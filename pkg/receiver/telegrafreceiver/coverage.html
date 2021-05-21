@@ -1,0 +1,447 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>telegrafreceiver: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/open-telemetry/opentelemetry-collector-contrib/receiver/telegrafreceiver/converter.go (83.0%)</option>
+				
+				<option value="file1">github.com/open-telemetry/opentelemetry-collector-contrib/receiver/telegrafreceiver/factory.go (0.0%)</option>
+				
+				<option value="file2">github.com/open-telemetry/opentelemetry-collector-contrib/receiver/telegrafreceiver/receiver.go (0.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">no coverage</span>
+				<span class="cov1">low coverage</span>
+				<span class="cov2">*</span>
+				<span class="cov3">*</span>
+				<span class="cov4">*</span>
+				<span class="cov5">*</span>
+				<span class="cov6">*</span>
+				<span class="cov7">*</span>
+				<span class="cov8">*</span>
+				<span class="cov9">*</span>
+				<span class="cov10">high coverage</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">// Copyright 2021, OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package telegrafreceiver
+
+import (
+        "fmt"
+
+        "github.com/influxdata/telegraf"
+        "go.opentelemetry.io/collector/consumer/pdata"
+)
+
+const (
+        fieldLabel = "field"
+)
+
+type MetricConverter interface {
+        Convert(telegraf.Metric) (pdata.Metrics, error)
+}
+
+type metricConverter struct {
+        separateField bool
+}
+
+func newConverter(separateField bool) MetricConverter <span class="cov7" title="6">{
+        return metricConverter{
+                separateField: separateField,
+        }
+}</span>
+
+// Convert converts telegraf.Metric to pdata.Metrics.
+func (mc metricConverter) Convert(m telegraf.Metric) (pdata.Metrics, error) <span class="cov7" title="6">{
+        ms := pdata.NewMetrics()
+        rms := ms.ResourceMetrics()
+        rms.Resize(1)
+        rm := rms.At(0)
+
+        // Attach tags as attributes - pipe through the metadata
+        for _, t := range m.TagList() </span><span class="cov0" title="0">{
+                rm.Resource().Attributes().InsertString(t.Key, t.Value)
+        }</span>
+
+        <span class="cov7" title="6">rm.InstrumentationLibraryMetrics().Resize(1)
+        ilm := rm.InstrumentationLibraryMetrics().At(0)
+
+        il := ilm.InstrumentationLibrary()
+        il.SetName(typeStr)
+        il.SetVersion(versionStr)
+
+        tim := m.Time().UnixNano()
+
+        metrics := ilm.Metrics()
+
+        switch t := m.Type(); t </span>{
+        case telegraf.Gauge:<span class="cov7" title="6">
+                for _, f := range m.FieldList() </span><span class="cov10" title="11">{
+                        pm := pdata.NewMetric()
+
+                        if mc.separateField </span><span class="cov6" title="4">{
+                                pm.SetName(m.Name())
+                        }</span> else<span class="cov8" title="7"> {
+                                pm.SetName(m.Name() + "_" + f.Key)
+                        }</span>
+
+                        <span class="cov10" title="11">switch v := f.Value.(type) </span>{
+                        case float64:<span class="cov5" title="3">
+                                pm.SetDataType(pdata.MetricDataTypeDoubleGauge)
+                                dps := pm.DoubleGauge().DataPoints()
+                                dps.Resize(1)
+                                dp := dps.At(0)
+                                dp.SetValue(v)
+                                dp.SetTimestamp(pdata.Timestamp(tim))
+                                if mc.separateField </span><span class="cov1" title="1">{
+                                        dp.LabelsMap().Insert(fieldLabel, f.Key)
+                                }</span>
+
+                        case int64, uint64:<span class="cov8" title="8">
+                                pm.SetDataType(pdata.MetricDataTypeIntGauge)
+                                dps := pm.IntGauge().DataPoints()
+                                dps.Resize(1)
+                                dp := dps.At(0)
+                                switch vv := v.(type) </span>{
+                                case int64:<span class="cov0" title="0">
+                                        dp.SetValue(vv)</span>
+                                case uint64:<span class="cov8" title="8">
+                                        dp.SetValue(int64(vv))</span>
+                                }
+
+                                <span class="cov8" title="8">dp.SetTimestamp(pdata.Timestamp(tim))
+                                if mc.separateField </span><span class="cov5" title="3">{
+                                        dp.LabelsMap().Insert(fieldLabel, f.Key)
+                                }</span>
+
+                        default:<span class="cov0" title="0">
+                                return pdata.Metrics{},
+                                        fmt.Errorf("unknown data type in telegraf.Gauge metric: %T", v)</span>
+                        }
+                        <span class="cov10" title="11">metrics.Append(pm)</span>
+                }
+
+        case telegraf.Counter:<span class="cov0" title="0">
+                return pdata.Metrics{}, fmt.Errorf("unsupported metric type: telegraf.Counter")</span>
+        case telegraf.Untyped:<span class="cov0" title="0">
+                return pdata.Metrics{}, fmt.Errorf("unsupported metric type: telegraf.Untyped")</span>
+        case telegraf.Summary:<span class="cov0" title="0">
+                return pdata.Metrics{}, fmt.Errorf("unsupported metric type: telegraf.Summary")</span>
+        case telegraf.Histogram:<span class="cov0" title="0">
+                return pdata.Metrics{}, fmt.Errorf("unsupported metric type: telegraf.Histogram")</span>
+
+        default:<span class="cov0" title="0">
+                return pdata.Metrics{}, fmt.Errorf("unknown metric type: %T", t)</span>
+        }
+
+        <span class="cov7" title="6">return ms, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">// Copyright 2021, OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package telegrafreceiver
+
+import (
+        "context"
+        "fmt"
+
+        telegrafagent "github.com/influxdata/telegraf/agent"
+        telegrafconfig "github.com/influxdata/telegraf/config"
+
+        "go.opentelemetry.io/collector/component"
+        "go.opentelemetry.io/collector/config"
+        "go.opentelemetry.io/collector/consumer"
+        "go.opentelemetry.io/collector/receiver/receiverhelper"
+)
+
+const (
+        typeStr    = "telegraf"
+        versionStr = "v0.1"
+)
+
+// NewFactory creates a factory for telegraf receiver.
+func NewFactory() component.ReceiverFactory <span class="cov0" title="0">{
+        return receiverhelper.NewFactory(
+                typeStr,
+                createDefaultConfig,
+                receiverhelper.WithMetrics(createMetricsReceiver),
+        )
+}</span>
+
+func createDefaultConfig() config.Receiver <span class="cov0" title="0">{
+        return &amp;Config{
+                ReceiverSettings: &amp;config.ReceiverSettings{
+                        TypeVal: config.Type(typeStr),
+                        NameVal: typeStr,
+                },
+                SeparateField: false,
+        }
+}</span>
+
+// createMetricsReceiver creates a metrics receiver based on provided config.
+func createMetricsReceiver(
+        ctx context.Context,
+        params component.ReceiverCreateParams,
+        cfg config.Receiver,
+        nextConsumer consumer.Metrics,
+) (component.MetricsReceiver, error) <span class="cov0" title="0">{
+        tCfg, ok := cfg.(*Config)
+        if !ok </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed reading telegraf agent config from otc config")
+        }</span>
+
+        <span class="cov0" title="0">tConfig := telegrafconfig.NewConfig()
+        if err := tConfig.LoadConfigData([]byte(tCfg.AgentConfig)); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed loading telegraf agent config: %w", err)
+        }</span>
+        <span class="cov0" title="0">tAgent, err := telegrafagent.NewAgent(tConfig)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed creating telegraf agent: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return &amp;telegrafreceiver{
+                agent:           tAgent,
+                consumer:        nextConsumer,
+                logger:          params.Logger,
+                metricConverter: newConverter(tCfg.SeparateField),
+        }, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">// Copyright 2021, OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package telegrafreceiver
+
+import (
+        "context"
+        "sync"
+
+        "github.com/influxdata/telegraf"
+        telegrafagent "github.com/influxdata/telegraf/agent"
+        "go.opentelemetry.io/collector/component"
+        "go.opentelemetry.io/collector/component/componenterror"
+        "go.opentelemetry.io/collector/consumer"
+        "go.opentelemetry.io/collector/consumer/pdata"
+        "go.uber.org/zap"
+)
+
+type telegrafreceiver struct {
+        sync.Mutex
+        startOnce sync.Once
+        stopOnce  sync.Once
+        wg        sync.WaitGroup
+        cancel    context.CancelFunc
+
+        agent           *telegrafagent.Agent
+        consumer        consumer.Metrics
+        logger          *zap.Logger
+        metricConverter MetricConverter
+}
+
+// Ensure this receiver adheres to required interface.
+var _ component.MetricsReceiver = (*telegrafreceiver)(nil)
+
+// Start tells the receiver to start.
+func (r *telegrafreceiver) Start(ctx context.Context, host component.Host) error <span class="cov0" title="0">{
+        r.logger.Info("Starting telegraf receiver")
+
+        r.Lock()
+        defer r.Unlock()
+
+        err := componenterror.ErrAlreadyStarted
+        r.startOnce.Do(func() </span><span class="cov0" title="0">{
+                err = nil
+                rctx, cancel := context.WithCancel(ctx)
+                r.cancel = cancel
+
+                ch := make(chan telegraf.Metric)
+                go func() </span><span class="cov0" title="0">{
+                        if rErr := r.agent.RunWithChannel(rctx, ch); rErr != nil </span><span class="cov0" title="0">{
+                                r.logger.Error("Problem starting receiver: %v", zap.Error(rErr))
+                        }</span>
+                }()
+
+                <span class="cov0" title="0">r.wg.Add(1)
+                go func() </span><span class="cov0" title="0">{
+                        var fErr error
+                        defer r.wg.Done()
+                        for </span><span class="cov0" title="0">{
+                                select </span>{
+                                case &lt;-rctx.Done():<span class="cov0" title="0">
+                                        return</span>
+
+                                case m, ok := &lt;-ch:<span class="cov0" title="0">
+                                        if !ok </span><span class="cov0" title="0">{
+                                                r.logger.Info("channel closed")
+                                                return
+                                        }</span>
+                                        <span class="cov0" title="0">if m == nil </span><span class="cov0" title="0">{
+                                                r.logger.Info("got nil from channel")
+                                                break</span>
+                                        }
+
+                                        <span class="cov0" title="0">var ms pdata.Metrics
+                                        if ms, fErr = r.metricConverter.Convert(m); fErr != nil </span><span class="cov0" title="0">{
+                                                r.logger.Error(
+                                                        "Error converting telegraf.Metric to pdata.Metrics",
+                                                        zap.Error(fErr),
+                                                )
+                                                continue</span>
+                                        }
+
+                                        <span class="cov0" title="0">if fErr = r.consumer.ConsumeMetrics(ctx, ms); fErr != nil </span><span class="cov0" title="0">{
+                                                r.logger.Error("ConsumeMetrics() error",
+                                                        zap.String("error", fErr.Error()),
+                                                )
+                                        }</span>
+                                }
+                        }
+                }()
+        })
+
+        <span class="cov0" title="0">return err</span>
+}
+
+// Shutdown is invoked during service shutdown.
+func (r *telegrafreceiver) Shutdown(context.Context) error <span class="cov0" title="0">{
+        r.Lock()
+        defer r.Unlock()
+
+        err := componenterror.ErrAlreadyStopped
+        r.stopOnce.Do(func() </span><span class="cov0" title="0">{
+                r.logger.Info("Stopping telegraf receiver")
+                r.cancel()
+                r.wg.Wait()
+                err = nil
+        }</span>)
+        <span class="cov0" title="0">return err</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

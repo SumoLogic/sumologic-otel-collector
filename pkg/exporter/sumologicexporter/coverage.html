@@ -1,0 +1,2248 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>sumologicexporter: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter/carbon_formatter.go (100.0%)</option>
+				
+				<option value="file1">github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter/compress.go (95.2%)</option>
+				
+				<option value="file2">github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter/config.go (100.0%)</option>
+				
+				<option value="file3">github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter/exporter.go (90.1%)</option>
+				
+				<option value="file4">github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter/factory.go (33.3%)</option>
+				
+				<option value="file5">github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter/fields.go (100.0%)</option>
+				
+				<option value="file6">github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter/filter.go (100.0%)</option>
+				
+				<option value="file7">github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter/prometheus_formatter.go (99.2%)</option>
+				
+				<option value="file8">github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter/sender.go (92.5%)</option>
+				
+				<option value="file9">github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter/source_format.go (94.4%)</option>
+				
+				<option value="file10">github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter/test_data.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">no coverage</span>
+				<span class="cov1">low coverage</span>
+				<span class="cov2">*</span>
+				<span class="cov3">*</span>
+				<span class="cov4">*</span>
+				<span class="cov5">*</span>
+				<span class="cov6">*</span>
+				<span class="cov7">*</span>
+				<span class="cov8">*</span>
+				<span class="cov9">*</span>
+				<span class="cov10">high coverage</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">// Copyright 2021, OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package sumologicexporter
+
+import (
+        "fmt"
+        "strings"
+
+        "go.opentelemetry.io/collector/consumer/pdata"
+        tracetranslator "go.opentelemetry.io/collector/translator/trace"
+)
+
+// carbon2TagString returns all attributes as space spearated key=value pairs.
+// In addition, metric name and unit are also included.
+// In case `metric` or `unit` attributes has been set too, they are prefixed
+// with underscore `_` to avoid overwriting the metric name and unit.
+func carbon2TagString(record metricPair) string <span class="cov9" title="15">{
+        length := record.attributes.Len()
+
+        if _, ok := record.attributes.Get("metric"); ok </span><span class="cov1" title="1">{
+                length++
+        }</span>
+
+        <span class="cov9" title="15">if _, ok := record.attributes.Get("unit"); ok &amp;&amp; len(record.metric.Unit()) &gt; 0 </span><span class="cov1" title="1">{
+                length++
+        }</span>
+
+        <span class="cov9" title="15">returnValue := make([]string, 0, length)
+        record.attributes.ForEach(func(k string, v pdata.AttributeValue) </span><span class="cov10" title="19">{
+                if k == "name" || k == "unit" </span><span class="cov1" title="1">{
+                        k = fmt.Sprintf("_%s", k)
+                }</span>
+                <span class="cov10" title="19">returnValue = append(returnValue, fmt.Sprintf("%s=%s", k, tracetranslator.AttributeValueToString(v, false)))</span>
+        })
+
+        <span class="cov9" title="15">returnValue = append(returnValue, fmt.Sprintf("metric=%s", record.metric.Name()))
+
+        if len(record.metric.Unit()) &gt; 0 </span><span class="cov3" title="2">{
+                returnValue = append(returnValue, fmt.Sprintf("unit=%s", record.metric.Unit()))
+        }</span>
+
+        <span class="cov9" title="15">return strings.Join(returnValue, " ")</span>
+}
+
+// carbon2IntRecord converts IntDataPoint to carbon2 metric string
+// with additional information from metricPair.
+func carbon2IntRecord(record metricPair, dataPoint pdata.IntDataPoint) string <span class="cov6" title="7">{
+        return fmt.Sprintf("%s  %d %d",
+                carbon2TagString(record),
+                dataPoint.Value(),
+                dataPoint.Timestamp()/1e9,
+        )
+}</span>
+
+// carbon2DoubleRecord converts DoubleDataPoint to carbon2 metric string
+// with additional information from metricPair.
+func carbon2DoubleRecord(record metricPair, dataPoint pdata.DoubleDataPoint) string <span class="cov5" title="4">{
+        return fmt.Sprintf("%s  %g %d",
+                carbon2TagString(record),
+                dataPoint.Value(),
+                dataPoint.Timestamp()/1e9,
+        )
+}</span>
+
+// carbon2metric2String converts metric to Carbon2 formatted string.
+func carbon2Metric2String(record metricPair) string <span class="cov7" title="9">{
+        var nextLines []string
+
+        switch record.metric.DataType() </span>{
+        case pdata.MetricDataTypeIntGauge:<span class="cov3" title="2">
+                dps := record.metric.IntGauge().DataPoints()
+                nextLines = make([]string, 0, dps.Len())
+                for i := 0; i &lt; dps.Len(); i++ </span><span class="cov5" title="4">{
+                        nextLines = append(nextLines, carbon2IntRecord(record, dps.At(i)))
+                }</span>
+        case pdata.MetricDataTypeIntSum:<span class="cov3" title="2">
+                dps := record.metric.IntSum().DataPoints()
+                nextLines = make([]string, 0, dps.Len())
+                for i := 0; i &lt; dps.Len(); i++ </span><span class="cov4" title="3">{
+                        nextLines = append(nextLines, carbon2IntRecord(record, dps.At(i)))
+                }</span>
+        case pdata.MetricDataTypeDoubleGauge:<span class="cov1" title="1">
+                dps := record.metric.DoubleGauge().DataPoints()
+                nextLines = make([]string, 0, dps.Len())
+                for i := 0; i &lt; dps.Len(); i++ </span><span class="cov3" title="2">{
+                        nextLines = append(nextLines, carbon2DoubleRecord(record, dps.At(i)))
+                }</span>
+        case pdata.MetricDataTypeDoubleSum:<span class="cov1" title="1">
+                dps := record.metric.DoubleSum().DataPoints()
+                nextLines = make([]string, 0, dps.Len())
+                for i := 0; i &lt; dps.Len(); i++ </span><span class="cov3" title="2">{
+                        nextLines = append(nextLines, carbon2DoubleRecord(record, dps.At(i)))
+                }</span>
+        // Skip complex metrics
+        case pdata.MetricDataTypeHistogram:<span class="cov1" title="1"></span>
+        case pdata.MetricDataTypeIntHistogram:<span class="cov1" title="1"></span>
+        case pdata.MetricDataTypeSummary:<span class="cov1" title="1"></span>
+        }
+
+        <span class="cov7" title="9">return strings.Join(nextLines, "\n")</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">// Copyright 2020, OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package sumologicexporter
+
+import (
+        "bytes"
+        "compress/flate"
+        "compress/gzip"
+        "fmt"
+        "io"
+        "io/ioutil"
+)
+
+type compressor struct {
+        format CompressEncodingType
+        writer encoder
+        buf    bytes.Buffer
+}
+
+type encoder interface {
+        io.WriteCloser
+        Reset(dst io.Writer)
+}
+
+// newCompressor takes encoding format and returns compressor struct and error eventually
+func newCompressor(format CompressEncodingType) (compressor, error) <span class="cov10" title="58">{
+        var (
+                writer encoder
+                err    error
+        )
+
+        switch format </span>{
+        case GZIPCompression:<span class="cov3" title="3">
+                writer = gzip.NewWriter(ioutil.Discard)</span>
+        case DeflateCompression:<span class="cov2" title="2">
+                writer, err = flate.NewWriter(ioutil.Discard, flate.BestSpeed)
+                if err != nil </span><span class="cov0" title="0">{
+                        return compressor{}, err
+                }</span>
+        case NoCompression:<span class="cov9" title="51">
+                writer = nil</span>
+        default:<span class="cov2" title="2">
+                return compressor{}, fmt.Errorf("invalid format: %s", format)</span>
+        }
+
+        <span class="cov9" title="56">return compressor{
+                format: format,
+                writer: writer,
+        }, nil</span>
+}
+
+// compress takes a reader with uncompressed data and returns
+// a reader with the same data compressed using c.writer
+func (c *compressor) compress(data io.Reader) (io.Reader, error) <span class="cov9" title="56">{
+        if c.writer == nil </span><span class="cov9" title="46">{
+                return data, nil
+        }</span>
+
+        <span class="cov6" title="10">var dataBytes bytes.Buffer
+        if _, err := dataBytes.ReadFrom(data); err != nil </span><span class="cov1" title="1">{
+                return nil, err
+        }</span>
+
+        // Reset c.buf to start with empty message
+        <span class="cov5" title="9">c.buf.Reset()
+        c.writer.Reset(&amp;c.buf)
+
+        if _, err := c.writer.Write(dataBytes.Bytes()); err != nil </span><span class="cov2" title="2">{
+                return nil, err
+        }</span>
+
+        <span class="cov5" title="7">if err := c.writer.Close(); err != nil </span><span class="cov1" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov4" title="6">return bytes.NewReader(c.buf.Bytes()), nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">// Copyright 2020, OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package sumologicexporter
+
+import (
+        "time"
+
+        "go.opentelemetry.io/collector/config"
+        "go.opentelemetry.io/collector/config/confighttp"
+        "go.opentelemetry.io/collector/exporter/exporterhelper"
+)
+
+// Config defines configuration for Sumo Logic exporter.
+type Config struct {
+        *config.ExporterSettings      `mapstructure:"-"`
+        confighttp.HTTPClientSettings `mapstructure:",squash"` // squash ensures fields are correctly decoded in embedded struct.
+        exporterhelper.QueueSettings  `mapstructure:"sending_queue"`
+        exporterhelper.RetrySettings  `mapstructure:"retry_on_failure"`
+
+        // Compression encoding format, either empty string, gzip or deflate (default gzip)
+        // Empty string means no compression
+        CompressEncoding CompressEncodingType `mapstructure:"compress_encoding"`
+        // Max HTTP request body size in bytes before compression (if applied).
+        // By default 1MB is recommended.
+        MaxRequestBodySize int `mapstructure:"max_request_body_size"`
+
+        // Logs related configuration
+        // Format to post logs into Sumo. (default json)
+        //   * text - Logs will appear in Sumo Logic in text format.
+        //   * json - Logs will appear in Sumo Logic in json format.
+        LogFormat LogFormatType `mapstructure:"log_format"`
+
+        // Metrics related configuration
+        // The format of metrics you will be sending, either graphite or carbon2 or prometheus (Default is prometheus)
+        // Possible values are `carbon2` and `prometheus`
+        MetricFormat MetricFormatType `mapstructure:"metric_format"`
+
+        // List of regexes for attributes which should be send as metadata
+        MetadataAttributes []string `mapstructure:"metadata_attributes"`
+
+        // Sumo specific options
+        // Desired source category.
+        // Useful if you want to override the source category configured for the source.
+        SourceCategory string `mapstructure:"source_category"`
+        // Desired source name.
+        // Useful if you want to override the source name configured for the source.
+        SourceName string `mapstructure:"source_name"`
+        // Desired host name.
+        // Useful if you want to override the source host configured for the source.
+        SourceHost string `mapstructure:"source_host"`
+        // Name of the client
+        Client string `mapstructure:"client"`
+}
+
+// CreateDefaultHTTPClientSettings returns default http client settings
+func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings <span class="cov8" title="1">{
+        return confighttp.HTTPClientSettings{
+                Timeout: defaultTimeout,
+        }
+}</span>
+
+// LogFormatType represents log_format
+type LogFormatType string
+
+// MetricFormatType represents metric_format
+type MetricFormatType string
+
+// PipelineType represents type of the pipeline
+type PipelineType string
+
+// CompressEncodingType represents type of the pipeline
+type CompressEncodingType string
+
+const (
+        // TextFormat represents log_format: text
+        TextFormat LogFormatType = "text"
+        // JSONFormat represents log_format: json
+        JSONFormat LogFormatType = "json"
+        // GraphiteFormat represents metric_format: text
+        GraphiteFormat MetricFormatType = "graphite"
+        // Carbon2Format represents metric_format: json
+        Carbon2Format MetricFormatType = "carbon2"
+        // PrometheusFormat represents metric_format: json
+        PrometheusFormat MetricFormatType = "prometheus"
+        // GZIPCompression represents compress_encoding: gzip
+        GZIPCompression CompressEncodingType = "gzip"
+        // DeflateCompression represents compress_encoding: deflate
+        DeflateCompression CompressEncodingType = "deflate"
+        // NoCompression represents disabled compression
+        NoCompression CompressEncodingType = ""
+        // MetricsPipeline represents metrics pipeline
+        MetricsPipeline PipelineType = "metrics"
+        // LogsPipeline represents metrics pipeline
+        LogsPipeline PipelineType = "logs"
+        // defaultTimeout
+        defaultTimeout time.Duration = 5 * time.Second
+        // DefaultCompress defines default Compress
+        DefaultCompress bool = true
+        // DefaultCompressEncoding defines default CompressEncoding
+        DefaultCompressEncoding CompressEncodingType = "gzip"
+        // DefaultMaxRequestBodySize defines default MaxRequestBodySize in bytes
+        DefaultMaxRequestBodySize int = 1 * 1024 * 1024
+        // DefaultLogFormat defines default LogFormat
+        DefaultLogFormat LogFormatType = JSONFormat
+        // DefaultMetricFormat defines default MetricFormat
+        DefaultMetricFormat MetricFormatType = PrometheusFormat
+        // DefaultSourceCategory defines default SourceCategory
+        DefaultSourceCategory string = ""
+        // DefaultSourceName defines default SourceName
+        DefaultSourceName string = ""
+        // DefaultSourceHost defines default SourceHost
+        DefaultSourceHost string = ""
+        // DefaultClient defines default Client
+        DefaultClient string = "otelcol"
+)
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package sumologicexporter
+
+import (
+        "context"
+        "errors"
+        "fmt"
+        "net/http"
+
+        "go.opentelemetry.io/collector/component"
+        "go.opentelemetry.io/collector/consumer/consumererror"
+        "go.opentelemetry.io/collector/consumer/pdata"
+        "go.opentelemetry.io/collector/exporter/exporterhelper"
+)
+
+type sumologicexporter struct {
+        sources             sourceFormats
+        config              *Config
+        client              *http.Client
+        filter              filter
+        prometheusFormatter prometheusFormatter
+}
+
+func initExporter(cfg *Config) (*sumologicexporter, error) <span class="cov3" title="49">{
+        switch cfg.LogFormat </span>{
+        case JSONFormat:<span class="cov2" title="6"></span>
+        case TextFormat:<span class="cov3" title="42"></span>
+        default:<span class="cov1" title="1">
+                return nil, fmt.Errorf("unexpected log format: %s", cfg.LogFormat)</span>
+        }
+
+        <span class="cov3" title="48">switch cfg.MetricFormat </span>{
+        case GraphiteFormat:<span class="cov0" title="0"></span>
+        case Carbon2Format:<span class="cov3" title="47"></span>
+        case PrometheusFormat:<span class="cov0" title="0"></span>
+        default:<span class="cov1" title="1">
+                return nil, fmt.Errorf("unexpected metric format: %s", cfg.MetricFormat)</span>
+        }
+
+        <span class="cov3" title="47">switch cfg.CompressEncoding </span>{
+        case GZIPCompression:<span class="cov1" title="4"></span>
+        case DeflateCompression:<span class="cov0" title="0"></span>
+        case NoCompression:<span class="cov3" title="42"></span>
+        default:<span class="cov1" title="1">
+                return nil, fmt.Errorf("unexpected compression encoding: %s", cfg.CompressEncoding)</span>
+        }
+
+        <span class="cov3" title="46">if len(cfg.HTTPClientSettings.Endpoint) == 0 </span><span class="cov1" title="1">{
+                return nil, errors.New("endpoint is not set")
+        }</span>
+
+        <span class="cov3" title="45">sfs, err := newSourceFormats(cfg)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov3" title="45">f, err := newFilter(cfg.MetadataAttributes)
+        if err != nil </span><span class="cov1" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov3" title="44">pf, err := newPrometheusFormatter()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov3" title="44">httpClient, err := cfg.HTTPClientSettings.ToClient()
+        if err != nil </span><span class="cov1" title="1">{
+                return nil, fmt.Errorf("failed to create HTTP Client: %w", err)
+        }</span>
+
+        <span class="cov3" title="43">se := &amp;sumologicexporter{
+                config:              cfg,
+                sources:             sfs,
+                client:              httpClient,
+                filter:              f,
+                prometheusFormatter: pf,
+        }
+
+        return se, nil</span>
+}
+
+func newLogsExporter(
+        cfg *Config,
+        params component.ExporterCreateParams,
+) (component.LogsExporter, error) <span class="cov0" title="0">{
+        se, err := initExporter(cfg)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to initialize the logs exporter: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return exporterhelper.NewLogsExporter(
+                cfg,
+                params.Logger,
+                se.pushLogsData,
+                // Disable exporterhelper Timeout, since we are using a custom mechanism
+                // within exporter itself
+                exporterhelper.WithTimeout(exporterhelper.TimeoutSettings{Timeout: 0}),
+                exporterhelper.WithRetry(cfg.RetrySettings),
+                exporterhelper.WithQueue(cfg.QueueSettings),
+        )</span>
+}
+
+func newMetricsExporter(
+        cfg *Config,
+        params component.ExporterCreateParams,
+) (component.MetricsExporter, error) <span class="cov0" title="0">{
+        se, err := initExporter(cfg)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return exporterhelper.NewMetricsExporter(
+                cfg,
+                params.Logger,
+                se.pushMetricsData,
+                // Disable exporterhelper Timeout, since we are using a custom mechanism
+                // within exporter itself
+                exporterhelper.WithTimeout(exporterhelper.TimeoutSettings{Timeout: 0}),
+                exporterhelper.WithRetry(cfg.RetrySettings),
+                exporterhelper.WithQueue(cfg.QueueSettings),
+        )</span>
+}
+
+// pushLogsData groups data with common metadata and sends them as separate batched requests.
+// It returns the number of unsent logs and an error which contains a list of dropped records
+// so they can be handled by OTC retry mechanism
+func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) error <span class="cov2" title="6">{
+        var (
+                currentMetadata  fields = newFields(pdata.NewAttributeMap())
+                previousMetadata fields = newFields(pdata.NewAttributeMap())
+                errs             []error
+                droppedRecords   []pdata.LogRecord
+                err              error
+        )
+
+        c, err := newCompressor(se.config.CompressEncoding)
+        if err != nil </span><span class="cov1" title="1">{
+                return consumererror.NewLogs(fmt.Errorf("failed to initialize compressor: %w", err), ld)
+        }</span>
+        <span class="cov1" title="5">sdr := newSender(se.config, se.client, se.filter, se.sources, c, se.prometheusFormatter)
+
+        // Iterate over ResourceLogs
+        rls := ld.ResourceLogs()
+        for i := 0; i &lt; rls.Len(); i++ </span><span class="cov10" title="2097157">{
+                rl := rls.At(i)
+
+                ills := rl.InstrumentationLibraryLogs()
+                // iterate over InstrumentationLibraryLogs
+                for j := 0; j &lt; ills.Len(); j++ </span><span class="cov9" title="1048581">{
+                        ill := ills.At(j)
+
+                        // iterate over Logs
+                        logs := ill.Logs()
+                        for k := 0; k &lt; logs.Len(); k++ </span><span class="cov9" title="1048583">{
+                                log := logs.At(k)
+
+                                // copy resource attributes into logs attributes
+                                // log attributes have precedence over resource attributes
+                                rl.Resource().Attributes().ForEach(
+                                        func(k string, v pdata.AttributeValue) </span><span class="cov1" title="2">{
+                                                log.Attributes().Insert(k, v)
+                                        }</span>,
+                                )
+
+                                <span class="cov9" title="1048583">currentMetadata = sdr.filter.filterIn(log.Attributes())
+
+                                // If metadata differs from currently buffered, flush the buffer
+                                if currentMetadata.string() != previousMetadata.string() &amp;&amp; previousMetadata.string() != "" </span><span class="cov1" title="1">{
+                                        var dropped []pdata.LogRecord
+                                        dropped, err = sdr.sendLogs(ctx, previousMetadata)
+                                        if err != nil </span><span class="cov1" title="1">{
+                                                errs = append(errs, err)
+                                                droppedRecords = append(droppedRecords, dropped...)
+                                        }</span>
+                                        <span class="cov1" title="1">sdr.cleanLogsBuffer()</span>
+                                }
+
+                                // assign metadata
+                                <span class="cov9" title="1048583">previousMetadata = currentMetadata
+
+                                // add log to the buffer
+                                var dropped []pdata.LogRecord
+                                dropped, err = sdr.batchLog(ctx, log, previousMetadata)
+                                if err != nil </span><span class="cov1" title="1">{
+                                        droppedRecords = append(droppedRecords, dropped...)
+                                        errs = append(errs, err)
+                                }</span>
+                        }
+                }
+        }
+
+        // Flush pending logs
+        <span class="cov1" title="5">dropped, err := sdr.sendLogs(ctx, previousMetadata)
+        if err != nil </span><span class="cov1" title="1">{
+                droppedRecords = append(droppedRecords, dropped...)
+                errs = append(errs, err)
+        }</span>
+
+        <span class="cov1" title="5">if len(droppedRecords) &gt; 0 </span><span class="cov1" title="3">{
+                // Move all dropped records to Logs
+                droppedLogs := pdata.NewLogs()
+                rls = droppedLogs.ResourceLogs()
+                rls.Resize(1)
+
+                ills := rls.At(0).InstrumentationLibraryLogs()
+                ills.Resize(1)
+                logs := ills.At(0).Logs()
+
+                for _, log := range droppedRecords </span><span class="cov9" title="1048579">{
+                        logs.Append(log)
+                }</span>
+
+                <span class="cov1" title="3">return consumererror.NewLogs(consumererror.Combine(errs), droppedLogs)</span>
+        }
+
+        <span class="cov1" title="2">return nil</span>
+}
+
+// pushMetricsData groups data with common metadata and send them as separate batched requests
+// it returns number of unsent metrics and error which contains list of dropped records
+// so they can be handle by the OTC retry mechanism
+func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metrics) error <span class="cov1" title="5">{
+        var (
+                currentMetadata  fields = newFields(pdata.NewAttributeMap())
+                previousMetadata fields = newFields(pdata.NewAttributeMap())
+                errs             []error
+                droppedRecords   []metricPair
+                attributes       pdata.AttributeMap
+        )
+
+        c, err := newCompressor(se.config.CompressEncoding)
+        if err != nil </span><span class="cov1" title="1">{
+                return consumererror.NewMetrics(fmt.Errorf("failed to initialize compressor: %w", err), md)
+        }</span>
+        <span class="cov1" title="4">sdr := newSender(se.config, se.client, se.filter, se.sources, c, se.prometheusFormatter)
+
+        // Iterate over ResourceMetrics
+        rms := md.ResourceMetrics()
+        for i := 0; i &lt; rms.Len(); i++ </span><span class="cov2" title="8">{
+                rm := rms.At(i)
+
+                attributes = rm.Resource().Attributes()
+
+                // iterate over InstrumentationLibraryMetrics
+                ilms := rm.InstrumentationLibraryMetrics()
+                for j := 0; j &lt; ilms.Len(); j++ </span><span class="cov2" title="8">{
+                        ilm := ilms.At(j)
+
+                        // iterate over Metrics
+                        ms := ilm.Metrics()
+                        for k := 0; k &lt; ms.Len(); k++ </span><span class="cov2" title="8">{
+                                m := ms.At(k)
+                                mp := metricPair{
+                                        metric:     m,
+                                        attributes: attributes,
+                                }
+
+                                currentMetadata = sdr.filter.filterIn(attributes)
+
+                                // If metadata differs from currently buffered, flush the buffer
+                                if currentMetadata.string() != previousMetadata.string() &amp;&amp; previousMetadata.string() != "" </span><span class="cov1" title="1">{
+                                        var dropped []metricPair
+                                        dropped, err = sdr.sendMetrics(ctx, previousMetadata)
+                                        if err != nil </span><span class="cov1" title="1">{
+                                                errs = append(errs, err)
+                                                droppedRecords = append(droppedRecords, dropped...)
+                                        }</span>
+                                        <span class="cov1" title="1">sdr.cleanMetricBuffer()</span>
+                                }
+
+                                // assign metadata
+                                <span class="cov2" title="8">previousMetadata = currentMetadata
+                                var dropped []metricPair
+                                // add metric to the buffer
+                                dropped, err = sdr.batchMetric(ctx, mp, currentMetadata)
+                                if err != nil </span><span class="cov0" title="0">{
+                                        droppedRecords = append(droppedRecords, dropped...)
+                                        errs = append(errs, err)
+                                }</span>
+                        }
+                }
+        }
+
+        // Flush pending metrics
+        <span class="cov1" title="4">dropped, err := sdr.sendMetrics(ctx, previousMetadata)
+        if err != nil </span><span class="cov1" title="2">{
+                droppedRecords = append(droppedRecords, dropped...)
+                errs = append(errs, err)
+        }</span>
+
+        <span class="cov1" title="4">if len(droppedRecords) &gt; 0 </span><span class="cov1" title="3">{
+                // Move all dropped records to Metrics
+                droppedMetrics := pdata.NewMetrics()
+                rms := droppedMetrics.ResourceMetrics()
+                rms.Resize(len(droppedRecords))
+                for num, record := range droppedRecords </span><span class="cov1" title="4">{
+                        rm := droppedMetrics.ResourceMetrics().At(num)
+                        record.attributes.CopyTo(rm.Resource().Attributes())
+
+                        ilms := rm.InstrumentationLibraryMetrics()
+                        ilms.Resize(1)
+                        ilms.At(0).Metrics().Append(record.metric)
+                }</span>
+
+                <span class="cov1" title="3">return consumererror.NewMetrics(consumererror.Combine(errs), droppedMetrics)</span>
+        }
+
+        <span class="cov1" title="1">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package sumologicexporter
+
+import (
+        "context"
+        "fmt"
+
+        "go.opentelemetry.io/collector/component"
+        "go.opentelemetry.io/collector/config"
+        "go.opentelemetry.io/collector/exporter/exporterhelper"
+)
+
+const (
+        // The value of "type" key in configuration.
+        typeStr = "sumologic"
+)
+
+// NewFactory returns a new factory for the sumologic exporter.
+func NewFactory() component.ExporterFactory <span class="cov10" title="2">{
+        return exporterhelper.NewFactory(
+                typeStr,
+                createDefaultConfig,
+                exporterhelper.WithLogs(createLogsExporter),
+                exporterhelper.WithMetrics(createMetricsExporter),
+        )
+}</span>
+
+func createDefaultConfig() config.Exporter <span class="cov1" title="1">{
+        qs := exporterhelper.DefaultQueueSettings()
+        qs.Enabled = false
+
+        return &amp;Config{
+                ExporterSettings: config.NewExporterSettings(typeStr),
+
+                CompressEncoding:   DefaultCompressEncoding,
+                MaxRequestBodySize: DefaultMaxRequestBodySize,
+                LogFormat:          DefaultLogFormat,
+                MetricFormat:       DefaultMetricFormat,
+                SourceCategory:     DefaultSourceCategory,
+                SourceName:         DefaultSourceName,
+                SourceHost:         DefaultSourceHost,
+                Client:             DefaultClient,
+
+                HTTPClientSettings: CreateDefaultHTTPClientSettings(),
+                RetrySettings:      exporterhelper.DefaultRetrySettings(),
+                QueueSettings:      qs,
+        }
+}</span>
+
+func createLogsExporter(
+        _ context.Context,
+        params component.ExporterCreateParams,
+        cfg config.Exporter,
+) (component.LogsExporter, error) <span class="cov0" title="0">{
+        exp, err := newLogsExporter(cfg.(*Config), params)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to create the logs exporter: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return exp, nil</span>
+}
+
+func createMetricsExporter(
+        _ context.Context,
+        params component.ExporterCreateParams,
+        cfg config.Exporter,
+) (component.MetricsExporter, error) <span class="cov0" title="0">{
+        exp, err := newMetricsExporter(cfg.(*Config), params)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to create the metrics exporter: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return exp, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package sumologicexporter
+
+import (
+        "fmt"
+        "sort"
+        "strings"
+
+        "go.opentelemetry.io/collector/consumer/pdata"
+        tracetranslator "go.opentelemetry.io/collector/translator/trace"
+)
+
+// fields represents metadata
+type fields struct {
+        orig     pdata.AttributeMap
+        replacer *strings.Replacer
+}
+
+func newFields(attrMap pdata.AttributeMap) fields <span class="cov9" title="1048664">{
+        return fields{
+                orig:     attrMap,
+                replacer: strings.NewReplacer(",", "_", "=", "_", "\n", "_"),
+        }
+}</span>
+
+// string returns fields as ordered key=value string with `, ` as separator
+func (f fields) string() string <span class="cov10" title="2097222">{
+        returnValue := make([]string, 0, f.orig.Len())
+        f.orig.ForEach(func(k string, v pdata.AttributeValue) </span><span class="cov3" title="45">{
+                returnValue = append(
+                        returnValue,
+                        fmt.Sprintf(
+                                "%s=%s",
+                                f.sanitizeField(k),
+                                f.sanitizeField(tracetranslator.AttributeValueToString(v, false)),
+                        ),
+                )
+        }</span>)
+        <span class="cov10" title="2097222">sort.Strings(returnValue)
+
+        return strings.Join(returnValue, ", ")</span>
+}
+
+// sanitizeFields sanitize field (key or value) to be correctly parsed by sumologic receiver
+func (f fields) sanitizeField(fld string) string <span class="cov3" title="90">{
+        return f.replacer.Replace(fld)
+}</span>
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package sumologicexporter
+
+import (
+        "regexp"
+
+        "go.opentelemetry.io/collector/consumer/pdata"
+)
+
+type filter struct {
+        regexes []*regexp.Regexp
+}
+
+func newFilter(flds []string) (filter, error) <span class="cov3" title="92">{
+        metadataRegexes := make([]*regexp.Regexp, len(flds))
+
+        for i, fld := range flds </span><span class="cov2" title="8">{
+                regex, err := regexp.Compile(fld)
+                if err != nil </span><span class="cov1" title="1">{
+                        return filter{}, err
+                }</span>
+
+                <span class="cov2" title="7">metadataRegexes[i] = regex</span>
+        }
+
+        <span class="cov3" title="91">return filter{
+                regexes: metadataRegexes,
+        }, nil</span>
+}
+
+// filterIn returns fields which match at least one of the filter regexes
+func (f *filter) filterIn(attributes pdata.AttributeMap) fields <span class="cov10" title="1048592">{
+        returnValue := pdata.NewAttributeMap()
+
+        attributes.ForEach(func(k string, v pdata.AttributeValue) </span><span class="cov3" title="29">{
+                for _, regex := range f.regexes </span><span class="cov2" title="19">{
+                        if regex.MatchString(k) </span><span class="cov2" title="11">{
+                                returnValue.Insert(k, v)
+                                return
+                        }</span>
+                }
+        })
+        <span class="cov10" title="1048592">returnValue.Sort()
+        return newFields(returnValue)</span>
+}
+
+// filterOut returns fields which don't match any of the filter regexes
+func (f *filter) filterOut(attributes pdata.AttributeMap) fields <span class="cov2" title="11">{
+        returnValue := pdata.NewAttributeMap()
+
+        attributes.ForEach(func(k string, v pdata.AttributeValue) </span><span class="cov3" title="25">{
+                for _, regex := range f.regexes </span><span class="cov2" title="8">{
+                        if regex.MatchString(k) </span><span class="cov1" title="3">{
+                                return
+                        }</span>
+                }
+                <span class="cov3" title="22">returnValue.Insert(k, v)</span>
+        })
+        <span class="cov2" title="11">returnValue.Sort()
+        return newFields(returnValue)</span>
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">// Copyright 2020, OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package sumologicexporter
+
+import (
+        "fmt"
+        "regexp"
+        "strings"
+        "time"
+
+        "go.opentelemetry.io/collector/consumer/pdata"
+        tracetranslator "go.opentelemetry.io/collector/translator/trace"
+)
+
+type dataPoint interface {
+        Timestamp() pdata.Timestamp
+        LabelsMap() pdata.StringMap
+}
+
+type prometheusFormatter struct {
+        sanitNameRegex *regexp.Regexp
+        replacer       *strings.Replacer
+}
+
+type prometheusTags string
+
+const (
+        prometheusLeTag       string = "le"
+        prometheusQuantileTag string = "quantile"
+        prometheusInfValue    string = "+Inf"
+)
+
+func newPrometheusFormatter() (prometheusFormatter, error) <span class="cov8" title="98">{
+        sanitNameRegex, err := regexp.Compile(`[^0-9a-zA-Z]`)
+        if err != nil </span><span class="cov0" title="0">{
+                return prometheusFormatter{}, err
+        }</span>
+
+        <span class="cov8" title="98">return prometheusFormatter{
+                sanitNameRegex: sanitNameRegex,
+                replacer:       strings.NewReplacer(`\`, `\\`, `"`, `\"`),
+        }, nil</span>
+}
+
+// PrometheusLabels returns all attributes as sanitized prometheus labels string
+func (f *prometheusFormatter) tags2String(attr pdata.AttributeMap, labels pdata.StringMap) prometheusTags <span class="cov7" title="73">{
+        mergedAttributes := pdata.NewAttributeMap()
+        attr.CopyTo(mergedAttributes)
+        labels.ForEach(func(k string, v string) </span><span class="cov8" title="124">{
+                mergedAttributes.UpsertString(k, v)
+        }</span>)
+        <span class="cov7" title="73">length := mergedAttributes.Len()
+
+        if length == 0 </span><span class="cov2" title="2">{
+                return ""
+        }</span>
+
+        <span class="cov7" title="71">returnValue := make([]string, 0, length)
+        mergedAttributes.ForEach(func(k string, v pdata.AttributeValue) </span><span class="cov9" title="233">{
+                returnValue = append(
+                        returnValue,
+                        fmt.Sprintf(
+                                `%s="%s"`,
+                                f.sanitizeKey(k),
+                                f.sanitizeValue(tracetranslator.AttributeValueToString(v, false)),
+                        ),
+                )
+        }</span>)
+
+        <span class="cov7" title="71">return prometheusTags(fmt.Sprintf("{%s}", strings.Join(returnValue, ",")))</span>
+}
+
+// sanitizeKey returns sanitized key string by replacing
+// all non-alphanumeric chars with `_`
+func (f *prometheusFormatter) sanitizeKey(s string) string <span class="cov10" title="304">{
+        return f.sanitNameRegex.ReplaceAllString(s, "_")
+}</span>
+
+// sanitizeKey returns sanitized value string performing the following substitutions:
+// `/` -&gt; `//`
+// `"` -&gt; `\"`
+// `\n` -&gt; `\n`
+func (f *prometheusFormatter) sanitizeValue(s string) string <span class="cov9" title="234">{
+        return strings.ReplaceAll(f.replacer.Replace(s), `\\n`, `\n`)
+}</span>
+
+// doubleLine builds metric based on the given arguments where value is float64
+func (f *prometheusFormatter) doubleLine(name string, attributes prometheusTags, value float64, timestamp pdata.Timestamp) string <span class="cov4" title="10">{
+        return fmt.Sprintf(
+                "%s%s %g %d",
+                f.sanitizeKey(name),
+                attributes,
+                value,
+                timestamp/pdata.Timestamp(time.Millisecond),
+        )
+}</span>
+
+// intLine builds metric based on the given arguments where value is int64
+func (f *prometheusFormatter) intLine(name string, attributes prometheusTags, value int64, timestamp pdata.Timestamp) string <span class="cov6" title="30">{
+        return fmt.Sprintf(
+                "%s%s %d %d",
+                f.sanitizeKey(name),
+                attributes,
+                value,
+                timestamp/pdata.Timestamp(time.Millisecond),
+        )
+}</span>
+
+// uintLine builds metric based on the given arguments where value is uint64
+func (f *prometheusFormatter) uintLine(name string, attributes prometheusTags, value uint64, timestamp pdata.Timestamp) string <span class="cov6" title="30">{
+        return fmt.Sprintf(
+                "%s%s %d %d",
+                f.sanitizeKey(name),
+                attributes,
+                value,
+                timestamp/pdata.Timestamp(time.Millisecond),
+        )
+}</span>
+
+// doubleValueLine returns prometheus line with given value
+func (f *prometheusFormatter) doubleValueLine(name string, value float64, dp dataPoint, attributes pdata.AttributeMap) string <span class="cov4" title="10">{
+        return f.doubleLine(
+                name,
+                f.tags2String(attributes, dp.LabelsMap()),
+                value,
+                dp.Timestamp(),
+        )
+}</span>
+
+// intValueLine returns prometheus line with given value
+func (f *prometheusFormatter) intValueLine(name string, value int64, dp dataPoint, attributes pdata.AttributeMap) string <span class="cov2" title="2">{
+        return f.intLine(
+                name,
+                f.tags2String(attributes, dp.LabelsMap()),
+                value,
+                dp.Timestamp(),
+        )
+}</span>
+
+// uintValueLine returns prometheus line with given value
+func (f *prometheusFormatter) uintValueLine(name string, value uint64, dp dataPoint, attributes pdata.AttributeMap) string <span class="cov6" title="30">{
+        return f.uintLine(
+                name,
+                f.tags2String(attributes, dp.LabelsMap()),
+                value,
+                dp.Timestamp(),
+        )
+}</span>
+
+// doubleDataPointValueLine returns prometheus line with value from pdata.DoubleDataPoint
+func (f *prometheusFormatter) doubleDataPointValueLine(name string, dp pdata.DoubleDataPoint, attributes pdata.AttributeMap) string <span class="cov3" title="4">{
+        return f.doubleValueLine(
+                name,
+                dp.Value(),
+                dp,
+                attributes,
+        )
+}</span>
+
+// intDataPointValueLine returns prometheus line with value from pdata.IntDataPoint
+func (f *prometheusFormatter) intDataPointValueLine(name string, dp pdata.IntDataPoint, attributes pdata.AttributeMap) string <span class="cov6" title="28">{
+        return f.intLine(
+                name,
+                f.tags2String(attributes, dp.LabelsMap()),
+                dp.Value(),
+                dp.Timestamp(),
+        )
+}</span>
+
+// sumMetric returns _sum suffixed metric name
+func (f *prometheusFormatter) sumMetric(name string) string <span class="cov3" title="6">{
+        return fmt.Sprintf("%s_sum", name)
+}</span>
+
+// countMetric returns _count suffixed metric name
+func (f *prometheusFormatter) countMetric(name string) string <span class="cov3" title="6">{
+        return fmt.Sprintf("%s_count", name)
+}</span>
+
+// intGauge2Strings converts IntGauge record to list of strings (one per dataPoint)
+func (f *prometheusFormatter) intGauge2Strings(record metricPair) []string <span class="cov4" title="9">{
+        dps := record.metric.IntGauge().DataPoints()
+        lines := make([]string, 0, dps.Len())
+
+        for i := 0; i &lt; dps.Len(); i++ </span><span class="cov5" title="18">{
+                dp := record.metric.IntGauge().DataPoints().At(i)
+                line := f.intDataPointValueLine(
+                        record.metric.Name(),
+                        dp,
+                        record.attributes,
+                )
+                lines = append(lines, line)
+        }</span>
+        <span class="cov4" title="9">return lines</span>
+}
+
+// mergeAttributes gets two pdata.AttributeMaps and returns new which contains values from both of them
+func (f *prometheusFormatter) mergeAttributes(attributes pdata.AttributeMap, additionalAttributes pdata.AttributeMap) pdata.AttributeMap <span class="cov6" title="26">{
+        mergedAttributes := pdata.NewAttributeMap()
+        attributes.CopyTo(mergedAttributes)
+        additionalAttributes.ForEach(func(k string, v pdata.AttributeValue) </span><span class="cov6" title="26">{
+                mergedAttributes.Upsert(k, v)
+        }</span>)
+        <span class="cov6" title="26">return mergedAttributes</span>
+}
+
+// doubleGauge2Strings converts DoubleGauge record to a list of strings (one per dataPoint)
+func (f *prometheusFormatter) doubleGauge2Strings(record metricPair) []string <span class="cov1" title="1">{
+        dps := record.metric.DoubleGauge().DataPoints()
+        lines := make([]string, 0, dps.Len())
+
+        for i := 0; i &lt; dps.Len(); i++ </span><span class="cov2" title="2">{
+                dp := dps.At(i)
+                line := f.doubleDataPointValueLine(
+                        record.metric.Name(),
+                        dp,
+                        record.attributes,
+                )
+                lines = append(lines, line)
+        }</span>
+
+        <span class="cov1" title="1">return lines</span>
+}
+
+// intSum2Strings converts IntSum record to a list of strings (one per dataPoint)
+func (f *prometheusFormatter) intSum2Strings(record metricPair) []string <span class="cov4" title="9">{
+        dps := record.metric.IntSum().DataPoints()
+        lines := make([]string, 0, dps.Len())
+
+        for i := 0; i &lt; dps.Len(); i++ </span><span class="cov4" title="10">{
+                dp := dps.At(i)
+                line := f.intDataPointValueLine(
+                        record.metric.Name(),
+                        dp,
+                        record.attributes,
+                )
+                lines = append(lines, line)
+        }</span>
+
+        <span class="cov4" title="9">return lines</span>
+}
+
+// doubleSum2Strings converts DoubleSum record to a list of strings (one per dataPoint)
+func (f *prometheusFormatter) doubleSum2Strings(record metricPair) []string <span class="cov1" title="1">{
+        dps := record.metric.DoubleSum().DataPoints()
+        lines := make([]string, 0, dps.Len())
+
+        for i := 0; i &lt; dps.Len(); i++ </span><span class="cov2" title="2">{
+                dp := dps.At(i)
+                line := f.doubleDataPointValueLine(
+                        record.metric.Name(),
+                        dp,
+                        record.attributes,
+                )
+                lines = append(lines, line)
+        }</span>
+
+        <span class="cov1" title="1">return lines</span>
+}
+
+// doubleSummary2Strings converts Summary record to a list of strings
+// n+2 where n is number of quantiles and 2 stands for sum and count metrics per each data point
+func (f *prometheusFormatter) doubleSummary2Strings(record metricPair) []string <span class="cov1" title="1">{
+        dps := record.metric.Summary().DataPoints()
+        var lines []string
+
+        for i := 0; i &lt; dps.Len(); i++ </span><span class="cov2" title="2">{
+                dp := dps.At(i)
+                qs := dp.QuantileValues()
+                additionalAttributes := pdata.NewAttributeMap()
+                for i := 0; i &lt; qs.Len(); i++ </span><span class="cov2" title="2">{
+                        q := qs.At(i)
+                        additionalAttributes.UpsertDouble(prometheusQuantileTag, q.Quantile())
+
+                        line := f.doubleValueLine(
+                                record.metric.Name(),
+                                q.Value(),
+                                dp,
+                                f.mergeAttributes(record.attributes, additionalAttributes),
+                        )
+                        lines = append(lines, line)
+                }</span>
+
+                <span class="cov2" title="2">line := f.doubleValueLine(
+                        f.sumMetric(record.metric.Name()),
+                        dp.Sum(),
+                        dp,
+                        record.attributes,
+                )
+                lines = append(lines, line)
+
+                line = f.uintValueLine(
+                        f.countMetric(record.metric.Name()),
+                        dp.Count(),
+                        dp,
+                        record.attributes,
+                )
+                lines = append(lines, line)</span>
+        }
+        <span class="cov1" title="1">return lines</span>
+}
+
+// intHistogram2Strings converts IntHistogram record to a list of strings,
+// (n+1) where n is number of bounds plus two for sum and count per each data point
+func (f *prometheusFormatter) intHistogram2Strings(record metricPair) []string <span class="cov1" title="1">{
+        dps := record.metric.IntHistogram().DataPoints()
+        var lines []string
+
+        for i := 0; i &lt; dps.Len(); i++ </span><span class="cov2" title="2">{
+                dp := dps.At(i)
+
+                explicitBounds := dp.ExplicitBounds()
+                var cumulative uint64
+                additionalAttributes := pdata.NewAttributeMap()
+
+                for i, bound := range explicitBounds </span><span class="cov4" title="10">{
+                        cumulative += dp.BucketCounts()[i]
+                        additionalAttributes.UpsertDouble(prometheusLeTag, bound)
+
+                        line := f.uintValueLine(
+                                record.metric.Name(),
+                                cumulative,
+                                dp,
+                                f.mergeAttributes(record.attributes, additionalAttributes),
+                        )
+                        lines = append(lines, line)
+                }</span>
+
+                <span class="cov2" title="2">cumulative += dp.BucketCounts()[len(explicitBounds)]
+                additionalAttributes.UpsertString(prometheusLeTag, prometheusInfValue)
+                line := f.uintValueLine(
+                        record.metric.Name(),
+                        cumulative,
+                        dp,
+                        f.mergeAttributes(record.attributes, additionalAttributes),
+                )
+                lines = append(lines, line)
+
+                line = f.intValueLine(
+                        f.sumMetric(record.metric.Name()),
+                        dp.Sum(),
+                        dp,
+                        record.attributes,
+                )
+                lines = append(lines, line)
+
+                line = f.uintValueLine(
+                        f.countMetric(record.metric.Name()),
+                        dp.Count(),
+                        dp,
+                        record.attributes,
+                )
+                lines = append(lines, line)</span>
+        }
+
+        <span class="cov1" title="1">return lines</span>
+}
+
+// doubleHistogram2Strings converts Histogram record to a list of strings,
+// (n+1) where n is number of bounds plus two for sum and count per each data point
+func (f *prometheusFormatter) doubleHistogram2Strings(record metricPair) []string <span class="cov1" title="1">{
+        dps := record.metric.Histogram().DataPoints()
+        var lines []string
+
+        for i := 0; i &lt; dps.Len(); i++ </span><span class="cov2" title="2">{
+                dp := dps.At(i)
+
+                explicitBounds := dp.ExplicitBounds()
+                var cumulative uint64
+                additionalAttributes := pdata.NewAttributeMap()
+
+                for i, bound := range explicitBounds </span><span class="cov4" title="10">{
+                        cumulative += dp.BucketCounts()[i]
+                        additionalAttributes.UpsertDouble(prometheusLeTag, bound)
+
+                        line := f.uintValueLine(
+                                record.metric.Name(),
+                                cumulative,
+                                dp,
+                                f.mergeAttributes(record.attributes, additionalAttributes),
+                        )
+                        lines = append(lines, line)
+                }</span>
+
+                <span class="cov2" title="2">cumulative += dp.BucketCounts()[len(explicitBounds)]
+                additionalAttributes.UpsertString(prometheusLeTag, prometheusInfValue)
+                line := f.uintValueLine(
+                        record.metric.Name(),
+                        cumulative,
+                        dp,
+                        f.mergeAttributes(record.attributes, additionalAttributes),
+                )
+                lines = append(lines, line)
+
+                line = f.doubleValueLine(
+                        f.sumMetric(record.metric.Name()),
+                        dp.Sum(),
+                        dp,
+                        record.attributes,
+                )
+                lines = append(lines, line)
+
+                line = f.uintValueLine(
+                        f.countMetric(record.metric.Name()),
+                        dp.Count(),
+                        dp,
+                        record.attributes,
+                )
+                lines = append(lines, line)</span>
+        }
+
+        <span class="cov1" title="1">return lines</span>
+}
+
+// metric2String returns stringified metricPair
+func (f *prometheusFormatter) metric2String(record metricPair) string <span class="cov5" title="23">{
+        var lines []string
+
+        switch record.metric.DataType() </span>{
+        case pdata.MetricDataTypeIntGauge:<span class="cov4" title="9">
+                lines = f.intGauge2Strings(record)</span>
+        case pdata.MetricDataTypeDoubleGauge:<span class="cov1" title="1">
+                lines = f.doubleGauge2Strings(record)</span>
+        case pdata.MetricDataTypeIntSum:<span class="cov4" title="9">
+                lines = f.intSum2Strings(record)</span>
+        case pdata.MetricDataTypeDoubleSum:<span class="cov1" title="1">
+                lines = f.doubleSum2Strings(record)</span>
+        case pdata.MetricDataTypeSummary:<span class="cov1" title="1">
+                lines = f.doubleSummary2Strings(record)</span>
+        case pdata.MetricDataTypeIntHistogram:<span class="cov1" title="1">
+                lines = f.intHistogram2Strings(record)</span>
+        case pdata.MetricDataTypeHistogram:<span class="cov1" title="1">
+                lines = f.doubleHistogram2Strings(record)</span>
+        }
+        <span class="cov5" title="23">return strings.Join(lines, "\n")</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">// Copyright 2020, OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package sumologicexporter
+
+import (
+        "bytes"
+        "context"
+        "encoding/json"
+        "errors"
+        "fmt"
+        "io"
+        "net/http"
+        "strings"
+
+        "go.opentelemetry.io/collector/consumer/consumererror"
+        "go.opentelemetry.io/collector/consumer/pdata"
+        tracetranslator "go.opentelemetry.io/collector/translator/trace"
+)
+
+type appendResponse struct {
+        // sent gives information if the data was sent or not
+        sent bool
+        // appended keeps state of appending new log line to the body
+        appended bool
+}
+
+// metricPair represents information required to send one metric to the Sumo Logic
+type metricPair struct {
+        attributes pdata.AttributeMap
+        metric     pdata.Metric
+}
+
+type sender struct {
+        logBuffer           []pdata.LogRecord
+        metricBuffer        []metricPair
+        config              *Config
+        client              *http.Client
+        filter              filter
+        sources             sourceFormats
+        compressor          compressor
+        prometheusFormatter prometheusFormatter
+}
+
+const (
+        logKey string = "log"
+        // maxBufferSize defines size of the logBuffer (maximum number of pdata.LogRecord entries)
+        maxBufferSize int = 1024 * 1024
+
+        headerContentType     string = "Content-Type"
+        headerContentEncoding string = "Content-Encoding"
+        headerClient          string = "X-Sumo-Client"
+        headerHost            string = "X-Sumo-Host"
+        headerName            string = "X-Sumo-Name"
+        headerCategory        string = "X-Sumo-Category"
+        headerFields          string = "X-Sumo-Fields"
+
+        contentTypeLogs       string = "application/x-www-form-urlencoded"
+        contentTypePrometheus string = "application/vnd.sumologic.prometheus"
+        contentTypeCarbon2    string = "application/vnd.sumologic.carbon2"
+
+        contentEncodingGzip    string = "gzip"
+        contentEncodingDeflate string = "deflate"
+)
+
+func newAppendResponse() appendResponse <span class="cov9" title="2097202">{
+        return appendResponse{
+                appended: true,
+        }
+}</span>
+
+func newSender(
+        cfg *Config,
+        cl *http.Client,
+        f filter,
+        s sourceFormats,
+        c compressor,
+        pf prometheusFormatter,
+) *sender <span class="cov3" title="51">{
+        return &amp;sender{
+                config:              cfg,
+                client:              cl,
+                filter:              f,
+                sources:             s,
+                compressor:          c,
+                prometheusFormatter: pf,
+        }
+}</span>
+
+// send sends data to sumologic
+func (s *sender) send(ctx context.Context, pipeline PipelineType, body io.Reader, flds fields) error <span class="cov3" title="49">{
+        data, err := s.compressor.compress(body)
+        if err != nil </span><span class="cov1" title="1">{
+                return err
+        }</span>
+        <span class="cov3" title="48">req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.config.HTTPClientSettings.Endpoint, data)
+        if err != nil </span><span class="cov1" title="2">{
+                return err
+        }</span>
+
+        // Add headers
+        <span class="cov3" title="46">switch s.config.CompressEncoding </span>{
+        case GZIPCompression:<span class="cov1" title="1">
+                req.Header.Set(headerContentEncoding, contentEncodingGzip)</span>
+        case DeflateCompression:<span class="cov1" title="1">
+                req.Header.Set(headerContentEncoding, contentEncodingDeflate)</span>
+        case NoCompression:<span class="cov3" title="43"></span>
+        default:<span class="cov1" title="1">
+                return fmt.Errorf("invalid content encoding: %s", s.config.CompressEncoding)</span>
+        }
+
+        <span class="cov3" title="45">req.Header.Add(headerClient, s.config.Client)
+
+        if s.sources.host.isSet() </span><span class="cov3" title="32">{
+                req.Header.Add(headerHost, s.sources.host.format(flds))
+        }</span>
+
+        <span class="cov3" title="45">if s.sources.name.isSet() </span><span class="cov3" title="32">{
+                req.Header.Add(headerName, s.sources.name.format(flds))
+        }</span>
+
+        <span class="cov3" title="45">if s.sources.category.isSet() </span><span class="cov3" title="32">{
+                req.Header.Add(headerCategory, s.sources.category.format(flds))
+        }</span>
+
+        <span class="cov3" title="45">switch pipeline </span>{
+        case LogsPipeline:<span class="cov3" title="29">
+                req.Header.Add(headerContentType, contentTypeLogs)
+                req.Header.Add(headerFields, flds.string())</span>
+        case MetricsPipeline:<span class="cov2" title="15">
+                switch s.config.MetricFormat </span>{
+                case PrometheusFormat:<span class="cov2" title="13">
+                        req.Header.Add(headerContentType, contentTypePrometheus)</span>
+                case Carbon2Format:<span class="cov1" title="1">
+                        req.Header.Add(headerContentType, contentTypeCarbon2)</span>
+                default:<span class="cov1" title="1">
+                        return fmt.Errorf("unsupported metrics format: %s", s.config.MetricFormat)</span>
+                }
+        default:<span class="cov1" title="1">
+                return errors.New("unexpected pipeline")</span>
+        }
+
+        <span class="cov3" title="43">resp, err := s.client.Do(req)
+        if err != nil </span><span class="cov1" title="1">{
+                return err
+        }</span>
+        <span class="cov3" title="42">if resp.StatusCode &lt; 200 || resp.StatusCode &gt;= 400 </span><span class="cov2" title="15">{
+                return fmt.Errorf("error during sending data: %s", resp.Status)
+        }</span>
+        <span class="cov2" title="27">return nil</span>
+}
+
+// logToText converts LogRecord to a plain text line, returns it and error eventually
+func (s *sender) logToText(record pdata.LogRecord) string <span class="cov9" title="2097174">{
+        return tracetranslator.AttributeValueToString(record.Body(), false)
+}</span>
+
+// logToJSON converts LogRecord to a json line, returns it and error eventually
+func (s *sender) logToJSON(record pdata.LogRecord) (string, error) <span class="cov2" title="10">{
+        data := s.filter.filterOut(record.Attributes())
+        data.orig.Upsert(logKey, record.Body())
+
+        nextLine, err := json.Marshal(tracetranslator.AttributeMapToMap(data.orig))
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+
+        <span class="cov2" title="10">return bytes.NewBuffer(nextLine).String(), nil</span>
+}
+
+// sendLogs sends log records from the logBuffer formatted according
+// to configured LogFormat and as the result of execution
+// returns array of records which has not been sent correctly and error
+func (s *sender) sendLogs(ctx context.Context, flds fields) ([]pdata.LogRecord, error) <span class="cov2" title="24">{
+        var (
+                body           strings.Builder
+                errs           []error
+                droppedRecords []pdata.LogRecord
+                currentRecords []pdata.LogRecord
+        )
+
+        for _, record := range s.logBuffer </span><span class="cov9" title="2097186">{
+                var formattedLine string
+                var err error
+
+                switch s.config.LogFormat </span>{
+                case TextFormat:<span class="cov9" title="2097174">
+                        formattedLine = s.logToText(record)</span>
+                case JSONFormat:<span class="cov2" title="10">
+                        formattedLine, err = s.logToJSON(record)</span>
+                default:<span class="cov1" title="2">
+                        err = errors.New("unexpected log format")</span>
+                }
+
+                <span class="cov9" title="2097186">if err != nil </span><span class="cov1" title="2">{
+                        droppedRecords = append(droppedRecords, record)
+                        errs = append(errs, err)
+                        continue</span>
+                }
+
+                <span class="cov9" title="2097184">ar, err := s.appendAndSend(ctx, formattedLine, LogsPipeline, &amp;body, flds)
+                if err != nil </span><span class="cov1" title="4">{
+                        errs = append(errs, err)
+                        if ar.sent </span><span class="cov1" title="4">{
+                                droppedRecords = append(droppedRecords, currentRecords...)
+                        }</span>
+
+                        <span class="cov1" title="4">if !ar.appended </span><span class="cov0" title="0">{
+                                droppedRecords = append(droppedRecords, record)
+                        }</span>
+                }
+
+                // If data was sent, cleanup the currentTimeSeries counter
+                <span class="cov9" title="2097184">if ar.sent </span><span class="cov2" title="6">{
+                        currentRecords = currentRecords[:0]
+                }</span>
+
+                // If log has been appended to body, increment the currentTimeSeries
+                <span class="cov9" title="2097184">if ar.appended </span><span class="cov9" title="2097184">{
+                        currentRecords = append(currentRecords, record)
+                }</span>
+        }
+
+        <span class="cov2" title="24">if body.Len() &gt; 0 </span><span class="cov2" title="23">{
+                if err := s.send(ctx, LogsPipeline, strings.NewReader(body.String()), flds); err != nil </span><span class="cov2" title="8">{
+                        errs = append(errs, err)
+                        droppedRecords = append(droppedRecords, currentRecords...)
+                }</span>
+        }
+
+        <span class="cov2" title="24">if len(errs) &gt; 0 </span><span class="cov2" title="11">{
+                return droppedRecords, consumererror.Combine(errs)
+        }</span>
+        <span class="cov2" title="13">return droppedRecords, nil</span>
+}
+
+// sendMetrics sends metrics in right format basing on the s.config.MetricFormat
+func (s *sender) sendMetrics(ctx context.Context, flds fields) ([]metricPair, error) <span class="cov2" title="11">{
+        var (
+                body           strings.Builder
+                errs           []error
+                droppedRecords []metricPair
+                currentRecords []metricPair
+        )
+
+        for _, record := range s.metricBuffer </span><span class="cov2" title="19">{
+                var formattedLine string
+                var err error
+
+                switch s.config.MetricFormat </span>{
+                case PrometheusFormat:<span class="cov2" title="16">
+                        formattedLine = s.prometheusFormatter.metric2String(record)</span>
+                case Carbon2Format:<span class="cov1" title="2">
+                        formattedLine = carbon2Metric2String(record)</span>
+                default:<span class="cov1" title="1">
+                        err = fmt.Errorf("unexpected metric format: %s", s.config.MetricFormat)</span>
+                }
+
+                <span class="cov2" title="19">if err != nil </span><span class="cov1" title="1">{
+                        droppedRecords = append(droppedRecords, record)
+                        errs = append(errs, err)
+                        continue</span>
+                }
+
+                <span class="cov2" title="18">ar, err := s.appendAndSend(ctx, formattedLine, MetricsPipeline, &amp;body, flds)
+                if err != nil </span><span class="cov1" title="3">{
+                        errs = append(errs, err)
+                        if ar.sent </span><span class="cov1" title="3">{
+                                droppedRecords = append(droppedRecords, currentRecords...)
+                        }</span>
+
+                        <span class="cov1" title="3">if !ar.appended </span><span class="cov0" title="0">{
+                                droppedRecords = append(droppedRecords, record)
+                        }</span>
+                }
+
+                // If data was sent, cleanup the currentTimeSeries counter
+                <span class="cov2" title="18">if ar.sent </span><span class="cov1" title="4">{
+                        currentRecords = currentRecords[:0]
+                }</span>
+
+                // If log has been appended to body, increment the currentTimeSeries
+                <span class="cov2" title="18">if ar.appended </span><span class="cov2" title="18">{
+                        currentRecords = append(currentRecords, record)
+                }</span>
+        }
+
+        <span class="cov2" title="11">if body.Len() &gt; 0 </span><span class="cov2" title="10">{
+                if err := s.send(ctx, MetricsPipeline, strings.NewReader(body.String()), flds); err != nil </span><span class="cov1" title="3">{
+                        errs = append(errs, err)
+                        droppedRecords = append(droppedRecords, currentRecords...)
+                }</span>
+        }
+
+        <span class="cov2" title="11">if len(errs) &gt; 0 </span><span class="cov2" title="6">{
+                return droppedRecords, consumererror.Combine(errs)
+        }</span>
+        <span class="cov1" title="5">return droppedRecords, nil</span>
+}
+
+// appendAndSend appends line to the request body that will be sent and sends
+// the accumulated data if the internal logBuffer has been filled (with maxBufferSize elements).
+// It returns appendResponse
+func (s *sender) appendAndSend(
+        ctx context.Context,
+        line string,
+        pipeline PipelineType,
+        body *strings.Builder,
+        flds fields,
+) (appendResponse, error) <span class="cov9" title="2097202">{
+        var errors []error
+        ar := newAppendResponse()
+
+        if body.Len() &gt; 0 &amp;&amp; body.Len()+len(line) &gt;= s.config.MaxRequestBodySize </span><span class="cov2" title="10">{
+                ar.sent = true
+                if err := s.send(ctx, pipeline, strings.NewReader(body.String()), flds); err != nil </span><span class="cov2" title="7">{
+                        errors = append(errors, err)
+                }</span>
+                <span class="cov2" title="10">body.Reset()</span>
+        }
+
+        <span class="cov9" title="2097202">if body.Len() &gt; 0 </span><span class="cov9" title="2097159">{
+                // Do not add newline if the body is empty
+                if _, err := body.WriteString("\n"); err != nil </span><span class="cov0" title="0">{
+                        errors = append(errors, err)
+                        ar.appended = false
+                }</span>
+        }
+
+        <span class="cov9" title="2097202">if ar.appended </span><span class="cov9" title="2097202">{
+                // Do not append new line if separator was not appended
+                if _, err := body.WriteString(line); err != nil </span><span class="cov0" title="0">{
+                        errors = append(errors, err)
+                        ar.appended = false
+                }</span>
+        }
+
+        <span class="cov9" title="2097202">if len(errors) &gt; 0 </span><span class="cov2" title="7">{
+                return ar, consumererror.Combine(errors)
+        }</span>
+        <span class="cov9" title="2097195">return ar, nil</span>
+}
+
+// cleanLogsBuffer zeroes logBuffer
+func (s *sender) cleanLogsBuffer() <span class="cov1" title="4">{
+        s.logBuffer = (s.logBuffer)[:0]
+}</span>
+
+// batchLog adds log to the logBuffer and flushes them if logBuffer is full to avoid overflow
+// returns list of log records which were not sent successfully
+func (s *sender) batchLog(ctx context.Context, log pdata.LogRecord, metadata fields) ([]pdata.LogRecord, error) <span class="cov9" title="2097161">{
+        s.logBuffer = append(s.logBuffer, log)
+
+        if s.countLogs() &gt;= maxBufferSize </span><span class="cov1" title="2">{
+                dropped, err := s.sendLogs(ctx, metadata)
+                s.cleanLogsBuffer()
+                return dropped, err
+        }</span>
+
+        <span class="cov9" title="2097159">return nil, nil</span>
+}
+
+// countLogs returns number of logs in logBuffer
+func (s *sender) countLogs() int <span class="cov10" title="3145742">{
+        return len(s.logBuffer)
+}</span>
+
+// cleanMetricBuffer zeroes metricBuffer
+func (s *sender) cleanMetricBuffer() <span class="cov1" title="2">{
+        s.metricBuffer = (s.metricBuffer)[:0]
+}</span>
+
+// batchMetric adds metric to the metricBuffer and flushes them if metricBuffer is full to avoid overflow
+// returns list of metric records which were not sent successfully
+func (s *sender) batchMetric(ctx context.Context, metric metricPair, metadata fields) ([]metricPair, error) <span class="cov2" title="10">{
+        s.metricBuffer = append(s.metricBuffer, metric)
+
+        if s.countMetrics() &gt;= maxBufferSize </span><span class="cov0" title="0">{
+                dropped, err := s.sendMetrics(ctx, metadata)
+                s.cleanMetricBuffer()
+                return dropped, err
+        }</span>
+
+        <span class="cov2" title="10">return nil, nil</span>
+}
+
+// countMetrics returns number of metrics in metricBuffer
+func (s *sender) countMetrics() int <span class="cov2" title="14">{
+        return len(s.metricBuffer)
+}</span>
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package sumologicexporter
+
+import (
+        "fmt"
+        "regexp"
+
+        tracetranslator "go.opentelemetry.io/collector/translator/trace"
+)
+
+type sourceFormats struct {
+        name     sourceFormat
+        host     sourceFormat
+        category sourceFormat
+}
+
+type sourceFormat struct {
+        matches  []string
+        template string
+}
+
+const sourceRegex = `\%\{([\w\.]+)\}`
+
+// newSourceFormat builds sourceFormat basing on the regex and given text.
+// Regex is basing on the `sourceRegex` const
+// For given example text: `%{cluster}/%{namespace}``, it sets:
+//  - template to `%s/%s`, which can be used later by fmt.Sprintf
+//  - matches as map of (attribute) keys ({"cluster", "namespace"}) which will
+//    be used to put corresponding value into templates' `%s
+func newSourceFormat(r *regexp.Regexp, text string) sourceFormat <span class="cov10" title="272">{
+        matches := r.FindAllStringSubmatch(text, -1)
+        template := r.ReplaceAllString(text, "%s")
+
+        m := make([]string, len(matches))
+
+        for i, match := range matches </span><span class="cov5" title="13">{
+                m[i] = match[1]
+        }</span>
+
+        <span class="cov10" title="272">return sourceFormat{
+                matches:  m,
+                template: template,
+        }</span>
+}
+
+// newSourceFormats returns sourceFormats for name, host and category based on cfg
+func newSourceFormats(cfg *Config) (sourceFormats, error) <span class="cov7" title="46">{
+        r, err := regexp.Compile(sourceRegex)
+        if err != nil </span><span class="cov0" title="0">{
+                return sourceFormats{}, err
+        }</span>
+
+        <span class="cov7" title="46">return sourceFormats{
+                category: newSourceFormat(r, cfg.SourceCategory),
+                host:     newSourceFormat(r, cfg.SourceHost),
+                name:     newSourceFormat(r, cfg.SourceName),
+        }, nil</span>
+}
+
+// format converts sourceFormat to string.
+// Takes fields and put into template (%s placeholders) in order defined by matches
+func (s *sourceFormat) format(f fields) string <span class="cov8" title="98">{
+        labels := make([]interface{}, 0, len(s.matches))
+
+        for _, matchset := range s.matches </span><span class="cov4" title="7">{
+                v, ok := f.orig.Get(matchset)
+                if ok </span><span class="cov3" title="6">{
+                        labels = append(labels, tracetranslator.AttributeValueToString(v, false))
+                }</span> else<span class="cov1" title="1"> {
+                        labels = append(labels, "")
+                }</span>
+        }
+
+        <span class="cov8" title="98">return fmt.Sprintf(s.template, labels...)</span>
+}
+
+// isSet returns true if template is non-empty
+func (s *sourceFormat) isSet() bool <span class="cov8" title="137">{
+        return len(s.template) &gt; 0
+}</span>
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package sumologicexporter
+
+import (
+        "go.opentelemetry.io/collector/consumer/pdata"
+)
+
+func exampleIntMetric() metricPair <span class="cov8" title="16">{
+        dp := pdata.NewIntDataPoint()
+        dp.SetTimestamp(1605534165 * 1e9)
+        dp.SetValue(14500)
+
+        metric := pdata.NewMetric()
+        metric.SetName("test.metric.data")
+        metric.SetUnit("bytes")
+        metric.SetDataType(pdata.MetricDataTypeIntSum)
+        metric.IntSum().DataPoints().Append(dp)
+
+        attributes := pdata.NewAttributeMap()
+        attributes.InsertString("test", "test_value")
+        attributes.InsertString("test2", "second_value")
+
+        return metricPair{
+                metric:     metric,
+                attributes: attributes,
+        }
+}</span>
+
+func exampleIntGaugeMetric() metricPair <span class="cov8" title="14">{
+        metric := metricPair{
+                attributes: pdata.NewAttributeMap(),
+                metric:     pdata.NewMetric(),
+        }
+
+        metric.metric.SetDataType(pdata.MetricDataTypeIntGauge)
+        metric.metric.SetName("gauge_metric_name")
+
+        metric.attributes.InsertString("foo", "bar")
+
+        dp := pdata.NewIntDataPoint()
+        dp.LabelsMap().Insert("remote_name", "156920")
+        dp.LabelsMap().Insert("url", "http://example_url")
+        dp.SetValue(124)
+        dp.SetTimestamp(1608124661.166 * 1e9)
+        metric.metric.IntGauge().DataPoints().Append(dp)
+
+        dp = pdata.NewIntDataPoint()
+        dp.LabelsMap().Insert("remote_name", "156955")
+        dp.LabelsMap().Insert("url", "http://another_url")
+        dp.SetValue(245)
+        dp.SetTimestamp(1608124662.166 * 1e9)
+        metric.metric.IntGauge().DataPoints().Append(dp)
+
+        return metric
+}</span>
+
+func exampleDoubleGaugeMetric() metricPair <span class="cov4" title="3">{
+        metric := metricPair{
+                attributes: pdata.NewAttributeMap(),
+                metric:     pdata.NewMetric(),
+        }
+
+        metric.metric.SetDataType(pdata.MetricDataTypeDoubleGauge)
+        metric.metric.SetName("gauge_metric_name_double_test")
+
+        metric.attributes.InsertString("foo", "bar")
+
+        dp := pdata.NewDoubleDataPoint()
+        dp.LabelsMap().Insert("local_name", "156720")
+        dp.LabelsMap().Insert("endpoint", "http://example_url")
+        dp.SetValue(33.4)
+        dp.SetTimestamp(1608124661.169 * 1e9)
+        metric.metric.DoubleGauge().DataPoints().Append(dp)
+
+        dp = pdata.NewDoubleDataPoint()
+        dp.LabelsMap().Insert("local_name", "156155")
+        dp.LabelsMap().Insert("endpoint", "http://another_url")
+        dp.SetValue(56.8)
+        dp.SetTimestamp(1608124662.186 * 1e9)
+        metric.metric.DoubleGauge().DataPoints().Append(dp)
+
+        return metric
+}</span>
+
+func exampleIntSumMetric() metricPair <span class="cov2" title="2">{
+        metric := metricPair{
+                attributes: pdata.NewAttributeMap(),
+                metric:     pdata.NewMetric(),
+        }
+
+        metric.metric.SetDataType(pdata.MetricDataTypeIntSum)
+        metric.metric.SetName("sum_metric_int_test")
+
+        metric.attributes.InsertString("foo", "bar")
+
+        dp := pdata.NewIntDataPoint()
+        dp.LabelsMap().Insert("name", "156720")
+        dp.LabelsMap().Insert("address", "http://example_url")
+        dp.SetValue(45)
+        dp.SetTimestamp(1608124444.169 * 1e9)
+        metric.metric.IntSum().DataPoints().Append(dp)
+
+        dp = pdata.NewIntDataPoint()
+        dp.LabelsMap().Insert("name", "156155")
+        dp.LabelsMap().Insert("address", "http://another_url")
+        dp.SetValue(1238)
+        dp.SetTimestamp(1608124699.186 * 1e9)
+        metric.metric.IntSum().DataPoints().Append(dp)
+
+        return metric
+}</span>
+
+func exampleDoubleSumMetric() metricPair <span class="cov4" title="3">{
+        metric := metricPair{
+                attributes: pdata.NewAttributeMap(),
+                metric:     pdata.NewMetric(),
+        }
+
+        metric.metric.SetDataType(pdata.MetricDataTypeDoubleSum)
+        metric.metric.SetName("sum_metric_double_test")
+
+        metric.attributes.InsertString("foo", "bar")
+
+        dp := pdata.NewDoubleDataPoint()
+        dp.LabelsMap().Insert("pod_name", "lorem")
+        dp.LabelsMap().Insert("namespace", "default")
+        dp.SetValue(45.6)
+        dp.SetTimestamp(1618124444.169 * 1e9)
+        metric.metric.DoubleSum().DataPoints().Append(dp)
+
+        dp = pdata.NewDoubleDataPoint()
+        dp.LabelsMap().Insert("pod_name", "opsum")
+        dp.LabelsMap().Insert("namespace", "kube-config")
+        dp.SetValue(1238.1)
+        dp.SetTimestamp(1608424699.186 * 1e9)
+        metric.metric.DoubleSum().DataPoints().Append(dp)
+
+        return metric
+}</span>
+
+func exampleSummaryMetric() metricPair <span class="cov2" title="2">{
+        metric := metricPair{
+                attributes: pdata.NewAttributeMap(),
+                metric:     pdata.NewMetric(),
+        }
+
+        metric.metric.SetDataType(pdata.MetricDataTypeSummary)
+        metric.metric.SetName("summary_metric_double_test")
+
+        metric.attributes.InsertString("foo", "bar")
+
+        dp := pdata.NewSummaryDataPoint()
+        dp.LabelsMap().Insert("pod_name", "dolor")
+        dp.LabelsMap().Insert("namespace", "sumologic")
+        dp.SetSum(45.6)
+        dp.SetCount(3)
+        dp.SetTimestamp(1618124444.169 * 1e9)
+
+        quantile := pdata.NewValueAtQuantile()
+        quantile.SetQuantile(0.6)
+        quantile.SetValue(0.7)
+        dp.QuantileValues().Append(quantile)
+
+        quantile = pdata.NewValueAtQuantile()
+        quantile.SetQuantile(2.6)
+        quantile.SetValue(4)
+        dp.QuantileValues().Append(quantile)
+
+        metric.metric.Summary().DataPoints().Append(dp)
+
+        dp = pdata.NewSummaryDataPoint()
+        dp.LabelsMap().Insert("pod_name", "sit")
+        dp.LabelsMap().Insert("namespace", "main")
+        dp.SetSum(1238.1)
+        dp.SetCount(7)
+        dp.SetTimestamp(1608424699.186 * 1e9)
+        metric.metric.Summary().DataPoints().Append(dp)
+
+        return metric
+}</span>
+
+func exampleIntHistogramMetric() metricPair <span class="cov2" title="2">{
+        metric := metricPair{
+                attributes: pdata.NewAttributeMap(),
+                metric:     pdata.NewMetric(),
+        }
+
+        metric.metric.SetDataType(pdata.MetricDataTypeIntHistogram)
+        metric.metric.SetName("histogram_metric_int_test")
+
+        metric.attributes.InsertString("foo", "bar")
+
+        dp := pdata.NewIntHistogramDataPoint()
+        dp.LabelsMap().Insert("pod_name", "dolor")
+        dp.LabelsMap().Insert("namespace", "sumologic")
+        dp.SetBucketCounts([]uint64{0, 12, 7, 5, 8, 13})
+        dp.SetExplicitBounds([]float64{0.1, 0.2, 0.5, 0.8, 1})
+        dp.SetTimestamp(1618124444.169 * 1e9)
+        dp.SetSum(45)
+        dp.SetCount(3)
+        metric.metric.IntHistogram().DataPoints().Append(dp)
+
+        dp = pdata.NewIntHistogramDataPoint()
+        dp.LabelsMap().Insert("pod_name", "sit")
+        dp.LabelsMap().Insert("namespace", "main")
+        dp.SetBucketCounts([]uint64{0, 10, 1, 1, 4, 6})
+        dp.SetExplicitBounds([]float64{0.1, 0.2, 0.5, 0.8, 1})
+        dp.SetTimestamp(1608424699.186 * 1e9)
+        dp.SetSum(54)
+        dp.SetCount(5)
+        metric.metric.IntHistogram().DataPoints().Append(dp)
+
+        return metric
+}</span>
+
+func exampleHistogramMetric() metricPair <span class="cov2" title="2">{
+        metric := metricPair{
+                attributes: pdata.NewAttributeMap(),
+                metric:     pdata.NewMetric(),
+        }
+
+        metric.metric.SetDataType(pdata.MetricDataTypeHistogram)
+        metric.metric.SetName("histogram_metric_double_test")
+
+        metric.attributes.InsertString("bar", "foo")
+
+        dp := pdata.NewHistogramDataPoint()
+        dp.LabelsMap().Insert("container", "dolor")
+        dp.LabelsMap().Insert("branch", "sumologic")
+        dp.SetBucketCounts([]uint64{0, 12, 7, 5, 8, 13})
+        dp.SetExplicitBounds([]float64{0.1, 0.2, 0.5, 0.8, 1})
+        dp.SetTimestamp(1618124444.169 * 1e9)
+        dp.SetSum(45.6)
+        dp.SetCount(7)
+        metric.metric.Histogram().DataPoints().Append(dp)
+
+        dp = pdata.NewHistogramDataPoint()
+        dp.LabelsMap().Insert("container", "sit")
+        dp.LabelsMap().Insert("branch", "main")
+        dp.SetBucketCounts([]uint64{0, 10, 1, 1, 4, 6})
+        dp.SetExplicitBounds([]float64{0.1, 0.2, 0.5, 0.8, 1})
+        dp.SetTimestamp(1608424699.186 * 1e9)
+        dp.SetSum(54.1)
+        dp.SetCount(98)
+        metric.metric.Histogram().DataPoints().Append(dp)
+
+        return metric
+}</span>
+
+func metricPairToMetrics(mp []metricPair) pdata.Metrics <span class="cov6" title="7">{
+        metrics := pdata.NewMetrics()
+        metrics.ResourceMetrics().Resize(len(mp))
+        for num, record := range mp </span><span class="cov7" title="12">{
+                record.attributes.CopyTo(metrics.ResourceMetrics().At(num).Resource().Attributes())
+                metrics.ResourceMetrics().At(num).InstrumentationLibraryMetrics().Resize(1)
+                metrics.ResourceMetrics().At(num).InstrumentationLibraryMetrics().At(0).Metrics().Append(record.metric)
+        }</span>
+
+        <span class="cov6" title="7">return metrics</span>
+}
+
+func fieldsFromMap(s map[string]string) fields <span class="cov8" title="15">{
+        attrMap := pdata.NewAttributeMap()
+        for k, v := range s </span><span class="cov10" title="27">{
+                attrMap.InsertString(k, v)
+        }</span>
+        <span class="cov8" title="15">return newFields(attrMap)</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

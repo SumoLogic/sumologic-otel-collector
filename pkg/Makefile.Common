@@ -1,0 +1,18 @@
+GOTEST=go test -count 1
+LINT=golangci-lint
+
+.PHONY: test
+test:
+	$(GOTEST) ./...
+
+.PHONY: fmt
+fmt:
+	gofmt  -w -s ./
+	goimports -w  -local github.com/open-telemetry/opentelemetry-collector-contrib ./
+
+.PHONY: lint
+lint:
+	$(LINT) run \
+		--allow-parallel-runners \
+		--max-same-issues 10 \
+		--timeout 3m

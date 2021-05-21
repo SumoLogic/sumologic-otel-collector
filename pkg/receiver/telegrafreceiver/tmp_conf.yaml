@@ -1,0 +1,58 @@
+receivers:
+  telegraf:
+    separate_field: false
+    agent_config: |
+      [agent]
+        interval = "2s"
+        flush_interval = "2s"
+      [[inputs.mem]]
+      # [[inputs.disk]]
+      # [[inputs.cpu]]
+      #   ## Whether to report per-cpu stats or not
+      #   percpu = true
+      #   ## Whether to report total system cpu stats or not
+      #   totalcpu = true
+      #   ## If true, collect raw CPU time metrics.
+      #   collect_cpu_time = false
+      #   ## If true, compute and report the sum of all non-idle CPU states.
+      #   report_active = false
+      # [[inputs.statsd]]
+      #   ## Protocol, must be "tcp", "udp4", "udp6" or "udp" (default=udp)
+      #   protocol = "udp"
+      #   ## Address and port to host UDP listener on
+      #   service_address = "0.0.0.0:8125"
+
+processors:
+  resource:
+    attributes:
+    - key: k8s.cluster.name
+      value: zone-1
+      action: upsert
+
+exporters:
+  logging:
+    loglevel: debug
+  file:
+    path: ./out.json
+  prometheus:
+    endpoint: "0.0.0.0:9091"
+  sumologic:
+    # otc
+    # endpoint: https://nite-events.sumologic.net/receiver/v1/http/ZaVnC4dhaV1sViINwXkZZasBZ6LWdeYgHtBpWn-n59p4AbcDlOhxAuYJ5AxhQczMU0DqIIVo80WYDFF6KzCjcdlXX0VbJKHqWu66qHsljEbQ5DpTBWipFg==
+    # otc_separate_field
+    # endpoint: https://nite-events.sumologic.net/receiver/v1/http/ZaVnC4dhaV3ZKzKLsCc17lOz6NWTzF3B9J4335ncB6C4i2lzaEbgP9aei3DjySNa3irJuLvOo3MRNuM6vhBkIxt9LjwX9MMouwOzZKBWanwMUdS1S4nUYA==
+    # long: otc
+    endpoint: https://long-events.sumologic.net/receiver/v1/http/ZaVnC4dhaV1MJgmhc-ty_O-SIR5PP2noOUdQgygAvcEzb19_lRs2852EYC1S7bWR3ag6rgPSj04gKbRZSTXeQrYy0j1xBXIOCgXv0J-pyHiv8DReW6-nfA==
+    compress_encoding: gzip
+    max_request_body_size: "1_048_576"  # 1MB
+    metric_format: prometheus
+    metadata_attributes:
+      - k8s.*
+
+service:
+  pipelines:
+    metrics:
+      receivers: [telegraf]
+      processors: [resource]
+      exporters: [file, logging]
+      # exporters: [file, prometheus]

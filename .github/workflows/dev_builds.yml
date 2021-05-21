@@ -1,0 +1,115 @@
+name: Dev builds
+
+on:
+  push:
+    branches:
+      - main
+      - 'release-v[0-9]+.[0-9]+'
+
+jobs:
+
+  test:
+    name: Test
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        go: [ '1.16' ]
+        arch_os: [ 'darwin_amd64', 'linux_amd64', 'linux_arm64']
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      # As described in
+      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+      - uses: actions/cache@v2
+        with:
+          path: |
+            /home/runner/go/pkg/mod
+            /home/runner/.cache/go-build
+          key: ${{matrix.arch_os}}-go-pkg-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{matrix.arch_os}}-go-pkg-
+      - name: Run tests
+        run: make gotest
+
+  lint:
+    name: Lint (golangci-lint)
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        go: [ '1.16' ]
+        arch_os: [ 'linux_amd64' ]
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      # As described in
+      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+      - uses: actions/cache@v2
+        with:
+          path: |
+            /home/runner/go/pkg/mod
+            /home/runner/.cache/go-build
+          key: ${{matrix.arch_os}}-go-lint-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{matrix.arch_os}}-go-lint-
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
+          sh -s -- -b $(go env GOPATH)/bin v1.40.1
+      - name: Run golangci-lint
+        run: make golint
+
+  build:
+    name: Build
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        go: [ '1.16' ]
+        arch_os: [ 'darwin_amd64', 'linux_amd64', 'linux_arm64']
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      # As described in
+      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+      - uses: actions/cache@v2
+        with:
+          path: |
+            /home/runner/go/pkg/mod
+            /home/runner/.cache/go-build
+          key: ${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{matrix.arch_os}}-go-
+      - name: Install opentelemetry-collector-builder
+        run: make install
+        working-directory: ./otelcolbuilder
+      - name: Build
+        run: make otelcol-sumo-${{matrix.arch_os}}
+        working-directory: ./otelcolbuilder
+      - name: Show included modules
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          go version -m otelcol-sumo-${{matrix.arch_os}} | \
+          grep -E "/(receiver|exporter|processor|extension)/" | \
+          tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
+      - name: Store binary as action artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: otelcol-sumo-${{matrix.arch_os}}
+          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}
+          if-no-files-found: error
+      - name: Store list of included modules as action artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: otelcol-sumo-${{matrix.arch_os}}_modules.txt
+          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}_modules.txt
+          if-no-files-found: error

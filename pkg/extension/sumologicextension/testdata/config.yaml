@@ -1,0 +1,26 @@
+extensions:
+  sumologic:
+    collector_name: my_custom_collector
+    access_id: aaa
+    access_key: bbbbbbbbbbbbbbbbbbbbbb
+
+# Data pipeline is required to load the config.
+receivers:
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      load:
+
+processors:
+
+exporters:
+  logging:
+    loglevel: debug
+
+service:
+  extensions: [sumologic]
+  pipelines:
+    metrics:
+      receivers: [hostmetrics]
+      processors: []
+      exporters: [logging]

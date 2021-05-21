@@ -1,0 +1,115 @@
+name: PRs checks
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'release-v[0-9]+.[0-9]+'
+
+jobs:
+  markdownlint:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '2.6'
+      - name: Install markdownlint
+        run: gem install mdl
+      - name: Markdownlint check
+        run: make markdownlint
+
+  yamllint:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: Install yamllint
+        run: pip install yamllint
+      - name: yamllint
+        run: make yamllint
+
+  test:
+    name: Test
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        go: [ '1.16' ]
+        arch_os: [ 'darwin_amd64', 'linux_amd64', 'linux_arm64']
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      # As described in
+      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+      - uses: actions/cache@v2
+        with:
+          path: |
+            /home/runner/go/pkg/mod
+            /home/runner/.cache/go-build
+          key: ${{matrix.arch_os}}-go-pkg-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{matrix.arch_os}}-go-pkg-
+      - name: Run tests
+        run: make gotest
+
+  lint:
+    name: Lint (golangci-lint)
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        go: [ '1.16' ]
+        arch_os: [ 'linux_amd64' ]
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.40
+          working-directory: pkg
+          skip-go-installation: true
+          skip-pkg-cache: false
+          skip-build-cache: false
+
+  build:
+    name: Build
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        go: [ '1.16' ]
+        arch_os: [ 'darwin_amd64', 'linux_amd64', 'linux_arm64']
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      # As described in
+      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+      - uses: actions/cache@v2
+        with:
+          path: |
+            /home/runner/go/pkg/mod
+            /home/runner/.cache/go-build
+          key: ${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{matrix.arch_os}}-go-
+
+      - name: Install opentelemetry-collector-builder
+        run: make install
+        working-directory: ./otelcolbuilder
+      - name: Build
+        run: make otelcol-sumo-${{matrix.arch_os}}
+        working-directory: ./otelcolbuilder
+      - name: Show included modules
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          go version -m otelcol-sumo-${{matrix.arch_os}} | \
+          grep -E "/(receiver|exporter|processor|extension)/"

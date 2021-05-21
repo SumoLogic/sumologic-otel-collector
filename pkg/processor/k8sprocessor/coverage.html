@@ -1,0 +1,2566 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>k8sprocessor: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/config.go (0.0%)</option>
+				
+				<option value="file1">github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/factory.go (95.5%)</option>
+				
+				<option value="file2">github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube/client.go (96.0%)</option>
+				
+				<option value="file3">github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube/fake_informer.go (92.9%)</option>
+				
+				<option value="file4">github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube/fake_owner.go (100.0%)</option>
+				
+				<option value="file5">github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube/informer.go (100.0%)</option>
+				
+				<option value="file6">github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube/kube.go (100.0%)</option>
+				
+				<option value="file7">github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube/owner.go (0.0%)</option>
+				
+				<option value="file8">github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/observability/observability.go (55.6%)</option>
+				
+				<option value="file9">github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/options.go (83.3%)</option>
+				
+				<option value="file10">github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/pod_association.go (100.0%)</option>
+				
+				<option value="file11">github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/processor.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">no coverage</span>
+				<span class="cov1">low coverage</span>
+				<span class="cov2">*</span>
+				<span class="cov3">*</span>
+				<span class="cov4">*</span>
+				<span class="cov5">*</span>
+				<span class="cov6">*</span>
+				<span class="cov7">*</span>
+				<span class="cov8">*</span>
+				<span class="cov9">*</span>
+				<span class="cov10">high coverage</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package k8sprocessor
+
+import (
+        "go.opentelemetry.io/collector/config"
+
+        "github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+)
+
+// Config defines configuration for k8s attributes processor.
+type Config struct {
+        *config.ProcessorSettings `mapstructure:"-"`
+
+        k8sconfig.APIConfig `mapstructure:",squash"`
+
+        // Passthrough mode only annotates resources with the pod IP and
+        // does not try to extract any other metadata. It does not need
+        // access to the K8S cluster API. Agent/Collector must receive spans
+        // directly from services to be able to correctly detect the pod IPs.
+        Passthrough bool `mapstructure:"passthrough"`
+
+        // OwnerLookupEnabled enables pulling owner data, which triggers
+        // additional calls to Kubernetes API
+        OwnerLookupEnabled bool `mapstructure:"owner_lookup_enabled"`
+
+        // Extract section allows specifying extraction rules to extract
+        // data from k8s pod specs
+        Extract ExtractConfig `mapstructure:"extract"`
+
+        // Filter section allows specifying filters to filter
+        // pods by labels, fields, namespaces, nodes, etc.
+        Filter FilterConfig `mapstructure:"filter"`
+
+        // Association section allows to define rules for tagging spans, metrics,
+        // and logs with Pod metadata.
+        Association []PodAssociationConfig `mapstructure:"pod_association"`
+}
+
+func (cfg *Config) Validate() error <span class="cov0" title="0">{
+        return cfg.APIConfig.Validate()
+}</span>
+
+// ExtractConfig section allows specifying extraction rules to extract
+// data from k8s pod specs.
+type ExtractConfig struct {
+        // Metadata allows to extract pod metadata from a list of metadata fields.
+        // The field accepts a list of strings.
+        //
+        // Metadata fields supported right now are,
+        //   namespace, podName, podUID, deployment, cluster, node and startTime
+        //
+        // Specifying anything other than these values will result in an error.
+        // By default all of the fields are extracted and added to spans and metrics.
+        Metadata []string `mapstructure:"metadata"`
+
+        // Tags allow to specify output name used for each of the kubernetes tags
+        // The field accepts a map of string-&gt;string. It is optional and if no values
+        // are provided, defaults will be used
+        Tags map[string]string `mapstructure:"tags"`
+
+        // Annotations allows extracting data from pod annotations and record it
+        // as resource attributes.
+        // It is a list of FieldExtractConfig type. See FieldExtractConfig
+        // documentation for more details.
+        Annotations []FieldExtractConfig `mapstructure:"annotations"`
+
+        // Labels allows extracting data from pod labels and record it
+        // as resource attributes.
+        // It is a list of FieldExtractConfig type. See FieldExtractConfig
+        // documentation for more details.
+        Labels []FieldExtractConfig `mapstructure:"labels"`
+
+        // NamespaceLabels allows extracting data from namespace labels and record it
+        // as resource attributes.
+        // It is a list of FieldExtractConfig type. See FieldExtractConfig
+        // documentation for more details.
+        NamespaceLabels []FieldExtractConfig `mapstructure:"namespace_labels"`
+}
+
+//FieldExtractConfig allows specifying an extraction rule to extract a value from exactly one field.
+//
+// The field accepts a list FilterExtractConfig map. The map accepts three keys
+//     tag_name, key and regex
+//
+// - tag_name represents the name of the tag that will be added to the span.
+//   When not specified a default tag name will be used of the format:
+//       k8s.pod.annotations.&lt;annotation key&gt;
+//       k8s.pod.labels.&lt;label key&gt;
+//   For example, if tag_name is not specified and the key is git_sha,
+//   then the attribute name will be `k8s.pod.annotations.git_sha`.
+//
+//- key represents the annotation name. This must exactly match an annotation name.
+//  To capture all keys, `*` can be used
+//
+//- regex is an optional field used to extract a sub-string from a complex field value.
+//  The supplied regular expression must contain one named parameter with the string "value"
+//  as the name. For example, if your pod spec contains the following annotation,
+//
+//                kubernetes.io/change-cause: 2019-08-28T18:34:33Z APP_NAME=my-app GIT_SHA=58a1e39 CI_BUILD=4120
+//
+//  and you'd like to extract the GIT_SHA and the CI_BUILD values as tags, then you must
+//  specify the following two extraction rules:
+//
+//  procesors:
+//    k8s-tagger:
+//      annotations:
+//        - tag_name: git.sha
+//          key: kubernetes.io/change-cause
+//          regex: GIT_SHA=(?P&lt;value&gt;\w+)
+//        - tag_name: ci.build
+//                 key: kubernetes.io/change-cause
+//          regex: JENKINS=(?P&lt;value&gt;[\w]+)
+//
+//  this will add the `git.sha` and `ci.build` tags to the spans.
+//
+//  It is also possible to generically fetch all keys and fill them into a template.
+//  To substitute the original name, use `%s`. For example:
+//
+//  procesors:
+//    k8s-tagger:
+//      annotations:
+//        - tag_name: k8s.annotation/%s
+//          key: *
+
+type FieldExtractConfig struct {
+        TagName string `mapstructure:"tag_name"`
+        Key     string `mapstructure:"key"`
+        Regex   string `mapstructure:"regex"`
+}
+
+// FilterConfig section allows specifying filters to filter
+// pods by labels, fields, namespaces, nodes, etc.
+type FilterConfig struct {
+        // Node represents a k8s node or host. If specified, any pods not running
+        // on the specified node will be ignored by the tagger.
+        Node string `mapstructure:"node"`
+
+        // NodeFromEnv can be used to extract the node name from an environment
+        // variable. The value must be the name of the environment variable.
+        // This is useful when the node a Otel agent will run on cannot be
+        // predicted. In such cases, the Kubernetes downward API can be used to
+        // add the node name to each pod as an environment variable. K8s tagger
+        // can then read this value and filter pods by it.
+        //
+        // For example, node name can be passed to each agent with the downward API as follows
+        //
+        // env:
+        //   - name: K8S_NODE_NAME
+        //     valueFrom:
+        //       fieldRef:
+        //         fieldPath: spec.nodeName
+        //
+        // Then the NodeFromEnv field can be set to `K8S_NODE_NAME` to filter all pods by the node that
+        // the agent is running on.
+        //
+        // More on downward API here: https://kubernetes.io/docs/tasks/inject-data-application/downward-api-volume-expose-pod-information/
+        NodeFromEnvVar string `mapstructure:"node_from_env_var"`
+
+        // Namespace filters all pods by the provided namespace. All other pods are ignored.
+        Namespace string `mapstructure:"namespace"`
+
+        // Fields allows to filter pods by generic k8s fields.
+        // Only the following operations are supported:
+        //    - equals
+        //    - not-equals
+        //
+        // Check FieldFilterConfig for more details.
+        Fields []FieldFilterConfig `mapstructure:"fields"`
+
+        // Labels allows to filter pods by generic k8s pod labels.
+        // Only the following operations are supported:
+        //    - equals
+        //    - not-equals
+        //    - exists
+        //    - not-exists
+        //
+        // Check FieldFilterConfig for more details.
+        Labels []FieldFilterConfig `mapstructure:"labels"`
+}
+
+// FieldFilterConfig allows specifying exactly one filter by a field.
+// It can be used to represent a label or generic field filter.
+type FieldFilterConfig struct {
+        // Key represents the key or name of the field or labels that a filter
+        // can apply on.
+        Key string `mapstructure:"key"`
+
+        // Value represents the value associated with the key that a filter
+        // operation specified by the `Op` field applies on.
+        Value string `mapstructure:"value"`
+
+        // Op represents the filter operation to apply on the given
+        // Key: Value pair. The following operations are supported
+        //   equals, not-equals, exists, does-not-exist.
+        Op string `mapstructure:"op"`
+}
+
+// PodAssociationConfig contain single rule how to associate Pod metadata
+// with logs, spans and metrics
+type PodAssociationConfig struct {
+        // From represents the source of the association.
+        // Allowed values are "connection" and "labels".
+        From string `mapstructure:"from"`
+
+        // Name represents extracted key name.
+        // e.g. ip, pod_uid, k8s.pod.ip
+        Name string `mapstructure:"name"`
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package k8sprocessor
+
+import (
+        "context"
+
+        "go.opentelemetry.io/collector/component"
+        "go.opentelemetry.io/collector/config"
+        "go.opentelemetry.io/collector/consumer"
+        "go.opentelemetry.io/collector/processor/processorhelper"
+
+        "github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+        "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube"
+)
+
+const (
+        // The value of "type" key in configuration.
+        typeStr = "k8s_tagger"
+)
+
+var kubeClientProvider = kube.ClientProvider(nil)
+var processorCapabilities = component.ProcessorCapabilities{MutatesConsumedData: true}
+
+// NewFactory returns a new factory for the k8s processor.
+func NewFactory() component.ProcessorFactory <span class="cov5" title="21">{
+        return processorhelper.NewFactory(
+                typeStr,
+                createDefaultConfig,
+                processorhelper.WithTraces(createTraceProcessor),
+                processorhelper.WithMetrics(createMetricsProcessor),
+                processorhelper.WithLogs(createLogsProcessor),
+        )
+}</span>
+
+func createDefaultConfig() config.Processor <span class="cov5" title="23">{
+        return &amp;Config{
+                ProcessorSettings: config.NewProcessorSettings(typeStr),
+                APIConfig:         k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
+        }
+}</span>
+
+func createTraceProcessor(
+        ctx context.Context,
+        params component.ProcessorCreateParams,
+        cfg config.Processor,
+        next consumer.Traces,
+) (component.TracesProcessor, error) <span class="cov1" title="2">{
+        return createTraceProcessorWithOptions(ctx, params, cfg, next)
+}</span>
+
+func createLogsProcessor(
+        ctx context.Context,
+        params component.ProcessorCreateParams,
+        cfg config.Processor,
+        nextLogsConsumer consumer.Logs,
+) (component.LogsProcessor, error) <span class="cov1" title="2">{
+        return createLogsProcessorWithOptions(ctx, params, cfg, nextLogsConsumer)
+}</span>
+
+func createMetricsProcessor(
+        ctx context.Context,
+        params component.ProcessorCreateParams,
+        cfg config.Processor,
+        nextMetricsConsumer consumer.Metrics,
+) (component.MetricsProcessor, error) <span class="cov1" title="2">{
+        return createMetricsProcessorWithOptions(ctx, params, cfg, nextMetricsConsumer)
+}</span>
+
+func createTraceProcessorWithOptions(
+        _ context.Context,
+        params component.ProcessorCreateParams,
+        cfg config.Processor,
+        next consumer.Traces,
+        options ...Option,
+) (component.TracesProcessor, error) <span class="cov5" title="18">{
+        kp, err := createKubernetesProcessor(params, cfg, options...)
+        if err != nil </span><span class="cov2" title="3">{
+                return nil, err
+        }</span>
+
+        <span class="cov4" title="15">return processorhelper.NewTraceProcessor(
+                cfg,
+                next,
+                kp,
+                processorhelper.WithCapabilities(processorCapabilities),
+                processorhelper.WithStart(kp.Start),
+                processorhelper.WithShutdown(kp.Shutdown))</span>
+}
+
+func createMetricsProcessorWithOptions(
+        _ context.Context,
+        params component.ProcessorCreateParams,
+        cfg config.Processor,
+        nextMetricsConsumer consumer.Metrics,
+        options ...Option,
+) (component.MetricsProcessor, error) <span class="cov5" title="17">{
+        kp, err := createKubernetesProcessor(params, cfg, options...)
+        if err != nil </span><span class="cov2" title="3">{
+                return nil, err
+        }</span>
+
+        <span class="cov4" title="14">return processorhelper.NewMetricsProcessor(
+                cfg,
+                nextMetricsConsumer,
+                kp,
+                processorhelper.WithCapabilities(processorCapabilities),
+                processorhelper.WithStart(kp.Start),
+                processorhelper.WithShutdown(kp.Shutdown))</span>
+}
+
+func createLogsProcessorWithOptions(
+        _ context.Context,
+        params component.ProcessorCreateParams,
+        cfg config.Processor,
+        nextLogsConsumer consumer.Logs,
+        options ...Option,
+) (component.LogsProcessor, error) <span class="cov4" title="15">{
+        kp, err := createKubernetesProcessor(params, cfg, options...)
+        if err != nil </span><span class="cov2" title="3">{
+                return nil, err
+        }</span>
+
+        <span class="cov4" title="12">return processorhelper.NewLogsProcessor(
+                cfg,
+                nextLogsConsumer,
+                kp,
+                processorhelper.WithCapabilities(processorCapabilities),
+                processorhelper.WithStart(kp.Start),
+                processorhelper.WithShutdown(kp.Shutdown))</span>
+}
+
+func createKubernetesProcessor(
+        params component.ProcessorCreateParams,
+        cfg config.Processor,
+        options ...Option,
+) (*kubernetesprocessor, error) <span class="cov6" title="50">{
+        kp := &amp;kubernetesprocessor{logger: params.Logger}
+
+        allOptions := append(createProcessorOpts(cfg), options...)
+
+        for _, opt := range allOptions </span><span class="cov10" title="556">{
+                if err := opt(kp); err != nil </span><span class="cov4" title="9">{
+                        return nil, err
+                }</span>
+        }
+
+        // This might have been set by an option already
+        <span class="cov6" title="41">if kp.kc == nil </span><span class="cov3" title="7">{
+                err := kp.initKubeClient(kp.logger, kubeClientProvider)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+        }
+
+        <span class="cov6" title="41">return kp, nil</span>
+}
+
+func createProcessorOpts(cfg config.Processor) []Option <span class="cov6" title="50">{
+        oCfg := cfg.(*Config)
+        opts := []Option{}
+        if oCfg.Passthrough </span><span class="cov2" title="3">{
+                opts = append(opts, WithPassthrough())
+        }</span>
+
+        // extraction rules
+        <span class="cov6" title="50">opts = append(opts, WithExtractMetadata(oCfg.Extract.Metadata...))
+        opts = append(opts, WithExtractLabels(oCfg.Extract.Labels...))
+        opts = append(opts, WithExtractAnnotations(oCfg.Extract.Annotations...))
+        opts = append(opts, WithExtractTags(oCfg.Extract.Tags))
+
+        if oCfg.OwnerLookupEnabled </span><span class="cov0" title="0">{
+                opts = append(opts, WithOwnerLookupEnabled())
+        }</span>
+
+        // filters
+        <span class="cov6" title="50">opts = append(opts, WithFilterNode(oCfg.Filter.Node, oCfg.Filter.NodeFromEnvVar))
+        opts = append(opts, WithFilterNamespace(oCfg.Filter.Namespace))
+        opts = append(opts, WithFilterLabels(oCfg.Filter.Labels...))
+        opts = append(opts, WithFilterFields(oCfg.Filter.Fields...))
+        opts = append(opts, WithAPIConfig(oCfg.APIConfig))
+
+        opts = append(opts, WithExtractPodAssociations(oCfg.Association...))
+
+        return opts</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package kube
+
+import (
+        "fmt"
+        "regexp"
+        "strings"
+        "sync"
+        "time"
+
+        "go.uber.org/zap"
+        api_v1 "k8s.io/api/core/v1"
+        "k8s.io/apimachinery/pkg/fields"
+        "k8s.io/apimachinery/pkg/labels"
+        "k8s.io/apimachinery/pkg/selection"
+        "k8s.io/client-go/kubernetes"
+        "k8s.io/client-go/tools/cache"
+
+        "github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+        "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/observability"
+)
+
+// WatchClient is the main interface provided by this package to a kubernetes cluster.
+type WatchClient struct {
+        m               sync.RWMutex
+        deleteMut       sync.Mutex
+        logger          *zap.Logger
+        kc              kubernetes.Interface
+        informer        cache.SharedInformer
+        deploymentRegex *regexp.Regexp
+        deleteQueue     []deleteRequest
+        stopCh          chan struct{}
+        op              OwnerAPI
+
+        // A map containing Pod related data, used to associate them with resources.
+        // Key can be either an IP address or Pod UID
+        Pods         map[PodIdentifier]*Pod
+        Rules        ExtractionRules
+        Filters      Filters
+        Associations []Association
+}
+
+// Extract deployment name from the pod name. Pod name is created using
+// format: [deployment-name]-[Random-String-For-ReplicaSet]-[Random-String-For-Pod]
+var dRegex = regexp.MustCompile(`^(.*)-[0-9a-zA-Z]*-[0-9a-zA-Z]*$`)
+
+// New initializes a new k8s Client.
+func New(logger *zap.Logger, apiCfg k8sconfig.APIConfig, rules ExtractionRules, filters Filters, associations []Association, newClientSet APIClientsetProvider, newInformer InformerProvider, newOwnerProviderFunc OwnerProvider) (Client, error) <span class="cov5" title="21">{
+        c := &amp;WatchClient{
+                logger:          logger,
+                Rules:           rules,
+                Filters:         filters,
+                Associations:    associations,
+                deploymentRegex: dRegex,
+                stopCh:          make(chan struct{}),
+        }
+        go c.deleteLoop(time.Second*30, defaultPodDeleteGracePeriod)
+
+        c.Pods = map[PodIdentifier]*Pod{}
+        if newClientSet == nil </span><span class="cov1" title="1">{
+                newClientSet = k8sconfig.MakeClient
+        }</span>
+
+        <span class="cov5" title="21">kc, err := newClientSet(apiCfg)
+        if err != nil </span><span class="cov1" title="2">{
+                return nil, err
+        }</span>
+        <span class="cov5" title="19">c.kc = kc
+
+        labelSelector, fieldSelector, err := selectorsFromFilters(c.Filters)
+        if err != nil </span><span class="cov1" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov5" title="18">if c.Rules.OwnerLookupEnabled </span><span class="cov1" title="1">{
+                if newOwnerProviderFunc == nil </span><span class="cov0" title="0">{
+                        newOwnerProviderFunc = newOwnerProvider
+                }</span>
+
+                <span class="cov1" title="1">c.op, err = newOwnerProviderFunc(logger, c.kc, labelSelector, fieldSelector, c.Filters.Namespace)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+        }
+
+        <span class="cov5" title="18">logger.Info(
+                "k8s filtering",
+                zap.String("labelSelector", labelSelector.String()),
+                zap.String("fieldSelector", fieldSelector.String()),
+        )
+        if newInformer == nil </span><span class="cov1" title="1">{
+                newInformer = newSharedInformer
+        }</span>
+
+        <span class="cov5" title="18">c.informer = newInformer(c.kc, c.Filters.Namespace, labelSelector, fieldSelector)
+        return c, err</span>
+}
+
+// Start registers pod event handlers and starts watching the kubernetes cluster for pod changes.
+func (c *WatchClient) Start() <span class="cov1" title="1">{
+        if c.op != nil </span><span class="cov0" title="0">{
+                c.op.Start()
+        }</span>
+
+        <span class="cov1" title="1">c.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+                AddFunc:    c.handlePodAdd,
+                UpdateFunc: c.handlePodUpdate,
+                DeleteFunc: c.handlePodDelete,
+        })
+        c.informer.Run(c.stopCh)</span>
+}
+
+// Stop signals the the k8s watcher/informer to stop watching for new events.
+func (c *WatchClient) Stop() <span class="cov1" title="1">{
+        close(c.stopCh)
+
+        if c.op != nil </span><span class="cov0" title="0">{
+                c.op.Stop()
+        }</span>
+}
+
+func (c *WatchClient) handlePodAdd(obj interface{}) <span class="cov5" title="25">{
+        observability.RecordPodAdded()
+        if pod, ok := obj.(*api_v1.Pod); ok </span><span class="cov5" title="24">{
+                c.addOrUpdatePod(pod)
+        }</span> else<span class="cov1" title="1"> {
+                c.logger.Error("object received was not of type api_v1.Pod", zap.Any("received", obj))
+        }</span>
+        <span class="cov5" title="25">podTableSize := len(c.Pods)
+        observability.RecordPodTableSize(int64(podTableSize))</span>
+}
+
+func (c *WatchClient) handlePodUpdate(old, new interface{}) <span class="cov3" title="5">{
+        observability.RecordPodUpdated()
+        if pod, ok := new.(*api_v1.Pod); ok </span><span class="cov2" title="4">{
+                // TODO: update or remove based on whether container is ready/unready?.
+                c.addOrUpdatePod(pod)
+        }</span> else<span class="cov1" title="1"> {
+                c.logger.Error("object received was not of type api_v1.Pod", zap.Any("received", new))
+        }</span>
+        <span class="cov3" title="5">podTableSize := len(c.Pods)
+        observability.RecordPodTableSize(int64(podTableSize))</span>
+}
+
+func (c *WatchClient) handlePodDelete(obj interface{}) <span class="cov3" title="8">{
+        observability.RecordPodDeleted()
+        if pod, ok := obj.(*api_v1.Pod); ok </span><span class="cov3" title="7">{
+                c.forgetPod(pod)
+        }</span> else<span class="cov1" title="1"> {
+                c.logger.Error("object received was not of type api_v1.Pod", zap.Any("received", obj))
+        }</span>
+        <span class="cov3" title="8">podTableSize := len(c.Pods)
+        observability.RecordPodTableSize(int64(podTableSize))</span>
+}
+
+func (c *WatchClient) deleteLoop(interval time.Duration, gracePeriod time.Duration) <span class="cov5" title="22">{
+        // This loop runs after N seconds and deletes pods from cache.
+        // It iterates over the delete queue and deletes all that aren't
+        // in the grace period anymore.
+        for </span><span class="cov10" title="517">{
+                select </span>{
+                case &lt;-time.After(interval):<span class="cov9" title="495">
+                        var cutoff int
+                        now := time.Now()
+                        c.deleteMut.Lock()
+                        for i, d := range c.deleteQueue </span><span class="cov9" title="416">{
+                                if d.ts.Add(gracePeriod).After(now) </span><span class="cov9" title="415">{
+                                        break</span>
+                                }
+                                <span class="cov1" title="1">cutoff = i + 1</span>
+                        }
+                        <span class="cov9" title="495">toDelete := c.deleteQueue[:cutoff]
+                        c.deleteQueue = c.deleteQueue[cutoff:]
+                        c.deleteMut.Unlock()
+
+                        c.m.Lock()
+                        for _, d := range toDelete </span><span class="cov1" title="1">{
+                                if p, ok := c.Pods[d.id]; ok </span><span class="cov1" title="1">{
+                                        // Sanity check: make sure we are deleting the same pod
+                                        // and the underlying state (ip&lt;&gt;pod mapping) has not changed.
+                                        if p.Name == d.podName </span><span class="cov1" title="1">{
+                                                delete(c.Pods, d.id)
+                                        }</span>
+                                }
+                        }
+                        <span class="cov9" title="495">podTableSize := len(c.Pods)
+                        observability.RecordPodTableSize(int64(podTableSize))
+                        c.m.Unlock()</span>
+
+                case &lt;-c.stopCh:<span class="cov2" title="3">
+                        return</span>
+                }
+        }
+}
+
+// GetPod takes an IP address or Pod UID and returns the pod the identifier is associated with.
+func (c *WatchClient) GetPod(identifier PodIdentifier) (*Pod, bool) <span class="cov5" title="22">{
+        c.m.RLock()
+        pod, ok := c.Pods[identifier]
+        c.m.RUnlock()
+        if ok </span><span class="cov4" title="14">{
+                if pod.Ignore </span><span class="cov1" title="1">{
+                        return nil, false
+                }</span>
+                <span class="cov4" title="13">return pod, ok</span>
+        }
+        <span class="cov3" title="8">observability.RecordIPLookupMiss()
+        return nil, false</span>
+}
+
+func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string <span class="cov5" title="27">{
+        tags := map[string]string{}
+        if c.Rules.PodName </span><span class="cov1" title="1">{
+                tags[c.Rules.Tags.PodName] = pod.Name
+        }</span>
+
+        <span class="cov5" title="27">if c.Rules.Namespace </span><span class="cov1" title="1">{
+                tags[c.Rules.Tags.Namespace] = pod.GetNamespace()
+        }</span>
+
+        <span class="cov5" title="27">if c.Rules.StartTime </span><span class="cov1" title="1">{
+                ts := pod.GetCreationTimestamp()
+                if !ts.IsZero() </span><span class="cov1" title="1">{
+                        tags[c.Rules.Tags.StartTime] = ts.String()
+                }</span>
+        }
+
+        <span class="cov5" title="27">if c.Rules.PodUID </span><span class="cov1" title="1">{
+                uid := pod.GetUID()
+                tags[c.Rules.Tags.PodUID] = string(uid)
+        }</span>
+
+        <span class="cov5" title="27">if c.Rules.DeploymentName </span><span class="cov1" title="2">{
+                // format: [deployment-name]-[Random-String-For-ReplicaSet]-[Random-String-For-Pod]
+                parts := c.deploymentRegex.FindStringSubmatch(pod.Name)
+                if len(parts) == 2 </span><span class="cov1" title="2">{
+                        tags[c.Rules.Tags.DeploymentName] = parts[1]
+                }</span>
+        }
+
+        <span class="cov5" title="27">if c.Rules.NodeName </span><span class="cov1" title="1">{
+                tags[c.Rules.Tags.NodeName] = pod.Spec.NodeName
+        }</span>
+
+        <span class="cov5" title="27">if c.Rules.HostName </span><span class="cov1" title="2">{
+                // Basing on v1.17 Kubernetes docs, when a hostname is specified, it takes precedence over
+                // the associated metadata name, see:
+                // https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-hostname-and-subdomain-fields
+                if pod.Spec.Hostname == "" </span><span class="cov1" title="1">{
+                        tags[c.Rules.Tags.HostName] = pod.Name
+                }</span> else<span class="cov1" title="1"> {
+                        tags[c.Rules.Tags.HostName] = pod.Spec.Hostname
+                }</span>
+        }
+
+        <span class="cov5" title="27">if c.Rules.ClusterName </span><span class="cov1" title="2">{
+                clusterName := pod.GetClusterName()
+                if clusterName != "" </span><span class="cov1" title="2">{
+                        tags[c.Rules.Tags.ClusterName] = clusterName
+                }</span>
+        }
+
+        <span class="cov5" title="27">if c.Rules.OwnerLookupEnabled </span><span class="cov1" title="2">{
+                owners := c.op.GetOwners(pod)
+
+                for _, owner := range owners </span><span class="cov1" title="2">{
+                        switch owner.kind </span>{
+                        case "DaemonSet":<span class="cov0" title="0">
+                                if c.Rules.DaemonSetName </span><span class="cov0" title="0">{
+                                        tags[c.Rules.Tags.DaemonSetName] = owner.name
+                                }</span>
+                        case "DeploymentName":<span class="cov0" title="0"></span>
+                                // This should be already set earlier
+                        case "ReplicaSet":<span class="cov1" title="2">
+                                if c.Rules.ReplicaSetName </span><span class="cov1" title="1">{
+                                        tags[c.Rules.Tags.ReplicaSetName] = owner.name
+                                }</span>
+                        case "StatefulSet":<span class="cov0" title="0">
+                                if c.Rules.StatefulSetName </span><span class="cov0" title="0">{
+                                        tags[c.Rules.Tags.StatefulSetName] = owner.name
+                                }</span>
+                        default:<span class="cov0" title="0"></span>
+                                // Do nothing
+                        }
+                }
+
+                <span class="cov1" title="2">if c.Rules.ServiceName </span><span class="cov1" title="1">{
+                        tags[c.Rules.Tags.ServiceName] = strings.Join(c.op.GetServices(pod), ", ")
+                }</span>
+
+        }
+
+        <span class="cov5" title="27">if len(pod.Status.ContainerStatuses) &gt; 0 </span><span class="cov3" title="6">{
+                cs := pod.Status.ContainerStatuses[0]
+                if c.Rules.ContainerID </span><span class="cov1" title="2">{
+                        tags[c.Rules.Tags.ContainerID] = cs.ContainerID
+                }</span>
+        }
+
+        <span class="cov5" title="27">if len(pod.Spec.Containers) &gt; 0 </span><span class="cov3" title="6">{
+                container := pod.Spec.Containers[0]
+
+                if c.Rules.ContainerName </span><span class="cov1" title="2">{
+                        tags[c.Rules.Tags.ContainerName] = container.Name
+                }</span>
+                <span class="cov3" title="6">if c.Rules.ContainerImage </span><span class="cov1" title="1">{
+                        tags[c.Rules.Tags.ContainerImage] = container.Image
+                }</span>
+        }
+
+        <span class="cov5" title="27">if c.Rules.PodUID </span><span class="cov1" title="1">{
+                tags[c.Rules.Tags.PodUID] = string(pod.UID)
+        }</span>
+
+        <span class="cov5" title="27">for _, r := range c.Rules.Labels </span><span class="cov2" title="3">{
+                c.extractLabelsIntoTags(r, pod.Labels, tags)
+        }</span>
+
+        <span class="cov5" title="27">if len(c.Rules.NamespaceLabels) &gt; 0 &amp;&amp; c.Rules.OwnerLookupEnabled </span><span class="cov1" title="1">{
+                namespace := c.op.GetNamespace(pod)
+                if namespace != nil </span><span class="cov1" title="1">{
+                        for _, r := range c.Rules.NamespaceLabels </span><span class="cov1" title="1">{
+                                c.extractLabelsIntoTags(r, namespace.Labels, tags)
+                        }</span>
+                }
+        }
+
+        <span class="cov5" title="27">for _, r := range c.Rules.Annotations </span><span class="cov1" title="2">{
+                c.extractLabelsIntoTags(r, pod.Annotations, tags)
+        }</span>
+        <span class="cov5" title="27">return tags</span>
+}
+
+func (c *WatchClient) extractLabelsIntoTags(r FieldExtractionRule, labels map[string]string, tags map[string]string) <span class="cov3" title="6">{
+        if r.Key == "*" </span><span class="cov2" title="3">{
+                // Special case, extract everything
+                for label, value := range labels </span><span class="cov2" title="4">{
+                        tags[fmt.Sprintf(r.Name, label)] = c.extractField(value, r)
+                }</span>
+        } else<span class="cov2" title="3"> {
+                if v, ok := labels[r.Key]; ok </span><span class="cov2" title="3">{
+                        tags[r.Name] = c.extractField(v, r)
+                }</span>
+        }
+}
+
+func (c *WatchClient) extractField(v string, r FieldExtractionRule) string <span class="cov4" title="10">{
+        // Check if a subset of the field should be extracted with a regular expression
+        // instead of the whole field.
+        if r.Regex == nil </span><span class="cov3" title="7">{
+                return v
+        }</span>
+
+        <span class="cov2" title="3">matches := r.Regex.FindStringSubmatch(v)
+        if len(matches) == 2 </span><span class="cov1" title="2">{
+                return matches[1]
+        }</span>
+        <span class="cov1" title="1">return ""</span>
+}
+
+func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) <span class="cov5" title="28">{
+        newPod := &amp;Pod{
+                Name:      pod.Name,
+                Address:   pod.Status.PodIP,
+                PodUID:    string(pod.UID),
+                StartTime: pod.Status.StartTime,
+        }
+
+        if c.shouldIgnorePod(pod) </span><span class="cov1" title="1">{
+                newPod.Ignore = true
+        }</span> else<span class="cov5" title="27"> {
+                newPod.Attributes = c.extractPodAttributes(pod)
+        }</span>
+
+        <span class="cov5" title="28">c.m.Lock()
+        defer c.m.Unlock()
+
+        if pod.UID != "" </span><span class="cov4" title="10">{
+                c.Pods[PodIdentifier(pod.UID)] = newPod
+        }</span>
+        <span class="cov5" title="28">if pod.Status.PodIP != "" </span><span class="cov5" title="24">{
+                // compare initial scheduled timestamp for existing pod and new pod with same IP
+                // and only replace old pod if scheduled time of new pod is newer? This should fix
+                // the case where scheduler has assigned the same IP to a new pod but update event for
+                // the old pod came in later.
+                if p, ok := c.Pods[PodIdentifier(pod.Status.PodIP)]; ok </span><span class="cov4" title="10">{
+                        if p.StartTime != nil &amp;&amp; pod.Status.StartTime.Before(p.StartTime) </span><span class="cov1" title="1">{
+                                return
+                        }</span>
+                }
+                <span class="cov5" title="23">c.Pods[PodIdentifier(pod.Status.PodIP)] = newPod</span>
+        }
+}
+
+func (c *WatchClient) forgetPod(pod *api_v1.Pod) <span class="cov3" title="7">{
+        c.m.RLock()
+        p, ok := c.GetPod(PodIdentifier(pod.Status.PodIP))
+        c.m.RUnlock()
+
+        if ok &amp;&amp; p.Name == pod.Name </span><span class="cov2" title="4">{
+                c.appendDeleteQueue(PodIdentifier(pod.Status.PodIP), pod.Name)
+        }</span>
+
+        <span class="cov3" title="7">c.m.RLock()
+        p, ok = c.GetPod(PodIdentifier(pod.UID))
+        c.m.RUnlock()
+
+        if ok &amp;&amp; p.Name == pod.Name </span><span class="cov1" title="1">{
+                c.appendDeleteQueue(PodIdentifier(pod.UID), pod.Name)
+        }</span>
+}
+
+func (c *WatchClient) appendDeleteQueue(podID PodIdentifier, podName string) <span class="cov3" title="5">{
+        c.deleteMut.Lock()
+        c.deleteQueue = append(c.deleteQueue, deleteRequest{
+                id:      podID,
+                podName: podName,
+                ts:      time.Now(),
+        })
+        c.deleteMut.Unlock()
+}</span>
+
+func (c *WatchClient) shouldIgnorePod(pod *api_v1.Pod) bool <span class="cov6" title="36">{
+        // Host network mode is not supported right now with IP based
+        // tagging as all pods in host network get same IP addresses.
+        // Such pods are very rare and usually are used to monitor or control
+        // host traffic (e.g, linkerd, flannel) instead of service business needs.
+        // We plan to support host network pods in future.
+        if pod.Spec.HostNetwork </span><span class="cov1" title="2">{
+                return true
+        }</span>
+
+        // Check if user requested the pod to be ignored through annotations
+        <span class="cov6" title="34">if v, ok := pod.Annotations[ignoreAnnotation]; ok </span><span class="cov2" title="4">{
+                if strings.ToLower(strings.TrimSpace(v)) == "true" </span><span class="cov1" title="2">{
+                        return true
+                }</span>
+        }
+
+        // Check well known names that should be ignored
+        <span class="cov5" title="32">for _, rexp := range podNameIgnorePatterns </span><span class="cov8" title="153">{
+                if rexp.MatchString(pod.Name) </span><span class="cov1" title="2">{
+                        return true
+                }</span>
+        }
+
+        <span class="cov5" title="30">return false</span>
+}
+
+func selectorsFromFilters(filters Filters) (labels.Selector, fields.Selector, error) <span class="cov5" title="24">{
+        labelSelector := labels.Everything()
+        for _, f := range filters.Labels </span><span class="cov3" title="5">{
+                r, err := labels.NewRequirement(f.Key, f.Op, []string{f.Value})
+                if err != nil </span><span class="cov1" title="1">{
+                        return nil, nil, err
+                }</span>
+                <span class="cov2" title="4">labelSelector = labelSelector.Add(*r)</span>
+        }
+
+        <span class="cov5" title="23">var selectors []fields.Selector
+        for _, f := range filters.Fields </span><span class="cov3" title="6">{
+                switch f.Op </span>{
+                case selection.Equals:<span class="cov2" title="3">
+                        selectors = append(selectors, fields.OneTermEqualSelector(f.Key, f.Value))</span>
+                case selection.NotEquals:<span class="cov1" title="1">
+                        selectors = append(selectors, fields.OneTermNotEqualSelector(f.Key, f.Value))</span>
+                default:<span class="cov1" title="2">
+                        return nil, nil, fmt.Errorf("field filters don't support operator: '%s'", f.Op)</span>
+                }
+        }
+
+        <span class="cov5" title="21">if filters.Node != "" </span><span class="cov1" title="1">{
+                selectors = append(selectors, fields.OneTermEqualSelector(podNodeField, filters.Node))
+        }</span>
+        <span class="cov5" title="21">return labelSelector, fields.AndSelectors(selectors...), nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package kube
+
+import (
+        "sync"
+        "time"
+
+        "k8s.io/apimachinery/pkg/fields"
+        "k8s.io/apimachinery/pkg/labels"
+        "k8s.io/client-go/kubernetes"
+        "k8s.io/client-go/tools/cache"
+)
+
+type FakeInformer struct {
+        *FakeController
+
+        namespace     string
+        labelSelector labels.Selector
+        fieldSelector fields.Selector
+}
+
+func NewFakeInformer(
+        _ kubernetes.Interface,
+        namespace string,
+        labelSelector labels.Selector,
+        fieldSelector fields.Selector,
+) cache.SharedInformer <span class="cov10" title="18">{
+        return &amp;FakeInformer{
+                FakeController: &amp;FakeController{},
+                namespace:      namespace,
+                labelSelector:  labelSelector,
+                fieldSelector:  fieldSelector,
+        }
+}</span>
+
+func (f *FakeInformer) AddEventHandler(handler cache.ResourceEventHandler) {<span class="cov1" title="1">}</span>
+
+func (f *FakeInformer) AddEventHandlerWithResyncPeriod(handler cache.ResourceEventHandler, period time.Duration) {<span class="cov1" title="1">
+}</span>
+
+func (f *FakeInformer) GetStore() cache.Store <span class="cov1" title="1">{
+        return cache.NewStore(func(obj interface{}) (string, error) </span><span class="cov1" title="1">{ return "", nil }</span>)
+}
+
+func (f *FakeInformer) GetController() cache.Controller <span class="cov1" title="1">{
+        return f.FakeController
+}</span>
+
+type FakeController struct {
+        sync.Mutex
+        stopped bool
+}
+
+func (c *FakeController) HasSynced() bool <span class="cov1" title="1">{
+        return true
+}</span>
+
+func (c *FakeController) Run(stopCh &lt;-chan struct{}) <span class="cov1" title="1">{
+        &lt;-stopCh
+        c.Lock()
+        c.stopped = true
+        c.Unlock()
+}</span>
+
+func (c *FakeController) HasStopped() bool <span class="cov3" title="2">{
+        c.Lock()
+        defer c.Unlock()
+        return c.stopped
+}</span>
+
+func (c *FakeController) LastSyncResourceVersion() string <span class="cov1" title="1">{
+        return ""
+}</span>
+
+func (f *FakeInformer) SetWatchErrorHandler(cache.WatchErrorHandler) error <span class="cov0" title="0">{
+        return nil
+}</span>
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">// Copyright 2019 Omnition Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package kube
+
+import (
+        "go.uber.org/zap"
+        api_v1 "k8s.io/api/core/v1"
+        metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+        "k8s.io/apimachinery/pkg/fields"
+        "k8s.io/apimachinery/pkg/labels"
+        "k8s.io/apimachinery/pkg/types"
+        "k8s.io/client-go/kubernetes"
+)
+
+// fakeOwnerCache is a simple structure which aids querying for owners
+type fakeOwnerCache struct {
+        logger       *zap.Logger
+        objectOwners map[string]*ObjectOwner
+}
+
+// NewOwnerProvider creates new instance of the owners api
+func newFakeOwnerProvider(logger *zap.Logger,
+        client kubernetes.Interface,
+        labelSelector labels.Selector,
+        fieldSelector fields.Selector,
+        namespace string) (OwnerAPI, error) <span class="cov1" title="1">{
+        ownerCache := fakeOwnerCache{}
+        ownerCache.objectOwners = map[string]*ObjectOwner{}
+        ownerCache.logger = logger
+
+        oo := ObjectOwner{
+                UID:       "1a1658f9-7818-11e9-90f1-02324f7e0d1e",
+                namespace: "kube-system",
+                ownerUIDs: []types.UID{},
+                kind:      "ReplicaSet",
+                name:      "SomeReplicaSet",
+        }
+        ownerCache.objectOwners[string(oo.UID)] = &amp;oo
+
+        return &amp;ownerCache, nil
+}</span>
+
+// Start
+func (op *fakeOwnerCache) Start() {<span class="cov0" title="0">}</span>
+
+// Stop
+func (op *fakeOwnerCache) Stop() {<span class="cov0" title="0">}</span>
+
+// GetServices fetches list of services for a given pod
+func (op *fakeOwnerCache) GetServices(pod *api_v1.Pod) []string <span class="cov1" title="1">{
+        return []string{"foo", "bar"}
+}</span>
+
+// GetNamespace returns a namespace
+func (op *fakeOwnerCache) GetNamespace(pod *api_v1.Pod) *api_v1.Namespace <span class="cov1" title="1">{
+        namespace := api_v1.Namespace{
+                ObjectMeta: metav1.ObjectMeta{
+                        Name:   pod.Namespace,
+                        Labels: map[string]string{"label": "namespace_label_value"},
+                },
+        }
+        return &amp;namespace
+}</span>
+
+// GetOwners fetches deep tree of owners for a given pod
+func (op *fakeOwnerCache) GetOwners(pod *api_v1.Pod) []*ObjectOwner <span class="cov10" title="2">{
+        objectOwners := []*ObjectOwner{}
+
+        // Make sure the tree is cached/traversed first
+        for _, or := range pod.OwnerReferences </span><span class="cov10" title="2">{
+                oo, found := op.objectOwners[string(or.UID)]
+                if found </span><span class="cov10" title="2">{
+                        objectOwners = append(objectOwners, oo)
+                }</span>
+        }
+
+        <span class="cov10" title="2">return objectOwners</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package kube
+
+import (
+        "context"
+
+        api_v1 "k8s.io/api/core/v1"
+        metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+        "k8s.io/apimachinery/pkg/fields"
+        "k8s.io/apimachinery/pkg/labels"
+        "k8s.io/apimachinery/pkg/runtime"
+        "k8s.io/apimachinery/pkg/watch"
+        "k8s.io/client-go/kubernetes"
+        "k8s.io/client-go/tools/cache"
+)
+
+// InformerProvider defines a function type that returns a new SharedInformer. It is used to
+// allow passing custom shared informers to the watch client.
+type InformerProvider func(
+        client kubernetes.Interface,
+        namespace string,
+        labelSelector labels.Selector,
+        fieldSelector fields.Selector,
+) cache.SharedInformer
+
+func newSharedInformer(
+        client kubernetes.Interface,
+        namespace string,
+        ls labels.Selector,
+        fs fields.Selector,
+) cache.SharedInformer <span class="cov6" title="2">{
+        informer := cache.NewSharedInformer(
+                &amp;cache.ListWatch{
+                        ListFunc:  informerListFuncWithSelectors(client, namespace, ls, fs),
+                        WatchFunc: informerWatchFuncWithSelectors(client, namespace, ls, fs),
+                },
+                &amp;api_v1.Pod{},
+                watchSyncPeriod,
+        )
+        return informer
+}</span>
+
+func informerListFuncWithSelectors(client kubernetes.Interface, namespace string, ls labels.Selector, fs fields.Selector) cache.ListFunc <span class="cov10" title="3">{
+        return func(opts metav1.ListOptions) (runtime.Object, error) </span><span class="cov1" title="1">{
+                opts.LabelSelector = ls.String()
+                opts.FieldSelector = fs.String()
+                return client.CoreV1().Pods(namespace).List(context.Background(), opts)
+        }</span>
+
+}
+
+func informerWatchFuncWithSelectors(client kubernetes.Interface, namespace string, ls labels.Selector, fs fields.Selector) cache.WatchFunc <span class="cov10" title="3">{
+        return func(opts metav1.ListOptions) (watch.Interface, error) </span><span class="cov1" title="1">{
+                opts.LabelSelector = ls.String()
+                opts.FieldSelector = fs.String()
+                return client.CoreV1().Pods(namespace).Watch(context.Background(), opts)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package kube
+
+import (
+        "regexp"
+        "time"
+
+        "go.opentelemetry.io/collector/translator/conventions"
+        "go.uber.org/zap"
+        metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+        "k8s.io/apimachinery/pkg/selection"
+        "k8s.io/client-go/kubernetes"
+
+        "github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+)
+
+const (
+        podNodeField            = "spec.nodeName"
+        ignoreAnnotation string = "opentelemetry.io/k8s-processor/ignore"
+
+        defaultTagContainerID     = "k8s.container.id"
+        defaultTagContainerImage  = "k8s.container.image"
+        defaultTagContainerName   = "k8s.container.name"
+        defaultTagDaemonSetName   = "k8s.daemonset.name"
+        defaultTagHostName        = "k8s.pod.hostname"
+        defaultTagNodeName        = "k8s.node.name"
+        defaultTagPodUID          = "k8s.pod.id"
+        defaultTagReplicaSetName  = "k8s.replicaset.name"
+        defaultTagServiceName     = "k8s.service.name"
+        defaultTagStatefulSetName = "k8s.statefulset.name"
+        defaultTagStartTime       = "k8s.pod.startTime"
+)
+
+// PodIdentifier is a custom type to represent IP Address or Pod UID
+type PodIdentifier string
+
+var (
+        // TODO: move these to config with default values
+        podNameIgnorePatterns = []*regexp.Regexp{
+                regexp.MustCompile(`jaeger-agent`),
+                regexp.MustCompile(`jaeger-collector`),
+                regexp.MustCompile(`otel-collector`),
+                regexp.MustCompile(`otel-agent`),
+                regexp.MustCompile(`collection-sumologic-otelcol`),
+        }
+        defaultPodDeleteGracePeriod = time.Second * 120
+        watchSyncPeriod             = time.Minute * 5
+)
+
+// Client defines the main interface that allows querying pods by metadata.
+type Client interface {
+        GetPod(PodIdentifier) (*Pod, bool)
+        Start()
+        Stop()
+}
+
+// ClientProvider defines a func type that returns a new Client.
+type ClientProvider func(*zap.Logger, k8sconfig.APIConfig, ExtractionRules, Filters, []Association, APIClientsetProvider, InformerProvider, OwnerProvider) (Client, error)
+
+// APIClientsetProvider defines a func type that initializes and return a new kubernetes
+// Clientset object.
+type APIClientsetProvider func(config k8sconfig.APIConfig) (kubernetes.Interface, error)
+
+// Pod represents a kubernetes pod.
+type Pod struct {
+        Name       string
+        Address    string
+        PodUID     string
+        Attributes map[string]string
+        StartTime  *metav1.Time
+        Ignore     bool
+
+        DeletedAt time.Time
+}
+
+type deleteRequest struct {
+        // id is identifier (IP address or Pod UID) of pod to remove from pods map
+        id PodIdentifier
+        // name contains name of pod to remove from pods map
+        podName string
+        ts      time.Time
+}
+
+// Filters is used to instruct the client on how to filter out k8s pods.
+// Right now only filters supported are the ones supported by k8s API itself
+// for performance reasons. We can support adding additional custom filters
+// in future if there is a real need.
+type Filters struct {
+        Node            string
+        Namespace       string
+        Fields          []FieldFilter
+        Labels          []FieldFilter
+        NamespaceLabels []FieldFilter
+}
+
+// FieldFilter represents exactly one filter by field rule.
+type FieldFilter struct {
+        // Key matches the field name.
+        Key string
+        // Value matches the field value.
+        Value string
+        // Op determines the matching operation.
+        // Currently only two operations are supported,
+        //  - Equals
+        //  - NotEquals
+        Op selection.Operator
+}
+
+// ExtractionRules is used to specify the information that needs to be extracted
+// from pods and added to the spans as tags.
+type ExtractionRules struct {
+        ClusterName     bool
+        ContainerID     bool
+        ContainerImage  bool
+        ContainerName   bool
+        DaemonSetName   bool
+        DeploymentName  bool
+        HostName        bool
+        PodUID          bool
+        PodName         bool
+        ReplicaSetName  bool
+        ServiceName     bool
+        StatefulSetName bool
+        StartTime       bool
+        Namespace       bool
+        NodeName        bool
+
+        OwnerLookupEnabled bool
+
+        Tags            ExtractionFieldTags
+        Annotations     []FieldExtractionRule
+        Labels          []FieldExtractionRule
+        NamespaceLabels []FieldExtractionRule
+}
+
+// ExtractionFieldTags is used to describe selected exported key names for the extracted data
+type ExtractionFieldTags struct {
+        ClusterName     string
+        ContainerID     string
+        ContainerImage  string
+        ContainerName   string
+        DaemonSetName   string
+        DeploymentName  string
+        HostName        string
+        PodUID          string
+        PodName         string
+        Namespace       string
+        NodeName        string
+        ReplicaSetName  string
+        ServiceName     string
+        StartTime       string
+        StatefulSetName string
+}
+
+// NewExtractionFieldTags builds a new instance of tags with default values
+func NewExtractionFieldTags() ExtractionFieldTags <span class="cov10" title="4">{
+        tags := ExtractionFieldTags{}
+        tags.ClusterName = conventions.AttributeK8sCluster
+        tags.ContainerID = defaultTagContainerID
+        tags.ContainerImage = defaultTagContainerImage
+        tags.ContainerName = defaultTagContainerName
+        tags.DaemonSetName = defaultTagDaemonSetName
+        tags.DeploymentName = conventions.AttributeK8sDeployment
+        tags.HostName = defaultTagHostName
+        tags.PodUID = defaultTagPodUID
+        tags.PodName = conventions.AttributeK8sPod
+        tags.Namespace = conventions.AttributeK8sNamespace
+        tags.NodeName = defaultTagNodeName
+        tags.ReplicaSetName = defaultTagReplicaSetName
+        tags.ServiceName = defaultTagServiceName
+        tags.StartTime = defaultTagStartTime
+        tags.StatefulSetName = defaultTagStatefulSetName
+        return tags
+}</span>
+
+// FieldExtractionRule is used to specify which fields to extract from pod fields
+// and inject into spans as attributes.
+type FieldExtractionRule struct {
+        // Name is used to as the Span tag name.
+        Name string
+        // Key is used to lookup k8s pod fields.
+        Key string
+        // Regex is a regular expression used to extract a sub-part of a field value.
+        // Full value is extracted when no regexp is provided.
+        Regex *regexp.Regexp
+}
+
+// Associations represent a list of rules for Pod metadata associations with resources
+type Associations struct {
+        Associations []Association
+}
+
+// Association represents one association rule
+type Association struct {
+        From string
+        Name string
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">// Copyright 2019 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package kube
+
+import (
+        "sort"
+        "sync"
+
+        "go.uber.org/zap"
+        api_v1 "k8s.io/api/core/v1"
+        meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+        "k8s.io/apimachinery/pkg/fields"
+        "k8s.io/apimachinery/pkg/labels"
+        "k8s.io/apimachinery/pkg/types"
+        "k8s.io/client-go/informers"
+        "k8s.io/client-go/kubernetes"
+        "k8s.io/client-go/tools/cache"
+
+        "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/observability"
+)
+
+// OwnerProvider allows to dynamically assign constructor
+type OwnerProvider func(
+        logger *zap.Logger,
+        client kubernetes.Interface,
+        labelSelector labels.Selector,
+        fieldSelector fields.Selector,
+        namespace string,
+) (OwnerAPI, error)
+
+// ObjectOwner keeps single entry
+type ObjectOwner struct {
+        UID       types.UID
+        ownerUIDs []types.UID
+        namespace string
+        kind      string
+        name      string
+}
+
+// OwnerAPI describes functions that could allow retrieving owner info
+type OwnerAPI interface {
+        GetOwners(pod *api_v1.Pod) []*ObjectOwner
+        GetNamespace(pod *api_v1.Pod) *api_v1.Namespace
+        GetServices(pod *api_v1.Pod) []string
+        Start()
+        Stop()
+}
+
+// OwnerCache is a simple structure which aids querying for owners
+type OwnerCache struct {
+        objectOwners map[string]*ObjectOwner
+        podServices  map[string][]string
+        namespaces   map[string]*api_v1.Namespace
+        cacheMutex   sync.RWMutex
+
+        client kubernetes.Interface
+        logger *zap.Logger
+
+        stopCh    chan struct{}
+        informers []cache.SharedIndexInformer
+}
+
+// Start runs the informers
+func (op *OwnerCache) Start() <span class="cov0" title="0">{
+        op.logger.Info("Staring K8S resource informers", zap.Int("#infomers", len(op.informers)))
+        for _, informer := range op.informers </span><span class="cov0" title="0">{
+                go informer.Run(op.stopCh)
+        }</span>
+}
+
+// Stop shutdowns the informers
+func (op *OwnerCache) Stop() <span class="cov0" title="0">{
+        close(op.stopCh)
+}</span>
+
+func newOwnerProvider(
+        logger *zap.Logger,
+        client kubernetes.Interface,
+        labelSelector labels.Selector,
+        fieldSelector fields.Selector,
+        namespace string) (OwnerAPI, error) <span class="cov0" title="0">{
+        ownerCache := OwnerCache{}
+        ownerCache.objectOwners = map[string]*ObjectOwner{}
+        ownerCache.podServices = map[string][]string{}
+        ownerCache.namespaces = map[string]*api_v1.Namespace{}
+        ownerCache.cacheMutex = sync.RWMutex{}
+
+        ownerCache.client = client
+        ownerCache.logger = logger
+
+        factory := informers.NewSharedInformerFactoryWithOptions(client, watchSyncPeriod,
+                informers.WithNamespace(namespace),
+                informers.WithTweakListOptions(func(opts *meta_v1.ListOptions) </span><span class="cov0" title="0">{
+                        opts.LabelSelector = labelSelector.String()
+                        opts.FieldSelector = fieldSelector.String()
+                }</span>))
+
+        <span class="cov0" title="0">ownerCache.addNamespaceInformer(factory)
+
+        ownerCache.addOwnerInformer("ReplicaSet",
+                factory.Apps().V1().ReplicaSets().Informer(),
+                ownerCache.cacheObject,
+                ownerCache.deleteObject)
+
+        ownerCache.addOwnerInformer("Deployment",
+                factory.Apps().V1().Deployments().Informer(),
+                ownerCache.cacheObject,
+                ownerCache.deleteObject)
+
+        ownerCache.addOwnerInformer("StatefulSet",
+                factory.Apps().V1().StatefulSets().Informer(),
+                ownerCache.cacheObject,
+                ownerCache.deleteObject)
+
+        ownerCache.addOwnerInformer("Endpoint",
+                factory.Core().V1().Endpoints().Informer(),
+                ownerCache.cacheEndpoint,
+                ownerCache.deleteEndpoint)
+
+        return &amp;ownerCache, nil</span>
+}
+
+func (op *OwnerCache) upsertNamespace(obj interface{}) <span class="cov0" title="0">{
+        namespace := obj.(*api_v1.Namespace)
+        op.cacheMutex.Lock()
+        defer op.cacheMutex.Unlock()
+        op.namespaces[namespace.Name] = namespace
+}</span>
+
+func (op *OwnerCache) deleteNamespace(obj interface{}) <span class="cov0" title="0">{
+        namespace := obj.(*api_v1.Namespace)
+        op.cacheMutex.Lock()
+        defer op.cacheMutex.Unlock()
+        delete(op.namespaces, namespace.Name)
+}</span>
+
+func (op *OwnerCache) addNamespaceInformer(factory informers.SharedInformerFactory) <span class="cov0" title="0">{
+        informer := factory.Core().V1().Namespaces().Informer()
+        informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+                AddFunc: func(obj interface{}) </span><span class="cov0" title="0">{
+                        observability.RecordOtherAdded()
+                        op.upsertNamespace(obj)
+                }</span>,
+                UpdateFunc: func(_, obj interface{}) <span class="cov0" title="0">{
+                        observability.RecordOtherUpdated()
+                        op.upsertNamespace(obj)
+                }</span>,
+                DeleteFunc: func(obj interface{}) <span class="cov0" title="0">{
+                        observability.RecordOtherDeleted()
+                        op.deleteNamespace(obj)
+                }</span>,
+        })
+
+        <span class="cov0" title="0">op.informers = append(op.informers, informer)</span>
+}
+
+func (op *OwnerCache) addOwnerInformer(
+        kind string,
+        informer cache.SharedIndexInformer,
+        cacheFunc func(kind string, obj interface{}),
+        deleteFunc func(obj interface{})) <span class="cov0" title="0">{
+        informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+                AddFunc: func(obj interface{}) </span><span class="cov0" title="0">{
+                        observability.RecordOtherAdded()
+                        cacheFunc(kind, obj)
+                }</span>,
+                UpdateFunc: func(_, obj interface{}) <span class="cov0" title="0">{
+                        observability.RecordOtherUpdated()
+                        cacheFunc(kind, obj)
+                }</span>,
+                DeleteFunc: func(obj interface{}) <span class="cov0" title="0">{
+                        observability.RecordOtherDeleted()
+                        deleteFunc(obj)
+                }</span>,
+        })
+
+        <span class="cov0" title="0">op.informers = append(op.informers, informer)</span>
+}
+
+func (op *OwnerCache) deleteObject(obj interface{}) <span class="cov0" title="0">{
+        op.cacheMutex.Lock()
+        defer op.cacheMutex.Unlock()
+        delete(op.objectOwners, string(obj.(meta_v1.Object).GetUID()))
+}</span>
+
+func (op *OwnerCache) cacheObject(kind string, obj interface{}) <span class="cov0" title="0">{
+        meta := obj.(meta_v1.Object)
+
+        oo := ObjectOwner{
+                UID:       meta.GetUID(),
+                namespace: meta.GetNamespace(),
+                ownerUIDs: []types.UID{},
+                kind:      kind,
+                name:      meta.GetName(),
+        }
+        for _, or := range meta.GetOwnerReferences() </span><span class="cov0" title="0">{
+                oo.ownerUIDs = append(oo.ownerUIDs, or.UID)
+        }</span>
+
+        <span class="cov0" title="0">op.cacheMutex.Lock()
+        defer op.cacheMutex.Unlock()
+        op.objectOwners[string(oo.UID)] = &amp;oo</span>
+}
+
+func (op *OwnerCache) addEndpointToPod(pod string, endpoint string) <span class="cov0" title="0">{
+        op.cacheMutex.RLock()
+        services := op.podServices[pod]
+        op.cacheMutex.RUnlock()
+
+        for _, it := range services </span><span class="cov0" title="0">{
+                if it == endpoint </span><span class="cov0" title="0">{
+                        return
+                }</span>
+        }
+
+        <span class="cov0" title="0">services = append(services, endpoint)
+        sort.Strings(services)
+
+        op.cacheMutex.Lock()
+        defer op.cacheMutex.Unlock()
+        op.podServices[pod] = services</span>
+}
+
+func (op *OwnerCache) deleteEndpointFromPod(pod string, endpoint string) <span class="cov0" title="0">{
+        op.cacheMutex.RLock()
+        services := op.podServices[pod]
+        op.cacheMutex.RUnlock()
+
+        newServices := []string{}
+
+        for _, it := range services </span><span class="cov0" title="0">{
+                if it != endpoint </span><span class="cov0" title="0">{
+                        newServices = append(newServices, it)
+                }</span>
+        }
+
+        <span class="cov0" title="0">op.cacheMutex.Lock()
+        defer op.cacheMutex.Unlock()
+        op.podServices[pod] = newServices</span>
+}
+
+func (op *OwnerCache) genericEndpointOp(obj interface{}, endpointFunc func(pod string, endpoint string)) <span class="cov0" title="0">{
+        ep := obj.(*api_v1.Endpoints)
+
+        for _, it := range ep.Subsets </span><span class="cov0" title="0">{
+                for _, addr := range it.Addresses </span><span class="cov0" title="0">{
+                        if addr.TargetRef != nil &amp;&amp; addr.TargetRef.Kind == "Pod" </span><span class="cov0" title="0">{
+                                endpointFunc(addr.TargetRef.Name, ep.Name)
+                        }</span>
+                }
+                <span class="cov0" title="0">for _, addr := range it.NotReadyAddresses </span><span class="cov0" title="0">{
+                        if addr.TargetRef != nil &amp;&amp; addr.TargetRef.Kind == "Pod" </span><span class="cov0" title="0">{
+                                endpointFunc(addr.TargetRef.Name, ep.Name)
+                        }</span>
+                }
+        }
+}
+
+func (op *OwnerCache) deleteEndpoint(obj interface{}) <span class="cov0" title="0">{
+        op.genericEndpointOp(obj, op.deleteEndpointFromPod)
+}</span>
+
+func (op *OwnerCache) cacheEndpoint(kind string, obj interface{}) <span class="cov0" title="0">{
+        op.genericEndpointOp(obj, op.addEndpointToPod)
+}</span>
+
+// GetNamespaces returns a cached namespace object (if one is found) or nil otherwise
+func (op *OwnerCache) GetNamespace(pod *api_v1.Pod) *api_v1.Namespace <span class="cov0" title="0">{
+        namespace, found := op.namespaces[pod.Namespace]
+        if found </span><span class="cov0" title="0">{
+                return namespace
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}
+
+// GetServices returns a slice with matched services - in case no services are found, it returns an empty slice
+func (op *OwnerCache) GetServices(pod *api_v1.Pod) []string <span class="cov0" title="0">{
+        op.cacheMutex.RLock()
+        oo, found := op.podServices[pod.Name]
+        op.cacheMutex.RUnlock()
+
+        if found </span><span class="cov0" title="0">{
+                return oo
+        }</span>
+        <span class="cov0" title="0">return []string{}</span>
+}
+
+// GetOwners goes through the cached data and assigns relevant metadata for pod
+func (op *OwnerCache) GetOwners(pod *api_v1.Pod) []*ObjectOwner <span class="cov0" title="0">{
+        objectOwners := []*ObjectOwner{}
+
+        visited := map[types.UID]bool{}
+        queue := []types.UID{}
+
+        for _, or := range pod.OwnerReferences </span><span class="cov0" title="0">{
+                if _, uidVisited := visited[or.UID]; !uidVisited </span><span class="cov0" title="0">{
+                        queue = append(queue, or.UID)
+                        visited[or.UID] = true
+                }</span>
+        }
+
+        <span class="cov0" title="0">for len(queue) &gt; 0 </span><span class="cov0" title="0">{
+                uid := queue[0]
+                queue = queue[1:]
+
+                op.cacheMutex.RLock()
+                oo, found := op.objectOwners[string(uid)]
+                if found </span><span class="cov0" title="0">{
+                        objectOwners = append(objectOwners, oo)
+
+                        for _, ownerUID := range oo.ownerUIDs </span><span class="cov0" title="0">{
+                                if _, uidVisited := visited[ownerUID]; !uidVisited </span><span class="cov0" title="0">{
+                                        queue = append(queue, ownerUID)
+                                        visited[ownerUID] = true
+                                }</span>
+                        }
+                }
+                <span class="cov0" title="0">op.cacheMutex.RUnlock()</span>
+        }
+
+        <span class="cov0" title="0">return objectOwners</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package observability
+
+import (
+        "context"
+
+        "go.opencensus.io/stats"
+        "go.opencensus.io/stats/view"
+)
+
+// TODO: re-think if processor should register it's own telemetry views or if some other
+// mechanism should be used by the collector to discover views from all components
+
+func init() <span class="cov8" title="1">{
+        view.Register(
+                viewPodsUpdated,
+                viewPodsAdded,
+                viewPodsDeleted,
+                viewOtherUpdated,
+                viewOtherAdded,
+                viewOtherDeleted,
+                viewIPLookupMiss,
+                viewPodTableSize,
+        )
+}</span>
+
+var (
+        mPodsUpdated  = stats.Int64("otelsvc/k8s/pod_updated", "Number of pod update events received", "1")
+        mPodsAdded    = stats.Int64("otelsvc/k8s/pod_added", "Number of pod add events received", "1")
+        mPodsDeleted  = stats.Int64("otelsvc/k8s/pod_deleted", "Number of pod delete events received", "1")
+        mPodTableSize = stats.Int64("otelsvc/k8s/pod_table_size", "Size of table containing pod info", "1")
+
+        mOtherUpdated = stats.Int64("otelsvc/k8s/other_updated", "Number of other update events received", "1")
+        mOtherAdded   = stats.Int64("otelsvc/k8s/other_added", "Number of other add events received", "1")
+        mOtherDeleted = stats.Int64("otelsvc/k8s/other_deleted", "Number of other delete events received", "1")
+
+        mIPLookupMiss = stats.Int64("otelsvc/k8s/ip_lookup_miss", "Number of times pod by IP lookup failed.", "1")
+)
+
+var viewPodsUpdated = &amp;view.View{
+        Name:        mPodsUpdated.Name(),
+        Description: mPodsUpdated.Description(),
+        Measure:     mPodsUpdated,
+        Aggregation: view.Sum(),
+}
+
+var viewPodsAdded = &amp;view.View{
+        Name:        mPodsAdded.Name(),
+        Description: mPodsAdded.Description(),
+        Measure:     mPodsAdded,
+        Aggregation: view.Sum(),
+}
+
+var viewPodsDeleted = &amp;view.View{
+        Name:        mPodsDeleted.Name(),
+        Description: mPodsDeleted.Description(),
+        Measure:     mPodsDeleted,
+        Aggregation: view.Sum(),
+}
+
+var viewOtherUpdated = &amp;view.View{
+        Name:        mOtherUpdated.Name(),
+        Description: mOtherUpdated.Description(),
+        Measure:     mOtherUpdated,
+        Aggregation: view.Sum(),
+}
+
+var viewOtherAdded = &amp;view.View{
+        Name:        mOtherAdded.Name(),
+        Description: mOtherAdded.Description(),
+        Measure:     mOtherAdded,
+        Aggregation: view.Sum(),
+}
+
+var viewOtherDeleted = &amp;view.View{
+        Name:        mOtherDeleted.Name(),
+        Description: mOtherDeleted.Description(),
+        Measure:     mOtherDeleted,
+        Aggregation: view.Sum(),
+}
+
+var viewIPLookupMiss = &amp;view.View{
+        Name:        mIPLookupMiss.Name(),
+        Description: mIPLookupMiss.Description(),
+        Measure:     mIPLookupMiss,
+        Aggregation: view.Sum(),
+}
+var viewPodTableSize = &amp;view.View{
+        Name:        mPodTableSize.Name(),
+        Description: mPodTableSize.Description(),
+        Measure:     mPodTableSize,
+        Aggregation: view.LastValue(),
+}
+
+// RecordPodUpdated increments the metric that records pod update events received.
+func RecordPodUpdated() <span class="cov8" title="1">{
+        stats.Record(context.Background(), mPodsUpdated.M(int64(1)))
+}</span>
+
+// RecordPodAdded increments the metric that records pod add events receiver.
+func RecordPodAdded() <span class="cov8" title="1">{
+        stats.Record(context.Background(), mPodsAdded.M(int64(1)))
+}</span>
+
+// RecordPodDeleted increments the metric that records pod events deleted.
+func RecordPodDeleted() <span class="cov8" title="1">{
+        stats.Record(context.Background(), mPodsDeleted.M(int64(1)))
+}</span>
+
+// RecordOtherUpdated increments the metric that records other update events received.
+func RecordOtherUpdated() <span class="cov0" title="0">{
+        stats.Record(context.Background(), mOtherUpdated.M(int64(1)))
+}</span>
+
+// RecordOtherAdded increments the metric that records other add events receiver.
+func RecordOtherAdded() <span class="cov0" title="0">{
+        stats.Record(context.Background(), mOtherAdded.M(int64(1)))
+}</span>
+
+// RecordOtherDeleted increments the metric that records other events deleted.
+func RecordOtherDeleted() <span class="cov0" title="0">{
+        stats.Record(context.Background(), mOtherDeleted.M(int64(1)))
+}</span>
+
+// RecordIPLookupMiss increments the metric that records Pod lookup by IP misses.
+func RecordIPLookupMiss() <span class="cov8" title="1">{
+        stats.Record(context.Background(), mIPLookupMiss.M(int64(1)))
+}</span>
+
+// RecordPodTableSize store size of pod table field in WatchClient
+func RecordPodTableSize(podTableSize int64) <span class="cov0" title="0">{
+        stats.Record(context.Background(), mPodTableSize.M(podTableSize))
+}</span>
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package k8sprocessor
+
+import (
+        "fmt"
+        "os"
+        "regexp"
+        "strings"
+
+        "k8s.io/apimachinery/pkg/selection"
+
+        "github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+        "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube"
+)
+
+const (
+        filterOPEquals       = "equals"
+        filterOPNotEquals    = "not-equals"
+        filterOPExists       = "exists"
+        filterOPDoesNotExist = "does-not-exist"
+
+        metadataContainerID     = "containerId"
+        metadataContainerName   = "containerName"
+        metadataContainerImage  = "containerImage"
+        metadataClusterName     = "clusterName"
+        metadataDaemonSetName   = "daemonSetName"
+        metadataDeploymentName  = "deploymentName"
+        metadataHostName        = "hostName"
+        metadataNamespace       = "namespace"
+        metadataNodeName        = "nodeName"
+        metadataPodID           = "podId"
+        metadataPodName         = "podName"
+        metadataReplicaSetName  = "replicaSetName"
+        metadataServiceName     = "serviceName"
+        metadataStartTime       = "startTime"
+        metadataStatefulSetName = "statefulSetName"
+)
+
+// Option represents a configuration option that can be passes.
+// to the k8s-tagger
+type Option func(*kubernetesprocessor) error
+
+// WithAPIConfig provides k8s API related configuration to the processor.
+// It defaults the authentication method to in-cluster auth using service accounts.
+func WithAPIConfig(cfg k8sconfig.APIConfig) Option <span class="cov6" title="53">{
+        return func(p *kubernetesprocessor) error </span><span class="cov6" title="49">{
+                p.apiConfig = cfg
+                return p.apiConfig.Validate()
+        }</span>
+}
+
+// WithPassthrough enables passthrough mode. In passthrough mode, the processor
+// only detects and tags the pod IP and does not invoke any k8s APIs.
+func WithPassthrough() Option <span class="cov3" title="5">{
+        return func(p *kubernetesprocessor) error </span><span class="cov3" title="5">{
+                p.passthroughMode = true
+                return nil
+        }</span>
+}
+
+// WithOwnerLookupEnabled makes the processor pull additional owner data from K8S API
+func WithOwnerLookupEnabled() Option <span class="cov0" title="0">{
+        return func(p *kubernetesprocessor) error </span><span class="cov0" title="0">{
+                p.rules.OwnerLookupEnabled = true
+                return nil
+        }</span>
+}
+
+// WithExtractMetadata allows specifying options to control extraction of pod metadata.
+// If no fields explicitly provided, all metadata extracted by default.
+func WithExtractMetadata(fields ...string) Option <span class="cov6" title="56">{
+        return func(p *kubernetesprocessor) error </span><span class="cov6" title="58">{
+                if len(fields) == 0 </span><span class="cov6" title="48">{
+                        fields = []string{
+                                metadataClusterName,
+                                metadataContainerID,
+                                metadataContainerImage,
+                                metadataContainerName,
+                                metadataDaemonSetName,
+                                metadataDeploymentName,
+                                metadataHostName,
+                                metadataNamespace,
+                                metadataNodeName,
+                                metadataPodName,
+                                metadataPodID,
+                                metadataReplicaSetName,
+                                metadataServiceName,
+                                metadataStartTime,
+                                metadataStatefulSetName,
+                        }
+                }</span>
+                <span class="cov6" title="58">for _, field := range fields </span><span class="cov10" title="731">{
+                        switch field </span>{
+                        case metadataClusterName:<span class="cov6" title="49">
+                                p.rules.ClusterName = true</span>
+                        case metadataContainerID:<span class="cov6" title="48">
+                                p.rules.ContainerID = true</span>
+                        case metadataContainerImage:<span class="cov6" title="48">
+                                p.rules.ContainerImage = true</span>
+                        case metadataContainerName:<span class="cov6" title="48">
+                                p.rules.ContainerName = true</span>
+                        case metadataDaemonSetName:<span class="cov6" title="48">
+                                p.rules.DaemonSetName = true</span>
+                        case metadataDeploymentName:<span class="cov6" title="48">
+                                p.rules.DeploymentName = true</span>
+                        case metadataHostName:<span class="cov6" title="48">
+                                p.rules.HostName = true</span>
+                        case metadataNamespace:<span class="cov6" title="49">
+                                p.rules.Namespace = true</span>
+                        case metadataNodeName:<span class="cov6" title="48">
+                                p.rules.NodeName = true</span>
+                        case metadataPodID:<span class="cov6" title="48">
+                                p.rules.PodUID = true</span>
+                        case metadataPodName:<span class="cov6" title="53">
+                                p.rules.PodName = true</span>
+                        case metadataReplicaSetName:<span class="cov6" title="48">
+                                p.rules.ReplicaSetName = true</span>
+                        case metadataServiceName:<span class="cov6" title="48">
+                                p.rules.ServiceName = true</span>
+                        case metadataStartTime:<span class="cov6" title="48">
+                                p.rules.StartTime = true</span>
+                        case metadataStatefulSetName:<span class="cov6" title="48">
+                                p.rules.StatefulSetName = true</span>
+                        default:<span class="cov2" title="4">
+                                return fmt.Errorf("\"%s\" is not a supported metadata field", field)</span>
+                        }
+                }
+                <span class="cov6" title="54">return nil</span>
+        }
+}
+
+// WithExtractTags allows specifying custom tag names
+func WithExtractTags(tagsMap map[string]string) Option <span class="cov6" title="50">{
+        return func(p *kubernetesprocessor) error </span><span class="cov6" title="47">{
+                var tags = kube.NewExtractionFieldTags()
+                for field, tag := range tagsMap </span><span class="cov0" title="0">{
+                        switch field </span>{
+                        case strings.ToLower(metadataClusterName):<span class="cov0" title="0">
+                                tags.ClusterName = tag</span>
+                        case strings.ToLower(metadataContainerID):<span class="cov0" title="0">
+                                tags.ContainerID = tag</span>
+                        case strings.ToLower(metadataContainerName):<span class="cov0" title="0">
+                                tags.ContainerName = tag</span>
+                        case strings.ToLower(metadataContainerImage):<span class="cov0" title="0">
+                                tags.ContainerImage = tag</span>
+                        case strings.ToLower(metadataDaemonSetName):<span class="cov0" title="0">
+                                tags.DaemonSetName = tag</span>
+                        case strings.ToLower(metadataDeploymentName):<span class="cov0" title="0">
+                                tags.DeploymentName = tag</span>
+                        case strings.ToLower(metadataHostName):<span class="cov0" title="0">
+                                tags.HostName = tag</span>
+                        case strings.ToLower(metadataNamespace):<span class="cov0" title="0">
+                                tags.Namespace = tag</span>
+                        case strings.ToLower(metadataNodeName):<span class="cov0" title="0">
+                                tags.NodeName = tag</span>
+                        case strings.ToLower(metadataPodID):<span class="cov0" title="0">
+                                tags.PodUID = tag</span>
+                        case strings.ToLower(metadataPodName):<span class="cov0" title="0">
+                                tags.PodName = tag</span>
+                        case strings.ToLower(metadataReplicaSetName):<span class="cov0" title="0">
+                                tags.ReplicaSetName = tag</span>
+                        case strings.ToLower(metadataServiceName):<span class="cov0" title="0">
+                                tags.ServiceName = tag</span>
+                        case strings.ToLower(metadataStartTime):<span class="cov0" title="0">
+                                tags.StartTime = tag</span>
+                        case strings.ToLower(metadataStatefulSetName):<span class="cov0" title="0">
+                                tags.StatefulSetName = tag</span>
+                        default:<span class="cov0" title="0">
+                                return fmt.Errorf("\"%s\" is not a supported metadata field", field)</span>
+                        }
+                }
+                <span class="cov6" title="47">p.rules.Tags = tags
+                return nil</span>
+        }
+}
+
+// WithExtractLabels allows specifying options to control extraction of pod labels.
+func WithExtractLabels(labels ...FieldExtractConfig) Option <span class="cov6" title="53">{
+        return func(p *kubernetesprocessor) error </span><span class="cov6" title="50">{
+                labels, err := extractFieldRules("labels", labels...)
+                if err != nil </span><span class="cov1" title="1">{
+                        return err
+                }</span>
+                <span class="cov6" title="49">p.rules.Labels = labels
+                return nil</span>
+        }
+}
+
+// WithExtractAnnotations allows specifying options to control extraction of pod annotations tags.
+func WithExtractAnnotations(annotations ...FieldExtractConfig) Option <span class="cov6" title="53">{
+        return func(p *kubernetesprocessor) error </span><span class="cov6" title="50">{
+                annotations, err := extractFieldRules("annotations", annotations...)
+                if err != nil </span><span class="cov1" title="1">{
+                        return err
+                }</span>
+                <span class="cov6" title="49">p.rules.Annotations = annotations
+                return nil</span>
+        }
+}
+
+func extractFieldRules(fieldType string, fields ...FieldExtractConfig) ([]kube.FieldExtractionRule, error) <span class="cov7" title="104">{
+        rules := []kube.FieldExtractionRule{}
+        for _, a := range fields </span><span class="cov3" title="8">{
+                name := a.TagName
+                if name == "" </span><span class="cov1" title="1">{
+                        if a.Key == "*" </span><span class="cov0" title="0">{
+                                name = fmt.Sprintf("k8s.%s.%%s", fieldType)
+                        }</span> else<span class="cov1" title="1"> {
+                                name = fmt.Sprintf("k8s.%s.%s", fieldType, a.Key)
+                        }</span>
+                }
+
+                <span class="cov3" title="8">var r *regexp.Regexp
+                if a.Regex != "" </span><span class="cov3" title="6">{
+                        var err error
+                        r, err = regexp.Compile(a.Regex)
+                        if err != nil </span><span class="cov2" title="3">{
+                                return rules, err
+                        }</span>
+                        <span class="cov2" title="3">names := r.SubexpNames()
+                        if len(names) != 2 || names[1] != "value" </span><span class="cov1" title="1">{
+                                return rules, fmt.Errorf("regex must contain exactly one named submatch (value)")
+                        }</span>
+                }
+
+                <span class="cov2" title="4">rules = append(rules, kube.FieldExtractionRule{
+                        Name: name, Key: a.Key, Regex: r,
+                })</span>
+        }
+        <span class="cov7" title="100">return rules, nil</span>
+}
+
+// WithFilterNode allows specifying options to control filtering pods by a node/host.
+func WithFilterNode(node, nodeFromEnvVar string) Option <span class="cov6" title="53">{
+        return func(p *kubernetesprocessor) error </span><span class="cov6" title="50">{
+                if nodeFromEnvVar != "" </span><span class="cov1" title="2">{
+                        p.filters.Node = os.Getenv(nodeFromEnvVar)
+                        return nil
+                }</span>
+                <span class="cov6" title="48">p.filters.Node = node
+                return nil</span>
+        }
+}
+
+// WithFilterNamespace allows specifying options to control filtering pods by a namespace.
+func WithFilterNamespace(ns string) Option <span class="cov6" title="51">{
+        return func(p *kubernetesprocessor) error </span><span class="cov6" title="48">{
+                p.filters.Namespace = ns
+                return nil
+        }</span>
+}
+
+// WithFilterLabels allows specifying options to control filtering pods by pod labels.
+func WithFilterLabels(filters ...FieldFilterConfig) Option <span class="cov6" title="57">{
+        return func(p *kubernetesprocessor) error </span><span class="cov6" title="54">{
+                labels := []kube.FieldFilter{}
+                for _, f := range filters </span><span class="cov3" title="6">{
+                        if f.Op == "" </span><span class="cov1" title="1">{
+                                f.Op = filterOPEquals
+                        }</span>
+
+                        <span class="cov3" title="6">var op selection.Operator
+                        switch f.Op </span>{
+                        case filterOPEquals:<span class="cov1" title="2">
+                                op = selection.Equals</span>
+                        case filterOPNotEquals:<span class="cov1" title="1">
+                                op = selection.NotEquals</span>
+                        case filterOPExists:<span class="cov1" title="1">
+                                op = selection.Exists</span>
+                        case filterOPDoesNotExist:<span class="cov1" title="1">
+                                op = selection.DoesNotExist</span>
+                        default:<span class="cov1" title="1">
+                                return fmt.Errorf("'%s' is not a valid label filter operation for key=%s, value=%s", f.Op, f.Key, f.Value)</span>
+                        }
+                        <span class="cov3" title="5">labels = append(labels, kube.FieldFilter{
+                                Key:   f.Key,
+                                Value: f.Value,
+                                Op:    op,
+                        })</span>
+                }
+                <span class="cov6" title="53">p.filters.Labels = labels
+                return nil</span>
+        }
+}
+
+// WithFilterFields allows specifying options to control filtering pods by pod fields.
+func WithFilterFields(filters ...FieldFilterConfig) Option <span class="cov6" title="57">{
+        return func(p *kubernetesprocessor) error </span><span class="cov6" title="54">{
+                fields := []kube.FieldFilter{}
+                for _, f := range filters </span><span class="cov3" title="6">{
+                        if f.Op == "" </span><span class="cov1" title="1">{
+                                f.Op = filterOPEquals
+                        }</span>
+
+                        <span class="cov3" title="6">var op selection.Operator
+                        switch f.Op </span>{
+                        case filterOPEquals:<span class="cov1" title="2">
+                                op = selection.Equals</span>
+                        case filterOPNotEquals:<span class="cov1" title="1">
+                                op = selection.NotEquals</span>
+                        default:<span class="cov2" title="3">
+                                return fmt.Errorf("'%s' is not a valid field filter operation for key=%s, value=%s", f.Op, f.Key, f.Value)</span>
+                        }
+                        <span class="cov2" title="3">fields = append(fields, kube.FieldFilter{
+                                Key:   f.Key,
+                                Value: f.Value,
+                                Op:    op,
+                        })</span>
+                }
+                <span class="cov6" title="51">p.filters.Fields = fields
+                return nil</span>
+        }
+}
+
+// WithExtractPodAssociations allows specifying options to associate pod metadata with incoming resource
+func WithExtractPodAssociations(podAssociations ...PodAssociationConfig) Option <span class="cov6" title="52">{
+        return func(p *kubernetesprocessor) error </span><span class="cov6" title="49">{
+                associations := make([]kube.Association, 0, len(podAssociations))
+                for _, association := range podAssociations </span><span class="cov1" title="1">{
+                        associations = append(associations, kube.Association{
+                                From: association.From,
+                                Name: association.Name,
+                        })
+                }</span>
+                <span class="cov6" title="49">p.podAssociations = associations
+                return nil</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package k8sprocessor
+
+import (
+        "context"
+        "net"
+
+        "go.opentelemetry.io/collector/client"
+        "go.opentelemetry.io/collector/consumer/pdata"
+        "go.opentelemetry.io/collector/translator/conventions"
+
+        "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube"
+)
+
+// extractPodIds extracts IP and pod UID from attributes or request context.
+// It returns a value pair containing configured label and IP Address and/or Pod UID.
+// If empty value in return it means that attributes does not contains configured label to match resources for Pod.
+func extractPodID(ctx context.Context, attrs pdata.AttributeMap, associations []kube.Association) (podIdentifierKey string, podIdentifierValue kube.PodIdentifier) <span class="cov8" title="50">{
+        hostname := stringAttributeFromMap(attrs, conventions.AttributeHostName)
+        var connectionIP kube.PodIdentifier
+        if c, ok := client.FromContext(ctx); ok </span><span class="cov7" title="27">{
+                connectionIP = kube.PodIdentifier(c.IP)
+        }</span>
+        // If pod association is not set
+        <span class="cov8" title="50">if len(associations) == 0 </span><span class="cov7" title="27">{
+                var podIP, labelIP kube.PodIdentifier
+                podIP = kube.PodIdentifier(stringAttributeFromMap(attrs, k8sIPLabelName))
+                labelIP = kube.PodIdentifier(stringAttributeFromMap(attrs, clientIPLabelName))
+                podIdentifierKey = k8sIPLabelName
+                if podIP != "" </span><span class="cov2" title="2">{
+                        podIdentifierValue = podIP
+                        return
+                }</span> else<span class="cov7" title="25"> if labelIP != "" </span><span class="cov2" title="2">{
+                        podIdentifierValue = labelIP
+                        return
+                }</span> else<span class="cov6" title="23"> if connectionIP != "" </span><span class="cov6" title="17">{
+                        podIdentifierValue = connectionIP
+                        return
+                }</span> else<span class="cov4" title="6"> if net.ParseIP(hostname) != nil </span><span class="cov1" title="1">{
+                        podIdentifierValue = kube.PodIdentifier(hostname)
+                        return
+                }</span>
+                <span class="cov4" title="5">podIdentifierKey = ""
+                return</span>
+        }
+
+        <span class="cov6" title="23">for _, asso := range associations </span><span class="cov7" title="32">{
+                // If association configured to take IP address from connection
+                if asso.From == "connection" &amp;&amp; connectionIP != "" </span><span class="cov4" title="6">{
+                        podIdentifierKey = k8sIPLabelName
+                        podIdentifierValue = connectionIP
+                        return
+                }</span> else<span class="cov7" title="26"> if asso.From == "resource_attribute" </span><span class="cov7" title="26">{ // If association configured by resource_attribute
+                        // In k8s environment, host.name label set to a pod IP address.
+                        // If the value doesn't represent an IP address, we skip it.
+                        if asso.Name == conventions.AttributeHostName </span><span class="cov4" title="5">{
+                                if net.ParseIP(hostname) != nil </span><span class="cov3" title="4">{
+                                        podIdentifierKey = k8sIPLabelName
+                                        podIdentifierValue = kube.PodIdentifier(hostname)
+                                        return
+                                }</span>
+                        } else<span class="cov6" title="21"> {
+                                // Extract values based on configured resource_attribute.
+                                attributeValue := stringAttributeFromMap(attrs, asso.Name)
+                                if attributeValue != "" </span><span class="cov5" title="12">{
+                                        podIdentifierKey = asso.Name
+                                        podIdentifierValue = kube.PodIdentifier(attributeValue)
+                                        return
+                                }</span>
+                        }
+                }
+        }
+        <span class="cov1" title="1">return "", kube.PodIdentifier("")</span>
+}
+
+func stringAttributeFromMap(attrs pdata.AttributeMap, key string) string <span class="cov10" title="125">{
+        if val, ok := attrs.Get(key); ok </span><span class="cov7" title="25">{
+                if val.Type() == pdata.AttributeValueSTRING </span><span class="cov7" title="25">{
+                        return val.StringVal()
+                }</span>
+        }
+        <span class="cov9" title="100">return ""</span>
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package k8sprocessor
+
+import (
+        "context"
+
+        "go.opentelemetry.io/collector/component"
+        "go.opentelemetry.io/collector/consumer/pdata"
+        "go.uber.org/zap"
+
+        "github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+        "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube"
+)
+
+const (
+        k8sIPLabelName    string = "k8s.pod.ip"
+        clientIPLabelName string = "ip"
+)
+
+type kubernetesprocessor struct {
+        logger          *zap.Logger
+        apiConfig       k8sconfig.APIConfig
+        kc              kube.Client
+        passthroughMode bool
+        rules           kube.ExtractionRules
+        filters         kube.Filters
+        podAssociations []kube.Association
+}
+
+func (kp *kubernetesprocessor) initKubeClient(logger *zap.Logger, kubeClient kube.ClientProvider) error <span class="cov9" title="48">{
+        if kubeClient == nil </span><span class="cov4" title="4">{
+                kubeClient = kube.New
+        }</span>
+        <span class="cov9" title="48">if !kp.passthroughMode </span><span class="cov9" title="43">{
+                kc, err := kubeClient(logger, kp.apiConfig, kp.rules, kp.filters, kp.podAssociations, nil, nil, nil)
+                if err != nil </span><span class="cov5" title="6">{
+                        return err
+                }</span>
+                <span class="cov9" title="37">kp.kc = kc</span>
+        }
+        <span class="cov9" title="42">return nil</span>
+}
+
+func (kp *kubernetesprocessor) Start(_ context.Context, _ component.Host) error <span class="cov3" title="3">{
+        if !kp.passthroughMode </span><span class="cov2" title="2">{
+                go kp.kc.Start()
+        }</span>
+        <span class="cov3" title="3">return nil</span>
+}
+
+func (kp *kubernetesprocessor) Shutdown(context.Context) error <span class="cov2" title="2">{
+        if !kp.passthroughMode </span><span class="cov1" title="1">{
+                kp.kc.Stop()
+        }</span>
+        <span class="cov2" title="2">return nil</span>
+}
+
+// ProcessTraces process traces and add k8s metadata using resource IP or incoming IP as pod origin.
+func (kp *kubernetesprocessor) ProcessTraces(ctx context.Context, td pdata.Traces) (pdata.Traces, error) <span class="cov7" title="16">{
+        rss := td.ResourceSpans()
+        for i := 0; i &lt; rss.Len(); i++ </span><span class="cov7" title="15">{
+                kp.processResource(ctx, rss.At(i).Resource())
+        }</span>
+
+        <span class="cov7" title="16">return td, nil</span>
+}
+
+// ProcessMetrics process metrics and add k8s metadata using resource IP, hostname or incoming IP as pod origin.
+func (kp *kubernetesprocessor) ProcessMetrics(ctx context.Context, md pdata.Metrics) (pdata.Metrics, error) <span class="cov7" title="20">{
+        rm := md.ResourceMetrics()
+        for i := 0; i &lt; rm.Len(); i++ </span><span class="cov7" title="19">{
+                kp.processResource(ctx, rm.At(i).Resource())
+        }</span>
+
+        <span class="cov7" title="20">return md, nil</span>
+}
+
+// ProcessLogs process logs and add k8s metadata using resource IP, hostname or incoming IP as pod origin.
+func (kp *kubernetesprocessor) ProcessLogs(ctx context.Context, ld pdata.Logs) (pdata.Logs, error) <span class="cov7" title="16">{
+        rl := ld.ResourceLogs()
+        for i := 0; i &lt; rl.Len(); i++ </span><span class="cov7" title="16">{
+                kp.processResource(ctx, rl.At(i).Resource())
+        }</span>
+
+        <span class="cov7" title="16">return ld, nil</span>
+}
+
+// processResource adds Pod metadata tags to resource based on pod association configuration
+func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pdata.Resource) <span class="cov10" title="50">{
+
+        podIdentifierKey, podIdentifierValue := extractPodID(ctx, resource.Attributes(), kp.podAssociations)
+        if podIdentifierKey == "" </span><span class="cov5" title="6">{
+                return
+        }</span>
+        <span class="cov9" title="44">resource.Attributes().InsertString(podIdentifierKey, string(podIdentifierValue))
+        if kp.passthroughMode </span><span class="cov3" title="3">{
+                return
+        }</span>
+        <span class="cov9" title="41">attrsToAdd := kp.getAttributesForPod(podIdentifierValue)
+        for key, val := range attrsToAdd </span><span class="cov9" title="38">{
+                resource.Attributes().InsertString(key, val)
+        }</span>
+}
+
+func (kp *kubernetesprocessor) getAttributesForPod(identifier kube.PodIdentifier) map[string]string <span class="cov9" title="41">{
+        pod, ok := kp.kc.GetPod(identifier)
+        if !ok </span><span class="cov8" title="21">{
+                return nil
+        }</span>
+        <span class="cov7" title="20">return pod.Attributes</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
