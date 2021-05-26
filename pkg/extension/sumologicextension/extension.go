@@ -35,7 +35,7 @@ type sumologicExtension struct {
 	conf             *Config
 	logger           *zap.Logger
 	registrationInfo OpenRegisterResponsePayload
-	ch               chan bool
+	ch               chan struct{}
 }
 
 const (
@@ -299,7 +299,7 @@ func (pm *sumologicExtension) heartbeat(ctx context.Context) {
 	pm.addCollectorCredentials(req)
 	pm.addJSONHeaders(req)
 
-	pm.logger.Info("Heartbeat heartbeat API initialized. Start sending requests to ",
+	pm.logger.Info("Heartbeat heartbeat API initialized. Starting sending hearbeat requests",
 		zap.String("URL", u.String()),
 	)
 	for {
@@ -319,13 +319,13 @@ func (pm *sumologicExtension) heartbeat(ctx context.Context) {
 				if _, err := io.Copy(&buff, res.Body); err != nil {
 					pm.logger.Error(
 						"failed to copy collector heartbeat response body, status code: %d, err: %w",
-						zap.Any("response status code", res.StatusCode),
+						zap.Int("response status code", res.StatusCode),
 						zap.String("error: ", err.Error()))
 					return
 				}
 				pm.logger.Error("Collector heartbeat request failed",
-					zap.Any("response status code", res.StatusCode),
-					zap.Any("response", buff.String()),
+					zap.Int("response status code", res.StatusCode),
+					zap.String("response", buff.String()),
 				)
 				return
 			}
