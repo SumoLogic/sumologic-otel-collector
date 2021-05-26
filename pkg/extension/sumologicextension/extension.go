@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"go.opentelemetry.io/collector/component"
 	"go.uber.org/zap"
@@ -34,6 +35,7 @@ type sumologicExtension struct {
 	conf             *Config
 	logger           *zap.Logger
 	registrationInfo OpenRegisterResponsePayload
+	ch               chan bool
 }
 
 const (
@@ -45,12 +47,14 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*sumologicExtensio
 	if conf.CollectorName == "" {
 		return nil, errors.New("collector name is unset")
 	}
+	ch := make(chan bool)
 
 	return &sumologicExtension{
 		// TODO: don't hardcode
 		baseUrl: niteBaseUrl,
 		conf:    conf,
 		logger:  logger,
+		ch:      ch,
 	}, nil
 }
 
@@ -58,6 +62,7 @@ func (pm *sumologicExtension) Start(ctx context.Context, host component.Host) er
 	if err := pm.register(ctx, pm.conf.CollectorName); err != nil {
 		return err
 	}
+	go pm.heartbeat(ctx)
 
 	// -------------------------------------------------------------------------
 
@@ -154,6 +159,7 @@ func (pm *sumologicExtension) Start(ctx context.Context, host component.Host) er
 
 // Shutdown is invoked during service shutdown.
 func (pm *sumologicExtension) Shutdown(ctx context.Context) error {
+	pm.ch <- true
 	return nil
 }
 
@@ -167,13 +173,18 @@ type FullRegisterKeyResponse struct {
 	Warnings      []interface{} `json:"warnings"`
 }
 
-func (pm *sumologicExtension) addCredentials(req *http.Request) {
+func (pm *sumologicExtension) addClientCredentials(req *http.Request) {
 	req.Header.Add("accessid", pm.conf.Credentials.AccessID)
 	req.Header.Add("accesskey", pm.conf.Credentials.AccessKey)
 }
 
 func (pm *sumologicExtension) addJSONHeaders(req *http.Request) {
 	req.Header.Add("Content-Type", "application/json")
+}
+
+func (pm *sumologicExtension) addCollectorCredentials(req *http.Request) {
+	req.Header.Add("collectorCredentialId", pm.registrationInfo.CollectorCredentialId)
+	req.Header.Add("collectorCredentialKey", pm.registrationInfo.CollectorCredentialKey)
 }
 
 type OpenRegisterRequestPayload struct {
@@ -224,7 +235,7 @@ func (pm *sumologicExtension) register(ctx context.Context, collectorName string
 		return err
 	}
 
-	pm.addCredentials(req)
+	pm.addClientCredentials(req)
 	pm.addJSONHeaders(req)
 
 	pm.logger.Info("calling register API",
@@ -266,6 +277,62 @@ func (pm *sumologicExtension) register(ctx context.Context, collectorName string
 	pm.registrationInfo = resp
 
 	return nil
+}
+
+func (pm *sumologicExtension) heartbeat(ctx context.Context) {
+	const heartbeatUrl = "api/v1/collector/heartbeat"
+	if pm.registrationInfo.CollectorCredentialId == "" || pm.registrationInfo.CollectorId == "" {
+		pm.logger.Error("Collector not registered, cannot send heartbeat")
+		return
+	}
+	u, err := url.Parse(pm.baseUrl + heartbeatUrl)
+	if err != nil {
+		pm.logger.Error("Unable to parse heartbeat URL ", zap.String("error: ", err.Error()))
+		return
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), nil)
+	if err != nil {
+		pm.logger.Error("Unable to create HTTP request. ", zap.String("error: ", err.Error()))
+		return
+	}
+
+	pm.addCollectorCredentials(req)
+	pm.addJSONHeaders(req)
+
+	pm.logger.Info("Heartbeat heartbeat API initialized. Start sending requests to ",
+		zap.String("URL", u.String()),
+	)
+	for {
+		select {
+		case <-pm.ch:
+			pm.logger.Info("Heartbeat sender turn off")
+			return
+		default:
+			res, err := http.DefaultClient.Do(req)
+			if err != nil {
+				pm.logger.Error("Unable to send HTTP request. ", zap.String("error: ", err.Error()))
+				return
+			}
+			defer res.Body.Close()
+			if res.StatusCode != 204 {
+				var buff bytes.Buffer
+				if _, err := io.Copy(&buff, res.Body); err != nil {
+					pm.logger.Error(
+						"failed to copy collector heartbeat response body, status code: %d, err: %w",
+						zap.Any("response status code", res.StatusCode),
+						zap.String("error: ", err.Error()))
+					return
+				}
+				pm.logger.Error("Collector heartbeat request failed",
+					zap.Any("response status code", res.StatusCode),
+					zap.Any("response", buff.String()),
+				)
+				return
+			}
+			pm.logger.Info("Heartbeat sent")
+			time.Sleep(15 * time.Second)
+		}
+	}
 }
 
 func (pm *sumologicExtension) CollectorID() string {
