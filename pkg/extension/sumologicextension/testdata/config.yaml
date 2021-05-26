@@ -1,6 +1,7 @@
 extensions:
   sumologic:
     collector_name: my_custom_collector
+    heartbeat_interval: 15
     access_id: aaa
     access_key: bbbbbbbbbbbbbbbbbbbbbb
 
