@@ -58,9 +58,7 @@ jobs:
           restore-keys: |
             ${{matrix.arch_os}}-go-lint-
       - name: Install golangci-lint
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
-          sh -s -- -b $(go env GOPATH)/bin v1.40.1
+        run: make install-golangci-lint
       - name: Run golangci-lint
         run: make golint
 

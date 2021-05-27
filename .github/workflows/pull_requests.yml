@@ -67,14 +67,20 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
+      # As described in
+      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+      - uses: actions/cache@v2
         with:
-          version: v1.40
-          working-directory: pkg
-          skip-go-installation: true
-          skip-pkg-cache: false
-          skip-build-cache: false
+          path: |
+            /home/runner/go/pkg/mod
+            /home/runner/.cache/go-build
+          key: ${{matrix.arch_os}}-go-lint-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{matrix.arch_os}}-go-lint-
+      - name: Install golangci-lint
+        run: make install-golangci-lint
+      - name: Run golangci-lint
+        run: make golint
 
   build:
     name: Build
@@ -101,7 +107,6 @@ jobs:
           key: ${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{matrix.arch_os}}-go-
-
       - name: Install opentelemetry-collector-builder
         run: make install
         working-directory: ./otelcolbuilder
