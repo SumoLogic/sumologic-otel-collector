@@ -52,6 +52,8 @@ type sender struct {
 	compressor          compressor
 	prometheusFormatter prometheusFormatter
 	graphiteFormatter   graphiteFormatter
+	dataUrlMetrics      string
+	dataUrlLogs         string
 }
 
 const (
@@ -90,6 +92,8 @@ func newSender(
 	c compressor,
 	pf prometheusFormatter,
 	gf graphiteFormatter,
+	metricsUrl string,
+	logsUrl string,
 ) *sender {
 	return &sender{
 		config:              cfg,
@@ -99,6 +103,8 @@ func newSender(
 		compressor:          c,
 		prometheusFormatter: pf,
 		graphiteFormatter:   gf,
+		dataUrlMetrics:      metricsUrl,
+		dataUrlLogs:         logsUrl,
 	}
 }
 
@@ -108,53 +114,14 @@ func (s *sender) send(ctx context.Context, pipeline PipelineType, body io.Reader
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.config.HTTPClientSettings.Endpoint, data)
+
+	req, err := s.createRequest(ctx, pipeline, data)
 	if err != nil {
 		return err
 	}
 
-	// Add headers
-	switch s.config.CompressEncoding {
-	case GZIPCompression:
-		req.Header.Set(headerContentEncoding, contentEncodingGzip)
-	case DeflateCompression:
-		req.Header.Set(headerContentEncoding, contentEncodingDeflate)
-	case NoCompression:
-	default:
-		return fmt.Errorf("invalid content encoding: %s", s.config.CompressEncoding)
-	}
-
-	req.Header.Add(headerClient, s.config.Client)
-
-	if s.sources.host.isSet() {
-		req.Header.Add(headerHost, s.sources.host.format(flds))
-	}
-
-	if s.sources.name.isSet() {
-		req.Header.Add(headerName, s.sources.name.format(flds))
-	}
-
-	if s.sources.category.isSet() {
-		req.Header.Add(headerCategory, s.sources.category.format(flds))
-	}
-
-	switch pipeline {
-	case LogsPipeline:
-		req.Header.Add(headerContentType, contentTypeLogs)
-		req.Header.Add(headerFields, flds.string())
-	case MetricsPipeline:
-		switch s.config.MetricFormat {
-		case PrometheusFormat:
-			req.Header.Add(headerContentType, contentTypePrometheus)
-		case Carbon2Format:
-			req.Header.Add(headerContentType, contentTypeCarbon2)
-		case GraphiteFormat:
-			req.Header.Add(headerContentType, contentTypeGraphite)
-		default:
-			return fmt.Errorf("unsupported metrics format: %s", s.config.MetricFormat)
-		}
-	default:
-		return errors.New("unexpected pipeline")
+	if err := s.addRequestHeaders(req, pipeline, flds); err != nil {
+		return err
 	}
 
 	resp, err := s.client.Do(req)
@@ -165,6 +132,29 @@ func (s *sender) send(ctx context.Context, pipeline PipelineType, body io.Reader
 		return fmt.Errorf("error during sending data: %s", resp.Status)
 	}
 	return nil
+}
+
+func (s *sender) createRequest(ctx context.Context, pipeline PipelineType, data io.Reader) (*http.Request, error) {
+	var url string
+	if s.config.HTTPClientSettings.Endpoint == "" {
+		switch pipeline {
+		case MetricsPipeline:
+			url = s.dataUrlMetrics
+		case LogsPipeline:
+			url = s.dataUrlLogs
+		default:
+			return nil, fmt.Errorf("unknown pipeline type: %s", pipeline)
+		}
+	} else {
+		url = s.config.HTTPClientSettings.Endpoint
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, data)
+	if err != nil {
+		return req, err
+	}
+
+	return req, err
 }
 
 // logToText converts LogRecord to a plain text line, returns it and error eventually
@@ -406,4 +396,72 @@ func (s *sender) batchMetric(ctx context.Context, metric metricPair, metadata fi
 // countMetrics returns number of metrics in metricBuffer
 func (s *sender) countMetrics() int {
 	return len(s.metricBuffer)
+}
+
+func addCompressHeader(req *http.Request, enc CompressEncodingType) error {
+	switch enc {
+	case GZIPCompression:
+		req.Header.Set(headerContentEncoding, contentEncodingGzip)
+	case DeflateCompression:
+		req.Header.Set(headerContentEncoding, contentEncodingDeflate)
+	case NoCompression:
+	default:
+		return fmt.Errorf("invalid content encoding: %s", enc)
+	}
+
+	return nil
+}
+
+func addSourcesHeaders(req *http.Request, sources sourceFormats, flds fields) {
+	if sources.host.isSet() {
+		req.Header.Add(headerHost, sources.host.format(flds))
+	}
+
+	if sources.name.isSet() {
+		req.Header.Add(headerName, sources.name.format(flds))
+	}
+
+	if sources.category.isSet() {
+		req.Header.Add(headerCategory, sources.category.format(flds))
+	}
+}
+
+func addLogsHeaders(req *http.Request, flds fields) {
+	req.Header.Add(headerContentType, contentTypeLogs)
+	req.Header.Add(headerFields, flds.string())
+}
+
+func addMetricsHeaders(req *http.Request, mf MetricFormatType) error {
+	switch mf {
+	case PrometheusFormat:
+		req.Header.Add(headerContentType, contentTypePrometheus)
+	case Carbon2Format:
+		req.Header.Add(headerContentType, contentTypeCarbon2)
+	case GraphiteFormat:
+		req.Header.Add(headerContentType, contentTypeGraphite)
+	default:
+		return fmt.Errorf("unsupported metrics format: %s", mf)
+	}
+	return nil
+}
+
+func (s *sender) addRequestHeaders(req *http.Request, pipeline PipelineType, flds fields) error {
+	req.Header.Add(headerClient, s.config.Client)
+
+	if err := addCompressHeader(req, s.config.CompressEncoding); err != nil {
+		return err
+	}
+	addSourcesHeaders(req, s.sources, flds)
+
+	switch pipeline {
+	case LogsPipeline:
+		addLogsHeaders(req, flds)
+	case MetricsPipeline:
+		if err := addMetricsHeaders(req, s.config.MetricFormat); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("unexpected pipeline: %v", pipeline)
+	}
+	return nil
 }

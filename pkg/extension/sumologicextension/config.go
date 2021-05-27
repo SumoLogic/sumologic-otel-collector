@@ -24,12 +24,26 @@ import (
 type Config struct {
 	config.ExtensionSettings `mapstructure:"-"`
 
+	// Credentials contains Access Key and Access ID for Sumo Logic service.
+	// Please refer to https://help.sumologic.com/Manage/Security/Access-Keys
+	// for detailed instructions how to obtain them.
+	Credentials credentials `mapstructure:",squash"`
+
 	// CollectorName is the name under which collector will be registered.
 	// Please note that registering a collector under a name which is already
 	// used is not allowed.
 	CollectorName string `mapstructure:"collector_name"`
-
-	Credentials credentials `mapstructure:",squash"`
+	// CollectorDescription is the description which will be used when the
+	// collector is being registered.
+	CollectorDescription string `mapstructure:"collector_description"`
+	// CollectorCategory is the collecot rcategory which will be used when the
+	// collector is being registered.
+	CollectorCategory string `mapstructure:"collector_category"`
 
 	HeartBeatInterval time.Duration `mapstructure:"heartbeat_interval"`
+}
+
+type credentials struct {
+	AccessID  string `mapstructure:"access_id"`
+	AccessKey string `mapstructure:"access_key"`
 }
