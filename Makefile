@@ -21,6 +21,11 @@ gotest:
 golint:
 	$(MAKE) for-all CMD="make lint"
 
+.PHONY: install-golint
+install-golangci-lint:
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
+	sh -s -- -b $(shell go env GOPATH)/bin v1.40.1
+
 .PHONY: for-all
 for-all:
 	@echo "running $${CMD} in root"
