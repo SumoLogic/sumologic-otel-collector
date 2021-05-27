@@ -35,7 +35,7 @@ type sumologicExtension struct {
 	conf             *Config
 	logger           *zap.Logger
 	registrationInfo OpenRegisterResponsePayload
-	ch               chan struct{}
+	closeChan        chan struct{}
 }
 
 const (
@@ -43,21 +43,23 @@ const (
 	niteBaseUrl              = "https://nite-open-events.sumologic.net/"
 	heartbeatUrl             = "api/v1/collector/heartbeat"
 	registerUrl              = "api/v1/collector/register"
-	defaultHeartbeatInterval = time.Duration(15)
+	defaultHeartbeatInterval = 15 * time.Second
 )
 
 func newSumologicExtension(conf *Config, logger *zap.Logger) (*sumologicExtension, error) {
 	if conf.CollectorName == "" {
 		return nil, errors.New("collector name is unset")
 	}
-	ch := make(chan struct{})
+	if conf.HeartBeatInterval <= 0 {
+		conf.HeartBeatInterval = defaultHeartbeatInterval
+	}
 
 	return &sumologicExtension{
 		// TODO: don't hardcode
-		baseUrl: niteBaseUrl,
-		conf:    conf,
-		logger:  logger,
-		ch:      ch,
+		baseUrl:   niteBaseUrl,
+		conf:      conf,
+		logger:    logger,
+		closeChan: make(chan struct{}),
 	}, nil
 }
 
@@ -162,7 +164,7 @@ func (pm *sumologicExtension) Start(ctx context.Context, host component.Host) er
 
 // Shutdown is invoked during service shutdown.
 func (pm *sumologicExtension) Shutdown(ctx context.Context) error {
-	pm.ch <- struct{}{}
+	pm.closeChan <- struct{}{}
 	return nil
 }
 
@@ -282,10 +284,8 @@ func (pm *sumologicExtension) register(ctx context.Context, collectorName string
 }
 
 func (pm *sumologicExtension) heartbeat(ctx context.Context) {
-	heartbeatInterval := defaultHeartbeatInterval
-	if pm.conf.HeartBeatInterval > 0 {
-		heartbeatInterval = pm.conf.HeartBeatInterval
-	}
+	heartbeatInterval := pm.conf.HeartBeatInterval
+
 	if pm.registrationInfo.CollectorCredentialId == "" || pm.registrationInfo.CollectorId == "" {
 		pm.logger.Error("Collector not registered, cannot send heartbeat")
 		return
@@ -307,7 +307,7 @@ func (pm *sumologicExtension) heartbeat(ctx context.Context) {
 	pm.logger.Info("Heartbeat heartbeat API initialized. Starting sending hearbeat requests")
 	for {
 		select {
-		case <-pm.ch:
+		case <-pm.closeChan:
 			pm.logger.Info("Heartbeat sender turn off")
 			return
 		default:
@@ -333,7 +333,7 @@ func (pm *sumologicExtension) heartbeat(ctx context.Context) {
 				return
 			}
 			pm.logger.Debug("Heartbeat sent")
-			time.Sleep(heartbeatInterval * time.Second)
+			time.Sleep(heartbeatInterval)
 		}
 	}
 }
