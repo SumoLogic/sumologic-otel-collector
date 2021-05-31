@@ -15,6 +15,8 @@
 package sumologicextension
 
 import (
+	"time"
+
 	"go.opentelemetry.io/collector/config"
 )
 
@@ -28,4 +30,6 @@ type Config struct {
 	CollectorName string `mapstructure:"collector_name"`
 
 	Credentials credentials `mapstructure:",squash"`
+
+	HeartBeatInterval time.Duration `mapstructure:"heartbeat_interval"`
 }
