@@ -26,6 +26,7 @@ processors:
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/routingprocessor v0.27.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/spanmetricsprocessor v0.27.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor v0.27.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector/processor/probabilisticsamplerprocessor v0.27.0"
 
 receivers:
   # Receivers with non-upstreamed changes:
@@ -83,6 +84,7 @@ replaces:
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor => ./../../pkg/processor/cascadingfilterprocessor
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/sourceprocessor => ./../../pkg/processor/sourceprocessor
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor => ./../../pkg/processor/k8sprocessor
+  - github.com/open-telemetry/opentelemetry-collector/processor/probabilisticsamplerprocessor => ./../../pkg/processor/probabilisticsamplerprocessor
 
   # ----------------------------------------------------------------------------
   # Customized core
