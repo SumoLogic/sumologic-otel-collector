@@ -310,9 +310,9 @@ func (pm *sumologicExtension) heartbeatLoop() {
 				pm.logger.Error("Heartbeat error: ", zap.String("error: ", err.Error()))
 			}
 			pm.logger.Debug("Heartbeat sent")
-			//nolint // pmatyjasek: Bypass rule S1037
 			select {
 			case <-time.After(heartbeatInterval):
+			case <-pm.closeChan:
 			}
 		}
 	}
@@ -321,11 +321,11 @@ func (pm *sumologicExtension) heartbeatLoop() {
 func (pm *sumologicExtension) sendHeartbeat() error {
 	u, err := url.Parse(pm.baseUrl + heartbeatUrl)
 	if err != nil {
-		return fmt.Errorf("unable to parse heartbeat URL %s", err.Error())
+		return fmt.Errorf("unable to parse heartbeat URL %w", err)
 	}
 	req, err := http.NewRequest(http.MethodPost, u.String(), nil)
 	if err != nil {
-		return fmt.Errorf("unable to create HTTP request %s", err.Error())
+		return fmt.Errorf("unable to create HTTP request %w", err)
 	}
 
 	pm.addCollectorCredentials(req)
@@ -340,11 +340,13 @@ func (pm *sumologicExtension) sendHeartbeat() error {
 		if _, err := io.Copy(&buff, res.Body); err != nil {
 			return fmt.Errorf(
 				"failed to copy collector heartbeat response body, status code: %d, err: %w",
-				res.StatusCode, err)
+				res.StatusCode, err,
+			)
 		}
 		return fmt.Errorf(
 			"collector heartbeat request failed, status code: %d, body: %s",
-			res.StatusCode, buff.String())
+			res.StatusCode, buff.String(),
+		)
 	}
 	return nil
 
