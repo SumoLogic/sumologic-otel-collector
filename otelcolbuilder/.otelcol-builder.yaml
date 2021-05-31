@@ -18,6 +18,7 @@ processors:
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor v0.27.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor v0.27.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/sourceprocessor v0.27.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/sumologicsyslogprocessor v0.27.0"
   # Upstream processors:
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbyattrsprocessor v0.27.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbytraceprocessor v0.27.0"
@@ -83,6 +84,7 @@ replaces:
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor => ./../../pkg/processor/cascadingfilterprocessor
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/sourceprocessor => ./../../pkg/processor/sourceprocessor
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor => ./../../pkg/processor/k8sprocessor
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/sumologicsyslogprocessor => ./../../pkg/processor/sumologicsyslogprocessor
 
   # ----------------------------------------------------------------------------
   # Customized core
