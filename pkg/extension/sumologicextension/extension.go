@@ -291,8 +291,6 @@ func (pm *sumologicExtension) register(ctx context.Context, collectorName string
 }
 
 func (pm *sumologicExtension) heartbeatLoop() {
-	heartbeatInterval := pm.conf.HeartBeatInterval
-
 	if pm.registrationInfo.CollectorCredentialId == "" || pm.registrationInfo.CollectorId == "" {
 		pm.logger.Error("Collector not registered, cannot send heartbeat")
 		return
@@ -311,7 +309,7 @@ func (pm *sumologicExtension) heartbeatLoop() {
 			}
 			pm.logger.Debug("Heartbeat sent")
 			select {
-			case <-time.After(heartbeatInterval):
+			case <-time.After(pm.conf.HeartBeatInterval):
 			case <-pm.closeChan:
 			}
 		}
