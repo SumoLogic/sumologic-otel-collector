@@ -67,7 +67,7 @@ func (pm *sumologicExtension) Start(ctx context.Context, host component.Host) er
 	if err := pm.register(ctx, pm.conf.CollectorName); err != nil {
 		return err
 	}
-	go pm.heartbeat(ctx)
+	go pm.heartbeatLoop()
 
 	// -------------------------------------------------------------------------
 
@@ -164,6 +164,13 @@ func (pm *sumologicExtension) Start(ctx context.Context, host component.Host) er
 
 // Shutdown is invoked during service shutdown.
 func (pm *sumologicExtension) Shutdown(ctx context.Context) error {
+	// Check if there is a signal from closed goroutine in a channel.
+	select {
+	case <-pm.closeChan:
+		return nil
+	default:
+	}
+	// Send signal to close goroutine.
 	pm.closeChan <- struct{}{}
 	return nil
 }
@@ -283,21 +290,27 @@ func (pm *sumologicExtension) register(ctx context.Context, collectorName string
 	return nil
 }
 
-func (pm *sumologicExtension) heartbeat(ctx context.Context) {
+func (pm *sumologicExtension) heartbeatLoop() {
 	heartbeatInterval := pm.conf.HeartBeatInterval
 
 	if pm.registrationInfo.CollectorCredentialId == "" || pm.registrationInfo.CollectorId == "" {
 		pm.logger.Error("Collector not registered, cannot send heartbeat")
+		// Send close signal to channel from goroutine.
+		pm.closeChan <- struct{}{}
 		return
 	}
 	u, err := url.Parse(pm.baseUrl + heartbeatUrl)
 	if err != nil {
 		pm.logger.Error("Unable to parse heartbeat URL ", zap.String("error: ", err.Error()))
+		// Send close signal to channel from goroutine.
+		pm.closeChan <- struct{}{}
 		return
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), nil)
+	req, err := http.NewRequest(http.MethodPost, u.String(), nil)
 	if err != nil {
 		pm.logger.Error("Unable to create HTTP request. ", zap.String("error: ", err.Error()))
+		// Send close signal to channel from goroutine.
+		pm.closeChan <- struct{}{}
 		return
 	}
 
@@ -311,31 +324,35 @@ func (pm *sumologicExtension) heartbeat(ctx context.Context) {
 			pm.logger.Info("Heartbeat sender turn off")
 			return
 		default:
-			res, err := http.DefaultClient.Do(req)
+			err = sendHeartbeat(req)
 			if err != nil {
-				pm.logger.Error("Unable to send HTTP request. ", zap.String("error: ", err.Error()))
-				return
-			}
-			defer res.Body.Close()
-			if res.StatusCode != 204 {
-				var buff bytes.Buffer
-				if _, err := io.Copy(&buff, res.Body); err != nil {
-					pm.logger.Error(
-						"failed to copy collector heartbeat response body, status code: %d, err: %w",
-						zap.Int("response status code", res.StatusCode),
-						zap.String("error: ", err.Error()))
-					return
-				}
-				pm.logger.Error("Collector heartbeat request failed",
-					zap.Int("response status code", res.StatusCode),
-					zap.String("response", buff.String()),
-				)
-				return
+				pm.logger.Error("Heartbeat error: ", zap.String("error: ", err.Error()))
 			}
 			pm.logger.Debug("Heartbeat sent")
 			time.Sleep(heartbeatInterval)
 		}
 	}
+}
+
+func sendHeartbeat(req *http.Request) error {
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("unable to send HTTP request: %w", err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 204 {
+		var buff bytes.Buffer
+		if _, err := io.Copy(&buff, res.Body); err != nil {
+			return fmt.Errorf(
+				"failed to copy collector heartbeat response body, status code: %d, err: %w",
+				res.StatusCode, err)
+		}
+		return fmt.Errorf(
+			"collector heartbeat request failed, status code: %d, body: %s",
+			res.StatusCode, buff.String())
+	}
+	return nil
+
 }
 
 func (pm *sumologicExtension) CollectorID() string {
