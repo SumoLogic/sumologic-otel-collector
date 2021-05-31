@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sync"
 	"time"
 
 	"go.opentelemetry.io/collector/component"
@@ -36,6 +37,7 @@ type sumologicExtension struct {
 	logger           *zap.Logger
 	registrationInfo OpenRegisterResponsePayload
 	closeChan        chan struct{}
+	closeOnce        sync.Once
 }
 
 const (
@@ -164,15 +166,13 @@ func (pm *sumologicExtension) Start(ctx context.Context, host component.Host) er
 
 // Shutdown is invoked during service shutdown.
 func (pm *sumologicExtension) Shutdown(ctx context.Context) error {
-	// Check if there is a signal from closed goroutine in a channel.
+	pm.closeOnce.Do(func() { close(pm.closeChan) })
 	select {
-	case <-pm.closeChan:
-		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	default:
+		return nil
 	}
-	// Send signal to close goroutine.
-	pm.closeChan <- struct{}{}
-	return nil
 }
 
 type FullRegisterKeyResponse struct {
@@ -295,27 +295,8 @@ func (pm *sumologicExtension) heartbeatLoop() {
 
 	if pm.registrationInfo.CollectorCredentialId == "" || pm.registrationInfo.CollectorId == "" {
 		pm.logger.Error("Collector not registered, cannot send heartbeat")
-		// Send close signal to channel from goroutine.
-		pm.closeChan <- struct{}{}
 		return
 	}
-	u, err := url.Parse(pm.baseUrl + heartbeatUrl)
-	if err != nil {
-		pm.logger.Error("Unable to parse heartbeat URL ", zap.String("error: ", err.Error()))
-		// Send close signal to channel from goroutine.
-		pm.closeChan <- struct{}{}
-		return
-	}
-	req, err := http.NewRequest(http.MethodPost, u.String(), nil)
-	if err != nil {
-		pm.logger.Error("Unable to create HTTP request. ", zap.String("error: ", err.Error()))
-		// Send close signal to channel from goroutine.
-		pm.closeChan <- struct{}{}
-		return
-	}
-
-	pm.addCollectorCredentials(req)
-	pm.addJSONHeaders(req)
 
 	pm.logger.Info("Heartbeat heartbeat API initialized. Starting sending hearbeat requests")
 	for {
@@ -324,17 +305,31 @@ func (pm *sumologicExtension) heartbeatLoop() {
 			pm.logger.Info("Heartbeat sender turn off")
 			return
 		default:
-			err = sendHeartbeat(req)
+			err := pm.sendHeartbeat()
 			if err != nil {
 				pm.logger.Error("Heartbeat error: ", zap.String("error: ", err.Error()))
 			}
 			pm.logger.Debug("Heartbeat sent")
-			time.Sleep(heartbeatInterval)
+			//nolint // pmatyjasek: Bypass rule S1037
+			select {
+			case <-time.After(heartbeatInterval):
+			}
 		}
 	}
 }
 
-func sendHeartbeat(req *http.Request) error {
+func (pm *sumologicExtension) sendHeartbeat() error {
+	u, err := url.Parse(pm.baseUrl + heartbeatUrl)
+	if err != nil {
+		return fmt.Errorf("unable to parse heartbeat URL %s", err.Error())
+	}
+	req, err := http.NewRequest(http.MethodPost, u.String(), nil)
+	if err != nil {
+		return fmt.Errorf("unable to create HTTP request %s", err.Error())
+	}
+
+	pm.addCollectorCredentials(req)
+	pm.addJSONHeaders(req)
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("unable to send HTTP request: %w", err)
