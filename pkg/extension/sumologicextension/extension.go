@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -44,6 +45,7 @@ const (
 	heartbeatUrl             = "/api/v1/collector/heartbeat"
 	registerUrl              = "/api/v1/collector/register"
 	DefaultHeartbeatInterval = 15 * time.Second
+	collectorCredentialsPath = "/tmp/sumo_otc_creds"
 )
 
 func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtension, error) {
@@ -63,10 +65,19 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 }
 
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
-	// TODO: handle already registered collector; retrieve credentials etc.
-	if err := se.register(ctx); err != nil {
-		return err
+	var err error
+	if se.checkCollectorCredentials() {
+		se.logger.Debug("found stored credentials")
+		if err = se.getCollectorCredentials(); err != nil {
+			return err
+		}
+	} else {
+		se.logger.Debug("credentials not found, register collector")
+		if err = se.register(ctx); err != nil {
+			return err
+		}
 	}
+
 	go se.heartbeatLoop()
 
 	return nil
@@ -75,6 +86,10 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 // Shutdown is invoked during service shutdown.
 func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 	se.closeOnce.Do(func() { close(se.closeChan) })
+	err := se.storeCollectorCredentials()
+	if err != nil {
+		se.logger.Error("unable to store collector credentials", zap.String("error", err.Error()))
+	}
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -106,6 +121,42 @@ type OpenRegisterResponsePayload struct {
 	CollectorCredentialId  string `json:"collectorCredentialId"`
 	CollectorCredentialKey string `json:"collectorCredentialKey"`
 	CollectorId            string `json:"collectorId"`
+}
+
+func (se *SumologicExtension) checkCollectorCredentials() bool {
+	if _, err := os.Stat(collectorCredentialsPath); err != nil {
+		return false
+	}
+	return true
+}
+
+func (se *SumologicExtension) getCollectorCredentials() error {
+	var credentialsInfo OpenRegisterResponsePayload
+	creds, err := os.Open(collectorCredentialsPath)
+	if err != nil {
+		return err
+	}
+	defer creds.Close()
+	readBytes, err := ioutil.ReadAll(creds)
+	if err != nil {
+		return err
+	}
+	json.Unmarshal(readBytes, &credentialsInfo)
+	se.registrationInfo = credentialsInfo
+
+	return nil
+}
+
+func (se *SumologicExtension) storeCollectorCredentials() error {
+	data, err := json.MarshalIndent(se.registrationInfo, "", " ")
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile(collectorCredentialsPath, data, 0666)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (se *SumologicExtension) register(ctx context.Context) error {
