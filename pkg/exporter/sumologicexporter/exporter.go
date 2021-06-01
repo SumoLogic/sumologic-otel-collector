@@ -16,15 +16,22 @@ package sumologicexporter
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
+	"net/url"
+	"strings"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/consumer/pdata"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension"
+)
+
+const (
+	logsDataUrl    = "/api/v1/collector/logs"
+	metricsDataUrl = "/api/v1/collector/metrics"
 )
 
 type sumologicexporter struct {
@@ -34,6 +41,8 @@ type sumologicexporter struct {
 	filter              filter
 	prometheusFormatter prometheusFormatter
 	graphiteFormatter   graphiteFormatter
+	dataUrlMetrics      string
+	dataUrlLogs         string
 }
 
 func initExporter(cfg *Config) (*sumologicexporter, error) {
@@ -167,6 +176,8 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		c,
 		se.prometheusFormatter,
 		se.graphiteFormatter,
+		se.dataUrlMetrics,
+		se.dataUrlLogs,
 	)
 
 	// Iterate over ResourceLogs
@@ -266,6 +277,8 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		c,
 		se.prometheusFormatter,
 		se.graphiteFormatter,
+		se.dataUrlMetrics,
+		se.dataUrlLogs,
 	)
 
 	// Iterate over ResourceMetrics
@@ -342,20 +355,40 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 }
 
 func (se *sumologicexporter) start(ctx context.Context, host component.Host) error {
-	extensions := host.GetExtensions()
-
-	for _, e := range extensions {
-		tt := reflect.TypeOf(e)
-		m, ok := tt.MethodByName("CollectorID")
-		if !ok {
-			return errors.New("no method CollectorID")
+	var (
+		ext          *sumologicextension.SumologicExtension
+		foundSumoExt bool
+	)
+	for _, e := range host.GetExtensions() {
+		v, ok := e.(*sumologicextension.SumologicExtension)
+		if ok {
+			ext = v
+			foundSumoExt = true
+			break
 		}
-
-		out := m.Func.Call([]reflect.Value{reflect.ValueOf(e)})
-		fmt.Printf("Collector ID: %s\n", out[0].String())
 	}
 
-	client, err := se.config.HTTPClientSettings.ToClient(extensions)
+	// If we're using sumologicextension as authentication extension and
+	// endpoint was not set then send data on a collector generic ingest URL
+	// with authentication set by sumologicextension.
+	if se.config.HTTPClientSettings.Endpoint == "" &&
+		// TODO: is there a better way than strings.Prefix of auth name?
+		strings.HasPrefix(se.config.HTTPClientSettings.Auth.AuthenticatorName, "sumologic") &&
+		foundSumoExt {
+		u, err := url.Parse(ext.BaseUrl())
+		if err != nil {
+			return fmt.Errorf("failed to parse API base URL from sumologicextension: %w", err)
+		}
+		u.Path = logsDataUrl
+		se.dataUrlLogs = u.String()
+		u.Path = metricsDataUrl
+		se.dataUrlMetrics = u.String()
+	} else {
+		se.dataUrlLogs = se.config.HTTPClientSettings.Endpoint
+		se.dataUrlMetrics = se.config.HTTPClientSettings.Endpoint
+	}
+
+	client, err := se.config.HTTPClientSettings.ToClient(host.GetExtensions())
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP Client: %w", err)
 	}
@@ -365,6 +398,5 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 }
 
 func (se *sumologicexporter) shutdown(context.Context) error {
-	fmt.Printf("shutdown\n")
 	return nil
 }

@@ -95,6 +95,8 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 			c,
 			pf,
 			gf,
+			"",
+			"",
 		),
 	}
 }
@@ -534,7 +536,7 @@ func TestInvalidPipeline(t *testing.T) {
 	defer func() { test.srv.Close() }()
 
 	err := test.s.send(context.Background(), "invalidPipeline", strings.NewReader(""), newFields(pdata.NewAttributeMap()))
-	assert.EqualError(t, err, `unexpected pipeline`)
+	assert.EqualError(t, err, `unexpected pipeline: invalidPipeline`)
 }
 
 func TestSendCompressGzip(t *testing.T) {

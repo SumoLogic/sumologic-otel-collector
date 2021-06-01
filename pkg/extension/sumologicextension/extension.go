@@ -31,7 +31,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type sumologicExtension struct {
+type SumologicExtension struct {
 	baseUrl          string
 	conf             *Config
 	logger           *zap.Logger
@@ -42,13 +42,13 @@ type sumologicExtension struct {
 
 const (
 	// TODO: fix
-	niteBaseUrl              = "https://nite-open-events.sumologic.net/"
-	heartbeatUrl             = "api/v1/collector/heartbeat"
-	registerUrl              = "api/v1/collector/register"
+	niteBaseUrl              = "https://nite-open-events.sumologic.net"
+	heartbeatUrl             = "/api/v1/collector/heartbeat"
+	registerUrl              = "/api/v1/collector/register"
 	defaultHeartbeatInterval = 15 * time.Second
 )
 
-func newSumologicExtension(conf *Config, logger *zap.Logger) (*sumologicExtension, error) {
+func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtension, error) {
 	if conf.CollectorName == "" {
 		return nil, errors.New("collector name is unset")
 	}
@@ -56,7 +56,7 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*sumologicExtensio
 		conf.HeartBeatInterval = defaultHeartbeatInterval
 	}
 
-	return &sumologicExtension{
+	return &SumologicExtension{
 		// TODO: don't hardcode
 		baseUrl:   niteBaseUrl,
 		conf:      conf,
@@ -65,108 +65,19 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*sumologicExtensio
 	}, nil
 }
 
-func (pm *sumologicExtension) Start(ctx context.Context, host component.Host) error {
-	if err := pm.register(ctx, pm.conf.CollectorName); err != nil {
+func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
+	// TODO: handle already registered collector; retrieve credentials etc.
+	if err := se.register(ctx); err != nil {
 		return err
 	}
-	go pm.heartbeatLoop()
-
-	// -------------------------------------------------------------------------
-
-	// exporters := host.GetExporters()
-	// for kk, vv := range exporters {
-
-	// 	for namedEnt, v := range vv {
-	// 		pm.logger.Info(fmt.Sprintf("stopping %s exporter, called: %s, type: %s", kk, namedEnt.Name(), namedEnt.Type()))
-	// 		pm.logger.Info(fmt.Sprintf("exporter type %T", v))
-
-	// 		if err := v.Shutdown(ctx); err != nil {
-	// 			panic(err)
-	// 		}
-	// 	}
-
-	// 	time.Sleep(time.Second)
-
-	// 	for namedEnt, v := range vv {
-	// 		// v =
-	// 		pm.logger.Info(fmt.Sprintf("starting %s exporter, called: %s, type: %s", kk, namedEnt.Name(), namedEnt.Type()))
-
-	// 		if err := v.Start(ctx, host); err != nil {
-	// 			panic(err)
-	// 		}
-	// 	}
-	// }
-
-	// -------------------------------------------------------------------------
-
-	// factory := host.GetFactory(component.KindExporter, "sumologic").(component.ExporterFactory)
-	// _ = factory
-
-	// {
-	// cfg1 := factory.CreateDefaultConfig().(*sumologicexporter.Config)
-	// _ = cfg1
-	// 	cfg1.SourceName = "sourceName1"
-	// 	exporter, err := sumologicexporter.NewFactory().CreateMetricsExporter(
-	// 		context.TODO(),
-	// 		component.ExporterCreateParams{},
-	// 		cfg1,
-	// 	)
-	// 	// exporter, err := factory.CreateMetricsExporter(ctx,
-	// 	// 	component.ExporterCreateParams{},
-	// 	// 	c,
-	// 	// )
-
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-
-	// 	if err = exporter.Start(context.TODO(), host); err != nil {
-	// 		panic(err)
-	// 	}
-	// 	pm.exporters = append(pm.exporters, exporter)
-	// }
-
-	// c := &sumologicexporter.Config{
-	// 	SourceName: "name2",
-	// }
-	// exporter, err := factory.CreateMetricsExporter(ctx,
-	// 	component.ExporterCreateParams{},
-	// 	c,
-	// )
-
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// if err = exporter.Start(context.TODO(), host); err != nil {
-	// 	panic(err)
-	// }
-	// pm.exporters = append(pm.exporters, exporter)
-
-	// rfactory := host.GetFactory(component.KindReceiver, "hostmetrics").(component.ReceiverFactory)
-	// hostmetricsrec := hostmetricsreceiver.NewFactory().CreateDefaultConfig()
-	// // 	rfactory.CreateMetricsReceiver(//ctx context.Context, params component.ReceiverCreateParams,
-	// // 	cfg config.Receiver,
-	// // 	nextConsumer consumer.Metrics,
-	// // )
-
-	// erec, err := rfactory.CreateMetricsReceiver(
-	// 	ctx,
-	// 	component.ReceiverCreateParams{},
-	// 	hostmetricsrec,
-	// 	exporter,
-	// )
-
-	// if err = erec.Start(context.TODO(), host); err != nil {
-	// 	panic(err)
-	// }
+	go se.heartbeatLoop()
 
 	return nil
 }
 
 // Shutdown is invoked during service shutdown.
-func (pm *sumologicExtension) Shutdown(ctx context.Context) error {
-	pm.closeOnce.Do(func() { close(pm.closeChan) })
+func (se *SumologicExtension) Shutdown(ctx context.Context) error {
+	se.closeOnce.Do(func() { close(se.closeChan) })
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -185,20 +96,6 @@ type FullRegisterKeyResponse struct {
 	Warnings      []interface{} `json:"warnings"`
 }
 
-func (pm *sumologicExtension) addClientCredentials(req *http.Request) {
-	req.Header.Add("accessid", pm.conf.Credentials.AccessID)
-	req.Header.Add("accesskey", pm.conf.Credentials.AccessKey)
-}
-
-func (pm *sumologicExtension) addJSONHeaders(req *http.Request) {
-	req.Header.Add("Content-Type", "application/json")
-}
-
-func (pm *sumologicExtension) addCollectorCredentials(req *http.Request) {
-	req.Header.Add("collectorCredentialId", pm.registrationInfo.CollectorCredentialId)
-	req.Header.Add("collectorCredentialKey", pm.registrationInfo.CollectorCredentialKey)
-}
-
 type OpenRegisterRequestPayload struct {
 	CollectorName string `json:"collectorName"`
 	Ephemeral     bool   `json:"ephemeral"`
@@ -214,30 +111,28 @@ type OpenRegisterResponsePayload struct {
 	CollectorId            string `json:"collectorId"`
 }
 
-func (pm *sumologicExtension) register(ctx context.Context, collectorName string) error {
-
-	u, err := url.Parse(pm.baseUrl + registerUrl)
+func (se *SumologicExtension) register(ctx context.Context) error {
+	u, err := url.Parse(se.baseUrl)
 	if err != nil {
 		return err
 	}
+	u.Path = registerUrl
 
-	// TODO:
-	// Just plaing hostname or we want to add some custom logic when setting
+	// TODO: just plain hostname or we want to add some custom logic when setting
 	// hostname in request?
 	hostname, err := os.Hostname()
 	if err != nil {
 		return fmt.Errorf("cannot get hostname: %w", err)
 	}
 
-	payload := OpenRegisterRequestPayload{
-		Ephemeral:     true,
-		CollectorName: pm.conf.CollectorName,
-		Description:   "Collector for test OTC registration purposes",
-		Hostname:      hostname,
-	}
-
 	var buff bytes.Buffer
-	if err = json.NewEncoder(&buff).Encode(payload); err != nil {
+	if err = json.NewEncoder(&buff).Encode(OpenRegisterRequestPayload{
+		Ephemeral:     true, // TODO: change that
+		CollectorName: se.conf.CollectorName,
+		Description:   se.conf.CollectorDescription,
+		Category:      se.conf.CollectorCategory,
+		Hostname:      hostname,
+	}); err != nil {
 		return err
 	}
 
@@ -246,16 +141,16 @@ func (pm *sumologicExtension) register(ctx context.Context, collectorName string
 		return err
 	}
 
-	pm.addClientCredentials(req)
-	pm.addJSONHeaders(req)
-
-	pm.logger.Info("calling register API",
-		zap.String("URL", u.String()),
+	addClientCredentials(req,
+		se.conf.Credentials.AccessID,
+		se.conf.Credentials.AccessKey,
 	)
+	addJSONHeaders(req)
 
+	se.logger.Info("Calling register API", zap.String("URL", u.String()))
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to register the collector: %w", err)
 	}
 
 	defer res.Body.Close()
@@ -268,9 +163,9 @@ func (pm *sumologicExtension) register(ctx context.Context, collectorName string
 				res.StatusCode, err,
 			)
 		}
-		pm.logger.Error("Collector registration failed",
-			zap.Any("response status code", res.StatusCode),
-			zap.Any("response", buff.String()),
+		se.logger.Error("Collector registration failed",
+			zap.Int("response status code", res.StatusCode),
+			zap.String("response", buff.String()),
 		)
 		return nil
 	}
@@ -280,44 +175,44 @@ func (pm *sumologicExtension) register(ctx context.Context, collectorName string
 		return err
 	}
 
-	pm.logger.Info("Collector registered",
+	se.logger.Info("Collector registered",
 		zap.String("CollectorID", resp.CollectorId),
 		zap.Any("response", resp),
 	)
 
-	pm.registrationInfo = resp
+	se.registrationInfo = resp
 
 	return nil
 }
 
-func (pm *sumologicExtension) heartbeatLoop() {
-	if pm.registrationInfo.CollectorCredentialId == "" || pm.registrationInfo.CollectorId == "" {
-		pm.logger.Error("Collector not registered, cannot send heartbeat")
+func (se *SumologicExtension) heartbeatLoop() {
+	if se.registrationInfo.CollectorCredentialId == "" || se.registrationInfo.CollectorId == "" {
+		se.logger.Error("Collector not registered, cannot send heartbeat")
 		return
 	}
 
-	pm.logger.Info("Heartbeat heartbeat API initialized. Starting sending hearbeat requests")
+	se.logger.Info("Heartbeat heartbeat API initialized. Starting sending hearbeat requests")
 	for {
 		select {
-		case <-pm.closeChan:
-			pm.logger.Info("Heartbeat sender turn off")
+		case <-se.closeChan:
+			se.logger.Info("Heartbeat sender turn off")
 			return
 		default:
-			err := pm.sendHeartbeat()
+			err := se.sendHeartbeat()
 			if err != nil {
-				pm.logger.Error("Heartbeat error: ", zap.String("error: ", err.Error()))
+				se.logger.Error("Heartbeat error: ", zap.String("error: ", err.Error()))
 			}
-			pm.logger.Debug("Heartbeat sent")
+			se.logger.Debug("Heartbeat sent")
 			select {
-			case <-time.After(pm.conf.HeartBeatInterval):
-			case <-pm.closeChan:
+			case <-time.After(se.conf.HeartBeatInterval):
+			case <-se.closeChan:
 			}
 		}
 	}
 }
 
-func (pm *sumologicExtension) sendHeartbeat() error {
-	u, err := url.Parse(pm.baseUrl + heartbeatUrl)
+func (se *SumologicExtension) sendHeartbeat() error {
+	u, err := url.Parse(se.baseUrl + heartbeatUrl)
 	if err != nil {
 		return fmt.Errorf("unable to parse heartbeat URL %w", err)
 	}
@@ -326,8 +221,11 @@ func (pm *sumologicExtension) sendHeartbeat() error {
 		return fmt.Errorf("unable to create HTTP request %w", err)
 	}
 
-	pm.addCollectorCredentials(req)
-	pm.addJSONHeaders(req)
+	addCollectorCredentials(req,
+		se.registrationInfo.CollectorCredentialId,
+		se.registrationInfo.CollectorCredentialKey,
+	)
+	addJSONHeaders(req)
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("unable to send HTTP request: %w", err)
@@ -350,32 +248,49 @@ func (pm *sumologicExtension) sendHeartbeat() error {
 
 }
 
-func (pm *sumologicExtension) CollectorID() string {
-	return pm.registrationInfo.CollectorId
+func (se *SumologicExtension) CollectorID() string {
+	return se.registrationInfo.CollectorId
 }
 
-// Implement
-// https://github.com/open-telemetry/opentelemetry-collector/blob/2e84285efc665798d76773b9901727e8836e9d8f/config/configauth/clientauth.go#L34-L39
-// in order for this extension to be used as custom exporter authenticator.
-func (pm *sumologicExtension) RoundTripper(base http.RoundTripper) (http.RoundTripper, error) {
+func (se *SumologicExtension) BaseUrl() string {
+	return se.baseUrl
+}
+
+// Implement [1] in order for this extension to be used as custom exporter
+// authenticator.
+//
+// [1]: https://github.com/open-telemetry/opentelemetry-collector/blob/2e84285efc665798d76773b9901727e8836e9d8f/config/configauth/clientauth.go#L34-L39
+func (se *SumologicExtension) RoundTripper(base http.RoundTripper) (http.RoundTripper, error) {
 	return roundTripper{
-		accessID:  pm.conf.Credentials.AccessID,
-		accessKey: pm.conf.Credentials.AccessKey,
-		base:      base,
+		collectorCredentialId:  se.registrationInfo.CollectorCredentialId,
+		collectorCredentialKey: se.registrationInfo.CollectorCredentialKey,
+		base:                   base,
 	}, nil
 }
 
 type roundTripper struct {
-	accessID  string
-	accessKey string
-	base      http.RoundTripper
+	collectorCredentialId  string
+	collectorCredentialKey string
+	base                   http.RoundTripper
 }
 
 func (rt roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	// TODO:
-	// What is preferred: headers of basic auth?
-	req.Header.Add("accessid", rt.accessID)
-	req.Header.Add("accesskey", rt.accessKey)
+	addCollectorCredentials(req, rt.collectorCredentialId, rt.collectorCredentialKey)
 
 	return rt.base.RoundTrip(req)
+}
+
+func addClientCredentials(req *http.Request, accessID string, accessKey string) {
+	// TODO: What is preferred: headers of basic auth?
+	req.Header.Add("accessid", accessID)
+	req.Header.Add("accesskey", accessKey)
+}
+
+func addJSONHeaders(req *http.Request) {
+	req.Header.Add("Content-Type", "application/json")
+}
+
+func addCollectorCredentials(req *http.Request, collectorCredentialId string, collectorCredentialKey string) {
+	req.Header.Add("collectorCredentialId", collectorCredentialId)
+	req.Header.Add("collectorCredentialKey", collectorCredentialKey)
 }
