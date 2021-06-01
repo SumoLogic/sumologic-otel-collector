@@ -41,11 +41,9 @@ type SumologicExtension struct {
 }
 
 const (
-	// TODO: fix
-	niteBaseUrl              = "https://nite-open-events.sumologic.net"
 	heartbeatUrl             = "/api/v1/collector/heartbeat"
 	registerUrl              = "/api/v1/collector/register"
-	defaultHeartbeatInterval = 15 * time.Second
+	DefaultHeartbeatInterval = 15 * time.Second
 )
 
 func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtension, error) {
@@ -53,12 +51,11 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 		return nil, errors.New("collector name is unset")
 	}
 	if conf.HeartBeatInterval <= 0 {
-		conf.HeartBeatInterval = defaultHeartbeatInterval
+		conf.HeartBeatInterval = DefaultHeartbeatInterval
 	}
 
 	return &SumologicExtension{
-		// TODO: don't hardcode
-		baseUrl:   niteBaseUrl,
+		baseUrl:   conf.ApiBaseUrl,
 		conf:      conf,
 		logger:    logger,
 		closeChan: make(chan struct{}),

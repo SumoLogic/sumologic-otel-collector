@@ -24,7 +24,8 @@ import (
 
 const (
 	// The value of extension "type" in configuration.
-	typeStr = "sumologic"
+	typeStr           = "sumologic"
+	DefaultApiBaseUrl = "https://collectors.sumologic.com"
 )
 
 // NewFactory creates a factory for Sumo Logic extension.
@@ -39,6 +40,8 @@ func NewFactory() component.ExtensionFactory {
 func createDefaultConfig() config.Extension {
 	return &Config{
 		ExtensionSettings: config.NewExtensionSettings(config.NewID(typeStr)),
+		ApiBaseUrl:        DefaultApiBaseUrl,
+		HeartBeatInterval: DefaultHeartbeatInterval,
 	}
 }
 

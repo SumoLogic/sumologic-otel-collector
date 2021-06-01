@@ -30,6 +30,8 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 	cfg := createDefaultConfig()
 	assert.Equal(t, &Config{
 		ExtensionSettings: config.NewExtensionSettings(config.NewID(typeStr)),
+		HeartBeatInterval: DefaultHeartbeatInterval,
+		ApiBaseUrl:        DefaultApiBaseUrl,
 	}, cfg)
 
 	assert.NoError(t, configcheck.ValidateConfig(cfg))
