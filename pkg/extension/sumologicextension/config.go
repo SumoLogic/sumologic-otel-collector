@@ -40,6 +40,8 @@ type Config struct {
 	// collector is being registered.
 	CollectorCategory string `mapstructure:"collector_category"`
 
+	ApiBaseUrl string `mapstructure:"api_base_url"`
+
 	HeartBeatInterval time.Duration `mapstructure:"heartbeat_interval"`
 }
 
