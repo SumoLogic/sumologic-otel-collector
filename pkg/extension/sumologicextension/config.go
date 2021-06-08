@@ -43,6 +43,8 @@ type Config struct {
 	ApiBaseUrl string `mapstructure:"api_base_url"`
 
 	HeartBeatInterval time.Duration `mapstructure:"heartbeat_interval"`
+
+	CollectorCredentialsPath string `mapstructure:"collector_credentials_path"`
 }
 
 type credentials struct {

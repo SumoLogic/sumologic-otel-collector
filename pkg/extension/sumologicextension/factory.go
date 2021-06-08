@@ -16,6 +16,7 @@ package sumologicextension
 
 import (
 	"context"
+	"os"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
@@ -38,10 +39,17 @@ func NewFactory() component.ExtensionFactory {
 }
 
 func createDefaultConfig() config.Extension {
+	homePath, err := os.UserHomeDir()
+	if err != nil {
+		return nil
+	}
+	defaultCredsPath := homePath + collectorCredentialsDirectory
+
 	return &Config{
-		ExtensionSettings: config.NewExtensionSettings(config.NewID(typeStr)),
-		ApiBaseUrl:        DefaultApiBaseUrl,
-		HeartBeatInterval: DefaultHeartbeatInterval,
+		ExtensionSettings:        config.NewExtensionSettings(config.NewID(typeStr)),
+		ApiBaseUrl:               DefaultApiBaseUrl,
+		HeartBeatInterval:        DefaultHeartbeatInterval,
+		CollectorCredentialsPath: defaultCredsPath,
 	}
 }
 

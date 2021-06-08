@@ -17,6 +17,11 @@ package sumologicextension
 import (
 	"bytes"
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/md5"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -39,63 +44,6 @@ type SumologicExtension struct {
 	registrationInfo OpenRegisterResponsePayload
 	closeChan        chan struct{}
 	closeOnce        sync.Once
-}
-
-const (
-	heartbeatUrl             = "/api/v1/collector/heartbeat"
-	registerUrl              = "/api/v1/collector/register"
-	DefaultHeartbeatInterval = 15 * time.Second
-	collectorCredentialsPath = "/tmp/sumo_otc_creds"
-)
-
-func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtension, error) {
-	if conf.CollectorName == "" {
-		return nil, errors.New("collector name is unset")
-	}
-	if conf.HeartBeatInterval <= 0 {
-		conf.HeartBeatInterval = DefaultHeartbeatInterval
-	}
-
-	return &SumologicExtension{
-		baseUrl:   conf.ApiBaseUrl,
-		conf:      conf,
-		logger:    logger,
-		closeChan: make(chan struct{}),
-	}, nil
-}
-
-func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
-	var err error
-	if se.checkCollectorCredentials() {
-		se.logger.Debug("found stored credentials")
-		if err = se.getCollectorCredentials(); err != nil {
-			return err
-		}
-	} else {
-		se.logger.Debug("credentials not found, register collector")
-		if err = se.register(ctx); err != nil {
-			return err
-		}
-	}
-
-	go se.heartbeatLoop()
-
-	return nil
-}
-
-// Shutdown is invoked during service shutdown.
-func (se *SumologicExtension) Shutdown(ctx context.Context) error {
-	se.closeOnce.Do(func() { close(se.closeChan) })
-	err := se.storeCollectorCredentials()
-	if err != nil {
-		se.logger.Error("unable to store collector credentials", zap.String("error", err.Error()))
-	}
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-		return nil
-	}
 }
 
 type FullRegisterKeyResponse struct {
@@ -123,40 +71,175 @@ type OpenRegisterResponsePayload struct {
 	CollectorId            string `json:"collectorId"`
 }
 
+const (
+	heartbeatUrl                  = "/api/v1/collector/heartbeat"
+	registerUrl                   = "/api/v1/collector/register"
+	collectorCredentialsDirectory = "/.sumologic-otel-collector/"
+)
+
+const (
+	DefaultHeartbeatInterval = 15 * time.Second
+)
+
+func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtension, error) {
+	if conf.CollectorName == "" {
+		return nil, errors.New("collector name is unset")
+	}
+	if conf.HeartBeatInterval <= 0 {
+		conf.HeartBeatInterval = DefaultHeartbeatInterval
+	}
+
+	return &SumologicExtension{
+		baseUrl:   conf.ApiBaseUrl,
+		conf:      conf,
+		logger:    logger,
+		closeChan: make(chan struct{}),
+	}, nil
+}
+
+func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
+	if se.checkCollectorCredentials() {
+		se.logger.Debug("found stored credentials")
+		if err := se.getCollectorCredentials(); err != nil {
+			return err
+		}
+	} else {
+		se.logger.Debug("credentials not found, register collector")
+		if err := se.register(ctx); err != nil {
+			return err
+		}
+	}
+
+	go se.heartbeatLoop()
+
+	return nil
+}
+
+// Shutdown is invoked during service shutdown.
+func (se *SumologicExtension) Shutdown(ctx context.Context) error {
+	se.closeOnce.Do(func() { close(se.closeChan) })
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		err := se.storeCollectorCredentials()
+		if err != nil {
+			se.logger.Error("unable to store collector credentials", zap.String("error", err.Error()))
+		}
+		return nil
+	}
+}
+
 func (se *SumologicExtension) checkCollectorCredentials() bool {
-	if _, err := os.Stat(collectorCredentialsPath); err != nil {
+	filenameHash := createHash(se.conf.CollectorName)
+	path := se.conf.CollectorCredentialsPath + filenameHash
+	if _, err := os.Stat(path); err != nil {
 		return false
 	}
 	return true
 }
 
 func (se *SumologicExtension) getCollectorCredentials() error {
+	filenameHash := createHash(se.conf.CollectorName)
+	path := se.conf.CollectorCredentialsPath + filenameHash
 	var credentialsInfo OpenRegisterResponsePayload
-	creds, err := os.Open(collectorCredentialsPath)
+	creds, err := os.Open(path)
 	if err != nil {
 		return err
 	}
 	defer creds.Close()
-	readBytes, err := ioutil.ReadAll(creds)
+	encryptedCreds, err := ioutil.ReadAll(creds)
 	if err != nil {
 		return err
 	}
-	json.Unmarshal(readBytes, &credentialsInfo)
+	collectorCreds, err := decrypt(encryptedCreds, se.conf.CollectorName)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(collectorCreds, &credentialsInfo)
+	if err != nil {
+		return err
+	}
 	se.registrationInfo = credentialsInfo
 
 	return nil
 }
 
 func (se *SumologicExtension) storeCollectorCredentials() error {
-	data, err := json.MarshalIndent(se.registrationInfo, "", " ")
+	if err := ensureStoreCredentialsDir(se.conf.CollectorCredentialsPath); err != nil {
+		return err
+	}
+	filenameHash := createHash(se.conf.CollectorName)
+	path := se.conf.CollectorCredentialsPath + filenameHash
+	collectorCreds, err := json.MarshalIndent(se.registrationInfo, "", " ")
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(collectorCredentialsPath, data, 0666)
+	encrypedCreds, err := encrypt(collectorCreds, se.conf.CollectorName)
 	if err != nil {
+		return err
+	}
+	if err = os.WriteFile(path, encrypedCreds, 0600); err != nil {
 		return err
 	}
 	return nil
+}
+
+// check if directory to store credentials exists, if not try to create it
+func ensureStoreCredentialsDir(path string) error {
+	if _, err := os.Stat(path); err != nil {
+		err := os.Mkdir(path, 0600)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// create hash key for encrypt and decrypt functions
+func createHash(key string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(key))
+	return hex.EncodeToString(hasher.Sum(nil))
+}
+
+// function encrypts collector credentials to store them in the file
+func encrypt(data []byte, passphrase string) ([]byte, error) {
+	block, err := aes.NewCipher([]byte(createHash(passphrase)))
+	if err != nil {
+		return nil, err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, err
+	}
+	ciphertext := gcm.Seal(nonce, nonce, data, nil)
+	return ciphertext, nil
+}
+
+// function decrypts collector credentials stored in the file
+func decrypt(data []byte, passphrase string) ([]byte, error) {
+	key := []byte(createHash(passphrase))
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	nonceSize := gcm.NonceSize()
+	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, err
+	}
+	return plaintext, nil
 }
 
 func (se *SumologicExtension) register(ctx context.Context) error {
