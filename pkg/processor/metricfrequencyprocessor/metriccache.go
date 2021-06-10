@@ -11,31 +11,25 @@ type DataPoint struct {
 	Value     float64
 }
 
-type metriccache struct {
+type MetricCache struct {
 	internalCaches map[string]*cache.Cache
 }
 
-func (mc *metriccache) Register(metric pdata.Metric) {
-	if metric.DataType() != pdata.MetricDataTypeDoubleGauge {
-		return
-	}
-	gauge := metric.DoubleGauge().DataPoints()
+func (mc *MetricCache) Register(name string, dataPoint pdata.DoubleDataPoint) {
 
-	internalCache, found := mc.internalCaches[metric.Name()]
+	internalCache, found := mc.internalCaches[name]
 	if !found {
 		newCache := mc.newCache()
-		mc.internalCaches[metric.Name()] = newCache
+		mc.internalCaches[name] = newCache
 		internalCache = newCache
 	}
 
-	for i := 0; i < gauge.Len(); i++ {
-		key := gauge.At(i).Timestamp().String()
-		value := &DataPoint{Timestamp: gauge.At(i).Timestamp(), Value: gauge.At(i).Value()}
-		internalCache.Set(key, value, cache.DefaultExpiration)
-	}
+	key := dataPoint.Timestamp().String()
+	value := &DataPoint{Timestamp: dataPoint.Timestamp(), Value: dataPoint.Value()}
+	internalCache.Set(key, value, cache.DefaultExpiration)
 }
 
-func (mc *metriccache) List(metricName string) map[pdata.Timestamp]float64 {
+func (mc *MetricCache) List(metricName string) map[pdata.Timestamp]float64 {
 	out := make(map[pdata.Timestamp]float64)
 	internalCache, found := mc.internalCaches[metricName]
 	if found {
@@ -48,7 +42,7 @@ func (mc *metriccache) List(metricName string) map[pdata.Timestamp]float64 {
 	return out
 }
 
-func (mc *metriccache) Cleanup() {
+func (mc *MetricCache) Cleanup() {
 	for key, internalCache := range mc.internalCaches {
 		if internalCache.ItemCount() == 0 {
 			delete(mc.internalCaches, key)
@@ -56,6 +50,6 @@ func (mc *metriccache) Cleanup() {
 	}
 }
 
-func (mc *metriccache) newCache() *cache.Cache {
+func (mc *MetricCache) newCache() *cache.Cache {
 	return cache.New(time.Hour*1, time.Minute*10)
 }

@@ -6,6 +6,7 @@ import (
 )
 
 type metricsfrequencyprocessor struct {
+	sieve *MetricSieve
 }
 
 func (mfp *metricsfrequencyprocessor) ProcessMetrics(_ context.Context, md pdata.Metrics) (pdata.Metrics, error) {
@@ -16,17 +17,13 @@ func (mfp *metricsfrequencyprocessor) ProcessMetrics(_ context.Context, md pdata
 		for j := 0; j < ilms.Len(); j++ {
 			ilm := ilms.At(j)
 			metrics := ilm.Metrics()
-			metrics.RemoveIf(mfp.filter)
+			metrics.RemoveIf(mfp.sieve.Sift)
 		}
 		ilms.RemoveIf(metricSliceEmpty)
 	}
 	rms.RemoveIf(ilmSliceEmpty)
 
 	return md, nil
-}
-
-func (mfp *metricsfrequencyprocessor) filter(metric pdata.Metric) bool {
-	return true
 }
 
 func metricSliceEmpty(metrics pdata.InstrumentationLibraryMetrics) bool {
