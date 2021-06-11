@@ -17,9 +17,9 @@ type MetricCache struct {
 
 func (mc *MetricCache) Register(name string, dataPoint pdata.DoubleDataPoint) {
 
-	internalCache, found := mc.internalCaches[name]
-	if !found {
-		newCache := mc.newCache()
+	internalCache, exists := mc.internalCaches[name]
+	if !exists {
+		newCache := newCache()
 		mc.internalCaches[name] = newCache
 		internalCache = newCache
 	}
@@ -50,6 +50,6 @@ func (mc *MetricCache) Cleanup() {
 	}
 }
 
-func (mc *MetricCache) newCache() *cache.Cache {
+func newCache() *cache.Cache {
 	return cache.New(time.Hour*1, time.Minute*10)
 }

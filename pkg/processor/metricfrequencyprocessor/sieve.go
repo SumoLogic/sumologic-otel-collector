@@ -10,17 +10,23 @@ import (
 const (
 	float64EqualityThreshold = 1e-9
 	minPointAccumulationTime = time.Minute * 15
-	category1ReportFrequency = time.Second * 30
+	category1ReportFrequency = time.Minute * 5
 	category2ReportFrequency = time.Minute * 2
-	category3ReportFrequency = time.Minute * 5
+	category3ReportFrequency = time.Second * 30
 	safetyInterval           = time.Second * 1
 
 	iqrAnomalyCoef            = 1.5
 	variationIqrThresholdCoef = 4
 )
 
+// MetricSieve removes data points from MetricSlices that would be reported more often than preset
+// frequency for a given category.
+// For metric sieve, there are three categories of metrics:
+// 1) Constant metrics
+// 2) Low info metrics - i.e. no anomaly in terms of iqr and low variation
+// 3) All other metrics
 type MetricSieve struct {
-	metricCache  MetricCache
+	metricCache  *MetricCache
 	lastReported map[string]pdata.Timestamp
 }
 
@@ -42,7 +48,11 @@ func (fs *MetricSieve) siftDataPoint(name string) func(pdata.DoubleDataPoint) bo
 	return func(dataPoint pdata.DoubleDataPoint) bool {
 		cachedPoints := fs.metricCache.List(name)
 		fs.metricCache.Register(name, dataPoint)
-		lastReported, _ := fs.lastReported[name]
+		lastReported, exists := fs.lastReported[name]
+		if !exists {
+			fs.lastReported[name] = dataPoint.Timestamp()
+			return false
+		}
 		earliest := earliestTimestamp(cachedPoints)
 		cachedPoints[dataPoint.Timestamp()] = dataPoint.Value()
 
@@ -51,7 +61,7 @@ func (fs *MetricSieve) siftDataPoint(name string) func(pdata.DoubleDataPoint) bo
 			return false
 		}
 
-		if pastCategoryFrequency(dataPoint, lastReported, category3ReportFrequency) {
+		if pastCategoryFrequency(dataPoint, lastReported, category1ReportFrequency) {
 			fs.lastReported[name] = dataPoint.Timestamp()
 			return false
 		}
@@ -69,7 +79,7 @@ func (fs *MetricSieve) siftDataPoint(name string) func(pdata.DoubleDataPoint) bo
 			return true
 		}
 
-		if pastCategoryFrequency(dataPoint, lastReported, category1ReportFrequency) {
+		if pastCategoryFrequency(dataPoint, lastReported, category3ReportFrequency) {
 			fs.lastReported[name] = dataPoint.Timestamp()
 			return false
 		}
@@ -96,14 +106,18 @@ func isConstant(point pdata.DoubleDataPoint, points map[pdata.Timestamp]float64)
 	return true
 }
 
+// heuristic attempt at defining uninteresting metrics. Requirements:
+// 1) no big changes - defined by no iqr anomalies
+// 2) little oscillations - defined by low variation
 func isLowInformation(points map[pdata.Timestamp]float64) bool {
 	q1, q3 := calculateQ1Q3(points)
 	iqr := q3 - q1
 	variation := calculateVariation(points)
 
-	return withingBounds(points, q1-iqrAnomalyCoef*iqr, q3+iqrAnomalyCoef*iqr) && lowVariation(variation, iqr)
+	return withinBounds(points, q1-iqrAnomalyCoef*iqr, q3+iqrAnomalyCoef*iqr) && lowVariation(variation, iqr)
 }
 
+// refers to quantiles - .25 and .75 respectively
 func calculateQ1Q3(points map[pdata.Timestamp]float64) (float64, float64) {
 	values := valueSlice(points)
 	sort.Float64s(values)
@@ -112,7 +126,7 @@ func calculateQ1Q3(points map[pdata.Timestamp]float64) (float64, float64) {
 	return values[q1Index], values[q3Index]
 }
 
-func withingBounds(points map[pdata.Timestamp]float64, lowerBound float64, upperBound float64) bool {
+func withinBounds(points map[pdata.Timestamp]float64, lowerBound float64, upperBound float64) bool {
 	for _, v := range points {
 		if v < lowerBound {
 			return false
@@ -125,6 +139,7 @@ func withingBounds(points map[pdata.Timestamp]float64, lowerBound float64, upper
 	return true
 }
 
+// sum of absolute values of differences of subsequent data points
 func calculateVariation(points map[pdata.Timestamp]float64) float64 {
 	keys := keySlice(points)
 	sortTimestampArray(keys)

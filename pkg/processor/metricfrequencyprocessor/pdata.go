@@ -16,9 +16,7 @@ func (pta PdataTimestampArr) Less(i, j int) bool {
 }
 
 func (pta PdataTimestampArr) Swap(i, j int) {
-	placeholder := pta[i]
-	pta[i] = pta[j]
-	pta[j] = placeholder
+	pta[i], pta[j] = pta[j], pta[i]
 }
 
 func sortTimestampArray(timestamps []pdata.Timestamp) {
