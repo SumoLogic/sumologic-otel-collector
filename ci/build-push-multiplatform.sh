@@ -32,19 +32,28 @@ fi
 # linux/arm/v7, linux/arm/v6
 function build() {
     local BUILD_ARCH
+    set -x
 
     case "${PLATFORM}" in
-    "linux/amd64")
+    "linux/amd64"|"linux_amd64")
         readonly BUILD_ARCH="amd64"
+        PLATFORM="linux/amd64"
         ;;
 
-    "linux/arm64")
+    "linux/arm64"|"linux_arm64")
         readonly BUILD_ARCH="arm64"
+        PLATFORM="linux/arm64"
         ;;
 
-    "linux/arm/v7")
-        readonly BUILD_ARCH="arm_v7"
-        ;;
+    # Can't really enable it for now because:
+    # !shopify/sarama@v1.29.0/gssapi_kerberos.go:62:10: constant 4294967295 overflows int
+    # ref: https://github.com/SumoLogic/sumologic-otel-collector/runs/2805247906
+    # If we'd like to support arm then we'd need to provide a patch in sarama.
+    #
+    # "linux/arm/v7"|"linux_arm_v7"|"linux/arm"|"linux_arm")
+    #     readonly BUILD_ARCH="arm"
+    #     PLATFORM="linux/arm/v7"
+    #     ;;
 
     *)
         echo "Unsupported platform ${PLATFORM}"
@@ -54,16 +63,24 @@ function build() {
 
     local TAG
     readonly TAG="${REPO_URL}:${BUILD_TAG}-${BUILD_ARCH}"
+    local LATEST_TAG
+    readonly LATEST_TAG="${REPO_URL}:latest-${BUILD_ARCH}"
 
-    echo "Building tag:${TAG}"
+    echo "Building tag: ${TAG}"
     docker buildx build \
         --push \
         --file "${DOCKERFILE}" \
-		--build-arg BUILD_TAG="${BUILD_TAG}" \
-		--build-arg BUILDKIT_INLINE_CACHE=1 \
+        --build-arg BUILD_TAG="${BUILD_TAG}" \
+        --build-arg BUILDKIT_INLINE_CACHE=1 \
         --platform="${PLATFORM}" \
         --tag "${TAG}" \
         .
+
+    echo "Tagging: ${LATEST_TAG}"
+    # Why is this needeed on CI?
+    docker pull "${TAG}"
+    docker tag "${TAG}" "${LATEST_TAG}"
+    docker push "${LATEST_TAG}"
 }
 
 build "${PLATFORM}"

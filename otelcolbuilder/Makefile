@@ -52,6 +52,10 @@ otelcol-sumo-linux_amd64:
 otelcol-sumo-linux_arm64:
 	GOOS=linux   GOARCH=arm64 $(MAKE) build BINARY_NAME=otelcol-sumo-linux_arm64
 
+.PHONY: otelcol-sumo-linux_arm
+otelcol-sumo-linux_arm:
+	GOOS=linux   GOARCH=arm $(MAKE) build BINARY_NAME=otelcol-sumo-linux_arm
+
 .PHONY: otelcol-sumo-windows_amd64
 otelcol-sumo-windows_amd64:
 	GOOS=windows GOARCH=amd64 $(MAKE) build BINARY_NAME=otelcol-sumo-windows_amd64.exe

@@ -66,6 +66,11 @@ function push_manifest() {
         "${REPO_URL}:${BUILD_TAG}" \
         "${TAGS_IN_MANIFEST[@]}"
     docker manifest push "${REPO_URL}:${BUILD_TAG}"
+
+    docker manifest create --amend \
+        "${REPO_URL}:latest" \
+        "${TAGS_IN_MANIFEST[@]}"
+    docker manifest push "${REPO_URL}:latest"
 }
 
 push_manifest
