@@ -46,16 +46,6 @@ type SumologicExtension struct {
 	closeOnce        sync.Once
 }
 
-type FullRegisterKeyResponse struct {
-	CollectorID   int64         `json:"collectorId"`
-	CredentialID  string        `json:"credentialId"`
-	CredentialKey string        `json:"credentialKey"`
-	CustomerID    int64         `json:"customerId"`
-	Errors        []interface{} `json:"errors"`
-	HTTPCode      int64         `json:"httpCode"`
-	Warnings      []interface{} `json:"warnings"`
-}
-
 type OpenRegisterRequestPayload struct {
 	CollectorName string `json:"collectorName"`
 	Ephemeral     bool   `json:"ephemeral"`
@@ -130,8 +120,13 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 	}
 }
 
+// verification if there are stored credentials for collector
 func (se *SumologicExtension) checkCollectorCredentials() bool {
-	filenameHash := createHash(se.conf.CollectorName)
+	filenameHash, err := createHash(se.conf.CollectorName)
+	if err != nil {
+		se.logger.Error("Unable to verify collector name")
+		return false
+	}
 	path := se.conf.CollectorCredentialsPath + filenameHash
 	if _, err := os.Stat(path); err != nil {
 		return false
@@ -139,8 +134,12 @@ func (se *SumologicExtension) checkCollectorCredentials() bool {
 	return true
 }
 
+// get and decrypt collector credentials content stored in file
 func (se *SumologicExtension) getCollectorCredentials() error {
-	filenameHash := createHash(se.conf.CollectorName)
+	filenameHash, err := createHash(se.conf.CollectorName)
+	if err != nil {
+		return err
+	}
 	path := se.conf.CollectorCredentialsPath + filenameHash
 	var credentialsInfo OpenRegisterResponsePayload
 	creds, err := os.Open(path)
@@ -166,11 +165,15 @@ func (se *SumologicExtension) getCollectorCredentials() error {
 	return nil
 }
 
+// encrypt nad store collector credentials in file
 func (se *SumologicExtension) storeCollectorCredentials() error {
 	if err := ensureStoreCredentialsDir(se.conf.CollectorCredentialsPath); err != nil {
 		return err
 	}
-	filenameHash := createHash(se.conf.CollectorName)
+	filenameHash, err := createHash(se.conf.CollectorName)
+	if err != nil {
+		return err
+	}
 	path := se.conf.CollectorCredentialsPath + filenameHash
 	collectorCreds, err := json.MarshalIndent(se.registrationInfo, "", " ")
 	if err != nil {
@@ -198,15 +201,21 @@ func ensureStoreCredentialsDir(path string) error {
 }
 
 // create hash key for encrypt and decrypt functions
-func createHash(key string) string {
+func createHash(key string) (string, error) {
 	hasher := md5.New()
-	hasher.Write([]byte(key))
-	return hex.EncodeToString(hasher.Sum(nil))
+	if _, err := hasher.Write([]byte(key)); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
 // function encrypts collector credentials to store them in the file
 func encrypt(data []byte, passphrase string) ([]byte, error) {
-	block, err := aes.NewCipher([]byte(createHash(passphrase)))
+	hash, err := createHash(passphrase)
+	if err != nil {
+		return nil, err
+	}
+	block, err := aes.NewCipher([]byte(hash))
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +233,11 @@ func encrypt(data []byte, passphrase string) ([]byte, error) {
 
 // function decrypts collector credentials stored in the file
 func decrypt(data []byte, passphrase string) ([]byte, error) {
-	key := []byte(createHash(passphrase))
+	hash, err := createHash(passphrase)
+	if err != nil {
+		return nil, err
+	}
+	key := []byte(hash)
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
