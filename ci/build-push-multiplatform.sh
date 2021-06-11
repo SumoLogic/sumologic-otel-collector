@@ -19,7 +19,10 @@ if [[ -z "${REPO_URL}" ]]; then
     exit 1
 fi
 
-TAGS_IN_MANIFEST=()
+if [[ -z "${PLATFORM}" ]]; then
+    echo "No PLATFORM passed in"
+    exit 1
+fi
 
 # build builds a container image for a designated platform.
 #
@@ -28,25 +31,18 @@ TAGS_IN_MANIFEST=()
 # e.g.linux/amd64, linux/arm64, linux/ppc64le, linux/s390x, linux/386,
 # linux/arm/v7, linux/arm/v6
 function build() {
-    local PLATFORM
-    readonly PLATFORM="${1}"
-
-    local BUILD_OS
     local BUILD_ARCH
 
     case "${PLATFORM}" in
     "linux/amd64")
-        readonly BUILD_OS="linux"
         readonly BUILD_ARCH="amd64"
         ;;
 
     "linux/arm64")
-        readonly BUILD_OS="linux"
         readonly BUILD_ARCH="arm64"
         ;;
 
     "linux/arm/v7")
-        readonly BUILD_OS="linux"
         readonly BUILD_ARCH="arm_v7"
         ;;
 
@@ -56,55 +52,18 @@ function build() {
         ;;
     esac
 
-    local TAG="${REPO_URL}:${BUILD_TAG}-${BUILD_ARCH}"
-    TAGS_IN_MANIFEST+=("${TAG}")
-
+    local TAG
+    readonly TAG="${REPO_URL}:${BUILD_TAG}-${BUILD_ARCH}"
 
     echo "Building tag:${TAG}"
     docker buildx build \
         --push \
         --file "${DOCKERFILE}" \
-        --progress tty \
+		--build-arg BUILD_TAG="${BUILD_TAG}" \
+		--build-arg BUILDKIT_INLINE_CACHE=1 \
         --platform="${PLATFORM}" \
         --tag "${TAG}" \
-        . &
-
-    case "${BUILD_ARCH}" in
-    "amd64")
-        readonly amd64_pid=$!
-        ;;
-
-    "arm64")
-        readonly arm64_pid=$!
-        ;;
-
-    "arm_v7")
-        readonly arm_v7_pid=$!
-        ;;
-
-    *)
-        echo "Unsupported platform ${BUILD_ARCH}"
-        exit 1
-        ;;
-    esac
+        .
 }
 
-build "linux/amd64"
-build "linux/arm64"
-build "linux/arm/v7"
-
-wait "${amd64_pid}"
-wait "${arm64_pid}"
-wait "${arm_v7_pid}"
-
-echo "Tags in the manifest:"
-for tag in "${TAGS_IN_MANIFEST[@]}"
-do
-    echo "${tag}"
-done
-
-docker manifest create --amend \
-    "${REPO_URL}:${BUILD_TAG}" \
-    "${TAGS_IN_MANIFEST[@]}"
-
-docker manifest push "${REPO_URL}:${BUILD_TAG}"
+build "${PLATFORM}"

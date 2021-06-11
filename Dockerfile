@@ -1,7 +1,8 @@
 FROM golang:1.16.4 as builder
 ADD . /src
 WORKDIR /src/otelcolbuilder/
-RUN make install && make build
+RUN make install
+RUN make build
 
 FROM alpine:3.13 as certs
 RUN apk --update add ca-certificates
