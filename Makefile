@@ -34,3 +34,72 @@ for-all:
 	  	echo "running $${CMD} in $${dir}" && \
 	 	$${CMD} ); \
 	done
+
+################################################################################
+# Build
+################################################################################
+
+BUILD_TAG ?= latest
+BUILD_CACHE_TAG = latest-builder-cache
+IMAGE_NAME = sumologic-otel-collector
+IMAGE_NAME_DEV = sumologic-otel-collector-dev
+
+OPENSOURCE_ECR_URL = public.ecr.aws/a4t4y2n3
+OPENSOURCE_REPO_URL = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME)
+OPENSOURCE_REPO_URL_DEV = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME_DEV)
+
+.PHONY: _build
+_build:
+	DOCKER_BUILDKIT=1 docker build \
+		--file $(DOCKERFILE) \
+		--build-arg BUILDKIT_INLINE_CACHE=1 \
+		--cache-from $(REPO_URL):$(BUILD_CACHE_TAG) \
+		--target builder \
+		--tag $(IMG):$(BUILD_CACHE_TAG) \
+		.
+
+	DOCKER_BUILDKIT=1 docker build \
+		--file $(DOCKERFILE) \
+		--build-arg BUILD_TAG=$(TAG) \
+		--build-arg BUILDKIT_INLINE_CACHE=1 \
+		--cache-from $(REPO_URL):$(BUILD_CACHE_TAG) \
+		--cache-from $(REPO_URL):$(TAG) \
+		--tag $(IMG):$(TAG) \
+		.
+
+.PHONY: build-container
+build-container:
+	$(MAKE) _build IMG="$(IMAGE_NAME)" \
+		DOCKERFILE="Dockerfile" \
+		TAG="$(BUILD_TAG)" \
+		REPO_URL="$(OPENSOURCE_REPO_URL)"
+
+.PHONY: build-container-dev
+build-container-dev:
+	$(MAKE) _build IMG="$(IMAGE_NAME_DEV)" \
+		DOCKERFILE="Dockerfile_dev" \
+		TAG="$(BUILD_TAG)" \
+		REPO_URL="$(OPENSOURCE_REPO_URL_DEV)"
+
+.PHONY: _build-push-multiplatform
+_build-push-multiplatform:
+	./ci/build-push-multiplatform.sh
+
+.PHONY: build-push-multiplatform-dev
+build-push-multiplatform-dev:
+	$(MAKE) REPO_URL=$(OPENSOURCE_REPO_URL_DEV) \
+		BUILD_TAG=$(BUILD_TAG) \
+		DOCKERFILE="Dockerfile_dev" \
+		_build-push-multiplatform
+
+.PHONY: build-push-multiplatform
+build-push-multiplatform:
+	$(MAKE) REPO_URL=$(OPENSOURCE_REPO_URL) \
+		BUILD_TAG=$(BUILD_TAG) \
+		DOCKERFILE="Dockerfile" \
+		_build-push-multiplatform
+
+.PHONY: login
+login:
+	aws ecr-public get-login-password --region us-east-1 \
+	| docker login --username AWS --password-stdin $(OPENSOURCE_ECR_URL)

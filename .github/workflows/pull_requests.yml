@@ -118,3 +118,34 @@ jobs:
         run: |
           go version -m otelcol-sumo-${{matrix.arch_os}} | \
           grep -E "/(receiver|exporter|processor|extension)/"
+
+  build-container-images:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2.3.4
+
+      - name: Extract tag
+        id: extract_tag
+        run: echo "::set-output name=tag::$(git rev-parse HEAD)"
+
+      - name: Print tag
+        run: echo "Running release build for ${{ steps.extract_tag.outputs.tag }}"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1.2.0
+
+      - name: Set up Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1.3.0
+
+      - name: Show Buildx platforms
+        run: echo ${{ steps.buildx.outputs.platforms }}
+
+      - name: Login to Open Source ECR
+        run: make login
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+
+      - name: Build and push image to Open Source ECR
+        run: make build-push-multiplatform-dev BUILD_TAG=${{ steps.extract_tag.outputs.tag }}
