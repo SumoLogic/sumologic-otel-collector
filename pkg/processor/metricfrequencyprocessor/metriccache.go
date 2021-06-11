@@ -34,7 +34,10 @@ func (mc *MetricCache) List(metricName string) map[pdata.Timestamp]float64 {
 	internalCache, found := mc.internalCaches[metricName]
 	if found {
 		for _, item := range internalCache.Items() {
-			dataPoint := item.Object.(*DataPoint)
+			dataPoint, err := item.Object.(*DataPoint)
+			if err {
+				panic(err)
+			}
 			out[dataPoint.Timestamp] = dataPoint.Value
 		}
 	}
