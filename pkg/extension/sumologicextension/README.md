@@ -23,7 +23,7 @@ exporters:
   logging:
     loglevel: debug
   sumologic:
-    endpoint: http://localhost:3000/
+    endpoint: "" # Leave it empty so we know we should fill it automatically
     auth:
       authenticator: sumologic
 
