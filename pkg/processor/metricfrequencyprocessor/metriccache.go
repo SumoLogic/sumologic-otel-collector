@@ -1,6 +1,7 @@
 package metricfrequencyprocessor
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/patrickmn/go-cache"
