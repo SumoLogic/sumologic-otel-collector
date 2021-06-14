@@ -8,7 +8,12 @@ The following configuration options are supported:
 - `compress_encoding` (optional): Compression encoding format, either empty string (`""`), `gzip` or `deflate` (default `gzip`).
 Empty string means no compression
 - `max_request_body_size` (optional): Max HTTP request body size in bytes before compression (if applied). By default `1_048_576` (1MB) is used.
-- `metadata_attributes` (optional): List of regexes for attributes which should be send as metadata
+- `translate_metadata` (optional): Specifies whether metadata attributes should be translated
+  from OpenTelemetry to Sumo conventions.
+  See [Metadata translation](#metadata-translation).
+  Default is `true`.
+- `metadata_attributes` (optional): List of regexes for attributes which should be sent as metadata.
+  Use OpenTelemetry attribute names (see [Metadata translation](#metadata-translation)).
 - `log_format` (optional) (logs only): Format to use when sending logs to Sumo. (default `json`) (possible values: `json`, `text`, `otlp`)
 - `metric_format` (optional) (metrics only): Format of the metrics to be sent (default is `prometheus`) (possible values: `carbon2`, `graphite`, `otlp`, `prometheus`).
 - `graphite_template` (default=`%{_metric_}`) (optional) (metrics only): Template for Graphite format.
@@ -35,11 +40,46 @@ Maximum connection timeout is 55s.
     - `num_seconds` is the number of seconds to buffer in case of a backend outage
     - `requests_per_second` is the average number of requests per seconds.
 
+## Metadata translation
+
+Metadata translation changes some of the attribute keys from OpenTelemetry convention to Sumo convention.
+For example, OpenTelemetry convention for the attribute containing Kubernetes pod name is `k8s.pod.name`,
+but Sumo expects it to be in attribute named `pod`.
+
+This feature is turned on by default.
+To turn it off, set the `translate_metadata` configuration option to `false`.
+Note that this may cause some of Sumo apps, built-in dashboards to not work correctly.
+
+Below is a list of all metadata keys that are being translated.
+
+| OTC key name            | Sumo key name    |
+|-------------------------|------------------|
+| cloud.account.id        | accountId        |
+| cloud.availability_zone | availabilityZone |
+| cloud.platform          | aws_service      |
+| cloud.region            | region           |
+| host.id                 | instanceId       |
+| host.name               | host             |
+| host.type               | instanceType     |
+| k8s.cluster.name        | cluster          |
+| k8s.container.name      | container        |
+| k8s.daemonset.name      | daemonset        |
+| k8s.deployment.name     | deployment       |
+| k8s.namespace.name      | namespace        |
+| k8s.node.name           | node             |
+| k8s.pod.hostname        | host             |
+| k8s.pod.name            | pod              |
+| k8s.pod.uid             | pod_id           |
+| k8s.replicaset.name     | replicaset       |
+| k8s.statefulset.name    | statefulset      |
+| service.name            | service          |
+
 ## Source Templates
 
 You can specify a template with an attribute for `source_category`, `source_name`, `source_host` or `graphite_template` using `%{attr_name}`.
 
 For example, when there is an attribute `my_attr`: `my_value`, `metrics/%{my_attr}` would be expanded to `metrics/my_value`.
+Use OpenTelemetry attribute names, even when [metadata translation](#metadata-translation) is turned on.
 
 For `graphite_template`, in addition to above, `%{_metric_}` is going to be replaced with metric name.
 
