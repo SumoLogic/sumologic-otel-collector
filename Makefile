@@ -83,6 +83,8 @@ build-container-dev:
 
 #-------------------------------------------------------------------------------
 
+# dev
+
 .PHONY: build-container-multiplatform-dev
 build-container-multiplatform-dev:
 	BUILD_TAG="$(BUILD_TAG)" \
@@ -95,6 +97,22 @@ build-container-multiplatform-dev:
 push-container-manifest-dev:
 	BUILD_TAG="$(BUILD_TAG)" \
 		REPO_URL="$(OPENSOURCE_REPO_URL_DEV)" \
+		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
+
+# release
+
+.PHONY: build-container-multiplatform
+build-container-multiplatform:
+	BUILD_TAG="$(BUILD_TAG)" \
+		REPO_URL="$(OPENSOURCE_REPO_URL)" \
+		DOCKERFILE="Dockerfile" \
+		PLATFORM="$(PLATFORM)" \
+		./ci/build-push-multiplatform.sh
+
+.PHONY: push-container-manifest
+push-container-manifest:
+	BUILD_TAG="$(BUILD_TAG)" \
+		REPO_URL="$(OPENSOURCE_REPO_URL)" \
 		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
 
 #-------------------------------------------------------------------------------
