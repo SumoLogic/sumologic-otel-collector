@@ -73,6 +73,7 @@ const (
 	contentTypePrometheus string = "application/vnd.sumologic.prometheus"
 	contentTypeCarbon2    string = "application/vnd.sumologic.carbon2"
 	contentTypeGraphite   string = "application/vnd.sumologic.graphite"
+	contentTypeOTLP       string = "application/x-protobuf"
 
 	contentEncodingGzip    string = "gzip"
 	contentEncodingDeflate string = "deflate"
@@ -179,6 +180,12 @@ func (s *sender) logToJSON(record pdata.LogRecord) (string, error) {
 // to configured LogFormat and as the result of execution
 // returns array of records which has not been sent correctly and error
 func (s *sender) sendLogs(ctx context.Context, flds fields) ([]pdata.LogRecord, error) {
+
+	// Follow different execution path for OTLP format
+	if s.config.LogFormat == OTLPLogFormat {
+		return s.sendOTLPLogs(ctx, flds)
+	}
+
 	var (
 		body           strings.Builder
 		errs           []error
@@ -239,6 +246,34 @@ func (s *sender) sendLogs(ctx context.Context, flds fields) ([]pdata.LogRecord, 
 		return droppedRecords, consumererror.Combine(errs)
 	}
 	return droppedRecords, nil
+}
+
+// sendLogs sends log records from the logBuffer in OTLP format and as a result
+// it returns an array of records which has not been sent correctly and an error.
+// TODO: add support for HTTP limits
+func (s *sender) sendOTLPLogs(ctx context.Context, flds fields) ([]pdata.LogRecord, error) {
+	ld := pdata.NewLogs()
+	rls := ld.ResourceLogs()
+	rls.Resize(1)
+	rl := rls.At(0)
+	ills := rl.InstrumentationLibraryLogs()
+	ills.Resize(1)
+	ill := ills.At(0)
+	logs := ill.Logs()
+	logs.Resize(len(s.logBuffer))
+	for i, record := range s.logBuffer {
+		record.CopyTo(logs.At(i))
+	}
+
+	body, err := ld.ToOtlpProtoBytes()
+	if err != nil {
+		return s.logBuffer, err
+	}
+
+	if err := s.send(ctx, LogsPipeline, bytes.NewReader(body), flds); err != nil {
+		return s.logBuffer, err
+	}
+	return nil, nil
 }
 
 // sendMetrics sends metrics in right format basing on the s.config.MetricFormat
@@ -426,8 +461,13 @@ func addSourcesHeaders(req *http.Request, sources sourceFormats, flds fields) {
 	}
 }
 
-func addLogsHeaders(req *http.Request, flds fields) {
-	req.Header.Add(headerContentType, contentTypeLogs)
+func addLogsHeaders(req *http.Request, lf LogFormatType, flds fields) {
+	switch lf {
+	case OTLPLogFormat:
+		req.Header.Add(headerContentType, contentTypeOTLP)
+	default:
+		req.Header.Add(headerContentType, contentTypeLogs)
+	}
 	req.Header.Add(headerFields, flds.string())
 }
 
@@ -455,7 +495,7 @@ func (s *sender) addRequestHeaders(req *http.Request, pipeline PipelineType, fld
 
 	switch pipeline {
 	case LogsPipeline:
-		addLogsHeaders(req, flds)
+		addLogsHeaders(req, s.config.LogFormat, flds)
 	case MetricsPipeline:
 		if err := addMetricsHeaders(req, s.config.MetricFormat); err != nil {
 			return err

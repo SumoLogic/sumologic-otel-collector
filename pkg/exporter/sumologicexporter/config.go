@@ -40,6 +40,7 @@ type Config struct {
 	// Format to post logs into Sumo. (default json)
 	//   * text - Logs will appear in Sumo Logic in text format.
 	//   * json - Logs will appear in Sumo Logic in json format.
+	//   * otlp - Logs will be send in otlp format and will appear in Sumo Logic in text format.
 	LogFormat LogFormatType `mapstructure:"log_format"`
 
 	// Metrics related configuration
@@ -94,6 +95,8 @@ const (
 	TextFormat LogFormatType = "text"
 	// JSONFormat represents log_format: json
 	JSONFormat LogFormatType = "json"
+	// OTLPLogFormat represents log_format: otlp
+	OTLPLogFormat LogFormatType = "otlp"
 	// GraphiteFormat represents metric_format: text
 	GraphiteFormat MetricFormatType = "graphite"
 	// Carbon2Format represents metric_format: json
