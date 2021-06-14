@@ -4,11 +4,14 @@ import (
 	"context"
 
 	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/processor/processorhelper"
 )
 
 type metricsfrequencyprocessor struct {
 	sieve *MetricSieve
 }
+
+var _ processorhelper.MProcessor = (*metricsfrequencyprocessor)(nil)
 
 func (mfp *metricsfrequencyprocessor) ProcessMetrics(_ context.Context, md pdata.Metrics) (pdata.Metrics, error) {
 	rms := md.ResourceMetrics()
