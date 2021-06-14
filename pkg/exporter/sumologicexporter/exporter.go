@@ -49,6 +49,7 @@ func initExporter(cfg *Config) (*sumologicexporter, error) {
 	switch cfg.LogFormat {
 	case JSONFormat:
 	case TextFormat:
+	case OTLPLogFormat:
 	default:
 		return nil, fmt.Errorf("unexpected log format: %s", cfg.LogFormat)
 	}
