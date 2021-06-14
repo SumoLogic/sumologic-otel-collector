@@ -47,7 +47,16 @@ type exporterTest struct {
 	exp *sumologicexporter
 }
 
-func prepareExporterTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.Request)) *exporterTest {
+func createTestConfig() *Config {
+	config := createDefaultConfig().(*Config)
+	config.CompressEncoding = NoCompression
+	config.LogFormat = TextFormat
+	config.MaxRequestBodySize = 20_971_520
+	config.MetricFormat = Carbon2Format
+	return config
+}
+
+func prepareExporterTest(t *testing.T, cfg *Config, cb []func(w http.ResponseWriter, req *http.Request)) *exporterTest {
 	var reqCounter int32
 	// generate a test server so we can capture and inspect the request
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -61,16 +70,8 @@ func prepareExporterTest(t *testing.T, cb []func(w http.ResponseWriter, req *htt
 		}
 	}))
 
-	cfg := &Config{
-		HTTPClientSettings: confighttp.HTTPClientSettings{
-			Endpoint: testServer.URL,
-			Timeout:  defaultTimeout,
-		},
-		LogFormat:          "text",
-		MetricFormat:       "carbon2",
-		Client:             "otelcol",
-		MaxRequestBodySize: 20_971_520,
-	}
+	cfg.HTTPClientSettings.Endpoint = testServer.URL
+
 	exp, err := initExporter(cfg)
 	require.NoError(t, err)
 
@@ -153,7 +154,7 @@ func TestInitExporterInvalidEndpoint(t *testing.T) {
 }
 
 func TestAllSuccess(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, `Example log`, body)
@@ -169,7 +170,7 @@ func TestAllSuccess(t *testing.T) {
 }
 
 func TestResourceMerge(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, `Example log`, body)
@@ -192,7 +193,7 @@ func TestResourceMerge(t *testing.T) {
 }
 
 func TestAllFailed(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -214,7 +215,7 @@ func TestAllFailed(t *testing.T) {
 }
 
 func TestPartiallyFailed(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -281,7 +282,7 @@ func TestInvalidHTTPCLient(t *testing.T) {
 }
 
 func TestPushInvalidCompressor(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, `Example log`, body)
@@ -299,7 +300,7 @@ func TestPushInvalidCompressor(t *testing.T) {
 }
 
 func TestPushFailedBatch(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 			body := extractBody(t, req)
@@ -335,8 +336,59 @@ func TestPushFailedBatch(t *testing.T) {
 	assert.EqualError(t, err, "error during sending data: 500 Internal Server Error")
 }
 
+func TestPushLogsWithMetadataTranslation(t *testing.T) {
+	logs := LogRecordsToLogs(exampleLog())
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.name", "harry-potter")
+
+	config := createTestConfig()
+	config.MetadataAttributes = []string{`host\.name`}
+	config.SourceCategory = "%{host.name}"
+	config.SourceHost = "%{host}"
+
+	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, `Example log`, body)
+			assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))
+			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
+			assert.Equal(t, "", req.Header.Get("X-Sumo-Host"))
+		},
+	}
+	test := prepareExporterTest(t, config, expectedRequests)
+	defer func() { test.srv.Close() }()
+
+	err := test.exp.pushLogsData(context.Background(), logs)
+	assert.NoError(t, err)
+}
+
+func TestPushLogsWithMetadataTranslationDisabled(t *testing.T) {
+	logs := LogRecordsToLogs(exampleLog())
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.name", "harry-potter")
+
+	config := createTestConfig()
+	config.MetadataAttributes = []string{`host\.name`}
+	config.SourceCategory = "%{host.name}"
+	config.SourceHost = "%{host}"
+	config.TranslateMetadata = false
+
+	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, `Example log`, body)
+			assert.Equal(t, "host.name=harry-potter", req.Header.Get("X-Sumo-Fields"))
+			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
+			assert.Equal(t, "", req.Header.Get("X-Sumo-Host"))
+		},
+	}
+	test := prepareExporterTest(t, config, expectedRequests)
+	defer func() { test.srv.Close() }()
+
+	err := test.exp.pushLogsData(context.Background(), logs)
+	assert.NoError(t, err)
+}
+
 func TestAllMetricsSuccess(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			expected := `test_metric_data{test="test_value",test2="second_value"} 14500 1605534165000
@@ -359,7 +411,7 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 }
 
 func TestAllMetricsOTLP(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			expected := "\nf\n/\n\x14\n\x04test\x12\f\n\ntest_value\n\x17\n\x05test2\x12\x0e\n\fsecond_value\x123\n\x00\x12/\n\x10test.metric.data\x1a\x05bytes2\x14\n\x12\x19\x00\x12\x94\v\xd1\x00H\x16!\xa48\x00\x00\x00\x00\x00\x00\n\xba\x01\n\x0e\n\f\n\x03foo\x12\x05\n\x03bar\x12\xa7\x01\n\x00\x12\xa2\x01\n\x11gauge_metric_name\"\x8c\x01\nD\n\x15\n\vremote_name\x12\x06156920\n\x19\n\x03url\x12\x12http://example_url\x19\x80GX\xef\xdb4Q\x16!|\x00\x00\x00\x00\x00\x00\x00\nD\n\x15\n\vremote_name\x12\x06156955\n\x19\n\x03url\x12\x12http://another_url\x19\x80\x11\xf3*\xdc4Q\x16!\xf5\x00\x00\x00\x00\x00\x00\x00"
@@ -380,7 +432,7 @@ func TestAllMetricsOTLP(t *testing.T) {
 }
 
 func TestAllMetricsFailed(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -409,7 +461,7 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 }
 
 func TestMetricsPartiallyFailed(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -446,7 +498,7 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 }
 
 func TestPushMetricsInvalidCompressor(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, `Example log`, body)
@@ -467,7 +519,7 @@ func TestPushMetricsInvalidCompressor(t *testing.T) {
 }
 
 func TestMetricsDifferentMetadata(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -513,7 +565,7 @@ gauge_metric_name{foo="bar",key2="value2",remote_name="156955",url="http://anoth
 
 func TestPushMetricsFailedBatch(t *testing.T) {
 	t.Skip("Skip test due to prometheus format complexity. Execution can take over 30s")
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 			body := extractBody(t, req)
@@ -550,7 +602,7 @@ func TestPushMetricsFailedBatch(t *testing.T) {
 }
 
 func TestLogsJsonFormatMetadataFilter(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, `{"key2":"value2","log":"Example log"}`, body)
@@ -573,7 +625,7 @@ func TestLogsJsonFormatMetadataFilter(t *testing.T) {
 }
 
 func TestLogsTextFormatMetadataFilter(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, `Example log`, body)
@@ -596,7 +648,7 @@ func TestLogsTextFormatMetadataFilter(t *testing.T) {
 }
 
 func TestMetricsCarbon2FormatMetadataFilter(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			expected := `test=test_value test2=second_value key1=value1 key2=value2 metric=test.metric.data unit=bytes  14500 1605534165`
@@ -625,7 +677,7 @@ func TestMetricsCarbon2FormatMetadataFilter(t *testing.T) {
 }
 
 func TestMetricsGraphiteFormatMetadataFilter(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			expected := `test_metric_data.test_value.second_value.value1.value2 14500 1605534165`
@@ -657,7 +709,7 @@ func TestMetricsGraphiteFormatMetadataFilter(t *testing.T) {
 }
 
 func TestMetricsPrometheusFormatMetadataFilter(t *testing.T) {
-	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			expected := `test_metric_data{test="test_value",test2="second_value",key1="value1",key2="value2"} 14500 1605534165000`
@@ -682,5 +734,65 @@ func TestMetricsPrometheusFormatMetadataFilter(t *testing.T) {
 	metrics := metricPairToMetrics(records)
 
 	err = test.exp.pushMetricsData(context.Background(), metrics)
+	assert.NoError(t, err)
+}
+
+func TestPushMetricsWithMetadataTranslation(t *testing.T) {
+	records := []metricPair{
+		exampleIntMetric(),
+	}
+	records[0].attributes.InsertString("host.name", "harry-potter")
+
+	metrics := metricPairToMetrics(records)
+
+	config := createTestConfig()
+	config.MetadataAttributes = []string{`host\.name`}
+	config.MetricFormat = PrometheusFormat
+	config.SourceCategory = "%{host.name}"
+	config.SourceHost = "%{host}"
+
+	test := prepareExporterTest(t, config, []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			expected := `test_metric_data{test="test_value",test2="second_value",host="harry-potter"} 14500 1605534165000`
+			assert.Equal(t, expected, body)
+			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
+			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
+			assert.Equal(t, "", req.Header.Get("X-Sumo-Host"))
+		},
+	})
+	defer func() { test.srv.Close() }()
+
+	err := test.exp.pushMetricsData(context.Background(), metrics)
+	assert.NoError(t, err)
+}
+func TestPushMetricsWithMetadataTranslationDisabled(t *testing.T) {
+	records := []metricPair{
+		exampleIntMetric(),
+	}
+	records[0].attributes.InsertString("host.name", "harry-potter")
+
+	metrics := metricPairToMetrics(records)
+
+	config := createTestConfig()
+	config.MetadataAttributes = []string{`host\.name`}
+	config.MetricFormat = PrometheusFormat
+	config.SourceCategory = "%{host.name}"
+	config.SourceHost = "%{host}"
+	config.TranslateMetadata = false
+
+	test := prepareExporterTest(t, config, []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			expected := `test_metric_data{test="test_value",test2="second_value",host_name="harry-potter"} 14500 1605534165000`
+			assert.Equal(t, expected, body)
+			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
+			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
+			assert.Equal(t, "", req.Header.Get("X-Sumo-Host"))
+		},
+	})
+	defer func() { test.srv.Close() }()
+
+	err := test.exp.pushMetricsData(context.Background(), metrics)
 	assert.NoError(t, err)
 }
