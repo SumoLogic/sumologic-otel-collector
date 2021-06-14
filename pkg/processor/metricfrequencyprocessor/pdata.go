@@ -1,24 +1,25 @@
 package metricfrequencyprocessor
 
 import (
-	"go.opentelemetry.io/collector/consumer/pdata"
 	"sort"
+
+	"go.opentelemetry.io/collector/consumer/pdata"
 )
 
-type PdataTimestampArr []pdata.Timestamp
+type pdataTimestampByValue []pdata.Timestamp
 
-func (pta PdataTimestampArr) Len() int {
+func (pta pdataTimestampByValue) Len() int {
 	return len(pta)
 }
 
-func (pta PdataTimestampArr) Less(i, j int) bool {
+func (pta pdataTimestampByValue) Less(i, j int) bool {
 	return pta[i] < pta[j]
 }
 
-func (pta PdataTimestampArr) Swap(i, j int) {
+func (pta pdataTimestampByValue) Swap(i, j int) {
 	pta[i], pta[j] = pta[j], pta[i]
 }
 
 func sortTimestampArray(timestamps []pdata.Timestamp) {
-	sort.Sort(PdataTimestampArr(timestamps))
+	sort.Sort(pdataTimestampByValue(timestamps))
 }

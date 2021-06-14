@@ -1,9 +1,15 @@
 package metricfrequencyprocessor
 
 import (
+	"time"
+
 	"github.com/patrickmn/go-cache"
 	"go.opentelemetry.io/collector/consumer/pdata"
-	"time"
+)
+
+const (
+	dataPointExpiration  = time.Hour * 1
+	cacheCleanupInterval = time.Minute * 10
 )
 
 type DataPoint struct {
@@ -54,5 +60,5 @@ func (mc *MetricCache) Cleanup() {
 }
 
 func newCache() *cache.Cache {
-	return cache.New(time.Hour*1, time.Minute*10)
+	return cache.New(dataPointExpiration, cacheCleanupInterval)
 }

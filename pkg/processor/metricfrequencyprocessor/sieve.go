@@ -1,10 +1,11 @@
 package metricfrequencyprocessor
 
 import (
-	"go.opentelemetry.io/collector/consumer/pdata"
 	"math"
 	"sort"
 	"time"
+
+	"go.opentelemetry.io/collector/consumer/pdata"
 )
 
 const (
@@ -30,10 +31,13 @@ type MetricSieve struct {
 	lastReported map[string]pdata.Timestamp
 }
 
+// Sift removes data points from MetricSlices of the metric argument according to specified strategy.
+// It returns true if the metric should be removed.
 func (fs *MetricSieve) Sift(metric pdata.Metric) bool {
-	if metric.DataType() == pdata.MetricDataTypeDoubleGauge {
+	switch metric.DataType() {
+	case pdata.MetricDataTypeDoubleGauge:
 		return fs.siftDropGauge(metric)
-	} else {
+	default:
 		return false
 	}
 }

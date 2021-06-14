@@ -2,6 +2,7 @@ package metricfrequencyprocessor
 
 import (
 	"context"
+
 	"go.opentelemetry.io/collector/consumer/pdata"
 )
 
