@@ -139,7 +139,7 @@ func withinBounds(points map[pdata.Timestamp]float64, lowerBound float64, upperB
 	return true
 }
 
-// sum of absolute values of differences of subsequent data points
+// calculateVariation returns a sum of absolute values of differences of subsequent data points.
 func calculateVariation(points map[pdata.Timestamp]float64) float64 {
 	keys := keySlice(points)
 	sortTimestampArray(keys)
