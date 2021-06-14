@@ -9,6 +9,7 @@ extensions:
   sumologic:
     access_id: aaa
     access_key: bbbbbbbbbbbbbbbbbbbbbb
+    collector_name: cccccccc
 
 receivers:
   hostmetrics:
