@@ -7,6 +7,7 @@ on:
       - 'release-v[0-9]+.[0-9]+'
 
 jobs:
+
   markdownlint:
     runs-on: ubuntu-20.04
     steps:
@@ -37,10 +38,12 @@ jobs:
         arch_os: [ 'darwin_amd64', 'linux_amd64', 'linux_arm64']
     steps:
       - uses: actions/checkout@v2.3.4
+
       - name: Setup go
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
+
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
       - uses: actions/cache@v2
@@ -51,6 +54,7 @@ jobs:
           key: ${{matrix.arch_os}}-go-pkg-${{matrix.go}}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{matrix.arch_os}}-go-pkg-${{matrix.go}}-
+
       - name: Run tests
         run: make gotest
 
@@ -63,10 +67,12 @@ jobs:
         arch_os: [ 'linux_amd64' ]
     steps:
       - uses: actions/checkout@v2.3.4
+
       - name: Setup go
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
+
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
       - uses: actions/cache@v2
@@ -77,8 +83,10 @@ jobs:
           key: ${{matrix.arch_os}}-go-lint-${{matrix.go}}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{matrix.arch_os}}-go-lint-${{matrix.go}}-
+
       - name: Install golangci-lint
         run: make install-golangci-lint
+
       - name: Run golangci-lint
         run: make golint
 
@@ -91,12 +99,15 @@ jobs:
         arch_os: [ 'darwin_amd64', 'linux_amd64', 'linux_arm64']
     steps:
       - uses: actions/checkout@v2.3.4
+
       - name: Fetch current branch
         run: ./ci/fetch_current_branch.sh
+
       - name: Setup go
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
+
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
       - uses: actions/cache@v2
@@ -107,14 +118,24 @@ jobs:
           key: ${{matrix.arch_os}}-go-${{matrix.go}}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{matrix.arch_os}}-go-${{matrix.go}}-
+
       - name: Install opentelemetry-collector-builder
         run: make install
         working-directory: ./otelcolbuilder
+
       - name: Build
         run: make otelcol-sumo-${{matrix.arch_os}}
         working-directory: ./otelcolbuilder
+
       - name: Show included modules
         working-directory: ./otelcolbuilder/cmd
         run: |
           go version -m otelcol-sumo-${{matrix.arch_os}} | \
           grep -E "/(receiver|exporter|processor|extension)/"
+
+      - name: Store binary as action artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: otelcol-sumo-${{matrix.arch_os}}
+          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}
+          if-no-files-found: error
