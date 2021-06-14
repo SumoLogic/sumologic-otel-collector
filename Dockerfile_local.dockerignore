@@ -1,0 +1,1 @@
+otelcolbuilder/cmd/otelcol-sumo*

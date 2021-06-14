@@ -1,0 +1,152 @@
+name: Releases
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-alpha.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        go: [ '1.16.4' ]
+        arch_os: [ 'darwin_amd64', 'linux_amd64', 'linux_arm64']
+    steps:
+      - uses: actions/checkout@v2.3.4
+
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
+
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+
+      # As described in
+      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+      - uses: actions/cache@v2
+        with:
+          path: |
+            /home/runner/go/pkg/mod
+            /home/runner/.cache/go-build
+          key: ${{matrix.arch_os}}-go-${{matrix.go}}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{matrix.arch_os}}-go-${{matrix.go}}-
+
+      - name: Install opentelemetry-collector-builder
+        run: make install
+        working-directory: ./otelcolbuilder
+
+      - name: Build
+        run: make otelcol-sumo-${{matrix.arch_os}}
+        working-directory: ./otelcolbuilder
+
+      - name: Show included modules
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          go version -m otelcol-sumo-${{matrix.arch_os}} | \
+          grep -E "/(receiver|exporter|processor|extension)/" | \
+          tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
+
+      - name: Store binary as action artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: otelcol-sumo-${{matrix.arch_os}}
+          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}
+          if-no-files-found: error
+
+      - name: Store list of included modules as action artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: otelcol-sumo-${{matrix.arch_os}}_modules.txt
+          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}_modules.txt
+          if-no-files-found: error
+
+  build-container-images:
+    name: Build container
+    runs-on: ubuntu-20.04
+    needs:
+      - build
+    strategy:
+      matrix:
+        arch_os: [ 'linux_amd64', 'linux_arm64']
+    steps:
+      - uses: actions/checkout@v2.3.4
+
+      - name: Extract tag
+        id: extract_tag
+        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
+
+      - name: Print tag
+        run: echo "Running release build for ${{ steps.extract_tag.outputs.tag }}"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1.2.0
+
+      - name: Set up Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1.3.0
+
+      - name: Show Buildx platforms
+        run: echo ${{ steps.buildx.outputs.platforms }}
+
+      - name: Download binary action artifact from build phase
+        uses: actions/download-artifact@v2
+        with:
+          name: otelcol-sumo-${{ matrix.arch_os }}
+
+      - name: Login to Open Source ECR
+        run: make login
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Build and push image to Open Source ECR
+        run: |
+          mv otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
+          make build-container-multiplatform \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }}
+
+  push-docker-manifest:
+    name: Push joint container manifest
+    runs-on: ubuntu-20.04
+    needs:
+      - build-container-images
+    steps:
+      - uses: actions/checkout@v2.3.4
+
+      - name: Extract tag
+        id: extract_tag
+        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
+
+      - name: Print tag
+        run: echo "Running release build for ${{ steps.extract_tag.outputs.tag }}"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1.2.0
+
+      - name: Set up Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1.3.0
+
+      - name: Show Buildx platforms
+        run: echo ${{ steps.buildx.outputs.platforms }}
+
+      - name: Login to Open Source ECR
+        run: make login
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Push joint container manifest for all platforms to Open Source ECR
+        run: |
+          make push-container-manifest \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORMS="linux/amd64 linux/arm64"

@@ -52,36 +52,21 @@ OPENSOURCE_REPO_URL_DEV = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME_DEV)
 _build:
 	DOCKER_BUILDKIT=1 docker build \
 		--file $(DOCKERFILE) \
-		--build-arg BUILDKIT_INLINE_CACHE=1 \
-		--cache-from $(REPO_URL):$(BUILD_CACHE_TAG) \
-		--target builder \
-		--tag $(IMG):$(BUILD_CACHE_TAG) \
-		.
-
-	DOCKER_BUILDKIT=1 docker build \
-		--file $(DOCKERFILE) \
 		--build-arg BUILD_TAG=$(TAG) \
 		--build-arg BUILDKIT_INLINE_CACHE=1 \
-		--cache-from $(REPO_URL):$(BUILD_CACHE_TAG) \
-		--cache-from $(REPO_URL):$(TAG) \
 		--tag $(IMG):$(TAG) \
 		.
 
 .PHONY: build-container
-build-container:
-	$(MAKE) _build IMG="$(IMAGE_NAME)" \
-		DOCKERFILE="Dockerfile" \
-		TAG="$(BUILD_TAG)" \
-		REPO_URL="$(OPENSOURCE_REPO_URL)"
-
-.PHONY: build-container-dev
-build-container-dev:
-	$(MAKE) _build IMG="$(IMAGE_NAME_DEV)" \
-		DOCKERFILE="Dockerfile_dev" \
-		TAG="$(BUILD_TAG)" \
-		REPO_URL="$(OPENSOURCE_REPO_URL_DEV)"
+build-container-local:
+	$(MAKE) _build \
+		IMG="$(IMAGE_NAME)-local" \
+		DOCKERFILE="Dockerfile_local" \
+		TAG="$(BUILD_TAG)"
 
 #-------------------------------------------------------------------------------
+
+# dev
 
 .PHONY: build-container-multiplatform-dev
 build-container-multiplatform-dev:
@@ -95,6 +80,22 @@ build-container-multiplatform-dev:
 push-container-manifest-dev:
 	BUILD_TAG="$(BUILD_TAG)" \
 		REPO_URL="$(OPENSOURCE_REPO_URL_DEV)" \
+		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
+
+# release
+
+.PHONY: build-container-multiplatform
+build-container-multiplatform:
+	BUILD_TAG="$(BUILD_TAG)" \
+		REPO_URL="$(OPENSOURCE_REPO_URL)" \
+		DOCKERFILE="Dockerfile" \
+		PLATFORM="$(PLATFORM)" \
+		./ci/build-push-multiplatform.sh
+
+.PHONY: push-container-manifest
+push-container-manifest:
+	BUILD_TAG="$(BUILD_TAG)" \
+		REPO_URL="$(OPENSOURCE_REPO_URL)" \
 		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
 
 #-------------------------------------------------------------------------------
