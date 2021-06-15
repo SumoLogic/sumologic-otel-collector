@@ -33,11 +33,8 @@ func newMetricCache() *metricCache {
 	go func(c *metricCache) {
 		t := time.NewTicker(metricCacheCleanupInterval)
 		defer t.Stop()
-		for {
-			select {
-			case <-t.C:
-				c.Cleanup()
-			}
+		for range t.C {
+			c.Cleanup()
 		}
 	}(c)
 
