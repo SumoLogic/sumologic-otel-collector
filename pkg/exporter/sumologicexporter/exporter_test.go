@@ -19,7 +19,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -38,6 +40,46 @@ func LogRecordsToLogs(records []pdata.LogRecord) pdata.Logs {
 	}
 
 	return logs
+}
+
+type exporterTest struct {
+	srv *httptest.Server
+	exp *sumologicexporter
+}
+
+func prepareExporterTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.Request)) *exporterTest {
+	var reqCounter int32
+	// generate a test server so we can capture and inspect the request
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if len(cb) == 0 {
+			return
+		}
+
+		if c := int(atomic.LoadInt32(&reqCounter)); assert.Greater(t, len(cb), c) {
+			cb[c](w, req)
+			atomic.AddInt32(&reqCounter, 1)
+		}
+	}))
+
+	cfg := &Config{
+		HTTPClientSettings: confighttp.HTTPClientSettings{
+			Endpoint: testServer.URL,
+			Timeout:  defaultTimeout,
+		},
+		LogFormat:          "text",
+		MetricFormat:       "carbon2",
+		Client:             "otelcol",
+		MaxRequestBodySize: 20_971_520,
+	}
+	exp, err := initExporter(cfg)
+	require.NoError(t, err)
+
+	require.NoError(t, exp.start(context.Background(), componenttest.NewNopHost()))
+
+	return &exporterTest{
+		srv: testServer,
+		exp: exp,
+	}
 }
 
 func TestInitExporter(t *testing.T) {
@@ -111,7 +153,7 @@ func TestInitExporterInvalidEndpoint(t *testing.T) {
 }
 
 func TestAllSuccess(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, `Example log`, body)
@@ -127,7 +169,7 @@ func TestAllSuccess(t *testing.T) {
 }
 
 func TestResourceMerge(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, `Example log`, body)
@@ -150,7 +192,7 @@ func TestResourceMerge(t *testing.T) {
 }
 
 func TestAllFailed(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -172,7 +214,7 @@ func TestAllFailed(t *testing.T) {
 }
 
 func TestPartiallyFailed(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -239,7 +281,7 @@ func TestInvalidHTTPCLient(t *testing.T) {
 }
 
 func TestPushInvalidCompressor(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, `Example log`, body)
@@ -257,7 +299,7 @@ func TestPushInvalidCompressor(t *testing.T) {
 }
 
 func TestPushFailedBatch(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 			body := extractBody(t, req)
@@ -294,7 +336,7 @@ func TestPushFailedBatch(t *testing.T) {
 }
 
 func TestAllMetricsSuccess(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			expected := `test_metric_data{test="test_value",test2="second_value"} 14500 1605534165000
@@ -317,7 +359,7 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 }
 
 func TestAllMetricsFailed(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -346,7 +388,7 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 }
 
 func TestMetricsPartiallyFailed(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -383,7 +425,7 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 }
 
 func TestPushMetricsInvalidCompressor(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, `Example log`, body)
@@ -404,7 +446,7 @@ func TestPushMetricsInvalidCompressor(t *testing.T) {
 }
 
 func TestMetricsDifferentMetadata(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -450,7 +492,7 @@ gauge_metric_name{foo="bar",key2="value2",remote_name="156955",url="http://anoth
 
 func TestPushMetricsFailedBatch(t *testing.T) {
 	t.Skip("Skip test due to prometheus format complexity. Execution can take over 30s")
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 			body := extractBody(t, req)

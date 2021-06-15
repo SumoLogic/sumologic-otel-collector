@@ -26,14 +26,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/consumer/pdata"
 )
 
 type senderTest struct {
 	srv *httptest.Server
-	exp *sumologicexporter
 	s   *sender
 }
 
@@ -61,9 +59,6 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 		Client:             "otelcol",
 		MaxRequestBodySize: 20_971_520,
 	}
-	exp, err := initExporter(cfg)
-	require.NoError(t, err)
-
 	f, err := newFilter([]string{})
 	require.NoError(t, err)
 
@@ -76,11 +71,8 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 	gf, err := newGraphiteFormatter(DefaultGraphiteTemplate)
 	require.NoError(t, err)
 
-	assert.NoError(t, exp.start(context.Background(), componenttest.NewNopHost()))
-
 	return &senderTest{
 		srv: testServer,
-		exp: exp,
 		s: newSender(
 			cfg,
 			&http.Client{
