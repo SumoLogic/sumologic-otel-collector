@@ -527,3 +527,139 @@ func TestPushMetricsFailedBatch(t *testing.T) {
 	err := test.exp.pushMetricsData(context.Background(), metrics)
 	assert.EqualError(t, err, "error during sending data: 500 Internal Server Error")
 }
+
+func TestLogsJsonFormatMetadataFilter(t *testing.T) {
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, `{"key2":"value2","log":"Example log"}`, body)
+			assert.Equal(t, "key1=value1", req.Header.Get("X-Sumo-Fields"))
+		},
+	})
+	defer func() { test.srv.Close() }()
+	test.exp.config.LogFormat = JSONFormat
+
+	f, err := newFilter([]string{`key1`})
+	require.NoError(t, err)
+	test.exp.filter = f
+
+	logs := LogRecordsToLogs(exampleLog())
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key1", "value1")
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key2", "value2")
+
+	err = test.exp.pushLogsData(context.Background(), logs)
+	assert.NoError(t, err)
+}
+
+func TestLogsTextFormatMetadataFilter(t *testing.T) {
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, `Example log`, body)
+			assert.Equal(t, "key1=value1", req.Header.Get("X-Sumo-Fields"))
+		},
+	})
+	defer func() { test.srv.Close() }()
+	test.exp.config.LogFormat = TextFormat
+
+	f, err := newFilter([]string{`key1`})
+	require.NoError(t, err)
+	test.exp.filter = f
+
+	logs := LogRecordsToLogs(exampleLog())
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key1", "value1")
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key2", "value2")
+
+	err = test.exp.pushLogsData(context.Background(), logs)
+	assert.NoError(t, err)
+}
+
+func TestMetricsCarbon2FormatMetadataFilter(t *testing.T) {
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			expected := `test=test_value test2=second_value key1=value1 key2=value2 metric=test.metric.data unit=bytes  14500 1605534165`
+			assert.Equal(t, expected, body)
+			assert.Equal(t, "application/vnd.sumologic.carbon2", req.Header.Get("Content-Type"))
+		},
+	})
+	defer func() { test.srv.Close() }()
+	test.exp.config.MetricFormat = Carbon2Format
+
+	f, err := newFilter([]string{`key1`})
+	require.NoError(t, err)
+	test.exp.filter = f
+
+	records := []metricPair{
+		exampleIntMetric(),
+	}
+
+	records[0].attributes.InsertString("key1", "value1")
+	records[0].attributes.InsertString("key2", "value2")
+
+	metrics := metricPairToMetrics(records)
+
+	err = test.exp.pushMetricsData(context.Background(), metrics)
+	assert.NoError(t, err)
+}
+
+func TestMetricsGraphiteFormatMetadataFilter(t *testing.T) {
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			expected := `test_metric_data.test_value.second_value.value1.value2 14500 1605534165`
+			assert.Equal(t, expected, body)
+			assert.Equal(t, "application/vnd.sumologic.graphite", req.Header.Get("Content-Type"))
+		},
+	})
+	defer func() { test.srv.Close() }()
+	test.exp.config.MetricFormat = GraphiteFormat
+	graphiteFormatter, err := newGraphiteFormatter("%{_metric_}.%{test}.%{test2}.%{key1}.%{key2}")
+	assert.NoError(t, err)
+	test.exp.graphiteFormatter = graphiteFormatter
+
+	f, err := newFilter([]string{`key1`})
+	require.NoError(t, err)
+	test.exp.filter = f
+
+	records := []metricPair{
+		exampleIntMetric(),
+	}
+
+	records[0].attributes.InsertString("key1", "value1")
+	records[0].attributes.InsertString("key2", "value2")
+
+	metrics := metricPairToMetrics(records)
+
+	err = test.exp.pushMetricsData(context.Background(), metrics)
+	assert.NoError(t, err)
+}
+
+func TestMetricsPrometheusFormatMetadataFilter(t *testing.T) {
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			expected := `test_metric_data{test="test_value",test2="second_value",key1="value1",key2="value2"} 14500 1605534165000`
+			assert.Equal(t, expected, body)
+			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
+		},
+	})
+	defer func() { test.srv.Close() }()
+	test.exp.config.MetricFormat = PrometheusFormat
+
+	f, err := newFilter([]string{`key1`})
+	require.NoError(t, err)
+	test.exp.filter = f
+
+	records := []metricPair{
+		exampleIntMetric(),
+	}
+
+	records[0].attributes.InsertString("key1", "value1")
+	records[0].attributes.InsertString("key2", "value2")
+
+	metrics := metricPairToMetrics(records)
+
+	err = test.exp.pushMetricsData(context.Background(), metrics)
+	assert.NoError(t, err)
+}

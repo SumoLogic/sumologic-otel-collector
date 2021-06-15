@@ -26,7 +26,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/consumer/pdata"
 )
 
@@ -49,26 +48,23 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 		}
 	}))
 
-	cfg := &Config{
-		HTTPClientSettings: confighttp.HTTPClientSettings{
-			Endpoint: testServer.URL,
-			Timeout:  defaultTimeout,
-		},
-		LogFormat:          "text",
-		MetricFormat:       "carbon2",
-		Client:             "otelcol",
-		MaxRequestBodySize: 20_971_520,
-	}
-	f, err := newFilter([]string{})
+	cfg := createDefaultConfig().(*Config)
+	cfg.CompressEncoding = NoCompression
+	cfg.HTTPClientSettings.Endpoint = testServer.URL
+	cfg.LogFormat = TextFormat
+	cfg.MetricFormat = Carbon2Format
+	cfg.MaxRequestBodySize = 20_971_520
+
+	f, err := newFilter(cfg.MetadataAttributes)
 	require.NoError(t, err)
 
-	c, err := newCompressor(NoCompression)
+	c, err := newCompressor(cfg.CompressEncoding)
 	require.NoError(t, err)
 
 	pf, err := newPrometheusFormatter()
 	require.NoError(t, err)
 
-	gf, err := newGraphiteFormatter(DefaultGraphiteTemplate)
+	gf, err := newGraphiteFormatter(cfg.GraphiteTemplate)
 	require.NoError(t, err)
 
 	return &senderTest{
