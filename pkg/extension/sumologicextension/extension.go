@@ -200,7 +200,7 @@ func ensureStoreCredentialsDir(path string) error {
 	return nil
 }
 
-// create hash key for encrypt and decrypt functions
+// createHash creates key used for credentials encryption.
 func createHash(key string) (string, error) {
 	hasher := md5.New()
 	if _, err := hasher.Write([]byte(key)); err != nil {
@@ -247,6 +247,9 @@ func decrypt(data []byte, passphrase string) ([]byte, error) {
 		return nil, err
 	}
 	nonceSize := gcm.NonceSize()
+	if nonceSize > len(data) {
+		return nil, fmt.Errorf("unable to decrypt credentials")
+	}
 	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
 	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {

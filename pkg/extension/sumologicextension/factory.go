@@ -17,6 +17,7 @@ package sumologicextension
 import (
 	"context"
 	"os"
+	"path"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
@@ -43,7 +44,7 @@ func createDefaultConfig() config.Extension {
 	if err != nil {
 		return nil
 	}
-	defaultCredsPath := homePath + collectorCredentialsDirectory
+	defaultCredsPath := path.Join(homePath, collectorCredentialsDirectory)
 
 	return &Config{
 		ExtensionSettings:        config.NewExtensionSettings(config.NewID(typeStr)),

@@ -36,14 +36,15 @@ type Config struct {
 	// CollectorDescription is the description which will be used when the
 	// collector is being registered.
 	CollectorDescription string `mapstructure:"collector_description"`
-	// CollectorCategory is the collecot rcategory which will be used when the
+	// CollectorCategory is the collecor category which will be used when the
 	// collector is being registered.
 	CollectorCategory string `mapstructure:"collector_category"`
 
 	ApiBaseUrl string `mapstructure:"api_base_url"`
 
 	HeartBeatInterval time.Duration `mapstructure:"heartbeat_interval"`
-
+	// CollectorCredentialsPath is path to directory where collector credentials
+	// are stored.
 	CollectorCredentialsPath string `mapstructure:"collector_credentials_path"`
 }
 
