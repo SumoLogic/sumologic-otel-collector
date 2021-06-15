@@ -209,7 +209,7 @@ func createHash(key string) (string, error) {
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-// function encrypts collector credentials to store them in the file
+// encrypt encrypts collector credentials with AES using the passphrase
 func encrypt(data []byte, passphrase string) ([]byte, error) {
 	hash, err := createHash(passphrase)
 	if err != nil {
@@ -231,7 +231,7 @@ func encrypt(data []byte, passphrase string) ([]byte, error) {
 	return ciphertext, nil
 }
 
-// function decrypts collector credentials stored in the file
+// decrypt decrypts collector credentials encrypted with AES passphrase.
 func decrypt(data []byte, passphrase string) ([]byte, error) {
 	hash, err := createHash(passphrase)
 	if err != nil {
