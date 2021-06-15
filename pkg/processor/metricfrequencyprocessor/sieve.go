@@ -20,20 +20,27 @@ const (
 	variationIqrThresholdCoef = 4
 )
 
-// MetricSieve removes data points from MetricSlices that would be reported more often than preset
+// metricSieve removes data points from MetricSlices that would be reported more often than preset
 // frequency for a given category.
 // For metric sieve, there are three categories of metrics:
 // 1) Constant metrics
 // 2) Low info metrics - i.e. no anomaly in terms of iqr and low variation
 // 3) All other metrics
-type MetricSieve struct {
-	metricCache  *MetricCache
+type metricSieve struct {
+	metricCache  *metricCache
 	lastReported map[string]pdata.Timestamp
+}
+
+func newMetricSieve() *metricSieve {
+	return &metricSieve{
+		metricCache: newMetricCache(),
+		lastReported: make(map[string]pdata.Timestamp),
+	}
 }
 
 // Sift removes data points from MetricSlices of the metric argument according to specified strategy.
 // It returns true if the metric should be removed.
-func (fs *MetricSieve) Sift(metric pdata.Metric) bool {
+func (fs *metricSieve) Sift(metric pdata.Metric) bool {
 	switch metric.DataType() {
 	case pdata.MetricDataTypeDoubleGauge:
 		return fs.siftDropGauge(metric)
@@ -42,13 +49,13 @@ func (fs *MetricSieve) Sift(metric pdata.Metric) bool {
 	}
 }
 
-func (fs *MetricSieve) siftDropGauge(metric pdata.Metric) bool {
+func (fs *metricSieve) siftDropGauge(metric pdata.Metric) bool {
 	metric.DoubleGauge().DataPoints().RemoveIf(fs.siftDataPoint(metric.Name()))
 
 	return metric.DoubleGauge().DataPoints().Len() == 0
 }
 
-func (fs *MetricSieve) siftDataPoint(name string) func(pdata.DoubleDataPoint) bool {
+func (fs *metricSieve) siftDataPoint(name string) func(pdata.DoubleDataPoint) bool {
 	return func(dataPoint pdata.DoubleDataPoint) bool {
 		cachedPoints := fs.metricCache.List(name)
 		fs.metricCache.Register(name, dataPoint)
@@ -110,7 +117,7 @@ func isConstant(point pdata.DoubleDataPoint, points map[pdata.Timestamp]float64)
 	return true
 }
 
-// heuristic attempt at defining uninteresting metrics. Requirements:
+// isLowInformation is a heuristic attempt at defining uninteresting metrics. Requirements:
 // 1) no big changes - defined by no iqr anomalies
 // 2) little oscillations - defined by low variation
 func isLowInformation(points map[pdata.Timestamp]float64) bool {
@@ -121,7 +128,7 @@ func isLowInformation(points map[pdata.Timestamp]float64) bool {
 	return withinBounds(points, q1-iqrAnomalyCoef*iqr, q3+iqrAnomalyCoef*iqr) && lowVariation(variation, iqr)
 }
 
-// refers to quantiles - .25 and .75 respectively
+// calculateQ1Q3 returns specific quantiles - it refers to quantiles .25 and .75 respectively
 func calculateQ1Q3(points map[pdata.Timestamp]float64) (float64, float64) {
 	values := valueSlice(points)
 	sort.Float64s(values)
@@ -159,6 +166,7 @@ func calculateVariation(points map[pdata.Timestamp]float64) float64 {
 	return variation
 }
 
+// lowVariation returns a heuristic check indicating that data points display little oscillations
 func lowVariation(variation float64, iqr float64) bool {
 	return variation < variationIqrThresholdCoef*iqr
 }

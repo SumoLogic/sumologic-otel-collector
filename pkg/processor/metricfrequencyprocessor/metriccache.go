@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	dataPointExpiration  = time.Hour * 1
-	cacheCleanupInterval = time.Minute * 10
+	dataPointExpiration           = time.Hour * 1
+	dataPointCacheCleanupInterval = time.Minute * 10
+	metricCacheCleanupInterval    = time.Hour * 3
 )
 
 type DataPoint struct {
@@ -18,11 +19,32 @@ type DataPoint struct {
 	Value     float64
 }
 
-type MetricCache struct {
+// metricCache caches data points in two level mapping structure.
+// To easily list all data points of a given metric it keeps a separate cache for each incoming metric.
+type metricCache struct {
 	internalCaches map[string]*cache.Cache
 }
 
-func (mc *MetricCache) Register(name string, dataPoint pdata.DoubleDataPoint) {
+func newMetricCache() *metricCache {
+	c := &metricCache{
+		internalCaches: make(map[string]*cache.Cache),
+	}
+
+	go func(c *metricCache) {
+		t := time.NewTicker(metricCacheCleanupInterval)
+		defer t.Stop()
+		for {
+			select {
+			case <-t.C:
+				c.Cleanup()
+			}
+		}
+	}(c)
+
+	return c
+}
+
+func (mc *metricCache) Register(name string, dataPoint pdata.DoubleDataPoint) {
 
 	internalCache, exists := mc.internalCaches[name]
 	if !exists {
@@ -36,7 +58,7 @@ func (mc *MetricCache) Register(name string, dataPoint pdata.DoubleDataPoint) {
 	internalCache.Set(key, value, cache.DefaultExpiration)
 }
 
-func (mc *MetricCache) List(metricName string) map[pdata.Timestamp]float64 {
+func (mc *metricCache) List(metricName string) map[pdata.Timestamp]float64 {
 	out := make(map[pdata.Timestamp]float64)
 	internalCache, found := mc.internalCaches[metricName]
 	if found {
@@ -52,7 +74,7 @@ func (mc *MetricCache) List(metricName string) map[pdata.Timestamp]float64 {
 	return out
 }
 
-func (mc *MetricCache) Cleanup() {
+func (mc *metricCache) Cleanup() {
 	for key, internalCache := range mc.internalCaches {
 		if internalCache.ItemCount() == 0 {
 			delete(mc.internalCaches, key)
@@ -61,5 +83,5 @@ func (mc *MetricCache) Cleanup() {
 }
 
 func newCache() *cache.Cache {
-	return cache.New(dataPointExpiration, cacheCleanupInterval)
+	return cache.New(dataPointExpiration, dataPointCacheCleanupInterval)
 }

@@ -8,11 +8,12 @@ import (
 )
 
 type metricsfrequencyprocessor struct {
-	sieve *MetricSieve
+	sieve *metricSieve
 }
 
 var _ processorhelper.MProcessor = (*metricsfrequencyprocessor)(nil)
 
+// ProcessMetrics applies metricSieve to incoming metrics. It mutates the argument.
 func (mfp *metricsfrequencyprocessor) ProcessMetrics(_ context.Context, md pdata.Metrics) (pdata.Metrics, error) {
 	rms := md.ResourceMetrics()
 	for i := 0; i < rms.Len(); i++ {

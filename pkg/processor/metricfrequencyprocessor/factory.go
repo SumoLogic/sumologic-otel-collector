@@ -25,5 +25,7 @@ func createMetricsProcessor(
 	cfg config.Processor,
 	nextConsumer consumer.Metrics,
 ) (component.MetricsProcessor, error) {
-	return processorhelper.NewMetricsProcessor(cfg, nextConsumer, &metricsfrequencyprocessor{})
+	return processorhelper.NewMetricsProcessor(cfg, nextConsumer, &metricsfrequencyprocessor{
+		sieve: newMetricSieve(),
+	})
 }
