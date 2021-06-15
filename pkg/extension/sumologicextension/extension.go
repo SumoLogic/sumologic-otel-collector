@@ -30,6 +30,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"sync"
 	"time"
 
@@ -127,7 +128,7 @@ func (se *SumologicExtension) checkCollectorCredentials() bool {
 		se.logger.Error("Unable to verify collector name")
 		return false
 	}
-	path := se.conf.CollectorCredentialsPath + filenameHash
+	path := path.Join(se.conf.CollectorCredentialsPath, filenameHash)
 	if _, err := os.Stat(path); err != nil {
 		return false
 	}
@@ -140,7 +141,7 @@ func (se *SumologicExtension) getCollectorCredentials() error {
 	if err != nil {
 		return err
 	}
-	path := se.conf.CollectorCredentialsPath + filenameHash
+	path := path.Join(se.conf.CollectorCredentialsPath, filenameHash)
 	var credentialsInfo OpenRegisterResponsePayload
 	creds, err := os.Open(path)
 	if err != nil {
@@ -174,7 +175,7 @@ func (se *SumologicExtension) storeCollectorCredentials() error {
 	if err != nil {
 		return err
 	}
-	path := se.conf.CollectorCredentialsPath + filenameHash
+	path := path.Join(se.conf.CollectorCredentialsPath, filenameHash)
 	collectorCreds, err := json.MarshalIndent(se.registrationInfo, "", " ")
 	if err != nil {
 		return err
