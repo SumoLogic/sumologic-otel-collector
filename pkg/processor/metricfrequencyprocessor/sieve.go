@@ -33,7 +33,7 @@ type metricSieve struct {
 
 func newMetricSieve() *metricSieve {
 	return &metricSieve{
-		metricCache: newMetricCache(),
+		metricCache:  newMetricCache(),
 		lastReported: make(map[string]pdata.Timestamp),
 	}
 }
