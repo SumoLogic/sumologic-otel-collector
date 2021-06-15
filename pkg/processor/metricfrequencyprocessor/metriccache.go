@@ -19,7 +19,7 @@ type DataPoint struct {
 	Value     float64
 }
 
-// metricCache caches data points in two level mapping structure.
+// metricCache caches data points into two level mapping structure.
 // To easily list all data points of a given metric it keeps a separate cache for each incoming metric.
 type metricCache struct {
 	internalCaches map[string]*cache.Cache
