@@ -121,7 +121,8 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 	}
 }
 
-// verification if there are stored credentials for collector
+// checkCollectorCredentials checks if collector credentials can be found in path
+// configured in the config.
 func (se *SumologicExtension) checkCollectorCredentials() bool {
 	filenameHash, err := createHash(se.conf.CollectorName)
 	if err != nil {
@@ -135,7 +136,8 @@ func (se *SumologicExtension) checkCollectorCredentials() bool {
 	return true
 }
 
-// get and decrypt collector credentials content stored in file
+// getCollectorCredentials retrieves and decrypts collector credentials using
+// collector name as passphrase.
 func (se *SumologicExtension) getCollectorCredentials() error {
 	filenameHash, err := createHash(se.conf.CollectorName)
 	if err != nil {
@@ -190,7 +192,7 @@ func (se *SumologicExtension) storeCollectorCredentials() error {
 	return nil
 }
 
-// check if directory to store credentials exists, if not try to create it
+// ensureStoreCredentialsDir checks if directory to store credentials exists, if not try to create it.
 func ensureStoreCredentialsDir(path string) error {
 	if _, err := os.Stat(path); err != nil {
 		err := os.Mkdir(path, 0600)
