@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         go: [ '1.16.4' ]
-        arch_os: [ 'darwin_amd64', 'linux_amd64', 'linux_arm64']
+        arch_os: [ 'darwin_amd64', 'linux_amd64']
     steps:
       - uses: actions/checkout@v2.3.4
 
@@ -75,7 +75,7 @@ jobs:
       - build
     strategy:
       matrix:
-        arch_os: [ 'linux_amd64', 'linux_arm64']
+        arch_os: [ 'linux_amd64']
     steps:
       - uses: actions/checkout@v2.3.4
 
