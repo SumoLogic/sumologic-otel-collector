@@ -149,4 +149,4 @@ jobs:
         run: |
           make push-container-manifest \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
-            PLATFORMS="linux/amd64 linux/arm64"
+            PLATFORMS="linux/amd64"

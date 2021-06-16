@@ -43,7 +43,7 @@ build:
 	chmod +x ./cmd/$(BINARY_NAME)
 
 .PHONY: otelcol-sumo-all-sys
-otelcol-sumo-all-sys: otelcol-sumo-darwin_amd64 otelcol-sumo-linux_amd64 otelcol-sumo-linux_arm64 otelcol-sumo-windows_amd64
+otelcol-sumo-all-sys: otelcol-sumo-darwin_amd64 otelcol-sumo-linux_amd64 otelcol-sumo-windows_amd64
 
 .PHONY: otelcol-sumo-darwin_amd64
 otelcol-sumo-darwin_amd64:
