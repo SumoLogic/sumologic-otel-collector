@@ -1,21 +1,22 @@
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.27.0
+BUILDER_VERSION ?= 0.27-3
+BUILDER_REPO ?= github.com/pmalek-sumo/opentelemetry-collector-builder
 BUILDER_BIN_PATH ?= ${HOME}/bin/opentelemetry-collector-builder
 VERSION ?= "$(shell git describe --tags --abbrev=10)"
 GO ?= go
 
 .PHONY: install
 install:
-	go install github.com/open-telemetry/opentelemetry-collector-builder@v$(BUILDER_VERSION)
+	go install ${BUILDER_REPO}@v$(BUILDER_VERSION)
 
 .PHONY: install-prego1.16
 install-prego1.16:
-	GO111MODULE=on go get github.com/open-telemetry/opentelemetry-collector-builder@v$(BUILDER_VERSION)
+	GO111MODULE=on go get ${BUILDER_REPO}@v$(BUILDER_VERSION)
 
 .PHONY: _install-bin
 _install-bin:
 	mkdir -p ${HOME}/bin && \
-	curl -L -o $(BUILDER_BIN_PATH) https://github.com/open-telemetry/opentelemetry-collector-builder/releases/download/v$(BUILDER_VERSION)/opentelemetry-collector-builder_$(BUILDER_VERSION)_$(PLATFORM)_amd64 && \
+	curl -L -o $(BUILDER_BIN_PATH) https://${BUILDER_REPO}/releases/download/v$(BUILDER_VERSION)/opentelemetry-collector-builder_$(BUILDER_VERSION)_$(PLATFORM)_amd64 && \
 	chmod +x $(BUILDER_BIN_PATH)
 
 .PHONY: install-bin-linux
