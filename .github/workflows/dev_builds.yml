@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: [ '1.16.4' ]
+        go: [ '1.17.0-beta1' ]
         # TODO: add arm64 when fix for
         # https://github.com/golang/go/issues/46766#event-4898300932
         # gets released in next 1.17 beta/rc.
@@ -28,6 +28,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
+          stable: 'false'
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
