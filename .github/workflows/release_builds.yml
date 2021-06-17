@@ -110,8 +110,22 @@ jobs:
 
       - name: Build and push image to Open Source ECR
         run: |
-          mv otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
+          cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-multiplatform \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }}
+
+      # TODO: should be removed after sumologic ECR alias migration
+      - name: Login to legacy ECR
+        run: make login-legacy
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.LEGACY_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.LEGACY_AWS_SECRET_ACCESS_KEY }}
+
+      - name: Build and push image to legacy ECR
+        run: |
+          cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
+          make build-push-container-multiplatform-legacy \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }}
 
@@ -147,7 +161,26 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Push joint container manifest for all platforms to Open Source ECR
+        # TODO: add arm64 when fix for
+        # https://github.com/golang/go/issues/46766#event-4898300932
+        # gets released in next 1.17 beta/rc.
         run: |
           make push-container-manifest \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORMS="linux/amd64"
+
+      # TODO: should be removed after sumologic ECR alias migration
+      - name: Login to legacy ECR
+        run: make login-legacy
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.LEGACY_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.LEGACY_AWS_SECRET_ACCESS_KEY }}
+
+      - name: Push joint container manifest for all platforms to legacy ECR
+        # TODO: add arm64 when fix for
+        # https://github.com/golang/go/issues/46766#event-4898300932
+        # gets released in next 1.17 beta/rc.
+        run: |
+          make push-container-manifest-legacy \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORMS="linux/amd64"
