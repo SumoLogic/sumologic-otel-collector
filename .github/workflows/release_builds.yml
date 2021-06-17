@@ -110,7 +110,7 @@ jobs:
       - name: Build and push image to Open Source ECR
         run: |
           mv otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
-          make build-container-multiplatform \
+          make build-push-container-multiplatform \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }}
 
