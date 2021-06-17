@@ -127,7 +127,7 @@ func TestStoreCredentials(t *testing.T) {
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	require.NoError(t, se.Shutdown(context.Background()))
 	require.FileExists(t, credsPath)
-	// To make sure that collector is usign credentials file, turn off the fake server
+	// To make sure that collector is using credentials file, turn off the mock registration server
 	srv.Close()
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	t.Cleanup(func() {

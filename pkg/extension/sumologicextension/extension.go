@@ -65,7 +65,7 @@ type OpenRegisterResponsePayload struct {
 const (
 	heartbeatUrl                  = "/api/v1/collector/heartbeat"
 	registerUrl                   = "/api/v1/collector/register"
-	collectorCredentialsDirectory = "/.sumologic-otel-collector/"
+	collectorCredentialsDirectory = ".sumologic-otel-collector/"
 )
 
 const (
