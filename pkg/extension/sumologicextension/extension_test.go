@@ -18,6 +18,8 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -92,4 +94,43 @@ func TestBasicStart(t *testing.T) {
 	assert.NotEmpty(t, se.registrationInfo.CollectorCredentialKey)
 	assert.NotEmpty(t, se.registrationInfo.CollectorId)
 	require.NoError(t, se.Shutdown(context.Background()))
+}
+
+func TestStoreCredentials(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path == registerUrl {
+			_, err := w.Write([]byte(`{
+				"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
+				"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+				"collectorId": "000000000FFFFFFF"
+			}`))
+
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+	}))
+
+	homePath := os.TempDir()
+	cfg := createDefaultConfig().(*Config)
+	cfg.CollectorName = "collector_name"
+	cfg.ExtensionSettings = config.ExtensionSettings{}
+	cfg.ApiBaseUrl = srv.URL
+	cfg.CollectorCredentialsPath = homePath
+	se, err := newSumologicExtension(cfg, zap.NewNop())
+	require.NoError(t, err)
+	fileName, err := createHash(cfg.CollectorName)
+	require.NoError(t, err)
+	credsPath := path.Join(homePath, fileName)
+	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+	require.NoError(t, se.Shutdown(context.Background()))
+	require.FileExists(t, credsPath)
+	// To make sure that collector is usign credentials file, turn off the fake server
+	srv.Close()
+	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+	t.Cleanup(func() {
+		os.RemoveAll(homePath)
+	})
 }
