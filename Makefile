@@ -110,10 +110,24 @@ build-push-container-multiplatform:
 		PLATFORM="$(PLATFORM)" \
 		./ci/build-push-multiplatform.sh
 
+.PHONY: build-push-container-multiplatform-legacy
+build-push-container-multiplatform-legacy:
+	BUILD_TAG="$(BUILD_TAG)" \
+		REPO_URL="$(LEGACY_REPO_URL)" \
+		DOCKERFILE="Dockerfile" \
+		PLATFORM="$(PLATFORM)" \
+		./ci/build-push-multiplatform.sh
+
 .PHONY: push-container-manifest
 push-container-manifest:
 	BUILD_TAG="$(BUILD_TAG)" \
 		REPO_URL="$(OPENSOURCE_REPO_URL)" \
+		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
+
+.PHONY: push-container-manifest-legacy
+push-container-manifest-legacy:
+	BUILD_TAG="$(BUILD_TAG)" \
+		REPO_URL="$(LEGACY_REPO_URL)" \
 		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
 
 #-------------------------------------------------------------------------------
