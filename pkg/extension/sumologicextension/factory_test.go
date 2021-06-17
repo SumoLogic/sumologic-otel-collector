@@ -16,6 +16,8 @@ package sumologicextension
 
 import (
 	"context"
+	"os"
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,10 +30,14 @@ import (
 
 func TestFactory_CreateDefaultConfig(t *testing.T) {
 	cfg := createDefaultConfig()
+	homePath, err := os.UserHomeDir()
+	require.NoError(t, err)
+	defaultCredsPath := path.Join(homePath, collectorCredentialsDirectory)
 	assert.Equal(t, &Config{
-		ExtensionSettings: config.NewExtensionSettings(config.NewID(typeStr)),
-		HeartBeatInterval: DefaultHeartbeatInterval,
-		ApiBaseUrl:        DefaultApiBaseUrl,
+		ExtensionSettings:        config.NewExtensionSettings(config.NewID(typeStr)),
+		HeartBeatInterval:        DefaultHeartbeatInterval,
+		ApiBaseUrl:               DefaultApiBaseUrl,
+		CollectorCredentialsPath: defaultCredsPath,
 	}, cfg)
 
 	assert.NoError(t, configcheck.ValidateConfig(cfg))
