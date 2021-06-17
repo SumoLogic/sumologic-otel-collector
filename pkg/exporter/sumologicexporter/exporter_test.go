@@ -358,6 +358,27 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 	assert.NoError(t, err)
 }
 
+func TestAllMetricsOTLP(t *testing.T) {
+	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			expected := "\nf\n/\n\x14\n\x04test\x12\f\n\ntest_value\n\x17\n\x05test2\x12\x0e\n\fsecond_value\x123\n\x00\x12/\n\x10test.metric.data\x1a\x05bytes2\x14\n\x12\x19\x00\x12\x94\v\xd1\x00H\x16!\xa48\x00\x00\x00\x00\x00\x00\n\xba\x01\n\x0e\n\f\n\x03foo\x12\x05\n\x03bar\x12\xa7\x01\n\x00\x12\xa2\x01\n\x11gauge_metric_name\"\x8c\x01\nD\n\x15\n\vremote_name\x12\x06156920\n\x19\n\x03url\x12\x12http://example_url\x19\x80GX\xef\xdb4Q\x16!|\x00\x00\x00\x00\x00\x00\x00\nD\n\x15\n\vremote_name\x12\x06156955\n\x19\n\x03url\x12\x12http://another_url\x19\x80\x11\xf3*\xdc4Q\x16!\xf5\x00\x00\x00\x00\x00\x00\x00"
+			assert.Equal(t, expected, body)
+			assert.Equal(t, "application/x-protobuf", req.Header.Get("Content-Type"))
+		},
+	})
+	defer func() { test.srv.Close() }()
+	test.exp.config.MetricFormat = OTLPMetricFormat
+
+	metrics := metricPairToMetrics([]metricPair{
+		exampleIntMetric(),
+		exampleIntGaugeMetric(),
+	})
+
+	err := test.exp.pushMetricsData(context.Background(), metrics)
+	assert.NoError(t, err)
+}
+
 func TestAllMetricsFailed(t *testing.T) {
 	test := prepareExporterTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {

@@ -44,7 +44,7 @@ type Config struct {
 	LogFormat LogFormatType `mapstructure:"log_format"`
 
 	// Metrics related configuration
-	// The format of metrics you will be sending, either graphite or carbon2 or prometheus (Default is prometheus)
+	// The format of metrics you will be sending, either graphite or carbon2, otlp or prometheus (Default is prometheus)
 	// Possible values are `carbon2` and `prometheus`
 	MetricFormat MetricFormatType `mapstructure:"metric_format"`
 	// Graphite template.
@@ -97,12 +97,14 @@ const (
 	JSONFormat LogFormatType = "json"
 	// OTLPLogFormat represents log_format: otlp
 	OTLPLogFormat LogFormatType = "otlp"
-	// GraphiteFormat represents metric_format: text
+	// GraphiteFormat represents metric_format: graphite
 	GraphiteFormat MetricFormatType = "graphite"
-	// Carbon2Format represents metric_format: json
+	// Carbon2Format represents metric_format: carbon2
 	Carbon2Format MetricFormatType = "carbon2"
-	// PrometheusFormat represents metric_format: json
+	// PrometheusFormat represents metric_format: prometheus
 	PrometheusFormat MetricFormatType = "prometheus"
+	// OTLPMetricFormat represents metric_format: otlp
+	OTLPMetricFormat MetricFormatType = "otlp"
 	// GZIPCompression represents compress_encoding: gzip
 	GZIPCompression CompressEncodingType = "gzip"
 	// DeflateCompression represents compress_encoding: deflate

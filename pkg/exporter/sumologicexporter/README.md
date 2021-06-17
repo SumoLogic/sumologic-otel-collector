@@ -10,7 +10,7 @@ Empty string means no compression
 - `max_request_body_size` (optional): Max HTTP request body size in bytes before compression (if applied). By default `1_048_576` (1MB) is used.
 - `metadata_attributes` (optional): List of regexes for attributes which should be send as metadata
 - `log_format` (optional) (logs only): Format to use when sending logs to Sumo. (default `json`) (possible values: `json`, `text`, `otlp`)
-- `metric_format` (optional) (metrics only): Format of the metrics to be sent (default is `prometheus`) (possible values: `carbon2`, `graphite`, `prometheus`).
+- `metric_format` (optional) (metrics only): Format of the metrics to be sent (default is `prometheus`) (possible values: `carbon2`, `graphite`, `otlp`, `prometheus`).
 - `graphite_template` (default=`%{_metric_}`) (optional) (metrics only): Template for Graphite format.
 [Source templates](#source-templates) are going to be applied.
 Applied only if `metric_format` is set to `graphite`.
