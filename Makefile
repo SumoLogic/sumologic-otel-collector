@@ -44,6 +44,10 @@ BUILD_CACHE_TAG = latest-builder-cache
 IMAGE_NAME = sumologic-otel-collector
 IMAGE_NAME_DEV = sumologic-otel-collector-dev
 
+LEGACY_ECR_URL = public.ecr.aws/sumologic
+LEGACY_REPO_URL = $(LEGACY_ECR_URL)/$(IMAGE_NAME)
+LEGACY_REPO_URL_DEV = $(LEGACY_ECR_URL)/$(IMAGE_NAME_DEV)
+
 OPENSOURCE_ECR_URL = public.ecr.aws/a4t4y2n3
 OPENSOURCE_REPO_URL = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME)
 OPENSOURCE_REPO_URL_DEV = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME_DEV)
@@ -68,8 +72,8 @@ build-container-local:
 
 # dev
 
-.PHONY: build-container-multiplatform-dev
-build-container-multiplatform-dev:
+.PHONY: build-push-container-multiplatform-dev
+build-push-container-multiplatform-dev:
 	BUILD_TAG="$(BUILD_TAG)" \
 		REPO_URL="$(OPENSOURCE_REPO_URL_DEV)" \
 		DOCKERFILE="Dockerfile_dev" \
@@ -82,10 +86,24 @@ push-container-manifest-dev:
 		REPO_URL="$(OPENSOURCE_REPO_URL_DEV)" \
 		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
 
+.PHONY: build-push-container-multiplatform-legacy-dev
+build-push-container-multiplatform-legacy-dev:
+	BUILD_TAG="$(BUILD_TAG)" \
+		REPO_URL="$(LEGACY_REPO_URL_DEV)" \
+		DOCKERFILE="Dockerfile_dev" \
+		PLATFORM="$(PLATFORM)" \
+		./ci/build-push-multiplatform.sh
+
+.PHONY: push-container-manifest-legacy-dev
+push-container-manifest-legacy-dev:
+	BUILD_TAG="$(BUILD_TAG)" \
+		REPO_URL="$(LEGACY_REPO_URL_DEV)" \
+		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
+
 # release
 
-.PHONY: build-container-multiplatform
-build-container-multiplatform:
+.PHONY: build-push-container-multiplatform
+build-push-container-multiplatform:
 	BUILD_TAG="$(BUILD_TAG)" \
 		REPO_URL="$(OPENSOURCE_REPO_URL)" \
 		DOCKERFILE="Dockerfile" \
@@ -100,7 +118,17 @@ push-container-manifest:
 
 #-------------------------------------------------------------------------------
 
+.PHONY: _login
+_login:
+	aws ecr-public get-login-password --region us-east-1 \
+	| docker login --username AWS --password-stdin $(ECR_URL)
+
 .PHONY: login
 login:
-	aws ecr-public get-login-password --region us-east-1 \
-	| docker login --username AWS --password-stdin $(OPENSOURCE_ECR_URL)
+	$(MAKE) _login \
+		ECR_URL="$(OPENSOURCE_ECR_URL)"
+
+.PHONY: login-legacy
+login-legacy:
+	$(MAKE) _login \
+		ECR_URL="$(LEGACY_ECR_URL)"

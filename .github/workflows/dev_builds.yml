@@ -14,6 +14,9 @@ jobs:
     strategy:
       matrix:
         go: [ '1.16.4' ]
+        # TODO: add arm64 when fix for
+        # https://github.com/golang/go/issues/46766#event-4898300932
+        # gets released in next 1.17 beta/rc.
         arch_os: [ 'darwin_amd64', 'linux_amd64' ]
     steps:
       - uses: actions/checkout@v2.3.4
@@ -73,6 +76,9 @@ jobs:
       - build
     strategy:
       matrix:
+        # TODO: add arm64 when fix for
+        # https://github.com/golang/go/issues/46766#event-4898300932
+        # gets released in next 1.17 beta/rc.
         arch_os: [ 'linux_amd64' ]
     steps:
       - uses: actions/checkout@v2.3.4
@@ -107,8 +113,22 @@ jobs:
 
       - name: Build and push image to Open Source ECR
         run: |
-          mv otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
-          make build-container-multiplatform-dev \
+          cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
+          make build-push-container-multiplatform-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }}
+
+      # TODO: should be removed after sumologic ECR alias migration
+      - name: Login to legacy ECR
+        run: make login-legacy
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.LEGACY_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.LEGACY_AWS_SECRET_ACCESS_KEY }}
+
+      - name: Build and push image to legacy ECR
+        run: |
+          cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
+          make build-push-container-multiplatform-legacy-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }}
 
@@ -144,7 +164,26 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
 
       - name: Push joint container manifest for all platforms to Open Source ECR
+        # TODO: add arm64 when fix for
+        # https://github.com/golang/go/issues/46766#event-4898300932
+        # gets released in next 1.17 beta/rc.
         run: |
           make push-container-manifest-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORMS="linux/amd64"
+
+      # TODO: should be removed after sumologic ECR alias migration
+      - name: Login to legacy ECR
+        run: make login-legacy
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.LEGACY_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.LEGACY_AWS_SECRET_ACCESS_KEY }}
+
+      - name: Push joint container manifest for all platforms to legacy ECR
+        # TODO: add arm64 when fix for
+        # https://github.com/golang/go/issues/46766#event-4898300932
+        # gets released in next 1.17 beta/rc.
+        run: |
+          make push-container-manifest-legacy-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORMS="linux/amd64"
