@@ -8,7 +8,7 @@ import (
 )
 
 type metricsfrequencyprocessor struct {
-	sieve *metricSieve
+	sieve metricSieve
 }
 
 var _ processorhelper.MProcessor = (*metricsfrequencyprocessor)(nil)
