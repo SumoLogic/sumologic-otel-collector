@@ -59,6 +59,7 @@ func initExporter(cfg *Config) (*sumologicexporter, error) {
 	case GraphiteFormat:
 	case Carbon2Format:
 	case PrometheusFormat:
+	case OTLPMetricFormat:
 	default:
 		return nil, fmt.Errorf("unexpected metric format: %s", cfg.MetricFormat)
 	}

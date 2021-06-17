@@ -278,6 +278,12 @@ func (s *sender) sendOTLPLogs(ctx context.Context, flds fields) ([]pdata.LogReco
 
 // sendMetrics sends metrics in right format basing on the s.config.MetricFormat
 func (s *sender) sendMetrics(ctx context.Context, flds fields) ([]metricPair, error) {
+
+	// Follow different execution path for OTLP format
+	if s.config.MetricFormat == OTLPMetricFormat {
+		return s.sendOTLPMetrics(ctx, flds)
+	}
+
 	var (
 		body           strings.Builder
 		errs           []error
@@ -340,6 +346,35 @@ func (s *sender) sendMetrics(ctx context.Context, flds fields) ([]metricPair, er
 		return droppedRecords, consumererror.Combine(errs)
 	}
 	return droppedRecords, nil
+}
+
+// sendMetrics sends metric records from the metricBuffer in OTLP format and as a result
+// it returns an array of records which has not been sent correctly and an error.
+// TODO: add support for HTTP limits
+func (s *sender) sendOTLPMetrics(ctx context.Context, flds fields) ([]metricPair, error) {
+	md := pdata.NewMetrics()
+	rms := md.ResourceMetrics()
+	rms.Resize(len(s.metricBuffer))
+	for i, record := range s.metricBuffer {
+		rm := rms.At(i)
+		record.attributes.CopyTo(rm.Resource().Attributes())
+		ilms := rm.InstrumentationLibraryMetrics()
+		ilms.Resize(1)
+		ilm := ilms.At(0)
+		ms := ilm.Metrics()
+		ms.Resize(1)
+		record.metric.CopyTo(ms.At(0))
+	}
+
+	body, err := md.ToOtlpProtoBytes()
+	if err != nil {
+		return s.metricBuffer, err
+	}
+
+	if err := s.send(ctx, MetricsPipeline, bytes.NewReader(body), flds); err != nil {
+		return s.metricBuffer, err
+	}
+	return nil, nil
 }
 
 // appendAndSend appends line to the request body that will be sent and sends
@@ -479,6 +514,8 @@ func addMetricsHeaders(req *http.Request, mf MetricFormatType) error {
 		req.Header.Add(headerContentType, contentTypeCarbon2)
 	case GraphiteFormat:
 		req.Header.Add(headerContentType, contentTypeGraphite)
+	case OTLPMetricFormat:
+		req.Header.Add(headerContentType, contentTypeOTLP)
 	default:
 		return fmt.Errorf("unsupported metrics format: %s", mf)
 	}
