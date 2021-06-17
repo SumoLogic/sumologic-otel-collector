@@ -44,7 +44,7 @@ type Config struct {
 
 	HeartBeatInterval time.Duration `mapstructure:"heartbeat_interval"`
 	// CollectorCredentialsPath is the path to directory where collector credentials
-	// are stored.
+	// are stored. Default value is $HOME/.sumologic-otel-collector
 	CollectorCredentialsPath string `mapstructure:"collector_credentials_path"`
 }
 
