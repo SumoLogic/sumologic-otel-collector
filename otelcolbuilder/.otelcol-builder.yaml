@@ -93,4 +93,5 @@ replaces:
 
   # ----------------------------------------------------------------------------
   # Customized log collection
+  # ToDo: Replace with upstream after https://github.com/open-telemetry/opentelemetry-log-collection/pull/189 merge and release
   - github.com/open-telemetry/opentelemetry-log-collection => github.com/sumologic/opentelemetry-log-collection v0.18.1-0.20210617065032-4049dee95672
