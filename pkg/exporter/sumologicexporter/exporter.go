@@ -16,6 +16,7 @@ package sumologicexporter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -70,10 +71,9 @@ func initExporter(cfg *Config) (*sumologicexporter, error) {
 		return nil, fmt.Errorf("unexpected compression encoding: %s", cfg.CompressEncoding)
 	}
 
-	// TODO checking the endpoint
-	// if len(cfg.HTTPClientSettings.Endpoint) == 0 {
-	// 	return nil, errors.New("endpoint is not set")
-	// }
+	if len(cfg.HTTPClientSettings.Endpoint) == 0 && cfg.HTTPClientSettings.Auth == nil {
+		return nil, errors.New("no endpoint and no auth extension specified")
+	}
 
 	sfs, err := newSourceFormats(cfg)
 	if err != nil {
@@ -369,12 +369,14 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 		}
 	}
 
+	httpSettings := se.config.HTTPClientSettings
+
 	// If we're using sumologicextension as authentication extension and
 	// endpoint was not set then send data on a collector generic ingest URL
 	// with authentication set by sumologicextension.
-	if se.config.HTTPClientSettings.Endpoint == "" &&
+	if httpSettings.Endpoint == "" && httpSettings.Auth != nil &&
 		// TODO: is there a better way than strings.Prefix of auth name?
-		strings.HasPrefix(se.config.HTTPClientSettings.Auth.AuthenticatorName, "sumologic") &&
+		strings.HasPrefix(httpSettings.Auth.AuthenticatorName, "sumologic") &&
 		foundSumoExt {
 		u, err := url.Parse(ext.BaseUrl())
 		if err != nil {
@@ -384,12 +386,14 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 		se.dataUrlLogs = u.String()
 		u.Path = metricsDataUrl
 		se.dataUrlMetrics = u.String()
+	} else if httpSettings.Endpoint != "" {
+		se.dataUrlLogs = httpSettings.Endpoint
+		se.dataUrlMetrics = httpSettings.Endpoint
 	} else {
-		se.dataUrlLogs = se.config.HTTPClientSettings.Endpoint
-		se.dataUrlMetrics = se.config.HTTPClientSettings.Endpoint
+		return fmt.Errorf("no auth extension and no endpoint specified")
 	}
 
-	client, err := se.config.HTTPClientSettings.ToClient(host.GetExtensions())
+	client, err := httpSettings.ToClient(host.GetExtensions())
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP Client: %w", err)
 	}

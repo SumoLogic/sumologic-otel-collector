@@ -41,10 +41,21 @@ func TestBasicExtensionConstruction(t *testing.T) {
 			WantErr: true,
 		},
 		{
+			Name: "no_credentials_causes_error",
+			Config: func() *Config {
+				cfg := createDefaultConfig().(*Config)
+				cfg.CollectorName = "collector_name"
+				return cfg
+			}(),
+			WantErr: true,
+		},
+		{
 			Name: "basic",
 			Config: func() *Config {
 				cfg := createDefaultConfig().(*Config)
 				cfg.CollectorName = "collector_name"
+				cfg.Credentials.AccessID = "access_id_123456"
+				cfg.Credentials.AccessKey = "access_key_123456"
 				return cfg
 			}(),
 		},
@@ -87,6 +98,9 @@ func TestBasicStart(t *testing.T) {
 	cfg.CollectorName = "collector_name"
 	cfg.ExtensionSettings = config.ExtensionSettings{}
 	cfg.ApiBaseUrl = srv.URL
+	cfg.Credentials.AccessID = "dummy_access_id"
+	cfg.Credentials.AccessKey = "dummy_access_key"
+
 	se, err := newSumologicExtension(cfg, zap.NewNop())
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
@@ -119,6 +133,9 @@ func TestStoreCredentials(t *testing.T) {
 	cfg.ExtensionSettings = config.ExtensionSettings{}
 	cfg.ApiBaseUrl = srv.URL
 	cfg.CollectorCredentialsPath = homePath
+	cfg.Credentials.AccessID = "dummy_access_id"
+	cfg.Credentials.AccessKey = "dummy_access_key"
+
 	se, err := newSumologicExtension(cfg, zap.NewNop())
 	require.NoError(t, err)
 	fileName, err := hash(cfg.CollectorName)
