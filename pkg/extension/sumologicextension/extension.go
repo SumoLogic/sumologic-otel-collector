@@ -26,6 +26,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -62,7 +63,7 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 	}
 
 	return &SumologicExtension{
-		baseUrl:   conf.ApiBaseUrl,
+		baseUrl:   strings.TrimSuffix(conf.ApiBaseUrl, "/"),
 		conf:      conf,
 		logger:    logger,
 		closeChan: make(chan struct{}),
