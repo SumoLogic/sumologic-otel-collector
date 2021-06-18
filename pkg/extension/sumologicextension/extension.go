@@ -29,6 +29,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension/api"
 	"go.opentelemetry.io/collector/component"
 	"go.uber.org/zap"
 )
@@ -37,15 +38,9 @@ type SumologicExtension struct {
 	baseUrl          string
 	conf             *Config
 	logger           *zap.Logger
-	registrationInfo OpenRegisterResponsePayload
+	registrationInfo api.OpenRegisterResponsePayload
 	closeChan        chan struct{}
 	closeOnce        sync.Once
-}
-
-type OpenRegisterResponsePayload struct {
-	CollectorCredentialId  string `json:"collectorCredentialId"`
-	CollectorCredentialKey string `json:"collectorCredentialKey"`
-	CollectorId            string `json:"collectorId"`
 }
 
 const (
@@ -77,11 +72,9 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
 	if se.checkCollectorCredentials() {
 		se.logger.Debug("Found stored credentials")
-		ri, err := se.getCollectorCredentials()
-		if err != nil {
+		if err := se.getCollectorCredentials(); err != nil {
 			return err
 		}
-		se.registrationInfo = ri
 	} else {
 		se.logger.Debug("Credentials not found, register collector")
 		if err := se.register(ctx); err != nil {
@@ -127,37 +120,40 @@ func (se *SumologicExtension) checkCollectorCredentials() bool {
 	return true
 }
 
-// getCollectorCredentials retrieves and decrypts collector credentials using
-// hashed collector name as passphrase.
-func (se *SumologicExtension) getCollectorCredentials() (OpenRegisterResponsePayload, error) {
+// getCollectorCredentials retrieves, decrypts collector credentials using
+// hashed collector name as passphrase and then assign it to registrationInfo
+// field.
+func (se *SumologicExtension) getCollectorCredentials() error {
 	filenameHash, err := hash(se.conf.CollectorName)
 	if err != nil {
-		return OpenRegisterResponsePayload{}, err
+		return err
 	}
 
 	path := path.Join(se.conf.CollectorCredentialsPath, filenameHash)
 	creds, err := os.Open(path)
 	if err != nil {
-		return OpenRegisterResponsePayload{}, err
+		return err
 	}
 
 	defer creds.Close()
 	encryptedCreds, err := ioutil.ReadAll(creds)
 	if err != nil {
-		return OpenRegisterResponsePayload{}, err
+		return err
 	}
 
 	collectorCreds, err := decrypt(encryptedCreds, se.conf.CollectorName)
 	if err != nil {
-		return OpenRegisterResponsePayload{}, err
+		return err
 	}
 
-	var credentialsInfo OpenRegisterResponsePayload
+	var credentialsInfo api.OpenRegisterResponsePayload
 	if err = json.Unmarshal(collectorCreds, &credentialsInfo); err != nil {
-		return OpenRegisterResponsePayload{}, err
+		return err
 	}
 
-	return credentialsInfo, nil
+	se.registrationInfo = credentialsInfo
+
+	return nil
 }
 
 // storeCollectorCredentials stores collector credentials in a file in directory
@@ -198,15 +194,6 @@ func ensureStoreCredentialsDir(path string) error {
 }
 
 func (se *SumologicExtension) register(ctx context.Context) error {
-	type OpenRegisterRequestPayload struct {
-		CollectorName string `json:"collectorName"`
-		Ephemeral     bool   `json:"ephemeral"`
-		Description   string `json:"description"`
-		Hostname      string `json:"hostname"`
-		Category      string `json:"category"`
-		Timezone      string `json:"timeZone"`
-	}
-
 	u, err := url.Parse(se.baseUrl)
 	if err != nil {
 		return err
@@ -221,7 +208,7 @@ func (se *SumologicExtension) register(ctx context.Context) error {
 	}
 
 	var buff bytes.Buffer
-	if err = json.NewEncoder(&buff).Encode(OpenRegisterRequestPayload{
+	if err = json.NewEncoder(&buff).Encode(api.OpenRegisterRequestPayload{
 		Ephemeral:     true, // TODO: change that
 		CollectorName: se.conf.CollectorName,
 		Description:   se.conf.CollectorDescription,
@@ -265,7 +252,7 @@ func (se *SumologicExtension) register(ctx context.Context) error {
 		return nil
 	}
 
-	var resp OpenRegisterResponsePayload
+	var resp api.OpenRegisterResponsePayload
 	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
 		return err
 	}
