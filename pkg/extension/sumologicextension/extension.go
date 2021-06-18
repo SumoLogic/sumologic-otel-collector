@@ -58,6 +58,9 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 	if conf.CollectorName == "" {
 		return nil, errors.New("collector name is unset")
 	}
+	if conf.Credentials.AccessID == "" || conf.Credentials.AccessKey == "" {
+		return nil, errors.New("access_key and/or access_id not provided")
+	}
 	if conf.HeartBeatInterval <= 0 {
 		conf.HeartBeatInterval = DefaultHeartbeatInterval
 	}
@@ -246,11 +249,14 @@ func (se *SumologicExtension) register(ctx context.Context) error {
 				res.StatusCode, err,
 			)
 		}
-		se.logger.Error("Collector registration failed",
-			zap.Int("response status code", res.StatusCode),
+		se.logger.Debug("Collector registration failed",
+			zap.Int("status_code", res.StatusCode),
 			zap.String("response", buff.String()),
 		)
-		return nil
+		return fmt.Errorf(
+			"failed to register the collector, got HTTP status code: %d",
+			res.StatusCode,
+		)
 	}
 
 	var resp api.OpenRegisterResponsePayload
@@ -283,7 +289,7 @@ func (se *SumologicExtension) heartbeatLoop() {
 		default:
 			err := se.sendHeartbeat()
 			if err != nil {
-				se.logger.Error("Heartbeat error: ", zap.String("error: ", err.Error()))
+				se.logger.Error("Heartbeat error", zap.Error(err))
 			}
 			se.logger.Debug("Heartbeat sent")
 			select {
@@ -371,6 +377,7 @@ func addClientCredentials(req *http.Request, accessID string, accessKey string) 
 
 func addJSONHeaders(req *http.Request) {
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
 }
 
 func addCollectorCredentials(req *http.Request, collectorCredentialId string, collectorCredentialKey string) {
