@@ -172,7 +172,7 @@ func createIlm(name string, metricNames []string) pdata.InstrumentationLibraryMe
 
 func createRm(metricsPerLibrary map[string][]string) pdata.ResourceMetrics {
 	rm := pdata.NewResourceMetrics()
-	keys := keySliceButDifferent(metricsPerLibrary)
+	keys := getStringKeySlice(metricsPerLibrary)
 	sort.Strings(keys)
 	pdata.NewResource().CopyTo(rm.Resource())
 	for _, key := range keys {
@@ -193,7 +193,7 @@ func createMetrics(metricsPerLibraryArgs ...map[string][]string) pdata.Metrics {
 	return metrics
 }
 
-func keySliceButDifferent(mapping map[string][]string) []string {
+func getStringKeySlice(mapping map[string][]string) []string {
 	out := make([]string, len(mapping))
 	i := 0
 	for k := range mapping {
