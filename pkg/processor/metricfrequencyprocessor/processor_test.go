@@ -6,23 +6,22 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/consumer/pdata"
 )
 
 func TestSieveAllFromEmpty(t *testing.T) {
-	ctx := context.Background()
 	sieve := &siftAllSieve{}
 	processor := &metricsfrequencyprocessor{sieve: sieve}
 
 	input := createMetrics()
-	result, err := processor.ProcessMetrics(ctx, input)
+	result, err := processor.ProcessMetrics(context.Background(), input)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, result.ResourceMetrics().Len(), 0)
 }
 
 func TestSieveAllFromNonempty(t *testing.T) {
-	ctx := context.Background()
 	sieve := &siftAllSieve{}
 	processor := &metricsfrequencyprocessor{sieve: sieve}
 
@@ -36,26 +35,24 @@ func TestSieveAllFromNonempty(t *testing.T) {
 		"lib-4": {"m2", "m3"},
 	}
 	input := createMetrics(resource1metrics, resource2metrics)
-	result, err := processor.ProcessMetrics(ctx, input)
+	result, err := processor.ProcessMetrics(context.Background(), input)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, result.ResourceMetrics().Len(), 0)
 }
 
 func TestKeepAllFromEmpty(t *testing.T) {
-	ctx := context.Background()
 	sieve := &keepAllSieve{}
 	processor := &metricsfrequencyprocessor{sieve: sieve}
 
 	input := createMetrics()
-	result, err := processor.ProcessMetrics(ctx, input)
+	result, err := processor.ProcessMetrics(context.Background(), input)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, result.ResourceMetrics().Len(), 0)
 }
 
 func TestKeepAllFromNonEmpty(t *testing.T) {
-	ctx := context.Background()
 	sieve := &keepAllSieve{}
 	processor := &metricsfrequencyprocessor{sieve: sieve}
 
@@ -69,21 +66,20 @@ func TestKeepAllFromNonEmpty(t *testing.T) {
 		"lib-4": {"m2", "m3", "m4"},
 	}
 	input := createMetrics(resource1metrics, resource2metrics)
-	result, err := processor.ProcessMetrics(ctx, input)
+	result, err := processor.ProcessMetrics(context.Background(), input)
 
-	assert.NoError(t, err)
-	assert.Equal(t, 2, result.ResourceMetrics().Len())
+	require.NoError(t, err)
+	require.Equal(t, 2, result.ResourceMetrics().Len())
 	assert.Equal(t, 2, result.ResourceMetrics().At(0).InstrumentationLibraryMetrics().Len())
 	assert.Equal(t, 2, result.ResourceMetrics().At(0).InstrumentationLibraryMetrics().At(0).Metrics().Len())
 	assert.Equal(t, 3, result.ResourceMetrics().At(0).InstrumentationLibraryMetrics().At(1).Metrics().Len())
-	assert.Equal(t, 3, result.ResourceMetrics().At(1).InstrumentationLibraryMetrics().Len())
+	require.Equal(t, 3, result.ResourceMetrics().At(1).InstrumentationLibraryMetrics().Len())
 	assert.Equal(t, 1, result.ResourceMetrics().At(1).InstrumentationLibraryMetrics().At(0).Metrics().Len())
 	assert.Equal(t, 2, result.ResourceMetrics().At(1).InstrumentationLibraryMetrics().At(1).Metrics().Len())
 	assert.Equal(t, 3, result.ResourceMetrics().At(1).InstrumentationLibraryMetrics().At(2).Metrics().Len())
 }
 
 func TestSelectionWithSingleMetric(t *testing.T) {
-	ctx := context.Background()
 	sieve := &singleMetricSieve{name: "m1"}
 	processor := &metricsfrequencyprocessor{sieve: sieve}
 
@@ -92,14 +88,13 @@ func TestSelectionWithSingleMetric(t *testing.T) {
 	}
 
 	input := createMetrics(resourceMetrics)
-	result, err := processor.ProcessMetrics(ctx, input)
+	result, err := processor.ProcessMetrics(context.Background(), input)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 0, result.ResourceMetrics().Len())
 }
 
 func TestSelectionWithTwoResources(t *testing.T) {
-	ctx := context.Background()
 	sieve := &singleMetricSieve{name: "m1"}
 	processor := &metricsfrequencyprocessor{sieve: sieve}
 
@@ -111,15 +106,14 @@ func TestSelectionWithTwoResources(t *testing.T) {
 	}
 
 	input := createMetrics(resource1metrics, resource2metrics)
-	result, err := processor.ProcessMetrics(ctx, input)
+	result, err := processor.ProcessMetrics(context.Background(), input)
 
-	assert.NoError(t, err)
-	assert.Equal(t, 1, result.ResourceMetrics().Len())
+	require.NoError(t, err)
+	require.Equal(t, 1, result.ResourceMetrics().Len())
 	assert.Equal(t, "m2", result.ResourceMetrics().At(0).InstrumentationLibraryMetrics().At(0).Metrics().At(0).Name())
 }
 
 func TestSelectionWithTwoLibraries(t *testing.T) {
-	ctx := context.Background()
 	sieve := &singleMetricSieve{name: "m1"}
 	processor := &metricsfrequencyprocessor{sieve: sieve}
 
@@ -129,13 +123,13 @@ func TestSelectionWithTwoLibraries(t *testing.T) {
 	}
 
 	input := createMetrics(resourceMetrics)
-	result, err := processor.ProcessMetrics(ctx, input)
+	result, err := processor.ProcessMetrics(context.Background(), input)
 
-	assert.NoError(t, err)
-	assert.Equal(t, 1, result.ResourceMetrics().Len())
-	assert.Equal(t, 1, result.ResourceMetrics().At(0).InstrumentationLibraryMetrics().Len())
+	require.NoError(t, err)
+	require.Equal(t, 1, result.ResourceMetrics().Len())
+	require.Equal(t, 1, result.ResourceMetrics().At(0).InstrumentationLibraryMetrics().Len())
 	assert.Equal(t, "lib-2", result.ResourceMetrics().At(0).InstrumentationLibraryMetrics().At(0).InstrumentationLibrary().Name())
-	assert.Equal(t, 1, result.ResourceMetrics().At(0).InstrumentationLibraryMetrics().At(0).Metrics().Len())
+	require.Equal(t, 1, result.ResourceMetrics().At(0).InstrumentationLibraryMetrics().At(0).Metrics().Len())
 	assert.Equal(t, "m2", result.ResourceMetrics().At(0).InstrumentationLibraryMetrics().At(0).Metrics().At(0).Name())
 }
 
