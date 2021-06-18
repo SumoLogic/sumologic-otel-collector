@@ -6,7 +6,7 @@ RUN apk --update add make gcc g++
 RUN make install
 RUN make build
 
-FROM alpine:3.13 as certs
+FROM alpine:3.14.0 as certs
 RUN apk --update add ca-certificates
 
 FROM scratch

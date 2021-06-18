@@ -1,10 +1,10 @@
-FROM alpine:3.13 as otelcol
+FROM alpine:3.14.0 as otelcol
 COPY otelcol-sumo /
 # This shouldn't be necessary but sometimes we end up with execution bit not set.
 # ref: https://github.com/open-telemetry/opentelemetry-collector/issues/1317
 RUN chmod 755 /otelcol-sumo
 
-FROM alpine:3.13 as certs
+FROM alpine:3.14.0 as certs
 RUN apk --update add ca-certificates
 
 FROM scratch
