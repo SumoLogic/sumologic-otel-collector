@@ -17,11 +17,6 @@ package sumologicextension
 import (
 	"bytes"
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/md5"
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -34,6 +29,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension/api"
 	"go.opentelemetry.io/collector/component"
 	"go.uber.org/zap"
 )
@@ -42,24 +38,9 @@ type SumologicExtension struct {
 	baseUrl          string
 	conf             *Config
 	logger           *zap.Logger
-	registrationInfo OpenRegisterResponsePayload
+	registrationInfo api.OpenRegisterResponsePayload
 	closeChan        chan struct{}
 	closeOnce        sync.Once
-}
-
-type OpenRegisterRequestPayload struct {
-	CollectorName string `json:"collectorName"`
-	Ephemeral     bool   `json:"ephemeral"`
-	Description   string `json:"description"`
-	Hostname      string `json:"hostname"`
-	Category      string `json:"category"`
-	Timezone      string `json:"timeZone"`
-}
-
-type OpenRegisterResponsePayload struct {
-	CollectorCredentialId  string `json:"collectorCredentialId"`
-	CollectorCredentialKey string `json:"collectorCredentialKey"`
-	CollectorId            string `json:"collectorId"`
 }
 
 const (
@@ -90,12 +71,12 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
 	if se.checkCollectorCredentials() {
-		se.logger.Debug("found stored credentials")
+		se.logger.Debug("Found stored credentials")
 		if err := se.getCollectorCredentials(); err != nil {
 			return err
 		}
 	} else {
-		se.logger.Debug("credentials not found, register collector")
+		se.logger.Debug("Credentials not found, register collector")
 		if err := se.register(ctx); err != nil {
 			return err
 		}
@@ -113,9 +94,10 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		err := se.storeCollectorCredentials()
-		if err != nil {
-			se.logger.Error("unable to store collector credentials", zap.String("error", err.Error()))
+		if err := se.storeCollectorCredentials(); err != nil {
+			se.logger.Error("Unable to store collector credentials",
+				zap.Error(err),
+			)
 		}
 		return nil
 	}
@@ -124,9 +106,11 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 // checkCollectorCredentials checks if collector credentials can be found in path
 // configured in the config.
 func (se *SumologicExtension) checkCollectorCredentials() bool {
-	filenameHash, err := createHash(se.conf.CollectorName)
+	filenameHash, err := hash(se.conf.CollectorName)
 	if err != nil {
-		se.logger.Error("Unable to verify collector name")
+		se.logger.Error("Unable to create hash from collector name",
+			zap.Error(err),
+		)
 		return false
 	}
 	path := path.Join(se.conf.CollectorCredentialsPath, filenameHash)
@@ -136,44 +120,50 @@ func (se *SumologicExtension) checkCollectorCredentials() bool {
 	return true
 }
 
-// getCollectorCredentials retrieves and decrypts collector credentials using
-// collector name as passphrase.
+// getCollectorCredentials retrieves, decrypts collector credentials using
+// hashed collector name as passphrase and then assign it to registrationInfo
+// field.
 func (se *SumologicExtension) getCollectorCredentials() error {
-	filenameHash, err := createHash(se.conf.CollectorName)
+	filenameHash, err := hash(se.conf.CollectorName)
 	if err != nil {
 		return err
 	}
+
 	path := path.Join(se.conf.CollectorCredentialsPath, filenameHash)
-	var credentialsInfo OpenRegisterResponsePayload
 	creds, err := os.Open(path)
 	if err != nil {
 		return err
 	}
+
 	defer creds.Close()
 	encryptedCreds, err := ioutil.ReadAll(creds)
 	if err != nil {
 		return err
 	}
+
 	collectorCreds, err := decrypt(encryptedCreds, se.conf.CollectorName)
 	if err != nil {
 		return err
 	}
 
-	err = json.Unmarshal(collectorCreds, &credentialsInfo)
-	if err != nil {
+	var credentialsInfo api.OpenRegisterResponsePayload
+	if err = json.Unmarshal(collectorCreds, &credentialsInfo); err != nil {
 		return err
 	}
+
 	se.registrationInfo = credentialsInfo
 
 	return nil
 }
 
-// encrypt nad store collector credentials in file
+// storeCollectorCredentials stores collector credentials in a file in directory
+// as specified in CollectorCredentialsPath. The credentials are encrypted using
+// hashed collector name.
 func (se *SumologicExtension) storeCollectorCredentials() error {
 	if err := ensureStoreCredentialsDir(se.conf.CollectorCredentialsPath); err != nil {
 		return err
 	}
-	filenameHash, err := createHash(se.conf.CollectorName)
+	filenameHash, err := hash(se.conf.CollectorName)
 	if err != nil {
 		return err
 	}
@@ -186,79 +176,21 @@ func (se *SumologicExtension) storeCollectorCredentials() error {
 	if err != nil {
 		return err
 	}
-	if err = os.WriteFile(path, encrypedCreds, 0600); err != nil {
-		return err
-	}
-	return nil
+	return fmt.Errorf("failed to save credentials file '%s': %w",
+		path,
+		os.WriteFile(path, encrypedCreds, 0600),
+	)
 }
 
-// ensureStoreCredentialsDir checks if directory to store credentials exists, if not try to create it.
+// ensureStoreCredentialsDir checks if directory to store credentials exists,
+// if not try to create it.
 func ensureStoreCredentialsDir(path string) error {
 	if _, err := os.Stat(path); err != nil {
-		err := os.Mkdir(path, 0600)
-		if err != nil {
+		if err := os.Mkdir(path, 0600); err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-// createHash creates key used for credentials encryption.
-func createHash(key string) (string, error) {
-	hasher := md5.New()
-	if _, err := hasher.Write([]byte(key)); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(hasher.Sum(nil)), nil
-}
-
-// encrypt encrypts collector credentials with AES using the passphrase
-func encrypt(data []byte, passphrase string) ([]byte, error) {
-	hash, err := createHash(passphrase)
-	if err != nil {
-		return nil, err
-	}
-	block, err := aes.NewCipher([]byte(hash))
-	if err != nil {
-		return nil, err
-	}
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
-	}
-	ciphertext := gcm.Seal(nonce, nonce, data, nil)
-	return ciphertext, nil
-}
-
-// decrypt decrypts collector credentials encrypted with AES passphrase.
-func decrypt(data []byte, passphrase string) ([]byte, error) {
-	hash, err := createHash(passphrase)
-	if err != nil {
-		return nil, err
-	}
-	key := []byte(hash)
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-	nonceSize := gcm.NonceSize()
-	if nonceSize > len(data) {
-		return nil, fmt.Errorf("unable to decrypt credentials")
-	}
-	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
-	if err != nil {
-		return nil, err
-	}
-	return plaintext, nil
 }
 
 func (se *SumologicExtension) register(ctx context.Context) error {
@@ -276,7 +208,7 @@ func (se *SumologicExtension) register(ctx context.Context) error {
 	}
 
 	var buff bytes.Buffer
-	if err = json.NewEncoder(&buff).Encode(OpenRegisterRequestPayload{
+	if err = json.NewEncoder(&buff).Encode(api.OpenRegisterRequestPayload{
 		Ephemeral:     true, // TODO: change that
 		CollectorName: se.conf.CollectorName,
 		Description:   se.conf.CollectorDescription,
@@ -320,7 +252,7 @@ func (se *SumologicExtension) register(ctx context.Context) error {
 		return nil
 	}
 
-	var resp OpenRegisterResponsePayload
+	var resp api.OpenRegisterResponsePayload
 	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
 		return err
 	}

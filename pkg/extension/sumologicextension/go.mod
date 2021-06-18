@@ -20,3 +20,5 @@ require (
 replace go.opentelemetry.io/collector => go.opentelemetry.io/collector v0.27.1-0.20210520180039-2e84285efc66
 
 replace github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter => ../../exporter/sumologicexporter
+
+replace github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension => ./

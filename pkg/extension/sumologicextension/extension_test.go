@@ -121,7 +121,7 @@ func TestStoreCredentials(t *testing.T) {
 	cfg.CollectorCredentialsPath = homePath
 	se, err := newSumologicExtension(cfg, zap.NewNop())
 	require.NoError(t, err)
-	fileName, err := createHash(cfg.CollectorName)
+	fileName, err := hash(cfg.CollectorName)
 	require.NoError(t, err)
 	credsPath := path.Join(homePath, fileName)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
