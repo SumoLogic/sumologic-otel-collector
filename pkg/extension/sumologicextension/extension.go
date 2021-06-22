@@ -75,14 +75,21 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
 	if se.checkCollectorCredentials() {
-		se.logger.Debug("Found stored credentials")
-		if err := se.getCollectorCredentials(); err != nil {
+		path, err := se.getCollectorCredentials()
+		if err != nil {
 			return err
 		}
+		se.logger.Info("Found stored credentials", zap.String("path", path))
 	} else {
-		se.logger.Debug("Credentials not found, register collector")
+		se.logger.Info("Locally stored credentials not found, registering the collector")
 		if err := se.register(ctx); err != nil {
 			return err
+		}
+
+		if err := se.storeCollectorCredentials(); err != nil {
+			se.logger.Error("Unable to store collector credentials",
+				zap.Error(err),
+			)
 		}
 	}
 
@@ -98,11 +105,6 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		if err := se.storeCollectorCredentials(); err != nil {
-			se.logger.Error("Unable to store collector credentials",
-				zap.Error(err),
-			)
-		}
 		return nil
 	}
 }
@@ -127,37 +129,37 @@ func (se *SumologicExtension) checkCollectorCredentials() bool {
 // getCollectorCredentials retrieves, decrypts collector credentials using
 // hashed collector name as passphrase and then assign it to registrationInfo
 // field.
-func (se *SumologicExtension) getCollectorCredentials() error {
+func (se *SumologicExtension) getCollectorCredentials() (string, error) {
 	filenameHash, err := hash(se.conf.CollectorName)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	path := path.Join(se.conf.CollectorCredentialsPath, filenameHash)
 	creds, err := os.Open(path)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	defer creds.Close()
 	encryptedCreds, err := ioutil.ReadAll(creds)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	collectorCreds, err := decrypt(encryptedCreds, se.conf.CollectorName)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	var credentialsInfo api.OpenRegisterResponsePayload
 	if err = json.Unmarshal(collectorCreds, &credentialsInfo); err != nil {
-		return err
+		return "", err
 	}
 
 	se.registrationInfo = credentialsInfo
 
-	return nil
+	return path, nil
 }
 
 // storeCollectorCredentials stores collector credentials in a file in directory
@@ -180,20 +182,37 @@ func (se *SumologicExtension) storeCollectorCredentials() error {
 	if err != nil {
 		return err
 	}
-	return fmt.Errorf("failed to save credentials file '%s': %w",
-		path,
-		os.WriteFile(path, encrypedCreds, 0600),
-	)
+
+	if err = os.WriteFile(path, encrypedCreds, 0600); err != nil {
+		return fmt.Errorf("failed to save credentials file '%s': %w",
+			path, err,
+		)
+	}
+
+	se.logger.Info("Collector registration credentials stored locally", zap.String("path", path))
+
+	return nil
 }
 
 // ensureStoreCredentialsDir checks if directory to store credentials exists,
 // if not try to create it.
 func ensureStoreCredentialsDir(path string) error {
-	if _, err := os.Stat(path); err != nil {
-		if err := os.Mkdir(path, 0600); err != nil {
+	fi, err := os.Stat(path)
+	if err != nil {
+		if err := os.Mkdir(path, 0700); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	// If the credentials directory doesn't have the execution bit then
+	// set it so that we can 'exec' into it.
+	if fi.Mode().Perm() != 0700 {
+		if err := os.Chmod(path, 0700); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 

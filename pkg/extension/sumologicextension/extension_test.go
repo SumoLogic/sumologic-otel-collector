@@ -111,43 +111,115 @@ func TestBasicStart(t *testing.T) {
 }
 
 func TestStoreCredentials(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.URL.Path == registerUrl {
-			_, err := w.Write([]byte(`{
+	getServer := func() *httptest.Server {
+		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			if req.URL.Path == registerUrl {
+				_, err := w.Write([]byte(`{
 				"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
 				"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
 				"collectorId": "000000000FFFFFFF"
 			}`))
 
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
 				return
 			}
-			return
-		}
-	}))
+		}))
+	}
 
-	homePath := os.TempDir()
-	cfg := createDefaultConfig().(*Config)
-	cfg.CollectorName = "collector_name"
-	cfg.ExtensionSettings = config.ExtensionSettings{}
-	cfg.ApiBaseUrl = srv.URL
-	cfg.CollectorCredentialsPath = homePath
-	cfg.Credentials.AccessID = "dummy_access_id"
-	cfg.Credentials.AccessKey = "dummy_access_key"
+	getConfig := func(url string) *Config {
+		cfg := createDefaultConfig().(*Config)
+		cfg.CollectorName = "collector_name"
+		cfg.ExtensionSettings = config.ExtensionSettings{}
+		cfg.ApiBaseUrl = url
+		cfg.Credentials.AccessID = "dummy_access_id"
+		cfg.Credentials.AccessKey = "dummy_access_key"
+		return cfg
+	}
 
-	se, err := newSumologicExtension(cfg, zap.NewNop())
-	require.NoError(t, err)
-	fileName, err := hash(cfg.CollectorName)
-	require.NoError(t, err)
-	credsPath := path.Join(homePath, fileName)
-	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
-	require.NoError(t, se.Shutdown(context.Background()))
-	require.FileExists(t, credsPath)
-	// To make sure that collector is using credentials file, turn off the mock registration server
-	srv.Close()
-	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
-	t.Cleanup(func() {
-		os.RemoveAll(homePath)
+	t.Run("dir does not exist", func(t *testing.T) {
+		dir, err := os.MkdirTemp("", "otelcol-sumo-store-credentials-test-*")
+		require.NoError(t, err)
+		t.Cleanup(func() { os.RemoveAll(dir) })
+
+		srv := getServer()
+		cfg := getConfig(srv.URL)
+		cfg.CollectorCredentialsPath = dir
+
+		// Ensure the directory doesn't exist before running the extension
+		require.NoError(t, os.RemoveAll(dir))
+
+		se, err := newSumologicExtension(cfg, zap.NewNop())
+		require.NoError(t, err)
+		fileName, err := hash(cfg.CollectorName)
+		require.NoError(t, err)
+		credsPath := path.Join(dir, fileName)
+		require.NoFileExists(t, credsPath)
+		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+		require.NoError(t, se.Shutdown(context.Background()))
+		require.FileExists(t, credsPath)
+
+		// To make sure that collector is using credentials file, turn off the mock registration server
+		srv.Close()
+		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+	})
+
+	t.Run("dir exists before launch with 600 permissions", func(t *testing.T) {
+		dir, err := os.MkdirTemp("", "otelcol-sumo-store-credentials-test-*")
+		require.NoError(t, err)
+		t.Cleanup(func() { os.RemoveAll(dir) })
+
+		srv := getServer()
+		cfg := getConfig(srv.URL)
+		cfg.CollectorCredentialsPath = dir
+
+		// Ensure the directory has 600 permissions
+		require.NoError(t, os.Chmod(dir, 0600))
+
+		se, err := newSumologicExtension(cfg, zap.NewNop())
+		require.NoError(t, err)
+		fileName, err := hash(cfg.CollectorName)
+		require.NoError(t, err)
+		credsPath := path.Join(dir, fileName)
+		require.NoFileExists(t, credsPath)
+		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+		require.NoError(t, se.Shutdown(context.Background()))
+		require.FileExists(t, credsPath)
+
+		// To make sure that collector is using credentials file, turn off the mock registration server
+		srv.Close()
+		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+	})
+
+	t.Run("ensure dir gets created with 700 permissions", func(t *testing.T) {
+		dir, err := os.MkdirTemp("", "otelcol-sumo-store-credentials-test-*")
+		require.NoError(t, err)
+		t.Cleanup(func() { os.RemoveAll(dir) })
+
+		srv := getServer()
+		cfg := getConfig(srv.URL)
+		cfg.CollectorCredentialsPath = dir
+
+		fi, err := os.Stat(dir)
+		require.NoError(t, err)
+
+		// Chceck that directory has 700 permissions
+		require.EqualValues(t, 0700, fi.Mode().Perm())
+
+		se, err := newSumologicExtension(cfg, zap.NewNop())
+		require.NoError(t, err)
+		fileName, err := hash(cfg.CollectorName)
+		require.NoError(t, err)
+		credsPath := path.Join(dir, fileName)
+		require.NoFileExists(t, credsPath)
+		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+		require.NoError(t, se.Shutdown(context.Background()))
+		require.FileExists(t, credsPath)
+
+		// To make sure that collector is using credentials file, turn off the mock registration server
+		srv.Close()
+		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	})
 }
