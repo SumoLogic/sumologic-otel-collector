@@ -39,6 +39,7 @@ type SumologicExtension struct {
 	baseUrl          string
 	conf             *Config
 	logger           *zap.Logger
+	authenticator    Authenticator
 	registrationInfo api.OpenRegisterResponsePayload
 	closeChan        chan struct{}
 	closeOnce        sync.Once
@@ -64,12 +65,17 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 	if conf.HeartBeatInterval <= 0 {
 		conf.HeartBeatInterval = DefaultHeartbeatInterval
 	}
+	auth := Authenticator{
+		conf:   conf,
+		logger: logger,
+	}
 
 	return &SumologicExtension{
-		baseUrl:   strings.TrimSuffix(conf.ApiBaseUrl, "/"),
-		conf:      conf,
-		logger:    logger,
-		closeChan: make(chan struct{}),
+		baseUrl:       strings.TrimSuffix(conf.ApiBaseUrl, "/"),
+		conf:          conf,
+		logger:        logger,
+		authenticator: auth,
+		closeChan:     make(chan struct{}),
 	}, nil
 }
 
@@ -92,6 +98,19 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 			)
 		}
 	}
+	// var colCreds api.OpenRegisterResponsePayload
+	// var err error
+	// if checkCollectorCredentials(se.conf.CollectorName, se.conf.CollectorCredentialsPath) {
+	// 	colCreds, err = Stored(se.authenticator).Get()
+	// } else {
+	// 	colCreds, err = Register(se.authenticator).Get()
+	// }
+	// if err != nil {
+	// 	se.logger.Error("Unable to set up collector credentials")
+	// 	return err
+	// }
+
+	se.registrationInfo = colCreds
 
 	go se.heartbeatLoop()
 
@@ -111,15 +130,12 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 
 // checkCollectorCredentials checks if collector credentials can be found in path
 // configured in the config.
-func (se *SumologicExtension) checkCollectorCredentials() bool {
-	filenameHash, err := hash(se.conf.CollectorName)
+func checkCollectorCredentials(collectorName, collectorCredentialsPath string) bool {
+	filenameHash, err := hash(collectorName)
 	if err != nil {
-		se.logger.Error("Unable to create hash from collector name",
-			zap.Error(err),
-		)
 		return false
 	}
-	path := path.Join(se.conf.CollectorCredentialsPath, filenameHash)
+	path := path.Join(collectorCredentialsPath, filenameHash)
 	if _, err := os.Stat(path); err != nil {
 		return false
 	}
@@ -358,6 +374,43 @@ func (se *SumologicExtension) sendHeartbeat() error {
 
 }
 
+// storeCollectorCredentials stores collector credentials in a file in directory
+// as specified in CollectorCredentialsPath. The credentials are encrypted using
+// hashed collector name.
+func (se *SumologicExtension) storeCollectorCredentials() error {
+	if err := ensureStoreCredentialsDir(se.conf.CollectorCredentialsPath); err != nil {
+		return err
+	}
+	filenameHash, err := hash(se.conf.CollectorName)
+	if err != nil {
+		return err
+	}
+	path := path.Join(se.conf.CollectorCredentialsPath, filenameHash)
+	collectorCreds, err := json.MarshalIndent(se.registrationInfo, "", " ")
+	if err != nil {
+		return err
+	}
+	encrypedCreds, err := encrypt(collectorCreds, se.conf.CollectorName)
+	if err != nil {
+		return err
+	}
+	return fmt.Errorf("failed to save credentials file '%s': %w",
+		path,
+		os.WriteFile(path, encrypedCreds, 0600),
+	)
+}
+
+// ensureStoreCredentialsDir checks if directory to store credentials exists,
+// if not try to create it.
+func ensureStoreCredentialsDir(path string) error {
+	if _, err := os.Stat(path); err != nil {
+		if err := os.Mkdir(path, 0600); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (se *SumologicExtension) CollectorID() string {
 	return se.registrationInfo.CollectorId
 }
@@ -388,17 +441,6 @@ func (rt roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	addCollectorCredentials(req, rt.collectorCredentialId, rt.collectorCredentialKey)
 
 	return rt.base.RoundTrip(req)
-}
-
-func addClientCredentials(req *http.Request, accessID string, accessKey string) {
-	// TODO: What is preferred: headers of basic auth?
-	req.Header.Add("accessid", accessID)
-	req.Header.Add("accesskey", accessKey)
-}
-
-func addJSONHeaders(req *http.Request) {
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Accept", "application/json")
 }
 
 func addCollectorCredentials(req *http.Request, collectorCredentialId string, collectorCredentialKey string) {
