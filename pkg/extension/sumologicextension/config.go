@@ -46,6 +46,11 @@ type Config struct {
 	// CollectorCredentialsPath is the path to directory where collector credentials
 	// are stored. Default value is $HOME/.sumologic-otel-collector
 	CollectorCredentialsPath string `mapstructure:"collector_credentials_path"`
+
+	// Ephemeral defines whether the collector will be deleted after 12 hours
+	// of inactivity.
+	// By default this is false.
+	Ephemeral bool `mapstructure:"ephemeral"`
 }
 
 type credentials struct {

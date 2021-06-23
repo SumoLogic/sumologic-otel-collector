@@ -51,6 +51,7 @@ func createDefaultConfig() config.Extension {
 		ApiBaseUrl:               DefaultApiBaseUrl,
 		HeartBeatInterval:        DefaultHeartbeatInterval,
 		CollectorCredentialsPath: defaultCredsPath,
+		Ephemeral:                false,
 	}
 }
 
