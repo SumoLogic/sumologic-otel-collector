@@ -31,14 +31,14 @@ import (
 	"go.uber.org/zap"
 )
 
-// Authentication is an interface to get collector authentication data
+// CredsGetter is an interface to get collector authentication data
 type CredsGetter interface {
 	CheckCollectorCredentials() bool
 	GetStoredCredentials() (api.OpenRegisterResponsePayload, error)
-	RegisterCollector() (api.OpenRegisterResponsePayload, error)
+	RegisterCollector(ctx context.Context) (api.OpenRegisterResponsePayload, error)
 }
 
-// Authenticator is a common structure for both types of getting collector credentials
+// credsGetter is a common structure for both types of getting collector credentials
 // stored in file and registration new collector.
 type credsGetter struct {
 	conf   *Config
@@ -93,7 +93,7 @@ func (cr credsGetter) GetStoredCredentials() (api.OpenRegisterResponsePayload, e
 }
 
 // RegisterCollector registers new collector using registration API and returns collector credentials.
-func (cr credsGetter) RegisterCollector() (api.OpenRegisterResponsePayload, error) {
+func (cr credsGetter) RegisterCollector(ctx context.Context) (api.OpenRegisterResponsePayload, error) {
 	baseUrl := strings.TrimSuffix(cr.conf.ApiBaseUrl, "/")
 	u, err := url.Parse(baseUrl)
 	if err != nil {
@@ -110,16 +110,17 @@ func (cr credsGetter) RegisterCollector() (api.OpenRegisterResponsePayload, erro
 
 	var buff bytes.Buffer
 	if err = json.NewEncoder(&buff).Encode(api.OpenRegisterRequestPayload{
-		Ephemeral:     true, // TODO: change that
 		CollectorName: cr.conf.CollectorName,
 		Description:   cr.conf.CollectorDescription,
 		Category:      cr.conf.CollectorCategory,
+		Ephemeral:     cr.conf.Ephemeral,
+		Clobber:       cr.conf.Clobber,
 		Hostname:      hostname,
 	}); err != nil {
 		return api.OpenRegisterResponsePayload{}, err
 	}
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, u.String(), &buff)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), &buff)
 	if err != nil {
 		return api.OpenRegisterResponsePayload{}, err
 	}

@@ -89,7 +89,7 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 		se.logger.Info("Found stored credentials")
 	} else {
 		se.logger.Info("Locally stored credentials not found, registering the collector")
-		if colCreds, err = se.creds.RegisterCollector(); err != nil {
+		if colCreds, err = se.creds.RegisterCollector(ctx); err != nil {
 			return err
 		}
 
