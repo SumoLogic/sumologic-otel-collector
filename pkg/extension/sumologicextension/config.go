@@ -43,9 +43,15 @@ type Config struct {
 	ApiBaseUrl string `mapstructure:"api_base_url"`
 
 	HeartBeatInterval time.Duration `mapstructure:"heartbeat_interval"`
+
 	// CollectorCredentialsPath is the path to directory where collector credentials
 	// are stored. Default value is $HOME/.sumologic-otel-collector
 	CollectorCredentialsPath string `mapstructure:"collector_credentials_path"`
+
+	// Clobber defines whether to delete any existing collector with the same
+	// name and create a new one upon registration.
+	// By default this is false.
+	Clobber bool `mapstructure:"collector_credentials_path"`
 
 	// Ephemeral defines whether the collector will be deleted after 12 hours
 	// of inactivity.
