@@ -232,10 +232,10 @@ func (se *SumologicExtension) register(ctx context.Context) error {
 
 	var buff bytes.Buffer
 	if err = json.NewEncoder(&buff).Encode(api.OpenRegisterRequestPayload{
-		Ephemeral:     true, // TODO: change that
 		CollectorName: se.conf.CollectorName,
 		Description:   se.conf.CollectorDescription,
 		Category:      se.conf.CollectorCategory,
+		Ephemeral:     se.conf.Ephemeral,
 		Hostname:      hostname,
 	}); err != nil {
 		return err
