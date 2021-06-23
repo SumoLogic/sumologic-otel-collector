@@ -113,6 +113,7 @@ func (cr credsGetter) RegisterCollector(ctx context.Context) (api.OpenRegisterRe
 		CollectorName: cr.conf.CollectorName,
 		Description:   cr.conf.CollectorDescription,
 		Category:      cr.conf.CollectorCategory,
+		Fields:        cr.conf.CollectorFields,
 		Hostname:      hostname,
 		Ephemeral:     cr.conf.Ephemeral,
 		Clobber:       cr.conf.Clobber,

@@ -36,6 +36,9 @@ and can be used as an authenticator for the
   registration info from previous runs or for registration in case those are not found
 * `collector_description`: collector description that will be used for registration
 * `collector_category`: collector category that will be used for registration
+* `collector_fields`: a map of key value pairs that will be used as collector
+  fields that will be used for registration.
+  For more information on this subject please visit[this help document][fields_help]
 * `api_base_url`: base URL that will be used for creating API requests
   (default: `https://collectors.sumologic.com`)
 * `heartbeat_interval`: interval that will be used for sending heartbeats 
@@ -44,6 +47,7 @@ and can be used as an authenticator for the
   successful collector registration (default: `$HOME/.sumologic-otel-collector`)
 
 [credentials_help]: https://help.sumologic.com/Manage/Security/Access-Keys
+[fields_help]: https://help.sumologic.com/Manage/Fields
 
 ## Example Config
 
