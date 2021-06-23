@@ -39,7 +39,7 @@ type SumologicExtension struct {
 	baseUrl          string
 	conf             *Config
 	logger           *zap.Logger
-	authenticator    Authenticator
+	authentication    Authentication
 	registrationInfo api.OpenRegisterResponsePayload
 	closeChan        chan struct{}
 	closeOnce        sync.Once

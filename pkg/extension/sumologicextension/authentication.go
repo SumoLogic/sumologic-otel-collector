@@ -46,7 +46,7 @@ type Authenticator struct {
 // Register is registering new collector using API
 type Register Authenticator
 
-// Get registers new collector using registration API and returns collector credentials
+// Get registers new collector using registration API and returns collector credentials.
 func (rc Register) Get() (api.OpenRegisterResponsePayload, error) {
 	baseUrl := strings.TrimSuffix(rc.conf.ApiBaseUrl, "/")
 	u, err := url.Parse(baseUrl)
@@ -124,7 +124,7 @@ func (rc Register) Get() (api.OpenRegisterResponsePayload, error) {
 }
 
 func addClientCredentials(req *http.Request, accessID string, accessKey string) {
-	// TODO: What is preferred: headers of basic auth?
+	// TODO: What is preferred: headers or basic auth?
 	req.Header.Add("accessid", accessID)
 	req.Header.Add("accesskey", accessKey)
 }
@@ -138,9 +138,8 @@ func addJSONHeaders(req *http.Request) {
 // previously registered collector
 type Stored Authenticator
 
-// Get retrieves, decrypts collector credentials using
-// hashed collector name as passphrase and then assign it to registrationInfo
-// field.
+// Get retrieves collector credentials stored in local file system and then decrypts it
+// using hashed collector name as passphrase.
 func (sc Stored) Get() (api.OpenRegisterResponsePayload, error) {
 	filenameHash, err := hash(sc.conf.CollectorName)
 	if err != nil {
