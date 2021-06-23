@@ -20,7 +20,7 @@ type OpenRegisterRequestPayload struct {
 	Description   string `json:"description"`
 	Hostname      string `json:"hostname"`
 	Category      string `json:"category"`
-	Timezone      string `json:"timeZone"`
+	TimeZone      string `json:"timeZone"`
 	Clobber       bool   `json:"clobber"`
 }
 

@@ -238,6 +238,7 @@ func (se *SumologicExtension) register(ctx context.Context) error {
 		Hostname:      hostname,
 		Ephemeral:     se.conf.Ephemeral,
 		Clobber:       se.conf.Clobber,
+		TimeZone:      se.conf.TimeZone,
 	}); err != nil {
 		return err
 	}
