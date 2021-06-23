@@ -235,8 +235,9 @@ func (se *SumologicExtension) register(ctx context.Context) error {
 		CollectorName: se.conf.CollectorName,
 		Description:   se.conf.CollectorDescription,
 		Category:      se.conf.CollectorCategory,
-		Ephemeral:     se.conf.Ephemeral,
 		Hostname:      hostname,
+		Ephemeral:     se.conf.Ephemeral,
+		Clobber:       se.conf.Clobber,
 	}); err != nil {
 		return err
 	}
