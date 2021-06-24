@@ -35,13 +35,13 @@ import (
 )
 
 type SumologicExtension struct {
-	baseUrl          string
-	conf             *Config
-	logger           *zap.Logger
-	credentialsGetter      CredsGetter
-	registrationInfo api.OpenRegisterResponsePayload
-	closeChan        chan struct{}
-	closeOnce        sync.Once
+	baseUrl           string
+	conf              *Config
+	logger            *zap.Logger
+	credentialsGetter CredsGetter
+	registrationInfo  api.OpenRegisterResponsePayload
+	closeChan         chan struct{}
+	closeOnce         sync.Once
 }
 
 const (
@@ -66,29 +66,29 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 	}
 
 	return &SumologicExtension{
-		baseUrl:     strings.TrimSuffix(conf.ApiBaseUrl, "/"),
-		conf:        conf,
-		logger:      logger,
+		baseUrl: strings.TrimSuffix(conf.ApiBaseUrl, "/"),
+		conf:    conf,
+		logger:  logger,
 		credentialsGetter: credsGetter{
 			conf:   conf,
 			logger: logger,
 		},
-		closeChan:   make(chan struct{}),
+		closeChan: make(chan struct{}),
 	}, nil
 }
 
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
 	var colCreds api.OpenRegisterResponsePayload
 	var err error
-	if se.credentials.CheckCollectorCredentials() {
-		colCreds, err = se.credentials.GetStoredCredentials()
+	if se.credentialsGetter.CheckCollectorCredentials() {
+		colCreds, err = se.credentialsGetter.GetStoredCredentials()
 		if err != nil {
 			return err
 		}
 		se.logger.Info("Found stored credentials")
 	} else {
 		se.logger.Info("Locally stored credentials not found, registering the collector")
-		if colCreds, err = se.credentials.RegisterCollector(ctx); err != nil {
+		if colCreds, err = se.credentialsGetter.RegisterCollector(ctx); err != nil {
 			return err
 		}
 

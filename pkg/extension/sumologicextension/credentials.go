@@ -110,13 +110,13 @@ func (cr credsGetter) RegisterCollector(ctx context.Context) (api.OpenRegisterRe
 
 	var buff bytes.Buffer
 	if err = json.NewEncoder(&buff).Encode(api.OpenRegisterRequestPayload{
-		CollectorName: se.conf.CollectorName,
-		Description:   se.conf.CollectorDescription,
-		Category:      se.conf.CollectorCategory,
+		CollectorName: cr.conf.CollectorName,
+		Description:   cr.conf.CollectorDescription,
+		Category:      cr.conf.CollectorCategory,
 		Hostname:      hostname,
-		Ephemeral:     se.conf.Ephemeral,
-		Clobber:       se.conf.Clobber,
-		TimeZone:      se.conf.TimeZone,
+		Ephemeral:     cr.conf.Ephemeral,
+		Clobber:       cr.conf.Clobber,
+		TimeZone:      cr.conf.TimeZone,
 	}); err != nil {
 		return api.OpenRegisterResponsePayload{}, err
 	}
