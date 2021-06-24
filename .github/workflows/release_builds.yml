@@ -48,25 +48,30 @@ jobs:
         run: make otelcol-sumo-${{matrix.arch_os}}
         working-directory: ./otelcolbuilder
 
+      - name: Extract tag
+        id: extract_tag
+        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
+
+      - name: Set filename
+        id: set_filename
+        run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}})"
+
+      - name: Rename to include tag in filename
+        run: cp otelcol-sumo-${{matrix.arch_os}} ${{ steps.set_filename.outputs.filename }}
+        working-directory: ./otelcolbuilder/cmd
+
       - name: Show included modules
         working-directory: ./otelcolbuilder/cmd
         run: |
-          go version -m otelcol-sumo-${{matrix.arch_os}} | \
+          go version -m ${{ steps.set_filename.outputs.filename }} | \
           grep -E "/(receiver|exporter|processor|extension)/" | \
           tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v2
         with:
-          name: otelcol-sumo-${{matrix.arch_os}}
-          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}
-          if-no-files-found: error
-
-      - name: Store list of included modules as action artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: otelcol-sumo-${{matrix.arch_os}}_modules.txt
-          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}_modules.txt
+          name: ${{matrix.arch_os}}
+          path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
           if-no-files-found: error
 
   build-container-images:
@@ -85,7 +90,7 @@ jobs:
         run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
 
       - name: Print tag
-        run: echo "Running release build for ${{ steps.extract_tag.outputs.tag }}"
+        run: echo "${{ steps.extract_tag.outputs.tag }}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1.2.0
@@ -100,7 +105,12 @@ jobs:
       - name: Download binary action artifact from build phase
         uses: actions/download-artifact@v2
         with:
-          name: otelcol-sumo-${{ matrix.arch_os }}
+          name: ${{matrix.arch_os}}
+          path: artifacts/
+
+      - name: Set filename
+        id: set_filename
+        run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}})"
 
       - name: Login to Open Source ECR
         run: make login
@@ -110,7 +120,7 @@ jobs:
 
       - name: Build and push image to Open Source ECR
         run: |
-          cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
+          cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
           make build-push-container-multiplatform \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }}
@@ -124,7 +134,7 @@ jobs:
 
       - name: Build and push image to legacy ECR
         run: |
-          cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
+          cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
           make build-push-container-multiplatform-legacy \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }}
@@ -142,7 +152,7 @@ jobs:
         run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
 
       - name: Print tag
-        run: echo "Running release build for ${{ steps.extract_tag.outputs.tag }}"
+        run: echo "${{ steps.extract_tag.outputs.tag }}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1.2.0
@@ -184,3 +194,34 @@ jobs:
           make push-container-manifest-legacy \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORMS="linux/amd64"
+
+  create-release:
+    name: Create Github release
+    runs-on: ubuntu-20.04
+    needs:
+      - build
+      - build-container-images
+      - push-docker-manifest
+    steps:
+      - name: Extract tag
+        id: extract_tag
+        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/})"
+
+      - name: Print tag
+        run: echo "${{ steps.extract_tag.outputs.tag }}"
+
+      - name: Download all binaries stored as artifact
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts/
+
+      - uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          prerelease: true
+          body: |
+            ## ${{ steps.extract_tag.outputs.tag }}
+          artifacts: "artifacts/*/*"
+          artifactErrorsFailBuild: true
+          replacesArtifacts: true
