@@ -38,7 +38,7 @@ type SumologicExtension struct {
 	baseUrl          string
 	conf             *Config
 	logger           *zap.Logger
-	credentials      CredsGetter
+	credentialsGetter      CredsGetter
 	registrationInfo api.OpenRegisterResponsePayload
 	closeChan        chan struct{}
 	closeOnce        sync.Once
@@ -64,16 +64,15 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 	if conf.HeartBeatInterval <= 0 {
 		conf.HeartBeatInterval = DefaultHeartbeatInterval
 	}
-	creds := credsGetter{
-		conf:   conf,
-		logger: logger,
-	}
 
 	return &SumologicExtension{
 		baseUrl:     strings.TrimSuffix(conf.ApiBaseUrl, "/"),
 		conf:        conf,
 		logger:      logger,
-		credentials: creds,
+		credentialsGetter: credsGetter{
+			conf:   conf,
+			logger: logger,
+		},
 		closeChan:   make(chan struct{}),
 	}, nil
 }
