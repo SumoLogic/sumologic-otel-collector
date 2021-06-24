@@ -57,6 +57,11 @@ type Config struct {
 	// of inactivity.
 	// By default this is false.
 	Ephemeral bool `mapstructure:"ephemeral"`
+
+	// TimeZone defines the time zone of the Collector.
+	// For a list of possible values, refer to the "TZ" column in
+	// https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List.
+	TimeZone string `mapstructure:"time_zone"`
 }
 
 type credentials struct {

@@ -53,6 +53,7 @@ func createDefaultConfig() config.Extension {
 		CollectorCredentialsPath: defaultCredsPath,
 		Clobber:                  false,
 		Ephemeral:                false,
+		TimeZone:                 "",
 	}
 }
 
