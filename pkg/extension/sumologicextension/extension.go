@@ -38,7 +38,7 @@ type SumologicExtension struct {
 	baseUrl          string
 	conf             *Config
 	logger           *zap.Logger
-	creds            credsGetter
+	credentials      CredsGetter
 	registrationInfo api.OpenRegisterResponsePayload
 	closeChan        chan struct{}
 	closeOnce        sync.Once
@@ -70,26 +70,26 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 	}
 
 	return &SumologicExtension{
-		baseUrl:   strings.TrimSuffix(conf.ApiBaseUrl, "/"),
-		conf:      conf,
-		logger:    logger,
-		creds:     creds,
-		closeChan: make(chan struct{}),
+		baseUrl:     strings.TrimSuffix(conf.ApiBaseUrl, "/"),
+		conf:        conf,
+		logger:      logger,
+		credentials: creds,
+		closeChan:   make(chan struct{}),
 	}, nil
 }
 
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
 	var colCreds api.OpenRegisterResponsePayload
 	var err error
-	if se.creds.CheckCollectorCredentials() {
-		colCreds, err = se.creds.GetStoredCredentials()
+	if se.credentials.CheckCollectorCredentials() {
+		colCreds, err = se.credentials.GetStoredCredentials()
 		if err != nil {
 			return err
 		}
 		se.logger.Info("Found stored credentials")
 	} else {
 		se.logger.Info("Locally stored credentials not found, registering the collector")
-		if colCreds, err = se.creds.RegisterCollector(ctx); err != nil {
+		if colCreds, err = se.credentials.RegisterCollector(ctx); err != nil {
 			return err
 		}
 
