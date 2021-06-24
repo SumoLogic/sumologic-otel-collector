@@ -138,7 +138,8 @@ func (se *SumologicExtension) storeCollectorCredentials(credentials api.OpenRegi
 	if err := ensureStoreCredentialsDir(se.conf.CollectorCredentialsPath); err != nil {
 		return err
 	}
-	filenameHash, err := hash(se.conf.CollectorName)
+	key := se.conf.CollectorName + se.conf.Credentials.AccessID + se.conf.Credentials.AccessKey
+	filenameHash, err := hash(key)
 	if err != nil {
 		return err
 	}

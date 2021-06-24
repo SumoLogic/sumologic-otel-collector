@@ -153,7 +153,8 @@ func TestStoreCredentials(t *testing.T) {
 
 		se, err := newSumologicExtension(cfg, zap.NewNop())
 		require.NoError(t, err)
-		fileName, err := hash(cfg.CollectorName)
+		key := cfg.CollectorName + cfg.Credentials.AccessID + cfg.Credentials.AccessKey
+		fileName, err := hash(key)
 		require.NoError(t, err)
 		credsPath := path.Join(dir, fileName)
 		require.NoFileExists(t, credsPath)
@@ -180,7 +181,8 @@ func TestStoreCredentials(t *testing.T) {
 
 		se, err := newSumologicExtension(cfg, zap.NewNop())
 		require.NoError(t, err)
-		fileName, err := hash(cfg.CollectorName)
+		key := cfg.CollectorName + cfg.Credentials.AccessID + cfg.Credentials.AccessKey
+		fileName, err := hash(key)
 		require.NoError(t, err)
 		credsPath := path.Join(dir, fileName)
 		require.NoFileExists(t, credsPath)
@@ -210,7 +212,8 @@ func TestStoreCredentials(t *testing.T) {
 
 		se, err := newSumologicExtension(cfg, zap.NewNop())
 		require.NoError(t, err)
-		fileName, err := hash(cfg.CollectorName)
+		key := cfg.CollectorName + cfg.Credentials.AccessID + cfg.Credentials.AccessKey
+		fileName, err := hash(key)
 		require.NoError(t, err)
 		credsPath := path.Join(dir, fileName)
 		require.NoFileExists(t, credsPath)
