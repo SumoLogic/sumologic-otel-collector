@@ -48,7 +48,6 @@ type credsGetter struct {
 // CheckCollectorCredentials checks if collector credentials can be found in path
 // configured in the config.
 func (cr credsGetter) CheckCollectorCredentials(key string) bool {
-	// key := cr.collectorName + cr.conf.Credentials.AccessID + cr.conf.Credentials.AccessKey
 	filenameHash, err := hash(key)
 	if err != nil {
 		return false
@@ -63,7 +62,6 @@ func (cr credsGetter) CheckCollectorCredentials(key string) bool {
 // GetStoredCredentials retrieves collector credentials stored in local file system and then decrypts it
 // using hashed collector name as passphrase.
 func (cr credsGetter) GetStoredCredentials(key string) (api.OpenRegisterResponsePayload, error) {
-	// key := cr.collectorName + cr.conf.Credentials.AccessID + cr.conf.Credentials.AccessKey
 	filenameHash, err := hash(key)
 	if err != nil {
 		return api.OpenRegisterResponsePayload{}, err
