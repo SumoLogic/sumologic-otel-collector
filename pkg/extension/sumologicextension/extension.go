@@ -30,6 +30,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension/api"
 	"go.opentelemetry.io/collector/component"
 	"go.uber.org/zap"
@@ -41,6 +43,7 @@ type SumologicExtension struct {
 	conf              *Config
 	logger            *zap.Logger
 	credentialsGetter CredsGetter
+	hashKey           string
 	registrationInfo  api.OpenRegisterResponsePayload
 	closeChan         chan struct{}
 	closeOnce         sync.Once
@@ -57,8 +60,16 @@ const (
 )
 
 func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtension, error) {
+	collectorName := ""
+	uuid := uuid.New()
+	hostname, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
 	if conf.CollectorName == "" {
-		return nil, errors.New("collector name is unset")
+		conf.CollectorName = fmt.Sprintf("%s-%s", hostname, uuid.String())
+	} else {
+		collectorName = conf.CollectorName
 	}
 	if conf.Credentials.AccessID == "" || conf.Credentials.AccessKey == "" {
 		return nil, errors.New("access_key and/or access_id not provided")
@@ -66,11 +77,13 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 	if conf.HeartBeatInterval <= 0 {
 		conf.HeartBeatInterval = DefaultHeartbeatInterval
 	}
+	hashKey := fmt.Sprintf("%s%s%s", collectorName, conf.Credentials.AccessID, conf.Credentials.AccessKey)
 
 	return &SumologicExtension{
 		baseUrl: strings.TrimSuffix(conf.ApiBaseUrl, "/"),
 		conf:    conf,
 		logger:  logger,
+		hashKey: hashKey,
 		credentialsGetter: credsGetter{
 			conf:   conf,
 			logger: logger,
@@ -82,8 +95,8 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
 	var colCreds api.OpenRegisterResponsePayload
 	var err error
-	if se.credentialsGetter.CheckCollectorCredentials() {
-		colCreds, err = se.credentialsGetter.GetStoredCredentials()
+	if se.credentialsGetter.CheckCollectorCredentials(se.hashKey) {
+		colCreds, err = se.credentialsGetter.GetStoredCredentials(se.hashKey)
 		if err != nil {
 			return err
 		}
@@ -138,8 +151,7 @@ func (se *SumologicExtension) storeCollectorCredentials(credentials api.OpenRegi
 	if err := ensureStoreCredentialsDir(se.conf.CollectorCredentialsPath); err != nil {
 		return err
 	}
-	key := se.conf.CollectorName + se.conf.Credentials.AccessID + se.conf.Credentials.AccessKey
-	filenameHash, err := hash(key)
+	filenameHash, err := hash(se.hashKey)
 	if err != nil {
 		return err
 	}
@@ -149,7 +161,7 @@ func (se *SumologicExtension) storeCollectorCredentials(credentials api.OpenRegi
 		return err
 	}
 
-	encrypedCreds, err := encrypt(collectorCreds, se.conf.CollectorName)
+	encrypedCreds, err := encrypt(collectorCreds, se.hashKey)
 	if err != nil {
 		return err
 	}
