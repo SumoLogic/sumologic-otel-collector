@@ -94,7 +94,7 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 			return err
 		}
 
-		if err := se.storeCollectorCredentials(); err != nil {
+		if err := se.storeCollectorCredentials(colCreds); err != nil {
 			se.logger.Error("Unable to store collector credentials",
 				zap.Error(err),
 			)
@@ -134,7 +134,7 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 // storeCollectorCredentials stores collector credentials in a file in directory
 // as specified in CollectorCredentialsPath. The credentials are encrypted using
 // hashed collector name.
-func (se *SumologicExtension) storeCollectorCredentials() error {
+func (se *SumologicExtension) storeCollectorCredentials(credentials api.OpenRegisterResponsePayload) error {
 	if err := ensureStoreCredentialsDir(se.conf.CollectorCredentialsPath); err != nil {
 		return err
 	}
@@ -143,10 +143,11 @@ func (se *SumologicExtension) storeCollectorCredentials() error {
 		return err
 	}
 	path := path.Join(se.conf.CollectorCredentialsPath, filenameHash)
-	collectorCreds, err := json.MarshalIndent(se.registrationInfo, "", " ")
+	collectorCreds, err := json.Marshal(credentials)
 	if err != nil {
 		return err
 	}
+
 	encrypedCreds, err := encrypt(collectorCreds, se.conf.CollectorName)
 	if err != nil {
 		return err
