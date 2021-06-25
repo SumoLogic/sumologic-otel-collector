@@ -89,10 +89,16 @@ service:
 
 ## Storing credentials
 
-When collector is starting first time Sumo Logic extension is using `access_key` and `access_id` to register collector with API.
-After registration extension gets collector credentials which are used to authenticate instance of collector.
-Credentials are stored on filesystem in `collector_credentials_path` which is by default set to `$HOME/.sumologic-otel-collector`.
-Name of file that contains credentials is created by hashing combination of `collector_name`, `access_id` and `access_key`.
-This mechanism allows to keep a state of collector (whether is registered or not).
-When collector is restarting it checks if state file exists in `collector_credentials_path`.
-If user want to register collector on the same machine and use another state file, need add the collector name to otc config.
+When collector is starting for the first time, Sumo Logic extension is using `access_key` and `access_id`
+to register collector with API.
+Upon registration, the extension gets collector credentials which are used to authenticate the collector
+when sending request to API (heartbeats, sending data etc).
+Credentials are stored on local filesystem to be reused when collector gets restarted (to prevent re-registration).a
+The path that's used to store the credentials files is configured via `collector_credentials_path` which is by default
+set to `$HOME/.sumologic-otel-collector`.
+Name of that file that contains the credentials is created by hashing a string being a combination of `collector_name`, `access_id` and `access_key`.
+This mechanism allows to keep the state of the collector (whether it is registered or not).
+When collector is restarting it checks if the state file exists in `collector_credentials_path`.
+If one would like to register another collector on the same machine then `collector_name` configuration property
+has to be specified in order to register the collector under that specific name which will be used to create
+a separate state file.
