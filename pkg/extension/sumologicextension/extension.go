@@ -17,6 +17,7 @@ package sumologicextension
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,6 +37,7 @@ import (
 
 type SumologicExtension struct {
 	baseUrl           string
+	httpClient        *http.Client
 	conf              *Config
 	logger            *zap.Logger
 	credentialsGetter CredsGetter
@@ -98,8 +100,20 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 			)
 		}
 	}
-
 	se.registrationInfo = colCreds
+
+	se.httpClient, err = se.conf.HTTPClientSettings.ToClient(host.GetExtensions())
+	if err != nil {
+		return fmt.Errorf("couldn't create HTTP client: %w", err)
+	}
+
+	// Set the transport so that all requests from se.httpClient will contain
+	// the collector credentials.
+	rt, err := se.RoundTripper(se.httpClient.Transport)
+	if err != nil {
+		return fmt.Errorf("couldn't create HTTP client transport: %w", err)
+	}
+	se.httpClient.Transport = rt
 
 	go se.heartbeatLoop()
 
@@ -172,7 +186,7 @@ func ensureStoreCredentialsDir(path string) error {
 }
 
 func (se *SumologicExtension) heartbeatLoop() {
-	if se.registrationInfo.CollectorCredentialId == "" || se.registrationInfo.CollectorId == "" {
+	if se.registrationInfo.CollectorCredentialId == "" || se.registrationInfo.CollectorCredentialKey == "" {
 		se.logger.Error("Collector not registered, cannot send heartbeat")
 		return
 	}
@@ -207,12 +221,8 @@ func (se *SumologicExtension) sendHeartbeat() error {
 		return fmt.Errorf("unable to create HTTP request %w", err)
 	}
 
-	addCollectorCredentials(req,
-		se.registrationInfo.CollectorCredentialId,
-		se.registrationInfo.CollectorCredentialKey,
-	)
 	addJSONHeaders(req)
-	res, err := http.DefaultClient.Do(req)
+	res, err := se.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("unable to send HTTP request: %w", err)
 	}
@@ -262,11 +272,13 @@ type roundTripper struct {
 
 func (rt roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	addCollectorCredentials(req, rt.collectorCredentialId, rt.collectorCredentialKey)
-
 	return rt.base.RoundTrip(req)
 }
 
 func addCollectorCredentials(req *http.Request, collectorCredentialId string, collectorCredentialKey string) {
-	req.Header.Add("collectorCredentialId", collectorCredentialId)
-	req.Header.Add("collectorCredentialKey", collectorCredentialKey)
+	token := base64.StdEncoding.EncodeToString(
+		[]byte(collectorCredentialId + ":" + collectorCredentialKey),
+	)
+
+	req.Header.Add("Authorization", "Basic "+token)
 }
