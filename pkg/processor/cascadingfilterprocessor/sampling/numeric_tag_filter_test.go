@@ -20,6 +20,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/consumer/pdata"
 	"go.uber.org/zap"
 )
@@ -77,7 +78,8 @@ func TestNumericTagFilter(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Desc, func(t *testing.T) {
-			u, _ := uuid.NewRandom()
+			u, err := uuid.NewRandom()
+			require.NoError(t, err)
 			decision := filter.Evaluate(pdata.NewTraceID(u), c.Trace)
 			assert.Equal(t, decision, c.Decision)
 		})

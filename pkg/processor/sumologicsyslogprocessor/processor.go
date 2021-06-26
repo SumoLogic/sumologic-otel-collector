@@ -16,6 +16,7 @@ package sumologicsyslogprocessor
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strconv"
 
@@ -100,7 +101,10 @@ func (ssp *sumologicSyslogProcessor) ProcessLogs(ctx context.Context, ld pdata.L
 				match := ssp.syslogFacilityRegex.FindStringSubmatch(log.Body().StringVal())
 
 				if match != nil {
-					facility, _ := strconv.Atoi(match[1])
+					facility, err := strconv.Atoi(match[1])
+					if err != nil {
+						return ld, fmt.Errorf("failed to parse: %s, err: %w", match[1], err)
+					}
 					facility = facility / 8
 
 					value, ok = facilities[facility]
