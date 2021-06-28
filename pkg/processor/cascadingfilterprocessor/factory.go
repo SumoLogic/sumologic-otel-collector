@@ -37,11 +37,16 @@ var (
 	defaultProbabilisticFilteringRatio = float32(0.2)
 )
 
+func init() {
+	// TODO: this is hardcoding the metrics level
+	err := view.Register(CascadingFilterMetricViews(configtelemetry.LevelNormal)...)
+	if err != nil {
+		panic("failed to register cascadingfilterprocessor: " + err.Error())
+	}
+}
+
 // NewFactory returns a new factory for the Cascading Filter processor.
 func NewFactory() component.ProcessorFactory {
-	// TODO: this is hardcoding the metrics level and skips error handling
-	_ = view.Register(CascadingFilterMetricViews(configtelemetry.LevelNormal)...)
-
 	return processorhelper.NewFactory(
 		typeStr,
 		createDefaultConfig,

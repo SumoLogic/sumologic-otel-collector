@@ -28,6 +28,18 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/sourceprocessor/observability"
 )
 
+var (
+	formatRegex *regexp.Regexp
+)
+
+func init() {
+	var err error
+	formatRegex, err = regexp.Compile(`\%\{(\w+)\}`)
+	if err != nil {
+		panic("failed to parse regex: " + err.Error())
+	}
+}
+
 type sourceTraceKeys struct {
 	annotationPrefix   string
 	containerKey       string
@@ -336,14 +348,12 @@ func (stp *sourceTraceProcessor) enrichPodName(atts *pdata.AttributeMap) {
 }
 
 func extractFormat(format string, name string, keys sourceTraceKeys) attributeFiller {
-	r, _ := regexp.Compile(`\%\{(\w+)\}`)
-
 	labels := make([]string, 0)
-	matches := r.FindAllStringSubmatch(format, -1)
+	matches := formatRegex.FindAllStringSubmatch(format, -1)
 	for _, matchset := range matches {
 		labels = append(labels, keys.convertKey(matchset[1]))
 	}
-	template := r.ReplaceAllString(format, "%s")
+	template := formatRegex.ReplaceAllString(format, "%s")
 
 	return attributeFiller{
 		name:            name,

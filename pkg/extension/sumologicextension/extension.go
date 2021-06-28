@@ -192,6 +192,15 @@ func (se *SumologicExtension) heartbeatLoop() {
 		return
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func() {
+		// When the close channel is closed ...
+		<-se.closeChan
+		// ... cancel the ongoing heartbeat request.
+		cancel()
+	}()
+
 	se.logger.Info("Heartbeat heartbeat API initialized. Starting sending hearbeat requests")
 	for {
 		select {
@@ -199,7 +208,7 @@ func (se *SumologicExtension) heartbeatLoop() {
 			se.logger.Info("Heartbeat sender turn off")
 			return
 		default:
-			err := se.sendHeartbeat()
+			err := se.sendHeartbeat(ctx)
 			if err != nil {
 				se.logger.Error("Heartbeat error", zap.Error(err))
 			}
@@ -212,12 +221,12 @@ func (se *SumologicExtension) heartbeatLoop() {
 	}
 }
 
-func (se *SumologicExtension) sendHeartbeat() error {
+func (se *SumologicExtension) sendHeartbeat(ctx context.Context) error {
 	u, err := url.Parse(se.baseUrl + heartbeatUrl)
 	if err != nil {
 		return fmt.Errorf("unable to parse heartbeat URL %w", err)
 	}
-	req, err := http.NewRequest(http.MethodPost, u.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), nil)
 	if err != nil {
 		return fmt.Errorf("unable to create HTTP request %w", err)
 	}

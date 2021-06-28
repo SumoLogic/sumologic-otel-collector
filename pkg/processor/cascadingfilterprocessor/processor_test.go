@@ -51,7 +51,8 @@ func TestSequentialTraceArrival(t *testing.T) {
 		ExpectedNewTracesPerSec: 64,
 		PolicyCfgs:              testPolicy,
 	}
-	sp, _ := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	require.NoError(t, err)
 	tsp := sp.(*cascadingFilterSpanProcessor)
 	for _, batch := range batches {
 		assert.NoError(t, tsp.ConsumeTraces(context.Background(), batch))
@@ -75,7 +76,8 @@ func TestConcurrentTraceArrival(t *testing.T) {
 		ExpectedNewTracesPerSec: 64,
 		PolicyCfgs:              testPolicy,
 	}
-	sp, _ := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	require.NoError(t, err)
 	tsp := sp.(*cascadingFilterSpanProcessor)
 	for _, batch := range batches {
 		// Add the same traceId twice.
@@ -113,7 +115,8 @@ func TestSequentialTraceMapSize(t *testing.T) {
 		ExpectedNewTracesPerSec: 64,
 		PolicyCfgs:              testPolicy,
 	}
-	sp, _ := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	require.NoError(t, err)
 	tsp := sp.(*cascadingFilterSpanProcessor)
 	for _, batch := range batches {
 		if err := tsp.ConsumeTraces(context.Background(), batch); err != nil {
@@ -138,7 +141,8 @@ func TestConcurrentTraceMapSize(t *testing.T) {
 		ExpectedNewTracesPerSec: 64,
 		PolicyCfgs:              testPolicy,
 	}
-	sp, _ := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	require.NoError(t, err)
 	tsp := sp.(*cascadingFilterSpanProcessor)
 	for _, batch := range batches {
 		wg.Add(1)

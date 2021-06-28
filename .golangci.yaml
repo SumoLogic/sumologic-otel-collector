@@ -1,0 +1,39 @@
+run:
+  timeout: 3m
+  allow-parallel-runners: true
+
+linters-settings:
+  errcheck:
+    check-type-assertions: false
+    check-blank: true
+
+  gosimple:
+    go: "1.16"
+
+  maligned:
+    # print struct with more effective memory layout or not, false by default
+    suggest-new: true
+
+  unused:
+    go: "1.16"
+
+linters:
+  disable-all: false
+  enable:
+    - gofmt
+    - deadcode
+    - unused
+    - errcheck
+    - goimports
+    - misspell
+    - noctx
+  disable:
+    - maligned
+    - prealloc
+  fast: false
+
+issues:
+  # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
+  max-issues-per-linter: 0
+  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
+  max-same-issues: 0
