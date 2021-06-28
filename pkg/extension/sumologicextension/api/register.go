@@ -15,13 +15,14 @@
 package api
 
 type OpenRegisterRequestPayload struct {
-	CollectorName string `json:"collectorName"`
-	Ephemeral     bool   `json:"ephemeral"`
-	Description   string `json:"description"`
-	Hostname      string `json:"hostname"`
-	Category      string `json:"category"`
-	TimeZone      string `json:"timeZone"`
-	Clobber       bool   `json:"clobber"`
+	CollectorName string                 `json:"collectorName"`
+	Ephemeral     bool                   `json:"ephemeral"`
+	Description   string                 `json:"description"`
+	Hostname      string                 `json:"hostname"`
+	Category      string                 `json:"category"`
+	TimeZone      string                 `json:"timeZone"`
+	Clobber       bool                   `json:"clobber"`
+	Fields        map[string]interface{} `json:"fields"`
 }
 
 type OpenRegisterResponsePayload struct {
