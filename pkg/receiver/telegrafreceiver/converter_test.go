@@ -143,6 +143,110 @@ func TestConverter(t *testing.T) {
 			},
 		},
 		{
+			name:          "sum_int_with_one_field",
+			separateField: false,
+			metricsFn: func() (telegraf.Metric, error) {
+				fields := map[string]interface{}{
+					"available": uint64(39097651200),
+				}
+
+				return metric.New("mem", nil, fields, tim, telegraf.Counter)
+			},
+			expectedFn: func() pdata.MetricSlice {
+				metrics := pdata.NewMetricSlice()
+				metrics.Append(newMetricIntSum("mem_available", 39097651200, tim))
+				return metrics
+			},
+		},
+		{
+			name:          "sum_int_separate_field_with_one_field",
+			separateField: true,
+			metricsFn: func() (telegraf.Metric, error) {
+				fields := map[string]interface{}{
+					"available": uint64(39097651200),
+				}
+
+				return metric.New("mem", nil, fields, tim, telegraf.Counter)
+			},
+			expectedFn: func() pdata.MetricSlice {
+				metrics := pdata.NewMetricSlice()
+				metrics.Append(newMetricIntSumWithSeparateField("mem", "available", 39097651200, tim))
+				return metrics
+			},
+		},
+		{
+			name:          "sum_double_with_one_field",
+			separateField: false,
+			metricsFn: func() (telegraf.Metric, error) {
+				fields := map[string]interface{}{
+					"available": float64(39097651200.123),
+				}
+
+				return metric.New("mem", nil, fields, tim, telegraf.Counter)
+			},
+			expectedFn: func() pdata.MetricSlice {
+				metrics := pdata.NewMetricSlice()
+				metrics.Append(newMetricDoubleSum("mem_available", 39097651200.123, tim))
+				return metrics
+			},
+		},
+		{
+			name:          "sum_double_separate_field_with_one_field",
+			separateField: true,
+			metricsFn: func() (telegraf.Metric, error) {
+				fields := map[string]interface{}{
+					"available": float64(39097651200.123),
+				}
+
+				return metric.New("mem", nil, fields, tim, telegraf.Counter)
+			},
+			expectedFn: func() pdata.MetricSlice {
+				metrics := pdata.NewMetricSlice()
+				metrics.Append(newMetricDoubleSumWithSeparateField("mem", "available", 39097651200.123, tim))
+				return metrics
+			},
+		},
+		{
+			name:          "sum_int_with_multiple_fields",
+			separateField: false,
+			metricsFn: func() (telegraf.Metric, error) {
+				fields := map[string]interface{}{
+					"available": uint64(39097651200),
+					"free":      uint64(24322170880),
+					"total":     uint64(68719476736),
+					"used":      uint64(29621825536),
+				}
+
+				return metric.New("mem", nil, fields, tim, telegraf.Counter)
+			},
+			expectedFn: func() pdata.MetricSlice {
+				metrics := pdata.NewMetricSlice()
+				metrics.Append(newMetricIntSum("mem_available", 39097651200, tim))
+				metrics.Append(newMetricIntSum("mem_free", 24322170880, tim))
+				metrics.Append(newMetricIntSum("mem_total", 68719476736, tim))
+				metrics.Append(newMetricIntSum("mem_used", 29621825536, tim))
+				return metrics
+			},
+		},
+		{
+			name:          "sum_int_separate_field_with_multiple_fields",
+			separateField: true,
+			metricsFn: func() (telegraf.Metric, error) {
+				fields := map[string]interface{}{
+					"available": uint64(39097651200),
+					"free":      uint64(24322170880),
+				}
+
+				return metric.New("mem", nil, fields, tim, telegraf.Counter)
+			},
+			expectedFn: func() pdata.MetricSlice {
+				metrics := pdata.NewMetricSlice()
+				metrics.Append(newMetricIntSumWithSeparateField("mem", "available", 39097651200, tim))
+				metrics.Append(newMetricIntSumWithSeparateField("mem", "free", 24322170880, tim))
+				return metrics
+			},
+		},
+		{
 			name:          "untyped_int_with_one_field",
 			separateField: false,
 			metricsFn: func() (telegraf.Metric, error) {
@@ -396,6 +500,68 @@ func fieldFromMetric(m pdata.Metric, field string) (DataPoint, bool) {
 	}
 
 	return nil, false
+}
+
+func newMetricIntSum(metric string, value int64, t time.Time) pdata.Metric {
+	pm := pdata.NewMetric()
+	pm.SetName(metric)
+	pm.SetDataType(pdata.MetricDataTypeIntSum)
+	is := pm.IntSum()
+	is.SetAggregationTemporality(pdata.AggregationTemporalityCumulative)
+	is.SetIsMonotonic(true)
+	dps := pm.IntSum().DataPoints()
+	dps.Resize(1)
+	dp := dps.At(0)
+	dp.SetValue(value)
+	dp.SetTimestamp(pdata.Timestamp(t.UnixNano()))
+	return pm
+}
+
+func newMetricIntSumWithSeparateField(metric string, field string, value int64, t time.Time) pdata.Metric {
+	pm := pdata.NewMetric()
+	pm.SetName(metric)
+	pm.SetDataType(pdata.MetricDataTypeIntSum)
+	is := pm.IntSum()
+	is.SetAggregationTemporality(pdata.AggregationTemporalityCumulative)
+	is.SetIsMonotonic(true)
+	dps := pm.IntSum().DataPoints()
+	dps.Resize(1)
+	dp := dps.At(0)
+	dp.SetValue(value)
+	dp.SetTimestamp(pdata.Timestamp(t.UnixNano()))
+	dp.LabelsMap().Insert(fieldLabel, field)
+	return pm
+}
+
+func newMetricDoubleSum(metric string, value float64, t time.Time) pdata.Metric {
+	pm := pdata.NewMetric()
+	pm.SetName(metric)
+	pm.SetDataType(pdata.MetricDataTypeDoubleSum)
+	ds := pm.DoubleSum()
+	ds.SetAggregationTemporality(pdata.AggregationTemporalityCumulative)
+	ds.SetIsMonotonic(true)
+	dps := ds.DataPoints()
+	dps.Resize(1)
+	dp := dps.At(0)
+	dp.SetValue(value)
+	dp.SetTimestamp(pdata.Timestamp(t.UnixNano()))
+	return pm
+}
+
+func newMetricDoubleSumWithSeparateField(metric string, field string, value float64, t time.Time) pdata.Metric {
+	pm := pdata.NewMetric()
+	pm.SetName(metric)
+	pm.SetDataType(pdata.MetricDataTypeDoubleSum)
+	ds := pm.DoubleSum()
+	ds.SetAggregationTemporality(pdata.AggregationTemporalityCumulative)
+	ds.SetIsMonotonic(true)
+	dps := ds.DataPoints()
+	dps.Resize(1)
+	dp := dps.At(0)
+	dp.SetValue(value)
+	dp.SetTimestamp(pdata.Timestamp(t.UnixNano()))
+	dp.LabelsMap().Insert(fieldLabel, field)
+	return pm
 }
 
 func newMetricIntGauge(metric string, value int64, t time.Time) pdata.Metric {
