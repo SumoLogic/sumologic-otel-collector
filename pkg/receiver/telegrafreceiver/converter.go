@@ -157,7 +157,7 @@ func (mc metricConverter) Convert(m telegraf.Metric) (pdata.Metrics, error) {
 
 			default:
 				mc.logger.Debug(
-					"Unsupported data type when handling telegraf.Gauge",
+					"Unsupported data type when handling telegraf.Counter",
 					zap.String("type", fmt.Sprintf("%T", v)),
 					zap.String("key", f.Key),
 					zap.Any("value", f.Value),
