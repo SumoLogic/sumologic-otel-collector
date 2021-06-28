@@ -38,6 +38,7 @@ import (
 )
 
 type SumologicExtension struct {
+	collectorName     string
 	baseUrl           string
 	httpClient        *http.Client
 	conf              *Config
@@ -66,8 +67,17 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 	if err != nil {
 		return nil, err
 	}
+	credentialsGetter := credsGetter{
+		conf:   conf,
+		logger: logger,
+	}
 	if conf.CollectorName == "" {
-		conf.CollectorName = fmt.Sprintf("%s-%s", hostname, uuid.String())
+		key := fmt.Sprintf("%s%s%s", conf.CollectorName, conf.Credentials.AccessID, conf.Credentials.AccessKey)
+		// If collector name is not set by the user check if the collector was restarted
+		if !credentialsGetter.CheckCollectorCredentials(key) {
+			// If credentials file is not stored on filesystem generate collector name
+			collectorName = fmt.Sprintf("%s-%s", hostname, uuid.String())
+		}
 	} else {
 		collectorName = conf.CollectorName
 	}
@@ -77,18 +87,16 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 	if conf.HeartBeatInterval <= 0 {
 		conf.HeartBeatInterval = DefaultHeartbeatInterval
 	}
-	hashKey := fmt.Sprintf("%s%s%s", collectorName, conf.Credentials.AccessID, conf.Credentials.AccessKey)
+	hashKey := fmt.Sprintf("%s%s%s", conf.CollectorName, conf.Credentials.AccessID, conf.Credentials.AccessKey)
 
 	return &SumologicExtension{
-		baseUrl: strings.TrimSuffix(conf.ApiBaseUrl, "/"),
-		conf:    conf,
-		logger:  logger,
-		hashKey: hashKey,
-		credentialsGetter: credsGetter{
-			conf:   conf,
-			logger: logger,
-		},
-		closeChan: make(chan struct{}),
+		collectorName:     collectorName,
+		baseUrl:           strings.TrimSuffix(conf.ApiBaseUrl, "/"),
+		conf:              conf,
+		logger:            logger,
+		hashKey:           hashKey,
+		credentialsGetter: credentialsGetter,
+		closeChan:         make(chan struct{}),
 	}, nil
 }
 
@@ -100,10 +108,13 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 		if err != nil {
 			return err
 		}
+		if se.collectorName == "" {
+			se.collectorName = colCreds.CollectorName
+		}
 		se.logger.Info("Found stored credentials")
 	} else {
 		se.logger.Info("Locally stored credentials not found, registering the collector")
-		if colCreds, err = se.credentialsGetter.RegisterCollector(ctx); err != nil {
+		if colCreds, err = se.credentialsGetter.RegisterCollector(ctx, se.collectorName); err != nil {
 			return err
 		}
 
