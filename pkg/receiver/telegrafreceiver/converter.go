@@ -136,7 +136,39 @@ func (mc metricConverter) Convert(m telegraf.Metric) (pdata.Metrics, error) {
 		}
 
 	case telegraf.Counter:
-		return pdata.Metrics{}, fmt.Errorf("unsupported metric type: telegraf.Counter")
+		for _, f := range m.FieldList() {
+			var pm pdata.Metric
+
+			switch v := f.Value.(type) {
+			case float64:
+				pm = newDoubleCounter(f.Key, v, tim, mc.separateField)
+
+			case int64:
+				pm = newIntCounter(f.Key, v, tim, mc.separateField)
+			case uint64:
+				pm = newIntCounter(f.Key, int64(v), tim, mc.separateField)
+
+			case bool:
+				var vv int64 = 0
+				if v {
+					vv = 1
+				}
+				pm = newIntCounter(f.Key, vv, tim, mc.separateField)
+
+			default:
+				mc.logger.Debug(
+					"Unsupported data type when handling telegraf.Gauge",
+					zap.String("type", fmt.Sprintf("%T", v)),
+					zap.String("key", f.Key),
+					zap.Any("value", f.Value),
+				)
+				continue
+			}
+
+			setName(&pm, m.Name(), f.Key, mc.separateField)
+			metrics.Append(pm)
+		}
+
 	case telegraf.Summary:
 		return pdata.Metrics{}, fmt.Errorf("unsupported metric type: telegraf.Summary")
 	case telegraf.Histogram:
@@ -155,6 +187,46 @@ func setName(pm *pdata.Metric, name string, key string, separateField bool) {
 	} else {
 		pm.SetName(name + "_" + key)
 	}
+}
+
+func newDoubleCounter(key string, value float64, t time.Time, separateField bool) pdata.Metric {
+	pm := pdata.NewMetric()
+	pm.SetDataType(pdata.MetricDataTypeDoubleSum)
+	// "[...] OTLP Sum is either translated into a Timeseries Counter, when
+	// the sum is monotonic, or a Gauge when the sum is not monotonic."
+	// https://github.com/open-telemetry/opentelemetry-specification/blob/7fc28733eb3791ebcc98fed0d858a7961f1e95b2/specification/metrics/datamodel.md#opentelemetry-protocol-data-model
+	ds := pm.DoubleSum()
+	ds.SetAggregationTemporality(pdata.AggregationTemporalityCumulative)
+	ds.SetIsMonotonic(true)
+	dps := ds.DataPoints()
+	dps.Resize(1)
+	dp := dps.At(0)
+	dp.SetValue(value)
+	dp.SetTimestamp(pdata.Timestamp(t.UnixNano()))
+	if separateField {
+		dp.LabelsMap().Insert(fieldLabel, key)
+	}
+	return pm
+}
+
+func newIntCounter(key string, value int64, t time.Time, separateField bool) pdata.Metric {
+	pm := pdata.NewMetric()
+	pm.SetDataType(pdata.MetricDataTypeIntSum)
+	// "[...] OTLP Sum is either translated into a Timeseries Counter, when
+	// the sum is monotonic, or a Gauge when the sum is not monotonic."
+	// https://github.com/open-telemetry/opentelemetry-specification/blob/7fc28733eb3791ebcc98fed0d858a7961f1e95b2/specification/metrics/datamodel.md#opentelemetry-protocol-data-model
+	ds := pm.IntSum()
+	ds.SetAggregationTemporality(pdata.AggregationTemporalityCumulative)
+	ds.SetIsMonotonic(true)
+	dps := ds.DataPoints()
+	dps.Resize(1)
+	dp := dps.At(0)
+	dp.SetValue(value)
+	dp.SetTimestamp(pdata.Timestamp(t.UnixNano()))
+	if separateField {
+		dp.LabelsMap().Insert(fieldLabel, key)
+	}
+	return pm
 }
 
 func newDoubleGauge(key string, value float64, t time.Time, separateField bool) pdata.Metric {
