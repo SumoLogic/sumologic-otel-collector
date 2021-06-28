@@ -17,6 +17,7 @@ package sumologicextension
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,6 +37,7 @@ import (
 
 type SumologicExtension struct {
 	baseUrl           string
+	httpClient        *http.Client
 	conf              *Config
 	logger            *zap.Logger
 	credentialsGetter CredsGetter
@@ -92,14 +94,26 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 			return err
 		}
 
-		if err := se.storeCollectorCredentials(); err != nil {
+		if err := se.storeCollectorCredentials(colCreds); err != nil {
 			se.logger.Error("Unable to store collector credentials",
 				zap.Error(err),
 			)
 		}
 	}
-
 	se.registrationInfo = colCreds
+
+	se.httpClient, err = se.conf.HTTPClientSettings.ToClient(host.GetExtensions())
+	if err != nil {
+		return fmt.Errorf("couldn't create HTTP client: %w", err)
+	}
+
+	// Set the transport so that all requests from se.httpClient will contain
+	// the collector credentials.
+	rt, err := se.RoundTripper(se.httpClient.Transport)
+	if err != nil {
+		return fmt.Errorf("couldn't create HTTP client transport: %w", err)
+	}
+	se.httpClient.Transport = rt
 
 	go se.heartbeatLoop()
 
@@ -120,7 +134,7 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 // storeCollectorCredentials stores collector credentials in a file in directory
 // as specified in CollectorCredentialsPath. The credentials are encrypted using
 // hashed collector name.
-func (se *SumologicExtension) storeCollectorCredentials() error {
+func (se *SumologicExtension) storeCollectorCredentials(credentials api.OpenRegisterResponsePayload) error {
 	if err := ensureStoreCredentialsDir(se.conf.CollectorCredentialsPath); err != nil {
 		return err
 	}
@@ -129,10 +143,11 @@ func (se *SumologicExtension) storeCollectorCredentials() error {
 		return err
 	}
 	path := path.Join(se.conf.CollectorCredentialsPath, filenameHash)
-	collectorCreds, err := json.MarshalIndent(se.registrationInfo, "", " ")
+	collectorCreds, err := json.Marshal(credentials)
 	if err != nil {
 		return err
 	}
+
 	encrypedCreds, err := encrypt(collectorCreds, se.conf.CollectorName)
 	if err != nil {
 		return err
@@ -172,10 +187,19 @@ func ensureStoreCredentialsDir(path string) error {
 }
 
 func (se *SumologicExtension) heartbeatLoop() {
-	if se.registrationInfo.CollectorCredentialId == "" || se.registrationInfo.CollectorId == "" {
+	if se.registrationInfo.CollectorCredentialId == "" || se.registrationInfo.CollectorCredentialKey == "" {
 		se.logger.Error("Collector not registered, cannot send heartbeat")
 		return
 	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func() {
+		// When the close channel is closed ...
+		<-se.closeChan
+		// ... cancel the ongoing heartbeat request.
+		cancel()
+	}()
 
 	se.logger.Info("Heartbeat heartbeat API initialized. Starting sending hearbeat requests")
 	for {
@@ -184,7 +208,7 @@ func (se *SumologicExtension) heartbeatLoop() {
 			se.logger.Info("Heartbeat sender turn off")
 			return
 		default:
-			err := se.sendHeartbeat()
+			err := se.sendHeartbeat(ctx)
 			if err != nil {
 				se.logger.Error("Heartbeat error", zap.Error(err))
 			}
@@ -197,22 +221,18 @@ func (se *SumologicExtension) heartbeatLoop() {
 	}
 }
 
-func (se *SumologicExtension) sendHeartbeat() error {
+func (se *SumologicExtension) sendHeartbeat(ctx context.Context) error {
 	u, err := url.Parse(se.baseUrl + heartbeatUrl)
 	if err != nil {
 		return fmt.Errorf("unable to parse heartbeat URL %w", err)
 	}
-	req, err := http.NewRequest(http.MethodPost, u.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), nil)
 	if err != nil {
 		return fmt.Errorf("unable to create HTTP request %w", err)
 	}
 
-	addCollectorCredentials(req,
-		se.registrationInfo.CollectorCredentialId,
-		se.registrationInfo.CollectorCredentialKey,
-	)
 	addJSONHeaders(req)
-	res, err := http.DefaultClient.Do(req)
+	res, err := se.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("unable to send HTTP request: %w", err)
 	}
@@ -262,11 +282,13 @@ type roundTripper struct {
 
 func (rt roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	addCollectorCredentials(req, rt.collectorCredentialId, rt.collectorCredentialKey)
-
 	return rt.base.RoundTrip(req)
 }
 
 func addCollectorCredentials(req *http.Request, collectorCredentialId string, collectorCredentialKey string) {
-	req.Header.Add("collectorCredentialId", collectorCredentialId)
-	req.Header.Add("collectorCredentialKey", collectorCredentialKey)
+	token := base64.StdEncoding.EncodeToString(
+		[]byte(collectorCredentialId + ":" + collectorCredentialKey),
+	)
+
+	req.Header.Add("Authorization", "Basic "+token)
 }

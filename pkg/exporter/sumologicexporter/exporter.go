@@ -76,6 +76,11 @@ func initExporter(cfg *Config) (*sumologicexporter, error) {
 		return nil, errors.New("no endpoint and no auth extension specified")
 	}
 
+	if cfg.TranslateMetadata {
+		cfg.SourceCategory = translateConfigValue(cfg.SourceCategory)
+		cfg.SourceHost = translateConfigValue(cfg.SourceHost)
+		cfg.SourceName = translateConfigValue(cfg.SourceName)
+	}
 	sfs, err := newSourceFormats(cfg)
 	if err != nil {
 		return nil, err
@@ -206,6 +211,10 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 
 				currentMetadata = sdr.filter.filterIn(log.Attributes())
 
+				if se.config.TranslateMetadata {
+					translateMetadata(currentMetadata.orig)
+				}
+
 				// If metadata differs from currently buffered, flush the buffer
 				if currentMetadata.string() != previousMetadata.string() && previousMetadata.string() != "" {
 					var dropped []pdata.LogRecord
@@ -289,6 +298,12 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		rm := rms.At(i)
 
 		attributes = rm.Resource().Attributes()
+		currentMetadata = sdr.filter.filterIn(attributes)
+
+		if se.config.TranslateMetadata {
+			translateMetadata(attributes)
+			translateMetadata(currentMetadata.orig)
+		}
 
 		// iterate over InstrumentationLibraryMetrics
 		ilms := rm.InstrumentationLibraryMetrics()
@@ -303,8 +318,6 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 					metric:     m,
 					attributes: attributes,
 				}
-
-				currentMetadata = sdr.filter.filterIn(attributes)
 
 				// If metadata differs from currently buffered, flush the buffer
 				if currentMetadata.string() != previousMetadata.string() && previousMetadata.string() != "" {

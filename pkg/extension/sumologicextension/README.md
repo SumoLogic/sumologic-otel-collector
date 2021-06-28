@@ -41,10 +41,17 @@ and can be used as an authenticator for the
   For more information on this subject please visit[this help document][fields_help]
 * `api_base_url`: base URL that will be used for creating API requests
   (default: `https://collectors.sumologic.com`)
-* `heartbeat_interval`: interval that will be used for sending heartbeats 
+* `heartbeat_interval`: interval that will be used for sending heartbeats
   (default: `15s`)
 * `collector_credentials_path`: path where registration info will be stored after
   successful collector registration (default: `$HOME/.sumologic-otel-collector`)
+* `clobber`: defines whether to delete any existing collector with the same name
+  and create a new one upon registration (default: `false`)
+* `ephemeral`: defines whether the collector will be deleted after 12 hours
+	of inactivity (default: `false`)
+* `time_zone`: defines the time zone of the collector. For a list of all possible
+  values, refer to the `TZ` column in
+  https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
 
 [credentials_help]: https://help.sumologic.com/Manage/Security/Access-Keys
 [fields_help]: https://help.sumologic.com/Manage/Fields

@@ -18,11 +18,14 @@ import (
 	"time"
 
 	"go.opentelemetry.io/collector/config"
+	"go.opentelemetry.io/collector/config/confighttp"
 )
 
 // Config has the configuration for the sumologic extension.
 type Config struct {
 	config.ExtensionSettings `mapstructure:"-"`
+	// squash ensures fields are correctly decoded in embedded struct.
+	confighttp.HTTPClientSettings `mapstructure:",squash"`
 
 	// Credentials contains Access Key and Access ID for Sumo Logic service.
 	// Please refer to https://help.sumologic.com/Manage/Security/Access-Keys
@@ -55,7 +58,7 @@ type Config struct {
 	// Clobber defines whether to delete any existing collector with the same
 	// name and create a new one upon registration.
 	// By default this is false.
-	Clobber bool `mapstructure:"collector_credentials_path"`
+	Clobber bool `mapstructure:"clobber"`
 
 	// Ephemeral defines whether the collector will be deleted after 12 hours
 	// of inactivity.
