@@ -96,6 +96,8 @@ exporters:
 Metadata translation changes some of the attribute keys from OpenTelemetry convention to Sumo convention.
 For example, OpenTelemetry convention for the attribute containing Kubernetes pod name is `k8s.pod.name`,
 but Sumo expects it to be in attribute named `pod`.
+If attribute with target name eg. `pod` already exists,
+translation is not being done for corresponding attribute (`k8s.pod.name` in this example).
 
 This feature is turned on by default.
 To turn it off, set the `translate_metadata` configuration option to `false`.
@@ -124,6 +126,7 @@ Below is a list of all metadata keys that are being translated.
 | k8s.replicaset.name     | replicaset       |
 | k8s.statefulset.name    | statefulset      |
 | service.name            | service          |
+| file.path.resolved      | _sourceName      |
 
 ## Source Templates
 
