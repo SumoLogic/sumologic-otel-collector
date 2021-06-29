@@ -42,6 +42,7 @@ var metadataTranslations = map[string]string{
 	"k8s.replicaset.name":     "replicaset",
 	"k8s.statefulset.name":    "statefulset",
 	"service.name":            "service",
+	"file.path.resolved":      "_sourceName",
 }
 
 // translateMetadata renames metadata keys according to metadataTranslations.
