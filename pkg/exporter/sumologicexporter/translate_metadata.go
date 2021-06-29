@@ -49,7 +49,11 @@ var metadataTranslations = map[string]string{
 func translateMetadata(attributes pdata.AttributeMap) {
 	attributes.Range(func(otKey string, value pdata.AttributeValue) bool {
 		if sumoKey, ok := metadataTranslations[otKey]; ok {
-			attributes.Upsert(sumoKey, value)
+			// do not rename attribute if target name already exists
+			if _, ok := attributes.Get(sumoKey); ok {
+				return true
+			}
+			attributes.Insert(sumoKey, value)
 			attributes.Delete(otKey)
 		}
 		return true
