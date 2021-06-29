@@ -62,7 +62,7 @@ func TestTranslateMetadataLeavesOtherAttributesUnchanged(t *testing.T) {
 	assertAttribute(t, metadata, "three", "three1")
 }
 
-func TestTranslateMetadataOverwritesExistingAttribute(t *testing.T) {
+func TestTranslateMetadataDoesNotOverwriteExistingAttribute(t *testing.T) {
 	metadata := pdata.NewAttributeMap()
 	metadata.InsertString("host", "host1")
 	metadata.InsertString("host.name", "hostname1")
@@ -70,11 +70,11 @@ func TestTranslateMetadataOverwritesExistingAttribute(t *testing.T) {
 
 	translateMetadata(metadata)
 
-	assert.Equal(t, 1, metadata.Len())
-	assertAttribute(t, metadata, "host", "hostname1")
+	assert.Equal(t, 2, metadata.Len())
+	assertAttribute(t, metadata, "host", "host1")
 }
 
-func TestTranslateMetadataOverwritesMultipleExistingAttributes(t *testing.T) {
+func TestTranslateMetadataDoesNotOverwriteMultipleExistingAttributes(t *testing.T) {
 	// Note: Current implementation of pdata.AttributeMap does not allow to insert duplicate keys.
 	// See https://cloud-native.slack.com/archives/C01N5UCHTEH/p1624020829067500
 	metadata := pdata.NewAttributeMap()
@@ -86,8 +86,8 @@ func TestTranslateMetadataOverwritesMultipleExistingAttributes(t *testing.T) {
 
 	translateMetadata(metadata)
 
-	assert.Equal(t, 1, metadata.Len())
-	assertAttribute(t, metadata, "host", "hostname1")
+	assert.Equal(t, 2, metadata.Len())
+	assertAttribute(t, metadata, "host", "host1")
 }
 
 func assertAttribute(t *testing.T, metadata pdata.AttributeMap, attributeName string, expectedValue string) {
