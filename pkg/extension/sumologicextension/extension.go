@@ -62,7 +62,6 @@ const (
 
 func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtension, error) {
 	collectorName := ""
-	uuid := uuid.New()
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, err
@@ -72,11 +71,11 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 		logger: logger,
 	}
 	if conf.CollectorName == "" {
-		key := fmt.Sprintf("%s%s%s", conf.CollectorName, conf.Credentials.AccessID, conf.Credentials.AccessKey)
+		key := createHashKey(conf)
 		// If collector name is not set by the user check if the collector was restarted
 		if !credentialsGetter.CheckCollectorCredentials(key) {
 			// If credentials file is not stored on filesystem generate collector name
-			collectorName = fmt.Sprintf("%s-%s", hostname, uuid.String())
+			collectorName = fmt.Sprintf("%s-%s", hostname, uuid.New().String())
 		}
 	} else {
 		collectorName = conf.CollectorName
@@ -87,7 +86,7 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 	if conf.HeartBeatInterval <= 0 {
 		conf.HeartBeatInterval = DefaultHeartbeatInterval
 	}
-	hashKey := fmt.Sprintf("%s%s%s", conf.CollectorName, conf.Credentials.AccessID, conf.Credentials.AccessKey)
+	hashKey := createHashKey(conf)
 
 	return &SumologicExtension{
 		collectorName:     collectorName,
@@ -100,31 +99,47 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 	}, nil
 }
 
+func createHashKey(conf *Config) string {
+	return fmt.Sprintf("%s%s%s", conf.CollectorName, conf.Credentials.AccessID, conf.Credentials.AccessKey)
+}
+
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
-	var colCreds api.OpenRegisterResponsePayload
+	var colCreds CollectorCredentials
 	var err error
 	if se.credentialsGetter.CheckCollectorCredentials(se.hashKey) {
 		colCreds, err = se.credentialsGetter.GetStoredCredentials(se.hashKey)
 		if err != nil {
 			return err
 		}
-		if se.collectorName == "" {
-			se.collectorName = colCreds.CollectorName
+		colName := colCreds.CollectorName
+		if !se.conf.Clobber {
+			if se.collectorName == "" {
+				se.collectorName = colName
+			}
+			se.logger.Info("Found stored credentials")
+		} else {
+			se.logger.Info("Locally stored credentials found, but clobber flag is set re-registering the collector")
+			if colCreds, err = se.credentialsGetter.RegisterCollector(ctx, colName); err != nil {
+				return err
+			}
+			if err := se.storeCollectorCredentials(colCreds); err != nil {
+				se.logger.Error("Unable to store collector credentials",
+					zap.Error(err),
+				)
+			}
 		}
-		se.logger.Info("Found stored credentials")
 	} else {
 		se.logger.Info("Locally stored credentials not found, registering the collector")
 		if colCreds, err = se.credentialsGetter.RegisterCollector(ctx, se.collectorName); err != nil {
 			return err
 		}
-
 		if err := se.storeCollectorCredentials(colCreds); err != nil {
 			se.logger.Error("Unable to store collector credentials",
 				zap.Error(err),
 			)
 		}
 	}
-	se.registrationInfo = colCreds
+	se.registrationInfo = colCreds.Credentials
 
 	se.httpClient, err = se.conf.HTTPClientSettings.ToClient(host.GetExtensions())
 	if err != nil {
@@ -158,7 +173,7 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 // storeCollectorCredentials stores collector credentials in a file in directory
 // as specified in CollectorCredentialsPath. The credentials are encrypted using
 // hashed collector name.
-func (se *SumologicExtension) storeCollectorCredentials(credentials api.OpenRegisterResponsePayload) error {
+func (se *SumologicExtension) storeCollectorCredentials(credentials CollectorCredentials) error {
 	if err := ensureStoreCredentialsDir(se.conf.CollectorCredentialsPath); err != nil {
 		return err
 	}
@@ -172,12 +187,12 @@ func (se *SumologicExtension) storeCollectorCredentials(credentials api.OpenRegi
 		return err
 	}
 
-	encrypedCreds, err := encrypt(collectorCreds, se.hashKey)
+	encryptedCreds, err := encrypt(collectorCreds, se.hashKey)
 	if err != nil {
 		return err
 	}
 
-	if err = os.WriteFile(path, encrypedCreds, 0600); err != nil {
+	if err = os.WriteFile(path, encryptedCreds, 0600); err != nil {
 		return fmt.Errorf("failed to save credentials file '%s': %w",
 			path, err,
 		)

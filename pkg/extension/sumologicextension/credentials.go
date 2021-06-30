@@ -31,11 +31,16 @@ import (
 	"go.uber.org/zap"
 )
 
+type CollectorCredentials struct {
+	CollectorName string                          `json:"collectorName"`
+	Credentials   api.OpenRegisterResponsePayload `json:"collectorCredentials"`
+}
+
 // CredsGetter is an interface to get collector authentication data
 type CredsGetter interface {
 	CheckCollectorCredentials(string) bool
-	GetStoredCredentials(string) (api.OpenRegisterResponsePayload, error)
-	RegisterCollector(ctx context.Context, collectorName string) (api.OpenRegisterResponsePayload, error)
+	GetStoredCredentials(string) (CollectorCredentials, error)
+	RegisterCollector(ctx context.Context, collectorName string) (CollectorCredentials, error)
 }
 
 // credsGetter is a common structure for both types of getting collector credentials
@@ -61,43 +66,43 @@ func (cr credsGetter) CheckCollectorCredentials(key string) bool {
 
 // GetStoredCredentials retrieves collector credentials stored in local file system and then decrypts it
 // using hashed collector name as passphrase.
-func (cr credsGetter) GetStoredCredentials(key string) (api.OpenRegisterResponsePayload, error) {
+func (cr credsGetter) GetStoredCredentials(key string) (CollectorCredentials, error) {
 	filenameHash, err := hash(key)
 	if err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 
 	path := path.Join(cr.conf.CollectorCredentialsPath, filenameHash)
 	creds, err := os.Open(path)
 	if err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 
 	defer creds.Close()
 	encryptedCreds, err := ioutil.ReadAll(creds)
 	if err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 
 	collectorCreds, err := decrypt(encryptedCreds, key)
 	if err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 
-	var credentialsInfo api.OpenRegisterResponsePayload
+	var credentialsInfo CollectorCredentials
 	if err = json.Unmarshal(collectorCreds, &credentialsInfo); err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 
 	return credentialsInfo, nil
 }
 
 // RegisterCollector registers new collector using registration API and returns collector credentials.
-func (cr credsGetter) RegisterCollector(ctx context.Context, collectorName string) (api.OpenRegisterResponsePayload, error) {
+func (cr credsGetter) RegisterCollector(ctx context.Context, collectorName string) (CollectorCredentials, error) {
 	baseUrl := strings.TrimSuffix(cr.conf.ApiBaseUrl, "/")
 	u, err := url.Parse(baseUrl)
 	if err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 	u.Path = registerUrl
 
@@ -105,7 +110,7 @@ func (cr credsGetter) RegisterCollector(ctx context.Context, collectorName strin
 	// hostname in request?
 	hostname, err := os.Hostname()
 	if err != nil {
-		return api.OpenRegisterResponsePayload{}, fmt.Errorf("cannot get hostname: %w", err)
+		return CollectorCredentials{}, fmt.Errorf("cannot get hostname: %w", err)
 	}
 
 	var buff bytes.Buffer
@@ -119,12 +124,12 @@ func (cr credsGetter) RegisterCollector(ctx context.Context, collectorName strin
 		Clobber:       cr.conf.Clobber,
 		TimeZone:      cr.conf.TimeZone,
 	}); err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), &buff)
 	if err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 
 	addClientCredentials(req,
@@ -136,7 +141,7 @@ func (cr credsGetter) RegisterCollector(ctx context.Context, collectorName strin
 	cr.logger.Info("Calling register API", zap.String("URL", u.String()))
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return api.OpenRegisterResponsePayload{}, fmt.Errorf("failed to register the collector: %w", err)
+		return CollectorCredentials{}, fmt.Errorf("failed to register the collector: %w", err)
 	}
 
 	defer res.Body.Close()
@@ -144,7 +149,7 @@ func (cr credsGetter) RegisterCollector(ctx context.Context, collectorName strin
 	if res.StatusCode < 200 || res.StatusCode >= 400 {
 		var buff bytes.Buffer
 		if _, err := io.Copy(&buff, res.Body); err != nil {
-			return api.OpenRegisterResponsePayload{}, fmt.Errorf(
+			return CollectorCredentials{}, fmt.Errorf(
 				"failed to copy collector registration response body, status code: %d, err: %w",
 				res.StatusCode, err,
 			)
@@ -153,7 +158,7 @@ func (cr credsGetter) RegisterCollector(ctx context.Context, collectorName strin
 			zap.Int("status_code", res.StatusCode),
 			zap.String("response", buff.String()),
 		)
-		return api.OpenRegisterResponsePayload{}, fmt.Errorf(
+		return CollectorCredentials{}, fmt.Errorf(
 			"failed to register the collector, got HTTP status code: %d",
 			res.StatusCode,
 		)
@@ -161,16 +166,19 @@ func (cr credsGetter) RegisterCollector(ctx context.Context, collectorName strin
 
 	var resp api.OpenRegisterResponsePayload
 	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
-	resp.CollectorName = collectorName
+	colCreds := CollectorCredentials{
+		CollectorName: collectorName,
+		Credentials:   resp,
+	}
 
 	cr.logger.Info("Collector registered",
 		zap.String("CollectorID", resp.CollectorId),
 		zap.Any("response", resp),
 	)
 
-	return resp, nil
+	return colCreds, nil
 }
 
 func addClientCredentials(req *http.Request, accessID string, accessKey string) {

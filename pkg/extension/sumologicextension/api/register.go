@@ -26,7 +26,6 @@ type OpenRegisterRequestPayload struct {
 }
 
 type OpenRegisterResponsePayload struct {
-	CollectorName          string `json:"collectorName"`
 	CollectorCredentialId  string `json:"collectorCredentialId"`
 	CollectorCredentialKey string `json:"collectorCredentialKey"`
 	CollectorId            string `json:"collectorId"`
