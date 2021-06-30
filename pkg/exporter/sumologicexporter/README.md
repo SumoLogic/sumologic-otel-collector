@@ -43,7 +43,7 @@ exporters:
     source_host: <source_host>
     # template for Graphite format, applied only if metric_format is set to graphite;
     # source templating is going to be applied,
-    # default=`%{_metric_}`
+    # default = `%{_metric_}`
     graphite_template: <graphite_template>
 
     # translate_metadata ppecifies whether metadata attributes should be translated
