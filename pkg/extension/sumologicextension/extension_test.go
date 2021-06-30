@@ -79,7 +79,7 @@ func TestBasicStart(t *testing.T) {
 		if req.URL.Path == registerUrl {
 			_, err := w.Write([]byte(`{
 				"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
-				"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+				"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
 				"collectorId": "000000000FFFFFFF"
 			}`))
 
@@ -116,7 +116,7 @@ func TestStoreCredentials(t *testing.T) {
 			if req.URL.Path == registerUrl {
 				_, err := w.Write([]byte(`{
 				"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
-				"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+				"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
 				"collectorId": "000000000FFFFFFF"
 			}`))
 

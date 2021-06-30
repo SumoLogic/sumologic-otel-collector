@@ -404,6 +404,7 @@ func TestSendLogsOTLP(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
+			//nolint:lll
 			assert.Equal(t, "\n\x80\x01\n\x00\x12|\n\x00\x127*\r\n\vExample log2\x10\n\x04key1\x12\b\n\x06value12\x10\n\x04key2\x12\b\n\x06value2J\x00R\x00\x12?*\x15\n\x13Another example log2\x10\n\x04key1\x12\b\n\x06value12\x10\n\x04key2\x12\b\n\x06value2J\x00R\x00", body)
 			assert.Equal(t, "key1=value, key2=value2", req.Header.Get("X-Sumo-Fields"))
 			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
@@ -811,6 +812,7 @@ func TestSendCarbon2Metrics(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
+			//nolint:lll
 			expected := `test=test_value test2=second_value _unit=m/s escape_me=:invalid_ metric=true metric=test.metric.data unit=bytes  14500 1605534165
 foo=bar metric=gauge_metric_name  124 1608124661
 foo=bar metric=gauge_metric_name  245 1608124662`

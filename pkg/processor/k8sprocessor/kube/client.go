@@ -58,7 +58,16 @@ type WatchClient struct {
 var dRegex = regexp.MustCompile(`^(.*)-[0-9a-zA-Z]*-[0-9a-zA-Z]*$`)
 
 // New initializes a new k8s Client.
-func New(logger *zap.Logger, apiCfg k8sconfig.APIConfig, rules ExtractionRules, filters Filters, associations []Association, newClientSet APIClientsetProvider, newInformer InformerProvider, newOwnerProviderFunc OwnerProvider) (Client, error) {
+func New(
+	logger *zap.Logger,
+	apiCfg k8sconfig.APIConfig,
+	rules ExtractionRules,
+	filters Filters,
+	associations []Association,
+	newClientSet APIClientsetProvider,
+	newInformer InformerProvider,
+	newOwnerProviderFunc OwnerProvider,
+) (Client, error) {
 	c := &WatchClient{
 		logger:          logger,
 		Rules:           rules,

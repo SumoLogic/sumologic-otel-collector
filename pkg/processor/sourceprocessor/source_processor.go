@@ -226,9 +226,18 @@ func (stp *sourceTraceProcessor) ConsumeTraces(ctx context.Context, td pdata.Tra
 		stp.fillOtherMeta(atts)
 		filledOtherMeta = true
 
-		filledAnySource = stp.sourceHostFiller.fillResourceOrUseAnnotation(&atts, stp.annotationAttribute(sourceHostSpecialAnnotation), stp.keys) || filledAnySource
-		filledAnySource = stp.sourceCategoryFiller.fillResourceOrUseAnnotation(&atts, stp.annotationAttribute(sourceCategorySpecialAnnotation), stp.keys) || filledAnySource
-		filledAnySource = stp.sourceNameFiller.fillResourceOrUseAnnotation(&atts, stp.annotationAttribute(sourceNameSpecialAnnotation), stp.keys) || filledAnySource
+		filledAnySource = stp.sourceHostFiller.fillResourceOrUseAnnotation(&atts,
+			stp.annotationAttribute(sourceHostSpecialAnnotation),
+			stp.keys,
+		) || filledAnySource
+		filledAnySource = stp.sourceCategoryFiller.fillResourceOrUseAnnotation(&atts,
+			stp.annotationAttribute(sourceCategorySpecialAnnotation),
+			stp.keys,
+		) || filledAnySource
+		filledAnySource = stp.sourceNameFiller.fillResourceOrUseAnnotation(&atts,
+			stp.annotationAttribute(sourceNameSpecialAnnotation),
+			stp.keys,
+		) || filledAnySource
 
 		ilss := rs.InstrumentationLibrarySpans()
 		totalSpans := 0
