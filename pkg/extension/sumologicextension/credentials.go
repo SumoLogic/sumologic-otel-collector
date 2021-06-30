@@ -31,6 +31,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// CollectorCredentials are used for storing the credentials received on registration
 type CollectorCredentials struct {
 	CollectorName string                          `json:"collectorName"`
 	Credentials   api.OpenRegisterResponsePayload `json:"collectorCredentials"`
@@ -38,8 +39,8 @@ type CollectorCredentials struct {
 
 // CredsGetter is an interface to get collector authentication data
 type CredsGetter interface {
-	CheckCollectorCredentials(string) bool
-	GetStoredCredentials(string) (CollectorCredentials, error)
+	CheckCollectorCredentials(key string) bool
+	GetStoredCredentials(key string) (CollectorCredentials, error)
 	RegisterCollector(ctx context.Context, collectorName string) (CollectorCredentials, error)
 }
 
@@ -168,17 +169,17 @@ func (cr credsGetter) RegisterCollector(ctx context.Context, collectorName strin
 	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
 		return CollectorCredentials{}, err
 	}
-	colCreds := CollectorCredentials{
-		CollectorName: collectorName,
-		Credentials:   resp,
-	}
 
 	cr.logger.Info("Collector registered",
 		zap.String("CollectorID", resp.CollectorId),
 		zap.Any("response", resp),
 	)
 
-	return colCreds, nil
+	return CollectorCredentials{
+		// TODO: When registration API will return registered name use it instead of collectorName
+		CollectorName: collectorName,
+		Credentials:   resp,
+	}, nil
 }
 
 func addClientCredentials(req *http.Request, accessID string, accessKey string) {

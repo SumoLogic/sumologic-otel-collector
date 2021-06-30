@@ -31,7 +31,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension/api"
 	"go.opentelemetry.io/collector/component"
 	"go.uber.org/zap"
@@ -61,6 +60,9 @@ const (
 )
 
 func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtension, error) {
+	if conf.Credentials.AccessID == "" || conf.Credentials.AccessKey == "" {
+		return nil, errors.New("access_key and/or access_id not provided")
+	}
 	collectorName := ""
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -75,13 +77,10 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 		// If collector name is not set by the user check if the collector was restarted
 		if !credentialsGetter.CheckCollectorCredentials(key) {
 			// If credentials file is not stored on filesystem generate collector name
-			collectorName = fmt.Sprintf("%s-%s", hostname, uuid.New().String())
+			collectorName = fmt.Sprintf("%s-%s", hostname, uuid.New())
 		}
 	} else {
 		collectorName = conf.CollectorName
-	}
-	if conf.Credentials.AccessID == "" || conf.Credentials.AccessKey == "" {
-		return nil, errors.New("access_key and/or access_id not provided")
 	}
 	if conf.HeartBeatInterval <= 0 {
 		conf.HeartBeatInterval = DefaultHeartbeatInterval
@@ -113,12 +112,15 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 		}
 		colName := colCreds.CollectorName
 		if !se.conf.Clobber {
+			// collectorName is not set when it is configured empty in config file, and there is state file which means
+			// that the collector was previously registered with generated name. Getting this name from state file and
+			// override it in the starting up collector.
 			if se.collectorName == "" {
 				se.collectorName = colName
 			}
-			se.logger.Info("Found stored credentials")
+			se.logger.Info("Found stored credentials, skipping registration")
 		} else {
-			se.logger.Info("Locally stored credentials found, but clobber flag is set re-registering the collector")
+			se.logger.Info("Locally stored credentials found, but clobber flag is set: re-registering the collector")
 			if colCreds, err = se.credentialsGetter.RegisterCollector(ctx, colName); err != nil {
 				return err
 			}
