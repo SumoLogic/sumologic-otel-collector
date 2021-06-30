@@ -11,7 +11,10 @@ dist:
   output_path: ./cmd
 
 exporters:
+  # Exporters with non-upstreamed changes:
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter v0.27.0"
+  # Upstream exporters:
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/loadbalancingexporter v0.27.0"
 
 processors:
   # Processors with non-upstreamed changes:
