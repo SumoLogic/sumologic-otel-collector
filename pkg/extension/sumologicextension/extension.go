@@ -110,18 +110,12 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 		if err != nil {
 			return err
 		}
-		colName := colCreds.CollectorName
+		se.collectorName = colCreds.CollectorName
 		if !se.conf.Clobber {
-			// collectorName is not set when it is configured empty in config file, and there is state file which means
-			// that the collector was previously registered with generated name. Getting this name from state file and
-			// override it in the starting up collector.
-			if se.collectorName == "" {
-				se.collectorName = colName
-			}
 			se.logger.Info("Found stored credentials, skipping registration")
 		} else {
 			se.logger.Info("Locally stored credentials found, but clobber flag is set: re-registering the collector")
-			if colCreds, err = se.credentialsGetter.RegisterCollector(ctx, colName); err != nil {
+			if colCreds, err = se.credentialsGetter.RegisterCollector(ctx, se.collectorName); err != nil {
 				return err
 			}
 			if err := se.storeCollectorCredentials(colCreds); err != nil {
