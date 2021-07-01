@@ -6,6 +6,21 @@ BUILDER_BIN_PATH ?= ${HOME}/bin/opentelemetry-collector-builder
 VERSION ?= "$(shell git describe --tags --abbrev=10)"
 GO ?= go
 
+# Builds for darwin need to be built with CGO_ENABLED set to 1 because some telegraf
+# plugins that are used within the telegrafreceiver are implemented with CGO.
+# Example of this might be the cpu input plugin using gopsutil to the cpu stats.
+#
+# https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin_nocgo.go
+# https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin.go
+ifeq ($(shell go env GOOS),darwin)
+CGO_ENABLED ?= 1
+else
+# CGO_ENABLED=0 is used becuase we don't want to rely on c libs and opentelemetry
+# also builds their binaries this way.
+# ref: https://github.com/open-telemetry/opentelemetry-collector/blob/4c503ddc/Makefile#L254-L256
+CGO_ENABLED ?= 0
+endif
+
 .PHONY: install
 install:
 	go install ${BUILDER_REPO}@v$(BUILDER_VERSION)
@@ -32,11 +47,7 @@ install-bin-darwin:
 build:
 # Need to specify go path because otherwise opentelemetry-collector-builder
 # uses /usr/bin/go which on Github Actions is using preinstalled 1.15.12 by default.
-# 
-# CGO_ENABLED=0 is used becuase we don't want to rely on c libs and opentelemetry
-# also builds their binaries this way.
-# ref: https://github.com/open-telemetry/opentelemetry-collector/blob/4c503ddc16aab9cf725b9e780cbdcf140a3dde52/Makefile#L254-L256
-	CGO_ENABLED=0 opentelemetry-collector-builder \
+	CGO_ENABLED=${CGO_ENABLED} opentelemetry-collector-builder \
 		--go ${GO} \
 		--version ${VERSION} \
 		--config .otelcol-builder.yaml \
