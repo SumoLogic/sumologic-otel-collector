@@ -194,7 +194,7 @@ func newDoubleCounter(key string, value float64, t time.Time, separateField bool
 	pm.SetDataType(pdata.MetricDataTypeDoubleSum)
 	// "[...] OTLP Sum is either translated into a Timeseries Counter, when
 	// the sum is monotonic, or a Gauge when the sum is not monotonic."
-	// https://github.com/open-telemetry/opentelemetry-specification/blob/7fc28733eb3791ebcc98fed0d858a7961f1e95b2/specification/metrics/datamodel.md#opentelemetry-protocol-data-model
+	// https://github.com/open-telemetry/opentelemetry-specification/blob/7fc28733/specification/metrics/datamodel.md#opentelemetry-protocol-data-model
 	ds := pm.DoubleSum()
 	ds.SetAggregationTemporality(pdata.AggregationTemporalityCumulative)
 	ds.SetIsMonotonic(true)
@@ -214,7 +214,7 @@ func newIntCounter(key string, value int64, t time.Time, separateField bool) pda
 	pm.SetDataType(pdata.MetricDataTypeIntSum)
 	// "[...] OTLP Sum is either translated into a Timeseries Counter, when
 	// the sum is monotonic, or a Gauge when the sum is not monotonic."
-	// https://github.com/open-telemetry/opentelemetry-specification/blob/7fc28733eb3791ebcc98fed0d858a7961f1e95b2/specification/metrics/datamodel.md#opentelemetry-protocol-data-model
+	// https://github.com/open-telemetry/opentelemetry-specification/blob/7fc28733/specification/metrics/datamodel.md#opentelemetry-protocol-data-model
 	ds := pm.IntSum()
 	ds.SetAggregationTemporality(pdata.AggregationTemporalityCumulative)
 	ds.SetIsMonotonic(true)
