@@ -43,8 +43,9 @@ and can be used as an authenticator for the
   (default: `https://collectors.sumologic.com`)
 * `heartbeat_interval`: interval that will be used for sending heartbeats
   (default: `15s`)
-* `collector_credentials_path`: path where registration info will be stored after
-  successful collector registration (default: `$HOME/.sumologic-otel-collector`)
+* `collector_credentials_directory`: directory where state files with registration
+  info will be stored after successful collector registration
+  (default: `$HOME/.sumologic-otel-collector`)
 * `clobber`: defines whether to delete any existing collector with the same name
   and create a new one upon registration (default: `false`)
 * `ephemeral`: defines whether the collector will be deleted after 12 hours

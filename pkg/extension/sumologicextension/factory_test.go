@@ -34,10 +34,10 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 	require.NoError(t, err)
 	defaultCredsPath := path.Join(homePath, collectorCredentialsDirectory)
 	assert.Equal(t, &Config{
-		ExtensionSettings:        config.NewExtensionSettings(config.NewID(typeStr)),
-		HeartBeatInterval:        DefaultHeartbeatInterval,
-		ApiBaseUrl:               DefaultApiBaseUrl,
-		CollectorCredentialsPath: defaultCredsPath,
+		ExtensionSettings:             config.NewExtensionSettings(config.NewID(typeStr)),
+		HeartBeatInterval:             DefaultHeartbeatInterval,
+		ApiBaseUrl:                    DefaultApiBaseUrl,
+		CollectorCredentialsDirectory: defaultCredsPath,
 	}, cfg)
 
 	assert.NoError(t, configcheck.ValidateConfig(cfg))

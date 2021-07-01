@@ -47,13 +47,13 @@ func createDefaultConfig() config.Extension {
 	defaultCredsPath := path.Join(homePath, collectorCredentialsDirectory)
 
 	return &Config{
-		ExtensionSettings:        config.NewExtensionSettings(config.NewID(typeStr)),
-		ApiBaseUrl:               DefaultApiBaseUrl,
-		HeartBeatInterval:        DefaultHeartbeatInterval,
-		CollectorCredentialsPath: defaultCredsPath,
-		Clobber:                  false,
-		Ephemeral:                false,
-		TimeZone:                 "",
+		ExtensionSettings:             config.NewExtensionSettings(config.NewID(typeStr)),
+		ApiBaseUrl:                    DefaultApiBaseUrl,
+		HeartBeatInterval:             DefaultHeartbeatInterval,
+		CollectorCredentialsDirectory: defaultCredsPath,
+		Clobber:                       false,
+		Ephemeral:                     false,
+		TimeZone:                      "",
 	}
 }
 
