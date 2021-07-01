@@ -39,6 +39,10 @@ for-all:
 # Build
 ################################################################################
 
+.PHONY: build
+build:
+	$(MAKE) -C ./otelcolbuilder/ build
+
 BUILD_TAG ?= latest
 BUILD_CACHE_TAG = latest-builder-cache
 IMAGE_NAME = sumologic-otel-collector
