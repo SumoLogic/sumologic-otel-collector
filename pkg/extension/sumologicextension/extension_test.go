@@ -16,10 +16,12 @@ package sumologicextension
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,6 +29,10 @@ import (
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
 	"go.uber.org/zap"
+)
+
+const (
+	uuidRegex = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 )
 
 func TestBasicExtensionConstruction(t *testing.T) {
@@ -76,6 +82,7 @@ func TestBasicExtensionConstruction(t *testing.T) {
 
 func TestBasicStart(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// TODO Add payload verification - verify if collectorName is set properly
 		if req.URL.Path == registerUrl {
 			_, err := w.Write([]byte(`{
 				"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
@@ -112,6 +119,7 @@ func TestBasicStart(t *testing.T) {
 
 func TestStoreCredentials(t *testing.T) {
 	getServer := func() *httptest.Server {
+		// TODO Add payload verification - verify if collectorName is set properly
 		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			if req.URL.Path == registerUrl {
 				_, err := w.Write([]byte(`{
@@ -153,7 +161,8 @@ func TestStoreCredentials(t *testing.T) {
 
 		se, err := newSumologicExtension(cfg, zap.NewNop())
 		require.NoError(t, err)
-		fileName, err := hash(cfg.CollectorName)
+		key := createHashKey(cfg)
+		fileName, err := hash(key)
 		require.NoError(t, err)
 		credsPath := path.Join(dir, fileName)
 		require.NoFileExists(t, credsPath)
@@ -180,7 +189,8 @@ func TestStoreCredentials(t *testing.T) {
 
 		se, err := newSumologicExtension(cfg, zap.NewNop())
 		require.NoError(t, err)
-		fileName, err := hash(cfg.CollectorName)
+		key := createHashKey(cfg)
+		fileName, err := hash(key)
 		require.NoError(t, err)
 		credsPath := path.Join(dir, fileName)
 		require.NoFileExists(t, credsPath)
@@ -210,7 +220,8 @@ func TestStoreCredentials(t *testing.T) {
 
 		se, err := newSumologicExtension(cfg, zap.NewNop())
 		require.NoError(t, err)
-		fileName, err := hash(cfg.CollectorName)
+		key := createHashKey(cfg)
+		fileName, err := hash(key)
 		require.NoError(t, err)
 		credsPath := path.Join(dir, fileName)
 		require.NoFileExists(t, credsPath)
@@ -222,4 +233,102 @@ func TestStoreCredentials(t *testing.T) {
 		srv.Close()
 		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	})
+}
+
+func TestRegisterEmptyCollectorName(t *testing.T) {
+	hostname, err := os.Hostname()
+	require.NoError(t, err)
+	// TODO Add payload verification - verify if collectorName is set properly
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path == registerUrl {
+			_, err := w.Write([]byte(`{
+				"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
+				"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+				"collectorId": "000000000FFFFFFF"
+			}`))
+
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+	}))
+
+	dir, err := os.MkdirTemp("", "otelcol-sumo-store-credentials-test-*")
+	t.Cleanup(func() {
+		srv.Close()
+		os.RemoveAll(dir)
+	})
+	require.NoError(t, err)
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.CollectorName = ""
+	cfg.ExtensionSettings = config.ExtensionSettings{}
+	cfg.ApiBaseUrl = srv.URL
+	cfg.Credentials.AccessID = "dummy_access_id"
+	cfg.Credentials.AccessKey = "dummy_access_key"
+	cfg.CollectorCredentialsPath = dir
+
+	se, err := newSumologicExtension(cfg, zap.NewNop())
+	require.NoError(t, err)
+	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+	regexPattern := fmt.Sprintf("%s-%s", hostname, uuidRegex)
+	matched, err := regexp.MatchString(regexPattern, se.collectorName)
+	require.NoError(t, err)
+	assert.True(t, matched)
+}
+
+func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
+	hostname, err := os.Hostname()
+	require.NoError(t, err)
+	// TODO Add payload verification - verify if collectorName is set properly
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path == registerUrl {
+			_, err := w.Write([]byte(`{
+				"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
+				"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+				"collectorId": "000000000FFFFFFF"
+			}`))
+
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+	}))
+
+	dir, err := os.MkdirTemp("", "otelcol-sumo-store-credentials-test-*")
+	t.Cleanup(func() {
+		srv.Close()
+		os.RemoveAll(dir)
+	})
+	require.NoError(t, err)
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.CollectorName = ""
+	cfg.ExtensionSettings = config.ExtensionSettings{}
+	cfg.ApiBaseUrl = srv.URL
+	cfg.Credentials.AccessID = "dummy_access_id"
+	cfg.Credentials.AccessKey = "dummy_access_key"
+	cfg.CollectorCredentialsPath = dir
+	cfg.Clobber = true
+
+	se, err := newSumologicExtension(cfg, zap.NewNop())
+	require.NoError(t, err)
+	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+	require.NoError(t, se.Shutdown(context.Background()))
+	assert.NotEmpty(t, se.collectorName)
+	regexPattern := fmt.Sprintf("%s-%s", hostname, uuidRegex)
+	matched, err := regexp.MatchString(regexPattern, se.collectorName)
+	require.NoError(t, err)
+	assert.True(t, matched)
+	colCreds, err := se.credentialsGetter.GetStoredCredentials(se.hashKey)
+	require.NoError(t, err)
+	colName := colCreds.CollectorName
+	se, err = newSumologicExtension(cfg, zap.NewNop())
+	require.NoError(t, err)
+	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+	assert.Equal(t, se.collectorName, colName)
 }

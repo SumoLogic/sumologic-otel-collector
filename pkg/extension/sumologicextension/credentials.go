@@ -31,11 +31,17 @@ import (
 	"go.uber.org/zap"
 )
 
+// CollectorCredentials are used for storing the credentials received on registration
+type CollectorCredentials struct {
+	CollectorName string                          `json:"collectorName"`
+	Credentials   api.OpenRegisterResponsePayload `json:"collectorCredentials"`
+}
+
 // CredsGetter is an interface to get collector authentication data
 type CredsGetter interface {
-	CheckCollectorCredentials() bool
-	GetStoredCredentials() (api.OpenRegisterResponsePayload, error)
-	RegisterCollector(ctx context.Context) (api.OpenRegisterResponsePayload, error)
+	CheckCollectorCredentials(key string) bool
+	GetStoredCredentials(key string) (CollectorCredentials, error)
+	RegisterCollector(ctx context.Context, collectorName string) (CollectorCredentials, error)
 }
 
 // credsGetter is a common structure for both types of getting collector credentials
@@ -47,8 +53,8 @@ type credsGetter struct {
 
 // CheckCollectorCredentials checks if collector credentials can be found in path
 // configured in the config.
-func (cr credsGetter) CheckCollectorCredentials() bool {
-	filenameHash, err := hash(cr.conf.CollectorName)
+func (cr credsGetter) CheckCollectorCredentials(key string) bool {
+	filenameHash, err := hash(key)
 	if err != nil {
 		return false
 	}
@@ -61,43 +67,43 @@ func (cr credsGetter) CheckCollectorCredentials() bool {
 
 // GetStoredCredentials retrieves collector credentials stored in local file system and then decrypts it
 // using hashed collector name as passphrase.
-func (cr credsGetter) GetStoredCredentials() (api.OpenRegisterResponsePayload, error) {
-	filenameHash, err := hash(cr.conf.CollectorName)
+func (cr credsGetter) GetStoredCredentials(key string) (CollectorCredentials, error) {
+	filenameHash, err := hash(key)
 	if err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 
 	path := path.Join(cr.conf.CollectorCredentialsPath, filenameHash)
 	creds, err := os.Open(path)
 	if err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 
 	defer creds.Close()
 	encryptedCreds, err := ioutil.ReadAll(creds)
 	if err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 
-	collectorCreds, err := decrypt(encryptedCreds, cr.conf.CollectorName)
+	collectorCreds, err := decrypt(encryptedCreds, key)
 	if err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 
-	var credentialsInfo api.OpenRegisterResponsePayload
+	var credentialsInfo CollectorCredentials
 	if err = json.Unmarshal(collectorCreds, &credentialsInfo); err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 
 	return credentialsInfo, nil
 }
 
 // RegisterCollector registers new collector using registration API and returns collector credentials.
-func (cr credsGetter) RegisterCollector(ctx context.Context) (api.OpenRegisterResponsePayload, error) {
+func (cr credsGetter) RegisterCollector(ctx context.Context, collectorName string) (CollectorCredentials, error) {
 	baseUrl := strings.TrimSuffix(cr.conf.ApiBaseUrl, "/")
 	u, err := url.Parse(baseUrl)
 	if err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 	u.Path = registerUrl
 
@@ -105,12 +111,12 @@ func (cr credsGetter) RegisterCollector(ctx context.Context) (api.OpenRegisterRe
 	// hostname in request?
 	hostname, err := os.Hostname()
 	if err != nil {
-		return api.OpenRegisterResponsePayload{}, fmt.Errorf("cannot get hostname: %w", err)
+		return CollectorCredentials{}, fmt.Errorf("cannot get hostname: %w", err)
 	}
 
 	var buff bytes.Buffer
 	if err = json.NewEncoder(&buff).Encode(api.OpenRegisterRequestPayload{
-		CollectorName: cr.conf.CollectorName,
+		CollectorName: collectorName,
 		Description:   cr.conf.CollectorDescription,
 		Category:      cr.conf.CollectorCategory,
 		Fields:        cr.conf.CollectorFields,
@@ -119,12 +125,12 @@ func (cr credsGetter) RegisterCollector(ctx context.Context) (api.OpenRegisterRe
 		Clobber:       cr.conf.Clobber,
 		TimeZone:      cr.conf.TimeZone,
 	}); err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), &buff)
 	if err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 
 	addClientCredentials(req,
@@ -136,7 +142,7 @@ func (cr credsGetter) RegisterCollector(ctx context.Context) (api.OpenRegisterRe
 	cr.logger.Info("Calling register API", zap.String("URL", u.String()))
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return api.OpenRegisterResponsePayload{}, fmt.Errorf("failed to register the collector: %w", err)
+		return CollectorCredentials{}, fmt.Errorf("failed to register the collector: %w", err)
 	}
 
 	defer res.Body.Close()
@@ -144,7 +150,7 @@ func (cr credsGetter) RegisterCollector(ctx context.Context) (api.OpenRegisterRe
 	if res.StatusCode < 200 || res.StatusCode >= 400 {
 		var buff bytes.Buffer
 		if _, err := io.Copy(&buff, res.Body); err != nil {
-			return api.OpenRegisterResponsePayload{}, fmt.Errorf(
+			return CollectorCredentials{}, fmt.Errorf(
 				"failed to copy collector registration response body, status code: %d, err: %w",
 				res.StatusCode, err,
 			)
@@ -153,7 +159,7 @@ func (cr credsGetter) RegisterCollector(ctx context.Context) (api.OpenRegisterRe
 			zap.Int("status_code", res.StatusCode),
 			zap.String("response", buff.String()),
 		)
-		return api.OpenRegisterResponsePayload{}, fmt.Errorf(
+		return CollectorCredentials{}, fmt.Errorf(
 			"failed to register the collector, got HTTP status code: %d",
 			res.StatusCode,
 		)
@@ -161,7 +167,7 @@ func (cr credsGetter) RegisterCollector(ctx context.Context) (api.OpenRegisterRe
 
 	var resp api.OpenRegisterResponsePayload
 	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
-		return api.OpenRegisterResponsePayload{}, err
+		return CollectorCredentials{}, err
 	}
 
 	cr.logger.Info("Collector registered",
@@ -169,7 +175,11 @@ func (cr credsGetter) RegisterCollector(ctx context.Context) (api.OpenRegisterRe
 		zap.Any("response", resp),
 	)
 
-	return resp, nil
+	return CollectorCredentials{
+		// TODO: When registration API will return registered name use it instead of collectorName
+		CollectorName: collectorName,
+		Credentials:   resp,
+	}, nil
 }
 
 func addClientCredentials(req *http.Request, accessID string, accessKey string) {

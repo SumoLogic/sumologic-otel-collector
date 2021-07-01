@@ -30,17 +30,20 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension/api"
 	"go.opentelemetry.io/collector/component"
 	"go.uber.org/zap"
 )
 
 type SumologicExtension struct {
+	collectorName     string
 	baseUrl           string
 	httpClient        *http.Client
 	conf              *Config
 	logger            *zap.Logger
 	credentialsGetter CredsGetter
+	hashKey           string
 	registrationInfo  api.OpenRegisterResponsePayload
 	closeChan         chan struct{}
 	closeOnce         sync.Once
@@ -57,50 +60,82 @@ const (
 )
 
 func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtension, error) {
-	if conf.CollectorName == "" {
-		return nil, errors.New("collector name is unset")
-	}
 	if conf.Credentials.AccessID == "" || conf.Credentials.AccessKey == "" {
 		return nil, errors.New("access_key and/or access_id not provided")
+	}
+	collectorName := ""
+	hostname, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
+	credentialsGetter := credsGetter{
+		conf:   conf,
+		logger: logger,
+	}
+	if conf.CollectorName == "" {
+		key := createHashKey(conf)
+		// If collector name is not set by the user check if the collector was restarted
+		if !credentialsGetter.CheckCollectorCredentials(key) {
+			// If credentials file is not stored on filesystem generate collector name
+			collectorName = fmt.Sprintf("%s-%s", hostname, uuid.New())
+		}
+	} else {
+		collectorName = conf.CollectorName
 	}
 	if conf.HeartBeatInterval <= 0 {
 		conf.HeartBeatInterval = DefaultHeartbeatInterval
 	}
+	hashKey := createHashKey(conf)
 
 	return &SumologicExtension{
-		baseUrl: strings.TrimSuffix(conf.ApiBaseUrl, "/"),
-		conf:    conf,
-		logger:  logger,
-		credentialsGetter: credsGetter{
-			conf:   conf,
-			logger: logger,
-		},
-		closeChan: make(chan struct{}),
+		collectorName:     collectorName,
+		baseUrl:           strings.TrimSuffix(conf.ApiBaseUrl, "/"),
+		conf:              conf,
+		logger:            logger,
+		hashKey:           hashKey,
+		credentialsGetter: credentialsGetter,
+		closeChan:         make(chan struct{}),
 	}, nil
 }
 
+func createHashKey(conf *Config) string {
+	return fmt.Sprintf("%s%s%s", conf.CollectorName, conf.Credentials.AccessID, conf.Credentials.AccessKey)
+}
+
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
-	var colCreds api.OpenRegisterResponsePayload
+	var colCreds CollectorCredentials
 	var err error
-	if se.credentialsGetter.CheckCollectorCredentials() {
-		colCreds, err = se.credentialsGetter.GetStoredCredentials()
+	if se.credentialsGetter.CheckCollectorCredentials(se.hashKey) {
+		colCreds, err = se.credentialsGetter.GetStoredCredentials(se.hashKey)
 		if err != nil {
 			return err
 		}
-		se.logger.Info("Found stored credentials")
+		se.collectorName = colCreds.CollectorName
+		if !se.conf.Clobber {
+			se.logger.Info("Found stored credentials, skipping registration")
+		} else {
+			se.logger.Info("Locally stored credentials found, but clobber flag is set: re-registering the collector")
+			if colCreds, err = se.credentialsGetter.RegisterCollector(ctx, se.collectorName); err != nil {
+				return err
+			}
+			if err := se.storeCollectorCredentials(colCreds); err != nil {
+				se.logger.Error("Unable to store collector credentials",
+					zap.Error(err),
+				)
+			}
+		}
 	} else {
 		se.logger.Info("Locally stored credentials not found, registering the collector")
-		if colCreds, err = se.credentialsGetter.RegisterCollector(ctx); err != nil {
+		if colCreds, err = se.credentialsGetter.RegisterCollector(ctx, se.collectorName); err != nil {
 			return err
 		}
-
 		if err := se.storeCollectorCredentials(colCreds); err != nil {
 			se.logger.Error("Unable to store collector credentials",
 				zap.Error(err),
 			)
 		}
 	}
-	se.registrationInfo = colCreds
+	se.registrationInfo = colCreds.Credentials
 
 	se.httpClient, err = se.conf.HTTPClientSettings.ToClient(host.GetExtensions())
 	if err != nil {
@@ -134,11 +169,11 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 // storeCollectorCredentials stores collector credentials in a file in directory
 // as specified in CollectorCredentialsPath. The credentials are encrypted using
 // hashed collector name.
-func (se *SumologicExtension) storeCollectorCredentials(credentials api.OpenRegisterResponsePayload) error {
+func (se *SumologicExtension) storeCollectorCredentials(credentials CollectorCredentials) error {
 	if err := ensureStoreCredentialsDir(se.conf.CollectorCredentialsPath); err != nil {
 		return err
 	}
-	filenameHash, err := hash(se.conf.CollectorName)
+	filenameHash, err := hash(se.hashKey)
 	if err != nil {
 		return err
 	}
@@ -148,12 +183,12 @@ func (se *SumologicExtension) storeCollectorCredentials(credentials api.OpenRegi
 		return err
 	}
 
-	encrypedCreds, err := encrypt(collectorCreds, se.conf.CollectorName)
+	encryptedCreds, err := encrypt(collectorCreds, se.hashKey)
 	if err != nil {
 		return err
 	}
 
-	if err = os.WriteFile(path, encrypedCreds, 0600); err != nil {
+	if err = os.WriteFile(path, encryptedCreds, 0600); err != nil {
 		return fmt.Errorf("failed to save credentials file '%s': %w",
 			path, err,
 		)
