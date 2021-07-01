@@ -167,17 +167,17 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 }
 
 // storeCollectorCredentials stores collector credentials in a file in directory
-// as specified in CollectorCredentialsPath. The credentials are encrypted using
+// as specified in CollectorCredentialsDirectory. The credentials are encrypted using
 // hashed collector name.
 func (se *SumologicExtension) storeCollectorCredentials(credentials CollectorCredentials) error {
-	if err := ensureStoreCredentialsDir(se.conf.CollectorCredentialsPath); err != nil {
+	if err := ensureStoreCredentialsDir(se.conf.CollectorCredentialsDirectory); err != nil {
 		return err
 	}
 	filenameHash, err := hash(se.hashKey)
 	if err != nil {
 		return err
 	}
-	path := path.Join(se.conf.CollectorCredentialsPath, filenameHash)
+	path := path.Join(se.conf.CollectorCredentialsDirectory, filenameHash)
 	collectorCreds, err := json.Marshal(credentials)
 	if err != nil {
 		return err

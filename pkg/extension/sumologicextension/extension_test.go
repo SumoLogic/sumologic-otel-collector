@@ -154,7 +154,7 @@ func TestStoreCredentials(t *testing.T) {
 
 		srv := getServer()
 		cfg := getConfig(srv.URL)
-		cfg.CollectorCredentialsPath = dir
+		cfg.CollectorCredentialsDirectory = dir
 
 		// Ensure the directory doesn't exist before running the extension
 		require.NoError(t, os.RemoveAll(dir))
@@ -182,7 +182,7 @@ func TestStoreCredentials(t *testing.T) {
 
 		srv := getServer()
 		cfg := getConfig(srv.URL)
-		cfg.CollectorCredentialsPath = dir
+		cfg.CollectorCredentialsDirectory = dir
 
 		// Ensure the directory has 600 permissions
 		require.NoError(t, os.Chmod(dir, 0600))
@@ -210,7 +210,7 @@ func TestStoreCredentials(t *testing.T) {
 
 		srv := getServer()
 		cfg := getConfig(srv.URL)
-		cfg.CollectorCredentialsPath = dir
+		cfg.CollectorCredentialsDirectory = dir
 
 		fi, err := os.Stat(dir)
 		require.NoError(t, err)
@@ -268,7 +268,7 @@ func TestRegisterEmptyCollectorName(t *testing.T) {
 	cfg.ApiBaseUrl = srv.URL
 	cfg.Credentials.AccessID = "dummy_access_id"
 	cfg.Credentials.AccessKey = "dummy_access_key"
-	cfg.CollectorCredentialsPath = dir
+	cfg.CollectorCredentialsDirectory = dir
 
 	se, err := newSumologicExtension(cfg, zap.NewNop())
 	require.NoError(t, err)
@@ -312,7 +312,7 @@ func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
 	cfg.ApiBaseUrl = srv.URL
 	cfg.Credentials.AccessID = "dummy_access_id"
 	cfg.Credentials.AccessKey = "dummy_access_key"
-	cfg.CollectorCredentialsPath = dir
+	cfg.CollectorCredentialsDirectory = dir
 	cfg.Clobber = true
 
 	se, err := newSumologicExtension(cfg, zap.NewNop())

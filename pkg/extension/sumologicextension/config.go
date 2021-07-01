@@ -51,9 +51,10 @@ type Config struct {
 
 	HeartBeatInterval time.Duration `mapstructure:"heartbeat_interval"`
 
-	// CollectorCredentialsPath is the path to directory where collector credentials
-	// are stored. Default value is $HOME/.sumologic-otel-collector
-	CollectorCredentialsPath string `mapstructure:"collector_credentials_path"`
+	// CollectorCredentialsDirectory is the directory where state files
+	// with collector credentials will be stored after successful collector
+	// registration. Default value is $HOME/.sumologic-otel-collector
+	CollectorCredentialsDirectory string `mapstructure:"collector_credentials_directory"`
 
 	// Clobber defines whether to delete any existing collector with the same
 	// name and create a new one upon registration.

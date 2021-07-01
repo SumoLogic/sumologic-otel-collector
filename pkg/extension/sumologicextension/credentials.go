@@ -58,7 +58,7 @@ func (cr credsGetter) CheckCollectorCredentials(key string) bool {
 	if err != nil {
 		return false
 	}
-	path := path.Join(cr.conf.CollectorCredentialsPath, filenameHash)
+	path := path.Join(cr.conf.CollectorCredentialsDirectory, filenameHash)
 	if _, err := os.Stat(path); err != nil {
 		return false
 	}
@@ -73,7 +73,7 @@ func (cr credsGetter) GetStoredCredentials(key string) (CollectorCredentials, er
 		return CollectorCredentials{}, err
 	}
 
-	path := path.Join(cr.conf.CollectorCredentialsPath, filenameHash)
+	path := path.Join(cr.conf.CollectorCredentialsDirectory, filenameHash)
 	creds, err := os.Open(path)
 	if err != nil {
 		return CollectorCredentials{}, err
