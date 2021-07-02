@@ -5,6 +5,8 @@
 Sumo Logic Distro of [OpenTelemetry Collector][otc_link] built with
 [opentelemetry-collector-builder][otc_builder_link].
 
+See the [documentation](docs/README.md) for more information.
+
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
 [otc_builder_link]: https://github.com/open-telemetry/opentelemetry-collector-builder
 
