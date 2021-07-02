@@ -64,6 +64,10 @@ jobs:
           grep -E "/(receiver|exporter|processor|extension)/" | \
           tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
 
+      - name: Run the binary
+        run: ./otelcol-sumo-${{matrix.arch_os}} --version
+        working-directory: ./otelcolbuilder/cmd/
+
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v2
         with:
@@ -130,6 +134,10 @@ jobs:
           go version -m otelcol-sumo-${{matrix.arch_os}} | \
           grep -E "/(receiver|exporter|processor|extension)/" | \
           tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
+
+      - name: Run the binary
+        run: ./otelcol-sumo-${{matrix.arch_os}} --version
+        working-directory: ./otelcolbuilder/cmd/
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v2
