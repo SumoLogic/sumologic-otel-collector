@@ -15,7 +15,9 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: [ '1.17.0-beta1' ]
+        # TODO: When [1] gets resolved use 1.17 for builds on darwin again.
+        # [1]: https://github.com/golang/go/issues/46080#issuecomment-864265977 
+        go: [ '1.16.5' ]
         # TODO:
         # when telegraf dependency gets removed for any reason merge MacOS
         # builds with other OSes. Until this happens test/build it separately
@@ -85,7 +87,9 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        go: [ '1.17.0-beta1' ]
+        # TODO: When [1] gets resolved use 1.17 for builds on darwin again.
+        # [1]: https://github.com/golang/go/issues/46080#issuecomment-864265977 
+        go: [ '1.16.5' ]
         # TODO:
         # when telegraf dependency gets removed for any reason merge MacOS
         # builds with other OSes. Until this happens test/build it separately
