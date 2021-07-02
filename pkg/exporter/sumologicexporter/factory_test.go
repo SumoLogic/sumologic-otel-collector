@@ -38,17 +38,17 @@ func TestCreateDefaultConfig(t *testing.T) {
 	qs.Enabled = false
 
 	assert.Equal(t, cfg, &Config{
-		ExporterSettings:   config.NewExporterSettings(config.NewID(typeStr)),
-		CompressEncoding:   "gzip",
-		MaxRequestBodySize: 1_048_576,
-		LogFormat:          "json",
-		MetricFormat:       "prometheus",
-		SourceCategory:     "",
-		SourceName:         "",
-		SourceHost:         "",
-		Client:             "otelcol",
-		GraphiteTemplate:   "%{_metric_}",
-		TranslateMetadata:  true,
+		ExporterSettings:    config.NewExporterSettings(config.NewID(typeStr)),
+		CompressEncoding:    "gzip",
+		MaxRequestBodySize:  1_048_576,
+		LogFormat:           "json",
+		MetricFormat:        "prometheus",
+		SourceCategory:      "",
+		SourceName:          "",
+		SourceHost:          "",
+		Client:              "otelcol",
+		GraphiteTemplate:    "%{_metric_}",
+		TranslateAttributes: true,
 
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout: 5 * time.Second,

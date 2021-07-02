@@ -51,10 +51,10 @@ type Config struct {
 	// Placeholders `%{attr_name}` will be replaced with attribute value for attr_name.
 	GraphiteTemplate string `mapstructure:"graphite_template"`
 
-	// Specifies whether metadata attributes should be translated
+	// Specifies whether attributes should be translated
 	// from OpenTelemetry standard to Sumo conventions (for example `cloud.account.id` => `accountId`
 	// `k8s.pod.name` => `pod` etc).
-	TranslateMetadata bool `mapstructure:"translate_metadata"`
+	TranslateAttributes bool `mapstructure:"translate_attributes"`
 
 	// List of regexes for attributes which should be send as metadata
 	MetadataAttributes []string `mapstructure:"metadata_attributes"`
@@ -142,6 +142,6 @@ const (
 	DefaultClient string = "otelcol"
 	// DefaultGraphiteTemplate defines default template for Graphite
 	DefaultGraphiteTemplate string = "%{_metric_}"
-	// DefaultTranslateMetadata defines default TranslateMetadata
-	DefaultTranslateMetadata bool = true
+	// DefaultTranslateAttributes defines default TranslateAttributes
+	DefaultTranslateAttributes bool = true
 )
