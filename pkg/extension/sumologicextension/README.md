@@ -32,8 +32,8 @@ and can be used as an authenticator for the
   [help][credentials_help] for more details
 * `access_key`: (required) access key for Sumo Logic service, see
   [help][credentials_help] for more details
-* `collector_name`: (required) name that will be used for locally stored
-  registration info from previous runs or for registration in case those are not found
+* `collector_name`: name that will be used for registration; by default it is a
+   hostname followed by UUID
 * `collector_description`: collector description that will be used for registration
 * `collector_category`: collector category that will be used for registration
 * `collector_fields`: a map of key value pairs that will be used as collector
@@ -95,11 +95,11 @@ to register the collector with API.
 Upon registration, the extension gets collector credentials which are used to authenticate the collector
 when sending request to API (heartbeats, sending data etc).
 Credentials are stored on local filesystem to be reused when collector gets restarted (to prevent re-registration).
-The path that's used to store the credentials files is configured via `collector_credentials_path` which is by default
+The path that's used to store the credentials files is configured via `collector_credentials_directory` which is by default
 set to `$HOME/.sumologic-otel-collector`.
 Name of that file that contains the credentials is created by hashing a string which is a combination of `collector_name`, `access_id` and `access_key`.
 This mechanism allows to keep the state of the collector (whether it is registered or not).
-When collector is restarting it checks if the state file exists in `collector_credentials_path`.
+When collector is restarting it checks if the state file exists in `collector_credentials_directory`.
 If one would like to register another collector on the same machine then `collector_name` configuration property
 has to be specified in order to register the collector under that specific name which will be used to create
 a separate state file.
