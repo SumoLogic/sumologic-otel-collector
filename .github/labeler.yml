@@ -1,0 +1,15 @@
+# Add 'documentation' label to any change to *.md files
+documentation:
+- any: ['**/*.md']
+
+# Add 'docker' label to any change in docker related files
+docker:
+- any: ['**/Dockerfile*', '**/.dockerignore']
+
+# Add 'github_actions' label to any change .github/ directory
+github_actions:
+- any: ['.github/**']
+
+# Add 'go' label to any change *.go files
+go:
+- any: ['**/*.go']
