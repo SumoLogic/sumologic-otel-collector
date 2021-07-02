@@ -76,7 +76,7 @@ func initExporter(cfg *Config) (*sumologicexporter, error) {
 		return nil, errors.New("no endpoint and no auth extension specified")
 	}
 
-	if cfg.TranslateMetadata {
+	if cfg.TranslateAttributes {
 		cfg.SourceCategory = translateConfigValue(cfg.SourceCategory)
 		cfg.SourceHost = translateConfigValue(cfg.SourceHost)
 		cfg.SourceName = translateConfigValue(cfg.SourceName)
@@ -204,15 +204,17 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 
 				// copy resource attributes into logs attributes
 				// log attributes have precedence over resource attributes
+				attributes := log.Attributes()
 				rl.Resource().Attributes().Range(func(k string, v pdata.AttributeValue) bool {
-					log.Attributes().Insert(k, v)
+					attributes.Insert(k, v)
 					return true
 				})
 
-				currentMetadata = sdr.filter.filterIn(log.Attributes())
+				currentMetadata = sdr.filter.filterIn(attributes)
 
-				if se.config.TranslateMetadata {
-					translateMetadata(currentMetadata.orig)
+				if se.config.TranslateAttributes {
+					translateAttributes(attributes)
+					translateAttributes(currentMetadata.orig)
 				}
 
 				// If metadata differs from currently buffered, flush the buffer
@@ -300,9 +302,9 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		attributes = rm.Resource().Attributes()
 		currentMetadata = sdr.filter.filterIn(attributes)
 
-		if se.config.TranslateMetadata {
-			translateMetadata(attributes)
-			translateMetadata(currentMetadata.orig)
+		if se.config.TranslateAttributes {
+			translateAttributes(attributes)
+			translateAttributes(currentMetadata.orig)
 		}
 
 		// iterate over InstrumentationLibraryMetrics

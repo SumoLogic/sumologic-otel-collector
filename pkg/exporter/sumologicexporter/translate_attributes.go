@@ -21,8 +21,8 @@ import (
 	"go.opentelemetry.io/collector/consumer/pdata"
 )
 
-// metadataTranslations maps OpenTelemetry attribute names to Sumo attribute names
-var metadataTranslations = map[string]string{
+// attributeTranslations maps OpenTelemetry attribute names to Sumo attribute names
+var attributeTranslations = map[string]string{
 	"cloud.account.id":        "accountId",
 	"cloud.availability_zone": "availabilityZone",
 	"cloud.platform":          "aws_service",
@@ -45,10 +45,10 @@ var metadataTranslations = map[string]string{
 	"file.path.resolved":      "_sourceName",
 }
 
-// translateMetadata renames metadata keys according to metadataTranslations.
-func translateMetadata(attributes pdata.AttributeMap) {
+// translateAttributes renames attribute keys according to attributeTranslations.
+func translateAttributes(attributes pdata.AttributeMap) {
 	attributes.Range(func(otKey string, value pdata.AttributeValue) bool {
-		if sumoKey, ok := metadataTranslations[otKey]; ok {
+		if sumoKey, ok := attributeTranslations[otKey]; ok {
 			// do not rename attribute if target name already exists
 			if _, ok := attributes.Get(sumoKey); ok {
 				return true
@@ -60,12 +60,12 @@ func translateMetadata(attributes pdata.AttributeMap) {
 	})
 }
 
-// translateConfigValue renames metadata keys in config values according to metadataTranslations.
+// translateConfigValue renames attribute keys in config values according to attributeTranslations.
 func translateConfigValue(value string) string {
-	for _, sumoKey := range metadataTranslations {
+	for _, sumoKey := range attributeTranslations {
 		value = strings.ReplaceAll(value, fmt.Sprintf("%%{%v}", sumoKey), "")
 	}
-	for otKey, sumoKey := range metadataTranslations {
+	for otKey, sumoKey := range attributeTranslations {
 		value = strings.ReplaceAll(value, fmt.Sprintf("%%{%v}", otKey), fmt.Sprintf("%%{%v}", sumoKey))
 	}
 	return value

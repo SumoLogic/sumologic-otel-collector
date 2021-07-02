@@ -46,11 +46,11 @@ exporters:
     # default = `%{_metric_}`
     graphite_template: <graphite_template>
 
-    # translate_metadata ppecifies whether metadata attributes should be translated
+    # translate_attributes specifies whether attributes should be translated
     # from OpenTelemetry to Sumo conventions;
-    # see "Metadata translation" documentation chapter from this document,
+    # see "Attribute translation" documentation chapter from this document,
     # default = true
-    translate_metadata: {true, false}
+    translate_attributes: {true, false}
 
     # list of regexes for attributes which should be sent as metadata,
     # use OpenTelemetry attribute names, see "Metadata translation" documentation
@@ -91,19 +91,19 @@ exporters:
 
 [sumologicextension]: ./../../extension/sumologicextension
 
-## Metadata translation
+## Attribute translation
 
-Metadata translation changes some of the attribute keys from OpenTelemetry convention to Sumo convention.
+Attribute translation changes some of the attribute keys from OpenTelemetry convention to Sumo convention.
 For example, OpenTelemetry convention for the attribute containing Kubernetes pod name is `k8s.pod.name`,
 but Sumo expects it to be in attribute named `pod`.
 If attribute with target name eg. `pod` already exists,
 translation is not being done for corresponding attribute (`k8s.pod.name` in this example).
 
 This feature is turned on by default.
-To turn it off, set the `translate_metadata` configuration option to `false`.
+To turn it off, set the `translate_attributes` configuration option to `false`.
 Note that this may cause some of Sumo apps, built-in dashboards to not work correctly.
 
-Below is a list of all metadata keys that are being translated.
+Below is a list of all attribute keys that are being translated.
 
 | OTC key name            | Sumo key name    |
 |-------------------------|------------------|
