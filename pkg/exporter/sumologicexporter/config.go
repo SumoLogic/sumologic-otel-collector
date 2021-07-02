@@ -52,6 +52,10 @@ type Config struct {
 	// Placeholders `%{attr_name}` will be replaced with attribute value for attr_name.
 	GraphiteTemplate string `mapstructure:"graphite_template"`
 
+	// Traces related configuration
+	// The format of traces you will be sending, currently only otlp format is supported
+	TraceFormat TraceFormatType `mapstructure:"trace_format"`
+
 	// Specifies whether attributes should be translated
 	// from OpenTelemetry standard to Sumo conventions (for example `cloud.account.id` => `accountId`
 	// `k8s.pod.name` => `pod` etc).
@@ -93,6 +97,9 @@ type LogFormatType string
 // MetricFormatType represents metric_format
 type MetricFormatType string
 
+// TraceFormatType represents trace_format
+type TraceFormatType string
+
 // PipelineType represents type of the pipeline
 type PipelineType string
 
@@ -114,6 +121,8 @@ const (
 	PrometheusFormat MetricFormatType = "prometheus"
 	// OTLPMetricFormat represents metric_format: otlp
 	OTLPMetricFormat MetricFormatType = "otlp"
+	// OTLPTraceFormat represents trace_format: otlp
+	OTLPTraceFormat TraceFormatType = "otlp"
 	// GZIPCompression represents compress_encoding: gzip
 	GZIPCompression CompressEncodingType = "gzip"
 	// DeflateCompression represents compress_encoding: deflate
@@ -124,6 +133,8 @@ const (
 	MetricsPipeline PipelineType = "metrics"
 	// LogsPipeline represents metrics pipeline
 	LogsPipeline PipelineType = "logs"
+	// TracesPipeline represents traces pipeline
+	TracesPipeline PipelineType = "traces"
 	// defaultTimeout
 	defaultTimeout time.Duration = 5 * time.Second
 	// DefaultCompress defines default Compress
