@@ -31,7 +31,7 @@ func TestConverter(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		metricsFn     func() (telegraf.Metric, error)
+		metricsFn     func() telegraf.Metric
 		separateField bool
 		expectedErr   bool
 		expectedFn    func() pdata.MetricSlice
@@ -39,7 +39,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "gauge_int_with_one_field",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available": uint64(39097651200),
 				}
@@ -55,7 +55,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "gauge_int_separate_field_with_one_field",
 			separateField: true,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available": uint64(39097651200),
 				}
@@ -71,7 +71,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "gauge_double_with_one_field",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available_percent": 54.505050,
 				}
@@ -87,7 +87,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "gauge_double_separate_field_with_one_field",
 			separateField: true,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available_percent": 54.505050,
 				}
@@ -103,7 +103,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "gauge_int_with_multiple_fields",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available":    uint64(39097651200),
 					"free":         uint64(24322170880),
@@ -127,7 +127,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "gauge_int_separate_field_with_multiple_fields",
 			separateField: true,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available": uint64(39097651200),
 					"free":      uint64(24322170880),
@@ -145,7 +145,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "sum_int_with_one_field",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available": uint64(39097651200),
 				}
@@ -161,7 +161,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "sum_int_separate_field_with_one_field",
 			separateField: true,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available": uint64(39097651200),
 				}
@@ -177,7 +177,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "sum_double_with_one_field",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available": float64(39097651200.123),
 				}
@@ -193,7 +193,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "sum_double_separate_field_with_one_field",
 			separateField: true,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available": float64(39097651200.123),
 				}
@@ -209,7 +209,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "sum_int_with_multiple_fields",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available": uint64(39097651200),
 					"free":      uint64(24322170880),
@@ -231,7 +231,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "sum_int_separate_field_with_multiple_fields",
 			separateField: true,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available": uint64(39097651200),
 					"free":      uint64(24322170880),
@@ -249,7 +249,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "untyped_int_with_one_field",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available": uint64(39097651200),
 				}
@@ -265,7 +265,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "untyped_double_with_one_field",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"used_percent": 43.10542941093445,
 				}
@@ -281,7 +281,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "untyped_bool_with_one_field_false",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"throttling_supported": false,
 				}
@@ -297,7 +297,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "untyped_bool_with_one_field_true",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"throttling_supported": true,
 				}
@@ -314,8 +314,7 @@ func TestConverter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m, err := tt.metricsFn()
-			require.NoError(t, err)
+			m := tt.metricsFn()
 
 			mc := newConverter(tt.separateField, zap.NewNop())
 			out, err := mc.Convert(m)
