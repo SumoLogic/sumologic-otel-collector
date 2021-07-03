@@ -243,11 +243,12 @@ func (se *SumologicExtension) heartbeatLoop() {
 			se.logger.Info("Heartbeat sender turn off")
 			return
 		default:
-			err := se.sendHeartbeat(ctx)
-			if err != nil {
+			if err := se.sendHeartbeat(ctx); err != nil {
 				se.logger.Error("Heartbeat error", zap.Error(err))
+			} else {
+				se.logger.Debug("Heartbeat sent")
 			}
-			se.logger.Debug("Heartbeat sent")
+
 			select {
 			case <-time.After(se.conf.HeartBeatInterval):
 			case <-se.closeChan:
