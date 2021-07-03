@@ -69,13 +69,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        # TODO: Don't test on 1.17.0-beta1 for now due to a strange bug in 1.17
-        # causing SIGSEGV: segmentation violation on darwin when testing
-        # telegrafreceiver.
-        #
-        # Possibly related to https://github.com/golang/go/issues/46080
-        # Failed CI build https://github.com/SumoLogic/sumologic-otel-collector/runs/2972810531
-        go: [ '1.16.5' ]
+        go: [ '1.16.5', '1.17.0-beta1' ]
         arch_os: [ 'darwin_amd64' ]
     steps:
       - uses: actions/checkout@v2.3.4
@@ -138,7 +132,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: [ '1.16.5', '1.17.0-beta1' ]
+        go: [ '1.17.0-beta1' ]
         arch_os: [ 'linux_amd64' ]
     steps:
       - uses: actions/checkout@v2.3.4
@@ -193,9 +187,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        # TODO: When [1] gets resolved use 1.17 for builds on darwin again.
-        # [1]: https://github.com/golang/go/issues/46080#issuecomment-864265977 
-        go: [ '1.16.5' ]
+        go: [ '1.17.0-beta1' ]
         # TODO:
         # when telegraf dependency gets removed for any reason merge MacOS
         # builds with other OSes. Until this happens test/build it separately
