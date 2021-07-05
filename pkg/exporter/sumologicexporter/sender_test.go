@@ -34,6 +34,8 @@ type senderTest struct {
 	s   *sender
 }
 
+// prepareSenderTest prepares sender test environment.
+// The enclosed httptest.Server is closed automatically using test.Cleanup.
 func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.Request)) *senderTest {
 	var reqCounter int32
 	// generate a test server so we can capture and inspect the request
@@ -47,6 +49,7 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 			atomic.AddInt32(&reqCounter, 1)
 		}
 	}))
+	t.Cleanup(func() { testServer.Close() })
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.CompressEncoding = NoCompression
@@ -175,7 +178,6 @@ func TestSendLogs(t *testing.T) {
 			assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	test.s.logBuffer = exampleTwoLogs()
 
@@ -195,7 +197,6 @@ func TestSendLogsMultitype(t *testing.T) {
 			assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	test.s.logBuffer = exampleMultitypeLogs()
 
@@ -214,7 +215,6 @@ func TestSendLogsSplit(t *testing.T) {
 			assert.Equal(t, "Another example log", body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.MaxRequestBodySize = 10
 	test.s.logBuffer = exampleTwoLogs()
 
@@ -234,7 +234,6 @@ func TestSendLogsSplitFailedOne(t *testing.T) {
 			assert.Equal(t, "Another example log", body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.LogFormat = TextFormat
 	test.s.logBuffer = exampleTwoLogs()
@@ -259,7 +258,6 @@ func TestSendLogsSplitFailedAll(t *testing.T) {
 			assert.Equal(t, "Another example log", body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.LogFormat = TextFormat
 	test.s.logBuffer = exampleTwoLogs()
@@ -285,7 +283,6 @@ func TestSendLogsJson(t *testing.T) {
 			assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.LogFormat = JSONFormat
 	test.s.logBuffer = exampleTwoLogs()
 
@@ -305,7 +302,6 @@ func TestSendLogsJsonMultitype(t *testing.T) {
 			assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.LogFormat = JSONFormat
 	test.s.logBuffer = exampleMultitypeLogs()
 
@@ -324,7 +320,6 @@ func TestSendLogsJsonSplit(t *testing.T) {
 			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Another example log"}`, body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.LogFormat = JSONFormat
 	test.s.config.MaxRequestBodySize = 10
 	test.s.logBuffer = exampleTwoLogs()
@@ -346,7 +341,6 @@ func TestSendLogsJsonSplitFailedOne(t *testing.T) {
 			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Another example log"}`, body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.LogFormat = JSONFormat
 	test.s.config.MaxRequestBodySize = 10
 	test.s.logBuffer = exampleTwoLogs()
@@ -371,7 +365,6 @@ func TestSendLogsJsonSplitFailedAll(t *testing.T) {
 			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Another example log"}`, body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.LogFormat = JSONFormat
 	test.s.config.MaxRequestBodySize = 10
 	test.s.logBuffer = exampleTwoLogs()
@@ -390,7 +383,6 @@ func TestSendLogsUnexpectedFormat(t *testing.T) {
 		func(w http.ResponseWriter, req *http.Request) {
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.LogFormat = "dummy"
 	logs := exampleTwoLogs()
 	test.s.logBuffer = logs
@@ -411,7 +403,6 @@ func TestSendLogsOTLP(t *testing.T) {
 			assert.Equal(t, "application/x-protobuf", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	test.s.logBuffer = exampleTwoLogs()
 	test.s.config.LogFormat = "otlp"
@@ -426,7 +417,6 @@ func TestOverrideSourceName(t *testing.T) {
 			assert.Equal(t, "Test source name/test_name", req.Header.Get("X-Sumo-Name"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
 	test.s.logBuffer = exampleLog()
@@ -441,7 +431,6 @@ func TestOverrideSourceCategory(t *testing.T) {
 			assert.Equal(t, "Test source category/test_name", req.Header.Get("X-Sumo-Category"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
 	test.s.logBuffer = exampleLog()
@@ -456,7 +445,6 @@ func TestOverrideSourceHost(t *testing.T) {
 			assert.Equal(t, "Test source host/test_name", req.Header.Get("X-Sumo-Host"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
 	test.s.logBuffer = exampleLog()
@@ -467,7 +455,6 @@ func TestOverrideSourceHost(t *testing.T) {
 
 func TestLogsBuffer(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	assert.Equal(t, test.s.countLogs(), 0)
 	logs := exampleTwoLogs()
@@ -491,7 +478,6 @@ func TestLogsBuffer(t *testing.T) {
 
 func TestInvalidEndpoint(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.HTTPClientSettings.Endpoint = ":"
 	test.s.logBuffer = exampleLog()
@@ -502,7 +488,6 @@ func TestInvalidEndpoint(t *testing.T) {
 
 func TestInvalidPostRequest(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.HTTPClientSettings.Endpoint = ""
 	test.s.logBuffer = exampleLog()
@@ -513,7 +498,6 @@ func TestInvalidPostRequest(t *testing.T) {
 
 func TestLogsBufferOverflow(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.HTTPClientSettings.Endpoint = ":"
 	log := exampleLog()
@@ -531,7 +515,6 @@ func TestLogsBufferOverflow(t *testing.T) {
 
 func TestInvalidMetricFormat(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.MetricFormat = "invalid"
 
@@ -541,7 +524,6 @@ func TestInvalidMetricFormat(t *testing.T) {
 
 func TestInvalidPipeline(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	err := test.s.send(context.Background(), "invalidPipeline", strings.NewReader(""), newFields(pdata.NewAttributeMap()))
 	assert.EqualError(t, err, `unexpected pipeline: invalidPipeline`)
@@ -561,7 +543,6 @@ func TestSendCompressGzip(t *testing.T) {
 			assert.Equal(t, "Some example log", body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.CompressEncoding = "gzip"
 
@@ -590,7 +571,6 @@ func TestSendCompressDeflate(t *testing.T) {
 			assert.Equal(t, "Some example log", body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.CompressEncoding = "deflate"
 
@@ -606,7 +586,6 @@ func TestSendCompressDeflate(t *testing.T) {
 
 func TestCompressionError(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	test.s.compressor = getTestCompressor(errors.New("read error"), nil)
 	reader := strings.NewReader("Some example log")
@@ -617,7 +596,6 @@ func TestCompressionError(t *testing.T) {
 
 func TestInvalidContentEncoding(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.CompressEncoding = "test"
 	reader := strings.NewReader("Some example log")
@@ -638,7 +616,6 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	flds := fieldsFromMap(map[string]string{
 		"key1": "value",
 		"key2": "value2",
@@ -667,7 +644,6 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 			assert.Equal(t, expected, body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.MetricFormat = PrometheusFormat
 	test.s.metricBuffer = []metricPair{
@@ -695,7 +671,6 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 			assert.Equal(t, expected, body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.MetricFormat = PrometheusFormat
 	test.s.metricBuffer = []metricPair{
@@ -726,7 +701,6 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 			assert.Equal(t, expected, body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.MetricFormat = PrometheusFormat
 	test.s.metricBuffer = []metricPair{
@@ -748,7 +722,6 @@ func TestSendMetricsUnexpectedFormat(t *testing.T) {
 		func(w http.ResponseWriter, req *http.Request) {
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.MetricFormat = "invalid"
 	metrics := []metricPair{
 		exampleIntMetric(),
@@ -762,7 +735,6 @@ func TestSendMetricsUnexpectedFormat(t *testing.T) {
 
 func TestMetricsBuffer(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	assert.Equal(t, test.s.countMetrics(), 0)
 	metrics := []metricPair{
@@ -790,7 +762,6 @@ func TestMetricsBuffer(t *testing.T) {
 func TestMetricsBufferOverflow(t *testing.T) {
 	t.Skip("Skip test due to prometheus format complexity. Execution can take over 30s")
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.HTTPClientSettings.Endpoint = ":"
 	test.s.config.MetricFormat = PrometheusFormat
@@ -821,7 +792,6 @@ foo=bar metric=gauge_metric_name  245 1608124662`
 			assert.Equal(t, "application/vnd.sumologic.carbon2", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.MetricFormat = Carbon2Format
 	test.s.metricBuffer = []metricPair{
@@ -854,7 +824,6 @@ gauge_metric_name.. 245 1608124662`
 			assert.Equal(t, "application/vnd.sumologic.graphite", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	gf, err := newGraphiteFormatter("%{_metric_}.%{metric}.%{unit}")
 	require.NoError(t, err)
