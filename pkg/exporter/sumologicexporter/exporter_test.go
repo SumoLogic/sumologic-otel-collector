@@ -336,6 +336,59 @@ func TestPushFailedBatch(t *testing.T) {
 	assert.EqualError(t, err, "error during sending data: 500 Internal Server Error")
 }
 
+func TestPushTextLogsWithAttributeTranslation(t *testing.T) {
+	logs := LogRecordsToLogs(exampleLog())
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.name", "harry-potter")
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.type", "wizard")
+
+	config := createTestConfig()
+	config.MetadataAttributes = []string{`host\.name`}
+	config.SourceCategory = "%{host.name}"
+	config.SourceHost = "%{host}"
+
+	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, `Example log`, body)
+			assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))
+			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
+			assert.Equal(t, "", req.Header.Get("X-Sumo-Host"))
+		},
+	}
+	test := prepareExporterTest(t, config, expectedRequests)
+	defer func() { test.srv.Close() }()
+
+	err := test.exp.pushLogsData(context.Background(), logs)
+	assert.NoError(t, err)
+}
+
+func TestPushTextLogsWithAttributeTranslationDisabled(t *testing.T) {
+	logs := LogRecordsToLogs(exampleLog())
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.name", "harry-potter")
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.type", "wizard")
+
+	config := createTestConfig()
+	config.MetadataAttributes = []string{`host\.name`}
+	config.SourceCategory = "%{host.name}"
+	config.SourceHost = "%{host}"
+	config.TranslateAttributes = false
+
+	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, `Example log`, body)
+			assert.Equal(t, "host.name=harry-potter", req.Header.Get("X-Sumo-Fields"))
+			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
+			assert.Equal(t, "", req.Header.Get("X-Sumo-Host"))
+		},
+	}
+	test := prepareExporterTest(t, config, expectedRequests)
+	defer func() { test.srv.Close() }()
+
+	err := test.exp.pushLogsData(context.Background(), logs)
+	assert.NoError(t, err)
+}
+
 func TestPushJSONLogsWithAttributeTranslation(t *testing.T) {
 	logs := LogRecordsToLogs(exampleLog())
 	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.name", "harry-potter")
@@ -777,6 +830,7 @@ func TestPushMetricsWithAttributeTranslationDisabled(t *testing.T) {
 		exampleIntMetric(),
 	}
 	records[0].attributes.InsertString("host.name", "harry-potter")
+	records[0].attributes.InsertString("host.type", "wizard")
 
 	metrics := metricPairToMetrics(records)
 
@@ -790,7 +844,7 @@ func TestPushMetricsWithAttributeTranslationDisabled(t *testing.T) {
 	test := prepareExporterTest(t, config, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			expected := `test_metric_data{test="test_value",test2="second_value",host_name="harry-potter"} 14500 1605534165000`
+			expected := `test_metric_data{test="test_value",test2="second_value",host_name="harry-potter",host_type="wizard"} 14500 1605534165000`
 			assert.Equal(t, expected, body)
 			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
