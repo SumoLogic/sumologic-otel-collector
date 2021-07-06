@@ -16,11 +16,12 @@ package sumologicexporter
 
 import (
 	"bytes"
-	"compress/flate"
-	"compress/gzip"
 	"fmt"
 	"io"
 	"io/ioutil"
+
+	"github.com/klauspost/compress/flate"
+	"github.com/klauspost/compress/gzip"
 )
 
 type compressor struct {
@@ -34,7 +35,7 @@ type encoder interface {
 	Reset(dst io.Writer)
 }
 
-// newCompressor takes encoding format and returns compressor struct and error eventually
+// newCompressor takes encoding format and returns the compressor and an error.
 func newCompressor(format CompressEncodingType) (compressor, error) {
 	var (
 		writer encoder
