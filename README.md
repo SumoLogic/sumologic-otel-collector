@@ -66,12 +66,12 @@ For a list of all configuration options for sumologicextension please refer to
 
 ## How to run
 
-* [Run as binary](./docs/HowToRun.md#binary)
-* [Run as Docker container](./docs/HowToRun.md#docker-container)
+- [Run as binary](./docs/HowToRun.md#binary)
+- [Run as Docker container](./docs/HowToRun.md#docker-container)
 
 ## How to build
 
-* [Build binary](./CONTRIBUTING.md#how-to-build)
+- [Build binary](./CONTRIBUTING.md#how-to-build)
 
 ## Contributing
 
