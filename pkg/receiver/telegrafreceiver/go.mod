@@ -11,7 +11,7 @@ require (
 
 replace github.com/influxdata/telegraf => github.com/sumologic/telegraf v1.19.0-sumo
 
-replace go.opentelemetry.io/collector => github.com/SumoLogic/opentelemetry-collector v0.26.0-sumo-1-rc.0
+replace go.opentelemetry.io/collector => github.com/SumoLogic/opentelemetry-collector v0.27.0-sumo-1
 
 // Needed due to https://github.com/golang/go/issues/46645 present in go1.17-beta1.
 // TODO: remove when this is fixed in newer go versions.

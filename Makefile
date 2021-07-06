@@ -21,6 +21,10 @@ gotest:
 golint:
 	$(MAKE) for-all CMD="make lint"
 
+.PHONY: gomod-download-all
+gomod-download-all:
+	$(MAKE) for-all CMD="make mod-download-all"
+
 .PHONY: install-golint
 install-golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
@@ -34,6 +38,10 @@ for-all:
 	  	echo "running $${CMD} in $${dir}" && \
 	 	$${CMD} ); \
 	done
+
+.PHONY: check-uniform-dependencies
+check-uniform-dependencies:
+	./ci/check_uniform_dependencies.sh
 
 ################################################################################
 # Build

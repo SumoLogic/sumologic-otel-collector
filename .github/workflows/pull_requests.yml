@@ -127,6 +127,15 @@ jobs:
       - name: Run golangci-lint
         run: make golint
 
+  check-uniform-dependencies:
+    name: Check uniform dependencies
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2.3.4
+
+      - name: Check uniform dependencies
+        run: make check-uniform-dependencies
+
   build:
     name: Build
     runs-on: ubuntu-20.04

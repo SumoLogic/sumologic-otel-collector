@@ -93,8 +93,8 @@ github.com/Shopify/toxiproxy v2.1.4+incompatible h1:TKdv8HiTLgE5wdJuEML90aBgNWso
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
 github.com/StackExchange/wmi v0.0.0-20210224194228-fe8f1750fd46 h1:5sXbqlSomvdjlRbWyNqkPsJ3Fg+tQZCbgeX1VGljbQY=
 github.com/StackExchange/wmi v0.0.0-20210224194228-fe8f1750fd46/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
-github.com/SumoLogic/opentelemetry-collector v0.2.7-0.20210524103057-96a028d589eb h1:emHXXcdfUQ99ruP4wqa13lJdgCTQ9TPLGQO5j+DFJgo=
-github.com/SumoLogic/opentelemetry-collector v0.2.7-0.20210524103057-96a028d589eb/go.mod h1:J2oCzkvFAkgmgrvIdQNg5Dt3QAZ+ep7HNtHPay/7nvo=
+github.com/SumoLogic/opentelemetry-collector v0.27.0-sumo-1 h1:NvZxxdxkyYEGQ04uQZdDgvVZokW3gs2co2FCLnUq7AA=
+github.com/SumoLogic/opentelemetry-collector v0.27.0-sumo-1/go.mod h1:J2oCzkvFAkgmgrvIdQNg5Dt3QAZ+ep7HNtHPay/7nvo=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
 github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5/go.mod h1:SkGFH1ia65gfNATL8TAiHDNxPzPdmEL5uirI2Uyuz6c=
