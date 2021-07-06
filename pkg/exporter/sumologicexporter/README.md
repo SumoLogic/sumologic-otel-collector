@@ -59,6 +59,13 @@ exporters:
       - <regex1>
       - <regex2>
 
+    # instructs sumologicextension to use automatically generated sumologic endpoint;
+    # to use direct endpoint, set it to null
+    # see sumologicextension documentation for details
+    # default = "sumologic"
+    auth:
+      authenticator: {"sumologic", null}
+
     # for below described queueing and retry related configuration please refer to:
     # https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/exporterhelper/README.md#configuration
 

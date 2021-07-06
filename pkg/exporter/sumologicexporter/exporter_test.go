@@ -71,6 +71,7 @@ func prepareExporterTest(t *testing.T, cfg *Config, cb []func(w http.ResponseWri
 	}))
 
 	cfg.HTTPClientSettings.Endpoint = testServer.URL
+	cfg.HTTPClientSettings.Auth = nil
 
 	exp, err := initExporter(cfg)
 	require.NoError(t, err)

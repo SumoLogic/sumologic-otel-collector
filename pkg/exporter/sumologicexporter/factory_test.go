@@ -20,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/config"
+	"go.opentelemetry.io/collector/config/configauth"
 	"go.opentelemetry.io/collector/config/configcheck"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
@@ -52,6 +53,9 @@ func TestCreateDefaultConfig(t *testing.T) {
 
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout: 5 * time.Second,
+			Auth: &configauth.Authentication{
+				AuthenticatorName: "sumologic",
+			},
 		},
 		RetrySettings: exporterhelper.DefaultRetrySettings(),
 		QueueSettings: qs,
