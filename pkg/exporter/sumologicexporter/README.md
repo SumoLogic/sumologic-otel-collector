@@ -105,28 +105,28 @@ Note that this may cause some of Sumo apps, built-in dashboards to not work corr
 
 Below is a list of all attribute keys that are being translated.
 
-| OTC key name            | Sumo key name    |
-|-------------------------|------------------|
-| cloud.account.id        | accountId        |
-| cloud.availability_zone | availabilityZone |
-| cloud.platform          | aws_service      |
-| cloud.region            | region           |
-| host.id                 | instanceId       |
-| host.name               | host             |
-| host.type               | instanceType     |
-| k8s.cluster.name        | cluster          |
-| k8s.container.name      | container        |
-| k8s.daemonset.name      | daemonset        |
-| k8s.deployment.name     | deployment       |
-| k8s.namespace.name      | namespace        |
-| k8s.node.name           | node             |
-| k8s.pod.hostname        | host             |
-| k8s.pod.name            | pod              |
-| k8s.pod.uid             | pod_id           |
-| k8s.replicaset.name     | replicaset       |
-| k8s.statefulset.name    | statefulset      |
-| service.name            | service          |
-| file.path.resolved      | _sourceName      |
+| OTC key name              | Sumo key name      |
+|---------------------------|--------------------|
+| `cloud.account.id`        | `AccountId`        |
+| `cloud.availability_zone` | `AvailabilityZone` |
+| `cloud.platform`          | `aws_service`      |
+| `cloud.region`            | `Region`           |
+| `host.id`                 | `InstanceId`       |
+| `host.name`               | `host`             |
+| `host.type`               | `InstanceType`     |
+| `k8s.cluster.name`        | `Cluster`          |
+| `k8s.container.name`      | `container`        |
+| `k8s.daemonset.name`      | `daemonset`        |
+| `k8s.deployment.name`     | `Deployment`       |
+| `k8s.namespace.name`      | `Namespace`        |
+| `k8s.node.name`           | `node`             |
+| `k8s.pod.hostname`        | `host`             |
+| `k8s.pod.name`            | `pod`              |
+| `k8s.pod.uid`             | `pod_id`           |
+| `k8s.replicaset.name`     | `replicaset`       |
+| `k8s.statefulset.name`    | `statefulset`      |
+| `service.name`            | `service`          |
+| `file.path.resolved`      | `_sourceName`      |
 
 ## Source Templates
 
