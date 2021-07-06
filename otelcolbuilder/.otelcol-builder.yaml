@@ -92,8 +92,7 @@ replaces:
 
   # ----------------------------------------------------------------------------
   # Customized core
-  # - go.opentelemetry.io/collector => go.opentelemetry.io/collector 2e84285efc665798d76773b9901727e8836e9d8f
-  - go.opentelemetry.io/collector => github.com/SumoLogic/opentelemetry-collector 4c7e2324da1b7c61e10ae3e571cfa48d6fe8fc7c
+  - go.opentelemetry.io/collector => github.com/SumoLogic/opentelemetry-collector v0.27.0-sumo-1
 
   # ----------------------------------------------------------------------------
   # Customized log collection
