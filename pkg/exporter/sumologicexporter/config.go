@@ -133,9 +133,9 @@ const (
 	// DefaultMaxRequestBodySize defines default MaxRequestBodySize in bytes
 	DefaultMaxRequestBodySize int = 1 * 1024 * 1024
 	// DefaultLogFormat defines default LogFormat
-	DefaultLogFormat LogFormatType = JSONFormat
+	DefaultLogFormat LogFormatType = OTLPLogFormat
 	// DefaultMetricFormat defines default MetricFormat
-	DefaultMetricFormat MetricFormatType = PrometheusFormat
+	DefaultMetricFormat MetricFormatType = OTLPMetricFormat
 	// DefaultSourceCategory defines default SourceCategory
 	DefaultSourceCategory string = ""
 	// DefaultSourceName defines default SourceName
