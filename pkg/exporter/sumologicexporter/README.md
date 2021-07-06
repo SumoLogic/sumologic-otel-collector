@@ -17,11 +17,11 @@ exporters:
     # default = 1_048_576 (1MB)
     max_request_body_size: <max_request_body_size>
 
-    # format to use when sending logs to Sumo, default = json,
+    # format to use when sending logs to Sumo, default = otlp,
     # NOTE: only `otlp` is supported when used with sumologicextension
     log_format: {json, text, otlp}
 
-    # format to use when sending metrics to Sumo, default = prometheus,
+    # format to use when sending metrics to Sumo, default = otlp,
     # NOTE: only `otlp` is supported when used with sumologicextension
     metric_format: {carbon2, graphite, otlp, prometheus}
 
