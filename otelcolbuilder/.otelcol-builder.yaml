@@ -97,9 +97,10 @@ replaces:
 
   # ----------------------------------------------------------------------------
   # Customized log collection
-  # ToDo: Remove after using v0.19.0 or newer in upstream.
-  # Replacing due to https://github.com/open-telemetry/opentelemetry-log-collection/pull/189
-  - github.com/open-telemetry/opentelemetry-log-collection => github.com/open-telemetry/opentelemetry-log-collection v0.19.0
+  # ToDo: Remove after listed PRs are in upstream.
+  # - https://github.com/open-telemetry/opentelemetry-log-collection/pull/189
+  # - https://github.com/open-telemetry/opentelemetry-log-collection/pull/212
+  - github.com/open-telemetry/opentelemetry-log-collection => github.com/SumoLogic/opentelemetry-log-collection v0.18.1-0.20210706124509-fd4dbb8a26b6
 
   # Needed due to https://github.com/golang/go/issues/46645 present in go1.17-beta1.
   # TODO: remove when this is fixed in newer go versions.
