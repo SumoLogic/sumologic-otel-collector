@@ -403,7 +403,7 @@ func TestPushJSONLogsWithAttributeTranslation(t *testing.T) {
 	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			assert.Equal(t, `{"host":"harry-potter","instanceType":"wizard","log":"Example log"}`, body)
+			assert.Equal(t, `{"InstanceType":"wizard","host":"harry-potter","log":"Example log"}`, body)
 			assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))
 			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
 			assert.Equal(t, "", req.Header.Get("X-Sumo-Host"))
@@ -813,7 +813,7 @@ func TestPushMetricsWithAttributeTranslation(t *testing.T) {
 	test := prepareExporterTest(t, config, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			expected := `test_metric_data{test="test_value",test2="second_value",host="harry-potter",instanceType="wizard"} 14500 1605534165000`
+			expected := `test_metric_data{test="test_value",test2="second_value",host="harry-potter",InstanceType="wizard"} 14500 1605534165000`
 			assert.Equal(t, expected, body)
 			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
