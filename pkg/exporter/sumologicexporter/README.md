@@ -53,7 +53,7 @@ exporters:
     translate_attributes: {true, false}
 
     # list of regexes for attributes which should be sent as metadata,
-    # use OpenTelemetry attribute names, see "Metadata translation" documentation
+    # use OpenTelemetry attribute names, see "Attribute translation" documentation
     # chapter from this document.
     metadata_attributes:
       - <regex1>
@@ -103,6 +103,7 @@ exporters:
 Attribute translation changes some of the attribute keys from OpenTelemetry convention to Sumo convention.
 For example, OpenTelemetry convention for the attribute containing Kubernetes pod name is `k8s.pod.name`,
 but Sumo expects it to be in attribute named `pod`.
+
 If attribute with target name eg. `pod` already exists,
 translation is not being done for corresponding attribute (`k8s.pod.name` in this example).
 
@@ -142,7 +143,7 @@ You can specify a template with an attribute for `source_category`, `source_name
 
 For example, when there is an attribute `my_attr`: `my_value`, `metrics/%{my_attr}`
 would be expanded to `metrics/my_value`.
-Use OpenTelemetry attribute names, even when [metadata translation](#metadata-translation)
+Use OpenTelemetry attribute names, even when [attribute translation](#attribute-translation)
 is turned on.
 
 For `graphite_template`, in addition to above, `%{_metric_}` is going to be replaced
