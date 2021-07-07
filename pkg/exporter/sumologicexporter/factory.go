@@ -96,7 +96,7 @@ func createTracesExporter(
 ) (component.TracesExporter, error) {
 	exp, err := newTracesExporter(cfg.(*Config), params)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create the metrics exporter: %w", err)
+		return nil, fmt.Errorf("failed to create the traces exporter: %w", err)
 	}
 
 	return exp, nil
