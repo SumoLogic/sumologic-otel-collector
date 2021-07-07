@@ -17,11 +17,11 @@ exporters:
     # default = 1_048_576 (1MB)
     max_request_body_size: <max_request_body_size>
 
-    # format to use when sending logs to Sumo, default = json,
+    # format to use when sending logs to Sumo, default = otlp,
     # NOTE: only `otlp` is supported when used with sumologicextension
     log_format: {json, text, otlp}
 
-    # format to use when sending metrics to Sumo, default = prometheus,
+    # format to use when sending metrics to Sumo, default = otlp,
     # NOTE: only `otlp` is supported when used with sumologicextension
     metric_format: {carbon2, graphite, otlp, prometheus}
 
@@ -58,6 +58,13 @@ exporters:
     metadata_attributes:
       - <regex1>
       - <regex2>
+
+    # instructs sumologicextension to use automatically generated sumologic endpoint;
+    # to use direct endpoint, set it to null
+    # see sumologicextension documentation for details
+    # default = sumologic
+    auth:
+      authenticator: {sumologic, null}
 
     # for below described queueing and retry related configuration please refer to:
     # https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/exporterhelper/README.md#configuration
