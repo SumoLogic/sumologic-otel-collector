@@ -1,0 +1,21 @@
+extensions:
+  sumologic:
+    access_id: <my_access_id>
+    access_key: <my_access_key>
+    collector_name: <my_collector_name>
+
+receivers:
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      load:
+
+exporters:
+  sumologic:
+
+service:
+  extensions: [sumologic]
+  pipelines:
+    metrics:
+      receivers: [hostmetrics]
+      exporters: [sumologic]
