@@ -95,7 +95,7 @@ func TestFormatNonExistingKey(t *testing.T) {
 	f := fieldsFromMap(map[string]string{"key_2": "value_2"})
 	s := getTestSourceFormat(t, "%{key_1}/%{key_2}")
 
-	expected := "/value_2"
+	expected := "undefined/value_2"
 
 	result := s.format(f)
 	assert.Equal(t, expected, result)

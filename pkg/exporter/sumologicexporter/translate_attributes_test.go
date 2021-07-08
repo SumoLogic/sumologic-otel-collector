@@ -126,5 +126,5 @@ func assertAttribute(t *testing.T, metadata pdata.AttributeMap, attributeName st
 func TestTranslateConfigValue(t *testing.T) {
 	translatedValue := translateConfigValue("%{k8s.pod.name}-%{host.name}/%{pod}-%{host}")
 
-	assert.Equal(t, "%{pod}-%{host}/-", translatedValue)
+	assert.Equal(t, "%{pod}-%{host}/undefined-undefined", translatedValue)
 }
