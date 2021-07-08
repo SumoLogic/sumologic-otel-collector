@@ -79,7 +79,7 @@ func createDefaultConfig() config.Processor {
 // CreateTraceProcessor creates a trace processor based on this config.
 func createTraceProcessor(
 	_ context.Context,
-	_ component.ProcessorCreateParams,
+	_ component.ProcessorCreateSettings,
 	cfg config.Processor,
 	nextConsumer consumer.Traces) (component.TracesProcessor, error) {
 

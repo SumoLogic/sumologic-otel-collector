@@ -5,13 +5,13 @@ go 1.14
 require (
 	github.com/influxdata/telegraf v1.19.0
 	github.com/stretchr/testify v1.7.0
-	go.opentelemetry.io/collector v0.26.0
-	go.uber.org/zap v1.16.0
+	go.opentelemetry.io/collector v0.28.0
+	go.uber.org/zap v1.17.0
 )
 
-replace github.com/influxdata/telegraf => github.com/sumologic/telegraf v1.19.0-sumo
+replace github.com/influxdata/telegraf => github.com/sumologic/telegraf v1.19.0-sumo-1
 
-replace go.opentelemetry.io/collector => github.com/SumoLogic/opentelemetry-collector v0.27.0-sumo-1
+replace go.opentelemetry.io/collector => github.com/SumoLogic/opentelemetry-collector v0.28.0-sumo-1
 
 // Needed due to https://github.com/golang/go/issues/46645 present in go1.17-beta1
 // and in go1.17rc1.

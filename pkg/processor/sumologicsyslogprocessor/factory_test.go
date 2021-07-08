@@ -38,7 +38,7 @@ func TestLogProcessor(t *testing.T) {
 	// Manually set required fields
 	cfg.FacilityAttr = "testAttrName"
 
-	params := component.ProcessorCreateParams{Logger: zap.NewNop()}
+	params := component.ProcessorCreateSettings{Logger: zap.NewNop()}
 	lp, err := factory.CreateLogsProcessor(context.Background(), params, cfg, consumertest.NewNop())
 	assert.NotNil(t, lp)
 	assert.NoError(t, err, "cannot create log processor")
