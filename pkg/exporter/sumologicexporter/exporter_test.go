@@ -779,62 +779,137 @@ func TestMetricsPrometheusFormatMetadataFilter(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestPushMetricsWithAttributeTranslation(t *testing.T) {
-	records := []metricPair{
-		exampleIntMetric(),
+func TestPushMetrics_AttributeTranslation(t *testing.T) {
+	createConfig := func() *Config {
+		config := createDefaultConfig().(*Config)
+		config.CompressEncoding = NoCompression
+		config.LogFormat = TextFormat
+		config.MetricFormat = PrometheusFormat
+		return config
 	}
-	records[0].attributes.InsertString("host.name", "harry-potter")
-	records[0].attributes.InsertString("host.type", "wizard")
 
-	metrics := metricPairToMetrics(records)
-
-	config := createTestConfig()
-	config.MetadataAttributes = []string{`host\.name`}
-	config.MetricFormat = PrometheusFormat
-	config.SourceCategory = "%{host.name}"
-	config.SourceHost = "%{host}"
-
-	test := prepareExporterTest(t, config, []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
-			expected := `test_metric_data{test="test_value",test2="second_value",host="harry-potter",InstanceType="wizard"} 14500 1605534165000`
-			assert.Equal(t, expected, body)
-			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
-			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
-			assert.Equal(t, "", req.Header.Get("X-Sumo-Host"))
+	testcases := []struct {
+		name            string
+		cfgFn           func() *Config
+		expectedHeaders map[string]string
+		expectedBody    string
+	}{
+		{
+			name: "enabled",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				cfg.MetadataAttributes = []string{`host\.name`}
+				cfg.SourceCategory = "%{host.name}"
+				cfg.SourceHost = "%{host}"
+				// This is and should be done by default:
+				// cfg.TranslateAttributes = true
+				return cfg
+			},
+			expectedHeaders: map[string]string{
+				"Content-Type":    "application/vnd.sumologic.prometheus",
+				"X-Sumo-Category": "harry-potter",
+				"X-Sumo-Host":     "",
+			},
+			expectedBody: `test_metric_data{test="test_value",test2="second_value",host="harry-potter",InstanceType="wizard"} 14500 1605534165000`,
 		},
-	})
-
-	err := test.exp.pushMetricsData(context.Background(), metrics)
-	assert.NoError(t, err)
-}
-func TestPushMetricsWithAttributeTranslationDisabled(t *testing.T) {
-	records := []metricPair{
-		exampleIntMetric(),
+		{
+			name: "enabled_with_ot_host_name_template_set_in_source_host",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				cfg.MetadataAttributes = []string{`host\.name`}
+				cfg.SourceCategory = "%{host.name}"
+				cfg.SourceHost = "%{host.name}"
+				// This is and should be done by default:
+				// cfg.TranslateAttributes = true
+				return cfg
+			},
+			expectedHeaders: map[string]string{
+				"Content-Type":    "application/vnd.sumologic.prometheus",
+				"X-Sumo-Category": "harry-potter",
+				"X-Sumo-Host":     "harry-potter",
+			},
+			expectedBody: `test_metric_data{test="test_value",test2="second_value",host="harry-potter",InstanceType="wizard"} 14500 1605534165000`,
+		},
+		{
+			name: "enabled_with_proper_host_template_set_in_source_host_but_not_specified_in_metadata_attributes",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				// This is the default
+				// cfg.MetadataAttributes = []string{}
+				cfg.SourceCategory = "%{host.name}"
+				cfg.SourceHost = "%{host.name}"
+				// This is and should be done by default:
+				// cfg.TranslateAttributes = true
+				return cfg
+			},
+			expectedHeaders: map[string]string{
+				"Content-Type":    "application/vnd.sumologic.prometheus",
+				"X-Sumo-Category": "",
+				"X-Sumo-Host":     "",
+			},
+			expectedBody: `test_metric_data{test="test_value",test2="second_value",host="harry-potter",InstanceType="wizard"} 14500 1605534165000`,
+		},
+		{
+			name: "disabled",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				cfg.MetadataAttributes = []string{`host\.name`}
+				cfg.SourceCategory = "%{host.name}"
+				cfg.SourceHost = "%{host}"
+				cfg.TranslateAttributes = false
+				return cfg
+			},
+			expectedHeaders: map[string]string{
+				"Content-Type":    "application/vnd.sumologic.prometheus",
+				"X-Sumo-Category": "harry-potter",
+				"X-Sumo-Host":     "",
+			},
+			expectedBody: `test_metric_data{test="test_value",test2="second_value",host_name="harry-potter",host_type="wizard"} 14500 1605534165000`,
+		},
+		{
+			name: "disabled_with_ot_host_name_template_set_in_source_host",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				cfg.MetadataAttributes = []string{`host\.name`}
+				cfg.SourceCategory = "%{host.name}"
+				cfg.SourceHost = "%{host.name}"
+				cfg.TranslateAttributes = false
+				return cfg
+			},
+			expectedHeaders: map[string]string{
+				"Content-Type":    "application/vnd.sumologic.prometheus",
+				"X-Sumo-Category": "harry-potter",
+				"X-Sumo-Host":     "harry-potter",
+			},
+			expectedBody: `test_metric_data{test="test_value",test2="second_value",host_name="harry-potter",host_type="wizard"} 14500 1605534165000`,
+		},
 	}
-	records[0].attributes.InsertString("host.name", "harry-potter")
-	records[0].attributes.InsertString("host.type", "wizard")
 
-	metrics := metricPairToMetrics(records)
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			records := []metricPair{
+				exampleIntMetric(),
+			}
+			records[0].attributes.InsertString("host.name", "harry-potter")
+			records[0].attributes.InsertString("host.type", "wizard")
 
-	config := createTestConfig()
-	config.MetadataAttributes = []string{`host\.name`}
-	config.MetricFormat = PrometheusFormat
-	config.SourceCategory = "%{host.name}"
-	config.SourceHost = "%{host}"
-	config.TranslateAttributes = false
+			metrics := metricPairToMetrics(records)
 
-	test := prepareExporterTest(t, config, []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
-			expected := `test_metric_data{test="test_value",test2="second_value",host_name="harry-potter",host_type="wizard"} 14500 1605534165000`
-			assert.Equal(t, expected, body)
-			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
-			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
-			assert.Equal(t, "", req.Header.Get("X-Sumo-Host"))
-		},
-	})
+			config := tc.cfgFn()
+			callbacks := []func(w http.ResponseWriter, req *http.Request){
+				func(w http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, tc.expectedBody, extractBody(t, req))
+					for header, expectedValue := range tc.expectedHeaders {
+						assert.Equalf(t, expectedValue, req.Header.Get(header),
+							"Unexpected value in header: %s", header,
+						)
+					}
+				},
+			}
+			test := prepareExporterTest(t, config, callbacks)
 
-	err := test.exp.pushMetricsData(context.Background(), metrics)
-	assert.NoError(t, err)
+			err := test.exp.pushMetricsData(context.Background(), metrics)
+			assert.NoError(t, err)
+		})
+	}
 }
