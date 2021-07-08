@@ -56,6 +56,10 @@ func createTestConfig() *Config {
 	return config
 }
 
+// prepareExporterTest prepares an exporter test object using provided config
+// and a slice of callbacks to be called for subsequent requests coming being
+// sent to the server.
+// The enclosed *httptest.Server is automatically closed on test cleanup.
 func prepareExporterTest(t *testing.T, cfg *Config, cb []func(w http.ResponseWriter, req *http.Request)) *exporterTest {
 	var reqCounter int32
 	// generate a test server so we can capture and inspect the request
@@ -69,6 +73,7 @@ func prepareExporterTest(t *testing.T, cfg *Config, cb []func(w http.ResponseWri
 			atomic.AddInt32(&reqCounter, 1)
 		}
 	}))
+	t.Cleanup(func() { testServer.Close() })
 
 	cfg.HTTPClientSettings.Endpoint = testServer.URL
 	cfg.HTTPClientSettings.Auth = nil
@@ -162,7 +167,6 @@ func TestAllSuccess(t *testing.T) {
 			assert.Equal(t, "", req.Header.Get("X-Sumo-Fields"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	logs := LogRecordsToLogs(exampleLog())
 
@@ -178,7 +182,6 @@ func TestResourceMerge(t *testing.T) {
 			assert.Equal(t, "key1=original_value, key2=additional_value", req.Header.Get("X-Sumo-Fields"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	f, err := newFilter([]string{`key\d`})
 	require.NoError(t, err)
@@ -203,7 +206,6 @@ func TestAllFailed(t *testing.T) {
 			assert.Equal(t, "", req.Header.Get("X-Sumo-Fields"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	logs := LogRecordsToLogs(exampleTwoLogs())
 
@@ -230,7 +232,6 @@ func TestPartiallyFailed(t *testing.T) {
 			assert.Equal(t, "key3=value3, key4=value4", req.Header.Get("X-Sumo-Fields"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	f, err := newFilter([]string{`key\d`})
 	require.NoError(t, err)
@@ -290,7 +291,6 @@ func TestPushInvalidCompressor(t *testing.T) {
 			assert.Equal(t, "", req.Header.Get("X-Sumo-Fields"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	logs := LogRecordsToLogs(exampleLog())
 
@@ -323,7 +323,6 @@ func TestPushFailedBatch(t *testing.T) {
 			assert.Equal(t, "", req.Header.Get("X-Sumo-Fields"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	logs := LogRecordsToLogs(exampleLog())
 	logs.ResourceLogs().Resize(maxBufferSize + 1)
@@ -357,7 +356,6 @@ func TestPushTextLogsWithAttributeTranslation(t *testing.T) {
 		},
 	}
 	test := prepareExporterTest(t, config, expectedRequests)
-	defer func() { test.srv.Close() }()
 
 	err := test.exp.pushLogsData(context.Background(), logs)
 	assert.NoError(t, err)
@@ -384,7 +382,6 @@ func TestPushTextLogsWithAttributeTranslationDisabled(t *testing.T) {
 		},
 	}
 	test := prepareExporterTest(t, config, expectedRequests)
-	defer func() { test.srv.Close() }()
 
 	err := test.exp.pushLogsData(context.Background(), logs)
 	assert.NoError(t, err)
@@ -411,7 +408,6 @@ func TestPushJSONLogsWithAttributeTranslation(t *testing.T) {
 		},
 	}
 	test := prepareExporterTest(t, config, expectedRequests)
-	defer func() { test.srv.Close() }()
 
 	err := test.exp.pushLogsData(context.Background(), logs)
 	assert.NoError(t, err)
@@ -439,7 +435,6 @@ func TestPushJSONLogsWithAttributeTranslationDisabled(t *testing.T) {
 		},
 	}
 	test := prepareExporterTest(t, config, expectedRequests)
-	defer func() { test.srv.Close() }()
 
 	err := test.exp.pushLogsData(context.Background(), logs)
 	assert.NoError(t, err)
@@ -456,7 +451,6 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.exp.config.MetricFormat = PrometheusFormat
 
 	metrics := metricPairToMetrics([]metricPair{
@@ -478,7 +472,6 @@ func TestAllMetricsOTLP(t *testing.T) {
 			assert.Equal(t, "application/x-protobuf", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.exp.config.MetricFormat = OTLPMetricFormat
 
 	metrics := metricPairToMetrics([]metricPair{
@@ -503,7 +496,6 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.exp.config.MetricFormat = PrometheusFormat
 
 	metrics := metricPairToMetrics([]metricPair{
@@ -537,7 +529,6 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.exp.config.MetricFormat = PrometheusFormat
 	test.exp.config.MaxRequestBodySize = 1
 
@@ -564,7 +555,6 @@ func TestPushMetricsInvalidCompressor(t *testing.T) {
 			assert.Equal(t, "", req.Header.Get("X-Sumo-Fields"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	metrics := metricPairToMetrics([]metricPair{
 		exampleIntMetric(),
@@ -595,7 +585,6 @@ gauge_metric_name{foo="bar",key2="value2",remote_name="156955",url="http://anoth
 			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.exp.config.MetricFormat = PrometheusFormat
 	test.exp.config.MaxRequestBodySize = 1
 
@@ -644,7 +633,6 @@ func TestPushMetricsFailedBatch(t *testing.T) {
 			assert.Equal(t, `test_metric_data{test="test_value",test2="second_value"} 14500 1605534165000`, body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.exp.config.MetricFormat = PrometheusFormat
 	test.exp.config.MaxRequestBodySize = 1024 * 1024 * 1024 * 1024
 
@@ -668,7 +656,6 @@ func TestLogsJsonFormatMetadataFilter(t *testing.T) {
 			assert.Equal(t, "key1=value1", req.Header.Get("X-Sumo-Fields"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.exp.config.LogFormat = JSONFormat
 
 	f, err := newFilter([]string{`key1`})
@@ -691,7 +678,6 @@ func TestLogsTextFormatMetadataFilter(t *testing.T) {
 			assert.Equal(t, "key1=value1", req.Header.Get("X-Sumo-Fields"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.exp.config.LogFormat = TextFormat
 
 	f, err := newFilter([]string{`key1`})
@@ -715,7 +701,6 @@ func TestMetricsCarbon2FormatMetadataFilter(t *testing.T) {
 			assert.Equal(t, "application/vnd.sumologic.carbon2", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.exp.config.MetricFormat = Carbon2Format
 
 	f, err := newFilter([]string{`key1`})
@@ -744,7 +729,6 @@ func TestMetricsGraphiteFormatMetadataFilter(t *testing.T) {
 			assert.Equal(t, "application/vnd.sumologic.graphite", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.exp.config.MetricFormat = GraphiteFormat
 	graphiteFormatter, err := newGraphiteFormatter("%{_metric_}.%{test}.%{test2}.%{key1}.%{key2}")
 	assert.NoError(t, err)
@@ -776,7 +760,6 @@ func TestMetricsPrometheusFormatMetadataFilter(t *testing.T) {
 			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.exp.config.MetricFormat = PrometheusFormat
 
 	f, err := newFilter([]string{`key1`})
@@ -821,7 +804,6 @@ func TestPushMetricsWithAttributeTranslation(t *testing.T) {
 			assert.Equal(t, "", req.Header.Get("X-Sumo-Host"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	err := test.exp.pushMetricsData(context.Background(), metrics)
 	assert.NoError(t, err)
@@ -852,7 +834,6 @@ func TestPushMetricsWithAttributeTranslationDisabled(t *testing.T) {
 			assert.Equal(t, "", req.Header.Get("X-Sumo-Host"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	err := test.exp.pushMetricsData(context.Background(), metrics)
 	assert.NoError(t, err)
