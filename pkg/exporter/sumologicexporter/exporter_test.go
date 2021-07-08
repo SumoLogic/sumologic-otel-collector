@@ -352,7 +352,7 @@ func TestPushTextLogsWithAttributeTranslation(t *testing.T) {
 			assert.Equal(t, `Example log`, body)
 			assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))
 			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
-			assert.Equal(t, "", req.Header.Get("X-Sumo-Host"))
+			assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"))
 		},
 	}
 	test := prepareExporterTest(t, config, expectedRequests)
@@ -378,7 +378,7 @@ func TestPushTextLogsWithAttributeTranslationDisabled(t *testing.T) {
 			assert.Equal(t, `Example log`, body)
 			assert.Equal(t, "host.name=harry-potter", req.Header.Get("X-Sumo-Fields"))
 			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
-			assert.Equal(t, "", req.Header.Get("X-Sumo-Host"))
+			assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"))
 		},
 	}
 	test := prepareExporterTest(t, config, expectedRequests)
@@ -404,7 +404,7 @@ func TestPushJSONLogsWithAttributeTranslation(t *testing.T) {
 			assert.Equal(t, `{"InstanceType":"wizard","host":"harry-potter","log":"Example log"}`, body)
 			assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))
 			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
-			assert.Equal(t, "", req.Header.Get("X-Sumo-Host"))
+			assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"))
 		},
 	}
 	test := prepareExporterTest(t, config, expectedRequests)
@@ -431,7 +431,7 @@ func TestPushJSONLogsWithAttributeTranslationDisabled(t *testing.T) {
 			assert.Equal(t, `{"host.type":"wizard","log":"Example log"}`, body)
 			assert.Equal(t, "host.name=harry-potter", req.Header.Get("X-Sumo-Fields"))
 			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
-			assert.Equal(t, "", req.Header.Get("X-Sumo-Host"))
+			assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"))
 		},
 	}
 	test := prepareExporterTest(t, config, expectedRequests)
@@ -808,7 +808,7 @@ func TestPushMetrics_AttributeTranslation(t *testing.T) {
 			expectedHeaders: map[string]string{
 				"Content-Type":    "application/vnd.sumologic.prometheus",
 				"X-Sumo-Category": "harry-potter",
-				"X-Sumo-Host":     "",
+				"X-Sumo-Host":     "undefined",
 			},
 			expectedBody: `test_metric_data{test="test_value",test2="second_value",host="harry-potter",InstanceType="wizard"} 14500 1605534165000`,
 		},
@@ -844,8 +844,8 @@ func TestPushMetrics_AttributeTranslation(t *testing.T) {
 			},
 			expectedHeaders: map[string]string{
 				"Content-Type":    "application/vnd.sumologic.prometheus",
-				"X-Sumo-Category": "",
-				"X-Sumo-Host":     "",
+				"X-Sumo-Category": "undefined",
+				"X-Sumo-Host":     "undefined",
 			},
 			expectedBody: `test_metric_data{test="test_value",test2="second_value",host="harry-potter",InstanceType="wizard"} 14500 1605534165000`,
 		},
@@ -862,7 +862,7 @@ func TestPushMetrics_AttributeTranslation(t *testing.T) {
 			expectedHeaders: map[string]string{
 				"Content-Type":    "application/vnd.sumologic.prometheus",
 				"X-Sumo-Category": "harry-potter",
-				"X-Sumo-Host":     "",
+				"X-Sumo-Host":     "undefined",
 			},
 			expectedBody: `test_metric_data{test="test_value",test2="second_value",host_name="harry-potter",host_type="wizard"} 14500 1605534165000`,
 		},

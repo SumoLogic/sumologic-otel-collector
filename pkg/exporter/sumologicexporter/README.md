@@ -149,6 +149,9 @@ is turned on.
 For `graphite_template`, in addition to above, `%{_metric_}` is going to be replaced
 with metric name.
 
+If an attribute is not found, it is replaced with `undefined`.
+For example, `%{existing_attr}/%{nonexistent_attr}` becomes `value-of-existing-attr/undefined`.
+
 ## Example Configuration
 
 ```yaml

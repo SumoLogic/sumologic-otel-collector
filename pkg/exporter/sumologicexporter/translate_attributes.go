@@ -63,7 +63,7 @@ func translateAttributes(attributes pdata.AttributeMap) {
 // translateConfigValue renames attribute keys in config values according to attributeTranslations.
 func translateConfigValue(value string) string {
 	for _, sumoKey := range attributeTranslations {
-		value = strings.ReplaceAll(value, fmt.Sprintf("%%{%v}", sumoKey), "")
+		value = strings.ReplaceAll(value, fmt.Sprintf("%%{%v}", sumoKey), unrecognizedAttributeValue)
 	}
 	for otKey, sumoKey := range attributeTranslations {
 		value = strings.ReplaceAll(value, fmt.Sprintf("%%{%v}", otKey), fmt.Sprintf("%%{%v}", sumoKey))
