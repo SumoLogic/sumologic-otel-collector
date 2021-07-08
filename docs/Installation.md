@@ -13,7 +13,7 @@ To run it as standalone process you only need to run the binary file downloaded 
 1. Set the release version variable:
 
    ```bash
-   export RELEASE_VERSION=0.0.10
+   export RELEASE_VERSION=0.0.12
    ```
 
 1. Set the platform variable:
@@ -57,7 +57,7 @@ using the image available in `public.ecr.aws/sumologic/sumologic-otel-collector`
 1. Set the release version variable:
 
    ```bash
-   export RELEASE_VERSION=0.0.10
+   export RELEASE_VERSION=0.0.12
    ```
 
 1. Prepare configuration according to [this](Configuration.md) documentation and save it in `config.yaml`
