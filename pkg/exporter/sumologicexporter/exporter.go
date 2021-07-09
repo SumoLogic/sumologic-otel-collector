@@ -66,6 +66,12 @@ func initExporter(cfg *Config) (*sumologicexporter, error) {
 		return nil, fmt.Errorf("unexpected metric format: %s", cfg.MetricFormat)
 	}
 
+	switch cfg.TraceFormat {
+	case OTLPTraceFormat:
+	default:
+		return nil, fmt.Errorf("unexpected trace format: %s", cfg.TraceFormat)
+	}
+
 	switch cfg.CompressEncoding {
 	case GZIPCompression:
 	case DeflateCompression:

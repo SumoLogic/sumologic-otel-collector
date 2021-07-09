@@ -552,7 +552,7 @@ func addTracesHeaders(req *http.Request, tf TraceFormatType) error {
 	case OTLPTraceFormat:
 		req.Header.Add(headerContentType, contentTypeOTLP)
 	default:
-		return fmt.Errorf("unsupported tracess format: %s", tf)
+		return fmt.Errorf("unsupported traces format: %s", tf)
 	}
 	return nil
 }
