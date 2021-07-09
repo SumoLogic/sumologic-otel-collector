@@ -425,6 +425,7 @@ func (s *sender) appendAndSend(
 	return ar, nil
 }
 
+// sendTraces sends traces in right format basing on the s.config.TraceFormat
 func (s *sender) sendTraces(ctx context.Context, td pdata.Traces, flds fields) error {
 	if s.config.TraceFormat == OTLPTraceFormat {
 		return s.sendOTLPTraces(ctx, td, flds)
@@ -432,6 +433,7 @@ func (s *sender) sendTraces(ctx context.Context, td pdata.Traces, flds fields) e
 	return nil
 }
 
+// sendOTLPTraces sends trace records in OTLP format
 func (s *sender) sendOTLPTraces(ctx context.Context, td pdata.Traces, flds fields) error {
 	body, err := td.ToOtlpProtoBytes()
 	if err != nil {
