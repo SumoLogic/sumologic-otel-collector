@@ -53,6 +53,7 @@ func createTestConfig() *Config {
 	config.LogFormat = TextFormat
 	config.MaxRequestBodySize = 20_971_520
 	config.MetricFormat = Carbon2Format
+	config.TraceFormat = OTLPTraceFormat
 	return config
 }
 
@@ -94,6 +95,7 @@ func TestInitExporter(t *testing.T) {
 		LogFormat:        "json",
 		MetricFormat:     "carbon2",
 		CompressEncoding: "gzip",
+		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout:  defaultTimeout,
 			Endpoint: "test_endpoint",
@@ -107,6 +109,7 @@ func TestInitExporterInvalidLogFormat(t *testing.T) {
 		LogFormat:        "test_format",
 		MetricFormat:     "carbon2",
 		CompressEncoding: "gzip",
+		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout:  defaultTimeout,
 			Endpoint: "test_endpoint",
@@ -130,11 +133,27 @@ func TestInitExporterInvalidMetricFormat(t *testing.T) {
 	assert.EqualError(t, err, "unexpected metric format: test_format")
 }
 
+func TestInitExporterInvalidTraceFormat(t *testing.T) {
+	_, err := initExporter(&Config{
+		LogFormat:    "json",
+		MetricFormat: "carbon2",
+		TraceFormat:  "text",
+		HTTPClientSettings: confighttp.HTTPClientSettings{
+			Timeout:  defaultTimeout,
+			Endpoint: "test_endpoint",
+		},
+		CompressEncoding: "gzip",
+	})
+
+	assert.EqualError(t, err, "unexpected trace format: text")
+}
+
 func TestInitExporterInvalidCompressEncoding(t *testing.T) {
 	_, err := initExporter(&Config{
 		LogFormat:        "json",
 		MetricFormat:     "carbon2",
 		CompressEncoding: "test_format",
+		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout:  defaultTimeout,
 			Endpoint: "test_endpoint",
@@ -149,6 +168,7 @@ func TestInitExporterInvalidEndpoint(t *testing.T) {
 		LogFormat:        "json",
 		MetricFormat:     "carbon2",
 		CompressEncoding: "gzip",
+		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout: defaultTimeout,
 		},
@@ -254,6 +274,7 @@ func TestInvalidSourceFormats(t *testing.T) {
 		LogFormat:        "json",
 		MetricFormat:     "carbon2",
 		CompressEncoding: "gzip",
+		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout:  defaultTimeout,
 			Endpoint: "test_endpoint",
@@ -268,6 +289,7 @@ func TestInvalidHTTPCLient(t *testing.T) {
 		LogFormat:        "json",
 		MetricFormat:     "carbon2",
 		CompressEncoding: "gzip",
+		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Endpoint: "test_endpoint",
 			CustomRoundTripper: func(next http.RoundTripper) (http.RoundTripper, error) {

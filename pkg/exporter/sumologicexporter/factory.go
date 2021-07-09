@@ -56,6 +56,7 @@ func createDefaultConfig() config.Exporter {
 		SourceHost:          DefaultSourceHost,
 		Client:              DefaultClient,
 		GraphiteTemplate:    DefaultGraphiteTemplate,
+		TraceFormat:         OTLPTraceFormat,
 
 		HTTPClientSettings: CreateDefaultHTTPClientSettings(),
 		RetrySettings:      exporterhelper.DefaultRetrySettings(),
