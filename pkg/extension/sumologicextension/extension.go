@@ -236,11 +236,12 @@ func (se *SumologicExtension) heartbeatLoop() {
 		cancel()
 	}()
 
-	se.logger.Info("Heartbeat heartbeat API initialized. Starting sending hearbeat requests")
+	se.logger.Info("Heartbeat API initialized. Starting sending hearbeat requests")
+	timer := time.NewTimer(se.conf.HeartBeatInterval)
 	for {
 		select {
 		case <-se.closeChan:
-			se.logger.Info("Heartbeat sender turn off")
+			se.logger.Info("Heartbeat sender turned off")
 			return
 		default:
 			if err := se.sendHeartbeat(ctx); err != nil {
@@ -250,9 +251,12 @@ func (se *SumologicExtension) heartbeatLoop() {
 			}
 
 			select {
-			case <-time.After(se.conf.HeartBeatInterval):
+			case <-timer.C:
+				timer.Stop()
+				timer.Reset(se.conf.HeartBeatInterval)
 			case <-se.closeChan:
 			}
+
 		}
 	}
 }
