@@ -10,6 +10,12 @@ yamllint:
 	yamllint -c .yamllint.yaml \
 		otelcolbuilder/.otelcol-builder.yaml
 
+markdown-links-lint:
+	./ci/markdown_links_lint.sh
+
+markdown-link-check:
+	./ci/markdown_link_check.sh
+
 # ALL_MODULES includes ./* dirs (excludes . dir and example with go code)
 ALL_MODULES := $(shell find ./pkg -type f -name "go.mod" -exec dirname {} \; | sort | egrep  '^./' )
 
