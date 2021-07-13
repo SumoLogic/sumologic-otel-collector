@@ -25,7 +25,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"strings"
 	"sync"
 	"time"
@@ -37,16 +36,16 @@ import (
 )
 
 type SumologicExtension struct {
-	collectorName     string
-	baseUrl           string
-	httpClient        *http.Client
-	conf              *Config
-	logger            *zap.Logger
-	credentialsGetter CredsGetter
-	hashKey           string
-	registrationInfo  api.OpenRegisterResponsePayload
-	closeChan         chan struct{}
-	closeOnce         sync.Once
+	collectorName    string
+	baseUrl          string
+	httpClient       *http.Client
+	conf             *Config
+	logger           *zap.Logger
+	credentialsStore CredentialsStore
+	hashKey          string
+	registrationInfo api.OpenRegisterResponsePayload
+	closeChan        chan struct{}
+	closeOnce        sync.Once
 }
 
 const (
@@ -68,14 +67,14 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 	if err != nil {
 		return nil, err
 	}
-	credentialsGetter := credsGetter{
-		conf:   conf,
-		logger: logger,
+	credentialsStore := localFsCredentialsStore{
+		collectorCredentialsDirectory: conf.CollectorCredentialsDirectory,
+		logger:                        logger,
 	}
 	if conf.CollectorName == "" {
 		key := createHashKey(conf)
 		// If collector name is not set by the user check if the collector was restarted
-		if !credentialsGetter.CheckCollectorCredentials(key) {
+		if !credentialsStore.Check(key) {
 			// If credentials file is not stored on filesystem generate collector name
 			collectorName = fmt.Sprintf("%s-%s", hostname, uuid.New())
 		}
@@ -88,13 +87,13 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 	hashKey := createHashKey(conf)
 
 	return &SumologicExtension{
-		collectorName:     collectorName,
-		baseUrl:           strings.TrimSuffix(conf.ApiBaseUrl, "/"),
-		conf:              conf,
-		logger:            logger,
-		hashKey:           hashKey,
-		credentialsGetter: credentialsGetter,
-		closeChan:         make(chan struct{}),
+		collectorName:    collectorName,
+		baseUrl:          strings.TrimSuffix(conf.ApiBaseUrl, "/"),
+		conf:             conf,
+		logger:           logger,
+		hashKey:          hashKey,
+		credentialsStore: credentialsStore,
+		closeChan:        make(chan struct{}),
 	}, nil
 }
 
@@ -105,8 +104,8 @@ func createHashKey(conf *Config) string {
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
 	var colCreds CollectorCredentials
 	var err error
-	if se.credentialsGetter.CheckCollectorCredentials(se.hashKey) {
-		colCreds, err = se.credentialsGetter.GetStoredCredentials(se.hashKey)
+	if se.credentialsStore.Check(se.hashKey) {
+		colCreds, err = se.credentialsStore.Get(se.hashKey)
 		if err != nil {
 			return err
 		}
@@ -115,10 +114,10 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 			se.logger.Info("Found stored credentials, skipping registration")
 		} else {
 			se.logger.Info("Locally stored credentials found, but clobber flag is set: re-registering the collector")
-			if colCreds, err = se.credentialsGetter.RegisterCollector(ctx, se.collectorName); err != nil {
+			if colCreds, err = se.registerCollector(ctx, se.collectorName); err != nil {
 				return err
 			}
-			if err := se.storeCollectorCredentials(colCreds); err != nil {
+			if err := se.credentialsStore.Store(se.hashKey, colCreds); err != nil {
 				se.logger.Error("Unable to store collector credentials",
 					zap.Error(err),
 				)
@@ -126,10 +125,10 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 		}
 	} else {
 		se.logger.Info("Locally stored credentials not found, registering the collector")
-		if colCreds, err = se.credentialsGetter.RegisterCollector(ctx, se.collectorName); err != nil {
+		if colCreds, err = se.registerCollector(ctx, se.collectorName); err != nil {
 			return err
 		}
-		if err := se.storeCollectorCredentials(colCreds); err != nil {
+		if err := se.credentialsStore.Store(se.hashKey, colCreds); err != nil {
 			se.logger.Error("Unable to store collector credentials",
 				zap.Error(err),
 			)
@@ -166,59 +165,91 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 	}
 }
 
-// storeCollectorCredentials stores collector credentials in a file in directory
-// as specified in CollectorCredentialsDirectory. The credentials are encrypted using
-// hashed collector name.
-func (se *SumologicExtension) storeCollectorCredentials(credentials CollectorCredentials) error {
-	if err := ensureStoreCredentialsDir(se.conf.CollectorCredentialsDirectory); err != nil {
-		return err
-	}
-	filenameHash, err := hash(se.hashKey)
+// registerCollector registers the collector using registration API and returns
+// the obtained collector credentials.
+func (se *SumologicExtension) registerCollector(ctx context.Context, collectorName string) (CollectorCredentials, error) {
+	baseUrl := strings.TrimSuffix(se.conf.ApiBaseUrl, "/")
+	u, err := url.Parse(baseUrl)
 	if err != nil {
-		return err
+		return CollectorCredentials{}, err
 	}
-	path := path.Join(se.conf.CollectorCredentialsDirectory, filenameHash)
-	collectorCreds, err := json.Marshal(credentials)
+	u.Path = registerUrl
+
+	// TODO: just plain hostname or we want to add some custom logic when setting
+	// hostname in request?
+	hostname, err := os.Hostname()
 	if err != nil {
-		return err
+		return CollectorCredentials{}, fmt.Errorf("cannot get hostname: %w", err)
 	}
 
-	encryptedCreds, err := encrypt(collectorCreds, se.hashKey)
-	if err != nil {
-		return err
+	var buff bytes.Buffer
+	if err = json.NewEncoder(&buff).Encode(api.OpenRegisterRequestPayload{
+		CollectorName: collectorName,
+		Description:   se.conf.CollectorDescription,
+		Category:      se.conf.CollectorCategory,
+		Fields:        se.conf.CollectorFields,
+		Hostname:      hostname,
+		Ephemeral:     se.conf.Ephemeral,
+		Clobber:       se.conf.Clobber,
+		TimeZone:      se.conf.TimeZone,
+	}); err != nil {
+		return CollectorCredentials{}, err
 	}
 
-	if err = os.WriteFile(path, encryptedCreds, 0600); err != nil {
-		return fmt.Errorf("failed to save credentials file '%s': %w",
-			path, err,
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), &buff)
+	if err != nil {
+		return CollectorCredentials{}, err
+	}
+
+	addClientCredentials(req,
+		credentials{
+			AccessID:  se.conf.Credentials.AccessID,
+			AccessKey: se.conf.Credentials.AccessKey,
+		},
+	)
+	addJSONHeaders(req)
+
+	se.logger.Info("Calling register API", zap.String("URL", u.String()))
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return CollectorCredentials{}, fmt.Errorf("failed to register the collector: %w", err)
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode < 200 || res.StatusCode >= 400 {
+		var buff bytes.Buffer
+		if _, err := io.Copy(&buff, res.Body); err != nil {
+			return CollectorCredentials{}, fmt.Errorf(
+				"failed to copy collector registration response body, status code: %d, err: %w",
+				res.StatusCode, err,
+			)
+		}
+		se.logger.Debug("Collector registration failed",
+			zap.Int("status_code", res.StatusCode),
+			zap.String("response", buff.String()),
+		)
+		return CollectorCredentials{}, fmt.Errorf(
+			"failed to register the collector, got HTTP status code: %d",
+			res.StatusCode,
 		)
 	}
 
-	se.logger.Info("Collector registration credentials stored locally", zap.String("path", path))
-
-	return nil
-}
-
-// ensureStoreCredentialsDir checks if directory to store credentials exists,
-// if not try to create it.
-func ensureStoreCredentialsDir(path string) error {
-	fi, err := os.Stat(path)
-	if err != nil {
-		if err := os.Mkdir(path, 0700); err != nil {
-			return err
-		}
-		return nil
+	var resp api.OpenRegisterResponsePayload
+	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		return CollectorCredentials{}, err
 	}
 
-	// If the credentials directory doesn't have the execution bit then
-	// set it so that we can 'exec' into it.
-	if fi.Mode().Perm() != 0700 {
-		if err := os.Chmod(path, 0700); err != nil {
-			return err
-		}
-	}
+	se.logger.Info("Collector registered",
+		zap.String("CollectorID", resp.CollectorId),
+		zap.Any("response", resp),
+	)
 
-	return nil
+	return CollectorCredentials{
+		// TODO: When registration API will return registered name use it instead of collectorName
+		CollectorName: collectorName,
+		Credentials:   resp,
+	}, nil
 }
 
 func (se *SumologicExtension) heartbeatLoop() {
@@ -328,6 +359,14 @@ func (rt roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 func addCollectorCredentials(req *http.Request, collectorCredentialId string, collectorCredentialKey string) {
 	token := base64.StdEncoding.EncodeToString(
 		[]byte(collectorCredentialId + ":" + collectorCredentialKey),
+	)
+
+	req.Header.Add("Authorization", "Basic "+token)
+}
+
+func addClientCredentials(req *http.Request, credentials credentials) {
+	token := base64.StdEncoding.EncodeToString(
+		[]byte(credentials.AccessID + ":" + credentials.AccessKey),
 	)
 
 	req.Header.Add("Authorization", "Basic "+token)
