@@ -325,7 +325,7 @@ func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
 	matched, err := regexp.MatchString(regexPattern, se.collectorName)
 	require.NoError(t, err)
 	assert.True(t, matched)
-	colCreds, err := se.credentialsGetter.GetStoredCredentials(se.hashKey)
+	colCreds, err := se.credentialsStore.Get(se.hashKey)
 	require.NoError(t, err)
 	colName := colCreds.CollectorName
 	se, err = newSumologicExtension(cfg, zap.NewNop())
