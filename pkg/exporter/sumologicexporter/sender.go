@@ -54,6 +54,7 @@ type sender struct {
 	graphiteFormatter   graphiteFormatter
 	dataUrlMetrics      string
 	dataUrlLogs         string
+	dataUrlTraces       string
 }
 
 const (
@@ -95,6 +96,7 @@ func newSender(
 	gf graphiteFormatter,
 	metricsUrl string,
 	logsUrl string,
+	tracesUrl string,
 ) *sender {
 	return &sender{
 		config:              cfg,
@@ -106,6 +108,7 @@ func newSender(
 		graphiteFormatter:   gf,
 		dataUrlMetrics:      metricsUrl,
 		dataUrlLogs:         logsUrl,
+		dataUrlTraces:       tracesUrl,
 	}
 }
 
@@ -143,6 +146,8 @@ func (s *sender) createRequest(ctx context.Context, pipeline PipelineType, data 
 			url = s.dataUrlMetrics
 		case LogsPipeline:
 			url = s.dataUrlLogs
+		case TracesPipeline:
+			url = s.dataUrlTraces
 		default:
 			return nil, fmt.Errorf("unknown pipeline type: %s", pipeline)
 		}
@@ -420,6 +425,26 @@ func (s *sender) appendAndSend(
 	return ar, nil
 }
 
+// sendTraces sends traces in right format basing on the s.config.TraceFormat
+func (s *sender) sendTraces(ctx context.Context, td pdata.Traces, flds fields) error {
+	if s.config.TraceFormat == OTLPTraceFormat {
+		return s.sendOTLPTraces(ctx, td, flds)
+	}
+	return nil
+}
+
+// sendOTLPTraces sends trace records in OTLP format
+func (s *sender) sendOTLPTraces(ctx context.Context, td pdata.Traces, flds fields) error {
+	body, err := td.ToOtlpProtoBytes()
+	if err != nil {
+		return err
+	}
+	if err := s.send(ctx, TracesPipeline, bytes.NewReader(body), flds); err != nil {
+		return err
+	}
+	return nil
+}
+
 // cleanLogsBuffer zeroes logBuffer
 func (s *sender) cleanLogsBuffer() {
 	s.logBuffer = (s.logBuffer)[:0]
@@ -522,6 +547,16 @@ func addMetricsHeaders(req *http.Request, mf MetricFormatType) error {
 	return nil
 }
 
+func addTracesHeaders(req *http.Request, tf TraceFormatType) error {
+	switch tf {
+	case OTLPTraceFormat:
+		req.Header.Add(headerContentType, contentTypeOTLP)
+	default:
+		return fmt.Errorf("unsupported traces format: %s", tf)
+	}
+	return nil
+}
+
 func (s *sender) addRequestHeaders(req *http.Request, pipeline PipelineType, flds fields) error {
 	req.Header.Add(headerClient, s.config.Client)
 
@@ -535,6 +570,10 @@ func (s *sender) addRequestHeaders(req *http.Request, pipeline PipelineType, fld
 		addLogsHeaders(req, s.config.LogFormat, flds)
 	case MetricsPipeline:
 		if err := addMetricsHeaders(req, s.config.MetricFormat); err != nil {
+			return err
+		}
+	case TracesPipeline:
+		if err := addTracesHeaders(req, s.config.TraceFormat); err != nil {
 			return err
 		}
 	default:

@@ -33,6 +33,7 @@ import (
 const (
 	logsDataUrl    = "/api/v1/collector/logs"
 	metricsDataUrl = "/api/v1/collector/metrics"
+	tracesDataUrl  = "/api/v1/collector/traces"
 )
 
 type sumologicexporter struct {
@@ -44,6 +45,7 @@ type sumologicexporter struct {
 	graphiteFormatter   graphiteFormatter
 	dataUrlMetrics      string
 	dataUrlLogs         string
+	dataUrlTraces       string
 }
 
 func initExporter(cfg *Config) (*sumologicexporter, error) {
@@ -62,6 +64,12 @@ func initExporter(cfg *Config) (*sumologicexporter, error) {
 	case OTLPMetricFormat:
 	default:
 		return nil, fmt.Errorf("unexpected metric format: %s", cfg.MetricFormat)
+	}
+
+	switch cfg.TraceFormat {
+	case OTLPTraceFormat:
+	default:
+		return nil, fmt.Errorf("unexpected trace format: %s", cfg.TraceFormat)
 	}
 
 	switch cfg.CompressEncoding {
@@ -159,6 +167,29 @@ func newMetricsExporter(
 	)
 }
 
+func newTracesExporter(
+	cfg *Config,
+	params component.ExporterCreateParams,
+) (component.TracesExporter, error) {
+	se, err := initExporter(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return exporterhelper.NewTracesExporter(
+		cfg,
+		params.Logger,
+		se.pushTracesData,
+		// Disable exporterhelper Timeout, since we are using a custom mechanism
+		// within exporter itself
+		exporterhelper.WithTimeout(exporterhelper.TimeoutSettings{Timeout: 0}),
+		exporterhelper.WithRetry(cfg.RetrySettings),
+		exporterhelper.WithQueue(cfg.QueueSettings),
+		exporterhelper.WithStart(se.start),
+		exporterhelper.WithShutdown(se.shutdown),
+	)
+}
+
 // pushLogsData groups data with common metadata and sends them as separate batched requests.
 // It returns the number of unsent logs and an error which contains a list of dropped records
 // so they can be handled by OTC retry mechanism
@@ -185,6 +216,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		se.graphiteFormatter,
 		se.dataUrlMetrics,
 		se.dataUrlLogs,
+		se.dataUrlTraces,
 	)
 
 	// Iterate over ResourceLogs
@@ -292,6 +324,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		se.graphiteFormatter,
 		se.dataUrlMetrics,
 		se.dataUrlLogs,
+		se.dataUrlTraces,
 	)
 
 	// Iterate over ResourceMetrics
@@ -371,6 +404,32 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 	return nil
 }
 
+func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces) error {
+	var currentMetadata fields = newFields(pdata.NewAttributeMap())
+	c, err := newCompressor(se.config.CompressEncoding)
+	if err != nil {
+		return consumererror.NewTraces(fmt.Errorf("failed to initialize compressor: %w", err), td)
+	}
+	sdr := newSender(
+		se.config,
+		se.client,
+		se.filter,
+		se.sources,
+		c,
+		se.prometheusFormatter,
+		se.graphiteFormatter,
+		se.dataUrlMetrics,
+		se.dataUrlLogs,
+		se.dataUrlTraces,
+	)
+	err = sdr.sendTraces(ctx, td, currentMetadata)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (se *sumologicexporter) start(ctx context.Context, host component.Host) error {
 	var (
 		ext          *sumologicextension.SumologicExtension
@@ -402,9 +461,12 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 		se.dataUrlLogs = u.String()
 		u.Path = metricsDataUrl
 		se.dataUrlMetrics = u.String()
+		u.Path = tracesDataUrl
+		se.dataUrlTraces = u.String()
 	} else if httpSettings.Endpoint != "" {
 		se.dataUrlLogs = httpSettings.Endpoint
 		se.dataUrlMetrics = httpSettings.Endpoint
+		se.dataUrlTraces = httpSettings.Endpoint
 	} else {
 		return fmt.Errorf("no auth extension and no endpoint specified")
 	}

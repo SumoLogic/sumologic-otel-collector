@@ -35,6 +35,7 @@ func NewFactory() component.ExporterFactory {
 		createDefaultConfig,
 		exporterhelper.WithLogs(createLogsExporter),
 		exporterhelper.WithMetrics(createMetricsExporter),
+		exporterhelper.WithTraces(createTracesExporter),
 	)
 }
 
@@ -55,6 +56,7 @@ func createDefaultConfig() config.Exporter {
 		SourceHost:          DefaultSourceHost,
 		Client:              DefaultClient,
 		GraphiteTemplate:    DefaultGraphiteTemplate,
+		TraceFormat:         OTLPTraceFormat,
 
 		HTTPClientSettings: CreateDefaultHTTPClientSettings(),
 		RetrySettings:      exporterhelper.DefaultRetrySettings(),
@@ -83,6 +85,19 @@ func createMetricsExporter(
 	exp, err := newMetricsExporter(cfg.(*Config), params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the metrics exporter: %w", err)
+	}
+
+	return exp, nil
+}
+
+func createTracesExporter(
+	_ context.Context,
+	params component.ExporterCreateParams,
+	cfg config.Exporter,
+) (component.TracesExporter, error) {
+	exp, err := newTracesExporter(cfg.(*Config), params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create the traces exporter: %w", err)
 	}
 
 	return exp, nil

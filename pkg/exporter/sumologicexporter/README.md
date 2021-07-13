@@ -25,6 +25,10 @@ exporters:
     # NOTE: only `otlp` is supported when used with sumologicextension
     metric_format: {carbon2, graphite, otlp, prometheus}
 
+    # format to use when sending traces to Sumo,
+    # currently only otlp is supported
+    trace_format: {otlp}
+
     # timeout is the timeout for every attempt to send data to the backend,
     # maximum connection timeout is 55s, default = 5s
     timeout: <timeout>

@@ -88,6 +88,7 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 			gf,
 			"",
 			"",
+			"",
 		),
 	}
 }
@@ -166,6 +167,38 @@ func exampleMultitypeLogs() []pdata.LogRecord {
 	buffer[1].Attributes().InsertString("key2", "value2")
 
 	return buffer
+}
+
+func exampleTrace() pdata.Traces {
+	td := pdata.NewTraces()
+	rs := td.ResourceSpans().AppendEmpty()
+	rs.Resource().Attributes().UpsertString("hostname", "testHost")
+	span := rs.InstrumentationLibrarySpans().AppendEmpty().Spans().AppendEmpty()
+	span.SetTraceID(pdata.NewTraceID([16]byte{0x5B, 0x8E, 0xFF, 0xF7, 0x98, 0x3, 0x81, 0x3, 0xD2, 0x69, 0xB6, 0x33, 0x81, 0x3F, 0xC6, 0xC}))
+	span.SetSpanID(pdata.NewSpanID([8]byte{0xEE, 0xE1, 0x9B, 0x7E, 0xC3, 0xC1, 0xB1, 0x73}))
+	span.SetName("testSpan")
+	span.SetStartTimestamp(1544712660000000000)
+	span.SetEndTimestamp(1544712661000000000)
+	span.Attributes().UpsertInt("attr1", 55)
+	return td
+}
+
+func TestSendTrace(t *testing.T) {
+	td := exampleTrace()
+	traceBody, err := td.ToOtlpProtoBytes()
+	assert.NoError(t, err)
+	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, string(traceBody), body)
+			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
+			assert.Equal(t, "application/x-protobuf", req.Header.Get("Content-Type"))
+		},
+	})
+
+	err = test.s.sendTraces(context.Background(), td, fieldsFromMap(map[string]string{}))
+	assert.NoError(t, err)
+
 }
 
 func TestSendLogs(t *testing.T) {
