@@ -2,8 +2,11 @@
 
 Supported pipeline types: traces
 
-The Cascading Filter processor is a [fork of tailsamplingprocessor](../tailsamplingprocessor) which
-allows for defining smart cascading filtering rules with preset limits.
+The Cascading Filter processor is a fork of
+[tailsamplingprocessor][tailsamplingprocessor] which allows for defining smart
+cascading filtering rules with preset limits.
+
+[tailsamplingprocessor]:https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/tailsamplingprocessor
 
 ## Processor configuration
 
