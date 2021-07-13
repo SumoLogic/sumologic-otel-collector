@@ -17,6 +17,7 @@ package sumologicextension
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -134,8 +135,10 @@ func (cr credsGetter) RegisterCollector(ctx context.Context, collectorName strin
 	}
 
 	addClientCredentials(req,
-		cr.conf.Credentials.AccessID,
-		cr.conf.Credentials.AccessKey,
+		credentials{
+			AccessID:  cr.conf.Credentials.AccessID,
+			AccessKey: cr.conf.Credentials.AccessKey,
+		},
 	)
 	addJSONHeaders(req)
 
@@ -182,10 +185,12 @@ func (cr credsGetter) RegisterCollector(ctx context.Context, collectorName strin
 	}, nil
 }
 
-func addClientCredentials(req *http.Request, accessID string, accessKey string) {
-	// TODO: What is preferred: headers or basic auth?
-	req.Header.Add("accessid", accessID)
-	req.Header.Add("accesskey", accessKey)
+func addClientCredentials(req *http.Request, credentials credentials) {
+	token := base64.StdEncoding.EncodeToString(
+		[]byte(credentials.AccessID + ":" + credentials.AccessKey),
+	)
+
+	req.Header.Add("Authorization", "Basic "+token)
 }
 
 func addJSONHeaders(req *http.Request) {
