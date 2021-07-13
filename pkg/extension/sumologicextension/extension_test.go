@@ -16,6 +16,7 @@ package sumologicextension
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -331,4 +332,52 @@ func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	assert.Equal(t, se.collectorName, colName)
+}
+
+func TestCollectorSendsBasicAuthHeadersOnRegistration(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		assert.Empty(t, req.Header.Get("accessid"))
+		assert.Empty(t, req.Header.Get("accesskey"))
+		authHeader := req.Header.Get("Authorization")
+		token := base64.StdEncoding.EncodeToString(
+			[]byte("dummy_access_id:dummy_access_key"),
+		)
+		assert.Equal(t, "Basic "+token, authHeader)
+
+		if req.URL.Path == registerUrl {
+			_, err := w.Write([]byte(`{
+				"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
+				"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+				"collectorId": "000000000FFFFFFF"
+			}`))
+
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				t.FailNow()
+				return
+			}
+			return
+		}
+	}))
+	t.Cleanup(func() {
+		srv.Close()
+	})
+
+	dir, err := os.MkdirTemp("", "otelcol-sumo-store-credentials-test-*")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		os.RemoveAll(dir)
+	})
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.CollectorName = ""
+	cfg.ApiBaseUrl = srv.URL
+	cfg.Credentials.AccessID = "dummy_access_id"
+	cfg.Credentials.AccessKey = "dummy_access_key"
+	cfg.CollectorCredentialsDirectory = dir
+
+	se, err := newSumologicExtension(cfg, zap.NewNop())
+	require.NoError(t, err)
+	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+	require.NoError(t, se.Shutdown(context.Background()))
 }
