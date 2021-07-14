@@ -196,12 +196,6 @@ jobs:
           go version -m otelcol-sumo-${{matrix.arch_os}} | \
           grep -E "/(receiver|exporter|processor|extension)/"
 
-      # TODO:
-      # Move that out to a separate job and run on a corresponding's OS runner.
-      # - name: Run the binary
-      #   run: ./otelcol-sumo-${{matrix.arch_os}} --version
-      #   working-directory: ./otelcolbuilder/cmd/
-
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v2
         with:
@@ -259,15 +253,32 @@ jobs:
           go version -m otelcol-sumo-${{matrix.arch_os}} | \
           grep -E "/(receiver|exporter|processor|extension)/"
 
-      # TODO:
-      # Move that out to a separate job and run on a corresponding's OS runner.
-      # - name: Run the binary
-      #   run: ./otelcol-sumo-${{matrix.arch_os}} --version
-      #   working-directory: ./otelcolbuilder/cmd/
-
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v2
         with:
           name: otelcol-sumo-${{matrix.arch_os}}
           path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}
           if-no-files-found: error
+
+  run-binaries:
+    name: Run the binaries
+    runs-on: ${{ matrix.runs_on }}
+    needs:
+      - build
+      - build-mac
+    strategy:
+      matrix:
+        include:
+          - arch_os: linux_amd64
+            runs_on: ubuntu-20.04
+          - arch_os: linux_arm64
+            runs_on: ubuntu-20.04
+          - arch_os: darwin_amd64
+            runs_on: macos-latest
+    steps:
+      - name: Download the binary from build phase artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: otelcol-sumo-${{ matrix.arch_os }}
+      - name: Run the binary
+        run: ./otelcol-sumo-${{ matrix.arch_os }}
