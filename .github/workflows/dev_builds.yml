@@ -10,17 +10,17 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.runs_on }}
     strategy:
       matrix:
         go: [ '1.17.0-rc1' ]
-        # TODO:
-        # when telegraf dependency gets removed for any reason merge MacOS
-        # builds with other OSes. Until this happens test/build it separately
-        # due to CGO_RELATED cross compilation issues.
-        # Exemplar failed workflow:
-        # https://github.com/SumoLogic/sumologic-otel-collector/runs/2963259368
-        arch_os: [ 'linux_amd64', 'linux_arm64' ]
+        include:
+          - arch_os: linux_amd64
+            runs_on: ubuntu-20.04
+          - arch_os: linux_arm64
+            runs_on: ubuntu-20.04
+          - arch_os: darwin_amd64
+            runs_on: macos-latest
     steps:
       - uses: actions/checkout@v2.3.4
 
@@ -59,82 +59,9 @@ jobs:
           grep -E "/(receiver|exporter|processor|extension)/" | \
           tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
 
-      # TODO:
-      # Move that out to a separate job and run on a corresponding's OS runner.
-      # - name: Run the binary
-      #   run: ./otelcol-sumo-${{matrix.arch_os}} --version
-      #   working-directory: ./otelcolbuilder/cmd/
-
-      - name: Store binary as action artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: otelcol-sumo-${{matrix.arch_os}}
-          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}
-          if-no-files-found: error
-
-      - name: Store list of included modules as action artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: otelcol-sumo-${{matrix.arch_os}}_modules.txt
-          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}_modules.txt
-          if-no-files-found: error
-
-  build-mac:
-    name: Build
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        go: [ '1.17.0-rc1' ]
-        # TODO:
-        # when telegraf dependency gets removed for any reason merge MacOS
-        # builds with other OSes. Until this happens test/build it separately
-        # due to CGO_RELATED cross compilation issues.
-        # Exemplar failed workflow:
-        # https://github.com/SumoLogic/sumologic-otel-collector/runs/2963259368
-        arch_os: [ 'darwin_amd64' ]
-    steps:
-      - uses: actions/checkout@v2.3.4
-
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
-
-      - name: Setup go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ matrix.go }}
-          stable: 'false'
-
-      # As described in
-      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
-      - uses: actions/cache@v2
-        with:
-          path: |
-            /home/runner/go/pkg/mod
-            /home/runner/.cache/go-build
-          key: ${{matrix.arch_os}}-go-${{matrix.go}}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{matrix.arch_os}}-go-${{matrix.go}}-
-
-      - name: Install opentelemetry-collector-builder
-        run: make install
-        working-directory: ./otelcolbuilder
-
-      - name: Build
-        run: make otelcol-sumo-${{matrix.arch_os}}
-        working-directory: ./otelcolbuilder
-
-      - name: Show included modules
-        working-directory: ./otelcolbuilder/cmd
-        run: |
-          go version -m otelcol-sumo-${{matrix.arch_os}} | \
-          grep -E "/(receiver|exporter|processor|extension)/" | \
-          tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
-
-      # TODO:
-      # Move that out to a separate job and run on a corresponding's OS runner.
-      # - name: Run the binary
-      #   run: ./otelcol-sumo-${{matrix.arch_os}} --version
-      #   working-directory: ./otelcolbuilder/cmd/
+      - name: Run the binary
+        run: ./otelcol-sumo-${{matrix.arch_os}} --version
+        working-directory: ./otelcolbuilder/cmd/
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v2
