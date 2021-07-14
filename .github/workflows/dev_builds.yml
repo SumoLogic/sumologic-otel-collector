@@ -13,17 +13,14 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: [ '1.17.0-beta1' ]
-        # TODO: add arm64 when fix for
-        # https://github.com/golang/go/issues/46766#event-4898300932
-        # gets released in next 1.17 beta/rc.
+        go: [ '1.17.0-rc1' ]
         # TODO:
         # when telegraf dependency gets removed for any reason merge MacOS
         # builds with other OSes. Until this happens test/build it separately
         # due to CGO_RELATED cross compilation issues.
         # Exemplar failed workflow:
         # https://github.com/SumoLogic/sumologic-otel-collector/runs/2963259368
-        arch_os: [ 'linux_amd64' ]
+        arch_os: [ 'linux_amd64', 'linux_arm64' ]
     steps:
       - uses: actions/checkout@v2.3.4
 
@@ -62,9 +59,11 @@ jobs:
           grep -E "/(receiver|exporter|processor|extension)/" | \
           tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
 
-      - name: Run the binary
-        run: ./otelcol-sumo-${{matrix.arch_os}} --version
-        working-directory: ./otelcolbuilder/cmd/
+      # TODO:
+      # Move that out to a separate job and run on a corresponding's OS runner.
+      # - name: Run the binary
+      #   run: ./otelcol-sumo-${{matrix.arch_os}} --version
+      #   working-directory: ./otelcolbuilder/cmd/
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v2
@@ -85,7 +84,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        go: [ '1.17.0-beta1' ]
+        go: [ '1.17.0-rc1' ]
         # TODO:
         # when telegraf dependency gets removed for any reason merge MacOS
         # builds with other OSes. Until this happens test/build it separately
@@ -131,9 +130,11 @@ jobs:
           grep -E "/(receiver|exporter|processor|extension)/" | \
           tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
 
-      - name: Run the binary
-        run: ./otelcol-sumo-${{matrix.arch_os}} --version
-        working-directory: ./otelcolbuilder/cmd/
+      # TODO:
+      # Move that out to a separate job and run on a corresponding's OS runner.
+      # - name: Run the binary
+      #   run: ./otelcol-sumo-${{matrix.arch_os}} --version
+      #   working-directory: ./otelcolbuilder/cmd/
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v2
@@ -157,10 +158,7 @@ jobs:
       - build-mac
     strategy:
       matrix:
-        # TODO: add arm64 when fix for
-        # https://github.com/golang/go/issues/46766#event-4898300932
-        # gets released in next 1.17 beta/rc.
-        arch_os: [ 'linux_amd64' ]
+        arch_os: [ 'linux_amd64', 'linux_arm64' ]
     steps:
       - uses: actions/checkout@v2.3.4
 
@@ -245,13 +243,10 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
 
       - name: Push joint container manifest for all platforms to Open Source ECR
-        # TODO: add arm64 when fix for
-        # https://github.com/golang/go/issues/46766#event-4898300932
-        # gets released in next 1.17 beta/rc.
         run: |
           make push-container-manifest-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
-            PLATFORMS="linux/amd64"
+            PLATFORMS="linux/amd64 linux/arm64"
 
       # TODO: should be removed after sumologic ECR alias migration
       - name: Login to legacy ECR
@@ -261,10 +256,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LEGACY_AWS_SECRET_ACCESS_KEY }}
 
       - name: Push joint container manifest for all platforms to legacy ECR
-        # TODO: add arm64 when fix for
-        # https://github.com/golang/go/issues/46766#event-4898300932
-        # gets released in next 1.17 beta/rc.
         run: |
           make push-container-manifest-legacy-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
-            PLATFORMS="linux/amd64"
+            PLATFORMS="linux/amd64 linux/arm64"
