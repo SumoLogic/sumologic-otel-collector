@@ -49,14 +49,14 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: [ '1.16.5', '1.17.0-beta1' ]
+        go: [ '1.16.5', '1.17.0-rc1' ]
         # TODO:
         # when telegraf dependency gets removed for any reason merge MacOS
         # builds with other OSes. Until this happens test/build it separately
         # due to CGO_RELATED cross compilation issues.
         # Exemplar failed workflow:
         # https://github.com/SumoLogic/sumologic-otel-collector/runs/2963259368
-        arch_os: [ 'linux_amd64' ]
+        arch_os: [ 'linux_amd64', 'linux_arm64' ]
     steps:
       - uses: actions/checkout@v2.3.4
 
@@ -85,7 +85,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        go: [ '1.16.5', '1.17.0-beta1' ]
+        go: [ '1.16.5', '1.17.0-rc1' ]
         arch_os: [ 'darwin_amd64' ]
     steps:
       - uses: actions/checkout@v2.3.4
@@ -115,7 +115,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: [ '1.16.5', '1.17.0-beta1' ]
+        go: [ '1.16.5', '1.17.0-rc1' ]
         arch_os: [ 'linux_amd64' ]
     steps:
       - uses: actions/checkout@v2.3.4
@@ -157,8 +157,8 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: [ '1.17.0-beta1' ]
-        arch_os: [ 'linux_amd64' ]
+        go: [ '1.17.0-rc1' ]
+        arch_os: [ 'linux_amd64', 'linux_arm64' ]
     steps:
       - uses: actions/checkout@v2.3.4
 
@@ -196,9 +196,11 @@ jobs:
           go version -m otelcol-sumo-${{matrix.arch_os}} | \
           grep -E "/(receiver|exporter|processor|extension)/"
 
-      - name: Run the binary
-        run: ./otelcol-sumo-${{matrix.arch_os}} --version
-        working-directory: ./otelcolbuilder/cmd/
+      # TODO:
+      # Move that out to a separate job and run on a corresponding's OS runner.
+      # - name: Run the binary
+      #   run: ./otelcol-sumo-${{matrix.arch_os}} --version
+      #   working-directory: ./otelcolbuilder/cmd/
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v2
@@ -212,7 +214,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        go: [ '1.17.0-beta1' ]
+        go: [ '1.17.0-rc1' ]
         # TODO:
         # when telegraf dependency gets removed for any reason merge MacOS
         # builds with other OSes. Until this happens test/build it separately
@@ -257,9 +259,11 @@ jobs:
           go version -m otelcol-sumo-${{matrix.arch_os}} | \
           grep -E "/(receiver|exporter|processor|extension)/"
 
-      - name: Run the binary
-        run: ./otelcol-sumo-${{matrix.arch_os}} --version
-        working-directory: ./otelcolbuilder/cmd/
+      # TODO:
+      # Move that out to a separate job and run on a corresponding's OS runner.
+      # - name: Run the binary
+      #   run: ./otelcol-sumo-${{matrix.arch_os}} --version
+      #   working-directory: ./otelcolbuilder/cmd/
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v2
