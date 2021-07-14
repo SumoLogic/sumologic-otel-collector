@@ -49,14 +49,19 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     strategy:
       matrix:
-        go: [ '1.16.5', '1.17.0-rc1' ]
         include:
           - arch_os: linux_amd64
             runs_on: ubuntu-20.04
-          - arch_os: linux_arm64
-            runs_on: ubuntu-20.04
+            go: '1.16.5'
           - arch_os: darwin_amd64
             runs_on: macos-latest
+            go: '1.16.5'
+          - arch_os: linux_amd64
+            runs_on: ubuntu-20.04
+            go: '1.17.0-rc1'
+          - arch_os: darwin_amd64
+            runs_on: macos-latest
+            go: '1.17.0-rc1'
     steps:
       - uses: actions/checkout@v2.3.4
 
@@ -127,14 +132,25 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     strategy:
       matrix:
-        go: [ '1.17.0-rc1' ]
         include:
           - arch_os: linux_amd64
             runs_on: ubuntu-20.04
+            go: '1.16.5'
           - arch_os: linux_arm64
             runs_on: ubuntu-20.04
+            go: '1.16.5'
           - arch_os: darwin_amd64
             runs_on: macos-latest
+            go: '1.16.5'
+          - arch_os: linux_amd64
+            runs_on: ubuntu-20.04
+            go: '1.17.0-rc1'
+          - arch_os: linux_arm64
+            runs_on: ubuntu-20.04
+            go: '1.17.0-rc1'
+          - arch_os: darwin_amd64
+            runs_on: macos-latest
+            go: '1.17.0-rc1'
     steps:
       - uses: actions/checkout@v2.3.4
 
@@ -166,9 +182,11 @@ jobs:
         run: make otelcol-sumo-${{matrix.arch_os}}
         working-directory: ./otelcolbuilder
 
-      - name: Run the binary
-        working-directory: ./otelcolbuilder/cmd
-        run: ./otelcol-sumo-${{ matrix.arch_os }}
+      # TODO:
+      # Move that out to a separate job and run on a corresponding's OS runner.
+      # - name: Run the binary
+      #   run: ./otelcol-sumo-${{matrix.arch_os}} --version
+      #   working-directory: ./otelcolbuilder/cmd/
 
       - name: Show included modules
         working-directory: ./otelcolbuilder/cmd
