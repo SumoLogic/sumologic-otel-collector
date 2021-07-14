@@ -7,7 +7,7 @@ RUN chmod 755 /otelcol-sumo
 FROM alpine:3.13 as certs
 RUN apk --update add ca-certificates
 
-FROM golang:1.17beta1
+FROM golang:1.17rc1
 ARG BUILD_TAG=latest
 ENV TAG $BUILD_TAG
 ARG USER_UID=10001
