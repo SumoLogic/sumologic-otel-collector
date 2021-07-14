@@ -435,24 +435,35 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 		ext          *sumologicextension.SumologicExtension
 		foundSumoExt bool
 	)
+
+	httpSettings := se.config.HTTPClientSettings
+
 	for _, e := range host.GetExtensions() {
 		v, ok := e.(*sumologicextension.SumologicExtension)
-		if ok {
+		if ok && httpSettings.Auth.AuthenticatorName == v.ComponentID() {
 			ext = v
 			foundSumoExt = true
 			break
 		}
 	}
 
-	httpSettings := se.config.HTTPClientSettings
-
-	// If we're using sumologicextension as authentication extension and
-	// endpoint was not set then send data on a collector generic ingest URL
-	// with authentication set by sumologicextension.
 	if httpSettings.Endpoint == "" && httpSettings.Auth != nil &&
-		// TODO: is there a better way than strings.Prefix of auth name?
-		strings.HasPrefix(httpSettings.Auth.AuthenticatorName, "sumologic") &&
-		foundSumoExt {
+		strings.HasPrefix(httpSettings.Auth.AuthenticatorName, "sumologic") {
+		// If user specified using sumologicextension as auth but none was
+		// found then return an error.
+		if !foundSumoExt {
+			return fmt.Errorf(
+				"sumologic was specified as auth extension (named: %q) but "+
+					"a matching extension was not found in the config, "+
+					"please re-check the config and/or define the sumologicextension",
+				httpSettings.Auth.AuthenticatorName,
+			)
+		}
+
+		// If we're using sumologicextension as authentication extension and
+		// endpoint was not set then send data on a collector generic ingest URL
+		// with authentication set by sumologicextension.
+
 		u, err := url.Parse(ext.BaseUrl())
 		if err != nil {
 			return fmt.Errorf("failed to parse API base URL from sumologicextension: %w", err)

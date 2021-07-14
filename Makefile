@@ -4,7 +4,8 @@ markdownlint: mdl
 
 mdl:
 	mdl --style .markdownlint/style.rb \
-		README.md
+		README.md \
+		docs
 
 yamllint:
 	yamllint -c .yamllint.yaml \
