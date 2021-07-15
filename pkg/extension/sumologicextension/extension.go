@@ -134,6 +134,10 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 			)
 		}
 	}
+
+	// TODO: change this to get the collector name as returned by the API.
+	se.logger = se.logger.With(zap.String("collector_name", se.collectorName))
+
 	se.registrationInfo = colCreds.Credentials
 
 	se.httpClient, err = se.conf.HTTPClientSettings.ToClient(host.GetExtensions())
@@ -323,6 +327,10 @@ func (se *SumologicExtension) sendHeartbeat(ctx context.Context) error {
 	}
 	return nil
 
+}
+
+func (se *SumologicExtension) ComponentID() string {
+	return se.conf.ExtensionSettings.ID().String()
 }
 
 func (se *SumologicExtension) CollectorID() string {

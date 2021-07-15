@@ -1,9 +1,19 @@
 # Configuration
 
-* [Extensions](#extensions)
-* [Receivers](#receivers)
-* [Processors](#processors)
-* [Exporters](#exporters)
+- [Extensions](#extensions)
+  - [Using multiple extensions](#using-multiple-extensions)
+- [Receivers](#receivers)
+  - [Filelog Receiver](#filelog-receiver)
+  - [Fluent Forward Receiver](#fluent-forward-receiver)
+  - [Syslog Receiver](#syslog-receiver)
+  - [Statsd Receiver](#statsd-receiver)
+  - [Telegraf Receiver](#telegraf-receiver)
+  - [OTLP Receiver](#otlp-receiver)
+  - [Receivers from OpenTelemetry Collector](#receivers-from-opentelemetry-collector)
+- [Processors](#processors)
+- [Exporters](#exporters)
+
+---
 
 ## Extensions
 
@@ -48,6 +58,58 @@ For a list of all configuration options for sumologicextension please refer to
 [hostmetricsreceiver]: https://github.com/SumoLogic/opentelemetry-collector/tree/release-0.27/receiver/hostmetricsreceiver
 [sumologicextension_configuration]: ../pkg/extension/sumologicextension#configuration
 
+### Using multiple extensions
+
+In case one would want to register multiple collectors and/or send data to
+mutiple orgs at Sumo, mutiple `sumologicextension`s can be defined within the
+pipeline and used in exporter definitions.
+
+In such a scenario custom authenticator name has to be specified to point at
+the correct extension ID.
+
+Example:
+
+```yaml
+extensions:
+  sumologic/custom_auth1:
+    access_id: <my_access_id1>
+    access_key: <my_access_key1>
+    collector_name: <my_collector_name1>
+
+  sumologic/custom_auth2:
+    access_id: <my_access_id2>
+    access_key: <my_access_key2>
+    collector_name: <my_collector_name2>
+
+receivers:
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      load:
+  filelog:
+    include: [ "**.log" ]
+
+exporters:
+  sumologic/custom1:
+    auth:
+      authenticator: sumologic/custom_auth1
+  sumologic/custom2:
+    auth:
+      authenticator: sumologic/custom_auth2
+
+service:
+  extensions: [sumologic/custom_auth1, sumologic/custom_auth2]
+  pipelines:
+    metrics/1:
+      receivers: [hostmetrics]
+      exporters: [sumologic/custom1]
+    logs/1:
+      receivers: [filelog]
+      exporters: [sumologic/custom2]
+```
+
+---
+
 ## Receivers
 
 ### Filelog Receiver
@@ -60,7 +122,7 @@ The basic configuration for Filelog Receiver has following format:
 receivers:
   filelog:
     include: [ /var/log/myservice/*.json ]
-    operators:    
+    operators:
       - type: json_parser
         timestamp:
           parse_from: time
@@ -208,6 +270,10 @@ Receivers along with documentation can be found [here][opentelemetry-collector-r
 [opentelemetry-collector]: https://github.com/SumoLogic/opentelemetry-collector/tree/release-0.27
 [opentelemetry-collector-receivers]: https://github.com/SumoLogic/opentelemetry-collector/tree/release-0.27/receiver
 
+---
+
 ## Processors
+
+---
 
 ## Exporters
