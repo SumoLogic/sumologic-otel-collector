@@ -478,6 +478,12 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 		se.dataUrlLogs = httpSettings.Endpoint
 		se.dataUrlMetrics = httpSettings.Endpoint
 		se.dataUrlTraces = httpSettings.Endpoint
+
+		// Clean authenticator if set to sumologic.
+		// Setting to null in configuration doesn't work, so we have to force it that way.
+		if httpSettings.Auth != nil && strings.HasPrefix(httpSettings.Auth.AuthenticatorName, "sumologic") {
+			httpSettings.Auth = nil
+		}
 	} else {
 		return fmt.Errorf("no auth extension and no endpoint specified")
 	}
