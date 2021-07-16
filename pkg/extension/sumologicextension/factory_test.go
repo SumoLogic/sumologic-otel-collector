@@ -48,7 +48,7 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 	ccfg.Credentials.AccessKey = "dummy_access_key"
 
 	ext, err := createExtension(context.Background(),
-		component.ExtensionCreateParams{Logger: zap.NewNop()},
+		component.ExtensionCreateSettings{Logger: zap.NewNop()},
 		cfg,
 	)
 	require.NoError(t, err)
@@ -62,7 +62,7 @@ func TestFactory_CreateExtension(t *testing.T) {
 	cfg.Credentials.AccessKey = "dummy_access_key"
 
 	ext, err := createExtension(context.Background(),
-		component.ExtensionCreateParams{Logger: zap.NewNop()},
+		component.ExtensionCreateSettings{Logger: zap.NewNop()},
 		cfg,
 	)
 	require.NoError(t, err)
