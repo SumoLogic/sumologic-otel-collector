@@ -93,7 +93,8 @@ replaces:
   # ToDo: Remove after listed PRs are in upstream.
   # - https://github.com/open-telemetry/opentelemetry-log-collection/pull/189
   # - https://github.com/open-telemetry/opentelemetry-log-collection/pull/212
-  - github.com/open-telemetry/opentelemetry-log-collection => github.com/SumoLogic/opentelemetry-log-collection v0.18.1-0.20210707064329-e67e78e10a47
+  # - https://github.com/open-telemetry/opentelemetry-log-collection/pull/216
+  - github.com/open-telemetry/opentelemetry-log-collection => github.com/open-telemetry/opentelemetry-log-collection v0.19.1-0.20210715195747-a3bb88ced3ba
 
   # Needed due to https://github.com/golang/go/issues/46645 present in go1.17-beta1
   # and in go1.17rc1.
