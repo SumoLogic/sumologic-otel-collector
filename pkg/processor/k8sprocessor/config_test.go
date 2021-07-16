@@ -38,8 +38,7 @@ func TestLoadConfig(t *testing.T) {
 	err = configcheck.ValidateConfig(factory.CreateDefaultConfig())
 	require.NoError(t, err)
 
-	cfg, err := configtest.LoadConfigFile(
-		t,
+	cfg, err := configtest.LoadConfig(
 		path.Join(".", "testdata", "config.yaml"),
 		factories)
 

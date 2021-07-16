@@ -26,9 +26,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/consumer/pdata"
-	tracetranslator "go.opentelemetry.io/collector/translator/trace"
 	"go.uber.org/zap"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor/bigendianconverter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor/config"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor/idbatcher"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor/sampling"
@@ -38,13 +38,14 @@ const (
 	defaultTestDecisionWait = 30 * time.Second
 )
 
+//nolint:unused
 var testPolicy = []config.PolicyCfg{{
 	Name:           "test-policy",
 	SpansPerSecond: 1000,
 }}
 
 func TestSequentialTraceArrival(t *testing.T) {
-	traceIds, batches := generateIdsAndBatches(128)
+	traceIds, batches := generateIdsAndBatches(t, 128)
 	cfg := config.Config{
 		DecisionWait:            defaultTestDecisionWait,
 		NumTraces:               uint64(2 * len(traceIds)),
@@ -67,7 +68,7 @@ func TestSequentialTraceArrival(t *testing.T) {
 }
 
 func TestConcurrentTraceArrival(t *testing.T) {
-	traceIds, batches := generateIdsAndBatches(128)
+	traceIds, batches := generateIdsAndBatches(t, 128)
 
 	var wg sync.WaitGroup
 	cfg := config.Config{
@@ -107,7 +108,7 @@ func TestConcurrentTraceArrival(t *testing.T) {
 }
 
 func TestSequentialTraceMapSize(t *testing.T) {
-	traceIds, batches := generateIdsAndBatches(210)
+	traceIds, batches := generateIdsAndBatches(t, 210)
 	const maxSize = 100
 	cfg := config.Config{
 		DecisionWait:            defaultTestDecisionWait,
@@ -132,7 +133,7 @@ func TestSequentialTraceMapSize(t *testing.T) {
 }
 
 func TestConcurrentTraceMapSize(t *testing.T) {
-	_, batches := generateIdsAndBatches(210)
+	_, batches := generateIdsAndBatches(t, 210)
 	const maxSize = 100
 	var wg sync.WaitGroup
 	cfg := config.Config{
@@ -186,7 +187,7 @@ func TestSamplingPolicyTypicalPath(t *testing.T) {
 		maxSpansPerSecond: 10000,
 	}
 
-	_, batches := generateIdsAndBatches(210)
+	_, batches := generateIdsAndBatches(t, 210)
 	currItem := 0
 	numSpansPerBatchWindow := 10
 	// First evaluations shouldn't have anything to evaluate, until decision wait time passed.
@@ -254,7 +255,7 @@ func TestSamplingMultiplePolicies(t *testing.T) {
 		maxSpansPerSecond: 10000,
 	}
 
-	_, batches := generateIdsAndBatches(210)
+	_, batches := generateIdsAndBatches(t, 210)
 	currItem := 0
 	numSpansPerBatchWindow := 10
 	// First evaluations shouldn't have anything to evaluate, until decision wait time passed.
@@ -320,7 +321,7 @@ func TestSamplingPolicyDecisionNotSampled(t *testing.T) {
 		maxSpansPerSecond: 10000,
 	}
 
-	_, batches := generateIdsAndBatches(210)
+	_, batches := generateIdsAndBatches(t, 210)
 	currItem := 0
 	numSpansPerBatchWindow := 10
 	// First evaluations shouldn't have anything to evaluate, until decision wait time passed.
@@ -389,7 +390,7 @@ func TestMultipleBatchesAreCombinedIntoOne(t *testing.T) {
 
 	mpe.NextDecision = sampling.Sampled
 
-	traceIds, batches := generateIdsAndBatches(3)
+	traceIds, batches := generateIdsAndBatches(t, 3)
 	for _, batch := range batches {
 		require.NoError(t, tsp.ConsumeTraces(context.Background(), batch))
 	}
@@ -401,16 +402,16 @@ func TestMultipleBatchesAreCombinedIntoOne(t *testing.T) {
 
 	expectedSpanIds := make(map[int][]pdata.SpanID)
 	expectedSpanIds[0] = []pdata.SpanID{
-		tracetranslator.UInt64ToSpanID(uint64(1)),
+		bigendianconverter.UInt64ToSpanID(uint64(1)),
 	}
 	expectedSpanIds[1] = []pdata.SpanID{
-		tracetranslator.UInt64ToSpanID(uint64(2)),
-		tracetranslator.UInt64ToSpanID(uint64(3)),
+		bigendianconverter.UInt64ToSpanID(uint64(2)),
+		bigendianconverter.UInt64ToSpanID(uint64(3)),
 	}
 	expectedSpanIds[2] = []pdata.SpanID{
-		tracetranslator.UInt64ToSpanID(uint64(4)),
-		tracetranslator.UInt64ToSpanID(uint64(5)),
-		tracetranslator.UInt64ToSpanID(uint64(6)),
+		bigendianconverter.UInt64ToSpanID(uint64(4)),
+		bigendianconverter.UInt64ToSpanID(uint64(5)),
+		bigendianconverter.UInt64ToSpanID(uint64(6)),
 	}
 
 	receivedTraces := msp.AllTraces()
@@ -424,8 +425,8 @@ func TestMultipleBatchesAreCombinedIntoOne(t *testing.T) {
 
 		// might have received out of order, sort for comparison
 		sort.Slice(got, func(i, j int) bool {
-			a := tracetranslator.SpanIDToUInt64(got[i])
-			b := tracetranslator.SpanIDToUInt64(got[j])
+			a := bigendianconverter.SpanIDToUInt64(got[i])
+			b := bigendianconverter.SpanIDToUInt64(got[j])
 			return a < b
 		})
 
@@ -433,6 +434,7 @@ func TestMultipleBatchesAreCombinedIntoOne(t *testing.T) {
 	}
 }
 
+//nolint:unused
 func collectSpanIds(trace *pdata.Traces) []pdata.SpanID {
 	spanIDs := make([]pdata.SpanID, 0)
 
@@ -452,6 +454,7 @@ func collectSpanIds(trace *pdata.Traces) []pdata.SpanID {
 	return spanIDs
 }
 
+//nolint:unused
 func findTrace(a []pdata.Traces, traceID pdata.TraceID) *pdata.Traces {
 	for _, batch := range a {
 		id := batch.ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(0).TraceID()
@@ -462,12 +465,12 @@ func findTrace(a []pdata.Traces, traceID pdata.TraceID) *pdata.Traces {
 	return nil
 }
 
-func generateIdsAndBatches(numIds int) ([]pdata.TraceID, []pdata.Traces) {
+func generateIdsAndBatches(t *testing.T, numIds int) ([]pdata.TraceID, []pdata.Traces) {
 	traceIds := make([]pdata.TraceID, numIds)
 	spanID := 0
 	var tds []pdata.Traces
 	for i := 0; i < numIds; i++ {
-		traceIds[i] = tracetranslator.UInt64ToTraceID(1, uint64(i+1))
+		traceIds[i] = bigendianconverter.UInt64ToTraceID(1, uint64(i+1))
 		// Send each span in a separate batch
 		for j := 0; j <= i; j++ {
 			td := simpleTraces()
@@ -475,7 +478,7 @@ func generateIdsAndBatches(numIds int) ([]pdata.TraceID, []pdata.Traces) {
 			span.SetTraceID(traceIds[i])
 
 			spanID++
-			span.SetSpanID(tracetranslator.UInt64ToSpanID(uint64(spanID)))
+			span.SetSpanID(bigendianconverter.UInt64ToSpanID(uint64(spanID)))
 			tds = append(tds, td)
 		}
 	}
@@ -483,10 +486,12 @@ func generateIdsAndBatches(numIds int) ([]pdata.TraceID, []pdata.Traces) {
 	return traceIds, tds
 }
 
+//nolint:unused
 func simpleTraces() pdata.Traces {
 	return simpleTracesWithID(pdata.NewTraceID([16]byte{1, 2, 3, 4}))
 }
 
+//nolint:unused
 func simpleTracesWithID(traceID pdata.TraceID) pdata.Traces {
 	span := pdata.NewSpan()
 	span.SetTraceID(traceID)

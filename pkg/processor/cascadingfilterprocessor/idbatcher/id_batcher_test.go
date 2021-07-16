@@ -21,9 +21,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor/bigendianconverter"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/consumer/pdata"
-	tracetranslator "go.opentelemetry.io/collector/translator/trace"
 )
 
 func TestBatcherNew(t *testing.T) {
@@ -154,7 +154,7 @@ func concurrencyTest(t *testing.T, numBatches, newBatchesInitialCapacity, batchC
 func generateSequentialIds(numIds uint64) []pdata.TraceID {
 	ids := make([]pdata.TraceID, numIds)
 	for i := uint64(0); i < numIds; i++ {
-		ids[i] = tracetranslator.UInt64ToTraceID(0, i)
+		ids[i] = bigendianconverter.UInt64ToTraceID(0, i)
 	}
 	return ids
 }
