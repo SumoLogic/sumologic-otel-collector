@@ -163,7 +163,7 @@ func TestInitExporterInvalidCompressEncoding(t *testing.T) {
 	assert.EqualError(t, err, "unexpected compression encoding: test_format")
 }
 
-func TestInitExporterInvalidEndpoint(t *testing.T) {
+func TestInitExporterInvalidEndpointAndNoAuth(t *testing.T) {
 	_, err := initExporter(&Config{
 		LogFormat:        "json",
 		MetricFormat:     "carbon2",
@@ -174,9 +174,7 @@ func TestInitExporterInvalidEndpoint(t *testing.T) {
 		},
 	})
 
-	// TODO: fix
-	_ = err
-	// assert.EqualError(t, err, "endpoint is not set")
+	assert.EqualError(t, err, "no endpoint and no auth extension specified")
 }
 
 func TestAllSuccess(t *testing.T) {
