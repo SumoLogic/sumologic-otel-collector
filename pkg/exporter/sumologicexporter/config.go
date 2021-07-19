@@ -60,6 +60,10 @@ type Config struct {
 	// from OpenTelemetry standard to Sumo conventions (for example `cloud.account.id` => `accountId`
 	// `k8s.pod.name` => `pod` etc).
 	TranslateAttributes bool `mapstructure:"translate_attributes"`
+	// Specifies whether telegraf metric names should be translated to match
+	// Sumo conventions expected in Sumo host related apps (for example
+	// `procstat_num_threads` => `Proc_Threads` or `cpu_usage_irq` => `CPU_Irq`).
+	TranslateTelegrafMetrics bool `mapstructure:"translate_telegraf_attributes"`
 
 	// List of regexes for attributes which should be send as metadata
 	MetadataAttributes []string `mapstructure:"metadata_attributes"`
@@ -159,4 +163,6 @@ const (
 	DefaultGraphiteTemplate string = "%{_metric_}"
 	// DefaultTranslateAttributes defines default TranslateAttributes
 	DefaultTranslateAttributes bool = true
+	// DefaultTranslateTelegrafMetrics defines default TranslateTelegrafMetrics
+	DefaultTranslateTelegrafMetrics bool = true
 )
