@@ -121,12 +121,12 @@ func TestTranslateTelegrafMetric_NamesAreTranslatedCorrectly(t *testing.T) {
 		},
 		{
 			nameIn:  "mem_used",
-			nameOut: "Mam_ActualUsed",
+			nameOut: "Mem_ActualUsed",
 		},
 		// TODO rethink above and below
 		// {
 		// 	nameIn:  "mem_used",
-		// 	nameOut: "Mam_Used",
+		// 	nameOut: "Mem_Used",
 		// },
 		{
 			nameIn:  "mem_used_percent",
