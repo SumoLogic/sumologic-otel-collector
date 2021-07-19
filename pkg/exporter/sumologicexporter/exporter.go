@@ -84,6 +84,12 @@ func initExporter(cfg *Config) (*sumologicexporter, error) {
 		return nil, errors.New("no endpoint and no auth extension specified")
 	}
 
+	if _, err := url.Parse(cfg.HTTPClientSettings.Endpoint); err != nil {
+		return nil, fmt.Errorf("failed parsing endpoint URL: %s; err: %w",
+			cfg.HTTPClientSettings.Endpoint, err,
+		)
+	}
+
 	if cfg.TranslateAttributes {
 		cfg.SourceCategory = translateConfigValue(cfg.SourceCategory)
 		cfg.SourceHost = translateConfigValue(cfg.SourceHost)
