@@ -76,7 +76,7 @@ func translateTelegrafMetric(m pdata.Metric) {
 	case "mem_available":
 		newName = "Mem_ActualFree"
 	case "mem_used":
-		newName = "Mam_ActualUsed"
+		newName = "Mem_ActualUsed"
 	case "mem_used_percent":
 		newName = "Mem_UsedPercent"
 	case "mem_available_percent":
