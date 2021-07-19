@@ -355,6 +355,11 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 			ms := ilm.Metrics()
 			for k := 0; k < ms.Len(); k++ {
 				m := ms.At(k)
+
+				if se.config.TranslateTelegrafMetrics {
+					translateTelegrafMetric(m)
+				}
+
 				mp := metricPair{
 					metric:     m,
 					attributes: attributes,

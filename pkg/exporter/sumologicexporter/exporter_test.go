@@ -23,6 +23,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -924,6 +925,186 @@ func TestPushMetrics_AttributeTranslation(t *testing.T) {
 							"Unexpected value in header: %s", header,
 						)
 					}
+				},
+			}
+			test := prepareExporterTest(t, config, callbacks)
+
+			err := test.exp.pushMetricsData(context.Background(), metrics)
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestPushMetrics_MetricsTranslation(t *testing.T) {
+	createConfig := func() *Config {
+		config := createDefaultConfig().(*Config)
+		config.CompressEncoding = NoCompression
+		config.MetricFormat = PrometheusFormat
+		return config
+	}
+
+	testcases := []struct {
+		name         string
+		cfgFn        func() *Config
+		metricsFn    func() pdata.Metrics
+		expectedBody string
+	}{
+		{
+			name: "enabled by default translated metrics successfully",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				// This is and should be done by default:
+				// cfg.TranslateTelegrafMetrics = true
+				return cfg
+			},
+			metricsFn: func() pdata.Metrics {
+				metrics := pdata.NewMetrics()
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						InstrumentationLibraryMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("cpu_usage_active")
+					m.SetDataType(pdata.MetricDataTypeDoubleGauge)
+					dp := m.DoubleGauge().DataPoints().AppendEmpty()
+					dp.SetValue(123.456)
+					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
+					dp.LabelsMap().Insert("test", "test_value")
+				}
+				return metrics
+			},
+			expectedBody: `CPU_Total{test="test_value"} 123.456 1605534165000`,
+		},
+		{
+			name: "enabled 3 metrics with 1 not to be translated",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				// This is and should be done by default:
+				// cfg.TranslateTelegrafMetrics = true
+				return cfg
+			},
+			metricsFn: func() pdata.Metrics {
+				metrics := pdata.NewMetrics()
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						InstrumentationLibraryMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("cpu_usage_active")
+					m.SetDataType(pdata.MetricDataTypeDoubleGauge)
+					dp := m.DoubleGauge().DataPoints().AppendEmpty()
+					dp.SetValue(123.456)
+					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
+					dp.LabelsMap().Insert("test", "test_value")
+				}
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						InstrumentationLibraryMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("diskio_reads")
+					m.SetDataType(pdata.MetricDataTypeDoubleGauge)
+					dp := m.DoubleGauge().DataPoints().AppendEmpty()
+					dp.SetValue(123456)
+					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 1000000)))
+					dp.LabelsMap().Insert("test", "test_value")
+				}
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						InstrumentationLibraryMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("dummy_metric")
+					m.SetDataType(pdata.MetricDataTypeDoubleGauge)
+					dp := m.DoubleGauge().DataPoints().AppendEmpty()
+					dp.SetValue(10)
+					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 2000000)))
+					dp.LabelsMap().Insert("test", "test_value")
+				}
+				return metrics
+			},
+			expectedBody: `CPU_Total{test="test_value"} 123.456 1605534165000
+Disk_Reads{test="test_value"} 123456 1605534165001
+dummy_metric{test="test_value"} 10 1605534165002`,
+		},
+		{
+			name: "disabled does not translate metric names",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				cfg.TranslateTelegrafMetrics = false
+				return cfg
+			},
+			metricsFn: func() pdata.Metrics {
+				metrics := pdata.NewMetrics()
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						InstrumentationLibraryMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("cpu_usage_active")
+					m.SetDataType(pdata.MetricDataTypeDoubleGauge)
+					dp := m.DoubleGauge().DataPoints().AppendEmpty()
+					dp.SetValue(123.456)
+					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
+					dp.LabelsMap().Insert("test", "test_value")
+				}
+				return metrics
+			},
+			expectedBody: `cpu_usage_active{test="test_value"} 123.456 1605534165000`,
+		},
+		{
+			name: "disabled does not translate metric names - 3 metrics",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				cfg.TranslateTelegrafMetrics = false
+				return cfg
+			},
+			metricsFn: func() pdata.Metrics {
+				metrics := pdata.NewMetrics()
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						InstrumentationLibraryMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("cpu_usage_active")
+					m.SetDataType(pdata.MetricDataTypeDoubleGauge)
+					dp := m.DoubleGauge().DataPoints().AppendEmpty()
+					dp.SetValue(123.456)
+					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
+					dp.LabelsMap().Insert("test", "test_value")
+				}
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						InstrumentationLibraryMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("diskio_reads")
+					m.SetDataType(pdata.MetricDataTypeDoubleGauge)
+					dp := m.DoubleGauge().DataPoints().AppendEmpty()
+					dp.SetValue(123456)
+					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 1000000)))
+					dp.LabelsMap().Insert("test", "test_value")
+				}
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						InstrumentationLibraryMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("dummy_metric")
+					m.SetDataType(pdata.MetricDataTypeDoubleGauge)
+					dp := m.DoubleGauge().DataPoints().AppendEmpty()
+					dp.SetValue(10)
+					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 2000000)))
+					dp.LabelsMap().Insert("test", "test_value")
+				}
+				return metrics
+			},
+			expectedBody: `cpu_usage_active{test="test_value"} 123.456 1605534165000
+diskio_reads{test="test_value"} 123456 1605534165001
+dummy_metric{test="test_value"} 10 1605534165002`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			metrics := tc.metricsFn()
+			config := tc.cfgFn()
+
+			callbacks := []func(w http.ResponseWriter, req *http.Request){
+				func(w http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, tc.expectedBody, extractBody(t, req))
 				},
 			}
 			test := prepareExporterTest(t, config, callbacks)
