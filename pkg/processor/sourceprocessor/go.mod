@@ -8,4 +8,4 @@ require (
 	go.opentelemetry.io/collector v0.16.0
 )
 
-replace go.opentelemetry.io/collector => github.com/SumoLogic/opentelemetry-collector v0.28.0-sumo-1
+replace go.opentelemetry.io/collector => github.com/SumoLogic/opentelemetry-collector v0.29.0-sumo-1

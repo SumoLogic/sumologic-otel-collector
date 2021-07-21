@@ -81,11 +81,7 @@ func TestLoadConfig(t *testing.T) {
 					{TagName: "namespace_labels_%s", Key: "*"},
 				},
 				Tags: map[string]string{
-					// TODO:
-					// For some reason this test fails when we use 'containerId'
-					// because the tag from the config.yaml is being read case
-					// as insensitive with small 'i' as 'containerid'
-					"containerid": "my.namespace.containerId",
+					"containerId": "my.namespace.containerId",
 				},
 			},
 			Filter: FilterConfig{
