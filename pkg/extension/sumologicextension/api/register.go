@@ -29,4 +29,5 @@ type OpenRegisterResponsePayload struct {
 	CollectorCredentialId  string `json:"collectorCredentialId"`
 	CollectorCredentialKey string `json:"collectorCredentialKey"`
 	CollectorId            string `json:"collectorId"`
+	CollectorName          string `json:"collectorName"`
 }
