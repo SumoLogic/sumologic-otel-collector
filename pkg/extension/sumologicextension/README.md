@@ -38,7 +38,7 @@ and can be used as an authenticator for the
 * `collector_category`: collector category that will be used for registration
 * `collector_fields`: a map of key value pairs that will be used as collector
   fields that will be used for registration.
-  For more information on this subject please visit[this help document][fields_help]
+  For more information on this subject please visit [this help document][fields_help]
 * `api_base_url`: base URL that will be used for creating API requests
   (default: `https://collectors.sumologic.com`)
 * `heartbeat_interval`: interval that will be used for sending heartbeats
