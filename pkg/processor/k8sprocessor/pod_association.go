@@ -74,6 +74,7 @@ func extractPodID(ctx context.Context, attrs pdata.AttributeMap, associations []
 				}
 			} else {
 				// Extract values based on configured resource_attribute.
+				// Value should be a pod ip, pod uid or `pod_name.namespace_name`
 				attributeValue := stringAttributeFromMap(attrs, asso.Name)
 				if attributeValue != "" {
 					podIdentifierKey = asso.Name

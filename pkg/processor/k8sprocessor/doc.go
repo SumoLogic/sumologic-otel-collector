@@ -24,7 +24,7 @@
 // Following rule types are available:
 //   from: "resource_attribute" - allows to specify the attribute name to lookup up in the list of attributes of the received Resource.
 //     The specified attribute, if it is present, identifies the Pod that is represented by the Resource.
-//     (the value can contain either IP address or Pod UID)
+//     (the value can contain either IP address, Pod UID or be in `pod_name.namespace_name` format)
 //   from: "connection" - takes the IP attribute from connection context (if available) and automatically
 //     associates it with "k8s.pod.ip" attribute
 // Pod association configuration.
