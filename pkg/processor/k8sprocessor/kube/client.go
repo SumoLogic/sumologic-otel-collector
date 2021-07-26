@@ -412,6 +412,10 @@ func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
 		}
 		c.Pods[PodIdentifier(pod.Status.PodIP)] = newPod
 	}
+	// Use pod_name.namespace_name identifier
+	if newPod.Name != "" && newPod.Attributes[c.Rules.Tags.Namespace] != "" {
+		c.Pods[PodIdentifier(fmt.Sprintf("%s.%s", newPod.Name, newPod.Attributes[c.Rules.Tags.Namespace]))] = newPod
+	}
 }
 
 func (c *WatchClient) forgetPod(pod *api_v1.Pod) {
