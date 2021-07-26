@@ -62,11 +62,12 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 	if conf.Credentials.AccessID == "" || conf.Credentials.AccessKey == "" {
 		return nil, errors.New("access_key and/or access_id not provided")
 	}
-	collectorName := ""
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, err
 	}
+
+	var collectorName string
 	credentialsStore := localFsCredentialsStore{
 		collectorCredentialsDirectory: conf.CollectorCredentialsDirectory,
 		logger:                        logger,
@@ -84,14 +85,13 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 	if conf.HeartBeatInterval <= 0 {
 		conf.HeartBeatInterval = DefaultHeartbeatInterval
 	}
-	hashKey := createHashKey(conf)
 
 	return &SumologicExtension{
 		collectorName:    collectorName,
 		baseUrl:          strings.TrimSuffix(conf.ApiBaseUrl, "/"),
 		conf:             conf,
 		logger:           logger,
-		hashKey:          hashKey,
+		hashKey:          createHashKey(conf),
 		credentialsStore: credentialsStore,
 		closeChan:        make(chan struct{}),
 	}, nil
@@ -111,16 +111,19 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 		}
 		se.collectorName = colCreds.CollectorName
 		if !se.conf.Clobber {
-			se.logger.Info("Found stored credentials, skipping registration")
+			se.logger.Info("Found stored credentials, skipping registration",
+				zap.String("collector_name", colCreds.Credentials.CollectorName),
+			)
 		} else {
-			se.logger.Info("Locally stored credentials found, but clobber flag is set: re-registering the collector")
+			se.logger.Info(
+				"Locally stored credentials found, but clobber flag is set: " +
+					"re-registering the collector",
+			)
 			if colCreds, err = se.registerCollector(ctx, se.collectorName); err != nil {
 				return err
 			}
 			if err := se.credentialsStore.Store(se.hashKey, colCreds); err != nil {
-				se.logger.Error("Unable to store collector credentials",
-					zap.Error(err),
-				)
+				se.logger.Error("Unable to store collector credentials", zap.Error(err))
 			}
 		}
 	} else {
@@ -129,14 +132,12 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 			return err
 		}
 		if err := se.credentialsStore.Store(se.hashKey, colCreds); err != nil {
-			se.logger.Error("Unable to store collector credentials",
-				zap.Error(err),
-			)
+			se.logger.Error("Unable to store collector credentials", zap.Error(err))
 		}
 	}
 
-	// TODO: change this to get the collector name as returned by the API.
-	se.logger = se.logger.With(zap.String("collector_name", se.collectorName))
+	// Add logger field based on actual collector name as returned by registration API.
+	se.logger = se.logger.With(zap.String("collector_name", colCreds.Credentials.CollectorName))
 
 	se.registrationInfo = colCreds.Credentials
 
@@ -245,12 +246,13 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 	}
 
 	se.logger.Info("Collector registered",
-		zap.String("CollectorID", resp.CollectorId),
-		zap.Any("response", resp),
+		zap.String("CollectorId", resp.CollectorId),
+		zap.String("CollectorName", resp.CollectorName),
+		zap.String("CollectorCredentialId", resp.CollectorCredentialId),
+		zap.String("CollectorCredentialKey", resp.CollectorCredentialKey),
 	)
 
 	return CollectorCredentials{
-		// TODO: When registration API will return registered name use it instead of collectorName
 		CollectorName: collectorName,
 		Credentials:   resp,
 	}, nil

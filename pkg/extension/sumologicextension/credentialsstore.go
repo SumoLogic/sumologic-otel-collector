@@ -21,6 +21,8 @@ import (
 // CollectorCredentials are used for storing the credentials received during
 // collector registration.
 type CollectorCredentials struct {
+	// CollectorName indicates what name was set in the configuration when
+	// registration has been made.
 	CollectorName string                          `json:"collectorName"`
 	Credentials   api.OpenRegisterResponsePayload `json:"collectorCredentials"`
 }
