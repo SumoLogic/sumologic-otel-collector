@@ -292,6 +292,13 @@ func withPodUID(uid string) generateResourceFunc {
 	}
 }
 
+func withPodAndNamespace(pod string, namespace string) generateResourceFunc {
+	return func(res pdata.Resource) {
+		res.Attributes().InsertString("k8s.pod.name", pod)
+		res.Attributes().InsertString("k8s.namespace.name", namespace)
+	}
+}
+
 func TestIPDetectionFromContext(t *testing.T) {
 	m := newMultiTest(t, NewFactory().CreateDefaultConfig(), nil)
 
@@ -699,6 +706,49 @@ func TestProcessorPicksUpPassthoughPodIp(t *testing.T) {
 
 	m.assertResource(0, func(res pdata.Resource) {
 		assertResourceHasStringAttribute(t, res, k8sIPLabelName, "2.2.2.2")
+		assertResourceHasStringAttribute(t, res, "k", "v")
+		assertResourceHasStringAttribute(t, res, "1", "2")
+	})
+}
+
+func TestProcessorByPodNameAndNamespace(t *testing.T) {
+	m := newMultiTest(
+		t,
+		NewFactory().CreateDefaultConfig(),
+		nil,
+	)
+
+	m.kubernetesProcessorOperation(func(kp *kubernetesprocessor) {
+		kp.podAssociations = []kube.Association{
+			{
+				From: "build_hostname",
+				Name: "_hostname",
+			},
+		}
+		kp.kc.(*fakeClient).Pods["PodA.test"] = &kube.Pod{
+			Name: "PodA",
+			Attributes: map[string]string{
+				"k": "v",
+				"1": "2",
+			},
+		}
+	})
+
+	m.testConsume(
+		context.Background(),
+		generateTraces(withPodAndNamespace("PodA", "test")),
+		generateMetrics(withPodAndNamespace("PodA", "test")),
+		generateLogs(withPodAndNamespace("PodA", "test")),
+		func(err error) {
+			assert.NoError(t, err)
+		})
+
+	m.assertBatchesLen(1)
+	m.assertResourceObjectLen(0)
+	m.assertResourceAttributesLen(0, 5)
+
+	m.assertResource(0, func(res pdata.Resource) {
+		assertResourceHasStringAttribute(t, res, "_hostname", "PodA.test")
 		assertResourceHasStringAttribute(t, res, "k", "v")
 		assertResourceHasStringAttribute(t, res, "1", "2")
 	})

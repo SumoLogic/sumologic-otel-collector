@@ -16,6 +16,7 @@ package k8sprocessor
 
 import (
 	"context"
+	"fmt"
 	"net"
 
 	"go.opentelemetry.io/collector/client"
@@ -58,12 +59,13 @@ func extractPodID(ctx context.Context, attrs pdata.AttributeMap, associations []
 	}
 
 	for _, asso := range associations {
+		switch {
 		// If association configured to take IP address from connection
-		if asso.From == "connection" && connectionIP != "" {
+		case asso.From == "connection" && connectionIP != "":
 			podIdentifierKey = k8sIPLabelName
 			podIdentifierValue = connectionIP
 			return
-		} else if asso.From == "resource_attribute" { // If association configured by resource_attribute
+		case asso.From == "resource_attribute": // If association configured by resource_attribute
 			// In k8s environment, host.name label set to a pod IP address.
 			// If the value doesn't represent an IP address, we skip it.
 			if asso.Name == conventions.AttributeHostName {
@@ -74,12 +76,28 @@ func extractPodID(ctx context.Context, attrs pdata.AttributeMap, associations []
 				}
 			} else {
 				// Extract values based on configured resource_attribute.
+				// Value should be a pod ip, pod uid or `pod_name.namespace_name`
 				attributeValue := stringAttributeFromMap(attrs, asso.Name)
 				if attributeValue != "" {
 					podIdentifierKey = asso.Name
 					podIdentifierValue = kube.PodIdentifier(attributeValue)
 					return
 				}
+			}
+		case asso.From == "build_hostname":
+			// Build hostname from pod k8s.pod.name and k8s.namespace.name attributes
+			pod, ok := attrs.Get(conventions.AttributeK8sPod)
+			if !ok {
+				return "", ""
+			}
+
+			namespace, ok := attrs.Get(conventions.AttributeK8sNamespace)
+			if !ok {
+				return "", ""
+			}
+
+			if pod.StringVal() == "" || namespace.StringVal() != "" {
+				return asso.Name, kube.PodIdentifier(fmt.Sprintf("%s.%s", pod.StringVal(), namespace.StringVal()))
 			}
 		}
 	}
