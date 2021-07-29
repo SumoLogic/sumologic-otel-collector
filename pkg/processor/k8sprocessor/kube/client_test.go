@@ -340,11 +340,12 @@ func TestGetPod(t *testing.T) {
 	c.handlePodAdd(pod)
 
 	expected := &Pod{
-		Name:       "pod_name",
-		Namespace:  "namespace_name",
-		Address:    "1.1.1.1",
-		PodUID:     "1234",
-		Attributes: map[string]string{},
+		Name:    "pod_name",
+		Address: "1.1.1.1",
+		PodUID:  "1234",
+		Attributes: map[string]string{
+			c.Rules.Tags.Namespace: "namespace_name",
+		},
 	}
 
 	got, ok := c.GetPod(PodIdentifier("1.1.1.1"))
