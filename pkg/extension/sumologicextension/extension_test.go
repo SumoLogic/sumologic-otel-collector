@@ -23,8 +23,10 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"sync/atomic"
 	"testing"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"
@@ -37,6 +39,8 @@ const (
 )
 
 func TestBasicExtensionConstruction(t *testing.T) {
+	t.Parallel()
+
 	testcases := []struct {
 		Name    string
 		Config  *Config
@@ -82,25 +86,46 @@ func TestBasicExtensionConstruction(t *testing.T) {
 }
 
 func TestBasicStart(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		// TODO Add payload verification - verify if collectorName is set properly
-		if req.URL.Path == registerUrl {
-			_, err := w.Write([]byte(`{
-				"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
-				"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-				"collectorId": "000000000FFFFFFF"
-			}`))
+	t.Parallel()
 
-			if err != nil {
+	srv := httptest.NewServer(func() http.HandlerFunc {
+		var reqCount int32
+
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			// TODO Add payload verification - verify if collectorName is set properly
+			reqNum := atomic.AddInt32(&reqCount, 1)
+
+			switch reqNum {
+
+			// register
+			case 1:
+				require.Equal(t, registerUrl, req.URL.Path)
+				_, err := w.Write([]byte(`{
+					"collectorCredentialId": "collectorId",
+					"collectorCredentialKey": "collectorKey",
+					"collectorId": "id"
+				}`))
+
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+
+			// heartbeat
+			case 2:
+				assert.Equal(t, heartbeatUrl, req.URL.Path)
+				w.WriteHeader(204)
+
+			// should not produce any more requests
+			default:
 				w.WriteHeader(http.StatusInternalServerError)
-				return
 			}
-			return
-		}
-	}))
-	t.Cleanup(func() {
-		srv.Close()
-	})
+		})
+	}())
+	t.Cleanup(func() { srv.Close() })
+
+	dir, err := os.MkdirTemp("", "otelcol-sumo-store-credentials-test-*")
+	require.NoError(t, err)
+	t.Cleanup(func() { os.RemoveAll(dir) })
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = "collector_name"
@@ -108,6 +133,7 @@ func TestBasicStart(t *testing.T) {
 	cfg.ApiBaseUrl = srv.URL
 	cfg.Credentials.AccessID = "dummy_access_id"
 	cfg.Credentials.AccessKey = "dummy_access_key"
+	cfg.CollectorCredentialsDirectory = dir
 
 	se, err := newSumologicExtension(cfg, zap.NewNop())
 	require.NoError(t, err)
@@ -119,23 +145,41 @@ func TestBasicStart(t *testing.T) {
 }
 
 func TestStoreCredentials(t *testing.T) {
-	getServer := func() *httptest.Server {
-		// TODO Add payload verification - verify if collectorName is set properly
-		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			if req.URL.Path == registerUrl {
-				_, err := w.Write([]byte(`{
-				"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
-				"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-				"collectorId": "000000000FFFFFFF"
-			}`))
+	t.Parallel()
 
-				if err != nil {
+	getServer := func() *httptest.Server {
+		var reqCount int32
+
+		return httptest.NewServer(http.HandlerFunc(
+			func(w http.ResponseWriter, req *http.Request) {
+				// TODO Add payload verification - verify if collectorName is set properly
+				reqNum := atomic.AddInt32(&reqCount, 1)
+
+				switch reqNum {
+
+				// register
+				case 1:
+					require.Equal(t, registerUrl, req.URL.Path)
+					_, err := w.Write([]byte(`{
+						"collectorCredentialId": "collectorId",
+						"collectorCredentialKey": "collectorKey",
+						"collectorId": "id"
+					}`))
+
+					if err != nil {
+						w.WriteHeader(http.StatusInternalServerError)
+					}
+
+				// heartbeat
+				case 2:
+					assert.Equal(t, heartbeatUrl, req.URL.Path)
+					w.WriteHeader(204)
+
+				// should not produce any more requests
+				default:
 					w.WriteHeader(http.StatusInternalServerError)
-					return
 				}
-				return
-			}
-		}))
+			}))
 	}
 
 	getConfig := func(url string) *Config {
@@ -154,6 +198,8 @@ func TestStoreCredentials(t *testing.T) {
 		t.Cleanup(func() { os.RemoveAll(dir) })
 
 		srv := getServer()
+		t.Cleanup(func() { srv.Close() })
+
 		cfg := getConfig(srv.URL)
 		cfg.CollectorCredentialsDirectory = dir
 
@@ -170,10 +216,6 @@ func TestStoreCredentials(t *testing.T) {
 		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 		require.NoError(t, se.Shutdown(context.Background()))
 		require.FileExists(t, credsPath)
-
-		// To make sure that collector is using credentials file, turn off the mock registration server
-		srv.Close()
-		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	})
 
 	t.Run("dir exists before launch with 600 permissions", func(t *testing.T) {
@@ -182,6 +224,8 @@ func TestStoreCredentials(t *testing.T) {
 		t.Cleanup(func() { os.RemoveAll(dir) })
 
 		srv := getServer()
+		t.Cleanup(func() { srv.Close() })
+
 		cfg := getConfig(srv.URL)
 		cfg.CollectorCredentialsDirectory = dir
 
@@ -198,10 +242,6 @@ func TestStoreCredentials(t *testing.T) {
 		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 		require.NoError(t, se.Shutdown(context.Background()))
 		require.FileExists(t, credsPath)
-
-		// To make sure that collector is using credentials file, turn off the mock registration server
-		srv.Close()
-		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	})
 
 	t.Run("ensure dir gets created with 700 permissions", func(t *testing.T) {
@@ -210,6 +250,7 @@ func TestStoreCredentials(t *testing.T) {
 		t.Cleanup(func() { os.RemoveAll(dir) })
 
 		srv := getServer()
+		t.Cleanup(func() { srv.Close() })
 		cfg := getConfig(srv.URL)
 		cfg.CollectorCredentialsDirectory = dir
 
@@ -229,32 +270,55 @@ func TestStoreCredentials(t *testing.T) {
 		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 		require.NoError(t, se.Shutdown(context.Background()))
 		require.FileExists(t, credsPath)
-
-		// To make sure that collector is using credentials file, turn off the mock registration server
-		srv.Close()
-		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	})
 }
 
 func TestRegisterEmptyCollectorName(t *testing.T) {
+	t.Parallel()
+
 	hostname, err := os.Hostname()
 	require.NoError(t, err)
-	// TODO Add payload verification - verify if collectorName is set properly
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.URL.Path == registerUrl {
-			_, err := w.Write([]byte(`{
-				"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
-				"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-				"collectorId": "000000000FFFFFFF"
-			}`))
+	srv := httptest.NewServer(func() http.HandlerFunc {
+		var reqCount int32
 
-			if err != nil {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			// TODO Add payload verification - verify if collectorName is set properly
+			reqNum := atomic.AddInt32(&reqCount, 1)
+
+			switch reqNum {
+
+			// register
+			case 1:
+				require.Equal(t, registerUrl, req.URL.Path)
+
+				authHeader := req.Header.Get("Authorization")
+				token := base64.StdEncoding.EncodeToString(
+					[]byte("dummy_access_id:dummy_access_key"),
+				)
+				assert.Equal(t, "Basic "+token, authHeader,
+					"collector didn't send correct Authorization header with registration request")
+
+				_, err := w.Write([]byte(`{
+					"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
+					"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+					"collectorId": "000000000FFFFFFF"
+				}`))
+
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+
+			// heartbeat
+			case 2:
+				assert.Equal(t, heartbeatUrl, req.URL.Path)
+				w.WriteHeader(204)
+
+			// should not produce any more requests
+			default:
 				w.WriteHeader(http.StatusInternalServerError)
-				return
 			}
-			return
-		}
-	}))
+		})
+	}())
 
 	dir, err := os.MkdirTemp("", "otelcol-sumo-store-credentials-test-*")
 	t.Cleanup(func() {
@@ -281,24 +345,67 @@ func TestRegisterEmptyCollectorName(t *testing.T) {
 }
 
 func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
+	t.Parallel()
+
 	hostname, err := os.Hostname()
 	require.NoError(t, err)
-	// TODO Add payload verification - verify if collectorName is set properly
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.URL.Path == registerUrl {
-			_, err := w.Write([]byte(`{
-				"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
-				"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-				"collectorId": "000000000FFFFFFF"
-			}`))
+	srv := httptest.NewServer(func() http.HandlerFunc {
+		var reqCount int32
 
-			if err != nil {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			// TODO Add payload verification - verify if collectorName is set properly
+			reqNum := atomic.AddInt32(&reqCount, 1)
+
+			switch reqNum {
+
+			// register
+			case 1:
+				require.Equal(t, registerUrl, req.URL.Path)
+
+				authHeader := req.Header.Get("Authorization")
+				token := base64.StdEncoding.EncodeToString(
+					[]byte("dummy_access_id:dummy_access_key"),
+				)
+				assert.Equal(t, "Basic "+token, authHeader,
+					"collector didn't send correct Authorization header with registration request")
+
+				_, err := w.Write([]byte(`{
+					"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
+					"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+					"collectorId": "000000000FFFFFFF"
+				}`))
+
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+
+			// register again because clobber was set
+			case 2:
+				require.Equal(t, registerUrl, req.URL.Path)
+
+				authHeader := req.Header.Get("Authorization")
+				token := base64.StdEncoding.EncodeToString(
+					[]byte("dummy_access_id:dummy_access_key"),
+				)
+				assert.Equal(t, "Basic "+token, authHeader,
+					"collector didn't send correct Authorization header with registration request")
+
+				_, err := w.Write([]byte(`{
+					"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
+					"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+					"collectorId": "000000000FFFFFFF"
+				}`))
+
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+
+			// should not produce any more requests
+			default:
 				w.WriteHeader(http.StatusInternalServerError)
-				return
 			}
-			return
-		}
-	}))
+		})
+	}())
 
 	dir, err := os.MkdirTemp("", "otelcol-sumo-store-credentials-test-*")
 	t.Cleanup(func() {
@@ -335,39 +442,56 @@ func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
 }
 
 func TestCollectorSendsBasicAuthHeadersOnRegistration(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		assert.Empty(t, req.Header.Get("accessid"))
-		assert.Empty(t, req.Header.Get("accesskey"))
-		authHeader := req.Header.Get("Authorization")
-		token := base64.StdEncoding.EncodeToString(
-			[]byte("dummy_access_id:dummy_access_key"),
-		)
-		assert.Equal(t, "Basic "+token, authHeader)
+	t.Parallel()
 
-		if req.URL.Path == registerUrl {
-			_, err := w.Write([]byte(`{
-				"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
-				"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-				"collectorId": "000000000FFFFFFF"
-			}`))
+	srv := httptest.NewServer(func() http.HandlerFunc {
+		var reqCount int32
 
-			if err != nil {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			// TODO Add payload verification - verify if collectorName is set properly
+			reqNum := atomic.AddInt32(&reqCount, 1)
+
+			switch reqNum {
+
+			// register
+			case 1:
+				require.Equal(t, registerUrl, req.URL.Path)
+
+				assert.Empty(t, req.Header.Get("accessid"))
+				assert.Empty(t, req.Header.Get("accesskey"))
+				authHeader := req.Header.Get("Authorization")
+				token := base64.StdEncoding.EncodeToString(
+					[]byte("dummy_access_id:dummy_access_key"),
+				)
+				assert.Equal(t, "Basic "+token, authHeader,
+					"collector didn't send correct Authorization header with registration request")
+
+				_, err := w.Write([]byte(`{
+					"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
+					"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+					"collectorId": "000000000FFFFFFF"
+				}`))
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+
+			// heartbeat
+			case 2:
+				assert.Equal(t, heartbeatUrl, req.URL.Path)
+				w.WriteHeader(204)
+
+			// should not produce any more requests
+			default:
 				w.WriteHeader(http.StatusInternalServerError)
-				t.FailNow()
-				return
 			}
-			return
-		}
-	}))
-	t.Cleanup(func() {
-		srv.Close()
-	})
+		})
+	}())
+
+	t.Cleanup(func() { srv.Close() })
 
 	dir, err := os.MkdirTemp("", "otelcol-sumo-store-credentials-test-*")
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		os.RemoveAll(dir)
-	})
+	t.Cleanup(func() { os.RemoveAll(dir) })
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = ""
@@ -380,4 +504,132 @@ func TestCollectorSendsBasicAuthHeadersOnRegistration(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	require.NoError(t, se.Shutdown(context.Background()))
+}
+
+func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
+	t.Parallel()
+
+	dir, err := os.MkdirTemp("", "otelcol-sumo-store-credentials-test-*")
+	require.NoError(t, err)
+	t.Cleanup(func() { os.RemoveAll(dir) })
+
+	cStore := localFsCredentialsStore{
+		collectorCredentialsDirectory: dir,
+		logger:                        zap.NewNop(),
+	}
+	creds := CollectorCredentials{
+		CollectorName: "test-name",
+		Credentials: api.OpenRegisterResponsePayload{
+			CollectorName:          "test-name",
+			CollectorId:            "test-id",
+			CollectorCredentialId:  "test-credential-id",
+			CollectorCredentialKey: "test-credential-key",
+		},
+	}
+	storageKey := createHashKey(&Config{
+		CollectorName: "test-name",
+		Credentials: credentials{
+			AccessID:  "dummy_access_id",
+			AccessKey: "dummy_access_key",
+		},
+	})
+	require.NoError(t, cStore.Store(storageKey, creds))
+
+	testcases := []struct {
+		name     string
+		srv      *httptest.Server
+		configFn func(url string) *Config
+	}{
+		{
+			name: "collector checks found credentials via heartbeat call - no registration is done",
+			srv: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				require.NotEqual(t, registerUrl, req.URL.Path,
+					"collector shouldn't call the register API when credentials locally retrieved")
+				require.Equal(t, heartbeatUrl, req.URL.Path)
+				w.WriteHeader(204)
+
+				authHeader := req.Header.Get("Authorization")
+				token := base64.StdEncoding.EncodeToString(
+					[]byte("test-credential-id:test-credential-key"),
+				)
+				assert.Equal(t, "Basic "+token, authHeader,
+					"collector didn't send correct Authorization header with heartbeat request")
+			})),
+			configFn: func(url string) *Config {
+				cfg := createDefaultConfig().(*Config)
+				cfg.CollectorName = "test-name"
+				cfg.ApiBaseUrl = url
+				cfg.Credentials.AccessID = "dummy_access_id"
+				cfg.Credentials.AccessKey = "dummy_access_key"
+				cfg.CollectorCredentialsDirectory = dir
+				return cfg
+			},
+		},
+		{
+			name: "collector registers when no matching credentials are found in local storage",
+			srv: httptest.NewServer(func() http.HandlerFunc {
+				var reqCount int32
+
+				return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+					reqNum := atomic.AddInt32(&reqCount, 1)
+
+					switch reqNum {
+
+					// register
+					case 1:
+						require.Equal(t, registerUrl, req.URL.Path)
+
+						authHeader := req.Header.Get("Authorization")
+						token := base64.StdEncoding.EncodeToString(
+							[]byte("dummy_access_id:dummy_access_key"),
+						)
+						assert.Equal(t, "Basic "+token, authHeader,
+							"collector didn't send correct Authorization header with registration request")
+
+						_, err := w.Write([]byte(`{
+							"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
+							"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+							"collectorId": "000000000FFFFFFF"
+						}`))
+
+						if err != nil {
+							w.WriteHeader(http.StatusInternalServerError)
+						}
+
+					// heartbeat
+					case 2:
+						w.WriteHeader(204)
+
+					// should not produce any more requests
+					default:
+						w.WriteHeader(http.StatusInternalServerError)
+					}
+				})
+			}(),
+			),
+			configFn: func(url string) *Config {
+				cfg := createDefaultConfig().(*Config)
+				cfg.CollectorName = "test-name-not-in-the-credentials-store"
+				cfg.ApiBaseUrl = url
+				cfg.Credentials.AccessID = "dummy_access_id"
+				cfg.Credentials.AccessKey = "dummy_access_key"
+				cfg.CollectorCredentialsDirectory = dir
+				return cfg
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Cleanup(func() { tc.srv.Close() })
+
+			cfg := tc.configFn(tc.srv.URL)
+
+			se, err := newSumologicExtension(cfg, zap.NewNop())
+			require.NoError(t, err)
+			require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+			require.NoError(t, se.Shutdown(context.Background()))
+		})
+	}
+
 }
