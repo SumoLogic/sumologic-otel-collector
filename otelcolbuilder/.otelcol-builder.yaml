@@ -67,7 +67,7 @@ replaces:
   # ----------------------------------------------------------------------------
   # Customized receivers
   - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/telegrafreceiver => ./../../pkg/receiver/telegrafreceiver
-  - github.com/influxdata/telegraf => github.com/sumologic/telegraf v1.19.0-sumo-1
+  - github.com/influxdata/telegraf => github.com/sumologic/telegraf v1.19.0-sumo-2.0.20210729112730-84345f1e5f0e
 
   # ----------------------------------------------------------------------------
   # Customized exporters
