@@ -40,7 +40,7 @@ func init() {
 	}
 }
 
-type sourceTraceKeys struct {
+type sourceKeys struct {
 	annotationPrefix   string
 	containerKey       string
 	namespaceKey       string
@@ -51,7 +51,7 @@ type sourceTraceKeys struct {
 	sourceHostKey      string
 }
 
-func (stk sourceTraceKeys) convertKey(key string) string {
+func (stk sourceKeys) convertKey(key string) string {
 	switch key {
 	case "container":
 		return stk.containerKey
@@ -78,7 +78,7 @@ type attributeFiller struct {
 	labels          []string
 }
 
-type sourceTraceProcessor struct {
+type sourceProcessor struct {
 	collector             string
 	source                string
 	sourceCategoryFiller  attributeFiller
@@ -89,7 +89,7 @@ type sourceTraceProcessor struct {
 	excludeContainerRegex *regexp.Regexp
 	excludeHostRegex      *regexp.Regexp
 	nextConsumer          consumer.Traces
-	keys                  sourceTraceKeys
+	keys                  sourceKeys
 }
 
 const (
@@ -135,8 +135,8 @@ func matchRegexMaybe(re *regexp.Regexp, atts pdata.AttributeMap, attributeName s
 	return false
 }
 
-func newSourceTraceProcessor(next consumer.Traces, cfg *Config) *sourceTraceProcessor {
-	keys := sourceTraceKeys{
+func newsourceProcessor(next consumer.Traces, cfg *Config) *sourceProcessor {
+	keys := sourceKeys{
 		annotationPrefix:   cfg.AnnotationPrefix,
 		containerKey:       cfg.ContainerKey,
 		namespaceKey:       cfg.NamespaceKey,
@@ -147,7 +147,7 @@ func newSourceTraceProcessor(next consumer.Traces, cfg *Config) *sourceTraceProc
 		sourceHostKey:      cfg.SourceHostKey,
 	}
 
-	return &sourceTraceProcessor{
+	return &sourceProcessor{
 		nextConsumer:          next,
 		collector:             cfg.Collector,
 		keys:                  keys,
@@ -162,17 +162,17 @@ func newSourceTraceProcessor(next consumer.Traces, cfg *Config) *sourceTraceProc
 	}
 }
 
-func (stp *sourceTraceProcessor) fillOtherMeta(atts pdata.AttributeMap) {
-	if stp.collector != "" {
-		atts.UpsertString(collectorKey, stp.collector)
+func (sp *sourceProcessor) fillOtherMeta(atts pdata.AttributeMap) {
+	if sp.collector != "" {
+		atts.UpsertString(collectorKey, sp.collector)
 	}
 }
 
-func (stp *sourceTraceProcessor) isFilteredOut(atts pdata.AttributeMap) bool {
+func (sp *sourceProcessor) isFilteredOut(atts pdata.AttributeMap) bool {
 	// TODO: This is quite inefficient when done for each package (ore even more so, span) separately.
 	// It should be moved to K8S Meta Processor and done once per new pod/changed pod
 
-	if value, found := atts.Get(stp.annotationAttribute(excludeAnnotation)); found {
+	if value, found := atts.Get(sp.annotationAttribute(excludeAnnotation)); found {
 		if value.Type() == pdata.AttributeValueTypeString && value.StringVal() == "true" {
 			return true
 		} else if value.Type() == pdata.AttributeValueTypeBool && value.BoolVal() {
@@ -180,7 +180,7 @@ func (stp *sourceTraceProcessor) isFilteredOut(atts pdata.AttributeMap) bool {
 		}
 	}
 
-	if value, found := atts.Get(stp.annotationAttribute(includeAnnotation)); found {
+	if value, found := atts.Get(sp.annotationAttribute(includeAnnotation)); found {
 		if value.Type() == pdata.AttributeValueTypeString && value.StringVal() == "true" {
 			return false
 		} else if value.Type() == pdata.AttributeValueTypeBool && value.BoolVal() {
@@ -188,27 +188,27 @@ func (stp *sourceTraceProcessor) isFilteredOut(atts pdata.AttributeMap) bool {
 		}
 	}
 
-	if matchRegexMaybe(stp.excludeNamespaceRegex, atts, stp.keys.namespaceKey) {
+	if matchRegexMaybe(sp.excludeNamespaceRegex, atts, sp.keys.namespaceKey) {
 		return true
 	}
-	if matchRegexMaybe(stp.excludePodRegex, atts, stp.keys.podKey) {
+	if matchRegexMaybe(sp.excludePodRegex, atts, sp.keys.podKey) {
 		return true
 	}
-	if matchRegexMaybe(stp.excludeContainerRegex, atts, stp.keys.containerKey) {
+	if matchRegexMaybe(sp.excludeContainerRegex, atts, sp.keys.containerKey) {
 		return true
 	}
-	if matchRegexMaybe(stp.excludeHostRegex, atts, stp.keys.sourceHostKey) {
+	if matchRegexMaybe(sp.excludeHostRegex, atts, sp.keys.sourceHostKey) {
 		return true
 	}
 
 	return false
 }
 
-func (stp *sourceTraceProcessor) annotationAttribute(annotationKey string) string {
-	return stp.keys.annotationPrefix + annotationKey
+func (sp *sourceProcessor) annotationAttribute(annotationKey string) string {
+	return sp.keys.annotationPrefix + annotationKey
 }
 
-func (stp *sourceTraceProcessor) ConsumeTraces(ctx context.Context, td pdata.Traces) error {
+func (sp *sourceProcessor) ConsumeTraces(ctx context.Context, td pdata.Traces) error {
 	rss := td.ResourceSpans()
 
 	for i := 0; i < rss.Len(); i++ {
@@ -222,21 +222,21 @@ func (stp *sourceTraceProcessor) ConsumeTraces(ctx context.Context, td pdata.Tra
 		atts := res.Attributes()
 
 		// TODO: move this to k8sprocessor
-		stp.enrichPodName(&atts)
-		stp.fillOtherMeta(atts)
+		sp.enrichPodName(&atts)
+		sp.fillOtherMeta(atts)
 		filledOtherMeta = true
 
-		filledAnySource = stp.sourceHostFiller.fillResourceOrUseAnnotation(&atts,
-			stp.annotationAttribute(sourceHostSpecialAnnotation),
-			stp.keys,
+		filledAnySource = sp.sourceHostFiller.fillResourceOrUseAnnotation(&atts,
+			sp.annotationAttribute(sourceHostSpecialAnnotation),
+			sp.keys,
 		) || filledAnySource
-		filledAnySource = stp.sourceCategoryFiller.fillResourceOrUseAnnotation(&atts,
-			stp.annotationAttribute(sourceCategorySpecialAnnotation),
-			stp.keys,
+		filledAnySource = sp.sourceCategoryFiller.fillResourceOrUseAnnotation(&atts,
+			sp.annotationAttribute(sourceCategorySpecialAnnotation),
+			sp.keys,
 		) || filledAnySource
-		filledAnySource = stp.sourceNameFiller.fillResourceOrUseAnnotation(&atts,
-			stp.annotationAttribute(sourceNameSpecialAnnotation),
-			stp.keys,
+		filledAnySource = sp.sourceNameFiller.fillResourceOrUseAnnotation(&atts,
+			sp.annotationAttribute(sourceNameSpecialAnnotation),
+			sp.keys,
 		) || filledAnySource
 
 		ilss := rs.InstrumentationLibrarySpans()
@@ -246,7 +246,7 @@ func (stp *sourceTraceProcessor) ConsumeTraces(ctx context.Context, td pdata.Tra
 			totalSpans = ils.Spans().Len()
 		}
 
-		if stp.isFilteredOut(atts) {
+		if sp.isFilteredOut(atts) {
 			rs.InstrumentationLibrarySpans().RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
 			observability.RecordFilteredOutN(totalSpans)
 		} else {
@@ -266,16 +266,16 @@ func (stp *sourceTraceProcessor) ConsumeTraces(ctx context.Context, td pdata.Tra
 					atts := s.Attributes()
 
 					// TODO: move this to k8sprocessor
-					stp.enrichPodName(&atts)
+					sp.enrichPodName(&atts)
 					if !filledOtherMeta {
-						stp.fillOtherMeta(atts)
+						sp.fillOtherMeta(atts)
 					}
 
-					stp.sourceHostFiller.fillResourceOrUseAnnotation(&atts, stp.annotationAttribute(sourceHostSpecialAnnotation), stp.keys)
-					stp.sourceCategoryFiller.fillResourceOrUseAnnotation(&atts, stp.annotationAttribute(sourceCategorySpecialAnnotation), stp.keys)
-					stp.sourceNameFiller.fillResourceOrUseAnnotation(&atts, stp.annotationAttribute(sourceNameSpecialAnnotation), stp.keys)
+					sp.sourceHostFiller.fillResourceOrUseAnnotation(&atts, sp.annotationAttribute(sourceHostSpecialAnnotation), sp.keys)
+					sp.sourceCategoryFiller.fillResourceOrUseAnnotation(&atts, sp.annotationAttribute(sourceCategorySpecialAnnotation), sp.keys)
+					sp.sourceNameFiller.fillResourceOrUseAnnotation(&atts, sp.annotationAttribute(sourceNameSpecialAnnotation), sp.keys)
 
-					if !stp.isFilteredOut(atts) {
+					if !sp.isFilteredOut(atts) {
 						s.CopyTo(outputSpans.AppendEmpty())
 						observability.RecordFilteredIn()
 					} else {
@@ -288,25 +288,25 @@ func (stp *sourceTraceProcessor) ConsumeTraces(ctx context.Context, td pdata.Tra
 			}
 		}
 	}
-	return stp.nextConsumer.ConsumeTraces(ctx, td)
+	return sp.nextConsumer.ConsumeTraces(ctx, td)
 }
 
 // GetCapabilities returns the Capabilities assocciated with the resource processor.
-// func (stp *sourceTraceProcessor) GetCapabilities() component.ProcessorCapabilities {
+// func (sp *sourceProcessor) GetCapabilities() component.ProcessorCapabilities {
 // 	return component.ProcessorCapabilities{MutatesConsumedData: true}
 // }
 
-func (stp *sourceTraceProcessor) Capabilities() consumer.Capabilities {
+func (sp *sourceProcessor) Capabilities() consumer.Capabilities {
 	return consumer.Capabilities{MutatesData: true}
 }
 
 // Start is invoked during service startup.
-func (*sourceTraceProcessor) Start(_context context.Context, _host component.Host) error {
+func (*sourceProcessor) Start(_context context.Context, _host component.Host) error {
 	return nil
 }
 
 // Shutdown is invoked during service shutdown.
-func (*sourceTraceProcessor) Shutdown(_context context.Context) error {
+func (*sourceProcessor) Shutdown(_context context.Context) error {
 	return nil
 }
 
@@ -320,7 +320,7 @@ func SafeEncodeString(s string) string {
 	return string(r)
 }
 
-func (stp *sourceTraceProcessor) enrichPodName(atts *pdata.AttributeMap) {
+func (sp *sourceProcessor) enrichPodName(atts *pdata.AttributeMap) {
 	// This replicates sanitize_pod_name function
 	// Strip out dynamic bits from pod name.
 	// NOTE: Kubernetes deployments append a template hash.
@@ -332,7 +332,7 @@ func (stp *sourceTraceProcessor) enrichPodName(atts *pdata.AttributeMap) {
 	if atts == nil {
 		return
 	}
-	pod, found := atts.Get(stp.keys.podKey)
+	pod, found := atts.Get(sp.keys.podKey)
 	if !found {
 		return
 	}
@@ -343,19 +343,19 @@ func (stp *sourceTraceProcessor) enrichPodName(atts *pdata.AttributeMap) {
 		return
 	}
 
-	podTemplateHashAttr, found := atts.Get(stp.keys.podTemplateHashKey)
+	podTemplateHashAttr, found := atts.Get(sp.keys.podTemplateHashKey)
 
 	if found && len(podParts) > 2 {
 		podTemplateHash := podTemplateHashAttr.StringVal()
 		if podTemplateHash == podParts[len(podParts)-2] || SafeEncodeString(podTemplateHash) == podParts[len(podParts)-2] {
-			atts.UpsertString(stp.keys.podNameKey, strings.Join(podParts[:len(podParts)-2], "-"))
+			atts.UpsertString(sp.keys.podNameKey, strings.Join(podParts[:len(podParts)-2], "-"))
 			return
 		}
 	}
-	atts.UpsertString(stp.keys.podNameKey, strings.Join(podParts[:len(podParts)-1], "-"))
+	atts.UpsertString(sp.keys.podNameKey, strings.Join(podParts[:len(podParts)-1], "-"))
 }
 
-func extractFormat(format string, name string, keys sourceTraceKeys) attributeFiller {
+func extractFormat(format string, name string, keys sourceKeys) attributeFiller {
 	labels := make([]string, 0)
 	matches := formatRegex.FindAllStringSubmatch(format, -1)
 	for _, matchset := range matches {
@@ -382,12 +382,12 @@ func createSourceHostFiller() attributeFiller {
 	}
 }
 
-func createSourceNameFiller(cfg *Config, keys sourceTraceKeys) attributeFiller {
+func createSourceNameFiller(cfg *Config, keys sourceKeys) attributeFiller {
 	filler := extractFormat(cfg.SourceName, sourceNameKey, keys)
 	return filler
 }
 
-func createSourceCategoryFiller(cfg *Config, keys sourceTraceKeys) attributeFiller {
+func createSourceCategoryFiller(cfg *Config, keys sourceKeys) attributeFiller {
 	filler := extractFormat(cfg.SourceCategory, sourceCategoryKey, keys)
 	filler.compiledFormat = cfg.SourceCategoryPrefix + filler.compiledFormat
 	filler.dashReplacement = cfg.SourceCategoryReplaceDash
@@ -395,7 +395,7 @@ func createSourceCategoryFiller(cfg *Config, keys sourceTraceKeys) attributeFill
 	return filler
 }
 
-func (f *attributeFiller) fillResourceOrUseAnnotation(atts *pdata.AttributeMap, annotationKey string, keys sourceTraceKeys) bool {
+func (f *attributeFiller) fillResourceOrUseAnnotation(atts *pdata.AttributeMap, annotationKey string, keys sourceKeys) bool {
 	val, found := atts.Get(annotationKey)
 	if found {
 		annotationFiller := extractFormat(val.StringVal(), f.name, keys)
