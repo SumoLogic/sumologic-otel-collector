@@ -54,6 +54,7 @@ func NewFactory() component.ProcessorFactory {
 		createDefaultConfig,
 		processorhelper.WithTraces(createTraceProcessor),
 		processorhelper.WithMetrics(createMetricsProcessor),
+		processorhelper.WithLogs(createLogsProcessor),
 	)
 }
 
@@ -105,6 +106,24 @@ func createMetricsProcessor(
 		cfg,
 		next,
 		sp.ProcessMetrics,
+		processorhelper.WithCapabilities(processorCapabilities),
+	)
+}
+
+// createLogsProcessor creates a logs processor based on this config
+func createLogsProcessor(
+	_ context.Context,
+	params component.ProcessorCreateSettings,
+	cfg config.Processor,
+	next consumer.Logs,
+) (component.LogsProcessor, error) {
+	oCfg := cfg.(*Config)
+
+	sp := newSourceProcessor(oCfg)
+	return processorhelper.NewLogsProcessor(
+		cfg,
+		next,
+		sp.ProcessLogs,
 		processorhelper.WithCapabilities(processorCapabilities),
 	)
 }
