@@ -134,7 +134,7 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 	if !registrationDone {
 		se.logger.Info("Checking if locally retrieved credentials are still valid...")
 		if err := se.validateCredenials(ctx, colCreds.Credentials); err != nil {
-			return fmt.Errorf("locally stored credentials invalid: %w", err)
+			return fmt.Errorf("locally stored credentials are invalid: %w", err)
 		}
 		se.logger.Info("Local collector credentials all good, starting up the collector")
 	}
