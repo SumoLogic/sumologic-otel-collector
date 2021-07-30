@@ -101,39 +101,17 @@ func createHashKey(conf *Config) string {
 	return fmt.Sprintf("%s%s%s", conf.CollectorName, conf.Credentials.AccessID, conf.Credentials.AccessKey)
 }
 
+func (se *SumologicExtension) validateCredenials(
+	ctx context.Context,
+	creds api.OpenRegisterResponsePayload,
+) error {
+	return se.sendHeartbeat(ctx)
+}
+
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
-	var colCreds CollectorCredentials
-	var err error
-	if se.credentialsStore.Check(se.hashKey) {
-		colCreds, err = se.credentialsStore.Get(se.hashKey)
-		if err != nil {
-			return err
-		}
-		se.collectorName = colCreds.CollectorName
-		if !se.conf.Clobber {
-			se.logger.Info("Found stored credentials, skipping registration",
-				zap.String("collector_name", colCreds.Credentials.CollectorName),
-			)
-		} else {
-			se.logger.Info(
-				"Locally stored credentials found, but clobber flag is set: " +
-					"re-registering the collector",
-			)
-			if colCreds, err = se.registerCollector(ctx, se.collectorName); err != nil {
-				return err
-			}
-			if err := se.credentialsStore.Store(se.hashKey, colCreds); err != nil {
-				se.logger.Error("Unable to store collector credentials", zap.Error(err))
-			}
-		}
-	} else {
-		se.logger.Info("Locally stored credentials not found, registering the collector")
-		if colCreds, err = se.registerCollector(ctx, se.collectorName); err != nil {
-			return err
-		}
-		if err := se.credentialsStore.Store(se.hashKey, colCreds); err != nil {
-			se.logger.Error("Unable to store collector credentials", zap.Error(err))
-		}
+	colCreds, registrationDone, err := se.getCredentials(ctx)
+	if err != nil {
+		return err
 	}
 
 	// Add logger field based on actual collector name as returned by registration API.
@@ -148,11 +126,18 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 
 	// Set the transport so that all requests from se.httpClient will contain
 	// the collector credentials.
-	rt, err := se.RoundTripper(se.httpClient.Transport)
+	se.httpClient.Transport, err = se.RoundTripper(se.httpClient.Transport)
 	if err != nil {
 		return fmt.Errorf("couldn't create HTTP client transport: %w", err)
 	}
-	se.httpClient.Transport = rt
+
+	if !registrationDone {
+		se.logger.Info("Checking if locally retrieved credentials are still valid...")
+		if err := se.validateCredenials(ctx, colCreds.Credentials); err != nil {
+			return fmt.Errorf("locally stored credentials are invalid: %w", err)
+		}
+		se.logger.Info("Local collector credentials all good, starting up the collector")
+	}
 
 	go se.heartbeatLoop()
 
@@ -168,6 +153,55 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 	default:
 		return nil
 	}
+}
+
+// getCredentials returns the credentials either retrieved from local credentials
+// storage in cases they were available there or it registers the collector and
+// returns the credentials obtained from the API.
+// It also returns a boolean flag indicating if the successful registration
+// with the API took place and an error.
+func (se *SumologicExtension) getCredentials(ctx context.Context) (CollectorCredentials, bool, error) {
+	var (
+		colCreds         CollectorCredentials
+		registrationDone bool
+		err              error
+	)
+
+	if se.credentialsStore.Check(se.hashKey) {
+		colCreds, err = se.credentialsStore.Get(se.hashKey)
+		if err != nil {
+			return CollectorCredentials{}, false, err
+		}
+		se.collectorName = colCreds.CollectorName
+		if !se.conf.Clobber {
+			se.logger.Info("Found stored credentials, skipping registration",
+				zap.String("collector_name", colCreds.Credentials.CollectorName),
+			)
+		} else {
+			se.logger.Info(
+				"Locally stored credentials found, but clobber flag is set: " +
+					"re-registering the collector",
+			)
+			if colCreds, err = se.registerCollector(ctx, se.collectorName); err != nil {
+				return CollectorCredentials{}, false, err
+			}
+			registrationDone = true
+			if err := se.credentialsStore.Store(se.hashKey, colCreds); err != nil {
+				se.logger.Error("Unable to store collector credentials", zap.Error(err))
+			}
+		}
+	} else {
+		se.logger.Info("Locally stored credentials not found, registering the collector")
+		if colCreds, err = se.registerCollector(ctx, se.collectorName); err != nil {
+			return CollectorCredentials{}, false, err
+		}
+		registrationDone = true
+		if err := se.credentialsStore.Store(se.hashKey, colCreds); err != nil {
+			se.logger.Error("Unable to store collector credentials", zap.Error(err))
+		}
+	}
+
+	return colCreds, registrationDone, err
 }
 
 // registerCollector registers the collector using registration API and returns
