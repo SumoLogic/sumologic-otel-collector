@@ -313,6 +313,23 @@ func (sp *sourceProcessor) ProcessMetrics(ctx context.Context, md pdata.Metrics)
 	return md, nil
 }
 
+// ProcessLogs processes logs
+func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md pdata.Logs) (pdata.Logs, error) {
+	rss := md.ResourceLogs()
+
+	for i := 0; i < rss.Len(); i++ {
+		rs := rss.At(i)
+		res := sp.processResource(rs.Resource())
+		atts := res.Attributes()
+
+		if sp.isFilteredOut(atts) {
+			rs.InstrumentationLibraryLogs().RemoveIf(func(pdata.InstrumentationLibraryLogs) bool { return true })
+		}
+	}
+
+	return md, nil
+}
+
 // processResource performs multiple actions on resource:
 //   - enrich pod name, so it can be used in templates
 //   - fills source attributes based on config or annotations
