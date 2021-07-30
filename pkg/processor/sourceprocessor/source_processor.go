@@ -234,7 +234,7 @@ func (sp *sourceProcessor) ProcessTraces(ctx context.Context, td pdata.Traces) (
 	return td, nil
 }
 
-// ProcessesMetrics process metrics
+// ProcessMetrics processes metrics
 func (sp *sourceProcessor) ProcessMetrics(ctx context.Context, md pdata.Metrics) (pdata.Metrics, error) {
 	rss := md.ResourceMetrics()
 
