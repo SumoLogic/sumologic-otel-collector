@@ -21,11 +21,10 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/sourceprocessor/observability"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/consumer/pdata"
-
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/sourceprocessor/observability"
 )
 
 var (
@@ -88,7 +87,6 @@ type sourceProcessor struct {
 	excludePodRegex       *regexp.Regexp
 	excludeContainerRegex *regexp.Regexp
 	excludeHostRegex      *regexp.Regexp
-	nextConsumer          consumer.Traces
 	keys                  sourceKeys
 }
 
@@ -161,12 +159,6 @@ func newSourceProcessor(cfg *Config) *sourceProcessor {
 	}
 }
 
-func newsourceProcessor(next consumer.Traces, cfg *Config) *sourceProcessor {
-	sp := newSourceProcessor(cfg)
-	sp.nextConsumer = next
-	return sp
-}
-
 func (sp *sourceProcessor) fillOtherMeta(atts pdata.AttributeMap) {
 	if sp.collector != "" {
 		atts.UpsertString(collectorKey, sp.collector)
@@ -213,42 +205,22 @@ func (sp *sourceProcessor) annotationAttribute(annotationKey string) string {
 	return sp.keys.annotationPrefix + annotationKey
 }
 
-func (sp *sourceProcessor) ConsumeTraces(ctx context.Context, td pdata.Traces) error {
+// ProcessTraces processes traces
+func (sp *sourceProcessor) ProcessTraces(ctx context.Context, td pdata.Traces) (pdata.Traces, error) {
 	rss := td.ResourceSpans()
 
 	for i := 0; i < rss.Len(); i++ {
 		observability.RecordResourceSpansProcessed()
 
 		rs := rss.At(i)
-		res := rs.Resource()
-		filledAnySource := false
-		filledOtherMeta := false
-
+		res := sp.processResource(rs.Resource())
 		atts := res.Attributes()
-
-		// TODO: move this to k8sprocessor
-		sp.enrichPodName(&atts)
-		sp.fillOtherMeta(atts)
-		filledOtherMeta = true
-
-		filledAnySource = sp.sourceHostFiller.fillResourceOrUseAnnotation(&atts,
-			sp.annotationAttribute(sourceHostSpecialAnnotation),
-			sp.keys,
-		) || filledAnySource
-		filledAnySource = sp.sourceCategoryFiller.fillResourceOrUseAnnotation(&atts,
-			sp.annotationAttribute(sourceCategorySpecialAnnotation),
-			sp.keys,
-		) || filledAnySource
-		filledAnySource = sp.sourceNameFiller.fillResourceOrUseAnnotation(&atts,
-			sp.annotationAttribute(sourceNameSpecialAnnotation),
-			sp.keys,
-		) || filledAnySource
 
 		ilss := rs.InstrumentationLibrarySpans()
 		totalSpans := 0
 		for j := 0; j < ilss.Len(); j++ {
 			ils := ilss.At(j)
-			totalSpans = ils.Spans().Len()
+			totalSpans += ils.Spans().Len()
 		}
 
 		if sp.isFilteredOut(atts) {
@@ -257,44 +229,9 @@ func (sp *sourceProcessor) ConsumeTraces(ctx context.Context, td pdata.Traces) e
 		} else {
 			observability.RecordFilteredInN(totalSpans)
 		}
-
-		// Perhaps this is coming through Zipkin and in such case the attributes are stored in each span attributes, doh!
-		if !filledAnySource {
-			ilss := rs.InstrumentationLibrarySpans()
-			for j := 0; j < ilss.Len(); j++ {
-				ils := ilss.At(j)
-				inputSpans := ils.Spans()
-				outputSpans := pdata.NewSpanSlice()
-
-				for k := 0; k < inputSpans.Len(); k++ {
-					s := inputSpans.At(k)
-					atts := s.Attributes()
-
-					// TODO: move this to k8sprocessor
-					sp.enrichPodName(&atts)
-					if !filledOtherMeta {
-						sp.fillOtherMeta(atts)
-					}
-
-					sp.sourceHostFiller.fillResourceOrUseAnnotation(&atts, sp.annotationAttribute(sourceHostSpecialAnnotation), sp.keys)
-					sp.sourceCategoryFiller.fillResourceOrUseAnnotation(&atts, sp.annotationAttribute(sourceCategorySpecialAnnotation), sp.keys)
-					sp.sourceNameFiller.fillResourceOrUseAnnotation(&atts, sp.annotationAttribute(sourceNameSpecialAnnotation), sp.keys)
-
-					if !sp.isFilteredOut(atts) {
-						outputSpans.Resize(outputSpans.Len() + 1)
-						s.CopyTo(outputSpans.At(outputSpans.Len() - 1))
-						observability.RecordFilteredIn()
-					} else {
-						observability.RecordFilteredOut()
-					}
-				}
-
-				ils.Spans().Resize(0)
-				outputSpans.MoveAndAppendTo(ils.Spans())
-			}
-		}
 	}
-	return sp.nextConsumer.ConsumeTraces(ctx, td)
+
+	return td, nil
 }
 
 // ProcessesMetrics process metrics

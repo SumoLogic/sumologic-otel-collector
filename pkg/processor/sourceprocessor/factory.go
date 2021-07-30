@@ -83,12 +83,20 @@ func createDefaultConfig() config.Processor {
 // CreateTraceProcessor creates a trace processor based on this config.
 func createTraceProcessor(
 	_ context.Context,
-	_ component.ProcessorCreateSettings,
+	params component.ProcessorCreateSettings,
 	cfg config.Processor,
-	nextConsumer consumer.Traces) (component.TracesProcessor, error) {
+	next consumer.Traces) (component.TracesProcessor, error) {
 
 	oCfg := cfg.(*Config)
-	return newsourceProcessor(nextConsumer, oCfg), nil
+
+	sp := newSourceProcessor(oCfg)
+
+	return processorhelper.NewTracesProcessor(
+		cfg,
+		next,
+		sp,
+		processorhelper.WithCapabilities(processorCapabilities),
+	)
 }
 
 // createMetricsProcessor creates a metrics processor based on this config
