@@ -14,7 +14,7 @@
 
 package sumologicexporter
 
-import "go.opentelemetry.io/collector/consumer/pdata"
+import "go.opentelemetry.io/collector/model/pdata"
 
 // translateTelegrafMetric translates telegraf metrics names to align with
 // Sumo conventions expected in Sumo host related apps, for example:

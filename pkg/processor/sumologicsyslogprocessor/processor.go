@@ -20,7 +20,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 // tailSamplingSpanProcessor handles the incoming trace data and uses the given sampling

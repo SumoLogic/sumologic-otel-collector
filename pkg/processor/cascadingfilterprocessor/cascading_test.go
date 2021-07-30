@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/config"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/zap"
 
 	cfconfig "github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor/config"
@@ -64,15 +64,14 @@ func createTrace(fsp *cascadingFilterSpanProcessor, numSpans int, durationMicros
 	var traceBatches []pdata.Traces
 
 	traces := pdata.NewTraces()
-	traces.ResourceSpans().Resize(1)
-	rs := traces.ResourceSpans().At(0)
-	rs.InstrumentationLibrarySpans().Resize(1)
-	ils := rs.InstrumentationLibrarySpans().At(0)
+	rs := traces.ResourceSpans().AppendEmpty()
+	ils := rs.InstrumentationLibrarySpans().AppendEmpty()
 
-	ils.Spans().Resize(numSpans)
+	spans := ils.Spans()
+	spans.EnsureCapacity(numSpans)
 
 	for i := 0; i < numSpans; i++ {
-		span := ils.Spans().At(i)
+		span := spans.AppendEmpty()
 
 		fillSpan(&span, durationMicros)
 	}

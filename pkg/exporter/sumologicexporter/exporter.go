@@ -24,8 +24,8 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer/consumererror"
-	"go.opentelemetry.io/collector/consumer/pdata"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
+	"go.opentelemetry.io/collector/model/pdata"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension"
 )
@@ -138,7 +138,9 @@ func newLogsExporter(
 
 	return exporterhelper.NewLogsExporter(
 		cfg,
-		params.Logger,
+		component.ExporterCreateSettings{
+			Logger: params.Logger,
+		},
 		se.pushLogsData,
 		// Disable exporterhelper Timeout, since we are using a custom mechanism
 		// within exporter itself
@@ -161,7 +163,9 @@ func newMetricsExporter(
 
 	return exporterhelper.NewMetricsExporter(
 		cfg,
-		params.Logger,
+		component.ExporterCreateSettings{
+			Logger: params.Logger,
+		},
 		se.pushMetricsData,
 		// Disable exporterhelper Timeout, since we are using a custom mechanism
 		// within exporter itself
@@ -184,7 +188,9 @@ func newTracesExporter(
 
 	return exporterhelper.NewTracesExporter(
 		cfg,
-		params.Logger,
+		component.ExporterCreateSettings{
+			Logger: params.Logger,
+		},
 		se.pushTracesData,
 		// Disable exporterhelper Timeout, since we are using a custom mechanism
 		// within exporter itself
@@ -293,9 +299,10 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		rls = droppedLogs.ResourceLogs()
 		ills := rls.AppendEmpty().InstrumentationLibraryLogs()
 		logs := ills.AppendEmpty().Logs()
+		logs.EnsureCapacity(len(droppedRecords))
 
 		for _, log := range droppedRecords {
-			logs.Append(log)
+			log.CopyTo(logs.AppendEmpty())
 		}
 
 		return consumererror.NewLogs(consumererror.Combine(errs), droppedLogs)
@@ -400,13 +407,13 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		// Move all dropped records to Metrics
 		droppedMetrics := pdata.NewMetrics()
 		rms := droppedMetrics.ResourceMetrics()
-		rms.Resize(len(droppedRecords))
-		for num, record := range droppedRecords {
-			rm := droppedMetrics.ResourceMetrics().At(num)
+		rms.EnsureCapacity(len(droppedRecords))
+		for _, record := range droppedRecords {
+			rm := droppedMetrics.ResourceMetrics().AppendEmpty()
 			record.attributes.CopyTo(rm.Resource().Attributes())
 
 			ilms := rm.InstrumentationLibraryMetrics()
-			ilms.AppendEmpty().Metrics().Append(record.metric)
+			record.metric.CopyTo(ilms.AppendEmpty().Metrics().AppendEmpty())
 		}
 
 		return consumererror.NewMetrics(consumererror.Combine(errs), droppedMetrics)

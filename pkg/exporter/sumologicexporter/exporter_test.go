@@ -30,14 +30,14 @@ import (
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/consumer/consumererror"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 func LogRecordsToLogs(records []pdata.LogRecord) pdata.Logs {
 	logs := pdata.NewLogs()
 	logsSlice := logs.ResourceLogs().AppendEmpty().InstrumentationLibraryLogs().AppendEmpty().Logs()
 	for _, record := range records {
-		logsSlice.Append(record)
+		record.CopyTo(logsSlice.AppendEmpty())
 	}
 
 	return logs
@@ -346,11 +346,12 @@ func TestPushFailedBatch(t *testing.T) {
 	})
 
 	logs := LogRecordsToLogs(exampleLog())
-	logs.ResourceLogs().Resize(maxBufferSize + 1)
+	logs.ResourceLogs().EnsureCapacity(maxBufferSize + 1)
 	log := logs.ResourceLogs().At(0)
+	rLogs := logs.ResourceLogs()
 
 	for i := 0; i < maxBufferSize; i++ {
-		logs.ResourceLogs().Append(log)
+		log.CopyTo(rLogs.AppendEmpty())
 	}
 
 	err := test.exp.pushLogsData(context.Background(), logs)
@@ -488,7 +489,7 @@ func TestAllMetricsOTLP(t *testing.T) {
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			//nolint:lll
-			expected := "\nf\n/\n\x14\n\x04test\x12\f\n\ntest_value\n\x17\n\x05test2\x12\x0e\n\fsecond_value\x123\n\x00\x12/\n\x10test.metric.data\x1a\x05bytes2\x14\n\x12\x19\x00\x12\x94\v\xd1\x00H\x16!\xa48\x00\x00\x00\x00\x00\x00\n\xba\x01\n\x0e\n\f\n\x03foo\x12\x05\n\x03bar\x12\xa7\x01\n\x00\x12\xa2\x01\n\x11gauge_metric_name\"\x8c\x01\nD\n\x15\n\vremote_name\x12\x06156920\n\x19\n\x03url\x12\x12http://example_url\x19\x80GX\xef\xdb4Q\x16!|\x00\x00\x00\x00\x00\x00\x00\nD\n\x15\n\vremote_name\x12\x06156955\n\x19\n\x03url\x12\x12http://another_url\x19\x80\x11\xf3*\xdc4Q\x16!\xf5\x00\x00\x00\x00\x00\x00\x00"
+			expected := "\nf\n/\n\x14\n\x04test\x12\f\n\ntest_value\n\x17\n\x05test2\x12\x0e\n\fsecond_value\x123\n\x00\x12/\n\x10test.metric.data\x1a\x05bytes:\x14\n\x12\x19\x00\x12\x94\v\xd1\x00H\x161\xa48\x00\x00\x00\x00\x00\x00\n\xba\x01\n\x0e\n\f\n\x03foo\x12\x05\n\x03bar\x12\xa7\x01\n\x00\x12\xa2\x01\n\x11gauge_metric_name*\x8c\x01\nD\n\x15\n\vremote_name\x12\x06156920\n\x19\n\x03url\x12\x12http://example_url\x19\x80GX\xef\xdb4Q\x161|\x00\x00\x00\x00\x00\x00\x00\nD\n\x15\n\vremote_name\x12\x06156955\n\x19\n\x03url\x12\x12http://another_url\x19\x80\x11\xf3*\xdc4Q\x161\xf5\x00\x00\x00\x00\x00\x00\x00"
 			assert.Equal(t, expected, body)
 			assert.Equal(t, "application/x-protobuf", req.Header.Get("Content-Type"))
 		},
@@ -658,11 +659,12 @@ func TestPushMetricsFailedBatch(t *testing.T) {
 	test.exp.config.MaxRequestBodySize = 1024 * 1024 * 1024 * 1024
 
 	metrics := metricPairToMetrics([]metricPair{exampleIntMetric()})
-	metrics.ResourceMetrics().Resize(maxBufferSize + 1)
-	metric := metrics.ResourceMetrics().At(0)
+	metrics.ResourceMetrics().EnsureCapacity(maxBufferSize + 1)
+	rMetrics := metrics.ResourceMetrics()
+	metric := rMetrics.AppendEmpty()
 
 	for i := 0; i < maxBufferSize; i++ {
-		metrics.ResourceMetrics().Append(metric)
+		metric.CopyTo(rMetrics.AppendEmpty())
 	}
 
 	err := test.exp.pushMetricsData(context.Background(), metrics)
@@ -964,8 +966,8 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 						InstrumentationLibraryMetrics().AppendEmpty().
 						Metrics().AppendEmpty()
 					m.SetName("cpu_usage_active")
-					m.SetDataType(pdata.MetricDataTypeDoubleGauge)
-					dp := m.DoubleGauge().DataPoints().AppendEmpty()
+					m.SetDataType(pdata.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetValue(123.456)
 					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
 					dp.LabelsMap().Insert("test", "test_value")
@@ -989,8 +991,8 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 						InstrumentationLibraryMetrics().AppendEmpty().
 						Metrics().AppendEmpty()
 					m.SetName("cpu_usage_active")
-					m.SetDataType(pdata.MetricDataTypeDoubleGauge)
-					dp := m.DoubleGauge().DataPoints().AppendEmpty()
+					m.SetDataType(pdata.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetValue(123.456)
 					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
 					dp.LabelsMap().Insert("test", "test_value")
@@ -1000,8 +1002,8 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 						InstrumentationLibraryMetrics().AppendEmpty().
 						Metrics().AppendEmpty()
 					m.SetName("diskio_reads")
-					m.SetDataType(pdata.MetricDataTypeDoubleGauge)
-					dp := m.DoubleGauge().DataPoints().AppendEmpty()
+					m.SetDataType(pdata.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetValue(123456)
 					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 1000000)))
 					dp.LabelsMap().Insert("test", "test_value")
@@ -1011,8 +1013,8 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 						InstrumentationLibraryMetrics().AppendEmpty().
 						Metrics().AppendEmpty()
 					m.SetName("dummy_metric")
-					m.SetDataType(pdata.MetricDataTypeDoubleGauge)
-					dp := m.DoubleGauge().DataPoints().AppendEmpty()
+					m.SetDataType(pdata.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetValue(10)
 					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 2000000)))
 					dp.LabelsMap().Insert("test", "test_value")
@@ -1037,8 +1039,8 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 						InstrumentationLibraryMetrics().AppendEmpty().
 						Metrics().AppendEmpty()
 					m.SetName("cpu_usage_active")
-					m.SetDataType(pdata.MetricDataTypeDoubleGauge)
-					dp := m.DoubleGauge().DataPoints().AppendEmpty()
+					m.SetDataType(pdata.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetValue(123.456)
 					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
 					dp.LabelsMap().Insert("test", "test_value")
@@ -1061,8 +1063,8 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 						InstrumentationLibraryMetrics().AppendEmpty().
 						Metrics().AppendEmpty()
 					m.SetName("cpu_usage_active")
-					m.SetDataType(pdata.MetricDataTypeDoubleGauge)
-					dp := m.DoubleGauge().DataPoints().AppendEmpty()
+					m.SetDataType(pdata.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetValue(123.456)
 					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
 					dp.LabelsMap().Insert("test", "test_value")
@@ -1072,8 +1074,8 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 						InstrumentationLibraryMetrics().AppendEmpty().
 						Metrics().AppendEmpty()
 					m.SetName("diskio_reads")
-					m.SetDataType(pdata.MetricDataTypeDoubleGauge)
-					dp := m.DoubleGauge().DataPoints().AppendEmpty()
+					m.SetDataType(pdata.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetValue(123456)
 					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 1000000)))
 					dp.LabelsMap().Insert("test", "test_value")
@@ -1083,8 +1085,8 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 						InstrumentationLibraryMetrics().AppendEmpty().
 						Metrics().AppendEmpty()
 					m.SetName("dummy_metric")
-					m.SetDataType(pdata.MetricDataTypeDoubleGauge)
-					dp := m.DoubleGauge().DataPoints().AppendEmpty()
+					m.SetDataType(pdata.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetValue(10)
 					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 2000000)))
 					dp.LabelsMap().Insert("test", "test_value")

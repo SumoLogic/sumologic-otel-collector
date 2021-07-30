@@ -25,8 +25,15 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/collector/consumer/consumererror"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/otlp"
+	"go.opentelemetry.io/collector/model/pdata"
 	tracetranslator "go.opentelemetry.io/collector/translator/trace"
+)
+
+var (
+	tracesMarshaler  = otlp.NewProtobufTracesMarshaler()
+	metricsMarshaler = otlp.NewProtobufMetricsMarshaler()
+	logsMarshaler    = otlp.NewProtobufLogsMarshaler()
 )
 
 type appendResponse struct {
@@ -258,19 +265,15 @@ func (s *sender) sendLogs(ctx context.Context, flds fields) ([]pdata.LogRecord, 
 // TODO: add support for HTTP limits
 func (s *sender) sendOTLPLogs(ctx context.Context, flds fields) ([]pdata.LogRecord, error) {
 	ld := pdata.NewLogs()
-	rls := ld.ResourceLogs()
-	rls.Resize(1)
-	rl := rls.At(0)
-	ills := rl.InstrumentationLibraryLogs()
-	ills.Resize(1)
-	ill := ills.At(0)
+	rl := ld.ResourceLogs().AppendEmpty()
+	ill := rl.InstrumentationLibraryLogs().AppendEmpty()
 	logs := ill.Logs()
-	logs.Resize(len(s.logBuffer))
-	for i, record := range s.logBuffer {
-		record.CopyTo(logs.At(i))
+	logs.EnsureCapacity(len(s.logBuffer))
+	for _, record := range s.logBuffer {
+		record.CopyTo(logs.AppendEmpty())
 	}
 
-	body, err := ld.ToOtlpProtoBytes()
+	body, err := logsMarshaler.MarshalLogs(ld)
 	if err != nil {
 		return s.logBuffer, err
 	}
@@ -359,19 +362,16 @@ func (s *sender) sendMetrics(ctx context.Context, flds fields) ([]metricPair, er
 func (s *sender) sendOTLPMetrics(ctx context.Context, flds fields) ([]metricPair, error) {
 	md := pdata.NewMetrics()
 	rms := md.ResourceMetrics()
-	rms.Resize(len(s.metricBuffer))
-	for i, record := range s.metricBuffer {
-		rm := rms.At(i)
+	rms.EnsureCapacity(len(s.metricBuffer))
+	for _, record := range s.metricBuffer {
+		rm := rms.AppendEmpty()
 		record.attributes.CopyTo(rm.Resource().Attributes())
-		ilms := rm.InstrumentationLibraryMetrics()
-		ilms.Resize(1)
-		ilm := ilms.At(0)
-		ms := ilm.Metrics()
-		ms.Resize(1)
-		record.metric.CopyTo(ms.At(0))
+		ilm := rm.InstrumentationLibraryMetrics().AppendEmpty()
+		ms := ilm.Metrics().AppendEmpty()
+		record.metric.CopyTo(ms)
 	}
 
-	body, err := md.ToOtlpProtoBytes()
+	body, err := metricsMarshaler.MarshalMetrics(md)
 	if err != nil {
 		return s.metricBuffer, err
 	}
@@ -435,7 +435,7 @@ func (s *sender) sendTraces(ctx context.Context, td pdata.Traces, flds fields) e
 
 // sendOTLPTraces sends trace records in OTLP format
 func (s *sender) sendOTLPTraces(ctx context.Context, td pdata.Traces, flds fields) error {
-	body, err := td.ToOtlpProtoBytes()
+	body, err := tracesMarshaler.MarshalTraces(td)
 	if err != nil {
 		return err
 	}

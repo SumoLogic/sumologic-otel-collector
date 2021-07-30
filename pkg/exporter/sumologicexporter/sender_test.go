@@ -26,7 +26,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/otlp"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 type senderTest struct {
@@ -159,8 +160,8 @@ func exampleMultitypeLogs() []pdata.LogRecord {
 	intVal := pdata.NewAttributeValueNull()
 	intVal.SetIntVal(13)
 
-	attArr.Append(strVal)
-	attArr.Append(intVal)
+	strVal.CopyTo(attArr.AppendEmpty())
+	intVal.CopyTo(attArr.AppendEmpty())
 
 	attVal.CopyTo(buffer[1].Body())
 	buffer[1].Attributes().InsertString("key1", "value1")
@@ -184,8 +185,9 @@ func exampleTrace() pdata.Traces {
 }
 
 func TestSendTrace(t *testing.T) {
+	tracesMarshaler = otlp.NewProtobufTracesMarshaler()
 	td := exampleTrace()
-	traceBody, err := td.ToOtlpProtoBytes()
+	traceBody, err := tracesMarshaler.MarshalTraces(td)
 	assert.NoError(t, err)
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
