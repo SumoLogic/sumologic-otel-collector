@@ -45,12 +45,16 @@ const (
 	defaultSourceHostKey      = "source_host"
 )
 
+var processorCapabilities = consumer.Capabilities{MutatesData: true}
+
 // NewFactory returns a new factory for the Span processor.
 func NewFactory() component.ProcessorFactory {
 	return processorhelper.NewFactory(
 		typeStr,
 		createDefaultConfig,
-		processorhelper.WithTraces(createTraceProcessor))
+		processorhelper.WithTraces(createTraceProcessor),
+		processorhelper.WithMetrics(createMetricsProcessor),
+	)
 }
 
 // createDefaultConfig creates the default configuration for processor.
@@ -85,4 +89,22 @@ func createTraceProcessor(
 
 	oCfg := cfg.(*Config)
 	return newsourceProcessor(nextConsumer, oCfg), nil
+}
+
+// createMetricsProcessor creates a metrics processor based on this config
+func createMetricsProcessor(
+	_ context.Context,
+	params component.ProcessorCreateSettings,
+	cfg config.Processor,
+	next consumer.Metrics,
+) (component.MetricsProcessor, error) {
+	oCfg := cfg.(*Config)
+
+	sp := newSourceProcessor(oCfg)
+	return processorhelper.NewMetricsProcessor(
+		cfg,
+		next,
+		sp,
+		processorhelper.WithCapabilities(processorCapabilities),
+	)
 }

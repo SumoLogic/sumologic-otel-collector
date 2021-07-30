@@ -135,7 +135,7 @@ func matchRegexMaybe(re *regexp.Regexp, atts pdata.AttributeMap, attributeName s
 	return false
 }
 
-func newsourceProcessor(next consumer.Traces, cfg *Config) *sourceProcessor {
+func newSourceProcessor(cfg *Config) *sourceProcessor {
 	keys := sourceKeys{
 		annotationPrefix:   cfg.AnnotationPrefix,
 		containerKey:       cfg.ContainerKey,
@@ -148,7 +148,6 @@ func newsourceProcessor(next consumer.Traces, cfg *Config) *sourceProcessor {
 	}
 
 	return &sourceProcessor{
-		nextConsumer:          next,
 		collector:             cfg.Collector,
 		keys:                  keys,
 		source:                cfg.Source,
@@ -160,6 +159,12 @@ func newsourceProcessor(next consumer.Traces, cfg *Config) *sourceProcessor {
 		excludeContainerRegex: compileRegex(cfg.ExcludeContainerRegex),
 		excludePodRegex:       compileRegex(cfg.ExcludePodRegex),
 	}
+}
+
+func newsourceProcessor(next consumer.Traces, cfg *Config) *sourceProcessor {
+	sp := newSourceProcessor(cfg)
+	sp.nextConsumer = next
+	return sp
 }
 
 func (sp *sourceProcessor) fillOtherMeta(atts pdata.AttributeMap) {
@@ -290,6 +295,49 @@ func (sp *sourceProcessor) ConsumeTraces(ctx context.Context, td pdata.Traces) e
 		}
 	}
 	return sp.nextConsumer.ConsumeTraces(ctx, td)
+}
+
+// ProcessesMetrics process metrics
+func (sp *sourceProcessor) ProcessMetrics(ctx context.Context, md pdata.Metrics) (pdata.Metrics, error) {
+	rss := md.ResourceMetrics()
+
+	for i := 0; i < rss.Len(); i++ {
+		rs := rss.At(i)
+		res := sp.processResource(rs.Resource())
+		atts := res.Attributes()
+
+		if sp.isFilteredOut(atts) {
+			rs.InstrumentationLibraryMetrics().Resize(0)
+		}
+	}
+
+	return md, nil
+}
+
+// processResource perform multiple actions on resource:
+//   - enrich pod name, so it can be used in templates
+//   - fills source attributes based on config or annotations
+//   - set metadata (collector name)
+func (sp *sourceProcessor) processResource(res pdata.Resource) pdata.Resource {
+	atts := res.Attributes()
+
+	sp.enrichPodName(&atts)
+	sp.fillOtherMeta(atts)
+
+	sp.sourceHostFiller.fillResourceOrUseAnnotation(&atts,
+		sp.annotationAttribute(sourceHostSpecialAnnotation),
+		sp.keys,
+	)
+	sp.sourceCategoryFiller.fillResourceOrUseAnnotation(&atts,
+		sp.annotationAttribute(sourceCategorySpecialAnnotation),
+		sp.keys,
+	)
+	sp.sourceNameFiller.fillResourceOrUseAnnotation(&atts,
+		sp.annotationAttribute(sourceNameSpecialAnnotation),
+		sp.keys,
+	)
+
+	return res
 }
 
 // GetCapabilities returns the Capabilities assocciated with the resource processor.
