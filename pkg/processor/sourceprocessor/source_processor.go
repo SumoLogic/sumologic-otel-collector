@@ -40,7 +40,7 @@ func init() {
 	}
 }
 
-type sourceTraceKeys struct {
+type sourceKeys struct {
 	annotationPrefix   string
 	containerKey       string
 	namespaceKey       string
@@ -51,7 +51,7 @@ type sourceTraceKeys struct {
 	sourceHostKey      string
 }
 
-func (stk sourceTraceKeys) convertKey(key string) string {
+func (stk sourceKeys) convertKey(key string) string {
 	switch key {
 	case "container":
 		return stk.containerKey
@@ -78,7 +78,7 @@ type attributeFiller struct {
 	labels          []string
 }
 
-type sourceTraceProcessor struct {
+type sourceProcessor struct {
 	collector             string
 	source                string
 	sourceCategoryFiller  attributeFiller
@@ -89,7 +89,7 @@ type sourceTraceProcessor struct {
 	excludeContainerRegex *regexp.Regexp
 	excludeHostRegex      *regexp.Regexp
 	nextConsumer          consumer.Traces
-	keys                  sourceTraceKeys
+	keys                  sourceKeys
 }
 
 const (
@@ -135,8 +135,8 @@ func matchRegexMaybe(re *regexp.Regexp, atts pdata.AttributeMap, attributeName s
 	return false
 }
 
-func newSourceTraceProcessor(next consumer.Traces, cfg *Config) *sourceTraceProcessor {
-	keys := sourceTraceKeys{
+func newsourceProcessor(next consumer.Traces, cfg *Config) *sourceProcessor {
+	keys := sourceKeys{
 		annotationPrefix:   cfg.AnnotationPrefix,
 		containerKey:       cfg.ContainerKey,
 		namespaceKey:       cfg.NamespaceKey,
@@ -147,7 +147,7 @@ func newSourceTraceProcessor(next consumer.Traces, cfg *Config) *sourceTraceProc
 		sourceHostKey:      cfg.SourceHostKey,
 	}
 
-	return &sourceTraceProcessor{
+	return &sourceProcessor{
 		nextConsumer:          next,
 		collector:             cfg.Collector,
 		keys:                  keys,
@@ -162,13 +162,13 @@ func newSourceTraceProcessor(next consumer.Traces, cfg *Config) *sourceTraceProc
 	}
 }
 
-func (stp *sourceTraceProcessor) fillOtherMeta(atts pdata.AttributeMap) {
+func (stp *sourceProcessor) fillOtherMeta(atts pdata.AttributeMap) {
 	if stp.collector != "" {
 		atts.UpsertString(collectorKey, stp.collector)
 	}
 }
 
-func (stp *sourceTraceProcessor) isFilteredOut(atts pdata.AttributeMap) bool {
+func (stp *sourceProcessor) isFilteredOut(atts pdata.AttributeMap) bool {
 	// TODO: This is quite inefficient when done for each package (ore even more so, span) separately.
 	// It should be moved to K8S Meta Processor and done once per new pod/changed pod
 
@@ -204,11 +204,11 @@ func (stp *sourceTraceProcessor) isFilteredOut(atts pdata.AttributeMap) bool {
 	return false
 }
 
-func (stp *sourceTraceProcessor) annotationAttribute(annotationKey string) string {
+func (stp *sourceProcessor) annotationAttribute(annotationKey string) string {
 	return stp.keys.annotationPrefix + annotationKey
 }
 
-func (stp *sourceTraceProcessor) ConsumeTraces(ctx context.Context, td pdata.Traces) error {
+func (stp *sourceProcessor) ConsumeTraces(ctx context.Context, td pdata.Traces) error {
 	rss := td.ResourceSpans()
 
 	for i := 0; i < rss.Len(); i++ {
@@ -293,21 +293,21 @@ func (stp *sourceTraceProcessor) ConsumeTraces(ctx context.Context, td pdata.Tra
 }
 
 // GetCapabilities returns the Capabilities assocciated with the resource processor.
-// func (stp *sourceTraceProcessor) GetCapabilities() component.ProcessorCapabilities {
+// func (stp *sourceProcessor) GetCapabilities() component.ProcessorCapabilities {
 // 	return component.ProcessorCapabilities{MutatesConsumedData: true}
 // }
 
-func (stp *sourceTraceProcessor) Capabilities() consumer.Capabilities {
+func (stp *sourceProcessor) Capabilities() consumer.Capabilities {
 	return consumer.Capabilities{MutatesData: true}
 }
 
 // Start is invoked during service startup.
-func (*sourceTraceProcessor) Start(_context context.Context, _host component.Host) error {
+func (*sourceProcessor) Start(_context context.Context, _host component.Host) error {
 	return nil
 }
 
 // Shutdown is invoked during service shutdown.
-func (*sourceTraceProcessor) Shutdown(_context context.Context) error {
+func (*sourceProcessor) Shutdown(_context context.Context) error {
 	return nil
 }
 
@@ -321,7 +321,7 @@ func SafeEncodeString(s string) string {
 	return string(r)
 }
 
-func (stp *sourceTraceProcessor) enrichPodName(atts *pdata.AttributeMap) {
+func (stp *sourceProcessor) enrichPodName(atts *pdata.AttributeMap) {
 	// This replicates sanitize_pod_name function
 	// Strip out dynamic bits from pod name.
 	// NOTE: Kubernetes deployments append a template hash.
@@ -356,7 +356,7 @@ func (stp *sourceTraceProcessor) enrichPodName(atts *pdata.AttributeMap) {
 	atts.UpsertString(stp.keys.podNameKey, strings.Join(podParts[:len(podParts)-1], "-"))
 }
 
-func extractFormat(format string, name string, keys sourceTraceKeys) attributeFiller {
+func extractFormat(format string, name string, keys sourceKeys) attributeFiller {
 	labels := make([]string, 0)
 	matches := formatRegex.FindAllStringSubmatch(format, -1)
 	for _, matchset := range matches {
@@ -383,12 +383,12 @@ func createSourceHostFiller() attributeFiller {
 	}
 }
 
-func createSourceNameFiller(cfg *Config, keys sourceTraceKeys) attributeFiller {
+func createSourceNameFiller(cfg *Config, keys sourceKeys) attributeFiller {
 	filler := extractFormat(cfg.SourceName, sourceNameKey, keys)
 	return filler
 }
 
-func createSourceCategoryFiller(cfg *Config, keys sourceTraceKeys) attributeFiller {
+func createSourceCategoryFiller(cfg *Config, keys sourceKeys) attributeFiller {
 	filler := extractFormat(cfg.SourceCategory, sourceCategoryKey, keys)
 	filler.compiledFormat = cfg.SourceCategoryPrefix + filler.compiledFormat
 	filler.dashReplacement = cfg.SourceCategoryReplaceDash
@@ -396,7 +396,7 @@ func createSourceCategoryFiller(cfg *Config, keys sourceTraceKeys) attributeFill
 	return filler
 }
 
-func (f *attributeFiller) fillResourceOrUseAnnotation(atts *pdata.AttributeMap, annotationKey string, keys sourceTraceKeys) bool {
+func (f *attributeFiller) fillResourceOrUseAnnotation(atts *pdata.AttributeMap, annotationKey string, keys sourceKeys) bool {
 	val, found := atts.Get(annotationKey)
 	if found {
 		annotationFiller := extractFormat(val.StringVal(), f.name, keys)
