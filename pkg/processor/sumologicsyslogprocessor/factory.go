@@ -61,6 +61,6 @@ func createLogProcessor(
 	return processorhelper.NewLogsProcessor(
 		cfg,
 		nextConsumer,
-		ssp,
+		ssp.ProcessLogs,
 		processorhelper.WithCapabilities(processorCapabilities))
 }

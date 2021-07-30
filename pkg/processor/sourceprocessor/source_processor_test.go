@@ -20,7 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/consumer"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 func createConfig() *Config {
@@ -98,8 +98,7 @@ var (
 
 func newTraceData(labels map[string]string) pdata.Traces {
 	td := pdata.NewTraces()
-	td.ResourceSpans().Resize(1)
-	rs := td.ResourceSpans().At(0)
+	rs := td.ResourceSpans().AppendEmpty()
 	attrs := rs.Resource().Attributes()
 	for k, v := range labels {
 		attrs.UpsertString(k, v)
@@ -110,12 +109,10 @@ func newTraceData(labels map[string]string) pdata.Traces {
 func newTraceDataWithSpans(_resourceLabels map[string]string, _spanLabels map[string]string) pdata.Traces {
 	// This will be very small attribute set, the actual data will be at span level
 	td := newTraceData(_resourceLabels)
-	ils := td.ResourceSpans().At(0).InstrumentationLibrarySpans()
-	ils.Resize(1)
-	spans := ils.At(0).Spans()
-	spans.Resize(1)
-	spans.At(0).SetName("foo")
-	spanAttrs := spans.At(0).Attributes()
+	ils := td.ResourceSpans().At(0).InstrumentationLibrarySpans().AppendEmpty()
+	span := ils.Spans().AppendEmpty()
+	span.SetName("foo")
+	spanAttrs := span.Attributes()
 	for k, v := range _spanLabels {
 		spanAttrs.UpsertString(k, v)
 	}
@@ -221,7 +218,8 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 		test := newTraceDataWithSpans(limitedLabels, k8sLabels)
 
 		want := newTraceDataWithSpans(limitedLabelsWithMeta, mergedK8sLabels)
-		want.ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().Resize(0)
+		want.ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().
+			RemoveIf(func(pdata.Span) bool { return true })
 
 		ttn := &testTraceConsumer{}
 		rtp := newSourceTraceProcessor(ttn, config)
@@ -234,10 +232,12 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 
 func TestTraceSourceFilteringOutByExclude(t *testing.T) {
 	test := newTraceDataWithSpans(limitedLabels, k8sLabels)
-	test.ResourceSpans().At(0).Resource().Attributes().UpsertString("pod_annotation_sumologic.com/exclude", "true")
+	test.ResourceSpans().At(0).Resource().Attributes().
+		UpsertString("pod_annotation_sumologic.com/exclude", "true")
 
 	want := newTraceDataWithSpans(limitedLabelsWithMeta, mergedK8sLabels)
-	want.ResourceSpans().At(0).InstrumentationLibrarySpans().Resize(0)
+	want.ResourceSpans().At(0).InstrumentationLibrarySpans().
+		RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
 
 	ttn := &testTraceConsumer{}
 	rtp := newSourceTraceProcessor(ttn, cfg)

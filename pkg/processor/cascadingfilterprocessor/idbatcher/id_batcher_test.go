@@ -23,7 +23,7 @@ import (
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor/bigendianconverter"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 func TestBatcherNew(t *testing.T) {

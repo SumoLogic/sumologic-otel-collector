@@ -22,3 +22,22 @@ if [[ "${CORE_VERSIONS_COUNT}" != "1" ]]; then
 else
   echo "OK: you only rely on \"${CORE_VERSIONS_UNIQ#replace }\""
 fi
+
+# TODO: make a function
+
+CORE_VERSIONS="$( find . -name go.mod -not -path "./otelcolbuilder/cmd/*" -print0 | \
+  xargs -0 "${GREP}" --no-filename "go.opentelemetry.io/collector v" | \
+  "${GREP}" -v module )"
+CORE_VERSIONS_UNIQ="$( echo "${CORE_VERSIONS}" | sort | uniq )"
+CORE_VERSIONS_COUNT="$( echo "${CORE_VERSIONS_UNIQ}" | wc -l | awk '{$1=$1;print}' )"
+
+if [[ "${CORE_VERSIONS_COUNT}" != "1" ]]; then
+  echo "There's more than one version of go.opentelemetry.io/collector that this repo depends on"
+  echo
+  find . -name go.mod -print0 | \
+    xargs -0 "${GREP}" "go.opentelemetry.io/collector v" | \
+    "${GREP}" -v module
+  exit 1
+else
+  echo "OK: you only rely on \"${CORE_VERSIONS_UNIQ#replace }\""
+fi

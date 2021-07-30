@@ -23,7 +23,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/zap"
 )
 
@@ -147,15 +147,14 @@ func newTraceAttrs(operationName string, duration time.Duration, numberOfSpans i
 	var traceBatches []pdata.Traces
 
 	traces := pdata.NewTraces()
-	traces.ResourceSpans().Resize(1)
-	rs := traces.ResourceSpans().At(0)
-	rs.InstrumentationLibrarySpans().Resize(1)
-	ils := rs.InstrumentationLibrarySpans().At(0)
+	rs := traces.ResourceSpans().AppendEmpty()
+	ils := rs.InstrumentationLibrarySpans().AppendEmpty()
 
-	ils.Spans().Resize(numberOfSpans)
+	spans := ils.Spans()
+	spans.EnsureCapacity(numberOfSpans)
 
 	for i := 0; i < numberOfSpans; i++ {
-		span := ils.Spans().At(i)
+		span := spans.AppendEmpty()
 		span.SetName(operationName)
 		span.SetStartTimestamp(pdata.Timestamp(startTs))
 		span.SetEndTimestamp(pdata.Timestamp(endTs))

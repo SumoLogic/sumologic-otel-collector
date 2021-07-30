@@ -21,7 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 func TestProcessLogs(t *testing.T) {
@@ -38,16 +38,15 @@ func TestProcessLogs(t *testing.T) {
 	}
 
 	logs := pdata.NewLogs()
-	logs.ResourceLogs().Resize(1)
-	logs.ResourceLogs().At(0).InstrumentationLibraryLogs().Resize(len(lines))
-	lgs := logs.ResourceLogs().At(0).InstrumentationLibraryLogs().At(0).Logs()
+	rls := logs.ResourceLogs().AppendEmpty()
+	rls.InstrumentationLibraryLogs().EnsureCapacity(len(lines))
+	lgs := rls.InstrumentationLibraryLogs().AppendEmpty()
 
 	for _, line := range lines {
-		lr := pdata.NewLogRecord()
+		lr := lgs.Logs().AppendEmpty()
 		lr.Body().SetStringVal(line)
-		lgs.Append(lr)
 	}
-	lgs.At(1).Attributes().InsertString("facility_name", "pre filled facility")
+	lgs.Logs().At(1).Attributes().InsertString("facility_name", "pre filled facility")
 
 	ctx := context.Background()
 	processor := &sumologicSyslogProcessor{
