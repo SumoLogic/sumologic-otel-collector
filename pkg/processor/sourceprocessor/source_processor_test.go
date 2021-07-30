@@ -19,7 +19,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/model/pdata"
 )
 
@@ -153,20 +152,19 @@ func TestTraceSourceProcessor(t *testing.T) {
 	want := newTraceData(mergedK8sLabelsWithMeta)
 	test := newTraceData(k8sLabels)
 
-	ttn := &testTraceConsumer{}
-	rtp := newsourceProcessor(ttn, cfg)
+	rtp := newSourceProcessor(cfg)
 	assert.True(t, rtp.Capabilities().MutatesData)
 
-	assert.NoError(t, rtp.ConsumeTraces(context.Background(), test))
+	td, err := rtp.ProcessTraces(context.Background(), test)
+	assert.NoError(t, err)
 
-	assertTracesEqual(t, ttn.td, want)
+	assertTracesEqual(t, td, want)
 }
 
 func TestTraceSourceProcessorNewTaxonomy(t *testing.T) {
 	want := newTraceData(mergedK8sNewLabelsWithMeta)
 	test := newTraceData(k8sNewLabels)
 
-	ttn := &testTraceConsumer{}
 	config := createConfig()
 	config.NamespaceKey = "k8s.namespace.name"
 	config.PodIDKey = "k8s.pod.id"
@@ -175,33 +173,23 @@ func TestTraceSourceProcessorNewTaxonomy(t *testing.T) {
 	config.PodTemplateHashKey = "k8s.pod.labels.pod-template-hash"
 	config.ContainerKey = "k8s.container.name"
 
-	rtp := newsourceProcessor(ttn, config)
-	assert.NoError(t, rtp.ConsumeTraces(context.Background(), test))
+	rtp := newSourceProcessor(config)
 
-	assertTracesEqual(t, ttn.td, want)
+	td, err := rtp.ProcessTraces(context.Background(), test)
+	assert.NoError(t, err)
+
+	assertTracesEqual(t, td, want)
 }
 
 func TestTraceSourceProcessorEmpty(t *testing.T) {
 	want := newTraceData(limitedLabelsWithMeta)
 	test := newTraceData(limitedLabels)
 
-	ttn := &testTraceConsumer{}
-	rtp := newsourceProcessor(ttn, cfg)
+	rtp := newSourceProcessor(cfg)
 
-	assert.NoError(t, rtp.ConsumeTraces(context.Background(), test))
-	assertTracesEqual(t, ttn.td, want)
-}
-
-func TestTraceSourceProcessorMetaAtSpan(t *testing.T) {
-	test := newTraceDataWithSpans(limitedLabels, k8sLabels)
-	want := newTraceDataWithSpans(limitedLabelsWithMeta, mergedK8sLabels)
-
-	ttn := &testTraceConsumer{}
-	rtp := newsourceProcessor(ttn, cfg)
-
-	assert.NoError(t, rtp.ConsumeTraces(context.Background(), test))
-
-	assertTracesEqual(t, ttn.td, want)
+	td, err := rtp.ProcessTraces(context.Background(), test)
+	assert.NoError(t, err)
+	assertTracesEqual(t, td, want)
 }
 
 func TestTraceSourceFilteringOutByRegex(t *testing.T) {
@@ -215,23 +203,23 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 	cfg3.ExcludeNamespaceRegex = ".*"
 
 	for _, config := range []*Config{cfg1, cfg2, cfg3} {
-		test := newTraceDataWithSpans(limitedLabels, k8sLabels)
+		test := newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
 
-		want := newTraceDataWithSpans(limitedLabelsWithMeta, mergedK8sLabels)
-		want.ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().
-			RemoveIf(func(pdata.Span) bool { return true })
+		want := newTraceDataWithSpans(mergedK8sLabelsWithMeta, k8sLabels)
+		want.ResourceSpans().At(0).InstrumentationLibrarySpans().
+			RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
 
-		ttn := &testTraceConsumer{}
-		rtp := newsourceProcessor(ttn, config)
+		rtp := newSourceProcessor(config)
 
-		assert.NoError(t, rtp.ConsumeTraces(context.Background(), test))
+		td, err := rtp.ProcessTraces(context.Background(), test)
+		assert.NoError(t, err)
 
-		assertTracesEqual(t, ttn.td, want)
+		assertTracesEqual(t, td, want)
 	}
 }
 
 func TestTraceSourceFilteringOutByExclude(t *testing.T) {
-	test := newTraceDataWithSpans(limitedLabels, k8sLabels)
+	test := newTraceDataWithSpans(k8sLabels, k8sLabels)
 	test.ResourceSpans().At(0).Resource().Attributes().
 		UpsertString("pod_annotation_sumologic.com/exclude", "true")
 
@@ -239,29 +227,29 @@ func TestTraceSourceFilteringOutByExclude(t *testing.T) {
 	want.ResourceSpans().At(0).InstrumentationLibrarySpans().
 		RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
 
-	ttn := &testTraceConsumer{}
-	rtp := newsourceProcessor(ttn, cfg)
+	rtp := newSourceProcessor(cfg)
 
-	assert.NoError(t, rtp.ConsumeTraces(context.Background(), test))
+	td, err := rtp.ProcessTraces(context.Background(), test)
+	assert.NoError(t, err)
 
-	assertSpansEqual(t, ttn.td, want)
+	assertSpansEqual(t, td, want)
 }
 
 func TestTraceSourceIncludePrecedence(t *testing.T) {
 	test := newTraceDataWithSpans(limitedLabels, k8sLabels)
-	test.ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(0).Attributes().UpsertString("pod_annotation_sumologic.com/include", "true")
+	test.ResourceSpans().At(0).Resource().Attributes().UpsertString("pod_annotation_sumologic.com/include", "true")
 
-	want := newTraceDataWithSpans(limitedLabelsWithMeta, mergedK8sLabels)
-	want.ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(0).Attributes().UpsertString("pod_annotation_sumologic.com/include", "true")
+	want := newTraceDataWithSpans(limitedLabelsWithMeta, k8sLabels)
+	want.ResourceSpans().At(0).Resource().Attributes().UpsertString("pod_annotation_sumologic.com/include", "true")
 
-	ttn := &testTraceConsumer{}
 	cfg1 := createConfig()
 	cfg1.ExcludePodRegex = ".*"
-	rtp := newsourceProcessor(ttn, cfg1)
+	rtp := newSourceProcessor(cfg)
 
-	assert.NoError(t, rtp.ConsumeTraces(context.Background(), test))
+	td, err := rtp.ProcessTraces(context.Background(), test)
+	assert.NoError(t, err)
 
-	assertSpansEqual(t, ttn.td, want)
+	assertTracesEqual(t, td, want)
 }
 
 func TestTraceSourceProcessorAnnotations(t *testing.T) {
@@ -275,26 +263,11 @@ func TestTraceSourceProcessorAnnotations(t *testing.T) {
 	mergedK8sLabelsWithMeta["_sourceCategory"] = "prefix/sc:pod#1234"
 	want := newTraceData(mergedK8sLabelsWithMeta)
 
-	ttn := &testTraceConsumer{}
-	rtp := newsourceProcessor(ttn, cfg)
+	rtp := newSourceProcessor(cfg)
 	assert.True(t, rtp.Capabilities().MutatesData)
 
-	assert.NoError(t, rtp.ConsumeTraces(context.Background(), test))
+	td, err := rtp.ProcessTraces(context.Background(), test)
+	assert.NoError(t, err)
 
-	assertTracesEqual(t, ttn.td, want)
-}
-
-type testTraceConsumer struct {
-	td pdata.Traces
-}
-
-func (ttn *testTraceConsumer) ConsumeTraces(ctx context.Context, td pdata.Traces) error {
-	ttn.td = td
-	return nil
-}
-
-func (ttn *testTraceConsumer) Capabilities() consumer.Capabilities {
-	return consumer.Capabilities{
-		MutatesData: true,
-	}
+	assertTracesEqual(t, td, want)
 }
