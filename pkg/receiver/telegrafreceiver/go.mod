@@ -9,7 +9,7 @@ require (
 	go.uber.org/zap v1.17.0
 )
 
-replace github.com/influxdata/telegraf => github.com/sumologic/telegraf v1.19.0-sumo-1
+replace github.com/influxdata/telegraf => github.com/sumologic/telegraf v1.19.0-sumo-3
 
 replace go.opentelemetry.io/collector => github.com/SumoLogic/opentelemetry-collector v0.29.0-sumo-1
 
