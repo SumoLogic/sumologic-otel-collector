@@ -361,6 +361,36 @@ func TestGetPod(t *testing.T) {
 	assert.True(t, ok)
 }
 
+func TestGetPod(t *testing.T) {
+	c, _ := newTestClient(t)
+	pod := &api_v1.Pod{}
+	pod.Status.PodIP = "1.1.1.1"
+	pod.UID = "1234"
+	pod.Name = "pod_name"
+	pod.Namespace = "namespace_name"
+	c.handlePodAdd(pod)
+
+	expected := &Pod{
+		Name:       "pod_name",
+		Namespace:  "namespace_name",
+		Address:    "1.1.1.1",
+		PodUID:     "1234",
+		Attributes: map[string]string{},
+	}
+
+	got, ok := c.GetPod(PodIdentifier("1.1.1.1"))
+	assert.Equal(t, got, expected)
+	assert.True(t, ok)
+
+	got, ok = c.GetPod(PodIdentifier("1234"))
+	assert.Equal(t, got, expected)
+	assert.True(t, ok)
+
+	got, ok = c.GetPod(PodIdentifier("pod_name.namespace_name"))
+	assert.Equal(t, got, expected)
+	assert.True(t, ok)
+}
+
 func TestHandlerWrongType(t *testing.T) {
 	c, logs := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
 	assert.Equal(t, logs.Len(), 0)
