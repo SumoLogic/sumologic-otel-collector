@@ -18,13 +18,13 @@ jobs:
         include:
           - arch_os: linux_amd64
             runs_on: ubuntu-20.04
-            go: '1.17.0-rc1'
+            go: '1.17.0-rc2'
           - arch_os: linux_arm64
             runs_on: ubuntu-20.04
-            go: '1.17.0-rc1'
+            go: '1.17.0-rc2'
           - arch_os: darwin_amd64
             runs_on: macos-latest
-            go: '1.17.0-rc1'
+            go: '1.17.0-rc2'
     steps:
       - uses: actions/checkout@v2.3.4
 
