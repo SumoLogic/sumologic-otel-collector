@@ -178,6 +178,7 @@ func createProcessorOpts(cfg config.Processor) []Option {
 	// extraction rules
 	opts = append(opts, WithExtractMetadata(oCfg.Extract.Metadata...))
 	opts = append(opts, WithExtractLabels(oCfg.Extract.Labels...))
+	opts = append(opts, WithExtractNamespaceLabels(oCfg.Extract.NamespaceLabels...))
 	opts = append(opts, WithExtractAnnotations(oCfg.Extract.Annotations...))
 	opts = append(opts, WithExtractTags(oCfg.Extract.Tags))
 

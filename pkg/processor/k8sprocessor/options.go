@@ -199,6 +199,18 @@ func WithExtractLabels(labels ...FieldExtractConfig) Option {
 	}
 }
 
+// WithExtractNamespaceLabels allows specifying options to control extraction of namespace labels.
+func WithExtractNamespaceLabels(labels ...FieldExtractConfig) Option {
+	return func(p *kubernetesprocessor) error {
+		labels, err := extractFieldRules("namespace_labels", labels...)
+		if err != nil {
+			return err
+		}
+		p.rules.NamespaceLabels = labels
+		return nil
+	}
+}
+
 // WithExtractAnnotations allows specifying options to control extraction of pod annotations tags.
 func WithExtractAnnotations(annotations ...FieldExtractConfig) Option {
 	return func(p *kubernetesprocessor) error {
