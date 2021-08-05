@@ -22,7 +22,7 @@ import (
 	"github.com/influxdata/telegraf/metric"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/zap"
 )
 
@@ -48,12 +48,11 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-					newIntGauge(39097651200,
-						WithName("mem_available"),
-						WithTime(tim),
-					),
-				)
+
+				newIntGauge(39097651200,
+					WithName("mem_available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -69,14 +68,11 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-
-					newIntGauge(39097651200,
-						WithName("mem"),
-						WithField("available"),
-						WithTime(tim),
-					),
-				)
+				newIntGauge(39097651200,
+					WithName("mem"),
+					WithField("available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -118,12 +114,10 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-					newDoubleGauge(54.505050,
-						WithName("mem_available_percent"),
-						WithTime(tim),
-					),
-				)
+				newDoubleGauge(54.505050,
+					WithName("mem_available_percent"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -139,13 +133,11 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-					newDoubleGauge(54.505050,
-						WithName("mem"),
-						WithField("available_percent"),
-						WithTime(tim),
-					),
-				)
+				newDoubleGauge(54.505050,
+					WithName("mem"),
+					WithField("available_percent"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -189,12 +181,10 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-					newDoubleGauge(54.505050,
-						WithName("mem_available_percent"),
-						WithTime(tim),
-					),
-				)
+				newDoubleGauge(54.505050,
+					WithName("mem_available_percent"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -214,36 +204,26 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-					newIntGauge(39097651200,
-						WithName("mem_available"),
-						WithTime(tim),
-					),
-				)
-				metrics.Append(
-					newIntGauge(24322170880,
-						WithName("mem_free"),
-						WithTime(tim),
-					),
-				)
-				metrics.Append(
-					newIntGauge(68719476736,
-						WithName("mem_total"),
-						WithTime(tim),
-					),
-				)
-				metrics.Append(
-					newIntGauge(29621825536,
-						WithName("mem_used"),
-						WithTime(tim),
-					),
-				)
-				metrics.Append(
-					newDoubleGauge(43.10542941093445,
-						WithName("mem_used_percent"),
-						WithTime(tim),
-					),
-				)
+				newIntGauge(39097651200,
+					WithName("mem_available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newIntGauge(24322170880,
+					WithName("mem_free"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newIntGauge(68719476736,
+					WithName("mem_total"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newIntGauge(29621825536,
+					WithName("mem_used"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newDoubleGauge(43.10542941093445,
+					WithName("mem_used_percent"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -260,20 +240,16 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-					newIntGauge(39097651200,
-						WithName("mem"),
-						WithField("available"),
-						WithTime(tim),
-					),
-				)
-				metrics.Append(
-					newIntGauge(24322170880,
-						WithName("mem"),
-						WithField("free"),
-						WithTime(tim),
-					),
-				)
+				newIntGauge(39097651200,
+					WithName("mem"),
+					WithField("available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newIntGauge(24322170880,
+					WithName("mem"),
+					WithField("free"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -289,12 +265,10 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-					newIntSum(39097651200,
-						WithName("mem_available"),
-						WithTime(tim),
-					),
-				)
+				newIntSum(39097651200,
+					WithName("mem_available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -310,13 +284,11 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-					newIntSum(39097651200,
-						WithName("mem"),
-						WithField("available"),
-						WithTime(tim),
-					),
-				)
+				newIntSum(39097651200,
+					WithName("mem"),
+					WithField("available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -388,12 +360,10 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-					newDoubleSum(39097651200.123,
-						WithName("mem_available"),
-						WithTime(tim),
-					),
-				)
+				newDoubleSum(39097651200.123,
+					WithName("mem_available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -409,13 +379,11 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-					newDoubleSum(39097651200.123,
-						WithName("mem"),
-						WithField("available"),
-						WithTime(tim),
-					),
-				)
+				newDoubleSum(39097651200.123,
+					WithName("mem"),
+					WithField("available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -461,30 +429,22 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-					newIntSum(39097651200,
-						WithName("mem_available"),
-						WithTime(tim),
-					),
-				)
-				metrics.Append(
-					newIntSum(24322170880,
-						WithName("mem_free"),
-						WithTime(tim),
-					),
-				)
-				metrics.Append(
-					newIntSum(68719476736,
-						WithName("mem_total"),
-						WithTime(tim),
-					),
-				)
-				metrics.Append(
-					newIntSum(29621825536,
-						WithName("mem_used"),
-						WithTime(tim),
-					),
-				)
+				newIntSum(39097651200,
+					WithName("mem_available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newIntSum(24322170880,
+					WithName("mem_free"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newIntSum(68719476736,
+					WithName("mem_total"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newIntSum(29621825536,
+					WithName("mem_used"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -501,20 +461,16 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-					newIntSum(39097651200,
-						WithName("mem"),
-						WithField("available"),
-						WithTime(tim),
-					),
-				)
-				metrics.Append(
-					newIntSum(24322170880,
-						WithName("mem"),
-						WithField("free"),
-						WithTime(tim),
-					),
-				)
+				newIntSum(39097651200,
+					WithName("mem"),
+					WithField("available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newIntSum(24322170880,
+					WithName("mem"),
+					WithField("free"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -530,12 +486,10 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-					newIntGauge(39097651200,
-						WithName("mem_available"),
-						WithTime(tim),
-					),
-				)
+				newIntGauge(39097651200,
+					WithName("mem_available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -551,12 +505,10 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-					newDoubleGauge(43.10542941093445,
-						WithName("mem_used_percent"),
-						WithTime(tim),
-					),
-				)
+				newDoubleGauge(43.10542941093445,
+					WithName("mem_used_percent"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -572,12 +524,10 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-					newIntGauge(0,
-						WithName("cpu_throttling_supported"),
-						WithTime(tim),
-					),
-				)
+				newIntGauge(0,
+					WithName("cpu_throttling_supported"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -593,12 +543,10 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(
-					newIntGauge(1,
-						WithName("cpu_throttling_supported"),
-						WithTime(tim),
-					),
-				)
+				newIntGauge(1,
+					WithName("cpu_throttling_supported"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -697,9 +645,9 @@ func assertEqualDataPointsWithLabels(t *testing.T, em pdata.Metric, am pdata.Met
 			assert.Equal(t, expected.Value(), actual.Value())
 			assertEqualDataPoints(t, am.Name(), expected, actual)
 		}
-	case pdata.MetricDataTypeDoubleGauge:
-		edps := em.DoubleGauge().DataPoints()
-		adps := am.DoubleGauge().DataPoints()
+	case pdata.MetricDataTypeGauge:
+		edps := em.Gauge().DataPoints()
+		adps := am.Gauge().DataPoints()
 		assert.Equal(t, edps.Len(), adps.Len())
 		for i := 0; i < edps.Len(); i++ {
 			expected := edps.At(i)
@@ -717,9 +665,9 @@ func assertEqualDataPointsWithLabels(t *testing.T, em pdata.Metric, am pdata.Met
 			assert.Equal(t, expected.Value(), actual.Value())
 			assertEqualDataPoints(t, am.Name(), expected, actual)
 		}
-	case pdata.MetricDataTypeDoubleSum:
-		edps := em.DoubleSum().DataPoints()
-		adps := am.DoubleSum().DataPoints()
+	case pdata.MetricDataTypeSum:
+		edps := em.Sum().DataPoints()
+		adps := am.Sum().DataPoints()
 		assert.Equal(t, edps.Len(), adps.Len())
 		for i := 0; i < edps.Len(); i++ {
 			expected := edps.At(i)
@@ -800,8 +748,8 @@ func metricSliceContainsMetricWithField(ms pdata.MetricSlice, name string, field
 					}
 				}
 
-			case pdata.MetricDataTypeDoubleGauge:
-				mg := m.DoubleGauge()
+			case pdata.MetricDataTypeGauge:
+				mg := m.Gauge()
 				dps := mg.DataPoints()
 				for i := 0; i < dps.Len(); i++ {
 					dp := dps.At(i)
@@ -837,10 +785,10 @@ func getFieldsFromMetric(m pdata.Metric) map[string]struct{} {
 		}
 		return ret
 
-	case pdata.MetricDataTypeDoubleGauge:
+	case pdata.MetricDataTypeGauge:
 		ret := make(map[string]struct{})
-		for i := 0; i < m.DoubleGauge().DataPoints().Len(); i++ {
-			dp := m.DoubleGauge().DataPoints().At(i)
+		for i := 0; i < m.Gauge().DataPoints().Len(); i++ {
+			dp := m.Gauge().DataPoints().At(i)
 			l, ok := dp.LabelsMap().Get("field")
 			if !ok {
 				continue
@@ -872,8 +820,8 @@ func fieldFromMetric(m pdata.Metric, field string) (DataPointWithLabelsMap, bool
 			}
 		}
 
-	case pdata.MetricDataTypeDoubleGauge:
-		dps := m.DoubleGauge().DataPoints()
+	case pdata.MetricDataTypeGauge:
+		dps := m.Gauge().DataPoints()
 		for i := 0; i < dps.Len(); i++ {
 			dp := dps.At(i)
 			l, ok := dp.LabelsMap().Get("field")

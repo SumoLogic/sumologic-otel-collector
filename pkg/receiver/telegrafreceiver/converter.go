@@ -18,7 +18,7 @@ import (
 	"fmt"
 
 	"github.com/influxdata/telegraf"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/zap"
 )
 
@@ -79,6 +79,7 @@ func (mc metricConverter) Convert(m telegraf.Metric) (pdata.Metrics, error) {
 
 	switch t := m.Type(); t {
 	case telegraf.Gauge:
+		metrics.EnsureCapacity(len(m.FieldList()))
 		for _, f := range m.FieldList() {
 			pm, err := mc.convertToGauge(m.Name(), f, opts...)
 			if err != nil {
@@ -91,10 +92,11 @@ func (mc metricConverter) Convert(m telegraf.Metric) (pdata.Metrics, error) {
 				continue
 			}
 
-			metrics.Append(pm)
+			pm.CopyTo(metrics.AppendEmpty())
 		}
 
 	case telegraf.Untyped:
+		metrics.EnsureCapacity(len(m.FieldList()))
 		for _, f := range m.FieldList() {
 			pm, err := mc.convertToGauge(m.Name(), f, opts...)
 			if err != nil {
@@ -107,10 +109,11 @@ func (mc metricConverter) Convert(m telegraf.Metric) (pdata.Metrics, error) {
 				continue
 			}
 
-			metrics.Append(pm)
+			pm.CopyTo(metrics.AppendEmpty())
 		}
 
 	case telegraf.Counter:
+		metrics.EnsureCapacity(len(m.FieldList()))
 		for _, f := range m.FieldList() {
 			pm, err := mc.convertToSum(m.Name(), f, opts...)
 			if err != nil {
@@ -123,7 +126,7 @@ func (mc metricConverter) Convert(m telegraf.Metric) (pdata.Metrics, error) {
 				continue
 			}
 
-			metrics.Append(pm)
+			pm.CopyTo(metrics.AppendEmpty())
 		}
 
 	case telegraf.Summary:
@@ -221,11 +224,11 @@ func newDoubleSum(
 	opts ...MetricOpt,
 ) pdata.Metric {
 	pm := pdata.NewMetric()
-	pm.SetDataType(pdata.MetricDataTypeDoubleSum)
+	pm.SetDataType(pdata.MetricDataTypeSum)
 	// "[...] OTLP Sum is either translated into a Timeseries Counter, when
 	// the sum is monotonic, or a Gauge when the sum is not monotonic."
 	// https://github.com/open-telemetry/opentelemetry-specification/blob/7fc28733/specification/metrics/datamodel.md#opentelemetry-protocol-data-model
-	ds := pm.DoubleSum()
+	ds := pm.Sum()
 	ds.SetAggregationTemporality(pdata.AggregationTemporalityCumulative)
 	ds.SetIsMonotonic(true)
 	dps := ds.DataPoints()
@@ -265,8 +268,8 @@ func newDoubleGauge(
 	opts ...MetricOpt,
 ) pdata.Metric {
 	pm := pdata.NewMetric()
-	pm.SetDataType(pdata.MetricDataTypeDoubleGauge)
-	dps := pm.DoubleGauge().DataPoints()
+	pm.SetDataType(pdata.MetricDataTypeGauge)
+	dps := pm.Gauge().DataPoints()
 	dp := dps.AppendEmpty()
 	dp.SetValue(value)
 

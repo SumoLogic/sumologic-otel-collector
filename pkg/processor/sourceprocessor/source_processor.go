@@ -23,7 +23,7 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/sourceprocessor/observability"
 )
@@ -247,7 +247,7 @@ func (stp *sourceTraceProcessor) ConsumeTraces(ctx context.Context, td pdata.Tra
 		}
 
 		if stp.isFilteredOut(atts) {
-			rs.InstrumentationLibrarySpans().Resize(0)
+			rs.InstrumentationLibrarySpans().RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
 			observability.RecordFilteredOutN(totalSpans)
 		} else {
 			observability.RecordFilteredInN(totalSpans)
@@ -276,15 +276,14 @@ func (stp *sourceTraceProcessor) ConsumeTraces(ctx context.Context, td pdata.Tra
 					stp.sourceNameFiller.fillResourceOrUseAnnotation(&atts, stp.annotationAttribute(sourceNameSpecialAnnotation), stp.keys)
 
 					if !stp.isFilteredOut(atts) {
-						outputSpans.Resize(outputSpans.Len() + 1)
-						s.CopyTo(outputSpans.At(outputSpans.Len() - 1))
+						s.CopyTo(outputSpans.AppendEmpty())
 						observability.RecordFilteredIn()
 					} else {
 						observability.RecordFilteredOut()
 					}
 				}
 
-				ils.Spans().Resize(0)
+				ils.Spans().RemoveIf(func(pdata.Span) bool { return true })
 				outputSpans.MoveAndAppendTo(ils.Spans())
 			}
 		}

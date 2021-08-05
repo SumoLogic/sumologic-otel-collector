@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/influxdata/telegraf"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 // MetricOpt is an option func that takes in a pdata.Metric and manipulates it.
@@ -50,9 +50,9 @@ func WithTime(t time.Time) MetricOpt {
 				m.IntGauge().DataPoints(),
 				opts,
 			)
-		case pdata.MetricDataTypeDoubleGauge:
+		case pdata.MetricDataTypeGauge:
 			handleDoubleDataPoints(
-				m.DoubleGauge().DataPoints(),
+				m.Gauge().DataPoints(),
 				opts,
 			)
 
@@ -61,9 +61,9 @@ func WithTime(t time.Time) MetricOpt {
 				m.IntSum().DataPoints(),
 				opts,
 			)
-		case pdata.MetricDataTypeDoubleSum:
+		case pdata.MetricDataTypeSum:
 			handleDoubleDataPoints(
-				m.DoubleSum().DataPoints(),
+				m.Sum().DataPoints(),
 				opts,
 			)
 		}
@@ -99,7 +99,7 @@ func handleIntDataPoints(dps pdata.IntDataPointSlice, opts options) {
 		}
 	}
 }
-func handleDoubleDataPoints(dps pdata.DoubleDataPointSlice, opts options) {
+func handleDoubleDataPoints(dps pdata.NumberDataPointSlice, opts options) {
 	for i := 0; i < dps.Len(); i++ {
 		dp := dps.At(i)
 		for _, opt := range opts.stringMapOpts {
@@ -134,9 +134,9 @@ func WithTag(tag *telegraf.Tag) MetricOpt {
 				m.IntGauge().DataPoints(),
 				opts,
 			)
-		case pdata.MetricDataTypeDoubleGauge:
+		case pdata.MetricDataTypeGauge:
 			handleDoubleDataPoints(
-				m.DoubleGauge().DataPoints(),
+				m.Gauge().DataPoints(),
 				opts,
 			)
 
@@ -145,9 +145,9 @@ func WithTag(tag *telegraf.Tag) MetricOpt {
 				m.IntSum().DataPoints(),
 				opts,
 			)
-		case pdata.MetricDataTypeDoubleSum:
+		case pdata.MetricDataTypeSum:
 			handleDoubleDataPoints(
-				m.DoubleSum().DataPoints(),
+				m.Sum().DataPoints(),
 				opts,
 			)
 		}
@@ -178,9 +178,9 @@ func WithTags(tags []*telegraf.Tag) MetricOpt {
 				m.IntGauge().DataPoints(),
 				opts,
 			)
-		case pdata.MetricDataTypeDoubleGauge:
+		case pdata.MetricDataTypeGauge:
 			handleDoubleDataPoints(
-				m.DoubleGauge().DataPoints(),
+				m.Gauge().DataPoints(),
 				opts,
 			)
 
@@ -189,9 +189,9 @@ func WithTags(tags []*telegraf.Tag) MetricOpt {
 				m.IntSum().DataPoints(),
 				opts,
 			)
-		case pdata.MetricDataTypeDoubleSum:
+		case pdata.MetricDataTypeSum:
 			handleDoubleDataPoints(
-				m.DoubleSum().DataPoints(),
+				m.Sum().DataPoints(),
 				opts,
 			)
 		}
