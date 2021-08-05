@@ -52,6 +52,11 @@ const (
 	heartbeatUrl                  = "/api/v1/collector/heartbeat"
 	registerUrl                   = "/api/v1/collector/register"
 	collectorCredentialsDirectory = ".sumologic-otel-collector/"
+
+	collectorIdField            = "collector_id"
+	collectorNameField          = "collector_name"
+	collectorCredentialIdField  = "collector_credential_id"
+	collectorCredentialKeyField = "collector_credential_key"
 )
 
 const (
@@ -117,8 +122,8 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 	// Add logger fields based on actual collector name and ID as returned
 	// by registration API.
 	se.logger = se.logger.With(
-		zap.String("collector_name", colCreds.Credentials.CollectorName),
-		zap.String("collector_id", colCreds.Credentials.CollectorId),
+		zap.String(collectorNameField, colCreds.Credentials.CollectorName),
+		zap.String(collectorIdField, colCreds.Credentials.CollectorId),
 	)
 
 	se.registrationInfo = colCreds.Credentials
@@ -179,7 +184,7 @@ func (se *SumologicExtension) getCredentials(ctx context.Context) (CollectorCred
 		se.collectorName = colCreds.CollectorName
 		if !se.conf.Clobber {
 			se.logger.Info("Found stored credentials, skipping registration",
-				zap.String("collector_name", colCreds.Credentials.CollectorName),
+				zap.String(collectorNameField, colCreds.Credentials.CollectorName),
 			)
 		} else {
 			se.logger.Info(
@@ -284,10 +289,10 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 	}
 
 	se.logger.Info("Collector registered",
-		zap.String("CollectorId", resp.CollectorId),
-		zap.String("CollectorName", resp.CollectorName),
-		zap.String("CollectorCredentialId", resp.CollectorCredentialId),
-		zap.String("CollectorCredentialKey", resp.CollectorCredentialKey),
+		zap.String(collectorIdField, resp.CollectorId),
+		zap.String(collectorNameField, resp.CollectorName),
+		zap.String(collectorCredentialIdField, resp.CollectorCredentialId),
+		zap.String(collectorCredentialKeyField, resp.CollectorCredentialKey),
 	)
 
 	return CollectorCredentials{
