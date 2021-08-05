@@ -153,7 +153,6 @@ func TestTraceSourceProcessor(t *testing.T) {
 	test := newTraceData(k8sLabels)
 
 	rtp := newSourceProcessor(cfg)
-	assert.True(t, rtp.Capabilities().MutatesData)
 
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
@@ -264,7 +263,6 @@ func TestTraceSourceProcessorAnnotations(t *testing.T) {
 	want := newTraceData(mergedK8sLabelsWithMeta)
 
 	rtp := newSourceProcessor(cfg)
-	assert.True(t, rtp.Capabilities().MutatesData)
 
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)

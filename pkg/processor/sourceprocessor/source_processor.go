@@ -21,10 +21,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/sourceprocessor/observability"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/model/pdata"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/sourceprocessor/observability"
 )
 
 var (
@@ -292,15 +292,6 @@ func (sp *sourceProcessor) processResource(res pdata.Resource) pdata.Resource {
 	)
 
 	return res
-}
-
-// GetCapabilities returns the Capabilities assocciated with the resource processor.
-// func (sp *sourceProcessor) GetCapabilities() component.ProcessorCapabilities {
-// 	return component.ProcessorCapabilities{MutatesConsumedData: true}
-// }
-
-func (sp *sourceProcessor) Capabilities() consumer.Capabilities {
-	return consumer.Capabilities{MutatesData: true}
 }
 
 // Start is invoked during service startup.
