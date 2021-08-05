@@ -77,6 +77,10 @@ const (
 	headerCategory        string = "X-Sumo-Category"
 	headerFields          string = "X-Sumo-Fields"
 
+	attributeKeySourceHost     = "_sourceHost"
+	attributeKeySourceName     = "_sourceName"
+	attributeKeySourceCategory = "_sourceCategory"
+
 	contentTypeLogs       string = "application/x-www-form-urlencoded"
 	contentTypePrometheus string = "application/vnd.sumologic.prometheus"
 	contentTypeCarbon2    string = "application/vnd.sumologic.carbon2"
@@ -273,6 +277,8 @@ func (s *sender) sendOTLPLogs(ctx context.Context, flds fields) ([]pdata.LogReco
 		record.CopyTo(logs.AppendEmpty())
 	}
 
+	s.addResourceAttributes(rl.Resource().Attributes(), flds)
+
 	body, err := logsMarshaler.MarshalLogs(ld)
 	if err != nil {
 		return s.logBuffer, err
@@ -366,6 +372,7 @@ func (s *sender) sendOTLPMetrics(ctx context.Context, flds fields) ([]metricPair
 	for _, record := range s.metricBuffer {
 		rm := rms.AppendEmpty()
 		record.attributes.CopyTo(rm.Resource().Attributes())
+		s.addResourceAttributes(rm.Resource().Attributes(), flds)
 		ilm := rm.InstrumentationLibraryMetrics().AppendEmpty()
 		ms := ilm.Metrics().AppendEmpty()
 		record.metric.CopyTo(ms)
@@ -435,6 +442,10 @@ func (s *sender) sendTraces(ctx context.Context, td pdata.Traces, flds fields) e
 
 // sendOTLPTraces sends trace records in OTLP format
 func (s *sender) sendOTLPTraces(ctx context.Context, td pdata.Traces, flds fields) error {
+	for i := 0; i < td.ResourceSpans().Len(); i++ {
+		s.addResourceAttributes(td.ResourceSpans().At(i).Resource().Attributes(), flds)
+	}
+
 	body, err := tracesMarshaler.MarshalTraces(td)
 	if err != nil {
 		return err
@@ -580,4 +591,16 @@ func (s *sender) addRequestHeaders(req *http.Request, pipeline PipelineType, fld
 		return fmt.Errorf("unexpected pipeline: %v", pipeline)
 	}
 	return nil
+}
+
+func (s *sender) addResourceAttributes(attrs pdata.AttributeMap, flds fields) {
+	if s.sources.host.isSet() {
+		attrs.InsertString(attributeKeySourceHost, s.sources.host.format(flds))
+	}
+	if s.sources.name.isSet() {
+		attrs.InsertString(attributeKeySourceName, s.sources.name.format(flds))
+	}
+	if s.sources.category.isSet() {
+		attrs.InsertString(attributeKeySourceCategory, s.sources.category.format(flds))
+	}
 }
