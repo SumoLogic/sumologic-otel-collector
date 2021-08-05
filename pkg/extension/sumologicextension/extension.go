@@ -114,8 +114,12 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 		return err
 	}
 
-	// Add logger field based on actual collector name as returned by registration API.
-	se.logger = se.logger.With(zap.String("collector_name", colCreds.Credentials.CollectorName))
+	// Add logger fields based on actual collector name and ID as returned
+	// by registration API.
+	se.logger = se.logger.With(
+		zap.String("collector_name", colCreds.Credentials.CollectorName),
+		zap.String("collector_id", colCreds.Credentials.CollectorId),
+	)
 
 	se.registrationInfo = colCreds.Credentials
 
