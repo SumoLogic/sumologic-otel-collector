@@ -195,6 +195,68 @@ func TestWithExtractLabels(t *testing.T) {
 	}
 }
 
+func TestWithExtractNamespaceLabels(t *testing.T) {
+	tests := []struct {
+		name      string
+		args      []FieldExtractConfig
+		want      []kube.FieldExtractionRule
+		wantError string
+	}{
+		{
+			"empty",
+			[]FieldExtractConfig{},
+			[]kube.FieldExtractionRule{},
+			"",
+		},
+		{
+			"bad",
+			[]FieldExtractConfig{{
+				TagName: "t1",
+				Key:     "k1",
+				Regex:   "[",
+			}},
+			[]kube.FieldExtractionRule{},
+			"error parsing regexp: missing closing ]: `[`",
+		},
+		{
+			"basic",
+			[]FieldExtractConfig{
+				{
+					TagName: "tag1",
+					Key:     "key1",
+					Regex:   "field=(?P<value>.+)",
+				},
+			},
+			[]kube.FieldExtractionRule{
+				{
+					Name:  "tag1",
+					Key:   "key1",
+					Regex: regexp.MustCompile(`field=(?P<value>.+)`),
+				},
+			},
+			"",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &kubernetesprocessor{}
+			option := WithExtractNamespaceLabels(tt.args...)
+			err := option(p)
+			if tt.wantError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, err.Error(), tt.wantError)
+				return
+			}
+			got := p.rules.NamespaceLabels
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("WithExtractNamespaceLabels() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestWithExtractMetadata(t *testing.T) {
 	p := &kubernetesprocessor{}
 	assert.NoError(t, WithExtractMetadata()(p))
