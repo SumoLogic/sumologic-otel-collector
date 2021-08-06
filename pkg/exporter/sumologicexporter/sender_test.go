@@ -94,6 +94,62 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 	}
 }
 
+// prepareOTLPSenderTest prepares sender test environment.
+// The enclosed httptest.Server is closed automatically using test.Cleanup.
+func prepareOTLPSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.Request)) *senderTest {
+	var reqCounter int32
+	// generate a test server so we can capture and inspect the request
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if len(cb) == 0 {
+			return
+		}
+
+		if c := int(atomic.LoadInt32(&reqCounter)); assert.Greater(t, len(cb), c) {
+			cb[c](w, req)
+			atomic.AddInt32(&reqCounter, 1)
+		}
+	}))
+	t.Cleanup(func() { testServer.Close() })
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.CompressEncoding = NoCompression
+	cfg.HTTPClientSettings.Endpoint = testServer.URL
+
+	f, err := newFilter(cfg.MetadataAttributes)
+	require.NoError(t, err)
+
+	c, err := newCompressor(cfg.CompressEncoding)
+	require.NoError(t, err)
+
+	pf, err := newPrometheusFormatter()
+	require.NoError(t, err)
+
+	gf, err := newGraphiteFormatter(cfg.GraphiteTemplate)
+	require.NoError(t, err)
+
+	return &senderTest{
+		srv: testServer,
+		s: newSender(
+			cfg,
+			&http.Client{
+				Timeout: cfg.HTTPClientSettings.Timeout,
+			},
+			f,
+			sourceFormats{
+				host:     getTestSourceFormat(t, "source_host"),
+				category: getTestSourceFormat(t, "source_category"),
+				name:     getTestSourceFormat(t, "source_name"),
+			},
+			c,
+			pf,
+			gf,
+			testServer.URL,
+			testServer.URL,
+			testServer.URL,
+		),
+	}
+}
+
 func extractBody(t *testing.T, req *http.Request) string {
 	buf := new(strings.Builder)
 	_, err := io.Copy(buf, req.Body)
@@ -174,6 +230,9 @@ func exampleTrace() pdata.Traces {
 	td := pdata.NewTraces()
 	rs := td.ResourceSpans().AppendEmpty()
 	rs.Resource().Attributes().UpsertString("hostname", "testHost")
+	rs.Resource().Attributes().UpsertString("_sourceHost", "source_host")
+	rs.Resource().Attributes().UpsertString("_sourceName", "source_name")
+	rs.Resource().Attributes().UpsertString("_sourceCategory", "source_category")
 	span := rs.InstrumentationLibrarySpans().AppendEmpty().Spans().AppendEmpty()
 	span.SetTraceID(pdata.NewTraceID([16]byte{0x5B, 0x8E, 0xFF, 0xF7, 0x98, 0x3, 0x81, 0x3, 0xD2, 0x69, 0xB6, 0x33, 0x81, 0x3F, 0xC6, 0xC}))
 	span.SetSpanID(pdata.NewSpanID([8]byte{0xEE, 0xE1, 0x9B, 0x7E, 0xC3, 0xC1, 0xB1, 0x73}))
@@ -432,7 +491,7 @@ func TestSendLogsOTLP(t *testing.T) {
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			//nolint:lll
-			assert.Equal(t, "\n\x80\x01\n\x00\x12|\n\x00\x127*\r\n\vExample log2\x10\n\x04key1\x12\b\n\x06value12\x10\n\x04key2\x12\b\n\x06value2J\x00R\x00\x12?*\x15\n\x13Another example log2\x10\n\x04key1\x12\b\n\x06value12\x10\n\x04key2\x12\b\n\x06value2J\x00R\x00", body)
+			assert.Equal(t, "\n\xe2\x01\nb\n\x1c\n\v_sourceHost\x12\r\n\vsource_host\n\x1c\n\v_sourceName\x12\r\n\vsource_name\n$\n\x0f_sourceCategory\x12\x11\n\x0fsource_category\x12|\n\x00\x127*\r\n\vExample log2\x10\n\x04key1\x12\b\n\x06value12\x10\n\x04key2\x12\b\n\x06value2J\x00R\x00\x12?*\x15\n\x13Another example log2\x10\n\x04key1\x12\b\n\x06value12\x10\n\x04key2\x12\b\n\x06value2J\x00R\x00", body)
 			assert.Equal(t, "key1=value, key2=value2", req.Header.Get("X-Sumo-Fields"))
 			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
 			assert.Equal(t, "application/x-protobuf", req.Header.Get("Content-Type"))
@@ -447,45 +506,123 @@ func TestSendLogsOTLP(t *testing.T) {
 }
 
 func TestOverrideSourceName(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			assert.Equal(t, "Test source name/test_name", req.Header.Get("X-Sumo-Name"))
-		},
+	t.Run("text format", func(t *testing.T) {
+		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				assert.Equal(t, "Test source name/test_name", req.Header.Get("X-Sumo-Name"))
+			},
+		})
+
+		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
 	})
 
-	test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
-	test.s.logBuffer = exampleLog()
+	t.Run("otlp", func(t *testing.T) {
+		test := prepareOTLPSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				unmarshaller := otlp.NewProtobufLogsUnmarshaler()
+				b, err := io.ReadAll(req.Body)
+				require.NoError(t, err)
+				l, err := unmarshaller.UnmarshalLogs(b)
+				require.NoError(t, err)
 
-	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
-	assert.NoError(t, err)
+				require.Equal(t, l.ResourceLogs().Len(), 1)
+				sourceCategory, ok := l.ResourceLogs().At(0).Resource().Attributes().Get("_sourceName")
+				require.True(t, ok)
+				require.Equal(t, pdata.AttributeValueTypeString, sourceCategory.Type())
+				require.Equal(t, "Test source name/test_name", sourceCategory.StringVal())
+			},
+		})
+
+		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
+	})
 }
 
 func TestOverrideSourceCategory(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			assert.Equal(t, "Test source category/test_name", req.Header.Get("X-Sumo-Category"))
-		},
+	t.Run("text format", func(t *testing.T) {
+		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				assert.Equal(t, "Test source category/test_name", req.Header.Get("X-Sumo-Category"))
+			},
+		})
+
+		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
 	})
 
-	test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
-	test.s.logBuffer = exampleLog()
+	t.Run("otlp", func(t *testing.T) {
+		test := prepareOTLPSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				unmarshaller := otlp.NewProtobufLogsUnmarshaler()
+				b, err := io.ReadAll(req.Body)
+				require.NoError(t, err)
+				l, err := unmarshaller.UnmarshalLogs(b)
+				require.NoError(t, err)
 
-	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
-	assert.NoError(t, err)
+				require.Equal(t, l.ResourceLogs().Len(), 1)
+				sourceCategory, ok := l.ResourceLogs().At(0).Resource().Attributes().Get("_sourceCategory")
+				require.True(t, ok)
+				require.Equal(t, pdata.AttributeValueTypeString, sourceCategory.Type())
+				require.Equal(t, "Test source category/test_name", sourceCategory.StringVal())
+			},
+		})
+
+		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
+	})
 }
 
 func TestOverrideSourceHost(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			assert.Equal(t, "Test source host/test_name", req.Header.Get("X-Sumo-Host"))
-		},
+	t.Run("text format", func(t *testing.T) {
+		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				assert.Equal(t, "Test source host/test_name", req.Header.Get("X-Sumo-Host"))
+			},
+		})
+
+		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
 	})
 
-	test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
-	test.s.logBuffer = exampleLog()
+	t.Run("otlp", func(t *testing.T) {
+		test := prepareOTLPSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				unmarshaller := otlp.NewProtobufLogsUnmarshaler()
+				b, err := io.ReadAll(req.Body)
+				require.NoError(t, err)
+				l, err := unmarshaller.UnmarshalLogs(b)
+				require.NoError(t, err)
 
-	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
-	assert.NoError(t, err)
+				require.Equal(t, l.ResourceLogs().Len(), 1)
+				sourceHost, ok := l.ResourceLogs().At(0).Resource().Attributes().Get("_sourceHost")
+				require.True(t, ok)
+				require.Equal(t, pdata.AttributeValueTypeString, sourceHost.Type())
+				require.Equal(t, "Test source host/test_name", sourceHost.StringVal())
+			},
+		})
+
+		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
+	})
 }
 
 func TestLogsBuffer(t *testing.T) {
