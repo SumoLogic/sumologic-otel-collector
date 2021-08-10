@@ -20,19 +20,25 @@ const (
 	variationIqrThresholdCoef = 4
 )
 
-// metricSieve removes data points from MetricSlices that would be reported more often than preset
+type metricSieve interface {
+	Sift(metric pdata.Metric) bool
+}
+
+// defaultMetricSieve removes data points from MetricSlices that would be reported more often than preset
 // frequency for a given category.
 // For metric sieve, there are three categories of metrics:
 // 1) Constant metrics
 // 2) Low info metrics - i.e. no anomaly in terms of iqr and low variation
 // 3) All other metrics
-type metricSieve struct {
+type defaultMetricSieve struct {
 	metricCache  *metricCache
 	lastReported map[string]pdata.Timestamp
 }
 
-func newMetricSieve() *metricSieve {
-	return &metricSieve{
+var _ metricSieve = (*defaultMetricSieve)(nil)
+
+func newMetricSieve() *defaultMetricSieve {
+	return &defaultMetricSieve{
 		metricCache:  newMetricCache(),
 		lastReported: make(map[string]pdata.Timestamp),
 	}
@@ -40,7 +46,7 @@ func newMetricSieve() *metricSieve {
 
 // Sift removes data points from MetricSlices of the metric argument according to specified strategy.
 // It returns true if the metric should be removed.
-func (fs *metricSieve) Sift(metric pdata.Metric) bool {
+func (fs *defaultMetricSieve) Sift(metric pdata.Metric) bool {
 	switch metric.DataType() {
 	case pdata.MetricDataTypeDoubleGauge:
 		return fs.siftDropGauge(metric)
@@ -49,13 +55,13 @@ func (fs *metricSieve) Sift(metric pdata.Metric) bool {
 	}
 }
 
-func (fs *metricSieve) siftDropGauge(metric pdata.Metric) bool {
+func (fs *defaultMetricSieve) siftDropGauge(metric pdata.Metric) bool {
 	metric.DoubleGauge().DataPoints().RemoveIf(fs.siftDataPoint(metric.Name()))
 
 	return metric.DoubleGauge().DataPoints().Len() == 0
 }
 
-func (fs *metricSieve) siftDataPoint(name string) func(pdata.DoubleDataPoint) bool {
+func (fs *defaultMetricSieve) siftDataPoint(name string) func(pdata.DoubleDataPoint) bool {
 	return func(dataPoint pdata.DoubleDataPoint) bool {
 		cachedPoints := fs.metricCache.List(name)
 		fs.metricCache.Register(name, dataPoint)
