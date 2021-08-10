@@ -29,6 +29,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension/api"
 	"go.opentelemetry.io/collector/component"
@@ -46,6 +47,7 @@ type SumologicExtension struct {
 	registrationInfo api.OpenRegisterResponsePayload
 	closeChan        chan struct{}
 	closeOnce        sync.Once
+	backOff          *backoff.ExponentialBackOff
 }
 
 const (
@@ -91,6 +93,12 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 		conf.HeartBeatInterval = DefaultHeartbeatInterval
 	}
 
+	// Prepare ExponentialBackoff
+	backOff := backoff.NewExponentialBackOff()
+	backOff.InitialInterval = conf.BackOff.InitialInterval
+	backOff.MaxElapsedTime = conf.BackOff.MaxElapsedTime
+	backOff.MaxInterval = conf.BackOff.MaxInterval
+
 	return &SumologicExtension{
 		collectorName:    collectorName,
 		baseUrl:          strings.TrimSuffix(conf.ApiBaseUrl, "/"),
@@ -99,6 +107,7 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 		hashKey:          createHashKey(conf),
 		credentialsStore: credentialsStore,
 		closeChan:        make(chan struct{}),
+		backOff:          backOff,
 	}, nil
 }
 
@@ -191,7 +200,7 @@ func (se *SumologicExtension) getCredentials(ctx context.Context) (CollectorCred
 				"Locally stored credentials found, but clobber flag is set: " +
 					"re-registering the collector",
 			)
-			if colCreds, err = se.registerCollector(ctx, se.collectorName); err != nil {
+			if colCreds, err = se.registerCollectorWithBackoff(ctx, se.collectorName); err != nil {
 				return CollectorCredentials{}, false, err
 			}
 			registrationDone = true
@@ -201,7 +210,7 @@ func (se *SumologicExtension) getCredentials(ctx context.Context) (CollectorCred
 		}
 	} else {
 		se.logger.Info("Locally stored credentials not found, registering the collector")
-		if colCreds, err = se.registerCollector(ctx, se.collectorName); err != nil {
+		if colCreds, err = se.registerCollectorWithBackoff(ctx, se.collectorName); err != nil {
 			return CollectorCredentials{}, false, err
 		}
 		registrationDone = true
@@ -294,11 +303,30 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 		zap.String(collectorCredentialIdField, resp.CollectorCredentialId),
 		zap.String(collectorCredentialKeyField, resp.CollectorCredentialKey),
 	)
-
 	return CollectorCredentials{
 		CollectorName: collectorName,
 		Credentials:   resp,
 	}, nil
+}
+
+// callRegisterWithBackoff calls registration using exponential backoff algorithm
+// this loosely base on backoff.Retry function
+func (se *SumologicExtension) registerCollectorWithBackoff(ctx context.Context, collectorName string) (CollectorCredentials, error) {
+	se.backOff.Reset()
+	for {
+		resp, err := se.registerCollector(ctx, collectorName)
+		if err == nil {
+			return resp, nil
+		}
+
+		se.logger.Warn("Collector registration failed: ", zap.Error(err))
+
+		nbo := se.backOff.NextBackOff()
+		if nbo == se.backOff.Stop {
+			return CollectorCredentials{}, fmt.Errorf("collector registration failed")
+		}
+		time.Sleep(nbo)
+	}
 }
 
 func (se *SumologicExtension) heartbeatLoop() {

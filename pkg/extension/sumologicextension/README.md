@@ -53,6 +53,11 @@ and can be used as an authenticator for the
 * `time_zone`: defines the time zone of the collector. For a list of all possible
   values, refer to the `TZ` column in
   https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
+* `backoff`: defines backoff mechanism for retry in case of failed registration.
+  [Exponential algorithm](https://pkg.go.dev/github.com/cenkalti/backoff/v4#ExponentialBackOff) is being used.
+  * `initial_interval` - initial interval of backoff (default: `500ms`)
+  * `max_interval` - maximum interval of backoff (default: `1m`)
+  * `max_elapsed_time` - time after which registration fails definitely (default: `15m`)
 
 [credentials_help]: https://help.sumologic.com/Manage/Security/Access-Keys
 [fields_help]: https://help.sumologic.com/Manage/Fields
