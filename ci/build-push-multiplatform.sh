@@ -2,7 +2,8 @@
 
 set -eo pipefail
 
-if ! docker buildx ls | grep -q arm ; then
+# check for arm support only if we try to build it
+if echo "${PLATFORM}" | grep -q arm && ! docker buildx ls | grep -q arm ; then
     echo "Your Buildx seems to lack ARM architecture support"
     echo
     docker buildx ls
@@ -24,13 +25,14 @@ if [[ -z "${PLATFORM}" ]]; then
     exit 1
 fi
 
-# build builds a container image for a designated platform.
+# build_push builds a container image for a designated platform and then pushes
+# it to container repository specified by REPO_URL variable.
 #
-# First param is a platform for which to build the image as accepted by docker
-# buildx build command.
+# PLATFORM variable is the platform for which to build the image as accepted
+# by docker buildx build command.
 # e.g.linux/amd64, linux/arm64, linux/ppc64le, linux/s390x, linux/386,
 # linux/arm/v7, linux/arm/v6
-function build() {
+function build_push() {
     local BUILD_ARCH
     set -x
 
@@ -83,4 +85,4 @@ function build() {
     docker push "${LATEST_TAG}"
 }
 
-build "${PLATFORM}"
+build_push

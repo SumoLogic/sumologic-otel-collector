@@ -25,10 +25,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/consumer/consumertest"
-	"go.opentelemetry.io/collector/consumer/pdata"
-	tracetranslator "go.opentelemetry.io/collector/translator/trace"
+	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/zap"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor/bigendianconverter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor/config"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor/idbatcher"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor/sampling"
@@ -38,20 +38,22 @@ const (
 	defaultTestDecisionWait = 30 * time.Second
 )
 
+//nolint:unused
 var testPolicy = []config.PolicyCfg{{
 	Name:           "test-policy",
 	SpansPerSecond: 1000,
 }}
 
 func TestSequentialTraceArrival(t *testing.T) {
-	traceIds, batches := generateIdsAndBatches(128)
+	traceIds, batches := generateIdsAndBatches(t, 128)
 	cfg := config.Config{
 		DecisionWait:            defaultTestDecisionWait,
 		NumTraces:               uint64(2 * len(traceIds)),
 		ExpectedNewTracesPerSec: 64,
 		PolicyCfgs:              testPolicy,
 	}
-	sp, _ := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	require.NoError(t, err)
 	tsp := sp.(*cascadingFilterSpanProcessor)
 	for _, batch := range batches {
 		assert.NoError(t, tsp.ConsumeTraces(context.Background(), batch))
@@ -66,7 +68,7 @@ func TestSequentialTraceArrival(t *testing.T) {
 }
 
 func TestConcurrentTraceArrival(t *testing.T) {
-	traceIds, batches := generateIdsAndBatches(128)
+	traceIds, batches := generateIdsAndBatches(t, 128)
 
 	var wg sync.WaitGroup
 	cfg := config.Config{
@@ -75,7 +77,8 @@ func TestConcurrentTraceArrival(t *testing.T) {
 		ExpectedNewTracesPerSec: 64,
 		PolicyCfgs:              testPolicy,
 	}
-	sp, _ := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	require.NoError(t, err)
 	tsp := sp.(*cascadingFilterSpanProcessor)
 	for _, batch := range batches {
 		// Add the same traceId twice.
@@ -105,7 +108,7 @@ func TestConcurrentTraceArrival(t *testing.T) {
 }
 
 func TestSequentialTraceMapSize(t *testing.T) {
-	traceIds, batches := generateIdsAndBatches(210)
+	traceIds, batches := generateIdsAndBatches(t, 210)
 	const maxSize = 100
 	cfg := config.Config{
 		DecisionWait:            defaultTestDecisionWait,
@@ -113,7 +116,8 @@ func TestSequentialTraceMapSize(t *testing.T) {
 		ExpectedNewTracesPerSec: 64,
 		PolicyCfgs:              testPolicy,
 	}
-	sp, _ := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	require.NoError(t, err)
 	tsp := sp.(*cascadingFilterSpanProcessor)
 	for _, batch := range batches {
 		if err := tsp.ConsumeTraces(context.Background(), batch); err != nil {
@@ -129,7 +133,7 @@ func TestSequentialTraceMapSize(t *testing.T) {
 }
 
 func TestConcurrentTraceMapSize(t *testing.T) {
-	_, batches := generateIdsAndBatches(210)
+	_, batches := generateIdsAndBatches(t, 210)
 	const maxSize = 100
 	var wg sync.WaitGroup
 	cfg := config.Config{
@@ -138,7 +142,8 @@ func TestConcurrentTraceMapSize(t *testing.T) {
 		ExpectedNewTracesPerSec: 64,
 		PolicyCfgs:              testPolicy,
 	}
-	sp, _ := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	require.NoError(t, err)
 	tsp := sp.(*cascadingFilterSpanProcessor)
 	for _, batch := range batches {
 		wg.Add(1)
@@ -182,7 +187,7 @@ func TestSamplingPolicyTypicalPath(t *testing.T) {
 		maxSpansPerSecond: 10000,
 	}
 
-	_, batches := generateIdsAndBatches(210)
+	_, batches := generateIdsAndBatches(t, 210)
 	currItem := 0
 	numSpansPerBatchWindow := 10
 	// First evaluations shouldn't have anything to evaluate, until decision wait time passed.
@@ -196,7 +201,7 @@ func TestSamplingPolicyTypicalPath(t *testing.T) {
 		tsp.samplingPolicyOnTick()
 		require.False(
 			t,
-			msp.SpansCount() != 0 || mpe.EvaluationCount != 0,
+			msp.SpanCount() != 0 || mpe.EvaluationCount != 0,
 			"policy for initial items was evaluated before decision wait period",
 		)
 	}
@@ -206,21 +211,21 @@ func TestSamplingPolicyTypicalPath(t *testing.T) {
 	tsp.samplingPolicyOnTick()
 	require.False(
 		t,
-		msp.SpansCount() == 0 || mpe.EvaluationCount == 0,
+		msp.SpanCount() == 0 || mpe.EvaluationCount == 0,
 		"policy should have been evaluated totalspans == %d and evaluationcount == %d",
-		msp.SpansCount(),
+		msp.SpanCount(),
 		mpe.EvaluationCount,
 	)
 
-	require.Equal(t, numSpansPerBatchWindow, msp.SpansCount(), "not all spans of first window were accounted for")
+	require.Equal(t, numSpansPerBatchWindow, msp.SpanCount(), "not all spans of first window were accounted for")
 
 	// Late span of a sampled trace should be sent directly down the pipeline exporter
 	if err := tsp.ConsumeTraces(context.Background(), batches[0]); err != nil {
 		t.Errorf("Failed consuming traces: %v", err)
 	}
 	expectedNumWithLateSpan := numSpansPerBatchWindow + 1
-	require.Equal(t, expectedNumWithLateSpan, msp.SpansCount(), "late span was not accounted for")
-	require.Equal(t, 1, mpe.LateArrivingSpansCount, "policy was not notified of the late span")
+	require.Equal(t, expectedNumWithLateSpan, msp.SpanCount(), "late span was not accounted for")
+	require.Equal(t, 1, mpe.LateArrivingSpanCount, "policy was not notified of the late span")
 }
 
 func TestSamplingMultiplePolicies(t *testing.T) {
@@ -250,7 +255,7 @@ func TestSamplingMultiplePolicies(t *testing.T) {
 		maxSpansPerSecond: 10000,
 	}
 
-	_, batches := generateIdsAndBatches(210)
+	_, batches := generateIdsAndBatches(t, 210)
 	currItem := 0
 	numSpansPerBatchWindow := 10
 	// First evaluations shouldn't have anything to evaluate, until decision wait time passed.
@@ -265,7 +270,7 @@ func TestSamplingMultiplePolicies(t *testing.T) {
 		tsp.samplingPolicyOnTick()
 		require.False(
 			t,
-			msp.SpansCount() != 0 || mpe1.EvaluationCount != 0 || mpe2.EvaluationCount != 0,
+			msp.SpanCount() != 0 || mpe1.EvaluationCount != 0 || mpe2.EvaluationCount != 0,
 			"policy for initial items was evaluated before decision wait period",
 		)
 	}
@@ -276,14 +281,14 @@ func TestSamplingMultiplePolicies(t *testing.T) {
 	tsp.samplingPolicyOnTick()
 	require.False(
 		t,
-		msp.SpansCount() == 0 || mpe1.EvaluationCount == 0 || mpe2.EvaluationCount == 0,
+		msp.SpanCount() == 0 || mpe1.EvaluationCount == 0 || mpe2.EvaluationCount == 0,
 		"policy should have been evaluated totalspans == %d and evaluationcount(1) == %d and evaluationcount(2) == %d",
-		msp.SpansCount(),
+		msp.SpanCount(),
 		mpe1.EvaluationCount,
 		mpe2.EvaluationCount,
 	)
 
-	require.Equal(t, numSpansPerBatchWindow, msp.SpansCount(), "nextConsumer should've been called with exactly 1 batch of spans")
+	require.Equal(t, numSpansPerBatchWindow, msp.SpanCount(), "nextConsumer should've been called with exactly 1 batch of spans")
 
 	// Late span of a sampled trace should be sent directly down the pipeline exporter
 	if err := tsp.ConsumeTraces(context.Background(), batches[0]); err != nil {
@@ -291,9 +296,9 @@ func TestSamplingMultiplePolicies(t *testing.T) {
 	}
 
 	expectedNumWithLateSpan := numSpansPerBatchWindow + 1
-	require.Equal(t, expectedNumWithLateSpan, msp.SpansCount(), "late span was not accounted for")
-	require.Equal(t, 1, mpe1.LateArrivingSpansCount, "1st policy was not notified of the late span")
-	require.Equal(t, 0, mpe2.LateArrivingSpansCount, "2nd policy should not have been notified of the late span")
+	require.Equal(t, expectedNumWithLateSpan, msp.SpanCount(), "late span was not accounted for")
+	require.Equal(t, 1, mpe1.LateArrivingSpanCount, "1st policy was not notified of the late span")
+	require.Equal(t, 0, mpe2.LateArrivingSpanCount, "2nd policy should not have been notified of the late span")
 }
 
 func TestSamplingPolicyDecisionNotSampled(t *testing.T) {
@@ -316,7 +321,7 @@ func TestSamplingPolicyDecisionNotSampled(t *testing.T) {
 		maxSpansPerSecond: 10000,
 	}
 
-	_, batches := generateIdsAndBatches(210)
+	_, batches := generateIdsAndBatches(t, 210)
 	currItem := 0
 	numSpansPerBatchWindow := 10
 	// First evaluations shouldn't have anything to evaluate, until decision wait time passed.
@@ -330,7 +335,7 @@ func TestSamplingPolicyDecisionNotSampled(t *testing.T) {
 		tsp.samplingPolicyOnTick()
 		require.False(
 			t,
-			msp.SpansCount() != 0 || mpe.EvaluationCount != 0,
+			msp.SpanCount() != 0 || mpe.EvaluationCount != 0,
 			"policy for initial items was evaluated before decision wait period",
 		)
 	}
@@ -338,7 +343,7 @@ func TestSamplingPolicyDecisionNotSampled(t *testing.T) {
 	// Now the first batch that waited the decision period.
 	mpe.NextDecision = sampling.NotSampled
 	tsp.samplingPolicyOnTick()
-	require.EqualValues(t, 0, msp.SpansCount(), "exporter should have received zero spans")
+	require.EqualValues(t, 0, msp.SpanCount(), "exporter should have received zero spans")
 	require.EqualValues(t, 4, mpe.EvaluationCount, "policy should have been evaluated 4 times")
 
 	// Late span of a non-sampled trace should be ignored
@@ -346,21 +351,21 @@ func TestSamplingPolicyDecisionNotSampled(t *testing.T) {
 	if err := tsp.ConsumeTraces(context.Background(), batches[0]); err != nil {
 		t.Errorf("Failed consuming traces: %v", err)
 	}
-	require.Equal(t, 0, msp.SpansCount())
-	require.Equal(t, 1, mpe.LateArrivingSpansCount, "policy was not notified of the late span")
+	require.Equal(t, 0, msp.SpanCount())
+	require.Equal(t, 1, mpe.LateArrivingSpanCount, "policy was not notified of the late span")
 
 	mpe.NextDecision = sampling.Unspecified
 	mpe.NextError = errors.New("mock policy error")
 	tsp.samplingPolicyOnTick()
-	require.EqualValues(t, 0, msp.SpansCount(), "exporter should have received zero spans")
+	require.EqualValues(t, 0, msp.SpanCount(), "exporter should have received zero spans")
 	require.EqualValues(t, 6, mpe.EvaluationCount, "policy should have been evaluated 6 times")
 
 	// Late span of a non-sampled trace should be ignored
 	if err := tsp.ConsumeTraces(context.Background(), batches[0]); err != nil {
 		t.Errorf("Failed consuming traces: %v", err)
 	}
-	require.Equal(t, 0, msp.SpansCount())
-	require.Equal(t, 2, mpe.LateArrivingSpansCount, "policy was not notified of the late span")
+	require.Equal(t, 0, msp.SpanCount())
+	require.Equal(t, 2, mpe.LateArrivingSpanCount, "policy was not notified of the late span")
 }
 
 func TestMultipleBatchesAreCombinedIntoOne(t *testing.T) {
@@ -385,7 +390,7 @@ func TestMultipleBatchesAreCombinedIntoOne(t *testing.T) {
 
 	mpe.NextDecision = sampling.Sampled
 
-	traceIds, batches := generateIdsAndBatches(3)
+	traceIds, batches := generateIdsAndBatches(t, 3)
 	for _, batch := range batches {
 		require.NoError(t, tsp.ConsumeTraces(context.Background(), batch))
 	}
@@ -397,16 +402,16 @@ func TestMultipleBatchesAreCombinedIntoOne(t *testing.T) {
 
 	expectedSpanIds := make(map[int][]pdata.SpanID)
 	expectedSpanIds[0] = []pdata.SpanID{
-		tracetranslator.UInt64ToSpanID(uint64(1)),
+		bigendianconverter.UInt64ToSpanID(uint64(1)),
 	}
 	expectedSpanIds[1] = []pdata.SpanID{
-		tracetranslator.UInt64ToSpanID(uint64(2)),
-		tracetranslator.UInt64ToSpanID(uint64(3)),
+		bigendianconverter.UInt64ToSpanID(uint64(2)),
+		bigendianconverter.UInt64ToSpanID(uint64(3)),
 	}
 	expectedSpanIds[2] = []pdata.SpanID{
-		tracetranslator.UInt64ToSpanID(uint64(4)),
-		tracetranslator.UInt64ToSpanID(uint64(5)),
-		tracetranslator.UInt64ToSpanID(uint64(6)),
+		bigendianconverter.UInt64ToSpanID(uint64(4)),
+		bigendianconverter.UInt64ToSpanID(uint64(5)),
+		bigendianconverter.UInt64ToSpanID(uint64(6)),
 	}
 
 	receivedTraces := msp.AllTraces()
@@ -420,8 +425,8 @@ func TestMultipleBatchesAreCombinedIntoOne(t *testing.T) {
 
 		// might have received out of order, sort for comparison
 		sort.Slice(got, func(i, j int) bool {
-			a := tracetranslator.SpanIDToUInt64(got[i])
-			b := tracetranslator.SpanIDToUInt64(got[j])
+			a := bigendianconverter.SpanIDToUInt64(got[i])
+			b := bigendianconverter.SpanIDToUInt64(got[j])
 			return a < b
 		})
 
@@ -429,6 +434,7 @@ func TestMultipleBatchesAreCombinedIntoOne(t *testing.T) {
 	}
 }
 
+//nolint:unused
 func collectSpanIds(trace *pdata.Traces) []pdata.SpanID {
 	spanIDs := make([]pdata.SpanID, 0)
 
@@ -448,6 +454,7 @@ func collectSpanIds(trace *pdata.Traces) []pdata.SpanID {
 	return spanIDs
 }
 
+//nolint:unused
 func findTrace(a []pdata.Traces, traceID pdata.TraceID) *pdata.Traces {
 	for _, batch := range a {
 		id := batch.ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(0).TraceID()
@@ -458,12 +465,12 @@ func findTrace(a []pdata.Traces, traceID pdata.TraceID) *pdata.Traces {
 	return nil
 }
 
-func generateIdsAndBatches(numIds int) ([]pdata.TraceID, []pdata.Traces) {
+func generateIdsAndBatches(t *testing.T, numIds int) ([]pdata.TraceID, []pdata.Traces) {
 	traceIds := make([]pdata.TraceID, numIds)
 	spanID := 0
 	var tds []pdata.Traces
 	for i := 0; i < numIds; i++ {
-		traceIds[i] = tracetranslator.UInt64ToTraceID(1, uint64(i+1))
+		traceIds[i] = bigendianconverter.UInt64ToTraceID(1, uint64(i+1))
 		// Send each span in a separate batch
 		for j := 0; j <= i; j++ {
 			td := simpleTraces()
@@ -471,7 +478,7 @@ func generateIdsAndBatches(numIds int) ([]pdata.TraceID, []pdata.Traces) {
 			span.SetTraceID(traceIds[i])
 
 			spanID++
-			span.SetSpanID(tracetranslator.UInt64ToSpanID(uint64(spanID)))
+			span.SetSpanID(bigendianconverter.UInt64ToSpanID(uint64(spanID)))
 			tds = append(tds, td)
 		}
 	}
@@ -479,38 +486,35 @@ func generateIdsAndBatches(numIds int) ([]pdata.TraceID, []pdata.Traces) {
 	return traceIds, tds
 }
 
+//nolint:unused
 func simpleTraces() pdata.Traces {
 	return simpleTracesWithID(pdata.NewTraceID([16]byte{1, 2, 3, 4}))
 }
 
+//nolint:unused
 func simpleTracesWithID(traceID pdata.TraceID) pdata.Traces {
-	span := pdata.NewSpan()
-	span.SetTraceID(traceID)
-
-	ils := pdata.NewInstrumentationLibrarySpans()
-	ils.Spans().Append(span)
-
-	rs := pdata.NewResourceSpans()
-	rs.InstrumentationLibrarySpans().Append(ils)
-
 	traces := pdata.NewTraces()
-	traces.ResourceSpans().Append(rs)
+	rs := traces.ResourceSpans().AppendEmpty()
+
+	ils := rs.InstrumentationLibrarySpans().AppendEmpty()
+	span := ils.Spans().AppendEmpty()
+	span.SetTraceID(traceID)
 
 	return traces
 }
 
 type mockPolicyEvaluator struct {
-	NextDecision           sampling.Decision
-	NextError              error
-	EvaluationCount        int
-	LateArrivingSpansCount int
-	OnDroppedSpansCount    int
+	NextDecision          sampling.Decision
+	NextError             error
+	EvaluationCount       int
+	LateArrivingSpanCount int
+	OnDroppedSpanCount    int
 }
 
 var _ sampling.PolicyEvaluator = (*mockPolicyEvaluator)(nil)
 
 func (m *mockPolicyEvaluator) OnLateArrivingSpans(sampling.Decision, []*pdata.Span) error {
-	m.LateArrivingSpansCount++
+	m.LateArrivingSpanCount++
 	return m.NextError
 }
 func (m *mockPolicyEvaluator) Evaluate(_ pdata.TraceID, _ *sampling.TraceData) sampling.Decision {

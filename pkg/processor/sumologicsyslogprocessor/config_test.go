@@ -32,7 +32,7 @@ func TestLoadConfig(t *testing.T) {
 	factory := NewFactory()
 	factories.Processors[factory.Type()] = factory
 
-	cfg, err := configtest.LoadConfigFile(t, path.Join(".", "testdata", "sumologic_syslog_config.yaml"), factories)
+	cfg, err := configtest.LoadConfig(path.Join(".", "testdata", "sumologic_syslog_config.yaml"), factories)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 

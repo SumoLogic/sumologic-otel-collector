@@ -26,7 +26,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenterror"
 	"go.opentelemetry.io/collector/consumer"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 	"go.opentelemetry.io/collector/translator/conventions"
 	"go.uber.org/zap"
 
@@ -211,27 +211,36 @@ func (cfsp *cascadingFilterSpanProcessor) samplingPolicyOnTick() {
 				if trace.SelectedByProbabilisticFilter {
 					selectedByProbabilisticFilterSpans += trace.SpanCount
 				}
-				_ = stats.RecordWithTags(
+				err := stats.RecordWithTags(
 					cfsp.ctx,
 					[]tag.Mutator{tag.Insert(tagCascadingFilterDecisionKey, statusSampled)},
 					statCascadingFilterDecision.M(int64(1)),
 				)
+				if err != nil {
+					cfsp.logger.Error("Sampling Policy Evaluation error on first run tick", zap.Error(err))
+				}
 			} else {
-				_ = stats.RecordWithTags(
+				err := stats.RecordWithTags(
 					cfsp.ctx,
 					[]tag.Mutator{tag.Insert(tagCascadingFilterDecisionKey, statusExceededKey)},
 					statCascadingFilterDecision.M(int64(1)),
 				)
+				if err != nil {
+					cfsp.logger.Error("Sampling Policy Evaluation error on first run tick", zap.Error(err))
+				}
 			}
 		} else if provisionalDecision == sampling.SecondChance {
 			trace.FinalDecision = sampling.SecondChance
 		} else {
 			trace.FinalDecision = provisionalDecision
-			_ = stats.RecordWithTags(
+			err := stats.RecordWithTags(
 				cfsp.ctx,
 				[]tag.Mutator{tag.Insert(tagCascadingFilterDecisionKey, statusNotSampled)},
 				statCascadingFilterDecision.M(int64(1)),
 			)
+			if err != nil {
+				cfsp.logger.Error("Sampling Policy Evaluation error on first run tick", zap.Error(err))
+			}
 		}
 	}
 
@@ -245,17 +254,23 @@ func (cfsp *cascadingFilterSpanProcessor) samplingPolicyOnTick() {
 		if trace.FinalDecision == sampling.SecondChance {
 			trace.FinalDecision = cfsp.updateRate(currSecond, trace.SpanCount)
 			if trace.FinalDecision == sampling.Sampled {
-				_ = stats.RecordWithTags(
+				err := stats.RecordWithTags(
 					cfsp.ctx,
 					[]tag.Mutator{tag.Insert(tagCascadingFilterDecisionKey, statusSecondChanceSampled)},
 					statCascadingFilterDecision.M(int64(1)),
 				)
+				if err != nil {
+					cfsp.logger.Error("Sampling Policy Evaluation error on second run tick", zap.Error(err))
+				}
 			} else {
-				_ = stats.RecordWithTags(
+				err := stats.RecordWithTags(
 					cfsp.ctx,
 					[]tag.Mutator{tag.Insert(tagCascadingFilterDecisionKey, statusSecondChanceExceeded)},
 					statCascadingFilterDecision.M(int64(1)),
 				)
+				if err != nil {
+					cfsp.logger.Error("Sampling Policy Evaluation error on second run tick", zap.Error(err))
+				}
 			}
 		}
 
@@ -282,7 +297,10 @@ func (cfsp *cascadingFilterSpanProcessor) samplingPolicyOnTick() {
 				updateFilteringTag(allSpans)
 			}
 
-			_ = cfsp.nextConsumer.ConsumeTraces(cfsp.ctx, allSpans)
+			err := cfsp.nextConsumer.ConsumeTraces(cfsp.ctx, allSpans)
+			if err != nil {
+				cfsp.logger.Error("Sampling Policy Evaluation error on consuming traces", zap.Error(err))
+			}
 		} else {
 			metrics.decisionNotSampled++
 		}
@@ -367,30 +385,39 @@ func (cfsp *cascadingFilterSpanProcessor) makeProvisionalDecision(id pdata.Trace
 				trace.SelectedByProbabilisticFilter = true
 			}
 
-			_ = stats.RecordWithTags(
+			err := stats.RecordWithTags(
 				policy.ctx,
 				[]tag.Mutator{tag.Insert(tagPolicyDecisionKey, statusSampled)},
 				statPolicyDecision.M(int64(1)),
 			)
+			if err != nil {
+				cfsp.logger.Error("Making provisional decision error", zap.Error(err))
+			}
 		case sampling.NotSampled:
 			if provisionalDecision == sampling.Unspecified {
 				provisionalDecision = sampling.NotSampled
 			}
-			_ = stats.RecordWithTags(
+			err := stats.RecordWithTags(
 				policy.ctx,
 				[]tag.Mutator{tag.Insert(tagPolicyDecisionKey, statusNotSampled)},
 				statPolicyDecision.M(int64(1)),
 			)
+			if err != nil {
+				cfsp.logger.Error("Making provisional decision error", zap.Error(err))
+			}
 		case sampling.SecondChance:
 			if provisionalDecision != sampling.Sampled {
 				provisionalDecision = sampling.SecondChance
 			}
 
-			_ = stats.RecordWithTags(
+			err := stats.RecordWithTags(
 				policy.ctx,
 				[]tag.Mutator{tag.Insert(tagPolicyDecisionKey, statusSecondChance)},
 				statPolicyDecision.M(int64(1)),
 			)
+			if err != nil {
+				cfsp.logger.Error("Making provisional decision error", zap.Error(err))
+			}
 		}
 	}
 
@@ -562,13 +589,12 @@ func (cfsp *cascadingFilterSpanProcessor) dropTrace(traceID traceKey, deletionTi
 
 func prepareTraceBatch(rss pdata.ResourceSpans, spans []*pdata.Span) pdata.Traces {
 	traceTd := pdata.NewTraces()
-	traceTd.ResourceSpans().Resize(1)
-	rs := traceTd.ResourceSpans().At(0)
+	rs := traceTd.ResourceSpans().AppendEmpty()
 	rss.Resource().CopyTo(rs.Resource())
-	rs.InstrumentationLibrarySpans().Resize(1)
-	ils := rs.InstrumentationLibrarySpans().At(0)
+	ils := rs.InstrumentationLibrarySpans().AppendEmpty()
+	ilsSpans := ils.Spans()
 	for _, span := range spans {
-		ils.Spans().Append(*span)
+		span.CopyTo(ilsSpans.AppendEmpty())
 	}
 	return traceTd
 }

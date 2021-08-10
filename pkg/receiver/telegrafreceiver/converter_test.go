@@ -22,7 +22,7 @@ import (
 	"github.com/influxdata/telegraf/metric"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/zap"
 )
 
@@ -31,7 +31,7 @@ func TestConverter(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		metricsFn     func() (telegraf.Metric, error)
+		metricsFn     func() telegraf.Metric
 		separateField bool
 		expectedErr   bool
 		expectedFn    func() pdata.MetricSlice
@@ -39,7 +39,7 @@ func TestConverter(t *testing.T) {
 		{
 			name:          "gauge_int_with_one_field",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available": uint64(39097651200),
 				}
@@ -48,14 +48,18 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(newMetricIntGauge("mem_available", 39097651200, tim))
+
+				newIntGauge(39097651200,
+					WithName("mem_available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
 		{
 			name:          "gauge_int_separate_field_with_one_field",
 			separateField: true,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available": uint64(39097651200),
 				}
@@ -64,14 +68,44 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(newMetricIntGaugeWithSeparateField("mem", "available", 39097651200, tim))
+				newIntGauge(39097651200,
+					WithName("mem"),
+					WithField("available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
+		// Don't expect telegraf tags to be added to data point labels.
+		// We only add the telegraf tags to resource level attributes.
+		// {
+		// 	name:          "gauge_int_with_one_field_and_tag",
+		// 	separateField: false,
+		// 	metricsFn: func() telegraf.Metric {
+		// 		fields := map[string]interface{}{
+		// 			"available": uint64(39097651200),
+		// 		}
+		// 		tags := map[string]string{
+		// 			"host": "localhost",
+		// 		}
+		// 		return metric.New("mem", tags, fields, tim, telegraf.Gauge)
+		// 	},
+		// 	expectedFn: func() pdata.MetricSlice {
+		// 		metrics := pdata.NewMetricSlice()
+		// 		metrics.Append(
+		// 			newIntGauge(39097651200,
+		// 				WithName("mem_available"),
+		// 				WithTime(tim),
+		// 				WithTag(&telegraf.Tag{Key: "host", Value: "localhost"}),
+		// 			),
+		// 		)
+		// 		return metrics
+		// 	},
+		// },
 		{
 			name:          "gauge_double_with_one_field",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available_percent": 54.505050,
 				}
@@ -80,14 +114,17 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(newMetricDoubleGauge("mem_available_percent", 54.505050, tim))
+				newDoubleGauge(54.505050,
+					WithName("mem_available_percent"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
 		{
 			name:          "gauge_double_separate_field_with_one_field",
 			separateField: true,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available_percent": 54.505050,
 				}
@@ -96,14 +133,65 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(newMetricDoubleGaugeWithSeparateField("mem", "available_percent", 54.505050, tim))
+				newDoubleGauge(54.505050,
+					WithName("mem"),
+					WithField("available_percent"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				return metrics
+			},
+		},
+		// Don't expect telegraf tags to be added to data point labels.
+		// We only add the telegraf tags to resource level attributes.
+		// {
+		// 	name:          "gauge_double_with_one_field_and_one_tag",
+		// 	separateField: false,
+		// 	metricsFn: func() telegraf.Metric {
+		// 		fields := map[string]interface{}{
+		// 			"available_percent": 54.505050,
+		// 		}
+		// 		tags := map[string]string{
+		// 			"host": "localhost",
+		// 		}
+		// 		return metric.New("mem", tags, fields, tim, telegraf.Gauge)
+		// 	},
+		// 	expectedFn: func() pdata.MetricSlice {
+		// 		metrics := pdata.NewMetricSlice()
+		// 		metrics.Append(
+		// 			newDoubleGauge(54.505050,
+		// 				WithName("mem_available_percent"),
+		// 				WithTime(tim),
+		// 				WithTag(&telegraf.Tag{Key: "host", Value: "localhost"}),
+		// 			),
+		// 		)
+		// 		return metrics
+		// 	},
+		// },
+		{
+			name:          "gauge_double_with_one_field_and_one_tag_doesnt_get_copied_to_record_attributes",
+			separateField: false,
+			metricsFn: func() telegraf.Metric {
+				fields := map[string]interface{}{
+					"available_percent": 54.505050,
+				}
+				tags := map[string]string{
+					"host": "localhost",
+				}
+				return metric.New("mem", tags, fields, tim, telegraf.Gauge)
+			},
+			expectedFn: func() pdata.MetricSlice {
+				metrics := pdata.NewMetricSlice()
+				newDoubleGauge(54.505050,
+					WithName("mem_available_percent"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
 		{
 			name:          "gauge_int_with_multiple_fields",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available":    uint64(39097651200),
 					"free":         uint64(24322170880),
@@ -116,18 +204,33 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(newMetricIntGauge("mem_available", 39097651200, tim))
-				metrics.Append(newMetricIntGauge("mem_free", 24322170880, tim))
-				metrics.Append(newMetricIntGauge("mem_total", 68719476736, tim))
-				metrics.Append(newMetricIntGauge("mem_used", 29621825536, tim))
-				metrics.Append(newMetricDoubleGauge("mem_used_percent", 43.10542941093445, tim))
+				newIntGauge(39097651200,
+					WithName("mem_available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newIntGauge(24322170880,
+					WithName("mem_free"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newIntGauge(68719476736,
+					WithName("mem_total"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newIntGauge(29621825536,
+					WithName("mem_used"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newDoubleGauge(43.10542941093445,
+					WithName("mem_used_percent"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
 		{
 			name:          "gauge_int_separate_field_with_multiple_fields",
 			separateField: true,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available": uint64(39097651200),
 					"free":      uint64(24322170880),
@@ -137,15 +240,244 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(newMetricIntGaugeWithSeparateField("mem", "available", 39097651200, tim))
-				metrics.Append(newMetricIntGaugeWithSeparateField("mem", "free", 24322170880, tim))
+				newIntGauge(39097651200,
+					WithName("mem"),
+					WithField("available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newIntGauge(24322170880,
+					WithName("mem"),
+					WithField("free"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				return metrics
+			},
+		},
+		{
+			name:          "sum_int_with_one_field",
+			separateField: false,
+			metricsFn: func() telegraf.Metric {
+				fields := map[string]interface{}{
+					"available": uint64(39097651200),
+				}
+
+				return metric.New("mem", nil, fields, tim, telegraf.Counter)
+			},
+			expectedFn: func() pdata.MetricSlice {
+				metrics := pdata.NewMetricSlice()
+				newIntSum(39097651200,
+					WithName("mem_available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				return metrics
+			},
+		},
+		{
+			name:          "sum_int_separate_field_with_one_field",
+			separateField: true,
+			metricsFn: func() telegraf.Metric {
+				fields := map[string]interface{}{
+					"available": uint64(39097651200),
+				}
+
+				return metric.New("mem", nil, fields, tim, telegraf.Counter)
+			},
+			expectedFn: func() pdata.MetricSlice {
+				metrics := pdata.NewMetricSlice()
+				newIntSum(39097651200,
+					WithName("mem"),
+					WithField("available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				return metrics
+			},
+		},
+		// Don't expect telegraf tags to be added to data point labels.
+		// We only add the telegraf tags to resource level attributes.
+		// {
+		// 	name:          "sum_int_with_one_field_and_one_tag",
+		// 	separateField: false,
+		// 	metricsFn: func() telegraf.Metric {
+		// 		fields := map[string]interface{}{
+		// 			"available": uint64(39097651200),
+		// 		}
+		// 		tags := map[string]string{
+		// 			"host": "localhost",
+		// 		}
+		// 		return metric.New("mem", tags, fields, tim, telegraf.Counter)
+		// 	},
+		// 	expectedFn: func() pdata.MetricSlice {
+		// 		metrics := pdata.NewMetricSlice()
+		// 		metrics.Append(
+		// 			newIntSum(39097651200,
+		// 				WithName("mem_available"),
+		// 				WithTime(tim),
+		// 				WithTag(&telegraf.Tag{Key: "host", Value: "localhost"}),
+		// 			),
+		// 		)
+		// 		return metrics
+		// 	},
+		// },
+		// Don't expect telegraf tags to be added to data point labels.
+		// We only add the telegraf tags to resource level attributes.
+		// {
+		// 	name:          "sum_int_with_one_field_and_three_tags",
+		// 	separateField: false,
+		// 	metricsFn: func() telegraf.Metric {
+		// 		fields := map[string]interface{}{
+		// 			"available": uint64(39097651200),
+		// 		}
+		// 		tags := map[string]string{
+		// 			"host":    "localhost",
+		// 			"cluster": "my-cluster",
+		// 			"blade":   "blade0",
+		// 		}
+		// 		return metric.New("mem", tags, fields, tim, telegraf.Counter)
+		// 	},
+		// 	expectedFn: func() pdata.MetricSlice {
+		// 		metrics := pdata.NewMetricSlice()
+		// 		metrics.Append(
+		// 			newIntSum(39097651200,
+		// 				WithName("mem_available"),
+		// 				WithTime(tim),
+		// 				WithTag(&telegraf.Tag{Key: "blade", Value: "blade0"}),
+		// 				WithTag(&telegraf.Tag{Key: "host", Value: "localhost"}),
+		// 				WithTag(&telegraf.Tag{Key: "cluster", Value: "my-cluster"}),
+		// 			),
+		// 		)
+		// 		return metrics
+		// 	},
+		// },
+		{
+			name:          "sum_double_with_one_field",
+			separateField: false,
+			metricsFn: func() telegraf.Metric {
+				fields := map[string]interface{}{
+					"available": float64(39097651200.123),
+				}
+
+				return metric.New("mem", nil, fields, tim, telegraf.Counter)
+			},
+			expectedFn: func() pdata.MetricSlice {
+				metrics := pdata.NewMetricSlice()
+				newDoubleSum(39097651200.123,
+					WithName("mem_available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				return metrics
+			},
+		},
+		{
+			name:          "sum_double_separate_field_with_one_field",
+			separateField: true,
+			metricsFn: func() telegraf.Metric {
+				fields := map[string]interface{}{
+					"available": float64(39097651200.123),
+				}
+
+				return metric.New("mem", nil, fields, tim, telegraf.Counter)
+			},
+			expectedFn: func() pdata.MetricSlice {
+				metrics := pdata.NewMetricSlice()
+				newDoubleSum(39097651200.123,
+					WithName("mem"),
+					WithField("available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				return metrics
+			},
+		},
+		// Don't expect telegraf tags to be added to data point labels.
+		// We only add the telegraf tags to resource level attributes.
+		// {
+		// 	name:          "sum_double_separate_field_with_one_field_and_one_tag",
+		// 	separateField: true,
+		// 	metricsFn: func() telegraf.Metric {
+		// 		fields := map[string]interface{}{
+		// 			"available": float64(39097651200.123),
+		// 		}
+		// 		tags := map[string]string{
+		// 			"host": "localhost",
+		// 		}
+		// 		return metric.New("mem", tags, fields, tim, telegraf.Counter)
+		// 	},
+		// 	expectedFn: func() pdata.MetricSlice {
+		// 		metrics := pdata.NewMetricSlice()
+		// 		metrics.Append(
+		// 			newDoubleSum(39097651200.123,
+		// 				WithName("mem"),
+		// 				WithField("available"),
+		// 				WithTime(tim),
+		// 				WithTag(&telegraf.Tag{Key: "host", Value: "localhost"}),
+		// 			),
+		// 		)
+		// 		return metrics
+		// 	},
+		// },
+		{
+			name:          "sum_int_with_multiple_fields",
+			separateField: false,
+			metricsFn: func() telegraf.Metric {
+				fields := map[string]interface{}{
+					"available": uint64(39097651200),
+					"free":      uint64(24322170880),
+					"total":     uint64(68719476736),
+					"used":      uint64(29621825536),
+				}
+
+				return metric.New("mem", nil, fields, tim, telegraf.Counter)
+			},
+			expectedFn: func() pdata.MetricSlice {
+				metrics := pdata.NewMetricSlice()
+				newIntSum(39097651200,
+					WithName("mem_available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newIntSum(24322170880,
+					WithName("mem_free"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newIntSum(68719476736,
+					WithName("mem_total"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newIntSum(29621825536,
+					WithName("mem_used"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				return metrics
+			},
+		},
+		{
+			name:          "sum_int_separate_field_with_multiple_fields",
+			separateField: true,
+			metricsFn: func() telegraf.Metric {
+				fields := map[string]interface{}{
+					"available": uint64(39097651200),
+					"free":      uint64(24322170880),
+				}
+
+				return metric.New("mem", nil, fields, tim, telegraf.Counter)
+			},
+			expectedFn: func() pdata.MetricSlice {
+				metrics := pdata.NewMetricSlice()
+				newIntSum(39097651200,
+					WithName("mem"),
+					WithField("available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
+				newIntSum(24322170880,
+					WithName("mem"),
+					WithField("free"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
 		{
 			name:          "untyped_int_with_one_field",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"available": uint64(39097651200),
 				}
@@ -154,14 +486,17 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(newMetricIntGauge("mem_available", 39097651200, tim))
+				newIntGauge(39097651200,
+					WithName("mem_available"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
 		{
 			name:          "untyped_double_with_one_field",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"used_percent": 43.10542941093445,
 				}
@@ -170,14 +505,17 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(newMetricDoubleGauge("mem_used_percent", 43.10542941093445, tim))
+				newDoubleGauge(43.10542941093445,
+					WithName("mem_used_percent"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
 		{
 			name:          "untyped_bool_with_one_field_false",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"throttling_supported": false,
 				}
@@ -186,14 +524,17 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(newMetricIntGauge("cpu_throttling_supported", 0, tim))
+				newIntGauge(0,
+					WithName("cpu_throttling_supported"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
 		{
 			name:          "untyped_bool_with_one_field_true",
 			separateField: false,
-			metricsFn: func() (telegraf.Metric, error) {
+			metricsFn: func() telegraf.Metric {
 				fields := map[string]interface{}{
 					"throttling_supported": true,
 				}
@@ -202,7 +543,10 @@ func TestConverter(t *testing.T) {
 			},
 			expectedFn: func() pdata.MetricSlice {
 				metrics := pdata.NewMetricSlice()
-				metrics.Append(newMetricIntGauge("cpu_throttling_supported", 1, tim))
+				newIntGauge(1,
+					WithName("cpu_throttling_supported"),
+					WithTime(tim),
+				).CopyTo(metrics.AppendEmpty())
 				return metrics
 			},
 		},
@@ -210,8 +554,7 @@ func TestConverter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m, err := tt.metricsFn()
-			require.NoError(t, err)
+			m := tt.metricsFn()
 
 			mc := newConverter(tt.separateField, zap.NewNop())
 			out, err := mc.Convert(m)
@@ -221,11 +564,12 @@ func TestConverter(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				expected := tt.expectedFn()
-				actual := out.
-					ResourceMetrics().At(0).
-					InstrumentationLibraryMetrics().At(0).Metrics()
+				resourceMetrics := out.ResourceMetrics().At(0)
+				assertResourceAttributes(t, m.TagList(), resourceMetrics.Resource())
 
+				actual := resourceMetrics.InstrumentationLibraryMetrics().At(0).Metrics()
+
+				expected := tt.expectedFn()
 				require.Equal(t, expected.Len(), actual.Len())
 				if tt.separateField {
 					pdataMetricSlicesWithFieldsAreEqual(t, expected, actual)
@@ -237,8 +581,27 @@ func TestConverter(t *testing.T) {
 	}
 }
 
-type DataPoint interface {
+type DataPointWithLabelsMap interface {
 	LabelsMap() pdata.StringMap
+}
+
+func assertResourceAttributes(t *testing.T, tags []*telegraf.Tag, resource pdata.Resource) {
+	resource.Attributes().Range(func(k string, v pdata.AttributeValue) bool {
+		var found bool
+		for _, tag := range tags {
+			if k != tag.Key {
+				continue
+			}
+			if assert.Equal(t, pdata.AttributeValueTypeString, v.Type()) {
+				if assert.Equal(t, tag.Value, v.StringVal()) {
+					found = true
+				}
+				break
+			}
+		}
+		assert.True(t, found, "attribute: %v not found", k)
+		return true
+	})
 }
 
 func pdataMetricSlicesAreEqual(t *testing.T, expected, actual pdata.MetricSlice) {
@@ -251,13 +614,93 @@ func pdataMetricSlicesAreEqual(t *testing.T, expected, actual pdata.MetricSlice)
 			am := actual.At(j)
 			aName := am.Name()
 			if eName == aName {
-				assert.EqualValues(t, em, am)
+				// Note: cannot compare with assert/require because
+				// each DataPoints() LabelsMap() is a map without
+				// order.
+				// assert.EqualValues(t, em, am)
+				assert.Equal(t, em.Description(), am.Description())
+				assert.Equal(t, em.Unit(), am.Unit())
+				if assert.Equal(t, em.DataType(), am.DataType()) {
+					assertEqualDataPointsWithLabels(t, em, am)
+				}
 				pass = true
 				break
 			}
 		}
 		assert.True(t, pass, "%q metric not found", eName)
 	}
+}
+
+// assertEqualDataPointsWithLabels checks that provided metrics have the same
+// data points with the same set of labels.
+func assertEqualDataPointsWithLabels(t *testing.T, em pdata.Metric, am pdata.Metric) {
+	switch em.DataType() {
+	case pdata.MetricDataTypeIntGauge:
+		edps := em.IntGauge().DataPoints()
+		adps := am.IntGauge().DataPoints()
+		assert.Equal(t, edps.Len(), adps.Len())
+		for i := 0; i < edps.Len(); i++ {
+			expected := edps.At(i)
+			actual := adps.At(i)
+			assert.Equal(t, expected.Value(), actual.Value())
+			assertEqualDataPoints(t, am.Name(), expected, actual)
+		}
+	case pdata.MetricDataTypeGauge:
+		edps := em.Gauge().DataPoints()
+		adps := am.Gauge().DataPoints()
+		assert.Equal(t, edps.Len(), adps.Len())
+		for i := 0; i < edps.Len(); i++ {
+			expected := edps.At(i)
+			actual := adps.At(i)
+			assert.Equal(t, expected.Value(), actual.Value())
+			assertEqualDataPoints(t, am.Name(), expected, actual)
+		}
+	case pdata.MetricDataTypeIntSum:
+		edps := em.IntSum().DataPoints()
+		adps := am.IntSum().DataPoints()
+		assert.Equal(t, edps.Len(), adps.Len())
+		for i := 0; i < edps.Len(); i++ {
+			expected := edps.At(i)
+			actual := adps.At(i)
+			assert.Equal(t, expected.Value(), actual.Value())
+			assertEqualDataPoints(t, am.Name(), expected, actual)
+		}
+	case pdata.MetricDataTypeSum:
+		edps := em.Sum().DataPoints()
+		adps := am.Sum().DataPoints()
+		assert.Equal(t, edps.Len(), adps.Len())
+		for i := 0; i < edps.Len(); i++ {
+			expected := edps.At(i)
+			actual := adps.At(i)
+			assert.Equal(t, expected.Value(), actual.Value())
+			assertEqualDataPoints(t, am.Name(), expected, actual)
+		}
+	}
+}
+
+type DataPoint interface {
+	Timestamp() pdata.Timestamp
+	StartTimestamp() pdata.Timestamp
+	LabelsMap() pdata.StringMap
+}
+
+func assertEqualDataPoints(t *testing.T, metricName string, expected, actual DataPoint) {
+	// NOTE: cannot compare values due to different return types of Value()
+	// func for different metric types.
+	// assert.Equal(t, edp.Value(), adp.Value())
+	assert.Equal(t, expected.Timestamp(), actual.Timestamp())
+	assert.Equal(t, expected.StartTimestamp(), actual.StartTimestamp())
+
+	// Expect that there are no labels added to data points because we don't
+	// copy over the telegraf tags to record level attributes.
+	assert.Equal(t, expected.LabelsMap().Len(), actual.LabelsMap().Len(),
+		"The amount of actual data point labels on %q metric is not as expected",
+		metricName,
+	)
+
+	// Don't expect telegraf tags to be added to data point labels.
+	// We only add the telegraf tags to resource level attributes.
+	// assert.Equal(t, edp.LabelsMap().Sort(), adp.LabelsMap().Sort())
 }
 
 func pdataMetricSlicesWithFieldsAreEqual(t *testing.T, expected, actual pdata.MetricSlice) {
@@ -305,8 +748,8 @@ func metricSliceContainsMetricWithField(ms pdata.MetricSlice, name string, field
 					}
 				}
 
-			case pdata.MetricDataTypeDoubleGauge:
-				mg := m.DoubleGauge()
+			case pdata.MetricDataTypeGauge:
+				mg := m.Gauge()
 				dps := mg.DataPoints()
 				for i := 0; i < dps.Len(); i++ {
 					dp := dps.At(i)
@@ -342,10 +785,10 @@ func getFieldsFromMetric(m pdata.Metric) map[string]struct{} {
 		}
 		return ret
 
-	case pdata.MetricDataTypeDoubleGauge:
+	case pdata.MetricDataTypeGauge:
 		ret := make(map[string]struct{})
-		for i := 0; i < m.DoubleGauge().DataPoints().Len(); i++ {
-			dp := m.DoubleGauge().DataPoints().At(i)
+		for i := 0; i < m.Gauge().DataPoints().Len(); i++ {
+			dp := m.Gauge().DataPoints().At(i)
 			l, ok := dp.LabelsMap().Get("field")
 			if !ok {
 				continue
@@ -361,7 +804,7 @@ func getFieldsFromMetric(m pdata.Metric) map[string]struct{} {
 
 // fieldFromMetric searches through pdata.Metric's data points to find
 // a particular field.
-func fieldFromMetric(m pdata.Metric, field string) (DataPoint, bool) {
+func fieldFromMetric(m pdata.Metric, field string) (DataPointWithLabelsMap, bool) {
 	switch m.DataType() {
 	case pdata.MetricDataTypeIntGauge:
 		dps := m.IntGauge().DataPoints()
@@ -377,8 +820,8 @@ func fieldFromMetric(m pdata.Metric, field string) (DataPoint, bool) {
 			}
 		}
 
-	case pdata.MetricDataTypeDoubleGauge:
-		dps := m.DoubleGauge().DataPoints()
+	case pdata.MetricDataTypeGauge:
+		dps := m.Gauge().DataPoints()
 		for i := 0; i < dps.Len(); i++ {
 			dp := dps.At(i)
 			l, ok := dp.LabelsMap().Get("field")
@@ -397,60 +840,3 @@ func fieldFromMetric(m pdata.Metric, field string) (DataPoint, bool) {
 
 	return nil, false
 }
-
-func newMetricIntGauge(metric string, value int64, t time.Time) pdata.Metric {
-	pm := pdata.NewMetric()
-	pm.SetName(metric)
-	pm.SetDataType(pdata.MetricDataTypeIntGauge)
-
-	dps := pm.IntGauge().DataPoints()
-	dps.Resize(1)
-	dp := dps.At(0)
-	dp.SetValue(value)
-	dp.SetTimestamp(pdata.Timestamp(t.UnixNano()))
-	return pm
-}
-
-func newMetricIntGaugeWithSeparateField(metric string, field string, value int64, t time.Time) pdata.Metric {
-	pm := pdata.NewMetric()
-	pm.SetName(metric)
-	pm.SetDataType(pdata.MetricDataTypeIntGauge)
-
-	dps := pm.IntGauge().DataPoints()
-	dps.Resize(1)
-	dp := dps.At(0)
-	dp.SetValue(value)
-	dp.SetTimestamp(pdata.Timestamp(t.UnixNano()))
-	dp.LabelsMap().Insert(fieldLabel, field)
-	return pm
-}
-
-func newMetricDoubleGauge(metric string, value float64, t time.Time) pdata.Metric {
-	pm := pdata.NewMetric()
-	pm.SetName(metric)
-	pm.SetDataType(pdata.MetricDataTypeDoubleGauge)
-
-	dps := pm.DoubleGauge().DataPoints()
-	dps.Resize(1)
-	dp := dps.At(0)
-	dp.SetValue(value)
-	dp.SetTimestamp(pdata.Timestamp(t.UnixNano()))
-	return pm
-}
-
-func newMetricDoubleGaugeWithSeparateField(metric string, field string, value float64, t time.Time) pdata.Metric {
-	pm := pdata.NewMetric()
-	pm.SetName(metric)
-	pm.SetDataType(pdata.MetricDataTypeDoubleGauge)
-
-	dps := pm.DoubleGauge().DataPoints()
-	dps.Resize(1)
-	dp := dps.At(0)
-	dp.SetValue(value)
-	dp.SetTimestamp(pdata.Timestamp(t.UnixNano()))
-	dp.LabelsMap().Insert(fieldLabel, field)
-	return pm
-}
-
-// func sort(m pdata.MetricSlice) {
-// }

@@ -22,7 +22,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/zap"
 )
 
@@ -32,10 +33,12 @@ var (
 	minNumberOfSpans     = 2
 )
 
-func newSpanPropertiesFilter(operationNamePattern *string, minDuration *time.Duration, minNumberOfSpans *int) policyEvaluator {
+func newSpanPropertiesFilter(t *testing.T, operationNamePattern *string, minDuration *time.Duration, minNumberOfSpans *int) policyEvaluator {
 	var operationRe *regexp.Regexp
+	var err error
 	if operationNamePattern != nil {
-		operationRe, _ = regexp.Compile(*operationNamePattern)
+		operationRe, err = regexp.Compile(*operationNamePattern)
+		require.NoError(t, err)
 	}
 	return policyEvaluator{
 		logger:            zap.NewNop(),
@@ -47,15 +50,16 @@ func newSpanPropertiesFilter(operationNamePattern *string, minDuration *time.Dur
 }
 
 func evaluate(t *testing.T, evaluator policyEvaluator, traces *TraceData, expectedDecision Decision) {
-	u, _ := uuid.NewRandom()
+	u, err := uuid.NewRandom()
+	require.NoError(t, err)
 	decision := evaluator.Evaluate(pdata.NewTraceID(u), traces)
 	assert.Equal(t, expectedDecision, decision)
 }
 
 func TestPartialSpanPropertiesFilter(t *testing.T) {
-	opFilter := newSpanPropertiesFilter(&operationNamePattern, nil, nil)
-	durationFilter := newSpanPropertiesFilter(nil, &minDuration, nil)
-	spansFilter := newSpanPropertiesFilter(nil, nil, &minNumberOfSpans)
+	opFilter := newSpanPropertiesFilter(t, &operationNamePattern, nil, nil)
+	durationFilter := newSpanPropertiesFilter(t, nil, &minDuration, nil)
+	spansFilter := newSpanPropertiesFilter(t, nil, nil, &minNumberOfSpans)
 
 	cases := []struct {
 		Desc      string
@@ -122,7 +126,7 @@ func TestSpanPropertiesFilter(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.Desc, func(t *testing.T) {
 			// Regular match
-			filter := newSpanPropertiesFilter(&operationNamePattern, &minDuration, &minNumberOfSpans)
+			filter := newSpanPropertiesFilter(t, &operationNamePattern, &minDuration, &minNumberOfSpans)
 			evaluate(t, filter, c.Trace, c.Decision)
 
 			// Invert match
@@ -143,15 +147,14 @@ func newTraceAttrs(operationName string, duration time.Duration, numberOfSpans i
 	var traceBatches []pdata.Traces
 
 	traces := pdata.NewTraces()
-	traces.ResourceSpans().Resize(1)
-	rs := traces.ResourceSpans().At(0)
-	rs.InstrumentationLibrarySpans().Resize(1)
-	ils := rs.InstrumentationLibrarySpans().At(0)
+	rs := traces.ResourceSpans().AppendEmpty()
+	ils := rs.InstrumentationLibrarySpans().AppendEmpty()
 
-	ils.Spans().Resize(numberOfSpans)
+	spans := ils.Spans()
+	spans.EnsureCapacity(numberOfSpans)
 
 	for i := 0; i < numberOfSpans; i++ {
-		span := ils.Spans().At(i)
+		span := spans.AppendEmpty()
 		span.SetName(operationName)
 		span.SetStartTimestamp(pdata.Timestamp(startTs))
 		span.SetEndTimestamp(pdata.Timestamp(endTs))

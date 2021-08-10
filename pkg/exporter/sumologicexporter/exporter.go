@@ -16,6 +16,7 @@ package sumologicexporter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -23,8 +24,8 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer/consumererror"
-	"go.opentelemetry.io/collector/consumer/pdata"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
+	"go.opentelemetry.io/collector/model/pdata"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension"
 )
@@ -32,6 +33,7 @@ import (
 const (
 	logsDataUrl    = "/api/v1/collector/logs"
 	metricsDataUrl = "/api/v1/collector/metrics"
+	tracesDataUrl  = "/api/v1/collector/traces"
 )
 
 type sumologicexporter struct {
@@ -43,12 +45,14 @@ type sumologicexporter struct {
 	graphiteFormatter   graphiteFormatter
 	dataUrlMetrics      string
 	dataUrlLogs         string
+	dataUrlTraces       string
 }
 
 func initExporter(cfg *Config) (*sumologicexporter, error) {
 	switch cfg.LogFormat {
 	case JSONFormat:
 	case TextFormat:
+	case OTLPLogFormat:
 	default:
 		return nil, fmt.Errorf("unexpected log format: %s", cfg.LogFormat)
 	}
@@ -57,8 +61,15 @@ func initExporter(cfg *Config) (*sumologicexporter, error) {
 	case GraphiteFormat:
 	case Carbon2Format:
 	case PrometheusFormat:
+	case OTLPMetricFormat:
 	default:
 		return nil, fmt.Errorf("unexpected metric format: %s", cfg.MetricFormat)
+	}
+
+	switch cfg.TraceFormat {
+	case OTLPTraceFormat:
+	default:
+		return nil, fmt.Errorf("unexpected trace format: %s", cfg.TraceFormat)
 	}
 
 	switch cfg.CompressEncoding {
@@ -69,11 +80,21 @@ func initExporter(cfg *Config) (*sumologicexporter, error) {
 		return nil, fmt.Errorf("unexpected compression encoding: %s", cfg.CompressEncoding)
 	}
 
-	// TODO checking the endpoint
-	// if len(cfg.HTTPClientSettings.Endpoint) == 0 {
-	// 	return nil, errors.New("endpoint is not set")
-	// }
+	if len(cfg.HTTPClientSettings.Endpoint) == 0 && cfg.HTTPClientSettings.Auth == nil {
+		return nil, errors.New("no endpoint and no auth extension specified")
+	}
 
+	if _, err := url.Parse(cfg.HTTPClientSettings.Endpoint); err != nil {
+		return nil, fmt.Errorf("failed parsing endpoint URL: %s; err: %w",
+			cfg.HTTPClientSettings.Endpoint, err,
+		)
+	}
+
+	if cfg.TranslateAttributes {
+		cfg.SourceCategory = translateConfigValue(cfg.SourceCategory)
+		cfg.SourceHost = translateConfigValue(cfg.SourceHost)
+		cfg.SourceName = translateConfigValue(cfg.SourceName)
+	}
 	sfs, err := newSourceFormats(cfg)
 	if err != nil {
 		return nil, err
@@ -108,7 +129,7 @@ func initExporter(cfg *Config) (*sumologicexporter, error) {
 
 func newLogsExporter(
 	cfg *Config,
-	params component.ExporterCreateParams,
+	params component.ExporterCreateSettings,
 ) (component.LogsExporter, error) {
 	se, err := initExporter(cfg)
 	if err != nil {
@@ -117,7 +138,9 @@ func newLogsExporter(
 
 	return exporterhelper.NewLogsExporter(
 		cfg,
-		params.Logger,
+		component.ExporterCreateSettings{
+			Logger: params.Logger,
+		},
 		se.pushLogsData,
 		// Disable exporterhelper Timeout, since we are using a custom mechanism
 		// within exporter itself
@@ -131,7 +154,7 @@ func newLogsExporter(
 
 func newMetricsExporter(
 	cfg *Config,
-	params component.ExporterCreateParams,
+	params component.ExporterCreateSettings,
 ) (component.MetricsExporter, error) {
 	se, err := initExporter(cfg)
 	if err != nil {
@@ -140,8 +163,35 @@ func newMetricsExporter(
 
 	return exporterhelper.NewMetricsExporter(
 		cfg,
-		params.Logger,
+		component.ExporterCreateSettings{
+			Logger: params.Logger,
+		},
 		se.pushMetricsData,
+		// Disable exporterhelper Timeout, since we are using a custom mechanism
+		// within exporter itself
+		exporterhelper.WithTimeout(exporterhelper.TimeoutSettings{Timeout: 0}),
+		exporterhelper.WithRetry(cfg.RetrySettings),
+		exporterhelper.WithQueue(cfg.QueueSettings),
+		exporterhelper.WithStart(se.start),
+		exporterhelper.WithShutdown(se.shutdown),
+	)
+}
+
+func newTracesExporter(
+	cfg *Config,
+	params component.ExporterCreateSettings,
+) (component.TracesExporter, error) {
+	se, err := initExporter(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return exporterhelper.NewTracesExporter(
+		cfg,
+		component.ExporterCreateSettings{
+			Logger: params.Logger,
+		},
+		se.pushTracesData,
 		// Disable exporterhelper Timeout, since we are using a custom mechanism
 		// within exporter itself
 		exporterhelper.WithTimeout(exporterhelper.TimeoutSettings{Timeout: 0}),
@@ -178,6 +228,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		se.graphiteFormatter,
 		se.dataUrlMetrics,
 		se.dataUrlLogs,
+		se.dataUrlTraces,
 	)
 
 	// Iterate over ResourceLogs
@@ -197,12 +248,18 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 
 				// copy resource attributes into logs attributes
 				// log attributes have precedence over resource attributes
+				attributes := log.Attributes()
 				rl.Resource().Attributes().Range(func(k string, v pdata.AttributeValue) bool {
-					log.Attributes().Insert(k, v)
+					attributes.Insert(k, v)
 					return true
 				})
 
-				currentMetadata = sdr.filter.filterIn(log.Attributes())
+				currentMetadata = sdr.filter.filterIn(attributes)
+
+				if se.config.TranslateAttributes {
+					translateAttributes(attributes)
+					translateAttributes(currentMetadata.orig)
+				}
 
 				// If metadata differs from currently buffered, flush the buffer
 				if currentMetadata.string() != previousMetadata.string() && previousMetadata.string() != "" {
@@ -242,9 +299,10 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		rls = droppedLogs.ResourceLogs()
 		ills := rls.AppendEmpty().InstrumentationLibraryLogs()
 		logs := ills.AppendEmpty().Logs()
+		logs.EnsureCapacity(len(droppedRecords))
 
 		for _, log := range droppedRecords {
-			logs.Append(log)
+			log.CopyTo(logs.AppendEmpty())
 		}
 
 		return consumererror.NewLogs(consumererror.Combine(errs), droppedLogs)
@@ -279,6 +337,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		se.graphiteFormatter,
 		se.dataUrlMetrics,
 		se.dataUrlLogs,
+		se.dataUrlTraces,
 	)
 
 	// Iterate over ResourceMetrics
@@ -287,6 +346,12 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		rm := rms.At(i)
 
 		attributes = rm.Resource().Attributes()
+		currentMetadata = sdr.filter.filterIn(attributes)
+
+		if se.config.TranslateAttributes {
+			translateAttributes(attributes)
+			translateAttributes(currentMetadata.orig)
+		}
 
 		// iterate over InstrumentationLibraryMetrics
 		ilms := rm.InstrumentationLibraryMetrics()
@@ -297,12 +362,15 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 			ms := ilm.Metrics()
 			for k := 0; k < ms.Len(); k++ {
 				m := ms.At(k)
+
+				if se.config.TranslateTelegrafMetrics {
+					translateTelegrafMetric(m)
+				}
+
 				mp := metricPair{
 					metric:     m,
 					attributes: attributes,
 				}
-
-				currentMetadata = sdr.filter.filterIn(attributes)
 
 				// If metadata differs from currently buffered, flush the buffer
 				if currentMetadata.string() != previousMetadata.string() && previousMetadata.string() != "" {
@@ -339,16 +407,42 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		// Move all dropped records to Metrics
 		droppedMetrics := pdata.NewMetrics()
 		rms := droppedMetrics.ResourceMetrics()
-		rms.Resize(len(droppedRecords))
-		for num, record := range droppedRecords {
-			rm := droppedMetrics.ResourceMetrics().At(num)
+		rms.EnsureCapacity(len(droppedRecords))
+		for _, record := range droppedRecords {
+			rm := droppedMetrics.ResourceMetrics().AppendEmpty()
 			record.attributes.CopyTo(rm.Resource().Attributes())
 
 			ilms := rm.InstrumentationLibraryMetrics()
-			ilms.AppendEmpty().Metrics().Append(record.metric)
+			record.metric.CopyTo(ilms.AppendEmpty().Metrics().AppendEmpty())
 		}
 
 		return consumererror.NewMetrics(consumererror.Combine(errs), droppedMetrics)
+	}
+
+	return nil
+}
+
+func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces) error {
+	var currentMetadata fields = newFields(pdata.NewAttributeMap())
+	c, err := newCompressor(se.config.CompressEncoding)
+	if err != nil {
+		return consumererror.NewTraces(fmt.Errorf("failed to initialize compressor: %w", err), td)
+	}
+	sdr := newSender(
+		se.config,
+		se.client,
+		se.filter,
+		se.sources,
+		c,
+		se.prometheusFormatter,
+		se.graphiteFormatter,
+		se.dataUrlMetrics,
+		se.dataUrlLogs,
+		se.dataUrlTraces,
+	)
+	err = sdr.sendTraces(ctx, td, currentMetadata)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -359,22 +453,35 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 		ext          *sumologicextension.SumologicExtension
 		foundSumoExt bool
 	)
+
+	httpSettings := se.config.HTTPClientSettings
+
 	for _, e := range host.GetExtensions() {
 		v, ok := e.(*sumologicextension.SumologicExtension)
-		if ok {
+		if ok && httpSettings.Auth.AuthenticatorName == v.ComponentID() {
 			ext = v
 			foundSumoExt = true
 			break
 		}
 	}
 
-	// If we're using sumologicextension as authentication extension and
-	// endpoint was not set then send data on a collector generic ingest URL
-	// with authentication set by sumologicextension.
-	if se.config.HTTPClientSettings.Endpoint == "" &&
-		// TODO: is there a better way than strings.Prefix of auth name?
-		strings.HasPrefix(se.config.HTTPClientSettings.Auth.AuthenticatorName, "sumologic") &&
-		foundSumoExt {
+	if httpSettings.Endpoint == "" && httpSettings.Auth != nil &&
+		strings.HasPrefix(httpSettings.Auth.AuthenticatorName, "sumologic") {
+		// If user specified using sumologicextension as auth but none was
+		// found then return an error.
+		if !foundSumoExt {
+			return fmt.Errorf(
+				"sumologic was specified as auth extension (named: %q) but "+
+					"a matching extension was not found in the config, "+
+					"please re-check the config and/or define the sumologicextension",
+				httpSettings.Auth.AuthenticatorName,
+			)
+		}
+
+		// If we're using sumologicextension as authentication extension and
+		// endpoint was not set then send data on a collector generic ingest URL
+		// with authentication set by sumologicextension.
+
 		u, err := url.Parse(ext.BaseUrl())
 		if err != nil {
 			return fmt.Errorf("failed to parse API base URL from sumologicextension: %w", err)
@@ -383,12 +490,23 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 		se.dataUrlLogs = u.String()
 		u.Path = metricsDataUrl
 		se.dataUrlMetrics = u.String()
+		u.Path = tracesDataUrl
+		se.dataUrlTraces = u.String()
+	} else if httpSettings.Endpoint != "" {
+		se.dataUrlLogs = httpSettings.Endpoint
+		se.dataUrlMetrics = httpSettings.Endpoint
+		se.dataUrlTraces = httpSettings.Endpoint
+
+		// Clean authenticator if set to sumologic.
+		// Setting to null in configuration doesn't work, so we have to force it that way.
+		if httpSettings.Auth != nil && strings.HasPrefix(httpSettings.Auth.AuthenticatorName, "sumologic") {
+			httpSettings.Auth = nil
+		}
 	} else {
-		se.dataUrlLogs = se.config.HTTPClientSettings.Endpoint
-		se.dataUrlMetrics = se.config.HTTPClientSettings.Endpoint
+		return fmt.Errorf("no auth extension and no endpoint specified")
 	}
 
-	client, err := se.config.HTTPClientSettings.ToClient(host.GetExtensions())
+	client, err := httpSettings.ToClient(host.GetExtensions())
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP Client: %w", err)
 	}

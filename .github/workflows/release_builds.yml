@@ -1,0 +1,229 @@
+name: Releases
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-alpha.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ${{ matrix.runs_on }}
+    strategy:
+      matrix:
+        include:
+          - arch_os: linux_amd64
+            runs_on: ubuntu-20.04
+            go: '1.17.0-rc2'
+          - arch_os: linux_arm64
+            runs_on: ubuntu-20.04
+            go: '1.17.0-rc2'
+          - arch_os: darwin_amd64
+            runs_on: macos-latest
+            go: '1.17.0-rc2'
+    steps:
+      - uses: actions/checkout@v2.3.4
+
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
+
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+          stable: 'false'
+
+      # As described in
+      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+      - uses: actions/cache@v2
+        with:
+          path: |
+            /home/runner/go/pkg/mod
+            /home/runner/.cache/go-build
+          key: ${{matrix.arch_os}}-go-${{matrix.go}}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{matrix.arch_os}}-go-${{matrix.go}}-
+
+      - name: Install opentelemetry-collector-builder
+        run: make install
+        working-directory: ./otelcolbuilder
+
+      - name: Build
+        run: make otelcol-sumo-${{matrix.arch_os}}
+        working-directory: ./otelcolbuilder
+
+      - name: Extract tag
+        id: extract_tag
+        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
+
+      - name: Set filename
+        id: set_filename
+        run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}})"
+
+      - name: Rename to include tag in filename
+        run: cp otelcol-sumo-${{matrix.arch_os}} ${{ steps.set_filename.outputs.filename }}
+        working-directory: ./otelcolbuilder/cmd
+
+      - name: Show included modules
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          go version -m ${{ steps.set_filename.outputs.filename }} | \
+          grep -E "/(receiver|exporter|processor|extension)/" | \
+          tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
+
+      - name: Store binary as action artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{matrix.arch_os}}
+          path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
+          if-no-files-found: error
+
+  build-container-images:
+    name: Build container
+    runs-on: ubuntu-20.04
+    needs:
+      - build
+    strategy:
+      matrix:
+        arch_os: [ 'linux_amd64', 'linux_arm64']
+    steps:
+      - uses: actions/checkout@v2.3.4
+
+      - name: Extract tag
+        id: extract_tag
+        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
+
+      - name: Print tag
+        run: echo "${{ steps.extract_tag.outputs.tag }}"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1.2.0
+
+      - name: Set up Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1.5.1
+
+      - name: Show Buildx platforms
+        run: echo ${{ steps.buildx.outputs.platforms }}
+
+      - name: Download binary action artifact from build phase
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{matrix.arch_os}}
+          path: artifacts/
+
+      - name: Set filename
+        id: set_filename
+        run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}})"
+
+      - name: Login to Open Source ECR
+        run: make login
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Build and push image to Open Source ECR
+        run: |
+          cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
+          make build-push-container-multiplatform \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }}
+
+      # TODO: should be removed after sumologic ECR alias migration
+      - name: Login to legacy ECR
+        run: make login-legacy
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.LEGACY_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.LEGACY_AWS_SECRET_ACCESS_KEY }}
+
+      - name: Build and push image to legacy ECR
+        run: |
+          cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
+          make build-push-container-multiplatform-legacy \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }}
+
+  push-docker-manifest:
+    name: Push joint container manifest
+    runs-on: ubuntu-20.04
+    needs:
+      - build-container-images
+    steps:
+      - uses: actions/checkout@v2.3.4
+
+      - name: Extract tag
+        id: extract_tag
+        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
+
+      - name: Print tag
+        run: echo "${{ steps.extract_tag.outputs.tag }}"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1.2.0
+
+      - name: Set up Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1.5.1
+
+      - name: Show Buildx platforms
+        run: echo ${{ steps.buildx.outputs.platforms }}
+
+      - name: Login to Open Source ECR
+        run: make login
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Push joint container manifest for all platforms to Open Source ECR
+        run: |
+          make push-container-manifest \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORMS="linux/amd64 linux/arm64"
+
+      # TODO: should be removed after sumologic ECR alias migration
+      - name: Login to legacy ECR
+        run: make login-legacy
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.LEGACY_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.LEGACY_AWS_SECRET_ACCESS_KEY }}
+
+      - name: Push joint container manifest for all platforms to legacy ECR
+        run: |
+          make push-container-manifest-legacy \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORMS="linux/amd64 linux/arm64"
+
+  create-release:
+    name: Create Github release
+    runs-on: ubuntu-20.04
+    needs:
+      - build
+      - build-container-images
+      - push-docker-manifest
+    steps:
+      - name: Extract tag
+        id: extract_tag
+        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/})"
+
+      - name: Print tag
+        run: echo "${{ steps.extract_tag.outputs.tag }}"
+
+      - name: Download all binaries stored as artifact
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts/
+
+      - uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          prerelease: true
+          body: |
+            ## ${{ steps.extract_tag.outputs.tag }}
+          artifacts: "artifacts/*/*"
+          artifactErrorsFailBuild: true
+          replacesArtifacts: true

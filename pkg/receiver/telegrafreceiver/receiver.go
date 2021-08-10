@@ -23,7 +23,7 @@ import (
 	telegrafagent "github.com/influxdata/telegraf/agent"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/zap"
 )
 
@@ -64,7 +64,7 @@ func (r *telegrafreceiver) Start(ctx context.Context, host component.Host) error
 		ch := make(chan telegraf.Metric)
 		go func() {
 			if rErr := r.agent.RunWithChannel(rctx, ch); rErr != nil {
-				r.logger.Error("Problem starting receiver: %v", zap.Error(rErr))
+				r.logger.Error("Problem starting receiver", zap.Error(rErr))
 			}
 		}()
 
@@ -96,7 +96,7 @@ func (r *telegrafreceiver) Start(ctx context.Context, host component.Host) error
 						continue
 					}
 
-					if fErr = r.consumer.ConsumeMetrics(ctx, ms); fErr != nil {
+					if fErr = r.consumer.ConsumeMetrics(rctx, ms); fErr != nil {
 						r.logger.Error("ConsumeMetrics() error",
 							zap.String("error", fErr.Error()),
 						)

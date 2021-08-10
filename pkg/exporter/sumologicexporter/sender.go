@@ -25,8 +25,15 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/collector/consumer/consumererror"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/otlp"
+	"go.opentelemetry.io/collector/model/pdata"
 	tracetranslator "go.opentelemetry.io/collector/translator/trace"
+)
+
+var (
+	tracesMarshaler  = otlp.NewProtobufTracesMarshaler()
+	metricsMarshaler = otlp.NewProtobufMetricsMarshaler()
+	logsMarshaler    = otlp.NewProtobufLogsMarshaler()
 )
 
 type appendResponse struct {
@@ -54,6 +61,7 @@ type sender struct {
 	graphiteFormatter   graphiteFormatter
 	dataUrlMetrics      string
 	dataUrlLogs         string
+	dataUrlTraces       string
 }
 
 const (
@@ -69,10 +77,15 @@ const (
 	headerCategory        string = "X-Sumo-Category"
 	headerFields          string = "X-Sumo-Fields"
 
+	attributeKeySourceHost     = "_sourceHost"
+	attributeKeySourceName     = "_sourceName"
+	attributeKeySourceCategory = "_sourceCategory"
+
 	contentTypeLogs       string = "application/x-www-form-urlencoded"
 	contentTypePrometheus string = "application/vnd.sumologic.prometheus"
 	contentTypeCarbon2    string = "application/vnd.sumologic.carbon2"
 	contentTypeGraphite   string = "application/vnd.sumologic.graphite"
+	contentTypeOTLP       string = "application/x-protobuf"
 
 	contentEncodingGzip    string = "gzip"
 	contentEncodingDeflate string = "deflate"
@@ -94,6 +107,7 @@ func newSender(
 	gf graphiteFormatter,
 	metricsUrl string,
 	logsUrl string,
+	tracesUrl string,
 ) *sender {
 	return &sender{
 		config:              cfg,
@@ -105,6 +119,7 @@ func newSender(
 		graphiteFormatter:   gf,
 		dataUrlMetrics:      metricsUrl,
 		dataUrlLogs:         logsUrl,
+		dataUrlTraces:       tracesUrl,
 	}
 }
 
@@ -142,6 +157,8 @@ func (s *sender) createRequest(ctx context.Context, pipeline PipelineType, data 
 			url = s.dataUrlMetrics
 		case LogsPipeline:
 			url = s.dataUrlLogs
+		case TracesPipeline:
+			url = s.dataUrlTraces
 		default:
 			return nil, fmt.Errorf("unknown pipeline type: %s", pipeline)
 		}
@@ -179,6 +196,12 @@ func (s *sender) logToJSON(record pdata.LogRecord) (string, error) {
 // to configured LogFormat and as the result of execution
 // returns array of records which has not been sent correctly and error
 func (s *sender) sendLogs(ctx context.Context, flds fields) ([]pdata.LogRecord, error) {
+
+	// Follow different execution path for OTLP format
+	if s.config.LogFormat == OTLPLogFormat {
+		return s.sendOTLPLogs(ctx, flds)
+	}
+
 	var (
 		body           strings.Builder
 		errs           []error
@@ -241,8 +264,40 @@ func (s *sender) sendLogs(ctx context.Context, flds fields) ([]pdata.LogRecord, 
 	return droppedRecords, nil
 }
 
+// sendLogs sends log records from the logBuffer in OTLP format and as a result
+// it returns an array of records which has not been sent correctly and an error.
+// TODO: add support for HTTP limits
+func (s *sender) sendOTLPLogs(ctx context.Context, flds fields) ([]pdata.LogRecord, error) {
+	ld := pdata.NewLogs()
+	rl := ld.ResourceLogs().AppendEmpty()
+	ill := rl.InstrumentationLibraryLogs().AppendEmpty()
+	logs := ill.Logs()
+	logs.EnsureCapacity(len(s.logBuffer))
+	for _, record := range s.logBuffer {
+		record.CopyTo(logs.AppendEmpty())
+	}
+
+	s.addResourceAttributes(rl.Resource().Attributes(), flds)
+
+	body, err := logsMarshaler.MarshalLogs(ld)
+	if err != nil {
+		return s.logBuffer, err
+	}
+
+	if err := s.send(ctx, LogsPipeline, bytes.NewReader(body), flds); err != nil {
+		return s.logBuffer, err
+	}
+	return nil, nil
+}
+
 // sendMetrics sends metrics in right format basing on the s.config.MetricFormat
 func (s *sender) sendMetrics(ctx context.Context, flds fields) ([]metricPair, error) {
+
+	// Follow different execution path for OTLP format
+	if s.config.MetricFormat == OTLPMetricFormat {
+		return s.sendOTLPMetrics(ctx, flds)
+	}
+
 	var (
 		body           strings.Builder
 		errs           []error
@@ -307,6 +362,33 @@ func (s *sender) sendMetrics(ctx context.Context, flds fields) ([]metricPair, er
 	return droppedRecords, nil
 }
 
+// sendMetrics sends metric records from the metricBuffer in OTLP format and as a result
+// it returns an array of records which has not been sent correctly and an error.
+// TODO: add support for HTTP limits
+func (s *sender) sendOTLPMetrics(ctx context.Context, flds fields) ([]metricPair, error) {
+	md := pdata.NewMetrics()
+	rms := md.ResourceMetrics()
+	rms.EnsureCapacity(len(s.metricBuffer))
+	for _, record := range s.metricBuffer {
+		rm := rms.AppendEmpty()
+		record.attributes.CopyTo(rm.Resource().Attributes())
+		s.addResourceAttributes(rm.Resource().Attributes(), flds)
+		ilm := rm.InstrumentationLibraryMetrics().AppendEmpty()
+		ms := ilm.Metrics().AppendEmpty()
+		record.metric.CopyTo(ms)
+	}
+
+	body, err := metricsMarshaler.MarshalMetrics(md)
+	if err != nil {
+		return s.metricBuffer, err
+	}
+
+	if err := s.send(ctx, MetricsPipeline, bytes.NewReader(body), flds); err != nil {
+		return s.metricBuffer, err
+	}
+	return nil, nil
+}
+
 // appendAndSend appends line to the request body that will be sent and sends
 // the accumulated data if the internal logBuffer has been filled (with maxBufferSize elements).
 // It returns appendResponse
@@ -348,6 +430,30 @@ func (s *sender) appendAndSend(
 		return ar, consumererror.Combine(errors)
 	}
 	return ar, nil
+}
+
+// sendTraces sends traces in right format basing on the s.config.TraceFormat
+func (s *sender) sendTraces(ctx context.Context, td pdata.Traces, flds fields) error {
+	if s.config.TraceFormat == OTLPTraceFormat {
+		return s.sendOTLPTraces(ctx, td, flds)
+	}
+	return nil
+}
+
+// sendOTLPTraces sends trace records in OTLP format
+func (s *sender) sendOTLPTraces(ctx context.Context, td pdata.Traces, flds fields) error {
+	for i := 0; i < td.ResourceSpans().Len(); i++ {
+		s.addResourceAttributes(td.ResourceSpans().At(i).Resource().Attributes(), flds)
+	}
+
+	body, err := tracesMarshaler.MarshalTraces(td)
+	if err != nil {
+		return err
+	}
+	if err := s.send(ctx, TracesPipeline, bytes.NewReader(body), flds); err != nil {
+		return err
+	}
+	return nil
 }
 
 // cleanLogsBuffer zeroes logBuffer
@@ -426,8 +532,13 @@ func addSourcesHeaders(req *http.Request, sources sourceFormats, flds fields) {
 	}
 }
 
-func addLogsHeaders(req *http.Request, flds fields) {
-	req.Header.Add(headerContentType, contentTypeLogs)
+func addLogsHeaders(req *http.Request, lf LogFormatType, flds fields) {
+	switch lf {
+	case OTLPLogFormat:
+		req.Header.Add(headerContentType, contentTypeOTLP)
+	default:
+		req.Header.Add(headerContentType, contentTypeLogs)
+	}
 	req.Header.Add(headerFields, flds.string())
 }
 
@@ -439,8 +550,20 @@ func addMetricsHeaders(req *http.Request, mf MetricFormatType) error {
 		req.Header.Add(headerContentType, contentTypeCarbon2)
 	case GraphiteFormat:
 		req.Header.Add(headerContentType, contentTypeGraphite)
+	case OTLPMetricFormat:
+		req.Header.Add(headerContentType, contentTypeOTLP)
 	default:
 		return fmt.Errorf("unsupported metrics format: %s", mf)
+	}
+	return nil
+}
+
+func addTracesHeaders(req *http.Request, tf TraceFormatType) error {
+	switch tf {
+	case OTLPTraceFormat:
+		req.Header.Add(headerContentType, contentTypeOTLP)
+	default:
+		return fmt.Errorf("unsupported traces format: %s", tf)
 	}
 	return nil
 }
@@ -455,13 +578,29 @@ func (s *sender) addRequestHeaders(req *http.Request, pipeline PipelineType, fld
 
 	switch pipeline {
 	case LogsPipeline:
-		addLogsHeaders(req, flds)
+		addLogsHeaders(req, s.config.LogFormat, flds)
 	case MetricsPipeline:
 		if err := addMetricsHeaders(req, s.config.MetricFormat); err != nil {
+			return err
+		}
+	case TracesPipeline:
+		if err := addTracesHeaders(req, s.config.TraceFormat); err != nil {
 			return err
 		}
 	default:
 		return fmt.Errorf("unexpected pipeline: %v", pipeline)
 	}
 	return nil
+}
+
+func (s *sender) addResourceAttributes(attrs pdata.AttributeMap, flds fields) {
+	if s.sources.host.isSet() {
+		attrs.InsertString(attributeKeySourceHost, s.sources.host.format(flds))
+	}
+	if s.sources.name.isSet() {
+		attrs.InsertString(attributeKeySourceName, s.sources.name.format(flds))
+	}
+	if s.sources.category.isSet() {
+		attrs.InsertString(attributeKeySourceCategory, s.sources.category.format(flds))
+	}
 }

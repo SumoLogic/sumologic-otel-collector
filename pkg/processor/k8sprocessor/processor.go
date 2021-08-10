@@ -18,7 +18,7 @@ import (
 	"context"
 
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
@@ -102,10 +102,14 @@ func (kp *kubernetesprocessor) ProcessLogs(ctx context.Context, ld pdata.Logs) (
 func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pdata.Resource) {
 
 	podIdentifierKey, podIdentifierValue := extractPodID(ctx, resource.Attributes(), kp.podAssociations)
-	if podIdentifierKey == "" {
+	if podIdentifierValue == "" {
 		return
 	}
-	resource.Attributes().InsertString(podIdentifierKey, string(podIdentifierValue))
+
+	if podIdentifierKey != "" {
+		resource.Attributes().InsertString(podIdentifierKey, string(podIdentifierValue))
+	}
+
 	if kp.passthroughMode {
 		return
 	}

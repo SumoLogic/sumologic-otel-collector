@@ -12,8 +12,8 @@ fmt:
 
 .PHONY: lint
 lint:
-	$(LINT) run \
-		--enable deadcode,unused,errcheck,goimports \
-		--allow-parallel-runners \
-		--max-same-issues 10 \
-		--timeout 3m
+	$(LINT) run
+
+.PHONY: mod-download-all
+mod-download-all:
+	go mod download all && go mod tidy

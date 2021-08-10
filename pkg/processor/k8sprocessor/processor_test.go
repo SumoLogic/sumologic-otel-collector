@@ -28,7 +28,7 @@ import (
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/consumer/consumertest"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 	"go.opentelemetry.io/collector/translator/conventions"
 	"go.uber.org/zap"
 
@@ -40,7 +40,7 @@ func newTracesProcessor(cfg config.Processor, next consumer.Traces, options ...O
 	opts := append(options, withKubeClientProvider(newFakeClient))
 	return createTracesProcessorWithOptions(
 		context.Background(),
-		component.ProcessorCreateParams{Logger: zap.NewNop()},
+		component.ProcessorCreateSettings{Logger: zap.NewNop()},
 		cfg,
 		next,
 		opts...,
@@ -51,7 +51,7 @@ func newMetricsProcessor(cfg config.Processor, nextMetricsConsumer consumer.Metr
 	opts := append(options, withKubeClientProvider(newFakeClient))
 	return createMetricsProcessorWithOptions(
 		context.Background(),
-		component.ProcessorCreateParams{Logger: zap.NewNop()},
+		component.ProcessorCreateSettings{Logger: zap.NewNop()},
 		cfg,
 		nextMetricsConsumer,
 		opts...,
@@ -62,7 +62,7 @@ func newLogsProcessor(cfg config.Processor, nextLogsConsumer consumer.Logs, opti
 	opts := append(options, withKubeClientProvider(newFakeClient))
 	return createLogsProcessorWithOptions(
 		context.Background(),
-		component.ProcessorCreateParams{Logger: zap.NewNop()},
+		component.ProcessorCreateSettings{Logger: zap.NewNop()},
 		cfg,
 		nextLogsConsumer,
 		opts...,
@@ -217,7 +217,16 @@ func TestProcessorBadConfig(t *testing.T) {
 }
 
 func TestProcessorBadClientProvider(t *testing.T) {
-	clientProvider := func(_ *zap.Logger, _ k8sconfig.APIConfig, _ kube.ExtractionRules, _ kube.Filters, _ []kube.Association, _ kube.APIClientsetProvider, _ kube.InformerProvider, _ kube.OwnerProvider) (kube.Client, error) {
+	clientProvider := func(
+		_ *zap.Logger,
+		_ k8sconfig.APIConfig,
+		_ kube.ExtractionRules,
+		_ kube.Filters,
+		_ []kube.Association,
+		_ kube.APIClientsetProvider,
+		_ kube.InformerProvider,
+		_ kube.OwnerProvider,
+	) (kube.Client, error) {
 		return nil, fmt.Errorf("bad client error")
 	}
 
@@ -280,6 +289,13 @@ func withHostname(hostname string) generateResourceFunc {
 func withPodUID(uid string) generateResourceFunc {
 	return func(res pdata.Resource) {
 		res.Attributes().InsertString("k8s.pod.uid", uid)
+	}
+}
+
+func withPodAndNamespace(pod string, namespace string) generateResourceFunc {
+	return func(res pdata.Resource) {
+		res.Attributes().InsertString("k8s.pod.name", pod)
+		res.Attributes().InsertString("k8s.namespace.name", namespace)
 	}
 }
 
@@ -690,6 +706,49 @@ func TestProcessorPicksUpPassthoughPodIp(t *testing.T) {
 
 	m.assertResource(0, func(res pdata.Resource) {
 		assertResourceHasStringAttribute(t, res, k8sIPLabelName, "2.2.2.2")
+		assertResourceHasStringAttribute(t, res, "k", "v")
+		assertResourceHasStringAttribute(t, res, "1", "2")
+	})
+}
+
+func TestProcessorByPodNameAndNamespace(t *testing.T) {
+	m := newMultiTest(
+		t,
+		NewFactory().CreateDefaultConfig(),
+		nil,
+	)
+
+	m.kubernetesProcessorOperation(func(kp *kubernetesprocessor) {
+		kp.podAssociations = []kube.Association{
+			{
+				From: "build_hostname",
+				Name: "_hostname",
+			},
+		}
+		kp.kc.(*fakeClient).Pods["PodA.test"] = &kube.Pod{
+			Name: "PodA",
+			Attributes: map[string]string{
+				"k": "v",
+				"1": "2",
+			},
+		}
+	})
+
+	m.testConsume(
+		context.Background(),
+		generateTraces(withPodAndNamespace("PodA", "test")),
+		generateMetrics(withPodAndNamespace("PodA", "test")),
+		generateLogs(withPodAndNamespace("PodA", "test")),
+		func(err error) {
+			assert.NoError(t, err)
+		})
+
+	m.assertBatchesLen(1)
+	m.assertResourceObjectLen(0)
+	m.assertResourceAttributesLen(0, 5)
+
+	m.assertResource(0, func(res pdata.Resource) {
+		assertResourceHasStringAttribute(t, res, "_hostname", "PodA.test")
 		assertResourceHasStringAttribute(t, res, "k", "v")
 		assertResourceHasStringAttribute(t, res, "1", "2")
 	})

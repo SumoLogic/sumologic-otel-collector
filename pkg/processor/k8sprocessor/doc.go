@@ -17,14 +17,19 @@
 // The processor automatically discovers k8s resources (pods), extracts metadata from them and adds the
 // extracted metadata to the relevant spans, metrics and logs. The processor uses the kubernetes API to discover all pods
 // running in a cluster, keeps a record of their IP addresses, pod UIDs and interesting metadata.
-// The rules for associating the data passing through the processor (spans, metrics and logs) with specific Pod Metadata are configured via "pod_association" key.
+// The rules for associating the data passing through the processor (spans, metrics and logs)
+// with specific Pod Metadata are configured via "pod_association" key.
 // It represents a list of rules that are executed in the specified order until the first one is able to do the match.
 // Each rule is specified as a pair of from (representing the rule type) and name (representing the extracted key name).
 // Following rule types are available:
-//   from: "resource_attribute" - allows to specify the attribute name to lookup up in the list of attributes of the received Resource. The specified attribute, if it is present, identifies the Pod that is represented by the Resource.
-//     (the value can contain either IP address or Pod UID)
+//   from: "resource_attribute" - allows to specify the attribute name to lookup up in the list of attributes of the received Resource.
+//     The specified attribute, if it is present, identifies the Pod that is represented by the Resource.
+//     (the value can contain either IP address, Pod UID or be in `pod_name.namespace_name` format).
+//     For `pod_name.namespace_name` format, always attributes for actual matching pod will be added.
 //   from: "connection" - takes the IP attribute from connection context (if available) and automatically
 //     associates it with "k8s.pod.ip" attribute
+//   from: "build_hostname" - build hostname from k8s.pod.name concatenated with k8s.namespace.name using dot as separator
+//     and proceed as for `pod_name.namespace_name` format for `resource_attributes` pod_association.
 // Pod association configuration.
 // pod_association:
 //  - from: resource_attribute

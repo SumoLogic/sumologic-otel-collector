@@ -54,7 +54,7 @@ func createDefaultConfig() config.Processor {
 
 func createTracesProcessor(
 	ctx context.Context,
-	params component.ProcessorCreateParams,
+	params component.ProcessorCreateSettings,
 	cfg config.Processor,
 	next consumer.Traces,
 ) (component.TracesProcessor, error) {
@@ -63,7 +63,7 @@ func createTracesProcessor(
 
 func createLogsProcessor(
 	ctx context.Context,
-	params component.ProcessorCreateParams,
+	params component.ProcessorCreateSettings,
 	cfg config.Processor,
 	nextLogsConsumer consumer.Logs,
 ) (component.LogsProcessor, error) {
@@ -72,7 +72,7 @@ func createLogsProcessor(
 
 func createMetricsProcessor(
 	ctx context.Context,
-	params component.ProcessorCreateParams,
+	params component.ProcessorCreateSettings,
 	cfg config.Processor,
 	nextMetricsConsumer consumer.Metrics,
 ) (component.MetricsProcessor, error) {
@@ -81,7 +81,7 @@ func createMetricsProcessor(
 
 func createTracesProcessorWithOptions(
 	_ context.Context,
-	params component.ProcessorCreateParams,
+	params component.ProcessorCreateSettings,
 	cfg config.Processor,
 	next consumer.Traces,
 	options ...Option,
@@ -94,7 +94,7 @@ func createTracesProcessorWithOptions(
 	return processorhelper.NewTracesProcessor(
 		cfg,
 		next,
-		kp,
+		kp.ProcessTraces,
 		processorhelper.WithCapabilities(processorCapabilities),
 		processorhelper.WithStart(kp.Start),
 		processorhelper.WithShutdown(kp.Shutdown))
@@ -102,7 +102,7 @@ func createTracesProcessorWithOptions(
 
 func createMetricsProcessorWithOptions(
 	_ context.Context,
-	params component.ProcessorCreateParams,
+	params component.ProcessorCreateSettings,
 	cfg config.Processor,
 	nextMetricsConsumer consumer.Metrics,
 	options ...Option,
@@ -115,7 +115,7 @@ func createMetricsProcessorWithOptions(
 	return processorhelper.NewMetricsProcessor(
 		cfg,
 		nextMetricsConsumer,
-		kp,
+		kp.ProcessMetrics,
 		processorhelper.WithCapabilities(processorCapabilities),
 		processorhelper.WithStart(kp.Start),
 		processorhelper.WithShutdown(kp.Shutdown))
@@ -123,7 +123,7 @@ func createMetricsProcessorWithOptions(
 
 func createLogsProcessorWithOptions(
 	_ context.Context,
-	params component.ProcessorCreateParams,
+	params component.ProcessorCreateSettings,
 	cfg config.Processor,
 	nextLogsConsumer consumer.Logs,
 	options ...Option,
@@ -136,14 +136,14 @@ func createLogsProcessorWithOptions(
 	return processorhelper.NewLogsProcessor(
 		cfg,
 		nextLogsConsumer,
-		kp,
+		kp.ProcessLogs,
 		processorhelper.WithCapabilities(processorCapabilities),
 		processorhelper.WithStart(kp.Start),
 		processorhelper.WithShutdown(kp.Shutdown))
 }
 
 func createKubernetesProcessor(
-	params component.ProcessorCreateParams,
+	params component.ProcessorCreateSettings,
 	cfg config.Processor,
 	options ...Option,
 ) (*kubernetesprocessor, error) {
@@ -178,6 +178,7 @@ func createProcessorOpts(cfg config.Processor) []Option {
 	// extraction rules
 	opts = append(opts, WithExtractMetadata(oCfg.Extract.Metadata...))
 	opts = append(opts, WithExtractLabels(oCfg.Extract.Labels...))
+	opts = append(opts, WithExtractNamespaceLabels(oCfg.Extract.NamespaceLabels...))
 	opts = append(opts, WithExtractAnnotations(oCfg.Extract.Annotations...))
 	opts = append(opts, WithExtractTags(oCfg.Extract.Tags))
 

@@ -26,17 +26,17 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/component/componenttest"
-	"go.opentelemetry.io/collector/config/confighttp"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/otlp"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 type senderTest struct {
 	srv *httptest.Server
-	exp *sumologicexporter
 	s   *sender
 }
 
+// prepareSenderTest prepares sender test environment.
+// The enclosed httptest.Server is closed automatically using test.Cleanup.
 func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.Request)) *senderTest {
 	var reqCounter int32
 	// generate a test server so we can capture and inspect the request
@@ -50,37 +50,29 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 			atomic.AddInt32(&reqCounter, 1)
 		}
 	}))
+	t.Cleanup(func() { testServer.Close() })
 
-	cfg := &Config{
-		HTTPClientSettings: confighttp.HTTPClientSettings{
-			Endpoint: testServer.URL,
-			Timeout:  defaultTimeout,
-		},
-		LogFormat:          "text",
-		MetricFormat:       "carbon2",
-		Client:             "otelcol",
-		MaxRequestBodySize: 20_971_520,
-	}
-	exp, err := initExporter(cfg)
+	cfg := createDefaultConfig().(*Config)
+	cfg.CompressEncoding = NoCompression
+	cfg.HTTPClientSettings.Endpoint = testServer.URL
+	cfg.LogFormat = TextFormat
+	cfg.MetricFormat = Carbon2Format
+	cfg.MaxRequestBodySize = 20_971_520
+
+	f, err := newFilter(cfg.MetadataAttributes)
 	require.NoError(t, err)
 
-	f, err := newFilter([]string{})
-	require.NoError(t, err)
-
-	c, err := newCompressor(NoCompression)
+	c, err := newCompressor(cfg.CompressEncoding)
 	require.NoError(t, err)
 
 	pf, err := newPrometheusFormatter()
 	require.NoError(t, err)
 
-	gf, err := newGraphiteFormatter(DefaultGraphiteTemplate)
+	gf, err := newGraphiteFormatter(cfg.GraphiteTemplate)
 	require.NoError(t, err)
-
-	assert.NoError(t, exp.start(context.Background(), componenttest.NewNopHost()))
 
 	return &senderTest{
 		srv: testServer,
-		exp: exp,
 		s: newSender(
 			cfg,
 			&http.Client{
@@ -97,6 +89,63 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 			gf,
 			"",
 			"",
+			"",
+		),
+	}
+}
+
+// prepareOTLPSenderTest prepares sender test environment.
+// The enclosed httptest.Server is closed automatically using test.Cleanup.
+func prepareOTLPSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.Request)) *senderTest {
+	var reqCounter int32
+	// generate a test server so we can capture and inspect the request
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if len(cb) == 0 {
+			return
+		}
+
+		if c := int(atomic.LoadInt32(&reqCounter)); assert.Greater(t, len(cb), c) {
+			cb[c](w, req)
+			atomic.AddInt32(&reqCounter, 1)
+		}
+	}))
+	t.Cleanup(func() { testServer.Close() })
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.CompressEncoding = NoCompression
+	cfg.HTTPClientSettings.Endpoint = testServer.URL
+
+	f, err := newFilter(cfg.MetadataAttributes)
+	require.NoError(t, err)
+
+	c, err := newCompressor(cfg.CompressEncoding)
+	require.NoError(t, err)
+
+	pf, err := newPrometheusFormatter()
+	require.NoError(t, err)
+
+	gf, err := newGraphiteFormatter(cfg.GraphiteTemplate)
+	require.NoError(t, err)
+
+	return &senderTest{
+		srv: testServer,
+		s: newSender(
+			cfg,
+			&http.Client{
+				Timeout: cfg.HTTPClientSettings.Timeout,
+			},
+			f,
+			sourceFormats{
+				host:     getTestSourceFormat(t, "source_host"),
+				category: getTestSourceFormat(t, "source_category"),
+				name:     getTestSourceFormat(t, "source_name"),
+			},
+			c,
+			pf,
+			gf,
+			testServer.URL,
+			testServer.URL,
+			testServer.URL,
 		),
 	}
 }
@@ -167,14 +216,50 @@ func exampleMultitypeLogs() []pdata.LogRecord {
 	intVal := pdata.NewAttributeValueNull()
 	intVal.SetIntVal(13)
 
-	attArr.Append(strVal)
-	attArr.Append(intVal)
+	strVal.CopyTo(attArr.AppendEmpty())
+	intVal.CopyTo(attArr.AppendEmpty())
 
 	attVal.CopyTo(buffer[1].Body())
 	buffer[1].Attributes().InsertString("key1", "value1")
 	buffer[1].Attributes().InsertString("key2", "value2")
 
 	return buffer
+}
+
+func exampleTrace() pdata.Traces {
+	td := pdata.NewTraces()
+	rs := td.ResourceSpans().AppendEmpty()
+	rs.Resource().Attributes().UpsertString("hostname", "testHost")
+	rs.Resource().Attributes().UpsertString("_sourceHost", "source_host")
+	rs.Resource().Attributes().UpsertString("_sourceName", "source_name")
+	rs.Resource().Attributes().UpsertString("_sourceCategory", "source_category")
+	span := rs.InstrumentationLibrarySpans().AppendEmpty().Spans().AppendEmpty()
+	span.SetTraceID(pdata.NewTraceID([16]byte{0x5B, 0x8E, 0xFF, 0xF7, 0x98, 0x3, 0x81, 0x3, 0xD2, 0x69, 0xB6, 0x33, 0x81, 0x3F, 0xC6, 0xC}))
+	span.SetSpanID(pdata.NewSpanID([8]byte{0xEE, 0xE1, 0x9B, 0x7E, 0xC3, 0xC1, 0xB1, 0x73}))
+	span.SetName("testSpan")
+	span.SetStartTimestamp(1544712660000000000)
+	span.SetEndTimestamp(1544712661000000000)
+	span.Attributes().UpsertInt("attr1", 55)
+	return td
+}
+
+func TestSendTrace(t *testing.T) {
+	tracesMarshaler = otlp.NewProtobufTracesMarshaler()
+	td := exampleTrace()
+	traceBody, err := tracesMarshaler.MarshalTraces(td)
+	assert.NoError(t, err)
+	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, string(traceBody), body)
+			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
+			assert.Equal(t, "application/x-protobuf", req.Header.Get("Content-Type"))
+		},
+	})
+
+	err = test.s.sendTraces(context.Background(), td, fieldsFromMap(map[string]string{}))
+	assert.NoError(t, err)
+
 }
 
 func TestSendLogs(t *testing.T) {
@@ -187,7 +272,6 @@ func TestSendLogs(t *testing.T) {
 			assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	test.s.logBuffer = exampleTwoLogs()
 
@@ -207,7 +291,6 @@ func TestSendLogsMultitype(t *testing.T) {
 			assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	test.s.logBuffer = exampleMultitypeLogs()
 
@@ -226,7 +309,6 @@ func TestSendLogsSplit(t *testing.T) {
 			assert.Equal(t, "Another example log", body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.MaxRequestBodySize = 10
 	test.s.logBuffer = exampleTwoLogs()
 
@@ -246,7 +328,6 @@ func TestSendLogsSplitFailedOne(t *testing.T) {
 			assert.Equal(t, "Another example log", body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.LogFormat = TextFormat
 	test.s.logBuffer = exampleTwoLogs()
@@ -271,7 +352,6 @@ func TestSendLogsSplitFailedAll(t *testing.T) {
 			assert.Equal(t, "Another example log", body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.LogFormat = TextFormat
 	test.s.logBuffer = exampleTwoLogs()
@@ -297,7 +377,6 @@ func TestSendLogsJson(t *testing.T) {
 			assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.LogFormat = JSONFormat
 	test.s.logBuffer = exampleTwoLogs()
 
@@ -317,7 +396,6 @@ func TestSendLogsJsonMultitype(t *testing.T) {
 			assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.LogFormat = JSONFormat
 	test.s.logBuffer = exampleMultitypeLogs()
 
@@ -336,7 +414,6 @@ func TestSendLogsJsonSplit(t *testing.T) {
 			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Another example log"}`, body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.LogFormat = JSONFormat
 	test.s.config.MaxRequestBodySize = 10
 	test.s.logBuffer = exampleTwoLogs()
@@ -358,7 +435,6 @@ func TestSendLogsJsonSplitFailedOne(t *testing.T) {
 			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Another example log"}`, body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.LogFormat = JSONFormat
 	test.s.config.MaxRequestBodySize = 10
 	test.s.logBuffer = exampleTwoLogs()
@@ -383,7 +459,6 @@ func TestSendLogsJsonSplitFailedAll(t *testing.T) {
 			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Another example log"}`, body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.LogFormat = JSONFormat
 	test.s.config.MaxRequestBodySize = 10
 	test.s.logBuffer = exampleTwoLogs()
@@ -402,7 +477,6 @@ func TestSendLogsUnexpectedFormat(t *testing.T) {
 		func(w http.ResponseWriter, req *http.Request) {
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.LogFormat = "dummy"
 	logs := exampleTwoLogs()
 	test.s.logBuffer = logs
@@ -412,54 +486,147 @@ func TestSendLogsUnexpectedFormat(t *testing.T) {
 	assert.Equal(t, logs, dropped)
 }
 
-func TestOverrideSourceName(t *testing.T) {
+func TestSendLogsOTLP(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
-			assert.Equal(t, "Test source name/test_name", req.Header.Get("X-Sumo-Name"))
+			body := extractBody(t, req)
+			//nolint:lll
+			assert.Equal(t, "\n\xe2\x01\nb\n\x1c\n\v_sourceHost\x12\r\n\vsource_host\n\x1c\n\v_sourceName\x12\r\n\vsource_name\n$\n\x0f_sourceCategory\x12\x11\n\x0fsource_category\x12|\n\x00\x127*\r\n\vExample log2\x10\n\x04key1\x12\b\n\x06value12\x10\n\x04key2\x12\b\n\x06value2J\x00R\x00\x12?*\x15\n\x13Another example log2\x10\n\x04key1\x12\b\n\x06value12\x10\n\x04key2\x12\b\n\x06value2J\x00R\x00", body)
+			assert.Equal(t, "key1=value, key2=value2", req.Header.Get("X-Sumo-Fields"))
+			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
+			assert.Equal(t, "application/x-protobuf", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
-	test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
-	test.s.logBuffer = exampleLog()
+	test.s.logBuffer = exampleTwoLogs()
+	test.s.config.LogFormat = "otlp"
 
-	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "value", "key2": "value2"}))
 	assert.NoError(t, err)
+}
+
+func TestOverrideSourceName(t *testing.T) {
+	t.Run("text format", func(t *testing.T) {
+		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				assert.Equal(t, "Test source name/test_name", req.Header.Get("X-Sumo-Name"))
+			},
+		})
+
+		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
+	})
+
+	t.Run("otlp", func(t *testing.T) {
+		test := prepareOTLPSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				unmarshaller := otlp.NewProtobufLogsUnmarshaler()
+				b, err := io.ReadAll(req.Body)
+				require.NoError(t, err)
+				l, err := unmarshaller.UnmarshalLogs(b)
+				require.NoError(t, err)
+
+				require.Equal(t, l.ResourceLogs().Len(), 1)
+				sourceCategory, ok := l.ResourceLogs().At(0).Resource().Attributes().Get("_sourceName")
+				require.True(t, ok)
+				require.Equal(t, pdata.AttributeValueTypeString, sourceCategory.Type())
+				require.Equal(t, "Test source name/test_name", sourceCategory.StringVal())
+			},
+		})
+
+		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
+	})
 }
 
 func TestOverrideSourceCategory(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			assert.Equal(t, "Test source category/test_name", req.Header.Get("X-Sumo-Category"))
-		},
+	t.Run("text format", func(t *testing.T) {
+		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				assert.Equal(t, "Test source category/test_name", req.Header.Get("X-Sumo-Category"))
+			},
+		})
+
+		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
 	})
-	defer func() { test.srv.Close() }()
 
-	test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
-	test.s.logBuffer = exampleLog()
+	t.Run("otlp", func(t *testing.T) {
+		test := prepareOTLPSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				unmarshaller := otlp.NewProtobufLogsUnmarshaler()
+				b, err := io.ReadAll(req.Body)
+				require.NoError(t, err)
+				l, err := unmarshaller.UnmarshalLogs(b)
+				require.NoError(t, err)
 
-	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
-	assert.NoError(t, err)
+				require.Equal(t, l.ResourceLogs().Len(), 1)
+				sourceCategory, ok := l.ResourceLogs().At(0).Resource().Attributes().Get("_sourceCategory")
+				require.True(t, ok)
+				require.Equal(t, pdata.AttributeValueTypeString, sourceCategory.Type())
+				require.Equal(t, "Test source category/test_name", sourceCategory.StringVal())
+			},
+		})
+
+		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
+	})
 }
 
 func TestOverrideSourceHost(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			assert.Equal(t, "Test source host/test_name", req.Header.Get("X-Sumo-Host"))
-		},
+	t.Run("text format", func(t *testing.T) {
+		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				assert.Equal(t, "Test source host/test_name", req.Header.Get("X-Sumo-Host"))
+			},
+		})
+
+		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
 	})
-	defer func() { test.srv.Close() }()
 
-	test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
-	test.s.logBuffer = exampleLog()
+	t.Run("otlp", func(t *testing.T) {
+		test := prepareOTLPSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				unmarshaller := otlp.NewProtobufLogsUnmarshaler()
+				b, err := io.ReadAll(req.Body)
+				require.NoError(t, err)
+				l, err := unmarshaller.UnmarshalLogs(b)
+				require.NoError(t, err)
 
-	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
-	assert.NoError(t, err)
+				require.Equal(t, l.ResourceLogs().Len(), 1)
+				sourceHost, ok := l.ResourceLogs().At(0).Resource().Attributes().Get("_sourceHost")
+				require.True(t, ok)
+				require.Equal(t, pdata.AttributeValueTypeString, sourceHost.Type())
+				require.Equal(t, "Test source host/test_name", sourceHost.StringVal())
+			},
+		})
+
+		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
+	})
 }
 
 func TestLogsBuffer(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	assert.Equal(t, test.s.countLogs(), 0)
 	logs := exampleTwoLogs()
@@ -483,7 +650,6 @@ func TestLogsBuffer(t *testing.T) {
 
 func TestInvalidEndpoint(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.HTTPClientSettings.Endpoint = ":"
 	test.s.logBuffer = exampleLog()
@@ -494,7 +660,6 @@ func TestInvalidEndpoint(t *testing.T) {
 
 func TestInvalidPostRequest(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.HTTPClientSettings.Endpoint = ""
 	test.s.logBuffer = exampleLog()
@@ -505,7 +670,6 @@ func TestInvalidPostRequest(t *testing.T) {
 
 func TestLogsBufferOverflow(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.HTTPClientSettings.Endpoint = ":"
 	log := exampleLog()
@@ -523,7 +687,6 @@ func TestLogsBufferOverflow(t *testing.T) {
 
 func TestInvalidMetricFormat(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.MetricFormat = "invalid"
 
@@ -533,7 +696,6 @@ func TestInvalidMetricFormat(t *testing.T) {
 
 func TestInvalidPipeline(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	err := test.s.send(context.Background(), "invalidPipeline", strings.NewReader(""), newFields(pdata.NewAttributeMap()))
 	assert.EqualError(t, err, `unexpected pipeline: invalidPipeline`)
@@ -553,7 +715,6 @@ func TestSendCompressGzip(t *testing.T) {
 			assert.Equal(t, "Some example log", body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.CompressEncoding = "gzip"
 
@@ -582,7 +743,6 @@ func TestSendCompressDeflate(t *testing.T) {
 			assert.Equal(t, "Some example log", body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.CompressEncoding = "deflate"
 
@@ -598,7 +758,6 @@ func TestSendCompressDeflate(t *testing.T) {
 
 func TestCompressionError(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	test.s.compressor = getTestCompressor(errors.New("read error"), nil)
 	reader := strings.NewReader("Some example log")
@@ -609,7 +768,6 @@ func TestCompressionError(t *testing.T) {
 
 func TestInvalidContentEncoding(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.CompressEncoding = "test"
 	reader := strings.NewReader("Some example log")
@@ -630,7 +788,6 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	flds := fieldsFromMap(map[string]string{
 		"key1": "value",
 		"key2": "value2",
@@ -659,7 +816,6 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 			assert.Equal(t, expected, body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.MetricFormat = PrometheusFormat
 	test.s.metricBuffer = []metricPair{
@@ -687,7 +843,6 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 			assert.Equal(t, expected, body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.MetricFormat = PrometheusFormat
 	test.s.metricBuffer = []metricPair{
@@ -718,7 +873,6 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 			assert.Equal(t, expected, body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.MetricFormat = PrometheusFormat
 	test.s.metricBuffer = []metricPair{
@@ -740,7 +894,6 @@ func TestSendMetricsUnexpectedFormat(t *testing.T) {
 		func(w http.ResponseWriter, req *http.Request) {
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.s.config.MetricFormat = "invalid"
 	metrics := []metricPair{
 		exampleIntMetric(),
@@ -754,7 +907,6 @@ func TestSendMetricsUnexpectedFormat(t *testing.T) {
 
 func TestMetricsBuffer(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	assert.Equal(t, test.s.countMetrics(), 0)
 	metrics := []metricPair{
@@ -782,7 +934,6 @@ func TestMetricsBuffer(t *testing.T) {
 func TestMetricsBufferOverflow(t *testing.T) {
 	t.Skip("Skip test due to prometheus format complexity. Execution can take over 30s")
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.HTTPClientSettings.Endpoint = ":"
 	test.s.config.MetricFormat = PrometheusFormat
@@ -804,6 +955,7 @@ func TestSendCarbon2Metrics(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
+			//nolint:lll
 			expected := `test=test_value test2=second_value _unit=m/s escape_me=:invalid_ metric=true metric=test.metric.data unit=bytes  14500 1605534165
 foo=bar metric=gauge_metric_name  124 1608124661
 foo=bar metric=gauge_metric_name  245 1608124662`
@@ -812,7 +964,6 @@ foo=bar metric=gauge_metric_name  245 1608124662`
 			assert.Equal(t, "application/vnd.sumologic.carbon2", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	test.s.config.MetricFormat = Carbon2Format
 	test.s.metricBuffer = []metricPair{
@@ -845,7 +996,6 @@ gauge_metric_name.. 245 1608124662`
 			assert.Equal(t, "application/vnd.sumologic.graphite", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	gf, err := newGraphiteFormatter("%{_metric_}.%{metric}.%{unit}")
 	require.NoError(t, err)

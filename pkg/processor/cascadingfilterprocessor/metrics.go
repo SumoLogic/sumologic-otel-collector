@@ -19,7 +19,6 @@ import (
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 	"go.opentelemetry.io/collector/config/configtelemetry"
-	"go.opentelemetry.io/collector/obsreport"
 )
 
 // Variables related to metrics specific to Cascading Filter.
@@ -146,5 +145,6 @@ func CascadingFilterMetricViews(level configtelemetry.Level) []*view.View {
 		trackTracesOnMemorylView,
 	}
 
-	return obsreport.ProcessorMetricViews(typeStr, legacyViews)
+	// return obsreport.ProcessorMetricViews(typeStr, legacyViews)
+	return legacyViews
 }

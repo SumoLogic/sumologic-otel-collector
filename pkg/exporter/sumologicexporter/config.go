@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/collector/config"
+	"go.opentelemetry.io/collector/config/configauth"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 )
@@ -40,15 +41,29 @@ type Config struct {
 	// Format to post logs into Sumo. (default json)
 	//   * text - Logs will appear in Sumo Logic in text format.
 	//   * json - Logs will appear in Sumo Logic in json format.
+	//   * otlp - Logs will be send in otlp format and will appear in Sumo Logic in text format.
 	LogFormat LogFormatType `mapstructure:"log_format"`
 
 	// Metrics related configuration
-	// The format of metrics you will be sending, either graphite or carbon2 or prometheus (Default is prometheus)
+	// The format of metrics you will be sending, either graphite or carbon2, otlp or prometheus (Default is prometheus)
 	// Possible values are `carbon2` and `prometheus`
 	MetricFormat MetricFormatType `mapstructure:"metric_format"`
 	// Graphite template.
 	// Placeholders `%{attr_name}` will be replaced with attribute value for attr_name.
 	GraphiteTemplate string `mapstructure:"graphite_template"`
+
+	// Traces related configuration
+	// The format of traces you will be sending, currently only otlp format is supported
+	TraceFormat TraceFormatType `mapstructure:"trace_format"`
+
+	// Specifies whether attributes should be translated
+	// from OpenTelemetry standard to Sumo conventions (for example `cloud.account.id` => `accountId`
+	// `k8s.pod.name` => `pod` etc).
+	TranslateAttributes bool `mapstructure:"translate_attributes"`
+	// Specifies whether telegraf metric names should be translated to match
+	// Sumo conventions expected in Sumo host related apps (for example
+	// `procstat_num_threads` => `Proc_Threads` or `cpu_usage_irq` => `CPU_Irq`).
+	TranslateTelegrafMetrics bool `mapstructure:"translate_telegraf_attributes"`
 
 	// List of regexes for attributes which should be send as metadata
 	MetadataAttributes []string `mapstructure:"metadata_attributes"`
@@ -74,6 +89,9 @@ type Config struct {
 func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 	return confighttp.HTTPClientSettings{
 		Timeout: defaultTimeout,
+		Auth: &configauth.Authentication{
+			AuthenticatorName: "sumologic",
+		},
 	}
 }
 
@@ -82,6 +100,9 @@ type LogFormatType string
 
 // MetricFormatType represents metric_format
 type MetricFormatType string
+
+// TraceFormatType represents trace_format
+type TraceFormatType string
 
 // PipelineType represents type of the pipeline
 type PipelineType string
@@ -94,12 +115,18 @@ const (
 	TextFormat LogFormatType = "text"
 	// JSONFormat represents log_format: json
 	JSONFormat LogFormatType = "json"
-	// GraphiteFormat represents metric_format: text
+	// OTLPLogFormat represents log_format: otlp
+	OTLPLogFormat LogFormatType = "otlp"
+	// GraphiteFormat represents metric_format: graphite
 	GraphiteFormat MetricFormatType = "graphite"
-	// Carbon2Format represents metric_format: json
+	// Carbon2Format represents metric_format: carbon2
 	Carbon2Format MetricFormatType = "carbon2"
-	// PrometheusFormat represents metric_format: json
+	// PrometheusFormat represents metric_format: prometheus
 	PrometheusFormat MetricFormatType = "prometheus"
+	// OTLPMetricFormat represents metric_format: otlp
+	OTLPMetricFormat MetricFormatType = "otlp"
+	// OTLPTraceFormat represents trace_format: otlp
+	OTLPTraceFormat TraceFormatType = "otlp"
 	// GZIPCompression represents compress_encoding: gzip
 	GZIPCompression CompressEncodingType = "gzip"
 	// DeflateCompression represents compress_encoding: deflate
@@ -110,6 +137,8 @@ const (
 	MetricsPipeline PipelineType = "metrics"
 	// LogsPipeline represents metrics pipeline
 	LogsPipeline PipelineType = "logs"
+	// TracesPipeline represents traces pipeline
+	TracesPipeline PipelineType = "traces"
 	// defaultTimeout
 	defaultTimeout time.Duration = 5 * time.Second
 	// DefaultCompress defines default Compress
@@ -119,9 +148,9 @@ const (
 	// DefaultMaxRequestBodySize defines default MaxRequestBodySize in bytes
 	DefaultMaxRequestBodySize int = 1 * 1024 * 1024
 	// DefaultLogFormat defines default LogFormat
-	DefaultLogFormat LogFormatType = JSONFormat
+	DefaultLogFormat LogFormatType = OTLPLogFormat
 	// DefaultMetricFormat defines default MetricFormat
-	DefaultMetricFormat MetricFormatType = PrometheusFormat
+	DefaultMetricFormat MetricFormatType = OTLPMetricFormat
 	// DefaultSourceCategory defines default SourceCategory
 	DefaultSourceCategory string = ""
 	// DefaultSourceName defines default SourceName
@@ -132,4 +161,8 @@ const (
 	DefaultClient string = "otelcol"
 	// DefaultGraphiteTemplate defines default template for Graphite
 	DefaultGraphiteTemplate string = "%{_metric_}"
+	// DefaultTranslateAttributes defines default TranslateAttributes
+	DefaultTranslateAttributes bool = true
+	// DefaultTranslateTelegrafMetrics defines default TranslateTelegrafMetrics
+	DefaultTranslateTelegrafMetrics bool = true
 )

@@ -152,3 +152,83 @@ func TestCompressCloseError(t *testing.T) {
 
 	assert.EqualError(t, err, "close error")
 }
+
+func BenchmarkCompression(b *testing.B) {
+	const (
+		message       = "This is an example log"
+		secondMessage = "This is an another example log"
+	)
+	decompress := func(compression string, data io.Reader) (string, error) {
+		switch compression {
+		case string(GZIPCompression):
+			r, err := gzip.NewReader(data)
+			if err != nil {
+				return "", err
+			}
+
+			var buf []byte
+			buf, err = ioutil.ReadAll(r)
+			if err != nil {
+				return "", err
+			}
+
+			return string(buf), nil
+		case string(DeflateCompression):
+			r := flate.NewReader(data)
+
+			buf, err := ioutil.ReadAll(r)
+			if err != nil {
+				return "", err
+			}
+
+			return string(buf), nil
+
+		default:
+			return "", errors.New("unknown compression method: " + compression)
+		}
+	}
+
+	testcases := []struct {
+		encoding string
+	}{
+		{
+			encoding: string(DeflateCompression),
+		},
+		{
+			encoding: string(GZIPCompression),
+		},
+	}
+
+	for _, tc := range testcases {
+		b.Run(tc.encoding, func(b *testing.B) {
+			c, err := newCompressor(CompressEncodingType(tc.encoding))
+			require.NoError(b, err)
+
+			body1 := strings.NewReader(message)
+			body2 := strings.NewReader(secondMessage)
+
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				data, err := c.compress(body1)
+				require.NoError(b, err)
+				out, err := decompress(tc.encoding, data)
+				require.NoError(b, err)
+				assert.Equal(b, message, out)
+
+				data, err = c.compress(body2)
+				require.NoError(b, err)
+				out, err = decompress(tc.encoding, data)
+				require.NoError(b, err)
+				assert.Equal(b, secondMessage, out)
+
+				b.StopTimer()
+				_, err = body1.Seek(0, 0)
+				require.NoError(b, err)
+				_, err = body2.Seek(0, 0)
+				require.NoError(b, err)
+				b.StartTimer()
+			}
+		})
+	}
+
+}

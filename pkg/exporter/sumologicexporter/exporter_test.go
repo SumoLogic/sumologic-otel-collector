@@ -19,25 +19,76 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/consumer/consumererror"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 func LogRecordsToLogs(records []pdata.LogRecord) pdata.Logs {
 	logs := pdata.NewLogs()
 	logsSlice := logs.ResourceLogs().AppendEmpty().InstrumentationLibraryLogs().AppendEmpty().Logs()
 	for _, record := range records {
-		logsSlice.Append(record)
+		record.CopyTo(logsSlice.AppendEmpty())
 	}
 
 	return logs
+}
+
+type exporterTest struct {
+	srv *httptest.Server
+	exp *sumologicexporter
+}
+
+func createTestConfig() *Config {
+	config := createDefaultConfig().(*Config)
+	config.CompressEncoding = NoCompression
+	config.LogFormat = TextFormat
+	config.MaxRequestBodySize = 20_971_520
+	config.MetricFormat = Carbon2Format
+	config.TraceFormat = OTLPTraceFormat
+	return config
+}
+
+// prepareExporterTest prepares an exporter test object using provided config
+// and a slice of callbacks to be called for subsequent requests coming being
+// sent to the server.
+// The enclosed *httptest.Server is automatically closed on test cleanup.
+func prepareExporterTest(t *testing.T, cfg *Config, cb []func(w http.ResponseWriter, req *http.Request)) *exporterTest {
+	var reqCounter int32
+	// generate a test server so we can capture and inspect the request
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if len(cb) == 0 {
+			return
+		}
+
+		if c := int(atomic.LoadInt32(&reqCounter)); assert.Greater(t, len(cb), c) {
+			cb[c](w, req)
+			atomic.AddInt32(&reqCounter, 1)
+		}
+	}))
+	t.Cleanup(func() { testServer.Close() })
+
+	cfg.HTTPClientSettings.Endpoint = testServer.URL
+	cfg.HTTPClientSettings.Auth = nil
+
+	exp, err := initExporter(cfg)
+	require.NoError(t, err)
+
+	require.NoError(t, exp.start(context.Background(), componenttest.NewNopHost()))
+
+	return &exporterTest{
+		srv: testServer,
+		exp: exp,
+	}
 }
 
 func TestInitExporter(t *testing.T) {
@@ -45,6 +96,7 @@ func TestInitExporter(t *testing.T) {
 		LogFormat:        "json",
 		MetricFormat:     "carbon2",
 		CompressEncoding: "gzip",
+		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout:  defaultTimeout,
 			Endpoint: "test_endpoint",
@@ -58,6 +110,7 @@ func TestInitExporterInvalidLogFormat(t *testing.T) {
 		LogFormat:        "test_format",
 		MetricFormat:     "carbon2",
 		CompressEncoding: "gzip",
+		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout:  defaultTimeout,
 			Endpoint: "test_endpoint",
@@ -81,11 +134,27 @@ func TestInitExporterInvalidMetricFormat(t *testing.T) {
 	assert.EqualError(t, err, "unexpected metric format: test_format")
 }
 
+func TestInitExporterInvalidTraceFormat(t *testing.T) {
+	_, err := initExporter(&Config{
+		LogFormat:    "json",
+		MetricFormat: "carbon2",
+		TraceFormat:  "text",
+		HTTPClientSettings: confighttp.HTTPClientSettings{
+			Timeout:  defaultTimeout,
+			Endpoint: "test_endpoint",
+		},
+		CompressEncoding: "gzip",
+	})
+
+	assert.EqualError(t, err, "unexpected trace format: text")
+}
+
 func TestInitExporterInvalidCompressEncoding(t *testing.T) {
 	_, err := initExporter(&Config{
 		LogFormat:        "json",
 		MetricFormat:     "carbon2",
 		CompressEncoding: "test_format",
+		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout:  defaultTimeout,
 			Endpoint: "test_endpoint",
@@ -95,30 +164,28 @@ func TestInitExporterInvalidCompressEncoding(t *testing.T) {
 	assert.EqualError(t, err, "unexpected compression encoding: test_format")
 }
 
-func TestInitExporterInvalidEndpoint(t *testing.T) {
+func TestInitExporterInvalidEndpointAndNoAuth(t *testing.T) {
 	_, err := initExporter(&Config{
 		LogFormat:        "json",
 		MetricFormat:     "carbon2",
 		CompressEncoding: "gzip",
+		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout: defaultTimeout,
 		},
 	})
 
-	// TODO: fix
-	_ = err
-	// assert.EqualError(t, err, "endpoint is not set")
+	assert.EqualError(t, err, "no endpoint and no auth extension specified")
 }
 
 func TestAllSuccess(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, `Example log`, body)
 			assert.Equal(t, "", req.Header.Get("X-Sumo-Fields"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	logs := LogRecordsToLogs(exampleLog())
 
@@ -127,14 +194,13 @@ func TestAllSuccess(t *testing.T) {
 }
 
 func TestResourceMerge(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, `Example log`, body)
 			assert.Equal(t, "key1=original_value, key2=additional_value", req.Header.Get("X-Sumo-Fields"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	f, err := newFilter([]string{`key\d`})
 	require.NoError(t, err)
@@ -150,7 +216,7 @@ func TestResourceMerge(t *testing.T) {
 }
 
 func TestAllFailed(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -159,7 +225,6 @@ func TestAllFailed(t *testing.T) {
 			assert.Equal(t, "", req.Header.Get("X-Sumo-Fields"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	logs := LogRecordsToLogs(exampleTwoLogs())
 
@@ -172,7 +237,7 @@ func TestAllFailed(t *testing.T) {
 }
 
 func TestPartiallyFailed(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -186,7 +251,6 @@ func TestPartiallyFailed(t *testing.T) {
 			assert.Equal(t, "key3=value3, key4=value4", req.Header.Get("X-Sumo-Fields"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	f, err := newFilter([]string{`key\d`})
 	require.NoError(t, err)
@@ -209,6 +273,7 @@ func TestInvalidSourceFormats(t *testing.T) {
 		LogFormat:        "json",
 		MetricFormat:     "carbon2",
 		CompressEncoding: "gzip",
+		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout:  defaultTimeout,
 			Endpoint: "test_endpoint",
@@ -223,6 +288,7 @@ func TestInvalidHTTPCLient(t *testing.T) {
 		LogFormat:        "json",
 		MetricFormat:     "carbon2",
 		CompressEncoding: "gzip",
+		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Endpoint: "test_endpoint",
 			CustomRoundTripper: func(next http.RoundTripper) (http.RoundTripper, error) {
@@ -239,14 +305,13 @@ func TestInvalidHTTPCLient(t *testing.T) {
 }
 
 func TestPushInvalidCompressor(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, `Example log`, body)
 			assert.Equal(t, "", req.Header.Get("X-Sumo-Fields"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	logs := LogRecordsToLogs(exampleLog())
 
@@ -257,7 +322,7 @@ func TestPushInvalidCompressor(t *testing.T) {
 }
 
 func TestPushFailedBatch(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 			body := extractBody(t, req)
@@ -279,22 +344,126 @@ func TestPushFailedBatch(t *testing.T) {
 			assert.Equal(t, "", req.Header.Get("X-Sumo-Fields"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	logs := LogRecordsToLogs(exampleLog())
-	logs.ResourceLogs().Resize(maxBufferSize + 1)
+	logs.ResourceLogs().EnsureCapacity(maxBufferSize + 1)
 	log := logs.ResourceLogs().At(0)
+	rLogs := logs.ResourceLogs()
 
 	for i := 0; i < maxBufferSize; i++ {
-		logs.ResourceLogs().Append(log)
+		log.CopyTo(rLogs.AppendEmpty())
 	}
 
 	err := test.exp.pushLogsData(context.Background(), logs)
 	assert.EqualError(t, err, "error during sending data: 500 Internal Server Error")
 }
 
+func TestPushTextLogsWithAttributeTranslation(t *testing.T) {
+	logs := LogRecordsToLogs(exampleLog())
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.name", "harry-potter")
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.type", "wizard")
+
+	config := createTestConfig()
+	config.MetadataAttributes = []string{`host\.name`}
+	config.SourceCategory = "%{host.name}"
+	config.SourceHost = "%{host}"
+
+	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, `Example log`, body)
+			assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))
+			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
+			assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"))
+		},
+	}
+	test := prepareExporterTest(t, config, expectedRequests)
+
+	err := test.exp.pushLogsData(context.Background(), logs)
+	assert.NoError(t, err)
+}
+
+func TestPushTextLogsWithAttributeTranslationDisabled(t *testing.T) {
+	logs := LogRecordsToLogs(exampleLog())
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.name", "harry-potter")
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.type", "wizard")
+
+	config := createTestConfig()
+	config.MetadataAttributes = []string{`host\.name`}
+	config.SourceCategory = "%{host.name}"
+	config.SourceHost = "%{host}"
+	config.TranslateAttributes = false
+
+	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, `Example log`, body)
+			assert.Equal(t, "host.name=harry-potter", req.Header.Get("X-Sumo-Fields"))
+			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
+			assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"))
+		},
+	}
+	test := prepareExporterTest(t, config, expectedRequests)
+
+	err := test.exp.pushLogsData(context.Background(), logs)
+	assert.NoError(t, err)
+}
+
+func TestPushJSONLogsWithAttributeTranslation(t *testing.T) {
+	logs := LogRecordsToLogs(exampleLog())
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.name", "harry-potter")
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.type", "wizard")
+
+	config := createTestConfig()
+	config.MetadataAttributes = []string{`host\.name`}
+	config.SourceCategory = "%{host.name}"
+	config.SourceHost = "%{host}"
+	config.LogFormat = JSONFormat
+
+	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, `{"InstanceType":"wizard","host":"harry-potter","log":"Example log"}`, body)
+			assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))
+			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
+			assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"))
+		},
+	}
+	test := prepareExporterTest(t, config, expectedRequests)
+
+	err := test.exp.pushLogsData(context.Background(), logs)
+	assert.NoError(t, err)
+}
+
+func TestPushJSONLogsWithAttributeTranslationDisabled(t *testing.T) {
+	logs := LogRecordsToLogs(exampleLog())
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.name", "harry-potter")
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.type", "wizard")
+
+	config := createTestConfig()
+	config.MetadataAttributes = []string{`host\.name`}
+	config.SourceCategory = "%{host.name}"
+	config.SourceHost = "%{host}"
+	config.LogFormat = JSONFormat
+	config.TranslateAttributes = false
+
+	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, `{"host.type":"wizard","log":"Example log"}`, body)
+			assert.Equal(t, "host.name=harry-potter", req.Header.Get("X-Sumo-Fields"))
+			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
+			assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"))
+		},
+	}
+	test := prepareExporterTest(t, config, expectedRequests)
+
+	err := test.exp.pushLogsData(context.Background(), logs)
+	assert.NoError(t, err)
+}
+
 func TestAllMetricsSuccess(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			expected := `test_metric_data{test="test_value",test2="second_value"} 14500 1605534165000
@@ -304,7 +473,6 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.exp.config.MetricFormat = PrometheusFormat
 
 	metrics := metricPairToMetrics([]metricPair{
@@ -316,8 +484,29 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 	assert.NoError(t, err)
 }
 
+func TestAllMetricsOTLP(t *testing.T) {
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			//nolint:lll
+			expected := "\nf\n/\n\x14\n\x04test\x12\f\n\ntest_value\n\x17\n\x05test2\x12\x0e\n\fsecond_value\x123\n\x00\x12/\n\x10test.metric.data\x1a\x05bytes:\x14\n\x12\x19\x00\x12\x94\v\xd1\x00H\x161\xa48\x00\x00\x00\x00\x00\x00\n\xba\x01\n\x0e\n\f\n\x03foo\x12\x05\n\x03bar\x12\xa7\x01\n\x00\x12\xa2\x01\n\x11gauge_metric_name*\x8c\x01\nD\n\x15\n\vremote_name\x12\x06156920\n\x19\n\x03url\x12\x12http://example_url\x19\x80GX\xef\xdb4Q\x161|\x00\x00\x00\x00\x00\x00\x00\nD\n\x15\n\vremote_name\x12\x06156955\n\x19\n\x03url\x12\x12http://another_url\x19\x80\x11\xf3*\xdc4Q\x161\xf5\x00\x00\x00\x00\x00\x00\x00"
+			assert.Equal(t, expected, body)
+			assert.Equal(t, "application/x-protobuf", req.Header.Get("Content-Type"))
+		},
+	})
+	test.exp.config.MetricFormat = OTLPMetricFormat
+
+	metrics := metricPairToMetrics([]metricPair{
+		exampleIntMetric(),
+		exampleIntGaugeMetric(),
+	})
+
+	err := test.exp.pushMetricsData(context.Background(), metrics)
+	assert.NoError(t, err)
+}
+
 func TestAllMetricsFailed(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -329,7 +518,6 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.exp.config.MetricFormat = PrometheusFormat
 
 	metrics := metricPairToMetrics([]metricPair{
@@ -346,7 +534,7 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 }
 
 func TestMetricsPartiallyFailed(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -363,7 +551,6 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.exp.config.MetricFormat = PrometheusFormat
 	test.exp.config.MaxRequestBodySize = 1
 
@@ -383,14 +570,13 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 }
 
 func TestPushMetricsInvalidCompressor(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, `Example log`, body)
 			assert.Equal(t, "", req.Header.Get("X-Sumo-Fields"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 
 	metrics := metricPairToMetrics([]metricPair{
 		exampleIntMetric(),
@@ -404,7 +590,7 @@ func TestPushMetricsInvalidCompressor(t *testing.T) {
 }
 
 func TestMetricsDifferentMetadata(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -421,7 +607,6 @@ gauge_metric_name{foo="bar",key2="value2",remote_name="156955",url="http://anoth
 			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.exp.config.MetricFormat = PrometheusFormat
 	test.exp.config.MaxRequestBodySize = 1
 
@@ -450,7 +635,7 @@ gauge_metric_name{foo="bar",key2="value2",remote_name="156955",url="http://anoth
 
 func TestPushMetricsFailedBatch(t *testing.T) {
 	t.Skip("Skip test due to prometheus format complexity. Execution can take over 30s")
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 			body := extractBody(t, req)
@@ -470,18 +655,464 @@ func TestPushMetricsFailedBatch(t *testing.T) {
 			assert.Equal(t, `test_metric_data{test="test_value",test2="second_value"} 14500 1605534165000`, body)
 		},
 	})
-	defer func() { test.srv.Close() }()
 	test.exp.config.MetricFormat = PrometheusFormat
 	test.exp.config.MaxRequestBodySize = 1024 * 1024 * 1024 * 1024
 
 	metrics := metricPairToMetrics([]metricPair{exampleIntMetric()})
-	metrics.ResourceMetrics().Resize(maxBufferSize + 1)
-	metric := metrics.ResourceMetrics().At(0)
+	metrics.ResourceMetrics().EnsureCapacity(maxBufferSize + 1)
+	rMetrics := metrics.ResourceMetrics()
+	metric := rMetrics.AppendEmpty()
 
 	for i := 0; i < maxBufferSize; i++ {
-		metrics.ResourceMetrics().Append(metric)
+		metric.CopyTo(rMetrics.AppendEmpty())
 	}
 
 	err := test.exp.pushMetricsData(context.Background(), metrics)
 	assert.EqualError(t, err, "error during sending data: 500 Internal Server Error")
+}
+
+func TestLogsJsonFormatMetadataFilter(t *testing.T) {
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, `{"key2":"value2","log":"Example log"}`, body)
+			assert.Equal(t, "key1=value1", req.Header.Get("X-Sumo-Fields"))
+		},
+	})
+	test.exp.config.LogFormat = JSONFormat
+
+	f, err := newFilter([]string{`key1`})
+	require.NoError(t, err)
+	test.exp.filter = f
+
+	logs := LogRecordsToLogs(exampleLog())
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key1", "value1")
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key2", "value2")
+
+	err = test.exp.pushLogsData(context.Background(), logs)
+	assert.NoError(t, err)
+}
+
+func TestLogsTextFormatMetadataFilter(t *testing.T) {
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, `Example log`, body)
+			assert.Equal(t, "key1=value1", req.Header.Get("X-Sumo-Fields"))
+		},
+	})
+	test.exp.config.LogFormat = TextFormat
+
+	f, err := newFilter([]string{`key1`})
+	require.NoError(t, err)
+	test.exp.filter = f
+
+	logs := LogRecordsToLogs(exampleLog())
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key1", "value1")
+	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key2", "value2")
+
+	err = test.exp.pushLogsData(context.Background(), logs)
+	assert.NoError(t, err)
+}
+
+func TestMetricsCarbon2FormatMetadataFilter(t *testing.T) {
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			expected := `test=test_value test2=second_value key1=value1 key2=value2 metric=test.metric.data unit=bytes  14500 1605534165`
+			assert.Equal(t, expected, body)
+			assert.Equal(t, "application/vnd.sumologic.carbon2", req.Header.Get("Content-Type"))
+		},
+	})
+	test.exp.config.MetricFormat = Carbon2Format
+
+	f, err := newFilter([]string{`key1`})
+	require.NoError(t, err)
+	test.exp.filter = f
+
+	records := []metricPair{
+		exampleIntMetric(),
+	}
+
+	records[0].attributes.InsertString("key1", "value1")
+	records[0].attributes.InsertString("key2", "value2")
+
+	metrics := metricPairToMetrics(records)
+
+	err = test.exp.pushMetricsData(context.Background(), metrics)
+	assert.NoError(t, err)
+}
+
+func TestMetricsGraphiteFormatMetadataFilter(t *testing.T) {
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			expected := `test_metric_data.test_value.second_value.value1.value2 14500 1605534165`
+			assert.Equal(t, expected, body)
+			assert.Equal(t, "application/vnd.sumologic.graphite", req.Header.Get("Content-Type"))
+		},
+	})
+	test.exp.config.MetricFormat = GraphiteFormat
+	graphiteFormatter, err := newGraphiteFormatter("%{_metric_}.%{test}.%{test2}.%{key1}.%{key2}")
+	assert.NoError(t, err)
+	test.exp.graphiteFormatter = graphiteFormatter
+
+	f, err := newFilter([]string{`key1`})
+	require.NoError(t, err)
+	test.exp.filter = f
+
+	records := []metricPair{
+		exampleIntMetric(),
+	}
+
+	records[0].attributes.InsertString("key1", "value1")
+	records[0].attributes.InsertString("key2", "value2")
+
+	metrics := metricPairToMetrics(records)
+
+	err = test.exp.pushMetricsData(context.Background(), metrics)
+	assert.NoError(t, err)
+}
+
+func TestMetricsPrometheusFormatMetadataFilter(t *testing.T) {
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			expected := `test_metric_data{test="test_value",test2="second_value",key1="value1",key2="value2"} 14500 1605534165000`
+			assert.Equal(t, expected, body)
+			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
+		},
+	})
+	test.exp.config.MetricFormat = PrometheusFormat
+
+	f, err := newFilter([]string{`key1`})
+	require.NoError(t, err)
+	test.exp.filter = f
+
+	records := []metricPair{
+		exampleIntMetric(),
+	}
+
+	records[0].attributes.InsertString("key1", "value1")
+	records[0].attributes.InsertString("key2", "value2")
+
+	metrics := metricPairToMetrics(records)
+
+	err = test.exp.pushMetricsData(context.Background(), metrics)
+	assert.NoError(t, err)
+}
+
+func TestPushMetrics_AttributeTranslation(t *testing.T) {
+	createConfig := func() *Config {
+		config := createDefaultConfig().(*Config)
+		config.CompressEncoding = NoCompression
+		config.LogFormat = TextFormat
+		config.MetricFormat = PrometheusFormat
+		return config
+	}
+
+	testcases := []struct {
+		name            string
+		cfgFn           func() *Config
+		expectedHeaders map[string]string
+		expectedBody    string
+	}{
+		{
+			name: "enabled",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				cfg.MetadataAttributes = []string{`host\.name`}
+				cfg.SourceCategory = "%{host.name}"
+				cfg.SourceHost = "%{host}"
+				// This is and should be done by default:
+				// cfg.TranslateAttributes = true
+				return cfg
+			},
+			expectedHeaders: map[string]string{
+				"Content-Type":    "application/vnd.sumologic.prometheus",
+				"X-Sumo-Category": "harry-potter",
+				"X-Sumo-Host":     "undefined",
+			},
+			expectedBody: `test_metric_data{test="test_value",test2="second_value",host="harry-potter",InstanceType="wizard"} 14500 1605534165000`,
+		},
+		{
+			name: "enabled_with_ot_host_name_template_set_in_source_host",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				cfg.MetadataAttributes = []string{`host\.name`}
+				cfg.SourceCategory = "%{host.name}"
+				cfg.SourceHost = "%{host.name}"
+				// This is and should be done by default:
+				// cfg.TranslateAttributes = true
+				return cfg
+			},
+			expectedHeaders: map[string]string{
+				"Content-Type":    "application/vnd.sumologic.prometheus",
+				"X-Sumo-Category": "harry-potter",
+				"X-Sumo-Host":     "harry-potter",
+			},
+			expectedBody: `test_metric_data{test="test_value",test2="second_value",host="harry-potter",InstanceType="wizard"} 14500 1605534165000`,
+		},
+		{
+			name: "enabled_with_proper_host_template_set_in_source_host_but_not_specified_in_metadata_attributes",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				// This is the default
+				// cfg.MetadataAttributes = []string{}
+				cfg.SourceCategory = "%{host.name}"
+				cfg.SourceHost = "%{host.name}"
+				// This is and should be done by default:
+				// cfg.TranslateAttributes = true
+				return cfg
+			},
+			expectedHeaders: map[string]string{
+				"Content-Type":    "application/vnd.sumologic.prometheus",
+				"X-Sumo-Category": "undefined",
+				"X-Sumo-Host":     "undefined",
+			},
+			expectedBody: `test_metric_data{test="test_value",test2="second_value",host="harry-potter",InstanceType="wizard"} 14500 1605534165000`,
+		},
+		{
+			name: "disabled",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				cfg.MetadataAttributes = []string{`host\.name`}
+				cfg.SourceCategory = "%{host.name}"
+				cfg.SourceHost = "%{host}"
+				cfg.TranslateAttributes = false
+				return cfg
+			},
+			expectedHeaders: map[string]string{
+				"Content-Type":    "application/vnd.sumologic.prometheus",
+				"X-Sumo-Category": "harry-potter",
+				"X-Sumo-Host":     "undefined",
+			},
+			expectedBody: `test_metric_data{test="test_value",test2="second_value",host_name="harry-potter",host_type="wizard"} 14500 1605534165000`,
+		},
+		{
+			name: "disabled_with_ot_host_name_template_set_in_source_host",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				cfg.MetadataAttributes = []string{`host\.name`}
+				cfg.SourceCategory = "%{host.name}"
+				cfg.SourceHost = "%{host.name}"
+				cfg.TranslateAttributes = false
+				return cfg
+			},
+			expectedHeaders: map[string]string{
+				"Content-Type":    "application/vnd.sumologic.prometheus",
+				"X-Sumo-Category": "harry-potter",
+				"X-Sumo-Host":     "harry-potter",
+			},
+			expectedBody: `test_metric_data{test="test_value",test2="second_value",host_name="harry-potter",host_type="wizard"} 14500 1605534165000`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			records := []metricPair{
+				exampleIntMetric(),
+			}
+			records[0].attributes.InsertString("host.name", "harry-potter")
+			records[0].attributes.InsertString("host.type", "wizard")
+
+			metrics := metricPairToMetrics(records)
+
+			config := tc.cfgFn()
+			callbacks := []func(w http.ResponseWriter, req *http.Request){
+				func(w http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, tc.expectedBody, extractBody(t, req))
+					for header, expectedValue := range tc.expectedHeaders {
+						assert.Equalf(t, expectedValue, req.Header.Get(header),
+							"Unexpected value in header: %s", header,
+						)
+					}
+				},
+			}
+			test := prepareExporterTest(t, config, callbacks)
+
+			err := test.exp.pushMetricsData(context.Background(), metrics)
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestPushMetrics_MetricsTranslation(t *testing.T) {
+	createConfig := func() *Config {
+		config := createDefaultConfig().(*Config)
+		config.CompressEncoding = NoCompression
+		config.MetricFormat = PrometheusFormat
+		return config
+	}
+
+	testcases := []struct {
+		name         string
+		cfgFn        func() *Config
+		metricsFn    func() pdata.Metrics
+		expectedBody string
+	}{
+		{
+			name: "enabled by default translated metrics successfully",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				// This is and should be done by default:
+				// cfg.TranslateTelegrafMetrics = true
+				return cfg
+			},
+			metricsFn: func() pdata.Metrics {
+				metrics := pdata.NewMetrics()
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						InstrumentationLibraryMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("cpu_usage_active")
+					m.SetDataType(pdata.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
+					dp.SetValue(123.456)
+					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
+					dp.LabelsMap().Insert("test", "test_value")
+				}
+				return metrics
+			},
+			expectedBody: `CPU_Total{test="test_value"} 123.456 1605534165000`,
+		},
+		{
+			name: "enabled 3 metrics with 1 not to be translated",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				// This is and should be done by default:
+				// cfg.TranslateTelegrafMetrics = true
+				return cfg
+			},
+			metricsFn: func() pdata.Metrics {
+				metrics := pdata.NewMetrics()
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						InstrumentationLibraryMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("cpu_usage_active")
+					m.SetDataType(pdata.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
+					dp.SetValue(123.456)
+					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
+					dp.LabelsMap().Insert("test", "test_value")
+				}
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						InstrumentationLibraryMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("diskio_reads")
+					m.SetDataType(pdata.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
+					dp.SetValue(123456)
+					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 1000000)))
+					dp.LabelsMap().Insert("test", "test_value")
+				}
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						InstrumentationLibraryMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("dummy_metric")
+					m.SetDataType(pdata.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
+					dp.SetValue(10)
+					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 2000000)))
+					dp.LabelsMap().Insert("test", "test_value")
+				}
+				return metrics
+			},
+			expectedBody: `CPU_Total{test="test_value"} 123.456 1605534165000
+Disk_Reads{test="test_value"} 123456 1605534165001
+dummy_metric{test="test_value"} 10 1605534165002`,
+		},
+		{
+			name: "disabled does not translate metric names",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				cfg.TranslateTelegrafMetrics = false
+				return cfg
+			},
+			metricsFn: func() pdata.Metrics {
+				metrics := pdata.NewMetrics()
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						InstrumentationLibraryMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("cpu_usage_active")
+					m.SetDataType(pdata.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
+					dp.SetValue(123.456)
+					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
+					dp.LabelsMap().Insert("test", "test_value")
+				}
+				return metrics
+			},
+			expectedBody: `cpu_usage_active{test="test_value"} 123.456 1605534165000`,
+		},
+		{
+			name: "disabled does not translate metric names - 3 metrics",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				cfg.TranslateTelegrafMetrics = false
+				return cfg
+			},
+			metricsFn: func() pdata.Metrics {
+				metrics := pdata.NewMetrics()
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						InstrumentationLibraryMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("cpu_usage_active")
+					m.SetDataType(pdata.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
+					dp.SetValue(123.456)
+					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
+					dp.LabelsMap().Insert("test", "test_value")
+				}
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						InstrumentationLibraryMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("diskio_reads")
+					m.SetDataType(pdata.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
+					dp.SetValue(123456)
+					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 1000000)))
+					dp.LabelsMap().Insert("test", "test_value")
+				}
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						InstrumentationLibraryMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("dummy_metric")
+					m.SetDataType(pdata.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
+					dp.SetValue(10)
+					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 2000000)))
+					dp.LabelsMap().Insert("test", "test_value")
+				}
+				return metrics
+			},
+			expectedBody: `cpu_usage_active{test="test_value"} 123.456 1605534165000
+diskio_reads{test="test_value"} 123456 1605534165001
+dummy_metric{test="test_value"} 10 1605534165002`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			metrics := tc.metricsFn()
+			config := tc.cfgFn()
+
+			callbacks := []func(w http.ResponseWriter, req *http.Request){
+				func(w http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, tc.expectedBody, extractBody(t, req))
+				},
+			}
+			test := prepareExporterTest(t, config, callbacks)
+
+			err := test.exp.pushMetricsData(context.Background(), metrics)
+			assert.NoError(t, err)
+		})
+	}
 }

@@ -28,13 +28,40 @@ jobs:
       - name: yamllint
         run: make yamllint
 
+  markdown-link-check:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          config-file: '.markdown_link_check.json'
+
+  md-links-lint:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: Lint markdown links
+        run: |
+          make markdown-links-lint
+
   test:
     name: Test
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.runs_on }}
     strategy:
       matrix:
-        go: [ '1.16.4' ]
-        arch_os: [ 'darwin_amd64', 'linux_amd64', 'linux_arm64']
+        include:
+          - arch_os: linux_amd64
+            runs_on: ubuntu-20.04
+            go: '1.16.5'
+          - arch_os: darwin_amd64
+            runs_on: macos-latest
+            go: '1.16.5'
+          - arch_os: linux_amd64
+            runs_on: ubuntu-20.04
+            go: '1.17.0-rc2'
+          - arch_os: darwin_amd64
+            runs_on: macos-latest
+            go: '1.17.0-rc2'
     steps:
       - uses: actions/checkout@v2.3.4
 
@@ -42,6 +69,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
+          stable: 'false'
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
@@ -62,7 +90,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: [ '1.16.4' ]
+        go: [ '1.16.5', '1.17.0-rc2' ]
         arch_os: [ 'linux_amd64' ]
     steps:
       - uses: actions/checkout@v2.3.4
@@ -71,6 +99,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
+          stable: 'false'
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
@@ -89,13 +118,39 @@ jobs:
       - name: Run golangci-lint
         run: make golint
 
+  check-uniform-dependencies:
+    name: Check uniform dependencies
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2.3.4
+
+      - name: Check uniform dependencies
+        run: make check-uniform-dependencies
+
   build:
     name: Build
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.runs_on }}
     strategy:
       matrix:
-        go: [ '1.16.4' ]
-        arch_os: [ 'darwin_amd64', 'linux_amd64', 'linux_arm64']
+        include:
+          - arch_os: linux_amd64
+            runs_on: ubuntu-20.04
+            go: '1.16.5'
+          - arch_os: linux_arm64
+            runs_on: ubuntu-20.04
+            go: '1.16.5'
+          - arch_os: darwin_amd64
+            runs_on: macos-latest
+            go: '1.16.5'
+          - arch_os: linux_amd64
+            runs_on: ubuntu-20.04
+            go: '1.17.0-rc2'
+          - arch_os: linux_arm64
+            runs_on: ubuntu-20.04
+            go: '1.17.0-rc2'
+          - arch_os: darwin_amd64
+            runs_on: macos-latest
+            go: '1.17.0-rc2'
     steps:
       - uses: actions/checkout@v2.3.4
 
@@ -106,6 +161,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
+          stable: 'false'
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
@@ -125,6 +181,12 @@ jobs:
       - name: Build
         run: make otelcol-sumo-${{matrix.arch_os}}
         working-directory: ./otelcolbuilder
+
+      # TODO:
+      # Move that out to a separate job and run on a corresponding's OS runner.
+      # - name: Run the binary
+      #   run: ./otelcol-sumo-${{matrix.arch_os}} --version
+      #   working-directory: ./otelcolbuilder/cmd/
 
       - name: Show included modules
         working-directory: ./otelcolbuilder/cmd

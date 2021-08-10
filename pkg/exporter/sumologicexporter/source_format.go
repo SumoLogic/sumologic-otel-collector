@@ -34,6 +34,8 @@ type sourceFormat struct {
 
 const sourceRegex = `\%\{([\w\.]+)\}`
 
+const unrecognizedAttributeValue = "undefined"
+
 // newSourceFormat builds sourceFormat basing on the regex and given text.
 // Regex is basing on the `sourceRegex` const
 // For given example text: `%{cluster}/%{namespace}``, it sets:
@@ -80,7 +82,7 @@ func (s *sourceFormat) format(f fields) string {
 		if ok {
 			labels = append(labels, tracetranslator.AttributeValueToString(v))
 		} else {
-			labels = append(labels, "")
+			labels = append(labels, unrecognizedAttributeValue)
 		}
 	}
 

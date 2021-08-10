@@ -20,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/config"
+	"go.opentelemetry.io/collector/config/configauth"
 	"go.opentelemetry.io/collector/config/configcheck"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
@@ -38,19 +39,25 @@ func TestCreateDefaultConfig(t *testing.T) {
 	qs.Enabled = false
 
 	assert.Equal(t, cfg, &Config{
-		ExporterSettings:   config.NewExporterSettings(config.NewID(typeStr)),
-		CompressEncoding:   "gzip",
-		MaxRequestBodySize: 1_048_576,
-		LogFormat:          "json",
-		MetricFormat:       "prometheus",
-		SourceCategory:     "",
-		SourceName:         "",
-		SourceHost:         "",
-		Client:             "otelcol",
-		GraphiteTemplate:   "%{_metric_}",
+		ExporterSettings:         config.NewExporterSettings(config.NewID(typeStr)),
+		CompressEncoding:         "gzip",
+		MaxRequestBodySize:       1_048_576,
+		LogFormat:                "otlp",
+		MetricFormat:             "otlp",
+		SourceCategory:           "",
+		SourceName:               "",
+		SourceHost:               "",
+		Client:                   "otelcol",
+		GraphiteTemplate:         "%{_metric_}",
+		TranslateAttributes:      true,
+		TranslateTelegrafMetrics: true,
+		TraceFormat:              "otlp",
 
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout: 5 * time.Second,
+			Auth: &configauth.Authentication{
+				AuthenticatorName: "sumologic",
+			},
 		},
 		RetrySettings: exporterhelper.DefaultRetrySettings(),
 		QueueSettings: qs,

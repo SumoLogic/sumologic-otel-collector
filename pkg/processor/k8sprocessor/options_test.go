@@ -118,13 +118,13 @@ func TestWithExtractAnnotations(t *testing.T) {
 			p := &kubernetesprocessor{}
 			option := WithExtractAnnotations(tt.args...)
 			err := option(p)
-			if tt.wantError == "" {
-				assert.NoError(t, err)
-			} else {
+			if tt.wantError != "" {
 				assert.Error(t, err)
 				assert.Equal(t, err.Error(), tt.wantError)
 				return
 			}
+
+			assert.NoError(t, err)
 			got := p.rules.Annotations
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("WithExtractAnnotations() = %v, want %v", got, tt.want)
@@ -180,16 +180,78 @@ func TestWithExtractLabels(t *testing.T) {
 			p := &kubernetesprocessor{}
 			option := WithExtractLabels(tt.args...)
 			err := option(p)
-			if tt.wantError == "" {
-				assert.NoError(t, err)
-			} else {
+			if tt.wantError != "" {
 				assert.Error(t, err)
 				assert.Equal(t, err.Error(), tt.wantError)
 				return
 			}
+
+			assert.NoError(t, err)
 			got := p.rules.Labels
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("WithExtractLabels() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestWithExtractNamespaceLabels(t *testing.T) {
+	tests := []struct {
+		name      string
+		args      []FieldExtractConfig
+		want      []kube.FieldExtractionRule
+		wantError string
+	}{
+		{
+			"empty",
+			[]FieldExtractConfig{},
+			[]kube.FieldExtractionRule{},
+			"",
+		},
+		{
+			"bad",
+			[]FieldExtractConfig{{
+				TagName: "t1",
+				Key:     "k1",
+				Regex:   "[",
+			}},
+			[]kube.FieldExtractionRule{},
+			"error parsing regexp: missing closing ]: `[`",
+		},
+		{
+			"basic",
+			[]FieldExtractConfig{
+				{
+					TagName: "tag1",
+					Key:     "key1",
+					Regex:   "field=(?P<value>.+)",
+				},
+			},
+			[]kube.FieldExtractionRule{
+				{
+					Name:  "tag1",
+					Key:   "key1",
+					Regex: regexp.MustCompile(`field=(?P<value>.+)`),
+				},
+			},
+			"",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &kubernetesprocessor{}
+			option := WithExtractNamespaceLabels(tt.args...)
+			err := option(p)
+			if tt.wantError != "" {
+				assert.Error(t, err)
+				assert.Equal(t, err.Error(), tt.wantError)
+				return
+			}
+
+			assert.NoError(t, err)
+			got := p.rules.NamespaceLabels
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("WithExtractNamespaceLabels() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -223,10 +285,10 @@ func TestWithExtractMetadata(t *testing.T) {
 
 func TestWithFilterLabels(t *testing.T) {
 	tests := []struct {
-		name  string
-		args  []FieldFilterConfig
-		want  []kube.FieldFilter
-		error string
+		name      string
+		args      []FieldFilterConfig
+		want      []kube.FieldFilter
+		wantError string
 	}{
 		{
 			"empty",
@@ -337,13 +399,13 @@ func TestWithFilterLabels(t *testing.T) {
 			p := &kubernetesprocessor{}
 			option := WithFilterLabels(tt.args...)
 			err := option(p)
-			if tt.error == "" {
-				assert.NoError(t, err)
-			} else {
+			if tt.wantError != "" {
 				assert.Error(t, err)
-				assert.Equal(t, err.Error(), tt.error)
+				assert.Equal(t, err.Error(), tt.wantError)
 				return
 			}
+
+			assert.NoError(t, err)
 			got := p.filters.Labels
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("WithExtractLabels() = %v, want %v", got, tt.want)
@@ -355,10 +417,10 @@ func TestWithFilterLabels(t *testing.T) {
 func TestWithFilterFields(t *testing.T) {
 
 	tests := []struct {
-		name  string
-		args  []FieldFilterConfig
-		want  []kube.FieldFilter
-		error string
+		name      string
+		args      []FieldFilterConfig
+		want      []kube.FieldFilter
+		wantError string
 	}{
 		{
 			"empty",
@@ -469,13 +531,13 @@ func TestWithFilterFields(t *testing.T) {
 			p := &kubernetesprocessor{}
 			option := WithFilterFields(tt.args...)
 			err := option(p)
-			if tt.error == "" {
-				assert.NoError(t, err)
-			} else {
+			if tt.wantError != "" {
 				assert.Error(t, err)
-				assert.Equal(t, err.Error(), tt.error)
+				assert.Equal(t, err.Error(), tt.wantError)
 				return
 			}
+
+			assert.NoError(t, err)
 			got := p.filters.Fields
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("WithExtractLabels() = %v, want %v", got, tt.want)
