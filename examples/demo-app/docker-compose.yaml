@@ -1,0 +1,15 @@
+version: "2"
+services:
+
+  demo-app:
+    build: .
+    environment:
+    - SUMO_OTEL_AGENT_ENDPOINT=otelcol:4317
+
+  otelcol:
+    image: otel/opentelemetry-collector:0.31.0
+    command: ["--config=/etc/otelcol-config.yaml"]
+    volumes:
+    - ./otelcol-config.yaml:/etc/otelcol-config.yaml
+    ports:
+    - "4317" # OTLP gRPC receiver
