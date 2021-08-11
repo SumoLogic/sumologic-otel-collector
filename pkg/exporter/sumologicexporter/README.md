@@ -56,6 +56,13 @@ exporters:
     # default = true
     translate_attributes: {true, false}
 
+    # Specifies whether telegraf metric names should be translated to match
+    # Sumo conventions expected in Sumo host related apps (for example
+    # `procstat_num_threads` => `Proc_Threads` or `cpu_usage_irq` => `CPU_Irq`).
+    # See `translate_metrics.go` for full list of translations.
+    # default = true
+    translate_telegraf_attributes: {true, false}
+
     # list of regexes for attributes which should be sent as metadata,
     # use OpenTelemetry attribute names, see "Attribute translation" documentation
     # chapter from this document.
