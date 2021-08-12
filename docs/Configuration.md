@@ -20,13 +20,13 @@
 
 ### Sumo Logic Extension
 
-In order to send data to [Sumo Logic][sumologic_webpage] one needs to configure
+To send data to [Sumo Logic][sumologic_webpage] you need to configure
 the [sumologicextension][sumologicextension] with credentials and define it
-(the extension) in the same service as [sumologicexporter][sumologicexporter]
-is defined so that it's used as auth extension.
+(the extension) in the same service as the [sumologicexporter][sumologicexporter]
+is defined so that it's used as an auth extension.
 
-The basic example to collect CPU load metrics using [Host Metrics Receiver][hostmetricsreceiver]
-and send them to Sumo Logic has following form:
+The following configuration is a basic example to collect CPU load metrics using
+the [Host Metrics Receiver][hostmetricsreceiver] and send them to Sumo Logic:
 
 ```yaml
 extensions:
@@ -52,8 +52,8 @@ service:
       exporters: [sumologic]
 ```
 
-For a list of all configuration options for sumologicextension please refer to
-[the documentation][sumologicextension_configuration].
+For a list of all the configuration options for sumologicextension refer to
+[this documentation][sumologicextension_configuration].
 
 [sumologic_webpage]: https://www.sumologic.com/
 [sumologicextension]: ../pkg/extension/sumologicextension/
@@ -63,11 +63,11 @@ For a list of all configuration options for sumologicextension please refer to
 
 #### Using multiple Sumo Logic extensions
 
-In case one would want to register multiple collectors and/or send data to
-mutiple orgs at Sumo, mutiple `sumologicextension`s can be defined within the
+If you want to register multiple collectors and/or send data to
+mutiple Sumo Logic accounts, mutiple `sumologicextension`s can be defined within the
 pipeline and used in exporter definitions.
 
-In such a scenario custom authenticator name has to be specified to point at
+In this case, you need to specify a custom authenticator name that points to
 the correct extension ID.
 
 Example:
@@ -117,9 +117,9 @@ service:
 
 ### Filelog Receiver
 
-Filelog Receiver tails and parses logs from files using the [opentelemetry-log-collection][opentelemetry-log-collection] library.
+The Filelog Receiver tails and parses logs from files using the [opentelemetry-log-collection][opentelemetry-log-collection] library.
 
-The basic configuration for Filelog Receiver has following format:
+The following is a basic configuration for the Filelog Receiver:
 
 ```yaml
 receivers:
@@ -132,14 +132,14 @@ receivers:
           layout: '%Y-%m-%d %H:%M:%S'
 ```
 
-for details please see [Filelog Receiver documentation][filelogreceiver_readme].
+For details, see the [Filelog Receiver documentation][filelogreceiver_readme].
 
 [opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
 [filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.27.0/receiver/filelogreceiver
 
 ### Fluent Forward Receiver
 
-Fluent Forward Receiver runs a TCP server that accepts events via the [Fluent Forward
+The Fluent Forward Receiver runs a TCP server that accepts events via the [Fluent Forward
 protocol][fluent_forward_protocol].
 
 The basic configuration for Fluent Forward Receiver has following format:
@@ -150,17 +150,17 @@ receivers:
     endpoint: 0.0.0.0:8006
 ```
 
-for details please see [Fluent Forward Receiver documentation][fluentforwardreceiver_readme].
+For details see the [Fluent Forward Receiver documentation][fluentforwardreceiver_readme].
 
 [fluent_forward_protocol]: https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1
 [fluentforwardreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/release/v0.27.x/receiver/fluentforwardreceiver
 
 ### Syslog Receiver
 
-Syslog Receiver parses Syslogs from tcp/udp using
+The Syslog Receiver parses Syslogs from tcp/udp using
 the [opentelemetry-log-collection](https://github.com/open-telemetry/opentelemetry-log-collection) library.
 
-The basic example for Syslog Receiver with TCP configuration:
+The following is a basic example for the Syslog Receiver with a TCP configuration:
 
 ```yaml
 receivers:
@@ -170,7 +170,7 @@ receivers:
     protocol: rfc5424
 ```
 
-The basic example for Syslog Receiver with UDP Configuration:
+The following is a basic example for the Syslog Receiver with a UDP Configuration:
 
 ```yaml
 receivers:
@@ -181,15 +181,15 @@ receivers:
     location: UTC
 ```
 
-for details please see [Syslog Receiver documentation][syslogreceiver_readme].
+For details see the [Syslog Receiver documentation][syslogreceiver_readme].
 
 [syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.27.0/receiver/syslogreceiver
 
 ### Statsd Receiver
 
-StatsD Receiver ingests [StatsD messages][statsd_messages] into the OpenTelemetry Collector.
+The StatsD Receiver ingests [StatsD messages][statsd_messages] into the OpenTelemetry Collector.
 
-The basic configuration for StatsD Receiver has following format:
+The following is a basic configuration for the StatsD Receiver:
 
 ```yaml
 receivers:
@@ -205,17 +205,17 @@ receivers:
         observer_type: "gauge"
 ```
 
-for details please see [StatsD Receiver documentation][statsdreceiver_readme].
+For details see the [StatsD Receiver documentation][statsdreceiver_readme].
 
 [statsd_messages]: https://github.com/statsd/statsd/blob/master/docs/metric_types.md
 [statsdreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/release/v0.27.x/receiver/statsdreceiver
 
 ### Telegraf Receiver
 
-Telegraf Receiver ingests metrics from various [input plugins][input_plugins]
-into OTC pipeline.
+The Telegraf Receiver ingests metrics from various [input plugins][input_plugins]
+into the OTC pipeline.
 
-The basic configuration for Telegraf Receiver has following format:
+The following is a basic configuration for the Telegraf Receiver:
 
 ```yaml
 receivers:
@@ -228,16 +228,16 @@ receivers:
       [[inputs.mem]]
 ```
 
-for details please see [Telegraf Receiver documentation][telegrafreceiver_readme].
+For details see the [Telegraf Receiver documentation][telegrafreceiver_readme].
 
 [input_plugins]: https://github.com/influxdata/telegraf/tree/master/plugins/inputs
 [telegrafreceiver_readme]: ../pkg/receiver/telegrafreceiver
 
 ### OTLP Receiver
 
-OTLP Receiver receives data via gRPC or HTTP using [OTLP][otlp] format.
+The OTLP Receiver receives data via gRPC or HTTP using [OTLP][otlp] format.
 
-The basic configuration for OTLP Receiver has following format:
+The following is a basic configuration for the OTLP Receiver:
 
 ```yaml
 receivers:
@@ -247,16 +247,16 @@ receivers:
       http:
 ```
 
-for details please see [OTLP Receiver documentation][otlpreceiver_readme]
+For details see the [OTLP Receiver documentation][otlpreceiver_readme]
 
 [otlp]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md
 [otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.27.0/receiver/otlpreceiver
 
 ### Receivers from OpenTelemetry Collector
 
-Sumo Logic OT Distro has inbuilt receivers from [OpenTelemetry Collector](https://github.com/SumoLogic/opentelemetry-collector) and they can be used in configuration for this distribution.
+The Sumo Logic OT Distro has built-in receivers from the [OpenTelemetry Collector](https://github.com/SumoLogic/opentelemetry-collector) and are allowed in the configuration for this distribution.
 
-Example configuration to collect CPU load metrics using [Host Metrics Receiver][hostmetricsreceiver]:
+The following is an example configuration to collect CPU load metrics using the [Host Metrics Receiver][hostmetricsreceiver]:
 
 ```yaml
 receivers:
@@ -266,8 +266,7 @@ receivers:
       load:
 ```
 
-for details please see documentation for appropriate receiver.
-Receivers along with documentation can be found [here][opentelemetry-collector-receivers].
+For details see the [receiver documentation][opentelemetry-collector-receivers].
 
 [hostmetricsreceiver]: https://github.com/SumoLogic/opentelemetry-collector/tree/release-0.27/receiver/hostmetricsreceiver
 [opentelemetry-collector]: https://github.com/SumoLogic/opentelemetry-collector/tree/release-0.27
