@@ -21,7 +21,7 @@ Flags:
 
 ## Binary
 
-Visit [releases page][releases_page] in order to download the binary for your OS
+Visit the [releases page][releases_page] to download the binary for your OS
 and then run it as shown below:
 
 ```bash
@@ -37,10 +37,10 @@ otelcol-sumo-darwin_amd64 version v0.0.5
 Our container images are stored in AWS Public ECR under the following repository:
 `public.ecr.aws/sumologic/sumologic-otel-collector`.
 
-One can find all the available tags pushed to this repository at
+You can find all the available tags pushed to this repository at
 https://gallery.ecr.aws/sumologic/sumologic-otel-collector.
 
-In order to run Sumo Logic OT distro in a container one can use the following
+To run the Sumo Logic OT distro in a container you can use the following
 set of commands:
 
 ```bash
