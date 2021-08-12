@@ -1,7 +1,8 @@
 # Configuration
 
 - [Extensions](#extensions)
-  - [Using multiple extensions](#using-multiple-extensions)
+  - [Sumo Logic Extension](#sumo-logic-extension)
+    - [Using multiple Sumo Logic extensions](#using-multiple-sumo-logic-extensions)
 - [Receivers](#receivers)
   - [Filelog Receiver](#filelog-receiver)
   - [Fluent Forward Receiver](#fluent-forward-receiver)
@@ -16,6 +17,8 @@
 ---
 
 ## Extensions
+
+### Sumo Logic Extension
 
 In order to send data to [Sumo Logic][sumologic_webpage] one needs to configure
 the [sumologicextension][sumologicextension] with credentials and define it
@@ -58,7 +61,7 @@ For a list of all configuration options for sumologicextension please refer to
 [hostmetricsreceiver]: https://github.com/SumoLogic/opentelemetry-collector/tree/release-0.27/receiver/hostmetricsreceiver
 [sumologicextension_configuration]: ../pkg/extension/sumologicextension#configuration
 
-### Using multiple extensions
+#### Using multiple Sumo Logic extensions
 
 In case one would want to register multiple collectors and/or send data to
 mutiple orgs at Sumo, mutiple `sumologicextension`s can be defined within the
