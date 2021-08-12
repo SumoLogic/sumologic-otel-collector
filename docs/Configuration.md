@@ -25,7 +25,7 @@ the [sumologicextension][sumologicextension] with credentials and define it
 (the extension) in the same service as the [sumologicexporter][sumologicexporter]
 is defined so that it's used as an auth extension.
 
-The following configuration is a basic example to collect CPU load metrics using 
+The following configuration is a basic example to collect CPU load metrics using
 the [Host Metrics Receiver][hostmetricsreceiver] and send them to Sumo Logic:
 
 ```yaml
