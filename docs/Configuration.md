@@ -12,6 +12,17 @@
   - [OTLP Receiver](#otlp-receiver)
   - [Receivers from OpenTelemetry Collector](#receivers-from-opentelemetry-collector)
 - [Processors](#processors)
+  - [Cascading Filter Processor](#cascading-filter-processor)
+  - [Kubernetes Processor](#kubernetes-processor)
+  - [Source Processor](#source-processor)
+  - [Sumo Logic Syslog Processor](#sumo-logic-syslog-processor)
+  - [Group by Attributes Processor](#group-by-attributes-processor)
+  - [Group by Trace Processor](#group-by-trace-processor)
+  - [Metrics Transform Processor](#metrics-transform-processor)
+  - [Resource Detection Processor](#resource-detection-processor)
+  - [Routing Processor](#routing-processor)
+  - [Span Metrics Processor](#span-metrics-processor)
+  - [Tail Sampling Processor](#tail-sampling-processor)
 - [Exporters](#exporters)
 
 ---
@@ -276,6 +287,290 @@ For details see the [receiver documentation][opentelemetry-collector-receivers].
 
 ## Processors
 
----
+### Cascading Filter Processor
+
+The Cascading Filter Processor is a trace sampling processor
+that allows to define smart cascading filtering rules with preset limits.
+
+Example configuration:
+
+```yaml
+processors:
+  cascading_filter:
+    decision_wait: 10s
+    num_traces: 100
+    expected_new_traces_per_sec: 10
+    spans_per_second: 1000
+    probabilistic_filtering_ratio: 0.1
+    policies:
+      [
+        {
+          name: test-policy-1,
+          spans_per_second: 35,
+        },
+        {
+          name: test-policy-2,
+          spans_per_second: 50,
+          properties: { min_duration: 9s }
+        }
+      ]
+```
+
+For details see [Cascading Filter Processor documentation][cascadingfilterprocessor_docs].
+
+[cascadingfilterprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/cascadingfilterprocessor/README.md
+
+### Kubernetes Processor
+
+The Kubernetes Processor adds Kubernetes-specific metadata to traces, metrics and logs
+by querying the Kubernetes cluster's API server.
+
+This is a Sumo Logic fork of the [upstream k8sprocessor][upstream_k8sprocessor].
+
+Example configuration:
+
+```yaml
+processors:
+  k8s_tagger:
+    extract:
+      metadata:
+        - hostName
+        - startTime
+      tags:
+        hostName: hostname
+```
+
+For details see [Kubernetes Processor documentation][k8sprocessor_docs].
+
+[upstream_k8sprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/k8sprocessor
+[k8sprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/k8sprocessor/README.md
+
+### Source Processor
+
+The Source Processor adds Sumo Logic-specific source metadata like `_source`, `_sourceCategory` etc.
+to traces, metrics and logs.
+
+Example configuration:
+
+```yaml
+processors:
+  source:
+    collector: "mycollector"
+    source_name: "%{namespace}.%{pod}.%{container}"
+    source_category: "%{namespace}/%{pod_name}"
+    source_category_prefix: "kubernetes/"
+    source_category_replace_dash: "/"
+    exclude_namespace_regex: "kube-system"
+```
+
+For details see [Source Processor documentation][sourceprocessor_docs].
+
+[sourceprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/sourceprocessor/README.md
+
+### Sumo Logic Syslog Processor
+
+The Sumo Logic Syslog Processor tries to extract facility code from syslog logs
+and adds the facility's name as a metadata attribute.
+
+Example configuration:
+
+```yaml
+processors:
+  sumologic_syslog:
+    facility_attr: syslog.facility.name
+```
+
+For details see [Sumo Logic Syslog Processor documentation][sumologicsyslogprocessor_docs].
+
+[sumologicsyslogprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/sumologicsyslogprocessor/README.md
+
+### Group by Attributes Processor
+
+The Group by Attributes Processor groups records by provided attributes, extracting them from the record to resource level.
+
+Example configuration:
+
+```yaml
+processors:
+  groupbyattrs:
+    keys:
+      - host.name
+```
+
+For details see [Group by Attributes Processor documentation][groupbyattrsprocessor_docs].
+
+[groupbyattrsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbyattrsprocessor/README.md
+
+### Group by Trace Processor
+
+The Group by Trace Processor tries to collect all spans in a trace
+before releasing that trace for further processing in the collector pipeline.
+
+Example configuration:
+
+```yaml
+processors:
+  groupbytrace:
+    wait_duration: 10s
+    num_traces: 1000
+```
+
+For details see [Group by Trace Processor documentation][groupbytraceprocessor_docs].
+
+[groupbytraceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbytraceprocessor/README.md
+
+### Metrics Transform Processor
+
+The Metrics Transform Processor can be used to rename metrics, and add, rename or delete label keys and values.
+
+Example configuration:
+
+```yaml
+processors:
+  metricstransform:
+    transforms:
+      # rename system.cpu.usage to system.cpu.usage_time
+      - include: system.cpu.usage
+        action: update
+        new_name: system.cpu.usage_time
+```
+
+For details see [Metrics Transform Processor documentation][metrictransformprocessor_docs].
+
+[metrictransformprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbytraceprocessor/README.md
+
+### Resource Detection Processor
+
+The Resource Detection Processor detects resource information from runtime environment
+and adds metadata with this information to the traces, metrics and logs.
+
+Example configuration:
+
+```yaml
+processors:
+  resourcedetection:
+    detectors: ["eks", "ecs", "ec2"]
+```
+
+For details see [Resource Detection Processor documentation][resourcedetectionprocessor_docs].
+
+[resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/README.md
+
+### Routing Processor
+
+The Routing Processor does not alter the records in any way by itself.
+It routes records to specific exporters based based on an attribute's value.
+
+Note that this should be the last processor in the pipeline.
+
+Example configuration:
+
+```yaml
+processors:
+  routing:
+    from_attribute: X-Tenant
+    default_exporters: jaeger
+    table:
+    - value: acme
+      exporters: [jaeger/acme]
+exporters:
+  jaeger:
+    endpoint: localhost:14250
+  jaeger/acme:
+    endpoint: localhost:24250
+```
+
+For details see [Routing Processor documentation][routingprocessor_docs].
+
+[routingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/routingprocessor/README.md
+
+### Span Metrics Processor
+
+The Span Metrics Processor aggregates request, error and duration (R.E.D) metrics from span data.
+
+Example configuration:
+
+```yaml
+receivers:
+  jaeger:
+    protocols:
+      thrift_http:
+        endpoint: "0.0.0.0:14278"
+
+  # Dummy receiver that's never used, because a pipeline is required to have one.
+  otlp/dummy:
+    protocols:
+      grpc:
+        endpoint: "localhost:12345"
+
+exporters:
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: promexample
+
+  jaeger:
+    endpoint: "localhost:14250"
+    insecure: true
+
+processors:
+  batch:
+  spanmetrics:
+    metrics_exporter: prometheus
+    latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 100ms, 250ms]
+    dimensions:
+      - name: http.method
+        default: GET
+      - name: http.status_code
+
+service:
+  pipelines:
+    traces:
+      receivers: [jaeger]
+      # spanmetrics will pass on span data untouched to next processor
+      # while also accumulating metrics to be sent to the configured 'prometheus' exporter.
+      processors: [spanmetrics, batch]
+      exporters: [jaeger]
+
+    metrics:
+      # This receiver is just a dummy and never used.
+      # Added to pass validation requiring at least one receiver in a pipeline.
+      receivers: [otlp/dummy]
+      # The metrics_exporter must be present in this list.
+      exporters: [prometheus]
+```
+
+For details see [Span Metrics Processor documentation][spanmetricsprocessor_docs].
+
+[spanmetricsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/spanmetricsprocessor/README.md
+
+### Tail Sampling Processor
+
+The Tail Sampling Processor samples traces based on a set of defined policies.
+
+Example configuration:
+
+```yaml
+processors:
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 100
+    expected_new_traces_per_sec: 10
+    policies:
+      [
+          {
+            name: test-policy-1,
+            type: always_sample
+          },
+          {
+            name: test-policy-2,
+            type: rate_limiting,
+            rate_limiting: {spans_per_second: 35}
+         }
+      ]
+```
+
+For details see [Tail Sampling Processor documentation][tailsamplingprocessor_docs].
+
+[tailsamplingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md
 
 ## Exporters
