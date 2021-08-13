@@ -6,7 +6,7 @@
 - [Receivers](#receivers)
   - [Sumo Logic Custom Receivers](#sumo-logic-custom-receivers)
     - [Telegraf Receiver](#telegraf-receiver)
-  - [Open Telemetry Upstream Processors](#open-telemetry-upstream-receivers)
+  - [Open Telemetry Upstream Receivers](#open-telemetry-upstream-receivers)
     - [Filelog Receiver](#filelog-receiver)
     - [Fluent Forward Receiver](#fluent-forward-receiver)
     - [Syslog Receiver](#syslog-receiver)
