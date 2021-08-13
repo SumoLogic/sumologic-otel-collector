@@ -167,7 +167,7 @@ receivers:
     endpoint: 0.0.0.0:8006
 ```
 
-For details see the [Fluent Forward Receiver documentation][fluentforwardreceiver_readme].
+For details, see the [Fluent Forward Receiver documentation][fluentforwardreceiver_readme].
 
 [fluent_forward_protocol]: https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1
 [fluentforwardreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/release/v0.27.x/receiver/fluentforwardreceiver
@@ -198,7 +198,7 @@ receivers:
     location: UTC
 ```
 
-For details see the [Syslog Receiver documentation][syslogreceiver_readme].
+For details, see the [Syslog Receiver documentation][syslogreceiver_readme].
 
 [syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.27.0/receiver/syslogreceiver
 
@@ -222,7 +222,7 @@ receivers:
         observer_type: "gauge"
 ```
 
-For details see the [StatsD Receiver documentation][statsdreceiver_readme].
+For details, see the [StatsD Receiver documentation][statsdreceiver_readme].
 
 [statsd_messages]: https://github.com/statsd/statsd/blob/master/docs/metric_types.md
 [statsdreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/release/v0.27.x/receiver/statsdreceiver
@@ -245,7 +245,7 @@ receivers:
       [[inputs.mem]]
 ```
 
-For details see the [Telegraf Receiver documentation][telegrafreceiver_readme].
+For details, see the [Telegraf Receiver documentation][telegrafreceiver_readme].
 
 [input_plugins]: https://github.com/influxdata/telegraf/tree/master/plugins/inputs
 [telegrafreceiver_readme]: ../pkg/receiver/telegrafreceiver
@@ -264,7 +264,7 @@ receivers:
       http:
 ```
 
-For details see the [OTLP Receiver documentation][otlpreceiver_readme]
+For details, see the [OTLP Receiver documentation][otlpreceiver_readme].
 
 [otlp]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md
 [otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.27.0/receiver/otlpreceiver
@@ -283,7 +283,7 @@ receivers:
       load:
 ```
 
-For details see the [receiver documentation][opentelemetry-collector-receivers].
+For details, see the [receiver documentation][opentelemetry-collector-receivers].
 
 [hostmetricsreceiver]: https://github.com/SumoLogic/opentelemetry-collector/tree/release-0.27/receiver/hostmetricsreceiver
 [opentelemetry-collector]: https://github.com/SumoLogic/opentelemetry-collector/tree/release-0.27
@@ -328,7 +328,7 @@ processors:
       ]
 ```
 
-For details see the [Cascading Filter Processor documentation][cascadingfilterprocessor_docs].
+For details, see the [Cascading Filter Processor documentation][cascadingfilterprocessor_docs].
 
 [cascadingfilterprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/cascadingfilterprocessor/README.md
 
@@ -352,7 +352,7 @@ processors:
         hostName: hostname
 ```
 
-For details see the [Kubernetes Processor documentation][k8sprocessor_docs].
+For details, see the [Kubernetes Processor documentation][k8sprocessor_docs].
 
 [upstream_k8sprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/k8sprocessor
 [k8sprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/k8sprocessor/README.md
@@ -375,7 +375,7 @@ processors:
     exclude_namespace_regex: "kube-system"
 ```
 
-For details see the [Source Processor documentation][sourceprocessor_docs].
+For details, see the [Source Processor documentation][sourceprocessor_docs].
 
 [sourceprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/sourceprocessor/README.md
 
@@ -392,7 +392,7 @@ processors:
     facility_attr: syslog.facility.name
 ```
 
-For details see the [Sumo Logic Syslog Processor documentation][sumologicsyslogprocessor_docs].
+For details, see the [Sumo Logic Syslog Processor documentation][sumologicsyslogprocessor_docs].
 
 [sumologicsyslogprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/sumologicsyslogprocessor/README.md
 
@@ -417,7 +417,7 @@ processors:
       - host.name
 ```
 
-For details see the [Group by Attributes Processor documentation][groupbyattrsprocessor_docs].
+For details, see the [Group by Attributes Processor documentation][groupbyattrsprocessor_docs].
 
 [groupbyattrsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbyattrsprocessor/README.md
 
@@ -435,7 +435,7 @@ processors:
     num_traces: 1000
 ```
 
-For details see the [Group by Trace Processor documentation][groupbytraceprocessor_docs].
+For details, see the [Group by Trace Processor documentation][groupbytraceprocessor_docs].
 
 [groupbytraceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbytraceprocessor/README.md
 
@@ -455,7 +455,7 @@ processors:
         new_name: system.cpu.usage_time
 ```
 
-For details see the [Metrics Transform Processor documentation][metrictransformprocessor_docs].
+For details, see the [Metrics Transform Processor documentation][metrictransformprocessor_docs].
 
 [metrictransformprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbytraceprocessor/README.md
 
@@ -472,7 +472,7 @@ processors:
     detectors: ["eks", "ecs", "ec2"]
 ```
 
-For details see the [Resource Detection Processor documentation][resourcedetectionprocessor_docs].
+For details, see the [Resource Detection Processor documentation][resourcedetectionprocessor_docs].
 
 [resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/README.md
 
@@ -500,7 +500,7 @@ exporters:
     endpoint: localhost:24250
 ```
 
-For details see the [Routing Processor documentation][routingprocessor_docs].
+For details, see the [Routing Processor documentation][routingprocessor_docs].
 
 [routingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/routingprocessor/README.md
 
@@ -559,7 +559,7 @@ service:
       exporters: [prometheus]
 ```
 
-For details see the [Span Metrics Processor documentation][spanmetricsprocessor_docs].
+For details, see the [Span Metrics Processor documentation][spanmetricsprocessor_docs].
 
 [spanmetricsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/spanmetricsprocessor/README.md
 
@@ -589,7 +589,7 @@ processors:
       ]
 ```
 
-For details see the [Tail Sampling Processor documentation][tailsamplingprocessor_docs].
+For details, see the [Tail Sampling Processor documentation][tailsamplingprocessor_docs].
 
 [tailsamplingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md
 
@@ -619,7 +619,7 @@ extensions:
     access_key: <my_access_key>
 ```
 
-For details see the [Sumo Logic Exporter documentation][sumologicexporter_docs].
+For details, see the [Sumo Logic Exporter documentation][sumologicexporter_docs].
 
 [sumologicexporter_docs]: ../pkg/exporter/sumologicexporter/README.md
 
@@ -654,6 +654,6 @@ exporters:
         - backend-4:4317
 ```
 
-For details see the [Load Balancing Exporter documentation][loadbalancingexporter_docs].
+For details, see the [Load Balancing Exporter documentation][loadbalancingexporter_docs].
 
 [loadbalancingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/loadbalancingexporter/README.md
