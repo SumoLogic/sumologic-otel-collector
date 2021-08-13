@@ -4,13 +4,15 @@
   - [Sumo Logic Extension](#sumo-logic-extension)
     - [Using multiple Sumo Logic extensions](#using-multiple-sumo-logic-extensions)
 - [Receivers](#receivers)
-  - [Filelog Receiver](#filelog-receiver)
-  - [Fluent Forward Receiver](#fluent-forward-receiver)
-  - [Syslog Receiver](#syslog-receiver)
-  - [Statsd Receiver](#statsd-receiver)
-  - [Telegraf Receiver](#telegraf-receiver)
-  - [OTLP Receiver](#otlp-receiver)
-  - [Receivers from OpenTelemetry Collector](#receivers-from-opentelemetry-collector)
+  - [Sumo Logic Custom Receivers](#sumo-logic-custom-receivers)
+    - [Telegraf Receiver](#telegraf-receiver)
+  - [Open Telemetry Upstream Receivers](#open-telemetry-upstream-receivers)
+    - [Filelog Receiver](#filelog-receiver)
+    - [Fluent Forward Receiver](#fluent-forward-receiver)
+    - [Syslog Receiver](#syslog-receiver)
+    - [Statsd Receiver](#statsd-receiver)
+    - [OTLP Receiver](#otlp-receiver)
+    - [Receivers from OpenTelemetry Collector](#receivers-from-opentelemetry-collector)
 - [Processors](#processors)
   - [Sumo Logic Custom Processors](#sumo-logic-custom-processors)
     - [Cascading Filter Processor](#cascading-filter-processor)
@@ -132,7 +134,42 @@ service:
 
 ## Receivers
 
-### Filelog Receiver
+### Sumo Logic Custom Receivers
+
+The following receivers have been developed by Sumo Logic.
+
+#### Telegraf Receiver
+
+The Telegraf Receiver ingests metrics from various [input plugins][input_plugins]
+into the OTC pipeline.
+
+The following is a basic configuration for the Telegraf Receiver:
+
+```yaml
+receivers:
+  telegraf:
+    separate_field: false
+    agent_config: |
+      [agent]
+        interval = "3s"
+        flush_interval = "3s"
+      [[inputs.mem]]
+```
+
+For details, see the [Telegraf Receiver documentation][telegrafreceiver_readme].
+
+[input_plugins]: https://github.com/influxdata/telegraf/tree/master/plugins/inputs
+[telegrafreceiver_readme]: ../pkg/receiver/telegrafreceiver
+
+### Open Telemetry Upstream Receivers
+
+The following receivers have been developed by the Open Telemetry community
+and are incorporated into the Sumo Logic Open Telemetry distro without any changes.
+
+If you are already familiar with Open Telemetry, you may know how the upstream components work
+and you can expect no changes in their behaviour.
+
+#### Filelog Receiver
 
 The Filelog Receiver tails and parses logs from files using the [opentelemetry-log-collection][opentelemetry-log-collection] library.
 
@@ -154,7 +191,7 @@ For details, see the [Filelog Receiver documentation][filelogreceiver_readme].
 [opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
 [filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.27.0/receiver/filelogreceiver
 
-### Fluent Forward Receiver
+#### Fluent Forward Receiver
 
 The Fluent Forward Receiver runs a TCP server that accepts events via the [Fluent Forward
 protocol][fluent_forward_protocol].
@@ -172,7 +209,7 @@ For details, see the [Fluent Forward Receiver documentation][fluentforwardreceiv
 [fluent_forward_protocol]: https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1
 [fluentforwardreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/release/v0.27.x/receiver/fluentforwardreceiver
 
-### Syslog Receiver
+#### Syslog Receiver
 
 The Syslog Receiver parses Syslogs from tcp/udp using
 the [opentelemetry-log-collection](https://github.com/open-telemetry/opentelemetry-log-collection) library.
@@ -202,7 +239,7 @@ For details, see the [Syslog Receiver documentation][syslogreceiver_readme].
 
 [syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.27.0/receiver/syslogreceiver
 
-### Statsd Receiver
+#### Statsd Receiver
 
 The StatsD Receiver ingests [StatsD messages][statsd_messages] into the OpenTelemetry Collector.
 
@@ -227,30 +264,7 @@ For details, see the [StatsD Receiver documentation][statsdreceiver_readme].
 [statsd_messages]: https://github.com/statsd/statsd/blob/master/docs/metric_types.md
 [statsdreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/release/v0.27.x/receiver/statsdreceiver
 
-### Telegraf Receiver
-
-The Telegraf Receiver ingests metrics from various [input plugins][input_plugins]
-into the OTC pipeline.
-
-The following is a basic configuration for the Telegraf Receiver:
-
-```yaml
-receivers:
-  telegraf:
-    separate_field: false
-    agent_config: |
-      [agent]
-        interval = "3s"
-        flush_interval = "3s"
-      [[inputs.mem]]
-```
-
-For details, see the [Telegraf Receiver documentation][telegrafreceiver_readme].
-
-[input_plugins]: https://github.com/influxdata/telegraf/tree/master/plugins/inputs
-[telegrafreceiver_readme]: ../pkg/receiver/telegrafreceiver
-
-### OTLP Receiver
+#### OTLP Receiver
 
 The OTLP Receiver receives data via gRPC or HTTP using [OTLP][otlp] format.
 
@@ -269,7 +283,7 @@ For details, see the [OTLP Receiver documentation][otlpreceiver_readme].
 [otlp]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md
 [otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.27.0/receiver/otlpreceiver
 
-### Receivers from OpenTelemetry Collector
+#### Receivers from OpenTelemetry Collector
 
 The Sumo Logic OT Distro has built-in receivers from the [OpenTelemetry Collector](https://github.com/SumoLogic/opentelemetry-collector) and are allowed in the configuration for this distribution.
 
