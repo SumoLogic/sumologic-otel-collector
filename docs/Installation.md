@@ -2,7 +2,7 @@
 
 The Sumo Logic OT Distro can be run using either the binary file available in [Github releases][github_releases] or
 the container images stored in AWS Public ECR under the following repository:
-`public.ecr.aws/sumologic/sumologic-otel-collector`.
+[public.ecr.aws/sumologic/sumologic-otel-collector](https://gallery.ecr.aws/sumologic/sumologic-otel-collector).
 
 ## Standalone
 
@@ -52,7 +52,9 @@ To run it as a standalone process you only need to run the binary file downloade
 ## Container image
 
 To run the Sumo Logic OT Distro in a container, you only need to run the container
-using the image available in the `public.ecr.aws/sumologic/sumologic-otel-collector` repository.
+using the image available in the
+[public.ecr.aws/sumologic/sumologic-otel-collector](https://gallery.ecr.aws/sumologic/sumologic-otel-collector)
+repository.
 
 1. Set the release version variable:
 
