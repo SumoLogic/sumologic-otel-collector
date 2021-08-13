@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# The purpose of this script is to make sure all links pointing to this repository are relative.
+
 if [[ $(uname) == "Darwin" ]]; then
 readonly GREP=ggrep
 else
@@ -18,7 +20,7 @@ for file in ${FILES}; do
     # filter out links ended with /releases
     # filter out links to CI badges
     if ${GREP} -HnoP '\[[^\]]*\]\([^\)]*\)' "${file}" \
-        | ${GREP} 'sumologic-otel-collector' \
+        | ${GREP} -i 'github\.com\/sumologic\/sumologic-otel-collector' \
         | ${GREP} -vP '(\/(blob|tree)\/(v\d+\.|[a-f0-9]{40}\/|release\-))' \
         | ${GREP} -vP '\/releases\)' \
         | ${GREP} -vP '\/badge.svg\)' \
