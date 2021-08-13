@@ -24,6 +24,8 @@
   - [Span Metrics Processor](#span-metrics-processor)
   - [Tail Sampling Processor](#tail-sampling-processor)
 - [Exporters](#exporters)
+  - [Sumo Logic Exporter](#sumo-logic-exporter)
+  - [Load Balancing Exporter](#load-balancing-exporter)
 
 ---
 
@@ -316,7 +318,7 @@ processors:
       ]
 ```
 
-For details see [Cascading Filter Processor documentation][cascadingfilterprocessor_docs].
+For details see the [Cascading Filter Processor documentation][cascadingfilterprocessor_docs].
 
 [cascadingfilterprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/cascadingfilterprocessor/README.md
 
@@ -340,7 +342,7 @@ processors:
         hostName: hostname
 ```
 
-For details see [Kubernetes Processor documentation][k8sprocessor_docs].
+For details see the [Kubernetes Processor documentation][k8sprocessor_docs].
 
 [upstream_k8sprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/k8sprocessor
 [k8sprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/k8sprocessor/README.md
@@ -363,7 +365,7 @@ processors:
     exclude_namespace_regex: "kube-system"
 ```
 
-For details see [Source Processor documentation][sourceprocessor_docs].
+For details see the [Source Processor documentation][sourceprocessor_docs].
 
 [sourceprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/sourceprocessor/README.md
 
@@ -380,7 +382,7 @@ processors:
     facility_attr: syslog.facility.name
 ```
 
-For details see [Sumo Logic Syslog Processor documentation][sumologicsyslogprocessor_docs].
+For details see the [Sumo Logic Syslog Processor documentation][sumologicsyslogprocessor_docs].
 
 [sumologicsyslogprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/sumologicsyslogprocessor/README.md
 
@@ -397,7 +399,7 @@ processors:
       - host.name
 ```
 
-For details see [Group by Attributes Processor documentation][groupbyattrsprocessor_docs].
+For details see the [Group by Attributes Processor documentation][groupbyattrsprocessor_docs].
 
 [groupbyattrsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbyattrsprocessor/README.md
 
@@ -415,7 +417,7 @@ processors:
     num_traces: 1000
 ```
 
-For details see [Group by Trace Processor documentation][groupbytraceprocessor_docs].
+For details see the [Group by Trace Processor documentation][groupbytraceprocessor_docs].
 
 [groupbytraceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbytraceprocessor/README.md
 
@@ -435,7 +437,7 @@ processors:
         new_name: system.cpu.usage_time
 ```
 
-For details see [Metrics Transform Processor documentation][metrictransformprocessor_docs].
+For details see the [Metrics Transform Processor documentation][metrictransformprocessor_docs].
 
 [metrictransformprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbytraceprocessor/README.md
 
@@ -452,7 +454,7 @@ processors:
     detectors: ["eks", "ecs", "ec2"]
 ```
 
-For details see [Resource Detection Processor documentation][resourcedetectionprocessor_docs].
+For details see the [Resource Detection Processor documentation][resourcedetectionprocessor_docs].
 
 [resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/README.md
 
@@ -480,7 +482,7 @@ exporters:
     endpoint: localhost:24250
 ```
 
-For details see [Routing Processor documentation][routingprocessor_docs].
+For details see the [Routing Processor documentation][routingprocessor_docs].
 
 [routingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/routingprocessor/README.md
 
@@ -539,7 +541,7 @@ service:
       exporters: [prometheus]
 ```
 
-For details see [Span Metrics Processor documentation][spanmetricsprocessor_docs].
+For details see the [Span Metrics Processor documentation][spanmetricsprocessor_docs].
 
 [spanmetricsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/spanmetricsprocessor/README.md
 
@@ -569,8 +571,59 @@ processors:
       ]
 ```
 
-For details see [Tail Sampling Processor documentation][tailsamplingprocessor_docs].
+For details see the [Tail Sampling Processor documentation][tailsamplingprocessor_docs].
 
 [tailsamplingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md
 
 ## Exporters
+
+### Sumo Logic Exporter
+
+The Sumo Logic Exporter supports sending data to [Sumo Logic](https://www.sumologic.com/).
+
+Example configuration with using the [Sumo Logic Extension](#sumo-logic-extension) for authentication
+and setting a custom source category:
+
+```yaml
+exporters:
+  sumologic:
+    auth:
+      authenticator: sumologic
+    source_category: my-category
+
+extensions:
+  sumologic:
+    access_id: <my_access_id>
+    access_key: <my_access_key>
+```
+
+For details see the [Sumo Logic Exporter documentation][sumologicexporter_docs].
+
+[sumologicexporter_docs]: ../pkg/exporter/sumologicexporter/README.md
+
+### Load Balancing Exporter
+
+The Load Balancing Exporter consistently exports spans and logs belonging to the same trace to the same backend.
+
+Example configuration:
+
+```yaml
+exporters:
+  loadbalancing:
+    protocol:
+      otlp:
+        # all options from the OTLP exporter are supported
+        # except the endpoint
+        timeout: 1s
+    resolver:
+      static:
+        hostnames:
+        - backend-1:4317
+        - backend-2:4317
+        - backend-3:4317
+        - backend-4:4317
+```
+
+For details see the [Load Balancing Exporter documentation][loadbalancingexporter_docs].
+
+[loadbalancingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/loadbalancingexporter/README.md
