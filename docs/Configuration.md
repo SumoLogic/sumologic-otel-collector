@@ -12,20 +12,24 @@
   - [OTLP Receiver](#otlp-receiver)
   - [Receivers from OpenTelemetry Collector](#receivers-from-opentelemetry-collector)
 - [Processors](#processors)
-  - [Cascading Filter Processor](#cascading-filter-processor)
-  - [Kubernetes Processor](#kubernetes-processor)
-  - [Source Processor](#source-processor)
-  - [Sumo Logic Syslog Processor](#sumo-logic-syslog-processor)
-  - [Group by Attributes Processor](#group-by-attributes-processor)
-  - [Group by Trace Processor](#group-by-trace-processor)
-  - [Metrics Transform Processor](#metrics-transform-processor)
-  - [Resource Detection Processor](#resource-detection-processor)
-  - [Routing Processor](#routing-processor)
-  - [Span Metrics Processor](#span-metrics-processor)
-  - [Tail Sampling Processor](#tail-sampling-processor)
+  - [Sumo Logic Custom Processors](#sumo-logic-custom-processors)
+    - [Cascading Filter Processor](#cascading-filter-processor)
+    - [Kubernetes Processor](#kubernetes-processor)
+    - [Source Processor](#source-processor)
+    - [Sumo Logic Syslog Processor](#sumo-logic-syslog-processor)
+  - [Open Telemetry Upstream Processors](#open-telemetry-upstream-processors)
+    - [Group by Attributes Processor](#group-by-attributes-processor)
+    - [Group by Trace Processor](#group-by-trace-processor)
+    - [Metrics Transform Processor](#metrics-transform-processor)
+    - [Resource Detection Processor](#resource-detection-processor)
+    - [Routing Processor](#routing-processor)
+    - [Span Metrics Processor](#span-metrics-processor)
+    - [Tail Sampling Processor](#tail-sampling-processor)
 - [Exporters](#exporters)
-  - [Sumo Logic Exporter](#sumo-logic-exporter)
-  - [Load Balancing Exporter](#load-balancing-exporter)
+  - [Sumo Logic Custom Exporters](#sumo-logic-custom-exporters)
+    - [Sumo Logic Exporter](#sumo-logic-exporter)
+  - [Open Telemetry Upstream Exporters](#open-telemetry-upstream-exporters)
+    - [Load Balancing Exporter](#load-balancing-exporter)
 
 ---
 
@@ -289,7 +293,13 @@ For details see the [receiver documentation][opentelemetry-collector-receivers].
 
 ## Processors
 
-### Cascading Filter Processor
+### Sumo Logic Custom Processors
+
+The following processors have been developed by Sumo Logic
+either from scratch (like the [Sumo Logic Syslog Processor](#sumo-logic-syslog-processor))
+or as a customized version of upstream processor (like the [Kubernetes Processor](#kubernetes-processor)).
+
+#### Cascading Filter Processor
 
 The Cascading Filter Processor is a trace sampling processor
 that allows to define smart cascading filtering rules with preset limits.
@@ -322,7 +332,7 @@ For details see the [Cascading Filter Processor documentation][cascadingfilterpr
 
 [cascadingfilterprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/cascadingfilterprocessor/README.md
 
-### Kubernetes Processor
+#### Kubernetes Processor
 
 The Kubernetes Processor adds Kubernetes-specific metadata to traces, metrics and logs
 by querying the Kubernetes cluster's API server.
@@ -347,7 +357,7 @@ For details see the [Kubernetes Processor documentation][k8sprocessor_docs].
 [upstream_k8sprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/k8sprocessor
 [k8sprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/k8sprocessor/README.md
 
-### Source Processor
+#### Source Processor
 
 The Source Processor adds Sumo Logic-specific source metadata like `_source`, `_sourceCategory` etc.
 to traces, metrics and logs.
@@ -369,7 +379,7 @@ For details see the [Source Processor documentation][sourceprocessor_docs].
 
 [sourceprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/sourceprocessor/README.md
 
-### Sumo Logic Syslog Processor
+#### Sumo Logic Syslog Processor
 
 The Sumo Logic Syslog Processor tries to extract facility code from syslog logs
 and adds the facility's name as a metadata attribute.
@@ -386,7 +396,15 @@ For details see the [Sumo Logic Syslog Processor documentation][sumologicsyslogp
 
 [sumologicsyslogprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/sumologicsyslogprocessor/README.md
 
-### Group by Attributes Processor
+### Open Telemetry Upstream Processors
+
+The following processors have been developed by the Open Telemetry community
+and are incorporated into the Sumo Logic Open Telemetry distro without any changes.
+
+If you are already familiar with Open Telemetry, you may know how the upstream components work
+and you can expect no changes in their behaviour.
+
+#### Group by Attributes Processor
 
 The Group by Attributes Processor groups records by provided attributes, extracting them from the record to resource level.
 
@@ -403,7 +421,7 @@ For details see the [Group by Attributes Processor documentation][groupbyattrspr
 
 [groupbyattrsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbyattrsprocessor/README.md
 
-### Group by Trace Processor
+#### Group by Trace Processor
 
 The Group by Trace Processor tries to collect all spans in a trace
 before releasing that trace for further processing in the collector pipeline.
@@ -421,7 +439,7 @@ For details see the [Group by Trace Processor documentation][groupbytraceprocess
 
 [groupbytraceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbytraceprocessor/README.md
 
-### Metrics Transform Processor
+#### Metrics Transform Processor
 
 The Metrics Transform Processor can be used to rename metrics, and add, rename or delete label keys and values.
 
@@ -441,7 +459,7 @@ For details see the [Metrics Transform Processor documentation][metrictransformp
 
 [metrictransformprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbytraceprocessor/README.md
 
-### Resource Detection Processor
+#### Resource Detection Processor
 
 The Resource Detection Processor detects resource information from runtime environment
 and adds metadata with this information to the traces, metrics and logs.
@@ -458,7 +476,7 @@ For details see the [Resource Detection Processor documentation][resourcedetecti
 
 [resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/README.md
 
-### Routing Processor
+#### Routing Processor
 
 The Routing Processor does not alter the records in any way by itself.
 It routes records to specific exporters based based on an attribute's value.
@@ -486,7 +504,7 @@ For details see the [Routing Processor documentation][routingprocessor_docs].
 
 [routingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/routingprocessor/README.md
 
-### Span Metrics Processor
+#### Span Metrics Processor
 
 The Span Metrics Processor aggregates request, error and duration (R.E.D) metrics from span data.
 
@@ -545,7 +563,7 @@ For details see the [Span Metrics Processor documentation][spanmetricsprocessor_
 
 [spanmetricsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/spanmetricsprocessor/README.md
 
-### Tail Sampling Processor
+#### Tail Sampling Processor
 
 The Tail Sampling Processor samples traces based on a set of defined policies.
 
@@ -577,7 +595,11 @@ For details see the [Tail Sampling Processor documentation][tailsamplingprocesso
 
 ## Exporters
 
-### Sumo Logic Exporter
+### Sumo Logic Custom Exporters
+
+The following exporters have been developed by Sumo Logic.
+
+#### Sumo Logic Exporter
 
 The Sumo Logic Exporter supports sending data to [Sumo Logic](https://www.sumologic.com/).
 
@@ -601,7 +623,15 @@ For details see the [Sumo Logic Exporter documentation][sumologicexporter_docs].
 
 [sumologicexporter_docs]: ../pkg/exporter/sumologicexporter/README.md
 
-### Load Balancing Exporter
+### Open Telemetry Upstream Exporters
+
+The following exporters have been developed by the Open Telemetry community
+and are incorporated into the Sumo Logic Open Telemetry distro without any changes.
+
+If you are already familiar with Open Telemetry, you may know how the upstream components work
+and you can expect no changes in their behaviour.
+
+#### Load Balancing Exporter
 
 The Load Balancing Exporter consistently exports spans and logs belonging to the same trace to the same backend.
 
