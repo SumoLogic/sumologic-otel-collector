@@ -4,28 +4,84 @@ The Sumo Logic OT Distro can be run using either the binary file available in [G
 the container images stored in AWS Public ECR under the following repository:
 [public.ecr.aws/sumologic/sumologic-otel-collector](https://gallery.ecr.aws/sumologic/sumologic-otel-collector).
 
+- [Standalone](#standalone)
+  - [Linux on amd64 (x86-64)](#linux-on-amd64-x86-64)
+  - [Linux on arm64](#linux-on-arm64)
+  - [MacOS on amd64 (x86-64)](#macos-on-amd64-x86-64)
+- [Container image](#container-image)
+
 ## Standalone
 
 The Sumo Logic OT Distro is a static Go binary.
 To run it as a standalone process you only need to run the binary file downloaded from
 [Github releases][github_releases] with an appropriate configuration.
 
-1. Set the release version variable:
+Follow the steps for your platform below.
 
-   ```bash
-   export RELEASE_VERSION=0.0.12
-   ```
-
-1. Set the platform variable:
-
-    ```bash
-    export PLATFORM=linux_amd64
-    ```
+### Linux on amd64 (x86-64)
 
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${RELEASE_VERSION}/otelcol-sumo-${RELEASE_VERSION}-${PLATFORM}"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.0.18/otelcol-sumo-0.0.18-linux_amd64"
+    ```
+
+1. Install the release binary in your `PATH`:
+
+    ```bash
+    chmod +x otelcol-sumo
+    sudo mv otelcol-sumo /usr/local/bin/otelcol-sumo
+    ```
+
+1. Verify the installation:
+
+    ```bash
+    otelcol-sumo --version
+    ```
+
+1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
+
+1. Run Sumo Logic OT Distro:
+
+   ```bash
+   otelcol-sumo --config config.yaml
+   ```
+
+### Linux on arm64
+
+1. Download the release binary:
+
+    ```bash
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.0.18/otelcol-sumo-0.0.18-linux_arm64"
+    ```
+
+1. Install the release binary in your `PATH`:
+
+    ```bash
+    chmod +x otelcol-sumo
+    sudo mv otelcol-sumo /usr/local/bin/otelcol-sumo
+    ```
+
+1. Verify the installation:
+
+    ```bash
+    otelcol-sumo --version
+    ```
+
+1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
+
+1. Run Sumo Logic OT Distro:
+
+   ```bash
+   otelcol-sumo --config config.yaml
+   ```
+
+### MacOS on amd64 (x86-64)
+
+1. Download the release binary:
+
+    ```bash
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.0.18/otelcol-sumo-0.0.18-darwin_amd64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -59,7 +115,7 @@ repository.
 1. Set the release version variable:
 
    ```bash
-   export RELEASE_VERSION=0.0.12
+   export RELEASE_VERSION=0.0.18
    ```
 
 1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
