@@ -264,7 +264,7 @@ receivers:
       http:
 ```
 
-For details, see the [OTLP Receiver documentation][otlpreceiver_readme]
+For details, see the [OTLP Receiver documentation][otlpreceiver_readme].
 
 [otlp]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md
 [otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.27.0/receiver/otlpreceiver
