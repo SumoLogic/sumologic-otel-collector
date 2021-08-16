@@ -10,6 +10,7 @@ the container images stored in AWS Public ECR under the following repository:
   - [MacOS on amd64 (x86-64)](#macos-on-amd64-x86-64)
   - [Upgrading standalone installation](#upgrading-standalone-installation)
 - [Container image](#container-image)
+- [Systemd service](#systemd-service)
 
 ## Standalone
 
@@ -149,3 +150,61 @@ repository.
     ```
 
 [github_releases]: https://github.com/SumoLogic/sumologic-otel-collector/releases
+
+## Systemd Service
+
+To run opentelemetry collector as Systemd Service please apply following steps:
+
+1. Ensure that `otelcol-sumo` [has been installed](#linux-on-amd64-x86-64) into `/usr/local/bin/otelcol-sumo`:
+
+   ```bash
+   /usr/local/bin/otelcol-sumo --version
+   ```
+
+1. Create configuration file and save it as `/etc/otelcol-sumo/config.yml`.
+
+1. Create `user` and `group` to run opentelemetry by:
+
+   ```bash
+   sudo useradd -rUs /bin/false opentelemetry
+   ```
+
+1. Verify if opentelemetry collector runs without errors:
+
+   ```bash
+   sudo su -s /bin/bash opentelemetry -c '/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yml'
+   ```
+
+1. Create service file: `/etc/systemd/system/otelcol-sumo.service`:
+
+   ```conf
+   [Unit]
+   Description=Sumologic Opentelemetry Collector
+
+   [Service]
+   ExecStart=/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yml
+   User=opentelemetry
+   Group=opentelemetry
+   MemoryHigh=200M
+   MemoryMax=300M
+   TimeoutStopSec=20
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+   _Note: adjust memory configuration to your setup._
+
+1. Enable autostart of the service:
+
+   ```bash
+   sudo systemctl enable otelcol-sumo
+   ```
+
+1. Start service and check status:
+
+   ```bash
+   sudo systemctl start otelcol-sumo
+   sudo systemctl status otelcol-sumo  # checks status
+   sudo journalctl -u otelcol-sumo  # checks logs
+   ```
