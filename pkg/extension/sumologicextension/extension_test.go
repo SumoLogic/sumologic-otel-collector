@@ -662,7 +662,7 @@ func TestRegisterEmptyCollectorNameWithBackoff(t *testing.T) {
 					"collector didn't send correct Authorization header with registration request")
 
 				if reqCount < retriesLimit {
-					w.WriteHeader(http.StatusNotFound)
+					w.WriteHeader(http.StatusTooManyRequests)
 				} else {
 
 					_, err := w.Write([]byte(`{
@@ -708,6 +708,54 @@ func TestRegisterEmptyCollectorNameWithBackoff(t *testing.T) {
 	se, err := newSumologicExtension(cfg, zap.NewNop())
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+	regexPattern := fmt.Sprintf("%s-%s", hostname, uuidRegex)
+	matched, err := regexp.MatchString(regexPattern, se.collectorName)
+	require.NoError(t, err)
+	assert.True(t, matched)
+}
+
+func TestRegisterEmptyCollectorNameUnrecoverableError(t *testing.T) {
+	t.Parallel()
+
+	hostname, err := os.Hostname()
+	require.NoError(t, err)
+	srv := httptest.NewServer(func() http.HandlerFunc {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			// TODO Add payload verification - verify if collectorName is set properly
+			require.Equal(t, registerUrl, req.URL.Path)
+
+			authHeader := req.Header.Get("Authorization")
+			token := base64.StdEncoding.EncodeToString(
+				[]byte("dummy_access_id:dummy_access_key"),
+			)
+			assert.Equal(t, "Basic "+token, authHeader,
+				"collector didn't send correct Authorization header with registration request")
+
+			w.WriteHeader(http.StatusNotFound)
+		})
+	}())
+
+	dir, err := os.MkdirTemp("", "otelcol-sumo-store-credentials-test-*")
+	t.Cleanup(func() {
+		srv.Close()
+		os.RemoveAll(dir)
+	})
+	require.NoError(t, err)
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.CollectorName = ""
+	cfg.ExtensionSettings = config.ExtensionSettings{}
+	cfg.ApiBaseUrl = srv.URL
+	cfg.Credentials.AccessID = "dummy_access_id"
+	cfg.Credentials.AccessKey = "dummy_access_key"
+	cfg.CollectorCredentialsDirectory = dir
+	cfg.BackOff.InitialInterval = time.Millisecond
+	cfg.BackOff.MaxInterval = time.Millisecond
+
+	se, err := newSumologicExtension(cfg, zap.NewNop())
+	require.NoError(t, err)
+	require.EqualError(t, se.Start(context.Background(), componenttest.NewNopHost()),
+		"collector registration failed: failed to register the collector, got HTTP status code: 404")
 	regexPattern := fmt.Sprintf("%s-%s", hostname, uuidRegex)
 	matched, err := regexp.MatchString(regexPattern, se.collectorName)
 	require.NoError(t, err)
