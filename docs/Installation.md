@@ -8,6 +8,7 @@ the container images stored in AWS Public ECR under the following repository:
   - [Linux on amd64 (x86-64)](#linux-on-amd64-x86-64)
   - [Linux on arm64](#linux-on-arm64)
   - [MacOS on amd64 (x86-64)](#macos-on-amd64-x86-64)
+  - [Upgrading standalone installation](#upgrading-standalone-installation)
 - [Container image](#container-image)
 
 ## Standalone
@@ -104,6 +105,14 @@ Follow the steps for your platform below.
    ```bash
    otelcol-sumo --config config.yaml
    ```
+
+### Upgrading standalone installation
+
+To upgrade, simply perform the above installation steps again,
+overwriting the `otelcol-sumo` binary with newer version.
+
+Before running the newer version, make sure to check the [release notes][github_releases]
+for potential breaking changes that would require manual migration steps.
 
 ## Container image
 
