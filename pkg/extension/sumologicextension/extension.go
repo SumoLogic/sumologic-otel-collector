@@ -286,10 +286,19 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 			zap.Int("status_code", res.StatusCode),
 			zap.String("response", buff.String()),
 		)
-		return CollectorCredentials{}, fmt.Errorf(
-			"failed to register the collector, got HTTP status code: %d",
-			res.StatusCode,
-		)
+
+		// Return unrecoverable error for 4xx status codes except 429
+		if res.StatusCode >= 400 && res.StatusCode < 500 && res.StatusCode != 429 {
+			return CollectorCredentials{}, backoff.Permanent(fmt.Errorf(
+				"failed to register the collector, got HTTP status code: %d",
+				res.StatusCode,
+			))
+		} else {
+			return CollectorCredentials{}, fmt.Errorf(
+				"failed to register the collector, got HTTP status code: %d",
+				res.StatusCode,
+			)
+		}
 	}
 
 	var resp api.OpenRegisterResponsePayload
@@ -322,8 +331,9 @@ func (se *SumologicExtension) registerCollectorWithBackoff(ctx context.Context, 
 		se.logger.Warn("Collector registration failed: ", zap.Error(err))
 
 		nbo := se.backOff.NextBackOff()
-		if nbo == se.backOff.Stop {
-			return CollectorCredentials{}, fmt.Errorf("collector registration failed")
+		// Return error if backoff reaches the limit or uncoverable error is spotted
+		if _, ok := err.(*backoff.PermanentError); nbo == se.backOff.Stop || ok {
+			return CollectorCredentials{}, fmt.Errorf("collector registration failed: %v", err)
 		}
 		time.Sleep(nbo)
 	}
