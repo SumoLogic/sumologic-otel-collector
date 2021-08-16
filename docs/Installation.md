@@ -1,14 +1,14 @@
 # Installation
 
-Sumo Logic OT Distro can be run either using binary file available in [Github releases][github_releases] or
-using container images which are stored in AWS Public ECR under the following repository:
-`public.ecr.aws/sumologic/sumologic-otel-collector`.
+The Sumo Logic OT Distro can be run using either the binary file available in [Github releases][github_releases] or
+the container images stored in AWS Public ECR under the following repository:
+[public.ecr.aws/sumologic/sumologic-otel-collector](https://gallery.ecr.aws/sumologic/sumologic-otel-collector).
 
 ## Standalone
 
-Sumo Logic OT Distro is a static Go binary.
-To run it as standalone process you only need to run the binary file downloaded from
-[Github releases][github_releases] with appropriate configuration.
+The Sumo Logic OT Distro is a static Go binary.
+To run it as a standalone process you only need to run the binary file downloaded from
+[Github releases][github_releases] with an appropriate configuration.
 
 1. Set the release version variable:
 
@@ -35,13 +35,13 @@ To run it as standalone process you only need to run the binary file downloaded 
     sudo mv otelcol-sumo /usr/local/bin/otelcol-sumo
     ```
 
-1. Verify installation:
+1. Verify the installation:
 
     ```bash
     otelcol-sumo --version
     ```
 
-1. Prepare configuration according to [this](Configuration.md) documentation and save it in `config.yaml`
+1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
 
 1. Run Sumo Logic OT Distro:
 
@@ -51,8 +51,10 @@ To run it as standalone process you only need to run the binary file downloaded 
 
 ## Container image
 
-In order to run Sumo Logic OT Distro in a container you only need to run the container
-using the image available in `public.ecr.aws/sumologic/sumologic-otel-collector` repository.
+To run the Sumo Logic OT Distro in a container, you only need to run the container
+using the image available in the
+[public.ecr.aws/sumologic/sumologic-otel-collector](https://gallery.ecr.aws/sumologic/sumologic-otel-collector)
+repository.
 
 1. Set the release version variable:
 
@@ -60,9 +62,9 @@ using the image available in `public.ecr.aws/sumologic/sumologic-otel-collector`
    export RELEASE_VERSION=0.0.12
    ```
 
-1. Prepare configuration according to [this](Configuration.md) documentation and save it in `config.yaml`
+1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
 
-1. Run Sumo Logic OT Distro in container, e.g.
+1. Run the Sumo Logic OT Distro in container, e.g.
 
     ```bash
     $ docker run --rm -ti --name sumologic-otel-collector -v "$(pwd)/config.yaml:/etc/config.yaml" "public.ecr.aws/sumologic/sumologic-otel-collector:${RELEASE_VERSION}" --config /etc/config.yaml
