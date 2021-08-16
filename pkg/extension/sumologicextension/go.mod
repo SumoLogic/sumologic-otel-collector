@@ -3,6 +3,8 @@ module github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumol
 go 1.14
 
 require (
+	github.com/cenkalti/backoff v2.2.1+incompatible
+	github.com/cenkalti/backoff/v4 v4.1.1
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
 	github.com/mattn/go-colorable v0.1.7 // indirect

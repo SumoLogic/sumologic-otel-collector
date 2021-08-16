@@ -19,6 +19,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/cenkalti/backoff"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/extension/extensionhelper"
@@ -54,6 +55,11 @@ func createDefaultConfig() config.Extension {
 		Clobber:                       false,
 		Ephemeral:                     false,
 		TimeZone:                      "",
+		BackOff: backOffConfig{
+			InitialInterval: backoff.DefaultInitialInterval,
+			MaxInterval:     backoff.DefaultMaxInterval,
+			MaxElapsedTime:  backoff.DefaultMaxElapsedTime,
+		},
 	}
 }
 
