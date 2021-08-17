@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-export BUILDER_VERSION=0.27.0
-export GO_VERSION=1.17rc2
+export BUILDER_VERSION=0.31.0
+export GO_VERSION=1.17
 
 # Install opentelemetry-collector-builder
 curl -LJ \

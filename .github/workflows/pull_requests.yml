@@ -58,10 +58,10 @@ jobs:
             go: '1.16.5'
           - arch_os: linux_amd64
             runs_on: ubuntu-20.04
-            go: '1.17.0-rc2'
+            go: '1.17.0'
           - arch_os: darwin_amd64
             runs_on: macos-latest
-            go: '1.17.0-rc2'
+            go: '1.17.0'
     steps:
       - uses: actions/checkout@v2.3.4
 
@@ -90,7 +90,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: [ '1.16.5', '1.17.0-rc2' ]
+        go: [ '1.16.5', '1.17.0' ]
         arch_os: [ 'linux_amd64' ]
     steps:
       - uses: actions/checkout@v2.3.4
@@ -144,13 +144,13 @@ jobs:
             go: '1.16.5'
           - arch_os: linux_amd64
             runs_on: ubuntu-20.04
-            go: '1.17.0-rc2'
+            go: '1.17.0'
           - arch_os: linux_arm64
             runs_on: ubuntu-20.04
-            go: '1.17.0-rc2'
+            go: '1.17.0'
           - arch_os: darwin_amd64
             runs_on: macos-latest
-            go: '1.17.0-rc2'
+            go: '1.17.0'
     steps:
       - uses: actions/checkout@v2.3.4
 
