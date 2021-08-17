@@ -1,7 +1,7 @@
 package metricfrequencyprocessor
 
 import (
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 type siftAllSieve struct{}

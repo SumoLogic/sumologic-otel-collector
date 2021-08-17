@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 const (
@@ -41,7 +41,7 @@ func newMetricCache() *metricCache {
 	return c
 }
 
-func (mc *metricCache) Register(name string, dataPoint pdata.DoubleDataPoint) {
+func (mc *metricCache) Register(name string, dataPoint pdata.NumberDataPoint) {
 
 	internalCache, exists := mc.internalCaches[name]
 	if !exists {

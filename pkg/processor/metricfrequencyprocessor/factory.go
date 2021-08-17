@@ -21,11 +21,12 @@ func NewFactory() component.ProcessorFactory {
 
 func createMetricsProcessor(
 	_ context.Context,
-	_ component.ProcessorCreateParams,
+	_ component.ProcessorCreateSettings,
 	cfg config.Processor,
 	nextConsumer consumer.Metrics,
 ) (component.MetricsProcessor, error) {
-	return processorhelper.NewMetricsProcessor(cfg, nextConsumer, &metricsfrequencyprocessor{
+	var internalProcessor = &metricsfrequencyprocessor{
 		sieve: newMetricSieve(),
-	})
+	}
+	return processorhelper.NewMetricsProcessor(cfg, nextConsumer, internalProcessor.ProcessMetrics)
 }

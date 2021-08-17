@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 func TestEmptyRead(t *testing.T) {
@@ -51,9 +51,9 @@ var emptyResult = make(map[pdata.Timestamp]float64)
 var timestamp1 = pdata.TimestampFromTime(time.Unix(0, 0))
 var timestamp2 = pdata.TimestampFromTime(time.Unix(1, 0))
 
-func newDataPoint(timestamp pdata.Timestamp, value float64) pdata.DoubleDataPoint {
-	result := pdata.NewDoubleDataPoint()
+func newDataPoint(timestamp pdata.Timestamp, value float64) pdata.NumberDataPoint {
+	result := pdata.NewNumberDataPoint()
 	result.SetTimestamp(timestamp)
-	result.SetValue(value)
+	result.SetDoubleVal(value)
 	return result
 }

@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 const (
@@ -48,7 +48,7 @@ func newMetricSieve() *defaultMetricSieve {
 // It returns true if the metric should be removed.
 func (fs *defaultMetricSieve) Sift(metric pdata.Metric) bool {
 	switch metric.DataType() {
-	case pdata.MetricDataTypeDoubleGauge:
+	case pdata.MetricDataTypeGauge:
 		return fs.siftDropGauge(metric)
 	default:
 		return false
@@ -56,13 +56,13 @@ func (fs *defaultMetricSieve) Sift(metric pdata.Metric) bool {
 }
 
 func (fs *defaultMetricSieve) siftDropGauge(metric pdata.Metric) bool {
-	metric.DoubleGauge().DataPoints().RemoveIf(fs.siftDataPoint(metric.Name()))
+	metric.Gauge().DataPoints().RemoveIf(fs.siftDataPoint(metric.Name()))
 
-	return metric.DoubleGauge().DataPoints().Len() == 0
+	return metric.Gauge().DataPoints().Len() == 0
 }
 
-func (fs *defaultMetricSieve) siftDataPoint(name string) func(pdata.DoubleDataPoint) bool {
-	return func(dataPoint pdata.DoubleDataPoint) bool {
+func (fs *defaultMetricSieve) siftDataPoint(name string) func(pdata.NumberDataPoint) bool {
+	return func(dataPoint pdata.NumberDataPoint) bool {
 		cachedPoints := fs.metricCache.List(name)
 		fs.metricCache.Register(name, dataPoint)
 		lastReported, exists := fs.lastReported[name]
@@ -105,15 +105,15 @@ func (fs *defaultMetricSieve) siftDataPoint(name string) func(pdata.DoubleDataPo
 	}
 }
 
-func metricRequiresSamples(point pdata.DoubleDataPoint, earliest pdata.Timestamp) bool {
+func metricRequiresSamples(point pdata.NumberDataPoint, earliest pdata.Timestamp) bool {
 	return point.Timestamp().AsTime().Before(earliest.AsTime().Add(minPointAccumulationTime))
 }
 
-func pastCategoryFrequency(point pdata.DoubleDataPoint, lastReport pdata.Timestamp, categoryFrequency time.Duration) bool {
+func pastCategoryFrequency(point pdata.NumberDataPoint, lastReport pdata.Timestamp, categoryFrequency time.Duration) bool {
 	return point.Timestamp().AsTime().After(lastReport.AsTime().Add(categoryFrequency).Add(safetyInterval))
 }
 
-func isConstant(point pdata.DoubleDataPoint, points map[pdata.Timestamp]float64) bool {
+func isConstant(point pdata.NumberDataPoint, points map[pdata.Timestamp]float64) bool {
 	for _, value := range points {
 		if !almostEqual(point.Value(), value) {
 			return false

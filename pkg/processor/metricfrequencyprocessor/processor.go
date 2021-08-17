@@ -3,7 +3,7 @@ package metricfrequencyprocessor
 import (
 	"context"
 
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 	"go.opentelemetry.io/collector/processor/processorhelper"
 )
 
@@ -11,7 +11,7 @@ type metricsfrequencyprocessor struct {
 	sieve metricSieve
 }
 
-var _ processorhelper.MProcessor = (*metricsfrequencyprocessor)(nil)
+var _ processorhelper.ProcessMetricsFunc = (*metricsfrequencyprocessor)(nil).ProcessMetrics
 
 // ProcessMetrics applies metricSieve to incoming metrics. It mutates the argument.
 func (mfp *metricsfrequencyprocessor) ProcessMetrics(_ context.Context, md pdata.Metrics) (pdata.Metrics, error) {

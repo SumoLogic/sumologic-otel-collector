@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 func TestSieveAllFromEmpty(t *testing.T) {
@@ -133,11 +133,11 @@ func TestSelectionWithTwoLibraries(t *testing.T) {
 	assert.Equal(t, "m2", result.ResourceMetrics().At(0).InstrumentationLibraryMetrics().At(0).Metrics().At(0).Name())
 }
 
-func createGauge() pdata.DoubleGauge {
-	dpSlice := pdata.NewDoubleDataPointSlice()
-	pdata.NewDoubleDataPoint().CopyTo(dpSlice.AppendEmpty())
+func createGauge() pdata.Gauge {
+	dpSlice := pdata.NewNumberDataPointSlice()
+	pdata.NewNumberDataPoint().CopyTo(dpSlice.AppendEmpty())
 
-	gauge := pdata.NewDoubleGauge()
+	gauge := pdata.NewGauge()
 	dpSlice.CopyTo(gauge.DataPoints())
 
 	return gauge
@@ -146,8 +146,8 @@ func createGauge() pdata.DoubleGauge {
 func createMetric(name string) pdata.Metric {
 	metric := pdata.NewMetric()
 	metric.SetName(name)
-	metric.SetDataType(pdata.MetricDataTypeDoubleGauge)
-	createGauge().CopyTo(metric.DoubleGauge())
+	metric.SetDataType(pdata.MetricDataTypeGauge)
+	createGauge().CopyTo(metric.Gauge())
 
 	return metric
 }
