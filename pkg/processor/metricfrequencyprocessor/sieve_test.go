@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 func TestAccumulate(t *testing.T) {
@@ -23,7 +23,7 @@ func TestAccumulate(t *testing.T) {
 
 func TestIsConstant(t *testing.T) {
 	type testCase struct {
-		dataPoint     pdata.DoubleDataPoint
+		dataPoint     pdata.NumberDataPoint
 		values        map[int64]float64
 		expectedValue bool
 	}
@@ -215,9 +215,9 @@ func unixPointsToPdata(points map[int64]float64) map[pdata.Timestamp]float64 {
 	return out
 }
 
-func createDataPoint(timestamp time.Time, value float64) pdata.DoubleDataPoint {
+func createDataPoint(timestamp time.Time, value float64) pdata.NumberDataPoint {
 	pdataTimestamp := pdata.TimestampFromTime(timestamp)
-	out := pdata.NewDoubleDataPoint()
+	out := pdata.NewNumberDataPoint()
 	out.SetTimestamp(pdataTimestamp)
 	out.SetValue(value)
 	return out
@@ -230,8 +230,8 @@ func setupHistory(sieve metricSieve, dataPoints map[time.Time]float64) {
 func dataPointsToMetric(dataPoints map[time.Time]float64) pdata.Metric {
 	out := pdata.NewMetric()
 	out.SetName("test")
-	out.SetDataType(pdata.MetricDataTypeDoubleGauge)
-	target := out.DoubleGauge().DataPoints()
+	out.SetDataType(pdata.MetricDataTypeGauge)
+	target := out.Gauge().DataPoints()
 	for timestamp, value := range dataPoints {
 		createDataPoint(timestamp, value).CopyTo(target.AppendEmpty())
 	}
