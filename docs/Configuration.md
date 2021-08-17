@@ -635,6 +635,9 @@ For details, see the [Source Processor documentation][sourceprocessor_docs].
 The Sumo Logic Syslog Processor tries to extract facility code from syslog logs
 and adds the facility's name as a metadata attribute.
 
+We recommend to use it with [TCPlog Receiver](#tcplog-receiver) and/or [UDPlog Receiver](#udplog-receiver).
+It will behave as Syslog source in Sumo Logic Installed Collector.
+
 Example configuration:
 
 ```yaml
