@@ -1,0 +1,2 @@
+[sumologic_otel_collector_hosts]
+localhost ansible_connection=local
