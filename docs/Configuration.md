@@ -17,6 +17,8 @@
     - [Syslog Receiver](#syslog-receiver)
     - [Statsd Receiver](#statsd-receiver)
     - [OTLP Receiver](#otlp-receiver)
+    - [TCPlog Receiver](#tcplog-receiver)
+    - [UDPlog Receiver](#udplog-receiver)
     - [Receivers from OpenTelemetry Collector](#receivers-from-opentelemetry-collector)
 - [Processors](#processors)
   - [Sumo Logic Custom Processors](#sumo-logic-custom-processors)
@@ -392,7 +394,7 @@ receivers:
 For details, see the [Filelog Receiver documentation][filelogreceiver_readme].
 
 [opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
-[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.27.0/receiver/filelogreceiver
+[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/filelogreceiver
 
 #### Fluent Forward Receiver
 
@@ -440,7 +442,7 @@ receivers:
 
 For details, see the [Syslog Receiver documentation][syslogreceiver_readme].
 
-[syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.27.0/receiver/syslogreceiver
+[syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/syslogreceiver
 
 #### Statsd Receiver
 
@@ -484,7 +486,39 @@ receivers:
 For details, see the [OTLP Receiver documentation][otlpreceiver_readme].
 
 [otlp]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md
-[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.27.0/receiver/otlpreceiver
+[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.31.0/receiver/otlpreceiver
+
+#### TCPlog Receiver
+
+The TCPlog Receiver receives logs data via TCP using text format.
+
+The following is a basic configuration for the TCPlog Receiver:
+
+```yaml
+receivers:
+  tcplog:
+    listen_address: "0.0.0.0:54525"
+```
+
+For details, see the [TCPlog Receiver documentation][tcplogreceiver_readme].
+
+[tcplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/tcplogreceiver
+
+#### UDPlog Receiver
+
+The UDPlog Receiver receives logs data via UDP using text format.
+
+The following is a basic configuration for the UDPlog Receiver:
+
+```yaml
+receivers:
+  udplog:
+    listen_address: "0.0.0.0:54525"
+```
+
+For details, see the [UDPlog Receiver documentation][udplogreceiver_readme].
+
+[udplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/udplogreceiver
 
 #### Receivers from OpenTelemetry Collector
 
