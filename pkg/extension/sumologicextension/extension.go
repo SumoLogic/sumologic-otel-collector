@@ -59,6 +59,12 @@ const (
 	collectorNameField          = "collector_name"
 	collectorCredentialIdField  = "collector_credential_id"
 	collectorCredentialKeyField = "collector_credential_key"
+
+	banner = `
+**********************************************************************************************
+*** This software is currently in beta and is not recommended for production environments. ***
+**********************************************************************************************
+`
 )
 
 const (
@@ -123,6 +129,7 @@ func (se *SumologicExtension) validateCredenials(
 }
 
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
+	se.logger.Info(banner)
 	colCreds, registrationDone, err := se.getCredentials(ctx)
 	if err != nil {
 		return err
