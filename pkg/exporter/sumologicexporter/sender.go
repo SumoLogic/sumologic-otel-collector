@@ -274,7 +274,13 @@ func (s *sender) sendOTLPLogs(ctx context.Context, flds fields) ([]pdata.LogReco
 	logs := ill.Logs()
 	logs.EnsureCapacity(len(s.logBuffer))
 	for _, record := range s.logBuffer {
-		record.CopyTo(logs.AppendEmpty())
+		log := logs.AppendEmpty()
+		record.CopyTo(log)
+
+		// Clear timestamp if required
+		if s.config.ClearLogsTimestamp {
+			log.SetTimestamp(0)
+		}
 	}
 
 	s.addResourceAttributes(rl.Resource().Attributes(), flds)

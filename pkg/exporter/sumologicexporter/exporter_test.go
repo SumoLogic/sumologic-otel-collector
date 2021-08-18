@@ -358,6 +358,48 @@ func TestPushFailedBatch(t *testing.T) {
 	assert.EqualError(t, err, "error during sending data: 500 Internal Server Error")
 }
 
+func TestPushOTLPLogsWithClearTimestamp(t *testing.T) {
+	exampleLogs := exampleLog()
+	exampleLogs[0].SetTimestamp(12345)
+	logs := LogRecordsToLogs(exampleLogs)
+
+	config := createTestConfig()
+	config.ClearLogsTimestamp = true
+	config.LogFormat = OTLPLogFormat
+
+	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, "\n\x1b\n\x00\x12\x17\n\x00\x12\x13*\r\n\vExample logJ\x00R\x00", body)
+		},
+	}
+	test := prepareExporterTest(t, config, expectedRequests)
+
+	err := test.exp.pushLogsData(context.Background(), logs)
+	assert.NoError(t, err)
+}
+
+func TestPushOTLPLogsWithoutClearTimestamp(t *testing.T) {
+	exampleLogs := exampleLog()
+	exampleLogs[0].SetTimestamp(12345)
+	logs := LogRecordsToLogs(exampleLogs)
+
+	config := createTestConfig()
+	config.ClearLogsTimestamp = false
+	config.LogFormat = OTLPLogFormat
+
+	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, "\n$\n\x00\x12 \n\x00\x12\x1c\t90\x00\x00\x00\x00\x00\x00*\r\n\vExample logJ\x00R\x00", body)
+		},
+	}
+	test := prepareExporterTest(t, config, expectedRequests)
+
+	err := test.exp.pushLogsData(context.Background(), logs)
+	assert.NoError(t, err)
+}
+
 func TestPushTextLogsWithAttributeTranslation(t *testing.T) {
 	logs := LogRecordsToLogs(exampleLog())
 	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.name", "harry-potter")
