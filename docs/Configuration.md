@@ -1,5 +1,10 @@
 # Configuration
 
+- [Basic configuration](#basic-configuration)
+  - [Basic configuration for logs](#basic-configuration-for-logs)
+  - [Basic configuration for metrics](#basic-configuration-for-metrics)
+  - [Basic configuration for traces](#basic-configuration-for-traces)
+- [Putting it all together](#putting-it-all-together)
 - [Extensions](#extensions)
   - [Sumo Logic Extension](#sumo-logic-extension)
     - [Using multiple Sumo Logic extensions](#using-multiple-sumo-logic-extensions)
@@ -32,8 +37,206 @@
     - [Sumo Logic Exporter](#sumo-logic-exporter)
   - [Open Telemetry Upstream Exporters](#open-telemetry-upstream-exporters)
     - [Load Balancing Exporter](#load-balancing-exporter)
+- [Command-line configuration options](#command-line-configuration-options)
 
 ---
+
+## Basic configuration
+
+The only required option to run the collector is the `--config` option that points to the configuration file.
+
+```shell
+otelcol-sumo --config config.yaml
+```
+
+For all the available command line options, see [Command-line configuration options](#command-line-configuration-options).
+
+The file `config.yaml` is a regular OpenTelemetry Collector configuration file
+that contains a pipeline with some receivers, processors and exporters.
+If you are new to OpenTelemetry Collector,
+you can familiarize yourself with the terms reading the [upstream documentation](https://opentelemetry.io/docs/collector/configuration/).
+
+The primary components that make it easy to send data to Sumo Logic are
+the [Sumo Logic Exporter][sumologicexporter_docs]
+and the [Sumo Logic Extension][sumologicextension_configuration].
+
+Here's a starting point for the configuration file that you will want to use:
+
+```yaml
+exporters:
+  sumologic:
+
+extensions:
+  sumologic:
+    access_id: <my_access_id>
+    access_key: <my_access_key>
+
+receivers:
+  ... # fill in receiver configurations here
+
+service:
+  extensions: [sumologic]
+  pipelines:
+    logs:
+      receivers: [...] # fill in logs receiver names here
+      exporters: [sumologic]
+    metrics:
+      receivers: [...] # fill in metrics receiver names here
+      exporters: [sumologic]
+    traces:
+      receivers: [...] # fill in trace receiver names here
+      exporters: [sumologic]
+```
+
+The Sumo Logic exporter automatically detects the Sumo Logic extension
+if it's added in the `service.extensions` property
+and uses it as the authentication provider to connect and send data to the Sumo Logic backend.
+
+You add the receivers for the data you want to be collected
+and put them together in one pipeline.
+You can of course also add other components according to your needs -
+extensions, processors, other exporters etc.
+
+Let's look at some examples for configuring logs, metrics and traces to be sent to Sumo,
+and after that let's put that all together.
+
+### Basic configuration for logs
+
+To send logs from local files, use the [Filelog Receiver][filelogreceiver_readme].
+
+Example configuration:
+
+```yaml
+exporters:
+  sumologic:
+
+extensions:
+  sumologic:
+    access_id: <my_access_id>
+    access_key: <my_access_key>
+
+receivers:
+  filelog:
+    include:
+    - /var/log/myservice/*.log
+    - /other/path/**/*.txt
+
+service:
+  extensions: [sumologic]
+  pipelines:
+    logs:
+      receivers: [filelog]
+      exporters: [sumologic]
+```
+
+See [Receivers](#receivers) section for sending data from other sources including Fluentd/Fluent Bit, syslog and others.
+
+### Basic configuration for metrics
+
+Sumo Logic OT Distro uses the Telegraf Receiver to ingest metrics.
+
+Here's a minimal `config.yaml` file that sends the host's memory metrics to Sumo Logic:
+
+```yaml
+exporters:
+  sumologic:
+
+extensions:
+  sumologic:
+    access_id: <my_access_id>
+    access_key: <my_access_key>
+
+receivers:
+  telegraf:
+    separate_field: false
+    agent_config: |
+      [agent]
+        interval = "3s"
+        flush_interval = "3s"
+      [[inputs.mem]]
+
+service:
+  extensions: [sumologic]
+  pipelines:
+    metrics:
+      receivers: [telegraf]
+      exporters: [sumologic]
+```
+
+### Basic configuration for traces
+
+Use the [OTLP Receiver][otlpreceiver_readme] to send traces to Sumo Logic.
+
+Example configuration:
+
+```yaml
+exporters:
+  sumologic:
+
+extensions:
+  sumologic:
+    access_id: <my_access_id>
+    access_key: <my_access_key>
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+
+service:
+  extensions: [sumologic]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [sumologic]
+```
+
+## Putting it all together
+
+Here's an example configuration file that collects all the signals - logs, metrics and traces.
+
+```yaml
+exporters:
+  sumologic:
+
+extensions:
+  sumologic:
+    access_id: <my_access_id>
+    access_key: <my_access_key>
+
+
+receivers:
+  filelog:
+    include:
+    - /var/log/myservice/*.log
+    - /other/path/**/*.txt
+  telegraf:
+    separate_field: false
+    agent_config: |
+      [agent]
+        interval = "3s"
+        flush_interval = "3s"
+      [[inputs.mem]]
+  otlp:
+    protocols:
+      grpc:
+
+service:
+  extensions: [sumologic]
+  pipelines:
+    logs:
+      receivers: [filelog]
+      exporters: [sumologic]
+    metrics:
+      receivers: [telegraf]
+      exporters: [sumologic]
+    traces:
+      receivers: [otlp]
+      exporters: [sumologic]
+```
+
+See below for details on configuring all the components available in the Sumo Logic OT Distro -
+extensions, receivers, processors, exporters.
 
 ## Extensions
 
@@ -671,3 +874,24 @@ exporters:
 For details, see the [Load Balancing Exporter documentation][loadbalancingexporter_docs].
 
 [loadbalancingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/loadbalancingexporter/README.md
+
+## Command-line configuration options
+
+```bash
+Usage:
+  otelcol-sumo [flags]
+
+Flags:
+      --add-instance-id             Flag to control the addition of 'service.instance.id' to the collector metrics. (default true)
+      --config string               Path to the config file
+  -h, --help                        help for otelcol-sumo
+      --log-format string           Format of logs to use (json, console) (default "console")
+      --log-level Level             Output level of logs (DEBUG, INFO, WARN, ERROR, DPANIC, PANIC, FATAL) (default info)
+      --log-profile string          Logging profile to use (dev, prod) (default "prod")
+      --mem-ballast-size-mib uint   Flag to specify size of memory (MiB) ballast to set. Ballast is not used when this is not specified. default settings: 0
+      --metrics-addr string         [address]:port for exposing collector telemetry. (default ":8888")
+      --metrics-level Level         Output level of telemetry metrics (none, basic, normal, detailed) (default basic)
+      --metrics-prefix string       Prefix to the metrics generated by the collector. (default "otelcol")
+      --set stringArray             Set arbitrary component config property. The component has to be defined in the config file and the flag has a higher precedence. Array config properties are overridden and maps are joined, note that only a single (first) array property can be set e.g. -set=processors.attributes.actions.key=some_key. Example --set=processors.batch.timeout=2s (default [])
+  -v, --version                     version for otelcol-sumo
+```
