@@ -1,0 +1,1 @@
+# Migration from Installed Collector
