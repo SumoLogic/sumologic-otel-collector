@@ -33,6 +33,12 @@ exporters:
     # maximum connection timeout is 55s, default = 5s
     timeout: <timeout>
 
+    # defines if timestamp for logs should be set to 0,
+    # it indicates that backend will extract timestamp from logs,
+    # this option affects OTLP format only
+    # default = true
+    clear_logs_timestamp: {true, false}
+
     # For below described source and graphite template related configuration,
     # please refer to "Source templates" documentation chapter from this document.
 
