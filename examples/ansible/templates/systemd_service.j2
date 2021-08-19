@@ -1,0 +1,13 @@
+[Unit]
+Description=Sumologic Opentelemetry Collector
+
+[Service]
+ExecStart=/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yml
+User=opentelemetry
+Group=opentelemetry
+MemoryHigh={{ sumologic_otel_collector.memory_high }}
+MemoryMax={{ sumologic_otel_collector.memory_max }}
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target

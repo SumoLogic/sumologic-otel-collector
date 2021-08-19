@@ -1,6 +1,6 @@
 - hosts: sumologic_otel_collector_hosts
   become: true
-  gather_facts: True
+  gather_facts: true
   vars_files:
     - vars/default.yaml
   tasks:
@@ -35,3 +35,38 @@
       when: 
         - ansible_architecture == 'x86_64' or ansible_architecture == 'aarch64' or ansible_architecture == 'arm64'
         - ansible_os_family != 'Windows'
+    - name: Ensure group "opentelemetry" exists
+      group:
+        name: opentelemetry
+        state: present
+    - name: Add the user 'opentelemetry' to 'opentelemetry' group
+      user:
+        name: opentelemetry
+        group: opentelemetry
+        system: True
+    - name: Ensures /etc/otelcol-sumo/ directory exists
+      file: path=/etc/otelcol-sumo/ state=directory
+    - name: Copy configuration file from {{ sumologic_otel_collector.src_config_path }} to /etc/otelcol-sumo/config.yml
+      copy:
+        src: "{{ sumologic_otel_collector.src_config_path }}"
+        dest: /etc/otelcol-sumo/config.yml
+        owner: opentelemetry
+        group: opentelemetry
+        mode: 0644
+    - name: Creating systemd service file
+      template:
+        src: systemd_service.j2
+        dest: /etc/systemd/system/otelcol-sumo.service
+        owner: opentelemetry
+        group: opentelemetry
+        mode: 0644
+      when:
+        - sumologic_otel_collector.systemd_service == true
+    - name: Run otelcol-sumo systemd service
+      systemd: state=started name=otelcol-sumo
+      when:
+        - sumologic_otel_collector.systemd_service == true
+    - name: Run otelcol-sumo in background
+      shell: nohup /usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yml > /var/log/otelcol.log 2>&1 &
+      when:
+        - sumologic_otel_collector.systemd_service == false
