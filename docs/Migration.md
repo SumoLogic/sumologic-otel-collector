@@ -1,6 +1,6 @@
 # Migration from Installed Collector
 
-The Installed Collector can gather data from several different types of sources.
+The Installed Collector can gather data from several different types of Sources.
 You should manually migrate your Sources to an OpenTelemetry Configuration.
 
 - [Cloud Based Management](#cloud-based-management)
