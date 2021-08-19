@@ -1,7 +1,7 @@
 # Migration from Installed Collector
 
-Installed Collector is able to gather data from several different type of source.
-Every source should be manually migrated to Opentelemetry Configuration.
+The Installed Collector can gather data from several different types of sources.
+You should manually migrate your Sources to an OpenTelemetry Configuration.
 
 - [Cloud Based Management](#cloud-based-management)
   - [Local File Source](#local-file-source)
@@ -22,13 +22,13 @@ Every source should be manually migrated to Opentelemetry Configuration.
 
 ## Cloud Based Management
 
-This section describes migration steps for sources managed from cloud.
+This section describes migration steps for Sources managed from the Cloud.
 
 ### Local File Source
 
 #### Overall example
 
-Below is an example of an Open Telemetry configuration for local file source
+Below is an example of an OpenTelemetry configuration for a Local File Source.
 
 ```yaml
 extensions:
@@ -110,9 +110,9 @@ service:
 
 #### Name
 
-In Opentelemetry Collector it can be added after slash `/` to the receiver name.
+Define the name after the slash `/` in the receiver name.
 
-For `Name` `my example name` it will look like in following snippet:
+For example, the following snippet configures the name as `my example name`:
 
 ```yaml
 receivers:
@@ -122,9 +122,9 @@ receivers:
 
 #### Description
 
-In Opentelemetry Collector configuration it can be added as a comment just above the receiver name.
+A description can be added as a comment just above the receiver name.
 
-For `Description` `All my example logs` it will look like in following snippet:
+For example, the following snippet configures the description as `All my example logs`:
 
 ```yaml
 receivers:
@@ -135,11 +135,11 @@ receivers:
 
 #### File Path
 
-As like Installed Collector, Opentelemetry Collector supports regular expression for paths.
-In addition, multiple different paths/expressions can be specified.
-They should be added as elements of `include` configuration option.
+Like the Installed Collector, the OpenTelemetry Collector supports regular expression for paths.
+In addition, you can specify multiple different path expressions.
+Add them as elements of the `include` configuration option.
 
-For all `.log` files from `/var/log/` and `/opt/my_app/` following snippet will apply:
+For example, the following snippet configures the path to all `.log` files from `/var/log/` and `/opt/my_app/`:
 
 ```yaml
 receivers:
@@ -153,13 +153,13 @@ receivers:
 
 ##### Collection should begin
 
-Opentelemetry Collector doesn't have a substitute for this Installed Collector option.
-Supported are only two modes, start at file beginning or file end.
-Starting at `beginning` will read all file every time it is started,
-starting at `end` will take only logs appended to file after Opentelemetry Collector is started.
-This is configurable by `start_at` option.
+The OpenTelemetry Collector doesn't have a substitute for this Installed Collector option.
+It supports two options, starting at the beginning or end of a file.
+Starting at the `beginning` will read the entire file every time it's started.
+Starting at the `end` will read only logs appended to file after it's started.
+This is configurable with the `start_at` option.
 
-To read logs only appended logs, following snippet can be used:
+For example, the following snippet configures the Collector to only read appended logs:
 
 ```yaml
 receivers:
@@ -174,9 +174,9 @@ receivers:
 
 #### Source Host
 
-Source Host can be set in exporter configuration in `source_host` option.
+The Source Host is set in the exporter configuration with the `source_host` option.
 
-For example for `My Host` following snippet can be used:
+For example, the following snippet configures the Source Host as `My Host`:
 
 ```yaml
 receivers:
@@ -194,9 +194,9 @@ exporters:
 
 #### Source Category
 
-Source Category can be set in exporter configuration in `source_category` option.
+The Source Category is set in the exporter configuration with the `source_category` option.
 
-For example for `My Category` following snippet can be used:
+For example, the following snippet configures the Source Category as `My Category`:
 
 ```yaml
 receivers:
@@ -215,10 +215,9 @@ exporters:
 
 #### Fields
 
-To set custom fields [resourceprocessor][resourceprocessor] can be used.
+Use the [resourceprocessor][resourceprocessor] to set custom fields.
 
-For example to add two more fields `cloud.availability_zone` and `k8s.cluster.name`,
-following config can be used
+For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
 
 ```yaml
 receivers:
@@ -248,9 +247,9 @@ exporters:
 
 ##### Denylist
 
-Substitute for Denylist in Opentelemetry is `exclude` list in filelog receiver.
+Use the `exclude` option in the filelog receiver to specify files you don't want collected.
 
-For example to exclude `/var/log/sensitive.log` following config can be used.
+For example, the following snippet excludes `/var/log/sensitive.log` from collection:
 
 ```yaml
 receivers:
@@ -280,12 +279,13 @@ exporters:
 
 ##### Timestamp Parsing
 
-Substitute for `Extract timestamp information from log file entries` is `clear_logs_timestamp`
-in exporter configuration. This is by default set to `true`.
+The Installed Collector option to `Extract timestamp information from log file entries` in an
+OpenTelemtry configuration is `clear_logs_timestamp`. This is set to `true` by default.
 
 This works like `Extract timestamp information from log file entries` combined with
 `Ignore time zone from log file and instead use:` set to `Use Collector Default`.
-To set time_zone for collector, `extensions.sumologic.time_zone` has to be set like in following example.
+
+For example, the following configuration sets the time_zone for a Collector with `extensions.sumologic.time_zone`:
 
 ```yaml
 extensions:
@@ -316,8 +316,8 @@ exporters:
     source_category: My Category
 ```
 
-If `clear_logs_timestamp` is set to `false`, timestamp parsing should be configured manually.
-To do that, following code snippet can be a good template.
+If `clear_logs_timestamp` is set to `false`, timestamp parsing should be configured
+manually, like in the following snippet:
 
 ```yaml
 extensions:
@@ -371,7 +371,7 @@ exporters:
     clear_logs_timestamp: true
 ```
 
-To get receipt time, parsing can be skipped like in following example.
+The following example snippet skips timestamp parsing so the Collector uses Receipt Time:
 
 ```yaml
 extensions:
@@ -400,15 +400,15 @@ exporters:
   sumologic/some name:
     source_host: My Host
     source_category: My Category
-    ## Keep manually parsed timestamps (get receipt time by default)
+    ## Keep manually parsed timestamps (use Receipt Time by default)
     clear_logs_timestamp: true
 ```
 
 ##### Encoding
 
-Substitute for `Encoding` is `encoding`. Full list of supporter encodings can be obtained from [filelogreceiver documentation][supported_encodings].
+Use `encoding` to set the encoding of your data. Full list of supporter encodings can be obtained from [filelogreceiver documentation][supported_encodings].
 
-See following snippet for example usage:
+The following snippet sets the encoding to UTF-8:
 
 ```yaml
 extensions:
@@ -442,9 +442,9 @@ exporters:
 
 ##### Multiline Processing
 
-Multiline in Opentelemetry Collector has to be always specified manually. There is no automatic boundary detection.
+Multiline processing in the Opentelemetry Collector is set manually. There is no automatic boundary detection.
 
-For boundary regex `^\d{4}-\d{2}-\d{2}` (matches for example `2021-06-06`) following config can be used.
+The following snippet sets the boundary regex as `^\d{4}-\d{2}-\d{2}` to match, for example, `2021-06-06`):
 
 ```yaml
 extensions:
@@ -478,13 +478,13 @@ exporters:
     source_category: My Category
 ```
 
-Opentelemetry Collector supports also `line_end_pattern`. It can be used for multiline logs, where log has known end pattern.
+If your multiline logs have a known end pattern use the `line_end_pattern` option.
 
-More information is available in [filelogreceiver documentation][multiline]
+More information is available in [filelogreceiver documentation][multiline].
 
 ## Local Configuration File
 
-This section describes migration steps for sources managed locally.
+This section describes migration steps for Sources managed locally.
 
 [resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.31.0/processor/resourceprocessor
 [multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/filelogreceiver#multiline-configuration
