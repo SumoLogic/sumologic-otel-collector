@@ -11,6 +11,7 @@ the container images stored in AWS Public ECR under the following repository:
   - [Upgrading standalone installation](#upgrading-standalone-installation)
 - [Container image](#container-image)
 - [Systemd service](#systemd-service)
+- [Ansible](#ansible)
 
 ## Standalone
 
@@ -208,3 +209,8 @@ To run opentelemetry collector as Systemd Service please apply following steps:
    sudo systemctl status otelcol-sumo  # checks status
    sudo journalctl -u otelcol-sumo  # checks logs
    ```
+
+## Ansible
+
+Example installation of Sumo Logic Distro of OpenTelemetry Collector with Ansible is described in
+[examples/ansible](../examples/ansible/README.md).
