@@ -120,18 +120,19 @@ We can differentiate four types of modules:
 - processors - responsible for data modification, like adding fields, limiting memory and so on
 - exporters - responsible for sending data, received by receivers and processed by processors
 
-To use those configured modules, they need to be mentioned in `service` section.
+To use those configured modules, they need to be mentioned in the `service` section.
 `service` consists of `extensions` (they are global across collector) and `pipelines`.
-`Pipelines` can be `logs`, `metrics` and `traces` and every of them can have
-`receivers`, `processors` and `exporters`. Multiple pipelines of one type can be configured using aliases (`example pipeline` for `logs` in above example).
+`Pipelines` can be `logs`, `metrics`, and `traces` and each of them can have
+`receivers`, `processors` and `exporters`. Multiple pipelines of one type can be configured using aliases,
+such as `example pipeline` for `logs` in the example above.
 
 ## Collector
 
-Collector registration and configuration is handle by [sumologicextension][sumologicextension].
+Collector registration and configuration is handled by the [sumologicextension][sumologicextension].
 
 ### Name
 
-Collector name can specified by setting `collector_name` option:
+Collector name can be specified by setting the `collector_name` option:
 
 ```yaml
 extensions:
@@ -143,7 +144,7 @@ extensions:
 
 ### Description
 
-To set a description, use `collector_description` option:
+To set a description, use the `collector_description` option:
 
 ```yaml
 extensions:
@@ -156,8 +157,8 @@ extensions:
 
 ### Host Name
 
-Host name can be set in sumologic exporter configuration.
-Exporter will set host name for every record being sended to Sumo:
+Host name can be set in the sumologic exporter configuration.
+The exporter will set the host name for every record sent to Sumo Logic:
 
 ```yaml
 extensions:
@@ -173,7 +174,7 @@ exporters:
 
 ### Category
 
-To set Collector category, use `collector_category` configuration:
+To set a Collector category, use the `collector_category` option:
 
 ```yaml
 extensions:
@@ -190,9 +191,9 @@ exporters:
 
 ### Fields
 
-Fields in Opentelemetry Collector can be added using [resourceprocessor][resourceprocessor].
-For example to add a field with key `author` and with value `me` to every record,
-please consider the following configuration:
+Fields in the Opentelemetry Collector can be added with the [resourceprocessor][resourceprocessor].
+For example, to add a field with the key `author` with the value `me` to every record,
+you could use the following configuration:
 
 ```yaml
 extensions:
@@ -213,14 +214,14 @@ exporters:
     source_host: My hostname
 ```
 
-### Assign to a budget
+### Assign to an Ingest Budget
 
-Assign to a budget is not supported by Opentelemetry Collector.
+Assignment to an Ingest Budget is not supported by Opentelemetry Collector.
 
 ### Time Zone
 
-To set Collector time zone, `time_zone` should be used.
-Example usage has been shown on the following snippet:
+To set the Collector time zone, use the `time_zone` option.
+For example, the following examples sets the time zone to `America/Tijuana`:
 
 ```yaml
 extensions:
@@ -246,13 +247,13 @@ exporters:
 
 #### CPU Target
 
-CPU Target is not supported by Opentelemetry Collector.
+CPU Target is not supported by the Opentelemetry Collector.
 
 #### Collector Management
 
-Currently Opentelemetry Collectot is local file managed.
-Depending on your setup please follow [Cloud Based Management](#cloud-based-management)
-or [Local Configuration File](#local-configuration-file) migration details.
+Currently, the Opentelemetry Collector can only be managed with Local Configuration File Management.
+Depending on your setup, follow the steps in [Cloud Based Management](#cloud-based-management)
+or [Local Configuration File](#local-configuration-file) for migration details.
 
 ## Cloud Based Management
 
@@ -718,7 +719,7 @@ More information is available in [filelogreceiver documentation][multiline].
 
 ### Remote File Source
 
-Remote File Source is not supported by Opentelemetry Collector.
+Remote File Source is not supported by the Opentelemetry Collector.
 
 ### Syslog Source
 
@@ -1032,11 +1033,11 @@ exporters:
 
 ##### Source Name
 
-In Opentelemetry Collector Source Name has to be set manually.
-[Sumologicsyslogprocessor][sumologicsyslog] sets `facility` attribute,
-which should be set as source name in exporter configuration.
+The OpenTelemetry Collector requires the Source Name to be set manually.
+In the exporter configuration, use the [Sumologicsyslogprocessor][sumologicsyslog]
+to set the `facility` attribute. 
 
-See following example for better understanding:
+For example:
 
 ```yaml
 extensions:
@@ -1068,13 +1069,12 @@ exporters:
 
 ##### Source Host
 
-In Opentelemetry Collector Source Name has to be set manually.
-To do it `add_attributes` should be set to `true`
-for [tcplogreceiver][tcplogreceiver]/[udplogreceiver][udplogreceiver].
-This is going to add [connection related attributes][network-semantic-convention],
-especially `net.peer.name` which should be set as Source Host.
+The OpenTelemetry Collector requires the Source Host to be set manually.
+Set `add_attributes` to `true` for [tcplogreceiver][tcplogreceiver]/[udplogreceiver][udplogreceiver].
+This adds [connection related attributes][network-semantic-convention],
+especially `net.peer.name` which should be set as the Source Host.
 
-Please see the following configuration for better understanding:
+For example:
 
 ```yaml
 extensions:
@@ -1108,39 +1108,39 @@ exporters:
 
 ### Docker Logs Source
 
-Docker Logs Source is not supported by Opentelemetry Collector.
+Docker Logs Source is not supported by the OpenTelemetry Collector.
 
 ### Docker Stats Source
 
-Docker Stats Source is not supported by Opentelemetry Collector.
+Docker Stats Source is not supported by the OpenTelemetry Collector.
 
 ### Script Source
 
-Script Source is not supported by Opentelemetry Collector.
+Script Source is not supported by the OpenTelemetry Collector.
 
 ### Streaming Metrics Source
 
-Streaming Metrics Source is not supported by Opentelemetry Collector.
+Streaming Metrics Source is not supported by the OpenTelemetry Collector.
 
 ### Host Metrics Source
 
-Host Metrics Source is not supported by Opentelemetry Collector.
+Host Metrics Source is not supported by the OpenTelemetry Collector.
 
 ### Local Windows Event Log Source
 
-Local Windows Event Log Source is not supported by Opentelemetry Collector.
+Local Windows Event Log Source is not supported by the OpenTelemetry Collector.
 
 ### Local Windows Performance Monitor Log Source
 
-Local Windows Performance Monitor Log Source is not supported by Opentelemetry Collector.
+Local Windows Performance Monitor Log Source is not supported by the OpenTelemetry Collector.
 
 ### Windows Active Directory Source
 
-Windows Active Directory Source is not supported by Opentelemetry Collector.
+Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 
 ### Script Action
 
-Script Action is not supported by Opentelemetry Collector.
+Script Action is not supported by the OpenTelemetry Collector.
 
 ## Local Configuration File
 
@@ -1148,51 +1148,51 @@ This section describes migration steps for Sources managed locally.
 
 ### Local File Source
 
-Local File Source is not supported by Opentelemetry Collector.
+Local File Source is not supported by the OpenTelemetry Collector.
 
 ### Remote File Source
 
-Remote File Source is not supported by Opentelemetry Collector.
+Remote File Source is not supported by the OpenTelemetry Collector.
 
 ### Syslog Source
 
-Remote File Source is not supported by Opentelemetry Collector.
+Remote File Source is not supported by the OpenTelemetry Collector.
 
 ### Docker Logs Source
 
-Docker Logs Source is not supported by Opentelemetry Collector.
+Docker Logs Source is not supported by the OpenTelemetry Collector.
 
 ### Docker Stats Source
 
-Docker Stats Source is not supported by Opentelemetry Collector.
+Docker Stats Source is not supported by the OpenTelemetry Collector.
 
 ### Script Source
 
-Script Source is not supported by Opentelemetry Collector.
+Script Source is not supported by the OpenTelemetry Collector.
 
 ### Streaming Metrics Source
 
-Streaming Metrics Source is not supported by Opentelemetry Collector.
+Streaming Metrics Source is not supported by the OpenTelemetry Collector.
 
 ### Host Metrics Source
 
-Host Metrics Source is not supported by Opentelemetry Collector.
+Host Metrics Source is not supported by the OpenTelemetry Collector.
 
 ### Local Windows Event Log Source
 
-Local Windows Event Log Source is not supported by Opentelemetry Collector.
+Local Windows Event Log Source is not supported by the OpenTelemetry Collector.
 
 ### Local Windows Performance Monitor Log Source
 
-Local Windows Performance Monitor Log Source is not supported by Opentelemetry Collector.
+Local Windows Performance Monitor Log Source is not supported by the OpenTelemetry Collector.
 
 ### Windows Active Directory Source
 
-Windows Active Directory Source is not supported by Opentelemetry Collector.
+Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 
 ### Script Action
 
-Script Action is not supported by Opentelemetry Collector.
+Script Action is not supported by the OpenTelemetry Collector.
 
 [resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.31.0/processor/resourceprocessor
 [multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/filelogreceiver#multiline-configuration
