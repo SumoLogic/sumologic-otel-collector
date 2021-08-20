@@ -17,7 +17,7 @@ rule 'MD020'
 rule 'MD021'
 rule 'MD022'
 rule 'MD023'
-rule 'MD024', :allow_different_nesting => true
+# rule 'MD024', :allow_different_nesting => true, Disable due to Migation.md being always an issue
 rule 'MD026'
 rule 'MD027'
 rule 'MD028'

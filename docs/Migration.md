@@ -48,6 +48,9 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
   - [Script Source](#script-source)
   - [Streaming Metrics Source](#streaming-metrics-source)
   - [Host Metrics Source](#host-metrics-source)
+  - [Local Windows Event Log Source](#local-windows-event-log-source)
+  - [Local Windows Performance Monitor Log Source](#local-windows-performance-monitor-log-source)
+  - [Windows Active Directory Source](#windows-active-directory-source)
   - [Script Action](#script-action)
 - [Local Configuration File](#local-configuration-file)
   - [Local File Source](#local-file-source-1)
@@ -58,6 +61,9 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
   - [Script Source](#script-source-1)
   - [Streaming Metrics Source](#streaming-metrics-source-1)
   - [Host Metrics Source](#host-metrics-source-1)
+  - [Local Windows Event Log Source](#local-windows-event-log-source-1)
+  - [Local Windows Performance Monitor Log Source](#local-windows-performance-monitor-log-source-1)
+  - [Windows Active Directory Source](#windows-active-directory-source-1)
   - [Script Action](#script-action-1)
 
 ## General Configuration Concepts
@@ -1120,6 +1126,18 @@ Streaming Metrics Source is not supported by Opentelemetry Collector.
 
 Host Metrics Source is not supported by Opentelemetry Collector.
 
+### Local Windows Event Log Source
+
+Local Windows Event Log Source is not supported by Opentelemetry Collector.
+
+### Local Windows Performance Monitor Log Source
+
+Local Windows Performance Monitor Log Source is not supported by Opentelemetry Collector.
+
+### Windows Active Directory Source
+
+Windows Active Directory Source is not supported by Opentelemetry Collector.
+
 ### Script Action
 
 Script Action is not supported by Opentelemetry Collector.
@@ -1159,6 +1177,18 @@ Streaming Metrics Source is not supported by Opentelemetry Collector.
 ### Host Metrics Source
 
 Host Metrics Source is not supported by Opentelemetry Collector.
+
+### Local Windows Event Log Source
+
+Local Windows Event Log Source is not supported by Opentelemetry Collector.
+
+### Local Windows Performance Monitor Log Source
+
+Local Windows Performance Monitor Log Source is not supported by Opentelemetry Collector.
+
+### Windows Active Directory Source
+
+Windows Active Directory Source is not supported by Opentelemetry Collector.
 
 ### Script Action
 
