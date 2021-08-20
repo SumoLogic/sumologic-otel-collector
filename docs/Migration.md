@@ -1035,7 +1035,7 @@ exporters:
 
 The OpenTelemetry Collector requires the Source Name to be set manually.
 In the exporter configuration, use the [Sumologicsyslogprocessor][sumologicsyslog]
-to set the `facility` attribute. 
+to set the `facility` attribute.
 
 For example:
 
