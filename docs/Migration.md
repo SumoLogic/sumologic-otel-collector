@@ -15,9 +15,21 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [Fields](#fields)
     - [Advanced Options for Logs](#advanced-options-for-logs)
       - [Denylist](#denylist)
-    - [Timestamp Parsing](#timestamp-parsing)
-    - [Encoding](#encoding)
-    - [Multiline Processing](#multiline-processing)
+      - [Timestamp Parsing](#timestamp-parsing)
+      - [Encoding](#encoding)
+      - [Multiline Processing](#multiline-processing)
+  - [Syslog Source](#syslog-source)
+    - [Overall example](#overall-example-1)
+    - [Name](#name-1)
+    - [Description](#description-1)
+    - [Protocol](#protocol-and-port)
+    - [Source Category](#source-category-1)
+    - [Fields](#fields-1)
+    - [Advanced Options for Logs](#advanced-options-for-logs-1)
+      - [Timestamp Parsing](#timestamp-parsing-1)
+    - [Additional Configuration](#additional-configuration)
+      - [Source Name](#source-name)
+      - [Source Host](#source-host-1)
 - [Local Configuration File](#local-configuration-file)
 
 ## Cloud Based Management
@@ -351,8 +363,8 @@ receivers:
     - type: restructure
       ops:
       - move:
-        from: $$body.empty_timestamp
-        to: $$timestamp
+        from: $$body.log
+        to: $$body
   # ...
 processors:
   resource/my example name fields:
@@ -482,6 +494,392 @@ If your multiline logs have a known end pattern use the `line_end_pattern` optio
 
 More information is available in [filelogreceiver documentation][multiline].
 
+### Syslog Source
+
+#### Overall example
+
+Below is an example of an OpenTelemetry configuration for a Syslog Source.
+
+```yaml
+extensions:
+  sumologic:
+    access_id: <access_id>
+    access_key: <access_key>
+    ## Time Zone is a substitute of Installed Collector `Time Zone`
+    ## with `Use time zone from log file. If none is detected use:` option.
+    ## This is used only if `clear_logs_timestamp` is set to `true` in sumologic exporter.
+    ## Full list of time zones is available on wikipedia:
+    ## https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
+    time_zone: America/Tijuana
+
+receivers:
+  ## Use tcpreceiver for TCP protocol
+  tcpreceiver/first receiver:
+    ## listen address in format host:port
+    ## host 0.0.0.0 mean all network interfaces
+    listen_address: 0.0.0.0:514
+    ## Add network attributes
+    ## `net.peer.name` is going to be used as exporters.sumologic.source_host
+    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/tcplogreceiver#configuration
+    add_attributes: true
+  ## Use udpreceiver for UDP protocol
+  udpreceiver/first receiver:
+    ## listen address in format host:port
+    ## host 0.0.0.0 mean all network interfaces
+    listen_address: 0.0.0.0:514
+    ## Add network attributes
+    ## `net.peer.name` is going to be used as exporters.sumologic.source_host
+    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/udplogreceiver#configuration
+    add_attributes: true
+
+processors:
+  ## There is no substitute for `Description` in current project phase.
+  ## It is recommended to use comments for that purpose, like this one.
+  ## sumologicsyslog/<source group name>:
+  ## <source group name> can be substitute of Installed Collector `Name`.
+  sumologicsyslog/syslog source:
+
+  ## Following configuration will add two fields to every record
+  resource/syslog source:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: insert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic/syslog:
+    ## Installed Collector substitute for `Source Category`.
+    source_category: example category
+    ## clear_logs_timestamp is by default set to True.
+    ## If it's set to true, it works like `Enable Timestamp Parsing`,
+    ## and `Time Zone` is going to be taken from `extensions` section.
+    ## There is no possibility to configure several time zones in one exporter.
+    ## clear_logs_timestamp sets to true also behaves like
+    ## `Timestamp Format` would be set to `Automatically detect the format`
+    ## in terms of Installed Collector configuration.
+    clear_logs_timestamp: true
+    ## Set Source Name to be facility name
+    source_name: "%{facility}"
+    ## Set Source Host to `net.peer.name`
+    source_host: "%{net.peer.name}
+service:
+  extensions:
+  - sumologic
+  pipelines:
+    logs/syslog source:
+      receivers:
+      - filelog/syslog source
+      processors:
+      - resource/syslog source
+      exporters:
+      - sumologic/syslog
+```
+
+#### Name
+
+Define the name after the slash `/` in the processor name.
+
+For example, the following snippet configures the name as `my example name`:
+
+```yaml
+processor:
+  sumologicsyslog/my example name:
+  # ...
+```
+
+#### Description
+
+A description can be added as a comment just above the processor name.
+
+For example, the following snippet configures the description as `All my example logs`:
+
+```yaml
+processor:
+  ## All my example logs
+  sumologicsyslog/my example name:
+  # ...
+```
+
+#### Protocol and Port
+
+Protocol is defined by receiver type. For UDP use [udplogreceiver][udplogreceiver] and for TCP use [tcplogreceiver][tcplogreceiver]. Port is defined by `listen_address`, for example to listen on port `6776` on all interfaces, use `listen_address: 0.0.0.0:6776`.
+
+You can use multiple receivers with different names nad ports like in following example:
+
+```yaml
+receivers:
+  tcpreceiver/first receiver:
+    listen_address: 0.0.0.0:514
+  tcpreceiver/second receiver:
+    listen_address: 127.0.0.1:5140
+  udpreceiver/first receiver:
+    listen_address: 0.0.0.0:514
+  udpreceiver/second receiver:
+    listen_address: 127.0.0.1:5150
+processor:
+  ## All my example logs
+  sumologicsyslog/my example name:
+  # ...
+```
+
+#### Source Category
+
+The Source Category is set in the exporter configuration with the `source_category` option.
+
+For example, the following snippet configures the Source Category as `My Category`:
+
+```yaml
+receivers:
+  tcpreceiver/first receiver:
+    listen_address: 0.0.0.0:514
+  tcpreceiver/second receiver:
+    listen_address: 127.0.0.1:5140
+  udpreceiver/first receiver:
+    listen_address: 0.0.0.0:514
+  udpreceiver/second receiver:
+    listen_address: 127.0.0.1:5150
+processor:
+  ## All my example logs
+  sumologicsyslog/my example name:
+  # ...
+exporters:
+  sumologic/some name:
+    source_category: My Category
+```
+
+#### Fields
+
+Use the [resourceprocessor][resourceprocessor] to set custom fields.
+
+For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
+
+```yaml
+receivers:
+  tcpreceiver/first receiver:
+    listen_address: 0.0.0.0:514
+  tcpreceiver/second receiver:
+    listen_address: 127.0.0.1:5140
+  udpreceiver/first receiver:
+    listen_address: 0.0.0.0:514
+  udpreceiver/second receiver:
+    listen_address: 127.0.0.1:5150
+processors:
+  ## All my example logs
+  sumologicsyslog/my example name:
+  # ...
+  resource/my example name fields:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: upsert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic/some name:
+    source_category: My Category
+```
+
+#### Advanced Options for Logs
+
+##### Timestamp Parsing
+
+The Installed Collector option to `Extract timestamp information from log file entries` in an
+OpenTelemtry configuration is `clear_logs_timestamp`. This is set to `true` by default.
+
+This works like `Extract timestamp information from log file entries` combined with
+`Ignore time zone from log file and instead use:` set to `Use Collector Default`.
+
+For example, the following configuration sets the time_zone for a Collector with `extensions.sumologic.time_zone`:
+
+```yaml
+extensions:
+  sumologic:
+    time_zone: America/Tijuana
+receivers:
+  tcpreceiver/first receiver:
+    listen_address: 0.0.0.0:514
+  tcpreceiver/second receiver:
+    listen_address: 127.0.0.1:5140
+  udpreceiver/first receiver:
+    listen_address: 0.0.0.0:514
+  udpreceiver/second receiver:
+    listen_address: 127.0.0.1:5150
+processors:
+  ## All my example logs
+  sumologicsyslog/my example name:
+  # ...
+  resource/my example name fields:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: upsert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic/some name:
+    source_category: My Category
+```
+
+If `clear_logs_timestamp` is set to `false`, timestamp parsing should be configured
+manually, like in the following snippet:
+
+```yaml
+extensions:
+  sumologic:
+    time_zone: America/Tijuana
+receivers:
+  tcpreceiver/first receiver:
+    listen_address: 0.0.0.0:514
+    operators:
+    ## Extract timestamp into timestamp field using regex
+    ## rel: https://github.com/sumo-drosiek/opentelemetry-log-collection/blob/b506aadf913d6c1691cef10a534d495338c87dee/docs/operators/regex_parser.md
+    - type: regex_parser
+      regex: (?P<timestamp>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (\+|\-)\d{4})
+      ## Keep original record in log field
+      preserve_to: $$body.log
+      ## Parse timestamp from timestamp field
+      ## rel: https://github.com/sumo-drosiek/opentelemetry-log-collection/blob/b506aadf913d6c1691cef10a534d495338c87dee/docs/operators/time_parser.md
+      timestamp:
+        parse_from: $$body.timestamp
+        ## Layout are substitute for Timestamp Format configuration
+        layout_type: gotime
+        layout: '2006-01-02 15:04:05,000 -0700'
+    ## Restore record from log field
+    ## rel: https://github.com/sumo-drosiek/opentelemetry-log-collection/blob/b506aadf913d6c1691cef10a534d495338c87dee/docs/operators/restructure.md#move
+    - type: restructure
+      ops:
+      - move:
+        from: $$body.log
+        to: $$body
+processors:
+  ## All my example logs
+  sumologicsyslog/my example name:
+  # ...
+  resource/my example name fields:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: upsert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic/some name:
+    source_category: My Category
+    ## Keep manually parsed timestamps
+    clear_logs_timestamp: true
+```
+
+The following example snippet skips timestamp parsing so the Collector uses Receipt Time:
+
+```yaml
+extensions:
+  sumologic:
+    time_zone: America/Tijuana
+receivers:
+  tcpreceiver/first receiver:
+    listen_address: 0.0.0.0:514
+processors:
+  ## All my example logs
+  sumologicsyslog/my example name:
+  # ...
+  resource/my example name fields:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: upsert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic/some name:
+    source_category: My Category
+    ## Keep manually parsed timestamps
+    clear_logs_timestamp: true
+```
+
+#### Additional Configuration
+
+##### Source Name
+
+In Opentelemetry Collector Source Name has to be set manually.
+[Sumologicsyslogprocessor][sumologicsyslog] sets `facility` attribute,
+which should be set as source name in exporter configuration.
+
+See following example for better understanding:
+
+```yaml
+extensions:
+  sumologic:
+    time_zone: America/Tijuana
+receivers:
+  tcpreceiver/first receiver:
+    listen_address: 0.0.0.0:514
+processors:
+  ## All my example logs
+  sumologicsyslog/my example name:
+  # ...
+  resource/my example name fields:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: upsert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic/some name:
+    source_category: My Category
+    ## Keep manually parsed timestamps
+    clear_logs_timestamp: true
+    ## Set Source Name to facility, which is set by sumologicsyslogprocessor
+    source_name: "%{facility}
+```
+
+##### Source Host
+
+In Opentelemetry Collector Source Name has to be set manually.
+To do it `add_attributes` should be set to `true`
+for [tcplogreceiver][tcplogreceiver]/[udplogreceiver][udplogreceiver].
+This is going to add [connection related attributes][network-semantic-convention],
+especially `net.peer.name` which should be set as Source Host.
+
+Please see following configuration for better understanding:
+
+```yaml
+extensions:
+  sumologic:
+    time_zone: America/Tijuana
+receivers:
+  tcpreceiver/first receiver:
+    listen_address: 0.0.0.0:514
+    add_attributes: true
+processors:
+  ## All my example logs
+  sumologicsyslog/my example name:
+  # ...
+  resource/my example name fields:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: upsert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic/some name:
+    source_category: My Category
+    ## Keep manually parsed timestamps
+    clear_logs_timestamp: true
+    ## Set Source Name to facility, which is set by sumologicsyslogprocessor
+    source_name: "%{facility}
+    source_host: "%{net.peer.name}
+```
+
 ## Local Configuration File
 
 This section describes migration steps for Sources managed locally.
@@ -489,3 +887,7 @@ This section describes migration steps for Sources managed locally.
 [resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.31.0/processor/resourceprocessor
 [multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/filelogreceiver#multiline-configuration
 [supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/filelogreceiver#supported-encodings
+[udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/udplogreceiver
+[tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/tcplogreceiver
+[sumologicsyslog]: https://github.com/SumoLogic/sumologic-otel-collector/tree/v0.0.19-beta.0/pkg/processor/sumologicsyslogprocessor
+[network-semantic-convention]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/span-general.md#general-network-connection-attributes
