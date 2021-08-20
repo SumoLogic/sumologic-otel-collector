@@ -3,34 +3,250 @@
 The Installed Collector can gather data from several different types of Sources.
 You should manually migrate your Sources to an OpenTelemetry Configuration.
 
+- [General Configuration Concepts](#general-configuration-concepts)
+- [Collector](#collector)
+  - [Name](#name)
+  - [Description](#description)
+  - [Host Name](#host-name)
+  - [Category](#category)
+  - [Fields](#fields)
+  - [Assign to a budget](#assign-to-a-budget)
+  - [Time Zone](#time-zone)
+  - [Advanced](#advanced)
+    - [CPU Target](#cpu-target)
+    - [Collector Management](#collector-management)
 - [Cloud Based Management](#cloud-based-management)
   - [Local File Source](#local-file-source)
     - [Overall example](#overall-example)
-    - [Name](#name)
-    - [Description](#description)
+    - [Name](#name-1)
+    - [Description](#description-1)
     - [File Path](#file-path)
       - [Collection should begin](#collection-should-begin)
     - [Source Host](#source-host)
     - [Source Category](#source-category)
-    - [Fields](#fields)
+    - [Fields](#fields-1)
     - [Advanced Options for Logs](#advanced-options-for-logs)
       - [Denylist](#denylist)
       - [Timestamp Parsing](#timestamp-parsing)
       - [Encoding](#encoding)
       - [Multiline Processing](#multiline-processing)
+  - [Remote File Source](#remote-file-source)
   - [Syslog Source](#syslog-source)
     - [Overall example](#overall-example-1)
-    - [Name](#name-1)
-    - [Description](#description-1)
+    - [Name](#name-2)
+    - [Description](#description-2)
     - [Protocol](#protocol-and-port)
     - [Source Category](#source-category-1)
-    - [Fields](#fields-1)
+    - [Fields](#fields-2)
     - [Advanced Options for Logs](#advanced-options-for-logs-1)
       - [Timestamp Parsing](#timestamp-parsing-1)
     - [Additional Configuration](#additional-configuration)
       - [Source Name](#source-name)
       - [Source Host](#source-host-1)
+  - [Docker Logs Source](#docker-logs-source)
+  - [Docker Stats Source](#docker-stats-source)
+  - [Script Source](#script-source)
+  - [Streaming Metrics Source](#streaming-metrics-source)
+  - [Host Metrics Source](#host-metrics-source)
+  - [Script Action](#script-action)
 - [Local Configuration File](#local-configuration-file)
+  - [Local File Source](#local-file-source-1)
+  - [Remote File Source](#remote-file-source-1)
+  - [Syslog Source](#syslog-source-1)
+  - [Docker Logs Source](#docker-logs-source-1)
+  - [Docker Stats Source](#docker-stats-source-1)
+  - [Script Source](#script-source-1)
+  - [Streaming Metrics Source](#streaming-metrics-source-1)
+  - [Host Metrics Source](#host-metrics-source-1)
+  - [Script Action](#script-action-1)
+
+## General Configuration Concepts
+
+Lets consider the following example:
+
+```yaml
+extensions:
+  sumologic:
+    access_id: <access_id>
+    access_key: <access_key>
+
+receivers:
+  filelog:
+    include:
+      - /var/log/syslog
+  tcplog:
+    listen_address: 0.0.0.0:514
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 4000
+    spike_limit_mib: 800
+  resource:
+    attributes:
+    - key: author
+      value: me
+      action: insert
+
+exporters:
+  sumologic:
+
+service:
+  extensions:
+  - sumologic
+  pipelines:
+  logs/example pipeline:
+    receivers:
+    - filelog
+    - tcplog
+    processors:
+    - memory_limiter
+    - resource
+    exporters:
+    - sumologic
+```
+
+We can differentiate four types of modules:
+
+- extensions - unrelated to data processing, but responsible for additional actions,
+  like collector registration (eg. [sumologic extension][sumologicextension])
+- receivers - responsible for receiving data and pushing it to processors
+- processors - responsible for data modification, like adding fields, limiting memory and so on
+- exporters - responsible for sending data, received by receivers and processed by processors
+
+To use those configured modules, they need to be mentioned in `service` section.
+`service` consists of `extensions` (they are global across collector) and `pipelines`.
+`Pipelines` can be `logs`, `metrics` and `traces` and every of them can have
+`receivers`, `processors` and `exporters`. Multiple pipelines of one type can be configured using aliases (`example pipeline` for `logs` in above example).
+
+## Collector
+
+Collector registration and configuration is handle by [sumologicextension][sumologicextension].
+
+### Name
+
+Collector name can specified by setting `collector_name` option:
+
+```yaml
+extensions:
+  sumologic:
+    access_id: <access_id>
+    access_key: <access_key>
+    collector_name: my_collector
+```
+
+### Description
+
+To set a description, use `collector_description` option:
+
+```yaml
+extensions:
+  sumologic:
+    access_id: <access_id>
+    access_key: <access_key>
+    collector_name: my_collector
+    collector_description: This is my and only my collector
+```
+
+### Host Name
+
+Host name can be set in sumologic exporter configuration.
+Exporter will set host name for every record being sended to Sumo:
+
+```yaml
+extensions:
+  sumologic:
+    access_id: <access_id>
+    access_key: <access_key>
+    collector_name: my_collector
+    collector_description: This is my and only my collector
+exporters:
+  sumologic:
+    source_host: My hostname
+```
+
+### Category
+
+To set Collector category, use `collector_category` configuration:
+
+```yaml
+extensions:
+  sumologic:
+    access_id: <access_id>
+    access_key: <access_key>
+    collector_name: my_collector
+    collector_description: This is my and only my collector
+    collector_category: example
+exporters:
+  sumologic:
+    source_host: My hostname
+```
+
+### Fields
+
+Fields in Opentelemetry Collector can be added using [resourceprocessor][resourceprocessor].
+For example to add a field with key `author` and with value `me` to every record,
+please consider the following configuration:
+
+```yaml
+extensions:
+  sumologic:
+    access_id: <access_id>
+    access_key: <access_key>
+    collector_name: my_collector
+    collector_description: This is my and only my collector
+    collector_category: example
+processors:
+  resource:
+    attributes:
+    - key: author
+      value: me
+      action: insert
+exporters:
+  sumologic:
+    source_host: My hostname
+```
+
+### Assign to a budget
+
+Assign to a budget is not supported by Opentelemetry Collector.
+
+### Time Zone
+
+To set Collector time zone, `time_zone` should be used.
+Example usage has been shown on the following snippet:
+
+```yaml
+extensions:
+  sumologic:
+    access_id: <access_id>
+    access_key: <access_key>
+    collector_name: my_collector
+    collector_description: This is my and only my collector
+    collector_category: example
+    time_zone: America/Tijuana
+processors:
+  resource:
+    attributes:
+    - key: author
+      value: me
+      action: insert
+exporters:
+  sumologic:
+    source_host: My hostname
+```
+
+### Advanced
+
+#### CPU Target
+
+CPU Target is not supported by Opentelemetry Collector.
+
+#### Collector Management
+
+Currently Opentelemetry Collectot is local file managed.
+Depending on your setup please follow [Cloud Based Management](#cloud-based-management)
+or [Local Configuration File](#local-configuration-file) migration details.
 
 ## Cloud Based Management
 
@@ -78,13 +294,13 @@ receivers:
     encoding: utf-8
     ## multiline is Opentelemetry Collector substitute for `Enable Multiline Processing`.
     ## As multiline detection behaves slightly different than in Installed Collector
-    ## following section in filelog documentation is recommended to read:
+    ## the following section in filelog documentation is recommended to read:
     ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/filelogreceiver#multiline-configuration
     multiline:
       ## line_start_pattern is substitute of `Boundary Regex`.
       line_start_pattern: ^\d{4}
 processors:
-  ## Following configuration will add two fields to every record
+  ## The following configuration will add two fields to every record
   resource/log source:
     attributes:
     - key: cloud.availability_zone
@@ -494,6 +710,10 @@ If your multiline logs have a known end pattern use the `line_end_pattern` optio
 
 More information is available in [filelogreceiver documentation][multiline].
 
+### Remote File Source
+
+Remote File Source is not supported by Opentelemetry Collector.
+
 ### Syslog Source
 
 #### Overall example
@@ -539,7 +759,7 @@ processors:
   ## <source group name> can be substitute of Installed Collector `Name`.
   sumologicsyslog/syslog source:
 
-  ## Following configuration will add two fields to every record
+  ## The following configuration will add two fields to every record
   resource/syslog source:
     attributes:
     - key: cloud.availability_zone
@@ -604,9 +824,9 @@ processor:
 
 #### Protocol and Port
 
-Protocol is defined by receiver type. For UDP use [udplogreceiver][udplogreceiver] and for TCP use [tcplogreceiver][tcplogreceiver]. Port is defined by `listen_address`, for example to listen on port `6776` on all interfaces, use `listen_address: 0.0.0.0:6776`.
+Protocol is defined by receiver type. For UDP use [udplogreceiver][udplogreceiver] and for TCP use [tcplogreceiver][tcplogreceiver]. Port can be set by `listen_address`, for example to listen on port `6776` on all interfaces, use `listen_address: 0.0.0.0:6776`.
 
-You can use multiple receivers with different names nad ports like in following example:
+You can use multiple receivers with different names nad ports like in the following example:
 
 ```yaml
 receivers:
@@ -626,7 +846,7 @@ processor:
 
 #### Source Category
 
-The Source Category is set in the exporter configuration with the `source_category` option.
+A Source Category can set in the exporter configuration with the `source_category` option.
 
 For example, the following snippet configures the Source Category as `My Category`:
 
@@ -848,7 +1068,7 @@ for [tcplogreceiver][tcplogreceiver]/[udplogreceiver][udplogreceiver].
 This is going to add [connection related attributes][network-semantic-convention],
 especially `net.peer.name` which should be set as Source Host.
 
-Please see following configuration for better understanding:
+Please see the following configuration for better understanding:
 
 ```yaml
 extensions:
@@ -880,9 +1100,69 @@ exporters:
     source_host: "%{net.peer.name}
 ```
 
+### Docker Logs Source
+
+Docker Logs Source is not supported by Opentelemetry Collector.
+
+### Docker Stats Source
+
+Docker Stats Source is not supported by Opentelemetry Collector.
+
+### Script Source
+
+Script Source is not supported by Opentelemetry Collector.
+
+### Streaming Metrics Source
+
+Streaming Metrics Source is not supported by Opentelemetry Collector.
+
+### Host Metrics Source
+
+Host Metrics Source is not supported by Opentelemetry Collector.
+
+### Script Action
+
+Script Action is not supported by Opentelemetry Collector.
+
 ## Local Configuration File
 
 This section describes migration steps for Sources managed locally.
+
+### Local File Source
+
+Local File Source is not supported by Opentelemetry Collector.
+
+### Remote File Source
+
+Remote File Source is not supported by Opentelemetry Collector.
+
+### Syslog Source
+
+Remote File Source is not supported by Opentelemetry Collector.
+
+### Docker Logs Source
+
+Docker Logs Source is not supported by Opentelemetry Collector.
+
+### Docker Stats Source
+
+Docker Stats Source is not supported by Opentelemetry Collector.
+
+### Script Source
+
+Script Source is not supported by Opentelemetry Collector.
+
+### Streaming Metrics Source
+
+Streaming Metrics Source is not supported by Opentelemetry Collector.
+
+### Host Metrics Source
+
+Host Metrics Source is not supported by Opentelemetry Collector.
+
+### Script Action
+
+Script Action is not supported by Opentelemetry Collector.
 
 [resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.31.0/processor/resourceprocessor
 [multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/filelogreceiver#multiline-configuration
@@ -891,3 +1171,4 @@ This section describes migration steps for Sources managed locally.
 [tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/tcplogreceiver
 [sumologicsyslog]: https://github.com/SumoLogic/sumologic-otel-collector/tree/v0.0.19-beta.0/pkg/processor/sumologicsyslogprocessor
 [network-semantic-convention]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/span-general.md#general-network-connection-attributes
+[sumologicextension]: https://github.com/SumoLogic/sumologic-otel-collector/tree/v0.0.19-beta.0/pkg/extension/sumologicextension
