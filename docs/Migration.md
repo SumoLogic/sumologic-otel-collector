@@ -68,7 +68,7 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
 
 ## General Configuration Concepts
 
-Lets consider the following example:
+Let's consider the following example:
 
 ```yaml
 extensions:
