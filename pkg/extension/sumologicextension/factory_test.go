@@ -20,6 +20,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
@@ -38,6 +39,11 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 		HeartBeatInterval:             DefaultHeartbeatInterval,
 		ApiBaseUrl:                    DefaultApiBaseUrl,
 		CollectorCredentialsDirectory: defaultCredsPath,
+		BackOff: backOffConfig{
+			InitialInterval: backoff.DefaultInitialInterval,
+			MaxInterval:     backoff.DefaultMaxInterval,
+			MaxElapsedTime:  backoff.DefaultMaxElapsedTime,
+		},
 	}, cfg)
 
 	assert.NoError(t, configcheck.ValidateConfig(cfg))

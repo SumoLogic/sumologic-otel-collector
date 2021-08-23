@@ -33,6 +33,12 @@ exporters:
     # maximum connection timeout is 55s, default = 5s
     timeout: <timeout>
 
+    # defines if timestamp for logs should be set to 0,
+    # it indicates that backend will extract timestamp from logs,
+    # this option affects OTLP format only
+    # default = true
+    clear_logs_timestamp: {true, false}
+
     # For below described source and graphite template related configuration,
     # please refer to "Source templates" documentation chapter from this document.
 
@@ -55,6 +61,13 @@ exporters:
     # see "Attribute translation" documentation chapter from this document,
     # default = true
     translate_attributes: {true, false}
+
+    # Specifies whether telegraf metric names should be translated to match
+    # Sumo conventions expected in Sumo host related apps (for example
+    # `procstat_num_threads` => `Proc_Threads` or `cpu_usage_irq` => `CPU_Irq`).
+    # See `translate_metrics.go` for full list of translations.
+    # default = true
+    translate_telegraf_attributes: {true, false}
 
     # list of regexes for attributes which should be sent as metadata,
     # use OpenTelemetry attribute names, see "Attribute translation" documentation

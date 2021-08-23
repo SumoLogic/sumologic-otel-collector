@@ -70,9 +70,22 @@ type Config struct {
 	// For a list of possible values, refer to the "TZ" column in
 	// https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List.
 	TimeZone string `mapstructure:"time_zone"`
+
+	// BackOff defines configuration of collector registration backoff algorithm
+	// Exponential algorithm is being used.
+	// Please see following link for details: https://github.com/cenkalti/backoff
+	BackOff backOffConfig `mapstructure:"backoff"`
 }
 
 type credentials struct {
 	AccessID  string `mapstructure:"access_id"`
 	AccessKey string `mapstructure:"access_key"`
+}
+
+// backOff configuration. See following link for details:
+// https://pkg.go.dev/github.com/cenkalti/backoff/v4#ExponentialBackOff
+type backOffConfig struct {
+	InitialInterval time.Duration `mapstructure:"initial_interval"`
+	MaxInterval     time.Duration `mapstructure:"max_interval"`
+	MaxElapsedTime  time.Duration `mapstructure:"max_elapsed_time"`
 }
