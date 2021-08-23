@@ -7,3 +7,4 @@
 - [Migration from Installed Collector](./Migration.md)
 - [Performance](./Performance.md)
 - [Best Practices](./BestPractices.md)
+- [Known Issues](./KnownIssues.md)
