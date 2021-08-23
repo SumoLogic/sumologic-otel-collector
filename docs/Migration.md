@@ -55,18 +55,20 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
 - [Local Configuration File](#local-configuration-file)
   - [Collector](#collector-1)
     - [user.properties](#user.properties)
-  - [Local File Source](#local-file-source-1)
-  - [Remote File Source](#remote-file-source-1)
-  - [Syslog Source](#syslog-source-1)
-  - [Docker Logs Source](#docker-logs-source-1)
-  - [Docker Stats Source](#docker-stats-source-1)
-  - [Script Source](#script-source-1)
-  - [Streaming Metrics Source](#streaming-metrics-source-1)
-  - [Host Metrics Source](#host-metrics-source-1)
-  - [Local Windows Event Log Source](#local-windows-event-log-source-1)
-  - [Local Windows Performance Monitor Log Source](#local-windows-performance-monitor-log-source-1)
-  - [Windows Active Directory Source](#windows-active-directory-source-1)
-  - [Script Action](#script-action-1)
+  - [Common Parameters](#common-parameters)
+  - [Local File Source (LocalFile)](#local-file-source-localfile)
+  - [Remote File Source (RemoteFileV2)](#remote-file-source-remotefilev2)
+  - [Syslog Source (Syslog)](#syslog-source-syslog)
+  - [Docker Logs Source (DockerLog)](#docker-logs-source-dockerlog)
+  - [Docker Stats Source (DockerStats)](#docker-stats-source-dockerstats)
+  - [Script Source (Script)](#script-source-script)
+  - [Streaming Metrics Source (StreamingMetrics)](#streaming-metrics-source-streamingmetrics)
+  - [Host Metrics Source (SystemStats)](#host-metrics-source-systemstats)
+  - [Local Windows Event Log Source (LocalWindowsEventLog)](#local-windows-event-log-source-localwindowseventlog)
+  - [Remote Windows Event Log Source (RemoteWindowsEventLog)](#local-windows-event-log-source-remotewindowseventlog)
+  - [Local Windows Performance Source (LocalWindowsPerfMon)](#local-windows-performance-monitor-log-source-localwindowsperfmon)
+  - [Remote Windows Performance Source (RemoteWindowsPerfMon)](#local-windows-performance-monitor-log-source-remotewindowsperfmon)
+  - [Windows Active Directory Source (ActiveDirectory)](#windows-active-directory-source-activedirectory)
 
 ## General Configuration Concepts
 
@@ -1188,53 +1190,59 @@ The following table shows propertied migration for [user.properties][user.proper
 | `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
 | `wrapper.java.maxmemory=size`                 | N/A                                                        |
 
-### Local File Source
+### Common Parameters
+
+### Local File Source (LocalFile)
 
 Local File Source is not supported by the OpenTelemetry Collector.
 
-### Remote File Source
+### Remote File Source (RemoteFileV2)
 
 Remote File Source is not supported by the OpenTelemetry Collector.
 
-### Syslog Source
+### Syslog Source (Syslog)
 
 Remote File Source is not supported by the OpenTelemetry Collector.
 
-### Docker Logs Source
+### Docker Logs Source (DockerLog)
 
 Docker Logs Source is not supported by the OpenTelemetry Collector.
 
-### Docker Stats Source
+### Docker Stats Source (DockerStats)
 
 Docker Stats Source is not supported by the OpenTelemetry Collector.
 
-### Script Source
+### Script Source (Script)
 
 Script Source is not supported by the OpenTelemetry Collector.
 
-### Streaming Metrics Source
+### Streaming Metrics Source (StreamingMetrics)
 
 Streaming Metrics Source is not supported by the OpenTelemetry Collector.
 
-### Host Metrics Source
+### Host Metrics Source (SystemStats)
 
 Host Metrics Source is not supported by the OpenTelemetry Collector.
 
-### Local Windows Event Log Source
+### Local Windows Event Log Source (LocalWindowsEventLog)
 
 Local Windows Event Log Source is not supported by the OpenTelemetry Collector.
 
-### Local Windows Performance Monitor Log Source
+### Remote Windows Event Log Source (RemoteWindowsEventLog)
 
-Local Windows Performance Monitor Log Source is not supported by the OpenTelemetry Collector.
+Remote Windows Event Log Source is not supported by the OpenTelemetry Collector.
 
-### Windows Active Directory Source
+### Local Windows Performance Source (LocalWindowsPerfMon)
+
+Local Windows Performance Source is not supported by the OpenTelemetry Collector.
+
+### Remote Windows Performance Source (RemoteWindowsPerfMon)
+
+Remote Windows Performance Source is not supported by the OpenTelemetry Collector.
+
+### Windows Active Directory Source (ActiveDirectory)
 
 Windows Active Directory Source is not supported by the OpenTelemetry Collector.
-
-### Script Action
-
-Script Action is not supported by the OpenTelemetry Collector.
 
 [resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.31.0/processor/resourceprocessor
 [multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/filelogreceiver#multiline-configuration
