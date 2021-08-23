@@ -1148,15 +1148,15 @@ Script Action is not supported by the OpenTelemetry Collector.
 
 ## Local Configuration File
 
-This section describes migration steps for the Installed Collector managed locally.
+This section describes migration steps for an Installed Collector managed with a Local Configuration File.
 
 ### Collector
 
 #### user.properties
 
-The following table shows propertied migration for [user.properties][user.properties]
+The following table shows the equivalent [user.properties][user.properties] for OpenTelemetry.
 
-| user.properties key                           | The Open Telemetry Collector Key                           |
+| user.properties key                           | The OpenTelemetry Collector Key                           |
 |-----------------------------------------------|------------------------------------------------------------|
 | `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
 | `accessid=accessId`                           | `extensions.sumologic.access_id`                           |
@@ -1192,7 +1192,7 @@ The following table shows propertied migration for [user.properties][user.proper
 
 ### Common Parameters
 
-This section describes migration steps for [the common parameters][common-parameters].
+This section describes migration steps for [common parameters][common-parameters].
 
 `sourceType` migration:
 
@@ -1210,7 +1210,7 @@ This section describes migration steps for [the common parameters][common-parame
 - [RemoteWindowsPerfMon](#local-windows-performance-monitor-log-source-remotewindowsperfmon)
 - [ActiveDirectory](#windows-active-directory-source-activedirectory)
 
-| The Installed Collector Parameter | The Open Telemetry Collector Key                                                                                |
+| The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                |
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | `name`                            | Define the name after the slash `/` in the receiver name. [See the linked example.](#name-1)                    |
 | `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-1) |
