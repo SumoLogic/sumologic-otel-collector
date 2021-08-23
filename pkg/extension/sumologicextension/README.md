@@ -40,7 +40,7 @@ and can be used as an authenticator for the
   fields that will be used for registration.
   For more information on this subject please visit [this help document][fields_help]
 * `api_base_url`: base URL that will be used for creating API requests
-  (default: `https://open-collectors.sumologic.comm`)
+  (default: `https://open-collectors.sumologic.com`)
 * `heartbeat_interval`: interval that will be used for sending heartbeats
   (default: `15s`)
 * `collector_credentials_directory`: directory where state files with registration
