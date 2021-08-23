@@ -53,6 +53,8 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
   - [Windows Active Directory Source](#windows-active-directory-source)
   - [Script Action](#script-action)
 - [Local Configuration File](#local-configuration-file)
+  - [Collector](#collector-1)
+    - [user.properties](#user.properties)
   - [Local File Source](#local-file-source-1)
   - [Remote File Source](#remote-file-source-1)
   - [Syslog Source](#syslog-source-1)
@@ -1144,7 +1146,47 @@ Script Action is not supported by the OpenTelemetry Collector.
 
 ## Local Configuration File
 
-This section describes migration steps for Sources managed locally.
+This section describes migration steps for the Installed Collector managed locally.
+
+### Collector
+
+#### user.properties
+
+The following table shows propertied migration for [user.properties][user.properties]
+
+| user.properties key                           | The Open Telemetry Collector Key                           |
+|-----------------------------------------------|------------------------------------------------------------|
+| `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
+| `accessid=accessId`                           | `extensions.sumologic.access_id`                           |
+| `accesskey=accessKey`                         | `extensions.sumologic.access_key`                          |
+| `category=category`                           | [extensions.sumologic.collector_category](#category)       |
+| `clobber=true/false`                          | `extensions.sumologic.clobber`                             |
+| `description=description`                     | [extensions.sumologic.collector_description](#description) |
+| `disableActionSource=true/false`              | N/A                                                        |
+| `disableScriptSource=true/false`              | N/A                                                        |
+| `disableUpgrade=true/false`                   | N/A                                                        |
+| `enableActionSource=true/false`               | N/A                                                        |
+| `enableScriptSource=true/false`               | N/A                                                        |
+| `ephemeral=true/false`                        | N/A                                                        |
+| `fields=[list of fields]`                     | [processors.resource](#fields)                             |
+| `fipsJce=true/false`                          | N/A                                                        |
+| `hostName=hostname`                           | `exporters.sumologic.source_host`                          |
+| `name=name`                                   | [extensions.sumologic.collector_name](#name)               |
+| `proxyHost=host`                              | [plese see OTC documentation][proxy]                       |
+| `proxyNtlmDomain=NTLM domain`                 | [plese see OTC documentation][proxy]                       |
+| `proxyPassword=password`                      | [plese see OTC documentation][proxy]                       |
+| `proxyPort=port`                              | [plese see OTC documentation][proxy]                       |
+| `proxyUser=username`                          | [plese see OTC documentation][proxy]                       |
+| `skipAccessKeyRemoval=true/false`             | N/A                                                        |
+| `sources=absolute filepath or folderpath`     | N/A                                                        |
+| `syncSources=absolute filepath or folderpath` | N/A                                                        |
+| `targetCPU=target`                            | N/A                                                        |
+| `timeZone=timezone`                           | [extensions.sumologic.time_zone](#time-zone)               |
+| `token=token`                                 | N/A                                                        |
+| `url=collection endpoint`                     | `extensions.sumologic.api.base.url`                        |
+| `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
+| `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
+| `wrapper.java.maxmemory=size`                 | N/A                                                        |
 
 ### Local File Source
 
@@ -1202,3 +1244,5 @@ Script Action is not supported by the OpenTelemetry Collector.
 [sumologicsyslog]: https://github.com/SumoLogic/sumologic-otel-collector/tree/v0.0.19-beta.0/pkg/processor/sumologicsyslogprocessor
 [network-semantic-convention]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/span-general.md#general-network-connection-attributes
 [sumologicextension]: https://github.com/SumoLogic/sumologic-otel-collector/tree/v0.0.19-beta.0/pkg/extension/sumologicextension
+[user.properties]: https://help.sumologic.com/03Send-Data/Installed-Collectors/05Reference-Information-for-Collector-Installation/06user.properties
+[proxy]: https://opentelemetry.io/docs/collector/configuration/#proxy-support
