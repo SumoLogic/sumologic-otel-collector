@@ -1192,6 +1192,43 @@ The following table shows propertied migration for [user.properties][user.proper
 
 ### Common Parameters
 
+This section describes migration steps for [the common parameters][common-parameters].
+
+`sourceType` migration:
+
+- [LocalFile](#local-file-source-localfile)
+- [RemoteFileV2](#remote-file-source-remotefilev2)
+- [Syslog](#syslog-source-syslog)
+- [DockerLog](#docker-logs-source-dockerlog)
+- [DockerStats](#docker-stats-source-dockerstats)
+- [Script](#script-source-script)
+- [StreamingMetrics](#streaming-metrics-source-streamingmetrics)
+- [SystemStats](#host-metrics-source-systemstats)
+- [LocalWindowsEventLog](#local-windows-event-log-source-localwindowseventlog)
+- [RemoteWindowsEventLog](#local-windows-event-log-source-remotewindowseventlog)
+- [LocalWindowsPerfMon](#local-windows-performance-monitor-log-source-localwindowsperfmon)
+- [RemoteWindowsPerfMon](#local-windows-performance-monitor-log-source-remotewindowsperfmon)
+- [ActiveDirectory](#windows-active-directory-source-activedirectory)
+
+| The Installed Collector Parameter | The Open Telemetry Collector Key                                                                                |
+|-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `name`                            | Define the name after the slash `/` in the receiver name. [See the linked example.](#name-1)                    |
+| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-1) |
+| `fields`                          | Use the [resourceprocessor][resourceprocessor] to set custom fields. [See the linked example.](#fields-1)       |
+| `hostName`                        | [exporters.sumologic.source_host][source-templates]; [See the linked example.](#host-name-1)                     |
+| `category`                        | [exporters.sumologic.source_category][source-templates]                                                         |
+| `automaticDateParsing`            | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
+| `timeZone`                        | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
+| `forceTimeZone`                   | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
+| `defaultDateFormat`               | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
+| `defaultDateFormats`              | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
+| `multilineProcessingEnabled`      | [See Multiline Processing explanation](#multiline-processing)                                                   |
+| `useAutolineMatching`             | [See Multiline Processing explanation](#multiline-processing)                                                   |
+| `manualPrefixRegexp`              | [See Multiline Processing explanation](#multiline-processing)                                                   |
+| `filters`                         | N/A                                                                                                             |
+| `cutoffTimestamp`                 | N/A                                                                                                             |
+| `cutoffRelativeTime`              | N/A                                                                                                             |
+
 ### Local File Source (LocalFile)
 
 Local File Source is not supported by the OpenTelemetry Collector.
@@ -1249,8 +1286,10 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/filelogreceiver#supported-encodings
 [udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/udplogreceiver
 [tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/tcplogreceiver
-[sumologicsyslog]: https://github.com/SumoLogic/sumologic-otel-collector/tree/v0.0.19-beta.0/pkg/processor/sumologicsyslogprocessor
+[sumologicsyslog]: ../pkg/processor/sumologicsyslogprocessor/README.md
 [network-semantic-convention]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/span-general.md#general-network-connection-attributes
-[sumologicextension]: https://github.com/SumoLogic/sumologic-otel-collector/tree/v0.0.19-beta.0/pkg/extension/sumologicextension
+[sumologicextension]: ../pkg/extension/sumologicextension/README.md
 [user.properties]: https://help.sumologic.com/03Send-Data/Installed-Collectors/05Reference-Information-for-Collector-Installation/06user.properties
 [proxy]: https://opentelemetry.io/docs/collector/configuration/#proxy-support
+[common-parameters]: https://help.sumologic.com/03Send-Data/Sources/03Use-JSON-to-Configure-Sources#common-parameters-for-log-source-types
+[source-templates]: ../pkg/exporter/sumologicexporter/README.md#source-templates
