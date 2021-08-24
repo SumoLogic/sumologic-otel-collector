@@ -53,18 +53,22 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
   - [Windows Active Directory Source](#windows-active-directory-source)
   - [Script Action](#script-action)
 - [Local Configuration File](#local-configuration-file)
-  - [Local File Source](#local-file-source-1)
-  - [Remote File Source](#remote-file-source-1)
-  - [Syslog Source](#syslog-source-1)
-  - [Docker Logs Source](#docker-logs-source-1)
-  - [Docker Stats Source](#docker-stats-source-1)
-  - [Script Source](#script-source-1)
-  - [Streaming Metrics Source](#streaming-metrics-source-1)
-  - [Host Metrics Source](#host-metrics-source-1)
-  - [Local Windows Event Log Source](#local-windows-event-log-source-1)
-  - [Local Windows Performance Monitor Log Source](#local-windows-performance-monitor-log-source-1)
-  - [Windows Active Directory Source](#windows-active-directory-source-1)
-  - [Script Action](#script-action-1)
+  - [Collector](#collector-1)
+    - [user.properties](#user.properties)
+  - [Common Parameters](#common-parameters)
+  - [Local File Source (LocalFile)](#local-file-source-localfile)
+  - [Remote File Source (RemoteFileV2)](#remote-file-source-remotefilev2)
+  - [Syslog Source (Syslog)](#syslog-source-syslog)
+  - [Docker Logs Source (DockerLog)](#docker-logs-source-dockerlog)
+  - [Docker Stats Source (DockerStats)](#docker-stats-source-dockerstats)
+  - [Script Source (Script)](#script-source-script)
+  - [Streaming Metrics Source (StreamingMetrics)](#streaming-metrics-source-streamingmetrics)
+  - [Host Metrics Source (SystemStats)](#host-metrics-source-systemstats)
+  - [Local Windows Event Log Source (LocalWindowsEventLog)](#local-windows-event-log-source-localwindowseventlog)
+  - [Remote Windows Event Log Source (RemoteWindowsEventLog)](#local-windows-event-log-source-remotewindowseventlog)
+  - [Local Windows Performance Source (LocalWindowsPerfMon)](#local-windows-performance-monitor-log-source-localwindowsperfmon)
+  - [Remote Windows Performance Source (RemoteWindowsPerfMon)](#local-windows-performance-monitor-log-source-remotewindowsperfmon)
+  - [Windows Active Directory Source (ActiveDirectory)](#windows-active-directory-source-activedirectory)
 
 ## General Configuration Concepts
 
@@ -1144,61 +1148,148 @@ Script Action is not supported by the OpenTelemetry Collector.
 
 ## Local Configuration File
 
-This section describes migration steps for Sources managed locally.
+This section describes migration steps for an Installed Collector managed with a Local Configuration File.
 
-### Local File Source
+### Collector
+
+#### user.properties
+
+The following table shows the equivalent [user.properties][user.properties] for OpenTelemetry.
+
+| user.properties key                           | The OpenTelemetry Collector Key                           |
+|-----------------------------------------------|------------------------------------------------------------|
+| `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
+| `accessid=accessId`                           | `extensions.sumologic.access_id`                           |
+| `accesskey=accessKey`                         | `extensions.sumologic.access_key`                          |
+| `category=category`                           | [extensions.sumologic.collector_category](#category)       |
+| `clobber=true/false`                          | `extensions.sumologic.clobber`                             |
+| `description=description`                     | [extensions.sumologic.collector_description](#description) |
+| `disableActionSource=true/false`              | N/A                                                        |
+| `disableScriptSource=true/false`              | N/A                                                        |
+| `disableUpgrade=true/false`                   | N/A                                                        |
+| `enableActionSource=true/false`               | N/A                                                        |
+| `enableScriptSource=true/false`               | N/A                                                        |
+| `ephemeral=true/false`                        | N/A                                                        |
+| `fields=[list of fields]`                     | [processors.resource](#fields)                             |
+| `fipsJce=true/false`                          | N/A                                                        |
+| `hostName=hostname`                           | `exporters.sumologic.source_host`                          |
+| `name=name`                                   | [extensions.sumologic.collector_name](#name)               |
+| `proxyHost=host`                              | [plese see OTC documentation][proxy]                       |
+| `proxyNtlmDomain=NTLM domain`                 | [plese see OTC documentation][proxy]                       |
+| `proxyPassword=password`                      | [plese see OTC documentation][proxy]                       |
+| `proxyPort=port`                              | [plese see OTC documentation][proxy]                       |
+| `proxyUser=username`                          | [plese see OTC documentation][proxy]                       |
+| `skipAccessKeyRemoval=true/false`             | N/A                                                        |
+| `sources=absolute filepath or folderpath`     | N/A                                                        |
+| `syncSources=absolute filepath or folderpath` | N/A                                                        |
+| `targetCPU=target`                            | N/A                                                        |
+| `timeZone=timezone`                           | [extensions.sumologic.time_zone](#time-zone)               |
+| `token=token`                                 | N/A                                                        |
+| `url=collection endpoint`                     | `extensions.sumologic.api.base.url`                        |
+| `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
+| `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
+| `wrapper.java.maxmemory=size`                 | N/A                                                        |
+
+### Common Parameters
+
+This section describes migration steps for [common parameters][common-parameters].
+
+`sourceType` migration:
+
+- [LocalFile](#local-file-source-localfile)
+- [RemoteFileV2](#remote-file-source-remotefilev2)
+- [Syslog](#syslog-source-syslog)
+- [DockerLog](#docker-logs-source-dockerlog)
+- [DockerStats](#docker-stats-source-dockerstats)
+- [Script](#script-source-script)
+- [StreamingMetrics](#streaming-metrics-source-streamingmetrics)
+- [SystemStats](#host-metrics-source-systemstats)
+- [LocalWindowsEventLog](#local-windows-event-log-source-localwindowseventlog)
+- [RemoteWindowsEventLog](#local-windows-event-log-source-remotewindowseventlog)
+- [LocalWindowsPerfMon](#local-windows-performance-monitor-log-source-localwindowsperfmon)
+- [RemoteWindowsPerfMon](#local-windows-performance-monitor-log-source-remotewindowsperfmon)
+- [ActiveDirectory](#windows-active-directory-source-activedirectory)
+
+| The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                |
+|-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `name`                            | Define the name after the slash `/` in the receiver name. [See the linked example.](#name-1)                    |
+| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-1) |
+| `fields`                          | Use the [resourceprocessor][resourceprocessor] to set custom fields. [See the linked example.](#fields-1)       |
+| `hostName`                        | [exporters.sumologic.source_host][source-templates]; [See the linked example.](#host-name-1)                     |
+| `category`                        | [exporters.sumologic.source_category][source-templates]                                                         |
+| `automaticDateParsing`            | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
+| `timeZone`                        | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
+| `forceTimeZone`                   | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
+| `defaultDateFormat`               | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
+| `defaultDateFormats`              | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
+| `multilineProcessingEnabled`      | [See Multiline Processing explanation](#multiline-processing)                                                   |
+| `useAutolineMatching`             | [See Multiline Processing explanation](#multiline-processing)                                                   |
+| `manualPrefixRegexp`              | [See Multiline Processing explanation](#multiline-processing)                                                   |
+| `filters`                         | N/A                                                                                                             |
+| `cutoffTimestamp`                 | N/A                                                                                                             |
+| `cutoffRelativeTime`              | N/A                                                                                                             |
+
+### Local File Source (LocalFile)
 
 Local File Source is not supported by the OpenTelemetry Collector.
 
-### Remote File Source
+### Remote File Source (RemoteFileV2)
 
 Remote File Source is not supported by the OpenTelemetry Collector.
 
-### Syslog Source
+### Syslog Source (Syslog)
 
 Remote File Source is not supported by the OpenTelemetry Collector.
 
-### Docker Logs Source
+### Docker Logs Source (DockerLog)
 
 Docker Logs Source is not supported by the OpenTelemetry Collector.
 
-### Docker Stats Source
+### Docker Stats Source (DockerStats)
 
 Docker Stats Source is not supported by the OpenTelemetry Collector.
 
-### Script Source
+### Script Source (Script)
 
 Script Source is not supported by the OpenTelemetry Collector.
 
-### Streaming Metrics Source
+### Streaming Metrics Source (StreamingMetrics)
 
 Streaming Metrics Source is not supported by the OpenTelemetry Collector.
 
-### Host Metrics Source
+### Host Metrics Source (SystemStats)
 
 Host Metrics Source is not supported by the OpenTelemetry Collector.
 
-### Local Windows Event Log Source
+### Local Windows Event Log Source (LocalWindowsEventLog)
 
 Local Windows Event Log Source is not supported by the OpenTelemetry Collector.
 
-### Local Windows Performance Monitor Log Source
+### Remote Windows Event Log Source (RemoteWindowsEventLog)
 
-Local Windows Performance Monitor Log Source is not supported by the OpenTelemetry Collector.
+Remote Windows Event Log Source is not supported by the OpenTelemetry Collector.
 
-### Windows Active Directory Source
+### Local Windows Performance Source (LocalWindowsPerfMon)
+
+Local Windows Performance Source is not supported by the OpenTelemetry Collector.
+
+### Remote Windows Performance Source (RemoteWindowsPerfMon)
+
+Remote Windows Performance Source is not supported by the OpenTelemetry Collector.
+
+### Windows Active Directory Source (ActiveDirectory)
 
 Windows Active Directory Source is not supported by the OpenTelemetry Collector.
-
-### Script Action
-
-Script Action is not supported by the OpenTelemetry Collector.
 
 [resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.31.0/processor/resourceprocessor
 [multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/filelogreceiver#multiline-configuration
 [supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/filelogreceiver#supported-encodings
 [udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/udplogreceiver
 [tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/tcplogreceiver
-[sumologicsyslog]: https://github.com/SumoLogic/sumologic-otel-collector/tree/v0.0.19-beta.0/pkg/processor/sumologicsyslogprocessor
+[sumologicsyslog]: ../pkg/processor/sumologicsyslogprocessor/README.md
 [network-semantic-convention]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/span-general.md#general-network-connection-attributes
-[sumologicextension]: https://github.com/SumoLogic/sumologic-otel-collector/tree/v0.0.19-beta.0/pkg/extension/sumologicextension
+[sumologicextension]: ../pkg/extension/sumologicextension/README.md
+[user.properties]: https://help.sumologic.com/03Send-Data/Installed-Collectors/05Reference-Information-for-Collector-Installation/06user.properties
+[proxy]: https://opentelemetry.io/docs/collector/configuration/#proxy-support
+[common-parameters]: https://help.sumologic.com/03Send-Data/Sources/03Use-JSON-to-Configure-Sources#common-parameters-for-log-source-types
+[source-templates]: ../pkg/exporter/sumologicexporter/README.md#source-templates
