@@ -35,7 +35,7 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [Overall example](#overall-example-1)
     - [Name](#name-2)
     - [Description](#description-2)
-    - [Protocol](#protocol-and-port)
+    - [Protocol and Port](#protocol-and-port)
     - [Source Category](#source-category-1)
     - [Fields](#fields-2)
     - [Advanced Options for Logs](#advanced-options-for-logs-1)
@@ -1231,7 +1231,14 @@ This section describes migration steps for [common parameters][common-parameters
 
 ### Local File Source (LocalFile)
 
-Local File Source is not supported by the OpenTelemetry Collector.
+Equivalent of the Local File Source is [the filelog receiver][filelogreceiver].
+More useful information can be found in [Local File Source for Cloud Based Management](#local-file-source).
+
+| The Installed Collector Parameter | The OpenTelemetry Collector Key                         |
+|-----------------------------------|---------------------------------------------------------|
+| `pathExpression`                  | element of [receivers.filelog.include](#file-path) list |
+| `denylist`                        | elemets of [receivers.filelog.exclude](#denylist) list  |
+| `encoding`                        | [receivers.filelog.encoding](#encoding)                 |
 
 ### Remote File Source (RemoteFileV2)
 
@@ -1239,7 +1246,15 @@ Remote File Source is not supported by the OpenTelemetry Collector.
 
 ### Syslog Source (Syslog)
 
-Remote File Source is not supported by the OpenTelemetry Collector.
+Equivalent of the Syslog Source is combination of
+[the tcplog][tcplogreceiver] or [the udplog][udplogreceiver] receivers
+and [the sumologicsyslog processor][sumologicsyslog].
+More useful information can be found in [Syslog Source for Cloud Based Management](#syslog-source).
+
+| The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                      |
+|-----------------------------------|----------------------------------------------------------------------------------------------------------------------|
+| `protocol`                        | using tcplog or udplog receiver. [See syslog explanation](#protocol-and-port)                                        |
+| `port`                            | `receivers.tcplog.listen_address` or `receivers.udplog.listen_address`. [See syslog explanation](#protocol-and-port) |
 
 ### Docker Logs Source (DockerLog)
 
@@ -1286,6 +1301,7 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#supported-encodings
 [udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/udplogreceiver
 [tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/tcplogreceiver
+[filelogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver
 [sumologicsyslog]: ../pkg/processor/sumologicsyslogprocessor/README.md
 [network-semantic-convention]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/span-general.md#general-network-connection-attributes
 [sumologicextension]: ../pkg/extension/sumologicextension/README.md
