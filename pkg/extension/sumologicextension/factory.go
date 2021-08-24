@@ -28,7 +28,7 @@ import (
 const (
 	// The value of extension "type" in configuration.
 	typeStr           = "sumologic"
-	DefaultApiBaseUrl = "https://collectors.sumologic.com"
+	DefaultApiBaseUrl = "https://open-collectors.sumologic.com"
 )
 
 // NewFactory creates a factory for Sumo Logic extension.
