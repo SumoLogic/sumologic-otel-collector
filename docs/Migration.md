@@ -812,9 +812,9 @@ receivers:
 processors:
   ## There is no substitute for `Description` in current project phase.
   ## It is recommended to use comments for that purpose, like this one.
-  ## sumologicsyslog/<source group name>:
+  ## sumologic_syslog/<source group name>:
   ## <source group name> can be substitute of Installed Collector `Name`.
-  sumologicsyslog/syslog source:
+  sumologic_syslog/syslog source:
 
   ## The following configuration will add two fields to every record
   resource/syslog source:
@@ -862,7 +862,7 @@ For example, the following snippet configures the name as `my example name`:
 
 ```yaml
 processor:
-  sumologicsyslog/my example name:
+  sumologic_syslog/my example name:
   # ...
 ```
 
@@ -875,7 +875,7 @@ For example, the following snippet configures the description as `All my example
 ```yaml
 processor:
   ## All my example logs
-  sumologicsyslog/my example name:
+  sumologic_syslog/my example name:
   # ...
 ```
 
@@ -897,7 +897,7 @@ receivers:
     listen_address: 127.0.0.1:5150
 processor:
   ## All my example logs
-  sumologicsyslog/my example name:
+  sumologic_syslog/my example name:
   # ...
 ```
 
@@ -919,7 +919,7 @@ receivers:
     listen_address: 127.0.0.1:5150
 processor:
   ## All my example logs
-  sumologicsyslog/my example name:
+  sumologic_syslog/my example name:
   # ...
 exporters:
   sumologic/some name:
@@ -944,7 +944,7 @@ receivers:
     listen_address: 127.0.0.1:5150
 processors:
   ## All my example logs
-  sumologicsyslog/my example name:
+  sumologic_syslog/my example name:
   # ...
   resource/my example name fields:
     attributes:
@@ -986,7 +986,7 @@ receivers:
     listen_address: 127.0.0.1:5150
 processors:
   ## All my example logs
-  sumologicsyslog/my example name:
+  sumologic_syslog/my example name:
   # ...
   resource/my example name fields:
     attributes:
@@ -1034,7 +1034,7 @@ receivers:
         to: $$body
 processors:
   ## All my example logs
-  sumologicsyslog/my example name:
+  sumologic_syslog/my example name:
   # ...
   resource/my example name fields:
     attributes:
@@ -1062,7 +1062,7 @@ receivers:
     listen_address: 0.0.0.0:514
 processors:
   ## All my example logs
-  sumologicsyslog/my example name:
+  sumologic_syslog/my example name:
   # ...
   resource/my example name fields:
     attributes:
@@ -1098,7 +1098,7 @@ receivers:
     listen_address: 0.0.0.0:514
 processors:
   ## All my example logs
-  sumologicsyslog/my example name:
+  sumologic_syslog/my example name:
   # ...
   resource/my example name fields:
     attributes:
@@ -1136,7 +1136,7 @@ receivers:
     add_attributes: true
 processors:
   ## All my example logs
-  sumologicsyslog/my example name:
+  sumologic_syslog/my example name:
   # ...
   resource/my example name fields:
     attributes:
