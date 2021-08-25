@@ -12,6 +12,7 @@ the container images stored in AWS Public ECR under the following repository:
 - [Container image](#container-image)
 - [Systemd service](#systemd-service)
 - [Ansible](#ansible)
+- [Puppet](#puppet)
 
 ## Standalone
 
@@ -214,3 +215,8 @@ To run opentelemetry collector as Systemd Service please apply following steps:
 
 Example installation of Sumo Logic Distro of OpenTelemetry Collector with Ansible is described in
 [examples/ansible](../examples/ansible/README.md).
+
+## Puppet
+
+Example installation of Sumo Logic Distro of OpenTelemetry Collector with Puppet is described in
+[examples/puppet](../examples/puppet/README.md).
