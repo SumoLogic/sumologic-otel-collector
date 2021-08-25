@@ -24,4 +24,6 @@ Vagrant.configure('2') do |config|
   config.vm.provision 'shell', path: 'vagrant/provision.sh'
 
   config.vm.synced_folder ".", "/sumologic"
+  config.vm.synced_folder "examples/puppet/modules/", "/etc/puppetlabs/code/environments/production/modules/"
+  config.vm.synced_folder "examples/puppet/manifests/", "/etc/puppetlabs/code/environments/production/manifests/"
 end

@@ -24,3 +24,41 @@ curl -LJ "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" -o go.linux-
 
 # Install ansible
 pip3 install ansible
+
+# Add puppet hosts
+tee -a /etc/hosts << END
+127.0.0.1 agent
+END
+
+# Install puppet server & puppet agent
+wget https://apt.puppetlabs.com/puppet6-release-focal.deb
+dpkg -i puppet6-release-focal.deb
+apt-get update -y
+apt-get install puppetserver puppet-agent -y
+
+tee /etc/puppetlabs/puppet/puppet.conf << END
+[server]
+vardir = /opt/puppetlabs/server/data/puppetserver
+logdir = /var/log/puppetlabs/puppetserver
+rundir = /var/run/puppetlabs/puppetserver
+pidfile = /var/run/puppetlabs/puppetserver/puppetserver.pid
+codedir = /etc/puppetlabs/code
+
+certname = sumologic-otel-collector
+server = sumologic-otel-collector
+
+[agent]
+certname = agent
+server = sumologic-otel-collector
+END
+
+# Start puppet server
+systemctl start puppetserver
+systemctl enable puppetserver
+
+# Start puppet agent
+systemctl start puppet
+systemctl enable puppet
+
+echo 'PATH="$PATH:/opt/puppetlabs/bin/"' >> /etc/profile
+sed -i 's#secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"#secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/opt/puppetlabs/bin"#g' /etc/sudoers
