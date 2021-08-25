@@ -46,10 +46,10 @@
         system: True
     - name: Ensures /etc/otelcol-sumo/ directory exists
       file: path=/etc/otelcol-sumo/ state=directory
-    - name: Copy configuration file from {{ sumologic_otel_collector.src_config_path }} to /etc/otelcol-sumo/config.yml
+    - name: Copy configuration file from {{ sumologic_otel_collector.src_config_path }} to /etc/otelcol-sumo/config.yaml
       copy:
         src: "{{ sumologic_otel_collector.src_config_path }}"
-        dest: /etc/otelcol-sumo/config.yml
+        dest: /etc/otelcol-sumo/config.yaml
         owner: opentelemetry
         group: opentelemetry
         mode: 0644
@@ -67,6 +67,6 @@
       when:
         - sumologic_otel_collector.systemd_service == true
     - name: Run otelcol-sumo in background
-      shell: nohup /usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yml > /var/log/otelcol.log 2>&1 &
+      shell: nohup /usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yaml > /var/log/otelcol.log 2>&1 &
       when:
         - sumologic_otel_collector.systemd_service == false

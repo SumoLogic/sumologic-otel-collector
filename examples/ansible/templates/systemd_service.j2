@@ -2,7 +2,7 @@
 Description=Sumologic Opentelemetry Collector
 
 [Service]
-ExecStart=/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yml
+ExecStart=/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yaml
 User=opentelemetry
 Group=opentelemetry
 MemoryHigh={{ sumologic_otel_collector.memory_high }}
