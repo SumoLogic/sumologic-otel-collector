@@ -2,6 +2,8 @@
 
 This exporter supports sending logs and metrics data to [Sumo Logic](https://www.sumologic.com/).
 
+We are strongly recommend to use this exporter with [sumologicextension](../../extension/sumologicextension/README.md).
+
 Configuration is specified via the yaml in the following structure:
 
 ```yaml
@@ -9,7 +11,8 @@ exporters:
   # ...
   sumologic:
     # unique URL generated for your HTTP Source, this is the address to send data to
-    # (required, unless configured with sumologicextension)
+    # deprecated, please use sumologicextension to manage your endpoints
+    # if sumologicextension is not being used, the endpoint is required
     endpoint: <HTTP_Source_URL>
     # Compression encoding format, empty string means no compression, default = gzip
     compress_encoding: {gzip, deflate, ""}
@@ -170,6 +173,39 @@ If an attribute is not found, it is replaced with `undefined`.
 For example, `%{existing_attr}/%{nonexistent_attr}` becomes `value-of-existing-attr/undefined`.
 
 ## Example Configuration
+
+### Example with sumologicextension
+
+```yaml
+extensions:
+  sumologic:
+    access_id: aaa
+    access_key: bbbbbbbbbbbbbbbbbbbbbb
+    collector_name: my_collector
+
+receivers:
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      load:
+
+exporters:
+  sumologic:
+    source_category: "custom category"
+    source_name: "custom name"
+    source_host: "custom host"
+    metadata_attributes:
+      - k8s.*
+
+service:
+  extensions: [sumologic]
+  pipelines:
+    metrics:
+      receivers: [hostmetrics]
+      exporters: [sumologic]
+```
+
+### Example without sumologicextension
 
 ```yaml
 exporters:
