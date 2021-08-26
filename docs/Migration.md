@@ -47,6 +47,13 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
   - [Docker Stats Source](#docker-stats-source)
   - [Script Source](#script-source)
   - [Streaming Metrics Source](#streaming-metrics-source)
+    - [Overall example](#overall-example-2)
+    - [Name](#name-3)
+    - [Description](#description-3)
+    - [Protocol and Port](#protocol-and-port-1)
+    - [Content Type](#content-type)
+    - [Source Category](#source-category-2)
+    - [Metadata](#metadata)
   - [Host Metrics Source](#host-metrics-source)
   - [Local Windows Event Log Source](#local-windows-event-log-source)
   - [Local Windows Performance Monitor Log Source](#local-windows-performance-monitor-log-source)
@@ -1124,7 +1131,217 @@ Script Source is not supported by the OpenTelemetry Collector.
 
 ### Streaming Metrics Source
 
-Streaming Metrics Source is not supported by the OpenTelemetry Collector.
+For the Streaming Metrics Source we are using [the Telegraf receiver][telegrafreceiver]
+with [socket_listener plugin][telegraf-socket_listener].
+
+#### Overall example
+
+Below is an example of an OpenTelemetry configuration for a Streaming Metrics Source.
+
+```yaml
+extensions:
+  sumologic:
+    access_id: <access_id>
+    access_key: <access_key>
+    ## Time Zone is a substitute of Installed Collector `Time Zone`
+    ## Full list of time zones is available on wikipedia:
+    ## https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
+    time_zone: America/Tijuana
+receivers:
+  ## There is no substitute for `Description` in current project phase.
+  ## It is recommended to use comments for that purpose, like this one.
+  ## telegraf/<source group name>:
+  ## <source group name> can be substitute of Installed Collector `Name`.
+  telegraf/metrics source:
+    ## Do not add metric field separately as data point label.
+    separate_field: false
+    ## Telegraf configuration
+    agent_config: |
+      [agent]
+        ## Get metrics every 15 seconds
+        interval = "15s"
+        ## Flush metrics every 15 seconds
+        flush_interval = "15s"
+      ## socket_listener listen on given protocol://hostname:port for metrics
+      [[inputs.socket_listener]]
+        ## listen for metrics on UDP port 2006 on localhost
+        service_address = "udp://localhost:2006"
+        ## Get metrics in carbon2 format
+        data_format = "carbon2"
+        ## Add additional metadata
+        [inputs.socket_listener.tags]
+          _contentType = "Carbon2"
+          _primaryMetricType = "carbon"
+processors:
+  ## The following configuration will add two metadata properties to every record
+  resource/metric source:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: insert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic:
+    ## Installed Collector substitute for `Source Category`.
+    source_category: example category
+    ## Installed Collector substitute for `Source Host`.
+    source_host: example host
+service:
+  extensions:
+  - sumologic
+  pipelines:
+    metrics/metric source:
+      receivers:
+      - telegraf/metrics source
+      processors:
+      - resource/metric source
+      exporters:
+      - sumologic
+```
+
+#### Name
+
+Define the name after the slash `/` in the receiver name.
+
+For example, the following snippet configures the name as `my example name`:
+
+```yaml
+receivers:
+  telegraf/my example name:
+  # ...
+```
+
+#### Description
+
+A description can be added as a comment just above the receiver name.
+
+For example, the following snippet configures the description as `All my example logs`:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+  # ...
+```
+
+#### Protocol and Port
+
+Protocol and Port can be configured using `service_address` in Telegraf `socket_listener` plugin configuration.
+
+Please see the following example:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+    ## Telegraf configuration
+    agent_config: |
+      ## socket_listener listen on given protocol://hostname:port for metrics
+      [[inputs.socket_listener]]
+        ## listen for metrics on UDP port 2006 on localhost
+        service_address = "udp://localhost:2006"
+        ## Get metrics in carbon2 format
+        data_format = "carbon2"
+        ## Add additional metadata
+        [inputs.socket_listener.tags]
+          _contentType = "Carbon2"
+          _primaryMetricType = "carbon"
+  # ...
+```
+
+#### Content Type
+
+Content Type can be configured using `data_format` in Telegraf `socket_listener` plugin configuration.
+Any of the [available formats][telegraf-input-formats] can be used, especially `graphite` and `carbon2`.
+
+Please see the following example:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+    ## Telegraf configuration
+    agent_config: |
+      ## socket_listener listen on given protocol://hostname:port for metrics
+      [[inputs.socket_listener]]
+        ## listen for metrics on UDP port 2006 on localhost
+        service_address = "udp://localhost:2006"
+        ## Get metrics in carbon2 format
+        data_format = "carbon2"
+  # ...
+```
+
+#### Source Category
+
+A Source Category can set in the exporter configuration with the `source_category` option.
+
+For example, the following snippet configures the Source Category as `My Category`:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+    ## Telegraf configuration
+    agent_config: |
+      ## socket_listener listen on given protocol://hostname:port for metrics
+      [[inputs.socket_listener]]
+        ## listen for metrics on UDP port 2006 on localhost
+        service_address = "udp://localhost:2006"
+        ## Get metrics in carbon2 format
+        data_format = "carbon2"
+processor:
+receivers:
+  tcpreceiver/first receiver:
+    listen_address: 0.0.0.0:514
+  tcpreceiver/second receiver:
+    listen_address: 127.0.0.1:5140
+  udpreceiver/first receiver:
+    listen_address: 0.0.0.0:514
+  udpreceiver/second receiver:
+    listen_address: 127.0.0.1:5150
+  ## All my example logs
+  sumologicsyslog/my example name:
+  # ...
+exporters:
+  sumologic/some name:
+    source_category: My Category
+```
+
+#### Metadata
+
+Use the [resourceprocessor][resourceprocessor] to set custom metadata.
+
+For example, the following snippet configures two additional metadata properties,
+`cloud.availability_zone` and `k8s.cluster.name`:
+
+```yaml
+receivers:
+  tcpreceiver/first receiver:
+    listen_address: 0.0.0.0:514
+  tcpreceiver/second receiver:
+    listen_address: 127.0.0.1:5140
+  udpreceiver/first receiver:
+    listen_address: 0.0.0.0:514
+  udpreceiver/second receiver:
+    listen_address: 127.0.0.1:5150
+processors:
+  ## All my example logs
+  sumologicsyslog/my example name:
+  # ...
+  resource/my example name fields:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: upsert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic/some name:
+    source_category: My Category
+```
 
 ### Host Metrics Source
 
@@ -1309,3 +1526,6 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [proxy]: https://opentelemetry.io/docs/collector/configuration/#proxy-support
 [common-parameters]: https://help.sumologic.com/03Send-Data/Sources/03Use-JSON-to-Configure-Sources#common-parameters-for-log-source-types
 [source-templates]: ../pkg/exporter/sumologicexporter/README.md#source-templates
+[telegrafreceiver]: ../pkg/receiver/telegrafreceiver/README.md
+[telegraf-socket_listener]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/socket_listener#socket-listener-input-plugin
+[telegraf-input-formats]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/parsers
