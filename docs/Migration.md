@@ -1995,7 +1995,7 @@ This section describes migration steps for an Installed Collector managed with a
 
 The following table shows the equivalent [user.properties][user.properties] for OpenTelemetry.
 
-| user.properties key                           | The OpenTelemetry Collector Key                           |
+| user.properties key                           | The OpenTelemetry Collector Key                            |
 |-----------------------------------------------|------------------------------------------------------------|
 | `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
 | `accessid=accessId`                           | `extensions.sumologic.access_id`                           |
@@ -2049,12 +2049,12 @@ This section describes migration steps for [common parameters][common-parameters
 - [RemoteWindowsPerfMon](#local-windows-performance-monitor-log-source-remotewindowsperfmon)
 - [ActiveDirectory](#windows-active-directory-source-activedirectory)
 
-| The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                |
+| The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `name`                            | Define the name after the slash `/` in the receiver name. [See the linked example.](#name-1)                    |
+| `name`                            | [exporters.sumologic.source_name](#name-1)                                                                      |
 | `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-1) |
 | `fields`                          | Use the [resourceprocessor][resourceprocessor] to set custom fields. [See the linked example.](#fields-1)       |
-| `hostName`                        | [exporters.sumologic.source_host][source-templates]; [See the linked example.](#host-name-1)                     |
+| `hostName`                        | [exporters.sumologic.source_host][source-templates]; [See the linked example.](#host-name-1)                    |
 | `category`                        | [exporters.sumologic.source_category][source-templates]                                                         |
 | `automaticDateParsing`            | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
 | `timeZone`                        | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
@@ -2109,11 +2109,31 @@ Script Source is not supported by the OpenTelemetry Collector.
 
 ### Streaming Metrics Source (StreamingMetrics)
 
-Streaming Metrics Source is not supported by the OpenTelemetry Collector.
+Equivalent of the Streaming Metrics Source is [the telegraf receiver with appropiate plugins][telegrafreceiver].
+More useful information can be found in [Streaming Metrics Source for Cloud Based Management](#streaming-metrics-source).
+
+| The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
+|-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `name`                            | [exporters.sumologic.source_name](#name-3)                                                                      |
+| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-3) |
+| `category`                        | [exporters.sumologic.source_category](#source-category-2)                                                       |
+| `contentType`                     | [receivers.telegraf.agent_config('inputs.socket_listener'.data_format)](#content-type)                          |
+| `protocol`                        | [receivers.telegraf.agent_config('inputs.socket_listener'.service_address)](#protocol-and-port-1)               |
+| `port`                            | [receivers.telegraf.agent_config('inputs.socket_listener'.service_address)](#protocol-and-port-1)               |
 
 ### Host Metrics Source (SystemStats)
 
-Host Metrics Source is not supported by the OpenTelemetry Collector.
+Equivalent of the Host Metrics Source is [the telegraf receiver with appropiate plugins][telegrafreceiver].
+More useful information can be found in [Host Metrics Source for Cloud Based Management](#host-metrics-source).
+
+| The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
+|-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `name`                            | [exporters.sumologic.source_name](#name-4)                                                                      |
+| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-4) |
+| `category`                        | [exporters.sumologic.source_category](#source-category-3)                                                       |
+| `metrics`                         | [Appropiate plugins have to be configured.](#metrics) By default no metrics are being processed.                |
+| `interval (ms)`                   | [receivers.telegraf.agent_config('agent'.interval)](#scan-interval)                                             |
+| `hostName`                        | [exporters.sumologic.source_host](#source-host-2)                                                               |
 
 ### Local Windows Event Log Source (LocalWindowsEventLog)
 
