@@ -233,7 +233,7 @@ func newDoubleSum(
 	ds.SetIsMonotonic(true)
 	dps := ds.DataPoints()
 	dp := dps.AppendEmpty()
-	dp.SetValue(value)
+	dp.SetDoubleVal(value)
 
 	for _, opt := range opts {
 		opt(pm)
@@ -246,16 +246,16 @@ func newIntSum(
 	opts ...MetricOpt,
 ) pdata.Metric {
 	pm := pdata.NewMetric()
-	pm.SetDataType(pdata.MetricDataTypeIntSum)
+	pm.SetDataType(pdata.MetricDataTypeSum)
 	// "[...] OTLP Sum is either translated into a Timeseries Counter, when
 	// the sum is monotonic, or a Gauge when the sum is not monotonic."
 	// https://github.com/open-telemetry/opentelemetry-specification/blob/7fc28733/specification/metrics/datamodel.md#opentelemetry-protocol-data-model
-	ds := pm.IntSum()
+	ds := pm.Sum()
 	ds.SetAggregationTemporality(pdata.AggregationTemporalityCumulative)
 	ds.SetIsMonotonic(true)
 	dps := ds.DataPoints()
 	dp := dps.AppendEmpty()
-	dp.SetValue(value)
+	dp.SetIntVal(value)
 
 	for _, opt := range opts {
 		opt(pm)
@@ -271,7 +271,7 @@ func newDoubleGauge(
 	pm.SetDataType(pdata.MetricDataTypeGauge)
 	dps := pm.Gauge().DataPoints()
 	dp := dps.AppendEmpty()
-	dp.SetValue(value)
+	dp.SetDoubleVal(value)
 
 	for _, opt := range opts {
 		opt(pm)
@@ -284,10 +284,10 @@ func newIntGauge(
 	opts ...MetricOpt,
 ) pdata.Metric {
 	pm := pdata.NewMetric()
-	pm.SetDataType(pdata.MetricDataTypeIntGauge)
-	dps := pm.IntGauge().DataPoints()
+	pm.SetDataType(pdata.MetricDataTypeGauge)
+	dps := pm.Gauge().DataPoints()
 	dp := dps.AppendEmpty()
-	dp.SetValue(value)
+	dp.SetIntVal(value)
 
 	for _, opt := range opts {
 		opt(pm)
