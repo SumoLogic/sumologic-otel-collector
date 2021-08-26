@@ -1010,9 +1010,9 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 					m.SetName("cpu_usage_active")
 					m.SetDataType(pdata.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
-					dp.SetValue(123.456)
+					dp.SetDoubleVal(123.456)
 					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
-					dp.LabelsMap().Insert("test", "test_value")
+					dp.Attributes().InsertString("test", "test_value")
 				}
 				return metrics
 			},
@@ -1035,9 +1035,9 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 					m.SetName("cpu_usage_active")
 					m.SetDataType(pdata.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
-					dp.SetValue(123.456)
+					dp.SetDoubleVal(123.456)
 					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
-					dp.LabelsMap().Insert("test", "test_value")
+					dp.Attributes().InsertString("test", "test_value")
 				}
 				{
 					m := metrics.ResourceMetrics().AppendEmpty().
@@ -1046,9 +1046,9 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 					m.SetName("diskio_reads")
 					m.SetDataType(pdata.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
-					dp.SetValue(123456)
+					dp.SetIntVal(123456)
 					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 1000000)))
-					dp.LabelsMap().Insert("test", "test_value")
+					dp.Attributes().InsertString("test", "test_value")
 				}
 				{
 					m := metrics.ResourceMetrics().AppendEmpty().
@@ -1057,9 +1057,9 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 					m.SetName("dummy_metric")
 					m.SetDataType(pdata.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
-					dp.SetValue(10)
+					dp.SetIntVal(10)
 					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 2000000)))
-					dp.LabelsMap().Insert("test", "test_value")
+					dp.Attributes().InsertString("test", "test_value")
 				}
 				return metrics
 			},
@@ -1083,9 +1083,9 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 					m.SetName("cpu_usage_active")
 					m.SetDataType(pdata.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
-					dp.SetValue(123.456)
+					dp.SetDoubleVal(123.456)
 					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
-					dp.LabelsMap().Insert("test", "test_value")
+					dp.Attributes().InsertString("test", "test_value")
 				}
 				return metrics
 			},
@@ -1107,9 +1107,9 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 					m.SetName("cpu_usage_active")
 					m.SetDataType(pdata.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
-					dp.SetValue(123.456)
+					dp.SetDoubleVal(123.456)
 					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
-					dp.LabelsMap().Insert("test", "test_value")
+					dp.Attributes().InsertString("test", "test_value")
 				}
 				{
 					m := metrics.ResourceMetrics().AppendEmpty().
@@ -1118,9 +1118,9 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 					m.SetName("diskio_reads")
 					m.SetDataType(pdata.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
-					dp.SetValue(123456)
+					dp.SetIntVal(123456)
 					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 1000000)))
-					dp.LabelsMap().Insert("test", "test_value")
+					dp.Attributes().InsertString("test", "test_value")
 				}
 				{
 					m := metrics.ResourceMetrics().AppendEmpty().
@@ -1129,9 +1129,9 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 					m.SetName("dummy_metric")
 					m.SetDataType(pdata.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
-					dp.SetValue(10)
+					dp.SetIntVal(10)
 					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 2000000)))
-					dp.LabelsMap().Insert("test", "test_value")
+					dp.Attributes().InsertString("test", "test_value")
 				}
 				return metrics
 			},
