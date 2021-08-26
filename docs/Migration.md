@@ -2176,7 +2176,7 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [telegraf-input-cpu]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/cpu
 [telegraf-input-system]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/system
 [telegraf-input-mem]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/mem
-[telegraf-input-net]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/net
-[telegraf-input-netstat]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/netstat
+[telegraf-input-net]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/net/NET_README.md
+[telegraf-input-netstat]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/net/NETSTAT_README.md
 [telegraf-input-diskio]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/diskio
 [telegraf-input-disk]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/disk
