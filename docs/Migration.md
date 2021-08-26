@@ -373,7 +373,7 @@ service:
 
 Define the name after the slash `/` in the receiver name.
 
-To set `_sourceName` please use [resourceprocessor][resourceprocessor]
+To set `_sourceName`, use [resourceprocessor][resourceprocessor]
 or set it in [sumologicexporter][sumologicexporter].
 
 For example, the following snippet configures the name as `my example name`:
@@ -1246,7 +1246,7 @@ service:
 
 Define the name after the slash `/` in the receiver name.
 
-To set `_sourceName` please use [resourceprocessor][resourceprocessor]
+To set `_sourceName`, use [resourceprocessor][resourceprocessor]
 or set it in [sumologicexporter][sumologicexporter].
 
 For example, the following snippet configures the name as `my example name`:
@@ -1280,7 +1280,7 @@ exporters:
 
 Protocol and Port can be configured using `service_address` in Telegraf `socket_listener` plugin configuration.
 
-Please see the following example:
+For example:
 
 ```yaml
 receivers:
@@ -1306,10 +1306,10 @@ exporters:
 
 #### Content Type
 
-Content Type can be configured using `data_format` in Telegraf `socket_listener` plugin configuration.
+Content Type can be configured using `data_format` in the Telegraf `socket_listener` plugin configuration.
 Any of the [available formats][telegraf-input-formats] can be used, especially `graphite` and `carbon2`.
 
-Please see the following example:
+For example:
 
 ```yaml
 receivers:
@@ -1496,7 +1496,7 @@ service:
 
 Define the name after the slash `/` in the receiver name.
 
-To set `_sourceName` please use [resourceprocessor][resourceprocessor]
+To set `_sourceName`, use [resourceprocessor][resourceprocessor]
 or set it in [sumologicexporter][sumologicexporter].
 
 For example, the following snippet configures the name as `my example name`:
@@ -1622,18 +1622,18 @@ exporters:
 
 #### Metrics
 
-Telegraf offers set of various plugins, which can be used to get metrics.
-In this section we are describing only plugins which are required
+Telegraf offers a set of various plugins you can use to get metrics.
+In this section, we are describing only plugins that are required
 for seamless migration from the Installed Collector.
 If you are interested in other metrics, see [list of Telegraf input plugins][telegraf-input-plugins].
 
-Each of the subtopic contains table which describe how Installed Collector
-metrics translate to Telegraf metric.
+Each of the subtopics contain a table that describes how Installed Collector
+metrics translate to Telegraf metrics.
 
-To ensure that all dashboards are working as before,
-telegraf metric names are going to be translated to Installed Collector by [sumologicexporter][sumologicexporter].
+To ensure all dashboards are working as before,
+Telegraf metric names are translated to the Installed Collector by [sumologicexporter][sumologicexporter].
 You can disable this by setting `translate_telegraf_attributes` to `false`,
-but in such case you need to update your dashboards.
+but in this case you need to update your dashboards.
 
 ##### CPU
 
@@ -1655,7 +1655,7 @@ and the [inputs.system][telegraf-input-system] Telegraf plugins.
 | CPU_LoadAvg_15min | inputs.system   | system_load15        |
 | CPU_Total         | inputs.cpu      | cpu_usage_active     |
 
-The following example shows desired configuration:
+The following example shows the desired configuration:
 
 ```yaml
 receivers:
@@ -1711,7 +1711,7 @@ To get CPU metrics we are using the [inputs.mem][telegraf-input-mem] Telegraf pl
 | Mem_FreePercent | inputs.mem      | mem_available_percent |
 | Mem_PhysicalRam | N/A             | N/A                   |
 
-The following example shows desired configuration:
+The following example shows the desired configuration:
 
 ```yaml
 receivers:
@@ -1772,7 +1772,7 @@ To get TCP metrics we are using the [inputs.netstat][telegraf-input-netstat] Tel
 | TCP_Close         | inputs.netstat  | netstat_tcp_close       |
 | TCP_TimeWait      | inputs.netstat  | netstat_tcp_time_wait   |
 
-The following example shows desired configuration:
+The following example shows the desired configuration:
 
 ```yaml
 receivers:
@@ -1832,7 +1832,7 @@ To get network metrics we are using the [inputs.net][telegraf-input-net] Telegra
 | Net_InBytes    | inputs.net      | net_bytes_recv       |
 | Net_OutBytes   | inputs.net      | net_bytes_sent       |
 
-The following example shows desired configuration:
+The following example shows the desired configuration:
 
 ```yaml
 receivers:
@@ -1904,7 +1904,7 @@ and the [inputs.disk][telegraf-input-disk] Telegraf plugins.
 | Disk_UsedPercent     | inputs.disk     | disk_used_percent    |
 | Disk_Available       | N/A             | N/A                  |
 
-The following example shows desired configuration:
+The following example shows the desired configuration:
 
 ```yaml
 receivers:
@@ -2070,7 +2070,7 @@ This section describes migration steps for [common parameters][common-parameters
 
 ### Local File Source (LocalFile)
 
-Equivalent of the Local File Source is [the filelog receiver][filelogreceiver].
+The equivalent of the Local File Source is [the filelog receiver][filelogreceiver].
 More useful information can be found in [Local File Source for Cloud Based Management](#local-file-source).
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                         |
@@ -2085,7 +2085,7 @@ Remote File Source is not supported by the OpenTelemetry Collector.
 
 ### Syslog Source (Syslog)
 
-Equivalent of the Syslog Source is combination of
+The equivalent of the Syslog Source is a combination of
 [the tcplog][tcplogreceiver] or [the udplog][udplogreceiver] receivers
 and [the sumologicsyslog processor][sumologicsyslog].
 More useful information can be found in [Syslog Source for Cloud Based Management](#syslog-source).
@@ -2109,7 +2109,7 @@ Script Source is not supported by the OpenTelemetry Collector.
 
 ### Streaming Metrics Source (StreamingMetrics)
 
-Equivalent of the Streaming Metrics Source is [the telegraf receiver with appropiate plugins][telegrafreceiver].
+The equivalent of the Streaming Metrics Source is [the telegraf receiver with appropiate plugins][telegrafreceiver].
 More useful information can be found in [Streaming Metrics Source for Cloud Based Management](#streaming-metrics-source).
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
@@ -2123,7 +2123,7 @@ More useful information can be found in [Streaming Metrics Source for Cloud Base
 
 ### Host Metrics Source (SystemStats)
 
-Equivalent of the Host Metrics Source is [the telegraf receiver with appropiate plugins][telegrafreceiver].
+The equivalent of the Host Metrics Source is [the telegraf receiver with appropiate plugins][telegrafreceiver].
 More useful information can be found in [Host Metrics Source for Cloud Based Management](#host-metrics-source).
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
