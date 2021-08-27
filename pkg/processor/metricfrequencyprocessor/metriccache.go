@@ -8,12 +8,6 @@ import (
 	"go.opentelemetry.io/collector/model/pdata"
 )
 
-const (
-	dataPointExpiration           = time.Hour * 1
-	dataPointCacheCleanupInterval = time.Minute * 10
-	metricCacheCleanupInterval    = time.Hour * 3
-)
-
 type DataPoint struct {
 	Timestamp pdata.Timestamp
 	Value     float64
@@ -22,16 +16,20 @@ type DataPoint struct {
 // metricCache caches data points into two level mapping structure.
 // To easily list all data points of a given metric it keeps a separate cache for each incoming metric.
 type metricCache struct {
+	config *Config
+
 	internalCaches map[string]*cache.Cache
 }
 
-func newMetricCache() *metricCache {
+func newMetricCache(config *Config) *metricCache {
 	c := &metricCache{
+		config:         config,
 		internalCaches: make(map[string]*cache.Cache),
 	}
 
 	go func(c *metricCache) {
-		t := time.NewTicker(metricCacheCleanupInterval)
+		interval := time.Duration(c.config.MetricCacheCleanupIntervalMinutes) * time.Minute
+		t := time.NewTicker(interval)
 		defer t.Stop()
 		for range t.C {
 			c.Cleanup()
@@ -45,13 +43,13 @@ func (mc *metricCache) Register(name string, dataPoint pdata.NumberDataPoint) {
 
 	internalCache, exists := mc.internalCaches[name]
 	if !exists {
-		newCache := newCache()
+		newCache := mc.newCache()
 		mc.internalCaches[name] = newCache
 		internalCache = newCache
 	}
 
 	key := dataPoint.Timestamp().String()
-	value := &DataPoint{Timestamp: dataPoint.Timestamp(), Value: dataPoint.Value()}
+	value := &DataPoint{Timestamp: dataPoint.Timestamp(), Value: dataPoint.DoubleVal()}
 	internalCache.Set(key, value, cache.DefaultExpiration)
 }
 
@@ -79,6 +77,14 @@ func (mc *metricCache) Cleanup() {
 	}
 }
 
-func newCache() *cache.Cache {
-	return cache.New(dataPointExpiration, dataPointCacheCleanupInterval)
+func (mc *metricCache) newCache() *cache.Cache {
+	return cache.New(mc.dataPointExpiration(), mc.dataPointCacheCleanupInterval())
+}
+
+func (mc *metricCache) dataPointExpiration() time.Duration {
+	return time.Duration(mc.config.DataPointExpirationMinutes) * time.Minute
+}
+
+func (mc *metricCache) dataPointCacheCleanupInterval() time.Duration {
+	return time.Duration(mc.config.DataPointCacheCleanupIntervalMinutes) * time.Minute
 }

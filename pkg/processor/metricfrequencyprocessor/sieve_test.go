@@ -9,7 +9,7 @@ import (
 )
 
 func TestAccumulate(t *testing.T) {
-	sieve := newMetricSieve()
+	sieve := newMetricSieve(createDefaultConfig().(*Config))
 	var timestamp = time.Unix(0, 0)
 	setupHistory(sieve, map[time.Time]float64{timestamp: 0.0})
 
@@ -107,8 +107,10 @@ func TestIsLowInfo(t *testing.T) {
 		},
 	}
 
+	sieve := newMetricSieve(createDefaultConfig().(*Config))
+
 	for _, test := range testCases {
-		result := isLowInformation(unixPointsToPdata(test.values))
+		result := sieve.isLowInformation(unixPointsToPdata(test.values))
 		assert.Equal(t, result, test.expectedValue)
 	}
 }
