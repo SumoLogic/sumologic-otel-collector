@@ -21,7 +21,7 @@ import (
 
 	"go.opentelemetry.io/collector/client"
 	"go.opentelemetry.io/collector/model/pdata"
-	"go.opentelemetry.io/collector/translator/conventions"
+	conventions "go.opentelemetry.io/collector/translator/conventions/v1.5.0"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube"
 )
@@ -86,12 +86,12 @@ func extractPodID(ctx context.Context, attrs pdata.AttributeMap, associations []
 			}
 		case asso.From == "build_hostname":
 			// Build hostname from pod k8s.pod.name and k8s.namespace.name attributes
-			pod, ok := attrs.Get(conventions.AttributeK8sPod)
+			pod, ok := attrs.Get(conventions.AttributeK8SPodName)
 			if !ok {
 				return "", ""
 			}
 
-			namespace, ok := attrs.Get(conventions.AttributeK8sNamespace)
+			namespace, ok := attrs.Get(conventions.AttributeK8SNamespaceName)
 			if !ok {
 				return "", ""
 			}

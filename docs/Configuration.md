@@ -394,7 +394,7 @@ receivers:
 For details, see the [Filelog Receiver documentation][filelogreceiver_readme].
 
 [opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
-[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/filelogreceiver
+[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver
 
 #### Fluent Forward Receiver
 
@@ -442,7 +442,7 @@ receivers:
 
 For details, see the [Syslog Receiver documentation][syslogreceiver_readme].
 
-[syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/syslogreceiver
+[syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/syslogreceiver
 
 #### Statsd Receiver
 
@@ -486,7 +486,7 @@ receivers:
 For details, see the [OTLP Receiver documentation][otlpreceiver_readme].
 
 [otlp]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md
-[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.31.0/receiver/otlpreceiver
+[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.33.0/receiver/otlpreceiver
 
 #### TCPlog Receiver
 
@@ -502,7 +502,7 @@ receivers:
 
 For details, see the [TCPlog Receiver documentation][tcplogreceiver_readme].
 
-[tcplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/tcplogreceiver
+[tcplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/tcplogreceiver
 
 #### UDPlog Receiver
 
@@ -518,7 +518,7 @@ receivers:
 
 For details, see the [UDPlog Receiver documentation][udplogreceiver_readme].
 
-[udplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/udplogreceiver
+[udplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/udplogreceiver
 
 #### Receivers from OpenTelemetry Collector
 
