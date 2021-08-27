@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export BUILDER_VERSION=0.31.0
+export BUILDER_VERSION=0.33.0
 export GO_VERSION=1.17
 
 # Install opentelemetry-collector-builder
@@ -12,7 +12,8 @@ curl -LJ \
 sudo apt update -y
 sudo apt install -y \
     make \
-    gcc
+    gcc \
+    python3-pip
 
 # Install Go
 curl -LJ "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" -o go.linux-amd64.tar.gz \
@@ -20,3 +21,6 @@ curl -LJ "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" -o go.linux-
     && tar -C /usr/local -xzf go.linux-amd64.tar.gz \
     && rm go.linux-amd64.tar.gz \
     && ln -s /usr/local/go/bin/go /usr/local/bin
+
+# Install ansible
+pip3 install ansible

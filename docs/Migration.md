@@ -301,12 +301,12 @@ receivers:
     start_at: beginning
     ## encoding is substitute for Installed Collector `Encoding`.
     ## List of supported encodings:
-    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/filelogreceiver
+    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver
     encoding: utf-8
     ## multiline is Opentelemetry Collector substitute for `Enable Multiline Processing`.
     ## As multiline detection behaves slightly different than in Installed Collector
     ## the following section in filelog documentation is recommended to read:
-    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/filelogreceiver#multiline-configuration
+    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#multiline-configuration
     multiline:
       ## line_start_pattern is substitute of `Boundary Regex`.
       line_start_pattern: ^\d{4}
@@ -751,7 +751,7 @@ receivers:
     listen_address: 0.0.0.0:514
     ## Add network attributes
     ## `net.peer.name` is going to be used as exporters.sumologic.source_host
-    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/tcplogreceiver#configuration
+    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/tcplogreceiver#configuration
     add_attributes: true
   ## Use udpreceiver for UDP protocol
   udpreceiver/first receiver:
@@ -760,7 +760,7 @@ receivers:
     listen_address: 0.0.0.0:514
     ## Add network attributes
     ## `net.peer.name` is going to be used as exporters.sumologic.source_host
-    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/udplogreceiver#configuration
+    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/udplogreceiver#configuration
     add_attributes: true
 
 processors:
@@ -1281,11 +1281,11 @@ Remote Windows Performance Source is not supported by the OpenTelemetry Collecto
 
 Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 
-[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.31.0/processor/resourceprocessor
-[multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/filelogreceiver#multiline-configuration
-[supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/filelogreceiver#supported-encodings
-[udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/udplogreceiver
-[tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.31.0/receiver/tcplogreceiver
+[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.33.0/processor/resourceprocessor
+[multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#multiline-configuration
+[supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#supported-encodings
+[udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/udplogreceiver
+[tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/tcplogreceiver
 [sumologicsyslog]: ../pkg/processor/sumologicsyslogprocessor/README.md
 [network-semantic-convention]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/span-general.md#general-network-connection-attributes
 [sumologicextension]: ../pkg/extension/sumologicextension/README.md
