@@ -442,6 +442,9 @@ receivers:
 
 For details, see the [Syslog Receiver documentation][syslogreceiver_readme].
 
+__Note: There are actually two ways of getting and processing Syslog data.
+More details are available in [comparison document](Comparison.md#syslog).__
+
 [syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/syslogreceiver
 
 #### Statsd Receiver
@@ -647,6 +650,9 @@ processors:
 ```
 
 For details, see the [Sumo Logic Syslog Processor documentation][sumologicsyslogprocessor_docs].
+
+__Note: There are actually two ways of getting and processing Syslog data.
+More details are available in [comparison document](Comparison.md#syslog).__
 
 [sumologicsyslogprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/sumologicsyslogprocessor/README.md
 
