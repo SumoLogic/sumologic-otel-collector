@@ -35,7 +35,7 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [Overall example](#overall-example-1)
     - [Name](#name-2)
     - [Description](#description-2)
-    - [Protocol](#protocol-and-port)
+    - [Protocol and Port](#protocol-and-port)
     - [Source Category](#source-category-1)
     - [Fields](#fields-2)
     - [Advanced Options for Logs](#advanced-options-for-logs-1)
@@ -47,7 +47,27 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
   - [Docker Stats Source](#docker-stats-source)
   - [Script Source](#script-source)
   - [Streaming Metrics Source](#streaming-metrics-source)
+    - [Overall example](#overall-example-2)
+    - [Name](#name-3)
+    - [Description](#description-3)
+    - [Protocol and Port](#protocol-and-port-1)
+    - [Content Type](#content-type)
+    - [Source Category](#source-category-2)
+    - [Metadata](#metadata)
   - [Host Metrics Source](#host-metrics-source)
+    - [Overall example](#overall-example-3)
+    - [Name](#name-4)
+    - [Description](#description-4)
+    - [Source Host](#source-host-2)
+    - [Source Category](#source-category-3)
+    - [Metadata](#metadata-1)
+    - [Scan Interval](#scan-interval)
+    - [Metrics](#metrics)
+      - [CPU](#cpu)
+      - [Memory](#memory)
+      - [TCP](#tcp)
+      - [Network](#network)
+      - [Disk](#disk)
   - [Local Windows Event Log Source](#local-windows-event-log-source)
   - [Local Windows Performance Monitor Log Source](#local-windows-performance-monitor-log-source)
   - [Windows Active Directory Source](#windows-active-directory-source)
@@ -322,6 +342,8 @@ processors:
       action: insert
 exporters:
   sumologic:
+    ## Set _sourceName
+    source_name: my example name
     ## Installed Collector substitute for `Source Category`.
     source_category: example category
     ## Installed Collector substitute for `Source Host`.
@@ -351,12 +373,18 @@ service:
 
 Define the name after the slash `/` in the receiver name.
 
+To set `_sourceName`, use [resourceprocessor][resourceprocessor]
+or set it in [sumologicexporter][sumologicexporter].
+
 For example, the following snippet configures the name as `my example name`:
 
 ```yaml
 receivers:
   filelog/my example name:
   # ...
+exporters:
+  sumologic:
+    source_name: my example name
 ```
 
 #### Description
@@ -370,6 +398,9 @@ receivers:
   ## All my example logs
   filelog/my example name:
   # ...
+exporters:
+  sumologic:
+    source_name: my example name
 ```
 
 #### File Path
@@ -388,6 +419,9 @@ receivers:
     - /var/log/*.log
     - /opt/my_app/*.log
   # ...
+exporters:
+  sumologic:
+    source_name: my example name
 ```
 
 ##### Collection should begin
@@ -409,6 +443,9 @@ receivers:
     - /opt/my_app/*.log
     start_at: end
   # ...
+exporters:
+  sumologic:
+    source_name: my example name
 ```
 
 #### Source Host
@@ -428,6 +465,7 @@ receivers:
   # ...
 exporters:
   sumologic/some name:
+    source_name: my example name
     source_host: My Host
 ```
 
@@ -448,6 +486,7 @@ receivers:
   # ...
 exporters:
   sumologic/some name:
+    source_name: my example name
     source_host: My Host
     source_category: My Category
 ```
@@ -478,6 +517,7 @@ processors:
       action: insert
 exporters:
   sumologic/some name:
+    source_name: my example name
     source_host: My Host
     source_category: My Category
 ```
@@ -512,6 +552,7 @@ processors:
       action: insert
 exporters:
   sumologic/some name:
+    source_name: my example name
     source_host: My Host
     source_category: My Category
 ```
@@ -551,6 +592,7 @@ processors:
       action: insert
 exporters:
   sumologic/some name:
+    source_name: my example name
     source_host: My Host
     source_category: My Category
 ```
@@ -604,6 +646,7 @@ processors:
       action: insert
 exporters:
   sumologic/some name:
+    source_name: my example name
     source_host: My Host
     source_category: My Category
     ## Keep manually parsed timestamps
@@ -637,6 +680,7 @@ processors:
       action: insert
 exporters:
   sumologic/some name:
+    source_name: my example name
     source_host: My Host
     source_category: My Category
     ## Keep manually parsed timestamps (use Receipt Time by default)
@@ -675,6 +719,7 @@ processors:
       action: insert
 exporters:
   sumologic/some name:
+    source_name: my example name
     source_host: My Host
     source_category: My Category
 ```
@@ -713,6 +758,7 @@ processors:
       action: insert
 exporters:
   sumologic/some name:
+    source_name: my example name
     source_host: My Host
     source_category: My Category
 ```
@@ -857,7 +903,7 @@ processor:
 
 #### Source Category
 
-A Source Category can set in the exporter configuration with the `source_category` option.
+A Source Category can be set in the exporter configuration with the `source_category` option.
 
 For example, the following snippet configures the Source Category as `My Category`:
 
@@ -1124,11 +1170,804 @@ Script Source is not supported by the OpenTelemetry Collector.
 
 ### Streaming Metrics Source
 
-Streaming Metrics Source is not supported by the OpenTelemetry Collector.
+For the Streaming Metrics Source we are using [the Telegraf receiver][telegrafreceiver]
+with [socket_listener plugin][telegraf-socket_listener].
+
+#### Overall example
+
+Below is an example of an OpenTelemetry configuration for a Streaming Metrics Source.
+
+```yaml
+extensions:
+  sumologic:
+    access_id: <access_id>
+    access_key: <access_key>
+    ## Time Zone is a substitute of Installed Collector `Time Zone`
+    ## Full list of time zones is available on wikipedia:
+    ## https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
+    time_zone: America/Tijuana
+receivers:
+  ## There is no substitute for `Description` in current project phase.
+  ## It is recommended to use comments for that purpose, like this one.
+  ## telegraf/<source group name>:
+  ## <source group name> can be substitute of Installed Collector `Name`.
+  telegraf/metrics source:
+    ## Do not add metric field separately as data point label.
+    separate_field: false
+    ## Telegraf configuration
+    agent_config: |
+      [agent]
+        ## Get metrics every 15 seconds
+        interval = "15s"
+        ## Flush metrics every 15 seconds
+        flush_interval = "15s"
+      ## socket_listener listen on given protocol://hostname:port for metrics
+      [[inputs.socket_listener]]
+        ## listen for metrics on UDP port 2006 on localhost
+        service_address = "udp://localhost:2006"
+        ## Get metrics in carbon2 format
+        data_format = "carbon2"
+        ## Add additional metadata
+        [inputs.socket_listener.tags]
+          _contentType = "Carbon2"
+          _primaryMetricType = "carbon"
+processors:
+  ## The following configuration will add two metadata properties to every record
+  resource/metric source:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: insert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic:
+    ## Set _sourceName
+    source_name: my example name
+    ## Installed Collector substitute for `Source Category`.
+    source_category: example category
+    ## Installed Collector substitute for `Source Host`.
+    source_host: example host
+service:
+  extensions:
+  - sumologic
+  pipelines:
+    metrics/metric source:
+      receivers:
+      - telegraf/metrics source
+      processors:
+      - resource/metric source
+      exporters:
+      - sumologic
+```
+
+#### Name
+
+Define the name after the slash `/` in the receiver name.
+
+To set `_sourceName`, use [resourceprocessor][resourceprocessor]
+or set it in [sumologicexporter][sumologicexporter].
+
+For example, the following snippet configures the name as `my example name`:
+
+```yaml
+receivers:
+  telegraf/my example name:
+  # ...
+exporters:
+  sumologic:
+    source_name: my example name
+```
+
+#### Description
+
+A description can be added as a comment just above the receiver name.
+
+For example, the following snippet configures the description as `All my example logs`:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+  # ...
+exporters:
+  sumologic:
+    source_name: my example name
+```
+
+#### Protocol and Port
+
+Protocol and Port can be configured using `service_address` in Telegraf `socket_listener` plugin configuration.
+
+For example:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+    ## Telegraf configuration
+    agent_config: |
+      ## socket_listener listen on given protocol://hostname:port for metrics
+      [[inputs.socket_listener]]
+        ## listen for metrics on UDP port 2006 on localhost
+        service_address = "udp://localhost:2006"
+        ## Get metrics in carbon2 format
+        data_format = "carbon2"
+        ## Add additional metadata
+        [inputs.socket_listener.tags]
+          _contentType = "Carbon2"
+          _primaryMetricType = "carbon"
+  # ...
+exporters:
+  sumologic:
+    source_name: my example name
+```
+
+#### Content Type
+
+Content Type can be configured using `data_format` in the Telegraf `socket_listener` plugin configuration.
+Any of the [available formats][telegraf-input-formats] can be used, especially `graphite` and `carbon2`.
+
+For example:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+    ## Telegraf configuration
+    agent_config: |
+      ## socket_listener listen on given protocol://hostname:port for metrics
+      [[inputs.socket_listener]]
+        ## listen for metrics on UDP port 2006 on localhost
+        service_address = "udp://localhost:2006"
+        ## Get metrics in carbon2 format
+        data_format = "carbon2"
+  # ...
+exporters:
+  sumologic:
+    source_name: my example name
+```
+
+#### Source Category
+
+A Source Category can be set in the exporter configuration with the `source_category` option.
+
+For example, the following snippet configures the Source Category as `My Category`:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+    ## Telegraf configuration
+    agent_config: |
+      ## socket_listener listen on given protocol://hostname:port for metrics
+      [[inputs.socket_listener]]
+        ## listen for metrics on UDP port 2006 on localhost
+        service_address = "udp://localhost:2006"
+        ## Get metrics in carbon2 format
+        data_format = "carbon2"
+exporters:
+  sumologic/some name:
+    source_name: my example name
+    source_category: My Category
+```
+
+#### Metadata
+
+Use the [resourceprocessor][resourceprocessor] to set custom metadata.
+
+For example, the following snippet configures two additional metadata properties,
+`cloud.availability_zone` and `k8s.cluster.name`:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+    ## Telegraf configuration
+    agent_config: |
+      ## socket_listener listen on given protocol://hostname:port for metrics
+      [[inputs.socket_listener]]
+        ## listen for metrics on UDP port 2006 on localhost
+        service_address = "udp://localhost:2006"
+        ## Get metrics in carbon2 format
+        data_format = "carbon2"
+processors:
+  # ...
+  resource/my example name fields:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: upsert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic/some name:
+    source_name: my example name
+    source_category: My Category
+```
 
 ### Host Metrics Source
 
 Host Metrics Source is not supported by the OpenTelemetry Collector.
+
+#### Overall Example
+
+Below is an example of an OpenTelemetry configuration for a Host Metrics Source.
+
+```yaml
+extensions:
+  sumologic:
+    access_id: <access_id>
+    access_key: <access_key>
+    ## Time Zone is a substitute of Installed Collector `Time Zone`
+    ## Full list of time zones is available on wikipedia:
+    ## https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
+    time_zone: America/Tijuana
+
+receivers:
+  ## There is no substitute for `Description` in current project phase.
+  ## It is recommended to use comments for that purpose, like this one.
+  ## telegraf/<source group name>:
+  ## <source group name> can be substitute of Installed Collector `Name`.
+  telegraf/metrics source:
+    ## Do not add metric field separately as data point label.
+    separate_field: false
+    ## Telegraf configuration
+    agent_config: |
+      [agent]
+        ## Get metrics every 15 seconds
+        interval = "15s"
+        ## Flush metrics every 15 seconds
+        flush_interval = "15s"
+
+      ## CPU metrics
+      [[inputs.cpu]]
+        percpu = false
+        totalcpu = true
+        collect_cpu_time = false
+        report_active = true
+        namepass = [ "cpu" ]
+        fieldpass = [ "usage_active", "usage_steal", "usage_iowait", "usage_irq", "usage_user", "usage_idle", "usage_nice", "usage_system", "usage_softirq" ]
+
+      ## CPU metrics
+      [[inputs.system]]
+        namepass = [ "system" ]
+        fieldpass = [ "load1", "load5", "load15" ]
+
+      ## Memory metrics
+      [[inputs.mem]]
+        fieldpass = [ "total", "free", "used", "used_percent", "available", "available_percent" ]
+
+      ## TCP metrics
+      [[inputs.netstat]]
+        fieldpass = [ "tcp_close", "tcp_close_wait", "tcp_closing", "tcp_established", "tcp_listen", "tcp_time_wait" ]
+
+      ## Network metrics
+      [[inputs.net]]
+        interfaces = ["eth*", "en*", "lo*"]
+        ignore_protocol_stats = true
+        fieldpass = [ "bytes_sent", "bytes_recv", "packets_sent", "packets_recv" ]
+
+      ## Disk metrics
+      [[inputs.disk]]
+        namepass = [ "disk" ]
+        fieldpass = [ "used", "used_percent", "inodes_free" ]
+        ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
+
+      ## Disk metrics
+      [[inputs.diskio]]
+        fieldpass = [ "reads", "read_bytes", "writes", "write_bytes" ]
+processors:
+  ## The following configuration will add two metadata properties to every record
+  resource/metric source:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: insert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic:
+    ## Set _sourceName
+    source_name: my example name
+    ## Installed Collector substitute for `Source Category`.
+    source_category: example category
+    ## Installed Collector substitute for `Source Host`.
+    source_host: example host
+    ## Ensure compability with Installed Colllector metric name
+    translate_telegraf_attributes: true
+service:
+  extensions:
+  - sumologic
+  pipelines:
+    metrics/metric source:
+      receivers:
+      - telegraf/metrics source
+      processors:
+      - resource/metric source
+      exporters:
+      - sumologic
+```
+
+#### Name
+
+Define the name after the slash `/` in the receiver name.
+
+To set `_sourceName`, use [resourceprocessor][resourceprocessor]
+or set it in [sumologicexporter][sumologicexporter].
+
+For example, the following snippet configures the name as `my example name`:
+
+```yaml
+receivers:
+  telegraf/my example name:
+  # ...
+exporters:
+  sumologic:
+    source_name: my example name
+```
+
+#### Description
+
+A description can be added as a comment just above the receiver name.
+
+For example, the following snippet configures the description as `All my example logs`:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+  # ...
+exporters:
+  sumologic:
+    source_name: my example name
+```
+
+#### Source Host
+
+A Source Host can be set in the exporter configuration with the `source_host` option.
+
+For example, the following snippet configures the Source Host as `my_host`:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+  # ...
+exporters:
+  sumologic/some name:
+    source_name: my example name
+    source_host: my_host
+```
+
+#### Source Category
+
+A Source Category can be set in the exporter configuration with the `source_category` option.
+
+For example, the following snippet configures the Source Category as `My Category`:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+  # ...
+exporters:
+  sumologic/some name:
+    source_name: my example name
+    source_host: my_host
+    source_category: My Category
+```
+
+#### Metadata
+
+Use the [resourceprocessor][resourceprocessor] to set custom metadata.
+
+For example, the following snippet configures two additional metadata properties,
+`cloud.availability_zone` and `k8s.cluster.name`:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+  # ...
+processors:
+  resource/my example name fields:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: upsert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic/some name:
+    source_name: my example name
+    source_host: my_host
+    source_category: My Category
+```
+
+#### Scan Interval
+
+To set Scan Interval use `interval` in Telegraf's agent configuration.
+
+The following example shows how to set it for 1 minute:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+    agent_config: |
+      [agent]
+        interval = "1m"
+        flush_interval = "1m"
+  # ...
+processors:
+  resource/my example name fields:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: upsert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic/some name:
+    source_name: my example name
+    source_host: my_host
+    source_category: My Category
+```
+
+#### Metrics
+
+Telegraf offers a set of various plugins you can use to get metrics.
+In this section, we are describing only plugins that are required
+for seamless migration from the Installed Collector.
+If you are interested in other metrics, see [list of Telegraf input plugins][telegraf-input-plugins].
+
+Each of the subtopics contain a table that describes how Installed Collector
+metrics translate to Telegraf metrics.
+
+To ensure all dashboards are working as before,
+Telegraf metric names are translated to the Installed Collector by [sumologicexporter][sumologicexporter].
+You can disable this by setting `translate_telegraf_attributes` to `false`,
+but in this case you need to update your dashboards.
+
+##### CPU
+
+To get CPU metrics we are using the [inputs.cpu][telegraf-input-cpu]
+and the [inputs.system][telegraf-input-system] Telegraf plugins.
+
+| Metric Name       | Telegraf plugin | Telegraf metric name |
+|-------------------|-----------------|----------------------|
+| CPU_User          | inputs.cpu      | cpu_usage_user       |
+| CPU_Sys           | inputs.cpu      | cpu_usage_System     |
+| CPU_Nice          | inputs.cpu      | cpu_usage_nice       |
+| CPU_Idle          | inputs.cpu      | cpu_usage_idle       |
+| CPU_IOWait        | inputs.cpu      | cpu_usage_iowait     |
+| CPU_Irq           | inputs.cpu      | cpu_usage_irq        |
+| CPU_SoftIrq       | inputs.cpu      | cpu_usage_softirq    |
+| CPU_Stolen        | inputs.cpu      | cpu_usage_steal      |
+| CPU_LoadAvg_1min  | inputs.system   | system_load1         |
+| CPU_LoadAvg_5min  | inputs.system   | system_load5         |
+| CPU_LoadAvg_15min | inputs.system   | system_load15        |
+| CPU_Total         | inputs.cpu      | cpu_usage_active     |
+
+The following example shows the desired configuration:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+    agent_config: |
+      [agent]
+        interval = "1m"
+        flush_interval = "1m"
+
+      ## CPU metrics
+      [[inputs.cpu]]
+        percpu = false
+        totalcpu = true
+        collect_cpu_time = false
+        report_active = true
+        namepass = [ "cpu" ]
+        fieldpass = [ "usage_active", "usage_steal", "usage_iowait", "usage_irq", "usage_user", "usage_idle", "usage_nice", "usage_system", "usage_softirq" ]
+
+      ## CPU metrics
+      [[inputs.system]]
+        namepass = [ "system" ]
+        fieldpass = [ "load1", "load5", "load15" ]
+  # ...
+processors:
+  resource/my example name fields:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: upsert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic/some name:
+    source_name: my example name
+    source_host: my_host
+    source_category: My Category
+```
+
+##### Memory
+
+To get CPU metrics we are using the [inputs.mem][telegraf-input-mem] Telegraf plugin.
+
+| Metric Name     | Telegraf plugin | Telegraf metric name  |
+|-----------------|-----------------|-----------------------|
+| Mem_Total       | inputs.mem      | mem_total             |
+| Mem_Used        | N/A             | N/A                   |
+| Mem_Free        | inputs.mem      | mem_free              |
+| Mem_ActualFree  | inputs.mem      | mem_available         |
+| Mem_ActualUsed  | inputs.mem      | mem_used              |
+| Mem_UsedPercent | inputs.mem      | mem_used_percent      |
+| Mem_FreePercent | inputs.mem      | mem_available_percent |
+| Mem_PhysicalRam | N/A             | N/A                   |
+
+The following example shows the desired configuration:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+    agent_config: |
+      [agent]
+        interval = "1m"
+        flush_interval = "1m"
+
+      ## CPU metrics
+      [[inputs.cpu]]
+        percpu = false
+        totalcpu = true
+        collect_cpu_time = false
+        report_active = true
+        namepass = [ "cpu" ]
+        fieldpass = [ "usage_active", "usage_steal", "usage_iowait", "usage_irq", "usage_user", "usage_idle", "usage_nice", "usage_system", "usage_softirq" ]
+
+      ## CPU metrics
+      [[inputs.system]]
+        namepass = [ "system" ]
+        fieldpass = [ "load1", "load5", "load15" ]
+
+      ## Memory metrics
+      [[inputs.mem]]
+        fieldpass = [ "total", "free", "used", "used_percent", "available", "available_percent" ]
+  # ...
+processors:
+  resource/my example name fields:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: upsert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic/some name:
+    source_name: my example name
+    source_host: my_host
+    source_category: My Category
+```
+
+##### TCP
+
+To get TCP metrics we are using the [inputs.netstat][telegraf-input-netstat] Telegraf plugin.
+
+| Metric Name       | Telegraf plugin | Telegraf metric name    |
+|-------------------|-----------------|-------------------------|
+| TCP_InboundTotal  | N/A             | N/A                     |
+| TCP_OutboundTotal | N/A             | N/A                     |
+| TCP_Established   | inputs.netstat  | netstat_tcp_established |
+| TCP_Listen        | inputs.netstat  | netstat_tcp_listen      |
+| TCP_Idle          | N/A             | N/A                     |
+| TCP_Closing       | inputs.netstat  | netstat_tcp_closing     |
+| TCP_CloseWait     | inputs.netstat  | netstat_tcp_close_wait  |
+| TCP_Close         | inputs.netstat  | netstat_tcp_close       |
+| TCP_TimeWait      | inputs.netstat  | netstat_tcp_time_wait   |
+
+The following example shows the desired configuration:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+    agent_config: |
+      [agent]
+        interval = "1m"
+        flush_interval = "1m"
+
+      ## CPU metrics
+      [[inputs.cpu]]
+        percpu = false
+        totalcpu = true
+        collect_cpu_time = false
+        report_active = true
+        namepass = [ "cpu" ]
+        fieldpass = [ "usage_active", "usage_steal", "usage_iowait", "usage_irq", "usage_user", "usage_idle", "usage_nice", "usage_system", "usage_softirq" ]
+
+      ## CPU metrics
+      [[inputs.system]]
+        namepass = [ "system" ]
+        fieldpass = [ "load1", "load5", "load15" ]
+
+      ## Memory metrics
+      [[inputs.mem]]
+        fieldpass = [ "total", "free", "used", "used_percent", "available", "available_percent" ]
+
+      ## TCP metrics
+      [[inputs.netstat]]
+        fieldpass = [ "tcp_close", "tcp_close_wait", "tcp_closing", "tcp_established", "tcp_listen", "tcp_time_wait" ]
+  # ...
+processors:
+  resource/my example name fields:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: upsert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic/some name:
+    source_name: my example name
+    source_host: my_host
+    source_category: My Category
+```
+
+##### Network
+
+To get network metrics we are using the [inputs.net][telegraf-input-net] Telegraf plugin.
+
+| Metric Name    | Telegraf plugin | Telegraf metric name |
+|----------------|-----------------|----------------------|
+| Net_InPackets  | inputs.net      | net_packets_recv     |
+| Net_OutPackets | inputs.net      | net_packets_sent     |
+| Net_InBytes    | inputs.net      | net_bytes_recv       |
+| Net_OutBytes   | inputs.net      | net_bytes_sent       |
+
+The following example shows the desired configuration:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+    agent_config: |
+      [agent]
+        interval = "1m"
+        flush_interval = "1m"
+
+      ## CPU metrics
+      [[inputs.cpu]]
+        percpu = false
+        totalcpu = true
+        collect_cpu_time = false
+        report_active = true
+        namepass = [ "cpu" ]
+        fieldpass = [ "usage_active", "usage_steal", "usage_iowait", "usage_irq", "usage_user", "usage_idle", "usage_nice", "usage_system", "usage_softirq" ]
+
+      ## CPU metrics
+      [[inputs.system]]
+        namepass = [ "system" ]
+        fieldpass = [ "load1", "load5", "load15" ]
+
+      ## Memory metrics
+      [[inputs.mem]]
+        fieldpass = [ "total", "free", "used", "used_percent", "available", "available_percent" ]
+
+      ## TCP metrics
+      [[inputs.netstat]]
+        fieldpass = [ "tcp_close", "tcp_close_wait", "tcp_closing", "tcp_established", "tcp_listen", "tcp_time_wait" ]
+
+      ## Network metrics
+      [[inputs.net]]
+        interfaces = ["eth*", "en*", "lo*"]
+        ignore_protocol_stats = true
+        fieldpass = [ "bytes_sent", "bytes_recv", "packets_sent", "packets_recv" ]
+  # ...
+processors:
+  resource/my example name fields:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: upsert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic/some name:
+    source_name: my example name
+    source_host: my_host
+    source_category: My Category
+```
+
+##### Disk
+
+To get disk metrics we are using the [inputs.diskio][telegraf-input-diskio]
+and the [inputs.disk][telegraf-input-disk] Telegraf plugins.
+
+| Metric Name          | Telegraf plugin | Telegraf metric name |
+|----------------------|-----------------|----------------------|
+| Disk_Reads           | inputs.diskio   | diskio_reads         |
+| Disk_ReadBytes       | inputs.diskio   | diskio_read_bytes    |
+| Disk_Writes          | inputs.diskio   | diskio_writes        |
+| Disk_WriteBytes      | inputs.diskio   | diskio_write_bytes   |
+| Disk_Queue           | N/A             | N/A                  |
+| Disk_InodesAvailable | inputs.disk     | disk_inodes_free     |
+| Disk_Used            | inputs.disk     | disk_used            |
+| Disk_UsedPercent     | inputs.disk     | disk_used_percent    |
+| Disk_Available       | N/A             | N/A                  |
+
+The following example shows the desired configuration:
+
+```yaml
+receivers:
+  ## All my example metrics
+  telegraf/my example name:
+    agent_config: |
+      [agent]
+        interval = "1m"
+        flush_interval = "1m"
+
+      ## CPU metrics
+      [[inputs.cpu]]
+        percpu = false
+        totalcpu = true
+        collect_cpu_time = false
+        report_active = true
+        namepass = [ "cpu" ]
+        fieldpass = [ "usage_active", "usage_steal", "usage_iowait", "usage_irq", "usage_user", "usage_idle", "usage_nice", "usage_system", "usage_softirq" ]
+
+      ## CPU metrics
+      [[inputs.system]]
+        namepass = [ "system" ]
+        fieldpass = [ "load1", "load5", "load15" ]
+
+      ## Memory metrics
+      [[inputs.mem]]
+        fieldpass = [ "total", "free", "used", "used_percent", "available", "available_percent" ]
+
+      ## TCP metrics
+      [[inputs.netstat]]
+        fieldpass = [ "tcp_close", "tcp_close_wait", "tcp_closing", "tcp_established", "tcp_listen", "tcp_time_wait" ]
+
+      ## Network metrics
+      [[inputs.net]]
+        interfaces = ["eth*", "en*", "lo*"]
+        ignore_protocol_stats = true
+        fieldpass = [ "bytes_sent", "bytes_recv", "packets_sent", "packets_recv" ]
+
+      ## Disk metrics
+      [[inputs.disk]]
+        namepass = [ "disk" ]
+        fieldpass = [ "used", "used_percent", "inodes_free" ]
+        ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
+
+      ## Disk metrics
+      [[inputs.diskio]]
+        fieldpass = [ "reads", "read_bytes", "writes", "write_bytes" ]
+  # ...
+processors:
+  resource/my example name fields:
+    attributes:
+    - key: cloud.availability_zone
+      value: zone-1
+      action: upsert
+    - key: k8s.cluster.name
+      value: my-cluster
+      action: insert
+exporters:
+  sumologic/some name:
+    source_name: my example name
+    source_host: my_host
+    source_category: My Category
+```
 
 ### Local Windows Event Log Source
 
@@ -1156,7 +1995,7 @@ This section describes migration steps for an Installed Collector managed with a
 
 The following table shows the equivalent [user.properties][user.properties] for OpenTelemetry.
 
-| user.properties key                           | The OpenTelemetry Collector Key                           |
+| user.properties key                           | The OpenTelemetry Collector Key                            |
 |-----------------------------------------------|------------------------------------------------------------|
 | `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
 | `accessid=accessId`                           | `extensions.sumologic.access_id`                           |
@@ -1210,12 +2049,12 @@ This section describes migration steps for [common parameters][common-parameters
 - [RemoteWindowsPerfMon](#local-windows-performance-monitor-log-source-remotewindowsperfmon)
 - [ActiveDirectory](#windows-active-directory-source-activedirectory)
 
-| The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                |
+| The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `name`                            | Define the name after the slash `/` in the receiver name. [See the linked example.](#name-1)                    |
+| `name`                            | [exporters.sumologic.source_name](#name-1)                                                                      |
 | `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-1) |
 | `fields`                          | Use the [resourceprocessor][resourceprocessor] to set custom fields. [See the linked example.](#fields-1)       |
-| `hostName`                        | [exporters.sumologic.source_host][source-templates]; [See the linked example.](#host-name-1)                     |
+| `hostName`                        | [exporters.sumologic.source_host][source-templates]; [See the linked example.](#host-name-1)                    |
 | `category`                        | [exporters.sumologic.source_category][source-templates]                                                         |
 | `automaticDateParsing`            | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
 | `timeZone`                        | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
@@ -1231,7 +2070,14 @@ This section describes migration steps for [common parameters][common-parameters
 
 ### Local File Source (LocalFile)
 
-Local File Source is not supported by the OpenTelemetry Collector.
+The equivalent of the Local File Source is [the filelog receiver][filelogreceiver].
+More useful information can be found in [Local File Source for Cloud Based Management](#local-file-source).
+
+| The Installed Collector Parameter | The OpenTelemetry Collector Key                         |
+|-----------------------------------|---------------------------------------------------------|
+| `pathExpression`                  | element of [receivers.filelog.include](#file-path) list |
+| `denylist`                        | elemets of [receivers.filelog.exclude](#denylist) list  |
+| `encoding`                        | [receivers.filelog.encoding](#encoding)                 |
 
 ### Remote File Source (RemoteFileV2)
 
@@ -1239,7 +2085,15 @@ Remote File Source is not supported by the OpenTelemetry Collector.
 
 ### Syslog Source (Syslog)
 
-Remote File Source is not supported by the OpenTelemetry Collector.
+The equivalent of the Syslog Source is a combination of
+[the tcplog][tcplogreceiver] or [the udplog][udplogreceiver] receivers
+and [the sumologicsyslog processor][sumologicsyslog].
+More useful information can be found in [Syslog Source for Cloud Based Management](#syslog-source).
+
+| The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                      |
+|-----------------------------------|----------------------------------------------------------------------------------------------------------------------|
+| `protocol`                        | using tcplog or udplog receiver. [See syslog explanation](#protocol-and-port)                                        |
+| `port`                            | `receivers.tcplog.listen_address` or `receivers.udplog.listen_address`. [See syslog explanation](#protocol-and-port) |
 
 ### Docker Logs Source (DockerLog)
 
@@ -1255,11 +2109,31 @@ Script Source is not supported by the OpenTelemetry Collector.
 
 ### Streaming Metrics Source (StreamingMetrics)
 
-Streaming Metrics Source is not supported by the OpenTelemetry Collector.
+The equivalent of the Streaming Metrics Source is [the telegraf receiver with appropiate plugins][telegrafreceiver].
+More useful information can be found in [Streaming Metrics Source for Cloud Based Management](#streaming-metrics-source).
+
+| The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
+|-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `name`                            | [exporters.sumologic.source_name](#name-3)                                                                      |
+| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-3) |
+| `category`                        | [exporters.sumologic.source_category](#source-category-2)                                                       |
+| `contentType`                     | [receivers.telegraf.agent_config('inputs.socket_listener'.data_format)](#content-type)                          |
+| `protocol`                        | [receivers.telegraf.agent_config('inputs.socket_listener'.service_address)](#protocol-and-port-1)               |
+| `port`                            | [receivers.telegraf.agent_config('inputs.socket_listener'.service_address)](#protocol-and-port-1)               |
 
 ### Host Metrics Source (SystemStats)
 
-Host Metrics Source is not supported by the OpenTelemetry Collector.
+The equivalent of the Host Metrics Source is [the telegraf receiver with appropiate plugins][telegrafreceiver].
+More useful information can be found in [Host Metrics Source for Cloud Based Management](#host-metrics-source).
+
+| The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
+|-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `name`                            | [exporters.sumologic.source_name](#name-4)                                                                      |
+| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-4) |
+| `category`                        | [exporters.sumologic.source_category](#source-category-3)                                                       |
+| `metrics`                         | [Appropiate plugins have to be configured.](#metrics) By default no metrics are being processed.                |
+| `interval (ms)`                   | [receivers.telegraf.agent_config('agent'.interval)](#scan-interval)                                             |
+| `hostName`                        | [exporters.sumologic.source_host](#source-host-2)                                                               |
 
 ### Local Windows Event Log Source (LocalWindowsEventLog)
 
@@ -1286,10 +2160,23 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#supported-encodings
 [udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/udplogreceiver
 [tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/tcplogreceiver
+[filelogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver
 [sumologicsyslog]: ../pkg/processor/sumologicsyslogprocessor/README.md
 [network-semantic-convention]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/span-general.md#general-network-connection-attributes
 [sumologicextension]: ../pkg/extension/sumologicextension/README.md
+[sumologicexporter]: ../pkg/exporter/sumologicexporter/README.md
 [user.properties]: https://help.sumologic.com/03Send-Data/Installed-Collectors/05Reference-Information-for-Collector-Installation/06user.properties
 [proxy]: https://opentelemetry.io/docs/collector/configuration/#proxy-support
 [common-parameters]: https://help.sumologic.com/03Send-Data/Sources/03Use-JSON-to-Configure-Sources#common-parameters-for-log-source-types
 [source-templates]: ../pkg/exporter/sumologicexporter/README.md#source-templates
+[telegrafreceiver]: ../pkg/receiver/telegrafreceiver/README.md
+[telegraf-socket_listener]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/socket_listener#socket-listener-input-plugin
+[telegraf-input-formats]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/parsers
+[telegraf-input-plugins]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs
+[telegraf-input-cpu]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/cpu
+[telegraf-input-system]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/system
+[telegraf-input-mem]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/mem
+[telegraf-input-net]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/net/NET_README.md
+[telegraf-input-netstat]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/net/NETSTAT_README.md
+[telegraf-input-diskio]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/diskio
+[telegraf-input-disk]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/disk
