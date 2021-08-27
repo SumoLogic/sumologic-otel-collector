@@ -773,6 +773,13 @@ Remote File Source is not supported by the Opentelemetry Collector.
 
 ### Syslog Source
 
+The equivalent of the Syslog Source is a combination of
+[the tcplog][tcplogreceiver] or [the udplog][udplogreceiver] receivers
+and [the sumologicsyslog processor][sumologicsyslog].
+
+__Note: The OpenTelemetry Collector provides also [Syslog Receiver][syslogreceiver].
+See [this document](Comparison.md#syslog) for details.__
+
 #### Overall example
 
 Below is an example of an OpenTelemetry configuration for a Syslog Source.
@@ -1390,7 +1397,10 @@ exporters:
 
 ### Host Metrics Source
 
-Host Metrics Source is not supported by the OpenTelemetry Collector.
+The equivalent of the Host Metrics Source is [the telegraf receiver][telegrafreceiver] with appropiate plugins.
+
+__Note: The are differences between the Installed Collector and the Openelemetry Collector host metrics.
+See [this document](Comparison.md#host-metrics) to learn more.__
 
 #### Overall Example
 
@@ -2090,6 +2100,9 @@ The equivalent of the Syslog Source is a combination of
 and [the sumologicsyslog processor][sumologicsyslog].
 More useful information can be found in [Syslog Source for Cloud Based Management](#syslog-source).
 
+__Note: The OpenTelemetry Collector provides also [Syslog Receiver][syslogreceiver].
+See [this document](Comparison.md#syslog) for details.__
+
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                      |
 |-----------------------------------|----------------------------------------------------------------------------------------------------------------------|
 | `protocol`                        | using tcplog or udplog receiver. [See syslog explanation](#protocol-and-port)                                        |
@@ -2109,7 +2122,7 @@ Script Source is not supported by the OpenTelemetry Collector.
 
 ### Streaming Metrics Source (StreamingMetrics)
 
-The equivalent of the Streaming Metrics Source is [the telegraf receiver with appropiate plugins][telegrafreceiver].
+The equivalent of the Streaming Metrics Source is [the telegraf receiver][telegrafreceiver] with appropiate plugins.
 More useful information can be found in [Streaming Metrics Source for Cloud Based Management](#streaming-metrics-source).
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
@@ -2123,8 +2136,11 @@ More useful information can be found in [Streaming Metrics Source for Cloud Base
 
 ### Host Metrics Source (SystemStats)
 
-The equivalent of the Host Metrics Source is [the telegraf receiver with appropiate plugins][telegrafreceiver].
+The equivalent of the Host Metrics Source is [the telegraf receiver][telegrafreceiver] with appropiate plugins.
 More useful information can be found in [Host Metrics Source for Cloud Based Management](#host-metrics-source).
+
+__Note: The are differences between the Installed Collector and the Openelemetry Collector host metrics.
+See [this document](Comparison.md#host-metrics) to learn more.__
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
@@ -2161,6 +2177,7 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/udplogreceiver
 [tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/tcplogreceiver
 [filelogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver
+[syslogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/syslogreceiver
 [sumologicsyslog]: ../pkg/processor/sumologicsyslogprocessor/README.md
 [network-semantic-convention]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/span-general.md#general-network-connection-attributes
 [sumologicextension]: ../pkg/extension/sumologicextension/README.md
