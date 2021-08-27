@@ -30,6 +30,7 @@ import (
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/consumer/consumererror"
+	"go.opentelemetry.io/collector/model/otlp"
 	"go.opentelemetry.io/collector/model/pdata"
 )
 
@@ -530,8 +531,13 @@ func TestAllMetricsOTLP(t *testing.T) {
 	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
+
+			md, err := otlp.NewProtobufMetricsUnmarshaler().UnmarshalMetrics([]byte(body))
+			assert.NoError(t, err)
+			assert.NotNil(t, md)
+
 			//nolint:lll
-			expected := "\nf\n/\n\x14\n\x04test\x12\f\n\ntest_value\n\x17\n\x05test2\x12\x0e\n\fsecond_value\x123\n\x00\x12/\n\x10test.metric.data\x1a\x05bytes:\x14\n\x12\x19\x00\x12\x94\v\xd1\x00H\x161\xa48\x00\x00\x00\x00\x00\x00\n\xba\x01\n\x0e\n\f\n\x03foo\x12\x05\n\x03bar\x12\xa7\x01\n\x00\x12\xa2\x01\n\x11gauge_metric_name*\x8c\x01\nD\n\x15\n\vremote_name\x12\x06156920\n\x19\n\x03url\x12\x12http://example_url\x19\x80GX\xef\xdb4Q\x161|\x00\x00\x00\x00\x00\x00\x00\nD\n\x15\n\vremote_name\x12\x06156955\n\x19\n\x03url\x12\x12http://another_url\x19\x80\x11\xf3*\xdc4Q\x161\xf5\x00\x00\x00\x00\x00\x00\x00"
+			expected := "\nf\n/\n\x14\n\x04test\x12\f\n\ntest_value\n\x17\n\x05test2\x12\x0e\n\fsecond_value\x123\n\x00\x12/\n\x10test.metric.data\x1a\x05bytes:\x14\n\x12\x19\x00\x12\x94\v\xd1\x00H\x161\xa48\x00\x00\x00\x00\x00\x00\n\xc2\x01\n\x0e\n\f\n\x03foo\x12\x05\n\x03bar\x12\xaf\x01\n\x00\x12\xaa\x01\n\x11gauge_metric_name*\x94\x01\nH\x19\x80GX\xef\xdb4Q\x161|\x00\x00\x00\x00\x00\x00\x00:\x17\n\vremote_name\x12\b\n\x06156920:\x1b\n\x03url\x12\x14\n\x12http://example_url\nH\x19\x80\x11\xf3*\xdc4Q\x161\xf5\x00\x00\x00\x00\x00\x00\x00:\x17\n\vremote_name\x12\b\n\x06156955:\x1b\n\x03url\x12\x14\n\x12http://another_url"
 			assert.Equal(t, expected, body)
 			assert.Equal(t, "application/x-protobuf", req.Header.Get("Content-Type"))
 		},
