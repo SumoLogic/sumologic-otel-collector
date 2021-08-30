@@ -11,4 +11,4 @@ jobs:
       run: 'echo "$SSH_KEY" | base64'
       shell: bash
       env:
-        SSH_KEY: ${ {secrets.AWS_ACCESS_KEY_ID }}
+        SSH_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
