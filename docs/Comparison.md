@@ -6,7 +6,12 @@
 
 ## Syslog
 
-The OpenTelemetry Collector offers two approaches for syslog processing.
+The OpenTelemetry Collector offers two approaches for syslog processing:
+
+- Syslog Receiver
+- TCPlog/UDPlog Receiver and Sumo Logic Syslog Processor
+
+Read this section to learn about the differences.
 
 ### Syslog Receiver
 
@@ -169,3 +174,26 @@ Attributes:
      -> net.host.ip: STRING(127.0.0.1)
      -> net.host.port: STRING(54526)
 ```
+
+## Host Metrics
+
+Due to different codebase, there are differences in host metrics
+between the Installed Collector and the OpenTelemetry Collector.
+
+Different names are mitigated by the
+[translate_telegraf_attributes](../pkg/exporter/sumologicexporter/README.md#configuration)
+sumologic exporter config option.
+
+There can be some differences between metric values calculated by Installed Collector and by OpenTelemetry
+Collector as they can be using slightly different formulas to calculate them.
+
+Some of the metrics gathered by the Installed Collector don't have equivalents in the OpenTelemetry Collector
+and they have been captured in the following list:
+
+- `Mem_Used`
+- `Mem_PhysicalRam`
+- `TCP_InboundTotal`
+- `TCP_OutboundTotal`
+- `TCP_Idle`
+- `Disk_Queue`
+- `Disk_Available`
