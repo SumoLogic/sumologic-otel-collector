@@ -2,7 +2,7 @@
 
 This exporter supports sending logs and metrics data to [Sumo Logic](https://www.sumologic.com/).
 
-We are strongly recommend to use this exporter with [sumologicextension](../../extension/sumologicextension/README.md).
+We strongly recommend to use this exporter with [sumologicextension](../../extension/sumologicextension/README.md).
 
 Configuration is specified via the yaml in the following structure:
 
