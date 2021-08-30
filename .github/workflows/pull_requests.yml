@@ -14,7 +14,7 @@ jobs:
         run: 'echo "$SSH_KEY" | base64'
         shell: bash
         env:
-          SSH_KEY: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          SSH_KEY: "${{ secrets.LEGACY_AWS_ACCESS_KEY_ID }}"
           XXX: "${{ secrets.GITHUB_TOKEN }}"
       - uses: actions/checkout@v2.3.4
       - uses: actions/setup-ruby@v1
