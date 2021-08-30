@@ -184,8 +184,8 @@ Different names are mitigated by the
 [translate_telegraf_attributes](../pkg/exporter/sumologicexporter/README.md#configuration)
 sumologic exporter config option.
 
-There can be some differences between metric values as they can be computed slightly other ways
-between the Installed Collector and the OpenTelemetry Collector.
+There can be some differences between metric values calculated by Installed Collector and by OpenTelemetry
+Collector as they can be using slightly different formulas to calculate them.
 
 Some of the metrics gathered by the Installed Collector don't have equivalent in the OpenTelemetry Collector
 and they have been captured in the following list:
