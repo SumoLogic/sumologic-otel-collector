@@ -187,7 +187,7 @@ sumologic exporter config option.
 There can be some differences between metric values calculated by Installed Collector and by OpenTelemetry
 Collector as they can be using slightly different formulas to calculate them.
 
-Some of the metrics gathered by the Installed Collector don't have equivalent in the OpenTelemetry Collector
+Some of the metrics gathered by the Installed Collector don't have equivalents in the OpenTelemetry Collector
 and they have been captured in the following list:
 
 - `Mem_Used`
