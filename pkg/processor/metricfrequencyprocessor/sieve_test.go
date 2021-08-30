@@ -221,7 +221,7 @@ func createDataPoint(timestamp time.Time, value float64) pdata.NumberDataPoint {
 	pdataTimestamp := pdata.TimestampFromTime(timestamp)
 	out := pdata.NewNumberDataPoint()
 	out.SetTimestamp(pdataTimestamp)
-	out.SetValue(value)
+	out.SetDoubleVal(value)
 	return out
 }
 

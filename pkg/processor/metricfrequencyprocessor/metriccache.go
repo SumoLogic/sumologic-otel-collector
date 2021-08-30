@@ -49,7 +49,7 @@ func (mc *metricCache) Register(name string, dataPoint pdata.NumberDataPoint) {
 	}
 
 	key := dataPoint.Timestamp().String()
-	value := &DataPoint{Timestamp: dataPoint.Timestamp(), Value: dataPoint.DoubleVal()}
+	value := &DataPoint{Timestamp: dataPoint.Timestamp(), Value: getVal(dataPoint)}
 	internalCache.Set(key, value, cache.DefaultExpiration)
 }
 

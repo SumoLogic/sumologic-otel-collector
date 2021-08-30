@@ -59,6 +59,10 @@ func (ms *defaultMetricSieve) siftDropGauge(metric pdata.Metric) bool {
 
 func (ms *defaultMetricSieve) siftDataPoint(name string) func(pdata.NumberDataPoint) bool {
 	return func(dataPoint pdata.NumberDataPoint) bool {
+		if  math.IsNaN(getVal(dataPoint)) {
+			return false
+		}
+
 		cachedPoints := ms.metricCache.List(name)
 		ms.metricCache.Register(name, dataPoint)
 		lastReported, exists := ms.lastReported[name]
@@ -67,7 +71,7 @@ func (ms *defaultMetricSieve) siftDataPoint(name string) func(pdata.NumberDataPo
 			return false
 		}
 		earliest := earliestTimestamp(cachedPoints)
-		cachedPoints[dataPoint.Timestamp()] = dataPoint.DoubleVal()
+		cachedPoints[dataPoint.Timestamp()] = getVal(dataPoint)
 
 		if ms.metricRequiresSamples(dataPoint, earliest) {
 			ms.lastReported[name] = dataPoint.Timestamp()
@@ -135,7 +139,7 @@ func pastCategoryFrequency(point pdata.NumberDataPoint, lastReport pdata.Timesta
 
 func isConstant(point pdata.NumberDataPoint, points map[pdata.Timestamp]float64) bool {
 	for _, value := range points {
-		if !almostEqual(point.DoubleVal(), value) {
+		if !almostEqual(getVal(point), value) {
 			return false
 		}
 	}

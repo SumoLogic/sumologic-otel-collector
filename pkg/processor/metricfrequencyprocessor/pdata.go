@@ -1,6 +1,7 @@
 package metricfrequencyprocessor
 
 import (
+	"math"
 	"sort"
 
 	"go.opentelemetry.io/collector/model/pdata"
@@ -22,4 +23,15 @@ func (pta pdataTimestampByValue) Swap(i, j int) {
 
 func sortTimestampArray(timestamps []pdata.Timestamp) {
 	sort.Sort(pdataTimestampByValue(timestamps))
+}
+
+func getVal(point pdata.NumberDataPoint) float64 {
+	switch point.Type() {
+	case pdata.MetricValueTypeDouble:
+		return point.DoubleVal()
+	case pdata.MetricValueTypeInt:
+		return float64(point.IntVal())
+	default:
+		return math.NaN()
+	}
 }
