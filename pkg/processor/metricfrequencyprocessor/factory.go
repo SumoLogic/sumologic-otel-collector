@@ -2,6 +2,7 @@ package metricfrequencyprocessor
 
 import (
 	"context"
+	"time"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
@@ -12,15 +13,15 @@ import (
 const (
 	cfgType = "metric_frequency"
 
-	defaultMinPointAccumulationSeconds           = 15 * 60
-	defaultConstantMetricsReportFrequencySeconds = 5 * 60
-	defaultLowInfoMetricsReportFrequencySeconds  = 2 * 60
-	defaultMaxReportFrequencySeconds             = 30
-	defaultIqrAnomalyCoef                        = 1.5
-	defaultVariationIqrThresholdCoef             = 4.0
-	defaultDataPointExpirationMinutes            = 60
-	defaultDataPointCacheCleanupIntervalMinutes  = 10
-	defaultMetricCacheCleanupIntervalMinutes     = 180
+	defaultMinPointAccumulationTime       = 15 * time.Minute
+	defaultConstantMetricsReportFrequency = 5 * time.Minute
+	defaultLowInfoMetricsReportFrequency  = 2 * time.Minute
+	defaultMaxReportFrequency             = 30 * time.Second
+	defaultIqrAnomalyCoef                 = 1.5
+	defaultVariationIqrThresholdCoef      = 4.0
+	defaultDataPointExpirationTime        = 1 * time.Hour
+	defaultDataPointCacheCleanupInterval  = 10 * time.Minute
+	defaultMetricCacheCleanupInterval     = 3 * time.Hour
 )
 
 func NewFactory() component.ProcessorFactory {
@@ -36,16 +37,16 @@ func createDefaultConfig() config.Processor {
 	ps := config.NewProcessorSettings(id)
 
 	return &Config{
-		ProcessorSettings:                     &ps,
-		MinPointAccumulationSeconds:           defaultMinPointAccumulationSeconds,
-		ConstantMetricsReportFrequencySeconds: defaultConstantMetricsReportFrequencySeconds,
-		LowInfoMetricsReportFrequencySeconds:  defaultLowInfoMetricsReportFrequencySeconds,
-		MaxReportFrequencySeconds:             defaultMaxReportFrequencySeconds,
-		IqrAnomalyCoef:                        defaultIqrAnomalyCoef,
-		VariationIqrThresholdCoef:             defaultVariationIqrThresholdCoef,
-		DataPointExpirationMinutes:            defaultDataPointExpirationMinutes,
-		DataPointCacheCleanupIntervalMinutes:  defaultDataPointCacheCleanupIntervalMinutes,
-		MetricCacheCleanupIntervalMinutes:     defaultMetricCacheCleanupIntervalMinutes,
+		ProcessorSettings:              &ps,
+		MinPointAccumulationTime:       defaultMinPointAccumulationTime,
+		ConstantMetricsReportFrequency: defaultConstantMetricsReportFrequency,
+		LowInfoMetricsReportFrequency:  defaultLowInfoMetricsReportFrequency,
+		MaxReportFrequency:             defaultMaxReportFrequency,
+		IqrAnomalyCoef:                 defaultIqrAnomalyCoef,
+		VariationIqrThresholdCoef:      defaultVariationIqrThresholdCoef,
+		DataPointExpirationTime:        defaultDataPointExpirationTime,
+		DataPointCacheCleanupInterval:  defaultDataPointCacheCleanupInterval,
+		MetricCacheCleanupInterval:     defaultMetricCacheCleanupInterval,
 	}
 }
 

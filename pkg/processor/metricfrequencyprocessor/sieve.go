@@ -59,7 +59,7 @@ func (ms *defaultMetricSieve) siftDropGauge(metric pdata.Metric) bool {
 
 func (ms *defaultMetricSieve) siftDataPoint(name string) func(pdata.NumberDataPoint) bool {
 	return func(dataPoint pdata.NumberDataPoint) bool {
-		if  math.IsNaN(getVal(dataPoint)) {
+		if math.IsNaN(getVal(dataPoint)) {
 			return false
 		}
 
@@ -78,7 +78,7 @@ func (ms *defaultMetricSieve) siftDataPoint(name string) func(pdata.NumberDataPo
 			return false
 		}
 
-		if pastCategoryFrequency(dataPoint, lastReported, ms.constantMetricsReportFrequency()) {
+		if pastCategoryFrequency(dataPoint, lastReported, ms.config.ConstantMetricsReportFrequency) {
 			ms.lastReported[name] = dataPoint.Timestamp()
 			return false
 		}
@@ -87,7 +87,7 @@ func (ms *defaultMetricSieve) siftDataPoint(name string) func(pdata.NumberDataPo
 			return true
 		}
 
-		if pastCategoryFrequency(dataPoint, lastReported, ms.lowInfoMetricsReportFrequency()) {
+		if pastCategoryFrequency(dataPoint, lastReported, ms.config.LowInfoMetricsReportFrequency) {
 			ms.lastReported[name] = dataPoint.Timestamp()
 			return false
 		}
@@ -96,7 +96,7 @@ func (ms *defaultMetricSieve) siftDataPoint(name string) func(pdata.NumberDataPo
 			return true
 		}
 
-		if pastCategoryFrequency(dataPoint, lastReported, ms.maxReportFrequency()) {
+		if pastCategoryFrequency(dataPoint, lastReported, ms.config.MaxReportFrequency) {
 			ms.lastReported[name] = dataPoint.Timestamp()
 			return false
 		}
@@ -105,32 +105,8 @@ func (ms *defaultMetricSieve) siftDataPoint(name string) func(pdata.NumberDataPo
 	}
 }
 
-func (ms *defaultMetricSieve) minPointAccumulationTime() time.Duration {
-	return time.Duration(ms.config.MinPointAccumulationSeconds) * time.Second
-}
-
-func (ms *defaultMetricSieve) iqrAnomalyCoef() float64 {
-	return ms.config.IqrAnomalyCoef
-}
-
-func (ms *defaultMetricSieve) variationIqrThresholdCoef() float64 {
-	return ms.config.VariationIqrThresholdCoef
-}
-
-func (ms *defaultMetricSieve) constantMetricsReportFrequency() time.Duration {
-	return time.Duration(ms.config.ConstantMetricsReportFrequencySeconds) * time.Second
-}
-
-func (ms *defaultMetricSieve) lowInfoMetricsReportFrequency() time.Duration {
-	return time.Duration(ms.config.LowInfoMetricsReportFrequencySeconds) * time.Second
-}
-
-func (ms *defaultMetricSieve) maxReportFrequency() time.Duration {
-	return time.Duration(ms.config.MaxReportFrequencySeconds) * time.Second
-}
-
 func (ms *defaultMetricSieve) metricRequiresSamples(point pdata.NumberDataPoint, earliest pdata.Timestamp) bool {
-	return point.Timestamp().AsTime().Before(earliest.AsTime().Add(ms.minPointAccumulationTime()))
+	return point.Timestamp().AsTime().Before(earliest.AsTime().Add(ms.config.MinPointAccumulationTime))
 }
 
 func pastCategoryFrequency(point pdata.NumberDataPoint, lastReport pdata.Timestamp, categoryFrequency time.Duration) bool {
@@ -155,7 +131,7 @@ func (ms *defaultMetricSieve) isLowInformation(points map[pdata.Timestamp]float6
 	iqr := q3 - q1
 	variation := calculateVariation(points)
 
-	noAnomaly := withinBounds(points, q1-ms.iqrAnomalyCoef()*iqr, q3+ms.iqrAnomalyCoef()*iqr)
+	noAnomaly := withinBounds(points, q1-ms.config.IqrAnomalyCoef*iqr, q3+ms.config.IqrAnomalyCoef*iqr)
 	return noAnomaly && ms.lowVariation(variation, iqr)
 }
 
@@ -199,7 +175,7 @@ func calculateVariation(points map[pdata.Timestamp]float64) float64 {
 
 // lowVariation returns a heuristic check indicating that data points display little oscillations
 func (ms *defaultMetricSieve) lowVariation(variation float64, iqr float64) bool {
-	return variation < ms.variationIqrThresholdCoef()*iqr
+	return variation < ms.config.VariationIqrThresholdCoef*iqr
 }
 
 func earliestTimestamp(points map[pdata.Timestamp]float64) pdata.Timestamp {

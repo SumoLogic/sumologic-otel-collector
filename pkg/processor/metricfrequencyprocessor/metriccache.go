@@ -28,8 +28,7 @@ func newMetricCache(config *Config) *metricCache {
 	}
 
 	go func(c *metricCache) {
-		interval := time.Duration(c.config.MetricCacheCleanupIntervalMinutes) * time.Minute
-		t := time.NewTicker(interval)
+		t := time.NewTicker(c.config.MetricCacheCleanupInterval)
 		defer t.Stop()
 		for range t.C {
 			c.Cleanup()
@@ -78,13 +77,5 @@ func (mc *metricCache) Cleanup() {
 }
 
 func (mc *metricCache) newCache() *cache.Cache {
-	return cache.New(mc.dataPointExpiration(), mc.dataPointCacheCleanupInterval())
-}
-
-func (mc *metricCache) dataPointExpiration() time.Duration {
-	return time.Duration(mc.config.DataPointExpirationMinutes) * time.Minute
-}
-
-func (mc *metricCache) dataPointCacheCleanupInterval() time.Duration {
-	return time.Duration(mc.config.DataPointCacheCleanupIntervalMinutes) * time.Minute
+	return cache.New(mc.config.DataPointExpirationTime, mc.config.DataPointCacheCleanupInterval)
 }

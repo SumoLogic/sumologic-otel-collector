@@ -13,7 +13,7 @@ func TestEmptyRead(t *testing.T) {
 
 	result := cache.List("a")
 
-	assert.Equal(t, result, emptyResult)
+	assert.Equal(t, emptyResult, result)
 }
 
 func TestSingleRegister(t *testing.T) {
@@ -22,7 +22,7 @@ func TestSingleRegister(t *testing.T) {
 
 	result := cache.List("a")
 
-	assert.Equal(t, result, map[pdata.Timestamp]float64{timestamp1: 0.0})
+	assert.Equal(t, map[pdata.Timestamp]float64{timestamp1: 0.0}, result)
 }
 
 func TestTwoRegistersOfSingleMetric(t *testing.T) {
@@ -32,7 +32,7 @@ func TestTwoRegistersOfSingleMetric(t *testing.T) {
 
 	result := cache.List("a")
 
-	assert.Equal(t, result, map[pdata.Timestamp]float64{timestamp1: 0.0, timestamp2: 1.0})
+	assert.Equal(t, map[pdata.Timestamp]float64{timestamp1: 0.0, timestamp2: 1.0}, result)
 }
 
 func TestTwoRegistersOnTwoMetrics(t *testing.T) {
@@ -43,8 +43,8 @@ func TestTwoRegistersOnTwoMetrics(t *testing.T) {
 	result1 := cache.List("a")
 	result2 := cache.List("b")
 
-	assert.Equal(t, result1, map[pdata.Timestamp]float64{timestamp1: 0.0})
-	assert.Equal(t, result2, map[pdata.Timestamp]float64{timestamp2: 1.0})
+	assert.Equal(t, map[pdata.Timestamp]float64{timestamp1: 0.0}, result1)
+	assert.Equal(t, map[pdata.Timestamp]float64{timestamp2: 1.0}, result2)
 }
 
 var emptyResult = make(map[pdata.Timestamp]float64)
