@@ -55,10 +55,9 @@ const (
 	registerUrl                   = "/api/v1/collector/register"
 	collectorCredentialsDirectory = ".sumologic-otel-collector/"
 
-	collectorIdField            = "collector_id"
-	collectorNameField          = "collector_name"
-	collectorCredentialIdField  = "collector_credential_id"
-	collectorCredentialKeyField = "collector_credential_key"
+	collectorIdField           = "collector_id"
+	collectorNameField         = "collector_name"
+	collectorCredentialIdField = "collector_credential_id"
 
 	banner = `
 **********************************************************************************************
@@ -317,7 +316,6 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 		zap.String(collectorIdField, resp.CollectorId),
 		zap.String(collectorNameField, resp.CollectorName),
 		zap.String(collectorCredentialIdField, resp.CollectorCredentialId),
-		zap.String(collectorCredentialKeyField, resp.CollectorCredentialKey),
 	)
 	return CollectorCredentials{
 		CollectorName: collectorName,
