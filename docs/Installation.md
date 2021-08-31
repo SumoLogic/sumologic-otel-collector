@@ -13,6 +13,7 @@ the container images stored in AWS Public ECR under the following repository:
 - [Systemd service](#systemd-service)
 - [Ansible](#ansible)
 - [Puppet](#puppet)
+- [Chef](#chef)
 
 ## Standalone
 
@@ -220,3 +221,8 @@ Example installation of Sumo Logic Distro of OpenTelemetry Collector with Ansibl
 
 Example installation of Sumo Logic Distro of OpenTelemetry Collector with Puppet is described in
 [examples/puppet](../examples/puppet/README.md).
+
+## Chef
+
+Example installation of Sumo Logic Distro of OpenTelemetry Collector with Chef is described in
+[examples/chef](../examples/chef/README.md).

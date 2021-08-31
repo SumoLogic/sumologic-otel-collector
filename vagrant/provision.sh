@@ -62,3 +62,10 @@ systemctl enable puppet
 
 echo 'PATH="$PATH:/opt/puppetlabs/bin/"' >> /etc/profile
 sed -i 's#secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"#secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/opt/puppetlabs/bin"#g' /etc/sudoers
+
+# Install chef
+curl -L https://www.opscode.com/chef/install.sh | sudo bash
+
+# accepts chef-solo licenses
+chef-solo --chef-license=accept || true
+su vagrant -c 'chef-solo --chef-license=accept' || true
