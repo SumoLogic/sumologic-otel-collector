@@ -52,7 +52,7 @@
         dest: /etc/otelcol-sumo/config.yaml
         owner: opentelemetry
         group: opentelemetry
-        mode: 0644
+        mode: 0640
     - name: Creating systemd service file
       template:
         src: systemd_service.j2
