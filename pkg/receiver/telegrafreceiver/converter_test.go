@@ -581,10 +581,6 @@ func TestConverter(t *testing.T) {
 	}
 }
 
-type DataPointWithLabelsMap interface {
-	LabelsMap() pdata.StringMap
-}
-
 func assertResourceAttributes(t *testing.T, tags []*telegraf.Tag, resource pdata.Resource) {
 	resource.Attributes().Range(func(k string, v pdata.AttributeValue) bool {
 		var found bool
@@ -635,16 +631,6 @@ func pdataMetricSlicesAreEqual(t *testing.T, expected, actual pdata.MetricSlice)
 // data points with the same set of labels.
 func assertEqualDataPointsWithLabels(t *testing.T, em pdata.Metric, am pdata.Metric) {
 	switch em.DataType() {
-	case pdata.MetricDataTypeIntGauge:
-		edps := em.IntGauge().DataPoints()
-		adps := am.IntGauge().DataPoints()
-		assert.Equal(t, edps.Len(), adps.Len())
-		for i := 0; i < edps.Len(); i++ {
-			expected := edps.At(i)
-			actual := adps.At(i)
-			assert.Equal(t, expected.Value(), actual.Value())
-			assertEqualDataPoints(t, am.Name(), expected, actual)
-		}
 	case pdata.MetricDataTypeGauge:
 		edps := em.Gauge().DataPoints()
 		adps := am.Gauge().DataPoints()
@@ -652,17 +638,7 @@ func assertEqualDataPointsWithLabels(t *testing.T, em pdata.Metric, am pdata.Met
 		for i := 0; i < edps.Len(); i++ {
 			expected := edps.At(i)
 			actual := adps.At(i)
-			assert.Equal(t, expected.Value(), actual.Value())
-			assertEqualDataPoints(t, am.Name(), expected, actual)
-		}
-	case pdata.MetricDataTypeIntSum:
-		edps := em.IntSum().DataPoints()
-		adps := am.IntSum().DataPoints()
-		assert.Equal(t, edps.Len(), adps.Len())
-		for i := 0; i < edps.Len(); i++ {
-			expected := edps.At(i)
-			actual := adps.At(i)
-			assert.Equal(t, expected.Value(), actual.Value())
+			assert.Equal(t, expected.DoubleVal(), actual.DoubleVal())
 			assertEqualDataPoints(t, am.Name(), expected, actual)
 		}
 	case pdata.MetricDataTypeSum:
@@ -672,7 +648,7 @@ func assertEqualDataPointsWithLabels(t *testing.T, em pdata.Metric, am pdata.Met
 		for i := 0; i < edps.Len(); i++ {
 			expected := edps.At(i)
 			actual := adps.At(i)
-			assert.Equal(t, expected.Value(), actual.Value())
+			assert.Equal(t, expected.DoubleVal(), actual.DoubleVal())
 			assertEqualDataPoints(t, am.Name(), expected, actual)
 		}
 	}
@@ -681,10 +657,10 @@ func assertEqualDataPointsWithLabels(t *testing.T, em pdata.Metric, am pdata.Met
 type DataPoint interface {
 	Timestamp() pdata.Timestamp
 	StartTimestamp() pdata.Timestamp
-	LabelsMap() pdata.StringMap
+	LabelsMap() pdata.AttributeMap
 }
 
-func assertEqualDataPoints(t *testing.T, metricName string, expected, actual DataPoint) {
+func assertEqualDataPoints(t *testing.T, metricName string, expected, actual pdata.NumberDataPoint) {
 	// NOTE: cannot compare values due to different return types of Value()
 	// func for different metric types.
 	// assert.Equal(t, edp.Value(), adp.Value())
@@ -693,7 +669,7 @@ func assertEqualDataPoints(t *testing.T, metricName string, expected, actual Dat
 
 	// Expect that there are no labels added to data points because we don't
 	// copy over the telegraf tags to record level attributes.
-	assert.Equal(t, expected.LabelsMap().Len(), actual.LabelsMap().Len(),
+	assert.Equal(t, expected.Attributes().Len(), actual.Attributes().Len(),
 		"The amount of actual data point labels on %q metric is not as expected",
 		metricName,
 	)
@@ -733,32 +709,17 @@ func metricSliceContainsMetricWithField(ms pdata.MetricSlice, name string, field
 		m := ms.At(i)
 		if m.Name() == name {
 			switch m.DataType() {
-			case pdata.MetricDataTypeIntGauge:
-				mg := m.IntGauge()
-				dps := mg.DataPoints()
-				for i := 0; i < dps.Len(); i++ {
-					dp := dps.At(i)
-					l, ok := dp.LabelsMap().Get("field")
-					if !ok {
-						continue
-					}
-
-					if l == field {
-						return m, true
-					}
-				}
-
 			case pdata.MetricDataTypeGauge:
 				mg := m.Gauge()
 				dps := mg.DataPoints()
 				for i := 0; i < dps.Len(); i++ {
 					dp := dps.At(i)
-					l, ok := dp.LabelsMap().Get("field")
+					l, ok := dp.Attributes().Get("field")
 					if !ok {
 						continue
 					}
 
-					if l == field {
+					if l.StringVal() == field {
 						return m, true
 					}
 				}
@@ -773,27 +734,15 @@ func metricSliceContainsMetricWithField(ms pdata.MetricSlice, name string, field
 // data points' label maps.
 func getFieldsFromMetric(m pdata.Metric) map[string]struct{} {
 	switch m.DataType() {
-	case pdata.MetricDataTypeIntGauge:
-		ret := make(map[string]struct{})
-		for i := 0; i < m.IntGauge().DataPoints().Len(); i++ {
-			dp := m.IntGauge().DataPoints().At(i)
-			l, ok := dp.LabelsMap().Get("field")
-			if !ok {
-				continue
-			}
-			ret[l] = struct{}{}
-		}
-		return ret
-
 	case pdata.MetricDataTypeGauge:
 		ret := make(map[string]struct{})
 		for i := 0; i < m.Gauge().DataPoints().Len(); i++ {
 			dp := m.Gauge().DataPoints().At(i)
-			l, ok := dp.LabelsMap().Get("field")
+			l, ok := dp.Attributes().Get("field")
 			if !ok {
 				continue
 			}
-			ret[l] = struct{}{}
+			ret[l.StringVal()] = struct{}{}
 		}
 		return ret
 
@@ -804,39 +753,25 @@ func getFieldsFromMetric(m pdata.Metric) map[string]struct{} {
 
 // fieldFromMetric searches through pdata.Metric's data points to find
 // a particular field.
-func fieldFromMetric(m pdata.Metric, field string) (DataPointWithLabelsMap, bool) {
+func fieldFromMetric(m pdata.Metric, field string) (pdata.NumberDataPoint, bool) {
 	switch m.DataType() {
-	case pdata.MetricDataTypeIntGauge:
-		dps := m.IntGauge().DataPoints()
-		for i := 0; i < dps.Len(); i++ {
-			dp := dps.At(i)
-			l, ok := dp.LabelsMap().Get("field")
-			if !ok {
-				continue
-			}
-
-			if l == field {
-				return dp, true
-			}
-		}
-
 	case pdata.MetricDataTypeGauge:
 		dps := m.Gauge().DataPoints()
 		for i := 0; i < dps.Len(); i++ {
 			dp := dps.At(i)
-			l, ok := dp.LabelsMap().Get("field")
+			l, ok := dp.Attributes().Get("field")
 			if !ok {
 				continue
 			}
 
-			if l == field {
+			if l.StringVal() == field {
 				return dp, true
 			}
 		}
 
 	default:
-		return nil, false
+		return pdata.NumberDataPoint{}, false
 	}
 
-	return nil, false
+	return pdata.NumberDataPoint{}, false
 }

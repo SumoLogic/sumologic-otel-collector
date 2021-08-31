@@ -27,7 +27,6 @@ import (
 	"go.opentelemetry.io/collector/component/componenterror"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/model/pdata"
-	"go.opentelemetry.io/collector/translator/conventions"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor/config"
@@ -77,6 +76,8 @@ const (
 	probabilisticRuleVale         = "probabilistic"
 	filteredRuleValue             = "filtered"
 	AttributeSamplingRule         = "sampling.rule"
+
+	AttributeSamplingProbability = "sampling.probability"
 )
 
 // newTraceProcessor returns a processor.TraceProcessor that will perform Cascading Filter according to the given
@@ -332,11 +333,11 @@ func updateProbabilisticRateTag(traces pdata.Traces, probabilisticSpans int64, a
 			spans := ils.At(j).Spans()
 			for k := 0; k < spans.Len(); k++ {
 				attrs := spans.At(k).Attributes()
-				av, found := attrs.Get(conventions.AttributeSamplingProbability)
+				av, found := attrs.Get(AttributeSamplingProbability)
 				if found && av.Type() == pdata.AttributeValueTypeDouble {
 					av.SetDoubleVal(av.DoubleVal() * ratio)
 				} else {
-					attrs.UpsertDouble(conventions.AttributeSamplingProbability, ratio)
+					attrs.UpsertDouble(AttributeSamplingProbability, ratio)
 				}
 				attrs.UpsertString(AttributeSamplingRule, probabilisticRuleVale)
 			}

@@ -11,6 +11,9 @@ the container images stored in AWS Public ECR under the following repository:
   - [Upgrading standalone installation](#upgrading-standalone-installation)
 - [Container image](#container-image)
 - [Systemd service](#systemd-service)
+- [Ansible](#ansible)
+- [Puppet](#puppet)
+- [Chef](#chef)
 
 ## Standalone
 
@@ -161,7 +164,7 @@ To run opentelemetry collector as Systemd Service please apply following steps:
    /usr/local/bin/otelcol-sumo --version
    ```
 
-1. Create configuration file and save it as `/etc/otelcol-sumo/config.yml`.
+1. Create configuration file and save it as `/etc/otelcol-sumo/config.yaml`.
 
 1. Create `user` and `group` to run opentelemetry by:
 
@@ -172,7 +175,7 @@ To run opentelemetry collector as Systemd Service please apply following steps:
 1. Verify if opentelemetry collector runs without errors:
 
    ```bash
-   sudo su -s /bin/bash opentelemetry -c '/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yml'
+   sudo su -s /bin/bash opentelemetry -c '/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yaml'
    ```
 
 1. Create service file: `/etc/systemd/system/otelcol-sumo.service`:
@@ -182,7 +185,7 @@ To run opentelemetry collector as Systemd Service please apply following steps:
    Description=Sumologic Opentelemetry Collector
 
    [Service]
-   ExecStart=/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yml
+   ExecStart=/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yaml
    User=opentelemetry
    Group=opentelemetry
    MemoryHigh=200M
@@ -208,3 +211,18 @@ To run opentelemetry collector as Systemd Service please apply following steps:
    sudo systemctl status otelcol-sumo  # checks status
    sudo journalctl -u otelcol-sumo  # checks logs
    ```
+
+## Ansible
+
+Example installation of Sumo Logic Distro of OpenTelemetry Collector with Ansible is described in
+[examples/ansible](../examples/ansible/README.md).
+
+## Puppet
+
+Example installation of Sumo Logic Distro of OpenTelemetry Collector with Puppet is described in
+[examples/puppet](../examples/puppet/README.md).
+
+## Chef
+
+Example installation of Sumo Logic Distro of OpenTelemetry Collector with Chef is described in
+[examples/chef](../examples/chef/README.md).
