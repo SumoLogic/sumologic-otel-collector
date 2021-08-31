@@ -21,3 +21,8 @@ coverage.txt
 
 # Mac's .DS_Store
 .DS_Store
+
+# chef
+chef_guid
+local-mode-cache
+nodes
