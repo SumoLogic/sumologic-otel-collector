@@ -55,10 +55,9 @@ const (
 	registerUrl                   = "/api/v1/collector/register"
 	collectorCredentialsDirectory = ".sumologic-otel-collector/"
 
-	collectorIdField            = "collector_id"
-	collectorNameField          = "collector_name"
-	collectorCredentialIdField  = "collector_credential_id"
-	collectorCredentialKeyField = "collector_credential_key"
+	collectorIdField           = "collector_id"
+	collectorNameField         = "collector_name"
+	collectorCredentialIdField = "collector_credential_id"
 
 	banner = `
 **********************************************************************************************
@@ -317,7 +316,6 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 		zap.String(collectorIdField, resp.CollectorId),
 		zap.String(collectorNameField, resp.CollectorName),
 		zap.String(collectorCredentialIdField, resp.CollectorCredentialId),
-		zap.String(collectorCredentialKeyField, resp.CollectorCredentialKey),
 	)
 	return CollectorCredentials{
 		CollectorName: collectorName,
@@ -330,19 +328,27 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 func (se *SumologicExtension) registerCollectorWithBackoff(ctx context.Context, collectorName string) (CollectorCredentials, error) {
 	se.backOff.Reset()
 	for {
-		resp, err := se.registerCollector(ctx, collectorName)
+		creds, err := se.registerCollector(ctx, collectorName)
 		if err == nil {
-			return resp, nil
+			return creds, nil
 		}
 
-		se.logger.Warn("Collector registration failed: ", zap.Error(err))
+		se.logger.Warn("Collector registration failed", zap.Error(err))
 
 		nbo := se.backOff.NextBackOff()
 		// Return error if backoff reaches the limit or uncoverable error is spotted
 		if _, ok := err.(*backoff.PermanentError); nbo == se.backOff.Stop || ok {
-			return CollectorCredentials{}, fmt.Errorf("collector registration failed: %v", err)
+			return CollectorCredentials{}, fmt.Errorf("collector registration failed: %w", err)
 		}
-		time.Sleep(nbo)
+
+		t := time.NewTimer(nbo)
+		defer t.Stop()
+
+		select {
+		case <-t.C:
+		case <-ctx.Done():
+			return CollectorCredentials{}, fmt.Errorf("collector registration cancelled: %w", ctx.Err())
+		}
 	}
 }
 

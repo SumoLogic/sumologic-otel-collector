@@ -11,12 +11,12 @@ require (
 	github.com/onsi/ginkgo v1.14.1 // indirect
 	github.com/onsi/gomega v1.10.2 // indirect
 	github.com/stretchr/testify v1.7.0
-	go.opentelemetry.io/collector v0.31.0
-	go.uber.org/zap v1.18.1
+	go.opentelemetry.io/collector v0.33.0
+	go.uber.org/zap v1.19.0
 )
 
 replace github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter => ../../exporter/sumologicexporter
 
 replace github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension => ./
 
-replace go.opentelemetry.io/collector => github.com/SumoLogic/opentelemetry-collector v0.31.0-sumo-1
+replace go.opentelemetry.io/collector => github.com/SumoLogic/opentelemetry-collector v0.33.0-sumo-1

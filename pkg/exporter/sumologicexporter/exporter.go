@@ -138,9 +138,7 @@ func newLogsExporter(
 
 	return exporterhelper.NewLogsExporter(
 		cfg,
-		component.ExporterCreateSettings{
-			Logger: params.Logger,
-		},
+		params,
 		se.pushLogsData,
 		// Disable exporterhelper Timeout, since we are using a custom mechanism
 		// within exporter itself
@@ -163,9 +161,7 @@ func newMetricsExporter(
 
 	return exporterhelper.NewMetricsExporter(
 		cfg,
-		component.ExporterCreateSettings{
-			Logger: params.Logger,
-		},
+		params,
 		se.pushMetricsData,
 		// Disable exporterhelper Timeout, since we are using a custom mechanism
 		// within exporter itself
@@ -188,9 +184,7 @@ func newTracesExporter(
 
 	return exporterhelper.NewTracesExporter(
 		cfg,
-		component.ExporterCreateSettings{
-			Logger: params.Logger,
-		},
+		params,
 		se.pushTracesData,
 		// Disable exporterhelper Timeout, since we are using a custom mechanism
 		// within exporter itself

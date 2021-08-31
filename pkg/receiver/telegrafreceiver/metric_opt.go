@@ -45,24 +45,13 @@ func WithTime(t time.Time) MetricOpt {
 		}
 
 		switch m.DataType() {
-		case pdata.MetricDataTypeIntGauge:
-			handleIntDataPoints(
-				m.IntGauge().DataPoints(),
-				opts,
-			)
 		case pdata.MetricDataTypeGauge:
-			handleDoubleDataPoints(
+			handleDataPoints(
 				m.Gauge().DataPoints(),
 				opts,
 			)
-
-		case pdata.MetricDataTypeIntSum:
-			handleIntDataPoints(
-				m.IntSum().DataPoints(),
-				opts,
-			)
 		case pdata.MetricDataTypeSum:
-			handleDoubleDataPoints(
+			handleDataPoints(
 				m.Sum().DataPoints(),
 				opts,
 			)
@@ -79,31 +68,19 @@ func WithField(field string) MetricOpt {
 	}
 }
 
-type StringMapOpt func(pdata.StringMap)
+type AttributeMapOpt func(attributeMap pdata.AttributeMap)
 type TimeOpt func() time.Time
 
 type options struct {
-	stringMapOpts []StringMapOpt
+	stringMapOpts []AttributeMapOpt
 	timeopt       TimeOpt
 }
 
-func handleIntDataPoints(dps pdata.IntDataPointSlice, opts options) {
+func handleDataPoints(dps pdata.NumberDataPointSlice, opts options) {
 	for i := 0; i < dps.Len(); i++ {
 		dp := dps.At(i)
 		for _, opt := range opts.stringMapOpts {
-			opt(dp.LabelsMap())
-		}
-
-		if opts.timeopt != nil {
-			dp.SetTimestamp(pdata.Timestamp(opts.timeopt().UnixNano()))
-		}
-	}
-}
-func handleDoubleDataPoints(dps pdata.NumberDataPointSlice, opts options) {
-	for i := 0; i < dps.Len(); i++ {
-		dp := dps.At(i)
-		for _, opt := range opts.stringMapOpts {
-			opt(dp.LabelsMap())
+			opt(dp.Attributes())
 		}
 
 		if opts.timeopt != nil {
@@ -112,9 +89,9 @@ func handleDoubleDataPoints(dps pdata.NumberDataPointSlice, opts options) {
 	}
 }
 
-func insertTagToPdataStringMapOpt(tag *telegraf.Tag) func(pdata.StringMap) {
-	return func(sm pdata.StringMap) {
-		sm.Insert(tag.Key, tag.Value)
+func insertTagToPdataStringMapOpt(tag *telegraf.Tag) func(attributeMap pdata.AttributeMap) {
+	return func(sm pdata.AttributeMap) {
+		sm.InsertString(tag.Key, tag.Value)
 	}
 }
 
@@ -123,30 +100,20 @@ func insertTagToPdataStringMapOpt(tag *telegraf.Tag) func(pdata.StringMap) {
 func WithTag(tag *telegraf.Tag) MetricOpt {
 	return func(m pdata.Metric) {
 		opts := options{
-			stringMapOpts: []StringMapOpt{
+			stringMapOpts: []AttributeMapOpt{
 				insertTagToPdataStringMapOpt(tag),
 			},
 		}
 
 		switch m.DataType() {
-		case pdata.MetricDataTypeIntGauge:
-			handleIntDataPoints(
-				m.IntGauge().DataPoints(),
-				opts,
-			)
 		case pdata.MetricDataTypeGauge:
-			handleDoubleDataPoints(
+			handleDataPoints(
 				m.Gauge().DataPoints(),
 				opts,
 			)
 
-		case pdata.MetricDataTypeIntSum:
-			handleIntDataPoints(
-				m.IntSum().DataPoints(),
-				opts,
-			)
 		case pdata.MetricDataTypeSum:
-			handleDoubleDataPoints(
+			handleDataPoints(
 				m.Sum().DataPoints(),
 				opts,
 			)
@@ -154,10 +121,10 @@ func WithTag(tag *telegraf.Tag) MetricOpt {
 	}
 }
 
-func insertTagsToPdataStringMapOpt(tags []*telegraf.Tag) func(pdata.StringMap) {
-	return func(sm pdata.StringMap) {
+func insertTagsToPdataStringMapOpt(tags []*telegraf.Tag) func(attributeMap pdata.AttributeMap) {
+	return func(sm pdata.AttributeMap) {
 		for _, tag := range tags {
-			sm.Insert(tag.Key, tag.Value)
+			sm.InsertString(tag.Key, tag.Value)
 		}
 	}
 }
@@ -167,30 +134,19 @@ func insertTagsToPdataStringMapOpt(tags []*telegraf.Tag) func(pdata.StringMap) {
 func WithTags(tags []*telegraf.Tag) MetricOpt {
 	return func(m pdata.Metric) {
 		opts := options{
-			stringMapOpts: []StringMapOpt{
+			stringMapOpts: []AttributeMapOpt{
 				insertTagsToPdataStringMapOpt(tags),
 			},
 		}
 
 		switch m.DataType() {
-		case pdata.MetricDataTypeIntGauge:
-			handleIntDataPoints(
-				m.IntGauge().DataPoints(),
-				opts,
-			)
 		case pdata.MetricDataTypeGauge:
-			handleDoubleDataPoints(
+			handleDataPoints(
 				m.Gauge().DataPoints(),
 				opts,
 			)
-
-		case pdata.MetricDataTypeIntSum:
-			handleIntDataPoints(
-				m.IntSum().DataPoints(),
-				opts,
-			)
 		case pdata.MetricDataTypeSum:
-			handleDoubleDataPoints(
+			handleDataPoints(
 				m.Sum().DataPoints(),
 				opts,
 			)
