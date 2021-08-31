@@ -32,7 +32,7 @@ class install_otel_collector {
 
    file {"/etc/otelcol-sumo/config.yaml":
      source => "puppet:///modules/install_otel_collector/config.yaml",
-     mode => "644",
+     mode => "640",
    }
 
    group {"opentelemetry":
