@@ -9,7 +9,7 @@ import (
 )
 
 func TestEmptyRead(t *testing.T) {
-	cache := newMetricCache(createDefaultConfig().(*Config))
+	cache := newCache()
 
 	result := cache.List("a")
 
@@ -17,7 +17,7 @@ func TestEmptyRead(t *testing.T) {
 }
 
 func TestSingleRegister(t *testing.T) {
-	cache := newMetricCache(createDefaultConfig().(*Config))
+	cache := newCache()
 	cache.Register("a", newDataPoint(timestamp1, 0.0))
 
 	result := cache.List("a")
@@ -26,7 +26,7 @@ func TestSingleRegister(t *testing.T) {
 }
 
 func TestTwoRegistersOfSingleMetric(t *testing.T) {
-	cache := newMetricCache(createDefaultConfig().(*Config))
+	cache := newCache()
 	cache.Register("a", newDataPoint(timestamp1, 0.0))
 	cache.Register("a", newDataPoint(timestamp2, 1.0))
 
@@ -36,7 +36,7 @@ func TestTwoRegistersOfSingleMetric(t *testing.T) {
 }
 
 func TestTwoRegistersOnTwoMetrics(t *testing.T) {
-	cache := newMetricCache(createDefaultConfig().(*Config))
+	cache := newCache()
 	cache.Register("a", newDataPoint(timestamp1, 0.0))
 	cache.Register("b", newDataPoint(timestamp2, 1.0))
 
@@ -50,6 +50,10 @@ func TestTwoRegistersOnTwoMetrics(t *testing.T) {
 var emptyResult = make(map[pdata.Timestamp]float64)
 var timestamp1 = pdata.TimestampFromTime(time.Unix(0, 0))
 var timestamp2 = pdata.TimestampFromTime(time.Unix(1, 0))
+
+func newCache() *metricCache {
+	return newMetricCache(toCacheConfig(createDefaultConfig().(*Config)))
+}
 
 func newDataPoint(timestamp pdata.Timestamp, value float64) pdata.NumberDataPoint {
 	result := pdata.NewNumberDataPoint()

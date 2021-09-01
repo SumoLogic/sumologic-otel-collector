@@ -16,12 +16,12 @@ type DataPoint struct {
 // metricCache caches data points into two level mapping structure.
 // To easily list all data points of a given metric it keeps a separate cache for each incoming metric.
 type metricCache struct {
-	config *Config
+	config *cacheConfig
 
 	internalCaches map[string]*cache.Cache
 }
 
-func newMetricCache(config *Config) *metricCache {
+func newMetricCache(config *cacheConfig) *metricCache {
 	c := &metricCache{
 		config:         config,
 		internalCaches: make(map[string]*cache.Cache),
