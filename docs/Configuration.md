@@ -39,6 +39,7 @@
     - [Sumo Logic Exporter](#sumo-logic-exporter)
   - [Open Telemetry Upstream Exporters](#open-telemetry-upstream-exporters)
     - [Load Balancing Exporter](#load-balancing-exporter)
+    - [Logging Exporter](#logging-exporter)
 - [Command-line configuration options](#command-line-configuration-options)
 - [Proxy Support](#proxy-support)
 
@@ -918,6 +919,24 @@ exporters:
 For details, see the [Load Balancing Exporter documentation][loadbalancingexporter_docs].
 
 [loadbalancingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/loadbalancingexporter/README.md
+
+#### Logging Exporter
+
+Logging exporter exports data to the console.
+
+Example configuration:
+
+```yaml
+exporters:
+  logging:
+    loglevel: debug
+    sampling_initial: 5
+    sampling_thereafter: 200
+```
+
+For details, see the [Logging Exporter documentation][loggingexporter_docs].
+
+[loggingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/loggingexporter/README.md
 
 ## Command-line configuration options
 
