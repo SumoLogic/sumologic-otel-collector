@@ -44,6 +44,16 @@ jobs:
         run: |
           make markdown-links-lint
 
+  plugins-check:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: Install yq
+        run: |
+          wget https://github.com/mikefarah/yq/releases/download/v4.12.1/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
+      - name: Check plugins in README and builder config
+        run: ./ci/plugins_check.sh
+
   test:
     name: Test
     runs-on: ${{ matrix.runs_on }}
