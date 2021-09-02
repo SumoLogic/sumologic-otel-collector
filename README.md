@@ -108,8 +108,10 @@ OT distro.
 | Name                                                                     | Source                                                                                                        |
 |--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
 | `loadbalancingexporter` [configuration help][loadbalancingexporter_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/exporter/loadbalancingexporter |
+| `loggingexporter` [configuration help][loggingexporter_help]             | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.33.0/exporter/loggingexporter       |
 
 [loadbalancingexporter_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#load-balancing-exporter
+[loggingexporter_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#logging-exporter
 
 ### Extensions
 
