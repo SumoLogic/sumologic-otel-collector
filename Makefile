@@ -80,11 +80,18 @@ _build:
 		--tag $(IMG):$(TAG) \
 		.
 
-.PHONY: build-container
+.PHONY: build-container-local
 build-container-local:
 	$(MAKE) _build \
 		IMG="$(IMAGE_NAME)-local" \
 		DOCKERFILE="Dockerfile_local" \
+		TAG="$(BUILD_TAG)"
+
+.PHONY: build-container-dev
+build-container-dev:
+	$(MAKE) _build \
+		IMG="$(IMAGE_NAME)-dev" \
+		DOCKERFILE="Dockerfile_dev" \
 		TAG="$(BUILD_TAG)"
 
 #-------------------------------------------------------------------------------
