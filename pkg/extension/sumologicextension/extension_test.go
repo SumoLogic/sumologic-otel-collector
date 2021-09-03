@@ -732,6 +732,16 @@ func TestRegisterEmptyCollectorNameUnrecoverableError(t *testing.T) {
 				"collector didn't send correct Authorization header with registration request")
 
 			w.WriteHeader(http.StatusNotFound)
+			_, err := w.Write([]byte(`{
+				"id": "XXXXX-XXXXX-XXXXX",
+				"errors": [
+					{
+						"code": "collector-registration:dummy_error",
+						"message": "The collector cannot be registered"
+					}
+				]
+			}`))
+			require.NoError(t, err)
 		})
 	}())
 
