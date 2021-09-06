@@ -6,7 +6,7 @@ import (
 	"go.opentelemetry.io/collector/config"
 )
 
-// Config defines configuration for ProcessMetrics.
+// Config defines configuration for metricfrequencyprocessor.
 type Config struct {
 	*config.ProcessorSettings `mapstructure:"-"`
 
