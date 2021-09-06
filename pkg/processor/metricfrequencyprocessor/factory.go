@@ -37,16 +37,20 @@ func createDefaultConfig() config.Processor {
 	ps := config.NewProcessorSettings(id)
 
 	return &Config{
-		ProcessorSettings:              &ps,
-		MinPointAccumulationTime:       defaultMinPointAccumulationTime,
-		ConstantMetricsReportFrequency: defaultConstantMetricsReportFrequency,
-		LowInfoMetricsReportFrequency:  defaultLowInfoMetricsReportFrequency,
-		MaxReportFrequency:             defaultMaxReportFrequency,
-		IqrAnomalyCoef:                 defaultIqrAnomalyCoef,
-		VariationIqrThresholdCoef:      defaultVariationIqrThresholdCoef,
-		DataPointExpirationTime:        defaultDataPointExpirationTime,
-		DataPointCacheCleanupInterval:  defaultDataPointCacheCleanupInterval,
-		MetricCacheCleanupInterval:     defaultMetricCacheCleanupInterval,
+		&ps,
+		sieveConfig{
+			MinPointAccumulationTime:       defaultMinPointAccumulationTime,
+			ConstantMetricsReportFrequency: defaultConstantMetricsReportFrequency,
+			LowInfoMetricsReportFrequency:  defaultLowInfoMetricsReportFrequency,
+			MaxReportFrequency:             defaultMaxReportFrequency,
+			IqrAnomalyCoef:                 defaultIqrAnomalyCoef,
+			VariationIqrThresholdCoef:      defaultVariationIqrThresholdCoef,
+		},
+		cacheConfig{
+			DataPointExpirationTime:       defaultDataPointExpirationTime,
+			DataPointCacheCleanupInterval: defaultDataPointCacheCleanupInterval,
+			MetricCacheCleanupInterval:    defaultMetricCacheCleanupInterval,
+		},
 	}
 }
 

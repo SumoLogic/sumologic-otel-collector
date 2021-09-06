@@ -10,6 +10,11 @@ import (
 type Config struct {
 	*config.ProcessorSettings `mapstructure:"-"`
 
+	sieveConfig `mapstructure:"squash"`
+	cacheConfig `mapstructure:"squash"`
+}
+
+type sieveConfig struct {
 	// MinPointAccumulationTime defines warm up time for the processor.
 	// Processor will not sift data points for metrics
 	// which do not have data points in processor's cache older than MinPointAccumulationTime.
@@ -33,7 +38,9 @@ type Config struct {
 	// I.e. if current variation v of a metric satisfies v / Iqr > VariationIqrThresholdCoef
 	// then the metric is not considered low info.
 	VariationIqrThresholdCoef float64 `mapstructure:"variation_iqr_threshold_coefficient"`
+}
 
+type cacheConfig struct {
 	// DataPointExpirationTime defines how long a data point should be used for determining metric's category.
 	DataPointExpirationTime time.Duration `mapstructure:"data_point_expiration_time"`
 
@@ -42,15 +49,6 @@ type Config struct {
 
 	// MetricCacheCleanupInterval defines how often no longer seen metrics are removed from memory.
 	MetricCacheCleanupInterval time.Duration `mapstructure:"metric_cache_cleanup_interval"`
-}
-
-type sieveConfig struct {
-	MinPointAccumulationTime       time.Duration
-	ConstantMetricsReportFrequency time.Duration
-	LowInfoMetricsReportFrequency  time.Duration
-	MaxReportFrequency             time.Duration
-	IqrAnomalyCoef                 float64
-	VariationIqrThresholdCoef      float64
 }
 
 func toSieveConfig(config *Config) *sieveConfig {
@@ -62,12 +60,6 @@ func toSieveConfig(config *Config) *sieveConfig {
 		IqrAnomalyCoef:                 config.IqrAnomalyCoef,
 		VariationIqrThresholdCoef:      config.VariationIqrThresholdCoef,
 	}
-}
-
-type cacheConfig struct {
-	DataPointExpirationTime       time.Duration
-	DataPointCacheCleanupInterval time.Duration
-	MetricCacheCleanupInterval    time.Duration
 }
 
 func toCacheConfig(config *Config) *cacheConfig {
