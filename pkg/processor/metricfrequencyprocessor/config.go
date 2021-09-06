@@ -10,8 +10,8 @@ import (
 type Config struct {
 	*config.ProcessorSettings `mapstructure:"-"`
 
-	sieveConfig `mapstructure:"squash"`
-	cacheConfig `mapstructure:"squash"`
+	sieveConfig `mapstructure:",squash"`
+	cacheConfig `mapstructure:",squash"`
 }
 
 type sieveConfig struct {
@@ -27,7 +27,7 @@ type sieveConfig struct {
 	LowInfoMetricsReportFrequency time.Duration `mapstructure:"low_info_metrics_report_frequency"`
 
 	// MaxReportFrequency defines minimum time between reports of any metric.
-	MaxReportFrequency time.Duration `mapstructure:"max_report_frequency_seconds"`
+	MaxReportFrequency time.Duration `mapstructure:"max_report_frequency"`
 
 	// IqrAnomalyCoef defines relative deviation from interquartile range which constitutes an anomaly.
 	// I.e. value v such that v > Iqr * IqrAnomalyCoef is considered an anomaly.
