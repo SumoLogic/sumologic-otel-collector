@@ -53,10 +53,13 @@ func TestLoadConfig(t *testing.T) {
 		SourceCategory:            "%{namespace}/%{pod_name}/bar",
 		SourceCategoryPrefix:      "kubernetes/",
 		SourceCategoryReplaceDash: "/",
-		ExcludeContainerRegex:     "excluded_container_regex",
-		ExcludeHostRegex:          "excluded_host_regex",
-		ExcludeNamespaceRegex:     "excluded_namespace_regex",
-		ExcludePodRegex:           "excluded_pod_regex",
+		Exclude: map[string]string{
+			"container":     "excluded_container_regex",
+			"host":          "excluded_host_regex",
+			"namespace":     "excluded_namespace_regex",
+			"pod":           "excluded_pod_regex",
+			"_SYSTEMD_UNIT": "excluded_systemd_unit_regex",
+		},
 
 		AnnotationPrefix:   "pod_annotation_",
 		ContainerKey:       "container",
