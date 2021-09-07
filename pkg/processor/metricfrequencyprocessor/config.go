@@ -52,20 +52,9 @@ type cacheConfig struct {
 }
 
 func toSieveConfig(config *Config) *sieveConfig {
-	return &sieveConfig{
-		MinPointAccumulationTime:       config.MinPointAccumulationTime,
-		ConstantMetricsReportFrequency: config.ConstantMetricsReportFrequency,
-		LowInfoMetricsReportFrequency:  config.LowInfoMetricsReportFrequency,
-		MaxReportFrequency:             config.MaxReportFrequency,
-		IqrAnomalyCoef:                 config.IqrAnomalyCoef,
-		VariationIqrThresholdCoef:      config.VariationIqrThresholdCoef,
-	}
+	return &config.sieveConfig
 }
 
 func toCacheConfig(config *Config) *cacheConfig {
-	return &cacheConfig{
-		DataPointExpirationTime:       config.DataPointExpirationTime,
-		DataPointCacheCleanupInterval: config.DataPointCacheCleanupInterval,
-		MetricCacheCleanupInterval:    config.MetricCacheCleanupInterval,
-	}
+	return &config.cacheConfig
 }
