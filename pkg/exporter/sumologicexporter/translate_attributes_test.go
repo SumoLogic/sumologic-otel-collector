@@ -52,9 +52,9 @@ func TestTranslateAttributes(t *testing.T) {
 	assertAttribute(t, attributes, "host.type", "")
 	assertAttribute(t, attributes, "Cluster", "testing-cluster")
 	assertAttribute(t, attributes, "k8s.cluster.name", "")
-	assertAttribute(t, attributes, "Deployment", "my-deployment-name")
+	assertAttribute(t, attributes, "deployment", "my-deployment-name")
 	assertAttribute(t, attributes, "k8s.deployment.name", "")
-	assertAttribute(t, attributes, "Namespace", "my-namespace-name")
+	assertAttribute(t, attributes, "namespace", "my-namespace-name")
 	assertAttribute(t, attributes, "k8s.namespace.name", "")
 }
 
