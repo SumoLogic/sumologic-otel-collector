@@ -1,12 +1,13 @@
 # Kubernetes Processor
 
-The `k8sprocessor` allow automatic tagging of spans with k8s metadata.
+The `k8sprocessor` automatically tags logs, metrics and traces with Kubernetes metadata
+like pod name, namespace name etc.
 
-It automatically discovers k8s resources (pods), extracts metadata from them and adds theextracted
-metadata to the relevant spans. The processor use the kubernetes API to discover all pods running
-in a cluster, keeps a record of their IP addresses and interesting metadata. Upon receiving spans,
-the processor tries to identify the source IP address of the service that sent the spans and matches
-it with the in memory data. If a match is found, the cached metadata is added to the spans as attributes.
+It automatically discovers k8s resources (pods), extracts metadata from them and adds the extracted
+metadata to the records. The processor uses the Kubernetes API to discover all pods running
+in a cluster, keeps a record of their IP addresses and interesting metadata. Upon receiving records,
+the processor tries to identify the pod that sent the record and matches
+it with the in-memory data. If a match is found, the cached metadata is added to the record as attributes.
 
 ## Config
 
@@ -14,7 +15,7 @@ There are several top level sections of the processor config:
 
 - `passthrough` (default = false): when set to true, only annotates resources with the pod IP and
 does not try to extract any other metadata. It does not need access to the K8S cluster API.
-Agent/Collector must receive spans directly from services to be able to correctly detect the pod IPs.
+Agent/Collector must receive records directly from services to be able to correctly detect the pod IPs.
 - `owner_lookup_enabled` (default = false): when set to true, fields such as `daemonSetName`,
 `replicaSetName`, `service`, etc. can be extracted, though it requires fetching additional data to traverse
 the `owner` relationship.  See the [list of fields](#extract-section) for more information over
@@ -64,7 +65,7 @@ Also, see [example config](#example-config).
   - `statefulSetName`: `k8s.statefulset.name`
   - `startTime`      : `k8s.pod.startTime`
 
-When custom value is specified, specified fields use provided names when being tagged, e.g.:
+When a custom value is specified, specified fields use provided names when being tagged, e.g.:
 
 ```yaml
 tags:
@@ -83,14 +84,14 @@ See [field extract config](#field-extract-config) for an example on how to use i
 
 Allows specifying an extraction rule to extract a value from exactly one field.
 
-The field accepts a list of maps accepting three keys: `tag-name`, `key` and `regex`
+The field accepts a list of maps accepting three keys: `tag_name`, `key` and `regex`
 
-- `tag-name`: represents the name of the tag that will be added to the span.  When not specified
-a default tag name will be used of the format: `k8s.<annotation>.<annotation key>` For example, if
-`tag-name` is not specified and the key is `git_sha`, then the span name will be `k8s.annotation.deployment.git_sha`
+- `tag_name`: represents the name of the tag that will be added to the record.  When not specified
+a default tag name will be used of the format: `k8s.annotations.<annotation key>`. For example, if
+`tag_name` is not specified and the key is `git_sha`, then the record name will be `k8s.annotations.git_sha`
 
 - `key`: represents the annotation name. This must exactly match an annotation name. To capture
-all keys, `*` can be used
+all keys, `"*"` can be used
 
 - `regex`: is an optional field used to extract a sub-string from a complex field value.
 The supplied regular expression must contain one named parameter with the string "value"
@@ -100,26 +101,28 @@ and you'd like to extract the GIT_SHA and the CI_BUILD values as tags, then you 
 the following two extraction rules:
 
   ```yaml
-  procesors:
-    k8s-tagger:
-      annotations:
-        - tag_name: git.sha
-          key: kubernetes.io/change-cause
-          regex: GIT_SHA=(?P<value>\w+)
-        - tag_name: ci.build
-          key: kubernetes.io/change-cause
-          regex: JENKINS=(?P<value>[\w]+)
+  processors:
+    k8s_tagger:
+      extract:
+        annotations:
+          - tag_name: git.sha
+            key: kubernetes.io/change-cause
+            regex: GIT_SHA=(?P<value>\w+)
+          - tag_name: ci.build
+            key: kubernetes.io/change-cause
+            regex: CI_BUILD=(?P<value>[\w]+)
   ```
 
-  this will add the `git.sha` and `ci.build` tags to the spans. It is also possible to generically fetch
+  this will add the `git.sha` and `ci.build` tags to the records. It is also possible to generically fetch
   all keys and fill them into a template. To substitute the original name, use `%s`. For example:
 
   ```yaml
-  procesors:
-    k8s-tagger:
-      annotations:
-        - tag_name: k8s.annotation/%s
-          key: *
+  processors:
+    k8s_tagger:
+      extract:
+        annotations:
+          - tag_name: k8s.annotation/%s
+            key: "*"
   ```
 
 ### Filter section
@@ -238,8 +241,8 @@ The processor supports running both in agent and collector mode.
 
 ### As an agent
 
-When running as an agent, the processor detects IP addresses of pods sending spans to the agent and uses this
-information to extract metadata from pods and add to spans. When running as an agent, it is important to apply
+When running as an agent, the processor detects IP addresses of pods sending records to the agent and uses this
+information to extract metadata from pods and add to records. When running as an agent, it is important to apply
 a discovery filter so that the processor only discovers pods from the same host that it is running on. Not using
 such a filter can result in unnecessary resource usage especially on very large clusters. Once the fitler is applied,
 each processor will only query the k8s API for pods running on it's own node.
@@ -281,10 +284,10 @@ Add the following snippet under the pod env section of the OpenTelemetry contain
 The processor can be deployed both as an agent or as a collector.
 
 When running as a collector, the processor cannot correctly detect the IP address of the pods generating
-the spans when it receives the spans from an agent instead of receiving them directly from the pods. To
+the records when it receives the records from an agent instead of receiving them directly from the pods. To
 workaround this issue, agents deployed with the k8s_tagger processor can be configured to detect
-the IP addresses and forward them along with the span resources. Collector can then match this IP address
-with k8s pods and enrich the spans with the metadata. In order to set this up, you'll need to complete the
+the IP addresses and forward them along with the record resources. Collector can then match this IP address
+with k8s pods and enrich the records with the metadata. In order to set this up, you'll need to complete the
 following steps:
 
 1. Setup agents in passthrough mode
@@ -297,13 +300,13 @@ following steps:
       passthrough: true
     ```
 
-    This will ensure that the agents detect the IP address as add it as an attribute to all span resources.
+    This will ensure that the agents detect the IP address as add it as an attribute to all records.
     Agents will not make any k8s API calls, do any discovery of pods or extract any metadata.
 
 1. Configure the collector as usual
 
     No special configuration changes are needed to be made on the collector. It'll automatically detect
-    the IP address of spans sent by the agents as well as directly by other services/pods.
+    the IP address of records sent by the agents as well as directly by other services/pods.
 
 ## Caveats
 
@@ -312,7 +315,7 @@ There are some edge-cases and scenarios where k8s_tagger will not work properly.
 ### Host networking mode
 
 The processor cannot correct identify pods running in the host network mode and
-enriching spans generated by such pods is not supported at the moment.
+enriching records generated by such pods is not supported at the moment.
 
 ### As a sidecar
 
