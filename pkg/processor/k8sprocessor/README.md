@@ -1,101 +1,104 @@
-## <a name="k8sprocessor"></a>Kubernetes Processor
- 
+# Kubernetes Processor
+
 The `k8sprocessor` allow automatic tagging of spans with k8s metadata.
 
-It automatically discovers k8s resources (pods), extracts metadata from them and adds theextracted 
-metadata to the relevant spans. The processor use the kubernetes API to discover all pods running 
+It automatically discovers k8s resources (pods), extracts metadata from them and adds theextracted
+metadata to the relevant spans. The processor use the kubernetes API to discover all pods running
 in a cluster, keeps a record of their IP addresses and interesting metadata. Upon receiving spans,
 the processor tries to identify the source IP address of the service that sent the spans and matches
 it with the in memory data. If a match is found, the cached metadata is added to the spans as attributes.
 
-### Config
+## Config
 
 There are several top level sections of the processor config:
 
 - `passthrough` (default = false): when set to true, only annotates resources with the pod IP and
-does not try to extract any other metadata. It does not need access to the K8S cluster API. 
+does not try to extract any other metadata. It does not need access to the K8S cluster API.
 Agent/Collector must receive spans directly from services to be able to correctly detect the pod IPs.
-- `owner_lookup_enabled` (default = false): when set to true, fields such as `daemonSetName`, 
-`replicaSetName`, `service`, etc. can be extracted, though it requires fetching additional data to traverse 
-the `owner` relationship.  See the [list of fields](#k8sprocessor-extract) for more information over 
-which tags require the flag to be enabled. 
-- `extract`: the section (see [below](#k8sprocessor-extract)) allows specifying extraction rules
-- `filter`: the section (see [below](#k8sprocessor-filter)) allows specifying filters when matching pods
+- `owner_lookup_enabled` (default = false): when set to true, fields such as `daemonSetName`,
+`replicaSetName`, `service`, etc. can be extracted, though it requires fetching additional data to traverse
+the `owner` relationship.  See the [list of fields](#extract-section) for more information over
+which tags require the flag to be enabled.
+- `extract`: the section (see [below](#extract-section)) allows specifying extraction rules
+- `filter`: the section (see [below](#filter-section)) allows specifying filters when matching pods
 
-#### <a name="k8sprocessor-extract"></a>Extract section
+### Extract section
 
 Allows specifying extraction rules to extract data from k8s pod specs.
 
 - `metadata` (default = empty): specifies a list of strings that denote extracted fields. Following fields
 can be extracted:
-    - `containerId`
-    - `containerName`
-    - `containerImage`
-    - `clusterName`
-    - `daemonSetName` _(`owner_lookup_enabled` must be set to `true`)_
-    - `deploymentName`
-    - `hostName`
-    - `namespace`
-    - `nodeName`
-    - `podId`
-    - `podName`
-    - `replicaSetName` _(`owner_lookup_enabled` must be set to `true`)_
-    - `serviceName` _(`owner_lookup_enabled` must be set to `true`)_ - in case more than one service is assigned 
-    to the pod, they are comma-separated
-    - `startTime`
-    - `statefulSetName` _(`owner_lookup_enabled` must be set to `true`)_
-      
-    Also, see [example config](#k8sprocessor-example). 
+  - `containerId`
+  - `containerName`
+  - `containerImage`
+  - `clusterName`
+  - `daemonSetName` _(`owner_lookup_enabled` must be set to `true`)_
+  - `deploymentName`
+  - `hostName`
+  - `namespace`
+  - `nodeName`
+  - `podId`
+  - `podName`
+  - `replicaSetName` _(`owner_lookup_enabled` must be set to `true`)_
+  - `serviceName` _(`owner_lookup_enabled` must be set to `true`)_ - in case more than one service is assigned
+  to the pod, they are comma-separated
+  - `startTime`
+  - `statefulSetName` _(`owner_lookup_enabled` must be set to `true`)_
+
+Also, see [example config](#example-config).
+
 - `tags`: specifies an optional map of custom tag names to be used. By default, following names are being assigned:
-	- `clusterName    `: `k8s.cluster.name`
-	- `containerID    `: `k8s.container.id`
-	- `containerImage `: `k8s.container.image`
-	- `containerName  `: `k8s.container.name`
-	- `daemonSetName  `: `k8s.daemonset.name`
-	- `deploymentName `: `k8s.deployment.name`
-	- `hostName       `: `k8s.pod.hostname`
-	- `namespaceName  `: `k8s.namespace.name`
-	- `nodeName       `: `k8s.node.name`
-	- `podID          `: `k8s.pod.id`
-	- `podName        `: `k8s.pod.name`
-	- `replicaSetName `: `k8s.replicaset.name`
-	- `serviceName    `: `k8s.service.name`
-	- `statefulSetName`: `k8s.statefulset.name`
-	- `startTime      `: `k8s.pod.startTime`
+  - `clusterName`    : `k8s.cluster.name`
+  - `containerID`    : `k8s.container.id`
+  - `containerImage` : `k8s.container.image`
+  - `containerName`  : `k8s.container.name`
+  - `daemonSetName`  : `k8s.daemonset.name`
+  - `deploymentName` : `k8s.deployment.name`
+  - `hostName`       : `k8s.pod.hostname`
+  - `namespaceName`  : `k8s.namespace.name`
+  - `nodeName`       : `k8s.node.name`
+  - `podID`          : `k8s.pod.id`
+  - `podName`        : `k8s.pod.name`
+  - `replicaSetName` : `k8s.replicaset.name`
+  - `serviceName`    : `k8s.service.name`
+  - `statefulSetName`: `k8s.statefulset.name`
+  - `startTime`      : `k8s.pod.startTime`
 
-    When custom value is specified, specified fields use provided names when being tagged, e.g.:
-    ```yaml
-    tags:
-      containerId: my-custom-tag-for-container-id
-      nodeName: node_name
-    ```
- - `annotations` (default = empty): a list of rules for extraction and recording annotation data.
-See [field extract config](#k8sprocessor-field-extract) for an example on how to use it.
+When custom value is specified, specified fields use provided names when being tagged, e.g.:
+
+```yaml
+tags:
+  containerId: my-custom-tag-for-container-id
+  nodeName: node_name
+```
+
+- `annotations` (default = empty): a list of rules for extraction and recording annotation data.
+See [field extract config](#field-extract-config) for an example on how to use it.
 - `labels` (default = empty): a list of rules for extraction and recording label data.
-See [field extract config](#k8sprocessor-field-extract) for an example on how to use it.
+See [field extract config](#field-extract-config) for an example on how to use it.
 - `namespace_labels` (default = empty): a list of rules for extraction and recording namespace label data.
-See [field extract config](#k8sprocessor-field-extract) for an example on how to use it.
+See [field extract config](#field-extract-config) for an example on how to use it.
 
-#### <a name="k8sprocessor-field-extract"></a> Field Extract Config
+### Field Extract Config
 
 Allows specifying an extraction rule to extract a value from exactly one field.
 
 The field accepts a list of maps accepting three keys: `tag-name`, `key` and `regex`
 
-- `tag-name`: represents the name of the tag that will be added to the span.  When not specified 
-a default tag name will be used of the format: `k8s.<annotation>.<annotation key>` For example, if 
+- `tag-name`: represents the name of the tag that will be added to the span.  When not specified
+a default tag name will be used of the format: `k8s.<annotation>.<annotation key>` For example, if
 `tag-name` is not specified and the key is `git_sha`, then the span name will be `k8s.annotation.deployment.git_sha`
 
-- `key`: represents the annotation name. This must exactly match an annotation name. To capture 
+- `key`: represents the annotation name. This must exactly match an annotation name. To capture
 all keys, `*` can be used
 
 - `regex`: is an optional field used to extract a sub-string from a complex field value.
 The supplied regular expression must contain one named parameter with the string "value"
 as the name. For example, if your pod spec contains the following annotation,
 `kubernetes.io/change-cause: 2019-08-28T18:34:33Z APP_NAME=my-app GIT_SHA=58a1e39 CI_BUILD=4120`
-and you'd like to extract the GIT_SHA and the CI_BUILD values as tags, then you must specify 
+and you'd like to extract the GIT_SHA and the CI_BUILD values as tags, then you must specify
 the following two extraction rules:
-  
+
   ```yaml
   procesors:
     k8s-tagger:
@@ -108,7 +111,7 @@ the following two extraction rules:
           regex: JENKINS=(?P<value>[\w]+)
   ```
 
-  this will add the `git.sha` and `ci.build` tags to the spans. It is also possible to generically fetch 
+  this will add the `git.sha` and `ci.build` tags to the spans. It is also possible to generically fetch
   all keys and fill them into a template. To substitute the original name, use `%s`. For example:
 
   ```yaml
@@ -118,19 +121,19 @@ the following two extraction rules:
         - tag_name: k8s.annotation/%s
           key: *
   ```
-          
-#### <a name="k8sprocessor-filter"></a>Filter section
+
+### Filter section
 
 FilterConfig section allows specifying filters to filter pods by labels, fields, namespaces, nodes, etc.
 
-- `node` (default = ""): represents a k8s node or host. If specified, any pods not running on the specified 
+- `node` (default = ""): represents a k8s node or host. If specified, any pods not running on the specified
 node will be ignored by the tagger.
-- `node_from_env_var` (default = ""): can be used to extract the node name from an environment variable. 
-The value must be the name of the environment variable. This is useful when the node a Otel agent will 
-run on cannot be predicted. In such cases, the Kubernetes downward API can be used to add the node name 
+- `node_from_env_var` (default = ""): can be used to extract the node name from an environment variable.
+The value must be the name of the environment variable. This is useful when the node a Otel agent will
+run on cannot be predicted. In such cases, the Kubernetes downward API can be used to add the node name
 to each pod as an environment variable. K8s tagger can then read this value and filter pods by it.
 For example, node name can be passed to each agent with the downward API as follows
- 
+
     ```yaml
      env:
        - name: K8S_NODE_NAME
@@ -139,34 +142,34 @@ For example, node name can be passed to each agent with the downward API as foll
                  fieldPath: spec.nodeName
     ```
 
-  Then the NodeFromEnv field can be set to `K8S_NODE_NAME` to filter all pods by the node that the agent 
-  is running on. More on downward API here: 
+  Then the NodeFromEnv field can be set to `K8S_NODE_NAME` to filter all pods by the node that the agent
+  is running on. More on downward API here:
   https://kubernetes.io/docs/tasks/inject-data-application/downward-api-volume-expose-pod-information/
 - `namespace` (default = ""): filters all pods by the provided namespace. All other pods are ignored.
-- `fields` (default = empty): a list of maps accepting three keys: `key`, `value`, `op`. Allows to filter 
+- `fields` (default = empty): a list of maps accepting three keys: `key`, `value`, `op`. Allows to filter
 pods by generic k8s fields. Only the following operations (`op`) are supported: `equals`, `not-equals`.
 For example, to match pods having `key1=value1` and `key2<>value2` condition met for fields, one can specify:
- 
+
     ```yaml
-      fields: 
+      fields:
        - key: key1 # `op` defaults to "equals" when not specified
          value: value1
-       - key: key2 
+       - key: key2
          value: value2
          op: not-equals
     ```
 
-- `labels` (default = empty): a list of maps accepting three keys: `key`, `value`, `op`. Allows to filter 
-pods by generic k8s pod labels. Only the following operations (`op`) are supported: `equals`, `not-equals`, 
+- `labels` (default = empty): a list of maps accepting three keys: `key`, `value`, `op`. Allows to filter
+pods by generic k8s pod labels. Only the following operations (`op`) are supported: `equals`, `not-equals`,
 `exists`, `not-exists`. For example, to match pods where `label1` exists, one can specify
 
     ```yaml
-      fields: 
+      fields:
        - key: label1
          op: exists
-    ``` 
+    ```
 
-#### <a name="k8sprocessor-example"></a>Example config:
+### Example config
 
 ```yaml
 processors:
@@ -192,7 +195,7 @@ processors:
         - startTime
         - statefulSetName
       tags:
-        # It is possible to provide your custom key names for each of the extracted metadata fields, 
+        # It is possible to provide your custom key names for each of the extracted metadata fields,
         # e.g. to store podName as "pod_name" rather than the default "k8s.pod.name", use following:
         podName: pod_name
 
@@ -225,15 +228,15 @@ processors:
          op: not-equals
 ```
 
-### RBAC
+## RBAC
 
 TODO: mention the required RBAC rules.
 
-### Deployment scenarios
+## Deployment scenarios
 
 The processor supports running both in agent and collector mode.
 
-#### As an agent
+### As an agent
 
 When running as an agent, the processor detects IP addresses of pods sending spans to the agent and uses this
 information to extract metadata from pods and add to spans. When running as an agent, it is important to apply
@@ -254,9 +257,9 @@ Add the following snippet under the pod env section of the OpenTelemetry contain
        env:
        - name: KUBE_NODE_NAME
          valueFrom:
-     	  fieldRef:
- 	        apiVersion: v1
- 	        fieldPath: spec.nodeName
+          fieldRef:
+          apiVersion: v1
+          fieldPath: spec.nodeName
     ```
 
     This will inject a new environment variable to the OpenTelemetry container with the value as the
@@ -273,7 +276,7 @@ Add the following snippet under the pod env section of the OpenTelemetry contain
     This will restrict each OpenTelemetry agent to query pods running on the same node only dramatically reducing
     resource requirements for very large clusters.
 
-#### As a collector
+### As a collector
 
 The processor can be deployed both as an agent or as a collector.
 
@@ -285,32 +288,33 @@ with k8s pods and enrich the spans with the metadata. In order to set this up, y
 following steps:
 
 1. Setup agents in passthrough mode
-Configure the agents' k8s_tagger processors to run in passthrough mode.
+
+    Configure the agents' k8s_tagger processors to run in passthrough mode.
 
     ```yaml
-       # k8s_tagger config for agent
-       k8s_tagger:
-         passthrough: true
+    # k8s_tagger config for agent
+    k8s_tagger:
+      passthrough: true
     ```
+
     This will ensure that the agents detect the IP address as add it as an attribute to all span resources.
     Agents will not make any k8s API calls, do any discovery of pods or extract any metadata.
 
-2. Configure the collector as usual
-No special configuration changes are needed to be made on the collector. It'll automatically detect
-the IP address of spans sent by the agents as well as directly by other services/pods.
+1. Configure the collector as usual
 
+    No special configuration changes are needed to be made on the collector. It'll automatically detect
+    the IP address of spans sent by the agents as well as directly by other services/pods.
 
-### Caveats
+## Caveats
 
 There are some edge-cases and scenarios where k8s_tagger will not work properly.
 
-
-#### Host networking mode
+### Host networking mode
 
 The processor cannot correct identify pods running in the host network mode and
 enriching spans generated by such pods is not supported at the moment.
 
-#### As a sidecar
+### As a sidecar
 
 The processor does not support detecting containers from the same pods when running
 as a sidecar. While this can be done, we think it is simpler to just use the kubernetes
