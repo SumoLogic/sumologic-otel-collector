@@ -192,28 +192,81 @@ func TestTraceSourceProcessorEmpty(t *testing.T) {
 }
 
 func TestTraceSourceFilteringOutByRegex(t *testing.T) {
-	cfg1 := createConfig()
-	cfg1.ExcludePodRegex = ".*"
+	testcases := []struct {
+		name string
+		cfg  *Config
+		want pdata.Traces
+	}{
+		{
+			name: "pod exclude regex",
+			cfg: func() *Config {
+				cfg := createConfig()
+				cfg.Exclude = map[string]string{
+					"pod": ".*",
+				}
+				return cfg
+			}(),
+			want: func() pdata.Traces {
+				want := newTraceDataWithSpans(mergedK8sLabelsWithMeta, k8sLabels)
+				want.ResourceSpans().At(0).InstrumentationLibrarySpans().
+					RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
+				return want
+			}(),
+		},
+		{
+			name: "container exclude regex",
+			cfg: func() *Config {
+				cfg := createConfig()
+				cfg.Exclude = map[string]string{
+					"container": ".*",
+				}
+				return cfg
+			}(),
+			want: func() pdata.Traces {
+				want := newTraceDataWithSpans(mergedK8sLabelsWithMeta, k8sLabels)
+				want.ResourceSpans().At(0).InstrumentationLibrarySpans().
+					RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
+				return want
+			}(),
+		},
+		{
+			name: "namespace exclude regex",
+			cfg: func() *Config {
+				cfg := createConfig()
+				cfg.Exclude = map[string]string{
+					"namespace": ".*",
+				}
+				return cfg
+			}(),
+			want: func() pdata.Traces {
+				want := newTraceDataWithSpans(mergedK8sLabelsWithMeta, k8sLabels)
+				want.ResourceSpans().At(0).InstrumentationLibrarySpans().
+					RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
+				return want
+			}(),
+		},
+		{
+			name: "no exclude regex",
+			cfg: func() *Config {
+				return createConfig()
+			}(),
+			want: func() pdata.Traces {
+				return newTraceDataWithSpans(mergedK8sLabelsWithMeta, k8sLabels)
+			}(),
+		},
+	}
 
-	cfg2 := createConfig()
-	cfg2.ExcludeContainerRegex = ".*"
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			test := newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
 
-	cfg3 := createConfig()
-	cfg3.ExcludeNamespaceRegex = ".*"
+			rtp := newSourceProcessor(tc.cfg)
 
-	for _, config := range []*Config{cfg1, cfg2, cfg3} {
-		test := newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
+			td, err := rtp.ProcessTraces(context.Background(), test)
+			assert.NoError(t, err)
 
-		want := newTraceDataWithSpans(mergedK8sLabelsWithMeta, k8sLabels)
-		want.ResourceSpans().At(0).InstrumentationLibrarySpans().
-			RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
-
-		rtp := newSourceProcessor(config)
-
-		td, err := rtp.ProcessTraces(context.Background(), test)
-		assert.NoError(t, err)
-
-		assertTracesEqual(t, td, want)
+			assertTracesEqual(t, td, tc.want)
+		})
 	}
 }
 
@@ -242,7 +295,9 @@ func TestTraceSourceIncludePrecedence(t *testing.T) {
 	want.ResourceSpans().At(0).Resource().Attributes().UpsertString("pod_annotation_sumologic.com/include", "true")
 
 	cfg1 := createConfig()
-	cfg1.ExcludePodRegex = ".*"
+	cfg1.Exclude = map[string]string{
+		"pod": ".*",
+	}
 	rtp := newSourceProcessor(cfg)
 
 	td, err := rtp.ProcessTraces(context.Background(), test)
