@@ -60,9 +60,10 @@ const (
 	collectorCredentialIdField = "collector_credential_id"
 
 	banner = `
-**********************************************************************************************
-*** This software is currently in beta and is not recommended for production environments. ***
-**********************************************************************************************
+************************************************************************************************************
+***    This software is currently in beta and is not recommended for production environments.            ***
+***    To participate in this beta, please contact your Sumo Logic account team or Sumo Logic Support.   ***
+************************************************************************************************************
 `
 )
 
