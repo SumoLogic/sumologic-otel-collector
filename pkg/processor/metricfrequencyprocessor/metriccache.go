@@ -8,12 +8,6 @@ import (
 	"go.opentelemetry.io/collector/model/pdata"
 )
 
-const (
-	dataPointExpiration           = time.Hour * 1
-	dataPointCacheCleanupInterval = time.Minute * 10
-	metricCacheCleanupInterval    = time.Hour * 3
-)
-
 type DataPoint struct {
 	Timestamp pdata.Timestamp
 	Value     float64
@@ -22,16 +16,19 @@ type DataPoint struct {
 // metricCache caches data points into two level mapping structure.
 // To easily list all data points of a given metric it keeps a separate cache for each incoming metric.
 type metricCache struct {
+	config cacheConfig
+
 	internalCaches map[string]*cache.Cache
 }
 
-func newMetricCache() *metricCache {
+func newMetricCache(config cacheConfig) *metricCache {
 	c := &metricCache{
+		config:         config,
 		internalCaches: make(map[string]*cache.Cache),
 	}
 
 	go func(c *metricCache) {
-		t := time.NewTicker(metricCacheCleanupInterval)
+		t := time.NewTicker(c.config.MetricCacheCleanupInterval)
 		defer t.Stop()
 		for range t.C {
 			c.Cleanup()
@@ -45,13 +42,13 @@ func (mc *metricCache) Register(name string, dataPoint pdata.NumberDataPoint) {
 
 	internalCache, exists := mc.internalCaches[name]
 	if !exists {
-		newCache := newCache()
+		newCache := mc.newCache()
 		mc.internalCaches[name] = newCache
 		internalCache = newCache
 	}
 
 	key := dataPoint.Timestamp().String()
-	value := &DataPoint{Timestamp: dataPoint.Timestamp(), Value: dataPoint.Value()}
+	value := &DataPoint{Timestamp: dataPoint.Timestamp(), Value: getVal(dataPoint)}
 	internalCache.Set(key, value, cache.DefaultExpiration)
 }
 
@@ -79,6 +76,6 @@ func (mc *metricCache) Cleanup() {
 	}
 }
 
-func newCache() *cache.Cache {
-	return cache.New(dataPointExpiration, dataPointCacheCleanupInterval)
+func (mc *metricCache) newCache() *cache.Cache {
+	return cache.New(mc.config.DataPointExpirationTime, mc.config.DataPointCacheCleanupInterval)
 }
