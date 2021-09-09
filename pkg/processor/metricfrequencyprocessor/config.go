@@ -50,11 +50,3 @@ type cacheConfig struct {
 	// MetricCacheCleanupInterval defines how often no longer seen metrics are removed from memory.
 	MetricCacheCleanupInterval time.Duration `mapstructure:"metric_cache_cleanup_interval"`
 }
-
-func toSieveConfig(config *Config) *sieveConfig {
-	return &config.sieveConfig
-}
-
-func toCacheConfig(config *Config) *cacheConfig {
-	return &config.cacheConfig
-}

@@ -52,7 +52,7 @@ var timestamp1 = pdata.TimestampFromTime(time.Unix(0, 0))
 var timestamp2 = pdata.TimestampFromTime(time.Unix(1, 0))
 
 func newCache() *metricCache {
-	return newMetricCache(toCacheConfig(createDefaultConfig().(*Config)))
+	return newMetricCache(createDefaultConfig().(*Config).cacheConfig)
 }
 
 func newDataPoint(timestamp pdata.Timestamp, value float64) pdata.NumberDataPoint {

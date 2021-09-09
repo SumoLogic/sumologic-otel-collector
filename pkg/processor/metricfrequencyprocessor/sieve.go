@@ -24,7 +24,7 @@ type metricSieve interface {
 // 2) Low info metrics - i.e. no anomaly in terms of iqr and low variation
 // 3) All other metrics
 type defaultMetricSieve struct {
-	config *sieveConfig
+	config sieveConfig
 
 	metricCache  *metricCache
 	lastReported map[string]pdata.Timestamp
@@ -34,9 +34,9 @@ var _ metricSieve = (*defaultMetricSieve)(nil)
 
 func newMetricSieve(config *Config) *defaultMetricSieve {
 	return &defaultMetricSieve{
-		metricCache:  newMetricCache(toCacheConfig(config)),
+		metricCache:  newMetricCache(config.cacheConfig),
 		lastReported: make(map[string]pdata.Timestamp),
-		config:       toSieveConfig(config),
+		config:       config.sieveConfig,
 	}
 }
 
