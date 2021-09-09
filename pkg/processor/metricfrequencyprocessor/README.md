@@ -1,4 +1,4 @@
-## <a name="metricfrequencyprocessor"></a>Metric Frequency Processor
+## Metric Frequency Processor
 
 The `metricfrequencyprocessor` is a metrics processor that helps reduce DPM by automatic tuning of metrics reporting
 frequency which adjusts for metric's information volume.
@@ -21,12 +21,12 @@ category's frequency.
 - `low_info_metrics_report_frequency` - minimum time between reports of a low info metric.
 - `max_report_frequency` - minimum time between reports of any metric.
 
-*Low info definition*
+#### Low info definition
 
 - `iqr_anomaly_coefficient` - relative deviation from interquartile range which constitutes an anomaly.
 - `variation_iqr_threshold_coefficient` - variation to iqr quotient under which a metric is considered low info.
 
-*Data point caching*
+#### Data point caching
 
 - `data_point_expiration_time` - how long a data point should be used for determining metrics category.
 - `data_point_cache_cleanup_interval` - how often expired data points are removed from memory.
