@@ -44,19 +44,23 @@ OT distro.
 
 | Name                                                                     | Source                                                                                                        |
 |--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
-| `filelogreceiver` [configuration help][filelogreceiver_help]             | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver       |
-| `fluentforwardreceiver` [configuration help][fluentforwardreceiver_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/fluentforwardreceiver |
-| `syslogreceiver` [configuration help][syslogreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/syslogreceiver        |
-| `statsdreceiver` [configuration help][statsdreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/statsdreceiver        |
-| `tcplogreceiver` [configuration help][tcplogreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/tcplogreceiver        |
-| `udplogreceiver` [configuration help][udplogreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/udplogreceiver        |
+| `filelogreceiver` [configuration help][filelogreceiver_help]             | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/filelogreceiver       |
+| `fluentforwardreceiver` [configuration help][fluentforwardreceiver_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/fluentforwardreceiver |
+| `hostmetricsreceiver` [configuration help][hostmetricsreceiver_help]     | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/hostmetricsreceiver   |
+| `syslogreceiver` [configuration help][syslogreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/syslogreceiver        |
+| `statsdreceiver` [configuration help][statsdreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/statsdreceiver        |
+| `tcplogreceiver` [configuration help][tcplogreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/tcplogreceiver        |
+| `udplogreceiver` [configuration help][udplogreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/udplogreceiver        |
+| `zipkinreceiver` [configuration help][zipkinreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/zipkinreceiver        |
 
 [filelogreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#filelog-receiver
 [fluentforwardreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#fluent-forward-receiver
+[hostmetricsreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#host-metrics-receiver
 [statsdreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#statsd-receiver
 [syslogreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#syslog-receiver
 [tcplogreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#tcplog-receiver
 [udplogreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#udplog-receiver
+[zipkinreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#zipkin-receiver
 
 ### Processors
 
@@ -78,13 +82,14 @@ OT distro.
 
 | Name                                                                               | Source                                                                                                              |
 |------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
-| `groupbyattrsprocessor` [configuration help][groupbyattrsprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/processor/groupbyattrsprocessor      |
-| `groupbytraceprocessor` [configuration help][groupbytraceprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/processor/groupbytraceprocessor      |
-| `metricstransformprocessor` [configuration help][metricstransformprocessor_help]   | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/processor/metricstransformprocessor  |
-| `resourcedetectionprocessor` [configuration help][resourcedetectionprocessor_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/processor/resourcedetectionprocessor |
-| `routingprocessor` [configuration help][routingprocessor_help]                     | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/processor/routingprocessor           |
-| `spanmetricsprocessor` [configuration help][spanmetricsprocessor_help]             | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/processor/spanmetricsprocessor       |
-| `tailsamplingprocessor` [configuration help][tailsamplingprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/processor/tailsamplingprocessor      |
+| `groupbyattrsprocessor` [configuration help][groupbyattrsprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/groupbyattrsprocessor      |
+| `groupbytraceprocessor` [configuration help][groupbytraceprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/groupbytraceprocessor      |
+| `metricstransformprocessor` [configuration help][metricstransformprocessor_help]   | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/metricstransformprocessor  |
+| `resourcedetectionprocessor` [configuration help][resourcedetectionprocessor_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/resourcedetectionprocessor |
+| `routingprocessor` [configuration help][routingprocessor_help]                     | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/routingprocessor           |
+| `spanmetricsprocessor` [configuration help][spanmetricsprocessor_help]             | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/spanmetricsprocessor       |
+| `tailsamplingprocessor` [configuration help][tailsamplingprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/tailsamplingprocessor      |
+| `filterprocessor` [configuration help][filterprocessor_help]                       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/filterprocessor            |
 
 [groupbyattrsprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#group-by-attributes-processor
 [groupbytraceprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#group-by-trace-processor
@@ -93,6 +98,7 @@ OT distro.
 [routingprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#routing-processor-processor
 [spanmetricsprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#span-metrics-processor
 [tailsamplingprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#tail-sampling-processor
+[filterprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#tail-sampling-processor
 
 ### Exporters
 
@@ -108,8 +114,8 @@ OT distro.
 
 | Name                                                                     | Source                                                                                                        |
 |--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
-| `loadbalancingexporter` [configuration help][loadbalancingexporter_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/exporter/loadbalancingexporter |
-| `loggingexporter` [configuration help][loggingexporter_help]             | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.33.0/exporter/loggingexporter       |
+| `loadbalancingexporter` [configuration help][loadbalancingexporter_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/exporter/loadbalancingexporter |
+| `loggingexporter` [configuration help][loggingexporter_help]             | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.34.0/exporter/loggingexporter               |
 
 [loadbalancingexporter_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#load-balancing-exporter
 [loggingexporter_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#logging-exporter
@@ -126,14 +132,14 @@ OT distro.
 
 #### Upstream extensions
 
-| Name                       | Source                                                                                                    |
-|----------------------------|-----------------------------------------------------------------------------------------------------------|
-| `ballastextension`         | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.33.0/extension/ballastextension         |
-| `bearertokenauthextension` | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.33.0/extension/bearertokenauthextension |
-| `healthcheckextension`     | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.33.0/extension/healthcheckextension     |
-| `oidcauthextension`        | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.33.0/extension/oidcauthextension        |
-| `pprofextension`           | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.33.0/extension/pprofextension           |
-| `zpagesextension`          | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.33.0/extension/zpagesextension          |
+| Name                       | Source                                                                                                            |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------|
+| `ballastextension`         | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.34.0/extension/ballastextension                 |
+| `bearertokenauthextension` | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/extension/bearertokenauthextension |
+| `healthcheckextension`     | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/extension/healthcheckextension     |
+| `oidcauthextension`        | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/extension/oidcauthextension        |
+| `pprofextension`           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/extension/pprofextension           |
+| `zpagesextension`          | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.34.0/extension/zpagesextension                  |
 
 <!-- markdownlint-enable MD013 -->
 
