@@ -14,11 +14,13 @@
   - [Open Telemetry Upstream Receivers](#open-telemetry-upstream-receivers)
     - [Filelog Receiver](#filelog-receiver)
     - [Fluent Forward Receiver](#fluent-forward-receiver)
+    - [Host Metrics Receiver](#host-metrics-receiver)
     - [Syslog Receiver](#syslog-receiver)
     - [Statsd Receiver](#statsd-receiver)
     - [OTLP Receiver](#otlp-receiver)
     - [TCPlog Receiver](#tcplog-receiver)
     - [UDPlog Receiver](#udplog-receiver)
+    - [Zipkin Receiver](#zipkin-receiver)
     - [Receivers from OpenTelemetry Collector](#receivers-from-opentelemetry-collector)
 - [Processors](#processors)
   - [Sumo Logic Custom Processors](#sumo-logic-custom-processors)
@@ -31,14 +33,17 @@
     - [Group by Trace Processor](#group-by-trace-processor)
     - [Metrics Transform Processor](#metrics-transform-processor)
     - [Resource Detection Processor](#resource-detection-processor)
+    - [Resource Processor](#resource-processor)
     - [Routing Processor](#routing-processor)
     - [Span Metrics Processor](#span-metrics-processor)
     - [Tail Sampling Processor](#tail-sampling-processor)
+    - [Filter Processor](#filter-processor)
 - [Exporters](#exporters)
   - [Sumo Logic Custom Exporters](#sumo-logic-custom-exporters)
     - [Sumo Logic Exporter](#sumo-logic-exporter)
   - [Open Telemetry Upstream Exporters](#open-telemetry-upstream-exporters)
     - [Load Balancing Exporter](#load-balancing-exporter)
+    - [Logging Exporter](#logging-exporter)
 - [Command-line configuration options](#command-line-configuration-options)
 - [Proxy Support](#proxy-support)
 
@@ -395,7 +400,7 @@ receivers:
 For details, see the [Filelog Receiver documentation][filelogreceiver_readme].
 
 [opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
-[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver
+[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/filelogreceiver
 
 #### Fluent Forward Receiver
 
@@ -414,6 +419,25 @@ For details, see the [Fluent Forward Receiver documentation][fluentforwardreceiv
 
 [fluent_forward_protocol]: https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1
 [fluentforwardreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/release/v0.27.x/receiver/fluentforwardreceiver
+
+#### Host Metrics Receiver
+
+Host Metrics Receiver generates metrics about the host system scraped from various sources.
+
+Example configuration:
+
+```yaml
+receivers:
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+      memory:
+```
+
+For details, see the [Host Metrics Receiver documentation][hostmetricsreceiver_readme].
+
+[hostmetricsreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/hostmetricsreceiver
 
 #### Syslog Receiver
 
@@ -446,7 +470,7 @@ For details, see the [Syslog Receiver documentation][syslogreceiver_readme].
 __Note: There are actually two ways of getting and processing Syslog data.
 More details are available in [comparison document](Comparison.md#syslog).__
 
-[syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/syslogreceiver
+[syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/syslogreceiver
 
 #### Statsd Receiver
 
@@ -490,7 +514,7 @@ receivers:
 For details, see the [OTLP Receiver documentation][otlpreceiver_readme].
 
 [otlp]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md
-[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.33.0/receiver/otlpreceiver
+[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.34.0/receiver/otlpreceiver
 
 #### TCPlog Receiver
 
@@ -506,7 +530,7 @@ receivers:
 
 For details, see the [TCPlog Receiver documentation][tcplogreceiver_readme].
 
-[tcplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/tcplogreceiver
+[tcplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/tcplogreceiver
 
 #### UDPlog Receiver
 
@@ -522,7 +546,22 @@ receivers:
 
 For details, see the [UDPlog Receiver documentation][udplogreceiver_readme].
 
-[udplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/udplogreceiver
+[udplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/udplogreceiver
+
+#### Zipkin Receiver
+
+Zipkin Receiver receives receives spans from Zipkin (`v1` and `v2`).
+
+The following is a basic configuration for Zipkin Receiver:
+
+```yaml
+receivers:
+  zipkin:
+```
+
+For details, see the [Zipkin Receiver documentation][zipkinreceiver_readme].
+
+[zipkinreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/zipkinreceiver
 
 #### Receivers from OpenTelemetry Collector
 
@@ -737,6 +776,30 @@ For details, see the [Resource Detection Processor documentation][resourcedetect
 
 [resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/README.md
 
+#### Resource Processor
+
+The Resource processor can be used to apply changes on resource attributes.
+
+Example configuration:
+
+```yaml
+processors:
+  resource:
+    attributes:
+    - key: cloud.availability_zone
+      value: "zone-1"
+      action: upsert
+    - key: k8s.cluster.name
+      from_attribute: k8s-cluster
+      action: insert
+    - key: redundant-attribute
+      action: delete
+```
+
+For details, see the [Resource Processor documentation][resourceprocessor_docs].
+
+[resourceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourceprocessor/README.md
+
 #### Routing Processor
 
 The Routing Processor does not alter the records in any way by itself.
@@ -854,6 +917,35 @@ For details, see the [Tail Sampling Processor documentation][tailsamplingprocess
 
 [tailsamplingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md
 
+#### Filter Processor
+
+Filter Processor filters metrics and/or logs based on the configuration.
+
+Example configuration:
+
+```yaml
+processors:
+  filter/1:
+    metrics:
+      include:
+        match_type: regexp
+        metric_names:
+          - prefix/.*
+          - prefix_.*
+        resource_attributes:
+          - Key: container.name
+            Value: app_container_1
+      exclude:
+        match_type: strict
+        metric_names:
+          - hello_world
+          - hello/world
+```
+
+For details, see the [Filter Processor documentation][filterprocessor_docs].
+
+[filterprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/filterprocessor/README.md
+
 ## Exporters
 
 ### Sumo Logic Custom Exporters
@@ -918,6 +1010,24 @@ exporters:
 For details, see the [Load Balancing Exporter documentation][loadbalancingexporter_docs].
 
 [loadbalancingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/loadbalancingexporter/README.md
+
+#### Logging Exporter
+
+Logging exporter exports data to the console.
+
+Example configuration:
+
+```yaml
+exporters:
+  logging:
+    loglevel: debug
+    sampling_initial: 5
+    sampling_thereafter: 200
+```
+
+For details, see the [Logging Exporter documentation][loggingexporter_docs].
+
+[loggingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/loggingexporter/README.md
 
 ## Command-line configuration options
 

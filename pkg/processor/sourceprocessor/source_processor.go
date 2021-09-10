@@ -16,7 +16,6 @@ package sourceprocessor
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"regexp"
 	"strings"
@@ -26,18 +25,6 @@ import (
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/sourceprocessor/observability"
 )
-
-var (
-	formatRegex *regexp.Regexp
-)
-
-func init() {
-	var err error
-	formatRegex, err = regexp.Compile(`\%\{(\w+)\}`)
-	if err != nil {
-		panic("failed to parse regex: " + err.Error())
-	}
-}
 
 type sourceKeys struct {
 	annotationPrefix   string
@@ -69,25 +56,16 @@ func (stk sourceKeys) convertKey(key string) string {
 	}
 }
 
-type attributeFiller struct {
-	name            string
-	compiledFormat  string
-	dashReplacement string
-	prefix          string
-	labels          []string
-}
-
 type sourceProcessor struct {
-	collector             string
-	source                string
-	sourceCategoryFiller  attributeFiller
-	sourceNameFiller      attributeFiller
-	sourceHostFiller      attributeFiller
-	excludeNamespaceRegex *regexp.Regexp
-	excludePodRegex       *regexp.Regexp
-	excludeContainerRegex *regexp.Regexp
-	excludeHostRegex      *regexp.Regexp
-	keys                  sourceKeys
+	collector            string
+	source               string
+	sourceCategoryFiller attributeFiller
+	sourceNameFiller     attributeFiller
+	sourceHostFiller     attributeFiller
+
+	systemdFiltering bool
+	exclude          map[string]*regexp.Regexp
+	keys             sourceKeys
 }
 
 const (
@@ -119,20 +97,6 @@ func compileRegex(regex string) *regexp.Regexp {
 	return re
 }
 
-func matchRegexMaybe(re *regexp.Regexp, atts pdata.AttributeMap, attributeName string) bool {
-	if re == nil {
-		return false
-	}
-
-	if attrValue, found := atts.Get(attributeName); found {
-		if attrValue.Type() == pdata.AttributeValueTypeString {
-			return re.MatchString(attrValue.StringVal())
-		}
-	}
-
-	return false
-}
-
 func newSourceProcessor(cfg *Config) *sourceProcessor {
 	keys := sourceKeys{
 		annotationPrefix:   cfg.AnnotationPrefix,
@@ -145,17 +109,28 @@ func newSourceProcessor(cfg *Config) *sourceProcessor {
 		sourceHostKey:      cfg.SourceHostKey,
 	}
 
+	var (
+		exclude          = make(map[string]*regexp.Regexp)
+		systemdFiltering bool
+	)
+	for field, regexStr := range cfg.Exclude {
+		if field == "_SYSTEMD_UNIT" {
+			systemdFiltering = true
+		}
+		if r := compileRegex(regexStr); r != nil {
+			exclude[field] = r
+		}
+	}
+
 	return &sourceProcessor{
-		collector:             cfg.Collector,
-		keys:                  keys,
-		source:                cfg.Source,
-		sourceHostFiller:      createSourceHostFiller(),
-		sourceCategoryFiller:  createSourceCategoryFiller(cfg, keys),
-		sourceNameFiller:      createSourceNameFiller(cfg, keys),
-		excludeNamespaceRegex: compileRegex(cfg.ExcludeNamespaceRegex),
-		excludeHostRegex:      compileRegex(cfg.ExcludeHostRegex),
-		excludeContainerRegex: compileRegex(cfg.ExcludeContainerRegex),
-		excludePodRegex:       compileRegex(cfg.ExcludePodRegex),
+		collector:            cfg.Collector,
+		keys:                 keys,
+		source:               cfg.Source,
+		sourceHostFiller:     createSourceHostFiller(),
+		sourceCategoryFiller: createSourceCategoryFiller(cfg, keys),
+		sourceNameFiller:     createSourceNameFiller(cfg, keys),
+		exclude:              exclude,
+		systemdFiltering:     systemdFiltering,
 	}
 }
 
@@ -185,17 +160,18 @@ func (sp *sourceProcessor) isFilteredOut(atts pdata.AttributeMap) bool {
 		}
 	}
 
-	if matchRegexMaybe(sp.excludeNamespaceRegex, atts, sp.keys.namespaceKey) {
-		return true
-	}
-	if matchRegexMaybe(sp.excludePodRegex, atts, sp.keys.podKey) {
-		return true
-	}
-	if matchRegexMaybe(sp.excludeContainerRegex, atts, sp.keys.containerKey) {
-		return true
-	}
-	if matchRegexMaybe(sp.excludeHostRegex, atts, sp.keys.sourceHostKey) {
-		return true
+	// Check fields by matching them against field exclusion regexes
+	for field, r := range sp.exclude {
+		v, ok := matchFieldByRegex(atts, field, r)
+		if ok {
+			// If we're filtering/processing systemd entries then set the hostname
+			// based on the _HOSTNAME attribute coming from systemd.
+			if sp.systemdFiltering && field == "_HOSTNAME" && v != "" {
+				atts.UpsertString("host", v)
+			}
+
+			return true
+		}
 	}
 
 	return false
@@ -349,82 +325,20 @@ func (sp *sourceProcessor) enrichPodName(atts *pdata.AttributeMap) {
 	atts.UpsertString(sp.keys.podNameKey, strings.Join(podParts[:len(podParts)-1], "-"))
 }
 
-func extractFormat(format string, name string, keys sourceKeys) attributeFiller {
-	labels := make([]string, 0)
-	matches := formatRegex.FindAllStringSubmatch(format, -1)
-	for _, matchset := range matches {
-		labels = append(labels, keys.convertKey(matchset[1]))
-	}
-	template := formatRegex.ReplaceAllString(format, "%s")
-
-	return attributeFiller{
-		name:            name,
-		compiledFormat:  template,
-		dashReplacement: "",
-		labels:          labels,
-		prefix:          "",
-	}
-}
-
-func createSourceHostFiller() attributeFiller {
-	return attributeFiller{
-		name:            sourceHostKey,
-		compiledFormat:  "",
-		dashReplacement: "",
-		labels:          make([]string, 0),
-		prefix:          "",
-	}
-}
-
-func createSourceNameFiller(cfg *Config, keys sourceKeys) attributeFiller {
-	filler := extractFormat(cfg.SourceName, sourceNameKey, keys)
-	return filler
-}
-
-func createSourceCategoryFiller(cfg *Config, keys sourceKeys) attributeFiller {
-	filler := extractFormat(cfg.SourceCategory, sourceCategoryKey, keys)
-	filler.compiledFormat = cfg.SourceCategoryPrefix + filler.compiledFormat
-	filler.dashReplacement = cfg.SourceCategoryReplaceDash
-	filler.prefix = cfg.SourceCategoryPrefix
-	return filler
-}
-
-func (f *attributeFiller) fillResourceOrUseAnnotation(atts *pdata.AttributeMap, annotationKey string, keys sourceKeys) bool {
-	val, found := atts.Get(annotationKey)
-	if found {
-		annotationFiller := extractFormat(val.StringVal(), f.name, keys)
-		annotationFiller.dashReplacement = f.dashReplacement
-		annotationFiller.compiledFormat = f.prefix + annotationFiller.compiledFormat
-		return annotationFiller.fillAttributes(atts)
-	}
-	return f.fillAttributes(atts)
-}
-
-func (f *attributeFiller) fillAttributes(atts *pdata.AttributeMap) bool {
-	if len(f.compiledFormat) == 0 {
-		return false
+// matchFieldByRegex searches the provided attribute map for a particular field
+// and matches is with the provided regex.
+// It returns the string value of found elements and a boolean flag whether the
+// value matched the provided regex.
+func matchFieldByRegex(atts pdata.AttributeMap, field string, r *regexp.Regexp) (string, bool) {
+	att, ok := atts.Get(field)
+	if !ok {
+		return "", false
 	}
 
-	labelValues := f.resourceLabelValues(atts)
-	if labelValues != nil {
-		str := fmt.Sprintf(f.compiledFormat, labelValues...)
-		if f.dashReplacement != "" {
-			str = strings.ReplaceAll(str, "-", f.dashReplacement)
-		}
-		atts.UpsertString(f.name, str)
-		return true
+	if att.Type() != pdata.AttributeValueTypeString {
+		return "", false
 	}
-	return false
-}
 
-func (f *attributeFiller) resourceLabelValues(atts *pdata.AttributeMap) []interface{} {
-	arr := make([]interface{}, 0)
-	for _, label := range f.labels {
-		value, ok := atts.Get(label)
-		if !ok {
-			return nil
-		}
-		arr = append(arr, value.StringVal())
-	}
-	return arr
+	v := att.StringVal()
+	return v, r.MatchString(v)
 }

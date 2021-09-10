@@ -60,9 +60,10 @@ const (
 	collectorCredentialIdField = "collector_credential_id"
 
 	banner = `
-**********************************************************************************************
-*** This software is currently in beta and is not recommended for production environments. ***
-**********************************************************************************************
+************************************************************************************************************
+***    This software is currently in beta and is not recommended for production environments.            ***
+***    To participate in this beta, please contact your Sumo Logic account team or Sumo Logic Support.   ***
+************************************************************************************************************
 `
 )
 
@@ -275,22 +276,32 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 	se.logger.Info("Calling register API", zap.String("URL", u.String()))
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
+		se.logger.Warn("Collector registration HTTP request failed", zap.Error(err))
 		return CollectorCredentials{}, fmt.Errorf("failed to register the collector: %w", err)
 	}
 
 	defer res.Body.Close()
 
 	if res.StatusCode < 200 || res.StatusCode >= 400 {
-		var buff bytes.Buffer
-		if _, err := io.Copy(&buff, res.Body); err != nil {
+		var errResponse api.ErrorResponsePayload
+		if err := json.NewDecoder(res.Body).Decode(&errResponse); err != nil {
+			var buff bytes.Buffer
+			if _, errCopy := io.Copy(&buff, res.Body); errCopy != nil {
+				return CollectorCredentials{}, fmt.Errorf(
+					"failed to read the collector registration response body, status code: %d, err: %w",
+					res.StatusCode, errCopy,
+				)
+			}
 			return CollectorCredentials{}, fmt.Errorf(
-				"failed to copy collector registration response body, status code: %d, err: %w",
-				res.StatusCode, err,
+				"failed to decode collector registration response body: %s, status code: %d, err: %w",
+				buff.String(), res.StatusCode, err,
 			)
 		}
-		se.logger.Debug("Collector registration failed",
+
+		se.logger.Warn("Collector registration failed",
 			zap.Int("status_code", res.StatusCode),
-			zap.String("response", buff.String()),
+			zap.String("error_id", errResponse.ID),
+			zap.Any("errors", errResponse.Errors),
 		)
 
 		// Return unrecoverable error for 4xx status codes except 429
@@ -332,8 +343,6 @@ func (se *SumologicExtension) registerCollectorWithBackoff(ctx context.Context, 
 		if err == nil {
 			return creds, nil
 		}
-
-		se.logger.Warn("Collector registration failed", zap.Error(err))
 
 		nbo := se.backOff.NextBackOff()
 		// Return error if backoff reaches the limit or uncoverable error is spotted

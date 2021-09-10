@@ -1,12 +1,12 @@
-## <a name="sourceprocessor"></a>Source Processor
- 
-The `sourceprocessor` adds _source and other tags related to Sumo Logic metadata taxonomy
+# Source Processor
 
-It leverages data tagged by `k8sprocessor` and must be after it in the processing chain. It has
-certain expectations on the label names used by `k8sprocessor` which might be configured below
+The `sourceprocessor` adds `_source` and other tags related to Sumo Logic metadata taxonomy.
 
-### Config
-	
+It leverages data tagged by `k8sprocessor` and must be after it in the processing chain.
+It has certain expectations on the label names used by `k8sprocessor` which might be configured below.
+
+## Config
+
 - `collector` (default = ""): name of the collector, put in `collector` tag
 - `source` (default = "traces"): name of the source, put in `_source` tag
 - `source_name` (default = "%{namespace}.%{pod}.%{container}"): `_sourceName` template
@@ -14,14 +14,21 @@ certain expectations on the label names used by `k8sprocessor` which might be co
 - `source_category_prefix` (default = "kubernetes/"): prefix added before each `_sourceCategory` value
 - `source_category_replace_dash` (default = "/"): character which all dashes (`-`) are being replaced to
 
-*Filtering section*
+### Filtering section
 
-- `exclude_namespace_regex` (default = empty): all data with matching namespace will be excluded
-- `exclude_pod_regex` (default = empty): all data with matching pod will be excluded
-- `exclude_container_regex` (default = empty): all data with matching container name will be excluded
-- `exclude_host_regex` (default = empty): all data with matching `_sourceHost` will be excluded
+**NOTE**: The filtering is done on the resource level attributes.
 
-*Keys section (must match `k8sprocessor` config)*
+- `exclude` (default = empty): a mapping of field names to exclusion regexes
+  for those particular fields. Whenever a value under particular field matches
+  a corresponding regex, the processed entry is dropped.
+
+  **NOTE**:
+
+  When systemd related filtering is taking place (`exclude` contains
+  an entry for `_SYSTEMD_UNIT`) then whenever the processed record contains
+  `_HOSTNAME` attribute it will be added to the resulting record under `host` key.
+
+### Keys section (must match `k8sprocessor` config)
 
 - `annotation_prefix` (default = "pod_annotation_"): prefix which allows to find given annotation; 
 it is used for including/excluding pods, among other attributes
@@ -34,7 +41,7 @@ during enrichment
 - `container_key` (default = "container"): attribute where container name is found
 - `source_host_key` (default = "source_host"): attribute where source host is found
 
-#### Name translation and template keys
+### Name translation and template keys
 
 The key names provided as `namespace`, `pod`, `pod_name`, `container` in templates for `source_category` 
 or `source_name`are replaced with the key name provided in `namespace_key`, `pod_key`, 
@@ -46,12 +53,11 @@ For example, when default template for `source_category` is being used (`%{names
 ```yaml
 k8s.namespace.name: my-namespace
 pod_name: some-name
-``` 
+```
 
 Then the `_source_category` will contain: `my-namespace/some-name`
 
-
-#### <a name="k8sprocessor-example"></a>Example config:
+### Example config
 
 ```yaml
 processors:
@@ -61,5 +67,7 @@ processors:
     source_category: "%{namespace}/%{pod_name}"
     source_category_prefix: "kubernetes/"
     source_category_replace_dash: "/"
-    exclude_namespace_regex: "kube-system"
+    exclude:
+      namespace: "kube-system"
+      pod: "custom-pod-.*"
 ```

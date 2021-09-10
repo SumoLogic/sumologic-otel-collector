@@ -145,9 +145,10 @@ Below is a list of all attribute keys that are being translated.
 | `k8s.cluster.name`        | `Cluster`          |
 | `k8s.container.name`      | `container`        |
 | `k8s.daemonset.name`      | `daemonset`        |
-| `k8s.deployment.name`     | `Deployment`       |
-| `k8s.namespace.name`      | `Namespace`        |
+| `k8s.deployment.name`     | `deployment`       |
+| `k8s.namespace.name`      | `namespace`        |
 | `k8s.node.name`           | `node`             |
+| `k8s.service.name`        | `service`          |
 | `k8s.pod.hostname`        | `host`             |
 | `k8s.pod.name`            | `pod`              |
 | `k8s.pod.uid`             | `pod_id`           |

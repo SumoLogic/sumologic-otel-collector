@@ -7,14 +7,19 @@ RUN chmod 755 /otelcol-sumo
 FROM alpine:3.13 as certs
 RUN apk --update add ca-certificates
 
-FROM golang:1.17.0
+FROM alpine:3.13 as directories
+RUN mkdir /etc/otel/
+
+FROM golang:1.17.1
 ARG BUILD_TAG=latest
 ENV TAG $BUILD_TAG
 ARG USER_UID=10001
 USER ${USER_UID}
+ENV HOME /etc/otel/
 
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=otelcol /otelcol-sumo /otelcol-sumo
+COPY --from=directories --chown=${USER_UID}:${USER_UID} /etc/otel/ /etc/otel/
 EXPOSE 55680 55679
 ENTRYPOINT ["/otelcol-sumo"]
 CMD ["--config", "/etc/otel/config.yaml"]
