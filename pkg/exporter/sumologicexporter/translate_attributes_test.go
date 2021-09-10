@@ -30,14 +30,15 @@ func TestTranslateAttributes(t *testing.T) {
 	attributes.InsertString("k8s.cluster.name", "testing-cluster")
 	attributes.InsertString("k8s.deployment.name", "my-deployment-name")
 	attributes.InsertString("k8s.namespace.name", "my-namespace-name")
+	attributes.InsertString("k8s.service.name", "my-service-name, other-service")
 	attributes.InsertString("cloud.account.id", "my-account-id")
 	attributes.InsertString("cloud.availability_zone", "my-zone")
 	attributes.InsertString("cloud.region", "my-region")
-	require.Equal(t, 9, attributes.Len())
+	require.Equal(t, 10, attributes.Len())
 
 	translateAttributes(attributes)
 
-	assert.Equal(t, 9, attributes.Len())
+	assert.Equal(t, 10, attributes.Len())
 	assertAttribute(t, attributes, "host", "testing-host")
 	assertAttribute(t, attributes, "host.name", "")
 	assertAttribute(t, attributes, "AccountId", "my-account-id")
@@ -56,6 +57,8 @@ func TestTranslateAttributes(t *testing.T) {
 	assertAttribute(t, attributes, "k8s.deployment.name", "")
 	assertAttribute(t, attributes, "namespace", "my-namespace-name")
 	assertAttribute(t, attributes, "k8s.namespace.name", "")
+	assertAttribute(t, attributes, "service", "my-service-name, other-service")
+	assertAttribute(t, attributes, "k8s.service.name", "")
 }
 
 func TestTranslateAttributesDoesNothingWhenAttributeDoesNotExist(t *testing.T) {
