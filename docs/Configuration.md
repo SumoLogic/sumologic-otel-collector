@@ -33,6 +33,7 @@
     - [Group by Trace Processor](#group-by-trace-processor)
     - [Metrics Transform Processor](#metrics-transform-processor)
     - [Resource Detection Processor](#resource-detection-processor)
+    - [Resource Processor](#resource-processor)
     - [Routing Processor](#routing-processor)
     - [Span Metrics Processor](#span-metrics-processor)
     - [Tail Sampling Processor](#tail-sampling-processor)
@@ -774,6 +775,30 @@ processors:
 For details, see the [Resource Detection Processor documentation][resourcedetectionprocessor_docs].
 
 [resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/README.md
+
+#### Resource Processor
+
+The Resource processor can be used to apply changes on resource attributes.
+
+Example configuration:
+
+```yaml
+processors:
+  resource:
+    attributes:
+    - key: cloud.availability_zone
+      value: "zone-1"
+      action: upsert
+    - key: k8s.cluster.name
+      from_attribute: k8s-cluster
+      action: insert
+    - key: redundant-attribute
+      action: delete
+```
+
+For details, see the [Resource Processor documentation][resourceprocessor_docs].
+
+[resourceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourceprocessor/README.md
 
 #### Routing Processor
 
