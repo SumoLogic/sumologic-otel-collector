@@ -86,6 +86,7 @@ OT distro.
 | `groupbytraceprocessor` [configuration help][groupbytraceprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/groupbytraceprocessor      |
 | `metricstransformprocessor` [configuration help][metricstransformprocessor_help]   | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/metricstransformprocessor  |
 | `resourcedetectionprocessor` [configuration help][resourcedetectionprocessor_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/resourcedetectionprocessor |
+| `resourceprocessor` [configuration help][resourceprocessor_help]                   | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/resourceprocessor          |
 | `routingprocessor` [configuration help][routingprocessor_help]                     | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/routingprocessor           |
 | `spanmetricsprocessor` [configuration help][spanmetricsprocessor_help]             | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/spanmetricsprocessor       |
 | `tailsamplingprocessor` [configuration help][tailsamplingprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/tailsamplingprocessor      |
@@ -95,6 +96,7 @@ OT distro.
 [groupbytraceprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#group-by-trace-processor
 [metricstransformprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#metrics-transform-processor
 [resourcedetectionprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#resource-detection-processor
+[resourceprocessor_help]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourceprocessor
 [routingprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#routing-processor-processor
 [spanmetricsprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#span-metrics-processor
 [tailsamplingprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#tail-sampling-processor
