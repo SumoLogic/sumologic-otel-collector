@@ -226,6 +226,7 @@ func TestProcessorBadClientProvider(t *testing.T) {
 		_ kube.APIClientsetProvider,
 		_ kube.InformerProvider,
 		_ kube.OwnerProvider,
+		_ string,
 	) (kube.Client, error) {
 		return nil, fmt.Errorf("bad client error")
 	}

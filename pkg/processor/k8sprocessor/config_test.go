@@ -50,6 +50,7 @@ func TestLoadConfig(t *testing.T) {
 		&Config{
 			ProcessorSettings: config.NewProcessorSettings(config.NewID(typeStr)),
 			APIConfig:         k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
+			Extract:           ExtractConfig{Delimiter: ", "},
 		})
 
 	p1 := cfg.Processors[config.NewIDWithName(typeStr, "2")]
@@ -83,6 +84,7 @@ func TestLoadConfig(t *testing.T) {
 				Tags: map[string]string{
 					"containerId": "my.namespace.containerId",
 				},
+				Delimiter: ", ",
 			},
 			Filter: FilterConfig{
 				Namespace:      "ns2",

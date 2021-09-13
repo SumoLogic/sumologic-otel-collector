@@ -87,12 +87,12 @@ func podAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj interfac
 }
 
 func TestDefaultClientset(t *testing.T) {
-	c, err := New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, nil, nil, nil)
+	c, err := New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, nil, nil, nil, "")
 	assert.Error(t, err)
 	assert.Equal(t, "invalid authType for kubernetes: ", err.Error())
 	assert.Nil(t, c)
 
-	c, err = New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, newFakeAPIClientset, nil, nil)
+	c, err = New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, newFakeAPIClientset, nil, nil, "")
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
 }
@@ -107,6 +107,7 @@ func TestBadFilters(t *testing.T) {
 		newFakeAPIClientset,
 		NewFakeInformer,
 		newFakeOwnerProvider,
+		"",
 	)
 	assert.Error(t, err)
 	assert.Nil(t, c)
@@ -142,7 +143,7 @@ func TestConstructorErrors(t *testing.T) {
 			gotAPIConfig = c
 			return nil, fmt.Errorf("error creating k8s client")
 		}
-		c, err := New(zap.NewNop(), apiCfg, er, ff, []Association{}, clientProvider, NewFakeInformer, newFakeOwnerProvider)
+		c, err := New(zap.NewNop(), apiCfg, er, ff, []Association{}, clientProvider, NewFakeInformer, newFakeOwnerProvider, "")
 		assert.Nil(t, c)
 		assert.Error(t, err)
 		assert.Equal(t, err.Error(), "error creating k8s client")
@@ -497,7 +498,7 @@ func TestExtractionRules(t *testing.T) {
 			"k8s.pod.name":        "auth-service-abc12-xyz3",
 			"k8s.pod.startTime":   pod.GetCreationTimestamp().String(),
 			"k8s.replicaset.name": "SomeReplicaSet",
-			"k8s.service.name":    "foo, bar",
+			"k8s.service.name":    "foo_bar",
 			"k8s.namespace.name":  "ns1",
 			"k8s.node.name":       "node1",
 		},
@@ -830,7 +831,7 @@ func Test_selectorsFromFilters(t *testing.T) {
 func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters) (*WatchClient, *observer.ObservedLogs) {
 	observedLogger, logs := observer.New(zapcore.WarnLevel)
 	logger := zap.New(observedLogger)
-	c, err := New(logger, k8sconfig.APIConfig{}, e, f, []Association{}, newFakeAPIClientset, NewFakeInformer, newFakeOwnerProvider)
+	c, err := New(logger, k8sconfig.APIConfig{}, e, f, []Association{}, newFakeAPIClientset, NewFakeInformer, newFakeOwnerProvider, "_")
 	require.NoError(t, err)
 	return c.(*WatchClient), logs
 }

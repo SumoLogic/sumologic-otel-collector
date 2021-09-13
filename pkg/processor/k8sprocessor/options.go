@@ -351,3 +351,11 @@ func WithExtractPodAssociations(podAssociations ...PodAssociationConfig) Option 
 		return nil
 	}
 }
+
+// WithDelimiter sets delimiter to use by kubernetesprocessor
+func WithDelimiter(delimiter string) Option {
+	return func(p *kubernetesprocessor) error {
+		p.delimiter = delimiter
+		return nil
+	}
+}

@@ -88,6 +88,11 @@ type ExtractConfig struct {
 	// It is a list of FieldExtractConfig type. See FieldExtractConfig
 	// documentation for more details.
 	NamespaceLabels []FieldExtractConfig `mapstructure:"namespace_labels"`
+
+	// Delimiter is going to be used to join multiple values for metadata.
+	// For example if given pod is associated with more than one service,
+	// delimiter is going to separate them in string.
+	Delimiter string `mapstructure:"delimiter"`
 }
 
 //FieldExtractConfig allows specifying an extraction rule to extract a value from exactly one field.
@@ -219,3 +224,6 @@ type PodAssociationConfig struct {
 	// e.g. ip, pod_uid, k8s.pod.ip
 	Name string `mapstructure:"name"`
 }
+
+// DefaultDelimiter is default value for Delimiter for ExtractConfig
+const DefaultDelimiter string = ", "
