@@ -80,6 +80,9 @@ See [field extract config](#field-extract-config) for an example on how to use i
 - `namespace_labels` (default = empty): a list of rules for extraction and recording namespace label data.
 See [field extract config](#field-extract-config) for an example on how to use it.
 
+- `delimiter`: if pod is associated with more than one service, delimiter is going be used to join them.
+  (default=`", "`)
+
 ### Field Extract Config
 
 Allows specifying an extraction rule to extract a value from exactly one field.
@@ -212,6 +215,7 @@ processors:
         - tag_name: l2 # extracts value of label with key `label1` with regexp and inserts it as a tag with key `l2`
           key: label2
           regex: field=(?P<value>.+)
+      delimiter: "_"
 
     filter:
       namespace: ns2 # only look for pods running in ns2 namespace

@@ -49,6 +49,7 @@ func createDefaultConfig() config.Processor {
 	return &Config{
 		ProcessorSettings: config.NewProcessorSettings(config.NewID(typeStr)),
 		APIConfig:         k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
+		Extract:           ExtractConfig{Delimiter: DefaultDelimiter},
 	}
 }
 
@@ -194,6 +195,8 @@ func createProcessorOpts(cfg config.Processor) []Option {
 	opts = append(opts, WithAPIConfig(oCfg.APIConfig))
 
 	opts = append(opts, WithExtractPodAssociations(oCfg.Association...))
+
+	opts = append(opts, WithDelimiter(oCfg.Extract.Delimiter))
 
 	return opts
 }

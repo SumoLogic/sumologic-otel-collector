@@ -50,6 +50,7 @@ func newFakeClient(
 	_ kube.APIClientsetProvider,
 	_ kube.InformerProvider,
 	_ kube.OwnerProvider,
+	_ string,
 ) (kube.Client, error) {
 	cs := fake.NewSimpleClientset()
 

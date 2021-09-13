@@ -38,6 +38,7 @@ type kubernetesprocessor struct {
 	rules           kube.ExtractionRules
 	filters         kube.Filters
 	podAssociations []kube.Association
+	delimiter       string
 }
 
 func (kp *kubernetesprocessor) initKubeClient(logger *zap.Logger, kubeClient kube.ClientProvider) error {
@@ -45,7 +46,7 @@ func (kp *kubernetesprocessor) initKubeClient(logger *zap.Logger, kubeClient kub
 		kubeClient = kube.New
 	}
 	if !kp.passthroughMode {
-		kc, err := kubeClient(logger, kp.apiConfig, kp.rules, kp.filters, kp.podAssociations, nil, nil, nil)
+		kc, err := kubeClient(logger, kp.apiConfig, kp.rules, kp.filters, kp.podAssociations, nil, nil, nil, kp.delimiter)
 		if err != nil {
 			return err
 		}

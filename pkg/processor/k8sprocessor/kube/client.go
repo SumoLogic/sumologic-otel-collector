@@ -44,6 +44,7 @@ type WatchClient struct {
 	deleteQueue     []deleteRequest
 	stopCh          chan struct{}
 	op              OwnerAPI
+	delimiter       string
 
 	// A map containing Pod related data, used to associate them with resources.
 	// Key can be either an IP address or Pod UID
@@ -67,6 +68,7 @@ func New(
 	newClientSet APIClientsetProvider,
 	newInformer InformerProvider,
 	newOwnerProviderFunc OwnerProvider,
+	delimiter string,
 ) (Client, error) {
 	c := &WatchClient{
 		logger:          logger,
@@ -75,6 +77,7 @@ func New(
 		Associations:    associations,
 		deploymentRegex: dRegex,
 		stopCh:          make(chan struct{}),
+		delimiter:       delimiter,
 	}
 	go c.deleteLoop(time.Second*30, defaultPodDeleteGracePeriod)
 
@@ -307,7 +310,7 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 		}
 
 		if c.Rules.ServiceName {
-			tags[c.Rules.Tags.ServiceName] = strings.Join(c.op.GetServices(pod), ", ")
+			tags[c.Rules.Tags.ServiceName] = strings.Join(c.op.GetServices(pod), c.delimiter)
 		}
 
 	}
