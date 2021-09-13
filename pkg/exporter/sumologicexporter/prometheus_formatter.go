@@ -42,7 +42,7 @@ const (
 )
 
 func newPrometheusFormatter() (prometheusFormatter, error) {
-	sanitNameRegex, err := regexp.Compile(`[^0-9a-zA-Z]`)
+	sanitNameRegex, err := regexp.Compile(`[^0-9a-zA-Z\./_:]`)
 	if err != nil {
 		return prometheusFormatter{}, err
 	}
@@ -84,7 +84,7 @@ func (f *prometheusFormatter) tags2String(attr pdata.AttributeMap, labels pdata.
 }
 
 // sanitizeKey returns sanitized key string by replacing
-// all non-alphanumeric chars with `_`
+// all non-allowed chars with `_`
 func (f *prometheusFormatter) sanitizeKey(s string) string {
 	return f.sanitNameRegex.ReplaceAllString(s, "_")
 }
