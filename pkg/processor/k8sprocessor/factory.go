@@ -49,7 +49,9 @@ func createDefaultConfig() config.Processor {
 	return &Config{
 		ProcessorSettings: config.NewProcessorSettings(config.NewID(typeStr)),
 		APIConfig:         k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
-		Extract:           ExtractConfig{Delimiter: DefaultDelimiter},
+		Extract:           ExtractConfig{
+			Delimiter: DefaultDelimiter
+		},
 	}
 }
 
