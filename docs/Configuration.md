@@ -29,6 +29,7 @@
     - [Source Processor](#source-processor)
     - [Sumo Logic Syslog Processor](#sumo-logic-syslog-processor)
   - [Open Telemetry Upstream Processors](#open-telemetry-upstream-processors)
+    - [Attributes Processor](#attributes-processor)
     - [Group by Attributes Processor](#group-by-attributes-processor)
     - [Group by Trace Processor](#group-by-trace-processor)
     - [Metrics Transform Processor](#metrics-transform-processor)
@@ -703,6 +704,38 @@ and are incorporated into the Sumo Logic Open Telemetry distro without any chang
 
 If you are already familiar with Open Telemetry, you may know how the upstream components work
 and you can expect no changes in their behaviour.
+
+#### Attributes Processor
+
+Use Attributes Processor to add, delete, modify attributes on logs, metrics, traces.
+
+See also [Resource Processor](#resource-processor) to modify attributes on resource level.
+
+Example configuration:
+
+```yaml
+processors:
+  attributes:
+    actions:
+      - key: db.table
+        action: delete
+      - key: redacted_span
+        value: true
+        action: upsert
+      - key: copy_key
+        from_attribute: key_original
+        action: update
+      - key: account_id
+        value: 2245
+      - key: account_password
+        action: delete
+      - key: account_email
+        action: hash
+```
+
+For details, see the [Attributes Processor documentation][attributesprocessor_docs].
+
+[attributesprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/attributesprocessor/README.md
 
 #### Group by Attributes Processor
 

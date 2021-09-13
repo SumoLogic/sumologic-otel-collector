@@ -82,6 +82,7 @@ OT distro.
 
 | Name                                                                               | Source                                                                                                              |
 |------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
+| `attributesprocessor` [configuration help][attributesprocessor_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/attributesprocessor          |
 | `groupbyattrsprocessor` [configuration help][groupbyattrsprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/groupbyattrsprocessor      |
 | `groupbytraceprocessor` [configuration help][groupbytraceprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/groupbytraceprocessor      |
 | `metricstransformprocessor` [configuration help][metricstransformprocessor_help]   | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/metricstransformprocessor  |
@@ -92,6 +93,7 @@ OT distro.
 | `tailsamplingprocessor` [configuration help][tailsamplingprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/tailsamplingprocessor      |
 | `filterprocessor` [configuration help][filterprocessor_help]                       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/processor/filterprocessor            |
 
+[attributesprocessor_help]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/attributesprocessor
 [groupbyattrsprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#group-by-attributes-processor
 [groupbytraceprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#group-by-trace-processor
 [metricstransformprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#metrics-transform-processor
