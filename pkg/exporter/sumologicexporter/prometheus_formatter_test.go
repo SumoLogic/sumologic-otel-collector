@@ -26,8 +26,8 @@ func TestSanitizeKey(t *testing.T) {
 	f, err := newPrometheusFormatter()
 	require.NoError(t, err)
 
-	key := "&^*123-abc-ABC!?"
-	expected := "___123_abc_ABC__"
+	key := "&^*123-abc-ABC!./?_:"
+	expected := "___123_abc_ABC_./__:"
 	assert.Equal(t, expected, f.sanitizeKey(key))
 }
 
@@ -35,8 +35,8 @@ func TestSanitizeValue(t *testing.T) {
 	f, err := newPrometheusFormatter()
 	require.NoError(t, err)
 
-	value := `&^*123-abc-ABC!?"\\n`
-	expected := `&^*123-abc-ABC!?\"\\\n`
+	value := `&^*123-abc-ABC!?./"\\n`
+	expected := `&^*123-abc-ABC!?./\"\\\n`
 	assert.Equal(t, expected, f.sanitizeValue(value))
 }
 
