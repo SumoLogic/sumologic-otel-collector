@@ -1017,7 +1017,7 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 					m.SetDataType(pdata.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetDoubleVal(123.456)
-					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
+					dp.SetTimestamp(pdata.NewTimestampFromTime(time.Unix(1605534165, 0)))
 					dp.Attributes().InsertString("test", "test_value")
 				}
 				return metrics
@@ -1042,7 +1042,7 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 					m.SetDataType(pdata.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetDoubleVal(123.456)
-					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
+					dp.SetTimestamp(pdata.NewTimestampFromTime(time.Unix(1605534165, 0)))
 					dp.Attributes().InsertString("test", "test_value")
 				}
 				{
@@ -1053,7 +1053,7 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 					m.SetDataType(pdata.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetIntVal(123456)
-					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 1000000)))
+					dp.SetTimestamp(pdata.NewTimestampFromTime(time.Unix(1605534165, 1000000)))
 					dp.Attributes().InsertString("test", "test_value")
 				}
 				{
@@ -1064,7 +1064,7 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 					m.SetDataType(pdata.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetIntVal(10)
-					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 2000000)))
+					dp.SetTimestamp(pdata.NewTimestampFromTime(time.Unix(1605534165, 2000000)))
 					dp.Attributes().InsertString("test", "test_value")
 				}
 				return metrics
@@ -1090,7 +1090,7 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 					m.SetDataType(pdata.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetDoubleVal(123.456)
-					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
+					dp.SetTimestamp(pdata.NewTimestampFromTime(time.Unix(1605534165, 0)))
 					dp.Attributes().InsertString("test", "test_value")
 				}
 				return metrics
@@ -1114,7 +1114,7 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 					m.SetDataType(pdata.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetDoubleVal(123.456)
-					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 0)))
+					dp.SetTimestamp(pdata.NewTimestampFromTime(time.Unix(1605534165, 0)))
 					dp.Attributes().InsertString("test", "test_value")
 				}
 				{
@@ -1125,7 +1125,7 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 					m.SetDataType(pdata.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetIntVal(123456)
-					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 1000000)))
+					dp.SetTimestamp(pdata.NewTimestampFromTime(time.Unix(1605534165, 1000000)))
 					dp.Attributes().InsertString("test", "test_value")
 				}
 				{
@@ -1136,7 +1136,7 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 					m.SetDataType(pdata.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetIntVal(10)
-					dp.SetTimestamp(pdata.TimestampFromTime(time.Unix(1605534165, 2000000)))
+					dp.SetTimestamp(pdata.NewTimestampFromTime(time.Unix(1605534165, 2000000)))
 					dp.Attributes().InsertString("test", "test_value")
 				}
 				return metrics

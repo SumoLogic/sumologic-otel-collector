@@ -211,10 +211,8 @@ func exampleMultitypeLogs() []pdata.LogRecord {
 
 	attVal = pdata.NewAttributeValueArray()
 	attArr := attVal.ArrayVal()
-	strVal := pdata.NewAttributeValueNull()
-	strVal.SetStringVal("lv2")
-	intVal := pdata.NewAttributeValueNull()
-	intVal.SetIntVal(13)
+	strVal := pdata.NewAttributeValueString("lv2")
+	intVal := pdata.NewAttributeValueInt(13)
 
 	strVal.CopyTo(attArr.AppendEmpty())
 	intVal.CopyTo(attArr.AppendEmpty())
