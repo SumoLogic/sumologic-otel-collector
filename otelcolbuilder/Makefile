@@ -1,4 +1,6 @@
 BINARY_NAME ?= otelcol-sumo
+# TODO: change this when 0.35.0 gets released
+# https://github.com/open-telemetry/opentelemetry-collector-builder
 BUILDER_VERSION ?= 0.34.0
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector-builder
 BUILDER_BIN_PATH ?= ${HOME}/bin/opentelemetry-collector-builder

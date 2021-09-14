@@ -24,9 +24,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/configcheck"
-	"go.uber.org/zap"
 )
 
 func TestFactory_CreateDefaultConfig(t *testing.T) {
@@ -54,7 +54,9 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 	ccfg.Credentials.AccessKey = "dummy_access_key"
 
 	ext, err := createExtension(context.Background(),
-		component.ExtensionCreateSettings{Logger: zap.NewNop()},
+		component.ExtensionCreateSettings{
+			TelemetrySettings: componenttest.NewNopTelemetrySettings(),
+		},
 		cfg,
 	)
 	require.NoError(t, err)
@@ -68,7 +70,9 @@ func TestFactory_CreateExtension(t *testing.T) {
 	cfg.Credentials.AccessKey = "dummy_access_key"
 
 	ext, err := createExtension(context.Background(),
-		component.ExtensionCreateSettings{Logger: zap.NewNop()},
+		component.ExtensionCreateSettings{
+			TelemetrySettings: componenttest.NewNopTelemetrySettings(),
+		},
 		cfg,
 	)
 	require.NoError(t, err)

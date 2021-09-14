@@ -401,7 +401,7 @@ receivers:
 For details, see the [Filelog Receiver documentation][filelogreceiver_readme].
 
 [opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
-[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/filelogreceiver
+[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/receiver/filelogreceiver
 
 #### Fluent Forward Receiver
 
@@ -438,7 +438,7 @@ receivers:
 
 For details, see the [Host Metrics Receiver documentation][hostmetricsreceiver_readme].
 
-[hostmetricsreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/hostmetricsreceiver
+[hostmetricsreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/receiver/hostmetricsreceiver
 
 #### Syslog Receiver
 
@@ -471,7 +471,7 @@ For details, see the [Syslog Receiver documentation][syslogreceiver_readme].
 __Note: There are actually two ways of getting and processing Syslog data.
 More details are available in [comparison document](Comparison.md#syslog).__
 
-[syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/syslogreceiver
+[syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/receiver/syslogreceiver
 
 #### Statsd Receiver
 
@@ -515,7 +515,7 @@ receivers:
 For details, see the [OTLP Receiver documentation][otlpreceiver_readme].
 
 [otlp]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md
-[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.34.0/receiver/otlpreceiver
+[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.35.0/receiver/otlpreceiver
 
 #### TCPlog Receiver
 
@@ -531,7 +531,7 @@ receivers:
 
 For details, see the [TCPlog Receiver documentation][tcplogreceiver_readme].
 
-[tcplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/tcplogreceiver
+[tcplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/receiver/tcplogreceiver
 
 #### UDPlog Receiver
 
@@ -547,7 +547,7 @@ receivers:
 
 For details, see the [UDPlog Receiver documentation][udplogreceiver_readme].
 
-[udplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/udplogreceiver
+[udplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/receiver/udplogreceiver
 
 #### Zipkin Receiver
 
@@ -562,7 +562,7 @@ receivers:
 
 For details, see the [Zipkin Receiver documentation][zipkinreceiver_readme].
 
-[zipkinreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/zipkinreceiver
+[zipkinreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/receiver/zipkinreceiver
 
 #### Receivers from OpenTelemetry Collector
 

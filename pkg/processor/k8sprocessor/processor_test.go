@@ -40,7 +40,9 @@ func newTracesProcessor(cfg config.Processor, next consumer.Traces, options ...O
 	opts := append(options, withKubeClientProvider(newFakeClient))
 	return createTracesProcessorWithOptions(
 		context.Background(),
-		component.ProcessorCreateSettings{Logger: zap.NewNop()},
+		component.ProcessorCreateSettings{
+			TelemetrySettings: componenttest.NewNopTelemetrySettings(),
+		},
 		cfg,
 		next,
 		opts...,
@@ -51,7 +53,9 @@ func newMetricsProcessor(cfg config.Processor, nextMetricsConsumer consumer.Metr
 	opts := append(options, withKubeClientProvider(newFakeClient))
 	return createMetricsProcessorWithOptions(
 		context.Background(),
-		component.ProcessorCreateSettings{Logger: zap.NewNop()},
+		component.ProcessorCreateSettings{
+			TelemetrySettings: componenttest.NewNopTelemetrySettings(),
+		},
 		cfg,
 		nextMetricsConsumer,
 		opts...,
@@ -62,7 +66,9 @@ func newLogsProcessor(cfg config.Processor, nextLogsConsumer consumer.Logs, opti
 	opts := append(options, withKubeClientProvider(newFakeClient))
 	return createLogsProcessorWithOptions(
 		context.Background(),
-		component.ProcessorCreateSettings{Logger: zap.NewNop()},
+		component.ProcessorCreateSettings{
+			TelemetrySettings: componenttest.NewNopTelemetrySettings(),
+		},
 		cfg,
 		nextLogsConsumer,
 		opts...,
