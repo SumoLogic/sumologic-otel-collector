@@ -14,6 +14,9 @@ exporters:
   # Exporters with non-upstreamed changes:
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter v0.35.0"
   # Upstream exporters:
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/carbonexporter v0.35.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter v0.35.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.35.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/loadbalancingexporter v0.35.0"
 
 processors:
