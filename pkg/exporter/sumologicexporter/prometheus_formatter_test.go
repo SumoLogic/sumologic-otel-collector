@@ -27,7 +27,7 @@ func TestSanitizeKey(t *testing.T) {
 	require.NoError(t, err)
 
 	key := "&^*123-abc-ABC!./?_:"
-	expected := "___123_abc_ABC_./__:"
+	expected := "___123-abc-ABC_./__:"
 	assert.Equal(t, expected, f.sanitizeKey(key))
 }
 
