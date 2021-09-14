@@ -35,7 +35,7 @@ gomod-download-all:
 .PHONY: install-golint
 install-golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
-	sh -s -- -b $(shell go env GOPATH)/bin v1.41.1
+	sh -s -- -b $(shell go env GOPATH)/bin v1.42.1
 
 .PHONY: for-all
 for-all:
