@@ -43,6 +43,9 @@
   - [Sumo Logic Custom Exporters](#sumo-logic-custom-exporters)
     - [Sumo Logic Exporter](#sumo-logic-exporter)
   - [Open Telemetry Upstream Exporters](#open-telemetry-upstream-exporters)
+    - [Carbon Exporter](#carbon-exporter)
+    - [File Exporter](#file-exporter)
+    - [Kafka Exporter](#kafka-exporter)
     - [Load Balancing Exporter](#load-balancing-exporter)
     - [Logging Exporter](#logging-exporter)
 - [Command-line configuration options](#command-line-configuration-options)
@@ -1016,6 +1019,68 @@ and are incorporated into the Sumo Logic Open Telemetry distro without any chang
 
 If you are already familiar with Open Telemetry, you may know how the upstream components work
 and you can expect no changes in their behaviour.
+
+#### Carbon Exporter
+
+The Carbon Exporter supports Carbon's plaintext protocol.
+
+Example configuration:
+
+```yaml
+exporters:
+  carbon:
+    # by default it will export to localhost:2003 using tcp
+  carbon/allsettings:
+    # use endpoint to specify alternative destinations for the exporter,
+    # the default is localhost:2003
+    endpoint: localhost:8080
+    # timeout is the maximum duration allowed to connecting and sending the
+    # data to the configured endpoint.
+    # The default is 5 seconds.
+    timeout: 10s
+```
+
+For details, see the [Carbon documentation][carbonexporter_docs].
+
+[carbonexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/carbonexporter/README.md
+
+#### File Exporter
+
+The File Exporter will write pipeline data to a JSON file.
+The data is written in Protobuf JSON encoding using OpenTelemetry protocol.
+
+Example configuration:
+
+```yaml
+exporters:
+  file:
+    path: ./filename.json
+```
+
+For details, see the [File Exporter documentation][fileexporter_docs].
+
+[fileexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/fileexporter/README.md
+
+#### Kafka Exporter
+
+The Kafka exporter exports traces to Kafka.
+This exporter uses a synchronous producer that blocks and does not batch messages,
+therefore it should be used with batch and queued retry processors for higher throughput and resiliency.
+Message payload encoding is configurable.
+
+Example configuration:
+
+```yaml
+exporters:
+  kafka:
+    brokers:
+      - localhost:9092
+    protocol_version: 2.0.0
+```
+
+For details, see the [Kafka Exporter documentation][kafkaexporter_docs].
+
+[kafkaexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/kafkaexporter/README.md
 
 #### Load Balancing Exporter
 

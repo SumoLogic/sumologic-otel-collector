@@ -118,9 +118,15 @@ OT distro.
 
 | Name                                                                     | Source                                                                                                        |
 |--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| `carbonexporter` [configuration help][carbonexporter_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/exporter/carbonexporter        |
+| `fileexporter` [configuration help][fileexporter_help]                   | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/exporter/fileexporter          |
+| `kafkaexporter` [configuration help][kafkaexporter_help]                 | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/exporter/kafkaexporter         |
 | `loadbalancingexporter` [configuration help][loadbalancingexporter_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/exporter/loadbalancingexporter |
 | `loggingexporter` [configuration help][loggingexporter_help]             | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.35.0/exporter/loggingexporter               |
 
+[carbonexporter_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#carbon-exporter
+[fileexporter_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#file-exporter
+[kafkaexporter_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#kafka-exporter
 [loadbalancingexporter_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#load-balancing-exporter
 [loggingexporter_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#logging-exporter
 
