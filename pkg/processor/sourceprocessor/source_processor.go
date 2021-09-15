@@ -16,6 +16,7 @@ package sourceprocessor
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"regexp"
 	"strings"
@@ -54,6 +55,13 @@ func (stk sourceKeys) convertKey(key string) string {
 	default:
 		return key
 	}
+}
+
+// dockerLog represents log from k8s using docker log driver send by FluentBit
+type dockerLog struct {
+	Stream string
+	Time   string
+	Log    string
 }
 
 type sourceProcessor struct {
@@ -231,6 +239,8 @@ func (sp *sourceProcessor) ProcessMetrics(ctx context.Context, md pdata.Metrics)
 func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md pdata.Logs) (pdata.Logs, error) {
 	rss := md.ResourceLogs()
 
+	var dockerLog dockerLog
+
 	for i := 0; i < rss.Len(); i++ {
 		rs := rss.At(i)
 		res := sp.processResource(rs.Resource())
@@ -238,6 +248,41 @@ func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md pdata.Logs) (pdat
 
 		if sp.isFilteredOut(atts) {
 			rs.InstrumentationLibraryLogs().RemoveIf(func(pdata.InstrumentationLibraryLogs) bool { return true })
+		}
+
+		// Due to fluent-bit configuration for sumologic kubernetes collection,
+		// logs from kubernetes with docker log driver are send as json with
+		// `log`, `stream` and `time` keys.
+		// We would like to extract `time` and `stream` to record level attributes
+		// and treat `log` as body of the log
+		//
+		// Related issue: https://github.com/SumoLogic/sumologic-kubernetes-collection/issues/1758
+		// ToDo: remove this functionality when the issue is resolved
+
+		ills := rs.InstrumentationLibraryLogs()
+		for j := 0; j < ills.Len(); j++ {
+			ill := ills.At(j)
+			logs := ill.Logs()
+			for k := 0; k < logs.Len(); k++ {
+				log := logs.At(k)
+				if log.Body().Type() == pdata.AttributeValueTypeString {
+					err := json.Unmarshal([]byte(log.Body().StringVal()), &dockerLog)
+
+					// If there was any parsing error or any of the expected key have no value
+					// skip extraction and leave log unchanged
+					if err != nil || dockerLog.Stream == "" || dockerLog.Time == "" || dockerLog.Log == "" {
+						continue
+					}
+
+					// Extract `stream` and `time` as record level attributes
+					log.Attributes().UpsertString("stream", dockerLog.Stream)
+					log.Attributes().UpsertString("time", dockerLog.Time)
+
+					// Set log body to `log` content
+					log.Body().SetStringVal(strings.TrimSpace(dockerLog.Log))
+				}
+			}
+
 		}
 	}
 

@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/model/pdata"
 )
 
@@ -323,4 +324,93 @@ func TestTraceSourceProcessorAnnotations(t *testing.T) {
 	assert.NoError(t, err)
 
 	assertTracesEqual(t, td, want)
+}
+
+func TestLogProcessorJson(t *testing.T) {
+	testcases := []struct {
+		name               string
+		body               string
+		expectedBody       string
+		expectedAttributes map[string]string
+		testLogs           pdata.Logs
+	}{
+		{
+			name:         "dockerFormat",
+			body:         `{"log": "test\n", "stream": "stdout", "time": "2021"}`,
+			expectedBody: "test",
+			expectedAttributes: map[string]string{
+				"stream": "stdout",
+				"time":   "2021",
+			},
+		},
+		{
+			// additional fields are going to be removed
+			name:         "additionalFields",
+			body:         `{"log": "test", "stream": "stdout", "time": "2021", "additional_field": "random_value"}`,
+			expectedBody: "test",
+			expectedAttributes: map[string]string{
+				"stream": "stdout",
+				"time":   "2021",
+			},
+		},
+		{
+			// nested json log is treated as invalid data and not processed
+			name:               "nestedLog",
+			body:               `{"log": {"nested_key": "nested_value"}, "stream": "stdout", "time": "2021"}`,
+			expectedBody:       `{"log": {"nested_key": "nested_value"}, "stream": "stdout", "time": "2021"}`,
+			expectedAttributes: map[string]string{},
+		},
+		{
+			// non docker json log is not parsed
+			name:               "additionalFields",
+			body:               `{"log": "some_log", "stream": "stdout"}`,
+			expectedBody:       `{"log": "some_log", "stream": "stdout"}`,
+			expectedAttributes: map[string]string{},
+		},
+		{
+			// non json log is not parsed
+			name:               "additionalFields",
+			body:               `log": "some_log", "stream": "stdout"}`,
+			expectedBody:       `log": "some_log", "stream": "stdout"}`,
+			expectedAttributes: map[string]string{},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			inputLog := pdata.NewLogs()
+			inputLog.
+				ResourceLogs().
+				AppendEmpty().
+				InstrumentationLibraryLogs().
+				AppendEmpty().
+				Logs().
+				AppendEmpty().
+				Body().
+				SetStringVal(tc.body)
+
+			rtp := newSourceProcessor(cfg)
+
+			td, err := rtp.ProcessLogs(context.Background(), inputLog)
+			assert.NoError(t, err)
+
+			rss := td.ResourceLogs()
+			require.Equal(t, 1, rss.Len())
+
+			ills := rss.At(0).InstrumentationLibraryLogs()
+			require.Equal(t, 1, ills.Len())
+
+			logs := ills.At(0).Logs()
+			require.Equal(t, 1, logs.Len())
+
+			log := logs.At(0)
+			assert.Equal(t, tc.expectedBody, log.Body().AsString())
+
+			for key, value := range tc.expectedAttributes {
+				attr, ok := log.Attributes().Get(key)
+				require.True(t, ok)
+				assert.Equal(t, value, attr.AsString())
+			}
+		})
+	}
 }
