@@ -27,11 +27,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/model/otlp"
 	"go.opentelemetry.io/collector/model/pdata"
+	"go.uber.org/zap"
 )
 
 func LogRecordsToLogs(records []pdata.LogRecord) pdata.Logs {
@@ -59,6 +61,14 @@ func createTestConfig() *Config {
 	return config
 }
 
+func createExporterCreateSettings() component.ExporterCreateSettings {
+	return component.ExporterCreateSettings{
+		TelemetrySettings: component.TelemetrySettings{
+			Logger: zap.NewNop(),
+		},
+	}
+}
+
 // prepareExporterTest prepares an exporter test object using provided config
 // and a slice of callbacks to be called for subsequent requests coming being
 // sent to the server.
@@ -81,7 +91,7 @@ func prepareExporterTest(t *testing.T, cfg *Config, cb []func(w http.ResponseWri
 	cfg.HTTPClientSettings.Endpoint = testServer.URL
 	cfg.HTTPClientSettings.Auth = nil
 
-	exp, err := initExporter(cfg)
+	exp, err := initExporter(cfg, createExporterCreateSettings())
 	require.NoError(t, err)
 
 	require.NoError(t, exp.start(context.Background(), componenttest.NewNopHost()))
@@ -102,7 +112,7 @@ func TestInitExporter(t *testing.T) {
 			Timeout:  defaultTimeout,
 			Endpoint: "test_endpoint",
 		},
-	})
+	}, createExporterCreateSettings())
 	assert.NoError(t, err)
 }
 
@@ -116,7 +126,7 @@ func TestInitExporterInvalidLogFormat(t *testing.T) {
 			Timeout:  defaultTimeout,
 			Endpoint: "test_endpoint",
 		},
-	})
+	}, createExporterCreateSettings())
 
 	assert.EqualError(t, err, "unexpected log format: test_format")
 }
@@ -130,7 +140,7 @@ func TestInitExporterInvalidMetricFormat(t *testing.T) {
 			Endpoint: "test_endpoint",
 		},
 		CompressEncoding: "gzip",
-	})
+	}, createExporterCreateSettings())
 
 	assert.EqualError(t, err, "unexpected metric format: test_format")
 }
@@ -145,7 +155,7 @@ func TestInitExporterInvalidTraceFormat(t *testing.T) {
 			Endpoint: "test_endpoint",
 		},
 		CompressEncoding: "gzip",
-	})
+	}, createExporterCreateSettings())
 
 	assert.EqualError(t, err, "unexpected trace format: text")
 }
@@ -160,7 +170,7 @@ func TestInitExporterInvalidCompressEncoding(t *testing.T) {
 			Timeout:  defaultTimeout,
 			Endpoint: "test_endpoint",
 		},
-	})
+	}, createExporterCreateSettings())
 
 	assert.EqualError(t, err, "unexpected compression encoding: test_format")
 }
@@ -174,7 +184,7 @@ func TestInitExporterInvalidEndpointAndNoAuth(t *testing.T) {
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout: defaultTimeout,
 		},
-	})
+	}, createExporterCreateSettings())
 
 	assert.EqualError(t, err, "no endpoint and no auth extension specified")
 }
@@ -280,7 +290,7 @@ func TestInvalidSourceFormats(t *testing.T) {
 			Endpoint: "test_endpoint",
 		},
 		MetadataAttributes: []string{"[a-z"},
-	})
+	}, createExporterCreateSettings())
 	assert.EqualError(t, err, "error parsing regexp: missing closing ]: `[a-z`")
 }
 
@@ -296,7 +306,7 @@ func TestInvalidHTTPCLient(t *testing.T) {
 				return nil, errors.New("roundTripperException")
 			},
 		},
-	})
+	}, createExporterCreateSettings())
 	assert.NoError(t, err)
 
 	assert.EqualError(t,
