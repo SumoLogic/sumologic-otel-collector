@@ -159,6 +159,36 @@ Below is a list of all attribute keys that are being translated.
 
 ## Source Templates
 
+> **IMPORTANT NOTE**:
+>
+> When using non-`OTLP` based format (e.g. `JSON` for logs) metadata attributes
+> used in source templates have to have a regex defined in
+> `metadata_attributes` that would match them.
+>
+> Otherwise the attributes will not be available during source templates rendering.
+> Hence this is correct:
+>
+> ```
+> source_name: "%{k8s.namespace.name}.%{k8s.pod.name}.%{k8s.container.name}"
+> source_category: "%{k8s.namespace.name}/%{k8s.pod.pod_name}"
+> source_host: '%{k8s.pod.hostname}'
+> metadata_attributes:
+>   - k8s.*
+>   - some_other_metadata_regex.*
+> ```
+>
+> While is **not**:
+>
+> ```
+> source_name: "%{k8s.namespace.name}.%{k8s.pod.name}.%{k8s.container.name}"
+> source_category: "%{k8s.namespace.name}/%{k8s.pod.pod_name}"
+> source_host: '%{k8s.pod.hostname}'
+> metadata_attributes:
+>   - host
+>   - pod
+>   - some_other_metadata_regex.*
+> ```
+
 You can specify a template with an attribute for `source_category`, `source_name`,
 `source_host` or `graphite_template` using `%{attr_name}`.
 
@@ -194,7 +224,7 @@ exporters:
   sumologic:
     source_category: "custom category"
     source_name: "custom name"
-    source_host: "custom host"
+    source_host: "%{k8s.pod.name}"
     metadata_attributes:
       - k8s.*
 
