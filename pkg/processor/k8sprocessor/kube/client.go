@@ -294,8 +294,10 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 				if c.Rules.DaemonSetName {
 					tags[c.Rules.Tags.DaemonSetName] = owner.name
 				}
-			case "DeploymentName":
-				// This should be already set earlier
+			case "Deployment":
+				if c.Rules.DeploymentName {
+					tags[c.Rules.Tags.DeploymentName] = owner.name
+				}
 			case "ReplicaSet":
 				if c.Rules.ReplicaSetName {
 					tags[c.Rules.Tags.ReplicaSetName] = owner.name

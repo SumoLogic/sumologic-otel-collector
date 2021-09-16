@@ -40,14 +40,32 @@ func newFakeOwnerProvider(logger *zap.Logger,
 	ownerCache.objectOwners = map[string]*ObjectOwner{}
 	ownerCache.logger = logger
 
-	oo := ObjectOwner{
+	replicaSet := ObjectOwner{
 		UID:       "1a1658f9-7818-11e9-90f1-02324f7e0d1e",
 		namespace: "kube-system",
-		ownerUIDs: []types.UID{},
+		ownerUIDs: []types.UID{types.UID("94682908-e546-42cc-9972-62bcd09bd9de")},
 		kind:      "ReplicaSet",
-		name:      "SomeReplicaSet",
+		name:      "dearest-deploy-77c99ccb96",
 	}
-	ownerCache.objectOwners[string(oo.UID)] = &oo
+	ownerCache.objectOwners[string(replicaSet.UID)] = &replicaSet
+
+	deployment := ObjectOwner{
+		UID:       "94682908-e546-42cc-9972-62bcd09bd9de",
+		namespace: "kube-system",
+		ownerUIDs: []types.UID{},
+		kind:      "Deployment",
+		name:      "dearest-deploy",
+	}
+	ownerCache.objectOwners[string(deployment.UID)] = &deployment
+
+	statefulSet := ObjectOwner{
+		UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75391",
+		namespace: "kube-system",
+		ownerUIDs: []types.UID{},
+		kind:      "StatefulSet",
+		name:      "snug-sts",
+	}
+	ownerCache.objectOwners[string(statefulSet.UID)] = &statefulSet
 
 	return &ownerCache, nil
 }
@@ -78,11 +96,30 @@ func (op *fakeOwnerCache) GetNamespace(pod *api_v1.Pod) *api_v1.Namespace {
 func (op *fakeOwnerCache) GetOwners(pod *api_v1.Pod) []*ObjectOwner {
 	objectOwners := []*ObjectOwner{}
 
-	// Make sure the tree is cached/traversed first
+	visited := map[types.UID]bool{}
+	queue := []types.UID{}
+
 	for _, or := range pod.OwnerReferences {
-		oo, found := op.objectOwners[string(or.UID)]
+		if _, uidVisited := visited[or.UID]; !uidVisited {
+			queue = append(queue, or.UID)
+			visited[or.UID] = true
+		}
+	}
+
+	for len(queue) > 0 {
+		uid := queue[0]
+		queue = queue[1:]
+
+		oo, found := op.objectOwners[string(uid)]
 		if found {
 			objectOwners = append(objectOwners, oo)
+
+			for _, ownerUID := range oo.ownerUIDs {
+				if _, uidVisited := visited[ownerUID]; !uidVisited {
+					queue = append(queue, ownerUID)
+					visited[ownerUID] = true
+				}
+			}
 		}
 	}
 
