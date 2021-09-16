@@ -146,6 +146,7 @@ OT distro.
 |----------------------------|-------------------------------------------------------------------------------------------------------------------|
 | `ballastextension`         | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.35.0/extension/ballastextension                 |
 | `bearertokenauthextension` | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/bearertokenauthextension |
+| `storage`                  | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/storage                  |
 | `healthcheckextension`     | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/healthcheckextension     |
 | `oidcauthextension`        | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/oidcauthextension        |
 | `pprofextension`           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/pprofextension           |
