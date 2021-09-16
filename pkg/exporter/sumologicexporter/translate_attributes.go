@@ -62,10 +62,11 @@ func translateAttributes(attributes pdata.AttributeMap) {
 }
 
 // translateConfigValue renames attribute keys in config values according to attributeTranslations.
+// Example:
+// * '%{k8s.container.name}' would translate to '%{container}'
+// * '%{k8s.pod.name}-%{custom_attr}' would translate to '%{pod}-%{custom_attr}'
+// * '%{pod}' would translate to '%{pod}'
 func translateConfigValue(value string) string {
-	for _, sumoKey := range attributeTranslations {
-		value = strings.ReplaceAll(value, fmt.Sprintf("%%{%v}", sumoKey), unrecognizedAttributeValue)
-	}
 	for otKey, sumoKey := range attributeTranslations {
 		value = strings.ReplaceAll(value, fmt.Sprintf("%%{%v}", otKey), fmt.Sprintf("%%{%v}", sumoKey))
 	}

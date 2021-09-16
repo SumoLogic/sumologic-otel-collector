@@ -427,7 +427,11 @@ func TestPushTextLogsWithAttributeTranslation(t *testing.T) {
 			assert.Equal(t, `Example log`, body)
 			assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))
 			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
-			assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"))
+
+			// This gets the value from 'host.name' because we do not disallow
+			// using Sumo schema and 'host.name' from OT convention
+			// translates into 'host' in Sumo convention
+			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Host"))
 		},
 	}
 	test := prepareExporterTest(t, config, expectedRequests)
@@ -479,7 +483,11 @@ func TestPushJSONLogsWithAttributeTranslation(t *testing.T) {
 			assert.Equal(t, `{"InstanceType":"wizard","host":"harry-potter","log":"Example log"}`, body)
 			assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))
 			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
-			assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"))
+
+			// This gets the value from 'host.name' because we do not disallow
+			// using Sumo schema and 'host.name' from OT convention
+			// translates into 'host' in Sumo convention.
+			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Host"))
 		},
 	}
 	test := prepareExporterTest(t, config, expectedRequests)
@@ -889,7 +897,11 @@ func TestPushMetrics_AttributeTranslation(t *testing.T) {
 			expectedHeaders: map[string]string{
 				"Content-Type":    "application/vnd.sumologic.prometheus",
 				"X-Sumo-Category": "harry-potter",
-				"X-Sumo-Host":     "undefined",
+
+				// This gets the value from 'host.name' because we do not disallow
+				// using Sumo schema and 'host.name' from OT convention
+				// translates into 'host' in Sumo convention
+				"X-Sumo-Host": "harry-potter",
 			},
 			expectedBody: `test.metric.data{test="test_value",test2="second_value",host="harry-potter",InstanceType="wizard"} 14500 1605534165000`,
 		},
