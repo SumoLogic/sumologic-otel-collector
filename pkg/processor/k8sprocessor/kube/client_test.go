@@ -421,13 +421,6 @@ func TestExtractionRules(t *testing.T) {
 			Annotations: map[string]string{
 				"annotation1": "av1",
 			},
-			OwnerReferences: []meta_v1.OwnerReference{
-				{
-					Kind: "ReplicaSet",
-					Name: "foo-bar-rs",
-					UID:  "1a1658f9-7818-11e9-90f1-02324f7e0d1e",
-				},
-			},
 		},
 		Spec: api_v1.PodSpec{
 			NodeName: "node1",
@@ -451,6 +444,7 @@ func TestExtractionRules(t *testing.T) {
 
 	testCases := []struct {
 		name       string
+		podOwner   *meta_v1.OwnerReference
 		rules      ExtractionRules
 		attributes map[string]string
 	}{{
@@ -467,7 +461,29 @@ func TestExtractionRules(t *testing.T) {
 			"k8s.deployment.name": "auth-service",
 		},
 	}, {
+		name: "statefulset",
+		podOwner: &meta_v1.OwnerReference{
+			Kind: "StatefulSet",
+			Name: "snug-sts",
+			UID:  "f15f0585-a0bc-43a3-96e4-dd2eace75391",
+		},
+		rules: ExtractionRules{
+			StatefulSetName:    true,
+			DeploymentName:     true,
+			OwnerLookupEnabled: true,
+			Tags:               NewExtractionFieldTags(),
+		},
+		attributes: map[string]string{
+			"k8s.deployment.name":  "auth-service",
+			"k8s.statefulset.name": "snug-sts",
+		},
+	}, {
 		name: "metadata",
+		podOwner: &meta_v1.OwnerReference{
+			Kind: "ReplicaSet",
+			Name: "foo-bar-rs",
+			UID:  "1a1658f9-7818-11e9-90f1-02324f7e0d1e",
+		},
 		rules: ExtractionRules{
 			ClusterName:        true,
 			ContainerID:        true,
@@ -492,12 +508,12 @@ func TestExtractionRules(t *testing.T) {
 			"k8s.container.id":    "111-222-333",
 			"k8s.container.image": "auth-service-image",
 			"k8s.container.name":  "auth-service-container-name",
-			"k8s.deployment.name": "auth-service",
+			"k8s.deployment.name": "dearest-deploy",
 			"k8s.pod.hostname":    "auth-hostname3",
 			"k8s.pod.id":          "33333",
 			"k8s.pod.name":        "auth-service-abc12-xyz3",
 			"k8s.pod.startTime":   pod.GetCreationTimestamp().String(),
-			"k8s.replicaset.name": "SomeReplicaSet",
+			"k8s.replicaset.name": "dearest-deploy-77c99ccb96",
 			"k8s.service.name":    "foo_bar",
 			"k8s.namespace.name":  "ns1",
 			"k8s.node.name":       "node1",
@@ -586,7 +602,13 @@ func TestExtractionRules(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			if tc.podOwner != nil {
+				pod.OwnerReferences = []meta_v1.OwnerReference{
+					*tc.podOwner,
+				}
+			}
 			c.Rules = tc.rules
+
 			c.handlePodAdd(pod)
 			p, ok := c.GetPod(PodIdentifier(pod.Status.PodIP))
 			require.True(t, ok)
@@ -594,8 +616,8 @@ func TestExtractionRules(t *testing.T) {
 			assert.Equal(t, len(tc.attributes), len(p.Attributes))
 			for k, v := range tc.attributes {
 				got, ok := p.Attributes[k]
-				assert.True(t, ok)
-				assert.Equal(t, v, got)
+				assert.True(t, ok, "Attribute '%s' not found.", k)
+				assert.Equal(t, v, got, "Value of '%s' should be '%s', but was '%s'.", k, v, got)
 			}
 		})
 	}
