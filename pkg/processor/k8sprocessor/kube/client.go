@@ -373,6 +373,7 @@ func (c *WatchClient) extractField(v string, r FieldExtractionRule) string {
 func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
 	newPod := &Pod{
 		Name:      pod.Name,
+		Namespace: pod.Namespace,
 		Address:   pod.Status.PodIP,
 		PodUID:    string(pod.UID),
 		StartTime: pod.Status.StartTime,
@@ -403,8 +404,8 @@ func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
 		c.Pods[PodIdentifier(pod.Status.PodIP)] = newPod
 	}
 	// Use pod_name.namespace_name identifier
-	if newPod.Name != "" && newPod.Attributes[c.Rules.Tags.Namespace] != "" {
-		c.Pods[PodIdentifier(fmt.Sprintf("%s.%s", newPod.Name, newPod.Attributes[c.Rules.Tags.Namespace]))] = newPod
+	if newPod.Name != "" && newPod.Namespace != "" {
+		c.Pods[PodIdentifier(fmt.Sprintf("%s.%s", newPod.Name, newPod.Namespace))] = newPod
 	}
 }
 

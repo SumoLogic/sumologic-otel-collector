@@ -78,6 +78,7 @@ type APIClientsetProvider func(config k8sconfig.APIConfig) (kubernetes.Interface
 // Pod represents a kubernetes pod.
 type Pod struct {
 	Name       string
+	Namespace  string
 	Address    string
 	PodUID     string
 	Attributes map[string]string
