@@ -1,4 +1,4 @@
-# sumologic-otel-collector
+# Sumo Logic Distribution of OpenTelemetry
 
 [![Default branch build](https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/dev_builds.yml/badge.svg)](https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/dev_builds.yml)
 
