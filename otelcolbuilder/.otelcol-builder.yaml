@@ -95,3 +95,7 @@ replaces:
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/sourceprocessor => ./../../pkg/processor/sourceprocessor
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor => ./../../pkg/processor/k8sprocessor
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/sumologicsyslogprocessor => ./../../pkg/processor/sumologicsyslogprocessor
+
+  # TODO: remove this when regexp log filtering is released upstream, e.g. this
+  # PR: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5237
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/pmalek-sumo/opentelemetry-collector-contrib/processor/filterprocessor 6643765789daf85c51150b5de8bb64a82d9c52e0
