@@ -98,4 +98,6 @@ replaces:
 
   # TODO: remove this when regexp log filtering is released upstream, e.g. this
   # PR: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5237
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/pmalek-sumo/opentelemetry-collector-contrib/processor/filterprocessor 6643765789daf85c51150b5de8bb64a82d9c52e0
+  # and when record level log filtering is available as implemented in here:
+  # https://github.com/pmalek-sumo/opentelemetry-collector-contrib/commit/11de2c03d3dbbde2e73b8a816318a2515c843985
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/filterprocessor 11de2c03d3dbbde2e73b8a816318a2515c843985
