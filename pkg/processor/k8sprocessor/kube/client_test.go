@@ -452,16 +452,29 @@ func TestExtractionRules(t *testing.T) {
 		rules:      ExtractionRules{},
 		attributes: nil,
 	}, {
-		name: "deployment",
+		name: "deployment name without owner lookup",
 		rules: ExtractionRules{
 			DeploymentName: true,
 			Tags:           NewExtractionFieldTags(),
 		},
+		attributes: map[string]string{},
+	}, {
+		name: "deployment name with owner lookup",
+		podOwner: &meta_v1.OwnerReference{
+			Kind: "ReplicaSet",
+			Name: "dearest-deploy-77c99ccb96",
+			UID:  "1a1658f9-7818-11e9-90f1-02324f7e0d1e",
+		},
+		rules: ExtractionRules{
+			DeploymentName:     true,
+			OwnerLookupEnabled: true,
+			Tags:               NewExtractionFieldTags(),
+		},
 		attributes: map[string]string{
-			"k8s.deployment.name": "auth-service",
+			"k8s.deployment.name": "dearest-deploy",
 		},
 	}, {
-		name: "statefulset",
+		name: "statefulset name",
 		podOwner: &meta_v1.OwnerReference{
 			Kind: "StatefulSet",
 			Name: "snug-sts",
@@ -474,7 +487,6 @@ func TestExtractionRules(t *testing.T) {
 			Tags:               NewExtractionFieldTags(),
 		},
 		attributes: map[string]string{
-			"k8s.deployment.name":  "auth-service",
 			"k8s.statefulset.name": "snug-sts",
 		},
 	}, {

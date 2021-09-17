@@ -34,7 +34,7 @@ can be extracted:
   - `containerImage`
   - `clusterName`
   - `daemonSetName` _(`owner_lookup_enabled` must be set to `true`)_
-  - `deploymentName`
+  - `deploymentName` _(`owner_lookup_enabled` must be set to `true`)_
   - `hostName`
   - `namespace`
   - `nodeName`
