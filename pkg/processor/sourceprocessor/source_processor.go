@@ -71,9 +71,8 @@ type sourceProcessor struct {
 	sourceNameFiller     attributeFiller
 	sourceHostFiller     attributeFiller
 
-	systemdFiltering bool
-	exclude          map[string]*regexp.Regexp
-	keys             sourceKeys
+	exclude map[string]*regexp.Regexp
+	keys    sourceKeys
 }
 
 const (
@@ -117,14 +116,8 @@ func newSourceProcessor(cfg *Config) *sourceProcessor {
 		sourceHostKey:      cfg.SourceHostKey,
 	}
 
-	var (
-		exclude          = make(map[string]*regexp.Regexp)
-		systemdFiltering bool
-	)
+	exclude := make(map[string]*regexp.Regexp)
 	for field, regexStr := range cfg.Exclude {
-		if field == "_SYSTEMD_UNIT" {
-			systemdFiltering = true
-		}
 		if r := compileRegex(regexStr); r != nil {
 			exclude[field] = r
 		}
@@ -138,7 +131,6 @@ func newSourceProcessor(cfg *Config) *sourceProcessor {
 		sourceCategoryFiller: createSourceCategoryFiller(cfg, keys),
 		sourceNameFiller:     createSourceNameFiller(cfg, keys),
 		exclude:              exclude,
-		systemdFiltering:     systemdFiltering,
 	}
 }
 
@@ -170,14 +162,8 @@ func (sp *sourceProcessor) isFilteredOut(atts pdata.AttributeMap) bool {
 
 	// Check fields by matching them against field exclusion regexes
 	for field, r := range sp.exclude {
-		v, ok := matchFieldByRegex(atts, field, r)
+		_, ok := matchFieldByRegex(atts, field, r)
 		if ok {
-			// If we're filtering/processing systemd entries then set the hostname
-			// based on the _HOSTNAME attribute coming from systemd.
-			if sp.systemdFiltering && field == "_HOSTNAME" && v != "" {
-				atts.UpsertString("host", v)
-			}
-
 			return true
 		}
 	}
