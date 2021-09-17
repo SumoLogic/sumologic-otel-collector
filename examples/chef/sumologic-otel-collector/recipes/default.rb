@@ -1,5 +1,5 @@
 sumologic_otel_collector 'sumologic-otel-collector' do
-  version '0.0.18'
+  version '0.0.26-beta.0'
   src_config_path '/sumologic/examples/config_logging.yaml'
   memory_high '200M'
   memory_max '300M'
