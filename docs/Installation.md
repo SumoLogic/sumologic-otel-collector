@@ -28,7 +28,7 @@ Follow the steps for your platform below.
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.0.18/otelcol-sumo-0.0.18-linux_amd64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.0.26-beta.0/otelcol-sumo-0.0.26-beta.0-linux_amd64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -57,7 +57,7 @@ Follow the steps for your platform below.
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.0.18/otelcol-sumo-0.0.18-linux_arm64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.0.26-beta.0/otelcol-sumo-0.0.26-beta.0-linux_arm64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -86,7 +86,7 @@ Follow the steps for your platform below.
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.0.18/otelcol-sumo-0.0.18-darwin_amd64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.0.26-beta.0/otelcol-sumo-0.0.26-beta.0-darwin_amd64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -128,7 +128,7 @@ repository.
 1. Set the release version variable:
 
    ```bash
-   export RELEASE_VERSION=0.0.18
+   export RELEASE_VERSION=0.0.26-beta.0
    ```
 
 1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
