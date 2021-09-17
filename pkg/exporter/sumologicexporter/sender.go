@@ -181,7 +181,11 @@ func (s *sender) logToText(record pdata.LogRecord) string {
 // logToJSON converts LogRecord to a json line, returns it and error eventually
 func (s *sender) logToJSON(record pdata.LogRecord) (string, error) {
 	data := s.filter.filterOut(record.Attributes())
-	data.orig.Upsert(logKey, record.Body())
+
+	// Only append the body when it's not empty to prevent sending 'null' log.
+	if body := record.Body(); !isEmptyAttributeValue(body) {
+		data.orig.Upsert(logKey, body)
+	}
 
 	nextLine, err := json.Marshal(pdata.AttributeMapToMap(data.orig))
 	if err != nil {
@@ -189,6 +193,14 @@ func (s *sender) logToJSON(record pdata.LogRecord) (string, error) {
 	}
 
 	return bytes.NewBuffer(nextLine).String(), nil
+}
+
+func isEmptyAttributeValue(att pdata.AttributeValue) bool {
+	t := att.Type()
+	return !(t == pdata.AttributeValueTypeString && len(att.StringVal()) > 0 ||
+		t == pdata.AttributeValueTypeArray && att.ArrayVal().Len() > 0 ||
+		t == pdata.AttributeValueTypeMap && att.MapVal().Len() > 0 ||
+		t == pdata.AttributeValueTypeBytes && len(att.BytesVal()) > 0)
 }
 
 // sendLogs sends log records from the logBuffer formatted according
