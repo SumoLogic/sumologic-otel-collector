@@ -102,10 +102,10 @@ type ExtractConfig struct {
 //
 // - tag_name represents the name of the tag that will be added to the span.
 //   When not specified a default tag name will be used of the format:
-//       k8s.pod.annotations.<annotation key>
-//       k8s.pod.labels.<label key>
+//       k8s.pod.annotation.<annotation key>
+//       k8s.pod.label.<label key>
 //   For example, if tag_name is not specified and the key is git_sha,
-//   then the attribute name will be `k8s.pod.annotations.git_sha`.
+//   then the attribute name will be `k8s.pod.annotation.git_sha`.
 //
 //- key represents the annotation name. This must exactly match an annotation name.
 //  To capture all keys, `*` can be used

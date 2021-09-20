@@ -29,6 +29,13 @@ func createConfig() *Config {
 	config.Collector = "foocollector"
 	config.SourceCategoryPrefix = "prefix/"
 	config.SourceCategoryReplaceDash = "#"
+	config.PodNameKey = "pod_name"
+	config.PodKey = "pod"
+	config.NamespaceKey = "namespace"
+	config.ContainerKey = "container"
+	config.PodTemplateHashKey = "pod_labels_pod-template-hash"
+	config.AnnotationPrefix = "pod_annotation_"
+	config.PodIDKey = "pod_id"
 	return config
 }
 
@@ -67,23 +74,23 @@ var (
 	}
 
 	k8sNewLabels = map[string]string{
-		"k8s.namespace.name":               "namespace-1",
-		"k8s.pod.id":                       "pod-1234",
-		"k8s.pod.name":                     "pod-5db86d8867-sdqlj",
-		"k8s.pod.labels.pod-template-hash": "5db86d8867",
-		"k8s.container.name":               "container-1",
+		"k8s.namespace.name":              "namespace-1",
+		"k8s.pod.id":                      "pod-1234",
+		"k8s.pod.name":                    "pod-5db86d8867-sdqlj",
+		"k8s.pod.label.pod-template-hash": "5db86d8867",
+		"k8s.container.name":              "container-1",
 	}
 
 	mergedK8sNewLabelsWithMeta = map[string]string{
-		"k8s.namespace.name":               "namespace-1",
-		"k8s.pod.id":                       "pod-1234",
-		"k8s.pod.name":                     "pod-5db86d8867-sdqlj",
-		"k8s.pod.labels.pod-template-hash": "5db86d8867",
-		"k8s.container.name":               "container-1",
-		"k8s.pod.pod_name":                 "pod",
-		"_sourceName":                      "namespace-1.pod-5db86d8867-sdqlj.container-1",
-		"_sourceCategory":                  "prefix/namespace#1/pod",
-		"_collector":                       "foocollector",
+		"k8s.namespace.name":              "namespace-1",
+		"k8s.pod.id":                      "pod-1234",
+		"k8s.pod.name":                    "pod-5db86d8867-sdqlj",
+		"k8s.pod.label.pod-template-hash": "5db86d8867",
+		"k8s.container.name":              "container-1",
+		"k8s.pod.pod_name":                "pod",
+		"_sourceName":                     "namespace-1.pod-5db86d8867-sdqlj.container-1",
+		"_sourceCategory":                 "prefix/namespace#1/pod",
+		"_collector":                      "foocollector",
 	}
 
 	limitedLabels = map[string]string{
@@ -279,7 +286,7 @@ func TestTraceSourceProcessorNewTaxonomy(t *testing.T) {
 	config.PodIDKey = "k8s.pod.id"
 	config.PodNameKey = "k8s.pod.pod_name"
 	config.PodKey = "k8s.pod.name"
-	config.PodTemplateHashKey = "k8s.pod.labels.pod-template-hash"
+	config.PodTemplateHashKey = "k8s.pod.label.pod-template-hash"
 	config.ContainerKey = "k8s.container.name"
 
 	rtp := newSourceProcessor(config)
