@@ -35,14 +35,14 @@ const (
 	defaultSourceCategoryPrefix      = "kubernetes/"
 	defaultSourceCategoryReplaceDash = "/"
 
-	defaultAnnotationPrefix   = "pod_annotation_"
-	defaultContainerKey       = "container"
-	defaultNamespaceKey       = "namespace"
-	defaultPodIDKey           = "pod_id"
-	defaultPodKey             = "pod"
-	defaultPodNameKey         = "pod_name"
-	defaultPodTemplateHashKey = "pod_labels_pod-template-hash"
-	defaultSourceHostKey      = "source_host"
+	defaultAnnotationPrefix   = "k8s.pod.annotation."
+	defaultContainerKey       = "k8s.container.name"
+	defaultNamespaceKey       = "k8s.namespace.name"
+	defaultPodIDKey           = "k8s.pod.uid"
+	defaultPodKey             = "k8s.pod.name"
+	defaultPodNameKey         = "k8s.pod.pod_name"
+	defaultPodTemplateHashKey = "k8s.pod.label.pod-template-hash"
+	defaultSourceHostKey      = "k8s.pod.hostname"
 )
 
 var processorCapabilities = consumer.Capabilities{MutatesData: true}
