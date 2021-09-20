@@ -31,8 +31,9 @@ import (
 )
 
 type senderTest struct {
-	srv *httptest.Server
-	s   *sender
+	reqCounter *int32
+	srv        *httptest.Server
+	s          *sender
 }
 
 // prepareSenderTest prepares sender test environment.
@@ -72,7 +73,8 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 	require.NoError(t, err)
 
 	return &senderTest{
-		srv: testServer,
+		reqCounter: &reqCounter,
+		srv:        testServer,
 		s: newSender(
 			cfg,
 			&http.Client{
@@ -128,7 +130,8 @@ func prepareOTLPSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *h
 	require.NoError(t, err)
 
 	return &senderTest{
-		srv: testServer,
+		reqCounter: &reqCounter,
+		srv:        testServer,
 		s: newSender(
 			cfg,
 			&http.Client{
@@ -275,6 +278,7 @@ func TestSendLogs(t *testing.T) {
 
 	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "value", "key2": "value2"}))
 	assert.NoError(t, err)
+	assert.EqualValues(t, 1, *test.reqCounter)
 }
 
 func TestSendLogsMultitype(t *testing.T) {
@@ -294,6 +298,8 @@ func TestSendLogsMultitype(t *testing.T) {
 
 	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "value", "key2": "value2"}))
 	assert.NoError(t, err)
+
+	assert.EqualValues(t, 1, *test.reqCounter)
 }
 
 func TestSendLogsSplit(t *testing.T) {
@@ -312,6 +318,8 @@ func TestSendLogsSplit(t *testing.T) {
 
 	_, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 	assert.NoError(t, err)
+
+	assert.EqualValues(t, 2, *test.reqCounter)
 }
 func TestSendLogsSplitFailedOne(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
@@ -333,6 +341,8 @@ func TestSendLogsSplitFailedOne(t *testing.T) {
 	dropped, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 	assert.EqualError(t, err, "error during sending data: 500 Internal Server Error")
 	assert.Equal(t, test.s.logBuffer[0:1], dropped)
+
+	assert.EqualValues(t, 2, *test.reqCounter)
 }
 
 func TestSendLogsSplitFailedAll(t *testing.T) {
@@ -361,6 +371,8 @@ func TestSendLogsSplitFailedAll(t *testing.T) {
 		"[error during sending data: 500 Internal Server Error; error during sending data: 404 Not Found]",
 	)
 	assert.Equal(t, test.s.logBuffer[0:2], dropped)
+
+	assert.EqualValues(t, 2, *test.reqCounter)
 }
 
 func TestSendLogsJson(t *testing.T) {
@@ -380,6 +392,8 @@ func TestSendLogsJson(t *testing.T) {
 
 	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key": "value"}))
 	assert.NoError(t, err)
+
+	assert.EqualValues(t, 1, *test.reqCounter)
 }
 
 func TestSendLogsJsonMultitype(t *testing.T) {
@@ -399,6 +413,8 @@ func TestSendLogsJsonMultitype(t *testing.T) {
 
 	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key": "value"}))
 	assert.NoError(t, err)
+
+	assert.EqualValues(t, 1, *test.reqCounter)
 }
 
 func TestSendLogsJsonSplit(t *testing.T) {
@@ -418,6 +434,8 @@ func TestSendLogsJsonSplit(t *testing.T) {
 
 	_, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 	assert.NoError(t, err)
+
+	assert.EqualValues(t, 2, *test.reqCounter)
 }
 
 func TestSendLogsJsonSplitFailedOne(t *testing.T) {
@@ -440,6 +458,8 @@ func TestSendLogsJsonSplitFailedOne(t *testing.T) {
 	dropped, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 	assert.EqualError(t, err, "error during sending data: 500 Internal Server Error")
 	assert.Equal(t, test.s.logBuffer[0:1], dropped)
+
+	assert.EqualValues(t, 2, *test.reqCounter)
 }
 
 func TestSendLogsJsonSplitFailedAll(t *testing.T) {
@@ -468,6 +488,8 @@ func TestSendLogsJsonSplitFailedAll(t *testing.T) {
 		"[error during sending data: 500 Internal Server Error; error during sending data: 404 Not Found]",
 	)
 	assert.Equal(t, test.s.logBuffer[0:2], dropped)
+
+	assert.EqualValues(t, 2, *test.reqCounter)
 }
 
 func TestSendLogsUnexpectedFormat(t *testing.T) {
@@ -501,6 +523,8 @@ func TestSendLogsOTLP(t *testing.T) {
 
 	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "value", "key2": "value2"}))
 	assert.NoError(t, err)
+
+	assert.EqualValues(t, 1, *test.reqCounter)
 }
 
 func TestOverrideSourceName(t *testing.T) {
@@ -516,6 +540,8 @@ func TestOverrideSourceName(t *testing.T) {
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
 		assert.NoError(t, err)
+
+		assert.EqualValues(t, 1, *test.reqCounter)
 	})
 
 	t.Run("otlp", func(t *testing.T) {
@@ -540,6 +566,8 @@ func TestOverrideSourceName(t *testing.T) {
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
 		assert.NoError(t, err)
+
+		assert.EqualValues(t, 1, *test.reqCounter)
 	})
 }
 
