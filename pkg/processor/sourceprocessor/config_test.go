@@ -48,7 +48,6 @@ func TestLoadConfig(t *testing.T) {
 	assert.Equal(t, p2, &Config{
 		ProcessorSettings:         &ps2,
 		Collector:                 "somecollector",
-		Source:                    "tracesource",
 		SourceName:                "%{namespace}.%{pod}.%{container}/foo",
 		SourceCategory:            "%{namespace}/%{pod_name}/bar",
 		SourceCategoryPrefix:      "kubernetes/",

@@ -27,7 +27,6 @@ const (
 	// The value of "type" key in configuration.
 	typeStr = "source"
 
-	defaultSource    = "traces"
 	defaultCollector = ""
 
 	defaultSourceName                = "%{namespace}.%{pod}.%{container}"
@@ -63,7 +62,6 @@ func createDefaultConfig() config.Processor {
 	ps := config.NewProcessorSettings(config.NewID(typeStr))
 	return &Config{
 		ProcessorSettings:         &ps,
-		Source:                    defaultSource,
 		Collector:                 defaultCollector,
 		SourceName:                defaultSourceName,
 		SourceCategory:            defaultSourceCategory,

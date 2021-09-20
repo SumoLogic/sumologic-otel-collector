@@ -23,7 +23,6 @@ type Config struct {
 	*config.ProcessorSettings `mapstructure:"-"`
 
 	Collector                 string `mapstructure:"collector"`
-	Source                    string `mapstructure:"source"`
 	SourceName                string `mapstructure:"source_name"`
 	SourceCategory            string `mapstructure:"source_category"`
 	SourceCategoryPrefix      string `mapstructure:"source_category_prefix"`

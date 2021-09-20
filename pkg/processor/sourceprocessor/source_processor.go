@@ -66,7 +66,6 @@ type dockerLog struct {
 
 type sourceProcessor struct {
 	collector            string
-	source               string
 	sourceCategoryFiller attributeFiller
 	sourceNameFiller     attributeFiller
 	sourceHostFiller     attributeFiller
@@ -126,7 +125,6 @@ func newSourceProcessor(cfg *Config) *sourceProcessor {
 	return &sourceProcessor{
 		collector:            cfg.Collector,
 		keys:                 keys,
-		source:               cfg.Source,
 		sourceHostFiller:     createSourceHostFiller(cfg.SourceHostKey),
 		sourceCategoryFiller: createSourceCategoryFiller(cfg, keys),
 		sourceNameFiller:     createSourceNameFiller(cfg, keys),

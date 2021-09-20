@@ -1,6 +1,6 @@
 # Source Processor
 
-The `sourceprocessor` adds `_source` and other tags related to Sumo Logic metadata taxonomy.
+The `sourceprocessor` adds `_sourceName` and other tags related to Sumo Logic metadata taxonomy.
 
 It leverages data tagged by `k8sprocessor` and must be after it in the processing chain.
 It has certain expectations on the label names used by `k8sprocessor` which might be configured below.
@@ -8,7 +8,6 @@ It has certain expectations on the label names used by `k8sprocessor` which migh
 ## Config
 
 - `collector` (default = ``): name of the collector, put in `_collector` tag
-- `source` (default = `traces`): name of the source, put in `_source` tag
 - `source_name` (default = `%{namespace}.%{pod}.%{container}`): `_sourceName` template
 - `source_category` (default = `%{namespace}/%{pod_name}`): `_sourceCategory` template
 - `source_category_prefix` (default = `kubernetes/`): prefix added before each `_sourceCategory` value
