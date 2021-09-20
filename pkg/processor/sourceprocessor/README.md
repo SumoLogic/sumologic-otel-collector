@@ -7,7 +7,7 @@ It has certain expectations on the label names used by `k8sprocessor` which migh
 
 ## Config
 
-- `collector` (default = ``): name of the collector, put in `collector` tag
+- `collector` (default = ``): name of the collector, put in `_collector` tag
 - `source` (default = `traces`): name of the source, put in `_source` tag
 - `source_name` (default = `%{namespace}.%{pod}.%{container}`): `_sourceName` template
 - `source_category` (default = `%{namespace}/%{pod_name}`): `_sourceCategory` template
