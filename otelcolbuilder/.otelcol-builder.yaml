@@ -58,6 +58,9 @@ extensions:
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.35.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/oidcauthextension v0.35.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.35.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.35.0"
+    import: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage"
+
 
 # Replacement paths are relative to the output_path (location of source files)
 replaces:
@@ -66,13 +69,6 @@ replaces:
   # Output: "go: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver@v0.35.0 requires
   #  github.com/open-telemetry/opentelemetry-collector-contrib/internal/stanza@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000"
   - github.com/open-telemetry/opentelemetry-collector-contrib/internal/stanza => github.com/open-telemetry/opentelemetry-collector-contrib/internal/stanza v0.35.0
-
-  # This is needed because of:
-  # failed to download go modules: exit status 1.
-  # Output: "go: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver@v0.35.0 requires
-  #  github.com/open-telemetry/opentelemetry-collector-contrib/internal/stanza@v0.0.0-00010101000000-000000000000 requires
-  #  github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000"
-  - github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage => github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.35.0
 
   # This is needed because of:
   # failed to download go modules: exit status 1.
@@ -99,3 +95,7 @@ replaces:
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/sourceprocessor => ./../../pkg/processor/sourceprocessor
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor => ./../../pkg/processor/k8sprocessor
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/sumologicsyslogprocessor => ./../../pkg/processor/sumologicsyslogprocessor
+
+  # TODO: remove this when regexp log filtering is released upstream, e.g. this
+  # PR: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5237
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/pmalek-sumo/opentelemetry-collector-contrib/processor/filterprocessor 6643765789daf85c51150b5de8bb64a82d9c52e0

@@ -42,12 +42,12 @@ type attributeFiller struct {
 	labels          []string
 }
 
-func createSourceHostFiller() attributeFiller {
+func createSourceHostFiller(sourceHostAttrName string) attributeFiller {
 	return attributeFiller{
 		name:            sourceHostKey,
-		compiledFormat:  "",
+		compiledFormat:  "%s",
 		dashReplacement: "",
-		labels:          make([]string, 0),
+		labels:          []string{sourceHostAttrName},
 		prefix:          "",
 	}
 }
