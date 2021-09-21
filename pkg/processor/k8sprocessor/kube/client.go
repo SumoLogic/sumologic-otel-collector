@@ -509,8 +509,12 @@ func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
 		c.Pods[PodIdentifier(pod.Status.PodIP)] = newPod
 	}
 	// Use pod_name.namespace_name identifier
-	if newPod.Name != "" && newPod.Attributes[conventions.AttributeK8SNamespaceName] != "" {
-		c.Pods[PodIdentifier(fmt.Sprintf("%s.%s", newPod.Name, newPod.Attributes[conventions.AttributeK8SNamespaceName]))] = newPod
+	if newPod.Name != "" && (newPod.Attributes[conventions.AttributeK8SNamespaceName] != "" || newPod.Namespace != "") {
+		namespace := newPod.Attributes[conventions.AttributeK8SNamespaceName]
+		if namespace == "" {
+			namespace = newPod.Namespace
+		}
+		c.Pods[PodIdentifier(fmt.Sprintf("%s.%s", newPod.Name, namespace))] = newPod
 	}
 }
 
