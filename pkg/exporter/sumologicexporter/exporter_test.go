@@ -46,6 +46,18 @@ func LogRecordsToLogs(records []pdata.LogRecord) pdata.Logs {
 	return logs
 }
 
+func logRecordsToLogPair(records []pdata.LogRecord) []logPair {
+	logs := make([]logPair, len(records))
+	for num, record := range records {
+		logs[num] = logPair{
+			log:            record,
+			bodyAttributes: newFields(record.Attributes()),
+		}
+	}
+
+	return logs
+}
+
 type exporterTest struct {
 	srv *httptest.Server
 	exp *sumologicexporter
@@ -480,7 +492,8 @@ func TestPushJSONLogsWithAttributeTranslation(t *testing.T) {
 	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			assert.Equal(t, `{"InstanceType":"wizard","host":"harry-potter","log":"Example log"}`, body)
+			// Mind that host attribute is not being send in log body
+			assert.Equal(t, `{"InstanceType":"wizard","log":"Example log"}`, body)
 			assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))
 			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
 
