@@ -499,7 +499,10 @@ func TestPushJSONLogsWithAttributeTranslation(t *testing.T) {
 	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			assert.Equal(t, `{"InstanceType":"wizard","host":"harry-potter","log":"Example log"}`, body)
+			var regex string
+			regex += `{"InstanceType":"wizard","host":"harry-potter","log":"Example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
+
 			assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))
 			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
 
@@ -530,7 +533,10 @@ func TestPushJSONLogsWithAttributeTranslationDisabled(t *testing.T) {
 	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			assert.Equal(t, `{"host.type":"wizard","log":"Example log"}`, body)
+			var regex string
+			regex += `{"host.type":"wizard","log":"Example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
+
 			assert.Equal(t, "host.name=harry-potter", req.Header.Get("X-Sumo-Fields"))
 			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
 			assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"))
@@ -760,7 +766,11 @@ func TestLogsJsonFormatMetadataFilter(t *testing.T) {
 	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			assert.Equal(t, `{"key2":"value2","log":"Example log"}`, body)
+
+			var regex string
+			regex += `{"key2":"value2","log":"Example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
+
 			assert.Equal(t, "key1=value1", req.Header.Get("X-Sumo-Fields"))
 		},
 	})

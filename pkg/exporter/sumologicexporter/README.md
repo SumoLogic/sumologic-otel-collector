@@ -59,6 +59,17 @@ exporters:
     # default = `%{_metric_}`
     graphite_template: <graphite_template>
 
+    json_logs:
+      # defines whether to include a timestamp field when sending
+      # JSON logs, which would contain UNIX epoch timestamp in milliseconds.
+      # This option affects JSON log format only.
+      # default = true.
+      add_timestamp: {true, false}
+      # when add_timestamp is set to true then this key defines what is the name
+      # of the timestamp key.
+      # default = "timestamp".
+      timestamp_key: <timestamp_key>
+
     # translate_attributes specifies whether attributes should be translated
     # from OpenTelemetry to Sumo conventions;
     # see "Attribute translation" documentation chapter from this document,
