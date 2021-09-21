@@ -15,6 +15,7 @@
 package k8sprocessor
 
 import (
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube"
 	"path"
 	"testing"
 
@@ -25,22 +26,20 @@ import (
 	"go.opentelemetry.io/collector/config/configcheck"
 	"go.opentelemetry.io/collector/config/configtest"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/k8sconfig"
 )
 
 func TestLoadConfig(t *testing.T) {
 	factories, err := componenttest.NopFactories()
 	require.NoError(t, err)
 	factory := NewFactory()
-	factories.Processors[config.Type(typeStr)] = factory
+	factories.Processors[typeStr] = factory
 	require.NoError(t, err)
 
 	err = configcheck.ValidateConfig(factory.CreateDefaultConfig())
 	require.NoError(t, err)
 
-	cfg, err := configtest.LoadConfig(
-		path.Join(".", "testdata", "config.yaml"),
-		factories)
+	cfg, err := configtest.LoadConfigAndValidate(path.Join(".", "testdata", "config.yaml"), factories)
 
 	require.Nil(t, err)
 	require.NotNil(t, cfg)
@@ -50,7 +49,7 @@ func TestLoadConfig(t *testing.T) {
 		&Config{
 			ProcessorSettings: config.NewProcessorSettings(config.NewID(typeStr)),
 			APIConfig:         k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
-			Extract:           ExtractConfig{Delimiter: ", "},
+			Exclude:           ExcludeConfig{Pods: []ExcludePodConfig{{Name: "jaeger-agent"}, {Name: "jaeger-collector"}, {Name: "otel-collector"}, {Name: "otel-agent"}, {Name: "collection-sumologic-otelcol"}}},
 		})
 
 	p1 := cfg.Processors[config.NewIDWithName(typeStr, "2")]
@@ -61,30 +60,18 @@ func TestLoadConfig(t *testing.T) {
 			Passthrough:        false,
 			OwnerLookupEnabled: true,
 			Extract: ExtractConfig{
-				Metadata: []string{
-					"podName",
-					"podUID",
-					"deployment",
-					"cluster",
-					"namespace",
-					"node",
-					"startTime",
-				},
+				Metadata: []string{"k8s.pod.name", "k8s.pod.uid", "k8s.deployment.name", "k8s.cluster.name", "k8s.namespace.name", "k8s.node.name", "k8s.pod.start_time"},
 				Annotations: []FieldExtractConfig{
-					{TagName: "a1", Key: "annotation-one"},
-					{TagName: "a2", Key: "annotation-two", Regex: "field=(?P<value>.+)"},
+					{TagName: "a1", Key: "annotation-one", From: "pod"},
+					{TagName: "a2", Key: "annotation-two", Regex: "field=(?P<value>.+)", From: kube.MetadataFromPod},
 				},
 				Labels: []FieldExtractConfig{
-					{TagName: "l1", Key: "label1"},
-					{TagName: "l2", Key: "label2", Regex: "field=(?P<value>.+)"},
+					{TagName: "l1", Key: "label1", From: "pod"},
+					{TagName: "l2", Key: "label2", Regex: "field=(?P<value>.+)", From: kube.MetadataFromPod},
 				},
 				NamespaceLabels: []FieldExtractConfig{
 					{TagName: "namespace_labels_%s", Key: "*"},
 				},
-				Tags: map[string]string{
-					"containerId": "my.namespace.containerId",
-				},
-				Delimiter: ", ",
 			},
 			Filter: FilterConfig{
 				Namespace:      "ns2",
@@ -119,6 +106,15 @@ func TestLoadConfig(t *testing.T) {
 				{
 					From: "resource_attribute",
 					Name: "k8s.pod.uid",
+				},
+			},
+			Exclude: ExcludeConfig{
+				Pods: []ExcludePodConfig{
+					{Name: "jaeger-agent"},
+					{Name: "jaeger-collector"},
+					{Name: "otel-collector"},
+					{Name: "otel-agent"},
+					{Name: "collection-sumologic-otelcol"},
 				},
 			},
 		})

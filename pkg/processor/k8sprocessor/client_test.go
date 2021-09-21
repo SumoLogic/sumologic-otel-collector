@@ -21,18 +21,20 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/k8sconfig"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube"
 )
 
 // fakeClient is used as a replacement for WatchClient in test cases.
 type fakeClient struct {
-	Pods         map[kube.PodIdentifier]*kube.Pod
-	Rules        kube.ExtractionRules
-	Filters      kube.Filters
-	Associations []kube.Association
-	Informer     cache.SharedInformer
-	StopCh       chan struct{}
+	Pods              map[kube.PodIdentifier]*kube.Pod
+	Rules             kube.ExtractionRules
+	Filters           kube.Filters
+	Associations      []kube.Association
+	Informer          cache.SharedInformer
+	NamespaceInformer cache.SharedInformer
+	Namespaces        map[string]*kube.Namespace
+	StopCh            chan struct{}
 }
 
 func selectors() (labels.Selector, fields.Selector) {
@@ -47,8 +49,10 @@ func newFakeClient(
 	rules kube.ExtractionRules,
 	filters kube.Filters,
 	associations []kube.Association,
+	exclude kube.Excludes,
 	_ kube.APIClientsetProvider,
 	_ kube.InformerProvider,
+	_ kube.InformerProviderNamespace,
 	_ kube.OwnerProvider,
 	_ string,
 ) (kube.Client, error) {
@@ -56,12 +60,13 @@ func newFakeClient(
 
 	ls, fs := selectors()
 	return &fakeClient{
-		Pods:         map[kube.PodIdentifier]*kube.Pod{},
-		Rules:        rules,
-		Filters:      filters,
-		Associations: associations,
-		Informer:     kube.NewFakeInformer(cs, "", ls, fs),
-		StopCh:       make(chan struct{}),
+		Pods:              map[kube.PodIdentifier]*kube.Pod{},
+		Rules:             rules,
+		Filters:           filters,
+		Associations:      associations,
+		Informer:          kube.NewFakeInformer(cs, "", ls, fs),
+		NamespaceInformer: kube.NewFakeInformer(cs, "", ls, fs),
+		StopCh:            make(chan struct{}),
 	}, nil
 }
 
@@ -70,6 +75,11 @@ func newFakeClient(
 func (f *fakeClient) GetPod(identifier kube.PodIdentifier) (*kube.Pod, bool) {
 	p, ok := f.Pods[identifier]
 	return p, ok
+}
+
+func (f *fakeClient) GetNamespace(namespace string) (*kube.Namespace, bool) {
+	ns, ok := f.Namespaces[namespace]
+	return ns, ok
 }
 
 // Start is a noop for FakeClient.

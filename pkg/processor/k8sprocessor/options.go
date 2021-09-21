@@ -18,11 +18,11 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strings"
 
+	conventions "go.opentelemetry.io/collector/model/semconv/v1.5.0"
 	"k8s.io/apimachinery/pkg/selection"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/k8sconfig"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube"
 )
 
@@ -31,7 +31,7 @@ const (
 	filterOPNotEquals    = "not-equals"
 	filterOPExists       = "exists"
 	filterOPDoesNotExist = "does-not-exist"
-
+	// Used for maintaining backward compatibility
 	metadataContainerID     = "containerId"
 	metadataContainerName   = "containerName"
 	metadataContainerImage  = "containerImage"
@@ -41,7 +41,7 @@ const (
 	metadataHostName        = "hostName"
 	metadataNamespace       = "namespace"
 	metadataNodeName        = "nodeName"
-	metadataPodID           = "podId"
+	metadataPodUID          = "podId"
 	metadataPodName         = "podName"
 	metadataReplicaSetName  = "replicaSetName"
 	metadataServiceName     = "serviceName"
@@ -85,104 +85,63 @@ func WithExtractMetadata(fields ...string) Option {
 	return func(p *kubernetesprocessor) error {
 		if len(fields) == 0 {
 			fields = []string{
-				metadataClusterName,
-				metadataContainerID,
-				metadataContainerImage,
-				metadataContainerName,
-				metadataDaemonSetName,
-				metadataDeploymentName,
-				metadataHostName,
-				metadataNamespace,
-				metadataNodeName,
-				metadataPodName,
-				metadataPodID,
-				metadataReplicaSetName,
-				metadataServiceName,
-				metadataStartTime,
-				metadataStatefulSetName,
+				conventions.AttributeK8SNamespaceName,
+				conventions.AttributeK8SPodName,
+				conventions.AttributeK8SPodUID,
+				kube.AttributeK8SProcessorStartTime,
+				conventions.AttributeK8SDeploymentName,
+				conventions.AttributeK8SClusterName,
+				conventions.AttributeK8SNodeName,
+				kube.AttributeK8SContainerID,
+				kube.AttributeK8SContainerImage,
+				conventions.AttributeK8SContainerName,
+				conventions.AttributeK8SDaemonSetName,
+				kube.AttributeK8SHostName,
+				conventions.AttributeK8SReplicaSetName,
+				kube.AttributeK8SServiceName,
+				conventions.AttributeK8SStatefulSetName,
 			}
 		}
 		for _, field := range fields {
 			switch field {
-			case metadataClusterName:
-				p.rules.ClusterName = true
-			case metadataContainerID:
-				p.rules.ContainerID = true
-			case metadataContainerImage:
-				p.rules.ContainerImage = true
-			case metadataContainerName:
-				p.rules.ContainerName = true
-			case metadataDaemonSetName:
-				p.rules.DaemonSetName = true
-			case metadataDeploymentName:
-				p.rules.DeploymentName = true
-			case metadataHostName:
-				p.rules.HostName = true
-			case metadataNamespace:
+			// Old conventions handled by the cases metdataNamespace, metadataPodName, metadataPodUID,
+			// metadataStartTime, metadataDeployment, metadataCluster, metadataNode are being supported for backward compatibility.
+			// These will be removed when new conventions get merged to https://github.com/open-telemetry/opentelemetry-collector/blob/main/model/semconv/opentelemetry.go
+			case metadataNamespace, conventions.AttributeK8SNamespaceName:
 				p.rules.Namespace = true
-			case metadataNodeName:
-				p.rules.NodeName = true
-			case metadataPodID:
-				p.rules.PodUID = true
-			case metadataPodName:
+			case metadataPodName, conventions.AttributeK8SPodName:
 				p.rules.PodName = true
-			case metadataReplicaSetName:
-				p.rules.ReplicaSetName = true
-			case metadataServiceName:
-				p.rules.ServiceName = true
-			case metadataStartTime:
+			case metadataPodUID, conventions.AttributeK8SPodUID:
+				p.rules.PodUID = true
+			case metadataStartTime, kube.AttributeK8SProcessorStartTime:
 				p.rules.StartTime = true
-			case metadataStatefulSetName:
+			case metadataDeploymentName, conventions.AttributeK8SDeploymentName:
+				p.rules.DeploymentName = true
+			case metadataClusterName, conventions.AttributeK8SClusterName:
+				p.rules.ClusterName = true
+			case metadataNodeName, conventions.AttributeK8SNodeName:
+				p.rules.NodeName = true
+				// Custom tags
+			case metadataContainerID, kube.AttributeK8SContainerID:
+				p.rules.ContainerID = true
+			case metadataContainerImage, kube.AttributeK8SContainerImage:
+				p.rules.ContainerImage = true
+			case metadataContainerName, conventions.AttributeK8SContainerName:
+				p.rules.ContainerName = true
+			case metadataDaemonSetName, conventions.AttributeK8SDaemonSetName:
+				p.rules.DaemonSetName = true
+			case metadataHostName, kube.AttributeK8SHostName:
+				p.rules.HostName = true
+			case metadataReplicaSetName, conventions.AttributeK8SReplicaSetName:
+				p.rules.ReplicaSetName = true
+			case metadataServiceName, kube.AttributeK8SServiceName:
+				p.rules.ServiceName = true
+			case metadataStatefulSetName, conventions.AttributeK8SStatefulSetName:
 				p.rules.StatefulSetName = true
 			default:
 				return fmt.Errorf("\"%s\" is not a supported metadata field", field)
 			}
 		}
-		return nil
-	}
-}
-
-// WithExtractTags allows specifying custom tag names
-func WithExtractTags(tagsMap map[string]string) Option {
-	return func(p *kubernetesprocessor) error {
-		var tags = kube.NewExtractionFieldTags()
-		for field, tag := range tagsMap {
-			switch field {
-			case strings.ToLower(metadataClusterName):
-				tags.ClusterName = tag
-			case strings.ToLower(metadataContainerID):
-				tags.ContainerID = tag
-			case strings.ToLower(metadataContainerName):
-				tags.ContainerName = tag
-			case strings.ToLower(metadataContainerImage):
-				tags.ContainerImage = tag
-			case strings.ToLower(metadataDaemonSetName):
-				tags.DaemonSetName = tag
-			case strings.ToLower(metadataDeploymentName):
-				tags.DeploymentName = tag
-			case strings.ToLower(metadataHostName):
-				tags.HostName = tag
-			case strings.ToLower(metadataNamespace):
-				tags.Namespace = tag
-			case strings.ToLower(metadataNodeName):
-				tags.NodeName = tag
-			case strings.ToLower(metadataPodID):
-				tags.PodUID = tag
-			case strings.ToLower(metadataPodName):
-				tags.PodName = tag
-			case strings.ToLower(metadataReplicaSetName):
-				tags.ReplicaSetName = tag
-			case strings.ToLower(metadataServiceName):
-				tags.ServiceName = tag
-			case strings.ToLower(metadataStartTime):
-				tags.StartTime = tag
-			case strings.ToLower(metadataStatefulSetName):
-				tags.StatefulSetName = tag
-			default:
-				return fmt.Errorf("\"%s\" is not a supported metadata field", field)
-			}
-		}
-		p.rules.Tags = tags
 		return nil
 	}
 }
@@ -199,7 +158,7 @@ func WithExtractLabels(labels ...FieldExtractConfig) Option {
 	}
 }
 
-// WithExtractNamespaceLabels allows specifying options to control extraction of namespace labels.
+// WithExtractNamespaceLabels allows specifying options to control extraction of namespace labels (deprecated)
 func WithExtractNamespaceLabels(labels ...FieldExtractConfig) Option {
 	return func(p *kubernetesprocessor) error {
 		labels, err := extractFieldRules("namespace_labels", labels...)
@@ -227,11 +186,30 @@ func extractFieldRules(fieldType string, fields ...FieldExtractConfig) ([]kube.F
 	rules := []kube.FieldExtractionRule{}
 	for _, a := range fields {
 		name := a.TagName
+
+		switch a.From {
+		// By default if the From field is not set for labels and annotations we want to extract them from pod
+		case "", kube.MetadataFromPod:
+			a.From = kube.MetadataFromPod
+		case kube.MetadataFromNamespace:
+			a.From = kube.MetadataFromNamespace
+		default:
+			return rules, fmt.Errorf("%s is not a valid choice for From. Must be one of: pod, namespace", a.From)
+		}
+
 		if name == "" {
 			if a.Key == "*" {
-				name = fmt.Sprintf("k8s.%s.%%s", fieldType)
+				if a.From == kube.MetadataFromPod {
+					name = fmt.Sprintf("k8s.pod.%s.%%s", fieldType)
+				} else if a.From == kube.MetadataFromNamespace {
+					name = fmt.Sprintf("k8s.namespace.%s.%%s", fieldType)
+				}
 			} else {
-				name = fmt.Sprintf("k8s.%s.%s", fieldType, a.Key)
+				if a.From == kube.MetadataFromPod {
+					name = fmt.Sprintf("k8s.pod.%s.%s", fieldType, a.Key)
+				} else if a.From == kube.MetadataFromNamespace {
+					name = fmt.Sprintf("k8s.namespace.%s.%s", fieldType, a.Key)
+				}
 			}
 		}
 
@@ -249,7 +227,7 @@ func extractFieldRules(fieldType string, fields ...FieldExtractConfig) ([]kube.F
 		}
 
 		rules = append(rules, kube.FieldExtractionRule{
-			Name: name, Key: a.Key, Regex: r,
+			Name: name, Key: a.Key, Regex: r, From: a.From,
 		})
 	}
 	return rules, nil
@@ -352,10 +330,19 @@ func WithExtractPodAssociations(podAssociations ...PodAssociationConfig) Option 
 	}
 }
 
-// WithDelimiter sets delimiter to use by kubernetesprocessor
-func WithDelimiter(delimiter string) Option {
+// WithExcludes allows specifying pods to exclude
+func WithExcludes(podExclude ExcludeConfig) Option {
 	return func(p *kubernetesprocessor) error {
-		p.delimiter = delimiter
+		ignoredNames := kube.Excludes{}
+		names := podExclude.Pods
+
+		if len(names) == 0 {
+			names = []ExcludePodConfig{{Name: "jaeger-agent"}, {Name: "jaeger-collector"}}
+		}
+		for _, name := range names {
+			ignoredNames.Pods = append(ignoredNames.Pods, kube.ExcludePods{Name: regexp.MustCompile(name.Name)})
+		}
+		p.podIgnore = ignoredNames
 		return nil
 	}
 }

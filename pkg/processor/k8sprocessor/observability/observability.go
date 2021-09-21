@@ -35,6 +35,9 @@ func init() {
 		viewOtherDeleted,
 		viewIPLookupMiss,
 		viewPodTableSize,
+		viewNamespacesAdded,
+		viewNamespacesUpdated,
+		viewNamespacesDeleted,
 	)
 	if err != nil {
 		fmt.Printf("Failed to register k8sprocessor's views: %v\n", err)
@@ -52,6 +55,10 @@ var (
 	mOtherDeleted = stats.Int64("otelsvc/k8s/other_deleted", "Number of other delete events received", "1")
 
 	mIPLookupMiss = stats.Int64("otelsvc/k8s/ip_lookup_miss", "Number of times pod by IP lookup failed.", "1")
+
+	mNamespacesUpdated = stats.Int64("otelsvc/k8s/namespace_updated", "Number of namespace update events received", "1")
+	mNamespacesAdded   = stats.Int64("otelsvc/k8s/namespace_added", "Number of namespace add events received", "1")
+	mNamespacesDeleted = stats.Int64("otelsvc/k8s/namespace_deleted", "Number of namespace delete events received", "1")
 )
 
 var viewPodsUpdated = &view.View{
@@ -102,11 +109,33 @@ var viewIPLookupMiss = &view.View{
 	Measure:     mIPLookupMiss,
 	Aggregation: view.Sum(),
 }
+
 var viewPodTableSize = &view.View{
 	Name:        mPodTableSize.Name(),
 	Description: mPodTableSize.Description(),
 	Measure:     mPodTableSize,
 	Aggregation: view.LastValue(),
+}
+
+var viewNamespacesUpdated = &view.View{
+	Name:        mNamespacesUpdated.Name(),
+	Description: mNamespacesUpdated.Description(),
+	Measure:     mNamespacesUpdated,
+	Aggregation: view.Sum(),
+}
+
+var viewNamespacesAdded = &view.View{
+	Name:        mNamespacesAdded.Name(),
+	Description: mNamespacesAdded.Description(),
+	Measure:     mNamespacesAdded,
+	Aggregation: view.Sum(),
+}
+
+var viewNamespacesDeleted = &view.View{
+	Name:        mNamespacesDeleted.Name(),
+	Description: mNamespacesDeleted.Description(),
+	Measure:     mNamespacesDeleted,
+	Aggregation: view.Sum(),
 }
 
 // RecordPodUpdated increments the metric that records pod update events received.
@@ -147,4 +176,19 @@ func RecordIPLookupMiss() {
 // RecordPodTableSize store size of pod table field in WatchClient
 func RecordPodTableSize(podTableSize int64) {
 	stats.Record(context.Background(), mPodTableSize.M(podTableSize))
+}
+
+// RecordNamespaceUpdated increments the metric that records namespace update events received.
+func RecordNamespaceUpdated() {
+	stats.Record(context.Background(), mNamespacesUpdated.M(int64(1)))
+}
+
+// RecordNamespaceAdded increments the metric that records namespace add events receiver.
+func RecordNamespaceAdded() {
+	stats.Record(context.Background(), mNamespacesAdded.M(int64(1)))
+}
+
+// RecordNamespaceDeleted increments the metric that records namespace events deleted.
+func RecordNamespaceDeleted() {
+	stats.Record(context.Background(), mNamespacesDeleted.M(int64(1)))
 }

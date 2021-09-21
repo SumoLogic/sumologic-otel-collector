@@ -21,9 +21,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	conventions "go.opentelemetry.io/collector/model/semconv/v1.5.0"
 	"k8s.io/apimachinery/pkg/selection"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/k8sconfig"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube"
 )
 
@@ -89,6 +90,7 @@ func TestWithExtractAnnotations(t *testing.T) {
 					TagName: "tag1",
 					Key:     "key1",
 					Regex:   "[",
+					From:    kube.MetadataFromPod,
 				},
 			},
 			[]kube.FieldExtractionRule{},
@@ -101,6 +103,7 @@ func TestWithExtractAnnotations(t *testing.T) {
 					TagName: "tag1",
 					Key:     "key1",
 					Regex:   "field=(?P<value>.+)",
+					From:    kube.MetadataFromPod,
 				},
 			},
 			[]kube.FieldExtractionRule{
@@ -108,6 +111,25 @@ func TestWithExtractAnnotations(t *testing.T) {
 					Name:  "tag1",
 					Key:   "key1",
 					Regex: regexp.MustCompile(`field=(?P<value>.+)`),
+					From:  kube.MetadataFromPod,
+				},
+			},
+			"",
+		},
+		{
+			"basic-namespace",
+			[]FieldExtractConfig{
+				{
+					TagName: "tag1",
+					Key:     "key1",
+					From:    kube.MetadataFromNamespace,
+				},
+			},
+			[]kube.FieldExtractionRule{
+				{
+					Name: "tag1",
+					Key:  "key1",
+					From: kube.MetadataFromNamespace,
 				},
 			},
 			"",
@@ -152,6 +174,7 @@ func TestWithExtractLabels(t *testing.T) {
 				TagName: "t1",
 				Key:     "k1",
 				Regex:   "[",
+				From:    kube.MetadataFromPod,
 			}},
 			[]kube.FieldExtractionRule{},
 			"error parsing regexp: missing closing ]: `[`",
@@ -163,6 +186,7 @@ func TestWithExtractLabels(t *testing.T) {
 					TagName: "tag1",
 					Key:     "key1",
 					Regex:   "field=(?P<value>.+)",
+					From:    kube.MetadataFromPod,
 				},
 			},
 			[]kube.FieldExtractionRule{
@@ -170,6 +194,25 @@ func TestWithExtractLabels(t *testing.T) {
 					Name:  "tag1",
 					Key:   "key1",
 					Regex: regexp.MustCompile(`field=(?P<value>.+)`),
+					From:  kube.MetadataFromPod,
+				},
+			},
+			"",
+		},
+		{
+			"basic-namespace",
+			[]FieldExtractConfig{
+				{
+					TagName: "tag1",
+					Key:     "key1",
+					From:    kube.MetadataFromNamespace,
+				},
+			},
+			[]kube.FieldExtractionRule{
+				{
+					Name: "tag1",
+					Key:  "key1",
+					From: kube.MetadataFromNamespace,
 				},
 			},
 			"",
@@ -214,6 +257,7 @@ func TestWithExtractNamespaceLabels(t *testing.T) {
 				TagName: "t1",
 				Key:     "k1",
 				Regex:   "[",
+				From: kube.MetadataFromPod,
 			}},
 			[]kube.FieldExtractionRule{},
 			"error parsing regexp: missing closing ]: `[`",
@@ -225,6 +269,7 @@ func TestWithExtractNamespaceLabels(t *testing.T) {
 					TagName: "tag1",
 					Key:     "key1",
 					Regex:   "field=(?P<value>.+)",
+					From: kube.MetadataFromPod,
 				},
 			},
 			[]kube.FieldExtractionRule{
@@ -232,6 +277,7 @@ func TestWithExtractNamespaceLabels(t *testing.T) {
 					Name:  "tag1",
 					Key:   "key1",
 					Regex: regexp.MustCompile(`field=(?P<value>.+)`),
+					From: kube.MetadataFromPod,
 				},
 			},
 			"",
@@ -273,11 +319,12 @@ func TestWithExtractMetadata(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, err.Error(), `"randomfield" is not a supported metadata field`)
 
-	assert.NoError(t, WithExtractMetadata("namespace", "clusterName")(p))
+	p = &kubernetesprocessor{}
+	assert.NoError(t, WithExtractMetadata(conventions.AttributeK8SNamespaceName, conventions.AttributeK8SPodName, conventions.AttributeK8SPodUID)(p))
 	assert.True(t, p.rules.Namespace)
-	assert.True(t, p.rules.ClusterName)
-	assert.False(t, p.rules.PodName)
-	assert.False(t, p.rules.PodUID)
+	assert.False(t, p.rules.ClusterName)
+	assert.True(t, p.rules.PodName)
+	assert.True(t, p.rules.PodUID)
 	assert.False(t, p.rules.StartTime)
 	assert.False(t, p.rules.DeploymentName)
 	assert.False(t, p.rules.NodeName)
@@ -561,13 +608,15 @@ func Test_extractFieldRules(t *testing.T) {
 			"default",
 			args{"labels", []FieldExtractConfig{
 				{
-					Key: "key",
+					Key:  "key",
+					From: kube.MetadataFromPod,
 				},
 			}},
 			[]kube.FieldExtractionRule{
 				{
-					Name: "k8s.labels.key",
+					Name: "k8s.pod.labels.key",
 					Key:  "key",
+					From: kube.MetadataFromPod,
 				},
 			},
 			false,
@@ -578,12 +627,14 @@ func Test_extractFieldRules(t *testing.T) {
 				{
 					TagName: "name",
 					Key:     "key",
+					From:    kube.MetadataFromPod,
 				},
 			}},
 			[]kube.FieldExtractionRule{
 				{
 					Name: "name",
 					Key:  "key",
+					From: kube.MetadataFromPod,
 				},
 			},
 			false,
@@ -595,6 +646,7 @@ func Test_extractFieldRules(t *testing.T) {
 					TagName: "name",
 					Key:     "key",
 					Regex:   "^h$",
+					From:    kube.MetadataFromPod,
 				},
 			}},
 			[]kube.FieldExtractionRule{},
@@ -607,6 +659,7 @@ func Test_extractFieldRules(t *testing.T) {
 					TagName: "name",
 					Key:     "key",
 					Regex:   "[",
+					From:    kube.MetadataFromPod,
 				},
 			}},
 			[]kube.FieldExtractionRule{},
@@ -660,6 +713,48 @@ func TestWithExtractPodAssociation(t *testing.T) {
 			option := WithExtractPodAssociations(tt.args...)
 			assert.NoError(t, option(p))
 			assert.Equal(t, tt.want, p.podAssociations)
+		})
+	}
+}
+
+func TestWithExcludes(t *testing.T) {
+	tests := []struct {
+		name string
+		args ExcludeConfig
+		want kube.Excludes
+	}{
+		{
+			"default",
+			ExcludeConfig{},
+			kube.Excludes{
+				Pods: []kube.ExcludePods{
+					{Name: regexp.MustCompile(`jaeger-agent`)},
+					{Name: regexp.MustCompile(`jaeger-collector`)},
+				},
+			},
+		},
+		{
+			"configured",
+			ExcludeConfig{
+				Pods: []ExcludePodConfig{
+					{Name: "ignore_pod1"},
+					{Name: "ignore_pod2"},
+				},
+			},
+			kube.Excludes{
+				Pods: []kube.ExcludePods{
+					{Name: regexp.MustCompile(`ignore_pod1`)},
+					{Name: regexp.MustCompile(`ignore_pod2`)},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &kubernetesprocessor{}
+			option := WithExcludes(tt.args)
+			option(p)
+			assert.Equal(t, tt.want, p.podIgnore)
 		})
 	}
 }

@@ -16,10 +16,12 @@ package kube
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
 
+	conventions "go.opentelemetry.io/collector/model/semconv/v1.5.0"
 	"go.uber.org/zap"
 	api_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -28,21 +30,23 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/k8sconfig"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/observability"
 )
 
 // WatchClient is the main interface provided by this package to a kubernetes cluster.
 type WatchClient struct {
-	m           sync.RWMutex
-	deleteMut   sync.Mutex
-	logger      *zap.Logger
-	kc          kubernetes.Interface
-	informer    cache.SharedInformer
-	deleteQueue []deleteRequest
-	stopCh      chan struct{}
-	op          OwnerAPI
-	delimiter   string
+	m                 sync.RWMutex
+	deleteMut         sync.Mutex
+	logger            *zap.Logger
+	kc                kubernetes.Interface
+	informer          cache.SharedInformer
+	namespaceInformer cache.SharedInformer
+	deploymentRegex   *regexp.Regexp
+	deleteQueue       []deleteRequest
+	stopCh            chan struct{}
+	op                OwnerAPI
+	delimiter         string
 
 	// A map containing Pod related data, used to associate them with resources.
 	// Key can be either an IP address or Pod UID
@@ -50,7 +54,16 @@ type WatchClient struct {
 	Rules        ExtractionRules
 	Filters      Filters
 	Associations []Association
+	Exclude      Excludes
+
+	// A map containing Namespace related data, used to associate them with resources.
+	// Key is namespace name
+	Namespaces map[string]*Namespace
 }
+
+// Extract deployment name from the pod name. Pod name is created using
+// format: [deployment-name]-[Random-String-For-ReplicaSet]-[Random-String-For-Pod]
+var dRegex = regexp.MustCompile(`^(.*)-[0-9a-zA-Z]*-[0-9a-zA-Z]*$`)
 
 // New initializes a new k8s Client.
 func New(
@@ -59,22 +72,27 @@ func New(
 	rules ExtractionRules,
 	filters Filters,
 	associations []Association,
+	exclude Excludes,
 	newClientSet APIClientsetProvider,
 	newInformer InformerProvider,
+	newNamespaceInformer InformerProviderNamespace,
 	newOwnerProviderFunc OwnerProvider,
 	delimiter string,
 ) (Client, error) {
 	c := &WatchClient{
-		logger:       logger,
-		Rules:        rules,
-		Filters:      filters,
-		Associations: associations,
-		stopCh:       make(chan struct{}),
-		delimiter:    delimiter,
+		logger:          logger,
+		Rules:           rules,
+		Filters:         filters,
+		Associations:    associations,
+		Exclude:         exclude,
+		deploymentRegex: dRegex,
+		stopCh:          make(chan struct{}),
+		delimiter:       delimiter,
 	}
 	go c.deleteLoop(time.Second*30, defaultPodDeleteGracePeriod)
 
 	c.Pods = map[PodIdentifier]*Pod{}
+	c.Namespaces = map[string]*Namespace{}
 	if newClientSet == nil {
 		newClientSet = k8sconfig.MakeClient
 	}
@@ -110,7 +128,16 @@ func New(
 		newInformer = newSharedInformer
 	}
 
+	if newNamespaceInformer == nil {
+		newNamespaceInformer = newNamespaceSharedInformer
+	}
+
 	c.informer = newInformer(c.kc, c.Filters.Namespace, labelSelector, fieldSelector)
+	if c.extractNamespaceLabelsAnnotations() {
+		c.namespaceInformer = newNamespaceInformer(c.kc)
+	} else {
+		c.namespaceInformer = NewNoOpInformer(c.kc)
+	}
 	return c, err
 }
 
@@ -125,7 +152,13 @@ func (c *WatchClient) Start() {
 		UpdateFunc: c.handlePodUpdate,
 		DeleteFunc: c.handlePodDelete,
 	})
-	c.informer.Run(c.stopCh)
+	go c.informer.Run(c.stopCh)
+	c.namespaceInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc:    c.handleNamespaceAdd,
+		UpdateFunc: c.handleNamespaceUpdate,
+		DeleteFunc: c.handleNamespaceDelete,
+	})
+	go c.namespaceInformer.Run(c.stopCh)
 }
 
 // Stop signals the the k8s watcher/informer to stop watching for new events.
@@ -169,6 +202,40 @@ func (c *WatchClient) handlePodDelete(obj interface{}) {
 	}
 	podTableSize := len(c.Pods)
 	observability.RecordPodTableSize(int64(podTableSize))
+}
+
+func (c *WatchClient) handleNamespaceAdd(obj interface{}) {
+	observability.RecordNamespaceAdded()
+	if namespace, ok := obj.(*api_v1.Namespace); ok {
+		c.addOrUpdateNamespace(namespace)
+	} else {
+		c.logger.Error("object received was not of type api_v1.Namespace", zap.Any("received", obj))
+	}
+}
+
+func (c *WatchClient) handleNamespaceUpdate(old, new interface{}) {
+	observability.RecordNamespaceUpdated()
+	if namespace, ok := new.(*api_v1.Namespace); ok {
+		c.addOrUpdateNamespace(namespace)
+	} else {
+		c.logger.Error("object received was not of type api_v1.Namespace", zap.Any("received", new))
+	}
+}
+
+func (c *WatchClient) handleNamespaceDelete(obj interface{}) {
+	observability.RecordNamespaceDeleted()
+	if namespace, ok := obj.(*api_v1.Namespace); ok {
+		c.m.Lock()
+		if ns, ok := c.Namespaces[namespace.Name]; ok {
+			// When a namespace is deleted all the pods(and other k8s objects in that namespace) in that namespace are deleted before it.
+			// So we wont have any spans that might need namespace annotations and labels.
+			// Thats why we dont need an implementation for deleteQueue and gracePeriod for namespaces.
+			delete(c.Namespaces, ns.Name)
+		}
+		c.m.Unlock()
+	} else {
+		c.logger.Error("object received was not of type api_v1.Namespace", zap.Any("received", obj))
+	}
 }
 
 func (c *WatchClient) deleteLoop(interval time.Duration, gracePeriod time.Duration) {
@@ -226,30 +293,41 @@ func (c *WatchClient) GetPod(identifier PodIdentifier) (*Pod, bool) {
 	return nil, false
 }
 
+// GetNamespace takes a namespace and returns the namespace object the namespace is associated with.
+func (c *WatchClient) GetNamespace(namespace string) (*Namespace, bool) {
+	c.m.RLock()
+	ns, ok := c.Namespaces[namespace]
+	c.m.RUnlock()
+	if ok {
+		return ns, ok
+	}
+	return nil, false
+}
+
 func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 	tags := map[string]string{}
 	if c.Rules.PodName {
-		tags[c.Rules.Tags.PodName] = pod.Name
+		tags[conventions.AttributeK8SPodName] = pod.Name
 	}
 
 	if c.Rules.Namespace {
-		tags[c.Rules.Tags.Namespace] = pod.GetNamespace()
+		tags[conventions.AttributeK8SNamespaceName] = pod.GetNamespace()
 	}
 
 	if c.Rules.StartTime {
 		ts := pod.GetCreationTimestamp()
 		if !ts.IsZero() {
-			tags[c.Rules.Tags.StartTime] = ts.String()
+			tags[AttributeK8SProcessorStartTime] = ts.String()
 		}
 	}
 
 	if c.Rules.PodUID {
 		uid := pod.GetUID()
-		tags[c.Rules.Tags.PodUID] = string(uid)
+		tags[conventions.AttributeK8SPodUID] = string(uid)
 	}
 
 	if c.Rules.NodeName {
-		tags[c.Rules.Tags.NodeName] = pod.Spec.NodeName
+		tags[tagNodeName] = pod.Spec.NodeName
 	}
 
 	if c.Rules.HostName {
@@ -257,16 +335,16 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 		// the associated metadata name, see:
 		// https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-hostname-and-subdomain-fields
 		if pod.Spec.Hostname == "" {
-			tags[c.Rules.Tags.HostName] = pod.Name
+			tags[AttributeK8SHostName] = pod.Name
 		} else {
-			tags[c.Rules.Tags.HostName] = pod.Spec.Hostname
+			tags[AttributeK8SHostName] = pod.Spec.Hostname
 		}
 	}
 
 	if c.Rules.ClusterName {
 		clusterName := pod.GetClusterName()
 		if clusterName != "" {
-			tags[c.Rules.Tags.ClusterName] = clusterName
+			tags[conventions.AttributeK8SClusterName] = clusterName
 		}
 	}
 
@@ -277,19 +355,19 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 			switch owner.kind {
 			case "DaemonSet":
 				if c.Rules.DaemonSetName {
-					tags[c.Rules.Tags.DaemonSetName] = owner.name
+					tags[conventions.AttributeK8SDaemonSetName] = owner.name
 				}
 			case "Deployment":
 				if c.Rules.DeploymentName {
-					tags[c.Rules.Tags.DeploymentName] = owner.name
+					tags[conventions.AttributeK8SDeploymentName] = owner.name
 				}
 			case "ReplicaSet":
 				if c.Rules.ReplicaSetName {
-					tags[c.Rules.Tags.ReplicaSetName] = owner.name
+					tags[conventions.AttributeK8SReplicaSetName] = owner.name
 				}
 			case "StatefulSet":
 				if c.Rules.StatefulSetName {
-					tags[c.Rules.Tags.StatefulSetName] = owner.name
+					tags[conventions.AttributeK8SStatefulSetName] = owner.name
 				}
 			default:
 				// Do nothing
@@ -297,7 +375,7 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 		}
 
 		if c.Rules.ServiceName {
-			tags[c.Rules.Tags.ServiceName] = strings.Join(c.op.GetServices(pod), c.delimiter)
+			tags[AttributeK8SServiceName] = strings.Join(c.op.GetServices(pod), ", ")
 		}
 
 	}
@@ -305,7 +383,7 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 	if len(pod.Status.ContainerStatuses) > 0 {
 		cs := pod.Status.ContainerStatuses[0]
 		if c.Rules.ContainerID {
-			tags[c.Rules.Tags.ContainerID] = cs.ContainerID
+			tags[AttributeK8SContainerID] = cs.ContainerID
 		}
 	}
 
@@ -313,19 +391,22 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 		container := pod.Spec.Containers[0]
 
 		if c.Rules.ContainerName {
-			tags[c.Rules.Tags.ContainerName] = container.Name
+			tags[conventions.AttributeK8SContainerName] = container.Name
 		}
 		if c.Rules.ContainerImage {
-			tags[c.Rules.Tags.ContainerImage] = container.Image
+			tags[AttributeK8SContainerImage] = container.Image
 		}
 	}
 
 	if c.Rules.PodUID {
-		tags[c.Rules.Tags.PodUID] = string(pod.UID)
+		tags[conventions.AttributeK8SPodUID] = string(pod.UID)
 	}
 
 	for _, r := range c.Rules.Labels {
-		c.extractLabelsIntoTags(r, pod.Labels, tags)
+		// By default if the From field is not set for labels and annotations we want to extract them from pod
+		if r.From == MetadataFromPod || r.From == "" {
+			c.extractLabelsIntoTags(r, pod.Labels, tags)
+		}
 	}
 
 	if len(c.Rules.NamespaceLabels) > 0 && c.Rules.OwnerLookupEnabled {
@@ -338,7 +419,31 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 	}
 
 	for _, r := range c.Rules.Annotations {
-		c.extractLabelsIntoTags(r, pod.Annotations, tags)
+		// By default if the From field is not set for labels and annotations we want to extract them from pod
+		if r.From == MetadataFromPod || r.From == "" {
+			c.extractLabelsIntoTags(r, pod.Annotations, tags)
+		}
+	}
+	return tags
+}
+
+func (c *WatchClient) extractNamespaceAttributes(namespace *api_v1.Namespace) map[string]string {
+	tags := map[string]string{}
+
+	for _, r := range c.Rules.Labels {
+		if r.From == MetadataFromNamespace {
+			if v, ok := namespace.Labels[r.Key]; ok {
+				tags[r.Name] = c.extractField(v, r)
+			}
+		}
+	}
+
+	for _, r := range c.Rules.Annotations {
+		if r.From == MetadataFromNamespace {
+			if v, ok := namespace.Annotations[r.Key]; ok {
+				tags[r.Name] = c.extractField(v, r)
+			}
+		}
 	}
 	return tags
 }
@@ -373,7 +478,7 @@ func (c *WatchClient) extractField(v string, r FieldExtractionRule) string {
 func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
 	newPod := &Pod{
 		Name:      pod.Name,
-		Namespace: pod.Namespace,
+		Namespace: pod.GetNamespace(),
 		Address:   pod.Status.PodIP,
 		PodUID:    string(pod.UID),
 		StartTime: pod.Status.StartTime,
@@ -404,8 +509,8 @@ func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
 		c.Pods[PodIdentifier(pod.Status.PodIP)] = newPod
 	}
 	// Use pod_name.namespace_name identifier
-	if newPod.Name != "" && newPod.Namespace != "" {
-		c.Pods[PodIdentifier(fmt.Sprintf("%s.%s", newPod.Name, newPod.Namespace))] = newPod
+	if newPod.Name != "" && newPod.Attributes[conventions.AttributeK8SNamespaceName] != "" {
+		c.Pods[PodIdentifier(fmt.Sprintf("%s.%s", newPod.Name, newPod.Attributes[conventions.AttributeK8SNamespaceName]))] = newPod
 	}
 }
 
@@ -454,9 +559,9 @@ func (c *WatchClient) shouldIgnorePod(pod *api_v1.Pod) bool {
 		}
 	}
 
-	// Check well known names that should be ignored
-	for _, rexp := range podNameIgnorePatterns {
-		if rexp.MatchString(pod.Name) {
+	// Check if user requested the pod to be ignored through configuration
+	for _, excludedPod := range c.Exclude.Pods {
+		if excludedPod.Name.MatchString(pod.Name) {
 			return true
 		}
 	}
@@ -490,4 +595,35 @@ func selectorsFromFilters(filters Filters) (labels.Selector, fields.Selector, er
 		selectors = append(selectors, fields.OneTermEqualSelector(podNodeField, filters.Node))
 	}
 	return labelSelector, fields.AndSelectors(selectors...), nil
+}
+
+func (c *WatchClient) addOrUpdateNamespace(namespace *api_v1.Namespace) {
+	newNamespace := &Namespace{
+		Name:         namespace.Name,
+		NamespaceUID: string(namespace.UID),
+		StartTime:    namespace.GetCreationTimestamp(),
+	}
+	newNamespace.Attributes = c.extractNamespaceAttributes(namespace)
+
+	c.m.Lock()
+	if namespace.Name != "" {
+		c.Namespaces[namespace.Name] = newNamespace
+	}
+	c.m.Unlock()
+}
+
+func (c *WatchClient) extractNamespaceLabelsAnnotations() bool {
+	for _, r := range c.Rules.Labels {
+		if r.From == MetadataFromNamespace {
+			return true
+		}
+	}
+
+	for _, r := range c.Rules.Annotations {
+		if r.From == MetadataFromNamespace {
+			return true
+		}
+	}
+
+	return false
 }

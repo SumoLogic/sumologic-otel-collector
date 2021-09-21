@@ -34,7 +34,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/k8sconfig"
 )
 
 func newFakeAPIClientset(_ k8sconfig.APIConfig) (kubernetes.Interface, error) {
@@ -86,13 +86,38 @@ func podAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj interfac
 
 }
 
+func namespaceAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj interface{})) {
+	assert.Equal(t, len(c.Namespaces), 0)
+
+	namespace := &api_v1.Namespace{}
+	handler(namespace)
+	assert.Equal(t, len(c.Namespaces), 0)
+
+	namespace = &api_v1.Namespace{}
+	namespace.Name = "namespaceA"
+	handler(namespace)
+	assert.Equal(t, len(c.Namespaces), 1)
+	got := c.Namespaces["namespaceA"]
+	assert.Equal(t, got.Name, "namespaceA")
+	assert.Equal(t, got.NamespaceUID, "")
+
+	namespace = &api_v1.Namespace{}
+	namespace.Name = "namespaceB"
+	namespace.UID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+	handler(namespace)
+	assert.Equal(t, len(c.Namespaces), 2)
+	got = c.Namespaces["namespaceB"]
+	assert.Equal(t, got.Name, "namespaceB")
+	assert.Equal(t, got.NamespaceUID, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+}
+
 func TestDefaultClientset(t *testing.T) {
-	c, err := New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, nil, nil, nil, "")
+	c, err := New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, nil, nil, nil, nil, "")
 	assert.Error(t, err)
 	assert.Equal(t, "invalid authType for kubernetes: ", err.Error())
 	assert.Nil(t, c)
 
-	c, err = New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, newFakeAPIClientset, nil, nil, "")
+	c, err = New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, newFakeAPIClientset, nil, nil, nil, "")
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
 }
@@ -104,8 +129,10 @@ func TestBadFilters(t *testing.T) {
 		ExtractionRules{},
 		Filters{Fields: []FieldFilter{{Op: selection.Exists}}},
 		[]Association{},
+		Excludes{},
 		newFakeAPIClientset,
 		NewFakeInformer,
+		NewFakeNamespaceInformer,
 		newFakeOwnerProvider,
 		"",
 	)
@@ -128,6 +155,7 @@ func TestClientStartStop(t *testing.T) {
 	}()
 	c.Stop()
 	<-done
+	time.Sleep(time.Second)
 	assert.True(t, fctr.HasStopped())
 }
 
@@ -143,7 +171,7 @@ func TestConstructorErrors(t *testing.T) {
 			gotAPIConfig = c
 			return nil, fmt.Errorf("error creating k8s client")
 		}
-		c, err := New(zap.NewNop(), apiCfg, er, ff, []Association{}, clientProvider, NewFakeInformer, newFakeOwnerProvider, "")
+		c, err := New(zap.NewNop(), apiCfg, er, ff, []Association{}, Excludes{}, clientProvider, NewFakeInformer, NewFakeNamespaceInformer, newFakeOwnerProvider, "")
 		assert.Nil(t, c)
 		assert.Error(t, err)
 		assert.Equal(t, err.Error(), "error creating k8s client")
@@ -154,6 +182,11 @@ func TestConstructorErrors(t *testing.T) {
 func TestPodAdd(t *testing.T) {
 	c, _ := newTestClient(t)
 	podAddAndUpdateTest(t, c, c.handlePodAdd)
+}
+
+func TestNamespaceAdd(t *testing.T) {
+	c, _ := newTestClient(t)
+	namespaceAddAndUpdateTest(t, c, c.handleNamespaceAdd)
 }
 
 func TestPodHostNetwork(t *testing.T) {
@@ -204,6 +237,14 @@ func TestPodUpdate(t *testing.T) {
 	podAddAndUpdateTest(t, c, func(obj interface{}) {
 		// first argument (old pod) is not used right now
 		c.handlePodUpdate(&api_v1.Pod{}, obj)
+	})
+}
+
+func TestNamespaceUpdate(t *testing.T) {
+	c, _ := newTestClient(t)
+	namespaceAddAndUpdateTest(t, c, func(obj interface{}) {
+		// first argument (old namespace) is not used right now
+		c.handleNamespaceUpdate(&api_v1.Namespace{}, obj)
 	})
 }
 
@@ -266,6 +307,24 @@ func TestPodDelete(t *testing.T) {
 	assert.Equal(t, deleteRequest.podName, "podC")
 	assert.False(t, deleteRequest.ts.Before(tsBeforeDelete))
 	assert.False(t, deleteRequest.ts.After(time.Now()))
+}
+
+func TestNamespaceDelete(t *testing.T) {
+	c, _ := newTestClient(t)
+	namespaceAddAndUpdateTest(t, c, c.handleNamespaceAdd)
+	assert.Equal(t, len(c.Namespaces), 2)
+	assert.Equal(t, c.Namespaces["namespaceA"].Name, "namespaceA")
+
+	// delete empty namespace
+	c.handleNamespaceDelete(&api_v1.Namespace{})
+
+	// delete non-existent namespace
+	namespace := &api_v1.Namespace{}
+	namespace.Name = "namespaceC"
+	c.handleNamespaceDelete(namespace)
+	assert.Equal(t, len(c.Namespaces), 2)
+	got := c.Namespaces["namespaceA"]
+	assert.Equal(t, got.Name, "namespaceA")
 }
 
 func TestDeleteQueue(t *testing.T) {
@@ -366,7 +425,6 @@ func TestGetPodWhenNamespaceInExtractedMetadata(t *testing.T) {
 	c, _ := newTestClient(t)
 
 	c.Rules.Namespace = true
-	c.Rules.Tags.Namespace = "namespace"
 
 	pod := &api_v1.Pod{}
 	pod.Status.PodIP = "1.1.1.1"
@@ -377,24 +435,24 @@ func TestGetPodWhenNamespaceInExtractedMetadata(t *testing.T) {
 
 	expected := &Pod{
 		Name:      "pod_name",
-		Namespace: "namespace_name",
 		Address:   "1.1.1.1",
 		PodUID:    "1234",
 		Attributes: map[string]string{
-			"namespace": "namespace_name",
+			"k8s.namespace.name": "namespace_name",
 		},
+		Namespace: "namespace_name",
 	}
 
 	got, ok := c.GetPod(PodIdentifier("1.1.1.1"))
-	assert.Equal(t, got, expected)
+	assert.Equal(t, expected, got)
 	assert.True(t, ok)
 
 	got, ok = c.GetPod(PodIdentifier("1234"))
-	assert.Equal(t, got, expected)
+	assert.Equal(t, expected, got)
 	assert.True(t, ok)
 
 	got, ok = c.GetPod(PodIdentifier("pod_name.namespace_name"))
-	assert.Equal(t, got, expected)
+	assert.Equal(t, expected, got)
 	assert.True(t, ok)
 }
 
@@ -427,7 +485,6 @@ func TestNoHostnameExtractionRules(t *testing.T) {
 
 	c.Rules = ExtractionRules{
 		HostName: true,
-		Tags:     NewExtractionFieldTags(),
 	}
 
 	c.handlePodAdd(pod)
@@ -443,7 +500,7 @@ func TestExtractionRules(t *testing.T) {
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:              "auth-service-abc12-xyz3",
 			Namespace:         "ns1",
-			UID:               "33333",
+			UID:               "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
 			CreationTimestamp: meta_v1.Now(),
 			ClusterName:       "cluster1",
 			Labels: map[string]string{
@@ -487,7 +544,6 @@ func TestExtractionRules(t *testing.T) {
 		name: "deployment name without owner lookup",
 		rules: ExtractionRules{
 			DeploymentName: true,
-			Tags:           NewExtractionFieldTags(),
 		},
 		attributes: map[string]string{},
 	}, {
@@ -498,9 +554,8 @@ func TestExtractionRules(t *testing.T) {
 			UID:  "1a1658f9-7818-11e9-90f1-02324f7e0d1e",
 		},
 		rules: ExtractionRules{
-			DeploymentName:     true,
+			DeploymentName: true,
 			OwnerLookupEnabled: true,
-			Tags:               NewExtractionFieldTags(),
 		},
 		attributes: map[string]string{
 			"k8s.deployment.name": "dearest-deploy",
@@ -516,7 +571,6 @@ func TestExtractionRules(t *testing.T) {
 			StatefulSetName:    true,
 			DeploymentName:     true,
 			OwnerLookupEnabled: true,
-			Tags:               NewExtractionFieldTags(),
 		},
 		attributes: map[string]string{
 			"k8s.statefulset.name": "snug-sts",
@@ -545,7 +599,6 @@ func TestExtractionRules(t *testing.T) {
 			Namespace:          true,
 			NodeName:           true,
 			OwnerLookupEnabled: true,
-			Tags:               NewExtractionFieldTags(),
 		},
 		attributes: map[string]string{
 			"k8s.cluster.name":    "cluster1",
@@ -554,45 +607,43 @@ func TestExtractionRules(t *testing.T) {
 			"k8s.container.name":  "auth-service-container-name",
 			"k8s.deployment.name": "dearest-deploy",
 			"k8s.pod.hostname":    "auth-hostname3",
-			"k8s.pod.id":          "33333",
-			"k8s.pod.name":        "auth-service-abc12-xyz3",
-			"k8s.pod.startTime":   pod.GetCreationTimestamp().String(),
-			"k8s.replicaset.name": "dearest-deploy-77c99ccb96",
-			"k8s.service.name":    "foo_bar",
+			"k8s.replicaset.name": "SomeReplicaSet",
+			"k8s.service.name":    "foo, bar",
 			"k8s.namespace.name":  "ns1",
 			"k8s.node.name":       "node1",
-		},
-	}, {
-		name: "non-default tags",
-		rules: ExtractionRules{
-			ClusterName:     true,
-			ContainerID:     true,
-			ContainerImage:  false,
-			ContainerName:   true,
-			DaemonSetName:   false,
-			DeploymentName:  false,
-			HostName:        false,
-			PodUID:          false,
-			PodName:         false,
-			ReplicaSetName:  false,
-			ServiceName:     false,
-			StatefulSetName: false,
-			StartTime:       false,
-			Namespace:       false,
-			NodeName:        false,
-			Tags: ExtractionFieldTags{
-				ClusterName:   "cc",
-				ContainerID:   "cid",
-				ContainerName: "cn",
-			},
-		},
-		attributes: map[string]string{
-			"cc":  "cluster1",
-			"cid": "111-222-333",
-			"cn":  "auth-service-container-name",
+			"k8s.pod.name":        "auth-service-abc12-xyz3",
+			"k8s.pod.uid":         "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+			"k8s.pod.start_time":   pod.GetCreationTimestamp().String(),
 		},
 	}, {
 		name: "labels",
+		rules: ExtractionRules{
+			Annotations: []FieldExtractionRule{{
+				Name: "a1",
+				Key:  "annotation1",
+				From: MetadataFromPod,
+			},
+			},
+			Labels: []FieldExtractionRule{{
+				Name: "l1",
+				Key:  "label1",
+				From: MetadataFromPod,
+			}, {
+				Name:  "l2",
+				Key:   "label2",
+				Regex: regexp.MustCompile(`k5=(?P<value>[^\s]+)`),
+				From:  MetadataFromPod,
+			},
+			},
+		},
+		attributes: map[string]string{
+			"l1": "lv1",
+			"l2": "v5",
+			"a1": "av1",
+		},
+	}, {
+		// By default if the From field is not set for labels and annotations we want to extract them from pod
+		name: "labels-annotations-default-pod",
 		rules: ExtractionRules{
 			Annotations: []FieldExtractionRule{{
 				Name: "a1",
@@ -619,7 +670,6 @@ func TestExtractionRules(t *testing.T) {
 			name: "generic-labels",
 			rules: ExtractionRules{
 				OwnerLookupEnabled: true,
-				Tags:               NewExtractionFieldTags(),
 				Annotations: []FieldExtractionRule{{
 					Name: "k8s.pod.annotation.%s",
 					Key:  "*",
@@ -662,6 +712,70 @@ func TestExtractionRules(t *testing.T) {
 				got, ok := p.Attributes[k]
 				assert.True(t, ok, "Attribute '%s' not found.", k)
 				assert.Equal(t, v, got, "Value of '%s' should be '%s', but was '%s'.", k, v, got)
+			}
+		})
+	}
+}
+
+func TestNamespaceExtractionRules(t *testing.T) {
+	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+
+	namespace := &api_v1.Namespace{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:              "auth-service-namespace-abc12-xyz3",
+			UID:               "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+			CreationTimestamp: meta_v1.Now(),
+			Labels: map[string]string{
+				"label1": "lv1",
+			},
+			Annotations: map[string]string{
+				"annotation1": "av1",
+			},
+		},
+	}
+
+	testCases := []struct {
+		name       string
+		rules      ExtractionRules
+		attributes map[string]string
+	}{{
+		name:       "no-rules",
+		rules:      ExtractionRules{},
+		attributes: nil,
+	}, {
+		name: "labels",
+		rules: ExtractionRules{
+			Annotations: []FieldExtractionRule{{
+				Name: "a1",
+				Key:  "annotation1",
+				From: MetadataFromNamespace,
+			},
+			},
+			Labels: []FieldExtractionRule{{
+				Name: "l1",
+				Key:  "label1",
+				From: MetadataFromNamespace,
+			},
+			},
+		},
+		attributes: map[string]string{
+			"l1": "lv1",
+			"a1": "av1",
+		},
+	},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			c.Rules = tc.rules
+			c.handleNamespaceAdd(namespace)
+			p, ok := c.GetNamespace(namespace.Name)
+			require.True(t, ok)
+
+			assert.Equal(t, len(tc.attributes), len(p.Attributes))
+			for k, v := range tc.attributes {
+				got, ok := p.Attributes[k]
+				assert.True(t, ok)
+				assert.Equal(t, v, got)
 			}
 		})
 	}
@@ -796,6 +910,20 @@ func TestPodIgnorePatterns(t *testing.T) {
 				Name: "jaeger-collector",
 			},
 		},
+	}, {
+		ignore: true,
+		pod: api_v1.Pod{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "jaeger-agent-b2zdv",
+			},
+		},
+	}, {
+		ignore: false,
+		pod: api_v1.Pod{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "test-pod-name",
+			},
+		},
 	},
 	}
 
@@ -894,10 +1022,75 @@ func Test_selectorsFromFilters(t *testing.T) {
 	}
 }
 
+func TestExtractNamespaceLabelsAnnotations(t *testing.T) {
+	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	testCases := []struct {
+		name                   string
+		shouldExtractNamespace bool
+		rules                  ExtractionRules
+	}{{
+		name:                   "empty-rules",
+		shouldExtractNamespace: false,
+		rules:                  ExtractionRules{},
+	}, {
+		name:                   "pod-rules",
+		shouldExtractNamespace: false,
+		rules: ExtractionRules{
+			Annotations: []FieldExtractionRule{{
+				Name: "a1",
+				Key:  "annotation1",
+				From: MetadataFromPod,
+			},
+			},
+			Labels: []FieldExtractionRule{{
+				Name: "l1",
+				Key:  "label1",
+				From: MetadataFromPod,
+			},
+			},
+		},
+	}, {
+		name:                   "namespace-rules-only-annotations",
+		shouldExtractNamespace: true,
+		rules: ExtractionRules{
+			Annotations: []FieldExtractionRule{{
+				Name: "a1",
+				Key:  "annotation1",
+				From: MetadataFromNamespace,
+			},
+			},
+		},
+	}, {
+		name:                   "namespace-rules-only-labels",
+		shouldExtractNamespace: true,
+		rules: ExtractionRules{
+			Labels: []FieldExtractionRule{{
+				Name: "l1",
+				Key:  "label1",
+				From: MetadataFromNamespace,
+			},
+			},
+		},
+	},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			c.Rules = tc.rules
+			assert.Equal(t, tc.shouldExtractNamespace, c.extractNamespaceLabelsAnnotations())
+		})
+	}
+}
+
 func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters) (*WatchClient, *observer.ObservedLogs) {
 	observedLogger, logs := observer.New(zapcore.WarnLevel)
 	logger := zap.New(observedLogger)
-	c, err := New(logger, k8sconfig.APIConfig{}, e, f, []Association{}, newFakeAPIClientset, NewFakeInformer, newFakeOwnerProvider, "_")
+	exclude := Excludes{
+		Pods: []ExcludePods{
+			{Name: regexp.MustCompile(`jaeger-agent`)},
+			{Name: regexp.MustCompile(`jaeger-collector`)},
+		},
+	}
+	c, err := New(logger, k8sconfig.APIConfig{}, e, f, []Association{}, exclude, newFakeAPIClientset, NewFakeInformer, NewFakeNamespaceInformer, newFakeOwnerProvider, "")
 	require.NoError(t, err)
 	return c.(*WatchClient), logs
 }

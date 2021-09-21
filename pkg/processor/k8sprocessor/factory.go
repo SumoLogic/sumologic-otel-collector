@@ -16,13 +16,16 @@ package k8sprocessor
 
 import (
 	"context"
+	"fmt"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer"
+	conventions "go.opentelemetry.io/collector/model/semconv/v1.5.0"
 	"go.opentelemetry.io/collector/processor/processorhelper"
+	"go.uber.org/zap"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/k8sconfig"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube"
 )
 
@@ -32,7 +35,14 @@ const (
 )
 
 var kubeClientProvider = kube.ClientProvider(nil)
-var processorCapabilities = consumer.Capabilities{MutatesData: true}
+var consumerCapabilities = consumer.Capabilities{MutatesData: true}
+var defaultExcludes = ExcludeConfig{Pods: []ExcludePodConfig{
+	{Name: "jaeger-agent"},
+	{Name: "jaeger-collector"},
+	{Name: "otel-collector"},
+	{Name: "otel-agent"},
+	{Name: "collection-sumologic-otelcol"},
+}}
 
 // NewFactory returns a new factory for the k8s processor.
 func NewFactory() component.ProcessorFactory {
@@ -49,9 +59,7 @@ func createDefaultConfig() config.Processor {
 	return &Config{
 		ProcessorSettings: config.NewProcessorSettings(config.NewID(typeStr)),
 		APIConfig:         k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
-		Extract: ExtractConfig{
-			Delimiter: DefaultDelimiter,
-		},
+		Exclude:           defaultExcludes,
 	}
 }
 
@@ -97,8 +105,8 @@ func createTracesProcessorWithOptions(
 	return processorhelper.NewTracesProcessor(
 		cfg,
 		next,
-		kp.ProcessTraces,
-		processorhelper.WithCapabilities(processorCapabilities),
+		kp.processTraces,
+		processorhelper.WithCapabilities(consumerCapabilities),
 		processorhelper.WithStart(kp.Start),
 		processorhelper.WithShutdown(kp.Shutdown))
 }
@@ -118,8 +126,8 @@ func createMetricsProcessorWithOptions(
 	return processorhelper.NewMetricsProcessor(
 		cfg,
 		nextMetricsConsumer,
-		kp.ProcessMetrics,
-		processorhelper.WithCapabilities(processorCapabilities),
+		kp.processMetrics,
+		processorhelper.WithCapabilities(consumerCapabilities),
 		processorhelper.WithStart(kp.Start),
 		processorhelper.WithShutdown(kp.Shutdown))
 }
@@ -139,8 +147,8 @@ func createLogsProcessorWithOptions(
 	return processorhelper.NewLogsProcessor(
 		cfg,
 		nextLogsConsumer,
-		kp.ProcessLogs,
-		processorhelper.WithCapabilities(processorCapabilities),
+		kp.processLogs,
+		processorhelper.WithCapabilities(consumerCapabilities),
 		processorhelper.WithStart(kp.Start),
 		processorhelper.WithShutdown(kp.Shutdown))
 }
@@ -151,6 +159,8 @@ func createKubernetesProcessor(
 	options ...Option,
 ) (*kubernetesprocessor, error) {
 	kp := &kubernetesprocessor{logger: params.Logger}
+
+	warnDeprecatedMetadataConfig(kp.logger, cfg)
 
 	allOptions := append(createProcessorOpts(cfg), options...)
 
@@ -183,7 +193,6 @@ func createProcessorOpts(cfg config.Processor) []Option {
 	opts = append(opts, WithExtractLabels(oCfg.Extract.Labels...))
 	opts = append(opts, WithExtractNamespaceLabels(oCfg.Extract.NamespaceLabels...))
 	opts = append(opts, WithExtractAnnotations(oCfg.Extract.Annotations...))
-	opts = append(opts, WithExtractTags(oCfg.Extract.Tags))
 
 	if oCfg.OwnerLookupEnabled {
 		opts = append(opts, WithOwnerLookupEnabled())
@@ -198,7 +207,65 @@ func createProcessorOpts(cfg config.Processor) []Option {
 
 	opts = append(opts, WithExtractPodAssociations(oCfg.Association...))
 
-	opts = append(opts, WithDelimiter(oCfg.Extract.Delimiter))
+	opts = append(opts, WithExcludes(oCfg.Exclude))
 
 	return opts
+}
+
+func warnDeprecatedMetadataConfig(logger *zap.Logger, cfg config.Processor) {
+	oCfg := cfg.(*Config)
+	for _, field := range oCfg.Extract.Metadata {
+		var oldName, newName string
+		switch field {
+		case metadataNamespace:
+			oldName = metadataNamespace
+			newName = conventions.AttributeK8SNamespaceName
+		case metadataPodName:
+			oldName = metadataPodName
+			newName = conventions.AttributeK8SPodName
+		case metadataPodUID:
+			oldName = metadataPodUID
+			newName = conventions.AttributeK8SPodUID
+		case metadataStartTime:
+			oldName = metadataStartTime
+			newName = kube.AttributeK8SProcessorStartTime
+		case metadataDeploymentName:
+			oldName = metadataDeploymentName
+			newName = conventions.AttributeK8SDeploymentName
+		case metadataClusterName:
+			oldName = metadataClusterName
+			newName = conventions.AttributeK8SClusterName
+		case metadataNodeName:
+			oldName = metadataNodeName
+			newName = conventions.AttributeK8SNodeName
+		// Sumo Logic extensions:
+		case metadataContainerID:
+			oldName = metadataContainerID
+			newName = kube.AttributeK8SContainerID
+		case metadataContainerImage:
+			oldName = metadataContainerImage
+			newName = kube.AttributeK8SContainerImage
+		case metadataContainerName:
+			oldName = metadataContainerName
+			newName = conventions.AttributeK8SContainerName
+		case metadataDaemonSetName:
+			oldName = metadataDaemonSetName
+			newName = conventions.AttributeK8SDaemonSetName
+		case metadataHostName:
+			oldName = metadataHostName
+			newName = kube.AttributeK8SHostName
+		case metadataReplicaSetName:
+			oldName = metadataReplicaSetName
+			newName = conventions.AttributeK8SReplicaSetName
+		case metadataServiceName:
+			oldName = metadataServiceName
+			newName = kube.AttributeK8SServiceName
+		case metadataStatefulSetName:
+			oldName = metadataStatefulSetName
+			newName = conventions.AttributeK8SStatefulSetName
+		}
+		if oldName != "" {
+			logger.Warn(fmt.Sprintf("%s has been deprecated in favor of %s for k8s-tagger processor", oldName, newName))
+		}
+	}
 }

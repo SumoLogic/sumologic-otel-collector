@@ -32,7 +32,7 @@ import (
 	conventions "go.opentelemetry.io/collector/model/semconv/v1.5.0"
 	"go.uber.org/zap"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/k8sconfig"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube"
 )
 
@@ -40,9 +40,7 @@ func newTracesProcessor(cfg config.Processor, next consumer.Traces, options ...O
 	opts := append(options, withKubeClientProvider(newFakeClient))
 	return createTracesProcessorWithOptions(
 		context.Background(),
-		component.ProcessorCreateSettings{
-			TelemetrySettings: componenttest.NewNopTelemetrySettings(),
-		},
+		componenttest.NewNopProcessorCreateSettings(),
 		cfg,
 		next,
 		opts...,
@@ -53,9 +51,7 @@ func newMetricsProcessor(cfg config.Processor, nextMetricsConsumer consumer.Metr
 	opts := append(options, withKubeClientProvider(newFakeClient))
 	return createMetricsProcessorWithOptions(
 		context.Background(),
-		component.ProcessorCreateSettings{
-			TelemetrySettings: componenttest.NewNopTelemetrySettings(),
-		},
+		componenttest.NewNopProcessorCreateSettings(),
 		cfg,
 		nextMetricsConsumer,
 		opts...,
@@ -66,9 +62,7 @@ func newLogsProcessor(cfg config.Processor, nextLogsConsumer consumer.Logs, opti
 	opts := append(options, withKubeClientProvider(newFakeClient))
 	return createLogsProcessorWithOptions(
 		context.Background(),
-		component.ProcessorCreateSettings{
-			TelemetrySettings: componenttest.NewNopTelemetrySettings(),
-		},
+		componenttest.NewNopProcessorCreateSettings(),
 		cfg,
 		nextLogsConsumer,
 		opts...,
@@ -229,8 +223,10 @@ func TestProcessorBadClientProvider(t *testing.T) {
 		_ kube.ExtractionRules,
 		_ kube.Filters,
 		_ []kube.Association,
+		_ kube.Excludes,
 		_ kube.APIClientsetProvider,
 		_ kube.InformerProvider,
+		_ kube.InformerProviderNamespace,
 		_ kube.OwnerProvider,
 		_ string,
 	) (kube.Client, error) {
@@ -346,7 +342,7 @@ func TestProcessorNoAttrs(t *testing.T) {
 		t,
 		NewFactory().CreateDefaultConfig(),
 		nil,
-		WithExtractMetadata(metadataPodName),
+		WithExtractMetadata(conventions.AttributeK8SPodName),
 	)
 
 	ctx := client.NewContext(context.Background(), &client.Client{IP: "1.1.1.1"})
@@ -767,7 +763,7 @@ func TestMetricsProcessorHostname(t *testing.T) {
 	p, err := newMetricsProcessor(
 		NewFactory().CreateDefaultConfig(),
 		next,
-		WithExtractMetadata(metadataPodName),
+		WithExtractMetadata(conventions.AttributeK8SPodName),
 		withExtractKubernetesProcessorInto(&kp),
 	)
 	require.NoError(t, err)
@@ -837,7 +833,7 @@ func TestMetricsProcessorHostnameWithPodAssociation(t *testing.T) {
 	p, err := newMetricsProcessor(
 		NewFactory().CreateDefaultConfig(),
 		next,
-		WithExtractMetadata(metadataPodName),
+		WithExtractMetadata(conventions.AttributeK8SPodName),
 		withExtractKubernetesProcessorInto(&kp),
 	)
 	require.NoError(t, err)
