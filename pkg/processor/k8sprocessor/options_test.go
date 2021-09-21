@@ -257,7 +257,7 @@ func TestWithExtractNamespaceLabels(t *testing.T) {
 				TagName: "t1",
 				Key:     "k1",
 				Regex:   "[",
-				From: kube.MetadataFromPod,
+				From:    kube.MetadataFromPod,
 			}},
 			[]kube.FieldExtractionRule{},
 			"error parsing regexp: missing closing ]: `[`",
@@ -269,7 +269,7 @@ func TestWithExtractNamespaceLabels(t *testing.T) {
 					TagName: "tag1",
 					Key:     "key1",
 					Regex:   "field=(?P<value>.+)",
-					From: kube.MetadataFromPod,
+					From:    kube.MetadataFromPod,
 				},
 			},
 			[]kube.FieldExtractionRule{
@@ -277,7 +277,7 @@ func TestWithExtractNamespaceLabels(t *testing.T) {
 					Name:  "tag1",
 					Key:   "key1",
 					Regex: regexp.MustCompile(`field=(?P<value>.+)`),
-					From: kube.MetadataFromPod,
+					From:  kube.MetadataFromPod,
 				},
 			},
 			"",
@@ -753,7 +753,8 @@ func TestWithExcludes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			p := &kubernetesprocessor{}
 			option := WithExcludes(tt.args)
-			option(p)
+			err := option(p)
+			assert.NoError(t, err)
 			assert.Equal(t, tt.want, p.podIgnore)
 		})
 	}

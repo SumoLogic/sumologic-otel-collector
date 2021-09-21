@@ -15,7 +15,6 @@
 package k8sprocessor
 
 import (
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube"
 	"path"
 	"testing"
 
@@ -27,6 +26,7 @@ import (
 	"go.opentelemetry.io/collector/config/configtest"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/k8sconfig"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube"
 )
 
 func TestLoadConfig(t *testing.T) {
@@ -49,7 +49,14 @@ func TestLoadConfig(t *testing.T) {
 		&Config{
 			ProcessorSettings: config.NewProcessorSettings(config.NewID(typeStr)),
 			APIConfig:         k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
-			Exclude:           ExcludeConfig{Pods: []ExcludePodConfig{{Name: "jaeger-agent"}, {Name: "jaeger-collector"}, {Name: "otel-collector"}, {Name: "otel-agent"}, {Name: "collection-sumologic-otelcol"}}},
+			Extract:           ExtractConfig{Delimiter: ", "},
+			Exclude: ExcludeConfig{Pods: []ExcludePodConfig{
+				{Name: "jaeger-agent"},
+				{Name: "jaeger-collector"},
+				{Name: "otel-collector"},
+				{Name: "otel-agent"},
+				{Name: "collection-sumologic-otelcol"}},
+			},
 		})
 
 	p1 := cfg.Processors[config.NewIDWithName(typeStr, "2")]
@@ -60,7 +67,15 @@ func TestLoadConfig(t *testing.T) {
 			Passthrough:        false,
 			OwnerLookupEnabled: true,
 			Extract: ExtractConfig{
-				Metadata: []string{"k8s.pod.name", "k8s.pod.uid", "k8s.deployment.name", "k8s.cluster.name", "k8s.namespace.name", "k8s.node.name", "k8s.pod.start_time"},
+				Metadata: []string{
+					"k8s.pod.name",
+					"k8s.pod.uid",
+					"k8s.deployment.name",
+					"k8s.cluster.name",
+					"k8s.namespace.name",
+					"k8s.node.name",
+					"k8s.pod.start_time",
+				},
 				Annotations: []FieldExtractConfig{
 					{TagName: "a1", Key: "annotation-one", From: "pod"},
 					{TagName: "a2", Key: "annotation-two", Regex: "field=(?P<value>.+)", From: kube.MetadataFromPod},
@@ -72,6 +87,7 @@ func TestLoadConfig(t *testing.T) {
 				NamespaceLabels: []FieldExtractConfig{
 					{TagName: "namespace_labels_%s", Key: "*"},
 				},
+				Delimiter: ", ",
 			},
 			Filter: FilterConfig{
 				Namespace:      "ns2",

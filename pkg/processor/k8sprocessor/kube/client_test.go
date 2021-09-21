@@ -434,9 +434,9 @@ func TestGetPodWhenNamespaceInExtractedMetadata(t *testing.T) {
 	c.handlePodAdd(pod)
 
 	expected := &Pod{
-		Name:      "pod_name",
-		Address:   "1.1.1.1",
-		PodUID:    "1234",
+		Name:    "pod_name",
+		Address: "1.1.1.1",
+		PodUID:  "1234",
 		Attributes: map[string]string{
 			"k8s.namespace.name": "namespace_name",
 		},
@@ -554,7 +554,7 @@ func TestExtractionRules(t *testing.T) {
 			UID:  "1a1658f9-7818-11e9-90f1-02324f7e0d1e",
 		},
 		rules: ExtractionRules{
-			DeploymentName: true,
+			DeploymentName:     true,
 			OwnerLookupEnabled: true,
 		},
 		attributes: map[string]string{
@@ -607,13 +607,13 @@ func TestExtractionRules(t *testing.T) {
 			"k8s.container.name":  "auth-service-container-name",
 			"k8s.deployment.name": "dearest-deploy",
 			"k8s.pod.hostname":    "auth-hostname3",
-			"k8s.replicaset.name": "SomeReplicaSet",
+			"k8s.replicaset.name": "dearest-deploy-77c99ccb96",
 			"k8s.service.name":    "foo, bar",
 			"k8s.namespace.name":  "ns1",
 			"k8s.node.name":       "node1",
 			"k8s.pod.name":        "auth-service-abc12-xyz3",
 			"k8s.pod.uid":         "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-			"k8s.pod.start_time":   pod.GetCreationTimestamp().String(),
+			"k8s.pod.start_time":  pod.GetCreationTimestamp().String(),
 		},
 	}, {
 		name: "labels",

@@ -47,7 +47,8 @@
 //
 //
 //The k8sprocessor can be used for automatic tagging of spans, metrics and logs with k8s labels and annotations from pods and namespaces.
-//The config for associating the data passing through the processor (spans, metrics and logs) with specific Pod/Namespace annotations/labels is configured via "annotations"  and "labels" keys.
+//The config for associating the data passing through the processor (spans, metrics and logs) with specific
+//Pod/Namespace annotations/labels is configured via "annotations"  and "labels" keys.
 //This config represents a list of annotations/labels that are extracted from pods/namespaces and added to spans, metrics and logs.
 //Each item is specified as a config of tag_name (representing the tag name to tag the spans with),
 //key (representing the key used to extract value) and from (representing the kubernetes object used to extract the value).

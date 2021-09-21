@@ -330,6 +330,14 @@ func WithExtractPodAssociations(podAssociations ...PodAssociationConfig) Option 
 	}
 }
 
+// WithDelimiter sets delimiter to use by kubernetesprocessor
+func WithDelimiter(delimiter string) Option {
+	return func(p *kubernetesprocessor) error {
+		p.delimiter = delimiter
+		return nil
+	}
+}
+
 // WithExcludes allows specifying pods to exclude
 func WithExcludes(podExclude ExcludeConfig) Option {
 	return func(p *kubernetesprocessor) error {

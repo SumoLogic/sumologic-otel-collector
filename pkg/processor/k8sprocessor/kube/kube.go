@@ -30,7 +30,6 @@ const (
 	podNodeField            = "spec.nodeName"
 	ignoreAnnotation string = "opentelemetry.io/k8s-processor/ignore"
 	tagNodeName             = "k8s.node.name"
-	tagStartTime            = "k8s.pod.start_time"
 	// MetadataFromPod is used to specify to extract metadata/labels/annotations from pod
 	MetadataFromPod = "pod"
 	// MetadataFromNamespace is used to specify to extract metadata/labels/annotations from namespace
@@ -54,7 +53,18 @@ type Client interface {
 }
 
 // ClientProvider defines a func type that returns a new Client.
-type ClientProvider func(*zap.Logger, k8sconfig.APIConfig, ExtractionRules, Filters, []Association, Excludes, APIClientsetProvider, InformerProvider, InformerProviderNamespace, OwnerProvider, string) (Client, error)
+type ClientProvider func(
+	*zap.Logger,
+	k8sconfig.APIConfig,
+	ExtractionRules,
+	Filters,
+	[]Association,
+	Excludes,
+	APIClientsetProvider,
+	InformerProvider,
+	InformerProviderNamespace,
+	OwnerProvider,
+	string) (Client, error)
 
 // APIClientsetProvider defines a func type that initializes and return a new kubernetes
 // Clientset object.

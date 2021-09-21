@@ -15,7 +15,8 @@
 package kube
 
 const (
-	// AttributeK8SProcessorStartTime Will be removed when new fields get merged to https://github.com/open-telemetry/opentelemetry-collector/blob/main/model/semconv/opentelemetry.go
+	// AttributeK8SProcessorStartTime Will be removed when new fields get merged
+	// to https://github.com/open-telemetry/opentelemetry-collector/blob/main/model/semconv/opentelemetry.go
 	AttributeK8SProcessorStartTime = "k8s.pod.start_time"
 
 	// AttributeK8SContainerID and others are additional tags used in Sumo Logic version
