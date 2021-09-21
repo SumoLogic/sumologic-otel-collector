@@ -961,7 +961,7 @@ Example configuration:
 
 ```yaml
 processors:
-  filter/1:
+  filter/metrics_include_regexp:
     metrics:
       include:
         match_type: regexp
@@ -971,16 +971,39 @@ processors:
         resource_attributes:
           - Key: container.name
             Value: app_container_1
+  filter/metrics_exclude_strict:
+    metrics:
       exclude:
         match_type: strict
         metric_names:
           - hello_world
           - hello/world
+  filter/include_logs_strict:
+    logs:
+      include:
+        match_type: strict
+        resource_attributes:
+          - Key: host.name
+            Value: just_this_one_hostname
+  filter/include_logs_by_resource_attr_regexp:
+    logs:
+      include:
+        match_type: regexp
+        resource_attributes:
+          - Key: host.name
+            Value: resource_attr_.*
+  filter/include_logs_by_record_attr_regexp:
+    logs:
+      include:
+        match_type: regexp
+        record_attributes:
+          - Key: host.name
+            Value: record_attr_.*
 ```
 
 For details, see the [Filter Processor documentation][filterprocessor_docs].
 
-[filterprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/filterprocessor/README.md
+[filterprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/11de2c03d3dbbde2e73b8a816318a2515c843985/processor/filterprocessor/README.md
 
 ## Exporters
 
