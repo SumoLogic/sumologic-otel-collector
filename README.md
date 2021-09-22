@@ -82,7 +82,7 @@ OT distro.
 
 | Name                                                                               | Source                                                                                                              |
 |------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
-| `attributesprocessor` [configuration help][attributesprocessor_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/processor/attributesprocessor          |
+| `attributesprocessor` [configuration help][attributesprocessor_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/processor/attributesprocessor        |
 | `groupbyattrsprocessor` [configuration help][groupbyattrsprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/processor/groupbyattrsprocessor      |
 | `groupbytraceprocessor` [configuration help][groupbytraceprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/processor/groupbytraceprocessor      |
 | `metricstransformprocessor` [configuration help][metricstransformprocessor_help]   | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/processor/metricstransformprocessor  |
@@ -142,15 +142,17 @@ OT distro.
 
 #### Upstream extensions
 
-| Name                       | Source                                                                                                            |
-|----------------------------|-------------------------------------------------------------------------------------------------------------------|
-| `ballastextension`         | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.35.0/extension/ballastextension                 |
-| `bearertokenauthextension` | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/bearertokenauthextension |
-| `storage`                  | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/storage                  |
-| `healthcheckextension`     | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/healthcheckextension     |
-| `oidcauthextension`        | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/oidcauthextension        |
-| `pprofextension`           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/pprofextension           |
-| `zpagesextension`          | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.35.0/extension/zpagesextension                  |
+| Name                                             | Source                                                                                                            |
+|--------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| `ballastextension`                               | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.35.0/extension/ballastextension                 |
+| `bearertokenauthextension`                       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/bearertokenauthextension |
+| `storage` [configuration help][filestorage_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/storage                  |
+| `healthcheckextension`                           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/healthcheckextension     |
+| `oidcauthextension`                              | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/oidcauthextension        |
+| `pprofextension`                                 | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/pprofextension           |
+| `zpagesextension`                                | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.35.0/extension/zpagesextension                  |
+
+[filestorage_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#file-storage-extension
 
 <!-- markdownlint-enable MD013 -->
 

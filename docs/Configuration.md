@@ -8,6 +8,8 @@
 - [Extensions](#extensions)
   - [Sumo Logic Extension](#sumo-logic-extension)
     - [Using multiple Sumo Logic extensions](#using-multiple-sumo-logic-extensions)
+  - [Open Telemetry Upstream Extensions](#open-telemetry-upstream-extensions)
+    - [File Storage Extension](#file-storage-extension)
 - [Receivers](#receivers)
   - [Sumo Logic Custom Receivers](#sumo-logic-custom-receivers)
     - [Telegraf Receiver](#telegraf-receiver)
@@ -250,6 +252,8 @@ service:
 See below for details on configuring all the components available in the Sumo Logic OT Distro -
 extensions, receivers, processors, exporters.
 
+---
+
 ## Extensions
 
 ### Sumo Logic Extension
@@ -344,6 +348,53 @@ service:
       receivers: [filelog]
       exporters: [sumologic/custom2]
 ```
+
+### Open Telemetry Upstream Extensions
+
+The following extensions have been developed by the Open Telemetry community
+and are incorporated into the Sumo Logic Open Telemetry distro without any changes.
+
+If you are already familiar with Open Telemetry, you may know how the upstream
+components work and you can expect no changes in their behaviour.
+
+#### File Storage Extension
+
+The File Storage extension can persist state to the local file system.
+
+The extension requires read and write access to a directory.
+A default directory can be used, but it must already exist in order for the
+extension to operate.
+
+`directory` is the relative or absolute path to the dedicated data storage directory.
+
+`timeout` is the maximum time to wait for a file lock.
+This value does not need to be modified in most circumstances.
+
+```yaml
+extensions:
+  file_storage/custom_settings:
+    directory: /var/lib/otelcol/mydir
+    timeout: 1s
+
+receivers:
+  filelog:
+    include: [ /var/log/myservice/*.json ]
+    start_at: beginning
+
+exporters:
+  sumologic:
+
+service:
+  extensions: [file_storage/custom_settings]
+  pipelines:
+    traces:
+      receivers: [filelog]
+      exporters: [sumologic]
+```
+
+For details, see the [File Storage Extension Readme][filestorageextension_readme].
+
+[filestorageextension_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/storage/filestorage
 
 ---
 
@@ -1005,6 +1056,8 @@ For details, see the [Filter Processor documentation][filterprocessor_docs].
 
 [filterprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/11de2c03d3dbbde2e73b8a816318a2515c843985/processor/filterprocessor/README.md
 
+---
+
 ## Exporters
 
 ### Sumo Logic Custom Exporters
@@ -1149,6 +1202,8 @@ exporters:
 For details, see the [Logging Exporter documentation][loggingexporter_docs].
 
 [loggingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/loggingexporter/README.md
+
+---
 
 ## Command-line configuration options
 
