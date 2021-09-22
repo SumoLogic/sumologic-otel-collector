@@ -23,6 +23,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/model/otlp"
@@ -48,6 +49,11 @@ type metricPair struct {
 	metric     pdata.Metric
 }
 
+type jsonLogsConfig struct {
+	addTimestamp bool
+	timestampKey string
+}
+
 type sender struct {
 	logBuffer           []pdata.LogRecord
 	metricBuffer        []metricPair
@@ -58,6 +64,7 @@ type sender struct {
 	compressor          compressor
 	prometheusFormatter prometheusFormatter
 	graphiteFormatter   graphiteFormatter
+	jsonLogsConfig      jsonLogsConfig
 	dataUrlMetrics      string
 	dataUrlLogs         string
 	dataUrlTraces       string
@@ -116,9 +123,13 @@ func newSender(
 		compressor:          c,
 		prometheusFormatter: pf,
 		graphiteFormatter:   gf,
-		dataUrlMetrics:      metricsUrl,
-		dataUrlLogs:         logsUrl,
-		dataUrlTraces:       tracesUrl,
+		jsonLogsConfig: jsonLogsConfig{
+			addTimestamp: cfg.JSONLogs.AddTimestamp,
+			timestampKey: cfg.JSONLogs.TimestampKey,
+		},
+		dataUrlMetrics: metricsUrl,
+		dataUrlLogs:    logsUrl,
+		dataUrlTraces:  tracesUrl,
 	}
 }
 
@@ -180,7 +191,13 @@ func (s *sender) logToText(record pdata.LogRecord) string {
 
 // logToJSON converts LogRecord to a json line, returns it and error eventually
 func (s *sender) logToJSON(record pdata.LogRecord) (string, error) {
-	data := s.filter.filterOut(record.Attributes())
+	attrs := pdata.NewAttributeMap()
+	record.Attributes().CopyTo(attrs)
+	if s.jsonLogsConfig.addTimestamp {
+		addJSONTimestamp(attrs, s.jsonLogsConfig.timestampKey, record.Timestamp())
+	}
+
+	data := s.filter.filterOut(attrs)
 
 	// Only append the body when it's not empty to prevent sending 'null' log.
 	if body := record.Body(); !isEmptyAttributeValue(body) {
@@ -193,6 +210,23 @@ func (s *sender) logToJSON(record pdata.LogRecord) (string, error) {
 	}
 
 	return bytes.NewBuffer(nextLine).String(), nil
+}
+
+var (
+	timeZeroUTC = time.Unix(0, 0).UTC()
+)
+
+// addJSONTimestamp adds a timestamp field to record attribtues before sending
+// out the logs as JSON.
+// If the attached timestamp is equal to 0 (millisecond based UNIX timestamp)
+// then send out current time formatted as milliseconds since January 1, 1970.
+func addJSONTimestamp(attrs pdata.AttributeMap, timestampKey string, pt pdata.Timestamp) {
+	t := pt.AsTime()
+	if t == timeZeroUTC {
+		attrs.InsertInt(timestampKey, time.Now().UnixMilli())
+	} else {
+		attrs.InsertInt(timestampKey, t.UnixMilli())
+	}
 }
 
 func isEmptyAttributeValue(att pdata.AttributeValue) bool {

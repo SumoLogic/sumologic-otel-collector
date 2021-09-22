@@ -37,8 +37,10 @@ type senderTest struct {
 }
 
 // prepareSenderTest prepares sender test environment.
+// Provided cfgOpts additionally configure the sender after the sendible default
+// for tests have been applied.
 // The enclosed httptest.Server is closed automatically using test.Cleanup.
-func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.Request)) *senderTest {
+func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.Request), cfgOpts ...func(*Config)) *senderTest {
 	var reqCounter int32
 	// generate a test server so we can capture and inspect the request
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -59,6 +61,9 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 	cfg.LogFormat = TextFormat
 	cfg.MetricFormat = Carbon2Format
 	cfg.MaxRequestBodySize = 20_971_520
+	for _, cfgOpt := range cfgOpts {
+		cfgOpt(cfg)
+	}
 
 	f, err := newFilter(cfg.MetadataAttributes)
 	require.NoError(t, err)
@@ -375,13 +380,87 @@ func TestSendLogsSplitFailedAll(t *testing.T) {
 	assert.EqualValues(t, 2, *test.reqCounter)
 }
 
+func TestSendLogsJsonTimestamp(t *testing.T) {
+	testcases := []struct {
+		name       string
+		configOpts []func(*Config)
+		bodyRegex  string
+	}{
+		{
+			name: "default config",
+			configOpts: []func(*Config){
+				func(c *Config) {
+					c.JSONLogs = JSONLogs{
+						AddTimestamp: DefaultAddTimestamp,
+						TimestampKey: DefaultTimestampKey,
+					}
+				},
+			},
+			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}` +
+				`\n` +
+				`{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`,
+		},
+		{
+			name: "disabled add timestamp",
+
+			configOpts: []func(*Config){
+				func(c *Config) {
+					c.JSONLogs = JSONLogs{
+						AddTimestamp: false,
+					}
+				},
+			},
+			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log"}` +
+				`\n` +
+				`{"key1":"value1","key2":"value2","log":"Another example log"}`,
+		},
+		{
+			name: "enabled add timestamp with custom timestamp key",
+
+			configOpts: []func(*Config){
+				func(c *Config) {
+					c.JSONLogs = JSONLogs{
+						AddTimestamp: true,
+						TimestampKey: "xxyy_zz",
+					}
+				},
+			},
+			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log","xxyy_zz":\d{13}}` +
+				`\n` +
+				`{"key1":"value1","key2":"value2","log":"Another example log","xxyy_zz":\d{13}}`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+				func(w http.ResponseWriter, req *http.Request) {
+					body := extractBody(t, req)
+					assert.Regexp(t, tc.bodyRegex, body)
+				},
+			}, tc.configOpts...)
+
+			test.s.config.LogFormat = JSONFormat
+			test.s.logBuffer = exampleTwoLogs()
+
+			_, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
+			assert.NoError(t, err)
+
+			assert.EqualValues(t, 1, *test.reqCounter)
+		})
+	}
+}
+
 func TestSendLogsJson(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			expected := `{"key1":"value1","key2":"value2","log":"Example log"}
-{"key1":"value1","key2":"value2","log":"Another example log"}`
-			assert.Equal(t, expected, body)
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}`
+			regex += `\n`
+			regex += `{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
+
 			assert.Equal(t, "key=value", req.Header.Get("X-Sumo-Fields"))
 			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
 			assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
@@ -400,9 +479,12 @@ func TestSendLogsJsonMultitype(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			expected := `{"key1":"value1","key2":"value2","log":{"lk1":"lv1","lk2":13}}
-{"key1":"value1","key2":"value2","log":["lv2",13]}`
-			assert.Equal(t, expected, body)
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":{"lk1":"lv1","lk2":13},"timestamp":\d{13}}`
+			regex += `\n`
+			regex += `{"key1":"value1","key2":"value2","log":\["lv2",13\],"timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
+
 			assert.Equal(t, "key=value", req.Header.Get("X-Sumo-Fields"))
 			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
 			assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
@@ -421,11 +503,15 @@ func TestSendLogsJsonSplit(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Example log"}`, body)
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
 		},
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Another example log"}`, body)
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
 		},
 	})
 	test.s.config.LogFormat = JSONFormat
@@ -444,11 +530,17 @@ func TestSendLogsJsonSplitFailedOne(t *testing.T) {
 			w.WriteHeader(500)
 
 			body := extractBody(t, req)
-			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Example log"}`, body)
+
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
 		},
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Another example log"}`, body)
+
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
 		},
 	})
 	test.s.config.LogFormat = JSONFormat
@@ -468,13 +560,19 @@ func TestSendLogsJsonSplitFailedAll(t *testing.T) {
 			w.WriteHeader(500)
 
 			body := extractBody(t, req)
-			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Example log"}`, body)
+
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
 		},
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(404)
 
 			body := extractBody(t, req)
-			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Another example log"}`, body)
+
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
 		},
 	})
 	test.s.config.LogFormat = JSONFormat
