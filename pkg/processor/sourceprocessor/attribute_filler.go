@@ -113,11 +113,11 @@ func (f *attributeFiller) fillAttributes(atts *pdata.AttributeMap) bool {
 func (f *attributeFiller) resourceLabelValues(atts *pdata.AttributeMap) []interface{} {
 	arr := make([]interface{}, 0)
 	for _, label := range f.labels {
-		value, ok := atts.Get(label)
-		if !ok {
-			return nil
+		if value, found := atts.Get(label); found {
+			arr = append(arr, value.StringVal())
+		} else {
+			arr = append(arr, "undefined")
 		}
-		arr = append(arr, value.StringVal())
 	}
 	return arr
 }

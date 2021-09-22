@@ -75,6 +75,7 @@ var (
 		"_collector":                   "foocollector",
 		"_sourceName":                  "namespace-1.pod-5db86d8867-sdqlj.container-1",
 		"_sourceCategory":              "prefix/namespace#1/pod",
+		"_sourceHost":                  "undefined",
 	}
 
 	k8sNewLabels = map[string]string{
@@ -94,6 +95,7 @@ var (
 		"k8s.pod.pod_name":                "pod",
 		"_sourceName":                     "namespace-1.pod-5db86d8867-sdqlj.container-1",
 		"_sourceCategory":                 "prefix/namespace#1/pod",
+		"_sourceHost":                     "undefined",
 		"_collector":                      "foocollector",
 	}
 
@@ -102,8 +104,11 @@ var (
 	}
 
 	limitedLabelsWithMeta = map[string]string{
-		"pod_id":     "pod-1234",
-		"_collector": "foocollector",
+		"pod_id":          "pod-1234",
+		"_collector":      "foocollector",
+		"_sourceCategory": "prefix/undefined/undefined",
+		"_sourceHost":     "undefined",
+		"_sourceName":     "undefined.undefined.undefined",
 	}
 )
 
@@ -257,15 +262,8 @@ func TestLogsSourceHostKey(t *testing.T) {
 		require.Equal(t, out.ResourceLogs().Len(), 1)
 		resAttrs := out.ResourceLogs().At(0).Resource().Attributes()
 
-		{
-			_, ok := resAttrs.Get("_sourceName")
-			require.False(t, ok)
-		}
-
-		{
-			_, ok := resAttrs.Get("_sourceHost")
-			require.False(t, ok)
-		}
+		assertAttribute(t, resAttrs, "_sourceName", "will-it-work-undefined")
+		assertAttribute(t, resAttrs, "_sourceHost", "undefined")
 	})
 }
 
@@ -278,7 +276,7 @@ func TestTraceSourceProcessor(t *testing.T) {
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
 
-	assertTracesEqual(t, td, want)
+	assertTracesEqual(t, want, td)
 }
 
 func TestTraceSourceProcessorNewTaxonomy(t *testing.T) {
@@ -298,7 +296,7 @@ func TestTraceSourceProcessorNewTaxonomy(t *testing.T) {
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
 
-	assertTracesEqual(t, td, want)
+	assertTracesEqual(t, want, td)
 }
 
 func TestTraceSourceProcessorEmpty(t *testing.T) {
@@ -309,7 +307,7 @@ func TestTraceSourceProcessorEmpty(t *testing.T) {
 
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
-	assertTracesEqual(t, td, want)
+	assertTracesEqual(t, want, td)
 }
 
 func TestTraceSourceFilteringOutByRegex(t *testing.T) {
@@ -405,7 +403,7 @@ func TestTraceSourceFilteringOutByExclude(t *testing.T) {
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
 
-	assertSpansEqual(t, td, want)
+	assertSpansEqual(t, want, td)
 }
 
 func TestTraceSourceIncludePrecedence(t *testing.T) {
@@ -424,7 +422,7 @@ func TestTraceSourceIncludePrecedence(t *testing.T) {
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
 
-	assertTracesEqual(t, td, want)
+	assertTracesEqual(t, want, td)
 }
 
 func TestTraceSourceProcessorAnnotations(t *testing.T) {
@@ -443,7 +441,7 @@ func TestTraceSourceProcessorAnnotations(t *testing.T) {
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
 
-	assertTracesEqual(t, td, want)
+	assertTracesEqual(t, want, td)
 }
 
 func TestTemplateWithCustomAttribute(t *testing.T) {
@@ -476,18 +474,33 @@ func TestTemplateWithCustomAttribute(t *testing.T) {
 		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
 		assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/somevalue/123")
 	})
+
+	t.Run("attribute does not exist", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		traces := newTraceData(inputAttributes)
+
+		config := createDefaultConfig().(*Config)
+		config.SourceCategory = "abc/%{nonexistent.attr}/123"
+
+		processedTraces, err := newSourceProcessor(config).ProcessTraces(context.Background(), traces)
+		assert.NoError(t, err)
+
+		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/undefined/123")
+	})
 }
 
 func assertAttribute(t *testing.T, attributes pdata.AttributeMap, attributeName string, expectedValue string) {
 	value, exists := attributes.Get(attributeName)
 
 	if expectedValue == "" {
-		assert.False(t, exists, "Attribute '%s' should not exist", attributeName)
+		assert.False(t, exists, "Attribute '%s' should not exist.", attributeName)
 	} else {
-		assert.True(t, exists)
-		actualValue := value.StringVal()
-		assert.Equal(t, expectedValue, actualValue, "Attribute '%s' should be '%s' but was '%s'", attributeName, expectedValue, actualValue)
-
+		assert.True(t, exists, "Attribute '%s' should exist, but it does not.", attributeName)
+		if exists {
+			actualValue := value.StringVal()
+			assert.Equal(t, expectedValue, actualValue, "Attribute '%s' should be '%s', but was '%s'.", attributeName, expectedValue, actualValue)
+		}
 	}
 }
 
