@@ -476,18 +476,33 @@ func TestTemplateWithCustomAttribute(t *testing.T) {
 		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
 		assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/somevalue/123")
 	})
+
+	t.Run("attribute does not exist", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		traces := newTraceData(inputAttributes)
+
+		config := createDefaultConfig().(*Config)
+		config.SourceCategory = "abc/%{nonexistent.attr}/123"
+
+		processedTraces, err := newSourceProcessor(config).ProcessTraces(context.Background(), traces)
+		assert.NoError(t, err)
+
+		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, attributes, "_sourceCategory", "")
+	})
 }
 
 func assertAttribute(t *testing.T, attributes pdata.AttributeMap, attributeName string, expectedValue string) {
 	value, exists := attributes.Get(attributeName)
 
 	if expectedValue == "" {
-		assert.False(t, exists, "Attribute '%s' should not exist", attributeName)
+		assert.False(t, exists, "Attribute '%s' should not exist.", attributeName)
 	} else {
-		assert.True(t, exists)
-		actualValue := value.StringVal()
-		assert.Equal(t, expectedValue, actualValue, "Attribute '%s' should be '%s' but was '%s'", attributeName, expectedValue, actualValue)
-
+		assert.True(t, exists, "Attribute '%s' should exist, but it does not.", attributeName)
+		if exists {
+			actualValue := value.StringVal()
+			assert.Equal(t, expectedValue, actualValue, "Attribute '%s' should be '%s', but was '%s'.", attributeName, expectedValue, actualValue)
+		}
 	}
 }
 
