@@ -474,7 +474,7 @@ func TestTemplateWithCustomAttribute(t *testing.T) {
 		assert.NoError(t, err)
 
 		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
-		assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/%!{(MISSING)some.attr}/123")
+		assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/somevalue/123")
 	})
 }
 
