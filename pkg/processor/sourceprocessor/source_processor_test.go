@@ -278,7 +278,7 @@ func TestTraceSourceProcessor(t *testing.T) {
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
 
-	assertTracesEqual(t, td, want)
+	assertTracesEqual(t, want, td)
 }
 
 func TestTraceSourceProcessorNewTaxonomy(t *testing.T) {
@@ -298,7 +298,7 @@ func TestTraceSourceProcessorNewTaxonomy(t *testing.T) {
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
 
-	assertTracesEqual(t, td, want)
+	assertTracesEqual(t, want, td)
 }
 
 func TestTraceSourceProcessorEmpty(t *testing.T) {
@@ -309,7 +309,7 @@ func TestTraceSourceProcessorEmpty(t *testing.T) {
 
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
-	assertTracesEqual(t, td, want)
+	assertTracesEqual(t, want, td)
 }
 
 func TestTraceSourceFilteringOutByRegex(t *testing.T) {
@@ -405,7 +405,7 @@ func TestTraceSourceFilteringOutByExclude(t *testing.T) {
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
 
-	assertSpansEqual(t, td, want)
+	assertSpansEqual(t, want, td)
 }
 
 func TestTraceSourceIncludePrecedence(t *testing.T) {
@@ -424,7 +424,7 @@ func TestTraceSourceIncludePrecedence(t *testing.T) {
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
 
-	assertTracesEqual(t, td, want)
+	assertTracesEqual(t, want, td)
 }
 
 func TestTraceSourceProcessorAnnotations(t *testing.T) {
@@ -443,7 +443,7 @@ func TestTraceSourceProcessorAnnotations(t *testing.T) {
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
 
-	assertTracesEqual(t, td, want)
+	assertTracesEqual(t, want, td)
 }
 
 func TestTemplateWithCustomAttribute(t *testing.T) {
