@@ -369,46 +369,65 @@ func TestPushFailedBatch(t *testing.T) {
 	assert.EqualError(t, err, "error during sending data: 500 Internal Server Error")
 }
 
-func TestPushOTLPLogsWithClearTimestamp(t *testing.T) {
-	exampleLogs := exampleLog()
-	exampleLogs[0].SetTimestamp(12345)
-	logs := LogRecordsToLogs(exampleLogs)
+func TestPushOTLPLogsClearTimestamp(t *testing.T) {
+	createLogs := func() pdata.Logs {
+		exampleLogs := exampleLog()
+		exampleLogs[0].SetTimestamp(12345)
+		logs := LogRecordsToLogs(exampleLogs)
+		return logs
+	}
 
-	config := createTestConfig()
-	config.ClearLogsTimestamp = true
-	config.LogFormat = OTLPLogFormat
-
-	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
-			assert.Equal(t, "\n\x1b\n\x00\x12\x17\n\x00\x12\x13*\r\n\vExample logJ\x00R\x00", body)
+	testcases := []struct {
+		name         string
+		configFunc   func() *Config
+		expectedBody string
+	}{
+		{
+			name: "enabled",
+			configFunc: func() *Config {
+				config := createTestConfig()
+				config.ClearLogsTimestamp = true
+				config.LogFormat = OTLPLogFormat
+				return config
+			},
+			expectedBody: "\n\x1b\n\x00\x12\x17\n\x00\x12\x13*\r\n\vExample logJ\x00R\x00",
+		},
+		{
+			name: "disabled",
+			configFunc: func() *Config {
+				config := createTestConfig()
+				config.ClearLogsTimestamp = false
+				config.LogFormat = OTLPLogFormat
+				return config
+			},
+			expectedBody: "\n$\n\x00\x12 \n\x00\x12\x1c\t90\x00\x00\x00\x00\x00\x00*\r\n\vExample logJ\x00R\x00",
+		},
+		{
+			name: "default does clear the timestamp",
+			configFunc: func() *Config {
+				config := createTestConfig()
+				// Don't set the clear timestamp config value
+				config.LogFormat = OTLPLogFormat
+				return config
+			},
+			expectedBody: "\n\x1b\n\x00\x12\x17\n\x00\x12\x13*\r\n\vExample logJ\x00R\x00",
 		},
 	}
-	test := prepareExporterTest(t, config, expectedRequests)
 
-	err := test.exp.pushLogsData(context.Background(), logs)
-	assert.NoError(t, err)
-}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			expectedRequests := []func(w http.ResponseWriter, req *http.Request){
+				func(w http.ResponseWriter, req *http.Request) {
+					body := extractBody(t, req)
+					assert.Equal(t, tc.expectedBody, body)
+				},
+			}
+			test := prepareExporterTest(t, tc.configFunc(), expectedRequests)
 
-func TestPushOTLPLogsWithoutClearTimestamp(t *testing.T) {
-	exampleLogs := exampleLog()
-	exampleLogs[0].SetTimestamp(12345)
-	logs := LogRecordsToLogs(exampleLogs)
-
-	config := createTestConfig()
-	config.ClearLogsTimestamp = false
-	config.LogFormat = OTLPLogFormat
-
-	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
-			assert.Equal(t, "\n$\n\x00\x12 \n\x00\x12\x1c\t90\x00\x00\x00\x00\x00\x00*\r\n\vExample logJ\x00R\x00", body)
-		},
+			err := test.exp.pushLogsData(context.Background(), createLogs())
+			assert.NoError(t, err)
+		})
 	}
-	test := prepareExporterTest(t, config, expectedRequests)
-
-	err := test.exp.pushLogsData(context.Background(), logs)
-	assert.NoError(t, err)
 }
 
 func TestPushTextLogsWithAttributeTranslation(t *testing.T) {
