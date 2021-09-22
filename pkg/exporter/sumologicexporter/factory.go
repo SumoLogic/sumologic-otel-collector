@@ -56,6 +56,7 @@ func createDefaultConfig() config.Exporter {
 		SourceName:               DefaultSourceName,
 		SourceHost:               DefaultSourceHost,
 		Client:                   DefaultClient,
+		ClearLogsTimestamp:       DefaultClearLogsTimestamp,
 		GraphiteTemplate:         DefaultGraphiteTemplate,
 		TraceFormat:              OTLPTraceFormat,
 

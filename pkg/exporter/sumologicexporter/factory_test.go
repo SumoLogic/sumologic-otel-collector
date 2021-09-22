@@ -48,6 +48,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 		SourceName:               "",
 		SourceHost:               "",
 		Client:                   "otelcol",
+		ClearLogsTimestamp:       true,
 		GraphiteTemplate:         "%{_metric_}",
 		TranslateAttributes:      true,
 		TranslateTelegrafMetrics: true,
