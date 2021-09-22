@@ -1,6 +1,9 @@
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.35.0
-BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector-builder
+BUILDER_VERSION ?= 0.36.0-1
+# TODO: change this back to upstream version when
+# https://github.com/open-telemetry/opentelemetry-collector-builder/pull/76
+# gets merged and when 0.36.0 gets released.
+BUILDER_REPO ?= github.com/pmalek-sumo/opentelemetry-collector-builder
 BUILDER_BIN_PATH ?= ${HOME}/bin/opentelemetry-collector-builder
 VERSION ?= "$(shell git describe --tags --abbrev=10)"
 GO ?= go
