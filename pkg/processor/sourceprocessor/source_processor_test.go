@@ -39,16 +39,20 @@ func createConfig() *Config {
 	return config
 }
 
-var (
-	cfg = createConfig()
-
-	k8sLabels = map[string]string{
+func createK8sLabels() map[string]string {
+	return map[string]string{
 		"namespace":                    "namespace-1",
 		"pod_id":                       "pod-1234",
 		"pod":                          "pod-5db86d8867-sdqlj",
 		"pod_labels_pod-template-hash": "5db86d8867",
 		"container":                    "container-1",
 	}
+}
+
+var (
+	cfg = createConfig()
+
+	k8sLabels = createK8sLabels()
 
 	mergedK8sLabels = map[string]string{
 		"container":                    "container-1",
@@ -440,6 +444,51 @@ func TestTraceSourceProcessorAnnotations(t *testing.T) {
 	assert.NoError(t, err)
 
 	assertTracesEqual(t, td, want)
+}
+
+func TestTemplateWithCustomAttribute(t *testing.T) {
+	t.Run("attribute name is a single word", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		inputAttributes["someattr"] = "somevalue"
+		traces := newTraceData(inputAttributes)
+
+		config := createDefaultConfig().(*Config)
+		config.SourceCategory = "abc/%{someattr}/123"
+
+		processedTraces, err := newSourceProcessor(config).ProcessTraces(context.Background(), traces)
+		assert.NoError(t, err)
+
+		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/somevalue/123")
+	})
+
+	t.Run("attribute name has dot in it", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		inputAttributes["some.attr"] = "somevalue"
+		traces := newTraceData(inputAttributes)
+
+		config := createDefaultConfig().(*Config)
+		config.SourceCategory = "abc/%{some.attr}/123"
+
+		processedTraces, err := newSourceProcessor(config).ProcessTraces(context.Background(), traces)
+		assert.NoError(t, err)
+
+		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/%!{(MISSING)some.attr}/123")
+	})
+}
+
+func assertAttribute(t *testing.T, attributes pdata.AttributeMap, attributeName string, expectedValue string) {
+	value, exists := attributes.Get(attributeName)
+
+	if expectedValue == "" {
+		assert.False(t, exists, "Attribute '%s' should not exist", attributeName)
+	} else {
+		assert.True(t, exists)
+		actualValue := value.StringVal()
+		assert.Equal(t, expectedValue, actualValue, "Attribute '%s' should be '%s' but was '%s'", attributeName, expectedValue, actualValue)
+
+	}
 }
 
 func TestLogProcessorJson(t *testing.T) {
