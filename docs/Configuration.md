@@ -703,7 +703,7 @@ processors:
 
 For details, see the [Kubernetes Processor documentation][k8sprocessor_docs].
 
-[upstream_k8sprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/k8sprocessor
+[upstream_k8sprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/processor/k8sprocessor
 [k8sprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/k8sprocessor/README.md
 
 #### Source Processor
@@ -789,7 +789,7 @@ processors:
 
 For details, see the [Attributes Processor documentation][attributesprocessor_docs].
 
-[attributesprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/attributesprocessor/README.md
+[attributesprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/attributesprocessor/README.md
 
 #### Group by Attributes Processor
 
@@ -806,7 +806,7 @@ processors:
 
 For details, see the [Group by Attributes Processor documentation][groupbyattrsprocessor_docs].
 
-[groupbyattrsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbyattrsprocessor/README.md
+[groupbyattrsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/groupbyattrsprocessor/README.md
 
 #### Group by Trace Processor
 
@@ -824,7 +824,7 @@ processors:
 
 For details, see the [Group by Trace Processor documentation][groupbytraceprocessor_docs].
 
-[groupbytraceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbytraceprocessor/README.md
+[groupbytraceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/groupbytraceprocessor/README.md
 
 #### Metrics Transform Processor
 
@@ -844,7 +844,7 @@ processors:
 
 For details, see the [Metrics Transform Processor documentation][metrictransformprocessor_docs].
 
-[metrictransformprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbytraceprocessor/README.md
+[metrictransformprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/groupbytraceprocessor/README.md
 
 #### Resource Detection Processor
 
@@ -861,7 +861,7 @@ processors:
 
 For details, see the [Resource Detection Processor documentation][resourcedetectionprocessor_docs].
 
-[resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/README.md
+[resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/resourcedetectionprocessor/README.md
 
 #### Resource Processor
 
@@ -885,7 +885,7 @@ processors:
 
 For details, see the [Resource Processor documentation][resourceprocessor_docs].
 
-[resourceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourceprocessor/README.md
+[resourceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/resourceprocessor/README.md
 
 #### Routing Processor
 
@@ -913,7 +913,7 @@ exporters:
 
 For details, see the [Routing Processor documentation][routingprocessor_docs].
 
-[routingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/routingprocessor/README.md
+[routingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/routingprocessor/README.md
 
 #### Span Metrics Processor
 
@@ -972,7 +972,7 @@ service:
 
 For details, see the [Span Metrics Processor documentation][spanmetricsprocessor_docs].
 
-[spanmetricsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/spanmetricsprocessor/README.md
+[spanmetricsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/spanmetricsprocessor/README.md
 
 #### Tail Sampling Processor
 
@@ -1002,7 +1002,7 @@ processors:
 
 For details, see the [Tail Sampling Processor documentation][tailsamplingprocessor_docs].
 
-[tailsamplingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md
+[tailsamplingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/tailsamplingprocessor/README.md
 
 #### Filter Processor
 
@@ -1118,7 +1118,7 @@ exporters:
 
 For details, see the [Carbon documentation][carbonexporter_docs].
 
-[carbonexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/carbonexporter/README.md
+[carbonexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/exporter/carbonexporter/README.md
 
 #### File Exporter
 
@@ -1135,7 +1135,7 @@ exporters:
 
 For details, see the [File Exporter documentation][fileexporter_docs].
 
-[fileexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/fileexporter/README.md
+[fileexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/exporter/fileexporter/README.md
 
 #### Kafka Exporter
 
@@ -1156,7 +1156,7 @@ exporters:
 
 For details, see the [Kafka Exporter documentation][kafkaexporter_docs].
 
-[kafkaexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/kafkaexporter/README.md
+[kafkaexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/exporter/kafkaexporter/README.md
 
 #### Load Balancing Exporter
 
@@ -1183,7 +1183,7 @@ exporters:
 
 For details, see the [Load Balancing Exporter documentation][loadbalancingexporter_docs].
 
-[loadbalancingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/loadbalancingexporter/README.md
+[loadbalancingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/exporter/loadbalancingexporter/README.md
 
 #### Logging Exporter
 

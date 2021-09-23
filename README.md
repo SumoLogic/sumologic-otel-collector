@@ -93,12 +93,12 @@ OT distro.
 | `tailsamplingprocessor` [configuration help][tailsamplingprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/processor/tailsamplingprocessor      |
 | `filterprocessor` [configuration help][filterprocessor_help]                       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/processor/filterprocessor            |
 
-[attributesprocessor_help]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/attributesprocessor
+[attributesprocessor_help]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/attributesprocessor
 [groupbyattrsprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#group-by-attributes-processor
 [groupbytraceprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#group-by-trace-processor
 [metricstransformprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#metrics-transform-processor
 [resourcedetectionprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#resource-detection-processor
-[resourceprocessor_help]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourceprocessor
+[resourceprocessor_help]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/resourceprocessor
 [routingprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#routing-processor-processor
 [spanmetricsprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#span-metrics-processor
 [tailsamplingprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#tail-sampling-processor
