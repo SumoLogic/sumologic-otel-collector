@@ -21,12 +21,6 @@ It has certain expectations on the label names used by `k8sprocessor` which migh
   for those particular fields. Whenever a value under particular field matches
   a corresponding regex, the processed entry is dropped.
 
-  **NOTE**:
-
-  When systemd related filtering is taking place (`exclude` contains
-  an entry for `_SYSTEMD_UNIT`) then whenever the processed record contains
-  `_HOSTNAME` attribute it will be added to the resulting record under `host` key.
-
 ### Keys section
 
 The following keys must match resource attributes.
