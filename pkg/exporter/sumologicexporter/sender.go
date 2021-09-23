@@ -49,11 +49,6 @@ type metricPair struct {
 	metric     pdata.Metric
 }
 
-type jsonLogsConfig struct {
-	addTimestamp bool
-	timestampKey string
-}
-
 type sender struct {
 	logBuffer           []pdata.LogRecord
 	metricBuffer        []metricPair
@@ -64,14 +59,13 @@ type sender struct {
 	compressor          compressor
 	prometheusFormatter prometheusFormatter
 	graphiteFormatter   graphiteFormatter
-	jsonLogsConfig      jsonLogsConfig
+	jsonLogsConfig      JSONLogs
 	dataUrlMetrics      string
 	dataUrlLogs         string
 	dataUrlTraces       string
 }
 
 const (
-	logKey string = "log"
 	// maxBufferSize defines size of the logBuffer (maximum number of pdata.LogRecord entries)
 	maxBufferSize int = 1024 * 1024
 
@@ -123,13 +117,10 @@ func newSender(
 		compressor:          c,
 		prometheusFormatter: pf,
 		graphiteFormatter:   gf,
-		jsonLogsConfig: jsonLogsConfig{
-			addTimestamp: cfg.JSONLogs.AddTimestamp,
-			timestampKey: cfg.JSONLogs.TimestampKey,
-		},
-		dataUrlMetrics: metricsUrl,
-		dataUrlLogs:    logsUrl,
-		dataUrlTraces:  tracesUrl,
+		jsonLogsConfig:      cfg.JSONLogs,
+		dataUrlMetrics:      metricsUrl,
+		dataUrlLogs:         logsUrl,
+		dataUrlTraces:       tracesUrl,
 	}
 }
 
@@ -193,15 +184,15 @@ func (s *sender) logToText(record pdata.LogRecord) string {
 func (s *sender) logToJSON(record pdata.LogRecord) (string, error) {
 	attrs := pdata.NewAttributeMap()
 	record.Attributes().CopyTo(attrs)
-	if s.jsonLogsConfig.addTimestamp {
-		addJSONTimestamp(attrs, s.jsonLogsConfig.timestampKey, record.Timestamp())
+	if s.jsonLogsConfig.AddTimestamp {
+		addJSONTimestamp(attrs, s.jsonLogsConfig.TimestampKey, record.Timestamp())
 	}
 
 	data := s.filter.filterOut(attrs)
 
 	// Only append the body when it's not empty to prevent sending 'null' log.
 	if body := record.Body(); !isEmptyAttributeValue(body) {
-		data.orig.Upsert(logKey, body)
+		data.orig.Upsert(s.jsonLogsConfig.LogKey, body)
 	}
 
 	nextLine, err := json.Marshal(pdata.AttributeMapToMap(data.orig))
