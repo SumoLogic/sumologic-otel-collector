@@ -50,6 +50,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 		Client:             "otelcol",
 		ClearLogsTimestamp: true,
 		JSONLogs: JSONLogs{
+			LogKey:       "log",
 			AddTimestamp: true,
 			TimestampKey: "timestamp",
 		},

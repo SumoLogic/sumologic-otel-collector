@@ -60,6 +60,10 @@ exporters:
     graphite_template: <graphite_template>
 
     json_logs:
+      # defines which key will be used to attach the log body at.
+      # This option affects JSON log format only.
+      # By default this is "log".
+      log_key: <log>
       # defines whether to include a timestamp field when sending
       # JSON logs, which would contain UNIX epoch timestamp in milliseconds.
       # This option affects JSON log format only.

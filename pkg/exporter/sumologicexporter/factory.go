@@ -58,6 +58,7 @@ func createDefaultConfig() config.Exporter {
 		Client:                   DefaultClient,
 		ClearLogsTimestamp:       DefaultClearLogsTimestamp,
 		JSONLogs: JSONLogs{
+			LogKey:       DefaultLogKey,
 			AddTimestamp: DefaultAddTimestamp,
 			TimestampKey: DefaultTimestampKey,
 		},

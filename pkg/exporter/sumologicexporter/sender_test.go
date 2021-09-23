@@ -380,7 +380,7 @@ func TestSendLogsSplitFailedAll(t *testing.T) {
 	assert.EqualValues(t, 2, *test.reqCounter)
 }
 
-func TestSendLogsJsonTimestamp(t *testing.T) {
+func TestSendLogsJsonConfig(t *testing.T) {
 	testcases := []struct {
 		name       string
 		configOpts []func(*Config)
@@ -391,6 +391,7 @@ func TestSendLogsJsonTimestamp(t *testing.T) {
 			configOpts: []func(*Config){
 				func(c *Config) {
 					c.JSONLogs = JSONLogs{
+						LogKey:       DefaultLogKey,
 						AddTimestamp: DefaultAddTimestamp,
 						TimestampKey: DefaultTimestampKey,
 					}
@@ -402,10 +403,10 @@ func TestSendLogsJsonTimestamp(t *testing.T) {
 		},
 		{
 			name: "disabled add timestamp",
-
 			configOpts: []func(*Config){
 				func(c *Config) {
 					c.JSONLogs = JSONLogs{
+						LogKey:       DefaultLogKey,
 						AddTimestamp: false,
 					}
 				},
@@ -416,10 +417,10 @@ func TestSendLogsJsonTimestamp(t *testing.T) {
 		},
 		{
 			name: "enabled add timestamp with custom timestamp key",
-
 			configOpts: []func(*Config){
 				func(c *Config) {
 					c.JSONLogs = JSONLogs{
+						LogKey:       DefaultLogKey,
 						AddTimestamp: true,
 						TimestampKey: "xxyy_zz",
 					}
@@ -428,6 +429,21 @@ func TestSendLogsJsonTimestamp(t *testing.T) {
 			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log","xxyy_zz":\d{13}}` +
 				`\n` +
 				`{"key1":"value1","key2":"value2","log":"Another example log","xxyy_zz":\d{13}}`,
+		},
+		{
+			name: "custom log key",
+			configOpts: []func(*Config){
+				func(c *Config) {
+					c.JSONLogs = JSONLogs{
+						LogKey:       "log_vendor_key",
+						AddTimestamp: DefaultAddTimestamp,
+						TimestampKey: DefaultTimestampKey,
+					}
+				},
+			},
+			bodyRegex: `{"key1":"value1","key2":"value2","log_vendor_key":"Example log","timestamp":\d{13}}` +
+				`\n` +
+				`{"key1":"value1","key2":"value2","log_vendor_key":"Another example log","timestamp":\d{13}}`,
 		},
 	}
 
