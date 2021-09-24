@@ -44,7 +44,7 @@ type dockerLog struct {
 
 type sourceProcessor struct {
 	collector            string
-	sourceCategoryFiller attributeFiller
+	sourceCategoryFiller sourceCategoryFiller
 	sourceNameFiller     attributeFiller
 	sourceHostFiller     attributeFiller
 
@@ -55,9 +55,11 @@ type sourceProcessor struct {
 const (
 	alphanums = "bcdfghjklmnpqrstvwxz2456789"
 
-	sourceHostSpecialAnnotation     = "sumologic.com/sourceHost"
-	sourceNameSpecialAnnotation     = "sumologic.com/sourceName"
-	sourceCategorySpecialAnnotation = "sumologic.com/sourceCategory"
+	sourceHostSpecialAnnotation         = "sumologic.com/sourceHost"
+	sourceNameSpecialAnnotation         = "sumologic.com/sourceName"
+	sourceCategorySpecialAnnotation     = "sumologic.com/sourceCategory"
+	sourceCategoryPrefixAnnotation      = "sumologic.com/sourceCategoryPrefix"
+	sourceCategoryReplaceDashAnnotation = "sumologic.com/sourceCategoryReplaceDash"
 
 	includeAnnotation = "sumologic.com/include"
 	excludeAnnotation = "sumologic.com/exclude"
@@ -101,7 +103,7 @@ func newSourceProcessor(cfg *Config) *sourceProcessor {
 		collector:            cfg.Collector,
 		keys:                 keys,
 		sourceHostFiller:     createSourceHostFiller(cfg.SourceHostKey),
-		sourceCategoryFiller: createSourceCategoryFiller(cfg, keys),
+		sourceCategoryFiller: newSourceCategoryFiller(sourceCategoryKey, cfg),
 		sourceNameFiller:     createSourceNameFiller(cfg, keys),
 		exclude:              exclude,
 	}
@@ -261,10 +263,7 @@ func (sp *sourceProcessor) processResource(res pdata.Resource) pdata.Resource {
 		sp.annotationAttribute(sourceHostSpecialAnnotation),
 		sp.keys,
 	)
-	sp.sourceCategoryFiller.fillResourceOrUseAnnotation(&atts,
-		sp.annotationAttribute(sourceCategorySpecialAnnotation),
-		sp.keys,
-	)
+	sp.sourceCategoryFiller.fill(&atts)
 	sp.sourceNameFiller.fillResourceOrUseAnnotation(&atts,
 		sp.annotationAttribute(sourceNameSpecialAnnotation),
 		sp.keys,

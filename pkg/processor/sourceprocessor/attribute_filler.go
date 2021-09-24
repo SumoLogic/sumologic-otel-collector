@@ -74,14 +74,6 @@ func createSourceNameFiller(cfg *Config, keys sourceKeys) attributeFiller {
 	return filler
 }
 
-func createSourceCategoryFiller(cfg *Config, keys sourceKeys) attributeFiller {
-	filler := extractFormat(cfg.SourceCategory, sourceCategoryKey, keys)
-	filler.compiledFormat = cfg.SourceCategoryPrefix + filler.compiledFormat
-	filler.dashReplacement = cfg.SourceCategoryReplaceDash
-	filler.prefix = cfg.SourceCategoryPrefix
-	return filler
-}
-
 func (f *attributeFiller) fillResourceOrUseAnnotation(atts *pdata.AttributeMap, annotationKey string, keys sourceKeys) bool {
 	val, found := atts.Get(annotationKey)
 	if found {
