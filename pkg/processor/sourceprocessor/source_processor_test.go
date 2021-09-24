@@ -29,23 +29,20 @@ func createConfig() *Config {
 	config.Collector = "foocollector"
 	config.SourceCategoryPrefix = "prefix/"
 	config.SourceCategoryReplaceDash = "#"
-	config.PodNameKey = "pod_name"
-	config.PodKey = "pod"
-	config.NamespaceKey = "namespace"
-	config.ContainerKey = "container"
-	config.PodTemplateHashKey = "pod_labels_pod-template-hash"
+	config.PodNameKey = "k8s.pod.pod_name"
+	config.PodKey = "k8s.pod.name"
+	config.PodTemplateHashKey = "k8s.pod.label.pod-template-hash"
 	config.AnnotationPrefix = "pod_annotation_"
-	config.PodIDKey = "pod_id"
 	return config
 }
 
 func createK8sLabels() map[string]string {
 	return map[string]string{
-		"namespace":                    "namespace-1",
-		"pod_id":                       "pod-1234",
-		"pod":                          "pod-5db86d8867-sdqlj",
-		"pod_labels_pod-template-hash": "5db86d8867",
-		"container":                    "container-1",
+		"k8s.namespace.name":              "namespace-1",
+		"k8s.pod.uid":                     "pod-1234",
+		"k8s.pod.name":                    "pod-5db86d8867-sdqlj",
+		"k8s.pod.label.pod-template-hash": "5db86d8867",
+		"k8s.container.name":              "container-1",
 	}
 }
 
@@ -55,56 +52,24 @@ var (
 	k8sLabels = createK8sLabels()
 
 	mergedK8sLabels = map[string]string{
-		"container":                    "container-1",
-		"namespace":                    "namespace-1",
-		"pod_id":                       "pod-1234",
-		"pod":                          "pod-5db86d8867-sdqlj",
-		"pod_name":                     "pod",
-		"pod_labels_pod-template-hash": "5db86d8867",
-		"_sourceName":                  "namespace-1.pod-5db86d8867-sdqlj.container-1",
-		"_sourceCategory":              "prefix/namespace#1/pod",
-	}
-
-	mergedK8sLabelsWithMeta = map[string]string{
-		"container":                    "container-1",
-		"namespace":                    "namespace-1",
-		"pod_id":                       "pod-1234",
-		"pod":                          "pod-5db86d8867-sdqlj",
-		"pod_name":                     "pod",
-		"pod_labels_pod-template-hash": "5db86d8867",
-		"_collector":                   "foocollector",
-		"_sourceName":                  "namespace-1.pod-5db86d8867-sdqlj.container-1",
-		"_sourceCategory":              "prefix/namespace#1/pod",
-		"_sourceHost":                  "undefined",
-	}
-
-	k8sNewLabels = map[string]string{
 		"k8s.namespace.name":              "namespace-1",
-		"k8s.pod.id":                      "pod-1234",
-		"k8s.pod.name":                    "pod-5db86d8867-sdqlj",
-		"k8s.pod.label.pod-template-hash": "5db86d8867",
-		"k8s.container.name":              "container-1",
-	}
-
-	mergedK8sNewLabelsWithMeta = map[string]string{
-		"k8s.namespace.name":              "namespace-1",
-		"k8s.pod.id":                      "pod-1234",
+		"k8s.pod.uid":                     "pod-1234",
 		"k8s.pod.name":                    "pod-5db86d8867-sdqlj",
 		"k8s.pod.label.pod-template-hash": "5db86d8867",
 		"k8s.container.name":              "container-1",
 		"k8s.pod.pod_name":                "pod",
+		"_sourceHost":                     "undefined",
 		"_sourceName":                     "namespace-1.pod-5db86d8867-sdqlj.container-1",
 		"_sourceCategory":                 "prefix/namespace#1/pod",
-		"_sourceHost":                     "undefined",
 		"_collector":                      "foocollector",
 	}
 
 	limitedLabels = map[string]string{
-		"pod_id": "pod-1234",
+		"k8s.pod.uid": "pod-1234",
 	}
 
 	limitedLabelsWithMeta = map[string]string{
-		"pod_id":          "pod-1234",
+		"k8s.pod.uid":     "pod-1234",
 		"_collector":      "foocollector",
 		"_sourceCategory": "prefix/undefined/undefined",
 		"_sourceHost":     "undefined",
@@ -268,30 +233,10 @@ func TestLogsSourceHostKey(t *testing.T) {
 }
 
 func TestTraceSourceProcessor(t *testing.T) {
-	want := newTraceData(mergedK8sLabelsWithMeta)
+	want := newTraceData(mergedK8sLabels)
 	test := newTraceData(k8sLabels)
 
 	rtp := newSourceProcessor(cfg)
-
-	td, err := rtp.ProcessTraces(context.Background(), test)
-	assert.NoError(t, err)
-
-	assertTracesEqual(t, want, td)
-}
-
-func TestTraceSourceProcessorNewTaxonomy(t *testing.T) {
-	want := newTraceData(mergedK8sNewLabelsWithMeta)
-	test := newTraceData(k8sNewLabels)
-
-	config := createConfig()
-	config.NamespaceKey = "k8s.namespace.name"
-	config.PodIDKey = "k8s.pod.id"
-	config.PodNameKey = "k8s.pod.pod_name"
-	config.PodKey = "k8s.pod.name"
-	config.PodTemplateHashKey = "k8s.pod.label.pod-template-hash"
-	config.ContainerKey = "k8s.container.name"
-
-	rtp := newSourceProcessor(config)
 
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
@@ -321,12 +266,12 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 			cfg: func() *Config {
 				cfg := createConfig()
 				cfg.Exclude = map[string]string{
-					"pod": ".*",
+					"k8s.pod.name": ".*",
 				}
 				return cfg
 			}(),
 			want: func() pdata.Traces {
-				want := newTraceDataWithSpans(mergedK8sLabelsWithMeta, k8sLabels)
+				want := newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
 				want.ResourceSpans().At(0).InstrumentationLibrarySpans().
 					RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
 				return want
@@ -337,12 +282,12 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 			cfg: func() *Config {
 				cfg := createConfig()
 				cfg.Exclude = map[string]string{
-					"container": ".*",
+					"k8s.container.name": ".*",
 				}
 				return cfg
 			}(),
 			want: func() pdata.Traces {
-				want := newTraceDataWithSpans(mergedK8sLabelsWithMeta, k8sLabels)
+				want := newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
 				want.ResourceSpans().At(0).InstrumentationLibrarySpans().
 					RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
 				return want
@@ -353,12 +298,12 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 			cfg: func() *Config {
 				cfg := createConfig()
 				cfg.Exclude = map[string]string{
-					"namespace": ".*",
+					"k8s.namespace.name": ".*",
 				}
 				return cfg
 			}(),
 			want: func() pdata.Traces {
-				want := newTraceDataWithSpans(mergedK8sLabelsWithMeta, k8sLabels)
+				want := newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
 				want.ResourceSpans().At(0).InstrumentationLibrarySpans().
 					RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
 				return want
@@ -370,7 +315,7 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 				return createConfig()
 			}(),
 			want: func() pdata.Traces {
-				return newTraceDataWithSpans(mergedK8sLabelsWithMeta, k8sLabels)
+				return newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
 			}(),
 		},
 	}
@@ -426,15 +371,15 @@ func TestTraceSourceIncludePrecedence(t *testing.T) {
 }
 
 func TestTraceSourceProcessorAnnotations(t *testing.T) {
-	k8sLabels["pod_annotation_sumologic.com/sourceHost"] = "sh:%{pod_id}"
-	k8sLabels["pod_annotation_sumologic.com/sourceCategory"] = "sc:%{pod_id}"
+	k8sLabels["pod_annotation_sumologic.com/sourceHost"] = "sh:%{k8s.pod.uid}"
+	k8sLabels["pod_annotation_sumologic.com/sourceCategory"] = "sc:%{k8s.pod.uid}"
 	test := newTraceData(k8sLabels)
 
-	mergedK8sLabelsWithMeta["pod_annotation_sumologic.com/sourceHost"] = "sh:%{pod_id}"
-	mergedK8sLabelsWithMeta["pod_annotation_sumologic.com/sourceCategory"] = "sc:%{pod_id}"
-	mergedK8sLabelsWithMeta["_sourceHost"] = "sh:pod-1234"
-	mergedK8sLabelsWithMeta["_sourceCategory"] = "prefix/sc:pod#1234"
-	want := newTraceData(mergedK8sLabelsWithMeta)
+	mergedK8sLabels["pod_annotation_sumologic.com/sourceHost"] = "sh:%{k8s.pod.uid}"
+	mergedK8sLabels["pod_annotation_sumologic.com/sourceCategory"] = "sc:%{k8s.pod.uid}"
+	mergedK8sLabels["_sourceHost"] = "sh:pod-1234"
+	mergedK8sLabels["_sourceCategory"] = "prefix/sc:pod#1234"
+	want := newTraceData(mergedK8sLabels)
 
 	rtp := newSourceProcessor(cfg)
 

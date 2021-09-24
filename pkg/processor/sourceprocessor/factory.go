@@ -29,15 +29,12 @@ const (
 
 	defaultCollector = ""
 
-	defaultSourceName                = "%{namespace}.%{pod}.%{container}"
-	defaultSourceCategory            = "%{namespace}/%{pod_name}"
+	defaultSourceName                = "%{k8s.namespace.name}.%{k8s.pod.name}.%{k8s.container.name}"
+	defaultSourceCategory            = "%{k8s.namespace.name}/%{k8s.pod.pod_name}"
 	defaultSourceCategoryPrefix      = "kubernetes/"
 	defaultSourceCategoryReplaceDash = "/"
 
 	defaultAnnotationPrefix   = "k8s.pod.annotation."
-	defaultContainerKey       = "k8s.container.name"
-	defaultNamespaceKey       = "k8s.namespace.name"
-	defaultPodIDKey           = "k8s.pod.uid"
 	defaultPodKey             = "k8s.pod.name"
 	defaultPodNameKey         = "k8s.pod.pod_name"
 	defaultPodTemplateHashKey = "k8s.pod.label.pod-template-hash"
@@ -69,10 +66,7 @@ func createDefaultConfig() config.Processor {
 		SourceCategoryReplaceDash: defaultSourceCategoryReplaceDash,
 
 		AnnotationPrefix:   defaultAnnotationPrefix,
-		ContainerKey:       defaultContainerKey,
-		NamespaceKey:       defaultNamespaceKey,
 		PodKey:             defaultPodKey,
-		PodIDKey:           defaultPodIDKey,
 		PodNameKey:         defaultPodNameKey,
 		PodTemplateHashKey: defaultPodTemplateHashKey,
 		SourceHostKey:      defaultSourceHostKey,

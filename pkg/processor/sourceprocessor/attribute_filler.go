@@ -56,7 +56,7 @@ func extractFormat(format string, name string, keys sourceKeys) attributeFiller 
 	labels := make([]string, 0)
 	matches := formatRegex.FindAllStringSubmatch(format, -1)
 	for _, matchset := range matches {
-		labels = append(labels, keys.convertKey(matchset[1]))
+		labels = append(labels, matchset[1])
 	}
 	template := formatRegex.ReplaceAllString(format, "%s")
 

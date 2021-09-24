@@ -35,10 +35,7 @@ type Config struct {
 	Exclude map[string]string `mapstructure:"exclude"`
 
 	AnnotationPrefix   string `mapstructure:"annotation_prefix"`
-	ContainerKey       string `mapstructure:"container_key"`
-	NamespaceKey       string `mapstructure:"namespace_key"`
 	PodKey             string `mapstructure:"pod_key"`
-	PodIDKey           string `mapstructure:"pod_id_key"`
 	PodNameKey         string `mapstructure:"pod_name_key"`
 	PodTemplateHashKey string `mapstructure:"pod_template_hash_key"`
 	SourceHostKey      string `mapstructure:"source_host_key"`
