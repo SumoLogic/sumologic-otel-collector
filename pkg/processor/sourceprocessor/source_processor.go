@@ -29,32 +29,10 @@ import (
 
 type sourceKeys struct {
 	annotationPrefix   string
-	containerKey       string
-	namespaceKey       string
 	podKey             string
-	podIDKey           string
 	podNameKey         string
 	podTemplateHashKey string
 	sourceHostKey      string
-}
-
-func (stk sourceKeys) convertKey(key string) string {
-	switch key {
-	case "container":
-		return stk.containerKey
-	case "namespace":
-		return stk.namespaceKey
-	case "pod":
-		return stk.podKey
-	case "pod_id":
-		return stk.podIDKey
-	case "pod_name":
-		return stk.podNameKey
-	case "source_host":
-		return stk.sourceHostKey
-	default:
-		return key
-	}
 }
 
 // dockerLog represents log from k8s using docker log driver send by FluentBit
@@ -106,9 +84,6 @@ func compileRegex(regex string) *regexp.Regexp {
 func newSourceProcessor(cfg *Config) *sourceProcessor {
 	keys := sourceKeys{
 		annotationPrefix:   cfg.AnnotationPrefix,
-		containerKey:       cfg.ContainerKey,
-		namespaceKey:       cfg.NamespaceKey,
-		podIDKey:           cfg.PodIDKey,
 		podKey:             cfg.PodKey,
 		podNameKey:         cfg.PodNameKey,
 		podTemplateHashKey: cfg.PodTemplateHashKey,
@@ -266,7 +241,6 @@ func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md pdata.Logs) (pdat
 					log.Body().SetStringVal(strings.TrimSpace(dockerLog.Log))
 				}
 			}
-
 		}
 	}
 
