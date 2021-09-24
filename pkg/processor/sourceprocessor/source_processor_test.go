@@ -370,23 +370,80 @@ func TestTraceSourceIncludePrecedence(t *testing.T) {
 	assertTracesEqual(t, want, td)
 }
 
-func TestTraceSourceProcessorAnnotations(t *testing.T) {
-	k8sLabels["pod_annotation_sumologic.com/sourceHost"] = "sh:%{k8s.pod.uid}"
-	k8sLabels["pod_annotation_sumologic.com/sourceCategory"] = "sc:%{k8s.pod.uid}"
-	test := newTraceData(k8sLabels)
+func TestSourceHostAnnotation(t *testing.T) {
+	inputAttributes := createK8sLabels()
+	inputAttributes["pod_annotation_sumologic.com/sourceHost"] = "sh:%{k8s.pod.uid}"
+	inputTraces := newTraceData(inputAttributes)
 
-	mergedK8sLabels["pod_annotation_sumologic.com/sourceHost"] = "sh:%{k8s.pod.uid}"
-	mergedK8sLabels["pod_annotation_sumologic.com/sourceCategory"] = "sc:%{k8s.pod.uid}"
-	mergedK8sLabels["_sourceHost"] = "sh:pod-1234"
-	mergedK8sLabels["_sourceCategory"] = "prefix/sc:pod#1234"
-	want := newTraceData(mergedK8sLabels)
-
-	rtp := newSourceProcessor(cfg)
-
-	td, err := rtp.ProcessTraces(context.Background(), test)
+	processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
 	assert.NoError(t, err)
 
-	assertTracesEqual(t, want, td)
+	processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+	assertAttribute(t, processedAttributes, "_sourceHost", "sh:pod-1234")
+}
+
+func TestSourceNameAnnotation(t *testing.T) {
+	inputAttributes := createK8sLabels()
+	inputAttributes["pod_annotation_sumologic.com/sourceName"] = "sn:%{k8s.pod.name}"
+	inputTraces := newTraceData(inputAttributes)
+
+	processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+	assert.NoError(t, err)
+
+	processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+	assertAttribute(t, processedAttributes, "_sourceName", "sn:pod-5db86d8867-sdqlj")
+}
+
+func TestSourceCategoryAnnotations(t *testing.T) {
+	t.Run("source category annotation", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		inputAttributes["pod_annotation_sumologic.com/sourceCategory"] = "sc-%{k8s.namespace.name}"
+		inputTraces := newTraceData(inputAttributes)
+
+		processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+		assert.NoError(t, err)
+
+		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, processedAttributes, "_sourceCategory", "prefix/sc#namespace#1")
+	})
+
+	t.Run("source category prefix annotation", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		inputAttributes["pod_annotation_sumologic.com/sourceCategoryPrefix"] = "annot>"
+		inputTraces := newTraceData(inputAttributes)
+
+		processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+		assert.NoError(t, err)
+
+		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, processedAttributes, "_sourceCategory", "annot>namespace#1/pod")
+	})
+
+	t.Run("source category dash replacement annotation", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		inputAttributes["pod_annotation_sumologic.com/sourceCategoryReplaceDash"] = "^"
+		inputTraces := newTraceData(inputAttributes)
+
+		processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+		assert.NoError(t, err)
+
+		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, processedAttributes, "_sourceCategory", "prefix/namespace^1/pod")
+	})
+
+	t.Run("all source category annotations together", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		inputAttributes["pod_annotation_sumologic.com/sourceCategory"] = "sc-%{k8s.namespace.name}"
+		inputAttributes["pod_annotation_sumologic.com/sourceCategoryPrefix"] = "annot>"
+		inputAttributes["pod_annotation_sumologic.com/sourceCategoryReplaceDash"] = "^"
+		inputTraces := newTraceData(inputAttributes)
+
+		processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+		assert.NoError(t, err)
+
+		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, processedAttributes, "_sourceCategory", "annot>sc^namespace^1")
+	})
 }
 
 func TestTemplateWithCustomAttribute(t *testing.T) {
@@ -447,6 +504,23 @@ func assertAttribute(t *testing.T, attributes pdata.AttributeMap, attributeName 
 			assert.Equal(t, expectedValue, actualValue, "Attribute '%s' should be '%s', but was '%s'.", attributeName, expectedValue, actualValue)
 		}
 	}
+}
+
+func TestSourceCategory(t *testing.T) {
+	t.Run("with ", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		inputAttributes["someattr"] = "somevalue"
+		traces := newTraceData(inputAttributes)
+
+		config := createDefaultConfig().(*Config)
+		config.SourceCategory = "abc/%{someattr}/123"
+
+		processedTraces, err := newSourceProcessor(config).ProcessTraces(context.Background(), traces)
+		assert.NoError(t, err)
+
+		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/somevalue/123")
+	})
 }
 
 func TestLogProcessorJson(t *testing.T) {

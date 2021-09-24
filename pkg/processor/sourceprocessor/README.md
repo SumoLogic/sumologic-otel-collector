@@ -67,3 +67,20 @@ processors:
       namespace: "kube-system"
       pod: "custom-pod-.*"
 ```
+
+## Pod annotations
+
+The following [Kubernetes annotations](https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/)
+can be used on pods:
+
+- `sumologic.com/exclude` - records from this pod are dropped
+- `sumologic.com/include` - overrides `exclude` processor settings, records from this pod are not checked against those regexes
+- `sumologic.com/sourceCategory` - overrides `source_category` config option
+- `sumologic.com/sourceCategoryPrefix` - overrides `source_category_prefix` config option
+- `sumologic.com/sourceCategoryReplaceDash` - overrides `source_category_replace_dash` config option
+
+For the processor to use them, the annotations need to be available in resource attributes,
+prefixed with the value defined in `keys.annotation_prefix` config option.
+This can be achieved with the [Kubernetes processor](../k8sprocessor).
+
+For example, if a resource has the `k8s.pod.annotation.sumologic.com/exclude` attribute, the resource will be dropped.
