@@ -23,30 +23,29 @@ import (
 
 // sourceCategoryFiller adds source category attribute to a collection of attributes.
 type sourceCategoryFiller struct {
-	attributeName      string
-	valueTemplate      string
-	templateAttributes []string
-	prefix             string
-	dashReplacement    string
-	annotationPrefix   string
+	valueTemplate                string
+	templateAttributes           []string
+	prefix                       string
+	dashReplacement              string
+	annotationPrefix             string
+	containerAnnotationsEnabled  bool
+	containerAnnotationsPrefixes []string
 }
 
 // newSourceCategoryFiller creates a new sourceCategoryFiller.
-func newSourceCategoryFiller(
-	attributeName string,
-	cfg *Config,
-) sourceCategoryFiller {
+func newSourceCategoryFiller(cfg *Config) sourceCategoryFiller {
 
 	valueTemplate := cfg.SourceCategory
 	templateAttributes := extractTemplateAttributes(valueTemplate)
 
 	return sourceCategoryFiller{
-		attributeName:      attributeName,
-		valueTemplate:      valueTemplate,
-		templateAttributes: templateAttributes,
-		prefix:             cfg.SourceCategoryPrefix,
-		dashReplacement:    cfg.SourceCategoryReplaceDash,
-		annotationPrefix:   cfg.AnnotationPrefix,
+		valueTemplate:                valueTemplate,
+		templateAttributes:           templateAttributes,
+		prefix:                       cfg.SourceCategoryPrefix,
+		dashReplacement:              cfg.SourceCategoryReplaceDash,
+		annotationPrefix:             cfg.AnnotationPrefix,
+		containerAnnotationsEnabled:  cfg.ContainerAnnotations.Enabled,
+		containerAnnotationsPrefixes: cfg.ContainerAnnotations.Prefixes,
 	}
 }
 
@@ -66,6 +65,12 @@ func extractTemplateAttributes(template string) []string {
 // - the source category pod-level annotation (e.g. "k8s.pod.annotation.sumologic.com/sourceCategory"),
 // - the source category configured in the processor's "source_category" configuration option.
 func (f *sourceCategoryFiller) fill(attributes *pdata.AttributeMap) {
+	containerSourceCategory := f.getSourceCategoryFromContainerAnnotation(attributes)
+	if containerSourceCategory != "" {
+		attributes.UpsertString(sourceCategoryKey, containerSourceCategory)
+		return
+	}
+
 	valueTemplate := getAnnotationAttributeValue(f.annotationPrefix, sourceCategorySpecialAnnotation, attributes)
 	var templateAttributes []string
 	if valueTemplate != "" {
@@ -88,7 +93,27 @@ func (f *sourceCategoryFiller) fill(attributes *pdata.AttributeMap) {
 	}
 	sourceCategoryValue = strings.ReplaceAll(sourceCategoryValue, "-", dashReplacement)
 
-	attributes.UpsertString(f.attributeName, sourceCategoryValue)
+	attributes.UpsertString(sourceCategoryKey, sourceCategoryValue)
+}
+
+func (f *sourceCategoryFiller) getSourceCategoryFromContainerAnnotation(attributes *pdata.AttributeMap) string {
+	if !f.containerAnnotationsEnabled {
+		return ""
+	}
+
+	containerName, found := attributes.Get("k8s.container.name")
+	if !found || containerName.StringVal() == "" {
+		return ""
+	}
+
+	for _, containerAnnotationPrefix := range f.containerAnnotationsPrefixes {
+		annotationKey := fmt.Sprintf("%s%s.sourceCategory", containerAnnotationPrefix, containerName.StringVal())
+		annotationValue := getAnnotationAttributeValue(f.annotationPrefix, annotationKey, attributes)
+		if annotationValue != "" {
+			return annotationValue
+		}
+	}
+	return ""
 }
 
 func (f *sourceCategoryFiller) replaceTemplateAttributes(template string, templateAttributes []string, attributes *pdata.AttributeMap) string {

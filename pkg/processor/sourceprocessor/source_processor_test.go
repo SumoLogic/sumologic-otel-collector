@@ -444,6 +444,19 @@ func TestSourceCategoryAnnotations(t *testing.T) {
 		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
 		assertAttribute(t, processedAttributes, "_sourceCategory", "annot>sc^namespace^1")
 	})
+
+	t.Run("container-level annotations", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		inputAttributes["pod_annotation_sumologic.com/container-1.sourceCategory"] = "container-sc"
+		inputTraces := newTraceData(inputAttributes)
+
+		cfg.ContainerAnnotations.Enabled = true
+		processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+		assert.NoError(t, err)
+
+		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, processedAttributes, "_sourceCategory", "container-sc")
+	})
 }
 
 func TestSourceCategoryTemplateWithCustomAttribute(t *testing.T) {

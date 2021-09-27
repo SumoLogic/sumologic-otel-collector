@@ -93,3 +93,39 @@ For example, if a resource has the `k8s.pod.annotation.sumologic.com/exclude`
 attribute set to `true`, the resource will be dropped.
 
 [k8s_annotations_doc]: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+
+### Container-level pod annotations
+
+To make it possible to set different metadata on logs from different containers inside a pod,
+it is possible to set pod annotations that are container-specific.
+
+The following rules apply:
+
+- Container-level annotations take precendence over other forms of setting the source category.
+- No other transformations are applied to the source categories retrieved from container-level annotations,
+like adding source category prefix or replacing the dash.
+
+Let's look at an example. Assuming this plugin is configured with the following properties:
+
+```yaml
+processors:
+  source:
+    container_annotations:
+      enabled: true
+      prefixes:
+      - sumologic.com/
+```
+
+and assuming there's a pod running that has containers named `container-name-1` and `container-name-2` in it,
+setting the following annotations on the pod:
+
+- `sumologic.com/container-name-1.sourceCategory` with the value of `first_source-category`
+- `sumologic.com/container-name-2.sourceCategory` with the value of `another/source-category`
+
+will make the logs from `container-name-1` be tagged with source category `first_source-category`
+and logs from `container-name-2` be tagged with source category `another/source-category`.
+
+
+If there is more than one prefix defined in `container_annotations.prefixes`,
+they are checked in the order they are defined in. If an annotation is found for one prefix,
+the other prefixes are not checked.

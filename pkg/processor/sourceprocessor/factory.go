@@ -70,6 +70,13 @@ func createDefaultConfig() config.Processor {
 		PodNameKey:         defaultPodNameKey,
 		PodTemplateHashKey: defaultPodTemplateHashKey,
 		SourceHostKey:      defaultSourceHostKey,
+
+		ContainerAnnotations: ContainerAnnotationsConfig{
+			Enabled: false,
+			Prefixes: []string{
+				"sumologic.com/",
+			},
+		},
 	}
 }
 
