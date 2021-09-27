@@ -70,17 +70,26 @@ processors:
 
 ## Pod annotations
 
-The following [Kubernetes annotations](https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/)
-can be used on pods:
+The following [Kubernetes annotations][k8s_annotations_doc] can be used on pods:
 
-- `sumologic.com/exclude` - records from this pod are dropped
-- `sumologic.com/include` - overrides `exclude` processor settings, records from this pod are not checked against those regexes
+- `sumologic.com/exclude` - records from a pod that has this annotation set to
+  `true` are dropped,
+
+  **NOTE**: this has precedence over `sumologic.com/include` if both are set at
+  the same time for one pod.
+
+- `sumologic.com/include` - records from a pod that has this annotation set to
+  `true` are not checked against exclusion regexes from `exclude` processor settings
+
 - `sumologic.com/sourceCategory` - overrides `source_category` config option
 - `sumologic.com/sourceCategoryPrefix` - overrides `source_category_prefix` config option
 - `sumologic.com/sourceCategoryReplaceDash` - overrides `source_category_replace_dash` config option
 
-For the processor to use them, the annotations need to be available in resource attributes,
-prefixed with the value defined in `keys.annotation_prefix` config option.
+For the processor to use them, the annotations need to be available as resource
+attributes, prefixed with the value defined in `keys.annotation_prefix` config option.
 This can be achieved with the [Kubernetes processor](../k8sprocessor).
 
-For example, if a resource has the `k8s.pod.annotation.sumologic.com/exclude` attribute, the resource will be dropped.
+For example, if a resource has the `k8s.pod.annotation.sumologic.com/exclude`
+attribute set to `true`, the resource will be dropped.
+
+[k8s_annotations_doc]: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
