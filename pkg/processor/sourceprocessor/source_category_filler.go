@@ -21,6 +21,7 @@ import (
 	"go.opentelemetry.io/collector/model/pdata"
 )
 
+// sourceCategoryFiller adds source category attribute to a collection of attributes.
 type sourceCategoryFiller struct {
 	attributeName      string
 	valueTemplate      string
@@ -58,9 +59,9 @@ func extractTemplateAttributes(template string) []string {
 	return attributes
 }
 
-// fill adds a new attribute to the attributes that contains the source category for the record.
+// fill takes a collection of attributes for a record and adds to it a new attribute with the source category for the record.
 //
-// The source category is retrieved from one of three places:
+// The source category is retrieved from one of three places (in the following precedence):
 // - the source category container-level annotation (e.g. "k8s.pod.annotation.sumologic.com/container-name.sourceCategory"),
 // - the source category pod-level annotation (e.g. "k8s.pod.annotation.sumologic.com/sourceCategory"),
 // - the source category configured in the processor's "source_category" configuration option.
