@@ -28,7 +28,7 @@ func TestNewSourceCategoryFiller(t *testing.T) {
 	filler := newSourceCategoryFiller("_sourceCategory", cfg)
 
 	assert.Equal(t, filler.attributeName, "_sourceCategory")
-	assert.Equal(t, 2, len(filler.templateAttributes))
+	assert.Len(t, filler.templateAttributes, 2)
 	assert.Equal(t, "k8s.namespace.name", filler.templateAttributes[0])
 	assert.Equal(t, "k8s.pod.uid", filler.templateAttributes[1])
 }
