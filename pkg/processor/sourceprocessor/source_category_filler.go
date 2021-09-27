@@ -30,6 +30,7 @@ type sourceCategoryFiller struct {
 	annotationPrefix   string
 }
 
+// newSourceCategoryFiller creates a new sourceCategoryFiller.
 func newSourceCategoryFiller(
 	attributeName string,
 	cfg *Config,
@@ -57,6 +58,12 @@ func extractTemplateAttributes(template string) []string {
 	return attributes
 }
 
+// fill adds a new attribute to the attributes that contains the source category for the record.
+//
+// The source category is retrieved from one of three places:
+// - the source category container-level annotation (e.g. "k8s.pod.annotation.sumologic.com/container-name.sourceCategory"),
+// - the source category pod-level annotation (e.g. "k8s.pod.annotation.sumologic.com/sourceCategory"),
+// - the source category configured in the processor's "source_category" configuration option.
 func (f *sourceCategoryFiller) fill(attributes *pdata.AttributeMap) {
 	valueTemplate := getAnnotationAttributeValue(f.annotationPrefix, sourceCategorySpecialAnnotation, attributes)
 	var templateAttributes []string
