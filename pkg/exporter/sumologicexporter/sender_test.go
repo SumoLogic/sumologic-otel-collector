@@ -658,6 +658,24 @@ func TestOverrideSourceName(t *testing.T) {
 		assert.EqualValues(t, 1, *test.reqCounter)
 	})
 
+	t.Run("json format", func(t *testing.T) {
+		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				assert.Equal(t, "Test source name/test_name", req.Header.Get("X-Sumo-Name"))
+			},
+		}, func(c *Config) {
+			c.LogFormat = JSONFormat
+		})
+
+		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
+
+		assert.EqualValues(t, 1, *test.reqCounter)
+	})
+
 	t.Run("otlp", func(t *testing.T) {
 		test := prepareOTLPSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 			func(w http.ResponseWriter, req *http.Request) {
@@ -700,6 +718,24 @@ func TestOverrideSourceCategory(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("json format", func(t *testing.T) {
+		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				assert.Equal(t, "Test source category/test_name", req.Header.Get("X-Sumo-Category"))
+			},
+		}, func(c *Config) {
+			c.LogFormat = JSONFormat
+		})
+
+		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
+
+		assert.EqualValues(t, 1, *test.reqCounter)
+	})
+
 	t.Run("otlp", func(t *testing.T) {
 		test := prepareOTLPSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 			func(w http.ResponseWriter, req *http.Request) {
@@ -740,6 +776,24 @@ func TestOverrideSourceHost(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("json format", func(t *testing.T) {
+		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				assert.Equal(t, "Test source host/test_name", req.Header.Get("X-Sumo-Host"))
+			},
+		}, func(c *Config) {
+			c.LogFormat = JSONFormat
+		})
+
+		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
+
+		assert.EqualValues(t, 1, *test.reqCounter)
+	})
+
 	t.Run("otlp", func(t *testing.T) {
 		test := prepareOTLPSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 			func(w http.ResponseWriter, req *http.Request) {
@@ -762,6 +816,71 @@ func TestOverrideSourceHost(t *testing.T) {
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
 		assert.NoError(t, err)
+	})
+}
+
+func TestLogsDontSendSourceFieldsInXSumoFieldsHeader(t *testing.T) {
+	assertNoSourceFieldsInXSumoFields := func(t *testing.T, fieldsHeader string) {
+		for _, field := range strings.Split(fieldsHeader, ",") {
+			field = strings.TrimSpace(field)
+			split := strings.Split(field, "=")
+			require.Len(t, split, 2)
+
+			switch fieldName := split[0]; fieldName {
+			case "_sourceName":
+				assert.Failf(t, "X-Sumo-Fields header check",
+					"%s should be removed from X-Sumo-Fields header when X-Sumo-Name is set", fieldName)
+			case "_sourceHost":
+				assert.Failf(t, "X-Sumo-Fields header check",
+					"%s should be removed from X-Sumo-Fields header when X-Sumo-Host is set", fieldName)
+			case "_sourceCategory":
+				assert.Failf(t, "X-Sumo-Fields header check",
+					"%s should be removed from X-Sumo-Fields header when X-Sumo-Category is set", fieldName)
+			default:
+			}
+
+			t.Logf("field: %s", field)
+		}
+	}
+
+	t.Run("json", func(t *testing.T) {
+		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				assert.Equal(t,
+					"Test source name/key1_val/test_source_name",
+					req.Header.Get("X-Sumo-Name"),
+				)
+				assert.Equal(t, "Test source host/key1_val",
+					req.Header.Get("X-Sumo-Host"),
+				)
+				assert.Equal(t, "Test source category/key1_val",
+					req.Header.Get("X-Sumo-Category"),
+				)
+
+				body := extractBody(t, req)
+				t.Logf("body: %s", body)
+
+				assertNoSourceFieldsInXSumoFields(t, req.Header.Get("X-Sumo-Fields"))
+			},
+		}, func(c *Config) {
+			c.LogFormat = JSONFormat
+		})
+
+		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}/%{_sourceName}")
+		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
+		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(
+			map[string]string{
+				"key1":            "key1_val",
+				"_sourceName":     "test_source_name",
+				"_sourceHost":     "test_source_host",
+				"_sourceCategory": "test_source_category",
+			}),
+		)
+		assert.NoError(t, err)
+		assert.EqualValues(t, 1, *test.reqCounter)
 	})
 }
 

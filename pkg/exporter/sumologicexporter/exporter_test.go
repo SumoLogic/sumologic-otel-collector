@@ -73,7 +73,7 @@ func createExporterCreateSettings() component.ExporterCreateSettings {
 // and a slice of callbacks to be called for subsequent requests coming being
 // sent to the server.
 // The enclosed *httptest.Server is automatically closed on test cleanup.
-func prepareExporterTest(t *testing.T, cfg *Config, cb []func(w http.ResponseWriter, req *http.Request)) *exporterTest {
+func prepareExporterTest(t *testing.T, cfg *Config, cb []func(w http.ResponseWriter, req *http.Request), cfgOpts ...func(*Config)) *exporterTest {
 	var reqCounter int32
 	// generate a test server so we can capture and inspect the request
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -90,6 +90,9 @@ func prepareExporterTest(t *testing.T, cfg *Config, cb []func(w http.ResponseWri
 
 	cfg.HTTPClientSettings.Endpoint = testServer.URL
 	cfg.HTTPClientSettings.Auth = nil
+	for _, cfgOpt := range cfgOpts {
+		cfgOpt(cfg)
+	}
 
 	exp, err := initExporter(cfg, createExporterCreateSettings())
 	require.NoError(t, err)
@@ -763,29 +766,150 @@ func TestPushMetricsFailedBatch(t *testing.T) {
 }
 
 func TestLogsJsonFormatMetadataFilter(t *testing.T) {
-	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
+	testcases := []struct {
+		name                  string
+		logResourceAttributes map[string]pdata.AttributeValue
+		cfgFn                 func(c *Config)
+		handler               func(w http.ResponseWriter, req *http.Request)
+	}{
+		{
+			name: "basic",
+			logResourceAttributes: map[string]pdata.AttributeValue{
+				"_sourceCategory": pdata.NewAttributeValueString("dummy"),
+				"key1":            pdata.NewAttributeValueString("value1"),
+				"key2":            pdata.NewAttributeValueString("value2"),
+			},
+			cfgFn: func(c *Config) {
+				c.LogFormat = JSONFormat
+				c.SourceCategory = "testing_source_templates %{_sourceCategory}"
+				c.MetadataAttributes = []string{
+					"key1",
+					"_source.*",
+				}
+			},
+			handler: func(w http.ResponseWriter, req *http.Request) {
+				body := extractBody(t, req)
 
-			var regex string
-			regex += `{"key2":"value2","log":"Example log","timestamp":\d{13}}`
-			assert.Regexp(t, regex, body)
+				var regex string
+				regex += `{"key2":"value2","log":"Example log","timestamp":\d{13}}`
+				assert.Regexp(t, regex, body)
 
-			assert.Equal(t, "key1=value1", req.Header.Get("X-Sumo-Fields"))
+				assert.Equal(t, "key1=value1", req.Header.Get("X-Sumo-Fields"),
+					"X-Sumo-Fields is not as expected",
+				)
+
+				assert.Equal(t, "testing_source_templates dummy",
+					req.Header.Get("X-Sumo-Category"),
+					"X-Sumo-Category header is not set correctly",
+				)
+			},
 		},
-	})
-	test.exp.config.LogFormat = JSONFormat
+		{
+			name: "source related attributes available for templating even without specifying in metadata attributes",
+			logResourceAttributes: map[string]pdata.AttributeValue{
+				"_sourceCategory": pdata.NewAttributeValueString("dummy_category"),
+				"_sourceHost":     pdata.NewAttributeValueString("dummy_host"),
+				"_sourceName":     pdata.NewAttributeValueString("dummy_name"),
+				"key1":            pdata.NewAttributeValueString("value1"),
+				"key2":            pdata.NewAttributeValueString("value2"),
+			},
+			cfgFn: func(c *Config) {
+				c.LogFormat = JSONFormat
+				c.SourceCategory = "testing_source_templates %{_sourceCategory}"
+				c.SourceHost = "testing_source_templates %{_sourceHost}"
+				c.SourceName = "testing_source_templates %{_sourceName}"
+				c.MetadataAttributes = []string{
+					"key1",
+				}
+			},
+			handler: func(w http.ResponseWriter, req *http.Request) {
+				body := extractBody(t, req)
 
-	f, err := newFilter([]string{`key1`})
-	require.NoError(t, err)
-	test.exp.filter = f
+				var regex string
+				regex += `{"key2":"value2","log":"Example log","timestamp":\d{13}}`
+				assert.Regexp(t, regex, body)
 
-	logs := LogRecordsToLogs(exampleLog())
-	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key1", "value1")
-	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key2", "value2")
+				assert.Equal(t, "key1=value1", req.Header.Get("X-Sumo-Fields"),
+					"X-Sumo-Fields is not as expected",
+				)
 
-	err = test.exp.pushLogsData(context.Background(), logs)
-	assert.NoError(t, err)
+				assert.Equal(t, "testing_source_templates dummy_category",
+					req.Header.Get("X-Sumo-Category"),
+					"X-Sumo-Category header is not set correctly",
+				)
+
+				assert.Equal(t, "testing_source_templates dummy_host",
+					req.Header.Get("X-Sumo-Host"),
+					"X-Sumo-Host header is not set correctly",
+				)
+
+				assert.Equal(t, "testing_source_templates dummy_name",
+					req.Header.Get("X-Sumo-Name"),
+					"X-Sumo-Name header is not set correctly",
+				)
+			},
+		},
+		{
+			name: "unavailable source metadata rendered as undefined",
+			logResourceAttributes: map[string]pdata.AttributeValue{
+				"_sourceCategory": pdata.NewAttributeValueString("cat"),
+				"key1":            pdata.NewAttributeValueString("value1"),
+				"key2":            pdata.NewAttributeValueString("value2"),
+			},
+			cfgFn: func(c *Config) {
+				c.LogFormat = JSONFormat
+				c.SourceCategory = "dummy %{_sourceCategory}"
+				c.SourceHost = "dummy %{_sourceHost}"
+				c.SourceName = "dummy %{_sourceName}"
+				c.MetadataAttributes = []string{
+					"key1",
+					"_source.*",
+				}
+			},
+			handler: func(w http.ResponseWriter, req *http.Request) {
+				body := extractBody(t, req)
+
+				var regex string
+				regex += `{"key2":"value2","log":"Example log","timestamp":\d{13}}`
+				assert.Regexp(t, regex, body)
+
+				assert.Equal(t, "key1=value1", req.Header.Get("X-Sumo-Fields"),
+					"X-Sumo-Fields is not as expected",
+				)
+
+				assert.Equal(t, "dummy cat",
+					req.Header.Get("X-Sumo-Category"),
+					"X-Sumo-Category header is not set correctly",
+				)
+
+				assert.Equal(t, "dummy undefined",
+					req.Header.Get("X-Sumo-Host"),
+					"X-Sumo-Host header is not set correctly",
+				)
+
+				assert.Equal(t, "dummy undefined",
+					req.Header.Get("X-Sumo-Name"),
+					"X-Sumo-Name header is not set correctly",
+				)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			test := prepareExporterTest(t, createTestConfig(),
+				[]func(http.ResponseWriter, *http.Request){tc.handler},
+				tc.cfgFn,
+			)
+
+			logs := LogRecordsToLogs(exampleLog())
+			logResourceAttrs := logs.ResourceLogs().At(0).Resource().Attributes()
+			logResourceAttrs.InitFromMap(tc.logResourceAttributes)
+
+			err := test.exp.pushLogsData(context.Background(), logs)
+			assert.NoError(t, err)
+		})
+	}
 }
 
 func TestLogsTextFormatMetadataFilter(t *testing.T) {
