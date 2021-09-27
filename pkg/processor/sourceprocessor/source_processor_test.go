@@ -446,7 +446,7 @@ func TestSourceCategoryAnnotations(t *testing.T) {
 	})
 }
 
-func TestTemplateWithCustomAttribute(t *testing.T) {
+func TestSourceCategoryTemplateWithCustomAttribute(t *testing.T) {
 	t.Run("attribute name is a single word", func(t *testing.T) {
 		inputAttributes := createK8sLabels()
 		inputAttributes["someattr"] = "somevalue"
@@ -504,23 +504,6 @@ func assertAttribute(t *testing.T, attributes pdata.AttributeMap, attributeName 
 			assert.Equal(t, expectedValue, actualValue, "Attribute '%s' should be '%s', but was '%s'.", attributeName, expectedValue, actualValue)
 		}
 	}
-}
-
-func TestSourceCategory(t *testing.T) {
-	t.Run("with ", func(t *testing.T) {
-		inputAttributes := createK8sLabels()
-		inputAttributes["someattr"] = "somevalue"
-		traces := newTraceData(inputAttributes)
-
-		config := createDefaultConfig().(*Config)
-		config.SourceCategory = "abc/%{someattr}/123"
-
-		processedTraces, err := newSourceProcessor(config).ProcessTraces(context.Background(), traces)
-		assert.NoError(t, err)
-
-		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
-		assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/somevalue/123")
-	})
 }
 
 func TestLogProcessorJson(t *testing.T) {
