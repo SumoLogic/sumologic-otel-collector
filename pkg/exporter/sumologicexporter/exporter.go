@@ -102,6 +102,7 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 		return nil, err
 	}
 
+	cfg.MetadataAttributes = addSourceMetadataFields(cfg.MetadataAttributes)
 	f, err := newFilter(cfg.MetadataAttributes)
 	if err != nil {
 		return nil, err
@@ -135,6 +136,40 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 	)
 
 	return se, nil
+}
+
+// addSourceMetadataFields adds source related attribute names to the list of
+// metadata attributes.
+func addSourceMetadataFields(metadataAttributes []string) []string {
+	var (
+		sourceCategory bool
+		sourceHost     bool
+		sourceName     bool
+	)
+
+	for _, attr := range metadataAttributes {
+		switch attr {
+		case attributeKeySourceCategory:
+			sourceCategory = true
+		case attributeKeySourceHost:
+			sourceHost = true
+		case attributeKeySourceName:
+			sourceName = true
+		default:
+		}
+	}
+
+	if !sourceCategory {
+		metadataAttributes = append(metadataAttributes, attributeKeySourceCategory)
+	}
+	if !sourceHost {
+		metadataAttributes = append(metadataAttributes, attributeKeySourceHost)
+	}
+	if !sourceName {
+		metadataAttributes = append(metadataAttributes, attributeKeySourceName)
+	}
+
+	return metadataAttributes
 }
 
 func newLogsExporter(
