@@ -51,8 +51,8 @@ func newSourceCategoryFiller(
 }
 
 func extractTemplateAttributes(template string) []string {
-	attributes := make([]string, 0)
 	attributeMatches := formatRegex.FindAllStringSubmatch(template, -1)
+	attributes := make([]string, 0, len(attributeMatches))
 	for _, matchset := range attributeMatches {
 		attributes = append(attributes, matchset[1])
 	}
