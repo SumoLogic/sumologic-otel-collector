@@ -39,4 +39,11 @@ type Config struct {
 	PodNameKey         string `mapstructure:"pod_name_key"`
 	PodTemplateHashKey string `mapstructure:"pod_template_hash_key"`
 	SourceHostKey      string `mapstructure:"source_host_key"`
+
+	ContainerAnnotations ContainerAnnotationsConfig `mapstructure:"container_annotations"`
+}
+
+type ContainerAnnotationsConfig struct {
+	Enabled  bool     `mapstructure:"enabled"`
+	Prefixes []string `mapstructure:"prefixes"`
 }

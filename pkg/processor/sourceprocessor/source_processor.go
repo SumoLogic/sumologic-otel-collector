@@ -103,7 +103,7 @@ func newSourceProcessor(cfg *Config) *sourceProcessor {
 		collector:            cfg.Collector,
 		keys:                 keys,
 		sourceHostFiller:     createSourceHostFiller(cfg.SourceHostKey),
-		sourceCategoryFiller: newSourceCategoryFiller(sourceCategoryKey, cfg),
+		sourceCategoryFiller: newSourceCategoryFiller(cfg),
 		sourceNameFiller:     createSourceNameFiller(cfg, keys),
 		exclude:              exclude,
 	}
