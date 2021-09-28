@@ -8,7 +8,7 @@ ones are self-explanatory. Low information ones are defined by heuristic - havin
 small relative variation. All metrics not falling to above categories are regular and do not have their report frequency
 tuned beyond `maxReportFrequency`.
 
-Metrics are categorised by their recent data points, so a category for a metric can can change.
+Metrics are categorised by their recent data points, so a category for a metric can change in time.
 
 `metricfrequencyprocessor` works by sifting out data points that would be reported earlier than according to their
 category's frequency.
