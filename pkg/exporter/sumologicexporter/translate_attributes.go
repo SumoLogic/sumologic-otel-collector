@@ -46,8 +46,33 @@ var attributeTranslations = map[string]string{
 	"file.path.resolved":      "_sourceName",
 }
 
-// translateAttributes renames attribute keys according to attributeTranslations.
-func translateAttributes(attributes pdata.AttributeMap) {
+func translateAttributes(attributes pdata.AttributeMap) pdata.AttributeMap {
+	ret := pdata.NewAttributeMap()
+	ret.EnsureCapacity(attributes.Len())
+
+	attributes.Range(func(otKey string, value pdata.AttributeValue) bool {
+		if sumoKey, ok := attributeTranslations[otKey]; ok {
+			// Only insert if it doesn't exist yet to prevent overwriting.
+			// We have to do it this way since the final return value is not
+			// ready yet to rely on .Insert() not overwriting.
+			if _, exists := attributes.Get(sumoKey); !exists {
+				ret.Insert(sumoKey, value)
+			} else {
+				ret.Insert(otKey, value)
+			}
+		} else {
+			ret.Insert(otKey, value)
+		}
+		return true
+	})
+
+	return ret
+}
+
+// translateAttributesInPlace renames attribute keys according to attributeTranslations.
+//
+// DEPRECATED: Please use translateAttributes instead.
+func translateAttributesInPlace(attributes pdata.AttributeMap) {
 	attributes.Range(func(otKey string, value pdata.AttributeValue) bool {
 		if sumoKey, ok := attributeTranslations[otKey]; ok {
 			// do not rename attribute if target name already exists

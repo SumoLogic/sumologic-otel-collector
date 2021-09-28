@@ -284,10 +284,15 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 			logs := ill.Logs()
 			for k := 0; k < logs.Len(); k++ {
 				log := logs.At(k)
+				logAttrs := log.Attributes()
 
 				// copy resource attributes into logs attributes
 				// log attributes have precedence over resource attributes
-				attributes := log.Attributes()
+				attributes := pdata.NewAttributeMap()
+				attributes.EnsureCapacity(
+					logAttrs.Len() + rl.Resource().Attributes().Len(),
+				)
+				logAttrs.CopyTo(attributes)
 				rl.Resource().Attributes().Range(func(k string, v pdata.AttributeValue) bool {
 					attributes.Insert(k, v)
 					return true
@@ -296,8 +301,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 				currentMetadata = sdr.filter.filterIn(attributes)
 
 				if se.config.TranslateAttributes {
-					translateAttributes(attributes)
-					translateAttributes(currentMetadata.orig)
+					currentMetadata.orig = translateAttributes(currentMetadata.orig)
 				}
 
 				// If metadata differs from currently buffered, flush the buffer
@@ -388,8 +392,8 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		currentMetadata = sdr.filter.filterIn(attributes)
 
 		if se.config.TranslateAttributes {
-			translateAttributes(attributes)
-			translateAttributes(currentMetadata.orig)
+			attributes = translateAttributes(attributes)
+			currentMetadata.orig = translateAttributes(currentMetadata.orig)
 		}
 
 		// iterate over InstrumentationLibraryMetrics
