@@ -16,6 +16,7 @@ package sourceprocessor
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"regexp"
 	"strings"
@@ -28,52 +29,37 @@ import (
 
 type sourceKeys struct {
 	annotationPrefix   string
-	containerKey       string
-	namespaceKey       string
 	podKey             string
-	podIDKey           string
 	podNameKey         string
 	podTemplateHashKey string
 	sourceHostKey      string
 }
 
-func (stk sourceKeys) convertKey(key string) string {
-	switch key {
-	case "container":
-		return stk.containerKey
-	case "namespace":
-		return stk.namespaceKey
-	case "pod":
-		return stk.podKey
-	case "pod_id":
-		return stk.podIDKey
-	case "pod_name":
-		return stk.podNameKey
-	case "source_host":
-		return stk.sourceHostKey
-	default:
-		return key
-	}
+// dockerLog represents log from k8s using docker log driver send by FluentBit
+type dockerLog struct {
+	Stream string
+	Time   string
+	Log    string
 }
 
 type sourceProcessor struct {
 	collector            string
-	source               string
-	sourceCategoryFiller attributeFiller
+	sourceCategoryFiller sourceCategoryFiller
 	sourceNameFiller     attributeFiller
 	sourceHostFiller     attributeFiller
 
-	systemdFiltering bool
-	exclude          map[string]*regexp.Regexp
-	keys             sourceKeys
+	exclude map[string]*regexp.Regexp
+	keys    sourceKeys
 }
 
 const (
 	alphanums = "bcdfghjklmnpqrstvwxz2456789"
 
-	sourceHostSpecialAnnotation     = "sumologic.com/sourceHost"
-	sourceNameSpecialAnnotation     = "sumologic.com/sourceName"
-	sourceCategorySpecialAnnotation = "sumologic.com/sourceCategory"
+	sourceHostSpecialAnnotation         = "sumologic.com/sourceHost"
+	sourceNameSpecialAnnotation         = "sumologic.com/sourceName"
+	sourceCategorySpecialAnnotation     = "sumologic.com/sourceCategory"
+	sourceCategoryPrefixAnnotation      = "sumologic.com/sourceCategoryPrefix"
+	sourceCategoryReplaceDashAnnotation = "sumologic.com/sourceCategoryReplaceDash"
 
 	includeAnnotation = "sumologic.com/include"
 	excludeAnnotation = "sumologic.com/exclude"
@@ -100,23 +86,14 @@ func compileRegex(regex string) *regexp.Regexp {
 func newSourceProcessor(cfg *Config) *sourceProcessor {
 	keys := sourceKeys{
 		annotationPrefix:   cfg.AnnotationPrefix,
-		containerKey:       cfg.ContainerKey,
-		namespaceKey:       cfg.NamespaceKey,
-		podIDKey:           cfg.PodIDKey,
 		podKey:             cfg.PodKey,
 		podNameKey:         cfg.PodNameKey,
 		podTemplateHashKey: cfg.PodTemplateHashKey,
 		sourceHostKey:      cfg.SourceHostKey,
 	}
 
-	var (
-		exclude          = make(map[string]*regexp.Regexp)
-		systemdFiltering bool
-	)
+	exclude := make(map[string]*regexp.Regexp)
 	for field, regexStr := range cfg.Exclude {
-		if field == "_SYSTEMD_UNIT" {
-			systemdFiltering = true
-		}
 		if r := compileRegex(regexStr); r != nil {
 			exclude[field] = r
 		}
@@ -125,12 +102,10 @@ func newSourceProcessor(cfg *Config) *sourceProcessor {
 	return &sourceProcessor{
 		collector:            cfg.Collector,
 		keys:                 keys,
-		source:               cfg.Source,
-		sourceHostFiller:     createSourceHostFiller(),
-		sourceCategoryFiller: createSourceCategoryFiller(cfg, keys),
+		sourceHostFiller:     createSourceHostFiller(cfg.SourceHostKey),
+		sourceCategoryFiller: newSourceCategoryFiller(sourceCategoryKey, cfg),
 		sourceNameFiller:     createSourceNameFiller(cfg, keys),
 		exclude:              exclude,
-		systemdFiltering:     systemdFiltering,
 	}
 }
 
@@ -162,14 +137,8 @@ func (sp *sourceProcessor) isFilteredOut(atts pdata.AttributeMap) bool {
 
 	// Check fields by matching them against field exclusion regexes
 	for field, r := range sp.exclude {
-		v, ok := matchFieldByRegex(atts, field, r)
+		_, ok := matchFieldByRegex(atts, field, r)
 		if ok {
-			// If we're filtering/processing systemd entries then set the hostname
-			// based on the _HOSTNAME attribute coming from systemd.
-			if sp.systemdFiltering && field == "_HOSTNAME" && v != "" {
-				atts.UpsertString("host", v)
-			}
-
 			return true
 		}
 	}
@@ -231,6 +200,8 @@ func (sp *sourceProcessor) ProcessMetrics(ctx context.Context, md pdata.Metrics)
 func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md pdata.Logs) (pdata.Logs, error) {
 	rss := md.ResourceLogs()
 
+	var dockerLog dockerLog
+
 	for i := 0; i < rss.Len(); i++ {
 		rs := rss.At(i)
 		res := sp.processResource(rs.Resource())
@@ -238,6 +209,40 @@ func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md pdata.Logs) (pdat
 
 		if sp.isFilteredOut(atts) {
 			rs.InstrumentationLibraryLogs().RemoveIf(func(pdata.InstrumentationLibraryLogs) bool { return true })
+		}
+
+		// Due to fluent-bit configuration for sumologic kubernetes collection,
+		// logs from kubernetes with docker log driver are send as json with
+		// `log`, `stream` and `time` keys.
+		// We would like to extract `time` and `stream` to record level attributes
+		// and treat `log` as body of the log
+		//
+		// Related issue: https://github.com/SumoLogic/sumologic-kubernetes-collection/issues/1758
+		// ToDo: remove this functionality when the issue is resolved
+
+		ills := rs.InstrumentationLibraryLogs()
+		for j := 0; j < ills.Len(); j++ {
+			ill := ills.At(j)
+			logs := ill.Logs()
+			for k := 0; k < logs.Len(); k++ {
+				log := logs.At(k)
+				if log.Body().Type() == pdata.AttributeValueTypeString {
+					err := json.Unmarshal([]byte(log.Body().StringVal()), &dockerLog)
+
+					// If there was any parsing error or any of the expected key have no value
+					// skip extraction and leave log unchanged
+					if err != nil || dockerLog.Stream == "" || dockerLog.Time == "" || dockerLog.Log == "" {
+						continue
+					}
+
+					// Extract `stream` and `time` as record level attributes
+					log.Attributes().UpsertString("stream", dockerLog.Stream)
+					log.Attributes().UpsertString("time", dockerLog.Time)
+
+					// Set log body to `log` content
+					log.Body().SetStringVal(strings.TrimSpace(dockerLog.Log))
+				}
+			}
 		}
 	}
 
@@ -258,10 +263,7 @@ func (sp *sourceProcessor) processResource(res pdata.Resource) pdata.Resource {
 		sp.annotationAttribute(sourceHostSpecialAnnotation),
 		sp.keys,
 	)
-	sp.sourceCategoryFiller.fillResourceOrUseAnnotation(&atts,
-		sp.annotationAttribute(sourceCategorySpecialAnnotation),
-		sp.keys,
-	)
+	sp.sourceCategoryFiller.fill(&atts)
 	sp.sourceNameFiller.fillResourceOrUseAnnotation(&atts,
 		sp.annotationAttribute(sourceNameSpecialAnnotation),
 		sp.keys,

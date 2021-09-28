@@ -26,3 +26,5 @@ coverage.txt
 chef_guid
 local-mode-cache
 nodes
+
+.vscode

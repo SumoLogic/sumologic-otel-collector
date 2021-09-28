@@ -26,6 +26,7 @@ import (
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 	"go.opentelemetry.io/collector/model/pdata"
+	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension"
 )
@@ -39,6 +40,7 @@ const (
 type sumologicexporter struct {
 	sources             sourceFormats
 	config              *Config
+	logger              *zap.Logger
 	client              *http.Client
 	filter              filter
 	prometheusFormatter prometheusFormatter
@@ -48,7 +50,7 @@ type sumologicexporter struct {
 	dataUrlTraces       string
 }
 
-func initExporter(cfg *Config) (*sumologicexporter, error) {
+func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) (*sumologicexporter, error) {
 	switch cfg.LogFormat {
 	case JSONFormat:
 	case TextFormat:
@@ -100,6 +102,7 @@ func initExporter(cfg *Config) (*sumologicexporter, error) {
 		return nil, err
 	}
 
+	cfg.MetadataAttributes = addSourceMetadataFields(cfg.MetadataAttributes)
 	f, err := newFilter(cfg.MetadataAttributes)
 	if err != nil {
 		return nil, err
@@ -117,6 +120,7 @@ func initExporter(cfg *Config) (*sumologicexporter, error) {
 
 	se := &sumologicexporter{
 		config:  cfg,
+		logger:  createSettings.Logger,
 		sources: sfs,
 		// NOTE: client is now set in start()
 		filter:              f,
@@ -124,14 +128,55 @@ func initExporter(cfg *Config) (*sumologicexporter, error) {
 		graphiteFormatter:   gf,
 	}
 
+	se.logger.Info(
+		"Sumo Logic Exporter configured",
+		zap.String("log_format", string(cfg.LogFormat)),
+		zap.String("metric_format", string(cfg.MetricFormat)),
+		zap.String("trace_format", string(cfg.TraceFormat)),
+	)
+
 	return se, nil
+}
+
+// addSourceMetadataFields adds source related attribute names to the list of
+// metadata attributes.
+func addSourceMetadataFields(metadataAttributes []string) []string {
+	var (
+		sourceCategory bool
+		sourceHost     bool
+		sourceName     bool
+	)
+
+	for _, attr := range metadataAttributes {
+		switch attr {
+		case attributeKeySourceCategory:
+			sourceCategory = true
+		case attributeKeySourceHost:
+			sourceHost = true
+		case attributeKeySourceName:
+			sourceName = true
+		default:
+		}
+	}
+
+	if !sourceCategory {
+		metadataAttributes = append(metadataAttributes, attributeKeySourceCategory)
+	}
+	if !sourceHost {
+		metadataAttributes = append(metadataAttributes, attributeKeySourceHost)
+	}
+	if !sourceName {
+		metadataAttributes = append(metadataAttributes, attributeKeySourceName)
+	}
+
+	return metadataAttributes
 }
 
 func newLogsExporter(
 	cfg *Config,
 	params component.ExporterCreateSettings,
 ) (component.LogsExporter, error) {
-	se, err := initExporter(cfg)
+	se, err := initExporter(cfg, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize the logs exporter: %w", err)
 	}
@@ -154,7 +199,7 @@ func newMetricsExporter(
 	cfg *Config,
 	params component.ExporterCreateSettings,
 ) (component.MetricsExporter, error) {
-	se, err := initExporter(cfg)
+	se, err := initExporter(cfg, params)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +222,7 @@ func newTracesExporter(
 	cfg *Config,
 	params component.ExporterCreateSettings,
 ) (component.TracesExporter, error) {
-	se, err := initExporter(cfg)
+	se, err := initExporter(cfg, params)
 	if err != nil {
 		return nil, err
 	}

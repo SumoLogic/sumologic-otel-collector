@@ -27,22 +27,18 @@ const (
 	// The value of "type" key in configuration.
 	typeStr = "source"
 
-	defaultSource    = "traces"
 	defaultCollector = ""
 
-	defaultSourceName                = "%{namespace}.%{pod}.%{container}"
-	defaultSourceCategory            = "%{namespace}/%{pod_name}"
+	defaultSourceName                = "%{k8s.namespace.name}.%{k8s.pod.name}.%{k8s.container.name}"
+	defaultSourceCategory            = "%{k8s.namespace.name}/%{k8s.pod.pod_name}"
 	defaultSourceCategoryPrefix      = "kubernetes/"
 	defaultSourceCategoryReplaceDash = "/"
 
-	defaultAnnotationPrefix   = "pod_annotation_"
-	defaultContainerKey       = "container"
-	defaultNamespaceKey       = "namespace"
-	defaultPodIDKey           = "pod_id"
-	defaultPodKey             = "pod"
-	defaultPodNameKey         = "pod_name"
-	defaultPodTemplateHashKey = "pod_labels_pod-template-hash"
-	defaultSourceHostKey      = "source_host"
+	defaultAnnotationPrefix   = "k8s.pod.annotation."
+	defaultPodKey             = "k8s.pod.name"
+	defaultPodNameKey         = "k8s.pod.pod_name"
+	defaultPodTemplateHashKey = "k8s.pod.label.pod-template-hash"
+	defaultSourceHostKey      = "k8s.pod.hostname"
 )
 
 var processorCapabilities = consumer.Capabilities{MutatesData: true}
@@ -63,7 +59,6 @@ func createDefaultConfig() config.Processor {
 	ps := config.NewProcessorSettings(config.NewID(typeStr))
 	return &Config{
 		ProcessorSettings:         &ps,
-		Source:                    defaultSource,
 		Collector:                 defaultCollector,
 		SourceName:                defaultSourceName,
 		SourceCategory:            defaultSourceCategory,
@@ -71,10 +66,7 @@ func createDefaultConfig() config.Processor {
 		SourceCategoryReplaceDash: defaultSourceCategoryReplaceDash,
 
 		AnnotationPrefix:   defaultAnnotationPrefix,
-		ContainerKey:       defaultContainerKey,
-		NamespaceKey:       defaultNamespaceKey,
 		PodKey:             defaultPodKey,
-		PodIDKey:           defaultPodIDKey,
 		PodNameKey:         defaultPodNameKey,
 		PodTemplateHashKey: defaultPodTemplateHashKey,
 		SourceHostKey:      defaultSourceHostKey,

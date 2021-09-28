@@ -89,6 +89,24 @@ type Config struct {
 	// This option affects OTLP format only.
 	// By default this is true.
 	ClearLogsTimestamp bool `mapstructure:"clear_logs_timestamp"`
+
+	JSONLogs `mapstructure:"json_logs"`
+}
+
+type JSONLogs struct {
+	// LogKey defines which key will be used to attach the log body at.
+	// This option affects JSON log format only.
+	// By default this is "log".
+	LogKey string `mapstructure:"log_key"`
+	// AddTimestamp defines whether to include a timestamp field when sending
+	// JSON logs, which would contain UNIX epoch timestamp in milliseconds.
+	// This option affects JSON log format only.
+	// By default this is true.
+	AddTimestamp bool `mapstructure:"add_timestamp"`
+	// When add_timestamp is set to true then this key defines what is the name
+	// of the timestamp key.
+	// By default this is "timestamp".
+	TimestampKey string `mapstructure:"timestamp_key"`
 }
 
 // CreateDefaultHTTPClientSettings returns default http client settings
@@ -173,4 +191,10 @@ const (
 	DefaultTranslateTelegrafMetrics bool = true
 	// DefaultClearTimestamp defines default ClearLogsTimestamp value
 	DefaultClearLogsTimestamp bool = true
+	// DefaultLogKey defines default LogKey value
+	DefaultLogKey string = "log"
+	// DefaultAddTimestamp defines default AddTimestamp value
+	DefaultAddTimestamp bool = true
+	// DefaultTimestampKey defines default TimestampKey value
+	DefaultTimestampKey string = "timestamp"
 )

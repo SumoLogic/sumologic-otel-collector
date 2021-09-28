@@ -20,9 +20,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config/configcheck"
 	"go.opentelemetry.io/collector/consumer/consumertest"
-	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor/config"
 )
@@ -45,7 +45,9 @@ func TestCreateProcessor(t *testing.T) {
 		},
 	}
 
-	params := component.ProcessorCreateSettings{Logger: zap.NewNop()}
+	params := component.ProcessorCreateSettings{
+		TelemetrySettings: componenttest.NewNopTelemetrySettings(),
+	}
 	tp, err := factory.CreateTracesProcessor(context.Background(), params, cfg, consumertest.NewNop())
 	assert.NotNil(t, tp)
 	assert.NoError(t, err, "cannot create trace processor")

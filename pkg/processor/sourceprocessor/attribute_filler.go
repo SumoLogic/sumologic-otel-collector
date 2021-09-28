@@ -28,7 +28,7 @@ var (
 
 func init() {
 	var err error
-	formatRegex, err = regexp.Compile(`\%\{(\w+)\}`)
+	formatRegex, err = regexp.Compile(`\%\{([\w\.]+)\}`)
 	if err != nil {
 		panic("failed to parse regex: " + err.Error())
 	}
@@ -42,12 +42,12 @@ type attributeFiller struct {
 	labels          []string
 }
 
-func createSourceHostFiller() attributeFiller {
+func createSourceHostFiller(sourceHostAttrName string) attributeFiller {
 	return attributeFiller{
 		name:            sourceHostKey,
-		compiledFormat:  "",
+		compiledFormat:  "%s",
 		dashReplacement: "",
-		labels:          make([]string, 0),
+		labels:          []string{sourceHostAttrName},
 		prefix:          "",
 	}
 }
@@ -56,7 +56,7 @@ func extractFormat(format string, name string, keys sourceKeys) attributeFiller 
 	labels := make([]string, 0)
 	matches := formatRegex.FindAllStringSubmatch(format, -1)
 	for _, matchset := range matches {
-		labels = append(labels, keys.convertKey(matchset[1]))
+		labels = append(labels, matchset[1])
 	}
 	template := formatRegex.ReplaceAllString(format, "%s")
 
@@ -71,14 +71,6 @@ func extractFormat(format string, name string, keys sourceKeys) attributeFiller 
 
 func createSourceNameFiller(cfg *Config, keys sourceKeys) attributeFiller {
 	filler := extractFormat(cfg.SourceName, sourceNameKey, keys)
-	return filler
-}
-
-func createSourceCategoryFiller(cfg *Config, keys sourceKeys) attributeFiller {
-	filler := extractFormat(cfg.SourceCategory, sourceCategoryKey, keys)
-	filler.compiledFormat = cfg.SourceCategoryPrefix + filler.compiledFormat
-	filler.dashReplacement = cfg.SourceCategoryReplaceDash
-	filler.prefix = cfg.SourceCategoryPrefix
 	return filler
 }
 
@@ -113,11 +105,11 @@ func (f *attributeFiller) fillAttributes(atts *pdata.AttributeMap) bool {
 func (f *attributeFiller) resourceLabelValues(atts *pdata.AttributeMap) []interface{} {
 	arr := make([]interface{}, 0)
 	for _, label := range f.labels {
-		value, ok := atts.Get(label)
-		if !ok {
-			return nil
+		if value, found := atts.Get(label); found {
+			arr = append(arr, value.StringVal())
+		} else {
+			arr = append(arr, "undefined")
 		}
-		arr = append(arr, value.StringVal())
 	}
 	return arr
 }

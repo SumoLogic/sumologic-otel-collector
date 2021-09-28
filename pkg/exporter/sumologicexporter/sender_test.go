@@ -31,13 +31,16 @@ import (
 )
 
 type senderTest struct {
-	srv *httptest.Server
-	s   *sender
+	reqCounter *int32
+	srv        *httptest.Server
+	s          *sender
 }
 
 // prepareSenderTest prepares sender test environment.
+// Provided cfgOpts additionally configure the sender after the sendible default
+// for tests have been applied.
 // The enclosed httptest.Server is closed automatically using test.Cleanup.
-func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.Request)) *senderTest {
+func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.Request), cfgOpts ...func(*Config)) *senderTest {
 	var reqCounter int32
 	// generate a test server so we can capture and inspect the request
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -58,6 +61,9 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 	cfg.LogFormat = TextFormat
 	cfg.MetricFormat = Carbon2Format
 	cfg.MaxRequestBodySize = 20_971_520
+	for _, cfgOpt := range cfgOpts {
+		cfgOpt(cfg)
+	}
 
 	f, err := newFilter(cfg.MetadataAttributes)
 	require.NoError(t, err)
@@ -72,7 +78,8 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 	require.NoError(t, err)
 
 	return &senderTest{
-		srv: testServer,
+		reqCounter: &reqCounter,
+		srv:        testServer,
 		s: newSender(
 			cfg,
 			&http.Client{
@@ -128,7 +135,8 @@ func prepareOTLPSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *h
 	require.NoError(t, err)
 
 	return &senderTest{
-		srv: testServer,
+		reqCounter: &reqCounter,
+		srv:        testServer,
 		s: newSender(
 			cfg,
 			&http.Client{
@@ -211,10 +219,8 @@ func exampleMultitypeLogs() []pdata.LogRecord {
 
 	attVal = pdata.NewAttributeValueArray()
 	attArr := attVal.ArrayVal()
-	strVal := pdata.NewAttributeValueNull()
-	strVal.SetStringVal("lv2")
-	intVal := pdata.NewAttributeValueNull()
-	intVal.SetIntVal(13)
+	strVal := pdata.NewAttributeValueString("lv2")
+	intVal := pdata.NewAttributeValueInt(13)
 
 	strVal.CopyTo(attArr.AppendEmpty())
 	intVal.CopyTo(attArr.AppendEmpty())
@@ -277,6 +283,7 @@ func TestSendLogs(t *testing.T) {
 
 	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "value", "key2": "value2"}))
 	assert.NoError(t, err)
+	assert.EqualValues(t, 1, *test.reqCounter)
 }
 
 func TestSendLogsMultitype(t *testing.T) {
@@ -296,6 +303,8 @@ func TestSendLogsMultitype(t *testing.T) {
 
 	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "value", "key2": "value2"}))
 	assert.NoError(t, err)
+
+	assert.EqualValues(t, 1, *test.reqCounter)
 }
 
 func TestSendLogsSplit(t *testing.T) {
@@ -314,6 +323,8 @@ func TestSendLogsSplit(t *testing.T) {
 
 	_, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 	assert.NoError(t, err)
+
+	assert.EqualValues(t, 2, *test.reqCounter)
 }
 func TestSendLogsSplitFailedOne(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
@@ -335,6 +346,8 @@ func TestSendLogsSplitFailedOne(t *testing.T) {
 	dropped, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 	assert.EqualError(t, err, "error during sending data: 500 Internal Server Error")
 	assert.Equal(t, test.s.logBuffer[0:1], dropped)
+
+	assert.EqualValues(t, 2, *test.reqCounter)
 }
 
 func TestSendLogsSplitFailedAll(t *testing.T) {
@@ -363,15 +376,107 @@ func TestSendLogsSplitFailedAll(t *testing.T) {
 		"[error during sending data: 500 Internal Server Error; error during sending data: 404 Not Found]",
 	)
 	assert.Equal(t, test.s.logBuffer[0:2], dropped)
+
+	assert.EqualValues(t, 2, *test.reqCounter)
+}
+
+func TestSendLogsJsonConfig(t *testing.T) {
+	testcases := []struct {
+		name       string
+		configOpts []func(*Config)
+		bodyRegex  string
+	}{
+		{
+			name: "default config",
+			configOpts: []func(*Config){
+				func(c *Config) {
+					c.JSONLogs = JSONLogs{
+						LogKey:       DefaultLogKey,
+						AddTimestamp: DefaultAddTimestamp,
+						TimestampKey: DefaultTimestampKey,
+					}
+				},
+			},
+			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}` +
+				`\n` +
+				`{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`,
+		},
+		{
+			name: "disabled add timestamp",
+			configOpts: []func(*Config){
+				func(c *Config) {
+					c.JSONLogs = JSONLogs{
+						LogKey:       DefaultLogKey,
+						AddTimestamp: false,
+					}
+				},
+			},
+			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log"}` +
+				`\n` +
+				`{"key1":"value1","key2":"value2","log":"Another example log"}`,
+		},
+		{
+			name: "enabled add timestamp with custom timestamp key",
+			configOpts: []func(*Config){
+				func(c *Config) {
+					c.JSONLogs = JSONLogs{
+						LogKey:       DefaultLogKey,
+						AddTimestamp: true,
+						TimestampKey: "xxyy_zz",
+					}
+				},
+			},
+			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log","xxyy_zz":\d{13}}` +
+				`\n` +
+				`{"key1":"value1","key2":"value2","log":"Another example log","xxyy_zz":\d{13}}`,
+		},
+		{
+			name: "custom log key",
+			configOpts: []func(*Config){
+				func(c *Config) {
+					c.JSONLogs = JSONLogs{
+						LogKey:       "log_vendor_key",
+						AddTimestamp: DefaultAddTimestamp,
+						TimestampKey: DefaultTimestampKey,
+					}
+				},
+			},
+			bodyRegex: `{"key1":"value1","key2":"value2","log_vendor_key":"Example log","timestamp":\d{13}}` +
+				`\n` +
+				`{"key1":"value1","key2":"value2","log_vendor_key":"Another example log","timestamp":\d{13}}`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+				func(w http.ResponseWriter, req *http.Request) {
+					body := extractBody(t, req)
+					assert.Regexp(t, tc.bodyRegex, body)
+				},
+			}, tc.configOpts...)
+
+			test.s.config.LogFormat = JSONFormat
+			test.s.logBuffer = exampleTwoLogs()
+
+			_, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
+			assert.NoError(t, err)
+
+			assert.EqualValues(t, 1, *test.reqCounter)
+		})
+	}
 }
 
 func TestSendLogsJson(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			expected := `{"key1":"value1","key2":"value2","log":"Example log"}
-{"key1":"value1","key2":"value2","log":"Another example log"}`
-			assert.Equal(t, expected, body)
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}`
+			regex += `\n`
+			regex += `{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
+
 			assert.Equal(t, "key=value", req.Header.Get("X-Sumo-Fields"))
 			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
 			assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
@@ -382,15 +487,20 @@ func TestSendLogsJson(t *testing.T) {
 
 	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key": "value"}))
 	assert.NoError(t, err)
+
+	assert.EqualValues(t, 1, *test.reqCounter)
 }
 
 func TestSendLogsJsonMultitype(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			expected := `{"key1":"value1","key2":"value2","log":{"lk1":"lv1","lk2":13}}
-{"key1":"value1","key2":"value2","log":["lv2",13]}`
-			assert.Equal(t, expected, body)
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":{"lk1":"lv1","lk2":13},"timestamp":\d{13}}`
+			regex += `\n`
+			regex += `{"key1":"value1","key2":"value2","log":\["lv2",13\],"timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
+
 			assert.Equal(t, "key=value", req.Header.Get("X-Sumo-Fields"))
 			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
 			assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
@@ -401,17 +511,23 @@ func TestSendLogsJsonMultitype(t *testing.T) {
 
 	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key": "value"}))
 	assert.NoError(t, err)
+
+	assert.EqualValues(t, 1, *test.reqCounter)
 }
 
 func TestSendLogsJsonSplit(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Example log"}`, body)
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
 		},
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Another example log"}`, body)
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
 		},
 	})
 	test.s.config.LogFormat = JSONFormat
@@ -420,6 +536,8 @@ func TestSendLogsJsonSplit(t *testing.T) {
 
 	_, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 	assert.NoError(t, err)
+
+	assert.EqualValues(t, 2, *test.reqCounter)
 }
 
 func TestSendLogsJsonSplitFailedOne(t *testing.T) {
@@ -428,11 +546,17 @@ func TestSendLogsJsonSplitFailedOne(t *testing.T) {
 			w.WriteHeader(500)
 
 			body := extractBody(t, req)
-			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Example log"}`, body)
+
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
 		},
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Another example log"}`, body)
+
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
 		},
 	})
 	test.s.config.LogFormat = JSONFormat
@@ -442,6 +566,8 @@ func TestSendLogsJsonSplitFailedOne(t *testing.T) {
 	dropped, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 	assert.EqualError(t, err, "error during sending data: 500 Internal Server Error")
 	assert.Equal(t, test.s.logBuffer[0:1], dropped)
+
+	assert.EqualValues(t, 2, *test.reqCounter)
 }
 
 func TestSendLogsJsonSplitFailedAll(t *testing.T) {
@@ -450,13 +576,19 @@ func TestSendLogsJsonSplitFailedAll(t *testing.T) {
 			w.WriteHeader(500)
 
 			body := extractBody(t, req)
-			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Example log"}`, body)
+
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
 		},
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(404)
 
 			body := extractBody(t, req)
-			assert.Equal(t, `{"key1":"value1","key2":"value2","log":"Another example log"}`, body)
+
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
 		},
 	})
 	test.s.config.LogFormat = JSONFormat
@@ -470,6 +602,8 @@ func TestSendLogsJsonSplitFailedAll(t *testing.T) {
 		"[error during sending data: 500 Internal Server Error; error during sending data: 404 Not Found]",
 	)
 	assert.Equal(t, test.s.logBuffer[0:2], dropped)
+
+	assert.EqualValues(t, 2, *test.reqCounter)
 }
 
 func TestSendLogsUnexpectedFormat(t *testing.T) {
@@ -503,6 +637,8 @@ func TestSendLogsOTLP(t *testing.T) {
 
 	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "value", "key2": "value2"}))
 	assert.NoError(t, err)
+
+	assert.EqualValues(t, 1, *test.reqCounter)
 }
 
 func TestOverrideSourceName(t *testing.T) {
@@ -518,6 +654,26 @@ func TestOverrideSourceName(t *testing.T) {
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
 		assert.NoError(t, err)
+
+		assert.EqualValues(t, 1, *test.reqCounter)
+	})
+
+	t.Run("json format", func(t *testing.T) {
+		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				assert.Equal(t, "Test source name/test_name", req.Header.Get("X-Sumo-Name"))
+			},
+		}, func(c *Config) {
+			c.LogFormat = JSONFormat
+		})
+
+		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
+
+		assert.EqualValues(t, 1, *test.reqCounter)
 	})
 
 	t.Run("otlp", func(t *testing.T) {
@@ -542,6 +698,8 @@ func TestOverrideSourceName(t *testing.T) {
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
 		assert.NoError(t, err)
+
+		assert.EqualValues(t, 1, *test.reqCounter)
 	})
 }
 
@@ -558,6 +716,24 @@ func TestOverrideSourceCategory(t *testing.T) {
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
 		assert.NoError(t, err)
+	})
+
+	t.Run("json format", func(t *testing.T) {
+		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				assert.Equal(t, "Test source category/test_name", req.Header.Get("X-Sumo-Category"))
+			},
+		}, func(c *Config) {
+			c.LogFormat = JSONFormat
+		})
+
+		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
+
+		assert.EqualValues(t, 1, *test.reqCounter)
 	})
 
 	t.Run("otlp", func(t *testing.T) {
@@ -600,6 +776,24 @@ func TestOverrideSourceHost(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("json format", func(t *testing.T) {
+		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				assert.Equal(t, "Test source host/test_name", req.Header.Get("X-Sumo-Host"))
+			},
+		}, func(c *Config) {
+			c.LogFormat = JSONFormat
+		})
+
+		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		assert.NoError(t, err)
+
+		assert.EqualValues(t, 1, *test.reqCounter)
+	})
+
 	t.Run("otlp", func(t *testing.T) {
 		test := prepareOTLPSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 			func(w http.ResponseWriter, req *http.Request) {
@@ -622,6 +816,71 @@ func TestOverrideSourceHost(t *testing.T) {
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
 		assert.NoError(t, err)
+	})
+}
+
+func TestLogsDontSendSourceFieldsInXSumoFieldsHeader(t *testing.T) {
+	assertNoSourceFieldsInXSumoFields := func(t *testing.T, fieldsHeader string) {
+		for _, field := range strings.Split(fieldsHeader, ",") {
+			field = strings.TrimSpace(field)
+			split := strings.Split(field, "=")
+			require.Len(t, split, 2)
+
+			switch fieldName := split[0]; fieldName {
+			case "_sourceName":
+				assert.Failf(t, "X-Sumo-Fields header check",
+					"%s should be removed from X-Sumo-Fields header when X-Sumo-Name is set", fieldName)
+			case "_sourceHost":
+				assert.Failf(t, "X-Sumo-Fields header check",
+					"%s should be removed from X-Sumo-Fields header when X-Sumo-Host is set", fieldName)
+			case "_sourceCategory":
+				assert.Failf(t, "X-Sumo-Fields header check",
+					"%s should be removed from X-Sumo-Fields header when X-Sumo-Category is set", fieldName)
+			default:
+			}
+
+			t.Logf("field: %s", field)
+		}
+	}
+
+	t.Run("json", func(t *testing.T) {
+		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				assert.Equal(t,
+					"Test source name/key1_val/test_source_name",
+					req.Header.Get("X-Sumo-Name"),
+				)
+				assert.Equal(t, "Test source host/key1_val",
+					req.Header.Get("X-Sumo-Host"),
+				)
+				assert.Equal(t, "Test source category/key1_val",
+					req.Header.Get("X-Sumo-Category"),
+				)
+
+				body := extractBody(t, req)
+				t.Logf("body: %s", body)
+
+				assertNoSourceFieldsInXSumoFields(t, req.Header.Get("X-Sumo-Fields"))
+			},
+		}, func(c *Config) {
+			c.LogFormat = JSONFormat
+		})
+
+		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}/%{_sourceName}")
+		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
+		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
+		test.s.logBuffer = exampleLog()
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(
+			map[string]string{
+				"key1":            "key1_val",
+				"_sourceName":     "test_source_name",
+				"_sourceHost":     "test_source_host",
+				"_sourceCategory": "test_source_category",
+			}),
+		)
+		assert.NoError(t, err)
+		assert.EqualValues(t, 1, *test.reqCounter)
 	})
 }
 
@@ -780,7 +1039,7 @@ func TestSendMetrics(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			expected := `test_metric_data{test="test_value",test2="second_value"} 14500 1605534165000
+			expected := `test.metric.data{test="test_value",test2="second_value"} 14500 1605534165000
 gauge_metric_name{foo="bar",remote_name="156920",url="http://example_url"} 124 1608124661166
 gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1608124662166`
 			assert.Equal(t, expected, body)
@@ -806,7 +1065,7 @@ func TestSendMetricsSplit(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			expected := `test_metric_data{test="test_value",test2="second_value"} 14500 1605534165000`
+			expected := `test.metric.data{test="test_value",test2="second_value"} 14500 1605534165000`
 			assert.Equal(t, expected, body)
 		},
 		func(w http.ResponseWriter, req *http.Request) {
@@ -833,7 +1092,7 @@ func TestSendMetricsSplitFailedOne(t *testing.T) {
 			w.WriteHeader(500)
 
 			body := extractBody(t, req)
-			expected := `test_metric_data{test="test_value",test2="second_value"} 14500 1605534165000`
+			expected := `test.metric.data{test="test_value",test2="second_value"} 14500 1605534165000`
 			assert.Equal(t, expected, body)
 		},
 		func(w http.ResponseWriter, req *http.Request) {
@@ -861,7 +1120,7 @@ func TestSendMetricsSplitFailedAll(t *testing.T) {
 			w.WriteHeader(500)
 
 			body := extractBody(t, req)
-			expected := `test_metric_data{test="test_value",test2="second_value"} 14500 1605534165000`
+			expected := `test.metric.data{test="test_value",test2="second_value"} 14500 1605534165000`
 			assert.Equal(t, expected, body)
 		},
 		func(w http.ResponseWriter, req *http.Request) {

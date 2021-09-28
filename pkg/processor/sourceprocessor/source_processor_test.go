@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/model/pdata"
 )
 
@@ -28,72 +29,71 @@ func createConfig() *Config {
 	config.Collector = "foocollector"
 	config.SourceCategoryPrefix = "prefix/"
 	config.SourceCategoryReplaceDash = "#"
+	config.PodNameKey = "k8s.pod.pod_name"
+	config.PodKey = "k8s.pod.name"
+	config.PodTemplateHashKey = "k8s.pod.label.pod-template-hash"
+	config.AnnotationPrefix = "pod_annotation_"
 	return config
+}
+
+func createK8sLabels() map[string]string {
+	return map[string]string{
+		"k8s.namespace.name":              "namespace-1",
+		"k8s.pod.uid":                     "pod-1234",
+		"k8s.pod.name":                    "pod-5db86d8867-sdqlj",
+		"k8s.pod.label.pod-template-hash": "5db86d8867",
+		"k8s.container.name":              "container-1",
+	}
 }
 
 var (
 	cfg = createConfig()
 
-	k8sLabels = map[string]string{
-		"namespace":                    "namespace-1",
-		"pod_id":                       "pod-1234",
-		"pod":                          "pod-5db86d8867-sdqlj",
-		"pod_labels_pod-template-hash": "5db86d8867",
-		"container":                    "container-1",
-	}
+	k8sLabels = createK8sLabels()
 
 	mergedK8sLabels = map[string]string{
-		"container":                    "container-1",
-		"namespace":                    "namespace-1",
-		"pod_id":                       "pod-1234",
-		"pod":                          "pod-5db86d8867-sdqlj",
-		"pod_name":                     "pod",
-		"pod_labels_pod-template-hash": "5db86d8867",
-		"_sourceName":                  "namespace-1.pod-5db86d8867-sdqlj.container-1",
-		"_sourceCategory":              "prefix/namespace#1/pod",
-	}
-
-	mergedK8sLabelsWithMeta = map[string]string{
-		"container":                    "container-1",
-		"namespace":                    "namespace-1",
-		"pod_id":                       "pod-1234",
-		"pod":                          "pod-5db86d8867-sdqlj",
-		"pod_name":                     "pod",
-		"pod_labels_pod-template-hash": "5db86d8867",
-		"_collector":                   "foocollector",
-		"_sourceName":                  "namespace-1.pod-5db86d8867-sdqlj.container-1",
-		"_sourceCategory":              "prefix/namespace#1/pod",
-	}
-
-	k8sNewLabels = map[string]string{
-		"k8s.namespace.name":               "namespace-1",
-		"k8s.pod.id":                       "pod-1234",
-		"k8s.pod.name":                     "pod-5db86d8867-sdqlj",
-		"k8s.pod.labels.pod-template-hash": "5db86d8867",
-		"k8s.container.name":               "container-1",
-	}
-
-	mergedK8sNewLabelsWithMeta = map[string]string{
-		"k8s.namespace.name":               "namespace-1",
-		"k8s.pod.id":                       "pod-1234",
-		"k8s.pod.name":                     "pod-5db86d8867-sdqlj",
-		"k8s.pod.labels.pod-template-hash": "5db86d8867",
-		"k8s.container.name":               "container-1",
-		"k8s.pod.pod_name":                 "pod",
-		"_sourceName":                      "namespace-1.pod-5db86d8867-sdqlj.container-1",
-		"_sourceCategory":                  "prefix/namespace#1/pod",
-		"_collector":                       "foocollector",
+		"k8s.namespace.name":              "namespace-1",
+		"k8s.pod.uid":                     "pod-1234",
+		"k8s.pod.name":                    "pod-5db86d8867-sdqlj",
+		"k8s.pod.label.pod-template-hash": "5db86d8867",
+		"k8s.container.name":              "container-1",
+		"k8s.pod.pod_name":                "pod",
+		"_sourceHost":                     "undefined",
+		"_sourceName":                     "namespace-1.pod-5db86d8867-sdqlj.container-1",
+		"_sourceCategory":                 "prefix/namespace#1/pod",
+		"_collector":                      "foocollector",
 	}
 
 	limitedLabels = map[string]string{
-		"pod_id": "pod-1234",
+		"k8s.pod.uid": "pod-1234",
 	}
 
 	limitedLabelsWithMeta = map[string]string{
-		"pod_id":     "pod-1234",
-		"_collector": "foocollector",
+		"k8s.pod.uid":     "pod-1234",
+		"_collector":      "foocollector",
+		"_sourceCategory": "prefix/undefined/undefined",
+		"_sourceHost":     "undefined",
+		"_sourceName":     "undefined.undefined.undefined",
 	}
 )
+
+func newLogsDataWithLogs(resourceAttrs map[string]string, logAttrs map[string]string) pdata.Logs {
+	ld := pdata.NewLogs()
+	rs := ld.ResourceLogs().AppendEmpty()
+	attrs := rs.Resource().Attributes()
+	for k, v := range resourceAttrs {
+		attrs.UpsertString(k, v)
+	}
+
+	ills := rs.InstrumentationLibraryLogs().AppendEmpty()
+	log := ills.Logs().AppendEmpty()
+	log.Body().SetStringVal("dummy log")
+	for k, v := range logAttrs {
+		log.Attributes().InsertString(k, v)
+	}
+
+	return ld
+}
 
 func newTraceData(labels map[string]string) pdata.Traces {
 	td := pdata.NewTraces()
@@ -148,8 +148,92 @@ func assertSpansEqual(t *testing.T, t1 pdata.Traces, t2 pdata.Traces) {
 	}
 }
 
+func TestLogsSourceHostKey(t *testing.T) {
+	resourceAttrs := map[string]string{
+		"_SYSTEMD_UNIT": `docker.service`,
+		"_HOSTNAME":     `sumologic-kubernetes-collection-hostname`,
+	}
+	logAttrs := map[string]string{
+		"PRIORITY":               `6`,
+		"_BOOT_ID":               `7878e140730d4ee89fadd300c929a892`,
+		"_MACHINE_ID":            `1e54ca203e554cda9c944fd7f00e94e1`,
+		"MESSAGE":                `time="2021-09-15T17:31:49.523983251+02:00" level=info msg="ignoring event"module=libcontainerd namespace=moby`,
+		"_TRANSPORT":             `stdout`,
+		"SYSLOG_FACILITY":        `3`,
+		"_UID":                   `0`,
+		"_GID":                   `0`,
+		"_CAP_EFFECTIVE":         `3fffffffff`,
+		"_SELINUX_CONTEXT":       `unconfined`,
+		"_SYSTEMD_SLICE":         `system.slice`,
+		"_STREAM_ID":             `f16d7d0400a44f228554869816ab1dfa`,
+		"SYSLOG_IDENTIFIER":      `dockerd`,
+		"_PID":                   `1061`,
+		"_COMM":                  `dockerd`,
+		"_EXE":                   `/usr/bin/dockerd`,
+		"_CMDLINE":               `/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock`,
+		"_SYSTEMD_CGROUP":        `/system.slice/docker.service`,
+		"fluent.tag":             `host.docker.service`,
+		"_SYSTEMD_INVOCATION_ID": `1b689467e52f4fc4aa95d3c36fa1d7fa`,
+	}
+
+	t.Run("works using existing resource attribute", func(t *testing.T) {
+		config := NewFactory().CreateDefaultConfig().(*Config)
+		config.SourceName = "will-it-work-%{_HOSTNAME}"
+		config.SourceHostKey = "_HOSTNAME"
+
+		pLogs := newLogsDataWithLogs(resourceAttrs, logAttrs)
+
+		sp := newSourceProcessor(config)
+		out, err := sp.ProcessLogs(context.Background(), pLogs)
+		require.NoError(t, err)
+
+		out.ResourceLogs().At(0).Resource().Attributes().Range(func(k string, v pdata.AttributeValue) bool {
+			t.Logf("k %s : v %v\n", k, v.StringVal())
+			return true
+		})
+
+		require.Equal(t, out.ResourceLogs().Len(), 1)
+		resAttrs := out.ResourceLogs().At(0).Resource().Attributes()
+
+		{
+			v, ok := resAttrs.Get("_sourceName")
+			require.True(t, ok)
+			assert.Equal(t, "will-it-work-sumologic-kubernetes-collection-hostname", v.StringVal())
+		}
+
+		{
+			v, ok := resAttrs.Get("_sourceHost")
+			require.True(t, ok)
+			assert.Equal(t, "sumologic-kubernetes-collection-hostname", v.StringVal())
+		}
+	})
+
+	t.Run("does not work using record attribute", func(t *testing.T) {
+		config := NewFactory().CreateDefaultConfig().(*Config)
+		config.SourceName = "will-it-work-%{_CMDLINE}"
+		config.SourceHostKey = "_CMDLINE"
+
+		pLogs := newLogsDataWithLogs(resourceAttrs, logAttrs)
+
+		sp := newSourceProcessor(config)
+		out, err := sp.ProcessLogs(context.Background(), pLogs)
+		require.NoError(t, err)
+
+		out.ResourceLogs().At(0).Resource().Attributes().Range(func(k string, v pdata.AttributeValue) bool {
+			t.Logf("k %s : v %v\n", k, v.StringVal())
+			return true
+		})
+
+		require.Equal(t, out.ResourceLogs().Len(), 1)
+		resAttrs := out.ResourceLogs().At(0).Resource().Attributes()
+
+		assertAttribute(t, resAttrs, "_sourceName", "will-it-work-undefined")
+		assertAttribute(t, resAttrs, "_sourceHost", "undefined")
+	})
+}
+
 func TestTraceSourceProcessor(t *testing.T) {
-	want := newTraceData(mergedK8sLabelsWithMeta)
+	want := newTraceData(mergedK8sLabels)
 	test := newTraceData(k8sLabels)
 
 	rtp := newSourceProcessor(cfg)
@@ -157,27 +241,7 @@ func TestTraceSourceProcessor(t *testing.T) {
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
 
-	assertTracesEqual(t, td, want)
-}
-
-func TestTraceSourceProcessorNewTaxonomy(t *testing.T) {
-	want := newTraceData(mergedK8sNewLabelsWithMeta)
-	test := newTraceData(k8sNewLabels)
-
-	config := createConfig()
-	config.NamespaceKey = "k8s.namespace.name"
-	config.PodIDKey = "k8s.pod.id"
-	config.PodNameKey = "k8s.pod.pod_name"
-	config.PodKey = "k8s.pod.name"
-	config.PodTemplateHashKey = "k8s.pod.labels.pod-template-hash"
-	config.ContainerKey = "k8s.container.name"
-
-	rtp := newSourceProcessor(config)
-
-	td, err := rtp.ProcessTraces(context.Background(), test)
-	assert.NoError(t, err)
-
-	assertTracesEqual(t, td, want)
+	assertTracesEqual(t, want, td)
 }
 
 func TestTraceSourceProcessorEmpty(t *testing.T) {
@@ -188,7 +252,7 @@ func TestTraceSourceProcessorEmpty(t *testing.T) {
 
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
-	assertTracesEqual(t, td, want)
+	assertTracesEqual(t, want, td)
 }
 
 func TestTraceSourceFilteringOutByRegex(t *testing.T) {
@@ -202,12 +266,12 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 			cfg: func() *Config {
 				cfg := createConfig()
 				cfg.Exclude = map[string]string{
-					"pod": ".*",
+					"k8s.pod.name": ".*",
 				}
 				return cfg
 			}(),
 			want: func() pdata.Traces {
-				want := newTraceDataWithSpans(mergedK8sLabelsWithMeta, k8sLabels)
+				want := newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
 				want.ResourceSpans().At(0).InstrumentationLibrarySpans().
 					RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
 				return want
@@ -218,12 +282,12 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 			cfg: func() *Config {
 				cfg := createConfig()
 				cfg.Exclude = map[string]string{
-					"container": ".*",
+					"k8s.container.name": ".*",
 				}
 				return cfg
 			}(),
 			want: func() pdata.Traces {
-				want := newTraceDataWithSpans(mergedK8sLabelsWithMeta, k8sLabels)
+				want := newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
 				want.ResourceSpans().At(0).InstrumentationLibrarySpans().
 					RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
 				return want
@@ -234,12 +298,12 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 			cfg: func() *Config {
 				cfg := createConfig()
 				cfg.Exclude = map[string]string{
-					"namespace": ".*",
+					"k8s.namespace.name": ".*",
 				}
 				return cfg
 			}(),
 			want: func() pdata.Traces {
-				want := newTraceDataWithSpans(mergedK8sLabelsWithMeta, k8sLabels)
+				want := newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
 				want.ResourceSpans().At(0).InstrumentationLibrarySpans().
 					RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
 				return want
@@ -251,7 +315,7 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 				return createConfig()
 			}(),
 			want: func() pdata.Traces {
-				return newTraceDataWithSpans(mergedK8sLabelsWithMeta, k8sLabels)
+				return newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
 			}(),
 		},
 	}
@@ -284,7 +348,7 @@ func TestTraceSourceFilteringOutByExclude(t *testing.T) {
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
 
-	assertSpansEqual(t, td, want)
+	assertSpansEqual(t, want, td)
 }
 
 func TestTraceSourceIncludePrecedence(t *testing.T) {
@@ -303,24 +367,230 @@ func TestTraceSourceIncludePrecedence(t *testing.T) {
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
 
-	assertTracesEqual(t, td, want)
+	assertTracesEqual(t, want, td)
 }
 
-func TestTraceSourceProcessorAnnotations(t *testing.T) {
-	k8sLabels["pod_annotation_sumologic.com/sourceHost"] = "sh:%{pod_id}"
-	k8sLabels["pod_annotation_sumologic.com/sourceCategory"] = "sc:%{pod_id}"
-	test := newTraceData(k8sLabels)
+func TestSourceHostAnnotation(t *testing.T) {
+	inputAttributes := createK8sLabels()
+	inputAttributes["pod_annotation_sumologic.com/sourceHost"] = "sh:%{k8s.pod.uid}"
+	inputTraces := newTraceData(inputAttributes)
 
-	mergedK8sLabelsWithMeta["pod_annotation_sumologic.com/sourceHost"] = "sh:%{pod_id}"
-	mergedK8sLabelsWithMeta["pod_annotation_sumologic.com/sourceCategory"] = "sc:%{pod_id}"
-	mergedK8sLabelsWithMeta["_sourceHost"] = "sh:pod-1234"
-	mergedK8sLabelsWithMeta["_sourceCategory"] = "prefix/sc:pod#1234"
-	want := newTraceData(mergedK8sLabelsWithMeta)
-
-	rtp := newSourceProcessor(cfg)
-
-	td, err := rtp.ProcessTraces(context.Background(), test)
+	processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
 	assert.NoError(t, err)
 
-	assertTracesEqual(t, td, want)
+	processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+	assertAttribute(t, processedAttributes, "_sourceHost", "sh:pod-1234")
+}
+
+func TestSourceNameAnnotation(t *testing.T) {
+	inputAttributes := createK8sLabels()
+	inputAttributes["pod_annotation_sumologic.com/sourceName"] = "sn:%{k8s.pod.name}"
+	inputTraces := newTraceData(inputAttributes)
+
+	processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+	assert.NoError(t, err)
+
+	processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+	assertAttribute(t, processedAttributes, "_sourceName", "sn:pod-5db86d8867-sdqlj")
+}
+
+func TestSourceCategoryAnnotations(t *testing.T) {
+	t.Run("source category annotation", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		inputAttributes["pod_annotation_sumologic.com/sourceCategory"] = "sc-%{k8s.namespace.name}"
+		inputTraces := newTraceData(inputAttributes)
+
+		processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+		assert.NoError(t, err)
+
+		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, processedAttributes, "_sourceCategory", "prefix/sc#namespace#1")
+	})
+
+	t.Run("source category prefix annotation", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		inputAttributes["pod_annotation_sumologic.com/sourceCategoryPrefix"] = "annot>"
+		inputTraces := newTraceData(inputAttributes)
+
+		processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+		assert.NoError(t, err)
+
+		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, processedAttributes, "_sourceCategory", "annot>namespace#1/pod")
+	})
+
+	t.Run("source category dash replacement annotation", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		inputAttributes["pod_annotation_sumologic.com/sourceCategoryReplaceDash"] = "^"
+		inputTraces := newTraceData(inputAttributes)
+
+		processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+		assert.NoError(t, err)
+
+		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, processedAttributes, "_sourceCategory", "prefix/namespace^1/pod")
+	})
+
+	t.Run("all source category annotations together", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		inputAttributes["pod_annotation_sumologic.com/sourceCategory"] = "sc-%{k8s.namespace.name}"
+		inputAttributes["pod_annotation_sumologic.com/sourceCategoryPrefix"] = "annot>"
+		inputAttributes["pod_annotation_sumologic.com/sourceCategoryReplaceDash"] = "^"
+		inputTraces := newTraceData(inputAttributes)
+
+		processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+		assert.NoError(t, err)
+
+		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, processedAttributes, "_sourceCategory", "annot>sc^namespace^1")
+	})
+}
+
+func TestSourceCategoryTemplateWithCustomAttribute(t *testing.T) {
+	t.Run("attribute name is a single word", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		inputAttributes["someattr"] = "somevalue"
+		traces := newTraceData(inputAttributes)
+
+		config := createDefaultConfig().(*Config)
+		config.SourceCategory = "abc/%{someattr}/123"
+
+		processedTraces, err := newSourceProcessor(config).ProcessTraces(context.Background(), traces)
+		assert.NoError(t, err)
+
+		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/somevalue/123")
+	})
+
+	t.Run("attribute name has dot in it", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		inputAttributes["some.attr"] = "somevalue"
+		traces := newTraceData(inputAttributes)
+
+		config := createDefaultConfig().(*Config)
+		config.SourceCategory = "abc/%{some.attr}/123"
+
+		processedTraces, err := newSourceProcessor(config).ProcessTraces(context.Background(), traces)
+		assert.NoError(t, err)
+
+		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/somevalue/123")
+	})
+
+	t.Run("attribute does not exist", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		traces := newTraceData(inputAttributes)
+
+		config := createDefaultConfig().(*Config)
+		config.SourceCategory = "abc/%{nonexistent.attr}/123"
+
+		processedTraces, err := newSourceProcessor(config).ProcessTraces(context.Background(), traces)
+		assert.NoError(t, err)
+
+		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/undefined/123")
+	})
+}
+
+func assertAttribute(t *testing.T, attributes pdata.AttributeMap, attributeName string, expectedValue string) {
+	value, exists := attributes.Get(attributeName)
+
+	if expectedValue == "" {
+		assert.False(t, exists, "Attribute '%s' should not exist.", attributeName)
+	} else {
+		assert.True(t, exists, "Attribute '%s' should exist, but it does not.", attributeName)
+		if exists {
+			actualValue := value.StringVal()
+			assert.Equal(t, expectedValue, actualValue, "Attribute '%s' should be '%s', but was '%s'.", attributeName, expectedValue, actualValue)
+		}
+	}
+}
+
+func TestLogProcessorJson(t *testing.T) {
+	testcases := []struct {
+		name               string
+		body               string
+		expectedBody       string
+		expectedAttributes map[string]string
+		testLogs           pdata.Logs
+	}{
+		{
+			name:         "dockerFormat",
+			body:         `{"log": "test\n", "stream": "stdout", "time": "2021"}`,
+			expectedBody: "test",
+			expectedAttributes: map[string]string{
+				"stream": "stdout",
+				"time":   "2021",
+			},
+		},
+		{
+			// additional fields are going to be removed
+			name:         "additionalFields",
+			body:         `{"log": "test", "stream": "stdout", "time": "2021", "additional_field": "random_value"}`,
+			expectedBody: "test",
+			expectedAttributes: map[string]string{
+				"stream": "stdout",
+				"time":   "2021",
+			},
+		},
+		{
+			// nested json log is treated as invalid data and not processed
+			name:               "nestedLog",
+			body:               `{"log": {"nested_key": "nested_value"}, "stream": "stdout", "time": "2021"}`,
+			expectedBody:       `{"log": {"nested_key": "nested_value"}, "stream": "stdout", "time": "2021"}`,
+			expectedAttributes: map[string]string{},
+		},
+		{
+			// non docker json log is not parsed
+			name:               "additionalFields",
+			body:               `{"log": "some_log", "stream": "stdout"}`,
+			expectedBody:       `{"log": "some_log", "stream": "stdout"}`,
+			expectedAttributes: map[string]string{},
+		},
+		{
+			// non json log is not parsed
+			name:               "additionalFields",
+			body:               `log": "some_log", "stream": "stdout"}`,
+			expectedBody:       `log": "some_log", "stream": "stdout"}`,
+			expectedAttributes: map[string]string{},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			inputLog := pdata.NewLogs()
+			inputLog.
+				ResourceLogs().
+				AppendEmpty().
+				InstrumentationLibraryLogs().
+				AppendEmpty().
+				Logs().
+				AppendEmpty().
+				Body().
+				SetStringVal(tc.body)
+
+			rtp := newSourceProcessor(cfg)
+
+			td, err := rtp.ProcessLogs(context.Background(), inputLog)
+			assert.NoError(t, err)
+
+			rss := td.ResourceLogs()
+			require.Equal(t, 1, rss.Len())
+
+			ills := rss.At(0).InstrumentationLibraryLogs()
+			require.Equal(t, 1, ills.Len())
+
+			logs := ills.At(0).Logs()
+			require.Equal(t, 1, logs.Len())
+
+			log := logs.At(0)
+			assert.Equal(t, tc.expectedBody, log.Body().AsString())
+
+			for key, value := range tc.expectedAttributes {
+				attr, ok := log.Attributes().Get(key)
+				require.True(t, ok)
+				assert.Equal(t, value, attr.AsString())
+			}
+		})
+	}
 }

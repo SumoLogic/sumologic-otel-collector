@@ -20,9 +20,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config/configcheck"
 	"go.opentelemetry.io/collector/consumer/consumertest"
-	"go.uber.org/zap"
 )
 
 func TestCreateDefaultConfig(t *testing.T) {
@@ -38,7 +38,9 @@ func TestLogProcessor(t *testing.T) {
 	// Manually set required fields
 	cfg.FacilityAttr = "testAttrName"
 
-	params := component.ProcessorCreateSettings{Logger: zap.NewNop()}
+	params := component.ProcessorCreateSettings{
+		TelemetrySettings: componenttest.NewNopTelemetrySettings(),
+	}
 	lp, err := factory.CreateLogsProcessor(context.Background(), params, cfg, consumertest.NewNop())
 	assert.NotNil(t, lp)
 	assert.NoError(t, err, "cannot create log processor")

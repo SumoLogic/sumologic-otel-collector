@@ -8,8 +8,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.1.1 // indirect
 	github.com/influxdata/telegraf v1.19.0
 	github.com/stretchr/testify v1.7.0
-	go.opentelemetry.io/collector v0.34.0
-	go.opentelemetry.io/collector/model v0.34.0
+	go.opentelemetry.io/collector v0.35.0
+	go.opentelemetry.io/collector/model v0.35.0
 	go.uber.org/zap v1.19.0
 )
 

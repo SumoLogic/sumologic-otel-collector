@@ -8,6 +8,8 @@
 - [Extensions](#extensions)
   - [Sumo Logic Extension](#sumo-logic-extension)
     - [Using multiple Sumo Logic extensions](#using-multiple-sumo-logic-extensions)
+  - [Open Telemetry Upstream Extensions](#open-telemetry-upstream-extensions)
+    - [File Storage Extension](#file-storage-extension)
 - [Receivers](#receivers)
   - [Sumo Logic Custom Receivers](#sumo-logic-custom-receivers)
     - [Telegraf Receiver](#telegraf-receiver)
@@ -29,6 +31,7 @@
     - [Source Processor](#source-processor)
     - [Sumo Logic Syslog Processor](#sumo-logic-syslog-processor)
   - [Open Telemetry Upstream Processors](#open-telemetry-upstream-processors)
+    - [Attributes Processor](#attributes-processor)
     - [Group by Attributes Processor](#group-by-attributes-processor)
     - [Group by Trace Processor](#group-by-trace-processor)
     - [Metrics Transform Processor](#metrics-transform-processor)
@@ -42,6 +45,9 @@
   - [Sumo Logic Custom Exporters](#sumo-logic-custom-exporters)
     - [Sumo Logic Exporter](#sumo-logic-exporter)
   - [Open Telemetry Upstream Exporters](#open-telemetry-upstream-exporters)
+    - [Carbon Exporter](#carbon-exporter)
+    - [File Exporter](#file-exporter)
+    - [Kafka Exporter](#kafka-exporter)
     - [Load Balancing Exporter](#load-balancing-exporter)
     - [Logging Exporter](#logging-exporter)
 - [Command-line configuration options](#command-line-configuration-options)
@@ -246,6 +252,8 @@ service:
 See below for details on configuring all the components available in the Sumo Logic OT Distro -
 extensions, receivers, processors, exporters.
 
+---
+
 ## Extensions
 
 ### Sumo Logic Extension
@@ -341,6 +349,53 @@ service:
       exporters: [sumologic/custom2]
 ```
 
+### Open Telemetry Upstream Extensions
+
+The following extensions have been developed by the Open Telemetry community
+and are incorporated into the Sumo Logic Open Telemetry distro without any changes.
+
+If you are already familiar with Open Telemetry, you may know how the upstream
+components work and you can expect no changes in their behaviour.
+
+#### File Storage Extension
+
+The File Storage extension can persist state to the local file system.
+
+The extension requires read and write access to a directory.
+A default directory can be used, but it must already exist in order for the
+extension to operate.
+
+`directory` is the relative or absolute path to the dedicated data storage directory.
+
+`timeout` is the maximum time to wait for a file lock.
+This value does not need to be modified in most circumstances.
+
+```yaml
+extensions:
+  file_storage/custom_settings:
+    directory: /var/lib/otelcol/mydir
+    timeout: 1s
+
+receivers:
+  filelog:
+    include: [ /var/log/myservice/*.json ]
+    start_at: beginning
+
+exporters:
+  sumologic:
+
+service:
+  extensions: [file_storage/custom_settings]
+  pipelines:
+    traces:
+      receivers: [filelog]
+      exporters: [sumologic]
+```
+
+For details, see the [File Storage Extension Readme][filestorageextension_readme].
+
+[filestorageextension_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/extension/storage/filestorage
+
 ---
 
 ## Receivers
@@ -400,7 +455,7 @@ receivers:
 For details, see the [Filelog Receiver documentation][filelogreceiver_readme].
 
 [opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
-[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/filelogreceiver
+[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/receiver/filelogreceiver
 
 #### Fluent Forward Receiver
 
@@ -437,7 +492,7 @@ receivers:
 
 For details, see the [Host Metrics Receiver documentation][hostmetricsreceiver_readme].
 
-[hostmetricsreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/hostmetricsreceiver
+[hostmetricsreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/receiver/hostmetricsreceiver
 
 #### Syslog Receiver
 
@@ -470,7 +525,7 @@ For details, see the [Syslog Receiver documentation][syslogreceiver_readme].
 __Note: There are actually two ways of getting and processing Syslog data.
 More details are available in [comparison document](Comparison.md#syslog).__
 
-[syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/syslogreceiver
+[syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/receiver/syslogreceiver
 
 #### Statsd Receiver
 
@@ -514,7 +569,7 @@ receivers:
 For details, see the [OTLP Receiver documentation][otlpreceiver_readme].
 
 [otlp]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md
-[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.34.0/receiver/otlpreceiver
+[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.35.0/receiver/otlpreceiver
 
 #### TCPlog Receiver
 
@@ -530,7 +585,7 @@ receivers:
 
 For details, see the [TCPlog Receiver documentation][tcplogreceiver_readme].
 
-[tcplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/tcplogreceiver
+[tcplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/receiver/tcplogreceiver
 
 #### UDPlog Receiver
 
@@ -546,7 +601,7 @@ receivers:
 
 For details, see the [UDPlog Receiver documentation][udplogreceiver_readme].
 
-[udplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/udplogreceiver
+[udplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/receiver/udplogreceiver
 
 #### Zipkin Receiver
 
@@ -561,7 +616,7 @@ receivers:
 
 For details, see the [Zipkin Receiver documentation][zipkinreceiver_readme].
 
-[zipkinreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.34.0/receiver/zipkinreceiver
+[zipkinreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/receiver/zipkinreceiver
 
 #### Receivers from OpenTelemetry Collector
 
@@ -648,7 +703,7 @@ processors:
 
 For details, see the [Kubernetes Processor documentation][k8sprocessor_docs].
 
-[upstream_k8sprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/k8sprocessor
+[upstream_k8sprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.35.0/processor/k8sprocessor
 [k8sprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/k8sprocessor/README.md
 
 #### Source Processor
@@ -704,6 +759,38 @@ and are incorporated into the Sumo Logic Open Telemetry distro without any chang
 If you are already familiar with Open Telemetry, you may know how the upstream components work
 and you can expect no changes in their behaviour.
 
+#### Attributes Processor
+
+Use Attributes Processor to add, delete, modify attributes on logs, metrics, traces.
+
+See also [Resource Processor](#resource-processor) to modify attributes on resource level.
+
+Example configuration:
+
+```yaml
+processors:
+  attributes:
+    actions:
+      - key: db.table
+        action: delete
+      - key: redacted_span
+        value: true
+        action: upsert
+      - key: copy_key
+        from_attribute: key_original
+        action: update
+      - key: account_id
+        value: 2245
+      - key: account_password
+        action: delete
+      - key: account_email
+        action: hash
+```
+
+For details, see the [Attributes Processor documentation][attributesprocessor_docs].
+
+[attributesprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/attributesprocessor/README.md
+
 #### Group by Attributes Processor
 
 The Group by Attributes Processor groups records by provided attributes, extracting them from the record to resource level.
@@ -719,7 +806,7 @@ processors:
 
 For details, see the [Group by Attributes Processor documentation][groupbyattrsprocessor_docs].
 
-[groupbyattrsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbyattrsprocessor/README.md
+[groupbyattrsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/groupbyattrsprocessor/README.md
 
 #### Group by Trace Processor
 
@@ -737,7 +824,7 @@ processors:
 
 For details, see the [Group by Trace Processor documentation][groupbytraceprocessor_docs].
 
-[groupbytraceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbytraceprocessor/README.md
+[groupbytraceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/groupbytraceprocessor/README.md
 
 #### Metrics Transform Processor
 
@@ -757,7 +844,7 @@ processors:
 
 For details, see the [Metrics Transform Processor documentation][metrictransformprocessor_docs].
 
-[metrictransformprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/groupbytraceprocessor/README.md
+[metrictransformprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/groupbytraceprocessor/README.md
 
 #### Resource Detection Processor
 
@@ -774,7 +861,7 @@ processors:
 
 For details, see the [Resource Detection Processor documentation][resourcedetectionprocessor_docs].
 
-[resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/README.md
+[resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/resourcedetectionprocessor/README.md
 
 #### Resource Processor
 
@@ -798,7 +885,7 @@ processors:
 
 For details, see the [Resource Processor documentation][resourceprocessor_docs].
 
-[resourceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourceprocessor/README.md
+[resourceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/resourceprocessor/README.md
 
 #### Routing Processor
 
@@ -826,7 +913,7 @@ exporters:
 
 For details, see the [Routing Processor documentation][routingprocessor_docs].
 
-[routingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/routingprocessor/README.md
+[routingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/routingprocessor/README.md
 
 #### Span Metrics Processor
 
@@ -885,7 +972,7 @@ service:
 
 For details, see the [Span Metrics Processor documentation][spanmetricsprocessor_docs].
 
-[spanmetricsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/spanmetricsprocessor/README.md
+[spanmetricsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/spanmetricsprocessor/README.md
 
 #### Tail Sampling Processor
 
@@ -915,7 +1002,7 @@ processors:
 
 For details, see the [Tail Sampling Processor documentation][tailsamplingprocessor_docs].
 
-[tailsamplingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md
+[tailsamplingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/processor/tailsamplingprocessor/README.md
 
 #### Filter Processor
 
@@ -925,7 +1012,7 @@ Example configuration:
 
 ```yaml
 processors:
-  filter/1:
+  filter/metrics_include_regexp:
     metrics:
       include:
         match_type: regexp
@@ -935,16 +1022,41 @@ processors:
         resource_attributes:
           - Key: container.name
             Value: app_container_1
+  filter/metrics_exclude_strict:
+    metrics:
       exclude:
         match_type: strict
         metric_names:
           - hello_world
           - hello/world
+  filter/include_logs_strict:
+    logs:
+      include:
+        match_type: strict
+        resource_attributes:
+          - Key: host.name
+            Value: just_this_one_hostname
+  filter/include_logs_by_resource_attr_regexp:
+    logs:
+      include:
+        match_type: regexp
+        resource_attributes:
+          - Key: host.name
+            Value: resource_attr_.*
+  filter/include_logs_by_record_attr_regexp:
+    logs:
+      include:
+        match_type: regexp
+        record_attributes:
+          - Key: host.name
+            Value: record_attr_.*
 ```
 
 For details, see the [Filter Processor documentation][filterprocessor_docs].
 
-[filterprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/filterprocessor/README.md
+[filterprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/11de2c03d3dbbde2e73b8a816318a2515c843985/processor/filterprocessor/README.md
+
+---
 
 ## Exporters
 
@@ -984,6 +1096,68 @@ and are incorporated into the Sumo Logic Open Telemetry distro without any chang
 If you are already familiar with Open Telemetry, you may know how the upstream components work
 and you can expect no changes in their behaviour.
 
+#### Carbon Exporter
+
+The Carbon Exporter supports Carbon's plaintext protocol.
+
+Example configuration:
+
+```yaml
+exporters:
+  carbon:
+    # by default it will export to localhost:2003 using tcp
+  carbon/allsettings:
+    # use endpoint to specify alternative destinations for the exporter,
+    # the default is localhost:2003
+    endpoint: localhost:8080
+    # timeout is the maximum duration allowed to connecting and sending the
+    # data to the configured endpoint.
+    # The default is 5 seconds.
+    timeout: 10s
+```
+
+For details, see the [Carbon documentation][carbonexporter_docs].
+
+[carbonexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/exporter/carbonexporter/README.md
+
+#### File Exporter
+
+The File Exporter will write pipeline data to a JSON file.
+The data is written in Protobuf JSON encoding using OpenTelemetry protocol.
+
+Example configuration:
+
+```yaml
+exporters:
+  file:
+    path: ./filename.json
+```
+
+For details, see the [File Exporter documentation][fileexporter_docs].
+
+[fileexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/exporter/fileexporter/README.md
+
+#### Kafka Exporter
+
+The Kafka exporter exports traces to Kafka.
+This exporter uses a synchronous producer that blocks and does not batch messages,
+therefore it should be used with batch and queued retry processors for higher throughput and resiliency.
+Message payload encoding is configurable.
+
+Example configuration:
+
+```yaml
+exporters:
+  kafka:
+    brokers:
+      - localhost:9092
+    protocol_version: 2.0.0
+```
+
+For details, see the [Kafka Exporter documentation][kafkaexporter_docs].
+
+[kafkaexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/exporter/kafkaexporter/README.md
+
 #### Load Balancing Exporter
 
 The Load Balancing Exporter consistently exports spans and logs belonging to the same trace to the same backend.
@@ -1009,7 +1183,7 @@ exporters:
 
 For details, see the [Load Balancing Exporter documentation][loadbalancingexporter_docs].
 
-[loadbalancingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/loadbalancingexporter/README.md
+[loadbalancingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.35.0/exporter/loadbalancingexporter/README.md
 
 #### Logging Exporter
 
@@ -1028,6 +1202,8 @@ exporters:
 For details, see the [Logging Exporter documentation][loggingexporter_docs].
 
 [loggingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/loggingexporter/README.md
+
+---
 
 ## Command-line configuration options
 

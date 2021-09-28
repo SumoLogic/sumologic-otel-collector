@@ -56,8 +56,14 @@ func createDefaultConfig() config.Exporter {
 		SourceName:               DefaultSourceName,
 		SourceHost:               DefaultSourceHost,
 		Client:                   DefaultClient,
-		GraphiteTemplate:         DefaultGraphiteTemplate,
-		TraceFormat:              OTLPTraceFormat,
+		ClearLogsTimestamp:       DefaultClearLogsTimestamp,
+		JSONLogs: JSONLogs{
+			LogKey:       DefaultLogKey,
+			AddTimestamp: DefaultAddTimestamp,
+			TimestampKey: DefaultTimestampKey,
+		},
+		GraphiteTemplate: DefaultGraphiteTemplate,
+		TraceFormat:      OTLPTraceFormat,
 
 		HTTPClientSettings: CreateDefaultHTTPClientSettings(),
 		RetrySettings:      exporterhelper.DefaultRetrySettings(),

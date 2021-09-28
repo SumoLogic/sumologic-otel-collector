@@ -16,7 +16,6 @@ package kube
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -35,15 +34,15 @@ import (
 
 // WatchClient is the main interface provided by this package to a kubernetes cluster.
 type WatchClient struct {
-	m               sync.RWMutex
-	deleteMut       sync.Mutex
-	logger          *zap.Logger
-	kc              kubernetes.Interface
-	informer        cache.SharedInformer
-	deploymentRegex *regexp.Regexp
-	deleteQueue     []deleteRequest
-	stopCh          chan struct{}
-	op              OwnerAPI
+	m           sync.RWMutex
+	deleteMut   sync.Mutex
+	logger      *zap.Logger
+	kc          kubernetes.Interface
+	informer    cache.SharedInformer
+	deleteQueue []deleteRequest
+	stopCh      chan struct{}
+	op          OwnerAPI
+	delimiter   string
 
 	// A map containing Pod related data, used to associate them with resources.
 	// Key can be either an IP address or Pod UID
@@ -52,10 +51,6 @@ type WatchClient struct {
 	Filters      Filters
 	Associations []Association
 }
-
-// Extract deployment name from the pod name. Pod name is created using
-// format: [deployment-name]-[Random-String-For-ReplicaSet]-[Random-String-For-Pod]
-var dRegex = regexp.MustCompile(`^(.*)-[0-9a-zA-Z]*-[0-9a-zA-Z]*$`)
 
 // New initializes a new k8s Client.
 func New(
@@ -67,14 +62,15 @@ func New(
 	newClientSet APIClientsetProvider,
 	newInformer InformerProvider,
 	newOwnerProviderFunc OwnerProvider,
+	delimiter string,
 ) (Client, error) {
 	c := &WatchClient{
-		logger:          logger,
-		Rules:           rules,
-		Filters:         filters,
-		Associations:    associations,
-		deploymentRegex: dRegex,
-		stopCh:          make(chan struct{}),
+		logger:       logger,
+		Rules:        rules,
+		Filters:      filters,
+		Associations: associations,
+		stopCh:       make(chan struct{}),
+		delimiter:    delimiter,
 	}
 	go c.deleteLoop(time.Second*30, defaultPodDeleteGracePeriod)
 
@@ -252,14 +248,6 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 		tags[c.Rules.Tags.PodUID] = string(uid)
 	}
 
-	if c.Rules.DeploymentName {
-		// format: [deployment-name]-[Random-String-For-ReplicaSet]-[Random-String-For-Pod]
-		parts := c.deploymentRegex.FindStringSubmatch(pod.Name)
-		if len(parts) == 2 {
-			tags[c.Rules.Tags.DeploymentName] = parts[1]
-		}
-	}
-
 	if c.Rules.NodeName {
 		tags[c.Rules.Tags.NodeName] = pod.Spec.NodeName
 	}
@@ -291,8 +279,10 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 				if c.Rules.DaemonSetName {
 					tags[c.Rules.Tags.DaemonSetName] = owner.name
 				}
-			case "DeploymentName":
-				// This should be already set earlier
+			case "Deployment":
+				if c.Rules.DeploymentName {
+					tags[c.Rules.Tags.DeploymentName] = owner.name
+				}
 			case "ReplicaSet":
 				if c.Rules.ReplicaSetName {
 					tags[c.Rules.Tags.ReplicaSetName] = owner.name
@@ -307,7 +297,7 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 		}
 
 		if c.Rules.ServiceName {
-			tags[c.Rules.Tags.ServiceName] = strings.Join(c.op.GetServices(pod), ", ")
+			tags[c.Rules.Tags.ServiceName] = strings.Join(c.op.GetServices(pod), c.delimiter)
 		}
 
 	}
@@ -383,6 +373,7 @@ func (c *WatchClient) extractField(v string, r FieldExtractionRule) string {
 func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
 	newPod := &Pod{
 		Name:      pod.Name,
+		Namespace: pod.Namespace,
 		Address:   pod.Status.PodIP,
 		PodUID:    string(pod.UID),
 		StartTime: pod.Status.StartTime,
@@ -413,8 +404,8 @@ func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
 		c.Pods[PodIdentifier(pod.Status.PodIP)] = newPod
 	}
 	// Use pod_name.namespace_name identifier
-	if newPod.Name != "" && newPod.Attributes[c.Rules.Tags.Namespace] != "" {
-		c.Pods[PodIdentifier(fmt.Sprintf("%s.%s", newPod.Name, newPod.Attributes[c.Rules.Tags.Namespace]))] = newPod
+	if newPod.Name != "" && newPod.Namespace != "" {
+		c.Pods[PodIdentifier(fmt.Sprintf("%s.%s", newPod.Name, newPod.Namespace))] = newPod
 	}
 }
 

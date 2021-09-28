@@ -7,25 +7,22 @@ processors:
   # The following specifies a non-trivial source
   source/2:
     collector: "somecollector"
-    source: "tracesource"
-    source_name: "%{namespace}.%{pod}.%{container}/foo"
-    source_category: "%{namespace}/%{pod_name}/bar"
+    source_name: "%{k8s.namespace.name}.%{k8s.pod.name}.%{k8s.container.name}/foo"
+    source_category: "%{k8s.namespace.name}/%{k8s.pod.pod_name}/bar"
     source_category_prefix: "kubernetes/"
     source_category_replace_dash: "/"
     exclude:
-      namespace: "excluded_namespace_regex"
-      pod: "excluded_pod_regex"
-      container: "excluded_container_regex"
-      host: "excluded_host_regex"
+      k8s.namespace.name: "excluded_namespace_regex"
+      k8s.pod.name: "excluded_pod_regex"
+      k8s.container.name: "excluded_container_regex"
+      k8s.pod.hostname: "excluded_host_regex"
       _SYSTEMD_UNIT: "excluded_systemd_unit_regex"
 
     annotation_prefix: "pod_annotation_"
     pod_template_hash_key: "pod_labels_pod-template-hash"
-    pod_name_key: "pod_name"
-    namespace_key: "namespace"
-    pod_key: "pod"
-    container_key: "container"
-    source_host_key: "source_host"
+    pod_name_key: "k8s.pod.pod_name"
+    pod_key: "k8s.pod.name"
+    source_host_key: "k8s.pod.hostname"
 
 exporters:
   nop:

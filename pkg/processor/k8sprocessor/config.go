@@ -88,6 +88,11 @@ type ExtractConfig struct {
 	// It is a list of FieldExtractConfig type. See FieldExtractConfig
 	// documentation for more details.
 	NamespaceLabels []FieldExtractConfig `mapstructure:"namespace_labels"`
+
+	// Delimiter is going to be used to join multiple values for metadata.
+	// For example if given pod is associated with more than one service,
+	// delimiter is going to separate them in string.
+	Delimiter string `mapstructure:"delimiter"`
 }
 
 //FieldExtractConfig allows specifying an extraction rule to extract a value from exactly one field.
@@ -97,10 +102,10 @@ type ExtractConfig struct {
 //
 // - tag_name represents the name of the tag that will be added to the span.
 //   When not specified a default tag name will be used of the format:
-//       k8s.pod.annotations.<annotation key>
-//       k8s.pod.labels.<label key>
+//       k8s.pod.annotation.<annotation key>
+//       k8s.pod.label.<label key>
 //   For example, if tag_name is not specified and the key is git_sha,
-//   then the attribute name will be `k8s.pod.annotations.git_sha`.
+//   then the attribute name will be `k8s.pod.annotation.git_sha`.
 //
 //- key represents the annotation name. This must exactly match an annotation name.
 //  To capture all keys, `*` can be used
@@ -219,3 +224,6 @@ type PodAssociationConfig struct {
 	// e.g. ip, pod_uid, k8s.pod.ip
 	Name string `mapstructure:"name"`
 }
+
+// DefaultDelimiter is default value for Delimiter for ExtractConfig
+const DefaultDelimiter string = ", "

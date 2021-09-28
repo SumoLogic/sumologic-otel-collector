@@ -23,6 +23,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/model/otlp"
@@ -58,13 +59,13 @@ type sender struct {
 	compressor          compressor
 	prometheusFormatter prometheusFormatter
 	graphiteFormatter   graphiteFormatter
+	jsonLogsConfig      JSONLogs
 	dataUrlMetrics      string
 	dataUrlLogs         string
 	dataUrlTraces       string
 }
 
 const (
-	logKey string = "log"
 	// maxBufferSize defines size of the logBuffer (maximum number of pdata.LogRecord entries)
 	maxBufferSize int = 1024 * 1024
 
@@ -116,6 +117,7 @@ func newSender(
 		compressor:          c,
 		prometheusFormatter: pf,
 		graphiteFormatter:   gf,
+		jsonLogsConfig:      cfg.JSONLogs,
 		dataUrlMetrics:      metricsUrl,
 		dataUrlLogs:         logsUrl,
 		dataUrlTraces:       tracesUrl,
@@ -180,8 +182,18 @@ func (s *sender) logToText(record pdata.LogRecord) string {
 
 // logToJSON converts LogRecord to a json line, returns it and error eventually
 func (s *sender) logToJSON(record pdata.LogRecord) (string, error) {
-	data := s.filter.filterOut(record.Attributes())
-	data.orig.Upsert(logKey, record.Body())
+	attrs := pdata.NewAttributeMap()
+	record.Attributes().CopyTo(attrs)
+	if s.jsonLogsConfig.AddTimestamp {
+		addJSONTimestamp(attrs, s.jsonLogsConfig.TimestampKey, record.Timestamp())
+	}
+
+	data := s.filter.filterOut(attrs)
+
+	// Only append the body when it's not empty to prevent sending 'null' log.
+	if body := record.Body(); !isEmptyAttributeValue(body) {
+		data.orig.Upsert(s.jsonLogsConfig.LogKey, body)
+	}
 
 	nextLine, err := json.Marshal(pdata.AttributeMapToMap(data.orig))
 	if err != nil {
@@ -189,6 +201,31 @@ func (s *sender) logToJSON(record pdata.LogRecord) (string, error) {
 	}
 
 	return bytes.NewBuffer(nextLine).String(), nil
+}
+
+var (
+	timeZeroUTC = time.Unix(0, 0).UTC()
+)
+
+// addJSONTimestamp adds a timestamp field to record attribtues before sending
+// out the logs as JSON.
+// If the attached timestamp is equal to 0 (millisecond based UNIX timestamp)
+// then send out current time formatted as milliseconds since January 1, 1970.
+func addJSONTimestamp(attrs pdata.AttributeMap, timestampKey string, pt pdata.Timestamp) {
+	t := pt.AsTime()
+	if t == timeZeroUTC {
+		attrs.InsertInt(timestampKey, time.Now().UnixMilli())
+	} else {
+		attrs.InsertInt(timestampKey, t.UnixMilli())
+	}
+}
+
+func isEmptyAttributeValue(att pdata.AttributeValue) bool {
+	t := att.Type()
+	return !(t == pdata.AttributeValueTypeString && len(att.StringVal()) > 0 ||
+		t == pdata.AttributeValueTypeArray && att.ArrayVal().Len() > 0 ||
+		t == pdata.AttributeValueTypeMap && att.MapVal().Len() > 0 ||
+		t == pdata.AttributeValueTypeBytes && len(att.BytesVal()) > 0)
 }
 
 // sendLogs sends log records from the logBuffer formatted according
@@ -527,14 +564,17 @@ func addSourcesHeaders(req *http.Request, sources sourceFormats, flds fields) {
 	if sources.host.isSet() {
 		req.Header.Add(headerHost, sources.host.format(flds))
 	}
+	flds.orig.Delete(attributeKeySourceHost)
 
 	if sources.name.isSet() {
 		req.Header.Add(headerName, sources.name.format(flds))
 	}
+	flds.orig.Delete(attributeKeySourceName)
 
 	if sources.category.isSet() {
 		req.Header.Add(headerCategory, sources.category.format(flds))
 	}
+	flds.orig.Delete(attributeKeySourceCategory)
 }
 
 func addLogsHeaders(req *http.Request, lf LogFormatType, flds fields) {

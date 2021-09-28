@@ -5,13 +5,13 @@ This [Puppet][puppet] [manifest](manifest/../manifests/install_otel_collector.pp
 
 ## Configuration
 
-- Prepare [configuration](../../docs/Configuration.md) for Sumo Logic Distro of of OpenTelemetry Collector and
+- Prepare [configuration](../../docs/Configuration.md) for Sumo Logic Distro of OpenTelemetry Collector and
   save it in [files](modules/install_otel_collector/files/) directory for `instal_otel_collector` module as `config.yaml`.
 - If needed modify variables in [modules/install_otel_collector/manifests/init.pp](modules/install_otel_collector/manifests/init.pp):
 
   ```ruby
   class install_otel_collector {
-     $otel_collector_version = "0.0.18"        # version of Sumo Logic Distro of OpenTelemetry Collector
+     $otel_collector_version = "0.0.26-beta.0" # version of Sumo Logic Distro of OpenTelemetry Collector
      $systemd_service = false                  # enables creation of Systemd Service for Sumo Logic Distro of OpenTelemetry Collector
 
   ...

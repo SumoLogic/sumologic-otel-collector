@@ -12,7 +12,7 @@ This playbook will install Sumo Logic Distro of [OpenTelemetry Collector][otc_li
 
 ## Running playbook
 
-- Prepare [configuration](../../docs/Configuration.md) for Sumo Logic Distro of of OpenTelemetry Collector
+- Prepare [configuration](../../docs/Configuration.md) for Sumo Logic Distro of OpenTelemetry Collector
 - Customize [inventory](inventory) file and add your host
 - Adjust configuration of Sumo Logic Distro of of OpenTelemetry Collector in [vars/default.yaml](vars/default.yaml)
 - Run the playbook

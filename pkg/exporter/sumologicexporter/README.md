@@ -59,6 +59,21 @@ exporters:
     # default = `%{_metric_}`
     graphite_template: <graphite_template>
 
+    json_logs:
+      # defines which key will be used to attach the log body at.
+      # This option affects JSON log format only.
+      # By default this is "log".
+      log_key: <log>
+      # defines whether to include a timestamp field when sending
+      # JSON logs, which would contain UNIX epoch timestamp in milliseconds.
+      # This option affects JSON log format only.
+      # default = true.
+      add_timestamp: {true, false}
+      # when add_timestamp is set to true then this key defines what is the name
+      # of the timestamp key.
+      # default = "timestamp".
+      timestamp_key: <timestamp_key>
+
     # translate_attributes specifies whether attributes should be translated
     # from OpenTelemetry to Sumo conventions;
     # see "Attribute translation" documentation chapter from this document,
@@ -159,6 +174,49 @@ Below is a list of all attribute keys that are being translated.
 
 ## Source Templates
 
+> **IMPORTANT NOTE**:
+>
+> When using non-`OTLP` based format (e.g. `JSON` for logs) metadata attributes
+> used in source templates have to have a regex defined in
+> `metadata_attributes` that would match them.
+>
+> Otherwise the attributes will not be available during source templates rendering.
+> Hence this is correct:
+>
+> ```yaml
+> source_name: "%{k8s.namespace.name}.%{k8s.pod.name}.%{k8s.container.name}"
+> source_category: "%{k8s.namespace.name}/%{k8s.pod.pod_name}"
+> source_host: '%{k8s.pod.hostname}'
+> metadata_attributes:
+>   - k8s.*
+>   - some_other_metadata_regex.*
+> ```
+>
+> While is **not**:
+>
+> ```yaml
+> source_name: "%{k8s.namespace.name}.%{k8s.pod.name}.%{k8s.container.name}"
+> source_category: "%{k8s.namespace.name}/%{k8s.pod.pod_name}"
+> source_host: '%{k8s.pod.hostname}'
+> metadata_attributes:
+>   - host
+>   - pod
+>   - some_other_metadata_regex.*
+> ```
+>
+> At the same time source related metadata attributes, i.e.:
+>
+> - `_sourceCategory`
+> - `_sourceHost`
+> - `_sourceName`
+>
+> are always available in the templates (when a corresponding resource attribute
+> is set for processed entry) but are **never** sent to Sumo Logic.
+>
+> In order to set those metadata attributes use `source_category`, `source_host`
+> and `source_name` configuration option which will set the corresponding
+> `X-Sumo-...` HTTP header.
+
 You can specify a template with an attribute for `source_category`, `source_name`,
 `source_host` or `graphite_template` using `%{attr_name}`.
 
@@ -194,7 +252,7 @@ exporters:
   sumologic:
     source_category: "custom category"
     source_name: "custom name"
-    source_host: "custom host"
+    source_host: "%{k8s.pod.name}"
     metadata_attributes:
       - k8s.*
 

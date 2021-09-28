@@ -127,7 +127,31 @@ func assertAttribute(t *testing.T, metadata pdata.AttributeMap, attributeName st
 }
 
 func TestTranslateConfigValue(t *testing.T) {
-	translatedValue := translateConfigValue("%{k8s.pod.name}-%{host.name}/%{pod}-%{host}")
+	testcases := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "basic",
+			input: "%{k8s.pod.name}-%{host.name}",
+			want:  "%{pod}-%{host}",
+		},
+		{
+			name:  "basic with sumo convention tags",
+			input: "%{k8s.pod.name}-%{host.name}/%{pod}-%{host}",
+			want:  "%{pod}-%{host}/%{pod}-%{host}",
+		},
+		{
+			name:  "custom attributes",
+			input: "%{_sourceCategory}-%{my_custom_vendor_attr}",
+			want:  "%{_sourceCategory}-%{my_custom_vendor_attr}",
+		},
+	}
 
-	assert.Equal(t, "%{pod}-%{host}/undefined-undefined", translatedValue)
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, translateConfigValue(tc.input))
+		})
+	}
 }

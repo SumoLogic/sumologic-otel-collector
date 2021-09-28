@@ -19,7 +19,8 @@ Chef-solo is installed in Vagrant environment to simplify testing and modifying 
 [Chef playground](.) is mounted as `/sumologic/examples/chef`.
 The following steps describe procedure of testing changes:
 
-- Prepare configuration using steps described in [Configuration](#configuration)
+- Prepare configuration for Sumo Logic Distro of OpenTelemetry Collector
+  using steps described in [Configuration](../../docs/Configuration.md)
 - Adjust [recipe](sumologic-otel-collector/recipes/default.rb) to your needs
 - From main directory of this repository start virtual machine:
 
