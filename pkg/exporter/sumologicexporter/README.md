@@ -214,7 +214,7 @@ Below is a list of all attribute keys that are being translated.
 > is set for processed entry) but are **never** sent to Sumo Logic.
 >
 > In order to set those metadata attributes use `source_category`, `source_host`
-> and > `source_name` configuration option which will set the corresponding
+> and `source_name` configuration option which will set the corresponding
 > `X-Sumo-...` HTTP header.
 
 You can specify a template with an attribute for `source_category`, `source_name`,
