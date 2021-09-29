@@ -4,42 +4,73 @@ The `sourceprocessor` adds `_sourceName` and other tags related to Sumo Logic me
 
 It is recommended to use `k8sprocessor` to provide attributes used in default values.
 
-## Config
+## Configuration
 
-- `collector` (default = ``): name of the collector, put in `_collector` tag
-- `source_name` (default = `%{k8s.namespace.name}.%{k8s.pod.name}.%{k8s.container.name}`): `_sourceName` template
-- `source_category` (default = `%{k8s.namespace.name}/%{k8s.pod.pod_name}`): `_sourceCategory` template
-- `source_category_prefix` (default = `kubernetes/`): prefix added before each `_sourceCategory` value
-- `source_category_replace_dash` (default = `/`): character which all dashes (`-`) are being replaced to
+```yaml
+processors:
+  source:
+    # Name of the collector, put in `_collector` tag.
+    # default: ""
+    collector: <collector>
+    # Template for source name, put in `_sourceName` tag.
+    # default: "%{k8s.namespace.name}.%{k8s.pod.name}.%{k8s.container.name}"
+    source_name: <source_name>
+    # Template for source category, put in `_sourceCategory` tag.
+    # default: "%{k8s.namespace.name}/%{k8s.pod.pod_name}"
+    source_category: <source_category>
+    # Prefix added before each `_sourceCategory` value.
+    # default: "kubernetes/"
+    soure_category_prefix: <source_category_prefix>
+    # Character which all dashes ("-") in source category value are being replaced to.
+    # default: "/"
+    source_category_replace_dash: <source_category_replace_dash>
+    # A mapping of resource attribute names to exclusion regexes for the attribute values.
+    # Whenever a value under a particular attribute matches the corresponding regex,
+    # the processed record is dropped.
+    # default: {}
+    exclude:
+      <attribute_key_1>: <attribute_value_regex_1>
+      <attribute_key_2>: <attribute_value_regex_2>
+    # Prefix which allows to find given annotation; it is used for including/excluding pods, among other attributes.
+    # default: "k8s.pod.annotation."
+    annotation_prefix: <annotation_prefix>
+    # Name of the attribute that contains the full name of the pod.
+    # default: "k8s.pod.name"
+    pod_key: <pod_key>
+    # Name of the attribute that will contain the deuniquified name of the pod.
+    # Here are some examples of deuniquified pod names:
+    # - for a daemonset pod `dset-otelcol-sumo-xa314` it's going to be `dset-otelcol-sumo`
+    # - for a deployment pod `dep-otelcol-sumo-75675f5861-qasd2` it's going to be `dep-otelcol-sumo`
+    # - for a statefulset pod `st-otelcol-sumo-0` it's going to be `st-otelcol-sumo`
+    # default: "k8s.pod.pod_name"
+    pod_name_key: <pod_name_key>
+    # Name of the attribute that contains pod's template hash. It is used for pod name extraction.
+    # default: "k8s.pod.label.pod-template-hash"
+    pod_template_has_key: <pod_template_hash_key>
+    # Name of the attribute that contains the source host.
+    # default: "k8s.pod.hostname"
+    source_host_key: <source_host_key>
+    # See "Container-level pod annotations" section below
+    container_annotations:
+      # Specifies whether container-level annotations are enabled.
+      # default: false
+      enabled: {true, false}
+      # List of prefixes for container-level pod annotations.
+      # default: ["sumologic.com/"]
+      prefixes:
+      - <prefix_1>
+      - <prefix_2>
+```
 
-### Filtering section
+## Source templates
 
-**NOTE**: The filtering is done on the resource level attributes.
+You can specify a template with an attribute for `source_category`, `source_name`, using `%{attr_name}`.
 
-- `exclude` (default = `{}`): a mapping of field names to exclusion regexes
-  for those particular fields. Whenever a value under particular field matches
-  a corresponding regex, the processed entry is dropped.
+For example, when there is an attribute `my_attr`: `my_value`, `metrics/%{my_attr}`
+will be expanded to `metrics/my_value`.
 
-### Keys section
-
-The following keys must match resource attributes.
-In most cases the keys should be the same like in [k8sprocessor](../k8sprocessor/README.md#extract-section) config:
-
-- `annotation_prefix` (default = `k8s.pod.annotation.`): prefix which allows to find given annotation;
-it is used for including/excluding pods, among other attributes
-- `pod_template_hash_key` (default = `k8s.pod.label.pod-template-hash`): attribute where pod template
-hash is found (used for `pod` extraction)
-- `pod_key` (default = `k8s.pod.name`): attribute where pod full name is found
-- `source_host_key` (default = `k8s.pod.hostname`): attribute where source host is found
-
-The following key is going to be created:
-
-- `pod_name_key` (default = `k8s.pod.pod_name`): attribute where name portion of the pod is stored
-during enrichment. Please consider following examples:
-
-  - for a daemonset pod `dset-otelcol-sumo-xa314` it's going to be `dset-otelcol-sumo`
-  - for a deployment pod `dep-otelcol-sumo-75675f5861-qasd2` it's going to be `dep-otelcol-sumo`
-  - for a statefulset pod `st-otelcol-sumo-0` it's going to be `st-otelcol-sumo`
+If an attribute is not found, it is replaced with `undefined`.
+For example, `%{existing_attr}/%{nonexistent_attr}` becomes `value-of-existing-attr/undefined`.
 
 ### Name translation and template keys
 
@@ -51,7 +82,8 @@ k8s.namespace.name: my-namespace
 k8s.pod.pod_name: some-name
 ```
 
-Then the `_source_category` will contain: `my-namespace/some-name`
+and the default values for `source_category_prefix` and `source_category_replace_dash` are used (`kubernetes/` and `/`),
+then the `_sourceCategory` attribute will contain: `kubernetes/my/namespace/some/name`
 
 ### Example config
 
