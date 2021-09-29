@@ -49,8 +49,15 @@ type metricPair struct {
 	metric     pdata.Metric
 }
 
+// logPair keeps information about logRecord and attributes,
+// where attributes are record and resource attributes
+type logPair struct {
+	attributes pdata.AttributeMap
+	log        pdata.LogRecord
+}
+
 type sender struct {
-	logBuffer           []pdata.LogRecord
+	logBuffer           []logPair
 	metricBuffer        []metricPair
 	config              *Config
 	client              *http.Client
@@ -181,17 +188,18 @@ func (s *sender) logToText(record pdata.LogRecord) string {
 }
 
 // logToJSON converts LogRecord to a json line, returns it and error eventually
-func (s *sender) logToJSON(record pdata.LogRecord) (string, error) {
-	attrs := pdata.NewAttributeMap()
-	record.Attributes().CopyTo(attrs)
+func (s *sender) logToJSON(record logPair) (string, error) {
+	data := s.filter.filterOut(record.attributes)
 	if s.jsonLogsConfig.AddTimestamp {
-		addJSONTimestamp(attrs, s.jsonLogsConfig.TimestampKey, record.Timestamp())
+		addJSONTimestamp(data.orig, s.jsonLogsConfig.TimestampKey, record.log.Timestamp())
 	}
 
-	data := s.filter.filterOut(attrs)
+	if s.config.TranslateAttributes {
+		data.translateAttributes()
+	}
 
 	// Only append the body when it's not empty to prevent sending 'null' log.
-	if body := record.Body(); !isEmptyAttributeValue(body) {
+	if body := record.log.Body(); !isEmptyAttributeValue(body) {
 		data.orig.Upsert(s.jsonLogsConfig.LogKey, body)
 	}
 
@@ -231,7 +239,7 @@ func isEmptyAttributeValue(att pdata.AttributeValue) bool {
 // sendLogs sends log records from the logBuffer formatted according
 // to configured LogFormat and as the result of execution
 // returns array of records which has not been sent correctly and error
-func (s *sender) sendLogs(ctx context.Context, flds fields) ([]pdata.LogRecord, error) {
+func (s *sender) sendLogs(ctx context.Context, flds fields) ([]logPair, error) {
 
 	// Follow different execution path for OTLP format
 	if s.config.LogFormat == OTLPLogFormat {
@@ -241,8 +249,8 @@ func (s *sender) sendLogs(ctx context.Context, flds fields) ([]pdata.LogRecord, 
 	var (
 		body           strings.Builder
 		errs           []error
-		droppedRecords []pdata.LogRecord
-		currentRecords []pdata.LogRecord
+		droppedRecords []logPair
+		currentRecords []logPair
 	)
 
 	for _, record := range s.logBuffer {
@@ -251,7 +259,7 @@ func (s *sender) sendLogs(ctx context.Context, flds fields) ([]pdata.LogRecord, 
 
 		switch s.config.LogFormat {
 		case TextFormat:
-			formattedLine = s.logToText(record)
+			formattedLine = s.logToText(record.log)
 		case JSONFormat:
 			formattedLine, err = s.logToJSON(record)
 		default:
@@ -303,7 +311,7 @@ func (s *sender) sendLogs(ctx context.Context, flds fields) ([]pdata.LogRecord, 
 // sendLogs sends log records from the logBuffer in OTLP format and as a result
 // it returns an array of records which has not been sent correctly and an error.
 // TODO: add support for HTTP limits
-func (s *sender) sendOTLPLogs(ctx context.Context, flds fields) ([]pdata.LogRecord, error) {
+func (s *sender) sendOTLPLogs(ctx context.Context, flds fields) ([]logPair, error) {
 	ld := pdata.NewLogs()
 	rl := ld.ResourceLogs().AppendEmpty()
 	ill := rl.InstrumentationLibraryLogs().AppendEmpty()
@@ -311,7 +319,10 @@ func (s *sender) sendOTLPLogs(ctx context.Context, flds fields) ([]pdata.LogReco
 	logs.EnsureCapacity(len(s.logBuffer))
 	for _, record := range s.logBuffer {
 		log := logs.AppendEmpty()
-		record.CopyTo(log)
+		record.log.CopyTo(log)
+		log.Attributes().Clear()
+		log.Attributes().EnsureCapacity(record.attributes.Len())
+		record.attributes.CopyTo(log.Attributes())
 
 		// Clear timestamp if required
 		if s.config.ClearLogsTimestamp {
@@ -505,7 +516,7 @@ func (s *sender) cleanLogsBuffer() {
 
 // batchLog adds log to the logBuffer and flushes them if logBuffer is full to avoid overflow
 // returns list of log records which were not sent successfully
-func (s *sender) batchLog(ctx context.Context, log pdata.LogRecord, metadata fields) ([]pdata.LogRecord, error) {
+func (s *sender) batchLog(ctx context.Context, log logPair, metadata fields) ([]logPair, error) {
 	s.logBuffer = append(s.logBuffer, log)
 
 	if s.countLogs() >= maxBufferSize {
