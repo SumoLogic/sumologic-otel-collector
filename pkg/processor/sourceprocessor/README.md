@@ -13,6 +13,10 @@ processors:
     # default: ""
     collector: <collector>
 
+    # Template for source host, put in `_sourceHost` tag.
+    # default: "%{k8s.pod.hostname}"
+    source_host: <source_host>
+
     # Template for source name, put in `_sourceName` tag.
     # default: "%{k8s.namespace.name}.%{k8s.pod.name}.%{k8s.container.name}"
     source_name: <source_name>
@@ -55,10 +59,6 @@ processors:
     # default: "k8s.pod.label.pod-template-hash"
     pod_template_has_key: <pod_template_hash_key>
 
-    # Name of the attribute that contains the source host.
-    # default: "k8s.pod.hostname"
-    source_host_key: <source_host_key>
-
     # See "Container-level pod annotations" section below
     container_annotations:
       # Specifies whether container-level annotations are enabled.
@@ -73,7 +73,7 @@ processors:
 
 ## Source templates
 
-You can specify a template with an attribute for `source_category`, `source_name`, using `%{attr_name}`.
+You can specify a template with an attribute for `source_category`, `source_host`, `source_name`, using `%{attr_name}`.
 
 For example, when there is an attribute `my_attr`: `my_value`, `metrics/%{my_attr}`
 will be expanded to `metrics/my_value`.
@@ -125,7 +125,7 @@ The following [Kubernetes annotations][k8s_annotations_doc] can be used on pods:
 - `sumologic.com/sourceCategory` - overrides `source_category` config option
 - `sumologic.com/sourceCategoryPrefix` - overrides `source_category_prefix` config option
 - `sumologic.com/sourceCategoryReplaceDash` - overrides `source_category_replace_dash` config option
-- `sumologic.com/sourceHost` - overrides `source_host_key` config option;
+- `sumologic.com/sourceHost` - overrides `source_host` config option;
   the value of this annotation will be set as the value of the `_sourceHost` resource attribute
 - `sumologic.com/sourceName` - overrides `source_name` config option;
   the value of this annotation will be set as the value of the `_sourceName` resource attribute
@@ -169,7 +169,6 @@ setting the following annotations on the pod:
 
 will make the logs from `container-name-1` be tagged with source category `first_source-category`
 and logs from `container-name-2` be tagged with source category `another/source-category`.
-
 
 If there is more than one prefix defined in `container_annotations.prefixes`,
 they are checked in the order they are defined in. If an annotation is found for one prefix,
