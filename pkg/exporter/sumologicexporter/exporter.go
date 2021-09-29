@@ -301,7 +301,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 				currentMetadata = sdr.filter.filterIn(attributes)
 
 				if se.config.TranslateAttributes {
-					currentMetadata.orig = translateAttributes(currentMetadata.orig)
+					currentMetadata.translateAttributes()
 				}
 
 				// If metadata differs from currently buffered, flush the buffer
@@ -393,7 +393,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 
 		if se.config.TranslateAttributes {
 			attributes = translateAttributes(attributes)
-			currentMetadata.orig = translateAttributes(currentMetadata.orig)
+			currentMetadata.translateAttributes()
 		}
 
 		// iterate over InstrumentationLibraryMetrics

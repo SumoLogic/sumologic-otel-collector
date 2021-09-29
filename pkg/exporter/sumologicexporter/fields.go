@@ -58,3 +58,8 @@ func (f fields) string() string {
 func (f fields) sanitizeField(fld string) string {
 	return f.replacer.Replace(fld)
 }
+
+// translateAttributes translates fields to sumo format
+func (f *fields) translateAttributes() {
+	f.orig = translateAttributes(f.orig)
+}
