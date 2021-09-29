@@ -125,6 +125,10 @@ The following [Kubernetes annotations][k8s_annotations_doc] can be used on pods:
 - `sumologic.com/sourceCategory` - overrides `source_category` config option
 - `sumologic.com/sourceCategoryPrefix` - overrides `source_category_prefix` config option
 - `sumologic.com/sourceCategoryReplaceDash` - overrides `source_category_replace_dash` config option
+- `sumologic.com/sourceHost` - overrides `source_host_key` config option;
+  the value of this annotation will be set as the value of the `_sourceHost` attribute
+- `sumologic.com/sourceName` - overrides `source_name` config option;
+  the value of this annotation will be set as the value of the `_sourceName` attribute
 
 For the processor to use them, the annotations need to be available as resource
 attributes, prefixed with the value defined in `keys.annotation_prefix` config option.
