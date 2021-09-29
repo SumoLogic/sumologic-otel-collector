@@ -42,7 +42,7 @@ type attributeFiller struct {
 	labels          []string
 }
 
-func extractFormat(format string, name string, keys sourceKeys) attributeFiller {
+func extractFormat(format string, name string) attributeFiller {
 	labels := make([]string, 0)
 	matches := formatRegex.FindAllStringSubmatch(format, -1)
 	for _, matchset := range matches {
@@ -59,20 +59,20 @@ func extractFormat(format string, name string, keys sourceKeys) attributeFiller 
 	}
 }
 
-func createSourceHostFiller(cfg *Config, keys sourceKeys) attributeFiller {
-	filler := extractFormat(cfg.SourceHost, sourceHostKey, keys)
+func createSourceHostFiller(cfg *Config) attributeFiller {
+	filler := extractFormat(cfg.SourceHost, sourceHostKey)
 	return filler
 }
 
-func createSourceNameFiller(cfg *Config, keys sourceKeys) attributeFiller {
-	filler := extractFormat(cfg.SourceName, sourceNameKey, keys)
+func createSourceNameFiller(cfg *Config) attributeFiller {
+	filler := extractFormat(cfg.SourceName, sourceNameKey)
 	return filler
 }
 
-func (f *attributeFiller) fillResourceOrUseAnnotation(atts *pdata.AttributeMap, annotationKey string, keys sourceKeys) bool {
+func (f *attributeFiller) fillResourceOrUseAnnotation(atts *pdata.AttributeMap, annotationKey string) bool {
 	val, found := atts.Get(annotationKey)
 	if found {
-		annotationFiller := extractFormat(val.StringVal(), f.name, keys)
+		annotationFiller := extractFormat(val.StringVal(), f.name)
 		annotationFiller.dashReplacement = f.dashReplacement
 		annotationFiller.compiledFormat = f.prefix + annotationFiller.compiledFormat
 		return annotationFiller.fillAttributes(atts)

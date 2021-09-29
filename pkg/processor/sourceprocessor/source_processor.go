@@ -100,9 +100,9 @@ func newSourceProcessor(cfg *Config) *sourceProcessor {
 	return &sourceProcessor{
 		collector:            cfg.Collector,
 		keys:                 keys,
-		sourceHostFiller:     createSourceHostFiller(cfg, keys),
+		sourceHostFiller:     createSourceHostFiller(cfg),
 		sourceCategoryFiller: newSourceCategoryFiller(cfg),
-		sourceNameFiller:     createSourceNameFiller(cfg, keys),
+		sourceNameFiller:     createSourceNameFiller(cfg),
 		exclude:              exclude,
 	}
 }
@@ -259,12 +259,10 @@ func (sp *sourceProcessor) processResource(res pdata.Resource) pdata.Resource {
 
 	sp.sourceHostFiller.fillResourceOrUseAnnotation(&atts,
 		sp.annotationAttribute(sourceHostSpecialAnnotation),
-		sp.keys,
 	)
 	sp.sourceCategoryFiller.fill(&atts)
 	sp.sourceNameFiller.fillResourceOrUseAnnotation(&atts,
 		sp.annotationAttribute(sourceNameSpecialAnnotation),
-		sp.keys,
 	)
 
 	return res
