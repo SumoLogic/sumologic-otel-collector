@@ -46,6 +46,18 @@ func LogRecordsToLogs(records []pdata.LogRecord) pdata.Logs {
 	return logs
 }
 
+func logRecordsToLogPair(records []pdata.LogRecord) []logPair {
+	logs := make([]logPair, len(records))
+	for num, record := range records {
+		logs[num] = logPair{
+			log:        record,
+			attributes: record.Attributes(),
+		}
+	}
+
+	return logs
+}
+
 type exporterTest struct {
 	srv *httptest.Server
 	exp *sumologicexporter
@@ -503,7 +515,8 @@ func TestPushJSONLogsWithAttributeTranslation(t *testing.T) {
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			var regex string
-			regex += `{"InstanceType":"wizard","host":"harry-potter","log":"Example log","timestamp":\d{13}}`
+			// Mind that host attribute is not being send in log body
+			regex += `{"InstanceType":"wizard","log":"Example log","timestamp":\d{13}}`
 			assert.Regexp(t, regex, body)
 
 			assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))

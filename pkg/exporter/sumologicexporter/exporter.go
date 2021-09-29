@@ -249,7 +249,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		currentMetadata  fields = newFields(pdata.NewAttributeMap())
 		previousMetadata fields = newFields(pdata.NewAttributeMap())
 		errs             []error
-		droppedRecords   []pdata.LogRecord
+		droppedRecords   []logPair
 		err              error
 	)
 
@@ -298,6 +298,12 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 					return true
 				})
 
+				// Put merged attributes into logPair
+				lp := logPair{
+					log:        log,
+					attributes: attributes,
+				}
+
 				currentMetadata = sdr.filter.filterIn(attributes)
 
 				if se.config.TranslateAttributes {
@@ -306,7 +312,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 
 				// If metadata differs from currently buffered, flush the buffer
 				if currentMetadata.string() != previousMetadata.string() && previousMetadata.string() != "" {
-					var dropped []pdata.LogRecord
+					var dropped []logPair
 					dropped, err = sdr.sendLogs(ctx, previousMetadata)
 					if err != nil {
 						errs = append(errs, err)
@@ -319,8 +325,8 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 				previousMetadata = currentMetadata
 
 				// add log to the buffer
-				var dropped []pdata.LogRecord
-				dropped, err = sdr.batchLog(ctx, log, previousMetadata)
+				var dropped []logPair
+				dropped, err = sdr.batchLog(ctx, lp, previousMetadata)
 				if err != nil {
 					droppedRecords = append(droppedRecords, dropped...)
 					errs = append(errs, err)
@@ -344,8 +350,8 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		logs := ills.AppendEmpty().Logs()
 		logs.EnsureCapacity(len(droppedRecords))
 
-		for _, log := range droppedRecords {
-			log.CopyTo(logs.AppendEmpty())
+		for _, lp := range droppedRecords {
+			lp.log.CopyTo(logs.AppendEmpty())
 		}
 
 		return consumererror.NewLogs(consumererror.Combine(errs), droppedLogs)

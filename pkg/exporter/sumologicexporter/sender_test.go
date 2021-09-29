@@ -279,7 +279,7 @@ func TestSendLogs(t *testing.T) {
 		},
 	})
 
-	test.s.logBuffer = exampleTwoLogs()
+	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
 	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "value", "key2": "value2"}))
 	assert.NoError(t, err)
@@ -299,7 +299,7 @@ func TestSendLogsMultitype(t *testing.T) {
 		},
 	})
 
-	test.s.logBuffer = exampleMultitypeLogs()
+	test.s.logBuffer = logRecordsToLogPair(exampleMultitypeLogs())
 
 	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "value", "key2": "value2"}))
 	assert.NoError(t, err)
@@ -319,7 +319,7 @@ func TestSendLogsSplit(t *testing.T) {
 		},
 	})
 	test.s.config.MaxRequestBodySize = 10
-	test.s.logBuffer = exampleTwoLogs()
+	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
 	_, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 	assert.NoError(t, err)
@@ -341,7 +341,7 @@ func TestSendLogsSplitFailedOne(t *testing.T) {
 	})
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.LogFormat = TextFormat
-	test.s.logBuffer = exampleTwoLogs()
+	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
 	dropped, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 	assert.EqualError(t, err, "error during sending data: 500 Internal Server Error")
@@ -367,7 +367,7 @@ func TestSendLogsSplitFailedAll(t *testing.T) {
 	})
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.LogFormat = TextFormat
-	test.s.logBuffer = exampleTwoLogs()
+	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
 	dropped, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 	assert.EqualError(
@@ -457,7 +457,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 			}, tc.configOpts...)
 
 			test.s.config.LogFormat = JSONFormat
-			test.s.logBuffer = exampleTwoLogs()
+			test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
 			_, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 			assert.NoError(t, err)
@@ -483,7 +483,7 @@ func TestSendLogsJson(t *testing.T) {
 		},
 	})
 	test.s.config.LogFormat = JSONFormat
-	test.s.logBuffer = exampleTwoLogs()
+	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
 	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key": "value"}))
 	assert.NoError(t, err)
@@ -507,7 +507,7 @@ func TestSendLogsJsonMultitype(t *testing.T) {
 		},
 	})
 	test.s.config.LogFormat = JSONFormat
-	test.s.logBuffer = exampleMultitypeLogs()
+	test.s.logBuffer = logRecordsToLogPair(exampleMultitypeLogs())
 
 	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key": "value"}))
 	assert.NoError(t, err)
@@ -532,7 +532,7 @@ func TestSendLogsJsonSplit(t *testing.T) {
 	})
 	test.s.config.LogFormat = JSONFormat
 	test.s.config.MaxRequestBodySize = 10
-	test.s.logBuffer = exampleTwoLogs()
+	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
 	_, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 	assert.NoError(t, err)
@@ -561,7 +561,7 @@ func TestSendLogsJsonSplitFailedOne(t *testing.T) {
 	})
 	test.s.config.LogFormat = JSONFormat
 	test.s.config.MaxRequestBodySize = 10
-	test.s.logBuffer = exampleTwoLogs()
+	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
 	dropped, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 	assert.EqualError(t, err, "error during sending data: 500 Internal Server Error")
@@ -593,7 +593,7 @@ func TestSendLogsJsonSplitFailedAll(t *testing.T) {
 	})
 	test.s.config.LogFormat = JSONFormat
 	test.s.config.MaxRequestBodySize = 10
-	test.s.logBuffer = exampleTwoLogs()
+	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
 	dropped, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 	assert.EqualError(
@@ -612,7 +612,7 @@ func TestSendLogsUnexpectedFormat(t *testing.T) {
 		},
 	})
 	test.s.config.LogFormat = "dummy"
-	logs := exampleTwoLogs()
+	logs := logRecordsToLogPair(exampleTwoLogs())
 	test.s.logBuffer = logs
 
 	dropped, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
@@ -632,7 +632,7 @@ func TestSendLogsOTLP(t *testing.T) {
 		},
 	})
 
-	test.s.logBuffer = exampleTwoLogs()
+	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 	test.s.config.LogFormat = "otlp"
 
 	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "value", "key2": "value2"}))
@@ -650,7 +650,7 @@ func TestOverrideSourceName(t *testing.T) {
 		})
 
 		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
-		test.s.logBuffer = exampleLog()
+		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
 		assert.NoError(t, err)
@@ -668,7 +668,7 @@ func TestOverrideSourceName(t *testing.T) {
 		})
 
 		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
-		test.s.logBuffer = exampleLog()
+		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
 		assert.NoError(t, err)
@@ -694,7 +694,7 @@ func TestOverrideSourceName(t *testing.T) {
 		})
 
 		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
-		test.s.logBuffer = exampleLog()
+		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
 		assert.NoError(t, err)
@@ -712,7 +712,7 @@ func TestOverrideSourceCategory(t *testing.T) {
 		})
 
 		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
-		test.s.logBuffer = exampleLog()
+		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
 		assert.NoError(t, err)
@@ -728,7 +728,7 @@ func TestOverrideSourceCategory(t *testing.T) {
 		})
 
 		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
-		test.s.logBuffer = exampleLog()
+		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
 		assert.NoError(t, err)
@@ -754,7 +754,7 @@ func TestOverrideSourceCategory(t *testing.T) {
 		})
 
 		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
-		test.s.logBuffer = exampleLog()
+		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
 		assert.NoError(t, err)
@@ -770,7 +770,7 @@ func TestOverrideSourceHost(t *testing.T) {
 		})
 
 		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
-		test.s.logBuffer = exampleLog()
+		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
 		assert.NoError(t, err)
@@ -786,7 +786,7 @@ func TestOverrideSourceHost(t *testing.T) {
 		})
 
 		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
-		test.s.logBuffer = exampleLog()
+		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
 		assert.NoError(t, err)
@@ -812,7 +812,7 @@ func TestOverrideSourceHost(t *testing.T) {
 		})
 
 		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
-		test.s.logBuffer = exampleLog()
+		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
 		assert.NoError(t, err)
@@ -869,7 +869,7 @@ func TestLogsDontSendSourceFieldsInXSumoFieldsHeader(t *testing.T) {
 		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}/%{_sourceName}")
 		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
 		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
-		test.s.logBuffer = exampleLog()
+		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
 		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(
 			map[string]string{
@@ -888,13 +888,13 @@ func TestLogsBuffer(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
 
 	assert.Equal(t, test.s.countLogs(), 0)
-	logs := exampleTwoLogs()
+	logs := logRecordsToLogPair(exampleTwoLogs())
 
 	droppedLogs, err := test.s.batchLog(context.Background(), logs[0], newFields(pdata.NewAttributeMap()))
 	require.NoError(t, err)
 	assert.Nil(t, droppedLogs)
 	assert.Equal(t, 1, test.s.countLogs())
-	assert.Equal(t, []pdata.LogRecord{logs[0]}, test.s.logBuffer)
+	assert.Equal(t, []logPair{logs[0]}, test.s.logBuffer)
 
 	droppedLogs, err = test.s.batchLog(context.Background(), logs[1], newFields(pdata.NewAttributeMap()))
 	require.NoError(t, err)
@@ -904,14 +904,14 @@ func TestLogsBuffer(t *testing.T) {
 
 	test.s.cleanLogsBuffer()
 	assert.Equal(t, 0, test.s.countLogs())
-	assert.Equal(t, []pdata.LogRecord{}, test.s.logBuffer)
+	assert.Equal(t, []logPair{}, test.s.logBuffer)
 }
 
 func TestInvalidEndpoint(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
 
 	test.s.config.HTTPClientSettings.Endpoint = ":"
-	test.s.logBuffer = exampleLog()
+	test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
 	_, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 	assert.EqualError(t, err, `parse ":": missing protocol scheme`)
@@ -921,7 +921,7 @@ func TestInvalidPostRequest(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
 
 	test.s.config.HTTPClientSettings.Endpoint = ""
-	test.s.logBuffer = exampleLog()
+	test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
 	_, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 	assert.EqualError(t, err, `Post "": unsupported protocol scheme ""`)
@@ -931,7 +931,7 @@ func TestLogsBufferOverflow(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
 
 	test.s.config.HTTPClientSettings.Endpoint = ":"
-	log := exampleLog()
+	log := logRecordsToLogPair(exampleLog())
 	flds := newFields(pdata.NewAttributeMap())
 
 	for test.s.countLogs() < maxBufferSize-1 {
