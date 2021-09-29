@@ -12,9 +12,11 @@ processors:
     # Name of the collector, put in `_collector` tag.
     # default: ""
     collector: <collector>
+
     # Template for source name, put in `_sourceName` tag.
     # default: "%{k8s.namespace.name}.%{k8s.pod.name}.%{k8s.container.name}"
     source_name: <source_name>
+
     # Template for source category, put in `_sourceCategory` tag.
     # default: "%{k8s.namespace.name}/%{k8s.pod.pod_name}"
     source_category: <source_category>
@@ -24,6 +26,7 @@ processors:
     # Character which all dashes ("-") in source category value are being replaced to.
     # default: "/"
     source_category_replace_dash: <source_category_replace_dash>
+
     # A mapping of resource attribute names to exclusion regexes for the attribute values.
     # Whenever a value under a particular attribute matches the corresponding regex,
     # the processed record is dropped.
@@ -31,12 +34,15 @@ processors:
     exclude:
       <attribute_key_1>: <attribute_value_regex_1>
       <attribute_key_2>: <attribute_value_regex_2>
+
     # Prefix which allows to find given annotation; it is used for including/excluding pods, among other attributes.
     # default: "k8s.pod.annotation."
     annotation_prefix: <annotation_prefix>
+
     # Name of the attribute that contains the full name of the pod.
     # default: "k8s.pod.name"
     pod_key: <pod_key>
+
     # Name of the attribute that will contain the deuniquified name of the pod.
     # Here are some examples of deuniquified pod names:
     # - for a daemonset pod `dset-otelcol-sumo-xa314` it's going to be `dset-otelcol-sumo`
@@ -44,12 +50,15 @@ processors:
     # - for a statefulset pod `st-otelcol-sumo-0` it's going to be `st-otelcol-sumo`
     # default: "k8s.pod.pod_name"
     pod_name_key: <pod_name_key>
+
     # Name of the attribute that contains pod's template hash. It is used for pod name extraction.
     # default: "k8s.pod.label.pod-template-hash"
     pod_template_has_key: <pod_template_hash_key>
+
     # Name of the attribute that contains the source host.
     # default: "k8s.pod.hostname"
     source_host_key: <source_host_key>
+
     # See "Container-level pod annotations" section below
     container_annotations:
       # Specifies whether container-level annotations are enabled.
