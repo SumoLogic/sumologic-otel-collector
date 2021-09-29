@@ -179,7 +179,7 @@ func TestLogsSourceHostKey(t *testing.T) {
 	t.Run("works using existing resource attribute", func(t *testing.T) {
 		config := NewFactory().CreateDefaultConfig().(*Config)
 		config.SourceName = "will-it-work-%{_HOSTNAME}"
-		config.SourceHostKey = "_HOSTNAME"
+		config.SourceHost = "%{_HOSTNAME}"
 
 		pLogs := newLogsDataWithLogs(resourceAttrs, logAttrs)
 
@@ -211,7 +211,7 @@ func TestLogsSourceHostKey(t *testing.T) {
 	t.Run("does not work using record attribute", func(t *testing.T) {
 		config := NewFactory().CreateDefaultConfig().(*Config)
 		config.SourceName = "will-it-work-%{_CMDLINE}"
-		config.SourceHostKey = "_CMDLINE"
+		config.SourceHost = "%{_CMDLINE}"
 
 		pLogs := newLogsDataWithLogs(resourceAttrs, logAttrs)
 

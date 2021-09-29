@@ -29,6 +29,7 @@ const (
 
 	defaultCollector = ""
 
+	defaultSourceHost                = "%{k8s.pod.hostname}"
 	defaultSourceName                = "%{k8s.namespace.name}.%{k8s.pod.name}.%{k8s.container.name}"
 	defaultSourceCategory            = "%{k8s.namespace.name}/%{k8s.pod.pod_name}"
 	defaultSourceCategoryPrefix      = "kubernetes/"
@@ -38,7 +39,6 @@ const (
 	defaultPodKey             = "k8s.pod.name"
 	defaultPodNameKey         = "k8s.pod.pod_name"
 	defaultPodTemplateHashKey = "k8s.pod.label.pod-template-hash"
-	defaultSourceHostKey      = "k8s.pod.hostname"
 )
 
 var processorCapabilities = consumer.Capabilities{MutatesData: true}
@@ -60,6 +60,7 @@ func createDefaultConfig() config.Processor {
 	return &Config{
 		ProcessorSettings:         &ps,
 		Collector:                 defaultCollector,
+		SourceHost:                defaultSourceHost,
 		SourceName:                defaultSourceName,
 		SourceCategory:            defaultSourceCategory,
 		SourceCategoryPrefix:      defaultSourceCategoryPrefix,
@@ -69,7 +70,6 @@ func createDefaultConfig() config.Processor {
 		PodKey:             defaultPodKey,
 		PodNameKey:         defaultPodNameKey,
 		PodTemplateHashKey: defaultPodTemplateHashKey,
-		SourceHostKey:      defaultSourceHostKey,
 
 		ContainerAnnotations: ContainerAnnotationsConfig{
 			Enabled: false,

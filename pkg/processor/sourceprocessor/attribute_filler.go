@@ -42,16 +42,6 @@ type attributeFiller struct {
 	labels          []string
 }
 
-func createSourceHostFiller(sourceHostAttrName string) attributeFiller {
-	return attributeFiller{
-		name:            sourceHostKey,
-		compiledFormat:  "%s",
-		dashReplacement: "",
-		labels:          []string{sourceHostAttrName},
-		prefix:          "",
-	}
-}
-
 func extractFormat(format string, name string, keys sourceKeys) attributeFiller {
 	labels := make([]string, 0)
 	matches := formatRegex.FindAllStringSubmatch(format, -1)
@@ -67,6 +57,11 @@ func extractFormat(format string, name string, keys sourceKeys) attributeFiller 
 		labels:          labels,
 		prefix:          "",
 	}
+}
+
+func createSourceHostFiller(cfg *Config, keys sourceKeys) attributeFiller {
+	filler := extractFormat(cfg.SourceHost, sourceHostKey, keys)
+	return filler
 }
 
 func createSourceNameFiller(cfg *Config, keys sourceKeys) attributeFiller {

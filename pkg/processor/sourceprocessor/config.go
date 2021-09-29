@@ -23,6 +23,7 @@ type Config struct {
 	*config.ProcessorSettings `mapstructure:"-"`
 
 	Collector                 string `mapstructure:"collector"`
+	SourceHost                string `mapstructure:"source_host"`
 	SourceName                string `mapstructure:"source_name"`
 	SourceCategory            string `mapstructure:"source_category"`
 	SourceCategoryPrefix      string `mapstructure:"source_category_prefix"`
@@ -38,7 +39,6 @@ type Config struct {
 	PodKey             string `mapstructure:"pod_key"`
 	PodNameKey         string `mapstructure:"pod_name_key"`
 	PodTemplateHashKey string `mapstructure:"pod_template_hash_key"`
-	SourceHostKey      string `mapstructure:"source_host_key"`
 
 	ContainerAnnotations ContainerAnnotationsConfig `mapstructure:"container_annotations"`
 }
