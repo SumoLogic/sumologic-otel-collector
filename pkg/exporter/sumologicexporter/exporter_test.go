@@ -906,6 +906,40 @@ func TestLogsJsonFormatMetadataFilter(t *testing.T) {
 				)
 			},
 		},
+		{
+			name: "empty attribute",
+			logResourceAttributes: map[string]pdata.AttributeValue{
+				"_sourceCategory": pdata.NewAttributeValueString("dummy"),
+				"key1":            pdata.NewAttributeValueString("value1"),
+				"key2":            pdata.NewAttributeValueString("value2"),
+				"key3":            pdata.NewAttributeValueString(""),
+			},
+			cfgFn: func(c *Config) {
+				c.LogFormat = JSONFormat
+				c.SourceCategory = "testing_source_templates %{_sourceCategory}"
+				c.MetadataAttributes = []string{
+					"key1",
+					"_source.*",
+					"key3",
+				}
+			},
+			handler: func(w http.ResponseWriter, req *http.Request) {
+				body := extractBody(t, req)
+
+				var regex string
+				regex += `{"key2":"value2","log":"Example log","timestamp":\d{13}}`
+				assert.Regexp(t, regex, body)
+
+				assert.Equal(t, "key1=value1", req.Header.Get("X-Sumo-Fields"),
+					"X-Sumo-Fields is not as expected",
+				)
+
+				assert.Equal(t, "testing_source_templates dummy",
+					req.Header.Get("X-Sumo-Category"),
+					"X-Sumo-Category header is not set correctly",
+				)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
