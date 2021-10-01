@@ -286,6 +286,24 @@ func TestSendLogs(t *testing.T) {
 	assert.EqualValues(t, 1, *test.reqCounter)
 }
 
+func TestSendLogsWithEmptyField(t *testing.T) {
+	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, "Example log\nAnother example log", body)
+			assert.Equal(t, "key1=value, key2=value2", req.Header.Get("X-Sumo-Fields"))
+			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
+			assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
+		},
+	})
+
+	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
+
+	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "value", "key2": "value2", "service": ""}))
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, *test.reqCounter)
+}
+
 func TestSendLogsMultitype(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
