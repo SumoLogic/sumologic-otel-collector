@@ -1,0 +1,1040 @@
+extensions:
+  file_storage/logs:
+    directory: ./testdata/storage/
+    timeout: 10s
+ 
+receivers:
+  filelog/service1:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/logs/service1/service1.log
+    exclude:
+      - /usr/company/logs/service1/service1.log.gz
+    multiline:
+      line_start_pattern: ^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}.*
+    operators:
+      - type: regex_parser
+        regex: (?P<timestamp>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (\+|\-)\d{2}\d{2})
+        preserve_to: $$body.log
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: 2006-01-02 15:04:05,000 -0700
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: service1
+      _source: service1
+      sourcetype: instrumentation
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+  filelog/service1_gc:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/logs/service1/service1.gc.log
+    exclude:
+      - /usr/company/logs/service1/service1.gc.log.gz
+    multiline:
+      line_start_pattern: ^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}-\d{4}\] GC\(\d+\) .*? \(.*?\)$
+    operators:
+      - type: regex_parser
+        regex: ^\[(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}(\+|\-)\d{2}\d{2})
+        preserve_to: $$body.log
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: 2006-01-02T15:04:05.000-0700
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: service1_gc
+      _source: service1_gc
+      sourcetype: gc
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+  filelog/service1_thread_dumps:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/logs/service1/dumps/*.threaddump
+    exclude:
+      - /usr/company/logs/service1/dumps/*.threaddump.gz
+    multiline:
+      line_start_pattern: (.*prio=.*|^\z)
+    operators:
+      - type: restructure
+        id: prepare
+        ops:
+          - move:
+              from: $$body
+              to: $$body.log
+      - type: regex_parser
+        regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
+        parse_from: $$attributes['file.path.resolved']
+        preserve_to: $$attributes['file.path.resolved']
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: 2006-01-02-1504-05
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: service1_thread_dumps
+      _source: service1_thread_dumps
+      sourcetype: thread_dumps
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+  filelog/service1_cpu_dumps:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/logs/service1/dumps/*.cpudump
+    exclude:
+      - /usr/company/logs/service1/dumps/*.cpudump.gz
+    multiline:
+      line_start_pattern: ^((top - ).*|\z)
+    operators:
+      - type: restructure
+        id: prepare
+        ops:
+          - move:
+              from: $$body
+              to: $$body.log
+      - type: regex_parser
+        regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
+        parse_from: $$attributes['file.path.resolved']
+        preserve_to: $$attributes['file.path.resolved']
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: 2006-01-02-1504-05
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: service1_cpu_dumps
+      _source: service1_cpu_dumps
+      sourcetype: cpu_dumps
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+
+  filelog/health:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/logs/health/health.log
+    exclude:
+      - /usr/company/logs/health/health.log.gz
+    multiline:
+      line_start_pattern: ^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}.*
+    operators:
+      - type: regex_parser
+        regex: (?P<timestamp>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (\+|\-)\d{2}\d{2})
+        preserve_to: $$body.log
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: 2006-01-02 15:04:05,000 -0700
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: health
+      _source: health
+      sourcetype: instrumentation
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+  filelog/health_gc:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/logs/health/health.gc.log
+    exclude:
+      - /usr/company/logs/health/health.gc.log.gz
+    multiline:
+      line_start_pattern: ^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}-\d{4}\] GC\(\d+\) .*? \(.*?\)$
+    operators:
+      - type: regex_parser
+        regex: ^\[(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}(\+|\-)\d{2}\d{2})
+        preserve_to: $$body.log
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: 2006-01-02T15:04:05.000-0700
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: health_gc
+      _source: health_gc
+      sourcetype: gc
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+  filelog/health_thread_dumps:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/logs/health/dumps/*.threaddump
+    exclude:
+      - /usr/company/logs/health/dumps/*.threaddump.gz
+    multiline:
+      line_start_pattern: (.*prio=.*|^\z)
+    operators:
+      - type: restructure
+        id: prepare
+        ops:
+          - move:
+              from: $$body
+              to: $$body.log
+      - type: regex_parser
+        regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
+        parse_from: $$attributes['file.path.resolved']
+        preserve_to: $$attributes['file.path.resolved']
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: 2006-01-02-1504-05
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: health_thread_dumps
+      _source: health_thread_dumps
+      sourcetype: thread_dumps
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+  filelog/health_cpu_dumps:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/logs/health/dumps/*.cpudump
+    exclude:
+      - /usr/company/logs/health/dumps/*.cpudump.gz
+    multiline:
+      line_start_pattern: ^((top - ).*|\z)
+    operators:
+      - type: restructure
+        id: prepare
+        ops:
+          - move:
+              from: $$body
+              to: $$body.log
+      - type: regex_parser
+        regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
+        parse_from: $$attributes['file.path.resolved']
+        preserve_to: $$attributes['file.path.resolved']
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: 2006-01-02-1504-05
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: health_cpu_dumps
+      _source: health_cpu_dumps
+      sourcetype: cpu_dumps
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+
+  filelog/snort:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /var/log/snort/alert
+    exclude:
+      - /var/log/snort/alert.gz
+    multiline:
+      line_start_pattern: ^\[\*+\]
+    operators:
+      - type: regex_parser
+        regex: (?P<timestamp>\d{2}/\d{2}\-\d{2}:\d{2}:\d{2}.\d+)
+        preserve_to: $$body.log
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: 02/01-15:04:05.000000
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: security_logs
+      _source: snort
+      sourcetype: soc
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+
+  filelog/auth:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /var/log/auth.log
+    exclude:
+      - /var/log/auth.log.gz
+    multiline:
+      line_start_pattern: \w{3}\s+\d{1,2} \d{2}:\d{2}:\d{2}
+    operators:
+      - type: regex_parser
+        regex: (?P<timestamp>\w{3}\s+\d{1,2} \d{2}:\d{2}:\d{2})
+        preserve_to: $$body.log
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: Jan _2 15:04:05
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: auth_logs
+      _source: auth
+      sourcetype: soc
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+
+  filelog/syslog:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /var/log/syslog*
+    exclude:
+      - /var/log/syslog*.gz
+    multiline:
+      line_start_pattern: \w{3}\s+\d{1,2} \d{2}:\d{2}:\d{2}
+    operators:
+      - type: regex_parser
+        regex: (?P<timestamp>\w{3}\s+\d{1,2} \d{2}:\d{2}:\d{2})
+        preserve_to: $$body.log
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: Jan _2 15:04:05
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: syslog
+      _source: syslog
+      sourcetype: soc
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+
+  filelog/service2:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /var/service2/logs/alerts/alerts.log
+    exclude:
+      - /var/service2/logs/alerts/alerts.log.gz
+    multiline:
+      line_start_pattern: ^\*+
+    operators:
+      - type: regex_parser
+        regex: (?P<timestamp>\d{4} \w{3} \d{2} \d{2}:\d{2}:\d{2})
+        preserve_to: $$body.log
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: 2006 Jan 02 15:04:05
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: service2
+      _source: service2
+      sourcetype: soc
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+
+  filelog/collectd:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /var/log/collectd.log
+    exclude:
+      - /var/log/collectd.log.gz
+    attributes:
+      _sourceCategory: collectd
+      _source: collectd
+      sourcetype: collectd
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+
+  filelog/outlogrotate:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /var/log/outlogrotate.log*
+    exclude:
+      - /var/log/outlogrotate.log*.gz
+    attributes:
+      _sourceCategory: outlogrotate
+      _source: outlogrotate
+      sourcetype: outlogrotate
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+
+  filelog/service5:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/logs/service6/service5.log
+    exclude:
+      - /usr/company/logs/service6/service5.log.gz
+    attributes:
+      _sourceCategory: service5
+      _source: service5
+      sourcetype: service6
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+  filelog/ops_zookeeper:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/service3/logs/zk.log
+    exclude:
+      - /usr/company/service3/logs/zk.log.gz
+    attributes:
+      _sourceCategory: ops_zookeeper
+      _source: ops_zookeeper
+      sourcetype: zk
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+  filelog/service3:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/service3/logs/service3.log
+    exclude:
+      - /usr/company/service3/logs/service3.log.gz
+    multiline:
+      line_start_pattern: ^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}.*
+    operators:
+      - type: regex_parser
+        regex: (?P<timestamp>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (\+|\-)\d{2}\d{2})
+        preserve_to: $$body.log
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: 2006-01-02 15:04:05,000 -0700
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: service3
+      _source: service3
+      sourcetype: telemetry
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+
+  filelog/network_report:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/network_report
+    exclude:
+      - /usr/company/network_report.gz
+    multiline:
+      line_start_pattern: ^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)
+    operators:
+      - type: regex_parser
+        regex: (?P<timestamp>^.*?)\n
+        preserve_to: $$body.log
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: Mon Jan _2 15:04:05 MST 2006
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: network_report
+      _source: network_report
+      sourcetype: network_report
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+
+  filelog/service4:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/logs/service4/service4.log
+    exclude:
+      - /usr/company/logs/service4/service4.log.gz
+    multiline:
+      line_start_pattern: ^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}.*
+    operators:
+      - type: regex_parser
+        regex: (?P<timestamp>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (\+|\-)\d{2}\d{2})
+        preserve_to: $$body.log
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: 2006-01-02 15:04:05,000 -0700
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: service4
+      _source: service4
+      sourcetype: instrumentation
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+  filelog/service4_gc:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/logs/service4/service4.gc.log
+    exclude:
+      - /usr/company/logs/service4/service4.gc.log.gz
+    multiline:
+      line_start_pattern: ^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}-\d{4}\] GC\(\d+\) .*? \(.*?\)$
+    operators:
+      - type: regex_parser
+        regex: ^\[(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}(\+|\-)\d{2}\d{2})
+        preserve_to: $$body.log
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: 2006-01-02T15:04:05.000-0700
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: service4_gc
+      _source: service4_gc
+      sourcetype: gc
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+  filelog/service4_thread_dumps:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/logs/service4/dumps/*.threaddump
+    exclude:
+      - /usr/company/logs/service4/dumps/*.threaddump.gz
+    multiline:
+      line_start_pattern: (.*prio=.*|^\z)
+    operators:
+      - type: restructure
+        id: prepare
+        ops:
+          - move:
+              from: $$body
+              to: $$body.log
+      - type: regex_parser
+        regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
+        parse_from: $$attributes['file.path.resolved']
+        preserve_to: $$attributes['file.path.resolved']
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: 2006-01-02-1504-05
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: service4_thread_dumps
+      _source: service4_thread_dumps
+      sourcetype: thread_dumps
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+  filelog/service4_cpu_dumps:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/logs/service4/dumps/*.cpudump
+    exclude:
+      - /usr/company/logs/service4/dumps/*.cpudump.gz
+    multiline:
+      line_start_pattern: ^((top - ).*|\z)
+    operators:
+      - type: restructure
+        id: prepare
+        ops:
+          - move:
+              from: $$body
+              to: $$body.log
+      - type: regex_parser
+        regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
+        parse_from: $$attributes['file.path.resolved']
+        preserve_to: $$attributes['file.path.resolved']
+        timestamp:
+          parse_from: $$body.timestamp
+          layout_type: gotime
+          layout: 2006-01-02-1504-05
+      - type: restructure
+        ops:
+          - move:
+              from: $$body.log
+              to: $$body
+    attributes:
+      _sourceCategory: service4_cpu_dumps
+      _source: service4_cpu_dumps
+      sourcetype: cpu_dumps
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+  filelog/service4_metrics_reporter:
+    start_at: beginning # remove after tests
+    include_file_path_resolved: true
+    include_file_name: false
+    max_log_size: 32MiB  # increase max_log_size to scrape long lines
+    include:
+      - /usr/company/logs/service4/metrics-reporter.log
+    exclude:
+      - /usr/company/logs/service4/metrics-reporter.log.gz
+    attributes:
+      _sourceCategory: service4_metrics_reporter
+      _source: service4_metrics_reporter
+      sourcetype: metrics-reporter
+    resource:
+      _sourceHost: stag-otelcol-2
+      deployment: stag
+      cluster: service4
+      node: stag-otelcol-2
+      agent: otelcol
+
+exporters:
+  sumologic/1:
+    endpoint: http://dummy.endpoint.com
+    compress_encoding: ""
+    sending_queue:
+      enabled: true
+      queue_size: 50000
+
+processors:
+  groupbyattrs/sumologic:
+    keys:
+      - _sourceCategory
+      - _sourceHost
+      - _sourceName
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 2048
+  batch:
+    send_batch_size: 512
+    send_batch_max_size: 512
+    timeout: 5s
+  resourcedetection:
+    detectors: ["ec2"]
+    override: false
+
+  metricstransform/telegrafreceiver:
+    transforms:
+    - include: cpu_usage_active
+      match_type: strict
+      action: update
+      new_name: CPU_Total
+    - include: cpu_usage_idle
+      match_type: strict
+      action: update
+      new_name: CPU_Idle
+    - include: cpu_usage_iowait
+      match_type: strict
+      action: update
+      new_name: CPU_IOWait
+    - include: cpu_usage_irq
+      match_type: strict
+      action: update
+      new_name: CPU_Irq
+    - include: cpu_usage_nice
+      match_type: strict
+      action: update
+      new_name: CPU_Nice
+    - include: cpu_usage_softirq
+      match_type: strict
+      action: update
+      new_name: CPU_SoftIrq
+    - include: cpu_usage_steal
+      match_type: strict
+      action: update
+      new_name: CPU_Stolen
+    - include: cpu_usage_system
+      match_type: strict
+      action: update
+      new_name: CPU_Sys
+    - include: cpu_usage_user
+      match_type: strict
+      action: update
+      new_name: CPU_User
+    - include: system_load1
+      match_type: strict
+      action: update
+      new_name: CPU_LoadAvg_1min
+    - include: system_load5
+      match_type: strict
+      action: update
+      new_name: CPU_LoadAvg_5min
+    - include: system_load15
+      match_type: strict
+      action: update
+      new_name: CPU_LoadAvg_15min
+    - include: disk_used
+      match_type: strict
+      action: update
+      new_name: Disk_Used
+    - include: disk_used_percent
+      match_type: strict
+      action: update
+      new_name: Disk_UsedPercent
+    - include: disk_inodes_free
+      match_type: strict
+      action: update
+      new_name: Disk_InodesAvailable
+    - include: diskio_reads
+      match_type: strict
+      action: update
+      new_name: Disk_Reads
+    - include: diskio_read_bytes
+      match_type: strict
+      action: update
+      new_name: Disk_ReadBytes
+    - include: diskio_writes
+      match_type: strict
+      action: update
+      new_name: Disk_Writes
+    - include: diskio_write_bytes
+      match_type: strict
+      action: update
+      new_name: Disk_WriteBytes
+    - include: mem_total
+      match_type: strict
+      action: update
+      new_name: Mem_Total
+    - include: mem_free
+      match_type: strict
+      action: update
+      new_name: Mem_Free
+    - include: mem_available
+      match_type: strict
+      action: update
+      new_name: Mem_ActualFree
+    - include: mem_used
+      match_type: strict
+      action: insert
+      new_name: Mem_ActualUsed
+    - include: mem_used
+      match_type: strict
+      action: update
+      new_name: Mem_Used
+    - include: mem_used_percent
+      match_type: strict
+      action: update
+      new_name: Mem_UsedPercent
+    - include: mem_available_percent
+      match_type: strict
+      action: update
+      new_name: Mem_FreePercent
+    - include: procstat_num_threads
+      match_type: strict
+      action: update
+      new_name: Proc_Threads
+    - include: procstat_memory_vms
+      match_type: strict
+      action: update
+      new_name: Proc_VMSize
+    - include: procstat_memory_rss
+      match_type: strict
+      action: update
+      new_name: Proc_RSSize
+    - include: procstat_cpu_usage
+      match_type: strict
+      action: update
+      new_name: Proc_CPU
+    - include: procstat_major_faults
+      match_type: strict
+      action: update
+      new_name: Proc_MajorFaults
+    - include: procstat_minor_faults
+      match_type: strict
+      action: update
+      new_name: Proc_MinorFaults
+    - include: net_bytes_sent
+      match_type: strict
+      action: update
+      new_name: Net_OutBytes
+    - include: net_bytes_recv
+      match_type: strict
+      action: update
+      new_name: Net_InBytes
+    - include: net_packets_sent
+      match_type: strict
+      action: update
+      new_name: Net_OutPackets
+    - include: net_packets_recv
+      match_type: strict
+      action: update
+      new_name: Net_InPackets
+    - include: netstat_tcp_close
+      match_type: strict
+      action: update
+      new_name: TCP_Close
+    - include: netstat_tcp_close_wait
+      match_type: strict
+      action: update
+      new_name: TCP_CloseWait
+    - include: netstat_tcp_closing
+      match_type: strict
+      action: update
+      new_name: TCP_Closing
+    - include: netstat_tcp_established
+      match_type: strict
+      action: update
+      new_name: TCP_Established
+    - include: netstat_tcp_listen
+      match_type: strict
+      action: update
+      new_name: TCP_Listen
+    - include: netstat_tcp_time_wait
+      match_type: strict
+      action: update
+      new_name: TCP_TimeWait
+  resource/telegrafreceiver:
+    attributes:
+    - key: _source
+      value: HostMetrics
+      action: insert
+    - key: _sourceCategory
+      value: service4
+      action: insert
+    - key: _sourceHost
+      value: stag-otelcol-2
+      action: insert
+    - key: _sourceName
+      value: HostMetrics
+      action: insert
+    - key: _contentType
+      value: HostMetrics
+      action: insert
+    - key: _budget
+      value: service4
+      action: insert
+    - key: Deployment
+      value: stag
+      action: insert
+    - key: Cluster
+      value: service4
+      action: insert
+  resource/common:
+    attributes:
+    - key: Namespace
+      value: AWS/EC2
+      action: upsert
+
+service:
+  extensions:
+    - file_storage/logs
+
+  pipelines:
+    logs:
+      receivers:
+        - filelog/service1
+        - filelog/service1_gc
+        - filelog/service1_thread_dumps
+        - filelog/service1_cpu_dumps
+
+        - filelog/health
+        - filelog/health_gc
+        - filelog/health_thread_dumps
+        - filelog/health_cpu_dumps
+
+        - filelog/snort
+
+        - filelog/auth
+
+        - filelog/syslog
+
+        - filelog/service2
+
+        - filelog/collectd
+
+        - filelog/outlogrotate
+
+        - filelog/service5
+        - filelog/ops_zookeeper
+        - filelog/service3
+
+        - filelog/network_report
+
+        - filelog/service4
+        - filelog/service4_gc
+        - filelog/service4_thread_dumps
+        - filelog/service4_cpu_dumps
+        - filelog/service4_metrics_reporter
+      exporters:
+        - sumologic/1
+      processors:
+        - memory_limiter
+        - batch
+        - resourcedetection
+        - groupbyattrs/sumologic
