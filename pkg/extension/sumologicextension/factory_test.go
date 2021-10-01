@@ -26,7 +26,6 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
-	"go.opentelemetry.io/collector/config/configcheck"
 )
 
 func TestFactory_CreateDefaultConfig(t *testing.T) {
@@ -46,7 +45,7 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 		},
 	}, cfg)
 
-	assert.NoError(t, configcheck.ValidateConfig(cfg))
+	assert.NoError(t, cfg.Validate())
 
 	ccfg := cfg.(*Config)
 	ccfg.CollectorName = "test_collector"

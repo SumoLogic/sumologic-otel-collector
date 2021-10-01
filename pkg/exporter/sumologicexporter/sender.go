@@ -203,7 +203,7 @@ func (s *sender) logToJSON(record logPair) (string, error) {
 		data.orig.Upsert(s.jsonLogsConfig.LogKey, body)
 	}
 
-	nextLine, err := json.Marshal(pdata.AttributeMapToMap(data.orig))
+	nextLine, err := json.Marshal(data.orig.AsRaw())
 	if err != nil {
 		return "", err
 	}
