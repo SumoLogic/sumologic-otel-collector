@@ -210,7 +210,7 @@ func TestVariation(t *testing.T) {
 func unixPointsToPdata(points map[int64]float64) map[pdata.Timestamp]float64 {
 	out := make(map[pdata.Timestamp]float64)
 	for unix, value := range points {
-		timestamp := pdata.TimestampFromTime(time.Unix(unix, 0))
+		timestamp := pdata.NewTimestampFromTime(time.Unix(unix, 0))
 		out[timestamp] = value
 	}
 
@@ -218,7 +218,7 @@ func unixPointsToPdata(points map[int64]float64) map[pdata.Timestamp]float64 {
 }
 
 func createDataPoint(timestamp time.Time, value float64) pdata.NumberDataPoint {
-	pdataTimestamp := pdata.TimestampFromTime(timestamp)
+	pdataTimestamp := pdata.NewTimestampFromTime(timestamp)
 	out := pdata.NewNumberDataPoint()
 	out.SetTimestamp(pdataTimestamp)
 	out.SetDoubleVal(value)

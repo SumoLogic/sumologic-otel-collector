@@ -48,8 +48,8 @@ func TestTwoRegistersOnTwoMetrics(t *testing.T) {
 }
 
 var emptyResult = make(map[pdata.Timestamp]float64)
-var timestamp1 = pdata.TimestampFromTime(time.Unix(0, 0))
-var timestamp2 = pdata.TimestampFromTime(time.Unix(1, 0))
+var timestamp1 = pdata.NewTimestampFromTime(time.Unix(0, 0))
+var timestamp2 = pdata.NewTimestampFromTime(time.Unix(1, 0))
 
 func newCache() *metricCache {
 	return newMetricCache(createDefaultConfig().(*Config).cacheConfig)
