@@ -7,6 +7,7 @@ require (
 	cloud.google.com/go/monitoring v0.1.0 // indirect
 	github.com/influxdata/telegraf v1.19.0
 	github.com/stretchr/testify v1.7.0
+	go.mongodb.org/mongo-driver v1.5.1 // indirect
 	go.opentelemetry.io/collector v0.36.0
 	go.opentelemetry.io/collector/model v0.36.0
 	go.uber.org/zap v1.19.1
