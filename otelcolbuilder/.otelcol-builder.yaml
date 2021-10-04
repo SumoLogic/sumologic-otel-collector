@@ -103,3 +103,8 @@ replaces:
   # and when record level log filtering is available as implemented in here:
   # https://github.com/pmalek-sumo/opentelemetry-collector-contrib/commit/11de2c03d3dbbde2e73b8a816318a2515c843985
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/filterprocessor 11de2c03d3dbbde2e73b8a816318a2515c843985
+
+  # Use features from branch https://github.com/sumologic/opentelemetry-collector-contrib/tree/v0.36.0-feat-routingprocessor-route-on-resource-attributes
+  # This replacement should be removed when all the features from the branch are upstreamed.
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/routingprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/routingprocessor e4d0740a3729724df5b4864d43f4931185e41d47
+

@@ -51,6 +51,10 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			name:       "filterprocessor log filtering",
 			configFile: "testdata/filterprocessor_logs.yaml",
 		},
+		{
+			name:       "routing processor for traces",
+			configFile: "testdata/routing_processor.yaml",
+		},
 	}
 
 	for _, tc := range testcases {
