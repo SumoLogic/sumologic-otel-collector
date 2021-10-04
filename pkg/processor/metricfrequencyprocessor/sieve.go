@@ -179,7 +179,7 @@ func (ms *defaultMetricSieve) lowVariation(variation float64, iqr float64) bool 
 }
 
 func earliestTimestamp(points map[pdata.Timestamp]float64) pdata.Timestamp {
-	min := pdata.TimestampFromTime(time.Now())
+	min := pdata.NewTimestampFromTime(time.Now())
 	for k := range points {
 		if k < min {
 			min = k
