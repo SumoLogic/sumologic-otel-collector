@@ -1,0 +1,53 @@
+receivers:
+  telegraf:
+    separate_field: false
+    agent_config: |
+      [agent]
+        interval = "1s"
+        flush_interval = "1s"
+        debug = true
+      [[inputs.cpu]]
+        percpu = true
+        totalcpu = true
+      [[inputs.disk]]
+      [[inputs.net]]
+        interfaces = ["eth*", "en*", "lo*"]
+        ignore_protocol_stats = true
+      [[inputs.netstat]]
+      [[inputs.diskio]]
+      [[inputs.mem]]
+
+processors:
+  metricstransform:
+    transforms:
+    - include: cpu_usage_active
+      match_type: strict
+      action: update
+      new_name: CPU_Total
+  filter:
+    metrics:
+      include:
+        match_type: regexp
+        metric_names:
+          - CPU_LoadAvg_15min
+  resource:
+    attributes:
+    - key: _sourceHost
+      from_attribute: host
+      action: insert
+
+exporters:
+  sumologic/1:
+    endpoint: http://dummy.endpoint.com:8888/api
+    source_category: source_category
+    source_name: source_name
+    source_host: source_host
+    sending_queue:
+      enabled: true
+
+service:
+  pipelines:
+    metrics:
+      receivers: [telegraf]
+      processors: [resource, metricstransform, filter]
+      exporters: [sumologic/1]

@@ -45,8 +45,8 @@ install-bin-linux:
 install-bin-darwin:
 	$(MAKE) _install-bin PLATFORM=darwin
 
-.PHONY: build
-build:
+.PHONY: _builder
+_builder:
 # Need to specify go path because otherwise opentelemetry-collector-builder
 # uses /usr/bin/go which on Github Actions is using preinstalled 1.15.12 by default.
 	CGO_ENABLED=${CGO_ENABLED} opentelemetry-collector-builder \
@@ -54,8 +54,25 @@ build:
 		--version ${VERSION} \
 		--config .otelcol-builder.yaml \
 		--output-path ./cmd \
+		--skip-compilation=${SKIP_COMPILATION} \
 		--name $(BINARY_NAME)
+
+.PHONY: build
+build:
+	$(MAKE) _builder SKIP_COMPILATION=false
 	chmod +x ./cmd/$(BINARY_NAME)
+
+.PHONY: generate-sources
+generate-sources:
+	$(MAKE) _builder SKIP_COMPILATION=true
+
+.PHONY: test
+test: install generate-sources
+	$(MAKE) -C cmd test
+
+.PHONY: lint
+lint: install generate-sources
+	$(MAKE) -C cmd lint
 
 .PHONY: otelcol-sumo-all-sys
 otelcol-sumo-all-sys: otelcol-sumo-darwin_amd64 otelcol-sumo-linux_amd64 otelcol-sumo-windows_amd64
