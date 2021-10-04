@@ -751,6 +751,27 @@ More details are available in [comparison document](Comparison.md#syslog).__
 
 [sumologicsyslogprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/sumologicsyslogprocessor/README.md
 
+### Sumo Logic Metric Frequency Processor
+
+The `metricfrequencyprocessor` is a metrics processor that helps reduce DPM by automatic tuning of metrics reporting
+frequency which adjusts for metric's information volume.
+
+Example configuation:
+
+```yaml
+processors:
+  metric_frequency:
+    min_point_accumulation_time: 15m
+    constant_metrics_report_frequency: 5m
+    low_info_metrics_report_frequency: 2m
+    max_report_frequency: 30s
+    data_point_expiration_time: 1h
+```
+
+For details, see the [Sumo Logic Metric Frequency Processor documentation][metricfrequencyprocessor_docs].
+
+[metricfrequencyprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/metricfrequencyprocessor/README.md
+
 ### Open Telemetry Upstream Processors
 
 The following processors have been developed by the Open Telemetry community

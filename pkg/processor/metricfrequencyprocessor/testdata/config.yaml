@@ -1,0 +1,24 @@
+receivers:
+  nop:
+
+exporters:
+  nop:
+
+processors:
+  metric_frequency:
+    min_point_accumulation_time: 15m
+    constant_metrics_report_frequency: 5m
+    low_info_metrics_report_frequency: 2m
+    max_report_frequency: 30s
+    iqr_anomaly_coefficient: 1.5
+    variation_iqr_threshold_coefficient: 4.0
+    data_point_expiration_time: 1h
+    data_point_cache_cleanup_interval: 10m
+    metric_cache_cleanup_interval: 3h
+
+service:
+  pipelines:
+    metrics:
+      receivers: [nop]
+      processors: [metric_frequency]
+      exporters: [nop]
