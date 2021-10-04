@@ -70,15 +70,15 @@ OT distro.
 |--------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
 | `cascadingfilterprocessor` [configuration help][cascadingfilterprocessor_help] | https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/cascadingfilterprocessor |
 | `k8sprocessor` [configuration help][k8sprocessor_help]                         | https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/k8sprocessor             |
+| `metricfrequencyprocessor` [configuration_help][metricfrequencyprocessor_help] | https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/metricfrequencyprocessor |
 | `sourceprocessor` [configuration help][sourceprocessor_help]                   | https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/sourceprocessor          |
 | `sumologicsyslogprocessor` [configuration help][sumologicsyslogprocessor_help] | https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/sumologicsyslogprocessor |
-| `metricfrequencyprocessor` [configuration_help][metricfrequencyprocessor_help] | https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/metricfrequencyprcoessor |
 
 [cascadingfilterprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#cascading-filter-processor
 [k8sprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#kubernetes-processor
+[metricfrequencyprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#metric-frequency-processor
 [sourceprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#source-processor
 [sumologicsyslogprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#sumo-logic-syslog-processor
-[metricfrequencyprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#metric-frequency-processor
 
 #### Upstream processors
 
