@@ -1,6 +1,9 @@
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.35.0
-BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector-builder
+BUILDER_VERSION ?= 0.36.0-1
+# TODO: change this back to upstream version when
+# https://github.com/open-telemetry/opentelemetry-collector-builder/pull/76
+# gets merged and when 0.36.0 gets released.
+BUILDER_REPO ?= github.com/pmalek-sumo/opentelemetry-collector-builder
 BUILDER_BIN_PATH ?= ${HOME}/bin/opentelemetry-collector-builder
 VERSION ?= "$(shell git describe --tags --abbrev=10)"
 GO ?= go
@@ -42,8 +45,8 @@ install-bin-linux:
 install-bin-darwin:
 	$(MAKE) _install-bin PLATFORM=darwin
 
-.PHONY: build
-build:
+.PHONY: _builder
+_builder:
 # Need to specify go path because otherwise opentelemetry-collector-builder
 # uses /usr/bin/go which on Github Actions is using preinstalled 1.15.12 by default.
 	CGO_ENABLED=${CGO_ENABLED} opentelemetry-collector-builder \
@@ -51,8 +54,25 @@ build:
 		--version ${VERSION} \
 		--config .otelcol-builder.yaml \
 		--output-path ./cmd \
+		--skip-compilation=${SKIP_COMPILATION} \
 		--name $(BINARY_NAME)
+
+.PHONY: build
+build:
+	$(MAKE) _builder SKIP_COMPILATION=false
 	chmod +x ./cmd/$(BINARY_NAME)
+
+.PHONY: generate-sources
+generate-sources:
+	$(MAKE) _builder SKIP_COMPILATION=true
+
+.PHONY: test
+test: install generate-sources
+	$(MAKE) -C cmd test
+
+.PHONY: lint
+lint: install generate-sources
+	$(MAKE) -C cmd lint
 
 .PHONY: otelcol-sumo-all-sys
 otelcol-sumo-all-sys: otelcol-sumo-darwin_amd64 otelcol-sumo-linux_amd64 otelcol-sumo-windows_amd64

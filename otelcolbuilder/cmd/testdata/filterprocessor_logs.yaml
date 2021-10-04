@@ -1,0 +1,66 @@
+receivers:
+  filelog:
+    include: [ "testdata/logs/empty.log" ]
+    start_at: end
+
+processors:
+  filter/empty:
+    logs:
+      include:
+        match_type: regexp
+  filter/record_include:
+    logs:
+      include:
+        match_type: regexp
+        record_attributes:
+          - key: host.name
+            value: "(host1|mycustomhost2)"
+  filter/record_exclude:
+    logs:
+      exclude:
+        match_type: regexp
+        record_attributes:
+          - key: host.name
+            value: banned_host_.*
+  filter/record_includeexclude:
+    logs:
+      include:
+        match_type: regexp
+        record_attributes:
+          - key: should_include
+            value: "(true|probably_true)"
+      exclude:
+        match_type: regexp
+        record_attributes:
+          - key: should_exclude
+            value: "(probably_false|false)"
+  filter/resource_includeexclude:
+    logs:
+      include:
+        match_type: regexp
+        resource_attributes:
+          - key: should_include
+            value: "(true|probably_true)"
+      exclude:
+        match_type: regexp
+        resource_attributes:
+          - key: should_exclude
+            value: "(probably_false|false)"
+
+exporters:
+  sumologic:
+    endpoint: http://dummy.endpoint.com:8888/api
+
+service:
+  pipelines:
+    logs:
+      receivers:
+        - filelog
+      processors:
+        - filter/empty
+        - filter/record_include
+        - filter/record_exclude
+        - filter/record_includeexclude
+        - filter/resource_includeexclude
+      exporters:
+        - sumologic

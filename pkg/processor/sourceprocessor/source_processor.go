@@ -32,7 +32,6 @@ type sourceKeys struct {
 	podKey             string
 	podNameKey         string
 	podTemplateHashKey string
-	sourceHostKey      string
 }
 
 // dockerLog represents log from k8s using docker log driver send by FluentBit
@@ -89,7 +88,6 @@ func newSourceProcessor(cfg *Config) *sourceProcessor {
 		podKey:             cfg.PodKey,
 		podNameKey:         cfg.PodNameKey,
 		podTemplateHashKey: cfg.PodTemplateHashKey,
-		sourceHostKey:      cfg.SourceHostKey,
 	}
 
 	exclude := make(map[string]*regexp.Regexp)
@@ -102,9 +100,9 @@ func newSourceProcessor(cfg *Config) *sourceProcessor {
 	return &sourceProcessor{
 		collector:            cfg.Collector,
 		keys:                 keys,
-		sourceHostFiller:     createSourceHostFiller(cfg.SourceHostKey),
-		sourceCategoryFiller: newSourceCategoryFiller(sourceCategoryKey, cfg),
-		sourceNameFiller:     createSourceNameFiller(cfg, keys),
+		sourceHostFiller:     createSourceHostFiller(cfg),
+		sourceCategoryFiller: newSourceCategoryFiller(cfg),
+		sourceNameFiller:     createSourceNameFiller(cfg),
 		exclude:              exclude,
 	}
 }
@@ -261,12 +259,10 @@ func (sp *sourceProcessor) processResource(res pdata.Resource) pdata.Resource {
 
 	sp.sourceHostFiller.fillResourceOrUseAnnotation(&atts,
 		sp.annotationAttribute(sourceHostSpecialAnnotation),
-		sp.keys,
 	)
 	sp.sourceCategoryFiller.fill(&atts)
 	sp.sourceNameFiller.fillResourceOrUseAnnotation(&atts,
 		sp.annotationAttribute(sourceNameSpecialAnnotation),
-		sp.keys,
 	)
 
 	return res

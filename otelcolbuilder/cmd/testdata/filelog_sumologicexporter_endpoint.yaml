@@ -1,0 +1,16 @@
+receivers:
+  filelog:
+    include: [ "testdata/logs/empty.log" ]
+    start_at: end
+
+exporters:
+  sumologic:
+    endpoint: http://dummy.endpoint.com:8888/api
+
+service:
+  pipelines:
+    logs:
+      receivers:
+      - filelog
+      exporters:
+      - sumologic

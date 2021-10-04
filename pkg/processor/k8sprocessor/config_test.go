@@ -22,7 +22,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
-	"go.opentelemetry.io/collector/config/configcheck"
 	"go.opentelemetry.io/collector/config/configtest"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
@@ -35,8 +34,7 @@ func TestLoadConfig(t *testing.T) {
 	factories.Processors[config.Type(typeStr)] = factory
 	require.NoError(t, err)
 
-	err = configcheck.ValidateConfig(factory.CreateDefaultConfig())
-	require.NoError(t, err)
+	require.NoError(t, factory.CreateDefaultConfig().Validate())
 
 	cfg, err := configtest.LoadConfig(
 		path.Join(".", "testdata", "config.yaml"),

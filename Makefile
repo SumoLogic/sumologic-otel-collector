@@ -19,6 +19,11 @@ markdown-link-check:
 
 # ALL_MODULES includes ./* dirs (excludes . dir and example with go code)
 ALL_MODULES := $(shell find ./pkg -type f -name "go.mod" -exec dirname {} \; | sort | egrep  '^./' )
+ALL_MODULES += ./otelcolbuilder
+
+.PHONY: list-modules
+list-modules:
+	$(MAKE) for-all CMD=""
 
 .PHONY: gotest
 gotest:

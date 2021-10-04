@@ -36,7 +36,7 @@ func TestTranslateAttributes(t *testing.T) {
 	attributes.InsertString("cloud.region", "my-region")
 	require.Equal(t, 10, attributes.Len())
 
-	translateAttributes(attributes)
+	attributes = translateAttributes(attributes)
 
 	assert.Equal(t, 10, attributes.Len())
 	assertAttribute(t, attributes, "host", "testing-host")
@@ -65,7 +65,7 @@ func TestTranslateAttributesDoesNothingWhenAttributeDoesNotExist(t *testing.T) {
 	attributes := pdata.NewAttributeMap()
 	require.Equal(t, 0, attributes.Len())
 
-	translateAttributes(attributes)
+	attributes = translateAttributes(attributes)
 
 	assert.Equal(t, 0, attributes.Len())
 	assertAttribute(t, attributes, "host", "")
@@ -78,7 +78,7 @@ func TestTranslateAttributesLeavesOtherAttributesUnchanged(t *testing.T) {
 	attributes.InsertString("three", "three1")
 	require.Equal(t, 3, attributes.Len())
 
-	translateAttributes(attributes)
+	attributes = translateAttributes(attributes)
 
 	assert.Equal(t, 3, attributes.Len())
 	assertAttribute(t, attributes, "one", "one1")
@@ -92,10 +92,11 @@ func TestTranslateAttributesDoesNotOverwriteExistingAttribute(t *testing.T) {
 	attributes.InsertString("host.name", "hostname1")
 	require.Equal(t, 2, attributes.Len())
 
-	translateAttributes(attributes)
+	attributes = translateAttributes(attributes)
 
 	assert.Equal(t, 2, attributes.Len())
 	assertAttribute(t, attributes, "host", "host1")
+	assertAttribute(t, attributes, "host.name", "hostname1")
 }
 
 func TestTranslateAttributesDoesNotOverwriteMultipleExistingAttributes(t *testing.T) {
@@ -108,10 +109,11 @@ func TestTranslateAttributesDoesNotOverwriteMultipleExistingAttributes(t *testin
 	attributes.InsertString("host.name", "hostname1")
 	require.Equal(t, 2, attributes.Len())
 
-	translateAttributes(attributes)
+	attributes = translateAttributes(attributes)
 
 	assert.Equal(t, 2, attributes.Len())
 	assertAttribute(t, attributes, "host", "host1")
+	assertAttribute(t, attributes, "host.name", "hostname1")
 }
 
 func assertAttribute(t *testing.T, metadata pdata.AttributeMap, attributeName string, expectedValue string) {
@@ -153,5 +155,39 @@ func TestTranslateConfigValue(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.want, translateConfigValue(tc.input))
 		})
+	}
+}
+
+var (
+	bench_pdata_attributes = map[string]pdata.AttributeValue{
+		"host.name":               pdata.NewAttributeValueString("testing-host"),
+		"host.id":                 pdata.NewAttributeValueString("my-host-id"),
+		"host.type":               pdata.NewAttributeValueString("my-host-type"),
+		"k8s.cluster.name":        pdata.NewAttributeValueString("testing-cluster"),
+		"k8s.deployment.name":     pdata.NewAttributeValueString("my-deployment-name"),
+		"k8s.namespace.name":      pdata.NewAttributeValueString("my-namespace-name"),
+		"k8s.service.name":        pdata.NewAttributeValueString("my-service-name"),
+		"cloud.account.id":        pdata.NewAttributeValueString("my-account-id"),
+		"cloud.availability_zone": pdata.NewAttributeValueString("my-zone"),
+		"cloud.region":            pdata.NewAttributeValueString("my-region"),
+		"abc":                     pdata.NewAttributeValueString("abc"),
+		"def":                     pdata.NewAttributeValueString("def"),
+		"xyz":                     pdata.NewAttributeValueString("xyz"),
+		"jkl":                     pdata.NewAttributeValueString("jkl"),
+		"dummy":                   pdata.NewAttributeValueString("dummy"),
+	}
+	attributes = pdata.NewAttributeMapFromMap(bench_pdata_attributes)
+)
+
+func BenchmarkTranslateAttributes(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = translateAttributes(attributes)
+	}
+}
+
+func BenchmarkTranslateAttributesInPlace(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		attributes := pdata.NewAttributeMapFromMap(bench_pdata_attributes)
+		translateAttributesInPlace(attributes)
 	}
 }

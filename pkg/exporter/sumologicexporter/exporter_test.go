@@ -46,6 +46,18 @@ func LogRecordsToLogs(records []pdata.LogRecord) pdata.Logs {
 	return logs
 }
 
+func logRecordsToLogPair(records []pdata.LogRecord) []logPair {
+	logs := make([]logPair, len(records))
+	for num, record := range records {
+		logs[num] = logPair{
+			log:        record,
+			attributes: record.Attributes(),
+		}
+	}
+
+	return logs
+}
+
 type exporterTest struct {
 	srv *httptest.Server
 	exp *sumologicexporter
@@ -503,7 +515,8 @@ func TestPushJSONLogsWithAttributeTranslation(t *testing.T) {
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			var regex string
-			regex += `{"InstanceType":"wizard","host":"harry-potter","log":"Example log","timestamp":\d{13}}`
+			// Mind that host attribute is not being send in log body
+			regex += `{"InstanceType":"wizard","log":"Example log","timestamp":\d{13}}`
 			assert.Regexp(t, regex, body)
 
 			assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))
@@ -890,6 +903,40 @@ func TestLogsJsonFormatMetadataFilter(t *testing.T) {
 				assert.Equal(t, "dummy undefined",
 					req.Header.Get("X-Sumo-Name"),
 					"X-Sumo-Name header is not set correctly",
+				)
+			},
+		},
+		{
+			name: "empty attribute",
+			logResourceAttributes: map[string]pdata.AttributeValue{
+				"_sourceCategory": pdata.NewAttributeValueString("dummy"),
+				"key1":            pdata.NewAttributeValueString("value1"),
+				"key2":            pdata.NewAttributeValueString("value2"),
+				"key3":            pdata.NewAttributeValueString(""),
+			},
+			cfgFn: func(c *Config) {
+				c.LogFormat = JSONFormat
+				c.SourceCategory = "testing_source_templates %{_sourceCategory}"
+				c.MetadataAttributes = []string{
+					"key1",
+					"_source.*",
+					"key3",
+				}
+			},
+			handler: func(w http.ResponseWriter, req *http.Request) {
+				body := extractBody(t, req)
+
+				var regex string
+				regex += `{"key2":"value2","log":"Example log","timestamp":\d{13}}`
+				assert.Regexp(t, regex, body)
+
+				assert.Equal(t, "key1=value1", req.Header.Get("X-Sumo-Fields"),
+					"X-Sumo-Fields is not as expected",
+				)
+
+				assert.Equal(t, "testing_source_templates dummy",
+					req.Header.Get("X-Sumo-Category"),
+					"X-Sumo-Category header is not set correctly",
 				)
 			},
 		},

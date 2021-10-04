@@ -1,8 +1,23 @@
 # Performance
 
-## Logs
+- [Benchmarks](#benchmarks)
+  - [Logs](#logs)
+    - [Benchmark setup](#benchmark-setup)
+    - [CPU usage guidelines](#cpu-usage-guidelines)
+      - [Benchmark - CPU usage for particular average message size and EPS](#benchmark---cpu-usage-for-particular-average-message-size-and-eps)
+      - [Benchmark - EPS for average message size and CPU usage](#benchmark---eps-for-average-message-size-and-cpu-usage)
+    - [Memory usage guidelines](#memory-usage-guidelines)
+      - [Benchmark - memory usage for particular average message size and EPS](#benchmark---memory-usage-for-particular-average-message-size-and-eps)
+- [Fine Tuning](#fine-tuning)
+  - [Sumo Logic Exporter](#sumo-logic-exporter)
+  - [Batch Processor](#batch-processor)
+  - [Memory Limiter Processor](#memory-limiter-processor)
 
-### Benchmark setup
+## Benchmarks
+
+### Logs
+
+#### Benchmark setup
 
 The following benchmark has been compiled on an Amazon `m4.large`
 instance (which has 2 CPU cores and 8 GB of memory available).
@@ -14,7 +29,7 @@ using [`filelogreceiver`][filelogreceiver].
 
 #### CPU usage guidelines
 
-#### Benchmark - CPU usage for particular average message size and EPS
+##### Benchmark - CPU usage for particular average message size and EPS
 
 Measured CPU usage for particular Events Per Second (EPS) average message size.
 
@@ -28,7 +43,7 @@ Measured CPU usage for particular Events Per Second (EPS) average message size.
 | **1500** | 7.08% | 7.29% | 7.99%  | 16.93% | 27.96% |
 | **2000** | 9.64% | 9.56% | 10.39% | 22.51% | 36.59% |
 
-#### Benchmark - EPS for average message size and CPU usage
+##### Benchmark - EPS for average message size and CPU usage
 
 Events Per Second (EPS) achieved for a particular average message size and CPU usage.
 
@@ -56,7 +71,7 @@ log entries (which is expected due to less overhead coming from timestamp parsin
 
 #### Memory usage guidelines
 
-#### Benchmark - memory usage for particular average message size and EPS
+##### Benchmark - memory usage for particular average message size and EPS
 
 Measured memory usage (in MB) for particular Events Per Second (EPS) average message size.
 
@@ -69,3 +84,45 @@ Measured memory usage (in MB) for particular Events Per Second (EPS) average mes
 | **1000** | 121.6  | 126.75 | 127.94 | 140.11 | 106.82 |
 | **1500** | 128.54 | 131.9  | 137.69 | 95.21  | 113.89 |
 | **2000** | 130.62 | 125.27 | 144.59 | 98.62  | 134.61 |
+
+## Fine Tuning
+
+There are a couple configuration options that can help with performance in specific scenarios.
+
+### Sumo Logic Exporter
+
+The [`sumologicexporter`](../pkg/exporter/sumologicexporter)
+sends data to Sumo Logic.
+
+It has the following features that can help with performance:
+
+- `retry_on_failure` with its `initial_interval`, `max_interval` and `max_elapsed_time` settings,
+- `sending_queue` with its `num_consumers`, `queue_size` settings,
+- `timeout`.
+
+Read more about these features in the [Sumo Logic Exporter docs](../pkg/exporter/sumologicexporter/README.md).
+
+### Batch Processor
+
+The [`batchprocessor`][batchprocessor] joins records of each type in batches.
+
+It has the following features that can help with performance:
+
+- `send_batch_size`,
+- `send_batch_max_size`,
+- `timeout`.
+
+Read more about these features in the [Batch Processor docs].
+
+[batchprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor
+[Batch Processor docs]: https://github.com/open-telemetry/opentelemetry-collector/blob/main/processor/batchprocessor/README.md
+
+### Memory Limiter Processor
+
+The [`memorylimiterprocessor`][memorylimiterprocessor] prevents out-of-memory crashes for the collector process
+by monitoring the amount of memory used by the collector and forcing it to lower its memory consumption.
+
+Read more about its features in the [Memory Limiter Processor docs].
+
+[memorylimiterprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor
+[Memory Limiter Processor docs]: https://github.com/open-telemetry/opentelemetry-collector/blob/main/processor/memorylimiterprocessor/README.md

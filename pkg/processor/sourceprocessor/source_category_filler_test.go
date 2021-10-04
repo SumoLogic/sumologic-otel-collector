@@ -25,9 +25,8 @@ func TestNewSourceCategoryFiller(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.SourceCategory = "qwerty-%{k8s.namespace.name}-%{k8s.pod.uid}"
 
-	filler := newSourceCategoryFiller("_sourceCategory", cfg)
+	filler := newSourceCategoryFiller(cfg)
 
-	assert.Equal(t, filler.attributeName, "_sourceCategory")
 	assert.Len(t, filler.templateAttributes, 2)
 	assert.Equal(t, "k8s.namespace.name", filler.templateAttributes[0])
 	assert.Equal(t, "k8s.pod.uid", filler.templateAttributes[1])
@@ -41,7 +40,7 @@ func TestFill(t *testing.T) {
 	attrs.InsertString("k8s.namespace.name", "ns-1")
 	attrs.InsertString("k8s.pod.uid", "123asd")
 
-	filler := newSourceCategoryFiller("_sourceCategory", cfg)
+	filler := newSourceCategoryFiller(cfg)
 	filler.fill(&attrs)
 
 	assertAttribute(t, attrs, "_sourceCategory", "kubernetes/source/ns/1/123asd/cat")
@@ -57,8 +56,78 @@ func TestFillWithAnnotations(t *testing.T) {
 	attrs.InsertString("k8s.pod.annotation.sumologic.com/sourceCategoryPrefix", "annoPrefix:")
 	attrs.InsertString("k8s.pod.annotation.sumologic.com/sourceCategoryReplaceDash", "#")
 
-	filler := newSourceCategoryFiller("_sourceCategory", cfg)
+	filler := newSourceCategoryFiller(cfg)
 	filler.fill(&attrs)
 
 	assertAttribute(t, attrs, "_sourceCategory", "annoPrefix:sc#from#annot#ns#1#123asd")
+}
+
+func TestFillWithContainerAnnotations(t *testing.T) {
+	t.Run("container annotations are disabled by default", func(t *testing.T) {
+		cfg := createDefaultConfig().(*Config)
+		cfg.SourceCategory = "my-source-category"
+
+		attrs := pdata.NewAttributeMap()
+		attrs.InsertString("k8s.pod.annotation.sumologic.com/container-name-1.sourceCategory", "first_source-category")
+		attrs.InsertString("k8s.pod.annotation.sumologic.com/container-name-2.sourceCategory", "another/source-category")
+		attrs.InsertString("k8s.container.name", "container-name-1")
+
+		filler := newSourceCategoryFiller(cfg)
+		filler.fill(&attrs)
+
+		assertAttribute(t, attrs, "_sourceCategory", "kubernetes/my/source/category")
+	})
+
+	t.Run("source category for container-name-1", func(t *testing.T) {
+		cfg := createDefaultConfig().(*Config)
+		cfg.SourceCategory = "my-source-category"
+		cfg.ContainerAnnotations.Enabled = true
+
+		attrs := pdata.NewAttributeMap()
+		attrs.InsertString("k8s.pod.annotation.sumologic.com/container-name-1.sourceCategory", "first_source-category")
+		attrs.InsertString("k8s.pod.annotation.sumologic.com/container-name-2.sourceCategory", "another/source-category")
+		attrs.InsertString("k8s.container.name", "container-name-1")
+
+		filler := newSourceCategoryFiller(cfg)
+		filler.fill(&attrs)
+
+		assertAttribute(t, attrs, "_sourceCategory", "first_source-category")
+	})
+
+	t.Run("source category for container-name-2", func(t *testing.T) {
+		cfg := createDefaultConfig().(*Config)
+		cfg.SourceCategory = "my-source-category"
+		cfg.ContainerAnnotations.Enabled = true
+
+		attrs := pdata.NewAttributeMap()
+		attrs.InsertString("k8s.pod.annotation.sumologic.com/container-name-1.sourceCategory", "first_source-category")
+		attrs.InsertString("k8s.pod.annotation.sumologic.com/container-name-2.sourceCategory", "another/source-category")
+		attrs.InsertString("k8s.container.name", "container-name-2")
+
+		filler := newSourceCategoryFiller(cfg)
+		filler.fill(&attrs)
+
+		assertAttribute(t, attrs, "_sourceCategory", "another/source-category")
+	})
+
+	t.Run("custom container annotation prefix", func(t *testing.T) {
+		cfg := createDefaultConfig().(*Config)
+		cfg.SourceCategory = "my-source-category"
+		cfg.ContainerAnnotations.Enabled = true
+		cfg.ContainerAnnotations.Prefixes = []string{
+			"unused-prefix/",
+			"customAnno_prefix:",
+		}
+
+		attrs := pdata.NewAttributeMap()
+		attrs.InsertString("k8s.pod.annotation.customAnno_prefix:container-name-1.sourceCategory", "first_source-category")
+		attrs.InsertString("k8s.pod.annotation.customAnno_prefix:container-name-2.sourceCategory", "another/source-category")
+		attrs.InsertString("k8s.pod.annotation.customAnno_prefix:container-name-3.sourceCategory", "THIRD_s-c!")
+		attrs.InsertString("k8s.container.name", "container-name-3")
+
+		filler := newSourceCategoryFiller(cfg)
+		filler.fill(&attrs)
+
+		assertAttribute(t, attrs, "_sourceCategory", "THIRD_s-c!")
+	})
 }

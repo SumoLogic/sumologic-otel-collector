@@ -48,6 +48,7 @@ func TestLoadConfig(t *testing.T) {
 	assert.Equal(t, p2, &Config{
 		ProcessorSettings:         &ps2,
 		Collector:                 "somecollector",
+		SourceHost:                "%{k8s.pod.hostname}",
 		SourceName:                "%{k8s.namespace.name}.%{k8s.pod.name}.%{k8s.container.name}/foo",
 		SourceCategory:            "%{k8s.namespace.name}/%{k8s.pod.pod_name}/bar",
 		SourceCategoryPrefix:      "kubernetes/",
@@ -64,6 +65,12 @@ func TestLoadConfig(t *testing.T) {
 		PodKey:             "k8s.pod.name",
 		PodNameKey:         "k8s.pod.pod_name",
 		PodTemplateHashKey: "pod_labels_pod-template-hash",
-		SourceHostKey:      "k8s.pod.hostname",
+
+		ContainerAnnotations: ContainerAnnotationsConfig{
+			Enabled: false,
+			Prefixes: []string{
+				"sumologic.com/",
+			},
+		},
 	})
 }

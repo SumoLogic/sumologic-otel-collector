@@ -179,7 +179,7 @@ func TestLogsSourceHostKey(t *testing.T) {
 	t.Run("works using existing resource attribute", func(t *testing.T) {
 		config := NewFactory().CreateDefaultConfig().(*Config)
 		config.SourceName = "will-it-work-%{_HOSTNAME}"
-		config.SourceHostKey = "_HOSTNAME"
+		config.SourceHost = "%{_HOSTNAME}"
 
 		pLogs := newLogsDataWithLogs(resourceAttrs, logAttrs)
 
@@ -211,7 +211,7 @@ func TestLogsSourceHostKey(t *testing.T) {
 	t.Run("does not work using record attribute", func(t *testing.T) {
 		config := NewFactory().CreateDefaultConfig().(*Config)
 		config.SourceName = "will-it-work-%{_CMDLINE}"
-		config.SourceHostKey = "_CMDLINE"
+		config.SourceHost = "%{_CMDLINE}"
 
 		pLogs := newLogsDataWithLogs(resourceAttrs, logAttrs)
 
@@ -443,6 +443,19 @@ func TestSourceCategoryAnnotations(t *testing.T) {
 
 		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
 		assertAttribute(t, processedAttributes, "_sourceCategory", "annot>sc^namespace^1")
+	})
+
+	t.Run("container-level annotations", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		inputAttributes["pod_annotation_sumologic.com/container-1.sourceCategory"] = "container-sc"
+		inputTraces := newTraceData(inputAttributes)
+
+		cfg.ContainerAnnotations.Enabled = true
+		processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+		assert.NoError(t, err)
+
+		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, processedAttributes, "_sourceCategory", "container-sc")
 	})
 }
 

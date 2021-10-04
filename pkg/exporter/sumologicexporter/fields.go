@@ -39,12 +39,19 @@ func newFields(attrMap pdata.AttributeMap) fields {
 func (f fields) string() string {
 	returnValue := make([]string, 0, f.orig.Len())
 	f.orig.Range(func(k string, v pdata.AttributeValue) bool {
+		sv := v.AsString()
+
+		// Skip empty field
+		if len(sv) == 0 {
+			return true
+		}
+
 		returnValue = append(
 			returnValue,
 			fmt.Sprintf(
 				"%s=%s",
 				f.sanitizeField(k),
-				f.sanitizeField(v.AsString()),
+				f.sanitizeField(sv),
 			),
 		)
 		return true
@@ -57,4 +64,9 @@ func (f fields) string() string {
 // sanitizeFields sanitize field (key or value) to be correctly parsed by sumologic receiver
 func (f fields) sanitizeField(fld string) string {
 	return f.replacer.Replace(fld)
+}
+
+// translateAttributes translates fields to sumo format
+func (f *fields) translateAttributes() {
+	f.orig = translateAttributes(f.orig)
 }
