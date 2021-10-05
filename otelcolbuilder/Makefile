@@ -67,6 +67,10 @@ test: install generate-sources
 lint: install generate-sources
 	@$(MAKE) -C cmd lint
 
+.PHONY: mod-download-all
+mod-download-all:
+	@echo "No need to run go mod download or tidy on generated sources in $(PWD)"
+
 .PHONY: otelcol-sumo-all-sys
 otelcol-sumo-all-sys: otelcol-sumo-darwin_amd64 otelcol-sumo-linux_amd64 otelcol-sumo-windows_amd64
 
