@@ -101,10 +101,10 @@ OT distro.
 [metricstransformprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#metrics-transform-processor
 [resourcedetectionprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#resource-detection-processor
 [resourceprocessor_help]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.36.0/processor/resourceprocessor
-[routingprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#routing-processor-processor
+[routingprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#routing-processor
 [spanmetricsprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#span-metrics-processor
 [tailsamplingprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#tail-sampling-processor
-[filterprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#tail-sampling-processor
+[filterprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#filter-processor
 
 ### Exporters
 

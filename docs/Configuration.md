@@ -30,7 +30,7 @@
     - [Kubernetes Processor](#kubernetes-processor)
     - [Source Processor](#source-processor)
     - [Sumo Logic Syslog Processor](#sumo-logic-syslog-processor)
-  - [Metric Frequency Processor](#metric-frequency-processor)
+    - [Metric Frequency Processor](#metric-frequency-processor)
   - [Open Telemetry Upstream Processors](#open-telemetry-upstream-processors)
     - [Attributes Processor](#attributes-processor)
     - [Group by Attributes Processor](#group-by-attributes-processor)
@@ -752,7 +752,7 @@ More details are available in [comparison document](Comparison.md#syslog).__
 
 [sumologicsyslogprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/sumologicsyslogprocessor/README.md
 
-### Metric Frequency Processor
+#### Metric Frequency Processor
 
 The `metricfrequencyprocessor` is a metrics processor that helps reduce DPM by automatic tuning of metrics reporting
 frequency which adjusts for metric's information volume.
