@@ -39,7 +39,8 @@ and can be used as an authenticator for the
 - `collector_fields`: a map of key value pairs that will be used as collector
   fields that will be used for registration.
   For more information on this subject please visit [this help document][fields_help]
-- `api_base_url`: base URL that will be used for creating API requests
+- `api_base_url`: base API URL that will be used for creating API requests,
+  see [API URLs](#api-urls) details
   (default: `https://open-collectors.sumologic.com`)
 - `heartbeat_interval`: interval that will be used for sending heartbeats
   (default: `15s`)
@@ -92,6 +93,26 @@ service:
       processors: []
       exporters: [sumologic]
 ```
+
+## API URLs
+
+When integrating the extension with different Sumo Logic deployment that the
+default one (i.e. `https://open-collectors.sumologic.com`) one needs to specify
+the base API URL in the configuration (via `api_base_url` option) in order to
+specify against which URL the agent will be authenticating against.
+
+Here is a list of valid values for this configuration option:
+
+|  Deployment   | API base URL                                |
+|:-------------:|---------------------------------------------|
+| default/`US1` | `https://open-collectors.sumologic.com`     |
+|     `US2`     | `https://open-collectors.us2.sumologic.com` |
+|     `AU`      | `https://open-collectors.au.sumologic.com`  |
+|     `DE`      | `https://open-collectors.de.sumologic.com`  |
+|     `EU`      | `https://open-collectors.eu.sumologic.com`  |
+|     `JP`      | `https://open-collectors.jp.sumologic.com`  |
+|     `CA`      | `https://open-collectors.ca.sumologic.com`  |
+|     `IN`      | `https://open-collectors.in.sumologic.com`  |
 
 ## Storing credentials
 
