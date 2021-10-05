@@ -8,7 +8,7 @@ In order to run tests run the following command:
 make test
 ```
 
-This whill:
+This will:
 
 - ensure that you have [`opentelemetry-collector-builder`][otcbuilder] installed
 - generate boilerplate according to the [.otelcol-builder.yaml][otconfig] config file
