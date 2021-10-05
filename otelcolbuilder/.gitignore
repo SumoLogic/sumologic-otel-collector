@@ -1,2 +1,3 @@
-cmd/
-!cmd/main_test.go
+cmd/*
+!cmd/collector_config_test.go
+!cmd/testdata/
