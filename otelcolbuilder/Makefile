@@ -1,9 +1,10 @@
 BINARY_NAME ?= otelcol-sumo
 BUILDER_VERSION ?= 0.36.0
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector-builder
-BUILDER_BIN_PATH ?= ${HOME}/bin/opentelemetry-collector-builder
+BUILDER_BIN_PATH ?= $(HOME)/bin/opentelemetry-collector-builder
 VERSION ?= "$(shell git describe --tags --abbrev=10)"
 GO ?= go
+OS ?= $(shell uname -s | tr A-Z a-z)
 
 # Builds for darwin need to be built with CGO_ENABLED set to 1 because some telegraf
 # plugins that are used within the telegrafreceiver are implemented with CGO.
@@ -20,56 +21,51 @@ else
 CGO_ENABLED ?= 0
 endif
 
+
 .PHONY: install
 install:
-	go install ${BUILDER_REPO}@v$(BUILDER_VERSION)
-
-.PHONY: install-prego1.16
-install-prego1.16:
-	GO111MODULE=on go get ${BUILDER_REPO}@v$(BUILDER_VERSION)
+	@echo "Installing $(BUILDER_REPO)@$(BUILDER_VERSION)..."
+	go install $(BUILDER_REPO)@v$(BUILDER_VERSION)
 
 .PHONY: _install-bin
 _install-bin:
-	mkdir -p ${HOME}/bin && \
-	curl -L -o $(BUILDER_BIN_PATH) https://${BUILDER_REPO}/releases/download/v$(BUILDER_VERSION)/opentelemetry-collector-builder_$(BUILDER_VERSION)_$(PLATFORM)_amd64 && \
+	mkdir -p $(HOME)/bin && \
+	curl -L -o $(BUILDER_BIN_PATH) https://$(BUILDER_REPO)/releases/download/v$(BUILDER_VERSION)/opentelemetry-collector-builder_$(BUILDER_VERSION)_$(PLATFORM)_amd64 && \
 	chmod +x $(BUILDER_BIN_PATH)
 
-.PHONY: install-bin-linux
-install-bin-linux:
-	$(MAKE) _install-bin PLATFORM=linux
-
-.PHONY: install-bin-darwin
-install-bin-darwin:
-	$(MAKE) _install-bin PLATFORM=darwin
+.PHONY: install-bin
+install-bin:
+	@echo "Installing $(BUILDER_REPO)@$(BUILDER_VERSION)..."
+	@$(MAKE) _install-bin PLATFORM=$(OS)
 
 .PHONY: _builder
 _builder:
 # Need to specify go path because otherwise opentelemetry-collector-builder
 # uses /usr/bin/go which on Github Actions is using preinstalled 1.15.12 by default.
-	CGO_ENABLED=${CGO_ENABLED} opentelemetry-collector-builder \
-		--go ${GO} \
-		--version ${VERSION} \
+	CGO_ENABLED=$(CGO_ENABLED) opentelemetry-collector-builder \
+		--go $(GO) \
+		--version $(VERSION) \
 		--config .otelcol-builder.yaml \
 		--output-path ./cmd \
-		--skip-compilation=${SKIP_COMPILATION} \
+		--skip-compilation=$(SKIP_COMPILATION) \
 		--name $(BINARY_NAME)
 
 .PHONY: build
 build:
-	$(MAKE) _builder SKIP_COMPILATION=false
+	@$(MAKE) _builder SKIP_COMPILATION=false
 	chmod +x ./cmd/$(BINARY_NAME)
 
 .PHONY: generate-sources
 generate-sources:
-	$(MAKE) _builder SKIP_COMPILATION=true
+	@$(MAKE) _builder SKIP_COMPILATION=true
 
 .PHONY: test
 test: install generate-sources
-	$(MAKE) -C cmd test
+	@$(MAKE) -C cmd test
 
 .PHONY: lint
 lint: install generate-sources
-	$(MAKE) -C cmd lint
+	@$(MAKE) -C cmd lint
 
 .PHONY: mod-download-all
 mod-download-all:

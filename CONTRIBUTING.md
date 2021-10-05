@@ -1,8 +1,13 @@
 # Contributing Guide
 
+- [How to build](#how-to-build)
+- [Running Tests](#running-tests)
+
+---
+
 To contribute you will need to ensure you have the following setup:
 
-* working Go environment
+- working Go environment
 
 ## How to build
 
@@ -35,3 +40,9 @@ opentelemetry-collector-builder \
 2021-05-24T16:32:12.376+0200    INFO    builder/main.go:107     Compiling
 2021-05-24T16:32:37.326+0200    INFO    builder/main.go:113     Compiled        {"binary": "./cmd/otelcol-sumo-linux_arm64"}
 ```
+
+## Running Tests
+
+In order to run tests run `make gotest` in root directory of this repository.
+This will run tests in every module from this repo by running `make test` in its
+directory.

@@ -11,7 +11,8 @@ Sumo Logic Distro of [OpenTelemetry Collector][otc_link] built with
 **This software is currently in beta and is not recommended for production environments.**
 **If you wish to participate in this beta, please contact your Sumo Logic account team or Sumo Logic Support.**
 
-- [Usage](#usage)
+- [Usage and configuration examples](#usage)
+- [Open Telemetry collector builder](#open-telemetry-collector-builder)
 - [Built-in Components](#built-in-components)
   - [Receivers](#receivers)
   - [Processors](#processors)
@@ -19,9 +20,20 @@ Sumo Logic Distro of [OpenTelemetry Collector][otc_link] built with
   - [Extensions](#extensions)
 - [Contributing](#contributing)
 
-## Usage
+## Usage and configuration examples
 
 See the [documentation](docs/README.md).
+
+## Open Telemetry collector builder
+
+Sumo Logic Distribution of OpenTelemetry uses
+[`opentelemetry-collector-builder`][otcbuilder] in order to produce the collector
+binary.
+
+One can find the details in [here][otcbuilder_dir].
+
+[otcbuilder]: https://github.com/open-telemetry/opentelemetry-collector-builder
+[otcbuilder_dir]: ./otelcolbuilder/README.md
 
 ## Built-in Components
 

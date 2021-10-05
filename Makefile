@@ -27,15 +27,15 @@ list-modules:
 
 .PHONY: gotest
 gotest:
-	$(MAKE) for-all CMD="make test"
+	@$(MAKE) for-all CMD="make test"
 
 .PHONY: golint
 golint:
-	$(MAKE) for-all CMD="make lint"
+	@$(MAKE) for-all CMD="make lint"
 
 .PHONY: gomod-download-all
 gomod-download-all:
-	$(MAKE) for-all CMD="make mod-download-all"
+	@$(MAKE) for-all CMD="make mod-download-all"
 
 .PHONY: install-golint
 install-golangci-lint:
@@ -44,7 +44,7 @@ install-golangci-lint:
 
 .PHONY: for-all
 for-all:
-	@echo "running $${CMD} in root"
+	@echo "running $${CMD} in all modules..."
 	@set -e; for dir in $(ALL_MODULES); do \
 	  (cd "$${dir}" && \
 	  	echo "running $${CMD} in $${dir}" && \
