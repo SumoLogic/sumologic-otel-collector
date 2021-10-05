@@ -13,13 +13,16 @@ it with the in-memory data. If a match is found, the cached metadata is added to
 
 There are several top level sections of the processor config:
 
-- `passthrough` (default = false): when set to true, only annotates resources with the pod IP and
-does not try to extract any other metadata. It does not need access to the K8S cluster API.
-Agent/Collector must receive records directly from services to be able to correctly detect the pod IPs.
-- `owner_lookup_enabled` (default = false): when set to true, fields such as `daemonSetName`,
-`replicaSetName`, `service`, etc. can be extracted, though it requires fetching additional data to traverse
-the `owner` relationship.  See the [list of fields](#extract-section) for more information over
-which tags require the flag to be enabled.
+- `passthrough` (default = false): when set to true, only annotates resources
+  with the pod IP and does not try to extract any other metadata.
+  It does not need access to the K8S cluster API.
+  Agent/Collector must receive records directly from services to be able to
+  correctly detect the pod IPs.
+- `owner_lookup_enabled` (default = false): when set to true, fields such as
+  `daemonSetName`, `replicaSetName`, `service`, etc. can be extracted, though
+  it requires fetching additional data to traverse the `owner` relationship.
+  See the [list of fields](#extract-section) for more information over which tags
+  require the flag to be enabled.
 - `extract`: the section (see [below](#extract-section)) allows specifying extraction rules
 - `filter`: the section (see [below](#filter-section)) allows specifying filters when matching pods
 
@@ -27,8 +30,9 @@ which tags require the flag to be enabled.
 
 Allows specifying extraction rules to extract data from k8s pod specs.
 
-- `metadata` (default = empty): specifies a list of strings that denote extracted fields. Following fields
-can be extracted:
+- `metadata` (default = empty): specifies a list of strings that denote
+  extracted fields. Following fields can be extracted:
+
   - `containerId`
   - `containerName`
   - `containerImage`
@@ -41,8 +45,8 @@ can be extracted:
   - `podId`
   - `podName`
   - `replicaSetName` _(`owner_lookup_enabled` must be set to `true`)_
-  - `serviceName` _(`owner_lookup_enabled` must be set to `true`)_ - in case more than one service is assigned
-  to the pod, they are comma-separated
+  - `serviceName` _(`owner_lookup_enabled` must be set to `true`)_ - in case more
+    than one service is assigned to the pod, they are comma-separated
   - `startTime`
   - `statefulSetName` _(`owner_lookup_enabled` must be set to `true`)_
 
@@ -74,11 +78,11 @@ tags:
 ```
 
 - `annotations` (default = empty): a list of rules for extraction and recording annotation data.
-See [field extract config](#field-extract-config) for an example on how to use it.
+  See [field extract config](#field-extract-config) for an example on how to use it.
 - `labels` (default = empty): a list of rules for extraction and recording label data.
-See [field extract config](#field-extract-config) for an example on how to use it.
+  See [field extract config](#field-extract-config) for an example on how to use it.
 - `namespace_labels` (default = empty): a list of rules for extraction and recording namespace label data.
-See [field extract config](#field-extract-config) for an example on how to use it.
+  See [field extract config](#field-extract-config) for an example on how to use it.
 
 - `delimiter`: if pod is associated with more than one service, delimiter is going be used to join them.
   (default=`", "`)
@@ -89,19 +93,22 @@ Allows specifying an extraction rule to extract a value from exactly one field.
 
 The field accepts a list of maps accepting three keys: `tag_name`, `key` and `regex`
 
-- `tag_name`: represents the name of the tag that will be added to the record.  When not specified
-a default tag name will be used of the format: `k8s.annotations.<annotation key>`. For example, if
-`tag_name` is not specified and the key is `git_sha`, then the record name will be `k8s.annotations.git_sha`
+- `tag_name`: represents the name of the tag that will be added to the record.
+  When not specified a default tag name will be used of the format:
+  `k8s.annotations.<annotation key>`.
+  For example, if `tag_name` is not specified and the key is `git_sha`,
+  then the record name will be `k8s.annotations.git_sha`
 
-- `key`: represents the annotation name. This must exactly match an annotation name. To capture
-all keys, `"*"` can be used
+- `key`: represents the annotation name. This must exactly match an annotation name.
+  To capture all keys, `"*"` can be used
 
 - `regex`: is an optional field used to extract a sub-string from a complex field value.
-The supplied regular expression must contain one named parameter with the string "value"
-as the name. For example, if your pod spec contains the following annotation,
-`kubernetes.io/change-cause: 2019-08-28T18:34:33Z APP_NAME=my-app GIT_SHA=58a1e39 CI_BUILD=4120`
-and you'd like to extract the GIT_SHA and the CI_BUILD values as tags, then you must specify
-the following two extraction rules:
+  The supplied regular expression must contain one named parameter with the string "value"
+  as the name.
+  For example, if your pod spec contains the following annotation,
+  `kubernetes.io/change-cause: 2019-08-28T18:34:33Z APP_NAME=my-app GIT_SHA=58a1e39 CI_BUILD=4120`
+  and you'd like to extract the GIT_SHA and the CI_BUILD values as tags, then you must specify
+  the following two extraction rules:
 
   ```yaml
   processors:
@@ -132,48 +139,55 @@ the following two extraction rules:
 
 FilterConfig section allows specifying filters to filter pods by labels, fields, namespaces, nodes, etc.
 
-- `node` (default = ""): represents a k8s node or host. If specified, any pods not running on the specified
-node will be ignored by the tagger.
-- `node_from_env_var` (default = ""): can be used to extract the node name from an environment variable.
-The value must be the name of the environment variable. This is useful when the node a Otel agent will
-run on cannot be predicted. In such cases, the Kubernetes downward API can be used to add the node name
-to each pod as an environment variable. K8s tagger can then read this value and filter pods by it.
-For example, node name can be passed to each agent with the downward API as follows
+- `node` (default = ""): represents a k8s node or host.
+  If specified, any pods not running on the specified node will be ignored by the tagger.
+- `node_from_env_var` (default = ""): can be used to extract the node name
+  from an environment variable.
+  The value must be the name of the environment variable.
+  This is useful when the node a Otel agent will run on cannot be predicted.
+  In such cases, the Kubernetes downward API can be used to add the node name
+  to each pod as an environment variable.
+  K8s tagger can then read this value and filter pods by it.
+  For example, node name can be passed to each agent with the downward API as follows
 
-    ```yaml
-     env:
-       - name: K8S_NODE_NAME
-             valueFrom:
-               fieldRef:
-                 fieldPath: spec.nodeName
-    ```
+  ```yaml
+   env:
+     - name: K8S_NODE_NAME
+           valueFrom:
+             fieldRef:
+               fieldPath: spec.nodeName
+  ```
 
   Then the NodeFromEnv field can be set to `K8S_NODE_NAME` to filter all pods by the node that the agent
   is running on. More on downward API here:
   https://kubernetes.io/docs/tasks/inject-data-application/downward-api-volume-expose-pod-information/
 - `namespace` (default = ""): filters all pods by the provided namespace. All other pods are ignored.
-- `fields` (default = empty): a list of maps accepting three keys: `key`, `value`, `op`. Allows to filter
-pods by generic k8s fields. Only the following operations (`op`) are supported: `equals`, `not-equals`.
-For example, to match pods having `key1=value1` and `key2<>value2` condition met for fields, one can specify:
+- `fields` (default = empty): a list of maps accepting three keys: `key`, `value`, `op`.
+  Allows to filter pods by generic k8s fields. Only the following operations (`op`)
+  are supported: `equals`, `not-equals`.
+  For example, to match pods having `key1=value1` and `key2<>value2` condition
+  met for fields, one can specify:
 
-    ```yaml
-      fields:
-       - key: key1 # `op` defaults to "equals" when not specified
-         value: value1
-       - key: key2
-         value: value2
-         op: not-equals
-    ```
+  ```yaml
+    fields:
+     - key: key1 # `op` defaults to "equals" when not specified
+       value: value1
+     - key: key2
+       value: value2
+       op: not-equals
+  ```
 
-- `labels` (default = empty): a list of maps accepting three keys: `key`, `value`, `op`. Allows to filter
-pods by generic k8s pod labels. Only the following operations (`op`) are supported: `equals`, `not-equals`,
-`exists`, `not-exists`. For example, to match pods where `label1` exists, one can specify
+- `labels` (default = empty): a list of maps accepting three keys: `key`, `value`, `op`.
+   Allows to filter pods by generic k8s pod labels.
+   Only the following operations (`op`) are supported: `equals`, `not-equals`,
+  `exists`, `not-exists`.
+  For example, to match pods where `label1` exists, one can specify:
 
-    ```yaml
-      fields:
-       - key: label1
-         op: exists
-    ```
+  ```yaml
+    fields:
+     - key: label1
+       op: exists
+  ```
 
 ### Example config
 
@@ -258,7 +272,7 @@ for this called the downward API. To automatically filter pods by the node the p
 to complete the following steps:
 
 1. Use the downward API to inject the node name as an environment variable.
-Add the following snippet under the pod env section of the OpenTelemetry container.
+  Add the following snippet under the pod env section of the OpenTelemetry container.
 
     ```yaml
        env:
@@ -272,7 +286,7 @@ Add the following snippet under the pod env section of the OpenTelemetry contain
     This will inject a new environment variable to the OpenTelemetry container with the value as the
     name of the node the pod was scheduled to run on.
 
-2. Set "filter.node_from_env_var" to the name of the environment variable holding the node name.
+1. Set "filter.node_from_env_var" to the name of the environment variable holding the node name.
 
     ```yaml
        k8s_tagger:

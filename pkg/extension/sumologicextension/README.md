@@ -8,11 +8,11 @@ This extension is to be used as part of Sumo Logic collector in conjuction with
 
 It manages:
 
-* authentication (passing the provided credentials to `sumologicexporter`
+- authentication (passing the provided credentials to `sumologicexporter`
   when configured as extension in the same service)
-* registration (storing the registration info locally after successful registration
+- registration (storing the registration info locally after successful registration
   for later use)
-* heartbeats
+- heartbeats
 
 [sumologicexporter]: ../../exporter/sumologicexporter/
 [sumologic]: https://www.sumologic.com/
@@ -28,36 +28,36 @@ and can be used as an authenticator for the
 
 ## Configuration
 
-* `access_id`: (required) access ID for Sumo Logic service, see
+- `access_id`: (required) access ID for Sumo Logic service, see
   [help][credentials_help] for more details
-* `access_key`: (required) access key for Sumo Logic service, see
+- `access_key`: (required) access key for Sumo Logic service, see
   [help][credentials_help] for more details
-* `collector_name`: name that will be used for registration; by default it is a
+- `collector_name`: name that will be used for registration; by default it is a
    hostname followed by UUID
-* `collector_description`: collector description that will be used for registration
-* `collector_category`: collector category that will be used for registration
-* `collector_fields`: a map of key value pairs that will be used as collector
+- `collector_description`: collector description that will be used for registration
+- `collector_category`: collector category that will be used for registration
+- `collector_fields`: a map of key value pairs that will be used as collector
   fields that will be used for registration.
   For more information on this subject please visit [this help document][fields_help]
-* `api_base_url`: base URL that will be used for creating API requests
+- `api_base_url`: base URL that will be used for creating API requests
   (default: `https://open-collectors.sumologic.com`)
-* `heartbeat_interval`: interval that will be used for sending heartbeats
+- `heartbeat_interval`: interval that will be used for sending heartbeats
   (default: `15s`)
-* `collector_credentials_directory`: directory where state files with registration
+- `collector_credentials_directory`: directory where state files with registration
   info will be stored after successful collector registration
   (default: `$HOME/.sumologic-otel-collector`)
-* `clobber`: defines whether to delete any existing collector with the same name
+- `clobber`: defines whether to delete any existing collector with the same name
   and create a new one upon registration (default: `false`)
-* `ephemeral`: defines whether the collector will be deleted after 12 hours
-	of inactivity (default: `false`)
-* `time_zone`: defines the time zone of the collector. For a list of all possible
+- `ephemeral`: defines whether the collector will be deleted after 12 hours
+  of inactivity (default: `false`)
+- `time_zone`: defines the time zone of the collector. For a list of all possible
   values, refer to the `TZ` column in
   https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
-* `backoff`: defines backoff mechanism for retry in case of failed registration.
+- `backoff`: defines backoff mechanism for retry in case of failed registration.
   [Exponential algorithm](https://pkg.go.dev/github.com/cenkalti/backoff/v4#ExponentialBackOff) is being used.
-  * `initial_interval` - initial interval of backoff (default: `500ms`)
-  * `max_interval` - maximum interval of backoff (default: `1m`)
-  * `max_elapsed_time` - time after which registration fails definitely (default: `15m`)
+  - `initial_interval` - initial interval of backoff (default: `500ms`)
+  - `max_interval` - maximum interval of backoff (default: `1m`)
+  - `max_elapsed_time` - time after which registration fails definitely (default: `15m`)
 
 [credentials_help]: https://help.sumologic.com/Manage/Security/Access-Keys
 [fields_help]: https://help.sumologic.com/Manage/Fields

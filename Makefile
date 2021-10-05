@@ -1,10 +1,15 @@
 all: markdownlint yamllint
 
+.PHONY: markdownlint
 markdownlint: mdl
 
+MD_FILES := $(shell find ./pkg -type f -name "*.md")
+
+.PHONY: mdl
 mdl:
 	mdl --style .markdownlint/style.rb \
-		README.md \
+		$(MD_FILES) \
+		otelcolbuilder/README.md \
 		docs
 
 yamllint:

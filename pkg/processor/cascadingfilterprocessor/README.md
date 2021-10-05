@@ -11,50 +11,68 @@ cascading filtering rules with preset limits.
 ## Processor configuration
 
 The following configuration options should be configured as desired:
+
 - `policies` (no default): Policies used to make a sampling decision
 - `spans_per_second` (default = 1500): Maximum total number of emitted spans per second
-- `probabilistic_filtering_ratio` (default = 0.2): Ratio of spans that are always probabilistically filtered 
-(hence might be used for metrics calculation). The ratio is specified as portion of output spans (defined by
-`spans_per_second`) rather than input spans. So the default filtering rate of `0.2` and default max span rate of
-`1500` produces at most `300` probabilistically sampled spans per second.
+- `probabilistic_filtering_ratio` (default = 0.2): Ratio of spans that are always
+  probabilistically filtered (hence might be used for metrics calculation).
+  The ratio is specified as portion of output spans (defined by `spans_per_second`)
+  rather than input spans. So the default filtering rate of `0.2` and default
+  max span rate of `1500` produces at most `300` probabilistically sampled
+  spans per second.
 
 The following configuration options can also be modified:
-- `decision_wait` (default = 30s): Wait time since the first span of a trace before making a filtering decision
+
+- `decision_wait` (default = 30s): Wait time since the first span of a trace
+  before making a filtering decision
 - `num_traces` (default = 50000): Number of traces kept in memory
-- `expected_new_traces_per_sec` (default = 0): Expected number of new traces (helps in allocating data structures)
+- `expected_new_traces_per_sec` (default = 0): Expected number of new traces
+  (helps in allocating data structures)
 
 ## Updated span attributes
 
 The processor modifies each span attributes, by setting following two attributes:
+
 - `sampling.rule`: describing if `probabilistic` or `filtered` policy was applied
-- `sampling.probability`: describing the effective sampling rate in case of `probabilistic` rule. E.g. if there were `5000`
-spans evaluated in a given second, with `1500` max total spans per second and `0.2` filtering ratio, at most `300` spans
-would be selected by such rule. This would effect in having `sampling.probability=0.06` (`300/5000=0.6`). If such value is already
-set by head-based (or other) sampling, it's multiplied by the calculated value.
+- `sampling.probability`: describing the effective sampling rate in case of
+  `probabilistic` rule. E.g. if there were `5000` spans evaluated in a given
+  second, with `1500` max total spans per second and `0.2` filtering ratio,
+  at most `300` spans would be selected by such rule.
+  This would effect in having `sampling.probability=0.06` (`300/5000=0.6`).
+  If such value is already set by head-based (or other) sampling, it's multiplied
+  by the calculated value.
 
 ## Policy configuration
 
 Each defined policy is evaluated with order as specified in config. There are several properties:
-- `name` (required): identifies the policy
-- `spans_per_second` (default = 0): defines maximum number of spans per second that could be handled by this policy. When set to `-1`,
-it selects the traces only if the global limit is not exceeded by other policies (however, without further limitations)
 
-Additionally, each of the policy might have any of the following filtering criteria defined. They are evaluated for 
-each of the trace spans. If at least one span matching all defined criteria is found, the trace is selected:
-- `numeric_attribute: {key: <name>, min_value: <min_value>, max_value: <max_value>}`: selects span by matching numeric
-attribute (either at resource of span level)
-- `string_attribute: {key: <name>, values: [<value1>, <value2>]}`: selects span by matching string attribute that is one
-of the provided values (either at resource of span level)
-- `properties: { min_number_of_spans: <number>}`: selects the trace if it has at least provided number of spans
-- `properties: { min_duration: <duration>}`: selects the span if the duration is greater or equal the given value 
-(use `s` or `ms` as the suffix to indicate unit)
-- `properties: { name_pattern: <regex>`}: selects the span if its operation name matches the provided regular expression
+- `name` (required): identifies the policy
+- `spans_per_second` (default = 0): defines maximum number of spans per second
+  that could be handled by this policy. When set to `-1`, it selects the traces
+  only if the global limit is not exceeded by other policies (however, without further limitations)
+
+Additionally, each of the policy might have any of the following filtering criteria defined.
+They are evaluated for each of the trace spans.
+If at least one span matching all defined criteria is found, the trace is selected:
+
+- `numeric_attribute: {key: <name>, min_value: <min_value>, max_value: <max_value>}`:
+  selects span by matching numeric attribute (either at resource of span level)
+- `string_attribute: {key: <name>, values: [<value1>, <value2>]}`: selects span
+  by matching string attribute that is one of the provided values (either at resource of span level)
+- `properties: { min_number_of_spans: <number>}`: selects the trace if it has
+  at least provided number of spans
+- `properties: { min_duration: <duration>}`: selects the span if the duration
+  is greater or equal the given value (use `s` or `ms` as the suffix to indicate unit)
+- `properties: { name_pattern: <regex>`}: selects the span if its operation name
+  matches the provided regular expression
 
 To invert the decision (which is still a subject to rate limiting), additional property can be configured:
-- `invert_match: <invert>` (default=`false`): when set to `true`, the opposite decision is selected for the trace. E.g.
-if trace matches a given string attribute and `invert_match=true`, then the trace is not selected
 
-## Limiting the number of spans 
+- `invert_match: <invert>` (default=`false`): when set to `true`, the opposite
+  decision is selected for the trace. E.g. if trace matches a given string
+  attribute and `invert_match=true`, then the trace is not selected
+
+## Limiting the number of spans
 
 There are two `spans_per_second` settings. The global one and the policy-one.
 
@@ -62,7 +80,7 @@ While evaluating traces, the limit is evaluated first on the policy level and th
 of all `spans_per_second` rates might be actually higher than the global limit, but the latter will never be
 exceeded (so some of the traces will not be included).
 
-For example, we have 3 policies: `A, B, C`. Each of them has limit of `300` spans per second and the global limit 
+For example, we have 3 policies: `A, B, C`. Each of them has limit of `300` spans per second and the global limit
 is `500` spans per second. Now, lets say, that there for each of the policies there were 5 distinct traces, each
 having `100` spans and matching policy criteria (lets call them `A1, A2, ... B1, B2...` and so forth:
 
