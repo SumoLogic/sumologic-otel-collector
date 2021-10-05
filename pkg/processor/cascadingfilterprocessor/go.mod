@@ -1,4 +1,4 @@
-module github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor
+module github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor
 
 go 1.17
 

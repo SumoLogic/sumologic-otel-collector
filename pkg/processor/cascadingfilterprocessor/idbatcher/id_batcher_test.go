@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor/bigendianconverter"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/bigendianconverter"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/model/pdata"
 )

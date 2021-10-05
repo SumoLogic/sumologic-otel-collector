@@ -15,7 +15,7 @@
 package sumologicextension
 
 import (
-	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension/api"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/api"
 )
 
 // CollectorCredentials are used for storing the credentials received during

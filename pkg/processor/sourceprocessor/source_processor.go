@@ -24,7 +24,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/model/pdata"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/sourceprocessor/observability"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/sourceprocessor/observability"
 )
 
 type sourceKeys struct {
