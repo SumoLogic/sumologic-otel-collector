@@ -199,6 +199,10 @@ func (se *SumologicExtension) getCredentials(ctx context.Context) (CollectorCred
 		}
 		se.collectorName = colCreds.CollectorName
 		if !se.conf.Clobber {
+			if colCreds.ApiBaseUrl != "" {
+				se.baseUrl = colCreds.ApiBaseUrl
+			}
+
 			se.logger.Info("Found stored credentials, skipping registration",
 				zap.String(collectorNameField, colCreds.Credentials.CollectorName),
 			)
@@ -232,8 +236,7 @@ func (se *SumologicExtension) getCredentials(ctx context.Context) (CollectorCred
 // registerCollector registers the collector using registration API and returns
 // the obtained collector credentials.
 func (se *SumologicExtension) registerCollector(ctx context.Context, collectorName string) (CollectorCredentials, error) {
-	baseUrl := strings.TrimSuffix(se.conf.ApiBaseUrl, "/")
-	u, err := url.Parse(baseUrl)
+	u, err := url.Parse(se.baseUrl)
 	if err != nil {
 		return CollectorCredentials{}, err
 	}
@@ -274,7 +277,12 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 	addJSONHeaders(req)
 
 	se.logger.Info("Calling register API", zap.String("URL", u.String()))
-	res, err := http.DefaultClient.Do(req)
+
+	client := *http.DefaultClient
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	res, err := client.Do(req)
 	if err != nil {
 		se.logger.Warn("Collector registration HTTP request failed", zap.Error(err))
 		return CollectorCredentials{}, fmt.Errorf("failed to register the collector: %w", err)
@@ -283,39 +291,14 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 	defer res.Body.Close()
 
 	if res.StatusCode < 200 || res.StatusCode >= 400 {
-		var errResponse api.ErrorResponsePayload
-		if err := json.NewDecoder(res.Body).Decode(&errResponse); err != nil {
-			var buff bytes.Buffer
-			if _, errCopy := io.Copy(&buff, res.Body); errCopy != nil {
-				return CollectorCredentials{}, fmt.Errorf(
-					"failed to read the collector registration response body, status code: %d, err: %w",
-					res.StatusCode, errCopy,
-				)
-			}
-			return CollectorCredentials{}, fmt.Errorf(
-				"failed to decode collector registration response body: %s, status code: %d, err: %w",
-				buff.String(), res.StatusCode, err,
-			)
-		}
-
-		se.logger.Warn("Collector registration failed",
-			zap.Int("status_code", res.StatusCode),
-			zap.String("error_id", errResponse.ID),
-			zap.Any("errors", errResponse.Errors),
+		return se.handleRegistrationError(res)
+	} else if res.StatusCode == 301 {
+		// Use the URL from Location header for subsequent requests.
+		se.baseUrl = strings.TrimSuffix(res.Header.Get("Location"), "/")
+		se.logger.Info("Redirected to a different deployment",
+			zap.String("url", se.baseUrl),
 		)
-
-		// Return unrecoverable error for 4xx status codes except 429
-		if res.StatusCode >= 400 && res.StatusCode < 500 && res.StatusCode != 429 {
-			return CollectorCredentials{}, backoff.Permanent(fmt.Errorf(
-				"failed to register the collector, got HTTP status code: %d",
-				res.StatusCode,
-			))
-		} else {
-			return CollectorCredentials{}, fmt.Errorf(
-				"failed to register the collector, got HTTP status code: %d",
-				res.StatusCode,
-			)
-		}
+		return se.registerCollector(ctx, collectorName)
 	}
 
 	var resp api.OpenRegisterResponsePayload
@@ -331,7 +314,45 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 	return CollectorCredentials{
 		CollectorName: collectorName,
 		Credentials:   resp,
+		ApiBaseUrl:    se.baseUrl,
 	}, nil
+}
+
+// handleRegistrationError handles the collector registration errors and returns
+// appropriate error for backoff handling and logging purposes.
+func (se *SumologicExtension) handleRegistrationError(res *http.Response) (CollectorCredentials, error) {
+	var errResponse api.ErrorResponsePayload
+	if err := json.NewDecoder(res.Body).Decode(&errResponse); err != nil {
+		var buff bytes.Buffer
+		if _, errCopy := io.Copy(&buff, res.Body); errCopy != nil {
+			return CollectorCredentials{}, fmt.Errorf(
+				"failed to read the collector registration response body, status code: %d, err: %w",
+				res.StatusCode, errCopy,
+			)
+		}
+		return CollectorCredentials{}, fmt.Errorf(
+			"failed to decode collector registration response body: %s, status code: %d, err: %w",
+			buff.String(), res.StatusCode, err,
+		)
+	}
+
+	se.logger.Warn("Collector registration failed",
+		zap.Int("status_code", res.StatusCode),
+		zap.String("error_id", errResponse.ID),
+		zap.Any("errors", errResponse.Errors),
+	)
+
+	// Return unrecoverable error for 4xx status codes except 429
+	if res.StatusCode >= 400 && res.StatusCode < 500 && res.StatusCode != 429 {
+		return CollectorCredentials{}, backoff.Permanent(fmt.Errorf(
+			"failed to register the collector, got HTTP status code: %d",
+			res.StatusCode,
+		))
+	}
+
+	return CollectorCredentials{}, fmt.Errorf(
+		"failed to register the collector, got HTTP status code: %d", res.StatusCode,
+	)
 }
 
 // callRegisterWithBackoff calls registration using exponential backoff algorithm
@@ -430,8 +451,8 @@ func (se *SumologicExtension) sendHeartbeat(ctx context.Context) error {
 			res.StatusCode, buff.String(),
 		)
 	}
-	return nil
 
+	return nil
 }
 
 func (se *SumologicExtension) ComponentID() string {
