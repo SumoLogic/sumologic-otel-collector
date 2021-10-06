@@ -1,6 +1,6 @@
 .PHONY: test
 test:
-	go test -count 1 -parallel 1 ./...
+	go test -count 1 -parallel 1 -tags enable_unstable ./...
 
 # Don't lint the code generated with opentelemetry-collector-builder as it
 # produces code that's not gofmt-ed:

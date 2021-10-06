@@ -52,7 +52,15 @@ _builder:
 
 .PHONY: build
 build:
-	@$(MAKE) _builder SKIP_COMPILATION=false
+# Since builder doesn't allow adding build tags, let's just skip the compilation
+# and run 'go build ...' by hand.
+	@$(MAKE) _builder SKIP_COMPILATION=true
+	(cd cmd && \
+		go build -v \
+		-ldflags="-s -w" \
+		-tags enable_unstable \
+		-trimpath -o ./$(BINARY_NAME) . \
+	)
 	chmod +x ./cmd/$(BINARY_NAME)
 
 .PHONY: generate-sources

@@ -59,6 +59,10 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			name:       "metricfrequencyprocessor with telegrafreceiver and sumologicexporter",
 			configFile: "testdata/metricfrequencyprocessor.yaml",
 		},
+		{
+			name:       "filelog with sumologicexporter with persistent queue enabled",
+			configFile: "testdata/filelog_sumologicexporter_with_persistent_queue_enabled.yaml",
+		},
 	}
 
 	for _, tc := range testcases {
