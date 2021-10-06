@@ -1,4 +1,4 @@
-module github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricfrequencyprocessor
+module github.com/SumoLogic/sumologic-otel-collector/processor/metricfrequencyprocessor
 
 go 1.17
 

@@ -1,4 +1,4 @@
-module github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension
+module github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension
 
 go 1.17
 
@@ -44,6 +44,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
-replace github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter => ../../exporter/sumologicexporter
+replace github.com/SumoLogic/sumologic-otel-collector/exporter/sumologicexporter => ../../exporter/sumologicexporter
 
-replace github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension => ./
+replace github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension => ./

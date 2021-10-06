@@ -28,7 +28,7 @@ import (
 	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/zap"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension"
 )
 
 const (

@@ -29,9 +29,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/api"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension/api"
 	"go.opentelemetry.io/collector/component"
 	"go.uber.org/zap"
 )
