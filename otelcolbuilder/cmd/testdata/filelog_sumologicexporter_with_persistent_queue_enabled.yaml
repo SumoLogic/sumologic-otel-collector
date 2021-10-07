@@ -1,0 +1,28 @@
+extensions:
+  file_storage/buff:
+    directory: /tmp/
+    timeout: 5s
+
+receivers:
+  filelog:
+    include: [ "testdata/logs/empty.log" ]
+    start_at: end
+
+exporters:
+  sumologic:
+    endpoint: http://dummy.endpoint.com:8888/api
+    sending_queue:
+      enabled: true
+      queue_size: 100
+      persistent_storage_enabled: true
+
+service:
+  extensions:
+  - file_storage/buff
+
+  pipelines:
+    logs:
+      receivers:
+      - filelog
+      exporters:
+      - sumologic
