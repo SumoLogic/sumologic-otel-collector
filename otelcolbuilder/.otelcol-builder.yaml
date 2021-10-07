@@ -3,7 +3,7 @@ dist:
   description: Sumo Logic OpenTelemetry Collector distribution
 
   # the module name for the new distribution, following Go mod conventions. Optional, but recommended.
-  module: github.com/SumoLogic/opentelemetry-collector-builder
+  module: github.com/SumoLogic/sumologic-otel-collector
 
   # the OpenTelemetry Collector version to use as base for the distribution.
   otelcol_version: 0.36.0
@@ -12,7 +12,9 @@ dist:
 
 exporters:
   # Exporters with non-upstreamed changes:
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter v0.36.0"
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter v0.36.0"
+    path: ./../pkg/exporter/sumologicexporter
+
   # Upstream exporters:
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/carbonexporter v0.36.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter v0.36.0"
@@ -21,11 +23,17 @@ exporters:
 
 processors:
   # Processors with non-upstreamed changes:
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor v0.36.0"
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor v0.36.0"
+    path: ./../pkg/processor/cascadingfilterprocessor
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor v0.36.0"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/sourceprocessor v0.36.0"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/sumologicsyslogprocessor v0.36.0"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricfrequencyprocessor v0.36.0"
+    path: ./../pkg/processor/k8sprocessor
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/sourceprocessor v0.36.0"
+    path: ./../pkg/processor/sourceprocessor
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/sumologicsyslogprocessor v0.36.0"
+    path: ./../pkg/processor/sumologicsyslogprocessor
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/metricfrequencyprocessor v0.36.0"
+    path: ./../pkg/processor/metricfrequencyprocessor
+
   # Upstream processors:
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.36.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbyattrsprocessor v0.36.0"
@@ -40,7 +48,9 @@ processors:
 
 receivers:
   # Receivers with non-upstreamed changes:
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/telegrafreceiver v0.36.0"
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/telegrafreceiver v0.36.0"
+    path: ./../pkg/receiver/telegrafreceiver
+
   # Upstream receivers:
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver v0.36.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/fluentforwardreceiver v0.36.0"
@@ -53,7 +63,9 @@ receivers:
 
 extensions:
   # Processors with non-upstreamed changes:
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.36.0"
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.36.0"
+    path: ./../pkg/extension/sumologicextension
+
   # Upstream receivers:
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/bearertokenauthextension v0.36.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.36.0"
@@ -78,25 +90,8 @@ replaces:
   - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchpersignal => github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchpersignal v0.36.0
 
   # ----------------------------------------------------------------------------
-  # Customized receivers
-  - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/telegrafreceiver => ./../../pkg/receiver/telegrafreceiver
+  # Needed for telegrafreceiver
   - github.com/influxdata/telegraf => github.com/sumologic/telegraf v1.19.3-sumo-0
-
-  # ----------------------------------------------------------------------------
-  # Customized exporters
-  - github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter => ./../../pkg/exporter/sumologicexporter
-
-  # ----------------------------------------------------------------------------
-  # Customized extensions
-  - github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension => ./../../pkg/extension/sumologicextension
-
-  # ----------------------------------------------------------------------------
-  # Customized processors
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/cascadingfilterprocessor => ./../../pkg/processor/cascadingfilterprocessor
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/sourceprocessor => ./../../pkg/processor/sourceprocessor
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor => ./../../pkg/processor/k8sprocessor
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/sumologicsyslogprocessor => ./../../pkg/processor/sumologicsyslogprocessor
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricfrequencyprocessor => ./../../pkg/processor/metricfrequencyprocessor
 
   # TODO: remove this when regexp log filtering is released upstream, e.g. this
   # PR: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5237
@@ -107,4 +102,3 @@ replaces:
   # Use features from branch https://github.com/sumologic/opentelemetry-collector-contrib/tree/v0.36.0-feat-routingprocessor-route-on-resource-attributes
   # This replacement should be removed when all the features from the branch are upstreamed.
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/routingprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/routingprocessor e4d0740a3729724df5b4864d43f4931185e41d47
-

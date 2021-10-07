@@ -1,4 +1,4 @@
-module github.com/open-telemetry/opentelemetry-collector-contrib/receiver/telegrafreceiver
+module github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/telegrafreceiver
 
 go 1.17
 

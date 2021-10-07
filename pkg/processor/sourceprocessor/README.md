@@ -147,8 +147,8 @@ it is possible to set pod annotations that are container-specific.
 The following rules apply:
 
 - Container-level annotations take precendence over other forms of setting the source category.
-- No other transformations are applied to the source categories retrieved from container-level annotations,
-like adding source category prefix or replacing the dash.
+- No other transformations are applied to the source categories retrieved from
+  container-level annotations, like adding source category prefix or replacing the dash.
 
 Let's look at an example. Assuming this plugin is configured with the following properties:
 

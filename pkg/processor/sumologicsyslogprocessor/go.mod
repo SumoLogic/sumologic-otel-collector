@@ -1,4 +1,4 @@
-module github.com/open-telemetry/opentelemetry-collector-contrib/processor/sumologicsyslogprocessor
+module github.com/SumoLogic/sumologic-otel-collector/pkg/processor/sumologicsyslogprocessor
 
 go 1.17
 

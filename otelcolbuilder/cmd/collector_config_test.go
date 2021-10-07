@@ -55,6 +55,14 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			name:       "routing processor for traces",
 			configFile: "testdata/routing_processor.yaml",
 		},
+		{
+			name:       "metricfrequencyprocessor with telegrafreceiver and sumologicexporter",
+			configFile: "testdata/metricfrequencyprocessor.yaml",
+		},
+		{
+			name:       "filelog with sumologicexporter with persistent queue enabled",
+			configFile: "testdata/filelog_sumologicexporter_with_persistent_queue_enabled.yaml",
+		},
 	}
 
 	for _, tc := range testcases {
@@ -94,7 +102,7 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 				app.Shutdown()
 			}()
 
-			t.Logf("Calling .Run() on the app with the following args: %v", args)
+			t.Logf("Starting the app with the following args: %v", args)
 
 			err = cmd.ExecuteContext(context.Background())
 			if tc.wantErr != nil {
