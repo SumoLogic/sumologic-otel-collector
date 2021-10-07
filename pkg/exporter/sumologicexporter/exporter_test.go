@@ -445,123 +445,244 @@ func TestPushOTLPLogsClearTimestamp(t *testing.T) {
 	}
 }
 
-func TestPushTextLogsWithAttributeTranslation(t *testing.T) {
-	logs := LogRecordsToLogs(exampleLog())
-	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.name", "harry-potter")
-	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.type", "wizard")
+func TestPushOTLPLogs_AttributeTranslation(t *testing.T) {
+	createLogs := func() pdata.Logs {
+		logs := LogRecordsToLogs(exampleLog())
+		resourceAttrs := logs.ResourceLogs().At(0).Resource().Attributes()
+		resourceAttrs.InsertString("host.name", "harry-potter")
+		resourceAttrs.InsertString("host.type", "wizard")
+		resourceAttrs.InsertString("file.path.resolved", "/tmp/log.log")
+		return logs
+	}
 
-	config := createTestConfig()
-	config.MetadataAttributes = []string{`host\.name`}
-	config.SourceCategory = "%{host.name}"
-	config.SourceHost = "%{host}"
+	testcases := []struct {
+		name       string
+		configFunc func() *Config
+		callbacks  []func(w http.ResponseWriter, req *http.Request)
+	}{
+		{
+			name: "enabled",
+			configFunc: func() *Config {
+				config := createTestConfig()
+				config.MetadataAttributes = []string{`host\.name`}
+				config.SourceCategory = "%{host.name}"
+				config.SourceHost = "%{host}"
+				config.LogFormat = OTLPLogFormat
+				config.TranslateAttributes = true
+				return config
+			},
+			callbacks: []func(w http.ResponseWriter, req *http.Request){
+				func(w http.ResponseWriter, req *http.Request) {
+					body := extractBody(t, req)
+					//nolint:lll
+					assert.Equal(t, "\n\xae\x01\nB\n\x1d\n\v_sourceHost\x12\x0e\n\fharry-potter\n!\n\x0f_sourceCategory\x12\x0e\n\fharry-potter\x12h\n\x00\x12d*\r\n\vExample log2\x16\n\x04host\x12\x0e\n\fharry-potter2\x18\n\fInstanceType\x12\b\n\x06wizard2\x1d\n\v_sourceName\x12\x0e\n\f/tmp/log.logJ\x00R\x00", body)
+					// TODO: Revisit: this should probably be empty when sending with OTLP
+					assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"), "X-Sumo-Fields")
+					// TODO: Revisit: this should probably be empty when sending with OTLP
+					assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"), "X-Sumo-Category")
 
-	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
-			assert.Equal(t, `Example log`, body)
-			assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))
-			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
+					// This gets the value from 'host.name' because we do not disallow
+					// using Sumo schema and 'host.name' from OT convention
+					// translates into 'host' in Sumo convention
+					// TODO: Revisit: this should probably be empty when sending with OTLP
+					assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Host"), "X-Sumo-Host")
+				},
+			},
+		},
+		{
+			name: "disabled",
+			configFunc: func() *Config {
+				config := createTestConfig()
+				config.MetadataAttributes = []string{`host\.name`}
+				config.SourceCategory = "%{host.name}"
+				config.SourceHost = "%{host}"
+				config.LogFormat = OTLPLogFormat
+				config.TranslateAttributes = false
+				return config
+			},
+			callbacks: []func(w http.ResponseWriter, req *http.Request){
+				func(w http.ResponseWriter, req *http.Request) {
+					body := extractBody(t, req)
+					//nolint:lll
+					assert.Equal(t, "\n\xb4\x01\n?\n\x1a\n\v_sourceHost\x12\v\n\tundefined\n!\n\x0f_sourceCategory\x12\x0e\n\fharry-potter\x12q\n\x00\x12m*\r\n\vExample log2\x1b\n\thost.name\x12\x0e\n\fharry-potter2\x15\n\thost.type\x12\b\n\x06wizard2$\n\x12file.path.resolved\x12\x0e\n\f/tmp/log.logJ\x00R\x00", body)
 
-			// This gets the value from 'host.name' because we do not disallow
-			// using Sumo schema and 'host.name' from OT convention
-			// translates into 'host' in Sumo convention
-			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Host"))
+					// TODO: Revisit: this should probably be empty when sending with OTLP
+					assert.Equal(t, "host.name=harry-potter", req.Header.Get("X-Sumo-Fields"), "X-Sumo-Fields")
+					// TODO: Revisit: this should probably be empty when sending with OTLP
+					assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"), "X-Sumo-Category")
+					// TODO: Revisit: this should probably be empty when sending with OTLP
+					assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"), "X-Sumo-Host")
+				},
+			},
 		},
 	}
-	test := prepareExporterTest(t, config, expectedRequests)
 
-	err := test.exp.pushLogsData(context.Background(), logs)
-	assert.NoError(t, err)
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc := tc
+
+			test := prepareExporterTest(t, tc.configFunc(), tc.callbacks)
+
+			err := test.exp.pushLogsData(context.Background(), createLogs())
+			assert.NoError(t, err)
+		})
+	}
 }
 
-func TestPushTextLogsWithAttributeTranslationDisabled(t *testing.T) {
-	logs := LogRecordsToLogs(exampleLog())
-	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.name", "harry-potter")
-	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.type", "wizard")
+func TestPushTextLogs_AttributeTranslation(t *testing.T) {
+	createLogs := func() pdata.Logs {
+		logs := LogRecordsToLogs(exampleLog())
+		resourceAttrs := logs.ResourceLogs().At(0).Resource().Attributes()
+		resourceAttrs.InsertString("host.name", "harry-potter")
+		resourceAttrs.InsertString("host.type", "wizard")
+		return logs
+	}
 
-	config := createTestConfig()
-	config.MetadataAttributes = []string{`host\.name`}
-	config.SourceCategory = "%{host.name}"
-	config.SourceHost = "%{host}"
-	config.TranslateAttributes = false
+	testcases := []struct {
+		name       string
+		configFunc func() *Config
+		callbacks  []func(w http.ResponseWriter, req *http.Request)
+	}{
+		{
+			name: "enabled",
+			configFunc: func() *Config {
+				config := createTestConfig()
+				config.MetadataAttributes = []string{`host\.name`}
+				config.SourceCategory = "%{host.name}"
+				config.SourceHost = "%{host}"
+				config.LogFormat = TextFormat
+				config.TranslateAttributes = true
+				return config
+			},
+			callbacks: []func(w http.ResponseWriter, req *http.Request){
+				func(w http.ResponseWriter, req *http.Request) {
+					body := extractBody(t, req)
+					assert.Equal(t, `Example log`, body)
+					assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))
+					assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
 
-	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
-			assert.Equal(t, `Example log`, body)
-			assert.Equal(t, "host.name=harry-potter", req.Header.Get("X-Sumo-Fields"))
-			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
-			assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"))
+					// This gets the value from 'host.name' because we do not disallow
+					// using Sumo schema and 'host.name' from OT convention
+					// translates into 'host' in Sumo convention
+					assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Host"))
+				},
+			},
+		},
+		{
+			name: "disabled",
+			configFunc: func() *Config {
+				config := createTestConfig()
+				config.MetadataAttributes = []string{`host\.name`}
+				config.SourceCategory = "%{host.name}"
+				config.SourceHost = "%{host}"
+				config.LogFormat = TextFormat
+				config.TranslateAttributes = false
+				return config
+			},
+			callbacks: []func(w http.ResponseWriter, req *http.Request){
+				func(w http.ResponseWriter, req *http.Request) {
+					body := extractBody(t, req)
+					assert.Equal(t, `Example log`, body)
+					assert.Equal(t, "host.name=harry-potter", req.Header.Get("X-Sumo-Fields"))
+					assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
+					assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"))
+				},
+			},
 		},
 	}
-	test := prepareExporterTest(t, config, expectedRequests)
 
-	err := test.exp.pushLogsData(context.Background(), logs)
-	assert.NoError(t, err)
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc := tc
+
+			test := prepareExporterTest(t, tc.configFunc(), tc.callbacks)
+
+			err := test.exp.pushLogsData(context.Background(), createLogs())
+			assert.NoError(t, err)
+		})
+	}
 }
 
-func TestPushJSONLogsWithAttributeTranslation(t *testing.T) {
-	logs := LogRecordsToLogs(exampleLog())
-	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.name", "harry-potter")
-	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.type", "wizard")
+func TestPushJSONLogs_AttributeTranslation(t *testing.T) {
+	createLogs := func() pdata.Logs {
+		logs := LogRecordsToLogs(exampleLog())
+		resourceAttrs := logs.ResourceLogs().At(0).Resource().Attributes()
+		resourceAttrs.InsertString("host.name", "harry-potter")
+		resourceAttrs.InsertString("host.type", "wizard")
+		return logs
+	}
 
-	config := createTestConfig()
-	config.MetadataAttributes = []string{`host\.name`}
-	config.SourceCategory = "%{host.name}"
-	config.SourceHost = "%{host}"
-	config.LogFormat = JSONFormat
+	testcases := []struct {
+		name       string
+		configFunc func() *Config
+		callbacks  []func(w http.ResponseWriter, req *http.Request)
+	}{
+		{
+			name: "enabled",
+			configFunc: func() *Config {
+				config := createTestConfig()
+				config.MetadataAttributes = []string{`host\.name`}
+				config.SourceCategory = "%{host.name}"
+				config.SourceHost = "%{host}"
+				config.LogFormat = JSONFormat
+				config.TranslateAttributes = true
+				return config
+			},
+			callbacks: []func(w http.ResponseWriter, req *http.Request){
+				func(w http.ResponseWriter, req *http.Request) {
+					body := extractBody(t, req)
 
-	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
-			var regex string
-			// Mind that host attribute is not being send in log body
-			regex += `{"InstanceType":"wizard","log":"Example log","timestamp":\d{13}}`
-			assert.Regexp(t, regex, body)
+					var regex string
+					// Mind that host attribute is not being send in log body
+					regex += `{"InstanceType":"wizard","log":"Example log","timestamp":\d{13}}`
+					assert.Regexp(t, regex, body)
 
-			assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))
-			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
+					assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"))
+					assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
 
-			// This gets the value from 'host.name' because we do not disallow
-			// using Sumo schema and 'host.name' from OT convention
-			// translates into 'host' in Sumo convention.
-			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Host"))
+					// This gets the value from 'host.name' because we do not disallow
+					// using Sumo schema and 'host.name' from OT convention
+					// translates into 'host' in Sumo convention
+					assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Host"))
+				},
+			},
+		},
+		{
+			name: "disabled",
+			configFunc: func() *Config {
+				config := createTestConfig()
+				config.MetadataAttributes = []string{`host\.name`}
+				config.SourceCategory = "%{host.name}"
+				config.SourceHost = "%{host}"
+				config.LogFormat = JSONFormat
+				config.TranslateAttributes = false
+				return config
+			},
+			callbacks: []func(w http.ResponseWriter, req *http.Request){
+				func(w http.ResponseWriter, req *http.Request) {
+					body := extractBody(t, req)
+					var regex string
+					regex += `{"host.type":"wizard","log":"Example log","timestamp":\d{13}}`
+					assert.Regexp(t, regex, body)
+
+					assert.Equal(t, "host.name=harry-potter", req.Header.Get("X-Sumo-Fields"))
+					assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
+					assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"))
+				},
+			},
 		},
 	}
-	test := prepareExporterTest(t, config, expectedRequests)
 
-	err := test.exp.pushLogsData(context.Background(), logs)
-	assert.NoError(t, err)
-}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc := tc
 
-func TestPushJSONLogsWithAttributeTranslationDisabled(t *testing.T) {
-	logs := LogRecordsToLogs(exampleLog())
-	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.name", "harry-potter")
-	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("host.type", "wizard")
+			test := prepareExporterTest(t, tc.configFunc(), tc.callbacks)
 
-	config := createTestConfig()
-	config.MetadataAttributes = []string{`host\.name`}
-	config.SourceCategory = "%{host.name}"
-	config.SourceHost = "%{host}"
-	config.LogFormat = JSONFormat
-	config.TranslateAttributes = false
-
-	expectedRequests := []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
-			var regex string
-			regex += `{"host.type":"wizard","log":"Example log","timestamp":\d{13}}`
-			assert.Regexp(t, regex, body)
-
-			assert.Equal(t, "host.name=harry-potter", req.Header.Get("X-Sumo-Fields"))
-			assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"))
-			assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"))
-		},
+			err := test.exp.pushLogsData(context.Background(), createLogs())
+			assert.NoError(t, err)
+		})
 	}
-	test := prepareExporterTest(t, config, expectedRequests)
-
-	err := test.exp.pushLogsData(context.Background(), logs)
-	assert.NoError(t, err)
 }
 
 func TestAllMetricsSuccess(t *testing.T) {
@@ -1068,7 +1189,7 @@ func TestMetricsPrometheusFormatMetadataFilter(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestPushMetrics_AttributeTranslation(t *testing.T) {
+func TestPushPrometheusMetrics_AttributeTranslation(t *testing.T) {
 	createConfig := func() *Config {
 		config := createDefaultConfig().(*Config)
 		config.CompressEncoding = NoCompression
@@ -1175,6 +1296,92 @@ func TestPushMetrics_AttributeTranslation(t *testing.T) {
 				"X-Sumo-Host":     "harry-potter",
 			},
 			expectedBody: `test.metric.data{test="test_value",test2="second_value",host.name="harry-potter",host.type="wizard"} 14500 1605534165000`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			records := []metricPair{
+				exampleIntMetric(),
+			}
+			records[0].attributes.InsertString("host.name", "harry-potter")
+			records[0].attributes.InsertString("host.type", "wizard")
+
+			metrics := metricPairToMetrics(records)
+
+			config := tc.cfgFn()
+			callbacks := []func(w http.ResponseWriter, req *http.Request){
+				func(w http.ResponseWriter, req *http.Request) {
+					assert.Equal(t, tc.expectedBody, extractBody(t, req))
+					for header, expectedValue := range tc.expectedHeaders {
+						assert.Equalf(t, expectedValue, req.Header.Get(header),
+							"Unexpected value in header: %s", header,
+						)
+					}
+				},
+			}
+			test := prepareExporterTest(t, config, callbacks)
+
+			err := test.exp.pushMetricsData(context.Background(), metrics)
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestPushOTLPMetrics_AttributeTranslation(t *testing.T) {
+	createConfig := func() *Config {
+		config := createDefaultConfig().(*Config)
+		config.CompressEncoding = NoCompression
+		config.MetricFormat = OTLPMetricFormat
+		return config
+	}
+
+	testcases := []struct {
+		name            string
+		cfgFn           func() *Config
+		expectedHeaders map[string]string
+		expectedBody    string
+	}{
+		{
+			name: "enabled",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				cfg.MetadataAttributes = []string{`host\.name`}
+				cfg.SourceCategory = "%{host.name}"
+				cfg.SourceHost = "%{host}"
+				// This is and should be done by default:
+				// cfg.TranslateAttributes = true
+				return cfg
+			},
+			expectedHeaders: map[string]string{
+				"Content-Type":    "application/x-protobuf",
+				"X-Sumo-Category": "harry-potter",
+
+				// This gets the value from 'host.name' because we do not disallow
+				// using Sumo schema and 'host.name' from OT convention
+				// translates into 'host' in Sumo convention
+				"X-Sumo-Host": "harry-potter",
+			},
+			//nolint:lll
+			expectedBody: "\n\xdb\x01\n\xa3\x01\n\x14\n\x04test\x12\f\n\ntest_value\n\x17\n\x05test2\x12\x0e\n\fsecond_value\n\x16\n\x04host\x12\x0e\n\fharry-potter\n\x18\n\fInstanceType\x12\b\n\x06wizard\n\x1d\n\v_sourceHost\x12\x0e\n\fharry-potter\n!\n\x0f_sourceCategory\x12\x0e\n\fharry-potter\x123\n\x00\x12/\n\x10test.metric.data\x1a\x05bytes:\x14\n\x12\x19\x00\x12\x94\v\xd1\x00H\x161\xa48\x00\x00\x00\x00\x00\x00",
+		},
+		{
+			name: "disabled",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				cfg.MetadataAttributes = []string{`host\.name`}
+				cfg.SourceCategory = "%{host.name}"
+				cfg.SourceHost = "%{host}"
+				cfg.TranslateAttributes = false
+				return cfg
+			},
+			expectedHeaders: map[string]string{
+				"Content-Type":    "application/x-protobuf",
+				"X-Sumo-Category": "harry-potter",
+				"X-Sumo-Host":     "undefined",
+			},
+			//nolint:lll
+			expectedBody: "\n\xda\x01\n\xa2\x01\n\x14\n\x04test\x12\f\n\ntest_value\n\x17\n\x05test2\x12\x0e\n\fsecond_value\n\x1b\n\thost.name\x12\x0e\n\fharry-potter\n\x15\n\thost.type\x12\b\n\x06wizard\n\x1a\n\v_sourceHost\x12\v\n\tundefined\n!\n\x0f_sourceCategory\x12\x0e\n\fharry-potter\x123\n\x00\x12/\n\x10test.metric.data\x1a\x05bytes:\x14\n\x12\x19\x00\x12\x94\v\xd1\x00H\x161\xa48\x00\x00\x00\x00\x00\x00",
 		},
 	}
 

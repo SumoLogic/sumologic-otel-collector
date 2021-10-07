@@ -322,7 +322,12 @@ func (s *sender) sendOTLPLogs(ctx context.Context, flds fields) ([]logPair, erro
 		record.log.CopyTo(log)
 		log.Attributes().Clear()
 		log.Attributes().EnsureCapacity(record.attributes.Len())
-		record.attributes.CopyTo(log.Attributes())
+
+		if s.config.TranslateAttributes {
+			translateAttributes(record.attributes).CopyTo(log.Attributes())
+		} else {
+			record.attributes.CopyTo(log.Attributes())
+		}
 
 		// Clear timestamp if required
 		if s.config.ClearLogsTimestamp {
