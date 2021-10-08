@@ -62,10 +62,10 @@ jobs:
         include:
           - arch_os: linux_amd64
             runs_on: ubuntu-20.04
-            go: '1.17.1'
+            go: '1.17.2'
           - arch_os: darwin_amd64
             runs_on: macos-latest
-            go: '1.17.1'
+            go: '1.17.2'
     steps:
       - uses: actions/checkout@v2.3.4
 
@@ -73,7 +73,6 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
-          stable: 'false'
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
@@ -94,7 +93,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: [ '1.17.1' ]
+        go: [ '1.17.2' ]
         arch_os: [ 'linux_amd64' ]
     steps:
       - uses: actions/checkout@v2.3.4
@@ -103,7 +102,6 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
-          stable: 'false'
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
@@ -139,13 +137,13 @@ jobs:
         include:
           - arch_os: linux_amd64
             runs_on: ubuntu-20.04
-            go: '1.17.1'
+            go: '1.17.2'
           - arch_os: linux_arm64
             runs_on: ubuntu-20.04
-            go: '1.17.1'
+            go: '1.17.2'
           - arch_os: darwin_amd64
             runs_on: macos-latest
-            go: '1.17.1'
+            go: '1.17.2'
     steps:
       - uses: actions/checkout@v2.3.4
 
@@ -156,7 +154,6 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
-          stable: 'false'
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
