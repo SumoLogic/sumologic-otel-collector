@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export BUILDER_VERSION=0.35.0
+export BUILDER_VERSION="$(grep '^BUILDER_VERSION' /sumologic/otelcolbuilder/Makefile | sed 's/BUILDER_VERSION ?= //')"
 export GO_VERSION=1.17
 
 # Install opentelemetry-collector-builder
