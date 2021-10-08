@@ -207,10 +207,10 @@ jobs:
     steps:
       - name: Extract tag
         id: extract_tag
-        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/})"
+        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
 
       - name: Print tag
-        run: echo "${{ steps.extract_tag.outputs.tag }}"
+        run: echo "v${{ steps.extract_tag.outputs.tag }}"
 
       - name: Download all binaries stored as artifact
         uses: actions/download-artifact@v2
@@ -223,7 +223,18 @@ jobs:
           draft: false
           prerelease: true
           body: |
-            ## ${{ steps.extract_tag.outputs.tag }}
+            ## v${{ steps.extract_tag.outputs.tag }}
+
+            ### Changelog
+
+            **TODO**
+
+            ### Container images:
+
+            ```
+            docker pull public.ecr.aws/sumologic/sumologic-otel-collector:${{ steps.extract_tag.outputs.tag }}
+            ```
+
           artifacts: "artifacts/*/*"
           artifactErrorsFailBuild: true
           replacesArtifacts: true
