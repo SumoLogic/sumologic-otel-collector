@@ -187,6 +187,36 @@ func exampleTwoLogs() []pdata.LogRecord {
 	return buffer
 }
 
+func exampleLogWithComplexBody() []pdata.LogRecord {
+	buffer := make([]pdata.LogRecord, 1)
+	buffer[0] = pdata.NewLogRecord()
+	body := pdata.NewAttributeValueMap().MapVal()
+	body.InsertString("a", "b")
+	body.InsertBool("c", false)
+	body.InsertInt("d", 20)
+	body.InsertDouble("e", 20.5)
+
+	f := pdata.NewAttributeValueArray()
+	f.ArrayVal().EnsureCapacity(4)
+	f.ArrayVal().AppendEmpty().SetStringVal("p")
+	f.ArrayVal().AppendEmpty().SetBoolVal(true)
+	f.ArrayVal().AppendEmpty().SetIntVal(13)
+	f.ArrayVal().AppendEmpty().SetDoubleVal(19.3)
+	body.Insert("f", f)
+
+	g := pdata.NewAttributeValueMap()
+	g.MapVal().InsertString("h", "i")
+	g.MapVal().InsertBool("j", false)
+	g.MapVal().InsertInt("k", 12)
+	g.MapVal().InsertDouble("l", 11.1)
+
+	body.Insert("g", g)
+
+	buffer[0].Attributes().InsertString("m", "n")
+	buffer[0].Body().SetMapVal(body)
+	return buffer
+}
+
 func exampleTwoDifferentLogs() []pdata.LogRecord {
 	buffer := make([]pdata.LogRecord, 2)
 	buffer[0] = pdata.NewLogRecord()
@@ -403,6 +433,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 		name       string
 		configOpts []func(*Config)
 		bodyRegex  string
+		logBuffer  []logPair
 	}{
 		{
 			name: "default config",
@@ -412,12 +443,14 @@ func TestSendLogsJsonConfig(t *testing.T) {
 						LogKey:       DefaultLogKey,
 						AddTimestamp: DefaultAddTimestamp,
 						TimestampKey: DefaultTimestampKey,
+						FlattenBody:  DefaultFlattenBody,
 					}
 				},
 			},
 			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}` +
 				`\n` +
 				`{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`,
+			logBuffer: logRecordsToLogPair(exampleTwoLogs()),
 		},
 		{
 			name: "disabled add timestamp",
@@ -432,6 +465,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log"}` +
 				`\n` +
 				`{"key1":"value1","key2":"value2","log":"Another example log"}`,
+			logBuffer: logRecordsToLogPair(exampleTwoLogs()),
 		},
 		{
 			name: "enabled add timestamp with custom timestamp key",
@@ -447,6 +481,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log","xxyy_zz":\d{13}}` +
 				`\n` +
 				`{"key1":"value1","key2":"value2","log":"Another example log","xxyy_zz":\d{13}}`,
+			logBuffer: logRecordsToLogPair(exampleTwoLogs()),
 		},
 		{
 			name: "custom log key",
@@ -456,12 +491,46 @@ func TestSendLogsJsonConfig(t *testing.T) {
 						LogKey:       "log_vendor_key",
 						AddTimestamp: DefaultAddTimestamp,
 						TimestampKey: DefaultTimestampKey,
+						FlattenBody:  DefaultFlattenBody,
 					}
 				},
 			},
 			bodyRegex: `{"key1":"value1","key2":"value2","log_vendor_key":"Example log","timestamp":\d{13}}` +
 				`\n` +
 				`{"key1":"value1","key2":"value2","log_vendor_key":"Another example log","timestamp":\d{13}}`,
+			logBuffer: logRecordsToLogPair(exampleTwoLogs()),
+		},
+		{
+			name: "flatten body",
+			configOpts: []func(*Config){
+				func(c *Config) {
+					c.JSONLogs = JSONLogs{
+						LogKey:       "log_vendor_key",
+						AddTimestamp: DefaultAddTimestamp,
+						TimestampKey: DefaultTimestampKey,
+						FlattenBody:  true,
+					}
+				},
+			},
+			bodyRegex: `{"a":"b","c":false,"d":20,"e":20.5,"f":\["p",true,13,19.3\],` +
+				`"g":{"h":"i","j":false,"k":12,"l":11.1},"m":"n","timestamp":\d{13}}`,
+			logBuffer: logRecordsToLogPair(exampleLogWithComplexBody()),
+		},
+		{
+			name: "complex body",
+			configOpts: []func(*Config){
+				func(c *Config) {
+					c.JSONLogs = JSONLogs{
+						LogKey:       "log_vendor_key",
+						AddTimestamp: DefaultAddTimestamp,
+						TimestampKey: DefaultTimestampKey,
+						FlattenBody:  DefaultFlattenBody,
+					}
+				},
+			},
+			bodyRegex: `{"log_vendor_key":{"a":"b","c":false,"d":20,"e":20.5,"f":\["p",true,13,19.3\],` +
+				`"g":{"h":"i","j":false,"k":12,"l":11.1}},"m":"n","timestamp":\d{13}}`,
+			logBuffer: logRecordsToLogPair(exampleLogWithComplexBody()),
 		},
 	}
 
@@ -475,7 +544,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 			}, tc.configOpts...)
 
 			test.s.config.LogFormat = JSONFormat
-			test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
+			test.s.logBuffer = tc.logBuffer
 
 			_, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
 			assert.NoError(t, err)

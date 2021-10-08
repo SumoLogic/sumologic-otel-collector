@@ -107,6 +107,10 @@ type JSONLogs struct {
 	// of the timestamp key.
 	// By default this is "timestamp".
 	TimestampKey string `mapstructure:"timestamp_key"`
+	// When flatten_body is set to true and log is a map,
+	// log's body is going to be flatten and `log_key` won't be used
+	// By default this is false.
+	FlattenBody bool `mapstructure:"flatten_body"`
 }
 
 // CreateDefaultHTTPClientSettings returns default http client settings
@@ -197,4 +201,6 @@ const (
 	DefaultAddTimestamp bool = true
 	// DefaultTimestampKey defines default TimestampKey value
 	DefaultTimestampKey string = "timestamp"
+	// DefaultFlattenBody defines default FlattenBody value
+	DefaultFlattenBody bool = false
 )
