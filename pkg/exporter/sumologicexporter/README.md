@@ -74,7 +74,7 @@ exporters:
       # default = "timestamp".
       timestamp_key: <timestamp_key>
       # When flatten_body is set to true and log is a map,
-      # log's body is going to be flatten and `log_key` won't be used
+      # log's body is going to be flattened and `log_key` won't be used
       # default = false
       flatten_body: {true, false}
 
