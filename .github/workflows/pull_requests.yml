@@ -81,6 +81,8 @@ jobs:
           path: |
             /home/runner/go/pkg/mod
             /home/runner/.cache/go-build
+            /Users/runner/go/pkg/mod
+            /Users/runner/Library/Caches/go-build
           key: ${{matrix.arch_os}}-go-pkg-${{matrix.go}}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{matrix.arch_os}}-go-pkg-${{matrix.go}}-
@@ -162,6 +164,8 @@ jobs:
           path: |
             /home/runner/go/pkg/mod
             /home/runner/.cache/go-build
+            /Users/runner/go/pkg/mod
+            /Users/runner/Library/Caches/go-build
           key: ${{matrix.arch_os}}-go-${{matrix.go}}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{matrix.arch_os}}-go-${{matrix.go}}-
