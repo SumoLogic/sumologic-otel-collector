@@ -108,7 +108,7 @@ type JSONLogs struct {
 	// By default this is "timestamp".
 	TimestampKey string `mapstructure:"timestamp_key"`
 	// When flatten_body is set to true and log is a map,
-	// log's body is going to be flatten and `log_key` won't be used
+	// log's body is going to be flattened and `log_key` won't be used
 	// By default this is false.
 	FlattenBody bool `mapstructure:"flatten_body"`
 }
