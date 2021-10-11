@@ -200,7 +200,15 @@ func (s *sender) logToJSON(record logPair) (string, error) {
 
 	// Only append the body when it's not empty to prevent sending 'null' log.
 	if body := record.log.Body(); !isEmptyAttributeValue(body) {
-		data.orig.Upsert(s.jsonLogsConfig.LogKey, body)
+		if s.jsonLogsConfig.FlattenBody && body.Type() == pdata.AttributeValueTypeMap {
+			// Cannot use CopyTo, as it overrides data.orig's values
+			body.MapVal().Range(func(k string, v pdata.AttributeValue) bool {
+				data.orig.Insert(k, v)
+				return true
+			})
+		} else {
+			data.orig.Upsert(s.jsonLogsConfig.LogKey, body)
+		}
 	}
 
 	nextLine, err := json.Marshal(data.orig.AsRaw())
