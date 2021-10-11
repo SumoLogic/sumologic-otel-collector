@@ -17,6 +17,7 @@
     - [Filelog Receiver](#filelog-receiver)
     - [Fluent Forward Receiver](#fluent-forward-receiver)
     - [Host Metrics Receiver](#host-metrics-receiver)
+    - [Jaeger Receiver](#jaeger-receiver)
     - [Syslog Receiver](#syslog-receiver)
     - [Statsd Receiver](#statsd-receiver)
     - [OTLP Receiver](#otlp-receiver)
@@ -494,6 +495,28 @@ receivers:
 For details, see the [Host Metrics Receiver documentation][hostmetricsreceiver_readme].
 
 [hostmetricsreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.36.0/receiver/hostmetricsreceiver
+
+#### Jaeger Receiver
+
+Jaeger Receiver receives trace data in [Jaeger][jaeger_io] format.
+
+Example configuration:
+
+```yaml
+receivers:
+  jaeger:
+    protocols:
+      grpc:
+  jaeger/withendpoint:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:14260
+```
+
+For details, see the [Jaeger Receiver documentation][jaegerreceiver_readme].
+
+[jaegerreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.36.0/receiver/jaegerreceiver
+[jaeger_io]: https://www.jaegertracing.io/
 
 #### Syslog Receiver
 

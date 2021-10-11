@@ -59,6 +59,7 @@ OT distro.
 | `filelogreceiver` [configuration help][filelogreceiver_help]             | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.36.0/receiver/filelogreceiver       |
 | `fluentforwardreceiver` [configuration help][fluentforwardreceiver_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.36.0/receiver/fluentforwardreceiver |
 | `hostmetricsreceiver` [configuration help][hostmetricsreceiver_help]     | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.36.0/receiver/hostmetricsreceiver   |
+| `jaegerreceiver` [configuration help][jaegerreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.36.0/receiver/jaegerreceiver        |
 | `syslogreceiver` [configuration help][syslogreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.36.0/receiver/syslogreceiver        |
 | `statsdreceiver` [configuration help][statsdreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.36.0/receiver/statsdreceiver        |
 | `tcplogreceiver` [configuration help][tcplogreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.36.0/receiver/tcplogreceiver        |
@@ -68,6 +69,7 @@ OT distro.
 [filelogreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#filelog-receiver
 [fluentforwardreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#fluent-forward-receiver
 [hostmetricsreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#host-metrics-receiver
+[jaegerreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#jaeger-receiver
 [statsdreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#statsd-receiver
 [syslogreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#syslog-receiver
 [tcplogreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#tcplog-receiver
