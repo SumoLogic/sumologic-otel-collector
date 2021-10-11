@@ -61,6 +61,7 @@ func createDefaultConfig() config.Exporter {
 			LogKey:       DefaultLogKey,
 			AddTimestamp: DefaultAddTimestamp,
 			TimestampKey: DefaultTimestampKey,
+			FlattenBody:  DefaultFlattenBody,
 		},
 		GraphiteTemplate: DefaultGraphiteTemplate,
 		TraceFormat:      OTLPTraceFormat,
