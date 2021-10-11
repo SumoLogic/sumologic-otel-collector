@@ -41,6 +41,7 @@ This sections represents the supported components that are included in Sumo Logi
 OT distro.
 
 <!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD034 -->
 
 ### Receivers
 
@@ -50,7 +51,7 @@ OT distro.
 |----------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
 | `telegrafreceiver` [configuration help][telegrafreceiver_help] | https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/receiver/telegrafreceiver |
 
-[telegrafreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#telegraf-receiver
+[telegrafreceiver_help]: ./docs/Configuration.md#telegraf-receiver
 
 #### Upstream receivers
 
@@ -66,15 +67,15 @@ OT distro.
 | `udplogreceiver` [configuration help][udplogreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.36.0/receiver/udplogreceiver        |
 | `zipkinreceiver` [configuration help][zipkinreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.36.0/receiver/zipkinreceiver        |
 
-[filelogreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#filelog-receiver
-[fluentforwardreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#fluent-forward-receiver
-[hostmetricsreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#host-metrics-receiver
-[jaegerreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#jaeger-receiver
-[statsdreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#statsd-receiver
-[syslogreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#syslog-receiver
-[tcplogreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#tcplog-receiver
-[udplogreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#udplog-receiver
-[zipkinreceiver_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#zipkin-receiver
+[filelogreceiver_help]: ./docs/Configuration.md#filelog-receiver
+[fluentforwardreceiver_help]: ./docs/Configuration.md#fluent-forward-receiver
+[hostmetricsreceiver_help]: ./docs/Configuration.md#host-metrics-receiver
+[jaegerreceiver_help]: ./docs/Configuration.md#jaeger-receiver
+[statsdreceiver_help]: ./docs/Configuration.md#statsd-receiver
+[syslogreceiver_help]: ./docs/Configuration.md#syslog-receiver
+[tcplogreceiver_help]: ./docs/Configuration.md#tcplog-receiver
+[udplogreceiver_help]: ./docs/Configuration.md#udplog-receiver
+[zipkinreceiver_help]: ./docs/Configuration.md#zipkin-receiver
 
 ### Processors
 
@@ -88,11 +89,11 @@ OT distro.
 | `sourceprocessor` [configuration help][sourceprocessor_help]                   | https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/sourceprocessor          |
 | `sumologicsyslogprocessor` [configuration help][sumologicsyslogprocessor_help] | https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/sumologicsyslogprocessor |
 
-[cascadingfilterprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#cascading-filter-processor
-[k8sprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#kubernetes-processor
-[metricfrequencyprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#metric-frequency-processor
-[sourceprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#source-processor
-[sumologicsyslogprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#sumo-logic-syslog-processor
+[cascadingfilterprocessor_help]: ./docs/Configuration.md#cascading-filter-processor
+[k8sprocessor_help]: ./docs/Configuration.md#kubernetes-processor
+[metricfrequencyprocessor_help]: ./docs/Configuration.md#metric-frequency-processor
+[sourceprocessor_help]: ./docs/Configuration.md#source-processor
+[sumologicsyslogprocessor_help]: ./docs/Configuration.md#sumo-logic-syslog-processor
 
 #### Upstream processors
 
@@ -110,15 +111,15 @@ OT distro.
 | `filterprocessor` [configuration help][filterprocessor_help]                       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.36.0/processor/filterprocessor            |
 
 [attributesprocessor_help]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.36.0/processor/attributesprocessor
-[groupbyattrsprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#group-by-attributes-processor
-[groupbytraceprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#group-by-trace-processor
-[metricstransformprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#metrics-transform-processor
-[resourcedetectionprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#resource-detection-processor
+[groupbyattrsprocessor_help]: ./docs/Configuration.md#group-by-attributes-processor
+[groupbytraceprocessor_help]: ./docs/Configuration.md#group-by-trace-processor
+[metricstransformprocessor_help]: ./docs/Configuration.md#metrics-transform-processor
+[resourcedetectionprocessor_help]: ./docs/Configuration.md#resource-detection-processor
 [resourceprocessor_help]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.36.0/processor/resourceprocessor
-[routingprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#routing-processor
-[spanmetricsprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#span-metrics-processor
-[tailsamplingprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#tail-sampling-processor
-[filterprocessor_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#filter-processor
+[routingprocessor_help]: ./docs/Configuration.md#routing-processor
+[spanmetricsprocessor_help]: ./docs/Configuration.md#span-metrics-processor
+[tailsamplingprocessor_help]: ./docs/Configuration.md#tail-sampling-processor
+[filterprocessor_help]: ./docs/Configuration.md#filter-processor
 
 ### Exporters
 
@@ -128,7 +129,7 @@ OT distro.
 |------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
 | `sumologicexporter` [configuration help][sumologicexporter_help] | https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/exporter/sumologicexporter |
 
-[sumologicexporter_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#sumo-logic-exporter
+[sumologicexporter_help]: ./docs/Configuration.md#sumo-logic-exporter
 
 #### Upstream exporters
 
@@ -140,11 +141,11 @@ OT distro.
 | `loadbalancingexporter` [configuration help][loadbalancingexporter_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.36.0/exporter/loadbalancingexporter |
 | `loggingexporter` [configuration help][loggingexporter_help]             | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.36.0/exporter/loggingexporter               |
 
-[carbonexporter_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#carbon-exporter
-[fileexporter_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#file-exporter
-[kafkaexporter_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#kafka-exporter
-[loadbalancingexporter_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#load-balancing-exporter
-[loggingexporter_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#logging-exporter
+[carbonexporter_help]: ./docs/Configuration.md#carbon-exporter
+[fileexporter_help]: ./docs/Configuration.md#file-exporter
+[kafkaexporter_help]: ./docs/Configuration.md#kafka-exporter
+[loadbalancingexporter_help]: ./docs/Configuration.md#load-balancing-exporter
+[loggingexporter_help]: ./docs/Configuration.md#logging-exporter
 
 ### Extensions
 
@@ -154,7 +155,7 @@ OT distro.
 |--------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
 | `sumologicextension` [configuration help][sumologicextension_help] | https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/extension/sumologicextension |
 
-[sumologicextension_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#sumo-logic-extension
+[sumologicextension_help]: ./docs/Configuration.md#sumo-logic-extension
 
 #### Upstream extensions
 
@@ -168,9 +169,10 @@ OT distro.
 | `pprofextension`                                 | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.36.0/extension/pprofextension           |
 | `zpagesextension`                                | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.36.0/extension/zpagesextension                  |
 
-[filestorage_help]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Configuration.md#file-storage-extension
+[filestorage_help]: ./docs/Configuration.md#file-storage-extension
 
 <!-- markdownlint-enable MD013 -->
+<!-- markdownlint-enable MD034 -->
 
 ## Contributing
 
