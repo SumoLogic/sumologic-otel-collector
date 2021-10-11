@@ -83,9 +83,9 @@ jobs:
             /home/runner/.cache/go-build
             /Users/runner/go/pkg/mod
             /Users/runner/Library/Caches/go-build
-          key: ${{matrix.arch_os}}-go-pkg-${{matrix.go}}-${{ hashFiles('**/go.sum') }}
+          key: ${{matrix.arch_os}}-go-${{matrix.go}}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            ${{matrix.arch_os}}-go-pkg-${{matrix.go}}-
+            ${{matrix.arch_os}}-go-${{matrix.go}}-
 
       - name: Run tests
         run: make gotest
@@ -112,9 +112,9 @@ jobs:
           path: |
             /home/runner/go/pkg/mod
             /home/runner/.cache/go-build
-          key: ${{matrix.arch_os}}-go-lint-${{matrix.go}}-${{ hashFiles('**/go.sum') }}
+          key: ${{matrix.arch_os}}-go-${{matrix.go}}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            ${{matrix.arch_os}}-go-lint-${{matrix.go}}-
+            ${{matrix.arch_os}}-go-${{matrix.go}}-
 
       - name: Install golangci-lint
         run: make install-golangci-lint
