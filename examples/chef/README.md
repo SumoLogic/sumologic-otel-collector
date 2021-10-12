@@ -41,15 +41,15 @@ The following steps describe procedure of testing changes:
   ```
 
 - Verify installation:
-  
+
   ```bash
   sudo ps aux | grep otelcol-sumo
   ```
 
 - Verify logs:
-  
+
   ```bash
-  cat /var/log/otelcol.log 
+  cat /var/log/otelcol.log
   ```
 
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector

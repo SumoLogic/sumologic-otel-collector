@@ -2,7 +2,7 @@ extensions:
   file_storage/logs:
     directory: ./testdata/storage/
     timeout: 10s
- 
+
 receivers:
   filelog/service1:
     start_at: beginning # remove after tests
