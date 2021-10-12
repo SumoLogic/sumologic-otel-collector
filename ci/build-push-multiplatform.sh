@@ -25,6 +25,11 @@ if [[ -z "${PLATFORM}" ]]; then
     exit 1
 fi
 
+PUSH=""
+if [[ $# -eq 1 ]] && [[ "${1}" == "--push" ]]; then
+    PUSH="true"
+fi
+
 # build_push builds a container image for a designated platform and then pushes
 # it to container repository specified by REPO_URL variable.
 #
@@ -69,20 +74,34 @@ function build_push() {
     readonly LATEST_TAG="${REPO_URL}:latest-${BUILD_ARCH}"
 
     echo "Building tag: ${TAG}"
-    docker buildx build \
-        --push \
-        --file "${DOCKERFILE}" \
-        --build-arg BUILD_TAG="${BUILD_TAG}" \
-        --build-arg BUILDKIT_INLINE_CACHE=1 \
-        --platform="${PLATFORM}" \
-        --tag "${TAG}" \
-        .
+    if [[ "${PUSH}" == true ]]; then
+        # load flag is needed so that docker loads this image
+        # for subsequent steps on github actions
+        docker buildx build \
+            --push \
+            --file "${DOCKERFILE}" \
+            --build-arg BUILD_TAG="${BUILD_TAG}" \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --platform="${PLATFORM}" \
+            --load \
+            --tag "${TAG}" \
+            .
 
-    echo "Tagging: ${LATEST_TAG}"
-    # Why is this needeed on CI?
-    docker pull "${TAG}"
-    docker tag "${TAG}" "${LATEST_TAG}"
-    docker push "${LATEST_TAG}"
+        echo "Tagging: ${LATEST_TAG}"
+        docker tag "${TAG}" "${LATEST_TAG}"
+        docker push "${LATEST_TAG}"
+    else
+        # load flag is needed so that docker loads this image
+        # for subsequent steps on github actions
+        docker buildx build \
+            --file "${DOCKERFILE}" \
+            --build-arg BUILD_TAG="latest" \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --platform="${PLATFORM}" \
+            --load \
+            --tag "${REPO_URL}:latest" \
+            .
+    fi
 }
 
-build_push
+build_push "${PUSH}"
