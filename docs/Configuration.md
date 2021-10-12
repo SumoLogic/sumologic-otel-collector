@@ -18,6 +18,7 @@
     - [Fluent Forward Receiver](#fluent-forward-receiver)
     - [Host Metrics Receiver](#host-metrics-receiver)
     - [Jaeger Receiver](#jaeger-receiver)
+    - [OpenCensus Receiver](#opencensus-receiver)
     - [Syslog Receiver](#syslog-receiver)
     - [Statsd Receiver](#statsd-receiver)
     - [OTLP Receiver](#otlp-receiver)

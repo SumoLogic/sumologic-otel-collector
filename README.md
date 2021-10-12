@@ -71,6 +71,7 @@ OT distro.
 [filelogreceiver_help]: ./docs/Configuration.md#filelog-receiver
 [fluentforwardreceiver_help]: ./docs/Configuration.md#fluent-forward-receiver
 [hostmetricsreceiver_help]: ./docs/Configuration.md#host-metrics-receiver
+[jaegerreceiver_help]: ./docs/Configuration.md#jaeger-receiver
 [opencensusreceiver_help]: ./docs/Configuration.md#opencensus-receiver
 [statsdreceiver_help]: ./docs/Configuration.md#statsd-receiver
 [syslogreceiver_help]: ./docs/Configuration.md#syslog-receiver
