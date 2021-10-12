@@ -510,13 +510,29 @@ receivers:
   jaeger/withendpoint:
     protocols:
       grpc:
-        endpoint: 0.0.0.0:14260
+        endpoint: 0.0.0.0:14250
 ```
 
 For details, see the [Jaeger Receiver documentation][jaegerreceiver_readme].
 
 [jaegerreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.36.0/receiver/jaegerreceiver
 [jaeger_io]: https://www.jaegertracing.io/
+
+#### OpenCensus Receiver
+
+OpenCensus Receiver receives data via gRPC or HTTP using [OpenCensus][opencensus_format] format.
+
+Example configuration:
+
+```yaml
+receivers:
+  opencensus:
+```
+
+For details, see the [OpenCensus Receiver documentation][opencensusreceiver_readme].
+
+[opencensusreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.36.0/receiver/opencensusreceiver
+[opencensus_format]: https://opencensus.io/
 
 #### Syslog Receiver
 
