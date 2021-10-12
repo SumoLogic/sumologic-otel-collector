@@ -18,4 +18,3 @@ done
 
 set -x
 exit "${RET_VAL}"
-

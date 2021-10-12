@@ -1,6 +1,6 @@
 # Installation of Sumo Logic Distro of OpenTelemetry Collector with Puppet
 
-This [Puppet][puppet] [manifest](manifest/../manifests/install_otel_collector.pp) along with 
+This [Puppet][puppet] [manifest](manifest/../manifests/install_otel_collector.pp) along with
 [module](modules/install_otel_collector/) will install Sumo Logic Distro of [OpenTelemetry Collector][otc_link].
 
 ## Configuration
@@ -58,15 +58,15 @@ To install Sumo Logic Distro of OpenTelemetry Collector with Puppet on Vagrant v
 
 - See that Puppet agent pulls configuration from Puppet server.
 - Verify installation:
-  
+
   ```bash
   sudo ps aux | grep otelcol-sumo
   ```
 
 - Verify logs:
-  
+
   ```bash
-  cat /var/log/otelcol.log 
+  cat /var/log/otelcol.log
   ```
 
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector

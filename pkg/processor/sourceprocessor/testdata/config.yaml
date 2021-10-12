@@ -33,4 +33,3 @@ service:
       receivers: [nop]
       processors: [source/2]
       exporters: [nop]
-

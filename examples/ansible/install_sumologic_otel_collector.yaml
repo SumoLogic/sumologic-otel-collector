@@ -17,22 +17,22 @@
     - name: "Set OS to linux, OS family: {{ ansible_os_family }}"
       set_fact:
          binary_os: "linux"
-      when: 
+      when:
         - ansible_os_family != 'Windows'
         - ansible_os_family != 'Darwin'
 
     - name: "Set OS to MacOS, OS family: {{ ansible_os_family }}"
       set_fact:
          binary_os: "darwin"
-      when: 
+      when:
         - ansible_os_family == 'Darwin'
-    
+
     - name: "Installing binary, OS: {{ binary_os }}, architecture: {{ binary_arch }}"
       get_url:
         url: "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v{{sumologic_otel_collector.version}}/otelcol-sumo-{{ sumologic_otel_collector.version }}-{{ binary_os }}_{{ binary_arch }}"
         dest: /usr/local/bin/otelcol-sumo
-        mode: 0755 
-      when: 
+        mode: 0755
+      when:
         - ansible_architecture == 'x86_64' or ansible_architecture == 'aarch64' or ansible_architecture == 'arm64'
         - ansible_os_family != 'Windows'
     - name: Ensure group "opentelemetry" exists
