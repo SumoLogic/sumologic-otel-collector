@@ -61,6 +61,15 @@ jobs:
       - uses: actions/setup-python@v2
       - uses: pre-commit/action@v2.0.3
 
+  check-uniform-dependencies:
+    name: Check uniform dependencies
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2.3.4
+
+      - name: Check uniform dependencies
+        run: make check-uniform-dependencies
+
   test:
     name: Test
     runs-on: ${{ matrix.runs_on }}
@@ -76,7 +85,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2.3.4
 
+      - name: Check if test related files changed
+        id: changed-files
+        uses: tj-actions/changed-files@v10
+        with:
+          files: |
+            pkg/
+            Makefile
+
       - name: Setup go
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
@@ -84,6 +102,7 @@ jobs:
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
       - uses: actions/cache@v2
+        if: steps.changed-files.outputs.any_changed == 'true'
         with:
           path: |
             /home/runner/go/pkg/mod
@@ -95,6 +114,7 @@ jobs:
             ${{matrix.arch_os}}-go-${{matrix.go}}-
 
       - name: Run tests
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: make gotest
 
   lint:
@@ -107,7 +127,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2.3.4
 
+      - name: Check if files changed that need linting
+        id: changed-files
+        uses: tj-actions/changed-files@v10
+        with:
+          files: |
+            otelcolbuilder/cmd/
+            pkg/
+
       - name: Setup go
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
@@ -115,6 +144,7 @@ jobs:
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
       - uses: actions/cache@v2
+        if: steps.changed-files.outputs.any_changed == 'true'
         with:
           path: |
             /home/runner/go/pkg/mod
@@ -124,19 +154,12 @@ jobs:
             ${{matrix.arch_os}}-go-${{matrix.go}}-
 
       - name: Install golangci-lint
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: make install-golangci-lint
 
       - name: Run golangci-lint
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: make golint
-
-  check-uniform-dependencies:
-    name: Check uniform dependencies
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2.3.4
-
-      - name: Check uniform dependencies
-        run: make check-uniform-dependencies
 
   build:
     name: Build
@@ -159,7 +182,20 @@ jobs:
       - name: Fetch current branch
         run: ./ci/fetch_current_branch.sh
 
+      - name: Check if build related files changed
+        id: changed-files
+        uses: tj-actions/changed-files@v10
+        with:
+          files: |
+            otelcolbuilder/.otelcol-builder.yaml
+            otelcolbuilder/Makefile
+            otelcolbuilder/cmd/
+            pkg/
+            Dockerfile.*
+            Makefile
+
       - name: Setup go
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
@@ -167,6 +203,7 @@ jobs:
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
       - uses: actions/cache@v2
+        if: steps.changed-files.outputs.any_changed == 'true'
         with:
           path: |
             /home/runner/go/pkg/mod
@@ -178,10 +215,12 @@ jobs:
             ${{matrix.arch_os}}-go-${{matrix.go}}-
 
       - name: Install opentelemetry-collector-builder
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: make install
         working-directory: ./otelcolbuilder
 
       - name: Build
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: make otelcol-sumo-${{matrix.arch_os}}
         working-directory: ./otelcolbuilder
 
@@ -192,12 +231,14 @@ jobs:
       #   working-directory: ./otelcolbuilder/cmd/
 
       - name: Show included modules
+        if: steps.changed-files.outputs.any_changed == 'true'
         working-directory: ./otelcolbuilder/cmd
         run: |
           go version -m otelcol-sumo-${{matrix.arch_os}} | \
           grep -E "/(receiver|exporter|processor|extension)/"
 
       - name: Store binary as action artifact
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/upload-artifact@v2
         with:
           name: otelcol-sumo-${{matrix.arch_os}}
