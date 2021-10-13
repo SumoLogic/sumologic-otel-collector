@@ -75,17 +75,19 @@ function build_push() {
 
     echo "Building tag: ${TAG}"
     if [[ "${PUSH}" == true ]]; then
-        # load flag is needed so that docker loads this image
-        # for subsequent steps on github actions
         docker buildx build \
             --push \
             --file "${DOCKERFILE}" \
             --build-arg BUILD_TAG="${BUILD_TAG}" \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --platform="${PLATFORM}" \
-            --load \
             --tag "${TAG}" \
             .
+
+        # This is needed on CI because the above build command does not include
+        # --load flag, which is forbidded to be used together with --push, hence
+        # the docker pull.
+        docker pull "${TAG}"
 
         echo "Tagging: ${LATEST_TAG}"
         docker tag "${TAG}" "${LATEST_TAG}"
