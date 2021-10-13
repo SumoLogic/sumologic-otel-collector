@@ -95,11 +95,19 @@ replaces:
   # Needed for telegrafreceiver
   - github.com/influxdata/telegraf => github.com/sumologic/telegraf v1.19.3-sumo-0
 
-  # TODO: remove this when regexp log filtering is released upstream, e.g. this
-  # PR: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5237
-  # and when record level log filtering is available as implemented in here:
-  # https://github.com/pmalek-sumo/opentelemetry-collector-contrib/commit/11de2c03d3dbbde2e73b8a816318a2515c843985
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/filterprocessor 11de2c03d3dbbde2e73b8a816318a2515c843985
+  # TODO: remove this when:
+  # - regexp log filtering is released upstream (0.37.0):
+  #   PR: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5680
+  # - record level log filtering is available upstream (0.37.0):
+  #   commit: https://github.com/pmalek-sumo/opentelemetry-collector-contrib/commit/11de2c03d3dbbde2e73b8a816318a2515c843985
+  # - expr log filtering is merged and released upstream:
+  #   PR: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5680
+  # For now, cherry-picked changes are being used:
+  # commit: https://github.com/SumoLogic/opentelemetry-collector-contrib/commit/ad02a5cc32f1d53ca56a7d4ce9a3bc1120676e2f
+  # branch: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.36.0-filterprocessor
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/filterprocessor ad02a5cc32f1d53ca56a7d4ce9a3bc1120676e2f
+  - github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal => github.com/SumoLogic/opentelemetry-collector-contrib/internal/coreinternal ad02a5cc32f1d53ca56a7d4ce9a3bc1120676e2f
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/attributesprocessor ad02a5cc32f1d53ca56a7d4ce9a3bc1120676e2f
 
   # Use features from branch:
   # https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.36.0-routingprocessor-allow-routing-on-all-signals
