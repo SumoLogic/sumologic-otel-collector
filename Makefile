@@ -113,13 +113,21 @@ build-container-dev:
 
 # dev
 
-.PHONY: build-push-container-multiplatform-dev
-build-push-container-multiplatform-dev:
+.PHONY: _build-container-multiplatform-dev
+_build-container-multiplatform-dev:
 	BUILD_TAG="$(BUILD_TAG)" \
 		REPO_URL="$(OPENSOURCE_REPO_URL_DEV)" \
 		DOCKERFILE="Dockerfile_dev" \
 		PLATFORM="$(PLATFORM)" \
-		./ci/build-push-multiplatform.sh
+		./ci/build-push-multiplatform.sh $(PUSH)
+
+.PHONY: build-container-multiplatform-dev
+build-container-multiplatform-dev:
+	$(MAKE) _build-container-multiplatform-dev PUSH=
+
+.PHONY: build-container-multiplatform-dev
+build-push-container-multiplatform-dev:
+	$(MAKE) _build-container-multiplatform-dev PUSH=--push
 
 .PHONY: push-container-manifest-dev
 push-container-manifest-dev:
@@ -133,7 +141,7 @@ build-push-container-multiplatform-legacy-dev:
 		REPO_URL="$(LEGACY_REPO_URL_DEV)" \
 		DOCKERFILE="Dockerfile_dev" \
 		PLATFORM="$(PLATFORM)" \
-		./ci/build-push-multiplatform.sh
+		./ci/build-push-multiplatform.sh --push
 
 .PHONY: push-container-manifest-legacy-dev
 push-container-manifest-legacy-dev:
@@ -143,13 +151,25 @@ push-container-manifest-legacy-dev:
 
 # release
 
-.PHONY: build-push-container-multiplatform
-build-push-container-multiplatform:
+.PHONY: _build-container-multiplatform
+_build-container-multiplatform:
 	BUILD_TAG="$(BUILD_TAG)" \
 		REPO_URL="$(OPENSOURCE_REPO_URL)" \
 		DOCKERFILE="Dockerfile" \
 		PLATFORM="$(PLATFORM)" \
-		./ci/build-push-multiplatform.sh
+		./ci/build-push-multiplatform.sh $(PUSH)
+
+.PHONY: build-container-multiplatform
+build-container-multiplatform:
+	$(MAKE) _build-container-multiplatform PUSH=
+
+.PHONY: build-push-container-multiplatform
+build-push-container-multiplatform:
+	$(MAKE) _build-container-multiplatform PUSH=--push
+
+.PHONY: test-built-image
+test-built-image:
+	docker run --rm "$(OPENSOURCE_REPO_URL):$(BUILD_TAG)" --version
 
 .PHONY: build-push-container-multiplatform-legacy
 build-push-container-multiplatform-legacy:
@@ -157,7 +177,7 @@ build-push-container-multiplatform-legacy:
 		REPO_URL="$(LEGACY_REPO_URL)" \
 		DOCKERFILE="Dockerfile" \
 		PLATFORM="$(PLATFORM)" \
-		./ci/build-push-multiplatform.sh
+		./ci/build-push-multiplatform.sh --push
 
 .PHONY: push-container-manifest
 push-container-manifest:

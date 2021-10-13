@@ -56,7 +56,7 @@ build:
 # and run 'go build ...' by hand.
 	@$(MAKE) _builder SKIP_COMPILATION=true
 	(cd cmd && \
-		go build -v \
+		CGO_ENABLED=$(CGO_ENABLED) go build -v \
 		-ldflags="-s -w" \
 		-tags enable_unstable \
 		-trimpath -o ./$(BINARY_NAME) . \
