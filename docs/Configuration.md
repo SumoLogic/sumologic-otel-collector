@@ -845,13 +845,17 @@ processors:
         value: 2245
       - key: account_password
         action: delete
+      - pattern: ^k8s.*
+        action: delete
       - key: account_email
+        action: hash
+      - pattern: ^secret.*
         action: hash
 ```
 
 For details, see the [Attributes Processor documentation][attributesprocessor_docs].
 
-[attributesprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.36.0/processor/attributesprocessor/README.md
+[attributesprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/0a7fe19d750abac51ce378c05409ff9f520a7fb1/processor/attributesprocessor/README.md
 
 #### Group by Attributes Processor
 
@@ -943,11 +947,13 @@ processors:
       action: insert
     - key: redundant-attribute
       action: delete
+    - pattern: ^k8s.*
+      action: delete
 ```
 
 For details, see the [Resource Processor documentation][resourceprocessor_docs].
 
-[resourceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.36.0/processor/resourceprocessor/README.md
+[resourceprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/0a7fe19d750abac51ce378c05409ff9f520a7fb1/processor/resourceprocessor/README.md
 
 #### Routing Processor
 
@@ -1112,11 +1118,17 @@ processors:
         record_attributes:
           - Key: host.name
             Value: record_attr_.*
+  filter/include_logs_by_record_expr:
+    logs:
+      include:
+        match_type: expr
+        expressions:
+          - Body matches '^my log.*'
 ```
 
 For details, see the [Filter Processor documentation][filterprocessor_docs].
 
-[filterprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/11de2c03d3dbbde2e73b8a816318a2515c843985/processor/filterprocessor/README.md
+[filterprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/0a7fe19d750abac51ce378c05409ff9f520a7fb1/processor/filterprocessor/README.md
 
 ---
 

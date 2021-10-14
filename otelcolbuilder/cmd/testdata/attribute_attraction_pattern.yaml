@@ -1,0 +1,38 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: localhost:4317
+
+processors:
+  resource:
+    attributes:
+      - action: delete
+        key: test_key
+      - action: delete
+        pattern: ^k8s\.pod\..*
+      - action: hash
+        pattern: ^k8s\..*
+      - action: hash
+        key: test_key
+  attributes:
+    actions:
+      - action: delete
+        key: test_key
+      - action: delete
+        pattern: .*
+
+exporters:
+  sumologic:
+    endpoint: http://dummy.endpoint.com:8888/api
+
+service:
+  pipelines:
+    traces:
+      receivers:
+      - otlp
+      processors:
+      - resource
+      - attributes
+      exporters:
+      - sumologic
