@@ -109,12 +109,12 @@ replaces:
   - github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal => github.com/SumoLogic/opentelemetry-collector-contrib/internal/coreinternal ad02a5cc32f1d53ca56a7d4ce9a3bc1120676e2f
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/attributesprocessor ad02a5cc32f1d53ca56a7d4ce9a3bc1120676e2f
 
-  # Use features from branch:
-  # https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.36.0-routingprocessor-allow-routing-on-all-signals
-  # This replacement should be removed when all the features from the branch are upstreamed.
-  # One PR addressing the above can be found here:
-  # * https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5694
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/routingprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/routingprocessor 9c497458a97b5b6772915da177df6f8f5b67e1e2
+  # TODO: remove this when:
+  # - routing on resource attributes for traces is merged upstream and available in released version
+  #   PR: https://github.com/SumoLogic/opentelemetry-collector-contrib/commit/1379fc03b534f219b977c975ec1a8867c12818b8
+  # - routing on resource attributes for all signals is merged upstream and available in released version
+  #   branch: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.36.0-routingprocessor-allow-routing-on-all-signals
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/routingprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/routingprocessor 1379fc03b534f219b977c975ec1a8867c12818b8
 
   # TODO: remove this when fluentforwardreceiver support for complex object is accepted, merged and released upstream
   # PR: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5676
