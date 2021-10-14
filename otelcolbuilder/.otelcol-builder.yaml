@@ -102,12 +102,15 @@ replaces:
   #   commit: https://github.com/pmalek-sumo/opentelemetry-collector-contrib/commit/11de2c03d3dbbde2e73b8a816318a2515c843985
   # - expr log filtering is merged and released upstream:
   #   PR: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5680
+  # - support for regexp for delete and hash actions for attribute attraction
+  #   PR: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5750
   # For now, cherry-picked changes are being used:
-  # commit: https://github.com/SumoLogic/opentelemetry-collector-contrib/commit/ad02a5cc32f1d53ca56a7d4ce9a3bc1120676e2f
+  # commit: https://github.com/SumoLogic/opentelemetry-collector-contrib/commit/0a7fe19d750abac51ce378c05409ff9f520a7fb1
   # branch: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.36.0-filterprocessor
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/filterprocessor ad02a5cc32f1d53ca56a7d4ce9a3bc1120676e2f
-  - github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal => github.com/SumoLogic/opentelemetry-collector-contrib/internal/coreinternal ad02a5cc32f1d53ca56a7d4ce9a3bc1120676e2f
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/attributesprocessor ad02a5cc32f1d53ca56a7d4ce9a3bc1120676e2f
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/filterprocessor 0a7fe19d750abac51ce378c05409ff9f520a7fb1
+  - github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal => github.com/SumoLogic/opentelemetry-collector-contrib/internal/coreinternal 0a7fe19d750abac51ce378c05409ff9f520a7fb1
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/attributesprocessor 0a7fe19d750abac51ce378c05409ff9f520a7fb1
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/resourceprocessor 0a7fe19d750abac51ce378c05409ff9f520a7fb1
 
   # Use features from branch:
   # https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.36.0-routingprocessor-allow-routing-on-all-signals
