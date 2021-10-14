@@ -18,13 +18,10 @@ jobs:
         include:
           - arch_os: linux_amd64
             runs_on: ubuntu-20.04
-            go: '1.17.2'
           - arch_os: linux_arm64
             runs_on: ubuntu-20.04
-            go: '1.17.2'
           - arch_os: darwin_amd64
             runs_on: macos-latest
-            go: '1.17.2'
     steps:
       - uses: actions/checkout@v2.3.4
 
@@ -34,7 +31,7 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v2
         with:
-          go-version: ${{ matrix.go }}
+          go-version: '1.17.2'
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
@@ -45,9 +42,9 @@ jobs:
             /home/runner/.cache/go-build
             /Users/runner/go/pkg/mod
             /Users/runner/Library/Caches/go-build
-          key: ${{matrix.arch_os}}-go-${{matrix.go}}-${{ hashFiles('**/go.sum') }}
+          key: ${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            ${{matrix.arch_os}}-go-${{matrix.go}}-
+            ${{matrix.arch_os}}-go-
 
       - name: Install opentelemetry-collector-builder
         run: make install
