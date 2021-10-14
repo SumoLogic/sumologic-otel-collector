@@ -1112,6 +1112,12 @@ processors:
         record_attributes:
           - Key: host.name
             Value: record_attr_.*
+  filter/include_logs_by_record_expr:
+    logs:
+      include:
+        match_type: expr
+        expressions:
+          - Body matches '^my log.*'
 ```
 
 For details, see the [Filter Processor documentation][filterprocessor_docs].
