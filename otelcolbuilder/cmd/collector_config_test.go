@@ -67,6 +67,10 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			name:       "telegrafreceiver with routingprocessor",
 			configFile: "testdata/telegrafreceiver_routingprocessor.yaml",
 		},
+		{
+			name:       "resource and attributes processors with support for regexp for delete and hash actions",
+			configFile: "testdata/attribute_attraction_pattern.yaml",
+		},
 	}
 
 	for _, tc := range testcases {
