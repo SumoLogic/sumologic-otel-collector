@@ -72,6 +72,18 @@ type OwnerCache struct {
 	informers []cache.SharedIndexInformer
 }
 
+func newOwnerCache(client kubernetes.Interface, logger *zap.Logger) OwnerCache {
+	return OwnerCache{
+		objectOwners: map[string]*ObjectOwner{},
+		podServices:  map[string][]string{},
+		namespaces:   map[string]*api_v1.Namespace{},
+		cacheMutex:   sync.RWMutex{},
+		client:       client,
+		logger:       logger,
+		stopCh:       make(chan struct{}),
+	}
+}
+
 // Start runs the informers
 func (op *OwnerCache) Start() {
 	op.logger.Info("Staring K8S resource informers", zap.Int("#infomers", len(op.informers)))
@@ -91,14 +103,8 @@ func newOwnerProvider(
 	labelSelector labels.Selector,
 	fieldSelector fields.Selector,
 	namespace string) (OwnerAPI, error) {
-	ownerCache := OwnerCache{}
-	ownerCache.objectOwners = map[string]*ObjectOwner{}
-	ownerCache.podServices = map[string][]string{}
-	ownerCache.namespaces = map[string]*api_v1.Namespace{}
-	ownerCache.cacheMutex = sync.RWMutex{}
 
-	ownerCache.client = client
-	ownerCache.logger = logger
+	ownerCache := newOwnerCache(client, logger)
 
 	factory := informers.NewSharedInformerFactoryWithOptions(client, watchSyncPeriod,
 		informers.WithNamespace(namespace),
