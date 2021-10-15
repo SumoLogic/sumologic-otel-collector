@@ -6,6 +6,35 @@ receivers:
         interval = "1s"
         flush_interval = "1s"
         debug = true
+
+      [[inputs.http_listener_v2]]
+        read_timeout = "30s"
+        write_timeout = "30s"
+        service_address = "localhost:9888"
+        data_format = "prometheusremotewrite"
+        path_tag = true
+        paths = [
+          "/prometheus.metrics",
+          "/prometheus.metrics.apiserver",
+          "/prometheus.metrics.applications.apache",
+          "/prometheus.metrics.applications.jmx",
+          "/prometheus.metrics.applications.kafka",
+          "/prometheus.metrics.applications.mysql",
+          "/prometheus.metrics.applications.nginx",
+          "/prometheus.metrics.applications.nginx-ingress",
+          "/prometheus.metrics.applications.postgresql",
+          "/prometheus.metrics.applications.redis",
+          "/prometheus.metrics.container",
+          "/prometheus.metrics.controller-manager",
+          "/prometheus.metrics.control-plane.coredns",
+          "/prometheus.metrics.control-plane.kube-etcd",
+          "/prometheus.metrics.kubelet",
+          "/prometheus.metrics.node",
+          "/prometheus.metrics.operator.rule",
+          "/prometheus.metrics.scheduler",
+          "/prometheus.metrics.state"
+        ]
+
       [[inputs.cpu]]
         percpu = true
         totalcpu = true

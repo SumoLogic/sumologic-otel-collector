@@ -93,7 +93,7 @@ replaces:
 
   # ----------------------------------------------------------------------------
   # Needed for telegrafreceiver
-  - github.com/influxdata/telegraf => github.com/sumologic/telegraf v1.19.3-sumo-0
+  - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.20.2-sumo-0
 
   # TODO: remove this when:
   # - regexp log filtering is released upstream (0.37.0):
