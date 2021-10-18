@@ -36,9 +36,9 @@ func TestLoadConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	assert.Equal(t, cfg.Processors[config.NewID("sumologic_syslog")],
+	assert.Equal(t, cfg.Processors[config.NewComponentID("sumologic_syslog")],
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(config.NewID("sumologic_syslog")),
+			ProcessorSettings: config.NewProcessorSettings(config.NewComponentID("sumologic_syslog")),
 			FacilityAttr:      "testAttrName",
 		})
 }

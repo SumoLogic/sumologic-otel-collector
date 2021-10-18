@@ -54,7 +54,7 @@ func NewFactory() component.ProcessorFactory {
 }
 
 func createDefaultConfig() config.Processor {
-	id := config.NewID("cascading_filter")
+	id := config.NewComponentID("cascading_filter")
 	ps := config.NewProcessorSettings(id)
 
 	return &cfconfig.Config{

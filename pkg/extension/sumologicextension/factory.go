@@ -48,7 +48,7 @@ func createDefaultConfig() config.Extension {
 	defaultCredsPath := path.Join(homePath, collectorCredentialsDirectory)
 
 	return &Config{
-		ExtensionSettings:             config.NewExtensionSettings(config.NewID(typeStr)),
+		ExtensionSettings:             config.NewExtensionSettings(config.NewComponentID(typeStr)),
 		ApiBaseUrl:                    DefaultApiBaseUrl,
 		HeartBeatInterval:             DefaultHeartbeatInterval,
 		CollectorCredentialsDirectory: defaultCredsPath,

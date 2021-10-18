@@ -1,5 +1,5 @@
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.36.0
+BUILDER_VERSION ?= 0.37.0
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector-builder
 BUILDER_BIN_PATH ?= $(HOME)/bin/opentelemetry-collector-builder
 VERSION ?= "$(shell git describe --tags --abbrev=10)"
@@ -26,12 +26,27 @@ endif
 install:
 	@echo "Installing $(BUILDER_REPO)@$(BUILDER_VERSION)..."
 	go install $(BUILDER_REPO)@v$(BUILDER_VERSION)
+	@$(MAKE) ensure-correct-builder-version
 
 .PHONY: _install-bin
 _install-bin:
 	mkdir -p $(HOME)/bin && \
 	curl -L -o $(BUILDER_BIN_PATH) https://$(BUILDER_REPO)/releases/download/v$(BUILDER_VERSION)/opentelemetry-collector-builder_$(BUILDER_VERSION)_$(PLATFORM)_amd64 && \
 	chmod +x $(BUILDER_BIN_PATH)
+	@$(MAKE) ensure-correct-builder-version
+
+.PHONY:ensure-correct-builder-version
+ensure-correct-builder-version:
+ifneq ($(shell opentelemetry-collector-builder version 2>/dev/null),$(BUILDER_VERSION))
+	@$(error "Installed opentelemetry-collector-builder version \
+		$(shell opentelemetry-collector-builder version 2>/dev/null) \
+		does not match the requested $(BUILDER_VERSION) \
+		Please check if $(BUILDER_BIN_PATH) is in your PATH" \
+	)
+else
+	@printf "Installed opentelemetry-collector-builder is at the correct version %s\n" \
+		"$(BUILDER_VERSION)"
+endif
 
 .PHONY: install-bin
 install-bin:
@@ -68,11 +83,11 @@ generate-sources:
 	@$(MAKE) _builder SKIP_COMPILATION=true
 
 .PHONY: test
-test: install generate-sources
+test: install-bin generate-sources
 	@$(MAKE) -C cmd test
 
 .PHONY: lint
-lint: install generate-sources
+lint: install-bin generate-sources
 	@$(MAKE) -C cmd lint
 
 .PHONY: mod-download-all

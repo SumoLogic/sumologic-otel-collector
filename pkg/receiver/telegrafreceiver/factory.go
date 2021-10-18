@@ -44,7 +44,7 @@ func createDefaultConfig() config.Receiver {
 	// TypeVal: config.Type(typeStr),
 	// NameVal: typeStr,
 	//
-	rs := config.NewReceiverSettings(config.NewID(typeStr))
+	rs := config.NewReceiverSettings(config.NewComponentID(typeStr))
 	return &Config{
 		ReceiverSettings: &rs,
 		SeparateField:    false,

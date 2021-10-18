@@ -421,7 +421,7 @@ func TestSendLogsSplitFailedAll(t *testing.T) {
 	assert.EqualError(
 		t,
 		err,
-		"[error during sending data: 500 Internal Server Error; error during sending data: 404 Not Found]",
+		"error during sending data: 500 Internal Server Error; error during sending data: 404 Not Found",
 	)
 	assert.Equal(t, test.s.logBuffer[0:2], dropped)
 
@@ -686,7 +686,7 @@ func TestSendLogsJsonSplitFailedAll(t *testing.T) {
 	assert.EqualError(
 		t,
 		err,
-		"[error during sending data: 500 Internal Server Error; error during sending data: 404 Not Found]",
+		"error during sending data: 500 Internal Server Error; error during sending data: 404 Not Found",
 	)
 	assert.Equal(t, test.s.logBuffer[0:2], dropped)
 
@@ -1230,7 +1230,7 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 	assert.EqualError(
 		t,
 		err,
-		"[error during sending data: 500 Internal Server Error; error during sending data: 404 Not Found]",
+		"error during sending data: 500 Internal Server Error; error during sending data: 404 Not Found",
 	)
 	assert.Equal(t, test.s.metricBuffer[0:2], dropped)
 }
