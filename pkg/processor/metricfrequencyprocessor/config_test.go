@@ -22,7 +22,7 @@ func TestLoadConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	id := config.NewID("metric_frequency")
+	id := config.NewComponentID("metric_frequency")
 
 	assert.Equal(t, cfg.Processors[id], createDefaultConfig())
 }

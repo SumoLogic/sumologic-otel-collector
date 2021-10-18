@@ -26,6 +26,7 @@ import (
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 	"go.opentelemetry.io/collector/model/pdata"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension"
@@ -354,7 +355,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 			lp.log.CopyTo(logs.AppendEmpty())
 		}
 
-		return consumererror.NewLogs(consumererror.Combine(errs), droppedLogs)
+		return consumererror.NewLogs(multierr.Combine(errs...), droppedLogs)
 	}
 
 	return nil
@@ -465,7 +466,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 			record.metric.CopyTo(ilms.AppendEmpty().Metrics().AppendEmpty())
 		}
 
-		return consumererror.NewMetrics(consumererror.Combine(errs), droppedMetrics)
+		return consumererror.NewMetrics(multierr.Combine(errs...), droppedMetrics)
 	}
 
 	return nil

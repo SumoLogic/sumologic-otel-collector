@@ -33,7 +33,7 @@ func NewFactory() component.ProcessorFactory {
 }
 
 func createDefaultConfig() config.Processor {
-	id := config.NewID(cfgType)
+	id := config.NewComponentID(cfgType)
 	ps := config.NewProcessorSettings(id)
 
 	return &Config{

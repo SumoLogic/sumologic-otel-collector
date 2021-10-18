@@ -21,8 +21,8 @@ This will:
 Exemplar output:
 
 ```
-Installing github.com/open-telemetry/opentelemetry-collector-builder@0.36.0...
-go install github.com/open-telemetry/opentelemetry-collector-builder@v0.36.0
+Installing github.com/open-telemetry/opentelemetry-collector-builder@0.37.0...
+go install github.com/open-telemetry/opentelemetry-collector-builder@v0.37.0
 CGO_ENABLED=1 opentelemetry-collector-builder \
                 --go go \
                 --version "v0.0.30-beta.0-9-g6f287a4371" \
@@ -30,7 +30,7 @@ CGO_ENABLED=1 opentelemetry-collector-builder \
                 --output-path ./cmd \
                 --skip-compilation=true \
                 --name otelcol-sumo
-2021-10-04T16:28:14.733+0200    INFO    cmd/root.go:99  OpenTelemetry Collector distribution builder    {"version": "0.36.0", "date": "2021-10-01T17:43:48Z"}
+2021-10-04T16:28:14.733+0200    INFO    cmd/root.go:99  OpenTelemetry Collector distribution builder    {"version": "0.37.0", "date": "2021-10-01T17:43:48Z"}
 2021-10-04T16:28:14.734+0200    INFO    cmd/root.go:115 Using config file       {"path": ".otelcol-builder.yaml"}
 2021-10-04T16:28:14.853+0200    INFO    builder/config.go:102   Using go        {"Go executable": "go"}
 2021-10-04T16:28:14.856+0200    INFO    builder/main.go:87      Sources created {"path": "./cmd"}

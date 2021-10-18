@@ -44,7 +44,7 @@ func createDefaultConfig() config.Exporter {
 	qs.Enabled = false
 
 	return &Config{
-		ExporterSettings: config.NewExporterSettings(config.NewID(typeStr)),
+		ExporterSettings: config.NewExporterSettings(config.NewComponentID(typeStr)),
 
 		TranslateAttributes:      DefaultTranslateAttributes,
 		TranslateTelegrafMetrics: DefaultTranslateTelegrafMetrics,

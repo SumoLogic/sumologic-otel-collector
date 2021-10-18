@@ -44,7 +44,7 @@ func TestLoadConfig(t *testing.T) {
 	probFilteringRatio := float32(0.1)
 	namePatternValue := "foo.*"
 
-	id := config.NewID("cascading_filter")
+	id := config.NewComponentID("cascading_filter")
 	ps := config.NewProcessorSettings(id)
 	assert.Equal(t, cfg.Processors[id],
 		&cfconfig.Config{
