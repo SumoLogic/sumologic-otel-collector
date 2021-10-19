@@ -47,11 +47,9 @@ jobs:
             ${{matrix.arch_os}}-go-
 
       - name: Add opentelemetry-collector-builder installation dir to PATH
-        if: steps.changed-files.outputs.any_changed == 'true'
         run: echo "$HOME/bin" >> $GITHUB_PATH
 
       - name: Install opentelemetry-collector-builder
-        if: steps.changed-files.outputs.any_changed == 'true'
         run: make install-bin
         working-directory: ./otelcolbuilder
 
