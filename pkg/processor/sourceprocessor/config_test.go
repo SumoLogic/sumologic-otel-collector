@@ -36,11 +36,11 @@ func TestLoadConfig(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, cfg)
 
-	id1 := config.NewID("source")
+	id1 := config.NewComponentID("source")
 	p1 := cfg.Processors[id1]
 	assert.Equal(t, p1, factory.CreateDefaultConfig())
 
-	id2 := config.NewIDWithName("source", "2")
+	id2 := config.NewComponentIDWithName("source", "2")
 	p2, ok := cfg.Processors[id2]
 	assert.True(t, ok)
 

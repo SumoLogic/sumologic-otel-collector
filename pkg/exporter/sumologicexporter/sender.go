@@ -25,9 +25,9 @@ import (
 	"strings"
 	"time"
 
-	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/model/otlp"
 	"go.opentelemetry.io/collector/model/pdata"
+	"go.uber.org/multierr"
 )
 
 var (
@@ -311,7 +311,7 @@ func (s *sender) sendLogs(ctx context.Context, flds fields) ([]logPair, error) {
 	}
 
 	if len(errs) > 0 {
-		return droppedRecords, consumererror.Combine(errs)
+		return droppedRecords, multierr.Combine(errs...)
 	}
 	return droppedRecords, nil
 }
@@ -423,7 +423,7 @@ func (s *sender) sendMetrics(ctx context.Context, flds fields) ([]metricPair, er
 	}
 
 	if len(errs) > 0 {
-		return droppedRecords, consumererror.Combine(errs)
+		return droppedRecords, multierr.Combine(errs...)
 	}
 	return droppedRecords, nil
 }
@@ -493,7 +493,7 @@ func (s *sender) appendAndSend(
 	}
 
 	if len(errors) > 0 {
-		return ar, consumererror.Combine(errors)
+		return ar, multierr.Combine(errors...)
 	}
 	return ar, nil
 }

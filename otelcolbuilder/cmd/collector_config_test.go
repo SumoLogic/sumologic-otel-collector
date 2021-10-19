@@ -19,14 +19,15 @@ package main
 
 import (
 	"context"
-	"net"
 	"testing"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/service"
+	"go.opentelemetry.io/collector/service/parserprovider"
 )
 
 func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
@@ -82,37 +83,40 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Creating new app...")
+
 			app, err := service.New(service.CollectorSettings{
-				BuildInfo: component.DefaultBuildInfo(),
+				BuildInfo: component.NewDefaultBuildInfo(),
 				Factories: factories,
+				ConfigMapProvider: parserprovider.NewFileMapProvider(
+					tc.configFile,
+				),
 			})
 			require.NoError(t, err)
 
-			args := []string{
-				"--config=" + tc.configFile,
-				"--metrics-addr=" + GetAvailableLocalAddress(t),
-				"--log-level=debug",
-			}
-
-			cmd := service.NewCommand(app)
-			cmd.SetArgs(args)
-
 			go func() {
+				bo := backoff.NewExponentialBackOff()
+				bo.InitialInterval = 25 * time.Millisecond
+				bo.MaxInterval = 3 * time.Second
+				bo.Multiplier = 1.2
+
 				for ch := app.GetStateChannel(); ; {
 					state := <-ch
-					if state == service.Running {
-						break
+
+					switch state {
+					case service.Running:
+						t.Log("App is in the running state, calling .Shutdown()...")
+						time.Sleep(time.Second)
+						app.Shutdown()
+						return
+
+					default:
+						time.Sleep(bo.NextBackOff())
+						continue
 					}
 				}
-
-				t.Log("App is in the running state, calling .Shutdown()...")
-				time.Sleep(time.Second)
-				app.Shutdown()
 			}()
 
-			t.Logf("Starting the app with the following args: %v", args)
-
-			err = cmd.ExecuteContext(context.Background())
+			err = app.Run(context.Background())
 			if tc.wantErr != nil {
 				assert.Equal(t, err, tc.wantErr)
 			} else {
@@ -129,17 +133,4 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			}
 		})
 	}
-}
-
-// GetAvailableLocalAddress finds an available local port and returns an endpoint
-// describing it. The port is available for opening when this function returns
-// provided that there is no race by some other code to grab the same port
-// immediately.
-func GetAvailableLocalAddress(t *testing.T) string {
-	ln, err := net.Listen("tcp", "localhost:0")
-	require.NoError(t, err, "Failed to get a free local port")
-	// There is a possible race if something else takes this same port before
-	// the test uses it, however, that is unlikely in practice.
-	defer ln.Close()
-	return ln.Addr().String()
 }

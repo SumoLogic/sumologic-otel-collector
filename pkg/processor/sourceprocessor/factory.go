@@ -56,7 +56,7 @@ func NewFactory() component.ProcessorFactory {
 
 // createDefaultConfig creates the default configuration for processor.
 func createDefaultConfig() config.Processor {
-	ps := config.NewProcessorSettings(config.NewID(typeStr))
+	ps := config.NewProcessorSettings(config.NewComponentID(typeStr))
 	return &Config{
 		ProcessorSettings:         &ps,
 		Collector:                 defaultCollector,

@@ -44,8 +44,13 @@ jobs:
           restore-keys: |
             ${{matrix.arch_os}}-go-
 
+      - name: Add opentelemetry-collector-builder installation dir to PATH
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: echo "$HOME/bin" >> $GITHUB_PATH
+
       - name: Install opentelemetry-collector-builder
-        run: make install
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make install-bin
         working-directory: ./otelcolbuilder
 
       - name: Build
