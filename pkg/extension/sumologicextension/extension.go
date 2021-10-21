@@ -118,7 +118,12 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 }
 
 func createHashKey(conf *Config) string {
-	return fmt.Sprintf("%s%s%s", conf.CollectorName, conf.Credentials.AccessID, conf.Credentials.AccessKey)
+	return fmt.Sprintf("%s%s%s%s",
+		conf.CollectorName,
+		conf.Credentials.AccessID,
+		conf.Credentials.AccessKey,
+		strings.TrimSuffix(conf.ApiBaseUrl, "/"),
+	)
 }
 
 func (se *SumologicExtension) validateCredenials(
