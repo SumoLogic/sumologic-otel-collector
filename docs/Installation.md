@@ -118,6 +118,8 @@ overwriting the `otelcol-sumo` binary with newer version.
 Before running the newer version, make sure to check the [release notes][github_releases]
 for potential breaking changes that would require manual migration steps.
 
+[github_releases]: https://github.com/SumoLogic/sumologic-otel-collector/releases
+
 ## Container image
 
 To run the Sumo Logic OT Distro in a container, you only need to run the container
@@ -152,7 +154,31 @@ repository.
     ...
     ```
 
-[github_releases]: https://github.com/SumoLogic/sumologic-otel-collector/releases
+### Important note about local state files when using `sumologicextension`
+
+> **IMPORTANT NOTE**:
+>
+> When running Sumo Logic OT distro in a container with [`sumologicextension`][sumologicextension],
+> one needs to take into account the local state files which are being used locally
+> in order to store collector credentials upon successful collector registration.
+>
+> When the collector is being run with `sumologicextension` (which manages collector
+> registration), local directory (which is configured via `collector_credentials_directory`
+> in `sumologicextension`, and which is by default set to `$HOME/.sumologic-otel-collector`)
+> will be used to store the aforementioned state files.
+> Without any mounts defined on the container the collector will register itself
+> every time it starts up, creating clutter on Sumo Logic Collector Management page.
+>
+> In order to avoid that, use volume mounts or any other mechanism to mount
+> the collector credentials directory to the container to persist the state
+> or use `clobber` configuration option from `sumologicextension` to force collector
+> re-registering under the same name, every time is starts up.
+>
+> One can read more about the above described mechanism in
+> [`sumologicextension` README.md][sumologicextension_storing_credentials].
+
+[sumologicextension]: ./../pkg/extension/sumologicextension/README.md
+[sumologicextension_storing_credentials]: ./../pkg/extension/sumologicextension/README.md#Storing-credentials
 
 ## Systemd Service
 
