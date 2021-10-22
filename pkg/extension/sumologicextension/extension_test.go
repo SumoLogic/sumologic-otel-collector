@@ -274,6 +274,101 @@ func TestStoreCredentials(t *testing.T) {
 	})
 }
 
+func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T) {
+	t.Parallel()
+
+	getServer := func() *httptest.Server {
+		var reqCount int32
+
+		return httptest.NewServer(http.HandlerFunc(
+			func(w http.ResponseWriter, req *http.Request) {
+				// TODO Add payload verification - verify if collectorName is set properly
+				reqNum := atomic.AddInt32(&reqCount, 1)
+
+				switch reqNum {
+
+				// register
+				case 1:
+					require.Equal(t, registerUrl, req.URL.Path)
+					_, err := w.Write([]byte(`{
+						"collectorCredentialId": "collectorId",
+						"collectorCredentialKey": "collectorKey",
+						"collectorId": "id"
+					}`))
+
+					if err != nil {
+						w.WriteHeader(http.StatusInternalServerError)
+					}
+
+				// heartbeat
+				case 2:
+					assert.Equal(t, heartbeatUrl, req.URL.Path)
+					w.WriteHeader(204)
+
+				// should not produce any more requests
+				default:
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+			}))
+	}
+
+	getConfig := func(url string) *Config {
+		cfg := createDefaultConfig().(*Config)
+		cfg.CollectorName = "collector_name"
+		cfg.ExtensionSettings = config.ExtensionSettings{}
+		cfg.ApiBaseUrl = url
+		cfg.Credentials.AccessID = "dummy_access_id"
+		cfg.Credentials.AccessKey = "dummy_access_key"
+		return cfg
+	}
+
+	getDir := func(t *testing.T) string {
+		dir, err := os.MkdirTemp("", "otelcol-sumo-store-credentials-multiple-extensions-test-*")
+		require.NoError(t, err)
+		return dir
+	}
+
+	dir1 := getDir(t)
+	t.Cleanup(func() { os.RemoveAll(dir1) })
+	dir2 := getDir(t)
+	t.Cleanup(func() { os.RemoveAll(dir2) })
+
+	srv1 := getServer()
+	t.Cleanup(func() { srv1.Close() })
+	srv2 := getServer()
+	t.Cleanup(func() { srv2.Close() })
+
+	cfg1 := getConfig(srv1.URL)
+	cfg1.CollectorCredentialsDirectory = dir1
+
+	cfg2 := getConfig(srv2.URL)
+	cfg2.CollectorCredentialsDirectory = dir2
+
+	se1, err := newSumologicExtension(cfg1, zap.NewNop())
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, se1.Shutdown(context.Background())) })
+	fileName1, err := hash(createHashKey(cfg1))
+	require.NoError(t, err)
+	credsPath1 := path.Join(dir1, fileName1)
+	require.NoFileExists(t, credsPath1)
+	require.NoError(t, se1.Start(context.Background(), componenttest.NewNopHost()))
+	require.FileExists(t, credsPath1)
+
+	se2, err := newSumologicExtension(cfg2, zap.NewNop())
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, se2.Shutdown(context.Background())) })
+	fileName2, err := hash(createHashKey(cfg2))
+	require.NoError(t, err)
+	credsPath2 := path.Join(dir2, fileName2)
+	require.NoFileExists(t, credsPath2)
+	require.NoError(t, se2.Start(context.Background(), componenttest.NewNopHost()))
+	require.FileExists(t, credsPath2)
+
+	require.NotEqual(t, credsPath1, credsPath2,
+		"credentials files should be different for configs with different apiBaseURLs",
+	)
+}
+
 func TestRegisterEmptyCollectorName(t *testing.T) {
 	t.Parallel()
 
@@ -536,6 +631,7 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 				AccessID:  "dummy_access_id",
 				AccessKey: "dummy_access_key",
 			},
+			ApiBaseUrl: url,
 		})
 		t.Logf("Storing collector credentials in temp dir: %s", dir)
 		require.NoError(t, cStore.Store(storageKey, creds))
