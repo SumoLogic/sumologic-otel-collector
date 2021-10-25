@@ -11,7 +11,8 @@ Sumo Logic Distro of [OpenTelemetry Collector][otc_link] built with
 **This software is currently in beta and is not recommended for production environments.**
 **If you wish to participate in this beta, please contact your Sumo Logic account team or Sumo Logic Support.**
 
-- [Usage and configuration examples](#usage)
+- [Usage and configuration examples](#usage-and-configuration-examples)
+- [Migration from Sumo Logic Installed Collector](#migration-from-sumo-logic-installed-collector)
 - [Open Telemetry collector builder](#open-telemetry-collector-builder)
 - [Built-in Components](#built-in-components)
   - [Receivers](#receivers)
@@ -23,6 +24,10 @@ Sumo Logic Distro of [OpenTelemetry Collector][otc_link] built with
 ## Usage and configuration examples
 
 See the [documentation](docs/README.md).
+
+## Migration from Sumo Logic Installed Collector
+
+See the [migration documentation](docs/Migration.md).
 
 ## Open Telemetry collector builder
 
