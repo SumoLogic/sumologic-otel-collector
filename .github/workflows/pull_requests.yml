@@ -85,7 +85,7 @@ jobs:
 
       - name: Check if test related files changed
         id: changed-files
-        uses: tj-actions/changed-files@v10
+        uses: tj-actions/changed-files@v11
         with:
           files: |
             pkg/
@@ -130,7 +130,7 @@ jobs:
 
       - name: Check if files changed that need linting
         id: changed-files
-        uses: tj-actions/changed-files@v10
+        uses: tj-actions/changed-files@v11
         with:
           files: |
             otelcolbuilder/cmd/
@@ -186,7 +186,7 @@ jobs:
 
       - name: Check if build related files changed
         id: changed-files
-        uses: tj-actions/changed-files@v10
+        uses: tj-actions/changed-files@v11
         with:
           files: |
             otelcolbuilder/.otelcol-builder.yaml
@@ -264,7 +264,7 @@ jobs:
 
       - name: Check if build related files changed
         id: changed-files
-        uses: tj-actions/changed-files@v10
+        uses: tj-actions/changed-files@v11
         with:
           files: |
             otelcolbuilder/.otelcol-builder.yaml
