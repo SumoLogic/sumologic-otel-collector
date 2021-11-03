@@ -21,7 +21,7 @@ jobs:
           - arch_os: darwin_amd64
             runs_on: macos-latest
     steps:
-      - uses: actions/checkout@v2.3.5
+      - uses: actions/checkout@v2.4.0
 
       - name: Fetch current branch
         run: ./ci/fetch_current_branch.sh
@@ -91,7 +91,7 @@ jobs:
       matrix:
         arch_os: [ 'linux_amd64', 'linux_arm64' ]
     steps:
-      - uses: actions/checkout@v2.3.5
+      - uses: actions/checkout@v2.4.0
 
       - name: Extract tag
         id: extract_tag
@@ -148,7 +148,7 @@ jobs:
     needs:
       - build-container-images
     steps:
-      - uses: actions/checkout@v2.3.5
+      - uses: actions/checkout@v2.4.0
 
       - name: Extract tag
         id: extract_tag
