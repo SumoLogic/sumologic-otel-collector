@@ -182,6 +182,25 @@ repository.
 
 ## Systemd Service
 
+> **IMPORTANT NOTE**:
+>
+> Make sure that the user that will run the `otelcol-sumo` process has access to
+> any directories within your filesystem that have been used in you configuration.
+>
+> For instance, using [filestorage extension][filestorage_help] in your configuration
+> like so:
+>
+> ```yaml
+> extensions:
+>   file_storage/custom_settings:
+>     directory: /var/lib/otelcol/mydir
+>     timeout: 1s
+> ```
+>
+> will require that the user running the process has access to `/var/lib/otelcol/mydir`.
+
+[filestorage_help]: ./Configuration.md#file-storage-extension
+
 To run opentelemetry collector as Systemd Service please apply following steps:
 
 1. Ensure that `otelcol-sumo` [has been installed](#linux-on-amd64-x86-64) into `/usr/local/bin/otelcol-sumo`:
