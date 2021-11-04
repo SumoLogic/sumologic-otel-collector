@@ -135,6 +135,16 @@ func newOwnerProvider(
 		ownerCache.cacheEndpoint,
 		ownerCache.deleteEndpoint)
 
+	ownerCache.addOwnerInformer("Job",
+		factory.Batch().V1().Jobs().Informer(),
+		ownerCache.cacheObject,
+		ownerCache.deleteObject)
+
+	ownerCache.addOwnerInformer("CronJob",
+		factory.Batch().V1().CronJobs().Informer(),
+		ownerCache.cacheObject,
+		ownerCache.deleteObject)
+
 	return &ownerCache, nil
 }
 
