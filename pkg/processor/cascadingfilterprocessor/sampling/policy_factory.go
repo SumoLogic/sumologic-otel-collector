@@ -30,21 +30,36 @@ type numericAttributeFilter struct {
 }
 
 type stringAttributeFilter struct {
-	key    string
-	values map[string]struct{}
+	key      string
+	values   map[string]struct{}
+	patterns []*regexp.Regexp
+}
+
+type attributeRange struct {
+	minValue int64
+	maxValue int64
+}
+
+type attributeFilter struct {
+	key      string
+	values   map[string]struct{}
+	patterns []*regexp.Regexp
+	ranges   []attributeRange
 }
 
 type policyEvaluator struct {
 	numericAttr *numericAttributeFilter
 	stringAttr  *stringAttributeFilter
+	attrs       []attributeFilter
 
-	operationRe      *regexp.Regexp
-	minDuration      *time.Duration
-	minNumberOfSpans *int
+	operationRe       *regexp.Regexp
+	minDuration       *time.Duration
+	minNumberOfSpans  *int
+	minNumberOfErrors *int
 
 	currentSecond        int64
-	maxSpansPerSecond    int64
-	spansInCurrentSecond int64
+	maxSpansPerSecond    int32
+	spansInCurrentSecond int32
 
 	invertMatch bool
 
@@ -65,26 +80,85 @@ func createNumericAttributeFilter(cfg *config.NumericAttributeCfg) *numericAttri
 	}
 }
 
-func createStringAttributeFilter(cfg *config.StringAttributeCfg) *stringAttributeFilter {
+func createStringAttributeFilter(cfg *config.StringAttributeCfg) (*stringAttributeFilter, error) {
 	if cfg == nil {
-		return nil
+		return nil, nil
 	}
 
 	valuesMap := make(map[string]struct{})
+	var patterns []*regexp.Regexp
 	for _, value := range cfg.Values {
-		if value != "" {
-			valuesMap[value] = struct{}{}
+		if cfg.UseRegex {
+			re, err := regexp.Compile(value)
+			if err != nil {
+				return nil, err
+			}
+			patterns = append(patterns, re)
+		} else {
+			if value != "" {
+				valuesMap[value] = struct{}{}
+			}
 		}
 	}
 
 	return &stringAttributeFilter{
-		key:    cfg.Key,
-		values: valuesMap,
+		key:      cfg.Key,
+		values:   valuesMap,
+		patterns: patterns,
+	}, nil
+}
+
+func createAttributeFilter(cfg config.AttributeCfg) (*attributeFilter, error) {
+	valuesMap := make(map[string]struct{})
+	var patterns []*regexp.Regexp
+	for _, value := range cfg.Values {
+		if cfg.UseRegex {
+			re, err := regexp.Compile(value)
+			if err != nil {
+				return nil, err
+			}
+			patterns = append(patterns, re)
+		} else {
+			if value != "" {
+				valuesMap[value] = struct{}{}
+			}
+		}
 	}
+	var ranges []attributeRange
+	for _, r := range cfg.Ranges {
+		ranges = append(ranges, attributeRange{
+			minValue: r.MinValue,
+			maxValue: r.MaxValue,
+		})
+	}
+
+	return &attributeFilter{
+		key:      cfg.Key,
+		values:   valuesMap,
+		patterns: patterns,
+		ranges:   ranges,
+	}, nil
+}
+
+func createAttributesFilter(cfg []config.AttributeCfg) ([]attributeFilter, error) {
+	if cfg == nil {
+		return nil, nil
+	}
+
+	var filters []attributeFilter
+	for _, attrCfg := range cfg {
+		filter, err := createAttributeFilter(attrCfg)
+		if err != nil {
+			return nil, err
+		}
+		filters = append(filters, *filter)
+	}
+
+	return filters, nil
 }
 
 // NewProbabilisticFilter creates a policy evaluator intended for selecting samples probabilistically
-func NewProbabilisticFilter(logger *zap.Logger, maxSpanRate int64) (PolicyEvaluator, error) {
+func NewProbabilisticFilter(logger *zap.Logger, maxSpanRate int32) (PolicyEvaluator, error) {
 	return &policyEvaluator{
 		logger:               logger,
 		currentSecond:        0,
@@ -94,12 +168,18 @@ func NewProbabilisticFilter(logger *zap.Logger, maxSpanRate int64) (PolicyEvalua
 }
 
 // NewFilter creates a policy evaluator that samples all traces with the specified criteria
-func NewFilter(logger *zap.Logger, cfg *config.PolicyCfg) (PolicyEvaluator, error) {
+func NewFilter(logger *zap.Logger, cfg *config.TraceAcceptCfg) (PolicyEvaluator, error) {
 	numericAttrFilter := createNumericAttributeFilter(cfg.NumericAttributeCfg)
-	stringAttrFilter := createStringAttributeFilter(cfg.StringAttributeCfg)
+	stringAttrFilter, err := createStringAttributeFilter(cfg.StringAttributeCfg)
+	if err != nil {
+		return nil, err
+	}
+	attrsFilter, err := createAttributesFilter(cfg.AttributeCfg)
+	if err != nil {
+		return nil, err
+	}
 
 	var operationRe *regexp.Regexp
-	var err error
 
 	if cfg.PropertiesCfg.NamePattern != nil {
 		operationRe, err = regexp.Compile(*cfg.PropertiesCfg.NamePattern)
@@ -119,9 +199,11 @@ func NewFilter(logger *zap.Logger, cfg *config.PolicyCfg) (PolicyEvaluator, erro
 	return &policyEvaluator{
 		stringAttr:           stringAttrFilter,
 		numericAttr:          numericAttrFilter,
+		attrs:                attrsFilter,
 		operationRe:          operationRe,
 		minDuration:          cfg.PropertiesCfg.MinDuration,
 		minNumberOfSpans:     cfg.PropertiesCfg.MinNumberOfSpans,
+		minNumberOfErrors:    cfg.PropertiesCfg.MinNumberOfErrors,
 		logger:               logger,
 		currentSecond:        0,
 		spansInCurrentSecond: 0,

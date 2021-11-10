@@ -26,7 +26,7 @@ import (
 func newAlwaysSample() *policyEvaluator {
 	return &policyEvaluator{
 		logger:            zap.NewNop(),
-		maxSpansPerSecond: math.MaxInt64,
+		maxSpansPerSecond: math.MaxInt32,
 	}
 }
 
@@ -37,10 +37,4 @@ func TestEvaluate_AlwaysSample(t *testing.T) {
 		newTraceStringAttrs(map[string]pdata.AttributeValue{}, "example", "value"),
 	)
 	assert.Equal(t, decision, Sampled)
-}
-
-func TestOnLateArrivingSpans_AlwaysSample(t *testing.T) {
-	filter := newAlwaysSample()
-	err := filter.OnLateArrivingSpans(NotSampled, nil)
-	assert.Nil(t, err)
 }

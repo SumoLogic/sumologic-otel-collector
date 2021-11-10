@@ -33,7 +33,7 @@ func newNumericAttributeFilter(minValue int64, maxValue int64) *policyEvaluator 
 			minValue: minValue,
 			maxValue: maxValue,
 		},
-		maxSpansPerSecond: math.MaxInt64,
+		maxSpansPerSecond: math.MaxInt32,
 	}
 }
 
@@ -84,12 +84,6 @@ func TestNumericTagFilter(t *testing.T) {
 			assert.Equal(t, decision, c.Decision)
 		})
 	}
-}
-
-func TestOnLateArrivingSpans_NumericTagFilter(t *testing.T) {
-	filter := newNumericAttributeFilter(math.MinInt32, math.MaxInt32)
-	err := filter.OnLateArrivingSpans(NotSampled, nil)
-	assert.Nil(t, err)
 }
 
 func newTraceIntAttrs(nodeAttrs map[string]pdata.AttributeValue, spanAttrKey string, spanAttrValue int64) *TraceData {

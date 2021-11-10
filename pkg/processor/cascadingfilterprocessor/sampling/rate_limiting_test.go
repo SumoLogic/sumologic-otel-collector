@@ -22,7 +22,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func newRateLimiterFilter(maxRate int64) *policyEvaluator {
+func newRateLimiterFilter(maxRate int32) *policyEvaluator {
 	return &policyEvaluator{
 		logger:            zap.NewNop(),
 		maxSpansPerSecond: maxRate,
@@ -55,10 +55,4 @@ func TestRateLimiter(t *testing.T) {
 	trace.SpanCount = 0
 	decision = rateLimiter.Evaluate(traceID, trace)
 	assert.Equal(t, decision, Sampled)
-}
-
-func TestOnLateArrivingSpans_RateLimiter(t *testing.T) {
-	rateLimiter := newRateLimiterFilter(3)
-	err := rateLimiter.OnLateArrivingSpans(NotSampled, nil)
-	assert.Nil(t, err)
 }
