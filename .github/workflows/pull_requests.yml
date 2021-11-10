@@ -222,7 +222,7 @@ jobs:
 
       - name: Install opentelemetry-collector-builder
         if: steps.changed-files.outputs.any_changed == 'true'
-        run: make install-bin
+        run: make install-builder
         working-directory: ./otelcolbuilder
 
       - name: Build

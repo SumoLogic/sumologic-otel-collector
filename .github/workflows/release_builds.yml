@@ -50,7 +50,7 @@ jobs:
         run: echo "$HOME/bin" >> $GITHUB_PATH
 
       - name: Install opentelemetry-collector-builder
-        run: make install-bin
+        run: make install-builder
         working-directory: ./otelcolbuilder
 
       - name: Build
