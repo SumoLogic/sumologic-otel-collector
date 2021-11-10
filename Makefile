@@ -71,7 +71,7 @@ check-uniform-dependencies:
 
 .PHONY: build
 build:
-	$(MAKE) -C ./otelcolbuilder/ build
+	@$(MAKE) -C ./otelcolbuilder/ build
 
 BUILD_TAG ?= latest
 BUILD_CACHE_TAG = latest-builder-cache

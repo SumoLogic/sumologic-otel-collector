@@ -22,8 +22,8 @@ CGO_ENABLED ?= 0
 endif
 
 
-.PHONY: install
-install:
+.PHONY: install-builder-with-go-install
+install-builder-with-go-install:
 	@echo "Installing $(BUILDER_REPO)@$(BUILDER_VERSION)..."
 	go install $(BUILDER_REPO)@v$(BUILDER_VERSION)
 	@$(MAKE) ensure-correct-builder-version
@@ -35,23 +35,25 @@ _install-bin:
 	chmod +x $(BUILDER_BIN_PATH)
 	@$(MAKE) ensure-correct-builder-version
 
-.PHONY:ensure-correct-builder-version
-ensure-correct-builder-version:
-ifneq ($(shell opentelemetry-collector-builder version 2>/dev/null),$(BUILDER_VERSION))
-	@$(error "Installed opentelemetry-collector-builder version \
-		$(shell opentelemetry-collector-builder version 2>/dev/null) \
-		does not match the requested $(BUILDER_VERSION) \
-		Please check if $(BUILDER_BIN_PATH) is in your PATH" \
-	)
-else
-	@printf "Installed opentelemetry-collector-builder is at the correct version %s\n" \
-		"$(BUILDER_VERSION)"
-endif
-
-.PHONY: install-bin
-install-bin:
+.PHONY: install-builder
+install-builder:
 	@echo "Installing $(BUILDER_REPO)@$(BUILDER_VERSION)..."
 	@$(MAKE) _install-bin PLATFORM=$(OS)
+
+.PHONY: ensure-correct-builder-version
+ensure-correct-builder-version:
+ifneq ($(shell opentelemetry-collector-builder version 2>/dev/null),$(BUILDER_VERSION))
+	@$(error Installed opentelemetry-collector-builder version \
+		"$(shell opentelemetry-collector-builder version 2>/dev/null)" \
+		does not match the requested "$(BUILDER_VERSION)" \
+		Please check if "$(BUILDER_BIN_PATH)" can be found in your PATH \
+		and if not, then install it using 'make install-builder' from otelcolbuilder's directory\
+	)
+else
+	@printf "Installed opentelemetry-collector-builder (%s) is at the correct version %s\n" \
+		"$(shell type opentelemetry-collector-builder | cut -d' ' -f 3)" \
+		"$(BUILDER_VERSION)"
+endif
 
 .PHONY: _builder
 _builder:
@@ -66,7 +68,7 @@ _builder:
 		--name $(BINARY_NAME)
 
 .PHONY: build
-build:
+build: ensure-correct-builder-version
 # Since builder doesn't allow adding build tags, let's just skip the compilation
 # and run 'go build ...' by hand.
 	@$(MAKE) _builder SKIP_COMPILATION=true
@@ -83,11 +85,11 @@ generate-sources:
 	@$(MAKE) _builder SKIP_COMPILATION=true
 
 .PHONY: test
-test: install-bin generate-sources
+test: install-builder generate-sources
 	@$(MAKE) -C cmd test
 
 .PHONY: lint
-lint: install-bin generate-sources
+lint: install-builder generate-sources
 	@$(MAKE) -C cmd lint
 
 .PHONY: mod-download-all
