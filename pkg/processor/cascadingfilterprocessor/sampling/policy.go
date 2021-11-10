@@ -35,7 +35,7 @@ type TraceData struct {
 	// Decisiontime time when sampling decision was taken.
 	DecisionTime time.Time
 	// SpanCount track the number of spans on the trace.
-	SpanCount int64
+	SpanCount int32
 	// ReceivedBatches stores all the batches received for the trace.
 	ReceivedBatches []pdata.Traces
 }
@@ -65,12 +65,13 @@ const (
 // PolicyEvaluator implements a cascading policy evaluator,
 // which makes a sampling decision for a given trace when requested.
 type PolicyEvaluator interface {
-	// OnLateArrivingSpans notifies the evaluator that the given list of spans arrived
-	// after the sampling decision was already taken for the trace.
-	// This gives the evaluator a chance to log any message/metrics and/or update any
-	// related internal state.
-	OnLateArrivingSpans(earlyDecision Decision, spans []*pdata.Span) error
-
 	// Evaluate looks at the trace data and returns a corresponding SamplingDecision.
 	Evaluate(traceID pdata.TraceID, trace *TraceData) Decision
+}
+
+// DropTraceEvaluator implements a cascading policy evaluator,
+// which checks if trace should be dropped completely before making any other operations
+type DropTraceEvaluator interface {
+	// ShouldDrop checks if trace should be dropped
+	ShouldDrop(traceID pdata.TraceID, trace *TraceData) bool
 }

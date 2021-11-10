@@ -16,6 +16,7 @@ package sampling
 
 import (
 	"math"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -30,14 +31,26 @@ func newStringAttributeFilter() *policyEvaluator {
 			key:    "example",
 			values: map[string]struct{}{"value": {}},
 		},
-		maxSpansPerSecond: math.MaxInt64,
+		maxSpansPerSecond: math.MaxInt32,
+	}
+}
+
+func newStringAttributeRegexFilter() *policyEvaluator {
+	return &policyEvaluator{
+		logger: zap.NewNop(),
+		stringAttr: &stringAttributeFilter{
+			key:      "example",
+			patterns: []*regexp.Regexp{regexp.MustCompile("val.*")},
+			values:   map[string]struct{}{},
+		},
+		maxSpansPerSecond: math.MaxInt32,
 	}
 }
 
 func TestStringTagFilter(t *testing.T) {
-
 	var empty = map[string]pdata.AttributeValue{}
 	filter := newStringAttributeFilter()
+	regexFilter := newStringAttributeRegexFilter()
 
 	cases := []struct {
 		Desc     string
@@ -78,8 +91,10 @@ func TestStringTagFilter(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Desc, func(t *testing.T) {
-			decision := filter.Evaluate(pdata.NewTraceID([16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}), c.Trace)
-			assert.Equal(t, decision, c.Decision)
+			decisionPlain := filter.Evaluate(pdata.NewTraceID([16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}), c.Trace)
+			decisionRegex := regexFilter.Evaluate(pdata.NewTraceID([16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}), c.Trace)
+			assert.Equal(t, decisionPlain, c.Decision)
+			assert.Equal(t, decisionRegex, c.Decision)
 		})
 	}
 }
@@ -100,10 +115,4 @@ func newTraceStringAttrs(nodeAttrs map[string]pdata.AttributeValue, spanAttrKey 
 	return &TraceData{
 		ReceivedBatches: traceBatches,
 	}
-}
-
-func TestOnLateArrivingSpans_StringAttribute(t *testing.T) {
-	filter := newStringAttributeFilter()
-	err := filter.OnLateArrivingSpans(NotSampled, nil)
-	assert.Nil(t, err)
 }

@@ -20,8 +20,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/component/componenttest"
+	"go.opentelemetry.io/collector/config/configtest"
 	"go.opentelemetry.io/collector/consumer/consumertest"
+	"go.uber.org/zap"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
 )
@@ -29,7 +30,7 @@ import (
 func TestCreateDefaultConfig(t *testing.T) {
 	cfg := createDefaultConfig()
 	assert.NotNil(t, cfg, "failed to create default config")
-	assert.NoError(t, cfg.Validate())
+	assert.NoError(t, configtest.CheckConfigStruct(cfg))
 }
 
 func TestCreateProcessor(t *testing.T) {
@@ -38,14 +39,14 @@ func TestCreateProcessor(t *testing.T) {
 	cfg := factory.CreateDefaultConfig().(*config.Config)
 	// Manually set required fields
 	cfg.ExpectedNewTracesPerSec = 64
-	cfg.PolicyCfgs = []config.PolicyCfg{
+	cfg.PolicyCfgs = []config.TraceAcceptCfg{
 		{
 			Name: "test-policy",
 		},
 	}
 
 	params := component.ProcessorCreateSettings{
-		TelemetrySettings: componenttest.NewNopTelemetrySettings(),
+		TelemetrySettings: component.TelemetrySettings{Logger: zap.NewNop()},
 	}
 	tp, err := factory.CreateTracesProcessor(context.Background(), params, cfg, consumertest.NewNop())
 	assert.NotNil(t, tp)

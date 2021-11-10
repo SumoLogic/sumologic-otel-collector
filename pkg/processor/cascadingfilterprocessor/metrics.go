@@ -29,6 +29,7 @@ var (
 	statusSecondChance         = "SecondChance"
 	statusSecondChanceSampled  = "SecondChanceSampled"
 	statusSecondChanceExceeded = "SecondChanceRateExceeded"
+	statusDropped              = "Dropped"
 
 	tagPolicyKey, _                  = tag.NewKey("policy")
 	tagCascadingFilterDecisionKey, _ = tag.NewKey("cascading_filter_decision")
