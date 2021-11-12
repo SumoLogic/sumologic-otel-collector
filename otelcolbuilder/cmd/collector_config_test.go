@@ -127,6 +127,7 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 				// until this issue is resolved upstream.
 				// https://github.com/open-telemetry/opentelemetry-collector/issues/4153
 				//
+				//
 				// require.Truef(t, errors.Is(err, syscall.EBADF) || err == nil,
 				// 	"error expected to be nil or syscall.BADF but was: %v", err,
 				// )

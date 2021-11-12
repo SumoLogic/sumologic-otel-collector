@@ -226,4 +226,5 @@ type PodAssociationConfig struct {
 }
 
 // DefaultDelimiter is default value for Delimiter for ExtractConfig
+//
 const DefaultDelimiter string = ", "
