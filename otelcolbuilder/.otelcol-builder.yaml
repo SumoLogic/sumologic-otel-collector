@@ -85,12 +85,6 @@ replaces:
   #  github.com/open-telemetry/opentelemetry-collector-contrib/internal/stanza@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000"
   - github.com/open-telemetry/opentelemetry-collector-contrib/internal/stanza => github.com/open-telemetry/opentelemetry-collector-contrib/internal/stanza  v0.38.0
 
-  # This is needed because of:
-  # failed to download go modules: exit status 1.
-  # Output: "go: github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbytraceprocessor@v0.37.1 requires
-  #  github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchpersignal@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000"
-  - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchpersignal => github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchpersignal  v0.38.0
-
   # ----------------------------------------------------------------------------
   # Needed for telegrafreceiver
   - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.20.2-sumo-0
@@ -107,11 +101,11 @@ replaces:
   #
   # For now, cherry-picked changes are being used:
   # commit: https://github.com/SumoLogic/opentelemetry-collector-contrib/commit/af1f222dacd90b3baee67c935a12ca5b523c349c
-  # branch: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.37.1-filterprocessor
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/filterprocessor af1f222dacd90b3baee67c935a12ca5b523c349c
-  - github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal => github.com/SumoLogic/opentelemetry-collector-contrib/internal/coreinternal af1f222dacd90b3baee67c935a12ca5b523c349c
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/attributesprocessor af1f222dacd90b3baee67c935a12ca5b523c349c
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/resourceprocessor af1f222dacd90b3baee67c935a12ca5b523c349c
+  # branch: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.38.0-filterprocessor
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/filterprocessor 4e57c94574d31e2ef1df385167421e6c54d60d75
+  - github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal => github.com/SumoLogic/opentelemetry-collector-contrib/internal/coreinternal 4e57c94574d31e2ef1df385167421e6c54d60d75
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/attributesprocessor 4e57c94574d31e2ef1df385167421e6c54d60d75
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/resourceprocessor 4e57c94574d31e2ef1df385167421e6c54d60d75
 
   # TODO: remove this when:
   # - routing on resource attributes for traces is merged upstream and available in released version
