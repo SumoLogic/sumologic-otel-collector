@@ -8,6 +8,56 @@ on:
 
 jobs:
 
+  # Add lint to dev builds as that's the only way for cache to be shared across branches.
+  # https://docs.github.com/en/actions/advanced-guides/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
+  lint:
+    name: Lint (golangci-lint)
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        arch_os: [ 'linux_amd64' ]
+    steps:
+      - uses: actions/checkout@v2.4.0
+
+      - name: Setup go
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.17.2'
+
+      # As described in
+      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+      - uses: actions/cache@v2
+        if: steps.changed-files.outputs.any_changed == 'true'
+        with:
+          path: |
+            /home/runner/go/pkg/mod
+            /home/runner/.cache/go-build
+          key: ${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{matrix.arch_os}}-go-
+
+      - uses: actions/cache@v2
+        if: steps.changed-files.outputs.any_changed == 'true'
+        with:
+          path: |
+            /home/runner/.cache/golangci-lint
+          key: ${{matrix.arch_os}}-golangcilint-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{matrix.arch_os}}-golangcilint-
+
+      - name: Install golangci-lint
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make install-golangci-lint
+
+      - name: Add opentelemetry-collector-builder installation dir to PATH
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Run golangci-lint
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make golint
+
   build:
     name: Build
     runs-on: ${{ matrix.runs_on }}
