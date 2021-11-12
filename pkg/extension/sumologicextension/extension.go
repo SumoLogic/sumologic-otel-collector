@@ -29,11 +29,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/api"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/config"
 	"go.uber.org/zap"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/api"
 )
 
 type SumologicExtension struct {
@@ -460,8 +462,8 @@ func (se *SumologicExtension) sendHeartbeat(ctx context.Context) error {
 	return nil
 }
 
-func (se *SumologicExtension) ComponentID() string {
-	return se.conf.ExtensionSettings.ID().String()
+func (se *SumologicExtension) ComponentID() config.ComponentID {
+	return se.conf.ExtensionSettings.ID()
 }
 
 func (se *SumologicExtension) CollectorID() string {

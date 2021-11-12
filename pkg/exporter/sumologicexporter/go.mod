@@ -3,11 +3,11 @@ module github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexpor
 go 1.17
 
 require (
-	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.37.1
+	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.38.0
 	github.com/klauspost/compress v1.13.1
 	github.com/stretchr/testify v1.7.0
-	go.opentelemetry.io/collector v0.37.0
-	go.opentelemetry.io/collector/model v0.37.0
+	go.opentelemetry.io/collector v0.38.0
+	go.opentelemetry.io/collector/model v0.38.0
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.19.1
 )
@@ -21,7 +21,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/knadh/koanf v1.2.4 // indirect
+	github.com/knadh/koanf v1.3.0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.4.2 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
