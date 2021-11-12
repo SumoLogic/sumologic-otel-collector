@@ -117,6 +117,7 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			}()
 
 			err = app.Run(context.Background())
+
 			if tc.wantErr != nil {
 				assert.Equal(t, err, tc.wantErr)
 			} else {

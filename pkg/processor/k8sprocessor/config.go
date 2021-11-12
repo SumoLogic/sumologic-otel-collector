@@ -46,6 +46,7 @@ type Config struct {
 
 	// Association section allows to define rules for tagging spans, metrics,
 	// and logs with Pod metadata.
+	//
 	Association []PodAssociationConfig `mapstructure:"pod_association"`
 }
 
