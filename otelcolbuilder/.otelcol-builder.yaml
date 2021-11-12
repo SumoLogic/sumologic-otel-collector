@@ -6,74 +6,74 @@ dist:
   module: github.com/SumoLogic/sumologic-otel-collector
 
   # the OpenTelemetry Collector version to use as base for the distribution.
-  otelcol_version: 0.37.0
+  otelcol_version: 0.38.0
   # the path to write the output (sources and binary).
   output_path: ./cmd
 
 exporters:
   # Exporters with non-upstreamed changes:
-  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter v0.37.1"
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter v0.38.0"
     path: ./../pkg/exporter/sumologicexporter
 
   # Upstream exporters:
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/carbonexporter v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/loadbalancingexporter v0.37.1"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/carbonexporter v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/loadbalancingexporter v0.38.0"
 
 processors:
   # Processors with non-upstreamed changes:
-  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor v0.37.1"
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor v0.38.0"
     path: ./../pkg/processor/cascadingfilterprocessor
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor v0.37.1"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor v0.38.0"
     path: ./../pkg/processor/k8sprocessor
-  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/sourceprocessor v0.37.1"
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/sourceprocessor v0.38.0"
     path: ./../pkg/processor/sourceprocessor
-  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/sumologicsyslogprocessor v0.37.1"
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/sumologicsyslogprocessor v0.38.0"
     path: ./../pkg/processor/sumologicsyslogprocessor
-  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/metricfrequencyprocessor v0.37.1"
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/metricfrequencyprocessor v0.38.0"
     path: ./../pkg/processor/metricfrequencyprocessor
 
   # Upstream processors:
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbyattrsprocessor v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbytraceprocessor v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricstransformprocessor v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/routingprocessor v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/spanmetricsprocessor v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.37.1"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbyattrsprocessor v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbytraceprocessor v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricstransformprocessor v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/routingprocessor v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/spanmetricsprocessor v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor v0.38.0"
 
 receivers:
   # Receivers with non-upstreamed changes:
-  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/telegrafreceiver v0.37.0"
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/telegrafreceiver v0.38.0"
     path: ./../pkg/receiver/telegrafreceiver
 
   # Upstream receivers:
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/fluentforwardreceiver v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceiver v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusreceiver v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/statsdreceiver v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/syslogreceiver v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/tcplogreceiver v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/udplogreceiver v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.37.1"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/fluentforwardreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/statsdreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/syslogreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/tcplogreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/udplogreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.38.0"
 
 extensions:
   # Processors with non-upstreamed changes:
-  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.37.1"
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.38.0"
     path: ./../pkg/extension/sumologicextension
 
   # Upstream receivers:
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/bearertokenauthextension v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/oidcauthextension v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.37.1"
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.37.1"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/bearertokenauthextension v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/oidcauthextension v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.38.0"
     import: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage"
 
 
@@ -83,13 +83,13 @@ replaces:
   # failed to download go modules: exit status 1.
   # Output: "go: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver@v0.37.1 requires
   #  github.com/open-telemetry/opentelemetry-collector-contrib/internal/stanza@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000"
-  - github.com/open-telemetry/opentelemetry-collector-contrib/internal/stanza => github.com/open-telemetry/opentelemetry-collector-contrib/internal/stanza v0.37.1
+  - github.com/open-telemetry/opentelemetry-collector-contrib/internal/stanza => github.com/open-telemetry/opentelemetry-collector-contrib/internal/stanza  v0.38.0
 
   # This is needed because of:
   # failed to download go modules: exit status 1.
   # Output: "go: github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbytraceprocessor@v0.37.1 requires
   #  github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchpersignal@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000"
-  - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchpersignal => github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchpersignal v0.37.1
+  - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchpersignal => github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchpersignal  v0.38.0
 
   # ----------------------------------------------------------------------------
   # Needed for telegrafreceiver
