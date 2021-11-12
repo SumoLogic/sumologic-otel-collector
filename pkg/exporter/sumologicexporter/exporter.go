@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer/consumererror"
@@ -508,7 +507,7 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 
 	for _, e := range host.GetExtensions() {
 		v, ok := e.(*sumologicextension.SumologicExtension)
-		if ok && httpSettings.Auth.AuthenticatorName == v.ComponentID() {
+		if ok && httpSettings.Auth.AuthenticatorID == v.ComponentID() {
 			ext = v
 			foundSumoExt = true
 			break
@@ -516,7 +515,7 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 	}
 
 	if httpSettings.Endpoint == "" && httpSettings.Auth != nil &&
-		strings.HasPrefix(httpSettings.Auth.AuthenticatorName, "sumologic") {
+		string(httpSettings.Auth.AuthenticatorID.Type()) == "sumologic" {
 		// If user specified using sumologicextension as auth but none was
 		// found then return an error.
 		if !foundSumoExt {
@@ -524,7 +523,7 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 				"sumologic was specified as auth extension (named: %q) but "+
 					"a matching extension was not found in the config, "+
 					"please re-check the config and/or define the sumologicextension",
-				httpSettings.Auth.AuthenticatorName,
+				httpSettings.Auth.AuthenticatorID.String(),
 			)
 		}
 
@@ -549,7 +548,7 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 
 		// Clean authenticator if set to sumologic.
 		// Setting to null in configuration doesn't work, so we have to force it that way.
-		if httpSettings.Auth != nil && strings.HasPrefix(httpSettings.Auth.AuthenticatorName, "sumologic") {
+		if httpSettings.Auth != nil && string(httpSettings.Auth.AuthenticatorID.Type()) == "sumologic" {
 			httpSettings.Auth = nil
 		}
 	} else {
