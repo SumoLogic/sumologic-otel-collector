@@ -154,6 +154,15 @@ jobs:
           restore-keys: |
             ${{matrix.arch_os}}-go-
 
+      - uses: actions/cache@v2
+        if: steps.changed-files.outputs.any_changed == 'true'
+        with:
+          path: |
+            /home/runner/.cache/golangci-lint
+          key: ${{matrix.arch_os}}-golangcilint-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{matrix.arch_os}}-golangcilint-
+
       - name: Install golangci-lint
         if: steps.changed-files.outputs.any_changed == 'true'
         run: make install-golangci-lint
