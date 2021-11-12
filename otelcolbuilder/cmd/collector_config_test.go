@@ -120,6 +120,7 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			if tc.wantErr != nil {
 				assert.Equal(t, err, tc.wantErr)
 			} else {
+
 				require.NoError(t, err)
 
 				// When adding a new testcase that would happen to include the

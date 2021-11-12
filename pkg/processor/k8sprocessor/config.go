@@ -56,6 +56,7 @@ func (cfg *Config) Validate() error {
 // ExtractConfig section allows specifying extraction rules to extract
 // data from k8s pod specs.
 type ExtractConfig struct {
+
 	// Metadata allows to extract pod metadata from a list of metadata fields.
 	// The field accepts a list of strings.
 	//
