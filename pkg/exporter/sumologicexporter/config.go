@@ -118,7 +118,7 @@ func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 	return confighttp.HTTPClientSettings{
 		Timeout: defaultTimeout,
 		Auth: &configauth.Authentication{
-			AuthenticatorName: "sumologic",
+			AuthenticatorID: config.NewComponentID("sumologic"),
 		},
 	}
 }

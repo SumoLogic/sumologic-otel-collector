@@ -61,7 +61,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout: 5 * time.Second,
 			Auth: &configauth.Authentication{
-				AuthenticatorName: "sumologic",
+				AuthenticatorID: config.NewComponentID("sumologic"),
 			},
 		},
 		RetrySettings: exporterhelper.DefaultRetrySettings(),
