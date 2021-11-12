@@ -37,9 +37,11 @@ Allows specifying extraction rules to extract data from k8s pod specs.
   - `containerName`
   - `containerImage`
   - `clusterName`
+  - `cronName`
   - `daemonSetName` _(`owner_lookup_enabled` must be set to `true`)_
   - `deploymentName` _(`owner_lookup_enabled` must be set to `true`)_
   - `hostName`
+  - `jobName`
   - `namespace`
   - `nodeName`
   - `podId`
@@ -57,9 +59,11 @@ Also, see [example config](#example-config).
   - `containerID`    : `k8s.container.id`
   - `containerImage` : `k8s.container.image`
   - `containerName`  : `k8s.container.name`
+  - `cronJobName`    : `k8s.cronjob.name`
   - `daemonSetName`  : `k8s.daemonset.name`
   - `deploymentName` : `k8s.deployment.name`
   - `hostName`       : `k8s.pod.hostname`
+  - `jobName`        : `k8s.job.name`
   - `namespaceName`  : `k8s.namespace.name`
   - `nodeName`       : `k8s.node.name`
   - `podID`          : `k8s.pod.id`

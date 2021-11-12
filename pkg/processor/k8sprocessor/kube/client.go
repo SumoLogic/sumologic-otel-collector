@@ -294,18 +294,16 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 					tags[c.Rules.Tags.StatefulSetName] = owner.name
 				}
 			case "Job":
-				if true {
-					// if c.Rules.JobName {
+				if c.Rules.JobName {
 					tags[c.Rules.Tags.JobName] = owner.name
 				}
 			case "CronJob":
-				if true {
-					// if c.Rules.JobName {
+				if c.Rules.CronJobName {
 					tags[c.Rules.Tags.CronJobName] = owner.name
 				}
 
 			default:
-				c.logger.Info("Unknown owner", zap.Any("owner", owner))
+				// Do nothing
 			}
 		}
 

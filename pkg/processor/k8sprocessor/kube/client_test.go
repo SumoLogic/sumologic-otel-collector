@@ -479,142 +479,196 @@ func TestExtractionRules(t *testing.T) {
 		podOwner   *meta_v1.OwnerReference
 		rules      ExtractionRules
 		attributes map[string]string
-	}{{
-		name:       "no-rules",
-		rules:      ExtractionRules{},
-		attributes: nil,
-	}, {
-		name: "deployment name without owner lookup",
-		rules: ExtractionRules{
-			DeploymentName: true,
-			Tags:           NewExtractionFieldTags(),
+	}{
+		{
+			name:       "no-rules",
+			rules:      ExtractionRules{},
+			attributes: nil,
 		},
-		attributes: map[string]string{},
-	}, {
-		name: "deployment name with owner lookup",
-		podOwner: &meta_v1.OwnerReference{
-			Kind: "ReplicaSet",
-			Name: "dearest-deploy-77c99ccb96",
-			UID:  "1a1658f9-7818-11e9-90f1-02324f7e0d1e",
+		{
+			name: "deployment name without owner lookup",
+			rules: ExtractionRules{
+				DeploymentName: true,
+				Tags:           NewExtractionFieldTags(),
+			},
+			attributes: map[string]string{},
 		},
-		rules: ExtractionRules{
-			DeploymentName:     true,
-			OwnerLookupEnabled: true,
-			Tags:               NewExtractionFieldTags(),
-		},
-		attributes: map[string]string{
-			"k8s.deployment.name": "dearest-deploy",
-		},
-	}, {
-		name: "statefulset name",
-		podOwner: &meta_v1.OwnerReference{
-			Kind: "StatefulSet",
-			Name: "snug-sts",
-			UID:  "f15f0585-a0bc-43a3-96e4-dd2eace75391",
-		},
-		rules: ExtractionRules{
-			StatefulSetName:    true,
-			DeploymentName:     true,
-			OwnerLookupEnabled: true,
-			Tags:               NewExtractionFieldTags(),
-		},
-		attributes: map[string]string{
-			"k8s.statefulset.name": "snug-sts",
-		},
-	}, {
-		name: "metadata",
-		podOwner: &meta_v1.OwnerReference{
-			Kind: "ReplicaSet",
-			Name: "foo-bar-rs",
-			UID:  "1a1658f9-7818-11e9-90f1-02324f7e0d1e",
-		},
-		rules: ExtractionRules{
-			ClusterName:        true,
-			ContainerID:        true,
-			ContainerImage:     true,
-			ContainerName:      true,
-			DaemonSetName:      true,
-			DeploymentName:     true,
-			HostName:           true,
-			PodUID:             true,
-			PodName:            true,
-			ReplicaSetName:     true,
-			ServiceName:        true,
-			StatefulSetName:    true,
-			StartTime:          true,
-			Namespace:          true,
-			NodeName:           true,
-			OwnerLookupEnabled: true,
-			Tags:               NewExtractionFieldTags(),
-		},
-		attributes: map[string]string{
-			"k8s.cluster.name":    "cluster1",
-			"k8s.container.id":    "111-222-333",
-			"k8s.container.image": "auth-service-image",
-			"k8s.container.name":  "auth-service-container-name",
-			"k8s.deployment.name": "dearest-deploy",
-			"k8s.pod.hostname":    "auth-hostname3",
-			"k8s.pod.id":          "33333",
-			"k8s.pod.name":        "auth-service-abc12-xyz3",
-			"k8s.pod.startTime":   pod.GetCreationTimestamp().String(),
-			"k8s.replicaset.name": "dearest-deploy-77c99ccb96",
-			"k8s.service.name":    "foo_bar",
-			"k8s.namespace.name":  "ns1",
-			"k8s.node.name":       "node1",
-		},
-	}, {
-		name: "non-default tags",
-		rules: ExtractionRules{
-			ClusterName:     true,
-			ContainerID:     true,
-			ContainerImage:  false,
-			ContainerName:   true,
-			DaemonSetName:   false,
-			DeploymentName:  false,
-			HostName:        false,
-			PodUID:          false,
-			PodName:         false,
-			ReplicaSetName:  false,
-			ServiceName:     false,
-			StatefulSetName: false,
-			StartTime:       false,
-			Namespace:       false,
-			NodeName:        false,
-			Tags: ExtractionFieldTags{
-				ClusterName:   "cc",
-				ContainerID:   "cid",
-				ContainerName: "cn",
+		{
+			name: "deployment name with owner lookup",
+			podOwner: &meta_v1.OwnerReference{
+				Kind: "ReplicaSet",
+				Name: "dearest-deploy-77c99ccb96",
+				UID:  "1a1658f9-7818-11e9-90f1-02324f7e0d1e",
+			},
+			rules: ExtractionRules{
+				DeploymentName:     true,
+				OwnerLookupEnabled: true,
+				Tags:               NewExtractionFieldTags(),
+			},
+			attributes: map[string]string{
+				"k8s.deployment.name": "dearest-deploy",
 			},
 		},
-		attributes: map[string]string{
-			"cc":  "cluster1",
-			"cid": "111-222-333",
-			"cn":  "auth-service-container-name",
-		},
-	}, {
-		name: "labels",
-		rules: ExtractionRules{
-			Annotations: []FieldExtractionRule{{
-				Name: "a1",
-				Key:  "annotation1",
+		{
+			name: "statefulset name",
+			podOwner: &meta_v1.OwnerReference{
+				Kind: "StatefulSet",
+				Name: "snug-sts",
+				UID:  "f15f0585-a0bc-43a3-96e4-dd2eace75391",
 			},
+			rules: ExtractionRules{
+				StatefulSetName:    true,
+				DeploymentName:     true,
+				OwnerLookupEnabled: true,
+				Tags:               NewExtractionFieldTags(),
 			},
-			Labels: []FieldExtractionRule{{
-				Name: "l1",
-				Key:  "label1",
-			}, {
-				Name:  "l2",
-				Key:   "label2",
-				Regex: regexp.MustCompile(`k5=(?P<value>[^\s]+)`),
-			},
+			attributes: map[string]string{
+				"k8s.statefulset.name": "snug-sts",
 			},
 		},
-		attributes: map[string]string{
-			"l1": "lv1",
-			"l2": "v5",
-			"a1": "av1",
+		{
+			name: "job name and cron job are not added by default",
+			podOwner: &meta_v1.OwnerReference{
+				Kind: "Job",
+				Name: "hello-job",
+				UID:  "f15f0585-a0bc-43a3-96e4-dd2ea9975391",
+			},
+			rules: ExtractionRules{
+				OwnerLookupEnabled: true,
+				Tags:               NewExtractionFieldTags(),
+			},
+			attributes: map[string]string{},
 		},
-	},
+		{
+			name: "job name is added properly",
+			podOwner: &meta_v1.OwnerReference{
+				Kind: "Job",
+				Name: "hello-job",
+				UID:  "f15f0585-a0bc-43a3-96e4-dd2ea9975391",
+			},
+			rules: ExtractionRules{
+				JobName:            true,
+				OwnerLookupEnabled: true,
+				Tags:               NewExtractionFieldTags(),
+			},
+			attributes: map[string]string{
+				"k8s.job.name": "hello-job",
+			},
+		},
+		{
+			name: "job name and cron job name are added properly",
+			podOwner: &meta_v1.OwnerReference{
+				Kind: "Job",
+				Name: "hello-job",
+				UID:  "f15f0585-a0bc-43a3-96e4-dd2ea9975391",
+			},
+			rules: ExtractionRules{
+				JobName:            true,
+				CronJobName:        true,
+				OwnerLookupEnabled: true,
+				Tags:               NewExtractionFieldTags(),
+			},
+			attributes: map[string]string{
+				"k8s.job.name":     "hello-job",
+				"k8s.cronjob.name": "hello-cronjob",
+			},
+		},
+		{
+			name: "metadata",
+			podOwner: &meta_v1.OwnerReference{
+				Kind: "ReplicaSet",
+				Name: "foo-bar-rs",
+				UID:  "1a1658f9-7818-11e9-90f1-02324f7e0d1e",
+			},
+			rules: ExtractionRules{
+				ClusterName:        true,
+				ContainerID:        true,
+				ContainerImage:     true,
+				ContainerName:      true,
+				DaemonSetName:      true,
+				DeploymentName:     true,
+				HostName:           true,
+				PodUID:             true,
+				PodName:            true,
+				ReplicaSetName:     true,
+				ServiceName:        true,
+				StatefulSetName:    true,
+				StartTime:          true,
+				Namespace:          true,
+				NodeName:           true,
+				OwnerLookupEnabled: true,
+				Tags:               NewExtractionFieldTags(),
+			},
+			attributes: map[string]string{
+				"k8s.cluster.name":    "cluster1",
+				"k8s.container.id":    "111-222-333",
+				"k8s.container.image": "auth-service-image",
+				"k8s.container.name":  "auth-service-container-name",
+				"k8s.deployment.name": "dearest-deploy",
+				"k8s.pod.hostname":    "auth-hostname3",
+				"k8s.pod.id":          "33333",
+				"k8s.pod.name":        "auth-service-abc12-xyz3",
+				"k8s.pod.startTime":   pod.GetCreationTimestamp().String(),
+				"k8s.replicaset.name": "dearest-deploy-77c99ccb96",
+				"k8s.service.name":    "foo_bar",
+				"k8s.namespace.name":  "ns1",
+				"k8s.node.name":       "node1",
+			},
+		},
+		{
+			name: "non-default tags",
+			rules: ExtractionRules{
+				ClusterName:     true,
+				ContainerID:     true,
+				ContainerImage:  false,
+				ContainerName:   true,
+				DaemonSetName:   false,
+				DeploymentName:  false,
+				HostName:        false,
+				PodUID:          false,
+				PodName:         false,
+				ReplicaSetName:  false,
+				ServiceName:     false,
+				StatefulSetName: false,
+				StartTime:       false,
+				Namespace:       false,
+				NodeName:        false,
+				Tags: ExtractionFieldTags{
+					ClusterName:   "cc",
+					ContainerID:   "cid",
+					ContainerName: "cn",
+				},
+			},
+			attributes: map[string]string{
+				"cc":  "cluster1",
+				"cid": "111-222-333",
+				"cn":  "auth-service-container-name",
+			},
+		},
+		{
+			name: "labels",
+			rules: ExtractionRules{
+				Annotations: []FieldExtractionRule{{
+					Name: "a1",
+					Key:  "annotation1",
+				},
+				},
+				Labels: []FieldExtractionRule{{
+					Name: "l1",
+					Key:  "label1",
+				}, {
+					Name:  "l2",
+					Key:   "label2",
+					Regex: regexp.MustCompile(`k5=(?P<value>[^\s]+)`),
+				},
+				},
+			},
+			attributes: map[string]string{
+				"l1": "lv1",
+				"l2": "v5",
+				"a1": "av1",
+			},
+		},
 		{
 			name: "generic-labels",
 			rules: ExtractionRules{
@@ -660,8 +714,9 @@ func TestExtractionRules(t *testing.T) {
 			assert.Equal(t, len(tc.attributes), len(p.Attributes))
 			for k, v := range tc.attributes {
 				got, ok := p.Attributes[k]
-				assert.True(t, ok, "Attribute '%s' not found.", k)
-				assert.Equal(t, v, got, "Value of '%s' should be '%s', but was '%s'.", k, v, got)
+				if assert.True(t, ok, "Attribute '%s' not found.", k) {
+					assert.Equal(t, v, got, "Value of '%s' is incorrect", k)
+				}
 			}
 		})
 	}

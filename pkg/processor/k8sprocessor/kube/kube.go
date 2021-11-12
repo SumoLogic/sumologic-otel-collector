@@ -134,6 +134,7 @@ type ExtractionRules struct {
 	DeploymentName  bool
 	HostName        bool
 	JobName         bool
+	CronJobName     bool
 	PodUID          bool
 	PodName         bool
 	ReplicaSetName  bool

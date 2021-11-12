@@ -36,9 +36,11 @@ const (
 	metadataContainerName   = "containerName"
 	metadataContainerImage  = "containerImage"
 	metadataClusterName     = "clusterName"
+	metadataCronJobName     = "cronJobName"
 	metadataDaemonSetName   = "daemonSetName"
 	metadataDeploymentName  = "deploymentName"
 	metadataHostName        = "hostName"
+	metadataJobName         = "jobName"
 	metadataNamespace       = "namespace"
 	metadataNodeName        = "nodeName"
 	metadataPodID           = "podId"
@@ -112,12 +114,16 @@ func WithExtractMetadata(fields ...string) Option {
 				p.rules.ContainerImage = true
 			case metadataContainerName:
 				p.rules.ContainerName = true
+			case metadataCronJobName:
+				p.rules.CronJobName = true
 			case metadataDaemonSetName:
 				p.rules.DaemonSetName = true
 			case metadataDeploymentName:
 				p.rules.DeploymentName = true
 			case metadataHostName:
 				p.rules.HostName = true
+			case metadataJobName:
+				p.rules.JobName = true
 			case metadataNamespace:
 				p.rules.Namespace = true
 			case metadataNodeName:
