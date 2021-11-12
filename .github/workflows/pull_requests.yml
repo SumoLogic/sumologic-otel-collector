@@ -128,6 +128,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2.4.0
 
+      - name: env
+        run: env
+
       - name: Check if files changed that need linting
         id: changed-files
         uses: tj-actions/changed-files@v11
@@ -162,9 +165,19 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         run: echo "$HOME/bin" >> $GITHUB_PATH
 
+      - name: ls
+        run: ls -la /home/runner/
+
       - name: Run golangci-lint
         if: steps.changed-files.outputs.any_changed == 'true'
         run: make golint
+
+      - name: ls
+        run: ls -la /home/runner/.cache/
+
+      - name: ls lint
+        run: ls -la /home/runner/.cache/golangci-lint/
+        # XDG_CONFIG_HOME=/home/runner/.config
 
   build:
     name: Build
