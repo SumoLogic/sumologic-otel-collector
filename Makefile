@@ -1,3 +1,5 @@
+GOLANGCI_LINT_VERSION ?= v1.43.0
+
 all: markdownlint yamllint
 
 .PHONY: markdownlint
@@ -50,7 +52,7 @@ gomod-download-all:
 .PHONY: install-golint
 install-golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
-	sh -s -- -b $(shell go env GOPATH)/bin v1.42.1
+	sh -s -- -b $(shell go env GOPATH)/bin $(GOLANGCI_LINT_VERSION)
 
 .PHONY: for-all
 for-all:
