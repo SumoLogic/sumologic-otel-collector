@@ -113,11 +113,3 @@ replaces:
   # - routing on resource attributes for all signals is merged upstream and available in released version
   #   branch: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.37.1-routingprocessor-allow-routing-on-all-signals
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/routingprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/routingprocessor 6dc23bb08e41f434ec4cae5aea8e380d0766e455
-
-  # TODO: remove this when:
-  # - fluentforwardreceiver support for complex object is accepted, merged and released upstream
-  #   PR: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5676
-  #
-  # This includes changes from this branch:
-  # https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.37.1-fluentforwardreceiver-complex-objects
-  - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/fluentforwardreceiver => github.com/SumoLogic/opentelemetry-collector-contrib/receiver/fluentforwardreceiver a1c5ea6f4e5eca13543e7b4aea7da034b9a1fa0e
