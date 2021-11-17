@@ -121,12 +121,40 @@ jobs:
 
   lint:
     name: Lint (golangci-lint)
-    runs-on: ubuntu-20.04
+    # runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.runs_on }}
     strategy:
+      # matrix:
+      #   arch_os: [ 'linux_amd64' , 'darwin_amd64']
       matrix:
-        arch_os: [ 'linux_amd64' ]
+        include:
+          - arch_os: linux_amd64
+            runs_on: ubuntu-20.04
+          - arch_os: darwin_amd64
+            runs_on: macos-latest
     steps:
       - uses: actions/checkout@v2.4.0
+
+      - name: Setup go
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.17.2'
+
+      - id: go-cache-paths
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+
+      - name: run 1
+        if: runner.os == 'Linux'
+        run: echo ${{ steps.go-cache-paths.outputs.go-build }}
+      - name: run 2
+        if: runner.os == 'Linux'
+        run: echo ${{ steps.go-cache-paths.outputs.go-mod }}
+      - name: run 3
+        if: runner.os == 'macOS'
+        run: echo ${{ steps.go-cache-paths.outputs.go-build }}
 
       - name: Check if files changed that need linting
         id: changed-files
@@ -135,12 +163,6 @@ jobs:
           files: |
             otelcolbuilder/cmd/
             pkg/
-
-      - name: Setup go
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/setup-go@v2
-        with:
-          go-version: '1.17.2'
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
