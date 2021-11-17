@@ -68,3 +68,17 @@ The other problem is that it is not currently possible for Filelog receiver to s
 or only read files created or modified after a specific point in time.
 
 There is currently no workaround for this.
+
+## Metadata for logs and metrics coming from Pods with specific names is not added ([#334][#334])
+
+Metadata is not added by [k8sprocessor][k8sprocessor] for logs and metrics coming from Pods with names
+that match following regular expressions:
+
+- `jaeger-agent`
+- `jaeger-collector`
+- `otel-collector`
+- `otel-agent`
+- `collection-sumologic-otelcol`
+
+[#334]: https://github.com/SumoLogic/sumologic-otel-collector/issues/334
+[k8sprocessor]: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/k8sprocessor
