@@ -33,7 +33,9 @@ import (
 	"github.com/google/uuid"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
+	"go.opentelemetry.io/collector/config/configauth"
 	"go.uber.org/zap"
+	grpccredentials "google.golang.org/grpc/credentials"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/api"
 )
@@ -72,6 +74,11 @@ const (
 const (
 	DefaultHeartbeatInterval = 15 * time.Second
 )
+
+var errGRPCNotSupported = fmt.Errorf("gRPC is not supported by sumologicextension")
+
+// SumologicExtension implements ClientAuthenticator
+var _ configauth.ClientAuthenticator = (*SumologicExtension)(nil)
 
 func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtension, error) {
 	if conf.Credentials.AccessID == "" || conf.Credentials.AccessKey == "" {
@@ -484,6 +491,10 @@ func (se *SumologicExtension) RoundTripper(base http.RoundTripper) (http.RoundTr
 		collectorCredentialKey: se.registrationInfo.CollectorCredentialKey,
 		base:                   base,
 	}, nil
+}
+
+func (se *SumologicExtension) PerRPCCredentials() (grpccredentials.PerRPCCredentials, error) {
+	return nil, errGRPCNotSupported
 }
 
 type roundTripper struct {
