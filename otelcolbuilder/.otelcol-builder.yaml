@@ -40,10 +40,12 @@ processors:
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbyattrsprocessor v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbytraceprocessor v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricstransformprocessor v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/probabilisticsamplerprocessor v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/routingprocessor v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/spanmetricsprocessor v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/spanprocessor v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor v0.38.0"
 
 receivers:
@@ -52,16 +54,37 @@ receivers:
     path: ./../pkg/receiver/telegrafreceiver
 
   # Upstream receivers:
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awsecscontainermetricsreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awsxrayreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/carbonreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/collectdreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/dockerstatsreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/dotnetdiagnosticsreceiver v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/fluentforwardreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/googlecloudspannerreceiver v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jmxreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/journaldreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kafkametricsreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kafkareceiver v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/podmanreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/receivercreator v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/redisreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/sapmreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/signalfxreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/splunkhecreceiver v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/statsdreceiver v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/syslogreceiver v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/tcplogreceiver v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/udplogreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/wavefrontreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowsperfcountersreceiver v0.38.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.38.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zookeeperreceiver v0.38.0"
 
 extensions:
   # Processors with non-upstreamed changes:
