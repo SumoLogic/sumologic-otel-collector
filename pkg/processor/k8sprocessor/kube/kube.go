@@ -37,6 +37,8 @@ const (
 	defaultTagContainerName   = "k8s.container.name"
 	defaultTagDaemonSetName   = "k8s.daemonset.name"
 	defaultTagHostName        = "k8s.pod.hostname"
+	defaultTagCronJobName     = "k8s.cronjob.name"
+	defaultTagJobName         = "k8s.job.name"
 	defaultTagNodeName        = "k8s.node.name"
 	defaultTagPodUID          = "k8s.pod.id"
 	defaultTagReplicaSetName  = "k8s.replicaset.name"
@@ -131,6 +133,8 @@ type ExtractionRules struct {
 	DaemonSetName   bool
 	DeploymentName  bool
 	HostName        bool
+	JobName         bool
+	CronJobName     bool
 	PodUID          bool
 	PodName         bool
 	ReplicaSetName  bool
@@ -157,6 +161,8 @@ type ExtractionFieldTags struct {
 	DaemonSetName   string
 	DeploymentName  string
 	HostName        string
+	CronJobName     string
+	JobName         string
 	PodUID          string
 	PodName         string
 	Namespace       string
@@ -177,6 +183,8 @@ func NewExtractionFieldTags() ExtractionFieldTags {
 	tags.DaemonSetName = defaultTagDaemonSetName
 	tags.DeploymentName = conventions.AttributeK8SDeploymentName
 	tags.HostName = defaultTagHostName
+	tags.CronJobName = defaultTagCronJobName
+	tags.JobName = defaultTagJobName
 	tags.PodUID = defaultTagPodUID
 	tags.PodName = conventions.AttributeK8SPodName
 	tags.Namespace = conventions.AttributeK8SNamespaceName

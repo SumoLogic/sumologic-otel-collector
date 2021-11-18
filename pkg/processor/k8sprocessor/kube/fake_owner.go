@@ -67,6 +67,24 @@ func newFakeOwnerProvider(logger *zap.Logger,
 	}
 	ownerCache.objectOwners[string(statefulSet.UID)] = &statefulSet
 
+	job := ObjectOwner{
+		UID:       "f15f0585-a0bc-43a3-96e4-dd2ea9975391",
+		namespace: "default",
+		ownerUIDs: []types.UID{"f01f0585-a0bc-43a3-9611-dd2ea9975391"},
+		kind:      "Job",
+		name:      "hello-job",
+	}
+	ownerCache.objectOwners[string(job.UID)] = &job
+
+	cronjob := ObjectOwner{
+		UID:       "f01f0585-a0bc-43a3-9611-dd2ea9975391",
+		namespace: "default",
+		ownerUIDs: []types.UID{},
+		kind:      "CronJob",
+		name:      "hello-cronjob",
+	}
+	ownerCache.objectOwners[string(cronjob.UID)] = &cronjob
+
 	return &ownerCache, nil
 }
 
