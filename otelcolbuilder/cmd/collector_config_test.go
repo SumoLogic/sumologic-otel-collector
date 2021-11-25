@@ -26,8 +26,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/config/configmapprovider"
 	"go.opentelemetry.io/collector/service"
-	"go.opentelemetry.io/collector/service/parserprovider"
 )
 
 func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
@@ -87,7 +87,7 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			app, err := service.New(service.CollectorSettings{
 				BuildInfo: component.NewDefaultBuildInfo(),
 				Factories: factories,
-				ConfigMapProvider: parserprovider.NewFileMapProvider(
+				ConfigMapProvider: configmapprovider.NewFile(
 					tc.configFile,
 				),
 			})
@@ -99,10 +99,8 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 				bo.MaxInterval = 3 * time.Second
 				bo.Multiplier = 1.2
 
-				for ch := app.GetStateChannel(); ; {
-					state := <-ch
-
-					switch state {
+				for {
+					switch state := app.GetState(); state {
 					case service.Running:
 						t.Log("App is in the running state, calling .Shutdown()...")
 						time.Sleep(time.Second)

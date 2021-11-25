@@ -30,11 +30,9 @@ import (
 // It returns a value pair containing configured label and IP Address and/or Pod UID.
 // If empty value in return it means that attributes does not contains configured label to match resources for Pod.
 func extractPodID(ctx context.Context, attrs pdata.AttributeMap, associations []kube.Association) (podIdentifierKey string, podIdentifierValue kube.PodIdentifier) {
+	connectionIP := getConnectionIP(ctx)
 	hostname := stringAttributeFromMap(attrs, conventions.AttributeHostName)
-	var connectionIP kube.PodIdentifier
-	if c, ok := client.FromContext(ctx); ok {
-		connectionIP = kube.PodIdentifier(c.IP)
-	}
+
 	// If pod association is not set
 	if len(associations) == 0 {
 		var podIP, labelIP kube.PodIdentifier
@@ -102,6 +100,14 @@ func extractPodID(ctx context.Context, attrs pdata.AttributeMap, associations []
 		}
 	}
 	return "", kube.PodIdentifier("")
+}
+
+func getConnectionIP(ctx context.Context) kube.PodIdentifier {
+	c := client.FromContext(ctx)
+	if c.Addr == nil {
+		return ""
+	}
+	return kube.PodIdentifier(c.Addr.String())
 }
 
 func stringAttributeFromMap(attrs pdata.AttributeMap, key string) string {
