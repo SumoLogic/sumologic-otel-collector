@@ -80,11 +80,7 @@ BUILD_CACHE_TAG = latest-builder-cache
 IMAGE_NAME = sumologic-otel-collector
 IMAGE_NAME_DEV = sumologic-otel-collector-dev
 
-LEGACY_ECR_URL = public.ecr.aws/sumologic
-LEGACY_REPO_URL = $(LEGACY_ECR_URL)/$(IMAGE_NAME)
-LEGACY_REPO_URL_DEV = $(LEGACY_ECR_URL)/$(IMAGE_NAME_DEV)
-
-OPENSOURCE_ECR_URL = public.ecr.aws/a4t4y2n3
+OPENSOURCE_ECR_URL = public.ecr.aws/sumologic
 OPENSOURCE_REPO_URL = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME)
 OPENSOURCE_REPO_URL_DEV = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME_DEV)
 
@@ -137,20 +133,6 @@ push-container-manifest-dev:
 		REPO_URL="$(OPENSOURCE_REPO_URL_DEV)" \
 		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
 
-.PHONY: build-push-container-multiplatform-legacy-dev
-build-push-container-multiplatform-legacy-dev:
-	BUILD_TAG="$(BUILD_TAG)" \
-		REPO_URL="$(LEGACY_REPO_URL_DEV)" \
-		DOCKERFILE="Dockerfile_dev" \
-		PLATFORM="$(PLATFORM)" \
-		./ci/build-push-multiplatform.sh --push
-
-.PHONY: push-container-manifest-legacy-dev
-push-container-manifest-legacy-dev:
-	BUILD_TAG="$(BUILD_TAG)" \
-		REPO_URL="$(LEGACY_REPO_URL_DEV)" \
-		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
-
 # release
 
 .PHONY: _build-container-multiplatform
@@ -173,24 +155,10 @@ build-push-container-multiplatform:
 test-built-image:
 	docker run --rm "$(OPENSOURCE_REPO_URL):$(BUILD_TAG)" --version
 
-.PHONY: build-push-container-multiplatform-legacy
-build-push-container-multiplatform-legacy:
-	BUILD_TAG="$(BUILD_TAG)" \
-		REPO_URL="$(LEGACY_REPO_URL)" \
-		DOCKERFILE="Dockerfile" \
-		PLATFORM="$(PLATFORM)" \
-		./ci/build-push-multiplatform.sh --push
-
 .PHONY: push-container-manifest
 push-container-manifest:
 	BUILD_TAG="$(BUILD_TAG)" \
 		REPO_URL="$(OPENSOURCE_REPO_URL)" \
-		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
-
-.PHONY: push-container-manifest-legacy
-push-container-manifest-legacy:
-	BUILD_TAG="$(BUILD_TAG)" \
-		REPO_URL="$(LEGACY_REPO_URL)" \
 		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
 
 #-------------------------------------------------------------------------------
@@ -204,8 +172,3 @@ _login:
 login:
 	$(MAKE) _login \
 		ECR_URL="$(OPENSOURCE_ECR_URL)"
-
-.PHONY: login-legacy
-login-legacy:
-	$(MAKE) _login \
-		ECR_URL="$(LEGACY_ECR_URL)"

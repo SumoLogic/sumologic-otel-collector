@@ -134,20 +134,6 @@ jobs:
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }}
 
-      # TODO: should be removed after sumologic ECR alias migration
-      - name: Login to legacy ECR
-        run: make login-legacy
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.LEGACY_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.LEGACY_AWS_SECRET_ACCESS_KEY }}
-
-      - name: Build and push image to legacy ECR
-        run: |
-          cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
-          make build-push-container-multiplatform-legacy \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
-            PLATFORM=${{ matrix.arch_os }}
-
   push-docker-manifest:
     name: Push joint container manifest
     runs-on: ubuntu-20.04
@@ -182,19 +168,6 @@ jobs:
       - name: Push joint container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
-            PLATFORMS="linux/amd64 linux/arm64"
-
-      # TODO: should be removed after sumologic ECR alias migration
-      - name: Login to legacy ECR
-        run: make login-legacy
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.LEGACY_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.LEGACY_AWS_SECRET_ACCESS_KEY }}
-
-      - name: Push joint container manifest for all platforms to legacy ECR
-        run: |
-          make push-container-manifest-legacy \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORMS="linux/amd64 linux/arm64"
 
