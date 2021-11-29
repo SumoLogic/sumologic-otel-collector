@@ -17,6 +17,7 @@ package k8sprocessor
 import (
 	"context"
 	"fmt"
+	"net"
 	"testing"
 	"time"
 
@@ -309,7 +310,12 @@ func withPodAndNamespace(pod string, namespace string) generateResourceFunc {
 func TestIPDetectionFromContext(t *testing.T) {
 	m := newMultiTest(t, NewFactory().CreateDefaultConfig(), nil)
 
-	ctx := client.NewContext(context.Background(), &client.Client{IP: "1.1.1.1"})
+	addr, err := net.ResolveIPAddr("ip", "1.1.1.1")
+	require.NoError(t, err)
+	ctx := client.NewContext(context.Background(),
+		client.Info{
+			Addr: addr,
+		})
 	m.testConsume(
 		ctx,
 		generateTraces(),
@@ -349,7 +355,12 @@ func TestProcessorNoAttrs(t *testing.T) {
 		WithExtractMetadata(metadataPodName),
 	)
 
-	ctx := client.NewContext(context.Background(), &client.Client{IP: "1.1.1.1"})
+	addr, err := net.ResolveIPAddr("ip", "1.1.1.1")
+	require.NoError(t, err)
+	ctx := client.NewContext(context.Background(),
+		client.Info{
+			Addr: addr,
+		})
 
 	// pod doesn't have attrs to add
 	m.kubernetesProcessorOperation(func(kp *kubernetesprocessor) {
@@ -464,7 +475,12 @@ func TestIPSourceWithoutPodAssociation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 			if tc.contextIP != "" {
-				ctx = client.NewContext(context.Background(), &client.Client{IP: tc.contextIP})
+				addr, err := net.ResolveIPAddr("ip", tc.contextIP)
+				require.NoError(t, err)
+				ctx = client.NewContext(context.Background(),
+					client.Info{
+						Addr: addr,
+					})
 			}
 
 			traces := generateTraces()
@@ -553,7 +569,12 @@ func TestIPSourceWithPodAssociation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 			if tc.contextIP != "" {
-				ctx = client.NewContext(context.Background(), &client.Client{IP: tc.contextIP})
+				addr, err := net.ResolveIPAddr("ip", tc.contextIP)
+				require.NoError(t, err)
+				ctx = client.NewContext(context.Background(),
+					client.Info{
+						Addr: addr,
+					})
 			}
 
 			traces := generateTraces()
@@ -625,12 +646,12 @@ func TestProcessorAddLabels(t *testing.T) {
 	)
 
 	tests := map[string]map[string]string{
-		"1": {
+		"1.1.1.1": {
 			"pod":         "test-2323",
 			"ns":          "default",
 			"another tag": "value",
 		},
-		"2": {
+		"2.2.2.2": {
 			"pod": "test-12",
 		},
 	}
@@ -651,7 +672,13 @@ func TestProcessorAddLabels(t *testing.T) {
 
 	var i int
 	for ip, attrs := range tests {
-		ctx := client.NewContext(context.Background(), &client.Client{IP: ip})
+		addr, err := net.ResolveIPAddr("ip", ip)
+		require.NoError(t, err)
+		ctx := client.NewContext(context.Background(),
+			client.Info{
+				Addr: addr,
+			})
+
 		m.testConsume(
 			ctx,
 			generateTraces(),

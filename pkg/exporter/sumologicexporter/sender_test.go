@@ -188,8 +188,6 @@ func exampleTwoLogs() []pdata.LogRecord {
 }
 
 func exampleLogWithComplexBody() []pdata.LogRecord {
-	buffer := make([]pdata.LogRecord, 1)
-	buffer[0] = pdata.NewLogRecord()
 	body := pdata.NewAttributeValueMap().MapVal()
 	body.InsertString("a", "b")
 	body.InsertBool("c", false)
@@ -197,11 +195,11 @@ func exampleLogWithComplexBody() []pdata.LogRecord {
 	body.InsertDouble("e", 20.5)
 
 	f := pdata.NewAttributeValueArray()
-	f.ArrayVal().EnsureCapacity(4)
-	f.ArrayVal().AppendEmpty().SetStringVal("p")
-	f.ArrayVal().AppendEmpty().SetBoolVal(true)
-	f.ArrayVal().AppendEmpty().SetIntVal(13)
-	f.ArrayVal().AppendEmpty().SetDoubleVal(19.3)
+	f.SliceVal().EnsureCapacity(4)
+	f.SliceVal().AppendEmpty().SetStringVal("p")
+	f.SliceVal().AppendEmpty().SetBoolVal(true)
+	f.SliceVal().AppendEmpty().SetIntVal(13)
+	f.SliceVal().AppendEmpty().SetDoubleVal(19.3)
 	body.Insert("f", f)
 
 	g := pdata.NewAttributeValueMap()
@@ -212,8 +210,13 @@ func exampleLogWithComplexBody() []pdata.LogRecord {
 
 	body.Insert("g", g)
 
+	buffer := make([]pdata.LogRecord, 1)
+	buffer[0] = pdata.NewLogRecord()
 	buffer[0].Attributes().InsertString("m", "n")
-	buffer[0].Body().SetMapVal(body)
+
+	bufferBody := buffer[0].Body()
+	pdata.NewAttributeValueMap().CopyTo(bufferBody)
+	body.CopyTo(bufferBody.MapVal())
 	return buffer
 }
 
@@ -248,7 +251,7 @@ func exampleMultitypeLogs() []pdata.LogRecord {
 	buffer[1] = pdata.NewLogRecord()
 
 	attVal = pdata.NewAttributeValueArray()
-	attArr := attVal.ArrayVal()
+	attArr := attVal.SliceVal()
 	strVal := pdata.NewAttributeValueString("lv2")
 	intVal := pdata.NewAttributeValueInt(13)
 
