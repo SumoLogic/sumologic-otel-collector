@@ -239,7 +239,7 @@ func addJSONTimestamp(attrs pdata.AttributeMap, timestampKey string, pt pdata.Ti
 func isEmptyAttributeValue(att pdata.AttributeValue) bool {
 	t := att.Type()
 	return !(t == pdata.AttributeValueTypeString && len(att.StringVal()) > 0 ||
-		t == pdata.AttributeValueTypeArray && att.ArrayVal().Len() > 0 ||
+		t == pdata.AttributeValueTypeArray && att.SliceVal().Len() > 0 ||
 		t == pdata.AttributeValueTypeMap && att.MapVal().Len() > 0 ||
 		t == pdata.AttributeValueTypeBytes && len(att.BytesVal()) > 0)
 }

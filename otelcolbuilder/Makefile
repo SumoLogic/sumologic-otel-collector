@@ -1,6 +1,6 @@
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.37.0
-BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector-builder
+BUILDER_VERSION ?= 0.40.0
+BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
 BUILDER_BIN_PATH ?= $(HOME)/bin/opentelemetry-collector-builder
 VERSION ?= "$(shell git describe --tags --abbrev=10)"
 GO ?= go
@@ -21,6 +21,7 @@ else
 CGO_ENABLED ?= 0
 endif
 
+X=$(shell opentelemetry-collector-builder version 2>&1)
 
 .PHONY: install-builder-with-go-install
 install-builder-with-go-install:
@@ -31,7 +32,7 @@ install-builder-with-go-install:
 .PHONY: _install-bin
 _install-bin:
 	mkdir -p $(HOME)/bin && \
-	curl -L -o $(BUILDER_BIN_PATH) https://$(BUILDER_REPO)/releases/download/v$(BUILDER_VERSION)/opentelemetry-collector-builder_$(BUILDER_VERSION)_$(PLATFORM)_amd64 && \
+	curl -L -o $(BUILDER_BIN_PATH) https://$(BUILDER_REPO)/releases/download/cmd%2Fbuilder%2Fv$(BUILDER_VERSION)/ocb_$(BUILDER_VERSION)_$(PLATFORM)_amd64 && \
 	chmod +x $(BUILDER_BIN_PATH)
 	@$(MAKE) ensure-correct-builder-version
 
@@ -40,9 +41,10 @@ install-builder:
 	@echo "Installing $(BUILDER_REPO)@$(BUILDER_VERSION)..."
 	@$(MAKE) _install-bin PLATFORM=$(OS)
 
+
 .PHONY: ensure-correct-builder-version
 ensure-correct-builder-version:
-ifneq ($(shell opentelemetry-collector-builder version 2>/dev/null),$(BUILDER_VERSION))
+ifneq ($(lastword $(shell opentelemetry-collector-builder version 2>&1)),$(BUILDER_VERSION))
 	@$(error Installed opentelemetry-collector-builder version \
 		"$(shell opentelemetry-collector-builder version 2>/dev/null)" \
 		does not match the requested "$(BUILDER_VERSION)" \
