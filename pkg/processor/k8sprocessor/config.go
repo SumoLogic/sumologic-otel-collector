@@ -47,6 +47,10 @@ type Config struct {
 	// Association section allows to define rules for tagging spans, metrics,
 	// and logs with Pod metadata.
 	Association []PodAssociationConfig `mapstructure:"pod_association"`
+
+	// Exclude section allows to define names of pod that should be
+	// ignored while tagging.
+	Exclude ExcludeConfig `mapstructure:"exclude"`
 }
 
 func (cfg *Config) Validate() error {
@@ -227,3 +231,13 @@ type PodAssociationConfig struct {
 
 // DefaultDelimiter is default value for Delimiter for ExtractConfig
 const DefaultDelimiter string = ", "
+
+// ExcludeConfig represent a list of Pods to exclude
+type ExcludeConfig struct {
+	Pods []ExcludePodConfig `mapstructure:"pods"`
+}
+
+// ExcludePodConfig represent a Pod name to ignore
+type ExcludePodConfig struct {
+	Name string `mapstructure:"name"`
+}

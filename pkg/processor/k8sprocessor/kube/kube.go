@@ -51,14 +51,6 @@ const (
 type PodIdentifier string
 
 var (
-	// TODO: move these to config with default values
-	podNameIgnorePatterns = []*regexp.Regexp{
-		regexp.MustCompile(`jaeger-agent`),
-		regexp.MustCompile(`jaeger-collector`),
-		regexp.MustCompile(`otel-collector`),
-		regexp.MustCompile(`otel-agent`),
-		regexp.MustCompile(`collection-sumologic-otelcol`),
-	}
 	defaultPodDeleteGracePeriod = time.Second * 120
 	watchSyncPeriod             = time.Minute * 5
 )
@@ -71,7 +63,18 @@ type Client interface {
 }
 
 // ClientProvider defines a func type that returns a new Client.
-type ClientProvider func(*zap.Logger, k8sconfig.APIConfig, ExtractionRules, Filters, []Association, APIClientsetProvider, InformerProvider, OwnerProvider, string) (Client, error)
+type ClientProvider func(
+	*zap.Logger,
+	k8sconfig.APIConfig,
+	ExtractionRules,
+	Filters,
+	[]Association,
+	Excludes,
+	APIClientsetProvider,
+	InformerProvider,
+	OwnerProvider,
+	string,
+) (Client, error)
 
 // APIClientsetProvider defines a func type that initializes and return a new kubernetes
 // Clientset object.
@@ -217,4 +220,14 @@ type Associations struct {
 type Association struct {
 	From string
 	Name string
+}
+
+// Excludes represent a list of Pods to ignore
+type Excludes struct {
+	Pods []ExcludePods
+}
+
+// ExcludePods represent a Pod name to ignore
+type ExcludePods struct {
+	Name *regexp.Regexp
 }

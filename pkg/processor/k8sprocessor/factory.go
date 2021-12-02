@@ -33,6 +33,15 @@ const (
 
 var kubeClientProvider = kube.ClientProvider(nil)
 var processorCapabilities = consumer.Capabilities{MutatesData: true}
+var defaultExcludes = ExcludeConfig{
+	Pods: []ExcludePodConfig{
+		{Name: "jaeger-agent"},
+		{Name: "jaeger-collector"},
+		{Name: "otel-collector"},
+		{Name: "otel-agent"},
+		{Name: "collection-sumologic-otelcol"},
+	},
+}
 
 // NewFactory returns a new factory for the k8s processor.
 func NewFactory() component.ProcessorFactory {
@@ -52,6 +61,7 @@ func createDefaultConfig() config.Processor {
 		Extract: ExtractConfig{
 			Delimiter: DefaultDelimiter,
 		},
+		Exclude: defaultExcludes,
 	}
 }
 
@@ -199,6 +209,8 @@ func createProcessorOpts(cfg config.Processor) []Option {
 	opts = append(opts, WithExtractPodAssociations(oCfg.Association...))
 
 	opts = append(opts, WithDelimiter(oCfg.Extract.Delimiter))
+
+	opts = append(opts, WithExcludes(oCfg.Exclude))
 
 	return opts
 }

@@ -48,7 +48,14 @@ func TestLoadConfig(t *testing.T) {
 		&Config{
 			ProcessorSettings: config.NewProcessorSettings(config.NewComponentID(typeStr)),
 			APIConfig:         k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
-			Extract:           ExtractConfig{Delimiter: ", "},
+			Exclude: ExcludeConfig{Pods: []ExcludePodConfig{
+				{Name: "jaeger-agent"},
+				{Name: "jaeger-collector"},
+				{Name: "otel-collector"},
+				{Name: "otel-agent"},
+				{Name: "collection-sumologic-otelcol"},
+			}},
+			Extract: ExtractConfig{Delimiter: ", "},
 		})
 
 	p1 := cfg.Processors[config.NewComponentIDWithName(typeStr, "2")]
@@ -117,6 +124,15 @@ func TestLoadConfig(t *testing.T) {
 				{
 					From: "resource_attribute",
 					Name: "k8s.pod.uid",
+				},
+			},
+			Exclude: ExcludeConfig{
+				Pods: []ExcludePodConfig{
+					{Name: "jaeger-agent"},
+					{Name: "jaeger-collector"},
+					{Name: "otel-collector"},
+					{Name: "otel-agent"},
+					{Name: "collection-sumologic-otelcol"},
 				},
 			},
 		})

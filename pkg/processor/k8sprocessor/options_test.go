@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
@@ -660,6 +661,51 @@ func TestWithExtractPodAssociation(t *testing.T) {
 			option := WithExtractPodAssociations(tt.args...)
 			assert.NoError(t, option(p))
 			assert.Equal(t, tt.want, p.podAssociations)
+		})
+	}
+}
+
+func TestWithExcludes(t *testing.T) {
+	tests := []struct {
+		name string
+		args ExcludeConfig
+		want kube.Excludes
+	}{
+		{
+			"default",
+			ExcludeConfig{},
+			kube.Excludes{
+				Pods: []kube.ExcludePods{
+					{Name: regexp.MustCompile(`jaeger-agent`)},
+					{Name: regexp.MustCompile(`jaeger-collector`)},
+					{Name: regexp.MustCompile(`otel-collector`)},
+					{Name: regexp.MustCompile(`otel-agent`)},
+					{Name: regexp.MustCompile(`collection-sumologic-otelcol`)},
+				},
+			},
+		},
+		{
+			"configured",
+			ExcludeConfig{
+				Pods: []ExcludePodConfig{
+					{Name: "ignore_pod1"},
+					{Name: "ignore_pod2"},
+				},
+			},
+			kube.Excludes{
+				Pods: []kube.ExcludePods{
+					{Name: regexp.MustCompile(`ignore_pod1`)},
+					{Name: regexp.MustCompile(`ignore_pod2`)},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &kubernetesprocessor{}
+			option := WithExcludes(tt.args)
+			require.NoError(t, option(p))
+			assert.Equal(t, tt.want, p.podIgnore)
 		})
 	}
 }

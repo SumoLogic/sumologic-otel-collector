@@ -16,6 +16,8 @@ require (
 	k8s.io/client-go v0.22.1
 )
 
+require github.com/kr/pretty v0.2.0
+
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/evanphx/json-patch v4.11.0+incompatible // indirect
@@ -30,6 +32,7 @@ require (
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/knadh/koanf v1.3.2 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.4.2 // indirect

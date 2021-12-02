@@ -50,6 +50,7 @@ type WatchClient struct {
 	Rules        ExtractionRules
 	Filters      Filters
 	Associations []Association
+	Exclude      Excludes
 }
 
 // New initializes a new k8s Client.
@@ -59,6 +60,7 @@ func New(
 	rules ExtractionRules,
 	filters Filters,
 	associations []Association,
+	exclude Excludes,
 	newClientSet APIClientsetProvider,
 	newInformer InformerProvider,
 	newOwnerProviderFunc OwnerProvider,
@@ -69,6 +71,7 @@ func New(
 		Rules:        rules,
 		Filters:      filters,
 		Associations: associations,
+		Exclude:      exclude,
 		stopCh:       make(chan struct{}),
 		delimiter:    delimiter,
 	}
@@ -465,9 +468,9 @@ func (c *WatchClient) shouldIgnorePod(pod *api_v1.Pod) bool {
 		}
 	}
 
-	// Check well known names that should be ignored
-	for _, rexp := range podNameIgnorePatterns {
-		if rexp.MatchString(pod.Name) {
+	// Check if user requested the pod to be ignored through configuration
+	for _, excludedPod := range c.Exclude.Pods {
+		if excludedPod.Name.MatchString(pod.Name) {
 			return true
 		}
 	}
