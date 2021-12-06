@@ -33,6 +33,8 @@ processors:
     path: ./../pkg/processor/sumologicsyslogprocessor
   - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/metricfrequencyprocessor v0.40.0"
     path: ./../pkg/processor/metricfrequencyprocessor
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/luaprocessor v0.40.0"
+    path: ./../pkg/processor/luaprocessor
 
   # Upstream processors:
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.40.0"
