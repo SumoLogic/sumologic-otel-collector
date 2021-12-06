@@ -8,10 +8,19 @@
 To contribute you will need to ensure you have the following setup:
 
 - working Go environment
+- installed `opentelemetry-collector-builder`
+
+  `opentelemetry-collector-builder` can be installed using following command:
+
+  ```bash
+  cd otelcolbuilder && \
+  sudo make install-builder BUILDER_BIN_PATH=/usr/local/bin/opentelemetry-collector-builder && \
+  cd ..
+  ```
 
 ## How to build
 
-```
+```bash
 $ cd otelcolbuilder && make build
 opentelemetry-collector-builder \
                 --config .otelcol-builder.yaml \
@@ -27,7 +36,7 @@ opentelemetry-collector-builder \
 In order to build for a different platform one can use `otelcol-sumo-${platform}_${arch}`
 make targets e.g.:
 
-```
+```bash
 $ cd otelcolbuilder && make otelcol-sumo-linux_arm64
 GOOS=linux   GOARCH=arm64 /Library/Developer/CommandLineTools/usr/bin/make build BINARY_NAME=otelcol-sumo-linux_arm64
 opentelemetry-collector-builder \
