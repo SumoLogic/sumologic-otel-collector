@@ -1,0 +1,19 @@
+receivers:
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+
+processors:
+  lua: {}
+
+exporters:
+  logging:
+    logLevel: debug
+
+service:
+  pipelines:
+    metrics:
+      receivers: [hostmetrics]
+      processors: [lua]
+      exporters: [logging]
