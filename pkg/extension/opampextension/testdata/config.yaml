@@ -1,0 +1,27 @@
+extensions:
+  opamp:
+
+# Data pipeline is required to load the config.
+receivers:
+  otlp:
+    protocols:
+      http:
+      grpc:
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      load:
+
+processors:
+
+exporters:
+  logging:
+    loglevel: info
+
+service:
+  extensions: [opamp]
+  pipelines:
+    metrics:
+      receivers: [otlp, hostmetrics]
+      processors: []
+      exporters: [logging]

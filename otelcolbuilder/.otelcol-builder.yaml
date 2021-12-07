@@ -90,6 +90,8 @@ extensions:
   # Processors with non-upstreamed changes:
   - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.40.0"
     path: ./../pkg/extension/sumologicextension
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/extension/opampextension v0.40.0"
+    path: ./../pkg/extension/opampextension
 
   # Upstream receivers:
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/bearertokenauthextension v0.40.0"
@@ -111,6 +113,9 @@ replaces:
   # ----------------------------------------------------------------------------
   # Needed for telegrafreceiver
   - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.20.2-sumo-0
+
+  # Needed for opamp (temporarily?)
+  - github.com/open-telemetry/opamp-go => github.com/pmm-sumo/opamp-go v0.0.1
 
   # TODO: remove this when:
   # - regexp log filtering is released upstream:
