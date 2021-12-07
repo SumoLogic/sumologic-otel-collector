@@ -101,7 +101,7 @@ func (se *OpAMPExtension) onAgentRemoteConfig(ctx context.Context, config *proto
 		return nil, nil
 	}
 
-	if se.updateConfigIfDiffers(newConfig) {
+	if se.updateConfigIfDiffers(newConfig) || !se.usingConfiguredFile() {
 		se.logger.Info("New config detected. Going to shutdown the collector and restart it")
 		go func() {
 			err := se.handleRestart(ctx)
@@ -112,6 +112,19 @@ func (se *OpAMPExtension) onAgentRemoteConfig(ctx context.Context, config *proto
 	}
 
 	return nil, nil
+}
+
+func (se *OpAMPExtension) usingConfiguredFile() bool {
+	// This is supposed to solve bootstraping issue, to some extent
+	for i, arg := range os.Args {
+		if i > 0 && os.Args[i-1] == "--config" {
+			// todo: this requires better comparison
+			if arg == se.conf.ConfigPath {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (se *OpAMPExtension) buildConfig(config *protobufs.AgentRemoteConfig) string {
