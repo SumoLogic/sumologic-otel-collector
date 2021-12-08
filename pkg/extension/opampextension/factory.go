@@ -51,5 +51,6 @@ func createDefaultConfig() config.Extension {
 
 func createExtension(_ context.Context, params component.ExtensionCreateSettings, cfg config.Extension) (component.Extension, error) {
 	config := cfg.(*Config)
-	return newOpAMPExtension(config, params.Logger)
+
+	return newOpAMPExtension(config, params.Logger, params.BuildInfo.Description, params.BuildInfo.Version)
 }
