@@ -52,6 +52,9 @@ receivers:
   # Receivers with non-upstreamed changes:
   - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/telegrafreceiver v0.40.0"
     path: ./../pkg/receiver/telegrafreceiver
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/servicemapreceiver v0.40.0"
+    path: ./../pkg/receiver/servicemapreceiver
+
 
   # Upstream receivers:
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver v0.40.0"
