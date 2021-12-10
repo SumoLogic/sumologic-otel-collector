@@ -51,9 +51,7 @@ func createMetricsReceiver(
 	cfg config.Receiver,
 	nextConsumer consumer.Metrics,
 ) (component.MetricsReceiver, error) {
-	return &servicemapreceiver{
-		logger: params.Logger,
-	}, nil
+	return newServiceMapReceiver(params.Logger), nil
 }
 
 // createMetricsReceiver creates a metrics receiver based on provided config.
@@ -63,8 +61,7 @@ func createTracesReceiver(
 	cfg config.Receiver,
 	nextConsumer consumer.Traces,
 ) (component.TracesReceiver, error) {
-	return &servicemapreceiver{
-		logger:         params.Logger,
-		tracesConsumer: nextConsumer,
-	}, nil
+	rcv := newServiceMapReceiver(params.Logger)
+	rcv.tracesConsumer = nextConsumer
+	return rcv, nil
 }

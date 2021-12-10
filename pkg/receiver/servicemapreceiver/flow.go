@@ -18,7 +18,17 @@ import (
 	"fmt"
 	"go.opentelemetry.io/collector/model/pdata"
 	"math/rand"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
+)
+
+var (
+	opRegex     = regexp.MustCompile("(?P<op>\\w+)\\s+(?P<path>[a-z/].*) HTTP.*")
+	statusRegex = regexp.MustCompile("HTTP/[0-9.]+\\s+(?P<op>\\d+).*")
+	hostRegex   = regexp.MustCompile("Host:\\s+(?P<host>.*)")
+	clientRegex = regexp.MustCompile("User-Agent:\\s+(?P<agent>.*)")
 )
 
 func buildTraces(input []*ebpfmessage) pdata.Traces {
@@ -36,9 +46,10 @@ func buildTraces(input []*ebpfmessage) pdata.Traces {
 type flowData struct {
 	ebpfmessage
 
-	minTimestamp time.Time
-	maxTimestamp time.Time
-	count        int
+	minTimestamp    time.Time
+	maxTimestamp    time.Time
+	count           int
+	combinedPayload string
 }
 
 func flowid(msg *ebpfmessage) string {
@@ -60,11 +71,21 @@ func (fp *flowsPackage) addMessage(msg *ebpfmessage) {
 			count:        1,
 			minTimestamp: msg.ts,
 			// Don't make it zero
-			maxTimestamp: msg.ts.Add(time.Nanosecond),
+			maxTimestamp:    msg.ts.Add(time.Nanosecond),
+			combinedPayload: "",
 		}
 		fp.flows[id] = flow
 	} else {
 		flow.count++
+		if flow.statusCode == 0 && msg.statusCode != 0 {
+			flow.statusCode = msg.statusCode
+		}
+		if flow.serverComm == "" && msg.serverComm != "" {
+			flow.serverComm = msg.serverComm
+		}
+		if flow.clientComm == "" && msg.clientComm != "" {
+			flow.clientComm = msg.clientComm
+		}
 		if msg.ts.After(flow.maxTimestamp) {
 			flow.maxTimestamp = msg.ts
 		}
@@ -72,6 +93,7 @@ func (fp *flowsPackage) addMessage(msg *ebpfmessage) {
 			flow.minTimestamp = msg.ts
 		}
 	}
+	flow.combinedPayload = flow.combinedPayload + msg.payload
 }
 
 func (fp *flowsPackage) buildTraces() pdata.Traces {
@@ -82,10 +104,47 @@ func (fp *flowsPackage) buildTraces() pdata.Traces {
 	spans := ils.Spans()
 	spans.EnsureCapacity(len(fp.flows) * 2)
 	for _, v := range fp.flows {
+		// THIS is not ideal, but we don't have the full payload at message level
+		fillPayload(v.combinedPayload, v)
 		fp.createTraceInSlice(spans, v)
 	}
 
 	return traces
+}
+
+func fillPayload(payload string, msg *flowData) {
+	lines := strings.Split(payload, "\r\n")
+	for i, line := range lines {
+		if i < 3 {
+			matches := opRegex.FindStringSubmatch(line)
+			if len(matches) > 2 {
+				msg.op = matches[1]
+				msg.path = matches[2]
+			}
+		}
+		var matches []string
+		if msg.statusCode == 0 {
+			matches = statusRegex.FindStringSubmatch(line)
+			if len(matches) > 1 {
+				val, err := strconv.Atoi(matches[1])
+				if err == nil {
+					msg.statusCode = val
+				}
+			}
+		}
+		if msg.serverComm == "" {
+			matches = hostRegex.FindStringSubmatch(line)
+			if len(matches) > 1 {
+				msg.serverComm = matches[1]
+			}
+		}
+		if msg.clientComm == "" {
+			matches = clientRegex.FindStringSubmatch(line)
+			if len(matches) > 1 {
+				msg.clientComm = matches[1]
+			}
+		}
+	}
 }
 
 func (fp *flowsPackage) createTraceInSlice(spans pdata.SpanSlice, v *flowData) {
@@ -134,25 +193,9 @@ func fillSpanBasics(span pdata.Span, fd *flowData) {
 }
 
 func (fp *flowsPackage) determineClientServiceName(fd *flowData) string {
-	if fd.clientComm != "" {
-		return fd.clientComm
-	}
-	// TODO: client IP+port should be used here
-	if fd.clientPort < 5000 {
-		return "foo"
-	} else {
-		return "foofoo"
-	}
+	return fd.clientComm
 }
 
 func (fp *flowsPackage) determineServerServiceName(fd *flowData) string {
-	if fd.serverComm != "" {
-		return fd.serverComm
-	}
-	// TODO: server IP+port should be used here
-	if fd.serverPort < 5000 {
-		return "bar"
-	} else {
-		return "snafu"
-	}
+	return fd.serverComm
 }

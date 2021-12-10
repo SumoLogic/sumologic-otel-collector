@@ -17,8 +17,8 @@ package servicemapreceiver
 import (
 	"context"
 	"errors"
-	"fmt"
 	"go.opentelemetry.io/collector/consumer"
+	"regexp"
 	"sync"
 	"time"
 
@@ -37,6 +37,11 @@ type servicemapreceiver struct {
 	logger         *zap.Logger
 	messageCache   []*ebpfmessage
 	tracesConsumer consumer.Traces
+
+	opRegex     *regexp.Regexp
+	statusRegex *regexp.Regexp
+	hostRegex   *regexp.Regexp
+	clientRegex *regexp.Regexp
 }
 
 type ebpfmessage struct {
@@ -49,14 +54,30 @@ type ebpfmessage struct {
 	// empty is not present
 	serverComm string
 	// 0  is not set
-	statusCode int
-
-	ts time.Time
+	statusCode   int
+	op           string
+	path         string
+	traceid      string
+	parentspanid string
+	payload      string
+	ts           time.Time
 }
 
 // Ensure this receiver adheres to required interface.
 var _ component.MetricsReceiver = (*servicemapreceiver)(nil)
 var _ component.TracesReceiver = (*servicemapreceiver)(nil)
+
+func newServiceMapReceiver(logger *zap.Logger) *servicemapreceiver {
+	rcv := &servicemapreceiver{
+		logger: logger,
+	}
+	rcv.opRegex = regexp.MustCompile("(?P<op>\\w+)\\s+(?P<path>[a-z/].*) HTTP.*")
+	rcv.statusRegex = regexp.MustCompile("HTTP/[0-9.]+\\s+(?P<op>\\d+).*")
+	rcv.hostRegex = regexp.MustCompile("Host:\\s+(?P<host>.*)")
+	rcv.clientRegex = regexp.MustCompile("User-Agent:\\s+(?P<agent>.*)")
+
+	return rcv
+}
 
 // Start tells the receiver to start.
 func (r *servicemapreceiver) Start(ctx context.Context, host component.Host) error {
@@ -94,7 +115,7 @@ func (r *servicemapreceiver) dumpData(ctx context.Context) {
 	traces := buildTraces(copiedData)
 
 	// Now we could aggregate and such
-	if r.tracesConsumer != nil {
+	if r.tracesConsumer != nil && traces.SpanCount() > 0 {
 		r.tracesConsumer.ConsumeTraces(ctx, traces)
 	}
 }
@@ -108,11 +129,6 @@ func (r *servicemapreceiver) Shutdown(context.Context) error {
 }
 
 func (r *servicemapreceiver) addMessage(msg *ebpfmessage) {
-	r.logger.Info(
-		fmt.Sprintf("Received a message %s:%d -> %s:%d",
-			msg.clientIp, msg.clientPort,
-			msg.serverIp, msg.serverPort))
-
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -121,16 +137,14 @@ func (r *servicemapreceiver) addMessage(msg *ebpfmessage) {
 	r.messageCache = append(r.messageCache, msg)
 }
 
-func buildMessage(srcIp string, srcPort uint16, destIp string, destPort uint16, srcComm string, destComm string, statusCode int) *ebpfmessage {
+func (r *servicemapreceiver) buildMessage(srcIp string, srcPort uint16, destIp string, destPort uint16, payload string) *ebpfmessage {
 	if srcPort < destPort {
 		return &ebpfmessage{
 			clientIp:   destIp,
 			serverIp:   srcIp,
 			clientPort: destPort,
 			serverPort: srcPort,
-			clientComm: destComm,
-			serverComm: srcComm,
-			statusCode: statusCode,
+			payload:    payload,
 			ts:         time.Now(),
 		}
 	} else {
@@ -139,25 +153,24 @@ func buildMessage(srcIp string, srcPort uint16, destIp string, destPort uint16, 
 			serverIp:   destIp,
 			clientPort: srcPort,
 			serverPort: destPort,
-			clientComm: srcComm,
-			serverComm: destComm,
-			statusCode: statusCode,
+			payload:    payload,
 			ts:         time.Now(),
 		}
 	}
 }
 
 func (r *servicemapreceiver) loop(ctx context.Context) {
-	for {
-		r.addMessage(buildMessage(
-			"10.0.0.1",
-			1000,
-			"11.1.1.1",
-			2000,
-			"",
-			"",
-			200,
-		))
-		time.Sleep(2 * time.Second)
-	}
+	run(r)
+	//for {
+	//	r.addMessage(buildMessage(
+	//		"10.0.0.1",
+	//		1000,
+	//		"11.1.1.1",
+	//		2000,
+	//		"",
+	//		"",
+	//		200,
+	//	))
+	//	time.Sleep(2 * time.Second)
+	//}
 }
