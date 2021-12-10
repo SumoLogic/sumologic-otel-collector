@@ -33,6 +33,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
-replace github.com/open-telemetry/opamp-go => github.com/pmm-sumo/opamp-go v0.0.1
+replace github.com/open-telemetry/opamp-go => github.com/pmm-sumo/opamp-go v0.0.2
 
 replace github.com/SumoLogic/sumologic-otel-collector/pkg/extension/opampextension => ./

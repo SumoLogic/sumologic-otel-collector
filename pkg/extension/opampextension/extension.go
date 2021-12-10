@@ -44,6 +44,7 @@ type OpAMPExtension struct {
 	instanceid  string
 	currentHash []byte
 	client      client.OpAMPClient
+	cancel      context.CancelFunc
 }
 
 func newOpAMPExtension(conf *Config, logger *zap.Logger, name string, version string) (*OpAMPExtension, error) {
@@ -99,7 +100,36 @@ func (se *OpAMPExtension) Start(ctx context.Context, host component.Host) error 
 	}
 
 	err = se.client.Start(settings)
+
+	se.startAgentAttrsUpdateLoop(ctx)
+
 	return err
+}
+
+func (se *OpAMPExtension) startAgentAttrsUpdateLoop(ctx context.Context) {
+	ctx, se.cancel = context.WithCancel(ctx)
+
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				se.setAgentAttributes()
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+}
+
+func (se *OpAMPExtension) setAgentAttributes() {
+	se.client.SetAgentAttributes(map[string]*protobufs.AnyValue{
+		"version": {
+			Value: &protobufs.AnyValue_StringValue{StringValue: se.version},
+		},
+	})
 }
 
 func (se *OpAMPExtension) readCurrentConfig() *protobufs.EffectiveConfig {
@@ -128,6 +158,7 @@ func (se *OpAMPExtension) readCurrentConfig() *protobufs.EffectiveConfig {
 
 // Shutdown is invoked during service shutdown.
 func (se *OpAMPExtension) Shutdown(ctx context.Context) error {
+	se.cancel()
 	return se.client.Stop(ctx)
 }
 

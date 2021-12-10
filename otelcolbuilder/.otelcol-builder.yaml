@@ -115,7 +115,7 @@ replaces:
   - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.20.2-sumo-0
 
   # Needed for opamp (temporarily?)
-  - github.com/open-telemetry/opamp-go => github.com/pmm-sumo/opamp-go v0.0.1
+  - github.com/open-telemetry/opamp-go => github.com/pmm-sumo/opamp-go v0.0.2
 
   # TODO: remove this when:
   # - regexp log filtering is released upstream:
