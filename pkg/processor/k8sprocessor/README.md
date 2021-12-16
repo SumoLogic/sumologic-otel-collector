@@ -251,6 +251,15 @@ processors:
        - key: key2
          value: value2
          op: not-equals
+
+    exclude:
+      # Configure a list of exclusion rules. For now it's possible to specify
+      # a list of pod name regexes who's records should not be enriched with metadata.
+      #
+      # By default this list is empty.
+      pods:
+        - name: jaeger-agent
+        - name: my-agent
 ```
 
 ## RBAC

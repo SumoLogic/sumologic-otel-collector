@@ -230,6 +230,7 @@ func TestProcessorBadClientProvider(t *testing.T) {
 		_ kube.ExtractionRules,
 		_ kube.Filters,
 		_ []kube.Association,
+		_ kube.Excludes,
 		_ kube.APIClientsetProvider,
 		_ kube.InformerProvider,
 		_ kube.OwnerProvider,

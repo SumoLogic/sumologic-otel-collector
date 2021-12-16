@@ -200,5 +200,7 @@ func createProcessorOpts(cfg config.Processor) []Option {
 
 	opts = append(opts, WithDelimiter(oCfg.Extract.Delimiter))
 
+	opts = append(opts, WithExcludes(oCfg.Exclude))
+
 	return opts
 }
