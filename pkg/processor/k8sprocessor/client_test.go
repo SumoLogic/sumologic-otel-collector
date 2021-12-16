@@ -47,6 +47,7 @@ func newFakeClient(
 	rules kube.ExtractionRules,
 	filters kube.Filters,
 	associations []kube.Association,
+	exclude kube.Excludes,
 	_ kube.APIClientsetProvider,
 	_ kube.InformerProvider,
 	_ kube.OwnerProvider,

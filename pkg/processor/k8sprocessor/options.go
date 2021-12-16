@@ -365,3 +365,20 @@ func WithDelimiter(delimiter string) Option {
 		return nil
 	}
 }
+
+// WithExcludes allows specifying pods to exclude
+func WithExcludes(excludeConfig ExcludeConfig) Option {
+	return func(p *kubernetesprocessor) error {
+		excludes := kube.Excludes{}
+		names := excludeConfig.Pods
+
+		for _, name := range names {
+			excludes.Pods = append(excludes.Pods, kube.ExcludePods{
+				Name: regexp.MustCompile(name.Name)},
+			)
+		}
+
+		p.podIgnore = excludes
+		return nil
+	}
+}

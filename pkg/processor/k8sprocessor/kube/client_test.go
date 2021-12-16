@@ -87,12 +87,12 @@ func podAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj interfac
 }
 
 func TestDefaultClientset(t *testing.T) {
-	c, err := New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, nil, nil, nil, "")
+	c, err := New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, nil, nil, nil, "")
 	assert.Error(t, err)
 	assert.Equal(t, "invalid authType for kubernetes: ", err.Error())
 	assert.Nil(t, c)
 
-	c, err = New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, newFakeAPIClientset, nil, nil, "")
+	c, err = New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, newFakeAPIClientset, nil, nil, "")
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
 }
@@ -104,6 +104,7 @@ func TestBadFilters(t *testing.T) {
 		ExtractionRules{},
 		Filters{Fields: []FieldFilter{{Op: selection.Exists}}},
 		[]Association{},
+		Excludes{},
 		newFakeAPIClientset,
 		NewFakeInformer,
 		newFakeOwnerProvider,
@@ -143,7 +144,7 @@ func TestConstructorErrors(t *testing.T) {
 			gotAPIConfig = c
 			return nil, fmt.Errorf("error creating k8s client")
 		}
-		c, err := New(zap.NewNop(), apiCfg, er, ff, []Association{}, clientProvider, NewFakeInformer, newFakeOwnerProvider, "")
+		c, err := New(zap.NewNop(), apiCfg, er, ff, []Association{}, Excludes{}, clientProvider, NewFakeInformer, newFakeOwnerProvider, "")
 		assert.Nil(t, c)
 		assert.Error(t, err)
 		assert.Equal(t, err.Error(), "error creating k8s client")
@@ -851,12 +852,28 @@ func TestPodIgnorePatterns(t *testing.T) {
 				Name: "jaeger-collector",
 			},
 		},
+	}, {
+		ignore: true,
+		pod: api_v1.Pod{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "jaeger-agent-b2zdv",
+			},
+		},
+	}, {
+		ignore: false,
+		pod: api_v1.Pod{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "test-pod-name",
+			},
+		},
 	},
 	}
 
 	c, _ := newTestClient(t)
 	for _, tc := range testCases {
-		assert.Equal(t, tc.ignore, c.shouldIgnorePod(&tc.pod))
+		assert.Equal(t, tc.ignore, c.shouldIgnorePod(&tc.pod),
+			"Should ignore %v, pod.Name: %q, pod annotations %#v", tc.ignore, tc.pod.Name, tc.pod.Annotations,
+		)
 	}
 }
 
@@ -952,7 +969,13 @@ func Test_selectorsFromFilters(t *testing.T) {
 func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters) (*WatchClient, *observer.ObservedLogs) {
 	observedLogger, logs := observer.New(zapcore.WarnLevel)
 	logger := zap.New(observedLogger)
-	c, err := New(logger, k8sconfig.APIConfig{}, e, f, []Association{}, newFakeAPIClientset, NewFakeInformer, newFakeOwnerProvider, "_")
+	exclude := Excludes{
+		Pods: []ExcludePods{
+			{Name: regexp.MustCompile(`jaeger-agent`)},
+			{Name: regexp.MustCompile(`jaeger-collector`)},
+		},
+	}
+	c, err := New(logger, k8sconfig.APIConfig{}, e, f, []Association{}, exclude, newFakeAPIClientset, NewFakeInformer, newFakeOwnerProvider, "_")
 	require.NoError(t, err)
 	return c.(*WatchClient), logs
 }
