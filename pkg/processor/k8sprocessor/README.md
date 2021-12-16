@@ -256,13 +256,7 @@ processors:
       # Configure a list of exclusion rules. For now it's possible to specify
       # a list of pod name regexes who's records should not be enriched with metadata.
       #
-      # Default:
-      # pods:
-      # - name: jaeger-agent
-      # - name: jaeger-collector
-      # - name: otel-collector
-      # - name: otel-agent
-      # - name: collection-sumologic-otelcol
+      # By default this list is empty.
       pods:
         - name: jaeger-agent
         - name: my-agent

@@ -674,15 +674,7 @@ func TestWithExcludes(t *testing.T) {
 		{
 			"default",
 			ExcludeConfig{},
-			kube.Excludes{
-				Pods: []kube.ExcludePods{
-					{Name: regexp.MustCompile(`jaeger-agent`)},
-					{Name: regexp.MustCompile(`jaeger-collector`)},
-					{Name: regexp.MustCompile(`otel-collector`)},
-					{Name: regexp.MustCompile(`otel-agent`)},
-					{Name: regexp.MustCompile(`collection-sumologic-otelcol`)},
-				},
-			},
+			kube.Excludes{},
 		},
 		{
 			"configured",

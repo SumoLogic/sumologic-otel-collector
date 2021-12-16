@@ -48,25 +48,7 @@ func TestLoadConfig(t *testing.T) {
 		&Config{
 			ProcessorSettings: config.NewProcessorSettings(config.NewComponentID(typeStr)),
 			APIConfig:         k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
-			Exclude: ExcludeConfig{
-				Pods: nil,
-				// NOTE: this will not work as expected because k8sprocessor uses
-				// options pattern passing only the "changed as we go" config, so
-				// setting a default would override the passed around config and then
-				// the config would get overwritten second time with options.
-				// Becasuse of that we don't set exclude by default but we rely on
-				// options to set it, i.e. via WithExcludes (which would also set
-				// the default values if nothing was set.)
-				//
-				// []ExcludePodConfig{
-				// 		{Name: "jaeger-agent"},
-				// 		{Name: "jaeger-collector"},
-				// 		{Name: "otel-collector"},
-				// 		{Name: "otel-agent"},
-				// 		{Name: "collection-sumologic-otelcol"},
-				// },
-			},
-			Extract: ExtractConfig{Delimiter: ", "},
+			Extract:           ExtractConfig{Delimiter: ", "},
 		},
 		p0,
 	)
