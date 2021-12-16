@@ -32,34 +32,47 @@ func TestLoadConfig(t *testing.T) {
 	require.NoError(t, err)
 	factory := NewFactory()
 	factories.Processors[config.Type(typeStr)] = factory
-	require.NoError(t, err)
 
 	require.NoError(t, factory.CreateDefaultConfig().Validate())
 
 	cfg, err := configtest.LoadConfig(
 		path.Join(".", "testdata", "config.yaml"),
-		factories)
-
-	require.Nil(t, err)
+		factories,
+	)
+	require.NoError(t, err)
 	require.NotNil(t, cfg)
+	require.NoError(t, cfg.Validate())
 
 	p0 := cfg.Processors[config.NewComponentID(typeStr)]
-	assert.Equal(t, p0,
+	assert.EqualValues(t,
 		&Config{
 			ProcessorSettings: config.NewProcessorSettings(config.NewComponentID(typeStr)),
 			APIConfig:         k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
-			Exclude: ExcludeConfig{Pods: []ExcludePodConfig{
-				{Name: "jaeger-agent"},
-				{Name: "jaeger-collector"},
-				{Name: "otel-collector"},
-				{Name: "otel-agent"},
-				{Name: "collection-sumologic-otelcol"},
-			}},
+			Exclude: ExcludeConfig{
+				Pods: nil,
+				// NOTE: this will not work as expected because k8sprocessor uses
+				// options pattern passing only the "changed as we go" config, so
+				// setting a default would override the passed around config and then
+				// the config would get overwritten second time with options.
+				// Becasuse of that we don't set exclude by default but we rely on
+				// options to set it, i.e. via WithExcludes (which would also set
+				// the default values if nothing was set.)
+				//
+				// []ExcludePodConfig{
+				// 		{Name: "jaeger-agent"},
+				// 		{Name: "jaeger-collector"},
+				// 		{Name: "otel-collector"},
+				// 		{Name: "otel-agent"},
+				// 		{Name: "collection-sumologic-otelcol"},
+				// },
+			},
 			Extract: ExtractConfig{Delimiter: ", "},
-		})
+		},
+		p0,
+	)
 
 	p1 := cfg.Processors[config.NewComponentIDWithName(typeStr, "2")]
-	assert.Equal(t, p1,
+	assert.EqualValues(t,
 		&Config{
 			ProcessorSettings:  config.NewProcessorSettings(config.NewComponentIDWithName(typeStr, "2")),
 			APIConfig:          k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeKubeConfig},
@@ -130,10 +143,9 @@ func TestLoadConfig(t *testing.T) {
 				Pods: []ExcludePodConfig{
 					{Name: "jaeger-agent"},
 					{Name: "jaeger-collector"},
-					{Name: "otel-collector"},
-					{Name: "otel-agent"},
-					{Name: "collection-sumologic-otelcol"},
 				},
 			},
-		})
+		},
+		p1,
+	)
 }

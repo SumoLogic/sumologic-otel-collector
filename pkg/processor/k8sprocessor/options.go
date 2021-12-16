@@ -366,21 +366,33 @@ func WithDelimiter(delimiter string) Option {
 	}
 }
 
+var defaultExcludes = ExcludeConfig{
+	Pods: []ExcludePodConfig{
+		{Name: "jaeger-agent"},
+		{Name: "jaeger-collector"},
+		{Name: "otel-collector"},
+		{Name: "otel-agent"},
+		{Name: "collection-sumologic-otelcol"},
+	},
+}
+
 // WithExcludes allows specifying pods to exclude
-func WithExcludes(podExclude ExcludeConfig) Option {
+func WithExcludes(excludeConfig ExcludeConfig) Option {
 	return func(p *kubernetesprocessor) error {
-		ignoredNames := kube.Excludes{}
-		names := podExclude.Pods
+		excludes := kube.Excludes{}
+		names := excludeConfig.Pods
 
 		if len(names) == 0 {
 			names = defaultExcludes.Pods
 		}
+
 		for _, name := range names {
-			ignoredNames.Pods = append(ignoredNames.Pods, kube.ExcludePods{
+			excludes.Pods = append(excludes.Pods, kube.ExcludePods{
 				Name: regexp.MustCompile(name.Name)},
 			)
 		}
-		p.podIgnore = ignoredNames
+
+		p.podIgnore = excludes
 		return nil
 	}
 }

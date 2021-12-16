@@ -84,5 +84,5 @@ service:
   pipelines:
     traces:
       receivers: [nop]
-      processors: [k8s_tagger]
+      processors: [k8s_tagger, k8s_tagger/2]
       exporters: [nop]
