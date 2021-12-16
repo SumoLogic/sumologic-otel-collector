@@ -274,9 +274,11 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 	}
 
 	if c.Rules.OwnerLookupEnabled {
-		c.logger.Info("pod owner lookup", zap.Any("pod", pod.Name), zap.Any("owner refs", pod.OwnerReferences))
+		c.logger.Debug("pod owner lookup",
+			zap.String("pod.Name", pod.Name),
+			zap.Any("pod.OwnerReferences", pod.OwnerReferences),
+		)
 		owners := c.op.GetOwners(pod)
-		c.logger.Info("pod owner lookup #2", zap.Any("owners", owners))
 
 		for _, owner := range owners {
 			switch owner.kind {
