@@ -258,6 +258,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		return consumererror.NewLogs(fmt.Errorf("failed to initialize compressor: %w", err), ld)
 	}
 	sdr := newSender(
+		se.logger,
 		se.config,
 		se.client,
 		se.filter,
@@ -377,6 +378,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		return consumererror.NewMetrics(fmt.Errorf("failed to initialize compressor: %w", err), md)
 	}
 	sdr := newSender(
+		se.logger,
 		se.config,
 		se.client,
 		se.filter,
@@ -478,6 +480,7 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces
 		return consumererror.NewTraces(fmt.Errorf("failed to initialize compressor: %w", err), td)
 	}
 	sdr := newSender(
+		se.logger,
 		se.config,
 		se.client,
 		se.filter,

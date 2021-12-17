@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/model/otlp"
 	"go.opentelemetry.io/collector/model/pdata"
+	"go.uber.org/zap"
 )
 
 type senderTest struct {
@@ -77,10 +78,14 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 	gf, err := newGraphiteFormatter(cfg.GraphiteTemplate)
 	require.NoError(t, err)
 
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+
 	return &senderTest{
 		reqCounter: &reqCounter,
 		srv:        testServer,
 		s: newSender(
+			logger,
 			cfg,
 			&http.Client{
 				Timeout: cfg.HTTPClientSettings.Timeout,
@@ -134,10 +139,14 @@ func prepareOTLPSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *h
 	gf, err := newGraphiteFormatter(cfg.GraphiteTemplate)
 	require.NoError(t, err)
 
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+
 	return &senderTest{
 		reqCounter: &reqCounter,
 		srv:        testServer,
 		s: newSender(
+			logger,
 			cfg,
 			&http.Client{
 				Timeout: cfg.HTTPClientSettings.Timeout,

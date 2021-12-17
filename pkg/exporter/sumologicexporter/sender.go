@@ -28,6 +28,7 @@ import (
 	"go.opentelemetry.io/collector/model/otlp"
 	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/multierr"
+	"go.uber.org/zap"
 )
 
 var (
@@ -57,6 +58,7 @@ type logPair struct {
 }
 
 type sender struct {
+	logger              *zap.Logger
 	logBuffer           []logPair
 	metricBuffer        []metricPair
 	config              *Config
@@ -105,6 +107,7 @@ func newAppendResponse() appendResponse {
 }
 
 func newSender(
+	logger *zap.Logger,
 	cfg *Config,
 	cl *http.Client,
 	f filter,
@@ -117,6 +120,7 @@ func newSender(
 	tracesUrl string,
 ) *sender {
 	return &sender{
+		logger:              logger,
 		config:              cfg,
 		client:              cl,
 		filter:              f,
@@ -146,6 +150,10 @@ func (s *sender) send(ctx context.Context, pipeline PipelineType, body io.Reader
 	if err := s.addRequestHeaders(req, pipeline, flds); err != nil {
 		return err
 	}
+
+	s.logger.Debug("Sending data",
+		zap.Any("headers", req.Header),
+	)
 
 	resp, err := s.client.Do(req)
 	if err != nil {
