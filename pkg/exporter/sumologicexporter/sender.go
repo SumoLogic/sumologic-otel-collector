@@ -152,6 +152,7 @@ func (s *sender) send(ctx context.Context, pipeline PipelineType, body io.Reader
 	}
 
 	s.logger.Debug("Sending data",
+		zap.String("pipeline", string(pipeline)),
 		zap.Any("headers", req.Header),
 	)
 
@@ -159,10 +160,44 @@ func (s *sender) send(ctx context.Context, pipeline PipelineType, body io.Reader
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
 		return fmt.Errorf("error during sending data: %s", resp.Status)
 	}
+
+	s.handleReceiverResponse(resp)
+
 	return nil
+}
+
+func (s *sender) handleReceiverResponse(resp *http.Response) {
+	type ReceiverResponse struct {
+		Status  int    `json:"status,omitempty"`
+		ID      string `json:"id,omitempty"`
+		Code    string `json:"code,omitempty"`
+		Message string `json:"message,omitempty"`
+	}
+
+	if resp.ContentLength == 0 {
+		return
+	}
+
+	var (
+		b  = bytes.NewBuffer(make([]byte, resp.ContentLength))
+		tr = io.TeeReader(resp.Body, b)
+	)
+
+	var rResponse ReceiverResponse
+	if err := json.NewDecoder(tr).Decode(&rResponse); err != nil {
+		s.logger.Warn("Error decoding receiver response", zap.ByteString("body", b.Bytes()))
+		return
+	}
+
+	s.logger.Warn("There was an issue sending data",
+		zap.String("error_id", rResponse.ID),
+		zap.String("message", rResponse.Message),
+	)
 }
 
 func (s *sender) createRequest(ctx context.Context, pipeline PipelineType, data io.Reader) (*http.Request, error) {
@@ -227,9 +262,7 @@ func (s *sender) logToJSON(record logPair) (string, error) {
 	return bytes.NewBuffer(nextLine).String(), nil
 }
 
-var (
-	timeZeroUTC = time.Unix(0, 0).UTC()
-)
+var timeZeroUTC = time.Unix(0, 0).UTC()
 
 // addJSONTimestamp adds a timestamp field to record attribtues before sending
 // out the logs as JSON.
@@ -256,7 +289,6 @@ func isEmptyAttributeValue(att pdata.AttributeValue) bool {
 // to configured LogFormat and as the result of execution
 // returns array of records which has not been sent correctly and error
 func (s *sender) sendLogs(ctx context.Context, flds fields) ([]logPair, error) {
-
 	// Follow different execution path for OTLP format
 	if s.config.LogFormat == OTLPLogFormat {
 		return s.sendOTLPLogs(ctx, flds)
@@ -366,7 +398,6 @@ func (s *sender) sendOTLPLogs(ctx context.Context, flds fields) ([]logPair, erro
 
 // sendMetrics sends metrics in right format basing on the s.config.MetricFormat
 func (s *sender) sendMetrics(ctx context.Context, flds fields) ([]metricPair, error) {
-
 	// Follow different execution path for OTLP format
 	if s.config.MetricFormat == OTLPMetricFormat {
 		return s.sendOTLPMetrics(ctx, flds)
