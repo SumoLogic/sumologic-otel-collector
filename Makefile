@@ -33,6 +33,8 @@ pre-commit-check:
 ALL_MODULES := $(shell find ./pkg -type f -name "go.mod" -exec dirname {} \; | sort | egrep  '^./' )
 ALL_MODULES += ./otelcolbuilder
 
+ALL_EXPORTABLE_MODULES += $(shell find ./pkg -type f -name "go.mod" ! -path "*pkg/test/*" -exec dirname {} \; | sort )
+
 .PHONY: list-modules
 list-modules:
 	$(MAKE) for-all CMD=""
@@ -54,6 +56,10 @@ install-golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
 	sh -s -- -b $(shell go env GOPATH)/bin $(GOLANGCI_LINT_VERSION)
 
+.PHONY: print-all-modules
+print-all-modules:
+	echo $(ALL_EXPORTABLE_MODULES)
+
 .PHONY: for-all
 for-all:
 	@echo "running $${CMD} in all modules..."
@@ -66,6 +72,58 @@ for-all:
 .PHONY: check-uniform-dependencies
 check-uniform-dependencies:
 	./ci/check_uniform_dependencies.sh
+
+################################################################################
+# Release
+################################################################################
+#
+# These targets should be used for the release process in order to make the modules
+# contained within this repo importable.
+# This is required because as of now Go doesn't allow importing modules being
+# defined in repository's sub directories without having this directory name set
+# as prefix for the tag
+#
+# So when we want to make pkg/exporter/sumologicexporter with version v0.0.43-beta.0
+# importable then we need to create the following tag:
+# `pkg/exporter/sumologicexporter/v0.0.43-beta.0`
+# in order for it to be importable.
+#
+# Related issue: https://github.com/golang/go/issues/34055
+
+# Exemplar usage for the release:
+#
+# export TAG=v0.0.43-beta.0
+# make add-tag push-tag
+
+.PHONY: add-tag
+add-tag:
+	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
+	@echo "Adding tag ${TAG}"
+	@git tag -a ${TAG} -s -m "${TAG}"
+	@set -e; for dir in $(ALL_EXPORTABLE_MODULES); do \
+	  (echo Adding tag "$${dir:2}/$${TAG}" && \
+	 	git tag -a "$${dir:2}/$${TAG}" -s -m "${dir:2}/${TAG}" ); \
+	done
+
+.PHONY: push-tag
+push-tag:
+	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
+	@echo "Pushing tag ${TAG}"
+	@git push upstream ${TAG}
+	@set -e; for dir in $(ALL_EXPORTABLE_MODULES); do \
+	  (echo Pushing tag "$${dir:2}/$${TAG}" && \
+	 	git push upstream "$${dir:2}/$${TAG}"); \
+	done
+
+.PHONY: delete-tag
+delete-tag:
+	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
+	@echo "Deleting tag ${TAG}"
+	@git tag -d ${TAG}
+	@set -e; for dir in $(ALL_EXPORTABLE_MODULES); do \
+	  (echo Deleting tag "$${dir:2}/$${TAG}" && \
+	 	git tag -d "$${dir:2}/$${TAG}" ); \
+	done
 
 ################################################################################
 # Build
