@@ -7,8 +7,8 @@ require (
 	github.com/influxdata/telegraf v1.20.4
 	github.com/stretchr/testify v1.7.0
 	go.mongodb.org/mongo-driver v1.5.2 // indirect
-	go.opentelemetry.io/collector v0.40.0
-	go.opentelemetry.io/collector/model v0.40.0
+	go.opentelemetry.io/collector v0.41.0
+	go.opentelemetry.io/collector/model v0.41.0
 	go.uber.org/zap v1.19.1
 )
 
@@ -86,7 +86,6 @@ require (
 	github.com/eclipse/paho.mqtt.golang v1.2.0 // indirect
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.5+incompatible // indirect
-	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
 	github.com/go-logr/logr v0.4.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
@@ -148,7 +147,7 @@ require (
 	github.com/karrick/godirwalk v1.16.1 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
-	github.com/knadh/koanf v1.3.2 // indirect
+	github.com/knadh/koanf v1.3.3 // indirect
 	github.com/leodido/ragel-machinery v0.0.0-20181214104525-299bdde78165 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
@@ -162,7 +161,7 @@ require (
 	github.com/minio/highwayhash v1.0.1 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/mitchellh/mapstructure v1.4.2 // indirect
+	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/ipvs v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

@@ -1,7 +1,8 @@
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.40.0
+BUILDER_VERSION ?= 0.41.0
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
 BUILDER_BIN_PATH ?= $(HOME)/bin/opentelemetry-collector-builder
+INSTALLED_BUILDER_VERSION := $(shell opentelemetry-collector-builder version 2>&1)
 VERSION ?= "$(shell git describe --tags --abbrev=10)"
 GO ?= go
 OS ?= $(shell uname -s | tr A-Z a-z)
@@ -21,8 +22,6 @@ else
 CGO_ENABLED ?= 0
 endif
 
-X=$(shell opentelemetry-collector-builder version 2>&1)
-
 .PHONY: install-builder-with-go-install
 install-builder-with-go-install:
 	@echo "Installing $(BUILDER_REPO)@$(BUILDER_VERSION)..."
@@ -32,7 +31,7 @@ install-builder-with-go-install:
 .PHONY: _install-bin
 _install-bin:
 	mkdir -p $(HOME)/bin && \
-	curl -L -o $(BUILDER_BIN_PATH) https://$(BUILDER_REPO)/releases/download/cmd%2Fbuilder%2Fv$(BUILDER_VERSION)/ocb_$(BUILDER_VERSION)_$(PLATFORM)_amd64 && \
+	curl -L -o $(BUILDER_BIN_PATH) https://$(BUILDER_REPO)/releases/download/v$(BUILDER_VERSION)/ocb_$(BUILDER_VERSION)_$(PLATFORM)_amd64 && \
 	chmod +x $(BUILDER_BIN_PATH)
 	@$(MAKE) ensure-correct-builder-version
 
@@ -44,9 +43,9 @@ install-builder:
 
 .PHONY: ensure-correct-builder-version
 ensure-correct-builder-version:
-ifneq ($(lastword $(shell opentelemetry-collector-builder version 2>&1)),$(BUILDER_VERSION))
+ifneq ($(lastword $(INSTALLED_BUILDER_VERSION)),$(BUILDER_VERSION))
 	@$(error Installed opentelemetry-collector-builder version \
-		"$(shell opentelemetry-collector-builder version 2>/dev/null)" \
+		"$(INSTALLED_BUILDER_VERSION)" \
 		does not match the requested "$(BUILDER_VERSION)" \
 		Please check if "$(BUILDER_BIN_PATH)" can be found in your PATH \
 		and if not, then install it using 'make install-builder' from otelcolbuilder's directory\
@@ -61,7 +60,7 @@ endif
 _builder:
 # Need to specify go path because otherwise opentelemetry-collector-builder
 # uses /usr/bin/go which on Github Actions is using preinstalled 1.15.12 by default.
-	CGO_ENABLED=$(CGO_ENABLED) opentelemetry-collector-builder \
+	CGO_ENABLED=$(CGO_ENABLED) $(BUILDER_BIN_PATH) \
 		--go $(GO) \
 		--version $(VERSION) \
 		--config .otelcol-builder.yaml \
@@ -87,7 +86,9 @@ generate-sources:
 	@$(MAKE) _builder SKIP_COMPILATION=true
 
 .PHONY: test
-test: install-builder generate-sources
+test:
+	@$(MAKE) ensure-correct-builder-version || $(MAKE) install-builder
+	@$(MAKE) generate-sources
 	@$(MAKE) -C cmd test
 
 .PHONY: lint
