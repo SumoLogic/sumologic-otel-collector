@@ -2,7 +2,7 @@ BINARY_NAME ?= otelcol-sumo
 BUILDER_VERSION ?= 0.40.0
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
 BUILDER_BIN_PATH ?= $(HOME)/bin/opentelemetry-collector-builder
-VERSION ?= "$(shell git describe --tags --abbrev=10)"
+VERSION ?= "$(shell git describe --tags --abbrev=10 --match "v[0-9]*")"
 GO ?= go
 OS ?= $(shell uname -s | tr A-Z a-z)
 
