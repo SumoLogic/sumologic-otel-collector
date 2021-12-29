@@ -3,7 +3,7 @@ BUILDER_VERSION ?= 0.41.0
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
 BUILDER_BIN_PATH ?= $(HOME)/bin/opentelemetry-collector-builder
 INSTALLED_BUILDER_VERSION := $(shell opentelemetry-collector-builder version 2>&1)
-VERSION ?= "$(shell git describe --tags --abbrev=10)"
+VERSION ?= "$(shell git describe --tags --abbrev=10 --match "v[0-9]*")"
 GO ?= go
 OS ?= $(shell uname -s | tr A-Z a-z)
 
