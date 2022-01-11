@@ -65,20 +65,18 @@ type OwnerCache struct {
 	namespaces   map[string]*api_v1.Namespace
 	cacheMutex   sync.RWMutex
 
-	client kubernetes.Interface
 	logger *zap.Logger
 
 	stopCh    chan struct{}
 	informers []cache.SharedIndexInformer
 }
 
-func newOwnerCache(client kubernetes.Interface, logger *zap.Logger) OwnerCache {
+func newOwnerCache(logger *zap.Logger) OwnerCache {
 	return OwnerCache{
 		objectOwners: map[string]*ObjectOwner{},
 		podServices:  map[string][]string{},
 		namespaces:   map[string]*api_v1.Namespace{},
 		cacheMutex:   sync.RWMutex{},
-		client:       client,
 		logger:       logger,
 		stopCh:       make(chan struct{}),
 	}
@@ -104,7 +102,7 @@ func newOwnerProvider(
 	fieldSelector fields.Selector,
 	namespace string) (OwnerAPI, error) {
 
-	ownerCache := newOwnerCache(client, logger)
+	ownerCache := newOwnerCache(logger)
 
 	factory := informers.NewSharedInformerFactoryWithOptions(client, watchSyncPeriod,
 		informers.WithNamespace(namespace),
@@ -231,9 +229,16 @@ func (op *OwnerCache) cacheObject(kind string, obj interface{}) {
 }
 
 func (op *OwnerCache) addEndpointToPod(pod string, endpoint string) {
-	op.cacheMutex.RLock()
-	services := op.podServices[pod]
-	op.cacheMutex.RUnlock()
+	op.cacheMutex.Lock()
+	defer op.cacheMutex.Unlock()
+
+	services, ok := op.podServices[pod]
+	if !ok {
+		// If there's no services/endpoints for a given pod then just update the cache
+		// with the provided enpoint.
+		op.podServices[pod] = []string{endpoint}
+		return
+	}
 
 	for _, it := range services {
 		if it == endpoint {
@@ -243,28 +248,43 @@ func (op *OwnerCache) addEndpointToPod(pod string, endpoint string) {
 
 	services = append(services, endpoint)
 	sort.Strings(services)
-
-	op.cacheMutex.Lock()
-	defer op.cacheMutex.Unlock()
 	op.podServices[pod] = services
 }
 
 func (op *OwnerCache) deleteEndpointFromPod(pod string, endpoint string) {
-	op.cacheMutex.RLock()
-	services := op.podServices[pod]
-	op.cacheMutex.RUnlock()
+	op.cacheMutex.Lock()
+	defer op.cacheMutex.Unlock()
 
-	newServices := []string{}
+	services, ok := op.podServices[pod]
+	if !ok {
+		return
+	}
 
-	for _, it := range services {
-		if it != endpoint {
-			newServices = append(newServices, it)
+	for i := 0; len(services) > 0; {
+		service := services[i]
+		if service == endpoint {
+			// Remove the ith entry by...
+			l := len(services)
+			last := services[l-1]
+			// ...moving it at the very end (swapping it with the last entry)...
+			services[l-1], services[i] = service, last
+			// ... and by truncating the slice by one elem
+			services = services[:l-1]
+		} else {
+			i++
+		}
+
+		if i == len(services)-1 {
+			break
 		}
 	}
 
-	op.cacheMutex.Lock()
-	defer op.cacheMutex.Unlock()
-	op.podServices[pod] = newServices
+	if len(services) == 0 {
+		delete(op.podServices, pod)
+	} else {
+		sort.Strings(services)
+		op.podServices[pod] = services
+	}
 }
 
 func (op *OwnerCache) genericEndpointOp(obj interface{}, endpointFunc func(pod string, endpoint string)) {
