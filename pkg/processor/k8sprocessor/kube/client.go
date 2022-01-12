@@ -74,10 +74,10 @@ func New(
 		Exclude:      exclude,
 		stopCh:       make(chan struct{}),
 		delimiter:    delimiter,
+		Pods:         map[PodIdentifier]*Pod{},
 	}
 	go c.deleteLoop(time.Second*30, defaultPodDeleteGracePeriod)
 
-	c.Pods = map[PodIdentifier]*Pod{}
 	if newClientSet == nil {
 		newClientSet = k8sconfig.MakeClient
 	}
@@ -147,7 +147,9 @@ func (c *WatchClient) handlePodAdd(obj interface{}) {
 	} else {
 		c.logger.Error("object received was not of type api_v1.Pod", zap.Any("received", obj))
 	}
+	c.m.RLock()
 	podTableSize := len(c.Pods)
+	c.m.RUnlock()
 	observability.RecordPodTableSize(int64(podTableSize))
 }
 
@@ -159,7 +161,9 @@ func (c *WatchClient) handlePodUpdate(old, new interface{}) {
 	} else {
 		c.logger.Error("object received was not of type api_v1.Pod", zap.Any("received", new))
 	}
+	c.m.RLock()
 	podTableSize := len(c.Pods)
+	c.m.RUnlock()
 	observability.RecordPodTableSize(int64(podTableSize))
 }
 
@@ -170,7 +174,9 @@ func (c *WatchClient) handlePodDelete(obj interface{}) {
 	} else {
 		c.logger.Error("object received was not of type api_v1.Pod", zap.Any("received", obj))
 	}
+	c.m.RLock()
 	podTableSize := len(c.Pods)
+	c.m.RUnlock()
 	observability.RecordPodTableSize(int64(podTableSize))
 }
 
@@ -205,8 +211,8 @@ func (c *WatchClient) deleteLoop(interval time.Duration, gracePeriod time.Durati
 				}
 			}
 			podTableSize := len(c.Pods)
-			observability.RecordPodTableSize(int64(podTableSize))
 			c.m.Unlock()
+			observability.RecordPodTableSize(int64(podTableSize))
 
 		case <-c.stopCh:
 			return
@@ -426,17 +432,13 @@ func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
 }
 
 func (c *WatchClient) forgetPod(pod *api_v1.Pod) {
-	c.m.RLock()
 	p, ok := c.GetPod(PodIdentifier(pod.Status.PodIP))
-	c.m.RUnlock()
 
 	if ok && p.Name == pod.Name {
 		c.appendDeleteQueue(PodIdentifier(pod.Status.PodIP), pod.Name)
 	}
 
-	c.m.RLock()
 	p, ok = c.GetPod(PodIdentifier(pod.UID))
-	c.m.RUnlock()
 
 	if ok && p.Name == pod.Name {
 		c.appendDeleteQueue(PodIdentifier(pod.UID), pod.Name)
