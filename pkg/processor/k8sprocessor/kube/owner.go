@@ -61,9 +61,13 @@ type OwnerAPI interface {
 // OwnerCache is a simple structure which aids querying for owners
 type OwnerCache struct {
 	objectOwners map[string]*ObjectOwner
-	podServices  map[string][]string
-	namespaces   map[string]*api_v1.Namespace
-	cacheMutex   sync.RWMutex
+	ownersMutex  sync.RWMutex
+
+	podServices      map[string][]string
+	podServicesMutex sync.RWMutex
+
+	namespaces map[string]*api_v1.Namespace
+	nsMutex    sync.RWMutex
 
 	logger *zap.Logger
 
@@ -76,7 +80,6 @@ func newOwnerCache(logger *zap.Logger) OwnerCache {
 		objectOwners: map[string]*ObjectOwner{},
 		podServices:  map[string][]string{},
 		namespaces:   map[string]*api_v1.Namespace{},
-		cacheMutex:   sync.RWMutex{},
 		logger:       logger,
 		stopCh:       make(chan struct{}),
 	}
@@ -148,16 +151,16 @@ func newOwnerProvider(
 
 func (op *OwnerCache) upsertNamespace(obj interface{}) {
 	namespace := obj.(*api_v1.Namespace)
-	op.cacheMutex.Lock()
-	defer op.cacheMutex.Unlock()
+	op.nsMutex.Lock()
 	op.namespaces[namespace.Name] = namespace
+	op.nsMutex.Unlock()
 }
 
 func (op *OwnerCache) deleteNamespace(obj interface{}) {
 	namespace := obj.(*api_v1.Namespace)
-	op.cacheMutex.Lock()
-	defer op.cacheMutex.Unlock()
+	op.nsMutex.Lock()
 	delete(op.namespaces, namespace.Name)
+	op.nsMutex.Unlock()
 }
 
 func (op *OwnerCache) addNamespaceInformer(factory informers.SharedInformerFactory) {
@@ -187,16 +190,16 @@ func (op *OwnerCache) addOwnerInformer(
 	deleteFunc func(obj interface{})) {
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			observability.RecordOtherAdded()
 			cacheFunc(kind, obj)
+			observability.RecordOtherAdded()
 		},
 		UpdateFunc: func(_, obj interface{}) {
-			observability.RecordOtherUpdated()
 			cacheFunc(kind, obj)
+			observability.RecordOtherUpdated()
 		},
 		DeleteFunc: func(obj interface{}) {
-			observability.RecordOtherDeleted()
 			deleteFunc(obj)
+			observability.RecordOtherDeleted()
 		},
 	})
 
@@ -204,9 +207,9 @@ func (op *OwnerCache) addOwnerInformer(
 }
 
 func (op *OwnerCache) deleteObject(obj interface{}) {
-	op.cacheMutex.Lock()
-	defer op.cacheMutex.Unlock()
+	op.ownersMutex.Lock()
 	delete(op.objectOwners, string(obj.(meta_v1.Object).GetUID()))
+	op.ownersMutex.Unlock()
 }
 
 func (op *OwnerCache) cacheObject(kind string, obj interface{}) {
@@ -223,14 +226,14 @@ func (op *OwnerCache) cacheObject(kind string, obj interface{}) {
 		oo.ownerUIDs = append(oo.ownerUIDs, or.UID)
 	}
 
-	op.cacheMutex.Lock()
-	defer op.cacheMutex.Unlock()
+	op.ownersMutex.Lock()
 	op.objectOwners[string(oo.UID)] = &oo
+	op.ownersMutex.Unlock()
 }
 
 func (op *OwnerCache) addEndpointToPod(pod string, endpoint string) {
-	op.cacheMutex.Lock()
-	defer op.cacheMutex.Unlock()
+	op.podServicesMutex.Lock()
+	defer op.podServicesMutex.Unlock()
 
 	services, ok := op.podServices[pod]
 	if !ok {
@@ -252,8 +255,8 @@ func (op *OwnerCache) addEndpointToPod(pod string, endpoint string) {
 }
 
 func (op *OwnerCache) deleteEndpointFromPod(pod string, endpoint string) {
-	op.cacheMutex.Lock()
-	defer op.cacheMutex.Unlock()
+	op.podServicesMutex.Lock()
+	defer op.podServicesMutex.Unlock()
 
 	services, ok := op.podServices[pod]
 	if !ok {
@@ -314,7 +317,10 @@ func (op *OwnerCache) cacheEndpoint(kind string, obj interface{}) {
 
 // GetNamespaces returns a cached namespace object (if one is found) or nil otherwise
 func (op *OwnerCache) GetNamespace(pod *api_v1.Pod) *api_v1.Namespace {
+	op.nsMutex.RLock()
 	namespace, found := op.namespaces[pod.Namespace]
+	op.nsMutex.RUnlock()
+
 	if found {
 		return namespace
 	}
@@ -323,9 +329,9 @@ func (op *OwnerCache) GetNamespace(pod *api_v1.Pod) *api_v1.Namespace {
 
 // GetServices returns a slice with matched services - in case no services are found, it returns an empty slice
 func (op *OwnerCache) GetServices(pod *api_v1.Pod) []string {
-	op.cacheMutex.RLock()
+	op.podServicesMutex.RLock()
 	oo, found := op.podServices[pod.Name]
-	op.cacheMutex.RUnlock()
+	op.podServicesMutex.RUnlock()
 
 	if found {
 		return oo
@@ -351,7 +357,7 @@ func (op *OwnerCache) GetOwners(pod *api_v1.Pod) []*ObjectOwner {
 		uid := queue[0]
 		queue = queue[1:]
 
-		op.cacheMutex.RLock()
+		op.ownersMutex.RLock()
 		oo, found := op.objectOwners[string(uid)]
 		if found {
 			objectOwners = append(objectOwners, oo)
@@ -363,7 +369,7 @@ func (op *OwnerCache) GetOwners(pod *api_v1.Pod) []*ObjectOwner {
 				}
 			}
 		}
-		op.cacheMutex.RUnlock()
+		op.ownersMutex.RUnlock()
 	}
 
 	return objectOwners
