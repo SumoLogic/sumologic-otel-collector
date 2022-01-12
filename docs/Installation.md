@@ -46,6 +46,14 @@ Follow the steps for your platform below.
 
 1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
 
+> **IMPORTANT NOTE**:
+> It is recommended to limit access to the configuration file as it contains sensitive information.
+> You can change access permissions to the configuration file using:
+>
+> ```bash
+> chmod 640 config.yaml
+> ```
+
 1. Run Sumo Logic OT Distro:
 
    ```bash
@@ -75,6 +83,14 @@ Follow the steps for your platform below.
 
 1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
 
+> **IMPORTANT NOTE**:
+> It is recommended to limit access to the configuration file as it contains sensitive information.
+> You can change access permissions to the configuration file using:
+>
+> ```bash
+> chmod 640 config.yaml
+> ```
+
 1. Run Sumo Logic OT Distro:
 
    ```bash
@@ -103,6 +119,14 @@ Follow the steps for your platform below.
     ```
 
 1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
+
+> **IMPORTANT NOTE**:
+> It is recommended to limit access to the configuration file as it contains sensitive information.
+> You can change access permissions to the configuration file using:
+>
+> ```bash
+> chmod 640 config.yaml
+> ```
 
 1. Run Sumo Logic OT Distro:
 
@@ -134,6 +158,14 @@ repository.
    ```
 
 1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
+
+> **IMPORTANT NOTE**:
+> It is recommended to limit access to the configuration file as it contains sensitive information.
+> You can change access permissions to the configuration file using:
+>
+> ```bash
+> chmod 640 config.yaml
+> ```
 
 1. Run the Sumo Logic OT Distro in container, e.g.
 
@@ -210,6 +242,14 @@ To run opentelemetry collector as Systemd Service please apply following steps:
    ```
 
 1. Create configuration file and save it as `/etc/otelcol-sumo/config.yaml`.
+
+> **IMPORTANT NOTE**:
+> It is recommended to limit access to the configuration file as it contains sensitive information.
+> You can change access permissions to the configuration file using:
+>
+> ```bash
+> chmod 640 config.yaml
+> ```
 
 1. Create `user` and `group` to run opentelemetry by:
 

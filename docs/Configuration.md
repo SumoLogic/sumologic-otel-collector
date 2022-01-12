@@ -117,6 +117,14 @@ extensions, processors, other exporters etc.
 Let's look at some examples for configuring logs, metrics and traces to be sent to Sumo,
 and after that let's put that all together.
 
+> **IMPORTANT NOTE**:
+> It is recommended to limit access to the configuration file as it contains sensitive information.
+> You can change access permissions to the configuration file using:
+>
+> ```bash
+> chmod 640 config.yaml
+> ```
+
 ### Basic configuration for logs
 
 To send logs from local files, use the [Filelog Receiver][filelogreceiver_readme].
