@@ -13,7 +13,8 @@ sudo apt update -y
 sudo apt install -y \
     make \
     gcc \
-    python3-pip
+    python3-pip \
+    ruby
 
 # Install Go
 curl -LJ "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" -o go.linux-amd64.tar.gz \
@@ -78,3 +79,7 @@ add-apt-repository \
    stable"
 apt-get install -y docker-ce docker-ce-cli containerd.io
 usermod -aG docker vagrant
+
+# Install Markdown lint
+# see: https://github.com/markdownlint/markdownlint
+gem install mdl
