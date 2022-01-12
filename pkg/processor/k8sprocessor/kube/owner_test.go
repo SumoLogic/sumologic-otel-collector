@@ -100,11 +100,18 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 	})
 
 	var (
+		pod = &api_v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-pod",
+				Namespace: "kube-system",
+				UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75392",
+			},
+		}
 		endpoints1 = &api_v1.Endpoints{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "my-service",
-				Namespace: "kube-system",
-				UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75391",
+				Namespace: pod.Namespace,
+				UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75390",
 			},
 			TypeMeta: metav1.TypeMeta{
 				Kind: "Endpoint",
@@ -114,10 +121,10 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 					Addresses: []api_v1.EndpointAddress{
 						{
 							TargetRef: &api_v1.ObjectReference{
-								Name:      "my-pod",
-								Namespace: "kube-system",
+								Name:      pod.Name,
+								Namespace: pod.Namespace,
 								Kind:      "Pod",
-								UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75392",
+								UID:       pod.UID,
 							},
 						},
 					},
@@ -127,7 +134,7 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 		endpoints2 = &api_v1.Endpoints{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "my-service-2",
-				Namespace: "kube-system",
+				Namespace: pod.Namespace,
 				UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75391",
 			},
 			TypeMeta: metav1.TypeMeta{
@@ -138,21 +145,14 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 					Addresses: []api_v1.EndpointAddress{
 						{
 							TargetRef: &api_v1.ObjectReference{
-								Name:      "my-pod",
-								Namespace: "kube-system",
+								Name:      pod.Name,
+								Namespace: pod.Namespace,
 								Kind:      "Pod",
-								UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75392",
+								UID:       pod.UID,
 							},
 						},
 					},
 				},
-			},
-		}
-		pod = &api_v1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-pod",
-				Namespace: "kube-system",
-				UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75392",
 			},
 		}
 	)
@@ -184,7 +184,7 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 	//
 	// Running these tests with an even increasing -count proved that this decreases
 	// the flakiness of tests but doesn't eliminate it completely.
-	time.Sleep(200 * time.Millisecond)
+	// time.Sleep(200 * time.Millisecond)
 
 	t.Run("adding endpoints", func(t *testing.T) {
 		_, err = c.CoreV1().Endpoints("kube-system").
