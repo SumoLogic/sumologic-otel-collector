@@ -15,6 +15,7 @@
 package kube
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -28,6 +29,7 @@ import (
 	"go.uber.org/zap/zaptest/observer"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -83,7 +85,6 @@ func podAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj interfac
 	assert.Equal(t, got.Address, "2.2.2.2")
 	assert.Equal(t, got.Name, "podC")
 	assert.Equal(t, got.PodUID, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
-
 }
 
 func TestDefaultClientset(t *testing.T) {
@@ -649,19 +650,21 @@ func TestExtractionRules(t *testing.T) {
 		{
 			name: "labels",
 			rules: ExtractionRules{
-				Annotations: []FieldExtractionRule{{
-					Name: "a1",
-					Key:  "annotation1",
+				Annotations: []FieldExtractionRule{
+					{
+						Name: "a1",
+						Key:  "annotation1",
+					},
 				},
-				},
-				Labels: []FieldExtractionRule{{
-					Name: "l1",
-					Key:  "label1",
-				}, {
-					Name:  "l2",
-					Key:   "label2",
-					Regex: regexp.MustCompile(`k5=(?P<value>[^\s]+)`),
-				},
+				Labels: []FieldExtractionRule{
+					{
+						Name: "l1",
+						Key:  "label1",
+					}, {
+						Name:  "l2",
+						Key:   "label2",
+						Regex: regexp.MustCompile(`k5=(?P<value>[^\s]+)`),
+					},
 				},
 			},
 			attributes: map[string]string{
@@ -675,20 +678,23 @@ func TestExtractionRules(t *testing.T) {
 			rules: ExtractionRules{
 				OwnerLookupEnabled: true,
 				Tags:               NewExtractionFieldTags(),
-				Annotations: []FieldExtractionRule{{
-					Name: "k8s.pod.annotation.%s",
-					Key:  "*",
+				Annotations: []FieldExtractionRule{
+					{
+						Name: "k8s.pod.annotation.%s",
+						Key:  "*",
+					},
 				},
+				Labels: []FieldExtractionRule{
+					{
+						Name: "k8s.pod.label.%s",
+						Key:  "*",
+					},
 				},
-				Labels: []FieldExtractionRule{{
-					Name: "k8s.pod.label.%s",
-					Key:  "*",
-				},
-				},
-				NamespaceLabels: []FieldExtractionRule{{
-					Name: "namespace_labels_%s",
-					Key:  "*",
-				},
+				NamespaceLabels: []FieldExtractionRule{
+					{
+						Name: "namespace_labels_%s",
+						Key:  "*",
+					},
 				},
 			},
 			attributes: map[string]string{
@@ -729,51 +735,52 @@ func TestFilters(t *testing.T) {
 		filters Filters
 		labels  string
 		fields  string
-	}{{
-		name:    "no-filters",
-		filters: Filters{},
-	}, {
-		name: "namespace",
-		filters: Filters{
-			Namespace: "default",
-		},
-	}, {
-		name: "node",
-		filters: Filters{
-			Node: "ec2-test",
-		},
-		fields: "spec.nodeName=ec2-test",
-	}, {
-		name: "labels-and-fields",
-		filters: Filters{
-			Labels: []FieldFilter{
-				{
-					Key:   "k1",
-					Value: "v1",
-					Op:    selection.Equals,
+	}{
+		{
+			name:    "no-filters",
+			filters: Filters{},
+		}, {
+			name: "namespace",
+			filters: Filters{
+				Namespace: "default",
+			},
+		}, {
+			name: "node",
+			filters: Filters{
+				Node: "ec2-test",
+			},
+			fields: "spec.nodeName=ec2-test",
+		}, {
+			name: "labels-and-fields",
+			filters: Filters{
+				Labels: []FieldFilter{
+					{
+						Key:   "k1",
+						Value: "v1",
+						Op:    selection.Equals,
+					},
+					{
+						Key:   "k2",
+						Value: "v2",
+						Op:    selection.NotEquals,
+					},
 				},
-				{
-					Key:   "k2",
-					Value: "v2",
-					Op:    selection.NotEquals,
+				Fields: []FieldFilter{
+					{
+						Key:   "k1",
+						Value: "v1",
+						Op:    selection.Equals,
+					},
+					{
+						Key:   "k2",
+						Value: "v2",
+						Op:    selection.NotEquals,
+					},
 				},
 			},
-			Fields: []FieldFilter{
-				{
-					Key:   "k1",
-					Value: "v1",
-					Op:    selection.Equals,
-				},
-				{
-					Key:   "k2",
-					Value: "v2",
-					Op:    selection.NotEquals,
-				},
-			},
+			labels: "k1=v1,k2!=v2",
+			fields: "k1=v1,k2!=v2",
 		},
-		labels: "k1=v1,k2!=v2",
-		fields: "k1=v1,k2!=v2",
-	},
 	}
 
 	for _, tc := range testCases {
@@ -785,88 +792,88 @@ func TestFilters(t *testing.T) {
 			assert.Equal(t, tc.fields, inf.fieldSelector.String())
 		})
 	}
-
 }
 
 func TestPodIgnorePatterns(t *testing.T) {
 	testCases := []struct {
 		ignore bool
 		pod    api_v1.Pod
-	}{{
-		ignore: false,
-		pod:    api_v1.Pod{},
-	}, {
-		ignore: true,
-		pod: api_v1.Pod{
-			Spec: api_v1.PodSpec{
-				HostNetwork: true,
+	}{
+		{
+			ignore: false,
+			pod:    api_v1.Pod{},
+		}, {
+			ignore: true,
+			pod: api_v1.Pod{
+				Spec: api_v1.PodSpec{
+					HostNetwork: true,
+				},
 			},
-		},
-	}, {
-		ignore: true,
-		pod: api_v1.Pod{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Annotations: map[string]string{
-					"opentelemetry.io/k8s-processor/ignore": "True ",
+		}, {
+			ignore: true,
+			pod: api_v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"opentelemetry.io/k8s-processor/ignore": "True ",
+					},
+				},
+			},
+		}, {
+			ignore: true,
+			pod: api_v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"opentelemetry.io/k8s-processor/ignore": "true",
+					},
+				},
+			},
+		}, {
+			ignore: false,
+			pod: api_v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"opentelemetry.io/k8s-processor/ignore": "false",
+					},
+				},
+			},
+		}, {
+			ignore: false,
+			pod: api_v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"opentelemetry.io/k8s-processor/ignore": "",
+					},
+				},
+			},
+		}, {
+			ignore: true,
+			pod: api_v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name: "jaeger-agent",
+				},
+			},
+		}, {
+			ignore: true,
+			pod: api_v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name: "jaeger-collector",
+				},
+			},
+		}, {
+			ignore: true,
+			pod: api_v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name: "jaeger-agent-b2zdv",
+				},
+			},
+		}, {
+			ignore: false,
+			pod: api_v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name: "test-pod-name",
 				},
 			},
 		},
-	}, {
-		ignore: true,
-		pod: api_v1.Pod{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Annotations: map[string]string{
-					"opentelemetry.io/k8s-processor/ignore": "true",
-				},
-			},
-		},
-	}, {
-		ignore: false,
-		pod: api_v1.Pod{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Annotations: map[string]string{
-					"opentelemetry.io/k8s-processor/ignore": "false",
-				},
-			},
-		},
-	}, {
-		ignore: false,
-		pod: api_v1.Pod{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Annotations: map[string]string{
-					"opentelemetry.io/k8s-processor/ignore": "",
-				},
-			},
-		},
-	}, {
-		ignore: true,
-		pod: api_v1.Pod{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "jaeger-agent",
-			},
-		},
-	}, {
-		ignore: true,
-		pod: api_v1.Pod{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "jaeger-collector",
-			},
-		},
-	}, {
-		ignore: true,
-		pod: api_v1.Pod{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "jaeger-agent-b2zdv",
-			},
-		},
-	}, {
-		ignore: false,
-		pod: api_v1.Pod{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "test-pod-name",
-			},
-		},
-	},
 	}
 
 	c, _ := newTestClient(t)
@@ -963,6 +970,230 @@ func Test_selectorsFromFilters(t *testing.T) {
 				t.Errorf("selectorsFromFilters() got1 = %v, want %v", got1, tt.wantF)
 			}
 		})
+	}
+}
+
+func Test_PodIsAnnotatedWithOwnershipInfoImmediatelyAfterOwnersAreCreated(t *testing.T) {
+	const (
+		namespace = "kube-system"
+	)
+
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+	client, err := New(
+		logger,
+		k8sconfig.APIConfig{},
+		ExtractionRules{
+			ContainerID:        true,
+			ContainerImage:     true,
+			ContainerName:      true,
+			PodUID:             true,
+			PodName:            true,
+			ServiceName:        true,
+			StartTime:          true,
+			Namespace:          true,
+			NodeName:           false,
+			OwnerLookupEnabled: true,
+			Tags:               NewExtractionFieldTags(),
+		},
+		Filters{},
+		[]Association{},
+		Excludes{},
+		newFakeAPIClientset,
+		newSharedInformer,
+		newOwnerProvider,
+		"_",
+	)
+	require.NoError(t, err)
+
+	c := client.(*WatchClient)
+
+	chPods := waitForWatchToBeEstablished(c.kc.(*fake.Clientset), "pods")
+	ch := waitForWatchToBeEstablished(c.kc.(*fake.Clientset), "endpoints")
+
+	go func() {
+		c.Start()
+	}()
+	defer c.Stop()
+
+	<-chPods
+	<-ch
+
+	var (
+		// sts = &v1.StatefulSet{
+		// 	ObjectMeta: metav1.ObjectMeta{
+		// 		Name:      "my-sts",
+		// 		Namespace: "kube-system",
+		// 		UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75391",
+		// 	},
+		// 	TypeMeta: metav1.TypeMeta{
+		// 		Kind: "StatefulSet",
+		// 	},
+		// }
+		pod = &api_v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-pod",
+				Namespace: namespace,
+				UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75392",
+				// OwnerReferences: []metav1.OwnerReference{
+				// 	{
+				// 		Name: sts.Name,
+				// 		UID:  sts.UID,
+				// 		Kind: "StatefulSet",
+				// 	},
+				// },
+			},
+		}
+		endpoints1 = &api_v1.Endpoints{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-service",
+				Namespace: namespace,
+				UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75390",
+			},
+			TypeMeta: metav1.TypeMeta{
+				Kind: "Endpoint",
+			},
+			Subsets: []api_v1.EndpointSubset{
+				{
+					Addresses: []api_v1.EndpointAddress{
+						{
+							TargetRef: &api_v1.ObjectReference{
+								Name:      pod.Name,
+								Namespace: namespace,
+								Kind:      "Pod",
+								UID:       pod.UID,
+							},
+						},
+					},
+				},
+			},
+		}
+	)
+
+	_, err = c.kc.CoreV1().Pods(namespace).
+		Create(context.Background(), pod, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	var foundPod *Pod
+	if !assert.Eventually(t, func() bool {
+		var found bool
+		foundPod, found = c.GetPod(PodIdentifier("my-pod.kube-system"))
+		if !found {
+			return false
+		}
+		if foundPod == nil {
+			return false
+		}
+		pod := *foundPod
+
+		return assert.ObjectsAreEqualValues(
+			map[string]string{
+				"k8s.pod.name":       "my-pod",
+				"k8s.namespace.name": "kube-system",
+				"k8s.pod.id":         "f15f0585-a0bc-43a3-96e4-dd2eace75392",
+				// k8s.service.name is not present
+				// k8s.statefulset.name is not present
+			},
+			pod.Attributes,
+		)
+	}, 5*time.Second, 10*time.Millisecond) {
+		if assert.NotNil(t, foundPod) {
+			t.Logf("found pod's attributes %#v", foundPod.Attributes)
+		}
+	}
+
+	// NOTE: below commented test will sometimes fail due to a synchronous
+	// nature of k8s-client sync that are being use by informers (sync period is
+	// controller by watchSyncPeriod passed in to cache.NewSharedInformer)
+	// and an asynchronous nature of watch updates to "owners" (e.g. statefulsets).
+	//
+	// The problem is that given the following order of updates received via the watch:
+	// * pod created
+	// * statefulset - that is the owner of the above mentioned pod - gets created
+	//
+	// In such a setting client update's it pod cache with currently available attributes
+	// and owners whereas the ownerCache is yet to be updated with the statefulset
+	// entry. Hence the data points that are being processed until next resync
+	// will have the pod's statefulset attributes missing.
+	//
+	// This could be solved by:
+	// * created a owner to pod mapping (similarly to what is being done in ownerCache
+	//   but in reverse)
+	// * notifying client - whenever an owner gets created/update - with a pod and owner
+	//   information
+	// * client then receives that mapping and accoring to the ownership lookup config
+	//   updates the pod's attributes
+	//
+	// This would cause an additional memory overhead of k8sprocessor since an additional
+	// mapping would have to be stored (owner to pod).
+	//
+	// Until that (or something similar) gets introduced we cannot uncomment the below
+	// attached test assertions and owners tags are only attached to processed pod
+	// records when an owner is already in the cache when a pod update comes in.
+	//
+	// This has been done for services/endpoints because whenever an watch event comes
+	// in for endpoints object we already have the associated pod info (under the targetRef
+	// field) and we can update the service pod's attribute and no mapping has to be kept.
+
+	// _, err = c.kc.AppsV1().StatefulSets(namespace).
+	// 	Create(context.Background(), sts, metav1.CreateOptions{})
+	// require.NoError(t, err)
+
+	// if !assert.Eventually(t, func() bool {
+	// 	var found bool
+	// 	foundPod, found = c.GetPod(PodIdentifier("my-pod.kube-system"))
+	// 	if !found {
+	// 		return false
+	// 	}
+	// 	if foundPod == nil {
+	// 		return false
+	// 	}
+
+	// 	return assert.ObjectsAreEqualValues(
+	// 		map[string]string{
+	// 			"k8s.pod.name":       "my-pod",
+	// 			"k8s.namespace.name": "kube-system",
+	// 			"k8s.pod.id":         "f15f0585-a0bc-43a3-96e4-dd2eace75392",
+	// 			// k8s.service.name is not present
+	// 			"k8s.statefulset.name": "my-sts",
+	// 		},
+	// 		foundPod.Attributes,
+	// 	)
+	// }, 5*time.Second, 100*time.Millisecond) {
+	// 	if assert.NotNil(t, foundPod) {
+	// 		t.Logf("found pod's attributes %#v", foundPod.Attributes)
+	// 	}
+	// }
+
+	_, err = c.kc.CoreV1().Endpoints(namespace).
+		Create(context.Background(), endpoints1, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// After adding an endpoint the associated pod should get it's name as service attribute.
+	if !assert.Eventually(t, func() bool {
+		var found bool
+		foundPod, found = c.GetPod(PodIdentifier("my-pod.kube-system"))
+		if !found {
+			return false
+		}
+		if foundPod == nil {
+			return false
+		}
+
+		return assert.ObjectsAreEqualValues(
+			map[string]string{
+				"k8s.pod.name":       "my-pod",
+				"k8s.namespace.name": "kube-system",
+				"k8s.pod.id":         "f15f0585-a0bc-43a3-96e4-dd2eace75392",
+				"k8s.service.name":   "my-service",
+				// "k8s.statefulset.name": "my-sts",
+			},
+			foundPod.Attributes,
+		)
+	}, 5*time.Second, 1*time.Millisecond) {
+		if assert.NotNil(t, foundPod) {
+			t.Logf("found pod's attributes %#v", foundPod.Attributes)
+		}
 	}
 }
 

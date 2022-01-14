@@ -30,7 +30,7 @@ import (
 // Related issue: https://github.com/kubernetes/kubernetes/issues/95372
 func waitForWatchToBeEstablished(client *fake.Clientset, resource string) <-chan struct{} {
 	ch := make(chan struct{})
-	client.PrependWatchReactor("*", func(action clienttesting.Action) (handled bool, ret watch.Interface, err error) {
+	client.PrependWatchReactor(resource, func(action clienttesting.Action) (handled bool, ret watch.Interface, err error) {
 		gvr := action.GetResource()
 		ns := action.GetNamespace()
 
@@ -39,7 +39,7 @@ func waitForWatchToBeEstablished(client *fake.Clientset, resource string) <-chan
 			return false, nil, err
 		}
 
-		if action.GetVerb() == "watch" && gvr.String() == resource {
+		if action.GetVerb() == "watch" {
 			close(ch)
 		}
 		return true, watch, nil
@@ -58,7 +58,7 @@ func Test_OwnerProvider_GetOwners(t *testing.T) {
 	require.NoError(t, err)
 
 	client := c.(*fake.Clientset)
-	ch := waitForWatchToBeEstablished(client, "apps/v1, Resource=statefulsets")
+	ch := waitForWatchToBeEstablished(client, "statefulsets")
 
 	op.Start()
 	t.Cleanup(func() {
@@ -133,7 +133,7 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 	require.NoError(t, err)
 
 	client := c.(*fake.Clientset)
-	ch := waitForWatchToBeEstablished(client, "/v1, Resource=endpoints")
+	ch := waitForWatchToBeEstablished(client, "endpoints")
 
 	op.Start()
 	t.Cleanup(func() {
@@ -214,7 +214,7 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Eventually(t, func() bool {
-			services := op.GetServices(pod)
+			services := op.GetServices(pod.Name)
 			if len(services) != 2 {
 				t.Logf("services: %v", services)
 				return false
@@ -229,7 +229,7 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 			Delete(context.Background(), endpoints1.Name, metav1.DeleteOptions{})
 		require.NoError(t, err)
 		assert.Eventually(t, func() bool {
-			services := op.GetServices(pod)
+			services := op.GetServices(pod.Name)
 			if len(services) != 1 {
 				t.Logf("services: %v", services)
 				return false
@@ -243,7 +243,7 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Eventually(t, func() bool {
-			services := op.GetServices(pod)
+			services := op.GetServices(pod.Name)
 			if len(services) != 0 {
 				t.Logf("services: %v", services)
 				return false
