@@ -59,7 +59,7 @@ func (kp *kubernetesprocessor) initKubeClient(logger *zap.Logger, kubeClient kub
 			nil,
 			nil,
 			kp.delimiter,
-			30 * time.Second,
+			30*time.Second,
 			kube.DefaultPodDeleteGracePeriod,
 		)
 		if err != nil {
@@ -116,7 +116,6 @@ func (kp *kubernetesprocessor) ProcessLogs(ctx context.Context, ld pdata.Logs) (
 
 // processResource adds Pod metadata tags to resource based on pod association configuration
 func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pdata.Resource) {
-
 	podIdentifierKey, podIdentifierValue := extractPodID(ctx, resource.Attributes(), kp.podAssociations)
 	if podIdentifierValue == "" {
 		return

@@ -88,12 +88,38 @@ func podAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj interfac
 }
 
 func TestDefaultClientset(t *testing.T) {
-	c, err := New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, nil, nil, nil, "", 30*time.Second, DefaultPodDeleteGracePeriod)
+	c, err := New(
+		zap.NewNop(),
+		k8sconfig.APIConfig{},
+		ExtractionRules{},
+		Filters{},
+		[]Association{},
+		Excludes{},
+		nil,
+		nil,
+		nil,
+		"",
+		30*time.Second,
+		DefaultPodDeleteGracePeriod,
+	)
 	assert.Error(t, err)
 	assert.Equal(t, "invalid authType for kubernetes: ", err.Error())
 	assert.Nil(t, c)
 
-	c, err = New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, newFakeAPIClientset, nil, nil, "", 30*time.Second, DefaultPodDeleteGracePeriod)
+	c, err = New(
+		zap.NewNop(),
+		k8sconfig.APIConfig{},
+		ExtractionRules{},
+		Filters{},
+		[]Association{},
+		Excludes{},
+		newFakeAPIClientset,
+		nil,
+		nil,
+		"",
+		30*time.Second,
+		DefaultPodDeleteGracePeriod,
+	)
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
 }
@@ -147,7 +173,20 @@ func TestConstructorErrors(t *testing.T) {
 			gotAPIConfig = c
 			return nil, fmt.Errorf("error creating k8s client")
 		}
-		c, err := New(zap.NewNop(), apiCfg, er, ff, []Association{}, Excludes{}, clientProvider, NewFakeInformer, newFakeOwnerProvider, "", 30*time.Second, DefaultPodDeleteGracePeriod)
+		c, err := New(
+			zap.NewNop(),
+			apiCfg,
+			er,
+			ff,
+			[]Association{},
+			Excludes{},
+			clientProvider,
+			NewFakeInformer,
+			newFakeOwnerProvider,
+			"",
+			30*time.Second,
+			DefaultPodDeleteGracePeriod,
+		)
 		assert.Nil(t, c)
 		assert.Error(t, err)
 		assert.Equal(t, err.Error(), "error creating k8s client")
@@ -652,19 +691,21 @@ func TestExtractionRules(t *testing.T) {
 		{
 			name: "labels",
 			rules: ExtractionRules{
-				Annotations: []FieldExtractionRule{{
-					Name: "a1",
-					Key:  "annotation1",
+				Annotations: []FieldExtractionRule{
+					{
+						Name: "a1",
+						Key:  "annotation1",
+					},
 				},
-				},
-				Labels: []FieldExtractionRule{{
-					Name: "l1",
-					Key:  "label1",
-				}, {
-					Name:  "l2",
-					Key:   "label2",
-					Regex: regexp.MustCompile(`k5=(?P<value>[^\s]+)`),
-				},
+				Labels: []FieldExtractionRule{
+					{
+						Name: "l1",
+						Key:  "label1",
+					}, {
+						Name:  "l2",
+						Key:   "label2",
+						Regex: regexp.MustCompile(`k5=(?P<value>[^\s]+)`),
+					},
 				},
 			},
 			attributes: map[string]string{
@@ -678,20 +719,23 @@ func TestExtractionRules(t *testing.T) {
 			rules: ExtractionRules{
 				OwnerLookupEnabled: true,
 				Tags:               NewExtractionFieldTags(),
-				Annotations: []FieldExtractionRule{{
-					Name: "k8s.pod.annotation.%s",
-					Key:  "*",
+				Annotations: []FieldExtractionRule{
+					{
+						Name: "k8s.pod.annotation.%s",
+						Key:  "*",
+					},
 				},
+				Labels: []FieldExtractionRule{
+					{
+						Name: "k8s.pod.label.%s",
+						Key:  "*",
+					},
 				},
-				Labels: []FieldExtractionRule{{
-					Name: "k8s.pod.label.%s",
-					Key:  "*",
-				},
-				},
-				NamespaceLabels: []FieldExtractionRule{{
-					Name: "namespace_labels_%s",
-					Key:  "*",
-				},
+				NamespaceLabels: []FieldExtractionRule{
+					{
+						Name: "namespace_labels_%s",
+						Key:  "*",
+					},
 				},
 			},
 			attributes: map[string]string{
@@ -732,51 +776,52 @@ func TestFilters(t *testing.T) {
 		filters Filters
 		labels  string
 		fields  string
-	}{{
-		name:    "no-filters",
-		filters: Filters{},
-	}, {
-		name: "namespace",
-		filters: Filters{
-			Namespace: "default",
-		},
-	}, {
-		name: "node",
-		filters: Filters{
-			Node: "ec2-test",
-		},
-		fields: "spec.nodeName=ec2-test",
-	}, {
-		name: "labels-and-fields",
-		filters: Filters{
-			Labels: []FieldFilter{
-				{
-					Key:   "k1",
-					Value: "v1",
-					Op:    selection.Equals,
+	}{
+		{
+			name:    "no-filters",
+			filters: Filters{},
+		}, {
+			name: "namespace",
+			filters: Filters{
+				Namespace: "default",
+			},
+		}, {
+			name: "node",
+			filters: Filters{
+				Node: "ec2-test",
+			},
+			fields: "spec.nodeName=ec2-test",
+		}, {
+			name: "labels-and-fields",
+			filters: Filters{
+				Labels: []FieldFilter{
+					{
+						Key:   "k1",
+						Value: "v1",
+						Op:    selection.Equals,
+					},
+					{
+						Key:   "k2",
+						Value: "v2",
+						Op:    selection.NotEquals,
+					},
 				},
-				{
-					Key:   "k2",
-					Value: "v2",
-					Op:    selection.NotEquals,
+				Fields: []FieldFilter{
+					{
+						Key:   "k1",
+						Value: "v1",
+						Op:    selection.Equals,
+					},
+					{
+						Key:   "k2",
+						Value: "v2",
+						Op:    selection.NotEquals,
+					},
 				},
 			},
-			Fields: []FieldFilter{
-				{
-					Key:   "k1",
-					Value: "v1",
-					Op:    selection.Equals,
-				},
-				{
-					Key:   "k2",
-					Value: "v2",
-					Op:    selection.NotEquals,
-				},
-			},
+			labels: "k1=v1,k2!=v2",
+			fields: "k1=v1,k2!=v2",
 		},
-		labels: "k1=v1,k2!=v2",
-		fields: "k1=v1,k2!=v2",
-	},
 	}
 
 	for _, tc := range testCases {
@@ -788,88 +833,88 @@ func TestFilters(t *testing.T) {
 			assert.Equal(t, tc.fields, inf.fieldSelector.String())
 		})
 	}
-
 }
 
 func TestPodIgnorePatterns(t *testing.T) {
 	testCases := []struct {
 		ignore bool
 		pod    api_v1.Pod
-	}{{
-		ignore: false,
-		pod:    api_v1.Pod{},
-	}, {
-		ignore: true,
-		pod: api_v1.Pod{
-			Spec: api_v1.PodSpec{
-				HostNetwork: true,
+	}{
+		{
+			ignore: false,
+			pod:    api_v1.Pod{},
+		}, {
+			ignore: true,
+			pod: api_v1.Pod{
+				Spec: api_v1.PodSpec{
+					HostNetwork: true,
+				},
 			},
-		},
-	}, {
-		ignore: true,
-		pod: api_v1.Pod{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Annotations: map[string]string{
-					"opentelemetry.io/k8s-processor/ignore": "True ",
+		}, {
+			ignore: true,
+			pod: api_v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"opentelemetry.io/k8s-processor/ignore": "True ",
+					},
+				},
+			},
+		}, {
+			ignore: true,
+			pod: api_v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"opentelemetry.io/k8s-processor/ignore": "true",
+					},
+				},
+			},
+		}, {
+			ignore: false,
+			pod: api_v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"opentelemetry.io/k8s-processor/ignore": "false",
+					},
+				},
+			},
+		}, {
+			ignore: false,
+			pod: api_v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"opentelemetry.io/k8s-processor/ignore": "",
+					},
+				},
+			},
+		}, {
+			ignore: true,
+			pod: api_v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name: "jaeger-agent",
+				},
+			},
+		}, {
+			ignore: true,
+			pod: api_v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name: "jaeger-collector",
+				},
+			},
+		}, {
+			ignore: true,
+			pod: api_v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name: "jaeger-agent-b2zdv",
+				},
+			},
+		}, {
+			ignore: false,
+			pod: api_v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name: "test-pod-name",
 				},
 			},
 		},
-	}, {
-		ignore: true,
-		pod: api_v1.Pod{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Annotations: map[string]string{
-					"opentelemetry.io/k8s-processor/ignore": "true",
-				},
-			},
-		},
-	}, {
-		ignore: false,
-		pod: api_v1.Pod{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Annotations: map[string]string{
-					"opentelemetry.io/k8s-processor/ignore": "false",
-				},
-			},
-		},
-	}, {
-		ignore: false,
-		pod: api_v1.Pod{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Annotations: map[string]string{
-					"opentelemetry.io/k8s-processor/ignore": "",
-				},
-			},
-		},
-	}, {
-		ignore: true,
-		pod: api_v1.Pod{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "jaeger-agent",
-			},
-		},
-	}, {
-		ignore: true,
-		pod: api_v1.Pod{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "jaeger-collector",
-			},
-		},
-	}, {
-		ignore: true,
-		pod: api_v1.Pod{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "jaeger-agent-b2zdv",
-			},
-		},
-	}, {
-		ignore: false,
-		pod: api_v1.Pod{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "test-pod-name",
-			},
-		},
-	},
 	}
 
 	c, _ := newTestClient(t)
@@ -1074,7 +1119,20 @@ func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters
 			{Name: regexp.MustCompile(`jaeger-collector`)},
 		},
 	}
-	c, err := New(logger, k8sconfig.APIConfig{}, e, f, []Association{}, exclude, newFakeAPIClientset, NewFakeInformer, newFakeOwnerProvider, "_", 30*time.Second, DefaultPodDeleteGracePeriod)
+	c, err := New(
+		logger,
+		k8sconfig.APIConfig{},
+		e,
+		f,
+		[]Association{},
+		exclude,
+		newFakeAPIClientset,
+		NewFakeInformer,
+		newFakeOwnerProvider,
+		"_",
+		30*time.Second,
+		DefaultPodDeleteGracePeriod,
+	)
 	require.NoError(t, err)
 	return c.(*WatchClient), logs
 }
