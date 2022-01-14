@@ -319,7 +319,9 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 		}
 
 		if c.Rules.ServiceName {
-			tags[c.Rules.Tags.ServiceName] = strings.Join(c.op.GetServices(pod), c.delimiter)
+			if services := c.op.GetServices(pod); len(services) > 0 {
+				tags[c.Rules.Tags.ServiceName] = strings.Join(services, c.delimiter)
+			}
 		}
 
 	}
