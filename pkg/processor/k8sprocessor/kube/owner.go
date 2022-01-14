@@ -51,9 +51,10 @@ type ObjectOwner struct {
 
 // OwnerAPI describes functions that could allow retrieving owner info
 type OwnerAPI interface {
-	GetOwners(pod *api_v1.Pod) []*ObjectOwner
+	GetOwners(or OwnerReferencer) []*ObjectOwner
 	GetNamespace(pod *api_v1.Pod) *api_v1.Namespace
-	GetServices(pod *api_v1.Pod) []string
+	GetServices(podName string) []string
+	GetPodUpdateChan() <-chan *Pod
 	Start()
 	Stop()
 }
@@ -71,12 +72,15 @@ type OwnerCache struct {
 
 	logger *zap.Logger
 
+	chPodUpdate chan *Pod
+
 	stopCh    chan struct{}
 	informers []cache.SharedIndexInformer
 }
 
 func newOwnerCache(logger *zap.Logger) OwnerCache {
 	return OwnerCache{
+		chPodUpdate:  make(chan *Pod, 8),
 		objectOwners: map[string]*ObjectOwner{},
 		podServices:  map[string][]string{},
 		namespaces:   map[string]*api_v1.Namespace{},
@@ -116,6 +120,9 @@ func newOwnerProvider(
 
 	ownerCache.addNamespaceInformer(factory)
 
+	// TODO: Below informers can be made optional based on the configuration.
+	// i.e. there's no need for cronjob's informer when user didn't configure
+	// CronJobName extraction rule in the config.
 	ownerCache.addOwnerInformer("ReplicaSet",
 		factory.Apps().V1().ReplicaSets().Informer(),
 		ownerCache.cacheObject,
@@ -147,6 +154,10 @@ func newOwnerProvider(
 		ownerCache.deleteObject)
 
 	return &ownerCache, nil
+}
+
+func (op *OwnerCache) GetPodUpdateChan() <-chan *Pod {
+	return op.chPodUpdate
 }
 
 func (op *OwnerCache) upsertNamespace(obj interface{}) {
@@ -231,20 +242,30 @@ func (op *OwnerCache) cacheObject(kind string, obj interface{}) {
 	op.ownersMutex.Unlock()
 }
 
-func (op *OwnerCache) addEndpointToPod(pod string, endpoint string) {
-	op.podServicesMutex.Lock()
-	defer op.podServicesMutex.Unlock()
+func (op *OwnerCache) addEndpointToPod(targetRef *api_v1.ObjectReference, endpoint string) {
+	pod := targetRef.Name
+	namespace := targetRef.Namespace
 
+	op.podServicesMutex.Lock()
 	services, ok := op.podServices[pod]
 	if !ok {
 		// If there's no services/endpoints for a given pod then just update the cache
 		// with the provided enpoint.
 		op.podServices[pod] = []string{endpoint}
+		op.podServicesMutex.Unlock()
+		// Notify client about the change so that service can be immediately
+		// attached to pod
+		op.chPodUpdate <- &Pod{
+			Name:      pod,
+			Namespace: namespace,
+			PodUID:    string(targetRef.UID),
+		}
 		return
 	}
 
 	for _, it := range services {
 		if it == endpoint {
+			op.podServicesMutex.Unlock()
 			return
 		}
 	}
@@ -252,9 +273,20 @@ func (op *OwnerCache) addEndpointToPod(pod string, endpoint string) {
 	services = append(services, endpoint)
 	sort.Strings(services)
 	op.podServices[pod] = services
+	op.podServicesMutex.Unlock()
+
+	// Notify client about the change so that service can be immediately
+	// attached to pod
+	op.chPodUpdate <- &Pod{
+		Name:      pod,
+		Namespace: namespace,
+		PodUID:    string(targetRef.UID),
+	}
 }
 
-func (op *OwnerCache) deleteEndpointFromPod(pod string, endpoint string) {
+func (op *OwnerCache) deleteEndpointFromPod(targetRef *api_v1.ObjectReference, endpoint string) {
+	pod := targetRef.Name
+
 	op.podServicesMutex.Lock()
 	defer op.podServicesMutex.Unlock()
 
@@ -290,18 +322,20 @@ func (op *OwnerCache) deleteEndpointFromPod(pod string, endpoint string) {
 	}
 }
 
-func (op *OwnerCache) genericEndpointOp(obj interface{}, endpointFunc func(pod string, endpoint string)) {
+func (op *OwnerCache) genericEndpointOp(obj interface{},
+	endpointFunc func(targetRef *api_v1.ObjectReference, endpoint string),
+) {
 	ep := obj.(*api_v1.Endpoints)
 
 	for _, it := range ep.Subsets {
 		for _, addr := range it.Addresses {
 			if addr.TargetRef != nil && addr.TargetRef.Kind == "Pod" {
-				endpointFunc(addr.TargetRef.Name, ep.Name)
+				endpointFunc(addr.TargetRef, ep.Name)
 			}
 		}
 		for _, addr := range it.NotReadyAddresses {
 			if addr.TargetRef != nil && addr.TargetRef.Kind == "Pod" {
-				endpointFunc(addr.TargetRef.Name, ep.Name)
+				endpointFunc(addr.TargetRef, ep.Name)
 			}
 		}
 	}
@@ -328,9 +362,9 @@ func (op *OwnerCache) GetNamespace(pod *api_v1.Pod) *api_v1.Namespace {
 }
 
 // GetServices returns a slice with matched services - in case no services are found, it returns an empty slice
-func (op *OwnerCache) GetServices(pod *api_v1.Pod) []string {
+func (op *OwnerCache) GetServices(podName string) []string {
 	op.podServicesMutex.RLock()
-	oo, found := op.podServices[pod.Name]
+	oo, found := op.podServices[podName]
 	op.podServicesMutex.RUnlock()
 
 	if found {
@@ -339,14 +373,18 @@ func (op *OwnerCache) GetServices(pod *api_v1.Pod) []string {
 	return []string{}
 }
 
+type OwnerReferencer interface {
+	GetOwnerReferences() []meta_v1.OwnerReference
+}
+
 // GetOwners goes through the cached data and assigns relevant metadata for pod
-func (op *OwnerCache) GetOwners(pod *api_v1.Pod) []*ObjectOwner {
+func (op *OwnerCache) GetOwners(or OwnerReferencer) []*ObjectOwner {
 	objectOwners := []*ObjectOwner{}
 
 	visited := map[types.UID]bool{}
 	queue := []types.UID{}
 
-	for _, or := range pod.OwnerReferences {
+	for _, or := range or.GetOwnerReferences() {
 		if _, uidVisited := visited[or.UID]; !uidVisited {
 			queue = append(queue, or.UID)
 			visited[or.UID] = true

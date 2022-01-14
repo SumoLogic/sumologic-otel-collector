@@ -66,13 +66,14 @@ func New(
 	newOwnerProviderFunc OwnerProvider,
 	delimiter string,
 ) (Client, error) {
+	stopCh := make(chan struct{})
 	c := &WatchClient{
 		logger:       logger,
 		Rules:        rules,
 		Filters:      filters,
 		Associations: associations,
 		Exclude:      exclude,
-		stopCh:       make(chan struct{}),
+		stopCh:       stopCh,
 		delimiter:    delimiter,
 		Pods:         map[PodIdentifier]*Pod{},
 	}
@@ -102,6 +103,7 @@ func New(
 		if err != nil {
 			return nil, err
 		}
+		go c.OwnerFeedbackLoop(stopCh)
 	}
 
 	logger.Info(
@@ -115,6 +117,51 @@ func New(
 
 	c.informer = newInformer(c.kc, c.Filters.Namespace, labelSelector, fieldSelector)
 	return c, err
+}
+
+// OwnerFeedbackLoop starts a loop that will receive notifications about updates
+// to endpoints objects which are then used to update corresponding pods with
+// ownership info.
+// For info it only updates the services attribute. See
+// Test_PodIsAnnotatedWithOwnershipInfoImmediatelyAfterOwnersAreCreated test in
+// client_test.go for details.
+func (c *WatchClient) OwnerFeedbackLoop(stopCh <-chan struct{}) {
+	ch := c.op.GetPodUpdateChan()
+	for {
+		select {
+		case <-stopCh:
+			return
+
+		case pod, ok := <-ch:
+			if !ok {
+				return
+			}
+
+			p, ok := c.GetPod(generatePodID(pod))
+			if !ok {
+				continue
+			}
+
+			if c.Rules.OwnerLookupEnabled {
+				if c.Rules.ServiceName {
+					services := c.op.GetServices(pod.Name)
+					if len(services) > 0 {
+						c.m.Lock()
+						// TODO: this cannot be done this way because Attributes are
+						// being accessed elsewhere e.g.
+						// * in kubernetesprocessor.getAttributesForPod()
+						// * in tests when assertions on attributes are being made.
+						//
+						// which create data race situations.
+						p.Attributes[c.Rules.Tags.ServiceName] =
+							strings.Join(services, c.delimiter)
+						c.Pods[PodIdentifier(pod.Name)] = p
+						c.m.Unlock()
+					}
+				}
+			}
+		}
+	}
 }
 
 // Start registers pod event handlers and starts watching the kubernetes cluster for pod changes.
@@ -319,7 +366,10 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 		}
 
 		if c.Rules.ServiceName {
-			tags[c.Rules.Tags.ServiceName] = strings.Join(c.op.GetServices(pod), c.delimiter)
+			services := c.op.GetServices(pod.Name)
+			if len(services) > 0 {
+				tags[c.Rules.Tags.ServiceName] = strings.Join(services, c.delimiter)
+			}
 		}
 
 	}
@@ -427,8 +477,12 @@ func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
 	}
 	// Use pod_name.namespace_name identifier
 	if newPod.Name != "" && newPod.Namespace != "" {
-		c.Pods[PodIdentifier(fmt.Sprintf("%s.%s", newPod.Name, newPod.Namespace))] = newPod
+		c.Pods[generatePodID(newPod)] = newPod
 	}
+}
+
+func generatePodID(pod *Pod) PodIdentifier {
+	return PodIdentifier(fmt.Sprintf("%s.%s", pod.Name, pod.Namespace))
 }
 
 func (c *WatchClient) forgetPod(pod *api_v1.Pod) {

@@ -59,7 +59,6 @@ func informerListFuncWithSelectors(client kubernetes.Interface, namespace string
 		opts.FieldSelector = fs.String()
 		return client.CoreV1().Pods(namespace).List(context.Background(), opts)
 	}
-
 }
 
 func informerWatchFuncWithSelectors(client kubernetes.Interface, namespace string, ls labels.Selector, fs fields.Selector) cache.WatchFunc {

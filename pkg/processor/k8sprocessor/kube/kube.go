@@ -89,8 +89,6 @@ type Pod struct {
 	Attributes map[string]string
 	StartTime  *metav1.Time
 	Ignore     bool
-
-	DeletedAt time.Time
 }
 
 type deleteRequest struct {
