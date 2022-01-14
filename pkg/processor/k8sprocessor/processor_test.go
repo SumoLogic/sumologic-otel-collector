@@ -235,6 +235,8 @@ func TestProcessorBadClientProvider(t *testing.T) {
 		_ kube.InformerProvider,
 		_ kube.OwnerProvider,
 		_ string,
+		_ time.Duration,
+		_ time.Duration,
 	) (kube.Client, error) {
 		return nil, fmt.Errorf("bad client error")
 	}
@@ -856,7 +858,6 @@ func TestMetricsProcessorHostname(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestMetricsProcessorHostnameWithPodAssociation(t *testing.T) {
@@ -932,7 +933,6 @@ func TestMetricsProcessorHostnameWithPodAssociation(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestPassthroughStart(t *testing.T) {

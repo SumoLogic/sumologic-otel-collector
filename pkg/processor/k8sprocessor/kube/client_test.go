@@ -15,6 +15,7 @@
 package kube
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -28,6 +29,7 @@ import (
 	"go.uber.org/zap/zaptest/observer"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -83,16 +85,15 @@ func podAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj interfac
 	assert.Equal(t, got.Address, "2.2.2.2")
 	assert.Equal(t, got.Name, "podC")
 	assert.Equal(t, got.PodUID, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
-
 }
 
 func TestDefaultClientset(t *testing.T) {
-	c, err := New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, nil, nil, nil, "")
+	c, err := New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, nil, nil, nil, "", 30*time.Second, DefaultPodDeleteGracePeriod)
 	assert.Error(t, err)
 	assert.Equal(t, "invalid authType for kubernetes: ", err.Error())
 	assert.Nil(t, c)
 
-	c, err = New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, newFakeAPIClientset, nil, nil, "")
+	c, err = New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, newFakeAPIClientset, nil, nil, "", 30*time.Second, DefaultPodDeleteGracePeriod)
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
 }
@@ -109,6 +110,8 @@ func TestBadFilters(t *testing.T) {
 		NewFakeInformer,
 		newFakeOwnerProvider,
 		"",
+		30*time.Second,
+		DefaultPodDeleteGracePeriod,
 	)
 	assert.Error(t, err)
 	assert.Nil(t, c)
@@ -144,7 +147,7 @@ func TestConstructorErrors(t *testing.T) {
 			gotAPIConfig = c
 			return nil, fmt.Errorf("error creating k8s client")
 		}
-		c, err := New(zap.NewNop(), apiCfg, er, ff, []Association{}, Excludes{}, clientProvider, NewFakeInformer, newFakeOwnerProvider, "")
+		c, err := New(zap.NewNop(), apiCfg, er, ff, []Association{}, Excludes{}, clientProvider, NewFakeInformer, newFakeOwnerProvider, "", 30*time.Second, DefaultPodDeleteGracePeriod)
 		assert.Nil(t, c)
 		assert.Error(t, err)
 		assert.Equal(t, err.Error(), "error creating k8s client")
@@ -966,6 +969,102 @@ func Test_selectorsFromFilters(t *testing.T) {
 	}
 }
 
+func Test_PodsGetAddedAndDeletedFromCache(t *testing.T) {
+	const (
+		namespace = "kube-system"
+	)
+
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+	client, err := New(
+		logger,
+		k8sconfig.APIConfig{},
+		ExtractionRules{
+			ContainerID:        true,
+			ContainerImage:     true,
+			ContainerName:      true,
+			PodUID:             true,
+			PodName:            true,
+			StartTime:          true,
+			Namespace:          true,
+			NodeName:           false,
+			OwnerLookupEnabled: true,
+			Tags:               NewExtractionFieldTags(),
+		},
+		Filters{},
+		[]Association{},
+		Excludes{},
+		newFakeAPIClientset,
+		newSharedInformer,
+		newOwnerProvider,
+		"_",
+		10*time.Millisecond,
+		10*time.Millisecond,
+	)
+	require.NoError(t, err)
+
+	c := client.(*WatchClient)
+
+	ch := waitForWatchToBeEstablished(c.kc.(*fake.Clientset), "pods")
+	go func() {
+		c.Start()
+	}()
+	defer c.Stop()
+	<-ch
+
+	eventuallyNPodsInCache := func(t *testing.T, n int) {
+		assert.Eventually(t, func() bool {
+			c.m.RLock()
+			l := len(c.Pods)
+			c.m.RUnlock()
+			return l == n
+		}, 5*time.Second, 10*time.Millisecond)
+	}
+
+	t.Run("pod with IP", func(t *testing.T) {
+		pod := &api_v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-pod",
+				Namespace: namespace,
+				UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75392",
+			},
+			Status: api_v1.PodStatus{
+				PodIP: "10.0.0.1",
+			},
+		}
+
+		_, err = c.kc.CoreV1().Pods(namespace).
+			Create(context.Background(), pod, metav1.CreateOptions{})
+		require.NoError(t, err)
+		eventuallyNPodsInCache(t, 3)
+
+		err = c.kc.CoreV1().Pods(namespace).
+			Delete(context.Background(), pod.Name, metav1.DeleteOptions{})
+		require.NoError(t, err)
+		eventuallyNPodsInCache(t, 0)
+	})
+
+	t.Run("pod without an IP", func(t *testing.T) {
+		pod := &api_v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-pod",
+				Namespace: namespace,
+				UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75392",
+			},
+		}
+
+		_, err = c.kc.CoreV1().Pods(namespace).
+			Create(context.Background(), pod, metav1.CreateOptions{})
+		require.NoError(t, err)
+		eventuallyNPodsInCache(t, 2)
+
+		err = c.kc.CoreV1().Pods(namespace).
+			Delete(context.Background(), pod.Name, metav1.DeleteOptions{})
+		require.NoError(t, err)
+		eventuallyNPodsInCache(t, 0)
+	})
+}
+
 func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters) (*WatchClient, *observer.ObservedLogs) {
 	observedLogger, logs := observer.New(zapcore.WarnLevel)
 	logger := zap.New(observedLogger)
@@ -975,7 +1074,7 @@ func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters
 			{Name: regexp.MustCompile(`jaeger-collector`)},
 		},
 	}
-	c, err := New(logger, k8sconfig.APIConfig{}, e, f, []Association{}, exclude, newFakeAPIClientset, NewFakeInformer, newFakeOwnerProvider, "_")
+	c, err := New(logger, k8sconfig.APIConfig{}, e, f, []Association{}, exclude, newFakeAPIClientset, NewFakeInformer, newFakeOwnerProvider, "_", 30*time.Second, DefaultPodDeleteGracePeriod)
 	require.NoError(t, err)
 	return c.(*WatchClient), logs
 }

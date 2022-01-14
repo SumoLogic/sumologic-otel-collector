@@ -50,8 +50,8 @@ const (
 // PodIdentifier is a custom type to represent IP Address or Pod UID
 type PodIdentifier string
 
-var (
-	defaultPodDeleteGracePeriod = time.Second * 120
+const (
+	DefaultPodDeleteGracePeriod = time.Second * 120
 	watchSyncPeriod             = time.Minute * 5
 )
 
@@ -74,6 +74,8 @@ type ClientProvider func(
 	InformerProvider,
 	OwnerProvider,
 	string,
+	time.Duration,
+	time.Duration,
 ) (Client, error)
 
 // APIClientsetProvider defines a func type that initializes and return a new kubernetes
@@ -89,6 +91,14 @@ type Pod struct {
 	Address    string
 	PodUID     string
 	Ignore     bool
+}
+
+func (p Pod) GetName() string {
+	return p.Name
+}
+
+func (p Pod) GetNamespace() string {
+	return p.Namespace
 }
 
 type deleteRequest struct {
