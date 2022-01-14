@@ -82,23 +82,21 @@ type APIClientsetProvider func(config k8sconfig.APIConfig) (kubernetes.Interface
 
 // Pod represents a kubernetes pod.
 type Pod struct {
+	Attributes map[string]string
+	StartTime  *metav1.Time
 	Name       string
 	Namespace  string
 	Address    string
 	PodUID     string
-	Attributes map[string]string
-	StartTime  *metav1.Time
 	Ignore     bool
-
-	DeletedAt time.Time
 }
 
 type deleteRequest struct {
+	ts time.Time
 	// id is identifier (IP address or Pod UID) of pod to remove from pods map
 	id PodIdentifier
 	// name contains name of pod to remove from pods map
 	podName string
-	ts      time.Time
 }
 
 // Filters is used to instruct the client on how to filter out k8s pods.
@@ -202,13 +200,13 @@ func NewExtractionFieldTags() ExtractionFieldTags {
 // FieldExtractionRule is used to specify which fields to extract from pod fields
 // and inject into spans as attributes.
 type FieldExtractionRule struct {
+	// Regex is a regular expression used to extract a sub-part of a field value.
+	// Full value is extracted when no regexp is provided.
+	Regex *regexp.Regexp
 	// Name is used to as the Span tag name.
 	Name string
 	// Key is used to lookup k8s pod fields.
 	Key string
-	// Regex is a regular expression used to extract a sub-part of a field value.
-	// Full value is extracted when no regexp is provided.
-	Regex *regexp.Regexp
 }
 
 // Associations represent a list of rules for Pod metadata associations with resources

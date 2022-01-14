@@ -43,10 +43,10 @@ type OwnerProvider func(
 // ObjectOwner keeps single entry
 type ObjectOwner struct {
 	UID       types.UID
-	ownerUIDs []types.UID
 	namespace string
 	kind      string
 	name      string
+	ownerUIDs []types.UID
 }
 
 // OwnerAPI describes functions that could allow retrieving owner info
