@@ -1,4 +1,4 @@
-// Copyright 2020 OpenTelemetry Authors
+// Copyright 2020 Sumo Logic Inc
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,14 +17,9 @@ package kube
 import (
 	"fmt"
 	"strings"
-	"sync"
-	"time"
 
 	"go.uber.org/zap"
 	api_v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 
@@ -32,29 +27,51 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/observability"
 )
 
-// WatchClient is the main interface provided by this package to a kubernetes cluster.
-type WatchClient struct {
-	m           sync.RWMutex
-	deleteMut   sync.Mutex
-	logger      *zap.Logger
-	kc          kubernetes.Interface
-	informer    cache.SharedInformer
-	deleteQueue []deleteRequest
-	stopCh      chan struct{}
-	op          OwnerAPI
-	delimiter   string
+type InformerClient struct {
+	logger    *zap.Logger
+	kc        kubernetes.Interface
+	informer  cache.SharedIndexInformer
+	stopCh    chan struct{}
+	op        OwnerAPI
+	delimiter string
 
-	// A map containing Pod related data, used to associate them with resources.
-	// Key can be either an IP address or Pod UID
-	Pods         map[PodIdentifier]*Pod
 	Rules        ExtractionRules
 	Filters      Filters
 	Associations []Association
 	Exclude      Excludes
 }
 
+const PodIPIndexName = "ip"
+const PodUIDIndexName = "uid"
+
+func podIPIndexFunc(obj interface{}) ([]string, error) {
+	if pod, ok := obj.(*api_v1.Pod); ok {
+		if pod.Status.PodIP != "" {
+			return []string{pod.Status.PodIP}, nil
+		} else {
+			return []string{}, nil
+		}
+	} else {
+		return []string{}, fmt.Errorf("invalid argument %v, must be core.v1.Pod", obj)
+	}
+
+}
+
+func podUIDIndexFunc(obj interface{}) ([]string, error) {
+	if pod, ok := obj.(*api_v1.Pod); ok {
+		if pod.ObjectMeta.UID != "" {
+			return []string{string(pod.ObjectMeta.UID)}, nil
+		} else {
+			return []string{}, nil
+		}
+	} else {
+		return []string{}, fmt.Errorf("invalid argument %v, must be core.v1.Pod", obj)
+	}
+
+}
+
 // New initializes a new k8s Client.
-func New(
+func NewInformerClient(
 	logger *zap.Logger,
 	apiCfg k8sconfig.APIConfig,
 	rules ExtractionRules,
@@ -62,13 +79,11 @@ func New(
 	associations []Association,
 	exclude Excludes,
 	newClientSet APIClientsetProvider,
-	newInformer InformerProvider,
+	newInformer IndexInformerProvider,
 	newOwnerProviderFunc OwnerProvider,
 	delimiter string,
-	deleteInterval time.Duration,
-	gracePeriod time.Duration,
-) (Client, error) {
-	c := &WatchClient{
+) (*InformerClient, error) {
+	c := &InformerClient{
 		logger:       logger,
 		Rules:        rules,
 		Filters:      filters,
@@ -76,9 +91,7 @@ func New(
 		Exclude:      exclude,
 		stopCh:       make(chan struct{}),
 		delimiter:    delimiter,
-		Pods:         map[PodIdentifier]*Pod{},
 	}
-	go c.deleteLoop(deleteInterval, gracePeriod)
 
 	if newClientSet == nil {
 		newClientSet = k8sconfig.MakeClient
@@ -112,7 +125,7 @@ func New(
 		zap.String("fieldSelector", fieldSelector.String()),
 	)
 	if newInformer == nil {
-		newInformer = newSharedInformer
+		newInformer = NewIndexedPodInformer
 	}
 
 	c.informer = newInformer(c.kc, c.Filters.Namespace, labelSelector, fieldSelector)
@@ -120,7 +133,7 @@ func New(
 }
 
 // Start registers pod event handlers and starts watching the kubernetes cluster for pod changes.
-func (c *WatchClient) Start() {
+func (c *InformerClient) Start() {
 	if c.op != nil {
 		c.op.Start()
 	}
@@ -134,7 +147,7 @@ func (c *WatchClient) Start() {
 }
 
 // Stop signals the the k8s watcher/informer to stop watching for new events.
-func (c *WatchClient) Stop() {
+func (c *InformerClient) Stop() {
 	close(c.stopCh)
 
 	if c.op != nil {
@@ -142,105 +155,84 @@ func (c *WatchClient) Stop() {
 	}
 }
 
-func (c *WatchClient) handlePodAdd(obj interface{}) {
+func (c *InformerClient) handlePodAdd(obj interface{}) {
 	observability.RecordPodAdded()
-	if pod, ok := obj.(*api_v1.Pod); ok {
-		c.addOrUpdatePod(pod)
-	} else {
-		c.logger.Error("object received was not of type api_v1.Pod", zap.Any("received", obj))
-	}
-	c.m.RLock()
-	podTableSize := len(c.Pods)
-	c.m.RUnlock()
-	observability.RecordPodTableSize(int64(podTableSize))
 }
 
-func (c *WatchClient) handlePodUpdate(old, new interface{}) {
+func (c *InformerClient) handlePodUpdate(old, new interface{}) {
 	observability.RecordPodUpdated()
-	if pod, ok := new.(*api_v1.Pod); ok {
-		// TODO: update or remove based on whether container is ready/unready?.
-		c.addOrUpdatePod(pod)
-	} else {
-		c.logger.Error("object received was not of type api_v1.Pod", zap.Any("received", new))
-	}
-	c.m.RLock()
-	podTableSize := len(c.Pods)
-	c.m.RUnlock()
-	observability.RecordPodTableSize(int64(podTableSize))
 }
 
-func (c *WatchClient) handlePodDelete(obj interface{}) {
+func (c *InformerClient) handlePodDelete(obj interface{}) {
 	observability.RecordPodDeleted()
-	if pod, ok := obj.(*api_v1.Pod); ok {
-		c.forgetPod(pod)
-	} else {
-		c.logger.Error("object received was not of type api_v1.Pod", zap.Any("received", obj))
-	}
-	c.m.RLock()
-	podTableSize := len(c.Pods)
-	c.m.RUnlock()
-	observability.RecordPodTableSize(int64(podTableSize))
 }
 
-func (c *WatchClient) deleteLoop(interval time.Duration, gracePeriod time.Duration) {
-	// This loop runs after N seconds and deletes pods from cache.
-	// It iterates over the delete queue and deletes all that aren't
-	// in the grace period anymore.
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			var cutoff int
-			now := time.Now()
-			c.deleteMut.Lock()
-			for i, d := range c.deleteQueue {
-				if d.ts.Add(gracePeriod).After(now) {
-					break
-				}
-				cutoff = i + 1
-			}
-			toDelete := c.deleteQueue[:cutoff]
-			c.deleteQueue = c.deleteQueue[cutoff:]
-			c.deleteMut.Unlock()
-
-			c.m.Lock()
-			for _, d := range toDelete {
-				if p, ok := c.Pods[d.id]; ok {
-					// Sanity check: make sure we are deleting the same pod
-					// and the underlying state (ip<>pod mapping) has not changed.
-					if p.Name == d.podName {
-						delete(c.Pods, d.id)
-					}
-				}
-			}
-			podTableSize := len(c.Pods)
-			c.m.Unlock()
-			observability.RecordPodTableSize(int64(podTableSize))
-
-		case <-c.stopCh:
-			return
-		}
+func (c *InformerClient) GetPod(identifier PodIdentifier) (*Pod, bool) {
+	pod, ok := c.getPodFromInformerStore(identifier)
+	if !ok {
+		observability.RecordIPLookupMiss()
+		return nil, false
 	}
+
+	podRecord := c.getPodRecord(pod)
+	if podRecord.Ignore {
+		return nil, false
+	}
+	return podRecord, ok
+
 }
 
-// GetPod takes an IP address or Pod UID and returns the pod the identifier is associated with.
-func (c *WatchClient) GetPod(identifier PodIdentifier) (*Pod, bool) {
-	c.m.RLock()
-	pod, ok := c.Pods[identifier]
-	c.m.RUnlock()
-	if ok {
-		if pod.Ignore {
-			return nil, false
-		}
-		return pod, ok
+func (c *InformerClient) getPodFromInformerStore(identifier PodIdentifier) (*api_v1.Pod, bool) {
+	indexer := c.informer.GetIndexer()
+	stringId := string(identifier)
+	if obj, exists, err := indexer.GetByKey(stringId); exists && err == nil {
+		pod := obj.(api_v1.Pod)
+		return &pod, exists
+	} else if err != nil {
+		c.logger.Error("error fetching pod from cache", zap.Any("message", err))
 	}
-	observability.RecordIPLookupMiss()
+
+	if objs, err := indexer.ByIndex(PodUIDIndexName, stringId); err == nil {
+		if len(objs) > 1 {
+			c.logger.Error("multiple pod entries for uid", zap.String("pod uid", stringId))
+		}
+		if len(objs) == 1 {
+			pod := objs[0].(api_v1.Pod)
+			return &pod, true
+		}
+	} else if err != nil {
+		c.logger.Error("error fetching pod from cache", zap.Any("message", err))
+	}
+
+	if objs, err := indexer.ByIndex(PodIPIndexName, stringId); err == nil {
+		// take the most recent value
+		if len(objs) > 0 {
+			pods := make([]api_v1.Pod, len(objs))
+			for i := range objs {
+				pods[i] = objs[i].(api_v1.Pod)
+			}
+
+			// simple linear search, not worth sorting, as it is unlikely to ever be more than 10 elements
+			mostRecent := pods[0]
+			if len(pods) == 1 {
+				return &mostRecent, true
+			}
+			for _, pod := range pods {
+				if pod.Status.StartTime.After(mostRecent.Status.StartTime.Time) {
+					mostRecent = pod
+				}
+			}
+
+			return &mostRecent, true
+		}
+	} else if err != nil {
+		c.logger.Error("error fetching pod from cache", zap.Any("message", err))
+	}
+
 	return nil, false
 }
 
-func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
+func (c *InformerClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 	tags := map[string]string{}
 	if c.Rules.PodName {
 		tags[c.Rules.Tags.PodName] = pod.Name
@@ -372,7 +364,7 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 	return tags
 }
 
-func (c *WatchClient) extractLabelsIntoTags(r FieldExtractionRule, labels map[string]string, tags map[string]string) {
+func (c *InformerClient) extractLabelsIntoTags(r FieldExtractionRule, labels map[string]string, tags map[string]string) {
 	if r.Key == "*" {
 		// Special case, extract everything
 		for label, value := range labels {
@@ -385,7 +377,7 @@ func (c *WatchClient) extractLabelsIntoTags(r FieldExtractionRule, labels map[st
 	}
 }
 
-func (c *WatchClient) extractField(v string, r FieldExtractionRule) string {
+func (c *InformerClient) extractField(v string, r FieldExtractionRule) string {
 	// Check if a subset of the field should be extracted with a regular expression
 	// instead of the whole field.
 	if r.Regex == nil {
@@ -399,7 +391,7 @@ func (c *WatchClient) extractField(v string, r FieldExtractionRule) string {
 	return ""
 }
 
-func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
+func (c *InformerClient) getPodRecord(pod *api_v1.Pod) *Pod {
 	newPod := &Pod{
 		Name:      pod.Name,
 		Namespace: pod.Namespace,
@@ -413,72 +405,10 @@ func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
 	} else {
 		newPod.Attributes = c.extractPodAttributes(pod)
 	}
-
-	c.m.Lock()
-	defer c.m.Unlock()
-
-	if pod.UID != "" {
-		c.Pods[PodIdentifier(pod.UID)] = newPod
-	}
-	if pod.Status.PodIP != "" {
-		// compare initial scheduled timestamp for existing pod and new pod with same IP
-		// and only replace old pod if scheduled time of new pod is newer? This should fix
-		// the case where scheduler has assigned the same IP to a new pod but update event for
-		// the old pod came in later.
-		if p, ok := c.Pods[PodIdentifier(pod.Status.PodIP)]; ok {
-			if p.StartTime != nil && pod.Status.StartTime.Before(p.StartTime) {
-				return
-			}
-		}
-		c.Pods[PodIdentifier(pod.Status.PodIP)] = newPod
-	}
-	// Use pod_name.namespace_name identifier
-	if newPod.Name != "" && newPod.Namespace != "" {
-		c.Pods[generatePodIDFromName(newPod)] = newPod
-	}
+	return newPod
 }
 
-type Namer interface {
-	GetName() string
-	GetNamespace() string
-}
-
-func generatePodIDFromName(p Namer) PodIdentifier {
-	// This is the key format informers use by default
-	// See: https://pkg.go.dev/k8s.io/client-go/tools/cache#MetaNamespaceKeyFunc
-	// and pod.association.go
-	return PodIdentifier(fmt.Sprintf("%s/%s", p.GetName(), p.GetNamespace()))
-}
-
-func (c *WatchClient) forgetPod(pod *api_v1.Pod) {
-	p, ok := c.GetPod(PodIdentifier(pod.Status.PodIP))
-	if ok && p.Name == pod.Name {
-		c.appendDeleteQueue(PodIdentifier(pod.Status.PodIP), pod.Name)
-	}
-
-	p, ok = c.GetPod(PodIdentifier(pod.UID))
-	if ok && p.Name == pod.Name {
-		c.appendDeleteQueue(PodIdentifier(pod.UID), pod.Name)
-	}
-
-	id := generatePodIDFromName(pod)
-	p, ok = c.GetPod(id)
-	if ok && p.Name == pod.Name {
-		c.appendDeleteQueue(id, pod.Name)
-	}
-}
-
-func (c *WatchClient) appendDeleteQueue(podID PodIdentifier, podName string) {
-	c.deleteMut.Lock()
-	c.deleteQueue = append(c.deleteQueue, deleteRequest{
-		id:      podID,
-		podName: podName,
-		ts:      time.Now(),
-	})
-	c.deleteMut.Unlock()
-}
-
-func (c *WatchClient) shouldIgnorePod(pod *api_v1.Pod) bool {
+func (c *InformerClient) shouldIgnorePod(pod *api_v1.Pod) bool {
 	// Host network mode is not supported right now with IP based
 	// tagging as all pods in host network get same IP addresses.
 	// Such pods are very rare and usually are used to monitor or control
@@ -503,32 +433,4 @@ func (c *WatchClient) shouldIgnorePod(pod *api_v1.Pod) bool {
 	}
 
 	return false
-}
-
-func selectorsFromFilters(filters Filters) (labels.Selector, fields.Selector, error) {
-	labelSelector := labels.Everything()
-	for _, f := range filters.Labels {
-		r, err := labels.NewRequirement(f.Key, f.Op, []string{f.Value})
-		if err != nil {
-			return nil, nil, err
-		}
-		labelSelector = labelSelector.Add(*r)
-	}
-
-	var selectors []fields.Selector
-	for _, f := range filters.Fields {
-		switch f.Op {
-		case selection.Equals:
-			selectors = append(selectors, fields.OneTermEqualSelector(f.Key, f.Value))
-		case selection.NotEquals:
-			selectors = append(selectors, fields.OneTermNotEqualSelector(f.Key, f.Value))
-		default:
-			return nil, nil, fmt.Errorf("field filters don't support operator: '%s'", f.Op)
-		}
-	}
-
-	if filters.Node != "" {
-		selectors = append(selectors, fields.OneTermEqualSelector(podNodeField, filters.Node))
-	}
-	return labelSelector, fields.AndSelectors(selectors...), nil
 }

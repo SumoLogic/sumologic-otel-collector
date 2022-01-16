@@ -69,3 +69,32 @@ func informerWatchFuncWithSelectors(client kubernetes.Interface, namespace strin
 		return client.CoreV1().Pods(namespace).Watch(context.Background(), opts)
 	}
 }
+
+type IndexInformerProvider func(
+	client kubernetes.Interface,
+	namespace string,
+	labelSelector labels.Selector,
+	fieldSelector fields.Selector,
+) cache.SharedIndexInformer
+
+func NewIndexedPodInformer(
+	client kubernetes.Interface,
+	namespace string,
+	labelSelector labels.Selector,
+	fieldSelector fields.Selector,
+) cache.SharedIndexInformer {
+	indexers := cache.Indexers{
+		PodIPIndexName:  podIPIndexFunc,
+		PodUIDIndexName: podUIDIndexFunc,
+	}
+	informer := cache.NewSharedIndexInformer(
+		&cache.ListWatch{
+			ListFunc:  informerListFuncWithSelectors(client, namespace, labelSelector, fieldSelector),
+			WatchFunc: informerWatchFuncWithSelectors(client, namespace, labelSelector, fieldSelector),
+		},
+		&api_v1.Pod{},
+		watchSyncPeriod,
+		indexers,
+	)
+	return informer
+}

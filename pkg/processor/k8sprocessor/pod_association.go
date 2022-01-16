@@ -95,7 +95,10 @@ func extractPodID(ctx context.Context, attrs pdata.AttributeMap, associations []
 			}
 
 			if pod.StringVal() == "" || namespace.StringVal() != "" {
-				return asso.Name, kube.PodIdentifier(fmt.Sprintf("%s.%s", pod.StringVal(), namespace.StringVal()))
+				// This is the key format informers use by default
+				// See: https://pkg.go.dev/k8s.io/client-go/tools/cache#MetaNamespaceKeyFunc
+				// TODO: Make this dependency explicit somehow
+				return asso.Name, kube.PodIdentifier(fmt.Sprintf("%s/%s", pod.StringVal(), namespace.StringVal()))
 			}
 		}
 	}
