@@ -100,7 +100,7 @@ func New(
 			newOwnerProviderFunc = newOwnerProvider
 		}
 
-		c.op, err = newOwnerProviderFunc(logger, c.kc, labelSelector, fieldSelector, c.Filters.Namespace)
+		c.op, err = newOwnerProviderFunc(logger, c.kc, labelSelector, fieldSelector, rules, c.Filters.Namespace)
 		if err != nil {
 			return nil, err
 		}
