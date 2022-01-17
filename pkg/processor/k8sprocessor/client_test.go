@@ -15,6 +15,8 @@
 package k8sprocessor
 
 import (
+	"time"
+
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -52,6 +54,8 @@ func newFakeClient(
 	_ kube.InformerProvider,
 	_ kube.OwnerProvider,
 	_ string,
+	_ time.Duration,
+	_ time.Duration,
 ) (kube.Client, error) {
 	cs := fake.NewSimpleClientset()
 

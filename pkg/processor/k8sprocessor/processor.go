@@ -16,6 +16,7 @@ package k8sprocessor
 
 import (
 	"context"
+	"time"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/model/pdata"
@@ -47,7 +48,20 @@ func (kp *kubernetesprocessor) initKubeClient(logger *zap.Logger, kubeClient kub
 		kubeClient = kube.New
 	}
 	if !kp.passthroughMode {
-		kc, err := kubeClient(logger, kp.apiConfig, kp.rules, kp.filters, kp.podAssociations, kp.podIgnore, nil, nil, nil, kp.delimiter)
+		kc, err := kubeClient(
+			logger,
+			kp.apiConfig,
+			kp.rules,
+			kp.filters,
+			kp.podAssociations,
+			kp.podIgnore,
+			nil,
+			nil,
+			nil,
+			kp.delimiter,
+			30*time.Second,
+			kube.DefaultPodDeleteGracePeriod,
+		)
 		if err != nil {
 			return err
 		}
@@ -102,7 +116,6 @@ func (kp *kubernetesprocessor) ProcessLogs(ctx context.Context, ld pdata.Logs) (
 
 // processResource adds Pod metadata tags to resource based on pod association configuration
 func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pdata.Resource) {
-
 	podIdentifierKey, podIdentifierValue := extractPodID(ctx, resource.Attributes(), kp.podAssociations)
 	if podIdentifierValue == "" {
 		return

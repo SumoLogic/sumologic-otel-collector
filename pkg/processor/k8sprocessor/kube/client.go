@@ -65,6 +65,8 @@ func New(
 	newInformer InformerProvider,
 	newOwnerProviderFunc OwnerProvider,
 	delimiter string,
+	deleteInterval time.Duration,
+	gracePeriod time.Duration,
 ) (Client, error) {
 	c := &WatchClient{
 		logger:       logger,
@@ -76,7 +78,7 @@ func New(
 		delimiter:    delimiter,
 		Pods:         map[PodIdentifier]*Pod{},
 	}
-	go c.deleteLoop(time.Second*30, defaultPodDeleteGracePeriod)
+	go c.deleteLoop(deleteInterval, gracePeriod)
 
 	if newClientSet == nil {
 		newClientSet = k8sconfig.MakeClient
@@ -184,9 +186,12 @@ func (c *WatchClient) deleteLoop(interval time.Duration, gracePeriod time.Durati
 	// This loop runs after N seconds and deletes pods from cache.
 	// It iterates over the delete queue and deletes all that aren't
 	// in the grace period anymore.
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
 	for {
 		select {
-		case <-time.After(interval):
+		case <-ticker.C:
 			var cutoff int
 			now := time.Now()
 			c.deleteMut.Lock()
@@ -429,21 +434,34 @@ func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
 	}
 	// Use pod_name.namespace_name identifier
 	if newPod.Name != "" && newPod.Namespace != "" {
-		c.Pods[PodIdentifier(fmt.Sprintf("%s.%s", newPod.Name, newPod.Namespace))] = newPod
+		c.Pods[generatePodIDFromName(newPod)] = newPod
 	}
+}
+
+type Namer interface {
+	GetName() string
+	GetNamespace() string
+}
+
+func generatePodIDFromName(p Namer) PodIdentifier {
+	return PodIdentifier(fmt.Sprintf("%s.%s", p.GetName(), p.GetNamespace()))
 }
 
 func (c *WatchClient) forgetPod(pod *api_v1.Pod) {
 	p, ok := c.GetPod(PodIdentifier(pod.Status.PodIP))
-
 	if ok && p.Name == pod.Name {
 		c.appendDeleteQueue(PodIdentifier(pod.Status.PodIP), pod.Name)
 	}
 
 	p, ok = c.GetPod(PodIdentifier(pod.UID))
-
 	if ok && p.Name == pod.Name {
 		c.appendDeleteQueue(PodIdentifier(pod.UID), pod.Name)
+	}
+
+	id := generatePodIDFromName(pod)
+	p, ok = c.GetPod(id)
+	if ok && p.Name == pod.Name {
+		c.appendDeleteQueue(id, pod.Name)
 	}
 }
 
