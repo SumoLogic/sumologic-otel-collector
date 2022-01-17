@@ -54,7 +54,21 @@ func Test_OwnerProvider_GetOwners(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	op, err := newOwnerProvider(logger, c, labels.Everything(), fields.Everything(), "kube-system")
+	op, err := newOwnerProvider(
+		logger,
+		c,
+		labels.Everything(),
+		fields.Everything(),
+		ExtractionRules{
+			PodUID:             true,
+			PodName:            true,
+			StatefulSetName:    true,
+			Namespace:          true,
+			OwnerLookupEnabled: true,
+			Tags:               NewExtractionFieldTags(),
+		},
+		"kube-system",
+	)
 	require.NoError(t, err)
 
 	client := c.(*fake.Clientset)
@@ -129,7 +143,21 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	op, err := newOwnerProvider(logger, c, labels.Everything(), fields.Everything(), namespace)
+	op, err := newOwnerProvider(
+		logger,
+		c,
+		labels.Everything(),
+		fields.Everything(),
+		ExtractionRules{
+			PodUID:             true,
+			PodName:            true,
+			Namespace:          true,
+			ServiceName:        true,
+			OwnerLookupEnabled: true,
+			Tags:               NewExtractionFieldTags(),
+		},
+		namespace,
+	)
 	require.NoError(t, err)
 
 	client := c.(*fake.Clientset)

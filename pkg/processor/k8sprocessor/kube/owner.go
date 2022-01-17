@@ -37,6 +37,7 @@ type OwnerProvider func(
 	client kubernetes.Interface,
 	labelSelector labels.Selector,
 	fieldSelector fields.Selector,
+	extractionRules ExtractionRules,
 	namespace string,
 ) (OwnerAPI, error)
 
@@ -103,6 +104,7 @@ func newOwnerProvider(
 	client kubernetes.Interface,
 	labelSelector labels.Selector,
 	fieldSelector fields.Selector,
+	extractionRules ExtractionRules,
 	namespace string) (OwnerAPI, error) {
 
 	ownerCache := newOwnerCache(logger)
@@ -116,35 +118,111 @@ func newOwnerProvider(
 
 	ownerCache.addNamespaceInformer(factory)
 
-	ownerCache.addOwnerInformer("ReplicaSet",
-		factory.Apps().V1().ReplicaSets().Informer(),
-		ownerCache.cacheObject,
-		ownerCache.deleteObject)
+	// Only enable ReplicaSet informer when ReplicaSet extraction rule is enabled
+	if extractionRules.ReplicaSetName {
+		logger.Debug("adding informer for ReplicaSet", zap.String("api_version", "apps/v1"))
+		ownerCache.addOwnerInformer("ReplicaSet",
+			factory.Apps().V1().ReplicaSets().Informer(),
+			ownerCache.cacheObject,
+			ownerCache.deleteObject)
+	}
 
-	ownerCache.addOwnerInformer("Deployment",
-		factory.Apps().V1().Deployments().Informer(),
-		ownerCache.cacheObject,
-		ownerCache.deleteObject)
+	// Only enable Deployment informer when Deployment extraction rule is enabled
+	if extractionRules.DeploymentName {
+		logger.Debug("adding informer for Deployment", zap.String("api_version", "apps/v1"))
+		ownerCache.addOwnerInformer("Deployment",
+			factory.Apps().V1().Deployments().Informer(),
+			ownerCache.cacheObject,
+			ownerCache.deleteObject)
+	}
 
-	ownerCache.addOwnerInformer("StatefulSet",
-		factory.Apps().V1().StatefulSets().Informer(),
-		ownerCache.cacheObject,
-		ownerCache.deleteObject)
+	// Only enable StatefulSet informer when StatefulSet extraction rule is enabled
+	if extractionRules.StatefulSetName {
+		logger.Debug("adding informer for StatefulSet", zap.String("api_version", "apps/v1"))
+		ownerCache.addOwnerInformer("StatefulSet",
+			factory.Apps().V1().StatefulSets().Informer(),
+			ownerCache.cacheObject,
+			ownerCache.deleteObject)
+	}
 
-	ownerCache.addOwnerInformer("Endpoint",
-		factory.Core().V1().Endpoints().Informer(),
-		ownerCache.cacheEndpoint,
-		ownerCache.deleteEndpoint)
+	// Only enable Endpoint informer when Endpoint extraction rule is enabled
+	if extractionRules.ServiceName {
+		logger.Debug("adding informer for Endpoint", zap.String("api_version", "v1"))
+		ownerCache.addOwnerInformer("Endpoint",
+			factory.Core().V1().Endpoints().Informer(),
+			ownerCache.cacheEndpoint,
+			ownerCache.deleteEndpoint)
+	}
 
-	ownerCache.addOwnerInformer("Job",
-		factory.Batch().V1().Jobs().Informer(),
-		ownerCache.cacheObject,
-		ownerCache.deleteObject)
+	// Only enable Job informer when Job extraction rule is enabled
+	if extractionRules.JobName {
+		logger.Debug("adding informer for Job", zap.String("api_version", "batch/v1"))
+		ownerCache.addOwnerInformer("Job",
+			factory.Batch().V1().Jobs().Informer(),
+			ownerCache.cacheObject,
+			ownerCache.deleteObject)
+	}
 
-	ownerCache.addOwnerInformer("CronJob",
-		factory.Batch().V1().CronJobs().Informer(),
-		ownerCache.cacheObject,
-		ownerCache.deleteObject)
+	// Only enable CronJob informer when CronJob extraction rule is enabled
+	// and when a particular API is available on the cluster
+	if extractionRules.CronJobName {
+		// Other resources used in remaining informers are all available in all supported
+		// cluster versions. Only CronJob from batch/v1 is available starting with k8s 1.21
+		// hence make this conditional on the supported batch API group version.
+		apiGroups, apiResList, err := client.Discovery().ServerGroupsAndResources()
+		if err != nil {
+			ownerCache.logger.Debug(
+				"failed to get server resources with client-go",
+				zap.Error(err),
+			)
+		} else {
+			enableCronJobInformer := func(informer cache.SharedIndexInformer) {
+				ownerCache.addOwnerInformer("CronJob",
+					informer,
+					ownerCache.cacheObject,
+					ownerCache.deleteObject)
+			}
+
+			handleAPIResources := func(informer cache.SharedIndexInformer, apiResources []meta_v1.APIResource) bool {
+				for _, apiR := range apiResources {
+					if apiR.Name == "cronjobs" && apiR.Kind == "CronJob" {
+						logger.Debug("adding informer for CronJob", zap.String("api_version", apiR.Version))
+						enableCronJobInformer(informer)
+						return true
+					}
+				}
+				return false
+			}
+
+			var preferredBatchVersion string
+			for _, g := range apiGroups {
+				if g.Name == "batch" {
+					preferredBatchVersion = g.PreferredVersion.GroupVersion
+					break
+				}
+			}
+
+			if preferredBatchVersion != "" {
+			outerLoop:
+				for _, v := range apiResList {
+					if v.GroupVersion == preferredBatchVersion {
+						switch v.GroupVersion {
+						case "batch/v1":
+							informer := factory.Batch().V1().CronJobs().Informer()
+							if enabled := handleAPIResources(informer, v.APIResources); enabled {
+								break outerLoop
+							}
+						case "batch/v1beta1":
+							informer := factory.Batch().V1beta1().CronJobs().Informer()
+							if enabled := handleAPIResources(informer, v.APIResources); enabled {
+								break outerLoop
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 
 	return &ownerCache, nil
 }
@@ -164,6 +242,7 @@ func (op *OwnerCache) deleteNamespace(obj interface{}) {
 }
 
 func (op *OwnerCache) addNamespaceInformer(factory informers.SharedInformerFactory) {
+	op.logger.Debug("adding informer for Namespace", zap.String("api_version", "v1"))
 	informer := factory.Core().V1().Namespaces().Informer()
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {

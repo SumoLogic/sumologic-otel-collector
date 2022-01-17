@@ -35,6 +35,7 @@ func newFakeOwnerProvider(logger *zap.Logger,
 	client kubernetes.Interface,
 	labelSelector labels.Selector,
 	fieldSelector fields.Selector,
+	extractionRules ExtractionRules,
 	namespace string) (OwnerAPI, error) {
 	ownerCache := fakeOwnerCache{}
 	ownerCache.objectOwners = map[string]*ObjectOwner{}
