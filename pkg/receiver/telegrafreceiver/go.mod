@@ -177,6 +177,7 @@ require (
 	github.com/openconfig/gnmi v0.0.0-20180912164834-33a1865c3029 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
+	github.com/opencontainers/runc v1.0.3 // indirect
 	github.com/philhofer/fwd v1.1.1 // indirect
 	github.com/pierrec/lz4 v2.6.0+incompatible // indirect
 	github.com/pion/dtls/v2 v2.0.9 // indirect
