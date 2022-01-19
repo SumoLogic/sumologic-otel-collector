@@ -627,17 +627,14 @@ func addSourcesHeaders(req *http.Request, sources sourceFormats, flds fields) {
 	if sources.host.isSet() {
 		req.Header.Add(headerHost, sources.host.format(flds))
 	}
-	flds.orig.Delete(attributeKeySourceHost)
 
 	if sources.name.isSet() {
 		req.Header.Add(headerName, sources.name.format(flds))
 	}
-	flds.orig.Delete(attributeKeySourceName)
 
 	if sources.category.isSet() {
 		req.Header.Add(headerCategory, sources.category.format(flds))
 	}
-	flds.orig.Delete(attributeKeySourceCategory)
 }
 
 func addLogsHeaders(req *http.Request, lf LogFormatType, flds fields) {
@@ -647,7 +644,10 @@ func addLogsHeaders(req *http.Request, lf LogFormatType, flds fields) {
 	default:
 		req.Header.Add(headerContentType, contentTypeLogs)
 	}
-	req.Header.Add(headerFields, flds.string())
+
+	if fieldsStr := flds.string(); fieldsStr != "" {
+		req.Header.Add(headerFields, fieldsStr)
+	}
 }
 
 func addMetricsHeaders(req *http.Request, mf MetricFormatType) error {

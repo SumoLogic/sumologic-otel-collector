@@ -307,7 +307,6 @@ func TestSendTrace(t *testing.T) {
 
 	err = test.s.sendTraces(context.Background(), td, fieldsFromMap(map[string]string{}))
 	assert.NoError(t, err)
-
 }
 
 func TestSendLogs(t *testing.T) {
@@ -386,6 +385,7 @@ func TestSendLogsSplit(t *testing.T) {
 
 	assert.EqualValues(t, 2, *test.reqCounter)
 }
+
 func TestSendLogsSplitFailedOne(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {

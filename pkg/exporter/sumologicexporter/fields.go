@@ -39,6 +39,12 @@ func newFields(attrMap pdata.AttributeMap) fields {
 func (f fields) string() string {
 	returnValue := make([]string, 0, f.orig.Len())
 	f.orig.Range(func(k string, v pdata.AttributeValue) bool {
+		// Don't add source related attributes to fields as they are handled separately
+		// and are added to the payload either as special HTTP headers or as resources
+		// attributes.
+		if k == attributeKeySourceCategory || k == attributeKeySourceHost || k == attributeKeySourceName {
+			return true
+		}
 		sv := v.AsString()
 
 		// Skip empty field

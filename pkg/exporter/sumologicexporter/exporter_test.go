@@ -685,6 +685,68 @@ func TestPushJSONLogs_AttributeTranslation(t *testing.T) {
 	}
 }
 
+func TestPushLogs_DontRemoveSourceAttributes(t *testing.T) {
+	createLogs := func() pdata.Logs {
+		logs := pdata.NewLogs()
+		resourceLogs := logs.ResourceLogs().AppendEmpty()
+		logsSlice := resourceLogs.InstrumentationLibraryLogs().AppendEmpty().Logs()
+
+		logRecords := make([]pdata.LogRecord, 2)
+		logRecords[0] = pdata.NewLogRecord()
+		logRecords[0].Body().SetStringVal("Example log aaaaaaaaaaaaaaaaaaaaaa 1")
+		logRecords[0].CopyTo(logsSlice.AppendEmpty())
+		logRecords[1] = pdata.NewLogRecord()
+		logRecords[1].Body().SetStringVal("Example log aaaaaaaaaaaaaaaaaaaaaa 2")
+		logRecords[1].CopyTo(logsSlice.AppendEmpty())
+
+		resourceAttrs := resourceLogs.Resource().Attributes()
+		resourceAttrs.InsertString("hostname", "my-host-name")
+		resourceAttrs.InsertString("hosttype", "my-host-type")
+		resourceAttrs.InsertString("_sourceCategory", "my-source-category")
+		resourceAttrs.InsertString("_sourceHost", "my-source-host")
+		resourceAttrs.InsertString("_sourceName", "my-source-name")
+
+		return logs
+	}
+
+	callbacks := []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, "Example log aaaaaaaaaaaaaaaaaaaaaa 1", body)
+			assert.Equal(t, "hostname=my-host-name", req.Header.Get("X-Sumo-Fields"))
+			assert.Equal(t, "my-source-category", req.Header.Get("X-Sumo-Category"))
+			assert.Equal(t, "my-source-host", req.Header.Get("X-Sumo-Host"))
+			assert.Equal(t, "my-source-name", req.Header.Get("X-Sumo-Name"))
+			for k, v := range req.Header {
+				t.Logf("request #1 header: %v=%v", k, v)
+			}
+		},
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, "Example log aaaaaaaaaaaaaaaaaaaaaa 2", body)
+			assert.Equal(t, "hostname=my-host-name", req.Header.Get("X-Sumo-Fields"))
+			assert.Equal(t, "my-source-category", req.Header.Get("X-Sumo-Category"))
+			assert.Equal(t, "my-source-host", req.Header.Get("X-Sumo-Host"))
+			assert.Equal(t, "my-source-name", req.Header.Get("X-Sumo-Name"))
+			for k, v := range req.Header {
+				t.Logf("request #2 header: %v=%v", k, v)
+			}
+		},
+	}
+
+	config := createTestConfig()
+	config.MetadataAttributes = []string{"hostname"}
+	config.SourceCategory = "%{_sourceCategory}"
+	config.SourceName = "%{_sourceName}"
+	config.SourceHost = "%{_sourceHost}"
+	config.LogFormat = TextFormat
+	config.TranslateAttributes = false
+	config.MaxRequestBodySize = 32
+
+	test := prepareExporterTest(t, config, callbacks)
+	assert.NoError(t, test.exp.pushLogsData(context.Background(), createLogs()))
+}
+
 func TestAllMetricsSuccess(t *testing.T) {
 	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
