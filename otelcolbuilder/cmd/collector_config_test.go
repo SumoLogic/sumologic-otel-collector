@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/configmapprovider"
+	"go.opentelemetry.io/collector/config/configunmarshaler"
 	"go.opentelemetry.io/collector/service"
 )
 
@@ -84,12 +85,18 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 
 			t.Log("Creating new app...")
 
+			cp := service.NewConfigProvider(
+				[]configmapprovider.Provider{
+					configmapprovider.NewFile(tc.configFile),
+				},
+				nil,
+				configunmarshaler.NewDefault(),
+			)
+
 			app, err := service.New(service.CollectorSettings{
-				BuildInfo: component.NewDefaultBuildInfo(),
-				Factories: factories,
-				ConfigMapProvider: configmapprovider.NewFile(
-					tc.configFile,
-				),
+				BuildInfo:      component.NewDefaultBuildInfo(),
+				Factories:      factories,
+				ConfigProvider: cp,
 			})
 			require.NoError(t, err)
 
