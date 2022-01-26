@@ -65,21 +65,43 @@ _builder:
 		--version $(VERSION) \
 		--config .otelcol-builder.yaml \
 		--output-path ./cmd \
-		--skip-compilation=$(SKIP_COMPILATION) \
-		--name $(BINARY_NAME)
+		--skip-compilation=$(SKIP_COMPILATION)
+
+.PHONY: _gobuild
+_gobuild:
+	(cd cmd && \
+		CGO_ENABLED=$(CGO_ENABLED) go build -v \
+		-tags enable_unstable \
+		-ldflags="-s -w" \
+		-trimpath \
+		-o ./$(BINARY_NAME) . \
+	)
+	chmod +x ./cmd/$(BINARY_NAME)
+
+.PHONY: _gobuild_debug
+_gobuild_debug:
+	(cd cmd && \
+		CGO_ENABLED=$(CGO_ENABLED) go build -v \
+		-tags enable_unstable \
+		-race \
+		-gcflags "all=-N -l" \
+		-o ./$(BINARY_NAME)-debug . \
+	)
+	chmod +x ./cmd/$(BINARY_NAME)-debug
 
 .PHONY: build
 build: ensure-correct-builder-version
 # Since builder doesn't allow adding build tags, let's just skip the compilation
 # and run 'go build ...' by hand.
 	@$(MAKE) _builder SKIP_COMPILATION=true
-	(cd cmd && \
-		CGO_ENABLED=$(CGO_ENABLED) go build -v \
-		-ldflags="-s -w" \
-		-tags enable_unstable \
-		-trimpath -o ./$(BINARY_NAME) . \
-	)
-	chmod +x ./cmd/$(BINARY_NAME)
+	@$(MAKE) _gobuild
+
+.PHONY: build-debug
+build-debug: ensure-correct-builder-version
+# Since builder doesn't allow adding build tags, let's just skip the compilation
+# and run 'go build ...' by hand.
+	@$(MAKE) _builder SKIP_COMPILATION=true
+	@$(MAKE) _gobuild_debug
 
 .PHONY: generate-sources
 generate-sources:
@@ -104,20 +126,20 @@ otelcol-sumo-all-sys: otelcol-sumo-darwin_amd64 otelcol-sumo-linux_amd64 otelcol
 
 .PHONY: otelcol-sumo-darwin_amd64
 otelcol-sumo-darwin_amd64:
-	GOOS=darwin  GOARCH=amd64 $(MAKE) build BINARY_NAME=otelcol-sumo-darwin_amd64
+	GOOS=darwin  GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)-darwin_amd64
 
 .PHONY: otelcol-sumo-linux_amd64
 otelcol-sumo-linux_amd64:
-	GOOS=linux   GOARCH=amd64 $(MAKE) build BINARY_NAME=otelcol-sumo-linux_amd64
+	GOOS=linux   GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)-linux_amd64
 
 .PHONY: otelcol-sumo-linux_arm64
 otelcol-sumo-linux_arm64:
-	GOOS=linux   GOARCH=arm64 $(MAKE) build BINARY_NAME=otelcol-sumo-linux_arm64
+	GOOS=linux   GOARCH=arm64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)-linux_arm64
 
 .PHONY: otelcol-sumo-linux_arm
 otelcol-sumo-linux_arm:
-	GOOS=linux   GOARCH=arm $(MAKE) build BINARY_NAME=otelcol-sumo-linux_arm
+	GOOS=linux   GOARCH=arm $(MAKE) build BINARY_NAME=$(BINARY_NAME)-linux_arm
 
 .PHONY: otelcol-sumo-windows_amd64
 otelcol-sumo-windows_amd64:
-	GOOS=windows GOARCH=amd64 $(MAKE) build BINARY_NAME=otelcol-sumo-windows_amd64.exe
+	GOOS=windows GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)-windows_amd64.exe
