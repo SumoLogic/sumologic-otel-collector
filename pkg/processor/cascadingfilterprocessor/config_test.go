@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
-	"go.opentelemetry.io/collector/config/configtest"
+	"go.opentelemetry.io/collector/service/servicetest"
 
 	cfconfig "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
 )
@@ -35,7 +35,7 @@ func TestLoadConfig(t *testing.T) {
 	factory := NewFactory()
 	factories.Processors[factory.Type()] = factory
 
-	cfg, err := configtest.LoadConfig(path.Join(".", "testdata", "cascading_filter_config.yaml"), factories)
+	cfg, err := servicetest.LoadConfig(path.Join(".", "testdata", "cascading_filter_config.yaml"), factories)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -145,7 +145,8 @@ func TestLoadConfig(t *testing.T) {
 					Name:           "test-policy-5",
 					SpansPerSecond: 123,
 					NumericAttributeCfg: &cfconfig.NumericAttributeCfg{
-						Key: "key1", MinValue: 50, MaxValue: 100},
+						Key: "key1", MinValue: 50, MaxValue: 100,
+					},
 					InvertMatch: true,
 				},
 				{
