@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package sumologicextension
+package credentials
 
 import (
 	"encoding/json"
@@ -24,19 +24,60 @@ import (
 	"go.uber.org/zap"
 )
 
-// localFsCredentialsStore implements CredentialsStore interface and can be used
-// to store and retrieve collector credentials from local file system.
+const (
+	DefaultCollectorCredentialsDirectory = ".sumologic-otel-collector/"
+)
+
+func GetDefaultCollectorCredentialsDirectory() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	return path.Join(home, DefaultCollectorCredentialsDirectory), nil
+}
+
+// LocalFsStore implements Store interface and can be used to store and retrieve
+// collector credentials from local file system.
 //
 // Files are stored locally in collectorCredentialsDirectory.
-type localFsCredentialsStore struct {
+type LocalFsStore struct {
 	collectorCredentialsDirectory string
 	logger                        *zap.Logger
 }
 
+type LocalFsStoreOpt func(*LocalFsStore)
+
+func WithLogger(l *zap.Logger) LocalFsStoreOpt {
+	return func(s *LocalFsStore) {
+		s.logger = l
+	}
+}
+
+func WithCredentialsDirectory(dir string) LocalFsStoreOpt {
+	return func(s *LocalFsStore) {
+		s.collectorCredentialsDirectory = dir
+	}
+}
+
+func NewLocalFsStore(opts ...LocalFsStoreOpt) (Store, error) {
+	dir, err := GetDefaultCollectorCredentialsDirectory()
+	if err != nil {
+		return nil, err
+	}
+	store := LocalFsStore{
+		collectorCredentialsDirectory: dir,
+	}
+	for _, opt := range opts {
+		opt(&store)
+	}
+	return store, err
+}
+
 // Check checks if collector credentials can be found under a name being a hash
 // of provided key inside collectorCredentialsDirectory.
-func (cr localFsCredentialsStore) Check(key string) bool {
-	filenameHash, err := hash(key)
+func (cr LocalFsStore) Check(key string) bool {
+	filenameHash, err := Hash(key)
 	if err != nil {
 		return false
 	}
@@ -49,8 +90,8 @@ func (cr localFsCredentialsStore) Check(key string) bool {
 
 // Get retrieves collector credentials stored in local file system and then
 // decrypts it using a hash of provided key.
-func (cr localFsCredentialsStore) Get(key string) (CollectorCredentials, error) {
-	filenameHash, err := hash(key)
+func (cr LocalFsStore) Get(key string) (CollectorCredentials, error) {
+	filenameHash, err := Hash(key)
 	if err != nil {
 		return CollectorCredentials{}, err
 	}
@@ -87,12 +128,12 @@ func (cr localFsCredentialsStore) Get(key string) (CollectorCredentials, error) 
 // Store stores collector credentials in a file in directory as specified
 // in CollectorCredentialsDirectory.
 // The credentials are encrypted using the provided key.
-func (cr localFsCredentialsStore) Store(key string, creds CollectorCredentials) error {
+func (cr LocalFsStore) Store(key string, creds CollectorCredentials) error {
 	if err := ensureDirExists(cr.collectorCredentialsDirectory); err != nil {
 		return err
 	}
 
-	filenameHash, err := hash(key)
+	filenameHash, err := Hash(key)
 	if err != nil {
 		return err
 	}
