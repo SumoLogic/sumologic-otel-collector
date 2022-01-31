@@ -30,7 +30,7 @@ type Config struct {
 	// Credentials contains Access Key and Access ID for Sumo Logic service.
 	// Please refer to https://help.sumologic.com/Manage/Security/Access-Keys
 	// for detailed instructions how to obtain them.
-	Credentials credentials `mapstructure:",squash"`
+	Credentials accessCredentials `mapstructure:",squash"`
 
 	// CollectorName is the name under which collector will be registered.
 	// Please note that registering a collector under a name which is already
@@ -77,7 +77,7 @@ type Config struct {
 	BackOff backOffConfig `mapstructure:"backoff"`
 }
 
-type credentials struct {
+type accessCredentials struct {
 	AccessID  string `mapstructure:"access_id"`
 	AccessKey string `mapstructure:"access_key"`
 }

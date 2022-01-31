@@ -27,12 +27,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
 	"go.uber.org/zap"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/api"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/credentials"
 )
 
 const (
@@ -106,7 +108,6 @@ func TestBasicStart(t *testing.T) {
 					"collectorCredentialKey": "collectorKey",
 					"collectorId": "id"
 				}`))
-
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
@@ -166,7 +167,6 @@ func TestStoreCredentials(t *testing.T) {
 						"collectorCredentialKey": "collectorKey",
 						"collectorId": "id"
 					}`))
-
 					if err != nil {
 						w.WriteHeader(http.StatusInternalServerError)
 					}
@@ -210,7 +210,7 @@ func TestStoreCredentials(t *testing.T) {
 		se, err := newSumologicExtension(cfg, zap.NewNop())
 		require.NoError(t, err)
 		key := createHashKey(cfg)
-		fileName, err := hash(key)
+		fileName, err := credentials.Hash(key)
 		require.NoError(t, err)
 		credsPath := path.Join(dir, fileName)
 		require.NoFileExists(t, credsPath)
@@ -236,7 +236,7 @@ func TestStoreCredentials(t *testing.T) {
 		se, err := newSumologicExtension(cfg, zap.NewNop())
 		require.NoError(t, err)
 		key := createHashKey(cfg)
-		fileName, err := hash(key)
+		fileName, err := credentials.Hash(key)
 		require.NoError(t, err)
 		credsPath := path.Join(dir, fileName)
 		require.NoFileExists(t, credsPath)
@@ -264,7 +264,7 @@ func TestStoreCredentials(t *testing.T) {
 		se, err := newSumologicExtension(cfg, zap.NewNop())
 		require.NoError(t, err)
 		key := createHashKey(cfg)
-		fileName, err := hash(key)
+		fileName, err := credentials.Hash(key)
 		require.NoError(t, err)
 		credsPath := path.Join(dir, fileName)
 		require.NoFileExists(t, credsPath)
@@ -295,7 +295,6 @@ func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T
 						"collectorCredentialKey": "collectorKey",
 						"collectorId": "id"
 					}`))
-
 					if err != nil {
 						w.WriteHeader(http.StatusInternalServerError)
 					}
@@ -347,7 +346,7 @@ func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T
 	se1, err := newSumologicExtension(cfg1, zap.NewNop())
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, se1.Shutdown(context.Background())) })
-	fileName1, err := hash(createHashKey(cfg1))
+	fileName1, err := credentials.Hash(createHashKey(cfg1))
 	require.NoError(t, err)
 	credsPath1 := path.Join(dir1, fileName1)
 	require.NoFileExists(t, credsPath1)
@@ -357,7 +356,7 @@ func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T
 	se2, err := newSumologicExtension(cfg2, zap.NewNop())
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, se2.Shutdown(context.Background())) })
-	fileName2, err := hash(createHashKey(cfg2))
+	fileName2, err := credentials.Hash(createHashKey(cfg2))
 	require.NoError(t, err)
 	credsPath2 := path.Join(dir2, fileName2)
 	require.NoFileExists(t, credsPath2)
@@ -399,7 +398,6 @@ func TestRegisterEmptyCollectorName(t *testing.T) {
 					"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
 					"collectorId": "000000000FFFFFFF"
 				}`))
-
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
@@ -470,7 +468,6 @@ func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
 					"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
 					"collectorId": "000000000FFFFFFF"
 				}`))
-
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
@@ -491,7 +488,6 @@ func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
 					"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
 					"collectorId": "000000000FFFFFFF"
 				}`))
-
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
@@ -609,13 +605,14 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { os.RemoveAll(dir) })
 
-	cStore := localFsCredentialsStore{
-		collectorCredentialsDirectory: dir,
-		logger:                        zap.NewNop(),
-	}
+	cStore, err := credentials.NewLocalFsStore(
+		credentials.WithCredentialsDirectory(dir),
+		credentials.WithLogger(zap.NewNop()),
+	)
+	require.NoError(t, err)
 
 	storeCredentials := func(t *testing.T, url string) {
-		creds := CollectorCredentials{
+		creds := credentials.CollectorCredentials{
 			CollectorName: "test-name",
 			Credentials: api.OpenRegisterResponsePayload{
 				CollectorName:          "test-name",
@@ -627,7 +624,7 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 		}
 		storageKey := createHashKey(&Config{
 			CollectorName: "test-name",
-			Credentials: credentials{
+			Credentials: accessCredentials{
 				AccessID:  "dummy_access_id",
 				AccessKey: "dummy_access_key",
 			},
@@ -703,7 +700,6 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 							"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
 							"collectorId": "000000000FFFFFFF"
 						}`))
-
 							if err != nil {
 								w.WriteHeader(http.StatusInternalServerError)
 							}
@@ -799,7 +795,6 @@ func TestRegisterEmptyCollectorNameWithBackoff(t *testing.T) {
 						"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
 						"collectorId": "000000000FFFFFFF"
 					}`))
-
 					if err != nil {
 						w.WriteHeader(http.StatusInternalServerError)
 					}
@@ -925,7 +920,6 @@ func TestRegistrationRedirect(t *testing.T) {
 					"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
 					"collectorId": "000000000FFFFFFF"
 				}`))
-
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
