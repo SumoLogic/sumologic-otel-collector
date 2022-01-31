@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package sumologicextension
+package credentials
 
 import (
 	"os"
 	"testing"
 
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/api"
 )
 
 func TestCredentialsStoreLocalFs(t *testing.T) {
@@ -42,7 +43,7 @@ func TestCredentialsStoreLocalFs(t *testing.T) {
 		},
 	}
 
-	sut := localFsCredentialsStore{
+	sut := LocalFsStore{
 		collectorCredentialsDirectory: dir,
 		logger:                        zap.NewNop(),
 	}

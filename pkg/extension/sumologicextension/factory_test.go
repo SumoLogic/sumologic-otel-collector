@@ -26,13 +26,15 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/credentials"
 )
 
 func TestFactory_CreateDefaultConfig(t *testing.T) {
 	cfg := createDefaultConfig()
 	homePath, err := os.UserHomeDir()
 	require.NoError(t, err)
-	defaultCredsPath := path.Join(homePath, collectorCredentialsDirectory)
+	defaultCredsPath := path.Join(homePath, credentials.DefaultCollectorCredentialsDirectory)
 	assert.Equal(t, &Config{
 		ExtensionSettings:             config.NewExtensionSettings(config.NewComponentID(typeStr)),
 		HeartBeatInterval:             DefaultHeartbeatInterval,

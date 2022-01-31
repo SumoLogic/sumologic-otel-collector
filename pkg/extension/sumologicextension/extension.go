@@ -38,6 +38,7 @@ import (
 	grpccredentials "google.golang.org/grpc/credentials"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/api"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/credentials"
 )
 
 type SumologicExtension struct {
@@ -46,7 +47,7 @@ type SumologicExtension struct {
 	httpClient       *http.Client
 	conf             *Config
 	logger           *zap.Logger
-	credentialsStore CredentialsStore
+	credentialsStore credentials.Store
 	hashKey          string
 	registrationInfo api.OpenRegisterResponsePayload
 	closeChan        chan struct{}
@@ -55,9 +56,8 @@ type SumologicExtension struct {
 }
 
 const (
-	heartbeatUrl                  = "/api/v1/collector/heartbeat"
-	registerUrl                   = "/api/v1/collector/register"
-	collectorCredentialsDirectory = ".sumologic-otel-collector/"
+	heartbeatUrl = "/api/v1/collector/heartbeat"
+	registerUrl  = "/api/v1/collector/register"
 
 	collectorIdField           = "collector_id"
 	collectorNameField         = "collector_name"
@@ -90,10 +90,14 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 	}
 
 	var collectorName string
-	credentialsStore := localFsCredentialsStore{
-		collectorCredentialsDirectory: conf.CollectorCredentialsDirectory,
-		logger:                        logger,
+	credentialsStore, err := credentials.NewLocalFsStore(
+		credentials.WithCredentialsDirectory(conf.CollectorCredentialsDirectory),
+		credentials.WithLogger(logger),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize credentials store: %w", err)
 	}
+
 	if conf.CollectorName == "" {
 		key := createHashKey(conf)
 		// If collector name is not set by the user check if the collector was restarted
@@ -199,9 +203,9 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 // returns the credentials obtained from the API.
 // It also returns a boolean flag indicating if the successful registration
 // with the API took place and an error.
-func (se *SumologicExtension) getCredentials(ctx context.Context) (CollectorCredentials, bool, error) {
+func (se *SumologicExtension) getCredentials(ctx context.Context) (credentials.CollectorCredentials, bool, error) {
 	var (
-		colCreds         CollectorCredentials
+		colCreds         credentials.CollectorCredentials
 		registrationDone bool
 		err              error
 	)
@@ -209,7 +213,7 @@ func (se *SumologicExtension) getCredentials(ctx context.Context) (CollectorCred
 	if se.credentialsStore.Check(se.hashKey) {
 		colCreds, err = se.credentialsStore.Get(se.hashKey)
 		if err != nil {
-			return CollectorCredentials{}, false, err
+			return credentials.CollectorCredentials{}, false, err
 		}
 		se.collectorName = colCreds.CollectorName
 		if !se.conf.Clobber {
@@ -226,7 +230,7 @@ func (se *SumologicExtension) getCredentials(ctx context.Context) (CollectorCred
 					"re-registering the collector",
 			)
 			if colCreds, err = se.registerCollectorWithBackoff(ctx, se.collectorName); err != nil {
-				return CollectorCredentials{}, false, err
+				return credentials.CollectorCredentials{}, false, err
 			}
 			registrationDone = true
 			if err := se.credentialsStore.Store(se.hashKey, colCreds); err != nil {
@@ -236,7 +240,7 @@ func (se *SumologicExtension) getCredentials(ctx context.Context) (CollectorCred
 	} else {
 		se.logger.Info("Locally stored credentials not found, registering the collector")
 		if colCreds, err = se.registerCollectorWithBackoff(ctx, se.collectorName); err != nil {
-			return CollectorCredentials{}, false, err
+			return credentials.CollectorCredentials{}, false, err
 		}
 		registrationDone = true
 		if err := se.credentialsStore.Store(se.hashKey, colCreds); err != nil {
@@ -249,10 +253,10 @@ func (se *SumologicExtension) getCredentials(ctx context.Context) (CollectorCred
 
 // registerCollector registers the collector using registration API and returns
 // the obtained collector credentials.
-func (se *SumologicExtension) registerCollector(ctx context.Context, collectorName string) (CollectorCredentials, error) {
+func (se *SumologicExtension) registerCollector(ctx context.Context, collectorName string) (credentials.CollectorCredentials, error) {
 	u, err := url.Parse(se.baseUrl)
 	if err != nil {
-		return CollectorCredentials{}, err
+		return credentials.CollectorCredentials{}, err
 	}
 	u.Path = registerUrl
 
@@ -260,7 +264,7 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 	// hostname in request?
 	hostname, err := os.Hostname()
 	if err != nil {
-		return CollectorCredentials{}, fmt.Errorf("cannot get hostname: %w", err)
+		return credentials.CollectorCredentials{}, fmt.Errorf("cannot get hostname: %w", err)
 	}
 
 	var buff bytes.Buffer
@@ -274,16 +278,16 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 		Clobber:       se.conf.Clobber,
 		TimeZone:      se.conf.TimeZone,
 	}); err != nil {
-		return CollectorCredentials{}, err
+		return credentials.CollectorCredentials{}, err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), &buff)
 	if err != nil {
-		return CollectorCredentials{}, err
+		return credentials.CollectorCredentials{}, err
 	}
 
 	addClientCredentials(req,
-		credentials{
+		accessCredentials{
 			AccessID:  se.conf.Credentials.AccessID,
 			AccessKey: se.conf.Credentials.AccessKey,
 		},
@@ -299,7 +303,7 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 	res, err := client.Do(req)
 	if err != nil {
 		se.logger.Warn("Collector registration HTTP request failed", zap.Error(err))
-		return CollectorCredentials{}, fmt.Errorf("failed to register the collector: %w", err)
+		return credentials.CollectorCredentials{}, fmt.Errorf("failed to register the collector: %w", err)
 	}
 
 	defer res.Body.Close()
@@ -317,7 +321,7 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 
 	var resp api.OpenRegisterResponsePayload
 	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
-		return CollectorCredentials{}, err
+		return credentials.CollectorCredentials{}, err
 	}
 
 	se.logger.Info("Collector registered",
@@ -325,7 +329,7 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 		zap.String(collectorNameField, resp.CollectorName),
 		zap.String(collectorCredentialIdField, resp.CollectorCredentialId),
 	)
-	return CollectorCredentials{
+	return credentials.CollectorCredentials{
 		CollectorName: collectorName,
 		Credentials:   resp,
 		ApiBaseUrl:    se.baseUrl,
@@ -334,17 +338,17 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 
 // handleRegistrationError handles the collector registration errors and returns
 // appropriate error for backoff handling and logging purposes.
-func (se *SumologicExtension) handleRegistrationError(res *http.Response) (CollectorCredentials, error) {
+func (se *SumologicExtension) handleRegistrationError(res *http.Response) (credentials.CollectorCredentials, error) {
 	var errResponse api.ErrorResponsePayload
 	if err := json.NewDecoder(res.Body).Decode(&errResponse); err != nil {
 		var buff bytes.Buffer
 		if _, errCopy := io.Copy(&buff, res.Body); errCopy != nil {
-			return CollectorCredentials{}, fmt.Errorf(
+			return credentials.CollectorCredentials{}, fmt.Errorf(
 				"failed to read the collector registration response body, status code: %d, err: %w",
 				res.StatusCode, errCopy,
 			)
 		}
-		return CollectorCredentials{}, fmt.Errorf(
+		return credentials.CollectorCredentials{}, fmt.Errorf(
 			"failed to decode collector registration response body: %s, status code: %d, err: %w",
 			buff.String(), res.StatusCode, err,
 		)
@@ -358,20 +362,20 @@ func (se *SumologicExtension) handleRegistrationError(res *http.Response) (Colle
 
 	// Return unrecoverable error for 4xx status codes except 429
 	if res.StatusCode >= 400 && res.StatusCode < 500 && res.StatusCode != 429 {
-		return CollectorCredentials{}, backoff.Permanent(fmt.Errorf(
+		return credentials.CollectorCredentials{}, backoff.Permanent(fmt.Errorf(
 			"failed to register the collector, got HTTP status code: %d",
 			res.StatusCode,
 		))
 	}
 
-	return CollectorCredentials{}, fmt.Errorf(
+	return credentials.CollectorCredentials{}, fmt.Errorf(
 		"failed to register the collector, got HTTP status code: %d", res.StatusCode,
 	)
 }
 
 // callRegisterWithBackoff calls registration using exponential backoff algorithm
 // this loosely base on backoff.Retry function
-func (se *SumologicExtension) registerCollectorWithBackoff(ctx context.Context, collectorName string) (CollectorCredentials, error) {
+func (se *SumologicExtension) registerCollectorWithBackoff(ctx context.Context, collectorName string) (credentials.CollectorCredentials, error) {
 	se.backOff.Reset()
 	for {
 		creds, err := se.registerCollector(ctx, collectorName)
@@ -382,7 +386,7 @@ func (se *SumologicExtension) registerCollectorWithBackoff(ctx context.Context, 
 		nbo := se.backOff.NextBackOff()
 		// Return error if backoff reaches the limit or uncoverable error is spotted
 		if _, ok := err.(*backoff.PermanentError); nbo == se.backOff.Stop || ok {
-			return CollectorCredentials{}, fmt.Errorf("collector registration failed: %w", err)
+			return credentials.CollectorCredentials{}, fmt.Errorf("collector registration failed: %w", err)
 		}
 
 		t := time.NewTimer(nbo)
@@ -391,7 +395,7 @@ func (se *SumologicExtension) registerCollectorWithBackoff(ctx context.Context, 
 		select {
 		case <-t.C:
 		case <-ctx.Done():
-			return CollectorCredentials{}, fmt.Errorf("collector registration cancelled: %w", ctx.Err())
+			return credentials.CollectorCredentials{}, fmt.Errorf("collector registration cancelled: %w", ctx.Err())
 		}
 	}
 }
@@ -516,7 +520,7 @@ func addCollectorCredentials(req *http.Request, collectorCredentialId string, co
 	req.Header.Add("Authorization", "Basic "+token)
 }
 
-func addClientCredentials(req *http.Request, credentials credentials) {
+func addClientCredentials(req *http.Request, credentials accessCredentials) {
 	token := base64.StdEncoding.EncodeToString(
 		[]byte(credentials.AccessID + ":" + credentials.AccessKey),
 	)

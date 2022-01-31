@@ -16,13 +16,13 @@ package sumologicextension
 
 import (
 	"context"
-	"os"
-	"path"
 
 	"github.com/cenkalti/backoff"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/extension/extensionhelper"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/credentials"
 )
 
 const (
@@ -41,11 +41,10 @@ func NewFactory() component.ExtensionFactory {
 }
 
 func createDefaultConfig() config.Extension {
-	homePath, err := os.UserHomeDir()
+	defaultCredsPath, err := credentials.GetDefaultCollectorCredentialsDirectory()
 	if err != nil {
 		return nil
 	}
-	defaultCredsPath := path.Join(homePath, collectorCredentialsDirectory)
 
 	return &Config{
 		ExtensionSettings:             config.NewExtensionSettings(config.NewComponentID(typeStr)),

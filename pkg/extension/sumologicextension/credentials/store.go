@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package sumologicextension
+package credentials
 
 import (
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/api"
@@ -34,8 +34,8 @@ type CollectorCredentials struct {
 	ApiBaseUrl string `json:"apiBaseUrl"`
 }
 
-// CredentialsStore is an interface to get collector authentication data
-type CredentialsStore interface {
+// Store is an interface to get collector authentication data
+type Store interface {
 	// Check checks if collector credentials exist under the specified key.
 	Check(key string) bool
 

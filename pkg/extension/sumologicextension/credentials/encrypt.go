@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package sumologicextension
+package credentials
 
 import (
 	"crypto/aes"
@@ -24,8 +24,8 @@ import (
 	"io"
 )
 
-// hash returns an md5 hashed string of provided key and an error.
-func hash(key string) (string, error) {
+// Hash returns an md5 hashed string of provided key and an error.
+func Hash(key string) (string, error) {
 	hasher := md5.New()
 	if _, err := hasher.Write([]byte(key)); err != nil {
 		return "", err
@@ -35,7 +35,7 @@ func hash(key string) (string, error) {
 
 // encrypt encrypts provided byte slice with AES using the passphrase
 func encrypt(data []byte, passphrase string) ([]byte, error) {
-	h, err := hash(passphrase)
+	h, err := Hash(passphrase)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func encrypt(data []byte, passphrase string) ([]byte, error) {
 
 // decrypt decrypts provided byte slice with AES using the passphrase.
 func decrypt(data []byte, passphrase string) ([]byte, error) {
-	h, err := hash(passphrase)
+	h, err := Hash(passphrase)
 	if err != nil {
 		return nil, err
 	}
