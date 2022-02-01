@@ -33,32 +33,45 @@ func _getHasher() Hasher {
 	return sha256.New()
 }
 
-// Hash hashes the provided string using sha256 and it returns the hash and an error.
-func Hash(key string) (string, error) {
-	hasher := _getHasher()
-	if _, err := hasher.Write([]byte(key)); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(hasher.Sum(nil)), nil
-}
+const (
+	filenamePrefix      = "filename"
+	encryptionKeyPrefix = "encryption"
+)
 
 type Hasher interface {
 	Write(p []byte) (n int, err error)
 	Sum(b []byte) []byte
 }
 
-// HashWith hashes the provided string using provided hasher.
-// It returns the hash and an error.
-func HashWith(hasher Hasher, key string) (string, error) {
-	if _, err := hasher.Write([]byte(key)); err != nil {
+func hashWith(hasher Hasher, key []byte) (string, error) {
+	if _, err := hasher.Write(key); err != nil {
 		return "", err
 	}
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-// passphraseToKey creates a 32 bytes long key from the provided passphrase.
-func passphraseToKey(hasher Hasher, passphrase string) ([]byte, error) {
-	h, err := HashWith(hasher, passphrase)
+// HashKeyToFilename creates a filename using the default hasher and provided key
+// as input. It returns this filename and an error.
+func HashKeyToFilename(key string) (string, error) {
+	return HashKeyToFilenameWith(_getHasher(), key)
+}
+
+// HashKeyToFilenameWith creates a filename using the provided key as input and
+// using the provided hasher.
+func HashKeyToFilenameWith(hasher Hasher, key string) (string, error) {
+	return hashWith(hasher, []byte(filenamePrefix+key))
+}
+
+// HashKeyToEncryptionKey creates an encryption key using a default hasher.
+// It returns the created key and an error.
+func HashKeyToEncryptionKey(key string) ([]byte, error) {
+	return HashKeyToEncryptionKeyWith(_getHasher(), key)
+}
+
+// HashKeyToEncryptionKeyWith creates a 32 bytes long key from the provided
+// key using the provided hasher.
+func HashKeyToEncryptionKeyWith(hasher Hasher, key string) ([]byte, error) {
+	h, err := hashWith(hasher, []byte(encryptionKeyPrefix+key))
 	if err != nil {
 		return nil, err
 	}
@@ -66,14 +79,10 @@ func passphraseToKey(hasher Hasher, passphrase string) ([]byte, error) {
 	return b[:32], nil
 }
 
-// encrypt encrypts provided byte slice with AES using the passphrase.
-func encrypt(data []byte, passphrase string) ([]byte, error) {
-	f := func(hasher Hasher, data []byte, passphrase string) ([]byte, error) {
-		key, err := passphraseToKey(hasher, passphrase)
-		if err != nil {
-			return nil, err
-		}
-		block, err := aes.NewCipher(key)
+// encrypt encrypts provided byte slice with AES using the encryption key.
+func encrypt(data []byte, encryptionKey []byte) ([]byte, error) {
+	f := func(hasher Hasher, data []byte, encryptionKey []byte) ([]byte, error) {
+		block, err := aes.NewCipher(encryptionKey)
 		if err != nil {
 			return nil, err
 		}
@@ -89,25 +98,21 @@ func encrypt(data []byte, passphrase string) ([]byte, error) {
 		return ciphertext, nil
 	}
 
-	if ret, err := f(_getHasher(), data, passphrase); err == nil {
+	if ret, err := f(_getHasher(), data, encryptionKey); err == nil {
 		return ret, nil
 	}
 
-	ret, err := f(_getDeprecatedHasher(), data, passphrase)
+	ret, err := f(_getDeprecatedHasher(), data, encryptionKey)
 	if err == nil {
 		return ret, nil
 	}
 	return nil, err
 }
 
-// decrypt decrypts provided byte slice with AES using the passphrase.
-func decrypt(data []byte, passphrase string) ([]byte, error) {
-	f := func(hasher Hasher, data []byte, passphrase string) ([]byte, error) {
-		key, err := passphraseToKey(hasher, passphrase)
-		if err != nil {
-			return nil, err
-		}
-		block, err := aes.NewCipher(key)
+// decrypt decrypts provided byte slice with AES using the encryptionKey.
+func decrypt(data []byte, encryptionKey []byte) ([]byte, error) {
+	f := func(hasher Hasher, data []byte, encryptionKey []byte) ([]byte, error) {
+		block, err := aes.NewCipher(encryptionKey)
 		if err != nil {
 			return nil, fmt.Errorf("unable tocreate new aes cipher: %w", err)
 		}
@@ -127,11 +132,11 @@ func decrypt(data []byte, passphrase string) ([]byte, error) {
 		return plaintext, nil
 	}
 
-	if ret, err := f(_getHasher(), data, passphrase); err == nil {
+	if ret, err := f(_getHasher(), data, encryptionKey); err == nil {
 		return ret, nil
 	}
 
-	ret, err := f(_getDeprecatedHasher(), data, passphrase)
+	ret, err := f(_getDeprecatedHasher(), data, encryptionKey)
 	if err == nil {
 		return ret, nil
 	}

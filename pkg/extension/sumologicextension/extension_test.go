@@ -215,7 +215,7 @@ func TestStoreCredentials(t *testing.T) {
 		se, err := newSumologicExtension(cfg, logger)
 		require.NoError(t, err)
 		key := createHashKey(cfg)
-		fileName, err := credentials.Hash(key)
+		fileName, err := credentials.HashKeyToFilename(key)
 		require.NoError(t, err)
 		credsPath := path.Join(dir, fileName)
 		require.NoFileExists(t, credsPath)
@@ -241,7 +241,7 @@ func TestStoreCredentials(t *testing.T) {
 		se, err := newSumologicExtension(cfg, zap.NewNop())
 		require.NoError(t, err)
 		key := createHashKey(cfg)
-		fileName, err := credentials.Hash(key)
+		fileName, err := credentials.HashKeyToFilename(key)
 		require.NoError(t, err)
 		credsPath := path.Join(dir, fileName)
 		require.NoFileExists(t, credsPath)
@@ -269,7 +269,7 @@ func TestStoreCredentials(t *testing.T) {
 		se, err := newSumologicExtension(cfg, zap.NewNop())
 		require.NoError(t, err)
 		key := createHashKey(cfg)
-		fileName, err := credentials.Hash(key)
+		fileName, err := credentials.HashKeyToFilename(key)
 		require.NoError(t, err)
 		credsPath := path.Join(dir, fileName)
 		require.NoFileExists(t, credsPath)
@@ -292,9 +292,9 @@ func TestStoreCredentials(t *testing.T) {
 		se, err := newSumologicExtension(cfg, zap.NewNop())
 		require.NoError(t, err)
 		key := createHashKey(cfg)
-		fileName, err := credentials.Hash(key)
+		fileName, err := credentials.HashKeyToFilename(key)
 		require.NoError(t, err)
-		fileNameSha256, err := credentials.HashWith(sha256.New(), key)
+		fileNameSha256, err := credentials.HashKeyToFilenameWith(sha256.New(), key)
 		require.NoError(t, err)
 		require.Equal(t, fileName, fileNameSha256)
 
@@ -305,7 +305,7 @@ func TestStoreCredentials(t *testing.T) {
 		require.FileExists(t, credsPath)
 
 		// Don't create md5 hashed credentials files anymore
-		fileNameMd5, err := credentials.HashWith(md5.New(), key)
+		fileNameMd5, err := credentials.HashKeyToFilenameWith(md5.New(), key)
 		require.NoError(t, err)
 		credsPathMd5 := path.Join(dir, fileNameMd5)
 		require.NoFileExists(t, credsPathMd5)
@@ -380,7 +380,7 @@ func TestStoreCredentials_PreexistingCredentialsAreUsed(t *testing.T) {
 	se, err := newSumologicExtension(cfg, logger)
 	require.NoError(t, err)
 
-	fileName, err := credentials.Hash(hashKey)
+	fileName, err := credentials.HashKeyToFilename(hashKey)
 	require.NoError(t, err)
 	credsPath := path.Join(dir, fileName)
 	// Credentials file exists before starting the extension because we created
@@ -392,7 +392,7 @@ func TestStoreCredentials_PreexistingCredentialsAreUsed(t *testing.T) {
 	require.FileExists(t, credsPath)
 
 	// Don't create md5 hashed credentials files anymore
-	fileNameMd5, err := credentials.HashWith(md5.New(), hashKey)
+	fileNameMd5, err := credentials.HashKeyToFilenameWith(md5.New(), hashKey)
 	require.NoError(t, err)
 	credsPathMd5 := path.Join(dir, fileNameMd5)
 	require.NoFileExists(t, credsPathMd5)
@@ -478,7 +478,7 @@ func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T
 	se1, err := newSumologicExtension(cfg1, logger1)
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, se1.Shutdown(context.Background())) })
-	fileName1, err := credentials.Hash(createHashKey(cfg1))
+	fileName1, err := credentials.HashKeyToFilename(createHashKey(cfg1))
 	require.NoError(t, err)
 	credsPath1 := path.Join(dir1, fileName1)
 	require.NoFileExists(t, credsPath1)
@@ -488,7 +488,7 @@ func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T
 	se2, err := newSumologicExtension(cfg2, logger2)
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, se2.Shutdown(context.Background())) })
-	fileName2, err := credentials.Hash(createHashKey(cfg2))
+	fileName2, err := credentials.HashKeyToFilename(createHashKey(cfg2))
 	require.NoError(t, err)
 	credsPath2 := path.Join(dir2, fileName2)
 	require.NoFileExists(t, credsPath2)
