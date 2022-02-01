@@ -77,52 +77,75 @@ func NewLocalFsStore(opts ...LocalFsStoreOpt) (Store, error) {
 // Check checks if collector credentials can be found under a name being a hash
 // of provided key inside collectorCredentialsDirectory.
 func (cr LocalFsStore) Check(key string) bool {
-	filenameHash, err := Hash(key)
-	if err != nil {
-		return false
+	f := func(hasher Hasher, key string) bool {
+		filenameHash, err := HashWith(hasher, key)
+		if err != nil {
+			return false
+		}
+		path := path.Join(cr.collectorCredentialsDirectory, filenameHash)
+		if _, err := os.Stat(path); err != nil {
+			return false
+		}
+		return true
 	}
-	path := path.Join(cr.collectorCredentialsDirectory, filenameHash)
-	if _, err := os.Stat(path); err != nil {
-		return false
+
+	if f(_getHasher(), key) {
+		return true
 	}
-	return true
+	if f(_getDeprecatedHasher(), key) {
+		return true
+	}
+
+	return false
 }
 
 // Get retrieves collector credentials stored in local file system and then
 // decrypts it using a hash of provided key.
 func (cr LocalFsStore) Get(key string) (CollectorCredentials, error) {
-	filenameHash, err := Hash(key)
-	if err != nil {
-		return CollectorCredentials{}, err
+	f := func(hasher Hasher, key string) (CollectorCredentials, error) {
+		filenameHash, err := HashWith(hasher, key)
+		if err != nil {
+			return CollectorCredentials{}, err
+		}
+
+		path := path.Join(cr.collectorCredentialsDirectory, filenameHash)
+		creds, err := os.Open(path)
+		if err != nil {
+			return CollectorCredentials{}, err
+		}
+		defer creds.Close()
+
+		encryptedCreds, err := ioutil.ReadAll(creds)
+		if err != nil {
+			return CollectorCredentials{}, err
+		}
+
+		collectorCreds, err := decrypt(encryptedCreds, key)
+		if err != nil {
+			return CollectorCredentials{}, err
+		}
+
+		var credentialsInfo CollectorCredentials
+		if err = json.Unmarshal(collectorCreds, &credentialsInfo); err != nil {
+			return CollectorCredentials{}, err
+		}
+
+		cr.logger.Info("Collector registration credentials retrieved from local fs",
+			zap.String("path", path),
+		)
+
+		return credentialsInfo, nil
 	}
 
-	path := path.Join(cr.collectorCredentialsDirectory, filenameHash)
-	creds, err := os.Open(path)
-	if err != nil {
-		return CollectorCredentials{}, err
-	}
-	defer creds.Close()
-
-	encryptedCreds, err := ioutil.ReadAll(creds)
-	if err != nil {
-		return CollectorCredentials{}, err
+	if creds, err := f(_getHasher(), key); err == nil {
+		return creds, nil
 	}
 
-	collectorCreds, err := decrypt(encryptedCreds, key)
-	if err != nil {
-		return CollectorCredentials{}, err
+	creds, err := f(_getDeprecatedHasher(), key)
+	if err == nil {
+		return creds, nil
 	}
-
-	var credentialsInfo CollectorCredentials
-	if err = json.Unmarshal(collectorCreds, &credentialsInfo); err != nil {
-		return CollectorCredentials{}, err
-	}
-
-	cr.logger.Info("Collector registration credentials retrieved from local fs",
-		zap.String("path", path),
-	)
-
-	return credentialsInfo, nil
+	return CollectorCredentials{}, err
 }
 
 // Store stores collector credentials in a file in directory as specified
@@ -133,32 +156,44 @@ func (cr LocalFsStore) Store(key string, creds CollectorCredentials) error {
 		return err
 	}
 
-	filenameHash, err := Hash(key)
-	if err != nil {
-		return err
-	}
-	path := path.Join(cr.collectorCredentialsDirectory, filenameHash)
-	collectorCreds, err := json.Marshal(creds)
-	if err != nil {
-		return err
-	}
+	f := func(hasher Hasher, key string, creds CollectorCredentials) error {
+		filenameHash, err := HashWith(hasher, key)
+		if err != nil {
+			return err
+		}
+		path := path.Join(cr.collectorCredentialsDirectory, filenameHash)
+		collectorCreds, err := json.Marshal(creds)
+		if err != nil {
+			return fmt.Errorf("failed marshalling collector credentials: %w", err)
+		}
 
-	encryptedCreds, err := encrypt(collectorCreds, key)
-	if err != nil {
-		return err
-	}
+		encryptedCreds, err := encrypt(collectorCreds, key)
+		if err != nil {
+			return err
+		}
 
-	if err = os.WriteFile(path, encryptedCreds, 0600); err != nil {
-		return fmt.Errorf("failed to save credentials file '%s': %w",
-			path, err,
+		if err = os.WriteFile(path, encryptedCreds, 0600); err != nil {
+			return fmt.Errorf("failed to save credentials file '%s': %w",
+				path, err,
+			)
+		}
+
+		cr.logger.Info("Collector registration credentials stored locally",
+			zap.String("path", path),
 		)
+
+		return nil
 	}
 
-	cr.logger.Info("Collector registration credentials stored locally",
-		zap.String("path", path),
-	)
+	if err := f(_getHasher(), key, creds); err == nil {
+		return nil
+	}
 
-	return nil
+	err := f(_getDeprecatedHasher(), key, creds)
+	if err == nil {
+		return nil
+	}
+	return err
 }
 
 // ensureDirExists checks if the specified directory exists,

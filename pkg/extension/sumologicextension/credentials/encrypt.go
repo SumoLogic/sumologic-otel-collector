@@ -19,64 +19,121 @@ import (
 	"crypto/cipher"
 	"crypto/md5"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
 )
 
-// Hash returns an md5 hashed string of provided key and an error.
+func _getDeprecatedHasher() Hasher {
+	return md5.New()
+}
+
+func _getHasher() Hasher {
+	return sha256.New()
+}
+
+// Hash hashes the provided string using sha256 and it returns the hash and an error.
 func Hash(key string) (string, error) {
-	hasher := md5.New()
+	hasher := _getHasher()
 	if _, err := hasher.Write([]byte(key)); err != nil {
 		return "", err
 	}
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-// encrypt encrypts provided byte slice with AES using the passphrase
+type Hasher interface {
+	Write(p []byte) (n int, err error)
+	Sum(b []byte) []byte
+}
+
+// HashWith hashes the provided string using provided hasher.
+// It returns the hash and an error.
+func HashWith(hasher Hasher, key string) (string, error) {
+	if _, err := hasher.Write([]byte(key)); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
+// passphraseToKey creates a 32 bytes long key from the provided passphrase.
+func passphraseToKey(hasher Hasher, passphrase string) ([]byte, error) {
+	h, err := HashWith(hasher, passphrase)
+	if err != nil {
+		return nil, err
+	}
+	b := []byte(h)
+	return b[:32], nil
+}
+
+// encrypt encrypts provided byte slice with AES using the passphrase.
 func encrypt(data []byte, passphrase string) ([]byte, error) {
-	h, err := Hash(passphrase)
-	if err != nil {
-		return nil, err
+	f := func(hasher Hasher, data []byte, passphrase string) ([]byte, error) {
+		key, err := passphraseToKey(hasher, passphrase)
+		if err != nil {
+			return nil, err
+		}
+		block, err := aes.NewCipher(key)
+		if err != nil {
+			return nil, err
+		}
+		gcm, err := cipher.NewGCM(block)
+		if err != nil {
+			return nil, err
+		}
+		nonce := make([]byte, gcm.NonceSize())
+		if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+			return nil, err
+		}
+		ciphertext := gcm.Seal(nonce, nonce, data, nil)
+		return ciphertext, nil
 	}
-	block, err := aes.NewCipher([]byte(h))
-	if err != nil {
-		return nil, err
+
+	if ret, err := f(_getHasher(), data, passphrase); err == nil {
+		return ret, nil
 	}
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
+
+	ret, err := f(_getDeprecatedHasher(), data, passphrase)
+	if err == nil {
+		return ret, nil
 	}
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
-	}
-	ciphertext := gcm.Seal(nonce, nonce, data, nil)
-	return ciphertext, nil
+	return nil, err
 }
 
 // decrypt decrypts provided byte slice with AES using the passphrase.
 func decrypt(data []byte, passphrase string) ([]byte, error) {
-	h, err := Hash(passphrase)
-	if err != nil {
-		return nil, err
+	f := func(hasher Hasher, data []byte, passphrase string) ([]byte, error) {
+		key, err := passphraseToKey(hasher, passphrase)
+		if err != nil {
+			return nil, err
+		}
+		block, err := aes.NewCipher(key)
+		if err != nil {
+			return nil, fmt.Errorf("unable tocreate new aes cipher: %w", err)
+		}
+		gcm, err := cipher.NewGCM(block)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create new cipher gcm: %w", err)
+		}
+		nonceSize := gcm.NonceSize()
+		if nonceSize > len(data) {
+			return nil, fmt.Errorf("unable to decrypt credentials")
+		}
+		nonce, ciphertext := data[:nonceSize], data[nonceSize:]
+		plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+		if err != nil {
+			return nil, fmt.Errorf("unable to decrypt: %w", err)
+		}
+		return plaintext, nil
 	}
-	block, err := aes.NewCipher([]byte(h))
-	if err != nil {
-		return nil, err
+
+	if ret, err := f(_getHasher(), data, passphrase); err == nil {
+		return ret, nil
 	}
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
+
+	ret, err := f(_getDeprecatedHasher(), data, passphrase)
+	if err == nil {
+		return ret, nil
 	}
-	nonceSize := gcm.NonceSize()
-	if nonceSize > len(data) {
-		return nil, fmt.Errorf("unable to decrypt credentials")
-	}
-	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
-	if err != nil {
-		return nil, err
-	}
-	return plaintext, nil
+	return nil, err
 }

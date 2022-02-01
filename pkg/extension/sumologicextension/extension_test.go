@@ -16,6 +16,8 @@ package sumologicextension
 
 import (
 	"context"
+	"crypto/md5"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
 	"net/http"
@@ -193,6 +195,9 @@ func TestStoreCredentials(t *testing.T) {
 		return cfg
 	}
 
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+
 	t.Run("dir does not exist", func(t *testing.T) {
 		dir, err := os.MkdirTemp("", "otelcol-sumo-store-credentials-test-*")
 		require.NoError(t, err)
@@ -207,7 +212,7 @@ func TestStoreCredentials(t *testing.T) {
 		// Ensure the directory doesn't exist before running the extension
 		require.NoError(t, os.RemoveAll(dir))
 
-		se, err := newSumologicExtension(cfg, zap.NewNop())
+		se, err := newSumologicExtension(cfg, logger)
 		require.NoError(t, err)
 		key := createHashKey(cfg)
 		fileName, err := credentials.Hash(key)
@@ -271,6 +276,39 @@ func TestStoreCredentials(t *testing.T) {
 		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 		require.NoError(t, se.Shutdown(context.Background()))
 		require.FileExists(t, credsPath)
+	})
+
+	t.Run("by default use sha256 for hashing", func(t *testing.T) {
+		dir, err := os.MkdirTemp("", "otelcol-sumo-store-credentials-test-*")
+		require.NoError(t, err)
+		t.Cleanup(func() { os.RemoveAll(dir) })
+
+		srv := getServer()
+		t.Cleanup(func() { srv.Close() })
+
+		cfg := getConfig(srv.URL)
+		cfg.CollectorCredentialsDirectory = dir
+
+		se, err := newSumologicExtension(cfg, zap.NewNop())
+		require.NoError(t, err)
+		key := createHashKey(cfg)
+		fileName, err := credentials.Hash(key)
+		require.NoError(t, err)
+		fileNameSha256, err := credentials.HashWith(sha256.New(), key)
+		require.NoError(t, err)
+		require.Equal(t, fileName, fileNameSha256)
+
+		credsPath := path.Join(dir, fileName)
+		require.NoFileExists(t, credsPath)
+		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+		require.NoError(t, se.Shutdown(context.Background()))
+		require.FileExists(t, credsPath)
+
+		// Don't create md5 hashed credentials files anymore
+		fileNameMd5, err := credentials.HashWith(md5.New(), key)
+		require.NoError(t, err)
+		credsPathMd5 := path.Join(dir, fileNameMd5)
+		require.NoFileExists(t, credsPathMd5)
 	})
 }
 
@@ -343,7 +381,13 @@ func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T
 	cfg2 := getConfig(srv2.URL)
 	cfg2.CollectorCredentialsDirectory = dir2
 
-	se1, err := newSumologicExtension(cfg1, zap.NewNop())
+	logger1, err := zap.NewDevelopment(zap.Fields(zap.Int("#", 1)))
+	require.NoError(t, err)
+
+	logger2, err := zap.NewDevelopment(zap.Fields(zap.Int("#", 2)))
+	require.NoError(t, err)
+
+	se1, err := newSumologicExtension(cfg1, logger1)
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, se1.Shutdown(context.Background())) })
 	fileName1, err := credentials.Hash(createHashKey(cfg1))
@@ -353,7 +397,7 @@ func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T
 	require.NoError(t, se1.Start(context.Background(), componenttest.NewNopHost()))
 	require.FileExists(t, credsPath1)
 
-	se2, err := newSumologicExtension(cfg2, zap.NewNop())
+	se2, err := newSumologicExtension(cfg2, logger2)
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, se2.Shutdown(context.Background())) })
 	fileName2, err := credentials.Hash(createHashKey(cfg2))
