@@ -312,6 +312,94 @@ func TestStoreCredentials(t *testing.T) {
 	})
 }
 
+func TestStoreCredentials_PreexistingCredentialsAreUsed(t *testing.T) {
+	t.Parallel()
+
+	var reqCount int32
+	getServer := func() *httptest.Server {
+		return httptest.NewServer(http.HandlerFunc(
+			func(w http.ResponseWriter, req *http.Request) {
+				reqNum := atomic.AddInt32(&reqCount, 1)
+
+				switch reqNum {
+				// heartbeat
+				case 1:
+					require.Equal(t, heartbeatUrl, req.URL.Path)
+					w.WriteHeader(204)
+
+				// should not produce any more requests
+				default:
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+			}))
+	}
+
+	getConfig := func(url string) *Config {
+		cfg := createDefaultConfig().(*Config)
+		cfg.CollectorName = "collector_name"
+		cfg.ExtensionSettings = config.ExtensionSettings{}
+		cfg.ApiBaseUrl = url
+		cfg.Credentials.AccessID = "dummy_access_id"
+		cfg.Credentials.AccessKey = "dummy_access_key"
+		return cfg
+	}
+
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+
+	dir, err := os.MkdirTemp("", "otelcol-sumo-store-credentials-test-*")
+	require.NoError(t, err)
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	t.Logf("Using dir: %s", dir)
+
+	store, err := credentials.NewLocalFsStore(
+		credentials.WithCredentialsDirectory(dir),
+		credentials.WithLogger(logger),
+	)
+	require.NoError(t, err)
+
+	srv := getServer()
+	t.Cleanup(func() { srv.Close() })
+
+	cfg := getConfig(srv.URL)
+	cfg.CollectorCredentialsDirectory = dir
+
+	hashKey := createHashKey(cfg)
+
+	require.NoError(t,
+		store.Store(hashKey, credentials.CollectorCredentials{
+			CollectorName: "collector_name",
+			Credentials: api.OpenRegisterResponsePayload{
+				CollectorCredentialId:  "collectorId",
+				CollectorCredentialKey: "collectorKey",
+				CollectorId:            "id",
+			},
+		}),
+	)
+
+	se, err := newSumologicExtension(cfg, logger)
+	require.NoError(t, err)
+
+	fileName, err := credentials.Hash(hashKey)
+	require.NoError(t, err)
+	credsPath := path.Join(dir, fileName)
+	// Credentials file exists before starting the extension because we created
+	// it directly via store.Store()
+	require.FileExists(t, credsPath)
+
+	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+	require.NoError(t, se.Shutdown(context.Background()))
+	require.FileExists(t, credsPath)
+
+	// Don't create md5 hashed credentials files anymore
+	fileNameMd5, err := credentials.HashWith(md5.New(), hashKey)
+	require.NoError(t, err)
+	credsPathMd5 := path.Join(dir, fileNameMd5)
+	require.NoFileExists(t, credsPathMd5)
+
+	require.EqualValues(t, atomic.LoadInt32(&reqCount), 1)
+}
+
 func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T) {
 	t.Parallel()
 

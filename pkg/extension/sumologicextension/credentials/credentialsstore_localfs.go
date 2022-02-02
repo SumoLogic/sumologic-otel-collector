@@ -65,8 +65,15 @@ func NewLocalFsStore(opts ...LocalFsStoreOpt) (Store, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		return nil, err
+	}
+
 	store := LocalFsStore{
 		collectorCredentialsDirectory: dir,
+		logger:                        logger,
 	}
 	for _, opt := range opts {
 		opt(&store)
