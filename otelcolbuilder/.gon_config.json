@@ -1,0 +1,14 @@
+{
+  "source" : ["./cmd/otelcol-sumo"],
+  "bundle_id" : "github.com/SumoLogic/sumologic-otel-collector",
+  "apple_id": {
+      "password":  "@env:AC_PASSWORD"
+  },
+  "sign" :{
+      "application_identity" : "26FD4C2B988C5943B40B80149DFDF2D7AA480C8D"
+  },
+  "dmg" :{
+      "output_path":  "otelcol-sumo.dmg",
+      "volume_name":  "otelcol_sumo"
+  }
+}

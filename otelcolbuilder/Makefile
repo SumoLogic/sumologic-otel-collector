@@ -128,6 +128,10 @@ otelcol-sumo-all-sys: otelcol-sumo-darwin_amd64 otelcol-sumo-linux_amd64 otelcol
 otelcol-sumo-darwin_amd64:
 	GOOS=darwin  GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)-darwin_amd64
 
+.PHONY: darwin-sign
+darwin-sign:
+	gon -log-level=debug -log-json ./.gon_config.json
+
 .PHONY: otelcol-sumo-linux_amd64
 otelcol-sumo-linux_amd64:
 	GOOS=linux   GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)-linux_amd64
