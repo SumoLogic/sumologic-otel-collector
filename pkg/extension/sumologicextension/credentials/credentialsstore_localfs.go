@@ -85,7 +85,7 @@ func NewLocalFsStore(opts ...LocalFsStoreOpt) (Store, error) {
 // of provided key inside collectorCredentialsDirectory.
 func (cr LocalFsStore) Check(key string) bool {
 	f := func(hasher Hasher, key string) bool {
-		filenameHash, err := HashWith(hasher, key)
+		filenameHash, err := HashKeyToFilename(key)
 		if err != nil {
 			return false
 		}
@@ -110,7 +110,7 @@ func (cr LocalFsStore) Check(key string) bool {
 // decrypts it using a hash of provided key.
 func (cr LocalFsStore) Get(key string) (CollectorCredentials, error) {
 	f := func(hasher Hasher, key string) (CollectorCredentials, error) {
-		filenameHash, err := HashWith(hasher, key)
+		filenameHash, err := HashKeyToFilename(key)
 		if err != nil {
 			return CollectorCredentials{}, err
 		}
@@ -127,7 +127,12 @@ func (cr LocalFsStore) Get(key string) (CollectorCredentials, error) {
 			return CollectorCredentials{}, err
 		}
 
-		collectorCreds, err := decrypt(encryptedCreds, key)
+		encKey, err := HashKeyToEncryptionKey(key)
+		if err != nil {
+			return CollectorCredentials{}, err
+		}
+
+		collectorCreds, err := decrypt(encryptedCreds, encKey)
 		if err != nil {
 			return CollectorCredentials{}, err
 		}
@@ -164,7 +169,7 @@ func (cr LocalFsStore) Store(key string, creds CollectorCredentials) error {
 	}
 
 	f := func(hasher Hasher, key string, creds CollectorCredentials) error {
-		filenameHash, err := HashWith(hasher, key)
+		filenameHash, err := HashKeyToFilename(key)
 		if err != nil {
 			return err
 		}
@@ -174,7 +179,12 @@ func (cr LocalFsStore) Store(key string, creds CollectorCredentials) error {
 			return fmt.Errorf("failed marshalling collector credentials: %w", err)
 		}
 
-		encryptedCreds, err := encrypt(collectorCreds, key)
+		encKey, err := HashKeyToEncryptionKey(key)
+		if err != nil {
+			return err
+		}
+
+		encryptedCreds, err := encrypt(collectorCreds, encKey)
 		if err != nil {
 			return err
 		}
