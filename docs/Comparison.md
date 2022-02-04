@@ -3,6 +3,7 @@
 - [Syslog](#syslog)
   - [Syslog Receiver](#syslog-receiver)
   - [TCPlog/UDPlog Receiver and Sumo Logic Syslog Processor](#tcplogudplog-receiver-and-sumo-logic-syslog-processor)
+- [Host Metrics](#host-metrics)
 
 ## Syslog
 
