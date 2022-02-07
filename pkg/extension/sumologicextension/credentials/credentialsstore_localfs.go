@@ -21,6 +21,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/hashicorp/go-multierror"
 	"go.uber.org/zap"
 )
 
@@ -211,6 +212,42 @@ func (cr LocalFsStore) Store(key string, creds CollectorCredentials) error {
 		return nil
 	}
 	return err
+}
+
+func (cr LocalFsStore) Delete(key string) error {
+	f := func(hasher Hasher, key string) error {
+		filenameHash, err := HashKeyToFilenameWith(hasher, key)
+		if err != nil {
+			return err
+		}
+
+		path := path.Join(cr.collectorCredentialsDirectory, filenameHash)
+
+		if _, err := os.Stat(path); err != nil {
+			return nil
+		}
+		if err := os.Remove(path); err != nil {
+			return fmt.Errorf("failed to remove credentials file '%s': %w",
+				path, err,
+			)
+		}
+
+		cr.logger.Debug("Collector registration credentials removed",
+			zap.String("path", path),
+		)
+
+		return nil
+	}
+
+	var errResult error
+	if err := f(_getHasher(), key); err != nil {
+		errResult = multierror.Append(errResult, err)
+	}
+	if err := f(_getDeprecatedHasher(), key); err != nil {
+		errResult = multierror.Append(errResult, err)
+	}
+
+	return errResult
 }
 
 // ensureDirExists checks if the specified directory exists,

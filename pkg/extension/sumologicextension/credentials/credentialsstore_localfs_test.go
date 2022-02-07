@@ -15,7 +15,9 @@
 package credentials
 
 import (
+	"io/fs"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -55,4 +57,20 @@ func TestCredentialsStoreLocalFs(t *testing.T) {
 	actual, err := sut.Get(key)
 	require.NoError(t, err)
 	assert.Equal(t, creds, actual)
+
+	require.NoError(t, sut.Delete(key))
+	// Make sure the file got deleted and there is nothing in the credentials store dir.
+	var fileCounter int
+	require.NoError(t,
+		filepath.WalkDir(dir,
+			func(path string, d fs.DirEntry, err error) error {
+				if d.IsDir() {
+					return nil
+				}
+				fileCounter++
+				return nil
+			},
+		),
+	)
+	require.EqualValues(t, fileCounter, 0)
 }
