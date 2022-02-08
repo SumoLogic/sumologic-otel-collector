@@ -11,34 +11,19 @@ Sumo Logic Distro of [OpenTelemetry Collector][otc_link] built with
 **This software is currently in beta and is not recommended for production environments.**
 **If you wish to participate in this beta, please contact your Sumo Logic account team or Sumo Logic Support.**
 
-- [Usage and configuration examples](#usage-and-configuration-examples)
-- [Migration from Sumo Logic Installed Collector](#migration-from-sumo-logic-installed-collector)
-- [Open Telemetry collector builder](#open-telemetry-collector-builder)
+- [Installation](docs/Installation.md)
+- [Configuration](docs/Configuration.md)
+- [Migration from Installed Collector](docs/Migration.md)
+- [Differences between Installed Collector and Opentelemetry Collector](docs/Comparison.md)
+- [Open Telemetry collector builder](./otelcolbuilder/README.md)
 - [Built-in Components](#built-in-components)
   - [Receivers](#receivers)
   - [Processors](#processors)
   - [Exporters](#exporters)
   - [Extensions](#extensions)
-- [Contributing](#contributing)
-
-## Usage and configuration examples
-
-See the [documentation](docs/README.md).
-
-## Migration from Sumo Logic Installed Collector
-
-See the [migration documentation](docs/Migration.md).
-
-## Open Telemetry collector builder
-
-Sumo Logic Distribution of OpenTelemetry uses
-[`opentelemetry-collector-builder`][otcbuilder] in order to produce the collector
-binary.
-
-One can find the details in [here][otcbuilder_dir].
-
-[otcbuilder]: https://github.com/open-telemetry/opentelemetry-collector-builder
-[otcbuilder_dir]: ./otelcolbuilder/README.md
+- [Performance](docs/Performance.md)
+- [Known Issues](docs/KnownIssues.md)
+- [Contributing](#contributing-guide)
 
 ## Built-in Components
 
@@ -206,6 +191,60 @@ OT distro.
 <!-- markdownlint-enable MD013 -->
 <!-- markdownlint-enable MD034 -->
 
-## Contributing
+## Contributing Guide
 
-For contributing guidelines, see [CONTRIBUTING](./CONTRIBUTING.md).
+- [How to build](#how-to-build)
+- [Running Tests](#running-tests)
+
+---
+
+To contribute you will need to ensure you have the following setup:
+
+- working Go environment
+- installed `opentelemetry-collector-builder`
+
+  `opentelemetry-collector-builder` can be installed using following command:
+
+  ```bash
+  cd otelcolbuilder && \
+  sudo make install-builder BUILDER_BIN_PATH=/usr/local/bin/opentelemetry-collector-builder && \
+  cd ..
+  ```
+
+### How to build
+
+```bash
+$ cd otelcolbuilder && make build
+opentelemetry-collector-builder \
+                --config .otelcol-builder.yaml \
+                --output-path ./cmd \
+                --name otelcol-sumo
+2021-05-24T16:29:03.494+0200    INFO    cmd/root.go:99  OpenTelemetry Collector distribution builder    {"version": "dev", "date": "unknown"}
+2021-05-24T16:29:03.498+0200    INFO    builder/main.go:90      Sources created {"path": "./cmd"}
+2021-05-24T16:29:03.612+0200    INFO    builder/main.go:126     Getting go modules
+2021-05-24T16:29:03.957+0200    INFO    builder/main.go:107     Compiling
+2021-05-24T16:29:09.770+0200    INFO    builder/main.go:113     Compiled        {"binary": "./cmd/otelcol-sumo"}
+```
+
+In order to build for a different platform one can use `otelcol-sumo-${platform}_${arch}`
+make targets e.g.:
+
+```bash
+$ cd otelcolbuilder && make otelcol-sumo-linux_arm64
+GOOS=linux   GOARCH=arm64 /Library/Developer/CommandLineTools/usr/bin/make build BINARY_NAME=otelcol-sumo-linux_arm64
+opentelemetry-collector-builder \
+                --config .otelcol-builder.yaml \
+                --output-path ./cmd \
+                --name otelcol-sumo-linux_arm64
+2021-05-24T16:32:11.963+0200    INFO    cmd/root.go:99  OpenTelemetry Collector distribution builder    {"version": "dev", "date": "unknown"}
+2021-05-24T16:32:11.965+0200    INFO    builder/main.go:90      Sources created {"path": "./cmd"}
+2021-05-24T16:32:12.066+0200    INFO    builder/main.go:126     Getting go modules
+2021-05-24T16:32:12.376+0200    INFO    builder/main.go:107     Compiling
+2021-05-24T16:32:37.326+0200    INFO    builder/main.go:113     Compiled        {"binary": "./cmd/otelcol-sumo-linux_arm64"}
+```
+
+### Running Tests
+
+In order to run tests run `make gotest` in root directory of this repository.
+This will run tests in every module from this repo by running `make test` in its
+directory.
