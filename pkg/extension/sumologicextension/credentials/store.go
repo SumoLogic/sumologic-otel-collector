@@ -44,4 +44,7 @@ type Store interface {
 
 	// Store stores the provided collector credentials stored under a specified key.
 	Store(key string, creds CollectorCredentials) error
+
+	// Delete deletes collector credentials stored under the specified key.
+	Delete(key string) error
 }

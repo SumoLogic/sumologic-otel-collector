@@ -148,9 +148,44 @@ func (se *SumologicExtension) validateCredenials(
 
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
 	se.logger.Info(banner)
-	colCreds, registrationDone, err := se.getCredentials(ctx)
+
+	// TODO: refactor this. Ideally separate local and remote credendtials handling.
+	// Some ideas where discussed in:
+	// https://github.com/SumoLogic/sumologic-otel-collector/pull/404
+	colCreds, registrationDone, err := se.handleCredentials(ctx, host)
 	if err != nil {
 		return err
+	}
+
+	if !registrationDone {
+		se.logger.Info("Checking if locally retrieved credentials are still valid...",
+			zap.String(collectorNameField, colCreds.Credentials.CollectorName),
+			zap.String(collectorIdField, colCreds.Credentials.CollectorId),
+		)
+
+		if err := se.validateCredenials(ctx, colCreds.Credentials); err != nil {
+			se.logger.Info("Locally stored credentials invalid. Trying to re-register...")
+			if err = se.credentialsStore.Delete(se.hashKey); err != nil {
+				return err
+			}
+
+			// Credentials might have ended up being invalid or the collector
+			// might have been removed in Sumo.
+			// Fall back to removing the credentials and recreating them.
+			colCreds, _, err = se.handleCredentials(ctx, host)
+			if err != nil {
+				return fmt.Errorf("registration failed: %w", err)
+			}
+			se.logger.Info("Registration finished successfully",
+				zap.String(collectorNameField, colCreds.Credentials.CollectorName),
+				zap.String(collectorIdField, colCreds.Credentials.CollectorId),
+			)
+		} else {
+			se.logger.Info("Local collector credentials all good, starting up the collector",
+				zap.String(collectorNameField, colCreds.Credentials.CollectorName),
+				zap.String(collectorIdField, colCreds.Credentials.CollectorId),
+			)
+		}
 	}
 
 	// Add logger fields based on actual collector name and ID as returned
@@ -160,31 +195,42 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 		zap.String(collectorIdField, colCreds.Credentials.CollectorId),
 	)
 
+	go se.heartbeatLoop()
+
+	return nil
+}
+
+// handleCredentials retrieves the credentials for the collector.
+// It does so by checking the local credentials store and by validating those credentials.
+// In case they are invalid or are not available through local credentials store
+// then it tries to register the collector using the provided access keys.
+func (se *SumologicExtension) handleCredentials(ctx context.Context, host component.Host) (credentials.CollectorCredentials, bool, error) {
+	colCreds, registrationDone, err := se.getCredentials(ctx)
+	if err != nil {
+		return credentials.CollectorCredentials{},
+			registrationDone,
+			err
+	}
+
 	se.registrationInfo = colCreds.Credentials
 
 	se.httpClient, err = se.conf.HTTPClientSettings.ToClient(host.GetExtensions())
 	if err != nil {
-		return fmt.Errorf("couldn't create HTTP client: %w", err)
+		return credentials.CollectorCredentials{},
+			registrationDone,
+			fmt.Errorf("couldn't create HTTP client: %w", err)
 	}
 
 	// Set the transport so that all requests from se.httpClient will contain
 	// the collector credentials.
 	se.httpClient.Transport, err = se.RoundTripper(se.httpClient.Transport)
 	if err != nil {
-		return fmt.Errorf("couldn't create HTTP client transport: %w", err)
+		return credentials.CollectorCredentials{},
+			registrationDone,
+			fmt.Errorf("couldn't create HTTP client transport: %w", err)
 	}
 
-	if !registrationDone {
-		se.logger.Info("Checking if locally retrieved credentials are still valid...")
-		if err := se.validateCredenials(ctx, colCreds.Credentials); err != nil {
-			return fmt.Errorf("locally stored credentials are invalid: %w", err)
-		}
-		se.logger.Info("Local collector credentials all good, starting up the collector")
-	}
-
-	go se.heartbeatLoop()
-
-	return nil
+	return colCreds, registrationDone, nil
 }
 
 // Shutdown is invoked during service shutdown.
