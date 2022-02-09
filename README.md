@@ -210,7 +210,7 @@ To contribute you will need to ensure you have the following setup:
   ```
 
   Which will by default install the builder binary in `${HOME}/bin/opentelemetry-collector-builder`.
-  You can customize it by providing `BUILDER_BIN_PATH` argument.
+  You can customize it by providing the `BUILDER_BIN_PATH` argument.
 
   ```bash
   make -C otelcolbuilder install-builder \
