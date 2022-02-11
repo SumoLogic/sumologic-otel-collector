@@ -1,6 +1,6 @@
 # Comparison between the Installed Collector and OpenTelemetry Collector
 
-#### Delivery Phase 1: “Initial Release”
+## Delivery Phase 1: “Initial Release”
 
 _Expected March 2022_
 
