@@ -119,6 +119,15 @@ func newOwnerProvider(
 	ownerCache.addNamespaceInformer(factory)
 
 	// Only enable ReplicaSet informer when ReplicaSet extraction rule is enabled
+	if extractionRules.DaemonSetName {
+		logger.Debug("adding informer for DaemonSet", zap.String("api_version", "apps/v1"))
+		ownerCache.addOwnerInformer("DaemonSet",
+			factory.Apps().V1().DaemonSets().Informer(),
+			ownerCache.cacheObject,
+			ownerCache.deleteObject)
+	}
+
+	// Only enable ReplicaSet informer when ReplicaSet extraction rule is enabled
 	if extractionRules.ReplicaSetName {
 		logger.Debug("adding informer for ReplicaSet", zap.String("api_version", "apps/v1"))
 		ownerCache.addOwnerInformer("ReplicaSet",

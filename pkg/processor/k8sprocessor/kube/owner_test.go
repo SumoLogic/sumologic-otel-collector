@@ -2,6 +2,7 @@ package kube
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -33,6 +34,7 @@ func waitForWatchToBeEstablished(client *fake.Clientset, resource string) <-chan
 	client.PrependWatchReactor(resource, func(action clienttesting.Action) (handled bool, ret watch.Interface, err error) {
 		gvr := action.GetResource()
 		ns := action.GetNamespace()
+		fmt.Printf("gvr %+v\n", gvr)
 
 		watch, err := client.Tracker().Watch(gvr, ns)
 		if err != nil {
@@ -47,7 +49,7 @@ func waitForWatchToBeEstablished(client *fake.Clientset, resource string) <-chan
 	return ch
 }
 
-func Test_OwnerProvider_GetOwners(t *testing.T) {
+func Test_OwnerProvider_GetOwners_Statefulset(t *testing.T) {
 	c, err := newFakeAPIClientset(k8sconfig.APIConfig{})
 	require.NoError(t, err)
 
@@ -124,6 +126,91 @@ func Test_OwnerProvider_GetOwners(t *testing.T) {
 		}
 
 		if uid := owners[0].UID; uid != "f15f0585-a0bc-43a3-96e4-dd2eace75391" {
+			t.Logf("wrong owner UID: %v", uid)
+			return false
+		}
+
+		return true
+	}, 5*time.Second, 5*time.Millisecond)
+}
+
+func Test_OwnerProvider_GetOwners_Daemonset(t *testing.T) {
+	c, err := newFakeAPIClientset(k8sconfig.APIConfig{})
+	require.NoError(t, err)
+
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+
+	op, err := newOwnerProvider(
+		logger,
+		c,
+		labels.Everything(),
+		fields.Everything(),
+		ExtractionRules{
+			PodUID:             true,
+			PodName:            true,
+			DaemonSetName:      true,
+			Namespace:          true,
+			OwnerLookupEnabled: true,
+			Tags:               NewExtractionFieldTags(),
+		},
+		"kube-system",
+	)
+	require.NoError(t, err)
+
+	client := c.(*fake.Clientset)
+	ch := waitForWatchToBeEstablished(client, "daemonsets")
+
+	op.Start()
+	t.Cleanup(func() {
+		op.Stop()
+	})
+
+	<-ch
+
+	ds, err := c.AppsV1().DaemonSets("kube-system").
+		Create(context.Background(),
+			&v1.DaemonSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-daemonset",
+					Namespace: "kube-system",
+					UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75395",
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "StatefulSet",
+				},
+			},
+			metav1.CreateOptions{},
+		)
+	require.NoError(t, err)
+
+	pod := &api_v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-pod",
+			Namespace: "kube-system",
+			UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75396",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Kind: ds.Kind,
+					Name: ds.Name,
+					UID:  ds.UID,
+				},
+			},
+		},
+	}
+
+	_, err = c.CoreV1().Pods("kube-system").
+		Create(context.Background(), pod, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	assert.Eventually(t, func() bool {
+		owners := op.GetOwners(pod)
+		if len(owners) != 1 {
+			t.Logf("owners: %v", owners)
+			return false
+		}
+
+		if uid := owners[0].UID; uid != "f15f0585-a0bc-43a3-96e4-dd2eace75395" {
 			t.Logf("wrong owner UID: %v", uid)
 			return false
 		}
