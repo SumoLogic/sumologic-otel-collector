@@ -35,34 +35,32 @@ const (
 	facilityRegexp = `^<(?P<number>\d+)>`
 )
 
-var (
-	facilities = map[int]string{
-		0:  "kernel messages",
-		1:  "user-level messages",
-		2:  "mail system",
-		3:  "system daemons",
-		4:  "security/authorization messages",
-		5:  "messages generated internally by syslogd",
-		6:  "line printer subsystem",
-		7:  "network news subsystem",
-		8:  "UUCP subsystem",
-		9:  "clock daemon",
-		10: "security/authorization messages",
-		11: "FTP daemon",
-		12: "NTP subsystem",
-		13: "log audit",
-		14: "log alert",
-		15: "clock daemon",
-		16: "local use 0  (local0)",
-		17: "local use 1  (local1)",
-		18: "local use 2  (local2)",
-		19: "local use 3  (local3)",
-		20: "local use 4  (local4)",
-		21: "local use 5  (local5)",
-		22: "local use 6  (local6)",
-		23: "local use 7  (local7)",
-	}
-)
+var facilities = map[int]string{
+	0:  "kernel messages",
+	1:  "user-level messages",
+	2:  "mail system",
+	3:  "system daemons",
+	4:  "security/authorization messages",
+	5:  "messages generated internally by syslogd",
+	6:  "line printer subsystem",
+	7:  "network news subsystem",
+	8:  "UUCP subsystem",
+	9:  "clock daemon",
+	10: "security/authorization messages",
+	11: "FTP daemon",
+	12: "NTP subsystem",
+	13: "log audit",
+	14: "log alert",
+	15: "clock daemon",
+	16: "local use 0  (local0)",
+	17: "local use 1  (local1)",
+	18: "local use 2  (local2)",
+	19: "local use 3  (local3)",
+	20: "local use 4  (local4)",
+	21: "local use 5  (local5)",
+	22: "local use 6  (local6)",
+	23: "local use 7  (local7)",
+}
 
 func newSumologicSyslogProcessor(cfg *Config) (*sumologicSyslogProcessor, error) {
 	r, err := regexp.Compile(facilityRegexp)
@@ -90,7 +88,7 @@ func (ssp *sumologicSyslogProcessor) ProcessLogs(ctx context.Context, ld pdata.L
 			ill := ills.At(j)
 
 			// iterate over Logs
-			logs := ill.Logs()
+			logs := ill.LogRecords()
 			for k := 0; k < logs.Len(); k++ {
 				var (
 					value string = syslogSource
