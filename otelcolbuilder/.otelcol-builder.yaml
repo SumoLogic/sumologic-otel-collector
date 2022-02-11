@@ -1,4 +1,5 @@
 dist:
+  name: otelcol-sumo
   description: Sumo Logic OpenTelemetry Collector distribution
 
   # the module name for the new distribution, following Go mod conventions. Optional, but recommended.
