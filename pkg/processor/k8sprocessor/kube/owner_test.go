@@ -2,7 +2,6 @@ package kube
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -34,7 +33,6 @@ func waitForWatchToBeEstablished(client *fake.Clientset, resource string) <-chan
 	client.PrependWatchReactor(resource, func(action clienttesting.Action) (handled bool, ret watch.Interface, err error) {
 		gvr := action.GetResource()
 		ns := action.GetNamespace()
-		fmt.Printf("gvr %+v\n", gvr)
 
 		watch, err := client.Tracker().Watch(gvr, ns)
 		if err != nil {
