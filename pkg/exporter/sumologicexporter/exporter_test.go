@@ -38,7 +38,7 @@ import (
 
 func LogRecordsToLogs(records []pdata.LogRecord) pdata.Logs {
 	logs := pdata.NewLogs()
-	logsSlice := logs.ResourceLogs().AppendEmpty().InstrumentationLibraryLogs().AppendEmpty().Logs()
+	logsSlice := logs.ResourceLogs().AppendEmpty().InstrumentationLibraryLogs().AppendEmpty().LogRecords()
 	for _, record := range records {
 		record.CopyTo(logsSlice.AppendEmpty())
 	}
@@ -233,7 +233,7 @@ func TestResourceMerge(t *testing.T) {
 	test.exp.filter = f
 
 	logs := LogRecordsToLogs(exampleLog())
-	logs.ResourceLogs().At(0).InstrumentationLibraryLogs().At(0).Logs().At(0).Attributes().InsertString("key1", "original_value")
+	logs.ResourceLogs().At(0).InstrumentationLibraryLogs().At(0).LogRecords().At(0).Attributes().InsertString("key1", "original_value")
 	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key1", "overwrite_value")
 	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key2", "additional_value")
 
@@ -689,7 +689,7 @@ func TestPushLogs_DontRemoveSourceAttributes(t *testing.T) {
 	createLogs := func() pdata.Logs {
 		logs := pdata.NewLogs()
 		resourceLogs := logs.ResourceLogs().AppendEmpty()
-		logsSlice := resourceLogs.InstrumentationLibraryLogs().AppendEmpty().Logs()
+		logsSlice := resourceLogs.InstrumentationLibraryLogs().AppendEmpty().LogRecords()
 
 		logRecords := make([]pdata.LogRecord, 2)
 		logRecords[0] = pdata.NewLogRecord()

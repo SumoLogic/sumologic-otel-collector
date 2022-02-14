@@ -214,7 +214,10 @@ func (se *SumologicExtension) handleCredentials(ctx context.Context, host compon
 
 	se.registrationInfo = colCreds.Credentials
 
-	se.httpClient, err = se.conf.HTTPClientSettings.ToClient(host.GetExtensions())
+	se.httpClient, err = se.conf.HTTPClientSettings.ToClient(
+		host.GetExtensions(),
+		component.TelemetrySettings{},
+	)
 	if err != nil {
 		return credentials.CollectorCredentials{},
 			registrationDone,

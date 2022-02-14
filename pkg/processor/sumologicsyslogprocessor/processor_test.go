@@ -43,10 +43,10 @@ func TestProcessLogs(t *testing.T) {
 	ills := rls.InstrumentationLibraryLogs().AppendEmpty()
 
 	for _, line := range lines {
-		lr := ills.Logs().AppendEmpty()
+		lr := ills.LogRecords().AppendEmpty()
 		lr.Body().SetStringVal(line)
 	}
-	ills.Logs().At(1).Attributes().InsertString("facility_name", "pre filled facility")
+	ills.LogRecords().At(1).Attributes().InsertString("facility_name", "pre filled facility")
 
 	ctx := context.Background()
 	processor := &sumologicSyslogProcessor{
@@ -58,7 +58,7 @@ func TestProcessLogs(t *testing.T) {
 	require.NoError(t, err)
 
 	for i, line := range facilities {
-		attrs := result.ResourceLogs().At(0).InstrumentationLibraryLogs().At(0).Logs().At(i).Attributes()
+		attrs := result.ResourceLogs().At(0).InstrumentationLibraryLogs().At(0).LogRecords().At(i).Attributes()
 		attr, ok := attrs.Get("facility_name")
 		require.True(t, ok)
 		assert.Equal(t, line, attr.StringVal())
