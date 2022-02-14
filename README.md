@@ -47,37 +47,37 @@ OT distro.
 
 | Name                                                                     | Source                                                                                                                 |
 |--------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
-| `awscontainerinsightreceiver`                                            | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/awscontainerinsightreceiver    |
-| `awsecscontainermetricsreceiver`                                         | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/awsecscontainermetricsreceiver |
-| `awsxrayreceiver`                                                        | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/awsxrayreceiver                |
-| `carbonreceiver`                                                         | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/carbonreceiver                 |
-| `collectdreceiver`                                                       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/collectdreceiver               |
-| `dockerstatsreceiver`                                                    | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/dockerstatsreceiver            |
-| `dotnetdiagnosticsreceiver`                                              | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/dotnetdiagnosticsreceiver      |
-| `filelogreceiver` [configuration help][filelogreceiver_help]             | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/filelogreceiver                |
-| `fluentforwardreceiver` [configuration help][fluentforwardreceiver_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/fluentforwardreceiver          |
-| `googlecloudspannerreceiver`                                             | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/googlecloudspannerreceiver     |
-| `hostmetricsreceiver` [configuration help][hostmetricsreceiver_help]     | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/hostmetricsreceiver            |
-| `jaegerreceiver` [configuration help][jaegerreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/jaegerreceiver                 |
-| `jmxreceiver`                                                            | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/jmxreceiver                    |
-| `journaldreceiver`                                                       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/journaldreceiver               |
-| `kafkametricsreceiver`                                                   | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/kafkametricsreceiver           |
-| `kafkareceiver`                                                          | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/kafkareceiver                  |
-| `opencensusreceiver` [configuration help][opencensusreceiver_help]       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/opencensusreceiver             |
-| `podmanreceiver`                                                         | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/podmanreceiver                 |
-| `receivercreator`                                                        | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/receivercreator                |
-| `redisreceiver`                                                          | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/redisreceiver                  |
-| `sapmreceiver`                                                           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/sapmreceiver                   |
-| `signalfxreceiver`                                                       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/signalfxreceiver               |
-| `splunkhecreceiver`                                                      | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/splunkhecreceiver              |
-| `syslogreceiver` [configuration help][syslogreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/syslogreceiver                 |
-| `statsdreceiver` [configuration help][statsdreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/statsdreceiver                 |
-| `tcplogreceiver` [configuration help][tcplogreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/tcplogreceiver                 |
-| `udplogreceiver` [configuration help][udplogreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/udplogreceiver                 |
-| `wavefrontreceiver`                                                      | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/wavefrontreceiver              |
-| `windowsperfcountersreceiver`                                            | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/windowsperfcountersreceiver    |
-| `zipkinreceiver` [configuration help][zipkinreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/zipkinreceiver                 |
-| `zookeeperreceiver`                                                      | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/receiver/zookeeperreceiver              |
+| `awscontainerinsightreceiver`                                            | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/awscontainerinsightreceiver    |
+| `awsecscontainermetricsreceiver`                                         | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/awsecscontainermetricsreceiver |
+| `awsxrayreceiver`                                                        | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/awsxrayreceiver                |
+| `carbonreceiver`                                                         | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/carbonreceiver                 |
+| `collectdreceiver`                                                       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/collectdreceiver               |
+| `dockerstatsreceiver`                                                    | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/dockerstatsreceiver            |
+| `dotnetdiagnosticsreceiver`                                              | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/dotnetdiagnosticsreceiver      |
+| `filelogreceiver` [configuration help][filelogreceiver_help]             | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/filelogreceiver                |
+| `fluentforwardreceiver` [configuration help][fluentforwardreceiver_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/fluentforwardreceiver          |
+| `googlecloudspannerreceiver`                                             | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/googlecloudspannerreceiver     |
+| `hostmetricsreceiver` [configuration help][hostmetricsreceiver_help]     | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/hostmetricsreceiver            |
+| `jaegerreceiver` [configuration help][jaegerreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/jaegerreceiver                 |
+| `jmxreceiver`                                                            | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/jmxreceiver                    |
+| `journaldreceiver`                                                       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/journaldreceiver               |
+| `kafkametricsreceiver`                                                   | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/kafkametricsreceiver           |
+| `kafkareceiver`                                                          | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/kafkareceiver                  |
+| `opencensusreceiver` [configuration help][opencensusreceiver_help]       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/opencensusreceiver             |
+| `podmanreceiver`                                                         | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/podmanreceiver                 |
+| `receivercreator`                                                        | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/receivercreator                |
+| `redisreceiver`                                                          | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/redisreceiver                  |
+| `sapmreceiver`                                                           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/sapmreceiver                   |
+| `signalfxreceiver`                                                       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/signalfxreceiver               |
+| `splunkhecreceiver`                                                      | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/splunkhecreceiver              |
+| `syslogreceiver` [configuration help][syslogreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/syslogreceiver                 |
+| `statsdreceiver` [configuration help][statsdreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/statsdreceiver                 |
+| `tcplogreceiver` [configuration help][tcplogreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/tcplogreceiver                 |
+| `udplogreceiver` [configuration help][udplogreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/udplogreceiver                 |
+| `wavefrontreceiver`                                                      | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/wavefrontreceiver              |
+| `windowsperfcountersreceiver`                                            | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/windowsperfcountersreceiver    |
+| `zipkinreceiver` [configuration help][zipkinreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/zipkinreceiver                 |
+| `zookeeperreceiver`                                                      | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/zookeeperreceiver              |
 
 [filelogreceiver_help]: ./docs/Configuration.md#filelog-receiver
 [fluentforwardreceiver_help]: ./docs/Configuration.md#fluent-forward-receiver
@@ -112,25 +112,25 @@ OT distro.
 
 | Name                                                                               | Source                                                                                                                 |
 |------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
-| `attributesprocessor` [configuration help][attributesprocessor_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/processor/attributesprocessor           |
-| `filterprocessor` [configuration help][filterprocessor_help]                       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/processor/filterprocessor               |
-| `groupbyattrsprocessor` [configuration help][groupbyattrsprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/processor/groupbyattrsprocessor         |
-| `groupbytraceprocessor` [configuration help][groupbytraceprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/processor/groupbytraceprocessor         |
-| `metricstransformprocessor` [configuration help][metricstransformprocessor_help]   | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/processor/metricstransformprocessor     |
-| `probabilisticsamplerprocessor`                                                    | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/processor/probabilisticsamplerprocessor |
-| `resourcedetectionprocessor` [configuration help][resourcedetectionprocessor_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/processor/resourcedetectionprocessor    |
-| `resourceprocessor` [configuration help][resourceprocessor_help]                   | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/processor/resourceprocessor             |
-| `routingprocessor` [configuration help][routingprocessor_help]                     | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/processor/routingprocessor              |
-| `spanmetricsprocessor` [configuration help][spanmetricsprocessor_help]             | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/processor/spanmetricsprocessor          |
-| `spanprocessor`                                                                    | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/processor/spanprocessor                 |
-| `tailsamplingprocessor` [configuration help][tailsamplingprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/processor/tailsamplingprocessor         |
+| `attributesprocessor` [configuration help][attributesprocessor_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/processor/attributesprocessor           |
+| `filterprocessor` [configuration help][filterprocessor_help]                       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/processor/filterprocessor               |
+| `groupbyattrsprocessor` [configuration help][groupbyattrsprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/processor/groupbyattrsprocessor         |
+| `groupbytraceprocessor` [configuration help][groupbytraceprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/processor/groupbytraceprocessor         |
+| `metricstransformprocessor` [configuration help][metricstransformprocessor_help]   | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/processor/metricstransformprocessor     |
+| `probabilisticsamplerprocessor`                                                    | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/processor/probabilisticsamplerprocessor |
+| `resourcedetectionprocessor` [configuration help][resourcedetectionprocessor_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/processor/resourcedetectionprocessor    |
+| `resourceprocessor` [configuration help][resourceprocessor_help]                   | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/processor/resourceprocessor             |
+| `routingprocessor` [configuration help][routingprocessor_help]                     | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/processor/routingprocessor              |
+| `spanmetricsprocessor` [configuration help][spanmetricsprocessor_help]             | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/processor/spanmetricsprocessor          |
+| `spanprocessor`                                                                    | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/processor/spanprocessor                 |
+| `tailsamplingprocessor` [configuration help][tailsamplingprocessor_help]           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/processor/tailsamplingprocessor         |
 
-[attributesprocessor_help]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.42.0/processor/attributesprocessor
+[attributesprocessor_help]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.44.0/processor/attributesprocessor
 [groupbyattrsprocessor_help]: ./docs/Configuration.md#group-by-attributes-processor
 [groupbytraceprocessor_help]: ./docs/Configuration.md#group-by-trace-processor
 [metricstransformprocessor_help]: ./docs/Configuration.md#metrics-transform-processor
 [resourcedetectionprocessor_help]: ./docs/Configuration.md#resource-detection-processor
-[resourceprocessor_help]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.42.0/processor/resourceprocessor
+[resourceprocessor_help]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.44.0/processor/resourceprocessor
 [routingprocessor_help]: ./docs/Configuration.md#routing-processor
 [spanmetricsprocessor_help]: ./docs/Configuration.md#span-metrics-processor
 [tailsamplingprocessor_help]: ./docs/Configuration.md#tail-sampling-processor
@@ -150,13 +150,13 @@ OT distro.
 
 | Name                                                                     | Source                                                                                                        |
 |--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
-| `carbonexporter` [configuration help][carbonexporter_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/exporter/carbonexporter        |
-| `fileexporter` [configuration help][fileexporter_help]                   | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/exporter/fileexporter          |
-| `kafkaexporter` [configuration help][kafkaexporter_help]                 | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/exporter/kafkaexporter         |
-| `loadbalancingexporter` [configuration help][loadbalancingexporter_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/exporter/loadbalancingexporter |
-| `loggingexporter` [configuration help][loggingexporter_help]             | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.42.0/exporter/loggingexporter               |
-| `otlpexporter`                                                           | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.42.0/exporter/otlpexporter                  |
-| `otlphttpexporter`                                                       | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.42.0/exporter/otlphttpexporter              |
+| `carbonexporter` [configuration help][carbonexporter_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/exporter/carbonexporter        |
+| `fileexporter` [configuration help][fileexporter_help]                   | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/exporter/fileexporter          |
+| `kafkaexporter` [configuration help][kafkaexporter_help]                 | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/exporter/kafkaexporter         |
+| `loadbalancingexporter` [configuration help][loadbalancingexporter_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/exporter/loadbalancingexporter |
+| `loggingexporter` [configuration help][loggingexporter_help]             | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.44.0/exporter/loggingexporter               |
+| `otlpexporter`                                                           | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.44.0/exporter/otlpexporter                  |
+| `otlphttpexporter`                                                       | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.44.0/exporter/otlphttpexporter              |
 
 [carbonexporter_help]: ./docs/Configuration.md#carbon-exporter
 [fileexporter_help]: ./docs/Configuration.md#file-exporter
@@ -178,13 +178,13 @@ OT distro.
 
 | Name                                             | Source                                                                                                            |
 |--------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| `ballastextension`                               | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.42.0/extension/ballastextension                 |
-| `bearertokenauthextension`                       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/extension/bearertokenauthextension |
-| `storage` [configuration help][filestorage_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/extension/storage                  |
-| `healthcheckextension`                           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/extension/healthcheckextension     |
-| `oidcauthextension`                              | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/extension/oidcauthextension        |
-| `pprofextension`                                 | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.42.0/extension/pprofextension           |
-| `zpagesextension`                                | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.42.0/extension/zpagesextension                  |
+| `ballastextension`                               | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.44.0/extension/ballastextension                 |
+| `bearertokenauthextension`                       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/extension/bearertokenauthextension |
+| `storage` [configuration help][filestorage_help] | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/extension/storage                  |
+| `healthcheckextension`                           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/extension/healthcheckextension     |
+| `oidcauthextension`                              | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/extension/oidcauthextension        |
+| `pprofextension`                                 | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/extension/pprofextension           |
+| `zpagesextension`                                | https://github.com/open-telemetry/opentelemetry-collector/tree/v0.44.0/extension/zpagesextension                  |
 
 [filestorage_help]: ./docs/Configuration.md#file-storage-extension
 
@@ -206,31 +206,48 @@ To contribute you will need to ensure you have the following setup:
   `opentelemetry-collector-builder` can be installed using following command:
 
   ```bash
-  cd otelcolbuilder && \
-  sudo make install-builder BUILDER_BIN_PATH=/usr/local/bin/opentelemetry-collector-builder && \
-  cd ..
+  make -C otelcolbuilder install-builder
+  ```
+
+  Which will by default install the builder binary in `${HOME}/bin/opentelemetry-collector-builder`.
+  You can customize it by providing the `BUILDER_BIN_PATH` argument.
+
+  ```bash
+  make -C otelcolbuilder install-builder \
+    BUILDER_BIN_PATH=/custom/dir/bin/opentelemetry-collector-builder
   ```
 
 ### How to build
 
 ```bash
-$ cd otelcolbuilder && make build
-opentelemetry-collector-builder \
+$ make build
+CGO_ENABLED=1 /usr/local/bin/opentelemetry-collector-builder \
+                --go go \
+                --version "v0.0.49-beta.0-1-gd43f61efd5" \
                 --config .otelcol-builder.yaml \
                 --output-path ./cmd \
-                --name otelcol-sumo
-2021-05-24T16:29:03.494+0200    INFO    cmd/root.go:99  OpenTelemetry Collector distribution builder    {"version": "dev", "date": "unknown"}
-2021-05-24T16:29:03.498+0200    INFO    builder/main.go:90      Sources created {"path": "./cmd"}
-2021-05-24T16:29:03.612+0200    INFO    builder/main.go:126     Getting go modules
-2021-05-24T16:29:03.957+0200    INFO    builder/main.go:107     Compiling
-2021-05-24T16:29:09.770+0200    INFO    builder/main.go:113     Compiled        {"binary": "./cmd/otelcol-sumo"}
+                --skip-compilation=true
+2022-02-09T09:57:42.706+0100    INFO    internal/command.go:82  OpenTelemetry Collector distribution builder    {"version": "0.42.0", "date": "2022-01-07T01:55:32Z"}
+2022-02-09T09:57:42.707+0100    INFO    internal/command.go:102 Using config file       {"path": ".otelcol-builder.yaml"}
+2022-02-09T09:57:42.854+0100    INFO    builder/config.go:103   Using go        {"go-executable": "go"}
+2022-02-09T09:57:42.857+0100    INFO    builder/main.go:76      Sources created {"path": "./cmd"}
+2022-02-09T09:57:43.687+0100    INFO    builder/main.go:108     Getting go modules
+2022-02-09T09:57:43.885+0100    INFO    builder/main.go:83      Generating source codes only, the distribution will not be compiled.
+(cd cmd && \
+                CGO_ENABLED=1 go build -v \
+                -tags enable_unstable \
+                -ldflags="-s -w" \
+                -trimpath \
+                -o ./otelcol-sumo . \
+        )
+...
 ```
 
 In order to build for a different platform one can use `otelcol-sumo-${platform}_${arch}`
-make targets e.g.:
+`make` targets e.g.:
 
 ```bash
-$ cd otelcolbuilder && make otelcol-sumo-linux_arm64
+$ make -C otelcolbuilder otelcol-sumo-linux_arm64
 GOOS=linux   GOARCH=arm64 /Library/Developer/CommandLineTools/usr/bin/make build BINARY_NAME=otelcol-sumo-linux_arm64
 opentelemetry-collector-builder \
                 --config .otelcol-builder.yaml \

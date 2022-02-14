@@ -282,7 +282,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 			ill := ills.At(j)
 
 			// iterate over Logs
-			logs := ill.Logs()
+			logs := ill.LogRecords()
 			for k := 0; k < logs.Len(); k++ {
 				log := logs.At(k)
 				logAttrs := log.Attributes()
@@ -348,7 +348,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		droppedLogs := pdata.NewLogs()
 		rls = droppedLogs.ResourceLogs()
 		ills := rls.AppendEmpty().InstrumentationLibraryLogs()
-		logs := ills.AppendEmpty().Logs()
+		logs := ills.AppendEmpty().LogRecords()
 		logs.EnsureCapacity(len(droppedRecords))
 
 		for _, lp := range droppedRecords {
@@ -558,7 +558,7 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 		return fmt.Errorf("no auth extension and no endpoint specified")
 	}
 
-	client, err := httpSettings.ToClient(host.GetExtensions())
+	client, err := httpSettings.ToClient(host.GetExtensions(), component.TelemetrySettings{})
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP Client: %w", err)
 	}

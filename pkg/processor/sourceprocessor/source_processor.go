@@ -221,7 +221,7 @@ func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md pdata.Logs) (pdat
 		ills := rs.InstrumentationLibraryLogs()
 		for j := 0; j < ills.Len(); j++ {
 			ill := ills.At(j)
-			logs := ill.Logs()
+			logs := ill.LogRecords()
 			for k := 0; k < logs.Len(); k++ {
 				log := logs.At(k)
 				if log.Body().Type() == pdata.AttributeValueTypeString {
