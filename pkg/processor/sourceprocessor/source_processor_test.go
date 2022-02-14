@@ -86,7 +86,7 @@ func newLogsDataWithLogs(resourceAttrs map[string]string, logAttrs map[string]st
 	}
 
 	ills := rs.InstrumentationLibraryLogs().AppendEmpty()
-	log := ills.Logs().AppendEmpty()
+	log := ills.LogRecords().AppendEmpty()
 	log.Body().SetStringVal("dummy log")
 	for k, v := range logAttrs {
 		log.Attributes().InsertString(k, v)
@@ -577,7 +577,7 @@ func TestLogProcessorJson(t *testing.T) {
 				AppendEmpty().
 				InstrumentationLibraryLogs().
 				AppendEmpty().
-				Logs().
+				LogRecords().
 				AppendEmpty().
 				Body().
 				SetStringVal(tc.body)
@@ -593,7 +593,7 @@ func TestLogProcessorJson(t *testing.T) {
 			ills := rss.At(0).InstrumentationLibraryLogs()
 			require.Equal(t, 1, ills.Len())
 
-			logs := ills.At(0).Logs()
+			logs := ills.At(0).LogRecords()
 			require.Equal(t, 1, logs.Len())
 
 			log := logs.At(0)

@@ -363,7 +363,7 @@ func (s *sender) sendOTLPLogs(ctx context.Context, flds fields) ([]logPair, erro
 	ld := pdata.NewLogs()
 	rl := ld.ResourceLogs().AppendEmpty()
 	ill := rl.InstrumentationLibraryLogs().AppendEmpty()
-	logs := ill.Logs()
+	logs := ill.LogRecords()
 	logs.EnsureCapacity(len(s.logBuffer))
 	for _, record := range s.logBuffer {
 		log := logs.AppendEmpty()
