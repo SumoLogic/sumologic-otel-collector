@@ -1,9 +1,5 @@
 # Comparison between the Installed Collector and OpenTelemetry Collector
 
-## Delivery Phase 1: “Initial Release”
-
-_Expected March 2022_
-
 ## When to use OpenTelemetry
 
 **Ideal use cases** include when you:
