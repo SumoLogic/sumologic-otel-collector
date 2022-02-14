@@ -1,11 +1,89 @@
-# Comparison between the Installed Collector and the OpenTelemetry Collector
+# Comparison between the Installed Collector and OpenTelemetry Collector
+
+## When to use OpenTelemetry
+
+**Ideal use cases** include when you:
+
+- leverage the **Supported Sources** and **Supported Platforms** listed below
+- are looking for a single agent as opposed to managing multiple agents
+- are having scale issues with FluentD on Kubernetes Collection
+- are looking for ARM support
+
+**Avoid use cases** that:
+
+- are using an **Unsupported Source** or **Unsupported Platform**
+- use CSE due to lack of Windows support
+- require remote management and remote configuration
+- require FIPS support
+- require Ingest Budgets
+- use the Collector Management API (e.g. for Health Events or CRUD operations)
+- require CPU target
+
+## Support Matrix
+
+<table>
+  <tr>
+   <td><strong>Supported Platforms</strong>
+   </td>
+   <td><strong>Unsupported Platforms</strong>
+   </td>
+  </tr>
+  <tr>
+   <td>
+<ul>
+  <li>Linux
+  <li>MacOS
+  <li>Kubernetes
+  </li>
+</ul>
+   </td>
+   <td>
+<ul>
+  <li>Windows OS
+  </li>
+</ul>
+  </td>
+  </tr>
+  <tr>
+   <td><strong>Supported Sources</strong>
+   </td>
+   <td><strong>Unsupported Sources</strong>
+   </td>
+  </tr>
+  <tr>
+  <td>
+<ul>
+
+<li>Local File
+<li>Syslog
+<li>Host/Process Metrics
+<li>Streaming Metrics
+<li>Transaction Tracing
+<li>All Telegraf Input Plugins
+</li>
+</ul>
+   </td>
+   <td>
+<ul>
+<li>Windows Collection
+<li>Script Sources
+<li>Script Actions
+<li>Docker Stats / Logs
+<li>Remote File
+</li>
+</ul>
+   </td>
+  </tr>
+</table>
+
+## Source specific considerations
 
 - [Syslog](#syslog)
   - [Syslog Receiver](#syslog-receiver)
   - [TCPlog/UDPlog Receiver and Sumo Logic Syslog Processor](#tcplogudplog-receiver-and-sumo-logic-syslog-processor)
 - [Host Metrics](#host-metrics)
 
-## Syslog
+### Syslog
 
 The OpenTelemetry Collector offers two approaches for syslog processing:
 
@@ -14,7 +92,7 @@ The OpenTelemetry Collector offers two approaches for syslog processing:
 
 Read this section to learn about the differences.
 
-### Syslog Receiver
+#### Syslog Receiver
 
 Syslog Receiver is a perfect solution if you are sending logs using a certain RFC protocol.
 There are two supported formats: `rfc3164` and `rfc5424`.
@@ -80,7 +158,7 @@ Body: {
 ...
 ```
 
-### TCPlog/UDPlog Receiver and Sumo Logic Syslog Processor
+#### TCPlog/UDPlog Receiver and Sumo Logic Syslog Processor
 
 This second approach is compatible with the current Installed Collector behavior.
 It doesn't parse out the fields on the collector side,
@@ -176,7 +254,7 @@ Attributes:
      -> net.host.port: STRING(54526)
 ```
 
-## Host Metrics
+### Host Metrics
 
 The Installed Collector and OpenTelemetry Collector have different
 codebases that cause some host metrics to have different names.
