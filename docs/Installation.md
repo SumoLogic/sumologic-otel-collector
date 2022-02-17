@@ -257,6 +257,14 @@ To run opentelemetry collector as Systemd Service please apply following steps:
    sudo useradd -rUs /bin/false opentelemetry
    ```
 
+1. Ensure that `/etc/otelcol-sumo/config.yaml` can be accessed by `opentelemetry` user
+   which will be used to run the service.
+
+   ```bash
+   $ ls -la /etc/otelcol-sumo/config.yaml
+   -rw-r--r-- 1 opentelemetry daemon 0 Feb 16 16:23 /etc/otelcol-sumo/config.yaml
+   ```
+
 1. Verify if opentelemetry collector runs without errors:
 
    ```bash
