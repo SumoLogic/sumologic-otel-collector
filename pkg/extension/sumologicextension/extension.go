@@ -139,7 +139,7 @@ func createHashKey(conf *Config) string {
 	)
 }
 
-func (se *SumologicExtension) validateCredenials(
+func (se *SumologicExtension) validateCredentials(
 	ctx context.Context,
 	creds api.OpenRegisterResponsePayload,
 ) error {
@@ -163,7 +163,7 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 			zap.String(collectorIdField, colCreds.Credentials.CollectorId),
 		)
 
-		if err := se.validateCredenials(ctx, colCreds.Credentials); err != nil {
+		if err := se.validateCredentials(ctx, colCreds.Credentials); err != nil {
 			se.logger.Info("Locally stored credentials invalid. Trying to re-register...")
 			if err = se.credentialsStore.Delete(se.hashKey); err != nil {
 				return err
