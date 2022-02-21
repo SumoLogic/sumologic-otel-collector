@@ -598,7 +598,8 @@ func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
 				_, err := w.Write([]byte(`{
 					"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
 					"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-					"collectorId": "000000000FFFFFFF"
+					"collectorId": "000000000FFFFFFF",
+					"collectorName": "hostname-test-123456123123"
 				}`))
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
@@ -618,7 +619,8 @@ func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
 				_, err := w.Write([]byte(`{
 					"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
 					"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-					"collectorId": "000000000FFFFFFF"
+					"collectorId": "000000000FFFFFFF",
+					"collectorName": "hostname-test-123456123123"
 				}`))
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
@@ -647,8 +649,13 @@ func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
 	cfg.CollectorCredentialsDirectory = dir
 	cfg.Clobber = true
 
-	se, err := newSumologicExtension(cfg, zap.NewNop())
+	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
+
+	se, err := newSumologicExtension(cfg, logger)
+	require.NoError(t, err)
+
+	t.Log("starting the extension")
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	require.NoError(t, se.Shutdown(context.Background()))
 	assert.NotEmpty(t, se.collectorName)
@@ -659,10 +666,13 @@ func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
 	colCreds, err := se.credentialsStore.Get(se.hashKey)
 	require.NoError(t, err)
 	colName := colCreds.CollectorName
-	se, err = newSumologicExtension(cfg, zap.NewNop())
+	se, err = newSumologicExtension(cfg, logger)
 	require.NoError(t, err)
+
+	t.Log("starting the extension")
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
-	assert.Equal(t, se.collectorName, colName)
+	require.NoError(t, se.Shutdown(context.Background()))
+	assert.Equal(t, colName, se.collectorName)
 }
 
 func TestCollectorSendsBasicAuthHeadersOnRegistration(t *testing.T) {
