@@ -145,6 +145,8 @@ receivers:
     include:
     - /var/log/myservice/*.log
     - /other/path/**/*.txt
+    include_file_name: false
+    include_file_path_resolved: true
 
 service:
   extensions: [sumologic]
@@ -154,7 +156,8 @@ service:
       exporters: [sumologic]
 ```
 
-See [Receivers](#receivers) section for sending data from other sources including Fluentd/Fluent Bit, syslog and others.
+See [Receivers](#receivers) section for details of the Filelog receiver
+and for sending data from other sources including Fluentd/Fluent Bit, syslog and others.
 
 ### Basic configuration for metrics
 
@@ -235,6 +238,8 @@ receivers:
     include:
     - /var/log/myservice/*.log
     - /other/path/**/*.txt
+    include_file_name: false
+    include_file_path_resolved: true
   telegraf:
     separate_field: false
     agent_config: |
@@ -455,13 +460,19 @@ The following is a basic configuration for the Filelog Receiver:
 ```yaml
 receivers:
   filelog:
-    include: [ /var/log/myservice/*.json ]
-    operators:
-      - type: json_parser
-        timestamp:
-          parse_from: time
-          layout: '%Y-%m-%d %H:%M:%S'
+    include:
+    - /var/log/myservice/*.log
+    - /other/path/**/*.txt
+    include_file_name: false
+    include_file_path_resolved: true
 ```
+
+The `include_file_name: false` prevents the receiver from adding `file.name` attribute to the logs.
+Instead, we are using `include_file_path_resolved: true`,
+which adds a `file.path.resolved` attribute to the logs
+that contains the whole path of the file, as opposed to just the name of the file.
+What's more, the `file.path.resolved` attribute is automatically recognized by the `sumologicexporter`
+and translated to `_sourceName` attribute in Sumo Logic.
 
 For details, see the [Filelog Receiver documentation][filelogreceiver_readme].
 
