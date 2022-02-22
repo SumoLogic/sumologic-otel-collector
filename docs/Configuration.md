@@ -136,6 +136,8 @@ exporters:
   sumologic:
 
 extensions:
+  file_storage:
+    directory: /tmp
   sumologic:
     access_id: <my_access_id>
     access_key: <my_access_key>
@@ -147,6 +149,7 @@ receivers:
     - /other/path/**/*.txt
     include_file_name: false
     include_file_path_resolved: true
+    start_at: beginning
 
 service:
   extensions: [sumologic]
@@ -155,6 +158,11 @@ service:
       receivers: [filelog]
       exporters: [sumologic]
 ```
+
+Adding the [File Storage extension](#file-storage-extension) allows the Filelog receiver
+to persist the position in the files it reads between restarts.
+Note that the path specified in the `directory` parameter must exist
+and be readable and writable by the Otelcol process.
 
 See [Receivers](#receivers) section for details of the Filelog receiver
 and for sending data from other sources including Fluentd/Fluent Bit, syslog and others.
@@ -228,6 +236,8 @@ exporters:
   sumologic:
 
 extensions:
+  file_storage:
+    directory: /tmp
   sumologic:
     access_id: <my_access_id>
     access_key: <my_access_key>
@@ -240,6 +250,7 @@ receivers:
     - /other/path/**/*.txt
     include_file_name: false
     include_file_path_resolved: true
+    start_at: beginning
   telegraf:
     separate_field: false
     agent_config: |
@@ -474,7 +485,30 @@ that contains the whole path of the file, as opposed to just the name of the fil
 What's more, the `file.path.resolved` attribute is automatically recognized by the `sumologicexporter`
 and translated to `_sourceName` attribute in Sumo Logic.
 
-For details, see the [Filelog Receiver documentation][filelogreceiver_readme].
+By default, the Filelog receiver watches files starting at their end
+(`start_at: end` is the [default][filelogreceiver_readme]),
+so nothing will be read after the otelcol process starts until new data is added to the files.
+To change this, add `start_at: beginning` to the receiver's configuration.
+To prevent the receiver from reading the same data over and over again on each otelcol restart,
+also add the [File Storage extension](#file-storage-extension) that will allow Filelog receiver to persist the current
+position in watched files between otelcol restarts. Here's an example of such configuration:
+
+```yaml
+extensions:
+  file_storage:
+    directory: /tmp
+
+receivers:
+  filelog:
+    include:
+    - /var/log/myservice/*.log
+    - /other/path/**/*.txt
+    include_file_name: false
+    include_file_path_resolved: true
+    start_at: beginning
+```
+
+For more details, see the [Filelog Receiver documentation][filelogreceiver_readme].
 
 [opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
 [filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/filelogreceiver
