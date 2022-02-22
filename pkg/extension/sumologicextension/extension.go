@@ -45,15 +45,20 @@ import (
 type SumologicExtension struct {
 	collectorName    string
 	baseUrl          string
-	httpClient       *http.Client
+	host             component.Host
 	conf             *Config
+	origLogger       *zap.Logger
 	logger           *zap.Logger
 	credentialsStore credentials.Store
 	hashKey          string
+
+	configLock       sync.RWMutex
+	httpClient       *http.Client
 	registrationInfo api.OpenRegisterResponsePayload
-	closeChan        chan struct{}
-	closeOnce        sync.Once
-	backOff          *backoff.ExponentialBackOff
+
+	closeChan chan struct{}
+	closeOnce sync.Once
+	backOff   *backoff.ExponentialBackOff
 }
 
 const (
@@ -129,6 +134,7 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 		collectorName:    collectorName,
 		baseUrl:          strings.TrimSuffix(conf.ApiBaseUrl, "/"),
 		conf:             conf,
+		origLogger:       logger,
 		logger:           logger,
 		hashKey:          hashKey,
 		credentialsStore: credentialsStore,
@@ -147,19 +153,20 @@ func createHashKey(conf *Config) string {
 }
 
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
+	se.host = host
 	se.logger.Info(banner)
 
-	colCreds, err := se.getCredentials(ctx, host)
+	colCreds, err := se.getCredentials(ctx)
 	if err != nil {
 		return err
 	}
 
-	if err = se.injectCredentials(colCreds, host); err != nil {
+	if err = se.injectCredentials(colCreds); err != nil {
 		return err
 	}
 
 	// Add logger fields based on actual collector name and ID.
-	se.logger = se.logger.With(
+	se.logger = se.origLogger.With(
 		zap.String(collectorNameField, colCreds.Credentials.CollectorName),
 		zap.String(collectorIdField, colCreds.Credentials.CollectorId),
 	)
@@ -182,7 +189,6 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 
 func (se *SumologicExtension) validateCredentials(
 	ctx context.Context,
-	host component.Host,
 	colCreds credentials.CollectorCredentials,
 ) error {
 	se.logger.Info("Validating collector credentials...",
@@ -190,7 +196,7 @@ func (se *SumologicExtension) validateCredentials(
 		zap.String(collectorIdField, colCreds.Credentials.CollectorId),
 	)
 
-	if err := se.injectCredentials(colCreds, host); err != nil {
+	if err := se.injectCredentials(colCreds); err != nil {
 		return err
 	}
 
@@ -201,11 +207,14 @@ func (se *SumologicExtension) validateCredentials(
 // * into registration info that's stored in the extension and can be used by roundTripper
 // * into http client and its transport so that each request is using collector
 //   credentials as authentication keys
-func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCredentials, host component.Host) error {
+func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCredentials) error {
+	se.configLock.Lock()
+	defer se.configLock.Unlock()
+
 	// Set the registration info so that it can be used in RoundTripper.
 	se.registrationInfo = colCreds.Credentials
 
-	httpClient, err := se.getHTTPClient(se.conf.HTTPClientSettings, colCreds.Credentials, host)
+	httpClient, err := se.getHTTPClient(se.conf.HTTPClientSettings, colCreds.Credentials)
 	if err != nil {
 		return err
 	}
@@ -218,11 +227,10 @@ func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCr
 func (se *SumologicExtension) getHTTPClient(
 	httpClientSettings confighttp.HTTPClientSettings,
 	regInfo api.OpenRegisterResponsePayload,
-	host component.Host,
 ) (*http.Client, error) {
 
 	httpClient, err := httpClientSettings.ToClient(
-		host.GetExtensions(),
+		se.host.GetExtensions(),
 		component.TelemetrySettings{},
 	)
 	if err != nil {
@@ -243,7 +251,7 @@ func (se *SumologicExtension) getHTTPClient(
 // It does so by checking the local credentials store and by validating those credentials.
 // In case they are invalid or are not available through local credentials store
 // then it tries to register the collector using the provided access keys.
-func (se *SumologicExtension) getCredentials(ctx context.Context, host component.Host) (credentials.CollectorCredentials, error) {
+func (se *SumologicExtension) getCredentials(ctx context.Context) (credentials.CollectorCredentials, error) {
 	var (
 		colCreds credentials.CollectorCredentials
 		err      error
@@ -252,7 +260,7 @@ func (se *SumologicExtension) getCredentials(ctx context.Context, host component
 	if !se.conf.Clobber {
 		colCreds, err = se.getLocalCredentials(ctx)
 		if err == nil {
-			errV := se.validateCredentials(ctx, host, colCreds)
+			errV := se.validateCredentials(ctx, colCreds)
 			if errV == nil {
 				se.logger.Info("Found stored credentials, skipping registration",
 					zap.String(collectorNameField, colCreds.Credentials.CollectorName),
@@ -399,11 +407,6 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 		return credentials.CollectorCredentials{}, err
 	}
 
-	se.logger.Info("Collector registered",
-		zap.String(collectorIdField, resp.CollectorId),
-		zap.String(collectorNameField, resp.CollectorName),
-		zap.String(collectorCredentialIdField, resp.CollectorCredentialId),
-	)
 	return credentials.CollectorCredentials{
 		CollectorName: collectorName,
 		Credentials:   resp,
@@ -455,11 +458,12 @@ func (se *SumologicExtension) registerCollectorWithBackoff(ctx context.Context, 
 	for {
 		creds, err := se.registerCollector(ctx, collectorName)
 		if err == nil {
-
-			se.logger.Info("Registration finished successfully",
+			se.logger = se.origLogger.With(
 				zap.String(collectorNameField, creds.Credentials.CollectorName),
 				zap.String(collectorIdField, creds.Credentials.CollectorId),
 			)
+			se.logger.Info("Collector registration finished successfully")
+
 			return creds, nil
 		}
 
@@ -495,16 +499,43 @@ func (se *SumologicExtension) heartbeatLoop() {
 		cancel()
 	}()
 
-	se.logger.Info("Heartbeat API initialized. Starting sending hearbeat requests")
+	se.logger.Info("Heartbeat loop initialized. Starting to send hearbeat requests")
 	timer := time.NewTimer(se.conf.HeartBeatInterval)
 	for {
 		select {
 		case <-se.closeChan:
 			se.logger.Info("Heartbeat sender turned off")
 			return
+
 		default:
-			if err := se.sendHeartbeatWithHTTPClient(ctx, se.httpClient); err != nil {
-				se.logger.Error("Heartbeat error", zap.Error(err))
+			se.configLock.RLock()
+			err := se.sendHeartbeatWithHTTPClient(ctx, se.httpClient)
+			se.configLock.RUnlock()
+
+			if err != nil {
+				if errors.Is(err, errUnauthorizedHeartbeat) {
+					se.logger.Warn("Heartbeat request unauthorized, re-registering the collector")
+					colCreds, err := se.getCredentialsByRegistering(ctx)
+					if err != nil {
+						se.logger.Error("Heartbeat error, cannot register the collector", zap.Error(err))
+						continue
+					}
+
+					// Inject newly received credentials into extension's configuration.
+					if err = se.injectCredentials(colCreds); err != nil {
+						se.logger.Error("Heartbeat error, cannot inject new collector credentials", zap.Error(err))
+						continue
+					}
+
+					// Overwrite old logger fields with new collector name and ID.
+					se.logger = se.origLogger.With(
+						zap.String(collectorNameField, colCreds.Credentials.CollectorName),
+						zap.String(collectorIdField, colCreds.Credentials.CollectorId),
+					)
+
+				} else {
+					se.logger.Error("Heartbeat error", zap.Error(err))
+				}
 			} else {
 				se.logger.Debug("Heartbeat sent")
 			}
@@ -518,6 +549,17 @@ func (se *SumologicExtension) heartbeatLoop() {
 
 		}
 	}
+}
+
+var errUnauthorizedHeartbeat = errors.New("heartbeat unauthorized")
+
+type ErrorAPI struct {
+	status int
+	body   string
+}
+
+func (e ErrorAPI) Error() string {
+	return fmt.Sprintf("API error (status code: %d): %s", e.status, e.body)
 }
 
 func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, httpClient *http.Client) error {
@@ -536,7 +578,9 @@ func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, h
 		return fmt.Errorf("unable to send HTTP request: %w", err)
 	}
 	defer res.Body.Close()
-	if res.StatusCode != 204 {
+
+	switch res.StatusCode {
+	default:
 		var buff bytes.Buffer
 		if _, err := io.Copy(&buff, res.Body); err != nil {
 			return fmt.Errorf(
@@ -544,10 +588,18 @@ func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, h
 				res.StatusCode, err,
 			)
 		}
-		return fmt.Errorf(
-			"collector heartbeat request failed, status code: %d, body: %s",
-			res.StatusCode, buff.String(),
+
+		return fmt.Errorf("collector heartbeat request failed: %w",
+			ErrorAPI{
+				status: res.StatusCode,
+				body:   buff.String(),
+			},
 		)
+
+	case http.StatusUnauthorized:
+		return errUnauthorizedHeartbeat
+
+	case http.StatusNoContent:
 	}
 
 	return nil
@@ -597,6 +649,9 @@ func addCollectorCredentials(req *http.Request, collectorCredentialId string, co
 		[]byte(collectorCredentialId + ":" + collectorCredentialKey),
 	)
 
+	// Delete the existing Authorization header so prevent sending both the old one
+	// and the new one.
+	req.Header.Del("Authorization")
 	req.Header.Add("Authorization", "Basic "+token)
 }
 

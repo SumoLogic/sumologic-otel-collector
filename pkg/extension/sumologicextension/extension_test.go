@@ -649,13 +649,8 @@ func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
 	cfg.CollectorCredentialsDirectory = dir
 	cfg.Clobber = true
 
-	logger, err := zap.NewDevelopment()
+	se, err := newSumologicExtension(cfg, zap.NewNop())
 	require.NoError(t, err)
-
-	se, err := newSumologicExtension(cfg, logger)
-	require.NoError(t, err)
-
-	t.Log("starting the extension")
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	require.NoError(t, se.Shutdown(context.Background()))
 	assert.NotEmpty(t, se.collectorName)
@@ -666,13 +661,10 @@ func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
 	colCreds, err := se.credentialsStore.Get(se.hashKey)
 	require.NoError(t, err)
 	colName := colCreds.CollectorName
-	se, err = newSumologicExtension(cfg, logger)
+	se, err = newSumologicExtension(cfg, zap.NewNop())
 	require.NoError(t, err)
-
-	t.Log("starting the extension")
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
-	require.NoError(t, se.Shutdown(context.Background()))
-	assert.Equal(t, colName, se.collectorName)
+	assert.Equal(t, se.collectorName, colName)
 }
 
 func TestCollectorSendsBasicAuthHeadersOnRegistration(t *testing.T) {
@@ -1153,4 +1145,101 @@ func TestRegistrationRedirect(t *testing.T) {
 
 		require.NoError(t, se.Shutdown(context.Background()))
 	})
+}
+
+func TestCollectorReregistersAfterHTTPUnathorizedFromHeartbeat(t *testing.T) {
+	t.Parallel()
+
+	var reqCount int32
+	srv := httptest.NewServer(func() http.HandlerFunc {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			reqNum := atomic.AddInt32(&reqCount, 1)
+
+			t.Logf("request: (#%d) %s", reqNum, req.URL.Path)
+			handlerRegister := func() {
+				require.Equal(t, registerUrl, req.URL.Path, "request num 1")
+
+				assert.Empty(t, req.Header.Get("accessid"))
+				assert.Empty(t, req.Header.Get("accesskey"))
+				authHeader := req.Header.Get("Authorization")
+				token := base64.StdEncoding.EncodeToString(
+					[]byte("dummy_access_id:dummy_access_key"),
+				)
+				assert.Equal(t, "Basic "+token, authHeader,
+					"collector didn't send correct Authorization header with registration request")
+
+				_, err := w.Write([]byte(`{
+					"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
+					"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+					"collectorId": "000000000FFFFFFF",
+					"collectorName": "hostname-test-123456123123"
+					}`))
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+			}
+
+			switch reqNum {
+			// register
+			case 1:
+				assert.Equal(t, registerUrl, req.URL.Path)
+				handlerRegister()
+
+			// heartbeat
+			case 2:
+				assert.Equal(t, heartbeatUrl, req.URL.Path)
+				w.WriteHeader(204)
+
+			// heartbeat
+			case 3:
+				assert.Equal(t, heartbeatUrl, req.URL.Path)
+				// return unauthorized to mimic collector being removed from API
+				w.WriteHeader(http.StatusUnauthorized)
+
+			// register
+			case 4:
+				assert.Equal(t, registerUrl, req.URL.Path)
+				handlerRegister()
+
+			default:
+				assert.Equal(t, heartbeatUrl, req.URL.Path)
+				w.WriteHeader(204)
+			}
+		})
+	}())
+
+	t.Cleanup(func() { srv.Close() })
+
+	dir, err := os.MkdirTemp("", "otelcol-sumo-reregistration-test-*")
+	require.NoError(t, err)
+	t.Cleanup(func() { os.RemoveAll(dir) })
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.CollectorName = ""
+	cfg.ApiBaseUrl = srv.URL
+	cfg.Credentials.AccessID = "dummy_access_id"
+	cfg.Credentials.AccessKey = "dummy_access_key"
+	cfg.CollectorCredentialsDirectory = dir
+	cfg.HeartBeatInterval = 100 * time.Millisecond
+
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+
+	se, err := newSumologicExtension(cfg, logger)
+	require.NoError(t, err)
+	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+
+	const expectedReqCount = 10
+	if !assert.Eventually(t,
+		func() bool {
+			return atomic.LoadInt32(&reqCount) == expectedReqCount
+		},
+		5*time.Second, 50*time.Millisecond,
+	) {
+		t.Logf("the expected number of requests (%d) wasn't reached, got %d",
+			expectedReqCount, atomic.LoadInt32(&reqCount),
+		)
+	}
+
+	require.NoError(t, se.Shutdown(context.Background()))
 }

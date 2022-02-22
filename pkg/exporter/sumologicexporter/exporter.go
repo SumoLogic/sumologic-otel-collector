@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer/consumererror"
@@ -39,7 +40,9 @@ const (
 
 type sumologicexporter struct {
 	sources             sourceFormats
+	configLock          sync.RWMutex
 	config              *Config
+	host                component.Host
 	logger              *zap.Logger
 	client              *http.Client
 	filter              filter
@@ -257,6 +260,8 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 	if err != nil {
 		return consumererror.NewLogs(fmt.Errorf("failed to initialize compressor: %w", err), ld)
 	}
+
+	se.configLock.RLock()
 	sdr := newSender(
 		se.logger,
 		se.config,
@@ -343,6 +348,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		errs = append(errs, err)
 	}
 
+	se.configLock.RUnlock()
 	if len(droppedRecords) > 0 {
 		// Move all dropped records to Logs
 		droppedLogs := pdata.NewLogs()
@@ -355,6 +361,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 			lp.log.CopyTo(logs.AppendEmpty())
 		}
 
+		se.handleUnauthorizedErrors(ctx, errs...)
 		return consumererror.NewLogs(multierr.Combine(errs...), droppedLogs)
 	}
 
@@ -377,6 +384,8 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 	if err != nil {
 		return consumererror.NewMetrics(fmt.Errorf("failed to initialize compressor: %w", err), md)
 	}
+
+	se.configLock.RLock()
 	sdr := newSender(
 		se.logger,
 		se.config,
@@ -454,6 +463,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		errs = append(errs, err)
 	}
 
+	se.configLock.RUnlock()
 	if len(droppedRecords) > 0 {
 		// Move all dropped records to Metrics
 		droppedMetrics := pdata.NewMetrics()
@@ -467,10 +477,29 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 			record.metric.CopyTo(ilms.AppendEmpty().Metrics().AppendEmpty())
 		}
 
+		se.handleUnauthorizedErrors(ctx, errs...)
 		return consumererror.NewMetrics(multierr.Combine(errs...), droppedMetrics)
 	}
 
 	return nil
+}
+
+// handleUnauthorizedErrors checks if any of the provided errors is an unauthorized error.
+// In which case it triggers exporter reconfiguration which in turn takes the credentials
+// from sumologicextension which at this point should already detect the problem with
+// authorization (via heartbeats) and prepare new collector credentials to be available.
+func (se *sumologicexporter) handleUnauthorizedErrors(ctx context.Context, errs ...error) {
+	for _, err := range errs {
+		if errors.Is(err, errUnauthorized) {
+			se.logger.Warn("Received unauthorized status code, triggering reconfiguration")
+			if errC := se.configure(ctx); errC != nil {
+				se.logger.Error("Error configuring the exporter with new credentials", zap.Error(err))
+			} else {
+				// It's enough to successfully reconfigure the exporter just once.
+				return
+			}
+		}
+	}
 }
 
 func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces) error {
@@ -479,6 +508,8 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces
 	if err != nil {
 		return consumererror.NewTraces(fmt.Errorf("failed to initialize compressor: %w", err), td)
 	}
+
+	se.configLock.RLock()
 	sdr := newSender(
 		se.logger,
 		se.config,
@@ -493,6 +524,8 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces
 		se.dataUrlTraces,
 	)
 	err = sdr.sendTraces(ctx, td, currentMetadata)
+	se.configLock.RUnlock()
+	se.handleUnauthorizedErrors(ctx, err)
 	if err != nil {
 		return err
 	}
@@ -501,6 +534,14 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces
 }
 
 func (se *sumologicexporter) start(ctx context.Context, host component.Host) error {
+	se.host = host
+	return se.configure(ctx)
+}
+
+func (se *sumologicexporter) configure(ctx context.Context) error {
+	se.configLock.Lock()
+	defer se.configLock.Unlock()
+
 	var (
 		ext          *sumologicextension.SumologicExtension
 		foundSumoExt bool
@@ -508,7 +549,7 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 
 	httpSettings := se.config.HTTPClientSettings
 
-	for _, e := range host.GetExtensions() {
+	for _, e := range se.host.GetExtensions() {
 		v, ok := e.(*sumologicextension.SumologicExtension)
 		if ok && httpSettings.Auth.AuthenticatorID == v.ComponentID() {
 			ext = v
@@ -558,7 +599,7 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 		return fmt.Errorf("no auth extension and no endpoint specified")
 	}
 
-	client, err := httpSettings.ToClient(host.GetExtensions(), component.TelemetrySettings{})
+	client, err := httpSettings.ToClient(se.host.GetExtensions(), component.TelemetrySettings{})
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP Client: %w", err)
 	}
