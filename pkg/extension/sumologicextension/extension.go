@@ -43,16 +43,19 @@ import (
 )
 
 type SumologicExtension struct {
-	collectorName    string
-	baseUrl          string
+	collectorName string
+
+	// The lock around baseUrl is needed because sumologicexporter is using
+	// it as base URL for API requests and this access has to be coordinated.
+	baseUrlLock sync.RWMutex
+	baseUrl     string
+
 	host             component.Host
 	conf             *Config
 	origLogger       *zap.Logger
 	logger           *zap.Logger
 	credentialsStore credentials.Store
 	hashKey          string
-
-	configLock       sync.RWMutex
 	httpClient       *http.Client
 	registrationInfo api.OpenRegisterResponsePayload
 
@@ -208,9 +211,6 @@ func (se *SumologicExtension) validateCredentials(
 // * into http client and its transport so that each request is using collector
 //   credentials as authentication keys
 func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCredentials) error {
-	se.configLock.Lock()
-	defer se.configLock.Unlock()
-
 	// Set the registration info so that it can be used in RoundTripper.
 	se.registrationInfo = colCreds.Credentials
 
@@ -328,7 +328,7 @@ func (se *SumologicExtension) getLocalCredentials(ctx context.Context) (credenti
 
 	se.collectorName = colCreds.CollectorName
 	if colCreds.ApiBaseUrl != "" {
-		se.baseUrl = colCreds.ApiBaseUrl
+		se.SetBaseUrl(colCreds.ApiBaseUrl)
 	}
 
 	return colCreds, nil
@@ -337,7 +337,7 @@ func (se *SumologicExtension) getLocalCredentials(ctx context.Context) (credenti
 // registerCollector registers the collector using registration API and returns
 // the obtained collector credentials.
 func (se *SumologicExtension) registerCollector(ctx context.Context, collectorName string) (credentials.CollectorCredentials, error) {
-	u, err := url.Parse(se.baseUrl)
+	u, err := url.Parse(se.BaseUrl())
 	if err != nil {
 		return credentials.CollectorCredentials{}, err
 	}
@@ -395,9 +395,10 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 		return se.handleRegistrationError(res)
 	} else if res.StatusCode == 301 {
 		// Use the URL from Location header for subsequent requests.
-		se.baseUrl = strings.TrimSuffix(res.Header.Get("Location"), "/")
+		u := strings.TrimSuffix(res.Header.Get("Location"), "/")
+		se.SetBaseUrl(u)
 		se.logger.Info("Redirected to a different deployment",
-			zap.String("url", se.baseUrl),
+			zap.String("url", u),
 		)
 		return se.registerCollector(ctx, collectorName)
 	}
@@ -410,7 +411,7 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 	return credentials.CollectorCredentials{
 		CollectorName: collectorName,
 		Credentials:   resp,
-		ApiBaseUrl:    se.baseUrl,
+		ApiBaseUrl:    se.BaseUrl(),
 	}, nil
 }
 
@@ -508,9 +509,7 @@ func (se *SumologicExtension) heartbeatLoop() {
 			return
 
 		default:
-			se.configLock.RLock()
 			err := se.sendHeartbeatWithHTTPClient(ctx, se.httpClient)
-			se.configLock.RUnlock()
 
 			if err != nil {
 				if errors.Is(err, errUnauthorizedHeartbeat) {
@@ -563,7 +562,7 @@ func (e ErrorAPI) Error() string {
 }
 
 func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, httpClient *http.Client) error {
-	u, err := url.Parse(se.baseUrl + heartbeatUrl)
+	u, err := url.Parse(se.BaseUrl() + heartbeatUrl)
 	if err != nil {
 		return fmt.Errorf("unable to parse heartbeat URL %w", err)
 	}
@@ -614,7 +613,15 @@ func (se *SumologicExtension) CollectorID() string {
 }
 
 func (se *SumologicExtension) BaseUrl() string {
+	se.baseUrlLock.RLock()
+	defer se.baseUrlLock.RUnlock()
 	return se.baseUrl
+}
+
+func (se *SumologicExtension) SetBaseUrl(baseUrl string) {
+	se.baseUrlLock.Lock()
+	se.baseUrl = baseUrl
+	se.baseUrlLock.Unlock()
 }
 
 // Implement [1] in order for this extension to be used as custom exporter
