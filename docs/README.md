@@ -9,3 +9,4 @@
 - [Performance](./Performance.md)
 - [Best Practices](./BestPractices.md)
 - [Known Issues](./KnownIssues.md)
+- [Troubleshooting](./Troubleshooting.md)
