@@ -61,7 +61,7 @@ type Config struct {
 	// By default this is false.
 	Clobber bool `mapstructure:"clobber"`
 
-	// ForceRegistration defined whether to force registration every time the
+	// ForceRegistration defines whether to force registration every time the
 	// collector starts.
 	// This will cause the collector to not look at the locally stored credentials
 	// and to always reach out to API to register itself.

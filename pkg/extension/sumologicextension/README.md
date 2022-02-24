@@ -52,9 +52,9 @@ and can be used as an authenticator for the
   collector starts.
   This will cause the collector to not look at the locally stored credentials
   and to always reach out to API to register itself. (default: `false`)
-  
+
   **NOTE**: if clobber is unset (default) then setting this to true will create
-  a new collector (with new unique name) on Sumo UI on every collector start.__
+  a new collector (with new unique name) on Sumo UI on every collector start
   and create a new one upon registration.
 - `ephemeral`: defines whether the collector will be deleted after 12 hours
   of inactivity (default: `false`)
