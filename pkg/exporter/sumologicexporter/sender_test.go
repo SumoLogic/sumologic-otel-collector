@@ -17,6 +17,7 @@ package sumologicexporter
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -390,6 +391,12 @@ func TestSendLogsSplitFailedOne(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
+			_, err := fmt.Fprintf(
+				w,
+				`{"id":"1TIRY-KGIVX-TPQRJ","errors":[{"code":"internal.error","message":"Internal server error."}]}`,
+			)
+
+			require.NoError(t, err)
 
 			body := extractBody(t, req)
 			assert.Equal(t, "Example log", body)
@@ -404,7 +411,7 @@ func TestSendLogsSplitFailedOne(t *testing.T) {
 	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
 	dropped, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
-	assert.EqualError(t, err, "error during sending data: 500 Internal Server Error")
+	assert.EqualError(t, err, "failed sending data: status: 500 Internal Server Error, id: 1TIRY-KGIVX-TPQRJ, errors: [{Code:internal.error Message:Internal server error.}]")
 	assert.Equal(t, test.s.logBuffer[0:1], dropped)
 
 	assert.EqualValues(t, 2, *test.reqCounter)
@@ -433,7 +440,7 @@ func TestSendLogsSplitFailedAll(t *testing.T) {
 	assert.EqualError(
 		t,
 		err,
-		"error during sending data: 500 Internal Server Error; error during sending data: 404 Not Found",
+		"failed sending data: status: 500 Internal Server Error; failed sending data: status: 404 Not Found",
 	)
 	assert.Equal(t, test.s.logBuffer[0:2], dropped)
 
@@ -663,7 +670,7 @@ func TestSendLogsJsonSplitFailedOne(t *testing.T) {
 	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
 	dropped, err := test.s.sendLogs(context.Background(), newFields(pdata.NewAttributeMap()))
-	assert.EqualError(t, err, "error during sending data: 500 Internal Server Error")
+	assert.EqualError(t, err, "failed sending data: status: 500 Internal Server Error")
 	assert.Equal(t, test.s.logBuffer[0:1], dropped)
 
 	assert.EqualValues(t, 2, *test.reqCounter)
@@ -698,7 +705,7 @@ func TestSendLogsJsonSplitFailedAll(t *testing.T) {
 	assert.EqualError(
 		t,
 		err,
-		"error during sending data: 500 Internal Server Error; error during sending data: 404 Not Found",
+		"failed sending data: status: 500 Internal Server Error; failed sending data: status: 404 Not Found",
 	)
 	assert.Equal(t, test.s.logBuffer[0:2], dropped)
 
@@ -1209,7 +1216,7 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 	}
 
 	dropped, err := test.s.sendMetrics(context.Background(), newFields(pdata.NewAttributeMap()))
-	assert.EqualError(t, err, "error during sending data: 500 Internal Server Error")
+	assert.EqualError(t, err, "failed sending data: status: 500 Internal Server Error")
 	assert.Equal(t, test.s.metricBuffer[0:1], dropped)
 }
 
@@ -1242,7 +1249,7 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 	assert.EqualError(
 		t,
 		err,
-		"error during sending data: 500 Internal Server Error; error during sending data: 404 Not Found",
+		"failed sending data: status: 500 Internal Server Error; failed sending data: status: 404 Not Found",
 	)
 	assert.Equal(t, test.s.metricBuffer[0:2], dropped)
 }

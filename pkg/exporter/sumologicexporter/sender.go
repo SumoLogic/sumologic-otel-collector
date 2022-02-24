@@ -164,47 +164,61 @@ func (s *sender) send(ctx context.Context, pipeline PipelineType, body io.Reader
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
-		switch resp.StatusCode {
-		case 401:
-			return errUnauthorized
-		default:
-			return fmt.Errorf("error during sending data: %s", resp.Status)
-		}
-	}
-
-	s.handleReceiverResponse(resp)
-
-	return nil
+	return s.handleReceiverResponse(resp)
 }
 
-func (s *sender) handleReceiverResponse(resp *http.Response) {
-	type ReceiverResponse struct {
-		Status  int    `json:"status,omitempty"`
-		ID      string `json:"id,omitempty"`
-		Code    string `json:"code,omitempty"`
-		Message string `json:"message,omitempty"`
+func (s *sender) handleReceiverResponse(resp *http.Response) error {
+	if resp.StatusCode >= 200 && resp.StatusCode < 400 {
+		return nil
 	}
 
-	if resp.ContentLength == 0 {
-		return
+	switch resp.StatusCode {
+	case 401:
+		return errUnauthorized
+	default:
+		type ReceiverResponse struct {
+			Status  int    `json:"status,omitempty"`
+			ID      string `json:"id,omitempty"`
+			Code    string `json:"code,omitempty"`
+			Message string `json:"message,omitempty"`
+			Errors  []struct {
+				Code    string `json:"code"`
+				Message string `json:"message"`
+			} `json:"errors,omitempty"`
+		}
+
+		var rResponse ReceiverResponse
+		if resp.ContentLength > 0 {
+			var (
+				b  = bytes.NewBuffer(make([]byte, resp.ContentLength))
+				tr = io.TeeReader(resp.Body, b)
+			)
+
+			if err := json.NewDecoder(tr).Decode(&rResponse); err != nil {
+				s.logger.Warn("Error decoding receiver response", zap.ByteString("body", b.Bytes()))
+				return nil
+			}
+		}
+
+		errMsgs := []string{
+			fmt.Sprintf("status: %s", resp.Status),
+		}
+
+		if len(rResponse.ID) > 0 {
+			errMsgs = append(errMsgs, fmt.Sprintf("id: %s", rResponse.ID))
+		}
+		if len(rResponse.Code) > 0 {
+			errMsgs = append(errMsgs, fmt.Sprintf("code: %s", rResponse.Code))
+		}
+		if len(rResponse.Errors) > 0 {
+			errMsgs = append(errMsgs, fmt.Sprintf("errors: %+v", rResponse.Errors))
+		}
+		if len(rResponse.Message) > 0 {
+			errMsgs = append(errMsgs, fmt.Sprintf("message: %s", rResponse.Message))
+		}
+
+		return fmt.Errorf("failed sending data: %s", strings.Join(errMsgs, ", "))
 	}
-
-	var (
-		b  = bytes.NewBuffer(make([]byte, resp.ContentLength))
-		tr = io.TeeReader(resp.Body, b)
-	)
-
-	var rResponse ReceiverResponse
-	if err := json.NewDecoder(tr).Decode(&rResponse); err != nil {
-		s.logger.Warn("Error decoding receiver response", zap.ByteString("body", b.Bytes()))
-		return
-	}
-
-	s.logger.Warn("There was an issue sending data",
-		zap.String("error_id", rResponse.ID),
-		zap.String("message", rResponse.Message),
-	)
 }
 
 func (s *sender) createRequest(ctx context.Context, pipeline PipelineType, data io.Reader) (*http.Request, error) {
