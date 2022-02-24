@@ -47,6 +47,30 @@ func TestGraphiteFormat(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
+func TestGraphiteMetricInvalidCharactersInName(t *testing.T) {
+	gf, err := newGraphiteFormatter("%{_metric_}")
+	require.NoError(t, err)
+
+	fs := fieldsFromMap(map[string]string{})
+
+	result := gf.format(fs, " .\n\r")
+	expected := `____`
+	assert.Equal(t, expected, result)
+}
+
+func TestGraphiteFieldInvalidCharactersInValue(t *testing.T) {
+	gf, err := newGraphiteFormatter("%{_metric_}.%{key}")
+	require.NoError(t, err)
+
+	fs := fieldsFromMap(map[string]string{
+		"key": " .\n\r",
+	})
+
+	result := gf.format(fs, "metric")
+	expected := `metric.____`
+	assert.Equal(t, expected, result)
+}
+
 func TestGraphiteMetricDataTypeIntGauge(t *testing.T) {
 	gf, err := newGraphiteFormatter("%{cluster}.%{namespace}.%{pod}.%{_metric_}")
 	require.NoError(t, err)
