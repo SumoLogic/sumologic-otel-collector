@@ -15,6 +15,7 @@
     - [Telegraf Receiver](#telegraf-receiver)
   - [Open Telemetry Upstream Receivers](#open-telemetry-upstream-receivers)
     - [Filelog Receiver](#filelog-receiver)
+      - [Example: Filelog Receiver with json_parser](#example-filelog-receiver-with-json_parser)
     - [Fluent Forward Receiver](#fluent-forward-receiver)
     - [Host Metrics Receiver](#host-metrics-receiver)
     - [Jaeger Receiver](#jaeger-receiver)
