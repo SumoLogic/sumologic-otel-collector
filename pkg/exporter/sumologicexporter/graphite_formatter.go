@@ -41,9 +41,13 @@ func newGraphiteFormatter(template string) (graphiteFormatter, error) {
 
 	sf := newSourceFormat(r, template)
 
+	replacementChar := `_`
+	// replace characters with special meaning in the Graphite transport format
+	// Note: \r is technically ok, but it's safer to replace anyway
+	replacer := strings.NewReplacer(`.`, replacementChar, ` `, replacementChar, "\n", replacementChar, "\r", replacementChar)
 	return graphiteFormatter{
 		template: sf,
-		replacer: strings.NewReplacer(`.`, `_`, ` `, `_`),
+		replacer: replacer,
 	}, nil
 }
 
