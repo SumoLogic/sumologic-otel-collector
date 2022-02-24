@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 func TestCarbon2TagString(t *testing.T) {
@@ -36,6 +37,21 @@ func TestCarbon2TagString(t *testing.T) {
 	metric = exampleDoubleGaugeMetric()
 	data = carbon2TagString(metric)
 	assert.Equal(t, "foo=bar metric=gauge_metric_name_double_test", data)
+}
+
+func TestCarbon2InvalidCharacters(t *testing.T) {
+	metric := pdata.NewMetric()
+
+	attributes := pdata.NewAttributeMap()
+	attributes.InsertString("= \n\r", "= \n\r")
+	metric.SetName("= \n\r")
+
+	metricPair := metricPair{
+		metric:     metric,
+		attributes: attributes,
+	}
+	data := carbon2TagString(metricPair)
+	assert.Equal(t, ":___=:___ metric=:___", data)
 }
 
 func TestCarbonMetricDataTypeIntGauge(t *testing.T) {
