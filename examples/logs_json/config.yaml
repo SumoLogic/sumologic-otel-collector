@@ -1,0 +1,19 @@
+exporters:
+  logging:
+    loglevel: debug
+    sampling_initial: 0
+    sampling_thereafter: 1
+receivers:
+  filelog:
+    include:
+    - /sumologic/examples/logs_json/example.log
+    start_at: beginning
+    operators:
+      - type: json_parser
+      - type: json_parser
+        parse_from: message
+service:
+  pipelines:
+    logs:
+      exporters: [logging]
+      receivers: [filelog]

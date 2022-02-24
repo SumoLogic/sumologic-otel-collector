@@ -510,8 +510,59 @@ receivers:
 
 For more details, see the [Filelog Receiver documentation][filelogreceiver_readme].
 
-[opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
+##### Example: Filelog Receiver with json_parser
+
+Filelog Receiver with [json_parser][json_parser] operator can be used for parsing JSON logs.
+The [json_parser][json_parser] operator parses the string-type field selected by `parse_from` as JSON
+(by default `parse_from` is set to `$body` which indicates the whole log record).
+
+For example when logs has following form in the file:
+
+```json
+{"message": "{\"key\": \"val\"}"}
+```
+
+then configuration to extract JSON which is represented as string (`{\"key\": \"val\"}`) has following form:
+
+```yaml
+receivers:
+  filelog:
+    include:
+    - /log/path/**/*.log
+    operators:
+      - type: json_parser   # this parses log line as JSON
+      - type: json_parser   # this parses string under 'message' key as JSON
+        parse_from: message
+```
+
+and the parsed log entry can be observed in [logging exporter](#logging-exporter)'s output as:
+
+```
+2022-02-24T10:23:37.809Z        INFO    loggingexporter/logging_exporter.go:69  LogsExporter    {"#logs": 1}
+2022-02-24T10:23:37.809Z        DEBUG   loggingexporter/logging_exporter.go:79  ResourceLog #0
+Resource SchemaURL:
+InstrumentationLibraryLogs #0
+InstrumentationLibraryMetrics SchemaURL:
+InstrumentationLibrary
+LogRecord #0
+Timestamp: 2022-02-24 10:23:37.714661255 +0000 UTC
+Severity:
+ShortName:
+Body: {
+     -> key: STRING(val)
+}
+Attributes:
+     -> file.name: STRING(example.log)
+Trace ID:
+Span ID:
+Flags: 0
+```
+
+Example configuration with example log can be found in [/examples/logs_json/](/examples/logs_json/) directory.
+
+[json_parser]: https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/operators/json_parser.md
 [filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/filelogreceiver
+[opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
 
 #### Fluent Forward Receiver
 
