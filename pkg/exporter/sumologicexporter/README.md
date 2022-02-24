@@ -128,6 +128,10 @@ exporters:
       # number of consumers that dequeue batches; ignored if enabled is false,
       # default = 10
       num_consumers: <num_consumers>
+      # when set to true, the queue is persisted using a file storage extension.
+      # make sure to configure and add a `file_storage` extension in `service.extensions`.
+      # default = false
+      persistent_storage_enabled: {true, false}
       # maximum number of batches kept in memory before data;
       # ignored if enabled is false, default = 5000
       #
@@ -285,4 +289,36 @@ exporters:
     source_host: "custom host"
     metadata_attributes:
       - k8s.*
+```
+
+### Example with persistent queue
+
+```yaml
+exporters:
+  sumologic:
+    endpoint: http://localhost:3000
+    metric_format: prometheus
+    sending_queue:
+      enabled: true
+      persistent_storage_enabled: true
+
+extensions:
+  file_storage:
+    directory: .
+
+receivers:
+  hostmetrics:
+    collection_interval: 3s
+    scrapers:
+      load:
+
+service:
+  extensions:
+  - file_storage
+  pipelines:
+    metrics:
+      exporters:
+      - sumologic
+      receivers:
+      - hostmetrics
 ```
