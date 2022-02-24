@@ -48,7 +48,14 @@ and can be used as an authenticator for the
   info will be stored after successful collector registration
   (default: `$HOME/.sumologic-otel-collector`)
 - `clobber`: defines whether to delete any existing collector with the same name
-  and create a new one upon registration (default: `false`)
+- `force_registration`: defines whether to force registration every time the
+  collector starts.
+  This will cause the collector to not look at the locally stored credentials
+  and to always reach out to API to register itself. (default: `false`)
+  
+  **NOTE**: if clobber is unset (default) then setting this to true will create
+  a new collector (with new unique name) on Sumo UI on every collector start.__
+  and create a new one upon registration.
 - `ephemeral`: defines whether the collector will be deleted after 12 hours
   of inactivity (default: `false`)
 - `time_zone`: defines the time zone of the collector. For a list of all possible

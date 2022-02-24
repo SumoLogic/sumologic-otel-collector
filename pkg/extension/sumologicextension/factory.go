@@ -52,6 +52,7 @@ func createDefaultConfig() config.Extension {
 		HeartBeatInterval:             DefaultHeartbeatInterval,
 		CollectorCredentialsDirectory: defaultCredsPath,
 		Clobber:                       false,
+		ForceRegistration:             false,
 		Ephemeral:                     false,
 		TimeZone:                      "",
 		BackOff: backOffConfig{

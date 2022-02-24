@@ -257,7 +257,7 @@ func (se *SumologicExtension) getCredentials(ctx context.Context) (credentials.C
 		err      error
 	)
 
-	if !se.conf.Clobber {
+	if !se.conf.ForceRegistration {
 		colCreds, err = se.getLocalCredentials(ctx)
 		if err == nil {
 			errV := se.validateCredentials(ctx, colCreds)

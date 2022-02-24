@@ -61,6 +61,17 @@ type Config struct {
 	// By default this is false.
 	Clobber bool `mapstructure:"clobber"`
 
+	// ForceRegistration defined whether to force registration every time the
+	// collector starts.
+	// This will cause the collector to not look at the locally stored credentials
+	// and to always reach out to API to register itself.
+	//
+	// NOTE: if clobber is unset (default) then setting this to true will create
+	// a new collector on Sumo UI on every collector start.
+	//
+	// By default this is false.
+	ForceRegistration bool `mapstructure:"force_registration"`
+
 	// Ephemeral defines whether the collector will be deleted after 12 hours
 	// of inactivity.
 	// By default this is false.
