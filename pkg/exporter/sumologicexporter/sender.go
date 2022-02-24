@@ -135,6 +135,8 @@ func newSender(
 	}
 }
 
+var errUnauthorized = errors.New("unauthorized")
+
 // send sends data to sumologic
 func (s *sender) send(ctx context.Context, pipeline PipelineType, body io.Reader, flds fields) error {
 	data, err := s.compressor.compress(body)
@@ -163,7 +165,12 @@ func (s *sender) send(ctx context.Context, pipeline PipelineType, body io.Reader
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
-		return fmt.Errorf("error during sending data: %s", resp.Status)
+		switch resp.StatusCode {
+		case 401:
+			return errUnauthorized
+		default:
+			return fmt.Errorf("error during sending data: %s", resp.Status)
+		}
 	}
 
 	s.handleReceiverResponse(resp)

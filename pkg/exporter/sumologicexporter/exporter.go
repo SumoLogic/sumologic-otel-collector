@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer/consumererror"
@@ -38,16 +39,24 @@ const (
 )
 
 type sumologicexporter struct {
-	sources             sourceFormats
-	config              *Config
-	logger              *zap.Logger
-	client              *http.Client
+	sources sourceFormats
+	config  *Config
+	host    component.Host
+	logger  *zap.Logger
+
+	clientLock sync.RWMutex
+	client     *http.Client
+
 	filter              filter
 	prometheusFormatter prometheusFormatter
 	graphiteFormatter   graphiteFormatter
-	dataUrlMetrics      string
-	dataUrlLogs         string
-	dataUrlTraces       string
+
+	// Lock around data URLs is needed because the reconfiguration of the exporter
+	// can happen asynchronously whenever the exporter is re registering.
+	dataUrlsLock   sync.RWMutex
+	dataUrlMetrics string
+	dataUrlLogs    string
+	dataUrlTraces  string
 }
 
 func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) (*sumologicexporter, error) {
@@ -257,18 +266,20 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 	if err != nil {
 		return consumererror.NewLogs(fmt.Errorf("failed to initialize compressor: %w", err), ld)
 	}
+
+	logsUrl, metricsUrl, tracesUrl := se.getDataURLs()
 	sdr := newSender(
 		se.logger,
 		se.config,
-		se.client,
+		se.getHTTPClient(),
 		se.filter,
 		se.sources,
 		c,
 		se.prometheusFormatter,
 		se.graphiteFormatter,
-		se.dataUrlMetrics,
-		se.dataUrlLogs,
-		se.dataUrlTraces,
+		metricsUrl,
+		logsUrl,
+		tracesUrl,
 	)
 
 	// Iterate over ResourceLogs
@@ -355,6 +366,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 			lp.log.CopyTo(logs.AppendEmpty())
 		}
 
+		se.handleUnauthorizedErrors(ctx, errs...)
 		return consumererror.NewLogs(multierr.Combine(errs...), droppedLogs)
 	}
 
@@ -377,18 +389,20 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 	if err != nil {
 		return consumererror.NewMetrics(fmt.Errorf("failed to initialize compressor: %w", err), md)
 	}
+
+	logsUrl, metricsUrl, tracesUrl := se.getDataURLs()
 	sdr := newSender(
 		se.logger,
 		se.config,
-		se.client,
+		se.getHTTPClient(),
 		se.filter,
 		se.sources,
 		c,
 		se.prometheusFormatter,
 		se.graphiteFormatter,
-		se.dataUrlMetrics,
-		se.dataUrlLogs,
-		se.dataUrlTraces,
+		metricsUrl,
+		logsUrl,
+		tracesUrl,
 	)
 
 	// Iterate over ResourceMetrics
@@ -467,10 +481,29 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 			record.metric.CopyTo(ilms.AppendEmpty().Metrics().AppendEmpty())
 		}
 
+		se.handleUnauthorizedErrors(ctx, errs...)
 		return consumererror.NewMetrics(multierr.Combine(errs...), droppedMetrics)
 	}
 
 	return nil
+}
+
+// handleUnauthorizedErrors checks if any of the provided errors is an unauthorized error.
+// In which case it triggers exporter reconfiguration which in turn takes the credentials
+// from sumologicextension which at this point should already detect the problem with
+// authorization (via heartbeats) and prepare new collector credentials to be available.
+func (se *sumologicexporter) handleUnauthorizedErrors(ctx context.Context, errs ...error) {
+	for _, err := range errs {
+		if errors.Is(err, errUnauthorized) {
+			se.logger.Warn("Received unauthorized status code, triggering reconfiguration")
+			if errC := se.configure(ctx); errC != nil {
+				se.logger.Error("Error configuring the exporter with new credentials", zap.Error(err))
+			} else {
+				// It's enough to successfully reconfigure the exporter just once.
+				return
+			}
+		}
+	}
 }
 
 func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces) error {
@@ -479,20 +512,23 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces
 	if err != nil {
 		return consumererror.NewTraces(fmt.Errorf("failed to initialize compressor: %w", err), td)
 	}
+
+	logsUrl, metricsUrl, tracesUrl := se.getDataURLs()
 	sdr := newSender(
 		se.logger,
 		se.config,
-		se.client,
+		se.getHTTPClient(),
 		se.filter,
 		se.sources,
 		c,
 		se.prometheusFormatter,
 		se.graphiteFormatter,
-		se.dataUrlMetrics,
-		se.dataUrlLogs,
-		se.dataUrlTraces,
+		metricsUrl,
+		logsUrl,
+		tracesUrl,
 	)
 	err = sdr.sendTraces(ctx, td, currentMetadata)
+	se.handleUnauthorizedErrors(ctx, err)
 	if err != nil {
 		return err
 	}
@@ -501,6 +537,11 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces
 }
 
 func (se *sumologicexporter) start(ctx context.Context, host component.Host) error {
+	se.host = host
+	return se.configure(ctx)
+}
+
+func (se *sumologicexporter) configure(ctx context.Context) error {
 	var (
 		ext          *sumologicextension.SumologicExtension
 		foundSumoExt bool
@@ -508,7 +549,7 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 
 	httpSettings := se.config.HTTPClientSettings
 
-	for _, e := range host.GetExtensions() {
+	for _, e := range se.host.GetExtensions() {
 		v, ok := e.(*sumologicextension.SumologicExtension)
 		if ok && httpSettings.Auth.AuthenticatorID == v.ComponentID() {
 			ext = v
@@ -538,16 +579,17 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 		if err != nil {
 			return fmt.Errorf("failed to parse API base URL from sumologicextension: %w", err)
 		}
-		u.Path = logsDataUrl
-		se.dataUrlLogs = u.String()
-		u.Path = metricsDataUrl
-		se.dataUrlMetrics = u.String()
-		u.Path = tracesDataUrl
-		se.dataUrlTraces = u.String()
+
+		logsUrl := *u
+		logsUrl.Path = logsDataUrl
+		metricsUrl := *u
+		metricsUrl.Path = metricsDataUrl
+		tracesUrl := *u
+		tracesUrl.Path = tracesDataUrl
+		se.setDataURLs(logsUrl.String(), metricsUrl.String(), tracesUrl.String())
+
 	} else if httpSettings.Endpoint != "" {
-		se.dataUrlLogs = httpSettings.Endpoint
-		se.dataUrlMetrics = httpSettings.Endpoint
-		se.dataUrlTraces = httpSettings.Endpoint
+		se.setDataURLs(httpSettings.Endpoint, httpSettings.Endpoint, httpSettings.Endpoint)
 
 		// Clean authenticator if set to sumologic.
 		// Setting to null in configuration doesn't work, so we have to force it that way.
@@ -558,13 +600,37 @@ func (se *sumologicexporter) start(ctx context.Context, host component.Host) err
 		return fmt.Errorf("no auth extension and no endpoint specified")
 	}
 
-	client, err := httpSettings.ToClient(host.GetExtensions(), component.TelemetrySettings{})
+	client, err := httpSettings.ToClient(se.host.GetExtensions(), component.TelemetrySettings{})
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP Client: %w", err)
 	}
 
-	se.client = client
+	se.setHTTPClient(client)
 	return nil
+}
+
+func (se *sumologicexporter) setHTTPClient(client *http.Client) {
+	se.clientLock.Lock()
+	se.client = client
+	se.clientLock.Unlock()
+}
+
+func (se *sumologicexporter) getHTTPClient() *http.Client {
+	se.clientLock.RLock()
+	defer se.clientLock.RUnlock()
+	return se.client
+}
+
+func (se *sumologicexporter) setDataURLs(logs, metrics, traces string) {
+	se.dataUrlsLock.Lock()
+	se.dataUrlLogs, se.dataUrlMetrics, se.dataUrlTraces = logs, metrics, traces
+	se.dataUrlsLock.Unlock()
+}
+
+func (se *sumologicexporter) getDataURLs() (logs, metrics, traces string) {
+	se.dataUrlsLock.RLock()
+	defer se.dataUrlsLock.RUnlock()
+	return se.dataUrlLogs, se.dataUrlMetrics, se.dataUrlTraces
 }
 
 func (se *sumologicexporter) shutdown(context.Context) error {
