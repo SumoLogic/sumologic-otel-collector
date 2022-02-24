@@ -26,8 +26,8 @@ func TestSanitizeKey(t *testing.T) {
 	f, err := newPrometheusFormatter()
 	require.NoError(t, err)
 
-	key := "&^*123-abc-ABC!./?_:"
-	expected := "___123-abc-ABC_./__:"
+	key := "&^*123-abc-ABC!./?_:\n\r"
+	expected := "___123-abc-ABC_./__:__"
 	assert.Equal(t, expected, f.sanitizeKey(key))
 }
 
@@ -35,8 +35,10 @@ func TestSanitizeValue(t *testing.T) {
 	f, err := newPrometheusFormatter()
 	require.NoError(t, err)
 
-	value := `&^*123-abc-ABC!?./"\\n`
-	expected := `&^*123-abc-ABC!?./\"\\\n`
+	// `\`, `"` and `\n` should be escaped, everything else should be left as-is
+	// see: https://github.com/prometheus/docs/blob/main/content/docs/instrumenting/exposition_formats.md#line-format
+	value := `&^*123-abc-ABC!?./"\` + "\n\r"
+	expected := `&^*123-abc-ABC!?./\"\\\n` + "\r"
 	assert.Equal(t, expected, f.sanitizeValue(value))
 }
 

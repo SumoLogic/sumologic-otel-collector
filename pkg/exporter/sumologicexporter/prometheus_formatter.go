@@ -49,7 +49,9 @@ func newPrometheusFormatter() (prometheusFormatter, error) {
 
 	return prometheusFormatter{
 		sanitNameRegex: sanitNameRegex,
-		replacer:       strings.NewReplacer(`\`, `\\`, `"`, `\"`),
+		// `\`, `"` and `\n` should be escaped, everything else should be left as-is
+		// see: https://github.com/prometheus/docs/blob/main/content/docs/instrumenting/exposition_formats.md#line-format
+		replacer: strings.NewReplacer(`\`, `\\`, `"`, `\"`, "\n", `\n`),
 	}, nil
 }
 
@@ -92,9 +94,9 @@ func (f *prometheusFormatter) sanitizeKey(s string) string {
 // sanitizeKey returns sanitized value string performing the following substitutions:
 // `/` -> `//`
 // `"` -> `\"`
-// `\n` -> `\n`
+// "\n" -> `\n`
 func (f *prometheusFormatter) sanitizeValue(s string) string {
-	return strings.ReplaceAll(f.replacer.Replace(s), `\\n`, `\n`)
+	return f.replacer.Replace(s)
 }
 
 // doubleLine builds metric based on the given arguments where value is float64
