@@ -3,13 +3,13 @@ module github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexpor
 go 1.17
 
 require (
-	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.0.43-beta.0
-	github.com/klauspost/compress v1.14.2
+	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.0.51-beta.0
+	github.com/klauspost/compress v1.14.4
 	github.com/stretchr/testify v1.7.0
 	go.opentelemetry.io/collector v0.44.0
 	go.opentelemetry.io/collector/model v0.44.0
 	go.uber.org/multierr v1.7.0
-	go.uber.org/zap v1.20.0
+	go.uber.org/zap v1.21.0
 )
 
 require (
