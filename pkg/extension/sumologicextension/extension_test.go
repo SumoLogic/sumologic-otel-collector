@@ -19,6 +19,7 @@ import (
 	"crypto/md5"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -570,7 +571,7 @@ func TestRegisterEmptyCollectorName(t *testing.T) {
 	assert.True(t, matched)
 }
 
-func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
+func TestRegisterEmptyCollectorNameForceRegistration(t *testing.T) {
 	t.Parallel()
 
 	hostname, err := os.Hostname()
@@ -605,7 +606,7 @@ func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 
-			// register again because clobber was set
+			// register again because force registration was set
 			case 2:
 				require.Equal(t, registerUrl, req.URL.Path)
 
@@ -647,7 +648,7 @@ func TestRegisterEmptyCollectorNameClobber(t *testing.T) {
 	cfg.Credentials.AccessID = "dummy_access_id"
 	cfg.Credentials.AccessKey = "dummy_access_key"
 	cfg.CollectorCredentialsDirectory = dir
-	cfg.Clobber = true
+	cfg.ForceRegistration = true
 
 	se, err := newSumologicExtension(cfg, zap.NewNop())
 	require.NoError(t, err)
@@ -1240,6 +1241,83 @@ func TestCollectorReregistersAfterHTTPUnathorizedFromHeartbeat(t *testing.T) {
 			expectedReqCount, atomic.LoadInt32(&reqCount),
 		)
 	}
+
+	require.NoError(t, se.Shutdown(context.Background()))
+}
+
+func TestRegistrationRequestPayload(t *testing.T) {
+	t.Parallel()
+
+	hostname, err := os.Hostname()
+	require.NoError(t, err)
+	srv := httptest.NewServer(func() http.HandlerFunc {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			require.Equal(t, registerUrl, req.URL.Path)
+
+			var reqPayload api.OpenRegisterRequestPayload
+			require.NoError(t, json.NewDecoder(req.Body).Decode(&reqPayload))
+			require.True(t, reqPayload.Clobber)
+			require.Equal(t, hostname, reqPayload.Hostname)
+			require.Equal(t, "my description", reqPayload.Description)
+			require.Equal(t, "my category/", reqPayload.Category)
+			require.EqualValues(t,
+				map[string]interface{}{
+					"field1": "value1",
+					"field2": "value2",
+				},
+				reqPayload.Fields,
+			)
+			require.Equal(t, "PST", reqPayload.TimeZone)
+
+			authHeader := req.Header.Get("Authorization")
+			token := base64.StdEncoding.EncodeToString(
+				[]byte("dummy_access_id:dummy_access_key"),
+			)
+			assert.Equal(t, "Basic "+token, authHeader,
+				"collector didn't send correct Authorization header with registration request")
+
+			_, err = w.Write([]byte(`{
+				"collectorCredentialId": "mycredentialID",
+				"collectorCredentialKey": "mycredentialKey",
+				"collectorId": "0000000001231231",
+				"collectorName": "otc-test-123456123123"
+			}`))
+			require.NoError(t, err)
+		})
+	}())
+
+	dir, err := os.MkdirTemp("", "otelcol-sumo-registration-payload-test-*")
+	t.Cleanup(func() {
+		srv.Close()
+		os.RemoveAll(dir)
+	})
+	require.NoError(t, err)
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.CollectorName = ""
+	cfg.ExtensionSettings = config.ExtensionSettings{}
+	cfg.ApiBaseUrl = srv.URL
+	cfg.Credentials.AccessID = "dummy_access_id"
+	cfg.Credentials.AccessKey = "dummy_access_key"
+	cfg.CollectorCredentialsDirectory = dir
+	cfg.BackOff.InitialInterval = time.Millisecond
+	cfg.BackOff.MaxInterval = time.Millisecond
+	cfg.Clobber = true
+	cfg.CollectorDescription = "my description"
+	cfg.CollectorCategory = "my category/"
+	cfg.CollectorFields = map[string]interface{}{
+		"field1": "value1",
+		"field2": "value2",
+	}
+	cfg.TimeZone = "PST"
+
+	se, err := newSumologicExtension(cfg, zap.NewNop())
+	require.NoError(t, err)
+	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+	regexPattern := fmt.Sprintf("%s-%s", hostname, uuidRegex)
+	matched, err := regexp.MatchString(regexPattern, se.collectorName)
+	require.NoError(t, err)
+	assert.True(t, matched)
 
 	require.NoError(t, se.Shutdown(context.Background()))
 }
