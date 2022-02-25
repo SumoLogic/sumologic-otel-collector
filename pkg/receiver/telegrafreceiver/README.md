@@ -52,6 +52,6 @@ With its current implementation Telegraf receiver has the following limitations:
   (apart from agent's configuration itself). That means that metrics go straight
   from input plugin to the receiver for translation (into otc data model) without
   any processing
-- ony `telegraf.Gauge` metric data is supported, which translated (loosly) into
-  `pdata.MetricDataTypeDoubleGauge` and `pdata.MetricDataTypeIntGauge` depending
-  on the underlying data type
+- only the following Telegraf metric data types are supported:
+  - `telegraf.Gauge` that is translated to `pdata.MetricDataTypeGauge`,
+  - `telegraf.Counter` that is translated to `pdata.MetricDataTypeSum`.
