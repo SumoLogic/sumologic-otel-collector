@@ -422,7 +422,7 @@ service:
 
 For details, see the [File Storage Extension Readme][filestorageextension_readme].
 
-[filestorageextension_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/extension/storage/filestorage
+[filestorageextension_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.45.0/extension/storage/filestorage
 
 ---
 
@@ -562,7 +562,7 @@ Flags: 0
 Example configuration with example log can be found in [/examples/logs_json/](/examples/logs_json/) directory.
 
 [json_parser]: https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/operators/json_parser.md
-[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/filelogreceiver
+[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.45.0/receiver/filelogreceiver
 [opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
 
 #### Fluent Forward Receiver
@@ -600,7 +600,7 @@ receivers:
 
 For details, see the [Host Metrics Receiver documentation][hostmetricsreceiver_readme].
 
-[hostmetricsreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/hostmetricsreceiver
+[hostmetricsreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.45.0/receiver/hostmetricsreceiver
 
 #### Jaeger Receiver
 
@@ -621,7 +621,7 @@ receivers:
 
 For details, see the [Jaeger Receiver documentation][jaegerreceiver_readme].
 
-[jaegerreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/jaegerreceiver
+[jaegerreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.45.0/receiver/jaegerreceiver
 [jaeger_io]: https://www.jaegertracing.io/
 
 #### OpenCensus Receiver
@@ -637,7 +637,7 @@ receivers:
 
 For details, see the [OpenCensus Receiver documentation][opencensusreceiver_readme].
 
-[opencensusreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/opencensusreceiver
+[opencensusreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.45.0/receiver/opencensusreceiver
 [opencensus_format]: https://opencensus.io/
 
 #### Syslog Receiver
@@ -671,7 +671,7 @@ For details, see the [Syslog Receiver documentation][syslogreceiver_readme].
 __Note: There are actually two ways of getting and processing Syslog data.
 More details are available in [comparison document](Comparison.md#syslog).__
 
-[syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/syslogreceiver
+[syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.45.0/receiver/syslogreceiver
 
 #### Statsd Receiver
 
@@ -715,7 +715,7 @@ receivers:
 For details, see the [OTLP Receiver documentation][otlpreceiver_readme].
 
 [otlp]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md
-[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.44.0/receiver/otlpreceiver
+[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.45.0/receiver/otlpreceiver
 
 #### TCPlog Receiver
 
@@ -731,7 +731,7 @@ receivers:
 
 For details, see the [TCPlog Receiver documentation][tcplogreceiver_readme].
 
-[tcplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/tcplogreceiver
+[tcplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.45.0/receiver/tcplogreceiver
 
 #### UDPlog Receiver
 
@@ -747,7 +747,7 @@ receivers:
 
 For details, see the [UDPlog Receiver documentation][udplogreceiver_readme].
 
-[udplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/udplogreceiver
+[udplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.45.0/receiver/udplogreceiver
 
 #### Zipkin Receiver
 
@@ -762,7 +762,7 @@ receivers:
 
 For details, see the [Zipkin Receiver documentation][zipkinreceiver_readme].
 
-[zipkinreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/receiver/zipkinreceiver
+[zipkinreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.45.0/receiver/zipkinreceiver
 
 #### Receivers from OpenTelemetry Collector
 
@@ -850,7 +850,7 @@ processors:
 
 For details, see the [Kubernetes Processor documentation][k8sprocessor_docs].
 
-[upstream_k8sattributesprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.44.0/processor/k8sattributesprocessor
+[upstream_k8sattributesprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.45.0/processor/k8sattributesprocessor
 [k8sprocessor_docs]: ../pkg/processor/k8sprocessor/README.md
 
 #### Source Processor
@@ -978,7 +978,7 @@ processors:
 
 For details, see the [Group by Attributes Processor documentation][groupbyattrsprocessor_docs].
 
-[groupbyattrsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.44.0/processor/groupbyattrsprocessor/README.md
+[groupbyattrsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.45.0/processor/groupbyattrsprocessor/README.md
 
 #### Group by Trace Processor
 
@@ -996,7 +996,7 @@ processors:
 
 For details, see the [Group by Trace Processor documentation][groupbytraceprocessor_docs].
 
-[groupbytraceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.44.0/processor/groupbytraceprocessor/README.md
+[groupbytraceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.45.0/processor/groupbytraceprocessor/README.md
 
 #### Metrics Transform Processor
 
@@ -1016,7 +1016,7 @@ processors:
 
 For details, see the [Metrics Transform Processor documentation][metrictransformprocessor_docs].
 
-[metrictransformprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.44.0/processor/groupbytraceprocessor/README.md
+[metrictransformprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.45.0/processor/groupbytraceprocessor/README.md
 
 #### Resource Detection Processor
 
@@ -1033,7 +1033,7 @@ processors:
 
 For details, see the [Resource Detection Processor documentation][resourcedetectionprocessor_docs].
 
-[resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.44.0/processor/resourcedetectionprocessor/README.md
+[resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.45.0/processor/resourcedetectionprocessor/README.md
 
 #### Resource Processor
 
@@ -1087,7 +1087,7 @@ exporters:
 
 For details, see the [Routing Processor documentation][routingprocessor_docs].
 
-[routingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.44.0/processor/routingprocessor/README.md
+[routingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.45.0/processor/routingprocessor/README.md
 
 #### Span Metrics Processor
 
@@ -1146,7 +1146,7 @@ service:
 
 For details, see the [Span Metrics Processor documentation][spanmetricsprocessor_docs].
 
-[spanmetricsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.44.0/processor/spanmetricsprocessor/README.md
+[spanmetricsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.45.0/processor/spanmetricsprocessor/README.md
 
 #### Tail Sampling Processor
 
@@ -1176,7 +1176,7 @@ processors:
 
 For details, see the [Tail Sampling Processor documentation][tailsamplingprocessor_docs].
 
-[tailsamplingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.44.0/processor/tailsamplingprocessor/README.md
+[tailsamplingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.45.0/processor/tailsamplingprocessor/README.md
 
 #### Filter Processor
 
@@ -1298,7 +1298,7 @@ exporters:
 
 For details, see the [Carbon documentation][carbonexporter_docs].
 
-[carbonexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.44.0/exporter/carbonexporter/README.md
+[carbonexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.45.0/exporter/carbonexporter/README.md
 
 #### File Exporter
 
@@ -1315,7 +1315,7 @@ exporters:
 
 For details, see the [File Exporter documentation][fileexporter_docs].
 
-[fileexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.44.0/exporter/fileexporter/README.md
+[fileexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.45.0/exporter/fileexporter/README.md
 
 #### Kafka Exporter
 
@@ -1336,7 +1336,7 @@ exporters:
 
 For details, see the [Kafka Exporter documentation][kafkaexporter_docs].
 
-[kafkaexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.44.0/exporter/kafkaexporter/README.md
+[kafkaexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.45.0/exporter/kafkaexporter/README.md
 
 #### Load Balancing Exporter
 
@@ -1363,7 +1363,7 @@ exporters:
 
 For details, see the [Load Balancing Exporter documentation][loadbalancingexporter_docs].
 
-[loadbalancingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.44.0/exporter/loadbalancingexporter/README.md
+[loadbalancingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.45.0/exporter/loadbalancingexporter/README.md
 
 #### Logging Exporter
 

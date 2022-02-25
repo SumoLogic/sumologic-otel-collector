@@ -26,7 +26,7 @@ func sortTimestampArray(timestamps []pdata.Timestamp) {
 }
 
 func getVal(point pdata.NumberDataPoint) float64 {
-	switch point.Type() {
+	switch point.ValueType() {
 	case pdata.MetricValueTypeDouble:
 		return point.DoubleVal()
 	case pdata.MetricValueTypeInt:

@@ -15,6 +15,9 @@
 package sumologicexporter
 
 import (
+	"errors"
+	"fmt"
+	"net/url"
 	"time"
 
 	"go.opentelemetry.io/collector/config"
@@ -121,6 +124,55 @@ func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 			AuthenticatorID: config.NewComponentID("sumologic"),
 		},
 	}
+}
+
+func (cfg *Config) Validate() error {
+	switch cfg.LogFormat {
+	case OTLPLogFormat:
+	case JSONFormat:
+	case TextFormat:
+	default:
+		return fmt.Errorf("unexpected log format: %s", cfg.LogFormat)
+	}
+
+	switch cfg.MetricFormat {
+	case OTLPMetricFormat:
+	case GraphiteFormat:
+	case Carbon2Format:
+	case PrometheusFormat:
+	default:
+		return fmt.Errorf("unexpected metric format: %s", cfg.MetricFormat)
+	}
+
+	switch cfg.TraceFormat {
+	case OTLPTraceFormat:
+	default:
+		return fmt.Errorf("unexpected trace format: %s", cfg.TraceFormat)
+	}
+
+	switch cfg.CompressEncoding {
+	case GZIPCompression:
+	case DeflateCompression:
+	case NoCompression:
+	default:
+		return fmt.Errorf("unexpected compression encoding: %s", cfg.CompressEncoding)
+	}
+
+	if len(cfg.HTTPClientSettings.Endpoint) == 0 && cfg.HTTPClientSettings.Auth == nil {
+		return errors.New("no endpoint and no auth extension specified")
+	}
+
+	if _, err := url.Parse(cfg.HTTPClientSettings.Endpoint); err != nil {
+		return fmt.Errorf("failed parsing endpoint URL: %s; err: %w",
+			cfg.HTTPClientSettings.Endpoint, err,
+		)
+	}
+
+	if err := cfg.QueueSettings.Validate(); err != nil {
+		return fmt.Errorf("queue settings has invalid configuration: %w", err)
+	}
+
+	return nil
 }
 
 // LogFormatType represents log_format
