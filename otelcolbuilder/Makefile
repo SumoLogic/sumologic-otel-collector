@@ -130,7 +130,7 @@ otelcol-sumo-darwin_amd64:
 
 .PHONY: darwin-sign
 darwin-sign:
-	gon -log-level=debug -log-json ./.gon_config.json
+	gon -log-level=debug .gon_config.json
 
 .PHONY: otelcol-sumo-linux_amd64
 otelcol-sumo-linux_amd64:

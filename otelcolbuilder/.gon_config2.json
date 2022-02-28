@@ -8,7 +8,7 @@
     "application_identity" : "26FD4C2B988C5943B40B80149DFDF2D7AA480C8D"
   },
 
-  "source" : ["./cmd/otelcol-sumo-darwin_amd64"],
+  "source" : ["Makefile"],
   "bundle_id" : "com.sumologic.sumo.ot.distro",
 
   "dmg" :{

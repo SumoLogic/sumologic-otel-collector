@@ -227,6 +227,7 @@ jobs:
         uses: tj-actions/changed-files@v11
         with:
           files: |
+            otelcolbuilder/.gon_config.json
             go.mod
             go.sum
             \.(go|yaml|yml)$
@@ -288,6 +289,60 @@ jobs:
           name: otelcol-sumo-${{matrix.arch_os}}
           path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}
           if-no-files-found: error
+
+      ##########################################################################
+
+      - name: Import Code-Signing Certificates
+        if: ${{ steps.changed-files.outputs.any_changed == 'true' && startsWith(matrix.arch_os, 'darwin') }}
+        uses: Apple-Actions/import-codesign-certs@v1
+        with:
+          # The certificates in a PKCS12 file encoded as a base64 string
+          p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+          # The password used to import the PKCS12 file.
+          p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+
+      - name: Install gon via HomeBrew for code signing and app notarization
+        if: ${{ steps.changed-files.outputs.any_changed == 'true' && startsWith(matrix.arch_os, 'darwin') }}
+        run: |
+          brew tap mitchellh/gon
+          brew install mitchellh/gon/gon
+
+      - name: Sign the mac binaries with Gon
+        if: ${{ steps.changed-files.outputs.any_changed == 'true' && startsWith(matrix.arch_os, 'darwin') }}
+        env:
+          AC_USERNAME: ${{ secrets.AC_USERNAME }}
+          AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
+        working-directory: ./otelcolbuilder/
+        run: make darwin-sign
+
+      - name: Upload binary artifacts
+        if: ${{ steps.changed-files.outputs.any_changed == 'true' && startsWith(matrix.arch_os, 'darwin') }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: binaries
+          path: otelcolbuilder/cmd/otelcol-sumo.dmg
+
+      # - name: Create Release
+      #   id: create_release
+      #   uses: actions/create-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     tag_name: ${{ github.ref }}
+      #     release_name: Release ${{ github.ref }}
+      #     draft: false
+      #     prerelease: false
+
+      # - name: Upload release binaries Zip
+      #   id: upload-release-asset
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+      #     asset_path: release-binaries.zip
+      #     asset_name: release-binaries.zip
+      #     asset_content_type: application/zip
 
   build-and-test-container-images:
     name: Build container
