@@ -93,7 +93,7 @@ func prepareExporterTest(t *testing.T, cfg *Config, cb []func(w http.ResponseWri
 			return
 		}
 
-		if c := int(atomic.LoadInt32(&reqCounter)); assert.Greater(t, len(cb), c) {
+		if c := int(atomic.LoadInt32(&reqCounter)); assert.Greater(t, len(cb), c, "Exporter sent more requests than the number of test callbacks defined:", len(cb)) {
 			cb[c](w, req)
 			atomic.AddInt32(&reqCounter, 1)
 		}
@@ -541,11 +541,55 @@ func TestPushJSONLogs_AttributeTranslation(t *testing.T) {
 
 	testcases := []struct {
 		name       string
+		logs       pdata.Logs
 		configFunc func() *Config
 		callbacks  []func(w http.ResponseWriter, req *http.Request)
 	}{
 		{
+			name: "logs from different files are sent with different metadata",
+			logs: func() pdata.Logs {
+				logRecords := make([]pdata.LogRecord, 2)
+				logRecords[0] = pdata.NewLogRecord()
+				logRecords[0].Body().SetStringVal("log from file1")
+				logRecords[0].Attributes().InsertString("file.path.resolved", "/file1.log")
+				logRecords[1] = pdata.NewLogRecord()
+				logRecords[1].Body().SetStringVal("log from file2")
+				logRecords[1].Attributes().InsertString("file.path.resolved", "/file2.log")
+				logs := LogRecordsToLogs(logRecords)
+				return logs
+			}(),
+			configFunc: func() *Config {
+				config := createTestConfig()
+				config.MetadataAttributes = []string{`file\.path\.resolved`}
+				config.SourceName = "%{_sourceName}"
+				config.LogFormat = JSONFormat
+				config.TranslateAttributes = true
+				return config
+			},
+			callbacks: []func(w http.ResponseWriter, req *http.Request){
+				func(w http.ResponseWriter, req *http.Request) {
+					body := extractBody(t, req)
+
+					assert.Regexp(t, `^{"log":"log from file1","timestamp":\d{13}}$`, body)
+
+					// Source attributes like `_sourceName` are not included in fields
+					assert.Equal(t, "", req.Header.Get("X-Sumo-Fields"))
+					assert.Equal(t, "/file1.log", req.Header.Get("X-Sumo-Name"))
+				},
+				func(w http.ResponseWriter, req *http.Request) {
+					body := extractBody(t, req)
+
+					assert.Regexp(t, `^{"log":"log from file2","timestamp":\d{13}}$`, body)
+
+					// Source attributes like `_sourceName` are not included in fields
+					assert.Equal(t, "", req.Header.Get("X-Sumo-Fields"))
+					assert.Equal(t, "/file2.log", req.Header.Get("X-Sumo-Name"))
+				},
+			},
+		},
+		{
 			name: "enabled",
+			logs: createLogs(),
 			configFunc: func() *Config {
 				config := createTestConfig()
 				config.MetadataAttributes = []string{`host\.name`}
@@ -576,6 +620,7 @@ func TestPushJSONLogs_AttributeTranslation(t *testing.T) {
 		},
 		{
 			name: "disabled",
+			logs: createLogs(),
 			configFunc: func() *Config {
 				config := createTestConfig()
 				config.MetadataAttributes = []string{`host\.name`}
@@ -606,7 +651,7 @@ func TestPushJSONLogs_AttributeTranslation(t *testing.T) {
 
 			test := prepareExporterTest(t, tc.configFunc(), tc.callbacks)
 
-			err := test.exp.pushLogsData(context.Background(), createLogs())
+			err := test.exp.pushLogsData(context.Background(), tc.logs)
 			assert.NoError(t, err)
 		})
 	}

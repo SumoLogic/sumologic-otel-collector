@@ -19,6 +19,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/google/go-cmp/cmp"
 	"go.opentelemetry.io/collector/model/pdata"
 )
 
@@ -33,6 +34,14 @@ func newFields(attrMap pdata.AttributeMap) fields {
 		orig:     attrMap,
 		replacer: strings.NewReplacer(",", "_", "=", ":", "\n", "_"),
 	}
+}
+
+func (f fields) isEmpty() bool {
+	return f.orig.Len() == 0
+}
+
+func (f fields) equals(other fields) bool {
+	return cmp.Equal(f.orig.AsRaw(), other.orig.AsRaw())
 }
 
 // string returns fields as ordered key=value string with `, ` as separator
