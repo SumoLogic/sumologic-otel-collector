@@ -282,7 +282,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 				}
 
 				// If metadata differs from currently buffered, flush the buffer
-				if currentMetadata.string() != previousMetadata.string() && previousMetadata.string() != "" {
+				if !currentMetadata.equals(previousMetadata) && !previousMetadata.isEmpty() {
 					var dropped []logPair
 					dropped, err = sdr.sendLogs(ctx, previousMetadata)
 					if err != nil {
@@ -397,7 +397,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 				}
 
 				// If metadata differs from currently buffered, flush the buffer
-				if currentMetadata.string() != previousMetadata.string() && previousMetadata.string() != "" {
+				if !currentMetadata.equals(previousMetadata) && !previousMetadata.isEmpty() {
 					var dropped []metricPair
 					dropped, err = sdr.sendMetrics(ctx, previousMetadata)
 					if err != nil {
