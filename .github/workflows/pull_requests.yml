@@ -10,7 +10,7 @@ jobs:
   markdownlint:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
       - name: Check if related files changed
         id: changed-files
         uses: tj-actions/changed-files@v10
@@ -31,7 +31,7 @@ jobs:
   yamllint:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
       - name: Install yamllint
         run: pip install yamllint
       - name: yamllint
@@ -40,7 +40,7 @@ jobs:
   markdown-link-check:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
       - name: Check if related files changed
         id: changed-files
         uses: tj-actions/changed-files@v10
@@ -55,7 +55,7 @@ jobs:
   md-links-lint:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
       - name: Check if related files changed
         id: changed-files
         uses: tj-actions/changed-files@v10
@@ -70,7 +70,7 @@ jobs:
   plugins-check:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
       - name: Install yq
         run: |
           wget https://github.com/mikefarah/yq/releases/download/v4.12.1/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
@@ -80,7 +80,7 @@ jobs:
   pre-commit-check:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
       - uses: pre-commit/action@v2.0.3
 
@@ -88,7 +88,7 @@ jobs:
     name: Check uniform dependencies
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
 
       - name: Check uniform dependencies
         run: make check-uniform-dependencies
@@ -104,7 +104,7 @@ jobs:
           - arch_os: darwin_amd64
             runs_on: macos-latest
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
 
       - name: Check if test related files changed
         id: changed-files
@@ -152,7 +152,7 @@ jobs:
       matrix:
         arch_os: [ 'linux_amd64' ]
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
 
       - name: Check if files changed that need linting
         id: changed-files
@@ -217,7 +217,7 @@ jobs:
           - arch_os: darwin_amd64
             runs_on: macos-latest
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
 
       - name: Fetch current branch
         run: ./ci/fetch_current_branch.sh
@@ -298,7 +298,7 @@ jobs:
       matrix:
         arch_os: [ 'linux_amd64', 'linux_arm64']
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
 
       - name: Check if build related files changed
         id: changed-files
