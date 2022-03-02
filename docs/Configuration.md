@@ -26,7 +26,6 @@
     - [TCPlog Receiver](#tcplog-receiver)
     - [UDPlog Receiver](#udplog-receiver)
     - [Zipkin Receiver](#zipkin-receiver)
-    - [Receivers from OpenTelemetry Collector](#receivers-from-opentelemetry-collector)
 - [Processors](#processors)
   - [Sumo Logic Custom Processors](#sumo-logic-custom-processors)
     - [Cascading Filter Processor](#cascading-filter-processor)
