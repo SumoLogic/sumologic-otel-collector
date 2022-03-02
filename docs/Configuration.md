@@ -764,26 +764,6 @@ For details, see the [Zipkin Receiver documentation][zipkinreceiver_readme].
 
 [zipkinreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.45.0/receiver/zipkinreceiver
 
-#### Receivers from OpenTelemetry Collector
-
-The Sumo Logic OT Distro has built-in receivers from the [OpenTelemetry Collector](https://github.com/SumoLogic/opentelemetry-collector) and are allowed in the configuration for this distribution.
-
-The following is an example configuration to collect CPU load metrics using the [Host Metrics Receiver][hostmetricsreceiver]:
-
-```yaml
-receivers:
-  hostmetrics:
-    collection_interval: 30s
-    scrapers:
-      load:
-```
-
-For details, see the [receiver documentation][opentelemetry-collector-receivers].
-
-[hostmetricsreceiver]: https://github.com/SumoLogic/opentelemetry-collector/tree/release-0.27/receiver/hostmetricsreceiver
-[opentelemetry-collector]: https://github.com/SumoLogic/opentelemetry-collector/tree/release-0.27
-[opentelemetry-collector-receivers]: https://github.com/SumoLogic/opentelemetry-collector/tree/release-0.27/receiver
-
 ---
 
 ## Processors
