@@ -190,7 +190,7 @@ func (s *sender) handleReceiverResponse(resp *http.Response) error {
 		var rResponse ReceiverResponse
 		if resp.ContentLength > 0 {
 			var (
-				b  = bytes.NewBuffer(make([]byte, resp.ContentLength))
+				b  = bytes.NewBuffer(make([]byte, 0, resp.ContentLength))
 				tr = io.TeeReader(resp.Body, b)
 			)
 
