@@ -17,7 +17,7 @@ jobs:
       matrix:
         arch_os: [ 'linux_amd64' ]
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
       - name: Setup go
         uses: actions/setup-go@v2
         with:
@@ -64,7 +64,7 @@ jobs:
           - arch_os: darwin_amd64
             runs_on: macos-latest
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
 
       - name: Fetch current branch
         run: ./ci/fetch_current_branch.sh
@@ -134,7 +134,7 @@ jobs:
       matrix:
         arch_os: [ 'linux_amd64', 'linux_arm64' ]
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
 
       - name: Extract tag
         id: extract_tag
@@ -177,7 +177,7 @@ jobs:
     needs:
       - build-container-images
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
 
       - name: Extract tag
         id: extract_tag
