@@ -168,26 +168,60 @@ func (s *sender) send(ctx context.Context, pipeline PipelineType, body io.Reader
 }
 
 func (s *sender) handleReceiverResponse(resp *http.Response) error {
-	if resp.StatusCode >= 200 && resp.StatusCode < 400 {
+	// API responds with a 200 or 204 with ConentLength set to 0 when all data
+	// has been successfully ingested.
+	if resp.ContentLength == 0 && (resp.StatusCode == 200 || resp.StatusCode == 204) {
 		return nil
 	}
 
+	type ReceiverResponseCore struct {
+		Status  int    `json:"status,omitempty"`
+		ID      string `json:"id,omitempty"`
+		Code    string `json:"code,omitempty"`
+		Message string `json:"message,omitempty"`
+	}
+
+	// API responds with a 200 or 204 with a JSON body describing what issues
+	// were encountered when processing the sent data.
 	switch resp.StatusCode {
+	case 200, 204:
+		var rResponse ReceiverResponseCore
+		var (
+			b  = bytes.NewBuffer(make([]byte, 0, resp.ContentLength))
+			tr = io.TeeReader(resp.Body, b)
+		)
+
+		if err := json.NewDecoder(tr).Decode(&rResponse); err != nil {
+			s.logger.Warn("Error decoding receiver response", zap.ByteString("body", b.Bytes()))
+			return nil
+		}
+
+		l := s.logger.With(zap.String("status", resp.Status))
+		if len(rResponse.ID) > 0 {
+			l = l.With(zap.String("id", rResponse.ID))
+		}
+		if len(rResponse.Code) > 0 {
+			l = l.With(zap.String("code", rResponse.Code))
+		}
+		if len(rResponse.Message) > 0 {
+			l = l.With(zap.String("message", rResponse.Message))
+		}
+		l.Warn("There was an issue sending data")
+		return nil
+
 	case 401:
 		return errUnauthorized
+
 	default:
-		type ReceiverResponse struct {
-			Status  int    `json:"status,omitempty"`
-			ID      string `json:"id,omitempty"`
-			Code    string `json:"code,omitempty"`
-			Message string `json:"message,omitempty"`
-			Errors  []struct {
+		type ReceiverErrorResponse struct {
+			ReceiverResponseCore
+			Errors []struct {
 				Code    string `json:"code"`
 				Message string `json:"message"`
 			} `json:"errors,omitempty"`
 		}
 
-		var rResponse ReceiverResponse
+		var rResponse ReceiverErrorResponse
 		if resp.ContentLength > 0 {
 			var (
 				b  = bytes.NewBuffer(make([]byte, 0, resp.ContentLength))
@@ -195,8 +229,9 @@ func (s *sender) handleReceiverResponse(resp *http.Response) error {
 			)
 
 			if err := json.NewDecoder(tr).Decode(&rResponse); err != nil {
-				s.logger.Warn("Error decoding receiver response", zap.ByteString("body", b.Bytes()))
-				return nil
+				return fmt.Errorf("failed to decode API response (status: %s): %s",
+					resp.Status, b.String(),
+				)
 			}
 		}
 
@@ -210,11 +245,11 @@ func (s *sender) handleReceiverResponse(resp *http.Response) error {
 		if len(rResponse.Code) > 0 {
 			errMsgs = append(errMsgs, fmt.Sprintf("code: %s", rResponse.Code))
 		}
-		if len(rResponse.Errors) > 0 {
-			errMsgs = append(errMsgs, fmt.Sprintf("errors: %+v", rResponse.Errors))
-		}
 		if len(rResponse.Message) > 0 {
 			errMsgs = append(errMsgs, fmt.Sprintf("message: %s", rResponse.Message))
+		}
+		if len(rResponse.Errors) > 0 {
+			errMsgs = append(errMsgs, fmt.Sprintf("errors: %+v", rResponse.Errors))
 		}
 
 		return fmt.Errorf("failed sending data: %s", strings.Join(errMsgs, ", "))

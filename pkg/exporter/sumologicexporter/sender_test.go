@@ -15,6 +15,8 @@
 package sumologicexporter
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -30,6 +32,7 @@ import (
 	"go.opentelemetry.io/collector/model/otlp"
 	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type senderTest struct {
@@ -987,6 +990,100 @@ func TestLogsDontSendSourceFieldsInXSumoFieldsHeader(t *testing.T) {
 		)
 		assert.NoError(t, err)
 		assert.EqualValues(t, 1, *test.reqCounter)
+	})
+}
+
+func TestLogsHandlesReceiverResponses(t *testing.T) {
+	t.Run("json with too many fields logs a warning", func(t *testing.T) {
+		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			func(w http.ResponseWriter, req *http.Request) {
+				fmt.Fprintf(w, `{
+					"status" : 200,
+					"id" : "YBLR1-S2T29-MVXEJ",
+					"code" : "bad.http.header.fields",
+					"message" : "X-Sumo-Fields Warning: 14 key-value pairs are dropped as they are exceeding maximum key-value pair number limit 30."
+				  }`)
+			},
+		}, func(c *Config) {
+			c.LogFormat = JSONFormat
+		})
+
+		test.s.logBuffer = logRecordsToLogPair(exampleLog())
+
+		var buffer bytes.Buffer
+		writer := bufio.NewWriter(&buffer)
+		test.s.logger = zap.New(
+			zapcore.NewCore(
+				zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
+				zapcore.AddSync(writer),
+				zapcore.DebugLevel,
+			),
+		)
+
+		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(
+			map[string]string{
+				"cluster":         "abcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				"code":            "4222222222222222222222222222222222222222222222222222222222222222222222222222222222222",
+				"component":       "apiserver",
+				"endpoint":        "httpsaaaaaaaaaaaaaaaaaaa",
+				"a":               "a",
+				"b":               "b",
+				"c":               "c",
+				"d":               "d",
+				"e":               "e",
+				"f":               "f",
+				"g":               "g",
+				"q":               "q",
+				"w":               "w",
+				"r":               "r",
+				"t":               "t",
+				"y":               "y",
+				"1":               "1",
+				"2":               "2",
+				"3":               "3",
+				"4":               "4",
+				"5":               "5",
+				"6":               "6",
+				"7":               "7",
+				"8":               "8",
+				"9":               "9",
+				"10":              "10",
+				"11":              "11",
+				"12":              "12",
+				"13":              "13",
+				"14":              "14",
+				"15":              "15",
+				"16":              "16",
+				"17":              "17",
+				"18":              "18",
+				"19":              "19",
+				"20":              "20",
+				"21":              "21",
+				"22":              "22",
+				"23":              "23",
+				"24":              "24",
+				"25":              "25",
+				"26":              "26",
+				"27":              "27",
+				"28":              "28",
+				"29":              "29",
+				"_sourceName":     "test_source_name",
+				"_sourceHost":     "test_source_host",
+				"_sourceCategory": "test_source_category",
+			}),
+		)
+		assert.NoError(t, writer.Flush())
+		assert.NoError(t, err)
+		assert.EqualValues(t, 1, *test.reqCounter)
+
+		assert.Contains(t,
+			buffer.String(),
+			`There was an issue sending data	{`+
+				`"status": "200 OK", `+
+				`"id": "YBLR1-S2T29-MVXEJ", `+
+				`"code": "bad.http.header.fields", `+
+				`"message": "X-Sumo-Fields Warning: 14 key-value pairs are dropped as they are exceeding maximum key-value pair number limit 30."`,
+		)
 	})
 }
 
