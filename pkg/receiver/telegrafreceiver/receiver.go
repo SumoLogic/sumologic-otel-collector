@@ -62,7 +62,10 @@ func (r *telegrafreceiver) Start(ctx context.Context, host component.Host) error
 		r.cancel = cancel
 
 		ch := make(chan telegraf.Metric)
+		
+		r.wg.Add(1)
 		go func() {
+			defer r.wg.Done()
 			if rErr := r.agent.RunWithChannel(rctx, ch); rErr != nil {
 				r.logger.Error("Problem starting receiver", zap.Error(rErr))
 			}
@@ -72,35 +75,25 @@ func (r *telegrafreceiver) Start(ctx context.Context, host component.Host) error
 		go func() {
 			var fErr error
 			defer r.wg.Done()
-			for {
-				select {
-				case <-rctx.Done():
-					return
+			for m := range ch {
+				if m == nil {
+					r.logger.Info("got nil from channel")
+					break
+				}
 
-				case m, ok := <-ch:
-					if !ok {
-						r.logger.Info("channel closed")
-						return
-					}
-					if m == nil {
-						r.logger.Info("got nil from channel")
-						break
-					}
+				var ms pdata.Metrics
+				if ms, fErr = r.metricConverter.Convert(m); fErr != nil {
+					r.logger.Error(
+						"Error converting telegraf.Metric to pdata.Metrics",
+						zap.Error(fErr),
+					)
+					continue
+				}
 
-					var ms pdata.Metrics
-					if ms, fErr = r.metricConverter.Convert(m); fErr != nil {
-						r.logger.Error(
-							"Error converting telegraf.Metric to pdata.Metrics",
-							zap.Error(fErr),
-						)
-						continue
-					}
-
-					if fErr = r.consumer.ConsumeMetrics(rctx, ms); fErr != nil {
-						r.logger.Error("ConsumeMetrics() error",
-							zap.String("error", fErr.Error()),
-						)
-					}
+				if fErr = r.consumer.ConsumeMetrics(rctx, ms); fErr != nil {
+					r.logger.Error("ConsumeMetrics() error",
+						zap.String("error", fErr.Error()),
+					)
 				}
 			}
 		}()
