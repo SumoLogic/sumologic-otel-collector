@@ -62,7 +62,7 @@ func (r *telegrafreceiver) Start(ctx context.Context, host component.Host) error
 		r.cancel = cancel
 
 		ch := make(chan telegraf.Metric)
-		
+
 		r.wg.Add(1)
 		go func() {
 			defer r.wg.Done()
@@ -75,10 +75,13 @@ func (r *telegrafreceiver) Start(ctx context.Context, host component.Host) error
 		go func() {
 			var fErr error
 			defer r.wg.Done()
+			// Telegraf expects its input plugins to always be able to write to this channel while running,
+			// and if we stop reading from it while there's still active plugins, we'll get a deadlock.
+			// As such, this loop only exits when the channel is closed by Telegraf itself.
 			for m := range ch {
 				if m == nil {
 					r.logger.Info("got nil from channel")
-					break
+					continue
 				}
 
 				var ms pdata.Metrics
