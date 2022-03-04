@@ -79,6 +79,24 @@ for-all:
 check-uniform-dependencies:
 	./ci/check_uniform_dependencies.sh
 
+OT_CORE_VERSION := $(shell grep "otelcol_version: .*" otelcolbuilder/.otelcol-builder.yaml | cut -f 4 -d " ")
+# usage: make update-ot-core OT_CORE_NEW_VERSION=x.x.x
+.PHONY: update-ot-core
+update-ot-core:
+	@test $(OT_CORE_NEW_VERSION) || (echo "usage: make update-otc-core OT_CORE_NEW_VERSION=x.x.x"; exit 1);
+	@echo "updating OT core from $(OT_CORE_VERSION) to $(OT_CORE_NEW_VERSION)"
+	@sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" otelcolbuilder/.otelcol-builder.yaml
+	@sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" otelcolbuilder/Makefile
+	@sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" README.md
+	@sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" docs/Configuration.md
+	@find . -type f -name "go.mod" -exec sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" {} \;
+	@echo "building OT distro to check for breakage"
+	make gomod-download-all
+	pushd otelcolbuilder \
+		&& make install-builder \
+		&& make build \
+		&& popd
+
 ################################################################################
 # Release
 ################################################################################

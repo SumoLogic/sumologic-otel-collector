@@ -1,6 +1,7 @@
 # Developer guide
 
 - [How to release](#how-to-release)
+- [Updating OT core](#updating-ot-core)
 
 ## How to release
 
@@ -29,6 +30,30 @@ make add-tag push-tag
 > ```shell
 > make prepare-tag TAG=$(git describe --tags --abbrev=10 --match "v[0-9]*")
 > ```
+
+## Updating OT core
+
+Updating OT core involves:
+
+1. Updating the version number where necessary
+1. Verifying that Sumo OT distro builds correctly
+1. Fixing lint errors from deprecations
+
+The first two steps of this list are covered by the `update-ot-core` Makefile target. Run:
+
+```shell
+make update-ot-core OT_CORE_NEW_VERSION=x.x.x
+```
+
+to carry these steps out.
+Afterwards, you can run tests and check for lint errors by running:
+
+```shell
+make golint
+make gotest
+```
+
+in the repository root.
 
 [builder_config]: ../otelcolbuilder/.otelcol-builder.yaml
 [release_job]: ../.github/workflows/release_builds.yml
