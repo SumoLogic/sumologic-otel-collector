@@ -32,10 +32,10 @@ var processorCapabilities = consumer.Capabilities{MutatesData: true}
 
 // NewFactory returns a new factory for the Tail Sampling processor.
 func NewFactory() component.ProcessorFactory {
-	return processorhelper.NewFactory(
+	return component.NewProcessorFactory(
 		typeStr,
 		createDefaultConfig,
-		processorhelper.WithLogs(createLogProcessor))
+		component.WithLogsProcessor(createLogProcessor))
 }
 
 func createDefaultConfig() config.Processor {

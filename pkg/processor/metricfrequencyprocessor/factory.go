@@ -25,10 +25,10 @@ const (
 )
 
 func NewFactory() component.ProcessorFactory {
-	return processorhelper.NewFactory(
+	return component.NewProcessorFactory(
 		cfgType,
 		createDefaultConfig,
-		processorhelper.WithMetrics(createMetricsProcessor),
+		component.WithMetricsProcessor(createMetricsProcessor),
 	)
 }
 

@@ -23,7 +23,6 @@ import (
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/configtelemetry"
 	"go.opentelemetry.io/collector/consumer"
-	"go.opentelemetry.io/collector/processor/processorhelper"
 
 	cfconfig "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
 )
@@ -43,10 +42,10 @@ func init() {
 
 // NewFactory returns a new factory for the Cascading Filter processor.
 func NewFactory() component.ProcessorFactory {
-	return processorhelper.NewFactory(
+	return component.NewProcessorFactory(
 		typeStr,
 		createDefaultConfig,
-		processorhelper.WithTraces(createTraceProcessor))
+		component.WithTracesProcessor(createTraceProcessor))
 }
 
 func createDefaultConfig() config.Processor {
