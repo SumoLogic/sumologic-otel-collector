@@ -28,9 +28,9 @@ and can be used as an authenticator for the
 
 ## Configuration
 
-- `access_id`: (required) access ID for Sumo Logic service, see
-  [help][credentials_help] for more details
-- `access_key`: (required) access key for Sumo Logic service, see
+- ~`access_id`: (required) access ID for Sumo Logic service~, deprecated, see `install_token` below
+- ~`access_key`: (required) access key for Sumo Logic service~, deprecated, see `install_token` below
+- `install_token`: (required) collector install token for the Sumo Logic service, see
   [help][credentials_help] for more details
 - `collector_name`: name that will be used for registration; by default it is a
    hostname followed by UUID
@@ -67,7 +67,7 @@ and can be used as an authenticator for the
   - `max_interval` - maximum interval of backoff (default: `1m`)
   - `max_elapsed_time` - time after which registration fails definitely (default: `15m`)
 
-[credentials_help]: https://help.sumologic.com/Manage/Security/Access-Keys
+[credentials_help]: https://help.sumologic.com/Manage/Security/Installation_Tokens
 [fields_help]: https://help.sumologic.com/Manage/Fields
 
 ## Example Config
@@ -75,8 +75,7 @@ and can be used as an authenticator for the
 ```yaml
 extensions:
   sumologic:
-    access_id: aaa
-    access_key: bbbbbbbbbbbbbbbbbbbbbb
+    install_token: <token>
     collector_name: my_collector
 
 receivers:
@@ -123,7 +122,7 @@ Here is a list of valid values for this configuration option:
 
 ## Storing credentials
 
-When collector is starting for the first time, Sumo Logic extension is using `access_key` and `access_id`
+When collector is starting for the first time, Sumo Logic extension is using the `install_token`
 to register the collector with API.
 Upon registration, the extension gets collector credentials which are used to authenticate the collector
 when sending request to API (heartbeats, sending data etc).
@@ -135,7 +134,7 @@ set to `$HOME/.sumologic-otel-collector`.
 Name of that file that contains the credentials is created in the following manner:
 
 ```go
-filename := hash(collector_name, access_id, access_key, api_base_url)
+filename := hash(collector_name, install_token, api_base_url)
 ```
 
 This mechanism allows to keep the state of the collector (whether it is registered or not).

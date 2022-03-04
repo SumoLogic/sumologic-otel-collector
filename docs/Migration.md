@@ -97,8 +97,7 @@ Let's consider the following example:
 ```yaml
 extensions:
   sumologic:
-    access_id: <access_id>
-    access_key: <access_key>
+    install_token: <install_token>
 
 receivers:
   filelog:
@@ -161,8 +160,7 @@ Collector name can be specified by setting the `collector_name` option:
 ```yaml
 extensions:
   sumologic:
-    access_id: <access_id>
-    access_key: <access_key>
+    install_token: <install_token>
     collector_name: my_collector
 ```
 
@@ -173,8 +171,7 @@ To set a description, use the `collector_description` option:
 ```yaml
 extensions:
   sumologic:
-    access_id: <access_id>
-    access_key: <access_key>
+    install_token: <install_token>
     collector_name: my_collector
     collector_description: This is my and only my collector
 ```
@@ -187,8 +184,7 @@ The exporter will set the host name for every record sent to Sumo Logic:
 ```yaml
 extensions:
   sumologic:
-    access_id: <access_id>
-    access_key: <access_key>
+    install_token: <install_token>
     collector_name: my_collector
     collector_description: This is my and only my collector
 exporters:
@@ -203,8 +199,7 @@ To set a Collector category, use the `collector_category` option:
 ```yaml
 extensions:
   sumologic:
-    access_id: <access_id>
-    access_key: <access_key>
+    install_token: <install_token>
     collector_name: my_collector
     collector_description: This is my and only my collector
     collector_category: example
@@ -222,8 +217,7 @@ you could use the following configuration:
 ```yaml
 extensions:
   sumologic:
-    access_id: <access_id>
-    access_key: <access_key>
+    install_token: <install_token>
     collector_name: my_collector
     collector_description: This is my and only my collector
     collector_category: example
@@ -250,8 +244,7 @@ For example, the following examples sets the time zone to `America/Tijuana`:
 ```yaml
 extensions:
   sumologic:
-    access_id: <access_id>
-    access_key: <access_key>
+    install_token: <install_token>
     collector_name: my_collector
     collector_description: This is my and only my collector
     collector_category: example
@@ -292,8 +285,7 @@ Below is an example of an OpenTelemetry configuration for a Local File Source.
 ```yaml
 extensions:
   sumologic:
-    access_id: <access_id>
-    access_key: <access_key>
+    install_token: <install_token>
     ## Time Zone is a substitute of Installed Collector `Time Zone`
     ## with `Use time zone from log file. If none is detected use:` option.
     ## This is used only if `clear_logs_timestamp` is set to `true` in sumologic exporter.
@@ -787,8 +779,7 @@ Below is an example of an OpenTelemetry configuration for a Syslog Source.
 ```yaml
 extensions:
   sumologic:
-    access_id: <access_id>
-    access_key: <access_key>
+    install_token: <install_token>
     ## Time Zone is a substitute of Installed Collector `Time Zone`
     ## with `Use time zone from log file. If none is detected use:` option.
     ## This is used only if `clear_logs_timestamp` is set to `true` in sumologic exporter.
@@ -1187,8 +1178,7 @@ Below is an example of an OpenTelemetry configuration for a Streaming Metrics So
 ```yaml
 extensions:
   sumologic:
-    access_id: <access_id>
-    access_key: <access_key>
+    install_token: <install_token>
     ## Time Zone is a substitute of Installed Collector `Time Zone`
     ## Full list of time zones is available on wikipedia:
     ## https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
@@ -1409,8 +1399,7 @@ Below is an example of an OpenTelemetry configuration for a Host Metrics Source.
 ```yaml
 extensions:
   sumologic:
-    access_id: <access_id>
-    access_key: <access_key>
+    install_token: <install_token>
     ## Time Zone is a substitute of Installed Collector `Time Zone`
     ## Full list of time zones is available on wikipedia:
     ## https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
@@ -2008,8 +1997,8 @@ The following table shows the equivalent [user.properties][user.properties] for 
 | user.properties key                           | The OpenTelemetry Collector Key                            |
 |-----------------------------------------------|------------------------------------------------------------|
 | `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
-| `accessid=accessId`                           | `extensions.sumologic.access_id`                           |
-| `accesskey=accessKey`                         | `extensions.sumologic.access_key`                          |
+| ~~`accessid=accessId`~~                       | N/A, use `extensions.sumologic.install_token`              |
+| ~~`accesskey=accessKey`~~                     | N/A, use `extensions.sumologic.install_token`              |
 | `category=category`                           | [extensions.sumologic.collector_category](#category)       |
 | `clobber=true/false`                          | `extensions.sumologic.clobber`                             |
 | `description=description`                     | [extensions.sumologic.collector_description](#description) |

@@ -90,8 +90,11 @@ var errGRPCNotSupported = fmt.Errorf("gRPC is not supported by sumologicextensio
 var _ configauth.ClientAuthenticator = (*SumologicExtension)(nil)
 
 func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtension, error) {
-	if conf.Credentials.AccessID == "" || conf.Credentials.AccessKey == "" {
-		return nil, errors.New("access_key and/or access_id not provided")
+	if conf.Credentials.InstallToken == "" {
+		if conf.Credentials.AccessID == "" || conf.Credentials.AccessKey == "" {
+			return nil, errors.New("access credentials not provided: need either install_token or access_id and access_key")
+		}
+		logger.Warn("access_id and access_key are deprecated and will be removed in the near future, please use install_token instead")
 	}
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -147,12 +150,21 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 }
 
 func createHashKey(conf *Config) string {
-	return fmt.Sprintf("%s%s%s%s",
-		conf.CollectorName,
-		conf.Credentials.AccessID,
-		conf.Credentials.AccessKey,
-		strings.TrimSuffix(conf.ApiBaseUrl, "/"),
-	)
+	// access_id and access_key are deprecated, use only if token is unset
+	if conf.Credentials.InstallToken != "" {
+		return fmt.Sprintf("%s%s%s",
+			conf.CollectorName,
+			conf.Credentials.InstallToken,
+			strings.TrimSuffix(conf.ApiBaseUrl, "/"),
+		)
+	} else {
+		return fmt.Sprintf("%s%s%s%s",
+			conf.CollectorName,
+			conf.Credentials.AccessID,
+			conf.Credentials.AccessKey,
+			strings.TrimSuffix(conf.ApiBaseUrl, "/"),
+		)
+	}
 }
 
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
@@ -370,10 +382,7 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 	}
 
 	addClientCredentials(req,
-		accessCredentials{
-			AccessID:  se.conf.Credentials.AccessID,
-			AccessKey: se.conf.Credentials.AccessKey,
-		},
+		se.conf.Credentials,
 	)
 	addJSONHeaders(req)
 
@@ -663,9 +672,16 @@ func addCollectorCredentials(req *http.Request, collectorCredentialId string, co
 }
 
 func addClientCredentials(req *http.Request, credentials accessCredentials) {
-	token := base64.StdEncoding.EncodeToString(
-		[]byte(credentials.AccessID + ":" + credentials.AccessKey),
-	)
+	var authHeaderValue string
+	if credentials.InstallToken != "" {
+		authHeaderValue = fmt.Sprintf("Bearer %s", credentials.InstallToken)
+	} else {
+		token := base64.StdEncoding.EncodeToString(
+			[]byte(credentials.AccessID + ":" + credentials.AccessKey),
+		)
+		authHeaderValue = fmt.Sprintf("Basic %s", token)
+	}
 
-	req.Header.Add("Authorization", "Basic "+token)
+	req.Header.Del("Authorization")
+	req.Header.Add("Authorization", authHeaderValue)
 }

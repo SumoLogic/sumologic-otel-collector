@@ -171,8 +171,7 @@ For example, with the following configuration:
 ```yaml
 extensions:
   sumologic:
-    access_id: <access_id>
-    access_key: <access_key>
+    install_token: <token>
 receivers:
   tcplog:
     listen_address: "0.0.0.0:54526"
