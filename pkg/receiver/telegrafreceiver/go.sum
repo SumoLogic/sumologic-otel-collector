@@ -1535,8 +1535,8 @@ github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5CcY=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/sumologic/telegraf v1.21.3-sumo-0 h1:efWQq7hkrWXhSg4aphi3qnXQmtSWfX5YjVt6GAwKdSA=
-github.com/sumologic/telegraf v1.21.3-sumo-0/go.mod h1:63aSA3wT04MSgH69nNEAlDbrVPJhEQ1Djwc+2QFMEtU=
+github.com/sumologic/telegraf v1.21.3-sumo-1 h1:fskH4qYA0meQHtI+b3/s0bH92LJ+XOu/3xfN2L9e2nM=
+github.com/sumologic/telegraf v1.21.3-sumo-1/go.mod h1:63aSA3wT04MSgH69nNEAlDbrVPJhEQ1Djwc+2QFMEtU=
 github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=

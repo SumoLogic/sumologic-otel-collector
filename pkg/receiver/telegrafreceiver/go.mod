@@ -276,4 +276,4 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-replace github.com/influxdata/telegraf => github.com/sumologic/telegraf v1.21.3-sumo-0
+replace github.com/influxdata/telegraf => github.com/sumologic/telegraf v1.21.3-sumo-1
