@@ -7,6 +7,12 @@ markdownlint: mdl
 
 MD_FILES := $(shell find ./pkg -type f -name "*.md")
 
+ifeq ($(shell go env GOOS),darwin)
+SED ?= gsed
+else
+SED ?= sed
+endif
+
 .PHONY: mdl
 mdl:
 	mdl --style .markdownlint/style.rb \
@@ -124,6 +130,12 @@ delete-tag:
 	  (echo Deleting tag "$${dir:2}/$${TAG}" && \
 	 	git tag -d "$${dir:2}/$${TAG}" ); \
 	done
+
+.PHONY: prepare-tag
+prepare-tag:
+	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
+	$(SED) -i 's#\(gomod: "github.com/SumoLogic/sumologic-otel-collector/.*\) v0.0.0-00010101000000-000000000000#\1 ${TAG}#g' \
+		otelcolbuilder/.otelcol-builder.yaml
 
 ################################################################################
 # Build
