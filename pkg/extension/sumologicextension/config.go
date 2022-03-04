@@ -27,9 +27,9 @@ type Config struct {
 	// squash ensures fields are correctly decoded in embedded struct.
 	confighttp.HTTPClientSettings `mapstructure:",squash"`
 
-	// Credentials contains Access Key and Access ID for Sumo Logic service.
-	// Please refer to https://help.sumologic.com/Manage/Security/Access-Keys
-	// for detailed instructions how to obtain them.
+	// Credentials contains Install Token for Sumo Logic service.
+	// Please refer to https://help.sumologic.com/Manage/Security/Installation_Tokens
+	// for detailed instructions how to obtain the token.
 	Credentials accessCredentials `mapstructure:",squash"`
 
 	// CollectorName is the name under which collector will be registered.
@@ -89,6 +89,8 @@ type Config struct {
 }
 
 type accessCredentials struct {
+	InstallToken string `mapstructure:"install_token"`
+	// the below fields are deprecated and will be removed shortly
 	AccessID  string `mapstructure:"access_id"`
 	AccessKey string `mapstructure:"access_key"`
 }

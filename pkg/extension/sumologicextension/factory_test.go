@@ -51,8 +51,7 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 
 	ccfg := cfg.(*Config)
 	ccfg.CollectorName = "test_collector"
-	ccfg.Credentials.AccessID = "dummy_access_id"
-	ccfg.Credentials.AccessKey = "dummy_access_key"
+	ccfg.Credentials.InstallToken = "dummy_install_token"
 
 	ext, err := createExtension(context.Background(),
 		component.ExtensionCreateSettings{
@@ -67,8 +66,7 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 func TestFactory_CreateExtension(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = "test_collector"
-	cfg.Credentials.AccessID = "dummy_access_id"
-	cfg.Credentials.AccessKey = "dummy_access_key"
+	cfg.Credentials.InstallToken = "dummy_install_token"
 
 	ext, err := createExtension(context.Background(),
 		component.ExtensionCreateSettings{

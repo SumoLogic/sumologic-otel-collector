@@ -248,8 +248,7 @@ For example, `%{existing_attr}/%{nonexistent_attr}` becomes `value-of-existing-a
 ```yaml
 extensions:
   sumologic:
-    access_id: aaa
-    access_key: bbbbbbbbbbbbbbbbbbbbbb
+    install_token: <token>
     collector_name: my_collector
 
 receivers:

@@ -3,8 +3,7 @@ extensions:
     collector_name: my_custom_collector
     collector_desription: "My custom OTC description"
     collector_category: collector_category
-    access_id: aaa
-    access_key: bbbbbbbbbbbbbbbbbbbbbb
+    install_token: <token>
     heartbeat_interval: 15s
 
 # Data pipeline is required to load the config.
