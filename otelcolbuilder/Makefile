@@ -3,7 +3,6 @@ BUILDER_VERSION ?= 0.45.0
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
 BUILDER_BIN_PATH ?= $(HOME)/bin/opentelemetry-collector-builder
 INSTALLED_BUILDER_VERSION := $(shell opentelemetry-collector-builder version 2>&1)
-VERSION ?= "$(shell git describe --tags --abbrev=10 --match "v[0-9]*")"
 GO ?= go
 OS ?= $(shell uname -s | tr A-Z a-z)
 
@@ -58,11 +57,12 @@ endif
 
 .PHONY: _builder
 _builder:
+	$(eval VERSION ?= $(shell git describe --tags --abbrev=10 --match "v[0-9]*"))
 # Need to specify go path because otherwise opentelemetry-collector-builder
 # uses /usr/bin/go which on Github Actions is using preinstalled 1.15.12 by default.
 	CGO_ENABLED=$(CGO_ENABLED) $(BUILDER_BIN_PATH) \
 		--go $(GO) \
-		--version $(VERSION) \
+		--version "$(VERSION)" \
 		--config .otelcol-builder.yaml \
 		--output-path ./cmd \
 		--skip-compilation=$(SKIP_COMPILATION)
@@ -93,14 +93,14 @@ _gobuild_debug:
 build: ensure-correct-builder-version
 # Since builder doesn't allow adding build tags, let's just skip the compilation
 # and run 'go build ...' by hand.
-	@$(MAKE) _builder SKIP_COMPILATION=true
+	@$(MAKE) generate-sources
 	@$(MAKE) _gobuild
 
 .PHONY: build-debug
 build-debug: ensure-correct-builder-version
 # Since builder doesn't allow adding build tags, let's just skip the compilation
 # and run 'go build ...' by hand.
-	@$(MAKE) _builder SKIP_COMPILATION=true
+	@$(MAKE) generate-sources
 	@$(MAKE) _gobuild_debug
 
 .PHONY: generate-sources
