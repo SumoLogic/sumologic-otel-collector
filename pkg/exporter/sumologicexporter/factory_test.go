@@ -34,7 +34,7 @@ func TestType(t *testing.T) {
 func TestCreateDefaultConfig(t *testing.T) {
 	factory := NewFactory()
 	cfg := factory.CreateDefaultConfig()
-	qs := exporterhelper.DefaultQueueSettings()
+	qs := exporterhelper.NewDefaultQueueSettings()
 	qs.Enabled = false
 
 	assert.Equal(t, cfg, &Config{
@@ -64,7 +64,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 				AuthenticatorID: config.NewComponentID("sumologic"),
 			},
 		},
-		RetrySettings: exporterhelper.DefaultRetrySettings(),
+		RetrySettings: exporterhelper.NewDefaultRetrySettings(),
 		QueueSettings: qs,
 	})
 

@@ -45,12 +45,12 @@ var processorCapabilities = consumer.Capabilities{MutatesData: true}
 
 // NewFactory returns a new factory for the Span processor.
 func NewFactory() component.ProcessorFactory {
-	return processorhelper.NewFactory(
+	return component.NewProcessorFactory(
 		typeStr,
 		createDefaultConfig,
-		processorhelper.WithTraces(createTraceProcessor),
-		processorhelper.WithMetrics(createMetricsProcessor),
-		processorhelper.WithLogs(createLogsProcessor),
+		component.WithTracesProcessor(createTraceProcessor),
+		component.WithMetricsProcessor(createMetricsProcessor),
+		component.WithLogsProcessor(createLogsProcessor),
 	)
 }
 
