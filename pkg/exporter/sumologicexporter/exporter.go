@@ -325,7 +325,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 			lp.log.CopyTo(logs.AppendEmpty())
 		}
 
-		errs = removeDuplicates(errs)
+		errs = deduplicateErrors(errs)
 		se.handleUnauthorizedErrors(ctx, errs...)
 		return consumererror.NewLogs(multierr.Combine(errs...), droppedLogs)
 	}
@@ -441,31 +441,12 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 			record.metric.CopyTo(ilms.AppendEmpty().Metrics().AppendEmpty())
 		}
 
-		errs = removeDuplicates(errs)
+		errs = deduplicateErrors(errs)
 		se.handleUnauthorizedErrors(ctx, errs...)
 		return consumererror.NewMetrics(multierr.Combine(errs...), droppedMetrics)
 	}
 
 	return nil
-}
-
-// removeDuplicates removes duplicate errors from a collection of errors.
-// Duplicate errors are errors that have the same message returned by `error.Error()`.
-func removeDuplicates(errs []error) []error {
-	if len(errs) < 2 {
-		return errs
-	}
-
-	var uniqueList []error
-	uniqueSet := make(map[string]struct{})
-	for _, err := range errs {
-		_, ok := uniqueSet[err.Error()]
-		if !ok {
-			uniqueSet[err.Error()] = struct{}{}
-			uniqueList = append(uniqueList, err)
-		}
-	}
-	return uniqueList
 }
 
 // handleUnauthorizedErrors checks if any of the provided errors is an unauthorized error.
