@@ -325,6 +325,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 			lp.log.CopyTo(logs.AppendEmpty())
 		}
 
+		errs = deduplicateErrors(errs)
 		se.handleUnauthorizedErrors(ctx, errs...)
 		return consumererror.NewLogs(multierr.Combine(errs...), droppedLogs)
 	}
@@ -440,6 +441,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 			record.metric.CopyTo(ilms.AppendEmpty().Metrics().AppendEmpty())
 		}
 
+		errs = deduplicateErrors(errs)
 		se.handleUnauthorizedErrors(ctx, errs...)
 		return consumererror.NewMetrics(multierr.Combine(errs...), droppedMetrics)
 	}
