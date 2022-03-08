@@ -78,7 +78,7 @@ jobs:
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v2
         with:
-          name: ${{matrix.arch_os}}
+          name: ${{ steps.set_filename.outputs.filename }}
           path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
           if-no-files-found: error
 
@@ -134,24 +134,6 @@ jobs:
         id: set_filename
         run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}})"
 
-      - name: Rename to include tag in filename
-        run: cp otelcol-sumo-${{matrix.arch_os}} ${{ steps.set_filename.outputs.filename }}
-        working-directory: ./otelcolbuilder/cmd
-
-      - name: Show included modules
-        working-directory: ./otelcolbuilder/cmd
-        run: |
-          go version -m ${{ steps.set_filename.outputs.filename }} | \
-          grep -E "/(receiver|exporter|processor|extension)/" | \
-          tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
-
-      - name: Store binary as action artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{matrix.arch_os}}
-          path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
-          if-no-files-found: error
-
       - name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v1
         with:
@@ -175,11 +157,31 @@ jobs:
         run: cp otelcol-sumo-${{matrix.arch_os}}.dmg ${{ steps.set_filename.outputs.filename }}.dmg
         working-directory: ./otelcolbuilder/cmd
 
+      - name: Rename binary to include tag in filename
+        run: cp otelcol-sumo-${{matrix.arch_os}} ${{ steps.set_filename.outputs.filename }}
+        working-directory: ./otelcolbuilder/cmd
+
+      - name: Show included modules
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          go version -m ${{ steps.set_filename.outputs.filename }} | \
+          grep -E "/(receiver|exporter|processor|extension)/" | \
+          tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
+
+      # Store binary and .dmg into pipeline artifacts after they have been signed
+
       - name: Store .dmg as action artifact
         uses: actions/upload-artifact@v2
         with:
-          name: otelcol-sumo-${{matrix.arch_os}}.dmg
+          name: ${{ steps.set_filename.outputs.filename }}.dmg
           path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}.dmg
+          if-no-files-found: error
+
+      - name: Store binary as action artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ steps.set_filename.outputs.filename }}
+          path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
           if-no-files-found: error
 
   build-container-images:
