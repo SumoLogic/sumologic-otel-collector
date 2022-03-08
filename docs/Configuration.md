@@ -14,18 +14,39 @@
   - [Sumo Logic Custom Receivers](#sumo-logic-custom-receivers)
     - [Telegraf Receiver](#telegraf-receiver)
   - [Open Telemetry Upstream Receivers](#open-telemetry-upstream-receivers)
+    - [AWS Container Insights Receiver](#aws-container-insights-receiver)
+    - [AWS ECS Container Metrics Receiver](#aws-ecs-container-metrics-receiver)
+    - [AWS X-Ray Receiver](#aws-x-ray-receiver)
+    - [Carbon Receiver](#carbon-receiver)
+    - [Collectd Receiver](#collectd-receiver)
+    - [Docker Stats Receiver](#docker-stats-receiver)
+    - [Dotnet Diagnostics Receiver](#dotnet-diagnostics-receiver)
     - [Filelog Receiver](#filelog-receiver)
       - [Example: Filelog Receiver with json_parser](#example-filelog-receiver-with-json_parser)
     - [Fluent Forward Receiver](#fluent-forward-receiver)
+    - [Google Cloud Spanner Receiver](#google-cloud-spanner-receiver)
     - [Host Metrics Receiver](#host-metrics-receiver)
     - [Jaeger Receiver](#jaeger-receiver)
+    - [JMX Receiver](#jmx-receiver)
+    - [Journald Receiver](#journald-receiver)
+    - [Kafka Receiver](#kafka-receiver)
+    - [Kafka Metrics Receiver](#kafka-metrics-receiver)
     - [OpenCensus Receiver](#opencensus-receiver)
+    - [Podman Stats Receiver](#podman-stats-receiver)
+    - [Receiver Creator](#receiver-creator)
+    - [Redis Receiver](#redis-receiver)
+    - [SAPM Receiver](#sapm-receiver)
+    - [SignalFx Receiver](#signalfx-receiver)
+    - [Splunk HEC Receiver](#splunk-hec-receiver)
     - [Syslog Receiver](#syslog-receiver)
     - [Statsd Receiver](#statsd-receiver)
     - [OTLP Receiver](#otlp-receiver)
     - [TCPlog Receiver](#tcplog-receiver)
     - [UDPlog Receiver](#udplog-receiver)
+    - [Wavefront Receiver](#wavefront-receiver)
+    - [Windows Performance Counters Receiver](#windows-performance-counters-receiver)
     - [Zipkin Receiver](#zipkin-receiver)
+    - [Zookeeper Receiver](#zookeeper-receiver)
 - [Processors](#processors)
   - [Sumo Logic Custom Processors](#sumo-logic-custom-processors)
     - [Cascading Filter Processor](#cascading-filter-processor)
@@ -460,7 +481,54 @@ The following receivers have been developed by the Open Telemetry community
 and are incorporated into the Sumo Logic Open Telemetry distro without any changes.
 
 If you are already familiar with Open Telemetry, you may know how the upstream components work
-and you can expect no changes in their behaviour.
+and you can expect no changes in their behavior.
+
+Most of these sections just link to the upstream documentation.
+Where applicable, we have added documentation useful specifically to users of Sumo Logic.
+
+#### AWS Container Insights Receiver
+
+See [upstream documentation]().
+
+https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/awscontainerinsightreceiver
+
+#### AWS ECS Container Metrics Receiver
+
+See [upstream documentation]().
+
+https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/awsecscontainermetricsreceiver
+
+#### AWS X-Ray Receiver
+
+See [upstream documentation]().
+
+https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/awsxrayreceiver
+
+#### Carbon Receiver
+
+See [upstream documentation]().
+
+#### Collectd Receiver
+
+See [upstream documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/collectdreceiver).
+
+#### Docker Stats Receiver
+
+See [upstream documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/dockerstatsreceiver).
+
+#### Dotnet Diagnostics Receiver
+
+The Dotnet Diagnostics receiver (`dotnet_diagnostics`) collects metrics about .NET processes
+published by the .NET runtime via the [EventCounter][dotnet_eventcounters] API.
+
+This receiver is compatible with .NET Core 3.0 and later versions, running on Linux or macOS.
+Windows is not yet supported.
+
+For details, see the [upstream documentation][dotnetdiagnosticsreceiver_docs].
+
+[dotnetdiagnosticsreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/dotnetdiagnosticsreceiver
+
+[dotnet_eventcounters]: https://docs.microsoft.com/en-us/dotnet/core/diagnostics/event-counters
 
 #### Filelog Receiver
 
@@ -582,6 +650,16 @@ For details, see the [Fluent Forward Receiver documentation][fluentforwardreceiv
 [fluent_forward_protocol]: https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1
 [fluentforwardreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/release/v0.27.x/receiver/fluentforwardreceiver
 
+#### Google Cloud Spanner Receiver
+
+The Google Cloud Spanner receiver (`googlecloudspanner`) creates metrics about Google Cloud Spanner databases
+from statistic retrieved from the [introspection tables][cloudspanner_introspection].
+
+For details, see the [upstream documentation][googlecloudspannerreceiver_docs].
+
+[cloudspanner_introspection]: https://cloud.google.com/spanner/docs/introspection
+[googlecloudspannerreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/googlecloudspannerreceiver
+
 #### Host Metrics Receiver
 
 Host Metrics Receiver generates metrics about the host system scraped from various sources.
@@ -623,6 +701,37 @@ For details, see the [Jaeger Receiver documentation][jaegerreceiver_readme].
 [jaegerreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/jaegerreceiver
 [jaeger_io]: https://www.jaegertracing.io/
 
+#### JMX Receiver
+
+The JMX receiver (`jmx`) reports metrics from an MBean server.
+It requires a Java runtime and the [OpenTelemetry JMX Metric Gatherer][jmx_metrics_gatherer] jar to exist on the machine.
+
+For details, see the [upstream documentation][jmxreceiver_docs].
+
+[jmx_metrics_gatherer]: https://github.com/open-telemetry/opentelemetry-java-contrib/blob/main/jmx-metrics/README.md
+[jmxreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/jmxreceiver
+
+#### Journald Receiver
+
+The Journald receiver (`journald`) parses journald events from systemd journal into logs.
+Journald receiver is dependent on `journalctl` binary to be present and must be in the $PATH of the agent.
+
+For details, see the [upstream documentation][journaldreceiver_docs].
+
+[journaldreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/journaldreceiver
+
+#### Kafka Receiver
+
+The Kafka receiver (`kafka`) receives traces, metrics, and logs from Kafka topics.
+
+For details, see the [upstream documentation][kafkareceiver_docs].
+
+[kafkareceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/kafkareceiver
+
+#### Kafka Metrics Receiver
+
+Kafka Metrics receiver (`kafkametrics`) collects Kafka metrics from Kafka servers.
+
 #### OpenCensus Receiver
 
 OpenCensus Receiver receives data via gRPC or HTTP using [OpenCensus][opencensus_format] format.
@@ -638,6 +747,60 @@ For details, see the [OpenCensus Receiver documentation][opencensusreceiver_read
 
 [opencensusreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/opencensusreceiver
 [opencensus_format]: https://opencensus.io/
+
+#### Podman Stats Receiver
+
+The Podman Stats receiver (`podman_stats`) queries the Podman service API to fetch stats for all running containers on a configured interval.
+
+For details, see the [upstream documentation][podmanstatsreceiver_docs].
+
+[podmanstatsreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/podmanreceiver
+
+#### Receiver Creator
+
+The Receiver Creator (`receiver_creator`) can instantiate other receivers at runtime based on whether observed endpoints match a configured rule.
+
+For details, see the [upstream documentation][receivercreator_docs].
+
+[receivercreator_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/receivercreator
+
+#### Redis Receiver
+
+The Redis receiver (`redis`) creates metrics about a single Redis instance
+based on the results of the [`INFO`][redis_info_command] command sent to the instance.
+
+For details, see the [upstream documentation][redisreceiver_docs].
+
+[redis_info_command]: https://redis.io/commands/info
+[redisreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/redisreceiver
+
+#### SAPM Receiver
+
+The SAPM receiver (`sapm`) accepts traces in the [Splunk APM Protocol format][sapm_format].
+This allows the collector to receive traces from other collectors or the SignalFx Smart Agent.
+
+For details, see the [upstream documentation][sapmreceiver_docs].
+
+[sapm_format]: https://github.com/signalfx/sapm-proto/
+[sapmreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/sapmreceiver
+
+#### SignalFx Receiver
+
+The SignalFx receiver (`signalfx`) accepts logs and metrics in [SignalFx protobuf format][signalfx_protobuf_format].
+
+For details, see the [upstream documentation][signalfxreceiver_docs].
+
+[signalfx_protobuf_format]: https://github.com/signalfx/com_signalfx_metrics_protobuf
+[signalfxreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/signalfxreceiver
+
+#### Splunk HEC Receiver
+
+The Splunk HEC receiver (`splunk_hec`) accepts events in the [Splunk HEC format][splunk_hec_format].
+
+For details, see the [upstream documentation][splunkhecreceiver_docs].
+
+[splunk_hec_format]: https://docs.splunk.com/Documentation/Splunk/8.0.5/Data/FormateventsforHTTPEventCollector
+[splunkhecreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/splunkhecreceiver
 
 #### Syslog Receiver
 
@@ -748,9 +911,29 @@ For details, see the [UDPlog Receiver documentation][udplogreceiver_readme].
 
 [udplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/udplogreceiver
 
+#### Wavefront Receiver
+
+The Wavefront receiver accepts metrics in [Wavefront][wavefront_data_format] format,
+which is similar to Carbon.
+
+Note that the Wavefront receiver is based on Carbon receiver and binds to the same port by default.
+To run both receivers, change the `endpoint` port on one of the receivers.
+
+For details, see the [upstream documentation][wavefrontreceiver_docs].
+
+[wavefront_data_format]: https://docs.wavefront.com/wavefront_data_format.html#metrics-data-format-syntax
+[wavefrontreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/wavefrontreceiver
+
+#### Windows Performance Counters Receiver
+
+The Windows Performance Counters receiver, for Windows only,
+captures system, application, or custom performance counter data from the Windows registry.
+
+For details, see the [upstream documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/windowsperfcountersreceiver).
+
 #### Zipkin Receiver
 
-Zipkin Receiver receives receives spans from Zipkin (`v1` and `v2`).
+Zipkin Receiver receives spans from Zipkin (`v1` and `v2`).
 
 The following is a basic configuration for Zipkin Receiver:
 
@@ -762,6 +945,12 @@ receivers:
 For details, see the [Zipkin Receiver documentation][zipkinreceiver_readme].
 
 [zipkinreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/zipkinreceiver
+
+#### Zookeeper Receiver
+
+The Zookeeper receiver collects metrics from a Zookeeper instance, using the `mntr` command.
+
+For details, see the [upstream documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/zookeeperreceiver).
 
 ---
 
