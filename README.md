@@ -65,10 +65,12 @@ OT distro.
 | `kafkareceiver`                                                          | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/kafkareceiver                  |
 | `opencensusreceiver` [configuration help][opencensusreceiver_help]       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/opencensusreceiver             |
 | `podmanreceiver`                                                         | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/podmanreceiver                 |
+| `prometheusreceiver`                                                     | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/prometheusreceiver             |
 | `receivercreator`                                                        | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/receivercreator                |
 | `redisreceiver`                                                          | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/redisreceiver                  |
 | `sapmreceiver`                                                           | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/sapmreceiver                   |
 | `signalfxreceiver`                                                       | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/signalfxreceiver               |
+| `simpleprometheusreceiver`                                               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/simpleprometheusreceiver       |
 | `splunkhecreceiver`                                                      | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/splunkhecreceiver              |
 | `syslogreceiver` [configuration help][syslogreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/syslogreceiver                 |
 | `statsdreceiver` [configuration help][statsdreceiver_help]               | https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/statsdreceiver                 |

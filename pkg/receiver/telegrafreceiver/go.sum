@@ -846,7 +846,6 @@ github.com/googleapis/gnostic v0.5.5 h1:9fHAtK0uDfpveeqqo1hkEZJcFvYXAiCN3UutL8F9
 github.com/googleapis/gnostic v0.5.5/go.mod h1:7+EbHbldMins07ALC74bsA81Ovc97DwqyJO1AENw9kA=
 github.com/gopcua/opcua v0.2.3 h1:K5SW2o+vNga62J2PL5GQmWqYQHiZPV/+EKPetarVFQM=
 github.com/gopcua/opcua v0.2.3/go.mod h1:GtgfiXLQVXu72KtHZnWNu4JHlMPKqPSOd+pmngEGLWE=
-github.com/gophercloud/gophercloud v0.16.0 h1:sWjPfypuzxRxjVbk3/MsU4H8jS0NNlyauZtIUl78BPU=
 github.com/gophercloud/gophercloud v0.16.0/go.mod h1:wRtmUelyIIv3CSSDI47aUwbs075O6i+LY+pXsKCBsb4=
 github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 h1:EGx4pi6eqNxGaHF6qqu48+N2wcFQ5qg5FXgOdqsJ5d8=
 github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=
@@ -1535,8 +1534,8 @@ github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5CcY=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/sumologic/telegraf v1.21.3-sumo-1 h1:fskH4qYA0meQHtI+b3/s0bH92LJ+XOu/3xfN2L9e2nM=
-github.com/sumologic/telegraf v1.21.3-sumo-1/go.mod h1:63aSA3wT04MSgH69nNEAlDbrVPJhEQ1Djwc+2QFMEtU=
+github.com/sumologic/telegraf v1.21.3-sumo-2 h1:KzkzMQzkHTz29h0n5esxWk2ydVoTYexzJIQWCiKKg4A=
+github.com/sumologic/telegraf v1.21.3-sumo-2/go.mod h1:TC2Ocox/78qGsKMslgsNcOEapYcGHipI0KDzHZZ3vQk=
 github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
