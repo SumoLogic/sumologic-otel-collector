@@ -270,6 +270,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - build
+      - build-darwin
       - build-container-images
       - push-docker-manifest
     steps:
