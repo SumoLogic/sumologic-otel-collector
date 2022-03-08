@@ -171,11 +171,16 @@ jobs:
         working-directory: ./otelcolbuilder/
         run: make darwin-sign
 
+      - name: Rename .dmg to include tag in filename
+        run: cp otelcol-sumo-${{matrix.arch_os}}.dmg ${{ steps.set_filename.outputs.filename }}.dmg
+        working-directory: ./otelcolbuilder/cmd
+
       - name: Store .dmg as action artifact
         uses: actions/upload-artifact@v2
         with:
-          name: binaries
-          path: otelcolbuilder/cmd/otelcol-sumo-darwin_amd64.dmg
+          name: otelcol-sumo-${{matrix.arch_os}}.dmg
+          path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}.dmg
+          if-no-files-found: error
 
   build-container-images:
     name: Build container
