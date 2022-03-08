@@ -110,7 +110,6 @@ require (
 	github.com/googleapis/gax-go/v2 v2.1.1 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/gopcua/opcua v0.2.3 // indirect
-	github.com/gophercloud/gophercloud v0.16.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/gosnmp/gosnmp v1.34.0 // indirect
@@ -276,4 +275,4 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-replace github.com/influxdata/telegraf => github.com/sumologic/telegraf v1.21.3-sumo-1
+replace github.com/influxdata/telegraf => github.com/sumologic/telegraf v1.21.3-sumo-2

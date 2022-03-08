@@ -96,10 +96,12 @@ receivers:
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kafkareceiver v0.46.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusreceiver v0.46.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/podmanreceiver v0.46.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.46.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/receivercreator v0.46.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/redisreceiver v0.46.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/sapmreceiver v0.46.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/signalfxreceiver v0.46.0"
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/simpleprometheusreceiver v0.46.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/splunkhecreceiver v0.46.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/statsdreceiver v0.46.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/syslogreceiver v0.46.0"
@@ -141,7 +143,7 @@ replaces:
 
   # ----------------------------------------------------------------------------
   # Needed for telegrafreceiver
-  - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.21.3-sumo-1
+  - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.21.3-sumo-2
 
   # TODO: remove this when:
   # - regexp log filtering is released upstream:
