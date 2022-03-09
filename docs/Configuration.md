@@ -4,76 +4,13 @@
   - [Basic configuration for logs](#basic-configuration-for-logs)
   - [Basic configuration for metrics](#basic-configuration-for-metrics)
   - [Basic configuration for traces](#basic-configuration-for-traces)
-- [Putting it all together](#putting-it-all-together)
-- [Extensions](#extensions)
-  - [Sumo Logic Extension](#sumo-logic-extension)
-    - [Using multiple Sumo Logic extensions](#using-multiple-sumo-logic-extensions)
-  - [Open Telemetry Upstream Extensions](#open-telemetry-upstream-extensions)
-    - [File Storage Extension](#file-storage-extension)
-- [Receivers](#receivers)
-  - [Sumo Logic Custom Receivers](#sumo-logic-custom-receivers)
-    - [Telegraf Receiver](#telegraf-receiver)
-  - [Open Telemetry Upstream Receivers](#open-telemetry-upstream-receivers)
-    - [AWS Container Insights Receiver](#aws-container-insights-receiver)
-    - [AWS ECS Container Metrics Receiver](#aws-ecs-container-metrics-receiver)
-    - [AWS X-Ray Receiver](#aws-x-ray-receiver)
-    - [Carbon Receiver](#carbon-receiver)
-    - [Collectd Receiver](#collectd-receiver)
-    - [Docker Stats Receiver](#docker-stats-receiver)
-    - [Dotnet Diagnostics Receiver](#dotnet-diagnostics-receiver)
-    - [Filelog Receiver](#filelog-receiver)
-      - [Example: Filelog Receiver with json_parser](#example-filelog-receiver-with-json_parser)
-    - [Fluent Forward Receiver](#fluent-forward-receiver)
-    - [Google Cloud Spanner Receiver](#google-cloud-spanner-receiver)
-    - [Host Metrics Receiver](#host-metrics-receiver)
-    - [Jaeger Receiver](#jaeger-receiver)
-    - [JMX Receiver](#jmx-receiver)
-    - [Journald Receiver](#journald-receiver)
-    - [Kafka Receiver](#kafka-receiver)
-    - [Kafka Metrics Receiver](#kafka-metrics-receiver)
-    - [OpenCensus Receiver](#opencensus-receiver)
-    - [Podman Stats Receiver](#podman-stats-receiver)
-    - [Receiver Creator](#receiver-creator)
-    - [Redis Receiver](#redis-receiver)
-    - [SAPM Receiver](#sapm-receiver)
-    - [SignalFx Receiver](#signalfx-receiver)
-    - [Splunk HEC Receiver](#splunk-hec-receiver)
-    - [Syslog Receiver](#syslog-receiver)
-    - [Statsd Receiver](#statsd-receiver)
-    - [OTLP Receiver](#otlp-receiver)
-    - [TCPlog Receiver](#tcplog-receiver)
-    - [UDPlog Receiver](#udplog-receiver)
-    - [Wavefront Receiver](#wavefront-receiver)
-    - [Windows Performance Counters Receiver](#windows-performance-counters-receiver)
-    - [Zipkin Receiver](#zipkin-receiver)
-    - [Zookeeper Receiver](#zookeeper-receiver)
-- [Processors](#processors)
-  - [Sumo Logic Custom Processors](#sumo-logic-custom-processors)
-    - [Cascading Filter Processor](#cascading-filter-processor)
-    - [Kubernetes Processor](#kubernetes-processor)
-    - [Source Processor](#source-processor)
-    - [Sumo Logic Syslog Processor](#sumo-logic-syslog-processor)
-    - [Metric Frequency Processor](#metric-frequency-processor)
-  - [Open Telemetry Upstream Processors](#open-telemetry-upstream-processors)
-    - [Attributes Processor](#attributes-processor)
-    - [Group by Attributes Processor](#group-by-attributes-processor)
-    - [Group by Trace Processor](#group-by-trace-processor)
-    - [Metrics Transform Processor](#metrics-transform-processor)
-    - [Resource Detection Processor](#resource-detection-processor)
-    - [Resource Processor](#resource-processor)
-    - [Routing Processor](#routing-processor)
-    - [Span Metrics Processor](#span-metrics-processor)
-    - [Tail Sampling Processor](#tail-sampling-processor)
-    - [Filter Processor](#filter-processor)
-- [Exporters](#exporters)
-  - [Sumo Logic Custom Exporters](#sumo-logic-custom-exporters)
-    - [Sumo Logic Exporter](#sumo-logic-exporter)
-  - [Open Telemetry Upstream Exporters](#open-telemetry-upstream-exporters)
-    - [Carbon Exporter](#carbon-exporter)
-    - [File Exporter](#file-exporter)
-    - [Kafka Exporter](#kafka-exporter)
-    - [Load Balancing Exporter](#load-balancing-exporter)
-    - [Logging Exporter](#logging-exporter)
+  - [Putting it all together](#putting-it-all-together)
+- [Authentication](#authentication)
+  - [Using multiple Sumo Logic extensions](#using-multiple-sumo-logic-extensions)
+- [Persistence](#persistence)
+- [Collecting logs from files](#collecting-logs-from-files)
+  - [Keeping track of position in files](#keeping-track-of-position-in-files)
+  - [Parsing JSON logs](#parsing-json-logs)
 - [Command-line configuration options](#command-line-configuration-options)
 - [Proxy Support](#proxy-support)
 
@@ -158,7 +95,7 @@ exporters:
 
 extensions:
   file_storage:
-    directory: /tmp
+    directory: .
   sumologic:
     access_id: <my_access_id>
     access_key: <my_access_key>
@@ -173,20 +110,19 @@ receivers:
     start_at: beginning
 
 service:
-  extensions: [sumologic]
+  extensions: [file_storage, sumologic]
   pipelines:
     logs:
       receivers: [filelog]
       exporters: [sumologic]
 ```
 
-Adding the [File Storage extension](#file-storage-extension) allows the Filelog receiver
+Adding the [File Storage extension][filestorageextension_docs] allows the Filelog receiver
 to persist the position in the files it reads between restarts.
-Note that the path specified in the `directory` parameter must exist
-and be readable and writable by the Otelcol process.
 
-See [Receivers](#receivers) section for details of the Filelog receiver
-and for sending data from other sources including Fluentd/Fluent Bit, syslog and others.
+See section below on [Collecting logs from files](#collecting-logs-from-files) for details on configuring the Filelog receiver.
+
+[filestorageextension_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/extension/storage/filestorage
 
 ### Basic configuration for metrics
 
@@ -248,7 +184,7 @@ service:
       exporters: [sumologic]
 ```
 
-## Putting it all together
+### Putting it all together
 
 Here's an example configuration file that collects all the signals - logs, metrics and traces.
 
@@ -258,7 +194,7 @@ exporters:
 
 extensions:
   file_storage:
-    directory: /tmp
+    directory: .
   sumologic:
     access_id: <my_access_id>
     access_key: <my_access_key>
@@ -284,7 +220,7 @@ receivers:
       grpc:
 
 service:
-  extensions: [sumologic]
+  extensions: [file_storage, sumologic]
   pipelines:
     logs:
       receivers: [filelog]
@@ -297,14 +233,7 @@ service:
       exporters: [sumologic]
 ```
 
-See below for details on configuring all the components available in the Sumo Logic OT Distro -
-extensions, receivers, processors, exporters.
-
----
-
-## Extensions
-
-### Sumo Logic Extension
+## Authentication
 
 To send data to [Sumo Logic][sumologic_webpage] you need to configure
 the [sumologicextension][sumologicextension] with credentials and define it
@@ -347,7 +276,7 @@ For a list of all the configuration options for sumologicextension refer to
 [hostmetricsreceiver]: https://github.com/SumoLogic/opentelemetry-collector/tree/release-0.27/receiver/hostmetricsreceiver
 [sumologicextension_configuration]: ../pkg/extension/sumologicextension#configuration
 
-#### Using multiple Sumo Logic extensions
+### Using multiple Sumo Logic extensions
 
 If you want to register multiple collectors and/or send data to
 mutiple Sumo Logic accounts, mutiple `sumologicextension`s can be defined within the
@@ -397,140 +326,53 @@ service:
       exporters: [sumologic/custom2]
 ```
 
-### Open Telemetry Upstream Extensions
+## Persistence
 
-The following extensions have been developed by the Open Telemetry community
-and are incorporated into the Sumo Logic Open Telemetry distro without any changes.
+When using the [Sumo Logic exporter][sumologicexporter_docs], it is recommended to store its state in a persistent storage
+to prevent loss of data buffered in the exporter between restarts.
 
-If you are already familiar with Open Telemetry, you may know how the upstream
-components work and you can expect no changes in their behaviour.
+To do that, add the [File Storage extension][filestorageextension_docs] to the configuration
+and configure the exporter to use persistent queue
+with the `sending_queue.enabled: true`
+and `sending_queue.persistent_storage_enabled: true` flags.
 
-#### File Storage Extension
-
-The File Storage extension can persist state to the local file system.
-
-The extension requires read and write access to a directory.
-A default directory can be used, but it must already exist in order for the
-extension to operate.
-
-`directory` is the relative or absolute path to the dedicated data storage directory.
-
-`timeout` is the maximum time to wait for a file lock.
-This value does not need to be modified in most circumstances.
+Here's an example configuration:
 
 ```yaml
-extensions:
-  file_storage/custom_settings:
-    directory: /var/lib/otelcol/mydir
-    timeout: 1s
-
-receivers:
-  filelog:
-    include: [ /var/log/myservice/*.json ]
-    start_at: beginning
-
 exporters:
   sumologic:
+    sending_queue:
+      enabled: true
+      persistent_storage_enabled: true
+
+extensions:
+  file_storage:
+    directory: .
+  sumologic:
+    access_id: <my_access_id>
+    access_key: <my_access_key>
+
+receivers:
+  hostmetrics:
+    collection_interval: 3s
+    scrapers:
+      load:
 
 service:
-  extensions: [file_storage/custom_settings]
+  extensions:
+  - file_storage
+  - sumologic
   pipelines:
-    traces:
-      receivers: [filelog]
-      exporters: [sumologic]
+    metrics:
+      exporters:
+      - sumologic
+      receivers:
+      - hostmetrics
 ```
 
-For details, see the [File Storage Extension Readme][filestorageextension_readme].
+[sumologicexporter_docs]: ../pkg/exporter/sumologicexporter/README.md
 
-[filestorageextension_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/extension/storage/filestorage
-
----
-
-## Receivers
-
-### Sumo Logic Custom Receivers
-
-The following receivers have been developed by Sumo Logic.
-
-#### Telegraf Receiver
-
-The Telegraf Receiver ingests metrics from various [input plugins][input_plugins]
-into the OTC pipeline.
-
-The following is a basic configuration for the Telegraf Receiver:
-
-```yaml
-receivers:
-  telegraf:
-    separate_field: false
-    agent_config: |
-      [agent]
-        interval = "3s"
-        flush_interval = "3s"
-      [[inputs.mem]]
-```
-
-For details, see the [Telegraf Receiver documentation][telegrafreceiver_readme].
-
-[input_plugins]: https://github.com/influxdata/telegraf/tree/master/plugins/inputs
-[telegrafreceiver_readme]: ../pkg/receiver/telegrafreceiver
-
-### Open Telemetry Upstream Receivers
-
-The following receivers have been developed by the Open Telemetry community
-and are incorporated into the Sumo Logic Open Telemetry distro without any changes.
-
-If you are already familiar with Open Telemetry, you may know how the upstream components work
-and you can expect no changes in their behavior.
-
-Most of these sections just link to the upstream documentation.
-Where applicable, we have added documentation useful specifically to users of Sumo Logic.
-
-#### AWS Container Insights Receiver
-
-See [upstream documentation]().
-
-https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/awscontainerinsightreceiver
-
-#### AWS ECS Container Metrics Receiver
-
-See [upstream documentation]().
-
-https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/awsecscontainermetricsreceiver
-
-#### AWS X-Ray Receiver
-
-See [upstream documentation]().
-
-https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/awsxrayreceiver
-
-#### Carbon Receiver
-
-See [upstream documentation]().
-
-#### Collectd Receiver
-
-See [upstream documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/collectdreceiver).
-
-#### Docker Stats Receiver
-
-See [upstream documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/dockerstatsreceiver).
-
-#### Dotnet Diagnostics Receiver
-
-The Dotnet Diagnostics receiver (`dotnet_diagnostics`) collects metrics about .NET processes
-published by the .NET runtime via the [EventCounter][dotnet_eventcounters] API.
-
-This receiver is compatible with .NET Core 3.0 and later versions, running on Linux or macOS.
-Windows is not yet supported.
-
-For details, see the [upstream documentation][dotnetdiagnosticsreceiver_docs].
-
-[dotnetdiagnosticsreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/dotnetdiagnosticsreceiver
-
-[dotnet_eventcounters]: https://docs.microsoft.com/en-us/dotnet/core/diagnostics/event-counters
-
-#### Filelog Receiver
+## Collecting logs from files
 
 The Filelog Receiver tails and parses logs from files using the [opentelemetry-log-collection][opentelemetry-log-collection] library.
 
@@ -553,6 +395,8 @@ that contains the whole path of the file, as opposed to just the name of the fil
 What's more, the `file.path.resolved` attribute is automatically recognized by the `sumologicexporter`
 and translated to `_sourceName` attribute in Sumo Logic.
 
+### Keeping track of position in files
+
 By default, the Filelog receiver watches files starting at their end
 (`start_at: end` is the [default][filelogreceiver_readme]),
 so nothing will be read after the otelcol process starts until new data is added to the files.
@@ -564,7 +408,7 @@ position in watched files between otelcol restarts. Here's an example of such co
 ```yaml
 extensions:
   file_storage:
-    directory: /tmp
+    directory: .
 
 receivers:
   filelog:
@@ -578,7 +422,7 @@ receivers:
 
 For more details, see the [Filelog Receiver documentation][filelogreceiver_readme].
 
-##### Example: Filelog Receiver with json_parser
+### Parsing JSON logs
 
 Filelog Receiver with [json_parser][json_parser] operator can be used for parsing JSON logs.
 The [json_parser][json_parser] operator parses the string-type field selected by `parse_from` as JSON
@@ -605,7 +449,7 @@ receivers:
 
 and the parsed log entry can be observed in [logging exporter](#logging-exporter)'s output as:
 
-```
+```console
 2022-02-24T10:23:37.809Z        INFO    loggingexporter/logging_exporter.go:69  LogsExporter    {"#logs": 1}
 2022-02-24T10:23:37.809Z        DEBUG   loggingexporter/logging_exporter.go:79  ResourceLog #0
 Resource SchemaURL:
@@ -631,927 +475,6 @@ Example configuration with example log can be found in [/examples/logs_json/](/e
 [json_parser]: https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/operators/json_parser.md
 [filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/filelogreceiver
 [opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
-
-#### Fluent Forward Receiver
-
-The Fluent Forward Receiver runs a TCP server that accepts events via the [Fluent Forward
-protocol][fluent_forward_protocol].
-
-The basic configuration for Fluent Forward Receiver has following format:
-
-```yaml
-receivers:
-  fluentforward:
-    endpoint: 0.0.0.0:8006
-```
-
-For details, see the [Fluent Forward Receiver documentation][fluentforwardreceiver_readme].
-
-[fluent_forward_protocol]: https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1
-[fluentforwardreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/release/v0.27.x/receiver/fluentforwardreceiver
-
-#### Google Cloud Spanner Receiver
-
-The Google Cloud Spanner receiver (`googlecloudspanner`) creates metrics about Google Cloud Spanner databases
-from statistic retrieved from the [introspection tables][cloudspanner_introspection].
-
-For details, see the [upstream documentation][googlecloudspannerreceiver_docs].
-
-[cloudspanner_introspection]: https://cloud.google.com/spanner/docs/introspection
-[googlecloudspannerreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/googlecloudspannerreceiver
-
-#### Host Metrics Receiver
-
-Host Metrics Receiver generates metrics about the host system scraped from various sources.
-
-Example configuration:
-
-```yaml
-receivers:
-  hostmetrics:
-    collection_interval: 30s
-    scrapers:
-      cpu:
-      memory:
-```
-
-For details, see the [Host Metrics Receiver documentation][hostmetricsreceiver_readme].
-
-[hostmetricsreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/hostmetricsreceiver
-
-#### Jaeger Receiver
-
-Jaeger Receiver receives trace data in [Jaeger][jaeger_io] format.
-
-Example configuration:
-
-```yaml
-receivers:
-  jaeger:
-    protocols:
-      grpc:
-  jaeger/withendpoint:
-    protocols:
-      grpc:
-        endpoint: 0.0.0.0:14250
-```
-
-For details, see the [Jaeger Receiver documentation][jaegerreceiver_readme].
-
-[jaegerreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/jaegerreceiver
-[jaeger_io]: https://www.jaegertracing.io/
-
-#### JMX Receiver
-
-The JMX receiver (`jmx`) reports metrics from an MBean server.
-It requires a Java runtime and the [OpenTelemetry JMX Metric Gatherer][jmx_metrics_gatherer] jar to exist on the machine.
-
-For details, see the [upstream documentation][jmxreceiver_docs].
-
-[jmx_metrics_gatherer]: https://github.com/open-telemetry/opentelemetry-java-contrib/blob/main/jmx-metrics/README.md
-[jmxreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/jmxreceiver
-
-#### Journald Receiver
-
-The Journald receiver (`journald`) parses journald events from systemd journal into logs.
-Journald receiver is dependent on `journalctl` binary to be present and must be in the $PATH of the agent.
-
-For details, see the [upstream documentation][journaldreceiver_docs].
-
-[journaldreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/journaldreceiver
-
-#### Kafka Receiver
-
-The Kafka receiver (`kafka`) receives traces, metrics, and logs from Kafka topics.
-
-For details, see the [upstream documentation][kafkareceiver_docs].
-
-[kafkareceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/kafkareceiver
-
-#### Kafka Metrics Receiver
-
-Kafka Metrics receiver (`kafkametrics`) collects Kafka metrics from Kafka servers.
-
-#### OpenCensus Receiver
-
-OpenCensus Receiver receives data via gRPC or HTTP using [OpenCensus][opencensus_format] format.
-
-Example configuration:
-
-```yaml
-receivers:
-  opencensus:
-```
-
-For details, see the [OpenCensus Receiver documentation][opencensusreceiver_readme].
-
-[opencensusreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/opencensusreceiver
-[opencensus_format]: https://opencensus.io/
-
-#### Podman Stats Receiver
-
-The Podman Stats receiver (`podman_stats`) queries the Podman service API to fetch stats for all running containers on a configured interval.
-
-For details, see the [upstream documentation][podmanstatsreceiver_docs].
-
-[podmanstatsreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/podmanreceiver
-
-#### Receiver Creator
-
-The Receiver Creator (`receiver_creator`) can instantiate other receivers at runtime based on whether observed endpoints match a configured rule.
-
-For details, see the [upstream documentation][receivercreator_docs].
-
-[receivercreator_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/receivercreator
-
-#### Redis Receiver
-
-The Redis receiver (`redis`) creates metrics about a single Redis instance
-based on the results of the [`INFO`][redis_info_command] command sent to the instance.
-
-For details, see the [upstream documentation][redisreceiver_docs].
-
-[redis_info_command]: https://redis.io/commands/info
-[redisreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/redisreceiver
-
-#### SAPM Receiver
-
-The SAPM receiver (`sapm`) accepts traces in the [Splunk APM Protocol format][sapm_format].
-This allows the collector to receive traces from other collectors or the SignalFx Smart Agent.
-
-For details, see the [upstream documentation][sapmreceiver_docs].
-
-[sapm_format]: https://github.com/signalfx/sapm-proto/
-[sapmreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/sapmreceiver
-
-#### SignalFx Receiver
-
-The SignalFx receiver (`signalfx`) accepts logs and metrics in [SignalFx protobuf format][signalfx_protobuf_format].
-
-For details, see the [upstream documentation][signalfxreceiver_docs].
-
-[signalfx_protobuf_format]: https://github.com/signalfx/com_signalfx_metrics_protobuf
-[signalfxreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/signalfxreceiver
-
-#### Splunk HEC Receiver
-
-The Splunk HEC receiver (`splunk_hec`) accepts events in the [Splunk HEC format][splunk_hec_format].
-
-For details, see the [upstream documentation][splunkhecreceiver_docs].
-
-[splunk_hec_format]: https://docs.splunk.com/Documentation/Splunk/8.0.5/Data/FormateventsforHTTPEventCollector
-[splunkhecreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/splunkhecreceiver
-
-#### Syslog Receiver
-
-The Syslog Receiver parses Syslogs from tcp/udp using
-the [opentelemetry-log-collection](https://github.com/open-telemetry/opentelemetry-log-collection) library.
-
-The following is a basic example for the Syslog Receiver with a TCP configuration:
-
-```yaml
-receivers:
-  syslog:
-    tcp:
-      listen_address: "0.0.0.0:54526"
-    protocol: rfc5424
-```
-
-The following is a basic example for the Syslog Receiver with a UDP Configuration:
-
-```yaml
-receivers:
-  syslog:
-    udp:
-      listen_address: "0.0.0.0:54526"
-    protocol: rfc3164
-    location: UTC
-```
-
-For details, see the [Syslog Receiver documentation][syslogreceiver_readme].
-
-__Note: There are actually two ways of getting and processing Syslog data.
-More details are available in [comparison document](Comparison.md#syslog).__
-
-[syslogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/syslogreceiver
-
-#### Statsd Receiver
-
-The StatsD Receiver ingests [StatsD messages][statsd_messages] into the OpenTelemetry Collector.
-
-The following is a basic configuration for the StatsD Receiver:
-
-```yaml
-receivers:
-  statsd:
-  statsd/2:
-    endpoint: "localhost:8127"
-    aggregation_interval: 70s
-    enable_metric_type: true
-    timer_histogram_mapping:
-      - statsd_type: "histogram"
-        observer_type: "gauge"
-      - statsd_type: "timing"
-        observer_type: "gauge"
-```
-
-For details, see the [StatsD Receiver documentation][statsdreceiver_readme].
-
-[statsd_messages]: https://github.com/statsd/statsd/blob/master/docs/metric_types.md
-[statsdreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/release/v0.27.x/receiver/statsdreceiver
-
-#### OTLP Receiver
-
-The OTLP Receiver receives data via gRPC or HTTP using [OTLP][otlp] format.
-
-The following is a basic configuration for the OTLP Receiver:
-
-```yaml
-receivers:
-  otlp:
-    protocols:
-      grpc:
-      http:
-```
-
-For details, see the [OTLP Receiver documentation][otlpreceiver_readme].
-
-[otlp]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md
-[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.46.0/receiver/otlpreceiver
-
-#### TCPlog Receiver
-
-The TCPlog Receiver receives logs data via TCP using text format.
-
-The following is a basic configuration for the TCPlog Receiver:
-
-```yaml
-receivers:
-  tcplog:
-    listen_address: "0.0.0.0:54525"
-```
-
-For details, see the [TCPlog Receiver documentation][tcplogreceiver_readme].
-
-[tcplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/tcplogreceiver
-
-#### UDPlog Receiver
-
-The UDPlog Receiver receives logs data via UDP using text format.
-
-The following is a basic configuration for the UDPlog Receiver:
-
-```yaml
-receivers:
-  udplog:
-    listen_address: "0.0.0.0:54525"
-```
-
-For details, see the [UDPlog Receiver documentation][udplogreceiver_readme].
-
-[udplogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/udplogreceiver
-
-#### Wavefront Receiver
-
-The Wavefront receiver accepts metrics in [Wavefront][wavefront_data_format] format,
-which is similar to Carbon.
-
-Note that the Wavefront receiver is based on Carbon receiver and binds to the same port by default.
-To run both receivers, change the `endpoint` port on one of the receivers.
-
-For details, see the [upstream documentation][wavefrontreceiver_docs].
-
-[wavefront_data_format]: https://docs.wavefront.com/wavefront_data_format.html#metrics-data-format-syntax
-[wavefrontreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/wavefrontreceiver
-
-#### Windows Performance Counters Receiver
-
-The Windows Performance Counters receiver, for Windows only,
-captures system, application, or custom performance counter data from the Windows registry.
-
-For details, see the [upstream documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/windowsperfcountersreceiver).
-
-#### Zipkin Receiver
-
-Zipkin Receiver receives spans from Zipkin (`v1` and `v2`).
-
-The following is a basic configuration for Zipkin Receiver:
-
-```yaml
-receivers:
-  zipkin:
-```
-
-For details, see the [Zipkin Receiver documentation][zipkinreceiver_readme].
-
-[zipkinreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/zipkinreceiver
-
-#### Zookeeper Receiver
-
-The Zookeeper receiver collects metrics from a Zookeeper instance, using the `mntr` command.
-
-For details, see the [upstream documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/zookeeperreceiver).
-
----
-
-## Processors
-
-### Sumo Logic Custom Processors
-
-The following processors have been developed by Sumo Logic
-either from scratch (like the [Sumo Logic Syslog Processor](#sumo-logic-syslog-processor))
-or as a customized version of upstream processor (like the [Kubernetes Processor](#kubernetes-processor)).
-
-#### Cascading Filter Processor
-
-The Cascading Filter Processor is a trace sampling processor
-that allows to define smart cascading filtering rules with preset limits.
-
-Example configuration:
-
-```yaml
-processors:
-  cascading_filter:
-    decision_wait: 10s
-    num_traces: 100
-    expected_new_traces_per_sec: 10
-    spans_per_second: 1000
-    probabilistic_filtering_ratio: 0.1
-    policies:
-      [
-        {
-          name: test-policy-1,
-          spans_per_second: 35,
-        },
-        {
-          name: test-policy-2,
-          spans_per_second: 50,
-          properties: { min_duration: 9s }
-        }
-      ]
-```
-
-For details, see the [Cascading Filter Processor documentation][cascadingfilterprocessor_docs].
-
-[cascadingfilterprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/cascadingfilterprocessor/README.md
-
-#### Kubernetes Processor
-
-The Kubernetes Processor adds Kubernetes-specific metadata to traces, metrics and logs
-by querying the Kubernetes cluster's API server.
-
-This is a Sumo Logic fork of the [upstream k8sattributesprocessor][upstream_k8sattributesprocessor]
-(formerly known as `k8sprocessor`).
-
-Example configuration:
-
-```yaml
-processors:
-  k8s_tagger:
-    extract:
-      metadata:
-        - hostName
-        - startTime
-      tags:
-        hostName: hostname
-```
-
-For details, see the [Kubernetes Processor documentation][k8sprocessor_docs].
-
-[upstream_k8sattributesprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/processor/k8sattributesprocessor
-[k8sprocessor_docs]: ../pkg/processor/k8sprocessor/README.md
-
-#### Source Processor
-
-The Source Processor adds Sumo Logic-specific source metadata like `_source`, `_sourceCategory` etc.
-to traces, metrics and logs.
-
-Example configuration:
-
-```yaml
-processors:
-  source:
-    collector: "mycollector"
-    source_name: "%{namespace}.%{pod}.%{container}"
-    source_category: "%{namespace}/%{pod_name}"
-    source_category_prefix: "kubernetes/"
-    source_category_replace_dash: "/"
-    exclude_namespace_regex: "kube-system"
-```
-
-For details, see the [Source Processor documentation][sourceprocessor_docs].
-
-[sourceprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/sourceprocessor/README.md
-
-#### Sumo Logic Syslog Processor
-
-The Sumo Logic Syslog Processor tries to extract facility code from syslog logs
-and adds the facility's name as a metadata attribute.
-
-We recommend to use it with [TCPlog Receiver](#tcplog-receiver) and/or [UDPlog Receiver](#udplog-receiver).
-It will behave as Syslog source in Sumo Logic Installed Collector.
-
-Example configuration:
-
-```yaml
-processors:
-  sumologic_syslog:
-    facility_attr: syslog.facility.name
-```
-
-For details, see the [Sumo Logic Syslog Processor documentation][sumologicsyslogprocessor_docs].
-
-__Note: There are actually two ways of getting and processing Syslog data.
-More details are available in [comparison document](Comparison.md#syslog).__
-
-[sumologicsyslogprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/main/processor/sumologicsyslogprocessor/README.md
-
-#### Metric Frequency Processor
-
-The `metricfrequencyprocessor` is a metrics processor that helps reduce DPM by automatic tuning of metrics reporting
-frequency which adjusts for metric's information volume.
-
-Example configuation:
-
-```yaml
-processors:
-  metric_frequency:
-    min_point_accumulation_time: 15m
-    constant_metrics_report_frequency: 5m
-    low_info_metrics_report_frequency: 2m
-    max_report_frequency: 30s
-    data_point_expiration_time: 1h
-```
-
-For details, see the [Metric Frequency Processor documentation][metricfrequencyprocessor_docs].
-
-[metricfrequencyprocessor_docs]: ../pkg/processor/metricfrequencyprocessor/README.md
-
-### Open Telemetry Upstream Processors
-
-The following processors have been developed by the Open Telemetry community
-and are incorporated into the Sumo Logic Open Telemetry distro without any changes.
-
-If you are already familiar with Open Telemetry, you may know how the upstream components work
-and you can expect no changes in their behaviour.
-
-#### Attributes Processor
-
-Use Attributes Processor to add, delete, modify attributes on logs, metrics, traces.
-
-See also [Resource Processor](#resource-processor) to modify attributes on resource level.
-
-Example configuration:
-
-```yaml
-processors:
-  attributes:
-    actions:
-      - key: db.table
-        action: delete
-      - key: redacted_span
-        value: true
-        action: upsert
-      - key: copy_key
-        from_attribute: key_original
-        action: update
-      - key: account_id
-        value: 2245
-      - key: account_password
-        action: delete
-      - pattern: ^k8s.*
-        action: delete
-      - key: account_email
-        action: hash
-      - pattern: ^secret.*
-        action: hash
-```
-
-For details, see the [Attributes Processor documentation][attributesprocessor_docs].
-
-[attributesprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/0a7fe19d750abac51ce378c05409ff9f520a7fb1/processor/attributesprocessor/README.md
-
-#### Group by Attributes Processor
-
-The Group by Attributes Processor groups records by provided attributes, extracting them from the record to resource level.
-
-Example configuration:
-
-```yaml
-processors:
-  groupbyattrs:
-    keys:
-      - host.name
-```
-
-For details, see the [Group by Attributes Processor documentation][groupbyattrsprocessor_docs].
-
-[groupbyattrsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.46.0/processor/groupbyattrsprocessor/README.md
-
-#### Group by Trace Processor
-
-The Group by Trace Processor tries to collect all spans in a trace
-before releasing that trace for further processing in the collector pipeline.
-
-Example configuration:
-
-```yaml
-processors:
-  groupbytrace:
-    wait_duration: 10s
-    num_traces: 1000
-```
-
-For details, see the [Group by Trace Processor documentation][groupbytraceprocessor_docs].
-
-[groupbytraceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.46.0/processor/groupbytraceprocessor/README.md
-
-#### Metrics Transform Processor
-
-The Metrics Transform Processor can be used to rename metrics, and add, rename or delete label keys and values.
-
-Example configuration:
-
-```yaml
-processors:
-  metricstransform:
-    transforms:
-      # rename system.cpu.usage to system.cpu.usage_time
-      - include: system.cpu.usage
-        action: update
-        new_name: system.cpu.usage_time
-```
-
-For details, see the [Metrics Transform Processor documentation][metrictransformprocessor_docs].
-
-[metrictransformprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.46.0/processor/groupbytraceprocessor/README.md
-
-#### Resource Detection Processor
-
-The Resource Detection Processor detects resource information from runtime environment
-and adds metadata with this information to the traces, metrics and logs.
-
-Example configuration:
-
-```yaml
-processors:
-  resourcedetection:
-    detectors: ["eks", "ecs", "ec2"]
-```
-
-For details, see the [Resource Detection Processor documentation][resourcedetectionprocessor_docs].
-
-[resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.46.0/processor/resourcedetectionprocessor/README.md
-
-#### Resource Processor
-
-The Resource processor can be used to apply changes on resource attributes.
-
-Example configuration:
-
-```yaml
-processors:
-  resource:
-    attributes:
-    - key: cloud.availability_zone
-      value: "zone-1"
-      action: upsert
-    - key: k8s.cluster.name
-      from_attribute: k8s-cluster
-      action: insert
-    - key: redundant-attribute
-      action: delete
-    - pattern: ^k8s.*
-      action: delete
-```
-
-For details, see the [Resource Processor documentation][resourceprocessor_docs].
-
-[resourceprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/0a7fe19d750abac51ce378c05409ff9f520a7fb1/processor/resourceprocessor/README.md
-
-#### Routing Processor
-
-The Routing Processor does not alter the records in any way by itself.
-It routes records to specific exporters based based on an attribute's value.
-
-Note that this should be the last processor in the pipeline.
-
-Example configuration:
-
-```yaml
-processors:
-  routing:
-    from_attribute: X-Tenant
-    default_exporters: jaeger
-    table:
-    - value: acme
-      exporters: [jaeger/acme]
-exporters:
-  jaeger:
-    endpoint: localhost:14250
-  jaeger/acme:
-    endpoint: localhost:24250
-```
-
-For details, see the [Routing Processor documentation][routingprocessor_docs].
-
-[routingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.46.0/processor/routingprocessor/README.md
-
-#### Span Metrics Processor
-
-The Span Metrics Processor aggregates request, error and duration (R.E.D) metrics from span data.
-
-Example configuration:
-
-```yaml
-receivers:
-  jaeger:
-    protocols:
-      thrift_http:
-        endpoint: "0.0.0.0:14278"
-
-  # Dummy receiver that's never used, because a pipeline is required to have one.
-  otlp/dummy:
-    protocols:
-      grpc:
-        endpoint: "localhost:12345"
-
-exporters:
-  prometheus:
-    endpoint: "0.0.0.0:8889"
-    namespace: promexample
-
-  jaeger:
-    endpoint: "localhost:14250"
-    insecure: true
-
-processors:
-  batch:
-  spanmetrics:
-    metrics_exporter: prometheus
-    latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 100ms, 250ms]
-    dimensions:
-      - name: http.method
-        default: GET
-      - name: http.status_code
-
-service:
-  pipelines:
-    traces:
-      receivers: [jaeger]
-      # spanmetrics will pass on span data untouched to next processor
-      # while also accumulating metrics to be sent to the configured 'prometheus' exporter.
-      processors: [spanmetrics, batch]
-      exporters: [jaeger]
-
-    metrics:
-      # This receiver is just a dummy and never used.
-      # Added to pass validation requiring at least one receiver in a pipeline.
-      receivers: [otlp/dummy]
-      # The metrics_exporter must be present in this list.
-      exporters: [prometheus]
-```
-
-For details, see the [Span Metrics Processor documentation][spanmetricsprocessor_docs].
-
-[spanmetricsprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.46.0/processor/spanmetricsprocessor/README.md
-
-#### Tail Sampling Processor
-
-The Tail Sampling Processor samples traces based on a set of defined policies.
-
-Example configuration:
-
-```yaml
-processors:
-  tail_sampling:
-    decision_wait: 10s
-    num_traces: 100
-    expected_new_traces_per_sec: 10
-    policies:
-      [
-          {
-            name: test-policy-1,
-            type: always_sample
-          },
-          {
-            name: test-policy-2,
-            type: rate_limiting,
-            rate_limiting: {spans_per_second: 35}
-         }
-      ]
-```
-
-For details, see the [Tail Sampling Processor documentation][tailsamplingprocessor_docs].
-
-[tailsamplingprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.46.0/processor/tailsamplingprocessor/README.md
-
-#### Filter Processor
-
-Filter Processor filters metrics and/or logs based on the configuration.
-
-Example configuration:
-
-```yaml
-processors:
-  filter/metrics_include_regexp:
-    metrics:
-      include:
-        match_type: regexp
-        metric_names:
-          - prefix/.*
-          - prefix_.*
-        resource_attributes:
-          - Key: container.name
-            Value: app_container_1
-  filter/metrics_exclude_strict:
-    metrics:
-      exclude:
-        match_type: strict
-        metric_names:
-          - hello_world
-          - hello/world
-  filter/include_logs_strict:
-    logs:
-      include:
-        match_type: strict
-        resource_attributes:
-          - Key: host.name
-            Value: just_this_one_hostname
-  filter/include_logs_by_resource_attr_regexp:
-    logs:
-      include:
-        match_type: regexp
-        resource_attributes:
-          - Key: host.name
-            Value: resource_attr_.*
-  filter/include_logs_by_record_attr_regexp:
-    logs:
-      include:
-        match_type: regexp
-        record_attributes:
-          - Key: host.name
-            Value: record_attr_.*
-  filter/include_logs_by_record_expr:
-    logs:
-      include:
-        match_type: expr
-        expressions:
-          - Body matches '^my log.*'
-```
-
-For details, see the [Filter Processor documentation][filterprocessor_docs].
-
-[filterprocessor_docs]: https://github.com/SumoLogic/opentelemetry-collector-contrib/blob/0a7fe19d750abac51ce378c05409ff9f520a7fb1/processor/filterprocessor/README.md
-
----
-
-## Exporters
-
-### Sumo Logic Custom Exporters
-
-The following exporters have been developed by Sumo Logic.
-
-#### Sumo Logic Exporter
-
-The Sumo Logic Exporter supports sending data to [Sumo Logic](https://www.sumologic.com/).
-
-Example configuration with using the [Sumo Logic Extension](#sumo-logic-extension) for authentication
-and setting a custom source category:
-
-```yaml
-exporters:
-  sumologic:
-    auth:
-      authenticator: sumologic
-    source_category: my-category
-
-extensions:
-  sumologic:
-    access_id: <my_access_id>
-    access_key: <my_access_key>
-```
-
-For details, see the [Sumo Logic Exporter documentation][sumologicexporter_docs].
-
-[sumologicexporter_docs]: ../pkg/exporter/sumologicexporter/README.md
-
-### Open Telemetry Upstream Exporters
-
-The following exporters have been developed by the Open Telemetry community
-and are incorporated into the Sumo Logic Open Telemetry distro without any changes.
-
-If you are already familiar with Open Telemetry, you may know how the upstream components work
-and you can expect no changes in their behaviour.
-
-#### Carbon Exporter
-
-The Carbon Exporter supports Carbon's plaintext protocol.
-
-Example configuration:
-
-```yaml
-exporters:
-  carbon:
-    # by default it will export to localhost:2003 using tcp
-  carbon/allsettings:
-    # use endpoint to specify alternative destinations for the exporter,
-    # the default is localhost:2003
-    endpoint: localhost:8080
-    # timeout is the maximum duration allowed to connecting and sending the
-    # data to the configured endpoint.
-    # The default is 5 seconds.
-    timeout: 10s
-```
-
-For details, see the [Carbon documentation][carbonexporter_docs].
-
-[carbonexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.46.0/exporter/carbonexporter/README.md
-
-#### File Exporter
-
-The File Exporter will write pipeline data to a JSON file.
-The data is written in Protobuf JSON encoding using OpenTelemetry protocol.
-
-Example configuration:
-
-```yaml
-exporters:
-  file:
-    path: ./filename.json
-```
-
-For details, see the [File Exporter documentation][fileexporter_docs].
-
-[fileexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.46.0/exporter/fileexporter/README.md
-
-#### Kafka Exporter
-
-The Kafka exporter exports traces to Kafka.
-This exporter uses a synchronous producer that blocks and does not batch messages,
-therefore it should be used with batch and queued retry processors for higher throughput and resiliency.
-Message payload encoding is configurable.
-
-Example configuration:
-
-```yaml
-exporters:
-  kafka:
-    brokers:
-      - localhost:9092
-    protocol_version: 2.0.0
-```
-
-For details, see the [Kafka Exporter documentation][kafkaexporter_docs].
-
-[kafkaexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.46.0/exporter/kafkaexporter/README.md
-
-#### Load Balancing Exporter
-
-The Load Balancing Exporter consistently exports spans and logs belonging to the same trace to the same backend.
-
-Example configuration:
-
-```yaml
-exporters:
-  loadbalancing:
-    protocol:
-      otlp:
-        # all options from the OTLP exporter are supported
-        # except the endpoint
-        timeout: 1s
-    resolver:
-      static:
-        hostnames:
-        - backend-1:4317
-        - backend-2:4317
-        - backend-3:4317
-        - backend-4:4317
-```
-
-For details, see the [Load Balancing Exporter documentation][loadbalancingexporter_docs].
-
-[loadbalancingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.46.0/exporter/loadbalancingexporter/README.md
-
-#### Logging Exporter
-
-Logging exporter exports data to the console.
-
-Example configuration:
-
-```yaml
-exporters:
-  logging:
-    loglevel: debug
-    sampling_initial: 5
-    sampling_thereafter: 200
-```
-
-For details, see the [Logging Exporter documentation][loggingexporter_docs].
-
-[loggingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/loggingexporter/README.md
-
----
 
 ## Command-line configuration options
 
