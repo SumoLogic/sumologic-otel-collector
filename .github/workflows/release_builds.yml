@@ -78,7 +78,7 @@ jobs:
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ steps.set_filename.outputs.filename }}
+          name: ${{matrix.arch_os}}
           path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
           if-no-files-found: error
 
@@ -173,14 +173,14 @@ jobs:
       - name: Store .dmg as action artifact
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ steps.set_filename.outputs.filename }}.dmg
+          name: ${{matrix.arch_os}}.dmg
           path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}.dmg
           if-no-files-found: error
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ steps.set_filename.outputs.filename }}
+          name: ${{matrix.arch_os}}
           path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
           if-no-files-found: error
 
