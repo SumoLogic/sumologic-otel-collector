@@ -239,6 +239,9 @@ jobs:
     name: Push joint container manifest
     runs-on: ubuntu-20.04
     needs:
+      # Require darwin build to succeed to prevent pushing container images
+      # when darwin build fails.
+      - build-darwin
       - build-container-images
     steps:
       - uses: actions/checkout@v3
