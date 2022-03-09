@@ -13,9 +13,15 @@ To contribute you will need to ensure you have the following setup:
   `opentelemetry-collector-builder` can be installed using following command:
 
   ```bash
-  cd otelcolbuilder && \
-  sudo make install-builder BUILDER_BIN_PATH=/usr/local/bin/opentelemetry-collector-builder && \
-  cd ..
+  make -C otelcolbuilder install-builder
+  ```
+
+  Which will by default install the builder binary in `${HOME}/bin/opentelemetry-collector-builder`.
+  You can customize it by providing the `BUILDER_BIN_PATH` argument.
+
+  ```bash
+  make -C otelcolbuilder install-builder \
+    BUILDER_BIN_PATH=/custom/dir/bin/opentelemetry-collector-builder
   ```
 
 ## How to build
