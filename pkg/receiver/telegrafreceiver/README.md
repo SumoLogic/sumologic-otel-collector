@@ -55,3 +55,82 @@ With its current implementation Telegraf receiver has the following limitations:
 - only the following Telegraf metric data types are supported:
   - `telegraf.Gauge` that is translated to `pdata.MetricDataTypeGauge`,
   - `telegraf.Counter` that is translated to `pdata.MetricDataTypeSum`.
+
+## Migration from Telegraf
+
+### Data model
+
+Internal OTC metric format differs from the Telegraf one and `separate_field` controls the conversion:
+
+- If `separate_field` is `false`, the Open Telemetry metric name is going to be concatenated from the Telegraf metric name
+  and the Telegraf field with `_` as separator.
+- If `separate_fields` is `true`, the Open Telemetry metric name is going to be the same as the Telegraf one,
+  and the Telegraf `field` is going to be converted to the Open Telemetry attribute.
+
+### Keep compability while sending metrics to the Sumo Logic
+
+In the Telegraf, metrics can be send to the Sumo Logic using [Sumologic Output Plugin][sumologic_output_plugin].
+It supports three formats (`prometheus`, `carbon2`, `graphite`),
+where every of them have some limitations (e.g. [only specific set of chars can be used for metric name for prometheus][prometheus_data_model]).
+
+OTLP doesn't have most of those limitations, so in order to keep the same metric names, some transformations should be done by processors.
+
+Let's consider the following example.
+`metric.with.dots` is going to be send as `metric_with_dots` by prometheus or `metric.with.dots` by OTLP.
+To unify it, you can use the [Metrics Transform Processor][metricstransformprocessor]:
+
+```yaml
+processors:
+  metricstransform:
+    transforms:
+      ## Replace metric.with.dots metric to metric_with_dots
+      - include: metric.with.dots
+        match_type: strict
+        action: update
+        new_name: metric_with_dots
+# ...
+service:
+  pipelines:
+    metrics:
+      receivers:
+        - telegraf
+      processors:
+        - metricstransform
+      exporters:
+        - sumologic
+# ...
+```
+
+With [Metrics Transform Processor][metricstransformprocessor] and regular expressions you can also handle more complex scenarios,
+like in the following snippet:
+
+```yaml
+processors:
+  metricstransform:
+    transforms:
+      ## Change <part1>.<part2> metrics to to <part1>_<part2>
+      - include: ^([^\.]*)\.([^\.]*)$$
+        match_type: strict
+        action: update
+        new_name: $${1}.$${2}
+      ## Change <part1>.<part2>.<part3> metrics to to <part1>_<part2>_<part3>
+      - include: ^([^\.]*)\.([^\.]*)\.([^\.]*)$$
+        match_type: strict
+        action: update
+        new_name: $${1}.$${2}.${3}
+# ...
+service:
+  pipelines:
+    metrics:
+      receivers:
+        - telegraf
+      processors:
+        - metricstransform
+      exporters:
+        - sumologic
+# ...
+```
+
+[prometheus_data_model]: https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+[sumologic_output_plugin]: https://github.com/influxdata/telegraf/tree/master/plugins/outputs/sumologic
+[metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/processor/metricstransformprocessor
