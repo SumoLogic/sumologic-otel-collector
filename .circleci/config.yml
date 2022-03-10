@@ -1,0 +1,100 @@
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@1.3.1
+  kubernetes: circleci/kubernetes@0.11.2
+
+executors:
+  golang:
+    docker:
+      - image: cimg/go:1.17
+  machine:
+    machine:
+      image: ubuntu-1604:201903-01
+
+workflows:
+  version: 2
+  tracing-tests:
+    jobs:
+      - hold:
+          type: approval
+          filters:
+            branches:
+              only:
+                - main
+                - /release-v[0-9]+.[0-9]+/
+      - run-tracing-tests:
+          repo: sumologic-otel-collector-dev
+          tag: ${CIRCLE_SHA1}
+          requires:
+            - hold
+          filters:
+            branches:
+              only:
+                - main
+                - /release-v[0-9]+.[0-9]+/
+
+jobs:
+  run-tracing-tests:
+    parameters:
+      repo:
+        type: string
+      tag:
+        type: string
+    docker:
+      - image: ${INFRASTRUCTURE_ACCOUNT_ID}.dkr.ecr.us-west-2.amazonaws.com/tracing-tests/tests:otel-distro
+        aws_auth:
+          aws_access_key_id: ${TRACING_TESTS_AWS_ACCESS_KEY_ID}
+          aws_secret_access_key: ${TRACING_TESTS_AWS_SECRET_ACCESS_KEY}
+    steps:
+      - run:
+          name: "Configure environment variables"
+          command: |
+            echo "export SUMO_API_ENDPOINT=${TRACING_TESTS_SUMO_API_ENDPOINT}" >> $BASH_ENV
+            echo "export OTELCOL_HEALTHCHECK_URL=${TRACING_TESTS_OTELCOL_URL}" >> $BASH_ENV
+            echo "export SUMO_ACCESS_ID=${TRACING_TESTS_SUMO_ACCESS_ID}" >> $BASH_ENV
+            echo "export SUMO_ACCESS_KEY=${TRACING_TESTS_SUMO_ACCESS_KEY}" >> $BASH_ENV
+            echo "export PYTHONWARNINGS=ignore:Unverified HTTPS request"  >> $BASH_ENV
+            echo "export AWS_ACCESS_KEY_ID=${TRACING_TESTS_CLUSTER_AWS_ACCESS_ID}" >> $BASH_ENV
+            echo "export AWS_SECRET_ACCESS_KEY=${TRACING_TESTS_CLUSTER_AWS_ACCESS_KEY}" >> $BASH_ENV
+      - kubernetes/install-kubeconfig:
+          kubeconfig: TRACING_TESTS_CLUSTER_KUBECONFIG_DATA
+      - kubernetes/install-kubectl
+      - aws-cli/install
+      - run:
+          name: "Clean up environment"
+          command: /opt/tracing-tests/deployment_scripts/clean-up-env.sh
+      - run:
+          name: "Deploy Sumologic OpenTelemetry Collector"
+          command: /opt/tracing-tests/deployment_scripts/deploy-otelcol.sh << parameters.repo >> << parameters.tag >>
+      - run:
+          name: "Wait for Sumologic OpenTelemetry Collector to be available"
+          command: kubectl -n java-app wait --for=condition=ready --timeout=120s pod -l app=otelcol
+      - run:
+          name: "Deploy ECR Registry Secret"
+          command: /opt/tracing-tests/deployment_scripts/deploy-ecr-registry-secret.sh
+      - run:
+          name: "Deploy Kubernetes Metadata Provider application"
+          command: /opt/tracing-tests/deployment_scripts/deploy-k8sfeeder.sh
+      - run:
+          name: "Wait for Kubernetes Metadata Provider"
+          command: kubectl -n java-app wait --for=condition=ready --timeout=60s pod -l app=k8s-feeder
+      - run:
+          name: "Get Kubernetes Metadata provider URL"
+          command: echo "export KUBERNETES_METADATA_URL=$(kubectl -n java-app get svc k8s-feeder-svc-pub -o json | jq .status.loadBalancer.ingress[0].hostname)" >> $BASH_ENV
+      - run:
+          name: "Deploy Java App application"
+          command: /opt/tracing-tests/deployment_scripts/deploy-test-applications.sh
+      - run:
+          name: "Wait for Kubernetes Metadata Provider"
+          command: kubectl -n java-app wait --for=condition=ready --timeout=60s pod -l app=server
+      - run:
+          name: "Wait for data..."
+          command: sleep 180
+      - run:
+          name: "Execute Tracing Tests"
+          command: "pytest --rootdir=/opt/tracing-tests --junitxml=/opt/tracing-tests/test-results/junit.xml --html=/opt/tracing-tests/test-results/report.html --self-contained-html -vvv /opt/tracing-tests/tests/test_java_app.py"
+      - store_test_results:
+          path: /opt/tracing-tests/test-results
+      - store_artifacts:
+          path: /opt/tracing-tests/test-results
