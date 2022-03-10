@@ -13,6 +13,7 @@
   - [Parsing JSON logs](#parsing-json-logs)
 - [Command-line configuration options](#command-line-configuration-options)
 - [Proxy Support](#proxy-support)
+- [Keeping Prometheus format using OTLP exporter](#keeping-prometheus-format-using-otlp-exporter)
 
 ---
 
@@ -522,3 +523,35 @@ export HTTP_PROXY=<PROXY-ADDRESS>:<PROXY-PORT>
 export HTTPS_PROXY=<PROXY-ADDRESS>:<PROXY-PORT>
 END
 ```
+
+## Keeping Prometheus format using OTLP exporter
+
+In order to keep the [Prometheus compatible metric names][prometheus_data_model] using OTLP exporting format,
+[the Metrics Transform Processor][metricstransformprocessor] can be used.
+
+Please see the following example of replacing last period char with underscore:
+
+```yaml
+processors:
+  metricstransform:
+    transforms:
+      ## Replace last period char in metric name with underscore
+      - include: ^(.*)\.([^\.]*)$$
+        match_type: regexp
+        action: update
+        new_name: $${1}_$${2}
+# ...
+service:
+  pipelines:
+    metrics:
+      receivers:
+        - telegraf
+      processors:
+        - metricstransform
+      exporters:
+        - sumologic
+# ...
+```
+
+[metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/processor/metricstransformprocessor
+[prometheus_data_model]: https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
