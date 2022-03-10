@@ -57,7 +57,7 @@ processors:
 
     # Name of the attribute that contains pod's template hash. It is used for pod name extraction.
     # default: "k8s.pod.label.pod-template-hash"
-    pod_template_has_key: <pod_template_hash_key>
+    pod_template_hash_key: <pod_template_hash_key>
 
     # See "Container-level pod annotations" section below
     container_annotations:
