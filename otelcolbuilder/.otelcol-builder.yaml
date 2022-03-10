@@ -165,3 +165,10 @@ replaces:
   # However, kubernetes/client-go still uses the old name for v0.5.5, and this causes go mod to complain
   # Replace this here instead of modifying indirect dependencies in packages, as it's more robust
   - github.com/googleapis/gnostic => github.com/google/gnostic v0.5.5
+
+  # This is to make sure we build the with the sumologicextension from the tree.
+  # The reason this is needed is that sumologicexporter depends on sumologicextension in its go.mod.
+  # We add a dependency in the builder config in this file but only for a particular (placeholder)
+  # version which gets then translated into a replace in go.mod file.
+  # This does not replace the version that sumologicexporter depends on.
+  - github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension => ../../pkg/extension/sumologicextension
