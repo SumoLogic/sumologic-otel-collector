@@ -69,7 +69,7 @@ Internal OTC metric format differs from the Telegraf one and `separate_field` co
 
 ### Keep compatibility while sending metrics to Sumo Logic
 
-In the Telegraf, metrics can be send to the Sumo Logic using [Sumologic Output Plugin][sumologic_output_plugin].
+In Telegraf, metrics can be sent to Sumo Logic using [Sumologic Output Plugin][sumologic_output_plugin].
 It supports three formats (`prometheus`, `carbon2`, `graphite`),
 where every of them have some limitations (e.g. [only specific set of chars can be used for metric name for prometheus][prometheus_data_model]).
 
