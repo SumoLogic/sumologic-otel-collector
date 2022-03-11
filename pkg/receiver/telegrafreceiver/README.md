@@ -76,7 +76,7 @@ where each of them has some limitations (e.g. [only specific set of chars can be
 OTLP doesn't have most of those limitations, so in order to keep the same metric names, some transformations should be done by processors.
 
 Let's consider the following example.
-`metric.with.dots` is going to be send as `metric_with_dots` by prometheus or `metric.with.dots` by OTLP.
+`metric.with.dots` is going to be sent as `metric_with_dots` by prometheus or `metric.with.dots` by OTLP.
 To unify it, you can use the [Metrics Transform Processor][metricstransformprocessor]:
 
 ```yaml
