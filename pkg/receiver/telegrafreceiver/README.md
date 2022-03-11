@@ -67,7 +67,7 @@ Internal OTC metric format differs from the Telegraf one and `separate_field` co
 - If `separate_fields` is `true`, the Open Telemetry metric name is going to be the same as the Telegraf one,
   and the Telegraf `field` is going to be converted to the Open Telemetry attribute.
 
-### Keep compability while sending metrics to the Sumo Logic
+### Keep compatibility while sending metrics to Sumo Logic
 
 In the Telegraf, metrics can be send to the Sumo Logic using [Sumologic Output Plugin][sumologic_output_plugin].
 It supports three formats (`prometheus`, `carbon2`, `graphite`),
