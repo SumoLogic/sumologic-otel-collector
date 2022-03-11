@@ -65,7 +65,7 @@ Internal OTC metric format differs from the Telegraf one and `separate_field` co
 - If `separate_field` is `false`, the Open Telemetry metric name is going to be concatenated from the Telegraf metric name
   and the Telegraf field with `_` as separator.
 - If `separate_fields` is `true`, the Open Telemetry metric name is going to be the same as the Telegraf one,
-  and the Telegraf `field` is going to be converted to the Open Telemetry attribute.
+  and the Telegraf `field` is going to be converted to the Open Telemetry data point attribute.
 
 ### Keep compatibility while sending metrics to Sumo Logic
 
