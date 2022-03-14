@@ -55,3 +55,203 @@ With its current implementation Telegraf receiver has the following limitations:
 - only the following Telegraf metric data types are supported:
   - `telegraf.Gauge` that is translated to `pdata.MetricDataTypeGauge`,
   - `telegraf.Counter` that is translated to `pdata.MetricDataTypeSum`.
+
+## Migration from Telegraf
+
+### Data model
+
+Internal OTC metric format differs from the Telegraf one and `separate_field` controls the conversion:
+
+- If `separate_field` is `false`, the Open Telemetry metric name is going to be concatenated from the Telegraf metric name
+  and the Telegraf field with `_` as separator.
+
+  The following telegraf structure:
+
+  ```json
+  {
+    "fields": {
+      "HeapMemoryUsage.committed": 1007157248
+      "HeapMemoryUsage.init": 1007157248
+    },
+    "name": "tomcat_jmx_jvm_memory",
+    "tags": {
+      "component": "webserver",
+      "environment": "dev",
+      "host": "32fafdb10522",
+      "jolokia_agent_url": "http://tomcat:8080/jolokia",
+      "webserver_system": "tomcat"
+    },
+    "timestamp": 1646904912
+  }
+  ```
+
+  is going to be converted to the following OpenTelemetry structure:
+
+  ```console
+  2022-03-10T07:16:34.117Z  DEBUG loggingexporter/logging_exporter.go:64
+  ResourceMetrics #0
+  Resource SchemaURL:
+  Resource labels:
+      -> component: STRING(webserver)
+      -> environment: STRING(dev)
+      -> host: STRING(32fafdb10522)
+      -> jolokia_agent_url: STRING(http://tomcat:8080/jolokia)
+      -> webserver_system: STRING(tomcat)
+  InstrumentationLibraryMetrics #0
+  InstrumentationLibraryMetrics SchemaURL:
+  InstrumentationLibrary telegraf v0.1
+  Metric #0
+  Descriptor:
+      -> Name: tomcat_jmx_jvm_memory_HeapMemoryUsage.committed
+      -> Description:
+      -> Unit:
+      -> DataType: Gauge
+  NumberDataPoints #0
+  StartTimestamp: 1970-01-01 00:00:00 +0000 UTC
+  Timestamp: 2022-03-10 09:35:12 +0000 UTC
+  Value: 1007157248.000000
+  Metric #1
+  Descriptor:
+      -> Name: tomcat_jmx_jvm_memory_HeapMemoryUsage.init
+      -> Description:
+      -> Unit:
+      -> DataType: Gauge
+  NumberDataPoints #0
+  StartTimestamp: 1970-01-01 00:00:00 +0000 UTC
+  Timestamp: 2022-03-10 09:35:12 +0000 UTC
+  Value: 1007157248.000000
+  ```
+
+- If `separate_fields` is `true`, the Open Telemetry metric name is going to be the same as the Telegraf one,
+  and the Telegraf `field` is going to be converted to the Open Telemetry data point attribute.
+
+  The following telegraf structure:
+
+  ```json
+  {
+    "fields": {
+      "HeapMemoryUsage.committed": 1007157248
+      "HeapMemoryUsage.init": 1007157248
+    },
+    "name": "tomcat_jmx_jvm_memory",
+    "tags": {
+      "component": "webserver",
+      "environment": "dev",
+      "host": "32fafdb10522",
+      "jolokia_agent_url": "http://tomcat:8080/jolokia",
+      "webserver_system": "tomcat"
+    },
+    "timestamp": 1646904912
+  }
+  ```
+
+  is going to be converted to the following OpenTelemetry structure:
+
+  ```console
+  2022-03-10T11:28:30.333Z  DEBUG loggingexporter/logging_exporter.go:64
+  ResourceMetrics #0
+  Resource SchemaURL:
+  Resource labels:
+      -> component: STRING(webserver)
+      -> environment: STRING(dev)
+      -> host: STRING(32fafdb10522)
+      -> jolokia_agent_url: STRING(http://tomcat:8080/jolokia)
+      -> webserver_system: STRING(tomcat)
+  InstrumentationLibraryMetrics #0
+  InstrumentationLibraryMetrics SchemaURL:
+  InstrumentationLibrary
+  Metric #0
+  Descriptor:
+      -> Name: tomcat_jmx_jvm_memory
+      -> Description:
+      -> Unit:
+      -> DataType: Gauge
+  NumberDataPoints #0
+  Data point attributes:
+      -> field: STRING(HeapMemoryUsage.committed)
+  StartTimestamp: 1970-01-01 00:00:00 +0000 UTC
+  Timestamp: 2022-03-10 09:35:12 +0000 UTC
+  Value: 1007157248.000000
+  Metric #1
+  Descriptor:
+      -> Name: tomcat_jmx_jvm_memory
+      -> Description:
+      -> Unit:
+      -> DataType: Gauge
+  NumberDataPoints #0
+  Data point attributes:
+      -> field: STRING(HeapMemoryUsage.init)
+  StartTimestamp: 1970-01-01 00:00:00 +0000 UTC
+  Timestamp: 2022-03-10 09:35:12 +0000 UTC
+  Value: 1007157248.000000
+  ```
+
+  </details>
+
+### Keep compatibility while sending metrics to Sumo Logic
+
+In Telegraf, metrics can be sent to Sumo Logic using [Sumologic Output Plugin][sumologic_output_plugin].
+It supports three formats (`prometheus`, `carbon2`, `graphite`),
+where each of them has some limitations (e.g. [only specific set of chars can be used for metric name for prometheus][prometheus_data_model]).
+
+OTLP doesn't have most of those limitations, so in order to keep the same metric names, some transformations should be done by processors.
+
+Let's consider the following example.
+`metric.with.dots` is going to be sent as `metric_with_dots` by prometheus or `metric.with.dots` by OTLP.
+To unify it, you can use the [Metrics Transform Processor][metricstransformprocessor]:
+
+```yaml
+processors:
+  metricstransform:
+    transforms:
+      ## Replace metric.with.dots metric to metric_with_dots
+      - include: metric.with.dots
+        match_type: strict
+        action: update
+        new_name: metric_with_dots
+# ...
+service:
+  pipelines:
+    metrics:
+      receivers:
+        - telegraf
+      processors:
+        - metricstransform
+      exporters:
+        - sumologic
+# ...
+```
+
+With [Metrics Transform Processor][metricstransformprocessor] and regular expressions you can also handle more complex scenarios,
+like in the following snippet:
+
+```yaml
+processors:
+  metricstransform:
+    transforms:
+      ## Change <part1>.<part2> metrics to to <part1>_<part2>
+      - include: ^([^\.]*)\.([^\.]*)$$
+        match_type: strict
+        action: update
+        new_name: $${1}.$${2}
+      ## Change <part1>.<part2>.<part3> metrics to to <part1>_<part2>_<part3>
+      - include: ^([^\.]*)\.([^\.]*)\.([^\.]*)$$
+        match_type: strict
+        action: update
+        new_name: $${1}.$${2}.${3}
+# ...
+service:
+  pipelines:
+    metrics:
+      receivers:
+        - telegraf
+      processors:
+        - metricstransform
+      exporters:
+        - sumologic
+# ...
+```
+
+[prometheus_data_model]: https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+[sumologic_output_plugin]: https://github.com/influxdata/telegraf/tree/master/plugins/outputs/sumologic
+[metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/processor/metricstransformprocessor
