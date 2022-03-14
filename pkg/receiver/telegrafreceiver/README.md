@@ -64,8 +64,129 @@ Internal OTC metric format differs from the Telegraf one and `separate_field` co
 
 - If `separate_field` is `false`, the Open Telemetry metric name is going to be concatenated from the Telegraf metric name
   and the Telegraf field with `_` as separator.
+
+  The following telegraf structure:
+
+  ```json
+  {
+    "fields": {
+      "HeapMemoryUsage.committed": 1007157248
+      "HeapMemoryUsage.init": 1007157248
+    },
+    "name": "tomcat_jmx_jvm_memory",
+    "tags": {
+      "component": "webserver",
+      "environment": "dev",
+      "host": "32fafdb10522",
+      "jolokia_agent_url": "http://tomcat:8080/jolokia",
+      "webserver_system": "tomcat"
+    },
+    "timestamp": 1646904912
+  }
+  ```
+
+  is going to be converted to the following OpenTelemetry structure:
+
+  ```console
+  2022-03-10T07:16:34.117Z  DEBUG loggingexporter/logging_exporter.go:64
+  ResourceMetrics #0
+  Resource SchemaURL:
+  Resource labels:
+      -> component: STRING(webserver)
+      -> environment: STRING(dev)
+      -> host: STRING(32fafdb10522)
+      -> jolokia_agent_url: STRING(http://tomcat:8080/jolokia)
+      -> webserver_system: STRING(tomcat)
+  InstrumentationLibraryMetrics #0
+  InstrumentationLibraryMetrics SchemaURL:
+  InstrumentationLibrary telegraf v0.1
+  Metric #0
+  Descriptor:
+      -> Name: tomcat_jmx_jvm_memory_HeapMemoryUsage.committed
+      -> Description:
+      -> Unit:
+      -> DataType: Gauge
+  NumberDataPoints #0
+  StartTimestamp: 1970-01-01 00:00:00 +0000 UTC
+  Timestamp: 2022-03-10 09:35:12 +0000 UTC
+  Value: 1007157248.000000
+  Metric #1
+  Descriptor:
+      -> Name: tomcat_jmx_jvm_memory_HeapMemoryUsage.init
+      -> Description:
+      -> Unit:
+      -> DataType: Gauge
+  NumberDataPoints #0
+  StartTimestamp: 1970-01-01 00:00:00 +0000 UTC
+  Timestamp: 2022-03-10 09:35:12 +0000 UTC
+  Value: 1007157248.000000
+  ```
+
 - If `separate_fields` is `true`, the Open Telemetry metric name is going to be the same as the Telegraf one,
   and the Telegraf `field` is going to be converted to the Open Telemetry data point attribute.
+
+  The following telegraf structure:
+
+  ```json
+  {
+    "fields": {
+      "HeapMemoryUsage.committed": 1007157248
+      "HeapMemoryUsage.init": 1007157248
+    },
+    "name": "tomcat_jmx_jvm_memory",
+    "tags": {
+      "component": "webserver",
+      "environment": "dev",
+      "host": "32fafdb10522",
+      "jolokia_agent_url": "http://tomcat:8080/jolokia",
+      "webserver_system": "tomcat"
+    },
+    "timestamp": 1646904912
+  }
+  ```
+
+  is going to be converted to the following OpenTelemetry structure:
+
+  ```console
+  2022-03-10T11:28:30.333Z  DEBUG loggingexporter/logging_exporter.go:64
+  ResourceMetrics #0
+  Resource SchemaURL:
+  Resource labels:
+      -> component: STRING(webserver)
+      -> environment: STRING(dev)
+      -> host: STRING(32fafdb10522)
+      -> jolokia_agent_url: STRING(http://tomcat:8080/jolokia)
+      -> webserver_system: STRING(tomcat)
+  InstrumentationLibraryMetrics #0
+  InstrumentationLibraryMetrics SchemaURL:
+  InstrumentationLibrary
+  Metric #0
+  Descriptor:
+      -> Name: tomcat_jmx_jvm_memory
+      -> Description:
+      -> Unit:
+      -> DataType: Gauge
+  NumberDataPoints #0
+  Data point attributes:
+      -> field: STRING(HeapMemoryUsage.committed)
+  StartTimestamp: 1970-01-01 00:00:00 +0000 UTC
+  Timestamp: 2022-03-10 09:35:12 +0000 UTC
+  Value: 1007157248.000000
+  Metric #1
+  Descriptor:
+      -> Name: tomcat_jmx_jvm_memory
+      -> Description:
+      -> Unit:
+      -> DataType: Gauge
+  NumberDataPoints #0
+  Data point attributes:
+      -> field: STRING(HeapMemoryUsage.init)
+  StartTimestamp: 1970-01-01 00:00:00 +0000 UTC
+  Timestamp: 2022-03-10 09:35:12 +0000 UTC
+  Value: 1007157248.000000
+  ```
+
+  </details>
 
 ### Keep compatibility while sending metrics to Sumo Logic
 
