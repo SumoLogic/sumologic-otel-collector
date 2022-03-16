@@ -1,6 +1,6 @@
 module github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor
 
-go 1.17
+go 1.18
 
 require (
 	github.com/onsi/ginkgo v1.14.1 // indirect

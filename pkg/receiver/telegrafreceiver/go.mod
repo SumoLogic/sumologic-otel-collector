@@ -1,6 +1,6 @@
 module github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/telegrafreceiver
 
-go 1.17
+go 1.18
 
 require (
 	cloud.google.com/go/monitoring v0.2.0 // indirect
