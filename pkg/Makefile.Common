@@ -16,4 +16,4 @@ lint:
 
 .PHONY: mod-download-all
 mod-download-all:
-	go mod download all && go mod tidy -compat=1.17
+	go mod download all && go mod tidy -compat=1.18
