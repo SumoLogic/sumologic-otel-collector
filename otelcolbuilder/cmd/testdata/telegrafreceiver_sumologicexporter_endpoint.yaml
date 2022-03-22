@@ -1,6 +1,8 @@
 receivers:
   telegraf:
     separate_field: false
+    consume_retry_delay: 1s
+    consume_max_retries: 3
     agent_config: |
       [agent]
         interval = "1s"

@@ -15,6 +15,8 @@
 package telegrafreceiver
 
 import (
+	"time"
+
 	"go.opentelemetry.io/collector/config"
 )
 
@@ -31,4 +33,11 @@ type Config struct {
 	// concatenated with metric name like e.g. metric=mem_available or maybe rather
 	// have it as a separate label like e.g. metric=mem field=available
 	SeparateField bool `mapstructure:"separate_field"`
+
+	// ConsumeRetryDelay is the retry delay for recoverable pipeline errors
+	// one frequent source of these kinds of errors is the memory_limiter processor
+	ConsumeRetryDelay time.Duration `mapstructure:"consume_retry_delay"`
+
+	// ConsumeMaxRetries is the maximum number of retries for recoverable pipeline errors
+	ConsumeMaxRetries uint64 `mapstructure:"consume_max_retries"`
 }

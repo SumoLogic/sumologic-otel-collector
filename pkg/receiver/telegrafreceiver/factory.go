@@ -17,6 +17,7 @@ package telegrafreceiver
 import (
 	"context"
 	"fmt"
+	"time"
 
 	telegrafagent "github.com/influxdata/telegraf/agent"
 	telegrafconfig "github.com/influxdata/telegraf/config"
@@ -47,6 +48,10 @@ func createDefaultConfig() config.Receiver {
 	return &Config{
 		ReceiverSettings: &rs,
 		SeparateField:    false,
+		// we mostly expect to get recoverable errors from the memory_limiter, which is unlikely to have
+		// a check interval less than 1s, so retrying much more frequently is pointless
+		ConsumeRetryDelay: 500 * time.Millisecond,
+		ConsumeMaxRetries: 10,
 	}
 }
 
@@ -72,9 +77,11 @@ func createMetricsReceiver(
 	}
 
 	return &telegrafreceiver{
-		agent:           tAgent,
-		consumer:        nextConsumer,
-		logger:          params.Logger,
-		metricConverter: newConverter(tCfg.SeparateField, params.Logger),
+		agent:             tAgent,
+		consumer:          nextConsumer,
+		logger:            params.Logger,
+		metricConverter:   newConverter(tCfg.SeparateField, params.Logger),
+		consumeRetryDelay: tCfg.ConsumeRetryDelay,
+		consumeMaxRetries: tCfg.ConsumeMaxRetries,
 	}, nil
 }

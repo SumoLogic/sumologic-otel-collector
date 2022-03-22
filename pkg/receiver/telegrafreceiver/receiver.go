@@ -18,11 +18,14 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
+	backoff "github.com/cenkalti/backoff/v4"
 	"github.com/influxdata/telegraf"
 	telegrafagent "github.com/influxdata/telegraf/agent"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
+	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/zap"
 )
@@ -39,10 +42,12 @@ type telegrafreceiver struct {
 	wg        sync.WaitGroup
 	cancel    context.CancelFunc
 
-	agent           *telegrafagent.Agent
-	consumer        consumer.Metrics
-	logger          *zap.Logger
-	metricConverter MetricConverter
+	agent             *telegrafagent.Agent
+	consumer          consumer.Metrics
+	logger            *zap.Logger
+	metricConverter   MetricConverter
+	consumeRetryDelay time.Duration
+	consumeMaxRetries uint64
 }
 
 // Ensure this receiver adheres to required interface.
@@ -92,8 +97,8 @@ func (r *telegrafreceiver) Start(ctx context.Context, host component.Host) error
 					)
 					continue
 				}
-
-				if fErr = r.consumer.ConsumeMetrics(rctx, ms); fErr != nil {
+				fErr = r.consumeWithRetry(rctx, ms)
+				if fErr != nil {
 					r.logger.Error("ConsumeMetrics() error",
 						zap.String("error", fErr.Error()),
 					)
@@ -101,6 +106,37 @@ func (r *telegrafreceiver) Start(ctx context.Context, host component.Host) error
 			}
 		}()
 	})
+
+	return err
+}
+
+// Consume metrics and retry on recoverable errors
+func (r *telegrafreceiver) consumeWithRetry(ctx context.Context, metrics pdata.Metrics) error {
+	constantBackoff := backoff.WithMaxRetries(backoff.NewConstantBackOff(r.consumeRetryDelay), r.consumeMaxRetries)
+
+	// retry handling according to https://github.com/open-telemetry/opentelemetry-collector/blob/master/component/receiver.go#L45
+	err := backoff.RetryNotify(
+		func() error {
+			// we need to check for context cancellation here
+			select {
+			case <-ctx.Done():
+				return backoff.Permanent(errors.New("closing"))
+			default:
+			}
+			err := r.consumer.ConsumeMetrics(ctx, metrics)
+			if consumererror.IsPermanent(err) {
+				return backoff.Permanent(err)
+			} else {
+				return err
+			}
+		},
+		constantBackoff,
+		func(err error, delay time.Duration) {
+			r.logger.Warn("ConsumeMetrics() recoverable error, will retry",
+				zap.Error(err), zap.Duration("delay", delay),
+			)
+		},
+	)
 
 	return err
 }

@@ -25,6 +25,11 @@ The Following settings are optional:
 
 - `separate_field` (default value is `false`): Specify whether metric field
   should be added separately as data point label.
+- `consume_retry_delay` (default value is `500ms`): The retry delay for recoverable
+  errors from the rest of the pipeline. Don't change this or the related setting below
+  unless you know what you're doing.
+- `consume_max_retries` (default value is `10`): The maximum number of retries for recoverable
+  errors from the rest of the pipeline.
 
 Example:
 
