@@ -125,7 +125,7 @@ jobs:
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         if: steps.changed-files.outputs.any_changed == 'true'
         with:
           path: |
@@ -173,7 +173,7 @@ jobs:
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         if: steps.changed-files.outputs.any_changed == 'true'
         with:
           path: |
@@ -183,7 +183,7 @@ jobs:
           restore-keys: |
             ${{matrix.arch_os}}-go-
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         if: steps.changed-files.outputs.any_changed == 'true'
         with:
           path: |
@@ -243,7 +243,7 @@ jobs:
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         if: steps.changed-files.outputs.any_changed == 'true'
         with:
           path: |
