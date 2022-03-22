@@ -25,7 +25,7 @@ jobs:
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: |
             /home/runner/go/pkg/mod
@@ -34,7 +34,7 @@ jobs:
           restore-keys: |
             ${{matrix.arch_os}}-go-
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: |
             /home/runner/.cache/golangci-lint
@@ -76,7 +76,7 @@ jobs:
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: |
             /home/runner/go/pkg/mod
