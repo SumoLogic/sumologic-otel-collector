@@ -3,6 +3,7 @@ module github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/telegrafreceiv
 go 1.18
 
 require (
+	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/influxdata/telegraf v1.22.0
 	github.com/stretchr/testify v1.7.1
 	go.opentelemetry.io/collector v0.47.0
