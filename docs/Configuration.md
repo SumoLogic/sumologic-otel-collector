@@ -156,7 +156,7 @@ service:
 
 ### Basic configuration for traces
 
-Use the [OTLP Receiver][otlpreceiver_readme] to send traces to Sumo Logic.
+Use the [OTLP Receiver][otlpreceiver_readme] to ingest traces.
 
 Example configuration:
 
@@ -181,6 +181,8 @@ service:
       exporters: [sumologic]
 ```
 
+[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.46.0/receiver/otlpreceiver
+
 ### Putting it all together
 
 Here's an example configuration file that collects all the signals - logs, metrics and traces.
@@ -194,7 +196,6 @@ extensions:
     directory: .
   sumologic:
     install_token: <token>
-
 
 receivers:
   filelog:
