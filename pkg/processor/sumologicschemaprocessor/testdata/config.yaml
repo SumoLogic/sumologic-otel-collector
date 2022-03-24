@@ -1,0 +1,28 @@
+receivers:
+  nop:
+
+processors:
+  sumologic_schema:
+  sumologic_schema/disabled-cloud-namespace:
+    add_cloud_namespace: false
+
+exporters:
+  nop:
+
+service:
+  pipelines:
+    metrics:
+      receivers:
+      - nop
+      processors:
+      - sumologic_schema/disabled-cloud-namespace
+      exporters:
+      - nop
+
+    traces:
+      receivers:
+      - nop
+      processors:
+      - sumologic_schema
+      exporters:
+      - nop

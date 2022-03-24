@@ -46,9 +46,9 @@ The rest of the components in the table are upstream OpenTelemetry components.
 |                   [kafka][kafkareceiver]                   |              [`source`][sourceprocessor]               |                                        |                                             |
 |            [kafkametrics][kafkametricsreceiver]            |                 [span][spanprocessor]                  |                                        |                                             |
 |              [opencensus][opencensusreceiver]              |          [spanmetrics][spanmetricsprocessor]           |                                        |                                             |
-|                    [otlp][otlpreceiver]                    |     [`sumologic_syslog`][sumologicsyslogprocessor]     |                                        |                                             |
-|               [podman_stats][podmanreceiver]               |         [tail_sampling][tailsamplingprocessor]         |                                        |                                             |
-|              [prometheus][prometheusreceiver]              |                                                        |                                        |                                             |
+|                    [otlp][otlpreceiver]                    |     [`sumologic_schema`][sumologicschemaprocessor]     |                                        |                                             |
+|               [podman_stats][podmanreceiver]               |     [`sumologic_syslog`][sumologicsyslogprocessor]     |                                        |                                             |
+|              [prometheus][prometheusreceiver]              |         [tail_sampling][tailsamplingprocessor]         |                                        |                                             |
 |       [prometheus_simple][simpleprometheusreceiver]        |                                                        |                                        |                                             |
 |            [receiver_creator][receivercreator]             |                                                        |                                        |                                             |
 |                   [redis][redisreceiver]                   |                                                        |                                        |                                             |
@@ -118,6 +118,7 @@ The rest of the components in the table are upstream OpenTelemetry components.
 [sourceprocessor]: ./pkg/processor/sourceprocessor
 [spanmetricsprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/processor/spanmetricsprocessor
 [spanprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/processor/spanprocessor
+[sumologicschemaprocessor]: ./pkg/processor/sumologicschemaprocessor
 [sumologicsyslogprocessor]: ./pkg/processor/sumologicsyslogprocessor
 [tailsamplingprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/processor/tailsamplingprocessor
 
