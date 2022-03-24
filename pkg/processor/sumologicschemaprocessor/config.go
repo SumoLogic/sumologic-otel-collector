@@ -35,3 +35,8 @@ func createDefaultConfig() config.Processor {
 		AddCloudNamespace: defaultAddCloudNamespace,
 	}
 }
+
+// Validate config
+func (cfg *Config) Validate() error {
+	return nil
+}
