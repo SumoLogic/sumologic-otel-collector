@@ -71,6 +71,10 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			name:       "resource and attributes processors with support for regexp for delete and hash actions",
 			configFile: "testdata/attribute_attraction_pattern.yaml",
 		},
+		{
+			name:       "sumologic_schema processor can be used in logs, metrics and traces pipelines",
+			configFile: "testdata/sumologicschemaprocessor.yaml",
+		},
 	}
 
 	for _, tc := range testcases {

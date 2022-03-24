@@ -1,0 +1,47 @@
+exporters:
+  sumologic:
+    endpoint: http://dummy.endpoint.com:8888/api
+
+processors:
+  sumologic_schema:
+    add_cloud_namespace: true
+
+receivers:
+  filelog:
+    include:
+    - ./sumologicschemaprocessor.yaml
+
+  hostmetrics:
+    scrapers:
+      load:
+
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+service:
+  pipelines:
+    logs:
+      exporters:
+      - sumologic
+      processors:
+      - sumologic_schema
+      receivers:
+      - filelog
+
+    metrics:
+      exporters:
+      - sumologic
+      processors:
+      - sumologic_schema
+      receivers:
+      - hostmetrics
+
+    traces:
+      exporters:
+      - sumologic
+      processors:
+      - sumologic_schema
+      receivers:
+      - otlp
