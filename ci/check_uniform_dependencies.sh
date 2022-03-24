@@ -33,5 +33,4 @@ function check(){
   fi
 }
 
-check "github.com/SumoLogic/opentelemetry-collector"
 check "go.opentelemetry.io/collector"
