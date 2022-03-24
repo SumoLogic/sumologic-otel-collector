@@ -175,6 +175,8 @@ github.com/Shopify/sarama v1.29.1 h1:wBAacXbYVLmWieEA/0X/JagDdCZ8NVFOfS6l6+2u5S0
 github.com/Shopify/sarama v1.29.1/go.mod h1:mdtqvCSg8JOxk8PmpTNGyo6wzd4BMm4QXSfDnTXmgkE=
 github.com/Shopify/toxiproxy v2.1.4+incompatible h1:TKdv8HiTLgE5wdJuEML90aBgNWsokNbMijUGhmcoBJc=
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
+github.com/SumoLogic/telegraf v1.21.4-sumo-1 h1:/wKobzoMBcTRmIq34lGc0UQc+HACPZzBgPFMmo2aS7E=
+github.com/SumoLogic/telegraf v1.21.4-sumo-1/go.mod h1:KamJkTTflXd5EtdiqvV9aRvMJzSHJM6AfV/6aRO5jBc=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
 github.com/a8m/tree v0.0.0-20210115125333-10a5fd5b637d/go.mod h1:FSdwKX97koS5efgm8WevNf7XS3PqtyFkKDDXrz778cg=
 github.com/aerospike/aerospike-client-go v1.27.0 h1:VC6/Wqqm3Qlp4/utM7Zts3cv4A2HPn8rVFp/XZKTWgE=
@@ -988,6 +990,7 @@ github.com/influxdata/toml v0.0.0-20190415235208-270119a8ce65 h1:vvyMtD5LTJc1W9s
 github.com/influxdata/toml v0.0.0-20190415235208-270119a8ce65/go.mod h1:zApaNFpP/bTpQItGZNNUMISDMDAnTXu9UqJ4yT3ocz8=
 github.com/influxdata/usage-client v0.0.0-20160829180054-6d3895376368/go.mod h1:Wbbw6tYNvwa5dlB6304Sd+82Z3f7PmVZHVKU637d4po=
 github.com/influxdata/wlog v0.0.0-20160411224016-7c63b0a71ef8 h1:W2IgzRCb0L9VzMujq/QuTaZUKcH8096jWwP519mHN6Q=
+github.com/influxdata/wlog v0.0.0-20160411224016-7c63b0a71ef8/go.mod h1:/2NMgWB1DHM1ti/gqhOlg+LJeBVk6FqR5aVGYY0hlwI=
 github.com/intel/iaevents v1.0.0 h1:J8lETV13FMImV0VbOrKhkA790z7+cAHQ/28gbiefu7E=
 github.com/intel/iaevents v1.0.0/go.mod h1:nFsAQmrbF6MoZUomrSl4jgmHhe0SrLxTGtyqvqU2X9Y=
 github.com/j-keck/arping v0.0.0-20160618110441-2cf9dc699c56/go.mod h1:ymszkNOg6tORTn+6F6j+Jc8TOr5osrynvN6ivFWZ2GA=
@@ -1548,8 +1551,6 @@ github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.1 h1:5TQK59W5E3v0r2duFAb7P95B6hEeOyEnHRa8MjYSMTY=
 github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/sumologic/telegraf v1.21.4-sumo-0 h1:qQL21Stcj5HNTMyXvsiDPNY8hqoexGdpgEdJPwxWogE=
-github.com/sumologic/telegraf v1.21.4-sumo-0/go.mod h1:KamJkTTflXd5EtdiqvV9aRvMJzSHJM6AfV/6aRO5jBc=
 github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=

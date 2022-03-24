@@ -130,6 +130,7 @@ require (
 	github.com/influxdata/go-syslog/v3 v3.0.0 // indirect
 	github.com/influxdata/tail v1.0.1-0.20210707231403-b283181d1fa7 // indirect
 	github.com/influxdata/toml v0.0.0-20190415235208-270119a8ce65 // indirect
+	github.com/influxdata/wlog v0.0.0-20160411224016-7c63b0a71ef8 // indirect
 	github.com/intel/iaevents v1.0.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.10.1 // indirect
@@ -280,4 +281,4 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-replace github.com/influxdata/telegraf => github.com/sumologic/telegraf v1.21.4-sumo-0
+replace github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.21.4-sumo-1
