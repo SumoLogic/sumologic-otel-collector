@@ -145,7 +145,7 @@ replaces:
 
   # ----------------------------------------------------------------------------
   # Needed for telegrafreceiver
-  - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.22.0-sumo-0
+  - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.22.0-sumo-1
 
   # TODO: remove this when:
   # - regexp log filtering is released upstream:
