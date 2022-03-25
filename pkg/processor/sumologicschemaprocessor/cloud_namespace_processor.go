@@ -19,6 +19,7 @@ import (
 	conventions "go.opentelemetry.io/collector/model/semconv/v1.6.1"
 )
 
+// cloudNamespaceProcessor adds the `cloud.namespace` resource attribute to logs, metrics and traces.
 type cloudNamespaceProcessor struct {
 	addCloudNamespace bool
 }
@@ -57,6 +58,10 @@ func (*cloudNamespaceProcessor) processTraces(traces pdata.Traces) (pdata.Traces
 	return traces, nil
 }
 
+// addCloudNamespaceAttribute adds the `cloud.namespace` attribute
+// to a collection of attributes that already contains a `cloud.platform` attribute.
+// It does not add the `cloud.namespace` attribute for all `cloud.platform` values,
+// but only for a few specific ones - namely AWS EC2, AWS ECS, and AWS Elastic Beanstalk.
 func addCloudNamespaceAttribute(attributes pdata.AttributeMap) {
 	cloudPlatformAttributeValue, found := attributes.Get(conventions.AttributeCloudPlatform)
 	if !found {
