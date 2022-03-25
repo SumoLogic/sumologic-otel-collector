@@ -72,6 +72,8 @@ type Config struct {
 	MetadataAttributes []string `mapstructure:"metadata_attributes"`
 
 	// Attribute used by routingprocessor which should be dropped during data ingestion
+	// This is workaround for the following issue:
+	// https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/7407
 	DropRoutingAttribute string `mapstructure:"drop_routing_atttribute"`
 
 	// Sumo specific options
