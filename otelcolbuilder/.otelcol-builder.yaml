@@ -156,12 +156,12 @@ replaces:
   #   PR: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5750
   #
   # For now, cherry-picked changes are being used:
-  # commit: https://github.com/SumoLogic/opentelemetry-collector-contrib/commit/9a7a757ce29d4a83f6c5019907be77a211941aab
-  # branch: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.45.1-filterprocessor
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/filterprocessor 9a7a757ce29d4a83f6c5019907be77a211941aab
-  - github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal => github.com/SumoLogic/opentelemetry-collector-contrib/internal/coreinternal 9a7a757ce29d4a83f6c5019907be77a211941aab
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/attributesprocessor 9a7a757ce29d4a83f6c5019907be77a211941aab
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/resourceprocessor 9a7a757ce29d4a83f6c5019907be77a211941aab
+  # commit: https://github.com/SumoLogic/opentelemetry-collector-contrib/commit/7c7461ff6450cc3c1eec5791601a09f8a42296b6
+  # branch: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.47.0-filterprocessor
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/filterprocessor 7c7461ff6450cc3c1eec5791601a09f8a42296b6
+  - github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal => github.com/SumoLogic/opentelemetry-collector-contrib/internal/coreinternal 7c7461ff6450cc3c1eec5791601a09f8a42296b6
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/attributesprocessor 7c7461ff6450cc3c1eec5791601a09f8a42296b6
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/resourceprocessor 7c7461ff6450cc3c1eec5791601a09f8a42296b6
 
   # Google renamed their org from `googleapis` to `google`, and for `gnostic` this happened in v0.5.6
   # However, kubernetes/client-go still uses the old name for v0.5.5, and this causes go mod to complain
