@@ -71,6 +71,9 @@ type Config struct {
 	// List of regexes for attributes which should be send as metadata
 	MetadataAttributes []string `mapstructure:"metadata_attributes"`
 
+	// Attribute used by routingprocessor which should be dropped during data ingestion
+	DropRoutingAttribute string `mapstructure:"drop_routing_atttribute"`
+
 	// Sumo specific options
 	// Desired source category.
 	// Useful if you want to override the source category configured for the source.
@@ -255,4 +258,6 @@ const (
 	DefaultTimestampKey string = "timestamp"
 	// DefaultFlattenBody defines default FlattenBody value
 	DefaultFlattenBody bool = false
+	// DefaultDropRoutingAttribute defines default DropRoutingAttribute
+	DefaultDropRoutingAttribute string = "sumo_routing"
 )

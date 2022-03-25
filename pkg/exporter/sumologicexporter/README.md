@@ -58,6 +58,11 @@ exporters:
     # source templating is going to be applied,
     # default = `%{_metric_}`
     graphite_template: <graphite_template>
+    # name of resource attribute which should be dropped for metrics
+    # this is for attribute used by resource processor
+    # other attributes should be removed by processors in pipelines before
+    # default = `sumo_routing`
+    drop_routing_atttribute: <drop_routing_atttribute>
 
     json_logs:
       # defines which key will be used to attach the log body at.
