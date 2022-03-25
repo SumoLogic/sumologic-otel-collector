@@ -80,7 +80,7 @@ func translateAttributesInPlace(attributes pdata.AttributeMap) {
 				return true
 			}
 			attributes.Insert(sumoKey, value)
-			attributes.Delete(otKey)
+			attributes.Remove(otKey)
 		}
 		return true
 	})
