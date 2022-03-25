@@ -1,5 +1,5 @@
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.46.0
+BUILDER_VERSION ?= 0.47.0
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
 BUILDER_BIN_PATH ?= $(HOME)/bin/opentelemetry-collector-builder
 INSTALLED_BUILDER_VERSION := $(shell opentelemetry-collector-builder version 2>&1)
