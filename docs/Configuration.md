@@ -121,7 +121,7 @@ to persist the position in the files it reads between restarts.
 
 See section below on [Collecting logs from files](#collecting-logs-from-files) for details on configuring the Filelog receiver.
 
-[filestorageextension_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/extension/storage/filestorage
+[filestorageextension_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/extension/storage/filestorage
 
 ### Basic configuration for metrics
 
@@ -181,7 +181,7 @@ service:
       exporters: [sumologic]
 ```
 
-[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.46.0/receiver/otlpreceiver
+[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.47.0/receiver/otlpreceiver
 
 ### Putting it all together
 
@@ -467,7 +467,7 @@ Flags: 0
 Example configuration with example log can be found in [/examples/logs_json/](/examples/logs_json/) directory.
 
 [json_parser]: https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/operators/json_parser.md
-[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/receiver/filelogreceiver
+[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/receiver/filelogreceiver
 [opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
 
 ## Command-line configuration options
@@ -539,5 +539,5 @@ service:
 # ...
 ```
 
-[metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.46.0/processor/metricstransformprocessor
+[metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/processor/metricstransformprocessor
 [prometheus_data_model]: https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
