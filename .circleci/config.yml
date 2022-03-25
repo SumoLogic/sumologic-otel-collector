@@ -86,7 +86,7 @@ jobs:
           name: "Deploy Java App application"
           command: /opt/tracing-tests/deployment_scripts/deploy-test-applications.sh
       - run:
-          name: "Wait for Kubernetes Metadata Provider"
+          name: "Wait for Java App"
           command: kubectl -n java-app wait --for=condition=ready --timeout=60s pod -l app=server
       - run:
           name: "Wait for data..."
