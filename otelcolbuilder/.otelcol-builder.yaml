@@ -215,7 +215,7 @@ replaces:
   # go.opentelemetry.io/collector/service.(*Collector).Run(0xc00016e460, {0x9acc778, 0xc00012a000})
   #         go.opentelemetry.io/collector@v0.47.0/service/collector.go:240 +0x24e fp=0xc0005c5b48 sp=0xc0005c5a28 pc=0x7be6aae
   # go.opentelemetry.io/collector/service.NewCommand.func1(0xc000a52280, {0x8fd4b1d?, 0x2?, 0x2?})
-  #         go.opentelemetry.io/collector@v0.47.0/service/command.go:39 +0x10e fp=0xc0005c5be0 sp=0xc0005c5b48 pc=0x7be74ee
+  #         go.opentelemetry.io/collector@v0.46.0/service/command.go:39 +0x10e fp=0xc0005c5be0 sp=0xc0005c5b48 pc=0x7be74ee
   # github.com/spf13/cobra.(*Command).execute(0xc000a52280, {0xc000124190, 0x2, 0x2})
   #         github.com/spf13/cobra@v1.3.0/command.go:856 +0x67c fp=0xc0005c5cb8 sp=0xc0005c5be0 pc=0x7bbcd5c
   # github.com/spf13/cobra.(*Command).ExecuteC(0xc000a52280)
