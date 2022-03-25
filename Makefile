@@ -1,4 +1,4 @@
-GOLANGCI_LINT_VERSION ?= v1.44.2
+GOLANGCI_LINT_VERSION ?= v1.45.2
 
 all: markdownlint yamllint
 
