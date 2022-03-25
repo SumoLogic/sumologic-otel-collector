@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter/internal/observability"
 	"go.opentelemetry.io/collector/model/otlp"
 	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/multierr"
@@ -158,16 +159,20 @@ func (s *sender) send(ctx context.Context, pipeline PipelineType, body io.Reader
 		zap.Any("headers", req.Header),
 	)
 
+	start := time.Now()
 	resp, err := s.client.Do(req)
 	if err != nil {
+		observability.RecordRequestsDuration(time.Since(start), 0)
 		return err
 	}
 	defer resp.Body.Close()
+	observability.RecordRequestsDuration(time.Since(start), resp.StatusCode)
 
 	return s.handleReceiverResponse(resp)
 }
 
 func (s *sender) handleReceiverResponse(resp *http.Response) error {
+	observability.RecordRequestsSent(resp.StatusCode)
 	// API responds with a 200 or 204 with ConentLength set to 0 when all data
 	// has been successfully ingested.
 	if resp.ContentLength == 0 && (resp.StatusCode == 200 || resp.StatusCode == 204) {
