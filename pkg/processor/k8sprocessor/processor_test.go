@@ -310,6 +310,15 @@ func withPodAndNamespace(pod string, namespace string) generateResourceFunc {
 	}
 }
 
+type strAddr string
+
+func (s strAddr) String() string {
+	return "1.1.1.1:3200"
+}
+
+func (strAddr) Network() string {
+	return "tcp"
+}
 func TestIPDetectionFromContext(t *testing.T) {
 	addresses := []net.Addr{
 		&net.IPAddr{
@@ -323,6 +332,7 @@ func TestIPDetectionFromContext(t *testing.T) {
 			IP:   net.IPv4(1, 1, 1, 1),
 			Port: 3200,
 		},
+		strAddr("1.1.1.1:3200"),
 	}
 	for _, addr := range addresses {
 		m := newMultiTest(t, NewFactory().CreateDefaultConfig(), nil)
