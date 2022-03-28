@@ -63,8 +63,8 @@ exporters:
     # other attributes should be removed by processors in pipelines before
     # This is workaround for the following issue:
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/7407
-    # default = `sumo_routing`
-    drop_routing_atttribute: <drop_routing_atttribute>
+    # default = ``
+    routing_atttribute_to_drop: <routing_atttribute_to_drop>
 
     json_logs:
       # defines which key will be used to attach the log body at.

@@ -74,7 +74,7 @@ type Config struct {
 	// Attribute used by routingprocessor which should be dropped during data ingestion
 	// This is workaround for the following issue:
 	// https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/7407
-	DropRoutingAttribute string `mapstructure:"drop_routing_atttribute"`
+	DropRoutingAttribute string `mapstructure:"routing_atttribute_to_drop"`
 
 	// Sumo specific options
 	// Desired source category.
@@ -261,5 +261,5 @@ const (
 	// DefaultFlattenBody defines default FlattenBody value
 	DefaultFlattenBody bool = false
 	// DefaultDropRoutingAttribute defines default DropRoutingAttribute
-	DefaultDropRoutingAttribute string = "sumo_routing"
+	DefaultDropRoutingAttribute string = ""
 )
