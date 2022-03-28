@@ -107,7 +107,7 @@ func (b *bodyBuilder) addLine(line string) error {
 }
 
 func (b *bodyBuilder) addNewLine() error {
-	_, err := b.builder.WriteString("\n")
+	err := b.builder.WriteByte('\n')
 	return err
 }
 
