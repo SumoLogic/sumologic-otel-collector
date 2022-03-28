@@ -66,7 +66,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 		},
 		RetrySettings:        exporterhelper.NewDefaultRetrySettings(),
 		QueueSettings:        qs,
-		DropRoutingAttribute: "sumo_routing",
+		DropRoutingAttribute: "",
 	})
 
 	assert.NoError(t, cfg.Validate())
