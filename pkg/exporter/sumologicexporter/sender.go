@@ -71,13 +71,13 @@ func newCountingReader(records int) *countingReader {
 	}
 }
 
-// withBytes set ups reader to read from bytes data
+// withBytes sets up reader to read from bytes data
 func (c *countingReader) withBytes(data []byte) *countingReader {
 	c.reader = bytes.NewReader(data)
 	return c
 }
 
-// withString set ups reader to read from string data
+// withString sets up reader to read from string data
 func (c *countingReader) withString(data string) *countingReader {
 	c.reader = strings.NewReader(data)
 	return c
