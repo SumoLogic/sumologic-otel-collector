@@ -84,9 +84,13 @@ func metricReader(chData chan []*metricdata.Metric, fail chan struct{}, count in
 // metricproducer.GlobalManager() used in metricexport.NewReader().
 func TestMetrics(t *testing.T) {
 	const (
-		statusCode = 200
-		endpoint   = "some/uri"
-		pipeline   = "metrics"
+		statusCode   = 200
+		endpoint     = "some/uri"
+		pipeline     = "metrics"
+		bytesFunc    = "bytes"
+		recordsFunc  = "records"
+		durationFunc = "duration"
+		sentFunc     = "sent"
 	)
 	type testCase struct {
 		name       string
@@ -98,21 +102,21 @@ func TestMetrics(t *testing.T) {
 	tests := []testCase{
 		{
 			name:       "sumologic/requests/sent",
-			recordFunc: "sent",
+			recordFunc: sentFunc,
 		},
 		{
 			name:       "sumologic/requests/duration",
-			recordFunc: "duration",
+			recordFunc: durationFunc,
 			duration:   time.Millisecond,
 		},
 		{
 			name:       "sumologic/requests/bytes",
-			recordFunc: "bytes",
+			recordFunc: bytesFunc,
 			bytes:      1,
 		},
 		{
 			name:       "sumologic/requests/records",
-			recordFunc: "records",
+			recordFunc: recordsFunc,
 			records:    1,
 		},
 	}
@@ -126,14 +130,14 @@ func TestMetrics(t *testing.T) {
 
 	for _, tt := range tests {
 		switch tt.recordFunc {
-		case "sent":
-			RecordRequestsSent(statusCode, endpoint, pipeline)
-		case "duration":
-			RecordRequestsDuration(tt.duration, statusCode, endpoint, pipeline)
-		case "bytes":
-			RecordRequestsBytes(tt.bytes, statusCode, endpoint, pipeline)
-		case "records":
-			RecordRequestsRecords(tt.records, statusCode, endpoint, pipeline)
+		case sentFunc:
+			require.NoError(t, RecordRequestsSent(statusCode, endpoint, pipeline))
+		case durationFunc:
+			require.NoError(t, RecordRequestsDuration(tt.duration, statusCode, endpoint, pipeline))
+		case bytesFunc:
+			require.NoError(t, RecordRequestsBytes(tt.bytes, statusCode, endpoint, pipeline))
+		case recordsFunc:
+			require.NoError(t, RecordRequestsRecords(tt.records, statusCode, endpoint, pipeline))
 		}
 	}
 
