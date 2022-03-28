@@ -39,10 +39,10 @@ func init() {
 var (
 	mRequestsSent     = stats.Int64("sumologic/requests/sent", "Number of requests", "1")
 	mRequestsDuration = stats.Int64("sumologic/requests/duration", "Duration of HTTP requests (in milliseconds)", "0")
-	mRequestsBytes    = stats.Int64("sumologic/requests/bytes", "Duration of HTTP requests (in milliseconds)", "0")
-	mRequestsRecords  = stats.Int64("sumologic/requests/records", "Duration of HTTP requests (in milliseconds)", "0")
+	mRequestsBytes    = stats.Int64("sumologic/requests/bytes", "Total size of requests (in bytes)", "0")
+	mRequestsRecords  = stats.Int64("sumologic/requests/records", "Total size of requests (in number of records)", "0")
 
-	statusKey, _  = tag.NewKey("status_code")
+	statusKey, _   = tag.NewKey("status_code")
 	endpointKey, _ = tag.NewKey("endpoint")
 )
 
