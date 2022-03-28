@@ -224,17 +224,17 @@ func (s *sender) send(ctx context.Context, pipeline PipelineType, reader *counti
 	start := time.Now()
 	resp, err := s.client.Do(req)
 	if err != nil {
-		observability.RecordRequestsDuration(time.Since(start), 0)
+		s.recordMetrics(time.Since(start), reader.counter, req, nil)
 		return err
 	}
 	defer resp.Body.Close()
-	observability.RecordRequestsDuration(time.Since(start), resp.StatusCode)
+
+	s.recordMetrics(time.Since(start), reader.counter, req, resp)
 
 	return s.handleReceiverResponse(resp)
 }
 
 func (s *sender) handleReceiverResponse(resp *http.Response) error {
-	observability.RecordRequestsSent(resp.StatusCode)
 	// API responds with a 200 or 204 with ConentLength set to 0 when all data
 	// has been successfully ingested.
 	if resp.ContentLength == 0 && (resp.StatusCode == 200 || resp.StatusCode == 204) {
@@ -837,4 +837,29 @@ func (s *sender) addResourceAttributes(attrs pdata.AttributeMap, flds fields) {
 	if s.sources.category.isSet() {
 		attrs.InsertString(attributeKeySourceCategory, s.sources.category.format(flds))
 	}
+}
+
+func (s *sender) recordMetrics(duration time.Duration, count int64, req *http.Request, resp *http.Response) {
+	statusCode := 0
+
+	if resp != nil {
+		statusCode = resp.StatusCode
+	}
+
+	if err := observability.RecordRequestsDuration(duration, statusCode, req.RemoteAddr, req.URL.String()); err != nil {
+		s.logger.Debug("error for recording metric for request duration", zap.Error(err))
+	}
+
+	if err := observability.RecordRequestsBytes(req.ContentLength, statusCode, req.RemoteAddr, req.URL.String()); err != nil {
+		s.logger.Debug("error for recording metric for sent bytes", zap.Error(err))
+	}
+
+	if err := observability.RecordRequestsRecords(count, statusCode, req.RemoteAddr, req.URL.String()); err != nil {
+		s.logger.Debug("error for recording metric for sent records", zap.Error(err))
+	}
+
+	if err := observability.RecordRequestsSent(statusCode, req.RemoteAddr, req.URL.String()); err != nil {
+		s.logger.Debug("error for recording metric for sent request", zap.Error(err))
+	}
+
 }
