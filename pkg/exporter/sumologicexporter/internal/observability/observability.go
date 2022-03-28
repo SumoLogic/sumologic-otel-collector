@@ -41,9 +41,10 @@ var (
 	mRequestsDuration = stats.Int64("sumologic/requests/duration", "Duration of HTTP requests (in milliseconds)", "0")
 	mRequestsBytes    = stats.Int64("sumologic/requests/bytes", "Duration of HTTP requests (in milliseconds)", "0")
 	mRequestsRecords  = stats.Int64("sumologic/requests/records", "Duration of HTTP requests (in milliseconds)", "0")
-	statusKey, _      = tag.NewKey("status_code")
-	addressKey, _     = tag.NewKey("address")
-	uriKey, _         = tag.NewKey("uri")
+
+	statusKey, _  = tag.NewKey("status_code")
+	addressKey, _ = tag.NewKey("address")
+	uriKey, _     = tag.NewKey("uri")
 )
 
 var viewRequestsSent = &view.View{
@@ -78,7 +79,7 @@ var viewRequestsRecords = &view.View{
 	Aggregation: view.Sum(),
 }
 
-// RecordPodUpdated increments the metric that records pod update events received.
+// RecordRequestsSent increments the metric that records sent requests
 func RecordRequestsSent(statusCode int, address string, uri string) error {
 	return stats.RecordWithTags(
 		context.Background(),
@@ -91,7 +92,7 @@ func RecordRequestsSent(statusCode int, address string, uri string) error {
 	)
 }
 
-// RecordPodAdded increments the metric that records pod add events receiver.
+// RecordRequestsDuration update metric which records request duration
 func RecordRequestsDuration(duration time.Duration, statusCode int, address string, uri string) error {
 	return stats.RecordWithTags(
 		context.Background(),
@@ -104,7 +105,7 @@ func RecordRequestsDuration(duration time.Duration, statusCode int, address stri
 	)
 }
 
-// RecordPodAdded increments the metric that records pod add events receiver.
+// RecordRequestsBytes update metric which records number of send bytes
 func RecordRequestsBytes(bytes int64, statusCode int, address string, uri string) error {
 	return stats.RecordWithTags(
 		context.Background(),
@@ -117,7 +118,7 @@ func RecordRequestsBytes(bytes int64, statusCode int, address string, uri string
 	)
 }
 
-// RecordPodAdded increments the metric that records pod add events receiver.
+// RecordRequestsRecords update metric which records number of sent records
 func RecordRequestsRecords(records int64, statusCode int, address string, uri string) error {
 	return stats.RecordWithTags(
 		context.Background(),
