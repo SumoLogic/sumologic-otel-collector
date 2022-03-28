@@ -24,9 +24,6 @@ import (
 	"go.opencensus.io/tag"
 )
 
-// TODO: re-think if processor should register it's own telemetry views or if some other
-// mechanism should be used by the collector to discover views from all components
-
 func init() {
 	err := view.Register(
 		viewRequestsSent,
