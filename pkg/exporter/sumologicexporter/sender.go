@@ -71,11 +71,13 @@ func newCountingReader(records int) *countingReader {
 	}
 }
 
+// withBytes set ups reader to read from bytes data
 func (c *countingReader) withBytes(data []byte) *countingReader {
 	c.reader = bytes.NewReader(data)
 	return c
 }
 
+// withString set ups reader to read from string data
 func (c *countingReader) withString(data string) *countingReader {
 	c.reader = strings.NewReader(data)
 	return c
@@ -87,10 +89,12 @@ type bodyBuilder struct {
 	counter int
 }
 
+// newBodyBuilder returns empty bodyBuilder
 func newBodyBuilder() bodyBuilder {
 	return bodyBuilder{}
 }
 
+// Reset resets both counter and builder content
 func (b *bodyBuilder) Reset() {
 	b.counter = 0
 	b.builder.Reset()
@@ -106,11 +110,13 @@ func (b *bodyBuilder) addLine(line string) error {
 	return nil
 }
 
+// addNewLine adds newline to builder
 func (b *bodyBuilder) addNewLine() error {
 	err := b.builder.WriteByte('\n')
 	return err
 }
 
+// Len returns builder content length
 func (b *bodyBuilder) Len() int {
 	return b.builder.Len()
 }
