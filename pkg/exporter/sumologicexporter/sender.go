@@ -852,19 +852,21 @@ func (s *sender) recordMetrics(duration time.Duration, count int64, req *http.Re
 		statusCode = resp.StatusCode
 	}
 
-	if err := observability.RecordRequestsDuration(duration, statusCode, req.URL.String(), string(pipeline)); err != nil {
+	id := s.config.ID().String()
+
+	if err := observability.RecordRequestsDuration(duration, statusCode, req.URL.String(), string(pipeline), id); err != nil {
 		s.logger.Debug("error for recording metric for request duration", zap.Error(err))
 	}
 
-	if err := observability.RecordRequestsBytes(req.ContentLength, statusCode, req.URL.String(), string(pipeline)); err != nil {
+	if err := observability.RecordRequestsBytes(req.ContentLength, statusCode, req.URL.String(), string(pipeline), id); err != nil {
 		s.logger.Debug("error for recording metric for sent bytes", zap.Error(err))
 	}
 
-	if err := observability.RecordRequestsRecords(count, statusCode, req.URL.String(), string(pipeline)); err != nil {
+	if err := observability.RecordRequestsRecords(count, statusCode, req.URL.String(), string(pipeline), id); err != nil {
 		s.logger.Debug("error for recording metric for sent records", zap.Error(err))
 	}
 
-	if err := observability.RecordRequestsSent(statusCode, req.URL.String(), string(pipeline)); err != nil {
+	if err := observability.RecordRequestsSent(statusCode, req.URL.String(), string(pipeline), id); err != nil {
 		s.logger.Debug("error for recording metric for sent request", zap.Error(err))
 	}
 

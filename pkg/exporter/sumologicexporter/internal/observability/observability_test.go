@@ -94,6 +94,7 @@ func TestMetrics(t *testing.T) {
 		statusCode   = 200
 		endpoint     = "some/uri"
 		pipeline     = "metrics"
+		exporter     = "sumologic/my-name"
 		bytesFunc    = "bytes"
 		recordsFunc  = "records"
 		durationFunc = "duration"
@@ -108,21 +109,21 @@ func TestMetrics(t *testing.T) {
 	}
 	tests := []testCase{
 		{
-			name:       "sumologic/requests/sent",
+			name:       "exporter/requests/sent",
 			recordFunc: sentFunc,
 		},
 		{
-			name:       "sumologic/requests/duration",
+			name:       "exporter/requests/duration",
 			recordFunc: durationFunc,
 			duration:   time.Millisecond,
 		},
 		{
-			name:       "sumologic/requests/bytes",
+			name:       "exporter/requests/bytes",
 			recordFunc: bytesFunc,
 			bytes:      1,
 		},
 		{
-			name:       "sumologic/requests/records",
+			name:       "exporter/requests/records",
 			recordFunc: recordsFunc,
 			records:    1,
 		},
@@ -138,13 +139,13 @@ func TestMetrics(t *testing.T) {
 	for _, tt := range tests {
 		switch tt.recordFunc {
 		case sentFunc:
-			require.NoError(t, RecordRequestsSent(statusCode, endpoint, pipeline))
+			require.NoError(t, RecordRequestsSent(statusCode, endpoint, pipeline, exporter))
 		case durationFunc:
-			require.NoError(t, RecordRequestsDuration(tt.duration, statusCode, endpoint, pipeline))
+			require.NoError(t, RecordRequestsDuration(tt.duration, statusCode, endpoint, pipeline, exporter))
 		case bytesFunc:
-			require.NoError(t, RecordRequestsBytes(tt.bytes, statusCode, endpoint, pipeline))
+			require.NoError(t, RecordRequestsBytes(tt.bytes, statusCode, endpoint, pipeline, exporter))
 		case recordsFunc:
-			require.NoError(t, RecordRequestsRecords(tt.records, statusCode, endpoint, pipeline))
+			require.NoError(t, RecordRequestsRecords(tt.records, statusCode, endpoint, pipeline, exporter))
 		}
 	}
 
@@ -172,15 +173,17 @@ func TestMetrics(t *testing.T) {
 			require.Len(t, d.TimeSeries[0].Points, 1)
 			assert.Equal(t, d.TimeSeries[0].Points[0].Value, int64(1))
 
-			require.Len(t, d.TimeSeries[0].LabelValues, 3)
+			require.Len(t, d.TimeSeries[0].LabelValues, 4)
 
 			require.True(t, d.TimeSeries[0].LabelValues[0].Present)
 			require.True(t, d.TimeSeries[0].LabelValues[1].Present)
 			require.True(t, d.TimeSeries[0].LabelValues[2].Present)
+			require.True(t, d.TimeSeries[0].LabelValues[3].Present)
 
 			assert.Equal(t, d.TimeSeries[0].LabelValues[0].Value, "some/uri")
-			assert.Equal(t, d.TimeSeries[0].LabelValues[1].Value, "metrics")
-			assert.Equal(t, d.TimeSeries[0].LabelValues[2].Value, "200")
+			assert.Equal(t, d.TimeSeries[0].LabelValues[1].Value, "sumologic/my-name")
+			assert.Equal(t, d.TimeSeries[0].LabelValues[2].Value, "metrics")
+			assert.Equal(t, d.TimeSeries[0].LabelValues[3].Value, "200")
 		})
 	}
 }
