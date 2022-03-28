@@ -1,4 +1,3 @@
-
 // Copyright 2020 OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -87,6 +86,7 @@ func TestMetrics(t *testing.T) {
 	const (
 		statusCode = 200
 		endpoint   = "some/uri"
+		pipeline   = "metrics"
 	)
 	type testCase struct {
 		name       string
@@ -127,13 +127,13 @@ func TestMetrics(t *testing.T) {
 	for _, tt := range tests {
 		switch tt.recordFunc {
 		case "sent":
-			RecordRequestsSent(statusCode, endpoint)
+			RecordRequestsSent(statusCode, endpoint, pipeline)
 		case "duration":
-			RecordRequestsDuration(tt.duration, statusCode, endpoint)
+			RecordRequestsDuration(tt.duration, statusCode, endpoint, pipeline)
 		case "bytes":
-			RecordRequestsBytes(tt.bytes, statusCode, endpoint)
+			RecordRequestsBytes(tt.bytes, statusCode, endpoint, pipeline)
 		case "records":
-			RecordRequestsRecords(tt.records, statusCode, endpoint)
+			RecordRequestsRecords(tt.records, statusCode, endpoint, pipeline)
 		}
 	}
 
@@ -160,12 +160,14 @@ func TestMetrics(t *testing.T) {
 		require.Len(t, d.TimeSeries[0].Points, 1)
 		assert.Equal(t, d.TimeSeries[0].Points[0].Value, int64(1))
 
-		require.Len(t, d.TimeSeries[0].LabelValues, 2)
+		require.Len(t, d.TimeSeries[0].LabelValues, 3)
 
 		require.True(t, d.TimeSeries[0].LabelValues[0].Present)
 		require.True(t, d.TimeSeries[0].LabelValues[1].Present)
+		require.True(t, d.TimeSeries[0].LabelValues[2].Present)
 
 		assert.Equal(t, d.TimeSeries[0].LabelValues[0].Value, "some/uri")
-		assert.Equal(t, d.TimeSeries[0].LabelValues[1].Value, "200")
+		assert.Equal(t, d.TimeSeries[0].LabelValues[1].Value, "metrics")
+		assert.Equal(t, d.TimeSeries[0].LabelValues[2].Value, "200")
 	}
 }

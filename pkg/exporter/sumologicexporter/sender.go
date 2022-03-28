@@ -224,12 +224,12 @@ func (s *sender) send(ctx context.Context, pipeline PipelineType, reader *counti
 	start := time.Now()
 	resp, err := s.client.Do(req)
 	if err != nil {
-		s.recordMetrics(time.Since(start), reader.counter, req, nil)
+		s.recordMetrics(time.Since(start), reader.counter, req, nil, pipeline)
 		return err
 	}
 	defer resp.Body.Close()
 
-	s.recordMetrics(time.Since(start), reader.counter, req, resp)
+	s.recordMetrics(time.Since(start), reader.counter, req, resp, pipeline)
 
 	return s.handleReceiverResponse(resp)
 }
@@ -839,26 +839,26 @@ func (s *sender) addResourceAttributes(attrs pdata.AttributeMap, flds fields) {
 	}
 }
 
-func (s *sender) recordMetrics(duration time.Duration, count int64, req *http.Request, resp *http.Response) {
+func (s *sender) recordMetrics(duration time.Duration, count int64, req *http.Request, resp *http.Response, pipeline PipelineType) {
 	statusCode := 0
 
 	if resp != nil {
 		statusCode = resp.StatusCode
 	}
 
-	if err := observability.RecordRequestsDuration(duration, statusCode, req.URL.String()); err != nil {
+	if err := observability.RecordRequestsDuration(duration, statusCode, req.URL.String(), string(pipeline)); err != nil {
 		s.logger.Debug("error for recording metric for request duration", zap.Error(err))
 	}
 
-	if err := observability.RecordRequestsBytes(req.ContentLength, statusCode, req.URL.String()); err != nil {
+	if err := observability.RecordRequestsBytes(req.ContentLength, statusCode, req.URL.String(), string(pipeline)); err != nil {
 		s.logger.Debug("error for recording metric for sent bytes", zap.Error(err))
 	}
 
-	if err := observability.RecordRequestsRecords(count, statusCode, req.URL.String()); err != nil {
+	if err := observability.RecordRequestsRecords(count, statusCode, req.URL.String(), string(pipeline)); err != nil {
 		s.logger.Debug("error for recording metric for sent records", zap.Error(err))
 	}
 
-	if err := observability.RecordRequestsSent(statusCode, req.URL.String()); err != nil {
+	if err := observability.RecordRequestsSent(statusCode, req.URL.String(), string(pipeline)); err != nil {
 		s.logger.Debug("error for recording metric for sent request", zap.Error(err))
 	}
 
