@@ -1680,3 +1680,33 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 		})
 	}
 }
+
+func TestTracesWithDroppedAttribute(t *testing.T) {
+	// Prepare data to compare (trace without routing attribute)
+	traces := exampleTrace()
+	traces.ResourceSpans().At(0).Resource().Attributes().InsertString("key2", "value2")
+	tracesMarshaler = otlp.NewProtobufTracesMarshaler()
+	bytes, err := tracesMarshaler.MarshalTraces(traces)
+	require.NoError(t, err)
+
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			assert.Equal(t, string(bytes), body)
+		},
+	})
+	test.exp.config.DropRoutingAttribute = "key1"
+
+	f, err := newFilter([]string{`key*`})
+	require.NoError(t, err)
+	test.exp.filter = f
+
+	// add routing attribute and check if after marshalling it's different
+	traces.ResourceSpans().At(0).Resource().Attributes().InsertString("key1", "value1")
+	bytesWithAttribute, err := tracesMarshaler.MarshalTraces(traces)
+	require.NoError(t, err)
+	require.NotEqual(t, bytes, bytesWithAttribute)
+
+	err = test.exp.pushTracesData(context.Background(), traces)
+	assert.NoError(t, err)
+}
