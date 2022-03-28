@@ -43,15 +43,14 @@ var (
 	mRequestsRecords  = stats.Int64("sumologic/requests/records", "Duration of HTTP requests (in milliseconds)", "0")
 
 	statusKey, _  = tag.NewKey("status_code")
-	addressKey, _ = tag.NewKey("address")
-	uriKey, _     = tag.NewKey("uri")
+	endpointKey, _ = tag.NewKey("endpoint")
 )
 
 var viewRequestsSent = &view.View{
 	Name:        mRequestsSent.Name(),
 	Description: mRequestsSent.Description(),
 	Measure:     mRequestsSent,
-	TagKeys:     []tag.Key{statusKey, addressKey, uriKey},
+	TagKeys:     []tag.Key{statusKey, endpointKey},
 	Aggregation: view.Count(),
 }
 
@@ -59,7 +58,7 @@ var viewRequestsDuration = &view.View{
 	Name:        mRequestsDuration.Name(),
 	Description: mRequestsDuration.Description(),
 	Measure:     mRequestsDuration,
-	TagKeys:     []tag.Key{statusKey, addressKey, uriKey},
+	TagKeys:     []tag.Key{statusKey, endpointKey},
 	Aggregation: view.Sum(),
 }
 
@@ -67,7 +66,7 @@ var viewRequestsBytes = &view.View{
 	Name:        mRequestsBytes.Name(),
 	Description: mRequestsBytes.Description(),
 	Measure:     mRequestsBytes,
-	TagKeys:     []tag.Key{statusKey, addressKey, uriKey},
+	TagKeys:     []tag.Key{statusKey, endpointKey},
 	Aggregation: view.Sum(),
 }
 
@@ -75,57 +74,53 @@ var viewRequestsRecords = &view.View{
 	Name:        mRequestsRecords.Name(),
 	Description: mRequestsRecords.Description(),
 	Measure:     mRequestsRecords,
-	TagKeys:     []tag.Key{statusKey, addressKey, uriKey},
+	TagKeys:     []tag.Key{statusKey, endpointKey},
 	Aggregation: view.Sum(),
 }
 
 // RecordRequestsSent increments the metric that records sent requests
-func RecordRequestsSent(statusCode int, address string, uri string) error {
+func RecordRequestsSent(statusCode int, endpoint string) error {
 	return stats.RecordWithTags(
 		context.Background(),
 		[]tag.Mutator{
 			tag.Insert(statusKey, fmt.Sprintf("%d", statusCode)),
-			tag.Insert(addressKey, address),
-			tag.Insert(uriKey, uri),
+			tag.Insert(endpointKey, endpoint),
 		},
 		mRequestsSent.M(int64(1)),
 	)
 }
 
 // RecordRequestsDuration update metric which records request duration
-func RecordRequestsDuration(duration time.Duration, statusCode int, address string, uri string) error {
+func RecordRequestsDuration(duration time.Duration, statusCode int, endpoint string) error {
 	return stats.RecordWithTags(
 		context.Background(),
 		[]tag.Mutator{
 			tag.Insert(statusKey, fmt.Sprintf("%d", statusCode)),
-			tag.Insert(addressKey, address),
-			tag.Insert(uriKey, uri),
+			tag.Insert(endpointKey, endpoint),
 		},
 		mRequestsDuration.M(duration.Milliseconds()),
 	)
 }
 
 // RecordRequestsBytes update metric which records number of send bytes
-func RecordRequestsBytes(bytes int64, statusCode int, address string, uri string) error {
+func RecordRequestsBytes(bytes int64, statusCode int, endpoint string) error {
 	return stats.RecordWithTags(
 		context.Background(),
 		[]tag.Mutator{
 			tag.Insert(statusKey, fmt.Sprintf("%d", statusCode)),
-			tag.Insert(addressKey, address),
-			tag.Insert(uriKey, uri),
+			tag.Insert(endpointKey, endpoint),
 		},
 		mRequestsBytes.M(bytes),
 	)
 }
 
 // RecordRequestsRecords update metric which records number of sent records
-func RecordRequestsRecords(records int64, statusCode int, address string, uri string) error {
+func RecordRequestsRecords(records int64, statusCode int, endpoint string) error {
 	return stats.RecordWithTags(
 		context.Background(),
 		[]tag.Mutator{
 			tag.Insert(statusKey, fmt.Sprintf("%d", statusCode)),
-			tag.Insert(addressKey, address),
-			tag.Insert(uriKey, uri),
+			tag.Insert(endpointKey, endpoint),
 		},
 		mRequestsRecords.M(records),
 	)
