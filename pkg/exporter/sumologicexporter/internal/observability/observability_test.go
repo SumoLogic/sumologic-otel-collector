@@ -31,9 +31,13 @@ type exporter struct {
 }
 
 func newExporter() *exporter {
-	return &exporter{make(chan *metricdata.Metric)}
+	return &exporter{
+		make(chan *metricdata.Metric),
+	}
 }
 
+// Run goroutine which is going to receive `after` metrics.
+// Goroutine is writing to returned chan
 func (e *exporter) ReturnAfter(after int) chan []*metricdata.Metric {
 	ch := make(chan []*metricdata.Metric)
 	go func() {
@@ -49,6 +53,7 @@ func (e *exporter) ReturnAfter(after int) chan []*metricdata.Metric {
 	return ch
 }
 
+// Write received metrics to data channel
 func (e *exporter) ExportMetrics(ctx context.Context, data []*metricdata.Metric) error {
 	for _, m := range data {
 		e.pipe <- m
@@ -56,6 +61,8 @@ func (e *exporter) ExportMetrics(ctx context.Context, data []*metricdata.Metric)
 	return nil
 }
 
+// Creates metrics reader and forward metrics from it to chData
+// Sens empty structs to fail chan afterwards
 func metricReader(chData chan []*metricdata.Metric, fail chan struct{}, count int) {
 	reader := metricexport.NewReader()
 	e := newExporter()
@@ -157,21 +164,23 @@ func TestMetrics(t *testing.T) {
 	})
 
 	for i, tt := range tests {
-		require.Len(t, data, len(tests))
-		d := data[i]
-		assert.Equal(t, d.Descriptor.Name, tt.name)
-		require.Len(t, d.TimeSeries, 1)
-		require.Len(t, d.TimeSeries[0].Points, 1)
-		assert.Equal(t, d.TimeSeries[0].Points[0].Value, int64(1))
+		t.Run(tt.name, func(t *testing.T) {
+			require.Len(t, data, len(tests))
+			d := data[i]
+			assert.Equal(t, d.Descriptor.Name, tt.name)
+			require.Len(t, d.TimeSeries, 1)
+			require.Len(t, d.TimeSeries[0].Points, 1)
+			assert.Equal(t, d.TimeSeries[0].Points[0].Value, int64(1))
 
-		require.Len(t, d.TimeSeries[0].LabelValues, 3)
+			require.Len(t, d.TimeSeries[0].LabelValues, 3)
 
-		require.True(t, d.TimeSeries[0].LabelValues[0].Present)
-		require.True(t, d.TimeSeries[0].LabelValues[1].Present)
-		require.True(t, d.TimeSeries[0].LabelValues[2].Present)
+			require.True(t, d.TimeSeries[0].LabelValues[0].Present)
+			require.True(t, d.TimeSeries[0].LabelValues[1].Present)
+			require.True(t, d.TimeSeries[0].LabelValues[2].Present)
 
-		assert.Equal(t, d.TimeSeries[0].LabelValues[0].Value, "some/uri")
-		assert.Equal(t, d.TimeSeries[0].LabelValues[1].Value, "metrics")
-		assert.Equal(t, d.TimeSeries[0].LabelValues[2].Value, "200")
+			assert.Equal(t, d.TimeSeries[0].LabelValues[0].Value, "some/uri")
+			assert.Equal(t, d.TimeSeries[0].LabelValues[1].Value, "metrics")
+			assert.Equal(t, d.TimeSeries[0].LabelValues[2].Value, "200")
+		})
 	}
 }
