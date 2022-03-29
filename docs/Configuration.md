@@ -11,6 +11,10 @@
 - [Collecting logs from files](#collecting-logs-from-files)
   - [Keeping track of position in files](#keeping-track-of-position-in-files)
   - [Parsing JSON logs](#parsing-json-logs)
+- [Setting source category](#setting-source-category)
+  - [Setting source category on logs from files](#setting-source-category-on-logs-from-files)
+  - [Setting source category on Prometheus metrics](#setting-source-category-on-prometheus-metrics)
+  - [Setting source category with the Resource processor](#setting-source-category-with-the-resource-processor)
 - [Setting source host](#setting-source-host)
 - [Command-line configuration options](#command-line-configuration-options)
 - [Proxy Support](#proxy-support)
@@ -470,6 +474,176 @@ Example configuration with example log can be found in [/examples/logs_json/](/e
 [json_parser]: https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/operators/json_parser.md
 [filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/receiver/filelogreceiver
 [opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
+
+## Setting source category
+
+For many Sumo Logic customers the [source category][source_category_docs] is a crucial piece of metadata
+that allows to differentiate data coming from different sources.
+This section describes how to configure the Sumo Logic Distribution of OpenTelemetry
+to decorate data with this attribute.
+
+To decorate all the data from the collector with the same source category,
+set the `source_category` property on the [Sumo Logic exporter][sumologicexporter_docs] like this:
+
+```yaml
+exporters:
+  sumologic:
+    source_category: my/source/category
+```
+
+You can also use Sumo Logic exporter's [source templates][sumologicexporter_source_templates]
+to use other attributes' values to compose source category, like this:
+
+```yaml
+exporters:
+  sumologic:
+    source_category: "%{cloud.provider}/%{cloud.region}/%{cloud.platform}"
+```
+
+If you want data from different sources to have different source categories,
+you'll need to set a resource attribute named `_sourceCategory` earlier in the pipeline.
+See below for examples on how to do this in various scenarios.
+
+[source_category_docs]: https://help.sumologic.com/03Send-Data/Sources/04Reference-Information-for-Sources/Metadata-Naming-Conventions#source-categories
+[sumologicexporter_source_templates]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/pkg/exporter/sumologicexporter/README.md#source-templates
+
+### Setting source category on logs from files
+
+The [Filelog receiver][filelogreceiver_readme] allows to set attributes on received data.
+Here's an example on how to attach different source categories to logs from different files
+with the Filelog receiver:
+
+```yaml
+exporters:
+  sumologic:
+
+receivers:
+
+  filelog/apache:
+    include:
+    - /logs/from/apache.txt
+    resource:
+      _sourceCategory: apache-logs
+
+  filelog/nginx:
+    include:
+    - /logs/from/nginx.txt
+    resource:
+      _sourceCategory: nginx-logs
+
+service:
+  pipelines:
+    logs:
+      exporters:
+      - sumologic
+      receivers:
+      - filelog/apache
+      - filelog/nginx
+```
+
+### Setting source category on Prometheus metrics
+
+The [Prometheus receiver][prometheusreceiver_docs] uses the same config
+as the full-blown [Prometheus][prometheus_website], so you can use its [relabel config][prometheus_relabel_config]
+to create the `_sourceCategory` label.
+
+```yaml
+exporters:
+  sumologic:
+
+receivers:
+  prometheus:
+    config:
+      scrape_configs:
+
+      - job_name: 'mysql-metrics'
+        relabel_configs:
+        - replacement: db-metrics
+          target_label: _sourceCategory
+        static_configs:
+        - targets:
+          - "0.0.0.0:9104"
+
+      - job_name: 'otelcol-metrics'
+        relabel_configs:
+        - source_labels:
+          - job
+          target_label: "_sourceCategory"
+        static_configs:
+        - targets:
+          - "0.0.0.0:8888"
+
+service:
+  pipelines:
+    metrics:
+      exporters:
+      - sumologic
+      receivers:
+      - prometheus
+```
+
+The first example creates a `_sourceCategory` label with a hardcoded value of `db-metrics`.
+
+The second example creates a `_sourceCategory` label by copying to it the value of Prometheus' `job` label,
+which contains the name of the job - in this case, `otelcol-metrics`.
+
+[prometheusreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.47.0/receiver/prometheusreceiver/README.md
+[prometheus_website]: https://prometheus.io/
+[prometheus_relabel_config]: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
+
+### Setting source category with the Resource processor
+
+If the receiver does not allow to set attributes on the received data,
+use the [Resource processor][resourceprocessor_docs] to add the `_sourceCategory` attribute
+later in the pipeline.
+Here's an example on how to get statsd metrics from two different apps to have different source categories.
+
+```yaml
+exporters:
+  sumologic:
+
+processors:
+
+  resource/one-source-category:
+    attributes:
+    - action: insert
+      key: _sourceCategory
+      value: one-app
+
+  resource/another-source-category:
+    attributes:
+    - action: insert
+      key: _sourceCategory
+      value: another-app
+
+receivers:
+
+  statsd/one-app:
+    endpoint: "localhost:8125"
+
+  statsd/another-app:
+    endpoint: "localhost:8126"
+
+service:
+  pipelines:
+    metrics/one-app:
+      exporters:
+      - sumologic
+      processors:
+      - resource/one-app
+      receivers:
+      - statsd/one-app
+
+    metrics/another-app:
+      exporters:
+      - sumologic
+      processors:
+      - resource/another-app
+      receivers:
+      - statsd/another-app
+```
+
+[resourceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.47.0/processor/resourceprocessor/README.md
 
 ## Setting source host
 
