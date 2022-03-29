@@ -556,7 +556,7 @@ receivers:
     config:
       scrape_configs:
 
-      - job_name: 'mysql-metrics'
+      - job_name: mysql-metrics
         relabel_configs:
         - replacement: db-metrics
           target_label: _sourceCategory
@@ -564,11 +564,11 @@ receivers:
         - targets:
           - "0.0.0.0:9104"
 
-      - job_name: 'otelcol-metrics'
+      - job_name: otelcol-metrics
         relabel_configs:
         - source_labels:
           - job
-          target_label: "_sourceCategory"
+          target_label: _sourceCategory
         static_configs:
         - targets:
           - "0.0.0.0:8888"
