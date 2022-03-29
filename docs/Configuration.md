@@ -472,7 +472,7 @@ Example configuration with example log can be found in [/examples/logs_json/](/e
 
 ## Command-line configuration options
 
-```bash
+```console
 Usage:
   otelcol-sumo [flags]
 
