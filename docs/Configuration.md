@@ -11,6 +11,7 @@
 - [Collecting logs from files](#collecting-logs-from-files)
   - [Keeping track of position in files](#keeping-track-of-position-in-files)
   - [Parsing JSON logs](#parsing-json-logs)
+- [Setting source host](#setting-source-host)
 - [Command-line configuration options](#command-line-configuration-options)
 - [Proxy Support](#proxy-support)
 - [Keeping Prometheus format using OTLP exporter](#keeping-prometheus-format-using-otlp-exporter)
@@ -490,18 +491,26 @@ This is what the [Resource Detection processor][resourcedetectionprocessor_docs]
 Use its built-in [`system` detector][resourcedetectionprocessor_system_detector]
 to set the OpenTelemetry standard `host.name` resource attribute
 to the name of the host that the collector is running on.
-
-After that is set, use the `host.name` attribute in the Sumo Logic exporter's `source_host` property.
+After that is set, you need to add the `_sourceHost` attribute
+with the value from the `host.name` attribute.
 
 ```yaml
 exporters:
   sumologic:
-    metadata_attributes:
-    - host\.name
-    source_host: "%{host.name}"
 
 processors:
-  resourcedetection:
+  resource/add-source-host:
+    attributes:
+    - action: insert
+      key: _sourceHost
+      from_attribute: host.name
+    # Optionally, delete the original attributes created by the Resource Detection processor.
+    - action: delete
+      key: host.name
+    - action: delete
+      key: os.type
+
+  resourcedetection/detect-host-name:
     detectors:
     - system
     system:
@@ -519,19 +528,21 @@ service:
       exporters:
       - sumologic
       processors:
-      - resourcedetection
+      - resourcedetection/detect-host-name
+      - resource/add-source-host
       receivers:
       - hostmetrics
 ```
 
-Note that, according to Sumo Logic exporter's docs on [source templates][sumologicexporter_source_templates],
-you need to add a regex for the `host.name` attribute to the `metadata_attributes` property
-for the exporter to be able to use the attribute in the template.
+Make sure to put the Resource Detection processor *before* the Resource processor in the pipeline
+so that the `host.name` attribute is already set in the `resource` processor.
+
+Only the first Resource processor's action is required to correctly set the `_sourceHost` attribute.
+The other two actions perform an optional metadata cleanup - they delete the unneeded attributes.
 
 [sumologic_source_host_docs]: https://help.sumologic.com/03Send-Data/Sources/04Reference-Information-for-Sources/Metadata-Naming-Conventions#source-host
 [resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.47.0/processor/resourcedetectionprocessor/README.md
 [resourcedetectionprocessor_system_detector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.47.0/processor/resourcedetectionprocessor/README.md#system-metadata
-[sumologicexporter_source_templates]: ../pkg/exporter/sumologicexporter/README.md#source-templates
 
 ## Command-line configuration options
 
