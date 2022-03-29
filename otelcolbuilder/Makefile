@@ -1,7 +1,8 @@
 BINARY_NAME ?= otelcol-sumo
 BUILDER_VERSION ?= 0.47.0
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
-BUILDER_BIN_PATH ?= $(HOME)/bin/opentelemetry-collector-builder
+BUILDER_BIN_NAME ?= opentelemetry-collector-builder
+BUILDER_BIN_PATH ?= $(HOME)/bin
 INSTALLED_BUILDER_VERSION := $(shell opentelemetry-collector-builder version 2>&1)
 GO ?= go
 OS ?= $(shell uname -s | tr A-Z a-z)
@@ -21,22 +22,16 @@ else
 CGO_ENABLED ?= 0
 endif
 
-.PHONY: install-builder-with-go-install
-install-builder-with-go-install:
-	@echo "Installing $(BUILDER_REPO)@$(BUILDER_VERSION)..."
-	go install $(BUILDER_REPO)@v$(BUILDER_VERSION)
-	@$(MAKE) ensure-correct-builder-version
-
 .PHONY: _install-bin
 _install-bin:
-	mkdir -p $(HOME)/bin && \
-	curl -L -o $(BUILDER_BIN_PATH) https://$(BUILDER_REPO)/releases/download/v$(BUILDER_VERSION)/ocb_$(BUILDER_VERSION)_$(PLATFORM)_amd64 && \
-	chmod +x $(BUILDER_BIN_PATH)
+	@mkdir -p /$(HOME)/bin
+	curl -L -o $(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME) https://$(BUILDER_REPO)/releases/download/v$(BUILDER_VERSION)/ocb_$(BUILDER_VERSION)_$(PLATFORM)_amd64
+	@chmod +x $(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME)
 	@$(MAKE) ensure-correct-builder-version
 
 .PHONY: install-builder
 install-builder:
-	@echo "Installing $(BUILDER_REPO)@$(BUILDER_VERSION)..."
+	@echo "Installing $(BUILDER_REPO)/cmd/builder@v$(BUILDER_VERSION)... (in $(BUILDER_BIN_PATH))"
 	@$(MAKE) _install-bin PLATFORM=$(OS)
 
 
@@ -60,7 +55,7 @@ _builder:
 	$(eval VERSION ?= $(shell git describe --tags --abbrev=10 --match "v[0-9]*"))
 # Need to specify go path because otherwise opentelemetry-collector-builder
 # uses /usr/bin/go which on Github Actions is using preinstalled 1.15.12 by default.
-	CGO_ENABLED=$(CGO_ENABLED) $(BUILDER_BIN_PATH) \
+	CGO_ENABLED=$(CGO_ENABLED) $(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME) \
 		--go $(GO) \
 		--version "$(VERSION)" \
 		--config .otelcol-builder.yaml \
