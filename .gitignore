@@ -28,3 +28,6 @@ local-mode-cache
 nodes
 
 .vscode
+
+# Go workspace settings
+go.work*

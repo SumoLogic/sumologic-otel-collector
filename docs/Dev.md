@@ -1,7 +1,37 @@
 # Developer guide
 
+- [Setitng up Go workspaces](#setting-up-go-workspaces)
 - [How to release](#how-to-release)
 - [Updating OT core](#updating-ot-core)
+- [Running Tracing E2E tests](#running-tracing-e2e-tests)
+
+## Setting up Go workspaces
+
+This repository contains multiple Go packages with their own dependencies. Some IDEs
+(VS Code for example) do not like this kind of setup and demand that you work on each
+package in a separate workspace. As of [Go 1.18](https://tip.golang.org/doc/go1.18#go-work)
+this can be solved by configuring a single Go workspace covering all the packages.
+This can be done by adding a `go.work` file to the repository root:
+
+```go
+go 1.18
+
+use (
+        ./otelcolbuilder/cmd
+        ./pkg/test
+        ./pkg/exporter/sumologicexporter
+        ./pkg/extension/sumologicextension
+        ./pkg/processor/cascadingfilterprocessor
+        ./pkg/processor/k8sprocessor
+        ./pkg/processor/metricfrequencyprocessor
+        ./pkg/processor/sourceprocessor
+        ./pkg/processor/sumologicschemaprocessor
+        ./pkg/processor/sumologicsyslogprocessor
+        ./pkg/receiver/telegrafreceiver
+)
+```
+
+This will also cause Go to generate a `go.work.sum` file to match.
 
 ## How to release
 
