@@ -470,6 +470,69 @@ Example configuration with example log can be found in [/examples/logs_json/](/e
 [filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/receiver/filelogreceiver
 [opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
 
+## Setting source host
+
+You can use the Sumo Logic exporter's `source_host` property
+to set the [Sumo Logic source host][sumologic_source_host_docs] attribute
+to a static value like this:
+
+```yaml
+exporters:
+  sumologic:
+    source_host: my-host-name
+```
+
+But this is most likely not what you want.
+You'd rather have the collector retrieve the name of the host from the operating system,
+instead of needing to manually hardcode it in the config.
+
+This is what the [Resource Detection processor][resourcedetectionprocessor_docs] does.
+Use its built-in [`system` detector][resourcedetectionprocessor_system_detector]
+to set the OpenTelemetry standard `host.name` resource attribute
+to the name of the host that the collector is running on.
+
+After that is set, use the `host.name` attribute in the Sumo Logic exporter's `source_host` property.
+
+```yaml
+exporters:
+  sumologic:
+    metadata_attributes:
+    - host\.name
+    source_host: "%{host.name}"
+
+processors:
+  resourcedetection:
+    detectors:
+    - system
+    system:
+      hostname_sources:
+      - os
+
+receivers:
+  hostmetrics:
+    scrapers:
+      memory:
+
+service:
+  pipelines:
+    metrics:
+      exporters:
+      - sumologic
+      processors:
+      - resourcedetection
+      receivers:
+      - hostmetrics
+```
+
+Note that, according to Sumo Logic exporter's docs on [source templates][sumologicexporter_source_templates],
+you need to add a regex for the `host.name` attribute to the `metadata_attributes` property
+for the exporter to be able to use the attribute in the template.
+
+[sumologic_source_host_docs]: https://help.sumologic.com/03Send-Data/Sources/04Reference-Information-for-Sources/Metadata-Naming-Conventions#source-host
+[resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.47.0/processor/resourcedetectionprocessor/README.md
+[resourcedetectionprocessor_system_detector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.47.0/processor/resourcedetectionprocessor/README.md#system-metadata
+[sumologicexporter_source_templates]: ../pkg/exporter/sumologicexporter/README.md#source-templates
+
 ## Command-line configuration options
 
 ```console

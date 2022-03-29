@@ -186,8 +186,8 @@ Below is a list of all attribute keys that are being translated.
 
 > **IMPORTANT NOTE**:
 >
-> When using non-`OTLP` based format (e.g. `JSON` for logs) metadata attributes
-> used in source templates have to have a regex defined in
+> The metadata attributes
+> used in source templates must have a regex defined in
 > `metadata_attributes` that would match them.
 >
 > Otherwise the attributes will not be available during source templates rendering.
@@ -202,7 +202,7 @@ Below is a list of all attribute keys that are being translated.
 >   - some_other_metadata_regex.*
 > ```
 >
-> While is **not**:
+> While this is **not**:
 >
 > ```yaml
 > source_name: "%{k8s.namespace.name}.%{k8s.pod.name}.%{k8s.container.name}"
@@ -214,25 +214,21 @@ Below is a list of all attribute keys that are being translated.
 >   - some_other_metadata_regex.*
 > ```
 >
-> At the same time source related metadata attributes, i.e.:
+> This does not apply to the source metadata attributes, i.e.:
 >
 > - `_sourceCategory`
 > - `_sourceHost`
 > - `_sourceName`
 >
-> are always available in the templates (when a corresponding resource attribute
-> is set for processed entry) but are **never** sent to Sumo Logic.
->
-> In order to set those metadata attributes use `source_category`, `source_host`
-> and `source_name` configuration option which will set the corresponding
-> `X-Sumo-...` HTTP header.
+> These attributes are always available in the templates.
 
 You can specify a template with an attribute for `source_category`, `source_name`,
 `source_host` or `graphite_template` using `%{attr_name}`.
 
 For example, when there is an attribute `my_attr`: `my_value`, `metrics/%{my_attr}`
 would be expanded to `metrics/my_value`.
-Use OpenTelemetry attribute names, even when [attribute translation](#attribute-translation)
+Use OpenTelemetry attribute names like `k8s.pod.name` instead of `pod`,
+even when [attribute translation](#attribute-translation)
 is turned on.
 
 For `graphite_template`, in addition to above, `%{_metric_}` is going to be replaced
