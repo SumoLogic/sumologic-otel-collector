@@ -90,9 +90,6 @@ type Config struct {
 
 type accessCredentials struct {
 	InstallToken string `mapstructure:"install_token"`
-	// the below fields are deprecated and will be removed shortly
-	AccessID  string `mapstructure:"access_id"`
-	AccessKey string `mapstructure:"access_key"`
 }
 
 // backOff configuration. See following link for details:
