@@ -27,7 +27,8 @@ type CollectorCredentials struct {
 	Credentials   api.OpenRegisterResponsePayload `json:"collectorCredentials"`
 	// ApiBaseUrl saves the destination API base URL which was used for registration.
 	// This is used for instance when the API redirects the collector to a different
-	// deployment due to access keys being used belong to a different deployment.
+	// deployment due to the fact that the installation token being used for registration
+	// belongs to a different deployment.
 	// In order to make collector registration work, we save the destination
 	// API base URL so that when the collector starts up again it can use this
 	// API base URL for communication with the backend.

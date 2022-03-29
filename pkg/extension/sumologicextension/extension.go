@@ -91,10 +91,7 @@ var _ configauth.ClientAuthenticator = (*SumologicExtension)(nil)
 
 func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtension, error) {
 	if conf.Credentials.InstallToken == "" {
-		if conf.Credentials.AccessID == "" || conf.Credentials.AccessKey == "" {
-			return nil, errors.New("access credentials not provided: need either install_token or access_id and access_key")
-		}
-		logger.Warn("access_id and access_key are deprecated and will be removed in the near future, please use install_token instead")
+		return nil, errors.New("access credentials not provided: need install_token")
 	}
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -150,21 +147,11 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 }
 
 func createHashKey(conf *Config) string {
-	// access_id and access_key are deprecated, use only if token is unset
-	if conf.Credentials.InstallToken != "" {
-		return fmt.Sprintf("%s%s%s",
-			conf.CollectorName,
-			conf.Credentials.InstallToken,
-			strings.TrimSuffix(conf.ApiBaseUrl, "/"),
-		)
-	} else {
-		return fmt.Sprintf("%s%s%s%s",
-			conf.CollectorName,
-			conf.Credentials.AccessID,
-			conf.Credentials.AccessKey,
-			strings.TrimSuffix(conf.ApiBaseUrl, "/"),
-		)
-	}
+	return fmt.Sprintf("%s%s%s",
+		conf.CollectorName,
+		conf.Credentials.InstallToken,
+		strings.TrimSuffix(conf.ApiBaseUrl, "/"),
+	)
 }
 
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
@@ -240,7 +227,6 @@ func (se *SumologicExtension) getHTTPClient(
 	httpClientSettings confighttp.HTTPClientSettings,
 	regInfo api.OpenRegisterResponsePayload,
 ) (*http.Client, error) {
-
 	httpClient, err := httpClientSettings.ToClient(
 		se.host.GetExtensions(),
 		component.TelemetrySettings{},
@@ -675,11 +661,6 @@ func addClientCredentials(req *http.Request, credentials accessCredentials) {
 	var authHeaderValue string
 	if credentials.InstallToken != "" {
 		authHeaderValue = fmt.Sprintf("Bearer %s", credentials.InstallToken)
-	} else {
-		token := base64.StdEncoding.EncodeToString(
-			[]byte(credentials.AccessID + ":" + credentials.AccessKey),
-		)
-		authHeaderValue = fmt.Sprintf("Basic %s", token)
 	}
 
 	req.Header.Del("Authorization")

@@ -28,8 +28,6 @@ and can be used as an authenticator for the
 
 ## Configuration
 
-- ~`access_id`: (required) access ID for Sumo Logic service~, deprecated, see `install_token` below
-- ~`access_key`: (required) access key for Sumo Logic service~, deprecated, see `install_token` below
 - `install_token`: (required) collector install token for the Sumo Logic service, see
   [help][credentials_help] for more details
 - `collector_name`: name that will be used for registration; by default it is a
