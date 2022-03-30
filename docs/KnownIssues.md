@@ -19,8 +19,8 @@ To do this, you need to do two things:
 
 After that, the collector will register on next run.
 
-If you do not delete the collector in the UI and only delete the local registration file,
-the collector will fail to start - see [Collector fails to start/re-register when deleted from UI](#collector-fails-to-startre-register-when-deleted-from-ui).
+If you delete the collector in the UI but not delete the local registration file,
+the collector will fail to start - see [Collector fails to start when deleted from UI](#collector-fails-to-start-when-deleted-from-ui).
 
 On the other hand, if you only delete the local registration file
 and do not delete the collector in the UI,
