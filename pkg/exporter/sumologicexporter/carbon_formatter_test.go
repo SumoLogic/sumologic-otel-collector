@@ -94,7 +94,7 @@ func TestCarbonMetricDataTypeSummary(t *testing.T) {
 	metric := exampleSummaryMetric()
 
 	result := carbon2Metric2String(metric)
-	expected := ""
+	expected := ``
 	assert.Equal(t, expected, result)
 }
 
@@ -102,7 +102,7 @@ func TestCarbonMetricDataTypeHistogram(t *testing.T) {
 	metric := exampleHistogramMetric()
 
 	result := carbon2Metric2String(metric)
-	expected := ""
+	expected := ``
 	assert.Equal(t, expected, result)
 }
 

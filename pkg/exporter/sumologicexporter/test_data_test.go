@@ -258,10 +258,11 @@ func buildExampleHistogramMetric(fillData bool) metricPair {
 func metricPairToMetrics(mp []metricPair) pdata.Metrics {
 	metrics := pdata.NewMetrics()
 	metrics.ResourceMetrics().EnsureCapacity(len(mp))
-	for num, record := range mp {
-		record.attributes.CopyTo(metrics.ResourceMetrics().AppendEmpty().Resource().Attributes())
+	for _, record := range mp {
+		rms := metrics.ResourceMetrics().AppendEmpty()
+		record.attributes.CopyTo(rms.Resource().Attributes())
 		// TODO: Change metricPair to have an init metric func.
-		record.metric.CopyTo(metrics.ResourceMetrics().At(num).InstrumentationLibraryMetrics().AppendEmpty().Metrics().AppendEmpty())
+		record.metric.CopyTo(rms.InstrumentationLibraryMetrics().AppendEmpty().Metrics().AppendEmpty())
 	}
 
 	return metrics
