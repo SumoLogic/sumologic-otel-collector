@@ -25,14 +25,17 @@ Sumo Logic Distro of [OpenTelemetry Collector][otc_link] built with
 This section lists the components that are included in Sumo Logic OT distro.
 
 The `highlighted` components are delivered by Sumo Logic.
-The rest of the components in the table are upstream OpenTelemetry components.
+
+The components with an asterisk `*` are upstream OpenTelemetry components with a minor addition by Sumo Logic.
+
+The rest of the components in the table are pure upstream OpenTelemetry components.
 
 |                         Receivers                          |                       Processors                       |               Exporters                |                 Extensions                  |
 |:----------------------------------------------------------:|:------------------------------------------------------:|:--------------------------------------:|:-------------------------------------------:|
-| [awscontainerinsightreceiver][awscontainerinsightreceiver] |           [attributes][attributesprocessor]            |        [carbon][carbonexporter]        | [bearertokenauth][bearertokenauthextension] |
+| [awscontainerinsightreceiver][awscontainerinsightreceiver] |           [attributes][attributesprocessor]*           |        [carbon][carbonexporter]        | [bearertokenauth][bearertokenauthextension] |
 |  [awsecscontainermetrics][awsecscontainermetricsreceiver]  |                [batch][batchprocessor]                 |          [file][fileexporter]          |    [file_storage][filestorageextension]     |
 |                 [awsxray][awsxrayreceiver]                 |     [`cascading_filter`][cascadingfilterprocessor]     |         [kafka][kafkaexporter]         |    [health_check][healthcheckextension]     |
-|                  [carbon][carbonreceiver]                  |               [filter][filterprocessor]                | [loadbalancing][loadbalancingexporter] |     [memory_ballast][ballastextension]      |
+|                  [carbon][carbonreceiver]                  |               [filter][filterprocessor]*               | [loadbalancing][loadbalancingexporter] |     [memory_ballast][ballastextension]      |
 |                [collectd][collectdreceiver]                |         [groupbyattrs][groupbyattrsprocessor]          |       [logging][loggingexporter]       |          [oidc][oidcauthextension]          |
 |            [docker_stats][dockerstatsreceiver]             |         [groupbytrace][groupbytraceprocessor]          |          [otlp][otlpexporter]          |           [pprof][pprofextension]           |
 |      [dotnet_diagnostics][dotnetdiagnosticsreceiver]       |              [`k8s_tagger`][k8sprocessor]              |      [otlphttp][otlphttpexporter]      |      [`sumologic`][sumologicextension]      |
@@ -40,7 +43,7 @@ The rest of the components in the table are upstream OpenTelemetry components.
 |           [fluentforward][fluentforwardreceiver]           |     [`metric_frequency`][metricfrequencyprocessor]     |                                        |                                             |
 |      [googlecloudspanner][googlecloudspannerreceiver]      |     [metricstransform][metricstransformprocessor]      |                                        |                                             |
 |             [hostmetrics][hostmetricsreceiver]             | [probabilistic_sampler][probabilisticsamplerprocessor] |                                        |                                             |
-|                  [jaeger][jaegerreceiver]                  |             [resource][resourceprocessor]              |                                        |                                             |
+|                  [jaeger][jaegerreceiver]                  |             [resource][resourceprocessor]*             |                                        |                                             |
 |                     [jmx][jmxreceiver]                     |    [resourcedetection][resourcedetectionprocessor]     |                                        |                                             |
 |                [journald][journaldreceiver]                |              [routing][routingprocessor]               |                                        |                                             |
 |                   [kafka][kafkareceiver]                   |              [`source`][sourceprocessor]               |                                        |                                             |
@@ -101,10 +104,10 @@ The rest of the components in the table are upstream OpenTelemetry components.
 [zipkinreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/receiver/zipkinreceiver
 [zookeeperreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/receiver/zookeeperreceiver
 
-[attributesprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/processor/attributesprocessor
+[attributesprocessor]: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.47.0-filterprocessor/processor/attributesprocessor
 [batchprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.47.0/processor/batchprocessor
 [cascadingfilterprocessor]: ./pkg/processor/cascadingfilterprocessor
-[filterprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/processor/filterprocessor
+[filterprocessor]: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.47.0-filterprocessor/processor/filterprocessor
 [groupbyattrsprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/processor/groupbyattrsprocessor
 [groupbytraceprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/processor/groupbytraceprocessor
 [k8sprocessor]: ./pkg/processor/k8sprocessor
@@ -113,7 +116,7 @@ The rest of the components in the table are upstream OpenTelemetry components.
 [metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/processor/metricstransformprocessor
 [probabilisticsamplerprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/processor/probabilisticsamplerprocessor
 [resourcedetectionprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/processor/resourcedetectionprocessor
-[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/processor/resourceprocessor
+[resourceprocessor]: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.47.0-filterprocessor/processor/resourceprocessor
 [routingprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/processor/routingprocessor
 [sourceprocessor]: ./pkg/processor/sourceprocessor
 [spanmetricsprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.47.0/processor/spanmetricsprocessor
