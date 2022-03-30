@@ -155,3 +155,54 @@ histogram_metric_double_test_sum{bar="foo",container="sit",branch="main"} 54.1 1
 histogram_metric_double_test_count{bar="foo",container="sit",branch="main"} 98 1608424699186`
 	assert.Equal(t, expected, result)
 }
+
+func TestPrometheusMetrics(t *testing.T) {
+	type testCase struct {
+		name     string
+		metric   metricPair
+		expected string
+	}
+
+	tests := []testCase{
+		{
+			name:     "empty int gauge",
+			metric:   buildExampleIntGaugeMetric(false),
+			expected: "",
+		},
+		{
+			name:     "empty double gauge",
+			metric:   buildExampleDoubleGaugeMetric(false),
+			expected: "",
+		},
+		{
+			name:     "empty int sum",
+			metric:   buildExampleIntSumMetric(false),
+			expected: "",
+		},
+		{
+			name:     "empty double sum",
+			metric:   buildExampleDoubleSumMetric(false),
+			expected: "",
+		},
+		{
+			name:     "empty summary",
+			metric:   buildExampleSummaryMetric(false),
+			expected: "",
+		},
+		{
+			name:     "empty histogram",
+			metric:   buildExampleHistogramMetric(false),
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f, err := newPrometheusFormatter()
+			require.NoError(t, err)
+
+			result := f.metric2String(tt.metric)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}

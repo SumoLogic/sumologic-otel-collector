@@ -172,3 +172,61 @@ func TestGraphiteMetricDataTypeHistogram(t *testing.T) {
 	expected := ``
 	assert.Equal(t, expected, result)
 }
+
+func TestGraphiteMetrics(t *testing.T) {
+	type testCase struct {
+		name      string
+		metric    metricPair
+		expected  string
+		formatter string
+	}
+
+	tests := []testCase{
+		{
+			name:      "empty int gauge",
+			metric:    buildExampleIntGaugeMetric(false),
+			expected:  "",
+			formatter: "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
+		},
+		{
+			name:      "empty double gauge",
+			metric:    buildExampleDoubleGaugeMetric(false),
+			expected:  "",
+			formatter: "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
+		},
+		{
+			name:      "empty int sum",
+			metric:    buildExampleIntSumMetric(false),
+			expected:  "",
+			formatter: "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
+		},
+		{
+			name:      "empty double sum",
+			metric:    buildExampleDoubleSumMetric(false),
+			expected:  "",
+			formatter: "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
+		},
+		{
+			name:      "empty summary",
+			metric:    buildExampleSummaryMetric(false),
+			expected:  "",
+			formatter: "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
+		},
+		{
+			name:      "empty histogram",
+			metric:    buildExampleHistogramMetric(false),
+			expected:  "",
+			formatter: "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gf, err := newGraphiteFormatter(tt.formatter)
+			require.NoError(t, err)
+
+			result := gf.metric2String(tt.metric)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
