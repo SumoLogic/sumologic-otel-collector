@@ -276,7 +276,6 @@ func fieldsFromMap(s map[string]string) fields {
 	return newFields(attrMap)
 }
 
-
 func exampleTrace() pdata.Traces {
 	td := pdata.NewTraces()
 	rs := td.ResourceSpans().AppendEmpty()
