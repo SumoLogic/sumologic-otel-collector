@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter/internal/observability"
 	"go.opentelemetry.io/collector/model/otlp"
 	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/multierr"
@@ -55,6 +56,74 @@ type metricPair struct {
 type logPair struct {
 	attributes pdata.AttributeMap
 	log        pdata.LogRecord
+}
+
+// countingReader keeps number of records related to reader
+type countingReader struct {
+	counter int64
+	reader  io.Reader
+}
+
+// newCountingReader creates countingReader with given number of records
+func newCountingReader(records int) *countingReader {
+	return &countingReader{
+		counter: int64(records),
+	}
+}
+
+// withBytes sets up reader to read from bytes data
+func (c *countingReader) withBytes(data []byte) *countingReader {
+	c.reader = bytes.NewReader(data)
+	return c
+}
+
+// withString sets up reader to read from string data
+func (c *countingReader) withString(data string) *countingReader {
+	c.reader = strings.NewReader(data)
+	return c
+}
+
+// bodyBuilder keeps information about number of records related to data it keeps
+type bodyBuilder struct {
+	builder strings.Builder
+	counter int
+}
+
+// newBodyBuilder returns empty bodyBuilder
+func newBodyBuilder() bodyBuilder {
+	return bodyBuilder{}
+}
+
+// Reset resets both counter and builder content
+func (b *bodyBuilder) Reset() {
+	b.counter = 0
+	b.builder.Reset()
+}
+
+// addLine adds line to builder and increments counter
+func (b *bodyBuilder) addLine(line string) error {
+	_, err := b.builder.WriteString(line)
+	if err != nil {
+		return err
+	}
+	b.counter += 1
+	return nil
+}
+
+// addNewLine adds newline to builder
+func (b *bodyBuilder) addNewLine() error {
+	err := b.builder.WriteByte('\n')
+	return err
+}
+
+// Len returns builder content length
+func (b *bodyBuilder) Len() int {
+	return b.builder.Len()
+}
+
+// toCountingReader converts bodyBuilder to countingReader
+func (b *bodyBuilder) toCountingReader() *countingReader {
+	return newCountingReader(b.counter).withString(b.builder.String())
 }
 
 type sender struct {
@@ -138,8 +207,8 @@ func newSender(
 var errUnauthorized = errors.New("unauthorized")
 
 // send sends data to sumologic
-func (s *sender) send(ctx context.Context, pipeline PipelineType, body io.Reader, flds fields) error {
-	data, err := s.compressor.compress(body)
+func (s *sender) send(ctx context.Context, pipeline PipelineType, reader *countingReader, flds fields) error {
+	data, err := s.compressor.compress(reader.reader)
 	if err != nil {
 		return err
 	}
@@ -158,11 +227,15 @@ func (s *sender) send(ctx context.Context, pipeline PipelineType, body io.Reader
 		zap.Any("headers", req.Header),
 	)
 
+	start := time.Now()
 	resp, err := s.client.Do(req)
 	if err != nil {
+		s.recordMetrics(time.Since(start), reader.counter, req, nil, pipeline)
 		return err
 	}
 	defer resp.Body.Close()
+
+	s.recordMetrics(time.Since(start), reader.counter, req, resp, pipeline)
 
 	return s.handleReceiverResponse(resp)
 }
@@ -351,7 +424,7 @@ func (s *sender) sendLogs(ctx context.Context, flds fields) ([]logPair, error) {
 	}
 
 	var (
-		body           strings.Builder
+		body           bodyBuilder = newBodyBuilder()
 		errs           []error
 		droppedRecords []logPair
 		currentRecords []logPair
@@ -400,7 +473,7 @@ func (s *sender) sendLogs(ctx context.Context, flds fields) ([]logPair, error) {
 	}
 
 	if body.Len() > 0 {
-		if err := s.send(ctx, LogsPipeline, strings.NewReader(body.String()), flds); err != nil {
+		if err := s.send(ctx, LogsPipeline, body.toCountingReader(), flds); err != nil {
 			errs = append(errs, err)
 			droppedRecords = append(droppedRecords, currentRecords...)
 		}
@@ -420,7 +493,8 @@ func (s *sender) sendOTLPLogs(ctx context.Context, flds fields) ([]logPair, erro
 	rl := ld.ResourceLogs().AppendEmpty()
 	ill := rl.InstrumentationLibraryLogs().AppendEmpty()
 	logs := ill.LogRecords()
-	logs.EnsureCapacity(len(s.logBuffer))
+	capacity := len(s.logBuffer)
+	logs.EnsureCapacity(capacity)
 	for _, record := range s.logBuffer {
 		log := logs.AppendEmpty()
 		record.log.CopyTo(log)
@@ -446,7 +520,7 @@ func (s *sender) sendOTLPLogs(ctx context.Context, flds fields) ([]logPair, erro
 		return s.logBuffer, err
 	}
 
-	if err := s.send(ctx, LogsPipeline, bytes.NewReader(body), flds); err != nil {
+	if err := s.send(ctx, LogsPipeline, newCountingReader(capacity).withBytes(body), flds); err != nil {
 		return s.logBuffer, err
 	}
 	return nil, nil
@@ -460,7 +534,7 @@ func (s *sender) sendMetrics(ctx context.Context, flds fields) ([]metricPair, er
 	}
 
 	var (
-		body           strings.Builder
+		body           bodyBuilder
 		errs           []error
 		droppedRecords []metricPair
 		currentRecords []metricPair
@@ -511,7 +585,7 @@ func (s *sender) sendMetrics(ctx context.Context, flds fields) ([]metricPair, er
 	}
 
 	if body.Len() > 0 {
-		if err := s.send(ctx, MetricsPipeline, strings.NewReader(body.String()), flds); err != nil {
+		if err := s.send(ctx, MetricsPipeline, body.toCountingReader(), flds); err != nil {
 			errs = append(errs, err)
 			droppedRecords = append(droppedRecords, currentRecords...)
 		}
@@ -529,7 +603,8 @@ func (s *sender) sendMetrics(ctx context.Context, flds fields) ([]metricPair, er
 func (s *sender) sendOTLPMetrics(ctx context.Context, flds fields) ([]metricPair, error) {
 	md := pdata.NewMetrics()
 	rms := md.ResourceMetrics()
-	rms.EnsureCapacity(len(s.metricBuffer))
+	capacity := len(s.metricBuffer)
+	rms.EnsureCapacity(capacity)
 	for _, record := range s.metricBuffer {
 		rm := rms.AppendEmpty()
 		record.attributes.CopyTo(rm.Resource().Attributes())
@@ -544,7 +619,7 @@ func (s *sender) sendOTLPMetrics(ctx context.Context, flds fields) ([]metricPair
 		return s.metricBuffer, err
 	}
 
-	if err := s.send(ctx, MetricsPipeline, bytes.NewReader(body), flds); err != nil {
+	if err := s.send(ctx, MetricsPipeline, newCountingReader(capacity).withBytes(body), flds); err != nil {
 		return s.metricBuffer, err
 	}
 	return nil, nil
@@ -557,7 +632,7 @@ func (s *sender) appendAndSend(
 	ctx context.Context,
 	line string,
 	pipeline PipelineType,
-	body *strings.Builder,
+	body *bodyBuilder,
 	flds fields,
 ) (appendResponse, error) {
 	var errors []error
@@ -565,7 +640,7 @@ func (s *sender) appendAndSend(
 
 	if body.Len() > 0 && body.Len()+len(line) >= s.config.MaxRequestBodySize {
 		ar.sent = true
-		if err := s.send(ctx, pipeline, strings.NewReader(body.String()), flds); err != nil {
+		if err := s.send(ctx, pipeline, body.toCountingReader(), flds); err != nil {
 			errors = append(errors, err)
 		}
 		body.Reset()
@@ -573,7 +648,7 @@ func (s *sender) appendAndSend(
 
 	if body.Len() > 0 {
 		// Do not add newline if the body is empty
-		if _, err := body.WriteString("\n"); err != nil {
+		if err := body.addNewLine(); err != nil {
 			errors = append(errors, err)
 			ar.appended = false
 		}
@@ -581,7 +656,7 @@ func (s *sender) appendAndSend(
 
 	if ar.appended {
 		// Do not append new line if separator was not appended
-		if _, err := body.WriteString(line); err != nil {
+		if err := body.addLine(line); err != nil {
 			errors = append(errors, err)
 			ar.appended = false
 		}
@@ -603,6 +678,7 @@ func (s *sender) sendTraces(ctx context.Context, td pdata.Traces, flds fields) e
 
 // sendOTLPTraces sends trace records in OTLP format
 func (s *sender) sendOTLPTraces(ctx context.Context, td pdata.Traces, flds fields) error {
+	capacity := td.SpanCount()
 	for i := 0; i < td.ResourceSpans().Len(); i++ {
 		s.addResourceAttributes(td.ResourceSpans().At(i).Resource().Attributes(), flds)
 	}
@@ -611,7 +687,7 @@ func (s *sender) sendOTLPTraces(ctx context.Context, td pdata.Traces, flds field
 	if err != nil {
 		return err
 	}
-	if err := s.send(ctx, TracesPipeline, bytes.NewReader(body), flds); err != nil {
+	if err := s.send(ctx, TracesPipeline, newCountingReader(capacity).withBytes(body), flds); err != nil {
 		return err
 	}
 	return nil
@@ -767,4 +843,31 @@ func (s *sender) addResourceAttributes(attrs pdata.AttributeMap, flds fields) {
 	if s.sources.category.isSet() {
 		attrs.InsertString(attributeKeySourceCategory, s.sources.category.format(flds))
 	}
+}
+
+func (s *sender) recordMetrics(duration time.Duration, count int64, req *http.Request, resp *http.Response, pipeline PipelineType) {
+	statusCode := 0
+
+	if resp != nil {
+		statusCode = resp.StatusCode
+	}
+
+	id := s.config.ID().String()
+
+	if err := observability.RecordRequestsDuration(duration, statusCode, req.URL.String(), string(pipeline), id); err != nil {
+		s.logger.Debug("error for recording metric for request duration", zap.Error(err))
+	}
+
+	if err := observability.RecordRequestsBytes(req.ContentLength, statusCode, req.URL.String(), string(pipeline), id); err != nil {
+		s.logger.Debug("error for recording metric for sent bytes", zap.Error(err))
+	}
+
+	if err := observability.RecordRequestsRecords(count, statusCode, req.URL.String(), string(pipeline), id); err != nil {
+		s.logger.Debug("error for recording metric for sent records", zap.Error(err))
+	}
+
+	if err := observability.RecordRequestsSent(statusCode, req.URL.String(), string(pipeline), id); err != nil {
+		s.logger.Debug("error for recording metric for sent request", zap.Error(err))
+	}
+
 }

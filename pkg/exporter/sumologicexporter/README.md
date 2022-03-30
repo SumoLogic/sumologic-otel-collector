@@ -244,6 +244,22 @@ with metric name.
 If an attribute is not found, it is replaced with `undefined`.
 For example, `%{existing_attr}/%{nonexistent_attr}` becomes `value-of-existing-attr/undefined`.
 
+## Metrics
+
+The Sumo Logic Exporter exposes the following metrics:
+
+- `otelcol_exporter_requests_bytes` (`counter`) - total size of HTTP requests (in bytes)
+- `otelcol_exporter_requests_duration` (`counter`) - duration of HTTP requests (in milliseconds)
+- `otelcol_exporter_requests_records` (`counter`) - total size of HTTP requests (in number of records)
+- `otelcol_exporter_requests_sent` (`counter`) - number of HTTP requests
+
+All of the above metrics have the following dimensions:
+
+- `endpoint` - endpoint address
+- `exporter` - exporter name
+- `pipeline` - pipeline name (`logs`, `metrics` or `traces`)
+- `status_code` - HTTP response status code (`0` in case of error)
+
 ## Example Configuration
 
 ### Example with sumologicextension

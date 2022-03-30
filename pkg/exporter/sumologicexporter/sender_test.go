@@ -1135,14 +1135,14 @@ func TestInvalidMetricFormat(t *testing.T) {
 
 	test.s.config.MetricFormat = "invalid"
 
-	err := test.s.send(context.Background(), MetricsPipeline, strings.NewReader(""), newFields(pdata.NewAttributeMap()))
+	err := test.s.send(context.Background(), MetricsPipeline, newCountingReader(0).withString(""), newFields(pdata.NewAttributeMap()))
 	assert.EqualError(t, err, `unsupported metrics format: invalid`)
 }
 
 func TestInvalidPipeline(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
 
-	err := test.s.send(context.Background(), "invalidPipeline", strings.NewReader(""), newFields(pdata.NewAttributeMap()))
+	err := test.s.send(context.Background(), "invalidPipeline", newCountingReader(0).withString(""), newFields(pdata.NewAttributeMap()))
 	assert.EqualError(t, err, `unexpected pipeline: invalidPipeline`)
 }
 
@@ -1167,7 +1167,7 @@ func TestSendCompressGzip(t *testing.T) {
 	require.NoError(t, err)
 
 	test.s.compressor = c
-	reader := strings.NewReader("Some example log")
+	reader := newCountingReader(0).withString("Some example log")
 
 	err = test.s.send(context.Background(), LogsPipeline, reader, newFields(pdata.NewAttributeMap()))
 	require.NoError(t, err)
@@ -1195,7 +1195,7 @@ func TestSendCompressDeflate(t *testing.T) {
 	require.NoError(t, err)
 
 	test.s.compressor = c
-	reader := strings.NewReader("Some example log")
+	reader := newCountingReader(0).withString("Some example log")
 
 	err = test.s.send(context.Background(), LogsPipeline, reader, newFields(pdata.NewAttributeMap()))
 	require.NoError(t, err)
@@ -1205,7 +1205,7 @@ func TestCompressionError(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
 
 	test.s.compressor = getTestCompressor(errors.New("read error"), nil)
-	reader := strings.NewReader("Some example log")
+	reader := newCountingReader(0).withString("Some example log")
 
 	err := test.s.send(context.Background(), LogsPipeline, reader, newFields(pdata.NewAttributeMap()))
 	assert.EqualError(t, err, "read error")
@@ -1215,7 +1215,7 @@ func TestInvalidContentEncoding(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
 
 	test.s.config.CompressEncoding = "test"
-	reader := strings.NewReader("Some example log")
+	reader := newCountingReader(0).withString("Some example log")
 
 	err := test.s.send(context.Background(), LogsPipeline, reader, newFields(pdata.NewAttributeMap()))
 	assert.EqualError(t, err, "invalid content encoding: test")
