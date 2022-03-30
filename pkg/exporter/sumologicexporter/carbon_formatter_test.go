@@ -94,7 +94,7 @@ func TestCarbonMetricDataTypeSummary(t *testing.T) {
 	metric := exampleSummaryMetric()
 
 	result := carbon2Metric2String(metric)
-	expected := ``
+	expected := ""
 	assert.Equal(t, expected, result)
 }
 
@@ -102,6 +102,54 @@ func TestCarbonMetricDataTypeHistogram(t *testing.T) {
 	metric := exampleHistogramMetric()
 
 	result := carbon2Metric2String(metric)
-	expected := ``
+	expected := ""
 	assert.Equal(t, expected, result)
+}
+
+func TestCarbonMetrics(t *testing.T) {
+	type testCase struct {
+		name     string
+		metric   metricPair
+		expected string
+	}
+
+	tests := []testCase{
+		{
+			name:     "empty int gauge",
+			metric:   buildExampleIntGaugeMetric(false),
+			expected: "",
+		},
+		{
+			name:     "empty double gauge",
+			metric:   buildExampleDoubleGaugeMetric(false),
+			expected: "",
+		},
+		{
+			name:     "empty int sum",
+			metric:   buildExampleIntSumMetric(false),
+			expected: "",
+		},
+		{
+			name:     "empty double sum",
+			metric:   buildExampleDoubleSumMetric(false),
+			expected: "",
+		},
+		{
+			name:     "empty summary",
+			metric:   buildExampleSummaryMetric(false),
+			expected: "",
+		},
+		{
+			name:     "empty histogram",
+			metric:   buildExampleHistogramMetric(false),
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := carbon2Metric2String(tt.metric)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
 }
