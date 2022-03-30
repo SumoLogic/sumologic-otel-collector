@@ -52,7 +52,7 @@ This affects the `_collectorId` attribute, which is different for every new coll
 
 To prevent this, remove the `extensions.sumologic.clobber` property or set it to `false`.
 
-## Cannot starting reading file logs from specific point in time
+## Cannot start reading file logs from specific point in time
 
 The [Filelog Receiver](./Configuration.md#filelog-receiver) currently supports only two modes of reading local files:
 
