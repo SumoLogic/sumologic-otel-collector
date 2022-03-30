@@ -246,6 +246,9 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 	for i := 0; i < rls.Len(); i++ {
 		rl := rls.At(i)
 
+		// drop routing attribute
+		se.dropRoutingAttribute(rl.Resource().Attributes())
+
 		ills := rl.InstrumentationLibraryLogs()
 		// iterate over InstrumentationLibraryLogs
 		for j := 0; j < ills.Len(); j++ {
@@ -371,6 +374,10 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		rm := rms.At(i)
 
 		attributes = rm.Resource().Attributes()
+
+		// drop routing attribute
+		se.dropRoutingAttribute(attributes)
+
 		currentMetadata = sdr.filter.filterIn(attributes)
 
 		if se.config.TranslateAttributes {
@@ -488,6 +495,13 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces
 		logsUrl,
 		tracesUrl,
 	)
+
+	// Drop routing attribute from ResourceSpans
+	rss := td.ResourceSpans()
+	for i := 0; i < rss.Len(); i++ {
+		se.dropRoutingAttribute(rss.At(i).Resource().Attributes())
+	}
+
 	err = sdr.sendTraces(ctx, td, currentMetadata)
 	se.handleUnauthorizedErrors(ctx, err)
 	if err != nil {
@@ -596,4 +610,8 @@ func (se *sumologicexporter) getDataURLs() (logs, metrics, traces string) {
 
 func (se *sumologicexporter) shutdown(context.Context) error {
 	return nil
+}
+
+func (se *sumologicexporter) dropRoutingAttribute(attr pdata.AttributeMap) {
+	attr.Delete(se.config.DropRoutingAttribute)
 }

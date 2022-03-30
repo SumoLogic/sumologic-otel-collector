@@ -64,8 +64,9 @@ func TestCreateDefaultConfig(t *testing.T) {
 				AuthenticatorID: config.NewComponentID("sumologic"),
 			},
 		},
-		RetrySettings: exporterhelper.NewDefaultRetrySettings(),
-		QueueSettings: qs,
+		RetrySettings:        exporterhelper.NewDefaultRetrySettings(),
+		QueueSettings:        qs,
+		DropRoutingAttribute: "",
 	})
 
 	assert.NoError(t, cfg.Validate())

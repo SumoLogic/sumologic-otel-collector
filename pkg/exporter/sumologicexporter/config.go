@@ -71,6 +71,11 @@ type Config struct {
 	// List of regexes for attributes which should be send as metadata
 	MetadataAttributes []string `mapstructure:"metadata_attributes"`
 
+	// Attribute used by routingprocessor which should be dropped during data ingestion
+	// This is workaround for the following issue:
+	// https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/7407
+	DropRoutingAttribute string `mapstructure:"routing_atttribute_to_drop"`
+
 	// Sumo specific options
 	// Desired source category.
 	// Useful if you want to override the source category configured for the source.
@@ -255,4 +260,6 @@ const (
 	DefaultTimestampKey string = "timestamp"
 	// DefaultFlattenBody defines default FlattenBody value
 	DefaultFlattenBody bool = false
+	// DefaultDropRoutingAttribute defines default DropRoutingAttribute
+	DefaultDropRoutingAttribute string = ""
 )

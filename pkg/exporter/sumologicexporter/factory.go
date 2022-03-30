@@ -66,9 +66,10 @@ func createDefaultConfig() config.Exporter {
 		GraphiteTemplate: DefaultGraphiteTemplate,
 		TraceFormat:      OTLPTraceFormat,
 
-		HTTPClientSettings: CreateDefaultHTTPClientSettings(),
-		RetrySettings:      exporterhelper.NewDefaultRetrySettings(),
-		QueueSettings:      qs,
+		HTTPClientSettings:   CreateDefaultHTTPClientSettings(),
+		RetrySettings:        exporterhelper.NewDefaultRetrySettings(),
+		QueueSettings:        qs,
+		DropRoutingAttribute: DefaultDropRoutingAttribute,
 	}
 }
 
