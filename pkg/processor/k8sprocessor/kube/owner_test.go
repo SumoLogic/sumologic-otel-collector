@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	v1 "k8s.io/api/apps/v1"
+	batch_v1 "k8s.io/api/batch/v1"
 	api_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -45,6 +46,201 @@ func waitForWatchToBeEstablished(client *fake.Clientset, resource string) <-chan
 		return true, watch, nil
 	})
 	return ch
+}
+
+func Test_OwnerProvider_GetOwners_ReplicaSet(t *testing.T) {
+	c, err := newFakeAPIClientset(k8sconfig.APIConfig{})
+	require.NoError(t, err)
+
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+
+	op, err := newOwnerProvider(
+		logger,
+		c,
+		labels.Everything(),
+		fields.Everything(),
+		ExtractionRules{
+			Namespace:          true,
+			OwnerLookupEnabled: true,
+			PodUID:             true,
+			PodName:            true,
+			ReplicaSetName:     true,
+			Tags:               NewExtractionFieldTags(),
+		},
+		"kube-system",
+	)
+	require.NoError(t, err)
+
+	client := c.(*fake.Clientset)
+	replicaSetWatchEstablished := waitForWatchToBeEstablished(client, "replicasets")
+
+	op.Start()
+	t.Cleanup(func() {
+		op.Stop()
+	})
+
+	<-replicaSetWatchEstablished
+
+	replicaSet, err := c.AppsV1().ReplicaSets("kube-system").
+		Create(context.Background(),
+			&v1.ReplicaSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-rs",
+					Namespace: "kube-system",
+					UID:       "fb9e6935-8936-4959-bd90-4e975a4c2b07",
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "ReplicaSet",
+				},
+			},
+			metav1.CreateOptions{},
+		)
+	require.NoError(t, err)
+
+	pod := &api_v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-pod",
+			Namespace: "kube-system",
+			UID:       "e98a3d3e-fde9-4b10-8f61-cc37d0357c28",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Kind: replicaSet.Kind,
+					Name: replicaSet.Name,
+					UID:  replicaSet.UID,
+				},
+			},
+		},
+	}
+
+	_, err = c.CoreV1().Pods("kube-system").
+		Create(context.Background(), pod, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	assert.Eventually(t, func() bool {
+		owners := op.GetOwners(pod)
+		if len(owners) != 1 {
+			t.Logf("owners: %v", owners)
+			return false
+		}
+
+		if uid := owners[0].UID; uid != "fb9e6935-8936-4959-bd90-4e975a4c2b07" {
+			t.Logf("wrong owner UID: %v", uid)
+			return false
+		}
+
+		return true
+	}, 5*time.Second, 5*time.Millisecond)
+}
+
+func Test_OwnerProvider_GetOwners_Deployment(t *testing.T) {
+	c, err := newFakeAPIClientset(k8sconfig.APIConfig{})
+	require.NoError(t, err)
+
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+
+	op, err := newOwnerProvider(
+		logger,
+		c,
+		labels.Everything(),
+		fields.Everything(),
+		ExtractionRules{
+			Namespace:          true,
+			OwnerLookupEnabled: true,
+			PodUID:             true,
+			PodName:            true,
+			DeploymentName:     true,
+			Tags:               NewExtractionFieldTags(),
+		},
+		"kube-system",
+	)
+	require.NoError(t, err)
+
+	client := c.(*fake.Clientset)
+	replicaSetWatchEstablished := waitForWatchToBeEstablished(client, "replicasets")
+	deploymentWatchEstablished := waitForWatchToBeEstablished(client, "deployments")
+
+	op.Start()
+	t.Cleanup(func() {
+		op.Stop()
+	})
+
+	<-replicaSetWatchEstablished
+	<-deploymentWatchEstablished
+
+	deployment, err := c.AppsV1().ReplicaSets("kube-system").
+		Create(context.Background(),
+			&v1.ReplicaSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-deploy",
+					Namespace: "kube-system",
+					UID:       "3849f24d-19c2-4b06-97bd-dcb57201a6a4",
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Deployment",
+				},
+			},
+			metav1.CreateOptions{},
+		)
+	require.NoError(t, err)
+
+	replicaSet, err := c.AppsV1().ReplicaSets("kube-system").
+		Create(context.Background(),
+			&v1.ReplicaSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-rs",
+					Namespace: "kube-system",
+					UID:       "fb9e6935-8936-4959-bd90-4e975a4c2b07",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							Kind: deployment.Kind,
+							Name: deployment.Name,
+							UID:  deployment.UID,
+						},
+					},
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "ReplicaSet",
+				},
+			},
+			metav1.CreateOptions{},
+		)
+	require.NoError(t, err)
+
+	pod := &api_v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-pod",
+			Namespace: "kube-system",
+			UID:       "e98a3d3e-fde9-4b10-8f61-cc37d0357c28",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Kind: replicaSet.Kind,
+					Name: replicaSet.Name,
+					UID:  replicaSet.UID,
+				},
+			},
+		},
+	}
+
+	_, err = c.CoreV1().Pods("kube-system").
+		Create(context.Background(), pod, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	assert.Eventually(t, func() bool {
+		owners := op.GetOwners(pod)
+		if len(owners) != 2 {
+			t.Logf("owners: %v", owners)
+			return false
+		}
+
+		if uid := owners[1].UID; uid != "3849f24d-19c2-4b06-97bd-dcb57201a6a4" {
+			t.Logf("wrong owner UID: %v", uid)
+			return false
+		}
+
+		return true
+	}, 5*time.Second, 5*time.Millisecond)
 }
 
 func Test_OwnerProvider_GetOwners_Statefulset(t *testing.T) {
@@ -365,4 +561,199 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 			return len(services) == 0
 		}, 5*time.Second, 10*time.Millisecond)
 	})
+}
+
+func Test_OwnerProvider_GetOwners_Job(t *testing.T) {
+	c, err := newFakeAPIClientset(k8sconfig.APIConfig{})
+	require.NoError(t, err)
+
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+
+	op, err := newOwnerProvider(
+		logger,
+		c,
+		labels.Everything(),
+		fields.Everything(),
+		ExtractionRules{
+			Namespace:          true,
+			OwnerLookupEnabled: true,
+			PodUID:             true,
+			PodName:            true,
+			JobName:            true,
+			Tags:               NewExtractionFieldTags(),
+		},
+		"kube-system",
+	)
+	require.NoError(t, err)
+
+	client := c.(*fake.Clientset)
+	ch := waitForWatchToBeEstablished(client, "jobs")
+
+	op.Start()
+	t.Cleanup(func() {
+		op.Stop()
+	})
+
+	<-ch
+
+	job, err := c.BatchV1().Jobs("kube-system").
+		Create(context.Background(),
+			&batch_v1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-job",
+					Namespace: "kube-system",
+					UID:       "1062885b-a745-4ff7-9617-2566f7e99531",
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Job",
+				},
+			},
+			metav1.CreateOptions{},
+		)
+	require.NoError(t, err)
+
+	pod := &api_v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-pod",
+			Namespace: "kube-system",
+			UID:       "e98a3d3e-fde9-4b10-8f61-cc37d0357c28",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Kind: job.Kind,
+					Name: job.Name,
+					UID:  job.UID,
+				},
+			},
+		},
+	}
+
+	_, err = c.CoreV1().Pods("kube-system").
+		Create(context.Background(), pod, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	assert.Eventually(t, func() bool {
+		owners := op.GetOwners(pod)
+		if len(owners) != 1 {
+			t.Logf("owners: %v", owners)
+			return false
+		}
+
+		if uid := owners[0].UID; uid != "1062885b-a745-4ff7-9617-2566f7e99531" {
+			t.Logf("wrong owner UID: %v", uid)
+			return false
+		}
+
+		return true
+	}, 5*time.Second, 5*time.Millisecond)
+}
+
+func Test_OwnerProvider_GetOwners_CronJob(t *testing.T) {
+	c, err := newFakeAPIClientset(k8sconfig.APIConfig{})
+	require.NoError(t, err)
+
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+
+	op, err := newOwnerProvider(
+		logger,
+		c,
+		labels.Everything(),
+		fields.Everything(),
+		ExtractionRules{
+			Namespace:          true,
+			OwnerLookupEnabled: true,
+			PodUID:             true,
+			PodName:            true,
+			CronJobName:        true,
+			Tags:               NewExtractionFieldTags(),
+		},
+		"kube-system",
+	)
+	require.NoError(t, err)
+
+	client := c.(*fake.Clientset)
+	jobWatchEstablished := waitForWatchToBeEstablished(client, "jobs")
+	cronJobWatchEstablished := waitForWatchToBeEstablished(client, "cronjobs")
+
+	op.Start()
+	t.Cleanup(func() {
+		op.Stop()
+	})
+
+	<-jobWatchEstablished
+	<-cronJobWatchEstablished
+
+	cronJob, err := c.BatchV1().CronJobs("kube-system").
+		Create(context.Background(),
+			&batch_v1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-cronjob",
+					Namespace: "kube-system",
+					UID:       "fcc51d15-a279-4738-8857-f4e905c84226",
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "CronJob",
+				},
+			},
+			metav1.CreateOptions{},
+		)
+	require.NoError(t, err)
+
+	job, err := c.BatchV1().Jobs("kube-system").
+		Create(context.Background(),
+			&batch_v1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-job",
+					Namespace: "kube-system",
+					UID:       "1062885b-a745-4ff7-9617-2566f7e99531",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							Kind: cronJob.Kind,
+							Name: cronJob.Name,
+							UID:  cronJob.UID,
+						},
+					},
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Job",
+				},
+			},
+			metav1.CreateOptions{},
+		)
+	require.NoError(t, err)
+
+	pod := &api_v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-pod",
+			Namespace: "kube-system",
+			UID:       "e98a3d3e-fde9-4b10-8f61-cc37d0357c28",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Kind: job.Kind,
+					Name: job.Name,
+					UID:  job.UID,
+				},
+			},
+		},
+	}
+
+	_, err = c.CoreV1().Pods("kube-system").
+		Create(context.Background(), pod, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	assert.Eventually(t, func() bool {
+		owners := op.GetOwners(pod)
+		if len(owners) != 2 {
+			t.Logf("owners: %v", owners)
+			return false
+		}
+
+		if uid := owners[1].UID; uid != "fcc51d15-a279-4738-8857-f4e905c84226" {
+			t.Logf("wrong owner UID: %v", uid)
+			return false
+		}
+
+		return true
+	}, 5*time.Second, 5*time.Millisecond)
 }

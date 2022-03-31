@@ -127,8 +127,8 @@ func newOwnerProvider(
 			ownerCache.deleteObject)
 	}
 
-	// Only enable ReplicaSet informer when ReplicaSet extraction rule is enabled
-	if extractionRules.ReplicaSetName {
+	// Only enable ReplicaSet informer when ReplicaSet or DeploymentName extraction rule is enabled
+	if extractionRules.ReplicaSetName || extractionRules.DeploymentName {
 		logger.Debug("adding informer for ReplicaSet", zap.String("api_version", "apps/v1"))
 		ownerCache.addOwnerInformer("ReplicaSet",
 			factory.Apps().V1().ReplicaSets().Informer(),
@@ -163,8 +163,8 @@ func newOwnerProvider(
 			ownerCache.deleteEndpoint)
 	}
 
-	// Only enable Job informer when Job extraction rule is enabled
-	if extractionRules.JobName {
+	// Only enable Job informer when Job or CronJob extraction rule is enabled
+	if extractionRules.JobName || extractionRules.CronJobName {
 		logger.Debug("adding informer for Job", zap.String("api_version", "batch/v1"))
 		ownerCache.addOwnerInformer("Job",
 			factory.Batch().V1().Jobs().Informer(),

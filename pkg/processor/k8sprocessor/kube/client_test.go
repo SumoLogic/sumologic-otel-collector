@@ -40,7 +40,23 @@ import (
 )
 
 func newFakeAPIClientset(_ k8sconfig.APIConfig) (kubernetes.Interface, error) {
-	return fake.NewSimpleClientset(), nil
+	fakeClient := fake.NewSimpleClientset()
+	// Add batch/v1 CronJob resource so that setting up a CronJob informer works in testing.
+	fakeClient.Fake.Resources = append(fakeClient.Fake.Resources, &metav1.APIResourceList{
+		GroupVersion: "batch/v1",
+		APIResources: []metav1.APIResource{
+			{
+				Name:         "cronjobs",
+				SingularName: "cronjob",
+				Namespaced:   true,
+				Group:        "batch",
+				Version:      "batch/v1",
+				Kind:         "CronJob",
+				ShortNames:   []string{"cj"},
+			},
+		},
+	})
+	return fakeClient, nil
 }
 
 func podAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj interface{})) {
