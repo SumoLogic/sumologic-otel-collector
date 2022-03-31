@@ -9,87 +9,155 @@ in a cluster, keeps a record of their IP addresses and interesting metadata. Upo
 the processor tries to identify the pod that sent the record and matches
 it with the in-memory data. If a match is found, the cached metadata is added to the record as attributes.
 
-## Config
-
-There are several top level sections of the processor config:
-
-- `passthrough` (default = false): when set to true, only annotates resources
-  with the pod IP and does not try to extract any other metadata.
-  It does not need access to the K8S cluster API.
-  Agent/Collector must receive records directly from services to be able to
-  correctly detect the pod IPs.
-- `owner_lookup_enabled` (default = false): when set to true, fields such as
-  `daemonSetName`, `replicaSetName`, `service`, etc. can be extracted, though
-  it requires fetching additional data to traverse the `owner` relationship.
-  See the [list of fields](#extract-section) for more information over which tags
-  require the flag to be enabled.
-- `extract`: the section (see [below](#extract-section)) allows specifying extraction rules
-- `filter`: the section (see [below](#filter-section)) allows specifying filters when matching pods
-
-### Extract section
-
-Allows specifying extraction rules to extract data from k8s pod specs.
-
-- `metadata` (default = empty): specifies a list of strings that denote
-  extracted fields. Following fields can be extracted:
-
-  - `containerId`
-  - `containerName`
-  - `containerImage`
-  - `clusterName`
-  - `cronJobName` _(`owner_lookup_enabled` must be set to `true`)_
-  - `daemonSetName` _(`owner_lookup_enabled` must be set to `true`)_
-  - `deploymentName` _(`owner_lookup_enabled` must be set to `true`)_
-  - `hostName`
-  - `jobName` _(`owner_lookup_enabled` must be set to `true`)_
-  - `namespace`
-  - `nodeName`
-  - `podId`
-  - `podName`
-  - `replicaSetName` _(`owner_lookup_enabled` must be set to `true`)_
-  - `serviceName` _(`owner_lookup_enabled` must be set to `true`)_ - in case more
-    than one service is assigned to the pod, they are comma-separated
-  - `startTime`
-  - `statefulSetName` _(`owner_lookup_enabled` must be set to `true`)_
-
-Also, see [example config](#example-config).
-
-- `tags`: specifies an optional map of custom tag names to be used. By default, following names are being assigned:
-  - `clusterName`    : `k8s.cluster.name`
-  - `containerID`    : `k8s.container.id`
-  - `containerImage` : `k8s.container.image`
-  - `containerName`  : `k8s.container.name`
-  - `cronJobName`    : `k8s.cronjob.name`
-  - `daemonSetName`  : `k8s.daemonset.name`
-  - `deploymentName` : `k8s.deployment.name`
-  - `hostName`       : `k8s.pod.hostname`
-  - `jobName`        : `k8s.job.name`
-  - `namespaceName`  : `k8s.namespace.name`
-  - `nodeName`       : `k8s.node.name`
-  - `podID`          : `k8s.pod.id`
-  - `podName`        : `k8s.pod.name`
-  - `replicaSetName` : `k8s.replicaset.name`
-  - `serviceName`    : `k8s.service.name`
-  - `statefulSetName`: `k8s.statefulset.name`
-  - `startTime`      : `k8s.pod.startTime`
-
-When a custom value is specified, specified fields use provided names when being tagged, e.g.:
+## Configuration
 
 ```yaml
-tags:
-  containerId: my-custom-tag-for-container-id
-  nodeName: node_name
+processors:
+  k8s_tagger:
+    # List of exclusion rules. For now it's possible to specify
+    # a list of pod name regexes who's records should not be enriched with metadata.
+    # default: []
+    exclude:
+      pods:
+      - name: <pod_name_regex>
+
+    # See "Extracting metadata" documentation section below
+    extract:
+      # List of rules to extract pod annotations into attributes.
+      # See the "Field extract config" documentation section below for details on how to use it.
+      # By default, no pod annotations are extracted into attributes.
+      # default: []
+      annotations:
+      - key: "*"
+        tag_name: k8s.pod.annotation.%s
+
+      # If a pod is associated with more than one service, delimiter will be used to join the service names.
+      # default: ", "
+      delimiter: <delimiter>
+
+      # List of rules to extract pod labels into attributes.
+      # See the "Field extract config" documentation section below for details on how to use it.
+      # By default, no pod labels are extracted into attributes.
+      # default: []
+      labels:
+      - key: "*"
+        tag_name: k8s.pod.label.%s
+
+      # List of pod metadata to extract into attributes.
+      # See "Extracting metadata" documentation section below for details.
+      # default: []
+      metadata:
+      - clusterName
+      - containerId
+      - containerImage
+      - containerName
+      - cronJobName
+      - daemonSetName
+      - deploymentName
+      - hostName
+      - jobName
+      - namespace
+      - nodeName
+      - podId
+      - podName
+      - replicaSetName
+      - serviceName
+      - startTime
+      - statefulSetName
+
+      # List of rules to extract namespace labels into attributes.
+      # See the "Field extract config" documentation section below for details on how to use it.
+      # By default, no namespace labels are extracted into attributes.
+      # default: []
+      namespace_labels:
+      - key: "*"
+        tag_name: k8s.namespace.label.%s
+
+      # Specifies the names of the attributes to put the extracted metadata in.
+      # See "Extracting metadata" documentation section below for details.
+      # For example, if `deploymentName` exists in the `extract.metadata` list,
+      # the name of the deployment will be put by default in an attribute named `k8s.deployment.name`.
+      # The following map defines the defaults.
+      # To override any of the defaults, specify a different attribute name for a selected key.
+      tags:
+        clusterName: k8s.cluster.name
+        containerID: k8s.container.id
+        containerImage: k8s.container.image
+        containerName: k8s.container.name
+        cronJobName: k8s.cronjob.name
+        daemonSetName: k8s.daemonset.name
+        deploymentName: k8s.deployment.name
+        hostName: k8s.pod.hostname
+        jobName: k8s.job.name
+        namespaceName: k8s.namespace.name
+        nodeName: k8s.node.name
+        podID: k8s.pod.id
+        podName: k8s.pod.name
+        replicaSetName: k8s.replicaset.name
+        serviceName: k8s.service.name
+        statefulSetName: k8s.statefulset.name
+        startTime: k8s.pod.startTime
+
+    # See "Filter section" documentation section below for details.
+    filter:
+      # Filters pods by pod fields.
+      # default: []
+      fields:
+      - key: <key>
+        op: {equals, not-equals}
+        value: <value>
+
+      # Filters pods by pod labels.
+      # default: []
+      labels:
+      - key: <key>
+        op: {equals, not-equals}
+        value: <value>
+
+      # Filters all pods by the provided namespace. All other pods are ignored.
+      # default: ""
+      namespace: <namespace>
+
+      # If specified, any pods not running on the specified node will be ignored by the tagger.
+      # default: ""
+      node: <node_name>
+
+      # Like `node`, but extracts the node name from the environment variable.
+      # default: ""
+      node_from_env_var: <env_var>
+
+    # When set to true, fields such as `daemonSetName`, `replicaSetName`, `service`, etc.
+    # can be extracted, though it requires fetching additional data to traverse the `owner` relationship.
+    # See the "Extract" section for more information on which tags require the flag to be enabled.
+    # default: false
+    owner_lookup_enabled: {true, false}
+
+    # When set to true, only annotates resources with the pod IP
+    # and does not try to extract any other metadata.
+    # It does not need access to the K8S cluster API.
+    # Agent/Collector must receive records directly from services
+    # to be able to correctly detect the pod IPs.
+    # default: false
+    passthrough: {true, false}
 ```
 
-- `annotations` (default = empty): a list of rules for extraction and recording annotation data.
-  See [field extract config](#field-extract-config) for an example on how to use it.
-- `labels` (default = empty): a list of rules for extraction and recording label data.
-  See [field extract config](#field-extract-config) for an example on how to use it.
-- `namespace_labels` (default = empty): a list of rules for extraction and recording namespace label data.
-  See [field extract config](#field-extract-config) for an example on how to use it.
+### Extracting metadata
 
-- `delimiter`: if pod is associated with more than one service, delimiter is going be used to join them.
-  (default=`", "`)
+The `extract` configuration section allows to specify rules to extract metadata from k8s pod specs.
+
+The `extract.metadata` section defines which metadata should be retrieved.
+The `extract.tags` section defines the names of the attributes that the metadata will be put in.
+
+Some of the metadata is only extracted when the `owner_lookup_enabled` property is set to `true`.
+The attributes that require this are:
+
+- `cronJobName`
+- `daemonSetName`
+- `deploymentName`
+- `jobName`
+- `replicaSetName`
+- `serviceName`
+- `statefulSetName`
 
 ### Field Extract Config
 
