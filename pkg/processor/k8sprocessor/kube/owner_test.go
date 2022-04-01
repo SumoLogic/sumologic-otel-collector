@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes/fake"
 	clienttesting "k8s.io/client-go/testing"
@@ -82,13 +83,14 @@ func Test_OwnerProvider_GetOwners_ReplicaSet(t *testing.T) {
 
 	<-replicaSetWatchEstablished
 
+	replicaSetUID := types.UID("fb9e6935-8936-4959-bd90-4e975a4c2b07")
 	replicaSet, err := c.AppsV1().ReplicaSets("kube-system").
 		Create(context.Background(),
 			&v1.ReplicaSet{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-rs",
 					Namespace: "kube-system",
-					UID:       "fb9e6935-8936-4959-bd90-4e975a4c2b07",
+					UID:       replicaSetUID,
 				},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "ReplicaSet",
@@ -124,7 +126,7 @@ func Test_OwnerProvider_GetOwners_ReplicaSet(t *testing.T) {
 			return false
 		}
 
-		if uid := owners[0].UID; uid != "fb9e6935-8936-4959-bd90-4e975a4c2b07" {
+		if uid := owners[0].UID; uid != replicaSetUID {
 			t.Logf("wrong owner UID: %v", uid)
 			return false
 		}
@@ -169,13 +171,14 @@ func Test_OwnerProvider_GetOwners_Deployment(t *testing.T) {
 	<-replicaSetWatchEstablished
 	<-deploymentWatchEstablished
 
+	deploymentUID := types.UID("3849f24d-19c2-4b06-97bd-dcb57201a6a4")
 	deployment, err := c.AppsV1().ReplicaSets("kube-system").
 		Create(context.Background(),
 			&v1.ReplicaSet{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-deploy",
 					Namespace: "kube-system",
-					UID:       "3849f24d-19c2-4b06-97bd-dcb57201a6a4",
+					UID:       deploymentUID,
 				},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Deployment",
@@ -185,13 +188,14 @@ func Test_OwnerProvider_GetOwners_Deployment(t *testing.T) {
 		)
 	require.NoError(t, err)
 
+	replicaSetUID := types.UID("fb9e6935-8936-4959-bd90-4e975a4c2b07")
 	replicaSet, err := c.AppsV1().ReplicaSets("kube-system").
 		Create(context.Background(),
 			&v1.ReplicaSet{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-rs",
 					Namespace: "kube-system",
-					UID:       "fb9e6935-8936-4959-bd90-4e975a4c2b07",
+					UID:       replicaSetUID,
 					OwnerReferences: []metav1.OwnerReference{
 						{
 							Kind: deployment.Kind,
@@ -234,7 +238,7 @@ func Test_OwnerProvider_GetOwners_Deployment(t *testing.T) {
 			return false
 		}
 
-		if uid := owners[1].UID; uid != "3849f24d-19c2-4b06-97bd-dcb57201a6a4" {
+		if uid := owners[1].UID; uid != deploymentUID {
 			t.Logf("wrong owner UID: %v", uid)
 			return false
 		}
@@ -277,13 +281,14 @@ func Test_OwnerProvider_GetOwners_Statefulset(t *testing.T) {
 
 	<-ch
 
+	statefulSetUID := types.UID("5513d7a3-3edd-4bd1-b036-7f4c6fb6eb46")
 	sts, err := c.AppsV1().StatefulSets("kube-system").
 		Create(context.Background(),
 			&v1.StatefulSet{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-sts",
 					Namespace: "kube-system",
-					UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75391",
+					UID:       statefulSetUID,
 				},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "StatefulSet",
@@ -319,7 +324,7 @@ func Test_OwnerProvider_GetOwners_Statefulset(t *testing.T) {
 			return false
 		}
 
-		if uid := owners[0].UID; uid != "f15f0585-a0bc-43a3-96e4-dd2eace75391" {
+		if uid := owners[0].UID; uid != statefulSetUID {
 			t.Logf("wrong owner UID: %v", uid)
 			return false
 		}
@@ -362,13 +367,14 @@ func Test_OwnerProvider_GetOwners_Daemonset(t *testing.T) {
 
 	<-ch
 
+	daemonSetUID := types.UID("ac264398-d301-4d32-b75d-0d073b119ccd")
 	ds, err := c.AppsV1().DaemonSets("kube-system").
 		Create(context.Background(),
 			&v1.DaemonSet{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-daemonset",
 					Namespace: "kube-system",
-					UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75395",
+					UID:       daemonSetUID,
 				},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "StatefulSet",
@@ -404,7 +410,7 @@ func Test_OwnerProvider_GetOwners_Daemonset(t *testing.T) {
 			return false
 		}
 
-		if uid := owners[0].UID; uid != "f15f0585-a0bc-43a3-96e4-dd2eace75395" {
+		if uid := owners[0].UID; uid != daemonSetUID {
 			t.Logf("wrong owner UID: %v", uid)
 			return false
 		}
@@ -461,7 +467,7 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "my-service",
 				Namespace: namespace,
-				UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75390",
+				UID:       "88125104-a4f6-40ac-906b-fcd385c127f3",
 			},
 			TypeMeta: metav1.TypeMeta{
 				Kind: "Endpoint",
@@ -485,7 +491,7 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "my-service-2",
 				Namespace: namespace,
-				UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75391",
+				UID:       "07ffe4a1-ca89-4d28-acb5-808b0c0bb20f",
 			},
 			TypeMeta: metav1.TypeMeta{
 				Kind: "Endpoint",
@@ -597,13 +603,14 @@ func Test_OwnerProvider_GetOwners_Job(t *testing.T) {
 
 	<-ch
 
+	jobUID := types.UID("1062885b-a745-4ff7-9617-2566f7e99531")
 	job, err := c.BatchV1().Jobs("kube-system").
 		Create(context.Background(),
 			&batch_v1.Job{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-job",
 					Namespace: "kube-system",
-					UID:       "1062885b-a745-4ff7-9617-2566f7e99531",
+					UID:       jobUID,
 				},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Job",
@@ -639,7 +646,7 @@ func Test_OwnerProvider_GetOwners_Job(t *testing.T) {
 			return false
 		}
 
-		if uid := owners[0].UID; uid != "1062885b-a745-4ff7-9617-2566f7e99531" {
+		if uid := owners[0].UID; uid != jobUID {
 			t.Logf("wrong owner UID: %v", uid)
 			return false
 		}
@@ -684,13 +691,14 @@ func Test_OwnerProvider_GetOwners_CronJob(t *testing.T) {
 	<-jobWatchEstablished
 	<-cronJobWatchEstablished
 
+	cronJobUID := types.UID("fcc51d15-a279-4738-8857-f4e905c84226")
 	cronJob, err := c.BatchV1().CronJobs("kube-system").
 		Create(context.Background(),
 			&batch_v1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-cronjob",
 					Namespace: "kube-system",
-					UID:       "fcc51d15-a279-4738-8857-f4e905c84226",
+					UID:       cronJobUID,
 				},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "CronJob",
@@ -700,13 +708,14 @@ func Test_OwnerProvider_GetOwners_CronJob(t *testing.T) {
 		)
 	require.NoError(t, err)
 
+	jobUID := types.UID("1062885b-a745-4ff7-9617-2566f7e99531")
 	job, err := c.BatchV1().Jobs("kube-system").
 		Create(context.Background(),
 			&batch_v1.Job{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-job",
 					Namespace: "kube-system",
-					UID:       "1062885b-a745-4ff7-9617-2566f7e99531",
+					UID:       jobUID,
 					OwnerReferences: []metav1.OwnerReference{
 						{
 							Kind: cronJob.Kind,
@@ -749,7 +758,7 @@ func Test_OwnerProvider_GetOwners_CronJob(t *testing.T) {
 			return false
 		}
 
-		if uid := owners[1].UID; uid != "fcc51d15-a279-4738-8857-f4e905c84226" {
+		if uid := owners[1].UID; uid != cronJobUID {
 			t.Logf("wrong owner UID: %v", uid)
 			return false
 		}
