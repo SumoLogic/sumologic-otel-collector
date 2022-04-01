@@ -42,6 +42,8 @@ import (
 func newFakeAPIClientset(_ k8sconfig.APIConfig) (kubernetes.Interface, error) {
 	fakeClient := fake.NewSimpleClientset()
 	// Add batch/v1 CronJob resource so that setting up a CronJob informer works in testing.
+	// This is required for the `client.Discovery().ServerGroupsAndResources()` function call
+	// in `newOwnerProvider()` to work with the fake client.
 	fakeClient.Fake.Resources = append(fakeClient.Fake.Resources, &metav1.APIResourceList{
 		GroupVersion: "batch/v1",
 		APIResources: []metav1.APIResource{
