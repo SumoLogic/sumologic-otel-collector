@@ -348,8 +348,7 @@ extensions:
   file_storage:
     directory: .
   sumologic:
-    access_id: <my_access_id>
-    access_key: <my_access_key>
+    install_token: <token>
 
 receivers:
   hostmetrics:
