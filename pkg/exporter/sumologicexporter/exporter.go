@@ -47,6 +47,8 @@ type sumologicexporter struct {
 	clientLock sync.RWMutex
 	client     *http.Client
 
+	compressorPool sync.Pool
+
 	filter              filter
 	prometheusFormatter prometheusFormatter
 	graphiteFormatter   graphiteFormatter
@@ -90,6 +92,15 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 		config:  cfg,
 		logger:  createSettings.Logger,
 		sources: sfs,
+		compressorPool: sync.Pool{
+			New: func() any {
+				c, err := newCompressor(cfg.CompressEncoding)
+				if err != nil {
+					return fmt.Errorf("failed to initialize compressor: %w", err)
+				}
+				return c
+			},
+		},
 		// NOTE: client is now set in start()
 		filter:              f,
 		prometheusFormatter: pf,
@@ -218,13 +229,13 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		previousMetadata fields = newFields(pdata.NewAttributeMap())
 		errs             []error
 		droppedRecords   []logPair
-		err              error
 	)
 
-	c, err := newCompressor(se.config.CompressEncoding)
+	compr, err := se.getCompressor()
 	if err != nil {
-		return consumererror.NewLogs(fmt.Errorf("failed to initialize compressor: %w", err), ld)
+		return consumererror.NewLogs(err, ld)
 	}
+	defer se.compressorPool.Put(compr)
 
 	logsUrl, metricsUrl, tracesUrl := se.getDataURLs()
 	sdr := newSender(
@@ -233,7 +244,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		se.getHTTPClient(),
 		se.filter,
 		se.sources,
-		c,
+		compr,
 		se.prometheusFormatter,
 		se.graphiteFormatter,
 		metricsUrl,
@@ -348,10 +359,11 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		attributes       pdata.AttributeMap
 	)
 
-	c, err := newCompressor(se.config.CompressEncoding)
+	compr, err := se.getCompressor()
 	if err != nil {
-		return consumererror.NewMetrics(fmt.Errorf("failed to initialize compressor: %w", err), md)
+		return consumererror.NewMetrics(err, md)
 	}
+	defer se.compressorPool.Put(compr)
 
 	logsUrl, metricsUrl, tracesUrl := se.getDataURLs()
 	sdr := newSender(
@@ -360,7 +372,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		se.getHTTPClient(),
 		se.filter,
 		se.sources,
-		c,
+		compr,
 		se.prometheusFormatter,
 		se.graphiteFormatter,
 		metricsUrl,
@@ -407,6 +419,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 				// If metadata differs from currently buffered, flush the buffer
 				if !currentMetadata.equals(previousMetadata) && !previousMetadata.isEmpty() {
 					var dropped []metricPair
+					var err error
 					dropped, err = sdr.sendMetrics(ctx, previousMetadata)
 					if err != nil {
 						errs = append(errs, err)
@@ -418,6 +431,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 				// assign metadata
 				previousMetadata = currentMetadata
 				var dropped []metricPair
+				var err error
 				// add metric to the buffer
 				dropped, err = sdr.batchMetric(ctx, mp, currentMetadata)
 				if err != nil {
@@ -476,10 +490,12 @@ func (se *sumologicexporter) handleUnauthorizedErrors(ctx context.Context, errs 
 
 func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces) error {
 	var currentMetadata fields = newFields(pdata.NewAttributeMap())
-	c, err := newCompressor(se.config.CompressEncoding)
+
+	compr, err := se.getCompressor()
 	if err != nil {
-		return consumererror.NewTraces(fmt.Errorf("failed to initialize compressor: %w", err), td)
+		return consumererror.NewTraces(err, td)
 	}
+	defer se.compressorPool.Put(compr)
 
 	logsUrl, metricsUrl, tracesUrl := se.getDataURLs()
 	sdr := newSender(
@@ -488,7 +504,7 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces
 		se.getHTTPClient(),
 		se.filter,
 		se.sources,
-		c,
+		compr,
 		se.prometheusFormatter,
 		se.graphiteFormatter,
 		metricsUrl,
@@ -509,6 +525,17 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces
 	}
 
 	return nil
+}
+
+func (se *sumologicexporter) getCompressor() (compressor, error) {
+	switch c := se.compressorPool.Get().(type) {
+	case error:
+		return compressor{}, fmt.Errorf("%v", c)
+	case compressor:
+		return c, nil
+	default:
+		return compressor{}, fmt.Errorf("unknown compressor type: %T", c)
+	}
 }
 
 func (se *sumologicexporter) start(ctx context.Context, host component.Host) error {
