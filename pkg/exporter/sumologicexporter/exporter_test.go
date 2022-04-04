@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -1709,4 +1710,51 @@ func TestTracesWithDroppedAttribute(t *testing.T) {
 
 	err = test.exp.pushTracesData(context.Background(), traces)
 	assert.NoError(t, err)
+}
+
+func Benchmark_ExporterPushLogs(b *testing.B) {
+	createConfig := func() *Config {
+		config := createDefaultConfig().(*Config)
+		config.CompressEncoding = GZIPCompression
+		config.MetricFormat = PrometheusFormat
+		config.LogFormat = TextFormat
+		config.SourceCategory = "testing_source_templates %{_sourceCategory}"
+		config.MetadataAttributes = []string{
+			"key1",
+			"_source.*",
+		}
+		config.HTTPClientSettings.Auth = nil
+		return config
+	}
+
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	}))
+	b.Cleanup(func() { testServer.Close() })
+
+	cfg := createConfig()
+	cfg.HTTPClientSettings.Endpoint = testServer.URL
+
+	exp, err := initExporter(cfg, createExporterCreateSettings())
+	require.NoError(b, err)
+	require.NoError(b, exp.start(context.Background(), componenttest.NewNopHost()))
+	defer func() {
+		require.NoError(b, exp.shutdown(context.Background()))
+	}()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		wg := sync.WaitGroup{}
+		for i := 0; i < 10; i++ {
+			wg.Add(1)
+			go func() {
+				err := exp.pushLogsData(context.Background(), LogRecordsToLogs(exampleNLogs(128)))
+				if err != nil {
+					b.Logf("Failed pushing logs: %v", err)
+				}
+				wg.Done()
+			}()
+		}
+
+		wg.Wait()
+	}
 }

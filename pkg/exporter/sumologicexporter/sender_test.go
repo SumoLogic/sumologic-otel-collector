@@ -186,6 +186,16 @@ func exampleLog() []pdata.LogRecord {
 	return buffer
 }
 
+func exampleNLogs(n int) []pdata.LogRecord {
+	buffer := make([]pdata.LogRecord, n)
+	for i := 0; i < n; i++ {
+		buffer[i] = pdata.NewLogRecord()
+		buffer[i].Body().SetStringVal("Example log")
+	}
+
+	return buffer
+}
+
 func exampleTwoLogs() []pdata.LogRecord {
 	buffer := make([]pdata.LogRecord, 2)
 	buffer[0] = pdata.NewLogRecord()
