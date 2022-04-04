@@ -8,6 +8,7 @@ the container images stored in AWS Public ECR under the following repository:
   - [Linux on amd64 (x86-64)](#linux-on-amd64-x86-64)
   - [Linux on arm64](#linux-on-arm64)
   - [MacOS on amd64 (x86-64)](#macos-on-amd64-x86-64)
+  - [MacOS on arm64 (Apple M1)](#macos-on-arm64-apple-m1-x86-64)
   - [Upgrading standalone installation](#upgrading-standalone-installation)
 - [Container image](#container-image)
 - [Systemd service](#systemd-service)
@@ -133,6 +134,10 @@ Follow the steps for your platform below.
    ```bash
    otelcol-sumo --config config.yaml
    ```
+
+### MacOS on arm64 (Apple M1) (x86-64)
+
+This is currently not a supported platform. Manually building for it might work, but we haven't tested it.
 
 ### Upgrading standalone installation
 
