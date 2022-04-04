@@ -155,12 +155,8 @@ func (cfg *Config) Validate() error {
 		return fmt.Errorf("unexpected trace format: %s", cfg.TraceFormat)
 	}
 
-	switch cfg.CompressEncoding {
-	case GZIPCompression:
-	case DeflateCompression:
-	case NoCompression:
-	default:
-		return fmt.Errorf("unexpected compression encoding: %s", cfg.CompressEncoding)
+	if err := cfg.CompressEncoding.Validate(); err != nil {
+		return err
 	}
 
 	if len(cfg.HTTPClientSettings.Endpoint) == 0 && cfg.HTTPClientSettings.Auth == nil {
@@ -194,6 +190,19 @@ type PipelineType string
 
 // CompressEncodingType represents type of the pipeline
 type CompressEncodingType string
+
+func (cet CompressEncodingType) Validate() error {
+	switch cet {
+	case GZIPCompression:
+	case NoCompression:
+	case DeflateCompression:
+
+	default:
+		return fmt.Errorf("invalid compression encoding type: %v", cet)
+	}
+
+	return nil
+}
 
 const (
 	// TextFormat represents log_format: text
