@@ -206,3 +206,15 @@ func TestPrometheusMetrics(t *testing.T) {
 		})
 	}
 }
+
+func Benchmark_PrometheusFormatter_Metric2String(b *testing.B) {
+	f, err := newPrometheusFormatter()
+	require.NoError(b, err)
+
+	metric := buildExampleHistogramMetric(true)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = f.metric2String(metric)
+	}
+}
