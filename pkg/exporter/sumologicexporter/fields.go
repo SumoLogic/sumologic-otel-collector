@@ -15,7 +15,6 @@
 package sumologicexporter
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 
@@ -25,14 +24,12 @@ import (
 
 // fields represents metadata
 type fields struct {
-	orig     pdata.AttributeMap
-	replacer *strings.Replacer
+	orig pdata.AttributeMap
 }
 
 func newFields(attrMap pdata.AttributeMap) fields {
 	return fields{
-		orig:     attrMap,
-		replacer: strings.NewReplacer(",", "_", "=", ":", "\n", "_"),
+		orig: attrMap,
 	}
 }
 
@@ -41,12 +38,17 @@ func (f fields) isEmpty() bool {
 }
 
 func (f fields) equals(other fields) bool {
+	if f.orig.Len() != other.orig.Len() {
+		return false
+	}
+
 	return cmp.Equal(f.orig.AsRaw(), other.orig.AsRaw())
 }
 
 // string returns fields as ordered key=value string with `, ` as separator
 func (f fields) string() string {
 	returnValue := make([]string, 0, f.orig.Len())
+
 	f.orig.Range(func(k string, v pdata.AttributeValue) bool {
 		// Don't add source related attributes to fields as they are handled separately
 		// and are added to the payload either as special HTTP headers or as resources
@@ -54,6 +56,7 @@ func (f fields) string() string {
 		if k == attributeKeySourceCategory || k == attributeKeySourceHost || k == attributeKeySourceName {
 			return true
 		}
+
 		sv := v.AsString()
 
 		// Skip empty field
@@ -61,13 +64,19 @@ func (f fields) string() string {
 			return true
 		}
 
+		key := []byte(k)
+		f.sanitizeField(key)
+		value := []byte(sv)
+		f.sanitizeField(value)
+		sb := strings.Builder{}
+		sb.Grow(len(key) + len(value) + 1)
+		sb.Write(key)
+		sb.WriteRune('=')
+		sb.Write(value)
+
 		returnValue = append(
 			returnValue,
-			fmt.Sprintf(
-				"%s=%s",
-				f.sanitizeField(k),
-				f.sanitizeField(sv),
-			),
+			sb.String(),
 		)
 		return true
 	})
@@ -77,8 +86,19 @@ func (f fields) string() string {
 }
 
 // sanitizeFields sanitize field (key or value) to be correctly parsed by sumologic receiver
-func (f fields) sanitizeField(fld string) string {
-	return f.replacer.Replace(fld)
+// It modifies the field in place.
+func (f fields) sanitizeField(fld []byte) {
+	for i := 0; i < len(fld); i++ {
+		switch fld[i] {
+		case ',':
+			fld[i] = '_'
+		case '=':
+			fld[i] = ':'
+		case '\n':
+			fld[i] = '_'
+		default:
+		}
+	}
 }
 
 // translateAttributes translates fields to sumo format
