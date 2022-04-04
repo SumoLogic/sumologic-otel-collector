@@ -19,6 +19,7 @@ Sumo Logic Distro of [OpenTelemetry Collector][otc_link] built with
 - [Performance](docs/Performance.md)
 - [Known Issues](docs/KnownIssues.md)
 - [Contributing](./CONTRIBUTING.md)
+- [Changelog](./CHANGELOG.md)
 
 ## Components
 
