@@ -47,23 +47,23 @@ processors:
       # See "Extracting metadata" documentation section below for details.
       # default: []
       metadata:
-      - clusterName
-      - containerId
-      - containerImage
-      - containerName
-      - cronJobName
-      - daemonSetName
-      - deploymentName
-      - hostName
-      - jobName
-      - namespace
-      - nodeName
-      - podId
-      - podName
-      - replicaSetName
-      - serviceName
-      - startTime
-      - statefulSetName
+        - k8s.cluster.name
+        - k8s.container.id
+        - k8s.container.image
+        - k8s.container.name
+        - k8s.cronjob.name
+        - k8s.daemonset.name
+        - k8s.deployment.name
+        - k8s.job.name
+        - k8s.namespace.name
+        - k8s.node.name
+        - k8s.pod.hostname
+        - k8s.pod.id
+        - k8s.pod.name
+        - k8s.pod.startTime
+        - k8s.replicaset.name
+        - k8s.service.name
+        - k8s.statefulset.name
 
       # List of rules to extract namespace labels into attributes.
       # See the "Field extract config" documentation section below for details on how to use it.
@@ -72,31 +72,6 @@ processors:
       namespace_labels:
       - key: "*"
         tag_name: k8s.namespace.label.%s
-
-      # Specifies the names of the attributes to put the extracted metadata in.
-      # See "Extracting metadata" documentation section below for details.
-      # For example, if `deploymentName` exists in the `extract.metadata` list,
-      # the name of the deployment will be put by default in an attribute named `k8s.deployment.name`.
-      # The following map defines the defaults.
-      # To override any of the defaults, specify a different attribute name for a selected key.
-      tags:
-        clusterName: k8s.cluster.name
-        containerID: k8s.container.id
-        containerImage: k8s.container.image
-        containerName: k8s.container.name
-        cronJobName: k8s.cronjob.name
-        daemonSetName: k8s.daemonset.name
-        deploymentName: k8s.deployment.name
-        hostName: k8s.pod.hostname
-        jobName: k8s.job.name
-        namespaceName: k8s.namespace.name
-        nodeName: k8s.node.name
-        podID: k8s.pod.id
-        podName: k8s.pod.name
-        replicaSetName: k8s.replicaset.name
-        serviceName: k8s.service.name
-        statefulSetName: k8s.statefulset.name
-        startTime: k8s.pod.startTime
 
     # See "Filter section" documentation section below for details.
     filter:
@@ -126,9 +101,9 @@ processors:
       # default: ""
       node_from_env_var: <env_var>
 
-    # When set to true, fields such as `daemonSetName`, `replicaSetName`, `service`, etc.
+    # When set to true, fields such as `k8s.daemonset.name`, `k8s.replicaset.name`, `k8s.service.name`, etc.
     # can be extracted, though it requires fetching additional data to traverse the `owner` relationship.
-    # See the "Extract" section for more information on which tags require the flag to be enabled.
+    # See the "Extracting metadata" section for more information on which tags require the flag to be enabled.
     # default: false
     owner_lookup_enabled: {true, false}
 
@@ -143,21 +118,18 @@ processors:
 
 ### Extracting metadata
 
-The `extract` configuration section allows to specify rules to extract metadata from k8s pod specs.
-
-The `extract.metadata` section defines which metadata should be retrieved.
-The `extract.tags` section defines the names of the attributes that the metadata will be put in.
+The `extract.metadata` configuration section specifies rules to extract metadata from k8s pod specs.
 
 Some of the metadata is only extracted when the `owner_lookup_enabled` property is set to `true`.
 The attributes that require this are:
 
-- `cronJobName`
-- `daemonSetName`
-- `deploymentName`
-- `jobName`
-- `replicaSetName`
-- `serviceName`
-- `statefulSetName`
+- `k8s.cronjob.name`
+- `k8s.daemonset.name`
+- `k8s.deployment.name`
+- `k8s.job.name`
+- `k8s.replicaset.name`
+- `k8s.service.name`
+- `k8s.statefulset.name`
 
 ### Field Extract Config
 

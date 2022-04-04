@@ -20,6 +20,8 @@ import (
 	"sync"
 	"time"
 
+	conventions "go.opentelemetry.io/collector/model/semconv/v1.6.1"
+
 	"go.uber.org/zap"
 	api_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -243,27 +245,27 @@ func (c *WatchClient) GetPod(identifier PodIdentifier) (*Pod, bool) {
 func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 	tags := map[string]string{}
 	if c.Rules.PodName {
-		tags[c.Rules.Tags.PodName] = pod.Name
+		tags[conventions.AttributeK8SPodName] = pod.Name
 	}
 
 	if c.Rules.Namespace {
-		tags[c.Rules.Tags.Namespace] = pod.GetNamespace()
+		tags[conventions.AttributeK8SNamespaceName] = pod.GetNamespace()
 	}
 
 	if c.Rules.StartTime {
 		ts := pod.GetCreationTimestamp()
 		if !ts.IsZero() {
-			tags[c.Rules.Tags.StartTime] = ts.String()
+			tags[defaultTagStartTime] = ts.String()
 		}
 	}
 
 	if c.Rules.PodUID {
 		uid := pod.GetUID()
-		tags[c.Rules.Tags.PodUID] = string(uid)
+		tags[defaultTagPodUID] = string(uid)
 	}
 
 	if c.Rules.NodeName {
-		tags[c.Rules.Tags.NodeName] = pod.Spec.NodeName
+		tags[defaultTagNodeName] = pod.Spec.NodeName
 	}
 
 	if c.Rules.HostName {
@@ -271,16 +273,16 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 		// the associated metadata name, see:
 		// https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-hostname-and-subdomain-fields
 		if pod.Spec.Hostname == "" {
-			tags[c.Rules.Tags.HostName] = pod.Name
+			tags[defaultTagHostName] = pod.Name
 		} else {
-			tags[c.Rules.Tags.HostName] = pod.Spec.Hostname
+			tags[defaultTagHostName] = pod.Spec.Hostname
 		}
 	}
 
 	if c.Rules.ClusterName {
 		clusterName := pod.GetClusterName()
 		if clusterName != "" {
-			tags[c.Rules.Tags.ClusterName] = clusterName
+			tags[conventions.AttributeK8SClusterName] = clusterName
 		}
 	}
 
@@ -295,27 +297,27 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 			switch owner.kind {
 			case "DaemonSet":
 				if c.Rules.DaemonSetName {
-					tags[c.Rules.Tags.DaemonSetName] = owner.name
+					tags[conventions.AttributeK8SDaemonSetName] = owner.name
 				}
 			case "Deployment":
 				if c.Rules.DeploymentName {
-					tags[c.Rules.Tags.DeploymentName] = owner.name
+					tags[conventions.AttributeK8SDeploymentName] = owner.name
 				}
 			case "ReplicaSet":
 				if c.Rules.ReplicaSetName {
-					tags[c.Rules.Tags.ReplicaSetName] = owner.name
+					tags[conventions.AttributeK8SReplicaSetName] = owner.name
 				}
 			case "StatefulSet":
 				if c.Rules.StatefulSetName {
-					tags[c.Rules.Tags.StatefulSetName] = owner.name
+					tags[conventions.AttributeK8SStatefulSetName] = owner.name
 				}
 			case "Job":
 				if c.Rules.JobName {
-					tags[c.Rules.Tags.JobName] = owner.name
+					tags[conventions.AttributeK8SJobName] = owner.name
 				}
 			case "CronJob":
 				if c.Rules.CronJobName {
-					tags[c.Rules.Tags.CronJobName] = owner.name
+					tags[conventions.AttributeK8SCronJobName] = owner.name
 				}
 
 			default:
@@ -325,7 +327,7 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 
 		if c.Rules.ServiceName {
 			if services := c.op.GetServices(pod); len(services) > 0 {
-				tags[c.Rules.Tags.ServiceName] = strings.Join(services, c.delimiter)
+				tags[defaultTagServiceName] = strings.Join(services, c.delimiter)
 			}
 		}
 
@@ -334,7 +336,7 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 	if len(pod.Status.ContainerStatuses) > 0 {
 		cs := pod.Status.ContainerStatuses[0]
 		if c.Rules.ContainerID {
-			tags[c.Rules.Tags.ContainerID] = cs.ContainerID
+			tags[defaultTagContainerID] = cs.ContainerID
 		}
 	}
 

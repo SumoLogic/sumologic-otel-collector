@@ -18,8 +18,6 @@ import (
 	"regexp"
 	"time"
 
-	conventions "go.opentelemetry.io/collector/model/semconv/v1.5.0"
-
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
@@ -157,54 +155,9 @@ type ExtractionRules struct {
 
 	OwnerLookupEnabled bool
 
-	Tags            ExtractionFieldTags
 	Annotations     []FieldExtractionRule
 	Labels          []FieldExtractionRule
 	NamespaceLabels []FieldExtractionRule
-}
-
-// ExtractionFieldTags is used to describe selected exported key names for the extracted data
-type ExtractionFieldTags struct {
-	ClusterName     string
-	ContainerID     string
-	ContainerImage  string
-	ContainerName   string
-	DaemonSetName   string
-	DeploymentName  string
-	HostName        string
-	CronJobName     string
-	JobName         string
-	PodUID          string
-	PodName         string
-	Namespace       string
-	NodeName        string
-	ReplicaSetName  string
-	ServiceName     string
-	StartTime       string
-	StatefulSetName string
-}
-
-// NewExtractionFieldTags builds a new instance of tags with default values
-func NewExtractionFieldTags() ExtractionFieldTags {
-	tags := ExtractionFieldTags{}
-	tags.ClusterName = conventions.AttributeK8SClusterName
-	tags.ContainerID = defaultTagContainerID
-	tags.ContainerImage = defaultTagContainerImage
-	tags.ContainerName = defaultTagContainerName
-	tags.DaemonSetName = defaultTagDaemonSetName
-	tags.DeploymentName = conventions.AttributeK8SDeploymentName
-	tags.HostName = defaultTagHostName
-	tags.CronJobName = defaultTagCronJobName
-	tags.JobName = defaultTagJobName
-	tags.PodUID = defaultTagPodUID
-	tags.PodName = conventions.AttributeK8SPodName
-	tags.Namespace = conventions.AttributeK8SNamespaceName
-	tags.NodeName = defaultTagNodeName
-	tags.ReplicaSetName = defaultTagReplicaSetName
-	tags.ServiceName = defaultTagServiceName
-	tags.StartTime = defaultTagStartTime
-	tags.StatefulSetName = defaultTagStatefulSetName
-	return tags
 }
 
 // FieldExtractionRule is used to specify which fields to extract from pod fields

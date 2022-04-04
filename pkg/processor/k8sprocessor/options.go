@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strings"
 
+	conventions "go.opentelemetry.io/collector/model/semconv/v1.6.1"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
@@ -49,6 +49,13 @@ const (
 	metadataServiceName     = "serviceName"
 	metadataStartTime       = "startTime"
 	metadataStatefulSetName = "statefulSetName"
+
+	AttributeK8sContainerId    = "k8s.container.id"
+	attributeK8sContainerImage = "k8s.container.image"
+	attributeK8SPodHostname    = "k8s.pod.hostname"
+	attributeK8sPodId          = "k8s.pod.id"
+	AttributeK8SPodStartTime   = "k8s.pod.startTime"
+	attributeK8SServiceName    = "k8s.service.name"
 )
 
 // Option represents a configuration option that can be passes.
@@ -87,108 +94,63 @@ func WithExtractMetadata(fields ...string) Option {
 	return func(p *kubernetesprocessor) error {
 		if len(fields) == 0 {
 			fields = []string{
-				metadataClusterName,
-				metadataContainerID,
-				metadataContainerImage,
-				metadataContainerName,
-				metadataDaemonSetName,
-				metadataDeploymentName,
-				metadataHostName,
-				metadataNamespace,
-				metadataNodeName,
-				metadataPodName,
-				metadataPodID,
-				metadataReplicaSetName,
-				metadataServiceName,
-				metadataStartTime,
-				metadataStatefulSetName,
+				conventions.AttributeK8SClusterName,
+				AttributeK8sContainerId,
+				attributeK8sContainerImage,
+				conventions.AttributeK8SContainerName,
+				conventions.AttributeK8SCronJobName,
+				conventions.AttributeK8SDeploymentName,
+				attributeK8SPodHostname,
+				conventions.AttributeK8SNamespaceName,
+				conventions.AttributeK8SNodeName,
+				conventions.AttributeK8SPodName,
+				attributeK8sPodId,
+				conventions.AttributeK8SReplicaSetName,
+				attributeK8SServiceName,
+				AttributeK8SPodStartTime,
+				conventions.AttributeK8SStatefulSetName,
 			}
 		}
 		for _, field := range fields {
 			switch field {
-			case metadataClusterName:
+			case metadataClusterName, conventions.AttributeK8SClusterName:
 				p.rules.ClusterName = true
-			case metadataContainerID:
+			case metadataContainerID, AttributeK8sContainerId:
 				p.rules.ContainerID = true
-			case metadataContainerImage:
+			case metadataContainerImage, attributeK8sContainerImage:
 				p.rules.ContainerImage = true
-			case metadataContainerName:
+			case metadataContainerName, conventions.AttributeK8SContainerName:
 				p.rules.ContainerName = true
-			case metadataCronJobName:
+			case metadataCronJobName, conventions.AttributeK8SCronJobName:
 				p.rules.CronJobName = true
-			case metadataDaemonSetName:
+			case metadataDaemonSetName, conventions.AttributeK8SDaemonSetName:
 				p.rules.DaemonSetName = true
-			case metadataDeploymentName:
+			case metadataDeploymentName, conventions.AttributeK8SDeploymentName:
 				p.rules.DeploymentName = true
-			case metadataHostName:
+			case metadataHostName, attributeK8SPodHostname:
 				p.rules.HostName = true
-			case metadataJobName:
+			case metadataJobName, conventions.AttributeK8SJobName:
 				p.rules.JobName = true
-			case metadataNamespace:
+			case metadataNamespace, conventions.AttributeK8SNamespaceName:
 				p.rules.Namespace = true
-			case metadataNodeName:
+			case metadataNodeName, conventions.AttributeK8SNodeName:
 				p.rules.NodeName = true
-			case metadataPodID:
+			case metadataPodID, attributeK8sPodId:
 				p.rules.PodUID = true
-			case metadataPodName:
+			case metadataPodName, conventions.AttributeK8SPodName:
 				p.rules.PodName = true
-			case metadataReplicaSetName:
+			case metadataReplicaSetName, conventions.AttributeK8SReplicaSetName:
 				p.rules.ReplicaSetName = true
-			case metadataServiceName:
+			case metadataServiceName, attributeK8SServiceName:
 				p.rules.ServiceName = true
-			case metadataStartTime:
+			case metadataStartTime, AttributeK8SPodStartTime:
 				p.rules.StartTime = true
-			case metadataStatefulSetName:
+			case metadataStatefulSetName, conventions.AttributeK8SStatefulSetName:
 				p.rules.StatefulSetName = true
 			default:
 				return fmt.Errorf("\"%s\" is not a supported metadata field", field)
 			}
 		}
-		return nil
-	}
-}
-
-// WithExtractTags allows specifying custom tag names
-func WithExtractTags(tagsMap map[string]string) Option {
-	return func(p *kubernetesprocessor) error {
-		var tags = kube.NewExtractionFieldTags()
-		for field, tag := range tagsMap {
-			switch field {
-			case strings.ToLower(metadataClusterName):
-				tags.ClusterName = tag
-			case strings.ToLower(metadataContainerID):
-				tags.ContainerID = tag
-			case strings.ToLower(metadataContainerName):
-				tags.ContainerName = tag
-			case strings.ToLower(metadataContainerImage):
-				tags.ContainerImage = tag
-			case strings.ToLower(metadataDaemonSetName):
-				tags.DaemonSetName = tag
-			case strings.ToLower(metadataDeploymentName):
-				tags.DeploymentName = tag
-			case strings.ToLower(metadataHostName):
-				tags.HostName = tag
-			case strings.ToLower(metadataNamespace):
-				tags.Namespace = tag
-			case strings.ToLower(metadataNodeName):
-				tags.NodeName = tag
-			case strings.ToLower(metadataPodID):
-				tags.PodUID = tag
-			case strings.ToLower(metadataPodName):
-				tags.PodName = tag
-			case strings.ToLower(metadataReplicaSetName):
-				tags.ReplicaSetName = tag
-			case strings.ToLower(metadataServiceName):
-				tags.ServiceName = tag
-			case strings.ToLower(metadataStartTime):
-				tags.StartTime = tag
-			case strings.ToLower(metadataStatefulSetName):
-				tags.StatefulSetName = tag
-			default:
-				return fmt.Errorf("\"%s\" is not a supported metadata field", field)
-			}
-		}
-		p.rules.Tags = tags
 		return nil
 	}
 }
