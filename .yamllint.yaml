@@ -5,7 +5,7 @@ rules:
     comments-indentation: disable
 
     line-length:
-        max: 170
+        max: 240
         level: warning
 
     indentation:
