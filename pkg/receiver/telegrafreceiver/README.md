@@ -8,8 +8,6 @@ Supported pipeline types: metrics
 Use case: user configures telegraf input plugins in config for ingestion and otc
 processors and exporters for data processing and export.
 
-> :construction: This receiver is currently in **BETA** and is considered **unstable**.
-
 [input_plugins]: https://github.com/SumoLogic/telegraf/tree/v1.21.3-sumo-2/plugins/inputs
 
 ## Configuration
