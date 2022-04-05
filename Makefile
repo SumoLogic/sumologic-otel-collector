@@ -89,6 +89,8 @@ update-ot-core:
 	@sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" otelcolbuilder/Makefile
 	@sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" README.md
 	@sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" docs/Configuration.md
+	@sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" docs/KnownIssues.md
+	@sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" pkg/receiver/telegrafreceiver/README.md
 	@find . -type f -name "go.mod" -exec sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" {} \;
 	@echo "building OT distro to check for breakage"
 	make gomod-download-all
