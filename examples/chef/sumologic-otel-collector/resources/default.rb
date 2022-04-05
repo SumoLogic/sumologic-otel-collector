@@ -3,7 +3,7 @@ unified_mode true
 
 # version of Sumo Logic Distro of OpenTelemetry Collector
 # rel: https://github.com/SumoLogic/sumologic-otel-collector/releases
-property :version, String, default: '0.0.52-beta.0'
+property :version, String, default: '0.47.0-sumo-0'
 # path to configuration file for Sumo Logic Distro of OpenTelemetry Collector
 property :src_config_path, String, default: '/sumologic/examples/config_logging.yaml'
 # defines the throttling limit on memory usage for Sumo Logic Distro of OpenTelemetry Collector
