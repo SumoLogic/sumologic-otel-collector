@@ -28,7 +28,7 @@ func TestSanitizeKey(t *testing.T) {
 
 	key := "&^*123-abc-ABC!./?_:\n\r"
 	expected := "___123-abc-ABC_./__:__"
-	assert.Equal(t, expected, f.sanitizeKey(key))
+	assert.EqualValues(t, expected, f.sanitizeKeyBytes([]byte(key)))
 }
 
 func TestSanitizeValue(t *testing.T) {
