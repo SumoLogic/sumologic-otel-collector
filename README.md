@@ -1,12 +1,12 @@
-# Sumo Logic Distribution of OpenTelemetry
+# Sumo Logic OpenTelemetry Distro Collector
 
 [![Default branch build](https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/dev_builds.yml/badge.svg)](https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/dev_builds.yml)
 
-Sumo Logic Distro of [OpenTelemetry Collector][otc_link] built with
-[opentelemetry-collector-builder][otc_builder_link].
+Sumo Logic OpenTelemetry Distro Collector is a Sumo Logic-supported distribution of the [OpenTelemetry Collector][otc_link].
+It is a single agent to send logs, metrics and traces to [Sumo Logic][sumologic].
 
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
-[otc_builder_link]: https://github.com/open-telemetry/opentelemetry-collector-builder
+[sumologic]: https://www.sumologic.com
 
 - [Installation](docs/Installation.md)
 - [Configuration](docs/Configuration.md)
