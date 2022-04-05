@@ -71,13 +71,6 @@ const (
 	collectorIdField           = "collector_id"
 	collectorNameField         = "collector_name"
 	collectorCredentialIdField = "collector_credential_id"
-
-	banner = `
-************************************************************************************************************
-***    This software is currently in beta and is not recommended for production environments.            ***
-***    To participate in this beta, please contact your Sumo Logic account team or Sumo Logic Support.   ***
-************************************************************************************************************
-`
 )
 
 const (
@@ -156,7 +149,6 @@ func createHashKey(conf *Config) string {
 
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
 	se.host = host
-	se.logger.Info(banner)
 
 	colCreds, err := se.getCredentials(ctx)
 	if err != nil {
