@@ -25,20 +25,24 @@ linters-settings:
     tab-width: 8
 
 linters:
-  disable-all: false
+  disable-all: true
   enable:
     - gofmt
     - deadcode
-    - unused
     - errcheck
     - goimports
     - misspell
     - noctx
     - lll
-  disable:
-    - maligned
-    - prealloc
-  fast: false
+    - govet
+    - ineffassign
+    - structcheck
+    - typecheck
+    - varcheck
+    # These linters are problematic when using go1.18 and generic code like in golang.org/x/exp/slices
+    # - unused
+    # - gosimple
+    # - staticcheck
 
 issues:
   # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
