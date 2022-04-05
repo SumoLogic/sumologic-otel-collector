@@ -314,6 +314,11 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           draft: false
           prerelease: true
+
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+
           body: |
             ## v${{ steps.extract_tag.outputs.tag }}
 
