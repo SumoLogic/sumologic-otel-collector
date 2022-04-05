@@ -15,11 +15,11 @@
 package sumologicexporter
 
 import (
-	"sort"
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
 	"go.opentelemetry.io/collector/model/pdata"
+	"golang.org/x/exp/slices"
 )
 
 // fields represents metadata
@@ -80,7 +80,7 @@ func (f fields) string() string {
 		)
 		return true
 	})
-	sort.Strings(returnValue)
+	slices.Sort(returnValue)
 
 	return strings.Join(returnValue, ", ")
 }
