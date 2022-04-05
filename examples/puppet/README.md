@@ -11,7 +11,7 @@ This [Puppet][puppet] [manifest](manifest/../manifests/install_otel_collector.pp
 
   ```ruby
   class install_otel_collector {
-     $otel_collector_version = "0.0.52-beta.0" # version of Sumo Logic Distro of OpenTelemetry Collector
+     $otel_collector_version = "0.47.0-sumo-0" # version of Sumo Logic Distro of OpenTelemetry Collector
      $systemd_service = false                  # enables creation of Systemd Service for Sumo Logic Distro of OpenTelemetry Collector
 
   ...
