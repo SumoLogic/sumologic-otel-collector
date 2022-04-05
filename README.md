@@ -8,9 +8,6 @@ Sumo Logic Distro of [OpenTelemetry Collector][otc_link] built with
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
 [otc_builder_link]: https://github.com/open-telemetry/opentelemetry-collector-builder
 
-**This software is currently in beta and is not recommended for production environments.**
-**If you wish to participate in this beta, please contact your Sumo Logic account team or Sumo Logic Support.**
-
 - [Installation](docs/Installation.md)
 - [Configuration](docs/Configuration.md)
 - [Migration from Installed Collector](docs/Migration.md)
