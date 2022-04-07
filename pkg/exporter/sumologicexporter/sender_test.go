@@ -302,7 +302,7 @@ func TestSendTrace(t *testing.T) {
 		},
 	})
 
-	err = test.s.sendTraces(context.Background(), td, fieldsFromMap(map[string]string{}))
+	err = test.s.sendTraces(context.Background(), td)
 	assert.NoError(t, err)
 }
 
@@ -727,19 +727,37 @@ func TestSendLogsOTLP(t *testing.T) {
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			//nolint:lll
-			assert.Equal(t, "\n\xe2\x01\nb\n\x1c\n\v_sourceHost\x12\r\n\vsource_host\n\x1c\n\v_sourceName\x12\r\n\vsource_name\n$\n\x0f_sourceCategory\x12\x11\n\x0fsource_category\x12|\n\x00\x127*\r\n\vExample log2\x10\n\x04key1\x12\b\n\x06value12\x10\n\x04key2\x12\b\n\x06value2J\x00R\x00\x12?*\x15\n\x13Another example log2\x10\n\x04key1\x12\b\n\x06value12\x10\n\x04key2\x12\b\n\x06value2J\x00R\x00", body)
-			assert.Equal(t, "key1=value, key2=value2", req.Header.Get("X-Sumo-Fields"))
+			assert.Equal(t, "\n\xe6\x01\nb\n\x1c\n\v_sourceHost\x12\r\n\vsource_host\n\x1c\n\v_sourceName\x12\r\n\vsource_name\n$\n\x0f_sourceCategory\x12\x11\n\x0fsource_category\x12;\n\x00\x127*\r\n\vExample log2\x10\n\x04key1\x12\b\n\x06value12\x10\n\x04key2\x12\b\n\x06value2J\x00R\x00\x12C\n\x00\x12?*\x15\n\x13Another example log2\x10\n\x04key1\x12\b\n\x06value12\x10\n\x04key2\x12\b\n\x06value2J\x00R\x00", body)
+
 			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
 			assert.Equal(t, "application/x-protobuf", req.Header.Get("Content-Type"))
+
+			assert.Empty(t, req.Header.Get("X-Sumo-Fields"),
+				"We should not get X-Sumo-Fields header when sending data with OTLP",
+			)
+			assert.Empty(t, req.Header.Get("X-Sumo-Category"),
+				"We should not get X-Sumo-Category header when sending data with OTLP",
+			)
+			assert.Empty(t, req.Header.Get("X-Sumo-Name"),
+				"We should not get X-Sumo-Name header when sending data with OTLP",
+			)
+			assert.Empty(t, req.Header.Get("X-Sumo-Host"),
+				"We should not get X-Sumo-Host header when sending data with OTLP",
+			)
 		},
 	})
 
-	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 	test.s.config.LogFormat = "otlp"
 
-	_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "value", "key2": "value2"}))
-	assert.NoError(t, err)
+	l := pdata.NewLogs()
+	ls := l.ResourceLogs().AppendEmpty()
 
+	logRecords := exampleTwoLogs()
+	for i := 0; i < len(logRecords); i++ {
+		logRecords[i].MoveTo(ls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty())
+	}
+
+	assert.NoError(t, test.s.sendOTLPLogs(context.Background(), l))
 	assert.EqualValues(t, 1, *test.reqCounter)
 }
 
@@ -796,12 +814,15 @@ func TestOverrideSourceName(t *testing.T) {
 		})
 
 		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
-		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
-		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
-		assert.NoError(t, err)
-
-		assert.EqualValues(t, 1, *test.reqCounter)
+		l := pdata.NewLogs()
+		ls := l.ResourceLogs().AppendEmpty()
+		ls.Resource().Attributes().InsertString("key1", "test_name")
+		logRecords := exampleTwoLogs()
+		for i := 0; i < len(logRecords); i++ {
+			logRecords[i].MoveTo(ls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty())
+		}
+		assert.NoError(t, test.s.sendOTLPLogs(context.Background(), l))
 	})
 }
 
@@ -856,10 +877,15 @@ func TestOverrideSourceCategory(t *testing.T) {
 		})
 
 		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
-		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
-		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
-		assert.NoError(t, err)
+		l := pdata.NewLogs()
+		ls := l.ResourceLogs().AppendEmpty()
+		ls.Resource().Attributes().InsertString("key1", "test_name")
+		logRecords := exampleTwoLogs()
+		for i := 0; i < len(logRecords); i++ {
+			logRecords[i].MoveTo(ls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty())
+		}
+		assert.NoError(t, test.s.sendOTLPLogs(context.Background(), l))
 	})
 }
 
@@ -914,10 +940,15 @@ func TestOverrideSourceHost(t *testing.T) {
 		})
 
 		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
-		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
-		_, err := test.s.sendLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
-		assert.NoError(t, err)
+		l := pdata.NewLogs()
+		ls := l.ResourceLogs().AppendEmpty()
+		ls.Resource().Attributes().InsertString("key1", "test_name")
+		logRecords := exampleTwoLogs()
+		for i := 0; i < len(logRecords); i++ {
+			logRecords[i].MoveTo(ls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty())
+		}
+		assert.NoError(t, test.s.sendOTLPLogs(context.Background(), l))
 	})
 }
 

@@ -101,6 +101,8 @@ exporters:
     # list of regexes for attributes which should be sent as metadata,
     # use OpenTelemetry attribute names, see "Attribute translation" documentation
     # chapter from this document.
+    #
+    # NOTE: Those apply only to non-OTLP data formats.
     metadata_attributes:
       - <regex1>
       - <regex2>
