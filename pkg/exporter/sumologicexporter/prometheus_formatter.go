@@ -57,7 +57,14 @@ func newPrometheusFormatter() (prometheusFormatter, error) {
 
 // PrometheusLabels returns all attributes as sanitized prometheus labels string
 func (f *prometheusFormatter) tags2String(attr pdata.AttributeMap, labels pdata.AttributeMap) prometheusTags {
+	attrsPlusLabelsLen := attr.Len() + labels.Len()
+	if attrsPlusLabelsLen == 0 {
+		return ""
+	}
+
 	mergedAttributes := pdata.NewAttributeMap()
+	mergedAttributes.EnsureCapacity(attrsPlusLabelsLen)
+
 	attr.CopyTo(mergedAttributes)
 	labels.Range(func(k string, v pdata.AttributeValue) bool {
 		mergedAttributes.UpsertString(k, v.StringVal())
@@ -65,30 +72,83 @@ func (f *prometheusFormatter) tags2String(attr pdata.AttributeMap, labels pdata.
 	})
 	length := mergedAttributes.Len()
 
-	if length == 0 {
-		return ""
-	}
-
 	returnValue := make([]string, 0, length)
 	mergedAttributes.Range(func(k string, v pdata.AttributeValue) bool {
+		key := f.sanitizeKeyBytes([]byte(k))
+		value := f.sanitizeValue(v.AsString())
+
 		returnValue = append(
 			returnValue,
-			fmt.Sprintf(
-				`%s="%s"`,
-				f.sanitizeKey(k),
-				f.sanitizeValue(v.AsString()),
-			),
+			formatKeyValuePair(key, value),
 		)
 		return true
 	})
 
-	return prometheusTags(fmt.Sprintf("{%s}", strings.Join(returnValue, ",")))
+	return prometheusTags(stringsJoinAndSurround(returnValue, ",", "{", "}"))
 }
 
-// sanitizeKey returns sanitized key string by replacing
+func formatKeyValuePair(key []byte, value string) string {
+	const (
+		quoteSign = `"`
+		equalSign = `=`
+	)
+
+	// Use strings.Builder and not fmt.Sprintf as it uses significantly less
+	// allocations.
+	sb := strings.Builder{}
+	// We preallocate space for key, value, equal sign and quotes.
+	sb.Grow(len(key) + len(equalSign) + 2*len(quoteSign) + len(value))
+	sb.Write(key)
+	sb.WriteString(equalSign)
+	sb.WriteString(quoteSign)
+	sb.WriteString(value)
+	sb.WriteString(quoteSign)
+	return sb.String()
+}
+
+// stringsJoinAndSurround joins the strings in s slice using the separator adds front
+// to the front of the resulting string and back at the end.
+//
+// This has a benefit over using the strings.Join() of using just one strings.Buidler
+// instance and hence using less allocations to produce the final string.
+func stringsJoinAndSurround(s []string, separator, front, back string) string {
+	switch len(s) {
+	case 0:
+		return ""
+	case 1:
+		var b strings.Builder
+		b.Grow(len(s[0]) + len(front) + len(back))
+		b.WriteString(front)
+		b.WriteString(s[0])
+		b.WriteString(back)
+		return b.String()
+	}
+
+	// Count the total strings summarized length for the preallocation.
+	n := len(front) + len(s[0])
+	for i := 1; i < len(s); i++ {
+		n += len(separator) + len(s[i])
+	}
+	n += len(back)
+
+	var b strings.Builder
+	// We preallocate space for all the entires in the provided slice together with
+	// the separator as well as the surrounding characters.
+	b.Grow(n)
+	b.WriteString(front)
+	b.WriteString(s[0])
+	for _, s := range s[1:] {
+		b.WriteString(separator)
+		b.WriteString(s)
+	}
+	b.WriteString(back)
+	return b.String()
+}
+
+// sanitizeKeyBytes returns sanitized key byte slice by replacing
 // all non-allowed chars with `_`
-func (f *prometheusFormatter) sanitizeKey(s string) string {
-	return f.sanitNameRegex.ReplaceAllString(s, "_")
+func (f *prometheusFormatter) sanitizeKeyBytes(s []byte) []byte {
+	return f.sanitNameRegex.ReplaceAll(s, []byte{'_'})
 }
 
 // sanitizeKey returns sanitized value string performing the following substitutions:
@@ -103,7 +163,7 @@ func (f *prometheusFormatter) sanitizeValue(s string) string {
 func (f *prometheusFormatter) doubleLine(name string, attributes prometheusTags, value float64, timestamp pdata.Timestamp) string {
 	return fmt.Sprintf(
 		"%s%s %g %d",
-		f.sanitizeKey(name),
+		f.sanitizeKeyBytes([]byte(name)),
 		attributes,
 		value,
 		timestamp/pdata.Timestamp(time.Millisecond),
@@ -114,7 +174,7 @@ func (f *prometheusFormatter) doubleLine(name string, attributes prometheusTags,
 func (f *prometheusFormatter) intLine(name string, attributes prometheusTags, value int64, timestamp pdata.Timestamp) string {
 	return fmt.Sprintf(
 		"%s%s %d %d",
-		f.sanitizeKey(name),
+		f.sanitizeKeyBytes([]byte(name)),
 		attributes,
 		value,
 		timestamp/pdata.Timestamp(time.Millisecond),
@@ -125,7 +185,7 @@ func (f *prometheusFormatter) intLine(name string, attributes prometheusTags, va
 func (f *prometheusFormatter) uintLine(name string, attributes prometheusTags, value uint64, timestamp pdata.Timestamp) string {
 	return fmt.Sprintf(
 		"%s%s %d %d",
-		f.sanitizeKey(name),
+		f.sanitizeKeyBytes([]byte(name)),
 		attributes,
 		value,
 		timestamp/pdata.Timestamp(time.Millisecond),
@@ -186,6 +246,8 @@ func (f *prometheusFormatter) countMetric(name string) string {
 // mergeAttributes gets two pdata.AttributeMaps and returns new which contains values from both of them
 func (f *prometheusFormatter) mergeAttributes(attributes pdata.AttributeMap, additionalAttributes pdata.AttributeMap) pdata.AttributeMap {
 	mergedAttributes := pdata.NewAttributeMap()
+	mergedAttributes.EnsureCapacity(attributes.Len() + additionalAttributes.Len())
+
 	attributes.CopyTo(mergedAttributes)
 	additionalAttributes.Range(func(k string, v pdata.AttributeValue) bool {
 		mergedAttributes.Upsert(k, v)

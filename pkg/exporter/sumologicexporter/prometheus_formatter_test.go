@@ -28,7 +28,7 @@ func TestSanitizeKey(t *testing.T) {
 
 	key := "&^*123-abc-ABC!./?_:\n\r"
 	expected := "___123-abc-ABC_./__:__"
-	assert.Equal(t, expected, f.sanitizeKey(key))
+	assert.EqualValues(t, expected, f.sanitizeKeyBytes([]byte(key)))
 }
 
 func TestSanitizeValue(t *testing.T) {
@@ -204,5 +204,17 @@ func TestPrometheusMetrics(t *testing.T) {
 			result := f.metric2String(tt.metric)
 			assert.Equal(t, tt.expected, result)
 		})
+	}
+}
+
+func Benchmark_PrometheusFormatter_Metric2String(b *testing.B) {
+	f, err := newPrometheusFormatter()
+	require.NoError(b, err)
+
+	metric := buildExampleHistogramMetric(true)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = f.metric2String(metric)
 	}
 }
