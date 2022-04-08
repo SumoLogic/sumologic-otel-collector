@@ -17,6 +17,8 @@ package sumologicexporter
 import (
 	"fmt"
 	"regexp"
+
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 type sourceFormats struct {
@@ -73,10 +75,19 @@ func newSourceFormats(cfg *Config) (sourceFormats, error) {
 // format converts sourceFormat to string.
 // Takes fields and put into template (%s placeholders) in order defined by matches
 func (s *sourceFormat) format(f fields) string {
+	return s.formatPdataMap(f.orig)
+}
+
+// formatPdataMap converts sourceFormat to string.
+// Takes pdata.Map attributes and puts them into template (%s placeholders)
+// in order defined by matches.
+//
+// The provided attribute map has to be initialized before calling this func.
+func (s *sourceFormat) formatPdataMap(m pdata.Map) string {
 	labels := make([]interface{}, 0, len(s.matches))
 
 	for _, matchset := range s.matches {
-		v, ok := f.orig.Get(matchset)
+		v, ok := m.Get(matchset)
 		if ok {
 			labels = append(labels, v.AsString())
 		} else {

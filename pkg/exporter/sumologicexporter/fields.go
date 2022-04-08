@@ -24,13 +24,19 @@ import (
 
 // fields represents metadata
 type fields struct {
-	orig pdata.AttributeMap
+	orig        pdata.AttributeMap
+	initialized bool
 }
 
 func newFields(attrMap pdata.AttributeMap) fields {
 	return fields{
-		orig: attrMap,
+		orig:        attrMap,
+		initialized: true,
 	}
+}
+
+func (f fields) isInitialized() bool {
+	return f.initialized
 }
 
 func (f fields) isEmpty() bool {
@@ -47,6 +53,10 @@ func (f fields) equals(other fields) bool {
 
 // string returns fields as ordered key=value string with `, ` as separator
 func (f fields) string() string {
+	if !f.initialized {
+		return ""
+	}
+
 	returnValue := make([]string, 0, f.orig.Len())
 
 	f.orig.Range(func(k string, v pdata.AttributeValue) bool {
