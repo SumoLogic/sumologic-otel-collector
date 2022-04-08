@@ -1,0 +1,21 @@
+receivers:
+  raw_k8s_events:
+  raw_k8s_events/all_settings:
+    auth_type: serviceAccount
+    namespaces: []
+    max_event_age: 1m
+    consume_max_retries: 10
+    consume_retry_delay: 500ms
+
+processors:
+  nop:
+
+exporters:
+  nop:
+
+service:
+  pipelines:
+    logs:
+      receivers: [raw_k8s_events]
+      processors: [nop]
+      exporters: [nop]
