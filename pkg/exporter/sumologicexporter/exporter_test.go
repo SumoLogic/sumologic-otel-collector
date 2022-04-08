@@ -1454,7 +1454,7 @@ func TestPushOTLPMetrics_AttributeTranslation(t *testing.T) {
 				cfg := createConfig()
 				// NOTE: MetadataAttributes does not have an impact on exporter
 				// behavior when using OTLP. What gets sent as fields is purely
-				// depdendent on what's in resource attributes.
+				// dependent on what's in resource attributes.
 				cfg.MetadataAttributes = []string{}
 				cfg.SourceCategory = "source_category_with_hostname_%{host.name}"
 				cfg.SourceHost = "%{host}"

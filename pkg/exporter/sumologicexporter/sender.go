@@ -415,10 +415,14 @@ func isEmptyAttributeValue(att pdata.AttributeValue) bool {
 		t == pdata.AttributeValueTypeBytes && len(att.BytesVal()) > 0)
 }
 
-// sendLogs sends log records from the logBuffer formatted according
+// sendNonOTLPLogs sends log records from the logBuffer formatted according
 // to configured LogFormat and as the result of execution
 // returns array of records which has not been sent correctly and error
-func (s *sender) sendLogs(ctx context.Context, flds fields) ([]logPair, error) {
+func (s *sender) sendNonOTLPLogs(ctx context.Context, flds fields) ([]logPair, error) {
+	if s.config.LogFormat == OTLPLogFormat {
+		return nil, fmt.Errorf("Attempting to send OTLP logs as non-OTLP data")
+	}
+
 	var (
 		body           bodyBuilder = newBodyBuilder()
 		errs           []error
@@ -514,8 +518,12 @@ func (s *sender) sendOTLPLogs(ctx context.Context, ld pdata.Logs) error {
 	return s.send(ctx, LogsPipeline, newCountingReader(ld.LogRecordCount()).withBytes(body), fields{})
 }
 
-// sendMetrics sends metrics in right format basing on the s.config.MetricFormat
-func (s *sender) sendMetrics(ctx context.Context, flds fields) ([]metricPair, error) {
+// sendNonOTLPMetrics sends metrics in right format basing on the s.config.MetricFormat
+func (s *sender) sendNonOTLPMetrics(ctx context.Context, flds fields) ([]metricPair, error) {
+	if s.config.MetricFormat == OTLPMetricFormat {
+		return nil, fmt.Errorf("Attempting to send OTLP metrics as non-OTLP data")
+	}
+
 	var (
 		body           bodyBuilder
 		errs           []error
@@ -680,7 +688,7 @@ func (s *sender) batchLog(ctx context.Context, log logPair, metadata fields) ([]
 	s.logBuffer = append(s.logBuffer, log)
 
 	if s.countLogs() >= maxBufferSize {
-		dropped, err := s.sendLogs(ctx, metadata)
+		dropped, err := s.sendNonOTLPLogs(ctx, metadata)
 		s.cleanLogsBuffer()
 		return dropped, err
 	}
@@ -704,7 +712,7 @@ func (s *sender) batchMetric(ctx context.Context, metric metricPair, metadata fi
 	s.metricBuffer = append(s.metricBuffer, metric)
 
 	if s.countMetrics() >= maxBufferSize {
-		dropped, err := s.sendMetrics(ctx, metadata)
+		dropped, err := s.sendNonOTLPMetrics(ctx, metadata)
 		s.cleanMetricBuffer()
 		return dropped, err
 	}

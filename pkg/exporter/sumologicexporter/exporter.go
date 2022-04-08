@@ -307,7 +307,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 				// If metadata differs from currently buffered, flush the buffer
 				if !currentMetadata.equals(previousMetadata) && !previousMetadata.isEmpty() {
 					var dropped []logPair
-					dropped, err = sdr.sendLogs(ctx, previousMetadata)
+					dropped, err = sdr.sendNonOTLPLogs(ctx, previousMetadata)
 					if err != nil {
 						errs = append(errs, err)
 						droppedRecords = append(droppedRecords, dropped...)
@@ -330,7 +330,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 	}
 
 	// Flush pending logs
-	dropped, err := sdr.sendLogs(ctx, previousMetadata)
+	dropped, err := sdr.sendNonOTLPLogs(ctx, previousMetadata)
 	if err != nil {
 		droppedRecords = append(droppedRecords, dropped...)
 		errs = append(errs, err)
@@ -437,7 +437,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 				if !currentMetadata.equals(previousMetadata) && !previousMetadata.isEmpty() {
 					var dropped []metricPair
 					var err error
-					dropped, err = sdr.sendMetrics(ctx, previousMetadata)
+					dropped, err = sdr.sendNonOTLPMetrics(ctx, previousMetadata)
 					if err != nil {
 						errs = append(errs, err)
 						droppedRecords = append(droppedRecords, dropped...)
@@ -460,7 +460,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 	}
 
 	// Flush pending metrics
-	dropped, err := sdr.sendMetrics(ctx, previousMetadata)
+	dropped, err := sdr.sendNonOTLPMetrics(ctx, previousMetadata)
 	if err != nil {
 		droppedRecords = append(droppedRecords, dropped...)
 		errs = append(errs, err)
