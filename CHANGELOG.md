@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- chore: bump OT core to v0.48.0 [#534][#534]
+
+### Fixed
+
+- fix(sumologicexporter): treat resource attributes as fields for otlp #536
+
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.47.0-sumo-0...main
+[#534]: https://github.com/SumoLogic/sumologic-otel-collector/pull/534
+[#536]: https://github.com/SumoLogic/sumologic-otel-collector/pull/536
 
 ## [v0.47.0-sumo-0]
 
