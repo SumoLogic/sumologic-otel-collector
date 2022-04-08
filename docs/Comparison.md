@@ -78,19 +78,33 @@
 
 ## Data model considerations
 
-OpenTelemetry has a [rich data model](https://github.com/open-telemetry/opentelemetry-proto/tree/main/opentelemetry/proto), which is internally constructed out of several layers. For all signals, these can be broken down into following:
+OpenTelemetry has a [rich data model], which is internally constructed out of several layers. For all signals,
+these can be broken down into following:
 
-- **Resource** - it includes Attributes describing the resource from which given set of data comes from. Should follow resource [semantic conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions).
+- **Resource** - includes Attributes describing the resource from which given set of data comes from.
+  Should follow [resource semantic conventions].
 - **Instrumentation Scope** - additional information about the scope of data (e.g. instrumentation library name).
-- **Record** - specific record (Log, Span, Metric) that also includes its own set of Attributes. May follow given signal type semantic conventions (e.g. [trace](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions), [metrics](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/metrics/semantic_conventions), [logs](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/logs/semantic_conventions)), though they may also contain key/values that are specific to the context of the record. Additionally, Logs can also include attributes in the Body.
+- **Record** - specific record (Log, Span, Metric) that also includes its own set of Attributes. May follow given
+  signal type semantic conventions (e.g. [trace], [metrics], [logs]), though they may also contain key/values that are
+  specific to the context of the record. Additionally, Logs can also include attributes in the Body.
 
-As can be observed, while attributes can be present at both Resource and Record level currently, they are not created equal and should be interpreted separately. Resource-level attributes have a much wider scope and are used to identify where the data comes from while Record-level attributes context is much narrower, related just to the single record, frequently with much high cardinality of both keys and values.
+As can be observed, while attributes can be present at both Resource and Record level currently, they are not created
+equal and should be interpreted separately. Resource-level attributes have a much wider scope and are used to identify
+where the data comes from while Record-level attributes context is much narrower, related just to the single record,
+frequently with much high cardinality of both keys and values.
 
-At Sumo Logic, there is a concept of [Fields](https://help.sumologic.com/Manage/Fields) for log data. Fields offer a powerful capability to associate indexable metadata with logs, though only limited number of them can be used at a given time. Also, they need to be defined first.
+At Sumo Logic, there is a concept of [Fields](https://help.sumologic.com/Manage/Fields) for log data. Fields offer
+a powerful capability to associate indexable metadata with logs, though only limited number of them can be used
+at a given time. Also, they need to be defined first.
 
-Looking from the OpenTelemetry standpoint, Fields are a good match for Resource-level attributes, while Log Record-level attributes are good fit for [structured representation of the log via JSON](https://help.sumologic.com/05Search/Get-Started-with-Search/Search-Basics/View-Search-Results-for-JSON-Logs), which is automatically supported by Sumo Logic Search.
+Looking from the OpenTelemetry standpoint, Fields are a good match for Resource-level attributes,
+while Log Record-level attributes are good fit for [structured representation of the log via JSON], which
+is automatically supported by Sumo Logic Search.
 
-All resource-level attributes are stored as fields. If a matching field is not defined, it will be dropped. When log contains record-level attributes, they are stored as JSON representation. Body, if present, is then stored under `log` key.
+All resource-level attributes are stored as fields. If a matching field is not defined, it will be skipped (the list
+of ignored fields can be checked via [dropped fields view]).
+When log contains record-level attributes, they are stored as JSON representation. Body, if present, is then
+stored under `log` key.
 
 ### Examples
 
@@ -341,3 +355,11 @@ that don't have equivalents in the OpenTelemetry Collector:
 - `TCP_Idle`
 - `Disk_Queue`
 - `Disk_Available`
+
+[rich data model]: https://github.com/open-telemetry/opentelemetry-proto/tree/main/opentelemetry/proto
+[resource semantic conventions]: https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions
+[trace]: https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions
+[metrics]: https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/metrics/semantic_conventions
+[logs]: https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/logs/semantic_conventions
+[structured representation of the log via JSON]: https://help.sumologic.com/05Search/Get-Started-with-Search/Search-Basics/View-Search-Results-for-JSON-Logs
+[dropped fields view]: https://help.sumologic.com/Manage/Fields#view-dropped-fields
