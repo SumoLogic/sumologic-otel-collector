@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- feat: add rawk8seventsreceiver [#547][#547]
+
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.49.0-sumo-0...main
+[#547]: https://github.com/SumoLogic/sumologic-otel-collector/pull/547
 
 ## [v0.49.0-sumo-0]
 
