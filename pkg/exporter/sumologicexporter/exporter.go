@@ -224,13 +224,6 @@ func newTracesExporter(
 // It returns the number of unsent logs and an error which contains a list of dropped records
 // so they can be handled by OTC retry mechanism
 func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) error {
-	var (
-		currentMetadata  fields = newFields(pdata.NewAttributeMap())
-		previousMetadata fields = newFields(pdata.NewAttributeMap())
-		errs             []error
-		droppedRecords   []logPair
-	)
-
 	compr, err := se.getCompressor()
 	if err != nil {
 		return consumererror.NewLogs(err, ld)
@@ -250,6 +243,22 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		metricsUrl,
 		logsUrl,
 		tracesUrl,
+	)
+
+	// Follow different execution path for OTLP format
+	if sdr.config.LogFormat == OTLPLogFormat {
+		if err := sdr.sendOTLPLogs(ctx, ld); err != nil {
+			se.handleUnauthorizedErrors(ctx, err)
+			return consumererror.NewLogs(err, ld)
+		}
+		return nil
+	}
+
+	var (
+		currentMetadata  fields = newFields(pdata.NewAttributeMap())
+		previousMetadata fields = newFields(pdata.NewAttributeMap())
+		errs             []error
+		droppedRecords   []logPair
 	)
 
 	// Iterate over ResourceLogs
@@ -298,7 +307,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 				// If metadata differs from currently buffered, flush the buffer
 				if !currentMetadata.equals(previousMetadata) && !previousMetadata.isEmpty() {
 					var dropped []logPair
-					dropped, err = sdr.sendLogs(ctx, previousMetadata)
+					dropped, err = sdr.sendNonOTLPLogs(ctx, previousMetadata)
 					if err != nil {
 						errs = append(errs, err)
 						droppedRecords = append(droppedRecords, dropped...)
@@ -321,7 +330,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 	}
 
 	// Flush pending logs
-	dropped, err := sdr.sendLogs(ctx, previousMetadata)
+	dropped, err := sdr.sendNonOTLPLogs(ctx, previousMetadata)
 	if err != nil {
 		droppedRecords = append(droppedRecords, dropped...)
 		errs = append(errs, err)
@@ -351,14 +360,6 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 // it returns number of unsent metrics and error which contains list of dropped records
 // so they can be handle by the OTC retry mechanism
 func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metrics) error {
-	var (
-		currentMetadata  fields = newFields(pdata.NewAttributeMap())
-		previousMetadata fields = newFields(pdata.NewAttributeMap())
-		errs             []error
-		droppedRecords   []metricPair
-		attributes       pdata.AttributeMap
-	)
-
 	compr, err := se.getCompressor()
 	if err != nil {
 		return consumererror.NewMetrics(err, md)
@@ -380,12 +381,28 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		tracesUrl,
 	)
 
+	// Follow different execution path for OTLP format
+	if sdr.config.MetricFormat == OTLPMetricFormat {
+		if err := sdr.sendOTLPMetrics(ctx, md); err != nil {
+			se.handleUnauthorizedErrors(ctx, err)
+			return consumererror.NewMetrics(err, md)
+		}
+		return nil
+	}
+
+	var (
+		currentMetadata  fields = newFields(pdata.NewAttributeMap())
+		previousMetadata fields = newFields(pdata.NewAttributeMap())
+		errs             []error
+		droppedRecords   []metricPair
+	)
+
 	// Iterate over ResourceMetrics
 	rms := md.ResourceMetrics()
 	for i := 0; i < rms.Len(); i++ {
 		rm := rms.At(i)
 
-		attributes = rm.Resource().Attributes()
+		attributes := rm.Resource().Attributes()
 
 		// drop routing attribute
 		se.dropRoutingAttribute(attributes)
@@ -420,7 +437,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 				if !currentMetadata.equals(previousMetadata) && !previousMetadata.isEmpty() {
 					var dropped []metricPair
 					var err error
-					dropped, err = sdr.sendMetrics(ctx, previousMetadata)
+					dropped, err = sdr.sendNonOTLPMetrics(ctx, previousMetadata)
 					if err != nil {
 						errs = append(errs, err)
 						droppedRecords = append(droppedRecords, dropped...)
@@ -443,7 +460,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 	}
 
 	// Flush pending metrics
-	dropped, err := sdr.sendMetrics(ctx, previousMetadata)
+	dropped, err := sdr.sendNonOTLPMetrics(ctx, previousMetadata)
 	if err != nil {
 		droppedRecords = append(droppedRecords, dropped...)
 		errs = append(errs, err)
@@ -489,8 +506,6 @@ func (se *sumologicexporter) handleUnauthorizedErrors(ctx context.Context, errs 
 }
 
 func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces) error {
-	var currentMetadata fields = newFields(pdata.NewAttributeMap())
-
 	compr, err := se.getCompressor()
 	if err != nil {
 		return consumererror.NewTraces(err, td)
@@ -518,13 +533,9 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces
 		se.dropRoutingAttribute(rss.At(i).Resource().Attributes())
 	}
 
-	err = sdr.sendTraces(ctx, td, currentMetadata)
+	err = sdr.sendTraces(ctx, td)
 	se.handleUnauthorizedErrors(ctx, err)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (se *sumologicexporter) getCompressor() (compressor, error) {

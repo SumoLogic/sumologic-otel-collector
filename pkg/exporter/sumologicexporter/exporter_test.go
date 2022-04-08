@@ -276,6 +276,8 @@ func TestPushInvalidCompressor(t *testing.T) {
 }
 
 func TestPushFailedBatch(t *testing.T) {
+	t.Parallel()
+
 	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
@@ -392,9 +394,12 @@ func TestPushOTLPLogs_AttributeTranslation(t *testing.T) {
 			name: "enabled",
 			configFunc: func() *Config {
 				config := createTestConfig()
-				config.MetadataAttributes = []string{`host\.name`}
-				config.SourceCategory = "%{host.name}"
-				config.SourceHost = "%{host}"
+				// NOTE: MetadataAttributes does not have an impact on exporter
+				// behavior when using OTLP. What gets sent as fields is purely
+				// depdendent on what's in resource attributes.
+				config.MetadataAttributes = []string{}
+				config.SourceCategory = "category_with_host_template_%{host.name}"
+				config.SourceHost = "%{host.name}"
 				config.LogFormat = OTLPLogFormat
 				config.TranslateAttributes = true
 				return config
@@ -402,18 +407,22 @@ func TestPushOTLPLogs_AttributeTranslation(t *testing.T) {
 			callbacks: []func(w http.ResponseWriter, req *http.Request){
 				func(w http.ResponseWriter, req *http.Request) {
 					body := extractBody(t, req)
-					//nolint:lll
-					assert.Equal(t, "\n\xae\x01\nB\n\x1d\n\v_sourceHost\x12\x0e\n\fharry-potter\n!\n\x0f_sourceCategory\x12\x0e\n\fharry-potter\x12h\n\x00\x12d*\r\n\vExample log2\x16\n\x04host\x12\x0e\n\fharry-potter2\x18\n\fInstanceType\x12\b\n\x06wizard2\x1d\n\v_sourceName\x12\x0e\n\f/tmp/log.logJ\x00R\x00", body)
-					// TODO: Revisit: this should probably be empty when sending with OTLP
-					assert.Equal(t, "host=harry-potter", req.Header.Get("X-Sumo-Fields"), "X-Sumo-Fields")
-					// TODO: Revisit: this should probably be empty when sending with OTLP
-					assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"), "X-Sumo-Category")
 
-					// This gets the value from 'host.name' because we do not disallow
-					// using Sumo schema and 'host.name' from OT convention
-					// translates into 'host' in Sumo convention
-					// TODO: Revisit: this should probably be empty when sending with OTLP
-					assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Host"), "X-Sumo-Host")
+					//nolint:lll
+					assert.Equal(t, "\n\xcb\x01\n\xaf\x01\n\x16\n\x04host\x12\x0e\n\fharry-potter\n\x18\n\fInstanceType\x12\b\n\x06wizard\n\x1d\n\v_sourceName\x12\x0e\n\f/tmp/log.log\n\x1d\n\v_sourceHost\x12\x0e\n\fharry-potter\n=\n\x0f_sourceCategory\x12*\n(category_with_host_template_harry-potter\x12\x17\n\x00\x12\x13*\r\n\vExample logJ\x00R\x00", body)
+
+					assert.Empty(t, req.Header.Get("X-Sumo-Fields"),
+						"We should not get X-Sumo-Fields header when sending data with OTLP",
+					)
+					assert.Empty(t, req.Header.Get("X-Sumo-Category"),
+						"We should not get X-Sumo-Category header when sending data with OTLP",
+					)
+					assert.Empty(t, req.Header.Get("X-Sumo-Name"),
+						"We should not get X-Sumo-Name header when sending data with OTLP",
+					)
+					assert.Empty(t, req.Header.Get("X-Sumo-Host"),
+						"We should not get X-Sumo-Host header when sending data with OTLP",
+					)
 				},
 			},
 		},
@@ -421,9 +430,12 @@ func TestPushOTLPLogs_AttributeTranslation(t *testing.T) {
 			name: "disabled",
 			configFunc: func() *Config {
 				config := createTestConfig()
-				config.MetadataAttributes = []string{`host\.name`}
-				config.SourceCategory = "%{host.name}"
-				config.SourceHost = "%{host}"
+				// NOTE: MetadataAttributes does not have an impact on exporter
+				// behavior when using OTLP. What gets sent as fields is purely
+				// depdendent on what's in resource attributes.
+				config.MetadataAttributes = []string{}
+				config.SourceCategory = "category_with_host_template_%{host.name}"
+				config.SourceHost = "%{host.name}"
 				config.LogFormat = OTLPLogFormat
 				config.TranslateAttributes = false
 				return config
@@ -431,15 +443,22 @@ func TestPushOTLPLogs_AttributeTranslation(t *testing.T) {
 			callbacks: []func(w http.ResponseWriter, req *http.Request){
 				func(w http.ResponseWriter, req *http.Request) {
 					body := extractBody(t, req)
-					//nolint:lll
-					assert.Equal(t, "\n\xb4\x01\n?\n\x1a\n\v_sourceHost\x12\v\n\tundefined\n!\n\x0f_sourceCategory\x12\x0e\n\fharry-potter\x12q\n\x00\x12m*\r\n\vExample log2\x1b\n\thost.name\x12\x0e\n\fharry-potter2\x15\n\thost.type\x12\b\n\x06wizard2$\n\x12file.path.resolved\x12\x0e\n\f/tmp/log.logJ\x00R\x00", body)
 
-					// TODO: Revisit: this should probably be empty when sending with OTLP
-					assert.Equal(t, "host.name=harry-potter", req.Header.Get("X-Sumo-Fields"), "X-Sumo-Fields")
-					// TODO: Revisit: this should probably be empty when sending with OTLP
-					assert.Equal(t, "harry-potter", req.Header.Get("X-Sumo-Category"), "X-Sumo-Category")
-					// TODO: Revisit: this should probably be empty when sending with OTLP
-					assert.Equal(t, "undefined", req.Header.Get("X-Sumo-Host"), "X-Sumo-Host")
+					//nolint:lll
+					assert.Equal(t, "\n\xd4\x01\n\xb8\x01\n\x1b\n\thost.name\x12\x0e\n\fharry-potter\n\x15\n\thost.type\x12\b\n\x06wizard\n$\n\x12file.path.resolved\x12\x0e\n\f/tmp/log.log\n\x1d\n\v_sourceHost\x12\x0e\n\fharry-potter\n=\n\x0f_sourceCategory\x12*\n(category_with_host_template_harry-potter\x12\x17\n\x00\x12\x13*\r\n\vExample logJ\x00R\x00", body)
+
+					assert.Empty(t, req.Header.Get("X-Sumo-Fields"),
+						"We should not get X-Sumo-Fields header when sending data with OTLP",
+					)
+					assert.Empty(t, req.Header.Get("X-Sumo-Category"),
+						"We should not get X-Sumo-Category header when sending data with OTLP",
+					)
+					assert.Empty(t, req.Header.Get("X-Sumo-Name"),
+						"We should not get X-Sumo-Name header when sending data with OTLP",
+					)
+					assert.Empty(t, req.Header.Get("X-Sumo-Host"),
+						"We should not get X-Sumo-Host header when sending data with OTLP",
+					)
 				},
 			},
 		},
@@ -1425,51 +1444,42 @@ func TestPushOTLPMetrics_AttributeTranslation(t *testing.T) {
 	}
 
 	testcases := []struct {
-		name            string
-		cfgFn           func() *Config
-		expectedHeaders map[string]string
-		expectedBody    string
+		name         string
+		cfgFn        func() *Config
+		expectedBody string
 	}{
 		{
 			name: "enabled",
 			cfgFn: func() *Config {
 				cfg := createConfig()
-				cfg.MetadataAttributes = []string{`host\.name`}
-				cfg.SourceCategory = "%{host.name}"
+				// NOTE: MetadataAttributes does not have an impact on exporter
+				// behavior when using OTLP. What gets sent as fields is purely
+				// dependent on what's in resource attributes.
+				cfg.MetadataAttributes = []string{}
+				cfg.SourceCategory = "source_category_with_hostname_%{host.name}"
 				cfg.SourceHost = "%{host}"
 				// This is and should be done by default:
 				// cfg.TranslateAttributes = true
 				return cfg
 			},
-			expectedHeaders: map[string]string{
-				"Content-Type":    "application/x-protobuf",
-				"X-Sumo-Category": "harry-potter",
-
-				// This gets the value from 'host.name' because we do not disallow
-				// using Sumo schema and 'host.name' from OT convention
-				// translates into 'host' in Sumo convention
-				"X-Sumo-Host": "harry-potter",
-			},
 			//nolint:lll
-			expectedBody: "\n\xdb\x01\n\xa3\x01\n\x14\n\x04test\x12\f\n\ntest_value\n\x17\n\x05test2\x12\x0e\n\fsecond_value\n\x16\n\x04host\x12\x0e\n\fharry-potter\n\x18\n\fInstanceType\x12\b\n\x06wizard\n\x1d\n\v_sourceHost\x12\x0e\n\fharry-potter\n!\n\x0f_sourceCategory\x12\x0e\n\fharry-potter\x123\n\x00\x12/\n\x10test.metric.data\x1a\x05bytes:\x14\n\x12\x19\x00\x12\x94\v\xd1\x00H\x161\xa48\x00\x00\x00\x00\x00\x00",
+			expectedBody: "\n\xf9\x01\n\xc1\x01\n\x14\n\x04test\x12\f\n\ntest_value\n\x17\n\x05test2\x12\x0e\n\fsecond_value\n\x16\n\x04host\x12\x0e\n\fharry-potter\n\x18\n\fInstanceType\x12\b\n\x06wizard\n\x1d\n\v_sourceHost\x12\x0e\n\fharry-potter\n?\n\x0f_sourceCategory\x12,\n*source_category_with_hostname_harry-potter\x123\n\x00\x12/\n\x10test.metric.data\x1a\x05bytes:\x14\n\x12\x19\x00\x12\x94\v\xd1\x00H\x161\xa48\x00\x00\x00\x00\x00\x00",
 		},
 		{
 			name: "disabled",
 			cfgFn: func() *Config {
 				cfg := createConfig()
-				cfg.MetadataAttributes = []string{`host\.name`}
-				cfg.SourceCategory = "%{host.name}"
-				cfg.SourceHost = "%{host}"
+				// NOTE: MetadataAttributes does not have an impact on exporter
+				// behavior when using OTLP. What gets sent as fields is purely
+				// depdendent on what's in resource attributes.
+				cfg.MetadataAttributes = []string{}
+				cfg.SourceCategory = "source_category_with_hostname_%{host.name}"
+				cfg.SourceHost = "%{host.name}"
 				cfg.TranslateAttributes = false
 				return cfg
 			},
-			expectedHeaders: map[string]string{
-				"Content-Type":    "application/x-protobuf",
-				"X-Sumo-Category": "harry-potter",
-				"X-Sumo-Host":     "undefined",
-			},
 			//nolint:lll
-			expectedBody: "\n\xda\x01\n\xa2\x01\n\x14\n\x04test\x12\f\n\ntest_value\n\x17\n\x05test2\x12\x0e\n\fsecond_value\n\x1b\n\thost.name\x12\x0e\n\fharry-potter\n\x15\n\thost.type\x12\b\n\x06wizard\n\x1a\n\v_sourceHost\x12\v\n\tundefined\n!\n\x0f_sourceCategory\x12\x0e\n\fharry-potter\x123\n\x00\x12/\n\x10test.metric.data\x1a\x05bytes:\x14\n\x12\x19\x00\x12\x94\v\xd1\x00H\x161\xa48\x00\x00\x00\x00\x00\x00",
+			expectedBody: "\n\xfb\x01\n\xc3\x01\n\x14\n\x04test\x12\f\n\ntest_value\n\x17\n\x05test2\x12\x0e\n\fsecond_value\n\x1b\n\thost.name\x12\x0e\n\fharry-potter\n\x15\n\thost.type\x12\b\n\x06wizard\n\x1d\n\v_sourceHost\x12\x0e\n\fharry-potter\n?\n\x0f_sourceCategory\x12,\n*source_category_with_hostname_harry-potter\x123\n\x00\x12/\n\x10test.metric.data\x1a\x05bytes:\x14\n\x12\x19\x00\x12\x94\v\xd1\x00H\x161\xa48\x00\x00\x00\x00\x00\x00",
 		},
 	}
 
@@ -1487,11 +1497,21 @@ func TestPushOTLPMetrics_AttributeTranslation(t *testing.T) {
 			callbacks := []func(w http.ResponseWriter, req *http.Request){
 				func(w http.ResponseWriter, req *http.Request) {
 					assert.Equal(t, tc.expectedBody, extractBody(t, req))
-					for header, expectedValue := range tc.expectedHeaders {
-						assert.Equalf(t, expectedValue, req.Header.Get(header),
-							"Unexpected value in header: %s", header,
-						)
-					}
+
+					assert.Equal(t, "application/x-protobuf", req.Header.Get("Content-Type"))
+
+					assert.Empty(t, req.Header.Get("X-Sumo-Fields"),
+						"We should not get X-Sumo-Fields header when sending data with OTLP",
+					)
+					assert.Empty(t, req.Header.Get("X-Sumo-Category"),
+						"We should not get X-Sumo-Category header when sending data with OTLP",
+					)
+					assert.Empty(t, req.Header.Get("X-Sumo-Name"),
+						"We should not get X-Sumo-Name header when sending data with OTLP",
+					)
+					assert.Empty(t, req.Header.Get("X-Sumo-Host"),
+						"We should not get X-Sumo-Host header when sending data with OTLP",
+					)
 				},
 			}
 			test := prepareExporterTest(t, config, callbacks)
