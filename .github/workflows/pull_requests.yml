@@ -328,7 +328,7 @@ jobs:
 
       - name: Download binary action artifact from build phase
         if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: otelcol-sumo-${{matrix.arch_os}}
           path: artifacts/
