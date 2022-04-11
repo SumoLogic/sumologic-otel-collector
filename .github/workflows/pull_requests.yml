@@ -284,7 +284,7 @@ jobs:
 
       - name: Store binary as action artifact
         if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: otelcol-sumo-${{matrix.arch_os}}
           path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}
