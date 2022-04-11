@@ -112,14 +112,14 @@ jobs:
       #   working-directory: ./otelcolbuilder/cmd/
 
       - name: Store binary as action artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: otelcol-sumo-${{matrix.arch_os}}
           path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}
           if-no-files-found: error
 
       - name: Store list of included modules as action artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: otelcol-sumo-${{matrix.arch_os}}_modules.txt
           path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}_modules.txt

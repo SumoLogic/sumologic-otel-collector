@@ -81,7 +81,7 @@ jobs:
           tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
 
       - name: Store binary as action artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{matrix.arch_os}}
           path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
@@ -184,14 +184,14 @@ jobs:
       # Store binary and .dmg into pipeline artifacts after they have been signed
 
       - name: Store .dmg as action artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{matrix.arch_os}}.dmg
           path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}.dmg
           if-no-files-found: error
 
       - name: Store binary as action artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{matrix.arch_os}}
           path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
