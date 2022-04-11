@@ -154,7 +154,7 @@ jobs:
         run: echo ${{ steps.buildx.outputs.platforms }}
 
       - name: Download binary action artifact from build phase
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: otelcol-sumo-${{ matrix.arch_os }}
 

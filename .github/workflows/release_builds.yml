@@ -226,7 +226,7 @@ jobs:
         run: echo ${{ steps.buildx.outputs.platforms }}
 
       - name: Download binary action artifact from build phase
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: ${{matrix.arch_os}}
           path: artifacts/
@@ -305,7 +305,7 @@ jobs:
         run: echo "v${{ steps.extract_tag.outputs.tag }}"
 
       - name: Download all binaries stored as artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           path: artifacts/
 
