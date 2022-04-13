@@ -1,0 +1,45 @@
+package mysqlreceiver 
+
+import (
+	"context"
+
+	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/config"
+	"go.opentelemetry.io/collector/config/confignet"
+	"go.opentelemetry.io/collector/consumer"
+)
+
+const (
+	typeStr = "mysql"
+)
+
+
+func NewFactory() component.ReceiverFactory {
+	return component.NewReceiverFactory(
+		typeStr,
+		createDefaultConfig,
+		component.WithLogsReceiver(CreateLogsReceiver))
+}
+
+func createDefaultConfig() config.Receiver {
+	return &Config{
+		AllowNativePasswords: true,
+		Username:             "root",
+		NetAddr: confignet.NetAddr{
+			Endpoint:  "localhost:3306",
+			Transport: "tcp",
+		},
+	}
+}
+
+
+func CreateLogsReceiver(
+	_ context.Context,
+	params component.ReceiverCreateSettings,
+	rConf config.Receiver,
+	consumer consumer.Logs,
+) (component.LogsReceiver, error) {
+	
+	cfg := rConf.(*Config)
+	return newMySQLReceiver(params.Logger, cfg, consumer)
+}
