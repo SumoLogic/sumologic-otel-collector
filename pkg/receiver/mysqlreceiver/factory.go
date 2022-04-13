@@ -22,7 +22,10 @@ func NewFactory() component.ReceiverFactory {
 }
 
 func createDefaultConfig() config.Receiver {
+	rs := config.NewReceiverSettings(config.NewComponentID(typeStr))
+
 	return &Config{
+		ReceiverSettings:   &rs,
 		AllowNativePasswords: true,
 		Username:             "root",
 		NetAddr: confignet.NetAddr{
