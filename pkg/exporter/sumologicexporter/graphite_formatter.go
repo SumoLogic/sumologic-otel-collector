@@ -101,20 +101,20 @@ func (gf *graphiteFormatter) numberRecord(fs fields, name string, dataPoint pdat
 }
 
 // metric2String returns stringified metricPair
-func (gf *graphiteFormatter) metric2String(record metricPair) string {
+func (gf *graphiteFormatter) metric2String(metric pdata.Metric, attributes pdata.Map) string {
 	var nextLines []string
-	fs := newFields(record.attributes)
-	name := record.metric.Name()
+	fs := newFields(attributes)
+	name := metric.Name()
 
-	switch record.metric.DataType() {
+	switch metric.DataType() {
 	case pdata.MetricDataTypeGauge:
-		dps := record.metric.Gauge().DataPoints()
+		dps := metric.Gauge().DataPoints()
 		nextLines = make([]string, 0, dps.Len())
 		for i := 0; i < dps.Len(); i++ {
 			nextLines = append(nextLines, gf.numberRecord(fs, name, dps.At(i)))
 		}
 	case pdata.MetricDataTypeSum:
-		dps := record.metric.Sum().DataPoints()
+		dps := metric.Sum().DataPoints()
 		nextLines = make([]string, 0, dps.Len())
 		for i := 0; i < dps.Len(); i++ {
 			nextLines = append(nextLines, gf.numberRecord(fs, name, dps.At(i)))

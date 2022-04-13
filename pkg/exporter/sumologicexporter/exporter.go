@@ -254,11 +254,13 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		return nil
 	}
 
+	type droppedResourceRecords struct {
+		resource pdata.Resource
+		records  []pdata.LogRecord
+	}
 	var (
-		currentMetadata  fields = newFields(pdata.NewAttributeMap())
-		previousMetadata fields = newFields(pdata.NewAttributeMap())
-		errs             []error
-		droppedRecords   []logPair
+		errs    []error
+		dropped []droppedResourceRecords
 	)
 
 	// Iterate over ResourceLogs
@@ -266,91 +268,41 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 	for i := 0; i < rls.Len(); i++ {
 		rl := rls.At(i)
 
-		// drop routing attribute
 		se.dropRoutingAttribute(rl.Resource().Attributes())
+		currentMetadata := newFields(rl.Resource().Attributes())
+		if se.config.TranslateAttributes {
+			currentMetadata.translateAttributes()
+		}
 
-		ills := rl.InstrumentationLibraryLogs()
-		// iterate over InstrumentationLibraryLogs
-		for j := 0; j < ills.Len(); j++ {
-			ill := ills.At(j)
-
-			// iterate over Logs
-			logs := ill.LogRecords()
-			for k := 0; k < logs.Len(); k++ {
-				log := logs.At(k)
-				logAttrs := log.Attributes()
-
-				// copy resource attributes into logs attributes
-				// log attributes have precedence over resource attributes
-				attributes := pdata.NewAttributeMap()
-				attributes.EnsureCapacity(
-					logAttrs.Len() + rl.Resource().Attributes().Len(),
-				)
-				logAttrs.CopyTo(attributes)
-				rl.Resource().Attributes().Range(func(k string, v pdata.AttributeValue) bool {
-					attributes.Insert(k, v)
-					return true
-				})
-
-				// Put merged attributes into logPair
-				lp := logPair{
-					log:        log,
-					attributes: attributes,
-				}
-
-				currentMetadata = sdr.filter.filterIn(attributes)
-
-				if se.config.TranslateAttributes {
-					currentMetadata.translateAttributes()
-				}
-
-				// If metadata differs from currently buffered, flush the buffer
-				if !currentMetadata.equals(previousMetadata) && !previousMetadata.isEmpty() {
-					var dropped []logPair
-					dropped, err = sdr.sendNonOTLPLogs(ctx, previousMetadata)
-					if err != nil {
-						errs = append(errs, err)
-						droppedRecords = append(droppedRecords, dropped...)
-					}
-					sdr.cleanLogsBuffer()
-				}
-
-				// assign metadata
-				previousMetadata = currentMetadata
-
-				// add log to the buffer
-				var dropped []logPair
-				dropped, err = sdr.batchLog(ctx, lp, previousMetadata)
-				if err != nil {
-					droppedRecords = append(droppedRecords, dropped...)
-					errs = append(errs, err)
-				}
-			}
+		if droppedRecords, err := sdr.sendNonOTLPLogs(ctx, rl, currentMetadata); err != nil {
+			dropped = append(dropped, droppedResourceRecords{
+				resource: rl.Resource(),
+				records:  droppedRecords,
+			})
+			errs = append(errs, err)
 		}
 	}
 
-	// Flush pending logs
-	dropped, err := sdr.sendNonOTLPLogs(ctx, previousMetadata)
-	if err != nil {
-		droppedRecords = append(droppedRecords, dropped...)
-		errs = append(errs, err)
-	}
+	if len(dropped) > 0 {
+		ld = pdata.NewLogs()
 
-	if len(droppedRecords) > 0 {
 		// Move all dropped records to Logs
-		droppedLogs := pdata.NewLogs()
-		rls = droppedLogs.ResourceLogs()
-		ills := rls.AppendEmpty().InstrumentationLibraryLogs()
-		logs := ills.AppendEmpty().LogRecords()
-		logs.EnsureCapacity(len(droppedRecords))
+		// NOTE: we only copy resource and log records here.
+		// Scope is not handled properly but it never was.
+		for i := range dropped {
+			rls := ld.ResourceLogs().AppendEmpty()
+			dropped[i].resource.MoveTo(rls.Resource())
 
-		for _, lp := range droppedRecords {
-			lp.log.CopyTo(logs.AppendEmpty())
+			for j := 0; j < len(dropped[i].records); j++ {
+				dropped[i].records[j].MoveTo(
+					rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty(),
+				)
+			}
 		}
 
 		errs = deduplicateErrors(errs)
 		se.handleUnauthorizedErrors(ctx, errs...)
-		return consumererror.NewLogs(multierr.Combine(errs...), droppedLogs)
+		return consumererror.NewLogs(multierr.Combine(errs...), ld)
 	}
 
 	return nil
@@ -390,11 +342,13 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		return nil
 	}
 
+	type droppedResourceMetrics struct {
+		resource pdata.Resource
+		metrics  []pdata.Metric
+	}
 	var (
-		currentMetadata  fields = newFields(pdata.NewAttributeMap())
-		previousMetadata fields = newFields(pdata.NewAttributeMap())
-		errs             []error
-		droppedRecords   []metricPair
+		errs    []error
+		dropped []droppedResourceMetrics
 	)
 
 	// Iterate over ResourceMetrics
@@ -402,86 +356,53 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 	for i := 0; i < rms.Len(); i++ {
 		rm := rms.At(i)
 
-		attributes := rm.Resource().Attributes()
+		se.dropRoutingAttribute(rm.Resource().Attributes())
 
-		// drop routing attribute
-		se.dropRoutingAttribute(attributes)
-
-		currentMetadata = sdr.filter.filterIn(attributes)
-
+		currentMetadata := newFields(rm.Resource().Attributes())
 		if se.config.TranslateAttributes {
-			attributes = translateAttributes(attributes)
+			translateAttributes(rm.Resource().Attributes()).
+				CopyTo(rm.Resource().Attributes())
 			currentMetadata.translateAttributes()
 		}
 
-		// iterate over InstrumentationLibraryMetrics
-		ilms := rm.InstrumentationLibraryMetrics()
-		for j := 0; j < ilms.Len(); j++ {
-			ilm := ilms.At(j)
-
-			// iterate over Metrics
-			ms := ilm.Metrics()
-			for k := 0; k < ms.Len(); k++ {
-				m := ms.At(k)
-
-				if se.config.TranslateTelegrafMetrics {
-					translateTelegrafMetric(m)
-				}
-
-				mp := metricPair{
-					metric:     m,
-					attributes: attributes,
-				}
-
-				// If metadata differs from currently buffered, flush the buffer
-				if !currentMetadata.equals(previousMetadata) && !previousMetadata.isEmpty() {
-					var dropped []metricPair
-					var err error
-					dropped, err = sdr.sendNonOTLPMetrics(ctx, previousMetadata)
-					if err != nil {
-						errs = append(errs, err)
-						droppedRecords = append(droppedRecords, dropped...)
-					}
-					sdr.cleanMetricBuffer()
-				}
-
-				// assign metadata
-				previousMetadata = currentMetadata
-				var dropped []metricPair
-				var err error
-				// add metric to the buffer
-				dropped, err = sdr.batchMetric(ctx, mp, currentMetadata)
-				if err != nil {
-					droppedRecords = append(droppedRecords, dropped...)
-					errs = append(errs, err)
+		if se.config.TranslateTelegrafMetrics {
+			for i := 0; i < rm.ScopeMetrics().Len(); i++ {
+				metricsSlice := rm.ScopeMetrics().At(i).Metrics()
+				for j := 0; j < metricsSlice.Len(); j++ {
+					translateTelegrafMetric(metricsSlice.At(j))
 				}
 			}
 		}
+
+		if droppedMetrics, err := sdr.sendNonOTLPMetrics(ctx, rm, currentMetadata); err != nil {
+			dropped = append(dropped, droppedResourceMetrics{
+				resource: rm.Resource(),
+				metrics:  droppedMetrics,
+			})
+			errs = append(errs, err)
+		}
 	}
 
-	// Flush pending metrics
-	dropped, err := sdr.sendNonOTLPMetrics(ctx, previousMetadata)
-	if err != nil {
-		droppedRecords = append(droppedRecords, dropped...)
-		errs = append(errs, err)
-	}
+	if len(dropped) > 0 {
+		md = pdata.NewMetrics()
 
-	if len(droppedRecords) > 0 {
 		// Move all dropped records to Metrics
-		droppedMetrics := pdata.NewMetrics()
-		rms := droppedMetrics.ResourceMetrics()
-		rms.EnsureCapacity(len(droppedRecords))
-		for _, record := range droppedRecords {
-			rm := droppedMetrics.ResourceMetrics().AppendEmpty()
-			record.attributes.CopyTo(rm.Resource().Attributes())
+		// NOTE: we only copy resource and metrics here.
+		// Scope is not handled properly but it never was.
+		for i := range dropped {
+			rms := md.ResourceMetrics().AppendEmpty()
+			dropped[i].resource.MoveTo(rms.Resource())
 
-			ilms := rm.InstrumentationLibraryMetrics()
-			record.metric.CopyTo(ilms.AppendEmpty().Metrics().AppendEmpty())
+			for j := 0; j < len(dropped[i].metrics); j++ {
+				dropped[i].metrics[j].MoveTo(
+					rms.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty(),
+				)
+			}
 		}
 
 		errs = deduplicateErrors(errs)
 		se.handleUnauthorizedErrors(ctx, errs...)
-		return consumererror.NewMetrics(multierr.Combine(errs...), droppedMetrics)
+		return consumererror.NewMetrics(multierr.Combine(errs...), md)
 	}
 
 	return nil

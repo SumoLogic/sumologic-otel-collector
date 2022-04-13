@@ -25,19 +25,19 @@ import (
 // In addition, metric name and unit are also included.
 // In case `metric` or `unit` attributes has been set too, they are prefixed
 // with underscore `_` to avoid overwriting the metric name and unit.
-func carbon2TagString(record metricPair) string {
-	length := record.attributes.Len()
+func carbon2TagString(metric pdata.Metric, attributes pdata.Map) string {
+	length := attributes.Len()
 
-	if _, ok := record.attributes.Get("metric"); ok {
+	if _, ok := attributes.Get("metric"); ok {
 		length++
 	}
 
-	if _, ok := record.attributes.Get("unit"); ok && len(record.metric.Unit()) > 0 {
+	if _, ok := attributes.Get("unit"); ok && len(metric.Unit()) > 0 {
 		length++
 	}
 
 	returnValue := make([]string, 0, length)
-	record.attributes.Range(func(k string, v pdata.AttributeValue) bool {
+	attributes.Range(func(k string, v pdata.AttributeValue) bool {
 		if k == "name" || k == "unit" {
 			k = fmt.Sprintf("_%s", k)
 		}
@@ -49,10 +49,10 @@ func carbon2TagString(record metricPair) string {
 		return true
 	})
 
-	returnValue = append(returnValue, fmt.Sprintf("metric=%s", sanitizeCarbonString(record.metric.Name())))
+	returnValue = append(returnValue, fmt.Sprintf("metric=%s", sanitizeCarbonString(metric.Name())))
 
-	if len(record.metric.Unit()) > 0 {
-		returnValue = append(returnValue, fmt.Sprintf("unit=%s", sanitizeCarbonString(record.metric.Unit())))
+	if len(metric.Unit()) > 0 {
+		returnValue = append(returnValue, fmt.Sprintf("unit=%s", sanitizeCarbonString(metric.Unit())))
 	}
 
 	return strings.Join(returnValue, " ")
@@ -65,17 +65,17 @@ func sanitizeCarbonString(text string) string {
 
 // carbon2NumberRecord converts NumberDataPoint to carbon2 metric string
 // with additional information from metricPair.
-func carbon2NumberRecord(record metricPair, dataPoint pdata.NumberDataPoint) string {
+func carbon2NumberRecord(metric pdata.Metric, attributes pdata.Map, dataPoint pdata.NumberDataPoint) string {
 	switch dataPoint.ValueType() {
 	case pdata.MetricValueTypeDouble:
 		return fmt.Sprintf("%s  %g %d",
-			carbon2TagString(record),
+			carbon2TagString(metric, attributes),
 			dataPoint.DoubleVal(),
 			dataPoint.Timestamp()/1e9,
 		)
 	case pdata.MetricValueTypeInt:
 		return fmt.Sprintf("%s  %d %d",
-			carbon2TagString(record),
+			carbon2TagString(metric, attributes),
 			dataPoint.IntVal(),
 			dataPoint.Timestamp()/1e9,
 		)
@@ -84,21 +84,21 @@ func carbon2NumberRecord(record metricPair, dataPoint pdata.NumberDataPoint) str
 }
 
 // carbon2metric2String converts metric to Carbon2 formatted string.
-func carbon2Metric2String(record metricPair) string {
+func carbon2Metric2String(metric pdata.Metric, attributes pdata.Map) string {
 	var nextLines []string
 
-	switch record.metric.DataType() {
+	switch metric.DataType() {
 	case pdata.MetricDataTypeGauge:
-		dps := record.metric.Gauge().DataPoints()
+		dps := metric.Gauge().DataPoints()
 		nextLines = make([]string, 0, dps.Len())
 		for i := 0; i < dps.Len(); i++ {
-			nextLines = append(nextLines, carbon2NumberRecord(record, dps.At(i)))
+			nextLines = append(nextLines, carbon2NumberRecord(metric, attributes, dps.At(i)))
 		}
 	case pdata.MetricDataTypeSum:
-		dps := record.metric.Sum().DataPoints()
+		dps := metric.Sum().DataPoints()
 		nextLines = make([]string, 0, dps.Len())
 		for i := 0; i < dps.Len(); i++ {
-			nextLines = append(nextLines, carbon2NumberRecord(record, dps.At(i)))
+			nextLines = append(nextLines, carbon2NumberRecord(metric, attributes, dps.At(i)))
 		}
 	// Skip complex metrics
 	case pdata.MetricDataTypeHistogram:

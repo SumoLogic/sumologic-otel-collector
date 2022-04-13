@@ -22,20 +22,20 @@ import (
 )
 
 func TestCarbon2TagString(t *testing.T) {
-	metric := exampleIntMetric()
-	data := carbon2TagString(metric)
+	metric, attributes := exampleIntMetric()
+	data := carbon2TagString(metric, attributes)
 	assert.Equal(t, "test=test_value test2=second_value metric=test.metric.data unit=bytes", data)
 
-	metric = exampleIntGaugeMetric()
-	data = carbon2TagString(metric)
+	metric, attributes = exampleIntGaugeMetric()
+	data = carbon2TagString(metric, attributes)
 	assert.Equal(t, "foo=bar metric=gauge_metric_name", data)
 
-	metric = exampleDoubleSumMetric()
-	data = carbon2TagString(metric)
+	metric, attributes = exampleDoubleSumMetric()
+	data = carbon2TagString(metric, attributes)
 	assert.Equal(t, "foo=bar metric=sum_metric_double_test", data)
 
-	metric = exampleDoubleGaugeMetric()
-	data = carbon2TagString(metric)
+	metric, attributes = exampleDoubleGaugeMetric()
+	data = carbon2TagString(metric, attributes)
 	assert.Equal(t, "foo=bar metric=gauge_metric_name_double_test", data)
 }
 
@@ -46,109 +46,118 @@ func TestCarbon2InvalidCharacters(t *testing.T) {
 	attributes.InsertString("= \n\r", "= \n\r")
 	metric.SetName("= \n\r")
 
-	metricPair := metricPair{
-		metric:     metric,
-		attributes: attributes,
-	}
-	data := carbon2TagString(metricPair)
+	data := carbon2TagString(metric, attributes)
 	assert.Equal(t, ":___=:___ metric=:___", data)
 }
 
 func TestCarbonMetricDataTypeIntGauge(t *testing.T) {
-	metric := exampleIntGaugeMetric()
+	metric, attributes := exampleIntGaugeMetric()
 
-	result := carbon2Metric2String(metric)
+	result := carbon2Metric2String(metric, attributes)
 	expected := `foo=bar metric=gauge_metric_name  124 1608124661
 foo=bar metric=gauge_metric_name  245 1608124662`
 	assert.Equal(t, expected, result)
 }
 
 func TestCarbonMetricDataTypeDoubleGauge(t *testing.T) {
-	metric := exampleDoubleGaugeMetric()
+	metric, attributes := exampleDoubleGaugeMetric()
 
-	result := carbon2Metric2String(metric)
+	result := carbon2Metric2String(metric, attributes)
 	expected := `foo=bar metric=gauge_metric_name_double_test  33.4 1608124661
 foo=bar metric=gauge_metric_name_double_test  56.8 1608124662`
 	assert.Equal(t, expected, result)
 }
 
 func TestCarbonMetricDataTypeIntSum(t *testing.T) {
-	metric := exampleIntSumMetric()
+	metric, attributes := exampleIntSumMetric()
 
-	result := carbon2Metric2String(metric)
+	result := carbon2Metric2String(metric, attributes)
 	expected := `foo=bar metric=sum_metric_int_test  45 1608124444
 foo=bar metric=sum_metric_int_test  1238 1608124699`
 	assert.Equal(t, expected, result)
 }
 
 func TestCarbonMetricDataTypeDoubleSum(t *testing.T) {
-	metric := exampleDoubleSumMetric()
+	metric, attributes := exampleDoubleSumMetric()
 
-	result := carbon2Metric2String(metric)
+	result := carbon2Metric2String(metric, attributes)
 	expected := `foo=bar metric=sum_metric_double_test  45.6 1618124444
 foo=bar metric=sum_metric_double_test  1238.1 1608424699`
 	assert.Equal(t, expected, result)
 }
 
 func TestCarbonMetricDataTypeSummary(t *testing.T) {
-	metric := exampleSummaryMetric()
+	metric, attributes := exampleSummaryMetric()
 
-	result := carbon2Metric2String(metric)
+	result := carbon2Metric2String(metric, attributes)
 	expected := ``
 	assert.Equal(t, expected, result)
 }
 
 func TestCarbonMetricDataTypeHistogram(t *testing.T) {
-	metric := exampleHistogramMetric()
+	metric, attributes := exampleHistogramMetric()
 
-	result := carbon2Metric2String(metric)
+	result := carbon2Metric2String(metric, attributes)
 	expected := ``
 	assert.Equal(t, expected, result)
 }
 
 func TestCarbonMetrics(t *testing.T) {
 	type testCase struct {
-		name     string
-		metric   metricPair
-		expected string
+		name       string
+		metricFunc func() (pdata.Metric, pdata.Map)
+		expected   string
 	}
 
 	tests := []testCase{
 		{
-			name:     "empty int gauge",
-			metric:   buildExampleIntGaugeMetric(false),
+			name: "empty int gauge",
+			metricFunc: func() (pdata.Metric, pdata.Map) {
+				return buildExampleIntGaugeMetric(false)
+			},
 			expected: "",
 		},
 		{
-			name:     "empty double gauge",
-			metric:   buildExampleDoubleGaugeMetric(false),
+			name: "empty double gauge",
+			metricFunc: func() (pdata.Metric, pdata.Map) {
+				return buildExampleDoubleGaugeMetric(false)
+			},
 			expected: "",
 		},
 		{
-			name:     "empty int sum",
-			metric:   buildExampleIntSumMetric(false),
+			name: "empty int sum",
+			metricFunc: func() (pdata.Metric, pdata.Map) {
+				return buildExampleIntSumMetric(false)
+			},
 			expected: "",
 		},
 		{
-			name:     "empty double sum",
-			metric:   buildExampleDoubleSumMetric(false),
+			name: "empty double sum",
+			metricFunc: func() (pdata.Metric, pdata.Map) {
+				return buildExampleDoubleSumMetric(false)
+			},
 			expected: "",
 		},
 		{
-			name:     "empty summary",
-			metric:   buildExampleSummaryMetric(false),
+			name: "empty summary",
+			metricFunc: func() (pdata.Metric, pdata.Map) {
+				return buildExampleSummaryMetric(false)
+			},
 			expected: "",
 		},
 		{
-			name:     "empty histogram",
-			metric:   buildExampleHistogramMetric(false),
+			name: "empty histogram",
+			metricFunc: func() (pdata.Metric, pdata.Map) {
+				return buildExampleHistogramMetric(false)
+			},
 			expected: "",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := carbon2Metric2String(tt.metric)
+			metric, attributes := tt.metricFunc()
+			result := carbon2Metric2String(metric, attributes)
 			assert.Equal(t, tt.expected, result)
 		})
 	}

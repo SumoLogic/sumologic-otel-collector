@@ -210,84 +210,6 @@ func exampleTwoLogs() []pdata.LogRecord {
 	return buffer
 }
 
-func exampleLogWithComplexBody() []pdata.LogRecord {
-	body := pdata.NewAttributeValueMap().MapVal()
-	body.InsertString("a", "b")
-	body.InsertBool("c", false)
-	body.InsertInt("d", 20)
-	body.InsertDouble("e", 20.5)
-
-	f := pdata.NewAttributeValueArray()
-	f.SliceVal().EnsureCapacity(4)
-	f.SliceVal().AppendEmpty().SetStringVal("p")
-	f.SliceVal().AppendEmpty().SetBoolVal(true)
-	f.SliceVal().AppendEmpty().SetIntVal(13)
-	f.SliceVal().AppendEmpty().SetDoubleVal(19.3)
-	body.Insert("f", f)
-
-	g := pdata.NewAttributeValueMap()
-	g.MapVal().InsertString("h", "i")
-	g.MapVal().InsertBool("j", false)
-	g.MapVal().InsertInt("k", 12)
-	g.MapVal().InsertDouble("l", 11.1)
-
-	body.Insert("g", g)
-
-	buffer := make([]pdata.LogRecord, 1)
-	buffer[0] = pdata.NewLogRecord()
-	buffer[0].Attributes().InsertString("m", "n")
-
-	bufferBody := buffer[0].Body()
-	pdata.NewAttributeValueMap().CopyTo(bufferBody)
-	body.CopyTo(bufferBody.MapVal())
-	return buffer
-}
-
-func exampleTwoDifferentLogs() []pdata.LogRecord {
-	buffer := make([]pdata.LogRecord, 2)
-	buffer[0] = pdata.NewLogRecord()
-	buffer[0].Body().SetStringVal("Example log")
-	buffer[0].Attributes().InsertString("key1", "value1")
-	buffer[0].Attributes().InsertString("key2", "value2")
-	buffer[1] = pdata.NewLogRecord()
-	buffer[1].Body().SetStringVal("Another example log")
-	buffer[1].Attributes().InsertString("key3", "value3")
-	buffer[1].Attributes().InsertString("key4", "value4")
-
-	return buffer
-}
-
-func exampleMultitypeLogs() []pdata.LogRecord {
-	buffer := make([]pdata.LogRecord, 2)
-
-	attVal := pdata.NewAttributeValueMap()
-	attMap := attVal.MapVal()
-	attMap.InsertString("lk1", "lv1")
-	attMap.InsertInt("lk2", 13)
-
-	buffer[0] = pdata.NewLogRecord()
-	attVal.CopyTo(buffer[0].Body())
-
-	buffer[0].Attributes().InsertString("key1", "value1")
-	buffer[0].Attributes().InsertString("key2", "value2")
-
-	buffer[1] = pdata.NewLogRecord()
-
-	attVal = pdata.NewAttributeValueArray()
-	attArr := attVal.SliceVal()
-	strVal := pdata.NewAttributeValueString("lv2")
-	intVal := pdata.NewAttributeValueInt(13)
-
-	strVal.CopyTo(attArr.AppendEmpty())
-	intVal.CopyTo(attArr.AppendEmpty())
-
-	attVal.CopyTo(buffer[1].Body())
-	buffer[1].Attributes().InsertString("key1", "value1")
-	buffer[1].Attributes().InsertString("key2", "value2")
-
-	return buffer
-}
-
 func TestSendTrace(t *testing.T) {
 	tracesMarshaler = otlp.NewProtobufTracesMarshaler()
 	td := exampleTrace()
@@ -317,9 +239,17 @@ func TestSendLogs(t *testing.T) {
 		},
 	})
 
-	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
+	rls := pdata.NewResourceLogs()
+	slgs := rls.ScopeLogs()
+	logsRecords1 := slgs.AppendEmpty().LogRecords()
+	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
+	logsRecords2 := slgs.AppendEmpty().LogRecords()
+	logsRecords2.AppendEmpty().Body().SetStringVal("Another example log")
 
-	_, err := test.s.sendNonOTLPLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "value", "key2": "value2"}))
+	_, err := test.s.sendNonOTLPLogs(context.Background(),
+		rls,
+		fieldsFromMap(map[string]string{"key1": "value", "key2": "value2"}),
+	)
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, *test.reqCounter)
 }
@@ -335,9 +265,17 @@ func TestSendLogsWithEmptyField(t *testing.T) {
 		},
 	})
 
-	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
+	rls := pdata.NewResourceLogs()
+	slgs := rls.ScopeLogs()
+	logsRecords1 := slgs.AppendEmpty().LogRecords()
+	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
+	logsRecords2 := slgs.AppendEmpty().LogRecords()
+	logsRecords2.AppendEmpty().Body().SetStringVal("Another example log")
 
-	_, err := test.s.sendNonOTLPLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "value", "key2": "value2", "service": ""}))
+	_, err := test.s.sendNonOTLPLogs(context.Background(),
+		rls,
+		fieldsFromMap(map[string]string{"key1": "value", "key2": "value2", "service": ""}),
+	)
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, *test.reqCounter)
 }
@@ -355,9 +293,28 @@ func TestSendLogsMultitype(t *testing.T) {
 		},
 	})
 
-	test.s.logBuffer = logRecordsToLogPair(exampleMultitypeLogs())
+	rls := pdata.NewResourceLogs()
+	slgs := rls.ScopeLogs()
+	logsRecords := slgs.AppendEmpty().LogRecords()
+	attVal := pdata.NewAttributeValueMap()
+	attMap := attVal.MapVal()
+	attMap.InsertString("lk1", "lv1")
+	attMap.InsertInt("lk2", 13)
+	logRecord := logsRecords.AppendEmpty()
+	attVal.CopyTo(logRecord.Body())
 
-	_, err := test.s.sendNonOTLPLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "value", "key2": "value2"}))
+	attVal = pdata.NewAttributeValueArray()
+	attArr := attVal.SliceVal()
+	strVal := pdata.NewAttributeValueString("lv2")
+	intVal := pdata.NewAttributeValueInt(13)
+	strVal.CopyTo(attArr.AppendEmpty())
+	intVal.CopyTo(attArr.AppendEmpty())
+	attVal.CopyTo(logsRecords.AppendEmpty().Body())
+
+	_, err := test.s.sendNonOTLPLogs(context.Background(),
+		rls,
+		fieldsFromMap(map[string]string{"key1": "value", "key2": "value2"}),
+	)
 	assert.NoError(t, err)
 
 	assert.EqualValues(t, 1, *test.reqCounter)
@@ -375,9 +332,18 @@ func TestSendLogsSplit(t *testing.T) {
 		},
 	})
 	test.s.config.MaxRequestBodySize = 10
-	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
-	_, err := test.s.sendNonOTLPLogs(context.Background(), newFields(pdata.NewAttributeMap()))
+	rls := pdata.NewResourceLogs()
+	slgs := rls.ScopeLogs()
+	logsRecords1 := slgs.AppendEmpty().LogRecords()
+	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
+	logsRecords2 := slgs.AppendEmpty().LogRecords()
+	logsRecords2.AppendEmpty().Body().SetStringVal("Another example log")
+
+	_, err := test.s.sendNonOTLPLogs(context.Background(),
+		rls,
+		fields{},
+	)
 	assert.NoError(t, err)
 
 	assert.EqualValues(t, 2, *test.reqCounter)
@@ -404,11 +370,20 @@ func TestSendLogsSplitFailedOne(t *testing.T) {
 	})
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.LogFormat = TextFormat
-	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
-	dropped, err := test.s.sendNonOTLPLogs(context.Background(), newFields(pdata.NewAttributeMap()))
+	rls := pdata.NewResourceLogs()
+	slgs := rls.ScopeLogs()
+	logsRecords1 := slgs.AppendEmpty().LogRecords()
+	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
+	logsRecords2 := slgs.AppendEmpty().LogRecords()
+	logsRecords2.AppendEmpty().Body().SetStringVal("Another example log")
+
+	dropped, err := test.s.sendNonOTLPLogs(context.Background(),
+		rls,
+		fields{},
+	)
 	assert.EqualError(t, err, "failed sending data: status: 500 Internal Server Error, id: 1TIRY-KGIVX-TPQRJ, errors: [{Code:internal.error Message:Internal server error.}]")
-	assert.Equal(t, test.s.logBuffer[0:1], dropped)
+	assert.Len(t, dropped, 1)
 
 	assert.EqualValues(t, 2, *test.reqCounter)
 }
@@ -430,25 +405,83 @@ func TestSendLogsSplitFailedAll(t *testing.T) {
 	})
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.LogFormat = TextFormat
-	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
-	dropped, err := test.s.sendNonOTLPLogs(context.Background(), newFields(pdata.NewAttributeMap()))
+	rls := pdata.NewResourceLogs()
+	slgs := rls.ScopeLogs()
+	logsRecords1 := slgs.AppendEmpty().LogRecords()
+	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
+	logsRecords2 := slgs.AppendEmpty().LogRecords()
+	logsRecords2.AppendEmpty().Body().SetStringVal("Another example log")
+
+	dropped, err := test.s.sendNonOTLPLogs(context.Background(), rls, fields{})
 	assert.EqualError(
 		t,
 		err,
 		"failed sending data: status: 500 Internal Server Error; failed sending data: status: 404 Not Found",
 	)
-	assert.Equal(t, test.s.logBuffer[0:2], dropped)
+	assert.Len(t, dropped, 2)
 
 	assert.EqualValues(t, 2, *test.reqCounter)
 }
 
 func TestSendLogsJsonConfig(t *testing.T) {
+	twoLogsFunc := func() pdata.ResourceLogs {
+		rls := pdata.NewResourceLogs()
+		slgs := rls.ScopeLogs().AppendEmpty()
+		log := slgs.LogRecords().AppendEmpty()
+
+		log.Body().SetStringVal("Example log")
+		log.Attributes().InsertString("key1", "value1")
+		log.Attributes().InsertString("key2", "value2")
+
+		log = slgs.LogRecords().AppendEmpty()
+		log.Body().SetStringVal("Another example log")
+		log.Attributes().InsertString("key1", "value1")
+		log.Attributes().InsertString("key2", "value2")
+
+		return rls
+	}
+
+	twoComplexBodyLogsFunc := func() pdata.ResourceLogs {
+		rls := pdata.NewResourceLogs()
+		slgs := rls.ScopeLogs().AppendEmpty()
+		log := slgs.LogRecords().AppendEmpty()
+
+		body := pdata.NewAttributeValueMap().MapVal()
+		body.InsertString("a", "b")
+		body.InsertBool("c", false)
+		body.InsertInt("d", 20)
+		body.InsertDouble("e", 20.5)
+
+		f := pdata.NewAttributeValueArray()
+		f.SliceVal().EnsureCapacity(4)
+		f.SliceVal().AppendEmpty().SetStringVal("p")
+		f.SliceVal().AppendEmpty().SetBoolVal(true)
+		f.SliceVal().AppendEmpty().SetIntVal(13)
+		f.SliceVal().AppendEmpty().SetDoubleVal(19.3)
+		body.Insert("f", f)
+
+		g := pdata.NewAttributeValueMap()
+		g.MapVal().InsertString("h", "i")
+		g.MapVal().InsertBool("j", false)
+		g.MapVal().InsertInt("k", 12)
+		g.MapVal().InsertDouble("l", 11.1)
+
+		body.Insert("g", g)
+
+		log.Attributes().InsertString("m", "n")
+
+		pdata.NewAttributeValueMap().CopyTo(log.Body())
+		body.CopyTo(log.Body().MapVal())
+
+		return rls
+	}
+
 	testcases := []struct {
 		name       string
 		configOpts []func(*Config)
 		bodyRegex  string
-		logBuffer  []logPair
+		logsFunc   func() pdata.ResourceLogs
 	}{
 		{
 			name: "default config",
@@ -465,7 +498,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}` +
 				`\n` +
 				`{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`,
-			logBuffer: logRecordsToLogPair(exampleTwoLogs()),
+			logsFunc: twoLogsFunc,
 		},
 		{
 			name: "disabled add timestamp",
@@ -480,7 +513,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log"}` +
 				`\n` +
 				`{"key1":"value1","key2":"value2","log":"Another example log"}`,
-			logBuffer: logRecordsToLogPair(exampleTwoLogs()),
+			logsFunc: twoLogsFunc,
 		},
 		{
 			name: "enabled add timestamp with custom timestamp key",
@@ -496,7 +529,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log","xxyy_zz":\d{13}}` +
 				`\n` +
 				`{"key1":"value1","key2":"value2","log":"Another example log","xxyy_zz":\d{13}}`,
-			logBuffer: logRecordsToLogPair(exampleTwoLogs()),
+			logsFunc: twoLogsFunc,
 		},
 		{
 			name: "custom log key",
@@ -513,7 +546,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 			bodyRegex: `{"key1":"value1","key2":"value2","log_vendor_key":"Example log","timestamp":\d{13}}` +
 				`\n` +
 				`{"key1":"value1","key2":"value2","log_vendor_key":"Another example log","timestamp":\d{13}}`,
-			logBuffer: logRecordsToLogPair(exampleTwoLogs()),
+			logsFunc: twoLogsFunc,
 		},
 		{
 			name: "flatten body",
@@ -529,7 +562,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 			},
 			bodyRegex: `{"a":"b","c":false,"d":20,"e":20.5,"f":\["p",true,13,19.3\],` +
 				`"g":{"h":"i","j":false,"k":12,"l":11.1},"m":"n","timestamp":\d{13}}`,
-			logBuffer: logRecordsToLogPair(exampleLogWithComplexBody()),
+			logsFunc: twoComplexBodyLogsFunc,
 		},
 		{
 			name: "complex body",
@@ -545,7 +578,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 			},
 			bodyRegex: `{"log_vendor_key":{"a":"b","c":false,"d":20,"e":20.5,"f":\["p",true,13,19.3\],` +
 				`"g":{"h":"i","j":false,"k":12,"l":11.1}},"m":"n","timestamp":\d{13}}`,
-			logBuffer: logRecordsToLogPair(exampleLogWithComplexBody()),
+			logsFunc: twoComplexBodyLogsFunc,
 		},
 	}
 
@@ -559,9 +592,11 @@ func TestSendLogsJsonConfig(t *testing.T) {
 			}, tc.configOpts...)
 
 			test.s.config.LogFormat = JSONFormat
-			test.s.logBuffer = tc.logBuffer
 
-			_, err := test.s.sendNonOTLPLogs(context.Background(), newFields(pdata.NewAttributeMap()))
+			_, err := test.s.sendNonOTLPLogs(context.Background(),
+				tc.logsFunc(),
+				fields{},
+			)
 			assert.NoError(t, err)
 
 			assert.EqualValues(t, 1, *test.reqCounter)
@@ -585,9 +620,24 @@ func TestSendLogsJson(t *testing.T) {
 		},
 	})
 	test.s.config.LogFormat = JSONFormat
-	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
-	_, err := test.s.sendNonOTLPLogs(context.Background(), fieldsFromMap(map[string]string{"key": "value"}))
+	rls := pdata.NewResourceLogs()
+	slgs := rls.ScopeLogs().AppendEmpty()
+	log := slgs.LogRecords().AppendEmpty()
+
+	log.Body().SetStringVal("Example log")
+	log.Attributes().InsertString("key1", "value1")
+	log.Attributes().InsertString("key2", "value2")
+
+	log = slgs.LogRecords().AppendEmpty()
+	log.Body().SetStringVal("Another example log")
+	log.Attributes().InsertString("key1", "value1")
+	log.Attributes().InsertString("key2", "value2")
+
+	_, err := test.s.sendNonOTLPLogs(context.Background(),
+		rls,
+		fieldsFromMap(map[string]string{"key": "value"}),
+	)
 	assert.NoError(t, err)
 
 	assert.EqualValues(t, 1, *test.reqCounter)
@@ -609,9 +659,39 @@ func TestSendLogsJsonMultitype(t *testing.T) {
 		},
 	})
 	test.s.config.LogFormat = JSONFormat
-	test.s.logBuffer = logRecordsToLogPair(exampleMultitypeLogs())
 
-	_, err := test.s.sendNonOTLPLogs(context.Background(), fieldsFromMap(map[string]string{"key": "value"}))
+	rls := pdata.NewResourceLogs()
+	slgs := rls.ScopeLogs().AppendEmpty()
+
+	attVal := pdata.NewAttributeValueMap()
+	attMap := attVal.MapVal()
+	attMap.InsertString("lk1", "lv1")
+	attMap.InsertInt("lk2", 13)
+
+	log := slgs.LogRecords().AppendEmpty()
+	attVal.CopyTo(log.Body())
+
+	log.Attributes().InsertString("key1", "value1")
+	log.Attributes().InsertString("key2", "value2")
+
+	log = slgs.LogRecords().AppendEmpty()
+
+	attVal = pdata.NewAttributeValueArray()
+	attArr := attVal.SliceVal()
+	strVal := pdata.NewAttributeValueString("lv2")
+	intVal := pdata.NewAttributeValueInt(13)
+
+	strVal.CopyTo(attArr.AppendEmpty())
+	intVal.CopyTo(attArr.AppendEmpty())
+
+	attVal.CopyTo(log.Body())
+	log.Attributes().InsertString("key1", "value1")
+	log.Attributes().InsertString("key2", "value2")
+
+	_, err := test.s.sendNonOTLPLogs(context.Background(),
+		rls,
+		fieldsFromMap(map[string]string{"key": "value"}),
+	)
 	assert.NoError(t, err)
 
 	assert.EqualValues(t, 1, *test.reqCounter)
@@ -634,9 +714,24 @@ func TestSendLogsJsonSplit(t *testing.T) {
 	})
 	test.s.config.LogFormat = JSONFormat
 	test.s.config.MaxRequestBodySize = 10
-	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
-	_, err := test.s.sendNonOTLPLogs(context.Background(), newFields(pdata.NewAttributeMap()))
+	rls := pdata.NewResourceLogs()
+	slgs := rls.ScopeLogs().AppendEmpty()
+	log := slgs.LogRecords().AppendEmpty()
+
+	log.Body().SetStringVal("Example log")
+	log.Attributes().InsertString("key1", "value1")
+	log.Attributes().InsertString("key2", "value2")
+
+	log = slgs.LogRecords().AppendEmpty()
+	log.Body().SetStringVal("Another example log")
+	log.Attributes().InsertString("key1", "value1")
+	log.Attributes().InsertString("key2", "value2")
+
+	_, err := test.s.sendNonOTLPLogs(context.Background(),
+		rls,
+		fieldsFromMap(map[string]string{"key": "value"}),
+	)
 	assert.NoError(t, err)
 
 	assert.EqualValues(t, 2, *test.reqCounter)
@@ -663,11 +758,26 @@ func TestSendLogsJsonSplitFailedOne(t *testing.T) {
 	})
 	test.s.config.LogFormat = JSONFormat
 	test.s.config.MaxRequestBodySize = 10
-	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
-	dropped, err := test.s.sendNonOTLPLogs(context.Background(), newFields(pdata.NewAttributeMap()))
+	rls := pdata.NewResourceLogs()
+	slgs := rls.ScopeLogs().AppendEmpty()
+	log := slgs.LogRecords().AppendEmpty()
+
+	log.Body().SetStringVal("Example log")
+	log.Attributes().InsertString("key1", "value1")
+	log.Attributes().InsertString("key2", "value2")
+
+	log = slgs.LogRecords().AppendEmpty()
+	log.Body().SetStringVal("Another example log")
+	log.Attributes().InsertString("key1", "value1")
+	log.Attributes().InsertString("key2", "value2")
+
+	dropped, err := test.s.sendNonOTLPLogs(context.Background(),
+		rls,
+		fieldsFromMap(map[string]string{"key": "value"}),
+	)
 	assert.EqualError(t, err, "failed sending data: status: 500 Internal Server Error")
-	assert.Equal(t, test.s.logBuffer[0:1], dropped)
+	assert.Len(t, dropped, 1)
 
 	assert.EqualValues(t, 2, *test.reqCounter)
 }
@@ -695,15 +805,31 @@ func TestSendLogsJsonSplitFailedAll(t *testing.T) {
 	})
 	test.s.config.LogFormat = JSONFormat
 	test.s.config.MaxRequestBodySize = 10
-	test.s.logBuffer = logRecordsToLogPair(exampleTwoLogs())
 
-	dropped, err := test.s.sendNonOTLPLogs(context.Background(), newFields(pdata.NewAttributeMap()))
+	rls := pdata.NewResourceLogs()
+	slgs := rls.ScopeLogs().AppendEmpty()
+	log := slgs.LogRecords().AppendEmpty()
+
+	log.Body().SetStringVal("Example log")
+	log.Attributes().InsertString("key1", "value1")
+	log.Attributes().InsertString("key2", "value2")
+
+	log = slgs.LogRecords().AppendEmpty()
+	log.Body().SetStringVal("Another example log")
+	log.Attributes().InsertString("key1", "value1")
+	log.Attributes().InsertString("key2", "value2")
+
+	dropped, err := test.s.sendNonOTLPLogs(context.Background(),
+		rls,
+		fields{},
+	)
+
 	assert.EqualError(
 		t,
 		err,
 		"failed sending data: status: 500 Internal Server Error; failed sending data: status: 404 Not Found",
 	)
-	assert.Equal(t, test.s.logBuffer[0:2], dropped)
+	assert.Len(t, dropped, 2)
 
 	assert.EqualValues(t, 2, *test.reqCounter)
 }
@@ -714,12 +840,19 @@ func TestSendLogsUnexpectedFormat(t *testing.T) {
 		},
 	})
 	test.s.config.LogFormat = "dummy"
-	logs := logRecordsToLogPair(exampleTwoLogs())
-	test.s.logBuffer = logs
 
-	dropped, err := test.s.sendNonOTLPLogs(context.Background(), newFields(pdata.NewAttributeMap()))
+	rls := pdata.NewResourceLogs()
+	slgs := rls.ScopeLogs().AppendEmpty()
+	log := slgs.LogRecords().AppendEmpty()
+	log.Body().SetStringVal("Example log")
+
+	dropped, err := test.s.sendNonOTLPLogs(context.Background(),
+		rls,
+		fields{},
+	)
 	assert.Error(t, err)
-	assert.Equal(t, logs, dropped)
+	assert.Len(t, dropped, 1)
+	assert.Equal(t, []pdata.LogRecord{log}, dropped)
 }
 
 func TestSendLogsOTLP(t *testing.T) {
@@ -762,6 +895,23 @@ func TestSendLogsOTLP(t *testing.T) {
 }
 
 func TestOverrideSourceName(t *testing.T) {
+	twoLogsFunc := func() pdata.ResourceLogs {
+		rls := pdata.NewResourceLogs()
+		slgs := rls.ScopeLogs().AppendEmpty()
+		log := slgs.LogRecords().AppendEmpty()
+
+		log.Body().SetStringVal("Example log")
+		log.Attributes().InsertString("key1", "value1")
+		log.Attributes().InsertString("key2", "value2")
+
+		log = slgs.LogRecords().AppendEmpty()
+		log.Body().SetStringVal("Another example log")
+		log.Attributes().InsertString("key1", "value1")
+		log.Attributes().InsertString("key2", "value2")
+
+		return rls
+	}
+
 	t.Run("text format", func(t *testing.T) {
 		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 			func(w http.ResponseWriter, req *http.Request) {
@@ -770,9 +920,11 @@ func TestOverrideSourceName(t *testing.T) {
 		})
 
 		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
-		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
-		_, err := test.s.sendNonOTLPLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		_, err := test.s.sendNonOTLPLogs(context.Background(),
+			twoLogsFunc(),
+			fieldsFromMap(map[string]string{"key1": "test_name"}),
+		)
 		assert.NoError(t, err)
 
 		assert.EqualValues(t, 1, *test.reqCounter)
@@ -788,9 +940,11 @@ func TestOverrideSourceName(t *testing.T) {
 		})
 
 		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
-		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
-		_, err := test.s.sendNonOTLPLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		_, err := test.s.sendNonOTLPLogs(context.Background(),
+			twoLogsFunc(),
+			fieldsFromMap(map[string]string{"key1": "test_name"}),
+		)
 		assert.NoError(t, err)
 
 		assert.EqualValues(t, 1, *test.reqCounter)
@@ -827,6 +981,23 @@ func TestOverrideSourceName(t *testing.T) {
 }
 
 func TestOverrideSourceCategory(t *testing.T) {
+	twoLogsFunc := func() pdata.ResourceLogs {
+		rls := pdata.NewResourceLogs()
+		slgs := rls.ScopeLogs().AppendEmpty()
+		log := slgs.LogRecords().AppendEmpty()
+
+		log.Body().SetStringVal("Example log")
+		log.Attributes().InsertString("key1", "value1")
+		log.Attributes().InsertString("key2", "value2")
+
+		log = slgs.LogRecords().AppendEmpty()
+		log.Body().SetStringVal("Another example log")
+		log.Attributes().InsertString("key1", "value1")
+		log.Attributes().InsertString("key2", "value2")
+
+		return rls
+	}
+
 	t.Run("text format", func(t *testing.T) {
 		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 			func(w http.ResponseWriter, req *http.Request) {
@@ -835,9 +1006,11 @@ func TestOverrideSourceCategory(t *testing.T) {
 		})
 
 		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
-		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
-		_, err := test.s.sendNonOTLPLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		_, err := test.s.sendNonOTLPLogs(context.Background(),
+			twoLogsFunc(),
+			fieldsFromMap(map[string]string{"key1": "test_name"}),
+		)
 		assert.NoError(t, err)
 	})
 
@@ -851,9 +1024,10 @@ func TestOverrideSourceCategory(t *testing.T) {
 		})
 
 		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
-		test.s.logBuffer = logRecordsToLogPair(exampleLog())
-
-		_, err := test.s.sendNonOTLPLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		_, err := test.s.sendNonOTLPLogs(context.Background(),
+			twoLogsFunc(),
+			fieldsFromMap(map[string]string{"key1": "test_name"}),
+		)
 		assert.NoError(t, err)
 
 		assert.EqualValues(t, 1, *test.reqCounter)
@@ -890,6 +1064,23 @@ func TestOverrideSourceCategory(t *testing.T) {
 }
 
 func TestOverrideSourceHost(t *testing.T) {
+	twoLogsFunc := func() pdata.ResourceLogs {
+		rls := pdata.NewResourceLogs()
+		slgs := rls.ScopeLogs().AppendEmpty()
+		log := slgs.LogRecords().AppendEmpty()
+
+		log.Body().SetStringVal("Example log")
+		log.Attributes().InsertString("key1", "value1")
+		log.Attributes().InsertString("key2", "value2")
+
+		log = slgs.LogRecords().AppendEmpty()
+		log.Body().SetStringVal("Another example log")
+		log.Attributes().InsertString("key1", "value1")
+		log.Attributes().InsertString("key2", "value2")
+
+		return rls
+	}
+
 	t.Run("text format", func(t *testing.T) {
 		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 			func(w http.ResponseWriter, req *http.Request) {
@@ -898,9 +1089,10 @@ func TestOverrideSourceHost(t *testing.T) {
 		})
 
 		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
-		test.s.logBuffer = logRecordsToLogPair(exampleLog())
-
-		_, err := test.s.sendNonOTLPLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		_, err := test.s.sendNonOTLPLogs(context.Background(),
+			twoLogsFunc(),
+			fieldsFromMap(map[string]string{"key1": "test_name"}),
+		)
 		assert.NoError(t, err)
 	})
 
@@ -914,9 +1106,11 @@ func TestOverrideSourceHost(t *testing.T) {
 		})
 
 		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
-		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
-		_, err := test.s.sendNonOTLPLogs(context.Background(), fieldsFromMap(map[string]string{"key1": "test_name"}))
+		_, err := test.s.sendNonOTLPLogs(context.Background(),
+			twoLogsFunc(),
+			fieldsFromMap(map[string]string{"key1": "test_name"}),
+		)
 		assert.NoError(t, err)
 
 		assert.EqualValues(t, 1, *test.reqCounter)
@@ -953,6 +1147,23 @@ func TestOverrideSourceHost(t *testing.T) {
 }
 
 func TestLogsDontSendSourceFieldsInXSumoFieldsHeader(t *testing.T) {
+	twoLogsFunc := func() pdata.ResourceLogs {
+		rls := pdata.NewResourceLogs()
+		slgs := rls.ScopeLogs().AppendEmpty()
+		log := slgs.LogRecords().AppendEmpty()
+
+		log.Body().SetStringVal("Example log")
+		log.Attributes().InsertString("key1", "value1")
+		log.Attributes().InsertString("key2", "value2")
+
+		log = slgs.LogRecords().AppendEmpty()
+		log.Body().SetStringVal("Another example log")
+		log.Attributes().InsertString("key1", "value1")
+		log.Attributes().InsertString("key2", "value2")
+
+		return rls
+	}
+
 	assertNoSourceFieldsInXSumoFields := func(t *testing.T, fieldsHeader string) {
 		for _, field := range strings.Split(fieldsHeader, ",") {
 			field = strings.TrimSpace(field)
@@ -1002,15 +1213,16 @@ func TestLogsDontSendSourceFieldsInXSumoFieldsHeader(t *testing.T) {
 		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}/%{_sourceName}")
 		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
 		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
-		test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
-		_, err := test.s.sendNonOTLPLogs(context.Background(), fieldsFromMap(
-			map[string]string{
-				"key1":            "key1_val",
-				"_sourceName":     "test_source_name",
-				"_sourceHost":     "test_source_host",
-				"_sourceCategory": "test_source_category",
-			}),
+		_, err := test.s.sendNonOTLPLogs(context.Background(),
+			twoLogsFunc(),
+			fieldsFromMap(
+				map[string]string{
+					"key1":            "key1_val",
+					"_sourceName":     "test_source_name",
+					"_sourceHost":     "test_source_host",
+					"_sourceCategory": "test_source_category",
+				}),
 		)
 		assert.NoError(t, err)
 		assert.EqualValues(t, 1, *test.reqCounter)
@@ -1032,7 +1244,8 @@ func TestLogsHandlesReceiverResponses(t *testing.T) {
 			c.LogFormat = JSONFormat
 		})
 
-		test.s.logBuffer = logRecordsToLogPair(exampleLog())
+		rls := pdata.NewResourceLogs()
+		rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().Body().SetStringVal("Example log")
 
 		var buffer bytes.Buffer
 		writer := bufio.NewWriter(&buffer)
@@ -1044,57 +1257,59 @@ func TestLogsHandlesReceiverResponses(t *testing.T) {
 			),
 		)
 
-		_, err := test.s.sendNonOTLPLogs(context.Background(), fieldsFromMap(
-			map[string]string{
-				"cluster":         "abcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-				"code":            "4222222222222222222222222222222222222222222222222222222222222222222222222222222222222",
-				"component":       "apiserver",
-				"endpoint":        "httpsaaaaaaaaaaaaaaaaaaa",
-				"a":               "a",
-				"b":               "b",
-				"c":               "c",
-				"d":               "d",
-				"e":               "e",
-				"f":               "f",
-				"g":               "g",
-				"q":               "q",
-				"w":               "w",
-				"r":               "r",
-				"t":               "t",
-				"y":               "y",
-				"1":               "1",
-				"2":               "2",
-				"3":               "3",
-				"4":               "4",
-				"5":               "5",
-				"6":               "6",
-				"7":               "7",
-				"8":               "8",
-				"9":               "9",
-				"10":              "10",
-				"11":              "11",
-				"12":              "12",
-				"13":              "13",
-				"14":              "14",
-				"15":              "15",
-				"16":              "16",
-				"17":              "17",
-				"18":              "18",
-				"19":              "19",
-				"20":              "20",
-				"21":              "21",
-				"22":              "22",
-				"23":              "23",
-				"24":              "24",
-				"25":              "25",
-				"26":              "26",
-				"27":              "27",
-				"28":              "28",
-				"29":              "29",
-				"_sourceName":     "test_source_name",
-				"_sourceHost":     "test_source_host",
-				"_sourceCategory": "test_source_category",
-			}),
+		_, err := test.s.sendNonOTLPLogs(context.Background(),
+			rls,
+			fieldsFromMap(
+				map[string]string{
+					"cluster":         "abcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					"code":            "4222222222222222222222222222222222222222222222222222222222222222222222222222222222222",
+					"component":       "apiserver",
+					"endpoint":        "httpsaaaaaaaaaaaaaaaaaaa",
+					"a":               "a",
+					"b":               "b",
+					"c":               "c",
+					"d":               "d",
+					"e":               "e",
+					"f":               "f",
+					"g":               "g",
+					"q":               "q",
+					"w":               "w",
+					"r":               "r",
+					"t":               "t",
+					"y":               "y",
+					"1":               "1",
+					"2":               "2",
+					"3":               "3",
+					"4":               "4",
+					"5":               "5",
+					"6":               "6",
+					"7":               "7",
+					"8":               "8",
+					"9":               "9",
+					"10":              "10",
+					"11":              "11",
+					"12":              "12",
+					"13":              "13",
+					"14":              "14",
+					"15":              "15",
+					"16":              "16",
+					"17":              "17",
+					"18":              "18",
+					"19":              "19",
+					"20":              "20",
+					"21":              "21",
+					"22":              "22",
+					"23":              "23",
+					"24":              "24",
+					"25":              "25",
+					"26":              "26",
+					"27":              "27",
+					"28":              "28",
+					"29":              "29",
+					"_sourceName":     "test_source_name",
+					"_sourceHost":     "test_source_host",
+					"_sourceCategory": "test_source_category",
+				}),
 		)
 		assert.NoError(t, writer.Flush())
 		assert.NoError(t, err)
@@ -1111,36 +1326,15 @@ func TestLogsHandlesReceiverResponses(t *testing.T) {
 	})
 }
 
-func TestLogsBuffer(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-
-	assert.Equal(t, test.s.countLogs(), 0)
-	logs := logRecordsToLogPair(exampleTwoLogs())
-
-	droppedLogs, err := test.s.batchLog(context.Background(), logs[0], newFields(pdata.NewAttributeMap()))
-	require.NoError(t, err)
-	assert.Nil(t, droppedLogs)
-	assert.Equal(t, 1, test.s.countLogs())
-	assert.Equal(t, []logPair{logs[0]}, test.s.logBuffer)
-
-	droppedLogs, err = test.s.batchLog(context.Background(), logs[1], newFields(pdata.NewAttributeMap()))
-	require.NoError(t, err)
-	assert.Nil(t, droppedLogs)
-	assert.Equal(t, 2, test.s.countLogs())
-	assert.Equal(t, logs, test.s.logBuffer)
-
-	test.s.cleanLogsBuffer()
-	assert.Equal(t, 0, test.s.countLogs())
-	assert.Equal(t, []logPair{}, test.s.logBuffer)
-}
-
 func TestInvalidEndpoint(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
 
 	test.s.config.HTTPClientSettings.Endpoint = ":"
-	test.s.logBuffer = logRecordsToLogPair(exampleLog())
 
-	_, err := test.s.sendNonOTLPLogs(context.Background(), newFields(pdata.NewAttributeMap()))
+	rls := pdata.NewResourceLogs()
+	rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().Body().SetStringVal("Example log")
+
+	_, err := test.s.sendNonOTLPLogs(context.Background(), rls, fields{})
 	assert.EqualError(t, err, `parse ":": missing protocol scheme`)
 }
 
@@ -1148,27 +1342,11 @@ func TestInvalidPostRequest(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
 
 	test.s.config.HTTPClientSettings.Endpoint = ""
-	test.s.logBuffer = logRecordsToLogPair(exampleLog())
+	rls := pdata.NewResourceLogs()
+	rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().Body().SetStringVal("Example log")
 
-	_, err := test.s.sendNonOTLPLogs(context.Background(), newFields(pdata.NewAttributeMap()))
+	_, err := test.s.sendNonOTLPLogs(context.Background(), rls, fields{})
 	assert.EqualError(t, err, `Post "": unsupported protocol scheme ""`)
-}
-
-func TestLogsBufferOverflow(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-
-	test.s.config.HTTPClientSettings.Endpoint = ":"
-	log := logRecordsToLogPair(exampleLog())
-	flds := newFields(pdata.NewAttributeMap())
-
-	for test.s.countLogs() < maxBufferSize-1 {
-		_, err := test.s.batchLog(context.Background(), log[0], flds)
-		require.NoError(t, err)
-	}
-
-	_, err := test.s.batchLog(context.Background(), log[0], flds)
-	assert.EqualError(t, err, `parse ":": missing protocol scheme`)
-	assert.Equal(t, 0, test.s.countLogs())
 }
 
 func TestInvalidMetricFormat(t *testing.T) {
@@ -1176,14 +1354,14 @@ func TestInvalidMetricFormat(t *testing.T) {
 
 	test.s.config.MetricFormat = "invalid"
 
-	err := test.s.send(context.Background(), MetricsPipeline, newCountingReader(0).withString(""), newFields(pdata.NewAttributeMap()))
+	err := test.s.send(context.Background(), MetricsPipeline, newCountingReader(0).withString(""), fields{})
 	assert.EqualError(t, err, `unsupported metrics format: invalid`)
 }
 
 func TestInvalidPipeline(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
 
-	err := test.s.send(context.Background(), "invalidPipeline", newCountingReader(0).withString(""), newFields(pdata.NewAttributeMap()))
+	err := test.s.send(context.Background(), "invalidPipeline", newCountingReader(0).withString(""), fields{})
 	assert.EqualError(t, err, `unexpected pipeline: invalidPipeline`)
 }
 
@@ -1210,7 +1388,7 @@ func TestSendCompressGzip(t *testing.T) {
 	test.s.compressor = c
 	reader := newCountingReader(0).withString("Some example log")
 
-	err = test.s.send(context.Background(), LogsPipeline, reader, newFields(pdata.NewAttributeMap()))
+	err = test.s.send(context.Background(), LogsPipeline, reader, fields{})
 	require.NoError(t, err)
 }
 
@@ -1238,7 +1416,7 @@ func TestSendCompressDeflate(t *testing.T) {
 	test.s.compressor = c
 	reader := newCountingReader(0).withString("Some example log")
 
-	err = test.s.send(context.Background(), LogsPipeline, reader, newFields(pdata.NewAttributeMap()))
+	err = test.s.send(context.Background(), LogsPipeline, reader, fields{})
 	require.NoError(t, err)
 }
 
@@ -1248,17 +1426,18 @@ func TestCompressionError(t *testing.T) {
 	test.s.compressor = getTestCompressor(errors.New("read error"), nil)
 	reader := newCountingReader(0).withString("Some example log")
 
-	err := test.s.send(context.Background(), LogsPipeline, reader, newFields(pdata.NewAttributeMap()))
+	err := test.s.send(context.Background(), LogsPipeline, reader, fields{})
 	assert.EqualError(t, err, "read error")
 }
 
 func TestInvalidContentEncoding(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
+	// Expect to requests
+	test := prepareSenderTest(t, nil)
 
 	test.s.config.CompressEncoding = "test"
 	reader := newCountingReader(0).withString("Some example log")
 
-	err := test.s.send(context.Background(), LogsPipeline, reader, newFields(pdata.NewAttributeMap()))
+	err := test.s.send(context.Background(), LogsPipeline, reader, fields{})
 	assert.EqualError(t, err, "invalid content encoding: test")
 }
 
@@ -1266,25 +1445,31 @@ func TestSendMetrics(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			expected := `test.metric.data{test="test_value",test2="second_value"} 14500 1605534165000
-gauge_metric_name{foo="bar",remote_name="156920",url="http://example_url"} 124 1608124661166
-gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1608124662166`
+			expected := `` +
+				`test.metric.data{test="test_value",test2="second_value"} 14500 1605534165000` + "\n" +
+				`gauge_metric_name{test="test_value",test2="second_value",remote_name="156920",url="http://example_url"} 124 1608124661166` + "\n" +
+				`gauge_metric_name{test="test_value",test2="second_value",remote_name="156955",url="http://another_url"} 245 1608124662166`
 			assert.Equal(t, expected, body)
 			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
 			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 		},
 	})
+
+	test.s.config.MetricFormat = PrometheusFormat
+
+	metricSum, attrs := exampleIntMetric()
+	metricGauge, _ := exampleIntGaugeMetric()
+	metrics := metricAndAttrsToPdataMetrics(
+		attrs,
+		metricSum, metricGauge,
+	)
+	resMetrics := metrics.ResourceMetrics().At(0)
+
 	flds := fieldsFromMap(map[string]string{
 		"key1": "value",
 		"key2": "value2",
 	})
-
-	test.s.config.MetricFormat = PrometheusFormat
-	test.s.metricBuffer = []metricPair{
-		exampleIntMetric(),
-		exampleIntGaugeMetric(),
-	}
-	_, err := test.s.sendNonOTLPMetrics(context.Background(), flds)
+	_, err := test.s.sendNonOTLPMetrics(context.Background(), resMetrics, flds)
 	assert.NoError(t, err)
 }
 
@@ -1297,19 +1482,24 @@ func TestSendMetricsSplit(t *testing.T) {
 		},
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			expected := `gauge_metric_name{foo="bar",remote_name="156920",url="http://example_url"} 124 1608124661166
-gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1608124662166`
+			expected := `` +
+				`gauge_metric_name{test="test_value",test2="second_value",remote_name="156920",url="http://example_url"} 124 1608124661166` + "\n" +
+				`gauge_metric_name{test="test_value",test2="second_value",remote_name="156955",url="http://another_url"} 245 1608124662166`
 			assert.Equal(t, expected, body)
 		},
 	})
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.MetricFormat = PrometheusFormat
-	test.s.metricBuffer = []metricPair{
-		exampleIntMetric(),
-		exampleIntGaugeMetric(),
-	}
 
-	_, err := test.s.sendNonOTLPMetrics(context.Background(), newFields(pdata.NewAttributeMap()))
+	metricSum, attrs := exampleIntMetric()
+	metricGauge, _ := exampleIntGaugeMetric()
+	metrics := metricAndAttrsToPdataMetrics(
+		attrs,
+		metricSum, metricGauge,
+	)
+	resMetrics := metrics.ResourceMetrics().At(0)
+
+	_, err := test.s.sendNonOTLPMetrics(context.Background(), resMetrics, fields{})
 	assert.NoError(t, err)
 }
 
@@ -1324,21 +1514,27 @@ func TestSendMetricsSplitFailedOne(t *testing.T) {
 		},
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			expected := `gauge_metric_name{foo="bar",remote_name="156920",url="http://example_url"} 124 1608124661166
-gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1608124662166`
+			expected := `` +
+				`gauge_metric_name{test="test_value",test2="second_value",remote_name="156920",url="http://example_url"} 124 1608124661166` + "\n" +
+				`gauge_metric_name{test="test_value",test2="second_value",remote_name="156955",url="http://another_url"} 245 1608124662166`
 			assert.Equal(t, expected, body)
 		},
 	})
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.MetricFormat = PrometheusFormat
-	test.s.metricBuffer = []metricPair{
-		exampleIntMetric(),
-		exampleIntGaugeMetric(),
-	}
 
-	dropped, err := test.s.sendNonOTLPMetrics(context.Background(), newFields(pdata.NewAttributeMap()))
+	metricSum, attrs := exampleIntMetric()
+	metricGauge, _ := exampleIntGaugeMetric()
+	metrics := metricAndAttrsToPdataMetrics(
+		attrs,
+		metricSum, metricGauge,
+	)
+	resMetrics := metrics.ResourceMetrics().At(0)
+
+	dropped, err := test.s.sendNonOTLPMetrics(context.Background(), resMetrics, fields{})
 	assert.EqualError(t, err, "failed sending data: status: 500 Internal Server Error")
-	assert.Equal(t, test.s.metricBuffer[0:1], dropped)
+	require.Len(t, dropped, 1)
+	assert.Equal(t, dropped[0], metricSum)
 }
 
 func TestSendMetricsSplitFailedAll(t *testing.T) {
@@ -1354,87 +1550,46 @@ func TestSendMetricsSplitFailedAll(t *testing.T) {
 			w.WriteHeader(404)
 
 			body := extractBody(t, req)
-			expected := `gauge_metric_name{foo="bar",remote_name="156920",url="http://example_url"} 124 1608124661166
-gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1608124662166`
+			expected := `` +
+				`gauge_metric_name{test="test_value",test2="second_value",remote_name="156920",url="http://example_url"} 124 1608124661166` + "\n" +
+				`gauge_metric_name{test="test_value",test2="second_value",remote_name="156955",url="http://another_url"} 245 1608124662166`
 			assert.Equal(t, expected, body)
 		},
 	})
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.MetricFormat = PrometheusFormat
-	test.s.metricBuffer = []metricPair{
-		exampleIntMetric(),
-		exampleIntGaugeMetric(),
-	}
 
-	dropped, err := test.s.sendNonOTLPMetrics(context.Background(), newFields(pdata.NewAttributeMap()))
+	metricSum, attrs := exampleIntMetric()
+	metricGauge, _ := exampleIntGaugeMetric()
+	metrics := metricAndAttrsToPdataMetrics(
+		attrs,
+		metricSum, metricGauge,
+	)
+	resMetrics := metrics.ResourceMetrics().At(0)
+
+	dropped, err := test.s.sendNonOTLPMetrics(context.Background(), resMetrics, fields{})
 	assert.EqualError(
 		t,
 		err,
 		"failed sending data: status: 500 Internal Server Error; failed sending data: status: 404 Not Found",
 	)
-	assert.Equal(t, test.s.metricBuffer[0:2], dropped)
+	require.Len(t, dropped, 2)
+	assert.Equal(t, dropped[0], metricSum)
+	assert.Equal(t, dropped[1], metricGauge)
 }
 
 func TestSendMetricsUnexpectedFormat(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-		},
-	})
+	// Expect no requestes
+	test := prepareSenderTest(t, nil)
 	test.s.config.MetricFormat = "invalid"
-	metrics := []metricPair{
-		exampleIntMetric(),
-	}
-	test.s.metricBuffer = metrics
 
-	dropped, err := test.s.sendNonOTLPMetrics(context.Background(), newFields(pdata.NewAttributeMap()))
+	metricSum, attrs := exampleIntMetric()
+	metrics := metricAndAttrsToPdataMetrics(attrs, metricSum)
+	resMetrics := metrics.ResourceMetrics().At(0)
+
+	dropped, err := test.s.sendNonOTLPMetrics(context.Background(), resMetrics, fields{})
 	assert.EqualError(t, err, "unexpected metric format: invalid")
-	assert.Equal(t, dropped, metrics)
-}
-
-func TestMetricsBuffer(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-
-	assert.Equal(t, test.s.countMetrics(), 0)
-	metrics := []metricPair{
-		exampleIntMetric(),
-		exampleIntGaugeMetric(),
-	}
-
-	droppedMetrics, err := test.s.batchMetric(context.Background(), metrics[0], newFields(pdata.NewAttributeMap()))
-	require.NoError(t, err)
-	assert.Nil(t, droppedMetrics)
-	assert.Equal(t, 1, test.s.countMetrics())
-	assert.Equal(t, metrics[0:1], test.s.metricBuffer)
-
-	droppedMetrics, err = test.s.batchMetric(context.Background(), metrics[1], newFields(pdata.NewAttributeMap()))
-	require.NoError(t, err)
-	assert.Nil(t, droppedMetrics)
-	assert.Equal(t, 2, test.s.countMetrics())
-	assert.Equal(t, metrics, test.s.metricBuffer)
-
-	test.s.cleanMetricBuffer()
-	assert.Equal(t, 0, test.s.countMetrics())
-	assert.Equal(t, []metricPair{}, test.s.metricBuffer)
-}
-
-func TestMetricsBufferOverflow(t *testing.T) {
-	t.Skip("Skip test due to prometheus format complexity. Execution can take over 30s")
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-
-	test.s.config.HTTPClientSettings.Endpoint = ":"
-	test.s.config.MetricFormat = PrometheusFormat
-	test.s.config.MaxRequestBodySize = 1024 * 1024 * 1024 * 1024
-	metric := exampleIntMetric()
-	flds := newFields(pdata.NewAttributeMap())
-
-	for test.s.countMetrics() < maxBufferSize-1 {
-		_, err := test.s.batchMetric(context.Background(), metric, flds)
-		require.NoError(t, err)
-	}
-
-	_, err := test.s.batchMetric(context.Background(), metric, flds)
-	assert.EqualError(t, err, `parse ":": missing protocol scheme`)
-	assert.Equal(t, 0, test.s.countMetrics())
+	assert.Equal(t, dropped, []pdata.Metric{metricSum})
 }
 
 func TestSendCarbon2Metrics(t *testing.T) {
@@ -1442,9 +1597,12 @@ func TestSendCarbon2Metrics(t *testing.T) {
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			//nolint:lll
-			expected := `test=test_value test2=second_value _unit=m/s escape_me=:invalid_ metric=true metric=test.metric.data unit=bytes  14500 1605534165
-foo=bar metric=gauge_metric_name  124 1608124661
-foo=bar metric=gauge_metric_name  245 1608124662`
+			expected := `` +
+				`test=test_value test2=second_value _unit=m/s escape_me=:invalid_ metric=true metric=test.metric.data unit=bytes  14500 1605534165` +
+				"\n" +
+				`test=test_value test2=second_value _unit=m/s escape_me=:invalid_ metric=true metric=gauge_metric_name  124 1608124661` +
+				"\n" +
+				`test=test_value test2=second_value _unit=m/s escape_me=:invalid_ metric=true metric=gauge_metric_name  245 1608124662`
 			assert.Equal(t, expected, body)
 			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
 			assert.Equal(t, "application/vnd.sumologic.carbon2", req.Header.Get("Content-Type"))
@@ -1452,21 +1610,30 @@ foo=bar metric=gauge_metric_name  245 1608124662`
 	})
 
 	test.s.config.MetricFormat = Carbon2Format
-	test.s.metricBuffer = []metricPair{
-		exampleIntMetric(),
-		exampleIntGaugeMetric(),
-	}
+
+	metricSum, attrs := exampleIntMetric()
+	metricGauge, _ := exampleIntGaugeMetric()
+
+	// Assign attributes on a resource level here to see it in the serialized output.
+	// This is done only because carbon2 data format does not take data point attributes
+	// into account just yet: https://github.com/SumoLogic/sumologic-otel-collector/issues/552
+	// TODO: change this to append only to a particular data point's attributes
+	// and check only for that in expected output when carbon2 serializer gets fixed.
+	attrs.InsertString("unit", "m/s")
+	attrs.InsertString("escape me", "=invalid\n")
+	attrs.InsertBool("metric", true)
+
+	metrics := metricAndAttrsToPdataMetrics(
+		attrs,
+		metricSum, metricGauge,
+	)
+	resMetrics := metrics.ResourceMetrics().At(0)
 
 	flds := fieldsFromMap(map[string]string{
 		"key1": "value",
 		"key2": "value2",
 	})
-
-	test.s.metricBuffer[0].attributes.InsertString("unit", "m/s")
-	test.s.metricBuffer[0].attributes.InsertString("escape me", "=invalid\n")
-	test.s.metricBuffer[0].attributes.InsertBool("metric", true)
-
-	_, err := test.s.sendNonOTLPMetrics(context.Background(), flds)
+	_, err := test.s.sendNonOTLPMetrics(context.Background(), resMetrics, flds)
 	assert.NoError(t, err)
 }
 
@@ -1474,9 +1641,12 @@ func TestSendGraphiteMetrics(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			expected := `test_metric_data.true.m/s 14500 1605534165
-gauge_metric_name.. 124 1608124661
-gauge_metric_name.. 245 1608124662`
+			expected := `` +
+				`test_metric_data.my_metric_name.kb 14500 1605534165` +
+				"\n" +
+				`gauge_metric_name.my_metric_name.kb 124 1608124661` +
+				"\n" +
+				`gauge_metric_name.my_metric_name.kb 245 1608124662`
 			assert.Equal(t, expected, body)
 			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
 			assert.Equal(t, "application/vnd.sumologic.graphite", req.Header.Get("Content-Type"))
@@ -1488,19 +1658,27 @@ gauge_metric_name.. 245 1608124662`
 	test.s.graphiteFormatter = gf
 
 	test.s.config.MetricFormat = GraphiteFormat
-	test.s.metricBuffer = []metricPair{
-		exampleIntMetric(),
-		exampleIntGaugeMetric(),
-	}
+	metricSum, attrs := exampleIntMetric()
+	metricGauge, _ := exampleIntGaugeMetric()
+
+	// Assign attributes on a resource level here to see it in the serialized output.
+	// This is done only because graphite data format does not take data point attributes
+	// into account just yet: https://github.com/SumoLogic/sumologic-otel-collector/issues/552
+	// TODO: change this to append only to a particular data point's attributes
+	// and check only for that in expected output when graphite serializer gets fixed.
+	attrs.InsertString("not_in_graphite_template", "stuff")
+	attrs.InsertString("unit", "kb")
+	attrs.InsertString("metric", "my_metric_name")
+	metrics := metricAndAttrsToPdataMetrics(
+		attrs,
+		metricSum, metricGauge,
+	)
+	resMetrics := metrics.ResourceMetrics().At(0)
 
 	flds := fieldsFromMap(map[string]string{
 		"key1": "value",
 		"key2": "value2",
 	})
-
-	test.s.metricBuffer[0].attributes.InsertString("unit", "m/s")
-	test.s.metricBuffer[0].attributes.InsertBool("metric", true)
-
-	_, err = test.s.sendNonOTLPMetrics(context.Background(), flds)
+	_, err = test.s.sendNonOTLPMetrics(context.Background(), resMetrics, flds)
 	assert.NoError(t, err)
 }
