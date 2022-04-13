@@ -52,13 +52,6 @@ type metricPair struct {
 	metric     pdata.Metric
 }
 
-// logPair keeps information about logRecord and attributes,
-// where attributes are record and resource attributes
-type logPair struct {
-	attributes pdata.AttributeMap
-	log        pdata.LogRecord
-}
-
 // countingReader keeps number of records related to reader
 type countingReader struct {
 	counter int64
@@ -129,7 +122,6 @@ func (b *bodyBuilder) toCountingReader() *countingReader {
 
 type sender struct {
 	logger              *zap.Logger
-	logBuffer           []logPair
 	metricBuffer        []metricPair
 	config              *Config
 	client              *http.Client
@@ -361,30 +353,25 @@ func (s *sender) logToText(record pdata.LogRecord) string {
 }
 
 // logToJSON converts LogRecord to a json line, returns it and error eventually
-func (s *sender) logToJSON(record logPair) (string, error) {
-	data := s.filter.filterOut(record.attributes)
+func (s *sender) logToJSON(record pdata.LogRecord) (string, error) {
 	if s.jsonLogsConfig.AddTimestamp {
-		addJSONTimestamp(data.orig, s.jsonLogsConfig.TimestampKey, record.log.Timestamp())
-	}
-
-	if s.config.TranslateAttributes {
-		data.translateAttributes()
+		addJSONTimestamp(record.Attributes(), s.jsonLogsConfig.TimestampKey, record.Timestamp())
 	}
 
 	// Only append the body when it's not empty to prevent sending 'null' log.
-	if body := record.log.Body(); !isEmptyAttributeValue(body) {
+	if body := record.Body(); !isEmptyAttributeValue(body) {
 		if s.jsonLogsConfig.FlattenBody && body.Type() == pdata.AttributeValueTypeMap {
 			// Cannot use CopyTo, as it overrides data.orig's values
 			body.MapVal().Range(func(k string, v pdata.AttributeValue) bool {
-				data.orig.Insert(k, v)
+				record.Attributes().Insert(k, v)
 				return true
 			})
 		} else {
-			data.orig.Upsert(s.jsonLogsConfig.LogKey, body)
+			record.Attributes().Upsert(s.jsonLogsConfig.LogKey, body)
 		}
 	}
 
-	nextLine, err := json.Marshal(data.orig.AsRaw())
+	nextLine, err := json.Marshal(record.Attributes().AsRaw())
 	if err != nil {
 		return "", err
 	}
@@ -418,7 +405,7 @@ func isEmptyAttributeValue(att pdata.AttributeValue) bool {
 // sendNonOTLPLogs sends log records from the logBuffer formatted according
 // to configured LogFormat and as the result of execution
 // returns array of records which has not been sent correctly and error
-func (s *sender) sendNonOTLPLogs(ctx context.Context, flds fields) ([]logPair, error) {
+func (s *sender) sendNonOTLPLogs(ctx context.Context, rl pdata.ResourceLogs, flds fields) ([]pdata.LogRecord, error) {
 	if s.config.LogFormat == OTLPLogFormat {
 		return nil, fmt.Errorf("Attempting to send OTLP logs as non-OTLP data")
 	}
@@ -426,49 +413,43 @@ func (s *sender) sendNonOTLPLogs(ctx context.Context, flds fields) ([]logPair, e
 	var (
 		body           bodyBuilder = newBodyBuilder()
 		errs           []error
-		droppedRecords []logPair
-		currentRecords []logPair
+		droppedRecords []pdata.LogRecord
+		currentRecords []pdata.LogRecord
 	)
 
-	for _, record := range s.logBuffer {
-		var formattedLine string
-		var err error
+	slgs := rl.ScopeLogs()
+	for i := 0; i < slgs.Len(); i++ {
+		slg := slgs.At(i)
+		for j := 0; j < slg.LogRecords().Len(); j++ {
+			lr := slg.LogRecords().At(j)
+			formattedLine, err := s.formatLogLine(lr)
+			if err != nil {
+				droppedRecords = append(droppedRecords, lr)
+				errs = append(errs, err)
+				continue
+			}
 
-		switch s.config.LogFormat {
-		case TextFormat:
-			formattedLine = s.logToText(record.log)
-		case JSONFormat:
-			formattedLine, err = s.logToJSON(record)
-		default:
-			err = errors.New("unexpected log format")
-		}
+			ar, err := s.appendAndSend(ctx, formattedLine, LogsPipeline, &body, flds)
+			if err != nil {
+				errs = append(errs, err)
+				if ar.sent {
+					droppedRecords = append(droppedRecords, currentRecords...)
+				}
 
-		if err != nil {
-			droppedRecords = append(droppedRecords, record)
-			errs = append(errs, err)
-			continue
-		}
+				if !ar.appended {
+					droppedRecords = append(droppedRecords, lr)
+				}
+			}
 
-		ar, err := s.appendAndSend(ctx, formattedLine, LogsPipeline, &body, flds)
-		if err != nil {
-			errs = append(errs, err)
+			// If data was sent, cleanup the currentTimeSeries counter
 			if ar.sent {
-				droppedRecords = append(droppedRecords, currentRecords...)
+				currentRecords = currentRecords[:0]
 			}
 
-			if !ar.appended {
-				droppedRecords = append(droppedRecords, record)
+			// If log has been appended to body, increment the currentTimeSeries
+			if ar.appended {
+				currentRecords = append(currentRecords, lr)
 			}
-		}
-
-		// If data was sent, cleanup the currentTimeSeries counter
-		if ar.sent {
-			currentRecords = currentRecords[:0]
-		}
-
-		// If log has been appended to body, increment the currentTimeSeries
-		if ar.appended {
-			currentRecords = append(currentRecords, record)
 		}
 	}
 
@@ -479,10 +460,23 @@ func (s *sender) sendNonOTLPLogs(ctx context.Context, flds fields) ([]logPair, e
 		}
 	}
 
-	if len(errs) > 0 {
-		return droppedRecords, multierr.Combine(errs...)
+	return droppedRecords, multierr.Combine(errs...)
+}
+
+func (s *sender) formatLogLine(lr pdata.LogRecord) (string, error) {
+	var formattedLine string
+	var err error
+
+	switch s.config.LogFormat {
+	case TextFormat:
+		formattedLine = s.logToText(lr)
+	case JSONFormat:
+		formattedLine, err = s.logToJSON(lr)
+	default:
+		err = errors.New("unexpected log format")
 	}
-	return droppedRecords, nil
+
+	return formattedLine, err
 }
 
 // TODO: add support for HTTP limits
@@ -519,59 +513,65 @@ func (s *sender) sendOTLPLogs(ctx context.Context, ld pdata.Logs) error {
 }
 
 // sendNonOTLPMetrics sends metrics in right format basing on the s.config.MetricFormat
-func (s *sender) sendNonOTLPMetrics(ctx context.Context, flds fields) ([]metricPair, error) {
+func (s *sender) sendNonOTLPMetrics(ctx context.Context, rm pdata.ResourceMetrics, flds fields) ([]pdata.Metric, error) {
 	if s.config.MetricFormat == OTLPMetricFormat {
 		return nil, fmt.Errorf("Attempting to send OTLP metrics as non-OTLP data")
 	}
 
 	var (
-		body           bodyBuilder
+		body           bodyBuilder = newBodyBuilder()
 		errs           []error
-		droppedRecords []metricPair
-		currentRecords []metricPair
+		droppedRecords []pdata.Metric
+		currentRecords []pdata.Metric
 	)
 
-	for _, record := range s.metricBuffer {
-		var formattedLine string
-		var err error
+	sms := rm.ScopeMetrics()
+	for i := 0; i < sms.Len(); i++ {
+		sm := sms.At(i)
 
-		switch s.config.MetricFormat {
-		case PrometheusFormat:
-			formattedLine = s.prometheusFormatter.metric2String(record)
-		case Carbon2Format:
-			formattedLine = carbon2Metric2String(record)
-		case GraphiteFormat:
-			formattedLine = s.graphiteFormatter.metric2String(record)
-		default:
-			err = fmt.Errorf("unexpected metric format: %s", s.config.MetricFormat)
-		}
+		for j := 0; j < sm.Metrics().Len(); j++ {
+			m := sm.Metrics().At(j)
 
-		if err != nil {
-			droppedRecords = append(droppedRecords, record)
-			errs = append(errs, err)
-			continue
-		}
+			var formattedLine string
+			var err error
 
-		ar, err := s.appendAndSend(ctx, formattedLine, MetricsPipeline, &body, flds)
-		if err != nil {
-			errs = append(errs, err)
+			switch s.config.MetricFormat {
+			case PrometheusFormat:
+				formattedLine = s.prometheusFormatter.metric2String(m, rm.Resource().Attributes())
+			case Carbon2Format:
+				formattedLine = carbon2Metric2String(m, rm.Resource().Attributes())
+			case GraphiteFormat:
+				formattedLine = s.graphiteFormatter.metric2String(m, rm.Resource().Attributes())
+			default:
+				err = fmt.Errorf("unexpected metric format: %s", s.config.MetricFormat)
+			}
+			if err != nil {
+				droppedRecords = append(droppedRecords, m)
+				errs = append(errs, err)
+				continue
+			}
+
+			ar, err := s.appendAndSend(ctx, formattedLine, MetricsPipeline, &body, flds)
+			if err != nil {
+				errs = append(errs, err)
+				if ar.sent {
+					droppedRecords = append(droppedRecords, currentRecords...)
+				}
+
+				if !ar.appended {
+					droppedRecords = append(droppedRecords, m)
+				}
+			}
+
+			// If data was sent, cleanup the currentTimeSeries counter
 			if ar.sent {
-				droppedRecords = append(droppedRecords, currentRecords...)
+				currentRecords = currentRecords[:0]
 			}
 
-			if !ar.appended {
-				droppedRecords = append(droppedRecords, record)
+			// If log has been appended to body, increment the currentTimeSeries
+			if ar.appended {
+				currentRecords = append(currentRecords, m)
 			}
-		}
-
-		// If data was sent, cleanup the currentTimeSeries counter
-		if ar.sent {
-			currentRecords = currentRecords[:0]
-		}
-
-		// If log has been appended to body, increment the currentTimeSeries
-		if ar.appended {
-			currentRecords = append(currentRecords, record)
 		}
 	}
 
@@ -582,10 +582,7 @@ func (s *sender) sendNonOTLPMetrics(ctx context.Context, flds fields) ([]metricP
 		}
 	}
 
-	if len(errs) > 0 {
-		return droppedRecords, multierr.Combine(errs...)
-	}
-	return droppedRecords, nil
+	return droppedRecords, multierr.Combine(errs...)
 }
 
 func (s *sender) sendOTLPMetrics(ctx context.Context, md pdata.Metrics) error {
@@ -677,47 +674,9 @@ func (s *sender) sendOTLPTraces(ctx context.Context, td pdata.Traces) error {
 	return nil
 }
 
-// cleanLogsBuffer zeroes logBuffer
-func (s *sender) cleanLogsBuffer() {
-	s.logBuffer = (s.logBuffer)[:0]
-}
-
-// batchLog adds log to the logBuffer and flushes them if logBuffer is full to avoid overflow
-// returns list of log records which were not sent successfully
-func (s *sender) batchLog(ctx context.Context, log logPair, metadata fields) ([]logPair, error) {
-	s.logBuffer = append(s.logBuffer, log)
-
-	if s.countLogs() >= maxBufferSize {
-		dropped, err := s.sendNonOTLPLogs(ctx, metadata)
-		s.cleanLogsBuffer()
-		return dropped, err
-	}
-
-	return nil, nil
-}
-
-// countLogs returns number of logs in logBuffer
-func (s *sender) countLogs() int {
-	return len(s.logBuffer)
-}
-
 // cleanMetricBuffer zeroes metricBuffer
 func (s *sender) cleanMetricBuffer() {
 	s.metricBuffer = (s.metricBuffer)[:0]
-}
-
-// batchMetric adds metric to the metricBuffer and flushes them if metricBuffer is full to avoid overflow
-// returns list of metric records which were not sent successfully
-func (s *sender) batchMetric(ctx context.Context, metric metricPair, metadata fields) ([]metricPair, error) {
-	s.metricBuffer = append(s.metricBuffer, metric)
-
-	if s.countMetrics() >= maxBufferSize {
-		dropped, err := s.sendNonOTLPMetrics(ctx, metadata)
-		s.cleanMetricBuffer()
-		return dropped, err
-	}
-
-	return nil, nil
 }
 
 // countMetrics returns number of metrics in metricBuffer
