@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"log"
 	"encoding/json"
-	// registers the mysql driver
 	"github.com/go-sql-driver/mysql"
 )
 
 type client interface {
 	Connect() error
-	//getGlobalStats() (map[string]string, error)
-	getRecords() (map[string]string, error)
+	getRecords() (map[int]string, error)
 	Close() error
 }
 
@@ -49,12 +47,12 @@ func (c *mySQLClient) Connect() error {
 }
 
 // getInnodbStats queries the db for innodb metrics.
-func (c *mySQLClient) getRecords() (map[string]string,error) {
+func (c *mySQLClient) getRecords() (map[int]string,error) {
 	query := "select * from Persons;"
 	return Query(*c, query)
 }
 
-func Query(c mySQLClient, query string) (map[string]string,error) {
+func Query(c mySQLClient, query string) (map[int]string,error) {
 	rows, err := c.client.Query(query)
 	if err != nil {
 		log.Printf("error in executing sql query")
@@ -72,7 +70,7 @@ func Query(c mySQLClient, query string) (map[string]string,error) {
 		for _, colvalue := range columnstype {
 			columndatatypes = append(columndatatypes, colvalue.DatabaseTypeName())
 		}
-		log.Printf("Column types are: %s", columndatatypes)
+		//log.Printf("Column types are: %s", columndatatypes)
 	}
 
 	values := make([]sql.RawBytes, len(columns))
@@ -109,30 +107,24 @@ func Query(c mySQLClient, query string) (map[string]string,error) {
 		}
 		lines = append(lines, line)
 	}
-
 	err = rows.Err()
 	if err != nil {
 		log.Println(err)
-	}
-
-	// jsonrecs := getjsonRecords(columns, lines)
-	// return jsonrecs
+	}	
 	myjsonobject := make(map[string]string)
-	var records [][]byte
-
-	for _, value := range lines {
+	myEntireRecord := make(map[int]string)
+	for j, value := range lines {
 		for i, v := range value {
 			myjsonobject[columns[i]] = v
 		}
 		jsonObjRecord, err := json.Marshal(myjsonobject)
+		jsonStr := string(jsonObjRecord)
+		myEntireRecord[j+1] = jsonStr		
 		if err != nil {
 			log.Printf("Error in converting records into json object, Error: %v", err)
 		}
-		//converting into [][]byte for use if required
-		records = append(records, jsonObjRecord)
 	}
-
-	return myjsonobject,nil
+	return myEntireRecord,nil
 }
 
 func (c *mySQLClient) Close() error {
