@@ -194,7 +194,7 @@ func (r *rawK8sEventsReceiver) convertToLog(event *corev1.Event) pdata.Logs {
 	sl := rl.ScopeLogs().AppendEmpty()
 	lr := sl.LogRecords().AppendEmpty()
 
-	// Convert the event into a map[string][interface{}]
+	// Convert the event into a map[string]interface{}
 	eventMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(event)
 	if err != nil {
 		r.logger.Error("failed to convert event", zap.Error(err), zap.Any("event", event))
@@ -217,8 +217,7 @@ func (r *rawK8sEventsReceiver) convertToLog(event *corev1.Event) pdata.Logs {
 		r.logger.Debug("unknown severity type", zap.String("type", event.Type))
 	}
 
-	attrs := lr.Attributes()
-	pdataObjectMap.CopyTo(attrs)
+	pdataObjectMap.CopyTo(lr.Attributes())
 	return ld
 }
 
