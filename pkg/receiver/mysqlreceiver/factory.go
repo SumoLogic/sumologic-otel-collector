@@ -2,6 +2,7 @@ package mysqlreceiver
 
 import (
 	"context"
+	//"time"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
@@ -26,8 +27,9 @@ func createDefaultConfig() config.Receiver {
 
 	return &Config{
 		ReceiverSettings:   &rs,
+		CollectionInterval: "10s",
 		AllowNativePasswords: true,
-		Username:             "root",
+		Username:             "Username",
 		NetAddr: confignet.NetAddr{
 			Endpoint:  "localhost:3306",
 			Transport: "tcp",

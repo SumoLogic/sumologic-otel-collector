@@ -13,4 +13,5 @@ type Config struct {
         Database                                string `mapstructure:"database,omitempty"`
         AllowNativePasswords                    bool   `mapstructure:"allow_native_passwords,omitempty"`
         confignet.NetAddr                       `mapstructure:",squash"`
+        CollectionInterval                      string `mapstructure:"collection_interval,omitempty"`
 }
