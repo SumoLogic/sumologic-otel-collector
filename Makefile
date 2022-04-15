@@ -14,6 +14,12 @@ else
 SED ?= sed
 endif
 
+.PHONY: install-gsed
+install-gsed:
+ifeq ($(shell go env GOOS),darwin)
+	@which gsed || brew install gsed
+endif
+
 .PHONY: mdl
 mdl:
 	mdl --style .markdownlint/style.rb $(MD_FILES)
@@ -79,16 +85,16 @@ check-uniform-dependencies:
 OT_CORE_VERSION := $(shell grep "otelcol_version: .*" otelcolbuilder/.otelcol-builder.yaml | cut -f 4 -d " ")
 # usage: make update-ot-core OT_CORE_NEW_VERSION=x.x.x
 .PHONY: update-ot-core
-update-ot-core:
+update-ot-core: install-gsed
 	@test $(OT_CORE_NEW_VERSION) || (echo "usage: make update-otc-core OT_CORE_NEW_VERSION=x.x.x"; exit 1);
 	@echo "updating OT core from $(OT_CORE_VERSION) to $(OT_CORE_NEW_VERSION)"
-	@sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" otelcolbuilder/.otelcol-builder.yaml
-	@sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" otelcolbuilder/Makefile
-	@sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" README.md
-	@sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" docs/Configuration.md
-	@sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" docs/KnownIssues.md
-	@sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" pkg/receiver/telegrafreceiver/README.md
-	@find . -type f -name "go.mod" -exec sed -i "" "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" {} \;
+	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" otelcolbuilder/.otelcol-builder.yaml
+	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" otelcolbuilder/Makefile
+	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" README.md
+	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" docs/Configuration.md
+	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" docs/KnownIssues.md
+	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" pkg/receiver/telegrafreceiver/README.md
+	@find . -type f -name "go.mod" -exec $(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" {} \;
 	@echo "building OT distro to check for breakage"
 	make gomod-download-all
 	pushd otelcolbuilder \
@@ -149,10 +155,7 @@ delete-tag:
 	done
 
 .PHONY: prepare-tag
-prepare-tag:
-ifeq ($(shell go env GOOS),darwin)
-	@which gsed || brew install gsed
-endif
+prepare-tag: install-gsed
 	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
 	$(SED) -i 's#\(gomod: "github.com/SumoLogic/sumologic-otel-collector/.*\) v0.0.0-00010101000000-000000000000#\1 ${TAG}#g' \
 		otelcolbuilder/.otelcol-builder.yaml
