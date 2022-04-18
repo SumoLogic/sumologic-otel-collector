@@ -2,10 +2,10 @@ package mysqlreceiver
 
 import (
 	"database/sql"
-	"fmt"
-	"log"
 	"encoding/json"
 	"github.com/go-sql-driver/mysql"
+	"go.uber.org/zap"
+
 )
 
 type client interface {
@@ -17,6 +17,7 @@ type client interface {
 type mySQLClient struct {
 	connStr string
 	client  *sql.DB
+	logger    *zap.Logger
 }
 
 var _ client = (*mySQLClient)(nil)
@@ -40,13 +41,14 @@ func newMySQLClient(conf *Config) client {
 func (c *mySQLClient) Connect() error {
 	clientDB, err := sql.Open("mysql", c.connStr)
 	if err != nil {
-		return fmt.Errorf("unable to connect to database: %w", err)
+		c.logger.Error("Unable to connect to database", zap.Error(err))
+		return err
 	}
 	c.client = clientDB
 	return nil
 }
 
-// getInnodbStats queries the db for innodb metrics.
+// getRecords queries the db for records
 func (c *mySQLClient) getRecords() (map[int]string,error) {
 	query := "select * from Persons;"
 	return Query(*c, query)
@@ -55,22 +57,24 @@ func (c *mySQLClient) getRecords() (map[int]string,error) {
 func Query(c mySQLClient, query string) (map[int]string,error) {
 	rows, err := c.client.Query(query)
 	if err != nil {
-		log.Printf("error in executing sql query")
+		c.logger.Error("Error in executing sql query", zap.Error(err))
 	}
 	defer rows.Close()
 
 	// Get column names
 	columns, err := rows.Columns()
-	columnstype, err := rows.ColumnTypes()
-
 	if err != nil {
-		log.Printf("error getting column datatype from table , error: %v",  err)
+		c.logger.Error("Error getting column names from table", zap.Error(err))
+	}
+
+	columnstype, err := rows.ColumnTypes()
+	if err != nil {
+		c.logger.Error("Error getting column datatype from table", zap.Error(err))
 	} else {
 		var columndatatypes []string
 		for _, colvalue := range columnstype {
 			columndatatypes = append(columndatatypes, colvalue.DatabaseTypeName())
 		}
-		//log.Printf("Column types are: %s", columndatatypes)
 	}
 
 	values := make([]sql.RawBytes, len(columns))
@@ -90,7 +94,7 @@ func Query(c mySQLClient, query string) (map[int]string,error) {
 		// each column value will be stored in the slice
 		err = rows.Scan(scanArgs...)
 		if err != nil {
-			log.Print(err)
+			c.logger.Error("Error scanning rows from table", zap.Error(err))
 		}
 
 		var value string
@@ -109,7 +113,7 @@ func Query(c mySQLClient, query string) (map[int]string,error) {
 	}
 	err = rows.Err()
 	if err != nil {
-		log.Println(err)
+		c.logger.Error("Error found in rows",zap.Error(err))
 	}	
 	myjsonobject := make(map[string]string)
 	myEntireRecord := make(map[int]string)
@@ -118,10 +122,13 @@ func Query(c mySQLClient, query string) (map[int]string,error) {
 			myjsonobject[columns[i]] = v
 		}
 		jsonObjRecord, err := json.Marshal(myjsonobject)
+		if err != nil {
+			c.logger.Error("Error in marshalling json object",zap.Error(err))
+		}
 		jsonStr := string(jsonObjRecord)
 		myEntireRecord[j+1] = jsonStr		
 		if err != nil {
-			log.Printf("Error in converting records into json object, Error: %v", err)
+			c.logger.Error("Error in converting records into json object",zap.Error(err))
 		}
 	}
 	return myEntireRecord,nil

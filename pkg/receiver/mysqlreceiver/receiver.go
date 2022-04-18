@@ -8,13 +8,10 @@ import (
 	"go.opentelemetry.io/collector/model/pdata"
 )
 
-//var records map[int]string
-
 type mySQLReceiver struct {
 	sqlclient client
 	logger    *zap.Logger
 	config    *Config
-	//data	  map[int]string
 	consumer consumer.Logs
 }
 
@@ -24,10 +21,10 @@ func newMySQLReceiver (logger *zap.Logger, conf *Config, next consumer.Logs) (co
 		consumer: next,
 		logger: logger,
 		config: conf,
-		//data: records,
 	},nil	
 }
 
+// start starts the receiver by initializing the db client connection.
 func (m *mySQLReceiver) Start(ctx context.Context, host component.Host) error {
 	sqlclient := newMySQLClient(m.config)
 
@@ -37,12 +34,11 @@ func (m *mySQLReceiver) Start(ctx context.Context, host component.Host) error {
 	}
 	m.sqlclient = sqlclient
 
-	data,err := m.sqlclient.getRecords()
+	data, err := m.sqlclient.getRecords()
 	if err != nil {
 		m.logger.Error("Failed to fetch records", zap.Error(err))
 		return err
 	}
-	//records = data
 	for _, element := range data {
         logs := m.convertToLog(element)
 		m.consumer.ConsumeLogs(ctx, logs)
