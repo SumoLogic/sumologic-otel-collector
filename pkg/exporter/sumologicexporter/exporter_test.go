@@ -268,21 +268,6 @@ func TestPartiallyFailed(t *testing.T) {
 	assert.Equal(t, logsExpected, partial.GetLogs())
 }
 
-func TestInvalidSourceFormats(t *testing.T) {
-	_, err := initExporter(&Config{
-		LogFormat:        "json",
-		MetricFormat:     "carbon2",
-		CompressEncoding: "gzip",
-		TraceFormat:      "otlp",
-		HTTPClientSettings: confighttp.HTTPClientSettings{
-			Timeout:  defaultTimeout,
-			Endpoint: "test_endpoint",
-		},
-		MetadataAttributes: []string{"[a-z"},
-	}, createExporterCreateSettings())
-	assert.EqualError(t, err, "error parsing regexp: missing closing ]: `[a-z`")
-}
-
 func TestInvalidHTTPCLient(t *testing.T) {
 	exp, err := initExporter(&Config{
 		LogFormat:        "json",
@@ -436,10 +421,6 @@ func TestPushOTLPLogs_AttributeTranslation(t *testing.T) {
 			name: "enabled",
 			configFunc: func() *Config {
 				config := createTestConfig()
-				// NOTE: MetadataAttributes does not have an impact on exporter
-				// behavior when using OTLP. What gets sent as fields is purely
-				// depdendent on what's in resource attributes.
-				config.MetadataAttributes = []string{}
 				config.SourceCategory = "category_with_host_template_%{host.name}"
 				config.SourceHost = "%{host.name}"
 				config.LogFormat = OTLPLogFormat
@@ -472,10 +453,6 @@ func TestPushOTLPLogs_AttributeTranslation(t *testing.T) {
 			name: "disabled",
 			configFunc: func() *Config {
 				config := createTestConfig()
-				// NOTE: MetadataAttributes does not have an impact on exporter
-				// behavior when using OTLP. What gets sent as fields is purely
-				// depdendent on what's in resource attributes.
-				config.MetadataAttributes = []string{}
 				config.SourceCategory = "category_with_host_template_%{host.name}"
 				config.SourceHost = "%{host.name}"
 				config.LogFormat = OTLPLogFormat
@@ -640,7 +617,6 @@ func TestPushJSONLogs_AttributeTranslation(t *testing.T) {
 			logs: createLogs(),
 			configFunc: func() *Config {
 				config := createTestConfig()
-				config.MetadataAttributes = []string{`host\.name`}
 				config.SourceCategory = "%{host.name}"
 				config.SourceHost = "%{host}"
 				config.LogFormat = JSONFormat
@@ -1078,15 +1054,11 @@ func TestLogsTextFormatMetadataFilterWithDroppedAttribute(t *testing.T) {
 	test.exp.config.LogFormat = TextFormat
 	test.exp.config.DropRoutingAttribute = "key1"
 
-	f, err := newFilter([]string{`key*`})
-	require.NoError(t, err)
-	test.exp.filter = f
-
 	logs := LogRecordsToLogs(exampleLog())
 	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key1", "value1")
 	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key2", "value2")
 
-	err = test.exp.pushLogsData(context.Background(), logs)
+	err := test.exp.pushLogsData(context.Background(), logs)
 	assert.NoError(t, err)
 }
 
@@ -1566,10 +1538,6 @@ func TestTracesWithDroppedAttribute(t *testing.T) {
 	})
 	test.exp.config.DropRoutingAttribute = "key1"
 
-	f, err := newFilter([]string{`key*`})
-	require.NoError(t, err)
-	test.exp.filter = f
-
 	// add routing attribute and check if after marshalling it's different
 	traces.ResourceSpans().At(0).Resource().Attributes().InsertString("key1", "value1")
 	bytesWithAttribute, err := tracesMarshaler.MarshalTraces(traces)
@@ -1587,10 +1555,6 @@ func Benchmark_ExporterPushLogs(b *testing.B) {
 		config.MetricFormat = PrometheusFormat
 		config.LogFormat = TextFormat
 		config.SourceCategory = "testing_source_templates %{_sourceCategory}"
-		config.MetadataAttributes = []string{
-			"key1",
-			"_source.*",
-		}
 		config.HTTPClientSettings.Auth = nil
 		return config
 	}
