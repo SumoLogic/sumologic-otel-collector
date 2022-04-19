@@ -18,17 +18,17 @@ import (
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"golang.org/x/exp/slices"
 )
 
 // fields represents metadata
 type fields struct {
-	orig        pdata.AttributeMap
+	orig        pcommon.Map
 	initialized bool
 }
 
-func newFields(attrMap pdata.AttributeMap) fields {
+func newFields(attrMap pcommon.Map) fields {
 	return fields{
 		orig:        attrMap,
 		initialized: true,
@@ -59,7 +59,7 @@ func (f fields) string() string {
 
 	returnValue := make([]string, 0, f.orig.Len())
 
-	f.orig.Range(func(k string, v pdata.AttributeValue) bool {
+	f.orig.Range(func(k string, v pcommon.Value) bool {
 		// Don't add source related attributes to fields as they are handled separately
 		// and are added to the payload either as special HTTP headers or as resources
 		// attributes.

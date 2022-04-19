@@ -28,7 +28,8 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenterror"
 	"go.opentelemetry.io/collector/consumer"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
@@ -407,7 +408,7 @@ func (cfsp *cascadingFilterSpanProcessor) samplingPolicyOnTick() {
 
 			// Combine all individual batches into a single batch so
 			// consumers may operate on the entire trace
-			allSpans := pdata.NewTraces()
+			allSpans := ptrace.NewTraces()
 			for j := 0; j < len(traceBatches); j++ {
 				batch := traceBatches[j]
 				batch.ResourceSpans().MoveAndAppendTo(allSpans.ResourceSpans())
@@ -450,7 +451,7 @@ func (cfsp *cascadingFilterSpanProcessor) samplingPolicyOnTick() {
 	)
 }
 
-func updateProbabilisticRateTag(traces pdata.Traces, probabilisticSpans int64, allSpans int64) {
+func updateProbabilisticRateTag(traces ptrace.Traces, probabilisticSpans int64, allSpans int64) {
 	ratio := float64(probabilisticSpans) / float64(allSpans)
 
 	rs := traces.ResourceSpans()
@@ -462,7 +463,7 @@ func updateProbabilisticRateTag(traces pdata.Traces, probabilisticSpans int64, a
 			for k := 0; k < spans.Len(); k++ {
 				attrs := spans.At(k).Attributes()
 				av, found := attrs.Get(AttributeSamplingProbability)
-				if found && av.Type() == pdata.AttributeValueTypeDouble && !math.IsNaN(av.DoubleVal()) && av.DoubleVal() > 0.0 {
+				if found && av.Type() == pcommon.ValueTypeDouble && !math.IsNaN(av.DoubleVal()) && av.DoubleVal() > 0.0 {
 					av.SetDoubleVal(av.DoubleVal() * ratio)
 				} else {
 					attrs.UpsertDouble(AttributeSamplingProbability, ratio)
@@ -473,7 +474,7 @@ func updateProbabilisticRateTag(traces pdata.Traces, probabilisticSpans int64, a
 	}
 }
 
-func updateFilteringTag(traces pdata.Traces) {
+func updateFilteringTag(traces ptrace.Traces) {
 	rs := traces.ResourceSpans()
 
 	for i := 0; i < rs.Len(); i++ {
@@ -488,7 +489,7 @@ func updateFilteringTag(traces pdata.Traces) {
 	}
 }
 
-func (cfsp *cascadingFilterSpanProcessor) shouldBeDropped(id pdata.TraceID, trace *sampling.TraceData) bool {
+func (cfsp *cascadingFilterSpanProcessor) shouldBeDropped(id pcommon.TraceID, trace *sampling.TraceData) bool {
 	for _, dropRule := range cfsp.traceRejectRules {
 		if dropRule.Evaluator.ShouldDrop(id, trace) {
 			err := stats.RecordWithTags(dropRule.ctx, []tag.Mutator{tag.Insert(tagProcessorKey, cfsp.instanceName)}, statPolicyDecision.M(int64(1)))
@@ -499,7 +500,7 @@ func (cfsp *cascadingFilterSpanProcessor) shouldBeDropped(id pdata.TraceID, trac
 	return false
 }
 
-func (cfsp *cascadingFilterSpanProcessor) makeProvisionalDecision(id pdata.TraceID, trace *sampling.TraceData) (sampling.Decision, *TraceAcceptEvaluator) {
+func (cfsp *cascadingFilterSpanProcessor) makeProvisionalDecision(id pcommon.TraceID, trace *sampling.TraceData) (sampling.Decision, *TraceAcceptEvaluator) {
 	// When no rules are defined, always sample
 	if len(cfsp.traceAcceptRules) == 0 {
 		return sampling.Sampled, nil
@@ -580,7 +581,7 @@ func (cfsp *cascadingFilterSpanProcessor) makeProvisionalDecision(id pdata.Trace
 }
 
 // ConsumeTraces is required by the SpanProcessor interface.
-func (cfsp *cascadingFilterSpanProcessor) ConsumeTraces(ctx context.Context, td pdata.Traces) error {
+func (cfsp *cascadingFilterSpanProcessor) ConsumeTraces(ctx context.Context, td ptrace.Traces) error {
 	if !cfsp.filteringEnabled {
 		return cfsp.nextConsumer.ConsumeTraces(ctx, td)
 	}
@@ -597,8 +598,8 @@ func (cfsp *cascadingFilterSpanProcessor) ConsumeTraces(ctx context.Context, td 
 	return nil
 }
 
-func (cfsp *cascadingFilterSpanProcessor) groupSpansByTraceKey(resourceSpans pdata.ResourceSpans) map[traceKey][]*pdata.Span {
-	idToSpans := make(map[traceKey][]*pdata.Span)
+func (cfsp *cascadingFilterSpanProcessor) groupSpansByTraceKey(resourceSpans ptrace.ResourceSpans) map[traceKey][]*ptrace.Span {
+	idToSpans := make(map[traceKey][]*ptrace.Span)
 	ilss := resourceSpans.InstrumentationLibrarySpans()
 	for j := 0; j < ilss.Len(); j++ {
 		ils := ilss.At(j)
@@ -615,7 +616,7 @@ func (cfsp *cascadingFilterSpanProcessor) groupSpansByTraceKey(resourceSpans pda
 	return idToSpans
 }
 
-func (cfsp *cascadingFilterSpanProcessor) processTraces(ctx context.Context, resourceSpans pdata.ResourceSpans) {
+func (cfsp *cascadingFilterSpanProcessor) processTraces(ctx context.Context, resourceSpans ptrace.ResourceSpans) {
 	// Group spans per their traceId to minimize contention on idToTrace
 	idToSpans := cfsp.groupSpansByTraceKey(resourceSpans)
 	var newTraceIDs int64
@@ -640,7 +641,7 @@ func (cfsp *cascadingFilterSpanProcessor) processTraces(ctx context.Context, res
 			atomic.AddInt32(&actualData.SpanCount, lenSpans)
 		} else {
 			newTraceIDs++
-			cfsp.decisionBatcher.AddToCurrentBatch(pdata.NewTraceID(id))
+			cfsp.decisionBatcher.AddToCurrentBatch(pcommon.NewTraceID(id))
 			atomic.AddUint64(&cfsp.numTracesOnMap, 1)
 			postDeletion := false
 			currTime := time.Now()
@@ -753,8 +754,8 @@ func (cfsp *cascadingFilterSpanProcessor) dropTrace(traceID traceKey, deletionTi
 	cfsp.logMetricsRecordErrorIfPresent(err, []string{statTraceRemovalAgeSec.Name()})
 }
 
-func prepareTraceBatch(rss pdata.ResourceSpans, spans []*pdata.Span) pdata.Traces {
-	traceTd := pdata.NewTraces()
+func prepareTraceBatch(rss ptrace.ResourceSpans, spans []*ptrace.Span) ptrace.Traces {
+	traceTd := ptrace.NewTraces()
 	rs := traceTd.ResourceSpans().AppendEmpty()
 	rss.Resource().CopyTo(rs.Resource())
 	ils := rs.InstrumentationLibrarySpans().AppendEmpty()

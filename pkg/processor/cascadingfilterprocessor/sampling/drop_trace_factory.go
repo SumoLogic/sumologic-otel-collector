@@ -17,7 +17,7 @@ package sampling
 import (
 	"regexp"
 
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
@@ -65,7 +65,7 @@ func NewDropTraceEvaluator(logger *zap.Logger, cfg config.TraceRejectCfg) (DropT
 }
 
 // ShouldDrop checks if trace should be dropped
-func (dte *dropTraceEvaluator) ShouldDrop(_ pdata.TraceID, trace *TraceData) bool {
+func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) bool {
 	trace.Lock()
 	batches := trace.ReceivedBatches
 	trace.Unlock()

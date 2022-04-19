@@ -30,7 +30,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/model/otlp"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -170,31 +172,31 @@ func extractBody(t *testing.T, req *http.Request) string {
 	return buf.String()
 }
 
-func exampleLog() []pdata.LogRecord {
-	buffer := make([]pdata.LogRecord, 1)
-	buffer[0] = pdata.NewLogRecord()
+func exampleLog() []plog.LogRecord {
+	buffer := make([]plog.LogRecord, 1)
+	buffer[0] = plog.NewLogRecord()
 	buffer[0].Body().SetStringVal("Example log")
 
 	return buffer
 }
 
-func exampleNLogs(n int) []pdata.LogRecord {
-	buffer := make([]pdata.LogRecord, n)
+func exampleNLogs(n int) []plog.LogRecord {
+	buffer := make([]plog.LogRecord, n)
 	for i := 0; i < n; i++ {
-		buffer[i] = pdata.NewLogRecord()
+		buffer[i] = plog.NewLogRecord()
 		buffer[i].Body().SetStringVal("Example log")
 	}
 
 	return buffer
 }
 
-func exampleTwoLogs() []pdata.LogRecord {
-	buffer := make([]pdata.LogRecord, 2)
-	buffer[0] = pdata.NewLogRecord()
+func exampleTwoLogs() []plog.LogRecord {
+	buffer := make([]plog.LogRecord, 2)
+	buffer[0] = plog.NewLogRecord()
 	buffer[0].Body().SetStringVal("Example log")
 	buffer[0].Attributes().InsertString("key1", "value1")
 	buffer[0].Attributes().InsertString("key2", "value2")
-	buffer[1] = pdata.NewLogRecord()
+	buffer[1] = plog.NewLogRecord()
 	buffer[1].Body().SetStringVal("Another example log")
 	buffer[1].Attributes().InsertString("key1", "value1")
 	buffer[1].Attributes().InsertString("key2", "value2")
@@ -231,7 +233,7 @@ func TestSendLogs(t *testing.T) {
 		},
 	})
 
-	rls := pdata.NewResourceLogs()
+	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs()
 	logsRecords1 := slgs.AppendEmpty().LogRecords()
 	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
@@ -257,7 +259,7 @@ func TestSendLogsWithEmptyField(t *testing.T) {
 		},
 	})
 
-	rls := pdata.NewResourceLogs()
+	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs()
 	logsRecords1 := slgs.AppendEmpty().LogRecords()
 	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
@@ -285,20 +287,20 @@ func TestSendLogsMultitype(t *testing.T) {
 		},
 	})
 
-	rls := pdata.NewResourceLogs()
+	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs()
 	logsRecords := slgs.AppendEmpty().LogRecords()
-	attVal := pdata.NewAttributeValueMap()
+	attVal := pcommon.NewValueMap()
 	attMap := attVal.MapVal()
 	attMap.InsertString("lk1", "lv1")
 	attMap.InsertInt("lk2", 13)
 	logRecord := logsRecords.AppendEmpty()
 	attVal.CopyTo(logRecord.Body())
 
-	attVal = pdata.NewAttributeValueArray()
+	attVal = pcommon.NewValueSlice()
 	attArr := attVal.SliceVal()
-	strVal := pdata.NewAttributeValueString("lv2")
-	intVal := pdata.NewAttributeValueInt(13)
+	strVal := pcommon.NewValueString("lv2")
+	intVal := pcommon.NewValueInt(13)
 	strVal.CopyTo(attArr.AppendEmpty())
 	intVal.CopyTo(attArr.AppendEmpty())
 	attVal.CopyTo(logsRecords.AppendEmpty().Body())
@@ -325,7 +327,7 @@ func TestSendLogsSplit(t *testing.T) {
 	})
 	test.s.config.MaxRequestBodySize = 10
 
-	rls := pdata.NewResourceLogs()
+	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs()
 	logsRecords1 := slgs.AppendEmpty().LogRecords()
 	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
@@ -363,7 +365,7 @@ func TestSendLogsSplitFailedOne(t *testing.T) {
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.LogFormat = TextFormat
 
-	rls := pdata.NewResourceLogs()
+	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs()
 	logsRecords1 := slgs.AppendEmpty().LogRecords()
 	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
@@ -398,7 +400,7 @@ func TestSendLogsSplitFailedAll(t *testing.T) {
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.LogFormat = TextFormat
 
-	rls := pdata.NewResourceLogs()
+	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs()
 	logsRecords1 := slgs.AppendEmpty().LogRecords()
 	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
@@ -417,8 +419,8 @@ func TestSendLogsSplitFailedAll(t *testing.T) {
 }
 
 func TestSendLogsJsonConfig(t *testing.T) {
-	twoLogsFunc := func() pdata.ResourceLogs {
-		rls := pdata.NewResourceLogs()
+	twoLogsFunc := func() plog.ResourceLogs {
+		rls := plog.NewResourceLogs()
 		slgs := rls.ScopeLogs().AppendEmpty()
 		log := slgs.LogRecords().AppendEmpty()
 
@@ -434,18 +436,18 @@ func TestSendLogsJsonConfig(t *testing.T) {
 		return rls
 	}
 
-	twoComplexBodyLogsFunc := func() pdata.ResourceLogs {
-		rls := pdata.NewResourceLogs()
+	twoComplexBodyLogsFunc := func() plog.ResourceLogs {
+		rls := plog.NewResourceLogs()
 		slgs := rls.ScopeLogs().AppendEmpty()
 		log := slgs.LogRecords().AppendEmpty()
 
-		body := pdata.NewAttributeValueMap().MapVal()
+		body := pcommon.NewValueMap().MapVal()
 		body.InsertString("a", "b")
 		body.InsertBool("c", false)
 		body.InsertInt("d", 20)
 		body.InsertDouble("e", 20.5)
 
-		f := pdata.NewAttributeValueArray()
+		f := pcommon.NewValueSlice()
 		f.SliceVal().EnsureCapacity(4)
 		f.SliceVal().AppendEmpty().SetStringVal("p")
 		f.SliceVal().AppendEmpty().SetBoolVal(true)
@@ -453,7 +455,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 		f.SliceVal().AppendEmpty().SetDoubleVal(19.3)
 		body.Insert("f", f)
 
-		g := pdata.NewAttributeValueMap()
+		g := pcommon.NewValueMap()
 		g.MapVal().InsertString("h", "i")
 		g.MapVal().InsertBool("j", false)
 		g.MapVal().InsertInt("k", 12)
@@ -463,7 +465,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 
 		log.Attributes().InsertString("m", "n")
 
-		pdata.NewAttributeValueMap().CopyTo(log.Body())
+		pcommon.NewValueMap().CopyTo(log.Body())
 		body.CopyTo(log.Body().MapVal())
 
 		return rls
@@ -473,7 +475,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 		name       string
 		configOpts []func(*Config)
 		bodyRegex  string
-		logsFunc   func() pdata.ResourceLogs
+		logsFunc   func() plog.ResourceLogs
 	}{
 		{
 			name: "default config",
@@ -613,7 +615,7 @@ func TestSendLogsJson(t *testing.T) {
 	})
 	test.s.config.LogFormat = JSONFormat
 
-	rls := pdata.NewResourceLogs()
+	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs().AppendEmpty()
 	log := slgs.LogRecords().AppendEmpty()
 
@@ -652,10 +654,10 @@ func TestSendLogsJsonMultitype(t *testing.T) {
 	})
 	test.s.config.LogFormat = JSONFormat
 
-	rls := pdata.NewResourceLogs()
+	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs().AppendEmpty()
 
-	attVal := pdata.NewAttributeValueMap()
+	attVal := pcommon.NewValueMap()
 	attMap := attVal.MapVal()
 	attMap.InsertString("lk1", "lv1")
 	attMap.InsertInt("lk2", 13)
@@ -668,10 +670,10 @@ func TestSendLogsJsonMultitype(t *testing.T) {
 
 	log = slgs.LogRecords().AppendEmpty()
 
-	attVal = pdata.NewAttributeValueArray()
+	attVal = pcommon.NewValueSlice()
 	attArr := attVal.SliceVal()
-	strVal := pdata.NewAttributeValueString("lv2")
-	intVal := pdata.NewAttributeValueInt(13)
+	strVal := pcommon.NewValueString("lv2")
+	intVal := pcommon.NewValueInt(13)
 
 	strVal.CopyTo(attArr.AppendEmpty())
 	intVal.CopyTo(attArr.AppendEmpty())
@@ -707,7 +709,7 @@ func TestSendLogsJsonSplit(t *testing.T) {
 	test.s.config.LogFormat = JSONFormat
 	test.s.config.MaxRequestBodySize = 10
 
-	rls := pdata.NewResourceLogs()
+	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs().AppendEmpty()
 	log := slgs.LogRecords().AppendEmpty()
 
@@ -751,7 +753,7 @@ func TestSendLogsJsonSplitFailedOne(t *testing.T) {
 	test.s.config.LogFormat = JSONFormat
 	test.s.config.MaxRequestBodySize = 10
 
-	rls := pdata.NewResourceLogs()
+	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs().AppendEmpty()
 	log := slgs.LogRecords().AppendEmpty()
 
@@ -798,7 +800,7 @@ func TestSendLogsJsonSplitFailedAll(t *testing.T) {
 	test.s.config.LogFormat = JSONFormat
 	test.s.config.MaxRequestBodySize = 10
 
-	rls := pdata.NewResourceLogs()
+	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs().AppendEmpty()
 	log := slgs.LogRecords().AppendEmpty()
 
@@ -833,7 +835,7 @@ func TestSendLogsUnexpectedFormat(t *testing.T) {
 	})
 	test.s.config.LogFormat = "dummy"
 
-	rls := pdata.NewResourceLogs()
+	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs().AppendEmpty()
 	log := slgs.LogRecords().AppendEmpty()
 	log.Body().SetStringVal("Example log")
@@ -844,7 +846,7 @@ func TestSendLogsUnexpectedFormat(t *testing.T) {
 	)
 	assert.Error(t, err)
 	assert.Len(t, dropped, 1)
-	assert.Equal(t, []pdata.LogRecord{log}, dropped)
+	assert.Equal(t, []plog.LogRecord{log}, dropped)
 }
 
 func TestSendLogsOTLP(t *testing.T) {
@@ -874,7 +876,7 @@ func TestSendLogsOTLP(t *testing.T) {
 
 	test.s.config.LogFormat = "otlp"
 
-	l := pdata.NewLogs()
+	l := plog.NewLogs()
 	ls := l.ResourceLogs().AppendEmpty()
 
 	logRecords := exampleTwoLogs()
@@ -887,8 +889,8 @@ func TestSendLogsOTLP(t *testing.T) {
 }
 
 func TestOverrideSourceName(t *testing.T) {
-	twoLogsFunc := func() pdata.ResourceLogs {
-		rls := pdata.NewResourceLogs()
+	twoLogsFunc := func() plog.ResourceLogs {
+		rls := plog.NewResourceLogs()
 		slgs := rls.ScopeLogs().AppendEmpty()
 		log := slgs.LogRecords().AppendEmpty()
 
@@ -954,14 +956,14 @@ func TestOverrideSourceName(t *testing.T) {
 				require.Equal(t, l.ResourceLogs().Len(), 1)
 				sourceCategory, ok := l.ResourceLogs().At(0).Resource().Attributes().Get("_sourceName")
 				require.True(t, ok)
-				require.Equal(t, pdata.AttributeValueTypeString, sourceCategory.Type())
+				require.Equal(t, pcommon.ValueTypeString, sourceCategory.Type())
 				require.Equal(t, "Test source name/test_name", sourceCategory.StringVal())
 			},
 		})
 
 		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
 
-		l := pdata.NewLogs()
+		l := plog.NewLogs()
 		ls := l.ResourceLogs().AppendEmpty()
 		ls.Resource().Attributes().InsertString("key1", "test_name")
 		logRecords := exampleTwoLogs()
@@ -973,8 +975,8 @@ func TestOverrideSourceName(t *testing.T) {
 }
 
 func TestOverrideSourceCategory(t *testing.T) {
-	twoLogsFunc := func() pdata.ResourceLogs {
-		rls := pdata.NewResourceLogs()
+	twoLogsFunc := func() plog.ResourceLogs {
+		rls := plog.NewResourceLogs()
 		slgs := rls.ScopeLogs().AppendEmpty()
 		log := slgs.LogRecords().AppendEmpty()
 
@@ -1037,14 +1039,14 @@ func TestOverrideSourceCategory(t *testing.T) {
 				require.Equal(t, l.ResourceLogs().Len(), 1)
 				sourceCategory, ok := l.ResourceLogs().At(0).Resource().Attributes().Get("_sourceCategory")
 				require.True(t, ok)
-				require.Equal(t, pdata.AttributeValueTypeString, sourceCategory.Type())
+				require.Equal(t, pcommon.ValueTypeString, sourceCategory.Type())
 				require.Equal(t, "Test source category/test_name", sourceCategory.StringVal())
 			},
 		})
 
 		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
 
-		l := pdata.NewLogs()
+		l := plog.NewLogs()
 		ls := l.ResourceLogs().AppendEmpty()
 		ls.Resource().Attributes().InsertString("key1", "test_name")
 		logRecords := exampleTwoLogs()
@@ -1056,8 +1058,8 @@ func TestOverrideSourceCategory(t *testing.T) {
 }
 
 func TestOverrideSourceHost(t *testing.T) {
-	twoLogsFunc := func() pdata.ResourceLogs {
-		rls := pdata.NewResourceLogs()
+	twoLogsFunc := func() plog.ResourceLogs {
+		rls := plog.NewResourceLogs()
 		slgs := rls.ScopeLogs().AppendEmpty()
 		log := slgs.LogRecords().AppendEmpty()
 
@@ -1120,14 +1122,14 @@ func TestOverrideSourceHost(t *testing.T) {
 				require.Equal(t, l.ResourceLogs().Len(), 1)
 				sourceHost, ok := l.ResourceLogs().At(0).Resource().Attributes().Get("_sourceHost")
 				require.True(t, ok)
-				require.Equal(t, pdata.AttributeValueTypeString, sourceHost.Type())
+				require.Equal(t, pcommon.ValueTypeString, sourceHost.Type())
 				require.Equal(t, "Test source host/test_name", sourceHost.StringVal())
 			},
 		})
 
 		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
 
-		l := pdata.NewLogs()
+		l := plog.NewLogs()
 		ls := l.ResourceLogs().AppendEmpty()
 		ls.Resource().Attributes().InsertString("key1", "test_name")
 		logRecords := exampleTwoLogs()
@@ -1139,8 +1141,8 @@ func TestOverrideSourceHost(t *testing.T) {
 }
 
 func TestLogsDontSendSourceFieldsInXSumoFieldsHeader(t *testing.T) {
-	twoLogsFunc := func() pdata.ResourceLogs {
-		rls := pdata.NewResourceLogs()
+	twoLogsFunc := func() plog.ResourceLogs {
+		rls := plog.NewResourceLogs()
 		slgs := rls.ScopeLogs().AppendEmpty()
 		log := slgs.LogRecords().AppendEmpty()
 
@@ -1236,7 +1238,7 @@ func TestLogsHandlesReceiverResponses(t *testing.T) {
 			c.LogFormat = JSONFormat
 		})
 
-		rls := pdata.NewResourceLogs()
+		rls := plog.NewResourceLogs()
 		rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().Body().SetStringVal("Example log")
 
 		var buffer bytes.Buffer
@@ -1323,7 +1325,7 @@ func TestInvalidEndpoint(t *testing.T) {
 
 	test.s.config.HTTPClientSettings.Endpoint = ":"
 
-	rls := pdata.NewResourceLogs()
+	rls := plog.NewResourceLogs()
 	rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().Body().SetStringVal("Example log")
 
 	_, err := test.s.sendNonOTLPLogs(context.Background(), rls, fields{})
@@ -1334,7 +1336,7 @@ func TestInvalidPostRequest(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
 
 	test.s.config.HTTPClientSettings.Endpoint = ""
-	rls := pdata.NewResourceLogs()
+	rls := plog.NewResourceLogs()
 	rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().Body().SetStringVal("Example log")
 
 	_, err := test.s.sendNonOTLPLogs(context.Background(), rls, fields{})
@@ -1581,7 +1583,7 @@ func TestSendMetricsUnexpectedFormat(t *testing.T) {
 
 	dropped, err := test.s.sendNonOTLPMetrics(context.Background(), resMetrics, fields{})
 	assert.EqualError(t, err, "unexpected metric format: invalid")
-	assert.Equal(t, dropped, []pdata.Metric{metricSum})
+	assert.Equal(t, dropped, []pmetric.Metric{metricSum})
 }
 
 func TestSendCarbon2Metrics(t *testing.T) {

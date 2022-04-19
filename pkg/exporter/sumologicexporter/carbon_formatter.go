@@ -18,14 +18,15 @@ import (
 	"fmt"
 	"strings"
 
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 )
 
 // carbon2TagString returns all attributes as space spearated key=value pairs.
 // In addition, metric name and unit are also included.
 // In case `metric` or `unit` attributes has been set too, they are prefixed
 // with underscore `_` to avoid overwriting the metric name and unit.
-func carbon2TagString(metric pdata.Metric, attributes pdata.Map) string {
+func carbon2TagString(metric pmetric.Metric, attributes pcommon.Map) string {
 	length := attributes.Len()
 
 	if _, ok := attributes.Get("metric"); ok {
@@ -37,7 +38,7 @@ func carbon2TagString(metric pdata.Metric, attributes pdata.Map) string {
 	}
 
 	returnValue := make([]string, 0, length)
-	attributes.Range(func(k string, v pdata.AttributeValue) bool {
+	attributes.Range(func(k string, v pcommon.Value) bool {
 		if k == "name" || k == "unit" {
 			k = fmt.Sprintf("_%s", k)
 		}
@@ -65,15 +66,15 @@ func sanitizeCarbonString(text string) string {
 
 // carbon2NumberRecord converts NumberDataPoint to carbon2 metric string
 // with additional information from metricPair.
-func carbon2NumberRecord(metric pdata.Metric, attributes pdata.Map, dataPoint pdata.NumberDataPoint) string {
+func carbon2NumberRecord(metric pmetric.Metric, attributes pcommon.Map, dataPoint pmetric.NumberDataPoint) string {
 	switch dataPoint.ValueType() {
-	case pdata.MetricValueTypeDouble:
+	case pmetric.MetricValueTypeDouble:
 		return fmt.Sprintf("%s  %g %d",
 			carbon2TagString(metric, attributes),
 			dataPoint.DoubleVal(),
 			dataPoint.Timestamp()/1e9,
 		)
-	case pdata.MetricValueTypeInt:
+	case pmetric.MetricValueTypeInt:
 		return fmt.Sprintf("%s  %d %d",
 			carbon2TagString(metric, attributes),
 			dataPoint.IntVal(),
@@ -84,25 +85,25 @@ func carbon2NumberRecord(metric pdata.Metric, attributes pdata.Map, dataPoint pd
 }
 
 // carbon2metric2String converts metric to Carbon2 formatted string.
-func carbon2Metric2String(metric pdata.Metric, attributes pdata.Map) string {
+func carbon2Metric2String(metric pmetric.Metric, attributes pcommon.Map) string {
 	var nextLines []string
 
 	switch metric.DataType() {
-	case pdata.MetricDataTypeGauge:
+	case pmetric.MetricDataTypeGauge:
 		dps := metric.Gauge().DataPoints()
 		nextLines = make([]string, 0, dps.Len())
 		for i := 0; i < dps.Len(); i++ {
 			nextLines = append(nextLines, carbon2NumberRecord(metric, attributes, dps.At(i)))
 		}
-	case pdata.MetricDataTypeSum:
+	case pmetric.MetricDataTypeSum:
 		dps := metric.Sum().DataPoints()
 		nextLines = make([]string, 0, dps.Len())
 		for i := 0; i < dps.Len(); i++ {
 			nextLines = append(nextLines, carbon2NumberRecord(metric, attributes, dps.At(i)))
 		}
 	// Skip complex metrics
-	case pdata.MetricDataTypeHistogram:
-	case pdata.MetricDataTypeSummary:
+	case pmetric.MetricDataTypeHistogram:
+	case pmetric.MetricDataTypeSummary:
 	}
 
 	return strings.Join(nextLines, "\n")

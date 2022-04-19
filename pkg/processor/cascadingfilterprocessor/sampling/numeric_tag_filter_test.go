@@ -21,7 +21,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
 )
 
@@ -38,11 +39,11 @@ func newNumericAttributeFilter(minValue int64, maxValue int64) *policyEvaluator 
 }
 
 func TestNumericTagFilter(t *testing.T) {
-	var empty = map[string]pdata.AttributeValue{}
+	var empty = map[string]interface{}{}
 	filter := newNumericAttributeFilter(math.MinInt32, math.MaxInt32)
 
-	resAttr := map[string]pdata.AttributeValue{}
-	resAttr["example"] = pdata.NewAttributeValueInt(8)
+	resAttr := map[string]interface{}{}
+	resAttr["example"] = pcommon.NewValueInt(8)
 
 	cases := []struct {
 		Desc     string
@@ -80,24 +81,22 @@ func TestNumericTagFilter(t *testing.T) {
 		t.Run(c.Desc, func(t *testing.T) {
 			u, err := uuid.NewRandom()
 			require.NoError(t, err)
-			decision := filter.Evaluate(pdata.NewTraceID(u), c.Trace)
+			decision := filter.Evaluate(pcommon.NewTraceID(u), c.Trace)
 			assert.Equal(t, decision, c.Decision)
 		})
 	}
 }
 
-func newTraceIntAttrs(nodeAttrs map[string]pdata.AttributeValue, spanAttrKey string, spanAttrValue int64) *TraceData {
-	var traceBatches []pdata.Traces
-	traces := pdata.NewTraces()
+func newTraceIntAttrs(nodeAttrs map[string]interface{}, spanAttrKey string, spanAttrValue int64) *TraceData {
+	var traceBatches []ptrace.Traces
+	traces := ptrace.NewTraces()
 	rs := traces.ResourceSpans().AppendEmpty()
-	pdata.NewAttributeMapFromMap(nodeAttrs).CopyTo(rs.Resource().Attributes())
+	pcommon.NewMapFromRaw(nodeAttrs).CopyTo(rs.Resource().Attributes())
 	ils := rs.InstrumentationLibrarySpans().AppendEmpty()
 	span := ils.Spans().AppendEmpty()
-	span.SetTraceID(pdata.NewTraceID([16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}))
-	span.SetSpanID(pdata.NewSpanID([8]byte{1, 2, 3, 4, 5, 6, 7, 8}))
-	attributes := make(map[string]pdata.AttributeValue)
-	attributes[spanAttrKey] = pdata.NewAttributeValueInt(spanAttrValue)
-	pdata.NewAttributeMapFromMap(attributes).CopyTo(span.Attributes())
+	span.SetTraceID(pcommon.NewTraceID([16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}))
+	span.SetSpanID(pcommon.NewSpanID([8]byte{1, 2, 3, 4, 5, 6, 7, 8}))
+	span.Attributes().InsertInt(spanAttrKey, spanAttrValue)
 	traceBatches = append(traceBatches, traces)
 	return &TraceData{
 		ReceivedBatches: traceBatches,

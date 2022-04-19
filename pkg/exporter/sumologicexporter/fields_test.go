@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
 func TestFields(t *testing.T) {
@@ -66,7 +66,7 @@ func TestFields(t *testing.T) {
 }
 
 func BenchmarkFields(b *testing.B) {
-	attrMap := pdata.NewAttributeMap()
+	attrMap := pcommon.NewMap()
 	flds := map[string]interface{}{
 		"key1": "value1",
 		"key3": "value3",
@@ -82,7 +82,7 @@ func BenchmarkFields(b *testing.B) {
 		case string:
 			attrMap.InsertString(k, v)
 		case map[string]string:
-			m := pdata.NewAttributeValueMap()
+			m := pcommon.NewValueMap()
 			mm := m.MapVal().AsRaw()
 			for kk, vv := range v {
 				mm[kk] = vv

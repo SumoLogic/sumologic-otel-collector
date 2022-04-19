@@ -56,8 +56,8 @@ With its current implementation Telegraf receiver has the following limitations:
   from input plugin to the receiver for translation (into otc data model) without
   any processing
 - only the following Telegraf metric data types are supported:
-  - `telegraf.Gauge` that is translated to `pdata.MetricDataTypeGauge`,
-  - `telegraf.Counter` that is translated to `pdata.MetricDataTypeSum`.
+  - `telegraf.Gauge` that is translated to `pmetric.MetricDataTypeGauge`,
+  - `telegraf.Counter` that is translated to `pmetric.MetricDataTypeSum`.
 
 ## Migration from Telegraf
 

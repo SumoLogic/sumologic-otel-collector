@@ -21,7 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/plog"
 )
 
 func TestProcessLogs(t *testing.T) {
@@ -37,7 +37,7 @@ func TestProcessLogs(t *testing.T) {
 		`syslog`,
 	}
 
-	logs := pdata.NewLogs()
+	logs := plog.NewLogs()
 	rls := logs.ResourceLogs().AppendEmpty()
 	rls.InstrumentationLibraryLogs().EnsureCapacity(len(lines))
 	ills := rls.InstrumentationLibraryLogs().AppendEmpty()

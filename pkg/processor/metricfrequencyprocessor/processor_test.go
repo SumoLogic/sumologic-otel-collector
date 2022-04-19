@@ -7,7 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 )
 
 func TestSieveAllFromEmpty(t *testing.T) {
@@ -133,35 +134,35 @@ func TestSelectionWithTwoLibraries(t *testing.T) {
 	assert.Equal(t, "m2", result.ResourceMetrics().At(0).InstrumentationLibraryMetrics().At(0).Metrics().At(0).Name())
 }
 
-func createGauge() pdata.Gauge {
-	dpSlice := pdata.NewNumberDataPointSlice()
-	pdata.NewNumberDataPoint().CopyTo(dpSlice.AppendEmpty())
+func createGauge() pmetric.Gauge {
+	dpSlice := pmetric.NewNumberDataPointSlice()
+	pmetric.NewNumberDataPoint().CopyTo(dpSlice.AppendEmpty())
 
-	gauge := pdata.NewGauge()
+	gauge := pmetric.NewGauge()
 	dpSlice.CopyTo(gauge.DataPoints())
 
 	return gauge
 }
 
-func createMetric(name string) pdata.Metric {
-	metric := pdata.NewMetric()
+func createMetric(name string) pmetric.Metric {
+	metric := pmetric.NewMetric()
 	metric.SetName(name)
-	metric.SetDataType(pdata.MetricDataTypeGauge)
+	metric.SetDataType(pmetric.MetricDataTypeGauge)
 	createGauge().CopyTo(metric.Gauge())
 
 	return metric
 }
 
-func createInstrumentedLibrary(name string) pdata.InstrumentationLibrary {
-	library := pdata.NewInstrumentationLibrary()
+func createInstrumentedLibrary(name string) pcommon.InstrumentationScope {
+	library := pcommon.NewInstrumentationScope()
 	library.SetName(name)
 	library.SetVersion("-")
 
 	return library
 }
 
-func createIlm(name string, metricNames []string) pdata.InstrumentationLibraryMetrics {
-	ilm := pdata.NewInstrumentationLibraryMetrics()
+func createIlm(name string, metricNames []string) pmetric.ScopeMetrics {
+	ilm := pmetric.NewScopeMetrics()
 	createInstrumentedLibrary(name).CopyTo(ilm.InstrumentationLibrary())
 	for _, metricName := range metricNames {
 		createMetric(metricName).CopyTo(ilm.Metrics().AppendEmpty())
@@ -170,11 +171,11 @@ func createIlm(name string, metricNames []string) pdata.InstrumentationLibraryMe
 	return ilm
 }
 
-func createRm(metricsPerLibrary map[string][]string) pdata.ResourceMetrics {
-	rm := pdata.NewResourceMetrics()
+func createRm(metricsPerLibrary map[string][]string) pmetric.ResourceMetrics {
+	rm := pmetric.NewResourceMetrics()
 	keys := getStringKeySlice(metricsPerLibrary)
 	sort.Strings(keys)
-	pdata.NewResource().CopyTo(rm.Resource())
+	pcommon.NewResource().CopyTo(rm.Resource())
 	for _, key := range keys {
 		library := key
 		metrics := metricsPerLibrary[library]
@@ -184,8 +185,8 @@ func createRm(metricsPerLibrary map[string][]string) pdata.ResourceMetrics {
 	return rm
 }
 
-func createMetrics(metricsPerLibraryArgs ...map[string][]string) pdata.Metrics {
-	metrics := pdata.NewMetrics()
+func createMetrics(metricsPerLibraryArgs ...map[string][]string) pmetric.Metrics {
+	metrics := pmetric.NewMetrics()
 	for _, metricsPerLibrary := range metricsPerLibraryArgs {
 		createRm(metricsPerLibrary).CopyTo(metrics.ResourceMetrics().AppendEmpty())
 	}

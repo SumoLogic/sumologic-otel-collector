@@ -15,8 +15,11 @@
 package sumologicschemaprocessor
 
 import (
-	"go.opentelemetry.io/collector/model/pdata"
 	conventions "go.opentelemetry.io/collector/model/semconv/v1.6.1"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
 // cloudNamespaceProcessor adds the `cloud.namespace` resource attribute to logs, metrics and traces.
@@ -37,21 +40,21 @@ func newCloudNamespaceProcessor(addCloudNamespace bool) (*cloudNamespaceProcesso
 	}, nil
 }
 
-func (*cloudNamespaceProcessor) processLogs(logs pdata.Logs) (pdata.Logs, error) {
+func (*cloudNamespaceProcessor) processLogs(logs plog.Logs) (plog.Logs, error) {
 	for i := 0; i < logs.ResourceLogs().Len(); i++ {
 		addCloudNamespaceAttribute(logs.ResourceLogs().At(i).Resource().Attributes())
 	}
 	return logs, nil
 }
 
-func (*cloudNamespaceProcessor) processMetrics(metrics pdata.Metrics) (pdata.Metrics, error) {
+func (*cloudNamespaceProcessor) processMetrics(metrics pmetric.Metrics) (pmetric.Metrics, error) {
 	for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
 		addCloudNamespaceAttribute(metrics.ResourceMetrics().At(i).Resource().Attributes())
 	}
 	return metrics, nil
 }
 
-func (*cloudNamespaceProcessor) processTraces(traces pdata.Traces) (pdata.Traces, error) {
+func (*cloudNamespaceProcessor) processTraces(traces ptrace.Traces) (ptrace.Traces, error) {
 	for i := 0; i < traces.ResourceSpans().Len(); i++ {
 		addCloudNamespaceAttribute(traces.ResourceSpans().At(i).Resource().Attributes())
 	}
@@ -62,7 +65,7 @@ func (*cloudNamespaceProcessor) processTraces(traces pdata.Traces) (pdata.Traces
 // to a collection of attributes that already contains a `cloud.platform` attribute.
 // It does not add the `cloud.namespace` attribute for all `cloud.platform` values,
 // but only for a few specific ones - namely AWS EC2, AWS ECS, and AWS Elastic Beanstalk.
-func addCloudNamespaceAttribute(attributes pdata.AttributeMap) {
+func addCloudNamespaceAttribute(attributes pcommon.Map) {
 	cloudPlatformAttributeValue, found := attributes.Get(conventions.AttributeCloudPlatform)
 	if !found {
 		return

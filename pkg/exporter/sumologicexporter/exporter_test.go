@@ -33,12 +33,14 @@ import (
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/model/otlp"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.uber.org/zap"
 )
 
-func LogRecordsToLogs(records []pdata.LogRecord) pdata.Logs {
-	logs := pdata.NewLogs()
+func LogRecordsToLogs(records []plog.LogRecord) plog.Logs {
+	logs := plog.NewLogs()
 	logsSlice := logs.ResourceLogs().AppendEmpty().InstrumentationLibraryLogs().AppendEmpty().LogRecords()
 	for _, record := range records {
 		record.CopyTo(logsSlice.AppendEmpty())
@@ -149,7 +151,7 @@ func TestLogsResourceAttributesSentAsFields(t *testing.T) {
 		name       string
 		configFunc func() *Config
 		callbacks  []func(w http.ResponseWriter, req *http.Request)
-		logsFunc   func() pdata.Logs
+		logsFunc   func() plog.Logs
 	}{
 		{
 			name: "text",
@@ -169,13 +171,13 @@ func TestLogsResourceAttributesSentAsFields(t *testing.T) {
 					assert.Equal(t, "res_attr1=1, res_attr2=2", req.Header.Get("X-Sumo-Fields"))
 				},
 			},
-			logsFunc: func() pdata.Logs {
-				buffer := make([]pdata.LogRecord, 2)
-				buffer[0] = pdata.NewLogRecord()
+			logsFunc: func() plog.Logs {
+				buffer := make([]plog.LogRecord, 2)
+				buffer[0] = plog.NewLogRecord()
 				buffer[0].Body().SetStringVal("Example log")
 				buffer[0].Attributes().InsertString("key1", "value1")
 				buffer[0].Attributes().InsertString("key2", "value2")
-				buffer[1] = pdata.NewLogRecord()
+				buffer[1] = plog.NewLogRecord()
 				buffer[1].Body().SetStringVal("Another example log")
 				buffer[1].Attributes().InsertString("key1", "value1")
 				buffer[1].Attributes().InsertString("key2", "value2")
@@ -212,7 +214,7 @@ func TestAllFailed(t *testing.T) {
 		},
 	})
 
-	logs := pdata.NewLogs()
+	logs := plog.NewLogs()
 	logsSlice := logs.ResourceLogs().AppendEmpty()
 	logsRecords1 := logsSlice.InstrumentationLibraryLogs().AppendEmpty().LogRecords()
 	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
@@ -220,7 +222,7 @@ func TestAllFailed(t *testing.T) {
 	logsRecords2 := logsSlice.InstrumentationLibraryLogs().AppendEmpty().LogRecords()
 	logsRecords2.AppendEmpty().Body().SetStringVal("Another example log")
 
-	logsExpected := pdata.NewLogs()
+	logsExpected := plog.NewLogs()
 	logsSlice.CopyTo(logsExpected.ResourceLogs().AppendEmpty())
 
 	err := test.exp.pushLogsData(context.Background(), logs)
@@ -249,7 +251,7 @@ func TestPartiallyFailed(t *testing.T) {
 		},
 	})
 
-	logs := pdata.NewLogs()
+	logs := plog.NewLogs()
 	logsSlice1 := logs.ResourceLogs().AppendEmpty()
 	logsRecords1 := logsSlice1.InstrumentationLibraryLogs().AppendEmpty().LogRecords()
 	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
@@ -257,7 +259,7 @@ func TestPartiallyFailed(t *testing.T) {
 	logsRecords2 := logsSlice2.InstrumentationLibraryLogs().AppendEmpty().LogRecords()
 	logsRecords2.AppendEmpty().Body().SetStringVal("Another example log")
 
-	logsExpected := pdata.NewLogs()
+	logsExpected := plog.NewLogs()
 	logsSlice2.CopyTo(logsExpected.ResourceLogs().AppendEmpty())
 
 	err := test.exp.pushLogsData(context.Background(), logs)
@@ -342,7 +344,7 @@ func TestPushFailedBatch(t *testing.T) {
 }
 
 func TestPushOTLPLogsClearTimestamp(t *testing.T) {
-	createLogs := func() pdata.Logs {
+	createLogs := func() plog.Logs {
 		exampleLogs := exampleLog()
 		exampleLogs[0].SetTimestamp(12345)
 		logs := LogRecordsToLogs(exampleLogs)
@@ -403,7 +405,7 @@ func TestPushOTLPLogsClearTimestamp(t *testing.T) {
 }
 
 func TestPushOTLPLogs_AttributeTranslation(t *testing.T) {
-	createLogs := func() pdata.Logs {
+	createLogs := func() plog.Logs {
 		logs := LogRecordsToLogs(exampleLog())
 		resourceAttrs := logs.ResourceLogs().At(0).Resource().Attributes()
 		resourceAttrs.InsertString("host.name", "harry-potter")
@@ -496,7 +498,7 @@ func TestPushOTLPLogs_AttributeTranslation(t *testing.T) {
 }
 
 func TestPushTextLogs_AttributeTranslation(t *testing.T) {
-	createLogs := func() pdata.Logs {
+	createLogs := func() plog.Logs {
 		logs := LogRecordsToLogs(exampleLog())
 		resourceAttrs := logs.ResourceLogs().At(0).Resource().Attributes()
 		resourceAttrs.InsertString("host.name", "harry-potter")
@@ -568,7 +570,7 @@ func TestPushTextLogs_AttributeTranslation(t *testing.T) {
 }
 
 func TestPushJSONLogs_AttributeTranslation(t *testing.T) {
-	createLogs := func() pdata.Logs {
+	createLogs := func() plog.Logs {
 		logs := LogRecordsToLogs(exampleLog())
 		resourceAttrs := logs.ResourceLogs().At(0).Resource().Attributes()
 		resourceAttrs.InsertString("host.name", "harry-potter")
@@ -578,7 +580,7 @@ func TestPushJSONLogs_AttributeTranslation(t *testing.T) {
 
 	testcases := []struct {
 		name       string
-		logs       pdata.Logs
+		logs       plog.Logs
 		configFunc func() *Config
 		callbacks  []func(w http.ResponseWriter, req *http.Request)
 	}{
@@ -651,16 +653,16 @@ func TestPushJSONLogs_AttributeTranslation(t *testing.T) {
 }
 
 func TestPushLogs_DontRemoveSourceAttributes(t *testing.T) {
-	createLogs := func() pdata.Logs {
-		logs := pdata.NewLogs()
+	createLogs := func() plog.Logs {
+		logs := plog.NewLogs()
 		resourceLogs := logs.ResourceLogs().AppendEmpty()
 		logsSlice := resourceLogs.InstrumentationLibraryLogs().AppendEmpty().LogRecords()
 
-		logRecords := make([]pdata.LogRecord, 2)
-		logRecords[0] = pdata.NewLogRecord()
+		logRecords := make([]plog.LogRecord, 2)
+		logRecords[0] = plog.NewLogRecord()
 		logRecords[0].Body().SetStringVal("Example log aaaaaaaaaaaaaaaaaaaaaa 1")
 		logRecords[0].CopyTo(logsSlice.AppendEmpty())
-		logRecords[1] = pdata.NewLogRecord()
+		logRecords[1] = plog.NewLogRecord()
 		logRecords[1].Body().SetStringVal("Example log aaaaaaaaaaaaaaaaaaaaaa 2")
 		logRecords[1].CopyTo(logsSlice.AppendEmpty())
 
@@ -715,7 +717,7 @@ func TestAllMetricsSuccess(t *testing.T) {
 	testcases := []struct {
 		name         string
 		expectedBody string
-		metricFunc   func() (pdata.Metric, pdata.Map)
+		metricFunc   func() (pmetric.Metric, pcommon.Map)
 	}{
 		{
 			name:         "sum",
@@ -787,7 +789,7 @@ func TestAllMetricsFailed(t *testing.T) {
 	testcases := []struct {
 		name          string
 		callbacks     []func(w http.ResponseWriter, req *http.Request)
-		metricFunc    func() pdata.Metrics
+		metricFunc    func() pmetric.Metrics
 		expectedError string
 	}{
 		{
@@ -804,7 +806,7 @@ gauge_metric_name{test="test_value",test2="second_value",remote_name="156955",ur
 					assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 				},
 			},
-			metricFunc: func() pdata.Metrics {
+			metricFunc: func() pmetric.Metrics {
 				metricSum, attrs := exampleIntMetric()
 				metricGauge, _ := exampleIntGaugeMetric()
 				metrics := metricAndAttrsToPdataMetrics(
@@ -836,7 +838,7 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 					assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 				},
 			},
-			metricFunc: func() pdata.Metrics {
+			metricFunc: func() pmetric.Metrics {
 				metricSum, attrsSum := exampleIntMetric()
 				metricGauge, attrsGauge := exampleIntGaugeMetric()
 				metrics := metricPairToMetrics(
@@ -887,16 +889,16 @@ func TestPushMetricsInvalidCompressor(t *testing.T) {
 func TestLogsJsonFormatMetadataFilter(t *testing.T) {
 	testcases := []struct {
 		name                  string
-		logResourceAttributes map[string]pdata.AttributeValue
+		logResourceAttributes map[string]interface{}
 		cfgFn                 func(c *Config)
 		handler               func(w http.ResponseWriter, req *http.Request)
 	}{
 		{
 			name: "basic",
-			logResourceAttributes: map[string]pdata.AttributeValue{
-				"_sourceCategory": pdata.NewAttributeValueString("dummy"),
-				"key1":            pdata.NewAttributeValueString("value1"),
-				"key2":            pdata.NewAttributeValueString("value2"),
+			logResourceAttributes: map[string]interface{}{
+				"_sourceCategory": "dummy",
+				"key1":            "value1",
+				"key2":            "value2",
 			},
 			cfgFn: func(c *Config) {
 				c.LogFormat = JSONFormat
@@ -919,12 +921,12 @@ func TestLogsJsonFormatMetadataFilter(t *testing.T) {
 		},
 		{
 			name: "source related attributes available for templating even without specifying in metadata attributes",
-			logResourceAttributes: map[string]pdata.AttributeValue{
-				"_sourceCategory": pdata.NewAttributeValueString("dummy_category"),
-				"_sourceHost":     pdata.NewAttributeValueString("dummy_host"),
-				"_sourceName":     pdata.NewAttributeValueString("dummy_name"),
-				"key1":            pdata.NewAttributeValueString("value1"),
-				"key2":            pdata.NewAttributeValueString("value2"),
+			logResourceAttributes: map[string]interface{}{
+				"_sourceCategory": "dummy_category",
+				"_sourceHost":     "dummy_host",
+				"_sourceName":     "dummy_name",
+				"key1":            "value1",
+				"key2":            "value2",
 			},
 			cfgFn: func(c *Config) {
 				c.LogFormat = JSONFormat
@@ -959,10 +961,10 @@ func TestLogsJsonFormatMetadataFilter(t *testing.T) {
 		},
 		{
 			name: "unavailable source metadata rendered as undefined",
-			logResourceAttributes: map[string]pdata.AttributeValue{
-				"_sourceCategory": pdata.NewAttributeValueString("cat"),
-				"key1":            pdata.NewAttributeValueString("value1"),
-				"key2":            pdata.NewAttributeValueString("value2"),
+			logResourceAttributes: map[string]interface{}{
+				"_sourceCategory": "cat",
+				"key1":            "value1",
+				"key2":            "value2",
 			},
 			cfgFn: func(c *Config) {
 				c.LogFormat = JSONFormat
@@ -997,11 +999,11 @@ func TestLogsJsonFormatMetadataFilter(t *testing.T) {
 		},
 		{
 			name: "empty attribute",
-			logResourceAttributes: map[string]pdata.AttributeValue{
-				"_sourceCategory": pdata.NewAttributeValueString("dummy"),
-				"key1":            pdata.NewAttributeValueString("value1"),
-				"key2":            pdata.NewAttributeValueString("value2"),
-				"key3":            pdata.NewAttributeValueString(""),
+			logResourceAttributes: map[string]interface{}{
+				"_sourceCategory": "dummy",
+				"key1":            "value1",
+				"key2":            "value2",
+				"key3":            "",
 			},
 			cfgFn: func(c *Config) {
 				c.LogFormat = JSONFormat
@@ -1035,7 +1037,7 @@ func TestLogsJsonFormatMetadataFilter(t *testing.T) {
 
 			logs := LogRecordsToLogs(exampleLog())
 			logResourceAttrs := logs.ResourceLogs().At(0).Resource().Attributes()
-			pdata.NewAttributeMapFromMap(tc.logResourceAttributes).CopyTo(logResourceAttrs)
+			pcommon.NewMapFromRaw(tc.logResourceAttributes).CopyTo(logResourceAttrs)
 
 			err := test.exp.pushLogsData(context.Background(), logs)
 			assert.NoError(t, err)
@@ -1363,7 +1365,7 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 	testcases := []struct {
 		name         string
 		cfgFn        func() *Config
-		metricsFn    func() pdata.Metrics
+		metricsFn    func() pmetric.Metrics
 		expectedBody string
 	}{
 		{
@@ -1374,17 +1376,17 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 				// cfg.TranslateTelegrafMetrics = true
 				return cfg
 			},
-			metricsFn: func() pdata.Metrics {
-				metrics := pdata.NewMetrics()
+			metricsFn: func() pmetric.Metrics {
+				metrics := pmetric.NewMetrics()
 				{
 					m := metrics.ResourceMetrics().AppendEmpty().
 						InstrumentationLibraryMetrics().AppendEmpty().
 						Metrics().AppendEmpty()
 					m.SetName("cpu_usage_active")
-					m.SetDataType(pdata.MetricDataTypeGauge)
+					m.SetDataType(pmetric.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetDoubleVal(123.456)
-					dp.SetTimestamp(pdata.NewTimestampFromTime(time.Unix(1605534165, 0)))
+					dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Unix(1605534165, 0)))
 					dp.Attributes().InsertString("test", "test_value")
 				}
 				return metrics
@@ -1399,34 +1401,34 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 				// cfg.TranslateTelegrafMetrics = true
 				return cfg
 			},
-			metricsFn: func() pdata.Metrics {
-				metrics := pdata.NewMetrics()
+			metricsFn: func() pmetric.Metrics {
+				metrics := pmetric.NewMetrics()
 				scopeMetrics := metrics.ResourceMetrics().AppendEmpty().ScopeMetrics()
 				{
 					m := scopeMetrics.AppendEmpty().Metrics().AppendEmpty()
 					m.SetName("cpu_usage_active")
-					m.SetDataType(pdata.MetricDataTypeGauge)
+					m.SetDataType(pmetric.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetDoubleVal(123.456)
-					dp.SetTimestamp(pdata.NewTimestampFromTime(time.Unix(1605534165, 0)))
+					dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Unix(1605534165, 0)))
 					dp.Attributes().InsertString("test", "test_value")
 				}
 				{
 					m := scopeMetrics.AppendEmpty().Metrics().AppendEmpty()
 					m.SetName("diskio_reads")
-					m.SetDataType(pdata.MetricDataTypeGauge)
+					m.SetDataType(pmetric.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetIntVal(123456)
-					dp.SetTimestamp(pdata.NewTimestampFromTime(time.Unix(1605534165, 1000000)))
+					dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Unix(1605534165, 1000000)))
 					dp.Attributes().InsertString("test", "test_value")
 				}
 				{
 					m := scopeMetrics.AppendEmpty().Metrics().AppendEmpty()
 					m.SetName("dummy_metric")
-					m.SetDataType(pdata.MetricDataTypeGauge)
+					m.SetDataType(pmetric.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetIntVal(10)
-					dp.SetTimestamp(pdata.NewTimestampFromTime(time.Unix(1605534165, 2000000)))
+					dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Unix(1605534165, 2000000)))
 					dp.Attributes().InsertString("test", "test_value")
 				}
 				return metrics
@@ -1442,17 +1444,17 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 				cfg.TranslateTelegrafMetrics = false
 				return cfg
 			},
-			metricsFn: func() pdata.Metrics {
-				metrics := pdata.NewMetrics()
+			metricsFn: func() pmetric.Metrics {
+				metrics := pmetric.NewMetrics()
 				{
 					m := metrics.ResourceMetrics().AppendEmpty().
 						InstrumentationLibraryMetrics().AppendEmpty().
 						Metrics().AppendEmpty()
 					m.SetName("cpu_usage_active")
-					m.SetDataType(pdata.MetricDataTypeGauge)
+					m.SetDataType(pmetric.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetDoubleVal(123.456)
-					dp.SetTimestamp(pdata.NewTimestampFromTime(time.Unix(1605534165, 0)))
+					dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Unix(1605534165, 0)))
 					dp.Attributes().InsertString("test", "test_value")
 				}
 				return metrics
@@ -1466,34 +1468,34 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 				cfg.TranslateTelegrafMetrics = false
 				return cfg
 			},
-			metricsFn: func() pdata.Metrics {
-				metrics := pdata.NewMetrics()
+			metricsFn: func() pmetric.Metrics {
+				metrics := pmetric.NewMetrics()
 				scopeMetrics := metrics.ResourceMetrics().AppendEmpty().ScopeMetrics()
 				{
 					m := scopeMetrics.AppendEmpty().Metrics().AppendEmpty()
 					m.SetName("cpu_usage_active")
-					m.SetDataType(pdata.MetricDataTypeGauge)
+					m.SetDataType(pmetric.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetDoubleVal(123.456)
-					dp.SetTimestamp(pdata.NewTimestampFromTime(time.Unix(1605534165, 0)))
+					dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Unix(1605534165, 0)))
 					dp.Attributes().InsertString("test", "test_value")
 				}
 				{
 					m := scopeMetrics.AppendEmpty().Metrics().AppendEmpty()
 					m.SetName("diskio_reads")
-					m.SetDataType(pdata.MetricDataTypeGauge)
+					m.SetDataType(pmetric.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetIntVal(123456)
-					dp.SetTimestamp(pdata.NewTimestampFromTime(time.Unix(1605534165, 1000000)))
+					dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Unix(1605534165, 1000000)))
 					dp.Attributes().InsertString("test", "test_value")
 				}
 				{
 					m := scopeMetrics.AppendEmpty().Metrics().AppendEmpty()
 					m.SetName("dummy_metric")
-					m.SetDataType(pdata.MetricDataTypeGauge)
+					m.SetDataType(pmetric.MetricDataTypeGauge)
 					dp := m.Gauge().DataPoints().AppendEmpty()
 					dp.SetIntVal(10)
-					dp.SetTimestamp(pdata.NewTimestampFromTime(time.Unix(1605534165, 2000000)))
+					dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Unix(1605534165, 2000000)))
 					dp.Attributes().InsertString("test", "test_value")
 				}
 				return metrics
