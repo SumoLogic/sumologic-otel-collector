@@ -8,7 +8,7 @@ import (
 	"go.opentelemetry.io/collector/config/confighttp"
 )
 
-func TestInitExporterInvalidLogFormat(t *testing.T) {
+func TestInitExporterInvalidConfiguration(t *testing.T) {
 	testcases := []struct {
 		name          string
 		cfg           *Config
@@ -80,6 +80,15 @@ func TestInitExporterInvalidLogFormat(t *testing.T) {
 				HTTPClientSettings: confighttp.HTTPClientSettings{
 					Timeout: defaultTimeout,
 				},
+			},
+		},
+		{
+			name: "deprecated metadata_attributes",
+			expectedError: errors.New(`*Deprecation warning*: metadata_attributes is not supported anymore.
+Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.49.0-sumo-0`,
+			),
+			cfg: &Config{
+				MetadataAttributes: []string{"some_attribute"},
 			},
 		},
 	}
