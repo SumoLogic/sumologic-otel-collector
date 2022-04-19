@@ -26,7 +26,10 @@ import (
 	"time"
 
 	"go.opentelemetry.io/collector/model/otlp"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
@@ -48,8 +51,8 @@ type appendResponse struct {
 
 // metricPair represents information required to send one metric to the Sumo Logic
 type metricPair struct {
-	attributes pdata.AttributeMap
-	metric     pdata.Metric
+	attributes pcommon.Map
+	metric     pmetric.Metric
 }
 
 // countingReader keeps number of records related to reader
@@ -136,7 +139,7 @@ type sender struct {
 }
 
 const (
-	// maxBufferSize defines size of the logBuffer (maximum number of pdata.LogRecord entries)
+	// maxBufferSize defines size of the logBuffer (maximum number of plog.LogRecord entries)
 	maxBufferSize int = 1024 * 1024
 
 	headerContentType     string = "Content-Type"
@@ -345,21 +348,21 @@ func (s *sender) createRequest(ctx context.Context, pipeline PipelineType, data 
 }
 
 // logToText converts LogRecord to a plain text line, returns it and error eventually
-func (s *sender) logToText(record pdata.LogRecord) string {
+func (s *sender) logToText(record plog.LogRecord) string {
 	return record.Body().AsString()
 }
 
 // logToJSON converts LogRecord to a json line, returns it and error eventually
-func (s *sender) logToJSON(record pdata.LogRecord) (string, error) {
+func (s *sender) logToJSON(record plog.LogRecord) (string, error) {
 	if s.jsonLogsConfig.AddTimestamp {
 		addJSONTimestamp(record.Attributes(), s.jsonLogsConfig.TimestampKey, record.Timestamp())
 	}
 
 	// Only append the body when it's not empty to prevent sending 'null' log.
 	if body := record.Body(); !isEmptyAttributeValue(body) {
-		if s.jsonLogsConfig.FlattenBody && body.Type() == pdata.AttributeValueTypeMap {
+		if s.jsonLogsConfig.FlattenBody && body.Type() == pcommon.ValueTypeMap {
 			// Cannot use CopyTo, as it overrides data.orig's values
-			body.MapVal().Range(func(k string, v pdata.AttributeValue) bool {
+			body.MapVal().Range(func(k string, v pcommon.Value) bool {
 				record.Attributes().Insert(k, v)
 				return true
 			})
@@ -382,7 +385,7 @@ var timeZeroUTC = time.Unix(0, 0).UTC()
 // out the logs as JSON.
 // If the attached timestamp is equal to 0 (millisecond based UNIX timestamp)
 // then send out current time formatted as milliseconds since January 1, 1970.
-func addJSONTimestamp(attrs pdata.AttributeMap, timestampKey string, pt pdata.Timestamp) {
+func addJSONTimestamp(attrs pcommon.Map, timestampKey string, pt pcommon.Timestamp) {
 	t := pt.AsTime()
 	if t == timeZeroUTC {
 		attrs.InsertInt(timestampKey, time.Now().UnixMilli())
@@ -391,18 +394,18 @@ func addJSONTimestamp(attrs pdata.AttributeMap, timestampKey string, pt pdata.Ti
 	}
 }
 
-func isEmptyAttributeValue(att pdata.AttributeValue) bool {
+func isEmptyAttributeValue(att pcommon.Value) bool {
 	t := att.Type()
-	return !(t == pdata.AttributeValueTypeString && len(att.StringVal()) > 0 ||
-		t == pdata.AttributeValueTypeArray && att.SliceVal().Len() > 0 ||
-		t == pdata.AttributeValueTypeMap && att.MapVal().Len() > 0 ||
-		t == pdata.AttributeValueTypeBytes && len(att.BytesVal()) > 0)
+	return !(t == pcommon.ValueTypeString && len(att.StringVal()) > 0 ||
+		t == pcommon.ValueTypeSlice && att.SliceVal().Len() > 0 ||
+		t == pcommon.ValueTypeMap && att.MapVal().Len() > 0 ||
+		t == pcommon.ValueTypeBytes && len(att.BytesVal()) > 0)
 }
 
 // sendNonOTLPLogs sends log records from the logBuffer formatted according
 // to configured LogFormat and as the result of execution
 // returns array of records which has not been sent correctly and error
-func (s *sender) sendNonOTLPLogs(ctx context.Context, rl pdata.ResourceLogs, flds fields) ([]pdata.LogRecord, error) {
+func (s *sender) sendNonOTLPLogs(ctx context.Context, rl plog.ResourceLogs, flds fields) ([]plog.LogRecord, error) {
 	if s.config.LogFormat == OTLPLogFormat {
 		return nil, fmt.Errorf("Attempting to send OTLP logs as non-OTLP data")
 	}
@@ -410,8 +413,8 @@ func (s *sender) sendNonOTLPLogs(ctx context.Context, rl pdata.ResourceLogs, fld
 	var (
 		body           bodyBuilder = newBodyBuilder()
 		errs           []error
-		droppedRecords []pdata.LogRecord
-		currentRecords []pdata.LogRecord
+		droppedRecords []plog.LogRecord
+		currentRecords []plog.LogRecord
 	)
 
 	slgs := rl.ScopeLogs()
@@ -460,7 +463,7 @@ func (s *sender) sendNonOTLPLogs(ctx context.Context, rl pdata.ResourceLogs, fld
 	return droppedRecords, multierr.Combine(errs...)
 }
 
-func (s *sender) formatLogLine(lr pdata.LogRecord) (string, error) {
+func (s *sender) formatLogLine(lr plog.LogRecord) (string, error) {
 	var formattedLine string
 	var err error
 
@@ -477,7 +480,7 @@ func (s *sender) formatLogLine(lr pdata.LogRecord) (string, error) {
 }
 
 // TODO: add support for HTTP limits
-func (s *sender) sendOTLPLogs(ctx context.Context, ld pdata.Logs) error {
+func (s *sender) sendOTLPLogs(ctx context.Context, ld plog.Logs) error {
 	rls := ld.ResourceLogs()
 	for i := 0; i < rls.Len(); i++ {
 		rl := rls.At(i)
@@ -510,7 +513,7 @@ func (s *sender) sendOTLPLogs(ctx context.Context, ld pdata.Logs) error {
 }
 
 // sendNonOTLPMetrics sends metrics in right format basing on the s.config.MetricFormat
-func (s *sender) sendNonOTLPMetrics(ctx context.Context, rm pdata.ResourceMetrics, flds fields) ([]pdata.Metric, error) {
+func (s *sender) sendNonOTLPMetrics(ctx context.Context, rm pmetric.ResourceMetrics, flds fields) ([]pmetric.Metric, error) {
 	if s.config.MetricFormat == OTLPMetricFormat {
 		return nil, fmt.Errorf("Attempting to send OTLP metrics as non-OTLP data")
 	}
@@ -518,8 +521,8 @@ func (s *sender) sendNonOTLPMetrics(ctx context.Context, rm pdata.ResourceMetric
 	var (
 		body           bodyBuilder = newBodyBuilder()
 		errs           []error
-		droppedRecords []pdata.Metric
-		currentRecords []pdata.Metric
+		droppedRecords []pmetric.Metric
+		currentRecords []pmetric.Metric
 	)
 
 	sms := rm.ScopeMetrics()
@@ -582,7 +585,7 @@ func (s *sender) sendNonOTLPMetrics(ctx context.Context, rm pdata.ResourceMetric
 	return droppedRecords, multierr.Combine(errs...)
 }
 
-func (s *sender) sendOTLPMetrics(ctx context.Context, md pdata.Metrics) error {
+func (s *sender) sendOTLPMetrics(ctx context.Context, md pmetric.Metrics) error {
 	rms := md.ResourceMetrics()
 	for i := 0; i < rms.Len(); i++ {
 		rm := rms.At(i)
@@ -647,7 +650,7 @@ func (s *sender) appendAndSend(
 }
 
 // sendTraces sends traces in right format basing on the s.config.TraceFormat
-func (s *sender) sendTraces(ctx context.Context, td pdata.Traces) error {
+func (s *sender) sendTraces(ctx context.Context, td ptrace.Traces) error {
 	if s.config.TraceFormat == OTLPTraceFormat {
 		return s.sendOTLPTraces(ctx, td)
 	}
@@ -655,7 +658,7 @@ func (s *sender) sendTraces(ctx context.Context, td pdata.Traces) error {
 }
 
 // sendOTLPTraces sends trace records in OTLP format
-func (s *sender) sendOTLPTraces(ctx context.Context, td pdata.Traces) error {
+func (s *sender) sendOTLPTraces(ctx context.Context, td ptrace.Traces) error {
 	capacity := td.SpanCount()
 	for i := 0; i < td.ResourceSpans().Len(); i++ {
 		s.addSourceResourceAttributes(td.ResourceSpans().At(i).Resource().Attributes())
@@ -783,7 +786,7 @@ func (s *sender) addRequestHeaders(req *http.Request, pipeline PipelineType, fld
 // * source name
 // to the provided attribute map using the provided fields as values source and using
 // the source templates for formatting.
-func (s *sender) addSourceRelatedResourceAttributesFromFields(attrs pdata.AttributeMap, flds fields) {
+func (s *sender) addSourceRelatedResourceAttributesFromFields(attrs pcommon.Map, flds fields) {
 	if s.sources.host.isSet() {
 		attrs.InsertString(attributeKeySourceHost, s.sources.host.format(flds))
 	}
@@ -804,7 +807,7 @@ func (s *sender) addSourceRelatedResourceAttributesFromFields(attrs pdata.Attrib
 // When those attributes are already in the attribute map then nothing is
 // changed since attributes that are provided with data have precedence over
 // exporter configuration.
-func (s *sender) addSourceResourceAttributes(attrs pdata.AttributeMap) {
+func (s *sender) addSourceResourceAttributes(attrs pcommon.Map) {
 	if s.sources.host.isSet() {
 		if _, ok := attrs.Get(attributeKeySourceHost); !ok {
 			attrs.InsertString(attributeKeySourceHost, s.sources.host.formatPdataMap(attrs))

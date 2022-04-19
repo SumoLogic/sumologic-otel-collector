@@ -19,7 +19,7 @@ import (
 	"regexp"
 	"strings"
 
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
 var (
@@ -69,7 +69,7 @@ func createSourceNameFiller(cfg *Config) attributeFiller {
 	return filler
 }
 
-func (f *attributeFiller) fillResourceOrUseAnnotation(atts *pdata.AttributeMap, annotationKey string) bool {
+func (f *attributeFiller) fillResourceOrUseAnnotation(atts *pcommon.Map, annotationKey string) bool {
 	val, found := atts.Get(annotationKey)
 	if found {
 		annotationFiller := extractFormat(val.StringVal(), f.name)
@@ -80,7 +80,7 @@ func (f *attributeFiller) fillResourceOrUseAnnotation(atts *pdata.AttributeMap, 
 	return f.fillAttributes(atts)
 }
 
-func (f *attributeFiller) fillAttributes(atts *pdata.AttributeMap) bool {
+func (f *attributeFiller) fillAttributes(atts *pcommon.Map) bool {
 	if len(f.compiledFormat) == 0 {
 		return false
 	}
@@ -97,7 +97,7 @@ func (f *attributeFiller) fillAttributes(atts *pdata.AttributeMap) bool {
 	return false
 }
 
-func (f *attributeFiller) resourceLabelValues(atts *pdata.AttributeMap) []interface{} {
+func (f *attributeFiller) resourceLabelValues(atts *pcommon.Map) []interface{} {
 	arr := make([]interface{}, 0)
 	for _, label := range f.labels {
 		if value, found := atts.Get(label); found {

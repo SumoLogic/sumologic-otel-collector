@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
 func TestNewSourceCategoryFiller(t *testing.T) {
@@ -36,7 +36,7 @@ func TestFill(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.SourceCategory = "source-%{k8s.namespace.name}-%{k8s.pod.uid}-cat"
 
-	attrs := pdata.NewAttributeMap()
+	attrs := pcommon.NewMap()
 	attrs.InsertString("k8s.namespace.name", "ns-1")
 	attrs.InsertString("k8s.pod.uid", "123asd")
 
@@ -49,7 +49,7 @@ func TestFill(t *testing.T) {
 func TestFillWithAnnotations(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 
-	attrs := pdata.NewAttributeMap()
+	attrs := pcommon.NewMap()
 	attrs.InsertString("k8s.namespace.name", "ns-1")
 	attrs.InsertString("k8s.pod.uid", "123asd")
 	attrs.InsertString("k8s.pod.annotation.sumologic.com/sourceCategory", "sc-from-annot-%{k8s.namespace.name}-%{k8s.pod.uid}")
@@ -67,7 +67,7 @@ func TestFillWithContainerAnnotations(t *testing.T) {
 		cfg := createDefaultConfig().(*Config)
 		cfg.SourceCategory = "my-source-category"
 
-		attrs := pdata.NewAttributeMap()
+		attrs := pcommon.NewMap()
 		attrs.InsertString("k8s.pod.annotation.sumologic.com/container-name-1.sourceCategory", "first_source-category")
 		attrs.InsertString("k8s.pod.annotation.sumologic.com/container-name-2.sourceCategory", "another/source-category")
 		attrs.InsertString("k8s.container.name", "container-name-1")
@@ -83,7 +83,7 @@ func TestFillWithContainerAnnotations(t *testing.T) {
 		cfg.SourceCategory = "my-source-category"
 		cfg.ContainerAnnotations.Enabled = true
 
-		attrs := pdata.NewAttributeMap()
+		attrs := pcommon.NewMap()
 		attrs.InsertString("k8s.pod.annotation.sumologic.com/container-name-1.sourceCategory", "first_source-category")
 		attrs.InsertString("k8s.pod.annotation.sumologic.com/container-name-2.sourceCategory", "another/source-category")
 		attrs.InsertString("k8s.container.name", "container-name-1")
@@ -99,7 +99,7 @@ func TestFillWithContainerAnnotations(t *testing.T) {
 		cfg.SourceCategory = "my-source-category"
 		cfg.ContainerAnnotations.Enabled = true
 
-		attrs := pdata.NewAttributeMap()
+		attrs := pcommon.NewMap()
 		attrs.InsertString("k8s.pod.annotation.sumologic.com/container-name-1.sourceCategory", "first_source-category")
 		attrs.InsertString("k8s.pod.annotation.sumologic.com/container-name-2.sourceCategory", "another/source-category")
 		attrs.InsertString("k8s.container.name", "container-name-2")
@@ -119,7 +119,7 @@ func TestFillWithContainerAnnotations(t *testing.T) {
 			"customAnno_prefix:",
 		}
 
-		attrs := pdata.NewAttributeMap()
+		attrs := pcommon.NewMap()
 		attrs.InsertString("k8s.pod.annotation.customAnno_prefix:container-name-1.sourceCategory", "first_source-category")
 		attrs.InsertString("k8s.pod.annotation.customAnno_prefix:container-name-2.sourceCategory", "another/source-category")
 		attrs.InsertString("k8s.pod.annotation.customAnno_prefix:container-name-3.sourceCategory", "THIRD_s-c!")

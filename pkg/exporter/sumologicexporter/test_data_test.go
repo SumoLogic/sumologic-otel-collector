@@ -15,18 +15,20 @@
 package sumologicexporter
 
 import (
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
-func exampleIntMetric() (pdata.Metric, pdata.Map) {
+func exampleIntMetric() (pmetric.Metric, pcommon.Map) {
 	return buildExampleIntMetric(true)
 }
 
-func buildExampleIntMetric(fillData bool) (pdata.Metric, pdata.Map) {
-	metric := pdata.NewMetric()
+func buildExampleIntMetric(fillData bool) (pmetric.Metric, pcommon.Map) {
+	metric := pmetric.NewMetric()
 	metric.SetName("test.metric.data")
 	metric.SetUnit("bytes")
-	metric.SetDataType(pdata.MetricDataTypeSum)
+	metric.SetDataType(pmetric.MetricDataTypeSum)
 
 	if fillData {
 		dp := metric.Sum().DataPoints().AppendEmpty()
@@ -34,22 +36,22 @@ func buildExampleIntMetric(fillData bool) (pdata.Metric, pdata.Map) {
 		dp.SetIntVal(14500)
 	}
 
-	attributes := pdata.NewAttributeMap()
+	attributes := pcommon.NewMap()
 	attributes.InsertString("test", "test_value")
 	attributes.InsertString("test2", "second_value")
 
 	return metric, attributes
 }
 
-func exampleIntGaugeMetric() (pdata.Metric, pdata.Map) {
+func exampleIntGaugeMetric() (pmetric.Metric, pcommon.Map) {
 	return buildExampleIntGaugeMetric(true)
 }
 
-func buildExampleIntGaugeMetric(fillData bool) (pdata.Metric, pdata.Map) {
-	attributes := pdata.NewAttributeMap()
-	metric := pdata.NewMetric()
+func buildExampleIntGaugeMetric(fillData bool) (pmetric.Metric, pcommon.Map) {
+	attributes := pcommon.NewMap()
+	metric := pmetric.NewMetric()
 
-	metric.SetDataType(pdata.MetricDataTypeGauge)
+	metric.SetDataType(pmetric.MetricDataTypeGauge)
 	metric.SetName("gauge_metric_name")
 
 	attributes.InsertString("foo", "bar")
@@ -71,15 +73,15 @@ func buildExampleIntGaugeMetric(fillData bool) (pdata.Metric, pdata.Map) {
 	return metric, attributes
 }
 
-func exampleDoubleGaugeMetric() (pdata.Metric, pdata.Map) {
+func exampleDoubleGaugeMetric() (pmetric.Metric, pcommon.Map) {
 	return buildExampleDoubleGaugeMetric(true)
 }
 
-func buildExampleDoubleGaugeMetric(fillData bool) (pdata.Metric, pdata.Map) {
-	attributes := pdata.NewAttributeMap()
-	metric := pdata.NewMetric()
+func buildExampleDoubleGaugeMetric(fillData bool) (pmetric.Metric, pcommon.Map) {
+	attributes := pcommon.NewMap()
+	metric := pmetric.NewMetric()
 
-	metric.SetDataType(pdata.MetricDataTypeGauge)
+	metric.SetDataType(pmetric.MetricDataTypeGauge)
 	metric.SetName("gauge_metric_name_double_test")
 
 	attributes.InsertString("foo", "bar")
@@ -101,15 +103,15 @@ func buildExampleDoubleGaugeMetric(fillData bool) (pdata.Metric, pdata.Map) {
 	return metric, attributes
 }
 
-func exampleIntSumMetric() (pdata.Metric, pdata.Map) {
+func exampleIntSumMetric() (pmetric.Metric, pcommon.Map) {
 	return buildExampleIntSumMetric(true)
 }
 
-func buildExampleIntSumMetric(fillData bool) (pdata.Metric, pdata.Map) {
-	attributes := pdata.NewAttributeMap()
-	metric := pdata.NewMetric()
+func buildExampleIntSumMetric(fillData bool) (pmetric.Metric, pcommon.Map) {
+	attributes := pcommon.NewMap()
+	metric := pmetric.NewMetric()
 
-	metric.SetDataType(pdata.MetricDataTypeSum)
+	metric.SetDataType(pmetric.MetricDataTypeSum)
 	metric.SetName("sum_metric_int_test")
 
 	attributes.InsertString("foo", "bar")
@@ -131,15 +133,15 @@ func buildExampleIntSumMetric(fillData bool) (pdata.Metric, pdata.Map) {
 	return metric, attributes
 }
 
-func exampleDoubleSumMetric() (pdata.Metric, pdata.Map) {
+func exampleDoubleSumMetric() (pmetric.Metric, pcommon.Map) {
 	return buildExampleDoubleSumMetric(true)
 }
 
-func buildExampleDoubleSumMetric(fillData bool) (pdata.Metric, pdata.Map) {
-	attributes := pdata.NewAttributeMap()
-	metric := pdata.NewMetric()
+func buildExampleDoubleSumMetric(fillData bool) (pmetric.Metric, pcommon.Map) {
+	attributes := pcommon.NewMap()
+	metric := pmetric.NewMetric()
 
-	metric.SetDataType(pdata.MetricDataTypeSum)
+	metric.SetDataType(pmetric.MetricDataTypeSum)
 	metric.SetName("sum_metric_double_test")
 
 	attributes.InsertString("foo", "bar")
@@ -161,15 +163,15 @@ func buildExampleDoubleSumMetric(fillData bool) (pdata.Metric, pdata.Map) {
 	return metric, attributes
 }
 
-func exampleSummaryMetric() (pdata.Metric, pdata.Map) {
+func exampleSummaryMetric() (pmetric.Metric, pcommon.Map) {
 	return buildExampleSummaryMetric(true)
 }
 
-func buildExampleSummaryMetric(fillData bool) (pdata.Metric, pdata.Map) {
-	attributes := pdata.NewAttributeMap()
-	metric := pdata.NewMetric()
+func buildExampleSummaryMetric(fillData bool) (pmetric.Metric, pcommon.Map) {
+	attributes := pcommon.NewMap()
+	metric := pmetric.NewMetric()
 
-	metric.SetDataType(pdata.MetricDataTypeSummary)
+	metric.SetDataType(pmetric.MetricDataTypeSummary)
 	metric.SetName("summary_metric_double_test")
 
 	attributes.InsertString("foo", "bar")
@@ -201,15 +203,15 @@ func buildExampleSummaryMetric(fillData bool) (pdata.Metric, pdata.Map) {
 	return metric, attributes
 }
 
-func exampleHistogramMetric() (pdata.Metric, pdata.Map) {
+func exampleHistogramMetric() (pmetric.Metric, pcommon.Map) {
 	return buildExampleHistogramMetric(true)
 }
 
-func buildExampleHistogramMetric(fillData bool) (pdata.Metric, pdata.Map) {
-	attributes := pdata.NewAttributeMap()
-	metric := pdata.NewMetric()
+func buildExampleHistogramMetric(fillData bool) (pmetric.Metric, pcommon.Map) {
+	attributes := pcommon.NewMap()
+	metric := pmetric.NewMetric()
 
-	metric.SetDataType(pdata.MetricDataTypeHistogram)
+	metric.SetDataType(pmetric.MetricDataTypeHistogram)
 	metric.SetName("histogram_metric_double_test")
 
 	attributes.InsertString("bar", "foo")
@@ -240,8 +242,8 @@ func buildExampleHistogramMetric(fillData bool) (pdata.Metric, pdata.Map) {
 	return metric, attributes
 }
 
-func metricPairToMetrics(mp ...metricPair) pdata.Metrics {
-	metrics := pdata.NewMetrics()
+func metricPairToMetrics(mp ...metricPair) pmetric.Metrics {
+	metrics := pmetric.NewMetrics()
 	metrics.ResourceMetrics().EnsureCapacity(len(mp))
 	for _, record := range mp {
 		rms := metrics.ResourceMetrics().AppendEmpty()
@@ -253,8 +255,8 @@ func metricPairToMetrics(mp ...metricPair) pdata.Metrics {
 	return metrics
 }
 
-func metricAndAttrsToPdataMetrics(attributes pdata.Map, ms ...pdata.Metric) pdata.Metrics {
-	metrics := pdata.NewMetrics()
+func metricAndAttrsToPdataMetrics(attributes pcommon.Map, ms ...pmetric.Metric) pmetric.Metrics {
+	metrics := pmetric.NewMetrics()
 	metrics.ResourceMetrics().EnsureCapacity(len(ms))
 
 	rms := metrics.ResourceMetrics().AppendEmpty()
@@ -269,8 +271,8 @@ func metricAndAttrsToPdataMetrics(attributes pdata.Map, ms ...pdata.Metric) pdat
 	return metrics
 }
 
-func metricAndAttributesToPdataMetrics(metric pdata.Metric, attributes pdata.Map) pdata.Metrics {
-	metrics := pdata.NewMetrics()
+func metricAndAttributesToPdataMetrics(metric pmetric.Metric, attributes pcommon.Map) pmetric.Metrics {
+	metrics := pmetric.NewMetrics()
 	metrics.ResourceMetrics().EnsureCapacity(attributes.Len())
 	rms := metrics.ResourceMetrics().AppendEmpty()
 	attributes.CopyTo(rms.Resource().Attributes())
@@ -280,23 +282,23 @@ func metricAndAttributesToPdataMetrics(metric pdata.Metric, attributes pdata.Map
 }
 
 func fieldsFromMap(s map[string]string) fields {
-	attrMap := pdata.NewAttributeMap()
+	attrMap := pcommon.NewMap()
 	for k, v := range s {
 		attrMap.InsertString(k, v)
 	}
 	return newFields(attrMap)
 }
 
-func exampleTrace() pdata.Traces {
-	td := pdata.NewTraces()
+func exampleTrace() ptrace.Traces {
+	td := ptrace.NewTraces()
 	rs := td.ResourceSpans().AppendEmpty()
 	rs.Resource().Attributes().UpsertString("hostname", "testHost")
 	rs.Resource().Attributes().UpsertString("_sourceHost", "source_host")
 	rs.Resource().Attributes().UpsertString("_sourceName", "source_name")
 	rs.Resource().Attributes().UpsertString("_sourceCategory", "source_category")
 	span := rs.InstrumentationLibrarySpans().AppendEmpty().Spans().AppendEmpty()
-	span.SetTraceID(pdata.NewTraceID([16]byte{0x5B, 0x8E, 0xFF, 0xF7, 0x98, 0x3, 0x81, 0x3, 0xD2, 0x69, 0xB6, 0x33, 0x81, 0x3F, 0xC6, 0xC}))
-	span.SetSpanID(pdata.NewSpanID([8]byte{0xEE, 0xE1, 0x9B, 0x7E, 0xC3, 0xC1, 0xB1, 0x73}))
+	span.SetTraceID(pcommon.NewTraceID([16]byte{0x5B, 0x8E, 0xFF, 0xF7, 0x98, 0x3, 0x81, 0x3, 0xD2, 0x69, 0xB6, 0x33, 0x81, 0x3F, 0xC6, 0xC}))
+	span.SetSpanID(pcommon.NewSpanID([8]byte{0xEE, 0xE1, 0x9B, 0x7E, 0xC3, 0xC1, 0xB1, 0x73}))
 	span.SetName("testSpan")
 	span.SetStartTimestamp(1544712660000000000)
 	span.SetEndTimestamp(1544712661000000000)

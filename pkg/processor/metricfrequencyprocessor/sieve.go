@@ -5,7 +5,8 @@ import (
 	"sort"
 	"time"
 
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 )
 
 const (
@@ -14,7 +15,7 @@ const (
 )
 
 type metricSieve interface {
-	Sift(metric pdata.Metric) bool
+	Sift(metric pmetric.Metric) bool
 }
 
 // defaultMetricSieve removes data points from MetricSlices that would be reported more often than preset
@@ -27,7 +28,7 @@ type defaultMetricSieve struct {
 	config sieveConfig
 
 	metricCache  *metricCache
-	lastReported map[string]pdata.Timestamp
+	lastReported map[string]pcommon.Timestamp
 }
 
 var _ metricSieve = (*defaultMetricSieve)(nil)
@@ -35,30 +36,30 @@ var _ metricSieve = (*defaultMetricSieve)(nil)
 func newMetricSieve(config *Config) *defaultMetricSieve {
 	return &defaultMetricSieve{
 		metricCache:  newMetricCache(config.cacheConfig),
-		lastReported: make(map[string]pdata.Timestamp),
+		lastReported: make(map[string]pcommon.Timestamp),
 		config:       config.sieveConfig,
 	}
 }
 
 // Sift removes data points from MetricSlices of the metric argument according to specified strategy.
 // It returns true if the metric should be removed.
-func (ms *defaultMetricSieve) Sift(metric pdata.Metric) bool {
+func (ms *defaultMetricSieve) Sift(metric pmetric.Metric) bool {
 	switch metric.DataType() {
-	case pdata.MetricDataTypeGauge:
+	case pmetric.MetricDataTypeGauge:
 		return ms.siftDropGauge(metric)
 	default:
 		return false
 	}
 }
 
-func (ms *defaultMetricSieve) siftDropGauge(metric pdata.Metric) bool {
+func (ms *defaultMetricSieve) siftDropGauge(metric pmetric.Metric) bool {
 	metric.Gauge().DataPoints().RemoveIf(ms.siftDataPoint(metric.Name()))
 
 	return metric.Gauge().DataPoints().Len() == 0
 }
 
-func (ms *defaultMetricSieve) siftDataPoint(name string) func(pdata.NumberDataPoint) bool {
-	return func(dataPoint pdata.NumberDataPoint) bool {
+func (ms *defaultMetricSieve) siftDataPoint(name string) func(pmetric.NumberDataPoint) bool {
+	return func(dataPoint pmetric.NumberDataPoint) bool {
 		if math.IsNaN(getVal(dataPoint)) {
 			return false
 		}
@@ -105,15 +106,15 @@ func (ms *defaultMetricSieve) siftDataPoint(name string) func(pdata.NumberDataPo
 	}
 }
 
-func (ms *defaultMetricSieve) metricRequiresSamples(point pdata.NumberDataPoint, earliest pdata.Timestamp) bool {
+func (ms *defaultMetricSieve) metricRequiresSamples(point pmetric.NumberDataPoint, earliest pcommon.Timestamp) bool {
 	return point.Timestamp().AsTime().Before(earliest.AsTime().Add(ms.config.MinPointAccumulationTime))
 }
 
-func pastCategoryFrequency(point pdata.NumberDataPoint, lastReport pdata.Timestamp, categoryFrequency time.Duration) bool {
+func pastCategoryFrequency(point pmetric.NumberDataPoint, lastReport pcommon.Timestamp, categoryFrequency time.Duration) bool {
 	return point.Timestamp().AsTime().Add(safetyInterval).After(lastReport.AsTime().Add(categoryFrequency))
 }
 
-func isConstant(point pdata.NumberDataPoint, points map[pdata.Timestamp]float64) bool {
+func isConstant(point pmetric.NumberDataPoint, points map[pcommon.Timestamp]float64) bool {
 	for _, value := range points {
 		if !almostEqual(getVal(point), value) {
 			return false
@@ -126,7 +127,7 @@ func isConstant(point pdata.NumberDataPoint, points map[pdata.Timestamp]float64)
 // isLowInformation is a heuristic attempt at defining uninteresting metrics. Requirements:
 // 1) no big changes - defined by no iqr anomalies
 // 2) little oscillations - defined by low variation
-func (ms *defaultMetricSieve) isLowInformation(points map[pdata.Timestamp]float64) bool {
+func (ms *defaultMetricSieve) isLowInformation(points map[pcommon.Timestamp]float64) bool {
 	q1, q3 := calculateQ1Q3(points)
 	iqr := q3 - q1
 	variation := calculateVariation(points)
@@ -136,7 +137,7 @@ func (ms *defaultMetricSieve) isLowInformation(points map[pdata.Timestamp]float6
 }
 
 // calculateQ1Q3 returns specific quantiles - it refers to quantiles .25 and .75 respectively
-func calculateQ1Q3(points map[pdata.Timestamp]float64) (float64, float64) {
+func calculateQ1Q3(points map[pcommon.Timestamp]float64) (float64, float64) {
 	values := valueSlice(points)
 	sort.Float64s(values)
 	q1Index := len(points) / 4
@@ -144,7 +145,7 @@ func calculateQ1Q3(points map[pdata.Timestamp]float64) (float64, float64) {
 	return values[q1Index], values[q3Index]
 }
 
-func withinBounds(points map[pdata.Timestamp]float64, lowerBound float64, upperBound float64) bool {
+func withinBounds(points map[pcommon.Timestamp]float64, lowerBound float64, upperBound float64) bool {
 	for _, v := range points {
 		if v < lowerBound {
 			return false
@@ -158,7 +159,7 @@ func withinBounds(points map[pdata.Timestamp]float64, lowerBound float64, upperB
 }
 
 // calculateVariation returns a sum of absolute values of differences of subsequent data points.
-func calculateVariation(points map[pdata.Timestamp]float64) float64 {
+func calculateVariation(points map[pcommon.Timestamp]float64) float64 {
 	keys := keySlice(points)
 	sortTimestampArray(keys)
 
@@ -178,8 +179,8 @@ func (ms *defaultMetricSieve) lowVariation(variation float64, iqr float64) bool 
 	return variation < ms.config.VariationIqrThresholdCoef*iqr
 }
 
-func earliestTimestamp(points map[pdata.Timestamp]float64) pdata.Timestamp {
-	min := pdata.NewTimestampFromTime(time.Now())
+func earliestTimestamp(points map[pcommon.Timestamp]float64) pcommon.Timestamp {
+	min := pcommon.NewTimestampFromTime(time.Now())
 	for k := range points {
 		if k < min {
 			min = k
@@ -189,8 +190,8 @@ func earliestTimestamp(points map[pdata.Timestamp]float64) pdata.Timestamp {
 	return min
 }
 
-func keySlice(mapping map[pdata.Timestamp]float64) []pdata.Timestamp {
-	out := make([]pdata.Timestamp, len(mapping))
+func keySlice(mapping map[pcommon.Timestamp]float64) []pcommon.Timestamp {
+	out := make([]pcommon.Timestamp, len(mapping))
 	i := 0
 	for k := range mapping {
 		out[i] = k
@@ -200,7 +201,7 @@ func keySlice(mapping map[pdata.Timestamp]float64) []pdata.Timestamp {
 	return out
 }
 
-func valueSlice(mapping map[pdata.Timestamp]float64) []float64 {
+func valueSlice(mapping map[pcommon.Timestamp]float64) []float64 {
 	out := make([]float64, len(mapping))
 	i := 0
 	for _, v := range mapping {

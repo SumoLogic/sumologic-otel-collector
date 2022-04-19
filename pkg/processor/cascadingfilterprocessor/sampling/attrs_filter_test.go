@@ -20,7 +20,8 @@ import (
 	"testing"
 	"time"
 
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
 )
 
@@ -132,13 +133,13 @@ func TestAttributesFilter(t *testing.T) {
 	}
 }
 
-func newTrace() (*TraceData, pdata.AttributeMap) {
+func newTrace() (*TraceData, pcommon.Map) {
 	endTs := time.Now().UnixNano()
 	startTs := endTs - 100000
 
-	var traceBatches []pdata.Traces
+	var traceBatches []ptrace.Traces
 
-	traces := pdata.NewTraces()
+	traces := ptrace.NewTraces()
 	rs := traces.ResourceSpans().AppendEmpty()
 	ils := rs.InstrumentationLibrarySpans().AppendEmpty()
 
@@ -147,8 +148,8 @@ func newTrace() (*TraceData, pdata.AttributeMap) {
 
 	span := spans.AppendEmpty()
 	span.SetName("fooname")
-	span.SetStartTimestamp(pdata.Timestamp(startTs))
-	span.SetEndTimestamp(pdata.Timestamp(endTs))
+	span.SetStartTimestamp(pcommon.Timestamp(startTs))
+	span.SetEndTimestamp(pcommon.Timestamp(endTs))
 
 	traceBatches = append(traceBatches, traces)
 

@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"strings"
 
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
 // attributeTranslations maps OpenTelemetry attribute names to Sumo attribute names
@@ -46,11 +46,11 @@ var attributeTranslations = map[string]string{
 	"file.path.resolved":      "_sourceName",
 }
 
-func translateAttributes(attributes pdata.AttributeMap) pdata.AttributeMap {
-	ret := pdata.NewAttributeMap()
+func translateAttributes(attributes pcommon.Map) pcommon.Map {
+	ret := pcommon.NewMap()
 	ret.EnsureCapacity(attributes.Len())
 
-	attributes.Range(func(otKey string, value pdata.AttributeValue) bool {
+	attributes.Range(func(otKey string, value pcommon.Value) bool {
 		if sumoKey, ok := attributeTranslations[otKey]; ok {
 			// Only insert if it doesn't exist yet to prevent overwriting.
 			// We have to do it this way since the final return value is not
@@ -72,8 +72,8 @@ func translateAttributes(attributes pdata.AttributeMap) pdata.AttributeMap {
 // translateAttributesInPlace renames attribute keys according to attributeTranslations.
 //
 // DEPRECATED: Please use translateAttributes instead.
-func translateAttributesInPlace(attributes pdata.AttributeMap) {
-	attributes.Range(func(otKey string, value pdata.AttributeValue) bool {
+func translateAttributesInPlace(attributes pcommon.Map) {
+	attributes.Range(func(otKey string, value pcommon.Value) bool {
 		if sumoKey, ok := attributeTranslations[otKey]; ok {
 			// do not rename attribute if target name already exists
 			if _, ok := attributes.Get(sumoKey); ok {

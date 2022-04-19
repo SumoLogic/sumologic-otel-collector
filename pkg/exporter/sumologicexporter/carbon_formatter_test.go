@@ -18,7 +18,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 )
 
 func TestCarbon2TagString(t *testing.T) {
@@ -40,9 +41,9 @@ func TestCarbon2TagString(t *testing.T) {
 }
 
 func TestCarbon2InvalidCharacters(t *testing.T) {
-	metric := pdata.NewMetric()
+	metric := pmetric.NewMetric()
 
-	attributes := pdata.NewAttributeMap()
+	attributes := pcommon.NewMap()
 	attributes.InsertString("= \n\r", "= \n\r")
 	metric.SetName("= \n\r")
 
@@ -105,49 +106,49 @@ func TestCarbonMetricDataTypeHistogram(t *testing.T) {
 func TestCarbonMetrics(t *testing.T) {
 	type testCase struct {
 		name       string
-		metricFunc func() (pdata.Metric, pdata.Map)
+		metricFunc func() (pmetric.Metric, pcommon.Map)
 		expected   string
 	}
 
 	tests := []testCase{
 		{
 			name: "empty int gauge",
-			metricFunc: func() (pdata.Metric, pdata.Map) {
+			metricFunc: func() (pmetric.Metric, pcommon.Map) {
 				return buildExampleIntGaugeMetric(false)
 			},
 			expected: "",
 		},
 		{
 			name: "empty double gauge",
-			metricFunc: func() (pdata.Metric, pdata.Map) {
+			metricFunc: func() (pmetric.Metric, pcommon.Map) {
 				return buildExampleDoubleGaugeMetric(false)
 			},
 			expected: "",
 		},
 		{
 			name: "empty int sum",
-			metricFunc: func() (pdata.Metric, pdata.Map) {
+			metricFunc: func() (pmetric.Metric, pcommon.Map) {
 				return buildExampleIntSumMetric(false)
 			},
 			expected: "",
 		},
 		{
 			name: "empty double sum",
-			metricFunc: func() (pdata.Metric, pdata.Map) {
+			metricFunc: func() (pmetric.Metric, pcommon.Map) {
 				return buildExampleDoubleSumMetric(false)
 			},
 			expected: "",
 		},
 		{
 			name: "empty summary",
-			metricFunc: func() (pdata.Metric, pdata.Map) {
+			metricFunc: func() (pmetric.Metric, pcommon.Map) {
 				return buildExampleSummaryMetric(false)
 			},
 			expected: "",
 		},
 		{
 			name: "empty histogram",
-			metricFunc: func() (pdata.Metric, pdata.Map) {
+			metricFunc: func() (pmetric.Metric, pcommon.Map) {
 				return buildExampleHistogramMetric(false)
 			},
 			expected: "",
