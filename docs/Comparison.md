@@ -190,7 +190,6 @@ exporters:
     source_name: "%{facility}"
     ## Set Source Host to client hostname
     source_host: "%{net.peer.name}"
-    metadata_attributes: [facility, net.peer.name]
   logging:
     logLevel: debug
 service:

@@ -68,7 +68,8 @@ type Config struct {
 	// `procstat_num_threads` => `Proc_Threads` or `cpu_usage_irq` => `CPU_Irq`).
 	TranslateTelegrafMetrics bool `mapstructure:"translate_telegraf_attributes"`
 
-	// List of regexes for attributes which should be send as metadata
+	// DEPRECATED: The below attribute only exists so we can print a nicer error
+	// message about not supporting it anymore.
 	MetadataAttributes []string `mapstructure:"metadata_attributes"`
 
 	// Attribute used by routingprocessor which should be dropped during data ingestion
@@ -132,6 +133,13 @@ func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 }
 
 func (cfg *Config) Validate() error {
+
+	if len(cfg.MetadataAttributes) > 0 {
+		return fmt.Errorf(`*Deprecation warning*: metadata_attributes is not supported anymore.
+Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.49.0-sumo-0`,
+		)
+	}
+
 	switch cfg.LogFormat {
 	case OTLPLogFormat:
 	case JSONFormat:

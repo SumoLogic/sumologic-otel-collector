@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - fix(sumologicexporter): treat resource attributes as fields for otlp #536
+- fix!(sumologicexporter): send resource attributes as fields for non-otlp, removing metadata_attributes #549
 
 ### Other
 
@@ -51,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#530]: https://github.com/SumoLogic/sumologic-otel-collector/pull/530
 [#534]: https://github.com/SumoLogic/sumologic-otel-collector/pull/534
 [#536]: https://github.com/SumoLogic/sumologic-otel-collector/pull/536
+[#549]: https://github.com/SumoLogic/sumologic-otel-collector/pull/549
 
 ## [v0.47.0-sumo-0]
 

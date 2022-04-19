@@ -49,7 +49,6 @@ type sumologicexporter struct {
 
 	compressorPool sync.Pool
 
-	filter              filter
 	prometheusFormatter prometheusFormatter
 	graphiteFormatter   graphiteFormatter
 
@@ -68,12 +67,6 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 		cfg.SourceName = translateConfigValue(cfg.SourceName)
 	}
 	sfs, err := newSourceFormats(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg.MetadataAttributes = addSourceMetadataFields(cfg.MetadataAttributes)
-	f, err := newFilter(cfg.MetadataAttributes)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +95,6 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 			},
 		},
 		// NOTE: client is now set in start()
-		filter:              f,
 		prometheusFormatter: pf,
 		graphiteFormatter:   gf,
 	}
@@ -115,40 +107,6 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 	)
 
 	return se, nil
-}
-
-// addSourceMetadataFields adds source related attribute names to the list of
-// metadata attributes.
-func addSourceMetadataFields(metadataAttributes []string) []string {
-	var (
-		sourceCategory bool
-		sourceHost     bool
-		sourceName     bool
-	)
-
-	for _, attr := range metadataAttributes {
-		switch attr {
-		case attributeKeySourceCategory:
-			sourceCategory = true
-		case attributeKeySourceHost:
-			sourceHost = true
-		case attributeKeySourceName:
-			sourceName = true
-		default:
-		}
-	}
-
-	if !sourceCategory {
-		metadataAttributes = append(metadataAttributes, attributeKeySourceCategory)
-	}
-	if !sourceHost {
-		metadataAttributes = append(metadataAttributes, attributeKeySourceHost)
-	}
-	if !sourceName {
-		metadataAttributes = append(metadataAttributes, attributeKeySourceName)
-	}
-
-	return metadataAttributes
 }
 
 func newLogsExporter(
@@ -235,7 +193,6 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		se.logger,
 		se.config,
 		se.getHTTPClient(),
-		se.filter,
 		se.sources,
 		compr,
 		se.prometheusFormatter,
@@ -323,7 +280,6 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		se.logger,
 		se.config,
 		se.getHTTPClient(),
-		se.filter,
 		se.sources,
 		compr,
 		se.prometheusFormatter,
@@ -438,7 +394,6 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces
 		se.logger,
 		se.config,
 		se.getHTTPClient(),
-		se.filter,
 		se.sources,
 		compr,
 		se.prometheusFormatter,

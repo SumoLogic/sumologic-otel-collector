@@ -125,7 +125,6 @@ type sender struct {
 	metricBuffer        []metricPair
 	config              *Config
 	client              *http.Client
-	filter              filter
 	sources             sourceFormats
 	compressor          compressor
 	prometheusFormatter prometheusFormatter
@@ -172,7 +171,6 @@ func newSender(
 	logger *zap.Logger,
 	cfg *Config,
 	cl *http.Client,
-	f filter,
 	s sourceFormats,
 	c compressor,
 	pf prometheusFormatter,
@@ -185,7 +183,6 @@ func newSender(
 		logger:              logger,
 		config:              cfg,
 		client:              cl,
-		filter:              f,
 		sources:             s,
 		compressor:          c,
 		prometheusFormatter: pf,

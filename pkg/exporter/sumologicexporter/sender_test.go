@@ -70,9 +70,6 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 		cfgOpt(cfg)
 	}
 
-	f, err := newFilter(cfg.MetadataAttributes)
-	require.NoError(t, err)
-
 	c, err := newCompressor(cfg.CompressEncoding)
 	require.NoError(t, err)
 
@@ -94,7 +91,6 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 			&http.Client{
 				Timeout: cfg.HTTPClientSettings.Timeout,
 			},
-			f,
 			sourceFormats{
 				host:     getTestSourceFormat(t, "source_host"),
 				category: getTestSourceFormat(t, "source_category"),
@@ -131,9 +127,6 @@ func prepareOTLPSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *h
 	cfg.CompressEncoding = NoCompression
 	cfg.HTTPClientSettings.Endpoint = testServer.URL
 
-	f, err := newFilter(cfg.MetadataAttributes)
-	require.NoError(t, err)
-
 	c, err := newCompressor(cfg.CompressEncoding)
 	require.NoError(t, err)
 
@@ -155,7 +148,6 @@ func prepareOTLPSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *h
 			&http.Client{
 				Timeout: cfg.HTTPClientSettings.Timeout,
 			},
-			f,
 			sourceFormats{
 				host:     getTestSourceFormat(t, "source_host"),
 				category: getTestSourceFormat(t, "source_category"),
