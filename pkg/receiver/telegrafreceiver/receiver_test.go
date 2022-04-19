@@ -26,7 +26,7 @@ import (
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/consumer/consumertest"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
@@ -48,7 +48,7 @@ type countingErrorConsumer struct {
 	CallCount int
 }
 
-func (er *countingErrorConsumer) ConsumeMetrics(context.Context, pdata.Metrics) error {
+func (er *countingErrorConsumer) ConsumeMetrics(context.Context, pmetric.Metrics) error {
 	er.CallCount++
 	return er.err
 }
@@ -87,7 +87,7 @@ func TestConsumeRetryOnRecoverableError(t *testing.T) {
 		consumeMaxRetries: uint64(maxRetries),
 	}
 
-	metrics := pdata.Metrics{}
+	metrics := pmetric.Metrics{}
 	err := receiver.consumeWithRetry(ctx, metrics)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, maxRetries+1, consumer.CallCount)
@@ -109,7 +109,7 @@ func TestConsumeNoRetryOnPermanentError(t *testing.T) {
 		consumeMaxRetries: 10,
 	}
 
-	metrics := pdata.Metrics{}
+	metrics := pmetric.Metrics{}
 	err := receiver.consumeWithRetry(ctx, metrics)
 	assert.Error(t, err)
 	assert.Equal(t, 1, consumer.CallCount)

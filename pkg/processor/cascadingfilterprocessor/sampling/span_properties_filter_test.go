@@ -23,7 +23,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
 )
 
@@ -54,7 +55,7 @@ func newSpanPropertiesFilter(t *testing.T, operationNamePattern *string, minDura
 func evaluate(t *testing.T, evaluator policyEvaluator, traces *TraceData, expectedDecision Decision) {
 	u, err := uuid.NewRandom()
 	require.NoError(t, err)
-	decision := evaluator.Evaluate(pdata.NewTraceID(u), traces)
+	decision := evaluator.Evaluate(pcommon.NewTraceID(u), traces)
 	assert.Equal(t, expectedDecision, decision)
 }
 
@@ -156,9 +157,9 @@ func newTraceAttrs(operationName string, duration time.Duration, numberOfSpans i
 	endTs := time.Now().UnixNano()
 	startTs := endTs - duration.Nanoseconds()
 
-	var traceBatches []pdata.Traces
+	var traceBatches []ptrace.Traces
 
-	traces := pdata.NewTraces()
+	traces := ptrace.NewTraces()
 	rs := traces.ResourceSpans().AppendEmpty()
 	ils := rs.InstrumentationLibrarySpans().AppendEmpty()
 
@@ -168,13 +169,13 @@ func newTraceAttrs(operationName string, duration time.Duration, numberOfSpans i
 	for i := 0; i < numberOfSpans; i++ {
 		span := spans.AppendEmpty()
 		span.SetName(operationName)
-		span.SetStartTimestamp(pdata.Timestamp(startTs))
-		span.SetEndTimestamp(pdata.Timestamp(endTs))
+		span.SetStartTimestamp(pcommon.Timestamp(startTs))
+		span.SetEndTimestamp(pcommon.Timestamp(endTs))
 	}
 
 	for i := 0; i < numberOfErrors && i < numberOfSpans; i++ {
 		span := spans.At(i)
-		span.Status().SetCode(pdata.StatusCodeError)
+		span.Status().SetCode(ptrace.StatusCodeError)
 	}
 
 	traceBatches = append(traceBatches, traces)

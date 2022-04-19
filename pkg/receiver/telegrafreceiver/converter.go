@@ -18,7 +18,7 @@ import (
 	"fmt"
 
 	"github.com/influxdata/telegraf"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.uber.org/zap"
 )
 
@@ -27,7 +27,7 @@ const (
 )
 
 type MetricConverter interface {
-	Convert(telegraf.Metric) (pdata.Metrics, error)
+	Convert(telegraf.Metric) (pmetric.Metrics, error)
 }
 
 type metricConverter struct {
@@ -42,9 +42,9 @@ func newConverter(separateField bool, logger *zap.Logger) MetricConverter {
 	}
 }
 
-// Convert converts telegraf.Metric to pdata.Metrics.
-func (mc metricConverter) Convert(m telegraf.Metric) (pdata.Metrics, error) {
-	ms := pdata.NewMetrics()
+// Convert converts telegraf.Metric to pmetric.Metrics.
+func (mc metricConverter) Convert(m telegraf.Metric) (pmetric.Metrics, error) {
+	ms := pmetric.NewMetrics()
 	rms := ms.ResourceMetrics()
 	rm := rms.AppendEmpty()
 
@@ -130,27 +130,27 @@ func (mc metricConverter) Convert(m telegraf.Metric) (pdata.Metrics, error) {
 		}
 
 	case telegraf.Summary:
-		return pdata.Metrics{}, fmt.Errorf("unsupported metric type: telegraf.Summary")
+		return pmetric.Metrics{}, fmt.Errorf("unsupported metric type: telegraf.Summary")
 	case telegraf.Histogram:
-		return pdata.Metrics{}, fmt.Errorf("unsupported metric type: telegraf.Histogram")
+		return pmetric.Metrics{}, fmt.Errorf("unsupported metric type: telegraf.Histogram")
 
 	default:
-		return pdata.Metrics{}, fmt.Errorf("unknown metric type: %T", t)
+		return pmetric.Metrics{}, fmt.Errorf("unknown metric type: %T", t)
 	}
 
 	return ms, nil
 }
 
-// convertToGauge returns a pdata.Metric gauge converted from telegraf metric,
+// convertToGauge returns a pmetric.Metric gauge converted from telegraf metric,
 // based on provided metric name, field and metric options which are passed
 // to metric constructors to manipulate the created metric in a functional manner.
-func (mc metricConverter) convertToGauge(name string, f *telegraf.Field, opts ...MetricOpt) (pdata.Metric, error) {
+func (mc metricConverter) convertToGauge(name string, f *telegraf.Field, opts ...MetricOpt) (pmetric.Metric, error) {
 	if mc.separateField {
 		opts = append(opts, WithField(f.Key))
 	}
 	opts = append(opts, WithName(mc.createMetricName(name, f.Key)))
 
-	var pm pdata.Metric
+	var pm pmetric.Metric
 	switch v := f.Value.(type) {
 	case float64:
 		pm = newDoubleGauge(v, opts...)
@@ -174,16 +174,16 @@ func (mc metricConverter) convertToGauge(name string, f *telegraf.Field, opts ..
 	return pm, nil
 }
 
-// convertToGauge returns a pdata.Metric sum converted from telegraf metric,
+// convertToGauge returns a pmetric.Metric sum converted from telegraf metric,
 // based on provided metric name, field and metric options which are passed
 // to metric constructors to manipulate the created metric in a functional manner.
-func (mc metricConverter) convertToSum(name string, f *telegraf.Field, opts ...MetricOpt) (pdata.Metric, error) {
+func (mc metricConverter) convertToSum(name string, f *telegraf.Field, opts ...MetricOpt) (pmetric.Metric, error) {
 	if mc.separateField {
 		opts = append(opts, WithField(f.Key))
 	}
 	opts = append(opts, WithName(mc.createMetricName(name, f.Key)))
 
-	var pm pdata.Metric
+	var pm pmetric.Metric
 	switch v := f.Value.(type) {
 	case float64:
 		pm = newDoubleSum(v, opts...)
@@ -222,14 +222,14 @@ func (mc metricConverter) createMetricName(name string, field string) string {
 func newDoubleSum(
 	value float64,
 	opts ...MetricOpt,
-) pdata.Metric {
-	pm := pdata.NewMetric()
-	pm.SetDataType(pdata.MetricDataTypeSum)
+) pmetric.Metric {
+	pm := pmetric.NewMetric()
+	pm.SetDataType(pmetric.MetricDataTypeSum)
 	// "[...] OTLP Sum is either translated into a Timeseries Counter, when
 	// the sum is monotonic, or a Gauge when the sum is not monotonic."
 	// https://github.com/open-telemetry/opentelemetry-specification/blob/7fc28733/specification/metrics/datamodel.md#opentelemetry-protocol-data-model
 	ds := pm.Sum()
-	ds.SetAggregationTemporality(pdata.MetricAggregationTemporalityCumulative)
+	ds.SetAggregationTemporality(pmetric.MetricAggregationTemporalityCumulative)
 	ds.SetIsMonotonic(true)
 	dps := ds.DataPoints()
 	dp := dps.AppendEmpty()
@@ -244,14 +244,14 @@ func newDoubleSum(
 func newIntSum(
 	value int64,
 	opts ...MetricOpt,
-) pdata.Metric {
-	pm := pdata.NewMetric()
-	pm.SetDataType(pdata.MetricDataTypeSum)
+) pmetric.Metric {
+	pm := pmetric.NewMetric()
+	pm.SetDataType(pmetric.MetricDataTypeSum)
 	// "[...] OTLP Sum is either translated into a Timeseries Counter, when
 	// the sum is monotonic, or a Gauge when the sum is not monotonic."
 	// https://github.com/open-telemetry/opentelemetry-specification/blob/7fc28733/specification/metrics/datamodel.md#opentelemetry-protocol-data-model
 	ds := pm.Sum()
-	ds.SetAggregationTemporality(pdata.MetricAggregationTemporalityCumulative)
+	ds.SetAggregationTemporality(pmetric.MetricAggregationTemporalityCumulative)
 	ds.SetIsMonotonic(true)
 	dps := ds.DataPoints()
 	dp := dps.AppendEmpty()
@@ -266,9 +266,9 @@ func newIntSum(
 func newDoubleGauge(
 	value float64,
 	opts ...MetricOpt,
-) pdata.Metric {
-	pm := pdata.NewMetric()
-	pm.SetDataType(pdata.MetricDataTypeGauge)
+) pmetric.Metric {
+	pm := pmetric.NewMetric()
+	pm.SetDataType(pmetric.MetricDataTypeGauge)
 	dps := pm.Gauge().DataPoints()
 	dp := dps.AppendEmpty()
 	dp.SetDoubleVal(value)
@@ -282,9 +282,9 @@ func newDoubleGauge(
 func newIntGauge(
 	value int64,
 	opts ...MetricOpt,
-) pdata.Metric {
-	pm := pdata.NewMetric()
-	pm.SetDataType(pdata.MetricDataTypeGauge)
+) pmetric.Metric {
+	pm := pmetric.NewMetric()
+	pm.SetDataType(pmetric.MetricDataTypeGauge)
 	dps := pm.Gauge().DataPoints()
 	dp := dps.AppendEmpty()
 	dp.SetIntVal(value)

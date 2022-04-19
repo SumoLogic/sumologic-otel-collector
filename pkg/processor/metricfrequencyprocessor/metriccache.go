@@ -5,11 +5,12 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 )
 
 type DataPoint struct {
-	Timestamp pdata.Timestamp
+	Timestamp pcommon.Timestamp
 	Value     float64
 }
 
@@ -38,7 +39,7 @@ func newMetricCache(config cacheConfig) *metricCache {
 	return c
 }
 
-func (mc *metricCache) Register(name string, dataPoint pdata.NumberDataPoint) {
+func (mc *metricCache) Register(name string, dataPoint pmetric.NumberDataPoint) {
 
 	internalCache, exists := mc.internalCaches[name]
 	if !exists {
@@ -52,8 +53,8 @@ func (mc *metricCache) Register(name string, dataPoint pdata.NumberDataPoint) {
 	internalCache.Set(key, value, cache.DefaultExpiration)
 }
 
-func (mc *metricCache) List(metricName string) map[pdata.Timestamp]float64 {
-	out := make(map[pdata.Timestamp]float64)
+func (mc *metricCache) List(metricName string) map[pcommon.Timestamp]float64 {
+	out := make(map[pcommon.Timestamp]float64)
 	internalCache, found := mc.internalCaches[metricName]
 	if found {
 		for _, item := range internalCache.Items() {

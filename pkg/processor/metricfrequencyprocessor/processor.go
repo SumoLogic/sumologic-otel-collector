@@ -3,7 +3,7 @@ package metricfrequencyprocessor
 import (
 	"context"
 
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/processor/processorhelper"
 )
 
@@ -14,7 +14,7 @@ type metricsfrequencyprocessor struct {
 var _ processorhelper.ProcessMetricsFunc = (*metricsfrequencyprocessor)(nil).ProcessMetrics
 
 // ProcessMetrics applies metricSieve to incoming metrics. It mutates the argument.
-func (mfp *metricsfrequencyprocessor) ProcessMetrics(_ context.Context, md pdata.Metrics) (pdata.Metrics, error) {
+func (mfp *metricsfrequencyprocessor) ProcessMetrics(_ context.Context, md pmetric.Metrics) (pmetric.Metrics, error) {
 	rms := md.ResourceMetrics()
 	for i := 0; i < rms.Len(); i++ {
 		rm := rms.At(i)
@@ -31,10 +31,10 @@ func (mfp *metricsfrequencyprocessor) ProcessMetrics(_ context.Context, md pdata
 	return md, nil
 }
 
-func metricSliceEmpty(metrics pdata.InstrumentationLibraryMetrics) bool {
+func metricSliceEmpty(metrics pmetric.ScopeMetrics) bool {
 	return metrics.Metrics().Len() == 0
 }
 
-func ilmSliceEmpty(metrics pdata.ResourceMetrics) bool {
+func ilmSliceEmpty(metrics pmetric.ResourceMetrics) bool {
 	return metrics.InstrumentationLibraryMetrics().Len() == 0
 }

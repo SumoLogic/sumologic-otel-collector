@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"strings"
 
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
 // sourceCategoryFiller adds source category attribute to a collection of attributes.
@@ -64,7 +64,7 @@ func extractTemplateAttributes(template string) []string {
 // - the source category container-level annotation (e.g. "k8s.pod.annotation.sumologic.com/container-name.sourceCategory"),
 // - the source category pod-level annotation (e.g. "k8s.pod.annotation.sumologic.com/sourceCategory"),
 // - the source category configured in the processor's "source_category" configuration option.
-func (f *sourceCategoryFiller) fill(attributes *pdata.AttributeMap) {
+func (f *sourceCategoryFiller) fill(attributes *pcommon.Map) {
 	containerSourceCategory := f.getSourceCategoryFromContainerAnnotation(attributes)
 	if containerSourceCategory != "" {
 		attributes.UpsertString(sourceCategoryKey, containerSourceCategory)
@@ -96,7 +96,7 @@ func (f *sourceCategoryFiller) fill(attributes *pdata.AttributeMap) {
 	attributes.UpsertString(sourceCategoryKey, sourceCategoryValue)
 }
 
-func (f *sourceCategoryFiller) getSourceCategoryFromContainerAnnotation(attributes *pdata.AttributeMap) string {
+func (f *sourceCategoryFiller) getSourceCategoryFromContainerAnnotation(attributes *pcommon.Map) string {
 	if !f.containerAnnotationsEnabled {
 		return ""
 	}
@@ -116,7 +116,7 @@ func (f *sourceCategoryFiller) getSourceCategoryFromContainerAnnotation(attribut
 	return ""
 }
 
-func (f *sourceCategoryFiller) replaceTemplateAttributes(template string, templateAttributes []string, attributes *pdata.AttributeMap) string {
+func (f *sourceCategoryFiller) replaceTemplateAttributes(template string, templateAttributes []string, attributes *pcommon.Map) string {
 	replacerArgs := make([]string, len(templateAttributes)*2)
 	for i, templateAttribute := range templateAttributes {
 		attributeValue, found := attributes.Get(templateAttribute)
@@ -133,7 +133,7 @@ func (f *sourceCategoryFiller) replaceTemplateAttributes(template string, templa
 	return strings.NewReplacer(replacerArgs...).Replace(template)
 }
 
-func getAnnotationAttributeValue(annotationAttributePrefix string, annotation string, attributes *pdata.AttributeMap) string {
+func getAnnotationAttributeValue(annotationAttributePrefix string, annotation string, attributes *pcommon.Map) string {
 	annotationAttribute, found := attributes.Get(annotationAttributePrefix + annotation)
 	if found {
 		return annotationAttribute.StringVal()

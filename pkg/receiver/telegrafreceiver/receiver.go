@@ -26,7 +26,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/consumer/consumererror"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.uber.org/zap"
 )
 
@@ -89,10 +89,10 @@ func (r *telegrafreceiver) Start(ctx context.Context, host component.Host) error
 					continue
 				}
 
-				var ms pdata.Metrics
+				var ms pmetric.Metrics
 				if ms, fErr = r.metricConverter.Convert(m); fErr != nil {
 					r.logger.Error(
-						"Error converting telegraf.Metric to pdata.Metrics",
+						"Error converting telegraf.Metric to pmetric.Metrics",
 						zap.Error(fErr),
 					)
 					continue
@@ -111,7 +111,7 @@ func (r *telegrafreceiver) Start(ctx context.Context, host component.Host) error
 }
 
 // Consume metrics and retry on recoverable errors
-func (r *telegrafreceiver) consumeWithRetry(ctx context.Context, metrics pdata.Metrics) error {
+func (r *telegrafreceiver) consumeWithRetry(ctx context.Context, metrics pmetric.Metrics) error {
 	constantBackoff := backoff.WithMaxRetries(backoff.NewConstantBackOff(r.consumeRetryDelay), r.consumeMaxRetries)
 
 	// retry handling according to https://github.com/open-telemetry/opentelemetry-collector/blob/master/component/receiver.go#L45

@@ -26,7 +26,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer/consumertest"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/bigendianconverter"
@@ -90,13 +91,13 @@ func TestConcurrentTraceArrival(t *testing.T) {
 	for _, batch := range batches {
 		// Add the same traceId twice.
 		wg.Add(2)
-		go func(td pdata.Traces) {
+		go func(td ptrace.Traces) {
 			if err := tsp.ConsumeTraces(context.Background(), td); err != nil {
 				t.Errorf("Failed consuming traces: %v", err)
 			}
 			wg.Done()
 		}(batch)
-		go func(td pdata.Traces) {
+		go func(td ptrace.Traces) {
 			if err := tsp.ConsumeTraces(context.Background(), td); err != nil {
 				t.Errorf("Failed consuming traces: %v", err)
 			}
@@ -160,7 +161,7 @@ func TestConcurrentTraceMapSize(t *testing.T) {
 	tsp := sp.(*cascadingFilterSpanProcessor)
 	for _, batch := range batches {
 		wg.Add(1)
-		go func(td pdata.Traces) {
+		go func(td ptrace.Traces) {
 			if err := tsp.ConsumeTraces(context.Background(), td); err != nil {
 				t.Errorf("Failed consuming traces: %v", err)
 			}
@@ -527,15 +528,15 @@ func TestMultipleBatchesAreCombinedIntoOne(t *testing.T) {
 
 	require.EqualValues(t, 3, len(msp.AllTraces()), "There should be three batches, one for each trace")
 
-	expectedSpanIds := make(map[int][]pdata.SpanID)
-	expectedSpanIds[0] = []pdata.SpanID{
+	expectedSpanIds := make(map[int][]pcommon.SpanID)
+	expectedSpanIds[0] = []pcommon.SpanID{
 		bigendianconverter.UInt64ToSpanID(uint64(1)),
 	}
-	expectedSpanIds[1] = []pdata.SpanID{
+	expectedSpanIds[1] = []pcommon.SpanID{
 		bigendianconverter.UInt64ToSpanID(uint64(2)),
 		bigendianconverter.UInt64ToSpanID(uint64(3)),
 	}
-	expectedSpanIds[2] = []pdata.SpanID{
+	expectedSpanIds[2] = []pcommon.SpanID{
 		bigendianconverter.UInt64ToSpanID(uint64(4)),
 		bigendianconverter.UInt64ToSpanID(uint64(5)),
 		bigendianconverter.UInt64ToSpanID(uint64(6)),
@@ -562,8 +563,8 @@ func TestMultipleBatchesAreCombinedIntoOne(t *testing.T) {
 }
 
 //nolint:unused
-func collectSpanIds(trace *pdata.Traces) []pdata.SpanID {
-	spanIDs := make([]pdata.SpanID, 0)
+func collectSpanIds(trace *ptrace.Traces) []pcommon.SpanID {
+	spanIDs := make([]pcommon.SpanID, 0)
 
 	for i := 0; i < trace.ResourceSpans().Len(); i++ {
 		ilss := trace.ResourceSpans().At(i).InstrumentationLibrarySpans()
@@ -582,7 +583,7 @@ func collectSpanIds(trace *pdata.Traces) []pdata.SpanID {
 }
 
 //nolint:unused
-func findTrace(a []pdata.Traces, traceID pdata.TraceID) *pdata.Traces {
+func findTrace(a []ptrace.Traces, traceID pcommon.TraceID) *ptrace.Traces {
 	for _, batch := range a {
 		id := batch.ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(0).TraceID()
 		if traceID.Bytes() == id.Bytes() {
@@ -592,10 +593,10 @@ func findTrace(a []pdata.Traces, traceID pdata.TraceID) *pdata.Traces {
 	return nil
 }
 
-func generateIdsAndBatches(numIds int) ([]pdata.TraceID, []pdata.Traces) {
-	traceIds := make([]pdata.TraceID, numIds)
+func generateIdsAndBatches(numIds int) ([]pcommon.TraceID, []ptrace.Traces) {
+	traceIds := make([]pcommon.TraceID, numIds)
 	spanID := 0
-	var tds []pdata.Traces
+	var tds []ptrace.Traces
 	for i := 0; i < numIds; i++ {
 		traceIds[i] = bigendianconverter.UInt64ToTraceID(1, uint64(i+1))
 		// Send each span in a separate batch
@@ -614,13 +615,13 @@ func generateIdsAndBatches(numIds int) ([]pdata.TraceID, []pdata.Traces) {
 }
 
 //nolint:unused
-func simpleTraces() pdata.Traces {
-	return simpleTracesWithID(pdata.NewTraceID([16]byte{1, 2, 3, 4}))
+func simpleTraces() ptrace.Traces {
+	return simpleTracesWithID(pcommon.NewTraceID([16]byte{1, 2, 3, 4}))
 }
 
 //nolint:unused
-func simpleTracesWithID(traceID pdata.TraceID) pdata.Traces {
-	traces := pdata.NewTraces()
+func simpleTracesWithID(traceID pcommon.TraceID) ptrace.Traces {
+	traces := ptrace.NewTraces()
 	rs := traces.ResourceSpans().AppendEmpty()
 
 	ils := rs.InstrumentationLibrarySpans().AppendEmpty()
@@ -642,12 +643,12 @@ type mockDropEvaluator struct{}
 var _ sampling.PolicyEvaluator = (*mockPolicyEvaluator)(nil)
 var _ sampling.DropTraceEvaluator = (*mockDropEvaluator)(nil)
 
-func (m *mockPolicyEvaluator) Evaluate(_ pdata.TraceID, _ *sampling.TraceData) sampling.Decision {
+func (m *mockPolicyEvaluator) Evaluate(_ pcommon.TraceID, _ *sampling.TraceData) sampling.Decision {
 	m.EvaluationCount++
 	return m.NextDecision
 }
 
-func (d *mockDropEvaluator) ShouldDrop(_ pdata.TraceID, _ *sampling.TraceData) bool {
+func (d *mockDropEvaluator) ShouldDrop(_ pcommon.TraceID, _ *sampling.TraceData) bool {
 	return true
 }
 
@@ -685,7 +686,7 @@ func newSyncIDBatcher(numBatches uint64) idbatcher.Batcher {
 	}
 }
 
-func (s *syncIDBatcher) AddToCurrentBatch(id pdata.TraceID) {
+func (s *syncIDBatcher) AddToCurrentBatch(id pcommon.TraceID) {
 	s.Lock()
 	s.openBatch = append(s.openBatch, id)
 	s.Unlock()

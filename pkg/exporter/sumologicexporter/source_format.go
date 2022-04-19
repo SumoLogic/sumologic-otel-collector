@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
 type sourceFormats struct {
@@ -79,11 +79,11 @@ func (s *sourceFormat) format(f fields) string {
 }
 
 // formatPdataMap converts sourceFormat to string.
-// Takes pdata.Map attributes and puts them into template (%s placeholders)
+// Takes pcommon.Map attributes and puts them into template (%s placeholders)
 // in order defined by matches.
 //
 // The provided attribute map has to be initialized before calling this func.
-func (s *sourceFormat) formatPdataMap(m pdata.Map) string {
+func (s *sourceFormat) formatPdataMap(m pcommon.Map) string {
 	labels := make([]interface{}, 0, len(s.matches))
 
 	for _, matchset := range s.matches {

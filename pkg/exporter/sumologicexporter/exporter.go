@@ -25,7 +25,10 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
@@ -181,7 +184,7 @@ func newTracesExporter(
 // pushLogsData groups data with common metadata and sends them as separate batched requests.
 // It returns the number of unsent logs and an error which contains a list of dropped records
 // so they can be handled by OTC retry mechanism
-func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) error {
+func (se *sumologicexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
 	compr, err := se.getCompressor()
 	if err != nil {
 		return consumererror.NewLogs(err, ld)
@@ -212,8 +215,8 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 	}
 
 	type droppedResourceRecords struct {
-		resource pdata.Resource
-		records  []pdata.LogRecord
+		resource pcommon.Resource
+		records  []plog.LogRecord
 	}
 	var (
 		errs    []error
@@ -241,7 +244,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 	}
 
 	if len(dropped) > 0 {
-		ld = pdata.NewLogs()
+		ld = plog.NewLogs()
 
 		// Move all dropped records to Logs
 		// NOTE: we only copy resource and log records here.
@@ -268,7 +271,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 // pushMetricsData groups data with common metadata and send them as separate batched requests
 // it returns number of unsent metrics and error which contains list of dropped records
 // so they can be handle by the OTC retry mechanism
-func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metrics) error {
+func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pmetric.Metrics) error {
 	compr, err := se.getCompressor()
 	if err != nil {
 		return consumererror.NewMetrics(err, md)
@@ -299,8 +302,8 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 	}
 
 	type droppedResourceMetrics struct {
-		resource pdata.Resource
-		metrics  []pdata.Metric
+		resource pcommon.Resource
+		metrics  []pmetric.Metric
 	}
 	var (
 		errs    []error
@@ -340,7 +343,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 	}
 
 	if len(dropped) > 0 {
-		md = pdata.NewMetrics()
+		md = pmetric.NewMetrics()
 
 		// Move all dropped records to Metrics
 		// NOTE: we only copy resource and metrics here.
@@ -382,7 +385,7 @@ func (se *sumologicexporter) handleUnauthorizedErrors(ctx context.Context, errs 
 	}
 }
 
-func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces) error {
+func (se *sumologicexporter) pushTracesData(ctx context.Context, td ptrace.Traces) error {
 	compr, err := se.getCompressor()
 	if err != nil {
 		return consumererror.NewTraces(err, td)
@@ -526,6 +529,6 @@ func (se *sumologicexporter) shutdown(context.Context) error {
 	return nil
 }
 
-func (se *sumologicexporter) dropRoutingAttribute(attr pdata.AttributeMap) {
+func (se *sumologicexporter) dropRoutingAttribute(attr pcommon.Map) {
 	attr.Delete(se.config.DropRoutingAttribute)
 }

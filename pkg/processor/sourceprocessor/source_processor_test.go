@@ -20,7 +20,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
 func createConfig() *Config {
@@ -77,8 +79,8 @@ var (
 	}
 )
 
-func newLogsDataWithLogs(resourceAttrs map[string]string, logAttrs map[string]string) pdata.Logs {
-	ld := pdata.NewLogs()
+func newLogsDataWithLogs(resourceAttrs map[string]string, logAttrs map[string]string) plog.Logs {
+	ld := plog.NewLogs()
 	rs := ld.ResourceLogs().AppendEmpty()
 	attrs := rs.Resource().Attributes()
 	for k, v := range resourceAttrs {
@@ -95,8 +97,8 @@ func newLogsDataWithLogs(resourceAttrs map[string]string, logAttrs map[string]st
 	return ld
 }
 
-func newTraceData(labels map[string]string) pdata.Traces {
-	td := pdata.NewTraces()
+func newTraceData(labels map[string]string) ptrace.Traces {
+	td := ptrace.NewTraces()
 	rs := td.ResourceSpans().AppendEmpty()
 	attrs := rs.Resource().Attributes()
 	for k, v := range labels {
@@ -105,7 +107,7 @@ func newTraceData(labels map[string]string) pdata.Traces {
 	return td
 }
 
-func newTraceDataWithSpans(_resourceLabels map[string]string, _spanLabels map[string]string) pdata.Traces {
+func newTraceDataWithSpans(_resourceLabels map[string]string, _spanLabels map[string]string) ptrace.Traces {
 	// This will be very small attribute set, the actual data will be at span level
 	td := newTraceData(_resourceLabels)
 	ils := td.ResourceSpans().At(0).InstrumentationLibrarySpans().AppendEmpty()
@@ -118,7 +120,7 @@ func newTraceDataWithSpans(_resourceLabels map[string]string, _spanLabels map[st
 	return td
 }
 
-func prepareAttributesForAssert(t pdata.Traces) {
+func prepareAttributesForAssert(t ptrace.Traces) {
 	for i := 0; i < t.ResourceSpans().Len(); i++ {
 		rss := t.ResourceSpans().At(i)
 		rss.Resource().Attributes().Sort()
@@ -131,13 +133,13 @@ func prepareAttributesForAssert(t pdata.Traces) {
 	}
 }
 
-func assertTracesEqual(t *testing.T, t1 pdata.Traces, t2 pdata.Traces) {
+func assertTracesEqual(t *testing.T, t1 ptrace.Traces, t2 ptrace.Traces) {
 	prepareAttributesForAssert(t1)
 	prepareAttributesForAssert(t2)
 	assert.Equal(t, t1, t2)
 }
 
-func assertSpansEqual(t *testing.T, t1 pdata.Traces, t2 pdata.Traces) {
+func assertSpansEqual(t *testing.T, t1 ptrace.Traces, t2 ptrace.Traces) {
 	prepareAttributesForAssert(t1)
 	prepareAttributesForAssert(t2)
 	assert.Equal(t, t1.ResourceSpans().Len(), t2.ResourceSpans().Len())
@@ -187,7 +189,7 @@ func TestLogsSourceHostKey(t *testing.T) {
 		out, err := sp.ProcessLogs(context.Background(), pLogs)
 		require.NoError(t, err)
 
-		out.ResourceLogs().At(0).Resource().Attributes().Range(func(k string, v pdata.AttributeValue) bool {
+		out.ResourceLogs().At(0).Resource().Attributes().Range(func(k string, v pcommon.Value) bool {
 			t.Logf("k %s : v %v\n", k, v.StringVal())
 			return true
 		})
@@ -219,7 +221,7 @@ func TestLogsSourceHostKey(t *testing.T) {
 		out, err := sp.ProcessLogs(context.Background(), pLogs)
 		require.NoError(t, err)
 
-		out.ResourceLogs().At(0).Resource().Attributes().Range(func(k string, v pdata.AttributeValue) bool {
+		out.ResourceLogs().At(0).Resource().Attributes().Range(func(k string, v pcommon.Value) bool {
 			t.Logf("k %s : v %v\n", k, v.StringVal())
 			return true
 		})
@@ -259,7 +261,7 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 	testcases := []struct {
 		name string
 		cfg  *Config
-		want pdata.Traces
+		want ptrace.Traces
 	}{
 		{
 			name: "pod exclude regex",
@@ -270,10 +272,10 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 				}
 				return cfg
 			}(),
-			want: func() pdata.Traces {
+			want: func() ptrace.Traces {
 				want := newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
 				want.ResourceSpans().At(0).InstrumentationLibrarySpans().
-					RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
+					RemoveIf(func(ptrace.ScopeSpans) bool { return true })
 				return want
 			}(),
 		},
@@ -286,10 +288,10 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 				}
 				return cfg
 			}(),
-			want: func() pdata.Traces {
+			want: func() ptrace.Traces {
 				want := newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
 				want.ResourceSpans().At(0).InstrumentationLibrarySpans().
-					RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
+					RemoveIf(func(ptrace.ScopeSpans) bool { return true })
 				return want
 			}(),
 		},
@@ -302,10 +304,10 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 				}
 				return cfg
 			}(),
-			want: func() pdata.Traces {
+			want: func() ptrace.Traces {
 				want := newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
 				want.ResourceSpans().At(0).InstrumentationLibrarySpans().
-					RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
+					RemoveIf(func(ptrace.ScopeSpans) bool { return true })
 				return want
 			}(),
 		},
@@ -314,7 +316,7 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 			cfg: func() *Config {
 				return createConfig()
 			}(),
-			want: func() pdata.Traces {
+			want: func() ptrace.Traces {
 				return newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
 			}(),
 		},
@@ -341,7 +343,7 @@ func TestTraceSourceFilteringOutByExclude(t *testing.T) {
 
 	want := newTraceDataWithSpans(limitedLabelsWithMeta, mergedK8sLabels)
 	want.ResourceSpans().At(0).InstrumentationLibrarySpans().
-		RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
+		RemoveIf(func(ptrace.ScopeSpans) bool { return true })
 
 	rtp := newSourceProcessor(cfg)
 
@@ -505,7 +507,7 @@ func TestSourceCategoryTemplateWithCustomAttribute(t *testing.T) {
 	})
 }
 
-func assertAttribute(t *testing.T, attributes pdata.AttributeMap, attributeName string, expectedValue string) {
+func assertAttribute(t *testing.T, attributes pcommon.Map, attributeName string, expectedValue string) {
 	value, exists := attributes.Get(attributeName)
 
 	if expectedValue == "" {
@@ -525,7 +527,7 @@ func TestLogProcessorJson(t *testing.T) {
 		body               string
 		expectedBody       string
 		expectedAttributes map[string]string
-		testLogs           pdata.Logs
+		testLogs           plog.Logs
 	}{
 		{
 			name:         "dockerFormat",
@@ -571,7 +573,7 @@ func TestLogProcessorJson(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			inputLog := pdata.NewLogs()
+			inputLog := plog.NewLogs()
 			inputLog.
 				ResourceLogs().
 				AppendEmpty().

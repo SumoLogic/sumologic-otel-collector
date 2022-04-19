@@ -19,7 +19,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 )
 
 func TestSanitizeKey(t *testing.T) {
@@ -48,7 +49,7 @@ func TestTags2StringNoLabels(t *testing.T) {
 
 	_, attributes := exampleIntMetric()
 	attributes.Clear()
-	assert.Equal(t, prometheusTags(""), f.tags2String(attributes, pdata.NewAttributeMap()))
+	assert.Equal(t, prometheusTags(""), f.tags2String(attributes, pcommon.NewMap()))
 }
 
 func TestTags2String(t *testing.T) {
@@ -59,7 +60,7 @@ func TestTags2String(t *testing.T) {
 	assert.Equal(
 		t,
 		prometheusTags(`{test="test_value",test2="second_value"}`),
-		f.tags2String(attributes, pdata.NewAttributeMap()),
+		f.tags2String(attributes, pcommon.NewMap()),
 	)
 }
 
@@ -69,7 +70,7 @@ func TestTags2StringNoAttributes(t *testing.T) {
 
 	_, attributes := exampleIntMetric()
 	attributes.Clear()
-	assert.Equal(t, prometheusTags(""), f.tags2String(pdata.NewAttributeMap(), pdata.NewAttributeMap()))
+	assert.Equal(t, prometheusTags(""), f.tags2String(pcommon.NewMap(), pcommon.NewMap()))
 }
 
 func TestPrometheusMetricDataTypeIntGauge(t *testing.T) {
@@ -159,7 +160,7 @@ histogram_metric_double_test_count{bar="foo",container="sit",branch="main"} 98 1
 func TestPrometheusMetrics(t *testing.T) {
 	type testCase struct {
 		name       string
-		metricFunc func(fillData bool) (pdata.Metric, pdata.Map)
+		metricFunc func(fillData bool) (pmetric.Metric, pcommon.Map)
 		expected   string
 	}
 

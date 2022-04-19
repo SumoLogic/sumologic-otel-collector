@@ -22,7 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/config"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
 
 	cfconfig "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
@@ -91,19 +92,19 @@ var cfgAutoRate = cfconfig.Config{
 	},
 }
 
-func fillSpan(span *pdata.Span, durationMicros int64) {
+func fillSpan(span *ptrace.Span, durationMicros int64) {
 	nowTs := time.Now().UnixNano()
 	startTime := nowTs - durationMicros*1000
 
 	span.Attributes().InsertInt("foo", 55)
-	span.SetStartTimestamp(pdata.Timestamp(startTime))
-	span.SetEndTimestamp(pdata.Timestamp(nowTs))
+	span.SetStartTimestamp(pcommon.Timestamp(startTime))
+	span.SetEndTimestamp(pcommon.Timestamp(nowTs))
 }
 
 func createTrace(fsp *cascadingFilterSpanProcessor, numSpans int, durationMicros int64) *sampling.TraceData {
-	var traceBatches []pdata.Traces
+	var traceBatches []ptrace.Traces
 
-	traces := pdata.NewTraces()
+	traces := ptrace.NewTraces()
 	rs := traces.ResourceSpans().AppendEmpty()
 	ils := rs.InstrumentationLibrarySpans().AppendEmpty()
 
@@ -141,25 +142,25 @@ func createCascadingEvaluatorWithConfig(t *testing.T, conf cfconfig.Config) *cas
 func TestSampling(t *testing.T) {
 	cascading := createCascadingEvaluator(t)
 
-	decision, policy := cascading.makeProvisionalDecision(pdata.NewTraceID([16]byte{0}), createTrace(cascading, 8, 1000000))
+	decision, policy := cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{0}), createTrace(cascading, 8, 1000000))
 	require.NotNil(t, policy)
 	require.Equal(t, sampling.Sampled, decision)
 
-	decision, _ = cascading.makeProvisionalDecision(pdata.NewTraceID([16]byte{1}), createTrace(cascading, 1000, 1000))
+	decision, _ = cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{1}), createTrace(cascading, 1000, 1000))
 	require.Equal(t, sampling.SecondChance, decision)
 }
 
 func TestSecondChanceEvaluation(t *testing.T) {
 	cascading := createCascadingEvaluator(t)
 
-	decision, _ := cascading.makeProvisionalDecision(pdata.NewTraceID([16]byte{0}), createTrace(cascading, 8, 1000))
+	decision, _ := cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{0}), createTrace(cascading, 8, 1000))
 	require.Equal(t, sampling.SecondChance, decision)
 
-	decision, _ = cascading.makeProvisionalDecision(pdata.NewTraceID([16]byte{1}), createTrace(cascading, 8, 1000))
+	decision, _ = cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{1}), createTrace(cascading, 8, 1000))
 	require.Equal(t, sampling.SecondChance, decision)
 
 	// TODO: This could me optimized to make a decision within cascadingfilter processor, as such span would never fit anyway
-	//decision, _ = cascading.makeProvisionalDecision(pdata.NewTraceID([16]byte{1}), createTrace(8000, 1000), metrics)
+	//decision, _ = cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{1}), createTrace(8000, 1000), metrics)
 	//require.Equal(t, sampling.NotSampled, decision)
 }
 
@@ -169,12 +170,12 @@ func TestProbabilisticFilter(t *testing.T) {
 	cascading := createCascadingEvaluator(t)
 
 	trace1 := createTrace(cascading, 8, 1000000)
-	decision, _ := cascading.makeProvisionalDecision(pdata.NewTraceID([16]byte{0}), trace1)
+	decision, _ := cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{0}), trace1)
 	require.Equal(t, sampling.Sampled, decision)
 	require.True(t, trace1.SelectedByProbabilisticFilter)
 
 	trace2 := createTrace(cascading, 800, 1000000)
-	decision, _ = cascading.makeProvisionalDecision(pdata.NewTraceID([16]byte{1}), trace2)
+	decision, _ = cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{1}), trace2)
 	require.Equal(t, sampling.SecondChance, decision)
 	require.False(t, trace2.SelectedByProbabilisticFilter)
 
@@ -188,8 +189,8 @@ func TestDropTraces(t *testing.T) {
 	trace1 := createTrace(cascading, 8, 1000000)
 	trace2 := createTrace(cascading, 8, 1000000)
 	trace2.ReceivedBatches[0].ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(2).SetName("health-check")
-	require.False(t, cascading.shouldBeDropped(pdata.NewTraceID([16]byte{0}), trace1))
-	require.True(t, cascading.shouldBeDropped(pdata.NewTraceID([16]byte{0}), trace2))
+	require.False(t, cascading.shouldBeDropped(pcommon.NewTraceID([16]byte{0}), trace1))
+	require.True(t, cascading.shouldBeDropped(pcommon.NewTraceID([16]byte{0}), trace2))
 }
 
 func TestDropTracesAndNotLimitOthers(t *testing.T) {
@@ -200,20 +201,20 @@ func TestDropTracesAndNotLimitOthers(t *testing.T) {
 	trace2.ReceivedBatches[0].ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(2).SetName("health-check")
 	trace3 := createTrace(cascading, 5000, 1000000)
 
-	decision, policy := cascading.makeProvisionalDecision(pdata.NewTraceID([16]byte{0}), trace1)
+	decision, policy := cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{0}), trace1)
 	require.Nil(t, policy)
 	require.Equal(t, sampling.Sampled, decision)
-	require.False(t, cascading.shouldBeDropped(pdata.NewTraceID([16]byte{0}), trace1))
+	require.False(t, cascading.shouldBeDropped(pcommon.NewTraceID([16]byte{0}), trace1))
 
-	decision, policy = cascading.makeProvisionalDecision(pdata.NewTraceID([16]byte{1}), trace2)
+	decision, policy = cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{1}), trace2)
 	require.Nil(t, policy)
 	require.Equal(t, sampling.Sampled, decision)
-	require.True(t, cascading.shouldBeDropped(pdata.NewTraceID([16]byte{1}), trace2))
+	require.True(t, cascading.shouldBeDropped(pcommon.NewTraceID([16]byte{1}), trace2))
 
-	decision, policy = cascading.makeProvisionalDecision(pdata.NewTraceID([16]byte{2}), trace3)
+	decision, policy = cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{2}), trace3)
 	require.Nil(t, policy)
 	require.Equal(t, sampling.Sampled, decision)
-	require.False(t, cascading.shouldBeDropped(pdata.NewTraceID([16]byte{2}), trace3))
+	require.False(t, cascading.shouldBeDropped(pcommon.NewTraceID([16]byte{2}), trace3))
 }
 
 func TestDropTracesAndAutoRateOthers(t *testing.T) {
@@ -224,33 +225,33 @@ func TestDropTracesAndAutoRateOthers(t *testing.T) {
 	trace2.ReceivedBatches[0].ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(2).SetName("health-check")
 	trace3 := createTrace(cascading, 20, 1000000)
 
-	decision, policy := cascading.makeProvisionalDecision(pdata.NewTraceID([16]byte{0}), trace1)
+	decision, policy := cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{0}), trace1)
 	require.NotNil(t, policy)
 	require.Equal(t, sampling.Sampled, decision)
-	require.False(t, cascading.shouldBeDropped(pdata.NewTraceID([16]byte{0}), trace1))
+	require.False(t, cascading.shouldBeDropped(pcommon.NewTraceID([16]byte{0}), trace1))
 
-	decision, policy = cascading.makeProvisionalDecision(pdata.NewTraceID([16]byte{1}), trace2)
+	decision, policy = cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{1}), trace2)
 	require.NotNil(t, policy)
 	require.Equal(t, sampling.Sampled, decision)
-	require.True(t, cascading.shouldBeDropped(pdata.NewTraceID([16]byte{1}), trace2))
+	require.True(t, cascading.shouldBeDropped(pcommon.NewTraceID([16]byte{1}), trace2))
 
-	decision, policy = cascading.makeProvisionalDecision(pdata.NewTraceID([16]byte{2}), trace3)
+	decision, policy = cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{2}), trace3)
 	require.Nil(t, policy)
 	require.Equal(t, sampling.NotSampled, decision)
-	require.False(t, cascading.shouldBeDropped(pdata.NewTraceID([16]byte{2}), trace3))
+	require.False(t, cascading.shouldBeDropped(pcommon.NewTraceID([16]byte{2}), trace3))
 }
 
 //func TestSecondChanceReevaluation(t *testing.T) {
 //	cascading := createCascadingEvaluator()
 //
-//	decision, _ := cascading.makeProvisionalDecision(pdata.NewTraceID([16]byte{1}), createTrace(100, 1000), metrics)
+//	decision, _ := cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{1}), createTrace(100, 1000), metrics)
 //	require.Equal(t, sampling.Sampled, decision)
 //
 //	// Too much
-//	decision, _ = cascading.makeProvisionalDecision(pdata.NewTraceID([16]byte{1}), createTrace(1000, 1000), metrics)
+//	decision, _ = cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{1}), createTrace(1000, 1000), metrics)
 //	require.Equal(t, sampling.NotSampled, decision)
 //
 //	// Just right
-//	decision, _ = cascading.makeProvisionalDecision(pdata.NewTraceID([16]byte{1}), createTrace(900, 1000), metrics)
+//	decision, _ = cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{1}), createTrace(900, 1000), metrics)
 //	require.Equal(t, sampling.Sampled, decision)
 //}

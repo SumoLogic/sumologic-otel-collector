@@ -18,7 +18,9 @@ import (
 	"context"
 
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
 )
 
@@ -54,7 +56,7 @@ func (processor *sumologicSchemaProcessor) shutdown(_ context.Context) error {
 	return nil
 }
 
-func (processor *sumologicSchemaProcessor) processLogs(_ context.Context, logs pdata.Logs) (pdata.Logs, error) {
+func (processor *sumologicSchemaProcessor) processLogs(_ context.Context, logs plog.Logs) (plog.Logs, error) {
 	logs, err := processor.cloudNamespaceProcessor.processLogs(logs)
 	if err != nil {
 		return logs, err
@@ -63,7 +65,7 @@ func (processor *sumologicSchemaProcessor) processLogs(_ context.Context, logs p
 	return logs, nil
 }
 
-func (processor *sumologicSchemaProcessor) processMetrics(ctx context.Context, metrics pdata.Metrics) (pdata.Metrics, error) {
+func (processor *sumologicSchemaProcessor) processMetrics(ctx context.Context, metrics pmetric.Metrics) (pmetric.Metrics, error) {
 	metrics, err := processor.cloudNamespaceProcessor.processMetrics(metrics)
 	if err != nil {
 		return metrics, err
@@ -72,7 +74,7 @@ func (processor *sumologicSchemaProcessor) processMetrics(ctx context.Context, m
 	return metrics, nil
 }
 
-func (processor *sumologicSchemaProcessor) processTraces(ctx context.Context, traces pdata.Traces) (pdata.Traces, error) {
+func (processor *sumologicSchemaProcessor) processTraces(ctx context.Context, traces ptrace.Traces) (ptrace.Traces, error) {
 	traces, err := processor.cloudNamespaceProcessor.processTraces(traces)
 	if err != nil {
 		return traces, err

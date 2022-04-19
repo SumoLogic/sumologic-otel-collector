@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 )
 
 func TestAccumulate(t *testing.T) {
@@ -23,7 +24,7 @@ func TestAccumulate(t *testing.T) {
 
 func TestIsConstant(t *testing.T) {
 	type testCase struct {
-		dataPoint     pdata.NumberDataPoint
+		dataPoint     pmetric.NumberDataPoint
 		values        map[int64]float64
 		expectedValue bool
 	}
@@ -207,19 +208,19 @@ func TestVariation(t *testing.T) {
 	}
 }
 
-func unixPointsToPdata(points map[int64]float64) map[pdata.Timestamp]float64 {
-	out := make(map[pdata.Timestamp]float64)
+func unixPointsToPdata(points map[int64]float64) map[pcommon.Timestamp]float64 {
+	out := make(map[pcommon.Timestamp]float64)
 	for unix, value := range points {
-		timestamp := pdata.NewTimestampFromTime(time.Unix(unix, 0))
+		timestamp := pcommon.NewTimestampFromTime(time.Unix(unix, 0))
 		out[timestamp] = value
 	}
 
 	return out
 }
 
-func createDataPoint(timestamp time.Time, value float64) pdata.NumberDataPoint {
-	pdataTimestamp := pdata.NewTimestampFromTime(timestamp)
-	out := pdata.NewNumberDataPoint()
+func createDataPoint(timestamp time.Time, value float64) pmetric.NumberDataPoint {
+	pdataTimestamp := pcommon.NewTimestampFromTime(timestamp)
+	out := pmetric.NewNumberDataPoint()
 	out.SetTimestamp(pdataTimestamp)
 	out.SetDoubleVal(value)
 	return out
@@ -229,10 +230,10 @@ func setupHistory(sieve metricSieve, dataPoints map[time.Time]float64) {
 	sieve.Sift(dataPointsToMetric(dataPoints))
 }
 
-func dataPointsToMetric(dataPoints map[time.Time]float64) pdata.Metric {
-	out := pdata.NewMetric()
+func dataPointsToMetric(dataPoints map[time.Time]float64) pmetric.Metric {
+	out := pmetric.NewMetric()
 	out.SetName("test")
-	out.SetDataType(pdata.MetricDataTypeGauge)
+	out.SetDataType(pmetric.MetricDataTypeGauge)
 	target := out.Gauge().DataPoints()
 	for timestamp, value := range dataPoints {
 		createDataPoint(timestamp, value).CopyTo(target.AppendEmpty())
