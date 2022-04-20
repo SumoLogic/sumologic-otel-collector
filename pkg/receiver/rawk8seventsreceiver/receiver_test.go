@@ -67,7 +67,7 @@ func TestNewRawK8sEventsReceiver(t *testing.T) {
 		rCfg,
 		consumertest.NewNop(),
 		client,
-		fakeListWatchFactory,
+		ListerWatcherFactoryFake{},
 	)
 
 	require.NoError(t, err)
@@ -81,7 +81,7 @@ func TestNewRawK8sEventsReceiver(t *testing.T) {
 		rCfg,
 		consumertest.NewNop(),
 		client,
-		fakeListWatchFactory,
+		ListerWatcherFactoryFake{},
 	)
 
 	require.NoError(t, err)
@@ -99,7 +99,7 @@ func TestProcessEvent(t *testing.T) {
 		rCfg,
 		sink,
 		client,
-		fakeListWatchFactory,
+		ListerWatcherFactoryFake{},
 	)
 	require.NoError(t, err)
 	require.NotNil(t, r)
@@ -127,7 +127,7 @@ func TestConsumeRetryOnRecoverableError(t *testing.T) {
 		rCfg,
 		consumer,
 		client,
-		fakeListWatchFactory,
+		ListerWatcherFactoryFake{},
 	)
 	require.NoError(t, err)
 	receiver.ctx = ctx
@@ -156,7 +156,7 @@ func TestConsumeNoRetryOnPermanentError(t *testing.T) {
 		rCfg,
 		consumer,
 		client,
-		fakeListWatchFactory,
+		ListerWatcherFactoryFake{},
 	)
 	require.NoError(t, err)
 	receiver.ctx = context.Background()
@@ -177,7 +177,7 @@ func TestConvertEventToLog(t *testing.T) {
 		rCfg,
 		sink,
 		client,
-		fakeListWatchFactory,
+		ListerWatcherFactoryFake{},
 	)
 	require.NoError(t, err)
 	require.NotNil(t, r)
@@ -254,11 +254,8 @@ func getEvent() *corev1.Event {
 	}
 }
 
-func fakeListWatchFactory(
-	c cache.Getter,
-	resource string,
-	namespace string,
-	fieldSelector fields.Selector,
-) cache.ListerWatcher {
+type ListerWatcherFactoryFake struct{}
+
+func (l ListerWatcherFactoryFake) CreateListWatcher(c cache.Getter, resource string, namespace string, fieldSelector fields.Selector) cache.ListerWatcher {
 	return cachetest.NewFakeControllerSource()
 }

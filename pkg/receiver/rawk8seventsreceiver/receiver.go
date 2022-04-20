@@ -54,7 +54,17 @@ type rawK8sEventsReceiver struct {
 }
 
 // Interface for creating ListerWatcher objects. Used for injecting mocks into k8s informers.
-type ListerWatcherFactory func(c cache.Getter, resource string, namespace string, fieldSelector fields.Selector) cache.ListerWatcher
+// type ListerWatcherFactory func(c cache.Getter, resource string, namespace string, fieldSelector fields.Selector) cache.ListerWatcher
+
+type ListerWatcherFactory interface {
+	CreateListWatcher(c cache.Getter, resource string, namespace string, fieldSelector fields.Selector) cache.ListerWatcher
+}
+
+type ListerWatcherFactoryImpl struct{}
+
+func (l ListerWatcherFactoryImpl) CreateListWatcher(c cache.Getter, resource string, namespace string, fieldSelector fields.Selector) cache.ListerWatcher {
+	return cache.NewListWatchFromClient(c, resource, namespace, fieldSelector)
+}
 
 func newRawK8sEventsReceiver(
 	params component.ReceiverCreateSettings,
@@ -65,17 +75,6 @@ func newRawK8sEventsReceiver(
 ) (*rawK8sEventsReceiver, error) {
 	var namespaceController cache.Controller
 	var namespaces []string
-
-	if listerWatcherFactory == nil {
-		listerWatcherFactory = func(
-			c cache.Getter,
-			resource string,
-			namespace string,
-			fieldSelector fields.Selector,
-		) cache.ListerWatcher {
-			return cache.NewListWatchFromClient(c, resource, namespace, fieldSelector)
-		}
-	}
 
 	// if no namespaces are specified, watch all of them
 	if len(cfg.Namespaces) == 0 {
@@ -89,7 +88,7 @@ func newRawK8sEventsReceiver(
 
 	restClient := client.CoreV1().RESTClient()
 	for _, namespace := range namespaces {
-		namespaceListWatch := listerWatcherFactory(restClient, "events", namespace, fields.Everything())
+		namespaceListWatch := listerWatcherFactory.CreateListWatcher(restClient, "events", namespace, fields.Everything())
 		_, namespaceController = cache.NewInformer(namespaceListWatch, &corev1.Event{}, 0, cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
 				event := obj.(*corev1.Event)

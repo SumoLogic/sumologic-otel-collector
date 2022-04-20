@@ -56,7 +56,6 @@ func createLogsReceiver(
 	cfg config.Receiver,
 	consumer consumer.Logs,
 ) (component.LogsReceiver, error) {
-
 	k8sClientFactory := MakeClient
 	return createLogsReceiverWithClient(ctx, params, cfg, consumer, k8sClientFactory)
 }
@@ -75,5 +74,5 @@ func createLogsReceiverWithClient(
 		return nil, err
 	}
 
-	return newRawK8sEventsReceiver(params, rCfg, consumer, k8sClient, nil)
+	return newRawK8sEventsReceiver(params, rCfg, consumer, k8sClient, ListerWatcherFactoryImpl{})
 }
