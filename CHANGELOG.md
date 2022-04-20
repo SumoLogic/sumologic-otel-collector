@@ -9,14 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- chore: bump OT core to v0.48.0 [#534][#534]
 - docs: clarify status of sumologicextension [#553][#553]
+- chore(deps): bump golang from 1.18 to 1.18.1 [#546][#546]
+
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.47.0-sumo-0...main
+[#553]: https://github.com/SumoLogic/sumologic-otel-collector/pull/553
+[#546]: https://github.com/SumoLogic/sumologic-otel-collector/pull/546
+
+## [v0.48.0-sumo-0]
+
+### Released 2022-04-12
+
+### Changed
+
+- chore: bump OT core to v0.48.0 [#534][#534]
+- chore(deps): bump alpine from 3.15.3 to 3.15.4 [#525][#525]
 
 ### Fixed
 
 - fix(sumologicexporter): treat resource attributes as fields for otlp #536
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.47.0-sumo-0...main
+### Other
+
+- refactor(sumologicexporter): use golang.org/x/exp/slices for sorting fields [#519][#519]
+- refactor(sumologicextension): use bytes slices and strings.Builder to decrease allocations [#530][#530]
+
+[v0.48.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.48.0-sumo-0
+[#519]: https://github.com/SumoLogic/sumologic-otel-collector/pull/519
+[#525]: https://github.com/SumoLogic/sumologic-otel-collector/pull/525
+[#530]: https://github.com/SumoLogic/sumologic-otel-collector/pull/530
 [#534]: https://github.com/SumoLogic/sumologic-otel-collector/pull/534
 [#536]: https://github.com/SumoLogic/sumologic-otel-collector/pull/536
 
