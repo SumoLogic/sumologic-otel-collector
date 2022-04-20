@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - chore: bump OT core to v0.48.0 [#534][#534]
+- docs: clarify status of sumologicextension [#553][#553]
 
 ### Fixed
 
