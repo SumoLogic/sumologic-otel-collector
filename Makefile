@@ -6,7 +6,7 @@ all: markdownlint yamllint
 .PHONY: markdownlint
 markdownlint: mdl
 
-MD_FILES := $(shell find ./pkg -type f -name "*.md")
+MD_FILES := $(shell find . -type f -name "*.md")
 
 ifeq ($(shell go env GOOS),darwin)
 SED ?= gsed
@@ -16,10 +16,7 @@ endif
 
 .PHONY: mdl
 mdl:
-	mdl --style .markdownlint/style.rb \
-		$(MD_FILES) \
-		otelcolbuilder/README.md \
-		docs
+	mdl --style .markdownlint/style.rb $(MD_FILES)
 
 yamllint:
 	yamllint -c .yamllint.yaml \
