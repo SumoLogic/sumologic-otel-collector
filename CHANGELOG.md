@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - docs: clarify status of sumologicextension [#553][#553]
 - chore(deps): bump golang from 1.18 to 1.18.1 [#546][#546]
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.47.0-sumo-0...main
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.48.0-sumo-0...main
 [#553]: https://github.com/SumoLogic/sumologic-otel-collector/pull/553
 [#546]: https://github.com/SumoLogic/sumologic-otel-collector/pull/546
 
