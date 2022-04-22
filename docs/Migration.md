@@ -611,21 +611,19 @@ receivers:
     - type: regex_parser
       regex: (?P<timestamp>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (\+|\-)\d{4})
       ## Keep original record in log field
-      preserve_to: $$body.log
+      preserve_to: body.log
       ## Parse timestamp from timestamp field
       ## rel: https://github.com/sumo-drosiek/opentelemetry-log-collection/blob/b506aadf913d6c1691cef10a534d495338c87dee/docs/operators/time_parser.md
       timestamp:
-        parse_from: $$body.timestamp
+        parse_from: body.timestamp
         ## Layout are substitute for Timestamp Format configuration
         layout_type: gotime
         layout: '2006-01-02 15:04:05,000 -0700'
     ## Restore record from log field
-    ## rel: https://github.com/sumo-drosiek/opentelemetry-log-collection/blob/b506aadf913d6c1691cef10a534d495338c87dee/docs/operators/restructure.md#move
-    - type: restructure
-      ops:
-      - move:
-        from: $$body.log
-        to: $$body
+    ## rel: https://github.com/sumo-drosiek/opentelemetry-log-collection/blob/b506aadf913d6c1691cef10a534d495338c87dee/docs/operators/move.md
+    - type: move
+      from: body.log
+      to: body
   # ...
 processors:
   resource/my example name fields:
@@ -1015,21 +1013,19 @@ receivers:
     - type: regex_parser
       regex: (?P<timestamp>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (\+|\-)\d{4})
       ## Keep original record in log field
-      preserve_to: $$body.log
+      preserve_to: body.log
       ## Parse timestamp from timestamp field
       ## rel: https://github.com/sumo-drosiek/opentelemetry-log-collection/blob/b506aadf913d6c1691cef10a534d495338c87dee/docs/operators/time_parser.md
       timestamp:
-        parse_from: $$body.timestamp
+        parse_from: body.timestamp
         ## Layout are substitute for Timestamp Format configuration
         layout_type: gotime
         layout: '2006-01-02 15:04:05,000 -0700'
     ## Restore record from log field
-    ## rel: https://github.com/sumo-drosiek/opentelemetry-log-collection/blob/b506aadf913d6c1691cef10a534d495338c87dee/docs/operators/restructure.md#move
-    - type: restructure
-      ops:
-      - move:
-        from: $$body.log
-        to: $$body
+    ## rel: https://github.com/sumo-drosiek/opentelemetry-log-collection/blob/b506aadf913d6c1691cef10a534d495338c87dee/docs/operators/move.md
+    - type: move
+      from: body.log
+      to: body
 processors:
   ## All my example logs
   sumologic_syslog/my example name:
