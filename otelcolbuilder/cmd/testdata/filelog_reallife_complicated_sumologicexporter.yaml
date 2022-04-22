@@ -18,16 +18,14 @@ receivers:
     operators:
       - type: regex_parser
         regex: (?P<timestamp>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (\+|\-)\d{2}\d{2})
-        preserve_to: $$body.log
+        preserve_to: body.log
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: 2006-01-02 15:04:05,000 -0700
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: service1
       _source: service1
@@ -52,16 +50,14 @@ receivers:
     operators:
       - type: regex_parser
         regex: ^\[(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}(\+|\-)\d{2}\d{2})
-        preserve_to: $$body.log
+        preserve_to: body.log
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: 2006-01-02T15:04:05.000-0700
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: service1_gc
       _source: service1_gc
@@ -84,25 +80,21 @@ receivers:
     multiline:
       line_start_pattern: (.*prio=.*|^\z)
     operators:
-      - type: restructure
+      - type: move
         id: prepare
-        ops:
-          - move:
-              from: $$body
-              to: $$body.log
+        from: body
+        to: body.log
       - type: regex_parser
         regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
-        parse_from: $$attributes['file.path.resolved']
-        preserve_to: $$attributes['file.path.resolved']
+        parse_from: attributes['file.path.resolved']
+        preserve_to: attributes['file.path.resolved']
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: 2006-01-02-1504-05
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: service1_thread_dumps
       _source: service1_thread_dumps
@@ -125,25 +117,21 @@ receivers:
     multiline:
       line_start_pattern: ^((top - ).*|\z)
     operators:
-      - type: restructure
+      - type: move
         id: prepare
-        ops:
-          - move:
-              from: $$body
-              to: $$body.log
+        from: body
+        to: body.log
       - type: regex_parser
         regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
-        parse_from: $$attributes['file.path.resolved']
-        preserve_to: $$attributes['file.path.resolved']
+        parse_from: attributes['file.path.resolved']
+        preserve_to: attributes['file.path.resolved']
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: 2006-01-02-1504-05
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: service1_cpu_dumps
       _source: service1_cpu_dumps
@@ -169,16 +157,14 @@ receivers:
     operators:
       - type: regex_parser
         regex: (?P<timestamp>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (\+|\-)\d{2}\d{2})
-        preserve_to: $$body.log
+        preserve_to: body.log
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: 2006-01-02 15:04:05,000 -0700
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: health
       _source: health
@@ -203,16 +189,14 @@ receivers:
     operators:
       - type: regex_parser
         regex: ^\[(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}(\+|\-)\d{2}\d{2})
-        preserve_to: $$body.log
+        preserve_to: body.log
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: 2006-01-02T15:04:05.000-0700
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: health_gc
       _source: health_gc
@@ -235,25 +219,21 @@ receivers:
     multiline:
       line_start_pattern: (.*prio=.*|^\z)
     operators:
-      - type: restructure
+      - type: move
         id: prepare
-        ops:
-          - move:
-              from: $$body
-              to: $$body.log
+        from: body
+        to: body.log
       - type: regex_parser
         regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
-        parse_from: $$attributes['file.path.resolved']
-        preserve_to: $$attributes['file.path.resolved']
+        parse_from: attributes['file.path.resolved']
+        preserve_to: attributes['file.path.resolved']
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: 2006-01-02-1504-05
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: health_thread_dumps
       _source: health_thread_dumps
@@ -276,25 +256,21 @@ receivers:
     multiline:
       line_start_pattern: ^((top - ).*|\z)
     operators:
-      - type: restructure
+      - type: move
         id: prepare
-        ops:
-          - move:
-              from: $$body
-              to: $$body.log
+        from: body
+        to: body.log
       - type: regex_parser
         regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
-        parse_from: $$attributes['file.path.resolved']
-        preserve_to: $$attributes['file.path.resolved']
+        parse_from: attributes['file.path.resolved']
+        preserve_to: attributes['file.path.resolved']
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: 2006-01-02-1504-05
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: health_cpu_dumps
       _source: health_cpu_dumps
@@ -320,16 +296,14 @@ receivers:
     operators:
       - type: regex_parser
         regex: (?P<timestamp>\d{2}/\d{2}\-\d{2}:\d{2}:\d{2}.\d+)
-        preserve_to: $$body.log
+        preserve_to: body.log
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: 02/01-15:04:05.000000
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: security_logs
       _source: snort
@@ -355,16 +329,14 @@ receivers:
     operators:
       - type: regex_parser
         regex: (?P<timestamp>\w{3}\s+\d{1,2} \d{2}:\d{2}:\d{2})
-        preserve_to: $$body.log
+        preserve_to: body.log
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: Jan _2 15:04:05
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: auth_logs
       _source: auth
@@ -390,16 +362,14 @@ receivers:
     operators:
       - type: regex_parser
         regex: (?P<timestamp>\w{3}\s+\d{1,2} \d{2}:\d{2}:\d{2})
-        preserve_to: $$body.log
+        preserve_to: body.log
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: Jan _2 15:04:05
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: syslog
       _source: syslog
@@ -425,16 +395,14 @@ receivers:
     operators:
       - type: regex_parser
         regex: (?P<timestamp>\d{4} \w{3} \d{2} \d{2}:\d{2}:\d{2})
-        preserve_to: $$body.log
+        preserve_to: body.log
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: 2006 Jan 02 15:04:05
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: service2
       _source: service2
@@ -538,16 +506,14 @@ receivers:
     operators:
       - type: regex_parser
         regex: (?P<timestamp>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (\+|\-)\d{2}\d{2})
-        preserve_to: $$body.log
+        preserve_to: body.log
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: 2006-01-02 15:04:05,000 -0700
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: service3
       _source: service3
@@ -573,16 +539,14 @@ receivers:
     operators:
       - type: regex_parser
         regex: (?P<timestamp>^.*?)\n
-        preserve_to: $$body.log
+        preserve_to: body.log
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: Mon Jan _2 15:04:05 MST 2006
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: network_report
       _source: network_report
@@ -608,16 +572,14 @@ receivers:
     operators:
       - type: regex_parser
         regex: (?P<timestamp>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (\+|\-)\d{2}\d{2})
-        preserve_to: $$body.log
+        preserve_to: body.log
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: 2006-01-02 15:04:05,000 -0700
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: service4
       _source: service4
@@ -642,16 +604,14 @@ receivers:
     operators:
       - type: regex_parser
         regex: ^\[(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}(\+|\-)\d{2}\d{2})
-        preserve_to: $$body.log
+        preserve_to: body.log
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: 2006-01-02T15:04:05.000-0700
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: service4_gc
       _source: service4_gc
@@ -674,25 +634,21 @@ receivers:
     multiline:
       line_start_pattern: (.*prio=.*|^\z)
     operators:
-      - type: restructure
+      - type: move
         id: prepare
-        ops:
-          - move:
-              from: $$body
-              to: $$body.log
+        from: body
+        to: body.log
       - type: regex_parser
         regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
-        parse_from: $$attributes['file.path.resolved']
-        preserve_to: $$attributes['file.path.resolved']
+        parse_from: attributes['file.path.resolved']
+        preserve_to: attributes['file.path.resolved']
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: 2006-01-02-1504-05
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: service4_thread_dumps
       _source: service4_thread_dumps
@@ -715,25 +671,21 @@ receivers:
     multiline:
       line_start_pattern: ^((top - ).*|\z)
     operators:
-      - type: restructure
+      - type: move
         id: prepare
-        ops:
-          - move:
-              from: $$body
-              to: $$body.log
+        from: body
+        to: body.log
       - type: regex_parser
         regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
-        parse_from: $$attributes['file.path.resolved']
-        preserve_to: $$attributes['file.path.resolved']
+        parse_from: attributes['file.path.resolved']
+        preserve_to: attributes['file.path.resolved']
         timestamp:
-          parse_from: $$body.timestamp
+          parse_from: body.timestamp
           layout_type: gotime
           layout: 2006-01-02-1504-05
-      - type: restructure
-        ops:
-          - move:
-              from: $$body.log
-              to: $$body
+      - type: move
+        from: body.log
+        to: body
     attributes:
       _sourceCategory: service4_cpu_dumps
       _source: service4_cpu_dumps
