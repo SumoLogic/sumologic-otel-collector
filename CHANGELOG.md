@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking changes
 
 - chore: bump OT core to v0.49.0 [#550][#550] ([upgrade guide][upgrade-guide-log-collection])
+- fix!(sumologicexporter): send resource attributes as fields for non-otlp, removing metadata_attributes [#549][#549] ([upgrade-guide][upgrade-guide-metadata])
 
 ### Changed
 
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.48.0-sumo-0...main
 [upgrade-guide-log-collection]: docs/Upgrading.md#several-changes-to-receivers-using-opentelemetry-log-collection
+[upgrade-guide-metadata]: docs/Upgrading.md#sumo-logic-exporter-metadata-handling
 [#546]: https://github.com/SumoLogic/sumologic-otel-collector/pull/546
 [#550]: https://github.com/SumoLogic/sumologic-otel-collector/pull/550
 [#553]: https://github.com/SumoLogic/sumologic-otel-collector/pull/553
@@ -39,7 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - fix(sumologicexporter): treat resource attributes as fields for otlp #536
-- fix!(sumologicexporter): send resource attributes as fields for non-otlp, removing metadata_attributes #549
 
 ### Other
 
@@ -52,7 +53,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#530]: https://github.com/SumoLogic/sumologic-otel-collector/pull/530
 [#534]: https://github.com/SumoLogic/sumologic-otel-collector/pull/534
 [#536]: https://github.com/SumoLogic/sumologic-otel-collector/pull/536
-[#549]: https://github.com/SumoLogic/sumologic-otel-collector/pull/549
 
 ## [v0.47.0-sumo-0]
 
