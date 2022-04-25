@@ -24,12 +24,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/zap"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/bigendianconverter"
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
+	cfconfig "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/idbatcher"
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/sampling"
 )
@@ -39,14 +40,17 @@ const (
 )
 
 //nolint:unused
-var testPolicy = []config.TraceAcceptCfg{{
+var testPolicy = []cfconfig.TraceAcceptCfg{{
 	Name:           "test-policy",
 	SpansPerSecond: 1000,
 }}
 
 func TestSequentialTraceArrival(t *testing.T) {
 	traceIds, batches := generateIdsAndBatches(128)
-	cfg := config.Config{
+	id1 := config.NewComponentIDWithName("cascading_filter", "1")
+	ps1 := config.NewProcessorSettings(id1)
+	cfg := cfconfig.Config{
+		ProcessorSettings:       &ps1,
 		DecisionWait:            defaultTestDecisionWait,
 		NumTraces:               uint64(2 * len(traceIds)),
 		ExpectedNewTracesPerSec: 64,
@@ -71,7 +75,10 @@ func TestConcurrentTraceArrival(t *testing.T) {
 	traceIds, batches := generateIdsAndBatches(128)
 
 	var wg sync.WaitGroup
-	cfg := config.Config{
+	id1 := config.NewComponentIDWithName("cascading_filter", "1")
+	ps1 := config.NewProcessorSettings(id1)
+	cfg := cfconfig.Config{
+		ProcessorSettings:       &ps1,
 		DecisionWait:            defaultTestDecisionWait,
 		NumTraces:               uint64(2 * len(traceIds)),
 		ExpectedNewTracesPerSec: 64,
@@ -110,7 +117,10 @@ func TestConcurrentTraceArrival(t *testing.T) {
 func TestSequentialTraceMapSize(t *testing.T) {
 	traceIds, batches := generateIdsAndBatches(210)
 	const maxSize = 100
-	cfg := config.Config{
+	id1 := config.NewComponentIDWithName("cascading_filter", "1")
+	ps1 := config.NewProcessorSettings(id1)
+	cfg := cfconfig.Config{
+		ProcessorSettings:       &ps1,
 		DecisionWait:            defaultTestDecisionWait,
 		NumTraces:               uint64(maxSize),
 		ExpectedNewTracesPerSec: 64,
@@ -136,7 +146,10 @@ func TestConcurrentTraceMapSize(t *testing.T) {
 	_, batches := generateIdsAndBatches(210)
 	const maxSize = 100
 	var wg sync.WaitGroup
-	cfg := config.Config{
+	id1 := config.NewComponentIDWithName("cascading_filter", "1")
+	ps1 := config.NewProcessorSettings(id1)
+	cfg := cfconfig.Config{
+		ProcessorSettings:       &ps1,
 		DecisionWait:            defaultTestDecisionWait,
 		NumTraces:               uint64(maxSize),
 		ExpectedNewTracesPerSec: 64,
