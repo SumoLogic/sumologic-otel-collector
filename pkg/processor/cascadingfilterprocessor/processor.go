@@ -18,6 +18,7 @@ import (
 	"context"
 	"math"
 	"runtime"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -67,6 +68,7 @@ type traceKey [16]byte
 type cascadingFilterSpanProcessor struct {
 	ctx              context.Context
 	nextConsumer     consumer.Traces
+	instanceName     string
 	start            sync.Once
 	maxNumTraces     uint64
 	traceAcceptRules []*TraceAcceptEvaluator
@@ -227,10 +229,10 @@ func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.T
 	}
 
 	// Build the span procesor
-
 	cfsp := &cascadingFilterSpanProcessor{
 		ctx:               ctx,
 		nextConsumer:      nextConsumer,
+		instanceName:      cfg.ProcessorSettings.ID().String(),
 		maxNumTraces:      cfg.NumTraces,
 		maxSpansPerSecond: spansPerSecond,
 		logger:            logger,
@@ -318,7 +320,10 @@ func (cfsp *cascadingFilterSpanProcessor) samplingPolicyOnTick() {
 				}
 				err := stats.RecordWithTags(
 					cfsp.ctx,
-					[]tag.Mutator{tag.Insert(tagCascadingFilterDecisionKey, statusSampled)},
+					[]tag.Mutator{
+						tag.Insert(tagProcessorKey, cfsp.instanceName),
+						tag.Insert(tagCascadingFilterDecisionKey, statusSampled),
+					},
 					statCascadingFilterDecision.M(int64(1)),
 				)
 				if err != nil {
@@ -327,7 +332,10 @@ func (cfsp *cascadingFilterSpanProcessor) samplingPolicyOnTick() {
 			} else {
 				err := stats.RecordWithTags(
 					cfsp.ctx,
-					[]tag.Mutator{tag.Insert(tagCascadingFilterDecisionKey, statusExceededKey)},
+					[]tag.Mutator{
+						tag.Insert(tagProcessorKey, cfsp.instanceName),
+						tag.Insert(tagCascadingFilterDecisionKey, statusExceededKey),
+					},
 					statCascadingFilterDecision.M(int64(1)),
 				)
 				if err != nil {
@@ -340,7 +348,10 @@ func (cfsp *cascadingFilterSpanProcessor) samplingPolicyOnTick() {
 			trace.FinalDecision = provisionalDecision
 			err := stats.RecordWithTags(
 				cfsp.ctx,
-				[]tag.Mutator{tag.Insert(tagCascadingFilterDecisionKey, statusNotSampled)},
+				[]tag.Mutator{
+					tag.Insert(tagProcessorKey, cfsp.instanceName),
+					tag.Insert(tagCascadingFilterDecisionKey, statusNotSampled),
+				},
 				statCascadingFilterDecision.M(int64(1)),
 			)
 			if err != nil {
@@ -361,7 +372,10 @@ func (cfsp *cascadingFilterSpanProcessor) samplingPolicyOnTick() {
 			if trace.FinalDecision == sampling.Sampled {
 				err := stats.RecordWithTags(
 					cfsp.ctx,
-					[]tag.Mutator{tag.Insert(tagCascadingFilterDecisionKey, statusSecondChanceSampled)},
+					[]tag.Mutator{
+						tag.Insert(tagProcessorKey, cfsp.instanceName),
+						tag.Insert(tagCascadingFilterDecisionKey, statusSecondChanceSampled),
+					},
 					statCascadingFilterDecision.M(int64(1)),
 				)
 				if err != nil {
@@ -370,7 +384,10 @@ func (cfsp *cascadingFilterSpanProcessor) samplingPolicyOnTick() {
 			} else {
 				err := stats.RecordWithTags(
 					cfsp.ctx,
-					[]tag.Mutator{tag.Insert(tagCascadingFilterDecisionKey, statusSecondChanceExceeded)},
+					[]tag.Mutator{
+						tag.Insert(tagProcessorKey, cfsp.instanceName),
+						tag.Insert(tagCascadingFilterDecisionKey, statusSecondChanceExceeded),
+					},
 					statCascadingFilterDecision.M(int64(1)),
 				)
 				if err != nil {
@@ -411,11 +428,18 @@ func (cfsp *cascadingFilterSpanProcessor) samplingPolicyOnTick() {
 		}
 	}
 
-	stats.Record(cfsp.ctx,
+	err := stats.RecordWithTags(cfsp.ctx,
+		[]tag.Mutator{tag.Insert(tagProcessorKey, cfsp.instanceName)},
 		statOverallDecisionLatencyus.M(int64(time.Since(startTime)/time.Microsecond)),
 		statDroppedTooEarlyCount.M(metrics.idNotFoundOnMapCount),
 		statPolicyEvaluationErrorCount.M(metrics.evaluateErrorCount),
 		statTracesOnMemoryGauge.M(int64(atomic.LoadUint64(&cfsp.numTracesOnMap))))
+	cfsp.logMetricsRecordErrorIfPresent(err, []string{
+		statOverallDecisionLatencyus.Name(),
+		statDroppedTooEarlyCount.Name(),
+		statPolicyEvaluationErrorCount.Name(),
+		statTracesOnMemoryGauge.Name(),
+	})
 
 	cfsp.logger.Debug("Sampling policy evaluation completed",
 		zap.Int("batch.len", batchLen),
@@ -467,7 +491,8 @@ func updateFilteringTag(traces pdata.Traces) {
 func (cfsp *cascadingFilterSpanProcessor) shouldBeDropped(id pdata.TraceID, trace *sampling.TraceData) bool {
 	for _, dropRule := range cfsp.traceRejectRules {
 		if dropRule.Evaluator.ShouldDrop(id, trace) {
-			stats.Record(dropRule.ctx, statPolicyDecision.M(int64(1)))
+			err := stats.RecordWithTags(dropRule.ctx, []tag.Mutator{tag.Insert(tagProcessorKey, cfsp.instanceName)}, statPolicyDecision.M(int64(1)))
+			cfsp.logMetricsRecordErrorIfPresent(err, []string{statPolicyDecision.Name()})
 			return true
 		}
 	}
@@ -485,9 +510,11 @@ func (cfsp *cascadingFilterSpanProcessor) makeProvisionalDecision(id pdata.Trace
 	for i, policy := range cfsp.traceAcceptRules {
 		policyEvaluateStartTime := time.Now()
 		decision := policy.Evaluator.Evaluate(id, trace)
-		stats.Record(
+		err := stats.RecordWithTags(
 			policy.ctx,
+			[]tag.Mutator{tag.Insert(tagProcessorKey, cfsp.instanceName)},
 			statDecisionLatencyMicroSec.M(int64(time.Since(policyEvaluateStartTime)/time.Microsecond)))
+		cfsp.logMetricsRecordErrorIfPresent(err, []string{statDecisionLatencyMicroSec.Name()})
 
 		trace.Decisions[i] = decision
 
@@ -503,7 +530,10 @@ func (cfsp *cascadingFilterSpanProcessor) makeProvisionalDecision(id pdata.Trace
 
 			err := stats.RecordWithTags(
 				policy.ctx,
-				[]tag.Mutator{tag.Insert(tagPolicyDecisionKey, statusSampled)},
+				[]tag.Mutator{
+					tag.Insert(tagProcessorKey, cfsp.instanceName),
+					tag.Insert(tagPolicyDecisionKey, statusSampled),
+				},
 				statPolicyDecision.M(int64(1)),
 			)
 			if err != nil {
@@ -518,7 +548,10 @@ func (cfsp *cascadingFilterSpanProcessor) makeProvisionalDecision(id pdata.Trace
 			}
 			err := stats.RecordWithTags(
 				policy.ctx,
-				[]tag.Mutator{tag.Insert(tagPolicyDecisionKey, statusNotSampled)},
+				[]tag.Mutator{
+					tag.Insert(tagProcessorKey, cfsp.instanceName),
+					tag.Insert(tagPolicyDecisionKey, statusNotSampled),
+				},
 				statPolicyDecision.M(int64(1)),
 			)
 			if err != nil {
@@ -531,7 +564,10 @@ func (cfsp *cascadingFilterSpanProcessor) makeProvisionalDecision(id pdata.Trace
 
 			err := stats.RecordWithTags(
 				policy.ctx,
-				[]tag.Mutator{tag.Insert(tagPolicyDecisionKey, statusSecondChance)},
+				[]tag.Mutator{
+					tag.Insert(tagProcessorKey, cfsp.instanceName),
+					tag.Insert(tagPolicyDecisionKey, statusSecondChance),
+				},
 				statPolicyDecision.M(int64(1)),
 			)
 			if err != nil {
@@ -644,18 +680,38 @@ func (cfsp *cascadingFilterSpanProcessor) processTraces(ctx context.Context, res
 				cfsp.logger.Warn("Error sending late arrived spans to destination",
 					zap.Error(err))
 			}
-			stats.Record(cfsp.ctx, statLateSpanArrivalAfterDecision.M(int64(time.Since(actualData.DecisionTime)/time.Second)))
+			err := stats.RecordWithTags(
+				cfsp.ctx,
+				[]tag.Mutator{tag.Insert(tagProcessorKey, cfsp.instanceName)},
+				statLateSpanArrivalAfterDecision.M(int64(time.Since(actualData.DecisionTime)/time.Second)),
+			)
+			cfsp.logMetricsRecordErrorIfPresent(err, []string{statLateSpanArrivalAfterDecision.Name()})
 		case sampling.NotSampled:
-			stats.Record(cfsp.ctx, statLateSpanArrivalAfterDecision.M(int64(time.Since(actualData.DecisionTime)/time.Second)))
+			err := stats.RecordWithTags(
+				cfsp.ctx,
+				[]tag.Mutator{tag.Insert(tagProcessorKey, cfsp.instanceName)},
+				statLateSpanArrivalAfterDecision.M(int64(time.Since(actualData.DecisionTime)/time.Second)),
+			)
+			cfsp.logMetricsRecordErrorIfPresent(err, []string{statLateSpanArrivalAfterDecision.Name()})
 		case sampling.Dropped:
-			stats.Record(cfsp.ctx, statLateSpanArrivalAfterDecision.M(int64(time.Since(actualData.DecisionTime)/time.Second)))
+			err := stats.RecordWithTags(
+				cfsp.ctx,
+				[]tag.Mutator{tag.Insert(tagProcessorKey, cfsp.instanceName)},
+				statLateSpanArrivalAfterDecision.M(int64(time.Since(actualData.DecisionTime)/time.Second)),
+			)
+			cfsp.logMetricsRecordErrorIfPresent(err, []string{statLateSpanArrivalAfterDecision.Name()})
 		default:
 			cfsp.logger.Warn("Encountered unexpected sampling decision",
 				zap.Int("decision", int(finalDecision)))
 		}
 	}
 
-	stats.Record(cfsp.ctx, statNewTraceIDReceivedCount.M(newTraceIDs))
+	err := stats.RecordWithTags(
+		cfsp.ctx,
+		[]tag.Mutator{tag.Insert(tagProcessorKey, cfsp.instanceName)},
+		statNewTraceIDReceivedCount.M(newTraceIDs),
+	)
+	cfsp.logMetricsRecordErrorIfPresent(err, []string{statNewTraceIDReceivedCount.Name()})
 }
 
 // func (cfsp *cascadingFilterSpanProcessor) GetCapabilities() component.ProcessorCapabilities {
@@ -689,7 +745,12 @@ func (cfsp *cascadingFilterSpanProcessor) dropTrace(traceID traceKey, deletionTi
 		return
 	}
 
-	stats.Record(cfsp.ctx, statTraceRemovalAgeSec.M(int64(deletionTime.Sub(trace.ArrivalTime)/time.Second)))
+	err := stats.RecordWithTags(
+		cfsp.ctx,
+		[]tag.Mutator{tag.Insert(tagProcessorKey, cfsp.instanceName)},
+		statTraceRemovalAgeSec.M(int64(deletionTime.Sub(trace.ArrivalTime)/time.Second)),
+	)
+	cfsp.logMetricsRecordErrorIfPresent(err, []string{statTraceRemovalAgeSec.Name()})
 }
 
 func prepareTraceBatch(rss pdata.ResourceSpans, spans []*pdata.Span) pdata.Traces {
@@ -702,6 +763,12 @@ func prepareTraceBatch(rss pdata.ResourceSpans, spans []*pdata.Span) pdata.Trace
 		span.CopyTo(ilsSpans.AppendEmpty())
 	}
 	return traceTd
+}
+
+func (cfsp *cascadingFilterSpanProcessor) logMetricsRecordErrorIfPresent(err error, metricsNames []string) {
+	if err != nil {
+		cfsp.logger.Error("failed to record the following metrics: "+strings.Join(metricsNames, ", "), zap.Error(err))
+	}
 }
 
 // tTicker interface allows easier testing of ticker related functionality used by cascadingfilterprocessor
