@@ -13,10 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore(deps): bump golang from 1.18 to 1.18.1 [#546][#546]
 - chore: bump OT core to v0.49.0 [#550][#550]
 
+### Fixed
+
+- fix(cascadingfilterprocessor): prevent overriding metrics in cascading filter processor - add processor tag [#539][#539]
+
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.48.0-sumo-0...main
 [#546]: https://github.com/SumoLogic/sumologic-otel-collector/pull/546
 [#550]: https://github.com/SumoLogic/sumologic-otel-collector/pull/550
 [#553]: https://github.com/SumoLogic/sumologic-otel-collector/pull/553
+[#539]: https://github.com/SumoLogic/sumologic-otel-collector/pull/539
 
 ## [v0.48.0-sumo-0]
 
