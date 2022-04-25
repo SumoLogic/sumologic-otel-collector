@@ -60,7 +60,6 @@ func (m *mySQLReceiver) convertToLog(record string) pdata.Logs {
 	rl := ld.ResourceLogs().AppendEmpty()
 	sl := rl.ScopeLogs().AppendEmpty()
 	lr := sl.LogRecords().AppendEmpty()
-	pdataObjectMap := pdata.NewMapFromRaw(map[string]interface{}{"record": record})
-	pdataObjectMap.CopyTo(lr.Attributes())
+	lr.Body().SetStringVal(record)
 	return ld
 }
