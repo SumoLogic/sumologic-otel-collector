@@ -18,11 +18,12 @@ type mySQLClient struct {
 	connStr string
 	client  *sql.DB
 	logger    *zap.Logger
+	conf	*Config
 }
 
 var _ client = (*mySQLClient)(nil)
 
-func newMySQLClient(conf *Config) client {
+func newMySQLClient(conf *Config, logger *zap.Logger) client {
 	driverConf := mysql.Config{
 		User:                 conf.Username,
 		Passwd:               conf.Password,
@@ -35,6 +36,8 @@ func newMySQLClient(conf *Config) client {
 
 	return &mySQLClient{
 		connStr: connStr,
+		conf: conf,
+		logger: logger,
 	}
 }
 
@@ -50,8 +53,7 @@ func (c *mySQLClient) Connect() error {
 
 // getRecords queries the db for records
 func (c *mySQLClient) getRecords() (map[int]string,error) {
-	query := "select * from Persons;"
-	return Query(*c, query)
+	return Query(*c, c.conf.Query)
 }
 
 func Query(c mySQLClient, query string) (map[int]string,error) {

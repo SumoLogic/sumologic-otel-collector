@@ -26,8 +26,7 @@ func newMySQLReceiver (logger *zap.Logger, conf *Config, next consumer.Logs) (co
 
 // start starts the receiver by initializing the db client connection.
 func (m *mySQLReceiver) Start(ctx context.Context, host component.Host) error {
-	sqlclient := newMySQLClient(m.config)
-
+	sqlclient := newMySQLClient(m.config, m.logger)
 	err := sqlclient.Connect()
 	if err != nil {
 		return err
