@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#553]: https://github.com/SumoLogic/sumologic-otel-collector/pull/553
 [#539]: https://github.com/SumoLogic/sumologic-otel-collector/pull/539
 [#557]: https://github.com/SumoLogic/sumologic-otel-collector/pull/557
+[#549]: https://github.com/SumoLogic/sumologic-otel-collector/pull/549
 
 ## [v0.48.0-sumo-0]
 
