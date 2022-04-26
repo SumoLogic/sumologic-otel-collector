@@ -7,10 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.49.0-sumo-0...main
+
+## [v0.49.0-sumo-0]
+
+### Released 2022-04-26
+
+This release includes two breaking changes. One is an upstream change to the configuration syntax of several
+log receivers, most notably the `filelog` receiver. The other changes how the Sumo Logic exporter determines
+metadata based on the attributes of a OpenTelemetry record. Please consult the upgrade guides linked below
+for more details.
+
 ### Breaking changes
 
 - chore: bump OT core to v0.49.0 [#550][#550] ([upgrade guide][upgrade-guide-log-collection])
-- fix!(sumologicexporter): send resource attributes as fields for non-otlp, removing metadata_attributes [#549][#549] ([upgrade-guide][upgrade-guide-metadata])
+- fix!(sumologicexporter): send resource attributes as fields for non-otlp, removing metadata_attributes [#549][#549] ([upgrade guide][upgrade-guide-metadata])
 
 ### Changed
 
@@ -22,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fix(cascadingfilterprocessor): prevent overriding metrics in cascading filter processor - add processor tag [#539][#539]
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.48.0-sumo-0...main
+[v0.49.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.48.0-sumo-0...v0.49.0-sumo-0
 [upgrade-guide-log-collection]: docs/Upgrading.md#several-changes-to-receivers-using-opentelemetry-log-collection
 [upgrade-guide-metadata]: docs/Upgrading.md#sumo-logic-exporter-metadata-handling
 [#546]: https://github.com/SumoLogic/sumologic-otel-collector/pull/546
