@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - docs: clarify status of sumologicextension [#553][#553]
 - chore(deps): bump golang from 1.18 to 1.18.1 [#546][#546]
+- chore: bump Telegraf to v1.22.0-sumo-3 [#557][#557]
 
 ### Fixed
 
@@ -28,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#550]: https://github.com/SumoLogic/sumologic-otel-collector/pull/550
 [#553]: https://github.com/SumoLogic/sumologic-otel-collector/pull/553
 [#539]: https://github.com/SumoLogic/sumologic-otel-collector/pull/539
+[#557]: https://github.com/SumoLogic/sumologic-otel-collector/pull/557
 
 ## [v0.48.0-sumo-0]
 
