@@ -32,6 +32,7 @@ import (
 	"go.opentelemetry.io/collector/model/otlp"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
+
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -1457,14 +1458,9 @@ func TestSendMetrics(t *testing.T) {
 		attrs,
 		metricSum, metricGauge,
 	)
-	resMetrics := metrics.ResourceMetrics().At(0)
 
-	flds := fieldsFromMap(map[string]string{
-		"key1": "value",
-		"key2": "value2",
-	})
-	_, err := test.s.sendNonOTLPMetrics(context.Background(), resMetrics, flds)
-	assert.NoError(t, err)
+	_, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
+	assert.Empty(t, errs)
 }
 
 func TestSendMetricsSplit(t *testing.T) {
@@ -1482,19 +1478,68 @@ func TestSendMetricsSplit(t *testing.T) {
 			assert.Equal(t, expected, body)
 		},
 	})
+	// note that the max request size only applies after each resource
 	test.s.config.MaxRequestBodySize = 10
 	test.s.config.MetricFormat = PrometheusFormat
 
 	metricSum, attrs := exampleIntMetric()
 	metricGauge, _ := exampleIntGaugeMetric()
-	metrics := metricAndAttrsToPdataMetrics(
-		attrs,
-		metricSum, metricGauge,
-	)
-	resMetrics := metrics.ResourceMetrics().At(0)
 
-	_, err := test.s.sendNonOTLPMetrics(context.Background(), resMetrics, fields{})
-	assert.NoError(t, err)
+	metrics := pmetric.NewMetrics()
+	metrics.ResourceMetrics().EnsureCapacity(2)
+
+	rmsSum := metrics.ResourceMetrics().AppendEmpty()
+	attrs.CopyTo(rmsSum.Resource().Attributes())
+	metricSum.CopyTo(rmsSum.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
+
+	rmsGauge := metrics.ResourceMetrics().AppendEmpty()
+	attrs.CopyTo(rmsGauge.Resource().Attributes())
+	metricGauge.CopyTo(rmsGauge.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
+
+	_, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
+	assert.Empty(t, errs)
+}
+
+func TestSendMetricsSplitBySource(t *testing.T) {
+	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			expected := `test.metric.data{test="test_value",test2="second_value",key="value1"} 14500 1605534165000`
+			assert.Equal(t, expected, body)
+		},
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			expected := `` +
+				`gauge_metric_name{test="test_value",test2="second_value",key="value2",remote_name="156920",url="http://example_url"} 124 1608124661166` + "\n" +
+				`gauge_metric_name{test="test_value",test2="second_value",key="value2",remote_name="156955",url="http://another_url"} 245 1608124662166`
+			assert.Equal(t, expected, body)
+		},
+	})
+	test.s.sources = sourceFormats{
+		host:     getTestSourceFormat(t, "%{key}"),
+		category: getTestSourceFormat(t, "source_category"),
+		name:     getTestSourceFormat(t, "source_name"),
+	}
+	test.s.config.MetricFormat = PrometheusFormat
+
+	metricSum, attrs := exampleIntMetric()
+	metricGauge, _ := exampleIntGaugeMetric()
+
+	metrics := pmetric.NewMetrics()
+	metrics.ResourceMetrics().EnsureCapacity(2)
+
+	rmsSum := metrics.ResourceMetrics().AppendEmpty()
+	attrs.CopyTo(rmsSum.Resource().Attributes())
+	rmsSum.Resource().Attributes().InsertString("key", "value1")
+	metricSum.CopyTo(rmsSum.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
+
+	rmsGauge := metrics.ResourceMetrics().AppendEmpty()
+	attrs.CopyTo(rmsGauge.Resource().Attributes())
+	rmsGauge.Resource().Attributes().InsertString("key", "value2")
+	metricGauge.CopyTo(rmsGauge.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
+
+	_, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
+	assert.Empty(t, errs)
 }
 
 func TestSendMetricsSplitFailedOne(t *testing.T) {
@@ -1519,16 +1564,22 @@ func TestSendMetricsSplitFailedOne(t *testing.T) {
 
 	metricSum, attrs := exampleIntMetric()
 	metricGauge, _ := exampleIntGaugeMetric()
-	metrics := metricAndAttrsToPdataMetrics(
-		attrs,
-		metricSum, metricGauge,
-	)
-	resMetrics := metrics.ResourceMetrics().At(0)
+	metrics := pmetric.NewMetrics()
+	metrics.ResourceMetrics().EnsureCapacity(2)
 
-	dropped, err := test.s.sendNonOTLPMetrics(context.Background(), resMetrics, fields{})
-	assert.EqualError(t, err, "failed sending data: status: 500 Internal Server Error")
-	require.Len(t, dropped, 1)
-	assert.Equal(t, dropped[0], metricSum)
+	rmsSum := metrics.ResourceMetrics().AppendEmpty()
+	attrs.CopyTo(rmsSum.Resource().Attributes())
+	metricSum.CopyTo(rmsSum.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
+
+	rmsGauge := metrics.ResourceMetrics().AppendEmpty()
+	attrs.CopyTo(rmsGauge.Resource().Attributes())
+	metricGauge.CopyTo(rmsGauge.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
+
+	dropped, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
+	assert.Len(t, errs, 1)
+	assert.EqualError(t, errs[0], "failed sending data: status: 500 Internal Server Error")
+	require.Equal(t, 1, dropped.MetricCount())
+	assert.Equal(t, dropped.ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0), metricSum)
 }
 
 func TestSendMetricsSplitFailedAll(t *testing.T) {
@@ -1555,21 +1606,32 @@ func TestSendMetricsSplitFailedAll(t *testing.T) {
 
 	metricSum, attrs := exampleIntMetric()
 	metricGauge, _ := exampleIntGaugeMetric()
-	metrics := metricAndAttrsToPdataMetrics(
-		attrs,
-		metricSum, metricGauge,
-	)
-	resMetrics := metrics.ResourceMetrics().At(0)
+	metrics := pmetric.NewMetrics()
+	metrics.ResourceMetrics().EnsureCapacity(2)
 
-	dropped, err := test.s.sendNonOTLPMetrics(context.Background(), resMetrics, fields{})
+	rmsSum := metrics.ResourceMetrics().AppendEmpty()
+	attrs.CopyTo(rmsSum.Resource().Attributes())
+	metricSum.CopyTo(rmsSum.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
+
+	rmsGauge := metrics.ResourceMetrics().AppendEmpty()
+	attrs.CopyTo(rmsGauge.Resource().Attributes())
+	metricGauge.CopyTo(rmsGauge.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
+
+	dropped, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
+	assert.Len(t, errs, 2)
 	assert.EqualError(
 		t,
-		err,
-		"failed sending data: status: 500 Internal Server Error; failed sending data: status: 404 Not Found",
+		errs[0],
+		"failed sending data: status: 500 Internal Server Error",
 	)
-	require.Len(t, dropped, 2)
-	assert.Equal(t, dropped[0], metricSum)
-	assert.Equal(t, dropped[1], metricGauge)
+	assert.EqualError(
+		t,
+		errs[1],
+		"failed sending data: status: 404 Not Found",
+	)
+	require.Equal(t, 2, dropped.MetricCount())
+	assert.Equal(t, dropped.ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0), metricSum)
+	assert.Equal(t, dropped.ResourceMetrics().At(1).ScopeMetrics().At(0).Metrics().At(0), metricGauge)
 }
 
 func TestSendMetricsUnexpectedFormat(t *testing.T) {
@@ -1579,11 +1641,12 @@ func TestSendMetricsUnexpectedFormat(t *testing.T) {
 
 	metricSum, attrs := exampleIntMetric()
 	metrics := metricAndAttrsToPdataMetrics(attrs, metricSum)
-	resMetrics := metrics.ResourceMetrics().At(0)
 
-	dropped, err := test.s.sendNonOTLPMetrics(context.Background(), resMetrics, fields{})
-	assert.EqualError(t, err, "unexpected metric format: invalid")
-	assert.Equal(t, dropped, []pmetric.Metric{metricSum})
+	dropped, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
+	assert.Len(t, errs, 1)
+	assert.EqualError(t, errs[0], "unexpected metric format: invalid")
+	require.Equal(t, 1, dropped.MetricCount())
+	assert.Equal(t, dropped, metrics)
 }
 
 func TestSendCarbon2Metrics(t *testing.T) {
@@ -1621,14 +1684,9 @@ func TestSendCarbon2Metrics(t *testing.T) {
 		attrs,
 		metricSum, metricGauge,
 	)
-	resMetrics := metrics.ResourceMetrics().At(0)
 
-	flds := fieldsFromMap(map[string]string{
-		"key1": "value",
-		"key2": "value2",
-	})
-	_, err := test.s.sendNonOTLPMetrics(context.Background(), resMetrics, flds)
-	assert.NoError(t, err)
+	_, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
+	assert.Empty(t, errs)
 }
 
 func TestSendGraphiteMetrics(t *testing.T) {
@@ -1667,12 +1725,7 @@ func TestSendGraphiteMetrics(t *testing.T) {
 		attrs,
 		metricSum, metricGauge,
 	)
-	resMetrics := metrics.ResourceMetrics().At(0)
 
-	flds := fieldsFromMap(map[string]string{
-		"key1": "value",
-		"key2": "value2",
-	})
-	_, err = test.s.sendNonOTLPMetrics(context.Background(), resMetrics, flds)
-	assert.NoError(t, err)
+	_, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
+	assert.Empty(t, errs)
 }
