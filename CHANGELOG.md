@@ -11,8 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - feat: add rawk8seventsreceiver [#547][#547]
 
+### Fixed
+
+- fix: fix(sumologicexporter): batch metrics if source headers match [#561][#561]
+
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.49.0-sumo-0...main
 [#547]: https://github.com/SumoLogic/sumologic-otel-collector/pull/547
+[#561]: https://github.com/SumoLogic/sumologic-otel-collector/pull/561
 
 ## [v0.49.0-sumo-0]
 

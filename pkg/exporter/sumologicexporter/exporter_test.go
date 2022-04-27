@@ -818,21 +818,14 @@ gauge_metric_name{test="test_value",test2="second_value",remote_name="156955",ur
 			expectedError: "failed sending data: status: 500 Internal Server Error",
 		},
 		{
-			name: "sent separately when metrics under different resources",
+			name: "sent together when metrics under different resources",
 			callbacks: []func(w http.ResponseWriter, req *http.Request){
 				func(w http.ResponseWriter, req *http.Request) {
 					w.WriteHeader(500)
 
 					body := extractBody(t, req)
-					expected := `test.metric.data{test="test_value",test2="second_value"} 14500 1605534165000`
-					assert.Equal(t, expected, body)
-					assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
-				},
-				func(w http.ResponseWriter, req *http.Request) {
-					w.WriteHeader(500)
-
-					body := extractBody(t, req)
-					expected := `gauge_metric_name{foo="bar",remote_name="156920",url="http://example_url"} 124 1608124661166
+					expected := `test.metric.data{test="test_value",test2="second_value"} 14500 1605534165000
+gauge_metric_name{foo="bar",remote_name="156920",url="http://example_url"} 124 1608124661166
 gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1608124662166`
 					assert.Equal(t, expected, body)
 					assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
@@ -853,7 +846,7 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 				)
 				return metrics
 			},
-			expectedError: "failed sending data: status: 500 Internal Server Error (x2)",
+			expectedError: "failed sending data: status: 500 Internal Server Error",
 		},
 	}
 

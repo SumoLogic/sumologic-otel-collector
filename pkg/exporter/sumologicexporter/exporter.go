@@ -301,27 +301,23 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pmetric.Met
 		return nil
 	}
 
-	type droppedResourceMetrics struct {
-		resource pcommon.Resource
-		metrics  []pmetric.Metric
-	}
 	var (
-		errs    []error
-		dropped []droppedResourceMetrics
+		errs []error
 	)
 
-	// Iterate over ResourceMetrics
+	// Transform metrics metadata
+	// this includes dropping the routing attribute and translating attributes
 	rms := md.ResourceMetrics()
 	for i := 0; i < rms.Len(); i++ {
 		rm := rms.At(i)
 
 		se.dropRoutingAttribute(rm.Resource().Attributes())
 
-		currentMetadata := newFields(rm.Resource().Attributes())
+		// TODO: Move these modifications to the Sumo schema processor
+		// we shouldn't modify data in an exporter, but these modifications are idempotent and therefore harmless
 		if se.config.TranslateAttributes {
 			translateAttributes(rm.Resource().Attributes()).
 				CopyTo(rm.Resource().Attributes())
-			currentMetadata.translateAttributes()
 		}
 
 		if se.config.TranslateTelegrafMetrics {
@@ -332,36 +328,13 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pmetric.Met
 				}
 			}
 		}
-
-		if droppedMetrics, err := sdr.sendNonOTLPMetrics(ctx, rm, currentMetadata); err != nil {
-			dropped = append(dropped, droppedResourceMetrics{
-				resource: rm.Resource(),
-				metrics:  droppedMetrics,
-			})
-			errs = append(errs, err)
-		}
 	}
 
-	if len(dropped) > 0 {
-		md = pmetric.NewMetrics()
+	droppedMetrics, errs := sdr.sendNonOTLPMetrics(ctx, md)
 
-		// Move all dropped records to Metrics
-		// NOTE: we only copy resource and metrics here.
-		// Scope is not handled properly but it never was.
-		for i := range dropped {
-			rms := md.ResourceMetrics().AppendEmpty()
-			dropped[i].resource.MoveTo(rms.Resource())
-
-			for j := 0; j < len(dropped[i].metrics); j++ {
-				dropped[i].metrics[j].MoveTo(
-					rms.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty(),
-				)
-			}
-		}
-
-		errs = deduplicateErrors(errs)
+	if len(errs) > 0 {
 		se.handleUnauthorizedErrors(ctx, errs...)
-		return consumererror.NewMetrics(multierr.Combine(errs...), md)
+		return consumererror.NewMetrics(multierr.Combine(errs...), droppedMetrics)
 	}
 
 	return nil

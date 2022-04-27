@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
 
@@ -41,13 +42,6 @@ var (
 	metricsMarshaler = otlp.NewProtobufMetricsMarshaler()
 	logsMarshaler    = otlp.NewProtobufLogsMarshaler()
 )
-
-type appendResponse struct {
-	// sent gives information if the data was sent or not
-	sent bool
-	// appended keeps state of appending new log line to the body
-	appended bool
-}
 
 // metricPair represents information required to send one metric to the Sumo Logic
 type metricPair struct {
@@ -98,19 +92,30 @@ func (b *bodyBuilder) Reset() {
 }
 
 // addLine adds line to builder and increments counter
-func (b *bodyBuilder) addLine(line string) error {
-	_, err := b.builder.WriteString(line)
-	if err != nil {
-		return err
-	}
+func (b *bodyBuilder) addLine(line string) {
+	b.builder.WriteString(line) // WriteString can't actually return an error
 	b.counter += 1
-	return nil
+}
+
+// addLine adds multiple lines to builder and increments counter
+func (b *bodyBuilder) addLines(lines []string) {
+	if len(lines) == 0 {
+		return
+	}
+
+	// add the first line separately to avoid a conditional in the loop
+	b.builder.WriteString(lines[0])
+
+	for _, line := range lines[1:] {
+		b.builder.WriteByte('\n')
+		b.builder.WriteString(line) // WriteString can't actually return an error
+	}
+	b.counter += len(lines)
 }
 
 // addNewLine adds newline to builder
-func (b *bodyBuilder) addNewLine() error {
-	err := b.builder.WriteByte('\n')
-	return err
+func (b *bodyBuilder) addNewLine() {
+	b.builder.WriteByte('\n') // WriteByte can't actually return an error
 }
 
 // Len returns builder content length
@@ -163,12 +168,6 @@ const (
 	contentEncodingGzip    string = "gzip"
 	contentEncodingDeflate string = "deflate"
 )
-
-func newAppendResponse() appendResponse {
-	return appendResponse{
-		appended: true,
-	}
-}
 
 func newSender(
 	logger *zap.Logger,
@@ -429,27 +428,18 @@ func (s *sender) sendNonOTLPLogs(ctx context.Context, rl plog.ResourceLogs, flds
 				continue
 			}
 
-			ar, err := s.appendAndSend(ctx, formattedLine, LogsPipeline, &body, flds)
+			sent, err := s.appendAndMaybeSend(ctx, []string{formattedLine}, LogsPipeline, &body, flds)
 			if err != nil {
 				errs = append(errs, err)
-				if ar.sent {
-					droppedRecords = append(droppedRecords, currentRecords...)
-				}
-
-				if !ar.appended {
-					droppedRecords = append(droppedRecords, lr)
-				}
+				droppedRecords = append(droppedRecords, currentRecords...)
 			}
 
-			// If data was sent, cleanup the currentTimeSeries counter
-			if ar.sent {
+			// If data was sent and either failed or succeeded, cleanup the currentRecords slice
+			if sent {
 				currentRecords = currentRecords[:0]
 			}
 
-			// If log has been appended to body, increment the currentTimeSeries
-			if ar.appended {
-				currentRecords = append(currentRecords, lr)
-			}
+			currentRecords = append(currentRecords, lr)
 		}
 	}
 
@@ -513,76 +503,101 @@ func (s *sender) sendOTLPLogs(ctx context.Context, ld plog.Logs) error {
 }
 
 // sendNonOTLPMetrics sends metrics in right format basing on the s.config.MetricFormat
-func (s *sender) sendNonOTLPMetrics(ctx context.Context, rm pmetric.ResourceMetrics, flds fields) ([]pmetric.Metric, error) {
+func (s *sender) sendNonOTLPMetrics(ctx context.Context, md pmetric.Metrics) (pmetric.Metrics, []error) {
 	if s.config.MetricFormat == OTLPMetricFormat {
-		return nil, fmt.Errorf("Attempting to send OTLP metrics as non-OTLP data")
+		return md, []error{fmt.Errorf("Attempting to send OTLP metrics as non-OTLP data")}
 	}
 
 	var (
-		body           bodyBuilder = newBodyBuilder()
-		errs           []error
-		droppedRecords []pmetric.Metric
-		currentRecords []pmetric.Metric
+		body             bodyBuilder = newBodyBuilder()
+		errs             []error
+		currentResources []pmetric.ResourceMetrics
+		flds             fields
 	)
 
-	sms := rm.ScopeMetrics()
-	for i := 0; i < sms.Len(); i++ {
-		sm := sms.At(i)
+	rms := md.ResourceMetrics()
+	droppedMetrics := pmetric.NewMetrics()
+	for i := 0; i < rms.Len(); i++ {
+		rm := rms.At(i)
+		flds = newFields(rm.Resource().Attributes())
+		sms := rm.ScopeMetrics()
 
-		for j := 0; j < sm.Metrics().Len(); j++ {
-			m := sm.Metrics().At(j)
-
-			var formattedLine string
-			var err error
-
-			switch s.config.MetricFormat {
-			case PrometheusFormat:
-				formattedLine = s.prometheusFormatter.metric2String(m, rm.Resource().Attributes())
-			case Carbon2Format:
-				formattedLine = carbon2Metric2String(m, rm.Resource().Attributes())
-			case GraphiteFormat:
-				formattedLine = s.graphiteFormatter.metric2String(m, rm.Resource().Attributes())
-			default:
-				err = fmt.Errorf("unexpected metric format: %s", s.config.MetricFormat)
-			}
-			if err != nil {
-				droppedRecords = append(droppedRecords, m)
-				errs = append(errs, err)
-				continue
-			}
-
-			ar, err := s.appendAndSend(ctx, formattedLine, MetricsPipeline, &body, flds)
-			if err != nil {
-				errs = append(errs, err)
-				if ar.sent {
-					droppedRecords = append(droppedRecords, currentRecords...)
+		// generally speaking, it's fine to send multiple ResourceMetrics in a single request
+		// the only exception is if the computed source headers are different, as those as unique per-request
+		// so we check if the headers are different here and send what we have if they are
+		if i > 0 {
+			currentSourceHeaders := getSourcesHeaders(s.sources, flds)
+			previousFields := newFields(rms.At(i - 1).Resource().Attributes())
+			previousSourceHeaders := getSourcesHeaders(s.sources, previousFields)
+			if !reflect.DeepEqual(previousSourceHeaders, currentSourceHeaders) && body.Len() > 0 {
+				if err := s.send(ctx, MetricsPipeline, body.toCountingReader(), previousFields); err != nil {
+					errs = append(errs, err)
+					for _, resource := range currentResources {
+						resource.MoveTo(droppedMetrics.ResourceMetrics().AppendEmpty())
+					}
 				}
-
-				if !ar.appended {
-					droppedRecords = append(droppedRecords, m)
-				}
-			}
-
-			// If data was sent, cleanup the currentTimeSeries counter
-			if ar.sent {
-				currentRecords = currentRecords[:0]
-			}
-
-			// If log has been appended to body, increment the currentTimeSeries
-			if ar.appended {
-				currentRecords = append(currentRecords, m)
+				body.Reset()
+				currentResources = currentResources[:0]
 			}
 		}
+
+		// transform the metrics into formatted lines ready to be sent
+		var formattedLines []string
+		var err error
+		for i := 0; i < sms.Len(); i++ {
+			sm := sms.At(i)
+
+			for j := 0; j < sm.Metrics().Len(); j++ {
+				m := sm.Metrics().At(j)
+
+				var formattedLine string
+
+				switch s.config.MetricFormat {
+				case PrometheusFormat:
+					formattedLine = s.prometheusFormatter.metric2String(m, rm.Resource().Attributes())
+				case Carbon2Format:
+					formattedLine = carbon2Metric2String(m, rm.Resource().Attributes())
+				case GraphiteFormat:
+					formattedLine = s.graphiteFormatter.metric2String(m, rm.Resource().Attributes())
+				default:
+					return md, []error{fmt.Errorf("unexpected metric format: %s", s.config.MetricFormat)}
+				}
+
+				formattedLines = append(formattedLines, formattedLine)
+			}
+		}
+
+		sent, err := s.appendAndMaybeSend(ctx, formattedLines, MetricsPipeline, &body, flds)
+		if err != nil {
+			errs = append(errs, err)
+			if sent {
+				// failed at sending, add the resource to the dropped metrics
+				// move instead of copy here to avoid duplicating data in memory on failure
+				for _, resource := range currentResources {
+					resource.MoveTo(droppedMetrics.ResourceMetrics().AppendEmpty())
+				}
+			}
+		}
+
+		// If data was sent, cleanup the currentResources slice
+		if sent {
+			currentResources = currentResources[:0]
+		}
+
+		currentResources = append(currentResources, rm)
+
 	}
 
 	if body.Len() > 0 {
 		if err := s.send(ctx, MetricsPipeline, body.toCountingReader(), flds); err != nil {
 			errs = append(errs, err)
-			droppedRecords = append(droppedRecords, currentRecords...)
+			for _, resource := range currentResources {
+				resource.MoveTo(droppedMetrics.ResourceMetrics().AppendEmpty())
+			}
 		}
 	}
 
-	return droppedRecords, multierr.Combine(errs...)
+	return droppedMetrics, errs
 }
 
 func (s *sender) sendOTLPMetrics(ctx context.Context, md pmetric.Metrics) error {
@@ -606,47 +621,36 @@ func (s *sender) sendOTLPMetrics(ctx context.Context, md pmetric.Metrics) error 
 	return s.send(ctx, MetricsPipeline, newCountingReader(md.DataPointCount()).withBytes(body), fields{})
 }
 
-// appendAndSend appends line to the request body that will be sent and sends
-// the accumulated data if the internal logBuffer has been filled (with maxBufferSize elements).
-// It returns appendResponse
-func (s *sender) appendAndSend(
+// appendAndMaybeSend appends line to the request body that will be sent and sends
+// the accumulated data if the internal logBuffer has been filled (with config.MaxRequestBodySize bytes).
+// It returns a boolean indicating if the data was sent and an error
+func (s *sender) appendAndMaybeSend(
 	ctx context.Context,
-	line string,
+	lines []string,
 	pipeline PipelineType,
 	body *bodyBuilder,
 	flds fields,
-) (appendResponse, error) {
-	var errors []error
-	ar := newAppendResponse()
+) (sent bool, err error) {
 
-	if body.Len() > 0 && body.Len()+len(line) >= s.config.MaxRequestBodySize {
-		ar.sent = true
-		if err := s.send(ctx, pipeline, body.toCountingReader(), flds); err != nil {
-			errors = append(errors, err)
-		}
+	linesTotalLength := 0
+	for _, line := range lines {
+		linesTotalLength += len(line) + 1 // count the newline as well
+	}
+
+	if body.Len() > 0 && body.Len()+linesTotalLength >= s.config.MaxRequestBodySize {
+		sent = true
+		err = s.send(ctx, pipeline, body.toCountingReader(), flds)
 		body.Reset()
 	}
 
 	if body.Len() > 0 {
 		// Do not add newline if the body is empty
-		if err := body.addNewLine(); err != nil {
-			errors = append(errors, err)
-			ar.appended = false
-		}
+		body.addNewLine()
 	}
 
-	if ar.appended {
-		// Do not append new line if separator was not appended
-		if err := body.addLine(line); err != nil {
-			errors = append(errors, err)
-			ar.appended = false
-		}
-	}
+	body.addLines(lines)
 
-	if len(errors) > 0 {
-		return ar, multierr.Combine(errors...)
-	}
-	return ar, nil
+	return sent, err
 }
 
 // sendTraces sends traces in right format basing on the s.config.TraceFormat
@@ -699,21 +703,31 @@ func addCompressHeader(req *http.Request, enc CompressEncodingType) error {
 }
 
 func addSourcesHeaders(req *http.Request, sources sourceFormats, flds fields) {
+	sourceHeaderValues := getSourcesHeaders(sources, flds)
+
+	for headerName, headerValue := range sourceHeaderValues {
+		req.Header.Add(headerName, headerValue)
+	}
+}
+
+func getSourcesHeaders(sources sourceFormats, flds fields) map[string]string {
+	sourceHeaderValues := map[string]string{}
 	if !flds.isInitialized() {
-		return
+		return sourceHeaderValues
 	}
 
 	if sources.host.isSet() {
-		req.Header.Add(headerHost, sources.host.format(flds))
+		sourceHeaderValues[headerHost] = sources.host.format(flds)
 	}
 
 	if sources.name.isSet() {
-		req.Header.Add(headerName, sources.name.format(flds))
+		sourceHeaderValues[headerName] = sources.name.format(flds)
 	}
 
 	if sources.category.isSet() {
-		req.Header.Add(headerCategory, sources.category.format(flds))
+		sourceHeaderValues[headerCategory] = sources.category.format(flds)
 	}
+	return sourceHeaderValues
 }
 
 func addLogsHeaders(req *http.Request, lf LogFormatType, flds fields) {
