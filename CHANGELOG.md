@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.50.0-sumo-0...main
 
-- feat: add rawk8seventsreceiver [#547][#547]
+## [v0.50.0-sumo-0]
+
+### Released 2022-04-29
+
+Aside from upstream changes, this release only contains a performance fix to metrics batching in the Sumo Logic exporter.
+The performance improvement is very substantial, so we recommend upgrading to this version immediately after `0.49.0-sumo-0`.
 
 ### Changed
 
@@ -19,8 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fix: fix(sumologicexporter): batch metrics if source headers match [#561][#561]
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.49.0-sumo-0...main
-[#547]: https://github.com/SumoLogic/sumologic-otel-collector/pull/547
+[v0.50.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.49.0-sumo-0...v0.50.0-sumo-0
 [#561]: https://github.com/SumoLogic/sumologic-otel-collector/pull/561
 [#562]: https://github.com/SumoLogic/sumologic-otel-collector/pull/562
 
