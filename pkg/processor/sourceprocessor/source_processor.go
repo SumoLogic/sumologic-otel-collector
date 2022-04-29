@@ -162,15 +162,15 @@ func (sp *sourceProcessor) ProcessTraces(ctx context.Context, td ptrace.Traces) 
 		res := sp.processResource(rs.Resource())
 		atts := res.Attributes()
 
-		ilss := rs.InstrumentationLibrarySpans()
+		ss := rs.ScopeSpans()
 		totalSpans := 0
-		for j := 0; j < ilss.Len(); j++ {
-			ils := ilss.At(j)
+		for j := 0; j < ss.Len(); j++ {
+			ils := ss.At(j)
 			totalSpans += ils.Spans().Len()
 		}
 
 		if sp.isFilteredOut(atts) {
-			rs.InstrumentationLibrarySpans().RemoveIf(func(ptrace.ScopeSpans) bool { return true })
+			rs.ScopeSpans().RemoveIf(func(ptrace.ScopeSpans) bool { return true })
 			observability.RecordFilteredOutN(totalSpans)
 		} else {
 			observability.RecordFilteredInN(totalSpans)
@@ -190,7 +190,7 @@ func (sp *sourceProcessor) ProcessMetrics(ctx context.Context, md pmetric.Metric
 		atts := res.Attributes()
 
 		if sp.isFilteredOut(atts) {
-			rs.InstrumentationLibraryMetrics().RemoveIf(func(pmetric.ScopeMetrics) bool { return true })
+			rs.ScopeMetrics().RemoveIf(func(pmetric.ScopeMetrics) bool { return true })
 		}
 	}
 
@@ -209,7 +209,7 @@ func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md plog.Logs) (plog.
 		atts := res.Attributes()
 
 		if sp.isFilteredOut(atts) {
-			rs.InstrumentationLibraryLogs().RemoveIf(func(plog.ScopeLogs) bool { return true })
+			rs.ScopeLogs().RemoveIf(func(plog.ScopeLogs) bool { return true })
 		}
 
 		// Due to fluent-bit configuration for sumologic kubernetes collection,
@@ -221,10 +221,10 @@ func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md plog.Logs) (plog.
 		// Related issue: https://github.com/SumoLogic/sumologic-kubernetes-collection/issues/1758
 		// ToDo: remove this functionality when the issue is resolved
 
-		ills := rs.InstrumentationLibraryLogs()
-		for j := 0; j < ills.Len(); j++ {
-			ill := ills.At(j)
-			logs := ill.LogRecords()
+		sls := rs.ScopeLogs()
+		for j := 0; j < sls.Len(); j++ {
+			sl := sls.At(j)
+			logs := sl.LogRecords()
 			for k := 0; k < logs.Len(); k++ {
 				log := logs.At(k)
 				if log.Body().Type() == pcommon.ValueTypeString {

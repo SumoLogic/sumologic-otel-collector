@@ -141,9 +141,9 @@ func newTrace() (*TraceData, pcommon.Map) {
 
 	traces := ptrace.NewTraces()
 	rs := traces.ResourceSpans().AppendEmpty()
-	ils := rs.InstrumentationLibrarySpans().AppendEmpty()
+	ss := rs.ScopeSpans().AppendEmpty()
 
-	spans := ils.Spans()
+	spans := ss.Spans()
 	spans.EnsureCapacity(1)
 
 	span := spans.AppendEmpty()

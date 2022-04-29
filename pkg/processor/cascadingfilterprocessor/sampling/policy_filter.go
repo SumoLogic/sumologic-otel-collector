@@ -153,9 +153,9 @@ func (pe *policyEvaluator) evaluateRules(_ pcommon.TraceID, trace *TraceData) De
 				matchingNumericAttrFound = checkIfNumericAttrFound(res.Attributes(), pe.numericAttr)
 			}
 
-			ils := rs.At(i).InstrumentationLibrarySpans()
-			for j := 0; j < ils.Len(); j++ {
-				spans := ils.At(j).Spans()
+			ss := rs.At(i).ScopeSpans()
+			for j := 0; j < ss.Len(); j++ {
+				spans := ss.At(j).Spans()
 				spanCount += spans.Len()
 				for k := 0; k < spans.Len(); k++ {
 					span := spans.At(k)

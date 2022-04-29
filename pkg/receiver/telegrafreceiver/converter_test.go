@@ -568,7 +568,7 @@ func TestConverter(t *testing.T) {
 				resourceMetrics := out.ResourceMetrics().At(0)
 				assertResourceAttributes(t, m.TagList(), resourceMetrics.Resource())
 
-				actual := resourceMetrics.InstrumentationLibraryMetrics().At(0).Metrics()
+				actual := resourceMetrics.ScopeMetrics().At(0).Metrics()
 
 				expected := tt.expectedFn()
 				require.Equal(t, expected.Len(), actual.Len())

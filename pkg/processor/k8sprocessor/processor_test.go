@@ -259,7 +259,7 @@ func generateTraces(resourceFunc ...generateResourceFunc) ptrace.Traces {
 		res := rs.Resource()
 		resFun(res)
 	}
-	span := rs.InstrumentationLibrarySpans().AppendEmpty().Spans().AppendEmpty()
+	span := rs.ScopeSpans().AppendEmpty().Spans().AppendEmpty()
 	span.SetName("foobar")
 	return t
 }
@@ -271,7 +271,7 @@ func generateMetrics(resourceFunc ...generateResourceFunc) pmetric.Metrics {
 		res := ms.Resource()
 		resFun(res)
 	}
-	metric := ms.InstrumentationLibraryMetrics().AppendEmpty().Metrics().AppendEmpty()
+	metric := ms.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty()
 	metric.SetName("foobar")
 	return m
 }
@@ -283,7 +283,7 @@ func generateLogs(resourceFunc ...generateResourceFunc) plog.Logs {
 		res := ls.Resource()
 		resFun(res)
 	}
-	log := ls.InstrumentationLibraryLogs().AppendEmpty().LogRecords().AppendEmpty()
+	log := ls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty()
 	log.SetName("foobar")
 	return l
 }

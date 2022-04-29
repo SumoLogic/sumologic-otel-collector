@@ -88,9 +88,9 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 				matchingNumericAttrFound = checkIfNumericAttrFound(res.Attributes(), dte.numericAttr)
 			}
 
-			ils := rs.At(i).InstrumentationLibrarySpans()
-			for j := 0; j < ils.Len(); j++ {
-				spans := ils.At(j).Spans()
+			ss := rs.At(i).ScopeSpans()
+			for j := 0; j < ss.Len(); j++ {
+				spans := ss.At(j).Spans()
 				for k := 0; k < spans.Len(); k++ {
 					span := spans.At(k)
 
