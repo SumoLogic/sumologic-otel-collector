@@ -31,3 +31,6 @@ nodes
 
 # Go workspace settings
 go.work*
+
+# udpdemux binary
+pkg/tools/udpdemux/udpdemux
