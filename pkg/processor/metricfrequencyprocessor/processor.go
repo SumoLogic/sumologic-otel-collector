@@ -18,13 +18,13 @@ func (mfp *metricsfrequencyprocessor) ProcessMetrics(_ context.Context, md pmetr
 	rms := md.ResourceMetrics()
 	for i := 0; i < rms.Len(); i++ {
 		rm := rms.At(i)
-		ilms := rm.InstrumentationLibraryMetrics()
-		for j := 0; j < ilms.Len(); j++ {
-			ilm := ilms.At(j)
+		sms := rm.ScopeMetrics()
+		for j := 0; j < sms.Len(); j++ {
+			ilm := sms.At(j)
 			metrics := ilm.Metrics()
 			metrics.RemoveIf(mfp.sieve.Sift)
 		}
-		ilms.RemoveIf(metricSliceEmpty)
+		sms.RemoveIf(metricSliceEmpty)
 	}
 	rms.RemoveIf(ilmSliceEmpty)
 
@@ -36,5 +36,5 @@ func metricSliceEmpty(metrics pmetric.ScopeMetrics) bool {
 }
 
 func ilmSliceEmpty(metrics pmetric.ResourceMetrics) bool {
-	return metrics.InstrumentationLibraryMetrics().Len() == 0
+	return metrics.ScopeMetrics().Len() == 0
 }

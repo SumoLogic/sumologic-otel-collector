@@ -106,9 +106,9 @@ func createTrace(fsp *cascadingFilterSpanProcessor, numSpans int, durationMicros
 
 	traces := ptrace.NewTraces()
 	rs := traces.ResourceSpans().AppendEmpty()
-	ils := rs.InstrumentationLibrarySpans().AppendEmpty()
+	ss := rs.ScopeSpans().AppendEmpty()
 
-	spans := ils.Spans()
+	spans := ss.Spans()
 	spans.EnsureCapacity(numSpans)
 
 	for i := 0; i < numSpans; i++ {
@@ -188,7 +188,7 @@ func TestDropTraces(t *testing.T) {
 
 	trace1 := createTrace(cascading, 8, 1000000)
 	trace2 := createTrace(cascading, 8, 1000000)
-	trace2.ReceivedBatches[0].ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(2).SetName("health-check")
+	trace2.ReceivedBatches[0].ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(2).SetName("health-check")
 	require.False(t, cascading.shouldBeDropped(pcommon.NewTraceID([16]byte{0}), trace1))
 	require.True(t, cascading.shouldBeDropped(pcommon.NewTraceID([16]byte{0}), trace2))
 }
@@ -198,7 +198,7 @@ func TestDropTracesAndNotLimitOthers(t *testing.T) {
 
 	trace1 := createTrace(cascading, 1000, 1000000)
 	trace2 := createTrace(cascading, 8, 1000000)
-	trace2.ReceivedBatches[0].ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(2).SetName("health-check")
+	trace2.ReceivedBatches[0].ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(2).SetName("health-check")
 	trace3 := createTrace(cascading, 5000, 1000000)
 
 	decision, policy := cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{0}), trace1)
@@ -222,7 +222,7 @@ func TestDropTracesAndAutoRateOthers(t *testing.T) {
 
 	trace1 := createTrace(cascading, 20, 1000000)
 	trace2 := createTrace(cascading, 8, 1000000)
-	trace2.ReceivedBatches[0].ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(2).SetName("health-check")
+	trace2.ReceivedBatches[0].ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(2).SetName("health-check")
 	trace3 := createTrace(cascading, 20, 1000000)
 
 	decision, policy := cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{0}), trace1)

@@ -87,8 +87,8 @@ func newLogsDataWithLogs(resourceAttrs map[string]string, logAttrs map[string]st
 		attrs.UpsertString(k, v)
 	}
 
-	ills := rs.InstrumentationLibraryLogs().AppendEmpty()
-	log := ills.LogRecords().AppendEmpty()
+	sls := rs.ScopeLogs().AppendEmpty()
+	log := sls.LogRecords().AppendEmpty()
 	log.Body().SetStringVal("dummy log")
 	for k, v := range logAttrs {
 		log.Attributes().InsertString(k, v)
@@ -110,8 +110,8 @@ func newTraceData(labels map[string]string) ptrace.Traces {
 func newTraceDataWithSpans(_resourceLabels map[string]string, _spanLabels map[string]string) ptrace.Traces {
 	// This will be very small attribute set, the actual data will be at span level
 	td := newTraceData(_resourceLabels)
-	ils := td.ResourceSpans().At(0).InstrumentationLibrarySpans().AppendEmpty()
-	span := ils.Spans().AppendEmpty()
+	sls := td.ResourceSpans().At(0).ScopeSpans().AppendEmpty()
+	span := sls.Spans().AppendEmpty()
 	span.SetName("foo")
 	spanAttrs := span.Attributes()
 	for k, v := range _spanLabels {
@@ -124,8 +124,8 @@ func prepareAttributesForAssert(t ptrace.Traces) {
 	for i := 0; i < t.ResourceSpans().Len(); i++ {
 		rss := t.ResourceSpans().At(i)
 		rss.Resource().Attributes().Sort()
-		for j := 0; j < rss.InstrumentationLibrarySpans().Len(); j++ {
-			ss := rss.InstrumentationLibrarySpans().At(j).Spans()
+		for j := 0; j < rss.ScopeSpans().Len(); j++ {
+			ss := rss.ScopeSpans().At(j).Spans()
 			for k := 0; k < ss.Len(); k++ {
 				ss.At(k).Attributes().Sort()
 			}
@@ -146,7 +146,7 @@ func assertSpansEqual(t *testing.T, t1 ptrace.Traces, t2 ptrace.Traces) {
 	for i := 0; i < t1.ResourceSpans().Len(); i++ {
 		rss1 := t1.ResourceSpans().At(i)
 		rss2 := t2.ResourceSpans().At(i)
-		assert.Equal(t, rss1.InstrumentationLibrarySpans(), rss2.InstrumentationLibrarySpans())
+		assert.Equal(t, rss1.ScopeSpans(), rss2.ScopeSpans())
 	}
 }
 
@@ -274,7 +274,7 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 			}(),
 			want: func() ptrace.Traces {
 				want := newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
-				want.ResourceSpans().At(0).InstrumentationLibrarySpans().
+				want.ResourceSpans().At(0).ScopeSpans().
 					RemoveIf(func(ptrace.ScopeSpans) bool { return true })
 				return want
 			}(),
@@ -290,7 +290,7 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 			}(),
 			want: func() ptrace.Traces {
 				want := newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
-				want.ResourceSpans().At(0).InstrumentationLibrarySpans().
+				want.ResourceSpans().At(0).ScopeSpans().
 					RemoveIf(func(ptrace.ScopeSpans) bool { return true })
 				return want
 			}(),
@@ -306,7 +306,7 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 			}(),
 			want: func() ptrace.Traces {
 				want := newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
-				want.ResourceSpans().At(0).InstrumentationLibrarySpans().
+				want.ResourceSpans().At(0).ScopeSpans().
 					RemoveIf(func(ptrace.ScopeSpans) bool { return true })
 				return want
 			}(),
@@ -342,7 +342,7 @@ func TestTraceSourceFilteringOutByExclude(t *testing.T) {
 		UpsertString("pod_annotation_sumologic.com/exclude", "true")
 
 	want := newTraceDataWithSpans(limitedLabelsWithMeta, mergedK8sLabels)
-	want.ResourceSpans().At(0).InstrumentationLibrarySpans().
+	want.ResourceSpans().At(0).ScopeSpans().
 		RemoveIf(func(ptrace.ScopeSpans) bool { return true })
 
 	rtp := newSourceProcessor(cfg)
@@ -577,7 +577,7 @@ func TestLogProcessorJson(t *testing.T) {
 			inputLog.
 				ResourceLogs().
 				AppendEmpty().
-				InstrumentationLibraryLogs().
+				ScopeLogs().
 				AppendEmpty().
 				LogRecords().
 				AppendEmpty().
@@ -592,10 +592,10 @@ func TestLogProcessorJson(t *testing.T) {
 			rss := td.ResourceLogs()
 			require.Equal(t, 1, rss.Len())
 
-			ills := rss.At(0).InstrumentationLibraryLogs()
-			require.Equal(t, 1, ills.Len())
+			sls := rss.At(0).ScopeLogs()
+			require.Equal(t, 1, sls.Len())
 
-			logs := ills.At(0).LogRecords()
+			logs := sls.At(0).LogRecords()
 			require.Equal(t, 1, logs.Len())
 
 			log := logs.At(0)

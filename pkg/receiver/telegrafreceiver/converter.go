@@ -54,15 +54,15 @@ func (mc metricConverter) Convert(m telegraf.Metric) (pmetric.Metrics, error) {
 		rAttributes.InsertString(t.Key, t.Value)
 	}
 
-	ilm := rm.InstrumentationLibraryMetrics().AppendEmpty()
+	sm := rm.ScopeMetrics().AppendEmpty()
 
-	il := ilm.InstrumentationLibrary()
-	il.SetName(typeStr)
-	il.SetVersion(versionStr)
+	scope := sm.Scope()
+	scope.SetName(typeStr)
+	scope.SetVersion(versionStr)
 
 	tim := m.Time()
 
-	metrics := ilm.Metrics()
+	metrics := sm.Metrics()
 
 	opts := []MetricOpt{
 		// Note: don't copy telegraf tags to record level attributes.
