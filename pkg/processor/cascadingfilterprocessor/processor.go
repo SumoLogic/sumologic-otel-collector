@@ -457,9 +457,9 @@ func updateProbabilisticRateTag(traces ptrace.Traces, probabilisticSpans int64, 
 	rs := traces.ResourceSpans()
 
 	for i := 0; i < rs.Len(); i++ {
-		ils := rs.At(i).InstrumentationLibrarySpans()
-		for j := 0; j < ils.Len(); j++ {
-			spans := ils.At(j).Spans()
+		ss := rs.At(i).ScopeSpans()
+		for j := 0; j < ss.Len(); j++ {
+			spans := ss.At(j).Spans()
 			for k := 0; k < spans.Len(); k++ {
 				attrs := spans.At(k).Attributes()
 				av, found := attrs.Get(AttributeSamplingProbability)
@@ -478,9 +478,9 @@ func updateFilteringTag(traces ptrace.Traces) {
 	rs := traces.ResourceSpans()
 
 	for i := 0; i < rs.Len(); i++ {
-		ils := rs.At(i).InstrumentationLibrarySpans()
-		for j := 0; j < ils.Len(); j++ {
-			spans := ils.At(j).Spans()
+		ss := rs.At(i).ScopeSpans()
+		for j := 0; j < ss.Len(); j++ {
+			spans := ss.At(j).Spans()
 			for k := 0; k < spans.Len(); k++ {
 				attrs := spans.At(k).Attributes()
 				attrs.UpsertString(AttributeSamplingRule, filteredRuleValue)
@@ -600,9 +600,9 @@ func (cfsp *cascadingFilterSpanProcessor) ConsumeTraces(ctx context.Context, td 
 
 func (cfsp *cascadingFilterSpanProcessor) groupSpansByTraceKey(resourceSpans ptrace.ResourceSpans) map[traceKey][]*ptrace.Span {
 	idToSpans := make(map[traceKey][]*ptrace.Span)
-	ilss := resourceSpans.InstrumentationLibrarySpans()
-	for j := 0; j < ilss.Len(); j++ {
-		ils := ilss.At(j)
+	ss := resourceSpans.ScopeSpans()
+	for j := 0; j < ss.Len(); j++ {
+		ils := ss.At(j)
 		spansLen := ils.Spans().Len()
 		for k := 0; k < spansLen; k++ {
 			span := ils.Spans().At(k)
@@ -758,8 +758,8 @@ func prepareTraceBatch(rss ptrace.ResourceSpans, spans []*ptrace.Span) ptrace.Tr
 	traceTd := ptrace.NewTraces()
 	rs := traceTd.ResourceSpans().AppendEmpty()
 	rss.Resource().CopyTo(rs.Resource())
-	ils := rs.InstrumentationLibrarySpans().AppendEmpty()
-	ilsSpans := ils.Spans()
+	ss := rs.ScopeSpans().AppendEmpty()
+	ilsSpans := ss.Spans()
 	for _, span := range spans {
 		span.CopyTo(ilsSpans.AppendEmpty())
 	}

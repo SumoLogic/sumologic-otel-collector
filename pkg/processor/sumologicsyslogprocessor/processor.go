@@ -82,10 +82,10 @@ func (ssp *sumologicSyslogProcessor) ProcessLogs(ctx context.Context, ld plog.Lo
 	for i := 0; i < rls.Len(); i++ {
 		rl := rls.At(i)
 
-		ills := rl.InstrumentationLibraryLogs()
+		sls := rl.ScopeLogs()
 		// iterate over InstrumentationLibraryLogs
-		for j := 0; j < ills.Len(); j++ {
-			ill := ills.At(j)
+		for j := 0; j < sls.Len(); j++ {
+			ill := sls.At(j)
 
 			// iterate over Logs
 			logs := ill.LogRecords()

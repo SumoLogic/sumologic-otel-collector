@@ -41,7 +41,7 @@ import (
 
 func LogRecordsToLogs(records []plog.LogRecord) plog.Logs {
 	logs := plog.NewLogs()
-	logsSlice := logs.ResourceLogs().AppendEmpty().InstrumentationLibraryLogs().AppendEmpty().LogRecords()
+	logsSlice := logs.ResourceLogs().AppendEmpty().ScopeLogs().AppendEmpty().LogRecords()
 	for _, record := range records {
 		record.CopyTo(logsSlice.AppendEmpty())
 	}
@@ -216,10 +216,10 @@ func TestAllFailed(t *testing.T) {
 
 	logs := plog.NewLogs()
 	logsSlice := logs.ResourceLogs().AppendEmpty()
-	logsRecords1 := logsSlice.InstrumentationLibraryLogs().AppendEmpty().LogRecords()
+	logsRecords1 := logsSlice.ScopeLogs().AppendEmpty().LogRecords()
 	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
 
-	logsRecords2 := logsSlice.InstrumentationLibraryLogs().AppendEmpty().LogRecords()
+	logsRecords2 := logsSlice.ScopeLogs().AppendEmpty().LogRecords()
 	logsRecords2.AppendEmpty().Body().SetStringVal("Another example log")
 
 	logsExpected := plog.NewLogs()
@@ -253,10 +253,10 @@ func TestPartiallyFailed(t *testing.T) {
 
 	logs := plog.NewLogs()
 	logsSlice1 := logs.ResourceLogs().AppendEmpty()
-	logsRecords1 := logsSlice1.InstrumentationLibraryLogs().AppendEmpty().LogRecords()
+	logsRecords1 := logsSlice1.ScopeLogs().AppendEmpty().LogRecords()
 	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
 	logsSlice2 := logs.ResourceLogs().AppendEmpty()
-	logsRecords2 := logsSlice2.InstrumentationLibraryLogs().AppendEmpty().LogRecords()
+	logsRecords2 := logsSlice2.ScopeLogs().AppendEmpty().LogRecords()
 	logsRecords2.AppendEmpty().Body().SetStringVal("Another example log")
 
 	logsExpected := plog.NewLogs()
@@ -656,7 +656,7 @@ func TestPushLogs_DontRemoveSourceAttributes(t *testing.T) {
 	createLogs := func() plog.Logs {
 		logs := plog.NewLogs()
 		resourceLogs := logs.ResourceLogs().AppendEmpty()
-		logsSlice := resourceLogs.InstrumentationLibraryLogs().AppendEmpty().LogRecords()
+		logsSlice := resourceLogs.ScopeLogs().AppendEmpty().LogRecords()
 
 		logRecords := make([]plog.LogRecord, 2)
 		logRecords[0] = plog.NewLogRecord()
@@ -1373,7 +1373,7 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 				metrics := pmetric.NewMetrics()
 				{
 					m := metrics.ResourceMetrics().AppendEmpty().
-						InstrumentationLibraryMetrics().AppendEmpty().
+						ScopeMetrics().AppendEmpty().
 						Metrics().AppendEmpty()
 					m.SetName("cpu_usage_active")
 					m.SetDataType(pmetric.MetricDataTypeGauge)
@@ -1441,7 +1441,7 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 				metrics := pmetric.NewMetrics()
 				{
 					m := metrics.ResourceMetrics().AppendEmpty().
-						InstrumentationLibraryMetrics().AppendEmpty().
+						ScopeMetrics().AppendEmpty().
 						Metrics().AppendEmpty()
 					m.SetName("cpu_usage_active")
 					m.SetDataType(pmetric.MetricDataTypeGauge)

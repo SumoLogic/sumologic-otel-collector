@@ -161,9 +161,9 @@ func newTraceAttrs(operationName string, duration time.Duration, numberOfSpans i
 
 	traces := ptrace.NewTraces()
 	rs := traces.ResourceSpans().AppendEmpty()
-	ils := rs.InstrumentationLibrarySpans().AppendEmpty()
+	ss := rs.ScopeSpans().AppendEmpty()
 
-	spans := ils.Spans()
+	spans := ss.Spans()
 	spans.EnsureCapacity(numberOfSpans)
 
 	for i := 0; i < numberOfSpans; i++ {

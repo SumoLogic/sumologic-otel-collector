@@ -249,7 +249,7 @@ func metricPairToMetrics(mp ...metricPair) pmetric.Metrics {
 		rms := metrics.ResourceMetrics().AppendEmpty()
 		record.attributes.CopyTo(rms.Resource().Attributes())
 		// TODO: Change metricPair to have an init metric func.
-		record.metric.CopyTo(rms.InstrumentationLibraryMetrics().AppendEmpty().Metrics().AppendEmpty())
+		record.metric.CopyTo(rms.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
 	}
 
 	return metrics
@@ -276,7 +276,7 @@ func metricAndAttributesToPdataMetrics(metric pmetric.Metric, attributes pcommon
 	metrics.ResourceMetrics().EnsureCapacity(attributes.Len())
 	rms := metrics.ResourceMetrics().AppendEmpty()
 	attributes.CopyTo(rms.Resource().Attributes())
-	metric.CopyTo(rms.InstrumentationLibraryMetrics().AppendEmpty().Metrics().AppendEmpty())
+	metric.CopyTo(rms.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
 
 	return metrics
 }
@@ -296,7 +296,7 @@ func exampleTrace() ptrace.Traces {
 	rs.Resource().Attributes().UpsertString("_sourceHost", "source_host")
 	rs.Resource().Attributes().UpsertString("_sourceName", "source_name")
 	rs.Resource().Attributes().UpsertString("_sourceCategory", "source_category")
-	span := rs.InstrumentationLibrarySpans().AppendEmpty().Spans().AppendEmpty()
+	span := rs.ScopeSpans().AppendEmpty().Spans().AppendEmpty()
 	span.SetTraceID(pcommon.NewTraceID([16]byte{0x5B, 0x8E, 0xFF, 0xF7, 0x98, 0x3, 0x81, 0x3, 0xD2, 0x69, 0xB6, 0x33, 0x81, 0x3F, 0xC6, 0xC}))
 	span.SetSpanID(pcommon.NewSpanID([8]byte{0xEE, 0xE1, 0x9B, 0x7E, 0xC3, 0xC1, 0xB1, 0x73}))
 	span.SetName("testSpan")

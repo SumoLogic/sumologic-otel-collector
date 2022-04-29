@@ -567,10 +567,10 @@ func collectSpanIds(trace *ptrace.Traces) []pcommon.SpanID {
 	spanIDs := make([]pcommon.SpanID, 0)
 
 	for i := 0; i < trace.ResourceSpans().Len(); i++ {
-		ilss := trace.ResourceSpans().At(i).InstrumentationLibrarySpans()
+		ss := trace.ResourceSpans().At(i).ScopeSpans()
 
-		for j := 0; j < ilss.Len(); j++ {
-			ils := ilss.At(j)
+		for j := 0; j < ss.Len(); j++ {
+			ils := ss.At(j)
 
 			for k := 0; k < ils.Spans().Len(); k++ {
 				span := ils.Spans().At(k)
@@ -585,7 +585,7 @@ func collectSpanIds(trace *ptrace.Traces) []pcommon.SpanID {
 //nolint:unused
 func findTrace(a []ptrace.Traces, traceID pcommon.TraceID) *ptrace.Traces {
 	for _, batch := range a {
-		id := batch.ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(0).TraceID()
+		id := batch.ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(0).TraceID()
 		if traceID.Bytes() == id.Bytes() {
 			return &batch
 		}
@@ -602,7 +602,7 @@ func generateIdsAndBatches(numIds int) ([]pcommon.TraceID, []ptrace.Traces) {
 		// Send each span in a separate batch
 		for j := 0; j <= i; j++ {
 			td := simpleTraces()
-			span := td.ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(0)
+			span := td.ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(0)
 			span.SetTraceID(traceIds[i])
 
 			spanID++
@@ -624,8 +624,8 @@ func simpleTracesWithID(traceID pcommon.TraceID) ptrace.Traces {
 	traces := ptrace.NewTraces()
 	rs := traces.ResourceSpans().AppendEmpty()
 
-	ils := rs.InstrumentationLibrarySpans().AppendEmpty()
-	span := ils.Spans().AppendEmpty()
+	ss := rs.ScopeSpans().AppendEmpty()
+	span := ss.Spans().AppendEmpty()
 	span.SetTraceID(traceID)
 
 	return traces
