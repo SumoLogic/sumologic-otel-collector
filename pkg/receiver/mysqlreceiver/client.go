@@ -105,8 +105,6 @@ func Query(c mySQLClient, query string) (map[int]string,error) {
 
 		queryFetchResult, err := ExecuteQueryandFetchRecords(c,query)
 		myEntireRecords = queryFetchResult
-		// fmt.Println(query)
-		// fmt.Println(queryFetchResult)
 		if err != nil {
 			c.logger.Error("Error in executing query and fetching records", zap.Error(err))
 			os.Exit(1)
@@ -125,7 +123,6 @@ func Query(c mySQLClient, query string) (map[int]string,error) {
 			SaveState(c,lastRecordStateNumber)
 		}
 	}
-	// fmt.Println(myEntireRecords)
 	return myEntireRecords,nil
 }
 
