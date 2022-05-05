@@ -15,5 +15,8 @@ type Config struct {
         confignet.NetAddr                       `mapstructure:",squash"`
         CollectionInterval                      string `mapstructure:"collection_interval,omitempty"`
         Query                                   string `mapstructure:"query"`
+        IndexColumnName                         string `mapstructure:"index_column_name,omitempty"`
+	InitialIndexColumnStartValue            string `mapstructure:"initial_index_column_start_value,omitempty"`
+	IndexColumnType                         string `mapstructure:"index_column_type,omitempty"`
 
 }
