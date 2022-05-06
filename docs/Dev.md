@@ -65,11 +65,56 @@ make add-tag push-tag
 
 Updating OT core involves:
 
+1. Rebasing our upstream processor patches on the new core version
 1. Updating the version number where necessary
 1. Verifying that Sumo OT distro builds correctly
 1. Fixing lint errors from deprecations
 
-The first two steps of this list are covered by the `update-ot-core` Makefile target. Run:
+### Updating patched processors
+
+We currently maintain patches for three upstream processors: `resourceprocessor`, `attributesprocessor` and `filterprocessor`.
+The patches live in our [contrib fork repository][contrib_fork], on the `vX.X.X-filterprocessor` branch. See [comments][builder_config]
+in the builder configuration for more details.
+
+To update this patchset for the new OT core version:
+
+1. Checkout the contrib fork repo, add upstream as a remote, and pull the new version tag.
+
+   ```bash
+   export CURRENT_VERSION=vX.X.X
+   export NEW_VERSION=vY.Y.Y
+   git clone https://github.com/SumoLogic/opentelemetry-collector-contrib && cd opentelemetry-collector-contrib
+   git remote add upstream https://github.com/open-telemetry/opentelemetry-collector-contrib
+   git pull upstream "${NEW_VERSION}" "${CURRENT_VERSION}"
+   ```
+
+1. Create a new branch for the patchset and rebase it on the new version
+
+   ```bash
+   git switch "${CURRENT_VERSION}-filterprocessor"
+   git checkout -b "${NEW_VERSION}-filterprocessor"
+   git rebase -i --onto "${NEW_VERSION}" "${OLD_VERSION}" "${NEW_VERSION}-filterprocessor"
+   ```
+
+1. Resolve conflicts and make sure tests and linters pass afterwards.
+   You can run them by invoking the following in the project root:
+
+   ```bash
+   make golint
+   make gotest
+   ```
+
+1. Push the new branch to the fork repo and write down the commit SHA
+
+   ```bash
+   git push origin "${NEW_VERSION}-filterprocessor"
+   ```
+
+1. Update the [builder configuration][builder_config] with the new commit SHA
+
+### Updating OT distro
+
+The second and third step of this list are covered by the `update-ot-core` Makefile target. Run:
 
 ```shell
 make update-ot-core OT_CORE_NEW_VERSION=x.x.x
@@ -102,3 +147,4 @@ approve the workflow to run. Note that you need commiter rights in this reposito
 [tracing_tests]: ../.circleci/config.yml
 [circleci]: https://app.circleci.com/pipelines/github/SumoLogic/sumologic-otel-collector
 [circleci_approve]: ../images/circleci_approve_workflow.png
+[contrib_fork]: https://github.com/SumoLogic/opentelemetry-collector-contrib
