@@ -39,7 +39,7 @@ func (m *mySQLReceiver) Start(ctx context.Context, host component.Host) error {
 		return err
 	}
 	for _, element := range data {
-        logs := m.convertToLog(element)
+		logs := m.convertToLog(element)
 		m.consumer.ConsumeLogs(ctx, logs)
 	}
 	return nil
