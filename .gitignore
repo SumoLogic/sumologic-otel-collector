@@ -27,7 +27,8 @@ chef_guid
 local-mode-cache
 nodes
 
-.vscode
+.vscode/*
+!.vscode/settings.json
 
 # Go workspace settings
 go.work*
