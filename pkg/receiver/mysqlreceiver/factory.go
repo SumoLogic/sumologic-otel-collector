@@ -1,7 +1,8 @@
-package mysqlreceiver 
+package mysqlreceiver
 
 import (
 	"context"
+
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/confignet"
@@ -11,7 +12,6 @@ import (
 const (
 	typeStr = "mysql"
 )
-
 
 func NewFactory() component.ReceiverFactory {
 	return component.NewReceiverFactory(
@@ -24,8 +24,8 @@ func createDefaultConfig() config.Receiver {
 	rs := config.NewReceiverSettings(config.NewComponentID(typeStr))
 
 	return &Config{
-		ReceiverSettings:   &rs,
-		CollectionInterval: "10s",
+		ReceiverSettings:     &rs,
+		CollectionInterval:   "10s",
 		AllowNativePasswords: true,
 		Username:             "Username",
 		NetAddr: confignet.NetAddr{
@@ -35,14 +35,13 @@ func createDefaultConfig() config.Receiver {
 	}
 }
 
-
 func CreateLogsReceiver(
 	_ context.Context,
 	params component.ReceiverCreateSettings,
 	rConf config.Receiver,
 	consumer consumer.Logs,
 ) (component.LogsReceiver, error) {
-	
+
 	cfg := rConf.(*Config)
 	return newMySQLReceiver(params.Logger, cfg, consumer)
 }

@@ -1,27 +1,28 @@
-package mysqlreceiver 
- 
+package mysqlreceiver
+
 import (
 	"context"
-	"go.opentelemetry.io/collector/consumer"
+
 	"go.opentelemetry.io/collector/component"
-	"go.uber.org/zap"
+	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/model/pdata"
+	"go.uber.org/zap"
 )
 
 type mySQLReceiver struct {
 	sqlclient client
 	logger    *zap.Logger
 	config    *Config
-	consumer consumer.Logs
+	consumer  consumer.Logs
 }
 
-func newMySQLReceiver (logger *zap.Logger, conf *Config, next consumer.Logs) (component.LogsReceiver, error) {
+func newMySQLReceiver(logger *zap.Logger, conf *Config, next consumer.Logs) (component.LogsReceiver, error) {
 
 	return &mySQLReceiver{
 		consumer: next,
-		logger: logger,
-		config: conf,
-	},nil	
+		logger:   logger,
+		config:   conf,
+	}, nil
 }
 
 // start starts the receiver by initializing the db client connection.

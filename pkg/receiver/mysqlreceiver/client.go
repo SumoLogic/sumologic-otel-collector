@@ -1,12 +1,13 @@
-package mysqlreceiver 
+package mysqlreceiver
 
 import (
 	"database/sql"
 	"encoding/json"
+	"strconv"
+	"strings"
+
 	"github.com/go-sql-driver/mysql"
 	"go.uber.org/zap"
-	"strings"
-	"strconv"
 )
 
 type client interface {
@@ -18,8 +19,8 @@ type client interface {
 type mySQLClient struct {
 	connStr string
 	client  *sql.DB
-	logger    *zap.Logger
-	conf	*Config
+	logger  *zap.Logger
+	conf    *Config
 }
 
 var _ client = (*mySQLClient)(nil)
@@ -37,8 +38,8 @@ func newMySQLClient(conf *Config, logger *zap.Logger) client {
 
 	return &mySQLClient{
 		connStr: connStr,
-		conf: conf,
-		logger: logger,
+		conf:    conf,
+		logger:  logger,
 	}
 }
 
@@ -53,15 +54,15 @@ func (c *mySQLClient) Connect() error {
 }
 
 // getRecords queries the db for records
-func (c *mySQLClient) getRecords() (map[string]string,error) {
+func (c *mySQLClient) getRecords() (map[string]string, error) {
 	return Query(*c)
 }
 
-func Query(c mySQLClient) (map[string]string,error) {
+func Query(c mySQLClient) (map[string]string, error) {
 
 	myEntireRecords := make(map[string]string)
 	var lastelementindex string
-	for _, dbquery := range c.conf.DBQueries{
+	for _, dbquery := range c.conf.DBQueries {
 		if len(strings.TrimSpace(dbquery.Query)) == 0 {
 			c.logger.Error("Query is empty, check collector config file.")
 			continue
@@ -72,13 +73,13 @@ func Query(c mySQLClient) (map[string]string,error) {
 			continue
 		} else if len(strings.TrimSpace(dbquery.IndexColumnName)) != 0 {
 			if dbquery.IndexColumnType == "TIMESTAMP" {
-				if strings.Contains(dbquery.Query,"where") {
+				if strings.Contains(dbquery.Query, "where") {
 					dbquery.Query += " and INDEXCOLUMNNAME > \"STATEVALUE\" order by INDEXCOLUMNNAME asc;"
 				} else {
 					dbquery.Query += " where INDEXCOLUMNNAME > \"STATEVALUE\" order by INDEXCOLUMNNAME asc;"
 				}
 			} else if dbquery.IndexColumnType == "INT" {
-				if strings.Contains(dbquery.Query,"where") {
+				if strings.Contains(dbquery.Query, "where") {
 					dbquery.Query += " and INDEXCOLUMNNAME > STATEVALUE order by INDEXCOLUMNNAME asc;"
 				} else {
 					dbquery.Query += " where INDEXCOLUMNNAME > STATEVALUE order by INDEXCOLUMNNAME asc;"
@@ -86,9 +87,9 @@ func Query(c mySQLClient) (map[string]string,error) {
 			}
 			c.logger.Info("IndexColumnName specified, fetching records incrementally.")
 		}
-		if len(strings.TrimSpace(dbquery.IndexColumnName)) == 0{
-			queryFetchResult, err := ExecuteQueryandFetchRecords(c,dbquery.Query,dbquery.QueryId)
-			for key,element := range queryFetchResult{
+		if len(strings.TrimSpace(dbquery.IndexColumnName)) == 0 {
+			queryFetchResult, err := ExecuteQueryandFetchRecords(c, dbquery.Query, dbquery.QueryId)
+			for key, element := range queryFetchResult {
 				myEntireRecords[key] = element
 				lastelementindex = key
 			}
@@ -102,11 +103,11 @@ func Query(c mySQLClient) (map[string]string,error) {
 				c.logger.Info("Database records found.")
 			}
 		} else {
-			var currentState = GetState(dbquery,c.logger)
+			var currentState = GetState(dbquery, c.logger)
 			dbquery.Query = strings.Replace(dbquery.Query, "STATEVALUE", currentState, -1)
 			dbquery.Query = strings.Replace(dbquery.Query, "INDEXCOLUMNNAME", dbquery.IndexColumnName, -1)
-			queryFetchResult, err := ExecuteQueryandFetchRecords(c,dbquery.Query,dbquery.QueryId)
-			for key,element := range queryFetchResult{
+			queryFetchResult, err := ExecuteQueryandFetchRecords(c, dbquery.Query, dbquery.QueryId)
+			for key, element := range queryFetchResult {
 				myEntireRecords[key] = element
 				lastelementindex = key
 			}
@@ -125,14 +126,14 @@ func Query(c mySQLClient) (map[string]string,error) {
 					c.logger.Error("Problem converting sql query resultset into json format.")
 				}
 				var lastRecordStateNumber = lastRecordFetchedVal[dbquery.IndexColumnName].(string)
-				SaveState(dbquery,lastRecordStateNumber,c.logger)
+				SaveState(dbquery, lastRecordStateNumber, c.logger)
 			}
 		}
 	}
-	return myEntireRecords,nil
+	return myEntireRecords, nil
 }
 
-func ExecuteQueryandFetchRecords(c mySQLClient, query string, queryid string) (map[string]string,error){
+func ExecuteQueryandFetchRecords(c mySQLClient, query string, queryid string) (map[string]string, error) {
 	rows, err := c.client.Query(query)
 	if err != nil {
 		c.logger.Error("Error in executing sql query", zap.Error(err))
@@ -143,16 +144,6 @@ func ExecuteQueryandFetchRecords(c mySQLClient, query string, queryid string) (m
 	columns, err := rows.Columns()
 	if err != nil {
 		c.logger.Error("Error getting column names from table", zap.Error(err))
-	}
-
-	columnstype, err := rows.ColumnTypes()
-	if err != nil {
-		c.logger.Error("Error getting column datatype from table", zap.Error(err))
-	} else {
-		var columndatatypes []string
-		for _, colvalue := range columnstype {
-			columndatatypes = append(columndatatypes, colvalue.DatabaseTypeName())
-		}
 	}
 
 	values := make([]sql.RawBytes, len(columns))
@@ -191,8 +182,8 @@ func ExecuteQueryandFetchRecords(c mySQLClient, query string, queryid string) (m
 	}
 	err = rows.Err()
 	if err != nil {
-		c.logger.Error("Error found in rows",zap.Error(err))
-	}	
+		c.logger.Error("Error found in rows", zap.Error(err))
+	}
 	myjsonobject := make(map[string]string)
 	myEntireRecord := make(map[string]string)
 	for j, value := range lines {
@@ -201,17 +192,16 @@ func ExecuteQueryandFetchRecords(c mySQLClient, query string, queryid string) (m
 		}
 		jsonObjRecord, err := json.Marshal(myjsonobject)
 		if err != nil {
-			c.logger.Error("Error in marshalling json object",zap.Error(err))
+			c.logger.Error("Error in marshalling json object", zap.Error(err))
 		}
 		jsonStr := string(jsonObjRecord)
-		var index string
-		index = queryid + "_record" + strconv.Itoa(j+1)
+		index := queryid + "_record" + strconv.Itoa(j+1)
 		myEntireRecord[index] = jsonStr
 		if err != nil {
-			c.logger.Error("Error in converting records into json object",zap.Error(err))
+			c.logger.Error("Error in converting records into json object", zap.Error(err))
 		}
 	}
-	return myEntireRecord,nil
+	return myEntireRecord, nil
 }
 
 func (c *mySQLClient) Close() error {

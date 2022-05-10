@@ -6,18 +6,17 @@ import (
 	"os"
 	"strconv"
 	"time"
-	"go.uber.org/zap"
 
+	"go.uber.org/zap"
 )
 
 func getStateStoreFilename(dbquery DBQueries) string {
 	var fileextension = ".csv"
-	var storeFilename string
-	storeFilename = dbquery.QueryId + "_" + dbquery.IndexColumnName + "_" + dbquery.IndexColumnType + fileextension
+	storeFilename := dbquery.QueryId + "_" + dbquery.IndexColumnName + "_" + dbquery.IndexColumnType + fileextension
 	return storeFilename
 }
 
-func GetState(dbquery DBQueries,logger *zap.Logger) string {
+func GetState(dbquery DBQueries, logger *zap.Logger) string {
 	var storeFilename = getStateStoreFilename(dbquery)
 	var stateValue = ""
 
@@ -84,7 +83,7 @@ func GetState(dbquery DBQueries,logger *zap.Logger) string {
 	return stateValue
 }
 
-func SaveState(dbquery DBQueries, stateValue string,logger *zap.Logger) {
+func SaveState(dbquery DBQueries, stateValue string, logger *zap.Logger) {
 	var storeFilename = getStateStoreFilename(dbquery)
 	stateData := [][]string{
 		{"queryid", "indexcolumnname", "indexcolumntype", "statevalue"},
