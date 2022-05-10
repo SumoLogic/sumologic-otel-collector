@@ -20,7 +20,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
 )
 
@@ -48,7 +49,7 @@ func newStringAttributeRegexFilter() *policyEvaluator {
 }
 
 func TestStringTagFilter(t *testing.T) {
-	var empty = map[string]pdata.AttributeValue{}
+	var empty = map[string]interface{}{}
 	filter := newStringAttributeFilter()
 	regexFilter := newStringAttributeRegexFilter()
 
@@ -59,17 +60,17 @@ func TestStringTagFilter(t *testing.T) {
 	}{
 		{
 			Desc:     "nonmatching node attribute key",
-			Trace:    newTraceStringAttrs(map[string]pdata.AttributeValue{"non_matching": pdata.NewAttributeValueString("value")}, "", ""),
+			Trace:    newTraceStringAttrs(map[string]interface{}{"non_matching": "value"}, "", ""),
 			Decision: NotSampled,
 		},
 		{
 			Desc:     "nonmatching node attribute value",
-			Trace:    newTraceStringAttrs(map[string]pdata.AttributeValue{"example": pdata.NewAttributeValueString("non_matching")}, "", ""),
+			Trace:    newTraceStringAttrs(map[string]interface{}{"example": "non_matching"}, "", ""),
 			Decision: NotSampled,
 		},
 		{
 			Desc:     "matching node attribute",
-			Trace:    newTraceStringAttrs(map[string]pdata.AttributeValue{"example": pdata.NewAttributeValueString("value")}, "", ""),
+			Trace:    newTraceStringAttrs(map[string]interface{}{"example": "value"}, "", ""),
 			Decision: Sampled,
 		},
 		{
@@ -91,26 +92,24 @@ func TestStringTagFilter(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Desc, func(t *testing.T) {
-			decisionPlain := filter.Evaluate(pdata.NewTraceID([16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}), c.Trace)
-			decisionRegex := regexFilter.Evaluate(pdata.NewTraceID([16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}), c.Trace)
+			decisionPlain := filter.Evaluate(pcommon.NewTraceID([16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}), c.Trace)
+			decisionRegex := regexFilter.Evaluate(pcommon.NewTraceID([16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}), c.Trace)
 			assert.Equal(t, decisionPlain, c.Decision)
 			assert.Equal(t, decisionRegex, c.Decision)
 		})
 	}
 }
 
-func newTraceStringAttrs(nodeAttrs map[string]pdata.AttributeValue, spanAttrKey string, spanAttrValue string) *TraceData {
-	var traceBatches []pdata.Traces
-	traces := pdata.NewTraces()
+func newTraceStringAttrs(nodeAttrs map[string]interface{}, spanAttrKey string, spanAttrValue string) *TraceData {
+	var traceBatches []ptrace.Traces
+	traces := ptrace.NewTraces()
 	rs := traces.ResourceSpans().AppendEmpty()
-	pdata.NewAttributeMapFromMap(nodeAttrs).CopyTo(rs.Resource().Attributes())
-	ils := rs.InstrumentationLibrarySpans().AppendEmpty()
-	span := ils.Spans().AppendEmpty()
-	span.SetTraceID(pdata.NewTraceID([16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}))
-	span.SetSpanID(pdata.NewSpanID([8]byte{1, 2, 3, 4, 5, 6, 7, 8}))
-	attributes := make(map[string]pdata.AttributeValue)
-	attributes[spanAttrKey] = pdata.NewAttributeValueString(spanAttrValue)
-	pdata.NewAttributeMapFromMap(attributes).CopyTo(span.Attributes())
+	pcommon.NewMapFromRaw(nodeAttrs).CopyTo(rs.Resource().Attributes())
+	ss := rs.ScopeSpans().AppendEmpty()
+	span := ss.Spans().AppendEmpty()
+	span.SetTraceID(pcommon.NewTraceID([16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}))
+	span.SetSpanID(pcommon.NewSpanID([8]byte{1, 2, 3, 4, 5, 6, 7, 8}))
+	span.Attributes().InsertString(spanAttrKey, spanAttrValue)
 	traceBatches = append(traceBatches, traces)
 	return &TraceData{
 		ReceivedBatches: traceBatches,

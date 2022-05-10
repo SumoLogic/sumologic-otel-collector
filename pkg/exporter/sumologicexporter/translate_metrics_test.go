@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 )
 
 func TestTranslateTelegrafMetric_NamesAreTranslatedCorrectly(t *testing.T) {
@@ -210,7 +210,7 @@ func TestTranslateTelegrafMetric_NamesAreTranslatedCorrectly(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.nameIn+"-"+tc.nameOut, func(t *testing.T) {
-			actual := pdata.NewMetric()
+			actual := pmetric.NewMetric()
 			actual.SetName(tc.nameIn)
 			translateTelegrafMetric(actual)
 			assert.Equal(t, tc.nameOut, actual.Name())

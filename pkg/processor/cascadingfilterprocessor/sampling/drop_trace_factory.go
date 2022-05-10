@@ -17,7 +17,7 @@ package sampling
 import (
 	"regexp"
 
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
@@ -65,7 +65,7 @@ func NewDropTraceEvaluator(logger *zap.Logger, cfg config.TraceRejectCfg) (DropT
 }
 
 // ShouldDrop checks if trace should be dropped
-func (dte *dropTraceEvaluator) ShouldDrop(_ pdata.TraceID, trace *TraceData) bool {
+func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) bool {
 	trace.Lock()
 	batches := trace.ReceivedBatches
 	trace.Unlock()
@@ -88,9 +88,9 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pdata.TraceID, trace *TraceData) boo
 				matchingNumericAttrFound = checkIfNumericAttrFound(res.Attributes(), dte.numericAttr)
 			}
 
-			ils := rs.At(i).InstrumentationLibrarySpans()
-			for j := 0; j < ils.Len(); j++ {
-				spans := ils.At(j).Spans()
+			ss := rs.At(i).ScopeSpans()
+			for j := 0; j < ss.Len(); j++ {
+				spans := ss.At(j).Spans()
 				for k := 0; k < spans.Len(); k++ {
 					span := spans.At(k)
 

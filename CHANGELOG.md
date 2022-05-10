@@ -7,15 +7,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.50.0-sumo-0...main
+
+## [v0.50.0-sumo-0]
+
+### Released 2022-04-29
+
+Aside from upstream changes, this release only contains a performance fix to metrics batching in the Sumo Logic exporter.
+The performance improvement is very substantial, so we recommend upgrading to this version immediately after `0.49.0-sumo-0`.
+
+### Changed
+
+- chore: update OT core to 0.50.0 [#562][#562]
+
+### Fixed
+
+- fix: fix(sumologicexporter): batch metrics if source headers match [#561][#561]
+
+[v0.50.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.49.0-sumo-0...v0.50.0-sumo-0
+[#561]: https://github.com/SumoLogic/sumologic-otel-collector/pull/561
+[#562]: https://github.com/SumoLogic/sumologic-otel-collector/pull/562
+
+## [v0.49.0-sumo-0]
+
+### Released 2022-04-26
+
+This release includes two breaking changes. One is an upstream change to the configuration syntax of several
+log receivers, most notably the `filelog` receiver. The other changes how the Sumo Logic exporter determines
+metadata based on the attributes of a OpenTelemetry record. Please consult the upgrade guides linked below
+for more details.
+
+### Breaking changes
+
+- chore: bump OT core to v0.49.0 [#550][#550] ([upgrade guide][upgrade-guide-log-collection])
+- fix!(sumologicexporter): send resource attributes as fields for non-otlp, removing metadata_attributes [#549][#549] ([upgrade guide][upgrade-guide-metadata])
+
+### Changed
+
+- docs: clarify status of sumologicextension [#553][#553]
+- chore(deps): bump golang from 1.18 to 1.18.1 [#546][#546]
+- chore: bump Telegraf to v1.22.0-sumo-3 [#557][#557]
+
+### Fixed
+
+- fix(cascadingfilterprocessor): prevent overriding metrics in cascading filter processor - add processor tag [#539][#539]
+
+[v0.49.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.48.0-sumo-0...v0.49.0-sumo-0
+[upgrade-guide-log-collection]: docs/Upgrading.md#several-changes-to-receivers-using-opentelemetry-log-collection
+[upgrade-guide-metadata]: docs/Upgrading.md#sumo-logic-exporter-metadata-handling
+[#546]: https://github.com/SumoLogic/sumologic-otel-collector/pull/546
+[#550]: https://github.com/SumoLogic/sumologic-otel-collector/pull/550
+[#553]: https://github.com/SumoLogic/sumologic-otel-collector/pull/553
+[#539]: https://github.com/SumoLogic/sumologic-otel-collector/pull/539
+[#557]: https://github.com/SumoLogic/sumologic-otel-collector/pull/557
+[#549]: https://github.com/SumoLogic/sumologic-otel-collector/pull/549
+
+## [v0.48.0-sumo-0]
+
+### Released 2022-04-12
+
 ### Changed
 
 - chore: bump OT core to v0.48.0 [#534][#534]
+- chore(deps): bump alpine from 3.15.3 to 3.15.4 [#525][#525]
 
 ### Fixed
 
 - fix(sumologicexporter): treat resource attributes as fields for otlp #536
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.47.0-sumo-0...main
+### Other
+
+- refactor(sumologicexporter): use golang.org/x/exp/slices for sorting fields [#519][#519]
+- refactor(sumologicextension): use bytes slices and strings.Builder to decrease allocations [#530][#530]
+
+[v0.48.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.48.0-sumo-0
+[#519]: https://github.com/SumoLogic/sumologic-otel-collector/pull/519
+[#525]: https://github.com/SumoLogic/sumologic-otel-collector/pull/525
+[#530]: https://github.com/SumoLogic/sumologic-otel-collector/pull/530
 [#534]: https://github.com/SumoLogic/sumologic-otel-collector/pull/534
 [#536]: https://github.com/SumoLogic/sumologic-otel-collector/pull/536
 

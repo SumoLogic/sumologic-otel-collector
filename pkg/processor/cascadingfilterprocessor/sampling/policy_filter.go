@@ -17,14 +17,15 @@ package sampling
 import (
 	"time"
 
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
-func tsToMicros(ts pdata.Timestamp) int64 {
+func tsToMicros(ts pcommon.Timestamp) int64 {
 	return int64(ts / 1000)
 }
 
-func checkIfAttrsMatched(resAttrs pdata.AttributeMap, spanAttrs pdata.AttributeMap, filters []attributeFilter) bool {
+func checkIfAttrsMatched(resAttrs pcommon.Map, spanAttrs pcommon.Map, filters []attributeFilter) bool {
 	for _, filter := range filters {
 		var resAttrMatched bool
 		spanAttrMatched, spanAttrFound := checkAttributeFilterMatchedAndFound(spanAttrs, filter)
@@ -39,7 +40,7 @@ func checkIfAttrsMatched(resAttrs pdata.AttributeMap, spanAttrs pdata.AttributeM
 	return true
 }
 
-func checkAttributeFilterMatchedAndFound(attrs pdata.AttributeMap, filter attributeFilter) (bool, bool) {
+func checkAttributeFilterMatchedAndFound(attrs pcommon.Map, filter attributeFilter) (bool, bool) {
 	if v, ok := attrs.Get(filter.key); ok {
 		// String patterns vs values is exclusive
 		if len(filter.patterns) > 0 {
@@ -61,14 +62,14 @@ func checkAttributeFilterMatchedAndFound(attrs pdata.AttributeMap, filter attrib
 		}
 
 		if len(filter.ranges) > 0 {
-			if v.Type() == pdata.AttributeValueTypeDouble {
+			if v.Type() == pcommon.ValueTypeDouble {
 				value := v.DoubleVal()
 				for _, r := range filter.ranges {
 					if value >= float64(r.minValue) && value <= float64(r.maxValue) {
 						return true, true
 					}
 				}
-			} else if v.Type() == pdata.AttributeValueTypeInt {
+			} else if v.Type() == pcommon.ValueTypeInt {
 				value := v.IntVal()
 				for _, r := range filter.ranges {
 					if value >= r.minValue && value <= r.maxValue {
@@ -90,7 +91,7 @@ func checkAttributeFilterMatchedAndFound(attrs pdata.AttributeMap, filter attrib
 	return false, false
 }
 
-func checkIfNumericAttrFound(attrs pdata.AttributeMap, filter *numericAttributeFilter) bool {
+func checkIfNumericAttrFound(attrs pcommon.Map, filter *numericAttributeFilter) bool {
 	if v, ok := attrs.Get(filter.key); ok {
 		value := v.IntVal()
 		if value >= filter.minValue && value <= filter.maxValue {
@@ -100,7 +101,7 @@ func checkIfNumericAttrFound(attrs pdata.AttributeMap, filter *numericAttributeF
 	return false
 }
 
-func checkIfStringAttrFound(attrs pdata.AttributeMap, filter *stringAttributeFilter) bool {
+func checkIfStringAttrFound(attrs pcommon.Map, filter *stringAttributeFilter) bool {
 	if v, ok := attrs.Get(filter.key); ok {
 		truncableStr := v.StringVal()
 		if filter.patterns != nil {
@@ -123,7 +124,7 @@ func checkIfStringAttrFound(attrs pdata.AttributeMap, filter *stringAttributeFil
 }
 
 // evaluateRules goes through the defined properties and checks if they are matched
-func (pe *policyEvaluator) evaluateRules(_ pdata.TraceID, trace *TraceData) Decision {
+func (pe *policyEvaluator) evaluateRules(_ pcommon.TraceID, trace *TraceData) Decision {
 	trace.Lock()
 	batches := trace.ReceivedBatches
 	trace.Unlock()
@@ -152,9 +153,9 @@ func (pe *policyEvaluator) evaluateRules(_ pdata.TraceID, trace *TraceData) Deci
 				matchingNumericAttrFound = checkIfNumericAttrFound(res.Attributes(), pe.numericAttr)
 			}
 
-			ils := rs.At(i).InstrumentationLibrarySpans()
-			for j := 0; j < ils.Len(); j++ {
-				spans := ils.At(j).Spans()
+			ss := rs.At(i).ScopeSpans()
+			for j := 0; j < ss.Len(); j++ {
+				spans := ss.At(j).Spans()
 				spanCount += spans.Len()
 				for k := 0; k < spans.Len(); k++ {
 					span := spans.At(k)
@@ -194,7 +195,7 @@ func (pe *policyEvaluator) evaluateRules(_ pdata.TraceID, trace *TraceData) Deci
 						}
 					}
 
-					if span.Status().Code() == pdata.StatusCodeError {
+					if span.Status().Code() == ptrace.StatusCodeError {
 						errorCount++
 					}
 				}
@@ -292,7 +293,7 @@ func (pe *policyEvaluator) updateRate(currSecond int64, numSpans int32) Decision
 
 // Evaluate looks at the trace data and returns a corresponding SamplingDecision. Also takes into account
 // the usage of sampling rate budget
-func (pe *policyEvaluator) Evaluate(traceID pdata.TraceID, trace *TraceData) Decision {
+func (pe *policyEvaluator) Evaluate(traceID pcommon.TraceID, trace *TraceData) Decision {
 	currSecond := time.Now().Unix()
 
 	if !pe.shouldConsider(currSecond, trace) {

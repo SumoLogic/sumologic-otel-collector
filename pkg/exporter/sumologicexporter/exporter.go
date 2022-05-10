@@ -25,7 +25,10 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
@@ -49,7 +52,6 @@ type sumologicexporter struct {
 
 	compressorPool sync.Pool
 
-	filter              filter
 	prometheusFormatter prometheusFormatter
 	graphiteFormatter   graphiteFormatter
 
@@ -68,12 +70,6 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 		cfg.SourceName = translateConfigValue(cfg.SourceName)
 	}
 	sfs, err := newSourceFormats(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg.MetadataAttributes = addSourceMetadataFields(cfg.MetadataAttributes)
-	f, err := newFilter(cfg.MetadataAttributes)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +98,6 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 			},
 		},
 		// NOTE: client is now set in start()
-		filter:              f,
 		prometheusFormatter: pf,
 		graphiteFormatter:   gf,
 	}
@@ -115,40 +110,6 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 	)
 
 	return se, nil
-}
-
-// addSourceMetadataFields adds source related attribute names to the list of
-// metadata attributes.
-func addSourceMetadataFields(metadataAttributes []string) []string {
-	var (
-		sourceCategory bool
-		sourceHost     bool
-		sourceName     bool
-	)
-
-	for _, attr := range metadataAttributes {
-		switch attr {
-		case attributeKeySourceCategory:
-			sourceCategory = true
-		case attributeKeySourceHost:
-			sourceHost = true
-		case attributeKeySourceName:
-			sourceName = true
-		default:
-		}
-	}
-
-	if !sourceCategory {
-		metadataAttributes = append(metadataAttributes, attributeKeySourceCategory)
-	}
-	if !sourceHost {
-		metadataAttributes = append(metadataAttributes, attributeKeySourceHost)
-	}
-	if !sourceName {
-		metadataAttributes = append(metadataAttributes, attributeKeySourceName)
-	}
-
-	return metadataAttributes
 }
 
 func newLogsExporter(
@@ -223,7 +184,7 @@ func newTracesExporter(
 // pushLogsData groups data with common metadata and sends them as separate batched requests.
 // It returns the number of unsent logs and an error which contains a list of dropped records
 // so they can be handled by OTC retry mechanism
-func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) error {
+func (se *sumologicexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
 	compr, err := se.getCompressor()
 	if err != nil {
 		return consumererror.NewLogs(err, ld)
@@ -235,7 +196,6 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		se.logger,
 		se.config,
 		se.getHTTPClient(),
-		se.filter,
 		se.sources,
 		compr,
 		se.prometheusFormatter,
@@ -254,11 +214,13 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 		return nil
 	}
 
+	type droppedResourceRecords struct {
+		resource pcommon.Resource
+		records  []plog.LogRecord
+	}
 	var (
-		currentMetadata  fields = newFields(pdata.NewAttributeMap())
-		previousMetadata fields = newFields(pdata.NewAttributeMap())
-		errs             []error
-		droppedRecords   []logPair
+		errs    []error
+		dropped []droppedResourceRecords
 	)
 
 	// Iterate over ResourceLogs
@@ -266,91 +228,41 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 	for i := 0; i < rls.Len(); i++ {
 		rl := rls.At(i)
 
-		// drop routing attribute
 		se.dropRoutingAttribute(rl.Resource().Attributes())
+		currentMetadata := newFields(rl.Resource().Attributes())
+		if se.config.TranslateAttributes {
+			currentMetadata.translateAttributes()
+		}
 
-		ills := rl.InstrumentationLibraryLogs()
-		// iterate over InstrumentationLibraryLogs
-		for j := 0; j < ills.Len(); j++ {
-			ill := ills.At(j)
-
-			// iterate over Logs
-			logs := ill.LogRecords()
-			for k := 0; k < logs.Len(); k++ {
-				log := logs.At(k)
-				logAttrs := log.Attributes()
-
-				// copy resource attributes into logs attributes
-				// log attributes have precedence over resource attributes
-				attributes := pdata.NewAttributeMap()
-				attributes.EnsureCapacity(
-					logAttrs.Len() + rl.Resource().Attributes().Len(),
-				)
-				logAttrs.CopyTo(attributes)
-				rl.Resource().Attributes().Range(func(k string, v pdata.AttributeValue) bool {
-					attributes.Insert(k, v)
-					return true
-				})
-
-				// Put merged attributes into logPair
-				lp := logPair{
-					log:        log,
-					attributes: attributes,
-				}
-
-				currentMetadata = sdr.filter.filterIn(attributes)
-
-				if se.config.TranslateAttributes {
-					currentMetadata.translateAttributes()
-				}
-
-				// If metadata differs from currently buffered, flush the buffer
-				if !currentMetadata.equals(previousMetadata) && !previousMetadata.isEmpty() {
-					var dropped []logPair
-					dropped, err = sdr.sendNonOTLPLogs(ctx, previousMetadata)
-					if err != nil {
-						errs = append(errs, err)
-						droppedRecords = append(droppedRecords, dropped...)
-					}
-					sdr.cleanLogsBuffer()
-				}
-
-				// assign metadata
-				previousMetadata = currentMetadata
-
-				// add log to the buffer
-				var dropped []logPair
-				dropped, err = sdr.batchLog(ctx, lp, previousMetadata)
-				if err != nil {
-					droppedRecords = append(droppedRecords, dropped...)
-					errs = append(errs, err)
-				}
-			}
+		if droppedRecords, err := sdr.sendNonOTLPLogs(ctx, rl, currentMetadata); err != nil {
+			dropped = append(dropped, droppedResourceRecords{
+				resource: rl.Resource(),
+				records:  droppedRecords,
+			})
+			errs = append(errs, err)
 		}
 	}
 
-	// Flush pending logs
-	dropped, err := sdr.sendNonOTLPLogs(ctx, previousMetadata)
-	if err != nil {
-		droppedRecords = append(droppedRecords, dropped...)
-		errs = append(errs, err)
-	}
+	if len(dropped) > 0 {
+		ld = plog.NewLogs()
 
-	if len(droppedRecords) > 0 {
 		// Move all dropped records to Logs
-		droppedLogs := pdata.NewLogs()
-		rls = droppedLogs.ResourceLogs()
-		ills := rls.AppendEmpty().InstrumentationLibraryLogs()
-		logs := ills.AppendEmpty().LogRecords()
-		logs.EnsureCapacity(len(droppedRecords))
+		// NOTE: we only copy resource and log records here.
+		// Scope is not handled properly but it never was.
+		for i := range dropped {
+			rls := ld.ResourceLogs().AppendEmpty()
+			dropped[i].resource.MoveTo(rls.Resource())
 
-		for _, lp := range droppedRecords {
-			lp.log.CopyTo(logs.AppendEmpty())
+			for j := 0; j < len(dropped[i].records); j++ {
+				dropped[i].records[j].MoveTo(
+					rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty(),
+				)
+			}
 		}
 
 		errs = deduplicateErrors(errs)
 		se.handleUnauthorizedErrors(ctx, errs...)
-		return consumererror.NewLogs(multierr.Combine(errs...), droppedLogs)
+		return consumererror.NewLogs(multierr.Combine(errs...), ld)
 	}
 
 	return nil
@@ -359,7 +271,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld pdata.Logs) er
 // pushMetricsData groups data with common metadata and send them as separate batched requests
 // it returns number of unsent metrics and error which contains list of dropped records
 // so they can be handle by the OTC retry mechanism
-func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metrics) error {
+func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pmetric.Metrics) error {
 	compr, err := se.getCompressor()
 	if err != nil {
 		return consumererror.NewMetrics(err, md)
@@ -371,7 +283,6 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 		se.logger,
 		se.config,
 		se.getHTTPClient(),
-		se.filter,
 		se.sources,
 		compr,
 		se.prometheusFormatter,
@@ -391,95 +302,37 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pdata.Metri
 	}
 
 	var (
-		currentMetadata  fields = newFields(pdata.NewAttributeMap())
-		previousMetadata fields = newFields(pdata.NewAttributeMap())
-		errs             []error
-		droppedRecords   []metricPair
+		errs []error
 	)
 
-	// Iterate over ResourceMetrics
+	// Transform metrics metadata
+	// this includes dropping the routing attribute and translating attributes
 	rms := md.ResourceMetrics()
 	for i := 0; i < rms.Len(); i++ {
 		rm := rms.At(i)
 
-		attributes := rm.Resource().Attributes()
+		se.dropRoutingAttribute(rm.Resource().Attributes())
 
-		// drop routing attribute
-		se.dropRoutingAttribute(attributes)
-
-		currentMetadata = sdr.filter.filterIn(attributes)
-
+		// TODO: Move these modifications to the Sumo schema processor
+		// we shouldn't modify data in an exporter, but these modifications are idempotent and therefore harmless
 		if se.config.TranslateAttributes {
-			attributes = translateAttributes(attributes)
-			currentMetadata.translateAttributes()
+			translateAttributes(rm.Resource().Attributes()).
+				CopyTo(rm.Resource().Attributes())
 		}
 
-		// iterate over InstrumentationLibraryMetrics
-		ilms := rm.InstrumentationLibraryMetrics()
-		for j := 0; j < ilms.Len(); j++ {
-			ilm := ilms.At(j)
-
-			// iterate over Metrics
-			ms := ilm.Metrics()
-			for k := 0; k < ms.Len(); k++ {
-				m := ms.At(k)
-
-				if se.config.TranslateTelegrafMetrics {
-					translateTelegrafMetric(m)
-				}
-
-				mp := metricPair{
-					metric:     m,
-					attributes: attributes,
-				}
-
-				// If metadata differs from currently buffered, flush the buffer
-				if !currentMetadata.equals(previousMetadata) && !previousMetadata.isEmpty() {
-					var dropped []metricPair
-					var err error
-					dropped, err = sdr.sendNonOTLPMetrics(ctx, previousMetadata)
-					if err != nil {
-						errs = append(errs, err)
-						droppedRecords = append(droppedRecords, dropped...)
-					}
-					sdr.cleanMetricBuffer()
-				}
-
-				// assign metadata
-				previousMetadata = currentMetadata
-				var dropped []metricPair
-				var err error
-				// add metric to the buffer
-				dropped, err = sdr.batchMetric(ctx, mp, currentMetadata)
-				if err != nil {
-					droppedRecords = append(droppedRecords, dropped...)
-					errs = append(errs, err)
+		if se.config.TranslateTelegrafMetrics {
+			for i := 0; i < rm.ScopeMetrics().Len(); i++ {
+				metricsSlice := rm.ScopeMetrics().At(i).Metrics()
+				for j := 0; j < metricsSlice.Len(); j++ {
+					translateTelegrafMetric(metricsSlice.At(j))
 				}
 			}
 		}
 	}
 
-	// Flush pending metrics
-	dropped, err := sdr.sendNonOTLPMetrics(ctx, previousMetadata)
-	if err != nil {
-		droppedRecords = append(droppedRecords, dropped...)
-		errs = append(errs, err)
-	}
+	droppedMetrics, errs := sdr.sendNonOTLPMetrics(ctx, md)
 
-	if len(droppedRecords) > 0 {
-		// Move all dropped records to Metrics
-		droppedMetrics := pdata.NewMetrics()
-		rms := droppedMetrics.ResourceMetrics()
-		rms.EnsureCapacity(len(droppedRecords))
-		for _, record := range droppedRecords {
-			rm := droppedMetrics.ResourceMetrics().AppendEmpty()
-			record.attributes.CopyTo(rm.Resource().Attributes())
-
-			ilms := rm.InstrumentationLibraryMetrics()
-			record.metric.CopyTo(ilms.AppendEmpty().Metrics().AppendEmpty())
-		}
-
-		errs = deduplicateErrors(errs)
+	if len(errs) > 0 {
 		se.handleUnauthorizedErrors(ctx, errs...)
 		return consumererror.NewMetrics(multierr.Combine(errs...), droppedMetrics)
 	}
@@ -505,7 +358,7 @@ func (se *sumologicexporter) handleUnauthorizedErrors(ctx context.Context, errs 
 	}
 }
 
-func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces) error {
+func (se *sumologicexporter) pushTracesData(ctx context.Context, td ptrace.Traces) error {
 	compr, err := se.getCompressor()
 	if err != nil {
 		return consumererror.NewTraces(err, td)
@@ -517,7 +370,6 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td pdata.Traces
 		se.logger,
 		se.config,
 		se.getHTTPClient(),
-		se.filter,
 		se.sources,
 		compr,
 		se.prometheusFormatter,
@@ -650,6 +502,6 @@ func (se *sumologicexporter) shutdown(context.Context) error {
 	return nil
 }
 
-func (se *sumologicexporter) dropRoutingAttribute(attr pdata.AttributeMap) {
+func (se *sumologicexporter) dropRoutingAttribute(attr pcommon.Map) {
 	attr.Delete(se.config.DropRoutingAttribute)
 }

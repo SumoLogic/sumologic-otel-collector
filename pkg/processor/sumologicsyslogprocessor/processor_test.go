@@ -21,7 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/plog"
 )
 
 func TestProcessLogs(t *testing.T) {
@@ -37,16 +37,16 @@ func TestProcessLogs(t *testing.T) {
 		`syslog`,
 	}
 
-	logs := pdata.NewLogs()
+	logs := plog.NewLogs()
 	rls := logs.ResourceLogs().AppendEmpty()
-	rls.InstrumentationLibraryLogs().EnsureCapacity(len(lines))
-	ills := rls.InstrumentationLibraryLogs().AppendEmpty()
+	rls.ScopeLogs().EnsureCapacity(len(lines))
+	sls := rls.ScopeLogs().AppendEmpty()
 
 	for _, line := range lines {
-		lr := ills.LogRecords().AppendEmpty()
+		lr := sls.LogRecords().AppendEmpty()
 		lr.Body().SetStringVal(line)
 	}
-	ills.LogRecords().At(1).Attributes().InsertString("facility_name", "pre filled facility")
+	sls.LogRecords().At(1).Attributes().InsertString("facility_name", "pre filled facility")
 
 	ctx := context.Background()
 	processor := &sumologicSyslogProcessor{
@@ -58,7 +58,7 @@ func TestProcessLogs(t *testing.T) {
 	require.NoError(t, err)
 
 	for i, line := range facilities {
-		attrs := result.ResourceLogs().At(0).InstrumentationLibraryLogs().At(0).LogRecords().At(i).Attributes()
+		attrs := result.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(i).Attributes()
 		attr, ok := attrs.Get("facility_name")
 		require.True(t, ok)
 		assert.Equal(t, line, attr.StringVal())

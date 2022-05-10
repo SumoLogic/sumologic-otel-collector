@@ -216,11 +216,11 @@ jobs:
         run: echo "${{ steps.extract_tag.outputs.tag }}"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1.2.0
+        uses: docker/setup-qemu-action@v2.0.0
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v1.6.0
+        uses: docker/setup-buildx-action@v2.0.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -267,11 +267,11 @@ jobs:
         run: echo "${{ steps.extract_tag.outputs.tag }}"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1.2.0
+        uses: docker/setup-qemu-action@v2.0.0
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v1.6.0
+        uses: docker/setup-buildx-action@v2.0.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -321,6 +321,13 @@ jobs:
 
           body: |
             ## v${{ steps.extract_tag.outputs.tag }}
+
+            **TODO**
+
+            ### Upstream releases
+            ** TODO: Add upstream versions in the links below**
+            Core: https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v
+            Contrib: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases/tag/v
 
             ### Changelog
 

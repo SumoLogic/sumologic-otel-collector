@@ -20,7 +20,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/plog"
 )
 
 // tailSamplingSpanProcessor handles the incoming trace data and uses the given sampling
@@ -76,16 +76,16 @@ func newSumologicSyslogProcessor(cfg *Config) (*sumologicSyslogProcessor, error)
 
 // ProcessLogs tries to extract facility number from log syslog line and maps it to facility name.
 // Facility is taken as $number/8 rounded down, where log looks like `^<$number> .*`
-func (ssp *sumologicSyslogProcessor) ProcessLogs(ctx context.Context, ld pdata.Logs) (pdata.Logs, error) {
+func (ssp *sumologicSyslogProcessor) ProcessLogs(ctx context.Context, ld plog.Logs) (plog.Logs, error) {
 	// Iterate over ResourceLogs
 	rls := ld.ResourceLogs()
 	for i := 0; i < rls.Len(); i++ {
 		rl := rls.At(i)
 
-		ills := rl.InstrumentationLibraryLogs()
+		sls := rl.ScopeLogs()
 		// iterate over InstrumentationLibraryLogs
-		for j := 0; j < ills.Len(); j++ {
-			ill := ills.At(j)
+		for j := 0; j < sls.Len(); j++ {
+			ill := sls.At(j)
 
 			// iterate over Logs
 			logs := ill.LogRecords()

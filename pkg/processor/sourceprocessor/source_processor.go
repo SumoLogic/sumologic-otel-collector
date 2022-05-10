@@ -22,7 +22,10 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/sourceprocessor/observability"
 )
@@ -107,28 +110,28 @@ func newSourceProcessor(cfg *Config) *sourceProcessor {
 	}
 }
 
-func (sp *sourceProcessor) fillOtherMeta(atts pdata.AttributeMap) {
+func (sp *sourceProcessor) fillOtherMeta(atts pcommon.Map) {
 	if sp.collector != "" {
 		atts.UpsertString(collectorKey, sp.collector)
 	}
 }
 
-func (sp *sourceProcessor) isFilteredOut(atts pdata.AttributeMap) bool {
+func (sp *sourceProcessor) isFilteredOut(atts pcommon.Map) bool {
 	// TODO: This is quite inefficient when done for each package (ore even more so, span) separately.
 	// It should be moved to K8S Meta Processor and done once per new pod/changed pod
 
 	if value, found := atts.Get(sp.annotationAttribute(excludeAnnotation)); found {
-		if value.Type() == pdata.AttributeValueTypeString && value.StringVal() == "true" {
+		if value.Type() == pcommon.ValueTypeString && value.StringVal() == "true" {
 			return true
-		} else if value.Type() == pdata.AttributeValueTypeBool && value.BoolVal() {
+		} else if value.Type() == pcommon.ValueTypeBool && value.BoolVal() {
 			return true
 		}
 	}
 
 	if value, found := atts.Get(sp.annotationAttribute(includeAnnotation)); found {
-		if value.Type() == pdata.AttributeValueTypeString && value.StringVal() == "true" {
+		if value.Type() == pcommon.ValueTypeString && value.StringVal() == "true" {
 			return false
-		} else if value.Type() == pdata.AttributeValueTypeBool && value.BoolVal() {
+		} else if value.Type() == pcommon.ValueTypeBool && value.BoolVal() {
 			return false
 		}
 	}
@@ -149,7 +152,7 @@ func (sp *sourceProcessor) annotationAttribute(annotationKey string) string {
 }
 
 // ProcessTraces processes traces
-func (sp *sourceProcessor) ProcessTraces(ctx context.Context, td pdata.Traces) (pdata.Traces, error) {
+func (sp *sourceProcessor) ProcessTraces(ctx context.Context, td ptrace.Traces) (ptrace.Traces, error) {
 	rss := td.ResourceSpans()
 
 	for i := 0; i < rss.Len(); i++ {
@@ -159,15 +162,15 @@ func (sp *sourceProcessor) ProcessTraces(ctx context.Context, td pdata.Traces) (
 		res := sp.processResource(rs.Resource())
 		atts := res.Attributes()
 
-		ilss := rs.InstrumentationLibrarySpans()
+		ss := rs.ScopeSpans()
 		totalSpans := 0
-		for j := 0; j < ilss.Len(); j++ {
-			ils := ilss.At(j)
+		for j := 0; j < ss.Len(); j++ {
+			ils := ss.At(j)
 			totalSpans += ils.Spans().Len()
 		}
 
 		if sp.isFilteredOut(atts) {
-			rs.InstrumentationLibrarySpans().RemoveIf(func(pdata.InstrumentationLibrarySpans) bool { return true })
+			rs.ScopeSpans().RemoveIf(func(ptrace.ScopeSpans) bool { return true })
 			observability.RecordFilteredOutN(totalSpans)
 		} else {
 			observability.RecordFilteredInN(totalSpans)
@@ -178,7 +181,7 @@ func (sp *sourceProcessor) ProcessTraces(ctx context.Context, td pdata.Traces) (
 }
 
 // ProcessMetrics processes metrics
-func (sp *sourceProcessor) ProcessMetrics(ctx context.Context, md pdata.Metrics) (pdata.Metrics, error) {
+func (sp *sourceProcessor) ProcessMetrics(ctx context.Context, md pmetric.Metrics) (pmetric.Metrics, error) {
 	rss := md.ResourceMetrics()
 
 	for i := 0; i < rss.Len(); i++ {
@@ -187,7 +190,7 @@ func (sp *sourceProcessor) ProcessMetrics(ctx context.Context, md pdata.Metrics)
 		atts := res.Attributes()
 
 		if sp.isFilteredOut(atts) {
-			rs.InstrumentationLibraryMetrics().RemoveIf(func(pdata.InstrumentationLibraryMetrics) bool { return true })
+			rs.ScopeMetrics().RemoveIf(func(pmetric.ScopeMetrics) bool { return true })
 		}
 	}
 
@@ -195,7 +198,7 @@ func (sp *sourceProcessor) ProcessMetrics(ctx context.Context, md pdata.Metrics)
 }
 
 // ProcessLogs processes logs
-func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md pdata.Logs) (pdata.Logs, error) {
+func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md plog.Logs) (plog.Logs, error) {
 	rss := md.ResourceLogs()
 
 	var dockerLog dockerLog
@@ -206,7 +209,7 @@ func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md pdata.Logs) (pdat
 		atts := res.Attributes()
 
 		if sp.isFilteredOut(atts) {
-			rs.InstrumentationLibraryLogs().RemoveIf(func(pdata.InstrumentationLibraryLogs) bool { return true })
+			rs.ScopeLogs().RemoveIf(func(plog.ScopeLogs) bool { return true })
 		}
 
 		// Due to fluent-bit configuration for sumologic kubernetes collection,
@@ -218,13 +221,13 @@ func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md pdata.Logs) (pdat
 		// Related issue: https://github.com/SumoLogic/sumologic-kubernetes-collection/issues/1758
 		// ToDo: remove this functionality when the issue is resolved
 
-		ills := rs.InstrumentationLibraryLogs()
-		for j := 0; j < ills.Len(); j++ {
-			ill := ills.At(j)
-			logs := ill.LogRecords()
+		sls := rs.ScopeLogs()
+		for j := 0; j < sls.Len(); j++ {
+			sl := sls.At(j)
+			logs := sl.LogRecords()
 			for k := 0; k < logs.Len(); k++ {
 				log := logs.At(k)
-				if log.Body().Type() == pdata.AttributeValueTypeString {
+				if log.Body().Type() == pcommon.ValueTypeString {
 					err := json.Unmarshal([]byte(log.Body().StringVal()), &dockerLog)
 
 					// If there was any parsing error or any of the expected key have no value
@@ -251,7 +254,7 @@ func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md pdata.Logs) (pdat
 //   - enrich pod name, so it can be used in templates
 //   - fills source attributes based on config or annotations
 //   - set metadata (collector name)
-func (sp *sourceProcessor) processResource(res pdata.Resource) pdata.Resource {
+func (sp *sourceProcessor) processResource(res pcommon.Resource) pcommon.Resource {
 	atts := res.Attributes()
 
 	sp.enrichPodName(&atts)
@@ -288,7 +291,7 @@ func SafeEncodeString(s string) string {
 	return string(r)
 }
 
-func (sp *sourceProcessor) enrichPodName(atts *pdata.AttributeMap) {
+func (sp *sourceProcessor) enrichPodName(atts *pcommon.Map) {
 	// This replicates sanitize_pod_name function
 	// Strip out dynamic bits from pod name.
 	// NOTE: Kubernetes deployments append a template hash.
@@ -327,13 +330,13 @@ func (sp *sourceProcessor) enrichPodName(atts *pdata.AttributeMap) {
 // and matches is with the provided regex.
 // It returns the string value of found elements and a boolean flag whether the
 // value matched the provided regex.
-func matchFieldByRegex(atts pdata.AttributeMap, field string, r *regexp.Regexp) (string, bool) {
+func matchFieldByRegex(atts pcommon.Map, field string, r *regexp.Regexp) (string, bool) {
 	att, ok := atts.Get(field)
 	if !ok {
 		return "", false
 	}
 
-	if att.Type() != pdata.AttributeValueTypeString {
+	if att.Type() != pcommon.ValueTypeString {
 		return "", false
 	}
 

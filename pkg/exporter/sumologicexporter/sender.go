@@ -22,11 +22,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
 
 	"go.opentelemetry.io/collector/model/otlp"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
@@ -39,24 +43,10 @@ var (
 	logsMarshaler    = otlp.NewProtobufLogsMarshaler()
 )
 
-type appendResponse struct {
-	// sent gives information if the data was sent or not
-	sent bool
-	// appended keeps state of appending new log line to the body
-	appended bool
-}
-
 // metricPair represents information required to send one metric to the Sumo Logic
 type metricPair struct {
-	attributes pdata.AttributeMap
-	metric     pdata.Metric
-}
-
-// logPair keeps information about logRecord and attributes,
-// where attributes are record and resource attributes
-type logPair struct {
-	attributes pdata.AttributeMap
-	log        pdata.LogRecord
+	attributes pcommon.Map
+	metric     pmetric.Metric
 }
 
 // countingReader keeps number of records related to reader
@@ -102,19 +92,30 @@ func (b *bodyBuilder) Reset() {
 }
 
 // addLine adds line to builder and increments counter
-func (b *bodyBuilder) addLine(line string) error {
-	_, err := b.builder.WriteString(line)
-	if err != nil {
-		return err
-	}
+func (b *bodyBuilder) addLine(line string) {
+	b.builder.WriteString(line) // WriteString can't actually return an error
 	b.counter += 1
-	return nil
+}
+
+// addLine adds multiple lines to builder and increments counter
+func (b *bodyBuilder) addLines(lines []string) {
+	if len(lines) == 0 {
+		return
+	}
+
+	// add the first line separately to avoid a conditional in the loop
+	b.builder.WriteString(lines[0])
+
+	for _, line := range lines[1:] {
+		b.builder.WriteByte('\n')
+		b.builder.WriteString(line) // WriteString can't actually return an error
+	}
+	b.counter += len(lines)
 }
 
 // addNewLine adds newline to builder
-func (b *bodyBuilder) addNewLine() error {
-	err := b.builder.WriteByte('\n')
-	return err
+func (b *bodyBuilder) addNewLine() {
+	b.builder.WriteByte('\n') // WriteByte can't actually return an error
 }
 
 // Len returns builder content length
@@ -129,11 +130,9 @@ func (b *bodyBuilder) toCountingReader() *countingReader {
 
 type sender struct {
 	logger              *zap.Logger
-	logBuffer           []logPair
 	metricBuffer        []metricPair
 	config              *Config
 	client              *http.Client
-	filter              filter
 	sources             sourceFormats
 	compressor          compressor
 	prometheusFormatter prometheusFormatter
@@ -145,7 +144,7 @@ type sender struct {
 }
 
 const (
-	// maxBufferSize defines size of the logBuffer (maximum number of pdata.LogRecord entries)
+	// maxBufferSize defines size of the logBuffer (maximum number of plog.LogRecord entries)
 	maxBufferSize int = 1024 * 1024
 
 	headerContentType     string = "Content-Type"
@@ -170,17 +169,10 @@ const (
 	contentEncodingDeflate string = "deflate"
 )
 
-func newAppendResponse() appendResponse {
-	return appendResponse{
-		appended: true,
-	}
-}
-
 func newSender(
 	logger *zap.Logger,
 	cfg *Config,
 	cl *http.Client,
-	f filter,
 	s sourceFormats,
 	c compressor,
 	pf prometheusFormatter,
@@ -193,7 +185,6 @@ func newSender(
 		logger:              logger,
 		config:              cfg,
 		client:              cl,
-		filter:              f,
 		sources:             s,
 		compressor:          c,
 		prometheusFormatter: pf,
@@ -356,35 +347,30 @@ func (s *sender) createRequest(ctx context.Context, pipeline PipelineType, data 
 }
 
 // logToText converts LogRecord to a plain text line, returns it and error eventually
-func (s *sender) logToText(record pdata.LogRecord) string {
+func (s *sender) logToText(record plog.LogRecord) string {
 	return record.Body().AsString()
 }
 
 // logToJSON converts LogRecord to a json line, returns it and error eventually
-func (s *sender) logToJSON(record logPair) (string, error) {
-	data := s.filter.filterOut(record.attributes)
+func (s *sender) logToJSON(record plog.LogRecord) (string, error) {
 	if s.jsonLogsConfig.AddTimestamp {
-		addJSONTimestamp(data.orig, s.jsonLogsConfig.TimestampKey, record.log.Timestamp())
-	}
-
-	if s.config.TranslateAttributes {
-		data.translateAttributes()
+		addJSONTimestamp(record.Attributes(), s.jsonLogsConfig.TimestampKey, record.Timestamp())
 	}
 
 	// Only append the body when it's not empty to prevent sending 'null' log.
-	if body := record.log.Body(); !isEmptyAttributeValue(body) {
-		if s.jsonLogsConfig.FlattenBody && body.Type() == pdata.AttributeValueTypeMap {
+	if body := record.Body(); !isEmptyAttributeValue(body) {
+		if s.jsonLogsConfig.FlattenBody && body.Type() == pcommon.ValueTypeMap {
 			// Cannot use CopyTo, as it overrides data.orig's values
-			body.MapVal().Range(func(k string, v pdata.AttributeValue) bool {
-				data.orig.Insert(k, v)
+			body.MapVal().Range(func(k string, v pcommon.Value) bool {
+				record.Attributes().Insert(k, v)
 				return true
 			})
 		} else {
-			data.orig.Upsert(s.jsonLogsConfig.LogKey, body)
+			record.Attributes().Upsert(s.jsonLogsConfig.LogKey, body)
 		}
 	}
 
-	nextLine, err := json.Marshal(data.orig.AsRaw())
+	nextLine, err := json.Marshal(record.Attributes().AsRaw())
 	if err != nil {
 		return "", err
 	}
@@ -398,7 +384,7 @@ var timeZeroUTC = time.Unix(0, 0).UTC()
 // out the logs as JSON.
 // If the attached timestamp is equal to 0 (millisecond based UNIX timestamp)
 // then send out current time formatted as milliseconds since January 1, 1970.
-func addJSONTimestamp(attrs pdata.AttributeMap, timestampKey string, pt pdata.Timestamp) {
+func addJSONTimestamp(attrs pcommon.Map, timestampKey string, pt pcommon.Timestamp) {
 	t := pt.AsTime()
 	if t == timeZeroUTC {
 		attrs.InsertInt(timestampKey, time.Now().UnixMilli())
@@ -407,18 +393,18 @@ func addJSONTimestamp(attrs pdata.AttributeMap, timestampKey string, pt pdata.Ti
 	}
 }
 
-func isEmptyAttributeValue(att pdata.AttributeValue) bool {
+func isEmptyAttributeValue(att pcommon.Value) bool {
 	t := att.Type()
-	return !(t == pdata.AttributeValueTypeString && len(att.StringVal()) > 0 ||
-		t == pdata.AttributeValueTypeArray && att.SliceVal().Len() > 0 ||
-		t == pdata.AttributeValueTypeMap && att.MapVal().Len() > 0 ||
-		t == pdata.AttributeValueTypeBytes && len(att.BytesVal()) > 0)
+	return !(t == pcommon.ValueTypeString && len(att.StringVal()) > 0 ||
+		t == pcommon.ValueTypeSlice && att.SliceVal().Len() > 0 ||
+		t == pcommon.ValueTypeMap && att.MapVal().Len() > 0 ||
+		t == pcommon.ValueTypeBytes && len(att.BytesVal()) > 0)
 }
 
 // sendNonOTLPLogs sends log records from the logBuffer formatted according
 // to configured LogFormat and as the result of execution
 // returns array of records which has not been sent correctly and error
-func (s *sender) sendNonOTLPLogs(ctx context.Context, flds fields) ([]logPair, error) {
+func (s *sender) sendNonOTLPLogs(ctx context.Context, rl plog.ResourceLogs, flds fields) ([]plog.LogRecord, error) {
 	if s.config.LogFormat == OTLPLogFormat {
 		return nil, fmt.Errorf("Attempting to send OTLP logs as non-OTLP data")
 	}
@@ -426,49 +412,34 @@ func (s *sender) sendNonOTLPLogs(ctx context.Context, flds fields) ([]logPair, e
 	var (
 		body           bodyBuilder = newBodyBuilder()
 		errs           []error
-		droppedRecords []logPair
-		currentRecords []logPair
+		droppedRecords []plog.LogRecord
+		currentRecords []plog.LogRecord
 	)
 
-	for _, record := range s.logBuffer {
-		var formattedLine string
-		var err error
+	slgs := rl.ScopeLogs()
+	for i := 0; i < slgs.Len(); i++ {
+		slg := slgs.At(i)
+		for j := 0; j < slg.LogRecords().Len(); j++ {
+			lr := slg.LogRecords().At(j)
+			formattedLine, err := s.formatLogLine(lr)
+			if err != nil {
+				droppedRecords = append(droppedRecords, lr)
+				errs = append(errs, err)
+				continue
+			}
 
-		switch s.config.LogFormat {
-		case TextFormat:
-			formattedLine = s.logToText(record.log)
-		case JSONFormat:
-			formattedLine, err = s.logToJSON(record)
-		default:
-			err = errors.New("unexpected log format")
-		}
-
-		if err != nil {
-			droppedRecords = append(droppedRecords, record)
-			errs = append(errs, err)
-			continue
-		}
-
-		ar, err := s.appendAndSend(ctx, formattedLine, LogsPipeline, &body, flds)
-		if err != nil {
-			errs = append(errs, err)
-			if ar.sent {
+			sent, err := s.appendAndMaybeSend(ctx, []string{formattedLine}, LogsPipeline, &body, flds)
+			if err != nil {
+				errs = append(errs, err)
 				droppedRecords = append(droppedRecords, currentRecords...)
 			}
 
-			if !ar.appended {
-				droppedRecords = append(droppedRecords, record)
+			// If data was sent and either failed or succeeded, cleanup the currentRecords slice
+			if sent {
+				currentRecords = currentRecords[:0]
 			}
-		}
 
-		// If data was sent, cleanup the currentTimeSeries counter
-		if ar.sent {
-			currentRecords = currentRecords[:0]
-		}
-
-		// If log has been appended to body, increment the currentTimeSeries
-		if ar.appended {
-			currentRecords = append(currentRecords, record)
+			currentRecords = append(currentRecords, lr)
 		}
 	}
 
@@ -479,14 +450,27 @@ func (s *sender) sendNonOTLPLogs(ctx context.Context, flds fields) ([]logPair, e
 		}
 	}
 
-	if len(errs) > 0 {
-		return droppedRecords, multierr.Combine(errs...)
+	return droppedRecords, multierr.Combine(errs...)
+}
+
+func (s *sender) formatLogLine(lr plog.LogRecord) (string, error) {
+	var formattedLine string
+	var err error
+
+	switch s.config.LogFormat {
+	case TextFormat:
+		formattedLine = s.logToText(lr)
+	case JSONFormat:
+		formattedLine, err = s.logToJSON(lr)
+	default:
+		err = errors.New("unexpected log format")
 	}
-	return droppedRecords, nil
+
+	return formattedLine, err
 }
 
 // TODO: add support for HTTP limits
-func (s *sender) sendOTLPLogs(ctx context.Context, ld pdata.Logs) error {
+func (s *sender) sendOTLPLogs(ctx context.Context, ld plog.Logs) error {
 	rls := ld.ResourceLogs()
 	for i := 0; i < rls.Len(); i++ {
 		rl := rls.At(i)
@@ -519,76 +503,104 @@ func (s *sender) sendOTLPLogs(ctx context.Context, ld pdata.Logs) error {
 }
 
 // sendNonOTLPMetrics sends metrics in right format basing on the s.config.MetricFormat
-func (s *sender) sendNonOTLPMetrics(ctx context.Context, flds fields) ([]metricPair, error) {
+func (s *sender) sendNonOTLPMetrics(ctx context.Context, md pmetric.Metrics) (pmetric.Metrics, []error) {
 	if s.config.MetricFormat == OTLPMetricFormat {
-		return nil, fmt.Errorf("Attempting to send OTLP metrics as non-OTLP data")
+		return md, []error{fmt.Errorf("Attempting to send OTLP metrics as non-OTLP data")}
 	}
 
 	var (
-		body           bodyBuilder
-		errs           []error
-		droppedRecords []metricPair
-		currentRecords []metricPair
+		body             bodyBuilder = newBodyBuilder()
+		errs             []error
+		currentResources []pmetric.ResourceMetrics
+		flds             fields
 	)
 
-	for _, record := range s.metricBuffer {
-		var formattedLine string
+	rms := md.ResourceMetrics()
+	droppedMetrics := pmetric.NewMetrics()
+	for i := 0; i < rms.Len(); i++ {
+		rm := rms.At(i)
+		flds = newFields(rm.Resource().Attributes())
+		sms := rm.ScopeMetrics()
+
+		// generally speaking, it's fine to send multiple ResourceMetrics in a single request
+		// the only exception is if the computed source headers are different, as those as unique per-request
+		// so we check if the headers are different here and send what we have if they are
+		if i > 0 {
+			currentSourceHeaders := getSourcesHeaders(s.sources, flds)
+			previousFields := newFields(rms.At(i - 1).Resource().Attributes())
+			previousSourceHeaders := getSourcesHeaders(s.sources, previousFields)
+			if !reflect.DeepEqual(previousSourceHeaders, currentSourceHeaders) && body.Len() > 0 {
+				if err := s.send(ctx, MetricsPipeline, body.toCountingReader(), previousFields); err != nil {
+					errs = append(errs, err)
+					for _, resource := range currentResources {
+						resource.MoveTo(droppedMetrics.ResourceMetrics().AppendEmpty())
+					}
+				}
+				body.Reset()
+				currentResources = currentResources[:0]
+			}
+		}
+
+		// transform the metrics into formatted lines ready to be sent
+		var formattedLines []string
 		var err error
+		for i := 0; i < sms.Len(); i++ {
+			sm := sms.At(i)
 
-		switch s.config.MetricFormat {
-		case PrometheusFormat:
-			formattedLine = s.prometheusFormatter.metric2String(record)
-		case Carbon2Format:
-			formattedLine = carbon2Metric2String(record)
-		case GraphiteFormat:
-			formattedLine = s.graphiteFormatter.metric2String(record)
-		default:
-			err = fmt.Errorf("unexpected metric format: %s", s.config.MetricFormat)
-		}
+			for j := 0; j < sm.Metrics().Len(); j++ {
+				m := sm.Metrics().At(j)
 
-		if err != nil {
-			droppedRecords = append(droppedRecords, record)
-			errs = append(errs, err)
-			continue
-		}
+				var formattedLine string
 
-		ar, err := s.appendAndSend(ctx, formattedLine, MetricsPipeline, &body, flds)
-		if err != nil {
-			errs = append(errs, err)
-			if ar.sent {
-				droppedRecords = append(droppedRecords, currentRecords...)
-			}
+				switch s.config.MetricFormat {
+				case PrometheusFormat:
+					formattedLine = s.prometheusFormatter.metric2String(m, rm.Resource().Attributes())
+				case Carbon2Format:
+					formattedLine = carbon2Metric2String(m, rm.Resource().Attributes())
+				case GraphiteFormat:
+					formattedLine = s.graphiteFormatter.metric2String(m, rm.Resource().Attributes())
+				default:
+					return md, []error{fmt.Errorf("unexpected metric format: %s", s.config.MetricFormat)}
+				}
 
-			if !ar.appended {
-				droppedRecords = append(droppedRecords, record)
+				formattedLines = append(formattedLines, formattedLine)
 			}
 		}
 
-		// If data was sent, cleanup the currentTimeSeries counter
-		if ar.sent {
-			currentRecords = currentRecords[:0]
+		sent, err := s.appendAndMaybeSend(ctx, formattedLines, MetricsPipeline, &body, flds)
+		if err != nil {
+			errs = append(errs, err)
+			if sent {
+				// failed at sending, add the resource to the dropped metrics
+				// move instead of copy here to avoid duplicating data in memory on failure
+				for _, resource := range currentResources {
+					resource.MoveTo(droppedMetrics.ResourceMetrics().AppendEmpty())
+				}
+			}
 		}
 
-		// If log has been appended to body, increment the currentTimeSeries
-		if ar.appended {
-			currentRecords = append(currentRecords, record)
+		// If data was sent, cleanup the currentResources slice
+		if sent {
+			currentResources = currentResources[:0]
 		}
+
+		currentResources = append(currentResources, rm)
+
 	}
 
 	if body.Len() > 0 {
 		if err := s.send(ctx, MetricsPipeline, body.toCountingReader(), flds); err != nil {
 			errs = append(errs, err)
-			droppedRecords = append(droppedRecords, currentRecords...)
+			for _, resource := range currentResources {
+				resource.MoveTo(droppedMetrics.ResourceMetrics().AppendEmpty())
+			}
 		}
 	}
 
-	if len(errs) > 0 {
-		return droppedRecords, multierr.Combine(errs...)
-	}
-	return droppedRecords, nil
+	return droppedMetrics, errs
 }
 
-func (s *sender) sendOTLPMetrics(ctx context.Context, md pdata.Metrics) error {
+func (s *sender) sendOTLPMetrics(ctx context.Context, md pmetric.Metrics) error {
 	rms := md.ResourceMetrics()
 	for i := 0; i < rms.Len(); i++ {
 		rm := rms.At(i)
@@ -609,51 +621,40 @@ func (s *sender) sendOTLPMetrics(ctx context.Context, md pdata.Metrics) error {
 	return s.send(ctx, MetricsPipeline, newCountingReader(md.DataPointCount()).withBytes(body), fields{})
 }
 
-// appendAndSend appends line to the request body that will be sent and sends
-// the accumulated data if the internal logBuffer has been filled (with maxBufferSize elements).
-// It returns appendResponse
-func (s *sender) appendAndSend(
+// appendAndMaybeSend appends line to the request body that will be sent and sends
+// the accumulated data if the internal logBuffer has been filled (with config.MaxRequestBodySize bytes).
+// It returns a boolean indicating if the data was sent and an error
+func (s *sender) appendAndMaybeSend(
 	ctx context.Context,
-	line string,
+	lines []string,
 	pipeline PipelineType,
 	body *bodyBuilder,
 	flds fields,
-) (appendResponse, error) {
-	var errors []error
-	ar := newAppendResponse()
+) (sent bool, err error) {
 
-	if body.Len() > 0 && body.Len()+len(line) >= s.config.MaxRequestBodySize {
-		ar.sent = true
-		if err := s.send(ctx, pipeline, body.toCountingReader(), flds); err != nil {
-			errors = append(errors, err)
-		}
+	linesTotalLength := 0
+	for _, line := range lines {
+		linesTotalLength += len(line) + 1 // count the newline as well
+	}
+
+	if body.Len() > 0 && body.Len()+linesTotalLength >= s.config.MaxRequestBodySize {
+		sent = true
+		err = s.send(ctx, pipeline, body.toCountingReader(), flds)
 		body.Reset()
 	}
 
 	if body.Len() > 0 {
 		// Do not add newline if the body is empty
-		if err := body.addNewLine(); err != nil {
-			errors = append(errors, err)
-			ar.appended = false
-		}
+		body.addNewLine()
 	}
 
-	if ar.appended {
-		// Do not append new line if separator was not appended
-		if err := body.addLine(line); err != nil {
-			errors = append(errors, err)
-			ar.appended = false
-		}
-	}
+	body.addLines(lines)
 
-	if len(errors) > 0 {
-		return ar, multierr.Combine(errors...)
-	}
-	return ar, nil
+	return sent, err
 }
 
 // sendTraces sends traces in right format basing on the s.config.TraceFormat
-func (s *sender) sendTraces(ctx context.Context, td pdata.Traces) error {
+func (s *sender) sendTraces(ctx context.Context, td ptrace.Traces) error {
 	if s.config.TraceFormat == OTLPTraceFormat {
 		return s.sendOTLPTraces(ctx, td)
 	}
@@ -661,7 +662,7 @@ func (s *sender) sendTraces(ctx context.Context, td pdata.Traces) error {
 }
 
 // sendOTLPTraces sends trace records in OTLP format
-func (s *sender) sendOTLPTraces(ctx context.Context, td pdata.Traces) error {
+func (s *sender) sendOTLPTraces(ctx context.Context, td ptrace.Traces) error {
 	capacity := td.SpanCount()
 	for i := 0; i < td.ResourceSpans().Len(); i++ {
 		s.addSourceResourceAttributes(td.ResourceSpans().At(i).Resource().Attributes())
@@ -677,47 +678,9 @@ func (s *sender) sendOTLPTraces(ctx context.Context, td pdata.Traces) error {
 	return nil
 }
 
-// cleanLogsBuffer zeroes logBuffer
-func (s *sender) cleanLogsBuffer() {
-	s.logBuffer = (s.logBuffer)[:0]
-}
-
-// batchLog adds log to the logBuffer and flushes them if logBuffer is full to avoid overflow
-// returns list of log records which were not sent successfully
-func (s *sender) batchLog(ctx context.Context, log logPair, metadata fields) ([]logPair, error) {
-	s.logBuffer = append(s.logBuffer, log)
-
-	if s.countLogs() >= maxBufferSize {
-		dropped, err := s.sendNonOTLPLogs(ctx, metadata)
-		s.cleanLogsBuffer()
-		return dropped, err
-	}
-
-	return nil, nil
-}
-
-// countLogs returns number of logs in logBuffer
-func (s *sender) countLogs() int {
-	return len(s.logBuffer)
-}
-
 // cleanMetricBuffer zeroes metricBuffer
 func (s *sender) cleanMetricBuffer() {
 	s.metricBuffer = (s.metricBuffer)[:0]
-}
-
-// batchMetric adds metric to the metricBuffer and flushes them if metricBuffer is full to avoid overflow
-// returns list of metric records which were not sent successfully
-func (s *sender) batchMetric(ctx context.Context, metric metricPair, metadata fields) ([]metricPair, error) {
-	s.metricBuffer = append(s.metricBuffer, metric)
-
-	if s.countMetrics() >= maxBufferSize {
-		dropped, err := s.sendNonOTLPMetrics(ctx, metadata)
-		s.cleanMetricBuffer()
-		return dropped, err
-	}
-
-	return nil, nil
 }
 
 // countMetrics returns number of metrics in metricBuffer
@@ -740,21 +703,31 @@ func addCompressHeader(req *http.Request, enc CompressEncodingType) error {
 }
 
 func addSourcesHeaders(req *http.Request, sources sourceFormats, flds fields) {
+	sourceHeaderValues := getSourcesHeaders(sources, flds)
+
+	for headerName, headerValue := range sourceHeaderValues {
+		req.Header.Add(headerName, headerValue)
+	}
+}
+
+func getSourcesHeaders(sources sourceFormats, flds fields) map[string]string {
+	sourceHeaderValues := map[string]string{}
 	if !flds.isInitialized() {
-		return
+		return sourceHeaderValues
 	}
 
 	if sources.host.isSet() {
-		req.Header.Add(headerHost, sources.host.format(flds))
+		sourceHeaderValues[headerHost] = sources.host.format(flds)
 	}
 
 	if sources.name.isSet() {
-		req.Header.Add(headerName, sources.name.format(flds))
+		sourceHeaderValues[headerName] = sources.name.format(flds)
 	}
 
 	if sources.category.isSet() {
-		req.Header.Add(headerCategory, sources.category.format(flds))
+		sourceHeaderValues[headerCategory] = sources.category.format(flds)
 	}
+	return sourceHeaderValues
 }
 
 func addLogsHeaders(req *http.Request, lf LogFormatType, flds fields) {
@@ -827,7 +800,7 @@ func (s *sender) addRequestHeaders(req *http.Request, pipeline PipelineType, fld
 // * source name
 // to the provided attribute map using the provided fields as values source and using
 // the source templates for formatting.
-func (s *sender) addSourceRelatedResourceAttributesFromFields(attrs pdata.AttributeMap, flds fields) {
+func (s *sender) addSourceRelatedResourceAttributesFromFields(attrs pcommon.Map, flds fields) {
 	if s.sources.host.isSet() {
 		attrs.InsertString(attributeKeySourceHost, s.sources.host.format(flds))
 	}
@@ -848,7 +821,7 @@ func (s *sender) addSourceRelatedResourceAttributesFromFields(attrs pdata.Attrib
 // When those attributes are already in the attribute map then nothing is
 // changed since attributes that are provided with data have precedence over
 // exporter configuration.
-func (s *sender) addSourceResourceAttributes(attrs pdata.AttributeMap) {
+func (s *sender) addSourceResourceAttributes(attrs pcommon.Map) {
 	if s.sources.host.isSet() {
 		if _, ok := attrs.Get(attributeKeySourceHost); !ok {
 			attrs.InsertString(attributeKeySourceHost, s.sources.host.formatPdataMap(attrs))

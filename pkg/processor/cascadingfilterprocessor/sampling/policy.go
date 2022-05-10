@@ -18,7 +18,8 @@ import (
 	"sync"
 	"time"
 
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
 // TraceData stores the sampling related trace data.
@@ -37,7 +38,7 @@ type TraceData struct {
 	// SpanCount track the number of spans on the trace.
 	SpanCount int32
 	// ReceivedBatches stores all the batches received for the trace.
-	ReceivedBatches []pdata.Traces
+	ReceivedBatches []ptrace.Traces
 }
 
 // Decision gives the status of sampling decision.
@@ -66,12 +67,12 @@ const (
 // which makes a sampling decision for a given trace when requested.
 type PolicyEvaluator interface {
 	// Evaluate looks at the trace data and returns a corresponding SamplingDecision.
-	Evaluate(traceID pdata.TraceID, trace *TraceData) Decision
+	Evaluate(traceID pcommon.TraceID, trace *TraceData) Decision
 }
 
 // DropTraceEvaluator implements a cascading policy evaluator,
 // which checks if trace should be dropped completely before making any other operations
 type DropTraceEvaluator interface {
 	// ShouldDrop checks if trace should be dropped
-	ShouldDrop(traceID pdata.TraceID, trace *TraceData) bool
+	ShouldDrop(traceID pcommon.TraceID, trace *TraceData) bool
 }

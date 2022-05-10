@@ -19,6 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 func TestEscapeGraphiteString(t *testing.T) {
@@ -75,12 +76,12 @@ func TestGraphiteMetricDataTypeIntGauge(t *testing.T) {
 	gf, err := newGraphiteFormatter("%{cluster}.%{namespace}.%{pod}.%{_metric_}")
 	require.NoError(t, err)
 
-	metric := exampleIntGaugeMetric()
-	metric.attributes.InsertString("cluster", "my_cluster")
-	metric.attributes.InsertString("namespace", "default")
-	metric.attributes.InsertString("pod", "some pod")
+	metric, attributes := exampleIntGaugeMetric()
+	attributes.InsertString("cluster", "my_cluster")
+	attributes.InsertString("namespace", "default")
+	attributes.InsertString("pod", "some pod")
 
-	result := gf.metric2String(metric)
+	result := gf.metric2String(metric, attributes)
 	expected := `my_cluster.default.some_pod.gauge_metric_name 124 1608124661
 my_cluster.default.some_pod.gauge_metric_name 245 1608124662`
 	assert.Equal(t, expected, result)
@@ -90,12 +91,12 @@ func TestGraphiteMetricDataTypeDoubleGauge(t *testing.T) {
 	gf, err := newGraphiteFormatter("%{cluster}.%{namespace}.%{pod}.%{_metric_}")
 	require.NoError(t, err)
 
-	metric := exampleDoubleGaugeMetric()
-	metric.attributes.InsertString("cluster", "my_cluster")
-	metric.attributes.InsertString("namespace", "default")
-	metric.attributes.InsertString("pod", "some pod")
+	metric, attributes := exampleDoubleGaugeMetric()
+	attributes.InsertString("cluster", "my_cluster")
+	attributes.InsertString("namespace", "default")
+	attributes.InsertString("pod", "some pod")
 
-	result := gf.metric2String(metric)
+	result := gf.metric2String(metric, attributes)
 	expected := `my_cluster.default.some_pod.gauge_metric_name_double_test 33.4 1608124661
 my_cluster.default.some_pod.gauge_metric_name_double_test 56.8 1608124662`
 	assert.Equal(t, expected, result)
@@ -105,11 +106,11 @@ func TestGraphiteNoattribute(t *testing.T) {
 	gf, err := newGraphiteFormatter("%{cluster}.%{namespace}.%{pod}.%{_metric_}")
 	require.NoError(t, err)
 
-	metric := exampleDoubleGaugeMetric()
-	metric.attributes.InsertString("cluster", "my_cluster")
-	metric.attributes.InsertString("pod", "some pod")
+	metric, attributes := exampleDoubleGaugeMetric()
+	attributes.InsertString("cluster", "my_cluster")
+	attributes.InsertString("pod", "some pod")
 
-	result := gf.metric2String(metric)
+	result := gf.metric2String(metric, attributes)
 	expected := `my_cluster..some_pod.gauge_metric_name_double_test 33.4 1608124661
 my_cluster..some_pod.gauge_metric_name_double_test 56.8 1608124662`
 	assert.Equal(t, expected, result)
@@ -119,12 +120,12 @@ func TestGraphiteMetricDataTypeIntSum(t *testing.T) {
 	gf, err := newGraphiteFormatter("%{cluster}.%{namespace}.%{pod}.%{_metric_}")
 	require.NoError(t, err)
 
-	metric := exampleIntSumMetric()
-	metric.attributes.InsertString("cluster", "my_cluster")
-	metric.attributes.InsertString("namespace", "default")
-	metric.attributes.InsertString("pod", "some pod")
+	metric, attributes := exampleIntSumMetric()
+	attributes.InsertString("cluster", "my_cluster")
+	attributes.InsertString("namespace", "default")
+	attributes.InsertString("pod", "some pod")
 
-	result := gf.metric2String(metric)
+	result := gf.metric2String(metric, attributes)
 	expected := `my_cluster.default.some_pod.sum_metric_int_test 45 1608124444
 my_cluster.default.some_pod.sum_metric_int_test 1238 1608124699`
 	assert.Equal(t, expected, result)
@@ -134,12 +135,12 @@ func TestGraphiteMetricDataTypeDoubleSum(t *testing.T) {
 	gf, err := newGraphiteFormatter("%{cluster}.%{namespace}.%{pod}.%{_metric_}")
 	require.NoError(t, err)
 
-	metric := exampleDoubleSumMetric()
-	metric.attributes.InsertString("cluster", "my_cluster")
-	metric.attributes.InsertString("namespace", "default")
-	metric.attributes.InsertString("pod", "some pod")
+	metric, attributes := exampleDoubleSumMetric()
+	attributes.InsertString("cluster", "my_cluster")
+	attributes.InsertString("namespace", "default")
+	attributes.InsertString("pod", "some pod")
 
-	result := gf.metric2String(metric)
+	result := gf.metric2String(metric, attributes)
 	expected := `my_cluster.default.some_pod.sum_metric_double_test 45.6 1618124444
 my_cluster.default.some_pod.sum_metric_double_test 1238.1 1608424699`
 	assert.Equal(t, expected, result)
@@ -149,12 +150,12 @@ func TestGraphiteMetricDataTypeSummary(t *testing.T) {
 	gf, err := newGraphiteFormatter("%{cluster}.%{namespace}.%{pod}.%{_metric_}")
 	require.NoError(t, err)
 
-	metric := exampleSummaryMetric()
-	metric.attributes.InsertString("cluster", "my_cluster")
-	metric.attributes.InsertString("namespace", "default")
-	metric.attributes.InsertString("pod", "some pod")
+	metric, attributes := exampleSummaryMetric()
+	attributes.InsertString("cluster", "my_cluster")
+	attributes.InsertString("namespace", "default")
+	attributes.InsertString("pod", "some pod")
 
-	result := gf.metric2String(metric)
+	result := gf.metric2String(metric, attributes)
 	expected := ``
 	assert.Equal(t, expected, result)
 }
@@ -163,60 +164,60 @@ func TestGraphiteMetricDataTypeHistogram(t *testing.T) {
 	gf, err := newGraphiteFormatter("%{cluster}.%{namespace}.%{pod}.%{_metric_}")
 	require.NoError(t, err)
 
-	metric := exampleHistogramMetric()
-	metric.attributes.InsertString("cluster", "my_cluster")
-	metric.attributes.InsertString("namespace", "default")
-	metric.attributes.InsertString("pod", "some pod")
+	metric, attributes := exampleHistogramMetric()
+	attributes.InsertString("cluster", "my_cluster")
+	attributes.InsertString("namespace", "default")
+	attributes.InsertString("pod", "some pod")
 
-	result := gf.metric2String(metric)
+	result := gf.metric2String(metric, attributes)
 	expected := ``
 	assert.Equal(t, expected, result)
 }
 
 func TestGraphiteMetrics(t *testing.T) {
 	type testCase struct {
-		name      string
-		metric    metricPair
-		expected  string
-		formatter string
+		name       string
+		metricFunc func(fillData bool) (pdata.Metric, pdata.Map)
+		expected   string
+		formatter  string
 	}
 
 	tests := []testCase{
 		{
-			name:      "empty int gauge",
-			metric:    buildExampleIntGaugeMetric(false),
-			expected:  "",
-			formatter: "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
+			name:       "empty int gauge",
+			metricFunc: buildExampleIntGaugeMetric,
+			expected:   "",
+			formatter:  "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
 		},
 		{
-			name:      "empty double gauge",
-			metric:    buildExampleDoubleGaugeMetric(false),
-			expected:  "",
-			formatter: "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
+			name:       "empty double gauge",
+			metricFunc: buildExampleDoubleGaugeMetric,
+			expected:   "",
+			formatter:  "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
 		},
 		{
-			name:      "empty int sum",
-			metric:    buildExampleIntSumMetric(false),
-			expected:  "",
-			formatter: "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
+			name:       "empty int sum",
+			metricFunc: buildExampleIntSumMetric,
+			expected:   "",
+			formatter:  "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
 		},
 		{
-			name:      "empty double sum",
-			metric:    buildExampleDoubleSumMetric(false),
-			expected:  "",
-			formatter: "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
+			name:       "empty double sum",
+			metricFunc: buildExampleDoubleSumMetric,
+			expected:   "",
+			formatter:  "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
 		},
 		{
-			name:      "empty summary",
-			metric:    buildExampleSummaryMetric(false),
-			expected:  "",
-			formatter: "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
+			name:       "empty summary",
+			metricFunc: buildExampleSummaryMetric,
+			expected:   "",
+			formatter:  "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
 		},
 		{
-			name:      "empty histogram",
-			metric:    buildExampleHistogramMetric(false),
-			expected:  "",
-			formatter: "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
+			name:       "empty histogram",
+			metricFunc: buildExampleHistogramMetric,
+			expected:   "",
+			formatter:  "%{cluster}.%{namespace}.%{pod}.%{_metric_}",
 		},
 	}
 
@@ -225,7 +226,7 @@ func TestGraphiteMetrics(t *testing.T) {
 			gf, err := newGraphiteFormatter(tt.formatter)
 			require.NoError(t, err)
 
-			result := gf.metric2String(tt.metric)
+			result := gf.metric2String(tt.metricFunc(false))
 			assert.Equal(t, tt.expected, result)
 		})
 	}

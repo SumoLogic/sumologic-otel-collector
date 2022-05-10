@@ -22,7 +22,8 @@ import (
 	"github.com/influxdata/telegraf/metric"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.uber.org/zap"
 )
 
@@ -34,7 +35,7 @@ func TestConverter(t *testing.T) {
 		metricsFn     func() telegraf.Metric
 		separateField bool
 		expectedErr   bool
-		expectedFn    func() pdata.MetricSlice
+		expectedFn    func() pmetric.MetricSlice
 	}{
 		{
 			name:          "gauge_int_with_one_field",
@@ -46,8 +47,8 @@ func TestConverter(t *testing.T) {
 
 				return metric.New("mem", nil, fields, tim, telegraf.Gauge)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 
 				newIntGauge(39097651200,
 					WithName("mem_available"),
@@ -66,8 +67,8 @@ func TestConverter(t *testing.T) {
 
 				return metric.New("mem", nil, fields, tim, telegraf.Gauge)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 				newIntGauge(39097651200,
 					WithName("mem"),
 					WithField("available"),
@@ -90,8 +91,8 @@ func TestConverter(t *testing.T) {
 		// 		}
 		// 		return metric.New("mem", tags, fields, tim, telegraf.Gauge)
 		// 	},
-		// 	expectedFn: func() pdata.MetricSlice {
-		// 		metrics := pdata.NewMetricSlice()
+		// 	expectedFn: func() pmetric.MetricSlice {
+		// 		metrics := pmetric.NewMetricSlice()
 		// 		metrics.Append(
 		// 			newIntGauge(39097651200,
 		// 				WithName("mem_available"),
@@ -112,8 +113,8 @@ func TestConverter(t *testing.T) {
 
 				return metric.New("mem", nil, fields, tim, telegraf.Gauge)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 				newDoubleGauge(54.505050,
 					WithName("mem_available_percent"),
 					WithTime(tim),
@@ -131,8 +132,8 @@ func TestConverter(t *testing.T) {
 
 				return metric.New("mem", nil, fields, tim, telegraf.Gauge)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 				newDoubleGauge(54.505050,
 					WithName("mem"),
 					WithField("available_percent"),
@@ -155,8 +156,8 @@ func TestConverter(t *testing.T) {
 		// 		}
 		// 		return metric.New("mem", tags, fields, tim, telegraf.Gauge)
 		// 	},
-		// 	expectedFn: func() pdata.MetricSlice {
-		// 		metrics := pdata.NewMetricSlice()
+		// 	expectedFn: func() pmetric.MetricSlice {
+		// 		metrics := pmetric.NewMetricSlice()
 		// 		metrics.Append(
 		// 			newDoubleGauge(54.505050,
 		// 				WithName("mem_available_percent"),
@@ -179,8 +180,8 @@ func TestConverter(t *testing.T) {
 				}
 				return metric.New("mem", tags, fields, tim, telegraf.Gauge)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 				newDoubleGauge(54.505050,
 					WithName("mem_available_percent"),
 					WithTime(tim),
@@ -202,8 +203,8 @@ func TestConverter(t *testing.T) {
 
 				return metric.New("mem", nil, fields, tim, telegraf.Gauge)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 				newIntGauge(39097651200,
 					WithName("mem_available"),
 					WithTime(tim),
@@ -238,8 +239,8 @@ func TestConverter(t *testing.T) {
 
 				return metric.New("mem", nil, fields, tim, telegraf.Gauge)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 				newIntGauge(39097651200,
 					WithName("mem"),
 					WithField("available"),
@@ -263,8 +264,8 @@ func TestConverter(t *testing.T) {
 
 				return metric.New("mem", nil, fields, tim, telegraf.Counter)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 				newIntSum(39097651200,
 					WithName("mem_available"),
 					WithTime(tim),
@@ -282,8 +283,8 @@ func TestConverter(t *testing.T) {
 
 				return metric.New("mem", nil, fields, tim, telegraf.Counter)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 				newIntSum(39097651200,
 					WithName("mem"),
 					WithField("available"),
@@ -306,8 +307,8 @@ func TestConverter(t *testing.T) {
 		// 		}
 		// 		return metric.New("mem", tags, fields, tim, telegraf.Counter)
 		// 	},
-		// 	expectedFn: func() pdata.MetricSlice {
-		// 		metrics := pdata.NewMetricSlice()
+		// 	expectedFn: func() pmetric.MetricSlice {
+		// 		metrics := pmetric.NewMetricSlice()
 		// 		metrics.Append(
 		// 			newIntSum(39097651200,
 		// 				WithName("mem_available"),
@@ -334,8 +335,8 @@ func TestConverter(t *testing.T) {
 		// 		}
 		// 		return metric.New("mem", tags, fields, tim, telegraf.Counter)
 		// 	},
-		// 	expectedFn: func() pdata.MetricSlice {
-		// 		metrics := pdata.NewMetricSlice()
+		// 	expectedFn: func() pmetric.MetricSlice {
+		// 		metrics := pmetric.NewMetricSlice()
 		// 		metrics.Append(
 		// 			newIntSum(39097651200,
 		// 				WithName("mem_available"),
@@ -358,8 +359,8 @@ func TestConverter(t *testing.T) {
 
 				return metric.New("mem", nil, fields, tim, telegraf.Counter)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 				newDoubleSum(39097651200.123,
 					WithName("mem_available"),
 					WithTime(tim),
@@ -377,8 +378,8 @@ func TestConverter(t *testing.T) {
 
 				return metric.New("mem", nil, fields, tim, telegraf.Counter)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 				newDoubleSum(39097651200.123,
 					WithName("mem"),
 					WithField("available"),
@@ -401,8 +402,8 @@ func TestConverter(t *testing.T) {
 		// 		}
 		// 		return metric.New("mem", tags, fields, tim, telegraf.Counter)
 		// 	},
-		// 	expectedFn: func() pdata.MetricSlice {
-		// 		metrics := pdata.NewMetricSlice()
+		// 	expectedFn: func() pmetric.MetricSlice {
+		// 		metrics := pmetric.NewMetricSlice()
 		// 		metrics.Append(
 		// 			newDoubleSum(39097651200.123,
 		// 				WithName("mem"),
@@ -427,8 +428,8 @@ func TestConverter(t *testing.T) {
 
 				return metric.New("mem", nil, fields, tim, telegraf.Counter)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 				newIntSum(39097651200,
 					WithName("mem_available"),
 					WithTime(tim),
@@ -459,8 +460,8 @@ func TestConverter(t *testing.T) {
 
 				return metric.New("mem", nil, fields, tim, telegraf.Counter)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 				newIntSum(39097651200,
 					WithName("mem"),
 					WithField("available"),
@@ -484,8 +485,8 @@ func TestConverter(t *testing.T) {
 
 				return metric.New("mem", nil, fields, tim, telegraf.Untyped)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 				newIntGauge(39097651200,
 					WithName("mem_available"),
 					WithTime(tim),
@@ -503,8 +504,8 @@ func TestConverter(t *testing.T) {
 
 				return metric.New("mem", nil, fields, tim, telegraf.Untyped)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 				newDoubleGauge(43.10542941093445,
 					WithName("mem_used_percent"),
 					WithTime(tim),
@@ -522,8 +523,8 @@ func TestConverter(t *testing.T) {
 
 				return metric.New("cpu", nil, fields, tim, telegraf.Untyped)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 				newIntGauge(0,
 					WithName("cpu_throttling_supported"),
 					WithTime(tim),
@@ -541,8 +542,8 @@ func TestConverter(t *testing.T) {
 
 				return metric.New("cpu", nil, fields, tim, telegraf.Untyped)
 			},
-			expectedFn: func() pdata.MetricSlice {
-				metrics := pdata.NewMetricSlice()
+			expectedFn: func() pmetric.MetricSlice {
+				metrics := pmetric.NewMetricSlice()
 				newIntGauge(1,
 					WithName("cpu_throttling_supported"),
 					WithTime(tim),
@@ -567,7 +568,7 @@ func TestConverter(t *testing.T) {
 				resourceMetrics := out.ResourceMetrics().At(0)
 				assertResourceAttributes(t, m.TagList(), resourceMetrics.Resource())
 
-				actual := resourceMetrics.InstrumentationLibraryMetrics().At(0).Metrics()
+				actual := resourceMetrics.ScopeMetrics().At(0).Metrics()
 
 				expected := tt.expectedFn()
 				require.Equal(t, expected.Len(), actual.Len())
@@ -581,14 +582,14 @@ func TestConverter(t *testing.T) {
 	}
 }
 
-func assertResourceAttributes(t *testing.T, tags []*telegraf.Tag, resource pdata.Resource) {
-	resource.Attributes().Range(func(k string, v pdata.AttributeValue) bool {
+func assertResourceAttributes(t *testing.T, tags []*telegraf.Tag, resource pcommon.Resource) {
+	resource.Attributes().Range(func(k string, v pcommon.Value) bool {
 		var found bool
 		for _, tag := range tags {
 			if k != tag.Key {
 				continue
 			}
-			if assert.Equal(t, pdata.AttributeValueTypeString, v.Type()) {
+			if assert.Equal(t, pcommon.ValueTypeString, v.Type()) {
 				if assert.Equal(t, tag.Value, v.StringVal()) {
 					found = true
 				}
@@ -600,7 +601,7 @@ func assertResourceAttributes(t *testing.T, tags []*telegraf.Tag, resource pdata
 	})
 }
 
-func pdataMetricSlicesAreEqual(t *testing.T, expected, actual pdata.MetricSlice) {
+func pdataMetricSlicesAreEqual(t *testing.T, expected, actual pmetric.MetricSlice) {
 	for i := 0; i < expected.Len(); i++ {
 		em := expected.At(i)
 		eName := em.Name()
@@ -629,9 +630,9 @@ func pdataMetricSlicesAreEqual(t *testing.T, expected, actual pdata.MetricSlice)
 
 // assertEqualDataPointsWithLabels checks that provided metrics have the same
 // data points with the same set of labels.
-func assertEqualDataPointsWithLabels(t *testing.T, em pdata.Metric, am pdata.Metric) {
+func assertEqualDataPointsWithLabels(t *testing.T, em pmetric.Metric, am pmetric.Metric) {
 	switch em.DataType() {
-	case pdata.MetricDataTypeGauge:
+	case pmetric.MetricDataTypeGauge:
 		edps := em.Gauge().DataPoints()
 		adps := am.Gauge().DataPoints()
 		assert.Equal(t, edps.Len(), adps.Len())
@@ -641,7 +642,7 @@ func assertEqualDataPointsWithLabels(t *testing.T, em pdata.Metric, am pdata.Met
 			assert.Equal(t, expected.DoubleVal(), actual.DoubleVal())
 			assertEqualDataPoints(t, am.Name(), expected, actual)
 		}
-	case pdata.MetricDataTypeSum:
+	case pmetric.MetricDataTypeSum:
 		edps := em.Sum().DataPoints()
 		adps := am.Sum().DataPoints()
 		assert.Equal(t, edps.Len(), adps.Len())
@@ -655,12 +656,12 @@ func assertEqualDataPointsWithLabels(t *testing.T, em pdata.Metric, am pdata.Met
 }
 
 type DataPoint interface {
-	Timestamp() pdata.Timestamp
-	StartTimestamp() pdata.Timestamp
-	LabelsMap() pdata.AttributeMap
+	Timestamp() pcommon.Timestamp
+	StartTimestamp() pcommon.Timestamp
+	LabelsMap() pcommon.Map
 }
 
-func assertEqualDataPoints(t *testing.T, metricName string, expected, actual pdata.NumberDataPoint) {
+func assertEqualDataPoints(t *testing.T, metricName string, expected, actual pmetric.NumberDataPoint) {
 	// NOTE: cannot compare values due to different return types of Value()
 	// func for different metric types.
 	// assert.Equal(t, edp.Value(), adp.Value())
@@ -679,7 +680,7 @@ func assertEqualDataPoints(t *testing.T, metricName string, expected, actual pda
 	// assert.Equal(t, edp.LabelsMap().Sort(), adp.LabelsMap().Sort())
 }
 
-func pdataMetricSlicesWithFieldsAreEqual(t *testing.T, expected, actual pdata.MetricSlice) {
+func pdataMetricSlicesWithFieldsAreEqual(t *testing.T, expected, actual pmetric.MetricSlice) {
 	for i := 0; i < expected.Len(); i++ {
 		em := expected.At(i)
 		eName := em.Name()
@@ -688,7 +689,7 @@ func pdataMetricSlicesWithFieldsAreEqual(t *testing.T, expected, actual pdata.Me
 		// assert the fields
 		for ef := range eFields {
 			am, ok := metricSliceContainsMetricWithField(actual, eName, ef)
-			if assert.True(t, ok, "pdata.MetricSlice doesn't contain %s", eName) {
+			if assert.True(t, ok, "pmetric.MetricSlice doesn't contain %s", eName) {
 
 				t.Logf("expected field name %s", ef)
 				adp, ok := fieldFromMetric(am, ef)
@@ -701,15 +702,15 @@ func pdataMetricSlicesWithFieldsAreEqual(t *testing.T, expected, actual pdata.Me
 	}
 }
 
-// metricSliceContainsMetricWithField searches through metrics in pdata.MetricSlice
-// and return the pdata.Metric that contains the requested field and a flag
+// metricSliceContainsMetricWithField searches through metrics in pmetric.MetricSlice
+// and return the pmetric.Metric that contains the requested field and a flag
 // whether such a metric was found.
-func metricSliceContainsMetricWithField(ms pdata.MetricSlice, name string, field string) (pdata.Metric, bool) {
+func metricSliceContainsMetricWithField(ms pmetric.MetricSlice, name string, field string) (pmetric.Metric, bool) {
 	for i := 0; i < ms.Len(); i++ {
 		m := ms.At(i)
 		if m.Name() == name {
 			switch m.DataType() {
-			case pdata.MetricDataTypeGauge:
+			case pmetric.MetricDataTypeGauge:
 				mg := m.Gauge()
 				dps := mg.DataPoints()
 				for i := 0; i < dps.Len(); i++ {
@@ -727,14 +728,14 @@ func metricSliceContainsMetricWithField(ms pdata.MetricSlice, name string, field
 		}
 	}
 
-	return pdata.Metric{}, false
+	return pmetric.Metric{}, false
 }
 
 // getFieldsFromMetric returns a map of fields in a metric gathered from all
 // data points' label maps.
-func getFieldsFromMetric(m pdata.Metric) map[string]struct{} {
+func getFieldsFromMetric(m pmetric.Metric) map[string]struct{} {
 	switch m.DataType() {
-	case pdata.MetricDataTypeGauge:
+	case pmetric.MetricDataTypeGauge:
 		ret := make(map[string]struct{})
 		for i := 0; i < m.Gauge().DataPoints().Len(); i++ {
 			dp := m.Gauge().DataPoints().At(i)
@@ -751,11 +752,11 @@ func getFieldsFromMetric(m pdata.Metric) map[string]struct{} {
 	}
 }
 
-// fieldFromMetric searches through pdata.Metric's data points to find
+// fieldFromMetric searches through pmetric.Metric's data points to find
 // a particular field.
-func fieldFromMetric(m pdata.Metric, field string) (pdata.NumberDataPoint, bool) {
+func fieldFromMetric(m pmetric.Metric, field string) (pmetric.NumberDataPoint, bool) {
 	switch m.DataType() {
-	case pdata.MetricDataTypeGauge:
+	case pmetric.MetricDataTypeGauge:
 		dps := m.Gauge().DataPoints()
 		for i := 0; i < dps.Len(); i++ {
 			dp := dps.At(i)
@@ -770,8 +771,8 @@ func fieldFromMetric(m pdata.Metric, field string) (pdata.NumberDataPoint, bool)
 		}
 
 	default:
-		return pdata.NumberDataPoint{}, false
+		return pmetric.NumberDataPoint{}, false
 	}
 
-	return pdata.NumberDataPoint{}, false
+	return pmetric.NumberDataPoint{}, false
 }

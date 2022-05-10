@@ -144,11 +144,11 @@ jobs:
         run: echo "Running dev build for ${{ steps.extract_tag.outputs.tag }}"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1.2.0
+        uses: docker/setup-qemu-action@v2.0.0
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v1.6.0
+        uses: docker/setup-buildx-action@v2.0.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -187,11 +187,11 @@ jobs:
         run: echo "Running dev build for ${{ steps.extract_tag.outputs.tag }}"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1.2.0
+        uses: docker/setup-qemu-action@v2.0.0
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v1.6.0
+        uses: docker/setup-buildx-action@v2.0.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}

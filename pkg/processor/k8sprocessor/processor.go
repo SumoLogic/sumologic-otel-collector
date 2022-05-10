@@ -19,7 +19,10 @@ import (
 	"time"
 
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
@@ -85,7 +88,7 @@ func (kp *kubernetesprocessor) Shutdown(context.Context) error {
 }
 
 // ProcessTraces process traces and add k8s metadata using resource IP or incoming IP as pod origin.
-func (kp *kubernetesprocessor) ProcessTraces(ctx context.Context, td pdata.Traces) (pdata.Traces, error) {
+func (kp *kubernetesprocessor) ProcessTraces(ctx context.Context, td ptrace.Traces) (ptrace.Traces, error) {
 	rss := td.ResourceSpans()
 	for i := 0; i < rss.Len(); i++ {
 		kp.processResource(ctx, rss.At(i).Resource())
@@ -95,7 +98,7 @@ func (kp *kubernetesprocessor) ProcessTraces(ctx context.Context, td pdata.Trace
 }
 
 // ProcessMetrics process metrics and add k8s metadata using resource IP, hostname or incoming IP as pod origin.
-func (kp *kubernetesprocessor) ProcessMetrics(ctx context.Context, md pdata.Metrics) (pdata.Metrics, error) {
+func (kp *kubernetesprocessor) ProcessMetrics(ctx context.Context, md pmetric.Metrics) (pmetric.Metrics, error) {
 	rm := md.ResourceMetrics()
 	for i := 0; i < rm.Len(); i++ {
 		kp.processResource(ctx, rm.At(i).Resource())
@@ -105,7 +108,7 @@ func (kp *kubernetesprocessor) ProcessMetrics(ctx context.Context, md pdata.Metr
 }
 
 // ProcessLogs process logs and add k8s metadata using resource IP, hostname or incoming IP as pod origin.
-func (kp *kubernetesprocessor) ProcessLogs(ctx context.Context, ld pdata.Logs) (pdata.Logs, error) {
+func (kp *kubernetesprocessor) ProcessLogs(ctx context.Context, ld plog.Logs) (plog.Logs, error) {
 	rl := ld.ResourceLogs()
 	for i := 0; i < rl.Len(); i++ {
 		kp.processResource(ctx, rl.At(i).Resource())
@@ -115,7 +118,7 @@ func (kp *kubernetesprocessor) ProcessLogs(ctx context.Context, ld pdata.Logs) (
 }
 
 // processResource adds Pod metadata tags to resource based on pod association configuration
-func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pdata.Resource) {
+func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pcommon.Resource) {
 	podIdentifierKey, podIdentifierValue := extractPodID(ctx, resource.Attributes(), kp.podAssociations)
 	if podIdentifierValue == "" {
 		return

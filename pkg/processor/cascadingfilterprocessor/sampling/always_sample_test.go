@@ -19,7 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
 )
 
@@ -33,8 +33,8 @@ func newAlwaysSample() *policyEvaluator {
 func TestEvaluate_AlwaysSample(t *testing.T) {
 	filter := newAlwaysSample()
 	decision := filter.Evaluate(
-		pdata.NewTraceID([16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}),
-		newTraceStringAttrs(map[string]pdata.AttributeValue{}, "example", "value"),
+		pcommon.NewTraceID([16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}),
+		newTraceStringAttrs(map[string]interface{}{}, "example", "value"),
 	)
 	assert.Equal(t, decision, Sampled)
 }

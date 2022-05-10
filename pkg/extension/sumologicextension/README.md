@@ -1,7 +1,5 @@
 # Sumo Logic Extension
 
-**This extension is experimental and may receive breaking changes at any time.**
-
 This extension is to be used as part of Sumo Logic collector in conjuction with
 [`sumologicexporter`][sumologicexporter] in order to export telemetry data to
 [Sumo Logic][sumologic].

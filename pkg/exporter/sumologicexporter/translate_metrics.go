@@ -14,13 +14,13 @@
 
 package sumologicexporter
 
-import "go.opentelemetry.io/collector/model/pdata"
+import "go.opentelemetry.io/collector/pdata/pmetric"
 
 // translateTelegrafMetric translates telegraf metrics names to align with
 // Sumo conventions expected in Sumo host related apps, for example:
 // * `procstat_num_threads` => `Proc_Threads`
 // * `cpu_usage_irq` => `CPU_Irq`
-func translateTelegrafMetric(m pdata.Metric) {
+func translateTelegrafMetric(m pmetric.Metric) {
 	var newName string
 	switch m.Name() {
 
