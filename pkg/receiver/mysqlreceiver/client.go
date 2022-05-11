@@ -3,6 +3,7 @@ package mysqlreceiver
 import (
 	"database/sql"
 	"encoding/json"
+
 	"strconv"
 	"strings"
 
@@ -61,7 +62,6 @@ func (c *mySQLClient) getRecords() (map[string]string, error) {
 func Query(c mySQLClient) (map[string]string, error) {
 
 	myEntireRecords := make(map[string]string)
-	var lastelementindex string
 	for _, dbquery := range c.conf.DBQueries {
 		if len(strings.TrimSpace(dbquery.Query)) == 0 {
 			c.logger.Error("Query is empty, check collector config file.")
@@ -88,38 +88,36 @@ func Query(c mySQLClient) (map[string]string, error) {
 			c.logger.Info("IndexColumnName specified, fetching records incrementally.")
 		}
 		if len(strings.TrimSpace(dbquery.IndexColumnName)) == 0 {
-			queryFetchResult, err := ExecuteQueryandFetchRecords(c, dbquery.Query, dbquery.QueryId)
+			queryFetchResult, _, err := ExecuteQueryandFetchRecords(c, dbquery.Query, dbquery.QueryId)
 			for key, element := range queryFetchResult {
 				myEntireRecords[key] = element
-				lastelementindex = key
 			}
 			if err != nil {
 				c.logger.Error("Error in executing query and fetching records", zap.Error(err))
 				continue
 			}
 			if len(queryFetchResult) == 0 {
-				c.logger.Info("No database records found.")
+				c.logger.Info("No database records found for query with : ", zap.String("queryId", dbquery.QueryId))
 			} else {
-				c.logger.Info("Database records found.")
+				c.logger.Info("Database records found for query with : ", zap.String("queryId", dbquery.QueryId))
 			}
 		} else {
 			var currentState = GetState(dbquery, c.logger)
 			dbquery.Query = strings.Replace(dbquery.Query, "STATEVALUE", currentState, -1)
 			dbquery.Query = strings.Replace(dbquery.Query, "INDEXCOLUMNNAME", dbquery.IndexColumnName, -1)
-			queryFetchResult, err := ExecuteQueryandFetchRecords(c, dbquery.Query, dbquery.QueryId)
+			queryFetchResult, lastIndex, err := ExecuteQueryandFetchRecords(c, dbquery.Query, dbquery.QueryId)
 			for key, element := range queryFetchResult {
 				myEntireRecords[key] = element
-				lastelementindex = key
 			}
 			if err != nil {
 				c.logger.Error("Error in executing query and fetching records", zap.Error(err))
 				continue
 			}
 			if len(queryFetchResult) == 0 {
-				c.logger.Info("No new records found.")
+				c.logger.Info("No new records found for query with : ", zap.String("queryId", dbquery.QueryId))
 			} else {
-				c.logger.Info("New database records found.")
-				lastRecordFetched := queryFetchResult[lastelementindex]
+				c.logger.Info("New database records found for query with : ", zap.String("queryId", dbquery.QueryId))
+				lastRecordFetched := myEntireRecords[lastIndex]
 				var lastRecordFetchedVal map[string]interface{}
 				err := json.Unmarshal([]byte(lastRecordFetched), &lastRecordFetchedVal)
 				if err != nil {
@@ -133,7 +131,7 @@ func Query(c mySQLClient) (map[string]string, error) {
 	return myEntireRecords, nil
 }
 
-func ExecuteQueryandFetchRecords(c mySQLClient, query string, queryid string) (map[string]string, error) {
+func ExecuteQueryandFetchRecords(c mySQLClient, query string, queryid string) (map[string]string, string, error) {
 	rows, err := c.client.Query(query)
 	if err != nil {
 		c.logger.Error("Error in executing sql query", zap.Error(err))
@@ -186,6 +184,7 @@ func ExecuteQueryandFetchRecords(c mySQLClient, query string, queryid string) (m
 	}
 	myjsonobject := make(map[string]string)
 	myEntireRecord := make(map[string]string)
+	var lastIndex string = ""
 	for j, value := range lines {
 		for i, v := range value {
 			myjsonobject[columns[i]] = v
@@ -197,11 +196,12 @@ func ExecuteQueryandFetchRecords(c mySQLClient, query string, queryid string) (m
 		jsonStr := string(jsonObjRecord)
 		index := queryid + "_record" + strconv.Itoa(j+1)
 		myEntireRecord[index] = jsonStr
+		lastIndex = index
 		if err != nil {
 			c.logger.Error("Error in converting records into json object", zap.Error(err))
 		}
 	}
-	return myEntireRecord, nil
+	return myEntireRecord, lastIndex, nil
 }
 
 func (c *mySQLClient) Close() error {

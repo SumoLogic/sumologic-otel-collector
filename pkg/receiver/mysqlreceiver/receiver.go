@@ -5,7 +5,7 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
 )
 
@@ -51,12 +51,13 @@ func (m *mySQLReceiver) Shutdown(context.Context) error {
 	if m.sqlclient == nil {
 		return nil
 	}
-	m.sqlclient.Close()
+	defer m.sqlclient.Close()
 	return nil
 }
 
-func (m *mySQLReceiver) convertToLog(record string) pdata.Logs {
-	ld := pdata.NewLogs()
+func (m *mySQLReceiver) convertToLog(record string) plog.Logs {
+
+	ld := plog.NewLogs()
 	rl := ld.ResourceLogs().AppendEmpty()
 	sl := rl.ScopeLogs().AppendEmpty()
 	lr := sl.LogRecords().AppendEmpty()
