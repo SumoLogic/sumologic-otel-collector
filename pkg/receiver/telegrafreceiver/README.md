@@ -45,7 +45,7 @@ receivers:
 The full list of settings exposed for this receiver are documented in
 [config.go](./config.go).
 
-[telegraf_config_docs]: https://github.com/SumoLogic/telegraf/blob/v1.21.3-sumo-2/docs/CONFIGURATION.md
+[telegraf_config_docs]: https://github.com/SumoLogic/telegraf/blob/v1.22.0-sumo-3/docs/CONFIGURATION.md
 
 ## Limitations
 
