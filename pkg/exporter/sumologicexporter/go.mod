@@ -13,7 +13,6 @@ require (
 	go.opentelemetry.io/collector/pdata v0.50.0
 	go.uber.org/multierr v1.8.0
 	go.uber.org/zap v1.21.0
-	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
 )
 
 require (
