@@ -89,7 +89,7 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 		logger:  createSettings.Logger,
 		sources: sfs,
 		compressorPool: sync.Pool{
-			New: func() any {
+			New: func() interface{} {
 				c, err := newCompressor(cfg.CompressEncoding)
 				if err != nil {
 					return fmt.Errorf("failed to initialize compressor: %w", err)
