@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.50.0-sumo-0...main
 
+### Fixed
+
+- fix: fix(cascadingfilterprocessor): do not attach sampling.rule attribute if trace accept rules are not specified [#575][#575]
+
+[#575]: https://github.com/SumoLogic/sumologic-otel-collector/pull/575
+
 ## [v0.50.0-sumo-0]
 
 ### Released 2022-04-29

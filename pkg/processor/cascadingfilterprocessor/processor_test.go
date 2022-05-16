@@ -414,7 +414,7 @@ func TestSamplingPolicyDecisionDrop(t *testing.T) {
 	// sampling policy evaluator.
 	msp := new(consumertest.TracesSink)
 	mpe := &mockPolicyEvaluator{}
-	mde := &mockDropEvaluator{}
+	mde := &mockDropTrueEvaluator{}
 	mtt := &manualTTicker{}
 	tsp := &cascadingFilterSpanProcessor{
 		ctx:               context.Background(),
@@ -493,6 +493,56 @@ func TestSamplingPolicyDecisionNoLimitSet(t *testing.T) {
 	tsp.samplingPolicyOnTick()
 	//require.EqualValues(t, 210, msp.SpanCount(), "exporter should have received all spans since no rate limiting was applied")
 	require.EqualValues(t, 10, msp.SpanCount())
+}
+
+func TestSamplingPolicyOnlyReject(t *testing.T) {
+	const maxSize = 100
+	const decisionWaitSeconds = 5
+	// For this test explicitly control the timer calls and batcher, and set a mock
+	// sampling policy evaluator.
+	msp := new(consumertest.TracesSink)
+	mtt := &manualTTicker{}
+	mde := &mockDropFalseEvaluator{}
+	tsp := &cascadingFilterSpanProcessor{
+		ctx:               context.Background(),
+		nextConsumer:      msp,
+		maxNumTraces:      maxSize,
+		logger:            zap.NewNop(),
+		decisionBatcher:   newSyncIDBatcher(decisionWaitSeconds),
+		traceRejectRules:  []*TraceRejectEvaluator{{Name: "mock-drop-eval", Evaluator: mde, ctx: context.TODO()}},
+		deleteChan:        make(chan traceKey, maxSize),
+		policyTicker:      mtt,
+		maxSpansPerSecond: 10000,
+		filteringEnabled:  true,
+	}
+
+	_, batches := generateIdsAndBatches(1)
+	if err := tsp.ConsumeTraces(context.Background(), batches[0]); err != nil {
+		t.Errorf("Failed consuming traces: %v", err)
+	}
+
+	// Count "decision wait" times
+	for i := 0; i < decisionWaitSeconds; i++ {
+		tsp.samplingPolicyOnTick()
+	}
+
+	tsp.samplingPolicyOnTick()
+
+	require.Equal(t, 1, msp.SpanCount(), "all spans were accounted for")
+	for _, trace := range msp.AllTraces() {
+		for i := 0; i < trace.ResourceSpans().Len(); i++ {
+			sss := trace.ResourceSpans().At(i).ScopeSpans()
+			for j := 0; j < sss.Len(); j++ {
+				spans := sss.At(j).Spans()
+				for k := 0; k < spans.Len(); k++ {
+					attrs := spans.At(k).Attributes()
+					println(attrs.Len())
+					_, found := attrs.Get("sampling.rule")
+					require.False(t, found, "sampling.rule value should not be set when only reject rules are applied")
+				}
+			}
+		}
+	}
 }
 
 func TestMultipleBatchesAreCombinedIntoOne(t *testing.T) {
@@ -638,18 +688,23 @@ type mockPolicyEvaluator struct {
 	OnDroppedSpanCount int
 }
 
-type mockDropEvaluator struct{}
+type mockDropTrueEvaluator struct{}
+type mockDropFalseEvaluator struct{}
 
 var _ sampling.PolicyEvaluator = (*mockPolicyEvaluator)(nil)
-var _ sampling.DropTraceEvaluator = (*mockDropEvaluator)(nil)
+var _ sampling.DropTraceEvaluator = (*mockDropTrueEvaluator)(nil)
 
 func (m *mockPolicyEvaluator) Evaluate(_ pcommon.TraceID, _ *sampling.TraceData) sampling.Decision {
 	m.EvaluationCount++
 	return m.NextDecision
 }
 
-func (d *mockDropEvaluator) ShouldDrop(_ pcommon.TraceID, _ *sampling.TraceData) bool {
+func (d *mockDropTrueEvaluator) ShouldDrop(_ pcommon.TraceID, _ *sampling.TraceData) bool {
 	return true
+}
+
+func (d *mockDropFalseEvaluator) ShouldDrop(_ pcommon.TraceID, _ *sampling.TraceData) bool {
+	return false
 }
 
 type manualTTicker struct {
