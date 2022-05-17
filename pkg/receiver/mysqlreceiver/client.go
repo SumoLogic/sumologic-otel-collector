@@ -3,6 +3,8 @@ package mysqlreceiver
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
+	"time"
 
 	"strconv"
 	"strings"
@@ -13,7 +15,7 @@ import (
 
 type client interface {
 	Connect() error
-	getRecords() (map[string]string, error)
+	getRecords(dbquery *DBQueries) (map[string]string, error)
 	Close() error
 }
 
@@ -46,6 +48,10 @@ func newMySQLClient(conf *Config, logger *zap.Logger) client {
 
 func (c *mySQLClient) Connect() error {
 	clientDB, err := sql.Open("mysql", c.connStr)
+	//ASKS FROM USERS
+	clientDB.SetConnMaxLifetime(time.Minute * 3)
+	clientDB.SetMaxOpenConns(10)
+	clientDB.SetMaxIdleConns(10)
 	if err != nil {
 		c.logger.Error("Unable to connect to database", zap.Error(err))
 		return err
@@ -55,81 +61,80 @@ func (c *mySQLClient) Connect() error {
 }
 
 // getRecords queries the db for records
-func (c *mySQLClient) getRecords() (map[string]string, error) {
-	return Query(*c)
-}
-
-func Query(c mySQLClient) (map[string]string, error) {
-
+func (c *mySQLClient) getRecords(dbquery *DBQueries) (map[string]string, error) {
 	myEntireRecords := make(map[string]string)
-	for _, dbquery := range c.conf.DBQueries {
-		if len(strings.TrimSpace(dbquery.Query)) == 0 {
-			c.logger.Error("Query is empty, check collector config file.")
-			continue
-		} else if len(strings.TrimSpace(dbquery.IndexColumnName)) == 0 {
-			c.logger.Info("IndexColumnName missing from collector config file, so fetching all records.")
-		} else if dbquery.IndexColumnType != "TIMESTAMP" && dbquery.IndexColumnType != "INT" {
-			c.logger.Error("Configured non supported Indexcolummtype, supported values are TIMESTAMP or INT. Check collector configuration file.")
-			continue
-		} else if len(strings.TrimSpace(dbquery.IndexColumnName)) != 0 {
-			if dbquery.IndexColumnType == "TIMESTAMP" {
-				if strings.Contains(dbquery.Query, "where") {
-					dbquery.Query += " and INDEXCOLUMNNAME > \"STATEVALUE\" order by INDEXCOLUMNNAME asc;"
-				} else {
-					dbquery.Query += " where INDEXCOLUMNNAME > \"STATEVALUE\" order by INDEXCOLUMNNAME asc;"
-				}
-			} else if dbquery.IndexColumnType == "INT" {
-				if strings.Contains(dbquery.Query, "where") {
-					dbquery.Query += " and INDEXCOLUMNNAME > STATEVALUE order by INDEXCOLUMNNAME asc;"
-				} else {
-					dbquery.Query += " where INDEXCOLUMNNAME > STATEVALUE order by INDEXCOLUMNNAME asc;"
-				}
+	//for _, dbquery := range c.conf.DBQueries {
+	if len(strings.TrimSpace(dbquery.Query)) == 0 {
+		err := errors.New("query is empty, check collector config file")
+		return nil, err
+	} else if len(strings.TrimSpace(dbquery.IndexColumnName)) == 0 {
+		c.logger.Info("IndexColumnName missing from collector config file, so fetching all records.")
+	} else if dbquery.IndexColumnType != "TIMESTAMP" && dbquery.IndexColumnType != "INT" {
+		c.logger.Error("Configured non supported Indexcolummtype, supported values are TIMESTAMP or INT. Check collector configuration file.")
+		//continue
+	} else if len(strings.TrimSpace(dbquery.IndexColumnName)) != 0 {
+		if dbquery.IndexColumnType == "TIMESTAMP" {
+			if strings.Contains(dbquery.Query, "where") {
+				dbquery.Query += " and INDEXCOLUMNNAME > \"STATEVALUE\" order by INDEXCOLUMNNAME asc;"
+			} else {
+				dbquery.Query += " where INDEXCOLUMNNAME > \"STATEVALUE\" order by INDEXCOLUMNNAME asc;"
 			}
-			c.logger.Info("IndexColumnName specified, fetching records incrementally.")
+		} else if dbquery.IndexColumnType == "INT" {
+			if strings.Contains(dbquery.Query, "where") {
+				dbquery.Query += " and INDEXCOLUMNNAME > STATEVALUE order by INDEXCOLUMNNAME asc;"
+			} else {
+				dbquery.Query += " where INDEXCOLUMNNAME > STATEVALUE order by INDEXCOLUMNNAME asc;"
+			}
 		}
-		if len(strings.TrimSpace(dbquery.IndexColumnName)) == 0 {
-			queryFetchResult, _, err := ExecuteQueryandFetchRecords(c, dbquery.Query, dbquery.QueryId)
-			for key, element := range queryFetchResult {
-				myEntireRecords[key] = element
-			}
-			if err != nil {
-				c.logger.Error("Error in executing query and fetching records", zap.Error(err))
-				continue
-			}
-			if len(queryFetchResult) == 0 {
-				c.logger.Info("No database records found for query with : ", zap.String("queryId", dbquery.QueryId))
-			} else {
-				c.logger.Info("Database records found for query with : ", zap.String("queryId", dbquery.QueryId))
-			}
+		c.logger.Info("IndexColumnName specified, fetching records incrementally.")
+	}
+	if len(strings.TrimSpace(dbquery.IndexColumnName)) == 0 {
+		queryFetchResult, _, err := ExecuteQueryandFetchRecords(*c, dbquery.Query, dbquery.QueryId)
+		for key, element := range queryFetchResult {
+			myEntireRecords[key] = element
+		}
+		if err != nil {
+			c.logger.Error("Error in executing query and fetching records", zap.Error(err))
+			//continue
+		}
+		if len(queryFetchResult) == 0 {
+			c.logger.Info("No database records found for query with : ", zap.String("queryId", dbquery.QueryId))
 		} else {
-			var currentState = GetState(dbquery, c.logger)
-			dbquery.Query = strings.Replace(dbquery.Query, "STATEVALUE", currentState, -1)
-			dbquery.Query = strings.Replace(dbquery.Query, "INDEXCOLUMNNAME", dbquery.IndexColumnName, -1)
-			queryFetchResult, lastIndex, err := ExecuteQueryandFetchRecords(c, dbquery.Query, dbquery.QueryId)
-			for key, element := range queryFetchResult {
-				myEntireRecords[key] = element
-			}
+			c.logger.Info("Database records found for query with : ", zap.String("queryId", dbquery.QueryId))
+		}
+	} else {
+		var currentState = GetState(dbquery, c.logger)
+		dbquery.Query = strings.Replace(dbquery.Query, "STATEVALUE", currentState, -1)
+		dbquery.Query = strings.Replace(dbquery.Query, "INDEXCOLUMNNAME", dbquery.IndexColumnName, -1)
+		queryFetchResult, lastIndex, err := ExecuteQueryandFetchRecords(*c, dbquery.Query, dbquery.QueryId)
+		for key, element := range queryFetchResult {
+			myEntireRecords[key] = element
+		}
+		if err != nil {
+			c.logger.Error("Error in executing query and fetching records", zap.Error(err))
+			//continue
+		}
+		if len(queryFetchResult) == 0 {
+			c.logger.Info("No new records found for query with : ", zap.String("queryId", dbquery.QueryId))
+		} else {
+			c.logger.Info("New database records found for query with : ", zap.String("queryId", dbquery.QueryId))
+			lastRecordFetched := myEntireRecords[lastIndex]
+			var lastRecordFetchedVal map[string]interface{}
+			err := json.Unmarshal([]byte(lastRecordFetched), &lastRecordFetchedVal)
 			if err != nil {
-				c.logger.Error("Error in executing query and fetching records", zap.Error(err))
-				continue
+				c.logger.Error("Problem converting sql query resultset into json format.")
 			}
-			if len(queryFetchResult) == 0 {
-				c.logger.Info("No new records found for query with : ", zap.String("queryId", dbquery.QueryId))
-			} else {
-				c.logger.Info("New database records found for query with : ", zap.String("queryId", dbquery.QueryId))
-				lastRecordFetched := myEntireRecords[lastIndex]
-				var lastRecordFetchedVal map[string]interface{}
-				err := json.Unmarshal([]byte(lastRecordFetched), &lastRecordFetchedVal)
-				if err != nil {
-					c.logger.Error("Problem converting sql query resultset into json format.")
-				}
-				var lastRecordStateNumber = lastRecordFetchedVal[dbquery.IndexColumnName].(string)
-				SaveState(dbquery, lastRecordStateNumber, c.logger)
-			}
+			var lastRecordStateNumber = lastRecordFetchedVal[dbquery.IndexColumnName].(string)
+			SaveState(dbquery, lastRecordStateNumber, c.logger)
 		}
 	}
+	//}
 	return myEntireRecords, nil
 }
+
+// func Query(c mySQLClient, dbquery *DBQueries) (map[string]string, error) {
+
+// }
 
 func ExecuteQueryandFetchRecords(c mySQLClient, query string, queryid string) (map[string]string, string, error) {
 	rows, err := c.client.Query(query)
