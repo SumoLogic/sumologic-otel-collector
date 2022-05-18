@@ -3,7 +3,6 @@ package mysqlreceiver
 import (
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"time"
 
 	"strconv"
@@ -48,10 +47,9 @@ func newMySQLClient(conf *Config, logger *zap.Logger) client {
 
 func (c *mySQLClient) Connect() error {
 	clientDB, err := sql.Open("mysql", c.connStr)
-	//ASKS FROM USERS
-	clientDB.SetConnMaxLifetime(time.Minute * 3)
-	clientDB.SetMaxOpenConns(10)
-	clientDB.SetMaxIdleConns(10)
+	clientDB.SetConnMaxLifetime(time.Minute * time.Duration(c.conf.SetConnMaxLifetime))
+	clientDB.SetMaxOpenConns(c.conf.SetMaxOpenConns)
+	clientDB.SetMaxIdleConns(c.conf.SetMaxIdleConns)
 	if err != nil {
 		c.logger.Error("Unable to connect to database", zap.Error(err))
 		return err
@@ -63,15 +61,12 @@ func (c *mySQLClient) Connect() error {
 // getRecords queries the db for records
 func (c *mySQLClient) getRecords(dbquery *DBQueries) (map[string]string, error) {
 	myEntireRecords := make(map[string]string)
-	//for _, dbquery := range c.conf.DBQueries {
 	if len(strings.TrimSpace(dbquery.Query)) == 0 {
-		err := errors.New("query is empty, check collector config file")
-		return nil, err
+		c.logger.Error("Query is empty, check collector config file.")
 	} else if len(strings.TrimSpace(dbquery.IndexColumnName)) == 0 {
 		c.logger.Info("IndexColumnName missing from collector config file, so fetching all records.")
 	} else if dbquery.IndexColumnType != "TIMESTAMP" && dbquery.IndexColumnType != "INT" {
 		c.logger.Error("Configured non supported Indexcolummtype, supported values are TIMESTAMP or INT. Check collector configuration file.")
-		//continue
 	} else if len(strings.TrimSpace(dbquery.IndexColumnName)) != 0 {
 		if dbquery.IndexColumnType == "TIMESTAMP" {
 			if strings.Contains(dbquery.Query, "where") {
@@ -95,7 +90,6 @@ func (c *mySQLClient) getRecords(dbquery *DBQueries) (map[string]string, error) 
 		}
 		if err != nil {
 			c.logger.Error("Error in executing query and fetching records", zap.Error(err))
-			//continue
 		}
 		if len(queryFetchResult) == 0 {
 			c.logger.Info("No database records found for query with : ", zap.String("queryId", dbquery.QueryId))
@@ -112,7 +106,6 @@ func (c *mySQLClient) getRecords(dbquery *DBQueries) (map[string]string, error) 
 		}
 		if err != nil {
 			c.logger.Error("Error in executing query and fetching records", zap.Error(err))
-			//continue
 		}
 		if len(queryFetchResult) == 0 {
 			c.logger.Info("No new records found for query with : ", zap.String("queryId", dbquery.QueryId))
@@ -128,13 +121,8 @@ func (c *mySQLClient) getRecords(dbquery *DBQueries) (map[string]string, error) 
 			SaveState(dbquery, lastRecordStateNumber, c.logger)
 		}
 	}
-	//}
 	return myEntireRecords, nil
 }
-
-// func Query(c mySQLClient, dbquery *DBQueries) (map[string]string, error) {
-
-// }
 
 func ExecuteQueryandFetchRecords(c mySQLClient, query string, queryid string) (map[string]string, string, error) {
 	rows, err := c.client.Query(query)

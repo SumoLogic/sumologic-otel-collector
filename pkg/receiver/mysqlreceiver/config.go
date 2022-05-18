@@ -16,6 +16,10 @@ type Config struct {
 	confignet.NetAddr        `mapstructure:",squash"`
 	CollectionInterval       string      `mapstructure:"collection_interval,omitempty"`
 	DBQueries                []DBQueries `mapstructure:"db_queries"`
+	SetConnMaxLifetime       int         `mapstructure:"setconnmaxlifetimemins,omitempty"`
+	SetMaxOpenConns          int         `mapstructure:"setmaxopenconns,omitempty"`
+	SetMaxIdleConns          int         `mapstructure:"setmaxidleconns,omitempty"`
+	SetMaxNoDatabaseWorkers  int         `mapstructure:"setmaxnodatabaseworkers,omitempty"`
 }
 
 type DBQueries struct {
