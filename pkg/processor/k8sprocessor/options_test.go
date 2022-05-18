@@ -22,6 +22,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"go.uber.org/zap/zaptest/observer"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
@@ -266,7 +269,6 @@ func TestWithExtractMetadata(t *testing.T) {
 	assert.True(t, p.rules.PodUID)
 	assert.True(t, p.rules.StartTime)
 	assert.True(t, p.rules.DeploymentName)
-	assert.True(t, p.rules.ClusterName)
 	assert.True(t, p.rules.NodeName)
 
 	p = &kubernetesprocessor{}
@@ -274,14 +276,27 @@ func TestWithExtractMetadata(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, err.Error(), `"randomfield" is not a supported metadata field`)
 
-	assert.NoError(t, WithExtractMetadata("namespace", "clusterName")(p))
+	assert.NoError(t, WithExtractMetadata("namespace")(p))
 	assert.True(t, p.rules.Namespace)
-	assert.True(t, p.rules.ClusterName)
 	assert.False(t, p.rules.PodName)
 	assert.False(t, p.rules.PodUID)
 	assert.False(t, p.rules.StartTime)
 	assert.False(t, p.rules.DeploymentName)
 	assert.False(t, p.rules.NodeName)
+}
+
+func TestWithExtractMetadataDeprecatedOption(t *testing.T) {
+	core, observedLogs := observer.New(zapcore.InfoLevel)
+	logger := zap.New(core)
+	p := &kubernetesprocessor{logger: logger}
+	assert.NoError(t, WithExtractMetadata("clusterName")(p))
+	assert.Equal(t, 1, observedLogs.Len())
+	assert.Equal(t, 1, observedLogs.FilterMessage("clusterName metadata field has been deprecated and will be removed soon").Len())
+	observedLogs.TakeAll()
+
+	assert.NoError(t, WithExtractTags(map[string]string{"clustername": "cluster"})(p))
+	assert.Equal(t, 1, observedLogs.Len())
+	assert.Equal(t, 1, observedLogs.FilterMessage("clusterName metadata field has been deprecated and will be removed soon").Len())
 }
 
 func TestWithFilterLabels(t *testing.T) {
