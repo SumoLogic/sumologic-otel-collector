@@ -75,6 +75,8 @@ receivers:
   - gomod: "local/mysqlreceiver v0.0.0-00010101000000-000000000000"
     path: ./../pkg/receiver/mysqlreceiver
 
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/rawk8seventsreceiver v0.0.0-00010101000000-000000000000"
+    path: ./../pkg/receiver/rawk8seventsreceiver
   # Upstream receivers:
 
   # Since include-code was removed we need to manually add all core components that we want to include:

@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- feat: enable rawk8seventsreceiver [#576]
+
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.50.0-sumo-0...main
+[576]: https://github.com/SumoLogic/sumologic-otel-collector/pull/576
+
+### Fixed
+
+- fix: fix(cascadingfilterprocessor): do not attach sampling.rule attribute if trace accept rules are not specified [#575][#575]
+
+[#575]: https://github.com/SumoLogic/sumologic-otel-collector/pull/575
 
 ## [v0.50.0-sumo-0]
 

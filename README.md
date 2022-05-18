@@ -51,6 +51,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 |               [podman_stats][podmanreceiver]               |     [`sumologic_syslog`][sumologicsyslogprocessor]     |                                        |                                             |
 |              [prometheus][prometheusreceiver]              |         [tail_sampling][tailsamplingprocessor]         |                                        |                                             |
 |       [prometheus_simple][simpleprometheusreceiver]        |                                                        |                                        |                                             |
+|               [`raw_k8_sevents`][rawk8seventsreceiver]     |                                                        |                                        |                                             |
 |            [receiver_creator][receivercreator]             |                                                        |                                        |                                             |
 |                   [redis][redisreceiver]                   |                                                        |                                        |                                             |
 |                    [sapm][sapmreceiver]                    |                                                        |                                        |                                             |
@@ -86,6 +87,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 [otlpreceiver]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.50.0/receiver/otlpreceiver
 [podmanreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.50.0/receiver/podmanreceiver
 [prometheusreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.50.0/receiver/prometheusreceiver
+[rawk8seventsreceiver]: ./pkg/receiver/rawk8seventsreceiver
 [receivercreator]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.50.0/receiver/receivercreator
 [redisreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.50.0/receiver/redisreceiver
 [sapmreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.50.0/receiver/sapmreceiver
