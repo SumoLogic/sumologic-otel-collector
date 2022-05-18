@@ -506,7 +506,6 @@ func TestExtractionRules(t *testing.T) {
 			Namespace:         "ns1",
 			UID:               "33333",
 			CreationTimestamp: meta_v1.Now(),
-			ClusterName:       "cluster1",
 			Labels: map[string]string{
 				"label1": "lv1",
 				"label2": "k1=v1 k5=v5 extra!",
@@ -642,7 +641,6 @@ func TestExtractionRules(t *testing.T) {
 				UID:  "1a1658f9-7818-11e9-90f1-02324f7e0d1e",
 			},
 			rules: ExtractionRules{
-				ClusterName:        true,
 				ContainerID:        true,
 				ContainerImage:     true,
 				ContainerName:      true,
@@ -661,7 +659,6 @@ func TestExtractionRules(t *testing.T) {
 				Tags:               NewExtractionFieldTags(),
 			},
 			attributes: map[string]string{
-				"k8s.cluster.name":    "cluster1",
 				"k8s.container.id":    "111-222-333",
 				"k8s.container.image": "auth-service-image",
 				"k8s.container.name":  "auth-service-container-name",
@@ -679,7 +676,6 @@ func TestExtractionRules(t *testing.T) {
 		{
 			name: "non-default tags",
 			rules: ExtractionRules{
-				ClusterName:     true,
 				ContainerID:     true,
 				ContainerImage:  false,
 				ContainerName:   true,
@@ -695,13 +691,11 @@ func TestExtractionRules(t *testing.T) {
 				Namespace:       false,
 				NodeName:        false,
 				Tags: ExtractionFieldTags{
-					ClusterName:   "cc",
 					ContainerID:   "cid",
 					ContainerName: "cn",
 				},
 			},
 			attributes: map[string]string{
-				"cc":  "cluster1",
 				"cid": "111-222-333",
 				"cn":  "auth-service-container-name",
 			},
@@ -1161,7 +1155,6 @@ func newTestClient(t *testing.T) (*WatchClient, *observer.ObservedLogs) {
 
 //func newBenchmarkClient(b *testing.B) *WatchClient {
 //	e := ExtractionRules{
-//		ClusterName:     true,
 //		ContainerID:     true,
 //		ContainerImage:  true,
 //		ContainerName:   true,
@@ -1196,7 +1189,6 @@ func newTestClient(t *testing.T) (*WatchClient, *observer.ObservedLogs) {
 //				Namespace:         "ns1",
 //				UID:               types.UID(fmt.Sprintf("33333-%d", i)),
 //				CreationTimestamp: meta_v1.Now(),
-//				ClusterName:       "cluster1",
 //				Labels: map[string]string{
 //					"label1": fmt.Sprintf("lv1-%d", i),
 //					"label2": "k1=v1 k5=v5 extra!",

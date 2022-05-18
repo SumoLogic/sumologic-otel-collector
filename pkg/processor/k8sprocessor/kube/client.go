@@ -277,13 +277,6 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 		}
 	}
 
-	if c.Rules.ClusterName {
-		clusterName := pod.GetClusterName()
-		if clusterName != "" {
-			tags[c.Rules.Tags.ClusterName] = clusterName
-		}
-	}
-
 	if c.Rules.OwnerLookupEnabled {
 		c.logger.Debug("pod owner lookup",
 			zap.String("pod.Name", pod.Name),

@@ -65,7 +65,6 @@ func TestLoadConfig(t *testing.T) {
 					"podName",
 					"podUID",
 					"deployment",
-					"cluster",
 					"namespace",
 					"node",
 					"startTime",
