@@ -7,10 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.51.0-sumo-0...main
+
+## [v0.51.0-sumo-0]
+
+### Released 2022-05-19
+
+See [Upgrade guide][upgrade_guide_v0_51_0] for the breaking changes in this version.
+
 ### Breaking changes
 
-- fix(k8sprocessor)!: deprecate clusterName setting [#578]
-- feat(sumologicexporter)!: attribute translation: change `file.path.resolved` to `log.file.path_resolved` [#579]
+- fix(k8sprocessor)!: remove `clusterName` metadata extraction option [#578] ([upgrade guide][upgrade_guide_v0_51_0_cluster_name])
+- feat(sumologicexporter)!: attribute translation: change `file.path.resolved` to `log.file.path_resolved` [#579] ([upgrade guide][upgrade_guide_v0_51_0_attribute_translation])
 
 ### Added
 
@@ -25,7 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fix: fix(cascadingfilterprocessor): do not attach sampling.rule attribute if trace accept rules are not specified [#575][#575]
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.50.0-sumo-0...main
+[v0.51.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.50.0-sumo-0...v0.51.0-sumo-0
+[upgrade_guide_v0_51_0]: ./docs/Upgrading.md#upgrading-to-v0510-sumo-0
+[upgrade_guide_v0_51_0_cluster_name]: ./docs/Upgrading.md#k8s_tagger-processor-removed-clustername-metadata-extraction-option
+[upgrade_guide_v0_51_0_attribute_translation]: ./docs/Upgrading.md#sumologic-exporter-metadata-translation-changed-the-attribute-that-is-translated-to-_sourcename-from-filepathresolved-to-logfilepath_resolved
 [#576]: https://github.com/SumoLogic/sumologic-otel-collector/pull/576
 [#575]: https://github.com/SumoLogic/sumologic-otel-collector/pull/575
 [#578]: https://github.com/SumoLogic/sumologic-otel-collector/pull/578
