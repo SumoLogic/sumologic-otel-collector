@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking changes
 
 - fix(k8sprocessor)!: deprecate clusterName setting [#578]
+- feat(sumologicexporter)!: attribute translation: change `file.path.resolved` to `log.file.path_resolved` [#579]
 
 ### Added
 
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#576]: https://github.com/SumoLogic/sumologic-otel-collector/pull/576
 [#575]: https://github.com/SumoLogic/sumologic-otel-collector/pull/575
 [#578]: https://github.com/SumoLogic/sumologic-otel-collector/pull/578
+[#579]: https://github.com/SumoLogic/sumologic-otel-collector/pull/579
 
 ## [v0.50.0-sumo-0]
 
