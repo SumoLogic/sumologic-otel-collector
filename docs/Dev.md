@@ -1,8 +1,10 @@
 # Developer guide
 
-- [Setitng up Go workspaces](#setting-up-go-workspaces)
+- [Setting up Go workspaces](#setting-up-go-workspaces)
 - [How to release](#how-to-release)
 - [Updating OT core](#updating-ot-core)
+  - [Updating patched processors](#updating-patched-processors)
+  - [Updating OT distro](#updating-ot-distro)
 - [Running Tracing E2E tests](#running-tracing-e2e-tests)
 
 ## Setting up Go workspaces
@@ -93,15 +95,23 @@ To update this patchset for the new OT core version:
    ```bash
    git switch "${CURRENT_VERSION}-filterprocessor"
    git checkout -b "${NEW_VERSION}-filterprocessor"
-   git rebase -i --onto "${NEW_VERSION}" "${OLD_VERSION}" "${NEW_VERSION}-filterprocessor"
+   git rebase -i --onto "${NEW_VERSION}" "${CURRENT_VERSION}" "${NEW_VERSION}-filterprocessor"
    ```
 
 1. Resolve conflicts and make sure tests and linters pass afterwards.
    You can run them by invoking the following in the project root:
 
    ```bash
+   make install-tools
    make golint
    make gotest
+   ```
+
+   If the command `make gotest` fails on unrelated tests, like for example `kafkareceiver`,
+   only run the tests for the changed modules:
+
+   ```bash
+   make -C internal/coreinternal test && make -C processor/attributesprocessor test && make -C processor/filterprocessor test && make -C processor/resourceprocessor test
    ```
 
 1. Push the new branch to the fork repo and write down the commit SHA
