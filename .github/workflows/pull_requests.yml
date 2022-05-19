@@ -103,7 +103,6 @@ jobs:
             runs_on: ubuntu-20.04
           - arch_os: darwin_amd64
             runs_on: macos-latest
-        go: [ '1.18', '1.17']
     steps:
       - uses: actions/checkout@v3
 
@@ -122,7 +121,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ matrix.go }}
+          go-version: '1.18'
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
@@ -152,7 +151,6 @@ jobs:
     strategy:
       matrix:
         arch_os: [ 'linux_amd64' ]
-        go: [ '1.18', '1.17']
     steps:
       - uses: actions/checkout@v3
 
@@ -171,7 +169,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ matrix.go }}
+          go-version: '1.18'
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
@@ -218,7 +216,6 @@ jobs:
             runs_on: ubuntu-20.04
           - arch_os: darwin_amd64
             runs_on: macos-latest
-        go: [ '1.18', '1.17']
     steps:
       - uses: actions/checkout@v3
 
@@ -242,7 +239,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ matrix.go }}
+          go-version: '1.18'
 
       # As described in
       # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
