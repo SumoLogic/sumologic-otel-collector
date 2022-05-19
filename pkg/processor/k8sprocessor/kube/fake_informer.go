@@ -88,3 +88,7 @@ func (c *FakeController) LastSyncResourceVersion() string {
 func (f *FakeInformer) SetWatchErrorHandler(cache.WatchErrorHandler) error {
 	return nil
 }
+
+func (f *FakeInformer) SetTransform(cache.TransformFunc) error {
+	return nil
+}

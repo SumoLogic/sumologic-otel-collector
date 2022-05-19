@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - feat: enable rawk8seventsreceiver [#576]
 
+### Changed
+
+- chore(deps): update OT core to v0.51.0 [#580]
+- chore(deps): update Telegraf to v1.22.0-sumo-4 [#580]
+
 ### Fixed
 
 - fix: fix(cascadingfilterprocessor): do not attach sampling.rule attribute if trace accept rules are not specified [#575][#575]
@@ -25,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#575]: https://github.com/SumoLogic/sumologic-otel-collector/pull/575
 [#578]: https://github.com/SumoLogic/sumologic-otel-collector/pull/578
 [#579]: https://github.com/SumoLogic/sumologic-otel-collector/pull/579
+[#580]: https://github.com/SumoLogic/sumologic-otel-collector/pull/580
 
 ## [v0.50.0-sumo-0]
 
