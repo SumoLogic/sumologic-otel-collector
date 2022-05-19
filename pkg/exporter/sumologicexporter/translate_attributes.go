@@ -43,7 +43,7 @@ var attributeTranslations = map[string]string{
 	"k8s.replicaset.name":     "replicaset",
 	"k8s.statefulset.name":    "statefulset",
 	"service.name":            "service",
-	"file.path.resolved":      "_sourceName",
+	"log.file.path_resolved":  "_sourceName",
 }
 
 func translateAttributes(attributes pcommon.Map) pcommon.Map {

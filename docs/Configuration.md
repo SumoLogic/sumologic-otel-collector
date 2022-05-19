@@ -386,11 +386,11 @@ receivers:
     include_file_path_resolved: true
 ```
 
-The `include_file_name: false` prevents the receiver from adding `file.name` attribute to the logs.
+The `include_file_name: false` prevents the receiver from adding `log.file.name` attribute to the logs.
 Instead, we are using `include_file_path_resolved: true`,
-which adds a `file.path.resolved` attribute to the logs
+which adds a `log.file.path_resolved` attribute to the logs
 that contains the whole path of the file, as opposed to just the name of the file.
-What's more, the `file.path.resolved` attribute is automatically recognized by the `sumologicexporter`
+What's more, the `log.file.path_resolved` attribute is automatically recognized by the `sumologicexporter`
 and translated to `_sourceName` attribute in Sumo Logic.
 
 ### Keeping track of position in files
@@ -462,7 +462,7 @@ Body: {
      -> key: STRING(val)
 }
 Attributes:
-     -> file.name: STRING(example.log)
+     -> log.file.name: STRING(example.log)
 Trace ID:
 Span ID:
 Flags: 0

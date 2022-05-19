@@ -410,7 +410,7 @@ func TestPushOTLPLogs_AttributeTranslation(t *testing.T) {
 		resourceAttrs := logs.ResourceLogs().At(0).Resource().Attributes()
 		resourceAttrs.InsertString("host.name", "harry-potter")
 		resourceAttrs.InsertString("host.type", "wizard")
-		resourceAttrs.InsertString("file.path.resolved", "/tmp/log.log")
+		resourceAttrs.InsertString("log.file.path_resolved", "/tmp/log.log")
 		return logs
 	}
 
@@ -466,7 +466,7 @@ func TestPushOTLPLogs_AttributeTranslation(t *testing.T) {
 					body := extractBody(t, req)
 
 					//nolint:lll
-					assert.Equal(t, "\n\xd4\x01\n\xb8\x01\n\x1b\n\thost.name\x12\x0e\n\fharry-potter\n\x15\n\thost.type\x12\b\n\x06wizard\n$\n\x12file.path.resolved\x12\x0e\n\f/tmp/log.log\n\x1d\n\v_sourceHost\x12\x0e\n\fharry-potter\n=\n\x0f_sourceCategory\x12*\n(category_with_host_template_harry-potter\x12\x17\n\x00\x12\x13*\r\n\vExample logJ\x00R\x00", body)
+					assert.Equal(t, "\n\xd8\x01\n\xbc\x01\n\x1b\n\thost.name\x12\x0e\n\fharry-potter\n\x15\n\thost.type\x12\b\n\x06wizard\n(\n\x16log.file.path_resolved\x12\x0e\n\f/tmp/log.log\n\x1d\n\v_sourceHost\x12\x0e\n\fharry-potter\n=\n\x0f_sourceCategory\x12*\n(category_with_host_template_harry-potter\x12\x17\n\x00\x12\x13*\r\n\vExample logJ\x00R\x00", body)
 
 					assert.Empty(t, req.Header.Get("X-Sumo-Fields"),
 						"We should not get X-Sumo-Fields header when sending data with OTLP",

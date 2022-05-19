@@ -180,7 +180,7 @@ Below is a list of all attribute keys that are being translated.
 | `k8s.replicaset.name`     | `replicaset`       |
 | `k8s.statefulset.name`    | `statefulset`      |
 | `service.name`            | `service`          |
-| `file.path.resolved`      | `_sourceName`      |
+| `log.file.path_resolved`  | `_sourceName`      |
 
 ## Source Templates
 
