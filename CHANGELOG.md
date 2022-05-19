@@ -36,6 +36,8 @@ The performance improvement is very substantial, so we recommend upgrading to th
 ### Changed
 
 - chore: update OT core to 0.50.0 [#562][#562]
+- chore: restore support for building otelcol on go 1.17 [#574][#574]
+- chore: chore: change go version to 1.17 in Dockerfiles [#582][#582]
 
 ### Fixed
 
@@ -44,6 +46,8 @@ The performance improvement is very substantial, so we recommend upgrading to th
 [v0.50.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.49.0-sumo-0...v0.50.0-sumo-0
 [#561]: https://github.com/SumoLogic/sumologic-otel-collector/pull/561
 [#562]: https://github.com/SumoLogic/sumologic-otel-collector/pull/562
+[#574]: https://github.com/SumoLogic/sumologic-otel-collector/pull/574
+[#582]: https://github.com/SumoLogic/sumologic-otel-collector/pull/582
 
 ## [v0.49.0-sumo-0]
 
@@ -96,7 +100,6 @@ for more details.
 
 - refactor(sumologicexporter): use golang.org/x/exp/slices for sorting fields [#519][#519]
 - refactor(sumologicextension): use bytes slices and strings.Builder to decrease allocations [#530][#530]
-- chore: restore support for building otelcol on go 1.17 [#574][#574]
 
 [v0.48.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.48.0-sumo-0
 [#519]: https://github.com/SumoLogic/sumologic-otel-collector/pull/519
@@ -104,7 +107,6 @@ for more details.
 [#530]: https://github.com/SumoLogic/sumologic-otel-collector/pull/530
 [#534]: https://github.com/SumoLogic/sumologic-otel-collector/pull/534
 [#536]: https://github.com/SumoLogic/sumologic-otel-collector/pull/536
-[#574]: https://github.com/SumoLogic/sumologic-otel-collector/pull/574
 
 ## [v0.47.0-sumo-0]
 
