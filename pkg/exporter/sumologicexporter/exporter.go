@@ -503,5 +503,5 @@ func (se *sumologicexporter) shutdown(context.Context) error {
 }
 
 func (se *sumologicexporter) dropRoutingAttribute(attr pcommon.Map) {
-	attr.Delete(se.config.DropRoutingAttribute)
+	attr.Remove(se.config.DropRoutingAttribute)
 }

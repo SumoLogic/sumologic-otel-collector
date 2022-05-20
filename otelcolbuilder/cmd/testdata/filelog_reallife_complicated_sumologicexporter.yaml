@@ -86,8 +86,8 @@ receivers:
         to: body.log
       - type: regex_parser
         regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
-        parse_from: attributes['file.path.resolved']
-        preserve_to: attributes['file.path.resolved']
+        parse_from: attributes['log.file.path_resolved']
+        preserve_to: attributes['log.file.path_resolved']
         timestamp:
           parse_from: body.timestamp
           layout_type: gotime
@@ -123,8 +123,8 @@ receivers:
         to: body.log
       - type: regex_parser
         regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
-        parse_from: attributes['file.path.resolved']
-        preserve_to: attributes['file.path.resolved']
+        parse_from: attributes['log.file.path_resolved']
+        preserve_to: attributes['log.file.path_resolved']
         timestamp:
           parse_from: body.timestamp
           layout_type: gotime
@@ -225,8 +225,8 @@ receivers:
         to: body.log
       - type: regex_parser
         regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
-        parse_from: attributes['file.path.resolved']
-        preserve_to: attributes['file.path.resolved']
+        parse_from: attributes['log.file.path_resolved']
+        preserve_to: attributes['log.file.path_resolved']
         timestamp:
           parse_from: body.timestamp
           layout_type: gotime
@@ -262,8 +262,8 @@ receivers:
         to: body.log
       - type: regex_parser
         regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
-        parse_from: attributes['file.path.resolved']
-        preserve_to: attributes['file.path.resolved']
+        parse_from: attributes['log.file.path_resolved']
+        preserve_to: attributes['log.file.path_resolved']
         timestamp:
           parse_from: body.timestamp
           layout_type: gotime
@@ -640,8 +640,8 @@ receivers:
         to: body.log
       - type: regex_parser
         regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
-        parse_from: attributes['file.path.resolved']
-        preserve_to: attributes['file.path.resolved']
+        parse_from: attributes['log.file.path_resolved']
+        preserve_to: attributes['log.file.path_resolved']
         timestamp:
           parse_from: body.timestamp
           layout_type: gotime
@@ -677,8 +677,8 @@ receivers:
         to: body.log
       - type: regex_parser
         regex: (?P<timestamp>\d{4}-\d{2}-\d{2}-\d{2}\d{2}-\d{2})\d+
-        parse_from: attributes['file.path.resolved']
-        preserve_to: attributes['file.path.resolved']
+        parse_from: attributes['log.file.path_resolved']
+        preserve_to: attributes['log.file.path_resolved']
         timestamp:
           parse_from: body.timestamp
           layout_type: gotime

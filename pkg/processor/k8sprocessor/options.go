@@ -35,7 +35,6 @@ const (
 	metadataContainerID     = "containerId"
 	metadataContainerName   = "containerName"
 	metadataContainerImage  = "containerImage"
-	metadataClusterName     = "clusterName"
 	metadataCronJobName     = "cronJobName"
 	metadataDaemonSetName   = "daemonSetName"
 	metadataDeploymentName  = "deploymentName"
@@ -49,6 +48,8 @@ const (
 	metadataServiceName     = "serviceName"
 	metadataStartTime       = "startTime"
 	metadataStatefulSetName = "statefulSetName"
+
+	deprecatedMetadataClusterName = "clusterName"
 )
 
 // Option represents a configuration option that can be passes.
@@ -87,7 +88,6 @@ func WithExtractMetadata(fields ...string) Option {
 	return func(p *kubernetesprocessor) error {
 		if len(fields) == 0 {
 			fields = []string{
-				metadataClusterName,
 				metadataContainerID,
 				metadataContainerImage,
 				metadataContainerName,
@@ -106,8 +106,6 @@ func WithExtractMetadata(fields ...string) Option {
 		}
 		for _, field := range fields {
 			switch field {
-			case metadataClusterName:
-				p.rules.ClusterName = true
 			case metadataContainerID:
 				p.rules.ContainerID = true
 			case metadataContainerImage:
@@ -140,6 +138,8 @@ func WithExtractMetadata(fields ...string) Option {
 				p.rules.StartTime = true
 			case metadataStatefulSetName:
 				p.rules.StatefulSetName = true
+			case deprecatedMetadataClusterName:
+				p.logger.Warn("clusterName metadata field has been deprecated and will be removed soon")
 			default:
 				return fmt.Errorf("\"%s\" is not a supported metadata field", field)
 			}
@@ -154,8 +154,6 @@ func WithExtractTags(tagsMap map[string]string) Option {
 		var tags = kube.NewExtractionFieldTags()
 		for field, tag := range tagsMap {
 			switch field {
-			case strings.ToLower(metadataClusterName):
-				tags.ClusterName = tag
 			case strings.ToLower(metadataContainerID):
 				tags.ContainerID = tag
 			case strings.ToLower(metadataContainerName):
@@ -184,6 +182,8 @@ func WithExtractTags(tagsMap map[string]string) Option {
 				tags.StartTime = tag
 			case strings.ToLower(metadataStatefulSetName):
 				tags.StatefulSetName = tag
+			case strings.ToLower(deprecatedMetadataClusterName):
+				p.logger.Warn("clusterName metadata field has been deprecated and will be removed soon")
 			default:
 				return fmt.Errorf("\"%s\" is not a supported metadata field", field)
 			}

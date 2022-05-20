@@ -325,7 +325,6 @@ func getEvent() *corev1.Event {
 			UID:               types.UID("289686f9-a5c0"),
 			Name:              "1",
 			Namespace:         "test",
-			ClusterName:       "testCluster",
 			CreationTimestamp: v1.Now(),
 			ManagedFields: []v1.ManagedFieldsEntry{
 				{

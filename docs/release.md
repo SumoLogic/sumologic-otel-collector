@@ -1,37 +1,10 @@
-# Developer guide
+# Releasing
 
-- [Setitng up Go workspaces](#setting-up-go-workspaces)
 - [How to release](#how-to-release)
 - [Updating OT core](#updating-ot-core)
+  - [Updating patched processors](#updating-patched-processors)
+  - [Updating OT distro](#updating-ot-distro)
 - [Running Tracing E2E tests](#running-tracing-e2e-tests)
-
-## Setting up Go workspaces
-
-This repository contains multiple Go packages with their own dependencies. Some IDEs
-(VS Code for example) do not like this kind of setup and demand that you work on each
-package in a separate workspace. As of [Go 1.18](https://tip.golang.org/doc/go1.18#go-work)
-this can be solved by configuring a single Go workspace covering all the packages.
-This can be done by adding a `go.work` file to the repository root:
-
-```go
-go 1.18
-
-use (
-        ./otelcolbuilder/cmd
-        ./pkg/test
-        ./pkg/exporter/sumologicexporter
-        ./pkg/extension/sumologicextension
-        ./pkg/processor/cascadingfilterprocessor
-        ./pkg/processor/k8sprocessor
-        ./pkg/processor/metricfrequencyprocessor
-        ./pkg/processor/sourceprocessor
-        ./pkg/processor/sumologicschemaprocessor
-        ./pkg/processor/sumologicsyslogprocessor
-        ./pkg/receiver/telegrafreceiver
-)
-```
-
-This will also cause Go to generate a `go.work.sum` file to match.
 
 ## How to release
 
@@ -93,15 +66,23 @@ To update this patchset for the new OT core version:
    ```bash
    git switch "${CURRENT_VERSION}-filterprocessor"
    git checkout -b "${NEW_VERSION}-filterprocessor"
-   git rebase -i --onto "${NEW_VERSION}" "${OLD_VERSION}" "${NEW_VERSION}-filterprocessor"
+   git rebase -i --onto "${NEW_VERSION}" "${CURRENT_VERSION}" "${NEW_VERSION}-filterprocessor"
    ```
 
 1. Resolve conflicts and make sure tests and linters pass afterwards.
    You can run them by invoking the following in the project root:
 
    ```bash
+   make install-tools
    make golint
    make gotest
+   ```
+
+   If the command `make gotest` fails on unrelated tests, like for example `kafkareceiver`,
+   only run the tests for the changed modules:
+
+   ```bash
+   make -C internal/coreinternal test && make -C processor/attributesprocessor test && make -C processor/filterprocessor test && make -C processor/resourceprocessor test
    ```
 
 1. Push the new branch to the fork repo and write down the commit SHA
