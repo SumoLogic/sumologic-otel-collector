@@ -1,30 +1,15 @@
 # Contributing Guide
 
-- [How to build](#how-to-build)
-- [Running Tests](#running-tests)
+- [Setting up development environment](#setting-up-development-environment)
+  - [How to build](#how-to-build)
+  - [Running Tests](#running-tests)
+  - [Setting up Go workspaces](#setting-up-go-workspaces)
 
 ---
 
-To contribute you will need to ensure you have the following setup:
+## Setting up development environment
 
-- working Go environment
-- installed `opentelemetry-collector-builder`
-
-  `opentelemetry-collector-builder` can be installed using following command:
-
-  ```bash
-  make -C otelcolbuilder install-builder
-  ```
-
-  Which will by default install the builder binary in `${HOME}/bin/opentelemetry-collector-builder`.
-  You can customize it by providing the `BUILDER_BIN_PATH` argument.
-
-  ```bash
-  make -C otelcolbuilder install-builder \
-    BUILDER_BIN_PATH=/custom/dir/bin/opentelemetry-collector-builder
-  ```
-
-## How to build
+### How to build
 
 ```bash
 $ cd otelcolbuilder && make build
@@ -56,8 +41,55 @@ opentelemetry-collector-builder \
 2021-05-24T16:32:37.326+0200    INFO    builder/main.go:113     Compiled        {"binary": "./cmd/otelcol-sumo-linux_arm64"}
 ```
 
-## Running Tests
+### Running Tests
 
 In order to run tests run `make gotest` in root directory of this repository.
 This will run tests in every module from this repo by running `make test` in its
 directory.
+
+### Setting up Go workspaces
+
+This repository contains multiple Go packages with their own dependencies. Some IDEs
+(VS Code for example) do not like this kind of setup and demand that you work on each
+package in a separate workspace. As of [Go 1.18](https://tip.golang.org/doc/go1.18#go-work)
+this can be solved by configuring a single Go workspace covering all the packages.
+This can be done by adding a `go.work` file to the repository root:
+
+```go
+go 1.18
+
+use (
+        ./otelcolbuilder/cmd
+        ./pkg/test
+        ./pkg/exporter/sumologicexporter
+        ./pkg/extension/sumologicextension
+        ./pkg/processor/cascadingfilterprocessor
+        ./pkg/processor/k8sprocessor
+        ./pkg/processor/metricfrequencyprocessor
+        ./pkg/processor/sourceprocessor
+        ./pkg/processor/sumologicschemaprocessor
+        ./pkg/processor/sumologicsyslogprocessor
+        ./pkg/receiver/telegrafreceiver
+)
+```
+
+This will also cause Go to generate a `go.work.sum` file to match.
+
+To contribute you will need to ensure you have the following setup:
+
+- working Go environment
+- installed `opentelemetry-collector-builder`
+
+  `opentelemetry-collector-builder` can be installed using following command:
+
+  ```bash
+  make -C otelcolbuilder install-builder
+  ```
+
+  Which will by default install the builder binary in `${HOME}/bin/opentelemetry-collector-builder`.
+  You can customize it by providing the `BUILDER_BIN_PATH` argument.
+
+  ```bash
+  make -C otelcolbuilder install-builder \
+    BUILDER_BIN_PATH=/custom/dir/bin/opentelemetry-collector-builder
+  ```

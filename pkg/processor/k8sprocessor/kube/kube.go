@@ -137,7 +137,6 @@ type FieldFilter struct {
 // ExtractionRules is used to specify the information that needs to be extracted
 // from pods and added to the spans as tags.
 type ExtractionRules struct {
-	ClusterName     bool
 	ContainerID     bool
 	ContainerImage  bool
 	ContainerName   bool
@@ -165,7 +164,6 @@ type ExtractionRules struct {
 
 // ExtractionFieldTags is used to describe selected exported key names for the extracted data
 type ExtractionFieldTags struct {
-	ClusterName     string
 	ContainerID     string
 	ContainerImage  string
 	ContainerName   string
@@ -187,7 +185,6 @@ type ExtractionFieldTags struct {
 // NewExtractionFieldTags builds a new instance of tags with default values
 func NewExtractionFieldTags() ExtractionFieldTags {
 	tags := ExtractionFieldTags{}
-	tags.ClusterName = conventions.AttributeK8SClusterName
 	tags.ContainerID = defaultTagContainerID
 	tags.ContainerImage = defaultTagContainerImage
 	tags.ContainerName = defaultTagContainerName

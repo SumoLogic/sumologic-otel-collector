@@ -47,7 +47,6 @@ processors:
       # See "Extracting metadata" documentation section below for details.
       # default: []
       metadata:
-      - clusterName
       - containerId
       - containerImage
       - containerName
@@ -80,7 +79,6 @@ processors:
       # The following map defines the defaults.
       # To override any of the defaults, specify a different attribute name for a selected key.
       tags:
-        clusterName: k8s.cluster.name
         containerID: k8s.container.id
         containerImage: k8s.container.image
         containerName: k8s.container.name
@@ -274,7 +272,6 @@ processors:
         - containerId
         - containerName
         - containerImage
-        - clusterName
         - daemonSetName
         - deploymentName
         - hostName
