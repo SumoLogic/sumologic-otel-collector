@@ -60,7 +60,7 @@ func createTestConfig() *Config {
 	config.CompressEncoding = NoCompression
 	config.LogFormat = TextFormat
 	config.MaxRequestBodySize = 20_971_520
-	config.MetricFormat = Carbon2Format
+	config.MetricFormat = OTLPMetricFormat
 	config.TraceFormat = OTLPTraceFormat
 	return config
 }
@@ -120,7 +120,7 @@ func prepareExporterTest(t *testing.T, cfg *Config, cb []func(w http.ResponseWri
 func TestInitExporter(t *testing.T) {
 	_, err := initExporter(&Config{
 		LogFormat:        "json",
-		MetricFormat:     "carbon2",
+		MetricFormat:     "otlp",
 		CompressEncoding: "gzip",
 		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
@@ -273,7 +273,7 @@ func TestPartiallyFailed(t *testing.T) {
 func TestInvalidHTTPCLient(t *testing.T) {
 	exp, err := initExporter(&Config{
 		LogFormat:        "json",
-		MetricFormat:     "carbon2",
+		MetricFormat:     "otlp",
 		CompressEncoding: "gzip",
 		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
@@ -1054,27 +1054,6 @@ func TestLogsTextFormatMetadataFilterWithDroppedAttribute(t *testing.T) {
 	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key2", "value2")
 
 	err := test.exp.pushLogsData(context.Background(), logs)
-	assert.NoError(t, err)
-}
-
-func TestMetricsCarbon2(t *testing.T) {
-	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
-			expected := `test=test_value test2=second_value key1=value1 key2=value2 metric=test.metric.data unit=bytes  14500 1605534165`
-			assert.Equal(t, expected, body)
-			assert.Equal(t, "application/vnd.sumologic.carbon2", req.Header.Get("Content-Type"))
-		},
-	})
-	test.exp.config.MetricFormat = Carbon2Format
-
-	metrics := metricAndAttributesToPdataMetrics(exampleIntMetric())
-
-	attrs := metrics.ResourceMetrics().At(0).Resource().Attributes()
-	attrs.InsertString("key1", "value1")
-	attrs.InsertString("key2", "value2")
-
-	err := test.exp.pushMetricsData(context.Background(), metrics)
 	assert.NoError(t, err)
 }
 
