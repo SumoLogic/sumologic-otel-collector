@@ -48,11 +48,8 @@ type Config struct {
 	LogFormat LogFormatType `mapstructure:"log_format"`
 
 	// Metrics related configuration
-	// The format of metrics you will be sending, either graphite, otlp or prometheus (Default is otlp)
+	// The format of metrics you will be sending, either otlp or prometheus (Default is otlp)
 	MetricFormat MetricFormatType `mapstructure:"metric_format"`
-	// Graphite template.
-	// Placeholders `%{attr_name}` will be replaced with attribute value for attr_name.
-	GraphiteTemplate string `mapstructure:"graphite_template"`
 
 	// Traces related configuration
 	// The format of traces you will be sending, currently only otlp format is supported
@@ -149,8 +146,9 @@ Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-coll
 
 	switch cfg.MetricFormat {
 	case OTLPMetricFormat:
-	case GraphiteFormat:
 	case PrometheusFormat:
+	case RemovedGraphiteFormat:
+		return fmt.Errorf("support for the graphite metric format was removed, please use prometheus or otlp instead")
 	case RemovedCarbon2Format:
 		return fmt.Errorf("support for the carbon2 metric format was removed, please use prometheus or otlp instead")
 	default:
@@ -219,8 +217,8 @@ const (
 	JSONFormat LogFormatType = "json"
 	// OTLPLogFormat represents log_format: otlp
 	OTLPLogFormat LogFormatType = "otlp"
-	// GraphiteFormat represents metric_format: graphite
-	GraphiteFormat MetricFormatType = "graphite"
+	// RemovedGraphiteFormat represents the no longer supported graphite metric format
+	RemovedGraphiteFormat MetricFormatType = "graphite"
 	// RemovedCarbon2Format represents the no longer supported carbon2 metric format
 	RemovedCarbon2Format MetricFormatType = "carbon2"
 	// PrometheusFormat represents metric_format: prometheus
@@ -261,8 +259,6 @@ const (
 	DefaultSourceHost string = ""
 	// DefaultClient defines default Client
 	DefaultClient string = "otelcol"
-	// DefaultGraphiteTemplate defines default template for Graphite
-	DefaultGraphiteTemplate string = "%{_metric_}"
 	// DefaultTranslateAttributes defines default TranslateAttributes
 	DefaultTranslateAttributes bool = true
 	// DefaultTranslateTelegrafMetrics defines default TranslateTelegrafMetrics
