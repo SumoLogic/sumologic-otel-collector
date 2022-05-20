@@ -145,6 +145,61 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         run: make gotest
 
+  # pipeline to test using Go+BoringCrypto
+  test-go-boringcrypto:
+    name: Test
+    runs-on: ${{ matrix.runs_on }}
+    strategy:
+      matrix:
+        include:
+          - arch_os: linux_amd64
+            runs_on: ubuntu-20.04
+        go: [ '1.18.2b7' ]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check if test related files changed
+        id: changed-files
+        uses: tj-actions/changed-files@v11
+        with:
+          files: |
+            go.mod
+            go.sum
+            \.(go|yaml|yml)$
+            Makefile
+            Makefile.common
+
+      - name: Install Go+BoringCrypto
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          curl -LJ "https://go-boringcrypto.storage.googleapis.com/go${{ matrix.go }}.linux-amd64.tar.gz" -o go.linux-amd64.tar.gz \
+            && sudo rm -rf /usr/local/go \
+            && sudo tar -C /usr/local -xzf go.linux-amd64.tar.gz \
+            && sudo rm go.linux-amd64.tar.gz \
+            && sudo ln -s /usr/local/go/bin/go /usr/local/bin
+
+      # As described in
+      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+      - uses: actions/cache@v3
+        if: steps.changed-files.outputs.any_changed == 'true'
+        with:
+          path: |
+            /home/runner/go/pkg/mod
+            /home/runner/.cache/go-build
+            /Users/runner/go/pkg/mod
+            /Users/runner/Library/Caches/go-build
+          key: ${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{matrix.arch_os}}-go-
+
+      - name: Add opentelemetry-collector-builder installation dir to PATH
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Run tests
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make gotest
+
   lint:
     name: Lint (golangci-lint)
     runs-on: ubuntu-20.04
@@ -292,6 +347,173 @@ jobs:
           path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}
           if-no-files-found: error
 
+  # pipeline to build FIPS compliance binary on Go+BoringCrypto for linux
+  build-go-boringcrypto:
+    name: Build
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        go: [ '1.18.2b7' ]
+        arch_os: [ 'linux_amd64' , 'linux_arm64' ]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
+
+      - name: Check if build related files changed
+        id: changed-files
+        uses: tj-actions/changed-files@v11
+        with:
+          files: |
+            otelcolbuilder/.gon_config.json
+            go.mod
+            go.sum
+            \.(go|yaml|yml)$
+            Makefile
+            Makefile.common
+            Dockerfile.*
+
+      - name: Install Go+BoringCrypto
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          curl -LJ "https://go-boringcrypto.storage.googleapis.com/go${{ matrix.go }}.linux-amd64.tar.gz" -o go.linux-amd64.tar.gz \
+            && sudo rm -rf /usr/local/go \
+            && sudo tar -C /usr/local -xzf go.linux-amd64.tar.gz \
+            && sudo rm go.linux-amd64.tar.gz \
+            && sudo ln -s /usr/local/go/bin/go /usr/local/bin
+
+      # As described in
+      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+      - uses: actions/cache@v3
+        if: steps.changed-files.outputs.any_changed == 'true'
+        with:
+          path: |
+            /home/runner/go/pkg/mod
+            /home/runner/.cache/go-build
+            /Users/runner/go/pkg/mod
+            /Users/runner/Library/Caches/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Add opentelemetry-collector-builder installation dir to PATH
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Install opentelemetry-collector-builder
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make install-builder
+        working-directory: ./otelcolbuilder
+
+      - name: Build
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make otelcol-sumo-${{matrix.arch_os}} BINARY_FIPS_SUFFIX="-fips"
+        working-directory: ./otelcolbuilder
+
+      - name: Show included modules
+        if: steps.changed-files.outputs.any_changed == 'true'
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          go version -m otelcol-sumo-${{matrix.arch_os}}-fips | \
+          grep -E "/(receiver|exporter|processor|extension)/"
+
+      - name: Store binary as action artifact
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: otelcol-sumo-${{matrix.arch_os}}-fips
+          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}-fips
+          if-no-files-found: error
+
+  # pipeline to build FIPS compliance binary on Go+BoringCrypto for darwin
+  build-go-boringcrypto-darwin:
+    name: Build
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        go: [ '1.18.2b7' ]
+        arch_os: [ 'darwin_amd64' ]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
+
+      - name: Check if build related files changed
+        id: changed-files
+        uses: tj-actions/changed-files@v11
+        with:
+          files: |
+            otelcolbuilder/.gon_config.json
+            go.mod
+            go.sum
+            \.(go|yaml|yml)$
+            Makefile
+            Makefile.common
+            Dockerfile.*
+
+      - name: Build and install Go+BoringCrypto
+        run: |
+          wget https://go-boringcrypto.storage.googleapis.com/go${{ matrix.go }}.src.tar.gz \
+            && tar -xf go${{ matrix.go }}.src.tar.gz \
+            && cd go/src/ \
+            && GOROOT_BOOTSTRAP=/usr ./make.bash \
+            && cd .. \
+            && sudo rm -rf /usr/local/bin/go \
+            && sudo cp bin/go* /usr/local/bin/
+
+      - name: Check go version
+        run: go version
+
+      # As described in
+      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+      - uses: actions/cache@v3
+        if: steps.changed-files.outputs.any_changed == 'true'
+        with:
+          path: |
+            /home/runner/go/pkg/mod
+            /home/runner/.cache/go-build
+            /Users/runner/go/pkg/mod
+            /Users/runner/Library/Caches/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Add opentelemetry-collector-builder installation dir to PATH
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Install opentelemetry-collector-builder
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make install-builder
+        working-directory: ./otelcolbuilder
+
+      - name: Build
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make otelcol-sumo-${{matrix.arch_os}} BINARY_FIPS_SUFFIX="-fips"
+        working-directory: ./otelcolbuilder
+
+      - name: Test that binary can be run on ${{matrix.arch_os}}
+        working-directory: ./otelcolbuilder/cmd
+        run: ./otelcol-sumo-${{matrix.arch_os}}-fips --version
+
+      - name: Show included modules
+        if: steps.changed-files.outputs.any_changed == 'true'
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          go version -m otelcol-sumo-${{matrix.arch_os}}-fips | \
+          grep -E "/(receiver|exporter|processor|extension)/"
+
+      - name: Store binary as action artifact
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: otelcol-sumo-${{matrix.arch_os}}-fips
+          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}-fips
+          if-no-files-found: error
+
   build-and-test-container-images:
     name: Build container
     runs-on: ubuntu-20.04
@@ -345,3 +567,21 @@ jobs:
       - name: Test built image
         if: steps.changed-files.outputs.any_changed == 'true'
         run: make test-built-image
+
+      - name: Download FIPS binary action artifact from build phase
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/download-artifact@v3
+        with:
+          name: otelcol-sumo-${{matrix.arch_os}}-fips
+          path: artifacts/
+
+      - name: Build the FIPS container image
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          cp artifacts/otelcol-sumo-${{matrix.arch_os}}-fips otelcol-sumo
+          make build-container-multiplatform \
+            PLATFORM=${{ matrix.arch_os }} LATEST_TAG_FIPS_SUFFIX="-fips"
+
+      - name: Test built FIPS image
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make test-built-image BUILD_TAG="latest-fips"

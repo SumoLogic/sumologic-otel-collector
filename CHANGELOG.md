@@ -20,6 +20,7 @@ and begin support of arm64 architecture for Darwin OS.
 
 - feat: build arm64 binary for darwin [#611]
 - feat: add missing core receivers, processors and extensions [#597], [#604], [#614]
+- chore(ci): add pipelines to test and build on Go+BoringCrypto [#588]
 
 ### Fixed
 
@@ -56,6 +57,7 @@ and begin support of arm64 architecture for Darwin OS.
 
 [v0.52.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.52.0-sumo-0...v0.52.0-sumo-1
 [#619]: https://github.com/SumoLogic/sumologic-otel-collector/pull/619
+[#588]: https://github.com/SumoLogic/sumologic-otel-collector/pull/588
 
 ## [v0.52.0-sumo-0]
 
