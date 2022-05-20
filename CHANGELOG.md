@@ -10,9 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking changes
 
 - feat(sumologicexporter)!: remove support for Carbon2 metrics format [#590][#590]
+- feat(sumologicexporter)!: remove support for Graphite metrics format [#592][#592]
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.51.0-sumo-0...main
 [#590]: https://github.com/SumoLogic/sumologic-otel-collector/pull/590
+[#592]: https://github.com/SumoLogic/sumologic-otel-collector/pull/592
 
 ## [v0.51.0-sumo-0]
 

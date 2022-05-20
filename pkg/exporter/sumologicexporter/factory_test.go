@@ -53,7 +53,6 @@ func TestCreateDefaultConfig(t *testing.T) {
 			AddTimestamp: true,
 			TimestampKey: "timestamp",
 		},
-		GraphiteTemplate:         "%{_metric_}",
 		TranslateAttributes:      true,
 		TranslateTelegrafMetrics: true,
 		TraceFormat:              "otlp",

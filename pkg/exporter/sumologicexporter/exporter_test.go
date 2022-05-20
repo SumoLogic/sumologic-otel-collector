@@ -1057,30 +1057,6 @@ func TestLogsTextFormatMetadataFilterWithDroppedAttribute(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestMetricsGraphiteFormatMetadataFilter(t *testing.T) {
-	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
-			expected := `test_metric_data.test_value.second_value.value1.value2 14500 1605534165`
-			assert.Equal(t, expected, body)
-			assert.Equal(t, "application/vnd.sumologic.graphite", req.Header.Get("Content-Type"))
-		},
-	})
-	test.exp.config.MetricFormat = GraphiteFormat
-	graphiteFormatter, err := newGraphiteFormatter("%{_metric_}.%{test}.%{test2}.%{key1}.%{key2}")
-	assert.NoError(t, err)
-	test.exp.graphiteFormatter = graphiteFormatter
-
-	metrics := metricAndAttributesToPdataMetrics(exampleIntMetric())
-
-	attrs := metrics.ResourceMetrics().At(0).Resource().Attributes()
-	attrs.InsertString("key1", "value1")
-	attrs.InsertString("key2", "value2")
-
-	err = test.exp.pushMetricsData(context.Background(), metrics)
-	assert.NoError(t, err)
-}
-
 func TestMetricsPrometheusFormatMetadataFilter(t *testing.T) {
 	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {

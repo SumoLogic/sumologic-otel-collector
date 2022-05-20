@@ -79,7 +79,6 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 	pf, err := newPrometheusFormatter()
 	require.NoError(t, err)
 
-	gf, err := newGraphiteFormatter(cfg.GraphiteTemplate)
 	require.NoError(t, err)
 
 	logger, err := zap.NewDevelopment()
@@ -101,7 +100,6 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 			},
 			c,
 			pf,
-			gf,
 			"",
 			"",
 			"",
@@ -136,7 +134,6 @@ func prepareOTLPSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *h
 	pf, err := newPrometheusFormatter()
 	require.NoError(t, err)
 
-	gf, err := newGraphiteFormatter(cfg.GraphiteTemplate)
 	require.NoError(t, err)
 
 	logger, err := zap.NewDevelopment()
@@ -158,7 +155,6 @@ func prepareOTLPSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *h
 			},
 			c,
 			pf,
-			gf,
 			testServer.URL,
 			testServer.URL,
 			testServer.URL,
@@ -1647,45 +1643,4 @@ func TestSendMetricsUnexpectedFormat(t *testing.T) {
 	assert.EqualError(t, errs[0], "unexpected metric format: invalid")
 	require.Equal(t, 1, dropped.MetricCount())
 	assert.Equal(t, dropped, metrics)
-}
-
-func TestSendGraphiteMetrics(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
-			expected := `` +
-				`test_metric_data.my_metric_name.kb 14500 1605534165` +
-				"\n" +
-				`gauge_metric_name.my_metric_name.kb 124 1608124661` +
-				"\n" +
-				`gauge_metric_name.my_metric_name.kb 245 1608124662`
-			assert.Equal(t, expected, body)
-			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
-			assert.Equal(t, "application/vnd.sumologic.graphite", req.Header.Get("Content-Type"))
-		},
-	})
-
-	gf, err := newGraphiteFormatter("%{_metric_}.%{metric}.%{unit}")
-	require.NoError(t, err)
-	test.s.graphiteFormatter = gf
-
-	test.s.config.MetricFormat = GraphiteFormat
-	metricSum, attrs := exampleIntMetric()
-	metricGauge, _ := exampleIntGaugeMetric()
-
-	// Assign attributes on a resource level here to see it in the serialized output.
-	// This is done only because graphite data format does not take data point attributes
-	// into account just yet: https://github.com/SumoLogic/sumologic-otel-collector/issues/552
-	// TODO: change this to append only to a particular data point's attributes
-	// and check only for that in expected output when graphite serializer gets fixed.
-	attrs.InsertString("not_in_graphite_template", "stuff")
-	attrs.InsertString("unit", "kb")
-	attrs.InsertString("metric", "my_metric_name")
-	metrics := metricAndAttrsToPdataMetrics(
-		attrs,
-		metricSum, metricGauge,
-	)
-
-	_, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
-	assert.Empty(t, errs)
 }
