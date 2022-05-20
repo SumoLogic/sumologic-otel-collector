@@ -1,6 +1,8 @@
 package mysqlreceiver
 
 import (
+	"errors"
+
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/confignet"
 )
@@ -28,4 +30,29 @@ type DBQueries struct {
 	IndexColumnName              string `mapstructure:"index_column_name,omitempty"`
 	InitialIndexColumnStartValue string `mapstructure:"initial_index_column_start_value,omitempty"`
 	IndexColumnType              string `mapstructure:"index_column_type,omitempty"`
+}
+
+func (cfg *Config) Validate() error {
+
+	var queryIds []string
+	var size = len(cfg.DBQueries)
+	for i := 0; i < size; i++ {
+		queryIds = append(queryIds, cfg.DBQueries[i].QueryId)
+	}
+	queryIdCount := make(map[string]int)
+	for _, item := range queryIds {
+		_, exist := queryIdCount[item]
+		if exist {
+			queryIdCount[item] += 1
+		} else {
+			queryIdCount[item] = 1
+		}
+	}
+	for _, count := range queryIdCount {
+		if count > 1 {
+			err := errors.New("multiple queries have the same queryId which is not allowed")
+			return err
+		}
+	}
+	return nil
 }

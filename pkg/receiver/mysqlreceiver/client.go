@@ -47,12 +47,24 @@ func newMySQLClient(conf *Config, logger *zap.Logger) client {
 
 func (c *mySQLClient) Connect() error {
 	clientDB, err := sql.Open("mysql", c.connStr)
-	clientDB.SetConnMaxLifetime(time.Minute * time.Duration(c.conf.SetConnMaxLifetime))
-	clientDB.SetMaxOpenConns(c.conf.SetMaxOpenConns)
-	clientDB.SetMaxIdleConns(c.conf.SetMaxIdleConns)
 	if err != nil {
 		c.logger.Error("Unable to connect to database", zap.Error(err))
 		return err
+	}
+	if c.conf.SetConnMaxLifetime != 0 {
+		clientDB.SetConnMaxLifetime(time.Minute * time.Duration(c.conf.SetConnMaxLifetime))
+	} else {
+		clientDB.SetConnMaxLifetime(time.Minute * 3)
+	}
+	if c.conf.SetConnMaxLifetime != 0 {
+		clientDB.SetMaxOpenConns(c.conf.SetMaxOpenConns)
+	} else {
+		clientDB.SetMaxOpenConns(5)
+	}
+	if c.conf.SetConnMaxLifetime != 0 {
+		clientDB.SetMaxIdleConns(c.conf.SetMaxIdleConns)
+	} else {
+		clientDB.SetMaxIdleConns(5)
 	}
 	c.client = clientDB
 	return nil
