@@ -50,32 +50,39 @@ func (m *mySQLReceiver) consume(records <-chan string, id int, wg *sync.WaitGrou
 
 // start starts the receiver by initializing the db client connection.
 func (m *mySQLReceiver) Start(ctx context.Context, host component.Host) error {
-
 	sqlclient := newMySQLClient(m.config, m.logger)
 	err := sqlclient.Connect()
 	if err != nil {
 		return err
 	}
 	m.sqlclient = sqlclient
-
 	records := make(chan string)
 	queryChan := make(chan DBQueries)
 	wp := &sync.WaitGroup{}
 	wc := &sync.WaitGroup{}
-	maxDBWorkers := m.config.SetMaxNoDatabaseWorkers
-
+	maxDBWorkers := 0
+	if m.config.SetMaxNoDatabaseWorkers == 0 {
+		if len(m.config.DBQueries) < 5 {
+			maxDBWorkers = len(m.config.DBQueries)
+		} else {
+			maxDBWorkers = 5
+		}
+	} else {
+		if (m.config.SetMaxNoDatabaseWorkers) < 5 {
+			maxDBWorkers = m.config.SetMaxNoDatabaseWorkers
+		} else {
+			maxDBWorkers = 5
+		}
+	}
 	wp.Add(maxDBWorkers)
 	wc.Add(maxDBWorkers)
-
 	for i := 0; i < maxDBWorkers; i++ {
 		go m.produce(records, i, wp, queryChan)
 		go m.consume(records, i, wc, ctx)
 	}
-
 	for _, dbquery := range m.config.DBQueries {
 		queryChan <- dbquery
 	}
-
 	close(queryChan)
 	wp.Wait()
 	close(records)

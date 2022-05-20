@@ -74,11 +74,16 @@ func (c *mySQLClient) Connect() error {
 func (c *mySQLClient) getRecords(dbquery *DBQueries) (map[string]string, error) {
 	myEntireRecords := make(map[string]string)
 	if len(strings.TrimSpace(dbquery.Query)) == 0 {
-		c.logger.Error("Query is empty, check collector config file.")
+		c.logger.Error("Query is empty, check collector config file for:", zap.String("queryId", dbquery.QueryId))
+		return nil, nil
 	} else if len(strings.TrimSpace(dbquery.IndexColumnName)) == 0 {
-		c.logger.Info("IndexColumnName missing from collector config file, so fetching all records.")
+		c.logger.Info("IndexColumnName missing from collector config file, so fetching all records for:", zap.String("queryId", dbquery.QueryId))
+	} else if len(strings.TrimSpace(dbquery.IndexColumnName)) != 0 && len(strings.TrimSpace(dbquery.IndexColumnType)) == 0 {
+		c.logger.Error("IndexColummType should be specified with a IndexColumnName for a query. Supported values are TIMESTAMP or INT.", zap.String("queryId", dbquery.QueryId))
+		return nil, nil
 	} else if dbquery.IndexColumnType != "TIMESTAMP" && dbquery.IndexColumnType != "INT" {
-		c.logger.Error("Configured non supported Indexcolummtype, supported values are TIMESTAMP or INT. Check collector configuration file.")
+		c.logger.Error("Configured non supported Indexcolummtype, supported values are TIMESTAMP or INT. Check collector configuration file for:", zap.String("queryId", dbquery.QueryId))
+		return nil, nil
 	} else if len(strings.TrimSpace(dbquery.IndexColumnName)) != 0 {
 		if dbquery.IndexColumnType == "TIMESTAMP" {
 			if strings.Contains(dbquery.Query, "where") {
@@ -93,7 +98,7 @@ func (c *mySQLClient) getRecords(dbquery *DBQueries) (map[string]string, error) 
 				dbquery.Query += " where INDEXCOLUMNNAME > STATEVALUE order by INDEXCOLUMNNAME asc;"
 			}
 		}
-		c.logger.Info("IndexColumnName specified, fetching records incrementally.")
+		c.logger.Info("IndexColumnName specified, fetching records incrementally for:", zap.String("queryId", dbquery.QueryId))
 	}
 	if len(strings.TrimSpace(dbquery.IndexColumnName)) == 0 {
 		queryFetchResult, _, err := ExecuteQueryandFetchRecords(*c, dbquery.Query, dbquery.QueryId)
@@ -101,12 +106,13 @@ func (c *mySQLClient) getRecords(dbquery *DBQueries) (map[string]string, error) 
 			myEntireRecords[key] = element
 		}
 		if err != nil {
-			c.logger.Error("Error in executing query and fetching records", zap.Error(err))
+			c.logger.Error("Error in executing query and fetching records for:", zap.Error(err), zap.String("queryId", dbquery.QueryId))
+			return nil, nil
 		}
 		if len(queryFetchResult) == 0 {
-			c.logger.Info("No database records found for query with : ", zap.String("queryId", dbquery.QueryId))
+			c.logger.Info("No database records found for query with:", zap.String("queryId", dbquery.QueryId))
 		} else {
-			c.logger.Info("Database records found for query with : ", zap.String("queryId", dbquery.QueryId))
+			c.logger.Info("Database records found for query with:", zap.String("queryId", dbquery.QueryId))
 		}
 	} else {
 		var currentState = GetState(dbquery, c.logger)
@@ -117,7 +123,8 @@ func (c *mySQLClient) getRecords(dbquery *DBQueries) (map[string]string, error) 
 			myEntireRecords[key] = element
 		}
 		if err != nil {
-			c.logger.Error("Error in executing query and fetching records", zap.Error(err))
+			c.logger.Error("Error in executing query and fetching records", zap.Error(err), zap.String("queryId", dbquery.QueryId))
+			return nil, nil
 		}
 		if len(queryFetchResult) == 0 {
 			c.logger.Info("No new records found for query with : ", zap.String("queryId", dbquery.QueryId))
@@ -127,7 +134,8 @@ func (c *mySQLClient) getRecords(dbquery *DBQueries) (map[string]string, error) 
 			var lastRecordFetchedVal map[string]interface{}
 			err := json.Unmarshal([]byte(lastRecordFetched), &lastRecordFetchedVal)
 			if err != nil {
-				c.logger.Error("Problem converting sql query resultset into json format.")
+				c.logger.Error("Problem converting sql query resultset into json format for:", zap.String("queryId", dbquery.QueryId))
+				return nil, nil
 			}
 			var lastRecordStateNumber = lastRecordFetchedVal[dbquery.IndexColumnName].(string)
 			SaveState(dbquery, lastRecordStateNumber, c.logger)
@@ -139,14 +147,16 @@ func (c *mySQLClient) getRecords(dbquery *DBQueries) (map[string]string, error) 
 func ExecuteQueryandFetchRecords(c mySQLClient, query string, queryid string) (map[string]string, string, error) {
 	rows, err := c.client.Query(query)
 	if err != nil {
-		c.logger.Error("Error in executing sql query", zap.Error(err))
+		c.logger.Error("Error in executing sql query", zap.String("error", "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use for the query."), zap.String("queryId", queryid))
+		return nil, "", nil
 	}
 	defer rows.Close()
 
 	// Get column names
 	columns, err := rows.Columns()
 	if err != nil {
-		c.logger.Error("Error getting column names from table", zap.Error(err))
+		c.logger.Error("Error getting column names from table", zap.String("queryId", queryid))
+		return nil, "", nil
 	}
 
 	values := make([]sql.RawBytes, len(columns))
@@ -166,7 +176,8 @@ func ExecuteQueryandFetchRecords(c mySQLClient, query string, queryid string) (m
 		// each column value will be stored in the slice
 		err = rows.Scan(scanArgs...)
 		if err != nil {
-			c.logger.Error("Error scanning rows from table", zap.Error(err))
+			c.logger.Error("Error scanning rows from table", zap.String("queryId", queryid))
+			return nil, "", nil
 		}
 
 		var value string
@@ -185,7 +196,8 @@ func ExecuteQueryandFetchRecords(c mySQLClient, query string, queryid string) (m
 	}
 	err = rows.Err()
 	if err != nil {
-		c.logger.Error("Error found in rows", zap.Error(err))
+		c.logger.Error("Error found in rows", zap.String("queryId", queryid))
+		return nil, "", nil
 	}
 	myjsonobject := make(map[string]string)
 	myEntireRecord := make(map[string]string)
@@ -196,14 +208,16 @@ func ExecuteQueryandFetchRecords(c mySQLClient, query string, queryid string) (m
 		}
 		jsonObjRecord, err := json.Marshal(myjsonobject)
 		if err != nil {
-			c.logger.Error("Error in marshalling json object", zap.Error(err))
+			c.logger.Error("Error in marshalling json object", zap.String("queryId", queryid))
+			return nil, "", nil
 		}
 		jsonStr := string(jsonObjRecord)
 		index := queryid + "_record" + strconv.Itoa(j+1)
 		myEntireRecord[index] = jsonStr
 		lastIndex = index
 		if err != nil {
-			c.logger.Error("Error in converting records into json object", zap.Error(err))
+			c.logger.Error("Error in converting records into json object", zap.String("queryId", queryid))
+			return nil, "", nil
 		}
 	}
 	return myEntireRecord, lastIndex, nil
