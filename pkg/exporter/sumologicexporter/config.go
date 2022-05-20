@@ -48,8 +48,7 @@ type Config struct {
 	LogFormat LogFormatType `mapstructure:"log_format"`
 
 	// Metrics related configuration
-	// The format of metrics you will be sending, either graphite or carbon2, otlp or prometheus (Default is prometheus)
-	// Possible values are `carbon2` and `prometheus`
+	// The format of metrics you will be sending, either graphite, otlp or prometheus (Default is otlp)
 	MetricFormat MetricFormatType `mapstructure:"metric_format"`
 	// Graphite template.
 	// Placeholders `%{attr_name}` will be replaced with attribute value for attr_name.
@@ -151,8 +150,9 @@ Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-coll
 	switch cfg.MetricFormat {
 	case OTLPMetricFormat:
 	case GraphiteFormat:
-	case Carbon2Format:
 	case PrometheusFormat:
+	case RemovedCarbon2Format:
+		return fmt.Errorf("support for the carbon2 metric format was removed, please use prometheus or otlp instead")
 	default:
 		return fmt.Errorf("unexpected metric format: %s", cfg.MetricFormat)
 	}
@@ -221,8 +221,8 @@ const (
 	OTLPLogFormat LogFormatType = "otlp"
 	// GraphiteFormat represents metric_format: graphite
 	GraphiteFormat MetricFormatType = "graphite"
-	// Carbon2Format represents metric_format: carbon2
-	Carbon2Format MetricFormatType = "carbon2"
+	// RemovedCarbon2Format represents the no longer supported carbon2 metric format
+	RemovedCarbon2Format MetricFormatType = "carbon2"
 	// PrometheusFormat represents metric_format: prometheus
 	PrometheusFormat MetricFormatType = "prometheus"
 	// OTLPMetricFormat represents metric_format: otlp

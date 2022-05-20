@@ -26,7 +26,7 @@ exporters:
 
     # format to use when sending metrics to Sumo, default = otlp,
     # NOTE: only `otlp` is supported when used with sumologicextension
-    metric_format: {carbon2, graphite, otlp, prometheus}
+    metric_format: {graphite, otlp, prometheus}
 
     # format to use when sending traces to Sumo,
     # currently only otlp is supported

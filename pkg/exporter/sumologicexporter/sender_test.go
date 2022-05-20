@@ -67,7 +67,7 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 	cfg.CompressEncoding = NoCompression
 	cfg.HTTPClientSettings.Endpoint = testServer.URL
 	cfg.LogFormat = TextFormat
-	cfg.MetricFormat = Carbon2Format
+	cfg.MetricFormat = OTLPMetricFormat
 	cfg.MaxRequestBodySize = 20_971_520
 	for _, cfgOpt := range cfgOpts {
 		cfgOpt(cfg)
@@ -1647,46 +1647,6 @@ func TestSendMetricsUnexpectedFormat(t *testing.T) {
 	assert.EqualError(t, errs[0], "unexpected metric format: invalid")
 	require.Equal(t, 1, dropped.MetricCount())
 	assert.Equal(t, dropped, metrics)
-}
-
-func TestSendCarbon2Metrics(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
-			//nolint:lll
-			expected := `` +
-				`test=test_value test2=second_value _unit=m/s escape_me=:invalid_ metric=true metric=test.metric.data unit=bytes  14500 1605534165` +
-				"\n" +
-				`test=test_value test2=second_value _unit=m/s escape_me=:invalid_ metric=true metric=gauge_metric_name  124 1608124661` +
-				"\n" +
-				`test=test_value test2=second_value _unit=m/s escape_me=:invalid_ metric=true metric=gauge_metric_name  245 1608124662`
-			assert.Equal(t, expected, body)
-			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
-			assert.Equal(t, "application/vnd.sumologic.carbon2", req.Header.Get("Content-Type"))
-		},
-	})
-
-	test.s.config.MetricFormat = Carbon2Format
-
-	metricSum, attrs := exampleIntMetric()
-	metricGauge, _ := exampleIntGaugeMetric()
-
-	// Assign attributes on a resource level here to see it in the serialized output.
-	// This is done only because carbon2 data format does not take data point attributes
-	// into account just yet: https://github.com/SumoLogic/sumologic-otel-collector/issues/552
-	// TODO: change this to append only to a particular data point's attributes
-	// and check only for that in expected output when carbon2 serializer gets fixed.
-	attrs.InsertString("unit", "m/s")
-	attrs.InsertString("escape me", "=invalid\n")
-	attrs.InsertBool("metric", true)
-
-	metrics := metricAndAttrsToPdataMetrics(
-		attrs,
-		metricSum, metricGauge,
-	)
-
-	_, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
-	assert.Empty(t, errs)
 }
 
 func TestSendGraphiteMetrics(t *testing.T) {

@@ -161,7 +161,6 @@ const (
 
 	contentTypeLogs       string = "application/x-www-form-urlencoded"
 	contentTypePrometheus string = "application/vnd.sumologic.prometheus"
-	contentTypeCarbon2    string = "application/vnd.sumologic.carbon2"
 	contentTypeGraphite   string = "application/vnd.sumologic.graphite"
 	contentTypeOTLP       string = "application/x-protobuf"
 
@@ -555,8 +554,6 @@ func (s *sender) sendNonOTLPMetrics(ctx context.Context, md pmetric.Metrics) (pm
 				switch s.config.MetricFormat {
 				case PrometheusFormat:
 					formattedLine = s.prometheusFormatter.metric2String(m, rm.Resource().Attributes())
-				case Carbon2Format:
-					formattedLine = carbon2Metric2String(m, rm.Resource().Attributes())
 				case GraphiteFormat:
 					formattedLine = s.graphiteFormatter.metric2String(m, rm.Resource().Attributes())
 				default:
@@ -747,8 +744,6 @@ func addMetricsHeaders(req *http.Request, mf MetricFormatType) error {
 	switch mf {
 	case PrometheusFormat:
 		req.Header.Add(headerContentType, contentTypePrometheus)
-	case Carbon2Format:
-		req.Header.Add(headerContentType, contentTypeCarbon2)
 	case GraphiteFormat:
 		req.Header.Add(headerContentType, contentTypeGraphite)
 	case OTLPMetricFormat:
