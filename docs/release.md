@@ -1,12 +1,26 @@
 # Releasing
 
 - [How to release](#how-to-release)
+  - [Update Changelog](#update-changelog)
+  - [Create and push Git tag](#create-and-push-git-tag)
+  - [Publish GitHub release](#publish-github-release)
 - [Updating OT core](#updating-ot-core)
   - [Updating patched processors](#updating-patched-processors)
   - [Updating OT distro](#updating-ot-distro)
 - [Running Tracing E2E tests](#running-tracing-e2e-tests)
 
 ## How to release
+
+### Update Changelog
+
+Edit the [CHANGELOG.md][changelog] file and add an entry for the release that will be created.
+
+Here are some example pull requests: [#585], [#563].
+
+[#563]: https://github.com/SumoLogic/sumologic-otel-collector/pull/563
+[#585]: https://github.com/SumoLogic/sumologic-otel-collector/pull/585
+
+### Create and push Git tag
 
 In order to release a new version of Sumo OT distro you'd export `TAG` env variable
 and create a tag and push it.
@@ -16,7 +30,7 @@ that for you as well as pushing tags for all the plugins in this repo so that
 they can be imported from other repositories.
 
 ```shell
-export TAG=v0.0.1
+export TAG=v0.51.0-sumo-0
 make add-tag push-tag
 ```
 
@@ -33,6 +47,18 @@ make add-tag push-tag
 > ```shell
 > make prepare-tag TAG=$(git describe --tags --abbrev=10 --match "v[0-9]*")
 > ```
+
+### Publish GitHub release
+
+The GitHub release is created as draft by the [create-release](../.github/workflows/release_builds.yml) GitHub Action.
+
+After the release draft is created, go to [GitHub releases](https://github.com/SumoLogic/sumologic-otel-collector/releases),
+edit the release draft and fill in missing information:
+
+- Specify versions for upstream OT core and contrib releases
+- Copy and paste the Changelog entry for this release from [CHANGELOG.md][changelog]
+
+After verifying that the release text and all links are good, publish the release.
 
 ## Updating OT core
 
@@ -129,3 +155,4 @@ approve the workflow to run. Note that you need commiter rights in this reposito
 [circleci]: https://app.circleci.com/pipelines/github/SumoLogic/sumologic-otel-collector
 [circleci_approve]: ../images/circleci_approve_workflow.png
 [contrib_fork]: https://github.com/SumoLogic/opentelemetry-collector-contrib
+[changelog]: ../CHANGELOG.md
