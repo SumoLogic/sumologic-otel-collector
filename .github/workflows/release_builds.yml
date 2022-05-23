@@ -312,8 +312,8 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          draft: false
-          prerelease: true
+          draft: true
+          prerelease: false
 
           allowUpdates: true
           omitBodyDuringUpdate: true
