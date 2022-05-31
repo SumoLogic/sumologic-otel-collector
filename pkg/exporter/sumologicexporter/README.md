@@ -26,7 +26,7 @@ exporters:
 
     # format to use when sending metrics to Sumo, default = otlp,
     # NOTE: only `otlp` is supported when used with sumologicextension
-    metric_format: {carbon2, graphite, otlp, prometheus}
+    metric_format: {otlp, prometheus}
 
     # format to use when sending traces to Sumo,
     # currently only otlp is supported
@@ -42,7 +42,7 @@ exporters:
     # default = true
     clear_logs_timestamp: {true, false}
 
-    # For below described source and graphite template related configuration,
+    # For below described source related configuration,
     # please refer to "Source templates" documentation chapter from this document.
 
     # desired source category, useful if you want to override the source category
@@ -54,10 +54,6 @@ exporters:
     # desired host name, useful if you want to override the source host
     # configured for the source.
     source_host: <source_host>
-    # template for Graphite format, applied only if metric_format is set to graphite;
-    # source templating is going to be applied,
-    # default = `%{_metric_}`
-    graphite_template: <graphite_template>
     # name of resource attribute which should be dropped for records
     # this is for attribute used by routing processor
     # other attributes should be removed by processors in pipelines before
@@ -185,7 +181,7 @@ Below is a list of all attribute keys that are being translated.
 ## Source Templates
 
 You can specify a template with an attribute for `source_category`, `source_name`,
-`source_host` or `graphite_template` using `%{attr_name}`. Only *resource* attributes
+`source_host` using `%{attr_name}`. Only *resource* attributes
 can be used this way.
 
 For example, when there is an attribute `my_attr`: `my_value`, `metrics/%{my_attr}`
@@ -193,9 +189,6 @@ would be expanded to `metrics/my_value`.
 Use OpenTelemetry attribute names like `k8s.pod.name` instead of `pod`,
 even when [attribute translation](#attribute-translation)
 is turned on.
-
-For `graphite_template`, in addition to above, `%{_metric_}` is going to be replaced
-with metric name.
 
 If an attribute is not found, it is replaced with `undefined`.
 For example, `%{existing_attr}/%{nonexistent_attr}` becomes `value-of-existing-attr/undefined`.
