@@ -63,8 +63,7 @@ func createDefaultConfig() config.Exporter {
 			TimestampKey: DefaultTimestampKey,
 			FlattenBody:  DefaultFlattenBody,
 		},
-		GraphiteTemplate: DefaultGraphiteTemplate,
-		TraceFormat:      OTLPTraceFormat,
+		TraceFormat: OTLPTraceFormat,
 
 		HTTPClientSettings:   CreateDefaultHTTPClientSettings(),
 		RetrySettings:        exporterhelper.NewDefaultRetrySettings(),

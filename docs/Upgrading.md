@@ -11,6 +11,19 @@
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
+## Upgrading to Unreleased
+
+### `sumologic` exporter: Removed `carbon2` and `graphite` metric formats
+
+These metric formats don't offer any advantages over Prometheus or OTLP formats. To migrate, simply switch
+the format to `prometheus`.
+
+```yaml
+exporters:
+  sumologic:
+    metric_format: prometheus
+```
+
 ## Upgrading to v0.51.0-sumo-0
 
 ### `k8s_tagger` processor: removed `clusterName` metadata extraction option
