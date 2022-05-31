@@ -30,6 +30,7 @@ See [Upgrade guide][upgrade_guide_v0_51_0] for the breaking changes in this vers
 ### Added
 
 - feat: enable rawk8seventsreceiver [#576]
+- feat: add sumo ic marshaler [#596]
 
 ### Changed
 
