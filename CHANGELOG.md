@@ -5,9 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.52.0-sumo-0]
-
 See [Upgrade guide][upgrade_guide_v0_52_0] for the breaking changes in this version.
+
+## [Unreleased]
+
+### Added
+
+- feat: Enable cumulativetodeltaprocessor [#595]
+
+### Changed
+
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.52.0-sumo-0...main
+
+## [v0.52.0-sumo-0]
 
 ### Breaking changes
 
