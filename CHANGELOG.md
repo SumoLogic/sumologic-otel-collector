@@ -13,7 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- feat(journaldreceiver): add missing dependencies [#577]
+
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.52.0-sumo-0...main
+[#595]: https://github.com/SumoLogic/sumologic-otel-collector/pull/595
+[#577]: https://github.com/SumoLogic/sumologic-otel-collector/pull/577
 
 ## [v0.52.0-sumo-0]
 
