@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - fix(k8sprocessor): store only necessary Pod data [#593][#593]
+- fix(filelogreceiver): fix changing fingerprint_size [#601]
+
+### Changed
+
+- chore(deps): update OT core to v0.52.0 [#600]
 
 ### Changed
 
@@ -25,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#592]: https://github.com/SumoLogic/sumologic-otel-collector/pull/592
 [#593]: https://github.com/SumoLogic/sumologic-otel-collector/pull/593
 [#600]: https://github.com/SumoLogic/sumologic-otel-collector/pull/600
+[#601]: https://github.com/SumoLogic/sumologic-otel-collector/pull/601
 
 ## [v0.51.0-sumo-0]
 
