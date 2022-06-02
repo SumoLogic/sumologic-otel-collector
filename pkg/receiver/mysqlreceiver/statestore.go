@@ -16,6 +16,45 @@ func getStateStoreFilename(dbquery *DBQueries) string {
 	return storeFilename
 }
 
+func getStateValueINT(dbquery *DBQueries, logger *zap.Logger) string {
+	var startval int = 0
+	var stateValue = ""
+	if dbquery.InitialIndexColumnStartValue == "" {
+		logger.Info("initial_index_column_start_value int not specified, considering default as 0 for:", zap.String("queryId", dbquery.QueryId))
+		stateValue = strconv.Itoa(startval)
+	} else if dbquery.InitialIndexColumnStartValue != "" {
+		startval, err := strconv.Atoi(dbquery.InitialIndexColumnStartValue)
+		if err != nil {
+			stateValue = strconv.Itoa(startval)
+			logger.Info("Problem parsing initial_index_column_start_value int, check collector config file. Considering default 0 for:", zap.String("queryId", dbquery.QueryId))
+		} else {
+			stateValue = strconv.Itoa(startval - 1)
+		}
+	}
+	return stateValue
+}
+
+func getStateValueTIMESTAMP(dbquery *DBQueries, logger *zap.Logger) string {
+	var startDate time.Time = time.Now()
+	var stateValue = ""
+	if dbquery.InitialIndexColumnStartValue == "" {
+		logger.Info("initial_index_column_start_value date not specified, considering default as now - 35hrs for:", zap.String("queryId", dbquery.QueryId))
+		startDate = startDate.Add(-35 * time.Hour)
+		stateValue = startDate.String()
+	} else if dbquery.InitialIndexColumnStartValue != "" {
+		startDate, err := time.Parse("2006-01-02 15:04:05", dbquery.InitialIndexColumnStartValue)
+		if err != nil {
+			startDate = startDate.Add(-35 * time.Hour)
+			stateValue = startDate.String()
+			logger.Info("Problem parsing initial_index_column_start_value date, check collector config file. Considering default now - 35hrs for:", zap.String("queryId", dbquery.QueryId))
+		} else {
+			startDate = startDate.Add(-1 * time.Second)
+			stateValue = startDate.String()
+		}
+	}
+	return stateValue
+}
+
 func GetState(dbquery *DBQueries, logger *zap.Logger) string {
 	var storeFilename = getStateStoreFilename(dbquery)
 	var stateValue = ""
@@ -25,26 +64,9 @@ func GetState(dbquery *DBQueries, logger *zap.Logger) string {
 		// State File does not exists, so use start value as mentioned in YAML configuration.
 		// If start value is not configured, we set some default value to it
 		if dbquery.IndexColumnType == "INT" {
-			var startval int = 0
-			startval, err = strconv.Atoi(dbquery.InitialIndexColumnStartValue)
-			if err != nil {
-				stateValue = strconv.Itoa(startval)
-				logger.Info("Problem parsing start value int, check InitialIndexColumnStartValue in collector config file. Considering default 0")
-			} else {
-				stateValue = strconv.Itoa(startval - 1)
-			}
+			return getStateValueINT(dbquery, logger)
 		} else if dbquery.IndexColumnType == "TIMESTAMP" {
-			var startDate time.Time = time.Now()
-			startDate, err := time.Parse("2006-01-02 15:04:05", dbquery.InitialIndexColumnStartValue)
-			if err != nil {
-				var startDate time.Time = time.Now()
-				startDate = startDate.Add(-35 * time.Hour)
-				stateValue = startDate.String()
-				logger.Info("Problem parsing start value date, check InitialIndexColumnStartValue in collector config file. Considering default now - 35hrs")
-			} else {
-				startDate = startDate.Add(-1 * time.Second)
-				stateValue = startDate.String()
-			}
+			return getStateValueTIMESTAMP(dbquery, logger)
 		}
 	} else {
 		// State file exists.
@@ -52,25 +74,9 @@ func GetState(dbquery *DBQueries, logger *zap.Logger) string {
 		if err != nil {
 			logger.Info("Error opening state file, using start value as mentioned in collector config file.")
 			if dbquery.IndexColumnType == "INT" {
-				var startval int = 0
-				startval, err = strconv.Atoi(dbquery.InitialIndexColumnStartValue)
-				if err != nil {
-					logger.Info("Problem parsing start value int, check InitialIndexColumnStartValue in collector config file. Considering default 0")
-					stateValue = strconv.Itoa(startval)
-				} else {
-					stateValue = strconv.Itoa(startval - 1)
-				}
+				return getStateValueINT(dbquery, logger)
 			} else if dbquery.IndexColumnType == "TIMESTAMP" {
-				startDate, err := time.Parse("2006-01-02 15:04:05", dbquery.InitialIndexColumnStartValue)
-				if err != nil {
-					var startDate time.Time = time.Now()
-					startDate = startDate.Add(-35 * time.Hour)
-					stateValue = startDate.String()
-					logger.Info("Problem parsing start value date, check InitialIndexColumnStartValue in collector config file. Considering default now - 35hrs")
-				} else {
-					startDate = startDate.Add(-1 * time.Microsecond)
-					stateValue = startDate.String()
-				}
+				return getStateValueTIMESTAMP(dbquery, logger)
 			}
 		} else {
 			// Able to read state file, so extract state value.
