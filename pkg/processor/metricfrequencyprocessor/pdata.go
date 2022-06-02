@@ -28,9 +28,9 @@ func sortTimestampArray(timestamps []pcommon.Timestamp) {
 
 func getVal(point pmetric.NumberDataPoint) float64 {
 	switch point.ValueType() {
-	case pmetric.MetricValueTypeDouble:
+	case pmetric.NumberDataPointValueTypeDouble:
 		return point.DoubleVal()
-	case pmetric.MetricValueTypeInt:
+	case pmetric.NumberDataPointValueTypeInt:
 		return float64(point.IntVal())
 	default:
 		return math.NaN()
