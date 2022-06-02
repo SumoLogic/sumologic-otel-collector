@@ -22,6 +22,7 @@ import (
 
 	"go.uber.org/zap"
 	api_v1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -130,6 +131,19 @@ func (c *WatchClient) Start() {
 		UpdateFunc: c.handlePodUpdate,
 		DeleteFunc: c.handlePodDelete,
 	})
+	err := c.informer.SetTransform(
+		func(object interface{}) (interface{}, error) {
+			originalPod, success := object.(*api_v1.Pod)
+			if !success {
+				return object.(cache.DeletedFinalStateUnknown), nil
+			} else {
+				return removeUnnecessaryPodData(originalPod, c.Rules), nil
+			}
+		},
+	)
+	if err != nil {
+		c.logger.Warn("error setting Pod data transformer, continuing without it", zap.Error(err))
+	}
 	c.informer.Run(c.stopCh)
 }
 
@@ -342,10 +356,6 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 		}
 	}
 
-	if c.Rules.PodUID {
-		tags[c.Rules.Tags.PodUID] = string(pod.UID)
-	}
-
 	for _, r := range c.Rules.Labels {
 		c.extractLabelsIntoTags(r, pod.Labels, tags)
 	}
@@ -363,6 +373,71 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 		c.extractLabelsIntoTags(r, pod.Annotations, tags)
 	}
 	return tags
+}
+
+// This function removes all data from the Pod except what is required by extraction rules
+func removeUnnecessaryPodData(pod *api_v1.Pod, rules ExtractionRules) *api_v1.Pod {
+
+	// name, namespace, uid, start time and ip are needed for identifying Pods
+	transformedPod := api_v1.Pod{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      pod.GetName(),
+			Namespace: pod.GetNamespace(),
+			UID:       pod.GetUID(),
+		},
+		Status: api_v1.PodStatus{
+			PodIP:     pod.Status.PodIP,
+			StartTime: pod.Status.StartTime,
+		},
+	}
+
+	if rules.StartTime {
+		transformedPod.SetCreationTimestamp(pod.GetCreationTimestamp())
+	}
+
+	if rules.PodUID {
+		transformedPod.SetUID(pod.GetUID())
+	}
+
+	if rules.NodeName {
+		transformedPod.Spec.NodeName = pod.Spec.NodeName
+	}
+
+	if rules.HostName {
+		transformedPod.Spec.Hostname = pod.Spec.Hostname
+	}
+
+	if rules.ContainerID {
+		for _, containerStatus := range pod.Status.ContainerStatuses {
+			transformedPod.Status.ContainerStatuses = append(
+				transformedPod.Status.ContainerStatuses,
+				api_v1.ContainerStatus{ContainerID: containerStatus.ContainerID},
+			)
+		}
+	}
+
+	if rules.ContainerName || rules.ContainerImage {
+		for _, container := range pod.Spec.Containers {
+			transformedPod.Spec.Containers = append(
+				transformedPod.Spec.Containers,
+				api_v1.Container{Name: container.Name, Image: container.Image},
+			)
+		}
+	}
+
+	if len(rules.Labels) > 0 {
+		transformedPod.Labels = pod.Labels
+	}
+
+	if len(rules.Annotations) > 0 {
+		transformedPod.Annotations = pod.Annotations
+	}
+
+	if rules.OwnerLookupEnabled {
+		transformedPod.SetOwnerReferences(pod.GetOwnerReferences())
+	}
+
+	return &transformedPod
 }
 
 func (c *WatchClient) extractLabelsIntoTags(r FieldExtractionRule, labels map[string]string, tags map[string]string) {
