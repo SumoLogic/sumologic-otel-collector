@@ -19,6 +19,9 @@ coverage.txt
 # Vagrant
 .vagrant
 
+# Virtualbox
+*.log
+
 # Mac's .DS_Store
 .DS_Store
 
