@@ -5,16 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.52.0-sumo-0]
+
+See [Upgrade guide][upgrade_guide_v0_52_0] for the breaking changes in this version.
 
 ### Breaking changes
 
-- feat(sumologicexporter)!: remove support for Carbon2 metrics format [#590][#590]
-- feat(sumologicexporter)!: remove support for Graphite metrics format [#592][#592]
+- feat(sumologicexporter)!: remove support for Carbon2 metrics format [#590][#590] ([upgrade guide][upgrade_guide_v0_52_0_metrics_support])
+- feat(sumologicexporter)!: remove support for Graphite metrics format [#592][#592] ([upgrade guide][upgrade_guide_v0_52_0_metrics_support])
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.51.0-sumo-0...main
+### Fixed
+
+- fix(k8sprocessor): store only necessary Pod data [#593][#593]
+- fix(filelogreceiver): fix changing fingerprint_size [#601]
+
+### Changed
+
+- chore(deps): update OT core to v0.52.0 [#600]
+
+[v0.52.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.51.0-sumo-0...v0.52.0-sumo-0
 [#590]: https://github.com/SumoLogic/sumologic-otel-collector/pull/590
 [#592]: https://github.com/SumoLogic/sumologic-otel-collector/pull/592
+[#593]: https://github.com/SumoLogic/sumologic-otel-collector/pull/593
+[#600]: https://github.com/SumoLogic/sumologic-otel-collector/pull/600
+[#601]: https://github.com/SumoLogic/sumologic-otel-collector/pull/601
+[upgrade_guide_v0_52_0]: ./docs/Upgrading.md#upgrading-to-v0520-sumo-0
+[upgrade_guide_v0_52_0_metrics_support]: ./docs/Upgrading.md#sumologic-exporter-removed-carbon2-and-graphite-metric-formats
 
 ## [v0.51.0-sumo-0]
 

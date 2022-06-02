@@ -1,5 +1,7 @@
 # Upgrading
 
+- [Upgrading to v0.52.0-sumo-0](#upgrading-to-v0520-sumo-0)
+  - [`sumologic` exporter: Removed `carbon2` and `graphite` metric formats](#sumologic-exporter-removed-carbon2-and-graphite-metric-formats)
 - [Upgrading to v0.51.0-sumo-0](#upgrading-to-v0510-sumo-0)
   - [`k8s_tagger` processor: removed `clusterName` metadata extraction option](#k8s_tagger-processor-removed-clustername-metadata-extraction-option)
     - [How to upgrade](#how-to-upgrade)
@@ -11,7 +13,7 @@
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
-## Upgrading to Unreleased
+## Upgrading to v0.52.0-sumo-0
 
 ### `sumologic` exporter: Removed `carbon2` and `graphite` metric formats
 

@@ -82,6 +82,7 @@ To update this patchset for the new OT core version:
    ```bash
    export CURRENT_VERSION=vX.X.X
    export NEW_VERSION=vY.Y.Y
+   export SUFFIX=filterprocessor
    git clone https://github.com/SumoLogic/opentelemetry-collector-contrib && cd opentelemetry-collector-contrib
    git remote add upstream https://github.com/open-telemetry/opentelemetry-collector-contrib
    git pull upstream "${NEW_VERSION}" "${CURRENT_VERSION}"
@@ -90,9 +91,9 @@ To update this patchset for the new OT core version:
 1. Create a new branch for the patchset and rebase it on the new version
 
    ```bash
-   git switch "${CURRENT_VERSION}-filterprocessor"
-   git checkout -b "${NEW_VERSION}-filterprocessor"
-   git rebase -i --onto "${NEW_VERSION}" "${CURRENT_VERSION}" "${NEW_VERSION}-filterprocessor"
+   git switch "${CURRENT_VERSION}-${SUFFIX}"
+   git checkout -b "${NEW_VERSION}-${SUFFIX}"
+   git rebase -i --onto "${NEW_VERSION}" "${CURRENT_VERSION}" "${NEW_VERSION}-${SUFFIX}"
    ```
 
 1. Resolve conflicts and make sure tests and linters pass afterwards.
@@ -114,10 +115,16 @@ To update this patchset for the new OT core version:
 1. Push the new branch to the fork repo and write down the commit SHA
 
    ```bash
-   git push origin "${NEW_VERSION}-filterprocessor"
+   git push origin "${NEW_VERSION}-${SUFFIX}"
    ```
 
 1. Update the [builder configuration][builder_config] with the new commit SHA
+
+1. Repeat above steps with the following change:
+
+   ```bash
+   export SUFFIX=stanza
+   ```
 
 ### Updating OT distro
 

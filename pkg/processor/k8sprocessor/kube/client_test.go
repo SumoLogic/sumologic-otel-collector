@@ -767,7 +767,10 @@ func TestExtractionRules(t *testing.T) {
 			}
 			c.Rules = tc.rules
 
-			c.handlePodAdd(pod)
+			// manually call the data removal function here
+			// normally the informer does this, but fully emulating the informer in this test is annoying
+			transformedPod := removeUnnecessaryPodData(pod, c.Rules)
+			c.handlePodAdd(transformedPod)
 			p, ok := c.GetPod(PodIdentifier(pod.Status.PodIP))
 			require.True(t, ok)
 
