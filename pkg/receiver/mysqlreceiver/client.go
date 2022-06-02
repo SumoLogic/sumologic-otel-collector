@@ -1,13 +1,20 @@
 package mysqlreceiver
 
 import (
+	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"time"
 
 	"strconv"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
 	"github.com/go-sql-driver/mysql"
 	"go.uber.org/zap"
 )
@@ -27,17 +34,72 @@ type mySQLClient struct {
 
 var _ client = (*mySQLClient)(nil)
 
-func newMySQLClient(conf *Config, logger *zap.Logger) client {
-	driverConf := mysql.Config{
-		User:                 conf.Username,
-		Passwd:               conf.Password,
-		Net:                  conf.Transport,
-		Addr:                 conf.Endpoint,
-		DBName:               conf.Database,
-		AllowNativePasswords: conf.AllowNativePasswords,
+func createIAMRDSTLSConf(pempath string, logger *zap.Logger) tls.Config {
+	rootCertPool := x509.NewCertPool()
+	globalpem, err := ioutil.ReadFile(pempath)
+	if err != nil {
+		logger.Error("error in reading pem file", zap.Error(err))
 	}
-	connStr := driverConf.FormatDSN()
+	if ok := rootCertPool.AppendCertsFromPEM(globalpem); !ok {
+		logger.Error("error in loading certificates from pem file", zap.Error(err))
+	}
+	return tls.Config{
+		RootCAs: rootCertPool,
+	}
+}
 
+func generateIAMAuthToken(endpoint string, conf *Config, logger *zap.Logger) (token string) {
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		logger.Error("configuration error:", zap.Error(err))
+	}
+	fmt.Println(cfg.Credentials)
+	authenticationToken, err := auth.BuildAuthToken(
+		context.TODO(), endpoint, conf.Region, conf.Username, cfg.Credentials)
+	if err != nil {
+		logger.Error("failed to create authentication token:", zap.Error(err))
+	}
+	return authenticationToken
+}
+
+func newMySQLClient(conf *Config, logger *zap.Logger) client {
+	var port string
+	var connStr string
+	if len(conf.DBPort) != 0 {
+		port = conf.DBPort
+	} else {
+		port = "3306"
+	}
+	endpoint := conf.DBHost + ":" + port
+	if conf.AuthenticationMode == "IAMRDSAuth" {
+		authenticationToken := generateIAMAuthToken(endpoint, conf, logger)
+		tlsConf := createIAMRDSTLSConf(conf.AWSCertificatePath, logger)
+		tlserr := mysql.RegisterTLSConfig("custom", &tlsConf)
+		if tlserr != nil {
+			logger.Error("Error %s when RegisterTLSConfig\n", zap.Error(tlserr))
+		}
+		driverConf := mysql.Config{
+			User:                    conf.Username,
+			Passwd:                  authenticationToken,
+			Net:                     conf.Transport,
+			Addr:                    endpoint,
+			DBName:                  conf.Database,
+			AllowNativePasswords:    conf.AllowNativePasswords,
+			TLSConfig:               "custom",
+			AllowCleartextPasswords: true,
+		}
+		connStr = driverConf.FormatDSN()
+	} else {
+		driverConf := mysql.Config{
+			User:                 conf.Username,
+			Passwd:               conf.Password,
+			Net:                  conf.Transport,
+			Addr:                 endpoint,
+			DBName:               conf.Database,
+			AllowNativePasswords: conf.AllowNativePasswords,
+		}
+		connStr = driverConf.FormatDSN()
+	}
 	return &mySQLClient{
 		connStr: connStr,
 		conf:    conf,
