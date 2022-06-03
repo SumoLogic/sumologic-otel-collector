@@ -161,6 +161,11 @@ approve the workflow to run. Note that you need commiter rights in this reposito
 Journalctl is dependency for [journaldreceiver]. In order to update it, please update debian version in Dockerfile files.
 Please see available [debian versions][debian_versions].
 
+```bash
+export DEBIAN_VERSION=11.3
+make update-journalctl
+```
+
 [builder_config]: ../otelcolbuilder/.otelcol-builder.yaml
 [release_job]: ../.github/workflows/release_builds.yml
 [ot_fork]: https://github.com/SumoLogic/opentelemetry-collector-contrib

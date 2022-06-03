@@ -102,6 +102,10 @@ update-ot-core: install-gsed
 		&& make build \
 		&& popd
 
+.PHONY: update-journalctl
+update-journalctl: install-gsed
+	$(SED) -i "s/FROM debian.*/FROM debian:${DEBIAN_VERSION} as systemd/" Dockerfile*
+
 ################################################################################
 # Release
 ################################################################################
