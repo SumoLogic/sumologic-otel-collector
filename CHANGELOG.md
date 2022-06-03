@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.52.0-sumo-0]
 
+### Released 2022-06-02
+
 See [Upgrade guide][upgrade_guide_v0_52_0] for the breaking changes in this version.
 
 ### Breaking changes
