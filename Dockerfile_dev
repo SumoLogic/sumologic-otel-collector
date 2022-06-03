@@ -12,6 +12,9 @@ RUN mkdir /etc/otel/
 
 FROM debian:11.3 as systemd
 RUN apt update && apt install -y systemd
+# prepare package with journald and it's dependencies
+# h stands for dereference of symbolic links
+RUN tar czhf journalctl.tar.gz /bin/journalctl $(ldd /bin/journalctl | grep -oP "\/.*? ")
 
 FROM golang:1.18.3
 ARG BUILD_TAG=latest
@@ -24,33 +27,11 @@ COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certifica
 COPY --from=otelcol /otelcol-sumo /otelcol-sumo
 COPY --from=directories --chown=${USER_UID}:${USER_UID} /etc/otel/ /etc/otel/
 
-# journaldreceiver dependencies
-COPY --from=systemd /bin/journalctl /bin/journalctl
-COPY --from=systemd /lib/systemd/libsystemd-shared-247.so /lib/systemd/libsystemd-shared-247.so
-COPY --from=systemd /lib/x86_64-linux-gnu/libaudit.so.1 /lib/x86_64-linux-gnu/libaudit.so.1
-COPY --from=systemd /lib/x86_64-linux-gnu/libc.so.6 /lib/x86_64-linux-gnu/libc.so.6
-COPY --from=systemd /lib/x86_64-linux-gnu/libcap-ng.so.0 /lib/x86_64-linux-gnu/libcap-ng.so.0
-COPY --from=systemd /lib/x86_64-linux-gnu/libcap.so.2 /lib/x86_64-linux-gnu/libcap.so.2
-COPY --from=systemd /lib/x86_64-linux-gnu/libcrypt.so.1 /lib/x86_64-linux-gnu/libcrypt.so.1
-COPY --from=systemd /lib/x86_64-linux-gnu/libdl.so.2 /lib/x86_64-linux-gnu/libdl.so.2
-COPY --from=systemd /lib/x86_64-linux-gnu/libgpg-error.so.0 /lib/x86_64-linux-gnu/libgpg-error.so.0
-COPY --from=systemd /lib/x86_64-linux-gnu/liblzma.so.5 /lib/x86_64-linux-gnu/liblzma.so.5
-COPY --from=systemd /lib/x86_64-linux-gnu/libpam.so.0 /lib/x86_64-linux-gnu/libpam.so.0
-COPY --from=systemd /lib/x86_64-linux-gnu/libpthread.so.0 /lib/x86_64-linux-gnu/libpthread.so.0
-COPY --from=systemd /lib/x86_64-linux-gnu/librt.so.1 /lib/x86_64-linux-gnu/librt.so.1
-COPY --from=systemd /lib/x86_64-linux-gnu/libselinux.so.1 /lib/x86_64-linux-gnu/libselinux.so.1
-COPY --from=systemd /lib64/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
-COPY --from=systemd /usr/lib/x86_64-linux-gnu/libacl.so.1 /usr/lib/x86_64-linux-gnu/libacl.so.1
-COPY --from=systemd /usr/lib/x86_64-linux-gnu/libblkid.so.1 /usr/lib/x86_64-linux-gnu/libblkid.so.1
-COPY --from=systemd /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1 /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1
-COPY --from=systemd /usr/lib/x86_64-linux-gnu/libgcrypt.so.20 /usr/lib/x86_64-linux-gnu/libgcrypt.so.20
-COPY --from=systemd /usr/lib/x86_64-linux-gnu/libip4tc.so.2 /usr/lib/x86_64-linux-gnu/libip4tc.so.2
-COPY --from=systemd /usr/lib/x86_64-linux-gnu/libkmod.so.2 /usr/lib/x86_64-linux-gnu/libkmod.so.2
-COPY --from=systemd /usr/lib/x86_64-linux-gnu/liblz4.so.1 /usr/lib/x86_64-linux-gnu/liblz4.so.1
-COPY --from=systemd /usr/lib/x86_64-linux-gnu/libmount.so.1 /usr/lib/x86_64-linux-gnu/libmount.so.1
-COPY --from=systemd /usr/lib/x86_64-linux-gnu/libpcre2-8.so.0 /usr/lib/x86_64-linux-gnu/libpcre2-8.so.0
-COPY --from=systemd /usr/lib/x86_64-linux-gnu/libseccomp.so.2 /usr/lib/x86_64-linux-gnu/libseccomp.so.2
-COPY --from=systemd /usr/lib/x86_64-linux-gnu/libzstd.so.1 /usr/lib/x86_64-linux-gnu/libzstd.so.1
+# copy and extract journald with dependencies
+COPY --from=systemd --chown=${USER_UID}:${USER_UID} /journalctl.tar.gz /journalctl.tar.gz
+USER root
+RUN tar xf /journalctl.tar.gz --directory / && rm /journalctl.tar.gz
+USER ${USER_UID}
 
 EXPOSE 55680 55679
 ENTRYPOINT ["/otelcol-sumo"]

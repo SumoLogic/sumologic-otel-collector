@@ -158,14 +158,8 @@ approve the workflow to run. Note that you need commiter rights in this reposito
 
 ## Updating journalctl
 
-Journalctl is dependency for [journaldreceiver]. In order to update it, please consider the following snippet:
-
-```bash
-export DEBIAN_VERSION=x.y
-make update-journal-dependencies
-```
-
-`DEBIAN_VERSION` should be the latest [docker version][debian_versions].
+Journalctl is dependency for [journaldreceiver]. In order to update it, please update debian version in Dockerfile files.
+Please see available [debian versions][debian_versions].
 
 [builder_config]: ../otelcolbuilder/.otelcol-builder.yaml
 [release_job]: ../.github/workflows/release_builds.yml

@@ -102,12 +102,6 @@ update-ot-core: install-gsed
 		&& make build \
 		&& popd
 
-# update journal dependencies
-# usage: DEBIAN_VERSION=x.x make update-journal-dependencies
-.PHONY: update-journal-dependencies
-update-journal-dependencies: install-gsed
-	ci/update_journalctl_dependencies.sh
-
 ################################################################################
 # Release
 ################################################################################
