@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - feat: Enable cumulativetodeltaprocessor [#595]
+- feat: add logstransformprocessor from upstream [#604]
 
 ### Changed
 
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.52.0-sumo-0...main
 [#595]: https://github.com/SumoLogic/sumologic-otel-collector/pull/595
 [#577]: https://github.com/SumoLogic/sumologic-otel-collector/pull/577
+[#604]: https://github.com/SumoLogic/sumologic-otel-collector/pull/604
 
 ## [v0.52.0-sumo-0]
 

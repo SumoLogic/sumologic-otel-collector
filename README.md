@@ -29,7 +29,7 @@ The components with an asterisk `*` are upstream OpenTelemetry components with a
 The rest of the components in the table are pure upstream OpenTelemetry components.
 
 |                         Receivers                          |                        Processors                        |               Exporters                |                 Extensions                  |
-| :--------------------------------------------------------: | :------------------------------------------------------: | :------------------------------------: | :-----------------------------------------: |
+|:----------------------------------------------------------:|:--------------------------------------------------------:|:--------------------------------------:|:-------------------------------------------:|
 | [awscontainerinsightreceiver][awscontainerinsightreceiver] |            [attributes][attributesprocessor]*            |        [carbon][carbonexporter]        | [bearertokenauth][bearertokenauthextension] |
 |  [awsecscontainermetrics][awsecscontainermetricsreceiver]  |                 [batch][batchprocessor]                  |          [file][fileexporter]          |    [file_storage][filestorageextension]     |
 |                 [awsxray][awsxrayreceiver]                 |      [`cascading_filter`][cascadingfilterprocessor]      |         [kafka][kafkaexporter]         |    [health_check][healthcheckextension]     |
@@ -38,20 +38,20 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 |            [docker_stats][dockerstatsreceiver]             |          [groupbyattrs][groupbyattrsprocessor]           |          [otlp][otlpexporter]          |           [pprof][pprofextension]           |
 |      [dotnet_diagnostics][dotnetdiagnosticsreceiver]       |          [groupbytrace][groupbytraceprocessor]           |      [otlphttp][otlphttpexporter]      |      [`sumologic`][sumologicextension]      |
 |                 [filelog][filelogreceiver]                 |               [`k8s_tagger`][k8sprocessor]               |    [`sumologic`][sumologicexporter]    |          [zpages][zpagesextension]          |
-|           [fluentforward][fluentforwardreceiver]           |         [memory_limiter][memorylimiterprocessor]         |                                        |                                             |
-|      [googlecloudspanner][googlecloudspannerreceiver]      |      [`metric_frequency`][metricfrequencyprocessor]      |                                        |                                             |
-|             [hostmetrics][hostmetricsreceiver]             |      [metricstransform][metricstransformprocessor]       |                                        |                                             |
-|                  [jaeger][jaegerreceiver]                  |  [probabilistic_sampler][probabilisticsamplerprocessor]  |                                        |                                             |
-|                     [jmx][jmxreceiver]                     |              [resource][resourceprocessor]*              |                                        |                                             |
-|                [journald][journaldreceiver]                |     [resourcedetection][resourcedetectionprocessor]      |                                        |                                             |
-|                   [kafka][kafkareceiver]                   |               [routing][routingprocessor]                |                                        |                                             |
-|            [kafkametrics][kafkametricsreceiver]            |               [`source`][sourceprocessor]                |                                        |                                             |
-|              [opencensus][opencensusreceiver]              |                  [span][spanprocessor]                   |                                        |                                             |
-|                    [otlp][otlpreceiver]                    |           [spanmetrics][spanmetricsprocessor]            |                                        |                                             |
-|               [podman_stats][podmanreceiver]               |      [`sumologic_schema`][sumologicschemaprocessor]      |                                        |                                             |
-|              [prometheus][prometheusreceiver]              |      [`sumologic_syslog`][sumologicsyslogprocessor]      |                                        |                                             |
-|       [prometheus_simple][simpleprometheusreceiver]        |          [tail_sampling][tailsamplingprocessor]          |                                        |                                             |
-|          [`raw_k8_sevents`][rawk8seventsreceiver]          |                                                          |                                        |                                             |
+|           [fluentforward][fluentforwardreceiver]           |         [logstransform][logstransformprocessor]          |                                        |                                             |
+|      [googlecloudspanner][googlecloudspannerreceiver]      |         [memory_limiter][memorylimiterprocessor]         |                                        |                                             |
+|             [hostmetrics][hostmetricsreceiver]             |      [`metric_frequency`][metricfrequencyprocessor]      |                                        |                                             |
+|                  [jaeger][jaegerreceiver]                  |      [metricstransform][metricstransformprocessor]       |                                        |                                             |
+|                     [jmx][jmxreceiver]                     |  [probabilistic_sampler][probabilisticsamplerprocessor]  |                                        |                                             |
+|                [journald][journaldreceiver]                |              [resource][resourceprocessor]*              |                                        |                                             |
+|                   [kafka][kafkareceiver]                   |     [resourcedetection][resourcedetectionprocessor]      |                                        |                                             |
+|            [kafkametrics][kafkametricsreceiver]            |               [routing][routingprocessor]                |                                        |                                             |
+|              [opencensus][opencensusreceiver]              |               [`source`][sourceprocessor]                |                                        |                                             |
+|                    [otlp][otlpreceiver]                    |                  [span][spanprocessor]                   |                                        |                                             |
+|               [podman_stats][podmanreceiver]               |           [spanmetrics][spanmetricsprocessor]            |                                        |                                             |
+|              [prometheus][prometheusreceiver]              |      [`sumologic_schema`][sumologicschemaprocessor]      |                                        |                                             |
+|       [prometheus_simple][simpleprometheusreceiver]        |      [`sumologic_syslog`][sumologicsyslogprocessor]      |                                        |                                             |
+|          [`raw_k8_sevents`][rawk8seventsreceiver]          |          [tail_sampling][tailsamplingprocessor]          |                                        |                                             |
 |            [receiver_creator][receivercreator]             |                                                          |                                        |                                             |
 |                   [redis][redisreceiver]                   |                                                          |                                        |                                             |
 |                    [sapm][sapmreceiver]                    |                                                          |                                        |                                             |
@@ -112,6 +112,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 [groupbyattrsprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.52.0/processor/groupbyattrsprocessor
 [groupbytraceprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.52.0/processor/groupbytraceprocessor
 [k8sprocessor]: ./pkg/processor/k8sprocessor
+[logstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.52.0/processor/logstransformprocessor
 [memorylimiterprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.52.0/processor/memorylimiterprocessor
 [metricfrequencyprocessor]: ./pkg/processor/metricfrequencyprocessor
 [metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.52.0/processor/metricstransformprocessor
