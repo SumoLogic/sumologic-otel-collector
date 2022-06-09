@@ -274,7 +274,7 @@ For a list of all the configuration options for sumologicextension refer to
 [sumologic_webpage]: https://www.sumologic.com/
 [sumologicextension]: ../pkg/extension/sumologicextension/
 [sumologicexporter]: ../pkg/exporter/sumologicexporter/
-[hostmetricsreceiver]: https://github.com/SumoLogic/opentelemetry-collector/tree/release-0.27/receiver/hostmetricsreceiver
+[hostmetricsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.52.0/receiver/hostmetricsreceiver
 [sumologicextension_configuration]: ../pkg/extension/sumologicextension#configuration
 
 ### Using multiple Sumo Logic extensions
