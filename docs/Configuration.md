@@ -41,6 +41,8 @@ The primary components that make it easy to send data to Sumo Logic are
 the [Sumo Logic Exporter][sumologicexporter_docs]
 and the [Sumo Logic Extension][sumologicextension_configuration].
 
+In order to create the `install_token` please follow [this documenation][sumologic_docs_install_token].
+
 Here's a starting point for the configuration file that you will want to use:
 
 ```yaml
@@ -87,6 +89,8 @@ and after that let's put that all together.
 > ```bash
 > chmod 640 config.yaml
 > ```
+
+[sumologic_docs_install_token]: https://help.sumologic.com/Manage/Security/Installation_Tokens
 
 ### Basic configuration for logs
 
