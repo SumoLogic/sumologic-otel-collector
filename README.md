@@ -5,6 +5,10 @@
 Sumo Logic OpenTelemetry Distro Collector is a Sumo Logic-supported distribution of the [OpenTelemetry Collector][otc_link].
 It is a single agent to send logs, metrics and traces to [Sumo Logic][sumologic].
 
+**Our aim is to extend and not to replace the OpenTelemetry Collector.**
+
+In order to learn more, pleasee see [purpose of Sumo Logic OT distro](./docs/UpstreamRelation.md#purpose-of-sumo-logic-ot-distro)
+
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
 [sumologic]: https://www.sumologic.com
 
@@ -17,6 +21,9 @@ It is a single agent to send logs, metrics and traces to [Sumo Logic][sumologic]
 - [Known Issues](docs/KnownIssues.md)
 - [Contributing](./CONTRIBUTING.md)
 - [Changelog](./CHANGELOG.md)
+- [Purpose of Sumo Logic OT Distro](./docs/UpstreamRelation.md#purpose-of-sumo-logic-ot-distro)
+- [Versioning policy](./docs/UpstreamRelation.md#versioning-policy)
+- [Breaking changes policy](./docs/UpstreamRelation.md#breaking-changes-policy)
 
 ## Components
 
