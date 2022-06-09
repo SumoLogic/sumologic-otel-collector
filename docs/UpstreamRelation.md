@@ -4,7 +4,7 @@ This document describes what is purpose of this repository,
 why do we provide another OpenTelemetry Collector distrubution and
 how look like our versioning and breaking changes policies.
 
-## Purpose of Sumo Logic OT distro
+## Purpose of Sumo Logic OT Distro
 
 Sumo Logic OT Distro is the OpenTelemetry Collector with addition of Sumo Logic specific changes.
 
