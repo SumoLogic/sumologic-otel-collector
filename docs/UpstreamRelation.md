@@ -10,7 +10,7 @@ Sumo Logic OT Distro is the OpenTelemetry Collector with addition of Sumo Logic 
 
 **Our aim is to extend and not to replace the OpenTelemetry Collector.**
 
-We work close with the OpenTelemetry community in order to improve overall experience by:
+We work closely with the OpenTelemetry community in order to improve overall experience by:
 
 - attending SIG meetings
 - creating issues in upstream if we find a bug or have a feature request
