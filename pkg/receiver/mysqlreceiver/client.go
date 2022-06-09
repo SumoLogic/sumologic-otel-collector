@@ -64,10 +64,35 @@ func generateIAMAuthToken(endpoint string, conf *Config, logger *zap.Logger) (to
 
 func newMySQLClient(conf *Config, logger *zap.Logger) client {
 	var port string
+	var basicauthpassword string
 	var connStr string
+	basicauthpassword = conf.Password
+	if (len(conf.PasswordType) == 0 || conf.PasswordType == "plaintext") && len(conf.EncryptSecretPath) != 0 {
+		MySecret1, err := readMySecret(conf)
+		if err != nil {
+			logger.Error("error in reading encryption secret from file", zap.Error(err))
+		}
+		encText, err := Encrypt(conf.Password, MySecret1, logger)
+		if err != nil {
+			logger.Error("error encrypting your classified text", zap.Error(err))
+		}
+		logger.Info("The plaintext password can be replaced with this encrpyted password for security purposes. Also, password_type should be entered as encrypted in config file.", zap.String("encryptedPassword", encText))
+	}
+	if conf.PasswordType == "encrypted" {
+		MySecret2, err := readMySecret(conf)
+		if err != nil {
+			logger.Error("error in reading encryption secret from file", zap.Error(err))
+		}
+		decText, err := Decrypt(conf.Password, MySecret2, logger)
+		if err != nil {
+			logger.Error("error decrypting your encrypted text: ", zap.Error(err))
+		}
+		basicauthpassword = decText
+	}
 	if len(conf.DBPort) != 0 {
 		port = conf.DBPort
 	} else {
+		logger.Info("dbport empty, considering default 3306")
 		port = "3306"
 	}
 	endpoint := conf.DBHost + ":" + port
@@ -92,7 +117,7 @@ func newMySQLClient(conf *Config, logger *zap.Logger) client {
 	} else {
 		driverConf := mysql.Config{
 			User:                 conf.Username,
-			Passwd:               conf.Password,
+			Passwd:               basicauthpassword,
 			Net:                  conf.Transport,
 			Addr:                 endpoint,
 			DBName:               conf.Database,
