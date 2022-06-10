@@ -80,11 +80,11 @@ function get_arch_type() {
 
 # Get installed version of otelcol-sumo
 function get_installed_version() {
-    local version
     if [[ -f "/usr/local/bin/otelcol-sumo" ]]; then
-        version="$(/usr/local/bin/otelcol-sumo --version | grep -o 'v[0-9].*$' | sed 's/v//')"
+        set +o pipefail
+        /usr/local/bin/otelcol-sumo --version | grep -o 'v[0-9].*$' | sed 's/v//'
+        set -o pipefail
     fi
-    echo "${version}"
 }
 
 # Ask to continue and abort if not
@@ -157,12 +157,11 @@ elif [[ -n "${INSTALLED_VERSION}" ]]; then
         # Print changelog for every version
         get_changelog "${version}"
     done | less
-
-    ask_to_continue
 fi
 
 readonly LINK="https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${VERSION}/otelcol-sumo-${VERSION}-${OS_TYPE}_${ARCH_TYPE}"
 
+ask_to_continue
 echo -e "Downloading:\t\t${LINK}"
 curl -L "${LINK}" --output otelcol-sumo --progress-bar
 
@@ -171,4 +170,12 @@ sudo mv otelcol-sumo /usr/local/bin/otelcol-sumo
 echo -e "Setting /usr/local/bin/otelcol-sumo to be executable"
 sudo chmod +x /usr/local/bin/otelcol-sumo
 
-echo -e "Verifying installation:\t$(otelcol-sumo --version)"
+OUTPUT="$(otelcol-sumo --version || true)"
+readonly OUTPUT
+
+if [[ -z "${OUTPUT}" ]]; then
+    echo "Installation failed. Please try again"
+    exit 1
+fi
+
+echo -e "Installation succeded:\t$(otelcol-sumo --version)"
