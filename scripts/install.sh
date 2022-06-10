@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 ############################ Functions
 
 function get_latest_version() {
     local versions
     readonly versions="${1}"
-    echo ${versions} | sed 's/ /\n/g' | head -n 1
+    # sed 's/ /\n/g' converts spaces to new lines
+    echo "${versions}" | sed 's/ /\n/g' | head -n 1
 }
 
 # Get available versions of otelcol-sumo
@@ -51,7 +54,7 @@ function get_os_type() {
         ;;
     *)
         echo -e "Unsupported OS type:\t$(uname)"
-        exit -1
+        exit 1
         ;;
     esac
     echo "${os_type}"
@@ -69,7 +72,7 @@ function get_arch_type() {
         ;;
     *)
         echo -e "Unsupported architecture type:\t$(uname -m)"
-        exit -1
+        exit 1
         ;;
     esac
     echo "${arch_type}"
@@ -87,12 +90,12 @@ function get_installed_version() {
 # Ask to continue and abort if not
 function ask_to_continue() {
     local choice
-    read -p "Continue (y/n)?" choice
+    read -rp "Continue (y/n)?" choice
     case "${choice}" in
     y|Y ) ;;
     n|N | * )
         echo "Aborting..."
-        exit -1
+        exit 1
         ;;
     esac
 }
@@ -104,22 +107,25 @@ function get_changelog() {
     readonly version="${1}"
 
     local notes
-    readonly notes="$(echo -e $(curl -s "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/releases/tags/v${version}" | grep -o "body.*"  | sed 's/body": "//;s/"$//'))"
+    notes="$(echo -e "$(curl -s "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/releases/tags/v${version}" | grep -o "body.*"  | sed 's/body": "//;s/"$//')")"
+    readonly notes
 
     local changelog
     # 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g' replaces [$1][*] with $1
     # 's/\[\([^\[]*\)\]([^\()]*)/\1/g' replaces [$1](*) with $1
-    changelog="$(echo "${notes}" | sed -e "/## v${version}/,/###/!d" | head -n -1 | sed 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g;s/\[\([^\[]*\)\]([^\()]*)/\1/g')"
+    # sed '$ d' removes last line
+    changelog="$(echo "${notes}" | sed -e "/## v${version}/,/###/!d" | sed '$ d' | sed 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g;s/\[\([^\[]*\)\]([^\()]*)/\1/g')"
     changelog="${changelog}\n### Release address\n\nhttps://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v${version}\n"
     # 's/\[#.*//' remove everything starting from `[#`
-    changelog="${changelog}\n$(echo "${notes}" | sed -e '/### Breaking changes/,/###/!d' | head -n -1 | sed 's/\[#.*//')"
+    changelog="${changelog}\n$(echo "${notes}" | sed -e '/### Breaking changes/,/###/!d' | sed '$ d' | sed 's/\[#.*//')"
     echo -e "${changelog}"
 }
 
 ############################ Main code
 
-readonly OS_TYPE="$(get_os_type)"
-readonly ARCH_TYPE="$(get_arch_type)"
+OS_TYPE="$(get_os_type)"
+ARCH_TYPE="$(get_arch_type)"
+readonly OS_TYPE ARCH_TYPE
 
 echo -e "Detected OS type:\t${OS_TYPE}"
 echo -e "Detected architecture:\t${ARCH_TYPE}"
@@ -127,12 +133,14 @@ echo -e "Detected architecture:\t${ARCH_TYPE}"
 # Skip unsupported combination of arm64 on darwin
 if [[ "${OS_TYPE}" == "darwin" && "${ARCH_TYPE}" == "arm64" ]]; then
     echo "Combination of ${OS_TYPE} and ${ARCH_TYPE} is not supported"
-    exit -1
+    exit 1
 fi
 
-readonly VERSIONS="$(get_versions)"
-readonly INSTALLED_VERSION="$(get_installed_version)"
-readonly VERSION="$(get_latest_version "${VERSIONS}")"
+VERSIONS="$(get_versions)"
+INSTALLED_VERSION="$(get_installed_version)"
+VERSION="$(get_latest_version "${VERSIONS}")"
+readonly VERSIONS VERSION INSTALLED_VERSION
+
 echo -e "Installed version:\t${INSTALLED_VERSION}"
 echo -e "Version to install:\t${VERSION}"
 
@@ -140,10 +148,11 @@ echo -e "Version to install:\t${VERSION}"
 if [[ "${INSTALLED_VERSION}" == "${VERSION}" ]]; then
     echo "OpenTelemetry collector is already in newest (${VERSION}) version"
     exit
-elif [[ ! -z "${INSTALLED_VERSION}" ]]; then
-    read -p "Press enter to see changelog"
+elif [[ -n "${INSTALLED_VERSION}" ]]; then
+    read -rp "Press enter to see changelog"
     # Take versions from installed up to the newest
-    readonly BETWEEN_VERSIONS="$(get_versions_from "${VERSIONS}" "${INSTALLED_VERSION}")"
+    BETWEEN_VERSIONS="$(get_versions_from "${VERSIONS}" "${INSTALLED_VERSION}")"
+    readonly BETWEEN_VERSIONS
     for version in ${BETWEEN_VERSIONS}; do
         # Print changelog for every version
         get_changelog "${version}"
