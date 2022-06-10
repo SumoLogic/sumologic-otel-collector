@@ -9,3 +9,6 @@
 - [Mapping OpenTelemetry concepts to Sumo Logic](./OpenTelemetryConcepts.md)
 - [Known Issues](./KnownIssues.md)
 - [Troubleshooting](./Troubleshooting.md)
+- [Purpose of Sumo Logic OT Distro](./UpstreamRelation.md#purpose-of-sumo-logic-ot-distro)
+- [Versioning policy](./UpstreamRelation.md#versioning-policy)
+- [Breaking changes policy](./UpstreamRelation.md#breaking-changes-policy)
