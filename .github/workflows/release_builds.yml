@@ -95,6 +95,8 @@ jobs:
         include:
           - arch_os: darwin_amd64
             runs_on: macos-latest
+          - arch_os: darwin_arm64
+            runs_on: macos-latest
     steps:
       - uses: actions/checkout@v3
 
