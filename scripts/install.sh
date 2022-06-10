@@ -4,6 +4,21 @@ set -euo pipefail
 
 ############################ Functions
 
+function check_dependencies() {
+    local error
+    error=0
+    for cmd in echo sudo sed curl head less grep sort tac mv chmod; do
+        if ! command -v "${cmd}" &> /dev/null; then
+            echo "Command '${cmd}' not found. Please install it."
+            error=1
+        fi
+    done
+
+    if [[ "${error}" == "1" ]] ; then
+        exit 1
+    fi
+}
+
 function get_latest_version() {
     local versions
     readonly versions="${1}"
@@ -122,6 +137,8 @@ function get_changelog() {
 }
 
 ############################ Main code
+
+check_dependencies
 
 OS_TYPE="$(get_os_type)"
 ARCH_TYPE="$(get_arch_type)"
