@@ -199,148 +199,148 @@ jobs:
           path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
           if-no-files-found: error
 
-  build-container-images:
-    name: Build container
-    runs-on: ubuntu-20.04
-    needs:
-      - build
-    strategy:
-      matrix:
-        arch_os: [ 'linux_amd64', 'linux_arm64']
-    steps:
-      - uses: actions/checkout@v3
+  # build-container-images:
+  #   name: Build container
+  #   runs-on: ubuntu-20.04
+  #   needs:
+  #     - build
+  #   strategy:
+  #     matrix:
+  #       arch_os: [ 'linux_amd64', 'linux_arm64']
+  #   steps:
+  #     - uses: actions/checkout@v3
 
-      - name: Extract tag
-        id: extract_tag
-        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
+  #     - name: Extract tag
+  #       id: extract_tag
+  #       run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
 
-      - name: Print tag
-        run: echo "${{ steps.extract_tag.outputs.tag }}"
+  #     - name: Print tag
+  #       run: echo "${{ steps.extract_tag.outputs.tag }}"
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2.0.0
+  #     - name: Set up QEMU
+  #       uses: docker/setup-qemu-action@v2.0.0
 
-      - name: Set up Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v2.0.0
+  #     - name: Set up Buildx
+  #       id: buildx
+  #       uses: docker/setup-buildx-action@v2.0.0
 
-      - name: Show Buildx platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
+  #     - name: Show Buildx platforms
+  #       run: echo ${{ steps.buildx.outputs.platforms }}
 
-      - name: Download binary action artifact from build phase
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{matrix.arch_os}}
-          path: artifacts/
+  #     - name: Download binary action artifact from build phase
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: ${{matrix.arch_os}}
+  #         path: artifacts/
 
-      - name: Set filename
-        id: set_filename
-        run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}})"
+  #     - name: Set filename
+  #       id: set_filename
+  #       run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}})"
 
-      - name: Login to Open Source ECR
-        run: make login
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #     - name: Login to Open Source ECR
+  #       run: make login
+  #       env:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Build and push image to Open Source ECR
-        run: |
-          cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
-          make build-push-container-multiplatform \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
-            PLATFORM=${{ matrix.arch_os }}
+  #     - name: Build and push image to Open Source ECR
+  #       run: |
+  #         cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
+  #         make build-push-container-multiplatform \
+  #           BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+  #           PLATFORM=${{ matrix.arch_os }}
 
-  push-docker-manifest:
-    name: Push joint container manifest
-    runs-on: ubuntu-20.04
-    needs:
-      # Require darwin build to succeed to prevent pushing container images
-      # when darwin build fails.
-      - build-darwin
-      - build-container-images
-    steps:
-      - uses: actions/checkout@v3
+  # push-docker-manifest:
+  #   name: Push joint container manifest
+  #   runs-on: ubuntu-20.04
+  #   needs:
+  #     # Require darwin build to succeed to prevent pushing container images
+  #     # when darwin build fails.
+  #     - build-darwin
+  #     - build-container-images
+  #   steps:
+  #     - uses: actions/checkout@v3
 
-      - name: Extract tag
-        id: extract_tag
-        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
+  #     - name: Extract tag
+  #       id: extract_tag
+  #       run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
 
-      - name: Print tag
-        run: echo "${{ steps.extract_tag.outputs.tag }}"
+  #     - name: Print tag
+  #       run: echo "${{ steps.extract_tag.outputs.tag }}"
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2.0.0
+  #     - name: Set up QEMU
+  #       uses: docker/setup-qemu-action@v2.0.0
 
-      - name: Set up Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v2.0.0
+  #     - name: Set up Buildx
+  #       id: buildx
+  #       uses: docker/setup-buildx-action@v2.0.0
 
-      - name: Show Buildx platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
+  #     - name: Show Buildx platforms
+  #       run: echo ${{ steps.buildx.outputs.platforms }}
 
-      - name: Login to Open Source ECR
-        run: make login
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #     - name: Login to Open Source ECR
+  #       run: make login
+  #       env:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Push joint container manifest for all platforms to Open Source ECR
-        run: |
-          make push-container-manifest \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
-            PLATFORMS="linux/amd64 linux/arm64"
+  #     - name: Push joint container manifest for all platforms to Open Source ECR
+  #       run: |
+  #         make push-container-manifest \
+  #           BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+  #           PLATFORMS="linux/amd64 linux/arm64"
 
-  create-release:
-    name: Create Github release
-    runs-on: ubuntu-20.04
-    needs:
-      - build
-      - build-darwin
-      - build-container-images
-      - push-docker-manifest
-    steps:
-      - name: Extract tag
-        id: extract_tag
-        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
+  # create-release:
+  #   name: Create Github release
+  #   runs-on: ubuntu-20.04
+  #   needs:
+  #     - build
+  #     - build-darwin
+  #     - build-container-images
+  #     - push-docker-manifest
+  #   steps:
+  #     - name: Extract tag
+  #       id: extract_tag
+  #       run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
 
-      - name: Print tag
-        run: echo "v${{ steps.extract_tag.outputs.tag }}"
+  #     - name: Print tag
+  #       run: echo "v${{ steps.extract_tag.outputs.tag }}"
 
-      - name: Download all binaries stored as artifact
-        uses: actions/download-artifact@v3
-        with:
-          path: artifacts/
+  #     - name: Download all binaries stored as artifact
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         path: artifacts/
 
-      - uses: ncipollo/release-action@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          draft: true
-          prerelease: false
+  #     - uses: ncipollo/release-action@v1
+  #       with:
+  #         token: ${{ secrets.GITHUB_TOKEN }}
+  #         draft: true
+  #         prerelease: false
 
-          allowUpdates: true
-          omitBodyDuringUpdate: true
-          omitNameDuringUpdate: true
+  #         allowUpdates: true
+  #         omitBodyDuringUpdate: true
+  #         omitNameDuringUpdate: true
 
-          body: |
-            ## v${{ steps.extract_tag.outputs.tag }}
+  #         body: |
+  #           ## v${{ steps.extract_tag.outputs.tag }}
 
-            **TODO**
+  #           **TODO**
 
-            ### Upstream releases
-            ** TODO: Add upstream versions in the links below**
-            Core: https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v
-            Contrib: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases/tag/v
+  #           ### Upstream releases
+  #           ** TODO: Add upstream versions in the links below**
+  #           Core: https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v
+  #           Contrib: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases/tag/v
 
-            ### Changelog
+  #           ### Changelog
 
-            **TODO**
+  #           **TODO**
 
-            ### Container images:
+  #           ### Container images:
 
-            ```
-            docker pull public.ecr.aws/sumologic/sumologic-otel-collector:${{ steps.extract_tag.outputs.tag }}
-            ```
+  #           ```
+  #           docker pull public.ecr.aws/sumologic/sumologic-otel-collector:${{ steps.extract_tag.outputs.tag }}
+  #           ```
 
-          artifacts: "artifacts/*/*"
-          artifactErrorsFailBuild: true
-          replacesArtifacts: true
+  #         artifacts: "artifacts/*/*"
+  #         artifactErrorsFailBuild: true
+  #         replacesArtifacts: true
