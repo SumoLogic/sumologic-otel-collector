@@ -13,12 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat: add logstransformprocessor from upstream [#604]
 - feat: build arm64 binary for darwin [#611]
 
+### Fixed
+
+- fix(cascadingfilter): fix leak memory leak on late arriving traces where decision was already made [#616]
+
 ### Changed
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.52.0-sumo-0...main
 [#595]: https://github.com/SumoLogic/sumologic-otel-collector/pull/595
 [#604]: https://github.com/SumoLogic/sumologic-otel-collector/pull/604
 [#611]: https://github.com/SumoLogic/sumologic-otel-collector/pull/611
+[#616]: https://github.com/SumoLogic/sumologic-otel-collector/pull/616
 
 ## [v0.52.0-sumo-0]
 
