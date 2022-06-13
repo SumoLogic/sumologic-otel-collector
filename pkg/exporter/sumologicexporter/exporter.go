@@ -53,7 +53,6 @@ type sumologicexporter struct {
 	compressorPool sync.Pool
 
 	prometheusFormatter prometheusFormatter
-	graphiteFormatter   graphiteFormatter
 
 	// Lock around data URLs is needed because the reconfiguration of the exporter
 	// can happen asynchronously whenever the exporter is re registering.
@@ -79,11 +78,6 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 		return nil, err
 	}
 
-	gf, err := newGraphiteFormatter(cfg.GraphiteTemplate)
-	if err != nil {
-		return nil, err
-	}
-
 	se := &sumologicexporter{
 		config:  cfg,
 		logger:  createSettings.Logger,
@@ -99,7 +93,6 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 		},
 		// NOTE: client is now set in start()
 		prometheusFormatter: pf,
-		graphiteFormatter:   gf,
 	}
 
 	se.logger.Info(
@@ -199,7 +192,6 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld plog.Logs) err
 		se.sources,
 		compr,
 		se.prometheusFormatter,
-		se.graphiteFormatter,
 		metricsUrl,
 		logsUrl,
 		tracesUrl,
@@ -286,7 +278,6 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pmetric.Met
 		se.sources,
 		compr,
 		se.prometheusFormatter,
-		se.graphiteFormatter,
 		metricsUrl,
 		logsUrl,
 		tracesUrl,
@@ -373,7 +364,6 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td ptrace.Trace
 		se.sources,
 		compr,
 		se.prometheusFormatter,
-		se.graphiteFormatter,
 		metricsUrl,
 		logsUrl,
 		tracesUrl,
@@ -503,5 +493,5 @@ func (se *sumologicexporter) shutdown(context.Context) error {
 }
 
 func (se *sumologicexporter) dropRoutingAttribute(attr pcommon.Map) {
-	attr.Delete(se.config.DropRoutingAttribute)
+	attr.Remove(se.config.DropRoutingAttribute)
 }

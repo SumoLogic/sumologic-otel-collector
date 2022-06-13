@@ -60,7 +60,7 @@ func createTestConfig() *Config {
 	config.CompressEncoding = NoCompression
 	config.LogFormat = TextFormat
 	config.MaxRequestBodySize = 20_971_520
-	config.MetricFormat = Carbon2Format
+	config.MetricFormat = OTLPMetricFormat
 	config.TraceFormat = OTLPTraceFormat
 	return config
 }
@@ -120,7 +120,7 @@ func prepareExporterTest(t *testing.T, cfg *Config, cb []func(w http.ResponseWri
 func TestInitExporter(t *testing.T) {
 	_, err := initExporter(&Config{
 		LogFormat:        "json",
-		MetricFormat:     "carbon2",
+		MetricFormat:     "otlp",
 		CompressEncoding: "gzip",
 		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
@@ -273,7 +273,7 @@ func TestPartiallyFailed(t *testing.T) {
 func TestInvalidHTTPCLient(t *testing.T) {
 	exp, err := initExporter(&Config{
 		LogFormat:        "json",
-		MetricFormat:     "carbon2",
+		MetricFormat:     "otlp",
 		CompressEncoding: "gzip",
 		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
@@ -410,7 +410,7 @@ func TestPushOTLPLogs_AttributeTranslation(t *testing.T) {
 		resourceAttrs := logs.ResourceLogs().At(0).Resource().Attributes()
 		resourceAttrs.InsertString("host.name", "harry-potter")
 		resourceAttrs.InsertString("host.type", "wizard")
-		resourceAttrs.InsertString("file.path.resolved", "/tmp/log.log")
+		resourceAttrs.InsertString("log.file.path_resolved", "/tmp/log.log")
 		return logs
 	}
 
@@ -466,7 +466,7 @@ func TestPushOTLPLogs_AttributeTranslation(t *testing.T) {
 					body := extractBody(t, req)
 
 					//nolint:lll
-					assert.Equal(t, "\n\xd4\x01\n\xb8\x01\n\x1b\n\thost.name\x12\x0e\n\fharry-potter\n\x15\n\thost.type\x12\b\n\x06wizard\n$\n\x12file.path.resolved\x12\x0e\n\f/tmp/log.log\n\x1d\n\v_sourceHost\x12\x0e\n\fharry-potter\n=\n\x0f_sourceCategory\x12*\n(category_with_host_template_harry-potter\x12\x17\n\x00\x12\x13*\r\n\vExample logJ\x00R\x00", body)
+					assert.Equal(t, "\n\xd8\x01\n\xbc\x01\n\x1b\n\thost.name\x12\x0e\n\fharry-potter\n\x15\n\thost.type\x12\b\n\x06wizard\n(\n\x16log.file.path_resolved\x12\x0e\n\f/tmp/log.log\n\x1d\n\v_sourceHost\x12\x0e\n\fharry-potter\n=\n\x0f_sourceCategory\x12*\n(category_with_host_template_harry-potter\x12\x17\n\x00\x12\x13*\r\n\vExample logJ\x00R\x00", body)
 
 					assert.Empty(t, req.Header.Get("X-Sumo-Fields"),
 						"We should not get X-Sumo-Fields header when sending data with OTLP",
@@ -1054,51 +1054,6 @@ func TestLogsTextFormatMetadataFilterWithDroppedAttribute(t *testing.T) {
 	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key2", "value2")
 
 	err := test.exp.pushLogsData(context.Background(), logs)
-	assert.NoError(t, err)
-}
-
-func TestMetricsCarbon2(t *testing.T) {
-	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
-			expected := `test=test_value test2=second_value key1=value1 key2=value2 metric=test.metric.data unit=bytes  14500 1605534165`
-			assert.Equal(t, expected, body)
-			assert.Equal(t, "application/vnd.sumologic.carbon2", req.Header.Get("Content-Type"))
-		},
-	})
-	test.exp.config.MetricFormat = Carbon2Format
-
-	metrics := metricAndAttributesToPdataMetrics(exampleIntMetric())
-
-	attrs := metrics.ResourceMetrics().At(0).Resource().Attributes()
-	attrs.InsertString("key1", "value1")
-	attrs.InsertString("key2", "value2")
-
-	err := test.exp.pushMetricsData(context.Background(), metrics)
-	assert.NoError(t, err)
-}
-
-func TestMetricsGraphiteFormatMetadataFilter(t *testing.T) {
-	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
-			expected := `test_metric_data.test_value.second_value.value1.value2 14500 1605534165`
-			assert.Equal(t, expected, body)
-			assert.Equal(t, "application/vnd.sumologic.graphite", req.Header.Get("Content-Type"))
-		},
-	})
-	test.exp.config.MetricFormat = GraphiteFormat
-	graphiteFormatter, err := newGraphiteFormatter("%{_metric_}.%{test}.%{test2}.%{key1}.%{key2}")
-	assert.NoError(t, err)
-	test.exp.graphiteFormatter = graphiteFormatter
-
-	metrics := metricAndAttributesToPdataMetrics(exampleIntMetric())
-
-	attrs := metrics.ResourceMetrics().At(0).Resource().Attributes()
-	attrs.InsertString("key1", "value1")
-	attrs.InsertString("key2", "value2")
-
-	err = test.exp.pushMetricsData(context.Background(), metrics)
 	assert.NoError(t, err)
 }
 

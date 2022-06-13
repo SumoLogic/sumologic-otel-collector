@@ -136,7 +136,6 @@ type sender struct {
 	sources             sourceFormats
 	compressor          compressor
 	prometheusFormatter prometheusFormatter
-	graphiteFormatter   graphiteFormatter
 	jsonLogsConfig      JSONLogs
 	dataUrlMetrics      string
 	dataUrlLogs         string
@@ -161,8 +160,6 @@ const (
 
 	contentTypeLogs       string = "application/x-www-form-urlencoded"
 	contentTypePrometheus string = "application/vnd.sumologic.prometheus"
-	contentTypeCarbon2    string = "application/vnd.sumologic.carbon2"
-	contentTypeGraphite   string = "application/vnd.sumologic.graphite"
 	contentTypeOTLP       string = "application/x-protobuf"
 
 	contentEncodingGzip    string = "gzip"
@@ -176,7 +173,6 @@ func newSender(
 	s sourceFormats,
 	c compressor,
 	pf prometheusFormatter,
-	gf graphiteFormatter,
 	metricsUrl string,
 	logsUrl string,
 	tracesUrl string,
@@ -188,7 +184,6 @@ func newSender(
 		sources:             s,
 		compressor:          c,
 		prometheusFormatter: pf,
-		graphiteFormatter:   gf,
 		jsonLogsConfig:      cfg.JSONLogs,
 		dataUrlMetrics:      metricsUrl,
 		dataUrlLogs:         logsUrl,
@@ -398,7 +393,7 @@ func isEmptyAttributeValue(att pcommon.Value) bool {
 	return !(t == pcommon.ValueTypeString && len(att.StringVal()) > 0 ||
 		t == pcommon.ValueTypeSlice && att.SliceVal().Len() > 0 ||
 		t == pcommon.ValueTypeMap && att.MapVal().Len() > 0 ||
-		t == pcommon.ValueTypeBytes && len(att.BytesVal()) > 0)
+		t == pcommon.ValueTypeBytes && len(att.MBytesVal()) > 0)
 }
 
 // sendNonOTLPLogs sends log records from the logBuffer formatted according
@@ -555,10 +550,6 @@ func (s *sender) sendNonOTLPMetrics(ctx context.Context, md pmetric.Metrics) (pm
 				switch s.config.MetricFormat {
 				case PrometheusFormat:
 					formattedLine = s.prometheusFormatter.metric2String(m, rm.Resource().Attributes())
-				case Carbon2Format:
-					formattedLine = carbon2Metric2String(m, rm.Resource().Attributes())
-				case GraphiteFormat:
-					formattedLine = s.graphiteFormatter.metric2String(m, rm.Resource().Attributes())
 				default:
 					return md, []error{fmt.Errorf("unexpected metric format: %s", s.config.MetricFormat)}
 				}
@@ -747,10 +738,6 @@ func addMetricsHeaders(req *http.Request, mf MetricFormatType) error {
 	switch mf {
 	case PrometheusFormat:
 		req.Header.Add(headerContentType, contentTypePrometheus)
-	case Carbon2Format:
-		req.Header.Add(headerContentType, contentTypeCarbon2)
-	case GraphiteFormat:
-		req.Header.Add(headerContentType, contentTypeGraphite)
 	case OTLPMetricFormat:
 		req.Header.Add(headerContentType, contentTypeOTLP)
 	default:

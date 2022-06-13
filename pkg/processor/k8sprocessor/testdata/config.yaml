@@ -13,7 +13,6 @@ processors:
         - podName
         - podUID
         - deployment
-        - cluster
         - namespace
         - node
         - startTime

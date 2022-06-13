@@ -7,7 +7,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.50.0-sumo-0...main
+### Added
+
+- feat: Enable cumulativetodeltaprocessor [#595]
+- feat: add logstransformprocessor from upstream [#604]
+- feat: build arm64 binary for darwin [#611]
+
+### Changed
+
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.52.0-sumo-0...main
+[#595]: https://github.com/SumoLogic/sumologic-otel-collector/pull/595
+[#604]: https://github.com/SumoLogic/sumologic-otel-collector/pull/604
+[#611]: https://github.com/SumoLogic/sumologic-otel-collector/pull/611
+
+## [v0.52.0-sumo-0]
+
+### Released 2022-06-02
+
+See [Upgrade guide][upgrade_guide_v0_52_0] for the breaking changes in this version.
+
+### Breaking changes
+
+- feat(sumologicexporter)!: remove support for Carbon2 metrics format [#590][#590] ([upgrade guide][upgrade_guide_v0_52_0_metrics_support])
+- feat(sumologicexporter)!: remove support for Graphite metrics format [#592][#592] ([upgrade guide][upgrade_guide_v0_52_0_metrics_support])
+
+### Fixed
+
+- fix(k8sprocessor): store only necessary Pod data [#593][#593]
+- fix(filelogreceiver): fix changing fingerprint_size [#601]
+
+### Changed
+
+- chore(deps): update OT core to v0.52.0 [#600]
+
+[v0.52.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.51.0-sumo-0...v0.52.0-sumo-0
+[#590]: https://github.com/SumoLogic/sumologic-otel-collector/pull/590
+[#592]: https://github.com/SumoLogic/sumologic-otel-collector/pull/592
+[#593]: https://github.com/SumoLogic/sumologic-otel-collector/pull/593
+[#600]: https://github.com/SumoLogic/sumologic-otel-collector/pull/600
+[#601]: https://github.com/SumoLogic/sumologic-otel-collector/pull/601
+[upgrade_guide_v0_52_0]: ./docs/Upgrading.md#upgrading-to-v0520-sumo-0
+[upgrade_guide_v0_52_0_metrics_support]: ./docs/Upgrading.md#sumologic-exporter-removed-carbon2-and-graphite-metric-formats
+
+## [v0.51.0-sumo-0]
+
+### Released 2022-05-19
+
+See [Upgrade guide][upgrade_guide_v0_51_0] for the breaking changes in this version.
+
+### Breaking changes
+
+- fix(k8sprocessor)!: remove `clusterName` metadata extraction option [#578] ([upgrade guide][upgrade_guide_v0_51_0_cluster_name])
+- feat(sumologicexporter)!: attribute translation: change `file.path.resolved` to `log.file.path_resolved` [#579] ([upgrade guide][upgrade_guide_v0_51_0_attribute_translation])
+
+### Added
+
+- feat: enable rawk8seventsreceiver [#576]
+
+### Changed
+
+- chore(deps): update OT core to v0.51.0 [#580]
+- chore(deps): update Telegraf to v1.22.0-sumo-4 [#580]
+
+### Fixed
+
+- fix: fix(cascadingfilterprocessor): do not attach sampling.rule attribute if trace accept rules are not specified [#575][#575]
+
+[v0.51.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.50.0-sumo-0...v0.51.0-sumo-0
+[upgrade_guide_v0_51_0]: ./docs/Upgrading.md#upgrading-to-v0510-sumo-0
+[upgrade_guide_v0_51_0_cluster_name]: ./docs/Upgrading.md#k8s_tagger-processor-removed-clustername-metadata-extraction-option
+[upgrade_guide_v0_51_0_attribute_translation]: ./docs/Upgrading.md#sumologic-exporter-metadata-translation-changed-the-attribute-that-is-translated-to-_sourcename-from-filepathresolved-to-logfilepath_resolved
+[#576]: https://github.com/SumoLogic/sumologic-otel-collector/pull/576
+[#575]: https://github.com/SumoLogic/sumologic-otel-collector/pull/575
+[#578]: https://github.com/SumoLogic/sumologic-otel-collector/pull/578
+[#579]: https://github.com/SumoLogic/sumologic-otel-collector/pull/579
+[#580]: https://github.com/SumoLogic/sumologic-otel-collector/pull/580
 
 ## [v0.50.0-sumo-0]
 

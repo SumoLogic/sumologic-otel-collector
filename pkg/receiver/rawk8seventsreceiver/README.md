@@ -1,7 +1,7 @@
 # Raw Kubernetes Events Receiver
 
 Receiver for ingesting Kubernetes Events in their raw format, exactly as the Kubernetes API returns them.
-It intends to return exactly the same output as the following [FluentD plugin].
+It intends to return exactly the same output as the following [Fluentd plugin].
 
 Supported pipeline types: logs
 
@@ -27,15 +27,15 @@ receivers:
 
     # The retry delay for recoverable errors from the rest of the pipeline.
     # Don't change this or the related setting below unless you know what you're doing.
-    # default = 10
+    # default = 500ms
     consume_retry_delay: 500ms
 
     # The maximum number of retries for recoverable errors from the rest of the pipeline.
-    # default = 10
-    consume_max_retries: 10
+    # default = 20
+    consume_max_retries: 20
 ```
 
 The full list of settings exposed for this receiver are documented in
 [config.go](./config.go).
 
-[FluentD plugin]: https://github.com/SumoLogic/sumologic-kubernetes-fluentd/tree/main/fluent-plugin-events
+[Fluentd plugin]: https://github.com/SumoLogic/sumologic-kubernetes-fluentd/tree/main/fluent-plugin-events

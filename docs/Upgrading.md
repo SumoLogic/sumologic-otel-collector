@@ -1,5 +1,140 @@
 # Upgrading
 
+- [Upgrading to v0.52.0-sumo-0](#upgrading-to-v0520-sumo-0)
+  - [`sumologic` exporter: Removed `carbon2` and `graphite` metric formats](#sumologic-exporter-removed-carbon2-and-graphite-metric-formats)
+- [Upgrading to v0.51.0-sumo-0](#upgrading-to-v0510-sumo-0)
+  - [`k8s_tagger` processor: removed `clusterName` metadata extraction option](#k8s_tagger-processor-removed-clustername-metadata-extraction-option)
+    - [How to upgrade](#how-to-upgrade)
+  - [`sumologic` exporter: metadata translation: changed the attribute that is translated to `_sourceName` from `file.path.resolved` to `log.file.path_resolved`](#sumologic-exporter-metadata-translation-changed-the-attribute-that-is-translated-to-_sourcename-from-filepathresolved-to-logfilepath_resolved)
+    - [How to upgrade](#how-to-upgrade-1)
+- [Upgrading to 0.49.0-sumo-0](#upgrading-to-0490-sumo-0)
+  - [Several changes to receivers using opentelemetry-log-collection](#several-changes-to-receivers-using-opentelemetry-log-collection)
+  - [Sumo Logic exporter metadata handling](#sumo-logic-exporter-metadata-handling)
+    - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
+    - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
+
+## Upgrading to v0.52.0-sumo-0
+
+### `sumologic` exporter: Removed `carbon2` and `graphite` metric formats
+
+These metric formats don't offer any advantages over Prometheus or OTLP formats. To migrate, simply switch
+the format to `prometheus`.
+
+```yaml
+exporters:
+  sumologic:
+    metric_format: prometheus
+```
+
+## Upgrading to v0.51.0-sumo-0
+
+### `k8s_tagger` processor: removed `clusterName` metadata extraction option
+
+Before `v0.51.0-sumo-0`, you could specify `clusterName` as one of the options for metadata extraction:
+
+```yaml
+processors:
+  k8s_tagger:
+    extract:
+      metadata:
+      - clusterName
+```
+
+Starting with `v0.51.0-sumo-0`, the `clusterName` option is removed.
+This is a result of an upstream change that removes the `k8s.cluster.name` metadata ([link](https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/9885)),
+which in turn is a result of Kubernetes libraries removing support for this deprecated and non-functional field ([link](https://github.com/kubernetes/apimachinery/commit/430b920312ca0fa10eca95967764ff08f34083a3)).
+
+#### How to upgrade
+
+Check if you are using the `extract.metadata` option in your `k8s_tagger` processor configuration
+and if yes, check if it includes the `clusterName` entry. If it does, remove it.
+
+For example, change the following configuration:
+
+```yaml
+processors:
+  k8s_tagger:
+    extract:
+      metadata:
+      - clusterName
+      - deploymentName
+      - podName
+      - serviceName
+      - statefulSetName
+```
+
+to the following, removing the `clusterName` entry from the list:
+
+```yaml
+processors:
+  k8s_tagger:
+    extract:
+      metadata:
+      - deploymentName
+      - podName
+      - serviceName
+      - statefulSetName
+```
+
+### `sumologic` exporter: metadata translation: changed the attribute that is translated to `_sourceName` from `file.path.resolved` to `log.file.path_resolved`
+
+This change should have landed already in previous version `v0.49.0-sumo-0`.
+It is a result of a change in [Filelog receiver][filelog_receiver_v0_49_0], which starting with `v0.49.0`,
+changed the names of the attributes it creates when one of the  configuration properties is set to `true`:
+
+- `include_file_name`: changed attribute name from `file.name` to `log.file.name`
+- `include_file_name_resolved`: changed attribute name from `file.name.resolved` to `log.file.name_resolved`
+- `include_file_path`: changed attribute name from `file.path` to `log.file.path`
+- `include_file_path_resolved`: changed attribute name from `file.path.resolved` to `log.file.path_resolved`
+
+See [documentation][ot_logs_collection_v0_29_0] that describes this change.
+
+#### How to upgrade
+
+This change is technically a breaking change, but it should be transparent and require no changes in your configuration.
+
+If you have a pipeline that includes Filelog receiver (configured with `include_file_path_resolved: true`) and Sumo Logic exporter,
+the Filelog receiver will create the `log.file.path_resolved` attribute
+and Sumo Logic exporter will translate this attribute to `_sourceName`.
+
+```yaml
+exporters:
+  sumologic:
+    endpoint: ...
+
+receivers:
+  filelog:
+    include:
+    - ...
+    include_file_path_resolved: true
+
+service:
+  pipelines:
+    logs:
+      exporters:
+      - sumologic
+      receivers:
+      - filelog
+```
+
+In the unlikely scenario that you have a component other than Filelog receiver that creates the `file.path.resolved` attribute
+that you relied on Sumo Logic exporter to be translated to `_sourceName` attribute,
+you can perform the translation with Resource processor like the following:
+
+```yaml
+processors:
+  resource:
+    attributes:
+    - action: insert
+      from_attribute: file.path.resolved
+      key: _sourceName
+    - action: delete
+      key: file.path.resolved
+```
+
+[filelog_receiver_v0_49_0]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.49.0/receiver/filelogreceiver
+[ot_logs_collection_v0_29_0]: https://github.com/open-telemetry/opentelemetry-log-collection/releases/tag/v0.29.0
+
 ## Upgrading to 0.49.0-sumo-0
 
 ### Several changes to receivers using [opentelemetry-log-collection][opentelemetry-log-collection]

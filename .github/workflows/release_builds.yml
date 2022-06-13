@@ -95,6 +95,8 @@ jobs:
         include:
           - arch_os: darwin_amd64
             runs_on: macos-latest
+          - arch_os: darwin_arm64
+            runs_on: macos-latest
     steps:
       - uses: actions/checkout@v3
 
@@ -164,7 +166,7 @@ jobs:
         env:
           AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
         working-directory: ./otelcolbuilder/
-        run: make darwin-sign
+        run: make ${{matrix.arch_os}}-sign
 
       - name: Rename .dmg to include tag in filename
         run: cp otelcol-sumo-${{matrix.arch_os}}.dmg ${{ steps.set_filename.outputs.filename }}.dmg
@@ -312,8 +314,8 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          draft: false
-          prerelease: true
+          draft: true
+          prerelease: false
 
           allowUpdates: true
           omitBodyDuringUpdate: true
