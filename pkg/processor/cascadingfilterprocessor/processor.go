@@ -26,7 +26,6 @@ import (
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/component/componenterror"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
@@ -101,7 +100,7 @@ const (
 // configuration.
 func newTraceProcessor(logger *zap.Logger, nextConsumer consumer.Traces, cfg config.Config) (component.TracesProcessor, error) {
 	if nextConsumer == nil {
-		return nil, componenterror.ErrNilNextConsumer
+		return nil, component.ErrNilNextConsumer
 	}
 
 	return newCascadingFilterSpanProcessor(logger, nextConsumer, cfg)
