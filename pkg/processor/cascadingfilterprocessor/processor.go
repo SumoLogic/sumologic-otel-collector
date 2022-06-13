@@ -600,7 +600,6 @@ func (cfsp *cascadingFilterSpanProcessor) processTraces(ctx context.Context, res
 
 		actualData := d.(*sampling.TraceData)
 		if loaded {
-			// PMM: why actualData is not updated with new trace?
 			atomic.AddInt32(&actualData.SpanCount, lenSpans)
 		} else {
 			newTraceIDs++
@@ -624,9 +623,19 @@ func (cfsp *cascadingFilterSpanProcessor) processTraces(ctx context.Context, res
 		// Add the spans to the trace, but only once for all policy, otherwise same spans will
 		// be duplicated in the final trace.
 		actualData.Lock()
-		traceTd := prepareTraceBatch(resourceSpans, spans)
-		actualData.ReceivedBatches = append(actualData.ReceivedBatches, traceTd)
 		finalDecision := actualData.FinalDecision
+
+		// If decision is pending, we want to add the new spans still under the lock, so the decision doesn't happen
+		// in between the transition from pending.
+		if finalDecision == sampling.Pending || finalDecision == sampling.Unspecified {
+			// Add the spans to the trace, but only once for all policy, otherwise same spans will
+			// be duplicated in the final trace.
+			traceTd := prepareTraceBatch(resourceSpans, spans)
+			actualData.ReceivedBatches = append(actualData.ReceivedBatches, traceTd)
+			actualData.Unlock()
+			break
+		}
+
 		actualData.Unlock()
 
 		// This section is run in case the decision was already applied earlier
