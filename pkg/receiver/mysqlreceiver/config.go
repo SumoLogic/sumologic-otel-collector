@@ -65,10 +65,16 @@ func (cfg *Config) Validate() error {
 		err = multierr.Append(err, errors.New("dbhost cannot be empty"))
 	}
 
+	if len(cfg.Database) == 0 {
+		err = multierr.Append(err, errors.New("database cannot be empty"))
+	}
+
 	var queryIds []string
+	var queryIndexColumnTypes []string
 	var size = len(cfg.DBQueries)
 	for i := 0; i < size; i++ {
 		queryIds = append(queryIds, cfg.DBQueries[i].QueryId)
+		queryIndexColumnTypes = append(queryIndexColumnTypes, cfg.DBQueries[i].IndexColumnType)
 	}
 	queryIdCount := make(map[string]int)
 	for _, item := range queryIds {
@@ -82,6 +88,13 @@ func (cfg *Config) Validate() error {
 	for _, count := range queryIdCount {
 		if count > 1 {
 			err = multierr.Append(err, errors.New("multiple queries have the same queryId which is not allowed"))
+		}
+	}
+	for _, item := range queryIndexColumnTypes {
+		if len(item) != 0 {
+			if item != "INT" && item != "TIMESTAMP" {
+				err = multierr.Append(err, errors.New("indexcolumtype in queries can only be 'INT' or 'TIMESTAMP'"))
+			}
 		}
 	}
 
