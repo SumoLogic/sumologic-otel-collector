@@ -117,15 +117,23 @@ mod-download-all:
 	@echo "No need to run go mod download or tidy on generated sources in $(PWD)"
 
 .PHONY: otelcol-sumo-all-sys
-otelcol-sumo-all-sys: otelcol-sumo-darwin_amd64 otelcol-sumo-linux_amd64 otelcol-sumo-windows_amd64
+otelcol-sumo-all-sys: otelcol-sumo-darwin_amd64 otelcol-sumo-darwin_arm64 otelcol-sumo-linux_amd64 otelcol-sumo-windows_amd64
 
 .PHONY: otelcol-sumo-darwin_amd64
 otelcol-sumo-darwin_amd64:
 	GOOS=darwin  GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)-darwin_amd64
 
-.PHONY: darwin-sign
-darwin-sign:
-	gon -log-level=debug .gon_config.json
+.PHONY: otelcol-sumo-darwin_arm64
+otelcol-sumo-darwin_arm64:
+	GOOS=darwin  GOARCH=arm64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)-darwin_arm64
+
+.PHONY: darwin_amd64-sign
+darwin_amd64-sign:
+	gon -log-level=debug .gon_config_amd64.json
+
+.PHONY: darwin_arm64-sign
+darwin_arm64-sign:
+	gon -log-level=debug .gon_config_arm64.json
 
 .PHONY: otelcol-sumo-linux_amd64
 otelcol-sumo-linux_amd64:
