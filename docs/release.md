@@ -7,7 +7,7 @@
 - [Updating OT core](#updating-ot-core)
   - [Updating patched processors](#updating-patched-processors)
   - [Updating OT distro](#updating-ot-distro)
-- [Add missing upstream components](#add-missing-upstream-components)
+  - [Add missing upstream components](#add-missing-upstream-components)
 - [Running Tracing E2E tests](#running-tracing-e2e-tests)
 
 ## How to release
@@ -69,6 +69,7 @@ Updating OT core involves:
 1. Updating the version number where necessary
 1. Verifying that Sumo OT distro builds correctly
 1. Fixing lint errors from deprecations
+1. Add missing upstream components
 
 ### Updating patched processors
 
@@ -145,11 +146,9 @@ make gotest
 
 in the repository root.
 
-## Add missing upstream components
+### Add missing upstream components
 
-We include all of the upstream receivers, processors and extensions.
-Please check if all of the components from the following directories have been included.
-Please use appropiate version instead of `main` branch.
+We include all of the components from the following list:
 
 - [OpenTelemetry receivers][OT_receivers]
 - [OpenTelemetry processors][OT_processors]
@@ -159,7 +158,14 @@ Please use appropiate version instead of `main` branch.
 - [OpenTelemetry Contrib processors][OTC_processors]
 - [OpenTelemetry Contrib extensions][OTC_extensions]
 
-You can follow some tips in order to upgrade the list:
+As a fourth step, please check [OpenTelemetry Collector][OT_release] and [OpenTelemetry Collector Contrib][OTC_release]
+release pages for new components and update [builder configuration][builder_config] and [README.md] if they are any.
+Please consider example pull request: [#604]
+
+#### Adding components from scratch
+
+This shouldn't be required as long as list of components is regularly updated,
+but in case you want to generate full list of components, the following instruction can be helpful:
 
 1. [update builder configuration][builder_config]
    You can use the following snippet inside [OpenTelemetry Contrib repository][OTC_repository]
@@ -259,3 +265,6 @@ approve the workflow to run. Note that you need commiter rights in this reposito
 [OTC_extensions]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension
 [OTC_repository]: https://github.com/open-telemetry/opentelemetry-collector-contrib
 [README.md]: ../README.md
+[#604]: https://github.com/SumoLogic/sumologic-otel-collector/pull/604/files
+[OTC_release]: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases
+[OT_release]: https://github.com/open-telemetry/opentelemetry-collector/releases
