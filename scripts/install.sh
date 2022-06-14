@@ -147,12 +147,6 @@ readonly OS_TYPE ARCH_TYPE
 echo -e "Detected OS type:\t${OS_TYPE}"
 echo -e "Detected architecture:\t${ARCH_TYPE}"
 
-# Skip unsupported combination of arm64 on darwin
-if [[ "${OS_TYPE}" == "darwin" && "${ARCH_TYPE}" == "arm64" ]]; then
-    echo "Combination of ${OS_TYPE} and ${ARCH_TYPE} is not supported"
-    exit 1
-fi
-
 VERSIONS="$(get_versions)"
 INSTALLED_VERSION="$(get_installed_version)"
 VERSION="$(get_latest_version "${VERSIONS}")"
