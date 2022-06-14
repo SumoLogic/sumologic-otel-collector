@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat: Enable cumulativetodeltaprocessor [#595]
 - feat: add logstransformprocessor from upstream [#604]
 - feat: build arm64 binary for darwin [#611]
+- feat: add missing core receivers, processors and extensions [#614]
 
 ### Fixed
 
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#611]: https://github.com/SumoLogic/sumologic-otel-collector/pull/611
 [#616]: https://github.com/SumoLogic/sumologic-otel-collector/pull/616
 [#615]: https://github.com/SumoLogic/sumologic-otel-collector/pull/615
+[#614]: https://github.com/SumoLogic/sumologic-otel-collector/pull/614
 
 ## [v0.52.0-sumo-0]
 
