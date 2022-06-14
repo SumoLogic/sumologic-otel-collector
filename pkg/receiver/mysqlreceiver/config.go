@@ -6,7 +6,6 @@ import (
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/confignet"
 	"go.uber.org/multierr"
-	"go.uber.org/zap"
 )
 
 type Config struct {
@@ -14,6 +13,8 @@ type Config struct {
 	AuthenticationMode       string `mapstructure:"authentication_mode,omitempty"`
 	Username                 string `mapstructure:"username,omitempty"`
 	Password                 string `mapstructure:"password,omitempty"`
+	PasswordType             string `mapstructure:"password_type,omitempty"`
+	EncryptSecretPath        string `mapstructure:"encrypt_secret_path,omitempty"`
 	Database                 string `mapstructure:"database,omitempty"`
 	DBHost                   string `mapstructure:"dbhost"`
 	DBPort                   string `mapstructure:"dbport,omitempty"`
@@ -41,20 +42,29 @@ type DBQueries struct {
 func (cfg *Config) Validate() error {
 
 	var err error
-	var logger zap.Logger
 
 	if cfg.AuthenticationMode != "IAMRDSAuth" && cfg.AuthenticationMode != "BasicAuth" {
 		err = multierr.Append(err, errors.New("authentication_mode should be either of 'IAMRDSAuth' or 'BasicAuth'"))
 	}
+
+	if len(cfg.PasswordType) != 0 && cfg.PasswordType != "plaintext" && cfg.PasswordType != "encrypted" {
+		err = multierr.Append(err, errors.New("password_type should be either of 'plaintext' or 'encrypted'"))
+	}
+
+	if cfg.PasswordType == "encrypted" {
+		if len(cfg.EncryptSecretPath) == 0 {
+			err = multierr.Append(err, errors.New("please specify encrypt_secret_path to read secret for decrpytion"))
+		}
+	}
+
 	if cfg.AuthenticationMode == "IAMRDSAuth" && len(cfg.Region) == 0 && len(cfg.AWSCertificatePath) == 0 {
 		err = multierr.Append(err, errors.New("require aws region and aws certificate path for authentication_mode : 'IAMRDSAuth'. You can download certificate from You can download it from https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html"))
 	}
+
 	if len(cfg.DBHost) == 0 {
 		err = multierr.Append(err, errors.New("dbhost cannot be empty"))
 	}
-	if len(cfg.DBPort) == 0 {
-		logger.Info("dbport empty, considering defalut 3306")
-	}
+
 	var queryIds []string
 	var size = len(cfg.DBQueries)
 	for i := 0; i < size; i++ {

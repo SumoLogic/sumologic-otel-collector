@@ -5,15 +5,18 @@ exporters:
     sampling_thereafter: 1
 receivers:
   mysql:
-    endpoint: localhost:3306
+    authentication_mode: IAMRDSAuth
+    dbhost: database-2.cni9nterddyl.us-east-1.rds.amazonaws.com
+    dbport: 3306
     transport: tcp
-    username: Jayanta
-    password: **********
-    database: employees
+    username: demo_ssl_2
+    database: information_schema
+    region: us-east-1
+    aws_certificate_path: global-bundle.pem
     collection_interval: 10s
     db_queries:
       - queryid: "Q1"
-        query: "Select * from departments;"
+        query: "Show tables"
       - queryid: "Q2"
         query: "Select * from dept_manager"
         index_column_name: emp_no
