@@ -7,6 +7,7 @@
 - [Updating OT core](#updating-ot-core)
   - [Updating patched processors](#updating-patched-processors)
   - [Updating OT distro](#updating-ot-distro)
+- [Add missing upstream components](#add-missing-upstream-components)
 - [Running Tracing E2E tests](#running-tracing-e2e-tests)
 
 ## How to release
@@ -144,6 +145,92 @@ make gotest
 
 in the repository root.
 
+## Add missing upstream components
+
+We include all of the upstream receivers, processors and extensions.
+Please check if all of the components from the following directories have been included.
+Please use appropiate version instead of `main` branch.
+
+- [OpenTelemetry receivers][OT_receivers]
+- [OpenTelemetry processors][OT_processors]
+- [OpenTelemetry exporters][OT_exporters]
+- [OpenTelemetry extensions][OT_extensions]
+- [OpenTelemetry Contrib receivers][OTC_receivers]
+- [OpenTelemetry Contrib processors][OTC_processors]
+- [OpenTelemetry Contrib extensions][OTC_extensions]
+
+You can follow some tips in order to upgrade the list:
+
+1. [update builder configuration][builder_config]
+   You can use the following snippet inside [OpenTelemetry Contrib repository][OTC_repository]
+   in order to get list of components:
+
+   ```bash
+   export TAG=vx.y.z
+   git fetch --all
+   git checkout "${TAG}"
+   for dir in receiver processor extension; do
+     echo "###############${dir}s###############"
+     for file in $(ls "${dir}"); do
+       echo "  - gomod: \"github.com/open-telemetry/opentelemetry-collector-contrib/${dir}/${file} ${TAG}\"";
+     done;
+   done;
+   ```
+
+1. Run `make build` in order to generate updated components file (`otelcolbuilder/cmd/components.go`)
+1. Update markdown table:
+
+   1. Prepare `local/receiver.txt`, `local/exporter.txt`, `local/extension.txt` and `local/processor.txt`
+      in [OpenTelemetry Contrib repository][OTC_repository] based on components file.
+      Example content of `local/extension.txt`:
+
+      ```text
+      sumologicextension.NewFactory(),
+      ballastextension.NewFactory(),
+      zpagesextension.NewFactory(),
+      asapauthextension.NewFactory(),
+      awsproxy.NewFactory(),
+      basicauthextension.NewFactory(),
+      bearertokenauthextension.NewFactory(),
+      fluentbitextension.NewFactory(),
+      healthcheckextension.NewFactory(),
+      httpforwarder.NewFactory(),
+      jaegerremotesampling.NewFactory(),
+      oauth2clientauthextension.NewFactory(),
+      dockerobserver.NewFactory(),
+      ecsobserver.NewFactory(),
+      ecstaskobserver.NewFactory(),
+      hostobserver.NewFactory(),
+      k8sobserver.NewFactory(),
+      oidcauthextension.NewFactory(),
+      pprofextension.NewFactory(),
+      sigv4authextension.NewFactory(),
+      filestorage.NewFactory(),
+      dbstorage.NewFactory(),
+      ```
+
+   1. Run the following snippet in order to prepare markdown links for [README.md]:
+
+      ```bash
+      for kind in extension processor receiver exporter; do
+        echo "#####${kind}#####"
+        for component in $(cat local/${kind}.txt | sed "s/\..*//g"); do
+          export dir=$(find ${kind} -name "${component}");
+          NAME=$(grep -oRP '(?<=typeStr\s)(.*?)=(.*?)"(.*?)"' "${dir}" | grep -oP '\w+"$' | sed 's/"//g');
+          echo "[${NAME}][${component}]";
+        done 2>/dev/null
+      done
+      ```
+
+   1. Copy and fix the output
+   1. Copy fixed output to spreadsheet. Every component in separate column as in [README.md].
+   1. Sort components and add placeholder to empty rows.
+      Placeholders make it easier to format table as markdown in next steps.
+   1. Copy table into text editor with support for regexp replacement.
+   1. Prepare table in markdown format. We recommend to use regexp replacement.
+   1. Prepare links for the table. You can use regexp replacement in order to generate it
+   1. Carefully analyse `git diff` and fix unwanted changes.
+
 ## Running Tracing E2E tests
 
 We currently have some legacy E2E tests ported from [our OT fork][ot_fork], which serve as a means of
@@ -163,3 +250,12 @@ approve the workflow to run. Note that you need commiter rights in this reposito
 [circleci_approve]: ../images/circleci_approve_workflow.png
 [contrib_fork]: https://github.com/SumoLogic/opentelemetry-collector-contrib
 [changelog]: ../CHANGELOG.md
+[OT_receivers]: https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver
+[OT_processors]: https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor
+[OT_exporters]: https://github.com/open-telemetry/opentelemetry-collector/tree/main/exporter
+[OT_extensions]: https://github.com/open-telemetry/opentelemetry-collector/tree/main/extension
+[OTC_receivers]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver
+[OTC_processors]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor
+[OTC_extensions]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension
+[OTC_repository]: https://github.com/open-telemetry/opentelemetry-collector-contrib
+[README.md]: ../README.md
