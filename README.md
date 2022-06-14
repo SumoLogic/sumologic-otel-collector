@@ -179,6 +179,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 [cumulativetodeltaprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/processor/cumulativetodeltaprocessor
 [deltatorateprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/processor/deltatorateprocessor
 [metricsgenerationprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/processor/metricsgenerationprocessor
+
 [filterprocessor]: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.53.0-filterprocessor/processor/filterprocessor
 [groupbyattrsprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/processor/groupbyattrsprocessor
 [groupbytraceprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/processor/groupbytraceprocessor
