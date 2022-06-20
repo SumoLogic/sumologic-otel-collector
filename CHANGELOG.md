@@ -5,14 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.53.0-sumo-0]
+
+### Released 2022-06-21
+
+This release adds missing [receivers], [processors] and [extensions] from the OpenTelemetry Distribution.
+It also includes `journald` binary required by [journaldreceiver]
+and begin support of arm64 architecture for Darwin OS.
 
 ### Added
 
-- feat: Enable cumulativetodeltaprocessor [#595]
-- feat: add logstransformprocessor from upstream [#604]
 - feat: build arm64 binary for darwin [#611]
-- feat: add missing core receivers, processors and extensions [#614]
+- feat: add missing core receivers, processors and extensions [#595], [#604], [#614]
 
 ### Fixed
 
@@ -23,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore(core): upgrade to v0.53.0 [#615]
 - feat(journaldreceiver): add missing dependencies [#577]
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.52.0-sumo-0...main
+[v0.53.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.52.0-sumo-0...v0.53.0-sumo-0
 [#595]: https://github.com/SumoLogic/sumologic-otel-collector/pull/595
 [#577]: https://github.com/SumoLogic/sumologic-otel-collector/pull/577
 [#604]: https://github.com/SumoLogic/sumologic-otel-collector/pull/604
@@ -31,6 +35,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#616]: https://github.com/SumoLogic/sumologic-otel-collector/pull/616
 [#615]: https://github.com/SumoLogic/sumologic-otel-collector/pull/615
 [#614]: https://github.com/SumoLogic/sumologic-otel-collector/pull/614
+[journaldreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/receiver/journaldreceiver#journald-receiver
+[receivers]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/receiver
+[processors]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/processor
+[extensions]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/extension
+
+## [v0.52.0-sumo-1]
+
+### Released 2022-06-14
+
+### Fixed
+
+- fix(cascadingfilter): fix leak memory leak on late arriving traces where decision was already made [#619]
+
+[v0.52.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.52.0-sumo-0...v0.52.0-sumo-1
+[#619]: https://github.com/SumoLogic/sumologic-otel-collector/pull/619
 
 ## [v0.52.0-sumo-0]
 
