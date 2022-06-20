@@ -1,0 +1,77 @@
+name: Grype scan
+
+on:
+  push:
+    tags:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        arch_os: [ 'linux_amd64' ]
+
+    steps:
+      # - uses: actions/checkout@v3
+
+      # - name: Fetch current branch
+      #   run: ./ci/fetch_current_branch.sh
+
+      # - name: Setup go
+      #   uses: actions/setup-go@v2
+      #   with:
+      #     go-version: '1.18'
+
+      # - name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v1.2.0
+
+      # - name: Set up Buildx
+      #   id: buildx
+      #   uses: docker/setup-buildx-action@v1.6.0
+
+      # - name: Show Buildx platforms
+      #   run: echo ${{ steps.buildx.outputs.platforms }}
+
+      # # As described in
+      # # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+      # - uses: actions/cache@v2
+      #   with:
+      #     path: |
+      #       /home/runner/go/pkg/mod
+      #       /home/runner/.cache/go-build
+      #     key: ${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
+      #     restore-keys: |
+      #       ${{matrix.arch_os}}-go-
+
+      # - name: Add opentelemetry-collector-builder installation dir to PATH
+      #   run: echo "$HOME/bin" >> $GITHUB_PATH
+
+      # - name: Install opentelemetry-collector-builder
+      #   run: make install-builder
+      #   working-directory: ./otelcolbuilder
+
+      # - name: Build
+      #   run: make otelcol-sumo-${{matrix.arch_os}}
+      #   working-directory: ./otelcolbuilder
+
+      # - name: Build and push image to Open Source ECR
+      #   run: |
+      #     cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
+      #     make build-push-container-multiplatform \
+      #       PLATFORM=${{ matrix.arch_os }}
+
+      - uses: anchore/scan-action@v3
+        id: scan
+        with:
+          image: public.ecr.aws/sumologic/sumologic-otel-collector:latest
+          acs-report-enable: true
+
+      - name: upload Anchore scan SARIF report
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: ${{ steps.scan.outputs.sarif }}
