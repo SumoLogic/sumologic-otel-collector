@@ -73,7 +73,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install yq
         run: |
-          wget https://github.com/mikefarah/yq/releases/download/v4.12.1/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
+          sudo wget https://github.com/mikefarah/yq/releases/download/v4.12.1/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
       - name: Check plugins in README and builder config
         run: ./ci/plugins_check.sh
 
