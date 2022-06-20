@@ -11,13 +11,13 @@ import (
 	"go.opentelemetry.io/collector/consumer/consumertest"
 )
 
-func TestType(t *testing.T) {
+func TestValidType(t *testing.T) {
 	factory := NewFactory()
 	ft := factory.Type()
 	require.EqualValues(t, "mysql", ft)
 }
 
-func TestTypeInvalis(t *testing.T) {
+func TestInvalidType(t *testing.T) {
 	factory := NewFactory()
 	ft := factory.Type()
 	require.NotEqualValues(t, "garbage", ft)
