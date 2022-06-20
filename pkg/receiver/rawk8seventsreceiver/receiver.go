@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -210,6 +211,23 @@ func (r *rawK8sEventsReceiver) processEventChange(ctx context.Context, eventChan
 // Check if we should process the event
 // Currently this only checks if the event isn't too old
 func (r *rawK8sEventsReceiver) isEventAccepted(event *corev1.Event) bool {
+	if r.cfg.ResourceVersion > 0 {
+		incomingEventResourceVersionNumber, err := strconv.ParseUint(event.ResourceVersion, 10, 64)
+		if err != nil {
+			r.logger.Debug("Failed checking if event is accepted, cannot convert incoming resource version to a number. Accepting the incoming event.", zap.Error(err), zap.Any("start_resource_version", r.cfg.ResourceVersion), zap.Any("incoming_event_version", event.ResourceVersion))
+			return true
+		}
+
+		incomingEventIsNewer := incomingEventResourceVersionNumber >= r.cfg.ResourceVersion
+		if incomingEventIsNewer {
+			r.logger.Debug("Incoming event is accepted as it is newer.", zap.Any("start_resource_version", r.cfg.ResourceVersion), zap.Any("incoming_event_version", incomingEventResourceVersionNumber))
+			return true
+		} else {
+			r.logger.Debug("Incoming event is NOT accepted, as it is older.", zap.Any("start_resource_version", r.cfg.ResourceVersion), zap.Any("incoming_event_version", incomingEventResourceVersionNumber))
+			return false
+		}
+	}
+
 	eventTime := getEventTimestamp(event)
 	minAcceptableTime := r.startTime.Add(-r.cfg.MaxEventAge)
 	return eventTime.After(minAcceptableTime) || eventTime.Equal(minAcceptableTime)

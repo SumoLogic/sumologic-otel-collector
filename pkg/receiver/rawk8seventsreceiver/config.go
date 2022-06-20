@@ -38,6 +38,8 @@ type Config struct {
 
 	// ConsumeMaxRetries is the maximum number of retries for recoverable pipeline errors
 	ConsumeMaxRetries uint64 `mapstructure:"consume_max_retries"`
+
+	ResourceVersion uint64 `mapstructure:"resource_version"`
 }
 
 // Validate checks if the receiver configuration is valid
