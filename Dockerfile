@@ -30,6 +30,5 @@ COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certifica
 COPY --from=otelcol /otelcol-sumo /otelcol-sumo
 COPY --from=directories --chown=${USER_UID}:${USER_UID} /etc/otel/ /etc/otel/
 
-EXPOSE 55680 55679
 ENTRYPOINT ["/otelcol-sumo"]
 CMD ["--config", "/etc/otel/config.yaml"]

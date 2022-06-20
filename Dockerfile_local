@@ -35,6 +35,5 @@ USER root
 RUN tar xf /journalctl.tar.gz --directory / && rm /journalctl.tar.gz
 USER ${USER_UID}
 
-EXPOSE 55680 55679
 ENTRYPOINT ["/otelcol-sumo"]
 CMD ["--config", "/etc/otel/config.yaml"]

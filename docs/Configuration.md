@@ -41,6 +41,8 @@ The primary components that make it easy to send data to Sumo Logic are
 the [Sumo Logic Exporter][sumologicexporter_docs]
 and the [Sumo Logic Extension][sumologicextension_configuration].
 
+To create the `install_token` please follow [this documenation][sumologic_docs_install_token].
+
 Here's a starting point for the configuration file that you will want to use:
 
 ```yaml
@@ -88,6 +90,8 @@ and after that let's put that all together.
 > chmod 640 config.yaml
 > ```
 
+[sumologic_docs_install_token]: https://help.sumologic.com/Manage/Security/Installation_Tokens
+
 ### Basic configuration for logs
 
 To send logs from local files, use the [Filelog Receiver][filelogreceiver_readme].
@@ -126,7 +130,7 @@ to persist the position in the files it reads between restarts.
 
 See section below on [Collecting logs from files](#collecting-logs-from-files) for details on configuring the Filelog receiver.
 
-[filestorageextension_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.52.0/extension/storage/filestorage
+[filestorageextension_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/extension/storage/filestorage
 
 ### Basic configuration for metrics
 
@@ -186,7 +190,7 @@ service:
       exporters: [sumologic]
 ```
 
-[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.52.0/receiver/otlpreceiver
+[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.53.0/receiver/otlpreceiver
 
 ### Putting it all together
 
@@ -274,7 +278,7 @@ For a list of all the configuration options for sumologicextension refer to
 [sumologic_webpage]: https://www.sumologic.com/
 [sumologicextension]: ../pkg/extension/sumologicextension/
 [sumologicexporter]: ../pkg/exporter/sumologicexporter/
-[hostmetricsreceiver]: https://github.com/SumoLogic/opentelemetry-collector/tree/release-0.27/receiver/hostmetricsreceiver
+[hostmetricsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/receiver/hostmetricsreceiver
 [sumologicextension_configuration]: ../pkg/extension/sumologicextension#configuration
 
 ### Using multiple Sumo Logic extensions
@@ -471,7 +475,7 @@ Flags: 0
 Example configuration with example log can be found in [/examples/logs_json/](/examples/logs_json/) directory.
 
 [json_parser]: https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/operators/json_parser.md
-[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.52.0/receiver/filelogreceiver
+[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/receiver/filelogreceiver
 [opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
 
 ## Setting source category
@@ -586,7 +590,7 @@ The first example creates a `_sourceCategory` label with a hardcoded value of `d
 The second example creates a `_sourceCategory` label by copying to it the value of Prometheus' `job` label,
 which contains the name of the job - in this case, `otelcol-metrics`.
 
-[prometheusreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.52.0/receiver/prometheusreceiver/README.md
+[prometheusreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.53.0/receiver/prometheusreceiver/README.md
 [prometheus_website]: https://prometheus.io/
 [prometheus_relabel_config]: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
 
@@ -642,7 +646,7 @@ service:
       - statsd/another-app
 ```
 
-[resourceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.52.0/processor/resourceprocessor/README.md
+[resourceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.53.0/processor/resourceprocessor/README.md
 
 ## Setting source host
 
@@ -714,8 +718,8 @@ Only the first Resource processor's action is required to correctly set the `_so
 The other two actions perform an optional metadata cleanup - they delete the unneeded attributes.
 
 [sumologic_source_host_docs]: https://help.sumologic.com/03Send-Data/Sources/04Reference-Information-for-Sources/Metadata-Naming-Conventions#source-host
-[resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.52.0/processor/resourcedetectionprocessor/README.md
-[resourcedetectionprocessor_system_detector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.52.0/processor/resourcedetectionprocessor/README.md#system-metadata
+[resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.53.0/processor/resourcedetectionprocessor/README.md
+[resourcedetectionprocessor_system_detector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.53.0/processor/resourcedetectionprocessor/README.md#system-metadata
 
 ## Command-line configuration options
 
@@ -786,5 +790,5 @@ service:
 # ...
 ```
 
-[metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.52.0/processor/metricstransformprocessor
+[metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/processor/metricstransformprocessor
 [prometheus_data_model]: https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
