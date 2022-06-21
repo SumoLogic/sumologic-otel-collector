@@ -10,6 +10,12 @@ RUN apk --update add ca-certificates
 FROM alpine:3.16.0 as directories
 RUN mkdir /etc/otel/
 
+FROM debian:11.3 as systemd
+RUN apt update && apt install -y systemd
+# prepare package with journald and it's dependencies keeping original paths
+# h stands for dereference of symbolic links
+RUN tar czhf journalctl.tar.gz /bin/journalctl $(ldd /bin/journalctl | grep -oP "\/.*? ")
+
 FROM golang:1.18.3
 ARG BUILD_TAG=latest
 ENV TAG $BUILD_TAG
@@ -20,6 +26,12 @@ ENV HOME /etc/otel/
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=otelcol /otelcol-sumo /otelcol-sumo
 COPY --from=directories --chown=${USER_UID}:${USER_UID} /etc/otel/ /etc/otel/
+
+# copy and extract journald with dependencies
+COPY --from=systemd --chown=${USER_UID}:${USER_UID} /journalctl.tar.gz /journalctl.tar.gz
+USER root
+RUN tar xf /journalctl.tar.gz --directory / && rm /journalctl.tar.gz
+USER ${USER_UID}
 
 ENTRYPOINT ["/otelcol-sumo"]
 CMD ["--config", "/etc/otel/config.yaml"]

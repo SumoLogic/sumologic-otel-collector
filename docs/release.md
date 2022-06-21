@@ -9,6 +9,7 @@
   - [Updating OT distro](#updating-ot-distro)
   - [Add missing upstream components](#add-missing-upstream-components)
 - [Running Tracing E2E tests](#running-tracing-e2e-tests)
+- [Updating journalctl](#updating-journalctl)
 
 ## How to release
 
@@ -248,6 +249,16 @@ approve the workflow to run. Note that you need commiter rights in this reposito
 
 ![Approving the workflow in CircleCI][circleci_approve]
 
+## Updating journalctl
+
+Journalctl is dependency for [journaldreceiver]. In order to update it, please update debian version in Dockerfile files.
+Please see available [debian versions][debian_versions].
+
+```bash
+export DEBIAN_VERSION=11.3
+make update-journalctl
+```
+
 [builder_config]: ../otelcolbuilder/.otelcol-builder.yaml
 [release_job]: ../.github/workflows/release_builds.yml
 [ot_fork]: https://github.com/SumoLogic/opentelemetry-collector-contrib
@@ -256,6 +267,8 @@ approve the workflow to run. Note that you need commiter rights in this reposito
 [circleci_approve]: ../images/circleci_approve_workflow.png
 [contrib_fork]: https://github.com/SumoLogic/opentelemetry-collector-contrib
 [changelog]: ../CHANGELOG.md
+[journaldreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.51.0/receiver/journaldreceiver
+[debian_versions]: https://hub.docker.com/_/debian/?tab=description
 [OT_receivers]: https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver
 [OT_processors]: https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor
 [OT_exporters]: https://github.com/open-telemetry/opentelemetry-collector/tree/main/exporter
