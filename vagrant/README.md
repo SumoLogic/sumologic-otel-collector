@@ -57,7 +57,7 @@ run the following command:
 make install-builder build
 ```
 
-The `otelcol-sumo` binary is going to be placed as `/sumologic/otelcolbuilder/cmd/otelcol-sumo`.
+The `otelcol-sumo` binary is going to be placed at `/sumologic/otelcolbuilder/cmd/otelcol-sumo`.
 
 ## Build docker image
 
