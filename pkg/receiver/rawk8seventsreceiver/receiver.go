@@ -132,14 +132,15 @@ func newRawK8sEventsReceiver(
 
 // Start tells the receiver to start.
 func (r *rawK8sEventsReceiver) Start(ctx context.Context, host component.Host) error {
-	err := r.initStorage(ctx, host)
+	var err error
+	r.storage, err = r.getStorage(ctx, host)
 	if err != nil {
-		return fmt.Errorf("failed to initialize storage: %s", err)
+		return fmt.Errorf("error when getting storage: %s", err)
 	}
-	err = r.initStartResourceVersion(ctx)
+
+	r.startResourceVersion, err = r.getStartResourceVersion(ctx)
 	if err != nil {
-		// Should we fail or warn and proceed?
-		return fmt.Errorf("failed to initialize start resource version: %s", err)
+		return fmt.Errorf("error when getting start resource version: %s", err)
 	}
 
 	r.ctx, r.cancel = context.WithCancel(ctx)
@@ -159,10 +160,10 @@ func (r *rawK8sEventsReceiver) Shutdown(context.Context) error {
 	return nil
 }
 
-func (r *rawK8sEventsReceiver) initStorage(ctx context.Context, host component.Host) error {
+func (r *rawK8sEventsReceiver) getStorage(ctx context.Context, host component.Host) (storage.Client, error) {
 	if host == nil {
-		r.logger.Debug("storage not initialized: host is not available")
-		return nil
+		r.logger.Debug("Storage not initialized: host is not available")
+		return nil, nil
 	}
 
 	var storageExtension storage.Extension
@@ -170,7 +171,7 @@ func (r *rawK8sEventsReceiver) initStorage(ctx context.Context, host component.H
 	for extentionId, extension := range host.GetExtensions() {
 		if se, ok := extension.(storage.Extension); ok {
 			if storageExtension != nil {
-				return fmt.Errorf("multiple storage extensions found: '%s', '%s'", storageExtensionId, extentionId)
+				return nil, fmt.Errorf("multiple storage extensions found: '%s', '%s'", storageExtensionId, extentionId)
 			}
 			storageExtension = se
 			storageExtensionId = extentionId
@@ -178,45 +179,43 @@ func (r *rawK8sEventsReceiver) initStorage(ctx context.Context, host component.H
 	}
 
 	if storageExtension == nil {
-		r.logger.Debug("storage not initialized: no storage extension found")
-		return nil
+		r.logger.Debug("Storage not initialized: no storage extension found")
+		return nil, nil
 	}
 
 	storageClient, err := storageExtension.GetClient(ctx, component.KindReceiver, r.cfg.ID(), "")
 	if err != nil {
-		return fmt.Errorf("failed to get storage client for extension '%s': %s", storageExtensionId, err)
+		return nil, fmt.Errorf("failed to get storage client for extension '%s': %s", storageExtensionId, err)
 	}
 
-	r.storage = storageClient
 	r.logger.Info("Initialized storage", zap.Any("storage_extension_id", storageExtensionId))
-	return nil
+	return storageClient, nil
 }
 
-func (r *rawK8sEventsReceiver) initStartResourceVersion(ctx context.Context) error {
-	r.startResourceVersion = 0
+func (r *rawK8sEventsReceiver) getStartResourceVersion(ctx context.Context) (uint64, error) {
 	if r.storage == nil {
-		return nil
+		r.logger.Info("Did not find start resource version, as there is no storage.")
+		return 0, nil
 	}
 
 	startResourceVersionBytes, err := r.storage.Get(ctx, "startResourceVersion")
 	if err != nil {
-		return fmt.Errorf("failed to retrieve start resource version from storage: %s", err)
+		return 0, fmt.Errorf("failed to retrieve start resource version from storage: %s", err)
 	}
 
 	if startResourceVersionBytes == nil {
 		r.logger.Info("Start resource version not found in storage")
-		return nil
+		return 0, nil
 	}
 
 	startResourceVersionString := string(startResourceVersionBytes)
 	startResourceVersion, err := strconv.ParseUint(startResourceVersionString, 10, 64)
 	if err != nil {
-		return fmt.Errorf("failed to parse start resource version '%s' to number: %s", startResourceVersionString, err)
+		return 0, fmt.Errorf("failed to parse start resource version '%s' to number: %s", startResourceVersionString, err)
 	}
 
-	r.startResourceVersion = startResourceVersion
-	r.logger.Info("Initialized start resource version", zap.Any("start_resource_version", startResourceVersion))
-	return nil
+	r.logger.Info("Found start resource version in storage", zap.Any("start_resource_version", startResourceVersion))
+	return startResourceVersion, nil
 }
 
 // Consume metrics and retry on recoverable errors
