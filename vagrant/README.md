@@ -21,13 +21,56 @@ vagrant plugin install vagrant-disksize
 You can set up the Vagrant environment with just one command:
 
 ```bash
-vagrant up
+make vagrant-up
 ```
 
 After successfull installation you can ssh to the virtual machine with:
 
 ```bash
-vagrant ssh
+make vagrant-ssh
 ```
 
 NOTICE: The directory with sumologic-otel-collector repository on the host is synced with `/sumologic/` directory on the virtual machine.
+
+## Build
+
+In order to build `otelcol-sumo` binary, simply execute the following command:
+
+```bash
+make build
+```
+
+If you see the following or similar error:
+
+```text
+vagrant@sumologic-otel-collector:/sumologic$ make build
+make[1]: Entering directory '/sumologic/otelcolbuilder'
+/bin/sh: 1: opentelemetry-collector-builder: not found
+Makefile:41: *** Installed opentelemetry-collector-builder version "" does not match the requested "0.53.0" Please check if "/home/vagrant/bin" can be found in your PATH and if not, then install it using 'make install-builder' from otelcolbuilder's directory .  Stop.
+make[1]: Leaving directory '/sumologic/otelcolbuilder'
+make: *** [Makefile:177: build] Error 2
+```
+
+run the following command:
+
+```bash
+make install-builder build
+```
+
+The `otelcol-sumo` binary is going to be placed at `/sumologic/otelcolbuilder/cmd/otelcol-sumo`.
+
+## Build docker image
+
+In order to build docker image, run the following command:
+
+```bash
+make build-container-local
+```
+
+## Useful targets
+
+Here is the list of useful targets for [make](../Makefile):
+
+- `install-golangci-lint` - to install golint
+- `gotest` - to run unittests
+- `golint` - to run go code linter

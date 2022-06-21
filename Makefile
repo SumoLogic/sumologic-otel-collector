@@ -61,7 +61,7 @@ golint:
 gomod-download-all:
 	@$(MAKE) for-all CMD="make mod-download-all"
 
-.PHONY: install-golint
+.PHONY: install-golangci-lint
 install-golangci-lint:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 
@@ -176,6 +176,10 @@ prepare-tag: install-gsed
 build:
 	@$(MAKE) -C ./otelcolbuilder/ build
 
+.PHONY: install-builder
+install-builder:
+	@$(MAKE) -C ./otelcolbuilder/ install-builder
+
 BUILD_TAG ?= latest
 BUILD_CACHE_TAG = latest-builder-cache
 IMAGE_NAME = sumologic-otel-collector
@@ -273,3 +277,23 @@ _login:
 login:
 	$(MAKE) _login \
 		ECR_URL="$(OPENSOURCE_ECR_URL)"
+
+#-------------------------------------------------------------------------------
+
+# vagrant
+
+.PHONY: vagrant-up
+vagrant-up:
+	vagrant up
+
+.PHONY: vagrant-ssh
+vagrant-ssh:
+	vagrant ssh -c 'cd /sumologic; exec "$$SHELL"'
+
+.PHONY: vagrant-destroy
+vagrant-destroy:
+	vagrant destroy -f
+
+.PHONY: vagrant-halt
+vagrant-halt:
+	vagrant halt

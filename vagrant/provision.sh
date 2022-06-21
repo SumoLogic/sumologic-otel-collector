@@ -1,13 +1,6 @@
 #!/usr/bin/env bash
 
-export BUILDER_VERSION="$(grep '^BUILDER_VERSION' /sumologic/otelcolbuilder/Makefile | sed 's/BUILDER_VERSION ?= //')"
 export GO_VERSION=1.18
-
-# Install opentelemetry-collector-builder
-curl -LJ \
-    "https://github.com/open-telemetry/opentelemetry-collector-builder/releases/download/v${BUILDER_VERSION}/opentelemetry-collector-builder_${BUILDER_VERSION}_linux_amd64" \
-    -o /usr/local/bin/opentelemetry-collector-builder \
-    && chmod +x /usr/local/bin/opentelemetry-collector-builder
 
 sudo apt update -y
 sudo apt install -y \
@@ -21,6 +14,10 @@ curl -LJ "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" -o go.linux-
     && tar -C /usr/local -xzf go.linux-amd64.tar.gz \
     && rm go.linux-amd64.tar.gz \
     && ln -s /usr/local/go/bin/go /usr/local/bin
+
+# Install opentelemetry-collector-builder
+
+su vagrant -c 'export PATH="${PATH}:/home/vagrant/bin"; make -C /sumologic/otelcolbuilder/ install-builder'
 
 # Install ansible
 pip3 install ansible
@@ -61,6 +58,7 @@ systemctl start puppet
 systemctl enable puppet
 
 echo 'PATH="$PATH:/opt/puppetlabs/bin/"' >> /etc/profile
+echo 'PATH="$PATH:/home/vagrant/bin:/home/vagrant/go/bin"' >> /home/vagrant/.bashrc
 sed -i 's#secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"#secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/opt/puppetlabs/bin"#g' /etc/sudoers
 
 # Install chef
