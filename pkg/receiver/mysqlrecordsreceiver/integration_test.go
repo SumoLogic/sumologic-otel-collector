@@ -1,8 +1,8 @@
 package mysqlrecordsreceiver
 
 import (
+	"bytes"
 	"context"
-	"fmt"
 	"net"
 	"path/filepath"
 	"testing"
@@ -13,6 +13,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/consumer/consumertest"
+	"go.opentelemetry.io/collector/pdata/plog"
 )
 
 func TestMySQLReceiverIntegration(t *testing.T) {
@@ -43,8 +44,11 @@ func TestMySQLReceiverIntegration(t *testing.T) {
 		return len(consumer.AllLogs()) > 0
 	}, 2*time.Minute, 1*time.Second, "failed to receive more than 0 logs")
 	actualLog := consumer.AllLogs()[0]
-	fmt.Println(actualLog)
-
+	logsMarshaler := plog.NewJSONMarshaler()
+	buf, err := logsMarshaler.MarshalLogs(actualLog)
+	require.NoError(t, err, "failed marshalling log record")
+	logRecord := bytes.NewBuffer(buf).String()
+	require.NotEmpty(t, logRecord)
 	require.NoError(t, receiver.Shutdown(context.Background()))
 }
 

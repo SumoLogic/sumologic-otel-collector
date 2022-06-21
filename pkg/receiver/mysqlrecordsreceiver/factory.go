@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	typeStr = "mysql"
+	typeStr = "mysqlrecords"
 )
 
 func NewFactory() component.ReceiverFactory {
