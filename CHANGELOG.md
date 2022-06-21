@@ -16,7 +16,7 @@ and begin support of arm64 architecture for Darwin OS.
 ### Added
 
 - feat: build arm64 binary for darwin [#611]
-- feat: add missing core receivers, processors and extensions [#595], [#604], [#614]
+- feat: add missing core receivers, processors and extensions [#597], [#604], [#614]
 
 ### Fixed
 
@@ -28,7 +28,7 @@ and begin support of arm64 architecture for Darwin OS.
 - feat(journaldreceiver): add missing dependencies [#577]
 
 [v0.53.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.52.0-sumo-0...v0.53.0-sumo-0
-[#595]: https://github.com/SumoLogic/sumologic-otel-collector/pull/595
+[#597]: https://github.com/SumoLogic/sumologic-otel-collector/pull/597
 [#577]: https://github.com/SumoLogic/sumologic-otel-collector/pull/577
 [#604]: https://github.com/SumoLogic/sumologic-otel-collector/pull/604
 [#611]: https://github.com/SumoLogic/sumologic-otel-collector/pull/611
