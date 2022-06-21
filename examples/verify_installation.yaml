@@ -1,0 +1,25 @@
+exporters:
+  sumologic:
+  logging:
+
+extensions:
+  file_storage:
+    directory: .
+  sumologic:
+    collector_name: sumologic-demo
+    install_token: ${SUMOLOGIC_INSTALL_TOKEN}
+
+receivers:
+  filelog:
+    include:
+    - /tmp/sumologic-otc-example.log
+    include_file_name: false
+    include_file_path_resolved: true
+    start_at: end
+
+service:
+  extensions: [file_storage, sumologic]
+  pipelines:
+    logs:
+      receivers: [filelog]
+      exporters: [sumologic, logging]

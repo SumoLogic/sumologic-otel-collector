@@ -10,6 +10,7 @@ the container images stored in AWS Public ECR under the following repository:
   - [MacOS on amd64 (x86-64)](#macos-on-amd64-x86-64)
   - [MacOS on arm64 (Apple M1)](#macos-on-arm64-apple-m1-x86-64)
   - [Upgrading standalone installation](#upgrading-standalone-installation)
+  - [Verify the installation](#verify-the-installation)
 - [Container image](#container-image)
 - [Systemd service](#systemd-service)
 - [Ansible](#ansible)
@@ -29,7 +30,7 @@ Follow the steps for your platform below.
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.50.0-sumo-0/otelcol-sumo-0.50.0-sumo-0-linux_amd64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.53.0-sumo-0/otelcol-sumo-0.53.0-sumo-0-linux_amd64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -39,21 +40,17 @@ Follow the steps for your platform below.
     sudo mv otelcol-sumo /usr/local/bin/otelcol-sumo
     ```
 
-1. Verify the installation:
-
-    ```bash
-    otelcol-sumo --version
-    ```
+1. [Verify the installation](#verify-the-installation)
 
 1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
 
-> **IMPORTANT NOTE**:
-> It is recommended to limit access to the configuration file as it contains sensitive information.
-> You can change access permissions to the configuration file using:
->
-> ```bash
-> chmod 640 config.yaml
-> ```
+   > **IMPORTANT NOTE**:
+   > It is recommended to limit access to the configuration file as it contains sensitive information.
+   > You can change access permissions to the configuration file using:
+   >
+   > ```bash
+   > chmod 640 config.yaml
+   > ```
 
 1. Run Sumo Logic Distribution for OpenTelemetry Collector:
 
@@ -66,7 +63,7 @@ Follow the steps for your platform below.
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.50.0-sumo-0/otelcol-sumo-0.50.0-sumo-0-linux_arm64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.53.0-sumo-0/otelcol-sumo-0.53.0-sumo-0-linux_arm64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -76,21 +73,17 @@ Follow the steps for your platform below.
     sudo mv otelcol-sumo /usr/local/bin/otelcol-sumo
     ```
 
-1. Verify the installation:
-
-    ```bash
-    otelcol-sumo --version
-    ```
+1. [Verify the installation](#verify-the-installation)
 
 1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
 
-> **IMPORTANT NOTE**:
-> It is recommended to limit access to the configuration file as it contains sensitive information.
-> You can change access permissions to the configuration file using:
->
-> ```bash
-> chmod 640 config.yaml
-> ```
+   > **IMPORTANT NOTE**:
+   > It is recommended to limit access to the configuration file as it contains sensitive information.
+   > You can change access permissions to the configuration file using:
+   >
+   > ```bash
+   > chmod 640 config.yaml
+   > ```
 
 1. Run Sumo Logic Distribution for OpenTelemetry Collector:
 
@@ -103,7 +96,7 @@ Follow the steps for your platform below.
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.50.0-sumo-0/otelcol-sumo-0.50.0-sumo-0-darwin_amd64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.53.0-sumo-0/otelcol-sumo-0.53.0-sumo-0-darwin_amd64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -113,21 +106,17 @@ Follow the steps for your platform below.
     sudo mv otelcol-sumo /usr/local/bin/otelcol-sumo
     ```
 
-1. Verify the installation:
-
-    ```bash
-    otelcol-sumo --version
-    ```
+1. [Verify the installation](#verify-the-installation)
 
 1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
 
-> **IMPORTANT NOTE**:
-> It is recommended to limit access to the configuration file as it contains sensitive information.
-> You can change access permissions to the configuration file using:
->
-> ```bash
-> chmod 640 config.yaml
-> ```
+   > **IMPORTANT NOTE**:
+   > It is recommended to limit access to the configuration file as it contains sensitive information.
+   > You can change access permissions to the configuration file using:
+   >
+   > ```bash
+   > chmod 640 config.yaml
+   > ```
 
 1. Run Sumo Logic Distribution for OpenTelemetry Collector:
 
@@ -137,7 +126,36 @@ Follow the steps for your platform below.
 
 ### MacOS on arm64 (Apple M1) (x86-64)
 
-This is currently not a supported platform. Manually building for it might work, but we haven't tested it.
+1. Download the release binary:
+
+    ```bash
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.53.0-sumo-0/otelcol-sumo-0.53.0-sumo-0-darwin_arm64"
+    ```
+
+1. Install the release binary in your `PATH`:
+
+    ```bash
+    chmod +x otelcol-sumo
+    sudo mv otelcol-sumo /usr/local/bin/otelcol-sumo
+    ```
+
+1. [Verify the installation](#verify-the-installation)
+
+1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
+
+   > **IMPORTANT NOTE**:
+   > It is recommended to limit access to the configuration file as it contains sensitive information.
+   > You can change access permissions to the configuration file using:
+   >
+   > ```bash
+   > chmod 640 config.yaml
+   > ```
+
+1. Run Sumo Logic OT Distro:
+
+   ```bash
+   otelcol-sumo --config config.yaml
+   ```
 
 ### Upgrading standalone installation
 
@@ -149,6 +167,75 @@ for potential breaking changes that would require manual migration steps.
 
 [github_releases]: https://github.com/SumoLogic/sumologic-otel-collector/releases
 
+### Verify the installation
+
+1. First of all, verify if `otelcol-sumo` is in proper version:
+
+   ```bash
+   otelcol-sumo --version
+   ```
+
+1. In order to validate installation, [the example configuration](../examples/verify_installation.yaml) can be used.
+   It instructs the Sumo Logic Distribution to read logs from `/tmp/sumologic-demo.log` and sends them to Sumo Logic.
+
+   > **Note**: For better understanding please follow [configuration document](./Configuration.md).
+
+   Content of the example configuration is listed below:
+
+   ```yaml
+   exporters:
+     sumologic:
+     logging:
+
+   extensions:
+     file_storage:
+       directory: .
+     sumologic:
+       collector_name: sumologic-demo
+       install_token: ${SUMOLOGIC_INSTALL_TOKEN}
+
+   receivers:
+     filelog:
+       include:
+       - /tmp/sumologic-otc-example.log
+       include_file_name: false
+       include_file_path_resolved: true
+       start_at: end
+
+   service:
+     extensions: [file_storage, sumologic]
+     pipelines:
+       logs:
+         receivers: [filelog]
+         exporters: [sumologic, logging]
+   ```
+
+   Please save configuration as `config.yaml`.
+
+1. In order to run the binary it you will also need an [installation token][sumologic_docs_install_token].
+
+   If you have an installation token, you can run otelcol with the example configuration:
+
+   ```bash
+   export TOKEN=<TOKEN>
+   ./otelcol-sumo --config=config.yaml
+   ```
+
+1. Run `_collector=sumologic-demo` query in [Live Tail][live_tail]
+
+1. Please generate some logs in another window:
+
+   ```bash
+   echo "$(date --utc) ${hostname} INFO: Hello, Sumo Logic OpenTelemetry Collector Distro\!" >> /tmp/sumologic-otc-example.log
+   ```
+
+1. You should be able to see the log in [Live Tail][live_tail] after a few seconds:
+
+   ![live_tail_image](../images/live_tail.png)
+
+[sumologic_docs_install_token]: https://help.sumologic.com/Manage/Security/Installation_Tokens
+[live_tail]: https://help.sumologic.com/05Search/Live-Tail/About-Live-Tail#start-a-live-tail-session
+
 ## Container image
 
 To run the Sumo Logic Distribution for OpenTelemetry Collector in a container, you only need to run the container
@@ -159,18 +246,18 @@ repository.
 1. Set the release version variable:
 
    ```bash
-   export RELEASE_VERSION=0.50.0-sumo-0
+   export RELEASE_VERSION=0.53.0-sumo-0
    ```
 
 1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
 
-> **IMPORTANT NOTE**:
-> It is recommended to limit access to the configuration file as it contains sensitive information.
-> You can change access permissions to the configuration file using:
->
-> ```bash
-> chmod 640 config.yaml
-> ```
+   > **IMPORTANT NOTE**:
+   > It is recommended to limit access to the configuration file as it contains sensitive information.
+   > You can change access permissions to the configuration file using:
+   >
+   > ```bash
+   > chmod 640 config.yaml
+   > ```
 
 1. Run the Sumo Logic Distribution for OpenTelemetry Collector in container, e.g.
 
