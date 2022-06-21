@@ -1,4 +1,4 @@
-package mysqlreceiver
+package mysqlrecordsreceiver
 
 import (
 	"crypto/aes"

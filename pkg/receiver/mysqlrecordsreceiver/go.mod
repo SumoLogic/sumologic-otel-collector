@@ -1,4 +1,4 @@
-module local/mysqlreceiver
+module local/mysqlrecordsreceiver
 
 go 1.18
 
