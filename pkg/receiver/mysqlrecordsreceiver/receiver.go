@@ -1,4 +1,4 @@
-package mysqlreceiver
+package mysqlrecordsreceiver
 
 import (
 	"context"
@@ -28,24 +28,30 @@ func newMySQLReceiver(logger *zap.Logger, conf *Config, next consumer.Logs) (com
 
 func (m *mySQLReceiver) produce(records chan<- string, id int, wg *sync.WaitGroup, queryChan <-chan DBQueries) {
 	defer wg.Done()
+	var recordcount int
 	for query := range queryChan {
 		channelData, err := m.sqlclient.getRecords(&query)
 		if err != nil {
 			m.logger.Error("Failed to fetch records", zap.Error(err))
 		} else {
 			for _, msg := range channelData {
+				recordcount++
 				records <- msg
 			}
 		}
 	}
+	m.logger.Info("Total records extracted and produced:", zap.Int("count", recordcount))
 }
 
 func (m *mySQLReceiver) consume(records <-chan string, id int, wg *sync.WaitGroup, ctx context.Context) {
 	defer wg.Done()
+	var recordcount int
 	for msg := range records {
+		recordcount++
 		logs := m.convertToLog(msg)
 		m.consumer.ConsumeLogs(ctx, logs)
 	}
+	m.logger.Info("Total records converted and consumed:", zap.Int("count", recordcount))
 }
 
 // start starts the receiver by initializing the db client connection.
@@ -55,6 +61,7 @@ func (m *mySQLReceiver) Start(ctx context.Context, host component.Host) error {
 	if err != nil {
 		return err
 	}
+	m.logger.Info("DB Connection successful")
 	m.sqlclient = sqlclient
 	records := make(chan string)
 	queryChan := make(chan DBQueries)
@@ -87,6 +94,7 @@ func (m *mySQLReceiver) Start(ctx context.Context, host component.Host) error {
 	wp.Wait()
 	close(records)
 	wc.Wait()
+	m.logger.Info("Records extracted, converted to logs and consumed")
 	return nil
 }
 
