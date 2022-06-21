@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"time"
 
@@ -53,7 +52,6 @@ func generateIAMAuthToken(endpoint string, conf *Config, logger *zap.Logger) (to
 	if err != nil {
 		logger.Error("configuration error:", zap.Error(err))
 	}
-	fmt.Println(cfg.Credentials)
 	authenticationToken, err := auth.BuildAuthToken(
 		context.TODO(), endpoint, conf.Region, conf.Username, cfg.Credentials)
 	if err != nil {
