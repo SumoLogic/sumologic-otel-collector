@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/storagetest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"
@@ -34,6 +35,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
+	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
 	cachetest "k8s.io/client-go/tools/cache/testing"
@@ -300,6 +302,21 @@ func TestGetEventTimestamp(t *testing.T) {
 	k8sEvent.EventTime = v1.MicroTime(v1.Now())
 	eventTimestamp = getEventTimestamp(k8sEvent)
 	assert.Equal(t, k8sEvent.EventTime.Time, eventTimestamp)
+}
+
+func TestStorage(t *testing.T) {
+	ctx := context.Background()
+	config := createDefaultConfig()
+	sink := new(consumertest.LogsSink)
+	fakeClientFactory := func(apiConf APIConfig) (k8s.Interface, error) {
+		return fake.NewSimpleClientset(), nil
+	}
+	receiver, err := createLogsReceiverWithClient(ctx, componenttest.NewNopReceiverCreateSettings(), config, sink, fakeClientFactory)
+	require.NoError(t, err, "failed to create receiver")
+
+	storageDir := t.TempDir()
+	host := storagetest.NewStorageHost(t, storageDir, "test")
+	require.NoError(t, receiver.Start(ctx, host))
 }
 
 func getEvent() *corev1.Event {
