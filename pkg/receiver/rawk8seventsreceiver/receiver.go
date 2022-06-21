@@ -262,6 +262,7 @@ func (r *rawK8sEventsReceiver) processEventChangeLoop() {
 // this includes: checking if we should process the event, converting it into a plog.Logs
 // and sending it to the next consumer in the pipeline
 func (r *rawK8sEventsReceiver) processEventChange(ctx context.Context, eventChange *eventChange) {
+	r.recordEventProcessed(eventChange.event)
 	if !r.isEventAccepted(eventChange.event) {
 		r.logger.Debug("skipping event, too old", zap.Any("event", eventChange.event))
 		return
@@ -281,6 +282,14 @@ func (r *rawK8sEventsReceiver) processEventChange(ctx context.Context, eventChan
 	}
 }
 
+func (r *rawK8sEventsReceiver) recordEventProcessed(event *corev1.Event) {
+	if r.storage == nil {
+		return
+	}
+
+	r.storage.Set(r.ctx, "startResourceVersion", []byte(event.ResourceVersion))
+}
+
 // Check if we should process the event.
 // If a start resource version was retrieved from storage, compare that to the incoming event's resource version.
 // Otherwise, check event time and compare it to collector's start time.
@@ -296,7 +305,7 @@ func (r *rawK8sEventsReceiver) isEventAccepted(event *corev1.Event) bool {
 			return true
 		}
 
-		incomingEventIsNewer := incomingEventResourceVersion >= r.startResourceVersion
+		incomingEventIsNewer := incomingEventResourceVersion > r.startResourceVersion
 		if incomingEventIsNewer {
 			r.logger.Debug("Incoming event is accepted as it is newer.",
 				zap.Any("incoming_event_version", incomingEventResourceVersion),
