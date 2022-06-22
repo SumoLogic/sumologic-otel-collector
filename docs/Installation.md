@@ -180,7 +180,7 @@ for potential breaking changes that would require manual migration steps.
 
    > **Note**: For better understanding please follow [configuration document](./Configuration.md).
 
-   Content of the example configuration is listed below:
+   The example configuration:
 
    ```yaml
    exporters:
