@@ -223,7 +223,7 @@ for potential breaking changes that would require manual migration steps.
 
 1. Run `_collector=sumologic-demo` query in [Live Tail][live_tail]
 
-1. Please generate some logs in another window:
+1. Generate some logs in another window:
 
    ```bash
    echo "$(date --utc) ${hostname} INFO: Hello, Sumo Logic OpenTelemetry Collector Distro\!" >> /tmp/sumologic-otc-example.log
