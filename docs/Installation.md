@@ -175,8 +175,8 @@ for potential breaking changes that would require manual migration steps.
    otelcol-sumo --version
    ```
 
-1. In order to validate installation, [the example configuration](../examples/verify_installation.yaml) can be used.
-   It instructs the Sumo Logic Distribution to read logs from `/tmp/sumologic-demo.log` and sends them to Sumo Logic.
+1. In order to validate the installation, [the example configuration](../examples/verify_installation.yaml) can be used.
+   It instructs the Sumo Logic Distribution to read logs from `/tmp/sumologic-demo.log` and send them to Sumo Logic.
 
    > **Note**: For better understanding please follow [configuration document](./Configuration.md).
 
