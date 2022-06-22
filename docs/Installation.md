@@ -169,7 +169,7 @@ for potential breaking changes that would require manual migration steps.
 
 ### Verify the installation
 
-1. First of all, verify if `otelcol-sumo` is in proper version:
+1. First of all, verify if `otelcol-sumo` is the right version:
 
    ```bash
    otelcol-sumo --version
