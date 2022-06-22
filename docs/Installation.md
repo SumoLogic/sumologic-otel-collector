@@ -212,7 +212,7 @@ for potential breaking changes that would require manual migration steps.
 
    Please save this configuration as `config.yaml`.
 
-1. In order to run the binary it you will also need an [installation token][sumologic_docs_install_token].
+1. In order to send data to Sumo you will also need an [installation token][sumologic_docs_install_token].
 
    If you have an installation token, you can run otelcol with the example configuration:
 
