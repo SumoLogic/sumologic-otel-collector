@@ -210,7 +210,7 @@ for potential breaking changes that would require manual migration steps.
          exporters: [sumologic, logging]
    ```
 
-   Please save configuration as `config.yaml`.
+   Please save this configuration as `config.yaml`.
 
 1. In order to run the binary it you will also need an [installation token][sumologic_docs_install_token].
 
