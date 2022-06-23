@@ -22,7 +22,9 @@ func getStateValueINT(dbquery *DBQueries, logger *zap.Logger) string {
 	if dbquery.InitialIndexColumnStartValue == "" {
 		logger.Info("initial_index_column_start_value int not specified, considering default as 0 for:", zap.String("queryId", dbquery.QueryId))
 		stateValue = strconv.Itoa(startval)
-	} else if dbquery.InitialIndexColumnStartValue != "" {
+	} else if dbquery.InitialIndexColumnStartValue == "0" {
+		stateValue = dbquery.InitialIndexColumnStartValue
+	} else {
 		startval, err := strconv.Atoi(dbquery.InitialIndexColumnStartValue)
 		if err != nil {
 			stateValue = strconv.Itoa(startval)
@@ -81,9 +83,27 @@ func GetState(dbquery *DBQueries, logger *zap.Logger) string {
 		} else {
 			// Able to read state file, so extract state value.
 			// State is maintained in 4th column in csv file of now
-			reader := csv.NewReader(csvFile)
-			records, _ := reader.ReadAll()
-			stateValue = records[1][3]
+			if dbquery.IndexColumnType == "INT" {
+				configFileStateValue := getStateValueINT(dbquery, logger)
+				reader := csv.NewReader(csvFile)
+				records, _ := reader.ReadAll()
+				stateFileStateValue := records[1][3]
+				if configFileStateValue != "" && configFileStateValue != stateFileStateValue {
+					stateValue = configFileStateValue
+				} else {
+					stateValue = stateFileStateValue
+				}
+			} else if dbquery.IndexColumnType == "TIMESTAMP" {
+				configFileStateValue := getStateValueTIMESTAMP(dbquery, logger)
+				reader := csv.NewReader(csvFile)
+				records, _ := reader.ReadAll()
+				stateFileStateValue := records[1][3]
+				if configFileStateValue != "" && configFileStateValue != stateFileStateValue {
+					stateValue = configFileStateValue
+				} else {
+					stateValue = stateFileStateValue
+				}
+			}
 		}
 	}
 	return stateValue
@@ -104,7 +124,10 @@ func SaveState(dbquery *DBQueries, stateValue string, logger *zap.Logger) {
 	csvwriter := csv.NewWriter(csvFile)
 
 	for _, empRow := range stateData {
-		_ = csvwriter.Write(empRow)
+		err = csvwriter.Write(empRow)
+		if err != nil {
+			logger.Error("Failed in writing in state file.", zap.Error(err))
+		}
 	}
 	csvwriter.Flush()
 	csvFile.Close()

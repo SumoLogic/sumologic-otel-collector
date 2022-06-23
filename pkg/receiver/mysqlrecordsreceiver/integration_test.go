@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"net"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -18,38 +19,44 @@ import (
 
 func TestMySQLReceiverIntegration(t *testing.T) {
 
-	container := getContainer(t, containerRequest8_0)
-	defer func() {
-		require.NoError(t, container.Terminate(context.Background()))
-	}()
-	hostname, err := container.Host(context.Background())
-	require.NoError(t, err)
+	t.Run("Running mysql version 8.0", func(t *testing.T) {
+		t.Parallel()
+		container := getContainer(t, containerRequest8_0)
+		defer func() {
+			require.NoError(t, container.Terminate(context.Background()))
+		}()
+		hostname, err := container.Host(context.Background())
+		require.NoError(t, err)
 
-	f := NewFactory()
-	cfg := f.CreateDefaultConfig().(*Config)
-	cfg.Endpoint = net.JoinHostPort(hostname, "3306")
-	cfg.Username = "otel"
-	cfg.Password = "otel"
-	cfg.Database = "information_schema"
-	cfg.DBQueries = make([]DBQueries, 1)
-	cfg.DBQueries[0].QueryId = "Q1"
-	cfg.DBQueries[0].Query = "Show tables"
+		f := NewFactory()
+		cfg := f.CreateDefaultConfig().(*Config)
+		cfg.Endpoint = net.JoinHostPort(hostname, "3306")
+		cfg.Username = "otel"
+		cfg.Password = "otel"
+		cfg.Database = "information_schema"
+		cfg.DBQueries = make([]DBQueries, 1)
+		cfg.DBQueries[0].QueryId = "Q1"
+		cfg.DBQueries[0].Query = "Show tables where Tables_in_information_schema='INNODB_TABLES'"
 
-	consumer := new(consumertest.LogsSink)
-	settings := componenttest.NewNopReceiverCreateSettings()
-	receiver, err := f.CreateLogsReceiver(context.Background(), settings, cfg, consumer)
-	require.NoError(t, err, "failed creating logs receiver")
-	require.NoError(t, receiver.Start(context.Background(), componenttest.NewNopHost()))
-	require.Eventuallyf(t, func() bool {
-		return len(consumer.AllLogs()) > 0
-	}, 2*time.Minute, 1*time.Second, "failed to receive more than 0 logs")
-	actualLog := consumer.AllLogs()[0]
-	logsMarshaler := plog.NewJSONMarshaler()
-	buf, err := logsMarshaler.MarshalLogs(actualLog)
-	require.NoError(t, err, "failed marshalling log record")
-	logRecord := bytes.NewBuffer(buf).String()
-	require.NotEmpty(t, logRecord)
-	require.NoError(t, receiver.Shutdown(context.Background()))
+		consumer := new(consumertest.LogsSink)
+		settings := componenttest.NewNopReceiverCreateSettings()
+		receiver, err := f.CreateLogsReceiver(context.Background(), settings, cfg, consumer)
+		require.NoError(t, err, "failed creating logs receiver")
+		require.NoError(t, receiver.Start(context.Background(), componenttest.NewNopHost()))
+		require.Eventuallyf(t, func() bool {
+			return len(consumer.AllLogs()) > 0
+		}, 2*time.Minute, 1*time.Second, "failed to receive more than 0 logs")
+		actualLog := consumer.AllLogs()[0]
+		logsMarshaler := plog.NewJSONMarshaler()
+		buf, err := logsMarshaler.MarshalLogs(actualLog)
+		require.NoError(t, err, "failed marshalling log record")
+		actualRecord := bytes.NewBuffer(buf).String()
+		expectedRecord, err := os.ReadFile(filepath.Join("testdata", "integration", "expected_mysql.8_0.json"))
+		require.NoError(t, err, "failed reading expected log record")
+		require.NotEmpty(t, actualRecord)
+		require.EqualValues(t, string(expectedRecord), actualRecord)
+		require.NoError(t, receiver.Shutdown(context.Background()))
+	})
 }
 
 var (
