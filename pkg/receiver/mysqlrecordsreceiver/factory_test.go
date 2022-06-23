@@ -14,7 +14,7 @@ import (
 func TestValidType(t *testing.T) {
 	factory := NewFactory()
 	ft := factory.Type()
-	require.EqualValues(t, "mysql", ft)
+	require.EqualValues(t, "mysqlrecords", ft)
 }
 
 func TestInvalidType(t *testing.T) {

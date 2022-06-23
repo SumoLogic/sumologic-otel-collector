@@ -4,7 +4,7 @@ exporters:
     sampling_initial: 0
     sampling_thereafter: 1
 receivers:
-  mysql:
+  mysqlrecords:
     authentication_mode: BasicAuth
     dbhost: localhost
     dbport: 3306
@@ -31,4 +31,4 @@ service:
   pipelines:
     logs:
       exporters: [logging]
-      receivers: [mysql]
+      receivers: [mysqlrecords]

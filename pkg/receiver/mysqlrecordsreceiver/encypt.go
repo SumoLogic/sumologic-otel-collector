@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var bytes = []byte{35, 46, 57, 24, 85, 35, 24, 74, 87, 35, 88, 98, 66, 32, 14, 05}
+var randombytes = []byte{35, 46, 57, 24, 85, 35, 24, 74, 87, 35, 88, 98, 66, 32, 14, 05}
 
 func readMySecret(conf *Config) (string, error) {
 	secret, err := os.ReadFile(conf.EncryptSecretPath)
@@ -38,7 +38,7 @@ func Encrypt(text, MySecret string, logger *zap.Logger) (string, error) {
 		logger.Error("error during encryption", zap.Error(err))
 	}
 	plainText := []byte(text)
-	cfb := cipher.NewCFBEncrypter(block, bytes)
+	cfb := cipher.NewCFBEncrypter(block, randombytes)
 	cipherText := make([]byte, len(plainText))
 	cfb.XORKeyStream(cipherText, plainText)
 	return Encode(cipherText), nil
@@ -51,7 +51,7 @@ func Decrypt(text, MySecret string, logger *zap.Logger) (string, error) {
 		logger.Error("error during decryption", zap.Error(err))
 	}
 	cipherText := Decode(text, logger)
-	cfb := cipher.NewCFBDecrypter(block, bytes)
+	cfb := cipher.NewCFBDecrypter(block, randombytes)
 	plainText := make([]byte, len(cipherText))
 	cfb.XORKeyStream(plainText, cipherText)
 	return string(plainText), nil
