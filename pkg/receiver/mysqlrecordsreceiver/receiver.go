@@ -69,16 +69,16 @@ func (m *mySQLReceiver) Start(ctx context.Context, host component.Host) error {
 	wc := &sync.WaitGroup{}
 	maxDBWorkers := 0
 	if m.config.SetMaxNoDatabaseWorkers == 0 {
-		if len(m.config.DBQueries) < 5 {
+		if len(m.config.DBQueries) < 10 {
 			maxDBWorkers = len(m.config.DBQueries)
 		} else {
-			maxDBWorkers = 5
+			maxDBWorkers = 10
 		}
 	} else {
-		if (m.config.SetMaxNoDatabaseWorkers) < 5 {
+		if (m.config.SetMaxNoDatabaseWorkers) < 10 {
 			maxDBWorkers = m.config.SetMaxNoDatabaseWorkers
 		} else {
-			maxDBWorkers = 5
+			maxDBWorkers = 10
 		}
 	}
 	wp.Add(maxDBWorkers)
