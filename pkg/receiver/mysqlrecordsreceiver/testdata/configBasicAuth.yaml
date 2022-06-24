@@ -1,6 +1,6 @@
 extensions:
   sumologic:
-    collector_name: MYSQL_DB_INTEGRATOR_TEST
+    collector_name: OTEL_MYSQL_DB_INTEGRATOR
     collector_category: collector_category
     install_token: U1VNT1dkVERFY1V3RklEQ2RnUUtTNEdrazk5aTVQeHlodHRwczovL3N0YWctZXZlbnRzLnN1bW9sb2dpYy5uZXQ=
     api_base_url: https://stag-open-events.sumologic.net
@@ -16,7 +16,7 @@ exporters:
       enabled: true
     log_format: otlp
   logging:
-    loglevel: debug
+    loglevel: info
     sampling_initial: 0
     sampling_thereafter: 1
 receivers:
