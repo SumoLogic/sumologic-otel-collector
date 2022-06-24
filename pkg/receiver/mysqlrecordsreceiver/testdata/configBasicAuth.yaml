@@ -1,4 +1,20 @@
+extensions:
+  sumologic:
+    collector_name: MYSQL_DB_INTEGRATOR_TEST
+    collector_category: collector_category
+    install_token: U1VNT1dkVERFY1V3RklEQ2RnUUtTNEdrazk5aTVQeHlodHRwczovL3N0YWctZXZlbnRzLnN1bW9sb2dpYy5uZXQ=
+    api_base_url: https://stag-open-events.sumologic.net
 exporters:
+  sumologic:
+    auth:
+      authenticator: sumologic
+    source_category: "MYSQL_DB_Collector"
+    source_name: "http input"
+    source_host: "mysqlRecords"
+    compress_encoding: ""
+    sending_queue:
+      enabled: true
+    log_format: otlp
   logging:
     loglevel: debug
     sampling_initial: 0
@@ -28,7 +44,8 @@ receivers:
     setmaxidleconns: 10
     setmaxnodatabaseworkers: 1
 service:
+  extensions: [sumologic]
   pipelines:
     logs:
-      exporters: [logging]
+      exporters: [sumologic,logging]
       receivers: [mysqlrecords]
