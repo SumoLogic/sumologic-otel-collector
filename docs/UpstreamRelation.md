@@ -4,9 +4,9 @@ This document describes what is purpose of this repository,
 why do we provide another OpenTelemetry Collector distrubution and
 how look like our versioning and breaking changes policies.
 
-## Purpose of Sumo Logic OT Distro
+## Purpose of Sumo Logic Distribution for OpenTelemetry Collector
 
-Sumo Logic OT Distro is the OpenTelemetry Collector with addition of Sumo Logic specific changes.
+Sumo Logic Distribution for OpenTelemetry Collector is the OpenTelemetry Collector with addition of Sumo Logic specific changes.
 
 **Our aim is to extend and not to replace the OpenTelemetry Collector.**
 
@@ -27,8 +27,8 @@ and to provide better customer support:
 
 ## Versioning policy
 
-We are using upstream OpenTelemetry Collector version numbers as the base for the Sumo Logic OT Distro version numbers.
-This means that Sumo Logic OT Distro Collector `v0.47.0-sumo-0` is based on `v0.47.0`
+We are using upstream OpenTelemetry Collector version numbers as the base for the Sumo Logic Distribution for OpenTelemetry Collector version numbers.
+This means that Sumo Logic Distribution for OpenTelemetry Collector `v0.47.0-sumo-0` is based on `v0.47.0`
 of the OpenTelemetry Collector core and contrib packages.
 
 In order to prevent confusion we are going to add Sumo Logic specific features

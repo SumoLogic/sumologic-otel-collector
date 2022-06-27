@@ -1,16 +1,16 @@
 # enable unified mode
 unified_mode true
 
-# version of Sumo Logic Distro of OpenTelemetry Collector
+# version of Sumo Logic Distribution for OpenTelemetry Collector
 # rel: https://github.com/SumoLogic/sumologic-otel-collector/releases
 property :version, String, default: '0.50.0-sumo-0'
-# path to configuration file for Sumo Logic Distro of OpenTelemetry Collector
+# path to configuration file for Sumo Logic Distribution for OpenTelemetry Collector
 property :src_config_path, String, default: '/sumologic/examples/config_logging.yaml'
-# defines the throttling limit on memory usage for Sumo Logic Distro of OpenTelemetry Collector
+# defines the throttling limit on memory usage for Sumo Logic Distribution for OpenTelemetry Collector
 property :memory_high, String, default: '200M'
-# defines the absolute limit on memory usage for Sumo Logic Distro of OpenTelemetry Collector
+# defines the absolute limit on memory usage for Sumo Logic Distribution for OpenTelemetry Collector
 property :memory_max, String, default: '300M'
-# enables creation of Systemd Service for Sumo Logic Distro of OpenTelemetry Collector
+# enables creation of Systemd Service for Sumo Logic Distribution for OpenTelemetry Collector
 property :systemd_service, [true, false] , default: true
 # os architecture
 property :os_arch, ['amd64', 'arm_64'], default: 'amd64'

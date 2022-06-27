@@ -1,6 +1,6 @@
 # Installation
 
-The Sumo Logic OT Distro can be run using either the binary file available in [Github releases][github_releases] or
+The Sumo Logic Distribution for OpenTelemetry Collector can be run using either the binary file available in [Github releases][github_releases] or
 the container images stored in AWS Public ECR under the following repository:
 [public.ecr.aws/sumologic/sumologic-otel-collector](https://gallery.ecr.aws/sumologic/sumologic-otel-collector).
 
@@ -18,7 +18,7 @@ the container images stored in AWS Public ECR under the following repository:
 
 ## Standalone
 
-The Sumo Logic OT Distro is a static Go binary.
+Sumo Logic Distribution for OpenTelemetry Collector is a static Go binary.
 To run it as a standalone process you only need to run the binary file downloaded from
 [Github releases][github_releases] with an appropriate configuration.
 
@@ -55,7 +55,7 @@ Follow the steps for your platform below.
 > chmod 640 config.yaml
 > ```
 
-1. Run Sumo Logic OT Distro:
+1. Run Sumo Logic Distribution for OpenTelemetry Collector:
 
    ```bash
    otelcol-sumo --config config.yaml
@@ -92,7 +92,7 @@ Follow the steps for your platform below.
 > chmod 640 config.yaml
 > ```
 
-1. Run Sumo Logic OT Distro:
+1. Run Sumo Logic Distribution for OpenTelemetry Collector:
 
    ```bash
    otelcol-sumo --config config.yaml
@@ -129,7 +129,7 @@ Follow the steps for your platform below.
 > chmod 640 config.yaml
 > ```
 
-1. Run Sumo Logic OT Distro:
+1. Run Sumo Logic Distribution for OpenTelemetry Collector:
 
    ```bash
    otelcol-sumo --config config.yaml
@@ -151,7 +151,7 @@ for potential breaking changes that would require manual migration steps.
 
 ## Container image
 
-To run the Sumo Logic OT Distro in a container, you only need to run the container
+To run the Sumo Logic Distribution for OpenTelemetry Collector in a container, you only need to run the container
 using the image available in the
 [public.ecr.aws/sumologic/sumologic-otel-collector](https://gallery.ecr.aws/sumologic/sumologic-otel-collector)
 repository.
@@ -172,7 +172,7 @@ repository.
 > chmod 640 config.yaml
 > ```
 
-1. Run the Sumo Logic OT Distro in container, e.g.
+1. Run the Sumo Logic Distribution for OpenTelemetry Collector in container, e.g.
 
     ```bash
     $ docker run --rm -ti --name sumologic-otel-collector -v "$(pwd)/config.yaml:/etc/config.yaml" "public.ecr.aws/sumologic/sumologic-otel-collector:${RELEASE_VERSION}" --config /etc/config.yaml
@@ -195,7 +195,7 @@ repository.
 
 > **IMPORTANT NOTE**:
 >
-> When running Sumo Logic OT distro in a container with [`sumologicextension`][sumologicextension],
+> When running Sumo Logic Distribution for OpenTelemetry Collector in a container with [`sumologicextension`][sumologicextension],
 > one needs to take into account the local state files which are being used locally
 > in order to store collector credentials upon successful collector registration.
 >
@@ -312,15 +312,15 @@ To run opentelemetry collector as Systemd Service please apply following steps:
 
 ## Ansible
 
-Example installation of Sumo Logic Distro of OpenTelemetry Collector with Ansible is described in
+Example installation of Sumo Logic Distribution for OpenTelemetry Collector with Ansible is described in
 [examples/ansible](../examples/ansible/README.md).
 
 ## Puppet
 
-Example installation of Sumo Logic Distro of OpenTelemetry Collector with Puppet is described in
+Example installation of Sumo Logic Distribution for OpenTelemetry Collector with Puppet is described in
 [examples/puppet](../examples/puppet/README.md).
 
 ## Chef
 
-Example installation of Sumo Logic Distro of OpenTelemetry Collector with Chef is described in
+Example installation of Sumo Logic Distribution for OpenTelemetry Collector with Chef is described in
 [examples/chef](../examples/chef/README.md).
