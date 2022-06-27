@@ -155,9 +155,13 @@ func (r *rawK8sEventsReceiver) Start(ctx context.Context, host component.Host) e
 }
 
 // Shutdown is invoked during service shutdown.
-func (r *rawK8sEventsReceiver) Shutdown(context.Context) error {
+func (r *rawK8sEventsReceiver) Shutdown(ctx context.Context) error {
 	r.cancel()
-	return nil
+	var err error
+	if r.storage != nil {
+		err = r.storage.Close(ctx)
+	}
+	return err
 }
 
 func (r *rawK8sEventsReceiver) getStorage(ctx context.Context, host component.Host) (storage.Client, error) {
