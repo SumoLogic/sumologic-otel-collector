@@ -46,16 +46,18 @@ var severityMap = map[string]plog.SeverityNumber{
 	"warning": plog.SeverityNumberWARN,
 }
 
+const latestResourceVersionStorageKey string = "latestResourceVersion"
+
 type rawK8sEventsReceiver struct {
-	cfg                  *Config
-	client               k8s.Interface
-	eventControllers     []cache.Controller
-	eventCh              chan *eventChange
-	ctx                  context.Context
-	cancel               context.CancelFunc
-	startTime            time.Time
-	storage              storage.Client
-	startResourceVersion uint64
+	cfg                   *Config
+	client                k8s.Interface
+	eventControllers      []cache.Controller
+	eventCh               chan *eventChange
+	ctx                   context.Context
+	cancel                context.CancelFunc
+	startTime             time.Time
+	storage               storage.Client
+	latestResourceVersion uint64
 
 	consumer consumer.Logs
 	logger   *zap.Logger
@@ -138,9 +140,9 @@ func (r *rawK8sEventsReceiver) Start(ctx context.Context, host component.Host) e
 		return fmt.Errorf("error when getting storage: %s", err)
 	}
 
-	r.startResourceVersion, err = r.getStartResourceVersion(ctx)
+	r.latestResourceVersion, err = r.getLatestResourceVersion(ctx)
 	if err != nil {
-		return fmt.Errorf("error when getting start resource version: %s", err)
+		return fmt.Errorf("error when getting latest resource version: %s", err)
 	}
 
 	r.ctx, r.cancel = context.WithCancel(ctx)
@@ -196,30 +198,30 @@ func (r *rawK8sEventsReceiver) getStorage(ctx context.Context, host component.Ho
 	return storageClient, nil
 }
 
-func (r *rawK8sEventsReceiver) getStartResourceVersion(ctx context.Context) (uint64, error) {
+func (r *rawK8sEventsReceiver) getLatestResourceVersion(ctx context.Context) (uint64, error) {
 	if r.storage == nil {
-		r.logger.Info("Did not find start resource version, as there is no storage.")
+		r.logger.Info("Did not find latest resource version, as there is no storage.")
 		return 0, nil
 	}
 
-	startResourceVersionBytes, err := r.storage.Get(ctx, "startResourceVersion")
+	latestResourceVersionBytes, err := r.storage.Get(ctx, latestResourceVersionStorageKey)
 	if err != nil {
-		return 0, fmt.Errorf("failed to retrieve start resource version from storage: %s", err)
+		return 0, fmt.Errorf("failed to retrieve latest resource version from storage: %s", err)
 	}
 
-	if startResourceVersionBytes == nil {
-		r.logger.Info("Start resource version not found in storage")
+	if latestResourceVersionBytes == nil {
+		r.logger.Info("Latest resource version not found in storage")
 		return 0, nil
 	}
 
-	startResourceVersionString := string(startResourceVersionBytes)
-	startResourceVersion, err := strconv.ParseUint(startResourceVersionString, 10, 64)
+	latestResourceVersionString := string(latestResourceVersionBytes)
+	latestResourceVersion, err := strconv.ParseUint(latestResourceVersionString, 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf("failed to parse start resource version '%s' to number: %s", startResourceVersionString, err)
+		return 0, fmt.Errorf("failed to parse latest resource version '%s' to number: %s", latestResourceVersionString, err)
 	}
 
-	r.logger.Info("Found start resource version in storage", zap.Any("start_resource_version", startResourceVersion))
-	return startResourceVersion, nil
+	r.logger.Info("Found latest resource version in storage", zap.Any("latest_resource_version", latestResourceVersion))
+	return latestResourceVersion, nil
 }
 
 // Consume metrics and retry on recoverable errors
@@ -291,35 +293,35 @@ func (r *rawK8sEventsReceiver) recordEventProcessed(event *corev1.Event) {
 		return
 	}
 
-	r.storage.Set(r.ctx, "startResourceVersion", []byte(event.ResourceVersion))
+	r.storage.Set(r.ctx, latestResourceVersionStorageKey, []byte(event.ResourceVersion))
 }
 
 // Check if we should process the event.
-// If a start resource version was retrieved from storage, compare that to the incoming event's resource version.
+// If a latest resource version was retrieved from storage, compare that to the incoming event's resource version.
 // Otherwise, check event time and compare it to collector's start time.
 func (r *rawK8sEventsReceiver) isEventAccepted(event *corev1.Event) bool {
-	if r.startResourceVersion > 0 {
+	if r.latestResourceVersion > 0 {
 		incomingEventResourceVersion, err := strconv.ParseUint(event.ResourceVersion, 10, 64)
 		if err != nil {
 			r.logger.Debug("Failed checking if event is accepted, cannot convert incoming resource version to a number. Accepting the incoming event.",
 				zap.Error(err),
 				zap.Any("incoming_event_version", event.ResourceVersion),
-				zap.Any("start_resource_version", r.startResourceVersion),
+				zap.Any("latest_resource_version", r.latestResourceVersion),
 			)
 			return true
 		}
 
-		incomingEventIsNewer := incomingEventResourceVersion > r.startResourceVersion
+		incomingEventIsNewer := incomingEventResourceVersion > r.latestResourceVersion
 		if incomingEventIsNewer {
 			r.logger.Debug("Incoming event is accepted as it is newer.",
 				zap.Any("incoming_event_version", incomingEventResourceVersion),
-				zap.Any("start_resource_version", r.startResourceVersion),
+				zap.Any("latest_resource_version", r.latestResourceVersion),
 			)
 			return true
 		} else {
 			r.logger.Debug("Incoming event is NOT accepted, as it is older.",
 				zap.Any("incoming_event_version", incomingEventResourceVersion),
-				zap.Any("start_resource_version", r.startResourceVersion),
+				zap.Any("latest_resource_version", r.latestResourceVersion),
 			)
 			return false
 		}
