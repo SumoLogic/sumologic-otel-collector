@@ -35,7 +35,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
-	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
 	cachetest "k8s.io/client-go/tools/cache/testing"
@@ -121,7 +120,7 @@ func TestProcessEventE2E(t *testing.T) {
 	assert.NoError(t, err)
 	listWatch.Add(getEvent())
 	assert.Eventually(t, func() bool {
-		return assert.Equal(t, sink.LogRecordCount(), 1)
+		return assert.Equal(t, 1, sink.LogRecordCount())
 	}, time.Second, time.Millisecond)
 
 	err = r.Shutdown(ctx)
@@ -145,7 +144,7 @@ func TestProcessEvent(t *testing.T) {
 	eventChange := eventChange{getEvent(), eventChangeTypeAdded}
 	r.processEventChange(context.Background(), &eventChange)
 
-	assert.Equal(t, sink.LogRecordCount(), 1)
+	assert.Equal(t, 1, sink.LogRecordCount())
 }
 
 func TestConsumeRetryOnRecoverableError(t *testing.T) {
@@ -224,7 +223,7 @@ func TestConvertEventToLog(t *testing.T) {
 	eventChange := &eventChange{k8sEvent, eventChangeTypeAdded}
 	logs, err := r.convertToLog(eventChange)
 	assert.NoError(t, err)
-	assert.Equal(t, logs.LogRecordCount(), 1)
+	assert.Equal(t, 1, logs.LogRecordCount())
 
 	// check the standard log record fields: body, severity and timestamp
 	logRecord := logs.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0)
@@ -304,19 +303,151 @@ func TestGetEventTimestamp(t *testing.T) {
 	assert.Equal(t, k8sEvent.EventTime.Time, eventTimestamp)
 }
 
-func TestStorage(t *testing.T) {
-	ctx := context.Background()
-	config := createDefaultConfig()
-	sink := new(consumertest.LogsSink)
-	fakeClientFactory := func(apiConf APIConfig) (k8s.Interface, error) {
-		return fake.NewSimpleClientset(), nil
+func TestNoStorage(t *testing.T) {
+	receiverConfig := createDefaultConfig().(*Config)
+	logsSink := new(consumertest.LogsSink)
+	listWatch := cachetest.NewFakeControllerSource()
+	listWatchFactory := func(
+		c cache.Getter,
+		resource string,
+		namespace string,
+		fieldSelector fields.Selector,
+	) cache.ListerWatcher {
+		return listWatch
 	}
-	receiver, err := createLogsReceiverWithClient(ctx, componenttest.NewNopReceiverCreateSettings(), config, sink, fakeClientFactory)
-	require.NoError(t, err, "failed to create receiver")
 
+	receiver, err := newRawK8sEventsReceiver(
+		componenttest.NewNopReceiverCreateSettings(),
+		receiverConfig,
+		logsSink,
+		fake.NewSimpleClientset(),
+		listWatchFactory,
+	)
+	require.NoError(t, err)
+
+	// Create the first k8s event.
+	firstEvent := getEvent()
+	firstEvent.UID = types.UID("ec279341-e2d8-4b2a-b17d-6e0566481001")
+	listWatch.Add(firstEvent)
+
+	// Start the receiver without storage extension.
+	ctx := context.Background()
+	host := componenttest.NewNopHost()
+	assert.NoError(t, receiver.Start(ctx, host))
+
+	// Create the second k8s event.
+	secondEvent := getEvent()
+	firstEvent.UID = types.UID("ec279341-e2d8-4b2a-b17d-6e0566481002")
+	listWatch.Add(secondEvent)
+
+	// Both events should be picked up by the receiver.
+	assert.Eventually(t, func() bool {
+		return assert.Equal(t, 2, logsSink.LogRecordCount())
+	}, time.Second, 100*time.Millisecond)
+
+	// Shutdown the receiver.
+	assert.NoError(t, receiver.Shutdown(ctx))
+	for _, extension := range host.GetExtensions() {
+		require.NoError(t, extension.Shutdown(ctx))
+	}
+	logsSink.Reset()
+
+	// Create the third k8s event.
+	thirdEvent := getEvent()
+	thirdEvent.UID = types.UID("ec279341-e2d8-4b2a-b17d-6e0566481003")
+	listWatch.Add(thirdEvent)
+
+	// Start the receiver again.
+	receiver, err = newRawK8sEventsReceiver(
+		componenttest.NewNopReceiverCreateSettings(),
+		receiverConfig,
+		logsSink,
+		fake.NewSimpleClientset(),
+		listWatchFactory,
+	)
+	require.NoError(t, err)
+	assert.NoError(t, receiver.Start(ctx, componenttest.NewNopHost()))
+
+	// Since the receiver has no storage, it should pick up events from last minute on start
+	// which means it should get all three events.
+	assert.Eventually(t, func() bool {
+		return assert.Equal(t, 3, logsSink.LogRecordCount())
+	}, time.Second, 100*time.Millisecond)
+}
+
+func TestStorage(t *testing.T) {
+	receiverConfig := createDefaultConfig().(*Config)
+	logsSink := new(consumertest.LogsSink)
+	listWatch := cachetest.NewFakeControllerSource()
+	listWatchFactory := func(
+		c cache.Getter,
+		resource string,
+		namespace string,
+		fieldSelector fields.Selector,
+	) cache.ListerWatcher {
+		return listWatch
+	}
+
+	receiver, err := newRawK8sEventsReceiver(
+		componenttest.NewNopReceiverCreateSettings(),
+		receiverConfig,
+		logsSink,
+		fake.NewSimpleClientset(),
+		listWatchFactory,
+	)
+	require.NoError(t, err)
+
+	// Create the first k8s event.
+	firstEvent := getEvent()
+	firstEvent.UID = types.UID("ec279341-e2d8-4b2a-b17d-6e0566481001")
+	listWatch.Add(firstEvent)
+
+	// Start the receiver with storage extension.
+	ctx := context.Background()
 	storageDir := t.TempDir()
 	host := storagetest.NewStorageHost(t, storageDir, "test")
+	assert.NoError(t, receiver.Start(ctx, host))
+
+	// Create the second k8s event.
+	secondEvent := getEvent()
+	firstEvent.UID = types.UID("ec279341-e2d8-4b2a-b17d-6e0566481002")
+	listWatch.Add(secondEvent)
+
+	// Both events should be picked up by the receiver.
+	// The last resource version processed should be saved in storage.
+	assert.Eventually(t, func() bool {
+		return assert.Equal(t, 2, logsSink.LogRecordCount())
+	}, time.Second, 100*time.Millisecond)
+
+	// Shutdown the receiver.
+	require.NoError(t, receiver.Shutdown(ctx))
+	for _, extension := range host.GetExtensions() {
+		require.NoError(t, extension.Shutdown(ctx))
+	}
+	logsSink.Reset()
+
+	// Create the third k8s event.
+	thirdEvent := getEvent()
+	thirdEvent.UID = types.UID("ec279341-e2d8-4b2a-b17d-6e0566481003")
+	listWatch.Add(thirdEvent)
+
+	// Start the receiver again.
+	receiver, err = newRawK8sEventsReceiver(
+		componenttest.NewNopReceiverCreateSettings(),
+		receiverConfig,
+		logsSink,
+		fake.NewSimpleClientset(),
+		listWatchFactory,
+	)
+	require.NoError(t, err)
+	host = storagetest.NewStorageHost(t, storageDir, "test")
 	require.NoError(t, receiver.Start(ctx, host))
+
+	// The receiver should only pick up the third event,
+	// as it is the only one with newer resource version.
+	assert.Eventually(t, func() bool {
+		return assert.Equal(t, 1, logsSink.LogRecordCount())
+	}, time.Second, 100*time.Millisecond)
 }
 
 func getEvent() *corev1.Event {
