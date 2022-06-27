@@ -13,6 +13,6 @@
 
   "dmg" :{
     "output_path": "./cmd/otelcol-sumo-darwin_arm64.dmg",
-    "volume_name": "Sumo Logic OT Distro"
+    "volume_name": "Sumo Logic Distribution for OpenTelemetry Collector"
   }
 }

@@ -218,7 +218,7 @@ for more details.
 
 ### Released 2022-04-05
 
-Welcome to the Sumo Logic OT Distro Collector!
+Welcome to the Sumo Logic Distribution for OpenTelemetry Collector!
 
 With this release, we are officially out of beta status and in GA, as in General Availability. 🎉
 
@@ -227,7 +227,7 @@ and is commercially fully supported by Sumo Logic in production environments.
 
 Starting with this release, we are using upstream [OpenTelemetry Collector][otc] version numbers
 as the base for the OT Distro version numbers.
-This means that Sumo Logic OT Distro Collector `v0.47.0-sumo-0` is based on `v0.47.0`
+This means that Sumo Logic Distribution for OpenTelemetry Collector `v0.47.0-sumo-0` is based on `v0.47.0`
 of the OpenTelemetry Collector [core][otc_v0_47_0] and [contrib][contrib_v0_47_0] packages.
 
 [otc]: https://github.com/open-telemetry/opentelemetry-collector

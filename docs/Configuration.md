@@ -138,7 +138,7 @@ See section below on [Collecting logs from files](#collecting-logs-from-files) f
 
 ### Basic configuration for metrics
 
-Sumo Logic OT Distro uses the Telegraf Receiver to ingest metrics.
+Sumo Logic Distribution for OpenTelemetry Collector uses the Telegraf Receiver to ingest metrics.
 
 Here's a minimal `config.yaml` file that sends the host's memory metrics to Sumo Logic:
 

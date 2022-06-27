@@ -1,13 +1,13 @@
-# Sumo Logic OpenTelemetry Distro Collector
+# Sumo Logic Distribution for OpenTelemetry Collector
 
 [![Default branch build](https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/dev_builds.yml/badge.svg)](https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/dev_builds.yml)
 
-Sumo Logic OpenTelemetry Distro Collector is a Sumo Logic-supported distribution of the [OpenTelemetry Collector][otc_link].
+Sumo Logic Distribution for OpenTelemetry Collector is a Sumo Logic-supported distribution of the [OpenTelemetry Collector][otc_link].
 It is a single agent to send logs, metrics and traces to [Sumo Logic][sumologic].
 
 **Our aim is to extend and not to replace the OpenTelemetry Collector.**
 
-In order to learn more, pleasee see [purpose of Sumo Logic OT distro](./docs/UpstreamRelation.md#purpose-of-sumo-logic-ot-distro)
+In order to learn more, pleasee see [purpose of Sumo Logic Distribution for OpenTelemetry Collector](./docs/UpstreamRelation.md#purpose-of-sumo-logic-distribution-for-opentelemetry-collector)
 
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
 [sumologic]: https://www.sumologic.com
@@ -21,13 +21,13 @@ In order to learn more, pleasee see [purpose of Sumo Logic OT distro](./docs/Ups
 - [Known Issues](docs/KnownIssues.md)
 - [Contributing](./CONTRIBUTING.md)
 - [Changelog](./CHANGELOG.md)
-- [Purpose of Sumo Logic OT Distro](./docs/UpstreamRelation.md#purpose-of-sumo-logic-ot-distro)
+- [Purpose of Sumo Logic Distribution for OpenTelemetry Collector](./docs/UpstreamRelation.md#purpose-of-sumo-logic-distribution-for-opentelemetry-collector)
 - [Versioning policy](./docs/UpstreamRelation.md#versioning-policy)
 - [Breaking changes policy](./docs/UpstreamRelation.md#breaking-changes-policy)
 
 ## Components
 
-This section lists the components that are included in Sumo Logic OT distro.
+This section lists the components that are included in Sumo Logic Distribution for OpenTelemetry Collector.
 
 The `highlighted` components are delivered by Sumo Logic.
 
