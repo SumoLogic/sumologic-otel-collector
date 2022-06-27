@@ -1,3 +1,16 @@
+// Copyright The OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package mysqlrecordsreceiver
 
 import (
@@ -33,6 +46,8 @@ type mySQLClient struct {
 
 var _ client = (*mySQLClient)(nil)
 
+//This function is used for reading certificates from .pem file for different AWS regions and passing them on as a tls config for authentication.
+//Details : https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html
 func createIAMRDSTLSConf(pempath string, logger *zap.Logger) tls.Config {
 	rootCertPool := x509.NewCertPool()
 	globalpem, err := ioutil.ReadFile(pempath)
@@ -47,6 +62,8 @@ func createIAMRDSTLSConf(pempath string, logger *zap.Logger) tls.Config {
 	}
 }
 
+//This function calls for the AWS packaged API which will generate an authentication token that can be used for accessing a AWS RDS instance instead of a password.
+//Details : https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html
 func generateIAMAuthToken(endpoint string, conf *Config, logger *zap.Logger) (token string) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
@@ -60,11 +77,16 @@ func generateIAMAuthToken(endpoint string, conf *Config, logger *zap.Logger) (to
 	return authenticationToken
 }
 
+//There are 3 scenarios here for creating connection strings for a database connection
+//1. With a plaintext password
+//2. With an encrypted plaintext password
+//3. With an AWS Authentication token to be used as a password
 func newMySQLClient(conf *Config, logger *zap.Logger) client {
 	var port string
 	var basicauthpassword string
 	var connStr string
 	basicauthpassword = conf.Password
+	//Encrypting a plaintext password if a 24 character secret string is provided by the user from an external file
 	if (len(conf.PasswordType) == 0 || conf.PasswordType == "plaintext") && len(conf.EncryptSecretPath) != 0 {
 		MySecret1, err := readMySecret(conf)
 		if err != nil {
@@ -76,6 +98,7 @@ func newMySQLClient(conf *Config, logger *zap.Logger) client {
 		}
 		logger.Info("The plaintext password can be replaced with this encrpyted password for security purposes. Also, password_type should be entered as encrypted in config file.", zap.String("encryptedPassword", encText))
 	}
+	//Decrypting an encrypted password
 	if conf.PasswordType == "encrypted" {
 		MySecret2, err := readMySecret(conf)
 		if err != nil {
@@ -87,6 +110,7 @@ func newMySQLClient(conf *Config, logger *zap.Logger) client {
 		}
 		basicauthpassword = decText
 	}
+	//Considering default port to be 3306 if not provided by user
 	if len(conf.DBPort) != 0 {
 		port = conf.DBPort
 	} else {
@@ -136,6 +160,7 @@ func (c *mySQLClient) Connect() error {
 		c.logger.Error("Unable to connect to database", zap.Error(err))
 		return err
 	}
+	//refer https://github.com/go-sql-driver/mysql#important-settings for below setting definitions
 	if c.conf.SetConnMaxLifetime != 0 {
 		clientDB.SetConnMaxLifetime(time.Minute * time.Duration(c.conf.SetConnMaxLifetime))
 	} else {
@@ -155,7 +180,7 @@ func (c *mySQLClient) Connect() error {
 	return nil
 }
 
-// getRecords queries the db for records
+//This function is used for querying the db for records
 func (c *mySQLClient) getRecords(dbquery *DBQueries) (map[string]string, error) {
 	myEntireRecords := make(map[string]string)
 	if len(strings.TrimSpace(dbquery.Query)) == 0 {
@@ -164,10 +189,10 @@ func (c *mySQLClient) getRecords(dbquery *DBQueries) (map[string]string, error) 
 	} else if len(strings.TrimSpace(dbquery.IndexColumnName)) == 0 {
 		c.logger.Info("IndexColumnName missing from collector config file, so fetching all records for:", zap.String("queryId", dbquery.QueryId))
 	} else if len(strings.TrimSpace(dbquery.IndexColumnName)) != 0 && len(strings.TrimSpace(dbquery.IndexColumnType)) == 0 {
-		c.logger.Error("IndexColummType should be specified with a IndexColumnName for a query. Supported values are TIMESTAMP or INT.", zap.String("queryId", dbquery.QueryId))
+		c.logger.Error("IndexColummType should be specified with a IndexColumnName for a query. Supported values are TIMESTAMP or NUMBER.", zap.String("queryId", dbquery.QueryId))
 		return nil, nil
-	} else if dbquery.IndexColumnType != "TIMESTAMP" && dbquery.IndexColumnType != "INT" {
-		c.logger.Error("Configured non supported Indexcolummtype, supported values are TIMESTAMP or INT. Check collector configuration file for:", zap.String("queryId", dbquery.QueryId))
+	} else if dbquery.IndexColumnType != "TIMESTAMP" && dbquery.IndexColumnType != "NUMBER" {
+		c.logger.Error("Configured non supported Indexcolummtype, supported values are TIMESTAMP or NUMBER. Check collector configuration file for:", zap.String("queryId", dbquery.QueryId))
 		return nil, nil
 	} else if len(strings.TrimSpace(dbquery.IndexColumnName)) != 0 {
 		if dbquery.IndexColumnType == "TIMESTAMP" {
@@ -176,7 +201,7 @@ func (c *mySQLClient) getRecords(dbquery *DBQueries) (map[string]string, error) 
 			} else {
 				dbquery.Query += " where INDEXCOLUMNNAME > \"STATEVALUE\" order by INDEXCOLUMNNAME asc;"
 			}
-		} else if dbquery.IndexColumnType == "INT" {
+		} else if dbquery.IndexColumnType == "NUMBER" {
 			if strings.Contains(dbquery.Query, "where") {
 				dbquery.Query += " and INDEXCOLUMNNAME > STATEVALUE order by INDEXCOLUMNNAME asc;"
 			} else {

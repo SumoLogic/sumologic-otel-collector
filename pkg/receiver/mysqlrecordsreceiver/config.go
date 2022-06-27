@@ -1,3 +1,16 @@
+// Copyright The OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package mysqlrecordsreceiver
 
 import (
@@ -10,8 +23,8 @@ import (
 
 type Config struct {
 	*config.ReceiverSettings `mapstructure:",squash"`
-	AuthenticationMode       string `mapstructure:"authentication_mode,omitempty"`
-	Username                 string `mapstructure:"username,omitempty"`
+	AuthenticationMode       string `mapstructure:"authentication_mode"`
+	Username                 string `mapstructure:"username"`
 	Password                 string `mapstructure:"password,omitempty"`
 	PasswordType             string `mapstructure:"password_type,omitempty"`
 	EncryptSecretPath        string `mapstructure:"encrypt_secret_path,omitempty"`
@@ -24,7 +37,7 @@ type Config struct {
 	AWSCertificatePath       string `mapstructure:"aws_certificate_path,omitempty"`
 	confignet.NetAddr        `mapstructure:",squash"`
 	CollectionInterval       string      `mapstructure:"collection_interval,omitempty"`
-	DBQueries                []DBQueries `mapstructure:"db_queries"`
+	DBQueries                []DBQueries `mapstructure:"db_queries,omitempty"`
 	SetConnMaxLifetime       int         `mapstructure:"setconnmaxlifetimemins,omitempty"`
 	SetMaxOpenConns          int         `mapstructure:"setmaxopenconns,omitempty"`
 	SetMaxIdleConns          int         `mapstructure:"setmaxidleconns,omitempty"`
@@ -39,6 +52,7 @@ type DBQueries struct {
 	IndexColumnType              string `mapstructure:"index_column_type,omitempty"`
 }
 
+//Validation function for various config entry validation options
 func (cfg *Config) Validate() error {
 
 	var err error
@@ -92,8 +106,8 @@ func (cfg *Config) Validate() error {
 	}
 	for _, item := range queryIndexColumnTypes {
 		if len(item) != 0 {
-			if item != "INT" && item != "TIMESTAMP" {
-				err = multierr.Append(err, errors.New("indexcolumtype in queries can only be 'INT' or 'TIMESTAMP'"))
+			if item != "NUMBER" && item != "TIMESTAMP" {
+				err = multierr.Append(err, errors.New("indexcolumtype in queries can only be 'NUMBER' or 'TIMESTAMP'"))
 			}
 		}
 	}
