@@ -16,6 +16,7 @@ package rawk8seventsreceiver
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"strconv"
@@ -214,10 +215,10 @@ func (r *rawK8sEventsReceiver) getLatestResourceVersion(ctx context.Context) (ui
 		return 0, nil
 	}
 
-	latestResourceVersionString := string(latestResourceVersionBytes)
-	latestResourceVersion, err := strconv.ParseUint(latestResourceVersionString, 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("failed to parse latest resource version '%s' to number: %s", latestResourceVersionString, err)
+	latestResourceVersion, length := binary.Uvarint(latestResourceVersionBytes)
+	if length <= 0 {
+		r.logger.Warn("failed to parse latest resource version", zap.Any("length", length))
+		return 0, nil
 	}
 
 	r.logger.Info("Found latest resource version in storage", zap.Any("latest_resource_version", latestResourceVersion))
@@ -293,7 +294,20 @@ func (r *rawK8sEventsReceiver) recordEventProcessed(event *corev1.Event) {
 		return
 	}
 
-	r.storage.Set(r.ctx, latestResourceVersionStorageKey, []byte(event.ResourceVersion))
+	resourceVersionNumber, err := strconv.ParseUint(event.ResourceVersion, 10, 64)
+	if err != nil {
+		r.logger.Debug("Cannot record incoming resource version, not a number.", zap.Any("incoming_resource_version", event.ResourceVersion))
+		return
+	}
+
+	bytes := make([]byte, binary.MaxVarintLen64)
+	length := binary.PutUvarint(bytes, resourceVersionNumber)
+	if length <= 0 {
+		r.logger.Warn("Cannot record incoming resource version, cannot encode.", zap.Any("length", length), zap.Any("incoming_resource_version", event.ResourceVersion))
+		return
+	}
+
+	r.storage.Set(r.ctx, latestResourceVersionStorageKey, bytes[:length])
 }
 
 // Check if we should process the event.
