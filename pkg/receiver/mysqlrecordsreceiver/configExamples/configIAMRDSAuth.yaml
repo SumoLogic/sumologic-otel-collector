@@ -1,0 +1,54 @@
+extensions:
+  #sumologoc extension details : https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/extension/sumologicextension#sumo-logic-extension
+  sumologic:
+    collector_name: OTEL_MYSQL_DB_INTEGRATOR
+    collector_category: collector_category
+    install_token: *************************************
+    api_base_url: https://stag-open-events.sumologic.net
+exporters:
+  #sumologic exporter details : https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/exporter/sumologicexporter#sumo-logic-exporter
+  sumologic:
+    auth:
+      authenticator: sumologic
+    source_category: "MYSQL_DB_Collector"
+    source_name: "http input"
+    source_host: "mysqlRecords"
+    compress_encoding: ""
+    sending_queue:
+      enabled: true
+    log_format: otlp
+  #loggong exporter details : https://github.com/open-telemetry/opentelemetry-collector/tree/v0.53.0/exporter/loggingexporter#logging-exporter
+  #using this as an optional exporter to view console level logs
+  logging:
+    loglevel: info
+    sampling_initial: 2
+    sampling_thereafter: 500
+receivers:
+  mysqlrecords:
+    authentication_mode: IAMRDSAuth
+    dbhost: database-2.cni9nterddyl.us-east-1.rds.amazonaws.com
+    dbport: 3306
+    transport: tcp
+    username: demo_ssl_2
+    database: information_schema
+    region: us-east-1
+    aws_certificate_path: global-bundle.pem
+    collection_interval: 10s
+    db_queries:
+      - queryid: "Q1"
+        query: "Show tables"
+      - queryid: "Q2"
+        query: "Select * from dept_manager"
+        index_column_name: emp_no
+        index_column_type: NUMBER
+        initial_index_column_start_value: "3"
+    setconnmaxlifetimemins: 3
+    setmaxopenconns: 10
+    setmaxidleconns: 10
+    setmaxnodatabaseworkers: 1
+service:
+  extensions: [sumologic]
+  pipelines:
+    logs:
+      exporters: [sumologic,logging]
+      receivers: [mysqlrecords]

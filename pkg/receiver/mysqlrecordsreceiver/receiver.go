@@ -1,3 +1,16 @@
+// Copyright The OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package mysqlrecordsreceiver
 
 import (
@@ -26,6 +39,7 @@ func newMySQLReceiver(logger *zap.Logger, conf *Config, next consumer.Logs) (com
 	}, nil
 }
 
+//Produce is used for fetching queries from a channel of queries, using them for extrtacting records for those queries and then pushing those records in channel of records
 func (m *mySQLReceiver) produce(records chan<- string, id int, wg *sync.WaitGroup, queryChan <-chan DBQueries) {
 	defer wg.Done()
 	var recordcount int
@@ -43,6 +57,7 @@ func (m *mySQLReceiver) produce(records chan<- string, id int, wg *sync.WaitGrou
 	m.logger.Info("Total records extracted and produced:", zap.Int("count", recordcount))
 }
 
+//Consume is used for fetching each record from the records channel, converting them into plog.Logs type with the record being passed into the body tag and then the comsumer of the LogsReceiver consuming them
 func (m *mySQLReceiver) consume(records <-chan string, id int, wg *sync.WaitGroup, ctx context.Context) {
 	defer wg.Done()
 	var recordcount int
@@ -68,17 +83,18 @@ func (m *mySQLReceiver) Start(ctx context.Context, host component.Host) error {
 	wp := &sync.WaitGroup{}
 	wc := &sync.WaitGroup{}
 	maxDBWorkers := 0
+	//Considering an ultimate maximum of 10 database workers
 	if m.config.SetMaxNoDatabaseWorkers == 0 {
-		if len(m.config.DBQueries) < 5 {
+		if len(m.config.DBQueries) < 10 {
 			maxDBWorkers = len(m.config.DBQueries)
 		} else {
-			maxDBWorkers = 5
+			maxDBWorkers = 10
 		}
 	} else {
-		if (m.config.SetMaxNoDatabaseWorkers) < 5 {
+		if (m.config.SetMaxNoDatabaseWorkers) < 10 {
 			maxDBWorkers = m.config.SetMaxNoDatabaseWorkers
 		} else {
-			maxDBWorkers = 5
+			maxDBWorkers = 10
 		}
 	}
 	wp.Add(maxDBWorkers)
@@ -98,7 +114,7 @@ func (m *mySQLReceiver) Start(ctx context.Context, host component.Host) error {
 	return nil
 }
 
-// shutdown closes the db connection
+//This function closes the db connection
 func (m *mySQLReceiver) Shutdown(context.Context) error {
 	defer m.sqlclient.Close()
 	if m.sqlclient == nil {
@@ -107,8 +123,8 @@ func (m *mySQLReceiver) Shutdown(context.Context) error {
 	return nil
 }
 
+//This function generates a plog.Logs type log record for each record coming from a database query fetch
 func (m *mySQLReceiver) convertToLog(record string) plog.Logs {
-
 	ld := plog.NewLogs()
 	rl := ld.ResourceLogs().AppendEmpty()
 	sl := rl.ScopeLogs().AppendEmpty()

@@ -1,3 +1,16 @@
+// Copyright The OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package mysqlrecordsreceiver
 
 import (
@@ -16,7 +29,7 @@ func getStateStoreFilename(dbquery *DBQueries) string {
 	return storeFilename
 }
 
-func getStateValueINT(dbquery *DBQueries, logger *zap.Logger) string {
+func getStateValueNUMBER(dbquery *DBQueries, logger *zap.Logger) string {
 	var startval int = 0
 	var stateValue = ""
 	if dbquery.InitialIndexColumnStartValue == "" {
@@ -65,8 +78,8 @@ func GetState(dbquery *DBQueries, logger *zap.Logger) string {
 	if errors.Is(err, os.ErrNotExist) {
 		// State File does not exists, so use start value as mentioned in YAML configuration.
 		// If start value is not configured, we set some default value to it
-		if dbquery.IndexColumnType == "INT" {
-			return getStateValueINT(dbquery, logger)
+		if dbquery.IndexColumnType == "NUMBER" {
+			return getStateValueNUMBER(dbquery, logger)
 		} else if dbquery.IndexColumnType == "TIMESTAMP" {
 			return getStateValueTIMESTAMP(dbquery, logger)
 		}
@@ -75,16 +88,16 @@ func GetState(dbquery *DBQueries, logger *zap.Logger) string {
 		csvFile, err := os.Open(storeFilename)
 		if err != nil {
 			logger.Info("Error opening state file, using start value as mentioned in collector config file.")
-			if dbquery.IndexColumnType == "INT" {
-				return getStateValueINT(dbquery, logger)
+			if dbquery.IndexColumnType == "NUMBER" {
+				return getStateValueNUMBER(dbquery, logger)
 			} else if dbquery.IndexColumnType == "TIMESTAMP" {
 				return getStateValueTIMESTAMP(dbquery, logger)
 			}
 		} else {
 			// Able to read state file, so extract state value.
 			// State is maintained in 4th column in csv file of now
-			if dbquery.IndexColumnType == "INT" {
-				configFileStateValue := getStateValueINT(dbquery, logger)
+			if dbquery.IndexColumnType == "NUMBER" {
+				configFileStateValue := getStateValueNUMBER(dbquery, logger)
 				reader := csv.NewReader(csvFile)
 				records, _ := reader.ReadAll()
 				stateFileStateValue := records[1][3]
