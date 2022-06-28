@@ -1,4 +1,4 @@
-module local/mysqlrecordsreceiver
+module github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/mysqlrecordsreceiver
 
 go 1.18
 
