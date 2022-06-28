@@ -316,7 +316,7 @@ jobs:
       - name: Download FIPS binary action artifact from build phase
         uses: actions/download-artifact@v3
         with:
-          name: ${{matrix.arch_os}}-fips
+          name: otelcol-sumo-${{matrix.arch_os}}-fips
           path: artifacts/
 
       - name: Build and push FIPS image to Open Source ECR
