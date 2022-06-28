@@ -50,6 +50,20 @@ make add-tag push-tag
 > make prepare-tag TAG=$(git describe --tags --abbrev=10 --match "v[0-9]*")
 > ```
 
+#### Remove tag in case of a failed release job
+
+Pushing a new version tag to GitHub starts the [release build](../.github/workflows/release_builds.yml) jobs.
+
+If one of these jobs fails for whatever reason (real world example: failing to notarize the MacOS binary),
+you might need to remove the created tags, perhaps change something, and create the tags again.
+
+To delete the tags both locally and remotely, run the following commands:
+
+```shell
+export TAG=v0.51.0-sumo-0
+make delete-tag delete-remote-tag
+```
+
 ### Publish GitHub release
 
 The GitHub release is created as draft by the [create-release](../.github/workflows/release_builds.yml) GitHub Action.
