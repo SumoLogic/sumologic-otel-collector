@@ -18,13 +18,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	backoff "github.com/cenkalti/backoff/v4"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/consumer/consumererror"
+	"go.opentelemetry.io/collector/extension/experimental/storage"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
@@ -43,14 +46,18 @@ var severityMap = map[string]plog.SeverityNumber{
 	"warning": plog.SeverityNumberWARN,
 }
 
+const latestResourceVersionStorageKey string = "latestResourceVersion"
+
 type rawK8sEventsReceiver struct {
-	cfg              *Config
-	client           k8s.Interface
-	eventControllers []cache.Controller
-	eventCh          chan *eventChange
-	ctx              context.Context
-	cancel           context.CancelFunc
-	startTime        time.Time
+	cfg                   *Config
+	client                k8s.Interface
+	eventControllers      []cache.Controller
+	eventCh               chan *eventChange
+	ctx                   context.Context
+	cancel                context.CancelFunc
+	startTime             time.Time
+	storage               storage.Client
+	latestResourceVersion uint64
 
 	consumer consumer.Logs
 	logger   *zap.Logger
@@ -127,6 +134,17 @@ func newRawK8sEventsReceiver(
 
 // Start tells the receiver to start.
 func (r *rawK8sEventsReceiver) Start(ctx context.Context, host component.Host) error {
+	var err error
+	r.storage, err = r.getStorage(ctx, host)
+	if err != nil {
+		return fmt.Errorf("error when getting storage: %s", err)
+	}
+
+	r.latestResourceVersion, err = r.getLatestResourceVersion(ctx)
+	if err != nil {
+		return fmt.Errorf("error when getting latest resource version: %s", err)
+	}
+
 	r.ctx, r.cancel = context.WithCancel(ctx)
 
 	go r.processEventChangeLoop()
@@ -139,9 +157,71 @@ func (r *rawK8sEventsReceiver) Start(ctx context.Context, host component.Host) e
 }
 
 // Shutdown is invoked during service shutdown.
-func (r *rawK8sEventsReceiver) Shutdown(context.Context) error {
+func (r *rawK8sEventsReceiver) Shutdown(ctx context.Context) error {
 	r.cancel()
-	return nil
+	var err error
+	if r.storage != nil {
+		err = r.storage.Close(ctx)
+	}
+	return err
+}
+
+func (r *rawK8sEventsReceiver) getStorage(ctx context.Context, host component.Host) (storage.Client, error) {
+	if host == nil {
+		r.logger.Debug("Storage not initialized: host is not available")
+		return nil, nil
+	}
+
+	var storageExtension storage.Extension
+	var storageExtensionId config.ComponentID
+	for extentionId, extension := range host.GetExtensions() {
+		if se, ok := extension.(storage.Extension); ok {
+			if storageExtension != nil {
+				return nil, fmt.Errorf("multiple storage extensions found: '%s', '%s'", storageExtensionId, extentionId)
+			}
+			storageExtension = se
+			storageExtensionId = extentionId
+		}
+	}
+
+	if storageExtension == nil {
+		r.logger.Debug("Storage not initialized: no storage extension found")
+		return nil, nil
+	}
+
+	storageClient, err := storageExtension.GetClient(ctx, component.KindReceiver, r.cfg.ID(), "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get storage client for extension '%s': %s", storageExtensionId, err)
+	}
+
+	r.logger.Info("Initialized storage", zap.Any("storage_extension_id", storageExtensionId))
+	return storageClient, nil
+}
+
+func (r *rawK8sEventsReceiver) getLatestResourceVersion(ctx context.Context) (uint64, error) {
+	if r.storage == nil {
+		r.logger.Info("Did not find latest resource version, as there is no storage.")
+		return 0, nil
+	}
+
+	latestResourceVersionBytes, err := r.storage.Get(ctx, latestResourceVersionStorageKey)
+	if err != nil {
+		return 0, fmt.Errorf("failed to retrieve latest resource version from storage: %s", err)
+	}
+
+	if latestResourceVersionBytes == nil {
+		r.logger.Info("Latest resource version not found in storage")
+		return 0, nil
+	}
+
+	latestResourceVersionString := string(latestResourceVersionBytes)
+	latestResourceVersion, err := strconv.ParseUint(latestResourceVersionString, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse latest resource version '%s' to number: %s", latestResourceVersionString, err)
+	}
+
+	r.logger.Info("Found latest resource version in storage", zap.Any("latest_resource_version", latestResourceVersion))
+	return latestResourceVersion, nil
 }
 
 // Consume metrics and retry on recoverable errors
@@ -188,6 +268,7 @@ func (r *rawK8sEventsReceiver) processEventChangeLoop() {
 // this includes: checking if we should process the event, converting it into a plog.Logs
 // and sending it to the next consumer in the pipeline
 func (r *rawK8sEventsReceiver) processEventChange(ctx context.Context, eventChange *eventChange) {
+	r.recordEventReceived(eventChange.event)
 	if !r.isEventAccepted(eventChange.event) {
 		r.logger.Debug("skipping event, too old", zap.Any("event", eventChange.event))
 		return
@@ -207,9 +288,48 @@ func (r *rawK8sEventsReceiver) processEventChange(ctx context.Context, eventChan
 	}
 }
 
-// Check if we should process the event
-// Currently this only checks if the event isn't too old
+func (r *rawK8sEventsReceiver) recordEventReceived(event *corev1.Event) {
+	if r.storage == nil {
+		return
+	}
+
+	err := r.storage.Set(r.ctx, latestResourceVersionStorageKey, []byte(event.ResourceVersion))
+	if err != nil {
+		r.logger.Warn("failed to record event received", zap.Error(err), zap.String("incoming_resource_version", event.ResourceVersion))
+	}
+}
+
+// Check if we should process the event.
+// If a latest resource version was retrieved from storage, compare that to the incoming event's resource version.
+// Otherwise, check event time and compare it to collector's start time.
 func (r *rawK8sEventsReceiver) isEventAccepted(event *corev1.Event) bool {
+	if r.latestResourceVersion > 0 {
+		incomingEventResourceVersion, err := strconv.ParseUint(event.ResourceVersion, 10, 64)
+		if err != nil {
+			r.logger.Debug("Failed checking if event is accepted, cannot convert incoming resource version to a number. Accepting the incoming event.",
+				zap.Error(err),
+				zap.Any("incoming_event_version", event.ResourceVersion),
+				zap.Any("latest_resource_version", r.latestResourceVersion),
+			)
+			return true
+		}
+
+		incomingEventIsNewer := incomingEventResourceVersion > r.latestResourceVersion
+		if incomingEventIsNewer {
+			r.logger.Debug("Incoming event is accepted as it is newer.",
+				zap.Any("incoming_event_version", incomingEventResourceVersion),
+				zap.Any("latest_resource_version", r.latestResourceVersion),
+			)
+			return true
+		} else {
+			r.logger.Debug("Incoming event is NOT accepted, as it is older.",
+				zap.Any("incoming_event_version", incomingEventResourceVersion),
+				zap.Any("latest_resource_version", r.latestResourceVersion),
+			)
+			return false
+		}
+	}
+
 	eventTime := getEventTimestamp(event)
 	minAcceptableTime := r.startTime.Add(-r.cfg.MaxEventAge)
 	return eventTime.After(minAcceptableTime) || eventTime.Equal(minAcceptableTime)
