@@ -293,7 +293,10 @@ func (r *rawK8sEventsReceiver) recordEventReceived(event *corev1.Event) {
 		return
 	}
 
-	r.storage.Set(r.ctx, latestResourceVersionStorageKey, []byte(event.ResourceVersion))
+	err := r.storage.Set(r.ctx, latestResourceVersionStorageKey, []byte(event.ResourceVersion))
+	if err != nil {
+		r.logger.Warn("failed to record event received", zap.Error(err), zap.String("incoming_resource_version", event.ResourceVersion))
+	}
 }
 
 // Check if we should process the event.
