@@ -158,6 +158,16 @@ delete-tag:
 	 	git tag -d "$${dir:2}/$${TAG}" ); \
 	done
 
+.PHONY: delete-remote-tag
+delete-remote-tag:
+	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
+	@echo "Deleting remote tag ${TAG}"
+	@git push --delete origin ${TAG}
+	@set -e; for dir in $(ALL_EXPORTABLE_MODULES); do \
+		(echo Deleting remote tag "$${dir:2}/$${TAG}" && \
+		git push --delete origin "$${dir:2}/$${TAG}"); \
+	done
+
 .PHONY: prepare-tag
 prepare-tag: install-gsed
 	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
