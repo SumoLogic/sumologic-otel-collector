@@ -142,7 +142,6 @@ jobs:
         run: ./ci/fetch_current_branch.sh
 
       - name: Install Go+BoringCrypto
-        if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           curl -LJ "https://go-boringcrypto.storage.googleapis.com/go${{ matrix.go }}.linux-amd64.tar.gz" -o go.linux-amd64.tar.gz \
             && sudo rm -rf /usr/local/go \
