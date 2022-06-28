@@ -29,7 +29,7 @@ and begin support of arm64 architecture for Darwin OS.
 
 - chore(core): upgrade to v0.53.0 [#615]
 - feat(journaldreceiver): add missing dependencies [#577]
-- ci: disable MacOS builds while signing not possible [#628]
+- ci: disable MacOS builds while signing not possible [#628], [#629]
 
 [v0.53.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.52.0-sumo-0...v0.53.0-sumo-0
 [#597]: https://github.com/SumoLogic/sumologic-otel-collector/pull/597
@@ -40,6 +40,7 @@ and begin support of arm64 architecture for Darwin OS.
 [#615]: https://github.com/SumoLogic/sumologic-otel-collector/pull/615
 [#614]: https://github.com/SumoLogic/sumologic-otel-collector/pull/614
 [#628]: https://github.com/SumoLogic/sumologic-otel-collector/pull/628
+[#629]: https://github.com/SumoLogic/sumologic-otel-collector/pull/629
 [journaldreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/receiver/journaldreceiver#journald-receiver
 [receivers]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/receiver
 [processors]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/processor

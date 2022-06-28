@@ -256,7 +256,7 @@ jobs:
     needs:
       # Require darwin build to succeed to prevent pushing container images
       # when darwin build fails.
-      - build-darwin
+      # - build-darwin
       - build-container-images
     steps:
       - uses: actions/checkout@v3
@@ -295,7 +295,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - build
-      - build-darwin
+      # - build-darwin
       - build-container-images
       - push-docker-manifest
     steps:
