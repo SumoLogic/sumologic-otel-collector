@@ -395,6 +395,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - build
+      - build-go-boringcrypto
     strategy:
       matrix:
         arch_os: [ 'linux_amd64', 'linux_arm64']
