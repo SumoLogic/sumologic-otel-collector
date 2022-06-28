@@ -268,7 +268,7 @@ func (r *rawK8sEventsReceiver) processEventChangeLoop() {
 // this includes: checking if we should process the event, converting it into a plog.Logs
 // and sending it to the next consumer in the pipeline
 func (r *rawK8sEventsReceiver) processEventChange(ctx context.Context, eventChange *eventChange) {
-	r.recordEventProcessed(eventChange.event)
+	r.recordEventReceived(eventChange.event)
 	if !r.isEventAccepted(eventChange.event) {
 		r.logger.Debug("skipping event, too old", zap.Any("event", eventChange.event))
 		return
@@ -288,7 +288,7 @@ func (r *rawK8sEventsReceiver) processEventChange(ctx context.Context, eventChan
 	}
 }
 
-func (r *rawK8sEventsReceiver) recordEventProcessed(event *corev1.Event) {
+func (r *rawK8sEventsReceiver) recordEventReceived(event *corev1.Event) {
 	if r.storage == nil {
 		return
 	}
