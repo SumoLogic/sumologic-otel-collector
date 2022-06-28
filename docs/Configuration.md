@@ -115,6 +115,10 @@ receivers:
     - /other/path/**/*.txt
     include_file_name: false
     include_file_path_resolved: true
+    operators:
+    - type: move
+      from: attributes["log.file.path_resolved"]
+      to: resource["log.file.path_resolved"]
     start_at: beginning
 
 service:
@@ -213,6 +217,10 @@ receivers:
     - /other/path/**/*.txt
     include_file_name: false
     include_file_path_resolved: true
+    operators:
+    - type: move
+      from: attributes["log.file.path_resolved"]
+      to: resource["log.file.path_resolved"]
     start_at: beginning
   telegraf:
     separate_field: false
@@ -388,6 +396,10 @@ receivers:
     - /other/path/**/*.txt
     include_file_name: false
     include_file_path_resolved: true
+    operators:
+    - type: move
+      from: attributes["log.file.path_resolved"]
+      to: resource["log.file.path_resolved"]
 ```
 
 The `include_file_name: false` prevents the receiver from adding `log.file.name` attribute to the logs.
@@ -396,6 +408,7 @@ which adds a `log.file.path_resolved` attribute to the logs
 that contains the whole path of the file, as opposed to just the name of the file.
 What's more, the `log.file.path_resolved` attribute is automatically recognized by the `sumologicexporter`
 and translated to `_sourceName` attribute in Sumo Logic.
+We just need the `move` operator to move the attribute from record level to resource level.
 
 ### Keeping track of position in files
 
@@ -419,6 +432,10 @@ receivers:
     - /other/path/**/*.txt
     include_file_name: false
     include_file_path_resolved: true
+    operators:
+    - type: move
+      from: attributes["log.file.path_resolved"]
+      to: resource["log.file.path_resolved"]
     start_at: beginning
 ```
 
