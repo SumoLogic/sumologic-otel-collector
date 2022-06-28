@@ -495,10 +495,6 @@ jobs:
         run: make otelcol-sumo-${{matrix.arch_os}} BINARY_FIPS_SUFFIX="-fips"
         working-directory: ./otelcolbuilder
 
-      - name: Test that binary can be run on ${{matrix.arch_os}}
-        working-directory: ./otelcolbuilder/cmd
-        run: ./otelcol-sumo-${{matrix.arch_os}}-fips --version
-
       - name: Show included modules
         if: steps.changed-files.outputs.any_changed == 'true'
         working-directory: ./otelcolbuilder/cmd
