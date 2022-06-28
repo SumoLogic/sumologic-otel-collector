@@ -434,7 +434,7 @@ jobs:
     strategy:
       matrix:
         go: [ '1.18.2b7' ]
-        arch_os: [ 'darwin_amd64' ]
+        arch_os: [ 'darwin_amd64' , 'darwin_arm64']
     steps:
       - uses: actions/checkout@v3
 
