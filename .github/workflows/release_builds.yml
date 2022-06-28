@@ -329,10 +329,6 @@ jobs:
         run: make otelcol-sumo-${{matrix.arch_os}} BINARY_FIPS_SUFFIX="-fips"
         working-directory: ./otelcolbuilder
 
-      - name: Test that binary can be run on ${{matrix.arch_os}}
-        working-directory: ./otelcolbuilder/cmd
-        run: ./otelcol-sumo-${{matrix.arch_os}}-fips --version
-
       - name: Set filename
         id: set_filename
         run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}}-fips)"
