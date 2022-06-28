@@ -126,7 +126,7 @@ otelcol-sumo-darwin_amd64:
 
 .PHONY: otelcol-sumo-darwin_arm64
 otelcol-sumo-darwin_arm64:
-	GOOS=darwin  GOARCH=arm64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)-darwin_arm64
+	GOOS=darwin  GOARCH=arm64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)-darwin_arm64$(BINARY_FIPS_SUFFIX)
 
 .PHONY: darwin_amd64-sign
 darwin_amd64-sign:
