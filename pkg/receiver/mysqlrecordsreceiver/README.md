@@ -1,6 +1,11 @@
 # MySQL Records Receiver
 
 This receiver queries MySQL for database records and creates a log record (plog.Logs type) for each database record.
+Supported pipeline types: logs
+State Manageent Use Case:
+- The receiver supports saving the state of a query fetch into a csv file where a unique/auto-increment field is present in a table of a database.
+- The unique/auto-increment field can either be of type 'NUMBER' or 'TIMESTAMP', where a 'NUMBER' should be a non-negative integer and a 'TIMESTAMP' should be of the     default timestamp storage format in mysql, i.e. '2006-01-02 15:04:05'.
+- This is basically the delta mode state management feature of the receiver where the current value/state of the unique/auto-increment field is saved in a csv file which can be retreived later so as to fetch records after the saved state value.
 
 ## Prerequisites
 
