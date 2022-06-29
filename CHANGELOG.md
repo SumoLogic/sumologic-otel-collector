@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+This release would add a new mysqlrecords receiver that would collect databse records and convert them into logs. They can be sent to SUMO using the Sumologic exporter.
+
+### Added
+
+- feat: new mysqlrecords receiver [#prno]
+
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.52.0-sumo-0...v0.53.0-sumo-0
+[#prno]: prlink
+
 ## [v0.53.0-sumo-0]
 
 ### Released 2022-06-21
