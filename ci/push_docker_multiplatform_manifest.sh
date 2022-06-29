@@ -15,6 +15,10 @@ if [[ -z "${BUILD_TAG}" ]]; then
     BUILD_TAG="latest"
 fi
 
+if [[ -z "${LATEST_TAG_FIPS_SUFFIX}" ]]; then
+    LATEST_TAG_FIPS_SUFFIX=""
+fi
+
 if [[ -z "${REPO_URL}" ]]; then
     echo "No REPO_URL passed in"
     exit 1
@@ -69,9 +73,9 @@ function push_manifest() {
     docker manifest push "${REPO_URL}:${BUILD_TAG}"
 
     docker manifest create --amend \
-        "${REPO_URL}:latest" \
+        "${REPO_URL}:latest${LATEST_TAG_FIPS_SUFFIX}" \
         "${TAGS_IN_MANIFEST[@]}"
-    docker manifest push "${REPO_URL}:latest"
+    docker manifest push "${REPO_URL}:latest${LATEST_TAG_FIPS_SUFFIX}"
 }
 
 push_manifest

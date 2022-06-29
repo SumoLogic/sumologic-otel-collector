@@ -500,7 +500,8 @@ jobs:
         run: |
           make push-container-manifest \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
-            PLATFORMS="linux/amd64 linux/arm64"
+            PLATFORMS="linux/amd64 linux/arm64" \
+            LATEST_TAG_FIPS_SUFFIX="-fips"
 
   create-release:
     name: Create Github release
