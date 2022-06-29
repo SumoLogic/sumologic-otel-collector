@@ -365,6 +365,6 @@ jobs:
 
       - name: Push joint FIPS container manifest for all platforms to Open Source ECR
         run: |
-          make push-container-manifest \
+          make push-container-manifest-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
             PLATFORMS="linux/amd64 linux/arm64"
