@@ -41,11 +41,16 @@ receivers:
     # this should be skipped while using authentication_mode : 'IAMRDSAuth' as an authentication token is used as a password in this case
     password: 'testpass'
 
-    # password_type refers to how the password of the user is fed in the receiver configuration
+    # password_type refers to how the password of the user is entered in the receiver configuration
     # it has two possible values, namely, 'plaintext' and 'encrypted'
     # it can be skipped while using a plaintext password, passing it along with value 'plaintext' will also yield a successful connection
     # it has to be mandatorily passed on with value 'encrypted' so as to decrypt an encrypted password with a secret string stored in file in encrypt_secret_path
     password_type: 'encrypted' 
+
+    # this is the path to a secret file containing a 24 character string that is used for encrypting a plaintext password
+    # when specified with a plaintext password, it will result in a console output with an encrypted password for the plaintext which can be used instead in the config
+    # this is a mandatory path required while passing an encrypted password in the config
+    encrypt_secret_path: '/path/to/secret/file.txt'
 
     # this is the database port, will be considered 3306 by default if not specified
     dbport: '3306'
@@ -75,7 +80,7 @@ receivers:
       # this is mandatory feild that needs to be specified by an user trying to save the state of the index_column_name of a database query
       index_column_type: 'NUMBER'
 
-      # while doing state managemenent of a query, a user can expicitly define the identifier value in a table, after which the records should be fetched in
+      # while doing state managemenent of a query, a user can explicitly define the identifier value in a table, after which the records should be fetched in
       # this is the explicitly defined identifier value for a particular database query
       initial_index_column_start_value: '5'
     
