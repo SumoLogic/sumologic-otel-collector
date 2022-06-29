@@ -46,19 +46,19 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 |                   [bigip][bigipreceiver]                   |                  [filter][filterprocessor]*                  |      [otlphttp][otlphttpexporter]      |         [ecs_observer][ecsobserver]          |
 |                  [carbon][carbonreceiver]                  |            [groupbyattrs][groupbyattrsprocessor]             |    [`sumologic`][sumologicexporter]    |     [ecs_task_observer][ecstaskobserver]     |
 |            [cloudfoundry][cloudfoundryreceiver]            |            [groupbytrace][groupbytraceprocessor]             |                                        |         [file_storage][filestorage]          |
-|                [collectd][collectdreceiver]                |                 [`k8s_tagger`][k8sprocessor]                 |                                        |       [fluentbit][fluentbitextension]        |
-|                 [couchdb][couchdbreceiver]                 |           [k8sattributes][k8sattributesprocessor]            |                                        |     [health_check][healthcheckextension]     |
-|            [docker_stats][dockerstatsreceiver]             |           [logstransform][logstransformprocessor]            |                                        |        [host_observer][hostobserver]         |
-|      [dotnet_diagnostics][dotnetdiagnosticsreceiver]       |           [memory_limiter][memorylimiterprocessor]           |                                        |       [http_forwarder][httpforwarder]        |
-|           [elasticsearch][elasticsearchreceiver]           |        [`metric_frequency`][metricfrequencyprocessor]        |                                        | [jaegerremotesampling][jaegerremotesampling] |
-|                  [expvar][expvarreceiver]                  |        [metricstransform][metricstransformprocessor]         |                                        |         [k8s_observer][k8sobserver]          |
-|                 [filelog][filelogreceiver]                 |    [probabilistic_sampler][probabilisticsamplerprocessor]    |                                        |      [memory_ballast][ballastextension]      |
-|            [flinkmetrics][flinkmetricsreceiver]            |               [redaction][redactionprocessor]                |                                        |  [oauth2client][oauth2clientauthextension]   |
-|           [fluentforward][fluentforwardreceiver]           |                [resource][resourceprocessor]*                |                                        |          [oidc][oidcauthextension]           |
-|       [googlecloudpubsub][googlecloudpubsubreceiver]       |       [resourcedetection][resourcedetectionprocessor]        |                                        |           [pprof][pprofextension]            |
-|      [googlecloudspanner][googlecloudspannerreceiver]      |                 [routing][routingprocessor]                  |                                        |       [sigv4auth][sigv4authextension]        |
-|             [hostmetrics][hostmetricsreceiver]             |                  [schema][schemaprocessor]                   |                                        |      [`sumologic`][sumologicextension]       |
-|                     [iis][iisreceiver]                     |                 [`source`][sourceprocessor]                  |                                        |          [zpages][zpagesextension]           |
+|                [collectd][collectdreceiver]                |                 [`k8s_tagger`][k8sprocessor]                 |                                        |     [health_check][healthcheckextension]     |
+|                 [couchdb][couchdbreceiver]                 |           [k8sattributes][k8sattributesprocessor]            |                                        |        [host_observer][hostobserver]         |
+|            [docker_stats][dockerstatsreceiver]             |           [logstransform][logstransformprocessor]            |                                        |       [http_forwarder][httpforwarder]        |
+|      [dotnet_diagnostics][dotnetdiagnosticsreceiver]       |           [memory_limiter][memorylimiterprocessor]           |                                        | [jaegerremotesampling][jaegerremotesampling] |
+|           [elasticsearch][elasticsearchreceiver]           |        [`metric_frequency`][metricfrequencyprocessor]        |                                        |         [k8s_observer][k8sobserver]          |
+|                  [expvar][expvarreceiver]                  |        [metricstransform][metricstransformprocessor]         |                                        |      [memory_ballast][ballastextension]      |
+|                 [filelog][filelogreceiver]                 |    [probabilistic_sampler][probabilisticsamplerprocessor]    |                                        |  [oauth2client][oauth2clientauthextension]   |
+|            [flinkmetrics][flinkmetricsreceiver]            |               [redaction][redactionprocessor]                |                                        |          [oidc][oidcauthextension]           |
+|           [fluentforward][fluentforwardreceiver]           |                [resource][resourceprocessor]*                |                                        |           [pprof][pprofextension]            |
+|       [googlecloudpubsub][googlecloudpubsubreceiver]       |       [resourcedetection][resourcedetectionprocessor]        |                                        |       [sigv4auth][sigv4authextension]        |
+|      [googlecloudspanner][googlecloudspannerreceiver]      |                 [routing][routingprocessor]                  |                                        |      [`sumologic`][sumologicextension]       |
+|             [hostmetrics][hostmetricsreceiver]             |                  [schema][schemaprocessor]                   |                                        |          [zpages][zpagesextension]           |
+|                     [iis][iisreceiver]                     |                 [`source`][sourceprocessor]                  |                                        |                                              |
 |                [influxdb][influxdbreceiver]                |                    [span][spanprocessor]                     |                                        |                                              |
 |                  [jaeger][jaegerreceiver]                  |             [spanmetrics][spanmetricsprocessor]              |                                        |                                              |
 |                     [jmx][jmxreceiver]                     |        [`sumologic_schema`][sumologicschemaprocessor]        |                                        |                                              |
@@ -78,7 +78,6 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 |                    [otlp][otlpreceiver]                    |                                                              |                                        |                                              |
 |               [podman_stats][podmanreceiver]               |                                                              |                                        |                                              |
 |              [postgresql][postgresqlreceiver]              |                                                              |                                        |                                              |
-|         [prometheus_exec][prometheusexecreceiver]          |                                                              |                                        |                                              |
 |       [prometheus_simple][simpleprometheusreceiver]        |                                                              |                                        |                                              |
 |              [prometheus][prometheusreceiver]              |                                                              |                                        |                                              |
 |                [rabbitmq][rabbitmqreceiver]                |                                                              |                                        |                                              |
@@ -146,7 +145,6 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 [otlpreceiver]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.54.0/receiver/otlpreceiver
 [podmanreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.54.0/receiver/podmanreceiver
 [postgresqlreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.54.0/receiver/postgresqlreceiver
-[prometheusexecreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.54.0/receiver/prometheusexecreceiver
 [simpleprometheusreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.54.0/receiver/simpleprometheusreceiver
 [prometheusreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.54.0/receiver/prometheusreceiver
 [rabbitmqreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.54.0/receiver/rabbitmqreceiver
@@ -221,7 +219,6 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 [ecsobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.54.0/extension/observer/ecsobserver
 [ecstaskobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.54.0/extension/observer/ecstaskobserver
 [filestorage]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.54.0/extension/storage/filestorage
-[fluentbitextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.54.0/extension/fluentbitextension
 [healthcheckextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.54.0/extension/healthcheckextension
 [hostobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.54.0/extension/observer/hostobserver
 [httpforwarder]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.54.0/extension/httpforwarder
