@@ -123,12 +123,6 @@ To update this patchset for the new OT core version:
 
 1. Update the [builder configuration][builder_config] with the new commit SHA
 
-1. Repeat above steps with the following change:
-
-   ```bash
-   export SUFFIX=stanza
-   ```
-
 ### Updating OT distro
 
 The second and third step of this list are covered by the `update-ot-core` Makefile target. Run:
