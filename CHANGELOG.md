@@ -5,9 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- feat(rawk8seventsreceiver): remember last processed resource version [#620]
+
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.53.0-sumo-0...main
+[#620]: https://github.com/SumoLogic/sumologic-otel-collector/pull/620
+
 ## [v0.53.0-sumo-0]
 
-### Released 2022-06-21
+### Released 2022-06-28
+
+:warning: Due to an infrastructure problem, this release lacks the MacOS binaries.
+We hope to restore building the binaries for MacOS as soon as possible.
 
 This release adds missing [receivers], [processors] and [extensions] from the OpenTelemetry Distribution.
 It also includes `journald` binary required by [journaldreceiver]
@@ -17,6 +29,7 @@ and begin support of arm64 architecture for Darwin OS.
 
 - feat: build arm64 binary for darwin [#611]
 - feat: add missing core receivers, processors and extensions [#597], [#604], [#614]
+- chore(ci): add pipelines to test and build on Go+BoringCrypto [#588]
 
 ### Fixed
 
@@ -26,6 +39,7 @@ and begin support of arm64 architecture for Darwin OS.
 
 - chore(core): upgrade to v0.53.0 [#615]
 - feat(journaldreceiver): add missing dependencies [#577]
+- ci: disable MacOS builds while signing not possible [#628], [#629]
 
 [v0.53.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.52.0-sumo-0...v0.53.0-sumo-0
 [#597]: https://github.com/SumoLogic/sumologic-otel-collector/pull/597
@@ -35,6 +49,8 @@ and begin support of arm64 architecture for Darwin OS.
 [#616]: https://github.com/SumoLogic/sumologic-otel-collector/pull/616
 [#615]: https://github.com/SumoLogic/sumologic-otel-collector/pull/615
 [#614]: https://github.com/SumoLogic/sumologic-otel-collector/pull/614
+[#628]: https://github.com/SumoLogic/sumologic-otel-collector/pull/628
+[#629]: https://github.com/SumoLogic/sumologic-otel-collector/pull/629
 [journaldreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/receiver/journaldreceiver#journald-receiver
 [receivers]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/receiver
 [processors]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.53.0/processor
@@ -50,6 +66,7 @@ and begin support of arm64 architecture for Darwin OS.
 
 [v0.52.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.52.0-sumo-0...v0.52.0-sumo-1
 [#619]: https://github.com/SumoLogic/sumologic-otel-collector/pull/619
+[#588]: https://github.com/SumoLogic/sumologic-otel-collector/pull/588
 
 ## [v0.52.0-sumo-0]
 
