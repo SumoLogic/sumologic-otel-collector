@@ -7,12 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+This release would add a new mysqlrecords receiver that would collect databse records and convert them into logs. They can be sent to SUMO using the Sumologic exporter.
+
 ### Added
 
+- feat: new mysqlrecords receiver [#prno]
 - feat(rawk8seventsreceiver): remember last processed resource version [#620]
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.53.0-sumo-0...main
+[#prno]: prlink
 [#620]: https://github.com/SumoLogic/sumologic-otel-collector/pull/620
+
 
 ## [v0.53.0-sumo-0]
 
