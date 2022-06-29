@@ -343,7 +343,7 @@ func TestNoStorage(t *testing.T) {
 	// Both events should be picked up by the receiver.
 	assert.Eventually(t, func() bool {
 		return assert.Equal(t, 2, logsSink.LogRecordCount())
-	}, time.Second, 100*time.Millisecond)
+	}, 100*time.Millisecond, 10*time.Millisecond)
 
 	// Shutdown the receiver.
 	assert.NoError(t, receiver.Shutdown(ctx))
@@ -372,7 +372,7 @@ func TestNoStorage(t *testing.T) {
 	// which means it should get all three events.
 	assert.Eventually(t, func() bool {
 		return assert.Equal(t, 3, logsSink.LogRecordCount())
-	}, time.Second, 100*time.Millisecond)
+	}, 100*time.Millisecond, 10*time.Millisecond)
 }
 
 func TestStorage(t *testing.T) {
@@ -408,6 +408,8 @@ func TestStorage(t *testing.T) {
 	host := storagetest.NewStorageHost(t, storageDir, "test")
 	assert.NoError(t, receiver.Start(ctx, host))
 
+	time.Sleep(10 * time.Millisecond)
+
 	// Create the second k8s event.
 	secondEvent := getEvent()
 	firstEvent.UID = types.UID("ec279341-e2d8-4b2a-b17d-6e0566481002")
@@ -417,7 +419,7 @@ func TestStorage(t *testing.T) {
 	// The last resource version processed should be saved in storage.
 	assert.Eventually(t, func() bool {
 		return assert.Equal(t, 2, logsSink.LogRecordCount())
-	}, 2*time.Second, 100*time.Millisecond)
+	}, 100*time.Millisecond, 10*time.Millisecond)
 
 	// Shutdown the receiver.
 	require.NoError(t, receiver.Shutdown(ctx))
@@ -447,7 +449,7 @@ func TestStorage(t *testing.T) {
 	// as it is the only one with newer resource version.
 	assert.Eventually(t, func() bool {
 		return assert.Equal(t, 1, logsSink.LogRecordCount())
-	}, 2*time.Second, 100*time.Millisecond)
+	}, 100*time.Millisecond, 10*time.Millisecond)
 }
 
 func getEvent() *corev1.Event {
