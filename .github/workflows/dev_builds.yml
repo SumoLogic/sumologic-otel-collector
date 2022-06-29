@@ -323,7 +323,8 @@ jobs:
           cp otelcol-sumo-${{ matrix.arch_os }}-fips otelcol-sumo
           make build-push-container-multiplatform \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
-            PLATFORM=${{ matrix.arch_os }}
+            PLATFORM=${{ matrix.arch_os }} \
+            LATEST_TAG_FIPS_SUFFIX="-fips"
 
   push-docker-manifest:
     name: Push joint container manifest
