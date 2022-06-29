@@ -35,13 +35,13 @@ receivers:
     aws_certificate_path: global-bundle.pem
     collection_interval: 10s
     db_queries:
-      - queryid: "Q1"
-        query: "Show tables"
-      - queryid: "Q2"
-        query: "Select * from dept_manager"
+      - queryid: Q1
+        query: Show tables
+      - queryid: Q2
+        query: Select * from dept_manager
         index_column_name: emp_no
         index_column_type: NUMBER
-        initial_index_column_start_value: "3"
+        initial_index_column_start_value: 3
     setconnmaxlifetimemins: 3
     setmaxopenconns: 10
     setmaxidleconns: 10

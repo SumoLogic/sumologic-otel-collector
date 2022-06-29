@@ -133,7 +133,7 @@ func TestValidTIMESTAMPStateValueII(t *testing.T) {
 	cfg := factory.CreateDefaultConfig().(*Config)
 	cfg.DBQueries = make([]DBQueries, 1)
 	var expectedDate time.Time = time.Now()
-	expectedDate = expectedDate.Add(-35 * time.Hour)
+	expectedDate = expectedDate.Add(-48 * time.Hour)
 	expectedDateString := expectedDate.String()
 	expectedDateString = expectedDateString[0:19]
 	cfg.DBQueries[0].QueryId = "Q1"

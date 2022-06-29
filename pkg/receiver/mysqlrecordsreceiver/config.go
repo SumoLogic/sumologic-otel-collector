@@ -71,6 +71,12 @@ func (cfg *Config) Validate() error {
 		}
 	}
 
+	if cfg.AuthenticationMode == "IAMRDSAuth" {
+		if len(cfg.EncryptSecretPath) != 0 {
+			err = multierr.Append(err, errors.New("encrypt_secret_path should be empty"))
+		}
+	}
+
 	if cfg.AuthenticationMode == "IAMRDSAuth" && len(cfg.Region) == 0 && len(cfg.AWSCertificatePath) == 0 {
 		err = multierr.Append(err, errors.New("require aws region and aws certificate path for authentication_mode : 'IAMRDSAuth'. You can download certificate from You can download it from https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html"))
 	}
@@ -81,6 +87,12 @@ func (cfg *Config) Validate() error {
 
 	if len(cfg.Database) == 0 {
 		err = multierr.Append(err, errors.New("database cannot be empty"))
+	}
+
+	if cfg.SetMaxNoDatabaseWorkers != 0 {
+		if cfg.SetMaxNoDatabaseWorkers <= 0 || cfg.SetMaxNoDatabaseWorkers > 10 {
+			err = multierr.Append(err, errors.New("database workers should be 1 to 10"))
+		}
 	}
 
 	var queryIds []string
