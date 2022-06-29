@@ -417,7 +417,7 @@ func TestStorage(t *testing.T) {
 	// The last resource version processed should be saved in storage.
 	assert.Eventually(t, func() bool {
 		return assert.Equal(t, 2, logsSink.LogRecordCount())
-	}, time.Second, 100*time.Millisecond)
+	}, 2*time.Second, 100*time.Millisecond)
 
 	// Shutdown the receiver.
 	require.NoError(t, receiver.Shutdown(ctx))
@@ -447,7 +447,7 @@ func TestStorage(t *testing.T) {
 	// as it is the only one with newer resource version.
 	assert.Eventually(t, func() bool {
 		return assert.Equal(t, 1, logsSink.LogRecordCount())
-	}, time.Second, 100*time.Millisecond)
+	}, 2*time.Second, 100*time.Millisecond)
 }
 
 func getEvent() *corev1.Event {
