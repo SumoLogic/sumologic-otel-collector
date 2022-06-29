@@ -317,11 +317,10 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: otelcol-sumo-${{matrix.arch_os}}-fips
-          path: artifacts/
 
       - name: Build and push FIPS image to Open Source ECR
         run: |
-          cp artifacts/${{ steps.set_filename.outputs.filename }}-fips otelcol-sumo
+          cp otelcol-sumo-${{ matrix.arch_os }}-fips otelcol-sumo
           make build-push-container-multiplatform \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
             PLATFORM=${{ matrix.arch_os }}
