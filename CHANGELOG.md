@@ -14,10 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - chore: upgrade OT core to v0.54.0 [#637]
+- ci: re-enable MacOS builds [#642]
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.53.0-sumo-0...main
 [#620]: https://github.com/SumoLogic/sumologic-otel-collector/pull/620
 [#637]: https://github.com/SumoLogic/sumologic-otel-collector/pull/637
+[#642]: https://github.com/SumoLogic/sumologic-otel-collector/pull/642
 
 ## [v0.53.0-sumo-0]
 
