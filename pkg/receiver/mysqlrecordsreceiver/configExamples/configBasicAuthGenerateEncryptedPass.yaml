@@ -4,6 +4,7 @@ exporters:
     loglevel: info
     sampling_initial: 2
     sampling_thereafter: 500
+
 receivers:
   mysqlrecords:
     authentication_mode: BasicAuth
@@ -16,6 +17,7 @@ receivers:
     encrypt_secret_path: secret.txt
     database: employees
     collection_interval: 10s
+
 service:
   telemetry:
       logs:

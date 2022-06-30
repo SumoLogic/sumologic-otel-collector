@@ -41,7 +41,8 @@ func getStateValueNUMBER(dbquery *DBQueries, logger *zap.Logger) string {
 		startval, err := strconv.Atoi(dbquery.InitialIndexColumnStartValue)
 		if err != nil {
 			stateValue = strconv.Itoa(startval)
-			logger.Info("Problem parsing initial_index_column_start_value int, check collector config file. Considering default 0 for:", zap.String("queryId", dbquery.QueryId))
+			logger.Info("Problem parsing initial_index_column_start_value int", zap.String("queryId", dbquery.QueryId))
+			logger.Info("Check collector config file. Considering default 0 for:", zap.String("queryId", dbquery.QueryId))
 		} else {
 			stateValue = strconv.Itoa(startval - 1)
 		}
@@ -61,7 +62,8 @@ func getStateValueTIMESTAMP(dbquery *DBQueries, logger *zap.Logger) string {
 		if err != nil {
 			startDate = startDate.Add(-48 * time.Hour)
 			stateValue = startDate.String()
-			logger.Info("Problem parsing initial_index_column_start_value date, check collector config file. Considering default now - 48hrs for:", zap.String("queryId", dbquery.QueryId))
+			logger.Info("Problem parsing initial_index_column_start_value date", zap.String("queryId", dbquery.QueryId))
+			logger.Info("Check collector config file. Considering default now - 48hrs for:", zap.String("queryId", dbquery.QueryId))
 		} else {
 			startDate = startDate.Add(-1 * time.Second)
 			stateValue = startDate.String()

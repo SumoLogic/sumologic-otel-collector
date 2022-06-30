@@ -5,6 +5,7 @@ extensions:
     collector_category: collector_category
     install_token: install_token
     api_base_url: https://open-collectors.sumologic.com
+
 exporters:
   #sumologic exporter details : https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/exporter/sumologicexporter#sumo-logic-exporter
   sumologic:
@@ -23,6 +24,7 @@ exporters:
     loglevel: info
     sampling_initial: 2
     sampling_thereafter: 500
+
 receivers:
   mysqlrecords:
     authentication_mode: IAMRDSAuth
@@ -46,6 +48,7 @@ receivers:
     setmaxopenconns: 10
     setmaxidleconns: 10
     setmaxnodatabaseworkers: 1
+
 service:
   extensions: [sumologic]
   pipelines:

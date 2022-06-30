@@ -57,7 +57,8 @@ func (m *mySQLReceiver) produce(records chan<- string, id int, wg *sync.WaitGrou
 	m.logger.Info("Total records extracted and produced:", zap.Int("count", recordcount))
 }
 
-//Consume is used for fetching each record from the records channel, converting them into plog.Logs type with the record being passed into the body tag and then the comsumer of the LogsReceiver consuming them
+//Consume is used for fetching each record from the records channel, converting them into plog.Logs type
+//The record is passed into the body tag and then the comsumer of the LogsReceiver consumes them
 func (m *mySQLReceiver) consume(records <-chan string, id int, wg *sync.WaitGroup, ctx context.Context) {
 	defer wg.Done()
 	var recordcount int

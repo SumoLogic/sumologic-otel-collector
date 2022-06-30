@@ -78,7 +78,7 @@ func (cfg *Config) Validate() error {
 	}
 
 	if cfg.AuthenticationMode == "IAMRDSAuth" && len(cfg.Region) == 0 && len(cfg.AWSCertificatePath) == 0 {
-		err = multierr.Append(err, errors.New("require aws region and aws certificate path for authentication_mode : 'IAMRDSAuth'. You can download certificate from You can download it from https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html"))
+		err = multierr.Append(err, errors.New("require aws region and aws certificate path for authentication_mode : 'IAMRDSAuth'"))
 	}
 
 	if len(cfg.DBHost) == 0 {
