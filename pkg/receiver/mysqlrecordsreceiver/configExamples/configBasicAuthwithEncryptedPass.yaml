@@ -3,17 +3,16 @@ extensions:
   sumologic:
     collector_name: OTEL_MYSQL_DB_INTEGRATOR
     collector_category: collector_category
-    install_token: *************************************
+    install_token: install_token
     api_base_url: https://open-collectors.sumologic.com
 exporters:
   #sumologic exporter details : https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/exporter/sumologicexporter#sumo-logic-exporter
   sumologic:
     auth:
       authenticator: sumologic
-    source_category: "MYSQL_DB_Collector"
-    source_name: "http input"
-    source_host: "mysqlRecords"
-    compress_encoding: ""
+    source_category: 'MYSQL_DB_Collector'
+    source_name: 'http input'
+    source_host: 'mysqlRecords'
     sending_queue:
       enabled: true
     #log_format should be otlp so as to send each record as a JSON object to SUMO

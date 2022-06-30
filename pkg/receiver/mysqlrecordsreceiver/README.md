@@ -5,6 +5,7 @@ This receiver queries MySQL for database records and creates a log record (plog.
 Supported pipeline types: logs
 
 BasicAuth Password Encryption Use Case:
+
 - The receiver supports password encryption for 'BasicAuth' authentication_mode
 - To generate an encrypted password:
   - Specify encrypt_secret_path to a secret file containing a 24 character string
@@ -16,6 +17,7 @@ BasicAuth Password Encryption Use Case:
     The encrypted password will only be printed in the console with a debug log level. Once generated, the user can remove the telemetry field so as to enable logging at the default info level. To use the encrypted password, the user needs to specify password_type as 'encrypted' and also the encrypt_secret_path to the same secret file.
 
 State Management Use Case:
+
 - The receiver supports saving the state of a query fetch into a csv file where a unique/auto-increment field is present in a table of a database.
 - The unique/auto-increment field can either be of type 'NUMBER' or 'TIMESTAMP', where a 'NUMBER' should be a non-negative integer and a 'TIMESTAMP' should be of the     default timestamp storage format in mysql, i.e. '2006-01-02 15:04:05'.
 - This is basically the delta mode state management feature of the receiver where the current value/state of the unique/auto-increment field is saved in a csv file which can be retreived later so as to fetch records after the saved state value.

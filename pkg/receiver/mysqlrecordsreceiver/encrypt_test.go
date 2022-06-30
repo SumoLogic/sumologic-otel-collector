@@ -39,27 +39,31 @@ func TestInValidReadMySecret(t *testing.T) {
 func TestValidEncrytFunc(t *testing.T) {
 	StringToEncrypt := "Encrypting this string"
 	logger := zap.NewExample()
-	encText, _ := Encrypt(StringToEncrypt, MySecret, logger)
+	encText, err := Encrypt(StringToEncrypt, MySecret, logger)
+	require.NoError(t, err)
 	require.EqualValues(t, "Li5E8RFcV/EPZY/neyCXQYjrfa/atA==", encText)
 }
 
 func TestInValidEncrytFunc(t *testing.T) {
 	StringToEncrypt := "Encrypting this string"
 	logger := zap.NewExample()
-	encText, _ := Encrypt(StringToEncrypt, MySecret, logger)
+	encText, err := Encrypt(StringToEncrypt, MySecret, logger)
+	require.NoError(t, err)
 	require.NotEqualValues(t, "Li5E8RFcV/EPZY/neyCXQYjrfa/atA", encText)
 }
 
 func TestValidDecrytFunc(t *testing.T) {
 	StringToDecryot := "Li5E8RFcV/EPZY/neyCXQYjrfa/atA=="
 	logger := zap.NewExample()
-	decText, _ := Decrypt(StringToDecryot, MySecret, logger)
+	decText, err := Decrypt(StringToDecryot, MySecret, logger)
+	require.NoError(t, err)
 	require.EqualValues(t, "Encrypting this string", decText)
 }
 
 func TestInValidDecrytFunc(t *testing.T) {
 	StringToDecryot := "Li5E8RFcV/EPZY/neyCXQYjrfa/atA=="
 	logger := zap.NewExample()
-	decText, _ := Decrypt(StringToDecryot, MySecret, logger)
+	decText, err := Decrypt(StringToDecryot, MySecret, logger)
+	require.NoError(t, err)
 	require.NotEqualValues(t, "Encrypting this string!", decText)
 }

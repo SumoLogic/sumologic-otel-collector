@@ -11,13 +11,12 @@ This release would add a new mysqlrecords receiver that would collect databse re
 
 ### Added
 
-- feat: new mysqlrecords receiver [#prno]
+- feat: new mysqlrecords receiver [#643]
 - feat(rawk8seventsreceiver): remember last processed resource version [#620]
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.53.0-sumo-0...main
-[#prno]: prlink
+[#643]: https://github.com/SumoLogic/sumologic-otel-collector/pull/643
 [#620]: https://github.com/SumoLogic/sumologic-otel-collector/pull/620
-
 
 ## [v0.53.0-sumo-0]
 

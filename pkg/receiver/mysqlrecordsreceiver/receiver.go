@@ -64,7 +64,10 @@ func (m *mySQLReceiver) consume(records <-chan string, id int, wg *sync.WaitGrou
 	for msg := range records {
 		recordcount++
 		logs := m.convertToLog(msg)
-		m.consumer.ConsumeLogs(ctx, logs)
+		err := m.consumer.ConsumeLogs(ctx, logs)
+		if err != nil {
+			m.logger.Error("Failed to consume records", zap.Error(err))
+		}
 	}
 	m.logger.Info("Total records converted and consumed:", zap.Int("count", recordcount))
 }

@@ -31,7 +31,7 @@ func getStateStoreFilename(dbquery *DBQueries) string {
 
 func getStateValueNUMBER(dbquery *DBQueries, logger *zap.Logger) string {
 	var startval int = 0
-	var stateValue = ""
+	var stateValue string
 	if dbquery.InitialIndexColumnStartValue == "" {
 		logger.Info("initial_index_column_start_value int not specified, considering default as 0 for:", zap.String("queryId", dbquery.QueryId))
 		stateValue = strconv.Itoa(startval)
@@ -99,7 +99,10 @@ func GetState(dbquery *DBQueries, logger *zap.Logger) string {
 			if dbquery.IndexColumnType == "NUMBER" {
 				configFileStateValue := getStateValueNUMBER(dbquery, logger)
 				reader := csv.NewReader(csvFile)
-				records, _ := reader.ReadAll()
+				records, err := reader.ReadAll()
+				if err != nil {
+					logger.Error("Failed to read stateFile", zap.Error(err))
+				}
 				stateFileStateValue := records[1][3]
 				if configFileStateValue != "" && configFileStateValue != stateFileStateValue {
 					stateValue = configFileStateValue
@@ -109,7 +112,10 @@ func GetState(dbquery *DBQueries, logger *zap.Logger) string {
 			} else if dbquery.IndexColumnType == "TIMESTAMP" {
 				configFileStateValue := getStateValueTIMESTAMP(dbquery, logger)
 				reader := csv.NewReader(csvFile)
-				records, _ := reader.ReadAll()
+				records, err := reader.ReadAll()
+				if err != nil {
+					logger.Error("Failed to read stateFile", zap.Error(err))
+				}
 				stateFileStateValue := records[1][3]
 				if configFileStateValue != "" && configFileStateValue != stateFileStateValue {
 					stateValue = configFileStateValue
