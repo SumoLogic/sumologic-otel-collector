@@ -1,0 +1,26 @@
+exporters:
+  #loggong exporter details : https://github.com/open-telemetry/opentelemetry-collector/tree/v0.53.0/exporter/loggingexporter#logging-exporter
+  logging:
+    loglevel: info
+    sampling_initial: 2
+    sampling_thereafter: 500
+receivers:
+  mysqlrecords:
+    authentication_mode: BasicAuth
+    dbhost: localhost
+    dbport: 3306
+    transport: tcp
+    username: test
+    password: test
+    #to generate an encrypted password for this plaintext password, specify path to file of encryption secret of 24 characters
+    encrypt_secret_path: secret.txt
+    database: employees
+    collection_interval: 10s
+service:
+  telemetry:
+      logs:
+        level: debug
+  pipelines:
+    logs:
+      exporters: [logging]
+      receivers: [mysqlrecords]

@@ -53,15 +53,15 @@ func getStateValueTIMESTAMP(dbquery *DBQueries, logger *zap.Logger) string {
 	var startDate time.Time = time.Now()
 	var stateValue = ""
 	if dbquery.InitialIndexColumnStartValue == "" {
-		logger.Info("initial_index_column_start_value date not specified, considering default as now - 35hrs for:", zap.String("queryId", dbquery.QueryId))
-		startDate = startDate.Add(-35 * time.Hour)
+		logger.Info("initial_index_column_start_value date not specified, considering default as now - 48hrs for:", zap.String("queryId", dbquery.QueryId))
+		startDate = startDate.Add(-48 * time.Hour)
 		stateValue = startDate.String()
 	} else if dbquery.InitialIndexColumnStartValue != "" {
 		startDate, err := time.Parse("2006-01-02 15:04:05", dbquery.InitialIndexColumnStartValue)
 		if err != nil {
-			startDate = startDate.Add(-35 * time.Hour)
+			startDate = startDate.Add(-48 * time.Hour)
 			stateValue = startDate.String()
-			logger.Info("Problem parsing initial_index_column_start_value date, check collector config file. Considering default now - 35hrs for:", zap.String("queryId", dbquery.QueryId))
+			logger.Info("Problem parsing initial_index_column_start_value date, check collector config file. Considering default now - 48hrs for:", zap.String("queryId", dbquery.QueryId))
 		} else {
 			startDate = startDate.Add(-1 * time.Second)
 			stateValue = startDate.String()

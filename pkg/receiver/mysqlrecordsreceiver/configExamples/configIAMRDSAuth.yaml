@@ -4,7 +4,7 @@ extensions:
     collector_name: OTEL_MYSQL_DB_INTEGRATOR
     collector_category: collector_category
     install_token: *************************************
-    api_base_url: https://stag-open-events.sumologic.net
+    api_base_url: https://open-collectors.sumologic.com
 exporters:
   #sumologic exporter details : https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/exporter/sumologicexporter#sumo-logic-exporter
   sumologic:
@@ -16,6 +16,7 @@ exporters:
     compress_encoding: ""
     sending_queue:
       enabled: true
+    #log_format should be otlp so as to send each record as a JSON object to SUMO
     log_format: otlp
   #loggong exporter details : https://github.com/open-telemetry/opentelemetry-collector/tree/v0.53.0/exporter/loggingexporter#logging-exporter
   #using this as an optional exporter to view console level logs
@@ -35,13 +36,13 @@ receivers:
     aws_certificate_path: global-bundle.pem
     collection_interval: 10s
     db_queries:
-      - queryid: "Q1"
-        query: "Show tables"
-      - queryid: "Q2"
-        query: "Select * from dept_manager"
+      - queryid: Q1
+        query: Show tables
+      - queryid: Q2
+        query: Select * from dept_manager
         index_column_name: emp_no
         index_column_type: NUMBER
-        initial_index_column_start_value: "3"
+        initial_index_column_start_value: 3
     setconnmaxlifetimemins: 3
     setmaxopenconns: 10
     setmaxidleconns: 10
