@@ -22,26 +22,26 @@ import (
 )
 
 type Config struct {
-	*config.ReceiverSettings `mapstructure:",squash"`
-	AuthenticationMode       string `mapstructure:"authentication_mode"`
-	Username                 string `mapstructure:"username"`
-	Password                 string `mapstructure:"password,omitempty"`
-	PasswordType             string `mapstructure:"password_type,omitempty"`
-	EncryptSecretPath        string `mapstructure:"encrypt_secret_path,omitempty"`
-	Database                 string `mapstructure:"database,omitempty"`
-	DBHost                   string `mapstructure:"dbhost"`
-	DBPort                   string `mapstructure:"dbport,omitempty"`
-	Transport                string `mapstructure:"transport,omitempty"`
-	AllowNativePasswords     bool   `mapstructure:"allow_native_passwords,omitempty"`
-	Region                   string `mapstructure:"region,omitempty"`
-	AWSCertificatePath       string `mapstructure:"aws_certificate_path,omitempty"`
-	confignet.NetAddr        `mapstructure:",squash"`
-	CollectionInterval       string      `mapstructure:"collection_interval,omitempty"`
-	DBQueries                []DBQueries `mapstructure:"db_queries,omitempty"`
-	SetConnMaxLifetime       int         `mapstructure:"setconnmaxlifetimemins,omitempty"`
-	SetMaxOpenConns          int         `mapstructure:"setmaxopenconns,omitempty"`
-	SetMaxIdleConns          int         `mapstructure:"setmaxidleconns,omitempty"`
-	SetMaxNoDatabaseWorkers  int         `mapstructure:"setmaxnodatabaseworkers,omitempty"`
+	config.ReceiverSettings `mapstructure:",squash"`
+	AuthenticationMode      string `mapstructure:"authentication_mode"`
+	Username                string `mapstructure:"username"`
+	Password                string `mapstructure:"password,omitempty"`
+	PasswordType            string `mapstructure:"password_type,omitempty"`
+	EncryptSecretPath       string `mapstructure:"encrypt_secret_path,omitempty"`
+	Database                string `mapstructure:"database,omitempty"`
+	DBHost                  string `mapstructure:"dbhost"`
+	DBPort                  string `mapstructure:"dbport,omitempty"`
+	Transport               string `mapstructure:"transport,omitempty"`
+	AllowNativePasswords    bool   `mapstructure:"allow_native_passwords,omitempty"`
+	Region                  string `mapstructure:"region,omitempty"`
+	AWSCertificatePath      string `mapstructure:"aws_certificate_path,omitempty"`
+	confignet.NetAddr       `mapstructure:",squash"`
+	CollectionInterval      string      `mapstructure:"collection_interval,omitempty"`
+	DBQueries               []DBQueries `mapstructure:"db_queries,omitempty"`
+	SetConnMaxLifetime      int         `mapstructure:"setconnmaxlifetimemins,omitempty"`
+	SetMaxOpenConns         int         `mapstructure:"setmaxopenconns,omitempty"`
+	SetMaxIdleConns         int         `mapstructure:"setmaxidleconns,omitempty"`
+	SetMaxNoDatabaseWorkers int         `mapstructure:"setmaxnodatabaseworkers,omitempty"`
 }
 
 type DBQueries struct {

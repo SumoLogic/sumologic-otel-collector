@@ -43,7 +43,7 @@ func TestCreateLogsReceiver(t *testing.T) {
 		context.Background(),
 		componenttest.NewNopReceiverCreateSettings(),
 		&Config{
-			ReceiverSettings:   &rs,
+			ReceiverSettings:   rs,
 			CollectionInterval: "10s",
 			Username:           "mysqluser",
 			Password:           "userpass",

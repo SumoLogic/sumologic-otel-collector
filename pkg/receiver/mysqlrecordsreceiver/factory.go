@@ -37,7 +37,7 @@ func createDefaultConfig() config.Receiver {
 	rs := config.NewReceiverSettings(config.NewComponentID(typeStr))
 
 	return &Config{
-		ReceiverSettings:     &rs,
+		ReceiverSettings:     rs,
 		CollectionInterval:   "10s",
 		AllowNativePasswords: true,
 		Username:             "Username",
