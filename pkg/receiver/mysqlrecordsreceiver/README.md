@@ -101,7 +101,7 @@ receivers:
         # this is the explicitly defined identifier value for a particular database query
         # for 'NUMBER' type the default value is 0 and for 'TIMESTAMP' the default value is currentTime - 48hrs
         initial_index_column_start_value: 5
-    
+
     # this is required to ensure connections are closed by the driver safely before connection is closed by MySQL server, OS, or other middlewares
     # default is 3
     setconnmaxlifetimemins: 3
