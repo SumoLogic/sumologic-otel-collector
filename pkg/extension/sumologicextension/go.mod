@@ -6,8 +6,8 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/stretchr/testify v1.7.1
-	go.opentelemetry.io/collector v0.53.0
+	github.com/stretchr/testify v1.7.4
+	go.opentelemetry.io/collector v0.54.0
 	go.uber.org/zap v1.21.0
 	google.golang.org/grpc v1.47.0
 )
@@ -23,7 +23,7 @@ require (
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.15.6 // indirect
-	github.com/knadh/koanf v1.4.1 // indirect
+	github.com/knadh/koanf v1.4.2 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
@@ -31,7 +31,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rs/cors v1.8.2 // indirect
-	go.opentelemetry.io/collector/pdata v0.53.0 // indirect
+	go.opentelemetry.io/collector/pdata v0.54.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.32.0 // indirect
 	go.opentelemetry.io/otel v1.7.0 // indirect
 	go.opentelemetry.io/otel/metric v0.30.0 // indirect

@@ -1,7 +1,7 @@
 class install_otel_collector {
 
-   $otel_collector_version = "0.50.0-sumo-0" # version of Sumo Logic Distro of OpenTelemetry Collector
-   $systemd_service = false                  # enables creation of Systemd Service for Sumo Logic Distro of OpenTelemetry Collector
+   $otel_collector_version = "0.50.0-sumo-0" # version of Sumo Logic Distribution for OpenTelemetry Collector
+   $systemd_service = false                  # enables creation of Systemd Service for Sumo Logic Distribution for OpenTelemetry Collector
 
    $arch = $facts['os']['architecture'] ? {
       'aarch64' => 'arm64',

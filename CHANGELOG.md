@@ -14,9 +14,16 @@ This release would add a new mysqlrecords receiver that would collect databse re
 - feat: new mysqlrecords receiver [#643]
 - feat(rawk8seventsreceiver): remember last processed resource version [#620]
 
+### Changed
+
+- chore: upgrade OT core to v0.54.0 [#637]
+- ci: re-enable MacOS builds [#642]
+
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.53.0-sumo-0...main
 [#643]: https://github.com/SumoLogic/sumologic-otel-collector/pull/643
 [#620]: https://github.com/SumoLogic/sumologic-otel-collector/pull/620
+[#637]: https://github.com/SumoLogic/sumologic-otel-collector/pull/637
+[#642]: https://github.com/SumoLogic/sumologic-otel-collector/pull/642
 
 ## [v0.53.0-sumo-0]
 
@@ -217,7 +224,7 @@ for more details.
 
 ### Released 2022-04-05
 
-Welcome to the Sumo Logic OT Distro Collector!
+Welcome to the Sumo Logic Distribution for OpenTelemetry Collector!
 
 With this release, we are officially out of beta status and in GA, as in General Availability. 🎉
 
@@ -226,7 +233,7 @@ and is commercially fully supported by Sumo Logic in production environments.
 
 Starting with this release, we are using upstream [OpenTelemetry Collector][otc] version numbers
 as the base for the OT Distro version numbers.
-This means that Sumo Logic OT Distro Collector `v0.47.0-sumo-0` is based on `v0.47.0`
+This means that Sumo Logic Distribution for OpenTelemetry Collector `v0.47.0-sumo-0` is based on `v0.47.0`
 of the OpenTelemetry Collector [core][otc_v0_47_0] and [contrib][contrib_v0_47_0] packages.
 
 [otc]: https://github.com/open-telemetry/opentelemetry-collector

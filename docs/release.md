@@ -159,13 +159,8 @@ in the repository root.
 
 We include all of the components from the following list:
 
-- [OpenTelemetry receivers][OT_receivers]
-- [OpenTelemetry processors][OT_processors]
-- [OpenTelemetry exporters][OT_exporters]
-- [OpenTelemetry extensions][OT_extensions]
-- [OpenTelemetry Contrib receivers][OTC_receivers]
-- [OpenTelemetry Contrib processors][OTC_processors]
-- [OpenTelemetry Contrib extensions][OTC_extensions]
+- [OpenTelemetry Collector][otelcol_components] extensions, receivers, processors, exporters
+- [OpenTelemetry Collector Contrib][otelcol_contrib_components] extensions, receivers, processors, exporters
 
 As a fourth step, please check [OpenTelemetry Collector][OT_release] and [OpenTelemetry Collector Contrib][OTC_release]
 release pages for new components and update [builder configuration][builder_config] and [README.md] if they are any.
@@ -277,13 +272,8 @@ make update-journalctl
 [changelog]: ../CHANGELOG.md
 [journaldreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.51.0/receiver/journaldreceiver
 [debian_versions]: https://hub.docker.com/_/debian/?tab=description
-[OT_receivers]: https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver
-[OT_processors]: https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor
-[OT_exporters]: https://github.com/open-telemetry/opentelemetry-collector/tree/main/exporter
-[OT_extensions]: https://github.com/open-telemetry/opentelemetry-collector/tree/main/extension
-[OTC_receivers]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver
-[OTC_processors]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor
-[OTC_extensions]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension
+[otelcol_components]: https://github.com/open-telemetry/opentelemetry-collector-releases/blob/main/distributions/otelcol/manifest.yaml
+[otelcol_contrib_components]: https://github.com/open-telemetry/opentelemetry-collector-releases/blob/main/distributions/otelcol-contrib/manifest.yaml
 [OTC_repository]: https://github.com/open-telemetry/opentelemetry-collector-contrib
 [README.md]: ../README.md
 [#604]: https://github.com/SumoLogic/sumologic-otel-collector/pull/604/files

@@ -87,117 +87,117 @@ jobs:
           path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
           if-no-files-found: error
 
-  # build-darwin:
-  #   name: Build darwin
-  #   runs-on: ${{ matrix.runs_on }}
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         - arch_os: darwin_amd64
-  #           runs_on: macos-latest
-  #         - arch_os: darwin_arm64
-  #           runs_on: macos-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
+  build-darwin:
+    name: Build darwin
+    runs-on: ${{ matrix.runs_on }}
+    strategy:
+      matrix:
+        include:
+          - arch_os: darwin_amd64
+            runs_on: macos-latest
+          - arch_os: darwin_arm64
+            runs_on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
 
-  #     - name: Fetch current branch
-  #       run: ./ci/fetch_current_branch.sh
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
 
-  #     - name: Setup go
-  #       uses: actions/setup-go@v3
-  #       with:
-  #         go-version: '1.18'
+      - name: Setup go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.18'
 
-  #     # As described in
-  #     # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
-  #     - uses: actions/cache@v3
-  #       with:
-  #         path: |
-  #           /Users/runner/go/pkg/mod
-  #           /Users/runner/Library/Caches/go-build
-  #         key: ${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
-  #         restore-keys: |
-  #           ${{matrix.arch_os}}-go-
+      # As described in
+      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+      - uses: actions/cache@v3
+        with:
+          path: |
+            /Users/runner/go/pkg/mod
+            /Users/runner/Library/Caches/go-build
+          key: ${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{matrix.arch_os}}-go-
 
-  #     - name: Extract tag
-  #       id: extract_tag
-  #       run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
+      - name: Extract tag
+        id: extract_tag
+        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
 
-  #     - name: Add opentelemetry-collector-builder installation dir to PATH
-  #       run: echo "$HOME/bin" >> $GITHUB_PATH
+      - name: Add opentelemetry-collector-builder installation dir to PATH
+        run: echo "$HOME/bin" >> $GITHUB_PATH
 
-  #     - name: Install opentelemetry-collector-builder
-  #       run: make install-builder
-  #       working-directory: ./otelcolbuilder
+      - name: Install opentelemetry-collector-builder
+        run: make install-builder
+        working-directory: ./otelcolbuilder
 
-  #     - name: Prepare tags in otelcolbuilder's config
-  #       run: make prepare-tag TAG=${{ steps.extract_tag.outputs.tag }}
+      - name: Prepare tags in otelcolbuilder's config
+        run: make prepare-tag TAG=${{ steps.extract_tag.outputs.tag }}
 
-  #     - name: Build
-  #       run: make otelcol-sumo-${{matrix.arch_os}}
-  #       working-directory: ./otelcolbuilder
+      - name: Build
+        run: make otelcol-sumo-${{matrix.arch_os}}
+        working-directory: ./otelcolbuilder
 
-  #     - name: Set filename
-  #       id: set_filename
-  #       run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}})"
+      - name: Set filename
+        id: set_filename
+        run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}})"
 
-  #     - name: Import Code-Signing Certificates
-  #       uses: Apple-Actions/import-codesign-certs@v1
-  #       with:
-  #         # The certificates in a PKCS12 file encoded as a base64 string
-  #         p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-  #         # The password used to import the PKCS12 file.
-  #         p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+      - name: Import Code-Signing Certificates
+        uses: Apple-Actions/import-codesign-certs@v1
+        with:
+          # The certificates in a PKCS12 file encoded as a base64 string
+          p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+          # The password used to import the PKCS12 file.
+          p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
 
-  #     # NOTE: gon's brew tap (as many others) has stopped working for some reason.
-  #     # Related issue: https://github.com/mitchellh/gon/issues/56
-  #     # - name: Install gon via HomeBrew for code signing and app notarization
-  #     #   run: |
-  #     #     brew tap mitchellh/gon
-  #     #     brew install mitchellh/gon/gon
+      # NOTE: gon's brew tap (as many others) has stopped working for some reason.
+      # Related issue: https://github.com/mitchellh/gon/issues/56
+      # - name: Install gon via HomeBrew for code signing and app notarization
+      #   run: |
+      #     brew tap mitchellh/gon
+      #     brew install mitchellh/gon/gon
 
-  #     - name: Install gon for code signing and app notarization
-  #       run: |
-  #         curl -Lo gon.dmg https://github.com/mitchellh/gon/releases/download/v0.2.3/gon_macos.dmg
-  #         sudo hdiutil attach gon.dmg
-  #         cp /Volumes/gon/gon "$HOME/bin"
+      - name: Install gon for code signing and app notarization
+        run: |
+          curl -Lo gon.dmg https://github.com/mitchellh/gon/releases/download/v0.2.3/gon_macos.dmg
+          sudo hdiutil attach gon.dmg
+          cp /Volumes/gon/gon "$HOME/bin"
 
-  #     - name: Sign the mac binaries with Gon
-  #       env:
-  #         AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
-  #       working-directory: ./otelcolbuilder/
-  #       run: make ${{matrix.arch_os}}-sign
+      - name: Sign the mac binaries with Gon
+        env:
+          AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
+        working-directory: ./otelcolbuilder/
+        run: make ${{matrix.arch_os}}-sign
 
-  #     - name: Rename .dmg to include tag in filename
-  #       run: cp otelcol-sumo-${{matrix.arch_os}}.dmg ${{ steps.set_filename.outputs.filename }}.dmg
-  #       working-directory: ./otelcolbuilder/cmd
+      - name: Rename .dmg to include tag in filename
+        run: cp otelcol-sumo-${{matrix.arch_os}}.dmg ${{ steps.set_filename.outputs.filename }}.dmg
+        working-directory: ./otelcolbuilder/cmd
 
-  #     - name: Rename binary to include tag in filename
-  #       run: cp otelcol-sumo-${{matrix.arch_os}} ${{ steps.set_filename.outputs.filename }}
-  #       working-directory: ./otelcolbuilder/cmd
+      - name: Rename binary to include tag in filename
+        run: cp otelcol-sumo-${{matrix.arch_os}} ${{ steps.set_filename.outputs.filename }}
+        working-directory: ./otelcolbuilder/cmd
 
-  #     - name: Show included modules
-  #       working-directory: ./otelcolbuilder/cmd
-  #       run: |
-  #         go version -m ${{ steps.set_filename.outputs.filename }} | \
-  #         grep -E "/(receiver|exporter|processor|extension)/" | \
-  #         tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
+      - name: Show included modules
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          go version -m ${{ steps.set_filename.outputs.filename }} | \
+          grep -E "/(receiver|exporter|processor|extension)/" | \
+          tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
 
-  #     # Store binary and .dmg into pipeline artifacts after they have been signed
+      # Store binary and .dmg into pipeline artifacts after they have been signed
 
-  #     - name: Store .dmg as action artifact
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: ${{matrix.arch_os}}.dmg
-  #         path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}.dmg
-  #         if-no-files-found: error
+      - name: Store .dmg as action artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{matrix.arch_os}}.dmg
+          path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}.dmg
+          if-no-files-found: error
 
-  #     - name: Store binary as action artifact
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: ${{matrix.arch_os}}
-  #         path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
-  #         if-no-files-found: error
+      - name: Store binary as action artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{matrix.arch_os}}
+          path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
+          if-no-files-found: error
 
   # pipeline to build FIPS compliance binary on Go+BoringCrypto
   build-go-boringcrypto:
@@ -273,122 +273,122 @@ jobs:
           if-no-files-found: error
 
   # pipeline to build FIPS compliance binary on Go+BoringCrypto on darwin
-  # build-go-boringcrypto-darwin:
-  #   name: Build
-  #   runs-on: macos-latest
-  #   strategy:
-  #     matrix:
-  #       go: [ '1.18.2b7' ]
-  #       arch_os: [ 'darwin_amd64' , 'darwin_arm64' ]
-  #   steps:
-  #     - uses: actions/checkout@v3
+  build-go-boringcrypto-darwin:
+    name: Build
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        go: [ '1.18.2b7' ]
+        arch_os: [ 'darwin_amd64' , 'darwin_arm64' ]
+    steps:
+      - uses: actions/checkout@v3
 
-  #     - name: Fetch current branch
-  #       run: ./ci/fetch_current_branch.sh
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
 
-  #     - name: Build and install Go+BoringCrypto
-  #       run: |
-  #         wget https://go-boringcrypto.storage.googleapis.com/go${{ matrix.go }}.src.tar.gz \
-  #           && tar -xf go${{ matrix.go }}.src.tar.gz \
-  #           && cd go/src/ \
-  #           && GOROOT_BOOTSTRAP=/usr ./make.bash \
-  #           && cd .. \
-  #           && sudo rm -rf /usr/local/bin/go \
-  #           && sudo cp bin/go* /usr/local/bin/
+      - name: Build and install Go+BoringCrypto
+        run: |
+          wget https://go-boringcrypto.storage.googleapis.com/go${{ matrix.go }}.src.tar.gz \
+            && tar -xf go${{ matrix.go }}.src.tar.gz \
+            && cd go/src/ \
+            && GOROOT_BOOTSTRAP=/usr ./make.bash \
+            && cd .. \
+            && sudo rm -rf /usr/local/bin/go \
+            && sudo cp bin/go* /usr/local/bin/
 
-  #     - name: Check go version
-  #       run: go version
+      - name: Check go version
+        run: go version
 
-  #     # As described in
-  #     # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
-  #     - uses: actions/cache@v3
-  #       with:
-  #         path: |
-  #           /Users/runner/go/pkg/mod
-  #           /Users/runner/Library/Caches/go-build
-  #         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-  #         restore-keys: |
-  #           ${{ runner.os }}-go-
+      # As described in
+      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+      - uses: actions/cache@v3
+        with:
+          path: |
+            /Users/runner/go/pkg/mod
+            /Users/runner/Library/Caches/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
-  #     - name: Extract tag
-  #       id: extract_tag
-  #       run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
+      - name: Extract tag
+        id: extract_tag
+        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
 
-  #     - name: Add opentelemetry-collector-builder installation dir to PATH
-  #       run: echo "$HOME/bin" >> $GITHUB_PATH
+      - name: Add opentelemetry-collector-builder installation dir to PATH
+        run: echo "$HOME/bin" >> $GITHUB_PATH
 
-  #     - name: Install opentelemetry-collector-builder
-  #       run: make install-builder
-  #       working-directory: ./otelcolbuilder
+      - name: Install opentelemetry-collector-builder
+        run: make install-builder
+        working-directory: ./otelcolbuilder
 
-  #     - name: Prepare tags in otelcolbuilder's config
-  #       run: make prepare-tag TAG=${{ steps.extract_tag.outputs.tag }}
+      - name: Prepare tags in otelcolbuilder's config
+        run: make prepare-tag TAG=${{ steps.extract_tag.outputs.tag }}
 
-  #     - name: Build
-  #       run: make otelcol-sumo-${{matrix.arch_os}} BINARY_FIPS_SUFFIX="-fips"
-  #       working-directory: ./otelcolbuilder
+      - name: Build
+        run: make otelcol-sumo-${{matrix.arch_os}} BINARY_FIPS_SUFFIX="-fips"
+        working-directory: ./otelcolbuilder
 
-  #     - name: Set filename
-  #       id: set_filename
-  #       run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}}-fips)"
+      - name: Set filename
+        id: set_filename
+        run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}}-fips)"
 
-  #     - name: Import Code-Signing Certificates
-  #       uses: Apple-Actions/import-codesign-certs@v1
-  #       with:
-  #         # The certificates in a PKCS12 file encoded as a base64 string
-  #         p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-  #         # The password used to import the PKCS12 file.
-  #         p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+      - name: Import Code-Signing Certificates
+        uses: Apple-Actions/import-codesign-certs@v1
+        with:
+          # The certificates in a PKCS12 file encoded as a base64 string
+          p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+          # The password used to import the PKCS12 file.
+          p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
 
-  #     # NOTE: gon's brew tap (as many others) has stopped working for some reason.
-  #     # Related issue: https://github.com/mitchellh/gon/issues/56
-  #     # - name: Install gon via HomeBrew for code signing and app notarization
-  #     #   run: |
-  #     #     brew tap mitchellh/gon
-  #     #     brew install mitchellh/gon/gon
+      # NOTE: gon's brew tap (as many others) has stopped working for some reason.
+      # Related issue: https://github.com/mitchellh/gon/issues/56
+      # - name: Install gon via HomeBrew for code signing and app notarization
+      #   run: |
+      #     brew tap mitchellh/gon
+      #     brew install mitchellh/gon/gon
 
-  #     - name: Install gon for code signing and app notarization
-  #       run: |
-  #         curl -Lo gon.dmg https://github.com/mitchellh/gon/releases/download/v0.2.3/gon_macos.dmg
-  #         sudo hdiutil attach gon.dmg
-  #         cp /Volumes/gon/gon "$HOME/bin"
+      - name: Install gon for code signing and app notarization
+        run: |
+          curl -Lo gon.dmg https://github.com/mitchellh/gon/releases/download/v0.2.3/gon_macos.dmg
+          sudo hdiutil attach gon.dmg
+          cp /Volumes/gon/gon "$HOME/bin"
 
-  #     - name: Sign the mac binaries with Gon
-  #       env:
-  #         AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
-  #       working-directory: ./otelcolbuilder/
-  #       run: make darwin-sign
+      - name: Sign the mac binaries with Gon
+        env:
+          AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
+        working-directory: ./otelcolbuilder/
+        run: make darwin-sign
 
-  #     - name: Rename .dmg to include tag in filename
-  #       run: cp otelcol-sumo-${{matrix.arch_os}}.dmg ${{ steps.set_filename.outputs.filename }}.dmg
-  #       working-directory: ./otelcolbuilder/cmd
+      - name: Rename .dmg to include tag in filename
+        run: cp otelcol-sumo-${{matrix.arch_os}}.dmg ${{ steps.set_filename.outputs.filename }}.dmg
+        working-directory: ./otelcolbuilder/cmd
 
-  #     - name: Rename binary to include tag in filename
-  #       run: cp otelcol-sumo-${{matrix.arch_os}}-fips ${{ steps.set_filename.outputs.filename }}
-  #       working-directory: ./otelcolbuilder/cmd
+      - name: Rename binary to include tag in filename
+        run: cp otelcol-sumo-${{matrix.arch_os}}-fips ${{ steps.set_filename.outputs.filename }}
+        working-directory: ./otelcolbuilder/cmd
 
-  #     - name: Show included modules
-  #       working-directory: ./otelcolbuilder/cmd
-  #       run: |
-  #         go version -m ${{ steps.set_filename.outputs.filename }} | \
-  #         grep -E "/(receiver|exporter|processor|extension)/" | \
-  #         tee otelcol-sumo-${{matrix.arch_os}}-fips_modules.txt
+      - name: Show included modules
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          go version -m ${{ steps.set_filename.outputs.filename }} | \
+          grep -E "/(receiver|exporter|processor|extension)/" | \
+          tee otelcol-sumo-${{matrix.arch_os}}-fips_modules.txt
 
-  #     # Store binary and .dmg into pipeline artifacts after they have been signed
+      # Store binary and .dmg into pipeline artifacts after they have been signed
 
-  #     - name: Store .dmg as action artifact
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: ${{matrix.arch_os}}.dmg
-  #         path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}.dmg
-  #         if-no-files-found: error
+      - name: Store .dmg as action artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{matrix.arch_os}}.dmg
+          path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}.dmg
+          if-no-files-found: error
 
-  #     - name: Store binary as action artifact
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: ${{matrix.arch_os}}
-  #         path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
-  #         if-no-files-found: error
+      - name: Store binary as action artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{matrix.arch_os}}
+          path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
+          if-no-files-found: error
 
   build-container-images:
     name: Build container
@@ -429,19 +429,6 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Download binary action artifact from build phase
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{matrix.arch_os}}
-          path: artifacts/
-
-      - name: Build and push image to Open Source ECR
-        run: |
-          cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
-          make build-push-container-multiplatform \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
-            PLATFORM=${{ matrix.arch_os }}
-
       - name: Download FIPS binary action artifact from build phase
         uses: actions/download-artifact@v3
         with:
@@ -456,13 +443,26 @@ jobs:
             PLATFORM=${{ matrix.arch_os }} \
             LATEST_TAG_FIPS_SUFFIX="-fips"
 
+      - name: Download binary action artifact from build phase
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{matrix.arch_os}}
+          path: artifacts/
+
+      - name: Build and push image to Open Source ECR
+        run: |
+          cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
+          make build-push-container-multiplatform \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }}
+
   push-docker-manifest:
     name: Push joint container manifest
     runs-on: ubuntu-20.04
     needs:
       # Require darwin build to succeed to prevent pushing container images
       # when darwin build fails.
-      # - build-darwin
+      - build-darwin
       - build-container-images
     steps:
       - uses: actions/checkout@v3
@@ -490,12 +490,6 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Push joint container manifest for all platforms to Open Source ECR
-        run: |
-          make push-container-manifest \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
-            PLATFORMS="linux/amd64 linux/arm64"
-
       - name: Push joint FIPS container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest \
@@ -503,12 +497,18 @@ jobs:
             PLATFORMS="linux/amd64 linux/arm64" \
             LATEST_TAG_FIPS_SUFFIX="-fips"
 
+      - name: Push joint container manifest for all platforms to Open Source ECR
+        run: |
+          make push-container-manifest \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORMS="linux/amd64 linux/arm64"
+
   create-release:
     name: Create Github release
     runs-on: ubuntu-20.04
     needs:
       - build
-      # - build-darwin
+      - build-darwin
       - build-container-images
       - push-docker-manifest
     steps:
