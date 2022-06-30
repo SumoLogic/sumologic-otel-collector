@@ -4,7 +4,7 @@ extensions:
     collector_name: OTEL_MYSQL_DB_INTEGRATOR
     collector_category: collector_category
     install_token: *************************************
-    api_base_url: https://stag-open-events.sumologic.net
+    api_base_url: https://open-collectors.sumologic.com
 exporters:
   #sumologic exporter details : https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/exporter/sumologicexporter#sumo-logic-exporter
   sumologic:
@@ -16,6 +16,7 @@ exporters:
     compress_encoding: ""
     sending_queue:
       enabled: true
+    #log_format should be otlp so as to send each record as a JSON object to SUMO
     log_format: otlp
   #loggong exporter details : https://github.com/open-telemetry/opentelemetry-collector/tree/v0.53.0/exporter/loggingexporter#logging-exporter
   #using this as an optional exporter to view console level logs
@@ -31,13 +32,11 @@ receivers:
     transport: tcp
     username: test
     password: test
-    #to generate an encrypted password for this plaintext password, specify path to file of encryption secret of 24 characters
-    encrypt_secret_path: secret.txt
     database: employees
     collection_interval: 10s
     db_queries:
       - queryid: Q1
-        query: Select * from departments;
+        query: Select * from departments
       - queryid: Q2
         query: Select * from dept_manager
         index_column_name: emp_no

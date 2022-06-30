@@ -96,7 +96,7 @@ func newMySQLClient(conf *Config, logger *zap.Logger) client {
 		if err != nil {
 			logger.Error("error encrypting your classified text", zap.Error(err))
 		}
-		logger.Info("The plaintext password can be replaced with this encrpyted password for security purposes. Also, password_type should be entered as encrypted in config file.", zap.String("encryptedPassword", encText))
+		logger.Debug("The plaintext password can be replaced with this encrpyted password for security purposes. Also, password_type should be entered as encrypted in config file.", zap.String("encryptedPassword", encText))
 	}
 	//Decrypting an encrypted password
 	if conf.PasswordType == "encrypted" {
