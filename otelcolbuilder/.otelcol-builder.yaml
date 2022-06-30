@@ -234,14 +234,3 @@ replaces:
   # version which gets then translated into a replace in go.mod file.
   # This does not replace the version that sumologicexporter depends on.
   - github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension => ../../pkg/extension/sumologicextension
-
-  # This fixes panic for changing fingerprint_size with already calculated fingerprint
-  # TODO: remove this when the following change is released upstream:
-  #
-  # - fix(pkg/stanza/input/file/reader): skip building fingerprint in case of configuration change
-  #   https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/10485
-  #
-  # For now, cherry-picked changes are being used:
-  # commit: https://github.com/SumoLogic/opentelemetry-collector-contrib/commit/6528176f3fd636ac770c5ebf1417718e84a7280e
-  # branch: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.53.0-stanza
-  - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza => github.com/SumoLogic/opentelemetry-collector-contrib/pkg/stanza 76f301f6f51db26d1fc17e6fdbd69438c569fc8d
