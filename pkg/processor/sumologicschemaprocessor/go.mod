@@ -6,17 +6,17 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	go.opentelemetry.io/collector v0.53.0
+	go.opentelemetry.io/collector v0.54.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/knadh/koanf v1.4.1 // indirect
+	github.com/knadh/koanf v1.4.2 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.4
 	go.opentelemetry.io/collector/model v0.50.0
 	go.opentelemetry.io/otel v1.7.0 // indirect
 	go.opentelemetry.io/otel/metric v0.30.0 // indirect
@@ -26,7 +26,7 @@ require (
 	go.uber.org/zap v1.21.0
 )
 
-require go.opentelemetry.io/collector/pdata v0.53.0
+require go.opentelemetry.io/collector/pdata v0.54.0
 
 require (
 	github.com/golang/protobuf v1.5.2 // indirect
