@@ -357,7 +357,7 @@ jobs:
         env:
           AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
         working-directory: ./otelcolbuilder/
-        run: make darwin-sign
+        run: make ${{matrix.arch_os}}-sign
 
       - name: Rename .dmg to include tag in filename
         run: cp otelcol-sumo-${{matrix.arch_os}}.dmg ${{ steps.set_filename.outputs.filename }}.dmg
