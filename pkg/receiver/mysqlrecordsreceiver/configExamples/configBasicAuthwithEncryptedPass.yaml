@@ -32,7 +32,7 @@ receivers:
     dbport: 3306
     transport: tcp
     username: test
-    password_type: encrypted 
+    password_type: encrypted
     #encrypted password
     password: uqDpyLNh4Ytfxw==
     encrypt_secret_path: secret.txt
