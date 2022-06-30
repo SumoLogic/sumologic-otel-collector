@@ -301,18 +301,6 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
 
-      - name: Download binary action artifact from build phase
-        uses: actions/download-artifact@v3
-        with:
-          name: otelcol-sumo-${{ matrix.arch_os }}
-
-      - name: Build and push image to Open Source ECR
-        run: |
-          cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
-          make build-push-container-multiplatform-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
-            PLATFORM=${{ matrix.arch_os }}
-
       - name: Download FIPS binary action artifact from build phase
         uses: actions/download-artifact@v3
         with:
@@ -325,6 +313,18 @@ jobs:
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
             PLATFORM=${{ matrix.arch_os }} \
             LATEST_TAG_FIPS_SUFFIX="-fips"
+
+      - name: Download binary action artifact from build phase
+        uses: actions/download-artifact@v3
+        with:
+          name: otelcol-sumo-${{ matrix.arch_os }}
+
+      - name: Build and push image to Open Source ECR
+        run: |
+          cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
+          make build-push-container-multiplatform-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }}
 
   push-docker-manifest:
     name: Push joint container manifest
@@ -357,15 +357,15 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
 
-      - name: Push joint container manifest for all platforms to Open Source ECR
-        run: |
-          make push-container-manifest-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
-            PLATFORMS="linux/amd64 linux/arm64"
-
       - name: Push joint FIPS container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
             PLATFORMS="linux/amd64 linux/arm64" \
             LATEST_TAG_FIPS_SUFFIX="-fips"
+
+      - name: Push joint container manifest for all platforms to Open Source ECR
+        run: |
+          make push-container-manifest-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORMS="linux/amd64 linux/arm64"
