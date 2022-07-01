@@ -429,19 +429,10 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Download binary action artifact from build phase
+      - name: Download binary action artifact from build phase (regular binary and FIPS binary)
         uses: actions/download-artifact@v3
         with:
           name: ${{matrix.arch_os}}
-          path: artifacts/
-
-      - name: Display structure of downloaded files
-        run: ls -R
-
-      - name: Download FIPS binary action artifact from build phase
-        uses: actions/download-artifact@v3
-        with:
-          name: otelcol-sumo-${{matrix.arch_os}}-fips
           path: artifacts/
 
       - name: Build and push FIPS image to Open Source ECR
