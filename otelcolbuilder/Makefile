@@ -1,6 +1,6 @@
 BINARY_NAME ?= otelcol-sumo
 BUILDER_VERSION ?= 0.54.0
-BINARY_FIPS_SUFFIX ?= ""
+FIPS_SUFFIX ?= ""
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
 BUILDER_BIN_NAME ?= opentelemetry-collector-builder
 BUILDER_BIN_PATH ?= $(HOME)/bin
@@ -58,7 +58,7 @@ _builder:
 # uses /usr/bin/go which on Github Actions is using preinstalled 1.15.12 by default.
 	CGO_ENABLED=$(CGO_ENABLED) $(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME) \
 		--go $(GO) \
-		--version "$(VERSION)" \
+		--version "$(VERSION)$(FIPS_SUFFIX)" \
 		--config .otelcol-builder.yaml \
 		--output-path ./cmd \
 		--skip-compilation=$(SKIP_COMPILATION)
@@ -122,40 +122,40 @@ otelcol-sumo-all-sys: otelcol-sumo-darwin_amd64 otelcol-sumo-darwin_arm64 otelco
 
 .PHONY: otelcol-sumo-darwin_amd64
 otelcol-sumo-darwin_amd64:
-	GOOS=darwin  GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)-darwin_amd64$(BINARY_FIPS_SUFFIX)
+	GOOS=darwin  GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-darwin_amd64
 
 .PHONY: otelcol-sumo-darwin_arm64
 otelcol-sumo-darwin_arm64:
-	GOOS=darwin  GOARCH=arm64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)-darwin_arm64$(BINARY_FIPS_SUFFIX)
+	GOOS=darwin  GOARCH=arm64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-darwin_arm64
 
 .PHONY: darwin_amd64-sign
 darwin_amd64-sign:
 	gon -log-level=debug .gon_config_amd64.json
 
-.PHONY: darwin_amd64-fips-sign
-darwin_amd64-fips-sign:
-	gon -log-level=debug .gon_config_amd64_fips.json
+.PHONY: fips-darwin_amd64-sign
+fips-darwin_amd64-sign:
+	gon -log-level=debug .gon_config_fips_amd64.json
 
 .PHONY: darwin_arm64-sign
 darwin_arm64-sign:
 	gon -log-level=debug .gon_config_arm64.json
 
-.PHONY: darwin_arm64-fips-sign
-darwin_arm64-fips-sign:
-	gon -log-level=debug .gon_config_arm64_fips.json
+.PHONY: fips-darwin_arm64-sign
+fips-darwin_arm64-sign:
+	gon -log-level=debug .gon_config_fips_arm64.json
 
 .PHONY: otelcol-sumo-linux_amd64
 otelcol-sumo-linux_amd64:
-	GOOS=linux   GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)-linux_amd64$(BINARY_FIPS_SUFFIX)
+	GOOS=linux   GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-linux_amd64
 
 .PHONY: otelcol-sumo-linux_arm64
 otelcol-sumo-linux_arm64:
-	GOOS=linux   GOARCH=arm64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)-linux_arm64$(BINARY_FIPS_SUFFIX)
+	GOOS=linux   GOARCH=arm64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-linux_arm64
 
 .PHONY: otelcol-sumo-linux_arm
 otelcol-sumo-linux_arm:
-	GOOS=linux   GOARCH=arm $(MAKE) build BINARY_NAME=$(BINARY_NAME)-linux_arm$(BINARY_FIPS_SUFFIX)
+	GOOS=linux   GOARCH=arm $(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-linux_arm
 
 .PHONY: otelcol-sumo-windows_amd64
 otelcol-sumo-windows_amd64:
-	GOOS=windows GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)-windows_amd64$(BINARY_FIPS_SUFFIX).exe
+	GOOS=windows GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-windows_amd64.exe

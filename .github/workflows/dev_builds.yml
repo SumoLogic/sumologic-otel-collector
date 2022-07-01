@@ -170,28 +170,28 @@ jobs:
         working-directory: ./otelcolbuilder
 
       - name: Build
-        run: make otelcol-sumo-${{matrix.arch_os}} BINARY_FIPS_SUFFIX="-fips"
+        run: make otelcol-sumo-${{matrix.arch_os}} FIPS_SUFFIX="-fips"
         working-directory: ./otelcolbuilder
 
       - name: Show included modules
         working-directory: ./otelcolbuilder/cmd
         run: |
-          go version -m otelcol-sumo-${{matrix.arch_os}}-fips | \
+          go version -m otelcol-sumo-fips-${{matrix.arch_os}} | \
           grep -E "/(receiver|exporter|processor|extension)/" | \
-          tee otelcol-sumo-${{matrix.arch_os}}-fips_modules.txt
+          tee otelcol-sumo-fips-${{matrix.arch_os}}_modules.txt
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v3
         with:
-          name: otelcol-sumo-${{matrix.arch_os}}-fips
-          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}-fips
+          name: otelcol-sumo-fips-${{matrix.arch_os}}
+          path: ./otelcolbuilder/cmd/otelcol-sumo-fips-${{matrix.arch_os}}
           if-no-files-found: error
 
       - name: Store list of included modules as action artifact
         uses: actions/upload-artifact@v3
         with:
-          name: otelcol-sumo-${{matrix.arch_os}}-fips_modules.txt
-          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}-fips_modules.txt
+          name: otelcol-sumo-fips-${{matrix.arch_os}}_modules.txt
+          path: ./otelcolbuilder/cmd/otelcol-sumo-fips-${{matrix.arch_os}}_modules.txt
           if-no-files-found: error
 
   # pipeline to build FIPS compliance binary on Go+BoringCrypto for darwin
@@ -242,28 +242,28 @@ jobs:
         working-directory: ./otelcolbuilder
 
       - name: Build
-        run: make otelcol-sumo-${{matrix.arch_os}} BINARY_FIPS_SUFFIX="-fips"
+        run: make otelcol-sumo-${{matrix.arch_os}} FIPS_SUFFIX="-fips"
         working-directory: ./otelcolbuilder
 
       - name: Show included modules
         working-directory: ./otelcolbuilder/cmd
         run: |
-          go version -m otelcol-sumo-${{matrix.arch_os}}-fips | \
+          go version -m otelcol-sumo-fips-${{matrix.arch_os}} | \
           grep -E "/(receiver|exporter|processor|extension)/" | \
-          tee otelcol-sumo-${{matrix.arch_os}}-fips_modules.txt
+          tee otelcol-sumo-fips-${{matrix.arch_os}}_modules.txt
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v3
         with:
-          name: otelcol-sumo-${{matrix.arch_os}}-fips
-          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}-fips
+          name: otelcol-sumo-fips-${{matrix.arch_os}}
+          path: ./otelcolbuilder/cmd/otelcol-sumo-fips-${{matrix.arch_os}}
           if-no-files-found: error
 
       - name: Store list of included modules as action artifact
         uses: actions/upload-artifact@v3
         with:
-          name: otelcol-sumo-${{matrix.arch_os}}-fips_modules.txt
-          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}-fips_modules.txt
+          name: otelcol-sumo-fips-${{matrix.arch_os}}_modules.txt
+          path: ./otelcolbuilder/cmd/otelcol-sumo-fips-${{matrix.arch_os}}_modules.txt
           if-no-files-found: error
 
   build-container-images:
@@ -304,11 +304,11 @@ jobs:
       - name: Download FIPS binary action artifact from build phase
         uses: actions/download-artifact@v3
         with:
-          name: otelcol-sumo-${{matrix.arch_os}}-fips
+          name: otelcol-sumo-fips-${{matrix.arch_os}}
 
       - name: Build and push FIPS image to Open Source ECR
         run: |
-          cp otelcol-sumo-${{ matrix.arch_os }}-fips otelcol-sumo
+          cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-multiplatform-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
             PLATFORM=${{ matrix.arch_os }} \
