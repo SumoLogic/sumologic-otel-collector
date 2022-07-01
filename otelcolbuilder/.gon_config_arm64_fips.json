@@ -1,0 +1,18 @@
+{
+  "apple_id": {
+    "username" : "it-apple-developer@sumologic.com",
+    "password":  "@env:AC_PASSWORD"
+  },
+
+  "sign" :{
+    "application_identity" : "26FD4C2B988C5943B40B80149DFDF2D7AA480C8D"
+  },
+
+  "source" : ["./cmd/otelcol-sumo-darwin_arm64-fips"],
+  "bundle_id" : "com.sumologic.sumo.ot.distro",
+
+  "dmg" :{
+    "output_path": "./cmd/otelcol-sumo-darwin_arm64-fips.dmg",
+    "volume_name": "Sumo Logic Distribution for OpenTelemetry Collector"
+  }
+}
