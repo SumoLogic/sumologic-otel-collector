@@ -357,10 +357,10 @@ jobs:
         env:
           AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
         working-directory: ./otelcolbuilder/
-        run: make ${{matrix.arch_os}}-sign
+        run: make ${{matrix.arch_os}}-fips-sign
 
       - name: Rename .dmg to include tag in filename
-        run: cp otelcol-sumo-${{matrix.arch_os}}.dmg ${{ steps.set_filename.outputs.filename }}.dmg
+        run: cp otelcol-sumo-${{matrix.arch_os}}-fips.dmg ${{ steps.set_filename.outputs.filename }}.dmg
         working-directory: ./otelcolbuilder/cmd
 
       - name: Rename binary to include tag in filename
