@@ -457,6 +457,7 @@ jobs:
       # Require darwin build to succeed to prevent pushing container images
       # when darwin build fails.
       - build-darwin
+      - build-go-boringcrypto-darwin
       - build-container-images
     steps:
       - uses: actions/checkout@v3
@@ -503,6 +504,8 @@ jobs:
     needs:
       - build
       - build-darwin
+      - build-go-boringcrypto
+      - build-go-boringcrypto-darwin
       - build-container-images
       - push-docker-manifest
     steps:
