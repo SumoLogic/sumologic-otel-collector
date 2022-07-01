@@ -8,11 +8,11 @@
     "application_identity" : "26FD4C2B988C5943B40B80149DFDF2D7AA480C8D"
   },
 
-  "source" : ["./cmd/otelcol-sumo-darwin_arm64-fips"],
+  "source" : ["./cmd/otelcol-sumo-fips-darwin_amd64"],
   "bundle_id" : "com.sumologic.sumo.ot.distro",
 
   "dmg" :{
-    "output_path": "./cmd/otelcol-sumo-darwin_arm64-fips.dmg",
+    "output_path": "./cmd/otelcol-sumo-fips-darwin_amd64.dmg",
     "volume_name": "Sumo Logic Distribution for OpenTelemetry Collector"
   }
 }

@@ -247,15 +247,15 @@ jobs:
         run: make prepare-tag TAG=${{ steps.extract_tag.outputs.tag }}
 
       - name: Build
-        run: make otelcol-sumo-${{matrix.arch_os}} BINARY_FIPS_SUFFIX="-fips"
+        run: make otelcol-sumo-${{matrix.arch_os}} FIPS_SUFFIX="-fips"
         working-directory: ./otelcolbuilder
 
       - name: Set filename
         id: set_filename
-        run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}}-fips)"
+        run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-fips-${{matrix.arch_os}})"
 
       - name: Rename to include tag in filename
-        run: cp otelcol-sumo-${{matrix.arch_os}}-fips ${{ steps.set_filename.outputs.filename }}
+        run: cp otelcol-sumo-fips-${{matrix.arch_os}} ${{ steps.set_filename.outputs.filename }}
         working-directory: ./otelcolbuilder/cmd
 
       - name: Show included modules
@@ -263,7 +263,7 @@ jobs:
         run: |
           go version -m ${{ steps.set_filename.outputs.filename }} | \
           grep -E "/(receiver|exporter|processor|extension)/" | \
-          tee otelcol-sumo-${{matrix.arch_os}}-fips_modules.txt
+          tee otelcol-sumo-fips-${{matrix.arch_os}}_modules.txt
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v3
@@ -325,12 +325,12 @@ jobs:
         run: make prepare-tag TAG=${{ steps.extract_tag.outputs.tag }}
 
       - name: Build
-        run: make otelcol-sumo-${{matrix.arch_os}} BINARY_FIPS_SUFFIX="-fips"
+        run: make otelcol-sumo-${{matrix.arch_os}} FIPS_SUFFIX="-fips"
         working-directory: ./otelcolbuilder
 
       - name: Set filename
         id: set_filename
-        run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}}-fips)"
+        run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-fips-${{matrix.arch_os}})"
 
       - name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v1
@@ -357,14 +357,14 @@ jobs:
         env:
           AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
         working-directory: ./otelcolbuilder/
-        run: make ${{matrix.arch_os}}-fips-sign
+        run: make fips-${{matrix.arch_os}}-sign
 
       - name: Rename .dmg to include tag in filename
-        run: cp otelcol-sumo-${{matrix.arch_os}}-fips.dmg ${{ steps.set_filename.outputs.filename }}.dmg
+        run: cp otelcol-sumo-fips-${{matrix.arch_os}}.dmg ${{ steps.set_filename.outputs.filename }}.dmg
         working-directory: ./otelcolbuilder/cmd
 
       - name: Rename binary to include tag in filename
-        run: cp otelcol-sumo-${{matrix.arch_os}}-fips ${{ steps.set_filename.outputs.filename }}
+        run: cp otelcol-sumo-fips-${{matrix.arch_os}} ${{ steps.set_filename.outputs.filename }}
         working-directory: ./otelcolbuilder/cmd
 
       - name: Show included modules
@@ -372,7 +372,7 @@ jobs:
         run: |
           go version -m ${{ steps.set_filename.outputs.filename }} | \
           grep -E "/(receiver|exporter|processor|extension)/" | \
-          tee otelcol-sumo-${{matrix.arch_os}}-fips_modules.txt
+          tee otelcol-sumo-fips-${{matrix.arch_os}}_modules.txt
 
       # Store binary and .dmg into pipeline artifacts after they have been signed
 
@@ -423,6 +423,10 @@ jobs:
         id: set_filename
         run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}})"
 
+      - name: Set filename for FIPS
+        id: set_filename_fips
+        run: echo "::set-output name=filename_fips::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-fips-${{matrix.arch_os}})"
+
       - name: Login to Open Source ECR
         run: make login
         env:
@@ -437,7 +441,7 @@ jobs:
 
       - name: Build and push FIPS image to Open Source ECR
         run: |
-          cp artifacts/${{ steps.set_filename.outputs.filename }}-fips otelcol-sumo
+          cp artifacts/${{ steps.set_filename_fips.outputs.filename_fips }} otelcol-sumo
           make build-push-container-multiplatform \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
             PLATFORM=${{ matrix.arch_os }} \
