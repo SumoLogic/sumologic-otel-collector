@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.54.0-sumo-0]
+
+### Released 2022-07-04
 
 ### Added
 
@@ -16,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: upgrade OT core to v0.54.0 [#637]
 - ci: re-enable MacOS builds [#642]
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.53.0-sumo-0...main
+[v0.54.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.53.0-sumo-0...v0.54.0-sumo-0
 [#620]: https://github.com/SumoLogic/sumologic-otel-collector/pull/620
 [#637]: https://github.com/SumoLogic/sumologic-otel-collector/pull/637
 [#642]: https://github.com/SumoLogic/sumologic-otel-collector/pull/642
