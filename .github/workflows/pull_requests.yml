@@ -348,7 +348,7 @@ jobs:
           if-no-files-found: error
 
   # pipeline to build FIPS compliance binary on Go+BoringCrypto for linux
-  build-go-boringcrypto:
+  build-fips:
     name: Build
     runs-on: ubuntu-20.04
     strategy:
@@ -428,7 +428,7 @@ jobs:
           if-no-files-found: error
 
   # pipeline to build FIPS compliance binary on Go+BoringCrypto for darwin
-  build-go-boringcrypto-darwin:
+  build-fips-darwin:
     name: Build
     runs-on: macos-latest
     strategy:
@@ -515,7 +515,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - build
-      - build-go-boringcrypto
+      - build-fips
     strategy:
       matrix:
         arch_os: [ 'linux_amd64', 'linux_arm64']

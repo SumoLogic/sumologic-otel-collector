@@ -200,7 +200,7 @@ jobs:
           if-no-files-found: error
 
   # pipeline to build FIPS compliance binary on Go+BoringCrypto
-  build-go-boringcrypto:
+  build-fips:
     name: Build
     runs-on: ubuntu-20.04
     strategy:
@@ -273,7 +273,7 @@ jobs:
           if-no-files-found: error
 
   # pipeline to build FIPS compliance binary on Go+BoringCrypto on darwin
-  build-go-boringcrypto-darwin:
+  build-fips-darwin:
     name: Build
     runs-on: macos-latest
     strategy:
@@ -395,7 +395,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - build
-      - build-go-boringcrypto
+      - build-fips
     strategy:
       matrix:
         arch_os: [ 'linux_amd64', 'linux_arm64']
@@ -461,7 +461,7 @@ jobs:
       # Require darwin build to succeed to prevent pushing container images
       # when darwin build fails.
       - build-darwin
-      - build-go-boringcrypto-darwin
+      - build-fips-darwin
       - build-container-images
     steps:
       - uses: actions/checkout@v3
@@ -508,8 +508,8 @@ jobs:
     needs:
       - build
       - build-darwin
-      - build-go-boringcrypto
-      - build-go-boringcrypto-darwin
+      - build-fips
+      - build-fips-darwin
       - build-container-images
       - push-docker-manifest
     steps:
