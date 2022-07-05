@@ -52,7 +52,7 @@ func getStateValueNUMBER(dbquery *DBQueries, logger *zap.Logger) string {
 
 func getStateValueTIMESTAMP(dbquery *DBQueries, logger *zap.Logger) string {
 	var startDate time.Time = time.Now()
-	var stateValue = ""
+	var stateValue string
 	if dbquery.InitialIndexColumnStartValue == "" {
 		logger.Info("initial_index_column_start_value date not specified, considering default as now - 48hrs for:", zap.String("queryId", dbquery.QueryId))
 		startDate = startDate.Add(-48 * time.Hour)
