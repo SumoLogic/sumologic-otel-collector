@@ -82,17 +82,17 @@ func generateIAMAuthToken(endpoint string, conf *Config, logger *zap.Logger) (to
 //2. With an encrypted plaintext password
 //3. With an AWS Authentication token to be used as a password
 func newMySQLClient(conf *Config, logger *zap.Logger) client {
-	var port string
 	var basicauthpassword string
 	var connStr string
+	var driverConf mysql.Config
 	basicauthpassword = conf.Password
 	//Encrypting a plaintext password if a 24 character secret string is provided by the user from an external file
 	if (len(conf.PasswordType) == 0 || conf.PasswordType == "plaintext") && len(conf.EncryptSecretPath) != 0 {
-		MySecret1, err := readMySecret(conf)
+		secret, err := readMySecret(conf)
 		if err != nil {
 			logger.Error("error in reading encryption secret from file", zap.Error(err))
 		}
-		encText, err := Encrypt(conf.Password, MySecret1, logger)
+		encText, err := Encrypt(conf.Password, secret, logger)
 		if err != nil {
 			logger.Error("error encrypting your classified text", zap.Error(err))
 		}
@@ -100,24 +100,17 @@ func newMySQLClient(conf *Config, logger *zap.Logger) client {
 	}
 	//Decrypting an encrypted password
 	if conf.PasswordType == "encrypted" {
-		MySecret2, err := readMySecret(conf)
+		secret, err := readMySecret(conf)
 		if err != nil {
 			logger.Error("error in reading encryption secret from file", zap.Error(err))
 		}
-		decText, err := Decrypt(conf.Password, MySecret2, logger)
+		decText, err := Decrypt(conf.Password, secret, logger)
 		if err != nil {
 			logger.Error("error decrypting your encrypted text: ", zap.Error(err))
 		}
 		basicauthpassword = decText
 	}
-	//Considering default port to be 3306 if not provided by user
-	if len(conf.DBPort) != 0 {
-		port = conf.DBPort
-	} else {
-		logger.Info("dbport empty, considering default 3306")
-		port = "3306"
-	}
-	endpoint := conf.DBHost + ":" + port
+	endpoint := conf.DBHost + ":" + conf.DBPort
 	if conf.AuthenticationMode == "IAMRDSAuth" {
 		authenticationToken := generateIAMAuthToken(endpoint, conf, logger)
 		tlsConf := createIAMRDSTLSConf(conf.AWSCertificatePath, logger)
@@ -125,7 +118,7 @@ func newMySQLClient(conf *Config, logger *zap.Logger) client {
 		if tlserr != nil {
 			logger.Error("Error %s when RegisterTLSConfig\n", zap.Error(tlserr))
 		}
-		driverConf := mysql.Config{
+		driverConf = mysql.Config{
 			User:                    conf.Username,
 			Passwd:                  authenticationToken,
 			Net:                     conf.Transport,
@@ -135,9 +128,8 @@ func newMySQLClient(conf *Config, logger *zap.Logger) client {
 			TLSConfig:               "custom",
 			AllowCleartextPasswords: true,
 		}
-		connStr = driverConf.FormatDSN()
 	} else {
-		driverConf := mysql.Config{
+		driverConf = mysql.Config{
 			User:                 conf.Username,
 			Passwd:               basicauthpassword,
 			Net:                  conf.Transport,
@@ -145,8 +137,8 @@ func newMySQLClient(conf *Config, logger *zap.Logger) client {
 			DBName:               conf.Database,
 			AllowNativePasswords: conf.AllowNativePasswords,
 		}
-		connStr = driverConf.FormatDSN()
 	}
+	connStr = driverConf.FormatDSN()
 	return &mySQLClient{
 		connStr: connStr,
 		conf:    conf,

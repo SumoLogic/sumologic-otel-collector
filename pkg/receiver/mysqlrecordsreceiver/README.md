@@ -1,26 +1,31 @@
 # MySQL Records Receiver
 
-This receiver queries MySQL for database records and creates a log record (plog.Logs type) for each database record.
+This receiver queries MySQL for database records and creates a log record for each database record.
 
 Supported pipeline types: logs
 
-BasicAuth Password Encryption Use Case:
+## Use Cases
+
+### BasicAuth Password Encryption Use Case:
 
 - The receiver supports password encryption for 'BasicAuth' authentication_mode
 - To generate an encrypted password:
-  - Specify encrypt_secret_path to a secret file containing a 24 character string
+  - Specify 'encrypt_secret_path' to a secret file containing a 24 character string
   - Include the following in the otel config:
+    
+    ```yaml
     service:
       telemetry:
         logs:
           level: debug
+    ```
     The encrypted password will only be printed in the console with a debug log level. Once generated, the user can remove the telemetry field so as to enable logging at the default info level. To use the encrypted password, the user needs to specify password_type as 'encrypted' and also the encrypt_secret_path to the same secret file.
 
-State Management Use Case:
+### State Management Use Case:
 
 - The receiver supports saving the state of a query fetch into a csv file where a unique/auto-increment field is present in a table of a database.
 - The unique/auto-increment field can either be of type 'NUMBER' or 'TIMESTAMP', where a 'NUMBER' should be a non-negative integer and a 'TIMESTAMP' should be of the     default timestamp storage format in mysql, i.e. '2006-01-02 15:04:05'.
-- This is basically the delta mode state management feature of the receiver where the current value/state of the unique/auto-increment field is saved in a csv file which can be retreived later so as to fetch records after the saved state value.
+- This is basically the delta mode state management feature of the receiver where the current value/state of the unique/auto-increment field is saved in a csv file which can be retrieved later so as to fetch records after the saved state value.
 
 ## Prerequisites
 
@@ -94,10 +99,10 @@ receivers:
 
         # this is the value for the type of the unique/auto-increment field mentioned above
         # it has two possible values namely, 'NUMBER' and 'TIMESTAMP'
-        # this is mandatory feild that needs to be specified by an user trying to save the state of the index_column_name of a database query
+        # this is mandatory field that needs to be specified by an user trying to save the state of the index_column_name of a database query
         index_column_type: NUMBER
 
-        # while doing state managemenent of a query, a user can explicitly define the identifier value in a table, after which the records should be fetched in
+        # while doing state management of a query, a user can explicitly define the identifier value in a table, after which the records should be fetched in
         # this is the explicitly defined identifier value for a particular database query
         # for 'NUMBER' type the default value is 0 and for 'TIMESTAMP' the default value is currentTime - 48hrs
         initial_index_column_start_value: 5
@@ -106,7 +111,7 @@ receivers:
     # default is 3
     setconnmaxlifetimemins: 3
 
-    # this is highly recommended to limit the number of connection used by the application. There is no recommended limit number because it depends on application and MySQL server
+    # this is highly recommended to limit the number of connections used by the application. There is no recommended limit number because it depends on application and MySQL server
     # default is 5
     setmaxopenconns: 5
 
@@ -114,7 +119,7 @@ receivers:
     # default is 5
     setmaxidleconns: 5
 
-    # this indicates the number of producer and comsumer workers/threads which will used to fetch, convert and consume database records
+    # this indicates the number of producer and consumer workers/threads which will used to fetch, convert and consume database records
     # by default it considers the value to be the number of queries that are to be run in the receiver
     # user can configure a maximum of 10 workers
     setmaxnodatabaseworkers: 4
