@@ -34,6 +34,8 @@ processors:
     num_traces: 100
     expected_new_traces_per_sec: 10
     spans_per_second: 1000
+    prior_spans_rate: 600
+    history_size: 100
     probabilistic_filtering_ratio: 0.1
     trace_reject_filters:
       - name: healthcheck-rule

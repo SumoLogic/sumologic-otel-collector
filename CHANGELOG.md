@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- feat(cascadingfilter): use LRU Cache for storing sampling decisions
+- feat(cascadingfilter): use limit for maximum volume of passed spans for which decisions were made earlier
+- feat(cascadingfilter): store information on which policy filtered the trace in `sampling.filter`
+- feat(cascadingfilter): store information about late span arrival in `sampling.late_arrival: true`
+- feat(cascadingfilter): add `otelcol_count_late_spans` and `otelcol_count_decided_spans` metrics
+
 ### Fixed
 
 - fix(sumologicexporter): translate Telegraf metrics with OTLP format [#659]

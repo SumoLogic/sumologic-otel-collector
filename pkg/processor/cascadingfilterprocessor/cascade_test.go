@@ -63,6 +63,7 @@ var cfg = cfconfig.Config{
 var cfgJustDropping = cfconfig.Config{
 	ProcessorSettings: &config.ProcessorSettings{},
 	DecisionWait:      2 * time.Second,
+	NumTraces:         100,
 	TraceRejectCfgs: []cfconfig.TraceRejectCfg{
 		{
 			Name:        "health-check",
@@ -75,6 +76,7 @@ var cfgAutoRate = cfconfig.Config{
 	ProcessorSettings:          &config.ProcessorSettings{},
 	DecisionWait:               2 * time.Second,
 	ProbabilisticFilteringRate: &probabilisticFilteringRate,
+	NumTraces:                  100,
 	PolicyCfgs: []cfconfig.TraceAcceptCfg{
 		{
 			Name:           "duration",
@@ -101,7 +103,7 @@ func fillSpan(span *ptrace.Span, durationMicros int64) {
 	span.SetEndTimestamp(pcommon.Timestamp(nowTs))
 }
 
-func createTrace(fsp *cascadingFilterSpanProcessor, numSpans int, durationMicros int64) *sampling.TraceData {
+func createTrace(c *cascade, numSpans int, durationMicros int64) *sampling.TraceData {
 	var traceBatches []ptrace.Traces
 
 	traces := ptrace.NewTraces()
@@ -121,7 +123,7 @@ func createTrace(fsp *cascadingFilterSpanProcessor, numSpans int, durationMicros
 
 	return &sampling.TraceData{
 		Mutex:           sync.Mutex{},
-		Decisions:       make([]sampling.Decision, len(fsp.traceAcceptRules)),
+		Decisions:       make([]sampling.Decision, len(c.cfsp.traceAcceptRules)),
 		ArrivalTime:     time.Time{},
 		DecisionTime:    time.Time{},
 		SpanCount:       int32(numSpans),
@@ -129,18 +131,18 @@ func createTrace(fsp *cascadingFilterSpanProcessor, numSpans int, durationMicros
 	}
 }
 
-func createCascadingEvaluator(t *testing.T) *cascadingFilterSpanProcessor {
-	return createCascadingEvaluatorWithConfig(t, cfg)
+func createCascade(t *testing.T) *cascade {
+	return createCascadeWithConfig(t, cfg)
 }
 
-func createCascadingEvaluatorWithConfig(t *testing.T, conf cfconfig.Config) *cascadingFilterSpanProcessor {
+func createCascadeWithConfig(t *testing.T, conf cfconfig.Config) *cascade {
 	cascading, err := newCascadingFilterSpanProcessor(zap.NewNop(), nil, conf)
 	assert.NoError(t, err)
-	return cascading
+	return newCascade(cascading)
 }
 
 func TestSampling(t *testing.T) {
-	cascading := createCascadingEvaluator(t)
+	cascading := createCascade(t)
 
 	decision, policy := cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{0}), createTrace(cascading, 8, 1000000))
 	require.NotNil(t, policy)
@@ -151,7 +153,7 @@ func TestSampling(t *testing.T) {
 }
 
 func TestSecondChanceEvaluation(t *testing.T) {
-	cascading := createCascadingEvaluator(t)
+	cascading := createCascade(t)
 
 	decision, _ := cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{0}), createTrace(cascading, 8, 1000))
 	require.Equal(t, sampling.SecondChance, decision)
@@ -167,7 +169,7 @@ func TestSecondChanceEvaluation(t *testing.T) {
 func TestProbabilisticFilter(t *testing.T) {
 	ratio := float32(0.5)
 	cfg.ProbabilisticFilteringRatio = &ratio
-	cascading := createCascadingEvaluator(t)
+	cascading := createCascade(t)
 
 	trace1 := createTrace(cascading, 8, 1000000)
 	decision, _ := cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{0}), trace1)
@@ -184,7 +186,7 @@ func TestProbabilisticFilter(t *testing.T) {
 }
 
 func TestDropTraces(t *testing.T) {
-	cascading := createCascadingEvaluator(t)
+	cascading := createCascade(t)
 
 	trace1 := createTrace(cascading, 8, 1000000)
 	trace2 := createTrace(cascading, 8, 1000000)
@@ -194,7 +196,7 @@ func TestDropTraces(t *testing.T) {
 }
 
 func TestDropTracesAndNotLimitOthers(t *testing.T) {
-	cascading := createCascadingEvaluatorWithConfig(t, cfgJustDropping)
+	cascading := createCascadeWithConfig(t, cfgJustDropping)
 
 	trace1 := createTrace(cascading, 1000, 1000000)
 	trace2 := createTrace(cascading, 8, 1000000)
@@ -218,7 +220,7 @@ func TestDropTracesAndNotLimitOthers(t *testing.T) {
 }
 
 func TestDropTracesAndAutoRateOthers(t *testing.T) {
-	cascading := createCascadingEvaluatorWithConfig(t, cfgAutoRate)
+	cascading := createCascadeWithConfig(t, cfgAutoRate)
 
 	trace1 := createTrace(cascading, 20, 1000000)
 	trace2 := createTrace(cascading, 8, 1000000)
@@ -242,7 +244,7 @@ func TestDropTracesAndAutoRateOthers(t *testing.T) {
 }
 
 //func TestSecondChanceReevaluation(t *testing.T) {
-//	cascading := createCascadingEvaluator()
+//	cascading := createCascade()
 //
 //	decision, _ := cascading.makeProvisionalDecision(pcommon.NewTraceID([16]byte{1}), createTrace(100, 1000), metrics)
 //	require.Equal(t, sampling.Sampled, decision)

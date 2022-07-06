@@ -31,6 +31,8 @@ type TraceData struct {
 	FinalDecision Decision
 	// SelectedByProbabilisticFilter determines if this trace was selected by probabilistic filter
 	SelectedByProbabilisticFilter bool
+	// ProvisionalDecisionFilter includes the name of the filter which has selected the trace
+	ProvisionalDecisionFilterName string
 	// Arrival time the first span for the trace was received.
 	ArrivalTime time.Time
 	// Decisiontime time when sampling decision was taken.
