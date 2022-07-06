@@ -222,6 +222,12 @@ build-container-dev:
 		DOCKERFILE="Dockerfile_dev" \
 		TAG="$(BUILD_TAG)"
 
+.PHONY: build-container-dev-fips
+build-container-dev-fips:
+	$(MAKE) _build \
+		IMG="$(IMAGE_NAME)-dev" \
+		DOCKERFILE="Dockerfile_dev_fips" \
+		TAG="$(BUILD_TAG)"
 #-------------------------------------------------------------------------------
 
 # dev
@@ -241,6 +247,22 @@ build-container-multiplatform-dev:
 .PHONY: build-container-multiplatform-dev
 build-push-container-multiplatform-dev:
 	$(MAKE) _build-container-multiplatform-dev PUSH=--push
+
+.PHONY: _build-container-multiplatform-dev-fips
+_build-container-multiplatform-dev-fips:
+	BUILD_TAG="$(BUILD_TAG)" \
+		REPO_URL="$(OPENSOURCE_REPO_URL_DEV)" \
+		DOCKERFILE="Dockerfile_dev_fips" \
+		PLATFORM="$(PLATFORM)" \
+		./ci/build-push-multiplatform.sh $(PUSH)
+
+.PHONY: build-container-multiplatform-dev-fips
+build-container-multiplatform-dev-fips:
+	$(MAKE) _build-container-multiplatform-dev-fips PUSH=
+
+.PHONY: build-container-multiplatform-dev-fips
+build-push-container-multiplatform-dev-fips:
+	$(MAKE) _build-container-multiplatform-dev-fips PUSH=--push
 
 .PHONY: push-container-manifest-dev
 push-container-manifest-dev:

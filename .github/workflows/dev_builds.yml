@@ -309,7 +309,7 @@ jobs:
       - name: Build and push FIPS image to Open Source ECR
         run: |
           cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
-          make build-push-container-multiplatform-dev \
+          make build-push-container-multiplatform-dev-fips \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
             PLATFORM=${{ matrix.arch_os }} \
             LATEST_TAG_FIPS_SUFFIX="-fips"
