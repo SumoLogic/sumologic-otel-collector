@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+This release deprecates the following change:
+
+- `filter` processor: drop support for `expr` language ([upgrade guide][upgrade_guide_v0_55_0_expr_support])
+
 ### Added
 
 - feat(cascadingfilter): use LRU Cache for storing sampling decisions [#654]
@@ -31,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#660]: https://github.com/SumoLogic/sumologic-otel-collector/pull/660
 [#661]: https://github.com/SumoLogic/sumologic-otel-collector/pull/661
 [#655]: https://github.com/SumoLogic/sumologic-otel-collector/pull/655
+[upgrade_guide_v0_55_0_expr_support]: ./docs/Upgrading.md#filter-processor-drop-support-for-expr-language
 
 ## [v0.54.0-sumo-0]
 
