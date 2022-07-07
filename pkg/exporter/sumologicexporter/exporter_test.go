@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -1311,10 +1312,11 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 	}
 
 	testcases := []struct {
-		name         string
-		cfgFn        func() *Config
-		metricsFn    func() pmetric.Metrics
-		expectedBody string
+		name              string
+		cfgFn             func() *Config
+		metricsFn         func() pmetric.Metrics
+		expectedBody      string
+		expectedBodyRegex *regexp.Regexp
 	}{
 		{
 			name: "enabled by default translated metrics successfully",
@@ -1340,6 +1342,32 @@ func TestPushMetrics_MetricsTranslation(t *testing.T) {
 				return metrics
 			},
 			expectedBody: `CPU_Total{test="test_value"} 123.456 1605534165000`,
+		},
+		{
+			name: "translates metrics with OTLP format",
+			cfgFn: func() *Config {
+				cfg := createConfig()
+				cfg.MetricFormat = OTLPMetricFormat
+				// This is and should be done by default:
+				// cfg.TranslateTelegrafMetrics = true
+				return cfg
+			},
+			metricsFn: func() pmetric.Metrics {
+				metrics := pmetric.NewMetrics()
+				{
+					m := metrics.ResourceMetrics().AppendEmpty().
+						ScopeMetrics().AppendEmpty().
+						Metrics().AppendEmpty()
+					m.SetName("cpu_usage_active")
+					m.SetDataType(pmetric.MetricDataTypeGauge)
+					dp := m.Gauge().DataPoints().AppendEmpty()
+					dp.SetDoubleVal(123.456)
+					dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Unix(1605534165, 0)))
+					dp.Attributes().InsertString("test", "test_value")
+				}
+				return metrics
+			},
+			expectedBodyRegex: regexp.MustCompile(`CPU_Total`),
 		},
 		{
 			name: "enabled 3 metrics with 1 not to be translated",
@@ -1461,7 +1489,12 @@ dummy_metric{test="test_value"} 10 1605534165002`,
 
 			callbacks := []func(w http.ResponseWriter, req *http.Request){
 				func(w http.ResponseWriter, req *http.Request) {
-					assert.Equal(t, tc.expectedBody, extractBody(t, req))
+					actualBody := extractBody(t, req)
+					if tc.expectedBody != "" {
+						assert.Equal(t, tc.expectedBody, actualBody)
+					} else {
+						assert.Regexp(t, tc.expectedBodyRegex, actualBody)
+					}
 				},
 			}
 			test := prepareExporterTest(t, config, callbacks)
