@@ -596,11 +596,6 @@ func (s *sender) sendOTLPMetrics(ctx context.Context, md pmetric.Metrics) error 
 	for i := 0; i < rms.Len(); i++ {
 		rm := rms.At(i)
 
-		if s.config.TranslateAttributes {
-			translateAttributes(rm.Resource().Attributes()).
-				CopyTo(rm.Resource().Attributes())
-		}
-
 		s.addSourceResourceAttributes(rm.Resource().Attributes())
 	}
 

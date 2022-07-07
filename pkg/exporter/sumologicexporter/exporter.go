@@ -283,19 +283,6 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pmetric.Met
 		tracesUrl,
 	)
 
-	// Follow different execution path for OTLP format
-	if sdr.config.MetricFormat == OTLPMetricFormat {
-		if err := sdr.sendOTLPMetrics(ctx, md); err != nil {
-			se.handleUnauthorizedErrors(ctx, err)
-			return consumererror.NewMetrics(err, md)
-		}
-		return nil
-	}
-
-	var (
-		errs []error
-	)
-
 	// Transform metrics metadata
 	// this includes dropping the routing attribute and translating attributes
 	rms := md.ResourceMetrics()
@@ -321,7 +308,16 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pmetric.Met
 		}
 	}
 
-	droppedMetrics, errs := sdr.sendNonOTLPMetrics(ctx, md)
+	var droppedMetrics pmetric.Metrics
+	var errs []error
+	if sdr.config.MetricFormat == OTLPMetricFormat {
+		if err := sdr.sendOTLPMetrics(ctx, md); err != nil {
+			droppedMetrics = md
+			errs = []error{err}
+		}
+	} else {
+		droppedMetrics, errs = sdr.sendNonOTLPMetrics(ctx, md)
+	}
 
 	if len(errs) > 0 {
 		se.handleUnauthorizedErrors(ctx, errs...)
