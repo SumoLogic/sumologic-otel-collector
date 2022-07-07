@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - feat(sumologicexporter): do not send empty OTLP requests [#660]
 - feat(sumologicexporter): do not retry on '400 Bad Request' response [#661]
+- chore: upgrade OpenTelemetry Core to v0.55.0 [#655]
 
 ### Fixed
 
@@ -29,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#659]: https://github.com/SumoLogic/sumologic-otel-collector/pull/659
 [#660]: https://github.com/SumoLogic/sumologic-otel-collector/pull/660
 [#661]: https://github.com/SumoLogic/sumologic-otel-collector/pull/661
+[#655]: https://github.com/SumoLogic/sumologic-otel-collector/pull/655
 
 ## [v0.54.0-sumo-0]
 
