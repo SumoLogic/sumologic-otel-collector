@@ -202,22 +202,18 @@ replaces:
   - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.22.0-sumo-4
 
   # TODO: remove this when:
-  # - regexp log filtering is released upstream:
+  # - expr (regexp) log filtering is merged and released upstream:
   #   PR: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5680
-  # - expr log filtering is merged and released upstream:
-  #   PR: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5680
-  # - support for regexp for delete and hash actions for attribute attraction
-  #   PR: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5750
-  # - It container also fix for exclusion using expr language
+  # - It contains also fix for exclusion using expr language
   #   PR: https://github.com/SumoLogic/opentelemetry-collector-contrib/pull/5144
   #
   # For now, cherry-picked changes are being used:
-  # commit: https://github.com/SumoLogic/opentelemetry-collector-contrib/commit/83e0b47657751209f63040d6b5ff7b338d2662b8
-  # branch: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.54.0-filterprocessor
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/filterprocessor 83e0b47657751209f63040d6b5ff7b338d2662b8
-  - github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal => github.com/SumoLogic/opentelemetry-collector-contrib/internal/coreinternal 83e0b47657751209f63040d6b5ff7b338d2662b8
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/attributesprocessor 83e0b47657751209f63040d6b5ff7b338d2662b8
-  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/resourceprocessor 83e0b47657751209f63040d6b5ff7b338d2662b8
+  # commit: https://github.com/SumoLogic/opentelemetry-collector-contrib/commit/022a244215d0ec844f4d94bfdcd8df87e6f05d7f
+  # branch: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.55.0-filterprocessor
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/filterprocessor 022a244215d0ec844f4d94bfdcd8df87e6f05d7f
+  - github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal => github.com/SumoLogic/opentelemetry-collector-contrib/internal/coreinternal 022a244215d0ec844f4d94bfdcd8df87e6f05d7f
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/attributesprocessor 022a244215d0ec844f4d94bfdcd8df87e6f05d7f
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/resourceprocessor 022a244215d0ec844f4d94bfdcd8df87e6f05d7f
 
   # Google renamed their org from `googleapis` to `google`, and for `gnostic` this happened in v0.5.6
   # However, kubernetes/client-go still uses the old name for v0.5.5, and this causes go mod to complain
