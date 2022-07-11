@@ -593,6 +593,11 @@ func (s *sender) sendNonOTLPMetrics(ctx context.Context, md pmetric.Metrics) (pm
 
 func (s *sender) sendOTLPMetrics(ctx context.Context, md pmetric.Metrics) error {
 	rms := md.ResourceMetrics()
+	if rms.Len() == 0 {
+		s.logger.Debug("there are no metrics to send, moving on")
+		return nil
+	}
+
 	for i := 0; i < rms.Len(); i++ {
 		rm := rms.At(i)
 
@@ -649,6 +654,11 @@ func (s *sender) sendTraces(ctx context.Context, td ptrace.Traces) error {
 
 // sendOTLPTraces sends trace records in OTLP format
 func (s *sender) sendOTLPTraces(ctx context.Context, td ptrace.Traces) error {
+	if td.ResourceSpans().Len() == 0 {
+		s.logger.Debug("there are no traces to send, moving on")
+		return nil
+	}
+
 	capacity := td.SpanCount()
 	for i := 0; i < td.ResourceSpans().Len(); i++ {
 		s.addSourceResourceAttributes(td.ResourceSpans().At(i).Resource().Attributes())

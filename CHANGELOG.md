@@ -7,12 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- feat(sumologicexporter): do not send empty OTLP requests [#660]
+
 ### Fixed
 
 - fix(sumologicexporter): translate Telegraf metrics with OTLP format [#659]
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.54.0-sumo-0...main
 [#659]: https://github.com/SumoLogic/sumologic-otel-collector/pull/659
+[#660]: https://github.com/SumoLogic/sumologic-otel-collector/pull/660
 
 ## [v0.54.0-sumo-0]
 

@@ -37,6 +37,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
 )
 
@@ -1572,4 +1573,38 @@ func Benchmark_ExporterPushLogs(b *testing.B) {
 
 		wg.Wait()
 	}
+}
+
+func TestSendEmptyLogsOTLP(t *testing.T) {
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
+		// No request is sent
+	})
+
+	logs := plog.NewLogs()
+
+	err := test.exp.pushLogsData(context.Background(), logs)
+	assert.NoError(t, err)
+}
+
+func TestSendEmptyMetricsOTLP(t *testing.T) {
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
+		// No request is sent
+	})
+	test.exp.config.MetricFormat = OTLPMetricFormat
+
+	metrics := metricPairToMetrics()
+
+	err := test.exp.pushMetricsData(context.Background(), metrics)
+	assert.NoError(t, err)
+}
+
+func TestSendEmptyTraces(t *testing.T) {
+	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
+		// No request is sent
+	})
+
+	traces := ptrace.NewTraces()
+
+	err := test.exp.pushTracesData(context.Background(), traces)
+	assert.NoError(t, err)
 }
