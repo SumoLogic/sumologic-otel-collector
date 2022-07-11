@@ -1588,17 +1588,7 @@ func TestSendEmptyLogsOTLP(t *testing.T) {
 
 func TestSendEmptyMetricsOTLP(t *testing.T) {
 	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
-		// A request with empty body is sent
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
-
-			md, err := otlp.NewProtobufMetricsUnmarshaler().UnmarshalMetrics([]byte(body))
-			assert.NoError(t, err)
-			assert.NotNil(t, md)
-
-			assert.Equal(t, "", body)
-			assert.Equal(t, "application/x-protobuf", req.Header.Get("Content-Type"))
-		},
+		// No request is sent
 	})
 	test.exp.config.MetricFormat = OTLPMetricFormat
 
@@ -1610,17 +1600,7 @@ func TestSendEmptyMetricsOTLP(t *testing.T) {
 
 func TestSendEmptyTraces(t *testing.T) {
 	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
-		// A request with empty body is sent
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
-
-			md, err := otlp.NewProtobufTracesUnmarshaler().UnmarshalTraces([]byte(body))
-			assert.NoError(t, err)
-			assert.NotNil(t, md)
-
-			assert.Equal(t, "", body)
-			assert.Equal(t, "application/x-protobuf", req.Header.Get("Content-Type"))
-		},
+		// No request is sent
 	})
 
 	traces := ptrace.NewTraces()
