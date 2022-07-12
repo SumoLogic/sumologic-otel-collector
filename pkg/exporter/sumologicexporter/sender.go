@@ -26,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/model/otlp"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -312,7 +313,14 @@ func (s *sender) handleReceiverResponse(resp *http.Response) error {
 			errMsgs = append(errMsgs, fmt.Sprintf("errors: %+v", rResponse.Errors))
 		}
 
-		return fmt.Errorf("failed sending data: %s", strings.Join(errMsgs, ", "))
+		err := fmt.Errorf("failed sending data: %s", strings.Join(errMsgs, ", "))
+
+		if resp.StatusCode == http.StatusBadRequest {
+			// Report the failure as permanent if the server thinks the request is malformed.
+			return consumererror.NewPermanent(err)
+		}
+
+		return err
 	}
 }
 
@@ -593,6 +601,11 @@ func (s *sender) sendNonOTLPMetrics(ctx context.Context, md pmetric.Metrics) (pm
 
 func (s *sender) sendOTLPMetrics(ctx context.Context, md pmetric.Metrics) error {
 	rms := md.ResourceMetrics()
+	if rms.Len() == 0 {
+		s.logger.Debug("there are no metrics to send, moving on")
+		return nil
+	}
+
 	for i := 0; i < rms.Len(); i++ {
 		rm := rms.At(i)
 
@@ -649,6 +662,11 @@ func (s *sender) sendTraces(ctx context.Context, td ptrace.Traces) error {
 
 // sendOTLPTraces sends trace records in OTLP format
 func (s *sender) sendOTLPTraces(ctx context.Context, td ptrace.Traces) error {
+	if td.ResourceSpans().Len() == 0 {
+		s.logger.Debug("there are no traces to send, moving on")
+		return nil
+	}
+
 	capacity := td.SpanCount()
 	for i := 0; i < td.ResourceSpans().Len(); i++ {
 		s.addSourceResourceAttributes(td.ResourceSpans().At(i).Resource().Attributes())

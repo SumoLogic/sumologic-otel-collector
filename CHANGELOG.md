@@ -9,18 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- feat(cascadingfilter): use LRU Cache for storing sampling decisions
-- feat(cascadingfilter): use limit for maximum volume of passed spans for which decisions were made earlier
-- feat(cascadingfilter): store information on which policy filtered the trace in `sampling.filter`
-- feat(cascadingfilter): store information about late span arrival in `sampling.late_arrival: true`
-- feat(cascadingfilter): add `otelcol_count_late_spans` and `otelcol_count_decided_spans` metrics
+- feat(cascadingfilter): use LRU Cache for storing sampling decisions [#654]
+- feat(cascadingfilter): use limit for maximum volume of passed spans for which decisions were made earlier [#654]
+- feat(cascadingfilter): store information on which policy filtered the trace in `sampling.filter` [#654]
+- feat(cascadingfilter): store information about late span arrival in `sampling.late_arrival: true` [#654]
+- feat(cascadingfilter): add `otelcol_count_late_spans` and `otelcol_count_decided_spans` metrics [#654]
+
+### Changed
+
+- feat(sumologicexporter): do not send empty OTLP requests [#660]
+- feat(sumologicexporter): do not retry on '400 Bad Request' response [#661]
 
 ### Fixed
 
 - fix(sumologicexporter): translate Telegraf metrics with OTLP format [#659]
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.54.0-sumo-0...main
+[#654]: https://github.com/SumoLogic/sumologic-otel-collector/pull/654
 [#659]: https://github.com/SumoLogic/sumologic-otel-collector/pull/659
+[#660]: https://github.com/SumoLogic/sumologic-otel-collector/pull/660
+[#661]: https://github.com/SumoLogic/sumologic-otel-collector/pull/661
 
 ## [v0.54.0-sumo-0]
 
