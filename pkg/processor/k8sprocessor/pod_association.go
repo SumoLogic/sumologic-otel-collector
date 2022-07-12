@@ -16,6 +16,7 @@ package k8sprocessor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -30,7 +31,11 @@ import (
 // extractPodIds extracts IP and pod UID from attributes or request context.
 // It returns a value pair containing configured label and IP Address and/or Pod UID.
 // If empty value in return it means that attributes does not contains configured label to match resources for Pod.
-func extractPodID(ctx context.Context, attrs pcommon.Map, associations []kube.Association) (podIdentifierKey string, podIdentifierValue kube.PodIdentifier) {
+func extractPodID(
+	ctx context.Context,
+	attrs pcommon.Map,
+	associations []kube.Association,
+) (podIdentifierKey string, podIdentifierValue kube.PodIdentifier, returnErr error) {
 	connectionIP := getConnectionIP(ctx)
 	hostname := stringAttributeFromMap(attrs, conventions.AttributeHostName)
 
@@ -53,8 +58,8 @@ func extractPodID(ctx context.Context, attrs pcommon.Map, associations []kube.As
 			podIdentifierValue = kube.PodIdentifier(hostname)
 			return
 		}
-		podIdentifierKey = ""
-		return
+
+		return "", kube.PodIdentifier(""), errors.New("pod association not set, could not assign other pod id")
 	}
 
 	for _, asso := range associations {
@@ -87,20 +92,23 @@ func extractPodID(ctx context.Context, attrs pcommon.Map, associations []kube.As
 			// Build hostname from pod k8s.pod.name and k8s.namespace.name attributes
 			pod, ok := attrs.Get(conventions.AttributeK8SPodName)
 			if !ok {
-				return "", ""
+				return "", kube.PodIdentifier(""), errors.New("pod name not found in attributes")
 			}
 
 			namespace, ok := attrs.Get(conventions.AttributeK8SNamespaceName)
 			if !ok {
-				return "", ""
+				return "", kube.PodIdentifier(""), errors.New("namespace name not found in attributes")
 			}
 
 			if pod.StringVal() == "" || namespace.StringVal() != "" {
-				return asso.Name, kube.PodIdentifier(fmt.Sprintf("%s.%s", pod.StringVal(), namespace.StringVal()))
+				podIdentifierKey = asso.Name
+				podIdentifierValue = kube.PodIdentifier(fmt.Sprintf("%s.%s", pod.StringVal(), namespace.StringVal()))
+				return
 			}
 		}
 	}
-	return "", kube.PodIdentifier("")
+
+	return "", kube.PodIdentifier(""), errors.New("could not assign pod id basing on associations")
 }
 
 func getConnectionIP(ctx context.Context) kube.PodIdentifier {
@@ -117,7 +125,7 @@ func getConnectionIP(ctx context.Context) kube.PodIdentifier {
 		return kube.PodIdentifier(addr.IP.String())
 	}
 
-	//If this is not a known address type, check for known "untyped" formats.
+	// If this is not a known address type, check for known "untyped" formats.
 	// 1.1.1.1:<port>
 
 	lastColonIndex := strings.LastIndex(c.Addr.String(), ":")

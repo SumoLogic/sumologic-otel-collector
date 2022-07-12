@@ -119,8 +119,13 @@ func (kp *kubernetesprocessor) ProcessLogs(ctx context.Context, ld plog.Logs) (p
 
 // processResource adds Pod metadata tags to resource based on pod association configuration
 func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pcommon.Resource) {
-	podIdentifierKey, podIdentifierValue := extractPodID(ctx, resource.Attributes(), kp.podAssociations)
-	if podIdentifierValue == "" {
+	podIdentifierKey, podIdentifierValue, err := extractPodID(ctx, resource.Attributes(), kp.podAssociations)
+	if err != nil {
+		kp.logger.Debug(
+			"Could not identify pod for given resource",
+			zap.Error(err),
+			zap.Any("resource_attributes", resource.Attributes()),
+		)
 		return
 	}
 
@@ -140,6 +145,7 @@ func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pco
 func (kp *kubernetesprocessor) getAttributesForPod(identifier kube.PodIdentifier) map[string]string {
 	pod, ok := kp.kc.GetPod(identifier)
 	if !ok {
+		kp.logger.Debug("No pod with given id found", zap.Any("pod_id", identifier))
 		return nil
 	}
 	return pod.Attributes
