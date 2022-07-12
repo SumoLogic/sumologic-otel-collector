@@ -29,6 +29,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/model/otlp"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -1643,4 +1644,16 @@ func TestSendMetricsUnexpectedFormat(t *testing.T) {
 	assert.EqualError(t, errs[0], "unexpected metric format: invalid")
 	require.Equal(t, 1, dropped.MetricCount())
 	assert.Equal(t, dropped, metrics)
+}
+
+func TestBadRequestCausesPermanentError(t *testing.T) {
+	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+		func(res http.ResponseWriter, req *http.Request) {
+			res.WriteHeader(400)
+		},
+	})
+	test.s.config.MetricFormat = OTLPMetricFormat
+
+	err := test.s.send(context.Background(), MetricsPipeline, newCountingReader(0).withString("malformed-request"), fields{})
+	assert.True(t, consumererror.IsPermanent(err), "A '400 Bad Request' response from the server should result in a permanent error")
 }

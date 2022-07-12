@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - feat(sumologicexporter): do not send empty OTLP requests [#660]
+- feat(sumologicexporter): do not retry on '400 Bad Request' response [#661]
 
 ### Fixed
 
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.54.0-sumo-0...main
 [#659]: https://github.com/SumoLogic/sumologic-otel-collector/pull/659
 [#660]: https://github.com/SumoLogic/sumologic-otel-collector/pull/660
+[#661]: https://github.com/SumoLogic/sumologic-otel-collector/pull/661
 
 ## [v0.54.0-sumo-0]
 

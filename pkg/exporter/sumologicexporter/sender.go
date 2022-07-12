@@ -26,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/model/otlp"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -312,7 +313,14 @@ func (s *sender) handleReceiverResponse(resp *http.Response) error {
 			errMsgs = append(errMsgs, fmt.Sprintf("errors: %+v", rResponse.Errors))
 		}
 
-		return fmt.Errorf("failed sending data: %s", strings.Join(errMsgs, ", "))
+		err := fmt.Errorf("failed sending data: %s", strings.Join(errMsgs, ", "))
+
+		if resp.StatusCode == http.StatusBadRequest {
+			// Report the failure as permanent if the server thinks the request is malformed.
+			return consumererror.NewPermanent(err)
+		}
+
+		return err
 	}
 }
 
