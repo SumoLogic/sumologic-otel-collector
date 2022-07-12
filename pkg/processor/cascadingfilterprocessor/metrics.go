@@ -15,6 +15,8 @@
 package cascadingfilterprocessor
 
 import (
+	"context"
+
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
@@ -39,18 +41,58 @@ var (
 	statDecisionLatencyMicroSec  = stats.Int64("policy_decision_latency", "Latency (in microseconds) of a given filtering policy", "µs")
 	statOverallDecisionLatencyus = stats.Int64("cascading_filtering_batch_processing_latency", "Latency (in microseconds) of each run of the cascading filter timer", "µs")
 
-	statTraceRemovalAgeSec           = stats.Int64("cascading_trace_removal_age", "Time (in seconds) from arrival of a new trace until its removal from memory", "s")
-	statLateSpanArrivalAfterDecision = stats.Int64("cascadind_late_span_age", "Time (in seconds) from the cascading filter decision was taken and the arrival of a late span", "s")
-
 	statPolicyEvaluationErrorCount = stats.Int64("cascading_policy_evaluation_error", "Count of cascading policy evaluation errors", stats.UnitDimensionless)
 
 	statCascadingFilterDecision = stats.Int64("count_final_decision", "Count of traces that were filtered or not", stats.UnitDimensionless)
 	statPolicyDecision          = stats.Int64("count_policy_decision", "Count of provisional (policy) decisions if traces were filtered or not", stats.UnitDimensionless)
 
+	statCascadingFilterDecidedSpans = stats.Int64("count_decided_spans", "Count of spans that were handled on decision time", stats.UnitDimensionless)
+	statCascadingFilterLateSpans    = stats.Int64("count_late_spans", "Count of spans that were handled in batches after the one where decision was made", stats.UnitDimensionless)
+
 	statDroppedTooEarlyCount    = stats.Int64("casdading_trace_dropped_too_early", "Count of traces that needed to be dropped the configured wait time", stats.UnitDimensionless)
 	statNewTraceIDReceivedCount = stats.Int64("cascading_new_trace_id_received", "Counts the arrival of new traces", stats.UnitDimensionless)
 	statTracesOnMemoryGauge     = stats.Int64("cascading_traces_on_memory", "Tracks the number of traces current on memory", stats.UnitDimensionless)
 )
+
+func recordProvisionalDecisionMade(ctx context.Context, instanceName string, decisionKey string) {
+	//nolint:errcheck
+	_ = stats.RecordWithTags(
+		ctx,
+		[]tag.Mutator{
+			tag.Insert(tagProcessorKey, instanceName),
+			tag.Insert(tagPolicyDecisionKey, decisionKey),
+		},
+		statPolicyDecision.M(int64(1)))
+}
+
+func recordCascadingFilterDecision(ctx context.Context, instanceName string, decisionKey string) {
+	//nolint:errcheck
+	_ = stats.RecordWithTags(
+		ctx,
+		[]tag.Mutator{
+			tag.Insert(tagProcessorKey, instanceName),
+			tag.Insert(tagPolicyDecisionKey, decisionKey),
+		},
+		statCascadingFilterDecision.M(int64(1)))
+}
+
+func recordSpanLateDecision(ctx context.Context, instanceName string, decision string, count int) {
+	//nolint:errcheck
+	_ = stats.RecordWithTags(
+		ctx,
+		[]tag.Mutator{tag.Insert(tagProcessorKey, instanceName), tag.Insert(tagCascadingFilterDecisionKey, decision)},
+		statCascadingFilterLateSpans.M(int64(count)),
+	)
+}
+
+func recordSpanEarlyDecision(ctx context.Context, instanceName string, decision string, count int) {
+	//nolint:errcheck
+	_ = stats.RecordWithTags(
+		ctx,
+		[]tag.Mutator{tag.Insert(tagProcessorKey, instanceName), tag.Insert(tagCascadingFilterDecisionKey, decision)},
+		statCascadingFilterDecidedSpans.M(int64(count)),
+	)
+}
 
 // CascadingFilterMetricViews return the metrics views according to given telemetry level.
 func CascadingFilterMetricViews(level configtelemetry.Level) []*view.View {
@@ -59,7 +101,6 @@ func CascadingFilterMetricViews(level configtelemetry.Level) []*view.View {
 	}
 
 	latencyDistributionAggregation := view.Distribution(1, 2, 5, 10, 25, 50, 75, 100, 150, 200, 300, 400, 500, 750, 1000, 2000, 3000, 4000, 5000, 10000, 20000, 30000, 50000)
-	ageDistributionAggregation := view.Distribution(1, 2, 5, 10, 20, 30, 40, 50, 60, 90, 120, 180, 300, 600, 1800, 3600, 7200)
 
 	overallDecisionLatencyView := &view.View{
 		Name:        statOverallDecisionLatencyus.Name(),
@@ -67,22 +108,6 @@ func CascadingFilterMetricViews(level configtelemetry.Level) []*view.View {
 		Description: statOverallDecisionLatencyus.Description(),
 		TagKeys:     []tag.Key{tagProcessorKey},
 		Aggregation: latencyDistributionAggregation,
-	}
-
-	traceRemovalAgeView := &view.View{
-		Name:        statTraceRemovalAgeSec.Name(),
-		Measure:     statTraceRemovalAgeSec,
-		Description: statTraceRemovalAgeSec.Description(),
-		TagKeys:     []tag.Key{tagProcessorKey},
-		Aggregation: ageDistributionAggregation,
-	}
-
-	lateSpanArrivalView := &view.View{
-		Name:        statLateSpanArrivalAfterDecision.Name(),
-		Measure:     statLateSpanArrivalAfterDecision,
-		Description: statLateSpanArrivalAfterDecision.Description(),
-		TagKeys:     []tag.Key{tagProcessorKey},
-		Aggregation: ageDistributionAggregation,
 	}
 
 	countPolicyEvaluationErrorView := &view.View{
@@ -139,14 +164,31 @@ func CascadingFilterMetricViews(level configtelemetry.Level) []*view.View {
 		Aggregation: view.LastValue(),
 	}
 
+	countEarlySpans := &view.View{
+		Name:        statCascadingFilterDecidedSpans.Name(),
+		Measure:     statCascadingFilterDecidedSpans,
+		Description: statCascadingFilterDecidedSpans.Description(),
+		TagKeys:     []tag.Key{tagProcessorKey, tagCascadingFilterDecisionKey},
+		Aggregation: view.Sum(),
+	}
+
+	countLateSpans := &view.View{
+		Name:        statCascadingFilterLateSpans.Name(),
+		Measure:     statCascadingFilterLateSpans,
+		Description: statCascadingFilterLateSpans.Description(),
+		TagKeys:     []tag.Key{tagProcessorKey, tagCascadingFilterDecisionKey},
+		Aggregation: view.Sum(),
+	}
+
 	legacyViews := []*view.View{
 		overallDecisionLatencyView,
-		traceRemovalAgeView,
-		lateSpanArrivalView,
 
 		countPolicyDecisionsView,
 		policyLatencyView,
 		countFinalDecisionView,
+
+		countEarlySpans,
+		countLateSpans,
 
 		countPolicyEvaluationErrorView,
 		countTraceDroppedTooEarlyView,

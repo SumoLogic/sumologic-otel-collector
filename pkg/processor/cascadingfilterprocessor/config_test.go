@@ -100,6 +100,8 @@ func TestLoadConfig(t *testing.T) {
 		})
 
 	id2 := config.NewComponentIDWithName("cascading_filter", "2")
+	priorSpansRate2 := int32(600)
+	priorHistorySize2 := uint64(100)
 	ps2 := config.NewProcessorSettings(id2)
 	assert.Equal(t, cfg.Processors[id2],
 		&cfconfig.Config{
@@ -108,6 +110,8 @@ func TestLoadConfig(t *testing.T) {
 			NumTraces:                   100,
 			ExpectedNewTracesPerSec:     10,
 			SpansPerSecond:              1000,
+			HistorySize:                 &priorHistorySize2,
+			PriorSpansRate:              &priorSpansRate2,
 			ProbabilisticFilteringRatio: &probFilteringRatio,
 			TraceRejectCfgs: []cfconfig.TraceRejectCfg{
 				{

@@ -115,6 +115,9 @@ type Config struct {
 	// When set to zero (default value) - it is automatically calculated basing on the accept trace and
 	// probabilistic filtering rate (if present)
 	SpansPerSecond int32 `mapstructure:"spans_per_second"`
+	// PriorSpansRate specifies the budget for traces where decision was already made previously
+	// By default, it equals to half of SpansPerSecond
+	PriorSpansRate *int32 `mapstructure:"prior_spans_rate"`
 	// ProbabilisticFilteringRatio describes which part (0.0-1.0) of the SpansPerSecond budget
 	// is exclusively allocated for probabilistically selected spans
 	ProbabilisticFilteringRatio *float32 `mapstructure:"probabilistic_filtering_ratio"`
@@ -124,6 +127,9 @@ type Config struct {
 	// NumTraces is the number of traces kept on memory. Typically, most of the data
 	// of a trace is released after a sampling decision is taken.
 	NumTraces uint64 `mapstructure:"num_traces"`
+	// HistorySize is the number of past decisions kept in memory. The implementation uses LRU, so
+	// decisions for long-running spans are honored. By default it equals to NumTraces
+	HistorySize *uint64 `mapstructure:"history_size"`
 	// ExpectedNewTracesPerSec sets the expected number of new traces sending to the Cascading Filter processor
 	// per second. This helps with allocating data structures with closer to actual usage size.
 	ExpectedNewTracesPerSec uint64 `mapstructure:"expected_new_traces_per_sec"`

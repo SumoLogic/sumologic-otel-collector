@@ -22,6 +22,8 @@ import (
 	"testing"
 	"time"
 
+	lru "github.com/hashicorp/golang-lru"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/config"
@@ -46,20 +48,25 @@ var testPolicy = []cfconfig.TraceAcceptCfg{{
 	SpansPerSecond: 1000,
 }}
 
-func TestSequentialTraceArrival(t *testing.T) {
-	traceIds, batches := generateIdsAndBatches(128)
+func buildBasicCFSP(t *testing.T, numTraces uint64) *cascadingFilterSpanProcessor {
 	id1 := config.NewComponentIDWithName("cascading_filter", "1")
 	ps1 := config.NewProcessorSettings(id1)
 	cfg := cfconfig.Config{
 		ProcessorSettings:       &ps1,
 		DecisionWait:            defaultTestDecisionWait,
-		NumTraces:               uint64(2 * len(traceIds)),
+		NumTraces:               numTraces,
 		ExpectedNewTracesPerSec: 64,
 		PolicyCfgs:              testPolicy,
 	}
 	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
 	require.NoError(t, err)
-	tsp := sp.(*cascadingFilterSpanProcessor)
+	return sp.(*cascadingFilterSpanProcessor)
+
+}
+
+func TestSequentialTraceArrival(t *testing.T) {
+	traceIds, batches := generateIdsAndBatches(128)
+	tsp := buildBasicCFSP(t, uint64(2*len(traceIds)))
 	for _, batch := range batches {
 		assert.NoError(t, tsp.ConsumeTraces(context.Background(), batch))
 	}
@@ -72,22 +79,36 @@ func TestSequentialTraceArrival(t *testing.T) {
 	}
 }
 
+func TestDecisionHistory(t *testing.T) {
+	tsp := buildBasicCFSP(t, uint64(100))
+
+	id1 := bigendianconverter.UInt64ToTraceID(1, uint64(100))
+	id2 := bigendianconverter.UInt64ToTraceID(1, uint64(101))
+
+	tsp.decisionHistory.Add(id1, decisionHistoryInfo{finalDecision: sampling.Sampled})
+	tsp.decisionHistory.Add(id2, decisionHistoryInfo{finalDecision: sampling.NotSampled})
+
+	id1 = bigendianconverter.UInt64ToTraceID(1, uint64(100))
+	id2 = bigendianconverter.UInt64ToTraceID(1, uint64(101))
+	id3 := bigendianconverter.UInt64ToTraceID(1, uint64(102))
+
+	v1, ok := tsp.decisionHistory.Get(id1)
+	assert.True(t, ok)
+	assert.Equal(t, sampling.Sampled, v1.(decisionHistoryInfo).finalDecision)
+
+	v2, ok := tsp.decisionHistory.Get(id2)
+	assert.True(t, ok)
+	assert.Equal(t, sampling.NotSampled, v2.(decisionHistoryInfo).finalDecision)
+
+	_, ok = tsp.decisionHistory.Get(id3)
+	assert.False(t, ok)
+}
+
 func TestConcurrentTraceArrival(t *testing.T) {
 	traceIds, batches := generateIdsAndBatches(128)
+	tsp := buildBasicCFSP(t, uint64(2*len(traceIds)))
 
 	var wg sync.WaitGroup
-	id1 := config.NewComponentIDWithName("cascading_filter", "1")
-	ps1 := config.NewProcessorSettings(id1)
-	cfg := cfconfig.Config{
-		ProcessorSettings:       &ps1,
-		DecisionWait:            defaultTestDecisionWait,
-		NumTraces:               uint64(2 * len(traceIds)),
-		ExpectedNewTracesPerSec: 64,
-		PolicyCfgs:              testPolicy,
-	}
-	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
-	require.NoError(t, err)
-	tsp := sp.(*cascadingFilterSpanProcessor)
 	for _, batch := range batches {
 		// Add the same traceId twice.
 		wg.Add(2)
@@ -118,18 +139,8 @@ func TestConcurrentTraceArrival(t *testing.T) {
 func TestSequentialTraceMapSize(t *testing.T) {
 	traceIds, batches := generateIdsAndBatches(210)
 	const maxSize = 100
-	id1 := config.NewComponentIDWithName("cascading_filter", "1")
-	ps1 := config.NewProcessorSettings(id1)
-	cfg := cfconfig.Config{
-		ProcessorSettings:       &ps1,
-		DecisionWait:            defaultTestDecisionWait,
-		NumTraces:               uint64(maxSize),
-		ExpectedNewTracesPerSec: 64,
-		PolicyCfgs:              testPolicy,
-	}
-	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
-	require.NoError(t, err)
-	tsp := sp.(*cascadingFilterSpanProcessor)
+	tsp := buildBasicCFSP(t, uint64(maxSize))
+
 	for _, batch := range batches {
 		if err := tsp.ConsumeTraces(context.Background(), batch); err != nil {
 			t.Errorf("Failed consuming traces: %v", err)
@@ -147,18 +158,7 @@ func TestConcurrentTraceMapSize(t *testing.T) {
 	_, batches := generateIdsAndBatches(210)
 	const maxSize = 100
 	var wg sync.WaitGroup
-	id1 := config.NewComponentIDWithName("cascading_filter", "1")
-	ps1 := config.NewProcessorSettings(id1)
-	cfg := cfconfig.Config{
-		ProcessorSettings:       &ps1,
-		DecisionWait:            defaultTestDecisionWait,
-		NumTraces:               uint64(maxSize),
-		ExpectedNewTracesPerSec: 64,
-		PolicyCfgs:              testPolicy,
-	}
-	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
-	require.NoError(t, err)
-	tsp := sp.(*cascadingFilterSpanProcessor)
+	tsp := buildBasicCFSP(t, uint64(maxSize))
 	for _, batch := range batches {
 		wg.Add(1)
 		go func(td ptrace.Traces) {
@@ -189,17 +189,22 @@ func TestSamplingPolicyTypicalPath(t *testing.T) {
 	msp := new(consumertest.TracesSink)
 	mpe := &mockPolicyEvaluator{}
 	mtt := &manualTTicker{}
+	cache, err := lru.New2Q(1000)
+	assert.NoError(t, err)
+
 	tsp := &cascadingFilterSpanProcessor{
-		ctx:               context.Background(),
-		nextConsumer:      msp,
-		maxNumTraces:      maxSize,
-		logger:            zap.NewNop(),
-		decisionBatcher:   newSyncIDBatcher(decisionWaitSeconds),
-		traceAcceptRules:  []*TraceAcceptEvaluator{{Name: "mock-policy", Evaluator: mpe, ctx: context.TODO()}},
-		deleteChan:        make(chan traceKey, maxSize),
-		policyTicker:      mtt,
-		maxSpansPerSecond: 10000,
-		filteringEnabled:  true,
+		ctx:                   context.Background(),
+		nextConsumer:          msp,
+		maxNumTraces:          maxSize,
+		logger:                zap.NewNop(),
+		decisionBatcher:       newSyncIDBatcher(decisionWaitSeconds),
+		traceAcceptRules:      []*TraceAcceptEvaluator{{Name: "mock-policy", Evaluator: mpe, ctx: context.TODO()}},
+		deleteChan:            make(chan traceKey, maxSize),
+		decisionHistory:       cache,
+		policyTicker:          mtt,
+		decisionSpansLimitter: newRateLimitter(10000),
+		priorSpansLimitter:    newRateLimitter(5000),
+		filteringEnabled:      true,
 	}
 
 	_, batches := generateIdsAndBatches(210)
@@ -250,15 +255,15 @@ func TestSamplingPolicyNoFiltering(t *testing.T) {
 	msp := new(consumertest.TracesSink)
 	mtt := &manualTTicker{}
 	tsp := &cascadingFilterSpanProcessor{
-		ctx:               context.Background(),
-		nextConsumer:      msp,
-		maxNumTraces:      maxSize,
-		logger:            zap.NewNop(),
-		decisionBatcher:   newSyncIDBatcher(decisionWaitSeconds),
-		deleteChan:        make(chan traceKey, maxSize),
-		policyTicker:      mtt,
-		maxSpansPerSecond: 10000,
-		filteringEnabled:  false,
+		ctx:                   context.Background(),
+		nextConsumer:          msp,
+		maxNumTraces:          maxSize,
+		logger:                zap.NewNop(),
+		decisionBatcher:       newSyncIDBatcher(decisionWaitSeconds),
+		deleteChan:            make(chan traceKey, maxSize),
+		policyTicker:          mtt,
+		decisionSpansLimitter: newRateLimitter(10000),
+		filteringEnabled:      false,
 	}
 
 	_, batches := generateIdsAndBatches(1)
@@ -278,6 +283,8 @@ func TestSamplingMultiplePolicies(t *testing.T) {
 	mpe1 := &mockPolicyEvaluator{}
 	mpe2 := &mockPolicyEvaluator{}
 	mtt := &manualTTicker{}
+	cache, err := lru.New2Q(1000)
+	assert.NoError(t, err)
 	tsp := &cascadingFilterSpanProcessor{
 		ctx:             context.Background(),
 		nextConsumer:    msp,
@@ -291,10 +298,12 @@ func TestSamplingMultiplePolicies(t *testing.T) {
 			{
 				Name: "policy-2", Evaluator: mpe2, ctx: context.TODO(),
 			}},
-		deleteChan:        make(chan traceKey, maxSize),
-		policyTicker:      mtt,
-		maxSpansPerSecond: 10000,
-		filteringEnabled:  true,
+		deleteChan:            make(chan traceKey, maxSize),
+		decisionHistory:       cache,
+		policyTicker:          mtt,
+		decisionSpansLimitter: newRateLimitter(10000),
+		priorSpansLimitter:    newRateLimitter(5000),
+		filteringEnabled:      true,
 	}
 
 	_, batches := generateIdsAndBatches(210)
@@ -349,17 +358,20 @@ func TestSamplingPolicyDecisionNotSampled(t *testing.T) {
 	msp := new(consumertest.TracesSink)
 	mpe := &mockPolicyEvaluator{}
 	mtt := &manualTTicker{}
+	cache, err := lru.New2Q(1000)
+	assert.NoError(t, err)
 	tsp := &cascadingFilterSpanProcessor{
-		ctx:               context.Background(),
-		nextConsumer:      msp,
-		maxNumTraces:      maxSize,
-		logger:            zap.NewNop(),
-		decisionBatcher:   newSyncIDBatcher(decisionWaitSeconds),
-		traceAcceptRules:  []*TraceAcceptEvaluator{{Name: "mock-policy", Evaluator: mpe, ctx: context.TODO()}},
-		deleteChan:        make(chan traceKey, maxSize),
-		policyTicker:      mtt,
-		maxSpansPerSecond: 10000,
-		filteringEnabled:  true,
+		ctx:                   context.Background(),
+		nextConsumer:          msp,
+		maxNumTraces:          maxSize,
+		logger:                zap.NewNop(),
+		decisionBatcher:       newSyncIDBatcher(decisionWaitSeconds),
+		traceAcceptRules:      []*TraceAcceptEvaluator{{Name: "mock-policy", Evaluator: mpe, ctx: context.TODO()}},
+		deleteChan:            make(chan traceKey, maxSize),
+		policyTicker:          mtt,
+		decisionSpansLimitter: newRateLimitter(10000),
+		decisionHistory:       cache,
+		filteringEnabled:      true,
 	}
 
 	_, batches := generateIdsAndBatches(210)
@@ -416,18 +428,21 @@ func TestSamplingPolicyDecisionDrop(t *testing.T) {
 	mpe := &mockPolicyEvaluator{}
 	mde := &mockDropTrueEvaluator{}
 	mtt := &manualTTicker{}
+	cache, err := lru.New2Q(1000)
+	assert.NoError(t, err)
 	tsp := &cascadingFilterSpanProcessor{
-		ctx:               context.Background(),
-		nextConsumer:      msp,
-		maxNumTraces:      maxSize,
-		logger:            zap.NewNop(),
-		decisionBatcher:   newSyncIDBatcher(decisionWaitSeconds),
-		traceAcceptRules:  []*TraceAcceptEvaluator{{Name: "mock-policy", Evaluator: mpe, ctx: context.TODO()}},
-		traceRejectRules:  []*TraceRejectEvaluator{{Name: "mock-drop-eval", Evaluator: mde, ctx: context.TODO()}},
-		deleteChan:        make(chan traceKey, maxSize),
-		policyTicker:      mtt,
-		maxSpansPerSecond: 10000,
-		filteringEnabled:  true,
+		ctx:                   context.Background(),
+		nextConsumer:          msp,
+		maxNumTraces:          maxSize,
+		logger:                zap.NewNop(),
+		decisionBatcher:       newSyncIDBatcher(decisionWaitSeconds),
+		traceAcceptRules:      []*TraceAcceptEvaluator{{Name: "mock-policy", Evaluator: mpe, ctx: context.TODO()}},
+		traceRejectRules:      []*TraceRejectEvaluator{{Name: "mock-drop-eval", Evaluator: mde, ctx: context.TODO()}},
+		deleteChan:            make(chan traceKey, maxSize),
+		decisionHistory:       cache,
+		policyTicker:          mtt,
+		decisionSpansLimitter: newRateLimitter(10000),
+		filteringEnabled:      true,
 	}
 
 	_, batches := generateIdsAndBatches(210)
@@ -462,16 +477,20 @@ func TestSamplingPolicyDecisionNoLimitSet(t *testing.T) {
 	// sampling policy evaluator.
 	msp := new(consumertest.TracesSink)
 	mtt := &manualTTicker{}
+	cache, err := lru.New2Q(1000)
+	assert.NoError(t, err)
 	tsp := &cascadingFilterSpanProcessor{
-		ctx:               context.Background(),
-		nextConsumer:      msp,
-		maxNumTraces:      maxSize,
-		logger:            zap.NewNop(),
-		decisionBatcher:   newSyncIDBatcher(decisionWaitSeconds),
-		deleteChan:        make(chan traceKey, maxSize),
-		policyTicker:      mtt,
-		maxSpansPerSecond: 0,
-		filteringEnabled:  true,
+		ctx:                   context.Background(),
+		nextConsumer:          msp,
+		maxNumTraces:          maxSize,
+		logger:                zap.NewNop(),
+		decisionBatcher:       newSyncIDBatcher(decisionWaitSeconds),
+		deleteChan:            make(chan traceKey, maxSize),
+		policyTicker:          mtt,
+		decisionHistory:       cache,
+		decisionSpansLimitter: newRateLimitter(0),
+		priorSpansLimitter:    newRateLimitter(0),
+		filteringEnabled:      true,
 	}
 
 	_, batches := generateIdsAndBatches(210)
@@ -491,7 +510,6 @@ func TestSamplingPolicyDecisionNoLimitSet(t *testing.T) {
 
 	// Now the first batch that waited the decision period.
 	tsp.samplingPolicyOnTick()
-	//require.EqualValues(t, 210, msp.SpanCount(), "exporter should have received all spans since no rate limiting was applied")
 	require.EqualValues(t, 10, msp.SpanCount())
 }
 
@@ -503,17 +521,20 @@ func TestSamplingPolicyOnlyReject(t *testing.T) {
 	msp := new(consumertest.TracesSink)
 	mtt := &manualTTicker{}
 	mde := &mockDropFalseEvaluator{}
+	cache, err := lru.New2Q(1000)
+	assert.NoError(t, err)
 	tsp := &cascadingFilterSpanProcessor{
-		ctx:               context.Background(),
-		nextConsumer:      msp,
-		maxNumTraces:      maxSize,
-		logger:            zap.NewNop(),
-		decisionBatcher:   newSyncIDBatcher(decisionWaitSeconds),
-		traceRejectRules:  []*TraceRejectEvaluator{{Name: "mock-drop-eval", Evaluator: mde, ctx: context.TODO()}},
-		deleteChan:        make(chan traceKey, maxSize),
-		policyTicker:      mtt,
-		maxSpansPerSecond: 10000,
-		filteringEnabled:  true,
+		ctx:                   context.Background(),
+		nextConsumer:          msp,
+		maxNumTraces:          maxSize,
+		logger:                zap.NewNop(),
+		decisionBatcher:       newSyncIDBatcher(decisionWaitSeconds),
+		traceRejectRules:      []*TraceRejectEvaluator{{Name: "mock-drop-eval", Evaluator: mde, ctx: context.TODO()}},
+		deleteChan:            make(chan traceKey, maxSize),
+		policyTicker:          mtt,
+		decisionSpansLimitter: newRateLimitter(10000),
+		decisionHistory:       cache,
+		filteringEnabled:      true,
 	}
 
 	_, batches := generateIdsAndBatches(1)
@@ -553,17 +574,20 @@ func TestMultipleBatchesAreCombinedIntoOne(t *testing.T) {
 	msp := new(consumertest.TracesSink)
 	mpe := &mockPolicyEvaluator{}
 	mtt := &manualTTicker{}
+	cache, err := lru.New2Q(1000)
+	assert.NoError(t, err)
 	tsp := &cascadingFilterSpanProcessor{
-		ctx:               context.Background(),
-		nextConsumer:      msp,
-		maxNumTraces:      maxSize,
-		logger:            zap.NewNop(),
-		decisionBatcher:   newSyncIDBatcher(decisionWaitSeconds),
-		traceAcceptRules:  []*TraceAcceptEvaluator{{Name: "mock-policy", Evaluator: mpe, ctx: context.TODO()}},
-		deleteChan:        make(chan traceKey, maxSize),
-		policyTicker:      mtt,
-		maxSpansPerSecond: 10000,
-		filteringEnabled:  true,
+		ctx:                   context.Background(),
+		nextConsumer:          msp,
+		maxNumTraces:          maxSize,
+		logger:                zap.NewNop(),
+		decisionBatcher:       newSyncIDBatcher(decisionWaitSeconds),
+		traceAcceptRules:      []*TraceAcceptEvaluator{{Name: "mock-policy", Evaluator: mpe, ctx: context.TODO()}},
+		deleteChan:            make(chan traceKey, maxSize),
+		policyTicker:          mtt,
+		decisionSpansLimitter: newRateLimitter(10000),
+		decisionHistory:       cache,
+		filteringEnabled:      true,
 	}
 
 	mpe.NextDecision = sampling.Sampled

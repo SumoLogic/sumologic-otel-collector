@@ -31,8 +31,13 @@ import (
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/sampling"
 )
 
+const skipLongRunning = true
+
 func TestRandomTraceProcessing(t *testing.T) {
-	t.Skip("a long running test, please run manually")
+	if skipLongRunning {
+		t.Skip("a long running test, please run manually")
+	}
+
 	stepDuration := time.Millisecond * 100
 	decisionWait := time.Second * 1
 
@@ -64,7 +69,9 @@ func TestRandomTraceProcessing(t *testing.T) {
 }
 
 func TestTraceProcessing(t *testing.T) {
-	t.Skip("a long running test, please run manually")
+	if skipLongRunning {
+		t.Skip("a long running test, please run manually")
+	}
 
 	decisionWait := time.Second * 1
 

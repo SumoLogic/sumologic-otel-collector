@@ -20,7 +20,9 @@ The following configuration options can also be modified:
 
 - `decision_wait` (default = 30s): Wait time since the first span of a trace before making a filtering decision
 - `num_traces` (default = 100000): Max number of traces for which decisions are kept in memory
+- `history_size` (default = `num_traces` value): Max size of LRU cache used for storing decisions on already processed traces
 - `expected_new_traces_per_sec` (default = 0): Expected number of new traces (helps in allocating data structures)
+- `prior_spans_rate` (default = `50%` of `spans_per_second`): number of spans that arrived late and are coming from traces which were previously sampled; this limit is not included in the overall total limit
 
 Whenever rate limiting is applied, only full traces are accepted (if trace won't fit within the limit, it will never be filtered). For spans that are arriving late, previous decision are kept for some time.
 
