@@ -1,5 +1,7 @@
 # Upgrading
 
+- [Upgrading to v0.55.0-sumo-0](#upgrading-to-v0550-sumo-0)
+  - [`filter` processor: Drop support for `expr` language](#filter-processor-drop-support-for-expr-language)
 - [Upgrading to v0.52.0-sumo-0](#upgrading-to-v0520-sumo-0)
   - [`sumologic` exporter: Removed `carbon2` and `graphite` metric formats](#sumologic-exporter-removed-carbon2-and-graphite-metric-formats)
 - [Upgrading to v0.51.0-sumo-0](#upgrading-to-v0510-sumo-0)
@@ -12,6 +14,43 @@
   - [Sumo Logic exporter metadata handling](#sumo-logic-exporter-metadata-handling)
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
+
+## Upgrading to v0.55.0-sumo-0
+
+### `filter` processor: drop support for `expr` language
+
+Expr language is supported by [logstransform] processor, so there is no need to have this functionality in [filter] processor.
+
+The following configuration of `filter` processor:
+
+```yaml
+processors:
+  filter:
+    logs:
+      include:
+        match_type: expr
+        expressions:
+          - Body matches "log to include"
+      exclude:
+        match_type: expr
+        expressions:
+          - Body matches "log to exclude"
+```
+
+is equivalent of the following configuration of `logstransform` processor:
+
+```yaml
+processors:
+  logstransform:
+    operators:
+      - type: filter
+        expr: 'body matches "log to include"'
+      - type: filter
+        expr: 'not(body matches "log to exclude")'
+```
+
+[logstransform]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.55.0/processor/logstransformprocessor
+[filter]: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.54.0-filterprocessor/processor/filterprocessor
 
 ## Upgrading to v0.52.0-sumo-0
 

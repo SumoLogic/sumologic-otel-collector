@@ -46,16 +46,12 @@ processors:
         resource_attributes:
           - key: should_exclude
             value: "(probably_false|false)"
-  filter/log_expr_includeexclude:
-    logs:
-      include:
-        match_type: expr
-        expressions:
-          - Body matches '\\[INFO\\]'
-      exclude:
-        match_type: expr
-        expressions:
-          - Body matches '\\[DEBUG\\]'
+  logstransform/log_expr_includeexclude:
+    operators:
+      - type: filter
+        expr: body matches '\\[INFO\\]'
+      - type: filter
+        expr: not(body matches '\\[DEBUG\\]')
 
 exporters:
   sumologic:
@@ -72,6 +68,6 @@ service:
         - filter/record_exclude
         - filter/record_includeexclude
         - filter/resource_includeexclude
-        - filter/log_expr_includeexclude
+        - logstransform/log_expr_includeexclude
       exporters:
         - sumologic
