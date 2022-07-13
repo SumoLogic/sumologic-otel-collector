@@ -850,6 +850,22 @@ func TestFilters(t *testing.T) {
 	}
 }
 
+func TestNodeFilterDoesntApplyToOwners(t *testing.T) {
+	filters := Filters{
+		Node: "ec2-test",
+	}
+	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{OwnerLookupEnabled: true}, filters)
+
+	// verify that the Pod informer has the Node selector set
+	inf := c.informer.(*FakeInformer)
+	assert.Equal(t, "", inf.labelSelector.String())
+	assert.Equal(t, "spec.nodeName=ec2-test", inf.fieldSelector.String())
+
+	// verify that the owner provider does NOT have the Node selector set
+	ownerProvider := c.op.(*fakeOwnerCache)
+	assert.Equal(t, "", ownerProvider.fieldSelector.String())
+}
+
 func TestPodIgnorePatterns(t *testing.T) {
 	testCases := []struct {
 		ignore bool

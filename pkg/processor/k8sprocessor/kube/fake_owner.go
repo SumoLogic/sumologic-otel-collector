@@ -26,8 +26,12 @@ import (
 
 // fakeOwnerCache is a simple structure which aids querying for owners
 type fakeOwnerCache struct {
-	logger       *zap.Logger
-	objectOwners map[string]*ObjectOwner
+	logger          *zap.Logger
+	objectOwners    map[string]*ObjectOwner
+	labelSelector   labels.Selector
+	fieldSelector   fields.Selector
+	extractionRules ExtractionRules
+	namespace       string
 }
 
 // NewOwnerProvider creates new instance of the owners api
@@ -37,7 +41,12 @@ func newFakeOwnerProvider(logger *zap.Logger,
 	fieldSelector fields.Selector,
 	extractionRules ExtractionRules,
 	namespace string) (OwnerAPI, error) {
-	ownerCache := fakeOwnerCache{}
+	ownerCache := fakeOwnerCache{
+		labelSelector:   labelSelector,
+		fieldSelector:   fieldSelector,
+		extractionRules: extractionRules,
+		namespace:       namespace,
+	}
 	ownerCache.objectOwners = map[string]*ObjectOwner{}
 	ownerCache.logger = logger
 
