@@ -19,7 +19,7 @@
 
 ### `filter` processor: drop support for `expr` language
 
-Expr language is supported by [logstransform] processor, so there is no need to have this functionality in [filter] processor:
+Expr language is supported by [logstransform] processor, so there is no need to have this functionality in [filter] processor.
 
 The following configuration of `filter` processor:
 
@@ -37,7 +37,7 @@ processors:
           - Body matches "log to exclude"
 ```
 
-is equivalent of configuration of `logstransform` processor:
+is equivalent of the following configuration of `logstransform` processor:
 
 ```yaml
 processors:
