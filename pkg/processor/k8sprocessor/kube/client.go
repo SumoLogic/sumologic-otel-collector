@@ -116,6 +116,11 @@ func New(
 		newInformer = newSharedInformer
 	}
 
+	// the Node filter only applies to Pods, so we add it here
+	if filters.Node != "" {
+		fieldSelector = addNodeSelector(fieldSelector, filters.Node)
+	}
+
 	c.informer = newInformer(c.kc, c.Filters.Namespace, labelSelector, fieldSelector)
 	return c, err
 }
@@ -570,6 +575,8 @@ func (c *WatchClient) shouldIgnorePod(pod *api_v1.Pod) bool {
 	return false
 }
 
+// selectors from Filters creates K8s selectors from Filters
+// this notably does not include the Node filter, which only applies to Pods and is handled separately in addNodeSelector
 func selectorsFromFilters(filters Filters) (labels.Selector, fields.Selector, error) {
 	labelSelector := labels.Everything()
 	for _, f := range filters.Labels {
@@ -592,8 +599,13 @@ func selectorsFromFilters(filters Filters) (labels.Selector, fields.Selector, er
 		}
 	}
 
-	if filters.Node != "" {
-		selectors = append(selectors, fields.OneTermEqualSelector(podNodeField, filters.Node))
-	}
 	return labelSelector, fields.AndSelectors(selectors...), nil
+}
+
+func addNodeSelector(selector fields.Selector, node string) fields.Selector {
+	nodeSelector := fields.OneTermEqualSelector(podNodeField, node)
+	if selector.Empty() {
+		return nodeSelector
+	}
+	return fields.AndSelectors(selector, nodeSelector)
 }
