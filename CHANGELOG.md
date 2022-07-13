@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This release deprecates the following change:
 
-- `filter` processor: drop support for `expr` language ([upgrade guide][upgrade_guide_v0_55_0_expr_support])
+- `filter` processor: support for `expr` language ([upgrade guide][upgrade_guide_v0_55_0_expr_support])
 
 ### Added
 
