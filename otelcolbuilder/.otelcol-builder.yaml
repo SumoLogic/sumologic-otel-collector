@@ -201,14 +201,14 @@ replaces:
   # Needed for telegrafreceiver
   - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.22.0-sumo-4
 
-  # TODO: remove this when:
+  # TODO: remove this in v0.58 version, as all the following changes has been deprecated:
   # - expr (regexp) log filtering is merged and released upstream:
   #   PR: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/5680
   # - It contains also fix for exclusion using expr language
   #   PR: https://github.com/SumoLogic/opentelemetry-collector-contrib/pull/5144
   #
   # For now, cherry-picked changes are being used:
-  # commit: https://github.com/SumoLogic/opentelemetry-collector-contrib/commit/022a244215d0ec844f4d94bfdcd8df87e6f05d7f
+  # commit: https://github.com/SumoLogic/opentelemetry-collector-contrib/commit/c9d2ba5d0f04cc3460495bb7c7018fa33b141b4f
   # branch: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.55.0-filterprocessor
   - github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/SumoLogic/opentelemetry-collector-contrib/processor/filterprocessor 022a244215d0ec844f4d94bfdcd8df87e6f05d7f
   - github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal => github.com/SumoLogic/opentelemetry-collector-contrib/internal/coreinternal 022a244215d0ec844f4d94bfdcd8df87e6f05d7f
