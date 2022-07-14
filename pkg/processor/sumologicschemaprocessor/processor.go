@@ -25,8 +25,9 @@ import (
 )
 
 type sumologicSchemaProcessor struct {
-	logger                  *zap.Logger
-	cloudNamespaceProcessor *cloudNamespaceProcessor
+	logger                       *zap.Logger
+	cloudNamespaceProcessor      *cloudNamespaceProcessor
+	translateAttributesProcessor *translateAttributesProcessor
 }
 
 func newSumologicSchemaProcessor(set component.ProcessorCreateSettings, config *Config) (*sumologicSchemaProcessor, error) {
@@ -35,9 +36,15 @@ func newSumologicSchemaProcessor(set component.ProcessorCreateSettings, config *
 		return nil, err
 	}
 
+	translateAttributesProcessor, err := newTranslateAttributesProcessor(config.TranslateAttributes)
+	if err != nil {
+		return nil, err
+	}
+
 	processor := &sumologicSchemaProcessor{
-		logger:                  set.Logger,
-		cloudNamespaceProcessor: cloudNamespaceProcessor,
+		logger:                       set.Logger,
+		cloudNamespaceProcessor:      cloudNamespaceProcessor,
+		translateAttributesProcessor: translateAttributesProcessor,
 	}
 
 	return processor, nil
@@ -62,11 +69,21 @@ func (processor *sumologicSchemaProcessor) processLogs(_ context.Context, logs p
 		return logs, err
 	}
 
+	logs, err = processor.translateAttributesProcessor.processLogs(logs)
+	if err != nil {
+		return logs, err
+	}
+
 	return logs, nil
 }
 
 func (processor *sumologicSchemaProcessor) processMetrics(ctx context.Context, metrics pmetric.Metrics) (pmetric.Metrics, error) {
 	metrics, err := processor.cloudNamespaceProcessor.processMetrics(metrics)
+	if err != nil {
+		return metrics, err
+	}
+
+	metrics, err = processor.translateAttributesProcessor.processMetrics(metrics)
 	if err != nil {
 		return metrics, err
 	}
@@ -79,5 +96,11 @@ func (processor *sumologicSchemaProcessor) processTraces(ctx context.Context, tr
 	if err != nil {
 		return traces, err
 	}
+
+	traces, err = processor.translateAttributesProcessor.processTraces(traces)
+	if err != nil {
+		return traces, err
+	}
+
 	return traces, nil
 }

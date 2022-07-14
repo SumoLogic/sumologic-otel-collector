@@ -5,6 +5,8 @@ processors:
   sumologic_schema:
   sumologic_schema/disabled-cloud-namespace:
     add_cloud_namespace: false
+  sumologic_schema/disabled-attribute-translation:
+    translate_attributes: false
 
 exporters:
   nop:
