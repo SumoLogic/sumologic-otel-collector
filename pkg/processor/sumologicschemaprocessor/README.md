@@ -17,6 +17,12 @@ processors:
     # Defines whether the `cloud.namespace` resource attribute should be added.
     # default = true
     add_cloud_namespace: {true,false}
+
+    # Defines whether attributes should be translated
+    # from OpenTelemetry to Sumo conventions;
+    # see "Attribute translation" documentation chapter from this document.
+    # default = true
+    translate_attributes: {true,false}
 ```
 
 ## Features
@@ -42,3 +48,44 @@ and if found, adds the corresponding `cloud.namespace` resource attribute.
 If the `cloud.platform` resource attribute is not found or has a value that is not in the table, nothing is added.
 
 [opentelemetry_cloud_provider_attribute]: https://github.com/open-telemetry/opentelemetry-specification/blob/v1.9.0/specification/resource/semantic_conventions/cloud.md
+
+### Attribute translation
+
+Attribute translation changes some of the attribute keys from OpenTelemetry convention to Sumo convention.
+For example, OpenTelemetry convention for the attribute containing Kubernetes pod name is `k8s.pod.name`,
+but Sumo expects it to be in attribute named `pod`.
+
+If attribute with target name eg. `pod` already exists,
+translation is not being done for corresponding attribute (`k8s.pod.name` in this example).
+
+This feature is turned on by default.
+To turn it off, set the `translate_attributes` configuration option to `false`.
+Note that this may cause some of Sumo apps, built-in dashboards to not work correctly.
+
+**Note**: the attributes are **not** translated for traces.
+
+Below is a list of all attribute keys that are being translated.
+
+| OTC key name              | Sumo key name      |
+|---------------------------|--------------------|
+| `cloud.account.id`        | `AccountId`        |
+| `cloud.availability_zone` | `AvailabilityZone` |
+| `cloud.platform`          | `aws_service`      |
+| `cloud.region`            | `Region`           |
+| `host.id`                 | `InstanceId`       |
+| `host.name`               | `host`             |
+| `host.type`               | `InstanceType`     |
+| `k8s.cluster.name`        | `Cluster`          |
+| `k8s.container.name`      | `container`        |
+| `k8s.daemonset.name`      | `daemonset`        |
+| `k8s.deployment.name`     | `deployment`       |
+| `k8s.namespace.name`      | `namespace`        |
+| `k8s.node.name`           | `node`             |
+| `k8s.service.name`        | `service`          |
+| `k8s.pod.hostname`        | `host`             |
+| `k8s.pod.name`            | `pod`              |
+| `k8s.pod.uid`             | `pod_id`           |
+| `k8s.replicaset.name`     | `replicaset`       |
+| `k8s.statefulset.name`    | `statefulset`      |
+| `service.name`            | `service`          |
+| `log.file.path_resolved`  | `_sourceName`      |

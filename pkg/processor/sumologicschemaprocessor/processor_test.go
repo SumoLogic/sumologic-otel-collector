@@ -141,7 +141,7 @@ func TestAddCloudNamespaceForLogs(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			// Arrange
-			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newConfig(testCase.addCloudNamespace))
+			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newCloudNamespaceConfig(testCase.addCloudNamespace))
 			require.NoError(t, err)
 
 			// Act
@@ -268,7 +268,7 @@ func TestAddCloudNamespaceForMetrics(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			// Arrange
-			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newConfig(testCase.addCloudNamespace))
+			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newCloudNamespaceConfig(testCase.addCloudNamespace))
 			require.NoError(t, err)
 
 			// Act
@@ -395,7 +395,217 @@ func TestAddCloudNamespaceForTraces(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			// Arrange
-			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newConfig(testCase.addCloudNamespace))
+			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newCloudNamespaceConfig(testCase.addCloudNamespace))
+			require.NoError(t, err)
+
+			// Act
+			outputTraces, err := processor.processTraces(context.Background(), testCase.createTraces())
+			require.NoError(t, err)
+
+			// Assert
+			testCase.test(outputTraces)
+		})
+	}
+}
+
+func TestTranslateAttributesForLogs(t *testing.T) {
+	testCases := []struct {
+		name                string
+		translateAttributes bool
+		createLogs          func() plog.Logs
+		test                func(plog.Logs)
+	}{
+		{
+			name:                "translates one attribute",
+			translateAttributes: true,
+			createLogs: func() plog.Logs {
+				inputLogs := plog.NewLogs()
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.account.id", "MyId1")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.account.id", "MyId2")
+
+				return inputLogs
+			},
+			test: func(outputLogs plog.Logs) {
+				attribute1, found := outputLogs.ResourceLogs().At(0).Resource().Attributes().Get("AccountId")
+				assert.True(t, found)
+				assert.Equal(t, "MyId1", attribute1.StringVal())
+
+				attribute2, found := outputLogs.ResourceLogs().At(1).Resource().Attributes().Get("AccountId")
+				assert.True(t, found)
+				assert.Equal(t, "MyId2", attribute2.StringVal())
+			},
+		},
+		{
+			name:                "does not translate",
+			translateAttributes: false,
+			createLogs: func() plog.Logs {
+				inputLogs := plog.NewLogs()
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.account.id", "MyId1")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.account.id", "MyId2")
+
+				return inputLogs
+			},
+			test: func(outputLogs plog.Logs) {
+				attribute1, found := outputLogs.ResourceLogs().At(0).Resource().Attributes().Get("cloud.account.id")
+				assert.True(t, found)
+				assert.Equal(t, "MyId1", attribute1.StringVal())
+
+				attribute2, found := outputLogs.ResourceLogs().At(1).Resource().Attributes().Get("cloud.account.id")
+				assert.True(t, found)
+				assert.Equal(t, "MyId2", attribute2.StringVal())
+			},
+		},
+		{
+			name:                "translates no attributes",
+			translateAttributes: true,
+			createLogs: func() plog.Logs {
+				inputLogs := plog.NewLogs()
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("not.actual.attr", "a1")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("maybe.an.attr", "a2")
+				return inputLogs
+			},
+			test: func(outputLogs plog.Logs) {
+				attribute1, found := outputLogs.ResourceLogs().At(0).Resource().Attributes().Get("not.actual.attr")
+				assert.True(t, found)
+				assert.Equal(t, "a1", attribute1.StringVal())
+
+				attribute2, found := outputLogs.ResourceLogs().At(1).Resource().Attributes().Get("maybe.an.attr")
+				assert.True(t, found)
+				assert.Equal(t, "a2", attribute2.StringVal())
+			},
+		},
+		{
+			name:                "translates many attributes, but not all",
+			translateAttributes: true,
+			createLogs: func() plog.Logs {
+				inputLogs := plog.NewLogs()
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.account.id", "MyId")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("maybe.an.attr", "a2")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("k8s.cluster.name", "A cool cluster")
+
+				return inputLogs
+			},
+			test: func(outputLogs plog.Logs) {
+				attribute1, found := outputLogs.ResourceLogs().At(0).Resource().Attributes().Get("AccountId")
+				assert.True(t, found)
+				assert.Equal(t, "MyId", attribute1.StringVal())
+
+				attribute2, found := outputLogs.ResourceLogs().At(1).Resource().Attributes().Get("maybe.an.attr")
+				assert.True(t, found)
+				assert.Equal(t, "a2", attribute2.StringVal())
+
+				attribute3, found := outputLogs.ResourceLogs().At(2).Resource().Attributes().Get("Cluster")
+				assert.True(t, found)
+				assert.Equal(t, "A cool cluster", attribute3.StringVal())
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			// Arrange
+			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newTranslateAttributesConfig(testCase.translateAttributes))
+			require.NoError(t, err)
+
+			// Act
+			outputLogs, err := processor.processLogs(context.Background(), testCase.createLogs())
+			require.NoError(t, err)
+
+			// Assert
+			testCase.test(outputLogs)
+		})
+	}
+}
+
+func TestTranslateAttributesForMetrics(t *testing.T) {
+	testCases := []struct {
+		name                string
+		translateAttributes bool
+		createMetrics       func() pmetric.Metrics
+		test                func(pmetric.Metrics)
+	}{
+		{
+			name:                "translates many attributes, but not all",
+			translateAttributes: true,
+			createMetrics: func() pmetric.Metrics {
+				inputMetrics := pmetric.NewMetrics()
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("cloud.account.id", "MyId")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("maybe.an.attr", "a2")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("k8s.cluster.name", "A cool cluster")
+
+				return inputMetrics
+			},
+			test: func(outputMetrics pmetric.Metrics) {
+				attribute1, found := outputMetrics.ResourceMetrics().At(0).Resource().Attributes().Get("AccountId")
+				assert.True(t, found)
+				assert.Equal(t, "MyId", attribute1.StringVal())
+
+				attribute2, found := outputMetrics.ResourceMetrics().At(1).Resource().Attributes().Get("maybe.an.attr")
+				assert.True(t, found)
+				assert.Equal(t, "a2", attribute2.StringVal())
+
+				attribute3, found := outputMetrics.ResourceMetrics().At(2).Resource().Attributes().Get("Cluster")
+				assert.True(t, found)
+				assert.Equal(t, "A cool cluster", attribute3.StringVal())
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			// Arrange
+			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newTranslateAttributesConfig(testCase.translateAttributes))
+			require.NoError(t, err)
+
+			// Act
+			outputMetrics, err := processor.processMetrics(context.Background(), testCase.createMetrics())
+			require.NoError(t, err)
+
+			// Assert
+			testCase.test(outputMetrics)
+		})
+	}
+}
+
+func TestTranslateAttributesForTraces(t *testing.T) {
+	// Traces are NOT translated.
+	testCases := []struct {
+		name                string
+		translateAttributes bool
+		createTraces        func() ptrace.Traces
+		test                func(ptrace.Traces)
+	}{
+		{
+			name:                "does not translate even translatable attributes",
+			translateAttributes: true,
+			createTraces: func() ptrace.Traces {
+				inputTraces := ptrace.NewTraces()
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("cloud.account.id", "MyId")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("maybe.an.attr", "a2")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("k8s.cluster.name", "A cool cluster")
+
+				return inputTraces
+			},
+			test: func(outputTraces ptrace.Traces) {
+				attribute1, found := outputTraces.ResourceSpans().At(0).Resource().Attributes().Get("cloud.account.id")
+				assert.True(t, found)
+				assert.Equal(t, "MyId", attribute1.StringVal())
+
+				attribute2, found := outputTraces.ResourceSpans().At(1).Resource().Attributes().Get("maybe.an.attr")
+				assert.True(t, found)
+				assert.Equal(t, "a2", attribute2.StringVal())
+
+				attribute3, found := outputTraces.ResourceSpans().At(2).Resource().Attributes().Get("k8s.cluster.name")
+				assert.True(t, found)
+				assert.Equal(t, "A cool cluster", attribute3.StringVal())
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			// Arrange
+			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newTranslateAttributesConfig(testCase.translateAttributes))
 			require.NoError(t, err)
 
 			// Act
@@ -416,8 +626,16 @@ func newProcessorCreateSettings() component.ProcessorCreateSettings {
 	}
 }
 
-func newConfig(addCloudNamespace bool) *Config {
+func newCloudNamespaceConfig(addCloudNamespace bool) *Config {
 	config := createDefaultConfig().(*Config)
 	config.AddCloudNamespace = addCloudNamespace
+	config.TranslateAttributes = false
+	return config
+}
+
+func newTranslateAttributesConfig(translateAttributes bool) *Config {
+	config := createDefaultConfig().(*Config)
+	config.AddCloudNamespace = false
+	config.TranslateAttributes = translateAttributes
 	return config
 }
