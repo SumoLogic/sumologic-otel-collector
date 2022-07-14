@@ -512,7 +512,10 @@ type Namer interface {
 }
 
 func generatePodIDFromName(p Namer) PodIdentifier {
-	return PodIdentifier(fmt.Sprintf("%s.%s", p.GetName(), p.GetNamespace()))
+	// This is the key format informers use by default
+	// See: https://pkg.go.dev/k8s.io/client-go/tools/cache#MetaNamespaceKeyFunc
+	// and pod.association.go
+	return PodIdentifier(fmt.Sprintf("%s/%s", p.GetName(), p.GetNamespace()))
 }
 
 func (c *WatchClient) forgetPod(pod *api_v1.Pod) {
