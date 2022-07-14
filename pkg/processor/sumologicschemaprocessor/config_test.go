@@ -43,7 +43,17 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Equal(t, p1,
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(config.NewComponentIDWithName(typeStr, "disabled-cloud-namespace")),
-			AddCloudNamespace: false,
+			ProcessorSettings:   config.NewProcessorSettings(config.NewComponentIDWithName(typeStr, "disabled-cloud-namespace")),
+			AddCloudNamespace:   false,
+			TranslateAttributes: true,
+		})
+
+	p2 := cfg.Processors[config.NewComponentIDWithName(typeStr, "disabled-attribute-translation")]
+
+	assert.Equal(t, p2,
+		&Config{
+			ProcessorSettings:   config.NewProcessorSettings(config.NewComponentIDWithName(typeStr, "disabled-attribute-translation")),
+			AddCloudNamespace:   true,
+			TranslateAttributes: false,
 		})
 }
