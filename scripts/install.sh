@@ -82,7 +82,7 @@ function get_arch_type() {
     x86_64)
         arch_type=amd64
         ;;
-    aarch64_be | aarch64 | armv8b | armv8l)
+    aarch64_be | aarch64 | armv8b | armv8l | arm64)
         arch_type=arm64
         ;;
     *)
