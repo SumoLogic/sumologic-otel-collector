@@ -17,8 +17,6 @@ package sumologicexporter
 import (
 	"fmt"
 	"strings"
-
-	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
 // attributeTranslations maps OpenTelemetry attribute names to Sumo attribute names
@@ -44,46 +42,6 @@ var attributeTranslations = map[string]string{
 	"k8s.statefulset.name":    "statefulset",
 	"service.name":            "service",
 	"log.file.path_resolved":  "_sourceName",
-}
-
-func translateAttributes(attributes pcommon.Map) pcommon.Map {
-	ret := pcommon.NewMap()
-	ret.EnsureCapacity(attributes.Len())
-
-	attributes.Range(func(otKey string, value pcommon.Value) bool {
-		if sumoKey, ok := attributeTranslations[otKey]; ok {
-			// Only insert if it doesn't exist yet to prevent overwriting.
-			// We have to do it this way since the final return value is not
-			// ready yet to rely on .Insert() not overwriting.
-			if _, exists := attributes.Get(sumoKey); !exists {
-				ret.Insert(sumoKey, value)
-			} else {
-				ret.Insert(otKey, value)
-			}
-		} else {
-			ret.Insert(otKey, value)
-		}
-		return true
-	})
-
-	return ret
-}
-
-// translateAttributesInPlace renames attribute keys according to attributeTranslations.
-//
-// DEPRECATED: Please use translateAttributes instead.
-func translateAttributesInPlace(attributes pcommon.Map) {
-	attributes.Range(func(otKey string, value pcommon.Value) bool {
-		if sumoKey, ok := attributeTranslations[otKey]; ok {
-			// do not rename attribute if target name already exists
-			if _, ok := attributes.Get(sumoKey); ok {
-				return true
-			}
-			attributes.Insert(sumoKey, value)
-			attributes.Remove(otKey)
-		}
-		return true
-	})
 }
 
 // translateConfigValue renames attribute keys in config values according to attributeTranslations.

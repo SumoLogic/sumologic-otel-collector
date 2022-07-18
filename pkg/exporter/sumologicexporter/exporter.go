@@ -222,9 +222,6 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld plog.Logs) err
 
 		se.dropRoutingAttribute(rl.Resource().Attributes())
 		currentMetadata := newFields(rl.Resource().Attributes())
-		if se.config.TranslateAttributes {
-			currentMetadata.translateAttributes()
-		}
 
 		if droppedRecords, err := sdr.sendNonOTLPLogs(ctx, rl, currentMetadata); err != nil {
 			dropped = append(dropped, droppedResourceRecords{
@@ -290,13 +287,6 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pmetric.Met
 		rm := rms.At(i)
 
 		se.dropRoutingAttribute(rm.Resource().Attributes())
-
-		// TODO: Move these modifications to the Sumo schema processor
-		// we shouldn't modify data in an exporter, but these modifications are idempotent and therefore harmless
-		if se.config.TranslateAttributes {
-			translateAttributes(rm.Resource().Attributes()).
-				CopyTo(rm.Resource().Attributes())
-		}
 
 		if se.config.TranslateTelegrafMetrics {
 			for i := 0; i < rm.ScopeMetrics().Len(); i++ {

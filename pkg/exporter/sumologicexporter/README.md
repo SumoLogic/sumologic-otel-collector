@@ -141,6 +141,9 @@ exporters:
 
 ## Attribute translation
 
+**Note**: This functionality has been moved to the [sumologicschemaprocessor](../../processor/sumologicschemaprocessor/).
+  As for now, this component uses it only to translate `source_*` values (see the part about [source templates](#source-templates)).
+
 Attribute translation changes some of the attribute keys from OpenTelemetry convention to Sumo convention.
 For example, OpenTelemetry convention for the attribute containing Kubernetes pod name is `k8s.pod.name`,
 but Sumo expects it to be in attribute named `pod`.

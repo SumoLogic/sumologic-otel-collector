@@ -1,7 +1,9 @@
 # Upgrading
 
+- [Unreleased](#unreleased)
+  - [`sumologic` exporter: moved translating attributes to `sumologicschemaprocessor`](#sumologic-exporter-moved-translating-attributes-to-sumologicschemaprocessor)
 - [Upgrading to v0.55.0-sumo-0](#upgrading-to-v0550-sumo-0)
-  - [`filter` processor: Drop support for `expr` language](#filter-processor-drop-support-for-expr-language)
+  - [`filter` processor: drop support for `expr` language](#filter-processor-drop-support-for-expr-language)
 - [Upgrading to v0.52.0-sumo-0](#upgrading-to-v0520-sumo-0)
   - [`sumologic` exporter: Removed `carbon2` and `graphite` metric formats](#sumologic-exporter-removed-carbon2-and-graphite-metric-formats)
 - [Upgrading to v0.51.0-sumo-0](#upgrading-to-v0510-sumo-0)
@@ -14,6 +16,76 @@
   - [Sumo Logic exporter metadata handling](#sumo-logic-exporter-metadata-handling)
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
+
+## Unreleased
+
+### `sumologic` exporter: moved translating attributes to `sumologicschemaprocessor`
+
+Translating the attributes is harmless, but the exporters should not modify the data.
+This functionality has been moved to the [sumologicschemaprocessor](../pkg/processor/sumologicschemaprocessor/).
+
+However, if the attributes are not translated, some Sumo apps might not work correctly.
+To migrate, add a `sumologicschemaprocessor` to your pipelines that use the `sumologic` exporter.
+
+Given the following configuration:
+
+```yaml
+receivers:
+  rec:
+
+processors:
+  proc:
+
+exporters:
+  sumologic:
+    endpoint: http://127.0.0.1:8080/
+    translate_attributes: true
+
+service:
+  pipelines:
+    logs:
+      receivers: [rec]
+      processors: [proc]
+      exporters: [sumologic]
+```
+
+The migrated version would be:
+
+```yaml
+receivers:
+  rec:
+
+processors:
+  proc:
+
+  sumologicschema:
+    translate_attributes: true
+
+exporters:
+  sumologic:
+    endpoint: http://127.0.0.1:8080/
+    translate_attributes: true
+
+service:
+  pipelines:
+    logs:
+      receivers: [rec]
+      processors: [proc, sumologicschema]
+      exporters: [sumologic]
+```
+
+**Note**: `translate_attributes` value in the config of `sumologic` exporter is still responsible for translating `source_*` config values.
+  If the value of `translate_attributes` was set to `true`, changing its value to `false` might cause a change of `source_*` values.
+  [More information about this functionality](../pkg/exporter/sumologicexporter/README.md#source-templates).
+
+**Note**: by default, the `sumologicschemaprocessor` also adds `cloud.namespace` attribute to the data.
+If you don't want this to happen, you should explicitly disable this functionality:
+
+```yaml
+processors:
+  sumologicschema:
+    add_cloud_namespace: false
+```
 
 ## Upgrading to v0.55.0-sumo-0
 

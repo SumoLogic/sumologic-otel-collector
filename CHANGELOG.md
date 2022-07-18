@@ -7,12 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking changes
+
+- feat(sumologicexporter)!: remove translating attributes ([upgrade guide](upgrade_guide_unreleased_removed_translation))
+
 ### Fixed
 
 - fix(k8sprocessor): only apply the node filter to Pods [#668]
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.55.0-sumo-0...main
 [#668]: https://github.com/SumoLogic/sumologic-otel-collector/pull/668
+[upgrade_guide_unreleased_removed_translation]: ./docs/Upgrading.md#sumologic-exporter-moved-translating-attributes-to-sumologicschemaprocessor
 
 ## [v0.55.0-sumo-0]
 
