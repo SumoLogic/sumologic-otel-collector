@@ -249,7 +249,7 @@ for potential breaking changes that would require manual migration steps.
    If you have an installation token, you can run otelcol with the example configuration:
 
    ```bash
-   export TOKEN=<TOKEN>
+   export SUMOLOGIC_INSTALL_TOKEN=<TOKEN>
    ./otelcol-sumo --config=config.yaml
    ```
 
