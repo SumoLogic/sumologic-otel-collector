@@ -4,6 +4,11 @@ set -euo pipefail
 
 ############################ Functions
 
+# Get github rate limit
+function github_rate_limit() {
+    curl -X GET https://api.github.com/rate_limit -v 2>&1 | grep x-ratelimit-remaining | grep -oE "[0-9]+"
+}
+
 function check_dependencies() {
     local error
     error=0
@@ -22,8 +27,14 @@ function check_dependencies() {
 function get_latest_version() {
     local versions
     readonly versions="${1}"
-    # sed 's/ /\n/g' converts spaces to new lines
-    echo "${versions}" | sed 's/ /\n/g' | head -n 1
+
+    # get latest version directly from website if there is no versions from api
+    if [[ -z "${versions}" ]]; then
+        echo "$(curl -s https://github.com/SumoLogic/sumologic-otel-collector/releases | grep -oE '/SumoLogic/sumologic-otel-collector/releases/tag/(.*)"' | head -n 1 | sed 's%/SumoLogic/sumologic-otel-collector/releases/tag/v\([^"]*\)".*%\1%g')"
+    else
+        # sed 's/ /\n/g' converts spaces to new lines
+        echo "${versions}" | sed 's/ /\n/g' | head -n 1
+    fi
 }
 
 # Get available versions of otelcol-sumo
@@ -31,6 +42,11 @@ function get_latest_version() {
 # sort it from last to first
 # remove v from beginning of version
 function get_versions() {
+    # returns empty in case we exceeded github rate limit
+    if [[ "$(github_rate_limit)" == "0" ]]; then
+        return
+    fi
+
     curl \
     -sH "Accept: application/vnd.github.v3+json" \
     https://api.github.com/repos/SumoLogic/sumologic-otel-collector/releases \
@@ -132,7 +148,28 @@ function get_changelog() {
     changelog="$(echo "${notes}" | sed -e "/## v${version}/,/###/!d" | sed '$ d' | sed 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g;s/\[\([^\[]*\)\]([^\()]*)/\1/g')"
     changelog="${changelog}\n### Release address\n\nhttps://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v${version}\n"
     # 's/\[#.*//' remove everything starting from `[#`
-    changelog="${changelog}\n$(echo "${notes}" | sed -e '/### Breaking changes/,/###/!d' | sed '$ d' | sed 's/\[#.*//')"
+    # 's/\[\([^\[]*\)\]/\1/g' replaces [$1] with $1
+    changelog="${changelog}\n$(echo "${notes}" | sed -e '/### Breaking changes/,/###/!d' | sed '$ d' | sed 's/\[#.*//;s/\[\([^\[]*\)\]/\1/g')"
+    echo -e "${changelog}"
+}
+
+# Get full changelog if there is no versions from API
+function get_full_changelog() {
+    local version
+    readonly version="${1}"
+
+    local notes
+    notes="$(echo -e "$(curl -s "https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${version}/CHANGELOG.md")")"
+    readonly notes
+
+    local changelog
+    # 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g' replaces [$1][*] with $1
+    # 's/\[\([^\[]*\)\]([^\()]*)/\1/g' replaces [$1](*) with $1
+    changelog="$(echo "${notes}" | sed 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g;s/\[\([^\[]*\)\]([^\()]*)/\1/g' | sed "s%# Changelog%# Changelog\n\nAddress: https://github.com/SumoLogic/sumologic-otel-collector/blob/v${version}/CHANGELOG.md%g")"
+    # s/## \[\(.*\)\]/## \1/g changes `## [$1]` to `## $1`
+    # 's/\[.*//' remove everything starting from `[#`
+    # 's/\[\([^\[]*\)\]/\1/g' replaces [$1] with $1
+    changelog="$(echo "${changelog}" | sed 's/^## \[\(.*\)\]/## \1/g' | sed '/^\[.*/d;;s/\[\([^\[]*\)\]/\1/g'))"
     echo -e "${changelog}"
 }
 
@@ -147,12 +184,24 @@ readonly OS_TYPE ARCH_TYPE
 echo -e "Detected OS type:\t${OS_TYPE}"
 echo -e "Detected architecture:\t${ARCH_TYPE}"
 
-VERSIONS="$(get_versions)"
+echo -e "Getting installed version..."
+echo -e "Getting versions..."
+
 INSTALLED_VERSION="$(get_installed_version)"
-VERSION="$(get_latest_version "${VERSIONS}")"
+echo -e "Installed version:\t${INSTALLED_VERSION}"
+
+VERSIONS="$(get_versions)"
+
+# Use user's version if set, otherwise get latest version from API (or website)
+set +u
+VERSION="${VERSION}"
+set -u
+
+if [[ -z "${VERSION}" ]]; then
+    VERSION="$(get_latest_version "${VERSIONS}")"
+fi
 readonly VERSIONS VERSION INSTALLED_VERSION
 
-echo -e "Installed version:\t${INSTALLED_VERSION}"
 echo -e "Version to install:\t${VERSION}"
 
 # Check if otelcol is already in newest version
@@ -160,14 +209,22 @@ if [[ "${INSTALLED_VERSION}" == "${VERSION}" ]]; then
     echo "OpenTelemetry collector is already in newest (${VERSION}) version"
     exit
 elif [[ -n "${INSTALLED_VERSION}" ]]; then
-    read -rp "Press enter to see changelog"
     # Take versions from installed up to the newest
     BETWEEN_VERSIONS="$(get_versions_from "${VERSIONS}" "${INSTALLED_VERSION}")"
     readonly BETWEEN_VERSIONS
-    for version in ${BETWEEN_VERSIONS}; do
-        # Print changelog for every version
-        get_changelog "${version}"
-    done | less
+
+    # Get full changelog if we were unable to access github API
+    if [[ -z "${BETWEEN_VERSIONS}" ]] || [[ "$(github_rate_limit)" < "$(echo BETWEEN_VERSIONS | wc -w)" ]]; then
+        echo -e "Showing full changelog up to ${VERSION}"
+        read -rp "Press enter to see changelog"
+        get_full_changelog "${VERSION}" | less
+    else
+        read -rp "Press enter to see changelog"
+        for version in ${BETWEEN_VERSIONS}; do
+            # Print changelog for every version
+            get_changelog "${version}"
+        done | less
+    fi
 fi
 
 readonly LINK="https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${VERSION}/otelcol-sumo-${VERSION}-${OS_TYPE}_${ARCH_TYPE}"
