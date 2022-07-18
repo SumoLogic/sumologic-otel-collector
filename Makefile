@@ -92,6 +92,7 @@ update-ot-core: install-gsed
 	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" otelcolbuilder/Makefile
 	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" README.md
 	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" docs/Configuration.md
+	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" docs/Configuration.md
 	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" docs/KnownIssues.md
 	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" pkg/receiver/telegrafreceiver/README.md
 	@find . -type f -name "go.mod" -exec $(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" {} \;
