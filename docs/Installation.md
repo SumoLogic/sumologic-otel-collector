@@ -5,11 +5,13 @@ the container images stored in AWS Public ECR under the following repository:
 [public.ecr.aws/sumologic/sumologic-otel-collector](https://gallery.ecr.aws/sumologic/sumologic-otel-collector).
 
 - [Standalone](#standalone)
-  - [Linux on amd64 (x86-64)](#linux-on-amd64-x86-64)
-  - [Linux on arm64](#linux-on-arm64)
-  - [MacOS on amd64 (x86-64)](#macos-on-amd64-x86-64)
-  - [MacOS on arm64 (Apple M1)](#macos-on-arm64-apple-m1-x86-64)
-  - [Upgrading standalone installation](#upgrading-standalone-installation)
+  - [Installation using script](#installation-using-script)
+  - [Manual installation](#manual-installation)
+    - [Linux on amd64 (x86-64)](#linux-on-amd64-x86-64)
+    - [Linux on arm64](#linux-on-arm64)
+    - [MacOS on amd64 (x86-64)](#macos-on-amd64-x86-64)
+    - [MacOS on arm64 (Apple M1)](#macos-on-arm64-apple-m1-x86-64)
+    - [Upgrading standalone installation](#upgrading-standalone-installation)
   - [Verify the installation](#verify-the-installation)
 - [Container image](#container-image)
 - [Systemd service](#systemd-service)
@@ -23,14 +25,44 @@ Sumo Logic Distribution for OpenTelemetry Collector is a static Go binary.
 To run it as a standalone process you only need to run the binary file downloaded from
 [Github releases][github_releases] with an appropriate configuration.
 
+### Installation using script
+
+1. Run installation script:
+
+    ```bash
+    bash <(curl https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v0.55.0-sumo-0/scripts/install.sh)
+    ```
+
+    It is going to perform install or upgrade operation by placing the latest version in `/usr/local/bin`,
+
+1. [Verify the installation](#verify-the-installation)
+
+1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
+
+   > **IMPORTANT NOTE**:
+   > It is recommended to limit access to the configuration file as it contains sensitive information.
+   > You can change access permissions to the configuration file using:
+   >
+   > ```bash
+   > chmod 640 config.yaml
+   > ```
+
+1. Run Sumo Logic OT Distro:
+
+   ```bash
+   otelcol-sumo --config config.yaml
+   ```
+
+### Manual installation
+
 Follow the steps for your platform below.
 
-### Linux on amd64 (x86-64)
+#### Linux on amd64 (x86-64)
 
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.53.0-sumo-0/otelcol-sumo-0.53.0-sumo-0-linux_amd64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.55.0-sumo-0/otelcol-sumo-0.55.0-sumo-0-linux_amd64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -58,12 +90,12 @@ Follow the steps for your platform below.
    otelcol-sumo --config config.yaml
    ```
 
-### Linux on arm64
+#### Linux on arm64
 
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.53.0-sumo-0/otelcol-sumo-0.53.0-sumo-0-linux_arm64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.55.0-sumo-0/otelcol-sumo-0.55.0-sumo-0-linux_arm64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -91,12 +123,12 @@ Follow the steps for your platform below.
    otelcol-sumo --config config.yaml
    ```
 
-### MacOS on amd64 (x86-64)
+#### MacOS on amd64 (x86-64)
 
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.53.0-sumo-0/otelcol-sumo-0.53.0-sumo-0-darwin_amd64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.55.0-sumo-0/otelcol-sumo-0.55.0-sumo-0-darwin_amd64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -124,12 +156,12 @@ Follow the steps for your platform below.
    otelcol-sumo --config config.yaml
    ```
 
-### MacOS on arm64 (Apple M1) (x86-64)
+#### MacOS on arm64 (Apple M1) (x86-64)
 
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.53.0-sumo-0/otelcol-sumo-0.53.0-sumo-0-darwin_arm64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.55.0-sumo-0/otelcol-sumo-0.55.0-sumo-0-darwin_arm64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -157,7 +189,7 @@ Follow the steps for your platform below.
    otelcol-sumo --config config.yaml
    ```
 
-### Upgrading standalone installation
+#### Upgrading standalone installation
 
 To upgrade, simply perform the above installation steps again,
 overwriting the `otelcol-sumo` binary with newer version.
@@ -246,7 +278,7 @@ repository.
 1. Set the release version variable:
 
    ```bash
-   export RELEASE_VERSION=0.53.0-sumo-0
+   export RELEASE_VERSION=0.55.0-sumo-0
    ```
 
 1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
