@@ -12,7 +12,7 @@ function github_rate_limit() {
 function check_dependencies() {
     local error
     error=0
-    for cmd in echo sudo sed curl head less grep sort tac mv chmod; do
+    for cmd in echo sudo sed curl head grep sort tac mv chmod; do
         if ! command -v "${cmd}" &> /dev/null; then
             echo "Command '${cmd}' not found. Please install it."
             error=1
@@ -69,7 +69,9 @@ get_versions_from() {
     local line
     readonly line="$(( $(echo "${versions}" | sed 's/ /\n/g' | grep -n "${from}$" | sed 's/:.*//g') - 1 ))"
 
-    echo "${versions}" | sed 's/ /\n/g' | head -n "${line}" | sort
+    if [[ "${line}" > "0" ]]; then
+        echo "${versions}" | sed 's/ /\n/g' | head -n "${line}" | sort
+    fi
     return 0
 }
 
@@ -122,7 +124,7 @@ function get_installed_version() {
 # Ask to continue and abort if not
 function ask_to_continue() {
     local choice
-    read -rp "Continue (y/n)?" choice
+    read -rp "Continue (y/N)?" choice
     case "${choice}" in
     y|Y ) ;;
     n|N | * )
@@ -217,12 +219,12 @@ elif [[ -n "${INSTALLED_VERSION}" ]]; then
     if [[ -z "${BETWEEN_VERSIONS}" ]] || [[ "$(github_rate_limit)" < "$(echo BETWEEN_VERSIONS | wc -w)" ]]; then
         echo -e "Showing full changelog up to ${VERSION}"
         read -rp "Press enter to see changelog"
-        get_full_changelog "${VERSION}" | less
+        get_full_changelog "${VERSION}"
     else
         read -rp "Press enter to see changelog"
         for version in ${BETWEEN_VERSIONS}; do
             # Print changelog for every version
-            get_changelog "${version}" | less
+            get_changelog "${version}"
         done
     fi
 fi
