@@ -30,7 +30,7 @@ To run it as a standalone process you only need to run the binary file downloade
 1. Run installation script:
 
     ```bash
-    bash <(curl https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v0.55.0-sumo-0/scripts/install.sh)
+    bash <(curl -s https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh)
     ```
 
     It is going to perform install or upgrade operation by placing the latest version in `/usr/local/bin`,
