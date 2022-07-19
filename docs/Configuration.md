@@ -51,7 +51,7 @@ exporters:
 
 extensions:
   sumologic:
-    install_token: <token>
+    install_token: ${SUMOLOGIC_INSTALL_TOKEN}
 
 receivers:
   ... # fill in receiver configurations here
@@ -106,7 +106,7 @@ extensions:
   file_storage:
     directory: .
   sumologic:
-    install_token: <token>
+    install_token: ${SUMOLOGIC_INSTALL_TOKEN}
 
 receivers:
   filelog:
@@ -148,7 +148,7 @@ exporters:
 
 extensions:
   sumologic:
-    install_token: <token>
+    install_token: ${SUMOLOGIC_INSTALL_TOKEN}
 
 receivers:
   telegraf:
@@ -179,7 +179,7 @@ exporters:
 
 extensions:
   sumologic:
-    install_token: <token>
+    install_token: ${SUMOLOGIC_INSTALL_TOKEN}
 
 receivers:
   otlp:
@@ -208,7 +208,7 @@ extensions:
   file_storage:
     directory: .
   sumologic:
-    install_token: <token>
+    install_token: ${SUMOLOGIC_INSTALL_TOKEN}
 
 receivers:
   filelog:
@@ -260,8 +260,8 @@ the [Host Metrics Receiver][hostmetricsreceiver] and send them to Sumo Logic:
 ```yaml
 extensions:
   sumologic:
-    install_token: <token>
-    collector_name: <my_collector_name>
+    install_token: ${SUMOLOGIC_INSTALL_TOKEN}
+    collector_name: ${MY_COLLECTOR_NAME}
 
 receivers:
   hostmetrics:
@@ -303,12 +303,12 @@ Example:
 ```yaml
 extensions:
   sumologic/custom_auth1:
-    install_token: <token1>
-    collector_name: <my_collector_name1>
+    install_token: ${SUMOLOGIC_INSTALL_TOKEN_1}
+    collector_name: <COLLECTOR_NAME_1>
 
   sumologic/custom_auth2:
-    install_token: <token2>
-    collector_name: <my_collector_name2>
+    install_token: ${SUMOLOGIC_INSTALL_TOKEN_2}
+    collector_name: <COLLECTOR_NAME_2>
 
 receivers:
   hostmetrics:
@@ -360,7 +360,7 @@ extensions:
   file_storage:
     directory: .
   sumologic:
-    install_token: <token>
+    install_token: ${SUMOLOGIC_INSTALL_TOKEN}
 
 receivers:
   hostmetrics:

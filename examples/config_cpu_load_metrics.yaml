@@ -1,7 +1,7 @@
 extensions:
   sumologic:
-    install_token: <token>
-    collector_name: <my_collector_name>
+    install_token: ${SUMOLOGIC_INSTALL_TOKEN}
+    collector_name: ${SUMOLOGIC_COLLECTOR_NAME}
 
 receivers:
   hostmetrics:
