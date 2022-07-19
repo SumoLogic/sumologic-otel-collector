@@ -30,7 +30,7 @@ function get_latest_version() {
 
     # get latest version directly from website if there is no versions from api
     if [[ -z "${versions}" ]]; then
-        echo "$(curl -s https://github.com/SumoLogic/sumologic-otel-collector/releases | grep -oE '/SumoLogic/sumologic-otel-collector/releases/tag/(.*)"' | head -n 1 | sed 's%/SumoLogic/sumologic-otel-collector/releases/tag/v\([^"]*\)".*%\1%g')"
+        curl -s https://github.com/SumoLogic/sumologic-otel-collector/releases | grep -oE '/SumoLogic/sumologic-otel-collector/releases/tag/(.*)"' | head -n 1 | sed 's%/SumoLogic/sumologic-otel-collector/releases/tag/v\([^"]*\)".*%\1%g'
     else
         # sed 's/ /\n/g' converts spaces to new lines
         echo "${versions}" | sed 's/ /\n/g' | head -n 1
@@ -194,12 +194,10 @@ VERSIONS="$(get_versions)"
 
 # Use user's version if set, otherwise get latest version from API (or website)
 set +u
-VERSION="${VERSION}"
-set -u
-
 if [[ -z "${VERSION}" ]]; then
     VERSION="$(get_latest_version "${VERSIONS}")"
 fi
+set -u
 readonly VERSIONS VERSION INSTALLED_VERSION
 
 echo -e "Version to install:\t${VERSION}"
