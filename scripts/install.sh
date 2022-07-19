@@ -70,6 +70,7 @@ get_versions_from() {
     readonly line="$(( $(echo "${versions}" | sed 's/ /\n/g' | grep -n "${from}$" | sed 's/:.*//g') - 1 ))"
 
     echo "${versions}" | sed 's/ /\n/g' | head -n "${line}" | sort
+    return 0
 }
 
 # Get OS type (linux or darwin)
@@ -137,18 +138,19 @@ function get_changelog() {
     local version
     readonly version="${1}"
 
+    # 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g' replaces [$1][*] with $1
+    # 's/\[\([^\[]*\)\]([^\()]*)/\1/g' replaces [$1](*) with $1
     local notes
-    notes="$(echo -e "$(curl -s "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/releases/tags/v${version}" | grep -o "body.*"  | sed 's/body": "//;s/"$//')")"
+    notes="$(echo -e "$(curl -s "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/releases/tags/v${version}" | grep -o "body.*"  | sed 's/body": "//;s/"$//' | sed 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g;s/\[\([^\[]*\)\]([^\()]*)/\1/g')")"
     readonly notes
 
     local changelog
-    # 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g' replaces [$1][*] with $1
-    # 's/\[\([^\[]*\)\]([^\()]*)/\1/g' replaces [$1](*) with $1
     # sed '$ d' removes last line
-    changelog="$(echo "${notes}" | sed -e "/## v${version}/,/###/!d" | sed '$ d' | sed 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g;s/\[\([^\[]*\)\]([^\()]*)/\1/g')"
+    changelog="$(echo "${notes}" | sed -e "/## v${version}/,/###/!d" | sed '$ d')"
     changelog="${changelog}\n### Release address\n\nhttps://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v${version}\n"
     # 's/\[#.*//' remove everything starting from `[#`
     # 's/\[\([^\[]*\)\]/\1/g' replaces [$1] with $1
+    changelog="${changelog}\n$(echo "${notes}" | sed -e '/### Changelog/,/###/!d' | sed '$ d' | sed 's/\[#.*//;s/\[\([^\[]*\)\]/\1/g')"
     changelog="${changelog}\n$(echo "${notes}" | sed -e '/### Breaking changes/,/###/!d' | sed '$ d' | sed 's/\[#.*//;s/\[\([^\[]*\)\]/\1/g')"
     echo -e "${changelog}"
 }
@@ -204,7 +206,7 @@ echo -e "Version to install:\t${VERSION}"
 
 # Check if otelcol is already in newest version
 if [[ "${INSTALLED_VERSION}" == "${VERSION}" ]]; then
-    echo "OpenTelemetry collector is already in newest (${VERSION}) version"
+    echo -e "OpenTelemetry collector is already in newest (${VERSION}) version"
     exit
 elif [[ -n "${INSTALLED_VERSION}" ]]; then
     # Take versions from installed up to the newest
@@ -220,8 +222,8 @@ elif [[ -n "${INSTALLED_VERSION}" ]]; then
         read -rp "Press enter to see changelog"
         for version in ${BETWEEN_VERSIONS}; do
             # Print changelog for every version
-            get_changelog "${version}"
-        done | less
+            get_changelog "${version}" | less
+        done
     fi
 fi
 
