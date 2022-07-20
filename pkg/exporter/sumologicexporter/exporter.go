@@ -41,6 +41,13 @@ const (
 	tracesDataUrl  = "/api/v1/collector/traces"
 )
 
+const deprecationBanner = `
+***********************************************************************************************************************************************************
+***    Translating attributes is deprecated and is going to be dropped soon. Please see the migration document:                                  	    ***
+***    https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Upgrading.md#sumologic-exporter-drop-support-for-translating-attributes.    ***
+***********************************************************************************************************************************************************
+`
+
 type sumologicexporter struct {
 	sources sourceFormats
 	config  *Config
@@ -64,6 +71,8 @@ type sumologicexporter struct {
 
 func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) (*sumologicexporter, error) {
 	if cfg.TranslateAttributes {
+		createSettings.Logger.Warn(deprecationBanner)
+
 		cfg.SourceCategory = translateConfigValue(cfg.SourceCategory)
 		cfg.SourceHost = translateConfigValue(cfg.SourceHost)
 		cfg.SourceName = translateConfigValue(cfg.SourceName)
