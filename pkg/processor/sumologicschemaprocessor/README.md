@@ -23,6 +23,13 @@ processors:
     # see "Attribute translation" documentation chapter from this document.
     # default = true
     translate_attributes: {true,false}
+
+    # Specifies whether telegraf metric names should be translated to match
+    # Sumo Logic conventions expected in Sumo Logic host related apps (for example
+    # `procstat_num_threads` => `Proc_Threads` or `cpu_usage_irq` => `CPU_Irq`).
+    # See `translate_telegraf_metrics_processor.go` for full list of translations.
+    # default = true
+    translate_telegraf_attributes: {true, false}
 ```
 
 ## Features
