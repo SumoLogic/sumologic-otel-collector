@@ -55,6 +55,7 @@ type Config struct {
 	// The format of traces you will be sending, currently only otlp format is supported
 	TraceFormat TraceFormatType `mapstructure:"trace_format"`
 
+	// DEPRECATED
 	// Specifies whether attributes should be translated
 	// from OpenTelemetry standard to Sumo conventions (for example `cloud.account.id` => `accountId`
 	// `k8s.pod.name` => `pod` etc).

@@ -1,7 +1,9 @@
 # Upgrading
 
+- [Unreleased](#unreleased)
+  - [`sumologic` exporter: moved translating attributes to `sumologicschema` processor](#sumologic-exporter-drop-support-for-translating-attributes)
 - [Upgrading to v0.55.0-sumo-0](#upgrading-to-v0550-sumo-0)
-  - [`filter` processor: Drop support for `expr` language](#filter-processor-drop-support-for-expr-language)
+  - [`filter` processor: drop support for `expr` language](#filter-processor-drop-support-for-expr-language)
 - [Upgrading to v0.52.0-sumo-0](#upgrading-to-v0520-sumo-0)
   - [`sumologic` exporter: Removed `carbon2` and `graphite` metric formats](#sumologic-exporter-removed-carbon2-and-graphite-metric-formats)
 - [Upgrading to v0.51.0-sumo-0](#upgrading-to-v0510-sumo-0)
@@ -14,6 +16,49 @@
   - [Sumo Logic exporter metadata handling](#sumo-logic-exporter-metadata-handling)
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
+
+## Unreleased
+
+### `sumologic` exporter: drop support for translating attributes
+
+Translating the attributes is harmless, but the exporters should not modify the data.
+This functionality has been moved to the [sumologicschema processor][sumologicschema_processor].
+Due to that, this functionality is now deprecated in the exporter and will be removed soon.
+
+However, if the attributes are not translated, some Sumo apps might not work correctly.
+To migrate, add a `sumologicschema` processor to your pipelines that use the `sumologic` exporter and disable that functionality in the exporter:
+
+```yaml
+processors:
+  # ...
+  sumologic_schema:
+    translate_attributes: true
+
+exporters:
+  sumologic:
+    # ...
+    translate_attributes: false
+
+# ...
+
+service:
+  pipelines:
+    logs:
+      processors:
+        # - ...
+        - sumologic_schema
+```
+
+**Note**: by default, the `sumologicschema` processor also adds `cloud.namespace` attribute to the data.
+If you don't want this to happen, you should explicitly disable this functionality:
+
+```yaml
+processors:
+  sumologic_schema:
+    add_cloud_namespace: false
+```
+
+[sumologicschema_processor]: ../pkg/processor/sumologicschemaprocessor/
 
 ## Upgrading to v0.55.0-sumo-0
 

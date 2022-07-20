@@ -20,15 +20,15 @@ exporters:
     # default = 1_048_576 (1MB)
     max_request_body_size: <max_request_body_size>
 
-    # format to use when sending logs to Sumo, default = otlp,
+    # format to use when sending logs to Sumo Logic, default = otlp,
     # NOTE: only `otlp` is supported when used with sumologicextension
     log_format: {json, text, otlp}
 
-    # format to use when sending metrics to Sumo, default = otlp,
+    # format to use when sending metrics to Sumo Logic, default = otlp,
     # NOTE: only `otlp` is supported when used with sumologicextension
     metric_format: {otlp, prometheus}
 
-    # format to use when sending traces to Sumo,
+    # format to use when sending traces to Sumo Logic,
     # currently only otlp is supported
     trace_format: {otlp}
 
@@ -81,14 +81,15 @@ exporters:
       # default = false
       flatten_body: {true, false}
 
+    # DEPRECATED
     # translate_attributes specifies whether attributes should be translated
-    # from OpenTelemetry to Sumo conventions;
+    # from OpenTelemetry to Sumo Logic conventions;
     # see "Attribute translation" documentation chapter from this document,
     # default = true
     translate_attributes: {true, false}
 
     # Specifies whether telegraf metric names should be translated to match
-    # Sumo conventions expected in Sumo host related apps (for example
+    # Sumo Logic conventions expected in Sumo Logic host related apps (for example
     # `procstat_num_threads` => `Proc_Threads` or `cpu_usage_irq` => `CPU_Irq`).
     # See `translate_metrics.go` for full list of translations.
     # default = true
@@ -141,42 +142,45 @@ exporters:
 
 ## Attribute translation
 
-Attribute translation changes some of the attribute keys from OpenTelemetry convention to Sumo convention.
+**Note**: This functionality has been moved to the [sumologicschemaprocessor](../../processor/sumologicschemaprocessor/) and is now deprecated.
+Please check the [upgrade guide](../../../docs/Upgrading.md#sumologic-exporter-drop-support-for-translating-attributes) for migrating instructions.
+
+Attribute translation changes some of the attribute keys from OpenTelemetry convention to Sumo Logic convention.
 For example, OpenTelemetry convention for the attribute containing Kubernetes pod name is `k8s.pod.name`,
-but Sumo expects it to be in attribute named `pod`.
+but Sumo Logic expects it to be in attribute named `pod`.
 
 If attribute with target name eg. `pod` already exists,
 translation is not being done for corresponding attribute (`k8s.pod.name` in this example).
 
 This feature is turned on by default.
 To turn it off, set the `translate_attributes` configuration option to `false`.
-Note that this may cause some of Sumo apps, built-in dashboards to not work correctly.
+Note that this may cause some of Sumo Logic apps, built-in dashboards to not work correctly.
 
 Below is a list of all attribute keys that are being translated.
 
-| OTC key name              | Sumo key name      |
-|---------------------------|--------------------|
-| `cloud.account.id`        | `AccountId`        |
-| `cloud.availability_zone` | `AvailabilityZone` |
-| `cloud.platform`          | `aws_service`      |
-| `cloud.region`            | `Region`           |
-| `host.id`                 | `InstanceId`       |
-| `host.name`               | `host`             |
-| `host.type`               | `InstanceType`     |
-| `k8s.cluster.name`        | `Cluster`          |
-| `k8s.container.name`      | `container`        |
-| `k8s.daemonset.name`      | `daemonset`        |
-| `k8s.deployment.name`     | `deployment`       |
-| `k8s.namespace.name`      | `namespace`        |
-| `k8s.node.name`           | `node`             |
-| `k8s.service.name`        | `service`          |
-| `k8s.pod.hostname`        | `host`             |
-| `k8s.pod.name`            | `pod`              |
-| `k8s.pod.uid`             | `pod_id`           |
-| `k8s.replicaset.name`     | `replicaset`       |
-| `k8s.statefulset.name`    | `statefulset`      |
-| `service.name`            | `service`          |
-| `log.file.path_resolved`  | `_sourceName`      |
+| OTC key name              | Sumo Logic key name |
+|---------------------------|---------------------|
+| `cloud.account.id`        | `AccountId`         |
+| `cloud.availability_zone` | `AvailabilityZone`  |
+| `cloud.platform`          | `aws_service`       |
+| `cloud.region`            | `Region`            |
+| `host.id`                 | `InstanceId`        |
+| `host.name`               | `host`              |
+| `host.type`               | `InstanceType`      |
+| `k8s.cluster.name`        | `Cluster`           |
+| `k8s.container.name`      | `container`         |
+| `k8s.daemonset.name`      | `daemonset`         |
+| `k8s.deployment.name`     | `deployment`        |
+| `k8s.namespace.name`      | `namespace`         |
+| `k8s.node.name`           | `node`              |
+| `k8s.service.name`        | `service`           |
+| `k8s.pod.hostname`        | `host`              |
+| `k8s.pod.name`            | `pod`               |
+| `k8s.pod.uid`             | `pod_id`            |
+| `k8s.replicaset.name`     | `replicaset`        |
+| `k8s.statefulset.name`    | `statefulset`       |
+| `service.name`            | `service`           |
+| `log.file.path_resolved`  | `_sourceName`       |
 
 ## Source Templates
 
