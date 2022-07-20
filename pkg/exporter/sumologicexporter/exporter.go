@@ -41,13 +41,6 @@ const (
 	tracesDataUrl  = "/api/v1/collector/traces"
 )
 
-const translationDeprecationBanner = `
-***********************************************************************************************************************************************************
-***    Translating attributes is deprecated and is going to be dropped soon. Please see the migration document:                                         ***
-***    https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Upgrading.md#sumologic-exporter-drop-support-for-translating-attributes.    ***
-***********************************************************************************************************************************************************
-`
-
 const sourceTemplatesDeprecationBanner = `
 ***********************************************************************************************************************************************************
 ***    Adding source headers is deprecated and is going to be dropped soon. Please see the migration document:                                          ***
@@ -77,14 +70,6 @@ type sumologicexporter struct {
 }
 
 func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) (*sumologicexporter, error) {
-	if cfg.TranslateAttributes {
-		createSettings.Logger.Warn(translationDeprecationBanner)
-
-		cfg.SourceCategory = translateConfigValue(cfg.SourceCategory)
-		cfg.SourceHost = translateConfigValue(cfg.SourceHost)
-		cfg.SourceName = translateConfigValue(cfg.SourceName)
-	}
-
 	if cfg.SourceCategory != "" || cfg.SourceHost != "" || cfg.SourceName != "" {
 		createSettings.Logger.Warn(sourceTemplatesDeprecationBanner)
 	}
@@ -243,9 +228,6 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld plog.Logs) err
 
 		se.dropRoutingAttribute(rl.Resource().Attributes())
 		currentMetadata := newFields(rl.Resource().Attributes())
-		if se.config.TranslateAttributes {
-			currentMetadata.translateAttributes()
-		}
 
 		if droppedRecords, err := sdr.sendNonOTLPLogs(ctx, rl, currentMetadata); err != nil {
 			dropped = append(dropped, droppedResourceRecords{
@@ -311,13 +293,6 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pmetric.Met
 		rm := rms.At(i)
 
 		se.dropRoutingAttribute(rm.Resource().Attributes())
-
-		// TODO: Move these modifications to the Sumo schema processor
-		// we shouldn't modify data in an exporter, but these modifications are idempotent and therefore harmless
-		if se.config.TranslateAttributes {
-			translateAttributes(rm.Resource().Attributes()).
-				CopyTo(rm.Resource().Attributes())
-		}
 	}
 
 	var droppedMetrics pmetric.Metrics

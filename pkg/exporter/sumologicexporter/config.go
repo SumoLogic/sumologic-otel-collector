@@ -55,14 +55,9 @@ type Config struct {
 	// The format of traces you will be sending, currently only otlp format is supported
 	TraceFormat TraceFormatType `mapstructure:"trace_format"`
 
-	// DEPRECATED
-	// Specifies whether attributes should be translated
-	// from OpenTelemetry standard to Sumo conventions (for example `cloud.account.id` => `accountId`
-	// `k8s.pod.name` => `pod` etc).
-	TranslateAttributes bool `mapstructure:"translate_attributes"`
-
 	// DEPRECATED: The below attributes only exist so we can print a nicer error
 	// message about not supporting them anymore.
+	TranslateAttributes      bool     `mapstructure:"translate_attributes"`
 	TranslateTelegrafMetrics bool     `mapstructure:"translate_telegraf_attributes"`
 	MetadataAttributes       []string `mapstructure:"metadata_attributes"`
 
@@ -139,6 +134,12 @@ Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-coll
 
 	if cfg.TranslateTelegrafMetrics {
 		return fmt.Errorf(`*Deprecation warning*: translate_telegraf_attributes is not supported anymore.
+		Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.59.0-sumo-0`,
+		)
+	}
+
+	if cfg.TranslateAttributes {
+		return fmt.Errorf(`*Deprecation warning*: translate_attributes is not supported anymore.
 Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.59.0-sumo-0`,
 		)
 	}
@@ -266,8 +267,6 @@ const (
 	DefaultSourceHost string = ""
 	// DefaultClient defines default Client
 	DefaultClient string = "otelcol"
-	// DefaultTranslateAttributes defines default TranslateAttributes
-	DefaultTranslateAttributes bool = true
 	// DefaultClearTimestamp defines default ClearLogsTimestamp value
 	DefaultClearLogsTimestamp bool = true
 	// DefaultLogKey defines default LogKey value

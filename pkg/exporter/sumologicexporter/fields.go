@@ -97,8 +97,3 @@ func (f fields) sanitizeField(fld []byte) {
 		}
 	}
 }
-
-// translateAttributes translates fields to sumo format
-func (f *fields) translateAttributes() {
-	f.orig = translateAttributes(f.orig)
-}
