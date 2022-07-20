@@ -40,25 +40,33 @@ func newCloudNamespaceProcessor(addCloudNamespace bool) (*cloudNamespaceProcesso
 	}, nil
 }
 
-func (*cloudNamespaceProcessor) processLogs(logs plog.Logs) (plog.Logs, error) {
+func (*cloudNamespaceProcessor) processLogs(logs plog.Logs) error {
 	for i := 0; i < logs.ResourceLogs().Len(); i++ {
 		addCloudNamespaceAttribute(logs.ResourceLogs().At(i).Resource().Attributes())
 	}
-	return logs, nil
+	return nil
 }
 
-func (*cloudNamespaceProcessor) processMetrics(metrics pmetric.Metrics) (pmetric.Metrics, error) {
+func (*cloudNamespaceProcessor) processMetrics(metrics pmetric.Metrics) error {
 	for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
 		addCloudNamespaceAttribute(metrics.ResourceMetrics().At(i).Resource().Attributes())
 	}
-	return metrics, nil
+	return nil
 }
 
-func (*cloudNamespaceProcessor) processTraces(traces ptrace.Traces) (ptrace.Traces, error) {
+func (*cloudNamespaceProcessor) processTraces(traces ptrace.Traces) error {
 	for i := 0; i < traces.ResourceSpans().Len(); i++ {
 		addCloudNamespaceAttribute(traces.ResourceSpans().At(i).Resource().Attributes())
 	}
-	return traces, nil
+	return nil
+}
+
+func (proc *cloudNamespaceProcessor) isEnabled() bool {
+	return proc.addCloudNamespace
+}
+
+func (*cloudNamespaceProcessor) ConfigPropertyName() string {
+	return "add_cloud_namespace"
 }
 
 // addCloudNamespaceAttribute adds the `cloud.namespace` attribute

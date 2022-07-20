@@ -57,29 +57,37 @@ func newTranslateAttributesProcessor(shouldTranslate bool) (*translateAttributes
 	}, nil
 }
 
-func (proc *translateAttributesProcessor) processLogs(logs plog.Logs) (plog.Logs, error) {
+func (proc *translateAttributesProcessor) processLogs(logs plog.Logs) error {
 	if proc.shouldTranslate {
 		for i := 0; i < logs.ResourceLogs().Len(); i++ {
 			translateAttributes(logs.ResourceLogs().At(i).Resource().Attributes())
 		}
 	}
 
-	return logs, nil
+	return nil
 }
 
-func (proc *translateAttributesProcessor) processMetrics(metrics pmetric.Metrics) (pmetric.Metrics, error) {
+func (proc *translateAttributesProcessor) processMetrics(metrics pmetric.Metrics) error {
 	if proc.shouldTranslate {
 		for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
 			translateAttributes(metrics.ResourceMetrics().At(i).Resource().Attributes())
 		}
 	}
 
-	return metrics, nil
+	return nil
 }
 
-func (proc *translateAttributesProcessor) processTraces(traces ptrace.Traces) (ptrace.Traces, error) {
+func (proc *translateAttributesProcessor) processTraces(traces ptrace.Traces) error {
 	// No-op. Traces should not be translated.
-	return traces, nil
+	return nil
+}
+
+func (proc *translateAttributesProcessor) isEnabled() bool {
+	return proc.shouldTranslate
+}
+
+func (*translateAttributesProcessor) ConfigPropertyName() string {
+	return "translate_attributes"
 }
 
 func translateAttributes(attributes pcommon.Map) {

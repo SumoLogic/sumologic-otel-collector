@@ -16,6 +16,7 @@ package sumologicschemaprocessor
 
 import (
 	"context"
+	"fmt"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -24,10 +25,17 @@ import (
 	"go.uber.org/zap"
 )
 
+type sumologicSchemaSubprocessor interface {
+	processLogs(plog.Logs) error
+	processMetrics(pmetric.Metrics) error
+	processTraces(ptrace.Traces) error
+	isEnabled() bool
+	ConfigPropertyName() string
+}
+
 type sumologicSchemaProcessor struct {
-	logger                       *zap.Logger
-	cloudNamespaceProcessor      *cloudNamespaceProcessor
-	translateAttributesProcessor *translateAttributesProcessor
+	logger        *zap.Logger
+	subprocessors []sumologicSchemaSubprocessor
 }
 
 func newSumologicSchemaProcessor(set component.ProcessorCreateSettings, config *Config) (*sumologicSchemaProcessor, error) {
@@ -41,19 +49,22 @@ func newSumologicSchemaProcessor(set component.ProcessorCreateSettings, config *
 		return nil, err
 	}
 
+	processors := []sumologicSchemaSubprocessor{cloudNamespaceProcessor, translateAttributesProcessor}
+
 	processor := &sumologicSchemaProcessor{
-		logger:                       set.Logger,
-		cloudNamespaceProcessor:      cloudNamespaceProcessor,
-		translateAttributesProcessor: translateAttributesProcessor,
+		logger:        set.Logger,
+		subprocessors: processors,
 	}
 
 	return processor, nil
 }
 
 func (processor *sumologicSchemaProcessor) start(_ context.Context, host component.Host) error {
+	procs := processor.subprocessors
 	processor.logger.Info(
 		"Processor sumologic_schema has started.",
-		zap.Bool("add_cloud_namespace", processor.cloudNamespaceProcessor.addCloudNamespace),
+		zap.Bool(procs[0].ConfigPropertyName(), procs[0].isEnabled()),
+		zap.Bool(procs[1].ConfigPropertyName(), procs[1].isEnabled()),
 	)
 	return nil
 }
@@ -64,42 +75,33 @@ func (processor *sumologicSchemaProcessor) shutdown(_ context.Context) error {
 }
 
 func (processor *sumologicSchemaProcessor) processLogs(_ context.Context, logs plog.Logs) (plog.Logs, error) {
-	logs, err := processor.cloudNamespaceProcessor.processLogs(logs)
-	if err != nil {
-		return logs, err
-	}
-
-	logs, err = processor.translateAttributesProcessor.processLogs(logs)
-	if err != nil {
-		return logs, err
+	for i := 0; i < len(processor.subprocessors); i++ {
+		subprocessor := processor.subprocessors[i]
+		if err := subprocessor.processLogs(logs); err != nil {
+			return logs, fmt.Errorf("failed to process logs for property %s: %v", subprocessor.ConfigPropertyName(), err)
+		}
 	}
 
 	return logs, nil
 }
 
 func (processor *sumologicSchemaProcessor) processMetrics(ctx context.Context, metrics pmetric.Metrics) (pmetric.Metrics, error) {
-	metrics, err := processor.cloudNamespaceProcessor.processMetrics(metrics)
-	if err != nil {
-		return metrics, err
-	}
-
-	metrics, err = processor.translateAttributesProcessor.processMetrics(metrics)
-	if err != nil {
-		return metrics, err
+	for i := 0; i < len(processor.subprocessors); i++ {
+		subprocessor := processor.subprocessors[i]
+		if err := subprocessor.processMetrics(metrics); err != nil {
+			return metrics, fmt.Errorf("failed to process metrics for property %s: %v", subprocessor.ConfigPropertyName(), err)
+		}
 	}
 
 	return metrics, nil
 }
 
 func (processor *sumologicSchemaProcessor) processTraces(ctx context.Context, traces ptrace.Traces) (ptrace.Traces, error) {
-	traces, err := processor.cloudNamespaceProcessor.processTraces(traces)
-	if err != nil {
-		return traces, err
-	}
-
-	traces, err = processor.translateAttributesProcessor.processTraces(traces)
-	if err != nil {
-		return traces, err
+	for i := 0; i < len(processor.subprocessors); i++ {
+		subprocessor := processor.subprocessors[i]
+		if err := subprocessor.processTraces(traces); err != nil {
+			return traces, fmt.Errorf("failed to process traces for property %s: %v", subprocessor.ConfigPropertyName(), err)
+		}
 	}
 
 	return traces, nil
