@@ -53,8 +53,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 			AddTimestamp: true,
 			TimestampKey: "timestamp",
 		},
-		TranslateAttributes: true,
-		TraceFormat:         "otlp",
+		TraceFormat: "otlp",
 
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout: 5 * time.Second,

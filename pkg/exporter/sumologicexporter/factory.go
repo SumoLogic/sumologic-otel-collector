@@ -45,18 +45,16 @@ func createDefaultConfig() config.Exporter {
 	qs.Enabled = false
 
 	return &Config{
-		ExporterSettings: config.NewExporterSettings(config.NewComponentID(typeStr)),
-
-		TranslateAttributes: DefaultTranslateAttributes,
-		CompressEncoding:    DefaultCompressEncoding,
-		MaxRequestBodySize:  DefaultMaxRequestBodySize,
-		LogFormat:           DefaultLogFormat,
-		MetricFormat:        DefaultMetricFormat,
-		SourceCategory:      DefaultSourceCategory,
-		SourceName:          DefaultSourceName,
-		SourceHost:          DefaultSourceHost,
-		Client:              DefaultClient,
-		ClearLogsTimestamp:  DefaultClearLogsTimestamp,
+		ExporterSettings:   config.NewExporterSettings(config.NewComponentID(typeStr)),
+		CompressEncoding:   DefaultCompressEncoding,
+		MaxRequestBodySize: DefaultMaxRequestBodySize,
+		LogFormat:          DefaultLogFormat,
+		MetricFormat:       DefaultMetricFormat,
+		SourceCategory:     DefaultSourceCategory,
+		SourceName:         DefaultSourceName,
+		SourceHost:         DefaultSourceHost,
+		Client:             DefaultClient,
+		ClearLogsTimestamp: DefaultClearLogsTimestamp,
 		JSONLogs: JSONLogs{
 			LogKey:       DefaultLogKey,
 			AddTimestamp: DefaultAddTimestamp,
