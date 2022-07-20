@@ -478,11 +478,6 @@ func (s *sender) sendOTLPLogs(ctx context.Context, ld plog.Logs) error {
 	for i := 0; i < rls.Len(); i++ {
 		rl := rls.At(i)
 
-		if s.config.TranslateAttributes {
-			translateAttributes(rl.Resource().Attributes()).
-				CopyTo(rl.Resource().Attributes())
-		}
-
 		// Clear timestamps if required
 		if s.config.ClearLogsTimestamp {
 			slgs := rl.ScopeLogs()
