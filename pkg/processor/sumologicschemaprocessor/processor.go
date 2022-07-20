@@ -49,7 +49,16 @@ func newSumologicSchemaProcessor(set component.ProcessorCreateSettings, config *
 		return nil, err
 	}
 
-	processors := []sumologicSchemaSubprocessor{cloudNamespaceProcessor, translateAttributesProcessor}
+	translateTelegrafMetricsProcessor, err := newTranslateTelegrafMetricsProcessor(config.TranslateTelegrafAttributes)
+	if err != nil {
+		return nil, err
+	}
+
+	processors := []sumologicSchemaSubprocessor{
+		cloudNamespaceProcessor,
+		translateAttributesProcessor,
+		translateTelegrafMetricsProcessor,
+	}
 
 	processor := &sumologicSchemaProcessor{
 		logger:        set.Logger,
@@ -65,6 +74,7 @@ func (processor *sumologicSchemaProcessor) start(_ context.Context, host compone
 		"Processor sumologic_schema has started.",
 		zap.Bool(procs[0].ConfigPropertyName(), procs[0].isEnabled()),
 		zap.Bool(procs[1].ConfigPropertyName(), procs[1].isEnabled()),
+		zap.Bool(procs[2].ConfigPropertyName(), procs[2].isEnabled()),
 	)
 	return nil
 }

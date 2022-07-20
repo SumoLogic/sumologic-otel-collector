@@ -19,13 +19,15 @@ import "go.opentelemetry.io/collector/config"
 type Config struct {
 	config.ProcessorSettings `mapstructure:",squash"`
 
-	AddCloudNamespace   bool `mapstructure:"add_cloud_namespace"`
-	TranslateAttributes bool `mapstructure:"translate_attributes"`
+	AddCloudNamespace           bool `mapstructure:"add_cloud_namespace"`
+	TranslateAttributes         bool `mapstructure:"translate_attributes"`
+	TranslateTelegrafAttributes bool `mapstructure:"translate_telegraf_attributes"`
 }
 
 const (
-	defaultAddCloudNamespace   = true
-	defaultTranslateAttributes = true
+	defaultAddCloudNamespace           = true
+	defaultTranslateAttributes         = true
+	defaultTranslateTelegrafAttributes = true
 )
 
 // Ensure the Config struct satisfies the config.Processor interface.
@@ -33,9 +35,10 @@ var _ config.Processor = (*Config)(nil)
 
 func createDefaultConfig() config.Processor {
 	return &Config{
-		ProcessorSettings:   config.NewProcessorSettings(config.NewComponentID(typeStr)),
-		AddCloudNamespace:   defaultAddCloudNamespace,
-		TranslateAttributes: defaultTranslateAttributes,
+		ProcessorSettings:           config.NewProcessorSettings(config.NewComponentID(typeStr)),
+		AddCloudNamespace:           defaultAddCloudNamespace,
+		TranslateAttributes:         defaultTranslateAttributes,
+		TranslateTelegrafAttributes: defaultTranslateTelegrafAttributes,
 	}
 }
 

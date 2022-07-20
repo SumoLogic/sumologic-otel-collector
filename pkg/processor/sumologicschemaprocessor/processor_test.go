@@ -618,6 +618,51 @@ func TestTranslateAttributesForTraces(t *testing.T) {
 	}
 }
 
+func TestTranslateTelegrafMetrics(t *testing.T) {
+	testCases := []struct {
+		testName        string
+		originalNames   []string
+		translatedNames []string
+		shouldTranslate bool
+	}{
+		{
+			testName:        "translates two names",
+			originalNames:   []string{"cpu_usage_irq", "system_load1"},
+			translatedNames: []string{"CPU_Irq", "CPU_LoadAvg_1min"},
+			shouldTranslate: true,
+		},
+		{
+			testName:        "does not translate",
+			originalNames:   []string{"cpu_usage_irq", "system_load1"},
+			translatedNames: []string{"cpu_usage_irq", "system_load1"},
+			shouldTranslate: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.testName, func(t *testing.T) {
+			// Arrange
+			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newTranslateTelegrafAttributesConfig(testCase.shouldTranslate))
+			require.NoError(t, err)
+
+			// Prepare metrics
+			metrics := pmetric.NewMetrics()
+			for _, name := range testCase.originalNames {
+				metrics.ResourceMetrics().AppendEmpty().ScopeMetrics().AppendEmpty().Metrics().AppendEmpty().SetName(name)
+			}
+
+			// Act
+			resultMetrics, err := processor.processMetrics(context.Background(), metrics)
+			require.NoError(t, err)
+
+			// Assert
+			for index, name := range testCase.translatedNames {
+				assert.Equal(t, name, resultMetrics.ResourceMetrics().At(index).ScopeMetrics().At(0).Metrics().At(0).Name())
+			}
+		})
+	}
+}
+
 func newProcessorCreateSettings() component.ProcessorCreateSettings {
 	return component.ProcessorCreateSettings{
 		TelemetrySettings: component.TelemetrySettings{
@@ -630,6 +675,7 @@ func newCloudNamespaceConfig(addCloudNamespace bool) *Config {
 	config := createDefaultConfig().(*Config)
 	config.AddCloudNamespace = addCloudNamespace
 	config.TranslateAttributes = false
+	config.TranslateTelegrafAttributes = false
 	return config
 }
 
@@ -637,5 +683,14 @@ func newTranslateAttributesConfig(translateAttributes bool) *Config {
 	config := createDefaultConfig().(*Config)
 	config.AddCloudNamespace = false
 	config.TranslateAttributes = translateAttributes
+	config.TranslateTelegrafAttributes = false
+	return config
+}
+
+func newTranslateTelegrafAttributesConfig(translateTelegrafAttributes bool) *Config {
+	config := createDefaultConfig().(*Config)
+	config.AddCloudNamespace = false
+	config.TranslateAttributes = false
+	config.TranslateTelegrafAttributes = translateTelegrafAttributes
 	return config
 }
