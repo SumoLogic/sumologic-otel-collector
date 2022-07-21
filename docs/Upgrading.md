@@ -1,7 +1,8 @@
 # Upgrading
 
 - [Unreleased](#unreleased)
-  - [`sumologic` exporter: moved translating attributes to `sumologicschema` processor](#sumologic-exporter-drop-support-for-translating-attributes)
+  - [`sumologic` exporter: drop support for translating attributes](#sumologic-exporter-drop-support-for-translating-attributes)
+  - [`sumologic` exporter: drop support for translating Telegraf metric names](#sumologic-exporter-drop-support-for-translating-telegraf-metric-names)
 - [Upgrading to v0.55.0-sumo-0](#upgrading-to-v0550-sumo-0)
   - [`filter` processor: drop support for `expr` language](#filter-processor-drop-support-for-expr-language)
 - [Upgrading to v0.52.0-sumo-0](#upgrading-to-v0520-sumo-0)
@@ -25,7 +26,7 @@ Translating the attributes is harmless, but the exporters should not modify the 
 This functionality has been moved to the [sumologicschema processor][sumologicschema_processor].
 Due to that, this functionality is now deprecated in the exporter and will be removed soon.
 
-However, if the attributes are not translated, some Sumo apps might not work correctly.
+However, if the attributes are not translated, some Sumo Logic apps might not work correctly.
 To migrate, add a `sumologicschema` processor to your pipelines that use the `sumologic` exporter and disable that functionality in the exporter:
 
 ```yaml
@@ -49,16 +50,51 @@ service:
         - sumologic_schema
 ```
 
-**Note**: by default, the `sumologicschema` processor also adds `cloud.namespace` attribute to the data.
-If you don't want this to happen, you should explicitly disable this functionality:
+**Note**: by default, the `sumologicschema` processor also performs other actions, like adding `cloud.namespace` attribute to the data.
+If you don't want this to happen, you should explicitly disable these functionalities:
 
 ```yaml
 processors:
   sumologic_schema:
     add_cloud_namespace: false
+    # ...
 ```
 
+Full list of configuration settings can be found in the [readme][sumologicschema_processor_readme] of the processor.
+
+### `sumologic` exporter: drop support for translating Telegraf metric names
+
+Similar as above, the translation should not happen in the exporter and has been moved to the [sumologicschema processor][sumologicschema_processor].
+The functionality is now deprecated and will be removed soon.
+
+However, if the attributes are not translated, some Sumo Logic apps might not work correctly.
+To migrate, add a `sumologicschema` processor to your pipelines that use the `sumologic` exporter and disable that functionality in the exporter:
+
+```yaml
+processors:
+  # ...
+  sumologic_schema:
+    translate_telegraf_attributes: true
+
+exporters:
+  sumologic:
+    # ...
+    translate_telegraf_attributes: false
+
+# ...
+
+service:
+  pipelines:
+    logs:
+      processors:
+        # - ...
+        - sumologic_schema
+```
+
+**Note**: By default, the `sumologicschema` processor also performs other actions. Please see a corresponding warning in paragraph [`sumologic` exporter: drop support for translating attributes](#sumologic-exporter-drop-support-for-translating-attributes) for more information.
+
 [sumologicschema_processor]: ../pkg/processor/sumologicschemaprocessor/
+[sumologicschema_processor_readme]: ../pkg/processor/sumologicschemaprocessor/README.md
 
 ## Upgrading to v0.55.0-sumo-0
 

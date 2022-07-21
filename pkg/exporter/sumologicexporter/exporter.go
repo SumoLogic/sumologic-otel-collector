@@ -41,9 +41,16 @@ const (
 	tracesDataUrl  = "/api/v1/collector/traces"
 )
 
-const deprecationBanner = `
+const translationDeprecationBanner = `
 ***********************************************************************************************************************************************************
 ***    Translating attributes is deprecated and is going to be dropped soon. Please see the migration document:                                  	    ***
+***    https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Upgrading.md#sumologic-exporter-drop-support-for-translating-attributes.    ***
+***********************************************************************************************************************************************************
+`
+
+const telegrafTranslationDeprecationBanner = `
+***********************************************************************************************************************************************************
+***    Translating Telegraf metric names is deprecated and is going to be dropped soon. Please see the migration document:                              ***
 ***    https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Upgrading.md#sumologic-exporter-drop-support-for-translating-attributes.    ***
 ***********************************************************************************************************************************************************
 `
@@ -71,12 +78,17 @@ type sumologicexporter struct {
 
 func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) (*sumologicexporter, error) {
 	if cfg.TranslateAttributes {
-		createSettings.Logger.Warn(deprecationBanner)
+		createSettings.Logger.Warn(translationDeprecationBanner)
 
 		cfg.SourceCategory = translateConfigValue(cfg.SourceCategory)
 		cfg.SourceHost = translateConfigValue(cfg.SourceHost)
 		cfg.SourceName = translateConfigValue(cfg.SourceName)
 	}
+
+	if cfg.TranslateTelegrafMetrics {
+		createSettings.Logger.Warn(telegrafTranslationDeprecationBanner)
+	}
+
 	sfs, err := newSourceFormats(cfg)
 	if err != nil {
 		return nil, err

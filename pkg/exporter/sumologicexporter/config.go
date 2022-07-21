@@ -60,6 +60,7 @@ type Config struct {
 	// from OpenTelemetry standard to Sumo conventions (for example `cloud.account.id` => `accountId`
 	// `k8s.pod.name` => `pod` etc).
 	TranslateAttributes bool `mapstructure:"translate_attributes"`
+	// DEPRECATED
 	// Specifies whether telegraf metric names should be translated to match
 	// Sumo conventions expected in Sumo host related apps (for example
 	// `procstat_num_threads` => `Proc_Threads` or `cpu_usage_irq` => `CPU_Irq`).
