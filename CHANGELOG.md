@@ -7,19 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-This release deprecates the following feature, which will be removed in `v0.59.0`:
+This release deprecates the following features, which will be removed in `v0.59.0`:
 
 - 'sumologic' exporter: translate attributes ([upgrade guide][upgrade_guide_unreleased_moved_translation])
+- 'sumologic' exporter: translate Telegraf metric names ([upgrade guide][upgrade_guide_unreleased_moved_telegraf_translation])
 
 ### Added
 
 - feat(sumologicschemaprocessor): add translating attributes
 - feat: add aerospikereceiver [#674]
+- feat(sumologicschemaprocessor): add translating Telegraf metric names
 
 ### Changed
 
 - feat(sumologicexporter): deprecate translating attributes ([upgrade guide][upgrade_guide_unreleased_moved_translation])
 - chore: upgrade OpenTelemetry Core to v0.56.0 [#674]
+- feat(sumologicexporter): deprecate translating Telegraf metric names ([upgrade guide][upgrade_guide_unreleased_moved_telegraf_translation])
 
 ### Fixed
 
@@ -29,6 +32,7 @@ This release deprecates the following feature, which will be removed in `v0.59.0
 [#668]: https://github.com/SumoLogic/sumologic-otel-collector/pull/668
 [#674]: https://github.com/SumoLogic/sumologic-otel-collector/pull/674
 [upgrade_guide_unreleased_moved_translation]: ./docs/Upgrading.md#sumologic-exporter-drop-support-for-translating-attributes
+[upgrade_guide_unreleased_moved_telegraf_translation]: ./docs/Upgrading.md#sumologic-exporter-drop-support-for-translating-telegraf-metric-names
 
 ## [v0.55.0-sumo-0]
 
