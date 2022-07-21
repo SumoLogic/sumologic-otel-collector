@@ -14,10 +14,12 @@ This release deprecates the following feature, which will be removed in `v0.59.0
 ### Added
 
 - feat(sumologicschemaprocessor): add translating attributes
+- feat: add aerospikereceiver [#674]
 
 ### Changed
 
 - feat(sumologicexporter): deprecate translating attributes ([upgrade guide][upgrade_guide_unreleased_moved_translation])
+- chore: upgrade OpenTelemetry Core to v0.56.0 [#674]
 
 ### Fixed
 
@@ -25,6 +27,7 @@ This release deprecates the following feature, which will be removed in `v0.59.0
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.55.0-sumo-0...main
 [#668]: https://github.com/SumoLogic/sumologic-otel-collector/pull/668
+[#674]: https://github.com/SumoLogic/sumologic-otel-collector/pull/674
 [upgrade_guide_unreleased_moved_translation]: ./docs/Upgrading.md#sumologic-exporter-drop-support-for-translating-attributes
 
 ## [v0.55.0-sumo-0]
