@@ -85,6 +85,9 @@ Updating OT core involves:
 1. Verifying that Sumo OT distro builds correctly
 1. Fixing lint errors from deprecations
 1. Add missing upstream components
+1. Ensure all [milestone] tasks and issues have been done
+
+[milestone]: https://github.com/SumoLogic/sumologic-otel-collector/milestones
 
 ### Updating patched processors
 
