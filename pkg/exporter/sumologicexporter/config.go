@@ -60,15 +60,11 @@ type Config struct {
 	// from OpenTelemetry standard to Sumo conventions (for example `cloud.account.id` => `accountId`
 	// `k8s.pod.name` => `pod` etc).
 	TranslateAttributes bool `mapstructure:"translate_attributes"`
-	// DEPRECATED
-	// Specifies whether telegraf metric names should be translated to match
-	// Sumo conventions expected in Sumo host related apps (for example
-	// `procstat_num_threads` => `Proc_Threads` or `cpu_usage_irq` => `CPU_Irq`).
-	TranslateTelegrafMetrics bool `mapstructure:"translate_telegraf_attributes"`
 
-	// DEPRECATED: The below attribute only exists so we can print a nicer error
-	// message about not supporting it anymore.
-	MetadataAttributes []string `mapstructure:"metadata_attributes"`
+	// DEPRECATED: The below attributes only exist so we can print a nicer error
+	// message about not supporting them anymore.
+	TranslateTelegrafMetrics bool     `mapstructure:"translate_telegraf_attributes"`
+	MetadataAttributes       []string `mapstructure:"metadata_attributes"`
 
 	// Attribute used by routingprocessor which should be dropped during data ingestion
 	// This is workaround for the following issue:
@@ -138,6 +134,12 @@ func (cfg *Config) Validate() error {
 	if len(cfg.MetadataAttributes) > 0 {
 		return fmt.Errorf(`*Deprecation warning*: metadata_attributes is not supported anymore.
 Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.49.0-sumo-0`,
+		)
+	}
+
+	if cfg.TranslateTelegrafMetrics {
+		return fmt.Errorf(`*Deprecation warning*: translate_telegraf_attributes is not supported anymore.
+Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.59.0-sumo-0`,
 		)
 	}
 
@@ -266,8 +268,6 @@ const (
 	DefaultClient string = "otelcol"
 	// DefaultTranslateAttributes defines default TranslateAttributes
 	DefaultTranslateAttributes bool = true
-	// DefaultTranslateTelegrafMetrics defines default TranslateTelegrafMetrics
-	DefaultTranslateTelegrafMetrics bool = true
 	// DefaultClearTimestamp defines default ClearLogsTimestamp value
 	DefaultClearLogsTimestamp bool = true
 	// DefaultLogKey defines default LogKey value

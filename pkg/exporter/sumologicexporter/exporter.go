@@ -48,13 +48,6 @@ const translationDeprecationBanner = `
 ***********************************************************************************************************************************************************
 `
 
-const telegrafTranslationDeprecationBanner = `
-***********************************************************************************************************************************************************
-***    Translating Telegraf metric names is deprecated and is going to be dropped soon. Please see the migration document:                              ***
-***    https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Upgrading.md#sumologic-exporter-drop-support-for-translating-attributes.    ***
-***********************************************************************************************************************************************************
-`
-
 const sourceTemplatesDeprecationBanner = `
 ***********************************************************************************************************************************************************
 ***    Adding source headers is deprecated and is going to be dropped soon. Please see the migration document:                                          ***
@@ -90,10 +83,6 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 		cfg.SourceCategory = translateConfigValue(cfg.SourceCategory)
 		cfg.SourceHost = translateConfigValue(cfg.SourceHost)
 		cfg.SourceName = translateConfigValue(cfg.SourceName)
-	}
-
-	if cfg.TranslateTelegrafMetrics {
-		createSettings.Logger.Warn(telegrafTranslationDeprecationBanner)
 	}
 
 	if cfg.SourceCategory != "" || cfg.SourceHost != "" || cfg.SourceName != "" {
@@ -328,15 +317,6 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pmetric.Met
 		if se.config.TranslateAttributes {
 			translateAttributes(rm.Resource().Attributes()).
 				CopyTo(rm.Resource().Attributes())
-		}
-
-		if se.config.TranslateTelegrafMetrics {
-			for i := 0; i < rm.ScopeMetrics().Len(); i++ {
-				metricsSlice := rm.ScopeMetrics().At(i).Metrics()
-				for j := 0; j < metricsSlice.Len(); j++ {
-					translateTelegrafMetric(metricsSlice.At(j))
-				}
-			}
 		}
 	}
 
