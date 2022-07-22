@@ -46,7 +46,6 @@ func createDefaultConfig() config.Exporter {
 	return &Config{
 		ExporterSettings: config.NewExporterSettings(config.NewComponentID(typeStr)),
 
-		TranslateAttributes:      DefaultTranslateAttributes,
 		TranslateTelegrafMetrics: DefaultTranslateTelegrafMetrics,
 		CompressEncoding:         DefaultCompressEncoding,
 		MaxRequestBodySize:       DefaultMaxRequestBodySize,
