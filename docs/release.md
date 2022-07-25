@@ -4,6 +4,7 @@
   - [Update Changelog](#update-changelog)
   - [Create and push Git tag](#create-and-push-git-tag)
   - [Publish GitHub release](#publish-github-release)
+  - [Add `Unreleased` section to the changelog](#add-unreleased-section-to-the-changelog)
 - [Updating OT core](#updating-ot-core)
   - [Updating patched processors](#updating-patched-processors)
   - [Updating OT distro](#updating-ot-distro)
@@ -17,10 +18,10 @@
 
 Edit the [CHANGELOG.md][changelog] file and add an entry for the release that will be created.
 
-Here are some example pull requests: [#585], [#563].
+Here are some example pull requests: [#602], [#652].
 
-[#563]: https://github.com/SumoLogic/sumologic-otel-collector/pull/563
-[#585]: https://github.com/SumoLogic/sumologic-otel-collector/pull/585
+[#602]: https://github.com/SumoLogic/sumologic-otel-collector/pull/602
+[#652]: https://github.com/SumoLogic/sumologic-otel-collector/pull/652
 
 ### Create and push Git tag
 
@@ -75,6 +76,14 @@ edit the release draft and fill in missing information:
 - Copy and paste the Changelog entry for this release from [CHANGELOG.md][changelog]
 
 After verifying that the release text and all links are good, publish the release.
+
+### Add `Unreleased` section to the changelog
+
+Edit the [CHANGELOG.md][changelog] file and prepare unreleased section.
+
+Here is the example pull request: [#677].
+
+[#677]: https://github.com/SumoLogic/sumologic-otel-collector/pull/677
 
 ## Updating OT core
 
