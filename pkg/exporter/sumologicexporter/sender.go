@@ -127,7 +127,6 @@ type sender struct {
 	logger              *zap.Logger
 	config              *Config
 	client              *http.Client
-	sources             sourceFormats
 	compressor          *compressor
 	prometheusFormatter prometheusFormatter
 	jsonLogsConfig      JSONLogs
@@ -164,7 +163,6 @@ func newSender(
 	logger *zap.Logger,
 	cfg *Config,
 	cl *http.Client,
-	s sourceFormats,
 	c *compressor,
 	pf prometheusFormatter,
 	metricsUrl string,
@@ -175,7 +173,6 @@ func newSender(
 		logger:              logger,
 		config:              cfg,
 		client:              cl,
-		sources:             s,
 		compressor:          c,
 		prometheusFormatter: pf,
 		jsonLogsConfig:      cfg.JSONLogs,
@@ -486,8 +483,6 @@ func (s *sender) sendOTLPLogs(ctx context.Context, ld plog.Logs) error {
 				}
 			}
 		}
-
-		s.addSourceResourceAttributes(rl.Resource().Attributes())
 	}
 
 	body, err := logsMarshaler.MarshalLogs(ld)
@@ -522,10 +517,11 @@ func (s *sender) sendNonOTLPMetrics(ctx context.Context, md pmetric.Metrics) (pm
 		// the only exception is if the computed source headers are different, as those as unique per-request
 		// so we check if the headers are different here and send what we have if they are
 		if i > 0 {
-			currentSourceHeaders := getSourcesHeaders(s.sources, flds)
+			currentSourceHeaders := getSourcesHeaders(flds)
 			previousFields := newFields(rms.At(i - 1).Resource().Attributes())
-			previousSourceHeaders := getSourcesHeaders(s.sources, previousFields)
+			previousSourceHeaders := getSourcesHeaders(previousFields)
 			if !reflect.DeepEqual(previousSourceHeaders, currentSourceHeaders) && body.Len() > 0 {
+
 				if err := s.send(ctx, MetricsPipeline, body.toCountingReader(), previousFields); err != nil {
 					errs = append(errs, err)
 					for _, resource := range currentResources {
@@ -599,12 +595,6 @@ func (s *sender) sendOTLPMetrics(ctx context.Context, md pmetric.Metrics) error 
 		return nil
 	}
 
-	for i := 0; i < rms.Len(); i++ {
-		rm := rms.At(i)
-
-		s.addSourceResourceAttributes(rm.Resource().Attributes())
-	}
-
 	body, err := metricsMarshaler.MarshalMetrics(md)
 	if err != nil {
 		return err
@@ -661,9 +651,6 @@ func (s *sender) sendOTLPTraces(ctx context.Context, td ptrace.Traces) error {
 	}
 
 	capacity := td.SpanCount()
-	for i := 0; i < td.ResourceSpans().Len(); i++ {
-		s.addSourceResourceAttributes(td.ResourceSpans().At(i).Resource().Attributes())
-	}
 
 	body, err := tracesMarshaler.MarshalTraces(td)
 	if err != nil {
@@ -689,30 +676,32 @@ func addCompressHeader(req *http.Request, enc CompressEncodingType) error {
 	return nil
 }
 
-func addSourcesHeaders(req *http.Request, sources sourceFormats, flds fields) {
-	sourceHeaderValues := getSourcesHeaders(sources, flds)
+func addSourcesHeaders(req *http.Request, flds fields) {
+	sourceHeaderValues := getSourcesHeaders(flds)
 
 	for headerName, headerValue := range sourceHeaderValues {
 		req.Header.Add(headerName, headerValue)
 	}
 }
 
-func getSourcesHeaders(sources sourceFormats, flds fields) map[string]string {
+func getSourcesHeaders(flds fields) map[string]string {
 	sourceHeaderValues := map[string]string{}
 	if !flds.isInitialized() {
 		return sourceHeaderValues
 	}
 
-	if sources.host.isSet() {
-		sourceHeaderValues[headerHost] = sources.host.format(flds)
+	attrs := flds.orig
+
+	if v, ok := attrs.Get(attributeKeySourceHost); ok {
+		sourceHeaderValues[headerHost] = v.AsString()
 	}
 
-	if sources.name.isSet() {
-		sourceHeaderValues[headerName] = sources.name.format(flds)
+	if v, ok := attrs.Get(attributeKeySourceName); ok {
+		sourceHeaderValues[headerName] = v.AsString()
 	}
 
-	if sources.category.isSet() {
-		sourceHeaderValues[headerCategory] = sources.category.format(flds)
+	if v, ok := attrs.Get(attributeKeySourceCategory); ok {
+		sourceHeaderValues[headerCategory] = v.AsString()
 	}
 	return sourceHeaderValues
 }
@@ -758,7 +747,7 @@ func (s *sender) addRequestHeaders(req *http.Request, pipeline PipelineType, fld
 	if err := addCompressHeader(req, s.config.CompressEncoding); err != nil {
 		return err
 	}
-	addSourcesHeaders(req, s.sources, flds)
+	addSourcesHeaders(req, flds)
 
 	switch pipeline {
 	case LogsPipeline:
@@ -775,33 +764,6 @@ func (s *sender) addRequestHeaders(req *http.Request, pipeline PipelineType, fld
 		return fmt.Errorf("unexpected pipeline: %v", pipeline)
 	}
 	return nil
-}
-
-// addSourceResourceAttributes adds source related attributes:
-// * source category
-// * source host
-// * source name
-// to the provided attribute map, according to the corresponding templates.
-//
-// When those attributes are already in the attribute map then nothing is
-// changed since attributes that are provided with data have precedence over
-// exporter configuration.
-func (s *sender) addSourceResourceAttributes(attrs pcommon.Map) {
-	if s.sources.host.isSet() {
-		if _, ok := attrs.Get(attributeKeySourceHost); !ok {
-			attrs.InsertString(attributeKeySourceHost, s.sources.host.formatPdataMap(attrs))
-		}
-	}
-	if s.sources.name.isSet() {
-		if _, ok := attrs.Get(attributeKeySourceName); !ok {
-			attrs.InsertString(attributeKeySourceName, s.sources.name.formatPdataMap(attrs))
-		}
-	}
-	if s.sources.category.isSet() {
-		if _, ok := attrs.Get(attributeKeySourceCategory); !ok {
-			attrs.InsertString(attributeKeySourceCategory, s.sources.category.formatPdataMap(attrs))
-		}
-	}
 }
 
 func (s *sender) recordMetrics(duration time.Duration, count int64, req *http.Request, resp *http.Response, pipeline PipelineType) {

@@ -24,10 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(filterprocessor): drop custom changes ([upgrade guide][upgrade_guide_v0_55_0_expr_support]) [#709] [#714]
 - feat(sumologicexporter): remove translating telegraf metric names ([upgrade guide][upgrade_guide_unreleased_moved_telegraf_translation]) [#678]
 - feat(sumologicexporter): remove translating attributes ([upgrade guide][upgrade_guide_unreleased_moved_translation]) [#672]
+- feat(sumologicexporter): remove setting source headers ([upgrade guide][upgrade_guide_v0_57_0_deprecate_source_templates]) [#686]
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.57.2-sumo-0...main
 [#672]: https://github.com/SumoLogic/sumologic-otel-collector/pull/672
 [#678]: https://github.com/SumoLogic/sumologic-otel-collector/pull/678
+[#686]: https://github.com/SumoLogic/sumologic-otel-collector/pull/686
 [#709]: https://github.com/SumoLogic/sumologic-otel-collector/pull/709
 [#710]: https://github.com/SumoLogic/sumologic-otel-collector/pull/710
 [#714]: https://github.com/SumoLogic/sumologic-otel-collector/pull/714

@@ -43,9 +43,6 @@ func TestCreateDefaultConfig(t *testing.T) {
 		MaxRequestBodySize: 1_048_576,
 		LogFormat:          "otlp",
 		MetricFormat:       "otlp",
-		SourceCategory:     "",
-		SourceName:         "",
-		SourceHost:         "",
 		Client:             "otelcol",
 		ClearLogsTimestamp: true,
 		JSONLogs: JSONLogs{

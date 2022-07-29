@@ -50,9 +50,6 @@ func createDefaultConfig() config.Exporter {
 		MaxRequestBodySize: DefaultMaxRequestBodySize,
 		LogFormat:          DefaultLogFormat,
 		MetricFormat:       DefaultMetricFormat,
-		SourceCategory:     DefaultSourceCategory,
-		SourceName:         DefaultSourceName,
-		SourceHost:         DefaultSourceHost,
 		Client:             DefaultClient,
 		ClearLogsTimestamp: DefaultClearLogsTimestamp,
 		JSONLogs: JSONLogs{

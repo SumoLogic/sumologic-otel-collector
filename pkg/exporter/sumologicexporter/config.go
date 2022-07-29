@@ -60,6 +60,9 @@ type Config struct {
 	TranslateAttributes      bool     `mapstructure:"translate_attributes"`
 	TranslateTelegrafMetrics bool     `mapstructure:"translate_telegraf_attributes"`
 	MetadataAttributes       []string `mapstructure:"metadata_attributes"`
+	SourceCategory           string   `mapstructure:"source_category"`
+	SourceName               string   `mapstructure:"source_name"`
+	SourceHost               string   `mapstructure:"source_host"`
 
 	// Attribute used by routingprocessor which should be dropped during data ingestion
 	// This is workaround for the following issue:
@@ -67,21 +70,6 @@ type Config struct {
 	DropRoutingAttribute string `mapstructure:"routing_atttribute_to_drop"`
 
 	// Sumo specific options
-	// DEPRECATED
-	// Desired source category.
-	// Useful if you want to override the source category configured for the source.
-	// Placeholders `%{attr_name}` will be replaced with attribute value for attr_name.
-	SourceCategory string `mapstructure:"source_category"`
-	// Desired source name.
-	// DEPRECATED
-	// Useful if you want to override the source name configured for the source.
-	// Placeholders `%{attr_name}` will be replaced with attribute value for attr_name.
-	SourceName string `mapstructure:"source_name"`
-	// Desired host name.
-	// DEPRECATED
-	// Useful if you want to override the source host configured for the source.
-	// Placeholders `%{attr_name}` will be replaced with attribute value for attr_name.
-	SourceHost string `mapstructure:"source_host"`
 	// Name of the client
 	Client string `mapstructure:"client"`
 
@@ -141,6 +129,12 @@ Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-coll
 	if cfg.TranslateAttributes {
 		return fmt.Errorf(`translate_attributes is not supported anymore.
 Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.59.0-sumo-0`,
+		)
+	}
+
+	if cfg.SourceCategory != "" || cfg.SourceHost != "" || cfg.SourceName != "" {
+		return fmt.Errorf(`setting source headers is not supported anymore.
+Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.60.0-sumo-0`,
 		)
 	}
 
@@ -259,12 +253,6 @@ const (
 	DefaultLogFormat LogFormatType = OTLPLogFormat
 	// DefaultMetricFormat defines default MetricFormat
 	DefaultMetricFormat MetricFormatType = OTLPMetricFormat
-	// DefaultSourceCategory defines default SourceCategory
-	DefaultSourceCategory string = ""
-	// DefaultSourceName defines default SourceName
-	DefaultSourceName string = ""
-	// DefaultSourceHost defines default SourceHost
-	DefaultSourceHost string = ""
 	// DefaultClient defines default Client
 	DefaultClient string = "otelcol"
 	// DefaultClearTimestamp defines default ClearLogsTimestamp value

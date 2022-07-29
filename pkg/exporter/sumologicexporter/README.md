@@ -44,21 +44,6 @@ exporters:
     # default = true
     clear_logs_timestamp: {true, false}
 
-    # For below described source related configuration,
-    # please refer to "Source templates" documentation chapter from this document.
-
-    # DEPRECATED
-    # desired source category, useful if you want to override the source category
-    # configured for the source.
-    source_category: <source_category>
-    # DEPRECATED
-    # desired source name, useful if you want to override the source name
-    # configured for the source.
-    source_name: <source_name>
-    # DEPRECATED
-    # desired host name, useful if you want to override the source host
-    # configured for the source.
-    source_host: <source_host>
     # name of resource attribute which should be dropped for records
     # this is for attribute used by routing processor
     # other attributes should be removed by processors in pipelines before
@@ -130,19 +115,6 @@ exporters:
 ```
 
 [sumologicextension]: ./../../extension/sumologicextension
-
-## Source Templates
-
-You can specify a template with an attribute for `source_category`, `source_name`,
-`source_host` using `%{attr_name}`. Only *resource* attributes
-can be used this way.
-
-For example, when there is an attribute `my_attr`: `my_value`, `metrics/%{my_attr}`
-would be expanded to `metrics/my_value`.
-Use OpenTelemetry attribute names like `k8s.pod.name` instead of `pod`.
-
-If an attribute is not found, it is replaced with `undefined`.
-For example, `%{existing_attr}/%{nonexistent_attr}` becomes `value-of-existing-attr/undefined`.
 
 ## Metrics
 
