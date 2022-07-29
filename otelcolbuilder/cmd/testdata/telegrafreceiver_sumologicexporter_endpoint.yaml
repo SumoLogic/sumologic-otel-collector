@@ -70,9 +70,6 @@ processors:
 exporters:
   sumologic/1:
     endpoint: http://dummy.endpoint.com:8888/api
-    source_category: source_category
-    source_name: source_name
-    source_host: source_host
     sending_queue:
       enabled: true
 

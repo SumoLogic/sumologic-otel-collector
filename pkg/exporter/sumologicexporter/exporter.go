@@ -41,18 +41,10 @@ const (
 	tracesDataUrl  = "/api/v1/collector/traces"
 )
 
-const sourceTemplatesDeprecationBanner = `
-***********************************************************************************************************************************************************
-***    Adding source headers is deprecated and is going to be dropped soon. Please see the migration document:                                          ***
-***    https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Upgrading.md#sumologic-exporter-drop-support-for-source-headers.            ***
-***********************************************************************************************************************************************************
-`
-
 type sumologicexporter struct {
-	sources sourceFormats
-	config  *Config
-	host    component.Host
-	logger  *zap.Logger
+	config *Config
+	host   component.Host
+	logger *zap.Logger
 
 	clientLock sync.RWMutex
 	client     *http.Client
@@ -70,24 +62,14 @@ type sumologicexporter struct {
 }
 
 func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) (*sumologicexporter, error) {
-	if cfg.SourceCategory != "" || cfg.SourceHost != "" || cfg.SourceName != "" {
-		createSettings.Logger.Warn(sourceTemplatesDeprecationBanner)
-	}
-
-	sfs, err := newSourceFormats(cfg)
-	if err != nil {
-		return nil, err
-	}
-
 	pf, err := newPrometheusFormatter()
 	if err != nil {
 		return nil, err
 	}
 
 	se := &sumologicexporter{
-		config:  cfg,
-		logger:  createSettings.Logger,
-		sources: sfs,
+		config: cfg,
+		logger: createSettings.Logger,
 		compressorPool: sync.Pool{
 			New: func() any {
 				c, err := newCompressor(cfg.CompressEncoding)
@@ -195,7 +177,6 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld plog.Logs) err
 		se.logger,
 		se.config,
 		se.getHTTPClient(),
-		se.sources,
 		compr,
 		se.prometheusFormatter,
 		metricsUrl,
@@ -278,7 +259,6 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pmetric.Met
 		se.logger,
 		se.config,
 		se.getHTTPClient(),
-		se.sources,
 		compr,
 		se.prometheusFormatter,
 		metricsUrl,
@@ -344,7 +324,6 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td ptrace.Trace
 		se.logger,
 		se.config,
 		se.getHTTPClient(),
-		se.sources,
 		compr,
 		se.prometheusFormatter,
 		metricsUrl,

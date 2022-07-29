@@ -94,71 +94,11 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 			&http.Client{
 				Timeout: cfg.HTTPClientSettings.Timeout,
 			},
-			sourceFormats{
-				host:     getTestSourceFormat(t, "source_host"),
-				category: getTestSourceFormat(t, "source_category"),
-				name:     getTestSourceFormat(t, "source_name"),
-			},
 			&c,
 			pf,
 			"",
 			"",
 			"",
-		),
-	}
-}
-
-// prepareOTLPSenderTest prepares sender test environment.
-// The enclosed httptest.Server is closed automatically using test.Cleanup.
-func prepareOTLPSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.Request)) *senderTest {
-	var reqCounter int32
-	// generate a test server so we can capture and inspect the request
-	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if len(cb) == 0 {
-			return
-		}
-
-		if c := int(atomic.LoadInt32(&reqCounter)); assert.Greater(t, len(cb), c) {
-			cb[c](w, req)
-			atomic.AddInt32(&reqCounter, 1)
-		}
-	}))
-	t.Cleanup(func() { testServer.Close() })
-
-	cfg := createDefaultConfig().(*Config)
-	cfg.CompressEncoding = NoCompression
-	cfg.HTTPClientSettings.Endpoint = testServer.URL
-
-	c, err := newCompressor(cfg.CompressEncoding)
-	require.NoError(t, err)
-
-	pf, err := newPrometheusFormatter()
-	require.NoError(t, err)
-
-	require.NoError(t, err)
-
-	logger, err := zap.NewDevelopment()
-	require.NoError(t, err)
-
-	return &senderTest{
-		reqCounter: &reqCounter,
-		srv:        testServer,
-		s: newSender(
-			logger,
-			cfg,
-			&http.Client{
-				Timeout: cfg.HTTPClientSettings.Timeout,
-			},
-			sourceFormats{
-				host:     getTestSourceFormat(t, "source_host"),
-				category: getTestSourceFormat(t, "source_category"),
-				name:     getTestSourceFormat(t, "source_name"),
-			},
-			&c,
-			pf,
-			testServer.URL,
-			testServer.URL,
-			testServer.URL,
 		),
 	}
 }
@@ -852,7 +792,7 @@ func TestSendLogsOTLP(t *testing.T) {
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			//nolint:lll
-			assert.Equal(t, "\n\xe6\x01\nb\n\x1c\n\v_sourceHost\x12\r\n\vsource_host\n\x1c\n\v_sourceName\x12\r\n\vsource_name\n$\n\x0f_sourceCategory\x12\x11\n\x0fsource_category\x12;\n\x00\x127*\r\n\vExample log2\x10\n\x04key1\x12\b\n\x06value12\x10\n\x04key2\x12\b\n\x06value2J\x00R\x00\x12C\n\x00\x12?*\x15\n\x13Another example log2\x10\n\x04key1\x12\b\n\x06value12\x10\n\x04key2\x12\b\n\x06value2J\x00R\x00", body)
+			assert.Equal(t, "\n\x84\x01\n\x00\x12;\n\x00\x127*\r\n\vExample log2\x10\n\x04key1\x12\b\n\x06value12\x10\n\x04key2\x12\b\n\x06value2J\x00R\x00\x12C\n\x00\x12?*\x15\n\x13Another example log2\x10\n\x04key1\x12\b\n\x06value12\x10\n\x04key2\x12\b\n\x06value2J\x00R\x00", body)
 
 			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
 			assert.Equal(t, "application/x-protobuf", req.Header.Get("Content-Type"))
@@ -884,341 +824,6 @@ func TestSendLogsOTLP(t *testing.T) {
 
 	assert.NoError(t, test.s.sendOTLPLogs(context.Background(), l))
 	assert.EqualValues(t, 1, *test.reqCounter)
-}
-
-func TestOverrideSourceName(t *testing.T) {
-	twoLogsFunc := func() plog.ResourceLogs {
-		rls := plog.NewResourceLogs()
-		slgs := rls.ScopeLogs().AppendEmpty()
-		log := slgs.LogRecords().AppendEmpty()
-
-		log.Body().SetStringVal("Example log")
-		log.Attributes().InsertString("key1", "value1")
-		log.Attributes().InsertString("key2", "value2")
-
-		log = slgs.LogRecords().AppendEmpty()
-		log.Body().SetStringVal("Another example log")
-		log.Attributes().InsertString("key1", "value1")
-		log.Attributes().InsertString("key2", "value2")
-
-		return rls
-	}
-
-	t.Run("text format", func(t *testing.T) {
-		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-			func(w http.ResponseWriter, req *http.Request) {
-				assert.Equal(t, "Test source name/test_name", req.Header.Get("X-Sumo-Name"))
-			},
-		})
-
-		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
-
-		_, err := test.s.sendNonOTLPLogs(context.Background(),
-			twoLogsFunc(),
-			fieldsFromMap(map[string]string{"key1": "test_name"}),
-		)
-		assert.NoError(t, err)
-
-		assert.EqualValues(t, 1, *test.reqCounter)
-	})
-
-	t.Run("json format", func(t *testing.T) {
-		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-			func(w http.ResponseWriter, req *http.Request) {
-				assert.Equal(t, "Test source name/test_name", req.Header.Get("X-Sumo-Name"))
-			},
-		}, func(c *Config) {
-			c.LogFormat = JSONFormat
-		})
-
-		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
-
-		_, err := test.s.sendNonOTLPLogs(context.Background(),
-			twoLogsFunc(),
-			fieldsFromMap(map[string]string{"key1": "test_name"}),
-		)
-		assert.NoError(t, err)
-
-		assert.EqualValues(t, 1, *test.reqCounter)
-	})
-
-	t.Run("otlp", func(t *testing.T) {
-		test := prepareOTLPSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-			func(w http.ResponseWriter, req *http.Request) {
-				unmarshaller := otlp.NewProtobufLogsUnmarshaler()
-				b, err := io.ReadAll(req.Body)
-				require.NoError(t, err)
-				l, err := unmarshaller.UnmarshalLogs(b)
-				require.NoError(t, err)
-
-				require.Equal(t, l.ResourceLogs().Len(), 1)
-				sourceCategory, ok := l.ResourceLogs().At(0).Resource().Attributes().Get("_sourceName")
-				require.True(t, ok)
-				require.Equal(t, pcommon.ValueTypeString, sourceCategory.Type())
-				require.Equal(t, "Test source name/test_name", sourceCategory.StringVal())
-			},
-		})
-
-		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}")
-
-		l := plog.NewLogs()
-		ls := l.ResourceLogs().AppendEmpty()
-		ls.Resource().Attributes().InsertString("key1", "test_name")
-		logRecords := exampleTwoLogs()
-		for i := 0; i < len(logRecords); i++ {
-			logRecords[i].MoveTo(ls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty())
-		}
-		assert.NoError(t, test.s.sendOTLPLogs(context.Background(), l))
-	})
-}
-
-func TestOverrideSourceCategory(t *testing.T) {
-	twoLogsFunc := func() plog.ResourceLogs {
-		rls := plog.NewResourceLogs()
-		slgs := rls.ScopeLogs().AppendEmpty()
-		log := slgs.LogRecords().AppendEmpty()
-
-		log.Body().SetStringVal("Example log")
-		log.Attributes().InsertString("key1", "value1")
-		log.Attributes().InsertString("key2", "value2")
-
-		log = slgs.LogRecords().AppendEmpty()
-		log.Body().SetStringVal("Another example log")
-		log.Attributes().InsertString("key1", "value1")
-		log.Attributes().InsertString("key2", "value2")
-
-		return rls
-	}
-
-	t.Run("text format", func(t *testing.T) {
-		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-			func(w http.ResponseWriter, req *http.Request) {
-				assert.Equal(t, "Test source category/test_name", req.Header.Get("X-Sumo-Category"))
-			},
-		})
-
-		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
-
-		_, err := test.s.sendNonOTLPLogs(context.Background(),
-			twoLogsFunc(),
-			fieldsFromMap(map[string]string{"key1": "test_name"}),
-		)
-		assert.NoError(t, err)
-	})
-
-	t.Run("json format", func(t *testing.T) {
-		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-			func(w http.ResponseWriter, req *http.Request) {
-				assert.Equal(t, "Test source category/test_name", req.Header.Get("X-Sumo-Category"))
-			},
-		}, func(c *Config) {
-			c.LogFormat = JSONFormat
-		})
-
-		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
-		_, err := test.s.sendNonOTLPLogs(context.Background(),
-			twoLogsFunc(),
-			fieldsFromMap(map[string]string{"key1": "test_name"}),
-		)
-		assert.NoError(t, err)
-
-		assert.EqualValues(t, 1, *test.reqCounter)
-	})
-
-	t.Run("otlp", func(t *testing.T) {
-		test := prepareOTLPSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-			func(w http.ResponseWriter, req *http.Request) {
-				unmarshaller := otlp.NewProtobufLogsUnmarshaler()
-				b, err := io.ReadAll(req.Body)
-				require.NoError(t, err)
-				l, err := unmarshaller.UnmarshalLogs(b)
-				require.NoError(t, err)
-
-				require.Equal(t, l.ResourceLogs().Len(), 1)
-				sourceCategory, ok := l.ResourceLogs().At(0).Resource().Attributes().Get("_sourceCategory")
-				require.True(t, ok)
-				require.Equal(t, pcommon.ValueTypeString, sourceCategory.Type())
-				require.Equal(t, "Test source category/test_name", sourceCategory.StringVal())
-			},
-		})
-
-		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
-
-		l := plog.NewLogs()
-		ls := l.ResourceLogs().AppendEmpty()
-		ls.Resource().Attributes().InsertString("key1", "test_name")
-		logRecords := exampleTwoLogs()
-		for i := 0; i < len(logRecords); i++ {
-			logRecords[i].MoveTo(ls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty())
-		}
-		assert.NoError(t, test.s.sendOTLPLogs(context.Background(), l))
-	})
-}
-
-func TestOverrideSourceHost(t *testing.T) {
-	twoLogsFunc := func() plog.ResourceLogs {
-		rls := plog.NewResourceLogs()
-		slgs := rls.ScopeLogs().AppendEmpty()
-		log := slgs.LogRecords().AppendEmpty()
-
-		log.Body().SetStringVal("Example log")
-		log.Attributes().InsertString("key1", "value1")
-		log.Attributes().InsertString("key2", "value2")
-
-		log = slgs.LogRecords().AppendEmpty()
-		log.Body().SetStringVal("Another example log")
-		log.Attributes().InsertString("key1", "value1")
-		log.Attributes().InsertString("key2", "value2")
-
-		return rls
-	}
-
-	t.Run("text format", func(t *testing.T) {
-		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-			func(w http.ResponseWriter, req *http.Request) {
-				assert.Equal(t, "Test source host/test_name", req.Header.Get("X-Sumo-Host"))
-			},
-		})
-
-		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
-		_, err := test.s.sendNonOTLPLogs(context.Background(),
-			twoLogsFunc(),
-			fieldsFromMap(map[string]string{"key1": "test_name"}),
-		)
-		assert.NoError(t, err)
-	})
-
-	t.Run("json format", func(t *testing.T) {
-		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-			func(w http.ResponseWriter, req *http.Request) {
-				assert.Equal(t, "Test source host/test_name", req.Header.Get("X-Sumo-Host"))
-			},
-		}, func(c *Config) {
-			c.LogFormat = JSONFormat
-		})
-
-		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
-
-		_, err := test.s.sendNonOTLPLogs(context.Background(),
-			twoLogsFunc(),
-			fieldsFromMap(map[string]string{"key1": "test_name"}),
-		)
-		assert.NoError(t, err)
-
-		assert.EqualValues(t, 1, *test.reqCounter)
-	})
-
-	t.Run("otlp", func(t *testing.T) {
-		test := prepareOTLPSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-			func(w http.ResponseWriter, req *http.Request) {
-				unmarshaller := otlp.NewProtobufLogsUnmarshaler()
-				b, err := io.ReadAll(req.Body)
-				require.NoError(t, err)
-				l, err := unmarshaller.UnmarshalLogs(b)
-				require.NoError(t, err)
-
-				require.Equal(t, l.ResourceLogs().Len(), 1)
-				sourceHost, ok := l.ResourceLogs().At(0).Resource().Attributes().Get("_sourceHost")
-				require.True(t, ok)
-				require.Equal(t, pcommon.ValueTypeString, sourceHost.Type())
-				require.Equal(t, "Test source host/test_name", sourceHost.StringVal())
-			},
-		})
-
-		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
-
-		l := plog.NewLogs()
-		ls := l.ResourceLogs().AppendEmpty()
-		ls.Resource().Attributes().InsertString("key1", "test_name")
-		logRecords := exampleTwoLogs()
-		for i := 0; i < len(logRecords); i++ {
-			logRecords[i].MoveTo(ls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty())
-		}
-		assert.NoError(t, test.s.sendOTLPLogs(context.Background(), l))
-	})
-}
-
-func TestLogsDontSendSourceFieldsInXSumoFieldsHeader(t *testing.T) {
-	twoLogsFunc := func() plog.ResourceLogs {
-		rls := plog.NewResourceLogs()
-		slgs := rls.ScopeLogs().AppendEmpty()
-		log := slgs.LogRecords().AppendEmpty()
-
-		log.Body().SetStringVal("Example log")
-		log.Attributes().InsertString("key1", "value1")
-		log.Attributes().InsertString("key2", "value2")
-
-		log = slgs.LogRecords().AppendEmpty()
-		log.Body().SetStringVal("Another example log")
-		log.Attributes().InsertString("key1", "value1")
-		log.Attributes().InsertString("key2", "value2")
-
-		return rls
-	}
-
-	assertNoSourceFieldsInXSumoFields := func(t *testing.T, fieldsHeader string) {
-		for _, field := range strings.Split(fieldsHeader, ",") {
-			field = strings.TrimSpace(field)
-			split := strings.Split(field, "=")
-			require.Len(t, split, 2)
-
-			switch fieldName := split[0]; fieldName {
-			case "_sourceName":
-				assert.Failf(t, "X-Sumo-Fields header check",
-					"%s should be removed from X-Sumo-Fields header when X-Sumo-Name is set", fieldName)
-			case "_sourceHost":
-				assert.Failf(t, "X-Sumo-Fields header check",
-					"%s should be removed from X-Sumo-Fields header when X-Sumo-Host is set", fieldName)
-			case "_sourceCategory":
-				assert.Failf(t, "X-Sumo-Fields header check",
-					"%s should be removed from X-Sumo-Fields header when X-Sumo-Category is set", fieldName)
-			default:
-			}
-
-			t.Logf("field: %s", field)
-		}
-	}
-
-	t.Run("json", func(t *testing.T) {
-		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
-			func(w http.ResponseWriter, req *http.Request) {
-				assert.Equal(t,
-					"Test source name/key1_val/test_source_name",
-					req.Header.Get("X-Sumo-Name"),
-				)
-				assert.Equal(t, "Test source host/key1_val",
-					req.Header.Get("X-Sumo-Host"),
-				)
-				assert.Equal(t, "Test source category/key1_val",
-					req.Header.Get("X-Sumo-Category"),
-				)
-
-				body := extractBody(t, req)
-				t.Logf("body: %s", body)
-
-				assertNoSourceFieldsInXSumoFields(t, req.Header.Get("X-Sumo-Fields"))
-			},
-		}, func(c *Config) {
-			c.LogFormat = JSONFormat
-		})
-
-		test.s.sources.name = getTestSourceFormat(t, "Test source name/%{key1}/%{_sourceName}")
-		test.s.sources.host = getTestSourceFormat(t, "Test source host/%{key1}")
-		test.s.sources.category = getTestSourceFormat(t, "Test source category/%{key1}")
-
-		_, err := test.s.sendNonOTLPLogs(context.Background(),
-			twoLogsFunc(),
-			fieldsFromMap(
-				map[string]string{
-					"key1":            "key1_val",
-					"_sourceName":     "test_source_name",
-					"_sourceHost":     "test_source_host",
-					"_sourceCategory": "test_source_category",
-				}),
-		)
-		assert.NoError(t, err)
-		assert.EqualValues(t, 1, *test.reqCounter)
-	})
 }
 
 func TestLogsHandlesReceiverResponses(t *testing.T) {
@@ -1501,22 +1106,17 @@ func TestSendMetricsSplitBySource(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			expected := `test.metric.data{test="test_value",test2="second_value",key="value1"} 14500 1605534165000`
+			expected := `test.metric.data{test="test_value",test2="second_value",_sourceHost="value1"} 14500 1605534165000`
 			assert.Equal(t, expected, body)
 		},
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			expected := `` +
-				`gauge_metric_name{test="test_value",test2="second_value",key="value2",remote_name="156920",url="http://example_url"} 124 1608124661166` + "\n" +
-				`gauge_metric_name{test="test_value",test2="second_value",key="value2",remote_name="156955",url="http://another_url"} 245 1608124662166`
+				`gauge_metric_name{test="test_value",test2="second_value",_sourceHost="value2",remote_name="156920",url="http://example_url"} 124 1608124661166` + "\n" +
+				`gauge_metric_name{test="test_value",test2="second_value",_sourceHost="value2",remote_name="156955",url="http://another_url"} 245 1608124662166`
 			assert.Equal(t, expected, body)
 		},
 	})
-	test.s.sources = sourceFormats{
-		host:     getTestSourceFormat(t, "%{key}"),
-		category: getTestSourceFormat(t, "source_category"),
-		name:     getTestSourceFormat(t, "source_name"),
-	}
 	test.s.config.MetricFormat = PrometheusFormat
 
 	metricSum, attrs := exampleIntMetric()
@@ -1527,12 +1127,12 @@ func TestSendMetricsSplitBySource(t *testing.T) {
 
 	rmsSum := metrics.ResourceMetrics().AppendEmpty()
 	attrs.CopyTo(rmsSum.Resource().Attributes())
-	rmsSum.Resource().Attributes().InsertString("key", "value1")
+	rmsSum.Resource().Attributes().InsertString("_sourceHost", "value1")
 	metricSum.CopyTo(rmsSum.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
 
 	rmsGauge := metrics.ResourceMetrics().AppendEmpty()
 	attrs.CopyTo(rmsGauge.Resource().Attributes())
-	rmsGauge.Resource().Attributes().InsertString("key", "value2")
+	rmsGauge.Resource().Attributes().InsertString("_sourceHost", "value2")
 	metricGauge.CopyTo(rmsGauge.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
 
 	_, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
