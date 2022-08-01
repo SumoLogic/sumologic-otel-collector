@@ -76,15 +76,18 @@ type Config struct {
 	DropRoutingAttribute string `mapstructure:"routing_atttribute_to_drop"`
 
 	// Sumo specific options
+	// DEPRECATED
 	// Desired source category.
 	// Useful if you want to override the source category configured for the source.
 	// Placeholders `%{attr_name}` will be replaced with attribute value for attr_name.
 	SourceCategory string `mapstructure:"source_category"`
 	// Desired source name.
+	// DEPRECATED
 	// Useful if you want to override the source name configured for the source.
 	// Placeholders `%{attr_name}` will be replaced with attribute value for attr_name.
 	SourceName string `mapstructure:"source_name"`
 	// Desired host name.
+	// DEPRECATED
 	// Useful if you want to override the source host configured for the source.
 	// Placeholders `%{attr_name}` will be replaced with attribute value for attr_name.
 	SourceHost string `mapstructure:"source_host"`

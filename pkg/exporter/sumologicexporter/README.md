@@ -45,12 +45,15 @@ exporters:
     # For below described source related configuration,
     # please refer to "Source templates" documentation chapter from this document.
 
+    # DEPRECATED
     # desired source category, useful if you want to override the source category
     # configured for the source.
     source_category: <source_category>
+    # DEPRECATED
     # desired source name, useful if you want to override the source name
     # configured for the source.
     source_name: <source_name>
+    # DEPRECATED
     # desired host name, useful if you want to override the source host
     # configured for the source.
     source_host: <source_host>
