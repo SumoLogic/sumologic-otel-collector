@@ -43,7 +43,7 @@ const (
 
 const translationDeprecationBanner = `
 ***********************************************************************************************************************************************************
-***    Translating attributes is deprecated and is going to be dropped soon. Please see the migration document:                                  	    ***
+***    Translating attributes is deprecated and is going to be dropped soon. Please see the migration document:                                         ***
 ***    https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Upgrading.md#sumologic-exporter-drop-support-for-translating-attributes.    ***
 ***********************************************************************************************************************************************************
 `
@@ -52,6 +52,13 @@ const telegrafTranslationDeprecationBanner = `
 ***********************************************************************************************************************************************************
 ***    Translating Telegraf metric names is deprecated and is going to be dropped soon. Please see the migration document:                              ***
 ***    https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Upgrading.md#sumologic-exporter-drop-support-for-translating-attributes.    ***
+***********************************************************************************************************************************************************
+`
+
+const sourceTemplatesDeprecationBanner = `
+***********************************************************************************************************************************************************
+***    Adding source headers is deprecated and is going to be dropped soon. Please see the migration document:                                          ***
+***    https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/Upgrading.md#sumologic-exporter-drop-support-for-source-headers.            ***
 ***********************************************************************************************************************************************************
 `
 
@@ -87,6 +94,10 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 
 	if cfg.TranslateTelegrafMetrics {
 		createSettings.Logger.Warn(telegrafTranslationDeprecationBanner)
+	}
+
+	if cfg.SourceCategory != "" || cfg.SourceHost != "" || cfg.SourceName != "" {
+		createSettings.Logger.Warn(sourceTemplatesDeprecationBanner)
 	}
 
 	sfs, err := newSourceFormats(cfg)

@@ -1,6 +1,7 @@
 # Upgrading
 
 - [Unreleased](#unreleased)
+  - [`sumologic` exporter: drop support for source templates](#sumologic-exporter-drop-support-for-source-headers)
 - [Upgrading to v0.56.0-sumo-0](#upgrading-to-v0560-sumo-0)
   - [`sumologic` exporter: drop support for translating attributes](#sumologic-exporter-drop-support-for-translating-attributes)
   - [`sumologic` exporter: drop support for translating Telegraf metric names](#sumologic-exporter-drop-support-for-translating-telegraf-metric-names)
@@ -20,6 +21,21 @@
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
 ## Unreleased
+
+### `sumologic` exporter: drop support for source headers
+
+Since the exporter should not modify the data, setting the source headers is no longer supported in the `sumologic` exporter.
+This deprecation includes deprecating the source templates.
+
+If you need to set the `_source*` headers in the collector, use the `transform` processor, for example:
+
+```yaml
+processors:
+  # ...
+  transform:
+    logs:
+      - set(attributes["_sourceHost"], "source_host")
+```
 
 ## Upgrading to v0.56.0-sumo-0
 
