@@ -1,6 +1,7 @@
 # Upgrading
 
 - [Unreleased](#unreleased)
+- [Upgrading to v0.56.0-sumo-0](#upgrading-to-v0560-sumo-0)
   - [`sumologic` exporter: drop support for translating attributes](#sumologic-exporter-drop-support-for-translating-attributes)
   - [`sumologic` exporter: drop support for translating Telegraf metric names](#sumologic-exporter-drop-support-for-translating-telegraf-metric-names)
 - [Upgrading to v0.55.0-sumo-0](#upgrading-to-v0550-sumo-0)
@@ -19,6 +20,8 @@
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
 ## Unreleased
+
+## Upgrading to v0.56.0-sumo-0
 
 ### `sumologic` exporter: drop support for translating attributes
 
