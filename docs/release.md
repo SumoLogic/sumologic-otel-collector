@@ -1,10 +1,10 @@
 # Releasing
 
 - [How to release](#how-to-release)
-  - [Update Changelog](#update-changelog)
+  - [Update Changelog and upgrading guide](#update-changelog-and-upgrading-guide)
   - [Create and push Git tag](#create-and-push-git-tag)
   - [Publish GitHub release](#publish-github-release)
-  - [Add `Unreleased` section to the changelog](#add-unreleased-section-to-the-changelog)
+  - [Add `Unreleased` section to the changelog and upgrading guide](#add-unreleased-section-to-the-changelog-and-upgrading-guide)
 - [Updating OT core](#updating-ot-core)
   - [Updating patched processors](#updating-patched-processors)
   - [Updating OT distro](#updating-ot-distro)
@@ -14,14 +14,15 @@
 
 ## How to release
 
-### Update Changelog
+### Update Changelog and upgrading guide
 
-Edit the [CHANGELOG.md][changelog] file and add an entry for the release that will be created.
+Edit the [CHANGELOG.md][changelog] and [Upgrading.md][upgrading] files and add entries for the release that will be created.
 
-Here are some example pull requests: [#602], [#652].
+Here are some example pull requests: [#602], [#652], [#684]
 
 [#602]: https://github.com/SumoLogic/sumologic-otel-collector/pull/602
 [#652]: https://github.com/SumoLogic/sumologic-otel-collector/pull/652
+[#684]: https://github.com/SumoLogic/sumologic-otel-collector/pull/684
 
 ### Create and push Git tag
 
@@ -77,9 +78,9 @@ edit the release draft and fill in missing information:
 
 After verifying that the release text and all links are good, publish the release.
 
-### Add `Unreleased` section to the changelog
+### Add `Unreleased` section to the changelog and upgrading guide
 
-Edit the [CHANGELOG.md][changelog] file and prepare unreleased section.
+Edit the [CHANGELOG.md][changelog] and [Upgrading.md][upgrading] files and prepare unreleased section.
 
 Here is the example pull request: [#677].
 
@@ -282,6 +283,7 @@ make update-journalctl
 [circleci_approve]: ../images/circleci_approve_workflow.png
 [contrib_fork]: https://github.com/SumoLogic/opentelemetry-collector-contrib
 [changelog]: ../CHANGELOG.md
+[upgrading]: ./Upgrading.md
 [journaldreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.51.0/receiver/journaldreceiver
 [debian_versions]: https://hub.docker.com/_/debian/?tab=description
 [otelcol_components]: https://github.com/open-telemetry/opentelemetry-collector-releases/blob/main/distributions/otelcol/manifest.yaml
