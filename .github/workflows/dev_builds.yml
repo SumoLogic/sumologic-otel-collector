@@ -134,7 +134,7 @@ jobs:
     strategy:
       matrix:
         go: [ '1.18.2b7' ]
-        arch_os: [ 'linux_amd64' , 'linux_arm64' ]
+        arch_os: [ 'linux_amd64']
     steps:
       - uses: actions/checkout@v3
 
@@ -170,7 +170,7 @@ jobs:
         working-directory: ./otelcolbuilder
 
       - name: Build
-        run: make otelcol-sumo-${{matrix.arch_os}} FIPS_SUFFIX="-fips"
+        run: make otelcol-sumo-${{matrix.arch_os}} FIPS_SUFFIX="-fips" CGO_ENABLED=1
         working-directory: ./otelcolbuilder
 
       - name: Show included modules
@@ -180,77 +180,11 @@ jobs:
           grep -E "/(receiver|exporter|processor|extension)/" | \
           tee otelcol-sumo-fips-${{matrix.arch_os}}_modules.txt
 
-      - name: Store binary as action artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: otelcol-sumo-fips-${{matrix.arch_os}}
-          path: ./otelcolbuilder/cmd/otelcol-sumo-fips-${{matrix.arch_os}}
-          if-no-files-found: error
-
-      - name: Store list of included modules as action artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: otelcol-sumo-fips-${{matrix.arch_os}}_modules.txt
-          path: ./otelcolbuilder/cmd/otelcol-sumo-fips-${{matrix.arch_os}}_modules.txt
-          if-no-files-found: error
-
-  # pipeline to build FIPS compliance binary on Go+BoringCrypto for darwin
-  build-fips-darwin:
-    name: Build
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        go: [ '1.18.2b7' ]
-        arch_os: [ 'darwin_amd64' , 'darwin_arm64']
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
-
-      - name: Build and install Go+BoringCrypto
-        run: |
-          wget https://go-boringcrypto.storage.googleapis.com/go${{ matrix.go }}.src.tar.gz \
-            && tar -xf go${{ matrix.go }}.src.tar.gz \
-            && cd go/src/ \
-            && GOROOT_BOOTSTRAP=/usr ./make.bash \
-            && cd .. \
-            && sudo rm -rf /usr/local/bin/go \
-            && sudo cp bin/go* /usr/local/bin/
-
-      - name: Check go version
-        run: go version
-
-      # As described in
-      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
-      - uses: actions/cache@v3
-        with:
-          path: |
-            /home/runner/go/pkg/mod
-            /home/runner/.cache/go-build
-            /Users/runner/go/pkg/mod
-            /Users/runner/Library/Caches/go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      - name: Add opentelemetry-collector-builder installation dir to PATH
-        run: echo "$HOME/bin" >> $GITHUB_PATH
-
-      - name: Install opentelemetry-collector-builder
-        run: make install-builder
-        working-directory: ./otelcolbuilder
-
-      - name: Build
-        run: make otelcol-sumo-${{matrix.arch_os}} FIPS_SUFFIX="-fips"
-        working-directory: ./otelcolbuilder
-
-      - name: Show included modules
+      - name: Show BoringSSL symbols
         working-directory: ./otelcolbuilder/cmd
         run: |
-          go version -m otelcol-sumo-fips-${{matrix.arch_os}} | \
-          grep -E "/(receiver|exporter|processor|extension)/" | \
-          tee otelcol-sumo-fips-${{matrix.arch_os}}_modules.txt
+          go tool nm otelcol-sumo-fips-${{matrix.arch_os}} | \
+          grep "_Cfunc__goboringcrypto_"
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v3
@@ -302,11 +236,13 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
 
       - name: Download FIPS binary action artifact from build phase
+        if: matrix.arch_os == 'linux_amd64'
         uses: actions/download-artifact@v3
         with:
           name: otelcol-sumo-fips-${{matrix.arch_os}}
 
       - name: Build and push FIPS image to Open Source ECR
+        if: matrix.arch_os == 'linux_amd64'
         run: |
           cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-multiplatform-dev-fips \
@@ -361,7 +297,7 @@ jobs:
         run: |
           make push-container-manifest-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
-            PLATFORMS="linux/amd64 linux/arm64" \
+            PLATFORMS="linux/amd64" \
             LATEST_TAG_FIPS_SUFFIX="-fips"
 
       - name: Push joint container manifest for all platforms to Open Source ECR
