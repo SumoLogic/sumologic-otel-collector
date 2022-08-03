@@ -3,3 +3,4 @@ cmd/*
 !cmd/testdata/
 !cmd/configprovider.go
 !cmd/main.go.patch
+!cmd/fips.go
