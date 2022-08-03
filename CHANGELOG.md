@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - feat: add glob config provider [#713]
+- feat(build): validate FIPS mode at build time and runtime [#693]
 
 ### Changed
 
@@ -32,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#713]: https://github.com/SumoLogic/sumologic-otel-collector/pull/713
 [#724]: https://github.com/SumoLogic/sumologic-otel-collector/pull/724
 [#746]: https://github.com/SumoLogic/sumologic-otel-collector/pull/746
+[#693]: https://github.com/SumoLogic/sumologic-otel-collector/pull/693
 
 ## [v0.57.2-sumo-0]
 
