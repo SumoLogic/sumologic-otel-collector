@@ -23,6 +23,13 @@ else
 CGO_ENABLED ?= 0
 endif
 
+# We don't want to strip symbols for FIPS builds, as they're useful for verifying the build
+ifeq ($(FIPS_SUFFIX),"")
+LDFLAGS="-s -w"
+else
+LDFLAGS="-w"
+endif
+
 .PHONY: _install-bin
 _install-bin:
 	@mkdir -p /$(HOME)/bin
@@ -68,7 +75,7 @@ _gobuild:
 	(cd cmd && \
 		CGO_ENABLED=$(CGO_ENABLED) go build -v \
 		-tags enable_unstable \
-		-ldflags="-s -w" \
+		-ldflags=$(LDFLAGS) \
 		-trimpath \
 		-o ./$(BINARY_NAME) . \
 	)
