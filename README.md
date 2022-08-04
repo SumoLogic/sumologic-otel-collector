@@ -25,6 +25,18 @@ In order to learn more, pleasee see [purpose of Sumo Logic Distribution for Open
 - [Versioning policy](./docs/UpstreamRelation.md#versioning-policy)
 - [Breaking changes policy](./docs/UpstreamRelation.md#breaking-changes-policy)
 
+## Supported OS and architectures
+
+| Linux                         | MacOS                         |
+|-------------------------------|-------------------------------|
+| [amd64 (x86_64)][linux_amd64] | [amd64 (x86_64)][mac_amd64]   |
+| [arm64][linux_arm64]          | [arm64 (Apple M1)][mac_arm64] |
+
+[linux_amd64]: ./docs/Installation.md#linux-on-amd64-x86-64
+[linux_arm64]: ./docs/Installation.md#linux-on-arm64
+[mac_amd64]: ./docs/Installation.md#macos-on-amd64-x86-64
+[mac_arm64]: ./docs/Installation.md#macos-on-arm64-apple-m1-x86-64
+
 ## Components
 
 This section lists the components that are included in Sumo Logic Distribution for OpenTelemetry Collector.
