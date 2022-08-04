@@ -420,6 +420,7 @@ jobs:
           grep -E "/(receiver|exporter|processor|extension)/"
 
       - name: Show BoringSSL symbols
+        if: steps.changed-files.outputs.any_changed == 'true'
         working-directory: ./otelcolbuilder/cmd
         run: |
           go tool nm otelcol-sumo-fips-${{matrix.arch_os}} | \
