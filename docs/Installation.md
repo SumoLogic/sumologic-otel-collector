@@ -367,19 +367,35 @@ To run opentelemetry collector as Systemd Service please apply following steps:
 
 1. Create configuration file and save it as `/etc/otelcol-sumo/config.yaml`.
 
-> **IMPORTANT NOTE**:
-> It is recommended to limit access to the configuration file as it contains sensitive information.
-> You can change access permissions to the configuration file using:
->
-> ```bash
-> chmod 640 config.yaml
-> ```
+   > **IMPORTANT NOTE**:
+   > It is recommended to limit access to the configuration file as it contains sensitive information.
+   > You can change access permissions to the configuration file using:
+   >
+   > ```bash
+   > chmod 640 config.yaml
+   > ```
 
 1. Create `user` and `group` to run opentelemetry by:
 
    ```bash
-   sudo useradd -rUs /bin/false opentelemetry
+   sudo useradd -mrUs /bin/false opentelemetry
    ```
+
+   > **IMPORTANT NOTE**:
+   > This command will create a home directory for the user. By default, the `sumologic` extension stores the credentials in a subdirectory of the home directory.
+   > However, if the user with name `opentelemetry` already exists, it won't be overwritten, so you should make sure that a home directory has been created for this user.
+   >
+   > If you don't want the user to have a home directory, you should use `useradd` without the `m` flag
+   > and explicitely change the directory for saving the credentials, for example:
+   >
+   > ```yaml
+   > extensions:
+   >   sumologic:
+   >     # ...
+   >     collector_credentials_directory: /etc/otelcol-sumo/credentials
+   > ```
+   >
+   > For more information, please refer to the documentation of [sumologic extension][sumologicextension].
 
 1. Ensure that `/etc/otelcol-sumo/config.yaml` can be accessed by `opentelemetry` user
    which will be used to run the service.

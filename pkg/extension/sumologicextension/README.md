@@ -139,3 +139,9 @@ When collector is restarting it checks if the state file exists in `collector_cr
 If one would like to register another collector on the same machine then `collector_name` configuration property
 has to be specified in order to register the collector under that specific name which will be used to create
 a separate state file.
+
+### Running the collector as systemd service
+
+Systemd services are often run as users without a home directory,
+so if the collector is run as such service, the credentials might not be stored properly. One should either make sure that the home directory exists for the user
+or change the store location to another directory.

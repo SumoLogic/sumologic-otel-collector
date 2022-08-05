@@ -6,6 +6,7 @@
   - [Basic configuration for traces](#basic-configuration-for-traces)
   - [Putting it all together](#putting-it-all-together)
 - [Authentication](#authentication)
+  - [Running the collector as systemd service](#running-the-collector-as-systemd-service)
   - [Using multiple Sumo Logic extensions](#using-multiple-sumo-logic-extensions)
 - [Persistence](#persistence)
 - [Collecting logs from files](#collecting-logs-from-files)
@@ -283,11 +284,20 @@ service:
 For a list of all the configuration options for sumologicextension refer to
 [this documentation][sumologicextension_configuration].
 
+### Running the collector as systemd service
+
+The credentials are stored on local filesystem (by default in `$HOME/.sumologic-otel-collector`) to be reused when collector gets restarted.
+However, systemd services are often run as users without a home directory,
+so keep in mind that to store credentials either the user needs a home directory or the store location should be explicitely changed.
+
+More information about this feature can be found in the [extension's documentation][sumologicextension_store_credentials].
+
 [sumologic_webpage]: https://www.sumologic.com/
 [sumologicextension]: ../pkg/extension/sumologicextension/
 [sumologicexporter]: ../pkg/exporter/sumologicexporter/
 [hostmetricsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.56.0/receiver/hostmetricsreceiver
 [sumologicextension_configuration]: ../pkg/extension/sumologicextension#configuration
+[sumologicextension_store_credentials]: ../pkg/extension/sumologicextension/README.md#storing-credentials
 
 ### Using multiple Sumo Logic extensions
 
