@@ -401,7 +401,7 @@ func isEmptyAttributeValue(att pcommon.Value) bool {
 	return !(t == pcommon.ValueTypeString && len(att.StringVal()) > 0 ||
 		t == pcommon.ValueTypeSlice && att.SliceVal().Len() > 0 ||
 		t == pcommon.ValueTypeMap && att.MapVal().Len() > 0 ||
-		t == pcommon.ValueTypeBytes && len(att.MBytesVal()) > 0)
+		t == pcommon.ValueTypeBytes && att.BytesVal().Len() > 0)
 }
 
 // sendNonOTLPLogs sends log records from the logBuffer formatted according

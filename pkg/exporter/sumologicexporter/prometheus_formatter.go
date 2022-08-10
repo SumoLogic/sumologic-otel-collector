@@ -344,16 +344,17 @@ func (f *prometheusFormatter) histogram2Strings(metric pmetric.Metric, attribute
 	for i := 0; i < dps.Len(); i++ {
 		dp := dps.At(i)
 
-		explicitBounds := dp.MExplicitBounds()
-		if len(explicitBounds) == 0 {
+		explicitBounds := dp.ExplicitBounds()
+		if explicitBounds.Len() == 0 {
 			continue
 		}
 
 		var cumulative uint64
 		additionalAttributes := pcommon.NewMap()
 
-		for i, bound := range explicitBounds {
-			cumulative += dp.MBucketCounts()[i]
+		for i := 0; i < explicitBounds.Len(); i++ {
+			bound := explicitBounds.At(i)
+			cumulative += dp.BucketCounts().At(i)
 			additionalAttributes.UpsertDouble(prometheusLeTag, bound)
 
 			line := f.uintValueLine(
@@ -365,7 +366,7 @@ func (f *prometheusFormatter) histogram2Strings(metric pmetric.Metric, attribute
 			lines = append(lines, line)
 		}
 
-		cumulative += dp.MBucketCounts()[len(explicitBounds)]
+		cumulative += dp.BucketCounts().At(explicitBounds.Len())
 		additionalAttributes.UpsertString(prometheusLeTag, prometheusInfValue)
 		line := f.uintValueLine(
 			metric.Name(),
