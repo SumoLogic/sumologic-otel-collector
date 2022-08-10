@@ -1,11 +1,11 @@
 # Raw Kubernetes Events Receiver
 
+**Stability level**: Beta
+
 Receiver for ingesting Kubernetes Events in their raw format, exactly as the Kubernetes API returns them.
 It intends to return exactly the same output as the following [Fluentd plugin].
 
 Supported pipeline types: logs
-
-> :construction: This receiver is in **ALPHA**. Configuration fields, behaviour and log data model are subject to change.
 
 ## Configuration
 

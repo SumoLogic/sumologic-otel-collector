@@ -1,5 +1,7 @@
 # Cascading Filter Processor
 
+**Stability level**: Beta
+
 Supported pipeline types: traces
 
 The Cascading Filter processor is a fork of [tailsamplingprocessor][tailsamplingprocessor] which allows for defining smart cascading filtering rules with preset limits.

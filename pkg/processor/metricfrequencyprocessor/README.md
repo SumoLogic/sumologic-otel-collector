@@ -1,5 +1,7 @@
 # Metric Frequency Processor
 
+**Stability level**: Beta
+
 The `metricfrequencyprocessor` is a metrics processor that helps reduce DPM by automatic tuning of metrics reporting
 frequency which adjusts for metric's information volume.
 

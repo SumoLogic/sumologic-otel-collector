@@ -22,13 +22,14 @@ const (
 	defaultDataPointExpirationTime        = 1 * time.Hour
 	defaultDataPointCacheCleanupInterval  = 10 * time.Minute
 	defaultMetricCacheCleanupInterval     = 3 * time.Hour
+	stabilityLevel                        = component.StabilityLevelBeta
 )
 
 func NewFactory() component.ProcessorFactory {
 	return component.NewProcessorFactory(
 		cfgType,
 		createDefaultConfig,
-		component.WithMetricsProcessor(createMetricsProcessor),
+		component.WithMetricsProcessorAndStabilityLevel(createMetricsProcessor, stabilityLevel),
 	)
 }
 

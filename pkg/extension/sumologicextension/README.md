@@ -1,5 +1,7 @@
 # Sumo Logic Extension
 
+**Stability level**: Beta
+
 This extension is to be used as part of Sumo Logic collector in conjuction with
 [`sumologicexporter`][sumologicexporter] in order to export telemetry data to
 [Sumo Logic][sumologic].

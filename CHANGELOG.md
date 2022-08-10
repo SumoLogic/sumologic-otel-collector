@@ -14,6 +14,7 @@ This release deprecates the following features, which will be removed in `v0.60.
 ### Changed
 
 - feat(sumologicexporter): deprecate source templates ([upgrade guide][upgrade_guide_v0_57_0_deprecate_source_templates])
+- feat: define stability levels for components
 
 [upgrade_guide_v0_57_0_deprecate_source_templates]: ./docs/Upgrading.md#sumologic-exporter-drop-support-for-source-headers
 

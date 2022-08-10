@@ -29,7 +29,8 @@ import (
 
 const (
 	// The value of "type" Cascading Filter in configuration.
-	typeStr = "cascading_filter"
+	typeStr        = "cascading_filter"
+	stabilityLevel = component.StabilityLevelBeta
 )
 
 func init() {
@@ -45,7 +46,7 @@ func NewFactory() component.ProcessorFactory {
 	return component.NewProcessorFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithTracesProcessor(createTraceProcessor))
+		component.WithTracesProcessorAndStabilityLevel(createTraceProcessor, stabilityLevel))
 }
 
 func createDefaultConfig() config.Processor {

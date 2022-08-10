@@ -1,5 +1,7 @@
 # Sumo Logic Syslog Processor
 
+**Stability level**: Beta
+
 Supported pipeline types: logs
 
 The Sumo Logic Syslog processor can be used to create attribute with facility name
