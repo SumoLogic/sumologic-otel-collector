@@ -28,7 +28,8 @@ import (
 
 const (
 	// Value of "type" key in configuration.
-	typeStr = "raw_k8s_events"
+	typeStr        = "raw_k8s_events"
+	stabilityLevel = component.StabilityLevelBeta
 )
 
 // NewFactory creates a factory for rawk8sevents receiver.
@@ -36,7 +37,7 @@ func NewFactory() component.ReceiverFactory {
 	return component.NewReceiverFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithLogsReceiver(createLogsReceiver))
+		component.WithLogsReceiverAndStabilityLevel(createLogsReceiver, stabilityLevel))
 }
 
 func createDefaultConfig() config.Receiver {

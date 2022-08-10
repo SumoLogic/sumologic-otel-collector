@@ -1,5 +1,7 @@
 # Source Processor
 
+**Stability level**: Beta
+
 The `sourceprocessor` adds `_sourceName` and other tags related to Sumo Logic metadata taxonomy.
 
 It is recommended to use `k8sprocessor` to provide attributes used in default values.

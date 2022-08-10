@@ -1,5 +1,7 @@
 # Kubernetes Processor
 
+**Stability level**: Beta
+
 The `k8sprocessor` automatically tags logs, metrics and traces with Kubernetes metadata
 like pod name, namespace name etc.
 

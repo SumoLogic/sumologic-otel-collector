@@ -28,7 +28,8 @@ import (
 
 const (
 	// The value of "type" key in configuration.
-	typeStr = "k8s_tagger"
+	typeStr        = "k8s_tagger"
+	stabilityLevel = component.StabilityLevelBeta
 )
 
 var kubeClientProvider = kube.ClientProvider(nil)
@@ -39,9 +40,9 @@ func NewFactory() component.ProcessorFactory {
 	return component.NewProcessorFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithTracesProcessor(createTracesProcessor),
-		component.WithMetricsProcessor(createMetricsProcessor),
-		component.WithLogsProcessor(createLogsProcessor),
+		component.WithTracesProcessorAndStabilityLevel(createTracesProcessor, stabilityLevel),
+		component.WithMetricsProcessorAndStabilityLevel(createMetricsProcessor, stabilityLevel),
+		component.WithLogsProcessorAndStabilityLevel(createLogsProcessor, stabilityLevel),
 	)
 }
 

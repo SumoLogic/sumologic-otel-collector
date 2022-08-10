@@ -1,5 +1,7 @@
 # Sumo Logic Exporter
 
+**Stability level**: Beta
+
 This exporter supports sending logs and metrics data to [Sumo Logic](https://www.sumologic.com/).
 
 We strongly recommend to use this exporter with [sumologicextension](../../extension/sumologicextension/README.md).

@@ -25,7 +25,8 @@ import (
 
 const (
 	// The value of "type" Tail Sampling in configuration.
-	typeStr = "sumologic_syslog"
+	typeStr        = "sumologic_syslog"
+	stabilityLevel = component.StabilityLevelBeta
 )
 
 var processorCapabilities = consumer.Capabilities{MutatesData: true}
@@ -35,7 +36,7 @@ func NewFactory() component.ProcessorFactory {
 	return component.NewProcessorFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithLogsProcessor(createLogProcessor))
+		component.WithLogsProcessorAndStabilityLevel(createLogProcessor, stabilityLevel))
 }
 
 func createDefaultConfig() config.Processor {

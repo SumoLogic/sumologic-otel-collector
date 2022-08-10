@@ -27,8 +27,9 @@ import (
 )
 
 const (
-	typeStr    = "telegraf"
-	versionStr = "v0.1"
+	typeStr        = "telegraf"
+	versionStr     = "v0.1"
+	stabilityLevel = component.StabilityLevelBeta
 )
 
 // NewFactory creates a factory for telegraf receiver.
@@ -36,7 +37,7 @@ func NewFactory() component.ReceiverFactory {
 	return component.NewReceiverFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithMetricsReceiver(createMetricsReceiver),
+		component.WithMetricsReceiverAndStabilityLevel(createMetricsReceiver, stabilityLevel),
 	)
 }
 

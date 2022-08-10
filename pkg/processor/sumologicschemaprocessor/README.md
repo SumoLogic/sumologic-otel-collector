@@ -1,5 +1,7 @@
 # Sumo Logic Schema Processor
 
+**Stability level**: Beta
+
 The Sumo Logic Schema processor (config name: `sumologic_schema`)
 modifies the metadata on logs, metrics and traces sent to [Sumo Logic][sumologic_webpage]
 so that the Sumo Logic [apps][sumologic_apps] can make full use of the ingested data.

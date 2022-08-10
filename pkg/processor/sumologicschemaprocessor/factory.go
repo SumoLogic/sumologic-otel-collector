@@ -25,7 +25,8 @@ import (
 
 const (
 	// The value of "type" key in configuration.
-	typeStr = "sumologic_schema"
+	typeStr        = "sumologic_schema"
+	stabilityLevel = component.StabilityLevelBeta
 )
 
 var processorCapabilities = consumer.Capabilities{MutatesData: true}
@@ -35,9 +36,9 @@ func NewFactory() component.ProcessorFactory {
 	return component.NewProcessorFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithTracesProcessor(createTracesProcessor),
-		component.WithMetricsProcessor(createMetricsProcessor),
-		component.WithLogsProcessor(createLogsProcessor))
+		component.WithTracesProcessorAndStabilityLevel(createTracesProcessor, stabilityLevel),
+		component.WithMetricsProcessorAndStabilityLevel(createMetricsProcessor, stabilityLevel),
+		component.WithLogsProcessorAndStabilityLevel(createLogsProcessor, stabilityLevel))
 }
 
 func createLogsProcessor(

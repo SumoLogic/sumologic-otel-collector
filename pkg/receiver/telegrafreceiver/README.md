@@ -1,5 +1,7 @@
 # Telegraf Receiver
 
+**Stability level**: Beta
+
 Telegraf receiver for ingesting metrics from various [input plugins][input_plugins]
 into otc pipeline.
 

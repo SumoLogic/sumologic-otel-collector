@@ -39,6 +39,8 @@ const (
 	defaultPodKey             = "k8s.pod.name"
 	defaultPodNameKey         = "k8s.pod.pod_name"
 	defaultPodTemplateHashKey = "k8s.pod.label.pod-template-hash"
+
+	stabilityLevel = component.StabilityLevelBeta
 )
 
 var processorCapabilities = consumer.Capabilities{MutatesData: true}
@@ -48,9 +50,9 @@ func NewFactory() component.ProcessorFactory {
 	return component.NewProcessorFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithTracesProcessor(createTraceProcessor),
-		component.WithMetricsProcessor(createMetricsProcessor),
-		component.WithLogsProcessor(createLogsProcessor),
+		component.WithTracesProcessorAndStabilityLevel(createTraceProcessor, stabilityLevel),
+		component.WithMetricsProcessorAndStabilityLevel(createMetricsProcessor, stabilityLevel),
+		component.WithLogsProcessorAndStabilityLevel(createLogsProcessor, stabilityLevel),
 	)
 }
 
