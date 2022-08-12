@@ -350,7 +350,6 @@ jobs:
       # Require darwin build to succeed to prevent pushing container images
       # when darwin build fails.
       - build-darwin
-      - build-fips-darwin
       - build-container-images
     steps:
       - uses: actions/checkout@v3
