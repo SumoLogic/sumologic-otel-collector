@@ -5,21 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.57.2-sumo-0]
 
 This release deprecates the following features, which will be removed in `v0.60.0`:
 
 - feat(sumologicexporter): deprecate source templates ([upgrade guide][upgrade_guide_v0_57_0_deprecate_source_templates])
-- chore: upgrade OpenTelemetry Core to v0.57.2 [#699]
-
-[#699]: https://github.com/SumoLogic/sumologic-otel-collector/pull/699/
 
 ### Changed
 
 - feat(sumologicexporter): deprecate source templates ([upgrade guide][upgrade_guide_v0_57_0_deprecate_source_templates])
-- feat: define stability levels for components
+- feat: define stability levels for components [#701]
+- chore: upgrade OpenTelemetry Core to v0.57.2 [#699]
 
 [upgrade_guide_v0_57_0_deprecate_source_templates]: ./docs/Upgrading.md#sumologic-exporter-drop-support-for-source-headers
+[#699]: https://github.com/SumoLogic/sumologic-otel-collector/pull/699/
+[#701]: https://github.com/SumoLogic/sumologic-otel-collector/pull/701/
 
 ## [v0.56.0-sumo-0]
 

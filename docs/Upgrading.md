@@ -1,6 +1,6 @@
 # Upgrading
 
-- [Unreleased](#unreleased)
+- [Upgrading to v0.57.2-sumo-0](#upgrading-to-v0572-sumo-0)
   - [`sumologic` exporter: drop support for source templates](#sumologic-exporter-drop-support-for-source-headers)
 - [Upgrading to v0.56.0-sumo-0](#upgrading-to-v0560-sumo-0)
   - [`sumologic` exporter: drop support for translating attributes](#sumologic-exporter-drop-support-for-translating-attributes)
@@ -20,7 +20,7 @@
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
-## Unreleased
+## Upgrading to v0.57.2-sumo-0
 
 ### `sumologic` exporter: drop support for source headers
 
