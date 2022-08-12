@@ -50,9 +50,9 @@ func NewFactory() component.ProcessorFactory {
 	return component.NewProcessorFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithTracesProcessorAndStabilityLevel(createTraceProcessor, stabilityLevel),
-		component.WithMetricsProcessorAndStabilityLevel(createMetricsProcessor, stabilityLevel),
-		component.WithLogsProcessorAndStabilityLevel(createLogsProcessor, stabilityLevel),
+		component.WithTracesProcessor(createTracesProcessor, stabilityLevel),
+		component.WithMetricsProcessor(createMetricsProcessor, stabilityLevel),
+		component.WithLogsProcessor(createLogsProcessor, stabilityLevel),
 	)
 }
 
@@ -83,7 +83,7 @@ func createDefaultConfig() config.Processor {
 }
 
 // CreateTraceProcessor creates a trace processor based on this config.
-func createTraceProcessor(
+func createTracesProcessor(
 	_ context.Context,
 	params component.ProcessorCreateSettings,
 	cfg config.Processor,

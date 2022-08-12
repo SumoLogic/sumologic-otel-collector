@@ -483,7 +483,7 @@ func (se *sumologicexporter) configure(ctx context.Context) error {
 		return fmt.Errorf("no auth extension and no endpoint specified")
 	}
 
-	client, err := httpSettings.ToClientWithHost(se.host, component.TelemetrySettings{})
+	client, err := httpSettings.ToClient(se.host, component.TelemetrySettings{})
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP Client: %w", err)
 	}

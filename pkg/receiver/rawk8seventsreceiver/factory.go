@@ -37,7 +37,7 @@ func NewFactory() component.ReceiverFactory {
 	return component.NewReceiverFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithLogsReceiverAndStabilityLevel(createLogsReceiver, stabilityLevel))
+		component.WithLogsReceiver(createLogsReceiver, stabilityLevel))
 }
 
 func createDefaultConfig() config.Receiver {
