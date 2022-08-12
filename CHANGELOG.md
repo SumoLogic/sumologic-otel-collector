@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This release deprecates the following features, which will be removed in `v0.60.0`:
 
 - feat(sumologicexporter): deprecate source templates ([upgrade guide][upgrade_guide_v0_57_0_deprecate_source_templates])
+- chore: upgrade OpenTelemetry Core to v0.57.2 [#699]
+
+[#699]: https://github.com/SumoLogic/sumologic-otel-collector/pull/699/
 
 ### Changed
 
