@@ -513,29 +513,32 @@ This section describes how to configure the Sumo Logic Distribution of OpenTelem
 to decorate data with this attribute.
 
 To decorate all the data from the collector with the same source category,
-set the `source_category` property on the [Sumo Logic exporter][sumologicexporter_docs] like this:
+set the `source_category` property on the [source processor][source_proc] like this:
 
 ```yaml
-exporters:
-  sumologic:
+processors:
+  source:
     source_category: my/source/category
 ```
 
-You can also use Sumo Logic exporter's [source templates][sumologicexporter_source_templates]
+You can also use the [source templates][source_proc_templates]
 to use other attributes' values to compose source category, like this:
 
 ```yaml
-exporters:
-  sumologic:
-    source_category: "%{cloud.provider}/%{cloud.region}/%{cloud.platform}"
+processors:
+  source:
+    source_category: "%{k8s.namespace.name}/%{k8s.pod.pod_name}"
 ```
+
+However, please bear in mind that the source processor is going to be removed in the future.
 
 If you want data from different sources to have different source categories,
 you'll need to set a resource attribute named `_sourceCategory` earlier in the pipeline.
 See below for examples on how to do this in various scenarios.
 
 [source_category_docs]: https://help.sumologic.com/03Send-Data/Sources/04Reference-Information-for-Sources/Metadata-Naming-Conventions#source-categories
-[sumologicexporter_source_templates]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/pkg/exporter/sumologicexporter/README.md#source-templates
+[source_proc]: ../pkg/processor/sourceprocessor
+[source_proc_templates]: ../pkg/processor/sourceprocessor/README.md#source-templates
 
 ### Setting source category on logs from files
 
@@ -677,13 +680,13 @@ service:
 
 ## Setting source host
 
-You can use the Sumo Logic exporter's `source_host` property
+You can use the source processor's `source_host` property
 to set the [Sumo Logic source host][sumologic_source_host_docs] attribute
 to a static value like this:
 
 ```yaml
-exporters:
-  sumologic:
+processors:
+  source:
     source_host: my-host-name
 ```
 
