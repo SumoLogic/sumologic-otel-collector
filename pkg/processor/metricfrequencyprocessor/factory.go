@@ -29,7 +29,7 @@ func NewFactory() component.ProcessorFactory {
 	return component.NewProcessorFactory(
 		cfgType,
 		createDefaultConfig,
-		component.WithMetricsProcessorAndStabilityLevel(createMetricsProcessor, stabilityLevel),
+		component.WithMetricsProcessor(createMetricsProcessor, stabilityLevel),
 	)
 }
 
