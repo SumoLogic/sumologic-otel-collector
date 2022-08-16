@@ -55,7 +55,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 | [awscontainerinsightreceiver][awscontainerinsightreceiver] |       [cumulativetodelta][cumulativetodeltaprocessor]        | [loadbalancing][loadbalancingexporter] | [bearertokenauth][bearertokenauthextension]  |
 |  [awsecscontainermetrics][awsecscontainermetricsreceiver]  |             [deltatorate][deltatorateprocessor]              |       [logging][loggingexporter]       |           [db_storage][dbstorage]            |
 |             [awsfirehose][awsfirehosereceiver]             | [experimental_metricsgeneration][metricsgenerationprocessor] |          [otlp][otlpexporter]          |      [docker_observer][dockerobserver]       |
-|                 [awsxray][awsxrayreceiver]                 |                  [filter][filterprocessor]*                  |      [otlphttp][otlphttpexporter]      |         [ecs_observer][ecsobserver]          |
+|                 [awsxray][awsxrayreceiver]                 |                  [filter][filterprocessor]                   |      [otlphttp][otlphttpexporter]      |         [ecs_observer][ecsobserver]          |
 |                   [bigip][bigipreceiver]                   |            [groupbyattrs][groupbyattrsprocessor]             |    [`sumologic`][sumologicexporter]    |     [ecs_task_observer][ecstaskobserver]     |
 |                  [carbon][carbonreceiver]                  |            [groupbytrace][groupbytraceprocessor]             |                                        |         [file_storage][filestorage]          |
 |            [cloudfoundry][cloudfoundryreceiver]            |                 [`k8s_tagger`][k8sprocessor]                 |                                        |     [health_check][healthcheckextension]     |
@@ -192,7 +192,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 [deltatorateprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.57.2/processor/deltatorateprocessor
 [metricsgenerationprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.57.2/processor/metricsgenerationprocessor
 
-[filterprocessor]: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.57.2-filterprocessor/processor/filterprocessor
+[filterprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.57.2/processor/filterprocessor
 [groupbyattrsprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.57.2/processor/groupbyattrsprocessor
 [groupbytraceprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.57.2/processor/groupbytraceprocessor
 [k8sprocessor]: ./pkg/processor/k8sprocessor

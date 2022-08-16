@@ -101,7 +101,7 @@ Updating OT core involves:
 
 ### Updating patched processors
 
-We currently maintain patches for three upstream processors: `resourceprocessor`, `attributesprocessor` and `filterprocessor`.
+We currently maintain patches for two upstream processors: `resourceprocessor` and `attributesprocessor`.
 The patches live in our [contrib fork repository][contrib_fork], on the `vX.X.X-filterprocessor` branch. See [comments][builder_config]
 in the builder configuration for more details.
 
