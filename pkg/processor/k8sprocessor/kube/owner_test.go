@@ -120,7 +120,7 @@ func Test_OwnerProvider_GetOwners_ReplicaSet(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Eventually(t, func() bool {
-		owners := op.GetOwners(pod)
+		owners := op.GetOwners(&Pod{OwnerReferences: &pod.OwnerReferences})
 		if len(owners) != 1 {
 			t.Logf("owners: %v", owners)
 			return false
@@ -232,7 +232,7 @@ func Test_OwnerProvider_GetOwners_Deployment(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Eventually(t, func() bool {
-		owners := op.GetOwners(pod)
+		owners := op.GetOwners(&Pod{OwnerReferences: &pod.OwnerReferences})
 		if len(owners) != 2 {
 			t.Logf("owners: %v", owners)
 			return false
@@ -318,7 +318,7 @@ func Test_OwnerProvider_GetOwners_Statefulset(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Eventually(t, func() bool {
-		owners := op.GetOwners(pod)
+		owners := op.GetOwners(&Pod{OwnerReferences: &pod.OwnerReferences})
 		if len(owners) != 1 {
 			t.Logf("owners: %v", owners)
 			return false
@@ -404,7 +404,7 @@ func Test_OwnerProvider_GetOwners_Daemonset(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Eventually(t, func() bool {
-		owners := op.GetOwners(pod)
+		owners := op.GetOwners(&Pod{OwnerReferences: &pod.OwnerReferences})
 		if len(owners) != 1 {
 			t.Logf("owners: %v", owners)
 			return false
@@ -529,7 +529,7 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Eventually(t, func() bool {
-			services := op.GetServices(pod)
+			services := op.GetServices(pod.Name)
 			if len(services) != 2 {
 				t.Logf("services: %v", services)
 				return false
@@ -544,7 +544,7 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 			Delete(context.Background(), endpoints1.Name, metav1.DeleteOptions{})
 		require.NoError(t, err)
 		assert.Eventually(t, func() bool {
-			services := op.GetServices(pod)
+			services := op.GetServices(pod.Name)
 			if len(services) != 1 {
 				t.Logf("services: %v", services)
 				return false
@@ -558,7 +558,7 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Eventually(t, func() bool {
-			services := op.GetServices(pod)
+			services := op.GetServices(pod.Name)
 			if len(services) != 0 {
 				t.Logf("services: %v", services)
 				return false
@@ -640,7 +640,7 @@ func Test_OwnerProvider_GetOwners_Job(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Eventually(t, func() bool {
-		owners := op.GetOwners(pod)
+		owners := op.GetOwners(&Pod{OwnerReferences: &pod.OwnerReferences})
 		if len(owners) != 1 {
 			t.Logf("owners: %v", owners)
 			return false
@@ -752,7 +752,7 @@ func Test_OwnerProvider_GetOwners_CronJob(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Eventually(t, func() bool {
-		owners := op.GetOwners(pod)
+		owners := op.GetOwners(&Pod{OwnerReferences: &pod.OwnerReferences})
 		if len(owners) != 2 {
 			t.Logf("owners: %v", owners)
 			return false
