@@ -52,9 +52,9 @@ type ObjectOwner struct {
 
 // OwnerAPI describes functions that could allow retrieving owner info
 type OwnerAPI interface {
-	GetOwners(pod *api_v1.Pod) []*ObjectOwner
+	GetOwners(pod *Pod) []*ObjectOwner
 	GetNamespace(pod *api_v1.Pod) *api_v1.Namespace
-	GetServices(pod *api_v1.Pod) []string
+	GetServices(podName string) []string
 	Start()
 	Stop()
 }
@@ -416,9 +416,10 @@ func (op *OwnerCache) GetNamespace(pod *api_v1.Pod) *api_v1.Namespace {
 }
 
 // GetServices returns a slice with matched services - in case no services are found, it returns an empty slice
-func (op *OwnerCache) GetServices(pod *api_v1.Pod) []string {
+
+func (op *OwnerCache) GetServices(podName string) []string {
 	op.podServicesMutex.RLock()
-	oo, found := op.podServices[pod.Name]
+	oo, found := op.podServices[podName]
 	op.podServicesMutex.RUnlock()
 
 	if found {
@@ -428,13 +429,13 @@ func (op *OwnerCache) GetServices(pod *api_v1.Pod) []string {
 }
 
 // GetOwners goes through the cached data and assigns relevant metadata for pod
-func (op *OwnerCache) GetOwners(pod *api_v1.Pod) []*ObjectOwner {
+func (op *OwnerCache) GetOwners(pod *Pod) []*ObjectOwner {
 	objectOwners := []*ObjectOwner{}
 
 	visited := map[types.UID]bool{}
 	queue := []types.UID{}
 
-	for _, or := range pod.OwnerReferences {
+	for _, or := range *pod.OwnerReferences {
 		if _, uidVisited := visited[or.UID]; !uidVisited {
 			queue = append(queue, or.UID)
 			visited[or.UID] = true
