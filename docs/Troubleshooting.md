@@ -1,5 +1,11 @@
 # Troubleshooting
 
+Make sure to read [OpenTelemetry Collector Troubleshooting][otc_troubleshooting] documentation for generic troubleshooting instructions.
+
+See below for some specific scenarios.
+
+[otc_troubleshooting]: https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md
+
 ## Error in OTC logs: `Dropping data because sending_queue is full`
 
 If you see logs like the following in the output from OTC:
