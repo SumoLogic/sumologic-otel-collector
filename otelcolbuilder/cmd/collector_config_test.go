@@ -26,8 +26,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/confmap"
-	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
 	"go.opentelemetry.io/collector/service"
 )
 
@@ -77,6 +75,10 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			name:       "sumologic_schema processor can be used in logs, metrics and traces pipelines",
 			configFile: "testdata/sumologicschemaprocessor.yaml",
 		},
+		{
+			name:       "multiple config files can be handled by the glob config provider",
+			configFile: "glob:testdata/multiple/*.yaml",
+		},
 	}
 
 	for _, tc := range testcases {
@@ -87,11 +89,9 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			factories, err := components()
 			require.NoError(t, err)
 
-			configProviderSettings := service.ConfigProviderSettings{
-				Locations:    []string{tc.configFile},
-				MapProviders: map[string]confmap.Provider{"file": fileprovider.New()},
-			}
-			cp, err := service.NewConfigProvider(configProviderSettings)
+			locations := []string{tc.configFile}
+			setFlags := []string{}
+			cp, err := NewConfigProvider(locations, setFlags)
 			require.NoError(t, err)
 
 			t.Log("Creating new app...")

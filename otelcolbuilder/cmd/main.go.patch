@@ -1,0 +1,14 @@
+--- cmd/main.go	2022-08-14 22:09:19.698717505 +0200
++++ "cmd/main copy.go"	2022-08-14 22:08:11.308717979 +0200
+@@ -28,6 +28,11 @@
+ }
+
+ func runInteractive(params service.CollectorSettings) error {
++	err := UseCustomConfigProvider(&params)
++	if err != nil {
++		return err
++	}
++
+ 	cmd := service.NewCommand(params)
+ 	if err := cmd.Execute(); err != nil {
+ 		log.Fatalf("collector server run finished with error: %v", err)

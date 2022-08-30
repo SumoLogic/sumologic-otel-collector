@@ -1,3 +1,5 @@
 cmd/*
 !cmd/collector_config_test.go
 !cmd/testdata/
+!cmd/configprovider.go
+!cmd/main.go.patch
