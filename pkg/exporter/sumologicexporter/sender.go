@@ -92,12 +92,6 @@ func (b *bodyBuilder) Reset() {
 	b.builder.Reset()
 }
 
-// addLine adds line to builder and increments counter
-func (b *bodyBuilder) addLine(line string) {
-	b.builder.WriteString(line) // WriteString can't actually return an error
-	b.counter += 1
-}
-
 // addLine adds multiple lines to builder and increments counter
 func (b *bodyBuilder) addLines(lines []string) {
 	if len(lines) == 0 {
@@ -131,7 +125,6 @@ func (b *bodyBuilder) toCountingReader() *countingReader {
 
 type sender struct {
 	logger              *zap.Logger
-	metricBuffer        []metricPair
 	config              *Config
 	client              *http.Client
 	sources             sourceFormats
@@ -682,16 +675,6 @@ func (s *sender) sendOTLPTraces(ctx context.Context, td ptrace.Traces) error {
 	return nil
 }
 
-// cleanMetricBuffer zeroes metricBuffer
-func (s *sender) cleanMetricBuffer() {
-	s.metricBuffer = (s.metricBuffer)[:0]
-}
-
-// countMetrics returns number of metrics in metricBuffer
-func (s *sender) countMetrics() int {
-	return len(s.metricBuffer)
-}
-
 func addCompressHeader(req *http.Request, enc CompressEncodingType) error {
 	switch enc {
 	case GZIPCompression:
@@ -792,24 +775,6 @@ func (s *sender) addRequestHeaders(req *http.Request, pipeline PipelineType, fld
 		return fmt.Errorf("unexpected pipeline: %v", pipeline)
 	}
 	return nil
-}
-
-// addSourceResourceAttributes adds source related attributes:
-// * source category
-// * source host
-// * source name
-// to the provided attribute map using the provided fields as values source and using
-// the source templates for formatting.
-func (s *sender) addSourceRelatedResourceAttributesFromFields(attrs pcommon.Map, flds fields) {
-	if s.sources.host.isSet() {
-		attrs.InsertString(attributeKeySourceHost, s.sources.host.format(flds))
-	}
-	if s.sources.name.isSet() {
-		attrs.InsertString(attributeKeySourceName, s.sources.name.format(flds))
-	}
-	if s.sources.category.isSet() {
-		attrs.InsertString(attributeKeySourceCategory, s.sources.category.format(flds))
-	}
 }
 
 // addSourceResourceAttributes adds source related attributes:

@@ -28,7 +28,6 @@ linters:
   disable-all: true
   enable:
     - gofmt
-    - deadcode
     - errcheck
     - goimports
     - misspell
@@ -36,13 +35,9 @@ linters:
     - lll
     - govet
     - ineffassign
-    - structcheck
     - typecheck
-    - varcheck
-    # These linters are problematic when using go1.18 and generic code like in golang.org/x/exp/slices
-    # - unused
-    # - gosimple
-    # - staticcheck
+    - unused
+    - gosimple
 
 issues:
   # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
