@@ -22,42 +22,44 @@
 // It represents a list of rules that are executed in the specified order until the first one is able to do the match.
 // Each rule is specified as a pair of from (representing the rule type) and name (representing the extracted key name).
 // Following rule types are available:
-//   from: "resource_attribute" - allows to specify the attribute name to lookup up in the list of attributes of the received Resource.
-//     The specified attribute, if it is present, identifies the Pod that is represented by the Resource.
-//     (the value can contain either IP address, Pod UID or be in `pod_name.namespace_name` format).
-//     For `pod_name.namespace_name` format, always attributes for actual matching pod will be added.
-//   from: "connection" - takes the IP attribute from connection context (if available) and automatically
-//     associates it with "k8s.pod.ip" attribute
-//   from: "build_hostname" - build hostname from k8s.pod.name concatenated with k8s.namespace.name using dot as separator
-//     and proceed as for `pod_name.namespace_name` format for `resource_attributes` pod_association.
+//
+//	from: "resource_attribute" - allows to specify the attribute name to lookup up in the list of attributes of the received Resource.
+//	  The specified attribute, if it is present, identifies the Pod that is represented by the Resource.
+//	  (the value can contain either IP address, Pod UID or be in `pod_name.namespace_name` format).
+//	  For `pod_name.namespace_name` format, always attributes for actual matching pod will be added.
+//	from: "connection" - takes the IP attribute from connection context (if available) and automatically
+//	  associates it with "k8s.pod.ip" attribute
+//	from: "build_hostname" - build hostname from k8s.pod.name concatenated with k8s.namespace.name using dot as separator
+//	  and proceed as for `pod_name.namespace_name` format for `resource_attributes` pod_association.
+//
 // Pod association configuration.
 // pod_association:
-//  - from: resource_attribute
-//    name: ip
-//  - from: resource_attribute
-//    name: k8s.pod.ip
-//  - from: resource_attribute
-//    name: host.name
-//  - from: connection
-//    name: ip
-//  - from: resource_attribute
-//    name: k8s.pod.uid
+//   - from: resource_attribute
+//     name: ip
+//   - from: resource_attribute
+//     name: k8s.pod.ip
+//   - from: resource_attribute
+//     name: host.name
+//   - from: connection
+//     name: ip
+//   - from: resource_attribute
+//     name: k8s.pod.uid
 //
 // If Pod association rules are not configured resources are associated with metadata only by connection's IP Address.
 //
-// RBAC
+// # RBAC
 //
 // TODO: mention the required RBAC rules.
 //
-// Config
+// # Config
 //
 // TODO: example config.
 //
-// Deployment scenarios
+// # Deployment scenarios
 //
 // The processor supports running both in agent and collector mode.
 //
-// As an agent
+// # As an agent
 //
 // When running as an agent, the processor detects IP addresses of pods sending spans, metrics or logs to the agent
 // and uses this information to extract metadata from pods. When running as an agent, it is important to apply
@@ -74,26 +76,26 @@
 // 1. Use the downward API to inject the node name as an environment variable.
 // Add the following snippet under the pod env section of the OpenTelemetry container.
 //
-//    env:
-//    - name: KUBE_NODE_NAME
-//      valueFrom:
-//  	  fieldRef:
-//  	    apiVersion: v1
-//  	    fieldPath: spec.nodeName
+//	  env:
+//	  - name: KUBE_NODE_NAME
+//	    valueFrom:
+//		  fieldRef:
+//		    apiVersion: v1
+//		    fieldPath: spec.nodeName
 //
 // This will inject a new environment variable to the OpenTelemetry container with the value as the
 // name of the node the pod was scheduled to run on.
 //
 // 2. Set "filter.node_from_env_var" to the name of the environment variable holding the node name.
 //
-//    k8s_tagger:
-//      filter:
-//        node_from_env_var: KUBE_NODE_NAME # this should be same as the var name used in previous step
+//	k8s_tagger:
+//	  filter:
+//	    node_from_env_var: KUBE_NODE_NAME # this should be same as the var name used in previous step
 //
 // This will restrict each OpenTelemetry agent to query pods running on the same node only dramatically reducing
 // resource requirements for very large clusters.
 //
-// As a collector
+// # As a collector
 //
 // The processor can be deployed both as an agent or as a collector.
 //
@@ -108,9 +110,9 @@
 // 1. Setup agents in passthrough mode
 // Configure the agents' k8s_tagger processors to run in passthrough mode.
 //
-//    # k8s_tagger config for agent
-//    k8s_tagger:
-//      passthrough: true
+//	# k8s_tagger config for agent
+//	k8s_tagger:
+//	  passthrough: true
 //
 // This will ensure that the agents detect the IP address as add it as an attribute to all telemetry resources.
 // Agents will not make any k8s API calls, do any discovery of pods or extract any metadata.
@@ -119,19 +121,17 @@
 // No special configuration changes are needed to be made on the collector. It'll automatically detect
 // the IP address of spans, logs and metrics sent by the agents as well as directly by other services/pods.
 //
-//
-// Caveats
+// # Caveats
 //
 // There are some edge-cases and scenarios where k8s_tagger will not work properly.
 //
-//
-// Host networking mode
+// # Host networking mode
 //
 // The processor cannot correct identify pods running in the host network mode and
 // enriching telemetry data generated by such pods is not supported at the moment, unless the attributes contain
 // information about the source IP.
 //
-// As a sidecar
+// # As a sidecar
 //
 // The processor does not support detecting containers from the same pods when running
 // as a sidecar. While this can be done, we think it is simpler to just use the kubernetes
