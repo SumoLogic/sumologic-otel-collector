@@ -99,7 +99,7 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 				category: getTestSourceFormat(t, "source_category"),
 				name:     getTestSourceFormat(t, "source_name"),
 			},
-			c,
+			&c,
 			pf,
 			"",
 			"",
@@ -154,7 +154,7 @@ func prepareOTLPSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *h
 				category: getTestSourceFormat(t, "source_category"),
 				name:     getTestSourceFormat(t, "source_name"),
 			},
-			c,
+			&c,
 			pf,
 			testServer.URL,
 			testServer.URL,
@@ -1377,7 +1377,7 @@ func TestSendCompressGzip(t *testing.T) {
 	c, err := newCompressor("gzip")
 	require.NoError(t, err)
 
-	test.s.compressor = c
+	test.s.compressor = &c
 	reader := newCountingReader(0).withString("Some example log")
 
 	err = test.s.send(context.Background(), LogsPipeline, reader, fields{})
@@ -1405,7 +1405,7 @@ func TestSendCompressDeflate(t *testing.T) {
 	c, err := newCompressor("deflate")
 	require.NoError(t, err)
 
-	test.s.compressor = c
+	test.s.compressor = &c
 	reader := newCountingReader(0).withString("Some example log")
 
 	err = test.s.send(context.Background(), LogsPipeline, reader, fields{})
