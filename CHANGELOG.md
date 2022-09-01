@@ -9,10 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- feat(filterprocessor): drop custom changes ([upgrade guide][upgrade_guide_v0_55_0_expr_support]) [#709]
+- feat(filterprocessor): drop custom changes ([upgrade guide][upgrade_guide_v0_55_0_expr_support]) [#709] [#714]
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.57.2-sumo-0...main
 [#709]: https://github.com/SumoLogic/sumologic-otel-collector/pull/709
+[#714]: https://github.com/SumoLogic/sumologic-otel-collector/pull/714
 
 ## [v0.57.2-sumo-0]
 
