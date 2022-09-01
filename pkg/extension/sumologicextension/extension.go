@@ -198,9 +198,9 @@ func (se *SumologicExtension) validateCredentials(
 }
 
 // injectCredentials injects the collector credentials:
-// * into registration info that's stored in the extension and can be used by roundTripper
-// * into http client and its transport so that each request is using collector
-//   credentials as authentication keys
+//   - into registration info that's stored in the extension and can be used by roundTripper
+//   - into http client and its transport so that each request is using collector
+//     credentials as authentication keys
 func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCredentials) error {
 	// Set the registration info so that it can be used in RoundTripper.
 	se.registrationInfo = colCreds.Credentials

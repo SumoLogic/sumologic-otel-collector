@@ -17,7 +17,6 @@ package sumologicexporter
 import (
 	"strings"
 
-	"github.com/google/go-cmp/cmp"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"golang.org/x/exp/slices"
 )
@@ -37,18 +36,6 @@ func newFields(attrMap pcommon.Map) fields {
 
 func (f fields) isInitialized() bool {
 	return f.initialized
-}
-
-func (f fields) isEmpty() bool {
-	return f.orig.Len() == 0
-}
-
-func (f fields) equals(other fields) bool {
-	if f.orig.Len() != other.orig.Len() {
-		return false
-	}
-
-	return cmp.Equal(f.orig.AsRaw(), other.orig.AsRaw())
 }
 
 // string returns fields as ordered key=value string with `, ` as separator

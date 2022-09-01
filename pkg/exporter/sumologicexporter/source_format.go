@@ -38,10 +38,10 @@ const unrecognizedAttributeValue = "undefined"
 
 // newSourceFormat builds sourceFormat basing on the regex and given text.
 // Regex is basing on the `sourceRegex` const
-// For given example text: `%{cluster}/%{namespace}``, it sets:
-//  - template to `%s/%s`, which can be used later by fmt.Sprintf
-//  - matches as map of (attribute) keys ({"cluster", "namespace"}) which will
-//    be used to put corresponding value into templates' `%s
+// For given example text: `%{cluster}/%{namespace}“, it sets:
+//   - template to `%s/%s`, which can be used later by fmt.Sprintf
+//   - matches as map of (attribute) keys ({"cluster", "namespace"}) which will
+//     be used to put corresponding value into templates' `%s
 func newSourceFormat(r *regexp.Regexp, text string) sourceFormat {
 	matches := r.FindAllStringSubmatch(text, -1)
 	template := r.ReplaceAllString(text, "%s")
