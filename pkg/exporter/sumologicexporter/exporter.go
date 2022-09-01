@@ -120,7 +120,7 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 				if err != nil {
 					return fmt.Errorf("failed to initialize compressor: %w", err)
 				}
-				return c
+				return &c
 			},
 		},
 		// NOTE: client is now set in start()
@@ -408,14 +408,14 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td ptrace.Trace
 	return err
 }
 
-func (se *sumologicexporter) getCompressor() (compressor, error) {
+func (se *sumologicexporter) getCompressor() (*compressor, error) {
 	switch c := se.compressorPool.Get().(type) {
 	case error:
-		return compressor{}, fmt.Errorf("%v", c)
-	case compressor:
+		return &compressor{}, fmt.Errorf("%v", c)
+	case *compressor:
 		return c, nil
 	default:
-		return compressor{}, fmt.Errorf("unknown compressor type: %T", c)
+		return &compressor{}, fmt.Errorf("unknown compressor type: %T", c)
 	}
 }
 

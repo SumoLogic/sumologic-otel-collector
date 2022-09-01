@@ -128,7 +128,7 @@ type sender struct {
 	config              *Config
 	client              *http.Client
 	sources             sourceFormats
-	compressor          compressor
+	compressor          *compressor
 	prometheusFormatter prometheusFormatter
 	jsonLogsConfig      JSONLogs
 	dataUrlMetrics      string
@@ -165,7 +165,7 @@ func newSender(
 	cfg *Config,
 	cl *http.Client,
 	s sourceFormats,
-	c compressor,
+	c *compressor,
 	pf prometheusFormatter,
 	metricsUrl string,
 	logsUrl string,

@@ -42,8 +42,8 @@ func (e mockedEncrypter) Close() error {
 	return e.closeError
 }
 
-func getTestCompressor(w error, c error) compressor {
-	return compressor{
+func getTestCompressor(w error, c error) *compressor {
+	return &compressor{
 		format: GZIPCompression,
 		writer: mockedEncrypter{
 			writeError: w,
