@@ -219,7 +219,7 @@ func (se *SumologicExtension) getHTTPClient(
 	httpClientSettings confighttp.HTTPClientSettings,
 	regInfo api.OpenRegisterResponsePayload,
 ) (*http.Client, error) {
-	httpClient, err := httpClientSettings.ToClientWithHost(
+	httpClient, err := httpClientSettings.ToClient(
 		se.host,
 		component.TelemetrySettings{},
 	)

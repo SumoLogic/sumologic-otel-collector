@@ -17,7 +17,7 @@ package credentials
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path"
 
@@ -123,7 +123,7 @@ func (cr LocalFsStore) Get(key string) (CollectorCredentials, error) {
 		}
 		defer creds.Close()
 
-		encryptedCreds, err := ioutil.ReadAll(creds)
+		encryptedCreds, err := io.ReadAll(creds)
 		if err != nil {
 			return CollectorCredentials{}, err
 		}
