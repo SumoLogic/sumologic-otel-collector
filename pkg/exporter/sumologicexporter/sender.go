@@ -239,6 +239,11 @@ func (s *sender) handleReceiverResponse(resp *http.Response) error {
 	// were encountered when processing the sent data.
 	switch resp.StatusCode {
 	case 200, 204:
+		if resp.ContentLength < 0 {
+			s.logger.Warn("Unknown length of server response")
+			return nil
+		}
+
 		var rResponse ReceiverResponseCore
 		var (
 			b  = bytes.NewBuffer(make([]byte, 0, resp.ContentLength))
