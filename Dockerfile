@@ -10,7 +10,7 @@ RUN apk --update add ca-certificates
 FROM alpine:3.16.2 as directories
 RUN mkdir /etc/otel/
 
-FROM debian:11.4 as systemd
+FROM debian:11.5 as systemd
 RUN apt update && apt install -y systemd
 # prepare package with journald and it's dependencies keeping original paths
 # h stands for dereference of symbolic links
