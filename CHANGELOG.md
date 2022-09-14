@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- fix(k8sprocessor): fix metadata enrichment [#724]
+
 ### Removed
 
 - feat(filterprocessor): drop custom changes ([upgrade guide][upgrade_guide_v0_55_0_expr_support]) [#709] [#714]
@@ -18,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#678]: https://github.com/SumoLogic/sumologic-otel-collector/pull/678
 [#709]: https://github.com/SumoLogic/sumologic-otel-collector/pull/709
 [#714]: https://github.com/SumoLogic/sumologic-otel-collector/pull/714
+[#724]: https://github.com/SumoLogic/sumologic-otel-collector/pull/724
 
 ## [v0.57.2-sumo-0]
 
