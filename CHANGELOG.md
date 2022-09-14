@@ -5,7 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.57.2-sumo-1]
+
+### Released 2022-09-14
+
+### Changed
+
+- fix(k8sprocessor): fix metadata enrichment [#725]
+
+[v0.57.2-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.57.2-sumo-0...v0.57.2-sumo-1
+[#725]: https://github.com/SumoLogic/sumologic-otel-collector/pull/725
+
 ## [v0.57.2-sumo-0]
+
+### Released 2022-08-12
 
 This release deprecates the following features, which will be removed in `v0.60.0`:
 
@@ -17,6 +30,7 @@ This release deprecates the following features, which will be removed in `v0.60.
 - feat: define stability levels for components [#701]
 - chore: upgrade OpenTelemetry Core to v0.57.2 [#699]
 
+[v0.57.2-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.56.0-sumo-0...v0.57.2-sumo-0
 [upgrade_guide_v0_57_0_deprecate_source_templates]: ./docs/Upgrading.md#sumologic-exporter-drop-support-for-source-headers
 [#699]: https://github.com/SumoLogic/sumologic-otel-collector/pull/699/
 [#701]: https://github.com/SumoLogic/sumologic-otel-collector/pull/701/
