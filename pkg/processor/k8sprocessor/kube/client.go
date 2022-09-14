@@ -490,24 +490,28 @@ func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
 	c.m.Lock()
 	defer c.m.Unlock()
 
-	if pod.UID != "" {
-		c.Pods[PodIdentifier(pod.UID)] = newPod
+	identifiers := []PodIdentifier{
+		PodIdentifier(pod.UID),
+		PodIdentifier(pod.Status.PodIP),
 	}
-	if pod.Status.PodIP != "" {
-		// compare initial scheduled timestamp for existing pod and new pod with same IP
-		// and only replace old pod if scheduled time of new pod is newer? This should fix
-		// the case where scheduler has assigned the same IP to a new pod but update event for
-		// the old pod came in later.
-		if p, ok := c.Pods[PodIdentifier(pod.Status.PodIP)]; ok {
-			if p.StartTime != nil && pod.Status.StartTime.Before(p.StartTime) {
-				return
-			}
-		}
-		c.Pods[PodIdentifier(pod.Status.PodIP)] = newPod
-	}
-	// Use pod_name.namespace_name identifier
+
 	if newPod.Name != "" && newPod.Namespace != "" {
-		c.Pods[generatePodIDFromName(newPod)] = newPod
+		identifiers = append(identifiers, generatePodIDFromName(newPod))
+	}
+
+	for _, identifier := range identifiers {
+		if identifier != "" {
+			// compare initial scheduled timestamp for existing pod and new pod with same identifier
+			// and only replace old pod if scheduled time of new pod is newer or equal.
+			// This should fix the case where scheduler has assigned the same attributes (like IP address)
+			// to a new pod but update event for the old pod came in later.
+			if p, ok := c.Pods[identifier]; ok {
+				if p.StartTime != nil && pod.Status.StartTime.Before(p.StartTime) {
+					continue
+				}
+			}
+			c.Pods[identifier] = newPod
+		}
 	}
 }
 
