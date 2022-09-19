@@ -2,7 +2,81 @@
 
 set -euo pipefail
 
+############################ Static variables
+
+ARG_SHORT_TOKEN='i'
+ARG_LONG_TOKEN='installation-token'
+ARG_SHORT_HELP='h'
+ARG_LONG_HELP='help'
+ARG_SHORT_SYSTEMD='s'
+ARG_LONG_SYSTEMD='disable-systemd'
+
+############################ Variables
+
+TOKEN=""
+SYSTEMD_ENABLED=true
+
 ############################ Functions
+
+function usage() {
+  cat << EOF
+Usage: bash install.sh --token <token> [--enable-systemd]
+  -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>     Installation token
+  -${ARG_SHORT_SYSTEMD}, --${ARG_LONG_SYSTEMD}                Do not install systemd daemon
+  -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                           Prints this help
+EOF
+}
+
+function parse_options() {
+  # Transform long options to short ones
+  for arg in "$@"; do
+    shift
+    case "$arg" in
+      "--${ARG_LONG_HELP}")
+        set -- "$@" "-${ARG_SHORT_HELP}"
+        ;;
+      "--${ARG_LONG_TOKEN}")
+        set -- "$@" "-${ARG_SHORT_TOKEN}"
+        ;;
+      "--${ARG_LONG_SYSTEMD}")
+        set -- "$@" "-${ARG_SHORT_SYSTEMD}"
+        ;;
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_SYSTEMD}")
+        set -- "$@" "${arg}"   ;;
+      -*)
+        echo "Unknown option ${arg}"; usage; exit 1 ;;
+      *)
+        set -- "$@" "$arg" ;;
+    esac
+  done
+
+  # Parse short options
+  OPTIND=1
+
+  while true; do
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_SYSTEMD}" opt
+
+    # Invalid argument catched, print and exit
+    if [[ $? != 0 && ${OPTIND} -le $# ]]; then
+      echo "Invalid argument:" "${@:${OPTIND}:1}"
+      usage
+      exit 1
+    fi
+
+    # Exit loop as we iterated over all arguments
+    if [[ $OPTIND > $# ]]; then
+      break;
+    fi 
+
+    # Validate opt and set arguments
+    case "$opt" in
+      "${ARG_SHORT_HELP}")    usage; exit 0 ;;
+      "${ARG_SHORT_TOKEN}")   TOKEN="${OPTARG}" ;;
+      "${ARG_SHORT_SYSTEMD}") SYSTEMD=false ;;
+      *)   usage; exit 1 ;;
+    esac
+  done
+}
 
 # Get github rate limit
 function github_rate_limit() {
