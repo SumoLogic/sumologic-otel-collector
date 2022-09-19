@@ -239,22 +239,24 @@ func TestPodAddOutOfSync(t *testing.T) {
 
 	pod := &api_v1.Pod{}
 	pod.Name = "podA"
+	pod.Namespace = "namespace"
 	pod.Status.PodIP = "1.1.1.1"
 	startTime := meta_v1.NewTime(time.Now())
 	pod.Status.StartTime = &startTime
 	c.handlePodAdd(pod)
-	assert.Equal(t, len(c.Pods), 1)
+	assert.Equal(t, len(c.Pods), 2)
 	got := c.Pods["1.1.1.1"]
 	assert.Equal(t, got.Address, "1.1.1.1")
 	assert.Equal(t, got.Name, "podA")
 
 	pod2 := &api_v1.Pod{}
 	pod2.Name = "podB"
-	pod.Status.PodIP = "1.1.1.1"
+	pod2.Namespace = "namespace"
+	pod2.Status.PodIP = "1.1.1.1"
 	startTime2 := meta_v1.NewTime(time.Now().Add(-time.Second * 10))
-	pod.Status.StartTime = &startTime2
-	c.handlePodAdd(pod)
-	assert.Equal(t, len(c.Pods), 1)
+	pod2.Status.StartTime = &startTime2
+	c.handlePodAdd(pod2)
+	assert.Equal(t, len(c.Pods), 3)
 	got = c.Pods["1.1.1.1"]
 	assert.Equal(t, got.Address, "1.1.1.1")
 	assert.Equal(t, got.Name, "podA")

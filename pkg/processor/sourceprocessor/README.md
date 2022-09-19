@@ -28,7 +28,7 @@ processors:
     source_category: <source_category>
     # Prefix added before each `_sourceCategory` value.
     # default: "kubernetes/"
-    soure_category_prefix: <source_category_prefix>
+    source_category_prefix: <source_category_prefix>
     # Character which all dashes ("-") in source category value are being replaced to.
     # default: "/"
     source_category_replace_dash: <source_category_replace_dash>

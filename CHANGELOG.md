@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - fix(sumologicexporter): do not crash if server returns unknown length response [#718]
+- fix(k8sprocessor): fix metadata enrichment [#724]
 
 ### Removed
 
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#709]: https://github.com/SumoLogic/sumologic-otel-collector/pull/709
 [#714]: https://github.com/SumoLogic/sumologic-otel-collector/pull/714
 [#718]: https://github.com/SumoLogic/sumologic-otel-collector/pull/718
+[#724]: https://github.com/SumoLogic/sumologic-otel-collector/pull/724
 
 ## [v0.57.2-sumo-0]
 
