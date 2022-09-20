@@ -13,7 +13,7 @@ ARG_LONG_SYSTEMD='disable-systemd'
 
 ############################ Variables
 
-TOKEN=""
+INSTALL_TOKEN=""
 SYSTEMD_ENABLED=true
 
 ############################ Functions
@@ -30,6 +30,7 @@ EOF
 function parse_options() {
   # Transform long options to short ones
   for arg in "$@"; do
+
     shift
     case "$arg" in
       "--${ARG_LONG_HELP}")
@@ -54,8 +55,9 @@ function parse_options() {
   OPTIND=1
 
   while true; do
+    set +e
     getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_SYSTEMD}" opt
-
+    set -e
     # Invalid argument catched, print and exit
     if [[ $? != 0 && ${OPTIND} -le $# ]]; then
       echo "Invalid argument:" "${@:${OPTIND}:1}"
@@ -63,18 +65,19 @@ function parse_options() {
       exit 1
     fi
 
+    # Validate opt and set arguments
+    case "$opt" in
+      "${ARG_SHORT_HELP}")    usage; exit 0 ;;
+      "${ARG_SHORT_TOKEN}")   INSTALL_TOKEN="${OPTARG}" ;;
+      "${ARG_SHORT_SYSTEMD}") SYSTEMD=false ;;
+      "?")                    ;;
+      *)                      usage; exit 1 ;;
+    esac
+
     # Exit loop as we iterated over all arguments
     if [[ $OPTIND > $# ]]; then
       break;
     fi 
-
-    # Validate opt and set arguments
-    case "$opt" in
-      "${ARG_SHORT_HELP}")    usage; exit 0 ;;
-      "${ARG_SHORT_TOKEN}")   TOKEN="${OPTARG}" ;;
-      "${ARG_SHORT_SYSTEMD}") SYSTEMD=false ;;
-      *)   usage; exit 1 ;;
-    esac
   done
 }
 
@@ -255,6 +258,8 @@ function get_full_changelog() {
 
 check_dependencies
 
+parse_options $@
+
 OS_TYPE="$(get_os_type)"
 ARCH_TYPE="$(get_arch_type)"
 readonly OS_TYPE ARCH_TYPE
@@ -263,11 +268,10 @@ echo -e "Detected OS type:\t${OS_TYPE}"
 echo -e "Detected architecture:\t${ARCH_TYPE}"
 
 echo -e "Getting installed version..."
-echo -e "Getting versions..."
-
 INSTALLED_VERSION="$(get_installed_version)"
 echo -e "Installed version:\t${INSTALLED_VERSION}"
 
+echo -e "Getting versions..."
 VERSIONS="$(get_versions)"
 
 # Use user's version if set, otherwise get latest version from API (or website)
@@ -283,7 +287,6 @@ echo -e "Version to install:\t${VERSION}"
 # Check if otelcol is already in newest version
 if [[ "${INSTALLED_VERSION}" == "${VERSION}" ]]; then
     echo -e "OpenTelemetry collector is already in newest (${VERSION}) version"
-    exit
 elif [[ -n "${INSTALLED_VERSION}" ]]; then
     # Take versions from installed up to the newest
     BETWEEN_VERSIONS="$(get_versions_from "${VERSIONS}" "${INSTALLED_VERSION}")"
@@ -301,25 +304,53 @@ elif [[ -n "${INSTALLED_VERSION}" ]]; then
             get_changelog "${version}"
         done
     fi
+
+    readonly LINK="https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${VERSION}/otelcol-sumo-${VERSION}-${OS_TYPE}_${ARCH_TYPE}"
+
+    ask_to_continue
+    echo -e "Downloading:\t\t${LINK}"
+    curl -L "${LINK}" --output otelcol-sumo --progress-bar
+
+    echo -e "Moving otelcol-sumo to /usr/local/bin"
+    sudo mv otelcol-sumo /usr/local/bin/otelcol-sumo
+    echo -e "Setting /usr/local/bin/otelcol-sumo to be executable"
+    sudo chmod +x /usr/local/bin/otelcol-sumo
+
+    OUTPUT="$(otelcol-sumo --version || true)"
+    readonly OUTPUT
+
+    if [[ -z "${OUTPUT}" ]]; then
+        echo "Installation failed. Please try again"
+        exit 1
+    fi
 fi
 
-readonly LINK="https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${VERSION}/otelcol-sumo-${VERSION}-${OS_TYPE}_${ARCH_TYPE}"
+if [[ ! -z "${INSTALL_TOKEN}" ]]; then
+    # Preparing default configuration
+    readonly FILE_STORAGE="/var/lib/sumologic/file_storage"
+    readonly CONFIG_DIRECTORY="/etc/sumologic/otelcol"
+    readonly CONFIG_PATH="${CONFIG_DIRECTORY}/config.yaml"
 
-ask_to_continue
-echo -e "Downloading:\t\t${LINK}"
-curl -L "${LINK}" --output otelcol-sumo --progress-bar
+    echo -e "Creating file_storage directory (${FILE_STORAGE})"
+    sudo mkdir -p "${FILE_STORAGE}"
 
-echo -e "Moving otelcol-sumo to /usr/local/bin"
-sudo mv otelcol-sumo /usr/local/bin/otelcol-sumo
-echo -e "Setting /usr/local/bin/otelcol-sumo to be executable"
-sudo chmod +x /usr/local/bin/otelcol-sumo
+    echo -e "Creating configuration directory (${CONFIG_DIRECTORY})"
+    sudo mkdir -p "${CONFIG_DIRECTORY}"
 
-OUTPUT="$(otelcol-sumo --version || true)"
-readonly OUTPUT
 
-if [[ -z "${OUTPUT}" ]]; then
-    echo "Installation failed. Please try again"
-    exit 1
+    echo "Generating configuration and saving as ${CONFIG_PATH}"
+
+    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/config_logging.yaml"
+    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/31feb07fed6320c1371dad8c1f53f22ea5a3cfeb/examples/default.yaml"
+
+    # Generate template
+    export FILE_STORAGE
+    export COLLECTOR_NAME="$(hostname)"
+    export INSTALL_TOKEN
+
+    curl -s "${CONFIG_URL}" | envsubst | sudo tee "${CONFIG_PATH}"
+
+    echo "Use 'otelcol-sumo --config=${CONFIG_PATH}' to run Sumologic OpenTelemetry "
 fi
 
 echo -e "Installation succeded:\t$(otelcol-sumo --version)"
