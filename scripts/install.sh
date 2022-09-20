@@ -10,18 +10,23 @@ ARG_SHORT_HELP='h'
 ARG_LONG_HELP='help'
 ARG_SHORT_SYSTEMD='s'
 ARG_LONG_SYSTEMD='disable-systemd'
+ARG_SHORT_API='a'
+ARG_LONG_API='api'
 
 ############################ Variables
 
 INSTALL_TOKEN=""
 SYSTEMD_ENABLED=true
+API_BASE_URL=""
 
 ############################ Functions
 
 function usage() {
   cat << EOF
-Usage: bash install.sh --token <token> [--enable-systemd]
+Usage: bash install.sh --token <token> [--enable-systemd] [--api <url>]
   -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>     Installation token
+
+  -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                      Api URL
   -${ARG_SHORT_SYSTEMD}, --${ARG_LONG_SYSTEMD}                Do not install systemd daemon
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                           Prints this help
 EOF
@@ -42,7 +47,10 @@ function parse_options() {
       "--${ARG_LONG_SYSTEMD}")
         set -- "$@" "-${ARG_SHORT_SYSTEMD}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_SYSTEMD}")
+      "--${ARG_LONG_API}")
+        set -- "$@" "-${ARG_SHORT_API}"
+        ;;
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_API}")
         set -- "$@" "${arg}"   ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -56,7 +64,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_SYSTEMD}" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_SYSTEMD}${ARG_SHORT_API}:" opt
     set -e
     # Invalid argument catched, print and exit
     if [[ $? != 0 && ${OPTIND} -le $# ]]; then
@@ -70,6 +78,7 @@ function parse_options() {
       "${ARG_SHORT_HELP}")    usage; exit 0 ;;
       "${ARG_SHORT_TOKEN}")   INSTALL_TOKEN="${OPTARG}" ;;
       "${ARG_SHORT_SYSTEMD}") SYSTEMD=false ;;
+      "${ARG_SHORT_API}")     API_BASE_URL="${OPTARG}" ;;
       "?")                    ;;
       *)                      usage; exit 1 ;;
     esac
@@ -341,16 +350,24 @@ if [[ ! -z "${INSTALL_TOKEN}" ]]; then
     echo "Generating configuration and saving as ${CONFIG_PATH}"
 
     CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/config_logging.yaml"
-    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/31feb07fed6320c1371dad8c1f53f22ea5a3cfeb/examples/default.yaml"
+    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/c31c518300c0f014fc53f3cb1c4a22740200d8bd/examples/default.yaml"
 
     # Generate template
     export FILE_STORAGE
     export COLLECTOR_NAME="$(hostname)"
     export INSTALL_TOKEN
+    export API_BASE_URL
 
-    curl -s "${CONFIG_URL}" | envsubst | sudo tee "${CONFIG_PATH}"
+    curl -s "${CONFIG_URL}" | \
+        if [[ ! -z "${API_BASE_URL}" ]];
+            # add api_base_url after install_token
+            then sed '/^    install_token/a\    api_base_url: ${API_BASE_URL}';
+        else
+            cat -;
+        fi | \
+            envsubst | sudo tee "${CONFIG_PATH}"
 
-    echo "Use 'otelcol-sumo --config=${CONFIG_PATH}' to run Sumologic OpenTelemetry "
+    echo "Use 'sudo otelcol-sumo --config=${CONFIG_PATH}' to run Sumo Logic Distribution for OpenTelemetry Collector"
 fi
 
 echo -e "Installation succeded:\t$(otelcol-sumo --version)"
