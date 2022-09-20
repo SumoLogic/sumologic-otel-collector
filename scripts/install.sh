@@ -8,8 +8,6 @@ ARG_SHORT_TOKEN='i'
 ARG_LONG_TOKEN='installation-token'
 ARG_SHORT_HELP='h'
 ARG_LONG_HELP='help'
-ARG_SHORT_SYSTEMD='s'
-ARG_LONG_SYSTEMD='disable-systemd'
 ARG_SHORT_API='a'
 ARG_LONG_API='api'
 ARG_SHORT_TAG='t'
@@ -18,21 +16,20 @@ ARG_LONG_TAG='tag'
 ############################ Variables
 
 INSTALL_TOKEN=""
-SYSTEMD_ENABLED=true
 API_BASE_URL=""
 FIELDS=""
+COLLECTOR_NAME="$(hostname)"
 
 ############################ Functions
 
 function usage() {
   cat << EOF
 
-Usage: bash install.sh --token <token> [--enable-systemd] [--api <url>] [--tag key=value [ --tag ...]]
+Usage: bash install.sh --token <token> [--api <url>] [--tag key=value [ --tag ...]]
   -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>     Installation token
 
   -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                      Api URL
   -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                Tag in format key=value
-  -${ARG_SHORT_SYSTEMD}, --${ARG_LONG_SYSTEMD}                Do not install systemd daemon
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                           Prints this help
 EOF
 }
@@ -49,16 +46,13 @@ function parse_options() {
       "--${ARG_LONG_TOKEN}")
         set -- "$@" "-${ARG_SHORT_TOKEN}"
         ;;
-      "--${ARG_LONG_SYSTEMD}")
-        set -- "$@" "-${ARG_SHORT_SYSTEMD}"
-        ;;
       "--${ARG_LONG_API}")
         set -- "$@" "-${ARG_SHORT_API}"
         ;;
       "--${ARG_LONG_TAG}")
         set -- "$@" "-${ARG_SHORT_TAG}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}")
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}")
         set -- "$@" "${arg}"   ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -72,8 +66,9 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_SYSTEMD}${ARG_SHORT_API}:${ARG_SHORT_TAG}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:" opt
     set -e
+
     # Invalid argument catched, print and exit
     if [[ $? != 0 && ${OPTIND} -le $# ]]; then
       echo "Invalid argument:" "${@:${OPTIND}:1}"
@@ -85,7 +80,6 @@ function parse_options() {
     case "$opt" in
       "${ARG_SHORT_HELP}")    usage; exit 0 ;;
       "${ARG_SHORT_TOKEN}")   INSTALL_TOKEN="${OPTARG}" ;;
-      "${ARG_SHORT_SYSTEMD}") SYSTEMD_ENABLED=false ;;
       "${ARG_SHORT_API}")     API_BASE_URL="${OPTARG}" ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
@@ -102,7 +96,7 @@ function parse_options() {
 
     # Exit loop as we iterated over all arguments
     if [[ "${OPTIND}" -gt $# ]]; then
-      break;
+      break
     fi 
   done
 }
@@ -289,7 +283,7 @@ function get_full_changelog() {
 
 check_dependencies
 
-parse_options $@
+parse_options "$@"
 
 OS_TYPE="$(get_os_type)"
 ARCH_TYPE="$(get_arch_type)"
@@ -322,7 +316,7 @@ elif [[ -z "${INSTALLED_VERSION}" ]]; then
     # Take versions from installed up to the newest
     BETWEEN_VERSIONS="$(get_versions_from "${VERSIONS}" "${INSTALLED_VERSION}")"
     readonly BETWEEN_VERSIONS
-    echo $BETWEEN_VERSIONS
+    echo "${BETWEEN_VERSIONS}"
 
     # Get full changelog if we were unable to access github API
     if [[ -z "${BETWEEN_VERSIONS}" ]] || [[ "$(github_rate_limit)" < "$(echo BETWEEN_VERSIONS | wc -w)" ]]; then
@@ -377,32 +371,32 @@ if [[ -n "${INSTALL_TOKEN}" ]]; then
 
     # Generate template
     export FILE_STORAGE
-    export COLLECTOR_NAME="$(hostname)"
+    export COLLECTOR_NAME
     export INSTALL_TOKEN
     export API_BASE_URL
 
     curl -s "${CONFIG_URL}" | \
         if [[ -n "${API_BASE_URL}" ]]; then
             # add api_base_url after install_token
-            sed '/^    install_token/a\
-    api_base_url: ${API_BASE_URL}
-';
+            sed "/^    install_token/a\\
+    api_base_url: \${API_BASE_URL}
+"
         else
-            cat -;
+            cat -
         fi | \
         if [[ -n "${FIELDS}" ]]; then
             # add collector_fields after install_token
             sed "/^    install_token/a\\
     collector_fields:${FIELDS}
-";
+"
         else
-            cat -;
+            cat -
         fi | \
         if [[ "${OS_TYPE}" == "darwin" ]]; then
             # adjust default configuration for macos
             sed '/^      process:/d'
         else
-            cat -;
+            cat -
         fi | \
         envsubst | sudo tee "${CONFIG_PATH}"
 
