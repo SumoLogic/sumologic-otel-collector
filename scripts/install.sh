@@ -97,7 +97,7 @@ function parse_options() {
     # Exit loop as we iterated over all arguments
     if [[ "${OPTIND}" -gt $# ]]; then
       break
-    fi 
+    fi
   done
 }
 
