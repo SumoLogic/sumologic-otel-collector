@@ -12,21 +12,26 @@ ARG_SHORT_SYSTEMD='s'
 ARG_LONG_SYSTEMD='disable-systemd'
 ARG_SHORT_API='a'
 ARG_LONG_API='api'
+ARG_SHORT_TAG='t'
+ARG_LONG_TAG='tag'
 
 ############################ Variables
 
 INSTALL_TOKEN=""
 SYSTEMD_ENABLED=true
 API_BASE_URL=""
+FIELDS=""
 
 ############################ Functions
 
 function usage() {
   cat << EOF
-Usage: bash install.sh --token <token> [--enable-systemd] [--api <url>]
+
+Usage: bash install.sh --token <token> [--enable-systemd] [--api <url>] [--tag key=value [ --tag ...]]
   -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>     Installation token
 
   -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                      Api URL
+  -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                Tag in format key=value
   -${ARG_SHORT_SYSTEMD}, --${ARG_LONG_SYSTEMD}                Do not install systemd daemon
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                           Prints this help
 EOF
@@ -50,7 +55,10 @@ function parse_options() {
       "--${ARG_LONG_API}")
         set -- "$@" "-${ARG_SHORT_API}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_API}")
+      "--${ARG_LONG_TAG}")
+        set -- "$@" "-${ARG_SHORT_TAG}"
+        ;;
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}")
         set -- "$@" "${arg}"   ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -64,7 +72,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_SYSTEMD}${ARG_SHORT_API}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_SYSTEMD}${ARG_SHORT_API}:${ARG_SHORT_TAG}:" opt
     set -e
     # Invalid argument catched, print and exit
     if [[ $? != 0 && ${OPTIND} -le $# ]]; then
@@ -79,6 +87,14 @@ function parse_options() {
       "${ARG_SHORT_TOKEN}")   INSTALL_TOKEN="${OPTARG}" ;;
       "${ARG_SHORT_SYSTEMD}") SYSTEMD=false ;;
       "${ARG_SHORT_API}")     API_BASE_URL="${OPTARG}" ;;
+      "${ARG_SHORT_TAG}")
+        if [[ "${OPTARG}" != ?"="* ]]; then
+            echo "Invalid tag: '${OPTARG}'. Should be in 'key=value' format"
+            usage
+            exit 1
+        fi
+
+        FIELDS="${FIELDS}\n    - ${OPTARG/=/: }" ;;
       "?")                    ;;
       *)                      usage; exit 1 ;;
     esac
@@ -365,7 +381,13 @@ if [[ ! -z "${INSTALL_TOKEN}" ]]; then
         else
             cat -;
         fi | \
-            envsubst | sudo tee "${CONFIG_PATH}"
+        if [[ ! -z "${FIELDS}" ]];
+            # add collector_fields after install_token
+            then sed "/^    install_token/a\    collector_fields:${FIELDS}";
+        else
+            cat -;
+        fi | \
+        sudo envsubst > "${CONFIG_PATH}"
 
     echo "Use 'sudo otelcol-sumo --config=${CONFIG_PATH}' to run Sumo Logic Distribution for OpenTelemetry Collector"
 fi
