@@ -88,7 +88,7 @@ function parse_options() {
       "${ARG_SHORT_SYSTEMD}") SYSTEMD_ENABLED=false ;;
       "${ARG_SHORT_API}")     API_BASE_URL="${OPTARG}" ;;
       "${ARG_SHORT_TAG}")
-        if [[ "${OPTARG}" != ?"="* ]]; then
+        if [[ "${OPTARG}" != ?*"="* ]]; then
             echo "Invalid tag: '${OPTARG}'. Should be in 'key=value' format"
             usage
             exit 1
@@ -101,7 +101,7 @@ function parse_options() {
     esac
 
     # Exit loop as we iterated over all arguments
-    if [[ $OPTIND > $# ]]; then
+    if [[ "${OPTIND}" -gt $# ]]; then
       break;
     fi 
   done
