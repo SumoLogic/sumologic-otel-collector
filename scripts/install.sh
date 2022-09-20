@@ -94,7 +94,8 @@ function parse_options() {
             exit 1
         fi
 
-        FIELDS="${FIELDS}\n      ${OPTARG/=/: }" ;;
+        FIELDS="${FIELDS}\\
+      ${OPTARG/=/: }" ;;
       "?")                    ;;
       *)                      usage; exit 1 ;;
     esac
@@ -392,7 +393,7 @@ if [[ -n "${INSTALL_TOKEN}" ]]; then
         if [[ -n "${FIELDS}" ]]; then
             # add collector_fields after install_token
             sed "/^    install_token/a\\
-    collector_fields:\\$(echo "${FIELDS}" | sed 's/\\n/\n/g')
+    collector_fields:${FIELDS}
 ";
         else
             cat -;
