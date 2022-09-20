@@ -366,8 +366,10 @@ if [[ -n "${INSTALL_TOKEN}" ]]; then
 
     echo "Generating configuration and saving as ${CONFIG_PATH}"
 
-    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/config_logging.yaml"
-    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/c31c518300c0f014fc53f3cb1c4a22740200d8bd/examples/default.yaml"
+    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/default.yaml"
+
+    # ToDo: remove this line after release
+    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/5147e309c37ba543d76b4544fdedfbd4c77cc820/examples/default.yaml"
 
     # Generate template
     export FILE_STORAGE
