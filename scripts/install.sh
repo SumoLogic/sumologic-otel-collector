@@ -85,7 +85,7 @@ function parse_options() {
     case "$opt" in
       "${ARG_SHORT_HELP}")    usage; exit 0 ;;
       "${ARG_SHORT_TOKEN}")   INSTALL_TOKEN="${OPTARG}" ;;
-      "${ARG_SHORT_SYSTEMD}") SYSTEMD=false ;;
+      "${ARG_SHORT_SYSTEMD}") SYSTEMD_ENABLED=false ;;
       "${ARG_SHORT_API}")     API_BASE_URL="${OPTARG}" ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?"="* ]]; then
@@ -94,7 +94,7 @@ function parse_options() {
             exit 1
         fi
 
-        FIELDS="${FIELDS}\n    - ${OPTARG/=/: }" ;;
+        FIELDS="${FIELDS}\n      ${OPTARG/=/: }" ;;
       "?")                    ;;
       *)                      usage; exit 1 ;;
     esac
@@ -168,10 +168,15 @@ get_versions_from() {
     local from
     readonly from="${2}"
 
+    # Return if there is no installed version
+    if [[ "${from}" == "" ]]; then
+        return 0
+    fi
+
     local line
     readonly line="$(( $(echo "${versions}" | sed 's/ /\n/g' | grep -n "${from}$" | sed 's/:.*//g') - 1 ))"
 
-    if [[ "${line}" > "0" ]]; then
+    if [[ "${line}" -gt "0" ]]; then
         echo "${versions}" | sed 's/ /\n/g' | head -n "${line}" | sort
     fi
     return 0
@@ -312,10 +317,11 @@ echo -e "Version to install:\t${VERSION}"
 # Check if otelcol is already in newest version
 if [[ "${INSTALLED_VERSION}" == "${VERSION}" ]]; then
     echo -e "OpenTelemetry collector is already in newest (${VERSION}) version"
-elif [[ -n "${INSTALLED_VERSION}" ]]; then
+elif [[ -z "${INSTALLED_VERSION}" ]]; then
     # Take versions from installed up to the newest
     BETWEEN_VERSIONS="$(get_versions_from "${VERSIONS}" "${INSTALLED_VERSION}")"
     readonly BETWEEN_VERSIONS
+    echo $BETWEEN_VERSIONS
 
     # Get full changelog if we were unable to access github API
     if [[ -z "${BETWEEN_VERSIONS}" ]] || [[ "$(github_rate_limit)" < "$(echo BETWEEN_VERSIONS | wc -w)" ]]; then
@@ -350,7 +356,7 @@ elif [[ -n "${INSTALLED_VERSION}" ]]; then
     fi
 fi
 
-if [[ ! -z "${INSTALL_TOKEN}" ]]; then
+if [[ -n "${INSTALL_TOKEN}" ]]; then
     # Preparing default configuration
     readonly FILE_STORAGE="/var/lib/sumologic/file_storage"
     readonly CONFIG_DIRECTORY="/etc/sumologic/otelcol"
@@ -375,19 +381,29 @@ if [[ ! -z "${INSTALL_TOKEN}" ]]; then
     export API_BASE_URL
 
     curl -s "${CONFIG_URL}" | \
-        if [[ ! -z "${API_BASE_URL}" ]];
+        if [[ -n "${API_BASE_URL}" ]]; then
             # add api_base_url after install_token
-            then sed '/^    install_token/a\    api_base_url: ${API_BASE_URL}';
+            sed '/^    install_token/a\
+    api_base_url: ${API_BASE_URL}
+';
         else
             cat -;
         fi | \
-        if [[ ! -z "${FIELDS}" ]];
+        if [[ -n "${FIELDS}" ]]; then
             # add collector_fields after install_token
-            then sed "/^    install_token/a\    collector_fields:${FIELDS}";
+            sed "/^    install_token/a\\
+    collector_fields:\\$(echo "${FIELDS}" | sed 's/\\n/\n/g')
+";
         else
             cat -;
         fi | \
-        sudo envsubst > "${CONFIG_PATH}"
+        if [[ "${OS_TYPE}" == "darwin" ]]; then
+            # adjust default configuration for macos
+            sed '/^      process:/d'
+        else
+            cat -;
+        fi | \
+        envsubst | sudo tee "${CONFIG_PATH}"
 
     echo "Use 'sudo otelcol-sumo --config=${CONFIG_PATH}' to run Sumo Logic Distribution for OpenTelemetry Collector"
 fi
