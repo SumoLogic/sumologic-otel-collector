@@ -426,6 +426,11 @@ ask_to_continue
 # Preparing default configuration
 readonly CONFIG_PATH="${CONFIG_DIRECTORY}/config.yaml"
 
+if [[ -f "${CONFIG_PATH}" ]]; then
+    echo "Configuration (${CONFIG_PATH}) already exist). Aborting"
+    exit 0
+fi
+
 echo -e "Creating file_storage directory (${FILE_STORAGE})"
 sudo mkdir -p "${FILE_STORAGE}"
 
