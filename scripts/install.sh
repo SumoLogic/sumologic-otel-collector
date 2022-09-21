@@ -450,7 +450,7 @@ curl -s "${CONFIG_URL}" | \
     if [[ -n "${API_BASE_URL}" ]]; then
         # add api_base_url after install_token
         sed "/^    install_token/a\\
-api_base_url: \${API_BASE_URL}
+    api_base_url: \${API_BASE_URL}
 "
     else
         cat -
@@ -458,7 +458,7 @@ api_base_url: \${API_BASE_URL}
     if [[ -n "${FIELDS}" ]]; then
         # add collector_fields after install_token
         sed "/^    install_token/a\\
-collector_fields:${FIELDS}
+    collector_fields:${FIELDS}
 "
     else
         cat -
