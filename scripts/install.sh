@@ -52,7 +52,7 @@ Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_COLLECTOR} na
 
   -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                      Api URL
   -${ARG_SHORT_CONFIG}, --${ARG_LONG_CONFIG} <config dir path>       Path to the storage directory (default is '/var/lib/sumologic/file_storage')
-  -${ARG_SHORT_STORAGE}, --${ARG_LONG_STORAGE} <storage dir path>     Path to the configuration directory (default is '/etc/sumologic/otelcol')
+  -${ARG_SHORT_STORAGE}, --${ARG_LONG_STORAGE} <storage dir path>     Path to the configuration directory (default is '/etc/otelcol-sumo')
   -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>              Manually specified version, e.g. 0.55.0-sumo-0
   -${ARG_SHORT_YES}, --${ARG_LONG_YES}                            Do not ask for confirmation
 
@@ -66,7 +66,7 @@ EOF
 function set_defaults() {
     COLLECTOR_NAME="$(hostname)"
     FILE_STORAGE="/var/lib/sumologic/file_storage"
-    CONFIG_DIRECTORY="/etc/sumologic/otelcol"
+    CONFIG_DIRECTORY="/etc/otelcol-sumo"
 }
 
 function parse_options() {
