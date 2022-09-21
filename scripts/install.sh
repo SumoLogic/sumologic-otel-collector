@@ -17,7 +17,13 @@ ARG_LONG_VERSION='version'
 
 ############################ Variables
 
-INSTALL_TOKEN=""
+# Support providing install_token as env
+set +u
+if [[ -z "${INSTALL_TOKEN}" ]]; then
+    INSTALL_TOKEN=""
+fi
+set -u
+
 API_BASE_URL=""
 FIELDS=""
 COLLECTOR_NAME="$(hostname)"
@@ -35,6 +41,9 @@ Usage: bash install.sh --token <token> [--api <url>] [--tag key=value [ --tag ..
   -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>              Manually specified version, e.g. 0.55.0-sumo-0
 
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                           Prints this help
+
+Supported env variables:
+  INSTALL_TOKEN=<token>                Equivalent of '--${ARG_LONG_TOKEN} <token>'
 EOF
 }
 
