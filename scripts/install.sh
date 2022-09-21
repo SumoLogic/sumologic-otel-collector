@@ -14,6 +14,8 @@ ARG_SHORT_TAG='t'
 ARG_LONG_TAG='tag'
 ARG_SHORT_VERSION='v'
 ARG_LONG_VERSION='version'
+ARG_SHORT_YES='y'
+ARG_LONG_YES='yes'
 
 ############################ Variables
 
@@ -28,14 +30,17 @@ API_BASE_URL=""
 FIELDS=""
 COLLECTOR_NAME="$(hostname)"
 VERSION=""
+CONTINUE=false
 
 ############################ Functions
 
 function usage() {
   cat << EOF
 
-Usage: bash install.sh --token <token> [--api <url>] [--tag key=value [ --tag ...]]
+Usage: bash install.sh [--token <token>] [--api <url>] [--tag <key>=<value> [ --tag ...]] [--version <version>]
   -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>     Installation token
+  -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                Tag in format key=value
+  -${ARG_SHORT_YES}, --${ARG_LONG_YES}                            Do not ask for confirmation
 
   -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                      Api URL
   -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>              Manually specified version, e.g. 0.55.0-sumo-0
@@ -65,10 +70,13 @@ function parse_options() {
       "--${ARG_LONG_TAG}")
         set -- "$@" "-${ARG_SHORT_TAG}"
         ;;
+      "--${ARG_LONG_YES}")
+        set -- "$@" "-${ARG_SHORT_YES}"
+        ;;
       "--${ARG_LONG_VERSION}")
         set -- "$@" "-${ARG_SHORT_VERSION}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}")
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}")
         set -- "$@" "${arg}"   ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -82,7 +90,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -98,6 +106,7 @@ function parse_options() {
       "${ARG_SHORT_TOKEN}")   INSTALL_TOKEN="${OPTARG}" ;;
       "${ARG_SHORT_API}")     API_BASE_URL="${OPTARG}" ;;
       "${ARG_SHORT_VERSION}") VERSION="${OPTARG}" ;;
+      "${ARG_SHORT_YES}")     CONTINUE=true ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
             echo "Invalid tag: '${OPTARG}'. Should be in 'key=value' format"
@@ -242,6 +251,10 @@ function get_installed_version() {
 
 # Ask to continue and abort if not
 function ask_to_continue() {
+    if [[ "${CONTINUE}" == true ]]; then
+        return 0
+    fi
+
     local choice
     read -rp "Continue (y/N)?" choice
     case "${choice}" in
@@ -370,6 +383,8 @@ else
 fi
 
 if [[ -n "${INSTALL_TOKEN}" ]]; then
+    echo 'We are going to get and set up default configuration for you'
+    ask_to_continue
     # Preparing default configuration
     readonly FILE_STORAGE="/var/lib/sumologic/file_storage"
     readonly CONFIG_DIRECTORY="/etc/sumologic/otelcol"
