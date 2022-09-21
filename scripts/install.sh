@@ -353,7 +353,7 @@ else
 
     ask_to_continue
     echo -e "Downloading:\t\t${LINK}"
-    curl -L "${LINK}" --output otelcol-sumo --progress-bar
+    curl -fL "${LINK}" --output otelcol-sumo --progress-bar
 
     echo -e "Moving otelcol-sumo to /usr/local/bin"
     sudo mv otelcol-sumo /usr/local/bin/otelcol-sumo
