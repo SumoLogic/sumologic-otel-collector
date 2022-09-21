@@ -7,7 +7,7 @@ BUILDER_BIN_PATH ?= $(HOME)/bin
 INSTALLED_BUILDER_VERSION := $(shell opentelemetry-collector-builder version 2>&1)
 GO ?= go
 OS ?= $(shell uname -s | tr A-Z a-z)
-ARCH ?= $(shell uname -m)
+ARCH ?= $(shell uname -m | sed s/aarch64/arm64/ | sed s/x86_64/amd64/)
 
 # Builds for darwin need to be built with CGO_ENABLED set to 1 because some telegraf
 # plugins that are used within the telegrafreceiver are implemented with CGO.
