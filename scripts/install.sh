@@ -16,8 +16,14 @@ ARG_SHORT_VERSION='v'
 ARG_LONG_VERSION='version'
 ARG_SHORT_YES='y'
 ARG_LONG_YES='yes'
+ARG_SHORT_CONFIG='c'
+ARG_LONG_CONFIG='config'
+ARG_SHORT_STORAGE='s'
+ARG_LONG_STORAGE='storage'
+ARG_SHORT_COLLECTOR='n'
+ARG_LONG_COLLECTOR='collector-name'
 
-############################ Variables
+############################ Variables (see set_defaults function for default values)
 
 # Support providing install_token as env
 set +u
@@ -28,28 +34,39 @@ set -u
 
 API_BASE_URL=""
 FIELDS=""
-COLLECTOR_NAME="$(hostname)"
+COLLECTOR_NAME=""
 VERSION=""
 CONTINUE=false
+FILE_STORAGE=""
+CONFIG_DIRECTORY=""
 
 ############################ Functions
 
 function usage() {
   cat << EOF
 
-Usage: bash install.sh [--token <token>] [--api <url>] [--tag <key>=<value> [ --tag ...]] [--version <version>]
+Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_COLLECTOR} name] [--${ARG_LONG_TAG} <key>=<value> [ --${ARG_LONG_TAG} ...]] [--${ARG_LONG_API} <url>] [--${ARG_LONG_CONFIG} <config dir path>] [--${ARG_LONG_STORAGE} <storage dir path>] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_YES}] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
   -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>     Installation token
+  -${ARG_SHORT_COLLECTOR}, --${ARG_LONG_COLLECTOR} <name>          Collector name (default is your hostname)
   -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                Tag in format key=value
-  -${ARG_SHORT_YES}, --${ARG_LONG_YES}                            Do not ask for confirmation
 
   -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                      Api URL
+  -${ARG_SHORT_CONFIG}, --${ARG_LONG_CONFIG} <config dir path>       Path to the storage directory (default is '/var/lib/sumologic/file_storage')
+  -${ARG_SHORT_STORAGE}, --${ARG_LONG_STORAGE} <storage dir path>     Path to the configuration directory (default is '/etc/sumologic/otelcol')
   -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>              Manually specified version, e.g. 0.55.0-sumo-0
+  -${ARG_SHORT_YES}, --${ARG_LONG_YES}                            Do not ask for confirmation
 
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                           Prints this help
 
 Supported env variables:
   INSTALL_TOKEN=<token>                Equivalent of '--${ARG_LONG_TOKEN} <token>'
 EOF
+}
+
+function set_defaults() {
+    COLLECTOR_NAME="$(hostname)"
+    FILE_STORAGE="/var/lib/sumologic/file_storage"
+    CONFIG_DIRECTORY="/etc/sumologic/otelcol"
 }
 
 function parse_options() {
@@ -76,7 +93,16 @@ function parse_options() {
       "--${ARG_LONG_VERSION}")
         set -- "$@" "-${ARG_SHORT_VERSION}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}")
+      "--${ARG_LONG_CONFIG}")
+        set -- "$@" "-${ARG_SHORT_CONFIG}"
+        ;;
+      "--${ARG_LONG_STORAGE}")
+        set -- "$@" "-${ARG_SHORT_STORAGE}"
+        ;;
+      "--${ARG_LONG_COLLECTOR}")
+        set -- "$@" "-${ARG_SHORT_COLLECTOR}"
+        ;;
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_CONFIG}"|"-${ARG_SHORT_STORAGE}"|"-${ARG_SHORT_COLLECTOR}")
         set -- "$@" "${arg}"   ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -90,7 +116,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_CONFIG}:${ARG_SHORT_STORAGE}:${ARG_SHORT_COLLECTOR}:" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -102,11 +128,14 @@ function parse_options() {
 
     # Validate opt and set arguments
     case "$opt" in
-      "${ARG_SHORT_HELP}")    usage; exit 0 ;;
-      "${ARG_SHORT_TOKEN}")   INSTALL_TOKEN="${OPTARG}" ;;
-      "${ARG_SHORT_API}")     API_BASE_URL="${OPTARG}" ;;
-      "${ARG_SHORT_VERSION}") VERSION="${OPTARG}" ;;
-      "${ARG_SHORT_YES}")     CONTINUE=true ;;
+      "${ARG_SHORT_HELP}")      usage; exit 0 ;;
+      "${ARG_SHORT_TOKEN}")     INSTALL_TOKEN="${OPTARG}" ;;
+      "${ARG_SHORT_API}")       API_BASE_URL="${OPTARG}" ;;
+      "${ARG_SHORT_CONFIG}")    CONFIG_DIRECTORY="${OPTARG}" ;;
+      "${ARG_SHORT_STORAGE}")   FILE_STORAGE="${OPTARG}" ;;
+      "${ARG_SHORT_VERSION}")   VERSION="${OPTARG}" ;;
+      "${ARG_SHORT_COLLECTOR}") COLLECTOR_NAME="${OPTARG}" ;;
+      "${ARG_SHORT_YES}")       CONTINUE=true ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
             echo "Invalid tag: '${OPTARG}'. Should be in 'key=value' format"
@@ -117,8 +146,8 @@ function parse_options() {
         # Cannot use `\n` and have to use `\\` as break line due to OSx sed implementation
         FIELDS="${FIELDS}\\
       ${OPTARG/=/: }" ;;
-      "?")                    ;;
-      *)                      usage; exit 1 ;;
+    "?")                        ;;
+      *)                        usage; exit 1 ;;
     esac
 
     # Exit loop as we iterated over all arguments
@@ -136,7 +165,7 @@ function github_rate_limit() {
 function check_dependencies() {
     local error
     error=0
-    for cmd in echo sudo sed curl head grep sort tac mv chmod envsubst getopts; do
+    for cmd in echo sudo sed curl head grep sort tac mv chmod envsubst getopts hostname; do
         if ! command -v "${cmd}" &> /dev/null; then
             echo "Command '${cmd}' not found. Please install it."
             error=1
@@ -313,8 +342,10 @@ function get_full_changelog() {
 ############################ Main code
 
 check_dependencies
-
+set_defaults
 parse_options "$@"
+
+readonly INSTALL_TOKEN API_BASE_URL FIELDS COLLECTOR_NAME CONTINUE FILE_STORAGE CONFIG_DIRECTORY
 
 OS_TYPE="$(get_os_type)"
 ARCH_TYPE="$(get_arch_type)"
@@ -393,8 +424,6 @@ fi
 echo 'We are going to get and set up default configuration for you'
 ask_to_continue
 # Preparing default configuration
-readonly FILE_STORAGE="/var/lib/sumologic/file_storage"
-readonly CONFIG_DIRECTORY="/etc/sumologic/otelcol"
 readonly CONFIG_PATH="${CONFIG_DIRECTORY}/config.yaml"
 
 echo -e "Creating file_storage directory (${FILE_STORAGE})"
