@@ -7,6 +7,7 @@ BUILDER_BIN_PATH ?= $(HOME)/bin
 INSTALLED_BUILDER_VERSION := $(shell opentelemetry-collector-builder version 2>&1)
 GO ?= go
 OS ?= $(shell uname -s | tr A-Z a-z)
+ARCH ?= $(shell uname -m)
 
 # Builds for darwin need to be built with CGO_ENABLED set to 1 because some telegraf
 # plugins that are used within the telegrafreceiver are implemented with CGO.
@@ -33,7 +34,7 @@ endif
 .PHONY: _install-bin
 _install-bin:
 	@mkdir -p /$(HOME)/bin
-	curl -L -o $(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME) https://$(BUILDER_REPO)/releases/download/v$(BUILDER_VERSION)/ocb_$(BUILDER_VERSION)_$(PLATFORM)_amd64
+	curl -L -o $(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME) https://$(BUILDER_REPO)/releases/download/v$(BUILDER_VERSION)/ocb_$(BUILDER_VERSION)_$(PLATFORM)_$(ARCH)
 	@chmod +x $(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME)
 	@$(MAKE) ensure-correct-builder-version
 
