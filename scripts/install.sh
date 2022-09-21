@@ -114,6 +114,7 @@ function parse_options() {
             exit 1
         fi
 
+        # Cannot use `\n` and have to use `\\` as break line due to OSx sed implementation
         FIELDS="${FIELDS}\\
       ${OPTARG/=/: }" ;;
       "?")                    ;;
@@ -380,62 +381,65 @@ else
         echo "Installation failed. Please try again"
         exit 1
     fi
+
+    echo -e "Installation succeded:\t$(otelcol-sumo --version)"
 fi
 
-if [[ -n "${INSTALL_TOKEN}" ]]; then
-    echo 'We are going to get and set up default configuration for you'
-    ask_to_continue
-    # Preparing default configuration
-    readonly FILE_STORAGE="/var/lib/sumologic/file_storage"
-    readonly CONFIG_DIRECTORY="/etc/sumologic/otelcol"
-    readonly CONFIG_PATH="${CONFIG_DIRECTORY}/config.yaml"
-
-    echo -e "Creating file_storage directory (${FILE_STORAGE})"
-    sudo mkdir -p "${FILE_STORAGE}"
-
-    echo -e "Creating configuration directory (${CONFIG_DIRECTORY})"
-    sudo mkdir -p "${CONFIG_DIRECTORY}"
-
-
-    echo "Generating configuration and saving as ${CONFIG_PATH}"
-
-    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/default.yaml"
-
-    # ToDo: remove this line after release
-    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/5147e309c37ba543d76b4544fdedfbd4c77cc820/examples/default.yaml"
-
-    # Generate template
-    export FILE_STORAGE
-    export COLLECTOR_NAME
-    export INSTALL_TOKEN
-    export API_BASE_URL
-
-    curl -s "${CONFIG_URL}" | \
-        if [[ -n "${API_BASE_URL}" ]]; then
-            # add api_base_url after install_token
-            sed "/^    install_token/a\\
-    api_base_url: \${API_BASE_URL}
-"
-        else
-            cat -
-        fi | \
-        if [[ -n "${FIELDS}" ]]; then
-            # add collector_fields after install_token
-            sed "/^    install_token/a\\
-    collector_fields:${FIELDS}
-"
-        else
-            cat -
-        fi | \
-        if [[ "${OS_TYPE}" == "darwin" ]]; then
-            # adjust default configuration for macos
-            sed '/^      process:/d'
-        else
-            cat -
-        fi | \
-        envsubst | sudo tee "${CONFIG_PATH}"
-
-    echo "Use 'sudo otelcol-sumo --config=${CONFIG_PATH}' to run Sumo Logic Distribution for OpenTelemetry Collector"
+# Exit if install token is not set
+if [[ -z "${INSTALL_TOKEN}" ]]; then
+    exit 0
 fi
 
-echo -e "Installation succeded:\t$(otelcol-sumo --version)"
+echo 'We are going to get and set up default configuration for you'
+ask_to_continue
+# Preparing default configuration
+readonly FILE_STORAGE="/var/lib/sumologic/file_storage"
+readonly CONFIG_DIRECTORY="/etc/sumologic/otelcol"
+readonly CONFIG_PATH="${CONFIG_DIRECTORY}/config.yaml"
+
+echo -e "Creating file_storage directory (${FILE_STORAGE})"
+sudo mkdir -p "${FILE_STORAGE}"
+
+echo -e "Creating configuration directory (${CONFIG_DIRECTORY})"
+sudo mkdir -p "${CONFIG_DIRECTORY}"
+
+
+echo "Generating configuration and saving as ${CONFIG_PATH}"
+
+CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/default.yaml"
+
+# ToDo: remove this line after release
+CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/5147e309c37ba543d76b4544fdedfbd4c77cc820/examples/default.yaml"
+
+# Generate template
+export FILE_STORAGE
+export COLLECTOR_NAME
+export INSTALL_TOKEN
+export API_BASE_URL
+
+curl -s "${CONFIG_URL}" | \
+    if [[ -n "${API_BASE_URL}" ]]; then
+        # add api_base_url after install_token
+        sed "/^    install_token/a\\
+api_base_url: \${API_BASE_URL}
+"
+    else
+        cat -
+    fi | \
+    if [[ -n "${FIELDS}" ]]; then
+        # add collector_fields after install_token
+        sed "/^    install_token/a\\
+collector_fields:${FIELDS}
+"
+    else
+        cat -
+    fi | \
+    if [[ "${OS_TYPE}" == "darwin" ]]; then
+        # adjust default configuration for macos
+        sed '/^      process:/d'
+    else
+        cat -
+    fi | \
+    envsubst | sudo tee "${CONFIG_PATH}"
+
+echo "Use 'sudo otelcol-sumo --config=${CONFIG_PATH}' to run Sumo Logic Distribution for OpenTelemetry Collector"
