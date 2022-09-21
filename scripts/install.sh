@@ -312,23 +312,25 @@ echo -e "Version to install:\t${VERSION}"
 # Check if otelcol is already in newest version
 if [[ "${INSTALLED_VERSION}" == "${VERSION}" ]]; then
     echo -e "OpenTelemetry collector is already in newest (${VERSION}) version"
-elif [[ -z "${INSTALLED_VERSION}" ]]; then
-    # Take versions from installed up to the newest
-    BETWEEN_VERSIONS="$(get_versions_from "${VERSIONS}" "${INSTALLED_VERSION}")"
-    readonly BETWEEN_VERSIONS
-    echo "${BETWEEN_VERSIONS}"
+else
+    if [[ -z "${INSTALLED_VERSION}" ]]; then
+        # Take versions from installed up to the newest
+        BETWEEN_VERSIONS="$(get_versions_from "${VERSIONS}" "${INSTALLED_VERSION}")"
+        readonly BETWEEN_VERSIONS
+        echo "${BETWEEN_VERSIONS}"
 
-    # Get full changelog if we were unable to access github API
-    if [[ -z "${BETWEEN_VERSIONS}" ]] || [[ "$(github_rate_limit)" < "$(echo BETWEEN_VERSIONS | wc -w)" ]]; then
-        echo -e "Showing full changelog up to ${VERSION}"
-        read -rp "Press enter to see changelog"
-        get_full_changelog "${VERSION}"
-    else
-        read -rp "Press enter to see changelog"
-        for version in ${BETWEEN_VERSIONS}; do
-            # Print changelog for every version
-            get_changelog "${version}"
-        done
+        # Get full changelog if we were unable to access github API
+        if [[ -z "${BETWEEN_VERSIONS}" ]] || [[ "$(github_rate_limit)" < "$(echo BETWEEN_VERSIONS | wc -w)" ]]; then
+            echo -e "Showing full changelog up to ${VERSION}"
+            read -rp "Press enter to see changelog"
+            get_full_changelog "${VERSION}"
+        else
+            read -rp "Press enter to see changelog"
+            for version in ${BETWEEN_VERSIONS}; do
+                # Print changelog for every version
+                get_changelog "${version}"
+            done
+        fi
     fi
 
     readonly LINK="https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${VERSION}/otelcol-sumo-${VERSION}-${OS_TYPE}_${ARCH_TYPE}"
