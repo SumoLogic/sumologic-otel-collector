@@ -12,6 +12,8 @@ ARG_SHORT_API='a'
 ARG_LONG_API='api'
 ARG_SHORT_TAG='t'
 ARG_LONG_TAG='tag'
+ARG_SHORT_VERSION='v'
+ARG_LONG_VERSION='version'
 
 ############################ Variables
 
@@ -19,6 +21,7 @@ INSTALL_TOKEN=""
 API_BASE_URL=""
 FIELDS=""
 COLLECTOR_NAME="$(hostname)"
+VERSION=""
 
 ############################ Functions
 
@@ -29,7 +32,8 @@ Usage: bash install.sh --token <token> [--api <url>] [--tag key=value [ --tag ..
   -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>     Installation token
 
   -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                      Api URL
-  -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                Tag in format key=value
+  -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>              Manually specified version, e.g. 0.55.0-sumo-0
+
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                           Prints this help
 EOF
 }
@@ -52,7 +56,10 @@ function parse_options() {
       "--${ARG_LONG_TAG}")
         set -- "$@" "-${ARG_SHORT_TAG}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}")
+      "--${ARG_LONG_VERSION}")
+        set -- "$@" "-${ARG_SHORT_VERSION}"
+        ;;
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}")
         set -- "$@" "${arg}"   ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -66,7 +73,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -81,6 +88,7 @@ function parse_options() {
       "${ARG_SHORT_HELP}")    usage; exit 0 ;;
       "${ARG_SHORT_TOKEN}")   INSTALL_TOKEN="${OPTARG}" ;;
       "${ARG_SHORT_API}")     API_BASE_URL="${OPTARG}" ;;
+      "${ARG_SHORT_VERSION}") VERSION="${OPTARG}" ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
             echo "Invalid tag: '${OPTARG}'. Should be in 'key=value' format"
@@ -300,11 +308,10 @@ echo -e "Getting versions..."
 VERSIONS="$(get_versions)"
 
 # Use user's version if set, otherwise get latest version from API (or website)
-set +u
 if [[ -z "${VERSION}" ]]; then
     VERSION="$(get_latest_version "${VERSIONS}")"
 fi
-set -u
+
 readonly VERSIONS VERSION INSTALLED_VERSION
 
 echo -e "Version to install:\t${VERSION}"
