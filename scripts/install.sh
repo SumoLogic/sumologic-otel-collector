@@ -454,7 +454,7 @@ else
         if [[ -n "${API_BASE_URL}" ]]; then
             # add api_base_url after install_token
             sed "/^    install_token/a\\
-        api_base_url: \${API_BASE_URL}
+    api_base_url: \${API_BASE_URL}
     "
         else
             cat -
