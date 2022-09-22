@@ -2,7 +2,160 @@
 
 set -euo pipefail
 
+############################ Static variables
+
+ARG_SHORT_TOKEN='i'
+ARG_LONG_TOKEN='installation-token'
+ARG_SHORT_HELP='h'
+ARG_LONG_HELP='help'
+ARG_SHORT_API='a'
+ARG_LONG_API='api'
+ARG_SHORT_TAG='t'
+ARG_LONG_TAG='tag'
+ARG_SHORT_VERSION='v'
+ARG_LONG_VERSION='version'
+ARG_SHORT_YES='y'
+ARG_LONG_YES='yes'
+ARG_SHORT_CONFIG='c'
+ARG_LONG_CONFIG='config'
+ARG_SHORT_STORAGE='s'
+ARG_LONG_STORAGE='storage'
+ARG_SHORT_COLLECTOR='n'
+ARG_LONG_COLLECTOR='collector-name'
+
+############################ Variables (see set_defaults function for default values)
+
+# Support providing install_token as env
+set +u
+if [[ -z "${INSTALL_TOKEN}" ]]; then
+    INSTALL_TOKEN=""
+fi
+set -u
+
+API_BASE_URL=""
+FIELDS=""
+COLLECTOR_NAME=""
+VERSION=""
+CONTINUE=false
+FILE_STORAGE=""
+CONFIG_DIRECTORY=""
+
 ############################ Functions
+
+function usage() {
+  cat << EOF
+
+Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_COLLECTOR} name] [--${ARG_LONG_TAG} <key>=<value> [ --${ARG_LONG_TAG} ...]] [--${ARG_LONG_API} <url>] [--${ARG_LONG_CONFIG} <config dir path>] [--${ARG_LONG_STORAGE} <storage dir path>] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_YES}] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
+  -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>     Installation token
+  -${ARG_SHORT_COLLECTOR}, --${ARG_LONG_COLLECTOR} <name>          Collector name (default is your hostname)
+  -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                Tag in format key=value
+
+  -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                      Api URL
+  -${ARG_SHORT_CONFIG}, --${ARG_LONG_CONFIG} <config dir path>       Path to the configuration directory (default is '/etc/otelcol-sumo')
+  -${ARG_SHORT_STORAGE}, --${ARG_LONG_STORAGE} <storage dir path>     Path to the storage directory (default is '/var/lib/sumologic/file_storage')
+  -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>              Manually specified version, e.g. 0.55.0-sumo-0
+  -${ARG_SHORT_YES}, --${ARG_LONG_YES}                            Do not ask for confirmation
+
+  -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                           Prints this help
+
+Supported env variables:
+  INSTALL_TOKEN=<token>                Equivalent of '--${ARG_LONG_TOKEN} <token>'
+EOF
+}
+
+function set_defaults() {
+    COLLECTOR_NAME="$(hostname)"
+    FILE_STORAGE="/var/lib/sumologic/file_storage"
+    CONFIG_DIRECTORY="/etc/otelcol-sumo"
+}
+
+function parse_options() {
+  # Transform long options to short ones
+  for arg in "$@"; do
+
+    shift
+    case "$arg" in
+      "--${ARG_LONG_HELP}")
+        set -- "$@" "-${ARG_SHORT_HELP}"
+        ;;
+      "--${ARG_LONG_TOKEN}")
+        set -- "$@" "-${ARG_SHORT_TOKEN}"
+        ;;
+      "--${ARG_LONG_API}")
+        set -- "$@" "-${ARG_SHORT_API}"
+        ;;
+      "--${ARG_LONG_TAG}")
+        set -- "$@" "-${ARG_SHORT_TAG}"
+        ;;
+      "--${ARG_LONG_YES}")
+        set -- "$@" "-${ARG_SHORT_YES}"
+        ;;
+      "--${ARG_LONG_VERSION}")
+        set -- "$@" "-${ARG_SHORT_VERSION}"
+        ;;
+      "--${ARG_LONG_CONFIG}")
+        set -- "$@" "-${ARG_SHORT_CONFIG}"
+        ;;
+      "--${ARG_LONG_STORAGE}")
+        set -- "$@" "-${ARG_SHORT_STORAGE}"
+        ;;
+      "--${ARG_LONG_COLLECTOR}")
+        set -- "$@" "-${ARG_SHORT_COLLECTOR}"
+        ;;
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_CONFIG}"|"-${ARG_SHORT_STORAGE}"|"-${ARG_SHORT_COLLECTOR}")
+        set -- "$@" "${arg}"   ;;
+      -*)
+        echo "Unknown option ${arg}"; usage; exit 1 ;;
+      *)
+        set -- "$@" "$arg" ;;
+    esac
+  done
+
+  # Parse short options
+  OPTIND=1
+
+  while true; do
+    set +e
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_CONFIG}:${ARG_SHORT_STORAGE}:${ARG_SHORT_COLLECTOR}:" opt
+    set -e
+
+    # Invalid argument catched, print and exit
+    if [[ $? != 0 && ${OPTIND} -le $# ]]; then
+      echo "Invalid argument:" "${@:${OPTIND}:1}"
+      usage
+      exit 1
+    fi
+
+    # Validate opt and set arguments
+    case "$opt" in
+      "${ARG_SHORT_HELP}")      usage; exit 0 ;;
+      "${ARG_SHORT_TOKEN}")     INSTALL_TOKEN="${OPTARG}" ;;
+      "${ARG_SHORT_API}")       API_BASE_URL="${OPTARG}" ;;
+      "${ARG_SHORT_CONFIG}")    CONFIG_DIRECTORY="${OPTARG}" ;;
+      "${ARG_SHORT_STORAGE}")   FILE_STORAGE="${OPTARG}" ;;
+      "${ARG_SHORT_VERSION}")   VERSION="${OPTARG}" ;;
+      "${ARG_SHORT_COLLECTOR}") COLLECTOR_NAME="${OPTARG}" ;;
+      "${ARG_SHORT_YES}")       CONTINUE=true ;;
+      "${ARG_SHORT_TAG}")
+        if [[ "${OPTARG}" != ?*"="* ]]; then
+            echo "Invalid tag: '${OPTARG}'. Should be in 'key=value' format"
+            usage
+            exit 1
+        fi
+
+        # Cannot use `\n` and have to use `\\` as break line due to OSx sed implementation
+        FIELDS="${FIELDS}\\
+      ${OPTARG/=/: }" ;;
+    "?")                        ;;
+      *)                        usage; exit 1 ;;
+    esac
+
+    # Exit loop as we iterated over all arguments
+    if [[ "${OPTIND}" -gt $# ]]; then
+      break
+    fi
+  done
+}
 
 # Get github rate limit
 function github_rate_limit() {
@@ -12,7 +165,7 @@ function github_rate_limit() {
 function check_dependencies() {
     local error
     error=0
-    for cmd in echo sudo sed curl head grep sort tac mv chmod; do
+    for cmd in echo sudo sed curl head grep sort tac mv chmod envsubst getopts hostname; do
         if ! command -v "${cmd}" &> /dev/null; then
             echo "Command '${cmd}' not found. Please install it."
             error=1
@@ -66,10 +219,15 @@ get_versions_from() {
     local from
     readonly from="${2}"
 
+    # Return if there is no installed version
+    if [[ "${from}" == "" ]]; then
+        return 0
+    fi
+
     local line
     readonly line="$(( $(echo "${versions}" | sed 's/ /\n/g' | grep -n "${from}$" | sed 's/:.*//g') - 1 ))"
 
-    if [[ "${line}" > "0" ]]; then
+    if [[ "${line}" -gt "0" ]]; then
         echo "${versions}" | sed 's/ /\n/g' | head -n "${line}" | sort
     fi
     return 0
@@ -123,6 +281,10 @@ function get_installed_version() {
 
 # Ask to continue and abort if not
 function ask_to_continue() {
+    if [[ "${CONTINUE}" == true ]]; then
+        return 0
+    fi
+
     local choice
     read -rp "Continue (y/N)?" choice
     case "${choice}" in
@@ -180,6 +342,10 @@ function get_full_changelog() {
 ############################ Main code
 
 check_dependencies
+set_defaults
+parse_options "$@"
+
+readonly INSTALL_TOKEN API_BASE_URL FIELDS COLLECTOR_NAME CONTINUE FILE_STORAGE CONFIG_DIRECTORY
 
 OS_TYPE="$(get_os_type)"
 ARCH_TYPE="$(get_arch_type)"
@@ -189,19 +355,17 @@ echo -e "Detected OS type:\t${OS_TYPE}"
 echo -e "Detected architecture:\t${ARCH_TYPE}"
 
 echo -e "Getting installed version..."
-echo -e "Getting versions..."
-
 INSTALLED_VERSION="$(get_installed_version)"
 echo -e "Installed version:\t${INSTALLED_VERSION}"
 
+echo -e "Getting versions..."
 VERSIONS="$(get_versions)"
 
 # Use user's version if set, otherwise get latest version from API (or website)
-set +u
 if [[ -z "${VERSION}" ]]; then
     VERSION="$(get_latest_version "${VERSIONS}")"
 fi
-set -u
+
 readonly VERSIONS VERSION INSTALLED_VERSION
 
 echo -e "Version to install:\t${VERSION}"
@@ -209,43 +373,107 @@ echo -e "Version to install:\t${VERSION}"
 # Check if otelcol is already in newest version
 if [[ "${INSTALLED_VERSION}" == "${VERSION}" ]]; then
     echo -e "OpenTelemetry collector is already in newest (${VERSION}) version"
-    exit
-elif [[ -n "${INSTALLED_VERSION}" ]]; then
-    # Take versions from installed up to the newest
-    BETWEEN_VERSIONS="$(get_versions_from "${VERSIONS}" "${INSTALLED_VERSION}")"
-    readonly BETWEEN_VERSIONS
+else
+    if [[ -z "${INSTALLED_VERSION}" ]]; then
+        # Take versions from installed up to the newest
+        BETWEEN_VERSIONS="$(get_versions_from "${VERSIONS}" "${INSTALLED_VERSION}")"
+        readonly BETWEEN_VERSIONS
+        echo "${BETWEEN_VERSIONS}"
 
-    # Get full changelog if we were unable to access github API
-    if [[ -z "${BETWEEN_VERSIONS}" ]] || [[ "$(github_rate_limit)" < "$(echo BETWEEN_VERSIONS | wc -w)" ]]; then
-        echo -e "Showing full changelog up to ${VERSION}"
-        read -rp "Press enter to see changelog"
-        get_full_changelog "${VERSION}"
-    else
-        read -rp "Press enter to see changelog"
-        for version in ${BETWEEN_VERSIONS}; do
-            # Print changelog for every version
-            get_changelog "${version}"
-        done
+        # Get full changelog if we were unable to access github API
+        if [[ -z "${BETWEEN_VERSIONS}" ]] || [[ "$(github_rate_limit)" < "$(echo BETWEEN_VERSIONS | wc -w)" ]]; then
+            echo -e "Showing full changelog up to ${VERSION}"
+            read -rp "Press enter to see changelog"
+            get_full_changelog "${VERSION}"
+        else
+            read -rp "Press enter to see changelog"
+            for version in ${BETWEEN_VERSIONS}; do
+                # Print changelog for every version
+                get_changelog "${version}"
+            done
+        fi
     fi
+
+    readonly LINK="https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${VERSION}/otelcol-sumo-${VERSION}-${OS_TYPE}_${ARCH_TYPE}"
+
+    ask_to_continue
+    echo -e "Downloading:\t\t${LINK}"
+    curl -fL "${LINK}" --output otelcol-sumo --progress-bar
+
+    echo -e "Moving otelcol-sumo to /usr/local/bin"
+    sudo mv otelcol-sumo /usr/local/bin/otelcol-sumo
+    echo -e "Setting /usr/local/bin/otelcol-sumo to be executable"
+    sudo chmod +x /usr/local/bin/otelcol-sumo
+
+    OUTPUT="$(otelcol-sumo --version || true)"
+    readonly OUTPUT
+
+    if [[ -z "${OUTPUT}" ]]; then
+        echo "Installation failed. Please try again"
+        exit 1
+    fi
+
+    echo -e "Installation succeded:\t$(otelcol-sumo --version)"
 fi
 
-readonly LINK="https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${VERSION}/otelcol-sumo-${VERSION}-${OS_TYPE}_${ARCH_TYPE}"
+# Exit if install token is not set
+if [[ -z "${INSTALL_TOKEN}" ]]; then
+    exit 0
+fi
 
+echo 'We are going to get and set up default configuration for you'
 ask_to_continue
-echo -e "Downloading:\t\t${LINK}"
-curl -L "${LINK}" --output otelcol-sumo --progress-bar
+# Preparing default configuration
+readonly CONFIG_PATH="${CONFIG_DIRECTORY}/config.yaml"
 
-echo -e "Moving otelcol-sumo to /usr/local/bin"
-sudo mv otelcol-sumo /usr/local/bin/otelcol-sumo
-echo -e "Setting /usr/local/bin/otelcol-sumo to be executable"
-sudo chmod +x /usr/local/bin/otelcol-sumo
-
-OUTPUT="$(otelcol-sumo --version || true)"
-readonly OUTPUT
-
-if [[ -z "${OUTPUT}" ]]; then
-    echo "Installation failed. Please try again"
-    exit 1
+if [[ -f "${CONFIG_PATH}" ]]; then
+    echo "Configuration (${CONFIG_PATH}) already exist). Aborting"
+    exit 0
 fi
 
-echo -e "Installation succeded:\t$(otelcol-sumo --version)"
+echo -e "Creating file_storage directory (${FILE_STORAGE})"
+sudo mkdir -p "${FILE_STORAGE}"
+
+echo -e "Creating configuration directory (${CONFIG_DIRECTORY})"
+sudo mkdir -p "${CONFIG_DIRECTORY}"
+
+
+echo "Generating configuration and saving as ${CONFIG_PATH}"
+
+CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/default.yaml"
+
+# ToDo: remove this line after release
+CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/5147e309c37ba543d76b4544fdedfbd4c77cc820/examples/default.yaml"
+
+# Generate template
+export FILE_STORAGE
+export COLLECTOR_NAME
+export INSTALL_TOKEN
+export API_BASE_URL
+
+curl -s "${CONFIG_URL}" | \
+    if [[ -n "${API_BASE_URL}" ]]; then
+        # add api_base_url after install_token
+        sed "/^    install_token/a\\
+    api_base_url: \${API_BASE_URL}
+"
+    else
+        cat -
+    fi | \
+    if [[ -n "${FIELDS}" ]]; then
+        # add collector_fields after install_token
+        sed "/^    install_token/a\\
+    collector_fields:${FIELDS}
+"
+    else
+        cat -
+    fi | \
+    if [[ "${OS_TYPE}" == "darwin" ]]; then
+        # adjust default configuration for macos
+        sed '/^      process:/d'
+    else
+        cat -
+    fi | \
+    envsubst | sudo tee "${CONFIG_PATH}"
+
+echo "Use 'sudo otelcol-sumo --config=${CONFIG_PATH}' to run Sumo Logic Distribution for OpenTelemetry Collector"
