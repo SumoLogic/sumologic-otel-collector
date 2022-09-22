@@ -427,56 +427,56 @@ ask_to_continue
 readonly CONFIG_PATH="${CONFIG_DIRECTORY}/config.yaml"
 
 if [[ -f "${CONFIG_PATH}" ]]; then
-    echo "Configuration (${CONFIG_PATH}) already exist). Aborting"
-    exit 0
+    echo "Configuration (${CONFIG_PATH}) already exist)"
+else
+
+    echo -e "Creating file_storage directory (${FILE_STORAGE})"
+    sudo mkdir -p "${FILE_STORAGE}"
+
+    echo -e "Creating configuration directory (${CONFIG_DIRECTORY})"
+    sudo mkdir -p "${CONFIG_DIRECTORY}"
+
+
+    echo "Generating configuration and saving as ${CONFIG_PATH}"
+
+    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/default.yaml"
+
+    # ToDo: remove this line after release
+    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/5147e309c37ba543d76b4544fdedfbd4c77cc820/examples/default.yaml"
+
+    # Generate template
+    export FILE_STORAGE
+    export COLLECTOR_NAME
+    export INSTALL_TOKEN
+    export API_BASE_URL
+
+    curl -s "${CONFIG_URL}" | \
+        if [[ -n "${API_BASE_URL}" ]]; then
+            # add api_base_url after install_token
+            sed "/^    install_token/a\\
+        api_base_url: \${API_BASE_URL}
+    "
+        else
+            cat -
+        fi | \
+        if [[ -n "${FIELDS}" ]]; then
+            # add collector_fields after install_token
+            sed "/^    install_token/a\\
+        collector_fields:${FIELDS}
+    "
+        else
+            cat -
+        fi | \
+        if [[ "${OS_TYPE}" == "darwin" ]]; then
+            # adjust default configuration for macos
+            sed '/^      process:/d'
+        else
+            cat -
+        fi | \
+        envsubst | sudo tee "${CONFIG_PATH}"
+
+    echo 'Changing permissions to config file'
+    sudo chmod 640 "${CONFIG_PATH}"
 fi
-
-echo -e "Creating file_storage directory (${FILE_STORAGE})"
-sudo mkdir -p "${FILE_STORAGE}"
-
-echo -e "Creating configuration directory (${CONFIG_DIRECTORY})"
-sudo mkdir -p "${CONFIG_DIRECTORY}"
-
-
-echo "Generating configuration and saving as ${CONFIG_PATH}"
-
-CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/default.yaml"
-
-# ToDo: remove this line after release
-CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/5147e309c37ba543d76b4544fdedfbd4c77cc820/examples/default.yaml"
-
-# Generate template
-export FILE_STORAGE
-export COLLECTOR_NAME
-export INSTALL_TOKEN
-export API_BASE_URL
-
-curl -s "${CONFIG_URL}" | \
-    if [[ -n "${API_BASE_URL}" ]]; then
-        # add api_base_url after install_token
-        sed "/^    install_token/a\\
-    api_base_url: \${API_BASE_URL}
-"
-    else
-        cat -
-    fi | \
-    if [[ -n "${FIELDS}" ]]; then
-        # add collector_fields after install_token
-        sed "/^    install_token/a\\
-    collector_fields:${FIELDS}
-"
-    else
-        cat -
-    fi | \
-    if [[ "${OS_TYPE}" == "darwin" ]]; then
-        # adjust default configuration for macos
-        sed '/^      process:/d'
-    else
-        cat -
-    fi | \
-    envsubst | sudo tee "${CONFIG_PATH}"
-
-echo 'Changing permissions to config file'
-sudo chmod 640 "${CONFIG_PATH}"
 
 echo "Use 'sudo otelcol-sumo --config=${CONFIG_PATH}' to run Sumo Logic Distribution for OpenTelemetry Collector"
