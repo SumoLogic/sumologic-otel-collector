@@ -1,0 +1,13 @@
+[Unit]
+Description=Sumo Logic Distribution for OpenTelemetry Collector
+
+[Service]
+ExecStart=/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yaml
+User=opentelemetry
+Group=opentelemetry
+MemoryHigh=200M
+MemoryMax=300M
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target
