@@ -476,4 +476,7 @@ curl -s "${CONFIG_URL}" | \
     fi | \
     envsubst | sudo tee "${CONFIG_PATH}"
 
+echo 'Changing permissions to config file'
+sudo chmod 640 "${CONFIG_PATH}"
+
 echo "Use 'sudo otelcol-sumo --config=${CONFIG_PATH}' to run Sumo Logic Distribution for OpenTelemetry Collector"
