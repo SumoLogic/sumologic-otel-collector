@@ -22,6 +22,8 @@ ARG_SHORT_STORAGE='s'
 ARG_LONG_STORAGE='storage'
 ARG_SHORT_COLLECTOR='n'
 ARG_LONG_COLLECTOR='collector-name'
+ARG_SHORT_SYSTEMD='d'
+ARG_LONG_SYSTEMD='disable-systemd-installation'
 
 ############################ Variables (see set_defaults function for default values)
 
@@ -39,6 +41,8 @@ VERSION=""
 CONTINUE=false
 FILE_STORAGE=""
 CONFIG_DIRECTORY=""
+SYSTEMD_DISABLED=""
+SYSTEMD_CONFIG=""
 
 ############################ Functions
 
@@ -52,6 +56,7 @@ Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_COLLECTOR} na
 
   -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                      Api URL
   -${ARG_SHORT_CONFIG}, --${ARG_LONG_CONFIG} <config dir path>       Path to the configuration directory (default is '/etc/otelcol-sumo')
+  -${ARG_SHORT_SYSTEMD}, --${ARG_LONG_SYSTEMD}   Do not set up systemd service
   -${ARG_SHORT_STORAGE}, --${ARG_LONG_STORAGE} <storage dir path>     Path to the storage directory (default is '/var/lib/sumologic/file_storage')
   -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>              Manually specified version, e.g. 0.55.0-sumo-0
   -${ARG_SHORT_YES}, --${ARG_LONG_YES}                            Do not ask for confirmation
@@ -67,6 +72,8 @@ function set_defaults() {
     COLLECTOR_NAME="$(hostname)"
     FILE_STORAGE="/var/lib/sumologic/file_storage"
     CONFIG_DIRECTORY="/etc/otelcol-sumo"
+    SYSTEMD_DISABLED=false
+    SYSTEMD_CONFIG="/etc/systemd/system/otelcol-sumo.service"
 }
 
 function parse_options() {
@@ -102,7 +109,10 @@ function parse_options() {
       "--${ARG_LONG_COLLECTOR}")
         set -- "$@" "-${ARG_SHORT_COLLECTOR}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_CONFIG}"|"-${ARG_SHORT_STORAGE}"|"-${ARG_SHORT_COLLECTOR}")
+      "--${ARG_LONG_SYSTEMD}")
+        set -- "$@" "-${ARG_SHORT_SYSTEMD}"
+        ;;
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_CONFIG}"|"-${ARG_SHORT_STORAGE}"|"-${ARG_SHORT_COLLECTOR}"|"-${ARG_SHORT_SYSTEMD}")
         set -- "$@" "${arg}"   ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -116,7 +126,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_CONFIG}:${ARG_SHORT_STORAGE}:${ARG_SHORT_COLLECTOR}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_CONFIG}:${ARG_SHORT_STORAGE}:${ARG_SHORT_COLLECTOR}:${ARG_SHORT_SYSTEMD}" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -136,6 +146,7 @@ function parse_options() {
       "${ARG_SHORT_VERSION}")   VERSION="${OPTARG}" ;;
       "${ARG_SHORT_COLLECTOR}") COLLECTOR_NAME="${OPTARG}" ;;
       "${ARG_SHORT_YES}")       CONTINUE=true ;;
+      "${ARG_SHORT_SYSTEMD}")   SYSTEMD_DISABLED=true ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
             echo "Invalid tag: '${OPTARG}'. Should be in 'key=value' format"
@@ -171,6 +182,10 @@ function check_dependencies() {
             error=1
         fi
     done
+
+    if ! command -v systemctl &> /dev/null; then
+        SYSTEMD_DISABLED=true
+    fi
 
     if [[ "${error}" == "1" ]] ; then
         exit 1
@@ -345,7 +360,7 @@ check_dependencies
 set_defaults
 parse_options "$@"
 
-readonly INSTALL_TOKEN API_BASE_URL FIELDS COLLECTOR_NAME CONTINUE FILE_STORAGE CONFIG_DIRECTORY
+readonly INSTALL_TOKEN API_BASE_URL FIELDS COLLECTOR_NAME CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG SYSTEMD_DISABLED
 
 OS_TYPE="$(get_os_type)"
 ARCH_TYPE="$(get_arch_type)"
@@ -475,8 +490,48 @@ else
         fi | \
         envsubst | sudo tee "${CONFIG_PATH}"
 
-    echo 'Changing permissions to config file'
-    sudo chmod 640 "${CONFIG_PATH}"
+    echo 'Changing permissions to config file and storage'
+    sudo chmod 640 "${CONFIG_PATH}" "${FILE_STORAGE}"
 fi
 
-echo "Use 'sudo otelcol-sumo --config=${CONFIG_PATH}' to run Sumo Logic Distribution for OpenTelemetry Collector"
+if [[ "${SYSTEMD_DISABLED}" == "true" ]]; then
+    echo "Use 'sudo otelcol-sumo --config=${CONFIG_PATH}' to run Sumo Logic Distribution for OpenTelemetry Collector"
+    exit 0
+fi
+
+echo 'We are going to set up systemd service'
+ask_to_continue
+
+if [[ -f "${SYSTEMD_CONFIG}" ]]; then
+    echo "Configuration for systemd service (${SYSTEMD_CONFIG}) already exist. Aborting"
+    exit 0
+else
+
+echo 'Creating user and group'
+if getent passwd opentelemetry > /dev/null; then
+    echo 'User and group already created'
+else
+    sudo useradd -mrUs /bin/false opentelemetry
+fi
+
+echo 'Changing ownership for config and storage'
+sudo chown -R opentelemetry:opentelemetry "${CONFIG_PATH}" "${FILE_STORAGE}"
+
+CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/systemd/otelcol-sumo.service"
+
+# ToDo: remove this line after release
+SYSTEMD_CONFIG="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/1e677911ea866769b33fa259c68f4507369fc141/examples/systemd/otelcol-sumo.service"
+
+echo 'Getting service configuration'
+curl -fL "${SYSTEMD_CONFIG}" --output otelcol-sumo.service --progress-bar
+sudo mv otelcol-sumo.service "${SYSTEMD_CONFIG}"
+
+echo 'Enable otelcol-sumo service'
+sudo systemctl enable otelcol-sumo
+
+echo 'Starting otelcol-sumo service'
+sudo systemctl start otelcol-sumo
+
+echo 'Waiting 10s before checking status'
+sleep 10
+sudo systemctl status otelcol-sumo
