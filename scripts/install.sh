@@ -462,7 +462,7 @@ else
         if [[ -n "${FIELDS}" ]]; then
             # add collector_fields after install_token
             sed "/^    install_token/a\\
-        collector_fields:${FIELDS}
+    collector_fields:${FIELDS}
     "
         else
             cat -
