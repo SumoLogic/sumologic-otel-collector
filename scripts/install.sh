@@ -505,7 +505,7 @@ ask_to_continue
 if [[ -f "${SYSTEMD_CONFIG}" ]]; then
     echo "Configuration for systemd service (${SYSTEMD_CONFIG}) already exist. Aborting"
     exit 0
-else
+fi
 
 echo 'Creating user and group'
 if getent passwd opentelemetry > /dev/null; then
