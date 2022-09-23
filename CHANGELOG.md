@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - fix(k8sprocessor): fix metadata enrichment [#724]
+- fix(k8sprocessor): keep pod's services information up to date [#710]
 
 ### Removed
 
@@ -25,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#672]: https://github.com/SumoLogic/sumologic-otel-collector/pull/672
 [#678]: https://github.com/SumoLogic/sumologic-otel-collector/pull/678
 [#709]: https://github.com/SumoLogic/sumologic-otel-collector/pull/709
+[#710]: https://github.com/SumoLogic/sumologic-otel-collector/pull/710
 [#714]: https://github.com/SumoLogic/sumologic-otel-collector/pull/714
 [#713]: https://github.com/SumoLogic/sumologic-otel-collector/pull/713
 [#724]: https://github.com/SumoLogic/sumologic-otel-collector/pull/724

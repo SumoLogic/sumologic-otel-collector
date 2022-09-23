@@ -105,7 +105,7 @@ func (op *fakeOwnerCache) Start() {}
 func (op *fakeOwnerCache) Stop() {}
 
 // GetServices fetches list of services for a given pod
-func (op *fakeOwnerCache) GetServices(pod *api_v1.Pod) []string {
+func (op *fakeOwnerCache) GetServices(podName string) []string {
 	return []string{"foo", "bar"}
 }
 
@@ -121,13 +121,13 @@ func (op *fakeOwnerCache) GetNamespace(pod *api_v1.Pod) *api_v1.Namespace {
 }
 
 // GetOwners fetches deep tree of owners for a given pod
-func (op *fakeOwnerCache) GetOwners(pod *api_v1.Pod) []*ObjectOwner {
+func (op *fakeOwnerCache) GetOwners(pod *Pod) []*ObjectOwner {
 	objectOwners := []*ObjectOwner{}
 
 	visited := map[types.UID]bool{}
 	queue := []types.UID{}
 
-	for _, or := range pod.OwnerReferences {
+	for _, or := range *pod.OwnerReferences {
 		if _, uidVisited := visited[or.UID]; !uidVisited {
 			queue = append(queue, or.UID)
 			visited[or.UID] = true
