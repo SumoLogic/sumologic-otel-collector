@@ -63,7 +63,7 @@
       when:
         - sumologic_otel_collector.systemd_service == true
     - name: Run otelcol-sumo systemd service
-      systemd: state=started name=otelcol-sumo
+      systemd: state=started enabled=yes name=otelcol-sumo
       when:
         - sumologic_otel_collector.systemd_service == true
     - name: Run otelcol-sumo in background
