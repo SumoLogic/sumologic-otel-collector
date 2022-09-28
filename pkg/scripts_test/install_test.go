@@ -54,9 +54,12 @@ func runScript(t *testing.T) {
 
 		if strings.Contains(strLine, "Showing full changelog") {
 			// show changelog
-			in.Write([]byte("\n"))
+			_, err = in.Write([]byte("\n"))
+			require.NoError(t, err)
+
 			// accept changes and proceed with the installation
-			in.Write([]byte("y\n"))
+			_, err = in.Write([]byte("y\n"))
+			require.NoError(t, err)
 		}
 	}
 
