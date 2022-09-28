@@ -43,7 +43,7 @@ FILE_STORAGE=""
 CONFIG_DIRECTORY=""
 SYSTEMD_CONFIG=""
 
-# set by check_dependencies
+# set by check_dependencies therefore cannot be set by set_defaults
 SYSTEMD_DISABLED=false
 
 ############################ Functions
