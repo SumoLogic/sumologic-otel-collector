@@ -41,8 +41,10 @@ VERSION=""
 CONTINUE=false
 FILE_STORAGE=""
 CONFIG_DIRECTORY=""
-SYSTEMD_DISABLED=""
 SYSTEMD_CONFIG=""
+
+# set by check_dependencies therefore cannot be set by set_defaults
+SYSTEMD_DISABLED=false
 
 ############################ Functions
 
@@ -72,7 +74,6 @@ function set_defaults() {
     COLLECTOR_NAME="$(hostname)"
     FILE_STORAGE="/var/lib/sumologic/file_storage"
     CONFIG_DIRECTORY="/etc/otelcol-sumo"
-    SYSTEMD_DISABLED=false
     SYSTEMD_CONFIG="/etc/systemd/system/otelcol-sumo.service"
 }
 
