@@ -46,6 +46,9 @@ SYSTEMD_CONFIG=""
 # set by check_dependencies therefore cannot be set by set_defaults
 SYSTEMD_DISABLED=false
 
+# alternative commands
+TAC="tac"
+
 ############################ Functions
 
 function usage() {
@@ -177,12 +180,22 @@ function github_rate_limit() {
 function check_dependencies() {
     local error
     error=0
-    for cmd in echo sudo sed curl head grep sort tac mv chmod envsubst getopts hostname; do
+    for cmd in echo sudo sed curl head grep sort mv chmod envsubst getopts hostname; do
         if ! command -v "${cmd}" &> /dev/null; then
             echo "Command '${cmd}' not found. Please install it."
             error=1
         fi
     done
+
+    # verify if `tac` is supported, otherwise check for `tail -r`
+    if ! command -v "tac" &> /dev/null; then
+        if echo '' | tail -r  &> /dev/null; then
+            TAC="tail -r"
+        else
+            echo "Neither command 'tac' nor support for `tail -r` not found. Please install it."
+            error=1
+        fi
+    fi
 
     if ! command -v systemctl &> /dev/null; then
         SYSTEMD_DISABLED=true
@@ -220,7 +233,7 @@ function get_versions() {
     -sH "Accept: application/vnd.github.v3+json" \
     https://api.github.com/repos/SumoLogic/sumologic-otel-collector/releases \
     | grep -E '(tag_name|"(draft|prerelease)")' \
-    | tac \
+    | ${TAC} \
     | sed 'N;N;s/.*true.*//' \
     | grep -o 'v.*"' \
     | sort -r \
