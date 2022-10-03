@@ -188,7 +188,7 @@ function github_rate_limit() {
 function check_dependencies() {
     local error
     error=0
-    for cmd in echo sudo sed curl head grep sort tac mv chmod envsubst getopts hostname; do
+    for cmd in echo sudo sed curl head grep sort tac mv chmod envsubst getopts hostname bc; do
         if ! command -v "${cmd}" &> /dev/null; then
             echo "Command '${cmd}' not found. Please install it."
             error=1
@@ -409,7 +409,9 @@ if [[ -z "${VERSION}" ]]; then
     VERSION="$(get_latest_version "${VERSIONS}")"
 fi
 
-readonly VERSIONS VERSION INSTALLED_VERSION
+VERSION_PREFIX="$(echo "${VERSION}" | grep -oE '^[^.]+\.[^.]+')"
+
+readonly VERSIONS VERSION INSTALLED_VERSION VERSION_PREFIX
 
 echo -e "Version to install:\t${VERSION}"
 
@@ -527,7 +529,12 @@ else
 fi
 
 if [[ "${SYSTEMD_DISABLED}" == "true" ]]; then
-    echo "Use 'sudo otelcol-sumo --config=${CONFIG_PATH}' to run Sumo Logic Distribution for OpenTelemetry Collector"
+    COMMAND_SUFFIX=""
+    # Add glob for versions above 0.57
+    if (( $(echo "${VERSION_PREFIX} > 0.57" | bc -l) )); then
+        COMMAND_SUFFIX=" --config \"glob:${CONFIG_DIRECTORY}/conf.d/*.yaml\""
+    fi
+    echo "Use 'sudo otelcol-sumo --config=${CONFIG_PATH}${COMMAND_SUFFIX}' to run Sumo Logic Distribution for OpenTelemetry Collector"
     exit 0
 fi
 
@@ -557,7 +564,13 @@ SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-c
 TMP_SYSTEMD_CONFIG="otelcol-sumo.service"
 echo 'Getting service configuration'
 curl -fL "${SYSTEMD_CONFIG_URL}" --output "${TMP_SYSTEMD_CONFIG}" --progress-bar
-sed -i'' -s "s%ExecStart=/usr/local/bin/otelcol-sumo .*%ExecStart=/usr/local/bin/otelcol-sumo --config '${CONFIG_PATH}'%/sumologic.yaml --config \"glob:'${CONFIG_PATH}'%/conf.d/*.yaml\" "${TMP_SYSTEMD_CONFIG}"
+sed -i'' -s "s%/etc/otelcol-sumo%'${CONFIG_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
+
+# Remove glob for versions up to 0.57
+if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then
+    sed -i'' -s "s% --config \"glob\"%%" "${TMP_SYSTEMD_CONFIG}"
+fi
+
 sudo mv "${TMP_SYSTEMD_CONFIG}" "${SYSTEMD_CONFIG}"
 
 echo 'Enable otelcol-sumo service'
