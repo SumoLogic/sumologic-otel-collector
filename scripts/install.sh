@@ -522,7 +522,7 @@ else
         envsubst | sudo tee "${CONFIG_PATH}"
 
     echo 'Changing permissions for config file and storage'
-    sudo chmod 640 "${CONFIG_PATH}"
+    sudo chmod 440 "${CONFIG_PATH}"
     sudo chmod -R 750 "${FILE_STORAGE}"
 fi
 

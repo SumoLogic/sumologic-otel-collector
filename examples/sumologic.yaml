@@ -1,3 +1,5 @@
+## This file is generated automatically and shouldn't be changed
+## All modifications should be put as separate files in conf.d subdirectory
 extensions:
   ## Configuration for Sumo Logic Extension
   ## Manages registration, heartbeats and authentication to Sumo Logic
