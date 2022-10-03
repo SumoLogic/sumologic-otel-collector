@@ -41,6 +41,7 @@ VERSION=""
 CONTINUE=false
 FILE_STORAGE=""
 CONFIG_DIRECTORY=""
+USER_CONFIG_DIRECTORY=""
 SYSTEMD_CONFIG=""
 
 # set by check_dependencies therefore cannot be set by set_defaults
@@ -57,7 +58,7 @@ Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_COLLECTOR} na
   -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                Tag in format key=value
 
   -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                      Api URL
-  -${ARG_SHORT_CONFIG}, --${ARG_LONG_CONFIG} <config dir path>       Path to the configuration directory (default is '/etc/otelcol-sumo/conf.d')
+  -${ARG_SHORT_CONFIG}, --${ARG_LONG_CONFIG} <config dir path>       Path to the configuration directory (default is '/etc/otelcol-sumo')
   -${ARG_SHORT_SYSTEMD}, --${ARG_LONG_SYSTEMD}   Do not set up systemd service
   -${ARG_SHORT_STORAGE}, --${ARG_LONG_STORAGE} <storage dir path>     Path to the storage directory (default is '/var/lib/sumologic/file_storage')
   -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>              Manually specified version, e.g. 0.55.0-sumo-0
@@ -363,6 +364,9 @@ parse_options "$@"
 
 readonly INSTALL_TOKEN API_BASE_URL FIELDS COLLECTOR_NAME CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG SYSTEMD_DISABLED
 
+USER_CONFIG_DIRECTORY="${CONFIG_DIRECTORY}/conf.d"
+readonly USER_CONFIG_DIRECTORY
+
 OS_TYPE="$(get_os_type)"
 ARCH_TYPE="$(get_arch_type)"
 readonly OS_TYPE ARCH_TYPE
@@ -442,7 +446,7 @@ fi
 echo 'We are going to get and set up default configuration for you'
 ask_to_continue
 # Preparing default configuration
-readonly CONFIG_PATH="${CONFIG_DIRECTORY}/000-default.yaml"
+readonly CONFIG_PATH="${CONFIG_DIRECTORY}/sumologic.yaml"
 
 if [[ -f "${CONFIG_PATH}" ]]; then
     echo "Configuration (${CONFIG_PATH}) already exist)"
@@ -452,6 +456,9 @@ else
 
     echo -e "Creating configuration directory (${CONFIG_DIRECTORY})"
     sudo mkdir -p "${CONFIG_DIRECTORY}"
+
+    echo -e "Creating user configurations directory (${USER_CONFIG_DIRECTORY})"
+    sudo mkdir -p "${USER_CONFIG_DIRECTORY}"
 
     echo "Generating configuration and saving as ${CONFIG_PATH}"
 
