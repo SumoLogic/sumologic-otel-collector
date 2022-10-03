@@ -108,7 +108,7 @@ jobs:
 
       - name: Check if test related files changed
         id: changed-files
-        uses: tj-actions/changed-files@v11
+        uses: tj-actions/changed-files@v13
         with:
           files: |
             go.mod
@@ -160,7 +160,7 @@ jobs:
 
       - name: Check if test related files changed
         id: changed-files
-        uses: tj-actions/changed-files@v11
+        uses: tj-actions/changed-files@v13
         with:
           files: |
             go.mod
@@ -211,7 +211,7 @@ jobs:
 
       - name: Check if files changed that need linting
         id: changed-files
-        uses: tj-actions/changed-files@v11
+        uses: tj-actions/changed-files@v13
         with:
           files: |
             go.mod
@@ -281,7 +281,7 @@ jobs:
 
       - name: Check if build related files changed
         id: changed-files
-        uses: tj-actions/changed-files@v11
+        uses: tj-actions/changed-files@v13
         with:
           files: |
             otelcolbuilder/.gon_config.json
@@ -364,7 +364,7 @@ jobs:
 
       - name: Check if build related files changed
         id: changed-files
-        uses: tj-actions/changed-files@v11
+        uses: tj-actions/changed-files@v13
         with:
           files: |
             otelcolbuilder/.gon_config.json
@@ -448,7 +448,7 @@ jobs:
 
       - name: Check if build related files changed
         id: changed-files
-        uses: tj-actions/changed-files@v11
+        uses: tj-actions/changed-files@v13
         with:
           files: |
             go.mod

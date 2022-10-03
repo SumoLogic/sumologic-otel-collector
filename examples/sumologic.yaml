@@ -1,3 +1,5 @@
+## This file is generated automatically and shouldn't be changed
+## All modifications should be put as separate files in conf.d subdirectory
 extensions:
   ## Configuration for Sumo Logic Extension
   ## Manages registration, heartbeats and authentication to Sumo Logic
@@ -20,44 +22,15 @@ extensions:
     directory: ${FILE_STORAGE}
 
 receivers:
-  ## Configuration for Host Metrics Receiver
-  ## The Host Metrics receiver generates metrics about the host system scraped from various sources
-  ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/hostmetricsreceiver
-  hostmetrics:
-    collection_interval: 30s
-    scrapers:
-      cpu:
-      disk:
-      load:
-      filesystem:
-      memory:
-      network:
-      paging:
-      processes:
-      process:
-
-  ## Configuration for Filelog Receiver
-  ## Tails and parses logs from files
-  ## This instance is configured to handle syslog logs
-  ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver
-  filelog/syslog:
-    start_at: beginning
-    include_file_path_resolved: true
-    include:
-      - /var/log/auth.log
-      - /var/log/syslog
-      - /var/log/daemon.log
-      - /var/log/kern.log
-
-  ## Configuration for Filelog Receiver
-  ## Tails and parses logs from files
-  ## This instance is configured to handle dpkg logs
-  ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver
-  filelog/dpkg:
-    start_at: beginning
-    include_file_path_resolved: true
-    include:
-      - /var/log/dpkg.log
+  ## Configuration for OTLP Receiver
+  ## Receives data via gRPC or HTTP using OTLP format.
+  ## ref: https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver/otlpreceiver
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
 
 exporters:
   ## Configuration for Sumo Logic Exporter
@@ -66,25 +39,6 @@ exporters:
   sumologic:
 
 processors:
-  ## Configuration for Sumo Logic Schema Processor
-  ## The Sumo Logic Schema processor modifies the metadata on logs, metrics and traces sent to Sumo Logic
-  ## so that the Sumo Logic apps can make full use of the ingested data.
-  ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/sumologicschemaprocessor
-  sumologic_schema:
-
-  ## Configuration Sumo Logic Syslog Processor
-  ## The Sumo Logic Syslog processor can be used to create attribute with facility name based on facility code.
-  ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/sumologicsyslogprocessor
-  sumologic_syslog:
-
-  ## Configuration for Group by Attributes Processor
-  ## It groups records by attributes and move record attributes to resource attributes
-  ## ref: https://github.com/sumologic/opentelemetry-collector-contrib/tree/main/processor/groupbyattrsprocessor
-  groupbyattrs:
-    keys:
-      - log.file.name
-      - facility
-      - log.file.path_resolved
 
   ## Configuration for Memory Limiter Processor
   ## The memory_limiter processor is used to prevent out of memory situations on the collector.
@@ -115,33 +69,27 @@ service:
     - health_check
     - file_storage
   pipelines:
-    metrics:
+    metrics/default:
       receivers:
-        - hostmetrics
+        - otlp
       processors:
         - memory_limiter
-        - sumologic_schema
         - batch
       exporters:
         - sumologic
-    logs/syslog:
+    logs/default:
       receivers:
-        - filelog/syslog
+        - otlp
       processors:
         - memory_limiter
-        - sumologic_syslog
-        - groupbyattrs
-        - sumologic_schema
         - batch
       exporters:
         - sumologic
-    logs/dkg:
+    traces/default:
       receivers:
-        - filelog/dpkg
+        - otlp
       processors:
         - memory_limiter
-        - groupbyattrs
-        - sumologic_schema
         - batch
       exporters:
         - sumologic

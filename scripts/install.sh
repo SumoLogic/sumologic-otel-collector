@@ -24,6 +24,8 @@ ARG_SHORT_COLLECTOR='n'
 ARG_LONG_COLLECTOR='collector-name'
 ARG_SHORT_SYSTEMD='d'
 ARG_LONG_SYSTEMD='disable-systemd-installation'
+ARG_SHORT_UNINSTALL='u'
+ARG_LONG_UNINSTALL='uninstall'
 
 ############################ Variables (see set_defaults function for default values)
 
@@ -41,7 +43,10 @@ VERSION=""
 CONTINUE=false
 FILE_STORAGE=""
 CONFIG_DIRECTORY=""
+USER_CONFIG_DIRECTORY=""
 SYSTEMD_CONFIG=""
+UNINSTALL=""
+SUMO_BINARY_PATH=""
 
 # set by check_dependencies therefore cannot be set by set_defaults
 SYSTEMD_DISABLED=false
@@ -55,6 +60,7 @@ Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_COLLECTOR} na
   -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>     Installation token
   -${ARG_SHORT_COLLECTOR}, --${ARG_LONG_COLLECTOR} <name>          Collector name (default is your hostname)
   -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                Tag in format key=value
+  -${ARG_SHORT_UNINSTALL}, --${ARG_LONG_UNINSTALL}                      Uninstall collection along with configuration
 
   -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                      Api URL
   -${ARG_SHORT_CONFIG}, --${ARG_LONG_CONFIG} <config dir path>       Path to the configuration directory (default is '/etc/otelcol-sumo')
@@ -75,6 +81,7 @@ function set_defaults() {
     FILE_STORAGE="/var/lib/sumologic/file_storage"
     CONFIG_DIRECTORY="/etc/otelcol-sumo"
     SYSTEMD_CONFIG="/etc/systemd/system/otelcol-sumo.service"
+    SUMO_BINARY_PATH="/usr/local/bin/otelcol-sumo"
 }
 
 function parse_options() {
@@ -113,7 +120,10 @@ function parse_options() {
       "--${ARG_LONG_SYSTEMD}")
         set -- "$@" "-${ARG_SHORT_SYSTEMD}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_CONFIG}"|"-${ARG_SHORT_STORAGE}"|"-${ARG_SHORT_COLLECTOR}"|"-${ARG_SHORT_SYSTEMD}")
+      "--${ARG_LONG_UNINSTALL}")
+        set -- "$@" "-${ARG_SHORT_UNINSTALL}"
+        ;;
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_CONFIG}"|"-${ARG_SHORT_STORAGE}"|"-${ARG_SHORT_COLLECTOR}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}")
         set -- "$@" "${arg}"   ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -127,7 +137,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_CONFIG}:${ARG_SHORT_STORAGE}:${ARG_SHORT_COLLECTOR}:${ARG_SHORT_SYSTEMD}" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_CONFIG}:${ARG_SHORT_STORAGE}:${ARG_SHORT_COLLECTOR}:${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -148,6 +158,7 @@ function parse_options() {
       "${ARG_SHORT_COLLECTOR}") COLLECTOR_NAME="${OPTARG}" ;;
       "${ARG_SHORT_YES}")       CONTINUE=true ;;
       "${ARG_SHORT_SYSTEMD}")   SYSTEMD_DISABLED=true ;;
+      "${ARG_SHORT_UNINSTALL}") UNINSTALL=true ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
             echo "Invalid tag: '${OPTARG}'. Should be in 'key=value' format"
@@ -177,7 +188,7 @@ function github_rate_limit() {
 function check_dependencies() {
     local error
     error=0
-    for cmd in echo sudo sed curl head grep sort tac mv chmod envsubst getopts hostname; do
+    for cmd in echo sudo sed curl head grep sort tac mv chmod envsubst getopts hostname bc; do
         if ! command -v "${cmd}" &> /dev/null; then
             echo "Command '${cmd}' not found. Please install it."
             error=1
@@ -288,9 +299,9 @@ function get_arch_type() {
 
 # Get installed version of otelcol-sumo
 function get_installed_version() {
-    if [[ -f "/usr/local/bin/otelcol-sumo" ]]; then
+    if [[ -f "${SUMO_BINARY_PATH}" ]]; then
         set +o pipefail
-        /usr/local/bin/otelcol-sumo --version | grep -o 'v[0-9].*$' | sed 's/v//'
+        "${SUMO_BINARY_PATH}" --version | grep -o 'v[0-9].*$' | sed 's/v//'
         set -o pipefail
     fi
 }
@@ -361,7 +372,23 @@ check_dependencies
 set_defaults
 parse_options "$@"
 
-readonly INSTALL_TOKEN API_BASE_URL FIELDS COLLECTOR_NAME CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG SYSTEMD_DISABLED
+readonly INSTALL_TOKEN API_BASE_URL FIELDS COLLECTOR_NAME CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG SYSTEMD_DISABLED UNINSTALL
+
+if [[ "${UNINSTALL}" == "true" ]]; then
+    echo "Going to remove Otelcol binary, it's file storage and configurations"
+    ask_to_continue
+
+    if [[ -f "${SYSTEMD_CONFIG}" ]]; then
+        sudo systemctl stop otelcol-sumo
+        sudo systemctl disable otelcol-sumo
+    fi
+
+    sudo rm -rif "${CONFIG_DIRECTORY}" "${FILE_STORAGE}" "${SUMO_BINARY_PATH}" "${SYSTEMD_CONFIG}"
+    exit 0
+fi
+
+USER_CONFIG_DIRECTORY="${CONFIG_DIRECTORY}/conf.d"
+readonly USER_CONFIG_DIRECTORY
 
 OS_TYPE="$(get_os_type)"
 ARCH_TYPE="$(get_arch_type)"
@@ -382,7 +409,9 @@ if [[ -z "${VERSION}" ]]; then
     VERSION="$(get_latest_version "${VERSIONS}")"
 fi
 
-readonly VERSIONS VERSION INSTALLED_VERSION
+VERSION_PREFIX="$(echo "${VERSION}" | grep -oE '^[^.]+\.[^.]+')"
+
+readonly VERSIONS VERSION INSTALLED_VERSION VERSION_PREFIX
 
 echo -e "Version to install:\t${VERSION}"
 
@@ -399,7 +428,9 @@ else
         # Get full changelog if we were unable to access github API
         if [[ -z "${BETWEEN_VERSIONS}" ]] || [[ "$(github_rate_limit)" < "$(echo BETWEEN_VERSIONS | wc -w)" ]]; then
             echo -e "Showing full changelog up to ${VERSION}"
-            read -rp "Press enter to see changelog"
+            if [[ "${CONTINUE}" != true ]]; then
+                read -rp "Press enter to see changelog"
+            fi
             get_full_changelog "${VERSION}"
         else
             read -rp "Press enter to see changelog"
@@ -417,9 +448,9 @@ else
     curl -fL "${LINK}" --output otelcol-sumo --progress-bar
 
     echo -e "Moving otelcol-sumo to /usr/local/bin"
-    sudo mv otelcol-sumo /usr/local/bin/otelcol-sumo
-    echo -e "Setting /usr/local/bin/otelcol-sumo to be executable"
-    sudo chmod +x /usr/local/bin/otelcol-sumo
+    sudo mv otelcol-sumo "${SUMO_BINARY_PATH}"
+    echo -e "Setting ${SUMO_BINARY_PATH} to be executable"
+    sudo chmod +x "${SUMO_BINARY_PATH}"
 
     OUTPUT="$(otelcol-sumo --version || true)"
     readonly OUTPUT
@@ -440,25 +471,26 @@ fi
 echo 'We are going to get and set up default configuration for you'
 ask_to_continue
 # Preparing default configuration
-readonly CONFIG_PATH="${CONFIG_DIRECTORY}/config.yaml"
+readonly CONFIG_PATH="${CONFIG_DIRECTORY}/sumologic.yaml"
 
 if [[ -f "${CONFIG_PATH}" ]]; then
     echo "Configuration (${CONFIG_PATH}) already exist)"
 else
-
     echo -e "Creating file_storage directory (${FILE_STORAGE})"
     sudo mkdir -p "${FILE_STORAGE}"
 
     echo -e "Creating configuration directory (${CONFIG_DIRECTORY})"
     sudo mkdir -p "${CONFIG_DIRECTORY}"
 
+    echo -e "Creating user configurations directory (${USER_CONFIG_DIRECTORY})"
+    sudo mkdir -p "${USER_CONFIG_DIRECTORY}"
 
     echo "Generating configuration and saving as ${CONFIG_PATH}"
 
-    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/default.yaml"
+    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/sumologic.yaml"
 
     # ToDo: remove this line after release
-    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/5147e309c37ba543d76b4544fdedfbd4c77cc820/examples/default.yaml"
+    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/0788a0af938242fef4561143715845503e022fb4/examples/sumologic.yaml"
 
     # Generate template
     export FILE_STORAGE
@@ -492,11 +524,17 @@ else
         envsubst | sudo tee "${CONFIG_PATH}"
 
     echo 'Changing permissions for config file and storage'
-    sudo chmod 640 "${CONFIG_PATH}" "${FILE_STORAGE}"
+    sudo chmod 440 "${CONFIG_PATH}"
+    sudo chmod -R 750 "${FILE_STORAGE}"
 fi
 
 if [[ "${SYSTEMD_DISABLED}" == "true" ]]; then
-    echo "Use 'sudo otelcol-sumo --config=${CONFIG_PATH}' to run Sumo Logic Distribution for OpenTelemetry Collector"
+    COMMAND_SUFFIX=""
+    # Add glob for versions above 0.57
+    if (( $(echo "${VERSION_PREFIX} > 0.57" | bc -l) )); then
+        COMMAND_SUFFIX=" --config \"glob:${CONFIG_DIRECTORY}/conf.d/*.yaml\""
+    fi
+    echo "Use 'sudo otelcol-sumo --config=${CONFIG_PATH}${COMMAND_SUFFIX}' to run Sumo Logic Distribution for OpenTelemetry Collector"
     exit 0
 fi
 
@@ -518,14 +556,22 @@ fi
 echo 'Changing ownership for config and storage'
 sudo chown -R opentelemetry:opentelemetry "${CONFIG_PATH}" "${FILE_STORAGE}"
 
-CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/systemd/otelcol-sumo.service"
+SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/systemd/otelcol-sumo.service"
 
 # ToDo: remove this line after release
-SYSTEMD_CONFIG="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/1e677911ea866769b33fa259c68f4507369fc141/examples/systemd/otelcol-sumo.service"
+SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/0788a0af938242fef4561143715845503e022fb4/examples/systemd/otelcol-sumo.service"
 
+TMP_SYSTEMD_CONFIG="otelcol-sumo.service"
 echo 'Getting service configuration'
-curl -fL "${SYSTEMD_CONFIG}" --output otelcol-sumo.service --progress-bar
-sudo mv otelcol-sumo.service "${SYSTEMD_CONFIG}"
+curl -fL "${SYSTEMD_CONFIG_URL}" --output "${TMP_SYSTEMD_CONFIG}" --progress-bar
+sed -i'' -s "s%/etc/otelcol-sumo%'${CONFIG_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
+
+# Remove glob for versions up to 0.57
+if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then
+    sed -i'' -s "s% --config \"glob\"%%" "${TMP_SYSTEMD_CONFIG}"
+fi
+
+sudo mv "${TMP_SYSTEMD_CONFIG}" "${SYSTEMD_CONFIG}"
 
 echo 'Enable otelcol-sumo service'
 sudo systemctl enable otelcol-sumo
