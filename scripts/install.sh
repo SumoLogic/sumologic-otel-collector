@@ -557,7 +557,7 @@ SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-c
 TMP_SYSTEMD_CONFIG="otelcol-sumo.service"
 echo 'Getting service configuration'
 curl -fL "${SYSTEMD_CONFIG_URL}" --output "${TMP_SYSTEMD_CONFIG}" --progress-bar
-sed -i'' -s "s%ExecStart=/usr/local/bin/otelcol-sumo .*%ExecStart=/usr/local/bin/otelcol-sumo --config '${CONFIG_PATH}'%" "${TMP_SYSTEMD_CONFIG}"
+sed -i'' -s "s%ExecStart=/usr/local/bin/otelcol-sumo .*%ExecStart=/usr/local/bin/otelcol-sumo --config '${CONFIG_PATH}'%/sumologic.yaml --config \"glob:'${CONFIG_PATH}'%/conf.d/*.yaml\" "${TMP_SYSTEMD_CONFIG}"
 sudo mv "${TMP_SYSTEMD_CONFIG}" "${SYSTEMD_CONFIG}"
 
 echo 'Enable otelcol-sumo service'
