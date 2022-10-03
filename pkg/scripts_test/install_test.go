@@ -6,7 +6,9 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,7 +16,7 @@ import (
 )
 
 func runScript(t *testing.T) {
-	cmd := exec.Command("bash", "-c", "../../scripts/install.sh")
+	cmd := exec.Command("bash", "-c", "/sumologic/scripts/install.sh")
 
 	in, err := cmd.StdinPipe()
 	if err != nil {
@@ -100,7 +102,13 @@ func exitCode(cmd *exec.Cmd) (int, error) {
 }
 
 func TestInstallation(t *testing.T) {
+	root, err := os.Open("/")
+	require.NoError(t, err)
+
+	defer removeEnvironment(t, root)
+
 	defer tearDown(t)
+	prepareEnvironment(t)
 
 	_, err := os.Stat("/usr/local/bin/otelcol-sumo")
 	require.ErrorIs(t, err, os.ErrNotExist, "/usr/local/bin/otelcol-sumo is already created")
@@ -116,4 +124,126 @@ func TestInstallation(t *testing.T) {
 	code, err := exitCode(cmd)
 	require.NoError(t, err)
 	require.Equal(t, 0, code)
+}
+
+func prepareEnvironment(t *testing.T) {
+
+	dir := os.TempDir()
+	path := filepath.Join(dir, "bin")
+	fmt.Printf("Local dir: %v", dir)
+
+	os.MkdirAll(path, os.ModePerm)
+	for _, command := range []string{"sudo", "sed", "curl", "head", "bash", "sort", "mv", "chmod", "envsubst", "hostname", "tac", "tail", "users", "whoami"} {
+		cmd := exec.Command("bash", "-c", fmt.Sprintf("cp $(which %s) %s", command, path))
+
+		out, err := cmd.CombinedOutput()
+		require.NoError(t, err, string(out))
+	}
+
+	path = filepath.Join(dir, "dev")
+	os.MkdirAll(path, os.ModePerm)
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("mount --rbind /dev %s", path))
+	out, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	path = filepath.Join(dir, "proc")
+	os.MkdirAll(path, os.ModePerm)
+	cmd = exec.Command("bash", "-c", fmt.Sprintf("mount -t proc /proc %s", path))
+	out, err = cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	path = filepath.Join(dir, "sys")
+	os.MkdirAll(path, os.ModePerm)
+	cmd = exec.Command("bash", "-c", fmt.Sprintf("mount -t sysfs /sys %s", path))
+	out, err = cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	path = filepath.Join(dir, "usr")
+	os.MkdirAll(path, os.ModePerm)
+	cmd = exec.Command("bash", "-c", fmt.Sprintf("mount -o bind /usr %s", path))
+	out, err = cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	path = filepath.Join(dir, "lib")
+	os.MkdirAll(path, os.ModePerm)
+	cmd = exec.Command("bash", "-c", fmt.Sprintf("mount -o bind /lib %s", path))
+	out, err = cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	path = filepath.Join(dir, "lib64")
+	os.MkdirAll(path, os.ModePerm)
+	cmd = exec.Command("bash", "-c", fmt.Sprintf("mount -o bind /lib64 %s", path))
+	out, err = cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	path = filepath.Join(dir, "run")
+	os.MkdirAll(path, os.ModePerm)
+	cmd = exec.Command("bash", "-c", fmt.Sprintf("mount -o bind /run %s", path))
+	out, err = cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	path = filepath.Join(dir, "sumologic")
+	os.MkdirAll(path, os.ModePerm)
+	cmd = exec.Command("bash", "-c", fmt.Sprintf("cp -r ../.. %s", path))
+	out, err = cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	path = filepath.Join(dir, "etc/ssl")
+	os.MkdirAll(path, os.ModePerm)
+	cmd = exec.Command("bash", "-c", fmt.Sprintf("cp -r /etc/ssl/certs %s", path))
+	out, err = cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	path = filepath.Join(dir, "etc")
+	os.MkdirAll(path, os.ModePerm)
+	cmd = exec.Command("bash", "-c", fmt.Sprintf("cp -r /etc/resolv.conf %s", path))
+	out, err = cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	cmd = exec.Command("bash", "-c", fmt.Sprintf("cp -r /etc/sudoers %s", path))
+	out, err = cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	cmd = exec.Command("bash", "-c", fmt.Sprintf("cp -r /etc/passwd %s", path))
+	out, err = cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	path = filepath.Join(dir, "tmp")
+	os.MkdirAll(path, os.ModePerm)
+
+	err = syscall.Chroot(dir)
+	require.NoError(t, err)
+}
+
+func removeEnvironment(t *testing.T, root *os.File) {
+	t.Log("Cleaning up env")
+	defer root.Close()
+
+	dir := os.TempDir()
+
+	err := root.Chdir()
+	require.NoError(t, err)
+
+	err = syscall.Chroot(".")
+	require.NoError(t, err)
+
+	path := filepath.Join(dir, "dev")
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("mount --make-rslave %s", path))
+	out, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	for _, subdir := range []string{
+		"dev",
+		"proc",
+		"sys",
+		"usr",
+		"lib",
+		"lib64",
+		"run",
+	} {
+		path := filepath.Join(dir, subdir)
+		cmd := exec.Command("bash", "-c", fmt.Sprintf("umount -R %s", path))
+		out, err := cmd.CombinedOutput()
+		require.NoError(t, err, string(out))
+	}
 }
