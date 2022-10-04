@@ -208,7 +208,7 @@ function check_dependencies() {
         fi
     fi
 
-    if ! command -v systemctl &> /dev/null; then
+    if [[ ! -d /run/systemd/system ]]; then
         SYSTEMD_DISABLED=true
     fi
 

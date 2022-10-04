@@ -1,6 +1,7 @@
 package sumologic_scripts_tests
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -25,24 +26,25 @@ func tearDown(t *testing.T) {
 
 func TestInstallScript(t *testing.T) {
 	for _, tt := range []struct {
-		name        string
-		options     installOptions
-		preChecks   []checkFunc
-		postChecks  []checkFunc
-		preActions  []checkFunc
-		installCode int
+		name              string
+		options           installOptions
+		preChecks         []checkFunc
+		postChecks        []checkFunc
+		preActions        []checkFunc
+		conditionalChecks []condCheckFunc
+		installCode       int
 	}{
 		{
 			name:       "no arguments",
 			options:    installOptions{},
 			preChecks:  []checkFunc{checkBinaryNotCreated},
-			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigNotCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigNotCreated, checkSystemdConfigNotCreated},
 		},
 		{
 			name:       "autoconfirm",
 			options:    installOptions{},
 			preChecks:  []checkFunc{checkBinaryNotCreated},
-			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigNotCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigNotCreated, checkSystemdConfigNotCreated},
 		},
 		{
 			name: "installation token only",
@@ -51,17 +53,33 @@ func TestInstallScript(t *testing.T) {
 				installToken:   installToken,
 			},
 			preChecks:  []checkFunc{checkBinaryNotCreated},
-			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkTokenInConfig},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkTokenInConfig, checkSystemdConfigNotCreated},
+		},
+		{
+			name: "systemd",
+			options: installOptions{
+				installToken: installToken,
+			},
+			preChecks:         []checkFunc{checkBinaryNotCreated},
+			postChecks:        []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkTokenInConfig, checkSystemdConfigCreated},
+			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
+			installCode:       3, // because of invalid install token
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			defer tearDown(t)
-
 			ch := check{
 				test:                t,
 				installOptions:      tt.options,
 				expectedInstallCode: tt.installCode,
 			}
+
+			for _, a := range tt.conditionalChecks {
+				if !a(ch) {
+					t.SkipNow()
+				}
+			}
+
+			defer tearDown(t)
 
 			for _, a := range tt.preActions {
 				a(ch)
@@ -72,6 +90,7 @@ func TestInstallScript(t *testing.T) {
 			}
 
 			ch.code, ch.err = runScript(t, tt.options)
+			fmt.Printf("%v:%v", ch.code, ch.expectedInstallCode)
 			checkRun(ch)
 
 			for _, c := range tt.postChecks {

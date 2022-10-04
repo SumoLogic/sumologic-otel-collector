@@ -4,6 +4,7 @@ import (
 	"os/exec"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,6 +14,12 @@ type check struct {
 	code                int
 	err                 error
 	expectedInstallCode int
+}
+
+type condCheckFunc func(check) bool
+
+func checkSystemdAvailability(c check) bool {
+	return assert.DirExists(c.test, systemdDirectoryPath, "systemd is not supported")
 }
 
 type checkFunc func(check)
@@ -52,4 +59,12 @@ func checkTokenInConfig(c check) {
 	require.NoError(c.test, err, "error while reading configuration")
 
 	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "install token is different than expected")
+}
+
+func checkSystemdConfigCreated(c check) {
+	require.FileExists(c.test, systemdPath, "systemd configuration has not been created properly")
+}
+
+func checkSystemdConfigNotCreated(c check) {
+	require.NoFileExists(c.test, systemdPath, "systemd configuration has been created")
 }
