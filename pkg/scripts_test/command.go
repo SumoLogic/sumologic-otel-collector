@@ -15,6 +15,7 @@ type installOptions struct {
 	installToken   string
 	autoconfirm    bool
 	disableSystemd bool
+	tags           map[string]string
 }
 
 func (io *installOptions) string() []string {
@@ -32,6 +33,12 @@ func (io *installOptions) string() []string {
 
 	if io.disableSystemd {
 		opts = append(opts, "--disable-systemd-installation")
+	}
+
+	if len(io.tags) > 0 {
+		for k, v := range io.tags {
+			opts = append(opts, "--tag", fmt.Sprintf("%s=%s", k, v))
+		}
 	}
 
 	return opts

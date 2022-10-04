@@ -56,6 +56,19 @@ func TestInstallScript(t *testing.T) {
 			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkTokenInConfig, checkSystemdConfigNotCreated},
 		},
 		{
+			name: "configuration with tags",
+			options: installOptions{
+				disableSystemd: true,
+				installToken:   installToken,
+				tags: map[string]string{
+					"lorem": "ipsum",
+					"foo":   "bar",
+				},
+			},
+			preChecks:  []checkFunc{checkBinaryNotCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkTags, checkSystemdConfigNotCreated},
+		},
+		{
 			name: "systemd",
 			options: installOptions{
 				installToken: installToken,

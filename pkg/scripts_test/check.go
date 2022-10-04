@@ -68,3 +68,12 @@ func checkSystemdConfigCreated(c check) {
 func checkSystemdConfigNotCreated(c check) {
 	require.NoFileExists(c.test, systemdPath, "systemd configuration has been created")
 }
+
+func checkTags(c check) {
+	conf, err := getConfig(configPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	for k, v := range c.installOptions.tags {
+		require.Equal(c.test, v, conf.Extensions.Sumologic.Tags[k], "install token is different than expected")
+	}
+}

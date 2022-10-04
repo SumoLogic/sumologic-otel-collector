@@ -15,7 +15,8 @@ type extensions struct {
 }
 
 type sumologicExtension struct {
-	InstallToken string `yaml:"install_token"`
+	InstallToken string            `yaml:"install_token"`
+	Tags         map[string]string `yaml:"collector_fields"`
 }
 
 func getConfig(path string) (config, error) {
