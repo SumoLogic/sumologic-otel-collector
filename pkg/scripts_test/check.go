@@ -28,28 +28,28 @@ func checkBinaryNotCreated(c check) {
 func checkBinaryIsRunning(c check) {
 	cmd := exec.Command(binaryPath, "--version")
 	err := cmd.Start()
-	require.NoError(c.test, err)
+	require.NoError(c.test, err, "error while checking version")
 
 	code, err := exitCode(cmd)
-	require.NoError(c.test, err)
-	require.Equal(c.test, 0, code)
+	require.NoError(c.test, err, "error while checking exit code")
+	require.Equal(c.test, 0, code, "got error code while checking version")
 }
 
 func checkRun(c check) {
-	require.Equal(c.test, c.expectedInstallCode, c.code)
+	require.Equal(c.test, c.expectedInstallCode, c.code, "unexpected installation script error code")
 }
 
 func checkConfigCreated(c check) {
-	require.FileExists(c.test, configPath)
+	require.FileExists(c.test, configPath, "configuration has not been created properly")
 }
 
 func checkConfigNotCreated(c check) {
-	require.NoFileExists(c.test, configPath)
+	require.NoFileExists(c.test, configPath, "configuration has been created")
 }
 
 func checkTokenInConfig(c check) {
 	conf, err := getConfig(configPath)
-	require.NoError(c.test, err)
+	require.NoError(c.test, err, "error while reading configuration")
 
-	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken)
+	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "install token is different than expected")
 }
