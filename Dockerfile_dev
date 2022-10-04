@@ -16,7 +16,7 @@ RUN apt update && apt install -y systemd
 # h stands for dereference of symbolic links
 RUN tar czhf journalctl.tar.gz /bin/journalctl $(ldd /bin/journalctl | grep -oP "\/.*? ")
 
-FROM golang:1.18.4
+FROM golang:1.19.1
 ARG BUILD_TAG=latest
 ENV TAG $BUILD_TAG
 ARG USER_UID=10001
