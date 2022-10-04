@@ -13,8 +13,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func runScript(t *testing.T) {
-	cmd := exec.Command("bash", "-c", "../../scripts/install.sh")
+const (
+	binaryPath      string = "/usr/local/bin/otelcol-sumo"
+	fileStoragePath string = "/var/lib/sumologic/file_storage"
+	etcPath         string = "/etc/otelcol-sumo"
+	systemdPath     string = "/etc/systemd/system/otelcol-sumo.service"
+	scriptPath      string = "../../scripts/install.sh"
+)
+
+type installOptions struct {
+	installToken string
+	autoconfirm  bool
+}
+
+func (io *installOptions) string() []string {
+	opts := []string{
+		scriptPath,
+	}
+
+	if io.installToken != "" {
+		opts = append(opts, "--installation-token", io.installToken)
+	}
+
+	if io.autoconfirm {
+		opts = append(opts, "--yes")
+	}
+
+	return opts
+}
+
+type check func(*testing.T, installOptions)
+
+func runScript(t *testing.T, opts installOptions) {
+	cmd := exec.Command("bash", opts.string()...)
 
 	in, err := cmd.StdinPipe()
 	if err != nil {
@@ -52,6 +83,10 @@ func runScript(t *testing.T) {
 		// otherwise ensure there is no error
 		require.NoError(t, err)
 
+		if opts.autoconfirm {
+			continue
+		}
+
 		if strings.Contains(strLine, "Showing full changelog") {
 			// show changelog
 			_, err = in.Write([]byte("\n"))
@@ -72,16 +107,16 @@ func runScript(t *testing.T) {
 func tearDown(t *testing.T) {
 	t.Log("Cleaning up")
 
-	err := os.RemoveAll("/var/lib/sumologic/file_storage")
+	err := os.RemoveAll(fileStoragePath)
 	assert.NoError(t, err, "no permissions to remove storage directory")
 
-	err = os.RemoveAll("/etc/otelcol-sumo")
+	err = os.RemoveAll(etcPath)
 	assert.NoError(t, err, "no permissions to remove configuration")
 
-	err = os.RemoveAll("/etc/systemd/system/otelcol-sumo.service")
+	err = os.RemoveAll(systemdPath)
 	assert.NoError(t, err, "no permissions to remove systemd configuration")
 
-	err = os.RemoveAll("/usr/local/bin/otelcol-sumo")
+	err = os.RemoveAll(binaryPath)
 	assert.NoError(t, err, "removing binary")
 }
 
@@ -99,21 +134,65 @@ func exitCode(cmd *exec.Cmd) (int, error) {
 	return 0, fmt.Errorf("cannot obtain exit code: %v", err)
 }
 
-func TestInstallation(t *testing.T) {
-	defer tearDown(t)
+func checkBinaryCreated(t *testing.T, opt installOptions) {
+	_, err := os.Stat(binaryPath)
+	require.NoError(t, err, "binary has not been created")
+}
 
-	_, err := os.Stat("/usr/local/bin/otelcol-sumo")
-	require.ErrorIs(t, err, os.ErrNotExist, "/usr/local/bin/otelcol-sumo is already created")
-	runScript(t)
+func checkBinaryNotCreated(t *testing.T, opt installOptions) {
+	_, err := os.Stat(binaryPath)
+	require.ErrorIs(t, err, os.ErrNotExist, "binary is already created")
+}
 
-	_, err = os.Stat("/usr/local/bin/otelcol-sumo")
-	require.NoError(t, err, "/usr/local/bin/otelcol-sumo has not been created")
-
-	cmd := exec.Command("/usr/local/bin/otelcol-sumo", "--version")
-	err = cmd.Start()
+func checkBinaryIsRunning(t *testing.T, opt installOptions) {
+	cmd := exec.Command(binaryPath, "--version")
+	err := cmd.Start()
 	require.NoError(t, err)
 
 	code, err := exitCode(cmd)
 	require.NoError(t, err)
 	require.Equal(t, 0, code)
+}
+
+func TestInstallScript(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		options    installOptions
+		code       int
+		preChecks  []check
+		postChecks []check
+		preActions []check
+	}{
+		{
+			name:       "no arguments",
+			options:    installOptions{},
+			preChecks:  []check{checkBinaryNotCreated},
+			postChecks: []check{checkBinaryCreated, checkBinaryIsRunning},
+		},
+		{
+			name:       "autoconfirm",
+			options:    installOptions{},
+			preChecks:  []check{checkBinaryNotCreated},
+			postChecks: []check{checkBinaryCreated, checkBinaryIsRunning},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			defer tearDown(t)
+
+			for _, a := range tt.preActions {
+				a(t, tt.options)
+			}
+
+			for _, c := range tt.preChecks {
+				c(t, tt.options)
+			}
+
+			runScript(t, tt.options)
+
+			for _, c := range tt.postChecks {
+				c(t, tt.options)
+			}
+
+		})
+	}
 }
