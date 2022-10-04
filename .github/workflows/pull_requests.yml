@@ -276,9 +276,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
-
       - name: Check if build related files changed
         id: changed-files
         uses: tj-actions/changed-files@v13
@@ -291,6 +288,9 @@ jobs:
             Makefile
             Makefile.common
             Dockerfile.*
+
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
 
       - name: Setup go
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -359,9 +359,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
-
       - name: Check if build related files changed
         id: changed-files
         uses: tj-actions/changed-files@v13
@@ -374,6 +371,9 @@ jobs:
             Makefile
             Makefile.common
             Dockerfile.*
+
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
 
       - name: Install Go+BoringCrypto
         if: steps.changed-files.outputs.any_changed == 'true'
