@@ -19,7 +19,7 @@ type check struct {
 type condCheckFunc func(check) bool
 
 func checkSystemdAvailability(c check) bool {
-	return assert.DirExists(c.test, systemdDirectoryPath, "systemd is not supported")
+	return assert.DirExists(&testing.T{}, systemdDirectoryPath, "systemd is not supported")
 }
 
 type checkFunc func(check)
