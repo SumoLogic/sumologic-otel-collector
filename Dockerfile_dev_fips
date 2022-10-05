@@ -18,7 +18,7 @@ RUN tar czhf journalctl.tar.gz /bin/journalctl $(ldd /bin/journalctl | grep -oP 
 
 FROM alpine:3.16.2
 RUN apk update && apk add curl tar
-RUN curl -LJ "https://go-boringcrypto.storage.googleapis.com/go1.18.2b7.linux-amd64.tar.gz" -o go.linux-amd64.tar.gz \
+RUN curl -LJ "https://go-boringcrypto.storage.googleapis.com/go1.18.7b7.linux-amd64.tar.gz" -o go.linux-amd64.tar.gz \
     && tar -C /usr/local -xzf go.linux-amd64.tar.gz \
     && rm go.linux-amd64.tar.gz \
     && ln -s /usr/local/go/bin/go /usr/local/bin
