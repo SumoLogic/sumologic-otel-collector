@@ -28,7 +28,7 @@ type Config struct {
 	confighttp.HTTPClientSettings `mapstructure:",squash"`
 
 	// Credentials contains Install Token for Sumo Logic service.
-	// Please refer to https://help.sumologic.com/Manage/Security/Installation_Tokens
+	// Please refer to https://help.sumologic.com/docs/manage/security/installation-tokens
 	// for detailed instructions how to obtain the token.
 	Credentials accessCredentials `mapstructure:",squash"`
 
@@ -44,7 +44,7 @@ type Config struct {
 	CollectorCategory string `mapstructure:"collector_category"`
 	// CollectorFields defines the collector fields.
 	// For more information on this subject visit:
-	// https://help.sumologic.com/Manage/Fields
+	// https://help.sumologic.com/docs/manage/fields
 	CollectorFields map[string]interface{} `mapstructure:"collector_fields"`
 
 	ApiBaseUrl string `mapstructure:"api_base_url"`

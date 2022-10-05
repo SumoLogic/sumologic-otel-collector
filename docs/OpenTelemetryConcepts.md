@@ -17,7 +17,7 @@ equal and should be interpreted separately. Resource-level attributes have a muc
 where the data comes from while Record-level attributes context is much narrower, related just to the single record,
 frequently with much high cardinality of both keys and values.
 
-At Sumo Logic, there is a concept of [Fields](https://help.sumologic.com/Manage/Fields) for log data. Fields offer
+At Sumo Logic, there is a concept of [Fields](https://help.sumologic.com/docs/manage/fields) for log data. Fields offer
 a powerful capability to associate indexable metadata with logs, though only limited number of them can be used
 at a given time. Also, they need to be defined first.
 
@@ -84,5 +84,5 @@ The output is stored as:
 [trace]: https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions
 [metrics]: https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/metrics/semantic_conventions
 [logs]: https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/logs/semantic_conventions
-[structured representation of the log via JSON]: https://help.sumologic.com/05Search/Get-Started-with-Search/Search-Basics/View-Search-Results-for-JSON-Logs
-[dropped fields view]: https://help.sumologic.com/Manage/Fields#view-dropped-fields
+[structured representation of the log via JSON]: https://help.sumologic.com/docs/search/get-started-with-search/search-basics/view-search-results-json-logs
+[dropped fields view]: https://help.sumologic.com/docs/manage/fields/#view-dropped-fields
