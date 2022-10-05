@@ -23,6 +23,7 @@ This release introduces the following breaking changes:
 - fix(sumologicexporter): do not crash if server returns unknown length response [#718]
 - fix(k8sprocessor): fix metadata enrichment [#724]
 - fix(k8sprocessor): keep pod's services information up to date [#710]
+- chore(deps): bump golang from 1.18.4 to 1.19.2 [#745]
 - chore(deps): bump go-boringcrypto to 1.18.7b7 [#746]
 - chore: upgrade OpenTelemetry Contrib Core to v0.62.0 [#769]
 
@@ -43,6 +44,7 @@ This release introduces the following breaking changes:
 [#713]: https://github.com/SumoLogic/sumologic-otel-collector/pull/713
 [#718]: https://github.com/SumoLogic/sumologic-otel-collector/pull/718
 [#724]: https://github.com/SumoLogic/sumologic-otel-collector/pull/724
+[#745]: https://github.com/SumoLogic/sumologic-otel-collector/pull/745
 [#746]: https://github.com/SumoLogic/sumologic-otel-collector/pull/746
 [#769]: https://github.com/SumoLogic/sumologic-otel-collector/pull/769
 [#693]: https://github.com/SumoLogic/sumologic-otel-collector/pull/693
