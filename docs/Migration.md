@@ -2167,9 +2167,9 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [network-semantic-convention]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/span-general.md#general-network-connection-attributes
 [sumologicextension]: ../pkg/extension/sumologicextension/README.md
 [sumologicexporter]: ../pkg/exporter/sumologicexporter/README.md
-[user.properties]: https://help.sumologic.com/03Send-Data/Installed-Collectors/05Reference-Information-for-Collector-Installation/06user.properties
+[user.properties]: https://help.sumologic.com/docs/send-data/installed-collectors/collector-installation-reference/user-properties
 [proxy]: https://opentelemetry.io/docs/collector/configuration/#proxy-support
-[common-parameters]: https://help.sumologic.com/03Send-Data/Sources/03Use-JSON-to-Configure-Sources#common-parameters-for-log-source-types
+[common-parameters]: https://help.sumologic.com/docs/send-data/use-json-configure-sources#common-parameters-for-log-source-types
 [source-templates]: ../pkg/exporter/sumologicexporter/README.md#source-templates
 [telegrafreceiver]: ../pkg/receiver/telegrafreceiver/README.md
 [telegraf-socket_listener]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/socket_listener#socket-listener-input-plugin

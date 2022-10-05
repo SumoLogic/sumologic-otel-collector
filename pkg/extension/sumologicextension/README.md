@@ -65,8 +65,8 @@ and can be used as an authenticator for the
   - `max_interval` - maximum interval of backoff (default: `1m`)
   - `max_elapsed_time` - time after which registration fails definitely (default: `15m`)
 
-[credentials_help]: https://help.sumologic.com/Manage/Security/Installation_Tokens
-[fields_help]: https://help.sumologic.com/Manage/Fields
+[credentials_help]: https://help.sumologic.com/docs/manage/security/installation-tokens
+[fields_help]: https://help.sumologic.com/docs/manage/fields
 
 ## Example Config
 
