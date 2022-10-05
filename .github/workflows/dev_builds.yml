@@ -133,7 +133,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: [ '1.18.2b7' ]
+        go: [ '1.18.7b7' ]
         arch_os: [ 'linux_amd64']
     steps:
       - uses: actions/checkout@v3
