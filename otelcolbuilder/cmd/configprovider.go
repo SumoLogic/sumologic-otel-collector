@@ -16,7 +16,9 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
@@ -32,6 +34,12 @@ import (
 // This file contains modifications to the collector settings which inject a custom config provider
 // Otherwise, it tries to be as close to the upstream defaults as defined here:
 // https://github.com/open-telemetry/opentelemetry-collector/blob/72011ca22dff6614d518768b3bb53a1193c6ad02/service/command.go#L38
+
+const (
+	sumoConfigDirEnvVariable = "SUMOLOGIC_CONFIG_DIR"
+	sumoConfigDirDefault     = "/etc/otelcol-sumo"
+	sumoUserConfigDir        = "conf.d"
+)
 
 func UseCustomConfigProvider(params *service.CollectorSettings) error {
 
@@ -55,7 +63,15 @@ func UseCustomConfigProvider(params *service.CollectorSettings) error {
 	if err != nil {
 		return err
 	}
-	if len(locations) == 0 {
+
+	defaultLocations, err := getDefaultLocations()
+	// TODO: log a warning here if we fail
+
+	finalLocations := make([]string, len(defaultLocations)+len(locations))
+	finalLocations = append(finalLocations, defaultLocations...)
+	finalLocations = append(finalLocations, locations...)
+
+	if len(finalLocations) == 0 {
 		return errors.New("at least one config flag must be provided")
 	}
 
@@ -66,8 +82,11 @@ func UseCustomConfigProvider(params *service.CollectorSettings) error {
 
 	// Not sure why this is necessary, config locations other than the first have an extra space at the start
 	var cleanedLocations []string
-	for _, location := range locations {
-		cleanedLocations = append(cleanedLocations, strings.TrimSpace(location))
+	for _, location := range finalLocations {
+		cleanedLocation := strings.TrimSpace(location)
+		if len(cleanedLocation) > 0 {
+			cleanedLocations = append(cleanedLocations, strings.TrimSpace(location))
+		}
 	}
 
 	// create the config provider using the locations
@@ -104,4 +123,34 @@ func makeMapProvidersMap(providers ...confmap.Provider) map[string]confmap.Provi
 		ret[provider.Scheme()] = provider
 	}
 	return ret
+}
+
+func getDefaultLocations() ([]string, error) {
+	configDir := os.Getenv(sumoConfigDirEnvVariable)
+	if configDir == "" {
+		configDir = sumoConfigDirDefault
+	}
+	userConfigDir := path.Join(configDir, sumoUserConfigDir)
+	var defaultLocations []string
+	var err error
+
+	fileInfo, err := os.Stat(configDir)
+	if err != nil {
+		return defaultLocations, err
+	}
+	if !fileInfo.IsDir() {
+		return defaultLocations, fmt.Errorf("%s needs to be a directory", configDir)
+	}
+	defaultLocations = append(defaultLocations, "glob:"+path.Join(configDir, "*.yaml"))
+
+	fileInfo, err = os.Stat(userConfigDir)
+	if err != nil {
+		return defaultLocations, err
+	}
+	if !fileInfo.IsDir() {
+		return defaultLocations, fmt.Errorf("%s needs to be a directory", userConfigDir)
+	}
+	defaultLocations = append(defaultLocations, "glob:"+path.Join(userConfigDir, "*.yaml"))
+
+	return defaultLocations, nil
 }
