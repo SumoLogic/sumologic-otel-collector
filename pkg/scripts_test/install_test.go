@@ -35,14 +35,25 @@ func TestInstallScript(t *testing.T) {
 		installCode       int
 	}{
 		{
-			name:       "no arguments",
-			options:    installOptions{},
+			name:        "no arguments",
+			options:     installOptions{},
+			preChecks:   []checkFunc{checkBinaryNotCreated},
+			postChecks:  []checkFunc{checkBinaryNotCreated},
+			installCode: 1,
+		},
+		{
+			name: "skip install token",
+			options: installOptions{
+				skipInstallToken: true,
+			},
 			preChecks:  []checkFunc{checkBinaryNotCreated},
 			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigNotCreated, checkSystemdConfigNotCreated},
 		},
 		{
-			name:       "autoconfirm",
-			options:    installOptions{},
+			name: "autoconfirm",
+			options: installOptions{
+				skipInstallToken: true,
+			},
 			preChecks:  []checkFunc{checkBinaryNotCreated},
 			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigNotCreated, checkSystemdConfigNotCreated},
 		},

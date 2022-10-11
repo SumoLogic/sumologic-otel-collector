@@ -24,6 +24,15 @@ ARG_SHORT_SYSTEMD='d'
 ARG_LONG_SYSTEMD='disable-systemd-installation'
 ARG_SHORT_UNINSTALL='u'
 ARG_LONG_UNINSTALL='uninstall'
+ARG_SHORT_SKIP_TOKEN='k'
+ARG_LONG_SKIP_TOKEN='skip-install-token'
+ENV_TOKEN="INSTALL_TOKEN"
+
+readonly ARG_SHORT_TOKEN ARG_LONG_TOKEN ARG_SHORT_HELP ARG_LONG_HELP ARG_SHORT_API ARG_LONG_API
+readonly ARG_SHORT_TAG ARG_LONG_TAG ARG_SHORT_VERSION ARG_LONG_VERSION ARG_SHORT_YES ARG_LONG_YES
+readonly ARG_SHORT_CONFIG ARG_LONG_CONFIG ARG_SHORT_STORAGE ARG_LONG_STORAGE
+readonly ARG_SHORT_SYSTEMD ARG_LONG_SYSTEMD ARG_SHORT_UNINSTALL ARG_LONG_UNINSTALL
+readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ENV_TOKEN
 
 ############################ Variables (see set_defaults function for default values)
 
@@ -44,6 +53,7 @@ USER_CONFIG_DIRECTORY=""
 SYSTEMD_CONFIG=""
 UNINSTALL=""
 SUMO_BINARY_PATH=""
+SKIP_TOKEN=""
 
 # set by check_dependencies therefore cannot be set by set_defaults
 SYSTEMD_DISABLED=false
@@ -58,6 +68,7 @@ function usage() {
 
 Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_TAG} <key>=<value> [ --${ARG_LONG_TAG} ...]] [--${ARG_LONG_API} <url>] [--${ARG_LONG_CONFIG} <config dir path>] [--${ARG_LONG_STORAGE} <storage dir path>] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_YES}] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
   -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>     Installation token
+  -${ARG_SHORT_SKIP_TOKEN}, --${ARG_LONG_SKIP_TOKEN}             Skip installation token (script will only upgrade the binary if token is not provided)
   -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                Tag in format key=value
   -${ARG_SHORT_UNINSTALL}, --${ARG_LONG_UNINSTALL}                      Uninstall collection along with configuration
 
@@ -71,7 +82,7 @@ Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_TAG} <key>=<v
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                           Prints this help
 
 Supported env variables:
-  INSTALL_TOKEN=<token>                Equivalent of '--${ARG_LONG_TOKEN} <token>'
+  ${ENV_TOKEN}=<token>                Equivalent of '--${ARG_LONG_TOKEN} <token>'
 EOF
 }
 
@@ -118,7 +129,10 @@ function parse_options() {
       "--${ARG_LONG_UNINSTALL}")
         set -- "$@" "-${ARG_SHORT_UNINSTALL}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_CONFIG}"|"-${ARG_SHORT_STORAGE}""-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}")
+      "--${ARG_LONG_SKIP_TOKEN}")
+        set -- "$@" "-${ARG_SHORT_SKIP_TOKEN}"
+        ;;
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_CONFIG}"|"-${ARG_SHORT_STORAGE}""-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_SKIP_TOKEN}")
         set -- "$@" "${arg}"   ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -132,7 +146,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_CONFIG}:${ARG_SHORT_STORAGE}:${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_CONFIG}:${ARG_SHORT_STORAGE}:${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_SKIP_TOKEN}" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -144,15 +158,16 @@ function parse_options() {
 
     # Validate opt and set arguments
     case "$opt" in
-      "${ARG_SHORT_HELP}")      usage; exit 0 ;;
-      "${ARG_SHORT_TOKEN}")     INSTALL_TOKEN="${OPTARG}" ;;
-      "${ARG_SHORT_API}")       API_BASE_URL="${OPTARG}" ;;
-      "${ARG_SHORT_CONFIG}")    CONFIG_DIRECTORY="${OPTARG}" ;;
-      "${ARG_SHORT_STORAGE}")   FILE_STORAGE="${OPTARG}" ;;
-      "${ARG_SHORT_VERSION}")   VERSION="${OPTARG}" ;;
-      "${ARG_SHORT_YES}")       CONTINUE=true ;;
-      "${ARG_SHORT_SYSTEMD}")   SYSTEMD_DISABLED=true ;;
-      "${ARG_SHORT_UNINSTALL}") UNINSTALL=true ;;
+      "${ARG_SHORT_HELP}")       usage; exit 0 ;;
+      "${ARG_SHORT_TOKEN}")      INSTALL_TOKEN="${OPTARG}" ;;
+      "${ARG_SHORT_API}")        API_BASE_URL="${OPTARG}" ;;
+      "${ARG_SHORT_CONFIG}")     CONFIG_DIRECTORY="${OPTARG}" ;;
+      "${ARG_SHORT_STORAGE}")    FILE_STORAGE="${OPTARG}" ;;
+      "${ARG_SHORT_VERSION}")    VERSION="${OPTARG}" ;;
+      "${ARG_SHORT_YES}")        CONTINUE=true ;;
+      "${ARG_SHORT_SYSTEMD}")    SYSTEMD_DISABLED=true ;;
+      "${ARG_SHORT_UNINSTALL}")  UNINSTALL=true ;;
+      "${ARG_SHORT_SKIP_TOKEN}") SKIP_TOKEN=true ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
             echo "Invalid tag: '${OPTARG}'. Should be in 'key=value' format"
@@ -377,6 +392,12 @@ set_defaults
 parse_options "$@"
 
 readonly INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG SYSTEMD_DISABLED UNINSTALL
+
+# Exit if install token is not set
+if [[ -z "${INSTALL_TOKEN}" && "${SKIP_TOKEN}" != "true" ]]; then
+    echo "Install token has not been provided. Please use '--${ARG_LONG_TOKEN} <token>' or '${ENV_TOKEN}' env."
+    exit 1
+fi
 
 if [[ "${UNINSTALL}" == "true" ]]; then
     echo "Going to remove Otelcol binary, it's file storage and configurations"
