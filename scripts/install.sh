@@ -515,11 +515,11 @@ else
     CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/sumologic.yaml"
 
     # ToDo: remove this line after release
-    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/0788a0af938242fef4561143715845503e022fb4/examples/sumologic.yaml"
+    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/028ba1edc927661cc1fcc8779e67c50ac7f42703/examples/sumologic.yaml"
 
     # Generate template
     export FILE_STORAGE
-    export "INSTALL_TOKEN=${SUMOLOGIC_INSTALL_TOKEN}"
+    export "SUMOLOGIC_INSTALL_TOKEN=${SUMOLOGIC_INSTALL_TOKEN}"
     export API_BASE_URL
 
     curl -s "${CONFIG_URL}" | \
