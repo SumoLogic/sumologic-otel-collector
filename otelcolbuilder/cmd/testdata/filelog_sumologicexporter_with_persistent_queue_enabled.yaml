@@ -1,6 +1,6 @@
 extensions:
   file_storage/buff:
-    directory: /tmp/
+    directory: "${TMPDIR}"
     timeout: 5s
 
 receivers:

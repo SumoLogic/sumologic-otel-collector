@@ -19,6 +19,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -30,6 +31,8 @@ import (
 )
 
 func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
+	t.Setenv("TMPDIR", os.TempDir())
+
 	testcases := []struct {
 		name       string
 		configFile string

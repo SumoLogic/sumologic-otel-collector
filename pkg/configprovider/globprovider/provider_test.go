@@ -76,7 +76,7 @@ func TestInvalidYAML(t *testing.T) {
 
 func TestInvalidPattern(t *testing.T) {
 	fp := New()
-	pattern := "\\"
+	pattern := "["
 	_, err := fp.Retrieve(context.Background(), schemePrefix+pattern, nil)
 	assert.Error(t, err)
 	assert.ErrorContains(t, err, "syntax error in pattern")
