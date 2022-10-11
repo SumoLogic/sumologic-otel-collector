@@ -54,15 +54,23 @@ func checkConfigNotCreated(c check) {
 	require.NoFileExists(c.test, configPath, "configuration has been created")
 }
 
+func checkUserConfigCreated(c check) {
+	require.FileExists(c.test, userConfigPath, "user configuration has not been created properly")
+}
+
+func checkUserConfigNotCreated(c check) {
+	require.NoFileExists(c.test, userConfigPath, "user configuration has been created")
+}
+
 func checkTokenInConfig(c check) {
-	conf, err := getConfig(configPath)
+	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
 	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "install token is different than expected")
 }
 
 func checkEnvTokenInConfig(c check) {
-	conf, err := getConfig(configPath)
+	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
 	token, ok := c.installOptions.envs["SUMOLOGIC_INSTALL_TOKEN"]
@@ -80,7 +88,7 @@ func checkSystemdConfigNotCreated(c check) {
 }
 
 func checkTags(c check) {
-	conf, err := getConfig(configPath)
+	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
 	for k, v := range c.installOptions.tags {
