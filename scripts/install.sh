@@ -20,8 +20,6 @@ ARG_SHORT_CONFIG='c'
 ARG_LONG_CONFIG='config'
 ARG_SHORT_STORAGE='s'
 ARG_LONG_STORAGE='storage'
-ARG_SHORT_COLLECTOR='n'
-ARG_LONG_COLLECTOR='collector-name'
 ARG_SHORT_SYSTEMD='d'
 ARG_LONG_SYSTEMD='disable-systemd-installation'
 ARG_SHORT_UNINSTALL='u'
@@ -38,7 +36,6 @@ set -u
 
 API_BASE_URL=""
 FIELDS=""
-COLLECTOR_NAME=""
 VERSION=""
 CONTINUE=false
 FILE_STORAGE=""
@@ -59,9 +56,8 @@ TAC="tac"
 function usage() {
   cat << EOF
 
-Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_COLLECTOR} name] [--${ARG_LONG_TAG} <key>=<value> [ --${ARG_LONG_TAG} ...]] [--${ARG_LONG_API} <url>] [--${ARG_LONG_CONFIG} <config dir path>] [--${ARG_LONG_STORAGE} <storage dir path>] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_YES}] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
+Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_TAG} <key>=<value> [ --${ARG_LONG_TAG} ...]] [--${ARG_LONG_API} <url>] [--${ARG_LONG_CONFIG} <config dir path>] [--${ARG_LONG_STORAGE} <storage dir path>] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_YES}] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
   -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>     Installation token
-  -${ARG_SHORT_COLLECTOR}, --${ARG_LONG_COLLECTOR} <name>          Collector name (default is your hostname)
   -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                Tag in format key=value
   -${ARG_SHORT_UNINSTALL}, --${ARG_LONG_UNINSTALL}                      Uninstall collection along with configuration
 
@@ -80,7 +76,6 @@ EOF
 }
 
 function set_defaults() {
-    COLLECTOR_NAME="$(hostname)"
     FILE_STORAGE="/var/lib/sumologic/file_storage"
     CONFIG_DIRECTORY="/etc/otelcol-sumo"
     SYSTEMD_CONFIG="/etc/systemd/system/otelcol-sumo.service"
@@ -117,16 +112,13 @@ function parse_options() {
       "--${ARG_LONG_STORAGE}")
         set -- "$@" "-${ARG_SHORT_STORAGE}"
         ;;
-      "--${ARG_LONG_COLLECTOR}")
-        set -- "$@" "-${ARG_SHORT_COLLECTOR}"
-        ;;
       "--${ARG_LONG_SYSTEMD}")
         set -- "$@" "-${ARG_SHORT_SYSTEMD}"
         ;;
       "--${ARG_LONG_UNINSTALL}")
         set -- "$@" "-${ARG_SHORT_UNINSTALL}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_CONFIG}"|"-${ARG_SHORT_STORAGE}"|"-${ARG_SHORT_COLLECTOR}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}")
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_CONFIG}"|"-${ARG_SHORT_STORAGE}""-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}")
         set -- "$@" "${arg}"   ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -140,7 +132,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_CONFIG}:${ARG_SHORT_STORAGE}:${ARG_SHORT_COLLECTOR}:${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_CONFIG}:${ARG_SHORT_STORAGE}:${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -158,7 +150,6 @@ function parse_options() {
       "${ARG_SHORT_CONFIG}")    CONFIG_DIRECTORY="${OPTARG}" ;;
       "${ARG_SHORT_STORAGE}")   FILE_STORAGE="${OPTARG}" ;;
       "${ARG_SHORT_VERSION}")   VERSION="${OPTARG}" ;;
-      "${ARG_SHORT_COLLECTOR}") COLLECTOR_NAME="${OPTARG}" ;;
       "${ARG_SHORT_YES}")       CONTINUE=true ;;
       "${ARG_SHORT_SYSTEMD}")   SYSTEMD_DISABLED=true ;;
       "${ARG_SHORT_UNINSTALL}") UNINSTALL=true ;;
@@ -385,7 +376,7 @@ check_dependencies
 set_defaults
 parse_options "$@"
 
-readonly INSTALL_TOKEN API_BASE_URL FIELDS COLLECTOR_NAME CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG SYSTEMD_DISABLED UNINSTALL
+readonly INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG SYSTEMD_DISABLED UNINSTALL
 
 if [[ "${UNINSTALL}" == "true" ]]; then
     echo "Going to remove Otelcol binary, it's file storage and configurations"
@@ -507,7 +498,6 @@ else
 
     # Generate template
     export FILE_STORAGE
-    export COLLECTOR_NAME
     export INSTALL_TOKEN
     export API_BASE_URL
 
