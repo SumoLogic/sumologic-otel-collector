@@ -17,6 +17,7 @@ type installOptions struct {
 	disableSystemd   bool
 	tags             map[string]string
 	skipInstallToken bool
+	envs             map[string]string
 }
 
 func (io *installOptions) string() []string {
@@ -49,6 +50,16 @@ func (io *installOptions) string() []string {
 	return opts
 }
 
+func (io *installOptions) buildEnvs() []string {
+	e := []string{}
+
+	for k, v := range io.envs {
+		e = append(e, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	return e
+}
+
 func exitCode(cmd *exec.Cmd) (int, error) {
 	err := cmd.Wait()
 
@@ -65,6 +76,7 @@ func exitCode(cmd *exec.Cmd) (int, error) {
 
 func runScript(t *testing.T, opts installOptions) (int, error) {
 	cmd := exec.Command("bash", opts.string()...)
+	cmd.Env = opts.buildEnvs()
 
 	in, err := cmd.StdinPipe()
 	if err != nil {

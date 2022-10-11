@@ -67,6 +67,17 @@ func TestInstallScript(t *testing.T) {
 			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkTokenInConfig, checkSystemdConfigNotCreated},
 		},
 		{
+			name: "installation token only (envs)",
+			options: installOptions{
+				disableSystemd: true,
+				envs: map[string]string{
+					"SUMOLOGIC_INSTALL_TOKEN": installToken,
+				},
+			},
+			preChecks:  []checkFunc{checkBinaryNotCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkEnvTokenInConfig, checkSystemdConfigNotCreated},
+		},
+		{
 			name: "configuration with tags",
 			options: installOptions{
 				disableSystemd: true,

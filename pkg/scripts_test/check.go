@@ -61,6 +61,16 @@ func checkTokenInConfig(c check) {
 	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "install token is different than expected")
 }
 
+func checkEnvTokenInConfig(c check) {
+	conf, err := getConfig(configPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	token, ok := c.installOptions.envs["SUMOLOGIC_INSTALL_TOKEN"]
+	require.True(c.test, ok, "SUMOLOGIC_INSTALL_TOKEN env hash not been set")
+
+	require.Equal(c.test, token, conf.Extensions.Sumologic.InstallToken, "install token is different than expected")
+}
+
 func checkSystemdConfigCreated(c check) {
 	require.FileExists(c.test, systemdPath, "systemd configuration has not been created properly")
 }

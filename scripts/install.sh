@@ -26,7 +26,7 @@ ARG_SHORT_UNINSTALL='u'
 ARG_LONG_UNINSTALL='uninstall'
 ARG_SHORT_SKIP_TOKEN='k'
 ARG_LONG_SKIP_TOKEN='skip-install-token'
-ENV_TOKEN="INSTALL_TOKEN"
+ENV_TOKEN="SUMOLOGIC_INSTALL_TOKEN"
 
 readonly ARG_SHORT_TOKEN ARG_LONG_TOKEN ARG_SHORT_HELP ARG_LONG_HELP ARG_SHORT_API ARG_LONG_API
 readonly ARG_SHORT_TAG ARG_LONG_TAG ARG_SHORT_VERSION ARG_LONG_VERSION ARG_SHORT_YES ARG_LONG_YES
@@ -38,8 +38,8 @@ readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ENV_TOKEN
 
 # Support providing install_token as env
 set +u
-if [[ -z "${INSTALL_TOKEN}" ]]; then
-    INSTALL_TOKEN=""
+if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
+    SUMOLOGIC_INSTALL_TOKEN=""
 fi
 set -u
 
@@ -159,7 +159,7 @@ function parse_options() {
     # Validate opt and set arguments
     case "$opt" in
       "${ARG_SHORT_HELP}")       usage; exit 0 ;;
-      "${ARG_SHORT_TOKEN}")      INSTALL_TOKEN="${OPTARG}" ;;
+      "${ARG_SHORT_TOKEN}")      SUMOLOGIC_INSTALL_TOKEN="${OPTARG}" ;;
       "${ARG_SHORT_API}")        API_BASE_URL="${OPTARG}" ;;
       "${ARG_SHORT_CONFIG}")     CONFIG_DIRECTORY="${OPTARG}" ;;
       "${ARG_SHORT_STORAGE}")    FILE_STORAGE="${OPTARG}" ;;
@@ -391,10 +391,10 @@ check_dependencies
 set_defaults
 parse_options "$@"
 
-readonly INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG SYSTEMD_DISABLED UNINSTALL
+readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG SYSTEMD_DISABLED UNINSTALL
 
 # Exit if install token is not set
-if [[ -z "${INSTALL_TOKEN}" && "${SKIP_TOKEN}" != "true" ]]; then
+if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && "${SKIP_TOKEN}" != "true" ]]; then
     echo "Install token has not been provided. Please use '--${ARG_LONG_TOKEN} <token>' or '${ENV_TOKEN}' env."
     exit 1
 fi
@@ -489,7 +489,7 @@ else
 fi
 
 # Exit if install token is not set
-if [[ -z "${INSTALL_TOKEN}" ]]; then
+if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
     exit 0
 fi
 
@@ -519,7 +519,7 @@ else
 
     # Generate template
     export FILE_STORAGE
-    export INSTALL_TOKEN
+    export "INSTALL_TOKEN=${SUMOLOGIC_INSTALL_TOKEN}"
     export API_BASE_URL
 
     curl -s "${CONFIG_URL}" | \
