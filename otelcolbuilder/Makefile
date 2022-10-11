@@ -2,12 +2,24 @@ BINARY_NAME ?= otelcol-sumo
 BUILDER_VERSION ?= 0.62.0
 FIPS_SUFFIX ?= ""
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
-BUILDER_BIN_NAME ?= opentelemetry-collector-builder
-BUILDER_BIN_PATH ?= $(HOME)/bin
-INSTALLED_BUILDER_VERSION := $(shell opentelemetry-collector-builder version 2>&1)
 GO ?= go
+
+ifeq ($(OS),Windows_NT)
+	OS=windows
+endif
+
+ifeq ($(OS),windows)
+	BUILDER_BIN_EXT ?= .exe
+	MAKE := "$(shell cygpath '$(MAKE)')"
+endif
+
 OS ?= $(shell uname -s | tr A-Z a-z)
 ARCH ?= $(shell uname -m | sed s/aarch64/arm64/ | sed s/x86_64/amd64/)
+
+BUILDER_BIN_NAME ?= opentelemetry-collector-builder$(BUILDER_BIN_EXT)
+BUILDER_BIN_PATH ?= $(HOME)/bin
+
+INSTALLED_BUILDER_VERSION := $(shell $(BUILDER_BIN_NAME) version 2>&1)
 
 # Builds for darwin need to be built with CGO_ENABLED set to 1 because some telegraf
 # plugins that are used within the telegrafreceiver are implemented with CGO.
@@ -33,8 +45,8 @@ endif
 
 .PHONY: _install-bin
 _install-bin:
-	@mkdir -p /$(HOME)/bin
-	curl -L -o $(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME) https://$(BUILDER_REPO)/releases/download/v$(BUILDER_VERSION)/ocb_$(BUILDER_VERSION)_$(PLATFORM)_$(ARCH)
+	@mkdir -p $(BUILDER_BIN_PATH)
+	curl -L -o $(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME) https://$(BUILDER_REPO)/releases/download/v$(BUILDER_VERSION)/ocb_$(BUILDER_VERSION)_$(PLATFORM)_$(ARCH)$(BUILDER_BIN_EXT)
 	@chmod +x $(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME)
 	@$(MAKE) ensure-correct-builder-version
 
@@ -64,7 +76,7 @@ _builder:
 	$(eval VERSION ?= $(shell git describe --tags --abbrev=10 --match "v[0-9]*"))
 # Need to specify go path because otherwise opentelemetry-collector-builder
 # uses /usr/bin/go which on Github Actions is using preinstalled 1.15.12 by default.
-	CGO_ENABLED=$(CGO_ENABLED) $(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME) \
+	CGO_ENABLED=$(CGO_ENABLED) $(BUILDER_BIN_NAME) \
 		--go $(GO) \
 		--version "$(VERSION)$(FIPS_SUFFIX)" \
 		--config .otelcol-builder.yaml \
@@ -119,7 +131,7 @@ generate-sources:
 test:
 	@$(MAKE) ensure-correct-builder-version || $(MAKE) install-builder
 	@$(MAKE) generate-sources
-	@$(MAKE) -C cmd test
+	@$(MAKE) -C cmd test CGO_ENABLED=${CGO_ENABLED}
 
 .PHONY: lint
 lint: install-builder generate-sources

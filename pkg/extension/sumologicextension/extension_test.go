@@ -258,11 +258,8 @@ func TestStoreCredentials(t *testing.T) {
 		cfg := getConfig(srv.URL)
 		cfg.CollectorCredentialsDirectory = dir
 
-		fi, err := os.Stat(dir)
-		require.NoError(t, err)
-
-		// Chceck that directory has 700 permissions
-		require.EqualValues(t, 0700, fi.Mode().Perm())
+		// Ensure the directory has 700 permissions
+		require.NoError(t, os.Chmod(dir, 0700))
 
 		se, err := newSumologicExtension(cfg, zap.NewNop())
 		require.NoError(t, err)

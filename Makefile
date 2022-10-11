@@ -1,6 +1,10 @@
 GOLANGCI_LINT_VERSION ?= v1.49
 SHELL := /usr/bin/env bash
 
+ifeq ($(OS),Windows_NT)
+	MAKE := "$(shell cygpath '$(MAKE)')"
+endif
+
 all: markdownlint yamllint
 
 .PHONY: markdownlint

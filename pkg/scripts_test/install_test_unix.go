@@ -1,3 +1,5 @@
+//go:build unix
+
 package sumologic_scripts_tests
 
 import (

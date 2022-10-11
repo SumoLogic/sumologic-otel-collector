@@ -407,6 +407,9 @@ func TestStorage(t *testing.T) {
 	storageDir := t.TempDir()
 	host := storagetest.NewStorageHost().WithFileBackedStorageExtension("test", storageDir)
 	assert.NoError(t, receiver.Start(ctx, host))
+	t.Cleanup(func() {
+		assert.NoError(t, receiver.Shutdown(ctx))
+	})
 
 	time.Sleep(10 * time.Millisecond)
 
