@@ -16,10 +16,6 @@ ARG_SHORT_VERSION='v'
 ARG_LONG_VERSION='version'
 ARG_SHORT_YES='y'
 ARG_LONG_YES='yes'
-ARG_SHORT_CONFIG='c'
-ARG_LONG_CONFIG='config'
-ARG_SHORT_STORAGE='s'
-ARG_LONG_STORAGE='storage'
 ARG_SHORT_SYSTEMD='d'
 ARG_LONG_SYSTEMD='disable-systemd-installation'
 ARG_SHORT_UNINSTALL='u'
@@ -30,7 +26,6 @@ ENV_TOKEN="SUMOLOGIC_INSTALL_TOKEN"
 
 readonly ARG_SHORT_TOKEN ARG_LONG_TOKEN ARG_SHORT_HELP ARG_LONG_HELP ARG_SHORT_API ARG_LONG_API
 readonly ARG_SHORT_TAG ARG_LONG_TAG ARG_SHORT_VERSION ARG_LONG_VERSION ARG_SHORT_YES ARG_LONG_YES
-readonly ARG_SHORT_CONFIG ARG_LONG_CONFIG ARG_SHORT_STORAGE ARG_LONG_STORAGE
 readonly ARG_SHORT_SYSTEMD ARG_LONG_SYSTEMD ARG_SHORT_UNINSTALL ARG_LONG_UNINSTALL
 readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ENV_TOKEN
 
@@ -47,7 +42,6 @@ API_BASE_URL=""
 FIELDS=""
 VERSION=""
 CONTINUE=false
-FILE_STORAGE=""
 CONFIG_DIRECTORY=""
 USER_CONFIG_DIRECTORY=""
 SYSTEMD_CONFIG=""
@@ -68,16 +62,14 @@ TAC="tac"
 function usage() {
   cat << EOF
 
-Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_TAG} <key>=<value> [ --${ARG_LONG_TAG} ...]] [--${ARG_LONG_API} <url>] [--${ARG_LONG_CONFIG} <config dir path>] [--${ARG_LONG_STORAGE} <storage dir path>] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_YES}] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
+Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_TAG} <key>=<value> [ --${ARG_LONG_TAG} ...]] [--${ARG_LONG_API} <url>] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_YES}] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
   -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>     Installation token
   -${ARG_SHORT_SKIP_TOKEN}, --${ARG_LONG_SKIP_TOKEN}             Skip installation token (script will only upgrade the binary if token is not provided)
   -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                Tag in format key=value
   -${ARG_SHORT_UNINSTALL}, --${ARG_LONG_UNINSTALL}                      Uninstall collection along with configuration
 
   -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                      Api URL
-  -${ARG_SHORT_CONFIG}, --${ARG_LONG_CONFIG} <config dir path>       Path to the configuration directory (default is '/etc/otelcol-sumo')
   -${ARG_SHORT_SYSTEMD}, --${ARG_LONG_SYSTEMD}   Do not set up systemd service
-  -${ARG_SHORT_STORAGE}, --${ARG_LONG_STORAGE} <storage dir path>     Path to the storage directory (default is '/var/lib/sumologic/file_storage')
   -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>              Manually specified version, e.g. 0.55.0-sumo-0
   -${ARG_SHORT_YES}, --${ARG_LONG_YES}                            Do not ask for confirmation
 
@@ -122,12 +114,6 @@ function parse_options() {
       "--${ARG_LONG_VERSION}")
         set -- "$@" "-${ARG_SHORT_VERSION}"
         ;;
-      "--${ARG_LONG_CONFIG}")
-        set -- "$@" "-${ARG_SHORT_CONFIG}"
-        ;;
-      "--${ARG_LONG_STORAGE}")
-        set -- "$@" "-${ARG_SHORT_STORAGE}"
-        ;;
       "--${ARG_LONG_SYSTEMD}")
         set -- "$@" "-${ARG_SHORT_SYSTEMD}"
         ;;
@@ -137,7 +123,7 @@ function parse_options() {
       "--${ARG_LONG_SKIP_TOKEN}")
         set -- "$@" "-${ARG_SHORT_SKIP_TOKEN}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_CONFIG}"|"-${ARG_SHORT_STORAGE}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_SKIP_TOKEN}")
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_SKIP_TOKEN}")
         set -- "$@" "${arg}"   ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -151,7 +137,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_CONFIG}:${ARG_SHORT_STORAGE}:${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_SKIP_TOKEN}" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_SKIP_TOKEN}" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -166,8 +152,6 @@ function parse_options() {
       "${ARG_SHORT_HELP}")       usage; exit 0 ;;
       "${ARG_SHORT_TOKEN}")      SUMOLOGIC_INSTALL_TOKEN="${OPTARG}" ;;
       "${ARG_SHORT_API}")        API_BASE_URL="${OPTARG}" ;;
-      "${ARG_SHORT_CONFIG}")     CONFIG_DIRECTORY="${OPTARG}" ;;
-      "${ARG_SHORT_STORAGE}")    FILE_STORAGE="${OPTARG}" ;;
       "${ARG_SHORT_VERSION}")    VERSION="${OPTARG}" ;;
       "${ARG_SHORT_YES}")        CONTINUE=true ;;
       "${ARG_SHORT_SYSTEMD}")    SYSTEMD_DISABLED=true ;;
