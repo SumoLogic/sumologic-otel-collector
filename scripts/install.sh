@@ -24,13 +24,22 @@ ARG_SHORT_SYSTEMD='d'
 ARG_LONG_SYSTEMD='disable-systemd-installation'
 ARG_SHORT_UNINSTALL='u'
 ARG_LONG_UNINSTALL='uninstall'
+ARG_SHORT_SKIP_TOKEN='k'
+ARG_LONG_SKIP_TOKEN='skip-install-token'
+ENV_TOKEN="SUMOLOGIC_INSTALL_TOKEN"
+
+readonly ARG_SHORT_TOKEN ARG_LONG_TOKEN ARG_SHORT_HELP ARG_LONG_HELP ARG_SHORT_API ARG_LONG_API
+readonly ARG_SHORT_TAG ARG_LONG_TAG ARG_SHORT_VERSION ARG_LONG_VERSION ARG_SHORT_YES ARG_LONG_YES
+readonly ARG_SHORT_CONFIG ARG_LONG_CONFIG ARG_SHORT_STORAGE ARG_LONG_STORAGE
+readonly ARG_SHORT_SYSTEMD ARG_LONG_SYSTEMD ARG_SHORT_UNINSTALL ARG_LONG_UNINSTALL
+readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ENV_TOKEN
 
 ############################ Variables (see set_defaults function for default values)
 
 # Support providing install_token as env
 set +u
-if [[ -z "${INSTALL_TOKEN}" ]]; then
-    INSTALL_TOKEN=""
+if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
+    SUMOLOGIC_INSTALL_TOKEN=""
 fi
 set -u
 
@@ -44,6 +53,9 @@ USER_CONFIG_DIRECTORY=""
 SYSTEMD_CONFIG=""
 UNINSTALL=""
 SUMO_BINARY_PATH=""
+SKIP_TOKEN=""
+CONFIG_PATH=""
+COMMON_CONFIG_PATH=""
 
 # set by check_dependencies therefore cannot be set by set_defaults
 SYSTEMD_DISABLED=false
@@ -58,6 +70,7 @@ function usage() {
 
 Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_TAG} <key>=<value> [ --${ARG_LONG_TAG} ...]] [--${ARG_LONG_API} <url>] [--${ARG_LONG_CONFIG} <config dir path>] [--${ARG_LONG_STORAGE} <storage dir path>] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_YES}] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
   -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>     Installation token
+  -${ARG_SHORT_SKIP_TOKEN}, --${ARG_LONG_SKIP_TOKEN}             Skip installation token (script will only upgrade the binary if token is not provided)
   -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                Tag in format key=value
   -${ARG_SHORT_UNINSTALL}, --${ARG_LONG_UNINSTALL}                      Uninstall collection along with configuration
 
@@ -71,15 +84,18 @@ Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_TAG} <key>=<v
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                           Prints this help
 
 Supported env variables:
-  INSTALL_TOKEN=<token>                Equivalent of '--${ARG_LONG_TOKEN} <token>'
+  ${ENV_TOKEN}=<token>                Equivalent of '--${ARG_LONG_TOKEN} <token>'
 EOF
 }
 
 function set_defaults() {
-    FILE_STORAGE="/var/lib/sumologic/file_storage"
+    FILE_STORAGE="/var/lib/otelcol-sumo/file_storage"
     CONFIG_DIRECTORY="/etc/otelcol-sumo"
     SYSTEMD_CONFIG="/etc/systemd/system/otelcol-sumo.service"
     SUMO_BINARY_PATH="/usr/local/bin/otelcol-sumo"
+    USER_CONFIG_DIRECTORY="${CONFIG_DIRECTORY}/conf.d"
+    CONFIG_PATH="${CONFIG_DIRECTORY}/sumologic.yaml"
+    COMMON_CONFIG_PATH="${USER_CONFIG_DIRECTORY}/common.yaml"
 }
 
 function parse_options() {
@@ -118,7 +134,10 @@ function parse_options() {
       "--${ARG_LONG_UNINSTALL}")
         set -- "$@" "-${ARG_SHORT_UNINSTALL}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_CONFIG}"|"-${ARG_SHORT_STORAGE}""-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}")
+      "--${ARG_LONG_SKIP_TOKEN}")
+        set -- "$@" "-${ARG_SHORT_SKIP_TOKEN}"
+        ;;
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_CONFIG}"|"-${ARG_SHORT_STORAGE}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_SKIP_TOKEN}")
         set -- "$@" "${arg}"   ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -132,7 +151,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_CONFIG}:${ARG_SHORT_STORAGE}:${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_CONFIG}:${ARG_SHORT_STORAGE}:${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_SKIP_TOKEN}" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -144,15 +163,16 @@ function parse_options() {
 
     # Validate opt and set arguments
     case "$opt" in
-      "${ARG_SHORT_HELP}")      usage; exit 0 ;;
-      "${ARG_SHORT_TOKEN}")     INSTALL_TOKEN="${OPTARG}" ;;
-      "${ARG_SHORT_API}")       API_BASE_URL="${OPTARG}" ;;
-      "${ARG_SHORT_CONFIG}")    CONFIG_DIRECTORY="${OPTARG}" ;;
-      "${ARG_SHORT_STORAGE}")   FILE_STORAGE="${OPTARG}" ;;
-      "${ARG_SHORT_VERSION}")   VERSION="${OPTARG}" ;;
-      "${ARG_SHORT_YES}")       CONTINUE=true ;;
-      "${ARG_SHORT_SYSTEMD}")   SYSTEMD_DISABLED=true ;;
-      "${ARG_SHORT_UNINSTALL}") UNINSTALL=true ;;
+      "${ARG_SHORT_HELP}")       usage; exit 0 ;;
+      "${ARG_SHORT_TOKEN}")      SUMOLOGIC_INSTALL_TOKEN="${OPTARG}" ;;
+      "${ARG_SHORT_API}")        API_BASE_URL="${OPTARG}" ;;
+      "${ARG_SHORT_CONFIG}")     CONFIG_DIRECTORY="${OPTARG}" ;;
+      "${ARG_SHORT_STORAGE}")    FILE_STORAGE="${OPTARG}" ;;
+      "${ARG_SHORT_VERSION}")    VERSION="${OPTARG}" ;;
+      "${ARG_SHORT_YES}")        CONTINUE=true ;;
+      "${ARG_SHORT_SYSTEMD}")    SYSTEMD_DISABLED=true ;;
+      "${ARG_SHORT_UNINSTALL}")  UNINSTALL=true ;;
+      "${ARG_SHORT_SKIP_TOKEN}") SKIP_TOKEN=true ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
             echo "Invalid tag: '${OPTARG}'. Should be in 'key=value' format"
@@ -161,7 +181,7 @@ function parse_options() {
         fi
 
         # Cannot use `\n` and have to use `\\` as break line due to OSx sed implementation
-        FIELDS="${FIELDS}\\
+        FIELDS="${FIELDS}
       ${OPTARG/=/: }" ;;
     "?")                        ;;
       *)                        usage; exit 1 ;;
@@ -376,7 +396,8 @@ check_dependencies
 set_defaults
 parse_options "$@"
 
-readonly INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG SYSTEMD_DISABLED UNINSTALL
+readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG SYSTEMD_DISABLED UNINSTALL
+readonly USER_CONFIG_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
 
 if [[ "${UNINSTALL}" == "true" ]]; then
     echo "Going to remove Otelcol binary, it's file storage and configurations"
@@ -391,8 +412,11 @@ if [[ "${UNINSTALL}" == "true" ]]; then
     exit 0
 fi
 
-USER_CONFIG_DIRECTORY="${CONFIG_DIRECTORY}/conf.d"
-readonly USER_CONFIG_DIRECTORY
+# Exit if install token is not set
+if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && "${SKIP_TOKEN}" != "true" ]]; then
+    echo "Install token has not been provided. Please use '--${ARG_LONG_TOKEN} <token>' or '${ENV_TOKEN}' env."
+    exit 1
+fi
 
 OS_TYPE="$(get_os_type)"
 ARCH_TYPE="$(get_arch_type)"
@@ -468,67 +492,52 @@ else
 fi
 
 # Exit if install token is not set
-if [[ -z "${INSTALL_TOKEN}" ]]; then
+if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
     exit 0
 fi
 
 echo 'We are going to get and set up default configuration for you'
 ask_to_continue
-# Preparing default configuration
-readonly CONFIG_PATH="${CONFIG_DIRECTORY}/sumologic.yaml"
 
-if [[ -f "${CONFIG_PATH}" ]]; then
-    echo "Configuration (${CONFIG_PATH}) already exist)"
+echo -e "Creating file_storage directory (${FILE_STORAGE})"
+sudo mkdir -p "${FILE_STORAGE}"
+
+echo -e "Creating configuration directory (${CONFIG_DIRECTORY})"
+sudo mkdir -p "${CONFIG_DIRECTORY}"
+
+echo -e "Creating user configurations directory (${USER_CONFIG_DIRECTORY})"
+sudo mkdir -p "${USER_CONFIG_DIRECTORY}"
+
+echo "Generating configuration and saving as ${CONFIG_PATH}"
+
+CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/sumologic.yaml"
+
+# ToDo: remove this line after release
+CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/028ba1edc927661cc1fcc8779e67c50ac7f42703/examples/sumologic.yaml"
+
+curl -s "${CONFIG_URL}" -o "${CONFIG_PATH}"
+
+echo 'Changing permissions for config file and storage'
+sudo chmod 440 "${CONFIG_PATH}"
+sudo chmod -R 750 "${FILE_STORAGE}"
+
+if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
+    echo "User configuration (${COMMON_CONFIG_PATH}) already exist)"
 else
-    echo -e "Creating file_storage directory (${FILE_STORAGE})"
-    sudo mkdir -p "${FILE_STORAGE}"
+    echo "extensions:
+  sumologic:" | sudo tee "${COMMON_CONFIG_PATH}" > /dev/null
 
-    echo -e "Creating configuration directory (${CONFIG_DIRECTORY})"
-    sudo mkdir -p "${CONFIG_DIRECTORY}"
+    if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
+        echo "    install_token: ${SUMOLOGIC_INSTALL_TOKEN}" | sudo tee -a "${COMMON_CONFIG_PATH}" > /dev/null
+    fi
 
-    echo -e "Creating user configurations directory (${USER_CONFIG_DIRECTORY})"
-    sudo mkdir -p "${USER_CONFIG_DIRECTORY}"
+    if [[ -n "${API_BASE_URL}" ]]; then
+        echo "    api_base_url: ${API_BASE_URL}" | sudo tee -a "${COMMON_CONFIG_PATH}" > /dev/null
+    fi
 
-    echo "Generating configuration and saving as ${CONFIG_PATH}"
-
-    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/sumologic.yaml"
-
-    # ToDo: remove this line after release
-    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/0788a0af938242fef4561143715845503e022fb4/examples/sumologic.yaml"
-
-    # Generate template
-    export FILE_STORAGE
-    export INSTALL_TOKEN
-    export API_BASE_URL
-
-    curl -s "${CONFIG_URL}" | \
-        if [[ -n "${API_BASE_URL}" ]]; then
-            # add api_base_url after install_token
-            sed "/^    install_token/a\\
-    api_base_url: \${API_BASE_URL}
-    "
-        else
-            cat -
-        fi | \
-        if [[ -n "${FIELDS}" ]]; then
-            # add collector_fields after install_token
-            sed "/^    install_token/a\\
-    collector_fields:${FIELDS}
-    "
-        else
-            cat -
-        fi | \
-        if [[ "${OS_TYPE}" == "darwin" ]]; then
-            # adjust default configuration for macos
-            sed '/^      process:/d'
-        else
-            cat -
-        fi | \
-        envsubst | sudo tee "${CONFIG_PATH}"
-
-    echo 'Changing permissions for config file and storage'
-    sudo chmod 440 "${CONFIG_PATH}"
-    sudo chmod -R 750 "${FILE_STORAGE}"
+    if [[ -n "${FIELDS}" ]]; then
+        echo "    collector_fields:${FIELDS}" | sudo tee -a "${COMMON_CONFIG_PATH}" > /dev/null
+    fi
 fi
 
 if [[ "${SYSTEMD_DISABLED}" == "true" ]]; then
@@ -536,6 +545,8 @@ if [[ "${SYSTEMD_DISABLED}" == "true" ]]; then
     # Add glob for versions above 0.57
     if (( $(echo "${VERSION_PREFIX} > 0.57" | bc -l) )); then
         COMMAND_SUFFIX=" --config \"glob:${CONFIG_DIRECTORY}/conf.d/*.yaml\""
+    else
+        COMMAND_SUFFIX=" --config ${COMMON_CONFIG_PATH}"
     fi
     echo "Use 'sudo otelcol-sumo --config=${CONFIG_PATH}${COMMAND_SUFFIX}' to run Sumo Logic Distribution for OpenTelemetry Collector"
     exit 0
@@ -562,7 +573,7 @@ sudo chown -R opentelemetry:opentelemetry "${CONFIG_PATH}" "${FILE_STORAGE}"
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/systemd/otelcol-sumo.service"
 
 # ToDo: remove this line after release
-SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/0788a0af938242fef4561143715845503e022fb4/examples/systemd/otelcol-sumo.service"
+SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/028ba1edc927661cc1fcc8779e67c50ac7f42703/examples/systemd/otelcol-sumo.service"
 
 TMP_SYSTEMD_CONFIG="otelcol-sumo.service"
 echo 'Getting service configuration'
@@ -571,7 +582,7 @@ sed -i'' -s "s%/etc/otelcol-sumo%'${CONFIG_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
 
 # Remove glob for versions up to 0.57
 if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then
-    sed -i'' -s "s% --config \"glob\"%%" "${TMP_SYSTEMD_CONFIG}"
+    sed -i'' -s "s% --config \"glob.*\"% --config ${COMMON_CONFIG_PATH}%" "${TMP_SYSTEMD_CONFIG}"
 fi
 
 sudo mv "${TMP_SYSTEMD_CONFIG}" "${SYSTEMD_CONFIG}"

@@ -5,7 +5,7 @@ extensions:
   ## Manages registration, heartbeats and authentication to Sumo Logic
   ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/extension/sumologicextension
   sumologic:
-    install_token: ${INSTALL_TOKEN}
+    install_token: ${SUMOLOGIC_INSTALL_TOKEN}
     collector_credentials_directory: ~/.sumologic-otel-collector
 
   ## Configuration for Health Check Extension
@@ -17,7 +17,7 @@ extensions:
   ## The File Storage extension can persist state to the local file system
   ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/storage/filestorage
   file_storage:
-    directory: ${FILE_STORAGE}
+    directory: ${FILE_STORAGE:-/var/lib/otelcol-sumo/file_storage}
 
 receivers:
   ## Configuration for OTLP Receiver

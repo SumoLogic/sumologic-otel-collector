@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -12,10 +13,12 @@ import (
 )
 
 type installOptions struct {
-	installToken   string
-	autoconfirm    bool
-	disableSystemd bool
-	tags           map[string]string
+	installToken     string
+	autoconfirm      bool
+	disableSystemd   bool
+	tags             map[string]string
+	skipInstallToken bool
+	envs             map[string]string
 }
 
 func (io *installOptions) string() []string {
@@ -35,6 +38,10 @@ func (io *installOptions) string() []string {
 		opts = append(opts, "--disable-systemd-installation")
 	}
 
+	if io.skipInstallToken {
+		opts = append(opts, "--skip-install-token")
+	}
+
 	if len(io.tags) > 0 {
 		for k, v := range io.tags {
 			opts = append(opts, "--tag", fmt.Sprintf("%s=%s", k, v))
@@ -42,6 +49,16 @@ func (io *installOptions) string() []string {
 	}
 
 	return opts
+}
+
+func (io *installOptions) buildEnvs() []string {
+	e := os.Environ()
+
+	for k, v := range io.envs {
+		e = append(e, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	return e
 }
 
 func exitCode(cmd *exec.Cmd) (int, error) {
@@ -60,6 +77,7 @@ func exitCode(cmd *exec.Cmd) (int, error) {
 
 func runScript(t *testing.T, opts installOptions) (int, error) {
 	cmd := exec.Command("bash", opts.string()...)
+	cmd.Env = opts.buildEnvs()
 
 	in, err := cmd.StdinPipe()
 	if err != nil {

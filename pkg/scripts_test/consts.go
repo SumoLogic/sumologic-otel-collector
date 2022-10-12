@@ -8,6 +8,7 @@ const (
 	scriptPath      string = "../../scripts/install.sh"
 	installToken    string = "token"
 	configPath      string = etcPath + "/sumologic.yaml"
+	userConfigPath  string = etcPath + "/conf.d/common.yaml"
 
 	systemdDirectoryPath string = "/run/systemd/system"
 )
