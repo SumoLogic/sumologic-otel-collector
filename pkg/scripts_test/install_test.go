@@ -1,7 +1,6 @@
 package sumologic_scripts_tests
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -166,8 +165,7 @@ func TestInstallScript(t *testing.T) {
 				c(ch)
 			}
 
-			ch.code, ch.err = runScript(t, tt.options)
-			fmt.Printf("%v:%v", ch.code, ch.expectedInstallCode)
+			ch.code, ch.err = runScript(ch)
 			checkRun(ch)
 
 			for _, c := range tt.postChecks {
