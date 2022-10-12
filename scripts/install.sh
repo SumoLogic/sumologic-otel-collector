@@ -20,6 +20,8 @@ ARG_SHORT_SYSTEMD='d'
 ARG_LONG_SYSTEMD='disable-systemd-installation'
 ARG_SHORT_UNINSTALL='u'
 ARG_LONG_UNINSTALL='uninstall'
+ARG_SHORT_PURGE='p'
+ARG_LONG_PURGE='purge'
 ARG_SHORT_SKIP_TOKEN='k'
 ARG_LONG_SKIP_TOKEN='skip-install-token'
 ENV_TOKEN="SUMOLOGIC_INSTALL_TOKEN"
@@ -27,6 +29,7 @@ ENV_TOKEN="SUMOLOGIC_INSTALL_TOKEN"
 readonly ARG_SHORT_TOKEN ARG_LONG_TOKEN ARG_SHORT_HELP ARG_LONG_HELP ARG_SHORT_API ARG_LONG_API
 readonly ARG_SHORT_TAG ARG_LONG_TAG ARG_SHORT_VERSION ARG_LONG_VERSION ARG_SHORT_YES ARG_LONG_YES
 readonly ARG_SHORT_SYSTEMD ARG_LONG_SYSTEMD ARG_SHORT_UNINSTALL ARG_LONG_UNINSTALL
+readonly ARG_SHORT_PURGE ARG_LONG_PURGE
 readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ENV_TOKEN
 
 ############################ Variables (see set_defaults function for default values)
@@ -50,6 +53,7 @@ SUMO_BINARY_PATH=""
 SKIP_TOKEN=""
 CONFIG_PATH=""
 COMMON_CONFIG_PATH=""
+PURGE=""
 
 # set by check_dependencies therefore cannot be set by set_defaults
 SYSTEMD_DISABLED=false
@@ -66,7 +70,9 @@ Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_TAG} <key>=<v
   -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>     Installation token
   -${ARG_SHORT_SKIP_TOKEN}, --${ARG_LONG_SKIP_TOKEN}             Skip installation token (script will only upgrade the binary if token is not provided)
   -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                Tag in format key=value
-  -${ARG_SHORT_UNINSTALL}, --${ARG_LONG_UNINSTALL}                      Uninstall collection along with configuration
+
+  -${ARG_SHORT_UNINSTALL}, --${ARG_LONG_UNINSTALL}                      Uninstall otelcol-sumo binary
+  -${ARG_SHORT_PURGE}, --${ARG_LONG_PURGE}                          Remove configuration and data during uninstallation
 
   -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                      Api URL
   -${ARG_SHORT_SYSTEMD}, --${ARG_LONG_SYSTEMD}   Do not set up systemd service
@@ -120,10 +126,13 @@ function parse_options() {
       "--${ARG_LONG_UNINSTALL}")
         set -- "$@" "-${ARG_SHORT_UNINSTALL}"
         ;;
+      "--${ARG_LONG_PURGE}")
+        set -- "$@" "-${ARG_SHORT_PURGE}"
+        ;;
       "--${ARG_LONG_SKIP_TOKEN}")
         set -- "$@" "-${ARG_SHORT_SKIP_TOKEN}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_SKIP_TOKEN}")
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}")
         set -- "$@" "${arg}"   ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -137,7 +146,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_SKIP_TOKEN}" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -156,6 +165,7 @@ function parse_options() {
       "${ARG_SHORT_YES}")        CONTINUE=true ;;
       "${ARG_SHORT_SYSTEMD}")    SYSTEMD_DISABLED=true ;;
       "${ARG_SHORT_UNINSTALL}")  UNINSTALL=true ;;
+      "${ARG_SHORT_PURGE}")      PURGE=true ;;
       "${ARG_SHORT_SKIP_TOKEN}") SKIP_TOKEN=true ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
@@ -374,6 +384,35 @@ function get_full_changelog() {
     echo -e "${changelog}"
 }
 
+# uninstall otelcol-sumo
+function uninstall() {
+    local MSG
+    MSG="Going to remove Otelcol binary"
+
+    if [[ "${PURGE}" == "true" ]]; then
+        MSG="${MSG}, file storage and configurations"
+    fi
+
+    echo "${MSG}."
+    ask_to_continue
+
+    # disable systemd service
+    if [[ -f "${SYSTEMD_CONFIG}" ]]; then
+        sudo systemctl stop otelcol-sumo
+        sudo systemctl disable otelcol-sumo
+    fi
+
+    # remove binary
+    sudo rm -f "${SUMO_BINARY_PATH}"
+
+    # remove configuration and data
+    if [[ "${PURGE}" == "true" ]]; then
+        sudo rm -rf "${CONFIG_DIRECTORY}" "${FILE_STORAGE}" "${SYSTEMD_CONFIG}"
+    fi
+
+    exit 0
+}
+
 ############################ Main code
 
 check_dependencies
@@ -384,15 +423,7 @@ readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFI
 readonly USER_CONFIG_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
 
 if [[ "${UNINSTALL}" == "true" ]]; then
-    echo "Going to remove Otelcol binary, it's file storage and configurations"
-    ask_to_continue
-
-    if [[ -f "${SYSTEMD_CONFIG}" ]]; then
-        sudo systemctl stop otelcol-sumo
-        sudo systemctl disable otelcol-sumo
-    fi
-
-    sudo rm -rif "${CONFIG_DIRECTORY}" "${FILE_STORAGE}" "${SUMO_BINARY_PATH}" "${SYSTEMD_CONFIG}"
+    uninstall
     exit 0
 fi
 

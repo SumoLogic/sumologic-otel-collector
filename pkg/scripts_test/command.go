@@ -19,6 +19,8 @@ type installOptions struct {
 	tags             map[string]string
 	skipInstallToken bool
 	envs             map[string]string
+	uninstall        bool
+	purge            bool
 }
 
 func (io *installOptions) string() []string {
@@ -40,6 +42,14 @@ func (io *installOptions) string() []string {
 
 	if io.skipInstallToken {
 		opts = append(opts, "--skip-install-token")
+	}
+
+	if io.uninstall {
+		opts = append(opts, "--uninstall")
+	}
+
+	if io.purge {
+		opts = append(opts, "--purge")
 	}
 
 	if len(io.tags) > 0 {
@@ -136,6 +146,12 @@ func runScript(t *testing.T, opts installOptions) (int, error) {
 		}
 
 		if strings.Contains(strLine, "We are going to set up systemd service") {
+			// approve installation config
+			_, err = in.Write([]byte("y\n"))
+			require.NoError(t, err)
+		}
+
+		if strings.Contains(strLine, "Going to remove") {
 			// approve installation config
 			_, err = in.Write([]byte("y\n"))
 			require.NoError(t, err)

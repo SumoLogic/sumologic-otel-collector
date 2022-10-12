@@ -102,6 +102,46 @@ func TestInstallScript(t *testing.T) {
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
 			installCode:       3, // because of invalid install token
 		},
+		{
+			name: "uninstallation",
+			options: installOptions{
+				uninstall: true,
+			},
+			preActions: []checkFunc{preActionMockStructure},
+			preChecks:  []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated},
+			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigCreated, checkUserConfigCreated},
+		},
+		{
+			name: "systemd uninstallation",
+			options: installOptions{
+				uninstall: true,
+			},
+			preActions:        []checkFunc{preActionMockSystemdStructure},
+			preChecks:         []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkSystemdConfigCreated},
+			postChecks:        []checkFunc{checkBinaryNotCreated, checkConfigCreated, checkUserConfigCreated, checkSystemdConfigCreated},
+			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
+		},
+		{
+			name: "purge",
+			options: installOptions{
+				uninstall: true,
+				purge:     true,
+			},
+			preActions: []checkFunc{preActionMockStructure},
+			preChecks:  []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated},
+			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated},
+		},
+		{
+			name: "systemd purge",
+			options: installOptions{
+				uninstall: true,
+				purge:     true,
+			},
+			preActions:        []checkFunc{preActionMockSystemdStructure},
+			preChecks:         []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkSystemdConfigCreated},
+			postChecks:        []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated},
+			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			ch := check{

@@ -1,6 +1,7 @@
 package sumologic_scripts_tests
 
 import (
+	"os"
 	"os/exec"
 	"testing"
 
@@ -94,4 +95,23 @@ func checkTags(c check) {
 	for k, v := range c.installOptions.tags {
 		require.Equal(c.test, v, conf.Extensions.Sumologic.Tags[k], "install token is different than expected")
 	}
+}
+
+func preActionMockStructure(c check) {
+	for _, path := range []string{confDPath, fileStoragePath} {
+		err := os.MkdirAll(path, os.ModePerm)
+		require.NoError(c.test, err)
+	}
+
+	for _, path := range []string{binaryPath, configPath, userConfigPath} {
+		_, err := os.Create(path)
+		require.NoError(c.test, err)
+	}
+}
+
+func preActionMockSystemdStructure(c check) {
+	preActionMockStructure(c)
+
+	_, err := os.Create(systemdPath)
+	require.NoError(c.test, err)
 }
