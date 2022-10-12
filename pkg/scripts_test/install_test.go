@@ -47,7 +47,7 @@ func TestInstallScript(t *testing.T) {
 				skipInstallToken: true,
 			},
 			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated},
-			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigNotCreated, checkSystemdConfigNotCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated},
 		},
 		{
 			name: "autoconfirm",
@@ -55,7 +55,7 @@ func TestInstallScript(t *testing.T) {
 				skipInstallToken: true,
 			},
 			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated},
-			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigNotCreated, checkSystemdConfigNotCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated},
 		},
 		{
 			name: "installation token only",

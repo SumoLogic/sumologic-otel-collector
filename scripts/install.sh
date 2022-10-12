@@ -419,7 +419,7 @@ check_dependencies
 set_defaults
 parse_options "$@"
 
-readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG SYSTEMD_DISABLED UNINSTALL
+readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
 readonly USER_CONFIG_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
 
 if [[ "${UNINSTALL}" == "true" ]]; then
@@ -432,6 +432,12 @@ if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && "${SKIP_TOKEN}" != "true" ]]; then
     echo "Install token has not been provided. Please use '--${ARG_LONG_TOKEN} <token>' or '${ENV_TOKEN}' env."
     exit 1
 fi
+
+if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
+    SYSTEMD_DISABLED=true
+fi
+
+readonly SYSTEMD_DISABLED
 
 OS_TYPE="$(get_os_type)"
 ARCH_TYPE="$(get_arch_type)"
@@ -506,11 +512,6 @@ else
     echo -e "Installation succeded:\t$(otelcol-sumo --version)"
 fi
 
-# Exit if install token is not set
-if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
-    exit 0
-fi
-
 echo 'We are going to get and set up default configuration for you'
 ask_to_continue
 
@@ -538,7 +539,7 @@ sudo chmod -R 750 "${FILE_STORAGE}"
 
 if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
     echo "User configuration (${COMMON_CONFIG_PATH}) already exist)"
-else
+elif [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
     echo "extensions:
   sumologic:" | sudo tee "${COMMON_CONFIG_PATH}" > /dev/null
 
