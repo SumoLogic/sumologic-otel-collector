@@ -17,7 +17,7 @@ extensions:
   ## The File Storage extension can persist state to the local file system
   ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/storage/filestorage
   file_storage:
-    directory: ${FILE_STORAGE:-/var/lib/otelcol-sumo/file_storage}
+    directory: ${SUMOLOGIC_FILE_STORAGE:-/var/lib/otelcol-sumo/file_storage}
 
 receivers:
   ## Configuration for OTLP Receiver
