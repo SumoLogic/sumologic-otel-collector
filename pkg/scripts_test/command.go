@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -51,7 +52,7 @@ func (io *installOptions) string() []string {
 }
 
 func (io *installOptions) buildEnvs() []string {
-	e := []string{}
+	e := os.Environ()
 
 	for k, v := range io.envs {
 		e = append(e, fmt.Sprintf("%s=%s", k, v))
