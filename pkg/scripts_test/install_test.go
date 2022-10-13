@@ -64,7 +64,8 @@ func TestInstallScript(t *testing.T) {
 			},
 			preActions: []checkFunc{preActionMockConfig},
 			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigCreated, checkUserConfigNotCreated},
-			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkConfigOverrided, checkUserConfigNotCreated, checkSystemdConfigNotCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkConfigOverrided, checkUserConfigNotCreated,
+				checkSystemdConfigNotCreated},
 		},
 		{
 			name: "installation token only",
@@ -137,7 +138,8 @@ func TestInstallScript(t *testing.T) {
 			},
 			preActions: []checkFunc{preActionMockUserConfig, preActionWriteAPIBaseURLToUserConfig},
 			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated},
-			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigCreated, checkAPIBaseURLInConfig, checkSystemdConfigNotCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigCreated, checkAPIBaseURLInConfig,
+				checkSystemdConfigNotCreated},
 		},
 		{
 			name: "different api base url",
@@ -145,9 +147,10 @@ func TestInstallScript(t *testing.T) {
 				disableSystemd: true,
 				apiBaseURL:     apiBaseURL,
 			},
-			preActions:  []checkFunc{preActionMockUserConfig, preActionWriteDifferentAPIBaseURLToUserConfig},
-			preChecks:   []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated},
-			postChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated, checkSystemdConfigNotCreated, checkAbortedDueToDifferentAPIBaseURL},
+			preActions: []checkFunc{preActionMockUserConfig, preActionWriteDifferentAPIBaseURLToUserConfig},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated},
+			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated, checkSystemdConfigNotCreated,
+				checkAbortedDueToDifferentAPIBaseURL},
 			installCode: 1,
 		},
 		{
