@@ -530,7 +530,7 @@ CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector
 # ToDo: remove this line after release
 CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/028ba1edc927661cc1fcc8779e67c50ac7f42703/examples/sumologic.yaml"
 
-curl -s "${CONFIG_URL}" -o "${CONFIG_PATH}"
+sudo curl -s "${CONFIG_URL}" -o "${CONFIG_PATH}"
 
 echo 'Changing permissions for config file and storage'
 sudo chmod 440 "${CONFIG_PATH}"
