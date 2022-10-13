@@ -200,7 +200,7 @@ func checkAPIBaseURLInConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
-	require.Equal(c.test, c.installOptions.apiBaseURL, conf.Extensions.Sumologic.APIBaseURL, "install token is different than expected")
+	require.Equal(c.test, c.installOptions.apiBaseURL, conf.Extensions.Sumologic.APIBaseURL, "api base url is different than expected")
 }
 
 func preActionWriteEmptyUserConfig(c check) {

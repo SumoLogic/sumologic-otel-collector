@@ -618,7 +618,7 @@ ${INDENTATION}sumologic:/" "${COMMON_CONFIG_PATH}"
 
         # ToDo: ensure we override only sumologic `install_token`
         if grep "install_token" "${COMMON_CONFIG_PATH}"; then
-            sudo sed -i'' -s "s/install_token:[[:blank:]]*$/install_token: $(escape_sed "${SUMOLOGIC_INSTALL_TOKEN}")/" "${COMMON_CONFIG_PATH}"
+            sudo sed -i'' -s "s/install_token:.*$/install_token: $(escape_sed "${SUMOLOGIC_INSTALL_TOKEN}")/" "${COMMON_CONFIG_PATH}"
         else
             # write install token on the top of sumologic: extension
             sudo sed -i'' -s "s/sumologic:/sumologic:\\
@@ -630,7 +630,7 @@ ${INDENTATION}sumologic:/" "${COMMON_CONFIG_PATH}"
     if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
         # ToDo: ensure we override only sumologic `api_base_url`
         if grep "api_base_url" "${COMMON_CONFIG_PATH}"; then
-            sudo sed -i'' -s "s/api_base_url:[[:blank:]]*$/api_base_url: $(escape_sed "${API_BASE_URL}")/" "${COMMON_CONFIG_PATH}"
+            sudo sed -i'' -s "s/api_base_url:.*$/api_base_url: $(escape_sed "${API_BASE_URL}")/" "${COMMON_CONFIG_PATH}"
         else
             # write install token on the top of sumologic: extension
             sudo sed -i'' -s "s/sumologic:/sumologic:\\
