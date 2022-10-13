@@ -84,9 +84,10 @@ func exitCode(cmd *exec.Cmd) (int, error) {
 	return 0, fmt.Errorf("cannot obtain exit code: %v", err)
 }
 
-func runScript(ch check) (int, error) {
+func runScript(ch check) (int, []string, error) {
 	cmd := exec.Command("bash", ch.installOptions.string()...)
 	cmd.Env = ch.installOptions.buildEnvs()
+	output := []string{}
 
 	in, err := cmd.StdinPipe()
 	if err != nil {
@@ -113,7 +114,11 @@ func runScript(ch check) (int, error) {
 	// Read the results from the process
 	for {
 		line, _, err := bufOut.ReadLine()
-		strLine := string(line)
+		strLine := strings.TrimSpace(string(line))
+
+		if len(strLine) > 0 {
+			output = append(output, strLine)
+		}
 		ch.test.Log(strLine)
 
 		// exit if script finished
@@ -157,5 +162,6 @@ func runScript(ch check) (int, error) {
 		}
 	}
 
-	return exitCode(cmd)
+	code, err := exitCode(cmd)
+	return code, output, err
 }

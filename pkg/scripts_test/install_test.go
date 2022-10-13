@@ -89,6 +89,46 @@ func TestInstallScript(t *testing.T) {
 				checkEnvTokenInConfig, checkSystemdConfigNotCreated},
 		},
 		{
+			name: "same installation token",
+			options: installOptions{
+				disableSystemd: true,
+				installToken:   installToken,
+			},
+			preActions: []checkFunc{preActionMockUserConfig, preActionWriteTokenToUserConfig},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigCreated, checkTokenInConfig, checkSystemdConfigNotCreated},
+		},
+		{
+			name: "different installation token",
+			options: installOptions{
+				disableSystemd: true,
+				installToken:   installToken,
+			},
+			preActions:  []checkFunc{preActionMockUserConfig, preActionWriteDifferentTokenToUserConfig},
+			preChecks:   []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated},
+			postChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated, checkSystemdConfigNotCreated, checkAbortedDueToDifferentToken},
+			installCode: 1,
+		},
+		{
+			name: "updating installation token",
+			options: installOptions{
+				disableSystemd: true,
+				installToken:   installToken,
+			},
+			preActions: []checkFunc{preActionMockUserConfig},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkTokenInConfig, checkSystemdConfigNotCreated},
+		},
+		{
+			name: "empty installation token",
+			options: installOptions{
+				disableSystemd: true,
+			},
+			preActions: []checkFunc{preActionMockUserConfig, preActionWriteDifferentTokenToUserConfig},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkSystemdConfigNotCreated, checkDifferentTokenInConfig},
+		},
+		{
 			name: "configuration with tags",
 			options: installOptions{
 				disableSystemd: true,
@@ -175,7 +215,7 @@ func TestInstallScript(t *testing.T) {
 				c(ch)
 			}
 
-			ch.code, ch.err = runScript(ch)
+			ch.code, ch.output, ch.err = runScript(ch)
 			checkRun(ch)
 
 			for _, c := range tt.postChecks {

@@ -2,6 +2,7 @@ package sumologic_scripts_tests
 
 import (
 	"io/ioutil"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
@@ -33,4 +34,18 @@ func getConfig(path string) (config, error) {
 	}
 
 	return conf, err
+}
+
+func saveConfig(path string, conf config) error {
+	out, err := yaml.Marshal(conf)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(path, out, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

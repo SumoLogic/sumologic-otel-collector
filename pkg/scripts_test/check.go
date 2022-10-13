@@ -15,6 +15,7 @@ type check struct {
 	code                int
 	err                 error
 	expectedInstallCode int
+	output              []string
 }
 
 type condCheckFunc func(check) bool
@@ -77,6 +78,13 @@ func checkTokenInConfig(c check) {
 	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "install token is different than expected")
 }
 
+func checkDifferentTokenInConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	require.Equal(c.test, c.installOptions.installToken+c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "install token is different than expected")
+}
+
 func checkEnvTokenInConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")
@@ -107,41 +115,32 @@ func checkTags(c check) {
 func preActionMockStructure(c check) {
 	preActionMockConfigs(c)
 
-	for _, path := range []string{fileStoragePath} {
-		err := os.MkdirAll(path, os.ModePerm)
-		require.NoError(c.test, err)
-	}
+	err := os.MkdirAll(fileStoragePath, os.ModePerm)
+	require.NoError(c.test, err)
 
-	for _, path := range []string{binaryPath} {
-		_, err := os.Create(path)
-		require.NoError(c.test, err)
-	}
+	_, err = os.Create(binaryPath)
+	require.NoError(c.test, err)
 }
 
 func preActionMockConfigs(c check) {
 	preActionMockConfig(c)
-
-	for _, path := range []string{confDPath} {
-		err := os.MkdirAll(path, os.ModePerm)
-		require.NoError(c.test, err)
-	}
-
-	for _, path := range []string{userConfigPath} {
-		_, err := os.Create(path)
-		require.NoError(c.test, err)
-	}
+	preActionMockUserConfig(c)
 }
 
 func preActionMockConfig(c check) {
-	for _, path := range []string{etcPath} {
-		err := os.MkdirAll(path, os.ModePerm)
-		require.NoError(c.test, err)
-	}
+	err := os.MkdirAll(etcPath, os.ModePerm)
+	require.NoError(c.test, err)
 
-	for _, path := range []string{configPath} {
-		_, err := os.Create(path)
-		require.NoError(c.test, err)
-	}
+	_, err = os.Create(configPath)
+	require.NoError(c.test, err)
+}
+
+func preActionMockUserConfig(c check) {
+	err := os.MkdirAll(confDPath, os.ModePerm)
+	require.NoError(c.test, err)
+
+	_, err = os.Create(userConfigPath)
+	require.NoError(c.test, err)
 }
 
 func preActionMockSystemdStructure(c check) {
@@ -149,4 +148,27 @@ func preActionMockSystemdStructure(c check) {
 
 	_, err := os.Create(systemdPath)
 	require.NoError(c.test, err)
+}
+
+func preActionWriteTokenToUserConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err)
+
+	conf.Extensions.Sumologic.InstallToken = c.installOptions.installToken
+	err = saveConfig(userConfigPath, conf)
+	require.NoError(c.test, err)
+}
+
+func preActionWriteDifferentTokenToUserConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err)
+
+	conf.Extensions.Sumologic.InstallToken = c.installOptions.installToken + c.installOptions.installToken
+	err = saveConfig(userConfigPath, conf)
+	require.NoError(c.test, err)
+}
+
+func checkAbortedDueToDifferentToken(c check) {
+	require.Greater(c.test, len(c.output), 0)
+	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different token than in your configuration file!")
 }
