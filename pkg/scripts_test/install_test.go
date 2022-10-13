@@ -110,7 +110,7 @@ func TestInstallScript(t *testing.T) {
 			installCode: 1,
 		},
 		{
-			name: "updating installation token",
+			name: "adding installation token",
 			options: installOptions{
 				disableSystemd: true,
 				installToken:   installToken,
@@ -118,6 +118,57 @@ func TestInstallScript(t *testing.T) {
 			preActions: []checkFunc{preActionMockUserConfig},
 			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated},
 			postChecks: []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkTokenInConfig, checkSystemdConfigNotCreated},
+		},
+		{
+			name: "editing installation token",
+			options: installOptions{
+				disableSystemd: true,
+				apiBaseURL:     apiBaseURL,
+			},
+			preActions: []checkFunc{preActionMockUserConfig, preActionWriteEmptyUserConfig},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkTokenInConfig, checkSystemdConfigNotCreated},
+		},
+		{
+			name: "same api base url",
+			options: installOptions{
+				disableSystemd: true,
+				apiBaseURL:     apiBaseURL,
+			},
+			preActions: []checkFunc{preActionMockUserConfig, preActionWriteAPIBaseURLToUserConfig},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigCreated, checkAPIBaseURLInConfig, checkSystemdConfigNotCreated},
+		},
+		{
+			name: "different api base url",
+			options: installOptions{
+				disableSystemd: true,
+				apiBaseURL:     apiBaseURL,
+			},
+			preActions:  []checkFunc{preActionMockUserConfig, preActionWriteDifferentAPIBaseURLToUserConfig},
+			preChecks:   []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated},
+			postChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated, checkSystemdConfigNotCreated, checkAbortedDueToDifferentAPIBaseURL},
+			installCode: 1,
+		},
+		{
+			name: "adding api base url",
+			options: installOptions{
+				disableSystemd: true,
+				apiBaseURL:     apiBaseURL,
+			},
+			preActions: []checkFunc{preActionMockUserConfig},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkAPIBaseURLInConfig, checkSystemdConfigNotCreated},
+		},
+		{
+			name: "editing api base url",
+			options: installOptions{
+				disableSystemd: true,
+				apiBaseURL:     apiBaseURL,
+			},
+			preActions: []checkFunc{preActionMockUserConfig, preActionWriteEmptyUserConfig},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkAPIBaseURLInConfig, checkSystemdConfigNotCreated},
 		},
 		{
 			name: "empty installation token",

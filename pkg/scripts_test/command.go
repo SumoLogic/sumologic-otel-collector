@@ -20,6 +20,7 @@ type installOptions struct {
 	envs             map[string]string
 	uninstall        bool
 	purge            bool
+	apiBaseURL       string
 }
 
 func (io *installOptions) string() []string {
@@ -55,6 +56,10 @@ func (io *installOptions) string() []string {
 		for k, v := range io.tags {
 			opts = append(opts, "--tag", fmt.Sprintf("%s=%s", k, v))
 		}
+	}
+
+	if io.apiBaseURL != "" {
+		opts = append(opts, "--api", io.apiBaseURL)
 	}
 
 	return opts

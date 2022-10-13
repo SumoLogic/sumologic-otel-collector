@@ -172,3 +172,41 @@ func checkAbortedDueToDifferentToken(c check) {
 	require.Greater(c.test, len(c.output), 0)
 	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different token than in your configuration file!")
 }
+
+func preActionWriteAPIBaseURLToUserConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err)
+
+	conf.Extensions.Sumologic.APIBaseURL = c.installOptions.apiBaseURL
+	err = saveConfig(userConfigPath, conf)
+	require.NoError(c.test, err)
+}
+
+func preActionWriteDifferentAPIBaseURLToUserConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err)
+
+	conf.Extensions.Sumologic.APIBaseURL = c.installOptions.apiBaseURL + c.installOptions.apiBaseURL
+	err = saveConfig(userConfigPath, conf)
+	require.NoError(c.test, err)
+}
+
+func checkAbortedDueToDifferentAPIBaseURL(c check) {
+	require.Greater(c.test, len(c.output), 0)
+	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different api base url than in your configuration file!")
+}
+
+func checkAPIBaseURLInConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	require.Equal(c.test, c.installOptions.apiBaseURL, conf.Extensions.Sumologic.APIBaseURL, "install token is different than expected")
+}
+
+func preActionWriteEmptyUserConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err)
+
+	err = saveConfig(userConfigPath, conf)
+	require.NoError(c.test, err)
+}

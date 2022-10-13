@@ -7,10 +7,12 @@ const (
 	etcPath         string = "/etc/otelcol-sumo"
 	systemdPath     string = "/etc/systemd/system/otelcol-sumo.service"
 	scriptPath      string = "../../scripts/install.sh"
-	installToken    string = "token"
 	configPath      string = etcPath + "/sumologic.yaml"
 	confDPath       string = etcPath + "/conf.d"
 	userConfigPath  string = confDPath + "/common.yaml"
 
 	systemdDirectoryPath string = "/run/systemd/system"
+
+	installToken string = "token"
+	apiBaseURL   string = "https://open-collectors.sumologic.com"
 )

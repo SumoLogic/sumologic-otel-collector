@@ -414,6 +414,13 @@ function uninstall() {
     exit 0
 }
 
+function escape_sed() {
+    local text
+    readonly text="${1}"
+
+    echo "${text}" | sed -s 's|/|\\/|g'
+}
+
 ############################ Main code
 
 check_dependencies
@@ -440,6 +447,12 @@ if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
 
     if [[ -n "${USER_TOKEN}" && -n "${SUMOLOGIC_INSTALL_TOKEN}" && "${USER_TOKEN}" != "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
         echo "You are trying to install with different token than in your configuration file!"
+        exit 1
+    fi
+
+    USER_API_URL="$(cat "${COMMON_CONFIG_PATH}" | grep api_base_url | tail -n 1 | sed 's/.*api_base_url:[[:blank:]]*//' | xargs || echo "")"
+    if [[ -n "${USER_API_URL}" && -n "${API_BASE_URL}" && "${USER_API_URL}" != "${API_BASE_URL}" ]]; then
+        echo "You are trying to install with different api base url than in your configuration file!"
         exit 1
     fi
 fi
@@ -560,7 +573,7 @@ if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" 
     fi
 
     if ! grep 'extensions:$' "${COMMON_CONFIG_PATH}"; then
-        echo "extensions:" | sudo tee -a "${COMMON_CONFIG_PATH}" > /dev/null
+        echo "extensions:" | sudo tee -a "${COMMON_CONFIG_PATH}" > /dev/null 2>&1
     fi
 
     ###### Get indentation for extension level
@@ -605,20 +618,28 @@ ${INDENTATION}sumologic:/" "${COMMON_CONFIG_PATH}"
 
         # ToDo: ensure we override only sumologic `install_token`
         if grep "install_token" "${COMMON_CONFIG_PATH}"; then
-            sudo sed -i'' -s "s/install_token:[[:blank:]]*$/install_token: ${SUMOLOGIC_INSTALL_TOKEN}/" "${COMMON_CONFIG_PATH}"
+            sudo sed -i'' -s "s/install_token:[[:blank:]]*$/install_token: $(escape_sed "${SUMOLOGIC_INSTALL_TOKEN}")/" "${COMMON_CONFIG_PATH}"
         else
             # write install token on the top of sumologic: extension
-            sudo sed -i'' "s/sumologic:/sumologic:\\
-\\${EXT_INDENTATION}install_token: ${SUMOLOGIC_INSTALL_TOKEN}/" "${COMMON_CONFIG_PATH}"
+            sudo sed -i'' -s "s/sumologic:/sumologic:\\
+\\${EXT_INDENTATION}install_token: $(escape_sed "${SUMOLOGIC_INSTALL_TOKEN}")/" "${COMMON_CONFIG_PATH}"
         fi
     fi
 
-    if [[ -n "${API_BASE_URL}" ]]; then
-        echo "    api_base_url: ${API_BASE_URL}" | sudo tee -a "${COMMON_CONFIG_PATH}" > /dev/null
+    # fill in api base url
+    if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
+        # ToDo: ensure we override only sumologic `api_base_url`
+        if grep "api_base_url" "${COMMON_CONFIG_PATH}"; then
+            sudo sed -i'' -s "s/api_base_url:[[:blank:]]*$/api_base_url: $(escape_sed "${API_BASE_URL}")/" "${COMMON_CONFIG_PATH}"
+        else
+            # write install token on the top of sumologic: extension
+            sudo sed -i'' -s "s/sumologic:/sumologic:\\
+\\${EXT_INDENTATION}api_base_url: $(escape_sed "${API_BASE_URL}")/" "${COMMON_CONFIG_PATH}"
+        fi
     fi
 
     if [[ -n "${FIELDS}" ]]; then
-        echo "    collector_fields:${FIELDS}" | sudo tee -a "${COMMON_CONFIG_PATH}" > /dev/null
+        echo "    collector_fields:${FIELDS}" | sudo tee -a "${COMMON_CONFIG_PATH}" > /dev/null 2>&1
     fi
 fi
 
