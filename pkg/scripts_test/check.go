@@ -55,6 +55,13 @@ func checkConfigNotCreated(c check) {
 	require.NoFileExists(c.test, configPath, "configuration has been created")
 }
 
+func checkConfigOverrided(c check) {
+	conf, err := getConfig(configPath)
+	require.NoError(c.test, err)
+
+	require.Equal(c.test, "${SUMOLOGIC_INSTALL_TOKEN}", conf.Extensions.Sumologic.InstallToken)
+}
+
 func checkUserConfigCreated(c check) {
 	require.FileExists(c.test, userConfigPath, "user configuration has not been created properly")
 }
@@ -98,12 +105,40 @@ func checkTags(c check) {
 }
 
 func preActionMockStructure(c check) {
-	for _, path := range []string{confDPath, fileStoragePath} {
+	preActionMockConfigs(c)
+
+	for _, path := range []string{fileStoragePath} {
 		err := os.MkdirAll(path, os.ModePerm)
 		require.NoError(c.test, err)
 	}
 
-	for _, path := range []string{binaryPath, configPath, userConfigPath} {
+	for _, path := range []string{binaryPath} {
+		_, err := os.Create(path)
+		require.NoError(c.test, err)
+	}
+}
+
+func preActionMockConfigs(c check) {
+	preActionMockConfig(c)
+
+	for _, path := range []string{confDPath} {
+		err := os.MkdirAll(path, os.ModePerm)
+		require.NoError(c.test, err)
+	}
+
+	for _, path := range []string{userConfigPath} {
+		_, err := os.Create(path)
+		require.NoError(c.test, err)
+	}
+}
+
+func preActionMockConfig(c check) {
+	for _, path := range []string{etcPath} {
+		err := os.MkdirAll(path, os.ModePerm)
+		require.NoError(c.test, err)
+	}
+
+	for _, path := range []string{configPath} {
 		_, err := os.Create(path)
 		require.NoError(c.test, err)
 	}

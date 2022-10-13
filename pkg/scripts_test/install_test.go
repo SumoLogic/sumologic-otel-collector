@@ -57,6 +57,16 @@ func TestInstallScript(t *testing.T) {
 			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated},
 		},
 		{
+			name: "override default config",
+			options: installOptions{
+				skipInstallToken: true,
+				autoconfirm:      true,
+			},
+			preActions: []checkFunc{preActionMockConfig},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigCreated, checkUserConfigNotCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkConfigOverrided, checkUserConfigNotCreated, checkSystemdConfigNotCreated},
+		},
+		{
 			name: "installation token only",
 			options: installOptions{
 				disableSystemd: true,
