@@ -298,7 +298,7 @@ jobs:
         run: echo "${{ steps.extract_tag.outputs.tag }}"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2.0.0
+        uses: docker/setup-qemu-action@v2.1.0
 
       - name: Set up Buildx
         id: buildx
@@ -362,7 +362,7 @@ jobs:
         run: echo "${{ steps.extract_tag.outputs.tag }}"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2.0.0
+        uses: docker/setup-qemu-action@v2.1.0
 
       - name: Set up Buildx
         id: buildx

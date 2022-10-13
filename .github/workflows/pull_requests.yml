@@ -474,7 +474,7 @@ jobs:
 
       - name: Set up QEMU
         if: steps.changed-files.outputs.any_changed == 'true'
-        uses: docker/setup-qemu-action@v2.0.0
+        uses: docker/setup-qemu-action@v2.1.0
 
       - name: Set up Buildx
         if: steps.changed-files.outputs.any_changed == 'true'
