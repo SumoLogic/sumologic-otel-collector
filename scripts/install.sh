@@ -54,6 +54,7 @@ SKIP_TOKEN=""
 CONFIG_PATH=""
 COMMON_CONFIG_PATH=""
 PURGE=""
+USER_TOKEN=""
 
 # set by check_dependencies therefore cannot be set by set_defaults
 SYSTEMD_DISABLED=false
@@ -196,7 +197,7 @@ function github_rate_limit() {
 function check_dependencies() {
     local error
     error=0
-    for cmd in echo sudo sed curl head grep sort mv chmod envsubst getopts hostname bc; do
+    for cmd in echo sudo sed curl head grep sort mv chmod envsubst getopts hostname bc touch xargs; do
         if ! command -v "${cmd}" &> /dev/null; then
             echo "Command '${cmd}' not found. Please install it."
             error=1
@@ -427,10 +428,20 @@ if [[ "${UNINSTALL}" == "true" ]]; then
     exit 0
 fi
 
-# Exit if install token is not set
-if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && "${SKIP_TOKEN}" != "true" ]]; then
+# Exit if install token is not set and there is no user configuration
+if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && "${SKIP_TOKEN}" != "true" && ! -f "${COMMON_CONFIG_PATH}" ]]; then
     echo "Install token has not been provided. Please use '--${ARG_LONG_TOKEN} <token>' or '${ENV_TOKEN}' env."
     exit 1
+fi
+
+# verify if passed arguments are the same like in user's configuration
+if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
+    USER_TOKEN="$(cat "${COMMON_CONFIG_PATH}" | grep install_token | tail -n 1 | sed 's/.*install_token:[[:blank:]]*//' | xargs || echo "")"
+
+    if [[ -n "${USER_TOKEN}" && -n "${SUMOLOGIC_INSTALL_TOKEN}" && "${USER_TOKEN}" != "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
+        echo "You are trying to install with different token than in your configuration file!"
+        exit 1
+    fi
 fi
 
 if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
@@ -537,14 +548,69 @@ echo 'Changing permissions for config file and storage'
 sudo chmod 440 "${CONFIG_PATH}"
 sudo chmod -R 750 "${FILE_STORAGE}"
 
+# Ensure that configuration is created
 if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
     echo "User configuration (${COMMON_CONFIG_PATH}) already exist)"
-elif [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
-    echo "extensions:
-  sumologic:" | sudo tee "${COMMON_CONFIG_PATH}" > /dev/null
+fi
 
-    if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
-        echo "    install_token: ${SUMOLOGIC_INSTALL_TOKEN}" | sudo tee -a "${COMMON_CONFIG_PATH}" > /dev/null
+## Check if there is anything to update in configuration
+if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
+    if [[ ! -f "${COMMON_CONFIG_PATH}" ]]; then
+        sudo touch "${COMMON_CONFIG_PATH}"
+    fi
+
+    if ! grep 'extensions:$' "${COMMON_CONFIG_PATH}"; then
+        echo "extensions:" | sudo tee -a "${COMMON_CONFIG_PATH}" > /dev/null
+    fi
+
+    ###### Get indentation for extension level
+
+    # take indentation same as first extension
+    INDENTATION="$(sed -e '/^extensions/,/^[a-z]/!d' "${COMMON_CONFIG_PATH}" | grep -m 1 -E '^\s+[a-z]' | grep -m 1 -oE '^\s+' || echo "")"
+
+    # otherwise take indentation from any other package
+    if [[ -z "${INDENTATION}" ]]; then
+        INDENTATION="$(grep -m 1 -E '^\s+[a-z]' "${COMMON_CONFIG_PATH}" | grep -m 1 -oE '^\s+' || echo "")"
+    fi
+
+    # otherwise use two spaces
+    if [[ -z "${INDENTATION}" ]]; then
+        INDENTATION="  "
+    fi
+
+    ###### Check if sumologic extension already exists, and if not, add it
+    if ! sed -e '/^extensions/,/^[a-z]/!d' "${COMMON_CONFIG_PATH}" | grep -E '^\s+sumologic(|\/.*):\s*$'; then
+        # add sumologic extension on the top of the extensions
+        sudo sed -i'' "s/extensions:/extensions:\\
+${INDENTATION}sumologic:/" "${COMMON_CONFIG_PATH}"
+    fi
+
+    ###### Get indentation for exporter level
+
+    # take indentation same as sumologic extension
+    EXT_INDENTATION="$(sed -e "/^${INDENTATION}sumologic:/,/^${INDENTATION}[a-z]/!d" "${COMMON_CONFIG_PATH}" | grep -m 1 -E "^${INDENTATION}\s+[a-z]" | grep -m 1 -oE '^\s+' || echo "")"
+
+    # otherwise take indentation from any other package
+    if [[ -z "${EXT_INDENTATION}" ]]; then
+        EXT_INDENTATION="$(grep -m 1 -E '^${INDENTATION}\s+[a-z]' "${COMMON_CONFIG_PATH}" | grep -m 1 -oE '^\s+' || echo "")"
+    fi
+
+    # otherwise use double indentation
+    if [[ -z "${EXT_INDENTATION}" ]]; then
+        EXT_INDENTATION="${INDENTATION}${INDENTATION}"
+    fi
+
+    # fill in install token
+    if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" && -z "${USER_TOKEN}" ]]; then
+
+        # ToDo: ensure we override only sumologic `install_token`
+        if grep "install_token" "${COMMON_CONFIG_PATH}"; then
+            sudo sed -i'' -s "s/install_token:[[:blank:]]*$/install_token: ${SUMOLOGIC_INSTALL_TOKEN}/" "${COMMON_CONFIG_PATH}"
+        else
+            # write install token on the top of sumologic: extension
+            sudo sed -i'' "s/sumologic:/sumologic:\\
+\\${EXT_INDENTATION}install_token: ${SUMOLOGIC_INSTALL_TOKEN}/" "${COMMON_CONFIG_PATH}"
+        fi
     fi
 
     if [[ -n "${API_BASE_URL}" ]]; then
