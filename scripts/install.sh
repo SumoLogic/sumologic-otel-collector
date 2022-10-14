@@ -528,7 +528,7 @@ echo "Generating configuration and saving as ${CONFIG_PATH}"
 CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/sumologic.yaml"
 
 # ToDo: remove this line after release
-CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/028ba1edc927661cc1fcc8779e67c50ac7f42703/examples/sumologic.yaml"
+CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/4d8f59c19d94ba9c8cc6b8f195b9d8eaec780117/examples/sumologic.yaml"
 
 sudo curl -s "${CONFIG_URL}" -o "${CONFIG_PATH}"
 
@@ -588,7 +588,7 @@ sudo chown -R opentelemetry:opentelemetry "${CONFIG_PATH}" "${FILE_STORAGE}"
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/systemd/otelcol-sumo.service"
 
 # ToDo: remove this line after release
-SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/028ba1edc927661cc1fcc8779e67c50ac7f42703/examples/systemd/otelcol-sumo.service"
+SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/4d8f59c19d94ba9c8cc6b8f195b9d8eaec780117/examples/systemd/otelcol-sumo.service"
 
 TMP_SYSTEMD_CONFIG="otelcol-sumo.service"
 echo 'Getting service configuration'
