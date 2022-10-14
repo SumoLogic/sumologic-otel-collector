@@ -54,6 +54,7 @@ SKIP_TOKEN=""
 CONFIG_PATH=""
 COMMON_CONFIG_PATH=""
 PURGE=""
+USER_API_URL=""
 USER_TOKEN=""
 
 # set by check_dependencies therefore cannot be set by set_defaults
@@ -209,7 +210,7 @@ function check_dependencies() {
         if echo '' | tail -r  &> /dev/null; then
             TAC="tail -r"
         else
-            echo "Neither command 'tac' nor support for `tail -r` not found. Please install it."
+            echo "Neither command 'tac' nor support for 'tail -r' not found. Please install it."
             error=1
         fi
     fi
@@ -418,7 +419,7 @@ function escape_sed() {
     local text
     readonly text="${1}"
 
-    echo "${text}" | sed -s 's|/|\\/|g'
+    echo "${text//\//\\/}"
 }
 
 ############################ Main code
@@ -443,14 +444,14 @@ fi
 
 # verify if passed arguments are the same like in user's configuration
 if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
-    USER_TOKEN="$(cat "${COMMON_CONFIG_PATH}" | grep install_token | tail -n 1 | sed 's/.*install_token:[[:blank:]]*//' | xargs || echo "")"
+    USER_TOKEN="$(grep -m 1 install_token "${COMMON_CONFIG_PATH}" | sed 's/.*install_token:[[:blank:]]*//' | xargs || echo "")"
 
     if [[ -n "${USER_TOKEN}" && -n "${SUMOLOGIC_INSTALL_TOKEN}" && "${USER_TOKEN}" != "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
         echo "You are trying to install with different token than in your configuration file!"
         exit 1
     fi
 
-    USER_API_URL="$(cat "${COMMON_CONFIG_PATH}" | grep api_base_url | tail -n 1 | sed 's/.*api_base_url:[[:blank:]]*//' | xargs || echo "")"
+    USER_API_URL="$(grep -m 1 api_base_url "${COMMON_CONFIG_PATH}" | sed 's/.*api_base_url:[[:blank:]]*//' | xargs || echo "")"
     if [[ -n "${USER_API_URL}" && -n "${API_BASE_URL}" && "${USER_API_URL}" != "${API_BASE_URL}" ]]; then
         echo "You are trying to install with different api base url than in your configuration file!"
         exit 1
@@ -572,7 +573,7 @@ if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" 
         sudo touch "${COMMON_CONFIG_PATH}"
     fi
 
-    if ! grep 'extensions:$' "${COMMON_CONFIG_PATH}"; then
+    if ! grep -q 'extensions:$' "${COMMON_CONFIG_PATH}"; then
         echo "extensions:" | sudo tee -a "${COMMON_CONFIG_PATH}" > /dev/null 2>&1
     fi
 
@@ -592,9 +593,9 @@ if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" 
     fi
 
     ###### Check if sumologic extension already exists, and if not, add it
-    if ! sed -e '/^extensions/,/^[a-z]/!d' "${COMMON_CONFIG_PATH}" | grep -E '^\s+sumologic(|\/.*):\s*$'; then
+    if ! sed -e '/^extensions/,/^[a-z]/!d' "${COMMON_CONFIG_PATH}" | grep -qE '^\s+(sumologic|sumologic\/.*):\s*$'; then
         # add sumologic extension on the top of the extensions
-        sudo sed -i'' "s/extensions:/extensions:\\
+        sudo sed -i'' -e "s/extensions:/extensions:\\
 ${INDENTATION}sumologic:/" "${COMMON_CONFIG_PATH}"
     fi
 
@@ -605,7 +606,7 @@ ${INDENTATION}sumologic:/" "${COMMON_CONFIG_PATH}"
 
     # otherwise take indentation from any other package
     if [[ -z "${EXT_INDENTATION}" ]]; then
-        EXT_INDENTATION="$(grep -m 1 -E '^${INDENTATION}\s+[a-z]' "${COMMON_CONFIG_PATH}" | grep -m 1 -oE '^\s+' || echo "")"
+        EXT_INDENTATION="$(grep -m 1 -E "^${INDENTATION}\s+[a-z]" "${COMMON_CONFIG_PATH}" | grep -m 1 -oE '^\s+' || echo "")"
     fi
 
     # otherwise use double indentation
@@ -618,10 +619,10 @@ ${INDENTATION}sumologic:/" "${COMMON_CONFIG_PATH}"
 
         # ToDo: ensure we override only sumologic `install_token`
         if grep "install_token" "${COMMON_CONFIG_PATH}"; then
-            sudo sed -i'' -s "s/install_token:.*$/install_token: $(escape_sed "${SUMOLOGIC_INSTALL_TOKEN}")/" "${COMMON_CONFIG_PATH}"
+            sudo sed -i'' -e "s/install_token:.*$/install_token: $(escape_sed "${SUMOLOGIC_INSTALL_TOKEN}")/" "${COMMON_CONFIG_PATH}"
         else
             # write install token on the top of sumologic: extension
-            sudo sed -i'' -s "s/sumologic:/sumologic:\\
+            sudo sed -i'' -e "s/sumologic:/sumologic:\\
 \\${EXT_INDENTATION}install_token: $(escape_sed "${SUMOLOGIC_INSTALL_TOKEN}")/" "${COMMON_CONFIG_PATH}"
         fi
     fi
@@ -630,10 +631,10 @@ ${INDENTATION}sumologic:/" "${COMMON_CONFIG_PATH}"
     if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
         # ToDo: ensure we override only sumologic `api_base_url`
         if grep "api_base_url" "${COMMON_CONFIG_PATH}"; then
-            sudo sed -i'' -s "s/api_base_url:.*$/api_base_url: $(escape_sed "${API_BASE_URL}")/" "${COMMON_CONFIG_PATH}"
+            sudo sed -i'' -e "s/api_base_url:.*$/api_base_url: $(escape_sed "${API_BASE_URL}")/" "${COMMON_CONFIG_PATH}"
         else
             # write install token on the top of sumologic: extension
-            sudo sed -i'' -s "s/sumologic:/sumologic:\\
+            sudo sed -i'' -e "s/sumologic:/sumologic:\\
 \\${EXT_INDENTATION}api_base_url: $(escape_sed "${API_BASE_URL}")/" "${COMMON_CONFIG_PATH}"
         fi
     fi
@@ -681,11 +682,11 @@ SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-c
 TMP_SYSTEMD_CONFIG="otelcol-sumo.service"
 echo 'Getting service configuration'
 curl -fL "${SYSTEMD_CONFIG_URL}" --output "${TMP_SYSTEMD_CONFIG}" --progress-bar
-sed -i'' -s "s%/etc/otelcol-sumo%'${CONFIG_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
+sed -i'' -e "s%/etc/otelcol-sumo%'${CONFIG_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
 
 # Remove glob for versions up to 0.57
 if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then
-    sed -i'' -s "s% --config \"glob.*\"% --config ${COMMON_CONFIG_PATH}%" "${TMP_SYSTEMD_CONFIG}"
+    sed -i'' -e "s% --config \"glob.*\"% --config ${COMMON_CONFIG_PATH}%" "${TMP_SYSTEMD_CONFIG}"
 fi
 
 sudo mv "${TMP_SYSTEMD_CONFIG}" "${SYSTEMD_CONFIG}"
