@@ -56,6 +56,11 @@ COMMON_CONFIG_PATH=""
 PURGE=""
 USER_API_URL=""
 USER_TOKEN=""
+USER_FIELDS=""
+
+INDENTATION=""
+EXT_INDENTATION=""
+FIELDS_INDENTATION=""
 
 # set by check_dependencies therefore cannot be set by set_defaults
 SYSTEMD_DISABLED=false
@@ -96,6 +101,9 @@ function set_defaults() {
     USER_CONFIG_DIRECTORY="${CONFIG_DIRECTORY}/conf.d"
     CONFIG_PATH="${CONFIG_DIRECTORY}/sumologic.yaml"
     COMMON_CONFIG_PATH="${USER_CONFIG_DIRECTORY}/common.yaml"
+    INDENTATION="  "
+    EXT_INDENTATION="${INDENTATION}${INDENTATION}"
+    FIELDS_INDENTATION="${INDENTATION}${INDENTATION}${INDENTATION}"
 }
 
 function parse_options() {
@@ -177,8 +185,8 @@ function parse_options() {
         fi
 
         # Cannot use `\n` and have to use `\\` as break line due to OSx sed implementation
-        FIELDS="${FIELDS}
-      ${OPTARG/=/: }" ;;
+        FIELDS="${FIELDS}\\
+$(escape_sed "${OPTARG/=/: }")" ;;
     "?")                        ;;
       *)                        usage; exit 1 ;;
     esac
@@ -444,6 +452,36 @@ fi
 
 # verify if passed arguments are the same like in user's configuration
 if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
+    ###### Get indentation for extension level
+
+    # take indentation same as first extension
+    INDENTATION="$(sed -e '/^extensions/,/^[a-z]/!d' "${COMMON_CONFIG_PATH}" | grep -m 1 -E '^\s+[a-z]' | grep -m 1 -oE '^\s+' || echo "")"
+
+    # otherwise take indentation from any other package
+    if [[ -z "${INDENTATION}" ]]; then
+        INDENTATION="$(grep -m 1 -E '^\s+[a-z]' "${COMMON_CONFIG_PATH}" | grep -m 1 -oE '^\s+' || echo "")"
+    fi
+
+    # otherwise use two spaces
+    if [[ -z "${INDENTATION}" ]]; then
+        INDENTATION="  "
+    fi
+
+    ###### Get indentation for exporter level
+
+    # take indentation same as sumologic extension
+    EXT_INDENTATION="$(sed -e "/^${INDENTATION}sumologic:/,/^${INDENTATION}[a-z]/!d" "${COMMON_CONFIG_PATH}" | grep -m 1 -E "^${INDENTATION}\s+[a-z]" | grep -m 1 -oE '^\s+' || echo "")"
+
+    # otherwise take indentation from any other package
+    if [[ -z "${EXT_INDENTATION}" ]]; then
+        EXT_INDENTATION="$(grep -m 1 -E "^${INDENTATION}\s+[a-z]" "${COMMON_CONFIG_PATH}" | grep -m 1 -oE '^\s+' || echo "")"
+    fi
+
+    # otherwise use double indentation
+    if [[ -z "${EXT_INDENTATION}" ]]; then
+        EXT_INDENTATION="${INDENTATION}${INDENTATION}"
+    fi
+
     USER_TOKEN="$(grep -m 1 install_token "${COMMON_CONFIG_PATH}" | sed 's/.*install_token:[[:blank:]]*//' | xargs || echo "")"
 
     if [[ -n "${USER_TOKEN}" && -n "${SUMOLOGIC_INSTALL_TOKEN}" && "${USER_TOKEN}" != "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
@@ -454,6 +492,15 @@ if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
     USER_API_URL="$(grep -m 1 api_base_url "${COMMON_CONFIG_PATH}" | sed 's/.*api_base_url:[[:blank:]]*//' | xargs || echo "")"
     if [[ -n "${USER_API_URL}" && -n "${API_BASE_URL}" && "${USER_API_URL}" != "${API_BASE_URL}" ]]; then
         echo "You are trying to install with different api base url than in your configuration file!"
+        exit 1
+    fi
+
+    USER_FIELDS="$(sed -e '/^extensions/,/^[a-z]/!d' "${COMMON_CONFIG_PATH}" | sed -e "/^${INDENTATION}sumologic/,/^${INDENTATION}[a-z]/!d" | sed -e "/^${EXT_INDENTATION}collector_fields/,/^${EXT_INDENTATION}[a-z]/!d;" | grep -vE "^${EXT_INDENTATION}\\S" | sed -e 's/^[[:blank:]]*//' | sort || echo "")"
+    USER_FIELDS="$(echo "${USER_FIELDS}" | sed -E -e "s/^(.*:)[[:blank:]]*('|\")(.*)('|\")[[:blank:]]*$/\1 \3/")"
+    FIELDS_TO_COMPARE="$(echo "${FIELDS//\\/}" | grep -vE '^$' | sort || echo "")"
+
+    if [[ -n "${USER_FIELDS}" && -n "${FIELDS_TO_COMPARE}" && "${USER_FIELDS}" != "${FIELDS_TO_COMPARE}" ]]; then
+        echo "You are trying to install with different tags than in your configuration file!"
         exit 1
     fi
 fi
@@ -577,21 +624,6 @@ if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" 
         echo "extensions:" | sudo tee -a "${COMMON_CONFIG_PATH}" > /dev/null 2>&1
     fi
 
-    ###### Get indentation for extension level
-
-    # take indentation same as first extension
-    INDENTATION="$(sed -e '/^extensions/,/^[a-z]/!d' "${COMMON_CONFIG_PATH}" | grep -m 1 -E '^\s+[a-z]' | grep -m 1 -oE '^\s+' || echo "")"
-
-    # otherwise take indentation from any other package
-    if [[ -z "${INDENTATION}" ]]; then
-        INDENTATION="$(grep -m 1 -E '^\s+[a-z]' "${COMMON_CONFIG_PATH}" | grep -m 1 -oE '^\s+' || echo "")"
-    fi
-
-    # otherwise use two spaces
-    if [[ -z "${INDENTATION}" ]]; then
-        INDENTATION="  "
-    fi
-
     ###### Check if sumologic extension already exists, and if not, add it
     if ! sed -e '/^extensions/,/^[a-z]/!d' "${COMMON_CONFIG_PATH}" | grep -qE '^\s+(sumologic|sumologic\/.*):\s*$'; then
         # add sumologic extension on the top of the extensions
@@ -599,26 +631,11 @@ if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" 
 ${INDENTATION}sumologic:/" "${COMMON_CONFIG_PATH}"
     fi
 
-    ###### Get indentation for exporter level
-
-    # take indentation same as sumologic extension
-    EXT_INDENTATION="$(sed -e "/^${INDENTATION}sumologic:/,/^${INDENTATION}[a-z]/!d" "${COMMON_CONFIG_PATH}" | grep -m 1 -E "^${INDENTATION}\s+[a-z]" | grep -m 1 -oE '^\s+' || echo "")"
-
-    # otherwise take indentation from any other package
-    if [[ -z "${EXT_INDENTATION}" ]]; then
-        EXT_INDENTATION="$(grep -m 1 -E "^${INDENTATION}\s+[a-z]" "${COMMON_CONFIG_PATH}" | grep -m 1 -oE '^\s+' || echo "")"
-    fi
-
-    # otherwise use double indentation
-    if [[ -z "${EXT_INDENTATION}" ]]; then
-        EXT_INDENTATION="${INDENTATION}${INDENTATION}"
-    fi
-
     # fill in install token
     if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" && -z "${USER_TOKEN}" ]]; then
 
         # ToDo: ensure we override only sumologic `install_token`
-        if grep "install_token" "${COMMON_CONFIG_PATH}"; then
+        if grep "install_token" "${COMMON_CONFIG_PATH}" > /dev/null; then
             sudo sed -i'' -e "s/install_token:.*$/install_token: $(escape_sed "${SUMOLOGIC_INSTALL_TOKEN}")/" "${COMMON_CONFIG_PATH}"
         else
             # write install token on the top of sumologic: extension
@@ -630,7 +647,7 @@ ${INDENTATION}sumologic:/" "${COMMON_CONFIG_PATH}"
     # fill in api base url
     if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
         # ToDo: ensure we override only sumologic `api_base_url`
-        if grep "api_base_url" "${COMMON_CONFIG_PATH}"; then
+        if grep "api_base_url" "${COMMON_CONFIG_PATH}" > /dev/null; then
             sudo sed -i'' -e "s/api_base_url:.*$/api_base_url: $(escape_sed "${API_BASE_URL}")/" "${COMMON_CONFIG_PATH}"
         else
             # write install token on the top of sumologic: extension
@@ -639,8 +656,18 @@ ${INDENTATION}sumologic:/" "${COMMON_CONFIG_PATH}"
         fi
     fi
 
-    if [[ -n "${FIELDS}" ]]; then
-        echo "    collector_fields:${FIELDS}" | sudo tee -a "${COMMON_CONFIG_PATH}" > /dev/null 2>&1
+    FIELDS_INDENTATION="${EXT_INDENTATION}${INDENTATION}"
+    FIELDS_TO_WRITE="$(escape_sed "${FIELDS}" | sed -e "s/^\\([^\\]\\)/${FIELDS_INDENTATION}\\1/")"
+
+    if [[ -n "${FIELDS}" && -z "${USER_FIELDS}" ]]; then
+        # ToDo: ensure we override only sumologic `collector_fields`
+        if grep "collector_fields" "${COMMON_CONFIG_PATH}" > /dev/null; then
+            sudo sed -i'' -e "s/collector_fields:.*$/collector_fields: ${FIELDS_TO_WRITE}/" "${COMMON_CONFIG_PATH}"
+        else
+            # write install token on the top of sumologic: extension
+            sudo sed -i'' -e "s/sumologic:/sumologic:\\
+\\${EXT_INDENTATION}collector_fields: ${FIELDS_TO_WRITE}/" "${COMMON_CONFIG_PATH}"
+        fi
     fi
 fi
 

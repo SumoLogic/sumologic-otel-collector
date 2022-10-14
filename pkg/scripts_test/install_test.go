@@ -196,6 +196,48 @@ func TestInstallScript(t *testing.T) {
 			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkTags, checkSystemdConfigNotCreated},
 		},
 		{
+			name: "same tags",
+			options: installOptions{
+				disableSystemd: true,
+				tags: map[string]string{
+					"lorem": "ipsum",
+					"foo":   "bar",
+				},
+			},
+			preActions: []checkFunc{preActionMockUserConfig, preActionWriteTagsToUserConfig},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigCreated, checkTags,
+				checkSystemdConfigNotCreated},
+		},
+		{
+			name: "different tags",
+			options: installOptions{
+				disableSystemd: true,
+				tags: map[string]string{
+					"lorem": "ipsum",
+					"foo":   "bar",
+				},
+			},
+			preActions: []checkFunc{preActionMockUserConfig, preActionWriteDifferentTagsToUserConfig},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated},
+			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated, checkDifferentTags, checkSystemdConfigNotCreated,
+				checkAbortedDueToDifferentTags},
+			installCode: 1,
+		},
+		{
+			name: "editing tags",
+			options: installOptions{
+				disableSystemd: true,
+				tags: map[string]string{
+					"lorem": "ipsum",
+					"foo":   "bar",
+				},
+			},
+			preActions: []checkFunc{preActionMockUserConfig, preActionWriteEmptyUserConfig},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkTags, checkSystemdConfigNotCreated},
+		},
+		{
 			name: "systemd",
 			options: installOptions{
 				installToken: installToken,

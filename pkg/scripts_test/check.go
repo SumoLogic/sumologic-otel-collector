@@ -112,6 +112,13 @@ func checkTags(c check) {
 	}
 }
 
+func checkDifferentTags(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	require.Equal(c.test, "tag", conf.Extensions.Sumologic.Tags["some"], "install token is different than expected")
+}
+
 func preActionMockStructure(c check) {
 	preActionMockConfigs(c)
 
@@ -209,4 +216,29 @@ func preActionWriteEmptyUserConfig(c check) {
 
 	err = saveConfig(userConfigPath, conf)
 	require.NoError(c.test, err)
+}
+
+func preActionWriteTagsToUserConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err)
+
+	conf.Extensions.Sumologic.Tags = c.installOptions.tags
+	err = saveConfig(userConfigPath, conf)
+	require.NoError(c.test, err)
+}
+
+func preActionWriteDifferentTagsToUserConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err)
+
+	conf.Extensions.Sumologic.Tags = map[string]string{
+		"some": "tag",
+	}
+	err = saveConfig(userConfigPath, conf)
+	require.NoError(c.test, err)
+}
+
+func checkAbortedDueToDifferentTags(c check) {
+	require.Greater(c.test, len(c.output), 0)
+	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different tags than in your configuration file!")
 }
