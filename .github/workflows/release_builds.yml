@@ -205,7 +205,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: [ '1.18.2b7' ]
+        go: [ '1.18.7b7' ]
         arch_os: [ 'linux_amd64' ]
     steps:
       - uses: actions/checkout@v3
@@ -298,11 +298,11 @@ jobs:
         run: echo "${{ steps.extract_tag.outputs.tag }}"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2.0.0
+        uses: docker/setup-qemu-action@v2.1.0
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v2.0.0
+        uses: docker/setup-buildx-action@v2.1.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -362,11 +362,11 @@ jobs:
         run: echo "${{ steps.extract_tag.outputs.tag }}"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2.0.0
+        uses: docker/setup-qemu-action@v2.1.0
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v2.0.0
+        uses: docker/setup-buildx-action@v2.1.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}

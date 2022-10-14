@@ -7,10 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- feat: add glob config provider [#713]
+- feat(build): validate FIPS mode at build time and runtime [#693]
+
 ### Changed
 
 - fix(sumologicexporter): do not crash if server returns unknown length response [#718]
 - fix(k8sprocessor): fix metadata enrichment [#724]
+- fix(k8sprocessor): keep pod's services information up to date [#710]
+- chore(deps): bump go-boringcrypto to 1.18.7b7 [#746]
 
 ### Removed
 
@@ -22,9 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#672]: https://github.com/SumoLogic/sumologic-otel-collector/pull/672
 [#678]: https://github.com/SumoLogic/sumologic-otel-collector/pull/678
 [#709]: https://github.com/SumoLogic/sumologic-otel-collector/pull/709
+[#710]: https://github.com/SumoLogic/sumologic-otel-collector/pull/710
 [#714]: https://github.com/SumoLogic/sumologic-otel-collector/pull/714
+[#713]: https://github.com/SumoLogic/sumologic-otel-collector/pull/713
 [#718]: https://github.com/SumoLogic/sumologic-otel-collector/pull/718
 [#724]: https://github.com/SumoLogic/sumologic-otel-collector/pull/724
+[#746]: https://github.com/SumoLogic/sumologic-otel-collector/pull/746
+[#693]: https://github.com/SumoLogic/sumologic-otel-collector/pull/693
 
 ## [v0.57.2-sumo-0]
 

@@ -265,8 +265,8 @@ for potential breaking changes that would require manual migration steps.
 
    ![live_tail_image](../images/live_tail.png)
 
-[sumologic_docs_install_token]: https://help.sumologic.com/Manage/Security/Installation_Tokens
-[live_tail]: https://help.sumologic.com/05Search/Live-Tail/About-Live-Tail#start-a-live-tail-session
+[sumologic_docs_install_token]: https://help.sumologic.com/docs/manage/security/installation-tokens
+[live_tail]: https://help.sumologic.com/docs/search/live-tail/about-live-tail#start-a-live-tail-session
 
 ## Container image
 

@@ -247,12 +247,14 @@ func (c *WatchClient) deleteLoop(interval time.Duration, gracePeriod time.Durati
 // GetPod takes an IP address or Pod UID and returns the pod the identifier is associated with.
 func (c *WatchClient) GetPod(identifier PodIdentifier) (*Pod, bool) {
 	c.m.RLock()
+	defer c.m.RUnlock()
 	pod, ok := c.Pods[identifier]
-	c.m.RUnlock()
 	if ok {
 		if pod.Ignore {
 			return nil, false
 		}
+
+		c.updatePodOwnerMetadata(pod)
 		return pod, ok
 	}
 	observability.RecordIPLookupMiss()
@@ -296,52 +298,7 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 		}
 	}
 
-	if c.Rules.OwnerLookupEnabled {
-		c.logger.Debug("pod owner lookup",
-			zap.String("pod.Name", pod.Name),
-			zap.Any("pod.OwnerReferences", pod.OwnerReferences),
-		)
-		owners := c.op.GetOwners(pod)
-
-		for _, owner := range owners {
-			switch owner.kind {
-			case "DaemonSet":
-				if c.Rules.DaemonSetName {
-					tags[c.Rules.Tags.DaemonSetName] = owner.name
-				}
-			case "Deployment":
-				if c.Rules.DeploymentName {
-					tags[c.Rules.Tags.DeploymentName] = owner.name
-				}
-			case "ReplicaSet":
-				if c.Rules.ReplicaSetName {
-					tags[c.Rules.Tags.ReplicaSetName] = owner.name
-				}
-			case "StatefulSet":
-				if c.Rules.StatefulSetName {
-					tags[c.Rules.Tags.StatefulSetName] = owner.name
-				}
-			case "Job":
-				if c.Rules.JobName {
-					tags[c.Rules.Tags.JobName] = owner.name
-				}
-			case "CronJob":
-				if c.Rules.CronJobName {
-					tags[c.Rules.Tags.CronJobName] = owner.name
-				}
-
-			default:
-				// Do nothing
-			}
-		}
-
-		if c.Rules.ServiceName {
-			if services := c.op.GetServices(pod); len(services) > 0 {
-				tags[c.Rules.Tags.ServiceName] = strings.Join(services, c.delimiter)
-			}
-		}
-
-	}
+	// Owner metadata is updated on every query.
 
 	if len(pod.Status.ContainerStatuses) > 0 {
 		cs := pod.Status.ContainerStatuses[0]
@@ -378,6 +335,53 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 		c.extractLabelsIntoTags(r, pod.Annotations, tags)
 	}
 	return tags
+}
+
+func (c *WatchClient) updatePodOwnerMetadata(pod *Pod) {
+	if c.Rules.OwnerLookupEnabled {
+		c.logger.Debug("pod owner lookup",
+			zap.String("pod.Name", pod.Name),
+			zap.Any("pod.OwnerReferences", pod.OwnerReferences),
+		)
+		owners := c.op.GetOwners(pod)
+
+		for _, owner := range owners {
+			switch owner.kind {
+			case "DaemonSet":
+				if c.Rules.DaemonSetName {
+					pod.Attributes[c.Rules.Tags.DaemonSetName] = owner.name
+				}
+			case "Deployment":
+				if c.Rules.DeploymentName {
+					pod.Attributes[c.Rules.Tags.DeploymentName] = owner.name
+				}
+			case "ReplicaSet":
+				if c.Rules.ReplicaSetName {
+					pod.Attributes[c.Rules.Tags.ReplicaSetName] = owner.name
+				}
+			case "StatefulSet":
+				if c.Rules.StatefulSetName {
+					pod.Attributes[c.Rules.Tags.StatefulSetName] = owner.name
+				}
+			case "Job":
+				if c.Rules.JobName {
+					pod.Attributes[c.Rules.Tags.JobName] = owner.name
+				}
+			case "CronJob":
+				if c.Rules.CronJobName {
+					pod.Attributes[c.Rules.Tags.CronJobName] = owner.name
+				}
+
+			default:
+				// Do nothing
+			}
+		}
+
+		if c.Rules.ServiceName {
+			services := c.op.GetServices(pod.Name)
+			pod.Attributes[c.Rules.Tags.ServiceName] = strings.Join(services, c.delimiter)
+		}
+	}
 }
 
 // This function removes all data from the Pod except what is required by extraction rules
@@ -474,11 +478,12 @@ func (c *WatchClient) extractField(v string, r FieldExtractionRule) string {
 
 func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
 	newPod := &Pod{
-		Name:      pod.Name,
-		Namespace: pod.Namespace,
-		Address:   pod.Status.PodIP,
-		PodUID:    string(pod.UID),
-		StartTime: pod.Status.StartTime,
+		Name:            pod.Name,
+		Namespace:       pod.Namespace,
+		Address:         pod.Status.PodIP,
+		PodUID:          string(pod.UID),
+		StartTime:       pod.Status.StartTime,
+		OwnerReferences: &pod.OwnerReferences,
 	}
 
 	if c.shouldIgnorePod(pod) {

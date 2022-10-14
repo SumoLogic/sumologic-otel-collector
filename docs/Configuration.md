@@ -91,7 +91,7 @@ and after that let's put that all together.
 > chmod 640 config.yaml
 > ```
 
-[sumologic_docs_install_token]: https://help.sumologic.com/Manage/Security/Installation_Tokens
+[sumologic_docs_install_token]: https://help.sumologic.com/docs/manage/security/installation-tokens
 
 ### Basic configuration for logs
 
@@ -536,7 +536,7 @@ If you want data from different sources to have different source categories,
 you'll need to set a resource attribute named `_sourceCategory` earlier in the pipeline.
 See below for examples on how to do this in various scenarios.
 
-[source_category_docs]: https://help.sumologic.com/03Send-Data/Sources/04Reference-Information-for-Sources/Metadata-Naming-Conventions#source-categories
+[source_category_docs]: https://help.sumologic.com/docs/send-data/reference-information/metadata-naming-conventions#source-categories
 [source_proc]: ../pkg/processor/sourceprocessor
 [source_proc_templates]: ../pkg/processor/sourceprocessor/README.md#source-templates
 
@@ -747,7 +747,7 @@ so that the `host.name` attribute is already set in the `resource` processor.
 Only the first Resource processor's action is required to correctly set the `_sourceHost` attribute.
 The other two actions perform an optional metadata cleanup - they delete the unneeded attributes.
 
-[sumologic_source_host_docs]: https://help.sumologic.com/03Send-Data/Sources/04Reference-Information-for-Sources/Metadata-Naming-Conventions#source-host
+[sumologic_source_host_docs]: https://help.sumologic.com/docs/send-data/reference-information/metadata-naming-conventions#source-host
 [resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.57.2/processor/resourcedetectionprocessor/README.md
 [resourcedetectionprocessor_system_detector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.57.2/processor/resourcedetectionprocessor/README.md#system-metadata
 

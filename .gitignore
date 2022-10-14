@@ -37,3 +37,6 @@ go.work*
 
 # udpdemux binary
 pkg/tools/udpdemux/udpdemux
+
+# temporary files
+/tmp
