@@ -72,6 +72,8 @@ func checkUserConfigNotCreated(c check) {
 }
 
 func checkTokenInConfig(c check) {
+	require.NotEmpty(c.test, c.installOptions.installToken, "install token has not been provided")
+
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
@@ -82,7 +84,7 @@ func checkDifferentTokenInConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
-	require.Equal(c.test, c.installOptions.installToken+c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "install token is different than expected")
+	require.Equal(c.test, "different"+c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "install token is different than expected")
 }
 
 func checkEnvTokenInConfig(c check) {
@@ -170,7 +172,7 @@ func preActionWriteDifferentTokenToUserConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err)
 
-	conf.Extensions.Sumologic.InstallToken = c.installOptions.installToken + c.installOptions.installToken
+	conf.Extensions.Sumologic.InstallToken = "different" + c.installOptions.installToken
 	err = saveConfig(userConfigPath, conf)
 	require.NoError(c.test, err)
 }
@@ -178,6 +180,12 @@ func preActionWriteDifferentTokenToUserConfig(c check) {
 func checkAbortedDueToDifferentToken(c check) {
 	require.Greater(c.test, len(c.output), 0)
 	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different token than in your configuration file!")
+}
+
+func checkAbortedDueToNoToken(c check) {
+	require.Greater(c.test, len(c.output), 1)
+	require.Contains(c.test, c.output[len(c.output)-2], "Install token has not been provided. Please use '--installation-token <token>' or 'SUMOLOGIC_INSTALL_TOKEN' env.")
+	require.Contains(c.test, c.output[len(c.output)-1], "You can ignore this requirement by adding '--skip-install-token argument.")
 }
 
 func preActionWriteAPIBaseURLToUserConfig(c check) {
@@ -193,7 +201,7 @@ func preActionWriteDifferentAPIBaseURLToUserConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err)
 
-	conf.Extensions.Sumologic.APIBaseURL = c.installOptions.apiBaseURL + c.installOptions.apiBaseURL
+	conf.Extensions.Sumologic.APIBaseURL = "different" + c.installOptions.apiBaseURL
 	err = saveConfig(userConfigPath, conf)
 	require.NoError(c.test, err)
 }

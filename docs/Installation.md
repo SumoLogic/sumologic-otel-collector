@@ -6,6 +6,7 @@ the container images stored in AWS Public ECR under the following repository:
 
 - [Standalone](#standalone)
   - [Installation using script](#installation-using-script)
+    - [Script options](#script-options)
   - [Manual installation](#manual-installation)
     - [Linux on amd64 (x86-64)](#linux-on-amd64-x86-64)
     - [Linux on arm64](#linux-on-arm64)
@@ -27,31 +28,51 @@ To run it as a standalone process you only need to run the binary file downloade
 
 ### Installation using script
 
+1. Get your [installation token][sumologic_docs_install_token] if you don't have it already and assign it to environment variable:
+
+   ```bash
+   export SUMOLOGIC_INSTALL_TOKEN=<TOKEN>
+   ```
+
 1. Run installation script:
 
     ```bash
-    bash <(curl -s https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh)
+    bash <(curl -s https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh) --installation-token "${SUMOLOGIC_INSTALL_TOKEN}"
     ```
 
-    It is going to perform install or upgrade operation by placing the latest version in `/usr/local/bin`,
+    It is going to perform the following operations:
 
-1. [Verify the installation](#verify-the-installation)
+      - install or upgrade operation by placing the latest version as `/usr/local/bin/otelcol-sumo`,
+      - get [static configuration](../examples/sumologic.yaml) and place it as `/etc/otelcol-sumo/sumologic.yaml`
+      - create user configuration directory (`/etc/otelcol-sumo/conf.d`) with `common.yaml` file which will contain installation token
+      - for Systemd:
 
-1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
+        - the script is going to get [Systemd service configuration](../examples/systemd/otelcol-sumo.service) and place it as `/etc/systemd/system/otelcol-sumo.service`
+        - create a `opentelemetry` user and group which will be used to run the service
+        - enable `otelcol-sumo` service
+        - start `otelcol-sumo` service
 
-   > **IMPORTANT NOTE**:
-   > It is recommended to limit access to the configuration file as it contains sensitive information.
-   > You can change access permissions to the configuration file using:
-   >
-   > ```bash
-   > chmod 640 config.yaml
-   > ```
+#### Script options
 
-1. Run Sumo Logic OT Distro:
+The following arguments can be passed to the script:
 
-   ```bash
-   otelcol-sumo --config config.yaml
-   ```
+| long name                        | short name | description                                                                                                                                                                  | takes value                |
+|----------------------------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------|
+| `--installation-token`           | `i`        | Installation token. It has precedence over `SUMOLOGIC_INSTALL_TOKEN` env variable.                                                                                           | yes                        |
+| `--skip-install-token`           | `k`        | Skips requirement for installation token. This option do not disable default configuration creation.                                                                         | no                         |
+| `--tag`                          | `t`        | Sets tag for collector. This argument can be use multiple times. One per tag.                                                                                                | yes, in `key=value` format |
+| `--version`                      | `v`        | Version of Sumo Logic Distribution for OpenTelemetry Collector to install. By defult it gets latest version.                                                                 | yes, e.g. `0.57.2-sumo-1`  |
+| `--disable-systemd-installation` | `d`        | Preserves from Systemd service installation.                                                                                                                                 | no                         |
+| `--yes`                          | `y`        | Disable confirmation asks.                                                                                                                                                   | no                         |
+| `--uninstall`                    | `u`        | Removes Sumo Logic Distribution for OpenTelemetry Collector from the system and disable Systemd service eventually. Use with `--purge` to remove all configurations as well. | no                         |
+| `--purge`                        | `p`        | It has to be used with `--uninstall`. It removes all Sumo Logic Distribution for OpenTelemetry Collector related configuration and data.                                     | no                         |
+| `--help`                         | `h`        | Prints help and usage.                                                                                                                                                       | no                         |
+
+The following env variables can be used along with script:
+
+| name                      | description                                                                 |
+|---------------------------|-----------------------------------------------------------------------------|
+| `SUMOLOGIC_INSTALL_TOKEN` | Installation token. It can be overridden by `--installation-token` argument. |
 
 ### Manual installation
 
