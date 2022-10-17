@@ -72,7 +72,7 @@ The following env variables can be used along with script:
 
 | name                      | description                                                                 |
 |---------------------------|-----------------------------------------------------------------------------|
-| `SUMOLOGIC_INSTALL_TOKEN` | Installation token. It can be overrided by `--installation-token` argument. |
+| `SUMOLOGIC_INSTALL_TOKEN` | Installation token. It can be overridden by `--installation-token` argument. |
 
 ### Manual installation
 

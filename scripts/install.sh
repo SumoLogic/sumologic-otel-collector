@@ -97,7 +97,7 @@ Supported arguments:
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                            Prints this help and usage.
 
 Supported env variables:
-  ${ENV_TOKEN}=<token>       Installation token. It can be overrided by '--installation-token' argument.'
+  ${ENV_TOKEN}=<token>       Installation token. It can be overridden by '--installation-token' argument.'
 EOF
 }
 
