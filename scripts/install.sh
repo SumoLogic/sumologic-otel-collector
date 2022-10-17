@@ -54,6 +54,13 @@ SKIP_TOKEN=""
 CONFIG_PATH=""
 COMMON_CONFIG_PATH=""
 PURGE=""
+USER_API_URL=""
+USER_TOKEN=""
+USER_FIELDS=""
+
+INDENTATION=""
+EXT_INDENTATION=""
+FIELDS_INDENTATION=""
 
 # set by check_dependencies therefore cannot be set by set_defaults
 SYSTEMD_DISABLED=false
@@ -94,6 +101,9 @@ function set_defaults() {
     USER_CONFIG_DIRECTORY="${CONFIG_DIRECTORY}/conf.d"
     CONFIG_PATH="${CONFIG_DIRECTORY}/sumologic.yaml"
     COMMON_CONFIG_PATH="${USER_CONFIG_DIRECTORY}/common.yaml"
+    INDENTATION="  "
+    EXT_INDENTATION="${INDENTATION}${INDENTATION}"
+    FIELDS_INDENTATION="${INDENTATION}${INDENTATION}${INDENTATION}"
 }
 
 function parse_options() {
@@ -175,8 +185,8 @@ function parse_options() {
         fi
 
         # Cannot use `\n` and have to use `\\` as break line due to OSx sed implementation
-        FIELDS="${FIELDS}
-      ${OPTARG/=/: }" ;;
+        FIELDS="${FIELDS}\\
+$(escape_sed "${OPTARG/=/: }")" ;;
     "?")                        ;;
       *)                        usage; exit 1 ;;
     esac
@@ -196,7 +206,7 @@ function github_rate_limit() {
 function check_dependencies() {
     local error
     error=0
-    for cmd in echo sudo sed curl head grep sort mv chmod envsubst getopts hostname bc; do
+    for cmd in echo sudo sed curl head grep sort mv chmod envsubst getopts hostname bc touch xargs; do
         if ! command -v "${cmd}" &> /dev/null; then
             echo "Command '${cmd}' not found. Please install it."
             error=1
@@ -208,7 +218,7 @@ function check_dependencies() {
         if echo '' | tail -r  &> /dev/null; then
             TAC="tail -r"
         else
-            echo "Neither command 'tac' nor support for `tail -r` not found. Please install it."
+            echo "Neither command 'tac' nor support for 'tail -r' not found. Please install it."
             error=1
         fi
     fi
@@ -413,13 +423,248 @@ function uninstall() {
     exit 0
 }
 
+function escape_sed() {
+    local text
+    readonly text="${1}"
+
+    echo "${text//\//\\/}"
+}
+
+function get_indentation() {
+    local file
+    readonly file="${1}"
+
+    local default
+    readonly default="${2}"
+    local indentation
+
+    # take indentation same as first extension
+    indentation="$(sed -e '/^extensions/,/^[a-z]/!d' "${file}" \
+        | grep -m 1 -E '^\s+[a-z]' \
+        | grep -m 1 -oE '^\s+' \
+    || echo "")"
+    if [[ -n "${indentation}" ]]; then
+        echo "${indentation}"
+        return
+    fi
+
+    # otherwise take indentation from any other package
+    indentation="$(grep -m 1 -E '^\s+[a-z]' "${file}" \
+        | grep -m 1 -oE '^\s+' \
+    || echo "")"
+    if [[ -n "${indentation}" ]]; then
+        echo "${indentation}"
+        return
+    fi
+
+    # return default indentation
+    echo "${default}"
+}
+
+function get_extension_indentation() {
+    local file
+    readonly file="${1}"
+
+    local indentation="${2}"
+    readonly indentation
+
+    local ext_indentation
+
+    # take indentation same as properties of sumologic extension
+    ext_indentation="$(sed -e "/^${indentation}sumologic:/,/^${indentation}[a-z]/!d" "${file}" \
+        | grep -m 1 -E "^${indentation}\s+[a-z]" \
+        | grep -m 1 -oE '^\s+' \
+    || echo "")"
+
+    if [[ -n "${ext_indentation}" ]]; then
+        echo "${ext_indentation}"
+        return
+    fi
+
+    # otherwise take indentation from properties of any other package
+    ext_indentation="$(grep -m 1 -E "^${indentation}\s+[a-z]" "${file}" \
+        | grep -m 1 -oE '^\s+' \
+    || echo "")"
+
+    if [[ -n "${ext_indentation}" ]]; then
+        echo "${ext_indentation}"
+        return
+    fi
+
+    # otherwise use double indentation
+    echo "${indentation}${indentation}"
+}
+
+function get_user_config() {
+    local file
+    readonly file="${1}"
+
+    grep -m 1 install_token "${file}" \
+        | sed 's/.*install_token:[[:blank:]]*//' \
+        | xargs \
+    || echo ""
+}
+
+function get_user_api_url() {
+    local file
+    readonly file="${1}"
+
+    grep -m 1 api_base_url "${file}" \
+        | sed 's/.*api_base_url:[[:blank:]]*//' \
+        | xargs \
+    || echo ""
+}
+
+function get_user_tags() {
+    local file
+    readonly file="${1}"
+
+    local indentation
+    readonly indentation="${2}"
+
+    local ext_indentation
+    readonly ext_indentation="${3}"
+
+    sed -e '/^extensions/,/^[a-z]/!d' "${file}" \
+        | sed -e "/^${indentation}sumologic/,/^${indentation}[a-z]/!d" \
+        | sed -e "/^${ext_indentation}collector_fields/,/^${ext_indentation}[a-z]/!d;" \
+        | grep -vE "^${ext_indentation}\\S" \
+        | sed -e 's/^[[:blank:]]*//' \
+        | sed -E -e "s/^(.*:)[[:blank:]]*('|\")(.*)('|\")[[:blank:]]*$/\1 \3/" \
+        | sort \
+        || echo ""
+}
+
+function get_fields_to_compare() {
+    local fields
+    readonly fields="${1}"
+
+    echo "${FIELDS//\\/}" \
+        | grep -vE '^$' \
+        | sort \
+    || echo ""
+}
+
+function create_user_config_file() {
+    local file
+    readonly file="${1}"
+
+    if [[ -f "${file}" ]]; then
+        return
+    fi
+
+    sudo touch "${file}"
+}
+
+# write extensions section to user configuration file
+function add_extension_to_config() {
+    local file
+    readonly file="${1}"
+
+    if grep -q 'extensions:$' "${file}"; then
+        return
+    fi
+
+    echo "extensions:" \
+        | sudo tee -a "${file}" > /dev/null 2>&1
+}
+
+# write sumologic extension to user configuration file
+function write_sumologic_extension() {
+    local file
+    readonly file="${1}"
+
+    local indentation
+    readonly indentation="${2}"
+
+    if sed -e '/^extensions/,/^[a-z]/!d' "${file}" | grep -qE '^\s+(sumologic|sumologic\/.*):\s*$'; then
+        return
+    fi
+
+    # add sumologic extension on the top of the extensions
+    sudo sed -i'' -e "s/extensions:/extensions:\\
+${indentation}sumologic:/" "${file}"
+}
+
+# write install token to user configuration file
+function write_install_token() {
+    local token
+    readonly token="${1}"
+
+    local file
+    readonly file="${2}"
+
+    local ext_indentation
+    readonly ext_indentation="${3}"
+
+    # ToDo: ensure we override only sumologic `install_token`
+    if grep "install_token" "${file}" > /dev/null; then
+        sudo sed -i'' -e "s/install_token:.*$/install_token: $(escape_sed "${token}")/" "${file}"
+    else
+        # write install token on the top of sumologic: extension
+        sudo sed -i'' -e "s/sumologic:/sumologic:\\
+\\${ext_indentation}install_token: $(escape_sed "${token}")/" "${file}"
+    fi
+}
+
+# write api_url to user configuration file
+function write_api_url() {
+    local api_url
+    readonly api_url="${1}"
+
+    local file
+    readonly file="${2}"
+
+    local ext_indentation
+    readonly ext_indentation="${3}"
+
+    # ToDo: ensure we override only sumologic `api_base_url`
+    if grep "api_base_url" "${file}" > /dev/null; then
+        sudo sed -i'' -e "s/api_base_url:.*$/api_base_url: $(escape_sed "${api_url}")/" "${file}"
+    else
+        # write install token on the top of sumologic: extension
+        sudo sed -i'' -e "s/sumologic:/sumologic:\\
+\\${ext_indentation}api_base_url: $(escape_sed "${api_url}")/" "${file}"
+    fi
+}
+
+# write tags to user configuration file
+function write_tags() {
+    local fields
+    readonly fields="${1}"
+
+    local file
+    readonly file="${2}"
+
+    local indentation
+    readonly indentation="${3}"
+
+    local ext_indentation
+    readonly ext_indentation="${4}"
+
+    local fields_indentation
+    readonly fields_indentation="${ext_indentation}${indentation}"
+
+    local fields_to_write
+    readonly fields_to_write="$(escape_sed "${fields}" | sed -e "s/^\\([^\\]\\)/${fields_indentation}\\1/")"
+
+    # ToDo: ensure we override only sumologic `collector_fields`
+    if grep "collector_fields" "${file}" > /dev/null; then
+        sudo sed -i'' -e "s/collector_fields:.*$/collector_fields: ${fields_to_write}/" "${file}"
+    else
+        # write install token on the top of sumologic: extension
+        sudo sed -i'' -e "s/sumologic:/sumologic:\\
+\\${ext_indentation}collector_fields: ${fields_to_write}/" "${file}"
+    fi
+}
+
 ############################ Main code
 
 check_dependencies
 set_defaults
 parse_options "$@"
 
-readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG SYSTEMD_DISABLED UNINSTALL
+readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
 readonly USER_CONFIG_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
 
 if [[ "${UNINSTALL}" == "true" ]]; then
@@ -427,11 +672,45 @@ if [[ "${UNINSTALL}" == "true" ]]; then
     exit 0
 fi
 
-# Exit if install token is not set
-if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && "${SKIP_TOKEN}" != "true" ]]; then
+# Exit if install token is not set and there is no user configuration
+if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && "${SKIP_TOKEN}" != "true" && ! -f "${COMMON_CONFIG_PATH}" ]]; then
     echo "Install token has not been provided. Please use '--${ARG_LONG_TOKEN} <token>' or '${ENV_TOKEN}' env."
     exit 1
 fi
+
+# verify if passed arguments are the same like in user's configuration
+if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
+    INDENTATION="$(get_indentation "${COMMON_CONFIG_PATH}" "${INDENTATION}")"
+    EXT_INDENTATION="$(get_extension_indentation "${COMMON_CONFIG_PATH}" "${INDENTATION}")"
+    readonly INDENTATION EXT_INDENTATION
+
+    USER_TOKEN="$(get_user_config "${COMMON_CONFIG_PATH}")"
+
+    if [[ -n "${USER_TOKEN}" && -n "${SUMOLOGIC_INSTALL_TOKEN}" && "${USER_TOKEN}" != "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
+        echo "You are trying to install with different token than in your configuration file!"
+        exit 1
+    fi
+
+    USER_API_URL="$(get_user_api_url "${COMMON_CONFIG_PATH}")"
+    if [[ -n "${USER_API_URL}" && -n "${API_BASE_URL}" && "${USER_API_URL}" != "${API_BASE_URL}" ]]; then
+        echo "You are trying to install with different api base url than in your configuration file!"
+        exit 1
+    fi
+
+    USER_FIELDS="$(get_user_tags "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}")"
+    FIELDS_TO_COMPARE="$(get_fields_to_compare "${FIELDS}")"
+
+    if [[ -n "${USER_FIELDS}" && -n "${FIELDS_TO_COMPARE}" && "${USER_FIELDS}" != "${FIELDS_TO_COMPARE}" ]]; then
+        echo "You are trying to install with different tags than in your configuration file!"
+        exit 1
+    fi
+fi
+
+if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
+    SYSTEMD_DISABLED=true
+fi
+
+readonly SYSTEMD_DISABLED
 
 OS_TYPE="$(get_os_type)"
 ARCH_TYPE="$(get_arch_type)"
@@ -506,11 +785,6 @@ else
     echo -e "Installation succeded:\t$(otelcol-sumo --version)"
 fi
 
-# Exit if install token is not set
-if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
-    exit 0
-fi
-
 echo 'We are going to get and set up default configuration for you'
 ask_to_continue
 
@@ -536,22 +810,28 @@ echo 'Changing permissions for config file and storage'
 sudo chmod 440 "${CONFIG_PATH}"
 sudo chmod -R 750 "${FILE_STORAGE}"
 
+# Ensure that configuration is created
 if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
     echo "User configuration (${COMMON_CONFIG_PATH}) already exist)"
-else
-    echo "extensions:
-  sumologic:" | sudo tee "${COMMON_CONFIG_PATH}" > /dev/null
+fi
 
-    if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
-        echo "    install_token: ${SUMOLOGIC_INSTALL_TOKEN}" | sudo tee -a "${COMMON_CONFIG_PATH}" > /dev/null
+## Check if there is anything to update in configuration
+if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
+    create_user_config_file "${COMMON_CONFIG_PATH}"
+    add_extension_to_config "${COMMON_CONFIG_PATH}"
+    write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
+
+    if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" && -z "${USER_TOKEN}" ]]; then
+        write_install_token "${SUMOLOGIC_INSTALL_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
     fi
 
-    if [[ -n "${API_BASE_URL}" ]]; then
-        echo "    api_base_url: ${API_BASE_URL}" | sudo tee -a "${COMMON_CONFIG_PATH}" > /dev/null
+    # fill in api base url
+    if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
+        write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
     fi
 
-    if [[ -n "${FIELDS}" ]]; then
-        echo "    collector_fields:${FIELDS}" | sudo tee -a "${COMMON_CONFIG_PATH}" > /dev/null
+    if [[ -n "${FIELDS}" && -z "${USER_FIELDS}" ]]; then
+        write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
     fi
 fi
 
@@ -593,11 +873,11 @@ SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-c
 TMP_SYSTEMD_CONFIG="otelcol-sumo.service"
 echo 'Getting service configuration'
 curl -fL "${SYSTEMD_CONFIG_URL}" --output "${TMP_SYSTEMD_CONFIG}" --progress-bar
-sed -i'' -s "s%/etc/otelcol-sumo%'${CONFIG_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
+sed -i'' -e "s%/etc/otelcol-sumo%'${CONFIG_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
 
 # Remove glob for versions up to 0.57
 if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then
-    sed -i'' -s "s% --config \"glob.*\"% --config ${COMMON_CONFIG_PATH}%" "${TMP_SYSTEMD_CONFIG}"
+    sed -i'' -e "s% --config \"glob.*\"% --config ${COMMON_CONFIG_PATH}%" "${TMP_SYSTEMD_CONFIG}"
 fi
 
 sudo mv "${TMP_SYSTEMD_CONFIG}" "${SYSTEMD_CONFIG}"

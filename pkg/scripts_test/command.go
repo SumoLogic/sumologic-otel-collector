@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"testing"
 
 	"github.com/stretchr/testify/require"
 )
@@ -21,6 +20,7 @@ type installOptions struct {
 	envs             map[string]string
 	uninstall        bool
 	purge            bool
+	apiBaseURL       string
 }
 
 func (io *installOptions) string() []string {
@@ -58,6 +58,10 @@ func (io *installOptions) string() []string {
 		}
 	}
 
+	if io.apiBaseURL != "" {
+		opts = append(opts, "--api", io.apiBaseURL)
+	}
+
 	return opts
 }
 
@@ -85,20 +89,21 @@ func exitCode(cmd *exec.Cmd) (int, error) {
 	return 0, fmt.Errorf("cannot obtain exit code: %v", err)
 }
 
-func runScript(t *testing.T, opts installOptions) (int, error) {
-	cmd := exec.Command("bash", opts.string()...)
-	cmd.Env = opts.buildEnvs()
+func runScript(ch check) (int, []string, error) {
+	cmd := exec.Command("bash", ch.installOptions.string()...)
+	cmd.Env = ch.installOptions.buildEnvs()
+	output := []string{}
 
 	in, err := cmd.StdinPipe()
 	if err != nil {
-		require.NoError(t, err)
+		require.NoError(ch.test, err)
 	}
 
 	defer in.Close()
 
 	out, err := cmd.StdoutPipe()
 	if err != nil {
-		require.NoError(t, err)
+		require.NoError(ch.test, err)
 	}
 
 	defer out.Close()
@@ -108,14 +113,18 @@ func runScript(t *testing.T, opts installOptions) (int, error) {
 
 	// Start the process
 	if err = cmd.Start(); err != nil {
-		require.NoError(t, err)
+		require.NoError(ch.test, err)
 	}
 
 	// Read the results from the process
 	for {
 		line, _, err := bufOut.ReadLine()
-		strLine := string(line)
-		t.Log(strLine)
+		strLine := strings.TrimSpace(string(line))
+
+		if len(strLine) > 0 {
+			output = append(output, strLine)
+		}
+		ch.test.Log(strLine)
 
 		// exit if script finished
 		if err == io.EOF {
@@ -123,40 +132,41 @@ func runScript(t *testing.T, opts installOptions) (int, error) {
 		}
 
 		// otherwise ensure there is no error
-		require.NoError(t, err)
+		require.NoError(ch.test, err)
 
-		if opts.autoconfirm {
+		if ch.installOptions.autoconfirm {
 			continue
 		}
 
 		if strings.Contains(strLine, "Showing full changelog") {
 			// show changelog
 			_, err = in.Write([]byte("\n"))
-			require.NoError(t, err)
+			require.NoError(ch.test, err)
 
 			// accept changes and proceed with the installation
 			_, err = in.Write([]byte("y\n"))
-			require.NoError(t, err)
+			require.NoError(ch.test, err)
 		}
 
 		if strings.Contains(strLine, "We are going to get and set up default configuration for you") {
 			// approve installation config
 			_, err = in.Write([]byte("y\n"))
-			require.NoError(t, err)
+			require.NoError(ch.test, err)
 		}
 
 		if strings.Contains(strLine, "We are going to set up systemd service") {
 			// approve installation config
 			_, err = in.Write([]byte("y\n"))
-			require.NoError(t, err)
+			require.NoError(ch.test, err)
 		}
 
 		if strings.Contains(strLine, "Going to remove") {
 			// approve installation config
 			_, err = in.Write([]byte("y\n"))
-			require.NoError(t, err)
+			require.NoError(ch.test, err)
 		}
 	}
 
-	return exitCode(cmd)
+	code, err := exitCode(cmd)
+	return code, output, err
 }

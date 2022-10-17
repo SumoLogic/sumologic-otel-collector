@@ -2,6 +2,7 @@ package sumologic_scripts_tests
 
 import (
 	"io/ioutil"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
@@ -17,6 +18,7 @@ type extensions struct {
 type sumologicExtension struct {
 	InstallToken string            `yaml:"install_token"`
 	Tags         map[string]string `yaml:"collector_fields"`
+	APIBaseURL   string            `yaml:"api_base_url"`
 }
 
 func getConfig(path string) (config, error) {
@@ -33,4 +35,18 @@ func getConfig(path string) (config, error) {
 	}
 
 	return conf, err
+}
+
+func saveConfig(path string, conf config) error {
+	out, err := yaml.Marshal(conf)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(path, out, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
