@@ -35,13 +35,13 @@ class install_otel_collector {
      mode => "640",
    }
 
-   group {"opentelemetry":
+   group {"otelcol-sumo":
       ensure  => "present",
    }
 
-   user {"opentelemetry":
+   user {"otelcol-sumo":
       ensure  => "present",
-      groups  => ["opentelemetry"],
+      groups  => ["otelcol-sumo"],
       managehome => true,
    }
 
@@ -57,7 +57,7 @@ class install_otel_collector {
       }
    } else {
       exec { 'run otelcol-sumo in background':
-         command => 'sudo -u opentelemetry /usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yaml > /var/log/otelcol.log 2>&1 &',
+         command => 'sudo -u otelcol-sumo /usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yaml > /var/log/otelcol.log 2>&1 &',
          path    => ['/usr/local/bin/', '/usr/bin', '/usr/sbin', '/bin'],
          logoutput => true,
          provider => shell,

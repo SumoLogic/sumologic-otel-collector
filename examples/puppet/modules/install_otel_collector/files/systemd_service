@@ -3,8 +3,8 @@ Description=Sumologic Opentelemetry Collector
 
 [Service]
 ExecStart=/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yaml
-User=opentelemetry
-Group=opentelemetry
+User=otelcol-sumo
+Group=otelcol-sumo
 MemoryHigh=300M
 MemoryMax=200M
 TimeoutStopSec=20
