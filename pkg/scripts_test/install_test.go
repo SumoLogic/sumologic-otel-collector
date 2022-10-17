@@ -41,6 +41,14 @@ func TestInstallScript(t *testing.T) {
 			installCode: 1,
 		},
 		{
+			name: "download only",
+			options: installOptions{
+				downloadOnly: true,
+			},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated},
+		},
+		{
 			name: "skip install token",
 			options: installOptions{
 				skipInstallToken: true,

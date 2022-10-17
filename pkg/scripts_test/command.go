@@ -21,6 +21,7 @@ type installOptions struct {
 	uninstall        bool
 	purge            bool
 	apiBaseURL       string
+	downloadOnly     bool
 }
 
 func (io *installOptions) string() []string {
@@ -50,6 +51,10 @@ func (io *installOptions) string() []string {
 
 	if io.purge {
 		opts = append(opts, "--purge")
+	}
+
+	if io.downloadOnly {
+		opts = append(opts, "--download-only")
 	}
 
 	if len(io.tags) > 0 {
