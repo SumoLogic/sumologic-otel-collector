@@ -62,6 +62,8 @@ USER_API_URL=""
 USER_TOKEN=""
 USER_FIELDS=""
 
+SYSTEM_USER="otelcol-sumo"
+
 INDENTATION=""
 EXT_INDENTATION=""
 FIELDS_INDENTATION=""
@@ -902,14 +904,14 @@ if [[ -f "${SYSTEMD_CONFIG}" ]]; then
 fi
 
 echo 'Creating user and group'
-if getent passwd opentelemetry > /dev/null; then
+if getent passwd "${SYSTEM_USER}" > /dev/null; then
     echo 'User and group already created'
 else
-    sudo useradd -mrUs /bin/false opentelemetry
+    sudo useradd -mrUs /bin/false "${SYSTEM_USER}"
 fi
 
 echo 'Changing ownership for config and storage'
-sudo chown -R opentelemetry:opentelemetry "${CONFIG_PATH}" "${FILE_STORAGE}"
+sudo chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${CONFIG_PATH}" "${FILE_STORAGE}"
 
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/systemd/otelcol-sumo.service"
 

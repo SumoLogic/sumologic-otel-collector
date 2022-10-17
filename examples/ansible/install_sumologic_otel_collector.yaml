@@ -35,14 +35,14 @@
       when:
         - ansible_architecture == 'x86_64' or ansible_architecture == 'aarch64' or ansible_architecture == 'arm64'
         - ansible_os_family != 'Windows'
-    - name: Ensure group "opentelemetry" exists
+    - name: Ensure group "otelcol-sumo" exists
       group:
-        name: opentelemetry
+        name: otelcol-sumo
         state: present
-    - name: Add the user 'opentelemetry' to 'opentelemetry' group
+    - name: Add the user 'otelcol-sumo' to 'otelcol-sumo' group
       user:
-        name: opentelemetry
-        group: opentelemetry
+        name: otelcol-sumo
+        group: otelcol-sumo
         system: True
     - name: Ensures /etc/otelcol-sumo/ directory exists
       file: path=/etc/otelcol-sumo/ state=directory
@@ -50,15 +50,15 @@
       copy:
         src: "{{ sumologic_otel_collector.src_config_path }}"
         dest: /etc/otelcol-sumo/config.yaml
-        owner: opentelemetry
-        group: opentelemetry
+        owner: otelcol-sumo
+        group: otelcol-sumo
         mode: 0640
     - name: Creating systemd service file
       template:
         src: systemd_service.j2
         dest: /etc/systemd/system/otelcol-sumo.service
-        owner: opentelemetry
-        group: opentelemetry
+        owner: otelcol-sumo
+        group: otelcol-sumo
         mode: 0644
       when:
         - sumologic_otel_collector.systemd_service == true

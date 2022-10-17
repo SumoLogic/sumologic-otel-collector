@@ -48,7 +48,7 @@ To run it as a standalone process you only need to run the binary file downloade
       - for Systemd:
 
         - the script is going to get [Systemd service configuration](../examples/systemd/otelcol-sumo.service) and place it as `/etc/systemd/system/otelcol-sumo.service`
-        - create a `opentelemetry` user and group which will be used to run the service
+        - create a `otelcol-sumo` user and group which will be used to run the service
         - enable `otelcol-sumo` service
         - start `otelcol-sumo` service
 
@@ -400,12 +400,12 @@ To run opentelemetry collector as Systemd Service please apply following steps:
 1. Create `user` and `group` to run opentelemetry by:
 
    ```bash
-   sudo useradd -mrUs /bin/false opentelemetry
+   sudo useradd -mrUs /bin/false otelcol-sumo
    ```
 
    > **IMPORTANT NOTE**:
    > This command will create a home directory for the user. By default, the `sumologic` extension stores the credentials in a subdirectory of the home directory.
-   > However, if the user with name `opentelemetry` already exists, it won't be overwritten, so you should make sure that a home directory has been created for this user.
+   > However, if the user with name `otelcol-sumo` already exists, it won't be overwritten, so you should make sure that a home directory has been created for this user.
    >
    > If you don't want the user to have a home directory, you should use `useradd` without the `m` flag
    > and explicitely change the directory for saving the credentials, for example:
@@ -419,18 +419,18 @@ To run opentelemetry collector as Systemd Service please apply following steps:
    >
    > For more information, please refer to the documentation of [sumologic extension][sumologicextension].
 
-1. Ensure that `/etc/otelcol-sumo/config.yaml` can be accessed by `opentelemetry` user
+1. Ensure that `/etc/otelcol-sumo/config.yaml` can be accessed by `otelcol-sumo` user
    which will be used to run the service.
 
    ```bash
    $ ls -la /etc/otelcol-sumo/config.yaml
-   -rw-r--r-- 1 opentelemetry daemon 0 Feb 16 16:23 /etc/otelcol-sumo/config.yaml
+   -rw-r--r-- 1 otelcol-sumo daemon 0 Feb 16 16:23 /etc/otelcol-sumo/config.yaml
    ```
 
 1. Verify if opentelemetry collector runs without errors:
 
    ```bash
-   sudo su -s /bin/bash opentelemetry -c '/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yaml'
+   sudo su -s /bin/bash otelcol-sumo -c '/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yaml'
    ```
 
 1. Create service file: `/etc/systemd/system/otelcol-sumo.service`:
@@ -441,8 +441,8 @@ To run opentelemetry collector as Systemd Service please apply following steps:
 
    [Service]
    ExecStart=/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yaml
-   User=opentelemetry
-   Group=opentelemetry
+   User=otelcol-sumo
+   Group=otelcol-sumo
    MemoryHigh=200M
    MemoryMax=300M
    TimeoutStopSec=20

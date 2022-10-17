@@ -17,8 +17,8 @@ property :os_arch, ['amd64', 'arm_64'], default: 'amd64'
 # os family
 property :os_family, ['linux', 'darwin'], default: 'linux'
 
-USER = 'opentelemetry'
-GROUP = 'opentelemetry'
+USER = 'otelcol-sumo'
+GROUP = 'otelcol-sumo'
 BINARY_PATH = '/usr/local/bin/otelcol-sumo'
 BINARY_CONFIG = '/etc/otelcol-sumo/config.yaml'
 
