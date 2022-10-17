@@ -24,12 +24,14 @@ ARG_SHORT_PURGE='p'
 ARG_LONG_PURGE='purge'
 ARG_SHORT_SKIP_TOKEN='k'
 ARG_LONG_SKIP_TOKEN='skip-install-token'
+ARG_SHORT_DOWNLOAD='w'
+ARG_LONG_DOWNLOAD='download-only'
 ENV_TOKEN="SUMOLOGIC_INSTALL_TOKEN"
 
 readonly ARG_SHORT_TOKEN ARG_LONG_TOKEN ARG_SHORT_HELP ARG_LONG_HELP ARG_SHORT_API ARG_LONG_API
 readonly ARG_SHORT_TAG ARG_LONG_TAG ARG_SHORT_VERSION ARG_LONG_VERSION ARG_SHORT_YES ARG_LONG_YES
 readonly ARG_SHORT_SYSTEMD ARG_LONG_SYSTEMD ARG_SHORT_UNINSTALL ARG_LONG_UNINSTALL
-readonly ARG_SHORT_PURGE ARG_LONG_PURGE
+readonly ARG_SHORT_PURGE ARG_LONG_PURGE ARG_SHORT_DOWNLOAD ARG_LONG_DOWNLOAD
 readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ENV_TOKEN
 
 ############################ Variables (see set_defaults function for default values)
@@ -54,6 +56,8 @@ SKIP_TOKEN=""
 CONFIG_PATH=""
 COMMON_CONFIG_PATH=""
 PURGE=""
+DOWNLOAD_ONLY=""
+
 USER_API_URL=""
 USER_TOKEN=""
 USER_FIELDS=""
@@ -81,6 +85,7 @@ Supported arguments:
   -${ARG_SHORT_SKIP_TOKEN}, --${ARG_LONG_SKIP_TOKEN}              Skips requirement for installation token.
                                         This option do not disable default configuration creation.
   -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                 Sets tag for collector. This argument can be use multiple times. One per tag.
+  -${ARG_SHORT_DOWNLOAD}, --${ARG_LONG_DOWNLOAD}                   Download new binary only and skip configuration part.
 
   -${ARG_SHORT_UNINSTALL}, --${ARG_LONG_UNINSTALL}                       Removes Sumo Logic Distribution for OpenTelemetry Collector from the system and
                                         disable Systemd service eventually.
@@ -150,7 +155,10 @@ function parse_options() {
       "--${ARG_LONG_SKIP_TOKEN}")
         set -- "$@" "-${ARG_SHORT_SKIP_TOKEN}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}")
+      "--${ARG_LONG_DOWNLOAD}")
+        set -- "$@" "-${ARG_SHORT_DOWNLOAD}"
+        ;;
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}")
         set -- "$@" "${arg}"   ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -164,7 +172,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_DOWNLOAD}" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -185,6 +193,7 @@ function parse_options() {
       "${ARG_SHORT_UNINSTALL}")  UNINSTALL=true ;;
       "${ARG_SHORT_PURGE}")      PURGE=true ;;
       "${ARG_SHORT_SKIP_TOKEN}") SKIP_TOKEN=true ;;
+      "${ARG_SHORT_DOWNLOAD}")   DOWNLOAD_ONLY=true ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
             echo "Invalid tag: '${OPTARG}'. Should be in 'key=value' format"
@@ -444,6 +453,12 @@ function get_indentation() {
 
     local default
     readonly default="${2}"
+
+    if [[ ! -f "${file}" ]]; then
+        echo "${default}"
+        return
+    fi
+
     local indentation
 
     # take indentation same as first extension
@@ -475,6 +490,11 @@ function get_extension_indentation() {
 
     local indentation="${2}"
     readonly indentation
+
+    if [[ ! -f "${file}" ]]; then
+        echo "${indentation}${indentation}"
+        return
+    fi
 
     local ext_indentation
 
@@ -696,14 +716,14 @@ USER_TOKEN="$(get_user_config "${COMMON_CONFIG_PATH}")"
 readonly USER_TOKEN
 
 # Exit if install token is not set and there is no user configuration
-if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && "${SKIP_TOKEN}" != "true" && -z "${USER_TOKEN}" ]]; then
+if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && "${SKIP_TOKEN}" != "true" && -z "${USER_TOKEN}" && -z "${DOWNLOAD_ONLY}" ]]; then
     echo "Install token has not been provided. Please use '--${ARG_LONG_TOKEN} <token>' or '${ENV_TOKEN}' env."
     echo "You can ignore this requirement by adding '--${ARG_LONG_SKIP_TOKEN} argument."
     exit 1
 fi
 
 # verify if passed arguments are the same like in user's configuration
-if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
+if [[ -f "${COMMON_CONFIG_PATH}" && -z "${DOWNLOAD_ONLY}" ]]; then
     INDENTATION="$(get_indentation "${COMMON_CONFIG_PATH}" "${INDENTATION}")"
     EXT_INDENTATION="$(get_extension_indentation "${COMMON_CONFIG_PATH}" "${INDENTATION}")"
     readonly INDENTATION EXT_INDENTATION
@@ -805,6 +825,10 @@ else
     fi
 
     echo -e "Installation succeded:\t$(otelcol-sumo --version)"
+fi
+
+if [[ "${DOWNLOAD_ONLY}" == "true" ]]; then
+    exit 0
 fi
 
 echo 'We are going to get and set up default configuration for you'
