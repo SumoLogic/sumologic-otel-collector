@@ -73,23 +73,31 @@ TAC="tac"
 function usage() {
   cat << EOF
 
-Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_TAG} <key>=<value> [ --${ARG_LONG_TAG} ...]] [--${ARG_LONG_API} <url>] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_YES}] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
-  -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>     Installation token
-  -${ARG_SHORT_SKIP_TOKEN}, --${ARG_LONG_SKIP_TOKEN}             Skip installation token (script will only upgrade the binary if token is not provided)
-  -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                Tag in format key=value
+Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_TAG} <key>=<value> [ --${ARG_LONG_TAG} ...]] [--${ARG_LONG_API} <url>] [--${ARG_LONG_VERSION} <version>] \\
+                       [--${ARG_LONG_YES}] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
 
-  -${ARG_SHORT_UNINSTALL}, --${ARG_LONG_UNINSTALL}                      Uninstall otelcol-sumo binary
-  -${ARG_SHORT_PURGE}, --${ARG_LONG_PURGE}                          Remove configuration and data during uninstallation
+Supported arguments:
+  -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>      Installation token. It has precedence over 'SUMOLOGIC_INSTALL_TOKEN' env variable.
+  -${ARG_SHORT_SKIP_TOKEN}, --${ARG_LONG_SKIP_TOKEN}              Skips requirement for installation token.
+                                        This option do not disable default configuration creation.
+  -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                 Sets tag for collector. This argument can be use multiple times. One per tag.
 
-  -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                      Api URL
-  -${ARG_SHORT_SYSTEMD}, --${ARG_LONG_SYSTEMD}   Do not set up systemd service
-  -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>              Manually specified version, e.g. 0.55.0-sumo-0
-  -${ARG_SHORT_YES}, --${ARG_LONG_YES}                            Do not ask for confirmation
+  -${ARG_SHORT_UNINSTALL}, --${ARG_LONG_UNINSTALL}                       Removes Sumo Logic Distribution for OpenTelemetry Collector from the system and
+                                        disable Systemd service eventually.
+                                        Use with '--purge' to remove all configurations as well.
+  -${ARG_SHORT_PURGE}, --${ARG_LONG_PURGE}                           It has to be used with '--${ARG_LONG_UNINSTALL}'.
+                                        It removes all Sumo Logic Distribution for OpenTelemetry Collector related configuration and data.
 
-  -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                           Prints this help
+  -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                       Api URL
+  -${ARG_SHORT_SYSTEMD}, --${ARG_LONG_SYSTEMD}    Preserves from Systemd service installation.
+  -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>               Version of Sumo Logic Distribution for OpenTelemetry Collector to install, e.g. 0.57.2-sumo-1.
+                                        By defult it gets latest version.
+  -${ARG_SHORT_YES}, --${ARG_LONG_YES}                             Disable confirmation asks.
+
+  -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                            Prints this help and usage.
 
 Supported env variables:
-  ${ENV_TOKEN}=<token>                Equivalent of '--${ARG_LONG_TOKEN} <token>'
+  ${ENV_TOKEN}=<token>       Installation token. It can be overrided by '--installation-token' argument.'
 EOF
 }
 
@@ -499,6 +507,10 @@ function get_user_config() {
     local file
     readonly file="${1}"
 
+    if [[ ! -f "${file}" ]]; then
+        return
+    fi
+
     grep -m 1 install_token "${file}" \
         | sed 's/.*install_token:[[:blank:]]*//' \
         | xargs \
@@ -508,6 +520,10 @@ function get_user_config() {
 function get_user_api_url() {
     local file
     readonly file="${1}"
+
+    if [[ ! -f "${file}" ]]; then
+        return
+    fi
 
     grep -m 1 api_base_url "${file}" \
         | sed 's/.*api_base_url:[[:blank:]]*//' \
@@ -524,6 +540,10 @@ function get_user_tags() {
 
     local ext_indentation
     readonly ext_indentation="${3}"
+
+    if [[ ! -f "${file}" ]]; then
+        return
+    fi
 
     sed -e '/^extensions/,/^[a-z]/!d' "${file}" \
         | sed -e "/^${indentation}sumologic/,/^${indentation}[a-z]/!d" \
@@ -672,9 +692,13 @@ if [[ "${UNINSTALL}" == "true" ]]; then
     exit 0
 fi
 
+USER_TOKEN="$(get_user_config "${COMMON_CONFIG_PATH}")"
+readonly USER_TOKEN
+
 # Exit if install token is not set and there is no user configuration
-if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && "${SKIP_TOKEN}" != "true" && ! -f "${COMMON_CONFIG_PATH}" ]]; then
+if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && "${SKIP_TOKEN}" != "true" && -z "${USER_TOKEN}" ]]; then
     echo "Install token has not been provided. Please use '--${ARG_LONG_TOKEN} <token>' or '${ENV_TOKEN}' env."
+    echo "You can ignore this requirement by adding '--${ARG_LONG_SKIP_TOKEN} argument."
     exit 1
 fi
 
@@ -683,8 +707,6 @@ if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
     INDENTATION="$(get_indentation "${COMMON_CONFIG_PATH}" "${INDENTATION}")"
     EXT_INDENTATION="$(get_extension_indentation "${COMMON_CONFIG_PATH}" "${INDENTATION}")"
     readonly INDENTATION EXT_INDENTATION
-
-    USER_TOKEN="$(get_user_config "${COMMON_CONFIG_PATH}")"
 
     if [[ -n "${USER_TOKEN}" && -n "${SUMOLOGIC_INSTALL_TOKEN}" && "${USER_TOKEN}" != "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
         echo "You are trying to install with different token than in your configuration file!"
