@@ -204,6 +204,14 @@ replaces:
   # Needed for telegrafreceiver
   - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.22.0-sumo-4
 
+  # For now, cherry-picked changes are being used:
+  # commit: https://github.com/SumoLogic/opentelemetry-collector-contrib/commit/04ce767d9704265356687ebc47373266eb48aefc
+  # branch: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.62.0-patches
+  - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver => github.com/SumoLogic/opentelemetry-collector-contrib/receiver/hostmetricsreceiver 04ce767d9704265356687ebc47373266eb48aefc
+  - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/apachereceiver => github.com/SumoLogic/opentelemetry-collector-contrib/receiver/apachereceiver 04ce767d9704265356687ebc47373266eb48aefc
+  - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/mysqlreceiver => github.com/SumoLogic/opentelemetry-collector-contrib/receiver/mysqlreceiver 04ce767d9704265356687ebc47373266eb48aefc
+  - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/elasticsearchsreceiver => github.com/SumoLogic/opentelemetry-collector-contrib/receiver/elasticsearchreceiver 04ce767d9704265356687ebc47373266eb48aefc
+
   # Google renamed their org from `googleapis` to `google`, and for `gnostic` this happened in v0.5.6
   # However, kubernetes/client-go still uses the old name for v0.5.5, and this causes go mod to complain
   # Replace this here instead of modifying indirect dependencies in packages, as it's more robust

@@ -101,9 +101,61 @@ Updating OT core involves:
 
 ### Updating patched processors
 
-We currently do not maintain patches for upstream components.
+We currently maintain patches for the following upstream components:
 
-Historical process can be taken from [v0.57.2-sumo-0][updating_patched] if needed.
+- `hostmetricsreceiver`
+- `mysqlreceiver`
+- `apachereceiver`
+- `elasticsearchreceiver`
+
+The patches live in our [contrib fork repository][contrib_fork], on the `vX.X.X-patches` branch. See [comments][builder_config]
+in the builder configuration for more details.
+
+To update this patchset for the new OT core version:
+
+1. Checkout the contrib fork repo, add upstream as a remote, and pull the new version tag.
+
+   ```bash
+   export CURRENT_VERSION=vX.X.X
+   export NEW_VERSION=vY.Y.Y
+   export SUFFIX=patches
+   git clone https://github.com/SumoLogic/opentelemetry-collector-contrib && cd opentelemetry-collector-contrib
+   git remote add upstream https://github.com/open-telemetry/opentelemetry-collector-contrib
+   git pull upstream "${NEW_VERSION}" "${CURRENT_VERSION}"
+   ```
+
+1. Create a new branch for the patchset and rebase it on the new version
+
+   ```bash
+   git switch "${CURRENT_VERSION}-${SUFFIX}"
+   git checkout -b "${NEW_VERSION}-${SUFFIX}"
+   git rebase -i --onto "${NEW_VERSION}" "${CURRENT_VERSION}" "${NEW_VERSION}-${SUFFIX}"
+   ```
+
+1. Resolve conflicts and make sure tests and linters pass afterwards.
+   You can run them by invoking the following in the project root:
+
+   ```bash
+   make install-tools
+   make golint
+   make gotest
+   ```
+
+   If the command `make gotest` fails on unrelated tests, like for example `kafkareceiver`,
+   only run the tests for the changed modules:
+
+   ```bash
+   export COMPONENTS=("receiver/hostmetricsreceiver" "receiver/mysqlreceiver" "receiver/apachesreceiver" "receiver/elasticsearchsreceiver")
+   for component in $COMPONENTS do; make -C $component test; done
+   ```
+
+1. Push the new branch to the fork repo and write down the commit SHA
+
+   ```bash
+   git push origin "${NEW_VERSION}-${SUFFIX}"
+   ```
+
+1. Update the [builder configuration][builder_config] with the new commit SHA
 
 ### Updating OT distro
 
@@ -236,6 +288,7 @@ make update-journalctl
 [tracing_tests]: ../.circleci/config.yml
 [circleci]: https://app.circleci.com/pipelines/github/SumoLogic/sumologic-otel-collector
 [circleci_approve]: ../images/circleci_approve_workflow.png
+[contrib_fork]: https://github.com/SumoLogic/opentelemetry-collector-contrib
 [changelog]: ../CHANGELOG.md
 [upgrading]: ./Upgrading.md
 [journaldreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.51.0/receiver/journaldreceiver
@@ -247,4 +300,3 @@ make update-journalctl
 [#604]: https://github.com/SumoLogic/sumologic-otel-collector/pull/604/files
 [OTC_release]: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases
 [OT_release]: https://github.com/open-telemetry/opentelemetry-collector/releases
-[updating_patched]: https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.57.2-sumo-0/docs/release.md#updating-patched-processors
