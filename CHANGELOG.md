@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+This release introduces the following breaking changes:
+
+- `filelog` receiver: has been removed from sub-parsers ([upgrade guide][upgrade_guide_unreleased]) [#769]
+- `sending_queue`: require explicit storage set ([upgrade guide][upgrade_guide_unreleased]) [#769]
+
 ### Added
 
 - feat: add glob config provider [#713]
@@ -18,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix(k8sprocessor): fix metadata enrichment [#724]
 - fix(k8sprocessor): keep pod's services information up to date [#710]
 - chore(deps): bump go-boringcrypto to 1.18.7b7 [#746]
-- chore: upgrade OpenTelemetry Contrib Core to v0.60.0 [#769]
+- chore: upgrade OpenTelemetry Contrib Core to v0.62.0 [#769]
 
 ### Removed
 
@@ -40,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#746]: https://github.com/SumoLogic/sumologic-otel-collector/pull/746
 [#769]: https://github.com/SumoLogic/sumologic-otel-collector/pull/769
 [#693]: https://github.com/SumoLogic/sumologic-otel-collector/pull/693
+[upgrade_guide_unreleased]: ./docs/Upgrading.md#unreleased
 
 ## [v0.57.2-sumo-0]
 

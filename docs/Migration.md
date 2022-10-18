@@ -607,23 +607,16 @@ receivers:
     start_at: end
     operators:
     ## Extract timestamp into timestamp field using regex
-    ## rel: https://github.com/sumo-drosiek/opentelemetry-log-collection/blob/b506aadf913d6c1691cef10a534d495338c87dee/docs/operators/regex_parser.md
+    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.60.0/pkg/stanza/docs/operators/regex_parser.md
     - type: regex_parser
       regex: (?P<timestamp>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (\+|\-)\d{4})
-      ## Keep original record in log field
-      preserve_to: body.log
       ## Parse timestamp from timestamp field
-      ## rel: https://github.com/sumo-drosiek/opentelemetry-log-collection/blob/b506aadf913d6c1691cef10a534d495338c87dee/docs/operators/time_parser.md
+      ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.60.0/pkg/stanza/docs/operators/time_parser.md
       timestamp:
-        parse_from: body.timestamp
+        parse_from: attributes.timestamp
         ## Layout are substitute for Timestamp Format configuration
         layout_type: gotime
         layout: '2006-01-02 15:04:05,000 -0700'
-    ## Restore record from log field
-    ## rel: https://github.com/sumo-drosiek/opentelemetry-log-collection/blob/b506aadf913d6c1691cef10a534d495338c87dee/docs/operators/move.md
-    - type: move
-      from: body.log
-      to: body
   # ...
 processors:
   resource/my example name fields:
@@ -1009,23 +1002,16 @@ receivers:
     listen_address: 0.0.0.0:514
     operators:
     ## Extract timestamp into timestamp field using regex
-    ## rel: https://github.com/sumo-drosiek/opentelemetry-log-collection/blob/b506aadf913d6c1691cef10a534d495338c87dee/docs/operators/regex_parser.md
+    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.60.0/pkg/stanza/docs/operators/regex_parser.md
     - type: regex_parser
       regex: (?P<timestamp>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (\+|\-)\d{4})
-      ## Keep original record in log field
-      preserve_to: body.log
       ## Parse timestamp from timestamp field
-      ## rel: https://github.com/sumo-drosiek/opentelemetry-log-collection/blob/b506aadf913d6c1691cef10a534d495338c87dee/docs/operators/time_parser.md
+      ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.60.0/pkg/stanza/docs/operators//time_parser.md
       timestamp:
-        parse_from: body.timestamp
+        parse_from: attributes.timestamp
         ## Layout are substitute for Timestamp Format configuration
         layout_type: gotime
         layout: '2006-01-02 15:04:05,000 -0700'
-    ## Restore record from log field
-    ## rel: https://github.com/sumo-drosiek/opentelemetry-log-collection/blob/b506aadf913d6c1691cef10a534d495338c87dee/docs/operators/move.md
-    - type: move
-      from: body.log
-      to: body
 processors:
   ## All my example logs
   sumologic_syslog/my example name:

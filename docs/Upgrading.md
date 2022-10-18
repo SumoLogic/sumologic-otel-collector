@@ -1,6 +1,8 @@
 # Upgrading
 
 - [Unreleased](#unreleased)
+  - [`filelog` receiver: has been removed from sub-parsers](#filelog-receiver-has-been-removed-from-sub-parsers)
+  - [`sending_queue`: require explicit storage set](#sending_queue-require-explicit-storage-set)
 - [Upgrading to v0.57.2-sumo-0](#upgrading-to-v0572-sumo-0)
   - [`sumologic` exporter: drop support for source templates](#sumologic-exporter-drop-support-for-source-headers)
 - [Upgrading to v0.56.0-sumo-0](#upgrading-to-v0560-sumo-0)
@@ -22,6 +24,35 @@
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
 ## Unreleased
+
+### `filelog` receiver: has been removed from sub-parsers
+
+`preserve_to` has been removed from sub-parsers ([#9331]).
+
+Now sub-parsers behaves like `preserve_to` would be equal to `parse_from`.
+
+### `sending_queue`: require explicit storage set
+
+`persistent_storage_enabled` configuration option is no longer available ([#5784]).
+It is replaced by `storage` which takes component name as value:
+
+```yaml
+exporters:
+  sumologic:
+    sending_queue:
+      enabled: true
+      storage: file_storage
+
+extensions:
+  file_storage:
+    directory: .
+  sumologic:
+    collector_name: sumologic-demo
+    install_token: ${SUMOLOGIC_INSTALL_TOKEN}
+```
+
+[#5784]: https://github.com/open-telemetry/opentelemetry-collector/pull/5784
+[#9331]: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/9331
 
 ## Upgrading to v0.57.2-sumo-0
 

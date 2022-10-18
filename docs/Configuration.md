@@ -102,6 +102,9 @@ Example configuration:
 ```yaml
 exporters:
   sumologic:
+    sending_queue:
+      enabled: true
+      storage: file_storage
 
 extensions:
   file_storage:
@@ -204,6 +207,9 @@ Here's an example configuration file that collects all the signals - logs, metri
 ```yaml
 exporters:
   sumologic:
+    sending_queue:
+      enabled: true
+      storage: file_storage
 
 extensions:
   file_storage:
@@ -355,7 +361,7 @@ to prevent loss of data buffered in the exporter between restarts.
 To do that, add the [File Storage extension][filestorageextension_docs] to the configuration
 and configure the exporter to use persistent queue
 with the `sending_queue.enabled: true`
-and `sending_queue.persistent_storage_enabled: true` flags.
+and `sending_queue.storage: <storage_name>` flags.
 
 Here's an example configuration:
 
@@ -364,7 +370,7 @@ exporters:
   sumologic:
     sending_queue:
       enabled: true
-      persistent_storage_enabled: true
+      storage: file_storage
 
 extensions:
   file_storage:

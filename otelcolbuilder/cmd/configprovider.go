@@ -89,11 +89,13 @@ func NewConfigProvider(locations []string, setFlags []string) (service.ConfigPro
 // we only add the glob provider, everything else should be the same
 func NewConfigProviderSettings(locations []string, setFlags []string) service.ConfigProviderSettings {
 	return service.ConfigProviderSettings{
-		Locations:    locations,
-		MapProviders: makeMapProvidersMap(fileprovider.New(), envprovider.New(), yamlprovider.New(), globprovider.New()),
-		MapConverters: []confmap.Converter{
-			overwritepropertiesconverter.New(setFlags),
-			expandconverter.New(),
+		ResolverSettings: confmap.ResolverSettings{
+			URIs:      locations,
+			Providers: makeMapProvidersMap(fileprovider.New(), envprovider.New(), yamlprovider.New(), globprovider.New()),
+			Converters: []confmap.Converter{
+				overwritepropertiesconverter.New(setFlags),
+				expandconverter.New(),
+			},
 		},
 	}
 }

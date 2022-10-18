@@ -239,6 +239,9 @@ for potential breaking changes that would require manual migration steps.
    ```yaml
    exporters:
      sumologic:
+       sending_queue:
+         enabled: true
+         storage: file_storage
      logging:
 
    extensions:
