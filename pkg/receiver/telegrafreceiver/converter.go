@@ -229,7 +229,7 @@ func newDoubleSum(
 	// the sum is monotonic, or a Gauge when the sum is not monotonic."
 	// https://github.com/open-telemetry/opentelemetry-specification/blob/7fc28733/specification/metrics/datamodel.md#opentelemetry-protocol-data-model
 	ds := pm.Sum()
-	ds.SetAggregationTemporality(pmetric.MetricAggregationTemporalityCumulative)
+	ds.SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
 	ds.SetIsMonotonic(true)
 	dps := ds.DataPoints()
 	dp := dps.AppendEmpty()
@@ -251,7 +251,7 @@ func newIntSum(
 	// the sum is monotonic, or a Gauge when the sum is not monotonic."
 	// https://github.com/open-telemetry/opentelemetry-specification/blob/7fc28733/specification/metrics/datamodel.md#opentelemetry-protocol-data-model
 	ds := pm.Sum()
-	ds.SetAggregationTemporality(pmetric.MetricAggregationTemporalityCumulative)
+	ds.SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
 	ds.SetIsMonotonic(true)
 	dps := ds.DataPoints()
 	dp := dps.AppendEmpty()

@@ -127,21 +127,21 @@ func assertAttribute(t *testing.T, metadata pcommon.Map, attributeName string, e
 
 var (
 	bench_pdata_attributes = map[string]interface{}{
-		"host.name":               pcommon.NewValueString("testing-host"),
-		"host.id":                 pcommon.NewValueString("my-host-id"),
-		"host.type":               pcommon.NewValueString("my-host-type"),
-		"k8s.cluster.name":        pcommon.NewValueString("testing-cluster"),
-		"k8s.deployment.name":     pcommon.NewValueString("my-deployment-name"),
-		"k8s.namespace.name":      pcommon.NewValueString("my-namespace-name"),
-		"k8s.service.name":        pcommon.NewValueString("my-service-name"),
-		"cloud.account.id":        pcommon.NewValueString("my-account-id"),
-		"cloud.availability_zone": pcommon.NewValueString("my-zone"),
-		"cloud.region":            pcommon.NewValueString("my-region"),
-		"abc":                     pcommon.NewValueString("abc"),
-		"def":                     pcommon.NewValueString("def"),
-		"xyz":                     pcommon.NewValueString("xyz"),
-		"jkl":                     pcommon.NewValueString("jkl"),
-		"dummy":                   pcommon.NewValueString("dummy"),
+		"host.name":               pcommon.NewValueStr("testing-host"),
+		"host.id":                 pcommon.NewValueStr("my-host-id"),
+		"host.type":               pcommon.NewValueStr("my-host-type"),
+		"k8s.cluster.name":        pcommon.NewValueStr("testing-cluster"),
+		"k8s.deployment.name":     pcommon.NewValueStr("my-deployment-name"),
+		"k8s.namespace.name":      pcommon.NewValueStr("my-namespace-name"),
+		"k8s.service.name":        pcommon.NewValueStr("my-service-name"),
+		"cloud.account.id":        pcommon.NewValueStr("my-account-id"),
+		"cloud.availability_zone": pcommon.NewValueStr("my-zone"),
+		"cloud.region":            pcommon.NewValueStr("my-region"),
+		"abc":                     pcommon.NewValueStr("abc"),
+		"def":                     pcommon.NewValueStr("def"),
+		"xyz":                     pcommon.NewValueStr("xyz"),
+		"jkl":                     pcommon.NewValueStr("jkl"),
+		"dummy":                   pcommon.NewValueStr("dummy"),
 	}
 	attributes = pcommon.NewMap()
 )
