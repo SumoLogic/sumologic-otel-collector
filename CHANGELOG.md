@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix(k8sprocessor): fix metadata enrichment [#724]
 - fix(k8sprocessor): keep pod's services information up to date [#710]
 - chore(deps): bump go-boringcrypto to 1.18.7b7 [#746]
+- chore: upgrade OpenTelemetry Contrib Core to v0.60.0 [#769]
 
 ### Removed
 
@@ -37,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#718]: https://github.com/SumoLogic/sumologic-otel-collector/pull/718
 [#724]: https://github.com/SumoLogic/sumologic-otel-collector/pull/724
 [#746]: https://github.com/SumoLogic/sumologic-otel-collector/pull/746
+[#769]: https://github.com/SumoLogic/sumologic-otel-collector/pull/769
 [#693]: https://github.com/SumoLogic/sumologic-otel-collector/pull/693
 
 ## [v0.57.2-sumo-0]
