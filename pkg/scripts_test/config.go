@@ -1,7 +1,6 @@
 package sumologic_scripts_tests
 
 import (
-	"io/ioutil"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -24,7 +23,7 @@ type sumologicExtension struct {
 func getConfig(path string) (config, error) {
 	var conf config
 
-	yamlFile, err := ioutil.ReadFile(path)
+	yamlFile, err := os.ReadFile(path)
 	if err != nil {
 		return config{}, err
 	}
@@ -43,7 +42,7 @@ func saveConfig(path string, conf config) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(path, out, os.ModePerm)
+	err = os.WriteFile(path, out, os.ModePerm)
 	if err != nil {
 		return err
 	}
