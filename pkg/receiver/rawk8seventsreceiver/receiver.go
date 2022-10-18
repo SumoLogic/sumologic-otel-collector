@@ -390,7 +390,9 @@ func (r *rawK8sEventsReceiver) convertToLog(eventChange *eventChange) (plog.Logs
 	pdataObjectMap.CopyTo(lr.Attributes())
 
 	// for compatibility with the FluentD plugin's data format, we need to put the change type under "type"
-	lr.Attributes().PutString("type", string(eventChange.changeType))
+	if _, ok := lr.Attributes().Get("type"); !ok {
+		lr.Attributes().PutStr("type", string(eventChange.changeType))
+	}
 	return ld, nil
 }
 

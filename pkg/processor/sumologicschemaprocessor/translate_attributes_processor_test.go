@@ -100,11 +100,8 @@ func TestTranslateAttributesDoesNotOverwriteExistingAttribute(t *testing.T) {
 }
 
 func TestTranslateAttributesDoesNotOverwriteMultipleExistingAttributes(t *testing.T) {
-	// Note: Current implementation of pcommon.Map does not allow to insert duplicate keys.
-	// See https://cloud-native.slack.com/archives/C01N5UCHTEH/p1624020829067500
 	attributes := pcommon.NewMap()
 	attributes.PutString("host", "host1")
-	attributes.PutString("host", "host2")
 	require.Equal(t, 1, attributes.Len())
 	attributes.PutString("host.name", "hostname1")
 	require.Equal(t, 2, attributes.Len())

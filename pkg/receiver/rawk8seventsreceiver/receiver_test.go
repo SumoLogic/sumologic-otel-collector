@@ -404,7 +404,8 @@ func TestStorage(t *testing.T) {
 
 	// Start the receiver with storage extension.
 	ctx := context.Background()
-	host := storagetest.NewStorageHost()
+	storageDir := t.TempDir()
+	host := storagetest.NewStorageHost().WithFileBackedStorageExtension("test", storageDir)
 	assert.NoError(t, receiver.Start(ctx, host))
 
 	time.Sleep(10 * time.Millisecond)
@@ -441,7 +442,7 @@ func TestStorage(t *testing.T) {
 		listWatchFactory,
 	)
 	require.NoError(t, err)
-	host = storagetest.NewStorageHost()
+	host = storagetest.NewStorageHost().WithFileBackedStorageExtension("test", storageDir)
 	require.NoError(t, receiver.Start(ctx, host))
 
 	// The receiver should only pick up the third event,

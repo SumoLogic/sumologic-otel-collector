@@ -237,7 +237,7 @@ func TestSendLogsMultitype(t *testing.T) {
 
 	attVal = pcommon.NewValueSlice()
 	attArr := attVal.Slice()
-	strVal := pcommon.NewValueString("lv2")
+	strVal := pcommon.NewValueStr("lv2")
 	intVal := pcommon.NewValueInt(13)
 	strVal.CopyTo(attArr.AppendEmpty())
 	intVal.CopyTo(attArr.AppendEmpty())
@@ -610,7 +610,7 @@ func TestSendLogsJsonMultitype(t *testing.T) {
 
 	attVal = pcommon.NewValueSlice()
 	attArr := attVal.Slice()
-	strVal := pcommon.NewValueString("lv2")
+	strVal := pcommon.NewValueStr("lv2")
 	intVal := pcommon.NewValueInt(13)
 
 	strVal.CopyTo(attArr.AppendEmpty())

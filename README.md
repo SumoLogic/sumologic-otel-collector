@@ -222,7 +222,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 [loggingexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.62.0/exporter/loggingexporter
 [otlpexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.62.0/exporter/otlpexporter
 [otlphttpexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.62.0/exporter/otlphttpexporter
-[prometheusexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.62.0/exporter/prometheusexporter
+[prometheusexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.62.0/exporter/prometheusexporter
 [sumologicexporter]: ./pkg/exporter/sumologicexporter
 
 [asapauthextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.62.0/extension/asapauthextension
