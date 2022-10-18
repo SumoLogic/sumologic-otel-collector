@@ -113,7 +113,7 @@ func extractBody(t *testing.T, req *http.Request) string {
 func exampleLog() []plog.LogRecord {
 	buffer := make([]plog.LogRecord, 1)
 	buffer[0] = plog.NewLogRecord()
-	buffer[0].Body().SetStringVal("Example log")
+	buffer[0].Body().SetStr("Example log")
 
 	return buffer
 }
@@ -122,7 +122,7 @@ func exampleNLogs(n int) []plog.LogRecord {
 	buffer := make([]plog.LogRecord, n)
 	for i := 0; i < n; i++ {
 		buffer[i] = plog.NewLogRecord()
-		buffer[i].Body().SetStringVal("Example log")
+		buffer[i].Body().SetStr("Example log")
 	}
 
 	return buffer
@@ -131,13 +131,13 @@ func exampleNLogs(n int) []plog.LogRecord {
 func exampleTwoLogs() []plog.LogRecord {
 	buffer := make([]plog.LogRecord, 2)
 	buffer[0] = plog.NewLogRecord()
-	buffer[0].Body().SetStringVal("Example log")
-	buffer[0].Attributes().InsertString("key1", "value1")
-	buffer[0].Attributes().InsertString("key2", "value2")
+	buffer[0].Body().SetStr("Example log")
+	buffer[0].Attributes().PutString("key1", "value1")
+	buffer[0].Attributes().PutString("key2", "value2")
 	buffer[1] = plog.NewLogRecord()
-	buffer[1].Body().SetStringVal("Another example log")
-	buffer[1].Attributes().InsertString("key1", "value1")
-	buffer[1].Attributes().InsertString("key2", "value2")
+	buffer[1].Body().SetStr("Another example log")
+	buffer[1].Attributes().PutString("key1", "value1")
+	buffer[1].Attributes().PutString("key2", "value2")
 
 	return buffer
 }
@@ -174,9 +174,9 @@ func TestSendLogs(t *testing.T) {
 	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs()
 	logsRecords1 := slgs.AppendEmpty().LogRecords()
-	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
+	logsRecords1.AppendEmpty().Body().SetStr("Example log")
 	logsRecords2 := slgs.AppendEmpty().LogRecords()
-	logsRecords2.AppendEmpty().Body().SetStringVal("Another example log")
+	logsRecords2.AppendEmpty().Body().SetStr("Another example log")
 
 	_, err := test.s.sendNonOTLPLogs(context.Background(),
 		rls,
@@ -200,9 +200,9 @@ func TestSendLogsWithEmptyField(t *testing.T) {
 	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs()
 	logsRecords1 := slgs.AppendEmpty().LogRecords()
-	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
+	logsRecords1.AppendEmpty().Body().SetStr("Example log")
 	logsRecords2 := slgs.AppendEmpty().LogRecords()
-	logsRecords2.AppendEmpty().Body().SetStringVal("Another example log")
+	logsRecords2.AppendEmpty().Body().SetStr("Another example log")
 
 	_, err := test.s.sendNonOTLPLogs(context.Background(),
 		rls,
@@ -229,15 +229,15 @@ func TestSendLogsMultitype(t *testing.T) {
 	slgs := rls.ScopeLogs()
 	logsRecords := slgs.AppendEmpty().LogRecords()
 	attVal := pcommon.NewValueMap()
-	attMap := attVal.MapVal()
-	attMap.InsertString("lk1", "lv1")
-	attMap.InsertInt("lk2", 13)
+	attMap := attVal.Map()
+	attMap.PutString("lk1", "lv1")
+	attMap.PutInt("lk2", 13)
 	logRecord := logsRecords.AppendEmpty()
 	attVal.CopyTo(logRecord.Body())
 
 	attVal = pcommon.NewValueSlice()
-	attArr := attVal.SliceVal()
-	strVal := pcommon.NewValueString("lv2")
+	attArr := attVal.Slice()
+	strVal := pcommon.NewValueStr("lv2")
 	intVal := pcommon.NewValueInt(13)
 	strVal.CopyTo(attArr.AppendEmpty())
 	intVal.CopyTo(attArr.AppendEmpty())
@@ -268,9 +268,9 @@ func TestSendLogsSplit(t *testing.T) {
 	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs()
 	logsRecords1 := slgs.AppendEmpty().LogRecords()
-	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
+	logsRecords1.AppendEmpty().Body().SetStr("Example log")
 	logsRecords2 := slgs.AppendEmpty().LogRecords()
-	logsRecords2.AppendEmpty().Body().SetStringVal("Another example log")
+	logsRecords2.AppendEmpty().Body().SetStr("Another example log")
 
 	_, err := test.s.sendNonOTLPLogs(context.Background(),
 		rls,
@@ -306,9 +306,9 @@ func TestSendLogsSplitFailedOne(t *testing.T) {
 	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs()
 	logsRecords1 := slgs.AppendEmpty().LogRecords()
-	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
+	logsRecords1.AppendEmpty().Body().SetStr("Example log")
 	logsRecords2 := slgs.AppendEmpty().LogRecords()
-	logsRecords2.AppendEmpty().Body().SetStringVal("Another example log")
+	logsRecords2.AppendEmpty().Body().SetStr("Another example log")
 
 	dropped, err := test.s.sendNonOTLPLogs(context.Background(),
 		rls,
@@ -341,9 +341,9 @@ func TestSendLogsSplitFailedAll(t *testing.T) {
 	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs()
 	logsRecords1 := slgs.AppendEmpty().LogRecords()
-	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
+	logsRecords1.AppendEmpty().Body().SetStr("Example log")
 	logsRecords2 := slgs.AppendEmpty().LogRecords()
-	logsRecords2.AppendEmpty().Body().SetStringVal("Another example log")
+	logsRecords2.AppendEmpty().Body().SetStr("Another example log")
 
 	dropped, err := test.s.sendNonOTLPLogs(context.Background(), rls, fields{})
 	assert.EqualError(
@@ -362,14 +362,14 @@ func TestSendLogsJsonConfig(t *testing.T) {
 		slgs := rls.ScopeLogs().AppendEmpty()
 		log := slgs.LogRecords().AppendEmpty()
 
-		log.Body().SetStringVal("Example log")
-		log.Attributes().InsertString("key1", "value1")
-		log.Attributes().InsertString("key2", "value2")
+		log.Body().SetStr("Example log")
+		log.Attributes().PutString("key1", "value1")
+		log.Attributes().PutString("key2", "value2")
 
 		log = slgs.LogRecords().AppendEmpty()
-		log.Body().SetStringVal("Another example log")
-		log.Attributes().InsertString("key1", "value1")
-		log.Attributes().InsertString("key2", "value2")
+		log.Body().SetStr("Another example log")
+		log.Attributes().PutString("key1", "value1")
+		log.Attributes().PutString("key2", "value2")
 
 		return rls
 	}
@@ -379,32 +379,32 @@ func TestSendLogsJsonConfig(t *testing.T) {
 		slgs := rls.ScopeLogs().AppendEmpty()
 		log := slgs.LogRecords().AppendEmpty()
 
-		body := pcommon.NewValueMap().MapVal()
-		body.InsertString("a", "b")
-		body.InsertBool("c", false)
-		body.InsertInt("d", 20)
-		body.InsertDouble("e", 20.5)
+		body := pcommon.NewValueMap().Map()
+		body.PutString("a", "b")
+		body.PutBool("c", false)
+		body.PutInt("d", 20)
+		body.PutDouble("e", 20.5)
 
 		f := pcommon.NewValueSlice()
-		f.SliceVal().EnsureCapacity(4)
-		f.SliceVal().AppendEmpty().SetStringVal("p")
-		f.SliceVal().AppendEmpty().SetBoolVal(true)
-		f.SliceVal().AppendEmpty().SetIntVal(13)
-		f.SliceVal().AppendEmpty().SetDoubleVal(19.3)
-		body.Insert("f", f)
+		f.Slice().EnsureCapacity(4)
+		f.Slice().AppendEmpty().SetStr("p")
+		f.Slice().AppendEmpty().SetBool(true)
+		f.Slice().AppendEmpty().SetInt(13)
+		f.Slice().AppendEmpty().SetDouble(19.3)
+		f.Slice().CopyTo(body.PutEmptySlice("f"))
 
 		g := pcommon.NewValueMap()
-		g.MapVal().InsertString("h", "i")
-		g.MapVal().InsertBool("j", false)
-		g.MapVal().InsertInt("k", 12)
-		g.MapVal().InsertDouble("l", 11.1)
+		g.Map().PutString("h", "i")
+		g.Map().PutBool("j", false)
+		g.Map().PutInt("k", 12)
+		g.Map().PutDouble("l", 11.1)
 
-		body.Insert("g", g)
+		g.Map().CopyTo(body.PutEmptyMap("g"))
 
-		log.Attributes().InsertString("m", "n")
+		log.Attributes().PutString("m", "n")
 
 		pcommon.NewValueMap().CopyTo(log.Body())
-		body.CopyTo(log.Body().MapVal())
+		body.CopyTo(log.Body().Map())
 
 		return rls
 	}
@@ -557,14 +557,14 @@ func TestSendLogsJson(t *testing.T) {
 	slgs := rls.ScopeLogs().AppendEmpty()
 	log := slgs.LogRecords().AppendEmpty()
 
-	log.Body().SetStringVal("Example log")
-	log.Attributes().InsertString("key1", "value1")
-	log.Attributes().InsertString("key2", "value2")
+	log.Body().SetStr("Example log")
+	log.Attributes().PutString("key1", "value1")
+	log.Attributes().PutString("key2", "value2")
 
 	log = slgs.LogRecords().AppendEmpty()
-	log.Body().SetStringVal("Another example log")
-	log.Attributes().InsertString("key1", "value1")
-	log.Attributes().InsertString("key2", "value2")
+	log.Body().SetStr("Another example log")
+	log.Attributes().PutString("key1", "value1")
+	log.Attributes().PutString("key2", "value2")
 
 	_, err := test.s.sendNonOTLPLogs(context.Background(),
 		rls,
@@ -596,29 +596,29 @@ func TestSendLogsJsonMultitype(t *testing.T) {
 	slgs := rls.ScopeLogs().AppendEmpty()
 
 	attVal := pcommon.NewValueMap()
-	attMap := attVal.MapVal()
-	attMap.InsertString("lk1", "lv1")
-	attMap.InsertInt("lk2", 13)
+	attMap := attVal.Map()
+	attMap.PutString("lk1", "lv1")
+	attMap.PutInt("lk2", 13)
 
 	log := slgs.LogRecords().AppendEmpty()
 	attVal.CopyTo(log.Body())
 
-	log.Attributes().InsertString("key1", "value1")
-	log.Attributes().InsertString("key2", "value2")
+	log.Attributes().PutString("key1", "value1")
+	log.Attributes().PutString("key2", "value2")
 
 	log = slgs.LogRecords().AppendEmpty()
 
 	attVal = pcommon.NewValueSlice()
-	attArr := attVal.SliceVal()
-	strVal := pcommon.NewValueString("lv2")
+	attArr := attVal.Slice()
+	strVal := pcommon.NewValueStr("lv2")
 	intVal := pcommon.NewValueInt(13)
 
 	strVal.CopyTo(attArr.AppendEmpty())
 	intVal.CopyTo(attArr.AppendEmpty())
 
 	attVal.CopyTo(log.Body())
-	log.Attributes().InsertString("key1", "value1")
-	log.Attributes().InsertString("key2", "value2")
+	log.Attributes().PutString("key1", "value1")
+	log.Attributes().PutString("key2", "value2")
 
 	_, err := test.s.sendNonOTLPLogs(context.Background(),
 		rls,
@@ -651,14 +651,14 @@ func TestSendLogsJsonSplit(t *testing.T) {
 	slgs := rls.ScopeLogs().AppendEmpty()
 	log := slgs.LogRecords().AppendEmpty()
 
-	log.Body().SetStringVal("Example log")
-	log.Attributes().InsertString("key1", "value1")
-	log.Attributes().InsertString("key2", "value2")
+	log.Body().SetStr("Example log")
+	log.Attributes().PutString("key1", "value1")
+	log.Attributes().PutString("key2", "value2")
 
 	log = slgs.LogRecords().AppendEmpty()
-	log.Body().SetStringVal("Another example log")
-	log.Attributes().InsertString("key1", "value1")
-	log.Attributes().InsertString("key2", "value2")
+	log.Body().SetStr("Another example log")
+	log.Attributes().PutString("key1", "value1")
+	log.Attributes().PutString("key2", "value2")
 
 	_, err := test.s.sendNonOTLPLogs(context.Background(),
 		rls,
@@ -695,14 +695,14 @@ func TestSendLogsJsonSplitFailedOne(t *testing.T) {
 	slgs := rls.ScopeLogs().AppendEmpty()
 	log := slgs.LogRecords().AppendEmpty()
 
-	log.Body().SetStringVal("Example log")
-	log.Attributes().InsertString("key1", "value1")
-	log.Attributes().InsertString("key2", "value2")
+	log.Body().SetStr("Example log")
+	log.Attributes().PutString("key1", "value1")
+	log.Attributes().PutString("key2", "value2")
 
 	log = slgs.LogRecords().AppendEmpty()
-	log.Body().SetStringVal("Another example log")
-	log.Attributes().InsertString("key1", "value1")
-	log.Attributes().InsertString("key2", "value2")
+	log.Body().SetStr("Another example log")
+	log.Attributes().PutString("key1", "value1")
+	log.Attributes().PutString("key2", "value2")
 
 	dropped, err := test.s.sendNonOTLPLogs(context.Background(),
 		rls,
@@ -742,14 +742,14 @@ func TestSendLogsJsonSplitFailedAll(t *testing.T) {
 	slgs := rls.ScopeLogs().AppendEmpty()
 	log := slgs.LogRecords().AppendEmpty()
 
-	log.Body().SetStringVal("Example log")
-	log.Attributes().InsertString("key1", "value1")
-	log.Attributes().InsertString("key2", "value2")
+	log.Body().SetStr("Example log")
+	log.Attributes().PutString("key1", "value1")
+	log.Attributes().PutString("key2", "value2")
 
 	log = slgs.LogRecords().AppendEmpty()
-	log.Body().SetStringVal("Another example log")
-	log.Attributes().InsertString("key1", "value1")
-	log.Attributes().InsertString("key2", "value2")
+	log.Body().SetStr("Another example log")
+	log.Attributes().PutString("key1", "value1")
+	log.Attributes().PutString("key2", "value2")
 
 	dropped, err := test.s.sendNonOTLPLogs(context.Background(),
 		rls,
@@ -776,7 +776,7 @@ func TestSendLogsUnexpectedFormat(t *testing.T) {
 	rls := plog.NewResourceLogs()
 	slgs := rls.ScopeLogs().AppendEmpty()
 	log := slgs.LogRecords().AppendEmpty()
-	log.Body().SetStringVal("Example log")
+	log.Body().SetStr("Example log")
 
 	dropped, err := test.s.sendNonOTLPLogs(context.Background(),
 		rls,
@@ -842,7 +842,7 @@ func TestLogsHandlesReceiverResponses(t *testing.T) {
 		})
 
 		rls := plog.NewResourceLogs()
-		rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().Body().SetStringVal("Example log")
+		rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().Body().SetStr("Example log")
 
 		var buffer bytes.Buffer
 		writer := bufio.NewWriter(&buffer)
@@ -929,7 +929,7 @@ func TestInvalidEndpoint(t *testing.T) {
 	test.s.config.HTTPClientSettings.Endpoint = ":"
 
 	rls := plog.NewResourceLogs()
-	rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().Body().SetStringVal("Example log")
+	rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().Body().SetStr("Example log")
 
 	_, err := test.s.sendNonOTLPLogs(context.Background(), rls, fields{})
 	assert.EqualError(t, err, `parse ":": missing protocol scheme`)
@@ -940,7 +940,7 @@ func TestInvalidPostRequest(t *testing.T) {
 
 	test.s.config.HTTPClientSettings.Endpoint = ""
 	rls := plog.NewResourceLogs()
-	rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().Body().SetStringVal("Example log")
+	rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().Body().SetStr("Example log")
 
 	_, err := test.s.sendNonOTLPLogs(context.Background(), rls, fields{})
 	assert.EqualError(t, err, `Post "": unsupported protocol scheme ""`)
@@ -1127,12 +1127,12 @@ func TestSendMetricsSplitBySource(t *testing.T) {
 
 	rmsSum := metrics.ResourceMetrics().AppendEmpty()
 	attrs.CopyTo(rmsSum.Resource().Attributes())
-	rmsSum.Resource().Attributes().InsertString("_sourceHost", "value1")
+	rmsSum.Resource().Attributes().PutString("_sourceHost", "value1")
 	metricSum.CopyTo(rmsSum.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
 
 	rmsGauge := metrics.ResourceMetrics().AppendEmpty()
 	attrs.CopyTo(rmsGauge.Resource().Attributes())
-	rmsGauge.Resource().Attributes().InsertString("_sourceHost", "value2")
+	rmsGauge.Resource().Attributes().PutString("_sourceHost", "value2")
 	metricGauge.CopyTo(rmsGauge.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
 
 	_, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)

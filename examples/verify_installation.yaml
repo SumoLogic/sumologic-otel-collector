@@ -1,5 +1,8 @@
 exporters:
   sumologic:
+    sending_queue:
+      enabled: true
+      storage: file_storage
   logging:
 
 extensions:

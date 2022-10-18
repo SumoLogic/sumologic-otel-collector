@@ -289,26 +289,26 @@ func generateLogs(resourceFunc ...generateResourceFunc) plog.Logs {
 
 func withPassthroughIP(passthroughIP string) generateResourceFunc {
 	return func(res pcommon.Resource) {
-		res.Attributes().InsertString(k8sIPLabelName, passthroughIP)
+		res.Attributes().PutString(k8sIPLabelName, passthroughIP)
 	}
 }
 
 func withHostname(hostname string) generateResourceFunc {
 	return func(res pcommon.Resource) {
-		res.Attributes().InsertString(conventions.AttributeHostName, hostname)
+		res.Attributes().PutString(conventions.AttributeHostName, hostname)
 	}
 }
 
 func withPodUID(uid string) generateResourceFunc {
 	return func(res pcommon.Resource) {
-		res.Attributes().InsertString("k8s.pod.uid", uid)
+		res.Attributes().PutString("k8s.pod.uid", uid)
 	}
 }
 
 func withPodAndNamespace(pod string, namespace string) generateResourceFunc {
 	return func(res pcommon.Resource) {
-		res.Attributes().InsertString("k8s.pod.name", pod)
-		res.Attributes().InsertString("k8s.namespace.name", namespace)
+		res.Attributes().PutString("k8s.pod.name", pod)
+		res.Attributes().PutString("k8s.namespace.name", namespace)
 	}
 }
 
@@ -520,10 +520,10 @@ func TestIPSourceWithoutPodAssociation(t *testing.T) {
 
 			for _, res := range resources {
 				if tc.resourceK8SIP != "" {
-					res.Attributes().InsertString(k8sIPLabelName, tc.resourceK8SIP)
+					res.Attributes().PutString(k8sIPLabelName, tc.resourceK8SIP)
 				}
 				if tc.resourceIP != "" {
-					res.Attributes().InsertString(clientIPLabelName, tc.resourceIP)
+					res.Attributes().PutString(clientIPLabelName, tc.resourceIP)
 				}
 			}
 
@@ -614,7 +614,7 @@ func TestIPSourceWithPodAssociation(t *testing.T) {
 			}
 
 			for _, res := range resources {
-				res.Attributes().InsertString(tc.labelName, tc.labelValue)
+				res.Attributes().PutString(tc.labelName, tc.labelValue)
 			}
 
 			m.testConsume(ctx, traces, metrics, logs, nil)
@@ -1022,8 +1022,8 @@ func TestStartStop(t *testing.T) {
 func assertResourceHasStringAttribute(t *testing.T, r pcommon.Resource, k, v string) {
 	got, ok := r.Attributes().Get(k)
 	assert.True(t, ok, fmt.Sprintf("resource does not contain attribute %s", k))
-	assert.EqualValues(t, pcommon.ValueTypeString, got.Type(), "attribute %s is not of type string", k)
-	assert.EqualValues(t, v, got.StringVal(), "attribute %s is not equal to %s", k, v)
+	assert.EqualValues(t, pcommon.ValueTypeStr, got.Type(), "attribute %s is not of type string", k)
+	assert.EqualValues(t, v, got.Str(), "attribute %s is not equal to %s", k, v)
 }
 
 //func BenchmarkConsumingTraceData(b *testing.B) {

@@ -100,12 +100,18 @@ func translateAttributes(attributes pcommon.Map) {
 			// We have to do it this way since the final return value is not
 			// ready yet to rely on .Insert() not overwriting.
 			if _, exists := attributes.Get(sumoKey); !exists {
-				result.Insert(sumoKey, value)
+				if _, ok := result.Get(sumoKey); !ok {
+					value.CopyTo(result.PutEmpty(sumoKey))
+				}
 			} else {
-				result.Insert(otKey, value)
+				if _, ok := result.Get(otKey); !ok {
+					value.CopyTo(result.PutEmpty(otKey))
+				}
 			}
 		} else {
-			result.Insert(otKey, value)
+			if _, ok := result.Get(otKey); !ok {
+				value.CopyTo(result.PutEmpty(otKey))
+			}
 		}
 		return true
 	})

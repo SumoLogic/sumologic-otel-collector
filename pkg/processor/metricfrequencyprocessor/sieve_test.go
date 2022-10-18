@@ -222,7 +222,7 @@ func createDataPoint(timestamp time.Time, value float64) pmetric.NumberDataPoint
 	pdataTimestamp := pcommon.NewTimestampFromTime(timestamp)
 	out := pmetric.NewNumberDataPoint()
 	out.SetTimestamp(pdataTimestamp)
-	out.SetDoubleVal(value)
+	out.SetDoubleValue(value)
 	return out
 }
 
@@ -233,7 +233,7 @@ func setupHistory(sieve metricSieve, dataPoints map[time.Time]float64) {
 func dataPointsToMetric(dataPoints map[time.Time]float64) pmetric.Metric {
 	out := pmetric.NewMetric()
 	out.SetName("test")
-	out.SetDataType(pmetric.MetricDataTypeGauge)
+	out.SetEmptyGauge()
 	target := out.Gauge().DataPoints()
 	for timestamp, value := range dataPoints {
 		createDataPoint(timestamp, value).CopyTo(target.AppendEmpty())

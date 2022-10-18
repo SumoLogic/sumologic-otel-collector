@@ -44,9 +44,9 @@ func TestProcessLogs(t *testing.T) {
 
 	for _, line := range lines {
 		lr := sls.LogRecords().AppendEmpty()
-		lr.Body().SetStringVal(line)
+		lr.Body().SetStr(line)
 	}
-	sls.LogRecords().At(1).Attributes().InsertString("facility_name", "pre filled facility")
+	sls.LogRecords().At(1).Attributes().PutString("facility_name", "pre filled facility")
 
 	ctx := context.Background()
 	processor := &sumologicSyslogProcessor{
@@ -61,6 +61,6 @@ func TestProcessLogs(t *testing.T) {
 		attrs := result.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(i).Attributes()
 		attr, ok := attrs.Get("facility_name")
 		require.True(t, ok)
-		assert.Equal(t, line, attr.StringVal())
+		assert.Equal(t, line, attr.Str())
 	}
 }

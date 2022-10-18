@@ -39,13 +39,13 @@ func TestAddCloudNamespaceForLogs(t *testing.T) {
 			addCloudNamespace: true,
 			createLogs: func() plog.Logs {
 				inputLogs := plog.NewLogs()
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_ec2")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_ec2")
 				return inputLogs
 			},
 			test: func(outputLogs plog.Logs) {
 				cloudNamespaceAttribute, found := outputLogs.ResourceLogs().At(0).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "aws/ec2", cloudNamespaceAttribute.StringVal())
+				assert.Equal(t, "aws/ec2", cloudNamespaceAttribute.Str())
 			},
 		},
 		{
@@ -53,13 +53,13 @@ func TestAddCloudNamespaceForLogs(t *testing.T) {
 			addCloudNamespace: true,
 			createLogs: func() plog.Logs {
 				inputLogs := plog.NewLogs()
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_ecs")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_ecs")
 				return inputLogs
 			},
 			test: func(outputLogs plog.Logs) {
 				cloudNamespaceAttribute, found := outputLogs.ResourceLogs().At(0).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "ecs", cloudNamespaceAttribute.StringVal())
+				assert.Equal(t, "ecs", cloudNamespaceAttribute.Str())
 			},
 		},
 		{
@@ -67,13 +67,13 @@ func TestAddCloudNamespaceForLogs(t *testing.T) {
 			addCloudNamespace: true,
 			createLogs: func() plog.Logs {
 				inputLogs := plog.NewLogs()
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_elastic_beanstalk")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_elastic_beanstalk")
 				return inputLogs
 			},
 			test: func(outputLogs plog.Logs) {
 				cloudNamespaceAttribute, found := outputLogs.ResourceLogs().At(0).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "ElasticBeanstalk", cloudNamespaceAttribute.StringVal())
+				assert.Equal(t, "ElasticBeanstalk", cloudNamespaceAttribute.Str())
 			},
 		},
 		{
@@ -81,10 +81,10 @@ func TestAddCloudNamespaceForLogs(t *testing.T) {
 			addCloudNamespace: false,
 			createLogs: func() plog.Logs {
 				inputLogs := plog.NewLogs()
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_eks")
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_lambda")
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "azure_vm")
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "gcp_app_engine")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_eks")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_lambda")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "azure_vm")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "gcp_app_engine")
 				return inputLogs
 			},
 			test: func(outputLogs plog.Logs) {
@@ -99,13 +99,13 @@ func TestAddCloudNamespaceForLogs(t *testing.T) {
 			addCloudNamespace: false,
 			createLogs: func() plog.Logs {
 				inputLogs := plog.NewLogs()
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_ec2")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_ec2")
 				return inputLogs
 			},
 			test: func(outputLogs plog.Logs) {
 				cloudNamespaceAttribute, found := outputLogs.ResourceLogs().At(0).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "aws/ec2", cloudNamespaceAttribute.StringVal())
+				assert.Equal(t, "aws/ec2", cloudNamespaceAttribute.Str())
 			},
 		},
 		{
@@ -113,27 +113,27 @@ func TestAddCloudNamespaceForLogs(t *testing.T) {
 			addCloudNamespace: true,
 			createLogs: func() plog.Logs {
 				inputLogs := plog.NewLogs()
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_ec2")
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_lambda")
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_ecs")
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_elastic_beanstalk")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_ec2")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_lambda")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_ecs")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_elastic_beanstalk")
 				return inputLogs
 			},
 			test: func(outputLogs plog.Logs) {
 				ec2ResourceAttribute, found := outputLogs.ResourceLogs().At(0).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "aws/ec2", ec2ResourceAttribute.StringVal())
+				assert.Equal(t, "aws/ec2", ec2ResourceAttribute.Str())
 
 				_, found = outputLogs.ResourceLogs().At(1).Resource().Attributes().Get("cloud.namespace")
 				assert.False(t, found)
 
 				ecsResourceAttribute, found := outputLogs.ResourceLogs().At(2).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "ecs", ecsResourceAttribute.StringVal())
+				assert.Equal(t, "ecs", ecsResourceAttribute.Str())
 
 				beanstalkResourceAttribute, found := outputLogs.ResourceLogs().At(3).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "ElasticBeanstalk", beanstalkResourceAttribute.StringVal())
+				assert.Equal(t, "ElasticBeanstalk", beanstalkResourceAttribute.Str())
 			},
 		},
 	}
@@ -166,13 +166,13 @@ func TestAddCloudNamespaceForMetrics(t *testing.T) {
 			addCloudNamespace: true,
 			createMetrics: func() pmetric.Metrics {
 				inputMetrics := pmetric.NewMetrics()
-				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_ec2")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_ec2")
 				return inputMetrics
 			},
 			test: func(outputMetrics pmetric.Metrics) {
 				cloudNamespaceAttribute, found := outputMetrics.ResourceMetrics().At(0).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "aws/ec2", cloudNamespaceAttribute.StringVal())
+				assert.Equal(t, "aws/ec2", cloudNamespaceAttribute.Str())
 			},
 		},
 		{
@@ -180,13 +180,13 @@ func TestAddCloudNamespaceForMetrics(t *testing.T) {
 			addCloudNamespace: true,
 			createMetrics: func() pmetric.Metrics {
 				inputMetrics := pmetric.NewMetrics()
-				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_ecs")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_ecs")
 				return inputMetrics
 			},
 			test: func(outputMetrics pmetric.Metrics) {
 				cloudNamespaceAttribute, found := outputMetrics.ResourceMetrics().At(0).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "ecs", cloudNamespaceAttribute.StringVal())
+				assert.Equal(t, "ecs", cloudNamespaceAttribute.Str())
 			},
 		},
 		{
@@ -194,13 +194,13 @@ func TestAddCloudNamespaceForMetrics(t *testing.T) {
 			addCloudNamespace: true,
 			createMetrics: func() pmetric.Metrics {
 				inputMetrics := pmetric.NewMetrics()
-				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_elastic_beanstalk")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_elastic_beanstalk")
 				return inputMetrics
 			},
 			test: func(outputMetrics pmetric.Metrics) {
 				cloudNamespaceAttribute, found := outputMetrics.ResourceMetrics().At(0).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "ElasticBeanstalk", cloudNamespaceAttribute.StringVal())
+				assert.Equal(t, "ElasticBeanstalk", cloudNamespaceAttribute.Str())
 			},
 		},
 		{
@@ -208,10 +208,10 @@ func TestAddCloudNamespaceForMetrics(t *testing.T) {
 			addCloudNamespace: false,
 			createMetrics: func() pmetric.Metrics {
 				inputMetrics := pmetric.NewMetrics()
-				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_eks")
-				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_lambda")
-				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "azure_vm")
-				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "gcp_app_engine")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_eks")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_lambda")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "azure_vm")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "gcp_app_engine")
 				return inputMetrics
 			},
 			test: func(outputMetrics pmetric.Metrics) {
@@ -226,13 +226,13 @@ func TestAddCloudNamespaceForMetrics(t *testing.T) {
 			addCloudNamespace: false,
 			createMetrics: func() pmetric.Metrics {
 				inputMetrics := pmetric.NewMetrics()
-				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_ec2")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_ec2")
 				return inputMetrics
 			},
 			test: func(outputMetrics pmetric.Metrics) {
 				cloudNamespaceAttribute, found := outputMetrics.ResourceMetrics().At(0).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "aws/ec2", cloudNamespaceAttribute.StringVal())
+				assert.Equal(t, "aws/ec2", cloudNamespaceAttribute.Str())
 			},
 		},
 		{
@@ -240,27 +240,27 @@ func TestAddCloudNamespaceForMetrics(t *testing.T) {
 			addCloudNamespace: true,
 			createMetrics: func() pmetric.Metrics {
 				inputMetrics := pmetric.NewMetrics()
-				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_ec2")
-				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_lambda")
-				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_ecs")
-				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_elastic_beanstalk")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_ec2")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_lambda")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_ecs")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_elastic_beanstalk")
 				return inputMetrics
 			},
 			test: func(outputMetrics pmetric.Metrics) {
 				ec2ResourceAttribute, found := outputMetrics.ResourceMetrics().At(0).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "aws/ec2", ec2ResourceAttribute.StringVal())
+				assert.Equal(t, "aws/ec2", ec2ResourceAttribute.Str())
 
 				_, found = outputMetrics.ResourceMetrics().At(1).Resource().Attributes().Get("cloud.namespace")
 				assert.False(t, found)
 
 				ecsResourceAttribute, found := outputMetrics.ResourceMetrics().At(2).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "ecs", ecsResourceAttribute.StringVal())
+				assert.Equal(t, "ecs", ecsResourceAttribute.Str())
 
 				beanstalkResourceAttribute, found := outputMetrics.ResourceMetrics().At(3).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "ElasticBeanstalk", beanstalkResourceAttribute.StringVal())
+				assert.Equal(t, "ElasticBeanstalk", beanstalkResourceAttribute.Str())
 			},
 		},
 	}
@@ -293,13 +293,13 @@ func TestAddCloudNamespaceForTraces(t *testing.T) {
 			addCloudNamespace: true,
 			createTraces: func() ptrace.Traces {
 				inputTraces := ptrace.NewTraces()
-				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_ec2")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_ec2")
 				return inputTraces
 			},
 			test: func(outputTraces ptrace.Traces) {
 				cloudNamespaceAttribute, found := outputTraces.ResourceSpans().At(0).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "aws/ec2", cloudNamespaceAttribute.StringVal())
+				assert.Equal(t, "aws/ec2", cloudNamespaceAttribute.Str())
 			},
 		},
 		{
@@ -307,13 +307,13 @@ func TestAddCloudNamespaceForTraces(t *testing.T) {
 			addCloudNamespace: true,
 			createTraces: func() ptrace.Traces {
 				inputTraces := ptrace.NewTraces()
-				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_ecs")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_ecs")
 				return inputTraces
 			},
 			test: func(outputTraces ptrace.Traces) {
 				cloudNamespaceAttribute, found := outputTraces.ResourceSpans().At(0).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "ecs", cloudNamespaceAttribute.StringVal())
+				assert.Equal(t, "ecs", cloudNamespaceAttribute.Str())
 			},
 		},
 		{
@@ -321,13 +321,13 @@ func TestAddCloudNamespaceForTraces(t *testing.T) {
 			addCloudNamespace: true,
 			createTraces: func() ptrace.Traces {
 				inputTraces := ptrace.NewTraces()
-				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_elastic_beanstalk")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_elastic_beanstalk")
 				return inputTraces
 			},
 			test: func(outputTraces ptrace.Traces) {
 				cloudNamespaceAttribute, found := outputTraces.ResourceSpans().At(0).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "ElasticBeanstalk", cloudNamespaceAttribute.StringVal())
+				assert.Equal(t, "ElasticBeanstalk", cloudNamespaceAttribute.Str())
 			},
 		},
 		{
@@ -335,10 +335,10 @@ func TestAddCloudNamespaceForTraces(t *testing.T) {
 			addCloudNamespace: false,
 			createTraces: func() ptrace.Traces {
 				inputTraces := ptrace.NewTraces()
-				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_eks")
-				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_lambda")
-				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "azure_vm")
-				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "gcp_app_engine")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_eks")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_lambda")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "azure_vm")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "gcp_app_engine")
 				return inputTraces
 			},
 			test: func(outputTraces ptrace.Traces) {
@@ -353,13 +353,13 @@ func TestAddCloudNamespaceForTraces(t *testing.T) {
 			addCloudNamespace: false,
 			createTraces: func() ptrace.Traces {
 				inputTraces := ptrace.NewTraces()
-				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_ec2")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_ec2")
 				return inputTraces
 			},
 			test: func(outputTraces ptrace.Traces) {
 				cloudNamespaceAttribute, found := outputTraces.ResourceSpans().At(0).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "aws/ec2", cloudNamespaceAttribute.StringVal())
+				assert.Equal(t, "aws/ec2", cloudNamespaceAttribute.Str())
 			},
 		},
 		{
@@ -367,27 +367,27 @@ func TestAddCloudNamespaceForTraces(t *testing.T) {
 			addCloudNamespace: true,
 			createTraces: func() ptrace.Traces {
 				inputTraces := ptrace.NewTraces()
-				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_ec2")
-				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_lambda")
-				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_ecs")
-				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("cloud.platform", "aws_elastic_beanstalk")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_ec2")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_lambda")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_ecs")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().PutString("cloud.platform", "aws_elastic_beanstalk")
 				return inputTraces
 			},
 			test: func(outputTraces ptrace.Traces) {
 				ec2ResourceAttribute, found := outputTraces.ResourceSpans().At(0).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "aws/ec2", ec2ResourceAttribute.StringVal())
+				assert.Equal(t, "aws/ec2", ec2ResourceAttribute.Str())
 
 				_, found = outputTraces.ResourceSpans().At(1).Resource().Attributes().Get("cloud.namespace")
 				assert.False(t, found)
 
 				ecsResourceAttribute, found := outputTraces.ResourceSpans().At(2).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "ecs", ecsResourceAttribute.StringVal())
+				assert.Equal(t, "ecs", ecsResourceAttribute.Str())
 
 				beanstalkResourceAttribute, found := outputTraces.ResourceSpans().At(3).Resource().Attributes().Get("cloud.namespace")
 				assert.True(t, found)
-				assert.Equal(t, "ElasticBeanstalk", beanstalkResourceAttribute.StringVal())
+				assert.Equal(t, "ElasticBeanstalk", beanstalkResourceAttribute.Str())
 			},
 		},
 	}
@@ -420,19 +420,19 @@ func TestTranslateAttributesForLogs(t *testing.T) {
 			translateAttributes: true,
 			createLogs: func() plog.Logs {
 				inputLogs := plog.NewLogs()
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.account.id", "MyId1")
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.account.id", "MyId2")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.account.id", "MyId1")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.account.id", "MyId2")
 
 				return inputLogs
 			},
 			test: func(outputLogs plog.Logs) {
 				attribute1, found := outputLogs.ResourceLogs().At(0).Resource().Attributes().Get("AccountId")
 				assert.True(t, found)
-				assert.Equal(t, "MyId1", attribute1.StringVal())
+				assert.Equal(t, "MyId1", attribute1.Str())
 
 				attribute2, found := outputLogs.ResourceLogs().At(1).Resource().Attributes().Get("AccountId")
 				assert.True(t, found)
-				assert.Equal(t, "MyId2", attribute2.StringVal())
+				assert.Equal(t, "MyId2", attribute2.Str())
 			},
 		},
 		{
@@ -440,19 +440,19 @@ func TestTranslateAttributesForLogs(t *testing.T) {
 			translateAttributes: false,
 			createLogs: func() plog.Logs {
 				inputLogs := plog.NewLogs()
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.account.id", "MyId1")
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.account.id", "MyId2")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.account.id", "MyId1")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.account.id", "MyId2")
 
 				return inputLogs
 			},
 			test: func(outputLogs plog.Logs) {
 				attribute1, found := outputLogs.ResourceLogs().At(0).Resource().Attributes().Get("cloud.account.id")
 				assert.True(t, found)
-				assert.Equal(t, "MyId1", attribute1.StringVal())
+				assert.Equal(t, "MyId1", attribute1.Str())
 
 				attribute2, found := outputLogs.ResourceLogs().At(1).Resource().Attributes().Get("cloud.account.id")
 				assert.True(t, found)
-				assert.Equal(t, "MyId2", attribute2.StringVal())
+				assert.Equal(t, "MyId2", attribute2.Str())
 			},
 		},
 		{
@@ -460,18 +460,18 @@ func TestTranslateAttributesForLogs(t *testing.T) {
 			translateAttributes: true,
 			createLogs: func() plog.Logs {
 				inputLogs := plog.NewLogs()
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("not.actual.attr", "a1")
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("maybe.an.attr", "a2")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("not.actual.attr", "a1")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("maybe.an.attr", "a2")
 				return inputLogs
 			},
 			test: func(outputLogs plog.Logs) {
 				attribute1, found := outputLogs.ResourceLogs().At(0).Resource().Attributes().Get("not.actual.attr")
 				assert.True(t, found)
-				assert.Equal(t, "a1", attribute1.StringVal())
+				assert.Equal(t, "a1", attribute1.Str())
 
 				attribute2, found := outputLogs.ResourceLogs().At(1).Resource().Attributes().Get("maybe.an.attr")
 				assert.True(t, found)
-				assert.Equal(t, "a2", attribute2.StringVal())
+				assert.Equal(t, "a2", attribute2.Str())
 			},
 		},
 		{
@@ -479,24 +479,24 @@ func TestTranslateAttributesForLogs(t *testing.T) {
 			translateAttributes: true,
 			createLogs: func() plog.Logs {
 				inputLogs := plog.NewLogs()
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("cloud.account.id", "MyId")
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("maybe.an.attr", "a2")
-				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().InsertString("k8s.cluster.name", "A cool cluster")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("cloud.account.id", "MyId")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("maybe.an.attr", "a2")
+				inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes().PutString("k8s.cluster.name", "A cool cluster")
 
 				return inputLogs
 			},
 			test: func(outputLogs plog.Logs) {
 				attribute1, found := outputLogs.ResourceLogs().At(0).Resource().Attributes().Get("AccountId")
 				assert.True(t, found)
-				assert.Equal(t, "MyId", attribute1.StringVal())
+				assert.Equal(t, "MyId", attribute1.Str())
 
 				attribute2, found := outputLogs.ResourceLogs().At(1).Resource().Attributes().Get("maybe.an.attr")
 				assert.True(t, found)
-				assert.Equal(t, "a2", attribute2.StringVal())
+				assert.Equal(t, "a2", attribute2.Str())
 
 				attribute3, found := outputLogs.ResourceLogs().At(2).Resource().Attributes().Get("Cluster")
 				assert.True(t, found)
-				assert.Equal(t, "A cool cluster", attribute3.StringVal())
+				assert.Equal(t, "A cool cluster", attribute3.Str())
 			},
 		},
 	}
@@ -529,24 +529,24 @@ func TestTranslateAttributesForMetrics(t *testing.T) {
 			translateAttributes: true,
 			createMetrics: func() pmetric.Metrics {
 				inputMetrics := pmetric.NewMetrics()
-				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("cloud.account.id", "MyId")
-				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("maybe.an.attr", "a2")
-				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().InsertString("k8s.cluster.name", "A cool cluster")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().PutString("cloud.account.id", "MyId")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().PutString("maybe.an.attr", "a2")
+				inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes().PutString("k8s.cluster.name", "A cool cluster")
 
 				return inputMetrics
 			},
 			test: func(outputMetrics pmetric.Metrics) {
 				attribute1, found := outputMetrics.ResourceMetrics().At(0).Resource().Attributes().Get("AccountId")
 				assert.True(t, found)
-				assert.Equal(t, "MyId", attribute1.StringVal())
+				assert.Equal(t, "MyId", attribute1.Str())
 
 				attribute2, found := outputMetrics.ResourceMetrics().At(1).Resource().Attributes().Get("maybe.an.attr")
 				assert.True(t, found)
-				assert.Equal(t, "a2", attribute2.StringVal())
+				assert.Equal(t, "a2", attribute2.Str())
 
 				attribute3, found := outputMetrics.ResourceMetrics().At(2).Resource().Attributes().Get("Cluster")
 				assert.True(t, found)
-				assert.Equal(t, "A cool cluster", attribute3.StringVal())
+				assert.Equal(t, "A cool cluster", attribute3.Str())
 			},
 		},
 	}
@@ -580,24 +580,24 @@ func TestTranslateAttributesForTraces(t *testing.T) {
 			translateAttributes: true,
 			createTraces: func() ptrace.Traces {
 				inputTraces := ptrace.NewTraces()
-				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("cloud.account.id", "MyId")
-				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("maybe.an.attr", "a2")
-				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().InsertString("k8s.cluster.name", "A cool cluster")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().PutString("cloud.account.id", "MyId")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().PutString("maybe.an.attr", "a2")
+				inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes().PutString("k8s.cluster.name", "A cool cluster")
 
 				return inputTraces
 			},
 			test: func(outputTraces ptrace.Traces) {
 				attribute1, found := outputTraces.ResourceSpans().At(0).Resource().Attributes().Get("cloud.account.id")
 				assert.True(t, found)
-				assert.Equal(t, "MyId", attribute1.StringVal())
+				assert.Equal(t, "MyId", attribute1.Str())
 
 				attribute2, found := outputTraces.ResourceSpans().At(1).Resource().Attributes().Get("maybe.an.attr")
 				assert.True(t, found)
-				assert.Equal(t, "a2", attribute2.StringVal())
+				assert.Equal(t, "a2", attribute2.Str())
 
 				attribute3, found := outputTraces.ResourceSpans().At(2).Resource().Attributes().Get("k8s.cluster.name")
 				assert.True(t, found)
-				assert.Equal(t, "A cool cluster", attribute3.StringVal())
+				assert.Equal(t, "A cool cluster", attribute3.Str())
 			},
 		},
 	}

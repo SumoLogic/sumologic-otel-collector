@@ -35,6 +35,9 @@ exporters:
   ## This exporter supports sending logs, metrics and traces data to Sumo Logic.
   ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/exporter/sumologicexporter
   sumologic:
+    sending_queue:
+      enabled: true
+      storage: file_storage
 
 processors:
 

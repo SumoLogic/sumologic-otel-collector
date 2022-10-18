@@ -61,7 +61,7 @@ type TraceRejectEvaluator struct {
 
 // traceKey is defined since sync.Map requires a comparable type, isolating it on its own
 // type to help track usage.
-type traceKey [16]byte
+type traceKey pcommon.TraceID
 
 // cascadingFilterSpanProcessor handles the incoming trace data and uses the given sampling
 // policy to sample traces.
@@ -322,7 +322,7 @@ func (cfsp *cascadingFilterSpanProcessor) groupSpansByTraceKey(resourceSpans ptr
 		spansLen := ils.Spans().Len()
 		for k := 0; k < spansLen; k++ {
 			span := ils.Spans().At(k)
-			tk := traceKey(span.TraceID().Bytes())
+			tk := traceKey(span.TraceID())
 			if len(tk) != 16 {
 				cfsp.logger.Warn("Span without valid TraceId")
 			}
@@ -353,7 +353,7 @@ func (cfsp *cascadingFilterSpanProcessor) bufferTraces(id traceKey, res pcommon.
 		atomic.AddInt32(&actualData.SpanCount, lenSpans)
 	} else {
 		newTraceIDs++
-		cfsp.decisionBatcher.AddToCurrentBatch(pcommon.NewTraceID(id))
+		cfsp.decisionBatcher.AddToCurrentBatch(pcommon.TraceID(id))
 		atomic.AddUint64(&cfsp.numTracesOnMap, 1)
 		postDeletion := false
 

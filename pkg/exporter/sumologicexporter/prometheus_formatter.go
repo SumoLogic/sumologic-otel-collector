@@ -68,7 +68,7 @@ func (f *prometheusFormatter) tags2String(attr pcommon.Map, labels pcommon.Map) 
 
 	attr.CopyTo(mergedAttributes)
 	labels.Range(func(k string, v pcommon.Value) bool {
-		mergedAttributes.UpsertString(k, v.StringVal())
+		mergedAttributes.PutString(k, v.Str())
 		return true
 	})
 	length := mergedAttributes.Len()
@@ -219,7 +219,7 @@ func (f *prometheusFormatter) numberDataPointValueLine(name string, dp pmetric.N
 	case pmetric.NumberDataPointValueTypeDouble:
 		return f.doubleValueLine(
 			name,
-			dp.DoubleVal(),
+			dp.DoubleValue(),
 			dp,
 			attributes,
 		)
@@ -227,7 +227,7 @@ func (f *prometheusFormatter) numberDataPointValueLine(name string, dp pmetric.N
 		return f.intLine(
 			name,
 			f.tags2String(attributes, dp.Attributes()),
-			dp.IntVal(),
+			dp.IntValue(),
 			dp.Timestamp(),
 		)
 	}
@@ -251,7 +251,7 @@ func (f *prometheusFormatter) mergeAttributes(attributes pcommon.Map, additional
 
 	attributes.CopyTo(mergedAttributes)
 	additionalAttributes.Range(func(k string, v pcommon.Value) bool {
-		mergedAttributes.Upsert(k, v)
+		v.CopyTo(mergedAttributes.PutEmpty(k))
 		return true
 	})
 	return mergedAttributes
@@ -305,7 +305,7 @@ func (f *prometheusFormatter) summary2Strings(metric pmetric.Metric, attributes 
 		additionalAttributes := pcommon.NewMap()
 		for i := 0; i < qs.Len(); i++ {
 			q := qs.At(i)
-			additionalAttributes.UpsertDouble(prometheusQuantileTag, q.Quantile())
+			additionalAttributes.PutDouble(prometheusQuantileTag, q.Quantile())
 
 			line := f.doubleValueLine(
 				metric.Name(),
@@ -355,7 +355,7 @@ func (f *prometheusFormatter) histogram2Strings(metric pmetric.Metric, attribute
 		for i := 0; i < explicitBounds.Len(); i++ {
 			bound := explicitBounds.At(i)
 			cumulative += dp.BucketCounts().At(i)
-			additionalAttributes.UpsertDouble(prometheusLeTag, bound)
+			additionalAttributes.PutDouble(prometheusLeTag, bound)
 
 			line := f.uintValueLine(
 				metric.Name(),
@@ -367,7 +367,7 @@ func (f *prometheusFormatter) histogram2Strings(metric pmetric.Metric, attribute
 		}
 
 		cumulative += dp.BucketCounts().At(explicitBounds.Len())
-		additionalAttributes.UpsertString(prometheusLeTag, prometheusInfValue)
+		additionalAttributes.PutString(prometheusLeTag, prometheusInfValue)
 		line := f.uintValueLine(
 			metric.Name(),
 			cumulative,
@@ -400,14 +400,14 @@ func (f *prometheusFormatter) histogram2Strings(metric pmetric.Metric, attribute
 func (f *prometheusFormatter) metric2String(metric pmetric.Metric, attributes pcommon.Map) string {
 	var lines []string
 
-	switch metric.DataType() {
-	case pmetric.MetricDataTypeGauge:
+	switch metric.Type() {
+	case pmetric.MetricTypeGauge:
 		lines = f.gauge2Strings(metric, attributes)
-	case pmetric.MetricDataTypeSum:
+	case pmetric.MetricTypeSum:
 		lines = f.sum2Strings(metric, attributes)
-	case pmetric.MetricDataTypeSummary:
+	case pmetric.MetricTypeSummary:
 		lines = f.summary2Strings(metric, attributes)
-	case pmetric.MetricDataTypeHistogram:
+	case pmetric.MetricTypeHistogram:
 		lines = f.histogram2Strings(metric, attributes)
 	}
 	return strings.Join(lines, "\n")

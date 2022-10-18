@@ -72,7 +72,7 @@ func createSourceNameFiller(cfg *Config) attributeFiller {
 func (f *attributeFiller) fillResourceOrUseAnnotation(atts *pcommon.Map, annotationKey string) bool {
 	val, found := atts.Get(annotationKey)
 	if found {
-		annotationFiller := extractFormat(val.StringVal(), f.name)
+		annotationFiller := extractFormat(val.Str(), f.name)
 		annotationFiller.dashReplacement = f.dashReplacement
 		annotationFiller.compiledFormat = f.prefix + annotationFiller.compiledFormat
 		return annotationFiller.fillAttributes(atts)
@@ -91,7 +91,7 @@ func (f *attributeFiller) fillAttributes(atts *pcommon.Map) bool {
 		if f.dashReplacement != "" {
 			str = strings.ReplaceAll(str, "-", f.dashReplacement)
 		}
-		atts.UpsertString(f.name, str)
+		atts.PutString(f.name, str)
 		return true
 	}
 	return false
@@ -101,7 +101,7 @@ func (f *attributeFiller) resourceLabelValues(atts *pcommon.Map) []interface{} {
 	arr := make([]interface{}, 0)
 	for _, label := range f.labels {
 		if value, found := atts.Get(label); found {
-			arr = append(arr, value.StringVal())
+			arr = append(arr, value.Str())
 		} else {
 			arr = append(arr, "undefined")
 		}

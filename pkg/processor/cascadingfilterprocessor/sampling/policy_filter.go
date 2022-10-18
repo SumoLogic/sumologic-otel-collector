@@ -45,7 +45,7 @@ func checkAttributeFilterMatchedAndFound(attrs pcommon.Map, filter attributeFilt
 		// String patterns vs values is exclusive
 		if len(filter.patterns) > 0 {
 			// Pattern matching
-			truncableStr := v.StringVal()
+			truncableStr := v.Str()
 			for _, re := range filter.patterns {
 				if re.MatchString(truncableStr) {
 					return true, true
@@ -53,7 +53,7 @@ func checkAttributeFilterMatchedAndFound(attrs pcommon.Map, filter attributeFilt
 			}
 		} else if len(filter.values) > 0 {
 			// Exact matching
-			truncableStr := v.StringVal()
+			truncableStr := v.Str()
 			if len(truncableStr) > 0 {
 				if _, ok := filter.values[truncableStr]; ok {
 					return true, true
@@ -63,14 +63,14 @@ func checkAttributeFilterMatchedAndFound(attrs pcommon.Map, filter attributeFilt
 
 		if len(filter.ranges) > 0 {
 			if v.Type() == pcommon.ValueTypeDouble {
-				value := v.DoubleVal()
+				value := v.Double()
 				for _, r := range filter.ranges {
 					if value >= float64(r.minValue) && value <= float64(r.maxValue) {
 						return true, true
 					}
 				}
 			} else if v.Type() == pcommon.ValueTypeInt {
-				value := v.IntVal()
+				value := v.Int()
 				for _, r := range filter.ranges {
 					if value >= r.minValue && value <= r.maxValue {
 						return true, true
@@ -93,7 +93,7 @@ func checkAttributeFilterMatchedAndFound(attrs pcommon.Map, filter attributeFilt
 
 func checkIfNumericAttrFound(attrs pcommon.Map, filter *numericAttributeFilter) bool {
 	if v, ok := attrs.Get(filter.key); ok {
-		value := v.IntVal()
+		value := v.Int()
 		if value >= filter.minValue && value <= filter.maxValue {
 			return true
 		}
@@ -103,7 +103,7 @@ func checkIfNumericAttrFound(attrs pcommon.Map, filter *numericAttributeFilter) 
 
 func checkIfStringAttrFound(attrs pcommon.Map, filter *stringAttributeFilter) bool {
 	if v, ok := attrs.Get(filter.key); ok {
-		truncableStr := v.StringVal()
+		truncableStr := v.Str()
 		if filter.patterns != nil {
 			// Pattern matching
 			for _, re := range filter.patterns {

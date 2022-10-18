@@ -112,7 +112,7 @@ func newSourceProcessor(cfg *Config) *sourceProcessor {
 
 func (sp *sourceProcessor) fillOtherMeta(atts pcommon.Map) {
 	if sp.collector != "" {
-		atts.UpsertString(collectorKey, sp.collector)
+		atts.PutString(collectorKey, sp.collector)
 	}
 }
 
@@ -121,17 +121,17 @@ func (sp *sourceProcessor) isFilteredOut(atts pcommon.Map) bool {
 	// It should be moved to K8S Meta Processor and done once per new pod/changed pod
 
 	if value, found := atts.Get(sp.annotationAttribute(excludeAnnotation)); found {
-		if value.Type() == pcommon.ValueTypeString && value.StringVal() == "true" {
+		if value.Type() == pcommon.ValueTypeStr && value.Str() == "true" {
 			return true
-		} else if value.Type() == pcommon.ValueTypeBool && value.BoolVal() {
+		} else if value.Type() == pcommon.ValueTypeBool && value.Bool() {
 			return true
 		}
 	}
 
 	if value, found := atts.Get(sp.annotationAttribute(includeAnnotation)); found {
-		if value.Type() == pcommon.ValueTypeString && value.StringVal() == "true" {
+		if value.Type() == pcommon.ValueTypeStr && value.Str() == "true" {
 			return false
-		} else if value.Type() == pcommon.ValueTypeBool && value.BoolVal() {
+		} else if value.Type() == pcommon.ValueTypeBool && value.Bool() {
 			return false
 		}
 	}
@@ -227,8 +227,8 @@ func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md plog.Logs) (plog.
 			logs := sl.LogRecords()
 			for k := 0; k < logs.Len(); k++ {
 				log := logs.At(k)
-				if log.Body().Type() == pcommon.ValueTypeString {
-					err := json.Unmarshal([]byte(log.Body().StringVal()), &dockerLog)
+				if log.Body().Type() == pcommon.ValueTypeStr {
+					err := json.Unmarshal([]byte(log.Body().Str()), &dockerLog)
 
 					// If there was any parsing error or any of the expected key have no value
 					// skip extraction and leave log unchanged
@@ -237,11 +237,11 @@ func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md plog.Logs) (plog.
 					}
 
 					// Extract `stream` and `time` as record level attributes
-					log.Attributes().UpsertString("stream", dockerLog.Stream)
-					log.Attributes().UpsertString("time", dockerLog.Time)
+					log.Attributes().PutString("stream", dockerLog.Stream)
+					log.Attributes().PutString("time", dockerLog.Time)
 
 					// Set log body to `log` content
-					log.Body().SetStringVal(strings.TrimSpace(dockerLog.Log))
+					log.Body().SetStr(strings.TrimSpace(dockerLog.Log))
 				}
 			}
 		}
@@ -308,7 +308,7 @@ func (sp *sourceProcessor) enrichPodName(atts *pcommon.Map) {
 		return
 	}
 
-	podParts := strings.Split(pod.StringVal(), "-")
+	podParts := strings.Split(pod.Str(), "-")
 	if len(podParts) < 2 {
 		// This is unexpected, fallback
 		return
@@ -317,13 +317,13 @@ func (sp *sourceProcessor) enrichPodName(atts *pcommon.Map) {
 	podTemplateHashAttr, found := atts.Get(sp.keys.podTemplateHashKey)
 
 	if found && len(podParts) > 2 {
-		podTemplateHash := podTemplateHashAttr.StringVal()
+		podTemplateHash := podTemplateHashAttr.Str()
 		if podTemplateHash == podParts[len(podParts)-2] || SafeEncodeString(podTemplateHash) == podParts[len(podParts)-2] {
-			atts.UpsertString(sp.keys.podNameKey, strings.Join(podParts[:len(podParts)-2], "-"))
+			atts.PutString(sp.keys.podNameKey, strings.Join(podParts[:len(podParts)-2], "-"))
 			return
 		}
 	}
-	atts.UpsertString(sp.keys.podNameKey, strings.Join(podParts[:len(podParts)-1], "-"))
+	atts.PutString(sp.keys.podNameKey, strings.Join(podParts[:len(podParts)-1], "-"))
 }
 
 // matchFieldByRegex searches the provided attribute map for a particular field
@@ -336,10 +336,10 @@ func matchFieldByRegex(atts pcommon.Map, field string, r *regexp.Regexp) (string
 		return "", false
 	}
 
-	if att.Type() != pcommon.ValueTypeString {
+	if att.Type() != pcommon.ValueTypeStr {
 		return "", false
 	}
 
-	v := att.StringVal()
+	v := att.Str()
 	return v, r.MatchString(v)
 }

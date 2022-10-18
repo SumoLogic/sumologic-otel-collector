@@ -228,7 +228,7 @@ func TestConvertEventToLog(t *testing.T) {
 	// check the standard log record fields: body, severity and timestamp
 	logRecord := logs.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0)
 	assert.Equal(t, eventChange.event.Message, logRecord.Body().AsString())
-	assert.Equal(t, plog.SeverityNumberINFO, logRecord.SeverityNumber())
+	assert.Equal(t, plog.SeverityNumberInfo, logRecord.SeverityNumber())
 	assert.Equal(t, eventChange.event.FirstTimestamp.Time.UTC(), logRecord.Timestamp().AsTime())
 
 	// check the top-level attributes: `object` and `type`
@@ -254,7 +254,7 @@ func TestConvertEventToLog(t *testing.T) {
 		"source",
 		"type",
 	}
-	objectMap := objectAttributeValue.MapVal()
+	objectMap := objectAttributeValue.Map()
 	for _, objectKey := range expectedObjectKeys {
 		_, keyExists := objectMap.Get(objectKey)
 		assert.True(t, keyExists, objectKey)
@@ -405,7 +405,7 @@ func TestStorage(t *testing.T) {
 	// Start the receiver with storage extension.
 	ctx := context.Background()
 	storageDir := t.TempDir()
-	host := storagetest.NewStorageHost(t, storageDir, "test")
+	host := storagetest.NewStorageHost().WithFileBackedStorageExtension("test", storageDir)
 	assert.NoError(t, receiver.Start(ctx, host))
 
 	time.Sleep(10 * time.Millisecond)
@@ -442,7 +442,7 @@ func TestStorage(t *testing.T) {
 		listWatchFactory,
 	)
 	require.NoError(t, err)
-	host = storagetest.NewStorageHost(t, storageDir, "test")
+	host = storagetest.NewStorageHost().WithFileBackedStorageExtension("test", storageDir)
 	require.NoError(t, receiver.Start(ctx, host))
 
 	// The receiver should only pick up the third event,

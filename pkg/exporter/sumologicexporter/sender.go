@@ -359,12 +359,16 @@ func (s *sender) logToJSON(record plog.LogRecord) (string, error) {
 	if body := record.Body(); !isEmptyAttributeValue(body) {
 		if s.jsonLogsConfig.FlattenBody && body.Type() == pcommon.ValueTypeMap {
 			// Cannot use CopyTo, as it overrides data.orig's values
-			body.MapVal().Range(func(k string, v pcommon.Value) bool {
-				record.Attributes().Insert(k, v)
+			body.Map().Range(func(k string, v pcommon.Value) bool {
+				_, ok := record.Attributes().Get(k)
+
+				if !ok {
+					v.CopyTo(record.Attributes().PutEmpty(k))
+				}
 				return true
 			})
 		} else {
-			record.Attributes().Upsert(s.jsonLogsConfig.LogKey, body)
+			body.CopyTo(record.Attributes().PutEmpty(s.jsonLogsConfig.LogKey))
 		}
 	}
 
@@ -385,18 +389,18 @@ var timeZeroUTC = time.Unix(0, 0).UTC()
 func addJSONTimestamp(attrs pcommon.Map, timestampKey string, pt pcommon.Timestamp) {
 	t := pt.AsTime()
 	if t == timeZeroUTC {
-		attrs.InsertInt(timestampKey, time.Now().UnixMilli())
+		attrs.PutInt(timestampKey, time.Now().UnixMilli())
 	} else {
-		attrs.InsertInt(timestampKey, t.UnixMilli())
+		attrs.PutInt(timestampKey, t.UnixMilli())
 	}
 }
 
 func isEmptyAttributeValue(att pcommon.Value) bool {
 	t := att.Type()
-	return !(t == pcommon.ValueTypeString && len(att.StringVal()) > 0 ||
-		t == pcommon.ValueTypeSlice && att.SliceVal().Len() > 0 ||
-		t == pcommon.ValueTypeMap && att.MapVal().Len() > 0 ||
-		t == pcommon.ValueTypeBytes && att.BytesVal().Len() > 0)
+	return !(t == pcommon.ValueTypeStr && len(att.Str()) > 0 ||
+		t == pcommon.ValueTypeSlice && att.Slice().Len() > 0 ||
+		t == pcommon.ValueTypeMap && att.Map().Len() > 0 ||
+		t == pcommon.ValueTypeBytes && att.Bytes().Len() > 0)
 }
 
 // sendNonOTLPLogs sends log records from the logBuffer formatted according

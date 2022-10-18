@@ -14,7 +14,7 @@ exporters:
     sending_queue:
       enabled: true
       queue_size: 100
-      persistent_storage_enabled: true
+      storage: file_storage/buff
 
 service:
   extensions:

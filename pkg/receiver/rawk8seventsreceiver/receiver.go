@@ -42,8 +42,8 @@ import (
 // Only two types of events are created as of now.
 // For more info: https://docs.openshift.com/container-platform/4.9/rest_api/metadata_apis/event-core-v1.html
 var severityMap = map[string]plog.SeverityNumber{
-	"normal":  plog.SeverityNumberINFO,
-	"warning": plog.SeverityNumberWARN,
+	"normal":  plog.SeverityNumberInfo,
+	"warning": plog.SeverityNumberWarn,
 }
 
 const latestResourceVersionStorageKey string = "latestResourceVersion"
@@ -370,13 +370,14 @@ func (r *rawK8sEventsReceiver) convertToLog(eventChange *eventChange) (plog.Logs
 	}
 
 	// for compatibility with the FluentD plugin's data format, we need to put the event data under the "object" key
-	pdataObjectMap := pcommon.NewMapFromRaw(map[string]interface{}{"object": eventMap})
+	pdataObjectMap := pcommon.NewMap()
+	pdataObjectMap.FromRaw(map[string]interface{}{"object": eventMap})
 
 	lr.SetTimestamp(pcommon.NewTimestampFromTime(getEventTimestamp(event)))
 
 	// The Message field contains description about the event,
 	// which is best suited for the "Body" of the LogRecordSlice.
-	lr.Body().SetStringVal(event.Message)
+	lr.Body().SetStr(event.Message)
 
 	// Set the "SeverityNumber" and "SeverityText" if a known type of severity is found.
 	if severityNumber, ok := severityMap[strings.ToLower(event.Type)]; ok {
@@ -389,7 +390,9 @@ func (r *rawK8sEventsReceiver) convertToLog(eventChange *eventChange) (plog.Logs
 	pdataObjectMap.CopyTo(lr.Attributes())
 
 	// for compatibility with the FluentD plugin's data format, we need to put the change type under "type"
-	lr.Attributes().InsertString("type", string(eventChange.changeType))
+	if _, ok := lr.Attributes().Get("type"); !ok {
+		lr.Attributes().PutStr("type", string(eventChange.changeType))
+	}
 	return ld, nil
 }
 

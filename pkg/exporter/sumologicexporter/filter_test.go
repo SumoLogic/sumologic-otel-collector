@@ -24,11 +24,11 @@ import (
 
 func TestGetMetadata(t *testing.T) {
 	attributes := pcommon.NewMap()
-	attributes.InsertString("key3", "value3")
-	attributes.InsertString("key1", "value1")
-	attributes.InsertString("key2", "value2")
-	attributes.InsertString("additional_key2", "value2")
-	attributes.InsertString("additional_key3", "value3")
+	attributes.PutString("key3", "value3")
+	attributes.PutString("key1", "value1")
+	attributes.PutString("key2", "value2")
+	attributes.PutString("additional_key2", "value2")
+	attributes.PutString("additional_key3", "value3")
 
 	regexes := []string{"^key[12]", "^key3"}
 	f, err := newFilter(regexes)
@@ -46,11 +46,11 @@ func TestGetMetadata(t *testing.T) {
 
 func TestFilterOutMetadata(t *testing.T) {
 	attributes := pcommon.NewMap()
-	attributes.InsertString("key3", "value3")
-	attributes.InsertString("key1", "value1")
-	attributes.InsertString("key2", "value2")
-	attributes.InsertString("additional_key2", "value2")
-	attributes.InsertString("additional_key3", "value3")
+	attributes.PutString("key3", "value3")
+	attributes.PutString("key1", "value1")
+	attributes.PutString("key2", "value2")
+	attributes.PutString("additional_key2", "value2")
+	attributes.PutString("additional_key3", "value3")
 
 	regexes := []string{"^key[12]", "^key3"}
 	f, err := newFilter(regexes)

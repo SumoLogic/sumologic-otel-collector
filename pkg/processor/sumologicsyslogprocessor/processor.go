@@ -96,7 +96,7 @@ func (ssp *sumologicSyslogProcessor) ProcessLogs(ctx context.Context, ld plog.Lo
 				)
 
 				log := logs.At(k)
-				match := ssp.syslogFacilityRegex.FindStringSubmatch(log.Body().StringVal())
+				match := ssp.syslogFacilityRegex.FindStringSubmatch(log.Body().Str())
 
 				if match != nil {
 					facility, err := strconv.Atoi(match[1])
@@ -110,7 +110,7 @@ func (ssp *sumologicSyslogProcessor) ProcessLogs(ctx context.Context, ld plog.Lo
 						value = syslogSource
 					}
 				}
-				log.Attributes().UpsertString(ssp.syslogFacilityAttrName, value)
+				log.Attributes().PutString(ssp.syslogFacilityAttrName, value)
 			}
 		}
 	}

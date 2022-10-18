@@ -75,7 +75,7 @@ or only read files created or modified after a specific point in time.
 
 There is currently no workaround for this.
 
-[filelogreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.57.2/receiver/filelogreceiver/README.md
+[filelogreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.62.0/receiver/filelogreceiver/README.md
 
 ## Multiple multiline logs are sometimes concatenated
 

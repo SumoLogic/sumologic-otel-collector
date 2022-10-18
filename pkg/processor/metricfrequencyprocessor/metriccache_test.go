@@ -59,6 +59,6 @@ func newCache() *metricCache {
 func newDataPoint(timestamp pcommon.Timestamp, value float64) pmetric.NumberDataPoint {
 	result := pmetric.NewNumberDataPoint()
 	result.SetTimestamp(timestamp)
-	result.SetDoubleVal(value)
+	result.SetDoubleValue(value)
 	return result
 }

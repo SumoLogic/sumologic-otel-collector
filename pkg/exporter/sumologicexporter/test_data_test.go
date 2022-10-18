@@ -28,17 +28,17 @@ func buildExampleIntMetric(fillData bool) (pmetric.Metric, pcommon.Map) {
 	metric := pmetric.NewMetric()
 	metric.SetName("test.metric.data")
 	metric.SetUnit("bytes")
-	metric.SetDataType(pmetric.MetricDataTypeSum)
+	metric.SetEmptySum()
 
 	if fillData {
 		dp := metric.Sum().DataPoints().AppendEmpty()
 		dp.SetTimestamp(1605534165 * 1e9)
-		dp.SetIntVal(14500)
+		dp.SetIntValue(14500)
 	}
 
 	attributes := pcommon.NewMap()
-	attributes.InsertString("test", "test_value")
-	attributes.InsertString("test2", "second_value")
+	attributes.PutString("test", "test_value")
+	attributes.PutString("test2", "second_value")
 
 	return metric, attributes
 }
@@ -51,22 +51,22 @@ func buildExampleIntGaugeMetric(fillData bool) (pmetric.Metric, pcommon.Map) {
 	attributes := pcommon.NewMap()
 	metric := pmetric.NewMetric()
 
-	metric.SetDataType(pmetric.MetricDataTypeGauge)
+	metric.SetEmptyGauge()
 	metric.SetName("gauge_metric_name")
 
-	attributes.InsertString("foo", "bar")
+	attributes.PutString("foo", "bar")
 
 	if fillData {
 		dp := metric.Gauge().DataPoints().AppendEmpty()
-		dp.Attributes().InsertString("remote_name", "156920")
-		dp.Attributes().InsertString("url", "http://example_url")
-		dp.SetIntVal(124)
+		dp.Attributes().PutString("remote_name", "156920")
+		dp.Attributes().PutString("url", "http://example_url")
+		dp.SetIntValue(124)
 		dp.SetTimestamp(1608124661.166 * 1e9)
 
 		dp = metric.Gauge().DataPoints().AppendEmpty()
-		dp.Attributes().InsertString("remote_name", "156955")
-		dp.Attributes().InsertString("url", "http://another_url")
-		dp.SetIntVal(245)
+		dp.Attributes().PutString("remote_name", "156955")
+		dp.Attributes().PutString("url", "http://another_url")
+		dp.SetIntValue(245)
 		dp.SetTimestamp(1608124662.166 * 1e9)
 	}
 
@@ -81,22 +81,22 @@ func buildExampleDoubleGaugeMetric(fillData bool) (pmetric.Metric, pcommon.Map) 
 	attributes := pcommon.NewMap()
 	metric := pmetric.NewMetric()
 
-	metric.SetDataType(pmetric.MetricDataTypeGauge)
+	metric.SetEmptyGauge()
 	metric.SetName("gauge_metric_name_double_test")
 
-	attributes.InsertString("foo", "bar")
+	attributes.PutString("foo", "bar")
 
 	if fillData {
 		dp := metric.Gauge().DataPoints().AppendEmpty()
-		dp.Attributes().InsertString("local_name", "156720")
-		dp.Attributes().InsertString("endpoint", "http://example_url")
-		dp.SetDoubleVal(33.4)
+		dp.Attributes().PutString("local_name", "156720")
+		dp.Attributes().PutString("endpoint", "http://example_url")
+		dp.SetDoubleValue(33.4)
 		dp.SetTimestamp(1608124661.169 * 1e9)
 
 		dp = metric.Gauge().DataPoints().AppendEmpty()
-		dp.Attributes().InsertString("local_name", "156155")
-		dp.Attributes().InsertString("endpoint", "http://another_url")
-		dp.SetDoubleVal(56.8)
+		dp.Attributes().PutString("local_name", "156155")
+		dp.Attributes().PutString("endpoint", "http://another_url")
+		dp.SetDoubleValue(56.8)
 		dp.SetTimestamp(1608124662.186 * 1e9)
 	}
 
@@ -111,22 +111,22 @@ func buildExampleIntSumMetric(fillData bool) (pmetric.Metric, pcommon.Map) {
 	attributes := pcommon.NewMap()
 	metric := pmetric.NewMetric()
 
-	metric.SetDataType(pmetric.MetricDataTypeSum)
+	metric.SetEmptySum()
 	metric.SetName("sum_metric_int_test")
 
-	attributes.InsertString("foo", "bar")
+	attributes.PutString("foo", "bar")
 
 	if fillData {
 		dp := metric.Sum().DataPoints().AppendEmpty()
-		dp.Attributes().InsertString("name", "156720")
-		dp.Attributes().InsertString("address", "http://example_url")
-		dp.SetIntVal(45)
+		dp.Attributes().PutString("name", "156720")
+		dp.Attributes().PutString("address", "http://example_url")
+		dp.SetIntValue(45)
 		dp.SetTimestamp(1608124444.169 * 1e9)
 
 		dp = metric.Sum().DataPoints().AppendEmpty()
-		dp.Attributes().InsertString("name", "156155")
-		dp.Attributes().InsertString("address", "http://another_url")
-		dp.SetIntVal(1238)
+		dp.Attributes().PutString("name", "156155")
+		dp.Attributes().PutString("address", "http://another_url")
+		dp.SetIntValue(1238)
 		dp.SetTimestamp(1608124699.186 * 1e9)
 	}
 
@@ -141,22 +141,22 @@ func buildExampleDoubleSumMetric(fillData bool) (pmetric.Metric, pcommon.Map) {
 	attributes := pcommon.NewMap()
 	metric := pmetric.NewMetric()
 
-	metric.SetDataType(pmetric.MetricDataTypeSum)
+	metric.SetEmptySum()
 	metric.SetName("sum_metric_double_test")
 
-	attributes.InsertString("foo", "bar")
+	attributes.PutString("foo", "bar")
 
 	if fillData {
 		dp := metric.Sum().DataPoints().AppendEmpty()
-		dp.Attributes().InsertString("pod_name", "lorem")
-		dp.Attributes().InsertString("namespace", "default")
-		dp.SetDoubleVal(45.6)
+		dp.Attributes().PutString("pod_name", "lorem")
+		dp.Attributes().PutString("namespace", "default")
+		dp.SetDoubleValue(45.6)
 		dp.SetTimestamp(1618124444.169 * 1e9)
 
 		dp = metric.Sum().DataPoints().AppendEmpty()
-		dp.Attributes().InsertString("pod_name", "opsum")
-		dp.Attributes().InsertString("namespace", "kube-config")
-		dp.SetDoubleVal(1238.1)
+		dp.Attributes().PutString("pod_name", "opsum")
+		dp.Attributes().PutString("namespace", "kube-config")
+		dp.SetDoubleValue(1238.1)
 		dp.SetTimestamp(1608424699.186 * 1e9)
 	}
 
@@ -171,15 +171,15 @@ func buildExampleSummaryMetric(fillData bool) (pmetric.Metric, pcommon.Map) {
 	attributes := pcommon.NewMap()
 	metric := pmetric.NewMetric()
 
-	metric.SetDataType(pmetric.MetricDataTypeSummary)
+	metric.SetEmptySummary()
 	metric.SetName("summary_metric_double_test")
 
-	attributes.InsertString("foo", "bar")
+	attributes.PutString("foo", "bar")
 
 	if fillData {
 		dp := metric.Summary().DataPoints().AppendEmpty()
-		dp.Attributes().InsertString("pod_name", "dolor")
-		dp.Attributes().InsertString("namespace", "sumologic")
+		dp.Attributes().PutString("pod_name", "dolor")
+		dp.Attributes().PutString("namespace", "sumologic")
 		dp.SetSum(45.6)
 		dp.SetCount(3)
 		dp.SetTimestamp(1618124444.169 * 1e9)
@@ -193,8 +193,8 @@ func buildExampleSummaryMetric(fillData bool) (pmetric.Metric, pcommon.Map) {
 		quantile.SetValue(4)
 
 		dp = metric.Summary().DataPoints().AppendEmpty()
-		dp.Attributes().InsertString("pod_name", "sit")
-		dp.Attributes().InsertString("namespace", "main")
+		dp.Attributes().PutString("pod_name", "sit")
+		dp.Attributes().PutString("namespace", "main")
 		dp.SetSum(1238.1)
 		dp.SetCount(7)
 		dp.SetTimestamp(1608424699.186 * 1e9)
@@ -211,26 +211,39 @@ func buildExampleHistogramMetric(fillData bool) (pmetric.Metric, pcommon.Map) {
 	attributes := pcommon.NewMap()
 	metric := pmetric.NewMetric()
 
-	metric.SetDataType(pmetric.MetricDataTypeHistogram)
+	metric.SetEmptyHistogram()
 	metric.SetName("histogram_metric_double_test")
 
-	attributes.InsertString("bar", "foo")
+	attributes.PutString("bar", "foo")
 
 	if fillData {
 		dp := metric.Histogram().DataPoints().AppendEmpty()
-		dp.Attributes().InsertString("container", "dolor")
-		dp.Attributes().InsertString("branch", "sumologic")
-		dp.SetBucketCounts(pcommon.NewImmutableUInt64Slice([]uint64{0, 12, 7, 5, 8, 13}))
-		dp.SetExplicitBounds(pcommon.NewImmutableFloat64Slice([]float64{0.1, 0.2, 0.5, 0.8, 1}))
+		dp.Attributes().PutString("container", "dolor")
+		dp.Attributes().PutString("branch", "sumologic")
+		si := pcommon.NewUInt64Slice()
+		si.FromRaw([]uint64{0, 12, 7, 5, 8, 13})
+		si.CopyTo(dp.BucketCounts())
+
+		sf := pcommon.NewFloat64Slice()
+		sf.FromRaw([]float64{0.1, 0.2, 0.5, 0.8, 1})
+		sf.CopyTo(dp.ExplicitBounds())
+
 		dp.SetTimestamp(1618124444.169 * 1e9)
 		dp.SetSum(45.6)
 		dp.SetCount(7)
 
 		dp = metric.Histogram().DataPoints().AppendEmpty()
-		dp.Attributes().InsertString("container", "sit")
-		dp.Attributes().InsertString("branch", "main")
-		dp.SetBucketCounts(pcommon.NewImmutableUInt64Slice([]uint64{0, 10, 1, 1, 4, 6}))
-		dp.SetExplicitBounds(pcommon.NewImmutableFloat64Slice([]float64{0.1, 0.2, 0.5, 0.8, 1}))
+		dp.Attributes().PutString("container", "sit")
+		dp.Attributes().PutString("branch", "main")
+
+		si = pcommon.NewUInt64Slice()
+		si.FromRaw([]uint64{0, 10, 1, 1, 4, 6})
+		si.CopyTo(dp.BucketCounts())
+
+		sf = pcommon.NewFloat64Slice()
+		sf.FromRaw([]float64{0.1, 0.2, 0.5, 0.8, 1})
+		sf.CopyTo(dp.ExplicitBounds())
+
 		dp.SetTimestamp(1608424699.186 * 1e9)
 		dp.SetSum(54.1)
 		dp.SetCount(98)
@@ -284,7 +297,7 @@ func metricAndAttributesToPdataMetrics(metric pmetric.Metric, attributes pcommon
 func fieldsFromMap(s map[string]string) fields {
 	attrMap := pcommon.NewMap()
 	for k, v := range s {
-		attrMap.InsertString(k, v)
+		attrMap.PutString(k, v)
 	}
 	return newFields(attrMap)
 }
@@ -292,16 +305,16 @@ func fieldsFromMap(s map[string]string) fields {
 func exampleTrace() ptrace.Traces {
 	td := ptrace.NewTraces()
 	rs := td.ResourceSpans().AppendEmpty()
-	rs.Resource().Attributes().UpsertString("hostname", "testHost")
-	rs.Resource().Attributes().UpsertString("_sourceHost", "source_host")
-	rs.Resource().Attributes().UpsertString("_sourceName", "source_name")
-	rs.Resource().Attributes().UpsertString("_sourceCategory", "source_category")
+	rs.Resource().Attributes().PutString("hostname", "testHost")
+	rs.Resource().Attributes().PutString("_sourceHost", "source_host")
+	rs.Resource().Attributes().PutString("_sourceName", "source_name")
+	rs.Resource().Attributes().PutString("_sourceCategory", "source_category")
 	span := rs.ScopeSpans().AppendEmpty().Spans().AppendEmpty()
-	span.SetTraceID(pcommon.NewTraceID([16]byte{0x5B, 0x8E, 0xFF, 0xF7, 0x98, 0x3, 0x81, 0x3, 0xD2, 0x69, 0xB6, 0x33, 0x81, 0x3F, 0xC6, 0xC}))
-	span.SetSpanID(pcommon.NewSpanID([8]byte{0xEE, 0xE1, 0x9B, 0x7E, 0xC3, 0xC1, 0xB1, 0x73}))
+	span.SetTraceID(pcommon.TraceID([16]byte{0x5B, 0x8E, 0xFF, 0xF7, 0x98, 0x3, 0x81, 0x3, 0xD2, 0x69, 0xB6, 0x33, 0x81, 0x3F, 0xC6, 0xC}))
+	span.SetSpanID(pcommon.SpanID([8]byte{0xEE, 0xE1, 0x9B, 0x7E, 0xC3, 0xC1, 0xB1, 0x73}))
 	span.SetName("testSpan")
 	span.SetStartTimestamp(1544712660000000000)
 	span.SetEndTimestamp(1544712661000000000)
-	span.Attributes().UpsertInt("attr1", 55)
+	span.Attributes().PutInt("attr1", 55)
 	return td
 }

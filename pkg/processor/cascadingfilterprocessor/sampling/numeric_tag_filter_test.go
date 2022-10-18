@@ -81,7 +81,7 @@ func TestNumericTagFilter(t *testing.T) {
 		t.Run(c.Desc, func(t *testing.T) {
 			u, err := uuid.NewRandom()
 			require.NoError(t, err)
-			decision := filter.Evaluate(pcommon.NewTraceID(u), c.Trace)
+			decision := filter.Evaluate(pcommon.TraceID(u), c.Trace)
 			assert.Equal(t, decision, c.Decision)
 		})
 	}
@@ -91,12 +91,14 @@ func newTraceIntAttrs(nodeAttrs map[string]interface{}, spanAttrKey string, span
 	var traceBatches []ptrace.Traces
 	traces := ptrace.NewTraces()
 	rs := traces.ResourceSpans().AppendEmpty()
-	pcommon.NewMapFromRaw(nodeAttrs).CopyTo(rs.Resource().Attributes())
+	m := pcommon.NewMap()
+	m.FromRaw(nodeAttrs)
+	m.CopyTo(rs.Resource().Attributes())
 	ss := rs.ScopeSpans().AppendEmpty()
 	span := ss.Spans().AppendEmpty()
-	span.SetTraceID(pcommon.NewTraceID([16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}))
-	span.SetSpanID(pcommon.NewSpanID([8]byte{1, 2, 3, 4, 5, 6, 7, 8}))
-	span.Attributes().InsertInt(spanAttrKey, spanAttrValue)
+	span.SetTraceID(pcommon.TraceID([16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}))
+	span.SetSpanID(pcommon.SpanID([8]byte{1, 2, 3, 4, 5, 6, 7, 8}))
+	span.Attributes().PutInt(spanAttrKey, spanAttrValue)
 	traceBatches = append(traceBatches, traces)
 	return &TraceData{
 		ReceivedBatches: traceBatches,

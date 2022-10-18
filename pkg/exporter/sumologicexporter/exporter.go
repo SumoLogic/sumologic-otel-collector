@@ -94,8 +94,9 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 }
 
 func newLogsExporter(
-	cfg *Config,
+	ctx context.Context,
 	params component.ExporterCreateSettings,
+	cfg *Config,
 ) (component.LogsExporter, error) {
 	se, err := initExporter(cfg, params)
 	if err != nil {
@@ -103,8 +104,9 @@ func newLogsExporter(
 	}
 
 	return exporterhelper.NewLogsExporter(
-		cfg,
+		ctx,
 		params,
+		cfg,
 		se.pushLogsData,
 		// Disable exporterhelper Timeout, since we are using a custom mechanism
 		// within exporter itself
@@ -117,8 +119,9 @@ func newLogsExporter(
 }
 
 func newMetricsExporter(
-	cfg *Config,
+	ctx context.Context,
 	params component.ExporterCreateSettings,
+	cfg *Config,
 ) (component.MetricsExporter, error) {
 	se, err := initExporter(cfg, params)
 	if err != nil {
@@ -126,8 +129,9 @@ func newMetricsExporter(
 	}
 
 	return exporterhelper.NewMetricsExporter(
-		cfg,
+		ctx,
 		params,
+		cfg,
 		se.pushMetricsData,
 		// Disable exporterhelper Timeout, since we are using a custom mechanism
 		// within exporter itself
@@ -140,8 +144,9 @@ func newMetricsExporter(
 }
 
 func newTracesExporter(
-	cfg *Config,
+	ctx context.Context,
 	params component.ExporterCreateSettings,
+	cfg *Config,
 ) (component.TracesExporter, error) {
 	se, err := initExporter(cfg, params)
 	if err != nil {
@@ -149,8 +154,9 @@ func newTracesExporter(
 	}
 
 	return exporterhelper.NewTracesExporter(
-		cfg,
+		ctx,
 		params,
+		cfg,
 		se.pushTracesData,
 		// Disable exporterhelper Timeout, since we are using a custom mechanism
 		// within exporter itself

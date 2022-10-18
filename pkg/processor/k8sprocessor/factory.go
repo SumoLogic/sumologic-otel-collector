@@ -84,7 +84,7 @@ func createMetricsProcessor(
 }
 
 func createTracesProcessorWithOptions(
-	_ context.Context,
+	ctx context.Context,
 	params component.ProcessorCreateSettings,
 	cfg config.Processor,
 	next consumer.Traces,
@@ -96,6 +96,8 @@ func createTracesProcessorWithOptions(
 	}
 
 	return processorhelper.NewTracesProcessor(
+		ctx,
+		params,
 		cfg,
 		next,
 		kp.ProcessTraces,
@@ -105,7 +107,7 @@ func createTracesProcessorWithOptions(
 }
 
 func createMetricsProcessorWithOptions(
-	_ context.Context,
+	ctx context.Context,
 	params component.ProcessorCreateSettings,
 	cfg config.Processor,
 	nextMetricsConsumer consumer.Metrics,
@@ -117,6 +119,8 @@ func createMetricsProcessorWithOptions(
 	}
 
 	return processorhelper.NewMetricsProcessor(
+		ctx,
+		params,
 		cfg,
 		nextMetricsConsumer,
 		kp.ProcessMetrics,
@@ -126,7 +130,7 @@ func createMetricsProcessorWithOptions(
 }
 
 func createLogsProcessorWithOptions(
-	_ context.Context,
+	ctx context.Context,
 	params component.ProcessorCreateSettings,
 	cfg config.Processor,
 	nextLogsConsumer consumer.Logs,
@@ -138,6 +142,8 @@ func createLogsProcessorWithOptions(
 	}
 
 	return processorhelper.NewLogsProcessor(
+		ctx,
+		params,
 		cfg,
 		nextLogsConsumer,
 		kp.ProcessLogs,

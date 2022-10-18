@@ -100,9 +100,9 @@ func extractPodID(
 				return "", kube.PodIdentifier(""), errors.New("namespace name not found in attributes")
 			}
 
-			if pod.StringVal() == "" || namespace.StringVal() != "" {
+			if pod.Str() == "" || namespace.Str() != "" {
 				podIdentifierKey = asso.Name
-				podIdentifierValue = kube.PodIdentifier(fmt.Sprintf("%s.%s", pod.StringVal(), namespace.StringVal()))
+				podIdentifierValue = kube.PodIdentifier(fmt.Sprintf("%s.%s", pod.Str(), namespace.Str()))
 				return
 			}
 		}
@@ -142,8 +142,8 @@ func getConnectionIP(ctx context.Context) kube.PodIdentifier {
 
 func stringAttributeFromMap(attrs pcommon.Map, key string) string {
 	if val, ok := attrs.Get(key); ok {
-		if val.Type() == pcommon.ValueTypeString {
-			return val.StringVal()
+		if val.Type() == pcommon.ValueTypeStr {
+			return val.Str()
 		}
 	}
 	return ""

@@ -51,7 +51,7 @@ func (mc metricConverter) Convert(m telegraf.Metric) (pmetric.Metrics, error) {
 	// Attach tags as resource attributes.
 	rAttributes := rm.Resource().Attributes()
 	for _, t := range m.TagList() {
-		rAttributes.InsertString(t.Key, t.Value)
+		rAttributes.PutString(t.Key, t.Value)
 	}
 
 	sm := rm.ScopeMetrics().AppendEmpty()
@@ -224,16 +224,16 @@ func newDoubleSum(
 	opts ...MetricOpt,
 ) pmetric.Metric {
 	pm := pmetric.NewMetric()
-	pm.SetDataType(pmetric.MetricDataTypeSum)
+	pm.SetEmptySum()
 	// "[...] OTLP Sum is either translated into a Timeseries Counter, when
 	// the sum is monotonic, or a Gauge when the sum is not monotonic."
 	// https://github.com/open-telemetry/opentelemetry-specification/blob/7fc28733/specification/metrics/datamodel.md#opentelemetry-protocol-data-model
 	ds := pm.Sum()
-	ds.SetAggregationTemporality(pmetric.MetricAggregationTemporalityCumulative)
+	ds.SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
 	ds.SetIsMonotonic(true)
 	dps := ds.DataPoints()
 	dp := dps.AppendEmpty()
-	dp.SetDoubleVal(value)
+	dp.SetDoubleValue(value)
 
 	for _, opt := range opts {
 		opt(pm)
@@ -246,16 +246,16 @@ func newIntSum(
 	opts ...MetricOpt,
 ) pmetric.Metric {
 	pm := pmetric.NewMetric()
-	pm.SetDataType(pmetric.MetricDataTypeSum)
+	pm.SetEmptySum()
 	// "[...] OTLP Sum is either translated into a Timeseries Counter, when
 	// the sum is monotonic, or a Gauge when the sum is not monotonic."
 	// https://github.com/open-telemetry/opentelemetry-specification/blob/7fc28733/specification/metrics/datamodel.md#opentelemetry-protocol-data-model
 	ds := pm.Sum()
-	ds.SetAggregationTemporality(pmetric.MetricAggregationTemporalityCumulative)
+	ds.SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
 	ds.SetIsMonotonic(true)
 	dps := ds.DataPoints()
 	dp := dps.AppendEmpty()
-	dp.SetIntVal(value)
+	dp.SetIntValue(value)
 
 	for _, opt := range opts {
 		opt(pm)
@@ -268,10 +268,10 @@ func newDoubleGauge(
 	opts ...MetricOpt,
 ) pmetric.Metric {
 	pm := pmetric.NewMetric()
-	pm.SetDataType(pmetric.MetricDataTypeGauge)
+	pm.SetEmptyGauge()
 	dps := pm.Gauge().DataPoints()
 	dp := dps.AppendEmpty()
-	dp.SetDoubleVal(value)
+	dp.SetDoubleValue(value)
 
 	for _, opt := range opts {
 		opt(pm)
@@ -284,10 +284,10 @@ func newIntGauge(
 	opts ...MetricOpt,
 ) pmetric.Metric {
 	pm := pmetric.NewMetric()
-	pm.SetDataType(pmetric.MetricDataTypeGauge)
+	pm.SetEmptyGauge()
 	dps := pm.Gauge().DataPoints()
 	dp := dps.AppendEmpty()
-	dp.SetIntVal(value)
+	dp.SetIntValue(value)
 
 	for _, opt := range opts {
 		opt(pm)

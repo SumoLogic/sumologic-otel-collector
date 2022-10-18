@@ -56,13 +56,13 @@ func createDefaultConfig() config.Processor {
 }
 
 func createMetricsProcessor(
-	_ context.Context,
-	_ component.ProcessorCreateSettings,
+	ctx context.Context,
+	params component.ProcessorCreateSettings,
 	cfg config.Processor,
 	nextConsumer consumer.Metrics,
 ) (component.MetricsProcessor, error) {
 	var internalProcessor = &metricsfrequencyprocessor{
 		sieve: newMetricSieve(cfg.(*Config)),
 	}
-	return processorhelper.NewMetricsProcessor(cfg, nextConsumer, internalProcessor.ProcessMetrics)
+	return processorhelper.NewMetricsProcessor(ctx, params, cfg, nextConsumer, internalProcessor.ProcessMetrics)
 }

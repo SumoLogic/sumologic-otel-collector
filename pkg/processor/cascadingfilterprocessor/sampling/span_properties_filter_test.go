@@ -55,7 +55,7 @@ func newSpanPropertiesFilter(t *testing.T, operationNamePattern *string, minDura
 func evaluate(t *testing.T, evaluator policyEvaluator, traces *TraceData, expectedDecision Decision) {
 	u, err := uuid.NewRandom()
 	require.NoError(t, err)
-	decision := evaluator.Evaluate(pcommon.NewTraceID(u), traces)
+	decision := evaluator.Evaluate(pcommon.TraceID(u), traces)
 	assert.Equal(t, expectedDecision, decision)
 }
 

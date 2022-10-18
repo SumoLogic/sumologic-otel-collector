@@ -84,14 +84,14 @@ func newLogsDataWithLogs(resourceAttrs map[string]string, logAttrs map[string]st
 	rs := ld.ResourceLogs().AppendEmpty()
 	attrs := rs.Resource().Attributes()
 	for k, v := range resourceAttrs {
-		attrs.UpsertString(k, v)
+		attrs.PutString(k, v)
 	}
 
 	sls := rs.ScopeLogs().AppendEmpty()
 	log := sls.LogRecords().AppendEmpty()
-	log.Body().SetStringVal("dummy log")
+	log.Body().SetStr("dummy log")
 	for k, v := range logAttrs {
-		log.Attributes().InsertString(k, v)
+		log.Attributes().PutString(k, v)
 	}
 
 	return ld
@@ -102,7 +102,7 @@ func newTraceData(labels map[string]string) ptrace.Traces {
 	rs := td.ResourceSpans().AppendEmpty()
 	attrs := rs.Resource().Attributes()
 	for k, v := range labels {
-		attrs.UpsertString(k, v)
+		attrs.PutString(k, v)
 	}
 	return td
 }
@@ -115,7 +115,7 @@ func newTraceDataWithSpans(_resourceLabels map[string]string, _spanLabels map[st
 	span.SetName("foo")
 	spanAttrs := span.Attributes()
 	for k, v := range _spanLabels {
-		spanAttrs.UpsertString(k, v)
+		spanAttrs.PutString(k, v)
 	}
 	return td
 }
@@ -190,7 +190,7 @@ func TestLogsSourceHostKey(t *testing.T) {
 		require.NoError(t, err)
 
 		out.ResourceLogs().At(0).Resource().Attributes().Range(func(k string, v pcommon.Value) bool {
-			t.Logf("k %s : v %v\n", k, v.StringVal())
+			t.Logf("k %s : v %v\n", k, v.Str())
 			return true
 		})
 
@@ -200,13 +200,13 @@ func TestLogsSourceHostKey(t *testing.T) {
 		{
 			v, ok := resAttrs.Get("_sourceName")
 			require.True(t, ok)
-			assert.Equal(t, "will-it-work-sumologic-kubernetes-collection-hostname", v.StringVal())
+			assert.Equal(t, "will-it-work-sumologic-kubernetes-collection-hostname", v.Str())
 		}
 
 		{
 			v, ok := resAttrs.Get("_sourceHost")
 			require.True(t, ok)
-			assert.Equal(t, "sumologic-kubernetes-collection-hostname", v.StringVal())
+			assert.Equal(t, "sumologic-kubernetes-collection-hostname", v.Str())
 		}
 	})
 
@@ -222,7 +222,7 @@ func TestLogsSourceHostKey(t *testing.T) {
 		require.NoError(t, err)
 
 		out.ResourceLogs().At(0).Resource().Attributes().Range(func(k string, v pcommon.Value) bool {
-			t.Logf("k %s : v %v\n", k, v.StringVal())
+			t.Logf("k %s : v %v\n", k, v.Str())
 			return true
 		})
 
@@ -339,7 +339,7 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 func TestTraceSourceFilteringOutByExclude(t *testing.T) {
 	test := newTraceDataWithSpans(k8sLabels, k8sLabels)
 	test.ResourceSpans().At(0).Resource().Attributes().
-		UpsertString("pod_annotation_sumologic.com/exclude", "true")
+		PutString("pod_annotation_sumologic.com/exclude", "true")
 
 	want := newTraceDataWithSpans(limitedLabelsWithMeta, mergedK8sLabels)
 	want.ResourceSpans().At(0).ScopeSpans().
@@ -355,10 +355,10 @@ func TestTraceSourceFilteringOutByExclude(t *testing.T) {
 
 func TestTraceSourceIncludePrecedence(t *testing.T) {
 	test := newTraceDataWithSpans(limitedLabels, k8sLabels)
-	test.ResourceSpans().At(0).Resource().Attributes().UpsertString("pod_annotation_sumologic.com/include", "true")
+	test.ResourceSpans().At(0).Resource().Attributes().PutString("pod_annotation_sumologic.com/include", "true")
 
 	want := newTraceDataWithSpans(limitedLabelsWithMeta, k8sLabels)
-	want.ResourceSpans().At(0).Resource().Attributes().UpsertString("pod_annotation_sumologic.com/include", "true")
+	want.ResourceSpans().At(0).Resource().Attributes().PutString("pod_annotation_sumologic.com/include", "true")
 
 	cfg1 := createConfig()
 	cfg1.Exclude = map[string]string{
@@ -515,7 +515,7 @@ func assertAttribute(t *testing.T, attributes pcommon.Map, attributeName string,
 	} else {
 		assert.True(t, exists, "Attribute '%s' should exist, but it does not.", attributeName)
 		if exists {
-			actualValue := value.StringVal()
+			actualValue := value.Str()
 			assert.Equal(t, expectedValue, actualValue, "Attribute '%s' should be '%s', but was '%s'.", attributeName, expectedValue, actualValue)
 		}
 	}
@@ -582,7 +582,7 @@ func TestLogProcessorJson(t *testing.T) {
 				LogRecords().
 				AppendEmpty().
 				Body().
-				SetStringVal(tc.body)
+				SetStr(tc.body)
 
 			rtp := newSourceProcessor(cfg)
 

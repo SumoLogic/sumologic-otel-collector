@@ -147,7 +147,7 @@ func createGauge() pmetric.Gauge {
 func createMetric(name string) pmetric.Metric {
 	metric := pmetric.NewMetric()
 	metric.SetName(name)
-	metric.SetDataType(pmetric.MetricDataTypeGauge)
+	metric.SetEmptyGauge()
 	createGauge().CopyTo(metric.Gauge())
 
 	return metric
