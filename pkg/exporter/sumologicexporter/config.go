@@ -127,19 +127,19 @@ func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 func (cfg *Config) Validate() error {
 
 	if len(cfg.MetadataAttributes) > 0 {
-		return fmt.Errorf(`*Deprecation warning*: metadata_attributes is not supported anymore.
+		return fmt.Errorf(`metadata_attributes is not supported anymore.
 Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.49.0-sumo-0`,
 		)
 	}
 
 	if cfg.TranslateTelegrafMetrics {
-		return fmt.Errorf(`*Deprecation warning*: translate_telegraf_attributes is not supported anymore.
-		Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.59.0-sumo-0`,
+		return fmt.Errorf(`translate_telegraf_attributes is not supported anymore.
+Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.59.0-sumo-0`,
 		)
 	}
 
 	if cfg.TranslateAttributes {
-		return fmt.Errorf(`*Deprecation warning*: translate_attributes is not supported anymore.
+		return fmt.Errorf(`translate_attributes is not supported anymore.
 Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.59.0-sumo-0`,
 		)
 	}
