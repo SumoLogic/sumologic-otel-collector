@@ -80,14 +80,14 @@ func BenchmarkFields(b *testing.B) {
 	for k, v := range flds {
 		switch v := v.(type) {
 		case string:
-			attrMap.InsertString(k, v)
+			attrMap.PutString(k, v)
 		case map[string]string:
 			m := pcommon.NewValueMap()
-			mm := m.MapVal().AsRaw()
+			mm := m.Map().AsRaw()
 			for kk, vv := range v {
 				mm[kk] = vv
 			}
-			attrMap.Insert(k, m)
+			m.CopyTo(attrMap.PutEmpty(k))
 		}
 	}
 	sut := newFields(attrMap)

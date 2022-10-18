@@ -72,7 +72,7 @@ func TestSequentialTraceArrival(t *testing.T) {
 	}
 
 	for i := range traceIds {
-		d, ok := tsp.idToTrace.Load(traceKey(traceIds[i].Bytes()))
+		d, ok := tsp.idToTrace.Load(traceKey(traceIds[i]))
 		require.True(t, ok, "Missing expected traceId")
 		v := d.(*sampling.TraceData)
 		require.Equal(t, int32(i+1), v.SpanCount, "Incorrect number of spans for entry %d", i)
@@ -129,7 +129,7 @@ func TestConcurrentTraceArrival(t *testing.T) {
 	wg.Wait()
 
 	for i := range traceIds {
-		d, ok := tsp.idToTrace.Load(traceKey(traceIds[i].Bytes()))
+		d, ok := tsp.idToTrace.Load(traceKey(traceIds[i]))
 		require.True(t, ok, "Missing expected traceId")
 		v := d.(*sampling.TraceData)
 		require.Equal(t, int32(i+1)*2, v.SpanCount, "Incorrect number of spans for entry %d", i)
@@ -149,7 +149,7 @@ func TestSequentialTraceMapSize(t *testing.T) {
 
 	// On sequential insertion it is possible to know exactly which traces should be still on the map.
 	for i := 0; i < len(traceIds)-maxSize; i++ {
-		_, ok := tsp.idToTrace.Load(traceKey(traceIds[i].Bytes()))
+		_, ok := tsp.idToTrace.Load(traceKey(traceIds[i]))
 		require.False(t, ok, "Found unexpected traceId[%d] still on map (id: %v)", i, traceIds[i])
 	}
 }
@@ -660,7 +660,7 @@ func collectSpanIds(trace *ptrace.Traces) []pcommon.SpanID {
 func findTrace(a []ptrace.Traces, traceID pcommon.TraceID) *ptrace.Traces {
 	for _, batch := range a {
 		id := batch.ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(0).TraceID()
-		if traceID.Bytes() == id.Bytes() {
+		if traceID == id {
 			return &batch
 		}
 	}
@@ -690,7 +690,7 @@ func generateIdsAndBatches(numIds int) ([]pcommon.TraceID, []ptrace.Traces) {
 
 //nolint:unused
 func simpleTraces() ptrace.Traces {
-	return simpleTracesWithID(pcommon.NewTraceID([16]byte{1, 2, 3, 4}))
+	return simpleTracesWithID(pcommon.TraceID([16]byte{1, 2, 3, 4}))
 }
 
 //nolint:unused

@@ -67,7 +67,7 @@ func extractTemplateAttributes(template string) []string {
 func (f *sourceCategoryFiller) fill(attributes *pcommon.Map) {
 	containerSourceCategory := f.getSourceCategoryFromContainerAnnotation(attributes)
 	if containerSourceCategory != "" {
-		attributes.UpsertString(sourceCategoryKey, containerSourceCategory)
+		attributes.PutString(sourceCategoryKey, containerSourceCategory)
 		return
 	}
 
@@ -93,7 +93,7 @@ func (f *sourceCategoryFiller) fill(attributes *pcommon.Map) {
 	}
 	sourceCategoryValue = strings.ReplaceAll(sourceCategoryValue, "-", dashReplacement)
 
-	attributes.UpsertString(sourceCategoryKey, sourceCategoryValue)
+	attributes.PutString(sourceCategoryKey, sourceCategoryValue)
 }
 
 func (f *sourceCategoryFiller) getSourceCategoryFromContainerAnnotation(attributes *pcommon.Map) string {
@@ -102,12 +102,12 @@ func (f *sourceCategoryFiller) getSourceCategoryFromContainerAnnotation(attribut
 	}
 
 	containerName, found := attributes.Get("k8s.container.name")
-	if !found || containerName.StringVal() == "" {
+	if !found || containerName.Str() == "" {
 		return ""
 	}
 
 	for _, containerAnnotationPrefix := range f.containerAnnotationsPrefixes {
-		annotationKey := fmt.Sprintf("%s%s.sourceCategory", containerAnnotationPrefix, containerName.StringVal())
+		annotationKey := fmt.Sprintf("%s%s.sourceCategory", containerAnnotationPrefix, containerName.Str())
 		annotationValue := getAnnotationAttributeValue(f.annotationPrefix, annotationKey, attributes)
 		if annotationValue != "" {
 			return annotationValue
@@ -122,7 +122,7 @@ func (f *sourceCategoryFiller) replaceTemplateAttributes(template string, templa
 		attributeValue, found := attributes.Get(templateAttribute)
 		var attributeValueString string
 		if found {
-			attributeValueString = attributeValue.StringVal()
+			attributeValueString = attributeValue.Str()
 		} else {
 			attributeValueString = "undefined"
 		}
@@ -136,7 +136,7 @@ func (f *sourceCategoryFiller) replaceTemplateAttributes(template string, templa
 func getAnnotationAttributeValue(annotationAttributePrefix string, annotation string, attributes *pcommon.Map) string {
 	annotationAttribute, found := attributes.Get(annotationAttributePrefix + annotation)
 	if found {
-		return annotationAttribute.StringVal()
+		return annotationAttribute.Str()
 	}
 	return ""
 }

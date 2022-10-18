@@ -47,7 +47,7 @@ func createDefaultConfig() config.Processor {
 }
 
 func createLogProcessor(
-	_ context.Context,
+	ctx context.Context,
 	params component.ProcessorCreateSettings,
 	cfg config.Processor,
 	nextConsumer consumer.Logs,
@@ -60,6 +60,8 @@ func createLogProcessor(
 	}
 
 	return processorhelper.NewLogsProcessor(
+		ctx,
+		params,
 		cfg,
 		nextConsumer,
 		ssp.ProcessLogs,

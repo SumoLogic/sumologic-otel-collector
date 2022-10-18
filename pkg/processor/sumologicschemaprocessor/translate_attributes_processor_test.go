@@ -24,16 +24,16 @@ import (
 
 func TestTranslateAttributes(t *testing.T) {
 	attributes := pcommon.NewMap()
-	attributes.InsertString("host.name", "testing-host")
-	attributes.InsertString("host.id", "my-host-id")
-	attributes.InsertString("host.type", "my-host-type")
-	attributes.InsertString("k8s.cluster.name", "testing-cluster")
-	attributes.InsertString("k8s.deployment.name", "my-deployment-name")
-	attributes.InsertString("k8s.namespace.name", "my-namespace-name")
-	attributes.InsertString("k8s.service.name", "my-service-name, other-service")
-	attributes.InsertString("cloud.account.id", "my-account-id")
-	attributes.InsertString("cloud.availability_zone", "my-zone")
-	attributes.InsertString("cloud.region", "my-region")
+	attributes.PutString("host.name", "testing-host")
+	attributes.PutString("host.id", "my-host-id")
+	attributes.PutString("host.type", "my-host-type")
+	attributes.PutString("k8s.cluster.name", "testing-cluster")
+	attributes.PutString("k8s.deployment.name", "my-deployment-name")
+	attributes.PutString("k8s.namespace.name", "my-namespace-name")
+	attributes.PutString("k8s.service.name", "my-service-name, other-service")
+	attributes.PutString("cloud.account.id", "my-account-id")
+	attributes.PutString("cloud.availability_zone", "my-zone")
+	attributes.PutString("cloud.region", "my-region")
 	require.Equal(t, 10, attributes.Len())
 
 	translateAttributes(attributes)
@@ -73,9 +73,9 @@ func TestTranslateAttributesDoesNothingWhenAttributeDoesNotExist(t *testing.T) {
 
 func TestTranslateAttributesLeavesOtherAttributesUnchanged(t *testing.T) {
 	attributes := pcommon.NewMap()
-	attributes.InsertString("one", "one1")
-	attributes.InsertString("host.name", "host1")
-	attributes.InsertString("three", "three1")
+	attributes.PutString("one", "one1")
+	attributes.PutString("host.name", "host1")
+	attributes.PutString("three", "three1")
 	require.Equal(t, 3, attributes.Len())
 
 	translateAttributes(attributes)
@@ -88,8 +88,8 @@ func TestTranslateAttributesLeavesOtherAttributesUnchanged(t *testing.T) {
 
 func TestTranslateAttributesDoesNotOverwriteExistingAttribute(t *testing.T) {
 	attributes := pcommon.NewMap()
-	attributes.InsertString("host", "host1")
-	attributes.InsertString("host.name", "hostname1")
+	attributes.PutString("host", "host1")
+	attributes.PutString("host.name", "hostname1")
 	require.Equal(t, 2, attributes.Len())
 
 	translateAttributes(attributes)
@@ -103,10 +103,10 @@ func TestTranslateAttributesDoesNotOverwriteMultipleExistingAttributes(t *testin
 	// Note: Current implementation of pcommon.Map does not allow to insert duplicate keys.
 	// See https://cloud-native.slack.com/archives/C01N5UCHTEH/p1624020829067500
 	attributes := pcommon.NewMap()
-	attributes.InsertString("host", "host1")
-	attributes.InsertString("host", "host2")
+	attributes.PutString("host", "host1")
+	attributes.PutString("host", "host2")
 	require.Equal(t, 1, attributes.Len())
-	attributes.InsertString("host.name", "hostname1")
+	attributes.PutString("host.name", "hostname1")
 	require.Equal(t, 2, attributes.Len())
 
 	translateAttributes(attributes)
@@ -123,7 +123,7 @@ func assertAttribute(t *testing.T, metadata pcommon.Map, attributeName string, e
 		assert.False(t, exists)
 	} else {
 		assert.True(t, exists)
-		assert.Equal(t, expectedValue, value.StringVal())
+		assert.Equal(t, expectedValue, value.Str())
 
 	}
 }
@@ -146,10 +146,11 @@ var (
 		"jkl":                     pcommon.NewValueString("jkl"),
 		"dummy":                   pcommon.NewValueString("dummy"),
 	}
-	attributes = pcommon.NewMapFromRaw(bench_pdata_attributes)
+	attributes = pcommon.NewMap()
 )
 
 func BenchmarkTranslateAttributes(b *testing.B) {
+	attributes.FromRaw(bench_pdata_attributes)
 	for i := 0; i < b.N; i++ {
 		translateAttributes(attributes)
 	}

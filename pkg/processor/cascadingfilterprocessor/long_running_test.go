@@ -60,7 +60,7 @@ func TestRandomTraceProcessing(t *testing.T) {
 	time.Sleep(decisionWait * 3)
 
 	for traceId := range allIDs {
-		d, ok := tsp.idToTrace.Load(traceKey(traceId.Bytes()))
+		d, ok := tsp.idToTrace.Load(traceId)
 		if ok {
 			v := d.(*sampling.TraceData)
 			require.Empty(t, v.ReceivedBatches)
@@ -141,7 +141,7 @@ func generateAndConsumeTraces(t *testing.T, tsp *cascadingFilterSpanProcessor) m
 
 func assertTracesEmpty(t *testing.T, tsp *cascadingFilterSpanProcessor, allIDs map[pcommon.TraceID]interface{}) {
 	for traceId := range allIDs {
-		d, ok := tsp.idToTrace.Load(traceKey(traceId.Bytes()))
+		d, ok := tsp.idToTrace.Load(traceId)
 		if ok {
 			v := d.(*sampling.TraceData)
 			require.Empty(t, v.ReceivedBatches)

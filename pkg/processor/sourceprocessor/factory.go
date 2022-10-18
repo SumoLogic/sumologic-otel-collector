@@ -84,7 +84,7 @@ func createDefaultConfig() config.Processor {
 
 // CreateTraceProcessor creates a trace processor based on this config.
 func createTracesProcessor(
-	_ context.Context,
+	ctx context.Context,
 	params component.ProcessorCreateSettings,
 	cfg config.Processor,
 	next consumer.Traces) (component.TracesProcessor, error) {
@@ -94,6 +94,8 @@ func createTracesProcessor(
 	sp := newSourceProcessor(oCfg)
 
 	return processorhelper.NewTracesProcessor(
+		ctx,
+		params,
 		cfg,
 		next,
 		sp.ProcessTraces,
@@ -103,7 +105,7 @@ func createTracesProcessor(
 
 // createMetricsProcessor creates a metrics processor based on this config
 func createMetricsProcessor(
-	_ context.Context,
+	ctx context.Context,
 	params component.ProcessorCreateSettings,
 	cfg config.Processor,
 	next consumer.Metrics,
@@ -112,6 +114,8 @@ func createMetricsProcessor(
 
 	sp := newSourceProcessor(oCfg)
 	return processorhelper.NewMetricsProcessor(
+		ctx,
+		params,
 		cfg,
 		next,
 		sp.ProcessMetrics,
@@ -121,7 +125,7 @@ func createMetricsProcessor(
 
 // createLogsProcessor creates a logs processor based on this config
 func createLogsProcessor(
-	_ context.Context,
+	ctx context.Context,
 	params component.ProcessorCreateSettings,
 	cfg config.Processor,
 	next consumer.Logs,
@@ -130,6 +134,8 @@ func createLogsProcessor(
 
 	sp := newSourceProcessor(oCfg)
 	return processorhelper.NewLogsProcessor(
+		ctx,
+		params,
 		cfg,
 		next,
 		sp.ProcessLogs,

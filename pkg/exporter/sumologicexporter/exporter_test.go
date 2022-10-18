@@ -175,18 +175,18 @@ func TestLogsResourceAttributesSentAsFields(t *testing.T) {
 			logsFunc: func() plog.Logs {
 				buffer := make([]plog.LogRecord, 2)
 				buffer[0] = plog.NewLogRecord()
-				buffer[0].Body().SetStringVal("Example log")
-				buffer[0].Attributes().InsertString("key1", "value1")
-				buffer[0].Attributes().InsertString("key2", "value2")
+				buffer[0].Body().SetStr("Example log")
+				buffer[0].Attributes().PutString("key1", "value1")
+				buffer[0].Attributes().PutString("key2", "value2")
 				buffer[1] = plog.NewLogRecord()
-				buffer[1].Body().SetStringVal("Another example log")
-				buffer[1].Attributes().InsertString("key1", "value1")
-				buffer[1].Attributes().InsertString("key2", "value2")
-				buffer[1].Attributes().InsertString("key3", "value3")
+				buffer[1].Body().SetStr("Another example log")
+				buffer[1].Attributes().PutString("key1", "value1")
+				buffer[1].Attributes().PutString("key2", "value2")
+				buffer[1].Attributes().PutString("key3", "value3")
 
 				logs := LogRecordsToLogs(buffer)
-				logs.ResourceLogs().At(0).Resource().Attributes().InsertString("res_attr1", "1")
-				logs.ResourceLogs().At(0).Resource().Attributes().InsertString("res_attr2", "2")
+				logs.ResourceLogs().At(0).Resource().Attributes().PutString("res_attr1", "1")
+				logs.ResourceLogs().At(0).Resource().Attributes().PutString("res_attr2", "2")
 				return logs
 			},
 		},
@@ -218,10 +218,10 @@ func TestAllFailed(t *testing.T) {
 	logs := plog.NewLogs()
 	logsSlice := logs.ResourceLogs().AppendEmpty()
 	logsRecords1 := logsSlice.ScopeLogs().AppendEmpty().LogRecords()
-	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
+	logsRecords1.AppendEmpty().Body().SetStr("Example log")
 
 	logsRecords2 := logsSlice.ScopeLogs().AppendEmpty().LogRecords()
-	logsRecords2.AppendEmpty().Body().SetStringVal("Another example log")
+	logsRecords2.AppendEmpty().Body().SetStr("Another example log")
 
 	logsExpected := plog.NewLogs()
 	logsSlice.CopyTo(logsExpected.ResourceLogs().AppendEmpty())
@@ -255,10 +255,10 @@ func TestPartiallyFailed(t *testing.T) {
 	logs := plog.NewLogs()
 	logsSlice1 := logs.ResourceLogs().AppendEmpty()
 	logsRecords1 := logsSlice1.ScopeLogs().AppendEmpty().LogRecords()
-	logsRecords1.AppendEmpty().Body().SetStringVal("Example log")
+	logsRecords1.AppendEmpty().Body().SetStr("Example log")
 	logsSlice2 := logs.ResourceLogs().AppendEmpty()
 	logsRecords2 := logsSlice2.ScopeLogs().AppendEmpty().LogRecords()
-	logsRecords2.AppendEmpty().Body().SetStringVal("Another example log")
+	logsRecords2.AppendEmpty().Body().SetStr("Another example log")
 
 	logsExpected := plog.NewLogs()
 	logsSlice2.CopyTo(logsExpected.ResourceLogs().AppendEmpty())
@@ -413,18 +413,18 @@ func TestPushLogs_DontRemoveSourceAttributes(t *testing.T) {
 
 		logRecords := make([]plog.LogRecord, 2)
 		logRecords[0] = plog.NewLogRecord()
-		logRecords[0].Body().SetStringVal("Example log aaaaaaaaaaaaaaaaaaaaaa 1")
+		logRecords[0].Body().SetStr("Example log aaaaaaaaaaaaaaaaaaaaaa 1")
 		logRecords[0].CopyTo(logsSlice.AppendEmpty())
 		logRecords[1] = plog.NewLogRecord()
-		logRecords[1].Body().SetStringVal("Example log aaaaaaaaaaaaaaaaaaaaaa 2")
+		logRecords[1].Body().SetStr("Example log aaaaaaaaaaaaaaaaaaaaaa 2")
 		logRecords[1].CopyTo(logsSlice.AppendEmpty())
 
 		resourceAttrs := resourceLogs.Resource().Attributes()
-		resourceAttrs.InsertString("hostname", "my-host-name")
-		resourceAttrs.InsertString("hosttype", "my-host-type")
-		resourceAttrs.InsertString("_sourceCategory", "my-source-category")
-		resourceAttrs.InsertString("_sourceHost", "my-source-host")
-		resourceAttrs.InsertString("_sourceName", "my-source-name")
+		resourceAttrs.PutString("hostname", "my-host-name")
+		resourceAttrs.PutString("hosttype", "my-host-type")
+		resourceAttrs.PutString("_sourceCategory", "my-source-category")
+		resourceAttrs.PutString("_sourceHost", "my-source-host")
+		resourceAttrs.PutString("_sourceName", "my-source-name")
 
 		return logs
 	}
@@ -643,8 +643,8 @@ func TestLogsTextFormatMetadataFilterWithDroppedAttribute(t *testing.T) {
 	test.exp.config.DropRoutingAttribute = "key1"
 
 	logs := LogRecordsToLogs(exampleLog())
-	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key1", "value1")
-	logs.ResourceLogs().At(0).Resource().Attributes().InsertString("key2", "value2")
+	logs.ResourceLogs().At(0).Resource().Attributes().PutString("key1", "value1")
+	logs.ResourceLogs().At(0).Resource().Attributes().PutString("key2", "value2")
 
 	err := test.exp.pushLogsData(context.Background(), logs)
 	assert.NoError(t, err)
@@ -664,8 +664,8 @@ func TestMetricsPrometheusFormatMetadataFilter(t *testing.T) {
 	metrics := metricAndAttributesToPdataMetrics(exampleIntMetric())
 
 	attrs := metrics.ResourceMetrics().At(0).Resource().Attributes()
-	attrs.InsertString("key1", "value1")
-	attrs.InsertString("key2", "value2")
+	attrs.PutString("key1", "value1")
+	attrs.PutString("key2", "value2")
 
 	err := test.exp.pushMetricsData(context.Background(), metrics)
 	assert.NoError(t, err)
@@ -686,9 +686,9 @@ func TestMetricsPrometheusWithDroppedRoutingAttribute(t *testing.T) {
 	metrics := metricAndAttributesToPdataMetrics(exampleIntMetric())
 
 	attrs := metrics.ResourceMetrics().At(0).Resource().Attributes()
-	attrs.InsertString("key1", "value1")
-	attrs.InsertString("key2", "value2")
-	attrs.InsertString("http_listener_v2_path_custom", "prometheus.metrics")
+	attrs.PutString("key1", "value1")
+	attrs.PutString("key2", "value2")
+	attrs.PutString("http_listener_v2_path_custom", "prometheus.metrics")
 
 	err := test.exp.pushMetricsData(context.Background(), metrics)
 	assert.NoError(t, err)
@@ -697,7 +697,7 @@ func TestMetricsPrometheusWithDroppedRoutingAttribute(t *testing.T) {
 func TestTracesWithDroppedAttribute(t *testing.T) {
 	// Prepare data to compare (trace without routing attribute)
 	traces := exampleTrace()
-	traces.ResourceSpans().At(0).Resource().Attributes().InsertString("key2", "value2")
+	traces.ResourceSpans().At(0).Resource().Attributes().PutString("key2", "value2")
 	tracesMarshaler = otlp.NewProtobufTracesMarshaler()
 	bytes, err := tracesMarshaler.MarshalTraces(traces)
 	require.NoError(t, err)
@@ -711,7 +711,7 @@ func TestTracesWithDroppedAttribute(t *testing.T) {
 	test.exp.config.DropRoutingAttribute = "key1"
 
 	// add routing attribute and check if after marshalling it's different
-	traces.ResourceSpans().At(0).Resource().Attributes().InsertString("key1", "value1")
+	traces.ResourceSpans().At(0).Resource().Attributes().PutString("key1", "value1")
 	bytesWithAttribute, err := tracesMarshaler.MarshalTraces(traces)
 	require.NoError(t, err)
 	require.NotEqual(t, bytes, bytesWithAttribute)

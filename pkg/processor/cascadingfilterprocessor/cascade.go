@@ -60,7 +60,7 @@ func (c *cascade) decideOnBatch(batch *idbatcher.Batch) {
 	// 3. Second pass - in which we add anything that was tagged with "second chance" if it fits within the global limit
 
 	for _, id := range *batch {
-		d, ok := c.cfsp.idToTrace.Load(traceKey(id.Bytes()))
+		d, ok := c.cfsp.idToTrace.Load(traceKey(id))
 		if !ok {
 			c.metrics.idNotFoundOnMapCount++
 			continue
@@ -85,7 +85,7 @@ func (c *cascade) decideOnBatch(batch *idbatcher.Batch) {
 
 	// The second run executes the decisions and makes "SecondChance" decisions in the meantime
 	for _, id := range *batch {
-		d, ok := c.cfsp.idToTrace.Load(traceKey(id.Bytes()))
+		d, ok := c.cfsp.idToTrace.Load(traceKey(id))
 		if !ok {
 			continue
 		}
@@ -94,7 +94,7 @@ func (c *cascade) decideOnBatch(batch *idbatcher.Batch) {
 		// If there's anything left, fill-up with "second chance" traces
 		c.secondPass(currSecond, trace)
 
-		c.cfsp.decisionHistory.Add(traceKey(id.Bytes()), decisionHistoryInfo{
+		c.cfsp.decisionHistory.Add(traceKey(id), decisionHistoryInfo{
 			finalDecision:       trace.FinalDecision,
 			filterName:          trace.ProvisionalDecisionFilterName,
 			probabilisticFilter: trace.SelectedByProbabilisticFilter})
@@ -102,7 +102,7 @@ func (c *cascade) decideOnBatch(batch *idbatcher.Batch) {
 		c.cleanup(trace)
 
 		// Actually, we don'c need to wait since decision history is now used and we can delete the trace pretty much right away
-		c.cfsp.dropTrace(id.Bytes())
+		c.cfsp.dropTrace(traceKey(id))
 	}
 
 	//nolint:errcheck
@@ -267,12 +267,12 @@ func updateProbabilisticRateTag(traces ptrace.Traces, probabilisticSpans int64, 
 			for k := 0; k < spans.Len(); k++ {
 				attrs := spans.At(k).Attributes()
 				av, found := attrs.Get(AttributeSamplingProbability)
-				if found && av.Type() == pcommon.ValueTypeDouble && !math.IsNaN(av.DoubleVal()) && av.DoubleVal() > 0.0 {
-					av.SetDoubleVal(av.DoubleVal() * ratio)
+				if found && av.Type() == pcommon.ValueTypeDouble && !math.IsNaN(av.Double()) && av.Double() > 0.0 {
+					av.SetDouble(av.Double() * ratio)
 				} else {
-					attrs.UpsertDouble(AttributeSamplingProbability, ratio)
+					attrs.PutDouble(AttributeSamplingProbability, ratio)
 				}
-				attrs.UpsertString(AttributeSamplingRule, probabilisticRuleVale)
+				attrs.PutString(AttributeSamplingRule, probabilisticRuleVale)
 			}
 		}
 	}
@@ -287,9 +287,9 @@ func updateFilteringTag(traces ptrace.Traces, filterName string) {
 			spans := ss.At(j).Spans()
 			for k := 0; k < spans.Len(); k++ {
 				attrs := spans.At(k).Attributes()
-				attrs.UpsertString(AttributeSamplingRule, filteredRuleValue)
+				attrs.PutString(AttributeSamplingRule, filteredRuleValue)
 				if filterName != "" {
-					attrs.UpsertString(AttributeSamplingFilter, filterName)
+					attrs.PutString(AttributeSamplingFilter, filterName)
 				}
 			}
 		}
@@ -305,11 +305,11 @@ func updateLateArrival(traces ptrace.Traces, filterName string, probabilistic bo
 			spans := ss.At(j).Spans()
 			for k := 0; k < spans.Len(); k++ {
 				attrs := spans.At(k).Attributes()
-				attrs.UpsertBool(AttributeSamplingLateArrival, true)
+				attrs.PutBool(AttributeSamplingLateArrival, true)
 				if filterName != "" {
-					attrs.UpsertString(AttributeSamplingFilter, filterName)
+					attrs.PutString(AttributeSamplingFilter, filterName)
 				} else if probabilistic {
-					attrs.UpsertString(AttributeSamplingFilter, "probabilistic")
+					attrs.PutString(AttributeSamplingFilter, "probabilistic")
 				}
 			}
 		}

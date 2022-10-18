@@ -29,12 +29,12 @@ func UInt64ToTraceID(high, low uint64) pcommon.TraceID {
 	traceID := [16]byte{}
 	binary.BigEndian.PutUint64(traceID[:8], high)
 	binary.BigEndian.PutUint64(traceID[8:], low)
-	return pcommon.NewTraceID(traceID)
+	return pcommon.TraceID(traceID)
 }
 
 // SpanIDToUInt64 converts the pcommon.SpanID to uint64 representation.
 func SpanIDToUInt64(spanID pcommon.SpanID) uint64 {
-	bytes := spanID.Bytes()
+	bytes := spanID
 	return binary.BigEndian.Uint64(bytes[:])
 }
 
@@ -42,5 +42,5 @@ func SpanIDToUInt64(spanID pcommon.SpanID) uint64 {
 func UInt64ToSpanID(id uint64) pcommon.SpanID {
 	spanID := [8]byte{}
 	binary.BigEndian.PutUint64(spanID[:], id)
-	return pcommon.NewSpanID(spanID)
+	return pcommon.SpanID(spanID)
 }

@@ -589,8 +589,8 @@ func assertResourceAttributes(t *testing.T, tags []*telegraf.Tag, resource pcomm
 			if k != tag.Key {
 				continue
 			}
-			if assert.Equal(t, pcommon.ValueTypeString, v.Type()) {
-				if assert.Equal(t, tag.Value, v.StringVal()) {
+			if assert.Equal(t, pcommon.ValueTypeStr, v.Type()) {
+				if assert.Equal(t, tag.Value, v.Str()) {
 					found = true
 				}
 				break
@@ -617,7 +617,7 @@ func pdataMetricSlicesAreEqual(t *testing.T, expected, actual pmetric.MetricSlic
 				// assert.EqualValues(t, em, am)
 				assert.Equal(t, em.Description(), am.Description())
 				assert.Equal(t, em.Unit(), am.Unit())
-				if assert.Equal(t, em.DataType(), am.DataType()) {
+				if assert.Equal(t, em.Type(), am.Type()) {
 					assertEqualDataPointsWithLabels(t, em, am)
 				}
 				pass = true
@@ -631,25 +631,25 @@ func pdataMetricSlicesAreEqual(t *testing.T, expected, actual pmetric.MetricSlic
 // assertEqualDataPointsWithLabels checks that provided metrics have the same
 // data points with the same set of labels.
 func assertEqualDataPointsWithLabels(t *testing.T, em pmetric.Metric, am pmetric.Metric) {
-	switch em.DataType() {
-	case pmetric.MetricDataTypeGauge:
+	switch em.Type() {
+	case pmetric.MetricTypeGauge:
 		edps := em.Gauge().DataPoints()
 		adps := am.Gauge().DataPoints()
 		assert.Equal(t, edps.Len(), adps.Len())
 		for i := 0; i < edps.Len(); i++ {
 			expected := edps.At(i)
 			actual := adps.At(i)
-			assert.Equal(t, expected.DoubleVal(), actual.DoubleVal())
+			assert.Equal(t, expected.DoubleValue(), actual.DoubleValue())
 			assertEqualDataPoints(t, am.Name(), expected, actual)
 		}
-	case pmetric.MetricDataTypeSum:
+	case pmetric.MetricTypeSum:
 		edps := em.Sum().DataPoints()
 		adps := am.Sum().DataPoints()
 		assert.Equal(t, edps.Len(), adps.Len())
 		for i := 0; i < edps.Len(); i++ {
 			expected := edps.At(i)
 			actual := adps.At(i)
-			assert.Equal(t, expected.DoubleVal(), actual.DoubleVal())
+			assert.Equal(t, expected.DoubleValue(), actual.DoubleValue())
 			assertEqualDataPoints(t, am.Name(), expected, actual)
 		}
 	}
@@ -709,8 +709,8 @@ func metricSliceContainsMetricWithField(ms pmetric.MetricSlice, name string, fie
 	for i := 0; i < ms.Len(); i++ {
 		m := ms.At(i)
 		if m.Name() == name {
-			switch m.DataType() {
-			case pmetric.MetricDataTypeGauge:
+			switch m.Type() {
+			case pmetric.MetricTypeGauge:
 				mg := m.Gauge()
 				dps := mg.DataPoints()
 				for i := 0; i < dps.Len(); i++ {
@@ -720,7 +720,7 @@ func metricSliceContainsMetricWithField(ms pmetric.MetricSlice, name string, fie
 						continue
 					}
 
-					if l.StringVal() == field {
+					if l.Str() == field {
 						return m, true
 					}
 				}
@@ -734,8 +734,8 @@ func metricSliceContainsMetricWithField(ms pmetric.MetricSlice, name string, fie
 // getFieldsFromMetric returns a map of fields in a metric gathered from all
 // data points' label maps.
 func getFieldsFromMetric(m pmetric.Metric) map[string]struct{} {
-	switch m.DataType() {
-	case pmetric.MetricDataTypeGauge:
+	switch m.Type() {
+	case pmetric.MetricTypeGauge:
 		ret := make(map[string]struct{})
 		for i := 0; i < m.Gauge().DataPoints().Len(); i++ {
 			dp := m.Gauge().DataPoints().At(i)
@@ -743,7 +743,7 @@ func getFieldsFromMetric(m pmetric.Metric) map[string]struct{} {
 			if !ok {
 				continue
 			}
-			ret[l.StringVal()] = struct{}{}
+			ret[l.Str()] = struct{}{}
 		}
 		return ret
 
@@ -755,8 +755,8 @@ func getFieldsFromMetric(m pmetric.Metric) map[string]struct{} {
 // fieldFromMetric searches through pmetric.Metric's data points to find
 // a particular field.
 func fieldFromMetric(m pmetric.Metric, field string) (pmetric.NumberDataPoint, bool) {
-	switch m.DataType() {
-	case pmetric.MetricDataTypeGauge:
+	switch m.Type() {
+	case pmetric.MetricTypeGauge:
 		dps := m.Gauge().DataPoints()
 		for i := 0; i < dps.Len(); i++ {
 			dp := dps.At(i)
@@ -765,7 +765,7 @@ func fieldFromMetric(m pmetric.Metric, field string) (pmetric.NumberDataPoint, b
 				continue
 			}
 
-			if l.StringVal() == field {
+			if l.Str() == field {
 				return dp, true
 			}
 		}

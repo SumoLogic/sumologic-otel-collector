@@ -44,8 +44,8 @@ func newMetricSieve(config *Config) *defaultMetricSieve {
 // Sift removes data points from MetricSlices of the metric argument according to specified strategy.
 // It returns true if the metric should be removed.
 func (ms *defaultMetricSieve) Sift(metric pmetric.Metric) bool {
-	switch metric.DataType() {
-	case pmetric.MetricDataTypeGauge:
+	switch metric.Type() {
+	case pmetric.MetricTypeGauge:
 		return ms.siftDropGauge(metric)
 	default:
 		return false

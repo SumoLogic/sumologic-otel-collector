@@ -45,13 +45,13 @@ func WithTime(t time.Time) MetricOpt {
 			timeopt: dataPointTimeOpt(t),
 		}
 
-		switch m.DataType() {
-		case pmetric.MetricDataTypeGauge:
+		switch m.Type() {
+		case pmetric.MetricTypeGauge:
 			handleDataPoints(
 				m.Gauge().DataPoints(),
 				opts,
 			)
-		case pmetric.MetricDataTypeSum:
+		case pmetric.MetricTypeSum:
 			handleDataPoints(
 				m.Sum().DataPoints(),
 				opts,
@@ -92,7 +92,7 @@ func handleDataPoints(dps pmetric.NumberDataPointSlice, opts options) {
 
 func insertTagToPdataStringMapOpt(tag *telegraf.Tag) func(attributeMap pcommon.Map) {
 	return func(sm pcommon.Map) {
-		sm.InsertString(tag.Key, tag.Value)
+		sm.PutString(tag.Key, tag.Value)
 	}
 }
 
@@ -106,14 +106,14 @@ func WithTag(tag *telegraf.Tag) MetricOpt {
 			},
 		}
 
-		switch m.DataType() {
-		case pmetric.MetricDataTypeGauge:
+		switch m.Type() {
+		case pmetric.MetricTypeGauge:
 			handleDataPoints(
 				m.Gauge().DataPoints(),
 				opts,
 			)
 
-		case pmetric.MetricDataTypeSum:
+		case pmetric.MetricTypeSum:
 			handleDataPoints(
 				m.Sum().DataPoints(),
 				opts,
@@ -125,7 +125,7 @@ func WithTag(tag *telegraf.Tag) MetricOpt {
 func insertTagsToPdataStringMapOpt(tags []*telegraf.Tag) func(attributeMap pcommon.Map) {
 	return func(sm pcommon.Map) {
 		for _, tag := range tags {
-			sm.InsertString(tag.Key, tag.Value)
+			sm.PutString(tag.Key, tag.Value)
 		}
 	}
 }
@@ -140,13 +140,13 @@ func WithTags(tags []*telegraf.Tag) MetricOpt {
 			},
 		}
 
-		switch m.DataType() {
-		case pmetric.MetricDataTypeGauge:
+		switch m.Type() {
+		case pmetric.MetricTypeGauge:
 			handleDataPoints(
 				m.Gauge().DataPoints(),
 				opts,
 			)
-		case pmetric.MetricDataTypeSum:
+		case pmetric.MetricTypeSum:
 			handleDataPoints(
 				m.Sum().DataPoints(),
 				opts,

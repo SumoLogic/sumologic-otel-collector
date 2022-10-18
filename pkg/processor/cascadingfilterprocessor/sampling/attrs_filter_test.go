@@ -62,20 +62,20 @@ func TestAttributesFilter(t *testing.T) {
 	coo := newAttrsFilter([]attributeFilter{filterCooNothing})
 
 	fooTraces, fooAttrs := newTrace()
-	fooAttrs.InsertString("foo", "foobar")
+	fooAttrs.PutString("foo", "foobar")
 
 	fooNumTraces, fooNumAttrs := newTrace()
-	fooNumAttrs.InsertInt("foo", 130)
+	fooNumAttrs.PutInt("foo", 130)
 
 	fooBarTraces, fooBarAttrs := newTrace()
-	fooBarAttrs.InsertString("foo", "foobar")
-	fooBarAttrs.InsertString("bar", "bazbar")
+	fooBarAttrs.PutString("foo", "foobar")
+	fooBarAttrs.PutString("bar", "bazbar")
 
 	booTraces, booAttrs := newTrace()
-	booAttrs.InsertString("bar", "bazboo")
+	booAttrs.PutString("bar", "bazboo")
 
 	cooTraces, cooAttrs := newTrace()
-	cooAttrs.InsertString("coo", "fsdkfjsdkljsda")
+	cooAttrs.PutString("coo", "fsdkfjsdkljsda")
 
 	cases := []struct {
 		Desc      string

@@ -38,19 +38,19 @@ func New() confmap.Provider {
 	return &provider{}
 }
 
-func (fmp *provider) Retrieve(ctx context.Context, uri string, _ confmap.WatcherFunc) (confmap.Retrieved, error) {
+func (fmp *provider) Retrieve(ctx context.Context, uri string, _ confmap.WatcherFunc) (*confmap.Retrieved, error) {
 	var rawConf map[string]interface{}
 	if !strings.HasPrefix(uri, schemePrefix) {
-		return confmap.Retrieved{}, fmt.Errorf("%q uri is not supported by %q provider", uri, schemeName)
+		return &confmap.Retrieved{}, fmt.Errorf("%q uri is not supported by %q provider", uri, schemeName)
 	}
 
 	globPattern := uri[len(schemePrefix):]
 	paths, err := filepath.Glob(globPattern)
 	if err != nil {
-		return confmap.Retrieved{}, err
+		return &confmap.Retrieved{}, err
 	}
 	if len(paths) == 0 {
-		return confmap.Retrieved{}, fmt.Errorf("no matching files found for pattern %s", globPattern)
+		return &confmap.Retrieved{}, fmt.Errorf("no matching files found for pattern %s", globPattern)
 	}
 
 	// sort the paths alphabetically to have consistent ordering
@@ -60,15 +60,15 @@ func (fmp *provider) Retrieve(ctx context.Context, uri string, _ confmap.Watcher
 	for _, path := range paths {
 		content, err := os.ReadFile(path)
 		if err != nil {
-			return confmap.Retrieved{}, err
+			return &confmap.Retrieved{}, err
 		}
 
 		if err := yaml.Unmarshal(content, &rawConf); err != nil {
-			return confmap.Retrieved{}, err
+			return &confmap.Retrieved{}, err
 		}
 		pathConf := confmap.NewFromStringMap(rawConf)
 		if err := conf.Merge(pathConf); err != nil {
-			return confmap.Retrieved{}, err
+			return &confmap.Retrieved{}, err
 		}
 	}
 
