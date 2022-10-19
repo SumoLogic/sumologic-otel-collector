@@ -850,7 +850,7 @@ echo "Generating configuration and saving as ${CONFIG_PATH}"
 CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/sumologic.yaml"
 
 # ToDo: remove this line after release
-CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/abb1ed3fa5f12495dc9f324f043315edac3931a5/examples/sumologic.yaml"
+CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/examples/sumologic.yaml"
 
 sudo curl -s "${CONFIG_URL}" -o "${CONFIG_PATH}"
 
@@ -916,7 +916,7 @@ sudo chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${CONFIG_PATH}" "${FILE_STORAGE
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/systemd/otelcol-sumo.service"
 
 # ToDo: remove this line after release
-SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/abb1ed3fa5f12495dc9f324f043315edac3931a5/examples/systemd/otelcol-sumo.service"
+SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/examples/systemd/otelcol-sumo.service"
 
 TMP_SYSTEMD_CONFIG="otelcol-sumo.service"
 echo 'Getting service configuration'

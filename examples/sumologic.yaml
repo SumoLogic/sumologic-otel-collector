@@ -37,7 +37,7 @@ exporters:
   sumologic:
     sending_queue:
       enabled: true
-      storage: file_storage
+      persistent_storage_enabled: true
 
 processors:
 
