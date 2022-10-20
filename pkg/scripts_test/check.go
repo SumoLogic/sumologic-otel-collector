@@ -253,11 +253,11 @@ func checkAbortedDueToDifferentTags(c check) {
 }
 
 func checkUserExists(c check) {
-	_, err := user.Lookup("otelcol-sumo")
+	_, err := user.Lookup(systemUser)
 	require.NoError(c.test, err)
 }
 
 func checkUserNotExists(c check) {
-	_, err := user.Lookup("otelcol-sumo")
+	_, err := user.Lookup(systemUser)
 	require.Error(c.test, err)
 }
