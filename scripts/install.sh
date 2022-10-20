@@ -28,13 +28,15 @@ ARG_SHORT_DOWNLOAD='w'
 ARG_LONG_DOWNLOAD='download-only'
 ARG_SHORT_CONFIG_BRANCH='c'
 ARG_LONG_CONFIG_BRANCH='config-branch'
+ARG_SHORT_BINARY_BRANCH='e'
+ARG_LONG_BINARY_BRANCH='binary-branch'
 ENV_TOKEN="SUMOLOGIC_INSTALL_TOKEN"
 
 readonly ARG_SHORT_TOKEN ARG_LONG_TOKEN ARG_SHORT_HELP ARG_LONG_HELP ARG_SHORT_API ARG_LONG_API
 readonly ARG_SHORT_TAG ARG_LONG_TAG ARG_SHORT_VERSION ARG_LONG_VERSION ARG_SHORT_YES ARG_LONG_YES
 readonly ARG_SHORT_SYSTEMD ARG_LONG_SYSTEMD ARG_SHORT_UNINSTALL ARG_LONG_UNINSTALL
 readonly ARG_SHORT_PURGE ARG_LONG_PURGE ARG_SHORT_DOWNLOAD ARG_LONG_DOWNLOAD
-readonly ARG_SHORT_CONFIG_BRANCH ARG_LONG_CONFIG_BRANCH
+readonly ARG_SHORT_CONFIG_BRANCH ARG_LONG_CONFIG_BRANCH ARG_SHORT_BINARY_BRANCH ARG_LONG_CONFIG_BRANCH
 readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ENV_TOKEN
 
 ############################ Variables (see set_defaults function for default values)
@@ -72,6 +74,7 @@ EXT_INDENTATION=""
 FIELDS_INDENTATION=""
 
 CONFIG_BRANCH=""
+BINARY_BRANCH=""
 
 # set by check_dependencies therefore cannot be set by set_defaults
 SYSTEMD_DISABLED=false
@@ -165,10 +168,13 @@ function parse_options() {
       "--${ARG_LONG_DOWNLOAD}")
         set -- "$@" "-${ARG_SHORT_DOWNLOAD}"
         ;;
+      "--${ARG_LONG_BINARY_BRANCH}")
+        set -- "$@" "-${ARG_SHORT_BINARY_BRANCH}"
+        ;;
       "--${ARG_LONG_CONFIG_BRANCH}")
         set -- "$@" "-${ARG_SHORT_CONFIG_BRANCH}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}")
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}")
         set -- "$@" "${arg}"
         ;;
       -*)
@@ -183,7 +189,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_CONFIG_BRANCH}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -206,6 +212,7 @@ function parse_options() {
       "${ARG_SHORT_SKIP_TOKEN}")    SKIP_TOKEN=true ;;
       "${ARG_SHORT_DOWNLOAD}")      DOWNLOAD_ONLY=true ;;
       "${ARG_SHORT_CONFIG_BRANCH}") CONFIG_BRANCH="${OPTARG}" ;;
+      "${ARG_SHORT_BINARY_BRANCH}") BINARY_BRANCH="${OPTARG}" ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
             echo "Invalid tag: '${OPTARG}'. Should be in 'key=value' format"
@@ -716,6 +723,38 @@ function write_tags() {
     fi
 }
 
+function get_binary_from_branch() {
+    local branch
+    readonly branch="${1}"
+
+    local name
+    readonly name="${2}"
+
+    local actions_output artifacts_link sha check_suit_url artifact_id
+    readonly actions_output="$(curl -f -s \
+      -H "Accept: application/vnd.github+json" \
+      -H "Authorization: token ${GITHUB_TOKEN}" \
+      "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/runs?status=success&branch=${branch}&event=push&per_page=1")"
+
+    # get latest action run
+    readonly artifacts_link="$(echo "${actions_output}" | grep '"url"' | grep -oE '"https.*collector/actions.*"' -m 1)/artifacts"
+
+    readonly artifact_id="$(curl -f -s \
+    -H "Accept: application/vnd.github+json" \
+    -H "Authorization: token ${GITHUB_TOKEN}" \
+    "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/runs/3287061866/artifacts" \
+        | grep -E '"(id|name)"' \
+        | grep -B 1 "\"${name}\"" -m 1 \
+        | grep -oE "[0-9]+" -m 1)"
+
+    curl -f -s -L \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: token ${GITHUB_TOKEN}" \
+        "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/artifacts/${artifact_id}/zip" --output otelcol-sumo.zip --progress-bar
+    unzip -p otelcol-sumo.zip "${name}" >otelcol-sumo
+    rm otelcol-sumo.zip
+}
+
 ############################ Main code
 
 check_dependencies
@@ -766,6 +805,13 @@ if [[ -f "${COMMON_CONFIG_PATH}" && -z "${DOWNLOAD_ONLY}" ]]; then
     fi
 fi
 
+set +u
+if [[ -n "${BINARY_BRANCH}" && -z "${GITHUB_TOKEN}" ]]; then
+    echo "GITHUB_TOKEN env is required for '${ARG_LONG_BINARY_BRANCH}' option"
+    exit 1
+fi
+set -u
+
 if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
     SYSTEMD_DISABLED=true
 fi
@@ -805,13 +851,13 @@ if [[ -z "${CONFIG_BRANCH}" ]]; then
         CONFIG_BRANCH="v${VERSION}"
     fi
 fi
-readonly CONFIG_BRANCH
+readonly CONFIG_BRANCH BINARY_BRANCH
 
 # Check if otelcol is already in newest version
-if [[ "${INSTALLED_VERSION}" == "${VERSION}" ]]; then
+if [[ "${INSTALLED_VERSION}" == "${VERSION}" && -z "${BINARY_BRANCH}" ]]; then
     echo -e "OpenTelemetry collector is already in newest (${VERSION}) version"
 else
-    if [[ -z "${INSTALLED_VERSION}" ]]; then
+    if [[ -z "${INSTALLED_VERSION}" && -z "${BINARY_BRANCH}" ]]; then
         # Take versions from installed up to the newest
         BETWEEN_VERSIONS="$(get_versions_from "${VERSIONS}" "${INSTALLED_VERSION}")"
         readonly BETWEEN_VERSIONS
@@ -833,11 +879,16 @@ else
         fi
     fi
 
-    readonly LINK="https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${VERSION}/otelcol-sumo-${VERSION}-${OS_TYPE}_${ARCH_TYPE}"
+    if [[ -n "${BINARY_BRANCH}" ]]; then
+        get_binary_from_branch "${BINARY_BRANCH}" "otelcol-sumo-${OS_TYPE}_${ARCH_TYPE}"
+    else
+        LINK="https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${VERSION}/otelcol-sumo-${VERSION}-${OS_TYPE}_${ARCH_TYPE}"
+        readonly LINK
 
-    ask_to_continue
-    echo -e "Downloading:\t\t${LINK}"
-    curl -fL "${LINK}" --output otelcol-sumo --progress-bar
+        ask_to_continue
+        echo -e "Downloading:\t\t${LINK}"
+        curl -fL "${LINK}" --output otelcol-sumo --progress-bar
+    fi
 
     echo -e "Moving otelcol-sumo to /usr/local/bin"
     sudo mv otelcol-sumo "${SUMO_BINARY_PATH}"
