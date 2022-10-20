@@ -3,6 +3,7 @@ package sumologic_scripts_tests
 import (
 	"os"
 	"os/exec"
+	"os/user"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -249,4 +250,14 @@ func preActionWriteDifferentTagsToUserConfig(c check) {
 func checkAbortedDueToDifferentTags(c check) {
 	require.Greater(c.test, len(c.output), 0)
 	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different tags than in your configuration file!")
+}
+
+func checkUserExists(c check) {
+	_, err := user.Lookup("otelcol-sumo")
+	require.NoError(c.test, err)
+}
+
+func checkUserNotExists(c check) {
+	_, err := user.Lookup("otelcol-sumo")
+	require.Error(c.test, err)
 }
