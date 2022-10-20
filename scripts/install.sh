@@ -419,7 +419,7 @@ function uninstall() {
     MSG="Going to remove Otelcol binary"
 
     if [[ "${PURGE}" == "true" ]]; then
-        MSG="${MSG}, file storage and configurations"
+        MSG="${MSG}, user, file storage and configurations"
     fi
 
     echo "${MSG}."
@@ -434,9 +434,15 @@ function uninstall() {
     # remove binary
     sudo rm -f "${SUMO_BINARY_PATH}"
 
-    # remove configuration and data
     if [[ "${PURGE}" == "true" ]]; then
+        # remove configuration and data
         sudo rm -rf "${CONFIG_DIRECTORY}" "${FILE_STORAGE}" "${SYSTEMD_CONFIG}"
+
+        # remove user
+        if getent passwd "${SYSTEM_USER}" > /dev/null; then
+            sudo userdel -r -f "${SYSTEM_USER}"
+            sudo groupdel -f "${SYSTEM_USER}"
+        fi
     fi
 
     exit 0

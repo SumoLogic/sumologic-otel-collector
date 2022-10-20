@@ -15,4 +15,6 @@ const (
 
 	installToken string = "token"
 	apiBaseURL   string = "https://open-collectors.sumologic.com"
+
+	systemUser string = "otelcol-sumo"
 )
