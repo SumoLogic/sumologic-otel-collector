@@ -26,12 +26,15 @@ ARG_SHORT_SKIP_TOKEN='k'
 ARG_LONG_SKIP_TOKEN='skip-install-token'
 ARG_SHORT_DOWNLOAD='w'
 ARG_LONG_DOWNLOAD='download-only'
+ARG_SHORT_CONFIG_BRANCH='c'
+ARG_LONG_CONFIG_BRANCH='config-branch'
 ENV_TOKEN="SUMOLOGIC_INSTALL_TOKEN"
 
 readonly ARG_SHORT_TOKEN ARG_LONG_TOKEN ARG_SHORT_HELP ARG_LONG_HELP ARG_SHORT_API ARG_LONG_API
 readonly ARG_SHORT_TAG ARG_LONG_TAG ARG_SHORT_VERSION ARG_LONG_VERSION ARG_SHORT_YES ARG_LONG_YES
 readonly ARG_SHORT_SYSTEMD ARG_LONG_SYSTEMD ARG_SHORT_UNINSTALL ARG_LONG_UNINSTALL
 readonly ARG_SHORT_PURGE ARG_LONG_PURGE ARG_SHORT_DOWNLOAD ARG_LONG_DOWNLOAD
+readonly ARG_SHORT_CONFIG_BRANCH ARG_LONG_CONFIG_BRANCH
 readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ENV_TOKEN
 
 ############################ Variables (see set_defaults function for default values)
@@ -67,6 +70,8 @@ SYSTEM_USER="otelcol-sumo"
 INDENTATION=""
 EXT_INDENTATION=""
 FIELDS_INDENTATION=""
+
+CONFIG_BRANCH=""
 
 # set by check_dependencies therefore cannot be set by set_defaults
 SYSTEMD_DISABLED=false
@@ -160,8 +165,12 @@ function parse_options() {
       "--${ARG_LONG_DOWNLOAD}")
         set -- "$@" "-${ARG_SHORT_DOWNLOAD}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}")
-        set -- "$@" "${arg}"   ;;
+      "--${ARG_LONG_CONFIG_BRANCH}")
+        set -- "$@" "-${ARG_SHORT_CONFIG_BRANCH}"
+        ;;
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}")
+        set -- "$@" "${arg}"
+        ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
       *)
@@ -174,7 +183,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_DOWNLOAD}" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_CONFIG_BRANCH}:" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -186,16 +195,17 @@ function parse_options() {
 
     # Validate opt and set arguments
     case "$opt" in
-      "${ARG_SHORT_HELP}")       usage; exit 0 ;;
-      "${ARG_SHORT_TOKEN}")      SUMOLOGIC_INSTALL_TOKEN="${OPTARG}" ;;
-      "${ARG_SHORT_API}")        API_BASE_URL="${OPTARG}" ;;
-      "${ARG_SHORT_VERSION}")    VERSION="${OPTARG}" ;;
-      "${ARG_SHORT_YES}")        CONTINUE=true ;;
-      "${ARG_SHORT_SYSTEMD}")    SYSTEMD_DISABLED=true ;;
-      "${ARG_SHORT_UNINSTALL}")  UNINSTALL=true ;;
-      "${ARG_SHORT_PURGE}")      PURGE=true ;;
-      "${ARG_SHORT_SKIP_TOKEN}") SKIP_TOKEN=true ;;
-      "${ARG_SHORT_DOWNLOAD}")   DOWNLOAD_ONLY=true ;;
+      "${ARG_SHORT_HELP}")          usage; exit 0 ;;
+      "${ARG_SHORT_TOKEN}")         SUMOLOGIC_INSTALL_TOKEN="${OPTARG}" ;;
+      "${ARG_SHORT_API}")           API_BASE_URL="${OPTARG}" ;;
+      "${ARG_SHORT_VERSION}")       VERSION="${OPTARG}" ;;
+      "${ARG_SHORT_YES}")           CONTINUE=true ;;
+      "${ARG_SHORT_SYSTEMD}")       SYSTEMD_DISABLED=true ;;
+      "${ARG_SHORT_UNINSTALL}")     UNINSTALL=true ;;
+      "${ARG_SHORT_PURGE}")         PURGE=true ;;
+      "${ARG_SHORT_SKIP_TOKEN}")    SKIP_TOKEN=true ;;
+      "${ARG_SHORT_DOWNLOAD}")      DOWNLOAD_ONLY=true ;;
+      "${ARG_SHORT_CONFIG_BRANCH}") CONFIG_BRANCH="${OPTARG}" ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
             echo "Invalid tag: '${OPTARG}'. Should be in 'key=value' format"
@@ -206,8 +216,8 @@ function parse_options() {
         # Cannot use `\n` and have to use `\\` as break line due to OSx sed implementation
         FIELDS="${FIELDS}\\
 $(escape_sed "${OPTARG/=/: }")" ;;
-    "?")                        ;;
-      *)                        usage; exit 1 ;;
+    "?")                            ;;
+      *)                            usage; exit 1 ;;
     esac
 
     # Exit loop as we iterated over all arguments
@@ -787,6 +797,16 @@ readonly VERSIONS VERSION INSTALLED_VERSION VERSION_PREFIX
 
 echo -e "Version to install:\t${VERSION}"
 
+if [[ -z "${CONFIG_BRANCH}" ]]; then
+    # Remove glob for versions up to 0.57
+    if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then
+        CONFIG_BRANCH="9e06ada346b5e7fb3df582f28e582e07730899de"
+    else
+        CONFIG_BRANCH="v${VERSION}"
+    fi
+fi
+readonly CONFIG_BRANCH
+
 # Check if otelcol is already in newest version
 if [[ "${INSTALLED_VERSION}" == "${VERSION}" ]]; then
     echo -e "OpenTelemetry collector is already in newest (${VERSION}) version"
@@ -853,12 +873,11 @@ sudo mkdir -p "${USER_CONFIG_DIRECTORY}"
 
 echo "Generating configuration and saving as ${CONFIG_PATH}"
 
-CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/sumologic.yaml"
-
-# ToDo: remove this line after release
-CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/examples/sumologic.yaml"
-
-sudo curl -s "${CONFIG_URL}" -o "${CONFIG_PATH}"
+CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/sumologic.yaml"
+if ! sudo curl -f -s "${CONFIG_URL}" -o "${CONFIG_PATH}"; then
+    echo "Cannot obtain configuration for '${CONFIG_BRANCH}' branch"
+    exit 1
+fi
 
 echo 'Changing permissions for config file and storage'
 sudo chmod 440 "${CONFIG_PATH}"
@@ -919,10 +938,7 @@ fi
 echo 'Changing ownership for config and storage'
 sudo chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${CONFIG_PATH}" "${FILE_STORAGE}"
 
-SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${VERSION}/examples/systemd/otelcol-sumo.service"
-
-# ToDo: remove this line after release
-SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/examples/systemd/otelcol-sumo.service"
+SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/systemd/otelcol-sumo.service"
 
 TMP_SYSTEMD_CONFIG="otelcol-sumo.service"
 echo 'Getting service configuration'
