@@ -207,6 +207,15 @@ func preActionWriteDifferentAPIBaseURLToUserConfig(c check) {
 	require.NoError(c.test, err)
 }
 
+func preActionWriteDefaultAPIBaseURLToUserConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err)
+
+	conf.Extensions.Sumologic.APIBaseURL = apiBaseURL
+	err = saveConfig(userConfigPath, conf)
+	require.NoError(c.test, err)
+}
+
 func checkAbortedDueToDifferentAPIBaseURL(c check) {
 	require.Greater(c.test, len(c.output), 0)
 	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different api base url than in your configuration file!")
