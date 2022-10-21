@@ -981,7 +981,8 @@ echo 'We are going to set up systemd service'
 ask_to_continue
 
 if [[ -f "${SYSTEMD_CONFIG}" ]]; then
-    echo "Configuration for systemd service (${SYSTEMD_CONFIG}) already exist. Aborting"
+    echo "Configuration for systemd service (${SYSTEMD_CONFIG}) already exist. Restarting service"
+    sudo systemctl restart otelcol-sumo
     exit 0
 fi
 
