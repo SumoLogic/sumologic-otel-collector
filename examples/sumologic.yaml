@@ -6,7 +6,7 @@ extensions:
   ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/extension/sumologicextension
   sumologic:
     install_token: ${SUMOLOGIC_INSTALL_TOKEN}
-    collector_credentials_directory: ~/.sumologic-otel-collector
+    collector_credentials_directory: /var/lib/otelcol-sumo/credentials
 
   ## Configuration for Health Check Extension
   ## Health Check extension enables an HTTP url that can be probed to check the status of the OpenTelemetry Collector
