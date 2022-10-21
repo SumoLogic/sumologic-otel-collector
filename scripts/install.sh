@@ -831,7 +831,8 @@ if [[ -n "${BINARY_BRANCH}" && -z "${GITHUB_TOKEN}" ]]; then
 fi
 set -u
 
-if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
+# Disable systemd if token is not specified at all
+if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && -z "${USER_TOKEN}" ]]; then
     SYSTEMD_DISABLED=true
 fi
 
