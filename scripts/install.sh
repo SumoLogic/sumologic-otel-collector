@@ -458,10 +458,13 @@ function uninstall() {
         # remove configuration and data
         sudo rm -rf "${CONFIG_DIRECTORY}" "${FILE_STORAGE}" "${SYSTEMD_CONFIG}"
 
-        # remove user
-        if getent passwd "${SYSTEM_USER}" > /dev/null; then
-            sudo userdel -r -f "${SYSTEM_USER}"
-            sudo groupdel -f "${SYSTEM_USER}"
+        # remove user and group only if getent exists (it was required in order to create the user)
+        if command -v "getent" &> /dev/null; then
+            # remove user
+            if getent passwd "${SYSTEM_USER}" > /dev/null; then
+                sudo userdel -r -f "${SYSTEM_USER}"
+                sudo groupdel -f "${SYSTEM_USER}"
+            fi
         fi
     fi
 
