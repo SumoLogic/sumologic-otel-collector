@@ -302,6 +302,16 @@ func TestInstallScript(t *testing.T) {
 			postChecks:        []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated, checkUserNotExists},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
 		},
+		{
+			name:       "systemd creation if token in file",
+			options:    installOptions{},
+			preActions: []checkFunc{preActionMockUserConfig, preActionWriteDifferentTokenToUserConfig, preActionWriteDefaultAPIBaseURLToUserConfig},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated, checkUserNotExists},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkDifferentTokenInConfig, checkSystemdConfigCreated,
+				checkUserExists},
+			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
+			installCode:       3, // because of invalid install token
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			ch := check{
