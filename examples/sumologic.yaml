@@ -37,7 +37,7 @@ exporters:
   sumologic:
     sending_queue:
       enabled: true
-      persistent_storage_enabled: true
+      storage: file_storage
 
 processors:
 
@@ -64,6 +64,12 @@ processors:
     ## Time duration after which a batch will be sent regardless of size
     timeout: 1s
 
+  ## Configuration for Sumo Logic Schema Processor
+  ## The Sumo Logic Schema processor modifies the metadata on logs, metrics and traces sent to Sumo Logic
+  ## so that the Sumo Logic apps can make full use of the ingested data.
+  ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/sumologicschemaprocessor
+  sumologic_schema:
+
 service:
   extensions:
     - sumologic
@@ -76,6 +82,7 @@ service:
       processors:
         - memory_limiter
         - batch
+        - sumologic_schema
       exporters:
         - sumologic
     logs/default:
@@ -84,6 +91,7 @@ service:
       processors:
         - memory_limiter
         - batch
+        - sumologic_schema
       exporters:
         - sumologic
     traces/default:
@@ -92,5 +100,6 @@ service:
       processors:
         - memory_limiter
         - batch
+        - sumologic_schema
       exporters:
         - sumologic
