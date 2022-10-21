@@ -52,6 +52,7 @@ API_BASE_URL=""
 FIELDS=""
 VERSION=""
 CONTINUE=false
+HOME_DIRECTORY=""
 CONFIG_DIRECTORY=""
 USER_CONFIG_DIRECTORY=""
 SYSTEMD_CONFIG=""
@@ -117,7 +118,8 @@ EOF
 }
 
 function set_defaults() {
-    FILE_STORAGE="/var/lib/otelcol-sumo/file_storage"
+    HOME_DIRECTORY="/var/lib/otelcol-sumo"
+    FILE_STORAGE="${HOME_DIRECTORY}/file_storage"
     CONFIG_DIRECTORY="/etc/otelcol-sumo"
     SYSTEMD_CONFIG="/etc/systemd/system/otelcol-sumo.service"
     SUMO_BINARY_PATH="/usr/local/bin/otelcol-sumo"
@@ -983,7 +985,7 @@ echo 'Creating user and group'
 if getent passwd "${SYSTEM_USER}" > /dev/null; then
     echo 'User and group already created'
 else
-    sudo useradd -mrUs /bin/false "${SYSTEM_USER}"
+    sudo useradd -mrUs /bin/false -d "${HOME_DIRECTORY}" "${SYSTEM_USER}"
 fi
 
 echo 'Changing ownership for config and storage'
