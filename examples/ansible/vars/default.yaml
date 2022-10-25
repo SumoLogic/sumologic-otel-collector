@@ -1,6 +1,2 @@
-sumologic_otel_collector:
-  version: 0.50.0-sumo-0
-  src_config_path: config.yaml
-  memory_high: 200M
-  memory_max: 300M
-  systemd_service: false
+collector_tags: {}
+systemd_service: true
