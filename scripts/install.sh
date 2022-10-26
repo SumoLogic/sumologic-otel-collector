@@ -258,7 +258,13 @@ function github_rate_limit() {
 function check_dependencies() {
     local error
     error=0
-    for cmd in echo sudo sed curl head grep sort mv chmod envsubst getopts hostname bc touch xargs; do
+
+    if [ "$EUID" -ne 0 ]; then
+        echo "Please run this script as root."
+        error=1
+    fi
+
+    for cmd in echo sed curl head grep sort mv chmod envsubst getopts hostname bc touch xargs; do
         if ! command -v "${cmd}" &> /dev/null; then
             echo "Command '${cmd}' not found. Please install it."
             error=1
@@ -460,23 +466,23 @@ function uninstall() {
 
     # disable systemd service
     if [[ -f "${SYSTEMD_CONFIG}" ]]; then
-        sudo systemctl stop otelcol-sumo
-        sudo systemctl disable otelcol-sumo
+        systemctl stop otelcol-sumo
+        systemctl disable otelcol-sumo
     fi
 
     # remove binary
-    sudo rm -f "${SUMO_BINARY_PATH}"
+    rm -f "${SUMO_BINARY_PATH}"
 
     if [[ "${PURGE}" == "true" ]]; then
         # remove configuration and data
-        sudo rm -rf "${CONFIG_DIRECTORY}" "${FILE_STORAGE}" "${SYSTEMD_CONFIG}"
+        rm -rf "${CONFIG_DIRECTORY}" "${FILE_STORAGE}" "${SYSTEMD_CONFIG}"
 
         # remove user and group only if getent exists (it was required in order to create the user)
         if command -v "getent" &> /dev/null; then
             # remove user
             if getent passwd "${SYSTEM_USER}" > /dev/null; then
-                sudo userdel -r -f "${SYSTEM_USER}"
-                sudo groupdel -f "${SYSTEM_USER}"
+                userdel -r -f "${SYSTEM_USER}"
+                groupdel -f "${SYSTEM_USER}"
             fi
         fi
     fi
@@ -637,7 +643,7 @@ function create_user_config_file() {
         return
     fi
 
-    sudo touch "${file}"
+    touch "${file}"
 }
 
 # write extensions section to user configuration file
@@ -650,7 +656,7 @@ function add_extension_to_config() {
     fi
 
     echo "extensions:" \
-        | sudo tee -a "${file}" > /dev/null 2>&1
+        | tee -a "${file}" > /dev/null 2>&1
 }
 
 # write sumologic extension to user configuration file
@@ -666,7 +672,7 @@ function write_sumologic_extension() {
     fi
 
     # add sumologic extension on the top of the extensions
-    sudo sed -i.bak -e "s/extensions:/extensions:\\
+    sed -i.bak -e "s/extensions:/extensions:\\
 ${indentation}sumologic:/" "${file}"
 }
 
@@ -683,10 +689,10 @@ function write_install_token() {
 
     # ToDo: ensure we override only sumologic `install_token`
     if grep "install_token" "${file}" > /dev/null; then
-        sudo sed -i.bak -e "s/install_token:.*$/install_token: $(escape_sed "${token}")/" "${file}"
+        sed -i.bak -e "s/install_token:.*$/install_token: $(escape_sed "${token}")/" "${file}"
     else
         # write install token on the top of sumologic: extension
-        sudo sed -i.bak -e "s/sumologic:/sumologic:\\
+        sed -i.bak -e "s/sumologic:/sumologic:\\
 \\${ext_indentation}install_token: $(escape_sed "${token}")/" "${file}"
     fi
 }
@@ -704,10 +710,10 @@ function write_api_url() {
 
     # ToDo: ensure we override only sumologic `api_base_url`
     if grep "api_base_url" "${file}" > /dev/null; then
-        sudo sed -i.bak -e "s/api_base_url:.*$/api_base_url: $(escape_sed "${api_url}")/" "${file}"
+        sed -i.bak -e "s/api_base_url:.*$/api_base_url: $(escape_sed "${api_url}")/" "${file}"
     else
         # write install token on the top of sumologic: extension
-        sudo sed -i.bak -e "s/sumologic:/sumologic:\\
+        sed -i.bak -e "s/sumologic:/sumologic:\\
 \\${ext_indentation}api_base_url: $(escape_sed "${api_url}")/" "${file}"
     fi
 }
@@ -734,10 +740,10 @@ function write_tags() {
 
     # ToDo: ensure we override only sumologic `collector_fields`
     if grep "collector_fields" "${file}" > /dev/null; then
-        sudo sed -i.bak -e "s/collector_fields:.*$/collector_fields: ${fields_to_write}/" "${file}"
+        sed -i.bak -e "s/collector_fields:.*$/collector_fields: ${fields_to_write}/" "${file}"
     else
         # write install token on the top of sumologic: extension
-        sudo sed -i.bak -e "s/sumologic:/sumologic:\\
+        sed -i.bak -e "s/sumologic:/sumologic:\\
 \\${ext_indentation}collector_fields: ${fields_to_write}/" "${file}"
     fi
 }
@@ -911,9 +917,9 @@ else
     fi
 
     echo -e "Moving otelcol-sumo to /usr/local/bin"
-    sudo mv otelcol-sumo "${SUMO_BINARY_PATH}"
+    mv otelcol-sumo "${SUMO_BINARY_PATH}"
     echo -e "Setting ${SUMO_BINARY_PATH} to be executable"
-    sudo chmod +x "${SUMO_BINARY_PATH}"
+    chmod +x "${SUMO_BINARY_PATH}"
 
     OUTPUT="$(otelcol-sumo --version || true)"
     readonly OUTPUT
@@ -934,25 +940,25 @@ echo 'We are going to get and set up default configuration for you'
 ask_to_continue
 
 echo -e "Creating file_storage directory (${FILE_STORAGE})"
-sudo mkdir -p "${FILE_STORAGE}"
+mkdir -p "${FILE_STORAGE}"
 
 echo -e "Creating configuration directory (${CONFIG_DIRECTORY})"
-sudo mkdir -p "${CONFIG_DIRECTORY}"
+mkdir -p "${CONFIG_DIRECTORY}"
 
 echo -e "Creating user configurations directory (${USER_CONFIG_DIRECTORY})"
-sudo mkdir -p "${USER_CONFIG_DIRECTORY}"
+mkdir -p "${USER_CONFIG_DIRECTORY}"
 
 echo "Generating configuration and saving as ${CONFIG_PATH}"
 
 CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/sumologic.yaml"
-if ! sudo curl -f -s "${CONFIG_URL}" -o "${CONFIG_PATH}"; then
+if ! curl -f -s "${CONFIG_URL}" -o "${CONFIG_PATH}"; then
     echo "Cannot obtain configuration for '${CONFIG_BRANCH}' branch"
     exit 1
 fi
 
 echo 'Changing permissions for config file and storage'
-sudo chmod 440 "${CONFIG_PATH}"
-sudo chmod -R 750 "${FILE_STORAGE}"
+chmod 440 "${CONFIG_PATH}"
+chmod -R 750 "${FILE_STORAGE}"
 
 # Ensure that configuration is created
 if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
@@ -979,7 +985,7 @@ if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" 
     fi
 
     # clean up bak file
-    sudo rm -f "${COMMON_CONFIG_BAK_PATH}"
+    rm -f "${COMMON_CONFIG_BAK_PATH}"
 fi
 
 if [[ "${SYSTEMD_DISABLED}" == "true" ]]; then
@@ -999,7 +1005,7 @@ ask_to_continue
 
 if [[ -f "${SYSTEMD_CONFIG}" ]]; then
     echo "Configuration for systemd service (${SYSTEMD_CONFIG}) already exist. Restarting service"
-    sudo systemctl restart otelcol-sumo
+    systemctl restart otelcol-sumo
     exit 0
 fi
 
@@ -1007,11 +1013,11 @@ echo 'Creating user and group'
 if getent passwd "${SYSTEM_USER}" > /dev/null; then
     echo 'User and group already created'
 else
-    sudo useradd -mrUs /bin/false -d "${HOME_DIRECTORY}" "${SYSTEM_USER}"
+    useradd -mrUs /bin/false -d "${HOME_DIRECTORY}" "${SYSTEM_USER}"
 fi
 
 echo 'Changing ownership for config and storage'
-sudo chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${CONFIG_PATH}" "${FILE_STORAGE}"
+chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${CONFIG_PATH}" "${FILE_STORAGE}"
 
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/systemd/otelcol-sumo.service"
 
@@ -1025,17 +1031,17 @@ sed -i.bak -e "s%/etc/otelcol-sumo%'${CONFIG_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG
 if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then
     sed -i.bak -e "s% --config \"glob.*\"% --config ${COMMON_CONFIG_PATH}%" "${TMP_SYSTEMD_CONFIG}"
     # clean up bak file
-    sudo rm -f "${TMP_SYSTEMD_CONFIG_BAK}"
+    rm -f "${TMP_SYSTEMD_CONFIG_BAK}"
 fi
 
-sudo mv "${TMP_SYSTEMD_CONFIG}" "${SYSTEMD_CONFIG}"
+mv "${TMP_SYSTEMD_CONFIG}" "${SYSTEMD_CONFIG}"
 
 echo 'Enable otelcol-sumo service'
-sudo systemctl enable otelcol-sumo
+systemctl enable otelcol-sumo
 
 echo 'Starting otelcol-sumo service'
-sudo systemctl start otelcol-sumo
+systemctl start otelcol-sumo
 
 echo 'Waiting 10s before checking status'
 sleep 10
-sudo systemctl status otelcol-sumo
+systemctl status otelcol-sumo
