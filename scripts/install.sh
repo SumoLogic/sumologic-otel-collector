@@ -75,7 +75,6 @@ SYSTEM_USER="otelcol-sumo"
 
 INDENTATION=""
 EXT_INDENTATION=""
-FIELDS_INDENTATION=""
 
 CONFIG_BRANCH=""
 BINARY_BRANCH=""
@@ -132,7 +131,6 @@ function set_defaults() {
     COMMON_CONFIG_BAK_PATH="${USER_CONFIG_DIRECTORY}/common.yaml.bak"
     INDENTATION="  "
     EXT_INDENTATION="${INDENTATION}${INDENTATION}"
-    FIELDS_INDENTATION="${INDENTATION}${INDENTATION}${INDENTATION}"
 }
 
 function parse_options() {
@@ -736,7 +734,8 @@ function write_tags() {
     readonly fields_indentation="${ext_indentation}${indentation}"
 
     local fields_to_write
-    readonly fields_to_write="$(escape_sed "${fields}" | sed -e "s/^\\([^\\]\\)/${fields_indentation}\\1/")"
+    fields_to_write="$(escape_sed "${fields}" | sed -e "s/^\\([^\\]\\)/${fields_indentation}\\1/")"
+    readonly fields_to_write
 
     # ToDo: ensure we override only sumologic `collector_fields`
     if grep "collector_fields" "${file}" > /dev/null; then
@@ -755,22 +754,25 @@ function get_binary_from_branch() {
     local name
     readonly name="${2}"
 
-    local actions_output artifacts_link sha check_suit_url artifact_id
-    readonly actions_output="$(curl -f -s \
+    local actions_output artifacts_link artifact_id
+    actions_output="$(curl -f -s \
       -H "Accept: application/vnd.github+json" \
       -H "Authorization: token ${GITHUB_TOKEN}" \
       "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/runs?status=success&branch=${branch}&event=push&per_page=1")"
+    readonly actions_output
 
     # get latest action run
-    readonly artifacts_link="$(echo "${actions_output}" | grep '"url"' | grep -oE '"https.*collector/actions.*"' -m 1)/artifacts"
+    artifacts_link="$(echo "${actions_output}" | grep '"url"' | grep -oE '"https.*collector/actions.*"' -m 1)/artifacts"
+    readonly artifacts_link
 
-    readonly artifact_id="$(curl -f -s \
+    artifact_id="$(curl -f -s \
     -H "Accept: application/vnd.github+json" \
     -H "Authorization: token ${GITHUB_TOKEN}" \
     "${artifacts_link}" \
         | grep -E '"(id|name)"' \
         | grep -B 1 "\"${name}\"" -m 1 \
         | grep -oE "[0-9]+" -m 1)"
+    readonly artifact_id
 
     curl -f -s -L \
         -H "Accept: application/vnd.github+json" \
