@@ -1007,6 +1007,8 @@ TMP_SYSTEMD_CONFIG_BAK="${TMP_SYSTEMD_CONFIG}.bak"
 echo 'Getting service configuration'
 curl -fL "${SYSTEMD_CONFIG_URL}" --output "${TMP_SYSTEMD_CONFIG}" --progress-bar
 sed -i.bak -e "s%/etc/otelcol-sumo%'${CONFIG_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
+sed -i.bak -e "s%/etc/otelcol-sumo/env%'${USER_ENV_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
+
 
 # Remove glob for versions up to 0.57
 if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then
