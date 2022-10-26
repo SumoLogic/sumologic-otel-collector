@@ -1000,7 +1000,6 @@ fi
 echo 'Changing ownership for config and storage'
 chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${CONFIG_PATH}" "${FILE_STORAGE}"
 
-
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/systemd/otelcol-sumo.service"
 
 TMP_SYSTEMD_CONFIG="otelcol-sumo.service"
