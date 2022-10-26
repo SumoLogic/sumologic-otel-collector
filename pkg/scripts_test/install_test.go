@@ -11,9 +11,8 @@ func tearDown(t *testing.T) {
 	ch := check{
 		test: t,
 		installOptions: installOptions{
-			uninstall:   true,
-			purge:       true,
-			autoconfirm: true,
+			uninstall: true,
+			purge:     true,
 		},
 	}
 
@@ -66,7 +65,6 @@ func TestInstallScript(t *testing.T) {
 			name: "override default config",
 			options: installOptions{
 				skipInstallToken: true,
-				autoconfirm:      true,
 			},
 			preActions: []checkFunc{preActionMockConfig},
 			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigCreated, checkUserConfigNotCreated, checkUserNotExists},
