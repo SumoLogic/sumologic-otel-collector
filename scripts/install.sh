@@ -122,6 +122,7 @@ function set_defaults() {
     SYSTEMD_CONFIG="/etc/systemd/system/otelcol-sumo.service"
     SUMO_BINARY_PATH="/usr/local/bin/otelcol-sumo"
     USER_CONFIG_DIRECTORY="${CONFIG_DIRECTORY}/conf.d"
+    USER_ENV_DIRECTORY="${CONFIG_DIRECTORY}/env"
     CONFIG_PATH="${CONFIG_DIRECTORY}/sumologic.yaml"
     COMMON_CONFIG_PATH="${USER_CONFIG_DIRECTORY}/common.yaml"
     COMMON_CONFIG_BAK_PATH="${USER_CONFIG_DIRECTORY}/common.yaml.bak"
@@ -763,7 +764,7 @@ set_defaults
 parse_options "$@"
 
 readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
-readonly USER_CONFIG_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
+readonly USER_CONFIG_DIRECTORY USER_ENV_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
 
 if [[ "${UNINSTALL}" == "true" ]]; then
     uninstall
@@ -919,6 +920,9 @@ mkdir -p "${CONFIG_DIRECTORY}"
 echo -e "Creating user configurations directory (${USER_CONFIG_DIRECTORY})"
 mkdir -p "${USER_CONFIG_DIRECTORY}"
 
+echo -e "Creating user env directory (${USER_ENV_DIRECTORY})"
+mkdir -p "${USER_ENV_DIRECTORY}"
+
 echo "Generating configuration and saving as ${CONFIG_PATH}"
 
 CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/sumologic.yaml"
@@ -930,6 +934,13 @@ fi
 echo 'Changing permissions for config file and storage'
 chmod 440 "${CONFIG_PATH}"
 chmod -R 750 "${FILE_STORAGE}"
+
+echo 'Changing permissions for user env directory'
+chmod 440 "${USER_ENV_DIRECTORY}"
+chmod g+s "${USER_ENV_DIRECTORY}"
+
+echo 'Changing ownership for user env directory'
+chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}" 
 
 # Ensure that configuration is created
 if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
@@ -988,6 +999,7 @@ fi
 
 echo 'Changing ownership for config and storage'
 chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${CONFIG_PATH}" "${FILE_STORAGE}"
+
 
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/systemd/otelcol-sumo.service"
 
