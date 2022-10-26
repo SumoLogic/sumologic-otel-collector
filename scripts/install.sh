@@ -767,7 +767,7 @@ function get_binary_from_branch() {
     readonly artifact_id="$(curl -f -s \
     -H "Accept: application/vnd.github+json" \
     -H "Authorization: token ${GITHUB_TOKEN}" \
-    "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/runs/3287061866/artifacts" \
+    "${artifacts_link}" \
         | grep -E '"(id|name)"' \
         | grep -B 1 "\"${name}\"" -m 1 \
         | grep -oE "[0-9]+" -m 1)"
