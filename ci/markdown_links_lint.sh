@@ -9,7 +9,8 @@ readonly GREP=grep
 fi
 
 # Get all markdown files
-readonly FILES=$(find . -type f -name '*.md')
+FILES=$(find . -type f -name '*.md')
+readonly FILES
 
 RET_VAL=0
 

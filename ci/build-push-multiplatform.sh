@@ -7,12 +7,13 @@ while ! docker buildx ls; do
     sleep 1
 done
 
-readonly DOCKER_BUILDX_LS_OUT=$(docker buildx ls <<-END
+DOCKER_BUILDX_LS_OUT=$(docker buildx ls <<-END
 END
 )
+readonly DOCKER_BUILDX_LS_OUT
 
 # check for arm support only if we try to build it
-if echo ${PLATFORM} | grep -q arm && ! grep -q arm <<< ${DOCKER_BUILDX_LS_OUT}; then
+if echo "${PLATFORM}" | grep -q arm && ! grep -q arm <<< "${DOCKER_BUILDX_LS_OUT}"; then
     echo "Your Buildx seems to lack ARM architecture support"
     echo "${DOCKER_BUILDX_LS_OUT}"
     exit 1
