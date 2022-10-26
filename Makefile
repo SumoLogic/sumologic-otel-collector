@@ -34,6 +34,9 @@ markdown-links-lint:
 markdown-link-check:
 	./ci/markdown_link_check.sh
 
+shellcheck:
+	./ci/shellcheck.sh
+
 # ref: https://pre-commit.com/
 .PHONY: pre-commit-check
 pre-commit-check:

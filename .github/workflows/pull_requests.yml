@@ -93,6 +93,19 @@ jobs:
       - name: Check uniform dependencies
         run: make check-uniform-dependencies
 
+  shellcheck:
+    runs-on: ubuntu-20.04
+    env:
+      SHELLCHECK_VERSION: 0.8.0
+    steps:
+      - uses: actions/checkout@v3
+      - name: install shellcheck
+        run: |
+            curl --retry 10 --retry-max-time 120 --retry-delay 5 -Lo- https://github.com/koalaman/shellcheck/releases/download/v${{ env.SHELLCHECK_VERSION }}/shellcheck-v${{ env.SHELLCHECK_VERSION }}.linux.x86_64.tar.xz | tar -xJf -
+            sudo cp shellcheck-v${{ env.SHELLCHECK_VERSION }}/shellcheck /usr/local/bin && rm -rf shellcheck-v${{ env.SHELLCHECK_VERSION }}
+      - name: shellcheck
+        run: make shellcheck
+
   test:
     name: Test
     runs-on: ${{ matrix.runs_on }}
