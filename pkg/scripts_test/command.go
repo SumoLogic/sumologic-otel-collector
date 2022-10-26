@@ -13,7 +13,6 @@ import (
 
 type installOptions struct {
 	installToken     string
-	autoconfirm      bool
 	disableSystemd   bool
 	tags             map[string]string
 	skipInstallToken bool
@@ -31,10 +30,6 @@ func (io *installOptions) string() []string {
 
 	if io.installToken != "" {
 		opts = append(opts, "--installation-token", io.installToken)
-	}
-
-	if io.autoconfirm {
-		opts = append(opts, "--yes")
 	}
 
 	if io.disableSystemd {
@@ -138,38 +133,6 @@ func runScript(ch check) (int, []string, error) {
 
 		// otherwise ensure there is no error
 		require.NoError(ch.test, err)
-
-		if ch.installOptions.autoconfirm {
-			continue
-		}
-
-		if strings.Contains(strLine, "Showing full changelog") {
-			// show changelog
-			_, err = in.Write([]byte("\n"))
-			require.NoError(ch.test, err)
-
-			// accept changes and proceed with the installation
-			_, err = in.Write([]byte("y\n"))
-			require.NoError(ch.test, err)
-		}
-
-		if strings.Contains(strLine, "We are going to get and set up default configuration for you") {
-			// approve installation config
-			_, err = in.Write([]byte("y\n"))
-			require.NoError(ch.test, err)
-		}
-
-		if strings.Contains(strLine, "We are going to set up systemd service") {
-			// approve installation config
-			_, err = in.Write([]byte("y\n"))
-			require.NoError(ch.test, err)
-		}
-
-		if strings.Contains(strLine, "Going to remove") {
-			// approve installation config
-			_, err = in.Write([]byte("y\n"))
-			require.NoError(ch.test, err)
-		}
 	}
 
 	code, err := exitCode(cmd)

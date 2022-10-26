@@ -14,8 +14,6 @@ ARG_SHORT_TAG='t'
 ARG_LONG_TAG='tag'
 ARG_SHORT_VERSION='v'
 ARG_LONG_VERSION='version'
-ARG_SHORT_YES='y'
-ARG_LONG_YES='yes'
 ARG_SHORT_SYSTEMD='d'
 ARG_LONG_SYSTEMD='disable-systemd-installation'
 ARG_SHORT_UNINSTALL='u'
@@ -35,7 +33,7 @@ ARG_SHORT_BRANCH='b'
 ARG_LONG_BRANCH='branch'
 
 readonly ARG_SHORT_TOKEN ARG_LONG_TOKEN ARG_SHORT_HELP ARG_LONG_HELP ARG_SHORT_API ARG_LONG_API
-readonly ARG_SHORT_TAG ARG_LONG_TAG ARG_SHORT_VERSION ARG_LONG_VERSION ARG_SHORT_YES ARG_LONG_YES
+readonly ARG_SHORT_TAG ARG_LONG_TAG ARG_SHORT_VERSION ARG_LONG_VERSION
 readonly ARG_SHORT_SYSTEMD ARG_LONG_SYSTEMD ARG_SHORT_UNINSTALL ARG_LONG_UNINSTALL
 readonly ARG_SHORT_PURGE ARG_LONG_PURGE ARG_SHORT_DOWNLOAD ARG_LONG_DOWNLOAD
 readonly ARG_SHORT_CONFIG_BRANCH ARG_LONG_CONFIG_BRANCH ARG_SHORT_BINARY_BRANCH ARG_LONG_CONFIG_BRANCH
@@ -54,7 +52,6 @@ set -u
 API_BASE_URL=""
 FIELDS=""
 VERSION=""
-CONTINUE=false
 HOME_DIRECTORY=""
 CONFIG_DIRECTORY=""
 USER_CONFIG_DIRECTORY=""
@@ -91,7 +88,7 @@ function usage() {
   cat << EOF
 
 Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_TAG} <key>=<value> [ --${ARG_LONG_TAG} ...]] [--${ARG_LONG_API} <url>] [--${ARG_LONG_VERSION} <version>] \\
-                       [--${ARG_LONG_YES}] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
+                       [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
 
 Supported arguments:
   -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>      Installation token. It has precedence over 'SUMOLOGIC_INSTALL_TOKEN' env variable.
@@ -110,7 +107,6 @@ Supported arguments:
   -${ARG_SHORT_SYSTEMD}, --${ARG_LONG_SYSTEMD}    Preserves from Systemd service installation.
   -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>               Version of Sumo Logic Distribution for OpenTelemetry Collector to install, e.g. 0.57.2-sumo-1.
                                         By defult it gets latest version.
-  -${ARG_SHORT_YES}, --${ARG_LONG_YES}                             Disable confirmation asks.
 
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                            Prints this help and usage.
 
@@ -151,9 +147,6 @@ function parse_options() {
       "--${ARG_LONG_TAG}")
         set -- "$@" "-${ARG_SHORT_TAG}"
         ;;
-      "--${ARG_LONG_YES}")
-        set -- "$@" "-${ARG_SHORT_YES}"
-        ;;
       "--${ARG_LONG_VERSION}")
         set -- "$@" "-${ARG_SHORT_VERSION}"
         ;;
@@ -181,7 +174,7 @@ function parse_options() {
       "--${ARG_LONG_CONFIG_BRANCH}")
         set -- "$@" "-${ARG_SHORT_CONFIG_BRANCH}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}")
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}")
         set -- "$@" "${arg}"
         ;;
       -*)
@@ -196,7 +189,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -212,7 +205,6 @@ function parse_options() {
       "${ARG_SHORT_TOKEN}")         SUMOLOGIC_INSTALL_TOKEN="${OPTARG}" ;;
       "${ARG_SHORT_API}")           API_BASE_URL="${OPTARG}" ;;
       "${ARG_SHORT_VERSION}")       VERSION="${OPTARG}" ;;
-      "${ARG_SHORT_YES}")           CONTINUE=true ;;
       "${ARG_SHORT_SYSTEMD}")       SYSTEMD_DISABLED=true ;;
       "${ARG_SHORT_UNINSTALL}")     UNINSTALL=true ;;
       "${ARG_SHORT_PURGE}")         PURGE=true ;;
@@ -390,23 +382,6 @@ function get_installed_version() {
     fi
 }
 
-# Ask to continue and abort if not
-function ask_to_continue() {
-    if [[ "${CONTINUE}" == true ]]; then
-        return 0
-    fi
-
-    local choice
-    read -rp "Continue (y/N)?" choice
-    case "${choice}" in
-    y|Y ) ;;
-    n|N | * )
-        echo "Aborting..."
-        exit 1
-        ;;
-    esac
-}
-
 # Get changelog for specific version
 # Only version description and breaking changes are taken
 function get_changelog() {
@@ -460,7 +435,6 @@ function uninstall() {
     fi
 
     echo "${MSG}."
-    ask_to_continue
 
     # disable systemd service
     if [[ -f "${SYSTEMD_CONFIG}" ]]; then
@@ -788,7 +762,7 @@ check_dependencies
 set_defaults
 parse_options "$@"
 
-readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
+readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
 readonly USER_CONFIG_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
 
 if [[ "${UNINSTALL}" == "true" ]]; then
@@ -894,9 +868,6 @@ else
         # Get full changelog if we were unable to access github API
         if [[ -z "${BETWEEN_VERSIONS}" ]] || [[ "$(github_rate_limit)" < "$(echo BETWEEN_VERSIONS | wc -w)" ]]; then
             echo -e "Showing full changelog up to ${VERSION}"
-            if [[ "${CONTINUE}" != true ]]; then
-                read -rp "Press enter to see changelog"
-            fi
             get_full_changelog "${VERSION}"
         else
             read -rp "Press enter to see changelog"
@@ -913,7 +884,6 @@ else
         LINK="https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${VERSION}/otelcol-sumo-${VERSION}-${OS_TYPE}_${ARCH_TYPE}"
         readonly LINK
 
-        ask_to_continue
         echo -e "Downloading:\t\t${LINK}"
         curl -fL "${LINK}" --output otelcol-sumo --progress-bar
     fi
@@ -938,8 +908,7 @@ if [[ "${DOWNLOAD_ONLY}" == "true" ]]; then
     exit 0
 fi
 
-echo 'We are going to get and set up default configuration for you'
-ask_to_continue
+echo 'We are going to get and set up a default configuration for you'
 
 echo -e "Creating file_storage directory (${FILE_STORAGE})"
 mkdir -p "${FILE_STORAGE}"
@@ -1002,8 +971,7 @@ if [[ "${SYSTEMD_DISABLED}" == "true" ]]; then
     exit 0
 fi
 
-echo 'We are going to set up systemd service'
-ask_to_continue
+echo 'We are going to set up a systemd service'
 
 if [[ -f "${SYSTEMD_CONFIG}" ]]; then
     echo "Configuration for systemd service (${SYSTEMD_CONFIG}) already exist. Restarting service"
