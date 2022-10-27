@@ -47,6 +47,15 @@ func TestInstallScript(t *testing.T) {
 			postChecks: []checkFunc{checkBinaryCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated, checkUserNotExists},
 		},
 		{
+			name: "skip config",
+			options: installOptions{
+				skipConfig:       true,
+				skipInstallToken: true,
+			},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			postChecks: []checkFunc{checkBinaryCreated, checkConfigNotCreated, checkUserConfigNotCreated},
+		},
+		{
 			name: "skip install token",
 			options: installOptions{
 				skipInstallToken: true,

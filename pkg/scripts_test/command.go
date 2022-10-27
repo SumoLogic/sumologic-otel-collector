@@ -16,6 +16,7 @@ type installOptions struct {
 	autoconfirm       bool
 	skipSystemd       bool
 	tags              map[string]string
+	skipConfig        bool
 	skipInstallToken  bool
 	envs              map[string]string
 	uninstall         bool
@@ -40,6 +41,10 @@ func (io *installOptions) string() []string {
 
 	if io.skipSystemd {
 		opts = append(opts, "--skip-systemd")
+	}
+
+	if io.skipConfig {
+		opts = append(opts, "--skip-config")
 	}
 
 	if io.skipInstallToken {
