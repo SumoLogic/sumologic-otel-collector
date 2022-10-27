@@ -99,7 +99,7 @@ Updating OT core involves:
 
 [milestone]: https://github.com/SumoLogic/sumologic-otel-collector/milestones
 
-### Updating patched processors
+### Updating patched components
 
 We currently maintain patches for the following upstream components:
 
