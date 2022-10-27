@@ -1,3 +1,7 @@
+ifeq ($(OS),Windows_NT)
+	OS=windows
+endif
+
 GOTEST=go test -count 1
 LINT=golangci-lint
 

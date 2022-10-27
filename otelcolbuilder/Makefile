@@ -90,9 +90,9 @@ _gobuild:
 		-tags enable_unstable \
 		-ldflags=$(LDFLAGS) \
 		-trimpath \
-		-o ./$(BINARY_NAME) . \
+		-o ./$(BINARY_NAME)$(BUILDER_BIN_EXT) . \
 	)
-	chmod +x ./cmd/$(BINARY_NAME)
+	chmod +x ./cmd/$(BINARY_NAME)$(BUILDER_BIN_EXT)
 
 .PHONY: _gobuild_debug
 _gobuild_debug:
@@ -101,9 +101,9 @@ _gobuild_debug:
 		-tags enable_unstable \
 		-race \
 		-gcflags "all=-N -l" \
-		-o ./$(BINARY_NAME)-debug . \
+		-o ./$(BINARY_NAME)-debug$(BUILDER_BIN_EXT) . \
 	)
-	chmod +x ./cmd/$(BINARY_NAME)-debug
+	chmod +x ./cmd/$(BINARY_NAME)-debug$(BUILDER_BIN_EXT)
 
 .PHONY: build
 build: ensure-correct-builder-version
