@@ -939,9 +939,6 @@ echo 'Changing permissions for user env directory'
 chmod 440 "${USER_ENV_DIRECTORY}"
 chmod g+s "${USER_ENV_DIRECTORY}"
 
-echo 'Changing ownership for user env directory'
-chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}" 
-
 # Ensure that configuration is created
 if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
     echo "User configuration (${COMMON_CONFIG_PATH}) already exist)"
@@ -999,6 +996,9 @@ fi
 
 echo 'Changing ownership for config and storage'
 chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${CONFIG_PATH}" "${FILE_STORAGE}"
+
+echo 'Changing ownership for user env directory'
+chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}" 
 
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/systemd/otelcol-sumo.service"
 
