@@ -242,7 +242,7 @@ $(escape_sed "${OPTARG/=/: }")" ;;
 
 # Get github rate limit
 function github_rate_limit() {
-    curl -X GET https://api.github.com/rate_limit -v 2>&1 | grep x-ratelimit-remaining | grep -oE "[0-9]+"
+    curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -X GET https://api.github.com/rate_limit -v 2>&1 | grep x-ratelimit-remaining | grep -oE "[0-9]+"
 }
 
 function check_dependencies() {
@@ -286,7 +286,7 @@ function get_latest_version() {
 
     # get latest version directly from website if there is no versions from api
     if [[ -z "${versions}" ]]; then
-        curl -s https://github.com/SumoLogic/sumologic-otel-collector/releases | grep -oE '/SumoLogic/sumologic-otel-collector/releases/tag/(.*)"' | head -n 1 | sed 's%/SumoLogic/sumologic-otel-collector/releases/tag/v\([^"]*\)".*%\1%g'
+        curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -s https://github.com/SumoLogic/sumologic-otel-collector/releases | grep -oE '/SumoLogic/sumologic-otel-collector/releases/tag/(.*)"' | head -n 1 | sed 's%/SumoLogic/sumologic-otel-collector/releases/tag/v\([^"]*\)".*%\1%g'
     else
         # sed 's/ /\n/g' converts spaces to new lines
         echo "${versions}" | sed 's/ /\n/g' | head -n 1
@@ -304,6 +304,11 @@ function get_versions() {
     fi
 
     curl \
+    --connect-timeout 5 \
+    --max-time 30 \
+    --retry 5 \
+    --retry-delay 0 \
+    --retry-max-time 150 \
     -sH "Accept: application/vnd.github.v3+json" \
     https://api.github.com/repos/SumoLogic/sumologic-otel-collector/releases \
     | grep -E '(tag_name|"(draft|prerelease)")' \
@@ -391,7 +396,7 @@ function get_changelog() {
     # 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g' replaces [$1][*] with $1
     # 's/\[\([^\[]*\)\]([^\()]*)/\1/g' replaces [$1](*) with $1
     local notes
-    notes="$(echo -e "$(curl -s "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/releases/tags/v${version}" | grep -o "body.*"  | sed 's/body": "//;s/"$//' | sed 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g;s/\[\([^\[]*\)\]([^\()]*)/\1/g')")"
+    notes="$(echo -e "$(curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -s "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/releases/tags/v${version}" | grep -o "body.*"  | sed 's/body": "//;s/"$//' | sed 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g;s/\[\([^\[]*\)\]([^\()]*)/\1/g')")"
     readonly notes
 
     local changelog
@@ -411,7 +416,7 @@ function get_full_changelog() {
     readonly version="${1}"
 
     local notes
-    notes="$(echo -e "$(curl -s "https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${version}/CHANGELOG.md")")"
+    notes="$(echo -e "$(curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -s "https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${version}/CHANGELOG.md")")"
     readonly notes
 
     local changelog
@@ -730,6 +735,11 @@ function get_binary_from_branch() {
 
     local actions_output artifacts_link artifact_id
     actions_output="$(curl -f -s \
+      --connect-timeout 5 \
+      --max-time 30 \
+      --retry 5 \
+      --retry-delay 0 \
+      --retry-max-time 150 \
       -H "Accept: application/vnd.github+json" \
       -H "Authorization: token ${GITHUB_TOKEN}" \
       "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/runs?status=success&branch=${branch}&event=push&per_page=1")"
@@ -744,6 +754,11 @@ function get_binary_from_branch() {
     readonly artifacts_link
 
     artifact_id="$(curl -f -s \
+    --connect-timeout 5 \
+    --max-time 30 \
+    --retry 5 \
+    --retry-delay 0 \
+    --retry-max-time 150 \
     -H "Accept: application/vnd.github+json" \
     -H "Authorization: token ${GITHUB_TOKEN}" \
     "${artifacts_link}" \
@@ -753,9 +768,15 @@ function get_binary_from_branch() {
     readonly artifact_id
 
     curl -f -s -L \
+        --connect-timeout 5 \
+        --max-time 30 \
+        --retry 5 \
+        --retry-delay 0 \
+        --retry-max-time 150 \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: token ${GITHUB_TOKEN}" \
         "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/artifacts/${artifact_id}/zip" --output otelcol-sumo.zip --progress-bar
+
     unzip -p otelcol-sumo.zip "${name}" >otelcol-sumo
     rm otelcol-sumo.zip
 }
@@ -889,7 +910,7 @@ else
         readonly LINK
 
         echo -e "Downloading:\t\t${LINK}"
-        curl -fL "${LINK}" --output otelcol-sumo --progress-bar
+        curl --retry 5 --connect-timeout 5 --retry-delay 0 -fL "${LINK}" --output otelcol-sumo --progress-bar
     fi
 
     echo -e "Moving otelcol-sumo to /usr/local/bin"
@@ -926,7 +947,7 @@ mkdir -p "${USER_CONFIG_DIRECTORY}"
 echo "Generating configuration and saving as ${CONFIG_PATH}"
 
 CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/sumologic.yaml"
-if ! curl -f -s "${CONFIG_URL}" -o "${CONFIG_PATH}"; then
+if ! curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -f -s "${CONFIG_URL}" -o "${CONFIG_PATH}"; then
     echo "Cannot obtain configuration for '${CONFIG_BRANCH}' branch"
     exit 1
 fi
@@ -998,7 +1019,7 @@ SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-c
 TMP_SYSTEMD_CONFIG="otelcol-sumo.service"
 TMP_SYSTEMD_CONFIG_BAK="${TMP_SYSTEMD_CONFIG}.bak"
 echo 'Getting service configuration'
-curl -fL "${SYSTEMD_CONFIG_URL}" --output "${TMP_SYSTEMD_CONFIG}" --progress-bar
+curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -fL "${SYSTEMD_CONFIG_URL}" --output "${TMP_SYSTEMD_CONFIG}" --progress-bar
 sed -i.bak -e "s%/etc/otelcol-sumo%'${CONFIG_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
 
 # Remove glob for versions up to 0.57
