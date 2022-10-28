@@ -736,7 +736,11 @@ function get_binary_from_branch() {
     readonly actions_output
 
     # get latest action run
-    artifacts_link="$(echo "${actions_output}" | grep '"url"' | grep -oE '"https.*collector/actions.*"' -m 1)/artifacts"
+    artifacts_link="$(echo "${actions_output}" | grep '"url"' | grep -oE '"https.*collector/actions.*"' -m 1)"
+    # strip first and last double-quote from $artifacts_link
+    artifacts_link=${artifacts_link%\"}
+    artifacts_link="${artifacts_link#\"}"
+    artifacts_link="${artifacts_link}/artifacts"
     readonly artifacts_link
 
     artifact_id="$(curl -f -s \
