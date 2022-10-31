@@ -13,6 +13,7 @@ import (
 
 type installOptions struct {
 	installToken     string
+	autoconfirm      bool
 	disableSystemd   bool
 	tags             map[string]string
 	skipInstallToken bool
@@ -30,6 +31,10 @@ func (io *installOptions) string() []string {
 
 	if io.installToken != "" {
 		opts = append(opts, "--installation-token", io.installToken)
+	}
+
+	if io.autoconfirm {
+		opts = append(opts, "--yes")
 	}
 
 	if io.disableSystemd {
@@ -133,6 +138,16 @@ func runScript(ch check) (int, []string, error) {
 
 		// otherwise ensure there is no error
 		require.NoError(ch.test, err)
+
+		if ch.installOptions.autoconfirm {
+			continue
+		}
+
+		if strings.Contains(strLine, "Going to remove") {
+			// approve installation config
+			_, err = in.Write([]byte("y\n"))
+			require.NoError(ch.test, err)
+		}
 	}
 
 	code, err := exitCode(cmd)

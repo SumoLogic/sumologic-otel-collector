@@ -11,8 +11,9 @@ func tearDown(t *testing.T) {
 	ch := check{
 		test: t,
 		installOptions: installOptions{
-			uninstall: true,
-			purge:     true,
+			uninstall:   true,
+			purge:       true,
+			autoconfirm: true,
 		},
 	}
 
@@ -54,17 +55,10 @@ func TestInstallScript(t *testing.T) {
 			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated},
 		},
 		{
-			name: "autoconfirm",
-			options: installOptions{
-				skipInstallToken: true,
-			},
-			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
-			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated},
-		},
-		{
 			name: "override default config",
 			options: installOptions{
 				skipInstallToken: true,
+				autoconfirm:      true,
 			},
 			preActions: []checkFunc{preActionMockConfig},
 			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigCreated, checkUserConfigNotCreated, checkUserNotExists},
@@ -264,6 +258,16 @@ func TestInstallScript(t *testing.T) {
 			name: "uninstallation",
 			options: installOptions{
 				uninstall: true,
+			},
+			preActions: []checkFunc{preActionMockStructure},
+			preChecks:  []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkUserNotExists},
+			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigCreated, checkUserConfigCreated},
+		},
+		{
+			name: "uninstallation with autoconfirm",
+			options: installOptions{
+				autoconfirm: true,
+				uninstall:   true,
 			},
 			preActions: []checkFunc{preActionMockStructure},
 			preChecks:  []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkUserNotExists},
