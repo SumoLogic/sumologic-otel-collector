@@ -72,6 +72,28 @@ opentelemetry-collector-builder \
 2021-05-24T16:32:37.326+0200    INFO    builder/main.go:113     Compiled        {"binary": "./cmd/otelcol-sumo-linux_arm64"}
 ```
 
+### How to build packages (Windows MSI)
+
+1. Install Visual Studio 2019 or newer with the  `.NET desktop development`
+   workload selected in the installer.
+
+1. Open `cmd` and add msbuild to the user PATH. The path may differ depending on
+   which version and edition of Visual Studio and which version and
+   platform of Windows are installed:
+
+  ```bat
+  setx path "%PATH%;%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin"
+  ```
+
+1. Navigate to the `packaging/msi/wix` directory and run:
+
+  ```
+  msbuild.exe /p:Configuration=Release /p:Platform=x64
+  ```
+
+1. The MSI package can be found in the `packaging/msi/wix/bin/x64/en-US`
+   directory.
+
 ### Running Tests
 
 In order to run tests run `make gotest` in root directory of this repository.
