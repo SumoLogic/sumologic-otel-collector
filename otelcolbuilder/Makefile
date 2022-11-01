@@ -182,4 +182,4 @@ otelcol-sumo-linux_arm:
 
 .PHONY: otelcol-sumo-windows_amd64
 otelcol-sumo-windows_amd64:
-	GOOS=windows GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-windows_amd64.exe
+	GOOS=windows GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-windows_amd64
