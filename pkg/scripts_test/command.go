@@ -12,16 +12,17 @@ import (
 )
 
 type installOptions struct {
-	installToken     string
-	autoconfirm      bool
-	disableSystemd   bool
-	tags             map[string]string
-	skipInstallToken bool
-	envs             map[string]string
-	uninstall        bool
-	purge            bool
-	apiBaseURL       string
-	downloadOnly     bool
+	installToken      string
+	autoconfirm       bool
+	disableSystemd    bool
+	tags              map[string]string
+	skipInstallToken  bool
+	envs              map[string]string
+	uninstall         bool
+	purge             bool
+	apiBaseURL        string
+	downloadOnly      bool
+	dontKeepDownloads bool
 }
 
 func (io *installOptions) string() []string {
@@ -55,6 +56,10 @@ func (io *installOptions) string() []string {
 
 	if io.downloadOnly {
 		opts = append(opts, "--download-only")
+	}
+
+	if !io.dontKeepDownloads {
+		opts = append(opts, "--keep-downloads")
 	}
 
 	if len(io.tags) > 0 {

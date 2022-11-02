@@ -314,6 +314,15 @@ func TestInstallScript(t *testing.T) {
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
 			installCode:       3, // because of invalid install token
 		},
+		{
+			name: "don't keep downloads",
+			options: installOptions{
+				skipInstallToken:  true,
+				dontKeepDownloads: true,
+			},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			ch := check{
