@@ -6,10 +6,12 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+
 	"os"
 	"os/exec"
 	"strings"
 
+	"github.com/creack/pty"
 	"github.com/stretchr/testify/require"
 )
 
@@ -122,31 +124,36 @@ func exitCode(cmd *exec.Cmd) (int, error) {
 }
 
 func runScript(ch check) (int, []string, error) {
+	var in io.WriteCloser
+	var out io.ReadCloser
+	var err error
+
 	cmd := exec.Command("bash", ch.installOptions.string()...)
 	cmd.Env = ch.installOptions.buildEnvs()
 	output := []string{}
 
-	in, err := cmd.StdinPipe()
-	if err != nil {
+	out, err = cmd.StdoutPipe()
+	require.NoError(ch.test, err)
+
+	if ch.fakeTTY { // pretend we're a TTY
+		// Start the process and get the tty fd
+		in, err = pty.Start(cmd)
 		require.NoError(ch.test, err)
+	} else {
+		in, err = cmd.StdinPipe()
+		require.NoError(ch.test, err)
+
+		// Start the process
+		if err = cmd.Start(); err != nil {
+			require.NoError(ch.test, err)
+		}
 	}
 
 	defer in.Close()
-
-	out, err := cmd.StdoutPipe()
-	if err != nil {
-		require.NoError(ch.test, err)
-	}
-
 	defer out.Close()
 
 	// We want to read line by line
 	bufOut := bufio.NewReader(out)
-
-	// Start the process
-	if err = cmd.Start(); err != nil {
-		require.NoError(ch.test, err)
-	}
 
 	// Read the results from the process
 	for {

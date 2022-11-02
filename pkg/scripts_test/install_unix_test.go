@@ -121,6 +121,17 @@ func TestInstallScript(t *testing.T) {
 			},
 		},
 		{
+			name:    "installation token only in tty",
+			fakeTTY: true,
+			options: installOptions{
+				skipSystemd:  true,
+				installToken: installToken,
+			},
+			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigCreated, checkTokenInConfig,
+				checkSystemdConfigNotCreated, checkUserNotExists},
+		},
+		{
 			name: "installation token only (envs)",
 			options: installOptions{
 				skipSystemd: true,
@@ -329,6 +340,7 @@ func TestInstallScript(t *testing.T) {
 			options: installOptions{
 				uninstall: true,
 			},
+			fakeTTY:    true,
 			preActions: []checkFunc{preActionMockStructure},
 			preChecks:  []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkUserNotExists},
 			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigCreated, checkUserConfigCreated},
@@ -348,10 +360,22 @@ func TestInstallScript(t *testing.T) {
 			options: installOptions{
 				uninstall: true,
 			},
+			fakeTTY:           true,
 			preActions:        []checkFunc{preActionMockSystemdStructure},
 			preChecks:         []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkSystemdConfigCreated, checkUserNotExists},
 			postChecks:        []checkFunc{checkBinaryNotCreated, checkConfigCreated, checkUserConfigCreated, checkSystemdConfigCreated, checkUserNotExists},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
+		},
+		{
+			name: "purge with autoconfirm",
+			options: installOptions{
+				uninstall:   true,
+				purge:       true,
+				autoconfirm: true, // tests run without a tty by default, so they need --yes
+			},
+			preActions: []checkFunc{preActionMockStructure},
+			preChecks:  []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkUserNotExists},
+			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated},
 		},
 		{
 			name: "purge",
@@ -359,6 +383,7 @@ func TestInstallScript(t *testing.T) {
 				uninstall: true,
 				purge:     true,
 			},
+			fakeTTY:    true,
 			preActions: []checkFunc{preActionMockStructure},
 			preChecks:  []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkUserNotExists},
 			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated},
@@ -366,8 +391,9 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "systemd purge",
 			options: installOptions{
-				uninstall: true,
-				purge:     true,
+				uninstall:   true,
+				purge:       true,
+				autoconfirm: true,
 			},
 			preActions:        []checkFunc{preActionMockSystemdStructure},
 			preChecks:         []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkSystemdConfigCreated, checkUserNotExists},

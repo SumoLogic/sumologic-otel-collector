@@ -19,6 +19,7 @@ import (
 type check struct {
 	test                *testing.T
 	installOptions      installOptions
+	fakeTTY             bool
 	code                int
 	err                 error
 	expectedInstallCode int

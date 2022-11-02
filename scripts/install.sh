@@ -353,6 +353,16 @@ function check_dependencies() {
     fi
 }
 
+# Return an input we can use to prompt the user.
+# Normally this is just stdin, but if that is redirected, we use /dev/tty directly.
+function get_interactive_input() {
+    if tty -s; then
+        echo "/dev/stdin"
+    else
+        echo "/dev/tty"
+    fi
+}
+
 function get_latest_version() {
     local versions
     readonly versions="${1}"
@@ -487,8 +497,12 @@ function ask_to_continue() {
         return 0
     fi
 
+    local input
+    input=$(get_interactive_input)
+    echo "Getting input from ${input}"
+
     local choice
-    read -rp "Continue (y/N)? " choice
+    read -rp "Continue (y/N)?" choice < "${input}"
     case "${choice}" in
     y|Y ) ;;
     n|N | * )

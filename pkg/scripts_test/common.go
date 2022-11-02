@@ -18,6 +18,7 @@ type testSpec struct {
 	preActions        []checkFunc
 	conditionalChecks []condCheckFunc
 	installCode       int
+	fakeTTY           bool
 }
 
 // These checks always have to be true after a script execution
