@@ -33,6 +33,8 @@ ARG_LONG_BINARY_BRANCH='binary-branch'
 ENV_TOKEN="SUMOLOGIC_INSTALL_TOKEN"
 ARG_SHORT_BRANCH='b'
 ARG_LONG_BRANCH='branch'
+ARG_SHORT_KEEP_DOWNLOADS='n'
+ARG_LONG_KEEP_DOWNLOADS='keep-downloads'
 
 readonly ARG_SHORT_TOKEN ARG_LONG_TOKEN ARG_SHORT_HELP ARG_LONG_HELP ARG_SHORT_API ARG_LONG_API
 readonly ARG_SHORT_TAG ARG_LONG_TAG ARG_SHORT_VERSION ARG_LONG_VERSION ARG_SHORT_YES ARG_LONG_YES
@@ -78,6 +80,8 @@ EXT_INDENTATION=""
 
 CONFIG_BRANCH=""
 BINARY_BRANCH=""
+
+KEEP_DOWNLOADS=false
 
 # set by check_dependencies therefore cannot be set by set_defaults
 SYSTEMD_DISABLED=false
@@ -181,7 +185,10 @@ function parse_options() {
       "--${ARG_LONG_CONFIG_BRANCH}")
         set -- "$@" "-${ARG_SHORT_CONFIG_BRANCH}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}")
+      "--${ARG_LONG_KEEP_DOWNLOADS}")
+        set -- "$@" "-${ARG_SHORT_KEEP_DOWNLOADS}"
+        ;;
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}")
         set -- "$@" "${arg}"
         ;;
       -*)
@@ -196,7 +203,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -227,6 +234,7 @@ function parse_options() {
         if [[ -z "${CONFIG_BRANCH}" ]]; then
             CONFIG_BRANCH="${OPTARG}"
         fi ;;
+      "${ARG_SHORT_KEEP_DOWNLOADS}") KEEP_DOWNLOADS=true ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
             echo "Invalid tag: '${OPTARG}'. Should be in 'key=value' format"
@@ -793,18 +801,58 @@ function get_binary_from_branch() {
         | grep -oE "[0-9]+" -m 1)"
     readonly artifact_id
 
-    curl -f -s -L \
-        --connect-timeout 5 \
-        --max-time 30 \
-        --retry 5 \
-        --retry-delay 0 \
-        --retry-max-time 150 \
+    local download_path curl_args
+    readonly download_path="/tmp/otelcol-sumo.zip"
+    curl_args=(
+        "-fL"
+        "--connect-timeout" "5"
+        "--max-time" "60"
+        "--retry" "5"
+        "--retry-delay" "0"
+        "--retry-max-time" "150"
+        "--output" "${download_path}"
+        "--progress-bar"
+    )
+    if [ "${KEEP_DOWNLOADS}" == "true" ]; then
+        curl_args+=("-z" "${download_path}")
+    fi
+    curl "${curl_args[@]}" \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: token ${GITHUB_TOKEN}" \
-        "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/artifacts/${artifact_id}/zip" --output otelcol-sumo.zip --progress-bar
+        "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/artifacts/${artifact_id}/zip"
 
-    unzip -p otelcol-sumo.zip "${name}" >otelcol-sumo
-    rm otelcol-sumo.zip
+    unzip -p "$download_path" "${name}" >otelcol-sumo
+    if [ "${KEEP_DOWNLOADS}" == "false" ]; then
+        rm -f "${download_path}"
+    fi
+}
+
+function get_binary_from_url() {
+    local url download_path curl_args
+    readonly url="${1}"
+    echo -e "Downloading:\t\t${url}"
+
+    readonly download_path="/tmp/otelcol-sumo"
+    curl_args=(
+        "-fL"
+        "--connect-timeout" "5"
+        "--max-time" "60"
+        "--retry" "5"
+        "--retry-delay" "0"
+        "--retry-max-time" "150"
+        "--output" "${download_path}"
+        "--progress-bar"
+    )
+    if [ "${KEEP_DOWNLOADS}" == "true" ]; then
+        curl_args+=("-z" "${download_path}")
+    fi
+    curl "${curl_args[@]}" "${url}"
+
+    cp -f "${download_path}" otelcol-sumo
+
+    if [ "${KEEP_DOWNLOADS}" == "false" ]; then
+        rm -f "${download_path}"
+    fi
 }
 
 ############################ Main code
@@ -934,8 +982,7 @@ else
         LINK="https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${VERSION}/otelcol-sumo-${VERSION}-${OS_TYPE}_${ARCH_TYPE}"
         readonly LINK
 
-        echo -e "Downloading:\t\t${LINK}"
-        curl --retry 5 --connect-timeout 5 --retry-delay 0 -fL "${LINK}" --output otelcol-sumo --progress-bar
+        get_binary_from_url "${LINK}"
     fi
 
     echo -e "Moving otelcol-sumo to /usr/local/bin"
