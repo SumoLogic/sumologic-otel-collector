@@ -34,7 +34,7 @@ This release introduces the following breaking changes:
 - feat(sumologicexporter): remove translating attributes ([upgrade guide][upgrade_guide_unreleased_moved_translation]) [#672]
 - feat(sumologicexporter): remove setting source headers ([upgrade guide][upgrade_guide_v0_57_0_deprecate_source_templates]) [#686]
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.57.2-sumo-0...main
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.57.2-sumo-1...main
 [#672]: https://github.com/SumoLogic/sumologic-otel-collector/pull/672
 [#678]: https://github.com/SumoLogic/sumologic-otel-collector/pull/678
 [#686]: https://github.com/SumoLogic/sumologic-otel-collector/pull/686
@@ -51,7 +51,20 @@ This release introduces the following breaking changes:
 [#767]: https://github.com/SumoLogic/sumologic-otel-collector/pull/767
 [upgrade_guide_unreleased]: ./docs/Upgrading.md#unreleased
 
+## [v0.57.2-sumo-1]
+
+### Released 2022-09-14
+
+### Changed
+
+- fix(k8sprocessor): fix metadata enrichment [#725]
+
+[v0.57.2-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.57.2-sumo-0...v0.57.2-sumo-1
+[#725]: https://github.com/SumoLogic/sumologic-otel-collector/pull/725
+
 ## [v0.57.2-sumo-0]
+
+### Released 2022-08-12
 
 This release deprecates the following features, which will be removed in `v0.60.0`:
 
@@ -63,7 +76,7 @@ This release deprecates the following features, which will be removed in `v0.60.
 - feat: define stability levels for components [#701]
 - chore: upgrade OpenTelemetry Core to v0.57.2 [#699]
 
-[v0.56.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.56.0-sumo-0...v0.57.2-sumo-0
+[v0.57.2-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.56.0-sumo-0...v0.57.2-sumo-0
 [upgrade_guide_v0_57_0_deprecate_source_templates]: ./docs/Upgrading.md#sumologic-exporter-drop-support-for-source-headers
 [#699]: https://github.com/SumoLogic/sumologic-otel-collector/pull/699/
 [#701]: https://github.com/SumoLogic/sumologic-otel-collector/pull/701/
