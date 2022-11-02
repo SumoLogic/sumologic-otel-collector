@@ -979,7 +979,7 @@ fi
 
 echo 'Changing permissions for config file and storage'
 chmod 440 "${CONFIG_PATH}"
-chmod -R 750 "${FILE_STORAGE}"
+chmod -R 750 "${HOME_DIRECTORY}"
 
 # Ensure that configuration is created
 if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
@@ -1037,7 +1037,7 @@ else
 fi
 
 echo 'Changing ownership for config and storage'
-chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${CONFIG_PATH}" "${FILE_STORAGE}"
+chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${CONFIG_PATH}" "${HOME_DIRECTORY}"
 
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/systemd/otelcol-sumo.service"
 
