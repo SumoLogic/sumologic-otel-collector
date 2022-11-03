@@ -16,8 +16,8 @@ ARG_SHORT_VERSION='v'
 ARG_LONG_VERSION='version'
 ARG_SHORT_YES='y'
 ARG_LONG_YES='yes'
-ARG_SHORT_SYSTEMD='d'
-ARG_LONG_SYSTEMD='disable-systemd-installation'
+ARG_SHORT_SKIP_SYSTEMD='d'
+ARG_LONG_SKIP_SYSTEMD='skip-systemd'
 ARG_SHORT_UNINSTALL='u'
 ARG_LONG_UNINSTALL='uninstall'
 ARG_SHORT_PURGE='p'
@@ -111,7 +111,7 @@ Supported arguments:
                                         It removes all Sumo Logic Distribution for OpenTelemetry Collector related configuration and data.
 
   -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                       Api URL
-  -${ARG_SHORT_SYSTEMD}, --${ARG_LONG_SYSTEMD}    Preserves from Systemd service installation.
+  -${ARG_SHORT_SYSTEMD}, --${ARG_LONG_SYSTEMD}    Do not install systemd unit.
   -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>               Version of Sumo Logic Distribution for OpenTelemetry Collector to install, e.g. 0.57.2-sumo-1.
                                         By defult it gets latest version.
   -${ARG_SHORT_YES}, --${ARG_LONG_YES}                             Disable confirmation asks.
@@ -161,8 +161,8 @@ function parse_options() {
       "--${ARG_LONG_VERSION}")
         set -- "$@" "-${ARG_SHORT_VERSION}"
         ;;
-      "--${ARG_LONG_SYSTEMD}")
-        set -- "$@" "-${ARG_SHORT_SYSTEMD}"
+      "--${ARG_LONG_SKIP_SYSTEMD}")
+        set -- "$@" "-${ARG_SHORT_SKIP_SYSTEMD}"
         ;;
       "--${ARG_LONG_UNINSTALL}")
         set -- "$@" "-${ARG_SHORT_UNINSTALL}"
@@ -188,7 +188,7 @@ function parse_options() {
       "--${ARG_LONG_KEEP_DOWNLOADS}")
         set -- "$@" "-${ARG_SHORT_KEEP_DOWNLOADS}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}")
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SKIP_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}")
         set -- "$@" "${arg}"
         ;;
       -*)
@@ -203,7 +203,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -220,7 +220,7 @@ function parse_options() {
       "${ARG_SHORT_API}")           API_BASE_URL="${OPTARG}" ;;
       "${ARG_SHORT_VERSION}")       VERSION="${OPTARG}" ;;
       "${ARG_SHORT_YES}")           CONTINUE=true ;;
-      "${ARG_SHORT_SYSTEMD}")       SYSTEMD_DISABLED=true ;;
+      "${ARG_SHORT_SKIP_SYSTEMD}")       SYSTEMD_DISABLED=true ;;
       "${ARG_SHORT_UNINSTALL}")     UNINSTALL=true ;;
       "${ARG_SHORT_PURGE}")         PURGE=true ;;
       "${ARG_SHORT_SKIP_TOKEN}")    SKIP_TOKEN=true ;;
