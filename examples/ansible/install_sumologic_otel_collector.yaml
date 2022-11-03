@@ -28,7 +28,7 @@
       when: api_url is defined
     - name: Disable systemd via install script argument list
       ansible.builtin.set_fact:
-        install_script_args: "{{ install_script_args + ['--disable-systemd-installation'] }}"
+        install_script_args: "{{ install_script_args + ['--skip-systemd'] }}"
       when: not systemd_service
     - name: Run install script
       ansible.builtin.command: "bash /tmp/install.sh {{ install_script_args | join(' ') }}"

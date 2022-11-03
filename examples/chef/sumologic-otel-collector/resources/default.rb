@@ -67,7 +67,7 @@ def get_install_script_command(resource)
      command_parts.push("--api #{resource.api_url}")
   end
   if ! resource.systemd_service
-     command_parts.push("--disable-systemd-installation")
+     command_parts.push("--skip-systemd")
   end
   command_parts.join(" ")
 end

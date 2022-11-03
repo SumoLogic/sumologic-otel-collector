@@ -45,7 +45,7 @@ class install_otel_collector (
   if $systemd_service {
     $systemd_command_args = []
   } else {
-    $systemd_command_args = ['--disable-systemd-installation']
+    $systemd_command_args = ['--skip-systemd']
   }
   $install_command_args = [
     "--installation-token ${install_token}",

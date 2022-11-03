@@ -68,8 +68,8 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "installation token only",
 			options: installOptions{
-				disableSystemd: true,
-				installToken:   installToken,
+				skipSystemd:  true,
+				installToken: installToken,
 			},
 			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
 			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigCreated, checkTokenInConfig,
@@ -78,7 +78,7 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "installation token only (envs)",
 			options: installOptions{
-				disableSystemd: true,
+				skipSystemd: true,
 				envs: map[string]string{
 					"SUMOLOGIC_INSTALL_TOKEN": installToken,
 				},
@@ -91,8 +91,8 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "same installation token",
 			options: installOptions{
-				disableSystemd: true,
-				installToken:   installToken,
+				skipSystemd:  true,
+				installToken: installToken,
 			},
 			preActions: []checkFunc{preActionMockUserConfig, preActionWriteTokenToUserConfig},
 			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated, checkUserNotExists},
@@ -101,8 +101,8 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "different installation token",
 			options: installOptions{
-				disableSystemd: true,
-				installToken:   installToken,
+				skipSystemd:  true,
+				installToken: installToken,
 			},
 			preActions:  []checkFunc{preActionMockUserConfig, preActionWriteDifferentTokenToUserConfig},
 			preChecks:   []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated, checkUserNotExists},
@@ -112,8 +112,8 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "adding installation token",
 			options: installOptions{
-				disableSystemd: true,
-				installToken:   installToken,
+				skipSystemd:  true,
+				installToken: installToken,
 			},
 			preActions: []checkFunc{preActionMockUserConfig},
 			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated, checkUserNotExists},
@@ -122,9 +122,9 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "editing installation token",
 			options: installOptions{
-				disableSystemd: true,
-				apiBaseURL:     apiBaseURL,
-				installToken:   installToken,
+				skipSystemd:  true,
+				apiBaseURL:   apiBaseURL,
+				installToken: installToken,
 			},
 			preActions: []checkFunc{preActionMockUserConfig, preActionWriteEmptyUserConfig},
 			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated, checkUserNotExists},
@@ -133,7 +133,7 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "same api base url",
 			options: installOptions{
-				disableSystemd:   true,
+				skipSystemd:      true,
 				apiBaseURL:       apiBaseURL,
 				skipInstallToken: true,
 			},
@@ -145,7 +145,7 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "different api base url",
 			options: installOptions{
-				disableSystemd:   true,
+				skipSystemd:      true,
 				apiBaseURL:       apiBaseURL,
 				skipInstallToken: true,
 			},
@@ -158,7 +158,7 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "adding api base url",
 			options: installOptions{
-				disableSystemd:   true,
+				skipSystemd:      true,
 				apiBaseURL:       apiBaseURL,
 				skipInstallToken: true,
 			},
@@ -169,7 +169,7 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "editing api base url",
 			options: installOptions{
-				disableSystemd:   true,
+				skipSystemd:      true,
 				apiBaseURL:       apiBaseURL,
 				skipInstallToken: true,
 			},
@@ -180,7 +180,7 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "empty installation token",
 			options: installOptions{
-				disableSystemd: true,
+				skipSystemd: true,
 			},
 			preActions: []checkFunc{preActionMockUserConfig, preActionWriteDifferentTokenToUserConfig},
 			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated, checkUserNotExists},
@@ -189,7 +189,7 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "configuration with tags",
 			options: installOptions{
-				disableSystemd:   true,
+				skipSystemd:      true,
 				skipInstallToken: true,
 				tags: map[string]string{
 					"lorem": "ipsum",
@@ -202,7 +202,7 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "same tags",
 			options: installOptions{
-				disableSystemd:   true,
+				skipSystemd:      true,
 				skipInstallToken: true,
 				tags: map[string]string{
 					"lorem": "ipsum",
@@ -217,7 +217,7 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "different tags",
 			options: installOptions{
-				disableSystemd:   true,
+				skipSystemd:      true,
 				skipInstallToken: true,
 				tags: map[string]string{
 					"lorem": "ipsum",
@@ -233,7 +233,7 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "editing tags",
 			options: installOptions{
-				disableSystemd:   true,
+				skipSystemd:      true,
 				skipInstallToken: true,
 				tags: map[string]string{
 					"lorem": "ipsum",

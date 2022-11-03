@@ -14,7 +14,7 @@ import (
 type installOptions struct {
 	installToken      string
 	autoconfirm       bool
-	disableSystemd    bool
+	skipSystemd       bool
 	tags              map[string]string
 	skipInstallToken  bool
 	envs              map[string]string
@@ -38,8 +38,8 @@ func (io *installOptions) string() []string {
 		opts = append(opts, "--yes")
 	}
 
-	if io.disableSystemd {
-		opts = append(opts, "--disable-systemd-installation")
+	if io.skipSystemd {
+		opts = append(opts, "--skip-systemd")
 	}
 
 	if io.skipInstallToken {
