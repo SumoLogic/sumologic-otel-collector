@@ -133,6 +133,7 @@ function set_defaults() {
     CONFIG_PATH="${CONFIG_DIRECTORY}/sumologic.yaml"
     COMMON_CONFIG_PATH="${USER_CONFIG_DIRECTORY}/common.yaml"
     COMMON_CONFIG_BAK_PATH="${USER_CONFIG_DIRECTORY}/common.yaml.bak"
+    LOG_FILE_PATHS="/var/log/ /srv/log/"
     INDENTATION="  "
     EXT_INDENTATION="${INDENTATION}${INDENTATION}"
 }
@@ -855,6 +856,14 @@ function get_binary_from_url() {
     fi
 }
 
+function set_acl_on_log_paths() {
+for path in ${LOG_FILE_PATHS}; do
+    echo -e "Running: setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${path}"
+    setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${path}
+done
+
+}
+
 ############################ Main code
 
 check_dependencies
@@ -1082,6 +1091,9 @@ if getent passwd "${SYSTEM_USER}" > /dev/null; then
 else
     useradd -mrUs /bin/false -d "${HOME_DIRECTORY}" "${SYSTEM_USER}"
 fi
+
+echo 'Creating ACL grants on log paths'
+set_acl_on_log_paths
 
 echo 'Changing ownership for config and storage'
 chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${CONFIG_PATH}" "${HOME_DIRECTORY}"
