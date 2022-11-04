@@ -857,10 +857,14 @@ function get_binary_from_url() {
 }
 
 function set_acl_on_log_paths() {
-for path in ${LOG_FILE_PATHS}; do
-    echo -e "Running: setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${path}"
-    setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${path}
-done
+    if command -v setfacl &> /dev/null; then
+         for path in ${LOG_FILE_PATHS}; do
+              echo -e "Running: setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${path}"
+              setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${path}
+         done
+    else
+         echo "setfacl command not found, skipping ACL creation for system log file paths."
+    fi
 
 }
 
