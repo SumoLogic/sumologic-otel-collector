@@ -48,10 +48,20 @@ func TestUnsupportedScheme(t *testing.T) {
 
 func TestNonExistent(t *testing.T) {
 	fp := New()
-	_, err := fp.Retrieve(context.Background(), schemePrefix+filepath.Join("testdata", "non-existent/*.yaml"), nil)
-	assert.Error(t, err)
-	_, err = fp.Retrieve(context.Background(), schemePrefix+absolutePath(t, filepath.Join("testdata", "non-existent/*.yaml")), nil)
-	assert.Error(t, err)
+	expectedMap := confmap.New()
+
+	ret, err := fp.Retrieve(context.Background(), schemePrefix+filepath.Join("testdata", "non-existent/*.yaml"), nil)
+	assert.NoError(t, err)
+	retMap, err := ret.AsConf()
+	assert.NoError(t, err)
+	assert.Equal(t, expectedMap, retMap)
+
+	ret, err = fp.Retrieve(context.Background(), schemePrefix+absolutePath(t, filepath.Join("testdata", "non-existent/*.yaml")), nil)
+	assert.NoError(t, err)
+	retMap, err = ret.AsConf()
+	assert.NoError(t, err)
+	assert.Equal(t, expectedMap, retMap)
+
 	require.NoError(t, fp.Shutdown(context.Background()))
 }
 
