@@ -1,9 +1,12 @@
 package sumologic_scripts_tests
 
 import (
+	"io/fs"
 	"os"
 	"os/exec"
 	"os/user"
+	"strconv"
+	"syscall"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -51,6 +54,14 @@ func checkRun(c check) {
 
 func checkConfigCreated(c check) {
 	require.FileExists(c.test, configPath, "configuration has not been created properly")
+}
+
+func checkConfigPathPermissions(c check) {
+	PathHasPermissions(c.test, configPath, configPathPermissions)
+}
+
+func checkConfigPathOwnership(c check) {
+	PathHasOwner(c.test, configPath, systemUser, systemUser)
 }
 
 func checkConfigNotCreated(c check) {
@@ -264,9 +275,35 @@ func checkAbortedDueToDifferentTags(c check) {
 func checkUserExists(c check) {
 	_, err := user.Lookup(systemUser)
 	require.NoError(c.test, err)
+	checkConfigPathOwnership(c)
 }
 
 func checkUserNotExists(c check) {
 	_, err := user.Lookup(systemUser)
 	require.Error(c.test, err)
+}
+
+func PathHasPermissions(t *testing.T, path string, perms uint32) {
+	info, err := os.Stat(path)
+	require.NoError(t, err)
+	require.Equal(t, fs.FileMode(perms), info.Mode().Perm())
+}
+
+func PathHasOwner(t *testing.T, path string, ownerName string, groupName string) {
+	info, err := os.Stat(path)
+	require.NoError(t, err)
+
+	// get the owning user and group
+	stat := info.Sys().(*syscall.Stat_t)
+	uid := strconv.FormatUint(uint64(stat.Uid), 10)
+	gid := strconv.FormatUint(uint64(stat.Gid), 10)
+
+	usr, err := user.LookupId(uid)
+	require.NoError(t, err)
+
+	group, err := user.LookupGroupId(gid)
+	require.NoError(t, err)
+
+	require.Equal(t, ownerName, usr.Username)
+	require.Equal(t, groupName, group.Name)
 }

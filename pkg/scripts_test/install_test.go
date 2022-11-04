@@ -60,8 +60,15 @@ func TestInstallScript(t *testing.T) {
 			options: installOptions{
 				skipInstallToken: true,
 			},
-			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
-			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated},
+			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkConfigPathPermissions,
+				checkUserConfigNotCreated,
+				checkSystemdConfigNotCreated,
+			},
 		},
 		{
 			name: "override default config",
@@ -81,8 +88,16 @@ func TestInstallScript(t *testing.T) {
 				installToken: installToken,
 			},
 			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
-			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigCreated, checkTokenInConfig,
-				checkSystemdConfigNotCreated, checkUserNotExists},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkConfigPathPermissions,
+				checkUserConfigCreated,
+				checkTokenInConfig,
+				checkSystemdConfigNotCreated,
+				checkUserNotExists,
+			},
 		},
 		{
 			name: "installation token only (envs)",
@@ -94,8 +109,15 @@ func TestInstallScript(t *testing.T) {
 			},
 			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated},
 			postChecks: []checkFunc{
-				checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigCreated,
-				checkEnvTokenInConfig, checkSystemdConfigNotCreated, checkUserNotExists},
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkConfigPathPermissions,
+				checkUserConfigCreated,
+				checkEnvTokenInConfig,
+				checkSystemdConfigNotCreated,
+				checkUserNotExists,
+			},
 		},
 		{
 			name: "same installation token",
@@ -206,7 +228,7 @@ func TestInstallScript(t *testing.T) {
 				},
 			},
 			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
-			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkTags, checkSystemdConfigNotCreated},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkConfigPathPermissions, checkTags, checkSystemdConfigNotCreated},
 		},
 		{
 			name: "same tags",
@@ -258,8 +280,16 @@ func TestInstallScript(t *testing.T) {
 			options: installOptions{
 				installToken: installToken,
 			},
-			preChecks:         []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
-			postChecks:        []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkTokenInConfig, checkSystemdConfigCreated, checkUserExists},
+			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkConfigPathPermissions,
+				checkTokenInConfig,
+				checkSystemdConfigCreated,
+				checkUserExists,
+			},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
 			installCode:       3, // because of invalid install token
 		},
