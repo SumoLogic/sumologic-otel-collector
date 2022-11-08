@@ -4,7 +4,6 @@
 - [Collector fails to start when deleted from UI](#collector-fails-to-start-when-deleted-from-ui)
 - [Enabling `clobber` property re-registers collector on every restart](#enabling-clobber-property-re-registers-collector-on-every-restart)
 - [Cannot start reading file logs from specific point in time](#cannot-start-reading-file-logs-from-specific-point-in-time)
-- [Multiple multiline logs are sometimes concatenated](#multiple-multiline-logs-are-sometimes-concatenated)
 
 ## Changes to collector properties are not applied
 
@@ -76,21 +75,3 @@ or only read files created or modified after a specific point in time.
 There is currently no workaround for this.
 
 [filelogreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.62.0/receiver/filelogreceiver/README.md
-
-## Multiple multiline logs are sometimes concatenated
-
-When using the [Filelog receiver][filelogreceiver_docs] with a `multiline` configuration,
-multiple consecutive log lines can sometimes get concatenated into a single multiline log,
-even if the multiline configuration should cause these log lines to be split into mutliple separate logs (multiline or not).
-This issue is caused by a faulty implementation of flushing the multiline buffer
-in the [OpenTelemetry log collection library][opentelemetry_log_collection].
-
-A [change][filelog_multiline_flush_fix] that fixes this has already been prepared
-and should be available in an upcoming release.
-
-There is no workaround for this issue,
-but setting the `force_flush_period` property to a higher value (e.g. `10s`)
-should cause the issue to occur less frequently or not at all.
-
-[opentelemetry_log_collection]: https://github.com/open-telemetry/opentelemetry-log-collection/tree/v0.27.0
-[filelog_multiline_flush_fix]: https://github.com/open-telemetry/opentelemetry-log-collection/pull/434
