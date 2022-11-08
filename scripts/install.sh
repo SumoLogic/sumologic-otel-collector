@@ -492,6 +492,12 @@ function setup_config() {
         exit 1
     fi
 
+    # Fixing configuration for versions up to 0.57.2
+    # Normally the config branch is the same as the version tag, and in this case the config has a bug
+    # Instead of changing the branch, we fix it here, with the intent of removing this logic once 0.63.0 is released
+    # TODO: Remove this after 0.63.0 is released
+    sed -i.bak -e "s#~/.sumologic-otel-collector#/var/lib/otelcol-sumo/credentials#" "${CONFIG_PATH}"
+
     echo 'Changing permissions for config file and storage'
     chmod 440 "${CONFIG_PATH}"
     chmod -R 750 "${HOME_DIRECTORY}"
