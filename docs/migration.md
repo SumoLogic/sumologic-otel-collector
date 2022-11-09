@@ -10,7 +10,7 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
   - [Host Name](#host-name)
   - [Category](#category)
   - [Fields](#fields)
-  - [Assign to a budget](#assign-to-a-budget)
+  - [Assign to an Ingest Budget](#assign-to-an-ingest-budget)
   - [Time Zone](#time-zone)
   - [Advanced](#advanced)
     - [CPU Target](#cpu-target)
@@ -55,7 +55,7 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [Source Category](#source-category-2)
     - [Metadata](#metadata)
   - [Host Metrics Source](#host-metrics-source)
-    - [Overall example](#overall-example-3)
+    - [Overall Example](#overall-example-3)
     - [Name](#name-4)
     - [Description](#description-4)
     - [Source Host](#source-host-2)
@@ -74,7 +74,7 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
   - [Script Action](#script-action)
 - [Local Configuration File](#local-configuration-file)
   - [Collector](#collector-1)
-    - [user.properties](#user.properties)
+    - [user.properties](#userproperties)
   - [Common Parameters](#common-parameters)
   - [Local File Source (LocalFile)](#local-file-source-localfile)
   - [Remote File Source (RemoteFileV2)](#remote-file-source-remotefilev2)
@@ -85,9 +85,9 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
   - [Streaming Metrics Source (StreamingMetrics)](#streaming-metrics-source-streamingmetrics)
   - [Host Metrics Source (SystemStats)](#host-metrics-source-systemstats)
   - [Local Windows Event Log Source (LocalWindowsEventLog)](#local-windows-event-log-source-localwindowseventlog)
-  - [Remote Windows Event Log Source (RemoteWindowsEventLog)](#local-windows-event-log-source-remotewindowseventlog)
-  - [Local Windows Performance Source (LocalWindowsPerfMon)](#local-windows-performance-monitor-log-source-localwindowsperfmon)
-  - [Remote Windows Performance Source (RemoteWindowsPerfMon)](#local-windows-performance-monitor-log-source-remotewindowsperfmon)
+  - [Remote Windows Event Log Source (RemoteWindowsEventLog)](#remote-windows-event-log-source-remotewindowseventlog)
+  - [Local Windows Performance Source (LocalWindowsPerfMon)](#local-windows-performance-source-localwindowsperfmon)
+  - [Remote Windows Performance Source (RemoteWindowsPerfMon)](#remote-windows-performance-source-remotewindowsperfmon)
   - [Windows Active Directory Source (ActiveDirectory)](#windows-active-directory-source-activedirectory)
 
 ## General Configuration Concepts
@@ -2025,9 +2025,9 @@ This section describes migration steps for [common parameters][common-parameters
 - [StreamingMetrics](#streaming-metrics-source-streamingmetrics)
 - [SystemStats](#host-metrics-source-systemstats)
 - [LocalWindowsEventLog](#local-windows-event-log-source-localwindowseventlog)
-- [RemoteWindowsEventLog](#local-windows-event-log-source-remotewindowseventlog)
-- [LocalWindowsPerfMon](#local-windows-performance-monitor-log-source-localwindowsperfmon)
-- [RemoteWindowsPerfMon](#local-windows-performance-monitor-log-source-remotewindowsperfmon)
+- [RemoteWindowsEventLog](#remote-windows-event-log-source-remotewindowseventlog)
+- [LocalWindowsPerfMon](#local-windows-performance-source-localwindowsperfmon)
+- [RemoteWindowsPerfMon](#remote-windows-performance-source-remotewindowsperfmon)
 - [ActiveDirectory](#windows-active-directory-source-activedirectory)
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
@@ -2035,7 +2035,7 @@ This section describes migration steps for [common parameters][common-parameters
 | `name`                            | [exporters.sumologic.source_name](#name-1)                                                                      |
 | `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-1) |
 | `fields`                          | Use the [resourceprocessor][resourceprocessor] to set custom fields. [See the linked example.](#fields-1)       |
-| `hostName`                        | [exporters.sumologic.source_host][source-templates]; [See the linked example.](#host-name-1)                    |
+| `hostName`                        | [exporters.sumologic.source_host][source-templates]; [See the linked example.](#source-host)                    |
 | `category`                        | [exporters.sumologic.source_category][source-templates]                                                         |
 | `automaticDateParsing`            | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
 | `timeZone`                        | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |

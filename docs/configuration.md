@@ -433,7 +433,7 @@ By default, the Filelog receiver watches files starting at their end
 so nothing will be read after the otelcol process starts until new data is added to the files.
 To change this, add `start_at: beginning` to the receiver's configuration.
 To prevent the receiver from reading the same data over and over again on each otelcol restart,
-also add the [File Storage extension](#file-storage-extension) that will allow Filelog receiver to persist the current
+also add the [File Storage extension][filestorageextension_docs] that will allow Filelog receiver to persist the current
 position in watched files between otelcol restarts. Here's an example of such configuration:
 
 ```yaml
@@ -482,7 +482,7 @@ receivers:
         parse_from: message
 ```
 
-and the parsed log entry can be observed in [logging exporter](#logging-exporter)'s output as:
+and the parsed log entry can be observed in [logging exporter][loggingexporter_docs]'s output as:
 
 ```console
 2022-02-24T10:23:37.809Z        INFO    loggingexporter/logging_exporter.go:69  LogsExporter    {"#logs": 1}
@@ -510,6 +510,7 @@ Example configuration with example log can be found in [/examples/logs_json/](/e
 [json_parser]: https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/operators/json_parser.md
 [filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.62.0/receiver/filelogreceiver
 [opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
+[loggingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.62.0/exporter/loggingexporter
 
 ## Setting source category
 
