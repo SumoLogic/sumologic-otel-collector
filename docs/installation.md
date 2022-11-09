@@ -97,7 +97,7 @@ Follow the steps for your platform below.
 
 1. [Verify the installation](#verify-the-installation)
 
-1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
+1. Prepare the configuration according to [this](configuration.md) document and save it in `config.yaml`.
 
    > **IMPORTANT NOTE**:
    > It is recommended to limit access to the configuration file as it contains sensitive information.
@@ -130,7 +130,7 @@ Follow the steps for your platform below.
 
 1. [Verify the installation](#verify-the-installation)
 
-1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
+1. Prepare the configuration according to [this](configuration.md) document and save it in `config.yaml`.
 
    > **IMPORTANT NOTE**:
    > It is recommended to limit access to the configuration file as it contains sensitive information.
@@ -163,7 +163,7 @@ Follow the steps for your platform below.
 
 1. [Verify the installation](#verify-the-installation)
 
-1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
+1. Prepare the configuration according to [this](configuration.md) document and save it in `config.yaml`.
 
    > **IMPORTANT NOTE**:
    > It is recommended to limit access to the configuration file as it contains sensitive information.
@@ -196,7 +196,7 @@ Follow the steps for your platform below.
 
 1. [Verify the installation](#verify-the-installation)
 
-1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
+1. Prepare the configuration according to [this](configuration.md) document and save it in `config.yaml`.
 
    > **IMPORTANT NOTE**:
    > It is recommended to limit access to the configuration file as it contains sensitive information.
@@ -233,7 +233,7 @@ for potential breaking changes that would require manual migration steps.
 1. In order to validate the installation, [the example configuration](../examples/verify_installation.yaml) can be used.
    It instructs the Sumo Logic Distribution to read logs from `/tmp/sumologic-demo.log` and send them to Sumo Logic.
 
-   > **Note**: For more details on configuring OT, check out the [following document](./Configuration.md).
+   > **Note**: For more details on configuring OT, check out the [following document](./configuration.md).
 
    The example configuration:
 
@@ -307,7 +307,7 @@ repository.
    export RELEASE_VERSION=0.57.2-sumo-1
    ```
 
-1. Prepare the configuration according to [this](Configuration.md) document and save it in `config.yaml`.
+1. Prepare the configuration according to [this](configuration.md) document and save it in `config.yaml`.
 
    > **IMPORTANT NOTE**:
    > It is recommended to limit access to the configuration file as it contains sensitive information.
@@ -370,7 +370,7 @@ repository.
 >
 > will require that the user running the process has access to `/var/lib/otelcol/mydir`.
 
-[filestorage_help]: ./Configuration.md#file-storage-extension
+[filestorage_help]: ./configuration.md#file-storage-extension
 
 To run opentelemetry collector as Systemd Service please apply following steps:
 

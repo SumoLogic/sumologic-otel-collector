@@ -761,7 +761,7 @@ The equivalent of the Syslog Source is a combination of
 and [the sumologicsyslog processor][sumologicsyslog].
 
 __Note: The OpenTelemetry Collector provides also [Syslog Receiver][syslogreceiver].
-See [this document](Comparison.md#syslog) for details.__
+See [this document](comparison.md#syslog) for details.__
 
 #### Overall example
 
@@ -1372,7 +1372,7 @@ exporters:
 The equivalent of the Host Metrics Source is [the telegraf receiver][telegrafreceiver] with appropiate plugins.
 
 __Note: The are differences between the Installed Collector and the Openelemetry Collector host metrics.
-See [this document](Comparison.md#host-metrics) to learn more.__
+See [this document](comparison.md#host-metrics) to learn more.__
 
 #### Overall Example
 
@@ -2072,7 +2072,7 @@ and [the sumologicsyslog processor][sumologicsyslog].
 More useful information can be found in [Syslog Source for Cloud Based Management](#syslog-source).
 
 __Note: The OpenTelemetry Collector provides also [Syslog Receiver][syslogreceiver].
-See [this document](Comparison.md#syslog) for details.__
+See [this document](comparison.md#syslog) for details.__
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                      |
 |-----------------------------------|----------------------------------------------------------------------------------------------------------------------|
@@ -2111,7 +2111,7 @@ The equivalent of the Host Metrics Source is [the telegraf receiver][telegrafrec
 More useful information can be found in [Host Metrics Source for Cloud Based Management](#host-metrics-source).
 
 __Note: The are differences between the Installed Collector and the Openelemetry Collector host metrics.
-See [this document](Comparison.md#host-metrics) to learn more.__
+See [this document](comparison.md#host-metrics) to learn more.__
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
