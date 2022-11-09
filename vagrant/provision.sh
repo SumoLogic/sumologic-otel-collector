@@ -62,7 +62,7 @@ echo 'PATH="$PATH:/home/vagrant/bin:/home/vagrant/go/bin"' >> /home/vagrant/.bas
 sed -i 's#secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"#secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/opt/puppetlabs/bin"#g' /etc/sudoers
 
 # Install chef
-curl -L https://www.opscode.com/chef/install.sh | sudo bash
+curl -L https://omnitruck.chef.io/install.sh | sudo bash
 
 # accepts chef-solo licenses
 chef-solo --chef-license=accept || true

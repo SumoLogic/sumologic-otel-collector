@@ -1,66 +1,72 @@
-class install_otel_collector {
+# @summary Installs Sumologic Otel Collector
+#
+# @example Basic usage
+#   class { 'install_otel_collector':
+#     install_token => '...'
+#     collector_tags => { 'key' => 'value' }
+#   }
+#
+# @param install_token
+#   Sumo Logic install token, rel: https://help.sumologic.com/docs/manage/security/installation-tokens/
+# @param collector_tags
+#   Collector tags, these are applied to all processed data
+# @param api_url
+#   Sumo Logic API url
+# @param systemd_service
+#   Enables creation of Systemd Service. Note that Opentelemetry Collector will not be started if this is disabled.
+# @param version
+#   Sumologic Otel Collector version. Defaults to latest stable.
+# @param src_config_path
+#   Path to a directory with config files.
+#
+class install_otel_collector (
+  String $install_token,
+  Hash[String, String] $collector_tags = {},
+  Optional[String] $api_url = undef,
+  Boolean $systemd_service = true,
+  Optional[String] $version = undef,
+  String $src_config_path = 'puppet:///modules/install_otel_collector/conf.d',
+) {
+  $install_script_url = 'https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh'
+  $install_script_path = '/tmp/install.sh'
 
-   $otel_collector_version = "0.50.0-sumo-0" # version of Sumo Logic Distribution for OpenTelemetry Collector
-   $systemd_service = false                  # enables creation of Systemd Service for Sumo Logic Distribution for OpenTelemetry Collector
+  # construct the install command arguments from class parameters
+  $tags_command_args = $collector_tags.map |$key, $value| { "--tag ${key}=${value}" }
+  if $version == undef {
+    $version_command_args = []
+  } else {
+    $version_command_args = ["--version ${version}"]
+  }
+  if $api_url == undef {
+    $api_command_args = []
+  } else {
+    $api_command_args = ["--api ${api_url}"]
+  }
+  if $systemd_service {
+    $systemd_command_args = []
+  } else {
+    $systemd_command_args = ['--skip-systemd']
+  }
+  $install_command_args = [
+    "--installation-token ${install_token}",
+  ] + $tags_command_args + $version_command_args + $api_command_args + $systemd_command_args
 
-   $arch = $facts['os']['architecture'] ? {
-      'aarch64' => 'arm64',
-      'arm64'   => 'arm64',
-      default   => 'amd64',
-   }
+  file { 'download the install script':
+    source => $install_script_url,
+    path   => $install_script_path,
+  }
 
-   $os_family = $facts['os']['family'] ? {
-      'Darwin' => 'darwin',
-      default   => 'linux',
-   }
+  $install_command_parts = ['bash', $install_script_path] + $install_command_args
+  $install_command = join($install_command_parts, ' ')
+  exec { 'run the installation script':
+    command => $install_command,
+    path    => ['/usr/local/bin/', '/usr/bin', '/usr/sbin', '/bin'],
+    user    => 'root',
+  }
 
-   exec {"download the release binary":
-      cwd     => "/usr/local/bin/",
-      command => "curl -sLo otelcol-sumo https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${otel_collector_version}/otelcol-sumo-${otel_collector_version}-${os_family}_${arch}",
-      path    => ['/usr/local/bin/', '/usr/bin', '/usr/sbin', '/bin'],
-   }
-
-   exec {"make otelcol-sumo executable":
-      cwd     => "/usr/local/bin/",
-      command => "chmod +x otelcol-sumo",
-      path    => ['/usr/local/bin/', '/usr/bin', '/usr/sbin', '/bin'],
-   }
-
-   file {"/etc/otelcol-sumo":
-     ensure => 'directory',
-   }
-
-   file {"/etc/otelcol-sumo/config.yaml":
-     source => "puppet:///modules/install_otel_collector/config.yaml",
-     mode => "640",
-   }
-
-   group {"otelcol-sumo":
-      ensure  => "present",
-   }
-
-   user {"otelcol-sumo":
-      ensure  => "present",
-      groups  => ["otelcol-sumo"],
-      managehome => true,
-   }
-
-   if $systemd_service {
-      file {"/etc/systemd/system/otelcol-sumo.service":
-         source => "puppet:///modules/install_otel_collector/systemd_service",
-         mode => "644",
-      }
-
-      service {"otelcol-sumo":
-         ensure => "running",
-         enable => true,
-      }
-   } else {
-      exec { 'run otelcol-sumo in background':
-         command => 'sudo -u otelcol-sumo /usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yaml > /var/log/otelcol.log 2>&1 &',
-         path    => ['/usr/local/bin/', '/usr/bin', '/usr/sbin', '/bin'],
-         logoutput => true,
-         provider => shell,
-      }
-   }
+  file { '/etc/otelcol-sumo/conf.d':
+    ensure  => directory,
+    recurse => true,
+    source  => $src_config_path,
+  }
 }

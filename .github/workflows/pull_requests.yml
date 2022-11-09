@@ -5,6 +5,10 @@ on:
     branches:
       - '**'
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
 
   markdownlint:
@@ -116,6 +120,10 @@ jobs:
             runs_on: ubuntu-20.04
           - arch_os: darwin_amd64
             runs_on: macos-latest
+          - arch_os: windows_amd64
+            runs_on: windows-2022
+            builder_bin_path: '${RUNNER_TEMP}\bin'
+            builder_bin_ext: .exe
     steps:
       - uses: actions/checkout@v3
 
@@ -149,13 +157,23 @@ jobs:
             /home/runner/.cache/go-build
             /Users/runner/go/pkg/mod
             /Users/runner/Library/Caches/go-build
+            /c/Users/runneradmin/go/pkg/mod
+            /c/Users/runneradmin/AppData/Local/go-build
           key: ${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{matrix.arch_os}}-go-
 
+      - name: Set default BUILDER_BIN_PATH
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
+
+      - name: Override BUILDER_BIN_PATH if set in matrix
+        if: matrix.builder_bin_path != '' && steps.changed-files.outputs.any_changed == 'true'
+        run: echo "BUILDER_BIN_PATH=${{matrix.builder_bin_path}}" >> $GITHUB_ENV
+
       - name: Add opentelemetry-collector-builder installation dir to PATH
         if: steps.changed-files.outputs.any_changed == 'true'
-        run: echo "$HOME/bin" >> $GITHUB_PATH
+        run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
 
       - name: Run tests
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -294,6 +312,10 @@ jobs:
             runs_on: macos-latest
           - arch_os: darwin_arm64
             runs_on: macos-latest
+          - arch_os: windows_amd64
+            runs_on: windows-2022
+            builder_bin_path: '${RUNNER_TEMP}\bin'
+            builder_bin_ext: .exe
     steps:
       - uses: actions/checkout@v3
 
@@ -331,13 +353,22 @@ jobs:
             /home/runner/.cache/go-build
             /Users/runner/go/pkg/mod
             /Users/runner/Library/Caches/go-build
+            /c/Users/runneradmin/go/pkg/mod
+            /c/Users/runneradmin/AppData/Local/go-build
           key: ${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{matrix.arch_os}}-go-
 
+      - name: Set default BUILDER_BIN_PATH
+        run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
+
+      - name: Override BUILDER_BIN_PATH if set in matrix
+        run: echo "BUILDER_BIN_PATH=${{matrix.builder_bin_path}}" >> $GITHUB_ENV
+        if: matrix.builder_bin_path != ''
+
       - name: Add opentelemetry-collector-builder installation dir to PATH
         if: steps.changed-files.outputs.any_changed == 'true'
-        run: echo "$HOME/bin" >> $GITHUB_PATH
+        run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
 
       - name: Install opentelemetry-collector-builder
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -359,7 +390,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         working-directory: ./otelcolbuilder/cmd
         run: |
-          go version -m otelcol-sumo-${{matrix.arch_os}} | \
+          go version -m otelcol-sumo-${{matrix.arch_os}}${{matrix.builder_bin_ext}} | \
           grep -E "/(receiver|exporter|processor|extension)/"
 
       - name: Store binary as action artifact
@@ -367,7 +398,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: otelcol-sumo-${{matrix.arch_os}}
-          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}
+          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}${{matrix.builder_bin_ext}}
           if-no-files-found: error
 
   # pipeline to build FIPS compliance binary on Go+BoringCrypto for linux

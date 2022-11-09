@@ -3,22 +3,36 @@
 This [Puppet][puppet] [manifest](manifest/../manifests/install_otel_collector.pp) along with
 [module](modules/install_otel_collector/) will install Sumo Logic Distro of [OpenTelemetry Collector][otc_link].
 
-## Configuration
+## Using the module
 
-- Prepare [configuration](../../docs/Configuration.md) for Sumo Logic Distribution for OpenTelemetry Collector and
-  save it in [files](modules/install_otel_collector/files/) directory for `instal_otel_collector` module as `config.yaml`.
-- If needed modify variables in [modules/install_otel_collector/manifests/init.pp](modules/install_otel_collector/manifests/init.pp):
+- Get an [install token][install_token] from Sumo Logic
+- Prepare [configuration](../../docs/configuration.md) file for Sumo Logic Distribution for OpenTelemetry Collector and put the file in a directory of your choice. You can put multiple configuration files in this directory, and all of them will be used.
+
+  **NOTE**: The playbook will prepare a [base configuration][base_configuration] for you, and configure the [extension][sumologicextension] as well.
+- Modify properties in [modules/install_otel_collector/manifests/init.pp](modules/install_otel_collector/manifests/init.pp):
 
   ```ruby
   class install_otel_collector {
-     $otel_collector_version = "0.50.0-sumo-0" # version of Sumo Logic Distribution for OpenTelemetry Collector
-     $systemd_service = false                  # enables creation of Systemd Service for Sumo Logic Distribution for OpenTelemetry Collector
-
-  ...
+     $install_token => "<your_token>"
+     $collector_tags => {"key" => "value"}
+     src_config_path => <your_config_path>
   }
   ```
 
-- Adjust settings for Systemd Service in [system_service](modules/install_otel_collector/files/systemd_service) when it needs to be created.
+- Apply the changes to your environment. In local mode, run:
+
+  ```bash
+  puppet apply
+  ```
+
+### Properties
+
+- `install_token`: Sumo Logic install token, rel: [install_token]
+- `collector_tags`: Collector tags, these are applied to all processed data
+- `api_url`: Sumo Logic API url. You shouldn't need to set this in most normal circumstances.
+- `version`: version of Sumo Logic Distribution for OpenTelemetry Collector
+- `systemd_service`: enables creation of Systemd Service for Sumo Logic Distribution for OpenTelemetry Collector. Enabled by default. Note that this recipe will not start the collector if you disable this.
+- `src_config_path`: path to configuration directory for Sumo Logic Distribution for OpenTelemetry Collector
 
 ## Test on Vagrant
 
@@ -31,7 +45,7 @@ Example Puppet manifest and module are mounted to Vagrant virtual machine:
 
 To install Sumo Logic Distribution for OpenTelemetry Collector with Puppet on Vagrant virtual machine:
 
-- Prepare configuration using steps described in [Configuration](#configuration)
+- Prepare configuration as outlined in [Using the module](#using-the-module)
 - From main directory of this repository start virtual machine:
 
   ```bash
@@ -66,8 +80,11 @@ To install Sumo Logic Distribution for OpenTelemetry Collector with Puppet on Va
 - Verify logs:
 
   ```bash
-  cat /var/log/otelcol.log
+  sudo journalctl -u otelcol-sumo
   ```
 
-[otc_link]: https://github.com/open-telemetry/opentelemetry-collector
 [puppet]: https://puppet.com/
+[otc_link]: https://github.com/open-telemetry/opentelemetry-collector
+[install_token]: https://help.sumologic.com/docs/manage/security/installation-tokens/
+[base_configuration]: ../sumologic.yaml
+[sumologicextension]: ../../pkg/extension/sumologicextension/

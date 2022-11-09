@@ -1,72 +1,43 @@
-- hosts: sumologic_otel_collector_hosts
+- name: Install and configure Sumo OT distro
+  hosts: sumologic_otel_collector_hosts
   become: true
   gather_facts: true
   vars_files:
     - vars/default.yaml
   tasks:
-    - name: "Set architecture to amd64 (x86_64), architecture: {{ ansible_architecture }}"
-      set_fact:
-         binary_arch: "amd64"
-      when: ansible_architecture == 'x86_64'
-
-    - name: "Set architecture to arm64, architecture: {{ ansible_architecture }}"
-      set_fact:
-         binary_arch: "arm64"
-      when: ansible_architecture == 'aarch64' or ansible_architecture == 'arm64'
-
-    - name: "Set OS to linux, OS family: {{ ansible_os_family }}"
-      set_fact:
-         binary_os: "linux"
-      when:
-        - ansible_os_family != 'Windows'
-        - ansible_os_family != 'Darwin'
-
-    - name: "Set OS to MacOS, OS family: {{ ansible_os_family }}"
-      set_fact:
-         binary_os: "darwin"
-      when:
-        - ansible_os_family == 'Darwin'
-
-    - name: "Installing binary, OS: {{ binary_os }}, architecture: {{ binary_arch }}"
-      get_url:
-        url: "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v{{sumologic_otel_collector.version}}/otelcol-sumo-{{ sumologic_otel_collector.version }}-{{ binary_os }}_{{ binary_arch }}"
-        dest: /usr/local/bin/otelcol-sumo
+    - name: Download install script
+      ansible.builtin.get_url:
+        url: "https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh"
+        dest: /tmp/install.sh
         mode: 0755
-      when:
-        - ansible_architecture == 'x86_64' or ansible_architecture == 'aarch64' or ansible_architecture == 'arm64'
-        - ansible_os_family != 'Windows'
-    - name: Ensure group "otelcol-sumo" exists
-      group:
-        name: otelcol-sumo
-        state: present
-    - name: Add the user 'otelcol-sumo' to 'otelcol-sumo' group
-      user:
-        name: otelcol-sumo
-        group: otelcol-sumo
-        system: True
-    - name: Ensures /etc/otelcol-sumo/ directory exists
-      file: path=/etc/otelcol-sumo/ state=directory
-    - name: Copy configuration file from {{ sumologic_otel_collector.src_config_path }} to /etc/otelcol-sumo/config.yaml
-      copy:
-        src: "{{ sumologic_otel_collector.src_config_path }}"
-        dest: /etc/otelcol-sumo/config.yaml
+    - name: Create install script argument list
+      ansible.builtin.set_fact:
+        install_script_args:
+          - "--installation-token {{ install_token | mandatory }}"
+    - name: Add tags to install script argument list
+      ansible.builtin.set_fact:
+        install_script_args: "{{ install_script_args + [ '--tag ' ~ item.key ~ '=' ~ item.value ] }}"
+      loop: "{{ collector_tags | dict2items }}"
+    - name: Add version to install script argument list
+      ansible.builtin.set_fact:
+        install_script_args: "{{ install_script_args + [ '--version ' ~ version ] }}"
+      when: version is defined
+    - name: Add api_url to install script argument list
+      ansible.builtin.set_fact:
+        install_script_args: "{{ install_script_args + [ '--api_url ' ~ api_url ] }}"
+      when: api_url is defined
+    - name: Disable systemd via install script argument list
+      ansible.builtin.set_fact:
+        install_script_args: "{{ install_script_args + ['--skip-systemd'] }}"
+      when: not systemd_service
+    - name: Run install script
+      ansible.builtin.command: "bash /tmp/install.sh {{ install_script_args | join(' ') }}"
+      changed_when: true
+    - name: "Copy configuration files to /etc/otelcol-sumo/conf.d"
+      ansible.builtin.copy:
+        src: "{{ src_config_path }}"
+        dest: /etc/otelcol-sumo/conf.d
         owner: otelcol-sumo
         group: otelcol-sumo
         mode: 0640
-    - name: Creating systemd service file
-      template:
-        src: systemd_service.j2
-        dest: /etc/systemd/system/otelcol-sumo.service
-        owner: otelcol-sumo
-        group: otelcol-sumo
-        mode: 0644
-      when:
-        - sumologic_otel_collector.systemd_service == true
-    - name: Run otelcol-sumo systemd service
-      systemd: state=started name=otelcol-sumo
-      when:
-        - sumologic_otel_collector.systemd_service == true
-    - name: Run otelcol-sumo in background
-      shell: nohup /usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yaml > /var/log/otelcol.log 2>&1 &
-      when:
-        - sumologic_otel_collector.systemd_service == false
+      when: src_config_path is defined

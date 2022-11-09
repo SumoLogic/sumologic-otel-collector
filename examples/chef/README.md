@@ -2,15 +2,36 @@
 
 This cookbook will install Sumo Logic Distro of [OpenTelemetry Collector][otc_link].
 
+## Using the cookbook
+
+- Get an [install token][install_token] from Sumo Logic
+- Prepare [configuration](../../docs/configuration.md) file for Sumo Logic Distribution for OpenTelemetry Collector and put the file in a directory of your choice. You can put multiple configuration files in this directory, and all of them will be used.
+
+  **NOTE**: The playbook will prepare a [base configuration][base_configuration] for you, and configure the [extension][sumologicextension] as well.
+- Prepare Chef Recipe and save it in the [recipes/default.rb](sumologic-otel-collector/recipes/default.rb) file
+
+    ```ruby
+    sumologic_otel_collector 'sumologic-otel-collector' do
+      install_token '<your_token>'
+      tags ({'abc' => 'def'})
+      src_config_path '<your_config_path>'
+    end
+    ```
+
+- Apply the changes to your environment. If using `chef-solo`, run the following:
+
+    ```bash
+    sudo chef-solo --config-option cookbook_path=$(pwd) -o sumologic-otel-collector
+    ```
+
 ## Properties
 
-- `version`: version of Sumo Logic Distribution for OpenTelemetry Collector
-- `src_config_path`: path to configuration file for Sumo Logic Distribution for OpenTelemetry Collector
-- `memory_high`: defines the throttling limit on memory usage for Sumo Logic Distribution for OpenTelemetry Collector
-- `memory_max`: defines the absolute limit on memory usage for Sumo Logic Distribution for OpenTelemetry Collector
-- `systemd_service`: enables creation of Systemd Service for Sumo Logic Distribution for OpenTelemetry Collector
-- `os_family`: OS family, can by either `linux` or `darwin`
-- `os_arch`: OS architecture, can be either `amd64` or `arm64`. `arm64` is supported for `linux` `os_family` only
+- `install_token`: Sumo Logic [install token][install_token]
+- `collector_tags`: Collector tags, these are applied to all processed data
+- `api_url`: Sumo Logic API url. You shouldn't need to set this in most normal circumstances.
+- `version`: version of Sumo Logic Distribution for OpenTelemetry Collector. The default is the latest stable version.
+- `systemd_service`: enables creation of Systemd Service for Sumo Logic Distribution for OpenTelemetry Collector. Enabled by default. Note that this playbook will not start the collector if you disable this.
+- `src_config_path`: path to configuration directory for Sumo Logic Distribution for OpenTelemetry Collector
 
 ## Test on Vagrant
 
@@ -19,9 +40,7 @@ Chef-solo is installed in Vagrant environment to simplify testing and modifying 
 [Chef playground](.) is mounted as `/sumologic/examples/chef`.
 The following steps describe procedure of testing changes:
 
-- Prepare configuration for Sumo Logic Distribution for OpenTelemetry Collector
-  using steps described in [Configuration](../../docs/Configuration.md)
-- Adjust [recipe](sumologic-otel-collector/recipes/default.rb) to your needs
+- Prepare configuration as outlined in [Using the cookbook](#using-the-cookbook)
 - From main directory of this repository start virtual machine:
 
   ```bash
@@ -49,7 +68,10 @@ The following steps describe procedure of testing changes:
 - Verify logs:
 
   ```bash
-  cat /var/log/otelcol.log
+  sudo journalctl -u otelcol-sumo
   ```
 
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
+[install_token]: https://help.sumologic.com/docs/manage/security/installation-tokens/
+[base_configuration]: ../sumologic.yaml
+[sumologicextension]: ../../pkg/extension/sumologicextension/

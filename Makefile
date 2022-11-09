@@ -1,6 +1,10 @@
 GOLANGCI_LINT_VERSION ?= v1.49
 SHELL := /usr/bin/env bash
 
+ifeq ($(OS),Windows_NT)
+	MAKE := "$(shell cygpath '$(MAKE)')"
+endif
+
 all: markdownlint yamllint
 
 .PHONY: markdownlint
@@ -94,8 +98,8 @@ update-ot-core: install-gsed
 	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" otelcolbuilder/.otelcol-builder.yaml
 	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" otelcolbuilder/Makefile
 	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" README.md
-	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" docs/Configuration.md
-	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" docs/KnownIssues.md
+	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" docs/configuration.md
+	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" docs/known-issues.md
 	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" pkg/receiver/telegrafreceiver/README.md
 	@find . -type f -name "go.mod" -exec $(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" {} \;
 	@echo "building OT distro to check for breakage"

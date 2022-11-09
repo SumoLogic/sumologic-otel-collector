@@ -14,8 +14,12 @@ ARG_SHORT_TAG='t'
 ARG_LONG_TAG='tag'
 ARG_SHORT_VERSION='v'
 ARG_LONG_VERSION='version'
-ARG_SHORT_SYSTEMD='d'
-ARG_LONG_SYSTEMD='disable-systemd-installation'
+ARG_SHORT_YES='y'
+ARG_LONG_YES='yes'
+ARG_SHORT_SKIP_SYSTEMD='d'
+ARG_LONG_SKIP_SYSTEMD='skip-systemd'
+ARG_SHORT_SKIP_CONFIG='s'
+ARG_LONG_SKIP_CONFIG='skip-config'
 ARG_SHORT_UNINSTALL='u'
 ARG_LONG_UNINSTALL='uninstall'
 ARG_SHORT_PURGE='p'
@@ -31,13 +35,15 @@ ARG_LONG_BINARY_BRANCH='binary-branch'
 ENV_TOKEN="SUMOLOGIC_INSTALL_TOKEN"
 ARG_SHORT_BRANCH='b'
 ARG_LONG_BRANCH='branch'
+ARG_SHORT_KEEP_DOWNLOADS='n'
+ARG_LONG_KEEP_DOWNLOADS='keep-downloads'
 
 readonly ARG_SHORT_TOKEN ARG_LONG_TOKEN ARG_SHORT_HELP ARG_LONG_HELP ARG_SHORT_API ARG_LONG_API
-readonly ARG_SHORT_TAG ARG_LONG_TAG ARG_SHORT_VERSION ARG_LONG_VERSION
-readonly ARG_SHORT_SYSTEMD ARG_LONG_SYSTEMD ARG_SHORT_UNINSTALL ARG_LONG_UNINSTALL
+readonly ARG_SHORT_TAG ARG_LONG_TAG ARG_SHORT_VERSION ARG_LONG_VERSION ARG_SHORT_YES ARG_LONG_YES
+readonly ARG_SHORT_SKIP_SYSTEMD ARG_LONG_SKIP_SYSTEMD ARG_SHORT_UNINSTALL ARG_LONG_UNINSTALL
 readonly ARG_SHORT_PURGE ARG_LONG_PURGE ARG_SHORT_DOWNLOAD ARG_LONG_DOWNLOAD
 readonly ARG_SHORT_CONFIG_BRANCH ARG_LONG_CONFIG_BRANCH ARG_SHORT_BINARY_BRANCH ARG_LONG_CONFIG_BRANCH
-readonly ARG_SHORT_BRANCH ARG_LONG_BRANCH
+readonly ARG_SHORT_BRANCH ARG_LONG_BRANCH ARG_SHORT_SKIP_CONFIG ARG_LONG_SKIP_CONFIG
 readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ENV_TOKEN
 
 ############################ Variables (see set_defaults function for default values)
@@ -52,6 +58,7 @@ set -u
 API_BASE_URL=""
 FIELDS=""
 VERSION=""
+CONTINUE=false
 HOME_DIRECTORY=""
 CONFIG_DIRECTORY=""
 USER_CONFIG_DIRECTORY=""
@@ -59,6 +66,7 @@ SYSTEMD_CONFIG=""
 UNINSTALL=""
 SUMO_BINARY_PATH=""
 SKIP_TOKEN=""
+SKIP_CONFIG=false
 CONFIG_PATH=""
 COMMON_CONFIG_PATH=""
 PURGE=""
@@ -76,6 +84,8 @@ EXT_INDENTATION=""
 CONFIG_BRANCH=""
 BINARY_BRANCH=""
 
+KEEP_DOWNLOADS=false
+
 # set by check_dependencies therefore cannot be set by set_defaults
 SYSTEMD_DISABLED=false
 
@@ -88,7 +98,7 @@ function usage() {
   cat << EOF
 
 Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_TAG} <key>=<value> [ --${ARG_LONG_TAG} ...]] [--${ARG_LONG_API} <url>] [--${ARG_LONG_VERSION} <version>] \\
-                       [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
+                       [--${ARG_LONG_YES}] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
 
 Supported arguments:
   -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>      Installation token. It has precedence over 'SUMOLOGIC_INSTALL_TOKEN' env variable.
@@ -104,9 +114,11 @@ Supported arguments:
                                         It removes all Sumo Logic Distribution for OpenTelemetry Collector related configuration and data.
 
   -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                       Api URL
-  -${ARG_SHORT_SYSTEMD}, --${ARG_LONG_SYSTEMD}    Preserves from Systemd service installation.
+  -${ARG_SHORT_SKIP_SYSTEMD}, --${ARG_LONG_SKIP_SYSTEMD}                    Do not install systemd unit.
+  -${ARG_SHORT_SKIP_CONFIG}, --${ARG_LONG_SKIP_CONFIG}                     Do not create default configuration.
   -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>               Version of Sumo Logic Distribution for OpenTelemetry Collector to install, e.g. 0.57.2-sumo-1.
                                         By defult it gets latest version.
+  -${ARG_SHORT_YES}, --${ARG_LONG_YES}                             Disable confirmation asks.
 
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                            Prints this help and usage.
 
@@ -148,11 +160,17 @@ function parse_options() {
       "--${ARG_LONG_TAG}")
         set -- "$@" "-${ARG_SHORT_TAG}"
         ;;
+      "--${ARG_LONG_YES}")
+        set -- "$@" "-${ARG_SHORT_YES}"
+        ;;
+      "--${ARG_LONG_SKIP_CONFIG}")
+        set -- "$@" "-${ARG_SHORT_SKIP_CONFIG}"
+        ;;
       "--${ARG_LONG_VERSION}")
         set -- "$@" "-${ARG_SHORT_VERSION}"
         ;;
-      "--${ARG_LONG_SYSTEMD}")
-        set -- "$@" "-${ARG_SHORT_SYSTEMD}"
+      "--${ARG_LONG_SKIP_SYSTEMD}")
+        set -- "$@" "-${ARG_SHORT_SKIP_SYSTEMD}"
         ;;
       "--${ARG_LONG_UNINSTALL}")
         set -- "$@" "-${ARG_SHORT_UNINSTALL}"
@@ -175,7 +193,10 @@ function parse_options() {
       "--${ARG_LONG_CONFIG_BRANCH}")
         set -- "$@" "-${ARG_SHORT_CONFIG_BRANCH}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}")
+      "--${ARG_LONG_KEEP_DOWNLOADS}")
+        set -- "$@" "-${ARG_SHORT_KEEP_DOWNLOADS}"
+        ;;
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_SKIP_CONFIG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SKIP_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}")
         set -- "$@" "${arg}"
         ;;
       -*)
@@ -190,7 +211,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_SKIP_CONFIG}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -205,8 +226,10 @@ function parse_options() {
       "${ARG_SHORT_HELP}")          usage; exit 0 ;;
       "${ARG_SHORT_TOKEN}")         SUMOLOGIC_INSTALL_TOKEN="${OPTARG}" ;;
       "${ARG_SHORT_API}")           API_BASE_URL="${OPTARG}" ;;
+      "${ARG_SHORT_SKIP_CONFIG}")   SKIP_CONFIG=true ;;
       "${ARG_SHORT_VERSION}")       VERSION="${OPTARG}" ;;
-      "${ARG_SHORT_SYSTEMD}")       SYSTEMD_DISABLED=true ;;
+      "${ARG_SHORT_YES}")           CONTINUE=true ;;
+      "${ARG_SHORT_SKIP_SYSTEMD}")       SYSTEMD_DISABLED=true ;;
       "${ARG_SHORT_UNINSTALL}")     UNINSTALL=true ;;
       "${ARG_SHORT_PURGE}")         PURGE=true ;;
       "${ARG_SHORT_SKIP_TOKEN}")    SKIP_TOKEN=true ;;
@@ -220,6 +243,7 @@ function parse_options() {
         if [[ -z "${CONFIG_BRANCH}" ]]; then
             CONFIG_BRANCH="${OPTARG}"
         fi ;;
+      "${ARG_SHORT_KEEP_DOWNLOADS}") KEEP_DOWNLOADS=true ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
             echo "Invalid tag: '${OPTARG}'. Should be in 'key=value' format"
@@ -243,7 +267,7 @@ $(escape_sed "${OPTARG/=/: }")" ;;
 
 # Get github rate limit
 function github_rate_limit() {
-    curl -X GET https://api.github.com/rate_limit -v 2>&1 | grep x-ratelimit-remaining | grep -oE "[0-9]+"
+    curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -X GET https://api.github.com/rate_limit -v 2>&1 | grep x-ratelimit-remaining | grep -oE "[0-9]+"
 }
 
 function check_dependencies() {
@@ -287,7 +311,7 @@ function get_latest_version() {
 
     # get latest version directly from website if there is no versions from api
     if [[ -z "${versions}" ]]; then
-        curl -s https://github.com/SumoLogic/sumologic-otel-collector/releases | grep -oE '/SumoLogic/sumologic-otel-collector/releases/tag/(.*)"' | head -n 1 | sed 's%/SumoLogic/sumologic-otel-collector/releases/tag/v\([^"]*\)".*%\1%g'
+        curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -s https://github.com/SumoLogic/sumologic-otel-collector/releases | grep -oE '/SumoLogic/sumologic-otel-collector/releases/tag/(.*)"' | head -n 1 | sed 's%/SumoLogic/sumologic-otel-collector/releases/tag/v\([^"]*\)".*%\1%g'
     else
         # sed 's/ /\n/g' converts spaces to new lines
         echo "${versions}" | sed 's/ /\n/g' | head -n 1
@@ -305,6 +329,11 @@ function get_versions() {
     fi
 
     curl \
+    --connect-timeout 5 \
+    --max-time 30 \
+    --retry 5 \
+    --retry-delay 0 \
+    --retry-max-time 150 \
     -sH "Accept: application/vnd.github.v3+json" \
     https://api.github.com/repos/SumoLogic/sumologic-otel-collector/releases \
     | grep -E '(tag_name|"(draft|prerelease)")' \
@@ -383,6 +412,23 @@ function get_installed_version() {
     fi
 }
 
+# Ask to continue and abort if not
+function ask_to_continue() {
+    if [[ "${CONTINUE}" == true ]]; then
+        return 0
+    fi
+
+    local choice
+    read -rp "Continue (y/N)?" choice
+    case "${choice}" in
+    y|Y ) ;;
+    n|N | * )
+        echo "Aborting..."
+        exit 1
+        ;;
+    esac
+}
+
 # Get changelog for specific version
 # Only version description and breaking changes are taken
 function get_changelog() {
@@ -392,7 +438,7 @@ function get_changelog() {
     # 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g' replaces [$1][*] with $1
     # 's/\[\([^\[]*\)\]([^\()]*)/\1/g' replaces [$1](*) with $1
     local notes
-    notes="$(echo -e "$(curl -s "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/releases/tags/v${version}" | grep -o "body.*"  | sed 's/body": "//;s/"$//' | sed 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g;s/\[\([^\[]*\)\]([^\()]*)/\1/g')")"
+    notes="$(echo -e "$(curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -s "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/releases/tags/v${version}" | grep -o "body.*"  | sed 's/body": "//;s/"$//' | sed 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g;s/\[\([^\[]*\)\]([^\()]*)/\1/g')")"
     readonly notes
 
     local changelog
@@ -412,7 +458,7 @@ function get_full_changelog() {
     readonly version="${1}"
 
     local notes
-    notes="$(echo -e "$(curl -s "https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${version}/CHANGELOG.md")")"
+    notes="$(echo -e "$(curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -s "https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${version}/CHANGELOG.md")")"
     readonly notes
 
     local changelog
@@ -426,6 +472,66 @@ function get_full_changelog() {
     echo -e "${changelog}"
 }
 
+# set up configuration
+function setup_config() {
+    echo 'We are going to get and set up a default configuration for you'
+
+    echo -e "Creating file_storage directory (${FILE_STORAGE})"
+    mkdir -p "${FILE_STORAGE}"
+
+    echo -e "Creating configuration directory (${CONFIG_DIRECTORY})"
+    mkdir -p "${CONFIG_DIRECTORY}"
+
+    echo -e "Creating user configurations directory (${USER_CONFIG_DIRECTORY})"
+    mkdir -p "${USER_CONFIG_DIRECTORY}"
+
+    echo "Generating configuration and saving as ${CONFIG_PATH}"
+
+    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/sumologic.yaml"
+    if ! curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -f -s "${CONFIG_URL}" -o "${CONFIG_PATH}"; then
+        echo "Cannot obtain configuration for '${CONFIG_BRANCH}' branch"
+        exit 1
+    fi
+
+    # Fixing configuration for versions up to 0.57.2
+    # Normally the config branch is the same as the version tag, and in this case the config has a bug
+    # Instead of changing the branch, we fix it here, with the intent of removing this logic once 0.63.0 is released
+    # TODO: Remove this after 0.63.0 is released
+    sed -i.bak -e "s#~/.sumologic-otel-collector#/var/lib/otelcol-sumo/credentials#" "${CONFIG_PATH}"
+
+    echo 'Changing permissions for config file and storage'
+    chmod 440 "${CONFIG_PATH}"
+    chmod -R 750 "${HOME_DIRECTORY}"
+
+    # Ensure that configuration is created
+    if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
+        echo "User configuration (${COMMON_CONFIG_PATH}) already exist)"
+    fi
+
+    ## Check if there is anything to update in configuration
+    if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
+        create_user_config_file "${COMMON_CONFIG_PATH}"
+        add_extension_to_config "${COMMON_CONFIG_PATH}"
+        write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
+
+        if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" && -z "${USER_TOKEN}" ]]; then
+            write_install_token "${SUMOLOGIC_INSTALL_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
+        fi
+
+        # fill in api base url
+        if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
+            write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
+        fi
+
+        if [[ -n "${FIELDS}" && -z "${USER_FIELDS}" ]]; then
+            write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
+        fi
+
+        # clean up bak file
+        rm -f "${COMMON_CONFIG_BAK_PATH}"
+    fi
+}
+
 # uninstall otelcol-sumo
 function uninstall() {
     local MSG
@@ -436,6 +542,7 @@ function uninstall() {
     fi
 
     echo "${MSG}."
+    ask_to_continue
 
     # disable systemd service
     if [[ -f "${SYSTEMD_CONFIG}" ]]; then
@@ -731,16 +838,30 @@ function get_binary_from_branch() {
 
     local actions_output artifacts_link artifact_id
     actions_output="$(curl -f -s \
+      --connect-timeout 5 \
+      --max-time 30 \
+      --retry 5 \
+      --retry-delay 0 \
+      --retry-max-time 150 \
       -H "Accept: application/vnd.github+json" \
       -H "Authorization: token ${GITHUB_TOKEN}" \
       "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/runs?status=success&branch=${branch}&event=push&per_page=1")"
     readonly actions_output
 
     # get latest action run
-    artifacts_link="$(echo "${actions_output}" | grep '"url"' | grep -oE '"https.*collector/actions.*"' -m 1)/artifacts"
+    artifacts_link="$(echo "${actions_output}" | grep '"url"' | grep -oE '"https.*collector/actions.*"' -m 1)"
+    # strip first and last double-quote from $artifacts_link
+    artifacts_link=${artifacts_link%\"}
+    artifacts_link="${artifacts_link#\"}"
+    artifacts_link="${artifacts_link}/artifacts"
     readonly artifacts_link
 
     artifact_id="$(curl -f -s \
+    --connect-timeout 5 \
+    --max-time 30 \
+    --retry 5 \
+    --retry-delay 0 \
+    --retry-max-time 150 \
     -H "Accept: application/vnd.github+json" \
     -H "Authorization: token ${GITHUB_TOKEN}" \
     "${artifacts_link}" \
@@ -749,12 +870,58 @@ function get_binary_from_branch() {
         | grep -oE "[0-9]+" -m 1)"
     readonly artifact_id
 
-    curl -f -s -L \
+    local download_path curl_args
+    readonly download_path="/tmp/otelcol-sumo.zip"
+    curl_args=(
+        "-fL"
+        "--connect-timeout" "5"
+        "--max-time" "60"
+        "--retry" "5"
+        "--retry-delay" "0"
+        "--retry-max-time" "150"
+        "--output" "${download_path}"
+        "--progress-bar"
+    )
+    if [ "${KEEP_DOWNLOADS}" == "true" ]; then
+        curl_args+=("-z" "${download_path}")
+    fi
+    curl "${curl_args[@]}" \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: token ${GITHUB_TOKEN}" \
-        "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/artifacts/${artifact_id}/zip" --output otelcol-sumo.zip --progress-bar
-    unzip -p otelcol-sumo.zip "${name}" >otelcol-sumo
-    rm otelcol-sumo.zip
+        "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/artifacts/${artifact_id}/zip"
+
+    unzip -p "$download_path" "${name}" >otelcol-sumo
+    if [ "${KEEP_DOWNLOADS}" == "false" ]; then
+        rm -f "${download_path}"
+    fi
+}
+
+function get_binary_from_url() {
+    local url download_path curl_args
+    readonly url="${1}"
+    echo -e "Downloading:\t\t${url}"
+
+    readonly download_path="/tmp/otelcol-sumo"
+    curl_args=(
+        "-fL"
+        "--connect-timeout" "5"
+        "--max-time" "60"
+        "--retry" "5"
+        "--retry-delay" "0"
+        "--retry-max-time" "150"
+        "--output" "${download_path}"
+        "--progress-bar"
+    )
+    if [ "${KEEP_DOWNLOADS}" == "true" ]; then
+        curl_args+=("-z" "${download_path}")
+    fi
+    curl "${curl_args[@]}" "${url}"
+
+    cp -f "${download_path}" otelcol-sumo
+
+    if [ "${KEEP_DOWNLOADS}" == "false" ]; then
+        rm -f "${download_path}"
+    fi
 }
 
 ############################ Main code
@@ -871,7 +1038,6 @@ else
             echo -e "Showing full changelog up to ${VERSION}"
             get_full_changelog "${VERSION}"
         else
-            read -rp "Press enter to see changelog"
             for version in ${BETWEEN_VERSIONS}; do
                 # Print changelog for every version
                 get_changelog "${version}"
@@ -885,8 +1051,7 @@ else
         LINK="https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${VERSION}/otelcol-sumo-${VERSION}-${OS_TYPE}_${ARCH_TYPE}"
         readonly LINK
 
-        echo -e "Downloading:\t\t${LINK}"
-        curl -fL "${LINK}" --output otelcol-sumo --progress-bar
+        get_binary_from_url "${LINK}"
     fi
 
     echo -e "Moving otelcol-sumo to /usr/local/bin"
@@ -909,6 +1074,7 @@ if [[ "${DOWNLOAD_ONLY}" == "true" ]]; then
     exit 0
 fi
 
+<<<<<<< HEAD
 echo 'We are going to get and set up a default configuration for you'
 
 echo -e "Creating file_storage directory (${FILE_STORAGE})"
@@ -967,6 +1133,10 @@ if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" 
     rm -f "${COMMON_CONFIG_BAK_PATH}"
 fi
 
+if [[ "${SKIP_CONFIG}" == "false" ]]; then
+    setup_config
+fi
+
 if [[ "${SYSTEMD_DISABLED}" == "true" ]]; then
     COMMAND_SUFFIX=""
     # Add glob for versions above 0.57
@@ -994,8 +1164,10 @@ else
     useradd -mrUs /bin/false -d "${HOME_DIRECTORY}" "${SYSTEM_USER}"
 fi
 
-echo 'Changing ownership for config and storage'
-chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${CONFIG_PATH}" "${FILE_STORAGE}"
+if [[ "${SKIP_CONFIG}" == "false" ]]; then
+    echo 'Changing ownership for config and storage'
+    chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOME_DIRECTORY}" "${CONFIG_PATH}"
+fi
 
 echo 'Changing ownership for user env directory'
 chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}" 
@@ -1005,7 +1177,7 @@ SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-c
 TMP_SYSTEMD_CONFIG="otelcol-sumo.service"
 TMP_SYSTEMD_CONFIG_BAK="${TMP_SYSTEMD_CONFIG}.bak"
 echo 'Getting service configuration'
-curl -fL "${SYSTEMD_CONFIG_URL}" --output "${TMP_SYSTEMD_CONFIG}" --progress-bar
+curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -fL "${SYSTEMD_CONFIG_URL}" --output "${TMP_SYSTEMD_CONFIG}" --progress-bar
 sed -i.bak -e "s%/etc/otelcol-sumo%'${CONFIG_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
 sed -i.bak -e "s%/etc/otelcol-sumo/env%'${USER_ENV_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
 

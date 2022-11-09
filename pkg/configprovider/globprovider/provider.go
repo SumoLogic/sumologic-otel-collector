@@ -49,9 +49,6 @@ func (fmp *provider) Retrieve(ctx context.Context, uri string, _ confmap.Watcher
 	if err != nil {
 		return &confmap.Retrieved{}, err
 	}
-	if len(paths) == 0 {
-		return &confmap.Retrieved{}, fmt.Errorf("no matching files found for pattern %s", globPattern)
-	}
 
 	// sort the paths alphabetically to have consistent ordering
 	sort.Strings(paths)

@@ -1,3 +1,5 @@
+//go:build unix
+
 package sumologic_scripts_tests
 
 import (
@@ -12,15 +14,18 @@ import (
 )
 
 type installOptions struct {
-	installToken     string
-	disableSystemd   bool
-	tags             map[string]string
-	skipInstallToken bool
-	envs             map[string]string
-	uninstall        bool
-	purge            bool
-	apiBaseURL       string
-	downloadOnly     bool
+	installToken      string
+	autoconfirm       bool
+	skipSystemd       bool
+	tags              map[string]string
+	skipConfig        bool
+	skipInstallToken  bool
+	envs              map[string]string
+	uninstall         bool
+	purge             bool
+	apiBaseURL        string
+	downloadOnly      bool
+	dontKeepDownloads bool
 }
 
 func (io *installOptions) string() []string {
@@ -32,8 +37,16 @@ func (io *installOptions) string() []string {
 		opts = append(opts, "--installation-token", io.installToken)
 	}
 
-	if io.disableSystemd {
-		opts = append(opts, "--disable-systemd-installation")
+	if io.autoconfirm {
+		opts = append(opts, "--yes")
+	}
+
+	if io.skipSystemd {
+		opts = append(opts, "--skip-systemd")
+	}
+
+	if io.skipConfig {
+		opts = append(opts, "--skip-config")
 	}
 
 	if io.skipInstallToken {
@@ -50,6 +63,10 @@ func (io *installOptions) string() []string {
 
 	if io.downloadOnly {
 		opts = append(opts, "--download-only")
+	}
+
+	if !io.dontKeepDownloads {
+		opts = append(opts, "--keep-downloads")
 	}
 
 	if len(io.tags) > 0 {
@@ -133,6 +150,16 @@ func runScript(ch check) (int, []string, error) {
 
 		// otherwise ensure there is no error
 		require.NoError(ch.test, err)
+
+		if ch.installOptions.autoconfirm {
+			continue
+		}
+
+		if strings.Contains(strLine, "Going to remove") {
+			// approve installation config
+			_, err = in.Write([]byte("y\n"))
+			require.NoError(ch.test, err)
+		}
 	}
 
 	code, err := exitCode(cmd)
