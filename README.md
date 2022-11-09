@@ -7,23 +7,23 @@ It is a single agent to send logs, metrics and traces to [Sumo Logic][sumologic]
 
 **Our aim is to extend and not to replace the OpenTelemetry Collector.**
 
-In order to learn more, pleasee see [purpose of Sumo Logic Distribution for OpenTelemetry Collector](./docs/UpstreamRelation.md#purpose-of-sumo-logic-distribution-for-opentelemetry-collector)
+In order to learn more, pleasee see [purpose of Sumo Logic Distribution for OpenTelemetry Collector](./docs/upstream-relation.md#purpose-of-sumo-logic-distribution-for-opentelemetry-collector)
 
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
 [sumologic]: https://www.sumologic.com
 
-- [Installation](docs/Installation.md)
-- [Configuration](docs/Configuration.md)
-- [Migration from Installed Collector](docs/Migration.md)
-- [Comparison between the Installed Collector and OpenTelemetry Collector](docs/Comparison.md)
+- [Installation](docs/installation.md)
+- [Configuration](docs/configuration.md)
+- [Migration from Installed Collector](docs/migration.md)
+- [Comparison between the Installed Collector and OpenTelemetry Collector](docs/comparison.md)
 - [OpenTelemetry Collector builder](./otelcolbuilder/README.md)
-- [Performance](docs/Performance.md)
-- [Known Issues](docs/KnownIssues.md)
+- [Performance](docs/performance.md)
+- [Known Issues](docs/known-issues.md)
 - [Contributing](./CONTRIBUTING.md)
 - [Changelog](./CHANGELOG.md)
-- [Purpose of Sumo Logic Distribution for OpenTelemetry Collector](./docs/UpstreamRelation.md#purpose-of-sumo-logic-distribution-for-opentelemetry-collector)
-- [Versioning policy](./docs/UpstreamRelation.md#versioning-policy)
-- [Breaking changes policy](./docs/UpstreamRelation.md#breaking-changes-policy)
+- [Purpose of Sumo Logic Distribution for OpenTelemetry Collector](./docs/upstream-relation.md#purpose-of-sumo-logic-distribution-for-opentelemetry-collector)
+- [Versioning policy](./docs/upstream-relation.md#versioning-policy)
+- [Breaking changes policy](./docs/upstream-relation.md#breaking-changes-policy)
 
 ## Supported OS and architectures
 
@@ -32,10 +32,10 @@ In order to learn more, pleasee see [purpose of Sumo Logic Distribution for Open
 | [amd64 (x86_64)][linux_amd64] | [amd64 (x86_64)][mac_amd64]   |
 | [arm64][linux_arm64]          | [arm64 (Apple M1)][mac_arm64] |
 
-[linux_amd64]: ./docs/Installation.md#linux-on-amd64-x86-64
-[linux_arm64]: ./docs/Installation.md#linux-on-arm64
-[mac_amd64]: ./docs/Installation.md#macos-on-amd64-x86-64
-[mac_arm64]: ./docs/Installation.md#macos-on-arm64-apple-m1-x86-64
+[linux_amd64]: ./docs/installation.md#linux-on-amd64-x86-64
+[linux_arm64]: ./docs/installation.md#linux-on-arm64
+[mac_amd64]: ./docs/installation.md#macos-on-amd64-x86-64
+[mac_arm64]: ./docs/installation.md#macos-on-arm64-apple-m1-x86-64
 
 ## Components
 

@@ -16,7 +16,7 @@
 
 ### Update Changelog and upgrading guide
 
-Edit the [CHANGELOG.md][changelog] and [Upgrading.md][upgrading] files and add entries for the release that will be created.
+Edit the [CHANGELOG.md][changelog] and [upgrading.md][upgrading] files and add entries for the release that will be created.
 
 Here are some example pull requests: [#602], [#652], [#684]
 
@@ -80,7 +80,7 @@ After verifying that the release text and all links are good, publish the releas
 
 ### Add `Unreleased` section to the changelog and upgrading guide
 
-Edit the [CHANGELOG.md][changelog] and [Upgrading.md][upgrading] files and prepare unreleased section.
+Edit the [CHANGELOG.md][changelog] and [upgrading.md][upgrading] files and prepare unreleased section.
 
 Here is the example pull request: [#677].
 
@@ -290,7 +290,7 @@ make update-journalctl
 [circleci_approve]: ../images/circleci_approve_workflow.png
 [contrib_fork]: https://github.com/SumoLogic/opentelemetry-collector-contrib
 [changelog]: ../CHANGELOG.md
-[upgrading]: ./Upgrading.md
+[upgrading]: ./upgrading.md
 [journaldreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.51.0/receiver/journaldreceiver
 [debian_versions]: https://hub.docker.com/_/debian/?tab=description
 [otelcol_components]: https://github.com/open-telemetry/opentelemetry-collector-releases/blob/main/distributions/otelcol/manifest.yaml
