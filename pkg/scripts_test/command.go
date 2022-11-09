@@ -1,3 +1,5 @@
+//go:build unix
+
 package sumologic_scripts_tests
 
 import (
@@ -14,8 +16,9 @@ import (
 type installOptions struct {
 	installToken      string
 	autoconfirm       bool
-	disableSystemd    bool
+	skipSystemd       bool
 	tags              map[string]string
+	skipConfig        bool
 	skipInstallToken  bool
 	envs              map[string]string
 	uninstall         bool
@@ -38,8 +41,12 @@ func (io *installOptions) string() []string {
 		opts = append(opts, "--yes")
 	}
 
-	if io.disableSystemd {
-		opts = append(opts, "--disable-systemd-installation")
+	if io.skipSystemd {
+		opts = append(opts, "--skip-systemd")
+	}
+
+	if io.skipConfig {
+		opts = append(opts, "--skip-config")
 	}
 
 	if io.skipInstallToken {

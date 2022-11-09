@@ -9,6 +9,37 @@
 
 ## Setting up development environment
 
+### Preparing the development environment (Windows)
+
+Several packages & environment variables are necessary to build in a Windows
+environment:
+
+1. Download & install the latest [Go MSI][go-msi].
+
+1. Download & install [Make for Windows][make-for-windows].
+
+1. Open `cmd` and add make to the user PATH:
+
+  ```bat
+  setx path "%PATH%;C:\Program Files (x86)\GnuWin32\bin"
+  ```
+
+1. Download & install [64-bit Git for Windows Setup][git-for-windows].
+
+1. Open gitbash.
+
+1. Navigate to the otelcolbuilder directory:
+
+  ```bash
+  cd sumologic-otel-collector/otelcolbuilder
+  ```
+
+1. Install otelcolbuilder:
+
+  ```bash
+  make install-builder
+  ```
+
 ### How to build
 
 ```bash
@@ -93,3 +124,8 @@ To contribute you will need to ensure you have the following setup:
   make -C otelcolbuilder install-builder \
     BUILDER_BIN_PATH=/custom/dir/bin/opentelemetry-collector-builder
   ```
+
+[go-msi]: https://go.dev/dl/
+[make-for-windows]: https://gnuwin32.sourceforge.net/downlinks/make.php
+[windows-terminal]: https://apps.microsoft.com/store/detail/windows-terminal/9N0DX20HK701
+[git-for-windows]: https://git-scm.com/download/win

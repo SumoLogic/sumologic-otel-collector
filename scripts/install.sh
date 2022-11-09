@@ -16,8 +16,10 @@ ARG_SHORT_VERSION='v'
 ARG_LONG_VERSION='version'
 ARG_SHORT_YES='y'
 ARG_LONG_YES='yes'
-ARG_SHORT_SYSTEMD='d'
-ARG_LONG_SYSTEMD='disable-systemd-installation'
+ARG_SHORT_SKIP_SYSTEMD='d'
+ARG_LONG_SKIP_SYSTEMD='skip-systemd'
+ARG_SHORT_SKIP_CONFIG='s'
+ARG_LONG_SKIP_CONFIG='skip-config'
 ARG_SHORT_UNINSTALL='u'
 ARG_LONG_UNINSTALL='uninstall'
 ARG_SHORT_PURGE='p'
@@ -38,10 +40,10 @@ ARG_LONG_KEEP_DOWNLOADS='keep-downloads'
 
 readonly ARG_SHORT_TOKEN ARG_LONG_TOKEN ARG_SHORT_HELP ARG_LONG_HELP ARG_SHORT_API ARG_LONG_API
 readonly ARG_SHORT_TAG ARG_LONG_TAG ARG_SHORT_VERSION ARG_LONG_VERSION ARG_SHORT_YES ARG_LONG_YES
-readonly ARG_SHORT_SYSTEMD ARG_LONG_SYSTEMD ARG_SHORT_UNINSTALL ARG_LONG_UNINSTALL
+readonly ARG_SHORT_SKIP_SYSTEMD ARG_LONG_SKIP_SYSTEMD ARG_SHORT_UNINSTALL ARG_LONG_UNINSTALL
 readonly ARG_SHORT_PURGE ARG_LONG_PURGE ARG_SHORT_DOWNLOAD ARG_LONG_DOWNLOAD
 readonly ARG_SHORT_CONFIG_BRANCH ARG_LONG_CONFIG_BRANCH ARG_SHORT_BINARY_BRANCH ARG_LONG_CONFIG_BRANCH
-readonly ARG_SHORT_BRANCH ARG_LONG_BRANCH
+readonly ARG_SHORT_BRANCH ARG_LONG_BRANCH ARG_SHORT_SKIP_CONFIG ARG_LONG_SKIP_CONFIG
 readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ENV_TOKEN
 
 ############################ Variables (see set_defaults function for default values)
@@ -64,6 +66,7 @@ SYSTEMD_CONFIG=""
 UNINSTALL=""
 SUMO_BINARY_PATH=""
 SKIP_TOKEN=""
+SKIP_CONFIG=false
 CONFIG_PATH=""
 COMMON_CONFIG_PATH=""
 PURGE=""
@@ -113,7 +116,8 @@ Supported arguments:
                                         It removes all Sumo Logic Distribution for OpenTelemetry Collector related configuration and data.
 
   -${ARG_SHORT_API}, --${ARG_LONG_API} <url>                       Api URL
-  -${ARG_SHORT_SYSTEMD}, --${ARG_LONG_SYSTEMD}    Preserves from Systemd service installation.
+  -${ARG_SHORT_SKIP_SYSTEMD}, --${ARG_LONG_SKIP_SYSTEMD}                    Do not install systemd unit.
+  -${ARG_SHORT_SKIP_CONFIG}, --${ARG_LONG_SKIP_CONFIG}                     Do not create default configuration.
   -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>               Version of Sumo Logic Distribution for OpenTelemetry Collector to install, e.g. 0.57.2-sumo-1.
                                         By defult it gets latest version.
   -${ARG_SHORT_YES}, --${ARG_LONG_YES}                             Disable confirmation asks.
@@ -160,11 +164,14 @@ function parse_options() {
       "--${ARG_LONG_YES}")
         set -- "$@" "-${ARG_SHORT_YES}"
         ;;
+      "--${ARG_LONG_SKIP_CONFIG}")
+        set -- "$@" "-${ARG_SHORT_SKIP_CONFIG}"
+        ;;
       "--${ARG_LONG_VERSION}")
         set -- "$@" "-${ARG_SHORT_VERSION}"
         ;;
-      "--${ARG_LONG_SYSTEMD}")
-        set -- "$@" "-${ARG_SHORT_SYSTEMD}"
+      "--${ARG_LONG_SKIP_SYSTEMD}")
+        set -- "$@" "-${ARG_SHORT_SKIP_SYSTEMD}"
         ;;
       "--${ARG_LONG_UNINSTALL}")
         set -- "$@" "-${ARG_SHORT_UNINSTALL}"
@@ -190,7 +197,7 @@ function parse_options() {
       "--${ARG_LONG_KEEP_DOWNLOADS}")
         set -- "$@" "-${ARG_SHORT_KEEP_DOWNLOADS}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}")
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_SKIP_CONFIG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SKIP_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}")
         set -- "$@" "${arg}"
         ;;
       -*)
@@ -205,7 +212,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_SKIP_CONFIG}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -220,9 +227,10 @@ function parse_options() {
       "${ARG_SHORT_HELP}")          usage; exit 0 ;;
       "${ARG_SHORT_TOKEN}")         SUMOLOGIC_INSTALL_TOKEN="${OPTARG}" ;;
       "${ARG_SHORT_API}")           API_BASE_URL="${OPTARG}" ;;
+      "${ARG_SHORT_SKIP_CONFIG}")   SKIP_CONFIG=true ;;
       "${ARG_SHORT_VERSION}")       VERSION="${OPTARG}" ;;
       "${ARG_SHORT_YES}")           CONTINUE=true ;;
-      "${ARG_SHORT_SYSTEMD}")       SYSTEMD_DISABLED=true ;;
+      "${ARG_SHORT_SKIP_SYSTEMD}")       SYSTEMD_DISABLED=true ;;
       "${ARG_SHORT_UNINSTALL}")     UNINSTALL=true ;;
       "${ARG_SHORT_PURGE}")         PURGE=true ;;
       "${ARG_SHORT_SKIP_TOKEN}")    SKIP_TOKEN=true ;;
@@ -463,6 +471,66 @@ function get_full_changelog() {
     # 's/\[\([^\[]*\)\]/\1/g' replaces [$1] with $1
     changelog="$(echo "${changelog}" | sed 's/^## \[\(.*\)\]/## \1/g' | sed '/^\[.*/d;;s/\[\([^\[]*\)\]/\1/g'))"
     echo -e "${changelog}"
+}
+
+# set up configuration
+function setup_config() {
+    echo 'We are going to get and set up a default configuration for you'
+
+    echo -e "Creating file_storage directory (${FILE_STORAGE})"
+    mkdir -p "${FILE_STORAGE}"
+
+    echo -e "Creating configuration directory (${CONFIG_DIRECTORY})"
+    mkdir -p "${CONFIG_DIRECTORY}"
+
+    echo -e "Creating user configurations directory (${USER_CONFIG_DIRECTORY})"
+    mkdir -p "${USER_CONFIG_DIRECTORY}"
+
+    echo "Generating configuration and saving as ${CONFIG_PATH}"
+
+    CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/sumologic.yaml"
+    if ! curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -f -s "${CONFIG_URL}" -o "${CONFIG_PATH}"; then
+        echo "Cannot obtain configuration for '${CONFIG_BRANCH}' branch"
+        exit 1
+    fi
+
+    # Fixing configuration for versions up to 0.57.2
+    # Normally the config branch is the same as the version tag, and in this case the config has a bug
+    # Instead of changing the branch, we fix it here, with the intent of removing this logic once 0.63.0 is released
+    # TODO: Remove this after 0.63.0 is released
+    sed -i.bak -e "s#~/.sumologic-otel-collector#/var/lib/otelcol-sumo/credentials#" "${CONFIG_PATH}"
+
+    echo 'Changing permissions for config file and storage'
+    chmod 440 "${CONFIG_PATH}"
+    chmod -R 750 "${HOME_DIRECTORY}"
+
+    # Ensure that configuration is created
+    if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
+        echo "User configuration (${COMMON_CONFIG_PATH}) already exist)"
+    fi
+
+    ## Check if there is anything to update in configuration
+    if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
+        create_user_config_file "${COMMON_CONFIG_PATH}"
+        add_extension_to_config "${COMMON_CONFIG_PATH}"
+        write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
+
+        if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" && -z "${USER_TOKEN}" ]]; then
+            write_install_token "${SUMOLOGIC_INSTALL_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
+        fi
+
+        # fill in api base url
+        if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
+            write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
+        fi
+
+        if [[ -n "${FIELDS}" && -z "${USER_FIELDS}" ]]; then
+            write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
+        fi
+
+        # clean up bak file
+        rm -f "${COMMON_CONFIG_BAK_PATH}"
+    fi
 }
 
 # uninstall otelcol-sumo
@@ -1020,55 +1088,8 @@ if [[ "${DOWNLOAD_ONLY}" == "true" ]]; then
     exit 0
 fi
 
-echo 'We are going to get and set up a default configuration for you'
-
-echo -e "Creating file_storage directory (${FILE_STORAGE})"
-mkdir -p "${FILE_STORAGE}"
-
-echo -e "Creating configuration directory (${CONFIG_DIRECTORY})"
-mkdir -p "${CONFIG_DIRECTORY}"
-
-echo -e "Creating user configurations directory (${USER_CONFIG_DIRECTORY})"
-mkdir -p "${USER_CONFIG_DIRECTORY}"
-
-echo "Generating configuration and saving as ${CONFIG_PATH}"
-
-CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/sumologic.yaml"
-if ! curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -f -s "${CONFIG_URL}" -o "${CONFIG_PATH}"; then
-    echo "Cannot obtain configuration for '${CONFIG_BRANCH}' branch"
-    exit 1
-fi
-
-echo 'Changing permissions for config file and storage'
-chmod 440 "${CONFIG_PATH}"
-chmod -R 750 "${HOME_DIRECTORY}"
-
-# Ensure that configuration is created
-if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
-    echo "User configuration (${COMMON_CONFIG_PATH}) already exist)"
-fi
-
-## Check if there is anything to update in configuration
-if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
-    create_user_config_file "${COMMON_CONFIG_PATH}"
-    add_extension_to_config "${COMMON_CONFIG_PATH}"
-    write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
-
-    if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" && -z "${USER_TOKEN}" ]]; then
-        write_install_token "${SUMOLOGIC_INSTALL_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
-    fi
-
-    # fill in api base url
-    if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
-        write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
-    fi
-
-    if [[ -n "${FIELDS}" && -z "${USER_FIELDS}" ]]; then
-        write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
-    fi
-
-    # clean up bak file
-    rm -f "${COMMON_CONFIG_BAK_PATH}"
+if [[ "${SKIP_CONFIG}" == "false" ]]; then
+    setup_config
 fi
 
 if [[ "${SYSTEMD_DISABLED}" == "true" ]]; then
@@ -1101,8 +1122,10 @@ fi
 echo 'Creating ACL grants on log paths'
 set_acl_on_log_paths
 
-echo 'Changing ownership for config and storage'
-chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${CONFIG_PATH}" "${HOME_DIRECTORY}"
+if [[ "${SKIP_CONFIG}" == "false" ]]; then
+    echo 'Changing ownership for config and storage'
+    chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOME_DIRECTORY}" "${CONFIG_PATH}"
+fi
 
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/systemd/otelcol-sumo.service"
 
