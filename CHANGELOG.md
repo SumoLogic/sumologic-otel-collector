@@ -20,7 +20,6 @@ This release introduces the following breaking changes:
 
 ### Changed
 
-- feat(build): use patched versions of four upstream receivers [#767]
 - fix(sumologicexporter): do not crash if server returns unknown length response [#718]
 - fix(k8sprocessor): fix metadata enrichment [#724]
 - fix(k8sprocessor): keep pod's services information up to date [#710]
@@ -50,7 +49,6 @@ This release introduces the following breaking changes:
 [#746]: https://github.com/SumoLogic/sumologic-otel-collector/pull/746
 [#769]: https://github.com/SumoLogic/sumologic-otel-collector/pull/769
 [#693]: https://github.com/SumoLogic/sumologic-otel-collector/pull/693
-[#767]: https://github.com/SumoLogic/sumologic-otel-collector/pull/767
 [#824]: https://github.com/SumoLogic/sumologic-otel-collector/pull/824
 [upgrade_guide_unreleased]: ./docs/upgrading.md#unreleased
 
