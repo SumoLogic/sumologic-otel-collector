@@ -27,7 +27,6 @@ import (
 	"time"
 
 	"go.opentelemetry.io/collector/consumer/consumererror"
-	"go.opentelemetry.io/collector/model/otlp"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -39,9 +38,9 @@ import (
 )
 
 var (
-	tracesMarshaler  = otlp.NewProtobufTracesMarshaler()
-	metricsMarshaler = otlp.NewProtobufMetricsMarshaler()
-	logsMarshaler    = otlp.NewProtobufLogsMarshaler()
+	tracesMarshaler  = ptrace.ProtoMarshaler{}
+	metricsMarshaler = pmetric.ProtoMarshaler{}
+	logsMarshaler    = plog.ProtoMarshaler{}
 )
 
 // metricPair represents information required to send one metric to the Sumo Logic

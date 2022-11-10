@@ -20,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/service/servicetest"
@@ -36,9 +37,9 @@ func TestLoadConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	assert.Equal(t, cfg.Processors[config.NewComponentID("sumologic_syslog")],
+	assert.Equal(t, cfg.Processors[component.NewID("sumologic_syslog")],
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(config.NewComponentID("sumologic_syslog")),
+			ProcessorSettings: config.NewProcessorSettings(component.NewID("sumologic_syslog")),
 			FacilityAttr:      "testAttrName",
 		})
 }

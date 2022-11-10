@@ -46,9 +46,9 @@ func NewFactory() component.ProcessorFactory {
 	)
 }
 
-func createDefaultConfig() config.Processor {
+func createDefaultConfig() component.ProcessorConfig {
 	return &Config{
-		ProcessorSettings: config.NewProcessorSettings(config.NewComponentID(typeStr)),
+		ProcessorSettings: config.NewProcessorSettings(component.NewID(typeStr)),
 		APIConfig:         k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
 		Extract: ExtractConfig{
 			Delimiter: DefaultDelimiter,
@@ -59,7 +59,7 @@ func createDefaultConfig() config.Processor {
 func createTracesProcessor(
 	ctx context.Context,
 	params component.ProcessorCreateSettings,
-	cfg config.Processor,
+	cfg component.ProcessorConfig,
 	next consumer.Traces,
 ) (component.TracesProcessor, error) {
 	return createTracesProcessorWithOptions(ctx, params, cfg, next)
@@ -68,7 +68,7 @@ func createTracesProcessor(
 func createLogsProcessor(
 	ctx context.Context,
 	params component.ProcessorCreateSettings,
-	cfg config.Processor,
+	cfg component.ProcessorConfig,
 	nextLogsConsumer consumer.Logs,
 ) (component.LogsProcessor, error) {
 	return createLogsProcessorWithOptions(ctx, params, cfg, nextLogsConsumer)
@@ -77,7 +77,7 @@ func createLogsProcessor(
 func createMetricsProcessor(
 	ctx context.Context,
 	params component.ProcessorCreateSettings,
-	cfg config.Processor,
+	cfg component.ProcessorConfig,
 	nextMetricsConsumer consumer.Metrics,
 ) (component.MetricsProcessor, error) {
 	return createMetricsProcessorWithOptions(ctx, params, cfg, nextMetricsConsumer)
@@ -86,7 +86,7 @@ func createMetricsProcessor(
 func createTracesProcessorWithOptions(
 	ctx context.Context,
 	params component.ProcessorCreateSettings,
-	cfg config.Processor,
+	cfg component.ProcessorConfig,
 	next consumer.Traces,
 	options ...Option,
 ) (component.TracesProcessor, error) {
@@ -109,7 +109,7 @@ func createTracesProcessorWithOptions(
 func createMetricsProcessorWithOptions(
 	ctx context.Context,
 	params component.ProcessorCreateSettings,
-	cfg config.Processor,
+	cfg component.ProcessorConfig,
 	nextMetricsConsumer consumer.Metrics,
 	options ...Option,
 ) (component.MetricsProcessor, error) {
@@ -132,7 +132,7 @@ func createMetricsProcessorWithOptions(
 func createLogsProcessorWithOptions(
 	ctx context.Context,
 	params component.ProcessorCreateSettings,
-	cfg config.Processor,
+	cfg component.ProcessorConfig,
 	nextLogsConsumer consumer.Logs,
 	options ...Option,
 ) (component.LogsProcessor, error) {
@@ -154,7 +154,7 @@ func createLogsProcessorWithOptions(
 
 func createKubernetesProcessor(
 	params component.ProcessorCreateSettings,
-	cfg config.Processor,
+	cfg component.ProcessorConfig,
 	options ...Option,
 ) (*kubernetesprocessor, error) {
 	kp := &kubernetesprocessor{logger: params.Logger}
@@ -178,7 +178,7 @@ func createKubernetesProcessor(
 	return kp, nil
 }
 
-func createProcessorOpts(cfg config.Processor) []Option {
+func createProcessorOpts(cfg component.ProcessorConfig) []Option {
 	oCfg := cfg.(*Config)
 	opts := []Option{}
 	if oCfg.Passthrough {

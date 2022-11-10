@@ -21,6 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer/consumertest"
@@ -34,7 +35,7 @@ func TestDefaultConfig(t *testing.T) {
 	require.True(t, ok)
 
 	assert.Equal(t, &Config{
-		ReceiverSettings: config.NewReceiverSettings(config.NewComponentID(typeStr)),
+		ReceiverSettings: config.NewReceiverSettings(component.NewID(typeStr)),
 		APIConfig: APIConfig{
 			AuthType: AuthTypeServiceAccount,
 		},
@@ -46,7 +47,7 @@ func TestDefaultConfig(t *testing.T) {
 }
 
 func TestFactoryType(t *testing.T) {
-	assert.Equal(t, config.Type("raw_k8s_events"), NewFactory().Type())
+	assert.Equal(t, component.Type("raw_k8s_events"), NewFactory().Type())
 }
 
 func TestCreateReceiver(t *testing.T) {

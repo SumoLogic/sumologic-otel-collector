@@ -21,6 +21,7 @@ import (
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/bigendianconverter"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -110,7 +111,7 @@ func generateTraces(startingTraceId int, traceCount int, spanCount int, increase
 func newLongRunningTraceProcessor(t *testing.T, decisionWait time.Duration) *cascadingFilterSpanProcessor {
 	outputRate := int32(10)
 
-	id1 := config.NewComponentIDWithName("cascading_filter", "1")
+	id1 := component.NewIDWithName("cascading_filter", "1")
 	ps1 := config.NewProcessorSettings(id1)
 	cfg := cfconfig.Config{
 		ProcessorSettings:          &ps1,

@@ -41,11 +41,11 @@ func NewFactory() component.ReceiverFactory {
 	)
 }
 
-func createDefaultConfig() config.Receiver {
+func createDefaultConfig() component.ReceiverConfig {
 	// TypeVal: config.Type(typeStr),
 	// NameVal: typeStr,
 	//
-	rs := config.NewReceiverSettings(config.NewComponentID(typeStr))
+	rs := config.NewReceiverSettings(component.NewID(typeStr))
 	return &Config{
 		ReceiverSettings: &rs,
 		SeparateField:    false,
@@ -60,7 +60,7 @@ func createDefaultConfig() config.Receiver {
 func createMetricsReceiver(
 	ctx context.Context,
 	params component.ReceiverCreateSettings,
-	cfg config.Receiver,
+	cfg component.ReceiverConfig,
 	nextConsumer consumer.Metrics,
 ) (component.MetricsReceiver, error) {
 	tCfg, ok := cfg.(*Config)

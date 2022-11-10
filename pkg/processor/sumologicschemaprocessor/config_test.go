@@ -20,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/service/servicetest"
@@ -36,14 +37,14 @@ func TestLoadConfig(t *testing.T) {
 	require.Nil(t, err)
 	require.NotNil(t, cfg)
 
-	p0 := cfg.Processors[config.NewComponentID(typeStr)]
+	p0 := cfg.Processors[component.NewID(typeStr)]
 	assert.Equal(t, p0, factory.CreateDefaultConfig())
 
-	p1 := cfg.Processors[config.NewComponentIDWithName(typeStr, "disabled-cloud-namespace")]
+	p1 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-cloud-namespace")]
 
 	assert.Equal(t, p1,
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(config.NewComponentIDWithName(
+			ProcessorSettings: config.NewProcessorSettings(component.NewIDWithName(
 				typeStr,
 				"disabled-cloud-namespace",
 			)),
@@ -52,11 +53,11 @@ func TestLoadConfig(t *testing.T) {
 			TranslateTelegrafAttributes: true,
 		})
 
-	p2 := cfg.Processors[config.NewComponentIDWithName(typeStr, "disabled-attribute-translation")]
+	p2 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-attribute-translation")]
 
 	assert.Equal(t, p2,
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(config.NewComponentIDWithName(
+			ProcessorSettings: config.NewProcessorSettings(component.NewIDWithName(
 				typeStr,
 				"disabled-attribute-translation",
 			)),
@@ -65,11 +66,11 @@ func TestLoadConfig(t *testing.T) {
 			TranslateTelegrafAttributes: true,
 		})
 
-	p3 := cfg.Processors[config.NewComponentIDWithName(typeStr, "disabled-telegraf-attribute-translation")]
+	p3 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-telegraf-attribute-translation")]
 
 	assert.Equal(t, p3,
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(config.NewComponentIDWithName(
+			ProcessorSettings: config.NewProcessorSettings(component.NewIDWithName(
 				typeStr,
 				"disabled-telegraf-attribute-translation",
 			)),

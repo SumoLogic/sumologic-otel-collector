@@ -272,7 +272,7 @@ func updateProbabilisticRateTag(traces ptrace.Traces, probabilisticSpans int64, 
 				} else {
 					attrs.PutDouble(AttributeSamplingProbability, ratio)
 				}
-				attrs.PutString(AttributeSamplingRule, probabilisticRuleVale)
+				attrs.Sort().PutStr(AttributeSamplingRule, probabilisticRuleVale)
 			}
 		}
 	}
@@ -287,9 +287,9 @@ func updateFilteringTag(traces ptrace.Traces, filterName string) {
 			spans := ss.At(j).Spans()
 			for k := 0; k < spans.Len(); k++ {
 				attrs := spans.At(k).Attributes()
-				attrs.PutString(AttributeSamplingRule, filteredRuleValue)
+				attrs.Sort().PutStr(AttributeSamplingRule, filteredRuleValue)
 				if filterName != "" {
-					attrs.PutString(AttributeSamplingFilter, filterName)
+					attrs.Sort().PutStr(AttributeSamplingFilter, filterName)
 				}
 			}
 		}
@@ -307,9 +307,9 @@ func updateLateArrival(traces ptrace.Traces, filterName string, probabilistic bo
 				attrs := spans.At(k).Attributes()
 				attrs.PutBool(AttributeSamplingLateArrival, true)
 				if filterName != "" {
-					attrs.PutString(AttributeSamplingFilter, filterName)
+					attrs.Sort().PutStr(AttributeSamplingFilter, filterName)
 				} else if probabilistic {
-					attrs.PutString(AttributeSamplingFilter, "probabilistic")
+					attrs.Sort().PutStr(AttributeSamplingFilter, "probabilistic")
 				}
 			}
 		}

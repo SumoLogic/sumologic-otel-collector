@@ -110,7 +110,7 @@ func (ssp *sumologicSyslogProcessor) ProcessLogs(ctx context.Context, ld plog.Lo
 						value = syslogSource
 					}
 				}
-				log.Attributes().PutString(ssp.syslogFacilityAttrName, value)
+				log.Attributes().PutStr(ssp.syslogFacilityAttrName, value)
 			}
 		}
 	}

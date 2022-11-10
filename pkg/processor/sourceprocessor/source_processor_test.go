@@ -84,14 +84,14 @@ func newLogsDataWithLogs(resourceAttrs map[string]string, logAttrs map[string]st
 	rs := ld.ResourceLogs().AppendEmpty()
 	attrs := rs.Resource().Attributes()
 	for k, v := range resourceAttrs {
-		attrs.PutString(k, v)
+		attrs.PutStr(k, v)
 	}
 
 	sls := rs.ScopeLogs().AppendEmpty()
 	log := sls.LogRecords().AppendEmpty()
 	log.Body().SetStr("dummy log")
 	for k, v := range logAttrs {
-		log.Attributes().PutString(k, v)
+		log.Attributes().PutStr(k, v)
 	}
 
 	return ld
@@ -102,7 +102,7 @@ func newTraceData(labels map[string]string) ptrace.Traces {
 	rs := td.ResourceSpans().AppendEmpty()
 	attrs := rs.Resource().Attributes()
 	for k, v := range labels {
-		attrs.PutString(k, v)
+		attrs.PutStr(k, v)
 	}
 	return td
 }
@@ -115,7 +115,7 @@ func newTraceDataWithSpans(_resourceLabels map[string]string, _spanLabels map[st
 	span.SetName("foo")
 	spanAttrs := span.Attributes()
 	for k, v := range _spanLabels {
-		spanAttrs.PutString(k, v)
+		spanAttrs.PutStr(k, v)
 	}
 	return td
 }
@@ -339,7 +339,7 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 func TestTraceSourceFilteringOutByExclude(t *testing.T) {
 	test := newTraceDataWithSpans(k8sLabels, k8sLabels)
 	test.ResourceSpans().At(0).Resource().Attributes().
-		PutString("pod_annotation_sumologic.com/exclude", "true")
+		PutStr("pod_annotation_sumologic.com/exclude", "true")
 
 	want := newTraceDataWithSpans(limitedLabelsWithMeta, mergedK8sLabels)
 	want.ResourceSpans().At(0).ScopeSpans().
@@ -355,10 +355,10 @@ func TestTraceSourceFilteringOutByExclude(t *testing.T) {
 
 func TestTraceSourceIncludePrecedence(t *testing.T) {
 	test := newTraceDataWithSpans(limitedLabels, k8sLabels)
-	test.ResourceSpans().At(0).Resource().Attributes().PutString("pod_annotation_sumologic.com/include", "true")
+	test.ResourceSpans().At(0).Resource().Attributes().PutStr("pod_annotation_sumologic.com/include", "true")
 
 	want := newTraceDataWithSpans(limitedLabelsWithMeta, k8sLabels)
-	want.ResourceSpans().At(0).Resource().Attributes().PutString("pod_annotation_sumologic.com/include", "true")
+	want.ResourceSpans().At(0).Resource().Attributes().PutStr("pod_annotation_sumologic.com/include", "true")
 
 	cfg1 := createConfig()
 	cfg1.Exclude = map[string]string{

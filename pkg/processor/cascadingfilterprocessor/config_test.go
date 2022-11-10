@@ -21,6 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/service/servicetest"
@@ -47,7 +48,7 @@ func TestLoadConfig(t *testing.T) {
 	namePatternValue := "foo.*"
 	healthCheckNamePatternValue := "health.*"
 
-	id1 := config.NewComponentIDWithName("cascading_filter", "1")
+	id1 := component.NewIDWithName("cascading_filter", "1")
 	ps1 := config.NewProcessorSettings(id1)
 	assert.Equal(t, cfg.Processors[id1],
 		&cfconfig.Config{
@@ -99,7 +100,7 @@ func TestLoadConfig(t *testing.T) {
 			},
 		})
 
-	id2 := config.NewComponentIDWithName("cascading_filter", "2")
+	id2 := component.NewIDWithName("cascading_filter", "2")
 	priorSpansRate2 := int32(600)
 	priorHistorySize2 := uint64(100)
 	ps2 := config.NewProcessorSettings(id2)
