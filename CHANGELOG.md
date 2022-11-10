@@ -25,9 +25,9 @@ This release introduces the following breaking changes:
 - fix(k8sprocessor): keep pod's services information up to date [#710]
 - chore(deps): bump golang from 1.18.4 to 1.19.2 [#745]
 - chore(deps): bump go-boringcrypto to 1.18.7b7 [#746]
-- chore: upgrade OpenTelemetry Contrib Core to v0.62.0 [#769]
 - feat(sourceprocessor): ensure that '_collector' is set before other source headers [#824]
 - chore(deps): upgrade Telegraf to 1.24.3-sumo-1 [#828]
+- chore: upgrade OpenTelemetry Contrib Core to v0.64.0 [#826]
 
 ### Removed
 
@@ -48,10 +48,10 @@ This release introduces the following breaking changes:
 [#724]: https://github.com/SumoLogic/sumologic-otel-collector/pull/724
 [#745]: https://github.com/SumoLogic/sumologic-otel-collector/pull/745
 [#746]: https://github.com/SumoLogic/sumologic-otel-collector/pull/746
-[#769]: https://github.com/SumoLogic/sumologic-otel-collector/pull/769
 [#693]: https://github.com/SumoLogic/sumologic-otel-collector/pull/693
 [#824]: https://github.com/SumoLogic/sumologic-otel-collector/pull/824
 [#828]: https://github.com/SumoLogic/sumologic-otel-collector/pull/828
+[#826]: https://github.com/SumoLogic/sumologic-otel-collector/pull/826
 [upgrade_guide_unreleased]: ./docs/upgrading.md#unreleased
 
 ## [v0.57.2-sumo-1]

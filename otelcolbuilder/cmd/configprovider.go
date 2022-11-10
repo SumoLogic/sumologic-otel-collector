@@ -22,7 +22,6 @@ import (
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
-	"go.opentelemetry.io/collector/confmap/converter/overwritepropertiesconverter"
 	"go.opentelemetry.io/collector/confmap/provider/envprovider"
 	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
@@ -90,12 +89,9 @@ func NewConfigProvider(locations []string, setFlags []string) (service.ConfigPro
 func NewConfigProviderSettings(locations []string, setFlags []string) service.ConfigProviderSettings {
 	return service.ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
-			URIs:      locations,
-			Providers: makeMapProvidersMap(fileprovider.New(), envprovider.New(), yamlprovider.New(), globprovider.New()),
-			Converters: []confmap.Converter{
-				overwritepropertiesconverter.New(setFlags),
-				expandconverter.New(),
-			},
+			URIs:       locations,
+			Providers:  makeMapProvidersMap(fileprovider.New(), envprovider.New(), yamlprovider.New(), globprovider.New()),
+			Converters: []confmap.Converter{expandconverter.New()},
 		},
 	}
 }

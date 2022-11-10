@@ -49,8 +49,8 @@ func NewFactory() component.ProcessorFactory {
 		component.WithTracesProcessor(createTraceProcessor, stabilityLevel))
 }
 
-func createDefaultConfig() config.Processor {
-	id := config.NewComponentID("cascading_filter")
+func createDefaultConfig() component.ProcessorConfig {
+	id := component.NewID("cascading_filter")
 	ps := config.NewProcessorSettings(id)
 
 	return &cfconfig.Config{
@@ -64,7 +64,7 @@ func createDefaultConfig() config.Processor {
 func createTraceProcessor(
 	_ context.Context,
 	settings component.ProcessorCreateSettings,
-	cfg config.Processor,
+	cfg component.ProcessorConfig,
 	nextConsumer consumer.Traces,
 ) (component.TracesProcessor, error) {
 	tCfg := cfg.(*cfconfig.Config)

@@ -67,7 +67,7 @@ func extractTemplateAttributes(template string) []string {
 func (f *sourceCategoryFiller) fill(attributes *pcommon.Map) {
 	containerSourceCategory := f.getSourceCategoryFromContainerAnnotation(attributes)
 	if containerSourceCategory != "" {
-		attributes.PutString(sourceCategoryKey, containerSourceCategory)
+		attributes.PutStr(sourceCategoryKey, containerSourceCategory)
 		return
 	}
 
@@ -93,7 +93,7 @@ func (f *sourceCategoryFiller) fill(attributes *pcommon.Map) {
 	}
 	sourceCategoryValue = strings.ReplaceAll(sourceCategoryValue, "-", dashReplacement)
 
-	attributes.PutString(sourceCategoryKey, sourceCategoryValue)
+	attributes.PutStr(sourceCategoryKey, sourceCategoryValue)
 }
 
 func (f *sourceCategoryFiller) getSourceCategoryFromContainerAnnotation(attributes *pcommon.Map) string {

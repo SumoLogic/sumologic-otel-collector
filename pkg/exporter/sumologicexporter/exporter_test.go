@@ -32,7 +32,6 @@ import (
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/consumer/consumererror"
-	"go.opentelemetry.io/collector/model/otlp"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -176,17 +175,17 @@ func TestLogsResourceAttributesSentAsFields(t *testing.T) {
 				buffer := make([]plog.LogRecord, 2)
 				buffer[0] = plog.NewLogRecord()
 				buffer[0].Body().SetStr("Example log")
-				buffer[0].Attributes().PutString("key1", "value1")
-				buffer[0].Attributes().PutString("key2", "value2")
+				buffer[0].Attributes().PutStr("key1", "value1")
+				buffer[0].Attributes().PutStr("key2", "value2")
 				buffer[1] = plog.NewLogRecord()
 				buffer[1].Body().SetStr("Another example log")
-				buffer[1].Attributes().PutString("key1", "value1")
-				buffer[1].Attributes().PutString("key2", "value2")
-				buffer[1].Attributes().PutString("key3", "value3")
+				buffer[1].Attributes().PutStr("key1", "value1")
+				buffer[1].Attributes().PutStr("key2", "value2")
+				buffer[1].Attributes().PutStr("key3", "value3")
 
 				logs := LogRecordsToLogs(buffer)
-				logs.ResourceLogs().At(0).Resource().Attributes().PutString("res_attr1", "1")
-				logs.ResourceLogs().At(0).Resource().Attributes().PutString("res_attr2", "2")
+				logs.ResourceLogs().At(0).Resource().Attributes().PutStr("res_attr1", "1")
+				logs.ResourceLogs().At(0).Resource().Attributes().PutStr("res_attr2", "2")
 				return logs
 			},
 		},
@@ -420,11 +419,11 @@ func TestPushLogs_DontRemoveSourceAttributes(t *testing.T) {
 		logRecords[1].CopyTo(logsSlice.AppendEmpty())
 
 		resourceAttrs := resourceLogs.Resource().Attributes()
-		resourceAttrs.PutString("hostname", "my-host-name")
-		resourceAttrs.PutString("hosttype", "my-host-type")
-		resourceAttrs.PutString("_sourceCategory", "my-source-category")
-		resourceAttrs.PutString("_sourceHost", "my-source-host")
-		resourceAttrs.PutString("_sourceName", "my-source-name")
+		resourceAttrs.PutStr("hostname", "my-host-name")
+		resourceAttrs.PutStr("hosttype", "my-host-type")
+		resourceAttrs.PutStr("_sourceCategory", "my-source-category")
+		resourceAttrs.PutStr("_sourceHost", "my-source-host")
+		resourceAttrs.PutStr("_sourceName", "my-source-name")
 
 		return logs
 	}
@@ -508,7 +507,7 @@ func TestAllMetricsOTLP(t *testing.T) {
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 
-			md, err := otlp.NewProtobufMetricsUnmarshaler().UnmarshalMetrics([]byte(body))
+			md, err := (&pmetric.ProtoUnmarshaler{}).UnmarshalMetrics([]byte(body))
 			assert.NoError(t, err)
 			assert.NotNil(t, md)
 
@@ -643,8 +642,8 @@ func TestLogsTextFormatMetadataFilterWithDroppedAttribute(t *testing.T) {
 	test.exp.config.DropRoutingAttribute = "key1"
 
 	logs := LogRecordsToLogs(exampleLog())
-	logs.ResourceLogs().At(0).Resource().Attributes().PutString("key1", "value1")
-	logs.ResourceLogs().At(0).Resource().Attributes().PutString("key2", "value2")
+	logs.ResourceLogs().At(0).Resource().Attributes().PutStr("key1", "value1")
+	logs.ResourceLogs().At(0).Resource().Attributes().PutStr("key2", "value2")
 
 	err := test.exp.pushLogsData(context.Background(), logs)
 	assert.NoError(t, err)
@@ -664,8 +663,8 @@ func TestMetricsPrometheusFormatMetadataFilter(t *testing.T) {
 	metrics := metricAndAttributesToPdataMetrics(exampleIntMetric())
 
 	attrs := metrics.ResourceMetrics().At(0).Resource().Attributes()
-	attrs.PutString("key1", "value1")
-	attrs.PutString("key2", "value2")
+	attrs.PutStr("key1", "value1")
+	attrs.PutStr("key2", "value2")
 
 	err := test.exp.pushMetricsData(context.Background(), metrics)
 	assert.NoError(t, err)
@@ -686,9 +685,9 @@ func TestMetricsPrometheusWithDroppedRoutingAttribute(t *testing.T) {
 	metrics := metricAndAttributesToPdataMetrics(exampleIntMetric())
 
 	attrs := metrics.ResourceMetrics().At(0).Resource().Attributes()
-	attrs.PutString("key1", "value1")
-	attrs.PutString("key2", "value2")
-	attrs.PutString("http_listener_v2_path_custom", "prometheus.metrics")
+	attrs.PutStr("key1", "value1")
+	attrs.PutStr("key2", "value2")
+	attrs.PutStr("http_listener_v2_path_custom", "prometheus.metrics")
 
 	err := test.exp.pushMetricsData(context.Background(), metrics)
 	assert.NoError(t, err)
@@ -697,8 +696,8 @@ func TestMetricsPrometheusWithDroppedRoutingAttribute(t *testing.T) {
 func TestTracesWithDroppedAttribute(t *testing.T) {
 	// Prepare data to compare (trace without routing attribute)
 	traces := exampleTrace()
-	traces.ResourceSpans().At(0).Resource().Attributes().PutString("key2", "value2")
-	tracesMarshaler = otlp.NewProtobufTracesMarshaler()
+	traces.ResourceSpans().At(0).Resource().Attributes().PutStr("key2", "value2")
+	tracesMarshaler = ptrace.ProtoMarshaler{}
 	bytes, err := tracesMarshaler.MarshalTraces(traces)
 	require.NoError(t, err)
 
@@ -711,7 +710,7 @@ func TestTracesWithDroppedAttribute(t *testing.T) {
 	test.exp.config.DropRoutingAttribute = "key1"
 
 	// add routing attribute and check if after marshalling it's different
-	traces.ResourceSpans().At(0).Resource().Attributes().PutString("key1", "value1")
+	traces.ResourceSpans().At(0).Resource().Attributes().PutStr("key1", "value1")
 	bytesWithAttribute, err := tracesMarshaler.MarshalTraces(traces)
 	require.NoError(t, err)
 	require.NotEqual(t, bytes, bytesWithAttribute)

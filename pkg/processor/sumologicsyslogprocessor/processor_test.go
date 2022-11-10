@@ -46,7 +46,7 @@ func TestProcessLogs(t *testing.T) {
 		lr := sls.LogRecords().AppendEmpty()
 		lr.Body().SetStr(line)
 	}
-	sls.LogRecords().At(1).Attributes().PutString("facility_name", "pre filled facility")
+	sls.LogRecords().At(1).Attributes().PutStr("facility_name", "pre filled facility")
 
 	ctx := context.Background()
 	processor := &sumologicSyslogProcessor{

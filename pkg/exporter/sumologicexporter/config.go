@@ -20,6 +20,7 @@ import (
 	"net/url"
 	"time"
 
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/configauth"
 	"go.opentelemetry.io/collector/config/confighttp"
@@ -107,7 +108,7 @@ func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 	return confighttp.HTTPClientSettings{
 		Timeout: defaultTimeout,
 		Auth: &configauth.Authentication{
-			AuthenticatorID: config.NewComponentID("sumologic"),
+			AuthenticatorID: component.NewID("sumologic"),
 		},
 	}
 }

@@ -24,7 +24,6 @@ import (
 
 	backoff "github.com/cenkalti/backoff/v4"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/extension/experimental/storage"
@@ -173,7 +172,7 @@ func (r *rawK8sEventsReceiver) getStorage(ctx context.Context, host component.Ho
 	}
 
 	var storageExtension storage.Extension
-	var storageExtensionId config.ComponentID
+	var storageExtensionId component.ID
 	for extentionId, extension := range host.GetExtensions() {
 		if se, ok := extension.(storage.Extension); ok {
 			if storageExtension != nil {

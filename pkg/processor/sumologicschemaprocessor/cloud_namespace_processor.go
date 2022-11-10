@@ -81,10 +81,10 @@ func addCloudNamespaceAttribute(attributes pcommon.Map) {
 
 	switch cloudPlatformAttributeValue.Str() {
 	case conventions.AttributeCloudPlatformAWSEC2:
-		attributes.PutString(cloudNamespaceAttributeName, cloudNamespaceAwsEc2)
+		attributes.PutStr(cloudNamespaceAttributeName, cloudNamespaceAwsEc2)
 	case conventions.AttributeCloudPlatformAWSECS:
-		attributes.PutString(cloudNamespaceAttributeName, cloudNamespaceAwsEcs)
+		attributes.PutStr(cloudNamespaceAttributeName, cloudNamespaceAwsEcs)
 	case conventions.AttributeCloudPlatformAWSElasticBeanstalk:
-		attributes.PutString(cloudNamespaceAttributeName, cloudNamespaceAwsBeanstalk)
+		attributes.PutStr(cloudNamespaceAttributeName, cloudNamespaceAwsBeanstalk)
 	}
 }
