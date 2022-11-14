@@ -505,6 +505,21 @@ func TestSourceCategoryTemplateWithCustomAttribute(t *testing.T) {
 		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
 		assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/undefined/123")
 	})
+
+	t.Run("attribute is a collector name", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		traces := newTraceData(inputAttributes)
+
+		config := createDefaultConfig().(*Config)
+		config.SourceCategory = "abc/%{_collector}/123"
+		config.Collector = "my-collector"
+
+		processedTraces, err := newSourceProcessor(config).ProcessTraces(context.Background(), traces)
+		assert.NoError(t, err)
+
+		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/my/collector/123")
+	})
 }
 
 func assertAttribute(t *testing.T, attributes pcommon.Map, attributeName string, expectedValue string) {

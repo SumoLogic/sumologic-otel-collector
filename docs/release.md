@@ -101,61 +101,9 @@ Updating OT core involves:
 
 ### Updating patched processors
 
-We currently maintain patches for the following upstream components:
+We currently do not maintain patches for upstream components.
 
-- `hostmetricsreceiver`
-- `mysqlreceiver`
-- `apachereceiver`
-- `elasticsearchreceiver`
-
-The patches live in our [contrib fork repository][contrib_fork], on the `vX.X.X-patches` branch. See [comments][builder_config]
-in the builder configuration for more details.
-
-To update this patchset for the new OT core version:
-
-1. Checkout the contrib fork repo, add upstream as a remote, and pull the new version tag.
-
-   ```bash
-   export CURRENT_VERSION=vX.X.X
-   export NEW_VERSION=vY.Y.Y
-   export SUFFIX=patches
-   git clone https://github.com/SumoLogic/opentelemetry-collector-contrib && cd opentelemetry-collector-contrib
-   git remote add upstream https://github.com/open-telemetry/opentelemetry-collector-contrib
-   git pull upstream "${NEW_VERSION}" "${CURRENT_VERSION}"
-   ```
-
-1. Create a new branch for the patchset and rebase it on the new version
-
-   ```bash
-   git switch "${CURRENT_VERSION}-${SUFFIX}"
-   git checkout -b "${NEW_VERSION}-${SUFFIX}"
-   git rebase -i --onto "${NEW_VERSION}" "${CURRENT_VERSION}" "${NEW_VERSION}-${SUFFIX}"
-   ```
-
-1. Resolve conflicts and make sure tests and linters pass afterwards.
-   You can run them by invoking the following in the project root:
-
-   ```bash
-   make install-tools
-   make golint
-   make gotest
-   ```
-
-   If the command `make gotest` fails on unrelated tests, like for example `kafkareceiver`,
-   only run the tests for the changed modules:
-
-   ```bash
-   export COMPONENTS=("receiver/hostmetricsreceiver" "receiver/mysqlreceiver" "receiver/apachesreceiver" "receiver/elasticsearchsreceiver")
-   for component in $COMPONENTS do; make -C $component test; done
-   ```
-
-1. Push the new branch to the fork repo and write down the commit SHA
-
-   ```bash
-   git push origin "${NEW_VERSION}-${SUFFIX}"
-   ```
-
-1. Update the [builder configuration][builder_config] with the new commit SHA
+Historical process can be taken from [v0.57.2-sumo-0][updating_patched] if needed.
 
 ### Updating OT distro
 
@@ -179,11 +127,21 @@ in the repository root.
 
 We include all of the components from the following list:
 
-- [OpenTelemetry Collector][otelcol_components] extensions, receivers, processors, exporters
-- [OpenTelemetry Collector Contrib][otelcol_contrib_components] extensions, receivers, processors, exporters
+- [OpenTelemetry Collector][otelcol_components] extensions, receivers, processors
+- [OpenTelemetry Collector Contrib][otelcol_contrib_components] extensions, receivers, processors
+
+Additionally, the following components are supported:
+
+- [logstransformprocessor]
+- [windowseventlogreceiver]
+- [db_storage][dbstorage]
+- [docker_observer][dockerobserver]
+- [ecs_observer][ecsobserver]
+- [ecs_task_observer][ecstaskobserver]
 
 As a fourth step, please check [OpenTelemetry Collector][OT_release] and [OpenTelemetry Collector Contrib][OTC_release]
 release pages for new components and update [builder configuration][builder_config] and [README.md] if they are any.
+New exporters should not be added without a reason.
 Please consider example pull request: [#604]
 
 #### Adding components from scratch
@@ -288,7 +246,6 @@ make update-journalctl
 [tracing_tests]: ../.circleci/config.yml
 [circleci]: https://app.circleci.com/pipelines/github/SumoLogic/sumologic-otel-collector
 [circleci_approve]: ../images/circleci_approve_workflow.png
-[contrib_fork]: https://github.com/SumoLogic/opentelemetry-collector-contrib
 [changelog]: ../CHANGELOG.md
 [upgrading]: ./upgrading.md
 [journaldreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.51.0/receiver/journaldreceiver
@@ -300,3 +257,10 @@ make update-journalctl
 [#604]: https://github.com/SumoLogic/sumologic-otel-collector/pull/604/files
 [OTC_release]: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases
 [OT_release]: https://github.com/open-telemetry/opentelemetry-collector/releases
+[updating_patched]: https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.57.2-sumo-0/docs/release.md#updating-patched-processors
+[windowseventlogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.62.0/receiver/windowseventlogreceiver
+[logstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.62.0/processor/logstransformprocessor
+[dbstorage]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.62.0/extension/storage/dbstorage
+[dockerobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.62.0/extension/observer/dockerobserver
+[ecsobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.62.0/extension/observer/ecsobserver
+[ecstaskobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.62.0/extension/observer/ecstaskobserver

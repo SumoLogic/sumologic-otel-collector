@@ -20,13 +20,13 @@ This release introduces the following breaking changes:
 
 ### Changed
 
-- feat(build): use patched versions of four upstream receivers [#767]
 - fix(sumologicexporter): do not crash if server returns unknown length response [#718]
 - fix(k8sprocessor): fix metadata enrichment [#724]
 - fix(k8sprocessor): keep pod's services information up to date [#710]
 - chore(deps): bump golang from 1.18.4 to 1.19.2 [#745]
 - chore(deps): bump go-boringcrypto to 1.18.7b7 [#746]
 - chore: upgrade OpenTelemetry Contrib Core to v0.62.0 [#769]
+- feat(sourceprocessor): ensure that '_collector' is set before other source headers [#824]
 
 ### Removed
 
@@ -49,7 +49,7 @@ This release introduces the following breaking changes:
 [#746]: https://github.com/SumoLogic/sumologic-otel-collector/pull/746
 [#769]: https://github.com/SumoLogic/sumologic-otel-collector/pull/769
 [#693]: https://github.com/SumoLogic/sumologic-otel-collector/pull/693
-[#767]: https://github.com/SumoLogic/sumologic-otel-collector/pull/767
+[#824]: https://github.com/SumoLogic/sumologic-otel-collector/pull/824
 [upgrade_guide_unreleased]: ./docs/upgrading.md#unreleased
 
 ## [v0.57.2-sumo-1]
