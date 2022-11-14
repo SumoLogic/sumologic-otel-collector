@@ -1,3 +1,6 @@
+//go:build windows
+// +build windows
+
 package sumologic_scripts_tests
 
 import (
