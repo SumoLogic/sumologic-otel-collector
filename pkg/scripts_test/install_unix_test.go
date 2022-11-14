@@ -49,6 +49,15 @@ func TestInstallScript(t *testing.T) {
 			postChecks: []checkFunc{checkBinaryCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated, checkUserNotExists},
 		},
 		{
+			name: "download only fips",
+			options: installOptions{
+				downloadOnly: true,
+				fips:         true,
+			},
+			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsFIPS, checkConfigNotCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated, checkUserNotExists},
+		},
+		{
 			name: "skip config",
 			options: installOptions{
 				skipConfig:       true,
