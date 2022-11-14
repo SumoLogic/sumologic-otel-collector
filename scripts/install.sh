@@ -1074,7 +1074,6 @@ if [[ "${DOWNLOAD_ONLY}" == "true" ]]; then
     exit 0
 fi
 
-<<<<<<< HEAD
 echo 'We are going to get and set up a default configuration for you'
 
 echo -e "Creating file_storage directory (${FILE_STORAGE})"
