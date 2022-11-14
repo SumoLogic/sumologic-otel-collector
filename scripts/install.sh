@@ -62,6 +62,7 @@ CONTINUE=false
 HOME_DIRECTORY=""
 CONFIG_DIRECTORY=""
 USER_CONFIG_DIRECTORY=""
+USER_ENV_DIRECTORY=""
 SYSTEMD_CONFIG=""
 UNINSTALL=""
 SUMO_BINARY_PATH=""
@@ -485,6 +486,9 @@ function setup_config() {
     echo -e "Creating user configurations directory (${USER_CONFIG_DIRECTORY})"
     mkdir -p "${USER_CONFIG_DIRECTORY}"
 
+    echo -e "Creating user env directory (${USER_ENV_DIRECTORY})"
+    mkdir -p "${USER_ENV_DIRECTORY}"
+
     echo "Generating configuration and saving as ${CONFIG_PATH}"
 
     CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/sumologic.yaml"
@@ -502,6 +506,10 @@ function setup_config() {
     echo 'Changing permissions for config file and storage'
     chmod 440 "${CONFIG_PATH}"
     chmod -R 750 "${HOME_DIRECTORY}"
+
+    echo 'Changing permissions for user env directory'
+    chmod 440 "${USER_ENV_DIRECTORY}"
+    chmod g+s "${USER_ENV_DIRECTORY}"
 
     # Ensure that configuration is created
     if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
@@ -930,7 +938,7 @@ check_dependencies
 set_defaults
 parse_options "$@"
 
-readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
+readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
 readonly USER_CONFIG_DIRECTORY USER_ENV_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
 
 if [[ "${UNINSTALL}" == "true" ]]; then
@@ -1074,64 +1082,6 @@ if [[ "${DOWNLOAD_ONLY}" == "true" ]]; then
     exit 0
 fi
 
-echo 'We are going to get and set up a default configuration for you'
-
-echo -e "Creating file_storage directory (${FILE_STORAGE})"
-mkdir -p "${FILE_STORAGE}"
-
-echo -e "Creating configuration directory (${CONFIG_DIRECTORY})"
-mkdir -p "${CONFIG_DIRECTORY}"
-
-echo -e "Creating user configurations directory (${USER_CONFIG_DIRECTORY})"
-mkdir -p "${USER_CONFIG_DIRECTORY}"
-
-echo -e "Creating user env directory (${USER_ENV_DIRECTORY})"
-mkdir -p "${USER_ENV_DIRECTORY}"
-
-echo "Generating configuration and saving as ${CONFIG_PATH}"
-
-CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/sumologic.yaml"
-if ! curl -f -s "${CONFIG_URL}" -o "${CONFIG_PATH}"; then
-    echo "Cannot obtain configuration for '${CONFIG_BRANCH}' branch"
-    exit 1
-fi
-
-echo 'Changing permissions for config file and storage'
-chmod 440 "${CONFIG_PATH}"
-chmod -R 750 "${FILE_STORAGE}"
-
-echo 'Changing permissions for user env directory'
-chmod 440 "${USER_ENV_DIRECTORY}"
-chmod g+s "${USER_ENV_DIRECTORY}"
-
-# Ensure that configuration is created
-if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
-    echo "User configuration (${COMMON_CONFIG_PATH}) already exist)"
-fi
-
-## Check if there is anything to update in configuration
-if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
-    create_user_config_file "${COMMON_CONFIG_PATH}"
-    add_extension_to_config "${COMMON_CONFIG_PATH}"
-    write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
-
-    if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" && -z "${USER_TOKEN}" ]]; then
-        write_install_token "${SUMOLOGIC_INSTALL_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
-    fi
-
-    # fill in api base url
-    if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
-        write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
-    fi
-
-    if [[ -n "${FIELDS}" && -z "${USER_FIELDS}" ]]; then
-        write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
-    fi
-
-    # clean up bak file
-    rm -f "${COMMON_CONFIG_BAK_PATH}"
-fi
-
 if [[ "${SKIP_CONFIG}" == "false" ]]; then
     setup_config
 fi
@@ -1166,10 +1116,8 @@ fi
 if [[ "${SKIP_CONFIG}" == "false" ]]; then
     echo 'Changing ownership for config and storage'
     chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOME_DIRECTORY}" "${CONFIG_PATH}"
+    chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}"
 fi
-
-echo 'Changing ownership for user env directory'
-chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}"
 
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/systemd/otelcol-sumo.service"
 
