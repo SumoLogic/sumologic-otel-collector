@@ -72,11 +72,12 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 |      [googlecloudspanner][googlecloudspannerreceiver]      |                  [schema][schemaprocessor]                   |                                          |        [`sumologic`][sumologicextension]         |
 |             [hostmetrics][hostmetricsreceiver]             |                 [`source`][sourceprocessor]                  |                                          |            [zpages][zpagesextension]             |
 |                     [iis][iisreceiver]                     |                    [span][spanprocessor]                     |                                          |                                                  |
-|                [influxdb][influxdbreceiver]                |             [spanmetrics][spanmetricsprocessor]              |                                          |                                                  |
-|                  [jaeger][jaegerreceiver]                  |        [`sumologic_schema`][sumologicschemaprocessor]        |                                          |                                                  |
-|                     [jmx][jmxreceiver]                     |        [`sumologic_syslog`][sumologicsyslogprocessor]        |                                          |                                                  |
-|                [journald][journaldreceiver]                |            [tail_sampling][tailsamplingprocessor]            |                                          |                                                  |
-|             [k8s_cluster][k8sclusterreceiver]              |               [transform][transformprocessor]                |                                          |                                                  |
+|               [httpcheck][httpcheckreceiver]               |             [spanmetrics][spanmetricsprocessor]              |                                          |                                                  |
+|                [influxdb][influxdbreceiver]                |        [`sumologic_schema`][sumologicschemaprocessor]        |                                          |                                                  |
+|                  [jaeger][jaegerreceiver]                  |        [`sumologic_syslog`][sumologicsyslogprocessor]        |                                          |                                                  |
+|                     [jmx][jmxreceiver]                     |            [tail_sampling][tailsamplingprocessor]            |                                          |                                                  |
+|                [journald][journaldreceiver]                |               [transform][transformprocessor]                |                                          |                                                  |
+|             [k8s_cluster][k8sclusterreceiver]              |                                                              |                                          |                                                  |
 |              [k8s_events][k8seventsreceiver]               |                                                              |                                          |                                                  |
 |                   [kafka][kafkareceiver]                   |                                                              |                                          |                                                  |
 |            [kafkametrics][kafkametricsreceiver]            |                                                              |                                          |                                                  |
@@ -139,6 +140,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 [googlecloudpubsubreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.64.0/receiver/googlecloudpubsubreceiver
 [googlecloudspannerreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.64.0/receiver/googlecloudspannerreceiver
 [hostmetricsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.64.0/receiver/hostmetricsreceiver
+[httpcheckreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.64.0/receiver/httpcheckreceiver
 [iisreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.64.0/receiver/iisreceiver
 [influxdbreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.64.0/receiver/influxdbreceiver
 [jaegerreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.64.0/receiver/jaegerreceiver
