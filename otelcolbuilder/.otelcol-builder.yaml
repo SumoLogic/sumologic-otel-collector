@@ -203,7 +203,7 @@ replaces:
 
   # ----------------------------------------------------------------------------
   # Needed for telegrafreceiver
-  - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.24.3-sumo-2
+  - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.24.3-sumo-3
 
   # Google renamed their org from `googleapis` to `google`, and for `gnostic` this happened in v0.5.6
   # However, kubernetes/client-go still uses the old name for v0.5.5, and this causes go mod to complain
