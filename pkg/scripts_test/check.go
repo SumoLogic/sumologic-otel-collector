@@ -50,14 +50,6 @@ func checkBinaryIsRunning(c check) {
 	require.Equal(c.test, 0, code, "got error code while checking version")
 }
 
-func checkBinaryIsFIPS(c check) {
-	cmd := exec.Command(binaryPath, "--version")
-
-	output, err := cmd.Output()
-	require.NoError(c.test, err, "error while checking version")
-	require.Contains(c.test, string(output), "fips")
-}
-
 func checkRun(c check) {
 	require.Equal(c.test, c.expectedInstallCode, c.code, "unexpected installation script error code")
 }
