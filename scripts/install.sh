@@ -426,7 +426,7 @@ function ask_to_continue() {
     fi
 
     local choice
-    read -rp "Continue (y/N)?" choice
+    read -rp "Continue (y/N)? " choice
     case "${choice}" in
     y|Y ) ;;
     n|N | * )
