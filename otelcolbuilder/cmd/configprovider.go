@@ -17,7 +17,6 @@ package main
 import (
 	"errors"
 	"os"
-	"strings"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
 	"go.opentelemetry.io/collector/confmap"
@@ -30,47 +29,26 @@ import (
 
 // This file contains modifications to the collector settings which inject a custom config provider
 // Otherwise, it tries to be as close to the upstream defaults as defined here:
-// https://github.com/open-telemetry/opentelemetry-collector/blob/72011ca22dff6614d518768b3bb53a1193c6ad02/service/command.go#L38
+// https://github.com/open-telemetry/opentelemetry-collector/blob/65dfc325d974be8ebb7c170b90c6646f9eaef27b/service/command.go#L38
 
 func UseCustomConfigProvider(params *service.CollectorSettings) error {
 
 	// to create the provider, we need config locations passed in via the command line
 	// to get these, we take the command the service uses to start, parse the flags, and read the values
 	var err error
-	tempCmd := service.NewCommand(*params)
-	_, flags, err := tempCmd.Find(os.Args[1:])
+	flagset := flags()
+	err = flagset.Parse(os.Args[1:])
 	if err != nil {
 		return err
 	}
 
-	err = tempCmd.ParseFlags(flags)
-	if err != nil {
-		// either the flags are completely invalid or don't use config at all
-		// in both cases we don't need to do anything
-		return nil
-	}
-
-	locations, err := tempCmd.Flags().GetStringArray("config")
-	if err != nil {
-		return err
-	}
+	locations := getConfigFlag(flagset)
 	if len(locations) == 0 {
 		return errors.New("at least one config flag must be provided")
 	}
 
-	setFlags, err := tempCmd.Flags().GetStringArray("set")
-	if err != nil {
-		return err
-	}
-
-	// Not sure why this is necessary, config locations other than the first have an extra space at the start
-	var cleanedLocations []string
-	for _, location := range locations {
-		cleanedLocations = append(cleanedLocations, strings.TrimSpace(location))
-	}
-
 	// create the config provider using the locations
-	params.ConfigProvider, err = NewConfigProvider(cleanedLocations, setFlags)
+	params.ConfigProvider, err = NewConfigProvider(locations)
 	if err != nil {
 		return err
 	}
@@ -78,15 +56,15 @@ func UseCustomConfigProvider(params *service.CollectorSettings) error {
 	return nil
 }
 
-func NewConfigProvider(locations []string, setFlags []string) (service.ConfigProvider, error) {
-	settings := NewConfigProviderSettings(locations, setFlags)
+func NewConfigProvider(locations []string) (service.ConfigProvider, error) {
+	settings := NewConfigProviderSettings(locations)
 	return service.NewConfigProvider(settings)
 }
 
 // see https://github.com/open-telemetry/opentelemetry-collector/blob/72011ca22dff6614d518768b3bb53a1193c6ad02/service/command.go#L38
 // for the logic we're emulating here
 // we only add the glob provider, everything else should be the same
-func NewConfigProviderSettings(locations []string, setFlags []string) service.ConfigProviderSettings {
+func NewConfigProviderSettings(locations []string) service.ConfigProviderSettings {
 	return service.ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
 			URIs:       locations,
