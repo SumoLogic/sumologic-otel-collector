@@ -4,3 +4,4 @@ cmd/*
 !cmd/configprovider.go
 !cmd/main.go.patch
 !cmd/fips.go
+!cmd/flags.go

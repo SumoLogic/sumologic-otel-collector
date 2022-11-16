@@ -93,8 +93,7 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			require.NoError(t, err)
 
 			locations := []string{tc.configFile}
-			setFlags := []string{}
-			cp, err := NewConfigProvider(locations, setFlags)
+			cp, err := NewConfigProvider(locations)
 			require.NoError(t, err)
 
 			t.Log("Creating new app...")
