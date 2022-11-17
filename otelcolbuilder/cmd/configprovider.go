@@ -56,7 +56,6 @@ func UseCustomConfigProvider(params *service.CollectorSettings) error {
 	if len(locations) == 0 {
 		return errors.New("at least one config flag must be provided")
 	}
-	os.Exit(1)
 
 	// create the config provider using the locations
 	params.ConfigProvider, err = NewConfigProvider(locations)
