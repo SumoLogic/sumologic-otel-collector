@@ -36,9 +36,18 @@ To run it as a standalone process you only need to run the binary file downloade
 
 1. Run installation script:
 
+    Either by piping `curl` straight into `bash`:
+
     ```bash
-    curl -s https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh | sudo bash -s -- --installation-token "${SUMOLOGIC_INSTALL_TOKEN}"
+    curl -s https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh | sudo --preserve-env=SUMOLOGIC_INSTALL_TOKEN bash
     ```
+
+    or by first downloading the script, inspecting its contents for security, and then running it:
+
+   ```bash
+   curl -o install-otelcol-sumo.sh https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh
+   sudo --preserve-env=SUMOLOGIC_INSTALL_TOKEN bash ./install-otelcol-sumo.sh
+   ```
 
     It is going to perform the following operations:
 
