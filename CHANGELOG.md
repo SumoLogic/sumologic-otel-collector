@@ -11,6 +11,7 @@ This release introduces the following breaking changes:
 
 - `filelog` receiver: has been removed from sub-parsers ([upgrade guide][upgrade_guide_unreleased]) [#769]
 - `sending_queue`: require explicit storage set ([upgrade guide][upgrade_guide_unreleased]) [#769]
+- `apache` receiver: turn on feature gates for resource attributes ([upgrade guide][upgrade_guide_unreleased])
 
 ### Added
 
