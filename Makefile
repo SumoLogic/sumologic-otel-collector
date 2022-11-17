@@ -297,7 +297,7 @@ build-push-container-multiplatform:
 
 .PHONY: test-built-image
 test-built-image:
-	docker run --rm "$(OPENSOURCE_REPO_URL):$(BUILD_TAG)" --version
+	docker run --rm "$(OPENSOURCE_REPO_URL):$(BUILD_TAG)"
 
 .PHONY: push-container-manifest
 push-container-manifest:
