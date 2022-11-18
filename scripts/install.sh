@@ -1013,7 +1013,7 @@ fi
 
 echo -e "Getting installed version..."
 INSTALLED_VERSION="$(get_installed_version)"
-echo -e "Installed version:\t${INSTALLED_VERSION}"
+echo -e "Installed version:\t${INSTALLED_VERSION:-none}"
 
 echo -e "Getting versions..."
 VERSIONS="$(get_versions)"
