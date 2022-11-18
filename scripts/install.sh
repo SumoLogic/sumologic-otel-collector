@@ -843,8 +843,11 @@ function get_binary_from_branch() {
     local name
     readonly name="${2}"
 
-    local actions_output artifacts_link artifact_id
-    actions_output="$(curl -f -s \
+
+    local actions_url actions_output artifacts_link artifact_id
+    readonly actions_url="https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/runs?status=success&branch=${branch}&event=push&per_page=1"
+    echo -e "Getting artifacts from latest CI run for branch \"${branch}\":\t\t${actions_url}"
+    actions_output="$(curl -f -sS \
       --connect-timeout 5 \
       --max-time 30 \
       --retry 5 \
@@ -852,7 +855,7 @@ function get_binary_from_branch() {
       --retry-max-time 150 \
       -H "Accept: application/vnd.github+json" \
       -H "Authorization: token ${GITHUB_TOKEN}" \
-      "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/runs?status=success&branch=${branch}&event=push&per_page=1")"
+      "${actions_url}")"
     readonly actions_output
 
     # get latest action run
@@ -863,7 +866,8 @@ function get_binary_from_branch() {
     artifacts_link="${artifacts_link}/artifacts"
     readonly artifacts_link
 
-    artifact_id="$(curl -f -s \
+    echo -e "Getting artifact id for CI run:\t\t${artifacts_link}"
+    artifact_id="$(curl -f -sS \
     --connect-timeout 5 \
     --max-time 30 \
     --retry 5 \
@@ -877,8 +881,10 @@ function get_binary_from_branch() {
         | grep -oE "[0-9]+" -m 1)"
     readonly artifact_id
 
-    local download_path curl_args
+    local artifact_url download_path curl_args
+    readonly artifact_url="https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/artifacts/${artifact_id}/zip"
     readonly download_path="/tmp/${name}.zip"
+    echo -e "Downloading binary from: ${artifact_url}"
     curl_args=(
         "-fL"
         "--connect-timeout" "5"
@@ -895,7 +901,7 @@ function get_binary_from_branch() {
     curl "${curl_args[@]}" \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: token ${GITHUB_TOKEN}" \
-        "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/artifacts/${artifact_id}/zip"
+        "${artifact_url}"
 
     unzip -p "$download_path" "${name}" >otelcol-sumo
     if [ "${KEEP_DOWNLOADS}" == "false" ]; then
