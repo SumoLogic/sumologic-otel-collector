@@ -3,6 +3,7 @@
 - [Unreleased](#unreleased)
   - [`filelog` receiver: has been removed from sub-parsers](#filelog-receiver-has-been-removed-from-sub-parsers)
   - [`sending_queue`: require explicit storage set](#sending_queue-require-explicit-storage-set)
+  - [`apache` receiver: turn on feature gates for resource attributes](#apache-receiver-turn-on-feature-gates-for-resource-attributes)
 - [Upgrading to v0.57.2-sumo-0](#upgrading-to-v0572-sumo-0)
   - [`sumologic` exporter: drop support for source templates](#sumologic-exporter-drop-support-for-source-headers)
 - [Upgrading to v0.56.0-sumo-0](#upgrading-to-v0560-sumo-0)
@@ -51,8 +52,26 @@ extensions:
     install_token: ${SUMOLOGIC_INSTALL_TOKEN}
 ```
 
+### `apache` receiver: turn on feature gates for resource attributes
+
+The metrics in this receiver are now being sent with two resource attributes: `apache.server.name` and `apache.server.port`.
+Additionally, `apache.server.name` replaces `server_name` metric-level attribute.
+
+Both features are hidden behind feature gates, but because they are important for Sumo Logic apps,
+they have been enabled by default ahead of the normal deprecation timeline.
+
+To disable the new features, disable the feature gates in otelcol's arguments:
+
+```bash
+otelcol-sumo --config=file:config.yaml --feature-gates=-receiver.apache.emitServerNameAsResourceAttribute,-receiver.apache.emitPortAsResourceAttribute
+```
+
+More information about the feature gates can be found [here][apache-feature-gates].
+The target release for the removal of feature gates is `v0.68`.
+
 [#5784]: https://github.com/open-telemetry/opentelemetry-collector/pull/5784
 [#9331]: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/9331
+[apache-feature-gates]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.64.0/receiver/apachereceiver#feature-gate-configurations
 
 ## Upgrading to v0.57.2-sumo-0
 

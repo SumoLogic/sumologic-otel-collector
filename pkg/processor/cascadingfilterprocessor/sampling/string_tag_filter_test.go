@@ -111,7 +111,7 @@ func newTraceStringAttrs(nodeAttrs map[string]interface{}, spanAttrKey string, s
 	span := ss.Spans().AppendEmpty()
 	span.SetTraceID(pcommon.TraceID([16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}))
 	span.SetSpanID(pcommon.SpanID([8]byte{1, 2, 3, 4, 5, 6, 7, 8}))
-	span.Attributes().PutString(spanAttrKey, spanAttrValue)
+	span.Attributes().PutStr(spanAttrKey, spanAttrValue)
 	traceBatches = append(traceBatches, traces)
 	return &TraceData{
 		ReceivedBatches: traceBatches,

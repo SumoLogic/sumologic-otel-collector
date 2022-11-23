@@ -14,6 +14,8 @@ ARG_SHORT_TAG='t'
 ARG_LONG_TAG='tag'
 ARG_SHORT_VERSION='v'
 ARG_LONG_VERSION='version'
+ARG_SHORT_FIPS='f'
+ARG_LONG_FIPS='fips'
 ARG_SHORT_YES='y'
 ARG_LONG_YES='yes'
 ARG_SHORT_SKIP_SYSTEMD='d'
@@ -44,7 +46,7 @@ readonly ARG_SHORT_SKIP_SYSTEMD ARG_LONG_SKIP_SYSTEMD ARG_SHORT_UNINSTALL ARG_LO
 readonly ARG_SHORT_PURGE ARG_LONG_PURGE ARG_SHORT_DOWNLOAD ARG_LONG_DOWNLOAD
 readonly ARG_SHORT_CONFIG_BRANCH ARG_LONG_CONFIG_BRANCH ARG_SHORT_BINARY_BRANCH ARG_LONG_CONFIG_BRANCH
 readonly ARG_SHORT_BRANCH ARG_LONG_BRANCH ARG_SHORT_SKIP_CONFIG ARG_LONG_SKIP_CONFIG
-readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ENV_TOKEN
+readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ARG_SHORT_FIPS ARG_LONG_FIPS ENV_TOKEN
 
 ############################ Variables (see set_defaults function for default values)
 
@@ -58,6 +60,7 @@ set -u
 API_BASE_URL=""
 FIELDS=""
 VERSION=""
+FIPS=false
 CONTINUE=false
 HOME_DIRECTORY=""
 CONFIG_DIRECTORY=""
@@ -119,7 +122,8 @@ Supported arguments:
   -${ARG_SHORT_SKIP_SYSTEMD}, --${ARG_LONG_SKIP_SYSTEMD}                    Do not install systemd unit.
   -${ARG_SHORT_SKIP_CONFIG}, --${ARG_LONG_SKIP_CONFIG}                     Do not create default configuration.
   -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>               Version of Sumo Logic Distribution for OpenTelemetry Collector to install, e.g. 0.57.2-sumo-1.
-                                        By defult it gets latest version.
+                                        By default it gets latest version.
+  -${ARG_SHORT_FIPS}, --${ARG_LONG_FIPS}                            Install the FIPS 140-2 compliant binary on Linux.
   -${ARG_SHORT_YES}, --${ARG_LONG_YES}                             Disable confirmation asks.
 
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                            Prints this help and usage.
@@ -170,6 +174,9 @@ function parse_options() {
       "--${ARG_LONG_VERSION}")
         set -- "$@" "-${ARG_SHORT_VERSION}"
         ;;
+      "--${ARG_LONG_FIPS}")
+        set -- "$@" "-${ARG_SHORT_FIPS}"
+        ;;
       "--${ARG_LONG_SKIP_SYSTEMD}")
         set -- "$@" "-${ARG_SHORT_SKIP_SYSTEMD}"
         ;;
@@ -197,7 +204,7 @@ function parse_options() {
       "--${ARG_LONG_KEEP_DOWNLOADS}")
         set -- "$@" "-${ARG_SHORT_KEEP_DOWNLOADS}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_SKIP_CONFIG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SKIP_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}")
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_SKIP_CONFIG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_FIPS}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SKIP_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}")
         set -- "$@" "${arg}"
         ;;
       -*)
@@ -212,7 +219,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_SKIP_CONFIG}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_FIPS}${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_SKIP_CONFIG}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -229,6 +236,7 @@ function parse_options() {
       "${ARG_SHORT_API}")           API_BASE_URL="${OPTARG}" ;;
       "${ARG_SHORT_SKIP_CONFIG}")   SKIP_CONFIG=true ;;
       "${ARG_SHORT_VERSION}")       VERSION="${OPTARG}" ;;
+      "${ARG_SHORT_FIPS}")          FIPS=true ;;
       "${ARG_SHORT_YES}")           CONTINUE=true ;;
       "${ARG_SHORT_SKIP_SYSTEMD}")       SYSTEMD_DISABLED=true ;;
       "${ARG_SHORT_UNINSTALL}")     UNINSTALL=true ;;
@@ -420,7 +428,7 @@ function ask_to_continue() {
     fi
 
     local choice
-    read -rp "Continue (y/N)?" choice
+    read -rp "Continue (y/N)? " choice
     case "${choice}" in
     y|Y ) ;;
     n|N | * )
@@ -837,8 +845,11 @@ function get_binary_from_branch() {
     local name
     readonly name="${2}"
 
-    local actions_output artifacts_link artifact_id
-    actions_output="$(curl -f -s \
+
+    local actions_url actions_output artifacts_link artifact_id
+    readonly actions_url="https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/runs?status=success&branch=${branch}&event=push&per_page=1"
+    echo -e "Getting artifacts from latest CI run for branch \"${branch}\":\t\t${actions_url}"
+    actions_output="$(curl -f -sS \
       --connect-timeout 5 \
       --max-time 30 \
       --retry 5 \
@@ -846,7 +857,7 @@ function get_binary_from_branch() {
       --retry-max-time 150 \
       -H "Accept: application/vnd.github+json" \
       -H "Authorization: token ${GITHUB_TOKEN}" \
-      "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/runs?status=success&branch=${branch}&event=push&per_page=1")"
+      "${actions_url}")"
     readonly actions_output
 
     # get latest action run
@@ -857,7 +868,8 @@ function get_binary_from_branch() {
     artifacts_link="${artifacts_link}/artifacts"
     readonly artifacts_link
 
-    artifact_id="$(curl -f -s \
+    echo -e "Getting artifact id for CI run:\t\t${artifacts_link}"
+    artifact_id="$(curl -f -sS \
     --connect-timeout 5 \
     --max-time 30 \
     --retry 5 \
@@ -871,8 +883,10 @@ function get_binary_from_branch() {
         | grep -oE "[0-9]+" -m 1)"
     readonly artifact_id
 
-    local download_path curl_args
-    readonly download_path="/tmp/otelcol-sumo.zip"
+    local artifact_url download_path curl_args
+    readonly artifact_url="https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/artifacts/${artifact_id}/zip"
+    readonly download_path="/tmp/${name}.zip"
+    echo -e "Downloading binary from: ${artifact_url}"
     curl_args=(
         "-fL"
         "--connect-timeout" "5"
@@ -889,7 +903,7 @@ function get_binary_from_branch() {
     curl "${curl_args[@]}" \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: token ${GITHUB_TOKEN}" \
-        "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/artifacts/${artifact_id}/zip"
+        "${artifact_url}"
 
     unzip -p "$download_path" "${name}" >otelcol-sumo
     if [ "${KEEP_DOWNLOADS}" == "false" ]; then
@@ -898,11 +912,13 @@ function get_binary_from_branch() {
 }
 
 function get_binary_from_url() {
-    local url download_path curl_args
+    local url download_filename download_path curl_args
     readonly url="${1}"
     echo -e "Downloading:\t\t${url}"
 
-    readonly download_path="/tmp/otelcol-sumo"
+    download_filename=$(basename "${url}")
+    readonly download_filename
+    readonly download_path="/tmp/${download_filename}"
     curl_args=(
         "-fL"
         "--connect-timeout" "5"
@@ -1009,9 +1025,16 @@ readonly OS_TYPE ARCH_TYPE
 echo -e "Detected OS type:\t${OS_TYPE}"
 echo -e "Detected architecture:\t${ARCH_TYPE}"
 
+if [ "${FIPS}" == "true" ]; then
+    if [ "${OS_TYPE}" != "linux" ] || [ "${ARCH_TYPE}" != "amd64" ]; then
+        echo "Error: The FIPS-approved binary is only available for linux/amd64"
+        exit 1
+    fi
+fi
+
 echo -e "Getting installed version..."
 INSTALLED_VERSION="$(get_installed_version)"
-echo -e "Installed version:\t${INSTALLED_VERSION}"
+echo -e "Installed version:\t${INSTALLED_VERSION:-none}"
 
 echo -e "Getting versions..."
 VERSIONS="$(get_versions)"
@@ -1059,10 +1082,17 @@ else
         fi
     fi
 
+    # Add -fips to the suffix if necessary
+    binary_suffix="${OS_TYPE}_${ARCH_TYPE}"
+    if [ "${FIPS}" == "true" ]; then
+        echo "Getting FIPS-compliant binary"
+        binary_suffix="fips-${binary_suffix}"
+    fi
+
     if [[ -n "${BINARY_BRANCH}" ]]; then
-        get_binary_from_branch "${BINARY_BRANCH}" "otelcol-sumo-${OS_TYPE}_${ARCH_TYPE}"
+        get_binary_from_branch "${BINARY_BRANCH}" "otelcol-sumo-${binary_suffix}"
     else
-        LINK="https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${VERSION}/otelcol-sumo-${VERSION}-${OS_TYPE}_${ARCH_TYPE}"
+        LINK="https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${VERSION}/otelcol-sumo-${VERSION}-${binary_suffix}"
         readonly LINK
 
         get_binary_from_url "${LINK}"

@@ -112,7 +112,7 @@ func newSourceProcessor(cfg *Config) *sourceProcessor {
 
 func (sp *sourceProcessor) fillOtherMeta(atts pcommon.Map) {
 	if sp.collector != "" {
-		atts.PutString(collectorKey, sp.collector)
+		atts.PutStr(collectorKey, sp.collector)
 	}
 }
 
@@ -237,8 +237,8 @@ func (sp *sourceProcessor) ProcessLogs(ctx context.Context, md plog.Logs) (plog.
 					}
 
 					// Extract `stream` and `time` as record level attributes
-					log.Attributes().PutString("stream", dockerLog.Stream)
-					log.Attributes().PutString("time", dockerLog.Time)
+					log.Attributes().PutStr("stream", dockerLog.Stream)
+					log.Attributes().PutStr("time", dockerLog.Time)
 
 					// Set log body to `log` content
 					log.Body().SetStr(strings.TrimSpace(dockerLog.Log))
@@ -319,11 +319,11 @@ func (sp *sourceProcessor) enrichPodName(atts *pcommon.Map) {
 	if found && len(podParts) > 2 {
 		podTemplateHash := podTemplateHashAttr.Str()
 		if podTemplateHash == podParts[len(podParts)-2] || SafeEncodeString(podTemplateHash) == podParts[len(podParts)-2] {
-			atts.PutString(sp.keys.podNameKey, strings.Join(podParts[:len(podParts)-2], "-"))
+			atts.PutStr(sp.keys.podNameKey, strings.Join(podParts[:len(podParts)-2], "-"))
 			return
 		}
 	}
-	atts.PutString(sp.keys.podNameKey, strings.Join(podParts[:len(podParts)-1], "-"))
+	atts.PutStr(sp.keys.podNameKey, strings.Join(podParts[:len(podParts)-1], "-"))
 }
 
 // matchFieldByRegex searches the provided attribute map for a particular field

@@ -40,14 +40,14 @@ func NewFactory() component.ExtensionFactory {
 	)
 }
 
-func createDefaultConfig() config.Extension {
+func createDefaultConfig() component.ExtensionConfig {
 	defaultCredsPath, err := credentials.GetDefaultCollectorCredentialsDirectory()
 	if err != nil {
 		return nil
 	}
 
 	return &Config{
-		ExtensionSettings:             config.NewExtensionSettings(config.NewComponentID(typeStr)),
+		ExtensionSettings:             config.NewExtensionSettings(component.NewID(typeStr)),
 		ApiBaseUrl:                    DefaultApiBaseUrl,
 		HeartBeatInterval:             DefaultHeartbeatInterval,
 		CollectorCredentialsDirectory: defaultCredsPath,
@@ -63,7 +63,7 @@ func createDefaultConfig() config.Extension {
 	}
 }
 
-func createExtension(_ context.Context, params component.ExtensionCreateSettings, cfg config.Extension) (component.Extension, error) {
+func createExtension(_ context.Context, params component.ExtensionCreateSettings, cfg component.ExtensionConfig) (component.Extension, error) {
 	config := cfg.(*Config)
 	return newSumologicExtension(config, params.Logger)
 }

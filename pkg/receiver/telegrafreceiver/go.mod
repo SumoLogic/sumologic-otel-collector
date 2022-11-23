@@ -6,8 +6,8 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/influxdata/telegraf v1.24.3
 	github.com/stretchr/testify v1.8.1
-	go.opentelemetry.io/collector v0.62.0
-	go.opentelemetry.io/collector/pdata v0.62.0
+	go.opentelemetry.io/collector v0.64.0
+	go.opentelemetry.io/collector/pdata v0.64.0
 	go.uber.org/zap v1.23.0
 )
 
@@ -79,8 +79,8 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/karrick/godirwalk v1.17.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.15.11 // indirect
-	github.com/knadh/koanf v1.4.3 // indirect
+	github.com/klauspost/compress v1.15.12 // indirect
+	github.com/knadh/koanf v1.4.4 // indirect
 	github.com/lufia/plan9stats v0.0.0-20220913051719-115f729f3c8c // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
@@ -105,7 +105,7 @@ require (
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/prometheus v0.38.0 // indirect
-	github.com/shirou/gopsutil/v3 v3.22.9 // indirect
+	github.com/shirou/gopsutil/v3 v3.22.10 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/sleepinggenius2/gosmi v0.4.4 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
@@ -122,9 +122,9 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.mongodb.org/mongo-driver v1.10.2 // indirect
-	go.opentelemetry.io/otel v1.10.0 // indirect
-	go.opentelemetry.io/otel/metric v0.32.1 // indirect
-	go.opentelemetry.io/otel/trace v1.10.0 // indirect
+	go.opentelemetry.io/otel v1.11.1 // indirect
+	go.opentelemetry.io/otel/metric v0.33.0 // indirect
+	go.opentelemetry.io/otel/trace v1.11.1 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be // indirect
@@ -142,4 +142,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.24.3-sumo-2
+replace github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.24.3-sumo-3

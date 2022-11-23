@@ -20,6 +20,7 @@ type installOptions struct {
 	tags              map[string]string
 	skipConfig        bool
 	skipInstallToken  bool
+	fips              bool
 	envs              map[string]string
 	uninstall         bool
 	purge             bool
@@ -39,6 +40,10 @@ func (io *installOptions) string() []string {
 
 	if io.autoconfirm {
 		opts = append(opts, "--yes")
+	}
+
+	if io.fips {
+		opts = append(opts, "--fips")
 	}
 
 	if io.skipSystemd {

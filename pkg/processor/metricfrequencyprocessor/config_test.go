@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/service/servicetest"
 )
 
@@ -22,7 +22,7 @@ func TestLoadConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	id := config.NewComponentID("metric_frequency")
+	id := component.NewID("metric_frequency")
 
 	assert.Equal(t, cfg.Processors[id], createDefaultConfig())
 }

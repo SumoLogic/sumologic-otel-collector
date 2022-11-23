@@ -14,7 +14,10 @@
 
 package sumologicschemaprocessor
 
-import "go.opentelemetry.io/collector/config"
+import (
+	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/config"
+)
 
 type Config struct {
 	config.ProcessorSettings `mapstructure:",squash"`
@@ -31,11 +34,11 @@ const (
 )
 
 // Ensure the Config struct satisfies the config.Processor interface.
-var _ config.Processor = (*Config)(nil)
+var _ component.ProcessorConfig = (*Config)(nil)
 
-func createDefaultConfig() config.Processor {
+func createDefaultConfig() component.ProcessorConfig {
 	return &Config{
-		ProcessorSettings:           config.NewProcessorSettings(config.NewComponentID(typeStr)),
+		ProcessorSettings:           config.NewProcessorSettings(component.NewID(typeStr)),
 		AddCloudNamespace:           defaultAddCloudNamespace,
 		TranslateAttributes:         defaultTranslateAttributes,
 		TranslateTelegrafAttributes: defaultTranslateTelegrafAttributes,

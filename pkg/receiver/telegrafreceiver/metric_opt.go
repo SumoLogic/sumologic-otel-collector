@@ -92,7 +92,7 @@ func handleDataPoints(dps pmetric.NumberDataPointSlice, opts options) {
 
 func insertTagToPdataStringMapOpt(tag *telegraf.Tag) func(attributeMap pcommon.Map) {
 	return func(sm pcommon.Map) {
-		sm.PutString(tag.Key, tag.Value)
+		sm.PutStr(tag.Key, tag.Value)
 	}
 }
 
@@ -125,7 +125,7 @@ func WithTag(tag *telegraf.Tag) MetricOpt {
 func insertTagsToPdataStringMapOpt(tags []*telegraf.Tag) func(attributeMap pcommon.Map) {
 	return func(sm pcommon.Map) {
 		for _, tag := range tags {
-			sm.PutString(tag.Key, tag.Value)
+			sm.PutStr(tag.Key, tag.Value)
 		}
 	}
 }

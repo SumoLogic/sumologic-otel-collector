@@ -26,7 +26,6 @@ import (
 	"go.opentelemetry.io/collector/client"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	conventions "go.opentelemetry.io/collector/model/semconv/v1.5.0"
@@ -40,7 +39,7 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube"
 )
 
-func newTracesProcessor(cfg config.Processor, next consumer.Traces, options ...Option) (component.TracesProcessor, error) {
+func newTracesProcessor(cfg component.ProcessorConfig, next consumer.Traces, options ...Option) (component.TracesProcessor, error) {
 	opts := append(options, withKubeClientProvider(newFakeClient))
 	return createTracesProcessorWithOptions(
 		context.Background(),
@@ -53,7 +52,7 @@ func newTracesProcessor(cfg config.Processor, next consumer.Traces, options ...O
 	)
 }
 
-func newMetricsProcessor(cfg config.Processor, nextMetricsConsumer consumer.Metrics, options ...Option) (component.MetricsProcessor, error) {
+func newMetricsProcessor(cfg component.ProcessorConfig, nextMetricsConsumer consumer.Metrics, options ...Option) (component.MetricsProcessor, error) {
 	opts := append(options, withKubeClientProvider(newFakeClient))
 	return createMetricsProcessorWithOptions(
 		context.Background(),
@@ -66,7 +65,7 @@ func newMetricsProcessor(cfg config.Processor, nextMetricsConsumer consumer.Metr
 	)
 }
 
-func newLogsProcessor(cfg config.Processor, nextLogsConsumer consumer.Logs, options ...Option) (component.LogsProcessor, error) {
+func newLogsProcessor(cfg component.ProcessorConfig, nextLogsConsumer consumer.Logs, options ...Option) (component.LogsProcessor, error) {
 	opts := append(options, withKubeClientProvider(newFakeClient))
 	return createLogsProcessorWithOptions(
 		context.Background(),
@@ -112,7 +111,7 @@ type multiTest struct {
 
 func newMultiTest(
 	t *testing.T,
-	cfg config.Processor,
+	cfg component.ProcessorConfig,
 	errFunc func(err error),
 	options ...Option,
 ) *multiTest {
@@ -289,26 +288,26 @@ func generateLogs(resourceFunc ...generateResourceFunc) plog.Logs {
 
 func withPassthroughIP(passthroughIP string) generateResourceFunc {
 	return func(res pcommon.Resource) {
-		res.Attributes().PutString(k8sIPLabelName, passthroughIP)
+		res.Attributes().PutStr(k8sIPLabelName, passthroughIP)
 	}
 }
 
 func withHostname(hostname string) generateResourceFunc {
 	return func(res pcommon.Resource) {
-		res.Attributes().PutString(conventions.AttributeHostName, hostname)
+		res.Attributes().PutStr(conventions.AttributeHostName, hostname)
 	}
 }
 
 func withPodUID(uid string) generateResourceFunc {
 	return func(res pcommon.Resource) {
-		res.Attributes().PutString("k8s.pod.uid", uid)
+		res.Attributes().PutStr("k8s.pod.uid", uid)
 	}
 }
 
 func withPodAndNamespace(pod string, namespace string) generateResourceFunc {
 	return func(res pcommon.Resource) {
-		res.Attributes().PutString("k8s.pod.name", pod)
-		res.Attributes().PutString("k8s.namespace.name", namespace)
+		res.Attributes().PutStr("k8s.pod.name", pod)
+		res.Attributes().PutStr("k8s.namespace.name", namespace)
 	}
 }
 
@@ -520,10 +519,10 @@ func TestIPSourceWithoutPodAssociation(t *testing.T) {
 
 			for _, res := range resources {
 				if tc.resourceK8SIP != "" {
-					res.Attributes().PutString(k8sIPLabelName, tc.resourceK8SIP)
+					res.Attributes().PutStr(k8sIPLabelName, tc.resourceK8SIP)
 				}
 				if tc.resourceIP != "" {
-					res.Attributes().PutString(clientIPLabelName, tc.resourceIP)
+					res.Attributes().PutStr(clientIPLabelName, tc.resourceIP)
 				}
 			}
 
@@ -614,7 +613,7 @@ func TestIPSourceWithPodAssociation(t *testing.T) {
 			}
 
 			for _, res := range resources {
-				res.Attributes().PutString(tc.labelName, tc.labelValue)
+				res.Attributes().PutStr(tc.labelName, tc.labelValue)
 			}
 
 			m.testConsume(ctx, traces, metrics, logs, nil)

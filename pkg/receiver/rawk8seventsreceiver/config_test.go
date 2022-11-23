@@ -21,8 +21,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/service/servicetest"
 )
 
@@ -39,5 +39,5 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Len(t, cfg.Receivers, 2)
 
-	assert.Equal(t, cfg.Receivers[config.NewComponentID(typeStr)], factory.CreateDefaultConfig())
+	assert.Equal(t, cfg.Receivers[component.NewID(typeStr)], factory.CreateDefaultConfig())
 }

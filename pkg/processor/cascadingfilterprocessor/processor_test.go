@@ -26,6 +26,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -49,7 +50,7 @@ var testPolicy = []cfconfig.TraceAcceptCfg{{
 }}
 
 func buildBasicCFSP(t *testing.T, numTraces uint64) *cascadingFilterSpanProcessor {
-	id1 := config.NewComponentIDWithName("cascading_filter", "1")
+	id1 := component.NewIDWithName("cascading_filter", "1")
 	ps1 := config.NewProcessorSettings(id1)
 	cfg := cfconfig.Config{
 		ProcessorSettings:       &ps1,

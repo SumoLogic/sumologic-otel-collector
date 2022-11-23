@@ -4,35 +4,10 @@ package sumologic_scripts_tests
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
-func tearDown(t *testing.T) {
-	t.Log("Cleaning up")
-	ch := check{
-		test: t,
-		installOptions: installOptions{
-			uninstall:   true,
-			purge:       true,
-			autoconfirm: true,
-		},
-	}
-
-	_, _, err := runScript(ch)
-	require.NoError(t, err)
-}
-
 func TestInstallScript(t *testing.T) {
-	for _, tt := range []struct {
-		name              string
-		options           installOptions
-		preChecks         []checkFunc
-		postChecks        []checkFunc
-		preActions        []checkFunc
-		conditionalChecks []condCheckFunc
-		installCode       int
-	}{
+	for _, spec := range []testSpec{
 		{
 			name:        "no arguments",
 			options:     installOptions{},
@@ -365,36 +340,8 @@ func TestInstallScript(t *testing.T) {
 			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated},
 		},
 	} {
-		t.Run(tt.name, func(t *testing.T) {
-			ch := check{
-				test:                t,
-				installOptions:      tt.options,
-				expectedInstallCode: tt.installCode,
-			}
-
-			for _, a := range tt.conditionalChecks {
-				if !a(ch) {
-					t.SkipNow()
-				}
-			}
-
-			defer tearDown(t)
-
-			for _, a := range tt.preActions {
-				a(ch)
-			}
-
-			for _, c := range tt.preChecks {
-				c(ch)
-			}
-
-			ch.code, ch.output, ch.err = runScript(ch)
-			checkRun(ch)
-
-			for _, c := range tt.postChecks {
-				c(ch)
-			}
-
+		t.Run(spec.name, func(t *testing.T) {
+			runTest(t, &spec)
 		})
 	}
 }

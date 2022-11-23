@@ -40,9 +40,9 @@ func NewFactory() component.ReceiverFactory {
 		component.WithLogsReceiver(createLogsReceiver, stabilityLevel))
 }
 
-func createDefaultConfig() config.Receiver {
+func createDefaultConfig() component.ReceiverConfig {
 	return &Config{
-		ReceiverSettings: config.NewReceiverSettings(config.NewComponentID(typeStr)),
+		ReceiverSettings: config.NewReceiverSettings(component.NewID(typeStr)),
 		APIConfig: APIConfig{
 			AuthType: AuthTypeServiceAccount,
 		},
@@ -56,7 +56,7 @@ func createDefaultConfig() config.Receiver {
 func createLogsReceiver(
 	ctx context.Context,
 	params component.ReceiverCreateSettings,
-	cfg config.Receiver,
+	cfg component.ReceiverConfig,
 	consumer consumer.Logs,
 ) (component.LogsReceiver, error) {
 
@@ -67,7 +67,7 @@ func createLogsReceiver(
 func createLogsReceiverWithClient(
 	_ context.Context,
 	params component.ReceiverCreateSettings,
-	cfg config.Receiver,
+	cfg component.ReceiverConfig,
 	consumer consumer.Logs,
 	clientFactory func(APIConfig) (k8s.Interface, error),
 ) (component.LogsReceiver, error) {
