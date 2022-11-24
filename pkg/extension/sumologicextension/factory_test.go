@@ -47,7 +47,7 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 		},
 	}, cfg)
 
-	assert.NoError(t, cfg.Validate())
+	assert.NoError(t, component.ValidateConfig(cfg))
 
 	ccfg := cfg.(*Config)
 	ccfg.CollectorName = "test_collector"
