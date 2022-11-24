@@ -34,7 +34,7 @@ func TestLoadConfig(t *testing.T) {
 	factory := NewFactory()
 	factories.Processors[component.Type(typeStr)] = factory
 
-	require.NoError(t, factory.CreateDefaultConfig().Validate())
+	require.NoError(t, component.ValidateConfig(factory.CreateDefaultConfig()))
 
 	cfg, err := servicetest.LoadConfig(
 		path.Join(".", "testdata", "config.yaml"),

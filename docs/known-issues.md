@@ -74,4 +74,4 @@ or only read files created or modified after a specific point in time.
 
 There is currently no workaround for this.
 
-[filelogreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.64.0/receiver/filelogreceiver/README.md
+[filelogreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.66.0/receiver/filelogreceiver/README.md

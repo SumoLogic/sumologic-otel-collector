@@ -16,6 +16,7 @@ package cascadingfilterprocessor
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"sort"
 	"sync"
@@ -620,7 +621,7 @@ func TestMultipleBatchesAreCombinedIntoOne(t *testing.T) {
 	receivedTraces := msp.AllTraces()
 	for i, traceID := range traceIds {
 		trace := findTrace(receivedTraces, traceID)
-		require.NotNil(t, trace, "Trace was not received. TraceId %s", traceID.HexString())
+		require.NotNil(t, trace, "Trace was not received. TraceId %s", hex.EncodeToString(traceID[:]))
 		require.EqualValues(t, i+1, trace.SpanCount(), "The trace should have all of its spans in a single batch")
 
 		expected := expectedSpanIds[i]

@@ -105,7 +105,10 @@ func newTraceStringAttrs(nodeAttrs map[string]interface{}, spanAttrKey string, s
 	traces := ptrace.NewTraces()
 	rs := traces.ResourceSpans().AppendEmpty()
 	m := pcommon.NewMap()
-	m.FromRaw(nodeAttrs)
+	err := m.FromRaw(nodeAttrs)
+	if err != nil {
+		return &TraceData{}
+	}
 	m.CopyTo(rs.Resource().Attributes())
 	ss := rs.ScopeSpans().AppendEmpty()
 	span := ss.Spans().AppendEmpty()

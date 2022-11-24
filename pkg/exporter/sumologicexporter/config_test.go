@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/confighttp"
 )
 
@@ -122,7 +123,7 @@ Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-coll
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.cfg.Validate()
+			err := component.ValidateConfig(tc.cfg)
 
 			if tc.expectedError != nil {
 				assert.EqualError(t, err, tc.expectedError.Error())
