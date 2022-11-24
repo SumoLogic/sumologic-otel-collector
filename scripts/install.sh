@@ -410,6 +410,25 @@ function get_arch_type() {
     echo "${arch_type}"
 }
 
+# Verify that the otelcol install is correct
+function verify_installation() {
+    local otel_command
+    if command -v otelcol-sumo; then
+        otel_command="otelcol-sumo"
+    else
+        echo "WARNING: ${SUMO_BINARY_PATH} is not in \$PATH"
+        otel_command="${SUMO_BINARY_PATH}"
+    fi
+    echo "Running ${otel_command} --version to verify installation"
+    OUTPUT="$(${otel_command} --version || true)"
+    readonly OUTPUT
+
+    if [[ -z "${OUTPUT}" ]]; then
+        echo "Installation failed. Please try again"
+        exit 1
+    fi
+}
+
 # Get installed version of otelcol-sumo
 function get_installed_version() {
     if [[ -f "${SUMO_BINARY_PATH}" ]]; then
@@ -1088,13 +1107,7 @@ else
     echo -e "Setting ${SUMO_BINARY_PATH} to be executable"
     chmod +x "${SUMO_BINARY_PATH}"
 
-    OUTPUT="$(otelcol-sumo --version || true)"
-    readonly OUTPUT
-
-    if [[ -z "${OUTPUT}" ]]; then
-        echo "Installation failed. Please try again"
-        exit 1
-    fi
+    verify_installation
 
     echo -e "Installation succeded:\t$(otelcol-sumo --version)"
 fi
