@@ -20,11 +20,11 @@ exporters:
   # Since include-code was removed we need to manually add all core components that we want to include:
   # https://github.com/open-telemetry/opentelemetry-collector/pull/4616
   - import: go.opentelemetry.io/collector/exporter/loggingexporter
-    gomod: go.opentelemetry.io/collector v0.64.1
+    gomod: go.opentelemetry.io/collector v0.66.0
   - import: go.opentelemetry.io/collector/exporter/otlpexporter
-    gomod: go.opentelemetry.io/collector v0.64.1
+    gomod: go.opentelemetry.io/collector v0.66.0
   - import: go.opentelemetry.io/collector/exporter/otlphttpexporter
-    gomod: go.opentelemetry.io/collector v0.64.1
+    gomod: go.opentelemetry.io/collector v0.66.0
 
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/carbonexporter v0.66.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter v0.66.0"
@@ -52,9 +52,9 @@ processors:
   # Since include-code was removed we need to manually add all core components that we want to include:
   # https://github.com/open-telemetry/opentelemetry-collector/pull/4616
   - import: go.opentelemetry.io/collector/processor/batchprocessor
-    gomod: go.opentelemetry.io/collector v0.64.1
+    gomod: go.opentelemetry.io/collector v0.66.0
   - import: go.opentelemetry.io/collector/processor/memorylimiterprocessor
-    gomod: go.opentelemetry.io/collector v0.64.1
+    gomod: go.opentelemetry.io/collector v0.66.0
 
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.66.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/processor/cumulativetodeltaprocessor v0.66.0"
@@ -89,7 +89,7 @@ receivers:
   # Since include-code was removed we need to manually add all core components that we want to include:
   # https://github.com/open-telemetry/opentelemetry-collector/pull/4616
   - import: go.opentelemetry.io/collector/receiver/otlpreceiver
-    gomod: go.opentelemetry.io/collector v0.64.1
+    gomod: go.opentelemetry.io/collector v0.66.0
 
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/activedirectorydsreceiver v0.66.0"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/aerospikereceiver v0.66.0"
@@ -165,9 +165,9 @@ extensions:
   # Since include-code was removed we need to manually add all core components that we want to include:
   # https://github.com/open-telemetry/opentelemetry-collector/pull/4616
   - import: go.opentelemetry.io/collector/extension/zpagesextension
-    gomod: go.opentelemetry.io/collector v0.64.1
+    gomod: go.opentelemetry.io/collector v0.66.0
   - import: go.opentelemetry.io/collector/extension/ballastextension
-    gomod: go.opentelemetry.io/collector v0.64.1
+    gomod: go.opentelemetry.io/collector v0.66.0
 
   # Upstream extensions:
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/asapauthextension v0.66.0"
