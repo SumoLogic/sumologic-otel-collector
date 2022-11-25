@@ -79,7 +79,7 @@ USER_API_URL=""
 USER_TOKEN=""
 USER_FIELDS=""
 
-LOG_FILE_PATHS="/var/log/ /srv/log/"
+ACL_LOG_FILE_PATHS="/var/log/ /srv/log/"
 
 SYSTEM_USER="otelcol-sumo"
 
@@ -943,14 +943,15 @@ function get_binary_from_url() {
 
 function set_acl_on_log_paths() {
     if command -v setfacl &> /dev/null; then
-         for path in ${LOG_FILE_PATHS}; do
-              echo -e "Running: setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${path}"
-              setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${path}
-         done
+        for log_path in ${ACL_LOG_FILE_PATHS}; do
+	    if [ -d "$log_path" ]; then
+		echo -e "Running: setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}"
+		setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}
+	    fi
+        done
     else
-         echo "setfacl command not found, skipping ACL creation for system log file paths."
+        echo "setfacl command not found, skipping ACL creation for system log file paths."
     fi
-
 }
 
 ############################ Main code
