@@ -12,6 +12,7 @@ This release introduces the following breaking changes:
 - `filelog` receiver: has been removed from sub-parsers ([upgrade guide][upgrade_guide_unreleased]) [#769]
 - `sending_queue`: require explicit storage set ([upgrade guide][upgrade_guide_unreleased]) [#769]
 - `apache` receiver: turn on feature gates for resource attributes ([upgrade guide][upgrade_guide_unreleased]) [#839]
+- `elasticsearch` receiver: turn on feature gates for resource attributes ([upgrade guide][upgrade_guide_unreleased]) [#848]
 
 ### Added
 
@@ -58,6 +59,7 @@ This release introduces the following breaking changes:
 [#844]: https://github.com/SumoLogic/sumologic-otel-collector/pull/844
 [#849]: https://github.com/SumoLogic/sumologic-otel-collector/pull/849
 [#839]: https://github.com/SumoLogic/sumologic-otel-collector/pull/839
+[#848]: https://github.com/SumoLogic/sumologic-otel-collector/pull/848
 [upgrade_guide_unreleased]: ./docs/upgrading.md#unreleased
 
 ## [v0.57.2-sumo-1]
