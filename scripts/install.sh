@@ -427,6 +427,8 @@ function verify_installation() {
         echo "Installation failed. Please try again"
         exit 1
     fi
+
+    echo -e "Installation succeded:\t$(${otel_command} --version)"
 }
 
 # Get installed version of otelcol-sumo
@@ -572,8 +574,8 @@ function uninstall() {
 
     # disable systemd service
     if [[ -f "${SYSTEMD_CONFIG}" ]]; then
-        systemctl stop otelcol-sumo
-        systemctl disable otelcol-sumo
+        systemctl stop otelcol-sumo || true
+        systemctl disable otelcol-sumo || true
     fi
 
     # remove binary
@@ -1108,8 +1110,6 @@ else
     chmod +x "${SUMO_BINARY_PATH}"
 
     verify_installation
-
-    echo -e "Installation succeded:\t$(otelcol-sumo --version)"
 fi
 
 if [[ "${DOWNLOAD_ONLY}" == "true" ]]; then
@@ -1168,6 +1168,13 @@ if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then
 fi
 
 mv "${TMP_SYSTEMD_CONFIG}" "${SYSTEMD_CONFIG}"
+
+if command -v sestatus && sestatus; then
+    echo "SELinux is enabled, relabeling binary and systemd unit file"
+    semanage fcontext -m -t bin_t /usr/local/bin/otelcol-sumo
+    restorecon -v "${SUMO_BINARY_PATH}"
+    restorecon -v "${SYSTEMD_CONFIG}"
+fi
 
 echo 'Enable otelcol-sumo service'
 systemctl enable otelcol-sumo
