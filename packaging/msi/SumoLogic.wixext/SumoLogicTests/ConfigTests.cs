@@ -9,7 +9,7 @@ namespace SumoLogicTests
     public class ConfigTests
     {
         private static Random random = new Random();
-        
+
         public static string RandomString(int length)
         {
             const string chars = "abcdefghijklmnopqrstuvwxyz";
