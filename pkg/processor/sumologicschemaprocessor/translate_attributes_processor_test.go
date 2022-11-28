@@ -147,7 +147,8 @@ var (
 )
 
 func BenchmarkTranslateAttributes(b *testing.B) {
-	attributes.FromRaw(bench_pdata_attributes)
+	err := attributes.FromRaw(bench_pdata_attributes)
+	require.NoError(b, err)
 	for i := 0; i < b.N; i++ {
 		translateAttributes(attributes)
 	}

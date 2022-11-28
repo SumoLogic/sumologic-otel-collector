@@ -112,7 +112,7 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 
 				for {
 					switch state := app.GetState(); state {
-					case service.Running:
+					case service.StateRunning:
 						t.Log("App is in the running state, calling .Shutdown()...")
 						time.Sleep(time.Second)
 						app.Shutdown()

@@ -42,8 +42,5 @@ type Config struct {
 
 // Validate checks if the receiver configuration is valid
 func (cfg *Config) Validate() error {
-	if err := cfg.ReceiverSettings.Validate(); err != nil {
-		return err
-	}
 	return cfg.APIConfig.Validate()
 }

@@ -288,7 +288,7 @@ function check_dependencies() {
         error=1
     fi
 
-    for cmd in echo sed curl head grep sort mv chmod envsubst getopts hostname bc touch xargs; do
+    for cmd in echo sed curl head grep sort mv chmod getopts hostname bc touch xargs; do
         if ! command -v "${cmd}" &> /dev/null; then
             echo "Command '${cmd}' not found. Please install it."
             error=1
@@ -410,6 +410,27 @@ function get_arch_type() {
         ;;
     esac
     echo "${arch_type}"
+}
+
+# Verify that the otelcol install is correct
+function verify_installation() {
+    local otel_command
+    if command -v otelcol-sumo; then
+        otel_command="otelcol-sumo"
+    else
+        echo "WARNING: ${SUMO_BINARY_PATH} is not in \$PATH"
+        otel_command="${SUMO_BINARY_PATH}"
+    fi
+    echo "Running ${otel_command} --version to verify installation"
+    OUTPUT="$(${otel_command} --version || true)"
+    readonly OUTPUT
+
+    if [[ -z "${OUTPUT}" ]]; then
+        echo "Installation failed. Please try again"
+        exit 1
+    fi
+
+    echo -e "Installation succeded:\t$(${otel_command} --version)"
 }
 
 # Get installed version of otelcol-sumo
@@ -555,8 +576,8 @@ function uninstall() {
 
     # disable systemd service
     if [[ -f "${SYSTEMD_CONFIG}" ]]; then
-        systemctl stop otelcol-sumo
-        systemctl disable otelcol-sumo
+        systemctl stop otelcol-sumo || true
+        systemctl disable otelcol-sumo || true
     fi
 
     # remove binary
@@ -1104,15 +1125,7 @@ else
     echo -e "Setting ${SUMO_BINARY_PATH} to be executable"
     chmod +x "${SUMO_BINARY_PATH}"
 
-    OUTPUT="$(otelcol-sumo --version || true)"
-    readonly OUTPUT
-
-    if [[ -z "${OUTPUT}" ]]; then
-        echo "Installation failed. Please try again"
-        exit 1
-    fi
-
-    echo -e "Installation succeded:\t$(otelcol-sumo --version)"
+    verify_installation
 fi
 
 if [[ "${DOWNLOAD_ONLY}" == "true" ]]; then
@@ -1174,6 +1187,13 @@ if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then
 fi
 
 mv "${TMP_SYSTEMD_CONFIG}" "${SYSTEMD_CONFIG}"
+
+if command -v sestatus && sestatus; then
+    echo "SELinux is enabled, relabeling binary and systemd unit file"
+    semanage fcontext -m -t bin_t /usr/local/bin/otelcol-sumo
+    restorecon -v "${SUMO_BINARY_PATH}"
+    restorecon -v "${SYSTEMD_CONFIG}"
+fi
 
 echo 'Enable otelcol-sumo service'
 systemctl enable otelcol-sumo

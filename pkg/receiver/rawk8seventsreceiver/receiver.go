@@ -370,7 +370,10 @@ func (r *rawK8sEventsReceiver) convertToLog(eventChange *eventChange) (plog.Logs
 
 	// for compatibility with the FluentD plugin's data format, we need to put the event data under the "object" key
 	pdataObjectMap := pcommon.NewMap()
-	pdataObjectMap.FromRaw(map[string]interface{}{"object": eventMap})
+	err = pdataObjectMap.FromRaw(map[string]interface{}{"object": eventMap})
+	if err != nil {
+		return ld, err
+	}
 
 	lr.SetTimestamp(pcommon.NewTimestampFromTime(getEventTimestamp(event)))
 

@@ -11,13 +11,14 @@ This release introduces the following breaking changes:
 
 - `filelog` receiver: has been removed from sub-parsers ([upgrade guide][upgrade_guide_unreleased]) [#769]
 - `sending_queue`: require explicit storage set ([upgrade guide][upgrade_guide_unreleased]) [#769]
-- `apache` receiver: turn on feature gates for resource attributes ([upgrade guide][upgrade_guide_unreleased])
+- `apache` receiver: turn on feature gates for resource attributes ([upgrade guide][upgrade_guide_unreleased]) [#839]
+- `elasticsearch` receiver: turn on feature gates for resource attributes ([upgrade guide][upgrade_guide_unreleased]) [#848]
 
 ### Added
 
 - feat: add glob config provider [#713]
 - feat(build): validate FIPS mode at build time and runtime [#693]
-- feat(ci): add windows builds to dev & pr jobs
+- feat(ci): add windows builds to dev & pr jobs [#762]
 
 ### Changed
 
@@ -28,7 +29,7 @@ This release introduces the following breaking changes:
 - chore(deps): bump go-boringcrypto to 1.18.7b7 [#746]
 - feat(sourceprocessor): ensure that '_collector' is set before other source headers [#824]
 - chore(deps): upgrade Telegraf to 1.24.3-sumo-1 [#828]
-- chore: upgrade OpenTelemetry Contrib Core to v0.64.0 [#826]
+- chore: upgrade OT core to v0.66.0 [#769] [#826] [#844] [#849]
 
 ### Removed
 
@@ -49,10 +50,16 @@ This release introduces the following breaking changes:
 [#724]: https://github.com/SumoLogic/sumologic-otel-collector/pull/724
 [#745]: https://github.com/SumoLogic/sumologic-otel-collector/pull/745
 [#746]: https://github.com/SumoLogic/sumologic-otel-collector/pull/746
+[#762]: https://github.com/SumoLogic/sumologic-otel-collector/pull/762
+[#769]: https://github.com/SumoLogic/sumologic-otel-collector/pull/769
 [#693]: https://github.com/SumoLogic/sumologic-otel-collector/pull/693
 [#824]: https://github.com/SumoLogic/sumologic-otel-collector/pull/824
 [#828]: https://github.com/SumoLogic/sumologic-otel-collector/pull/828
 [#826]: https://github.com/SumoLogic/sumologic-otel-collector/pull/826
+[#844]: https://github.com/SumoLogic/sumologic-otel-collector/pull/844
+[#849]: https://github.com/SumoLogic/sumologic-otel-collector/pull/849
+[#839]: https://github.com/SumoLogic/sumologic-otel-collector/pull/839
+[#848]: https://github.com/SumoLogic/sumologic-otel-collector/pull/848
 [upgrade_guide_unreleased]: ./docs/upgrading.md#unreleased
 
 ## [v0.57.2-sumo-1]

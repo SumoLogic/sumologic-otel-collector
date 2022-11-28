@@ -64,5 +64,5 @@ func TestCreateDefaultConfig(t *testing.T) {
 		DropRoutingAttribute: "",
 	})
 
-	assert.NoError(t, cfg.Validate())
+	assert.NoError(t, component.ValidateConfig(cfg))
 }
