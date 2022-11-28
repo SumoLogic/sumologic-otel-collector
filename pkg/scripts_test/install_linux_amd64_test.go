@@ -17,6 +17,14 @@ func checkBinaryIsFIPS(c check) {
 	require.Contains(c.test, string(output), "fips")
 }
 
+func checkVarLogHasACL(c check) {
+	cmd := exec.Command("/usr/bin/getfacl", "/var/log")
+
+	output, err := cmd.Output()
+	require.NoError(c.test, err, "error while checking /var/log acl")
+	require.Contains(c.test, string(output), "user:otelcol-sumo:r-x")
+}
+
 func TestInstallScriptLinuxAmd64(t *testing.T) {
 	for _, spec := range []testSpec{
 		{
@@ -33,6 +41,7 @@ func TestInstallScriptLinuxAmd64(t *testing.T) {
 				checkUserConfigNotCreated,
 				checkSystemdConfigNotCreated,
 				checkUserNotExists,
+				checkVarLogHasACL,
 			},
 		},
 	} {
