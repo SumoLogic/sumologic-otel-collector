@@ -61,7 +61,7 @@
 
     <ComponentGroup Id="ProgramComponents" Directory="INSTALLFOLDER">
       <Component Directory="BinFolder">
-        <File Source="!(bindpath.binaries)\otelcol-sumo.exe" />
+        <File Name="otelcol-sumo.exe" Source="!(bindpath.binaries)\$(OtelcolBinary)" />
 
         <!-- Add bin dir to System PATH -->
         <Environment Id="PATH" Name="PATH" Value="[INSTALLDIR]\bin" Permanent="yes" Part="last" Action="set" System="yes" />
