@@ -266,6 +266,7 @@ func TestInstallScript(t *testing.T) {
 				checkTokenInConfig,
 				checkSystemdConfigCreated,
 				checkUserExists,
+				checkVarLogACL,
 			},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
 			installCode:       3, // because of invalid install token
