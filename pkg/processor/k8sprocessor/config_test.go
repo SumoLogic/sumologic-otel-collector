@@ -20,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/service/servicetest"
@@ -31,9 +32,9 @@ func TestLoadConfig(t *testing.T) {
 	factories, err := componenttest.NopFactories()
 	require.NoError(t, err)
 	factory := NewFactory()
-	factories.Processors[config.Type(typeStr)] = factory
+	factories.Processors[component.Type(typeStr)] = factory
 
-	require.NoError(t, factory.CreateDefaultConfig().Validate())
+	require.NoError(t, component.ValidateConfig(factory.CreateDefaultConfig()))
 
 	cfg, err := servicetest.LoadConfig(
 		path.Join(".", "testdata", "config.yaml"),
@@ -43,20 +44,20 @@ func TestLoadConfig(t *testing.T) {
 	require.NotNil(t, cfg)
 	require.NoError(t, cfg.Validate())
 
-	p0 := cfg.Processors[config.NewComponentID(typeStr)]
+	p0 := cfg.Processors[component.NewID(typeStr)]
 	assert.EqualValues(t,
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(config.NewComponentID(typeStr)),
+			ProcessorSettings: config.NewProcessorSettings(component.NewID(typeStr)),
 			APIConfig:         k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
 			Extract:           ExtractConfig{Delimiter: ", "},
 		},
 		p0,
 	)
 
-	p1 := cfg.Processors[config.NewComponentIDWithName(typeStr, "2")]
+	p1 := cfg.Processors[component.NewIDWithName(typeStr, "2")]
 	assert.EqualValues(t,
 		&Config{
-			ProcessorSettings:  config.NewProcessorSettings(config.NewComponentIDWithName(typeStr, "2")),
+			ProcessorSettings:  config.NewProcessorSettings(component.NewIDWithName(typeStr, "2")),
 			APIConfig:          k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeKubeConfig},
 			Passthrough:        false,
 			OwnerLookupEnabled: true,

@@ -28,6 +28,10 @@ import (
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.uber.org/zap"
+
+	// Blank imports to register all the plugins
+	_ "github.com/influxdata/telegraf/plugins/inputs/all"
+	_ "github.com/influxdata/telegraf/plugins/parsers/all"
 )
 
 var (

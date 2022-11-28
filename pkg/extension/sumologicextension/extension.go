@@ -32,7 +32,6 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/configauth"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.uber.org/zap"
@@ -591,7 +590,7 @@ func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, h
 	return nil
 }
 
-func (se *SumologicExtension) ComponentID() config.ComponentID {
+func (se *SumologicExtension) ComponentID() component.ID {
 	return se.conf.ExtensionSettings.ID()
 }
 

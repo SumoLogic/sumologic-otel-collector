@@ -24,16 +24,16 @@ import (
 
 func TestTranslateAttributes(t *testing.T) {
 	attributes := pcommon.NewMap()
-	attributes.PutString("host.name", "testing-host")
-	attributes.PutString("host.id", "my-host-id")
-	attributes.PutString("host.type", "my-host-type")
-	attributes.PutString("k8s.cluster.name", "testing-cluster")
-	attributes.PutString("k8s.deployment.name", "my-deployment-name")
-	attributes.PutString("k8s.namespace.name", "my-namespace-name")
-	attributes.PutString("k8s.service.name", "my-service-name, other-service")
-	attributes.PutString("cloud.account.id", "my-account-id")
-	attributes.PutString("cloud.availability_zone", "my-zone")
-	attributes.PutString("cloud.region", "my-region")
+	attributes.PutStr("host.name", "testing-host")
+	attributes.PutStr("host.id", "my-host-id")
+	attributes.PutStr("host.type", "my-host-type")
+	attributes.PutStr("k8s.cluster.name", "testing-cluster")
+	attributes.PutStr("k8s.deployment.name", "my-deployment-name")
+	attributes.PutStr("k8s.namespace.name", "my-namespace-name")
+	attributes.PutStr("k8s.service.name", "my-service-name, other-service")
+	attributes.PutStr("cloud.account.id", "my-account-id")
+	attributes.PutStr("cloud.availability_zone", "my-zone")
+	attributes.PutStr("cloud.region", "my-region")
 	require.Equal(t, 10, attributes.Len())
 
 	translateAttributes(attributes)
@@ -73,9 +73,9 @@ func TestTranslateAttributesDoesNothingWhenAttributeDoesNotExist(t *testing.T) {
 
 func TestTranslateAttributesLeavesOtherAttributesUnchanged(t *testing.T) {
 	attributes := pcommon.NewMap()
-	attributes.PutString("one", "one1")
-	attributes.PutString("host.name", "host1")
-	attributes.PutString("three", "three1")
+	attributes.PutStr("one", "one1")
+	attributes.PutStr("host.name", "host1")
+	attributes.PutStr("three", "three1")
 	require.Equal(t, 3, attributes.Len())
 
 	translateAttributes(attributes)
@@ -88,8 +88,8 @@ func TestTranslateAttributesLeavesOtherAttributesUnchanged(t *testing.T) {
 
 func TestTranslateAttributesDoesNotOverwriteExistingAttribute(t *testing.T) {
 	attributes := pcommon.NewMap()
-	attributes.PutString("host", "host1")
-	attributes.PutString("host.name", "hostname1")
+	attributes.PutStr("host", "host1")
+	attributes.PutStr("host.name", "hostname1")
 	require.Equal(t, 2, attributes.Len())
 
 	translateAttributes(attributes)
@@ -101,9 +101,9 @@ func TestTranslateAttributesDoesNotOverwriteExistingAttribute(t *testing.T) {
 
 func TestTranslateAttributesDoesNotOverwriteMultipleExistingAttributes(t *testing.T) {
 	attributes := pcommon.NewMap()
-	attributes.PutString("host", "host1")
+	attributes.PutStr("host", "host1")
 	require.Equal(t, 1, attributes.Len())
-	attributes.PutString("host.name", "hostname1")
+	attributes.PutStr("host.name", "hostname1")
 	require.Equal(t, 2, attributes.Len())
 
 	translateAttributes(attributes)
@@ -147,7 +147,8 @@ var (
 )
 
 func BenchmarkTranslateAttributes(b *testing.B) {
-	attributes.FromRaw(bench_pdata_attributes)
+	err := attributes.FromRaw(bench_pdata_attributes)
+	require.NoError(b, err)
 	for i := 0; i < b.N; i++ {
 		translateAttributes(attributes)
 	}

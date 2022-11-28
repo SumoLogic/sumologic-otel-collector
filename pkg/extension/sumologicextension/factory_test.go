@@ -36,7 +36,7 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 	require.NoError(t, err)
 	defaultCredsPath := path.Join(homePath, credentials.DefaultCollectorCredentialsDirectory)
 	assert.Equal(t, &Config{
-		ExtensionSettings:             config.NewExtensionSettings(config.NewComponentID(typeStr)),
+		ExtensionSettings:             config.NewExtensionSettings(component.NewID(typeStr)),
 		HeartBeatInterval:             DefaultHeartbeatInterval,
 		ApiBaseUrl:                    DefaultApiBaseUrl,
 		CollectorCredentialsDirectory: defaultCredsPath,
@@ -47,7 +47,7 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 		},
 	}, cfg)
 
-	assert.NoError(t, cfg.Validate())
+	assert.NoError(t, component.ValidateConfig(cfg))
 
 	ccfg := cfg.(*Config)
 	ccfg.CollectorName = "test_collector"

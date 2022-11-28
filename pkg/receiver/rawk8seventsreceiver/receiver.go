@@ -24,7 +24,6 @@ import (
 
 	backoff "github.com/cenkalti/backoff/v4"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/extension/experimental/storage"
@@ -173,7 +172,7 @@ func (r *rawK8sEventsReceiver) getStorage(ctx context.Context, host component.Ho
 	}
 
 	var storageExtension storage.Extension
-	var storageExtensionId config.ComponentID
+	var storageExtensionId component.ID
 	for extentionId, extension := range host.GetExtensions() {
 		if se, ok := extension.(storage.Extension); ok {
 			if storageExtension != nil {
@@ -371,7 +370,10 @@ func (r *rawK8sEventsReceiver) convertToLog(eventChange *eventChange) (plog.Logs
 
 	// for compatibility with the FluentD plugin's data format, we need to put the event data under the "object" key
 	pdataObjectMap := pcommon.NewMap()
-	pdataObjectMap.FromRaw(map[string]interface{}{"object": eventMap})
+	err = pdataObjectMap.FromRaw(map[string]interface{}{"object": eventMap})
+	if err != nil {
+		return ld, err
+	}
 
 	lr.SetTimestamp(pcommon.NewTimestampFromTime(getEventTimestamp(event)))
 

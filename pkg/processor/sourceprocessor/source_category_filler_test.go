@@ -37,8 +37,8 @@ func TestFill(t *testing.T) {
 	cfg.SourceCategory = "source-%{k8s.namespace.name}-%{k8s.pod.uid}-cat"
 
 	attrs := pcommon.NewMap()
-	attrs.PutString("k8s.namespace.name", "ns-1")
-	attrs.PutString("k8s.pod.uid", "123asd")
+	attrs.PutStr("k8s.namespace.name", "ns-1")
+	attrs.PutStr("k8s.pod.uid", "123asd")
 
 	filler := newSourceCategoryFiller(cfg)
 	filler.fill(&attrs)
@@ -50,11 +50,11 @@ func TestFillWithAnnotations(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 
 	attrs := pcommon.NewMap()
-	attrs.PutString("k8s.namespace.name", "ns-1")
-	attrs.PutString("k8s.pod.uid", "123asd")
-	attrs.PutString("k8s.pod.annotation.sumologic.com/sourceCategory", "sc-from-annot-%{k8s.namespace.name}-%{k8s.pod.uid}")
-	attrs.PutString("k8s.pod.annotation.sumologic.com/sourceCategoryPrefix", "annoPrefix:")
-	attrs.PutString("k8s.pod.annotation.sumologic.com/sourceCategoryReplaceDash", "#")
+	attrs.PutStr("k8s.namespace.name", "ns-1")
+	attrs.PutStr("k8s.pod.uid", "123asd")
+	attrs.PutStr("k8s.pod.annotation.sumologic.com/sourceCategory", "sc-from-annot-%{k8s.namespace.name}-%{k8s.pod.uid}")
+	attrs.PutStr("k8s.pod.annotation.sumologic.com/sourceCategoryPrefix", "annoPrefix:")
+	attrs.PutStr("k8s.pod.annotation.sumologic.com/sourceCategoryReplaceDash", "#")
 
 	filler := newSourceCategoryFiller(cfg)
 	filler.fill(&attrs)
@@ -68,9 +68,9 @@ func TestFillWithContainerAnnotations(t *testing.T) {
 		cfg.SourceCategory = "my-source-category"
 
 		attrs := pcommon.NewMap()
-		attrs.PutString("k8s.pod.annotation.sumologic.com/container-name-1.sourceCategory", "first_source-category")
-		attrs.PutString("k8s.pod.annotation.sumologic.com/container-name-2.sourceCategory", "another/source-category")
-		attrs.PutString("k8s.container.name", "container-name-1")
+		attrs.PutStr("k8s.pod.annotation.sumologic.com/container-name-1.sourceCategory", "first_source-category")
+		attrs.PutStr("k8s.pod.annotation.sumologic.com/container-name-2.sourceCategory", "another/source-category")
+		attrs.PutStr("k8s.container.name", "container-name-1")
 
 		filler := newSourceCategoryFiller(cfg)
 		filler.fill(&attrs)
@@ -84,9 +84,9 @@ func TestFillWithContainerAnnotations(t *testing.T) {
 		cfg.ContainerAnnotations.Enabled = true
 
 		attrs := pcommon.NewMap()
-		attrs.PutString("k8s.pod.annotation.sumologic.com/container-name-1.sourceCategory", "first_source-category")
-		attrs.PutString("k8s.pod.annotation.sumologic.com/container-name-2.sourceCategory", "another/source-category")
-		attrs.PutString("k8s.container.name", "container-name-1")
+		attrs.PutStr("k8s.pod.annotation.sumologic.com/container-name-1.sourceCategory", "first_source-category")
+		attrs.PutStr("k8s.pod.annotation.sumologic.com/container-name-2.sourceCategory", "another/source-category")
+		attrs.PutStr("k8s.container.name", "container-name-1")
 
 		filler := newSourceCategoryFiller(cfg)
 		filler.fill(&attrs)
@@ -100,9 +100,9 @@ func TestFillWithContainerAnnotations(t *testing.T) {
 		cfg.ContainerAnnotations.Enabled = true
 
 		attrs := pcommon.NewMap()
-		attrs.PutString("k8s.pod.annotation.sumologic.com/container-name-1.sourceCategory", "first_source-category")
-		attrs.PutString("k8s.pod.annotation.sumologic.com/container-name-2.sourceCategory", "another/source-category")
-		attrs.PutString("k8s.container.name", "container-name-2")
+		attrs.PutStr("k8s.pod.annotation.sumologic.com/container-name-1.sourceCategory", "first_source-category")
+		attrs.PutStr("k8s.pod.annotation.sumologic.com/container-name-2.sourceCategory", "another/source-category")
+		attrs.PutStr("k8s.container.name", "container-name-2")
 
 		filler := newSourceCategoryFiller(cfg)
 		filler.fill(&attrs)
@@ -120,10 +120,10 @@ func TestFillWithContainerAnnotations(t *testing.T) {
 		}
 
 		attrs := pcommon.NewMap()
-		attrs.PutString("k8s.pod.annotation.customAnno_prefix:container-name-1.sourceCategory", "first_source-category")
-		attrs.PutString("k8s.pod.annotation.customAnno_prefix:container-name-2.sourceCategory", "another/source-category")
-		attrs.PutString("k8s.pod.annotation.customAnno_prefix:container-name-3.sourceCategory", "THIRD_s-c!")
-		attrs.PutString("k8s.container.name", "container-name-3")
+		attrs.PutStr("k8s.pod.annotation.customAnno_prefix:container-name-1.sourceCategory", "first_source-category")
+		attrs.PutStr("k8s.pod.annotation.customAnno_prefix:container-name-2.sourceCategory", "another/source-category")
+		attrs.PutStr("k8s.pod.annotation.customAnno_prefix:container-name-3.sourceCategory", "THIRD_s-c!")
+		attrs.PutStr("k8s.container.name", "container-name-3")
 
 		filler := newSourceCategoryFiller(cfg)
 		filler.fill(&attrs)

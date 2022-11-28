@@ -130,7 +130,7 @@ func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pco
 	}
 
 	if podIdentifierKey != "" {
-		resource.Attributes().PutString(podIdentifierKey, string(podIdentifierValue))
+		resource.Attributes().PutStr(podIdentifierKey, string(podIdentifierValue))
 	}
 
 	if kp.passthroughMode {
@@ -138,7 +138,7 @@ func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pco
 	}
 	attrsToAdd := kp.getAttributesForPod(podIdentifierValue)
 	for key, val := range attrsToAdd {
-		resource.Attributes().PutString(key, val)
+		resource.Attributes().PutStr(key, val)
 	}
 }
 

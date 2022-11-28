@@ -91,7 +91,7 @@ func (f *attributeFiller) fillAttributes(atts *pcommon.Map) bool {
 		if f.dashReplacement != "" {
 			str = strings.ReplaceAll(str, "-", f.dashReplacement)
 		}
-		atts.PutString(f.name, str)
+		atts.PutStr(f.name, str)
 		return true
 	}
 	return false

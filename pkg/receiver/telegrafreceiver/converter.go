@@ -51,7 +51,7 @@ func (mc metricConverter) Convert(m telegraf.Metric) (pmetric.Metrics, error) {
 	// Attach tags as resource attributes.
 	rAttributes := rm.Resource().Attributes()
 	for _, t := range m.TagList() {
-		rAttributes.PutString(t.Key, t.Value)
+		rAttributes.PutStr(t.Key, t.Value)
 	}
 
 	sm := rm.ScopeMetrics().AppendEmpty()
