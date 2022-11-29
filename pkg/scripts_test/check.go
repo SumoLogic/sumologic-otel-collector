@@ -123,6 +123,10 @@ func checkSystemdEnvDirExists(c check) {
 	require.DirExists(c.test, etcPath+"/env", "systemd env directory does not exist")
 }
 
+func checkSystemdEnvDirPermissions(c check) {
+	PathHasPermissions(c.test, etcPath+"/env", configPathPermissions)
+}
+
 func checkTags(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")

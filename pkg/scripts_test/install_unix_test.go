@@ -287,6 +287,7 @@ func TestInstallScript(t *testing.T) {
 				checkTokenInConfig,
 				checkSystemdConfigCreated,
 				checkSystemdEnvDirExists,
+				checkSystemdEnvDirPermissions,
 				checkUserExists,
 			},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
