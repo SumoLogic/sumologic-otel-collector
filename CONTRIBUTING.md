@@ -77,18 +77,14 @@ opentelemetry-collector-builder \
 1. Install Visual Studio 2019 or newer with the  `.NET desktop development`
    workload selected in the installer.
 
-1. Open `cmd` and add msbuild to the user PATH. The path may differ depending on
-   which version and edition of Visual Studio and which version and
-   platform of Windows are installed:
+1. Open `Developer Command Prompt for VS 2019/2022`.
 
-  ```bat
-  setx path "%PATH%;%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin"
-  ```
+1. Navigate to the `packaging/msi/wix` directory.
 
-1. Navigate to the `packaging/msi/wix` directory and run:
+1. Fetch project dependencies & build the MSI:
 
   ```
-  msbuild.exe /p:Configuration=Release /p:Platform=x64
+  msbuild.exe /p:Configuration=Release /p:Platform=x64 -Restore
   ```
 
 1. The MSI package can be found in the `packaging/msi/wix/bin/x64/en-US`
