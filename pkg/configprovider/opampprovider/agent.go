@@ -63,10 +63,6 @@ func newAgent(logger types.Logger) *Agent {
 }
 
 func (agent *Agent) Start(serverURL string) error {
-	err := agent.loadState(); if err != nil {
-		return err
-	}
-
 	state := agent.stateManager.GetState()
 
 	agent.logger.Debugf("OpAMP agent starting, id=%v, type=%s, version=%s.",
@@ -115,7 +111,7 @@ func (agent *Agent) Start(serverURL string) error {
 			protobufs.AgentCapabilities_ReportsRemoteConfig |
 			protobufs.AgentCapabilities_ReportsEffectiveConfig,
 	}
-	err = agent.opampClient.SetAgentDescription(agent.agentDescription)
+	err := agent.opampClient.SetAgentDescription(agent.agentDescription)
 	if err != nil {
 		return err
 	}

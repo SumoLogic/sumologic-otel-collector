@@ -45,6 +45,10 @@ func (fmp *provider) Retrieve(ctx context.Context, uri string, watcher confmap.W
 	}
 	opampEndpoint := uri[len(schemeName)+1:]
 
+	err := fmp.opampAgent.loadState(); if err != nil {
+		return &confmap.Retrieved{}, err
+	}
+
 	if err := fmp.opampAgent.Start(opampEndpoint); err != nil {
 		return &confmap.Retrieved{}, err
 	}

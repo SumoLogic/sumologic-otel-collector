@@ -140,3 +140,14 @@ func (m *stateManager) Save() error {
 
 	return nil
 }
+
+func (m *stateManager) Delete() error {
+	m.logger.Debugf("Deleting OpAMP state from path: %s.", m.StatePath())
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	err := os.Remove(m.StatePath())
+
+	return err
+}
