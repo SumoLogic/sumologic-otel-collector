@@ -23,7 +23,6 @@ import (
 	"sort"
 
 	"github.com/knadh/koanf"
-	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/oklog/ulid/v2"
@@ -98,11 +97,14 @@ func (agent *Agent) Start(serverURL string) error {
 				agent.logger.Errorf("OpAMP server returned an error response: %v", err.ErrorMessage)
 			},
 			SaveRemoteConfigStatusFunc: func(_ context.Context, status *protobufs.RemoteConfigStatus) {
+				agent.logger.Errorf("Saving OpAMP remote status: %v", status)
 				agent.remoteConfigStatus = status
 			},
 			GetEffectiveConfigFunc: func(ctx context.Context) (*protobufs.EffectiveConfig, error) {
 				state := agent.stateManager.GetState()
-				return state.EffectiveConfig.composeEffectiveConfigProto()
+				ecp, err := state.EffectiveConfig.composeEffectiveConfigProto()
+				agent.logger.Errorf("Getting OpAMP effective config: %v", ecp)
+				return ecp, err
 			},
 			OnMessageFunc: agent.onMessage,
 		},
@@ -256,21 +258,21 @@ func (agent *Agent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (conf
 	}
 
 	// The merged final result is our effective config.
-	newEffectiveConfigJson, err := k.Marshal(json.Parser())
+	newEffectiveConfigBytes, err := k.Marshal(yaml.Parser())
 	if err != nil {
 		panic(err)
 	}
 
 	state := agent.stateManager.GetState()
 
-	oldEffectiveConfigJson, err := json.Parser().Marshal(state.EffectiveConfig)
+	oldEffectiveConfigBytes, err := yaml.Parser().Marshal(state.EffectiveConfig)
 	if err != nil {
 		panic(err)
 	}
 
 	configChanged = false
-	if string(oldEffectiveConfigJson) != string(newEffectiveConfigJson) {
-		agent.logger.Debugf("Effective config changed. Need to report to server.")
+	if string(oldEffectiveConfigBytes) != string(newEffectiveConfigBytes) {
+		agent.logger.Errorf("Effective config changed. Need to report to server.")
 		state.EffectiveConfig = k.Raw()
 		agent.stateManager.SetState(state)
 		if err := agent.stateManager.Save(); err != nil {

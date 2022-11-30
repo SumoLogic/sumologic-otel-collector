@@ -110,8 +110,7 @@ func TestAgent_loadState(t *testing.T) {
 		{
 			name: "generates state when none exists",
 			beforeHook: func(t *testing.T, m *stateManager) {
-				err := m.Delete()
-				require.NoError(t, err)
+				m.Delete()
 			},
 			fields: fields{
 				logger: &NoopLogger{},
