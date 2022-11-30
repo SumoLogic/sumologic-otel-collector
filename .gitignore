@@ -40,3 +40,20 @@ pkg/tools/udpdemux/udpdemux
 
 # temporary files
 /tmp
+
+# WiX toolset
+*.msi
+*.wixpdb
+*.wixobj
+*.cab
+.vs/
+bin/
+obj/
+Backup*/
+UpgradeLog*.htm
+packaging/wix/packages
+packaging/msi/wix/packages
+packaging/msi/SumoLogic.wixext/packages
+
+# Windows Thumbs.db
+Thumbs.db
