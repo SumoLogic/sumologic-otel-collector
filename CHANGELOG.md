@@ -61,6 +61,7 @@ This release introduces the following breaking changes:
 [#849]: https://github.com/SumoLogic/sumologic-otel-collector/pull/849
 [#839]: https://github.com/SumoLogic/sumologic-otel-collector/pull/839
 [#848]: https://github.com/SumoLogic/sumologic-otel-collector/pull/848
+[#852]: https://github.com/SumoLogic/sumologic-otel-collector/pull/852
 [upgrade_guide_unreleased]: ./docs/upgrading.md#unreleased
 
 ## [v0.57.2-sumo-1]
