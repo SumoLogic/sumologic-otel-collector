@@ -15,7 +15,7 @@ declare -i internal_version
 #declare channel
 declare ot_channel
 declare -i ot_channel_version
-#declare sumo_channel
+declare sumo_channel
 declare -i sumo_channel_version
 
 version_tag="${VERSION_TAG:-$(git tag -l --sort -version:refname | head -n 1)}"
