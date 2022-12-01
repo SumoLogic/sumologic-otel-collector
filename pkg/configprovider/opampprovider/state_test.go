@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+	"runtime"
 
 	"github.com/stretchr/testify/require"
 )
@@ -171,6 +172,7 @@ func Test_stateManager_Save(t *testing.T) {
 	}
 	tests := []struct {
 		name       string
+		platform   string
 		fields     fields
 		args       args
 		wantErr    bool
@@ -188,7 +190,8 @@ func Test_stateManager_Save(t *testing.T) {
 			wantErrMsg: "instance id is empty",
 		},
 		{
-			name: "returns error when open file fails",
+			name:     "returns error when open file fails (linux)",
+			platform: "linux",
 			fields: fields{
 				statePath: "/foo/bar/fake/path",
 			},
@@ -201,6 +204,20 @@ func Test_stateManager_Save(t *testing.T) {
 			wantErrMsg: "open /foo/bar/fake/path: no such file or directory",
 		},
 		{
+			name:     "returns error when open file fails (windows)",
+			platform: "windows",
+			fields: fields{
+				statePath: "C:\\foo\\bar\\fake\\path",
+			},
+			args: args{
+				state: &agentState{
+					InstanceId: newInstanceId(),
+				},
+			},
+			wantErr:    true,
+			wantErrMsg: "open C:\\foo\\bar\\fake\\path: The system cannot find the path specified.",
+		},
+		{
 			name: "saves state without errors",
 			args: args{
 				state: &agentState{
@@ -211,6 +228,9 @@ func Test_stateManager_Save(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		if tt.platform != "" && tt.platform != runtime.GOOS {
+			continue
+		}
 		t.Run(tt.name, func(t *testing.T) {
 			m := &stateManager{
 				statePath: tt.fields.statePath,
