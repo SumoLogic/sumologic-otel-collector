@@ -19,8 +19,8 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"testing"
 	"runtime"
+	"testing"
 
 	"github.com/stretchr/testify/require"
 )
@@ -66,6 +66,7 @@ func Test_stateManager_Load(t *testing.T) {
 	}
 	tests := []struct {
 		name       string
+		platform   string
 		fields     fields
 		beforeHook func(*testing.T, *stateManager)
 		want       *agentState
@@ -73,12 +74,22 @@ func Test_stateManager_Load(t *testing.T) {
 		wantErrMsg string
 	}{
 		{
-			name: "returns error when read file fails",
+			name:     "returns error when read file fails (linux)",
+			platform: "linux",
 			fields: fields{
 				statePath: "/foo/bar/fake/path",
 			},
 			wantErr:    true,
 			wantErrMsg: "open /foo/bar/fake/path: no such file or directory",
+		},
+		{
+			name:     "returns error when read file fails (windows)",
+			platform: "windows",
+			fields: fields{
+				statePath: "C:\\foo\\bar\\fake\\path",
+			},
+			wantErr:    true,
+			wantErrMsg: "open C:\\foo\\bar\\fake\\path: The system cannot find the path specified.",
 		},
 		{
 			name: "returns error when json unmarshaling fails",
@@ -138,6 +149,9 @@ func Test_stateManager_Load(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		if tt.platform != "" && tt.platform != runtime.GOOS {
+			continue
+		}
 		t.Run(tt.name, func(t *testing.T) {
 			m := &stateManager{
 				statePath: tt.fields.statePath,
