@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//       http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -95,7 +95,7 @@ func TestAgent_Start(t *testing.T) {
 
 func TestAgent_loadState(t *testing.T) {
 	type fields struct {
-		logger       types.Logger
+		logger types.Logger
 	}
 	tests := []struct {
 		name       string
@@ -465,7 +465,8 @@ func TestAgent_Shutdown(t *testing.T) {
 				remoteConfigStatus: tt.fields.remoteConfigStatus,
 			}
 			agent.stateManager.SetState(tt.fields.state)
-			agent.Shutdown()
+			err := agent.Shutdown()
+			require.NoError(t, err)
 		})
 	}
 }

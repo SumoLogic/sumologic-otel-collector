@@ -140,7 +140,7 @@ func Test_stateManager_Load(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &stateManager{
 				statePath: tt.fields.statePath,
-                logger:    &NoopLogger{},
+				logger:    &NoopLogger{},
 			}
 			if tt.beforeHook != nil {
 				tt.beforeHook(t, m)
@@ -214,7 +214,7 @@ func Test_stateManager_Save(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &stateManager{
 				statePath: tt.fields.statePath,
-                logger:    &NoopLogger{},
+				logger:    &NoopLogger{},
 			}
 			m.SetState(tt.args.state)
 			err := m.Save()
