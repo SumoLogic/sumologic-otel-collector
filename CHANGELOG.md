@@ -19,6 +19,7 @@ This release introduces the following breaking changes:
 - feat: add glob config provider [#713]
 - feat(build): validate FIPS mode at build time and runtime [#693]
 - feat(ci): add windows builds to dev & pr jobs [#762]
+- feat: add opamp config provider
 
 ### Changed
 
