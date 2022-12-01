@@ -97,13 +97,13 @@ func (agent *Agent) Start(serverURL string) error {
 				agent.logger.Errorf("OpAMP server returned an error response: %v", err.ErrorMessage)
 			},
 			SaveRemoteConfigStatusFunc: func(_ context.Context, status *protobufs.RemoteConfigStatus) {
-				agent.logger.Errorf("Saving OpAMP remote status: %v", status)
+				agent.logger.Debugf("Saving OpAMP remote status: %v", status)
 				agent.remoteConfigStatus = status
 			},
 			GetEffectiveConfigFunc: func(ctx context.Context) (*protobufs.EffectiveConfig, error) {
 				state := agent.stateManager.GetState()
 				ecp, err := state.EffectiveConfig.composeEffectiveConfigProto()
-				agent.logger.Errorf("Getting OpAMP effective config: %v", ecp)
+				agent.logger.Debugf("Getting OpAMP effective config: %v", ecp)
 				return ecp, err
 			},
 			OnMessageFunc: agent.onMessage,

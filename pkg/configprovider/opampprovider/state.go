@@ -79,10 +79,16 @@ func (m *stateManager) StatePath() string {
 }
 
 func (m *stateManager) GetState() *agentState {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	return m.state
 }
 
 func (m *stateManager) SetState(state *agentState) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	m.state = state
 }
 
