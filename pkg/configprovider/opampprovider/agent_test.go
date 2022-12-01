@@ -194,7 +194,8 @@ func TestAgent_createAgentDescription(t *testing.T) {
 				remoteConfigStatus: tt.fields.remoteConfigStatus,
 			}
 			agent.stateManager.SetState(tt.fields.state)
-			agent.createAgentDescription()
+			err := agent.createAgentDescription()
+			require.NoError(t, err)
 		})
 	}
 }
@@ -234,7 +235,8 @@ func TestAgent_updateAgentIdentity(t *testing.T) {
 				remoteConfigStatus: tt.fields.remoteConfigStatus,
 			}
 			agent.stateManager.SetState(tt.fields.state)
-			agent.updateAgentIdentity(tt.args.instanceId)
+			err := agent.updateAgentIdentity(tt.args.instanceId)
+			require.NoError(t, err)
 		})
 	}
 }

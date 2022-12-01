@@ -75,7 +75,7 @@ func (*provider) Scheme() string {
 }
 
 func (fmp *provider) Shutdown(context.Context) error {
-	fmp.opampAgent.Shutdown()
+	err := fmp.opampAgent.Shutdown()
 
-	return nil
+	return err
 }

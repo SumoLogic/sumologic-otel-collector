@@ -69,7 +69,10 @@ func (agent *Agent) Start(serverURL string) error {
 
 	agent.serverURL = serverURL
 
-	agent.createAgentDescription()
+	err := agent.createAgentDescription()
+	if err != nil {
+		return err
+	}
 
 	agent.opampClient = client.NewWebSocket(agent.logger)
 
@@ -295,11 +298,13 @@ func (agent *Agent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (conf
 	return configChanged, nil
 }
 
-func (agent *Agent) Shutdown() {
+func (agent *Agent) Shutdown() error {
 	agent.logger.Debugf("OpAMP agent shutting down...")
 	if agent.opampClient != nil {
-		agent.opampClient.Stop(context.Background())
+		err := agent.opampClient.Stop(context.Background())
+		return err
 	}
+	return nil
 }
 
 func (agent *Agent) onMessage(ctx context.Context, msg *types.MessageData) {
@@ -315,7 +320,7 @@ func (agent *Agent) onMessage(ctx context.Context, msg *types.MessageData) {
 			})
 
 			if err != nil {
-				agent.logger.Errorf("Failed to set OpAMP remote config status (FAILED).")
+				agent.logger.Errorf(err.Error())
 			}
 		} else {
 			err = agent.opampClient.SetRemoteConfigStatus(&protobufs.RemoteConfigStatus{
@@ -324,7 +329,7 @@ func (agent *Agent) onMessage(ctx context.Context, msg *types.MessageData) {
 			})
 
 			if err != nil {
-				agent.logger.Errorf("Failed to set OpAMP remote config status (APPLIED).")
+				agent.logger.Errorf(err.Error())
 			}
 		}
 	}
@@ -334,7 +339,10 @@ func (agent *Agent) onMessage(ctx context.Context, msg *types.MessageData) {
 		if err != nil {
 			agent.logger.Errorf(err.Error())
 		}
-		agent.updateAgentIdentity(newInstanceId)
+		err = agent.updateAgentIdentity(newInstanceId)
+		if err != nil {
+			agent.logger.Errorf(err.Error())
+		}
 	}
 
 	if configChanged {
