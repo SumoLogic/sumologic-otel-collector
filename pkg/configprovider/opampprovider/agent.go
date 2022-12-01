@@ -73,7 +73,10 @@ func (agent *Agent) Start(serverURL string) error {
 
 	agent.opampClient = client.NewWebSocket(agent.logger)
 
-	hostname, _ := os.Hostname()
+	hostname, err := os.Hostname()
+	if err != nil {
+		return err
+	}
 
 	settings := types.StartSettings{
 		OpAMPServerURL: agent.serverURL,
@@ -113,7 +116,7 @@ func (agent *Agent) Start(serverURL string) error {
 			protobufs.AgentCapabilities_ReportsRemoteConfig |
 			protobufs.AgentCapabilities_ReportsEffectiveConfig,
 	}
-	err := agent.opampClient.SetAgentDescription(agent.agentDescription)
+	err = agent.opampClient.SetAgentDescription(agent.agentDescription)
 	if err != nil {
 		return err
 	}
@@ -154,8 +157,11 @@ func stringKeyValue(key, value string) *protobufs.KeyValue {
 	}
 }
 
-func (agent *Agent) createAgentDescription() {
-	hostname, _ := os.Hostname()
+func (agent *Agent) createAgentDescription() error {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return err
+	}
 
 	state := agent.stateManager.GetState()
 
@@ -177,9 +183,11 @@ func (agent *Agent) createAgentDescription() {
 		IdentifyingAttributes:    ident,
 		NonIdentifyingAttributes: nonIdent,
 	}
+
+	return nil
 }
 
-func (agent *Agent) updateAgentIdentity(instanceId ulid.ULID) {
+func (agent *Agent) updateAgentIdentity(instanceId ulid.ULID) error {
 	state := agent.stateManager.GetState()
 
 	agent.logger.Debugf("OpAMP agent identity is being changed from id=%v to id=%v",
@@ -188,7 +196,10 @@ func (agent *Agent) updateAgentIdentity(instanceId ulid.ULID) {
 
 	state.InstanceId = instanceId.String()
 	agent.stateManager.SetState(state)
-	agent.stateManager.Save()
+
+	err := agent.stateManager.Save()
+
+	return err
 }
 
 type agentConfigFileItem struct {
@@ -287,7 +298,7 @@ func (agent *Agent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (conf
 func (agent *Agent) Shutdown() {
 	agent.logger.Debugf("OpAMP agent shutting down...")
 	if agent.opampClient != nil {
-		_ = agent.opampClient.Stop(context.Background())
+		agent.opampClient.Stop(context.Background())
 	}
 }
 
@@ -297,16 +308,24 @@ func (agent *Agent) onMessage(ctx context.Context, msg *types.MessageData) {
 		var err error
 		configChanged, err = agent.applyRemoteConfig(msg.RemoteConfig)
 		if err != nil {
-			agent.opampClient.SetRemoteConfigStatus(&protobufs.RemoteConfigStatus{
+			err = agent.opampClient.SetRemoteConfigStatus(&protobufs.RemoteConfigStatus{
 				LastRemoteConfigHash: msg.RemoteConfig.ConfigHash,
 				Status:               protobufs.RemoteConfigStatus_FAILED,
 				ErrorMessage:         err.Error(),
 			})
+
+			if err != nil {
+				agent.logger.Errorf("Failed to set OpAMP remote config status (FAILED).")
+			}
 		} else {
-			agent.opampClient.SetRemoteConfigStatus(&protobufs.RemoteConfigStatus{
+			err = agent.opampClient.SetRemoteConfigStatus(&protobufs.RemoteConfigStatus{
 				LastRemoteConfigHash: msg.RemoteConfig.ConfigHash,
 				Status:               protobufs.RemoteConfigStatus_APPLIED,
 			})
+
+			if err != nil {
+				agent.logger.Errorf("Failed to set OpAMP remote config status (APPLIED).")
+			}
 		}
 	}
 

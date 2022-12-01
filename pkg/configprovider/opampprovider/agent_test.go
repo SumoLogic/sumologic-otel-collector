@@ -29,13 +29,10 @@ func TestAgent_Start(t *testing.T) {
 	type fields struct {
 		logger             types.Logger
 		state              *agentState
-		stateManager       *stateManager
 		agentType          string
 		agentVersion       string
 		serverURL          string
-		effectiveConfig    string
 		configUpdated      chan bool
-		instanceId         string
 		agentDescription   *protobufs.AgentDescription
 		opampClient        client.OpAMPClient
 		remoteConfigStatus *protobufs.RemoteConfigStatus
@@ -99,8 +96,6 @@ func TestAgent_Start(t *testing.T) {
 func TestAgent_loadState(t *testing.T) {
 	type fields struct {
 		logger       types.Logger
-		state        *agentState
-		stateManager *stateManager
 	}
 	tests := []struct {
 		name       string
@@ -110,7 +105,8 @@ func TestAgent_loadState(t *testing.T) {
 		{
 			name: "generates state when none exists",
 			beforeHook: func(t *testing.T, m *stateManager) {
-				m.Delete()
+				err := m.Delete()
+				require.NoError(t, err)
 			},
 			fields: fields{
 				logger: &NoopLogger{},
@@ -137,7 +133,8 @@ func TestAgent_loadState(t *testing.T) {
 			if tt.beforeHook != nil {
 				tt.beforeHook(t, agent.stateManager)
 			}
-			agent.loadState()
+			err := agent.loadState()
+			require.NoError(t, err)
 			state := agent.stateManager.GetState()
 			if state.InstanceId == "" {
 				t.Error("Agent.loadState() instanceId is empty, want non-empty string")
@@ -174,7 +171,6 @@ func TestAgent_createAgentDescription(t *testing.T) {
 		agentType          string
 		agentVersion       string
 		serverURL          string
-		effectiveConfig    string
 		configUpdated      chan bool
 		agentDescription   *protobufs.AgentDescription
 		opampClient        client.OpAMPClient
@@ -211,7 +207,6 @@ func TestAgent_updateAgentIdentity(t *testing.T) {
 		agentType          string
 		agentVersion       string
 		serverURL          string
-		effectiveConfig    string
 		configUpdated      chan bool
 		agentDescription   *protobufs.AgentDescription
 		opampClient        client.OpAMPClient
@@ -252,9 +247,7 @@ func TestAgent_composeEffectiveConfig(t *testing.T) {
 		agentType          string
 		agentVersion       string
 		serverURL          string
-		effectiveConfig    string
 		configUpdated      chan bool
-		instanceId         string
 		agentDescription   *protobufs.AgentDescription
 		opampClient        client.OpAMPClient
 		remoteConfigStatus *protobufs.RemoteConfigStatus
@@ -294,7 +287,6 @@ func TestAgent_effectiveConfigMap(t *testing.T) {
 		agentType          string
 		agentVersion       string
 		serverURL          string
-		effectiveConfig    string
 		configUpdated      chan bool
 		agentDescription   *protobufs.AgentDescription
 		opampClient        client.OpAMPClient
@@ -399,7 +391,6 @@ func TestAgent_applyRemoteConfig(t *testing.T) {
 		agentType          string
 		agentVersion       string
 		serverURL          string
-		effectiveConfig    string
 		configUpdated      chan bool
 		agentDescription   *protobufs.AgentDescription
 		opampClient        client.OpAMPClient
@@ -449,7 +440,6 @@ func TestAgent_Shutdown(t *testing.T) {
 		agentType          string
 		agentVersion       string
 		serverURL          string
-		effectiveConfig    string
 		configUpdated      chan bool
 		agentDescription   *protobufs.AgentDescription
 		opampClient        client.OpAMPClient
@@ -486,7 +476,6 @@ func TestAgent_onMessage(t *testing.T) {
 		agentType          string
 		agentVersion       string
 		serverURL          string
-		effectiveConfig    string
 		configUpdated      chan bool
 		agentDescription   *protobufs.AgentDescription
 		opampClient        client.OpAMPClient
