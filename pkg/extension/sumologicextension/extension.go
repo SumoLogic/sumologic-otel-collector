@@ -65,6 +65,7 @@ type SumologicExtension struct {
 
 const (
 	heartbeatUrl = "/api/v1/collector/heartbeat"
+	metadataUrl  = "/api/v1/otCollector/metadata"
 	registerUrl  = "/api/v1/collector/register"
 
 	collectorIdField           = "collector_id"
@@ -537,6 +538,7 @@ func (se *SumologicExtension) heartbeatLoop() {
 }
 
 var errUnauthorizedHeartbeat = errors.New("heartbeat unauthorized")
+var errUnauthorizedMetadata = errors.New("metadata update unauthorized")
 
 type ErrorAPI struct {
 	status int
@@ -585,6 +587,80 @@ func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, h
 		return errUnauthorizedHeartbeat
 
 	case http.StatusNoContent:
+	}
+
+	return nil
+}
+
+func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, httpClient *http.Client) error {
+	u, err := url.Parse(se.BaseUrl() + metadataUrl)
+	if err != nil {
+		return fmt.Errorf("unable to parse metadata URL %w", err)
+	}
+
+	var buff bytes.Buffer
+	if err = json.NewEncoder(&buff).Encode(api.OpenMetadataRequestPayload{
+		HostDetails: api.OpenMetadataHostDetails{
+			Name:      "app.test.com",
+			OsName:    "Linux",
+			OsVersion: "5.4.144-69.257.amzn2.x86_64",
+		},
+		AgentDetails: api.OpenMetadataAgentDetails{
+			RunningVersion: "1.0.0",
+		},
+		NetworkDetails: api.OpenMetadataNetworkDetails{
+			HostIpAddress: "19.123.24.66",
+			ProxyAddress:  "foobar.org.com",
+			ProxyPort:     3128,
+		},
+		TagDetails: map[string]string{
+			"team": "A",
+			"app":  "linux",
+		},
+	}); err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), &buff)
+	if err != nil {
+		return fmt.Errorf("unable to create HTTP request %w", err)
+	}
+
+	addClientCredentials(req,
+		se.conf.Credentials,
+	)
+	addJSONHeaders(req)
+
+	se.logger.Info("Calling metadata API", zap.String("URL", u.String()))
+
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("unable to send HTTP request: %w", err)
+	}
+	defer res.Body.Close()
+
+	switch res.StatusCode {
+	default:
+		var buff bytes.Buffer
+		if _, err := io.Copy(&buff, res.Body); err != nil {
+			return fmt.Errorf(
+				"failed to copy collector metadata response body, status code: %d, err: %w",
+				res.StatusCode, err,
+			)
+		}
+
+		return fmt.Errorf("collector metadata request failed: %w",
+			ErrorAPI{
+				status: res.StatusCode,
+				body:   buff.String(),
+			},
+		)
+
+	case http.StatusUnauthorized:
+		return errUnauthorizedMetadata
+
+	case http.StatusNoContent:
+	case http.StatusOK:
 	}
 
 	return nil

@@ -1269,3 +1269,53 @@ func TestRegistrationRequestPayload(t *testing.T) {
 
 	require.NoError(t, se.Shutdown(context.Background()))
 }
+
+func TestUpdateMetadataRequestPayload(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(func() http.HandlerFunc {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			require.Equal(t, metadataUrl, req.URL.Path)
+
+			var reqPayload api.OpenMetadataRequestPayload
+			require.NoError(t, json.NewDecoder(req.Body).Decode(&reqPayload))
+			require.Equal(t, "app.test.com", reqPayload.HostDetails.Name)
+			require.EqualValues(t,
+				map[string]string{
+					"team": "A",
+					"app":  "linux",
+				},
+				reqPayload.TagDetails,
+			)
+
+			_, err := w.Write([]byte(``))
+
+			require.NoError(t, err)
+		})
+	}())
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.CollectorName = ""
+	cfg.ExtensionSettings = config.ExtensionSettings{}
+	cfg.ApiBaseUrl = srv.URL
+	cfg.Credentials.InstallToken = "dummy_install_token"
+	cfg.BackOff.InitialInterval = time.Millisecond
+	cfg.BackOff.MaxInterval = time.Millisecond
+	cfg.Clobber = true
+	cfg.CollectorDescription = "my description"
+	cfg.CollectorCategory = "my category/"
+	cfg.CollectorFields = map[string]interface{}{
+		"team": "A",
+		"app":  "linux",
+	}
+	cfg.TimeZone = "PST"
+
+	se, err := newSumologicExtension(cfg, zap.NewNop())
+	require.NoError(t, err)
+
+	httpClient, err := se.getHTTPClient(se.conf.HTTPClientSettings, api.OpenRegisterResponsePayload{})
+	require.NoError(t, err)
+
+	err = se.updateMetadataWithHTTPClient(context.TODO(), httpClient)
+	require.NoError(t, err)
+}
