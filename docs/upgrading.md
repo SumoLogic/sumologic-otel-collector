@@ -4,7 +4,7 @@
   - [`filelog` receiver: has been removed from sub-parsers](#filelog-receiver-has-been-removed-from-sub-parsers)
   - [`sending_queue`: require explicit storage set](#sending_queue-require-explicit-storage-set)
   - [`apache` receiver: turn on feature gates for resource attributes](#apache-receiver-turn-on-feature-gates-for-resource-attributes)
-  - [`elasticsearch` receiver: turn on feature gates for resource attributes](#elasticsearch-receiver-turn-on-feature-gates-for-resource-attributes)
+  - [`elasticsearch` receiver: turn on more datapoints](#elasticsearch-receiver-turn-on-more-datapoints)
 - [Upgrading to v0.57.2-sumo-0](#upgrading-to-v0572-sumo-0)
   - [`sumologic` exporter: drop support for source templates](#sumologic-exporter-drop-support-for-source-headers)
 - [Upgrading to v0.56.0-sumo-0](#upgrading-to-v0560-sumo-0)
@@ -70,9 +70,9 @@ otelcol-sumo --config=file:config.yaml --feature-gates=-receiver.apache.emitServ
 More information about the feature gates can be found [here][apache-feature-gates].
 The target release for the removal of feature gates is `v0.68`.
 
-### `elasticsearch` receiver: turn on feature gates for resource attributes
+### `elasticsearch` receiver: turn on more datapoints
 
-The metrics `elasticsearch.index.operation.count`, `elasticsearch.index.operation.count` and `elasticsearch.cluster.shards` emit more data points now.
+The metrics `elasticsearch.index.operation.count`, `elasticsearch.index.operation.time` and `elasticsearch.cluster.shards` emit more data points now.
 
 These features are hidden behind feature gates, but because they are important for Sumo Logic apps,
 they have been enabled by default ahead of the normal deprecation timeline.
