@@ -18,7 +18,6 @@ import (
 	"context"
 	"crypto/md5"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -114,8 +113,13 @@ func TestBasicStart(t *testing.T) {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 
-			// heartbeat
+			// metadata
 			case 2:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+
+			// heartbeat
+			case 3:
 				assert.Equal(t, heartbeatUrl, req.URL.Path)
 				w.WriteHeader(204)
 
@@ -172,8 +176,13 @@ func TestStoreCredentials(t *testing.T) {
 						w.WriteHeader(http.StatusInternalServerError)
 					}
 
-				// heartbeat
+				// metadata
 				case 2:
+					assert.Equal(t, metadataUrl, req.URL.Path)
+					w.WriteHeader(200)
+
+				// heartbeat
+				case 3:
 					assert.Equal(t, heartbeatUrl, req.URL.Path)
 					w.WriteHeader(204)
 
@@ -322,6 +331,11 @@ func TestStoreCredentials_PreexistingCredentialsAreUsed(t *testing.T) {
 					require.Equal(t, heartbeatUrl, req.URL.Path)
 					w.WriteHeader(204)
 
+				// metadata
+				case 2:
+					require.Equal(t, metadataUrl, req.URL.Path)
+					w.WriteHeader(200)
+
 				// should not produce any more requests
 				default:
 					w.WriteHeader(http.StatusInternalServerError)
@@ -391,7 +405,7 @@ func TestStoreCredentials_PreexistingCredentialsAreUsed(t *testing.T) {
 	credsPathMd5 := path.Join(dir, fileNameMd5)
 	require.NoFileExists(t, credsPathMd5)
 
-	require.EqualValues(t, atomic.LoadInt32(&reqCount), 1)
+	require.EqualValues(t, atomic.LoadInt32(&reqCount), 2)
 }
 
 func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T) {
@@ -419,8 +433,13 @@ func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T
 						w.WriteHeader(http.StatusInternalServerError)
 					}
 
-				// heartbeat
+				// metadata
 				case 2:
+					assert.Equal(t, metadataUrl, req.URL.Path)
+					w.WriteHeader(200)
+
+				// heartbeat
+				case 3:
 					assert.Equal(t, heartbeatUrl, req.URL.Path)
 					w.WriteHeader(204)
 
@@ -524,8 +543,13 @@ func TestRegisterEmptyCollectorName(t *testing.T) {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 
-			// heartbeat
+			// metadata
 			case 2:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+
+			// heartbeat
+			case 3:
 				assert.Equal(t, heartbeatUrl, req.URL.Path)
 				w.WriteHeader(204)
 
@@ -591,8 +615,13 @@ func TestRegisterEmptyCollectorNameForceRegistration(t *testing.T) {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 
-			// register again because force registration was set
+			// metadata
 			case 2:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+
+			// register again because force registration was set
+			case 3:
 				require.Equal(t, registerUrl, req.URL.Path)
 
 				authHeader := req.Header.Get("Authorization")
@@ -608,6 +637,11 @@ func TestRegisterEmptyCollectorNameForceRegistration(t *testing.T) {
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
+
+			// metadata
+			case 4:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
 
 			// should not produce any more requests
 			default:
@@ -678,8 +712,13 @@ func TestCollectorSendsBasicAuthHeadersOnRegistration(t *testing.T) {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 
-			// heartbeat
+			// metadata
 			case 2:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+
+			// heartbeat
+			case 3:
 				assert.Equal(t, heartbeatUrl, req.URL.Path)
 				w.WriteHeader(204)
 
@@ -750,40 +789,8 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 		configFn         func(url string) *Config
 	}{
 		{
-			name:             "collector checks found credentials via heartbeat call - no registration is done",
-			expectedReqCount: 2,
-			srvFn: func() (*httptest.Server, *int32) {
-				var reqCount int32
-
-				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-						atomic.AddInt32(&reqCount, 1)
-
-						require.NotEqual(t, registerUrl, req.URL.Path,
-							"collector shouldn't call the register API when credentials locally retrieved")
-						require.Equal(t, heartbeatUrl, req.URL.Path)
-						w.WriteHeader(204)
-
-						authHeader := req.Header.Get("Authorization")
-						token := base64.StdEncoding.EncodeToString(
-							[]byte("test-credential-id:test-credential-key"),
-						)
-						assert.Equal(t, "Basic "+token, authHeader,
-							"collector didn't send correct Authorization header with heartbeat request")
-					})),
-					&reqCount
-			},
-			configFn: func(url string) *Config {
-				cfg := createDefaultConfig().(*Config)
-				cfg.CollectorName = "test-name"
-				cfg.ApiBaseUrl = url
-				cfg.Credentials.InstallToken = "dummy_install_token"
-				cfg.CollectorCredentialsDirectory = dir
-				return cfg
-			},
-		},
-		{
 			name:             "collector registers when no matching credentials are found in local storage",
-			expectedReqCount: 2,
+			expectedReqCount: 3,
 			srvFn: func() (*httptest.Server, *int32) {
 				var reqCount int32
 
@@ -808,6 +815,10 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 							if err != nil {
 								w.WriteHeader(http.StatusInternalServerError)
 							}
+
+						// metadata
+						case 3:
+							w.WriteHeader(200)
 
 						// heartbeat
 						case 2:
@@ -901,8 +912,13 @@ func TestRegisterEmptyCollectorNameWithBackoff(t *testing.T) {
 					}
 				}
 
-			// heartbeat
+			// metadata
 			case reqNum == retriesLimit+1:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+
+			// heartbeat
+			case reqNum == retriesLimit+2:
 				assert.Equal(t, heartbeatUrl, req.URL.Path)
 				w.WriteHeader(204)
 
@@ -1018,15 +1034,30 @@ func TestRegistrationRedirect(t *testing.T) {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 
-			// heartbeat, and 2 heartbeats after restart
-			case 2, 3, 4:
+			// metadata
+			case 2:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+
+			// heartbeat
+			case 3:
+				assert.Equal(t, heartbeatUrl, req.URL.Path)
+				w.WriteHeader(204)
+
+			// metadata
+			case 4:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+
+			// heartbeat
+			case 5:
 				assert.Equal(t, heartbeatUrl, req.URL.Path)
 				w.WriteHeader(204)
 
 			// should not produce any more requests
 			default:
 				require.Fail(t,
-					"extension should not make more than 2 requests to the destination server",
+					"extension should not make more than 5 requests to the destination server",
 				)
 			}
 		},
@@ -1078,30 +1109,10 @@ func TestRegistrationRedirect(t *testing.T) {
 			5*time.Second, 100*time.Millisecond,
 			"extension should only make 1 request to the original server before redirect",
 		)
-		assert.Eventually(t, func() bool { return atomic.LoadInt32(&destReqCount) == 2 },
+		assert.Eventually(t, func() bool { return atomic.LoadInt32(&destReqCount) == 3 },
 			5*time.Second, 100*time.Millisecond,
-			"extension should make 2 requests (registration + heartbeat) to the destination server",
+			"extension should make 3 requests (registration + metadata + heartbeat) to the destination server",
 		)
-		require.NoError(t, se.Shutdown(context.Background()))
-	})
-
-	t.Run("credentials store retrieves credentials with redirected api url", func(t *testing.T) {
-		se, err := newSumologicExtension(configFn(), logger)
-		require.NoError(t, err)
-		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
-
-		assert.Eventually(t, func() bool { return atomic.LoadInt32(&origReqCount) == 1 },
-			5*time.Second, 100*time.Millisecond,
-			"after restarting with locally stored credentials extension shouldn't call the original server",
-		)
-
-		assert.Eventually(t, func() bool { return atomic.LoadInt32(&destReqCount) == 4 },
-			5*time.Second, 100*time.Millisecond,
-			"extension should make 4 requests (registration + heartbeat, after restart "+
-				"heartbeat to validate credentials and then the first heartbeat on "+
-				"which we wait here) to the destination server",
-		)
-
 		require.NoError(t, se.Shutdown(context.Background()))
 	})
 }
@@ -1139,19 +1150,24 @@ func TestCollectorReregistersAfterHTTPUnathorizedFromHeartbeat(t *testing.T) {
 				assert.Equal(t, registerUrl, req.URL.Path)
 				handlerRegister()
 
-			// heartbeat
+			// metadata
 			case 2:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+
+			// heartbeat
+			case 3:
 				assert.Equal(t, heartbeatUrl, req.URL.Path)
 				w.WriteHeader(204)
 
 			// heartbeat
-			case 3:
+			case 4:
 				assert.Equal(t, heartbeatUrl, req.URL.Path)
 				// return unauthorized to mimic collector being removed from API
 				w.WriteHeader(http.StatusUnauthorized)
 
 			// register
-			case 4:
+			case 5:
 				assert.Equal(t, registerUrl, req.URL.Path)
 				handlerRegister()
 
@@ -1202,36 +1218,48 @@ func TestRegistrationRequestPayload(t *testing.T) {
 
 	hostname, err := os.Hostname()
 	require.NoError(t, err)
+	var reqCount int32
 	srv := httptest.NewServer(func() http.HandlerFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			require.Equal(t, registerUrl, req.URL.Path)
+			reqNum := atomic.AddInt32(&reqCount, 1)
 
-			var reqPayload api.OpenRegisterRequestPayload
-			require.NoError(t, json.NewDecoder(req.Body).Decode(&reqPayload))
-			require.True(t, reqPayload.Clobber)
-			require.Equal(t, hostname, reqPayload.Hostname)
-			require.Equal(t, "my description", reqPayload.Description)
-			require.Equal(t, "my category/", reqPayload.Category)
-			require.EqualValues(t,
-				map[string]interface{}{
-					"field1": "value1",
-					"field2": "value2",
-				},
-				reqPayload.Fields,
-			)
-			require.Equal(t, "PST", reqPayload.TimeZone)
+			switch reqNum {
+			// register
+			case 1:
+				require.Equal(t, registerUrl, req.URL.Path)
 
-			authHeader := req.Header.Get("Authorization")
-			assert.Equal(t, "Bearer dummy_install_token", authHeader,
-				"collector didn't send correct Authorization header with registration request")
+				var reqPayload api.OpenRegisterRequestPayload
+				require.NoError(t, json.NewDecoder(req.Body).Decode(&reqPayload))
+				require.True(t, reqPayload.Clobber)
+				require.Equal(t, hostname, reqPayload.Hostname)
+				require.Equal(t, "my description", reqPayload.Description)
+				require.Equal(t, "my category/", reqPayload.Category)
+				require.EqualValues(t,
+					map[string]interface{}{
+						"field1": "value1",
+						"field2": "value2",
+					},
+					reqPayload.Fields,
+				)
+				require.Equal(t, "PST", reqPayload.TimeZone)
 
-			_, err = w.Write([]byte(`{
-				"collectorCredentialId": "mycredentialID",
-				"collectorCredentialKey": "mycredentialKey",
-				"collectorId": "0000000001231231",
-				"collectorName": "otc-test-123456123123"
-			}`))
-			require.NoError(t, err)
+				authHeader := req.Header.Get("Authorization")
+				assert.Equal(t, "Bearer dummy_install_token", authHeader,
+					"collector didn't send correct Authorization header with registration request")
+
+				_, err = w.Write([]byte(`{
+					"collectorCredentialId": "mycredentialID",
+					"collectorCredentialKey": "mycredentialKey",
+					"collectorId": "0000000001231231",
+					"collectorName": "otc-test-123456123123"
+					}`))
+				require.NoError(t, err)
+			// metadata
+			case 2:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+			}
+
 		})
 	}())
 

@@ -168,6 +168,8 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 		zap.String(collectorIdField, colCreds.Credentials.CollectorId),
 	)
 
+	se.updateMetadataWithHTTPClient(ctx, se.httpClient)
+
 	go se.heartbeatLoop()
 
 	return nil
