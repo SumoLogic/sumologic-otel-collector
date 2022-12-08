@@ -1281,7 +1281,7 @@ func TestUpdateMetadataRequestPayload(t *testing.T) {
 			require.NoError(t, json.NewDecoder(req.Body).Decode(&reqPayload))
 			require.Equal(t, "app.test.com", reqPayload.HostDetails.Name)
 			require.EqualValues(t,
-				map[string]string{
+				map[string]interface{}{
 					"team": "A",
 					"app":  "linux",
 				},

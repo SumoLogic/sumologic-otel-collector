@@ -613,10 +613,7 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 			ProxyAddress:  "foobar.org.com",
 			ProxyPort:     3128,
 		},
-		TagDetails: map[string]string{
-			"team": "A",
-			"app":  "linux",
-		},
+		TagDetails: se.conf.CollectorFields,
 	}); err != nil {
 		return err
 	}
