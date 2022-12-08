@@ -31,6 +31,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
+	"github.com/shirou/gopsutil/v3/host"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/configauth"
 	"go.opentelemetry.io/collector/config/confighttp"
@@ -598,12 +599,17 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 		return fmt.Errorf("unable to parse metadata URL %w", err)
 	}
 
+	info, err := host.Info()
+	if err != nil {
+		return err
+	}
+
 	var buff bytes.Buffer
 	if err = json.NewEncoder(&buff).Encode(api.OpenMetadataRequestPayload{
 		HostDetails: api.OpenMetadataHostDetails{
-			Name:      "app.test.com",
-			OsName:    "Linux",
-			OsVersion: "5.4.144-69.257.amzn2.x86_64",
+			Name:      info.Hostname,
+			OsName:    info.OS,
+			OsVersion: info.PlatformVersion,
 		},
 		AgentDetails: api.OpenMetadataAgentDetails{
 			RunningVersion: "1.0.0",

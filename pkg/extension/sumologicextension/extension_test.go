@@ -1279,7 +1279,9 @@ func TestUpdateMetadataRequestPayload(t *testing.T) {
 
 			var reqPayload api.OpenMetadataRequestPayload
 			require.NoError(t, json.NewDecoder(req.Body).Decode(&reqPayload))
-			require.Equal(t, "app.test.com", reqPayload.HostDetails.Name)
+			require.NotEmpty(t, reqPayload.HostDetails.Name)
+			require.NotEmpty(t, reqPayload.HostDetails.OsName)
+			require.NotEmpty(t, reqPayload.HostDetails.OsVersion)
 			require.EqualValues(t,
 				map[string]interface{}{
 					"team": "A",
