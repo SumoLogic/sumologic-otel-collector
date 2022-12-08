@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -593,6 +594,17 @@ func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, h
 	return nil
 }
 
+func getHostIpAddress() (string, error) {
+	conn, err := net.Dial("udp", "8.8.8.8:53")
+	if err != nil {
+		return "", err
+	}
+
+	defer conn.Close()
+	addr := conn.LocalAddr().(*net.UDPAddr)
+	return addr.String(), nil
+}
+
 func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, httpClient *http.Client) error {
 	u, err := url.Parse(se.BaseUrl() + metadataUrl)
 	if err != nil {
@@ -600,6 +612,11 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 	}
 
 	info, err := host.Info()
+	if err != nil {
+		return err
+	}
+
+	ip, err := getHostIpAddress()
 	if err != nil {
 		return err
 	}
@@ -615,7 +632,7 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 			RunningVersion: "1.0.0",
 		},
 		NetworkDetails: api.OpenMetadataNetworkDetails{
-			HostIpAddress: "19.123.24.66",
+			HostIpAddress: ip,
 			ProxyAddress:  "foobar.org.com",
 			ProxyPort:     3128,
 		},
