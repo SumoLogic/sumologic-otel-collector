@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -595,14 +596,39 @@ func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, h
 }
 
 func getHostIpAddress() (string, error) {
-	conn, err := net.Dial("udp", "8.8.8.8:53")
+	c, err := net.Dial("udp", "8.8.8.8:53")
 	if err != nil {
 		return "", err
 	}
 
-	defer conn.Close()
-	addr := conn.LocalAddr().(*net.UDPAddr)
-	return addr.String(), nil
+	defer c.Close()
+	a := c.LocalAddr().(*net.UDPAddr)
+	return a.String(), nil
+}
+
+func getProxyInfo() (string, int, error) {
+	p := os.Getenv("HTTPS_PROXY")
+	if p == "" {
+		p = os.Getenv("HTTP_PROXY")
+	}
+
+	if p == "" {
+		return "", 0, nil
+	}
+
+	u, err := url.Parse(p)
+
+	h, ps, err := net.SplitHostPort(u.Host)
+	if err != nil {
+		return "", 0, err
+	}
+
+	pi, err := strconv.Atoi(ps)
+	if err != nil {
+		return "", 0, err
+	}
+
+	return h, pi, nil
 }
 
 func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, httpClient *http.Client) error {
@@ -621,6 +647,11 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 		return err
 	}
 
+	pAddr, pPort, err := getProxyInfo()
+	if err != nil {
+		return err
+	}
+
 	var buff bytes.Buffer
 	if err = json.NewEncoder(&buff).Encode(api.OpenMetadataRequestPayload{
 		HostDetails: api.OpenMetadataHostDetails{
@@ -633,8 +664,8 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 		},
 		NetworkDetails: api.OpenMetadataNetworkDetails{
 			HostIpAddress: ip,
-			ProxyAddress:  "foobar.org.com",
-			ProxyPort:     3128,
+			ProxyAddress:  pAddr,
+			ProxyPort:     pPort,
 		},
 		TagDetails: se.conf.CollectorFields,
 	}); err != nil {

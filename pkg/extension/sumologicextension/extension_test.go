@@ -1270,6 +1270,36 @@ func TestRegistrationRequestPayload(t *testing.T) {
 	require.NoError(t, se.Shutdown(context.Background()))
 }
 
+func TestGetHostIpAddress(t *testing.T) {
+	ip, err := getHostIpAddress()
+	require.NoError(t, err)
+	require.NotEmpty(t, ip)
+}
+
+func TestGetProxyInfo(t *testing.T) {
+	pAddr, pPort, err := getProxyInfo()
+	require.NoError(t, err)
+	require.Empty(t, pAddr)
+	require.Empty(t, pPort)
+	os.Setenv("HTTP_PROXY", "http://foo:8080")
+	pAddr, pPort, err = getProxyInfo()
+	require.NoError(t, err)
+	require.Equal(t, pAddr, "foo")
+	require.Equal(t, pPort, 8080)
+	os.Setenv("HTTPS_PROXY", "https://bar:4430")
+	pAddr, pPort, err = getProxyInfo()
+	require.NoError(t, err)
+	require.Equal(t, pAddr, "bar")
+	require.Equal(t, pPort, 4430)
+	os.Setenv("HTTPS_PROXY", "invalid")
+	pAddr, pPort, err = getProxyInfo()
+	require.Error(t, err)
+	require.Empty(t, pAddr)
+	require.Empty(t, pPort)
+	os.Setenv("HTTP_PROXY", "")
+	os.Setenv("HTTPS_PROXY", "")
+}
+
 func TestUpdateMetadataRequestPayload(t *testing.T) {
 	t.Parallel()
 
