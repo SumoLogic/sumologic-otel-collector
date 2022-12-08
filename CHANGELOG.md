@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.66.0-sumo-0]
+
+### Released 2022-12-08
 
 This release introduces the following breaking changes:
 
@@ -39,7 +41,7 @@ This release introduces the following breaking changes:
 - feat(sumologicexporter): remove translating attributes ([upgrade guide][upgrade_guide_unreleased_moved_translation]) [#672]
 - feat(sumologicexporter): remove setting source headers ([upgrade guide][upgrade_guide_v0_57_0_deprecate_source_templates]) [#686]
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.57.2-sumo-1...main
+[v0.66.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.57.2-sumo-1...v0.66.0-sumo-0
 [#672]: https://github.com/SumoLogic/sumologic-otel-collector/pull/672
 [#678]: https://github.com/SumoLogic/sumologic-otel-collector/pull/678
 [#686]: https://github.com/SumoLogic/sumologic-otel-collector/pull/686

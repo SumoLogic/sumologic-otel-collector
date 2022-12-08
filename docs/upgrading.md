@@ -1,6 +1,6 @@
 # Upgrading
 
-- [Unreleased](#unreleased)
+- [Upgrading to v0.66.0-sumo-0](#upgrading-to-v0660-sumo-0)
   - [`filelog` receiver: has been removed from sub-parsers](#filelog-receiver-has-been-removed-from-sub-parsers)
   - [`sending_queue`: require explicit storage set](#sending_queue-require-explicit-storage-set)
   - [`apache` receiver: turn on feature gates for resource attributes](#apache-receiver-turn-on-feature-gates-for-resource-attributes)
@@ -25,7 +25,7 @@
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
-## Unreleased
+## Upgrading to v0.66.0-sumo-0
 
 ### `filelog` receiver: has been removed from sub-parsers
 
