@@ -634,6 +634,12 @@ func getProxyInfo() (string, int, error) {
 	return h, pi, nil
 }
 
+var sumoAppProcesses = map[string]string{
+	"mysql-server": "mysql",
+	"mysqld":       "mysql",
+	"docker":       "docker",
+}
+
 func filteredProcessList() ([]string, error) {
 	var pl []string
 
@@ -643,7 +649,10 @@ func filteredProcessList() ([]string, error) {
 	}
 
 	for _, v := range p {
-		pl = append(pl, v.Executable())
+		e := strings.ToLower(v.Executable())
+		if a, i := sumoAppProcesses[e]; i {
+			pl = append(pl, a)
+		}
 	}
 
 	return pl, nil
@@ -660,7 +669,6 @@ func discoverTags() (map[string]interface{}, error) {
 	}
 
 	for _, v := range pl {
-		// TODO: Filter for Sumo App specific processes (e.g. mysqld).
 		t["sumo.disco."+v] = "running"
 	}
 

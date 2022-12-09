@@ -1343,6 +1343,7 @@ func TestUpdateMetadataRequestPayload(t *testing.T) {
 			require.NotEmpty(t, reqPayload.NetworkDetails.HostIpAddress)
 			require.EqualValues(t, reqPayload.TagDetails["team"], "A")
 			require.EqualValues(t, reqPayload.TagDetails["app"], "linux")
+			require.EqualValues(t, reqPayload.TagDetails["sumo.disco.enabled"], "true")
 
 			_, err := w.Write([]byte(``))
 
