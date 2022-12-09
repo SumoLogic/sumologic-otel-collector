@@ -1341,13 +1341,8 @@ func TestUpdateMetadataRequestPayload(t *testing.T) {
 			require.NotEmpty(t, reqPayload.HostDetails.OsName)
 			require.NotEmpty(t, reqPayload.HostDetails.OsVersion)
 			require.NotEmpty(t, reqPayload.NetworkDetails.HostIpAddress)
-			require.EqualValues(t,
-				map[string]interface{}{
-					"team": "A",
-					"app":  "linux",
-				},
-				reqPayload.TagDetails,
-			)
+			require.EqualValues(t, reqPayload.TagDetails["team"], "A")
+			require.EqualValues(t, reqPayload.TagDetails["app"], "linux")
 
 			_, err := w.Write([]byte(``))
 

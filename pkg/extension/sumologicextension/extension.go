@@ -33,6 +33,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
+	ps "github.com/mitchellh/go-ps"
 	"github.com/shirou/gopsutil/v3/host"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/configauth"
@@ -633,6 +634,39 @@ func getProxyInfo() (string, int, error) {
 	return h, pi, nil
 }
 
+func filteredProcessList() ([]string, error) {
+	var pl []string
+
+	p, err := ps.Processes()
+	if err != nil {
+		return pl, err
+	}
+
+	for _, v := range p {
+		pl = append(pl, v.Executable())
+	}
+
+	return pl, nil
+}
+
+func discoverTags() (map[string]interface{}, error) {
+	t := map[string]interface{}{
+		"sumo.disco.enabled": "true",
+	}
+
+	pl, err := filteredProcessList()
+	if err != nil {
+		return t, err
+	}
+
+	for _, v := range pl {
+		// TODO: Filter for Sumo App specific processes (e.g. mysqld).
+		t["sumo.disco."+v] = "running"
+	}
+
+	return t, nil
+}
+
 func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, httpClient *http.Client) error {
 	u, err := url.Parse(se.BaseUrl() + metadataUrl)
 	if err != nil {
@@ -654,6 +688,15 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 		return err
 	}
 
+	td, err := discoverTags()
+	if err != nil {
+		return err
+	}
+
+	for k, v := range se.conf.CollectorFields {
+		td[k] = v
+	}
+
 	var buff bytes.Buffer
 	if err = json.NewEncoder(&buff).Encode(api.OpenMetadataRequestPayload{
 		HostDetails: api.OpenMetadataHostDetails{
@@ -669,7 +712,7 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 			ProxyAddress:  pAddr,
 			ProxyPort:     pPort,
 		},
-		TagDetails: se.conf.CollectorFields,
+		TagDetails: td,
 	}); err != nil {
 		return err
 	}
