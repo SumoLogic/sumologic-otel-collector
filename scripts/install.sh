@@ -80,6 +80,8 @@ USER_API_URL=""
 USER_TOKEN=""
 USER_FIELDS=""
 
+ACL_LOG_FILE_PATHS="/var/log/ /srv/log/"
+
 SYSTEM_USER="otelcol-sumo"
 
 INDENTATION=""
@@ -969,6 +971,19 @@ function get_binary_from_url() {
     fi
 }
 
+function set_acl_on_log_paths() {
+    if command -v setfacl &> /dev/null; then
+        for log_path in ${ACL_LOG_FILE_PATHS}; do
+	    if [ -d "$log_path" ]; then
+		echo -e "Running: setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}"
+		setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}
+	    fi
+        done
+    else
+        echo "setfacl command not found, skipping ACL creation for system log file paths."
+    fi
+}
+
 ############################ Main code
 
 check_dependencies
@@ -977,6 +992,7 @@ parse_options "$@"
 
 readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
 readonly USER_CONFIG_DIRECTORY USER_ENV_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
+readonly ACL_LOG_FILE_PATHS
 
 if [[ "${UNINSTALL}" == "true" ]]; then
     uninstall
@@ -1155,6 +1171,9 @@ if getent passwd "${SYSTEM_USER}" > /dev/null; then
 else
     useradd -mrUs /bin/false -d "${HOME_DIRECTORY}" "${SYSTEM_USER}"
 fi
+
+echo 'Creating ACL grants on log paths'
+set_acl_on_log_paths
 
 if [[ "${SKIP_CONFIG}" == "false" ]]; then
     echo 'Changing ownership for config and storage'

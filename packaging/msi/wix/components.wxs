@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <?include variables.wxi ?>
+
+  <Fragment>
+    <ComponentGroup Id="AppDataComponents" Directory="APPDATAFOLDER">
+      <!-- Add InstallLocation to Registry -->
+      <Component>
+        <RegistryKey Root="HKLM" Key="$(RegKeyPath)" ForceCreateOnInstall="yes">
+          <RegistryValue Name="InstallLocation" Value="[INSTALLFOLDER]" Type="string" KeyPath="yes" />
+          <!-- <Permission User="Administrators" GenericAll="yes" /> -->
+          <PermissionEx Sddl="O:BAG:S-1-5-21-3988832304-4192099344-2875098712-513D:PAI(A;CI;KA;;;SY)(A;CI;KA;;;BA)" />
+        </RegistryKey>
+      </Component>
+
+      <!-- Add AppDataLocation to Registry -->
+      <Component>
+        <RegistryKey Root="HKLM" Key="$(RegKeyPath)" ForceCreateOnInstall="yes">
+          <RegistryValue Name="AppDataLocation" Value="[APPDATAFOLDER]" Type="string" KeyPath="yes" />
+          <PermissionEx Sddl="O:BAG:S-1-5-21-3988832304-4192099344-2875098712-513D:PAI(A;CI;KA;;;SY)(A;CI;KA;;;BA)" />
+        </RegistryKey>
+      </Component>
+
+      <!-- TODO: fix permissions to allow securely storing secrets in the registry -->
+      <!-- Add InstallToken to Registry -->
+      <!-- <Component> -->
+      <!--   <RegistryKey Root="HKLM" Key="$(RegKeyPath)" ForceCreateOnInstall="yes"> -->
+      <!--     <RegistryValue Name="InstallToken" Value="[INSTALLTOKEN]" Type="string" KeyPath="yes" /> -->
+      <!--     <PermissionEx Sddl="O:BAG:S-1-5-21-3988832304-4192099344-2875098712-513D:PAI(A;CI;KA;;;SY)(A;CI;KA;;;BA)" /> -->
+      <!--   </RegistryKey> -->
+      <!-- </Component> -->
+
+      <!-- TODO: fix permissions to allow securely storing secrets in the registry -->
+      <!-- Add Tags to Registry -->
+      <!-- <Component> -->
+      <!--   <RegistryKey Root="HKLM" Key="$(RegKeyPath)" ForceCreateOnInstall="yes"> -->
+      <!--     <RegistryValue Name="Tags" Value="[TAGS]" Type="string" KeyPath="yes" /> -->
+      <!--     <PermissionEx Sddl="O:BAG:S-1-5-21-3988832304-4192099344-2875098712-513D:PAI(A;CI;KA;;;SY)(A;CI;KA;;;BA)" /> -->
+      <!--   </RegistryKey> -->
+      <!-- </Component> -->
+
+      <Component Id="cAPPDATAFOLDER" KeyPath="yes" Guid="0606049B-8268-4002-855F-586426F3EDFD">
+        <CreateFolder />
+        <RemoveFolder On="uninstall" />
+      </Component>
+
+      <Component Directory="ConfigFolder">
+        <File Id="SumoLogicConfig" Name="sumologic.yaml" Source="!(bindpath.examples)\sumologic-windows.yaml" />
+      </Component>
+
+      <Component Id="cDataFolder" Directory="DataFolder" KeyPath="yes" Guid="B10962F8-B958-45E2-8B73-75C142A50B30">
+        <CreateFolder />
+        <RemoveFolder On="uninstall" />
+      </Component>
+
+      <Component Id="cFileStorageFolder" Directory="FileStorageFolder" KeyPath="yes" Guid="0A7EFA54-26F3-46A9-BA12-9D12CDAEF1CD">
+        <CreateFolder />
+        <RemoveFolder On="uninstall" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="ProgramComponents" Directory="INSTALLFOLDER">
+      <Component Directory="BinFolder">
+        <File Source="!(bindpath.binaries)\otelcol-sumo.exe" />
+
+        <!-- Add bin dir to System PATH -->
+        <Environment Id="PATH" Name="PATH" Value="[INSTALLDIR]\bin" Permanent="yes" Part="last" Action="set" System="yes" />
+
+        <!-- Add service for OTC -->
+        <ServiceInstall Id="Sevice" Name="!(loc.ServiceName)" DisplayName="!(loc.ServiceDisplayName)" Description="!(loc.ServiceDescription)" Type="ownProcess" Vital="yes" Start="auto" Account="LocalSystem" ErrorControl="normal" Arguments=" --config=&quot;[ConfigFolder]sumologic.yaml&quot;" Interactive="no" />
+
+        <!-- Start/Stop/Remove OTC service -->
+        <ServiceControl Id="StartServiceControl" Name="!(loc.ServiceName)" Start="install" Stop="both" Remove="uninstall" Wait="no" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

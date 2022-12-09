@@ -7,18 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.66.0-sumo-0...main
+
+## [v0.66.0-sumo-0]
+
+### Released 2022-12-08
+
 This release introduces the following breaking changes:
 
-- `filelog` receiver: has been removed from sub-parsers ([upgrade guide][upgrade_guide_unreleased]) [#769]
-- `sending_queue`: require explicit storage set ([upgrade guide][upgrade_guide_unreleased]) [#769]
-- `apache` receiver: turn on feature gates for resource attributes ([upgrade guide][upgrade_guide_unreleased]) [#839]
-- `elasticsearch` receiver: turn on feature gates for resource attributes ([upgrade guide][upgrade_guide_unreleased]) [#848]
+- `filelog` receiver: has been removed from sub-parsers ([upgrade guide][upgrade_guide_v0.66]) [#769]
+- `sending_queue`: require explicit storage set ([upgrade guide][upgrade_guide_v0.66]) [#769]
+- `apache` receiver: turn on feature gates for resource attributes ([upgrade guide][upgrade_guide_v0.66]) [#839]
+- `elasticsearch` receiver: turn on feature gates for resource attributes ([upgrade guide][upgrade_guide_v0.66]) [#848]
 
 ### Added
 
 - feat: add glob config provider [#713]
 - feat(build): validate FIPS mode at build time and runtime [#693]
 - feat(ci): add windows builds to dev & pr jobs [#762]
+- feat(packaging/msi): add msi packaging [#852]
 
 ### Changed
 
@@ -38,7 +45,7 @@ This release introduces the following breaking changes:
 - feat(sumologicexporter): remove translating attributes ([upgrade guide][upgrade_guide_unreleased_moved_translation]) [#672]
 - feat(sumologicexporter): remove setting source headers ([upgrade guide][upgrade_guide_v0_57_0_deprecate_source_templates]) [#686]
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.57.2-sumo-1...main
+[v0.66.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.57.2-sumo-1...v0.66.0-sumo-0
 [#672]: https://github.com/SumoLogic/sumologic-otel-collector/pull/672
 [#678]: https://github.com/SumoLogic/sumologic-otel-collector/pull/678
 [#686]: https://github.com/SumoLogic/sumologic-otel-collector/pull/686
@@ -60,7 +67,8 @@ This release introduces the following breaking changes:
 [#849]: https://github.com/SumoLogic/sumologic-otel-collector/pull/849
 [#839]: https://github.com/SumoLogic/sumologic-otel-collector/pull/839
 [#848]: https://github.com/SumoLogic/sumologic-otel-collector/pull/848
-[upgrade_guide_unreleased]: ./docs/upgrading.md#unreleased
+[#852]: https://github.com/SumoLogic/sumologic-otel-collector/pull/852
+[upgrade_guide_v0.66]: ./docs/upgrading.md#upgrading-to-v0660-sumo-0
 
 ## [v0.57.2-sumo-1]
 

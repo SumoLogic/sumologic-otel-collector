@@ -293,6 +293,10 @@ func checkUserNotExists(c check) {
 	require.Error(c.test, err)
 }
 
+func checkVarLogACL(c check) {
+	PathHasUserACL(c.test, "/var/log", systemUser, "r-x")
+}
+
 func PathHasPermissions(t *testing.T, path string, perms uint32) {
 	info, err := os.Stat(path)
 	require.NoError(t, err)
@@ -316,4 +320,12 @@ func PathHasOwner(t *testing.T, path string, ownerName string, groupName string)
 
 	require.Equal(t, ownerName, usr.Username)
 	require.Equal(t, groupName, group.Name)
+}
+
+func PathHasUserACL(t *testing.T, path string, ownerName string, perms string) {
+	cmd := exec.Command("/usr/bin/getfacl", path)
+
+	output, err := cmd.Output()
+	require.NoError(t, err, "error while checking "+path+" acl")
+	require.Contains(t, string(output), "user:"+ownerName+":"+perms)
 }
