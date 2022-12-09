@@ -641,9 +641,20 @@ func getProxyInfo() (string, int, error) {
 }
 
 var sumoAppProcesses = map[string]string{
-	"mysql-server": "mysql",
-	"mysqld":       "mysql",
-	"docker":       "docker",
+	"apache":                "apache",
+	"apache2":               "apache",
+	"httpd":                 "apache",
+	"docker":                "docker",
+	"elasticsearch":         "elasticsearch",
+	"mysql-server":          "mysql",
+	"mysqld":                "mysql",
+	"nginx":                 "nginx",
+	"postgresql":            "postgres",
+	"postgresql-9.5":        "postgres",
+	"rabbitmq-server":       "rabbitmq",
+	"redis":                 "redis",
+	"tomcat":                "tomcat",
+	"kafka-server-start.sh": "kafka", // Need to test this, most common shell wrapper.
 }
 
 func filteredProcessList() ([]string, error) {
