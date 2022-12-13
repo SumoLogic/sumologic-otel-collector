@@ -286,6 +286,8 @@ func TestInstallScript(t *testing.T) {
 				checkConfigPathPermissions,
 				checkTokenInConfig,
 				checkSystemdConfigCreated,
+				checkSystemdEnvDirExists,
+				checkSystemdEnvDirPermissions,
 				checkUserExists,
 				checkVarLogACL,
 			},
