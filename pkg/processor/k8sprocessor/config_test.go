@@ -23,7 +23,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
-	"go.opentelemetry.io/collector/service/servicetest"
+	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
 )
@@ -36,7 +36,7 @@ func TestLoadConfig(t *testing.T) {
 
 	require.NoError(t, component.ValidateConfig(factory.CreateDefaultConfig()))
 
-	cfg, err := servicetest.LoadConfig(
+	cfg, err := otelcoltest.LoadConfig(
 		path.Join(".", "testdata", "config.yaml"),
 		factories,
 	)

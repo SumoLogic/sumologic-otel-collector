@@ -26,6 +26,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
+	"go.opentelemetry.io/collector/extension"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/credentials"
 )
@@ -54,7 +55,7 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 	ccfg.Credentials.InstallToken = "dummy_install_token"
 
 	ext, err := createExtension(context.Background(),
-		component.ExtensionCreateSettings{
+		extension.CreateSettings{
 			TelemetrySettings: componenttest.NewNopTelemetrySettings(),
 		},
 		cfg,
@@ -69,7 +70,7 @@ func TestFactory_CreateExtension(t *testing.T) {
 	cfg.Credentials.InstallToken = "dummy_install_token"
 
 	ext, err := createExtension(context.Background(),
-		component.ExtensionCreateSettings{
+		extension.CreateSettings{
 			TelemetrySettings: componenttest.NewNopTelemetrySettings(),
 		},
 		cfg,

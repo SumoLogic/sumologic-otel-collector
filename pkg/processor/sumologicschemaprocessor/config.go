@@ -34,9 +34,9 @@ const (
 )
 
 // Ensure the Config struct satisfies the config.Processor interface.
-var _ component.ProcessorConfig = (*Config)(nil)
+var _ component.Config = (*Config)(nil)
 
-func createDefaultConfig() component.ProcessorConfig {
+func createDefaultConfig() component.Config {
 	return &Config{
 		ProcessorSettings:           config.NewProcessorSettings(component.NewID(typeStr)),
 		AddCloudNamespace:           defaultAddCloudNamespace,

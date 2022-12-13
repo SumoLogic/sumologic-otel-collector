@@ -27,6 +27,7 @@ import (
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/receiver"
 	"go.uber.org/zap"
 
 	// Blank imports to register all the plugins
@@ -55,7 +56,7 @@ type telegrafreceiver struct {
 }
 
 // Ensure this receiver adheres to required interface.
-var _ component.MetricsReceiver = (*telegrafreceiver)(nil)
+var _ receiver.Metrics = (*telegrafreceiver)(nil)
 
 // Start tells the receiver to start.
 func (r *telegrafreceiver) Start(ctx context.Context, host component.Host) error {
