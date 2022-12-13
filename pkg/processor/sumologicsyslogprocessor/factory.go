@@ -39,7 +39,7 @@ func NewFactory() component.ProcessorFactory {
 		component.WithLogsProcessor(createLogProcessor, stabilityLevel))
 }
 
-func createDefaultConfig() component.ProcessorConfig {
+func createDefaultConfig() component.Config {
 	return &Config{
 		ProcessorSettings: config.NewProcessorSettings(component.NewID(typeStr)),
 		FacilityAttr:      defaultFacilityAttr,
@@ -49,7 +49,7 @@ func createDefaultConfig() component.ProcessorConfig {
 func createLogProcessor(
 	ctx context.Context,
 	params component.ProcessorCreateSettings,
-	cfg component.ProcessorConfig,
+	cfg component.Config,
 	nextConsumer consumer.Logs,
 ) (component.LogsProcessor, error) {
 	tCfg := cfg.(*Config)

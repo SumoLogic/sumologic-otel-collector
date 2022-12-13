@@ -26,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -132,6 +133,7 @@ type sender struct {
 	dataUrlMetrics      string
 	dataUrlLogs         string
 	dataUrlTraces       string
+	id                  component.ID
 }
 
 const (
@@ -167,6 +169,7 @@ func newSender(
 	metricsUrl string,
 	logsUrl string,
 	tracesUrl string,
+	id component.ID,
 ) *sender {
 	return &sender{
 		logger:              logger,
@@ -178,6 +181,7 @@ func newSender(
 		dataUrlMetrics:      metricsUrl,
 		dataUrlLogs:         logsUrl,
 		dataUrlTraces:       tracesUrl,
+		id:                  id,
 	}
 }
 
@@ -776,7 +780,7 @@ func (s *sender) recordMetrics(duration time.Duration, count int64, req *http.Re
 		statusCode = resp.StatusCode
 	}
 
-	id := s.config.ID().String()
+	id := s.id.String()
 
 	if err := observability.RecordRequestsDuration(duration, statusCode, req.URL.String(), string(pipeline), id); err != nil {
 		s.logger.Debug("error for recording metric for request duration", zap.Error(err))

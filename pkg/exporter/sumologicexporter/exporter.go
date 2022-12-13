@@ -24,6 +24,7 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer/consumererror"
+	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -59,9 +60,11 @@ type sumologicexporter struct {
 	dataUrlMetrics string
 	dataUrlLogs    string
 	dataUrlTraces  string
+
+	id component.ID
 }
 
-func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) (*sumologicexporter, error) {
+func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sumologicexporter, error) {
 	pf, err := newPrometheusFormatter()
 	if err != nil {
 		return nil, err
@@ -81,6 +84,7 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 		},
 		// NOTE: client is now set in start()
 		prometheusFormatter: pf,
+		id:                  createSettings.ID,
 	}
 
 	se.logger.Info(
@@ -95,9 +99,9 @@ func initExporter(cfg *Config, createSettings component.ExporterCreateSettings) 
 
 func newLogsExporter(
 	ctx context.Context,
-	params component.ExporterCreateSettings,
+	params exporter.CreateSettings,
 	cfg *Config,
-) (component.LogsExporter, error) {
+) (exporter.Logs, error) {
 	se, err := initExporter(cfg, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize the logs exporter: %w", err)
@@ -120,9 +124,9 @@ func newLogsExporter(
 
 func newMetricsExporter(
 	ctx context.Context,
-	params component.ExporterCreateSettings,
+	params exporter.CreateSettings,
 	cfg *Config,
-) (component.MetricsExporter, error) {
+) (exporter.Metrics, error) {
 	se, err := initExporter(cfg, params)
 	if err != nil {
 		return nil, err
@@ -145,9 +149,9 @@ func newMetricsExporter(
 
 func newTracesExporter(
 	ctx context.Context,
-	params component.ExporterCreateSettings,
+	params exporter.CreateSettings,
 	cfg *Config,
-) (component.TracesExporter, error) {
+) (exporter.Traces, error) {
 	se, err := initExporter(cfg, params)
 	if err != nil {
 		return nil, err
@@ -188,6 +192,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld plog.Logs) err
 		metricsUrl,
 		logsUrl,
 		tracesUrl,
+		se.id,
 	)
 
 	// Follow different execution path for OTLP format
@@ -270,6 +275,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pmetric.Met
 		metricsUrl,
 		logsUrl,
 		tracesUrl,
+		se.id,
 	)
 
 	// Transform metrics metadata
@@ -335,6 +341,7 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td ptrace.Trace
 		metricsUrl,
 		logsUrl,
 		tracesUrl,
+		se.id,
 	)
 
 	// Drop routing attribute from ResourceSpans
