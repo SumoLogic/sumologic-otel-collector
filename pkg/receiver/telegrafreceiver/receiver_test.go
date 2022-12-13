@@ -27,6 +27,7 @@ import (
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/receiver/receivertest"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
@@ -66,7 +67,7 @@ func newCountingErrorConsumer(err error) *countingErrorConsumer {
 func TestStartShutdown(t *testing.T) {
 	ctx := context.Background()
 	cfg := createTestConfig()
-	receiver, err := createMetricsReceiver(ctx, componenttest.NewNopReceiverCreateSettings(), cfg, consumertest.NewNop())
+	receiver, err := createMetricsReceiver(ctx, receivertest.NewNopCreateSettings(), cfg, consumertest.NewNop())
 	require.NoError(t, err)
 	require.NoError(t, receiver.Start(ctx, componenttest.NewNopHost()))
 	require.NoError(t, receiver.Shutdown(ctx))

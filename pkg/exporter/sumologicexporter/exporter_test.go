@@ -32,6 +32,7 @@ import (
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/consumer/consumererror"
+	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -65,8 +66,8 @@ func createTestConfig() *Config {
 	return config
 }
 
-func createExporterCreateSettings() component.ExporterCreateSettings {
-	return component.ExporterCreateSettings{
+func createExporterCreateSettings() exporter.CreateSettings {
+	return exporter.CreateSettings{
 		TelemetrySettings: component.TelemetrySettings{
 			Logger: zap.NewNop(),
 		},

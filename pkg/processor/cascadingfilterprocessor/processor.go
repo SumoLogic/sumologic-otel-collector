@@ -106,15 +106,15 @@ const (
 
 // newTraceProcessor returns a processor.TraceProcessor that will perform Cascading Filter according to the given
 // configuration.
-func newTraceProcessor(logger *zap.Logger, nextConsumer consumer.Traces, cfg config.Config) (component.TracesProcessor, error) {
+func newTraceProcessor(logger *zap.Logger, nextConsumer consumer.Traces, cfg config.Config, id component.ID) (component.TracesProcessor, error) {
 	if nextConsumer == nil {
 		return nil, component.ErrNilNextConsumer
 	}
 
-	return newCascadingFilterSpanProcessor(logger, nextConsumer, cfg)
+	return newCascadingFilterSpanProcessor(logger, nextConsumer, cfg, id)
 }
 
-func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.Traces, cfg config.Config) (*cascadingFilterSpanProcessor, error) {
+func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.Traces, cfg config.Config, id component.ID) (*cascadingFilterSpanProcessor, error) {
 	numDecisionBatches := uint64(cfg.DecisionWait.Seconds())
 	inBatcher, err := idbatcher.New(numDecisionBatches, cfg.ExpectedNewTracesPerSec, uint64(2*runtime.NumCPU()))
 	if err != nil {
@@ -259,7 +259,7 @@ func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.T
 	cfsp := &cascadingFilterSpanProcessor{
 		ctx:                   ctx,
 		nextConsumer:          nextConsumer,
-		instanceName:          cfg.ProcessorSettings.ID().String(),
+		instanceName:          id.String(),
 		maxNumTraces:          cfg.NumTraces,
 		decisionSpansLimitter: newRateLimitter(spansPerSecond),
 		priorSpansLimitter:    newRateLimitter(priorSpansRate),

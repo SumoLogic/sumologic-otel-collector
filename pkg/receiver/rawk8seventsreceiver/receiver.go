@@ -29,6 +29,7 @@ import (
 	"go.opentelemetry.io/collector/extension/experimental/storage"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/receiver"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -60,6 +61,7 @@ type rawK8sEventsReceiver struct {
 
 	consumer consumer.Logs
 	logger   *zap.Logger
+	id       component.ID
 }
 
 // Function type for creating ListerWatcher objects. Used for injecting mocks into k8s informers.
@@ -79,7 +81,7 @@ type eventChange struct {
 
 // create a new receiver
 func newRawK8sEventsReceiver(
-	params component.ReceiverCreateSettings,
+	params receiver.CreateSettings,
 	cfg *Config,
 	consumer consumer.Logs,
 	client k8s.Interface,
@@ -127,6 +129,7 @@ func newRawK8sEventsReceiver(
 		consumer:         consumer,
 		logger:           params.Logger,
 		startTime:        time.Now(),
+		id:               params.ID,
 	}
 	return receiver, nil
 }
@@ -188,7 +191,7 @@ func (r *rawK8sEventsReceiver) getStorage(ctx context.Context, host component.Ho
 		return nil, nil
 	}
 
-	storageClient, err := storageExtension.GetClient(ctx, component.KindReceiver, r.cfg.ID(), "")
+	storageClient, err := storageExtension.GetClient(ctx, component.KindReceiver, r.id, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get storage client for extension '%s': %s", storageExtensionId, err)
 	}

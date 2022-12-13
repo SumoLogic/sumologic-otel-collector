@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/service"
 )
 
@@ -112,7 +113,7 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 
 				for {
 					switch state := app.GetState(); state {
-					case service.StateRunning:
+					case otelcol.StateRunning:
 						t.Log("App is in the running state, calling .Shutdown()...")
 						time.Sleep(time.Second)
 						app.Shutdown()

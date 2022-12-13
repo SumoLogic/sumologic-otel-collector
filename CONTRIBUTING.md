@@ -119,6 +119,9 @@ use (
         ./pkg/processor/sumologicschemaprocessor
         ./pkg/processor/sumologicsyslogprocessor
         ./pkg/receiver/telegrafreceiver
+        ./pkg/configprovider/globprovider
+        ./pkg/scripts_test
+        ./pkg/tools/udpdemux
 )
 ```
 
