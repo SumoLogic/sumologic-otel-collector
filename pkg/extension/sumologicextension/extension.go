@@ -170,7 +170,10 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 		zap.String(collectorIdField, colCreds.Credentials.CollectorId),
 	)
 
-	se.updateMetadataWithHTTPClient(ctx, se.httpClient)
+	err = se.updateMetadataWithHTTPClient(ctx, se.httpClient)
+	if err != nil {
+		return err
+	}
 
 	go se.heartbeatLoop()
 
@@ -621,6 +624,9 @@ func getProxyInfo() (string, int, error) {
 	}
 
 	u, err := url.Parse(p)
+	if err != nil {
+		return "", 0, err
+	}
 
 	h, ps, err := net.SplitHostPort(u.Host)
 	if err != nil {

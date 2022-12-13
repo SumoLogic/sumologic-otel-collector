@@ -1372,7 +1372,7 @@ func TestUpdateMetadataRequestPayload(t *testing.T) {
 	}
 	cfg.TimeZone = "PST"
 
-	se, err := newSumologicExtension(cfg, zap.NewNop())
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
 	require.NoError(t, err)
 
 	httpClient, err := se.getHTTPClient(se.conf.HTTPClientSettings, api.OpenRegisterResponsePayload{})
