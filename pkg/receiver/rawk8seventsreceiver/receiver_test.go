@@ -28,6 +28,7 @@ import (
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/receiver/receivertest"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
@@ -64,7 +65,7 @@ func TestNewRawK8sEventsReceiver(t *testing.T) {
 	rCfg := createDefaultConfig().(*Config)
 	client := fake.NewSimpleClientset(&corev1.Event{})
 	r, err := newRawK8sEventsReceiver(
-		componenttest.NewNopReceiverCreateSettings(),
+		receivertest.NewNopCreateSettings(),
 		rCfg,
 		consumertest.NewNop(),
 		client,
@@ -78,7 +79,7 @@ func TestNewRawK8sEventsReceiver(t *testing.T) {
 
 	rCfg.Namespaces = []string{"test", "another_test"}
 	r1, err := newRawK8sEventsReceiver(
-		componenttest.NewNopReceiverCreateSettings(),
+		receivertest.NewNopCreateSettings(),
 		rCfg,
 		consumertest.NewNop(),
 		client,
@@ -106,7 +107,7 @@ func TestProcessEventE2E(t *testing.T) {
 	}
 
 	r, err := newRawK8sEventsReceiver(
-		componenttest.NewNopReceiverCreateSettings(),
+		receivertest.NewNopCreateSettings(),
 		rCfg,
 		sink,
 		client,
@@ -132,7 +133,7 @@ func TestProcessEvent(t *testing.T) {
 	client := fake.NewSimpleClientset()
 	sink := new(consumertest.LogsSink)
 	r, err := newRawK8sEventsReceiver(
-		componenttest.NewNopReceiverCreateSettings(),
+		receivertest.NewNopCreateSettings(),
 		rCfg,
 		sink,
 		client,
@@ -154,7 +155,7 @@ func TestConsumeRetryOnRecoverableError(t *testing.T) {
 	core, observedLogs := observer.New(zapcore.InfoLevel)
 	consumerError := errors.New("recoverable error")
 	consumer := newCountingErrorConsumer(consumerError)
-	settings := componenttest.NewNopReceiverCreateSettings()
+	settings := receivertest.NewNopCreateSettings()
 	settings.Logger = zap.New(core)
 	rCfg.ConsumeMaxRetries = 1
 	rCfg.ConsumeRetryDelay = time.Nanosecond
@@ -184,7 +185,7 @@ func TestConsumeNoRetryOnPermanentError(t *testing.T) {
 	core, observedLogs := observer.New(zapcore.InfoLevel)
 	consumerError := consumererror.NewPermanent(errors.New("permanent error"))
 	consumer := newCountingErrorConsumer(consumerError)
-	settings := componenttest.NewNopReceiverCreateSettings()
+	settings := receivertest.NewNopCreateSettings()
 	settings.Logger = zap.New(core)
 	rCfg.ConsumeRetryDelay = time.Nanosecond
 
@@ -210,7 +211,7 @@ func TestConvertEventToLog(t *testing.T) {
 	client := fake.NewSimpleClientset()
 	sink := new(consumertest.LogsSink)
 	r, err := newRawK8sEventsReceiver(
-		componenttest.NewNopReceiverCreateSettings(),
+		receivertest.NewNopCreateSettings(),
 		rCfg,
 		sink,
 		client,
@@ -269,7 +270,7 @@ func TestEventFilterByTime(t *testing.T) {
 	client := fake.NewSimpleClientset()
 	sink := new(consumertest.LogsSink)
 	r, err := newRawK8sEventsReceiver(
-		componenttest.NewNopReceiverCreateSettings(),
+		receivertest.NewNopCreateSettings(),
 		rCfg,
 		sink,
 		client,
@@ -317,7 +318,7 @@ func TestNoStorage(t *testing.T) {
 	}
 
 	receiver, err := newRawK8sEventsReceiver(
-		componenttest.NewNopReceiverCreateSettings(),
+		receivertest.NewNopCreateSettings(),
 		receiverConfig,
 		logsSink,
 		fake.NewSimpleClientset(),
@@ -359,7 +360,7 @@ func TestNoStorage(t *testing.T) {
 
 	// Start the receiver again.
 	receiver, err = newRawK8sEventsReceiver(
-		componenttest.NewNopReceiverCreateSettings(),
+		receivertest.NewNopCreateSettings(),
 		receiverConfig,
 		logsSink,
 		fake.NewSimpleClientset(),
@@ -389,7 +390,7 @@ func TestStorage(t *testing.T) {
 	}
 
 	receiver, err := newRawK8sEventsReceiver(
-		componenttest.NewNopReceiverCreateSettings(),
+		receivertest.NewNopCreateSettings(),
 		receiverConfig,
 		logsSink,
 		fake.NewSimpleClientset(),
@@ -438,7 +439,7 @@ func TestStorage(t *testing.T) {
 
 	// Start the receiver again.
 	receiver, err = newRawK8sEventsReceiver(
-		componenttest.NewNopReceiverCreateSettings(),
+		receivertest.NewNopCreateSettings(),
 		receiverConfig,
 		logsSink,
 		fake.NewSimpleClientset(),

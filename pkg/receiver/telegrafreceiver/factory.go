@@ -24,6 +24,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer"
+	"go.opentelemetry.io/collector/receiver"
 )
 
 const (
@@ -33,15 +34,15 @@ const (
 )
 
 // NewFactory creates a factory for telegraf receiver.
-func NewFactory() component.ReceiverFactory {
-	return component.NewReceiverFactory(
+func NewFactory() receiver.Factory {
+	return receiver.NewFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithMetricsReceiver(createMetricsReceiver, stabilityLevel),
+		receiver.WithMetrics(createMetricsReceiver, stabilityLevel),
 	)
 }
 
-func createDefaultConfig() component.ReceiverConfig {
+func createDefaultConfig() component.Config {
 	// TypeVal: config.Type(typeStr),
 	// NameVal: typeStr,
 	//
@@ -59,10 +60,10 @@ func createDefaultConfig() component.ReceiverConfig {
 // createMetricsReceiver creates a metrics receiver based on provided config.
 func createMetricsReceiver(
 	ctx context.Context,
-	params component.ReceiverCreateSettings,
-	cfg component.ReceiverConfig,
+	params receiver.CreateSettings,
+	cfg component.Config,
 	nextConsumer consumer.Metrics,
-) (component.MetricsReceiver, error) {
+) (receiver.Metrics, error) {
 	tCfg, ok := cfg.(*Config)
 	if !ok {
 		return nil, fmt.Errorf("failed reading telegraf agent config from otc config")

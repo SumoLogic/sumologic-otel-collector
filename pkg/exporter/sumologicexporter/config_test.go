@@ -84,7 +84,7 @@ func TestInitExporterInvalidConfiguration(t *testing.T) {
 		},
 		{
 			name:          "unexpected compression encoding",
-			expectedError: errors.New("invalid compression encoding type: test_format"),
+			expectedError: errors.New("invalid compression encoding type: test_format; invalid compression encoding type: test_format"),
 			cfg: &Config{
 				LogFormat:        "json",
 				MetricFormat:     "otlp",

@@ -60,7 +60,7 @@ func buildBasicCFSP(t *testing.T, numTraces uint64) *cascadingFilterSpanProcesso
 		ExpectedNewTracesPerSec: 64,
 		PolicyCfgs:              testPolicy,
 	}
-	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg, component.NewID("cascading_filter"))
 	require.NoError(t, err)
 	return sp.(*cascadingFilterSpanProcessor)
 

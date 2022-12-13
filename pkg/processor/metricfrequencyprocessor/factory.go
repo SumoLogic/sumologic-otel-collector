@@ -33,7 +33,7 @@ func NewFactory() component.ProcessorFactory {
 	)
 }
 
-func createDefaultConfig() component.ProcessorConfig {
+func createDefaultConfig() component.Config {
 	id := component.NewID(cfgType)
 	ps := config.NewProcessorSettings(id)
 
@@ -58,7 +58,7 @@ func createDefaultConfig() component.ProcessorConfig {
 func createMetricsProcessor(
 	ctx context.Context,
 	params component.ProcessorCreateSettings,
-	cfg component.ProcessorConfig,
+	cfg component.Config,
 	nextConsumer consumer.Metrics,
 ) (component.MetricsProcessor, error) {
 	var internalProcessor = &metricsfrequencyprocessor{

@@ -3,12 +3,12 @@
 @@ -28,6 +28,11 @@
  }
 
- func runInteractive(params service.CollectorSettings) error {
+ func runInteractive(params otelcol.CollectorSettings) error {
 +	err := UseCustomConfigProvider(&params)
 +	if err != nil {
 +		return err
 +	}
 +
- 	cmd := service.NewCommand(params)
+ 	cmd := otelcol.NewCommand(params)
  	if err := cmd.Execute(); err != nil {
  		log.Fatalf("collector server run finished with error: %v", err)

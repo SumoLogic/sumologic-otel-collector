@@ -119,7 +119,7 @@ func newLongRunningTraceProcessor(t *testing.T, decisionWait time.Duration) *cas
 		ProbabilisticFilteringRate: &outputRate,
 		NumTraces:                  100,
 	}
-	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg)
+	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg, component.NewID("cascading_filter"))
 	require.NoError(t, err)
 	return sp.(*cascadingFilterSpanProcessor)
 }

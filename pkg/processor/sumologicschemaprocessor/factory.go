@@ -44,7 +44,7 @@ func NewFactory() component.ProcessorFactory {
 func createLogsProcessor(
 	ctx context.Context,
 	set component.ProcessorCreateSettings,
-	cfg component.ProcessorConfig,
+	cfg component.Config,
 	nextConsumer consumer.Logs,
 ) (component.LogsProcessor, error) {
 	processor, err := newSumologicSchemaProcessor(set, cfg.(*Config))
@@ -65,7 +65,7 @@ func createLogsProcessor(
 func createMetricsProcessor(
 	ctx context.Context,
 	set component.ProcessorCreateSettings,
-	cfg component.ProcessorConfig,
+	cfg component.Config,
 	nextConsumer consumer.Metrics,
 ) (component.MetricsProcessor, error) {
 	processor, err := newSumologicSchemaProcessor(set, cfg.(*Config))
@@ -86,7 +86,7 @@ func createMetricsProcessor(
 func createTracesProcessor(
 	ctx context.Context,
 	set component.ProcessorCreateSettings,
-	cfg component.ProcessorConfig,
+	cfg component.Config,
 	nextConsumer consumer.Traces,
 ) (component.TracesProcessor, error) {
 	processor, err := newSumologicSchemaProcessor(set, cfg.(*Config))
