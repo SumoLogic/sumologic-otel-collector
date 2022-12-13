@@ -35,8 +35,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/shirou/gopsutil/v3/host"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/config/configauth"
 	"go.opentelemetry.io/collector/config/confighttp"
+	"go.opentelemetry.io/collector/extension/auth"
 	"go.uber.org/zap"
 	grpccredentials "google.golang.org/grpc/credentials"
 
@@ -64,6 +64,7 @@ type SumologicExtension struct {
 	closeChan chan struct{}
 	closeOnce sync.Once
 	backOff   *backoff.ExponentialBackOff
+	id        component.ID
 }
 
 const (
@@ -83,9 +84,9 @@ const (
 var errGRPCNotSupported = fmt.Errorf("gRPC is not supported by sumologicextension")
 
 // SumologicExtension implements ClientAuthenticator
-var _ configauth.ClientAuthenticator = (*SumologicExtension)(nil)
+var _ auth.Client = (*SumologicExtension)(nil)
 
-func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtension, error) {
+func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID) (*SumologicExtension, error) {
 	if conf.Credentials.InstallToken == "" {
 		return nil, errors.New("access credentials not provided: need install_token")
 	}
@@ -139,6 +140,7 @@ func newSumologicExtension(conf *Config, logger *zap.Logger) (*SumologicExtensio
 		credentialsStore: credentialsStore,
 		closeChan:        make(chan struct{}),
 		backOff:          backOff,
+		id:               id,
 	}, nil
 }
 
@@ -720,7 +722,7 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 }
 
 func (se *SumologicExtension) ComponentID() component.ID {
-	return se.conf.ExtensionSettings.ID()
+	return se.id
 }
 
 func (se *SumologicExtension) CollectorID() string {

@@ -13,6 +13,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - feat: Integrated collector with new metadata API [#858]
 
+### Changed
+
+- chore: upgrade OT core to v0.67.0 [#867]
+
+### Fixed
+
+- fix(otelcolbuilder): use correct upstream modules [#864]
+
+[#858]: https://github.com/SumoLogic/sumologic-otel-collector/pull/858
+[#864]: https://github.com/SumoLogic/sumologic-otel-collector/pull/864
+[#867]: https://github.com/SumoLogic/sumologic-otel-collector/pull/867
+
 ## [v0.66.0-sumo-0]
 
 ### Released 2022-12-08
