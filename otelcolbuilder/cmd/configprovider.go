@@ -28,6 +28,7 @@ import (
 	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
 	"go.opentelemetry.io/collector/featuregate"
+	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/service"
 )
 
@@ -79,7 +80,7 @@ func UseCustomConfigProvider(params *service.CollectorSettings) error {
 	return nil
 }
 
-func NewConfigProvider(locations []string) (service.ConfigProvider, error) {
+func NewConfigProvider(locations []string) (otelcol.ConfigProvider, error) {
 	settings := NewConfigProviderSettings(locations)
 	return service.NewConfigProvider(settings)
 }

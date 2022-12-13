@@ -21,6 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
@@ -136,7 +137,7 @@ func createCascade(t *testing.T) *cascade {
 }
 
 func createCascadeWithConfig(t *testing.T, conf cfconfig.Config) *cascade {
-	cascading, err := newCascadingFilterSpanProcessor(zap.NewNop(), nil, conf)
+	cascading, err := newCascadingFilterSpanProcessor(zap.NewNop(), nil, conf, component.NewID("cascading_filter"))
 	assert.NoError(t, err)
 	return newCascade(cascading)
 }

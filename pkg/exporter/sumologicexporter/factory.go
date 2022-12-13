@@ -20,6 +20,7 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
+	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 )
 
@@ -30,17 +31,17 @@ const (
 )
 
 // NewFactory returns a new factory for the sumologic exporter.
-func NewFactory() component.ExporterFactory {
-	return component.NewExporterFactory(
+func NewFactory() exporter.Factory {
+	return exporter.NewFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithLogsExporter(createLogsExporter, stabilityLevel),
-		component.WithMetricsExporter(createMetricsExporter, stabilityLevel),
-		component.WithTracesExporter(createTracesExporter, stabilityLevel),
+		exporter.WithLogs(createLogsExporter, stabilityLevel),
+		exporter.WithMetrics(createMetricsExporter, stabilityLevel),
+		exporter.WithTraces(createTracesExporter, stabilityLevel),
 	)
 }
 
-func createDefaultConfig() component.ExporterConfig {
+func createDefaultConfig() component.Config {
 	qs := exporterhelper.NewDefaultQueueSettings()
 	qs.Enabled = false
 
@@ -69,9 +70,9 @@ func createDefaultConfig() component.ExporterConfig {
 
 func createLogsExporter(
 	ctx context.Context,
-	params component.ExporterCreateSettings,
-	cfg component.ExporterConfig,
-) (component.LogsExporter, error) {
+	params exporter.CreateSettings,
+	cfg component.Config,
+) (exporter.Logs, error) {
 	exp, err := newLogsExporter(ctx, params, cfg.(*Config))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the logs exporter: %w", err)
@@ -82,9 +83,9 @@ func createLogsExporter(
 
 func createMetricsExporter(
 	ctx context.Context,
-	params component.ExporterCreateSettings,
-	cfg component.ExporterConfig,
-) (component.MetricsExporter, error) {
+	params exporter.CreateSettings,
+	cfg component.Config,
+) (exporter.Metrics, error) {
 	exp, err := newMetricsExporter(ctx, params, cfg.(*Config))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the metrics exporter: %w", err)
@@ -95,9 +96,9 @@ func createMetricsExporter(
 
 func createTracesExporter(
 	ctx context.Context,
-	params component.ExporterCreateSettings,
-	cfg component.ExporterConfig,
-) (component.TracesExporter, error) {
+	params exporter.CreateSettings,
+	cfg component.Config,
+) (exporter.Traces, error) {
 	exp, err := newTracesExporter(ctx, params, cfg.(*Config))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the traces exporter: %w", err)

@@ -21,6 +21,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer"
+	"go.opentelemetry.io/collector/receiver"
 	"k8s.io/apimachinery/pkg/fields"
 	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
@@ -33,14 +34,14 @@ const (
 )
 
 // NewFactory creates a factory for rawk8sevents receiver.
-func NewFactory() component.ReceiverFactory {
-	return component.NewReceiverFactory(
+func NewFactory() receiver.Factory {
+	return receiver.NewFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithLogsReceiver(createLogsReceiver, stabilityLevel))
+		receiver.WithLogs(createLogsReceiver, stabilityLevel))
 }
 
-func createDefaultConfig() component.ReceiverConfig {
+func createDefaultConfig() component.Config {
 	return &Config{
 		ReceiverSettings: config.NewReceiverSettings(component.NewID(typeStr)),
 		APIConfig: APIConfig{
@@ -55,10 +56,10 @@ func createDefaultConfig() component.ReceiverConfig {
 
 func createLogsReceiver(
 	ctx context.Context,
-	params component.ReceiverCreateSettings,
-	cfg component.ReceiverConfig,
+	params receiver.CreateSettings,
+	cfg component.Config,
 	consumer consumer.Logs,
-) (component.LogsReceiver, error) {
+) (receiver.Logs, error) {
 
 	k8sClientFactory := MakeClient
 	return createLogsReceiverWithClient(ctx, params, cfg, consumer, k8sClientFactory)
@@ -66,11 +67,11 @@ func createLogsReceiver(
 
 func createLogsReceiverWithClient(
 	_ context.Context,
-	params component.ReceiverCreateSettings,
-	cfg component.ReceiverConfig,
+	params receiver.CreateSettings,
+	cfg component.Config,
 	consumer consumer.Logs,
 	clientFactory func(APIConfig) (k8s.Interface, error),
-) (component.LogsReceiver, error) {
+) (receiver.Logs, error) {
 	rCfg := cfg.(*Config)
 
 	k8sClient, err := clientFactory(rCfg.APIConfig)
