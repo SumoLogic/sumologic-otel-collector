@@ -1,0 +1,14 @@
+--- main_windows.go	2022-12-14 15:28:41.207327800 -0800
++++ main_windows_patched.go	2022-12-14 15:27:42.320825400 -0800
+@@ -41,6 +41,11 @@
+ }
+ 
+ func runService(params otelcol.CollectorSettings) error {
++	err := UseCustomConfigProvider(&params)
++	if err != nil {
++		return err
++	}
++
+ 	// do not need to supply service name when startup is invoked through Service Control Manager directly
+ 	if err := svc.Run("", otelcol.NewSvcHandler(params)); err != nil {
+ 		return fmt.Errorf("failed to start collector server: %w", err)
