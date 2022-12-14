@@ -11,7 +11,9 @@
 
     <StandardDirectory Id="CommonAppDataFolder">
       <Directory Id="APPDATAFOLDER" Name="!(bind.Property.Manufacturer)\!(bind.Property.ProductName)">
-        <Directory Id="ConfigFolder" Name="config" />
+        <Directory Id="ConfigFolder" Name="config">
+          <Directory Id="ConfigFragmentsFolder" Name="conf.d" />
+        </Directory>
         <Directory Id="DataFolder" Name="data">
           <Directory Id="FileStorageFolder" Name="file_storage" />
         </Directory>

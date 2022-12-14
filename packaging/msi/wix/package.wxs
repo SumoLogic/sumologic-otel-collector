@@ -81,7 +81,7 @@
 
     <Binary Id="SumoLogicDll" SourceFile="$(SumoLogic.TargetDir)\SumoLogic.wixext.CA.dll" />
     <CustomAction Id="UpdateConfigAction" BinaryRef="SumoLogicDll" DllEntry="UpdateConfig" Execute="deferred" Return="check" Impersonate="no" />
-    <CustomAction Id="UpdateConfigActionData" Property="UpdateConfigAction" Value="ConfigPath=[ConfigFolder]sumologic.yaml;InstallToken=[INSTALLTOKEN];Tags=[TAGS]" />
+    <CustomAction Id="UpdateConfigActionData" Property="UpdateConfigAction" Value="CommonConfigPath=[ConfigFragmentsFolder]common.yaml;InstallToken=[INSTALLTOKEN];Tags=[TAGS]" />
 
     <!-- Execute Sequence -->
     <InstallExecuteSequence>
