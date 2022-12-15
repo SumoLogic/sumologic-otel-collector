@@ -7,7 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.66.0-sumo-0...main
 
 ### Added
 
@@ -22,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fix(otelcolbuilder): use correct upstream modules [#864]
 
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.66.0-sumo-0...main
 [#864]: https://github.com/SumoLogic/sumologic-otel-collector/pull/864
 [#867]: https://github.com/SumoLogic/sumologic-otel-collector/pull/867
 [#869]: https://github.com/SumoLogic/sumologic-otel-collector/pull/869
