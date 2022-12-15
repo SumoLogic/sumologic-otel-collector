@@ -434,9 +434,6 @@ jobs:
         working-directory: ./otelcolbuilder/cmd
         run: mv otelcol-sumo-*-sumo-*-windows_amd64.exe otelcol-sumo-windows_amd64.exe
 
-      - name: DEBUG 1
-        run: ls -l ./otelcolbuilder/cmd
-
       - name: Set VERSION_TAG
         run: echo "VERSION_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
