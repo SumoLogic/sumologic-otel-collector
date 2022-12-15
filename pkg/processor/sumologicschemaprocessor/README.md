@@ -53,6 +53,14 @@ processors:
       # For example, if "k8s." is in this list, then all "k8s.*" attributes will not be nested.
       # default = []
       exclude: [<prefix>]
+
+    # Specifies if attributes matching given pattern should be mapped to a common key.
+    # See "Aggregating attributes" documentation chapter from this document.
+    # default = []
+    aggregate_attributes:
+      - attribute: <attribute>
+        prefixes: [<prefix>]
+      - ...
 ```
 
 ## Features
@@ -229,3 +237,31 @@ It is not possible to predict, what will be the result. It will have the followi
 ```
 
 However, it is not possible to know a priori if the value under key `c` will be equal to `d` or `e`.
+
+### Aggregating attributes
+
+Aggregating attributes allows to map attributes with keys with given prefixes to a common key.
+For example, it is possible to map all attributes with keys with prefixes `pod_` to a key `pods`.
+The names in resulting maps are the original key names with trimmed prefix.
+
+For given input, mapping keys with prefixes `pod_` to a key `pods`:
+
+```json
+{
+  "pod_a": "x",
+  "pod_b": "y",
+  "pod_c": "z"
+}
+```
+
+The result is:
+
+```json
+{
+  "pods": {
+    "a": "x",
+    "b": "y",
+    "c": "z"
+  }
+}
+```

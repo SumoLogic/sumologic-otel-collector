@@ -26,6 +26,12 @@ type Config struct {
 	TranslateAttributes         bool                    `mapstructure:"translate_attributes"`
 	TranslateTelegrafAttributes bool                    `mapstructure:"translate_telegraf_attributes"`
 	NestAttributes              *NestingProcessorConfig `mapstructure:"nest_attributes"`
+	AggregateAttributes         []aggregationPair       `mapstructure:"aggregate_attributes"`
+}
+
+type aggregationPair struct {
+	Attribute string   `mapstructure:"attribute"`
+	Patterns  []string `mapstructure:"prefixes"`
 }
 
 const (
@@ -36,6 +42,10 @@ const (
 	// Nesting processor default config
 	defaultNestingEnabled   = false
 	defaultNestingSeparator = "."
+)
+
+var (
+	defaultAggregateAttributes = []aggregationPair{}
 )
 
 // Ensure the Config struct satisfies the config.Processor interface.
@@ -57,6 +67,7 @@ func createDefaultConfig() component.Config {
 			Include:   defaultNestingInclude,
 			Exclude:   defaultNestingExclude,
 		},
+		AggregateAttributes: defaultAggregateAttributes,
 	}
 }
 

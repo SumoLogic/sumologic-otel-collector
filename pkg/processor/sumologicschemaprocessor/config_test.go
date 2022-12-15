@@ -57,6 +57,7 @@ func TestLoadConfig(t *testing.T) {
 				Include:   []string{},
 				Exclude:   []string{},
 			},
+			AggregateAttributes: []aggregationPair{},
 		})
 
 	p2 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-attribute-translation")]
@@ -76,6 +77,7 @@ func TestLoadConfig(t *testing.T) {
 				Include:   []string{},
 				Exclude:   []string{},
 			},
+			AggregateAttributes: []aggregationPair{},
 		})
 
 	p3 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-telegraf-attribute-translation")]
@@ -95,6 +97,7 @@ func TestLoadConfig(t *testing.T) {
 				Include:   []string{},
 				Exclude:   []string{},
 			},
+			AggregateAttributes: []aggregationPair{},
 		})
 
 	p4 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-nesting")]
@@ -113,6 +116,36 @@ func TestLoadConfig(t *testing.T) {
 				Separator: "!",
 				Include:   []string{"blep"},
 				Exclude:   []string{"nghu"},
+			},
+			AggregateAttributes: []aggregationPair{},
+		})
+
+	p5 := cfg.Processors[component.NewIDWithName(typeStr, "aggregate-attributes")]
+
+	assert.Equal(t, p5,
+		&Config{
+			ProcessorSettings: config.NewProcessorSettings(component.NewIDWithName(
+				typeStr,
+				"aggregate-attributes",
+			)),
+			AddCloudNamespace:           true,
+			TranslateAttributes:         true,
+			TranslateTelegrafAttributes: true,
+			NestAttributes: &NestingProcessorConfig{
+				Enabled:   false,
+				Separator: ".",
+				Include:   []string{},
+				Exclude:   []string{},
+			},
+			AggregateAttributes: []aggregationPair{
+				{
+					Attribute: "attr1",
+					Patterns:  []string{"pattern1", "pattern2", "pattern3"},
+				},
+				{
+					Attribute: "attr2",
+					Patterns:  []string{"pattern4"},
+				},
 			},
 		})
 }
