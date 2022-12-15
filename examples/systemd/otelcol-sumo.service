@@ -8,6 +8,7 @@ Group=otelcol-sumo
 MemoryHigh=2000M
 MemoryMax=3000M
 TimeoutStopSec=20
+EnvironmentFile=-/etc/otelcol-sumo/env/*.env
 
 [Install]
 WantedBy=multi-user.target

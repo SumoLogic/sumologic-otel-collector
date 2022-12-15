@@ -65,6 +65,7 @@ CONTINUE=false
 HOME_DIRECTORY=""
 CONFIG_DIRECTORY=""
 USER_CONFIG_DIRECTORY=""
+USER_ENV_DIRECTORY=""
 SYSTEMD_CONFIG=""
 UNINSTALL=""
 SUMO_BINARY_PATH=""
@@ -140,6 +141,7 @@ function set_defaults() {
     SYSTEMD_CONFIG="/etc/systemd/system/otelcol-sumo.service"
     SUMO_BINARY_PATH="/usr/local/bin/otelcol-sumo"
     USER_CONFIG_DIRECTORY="${CONFIG_DIRECTORY}/conf.d"
+    USER_ENV_DIRECTORY="${CONFIG_DIRECTORY}/env"
     CONFIG_PATH="${CONFIG_DIRECTORY}/sumologic.yaml"
     COMMON_CONFIG_PATH="${USER_CONFIG_DIRECTORY}/common.yaml"
     COMMON_CONFIG_BAK_PATH="${USER_CONFIG_DIRECTORY}/common.yaml.bak"
@@ -515,6 +517,9 @@ function setup_config() {
     echo -e "Creating user configurations directory (${USER_CONFIG_DIRECTORY})"
     mkdir -p "${USER_CONFIG_DIRECTORY}"
 
+    echo -e "Creating user env directory (${USER_ENV_DIRECTORY})"
+    mkdir -p "${USER_ENV_DIRECTORY}"
+
     echo "Generating configuration and saving as ${CONFIG_PATH}"
 
     CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/sumologic.yaml"
@@ -532,6 +537,10 @@ function setup_config() {
     echo 'Changing permissions for config file and storage'
     chmod 440 "${CONFIG_PATH}"
     chmod -R 750 "${HOME_DIRECTORY}"
+
+    echo 'Changing permissions for user env directory'
+    chmod 440 "${USER_ENV_DIRECTORY}"
+    chmod g+s "${USER_ENV_DIRECTORY}"
 
     # Ensure that configuration is created
     if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
@@ -982,7 +991,7 @@ set_defaults
 parse_options "$@"
 
 readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
-readonly USER_CONFIG_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
+readonly USER_CONFIG_DIRECTORY USER_ENV_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
 readonly ACL_LOG_FILE_PATHS
 
 if [[ "${UNINSTALL}" == "true" ]]; then
@@ -1169,6 +1178,7 @@ set_acl_on_log_paths
 if [[ "${SKIP_CONFIG}" == "false" ]]; then
     echo 'Changing ownership for config and storage'
     chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOME_DIRECTORY}" "${CONFIG_PATH}"
+    chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}"
 fi
 
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/systemd/otelcol-sumo.service"
@@ -1178,6 +1188,7 @@ TMP_SYSTEMD_CONFIG_BAK="${TMP_SYSTEMD_CONFIG}.bak"
 echo 'Getting service configuration'
 curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -fL "${SYSTEMD_CONFIG_URL}" --output "${TMP_SYSTEMD_CONFIG}" --progress-bar
 sed -i.bak -e "s%/etc/otelcol-sumo%'${CONFIG_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
+sed -i.bak -e "s%/etc/otelcol-sumo/env%'${USER_ENV_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
 
 # Remove glob for versions up to 0.57
 if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then
