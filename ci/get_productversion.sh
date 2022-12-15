@@ -40,7 +40,6 @@ if [[ $ot_channel == "sumo" ]]; then
         internal_version="${ot_channel_version}"
     fi
 elif [[ $ot_channel != "" ]]; then
-    #channel="${ot_channel}"
     internal_version="${ot_channel_version}"
 fi
 
