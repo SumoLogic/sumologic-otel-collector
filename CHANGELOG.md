@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.66.0-sumo-0...main
 
+### Added
+
+- feature(packaging/msi): add conf.d dir, mv token/tags to common.yaml [869]
+
 ### Changed
 
 - chore: upgrade OT core to v0.67.0 [#867]
@@ -19,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [#864]: https://github.com/SumoLogic/sumologic-otel-collector/pull/864
 [#867]: https://github.com/SumoLogic/sumologic-otel-collector/pull/867
+[#869]: https://github.com/SumoLogic/sumologic-otel-collector/pull/869
 
 ## [v0.66.0-sumo-0]
 
