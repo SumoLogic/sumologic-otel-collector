@@ -322,3 +322,40 @@ jobs:
           make push-container-manifest-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORMS="linux/amd64 linux/arm64"
+
+  package-msi:
+    name: Package MSI
+    runs-on: windows-2019
+    needs:
+      - build
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+
+      - name: Fetch binary artifact for windows/amd64
+        uses: actions/download-artifact@v3
+        with:
+          name: otelcol-sumo-windows_amd64
+          path: ./otelcolbuilder/cmd
+
+      - name: Set OVERRIDE_INTERNAL_VERSION
+        run: echo "OVERRIDE_INTERNAL_VERSION=$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+
+      - name: Set PRODUCT_VERSION
+        run: echo "PRODUCT_VERSION=$(./ci/get_productversion.sh)" >> $GITHUB_ENV
+
+      - name: Build MSI for windows/amd64
+        working-directory: ./packaging/msi/wix
+        run: msbuild.exe -p:Configuration=Release -p:Platform=x64 -p:ProductVersion=$PRODUCT_VERSION -Restore
+
+      - name: Store MSI as action artifact for windows/amd64
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows_amd64_msi
+          path: ./packaging/msi/wix/bin/x64/en-US/*.msi
+          if-no-files-found: error

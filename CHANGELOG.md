@@ -42,6 +42,7 @@ This release introduces the following breaking changes:
 - feat(build): validate FIPS mode at build time and runtime [#693]
 - feat(ci): add windows builds to dev & pr jobs [#762]
 - feat(packaging/msi): add msi packaging [#852]
+- feat(ci): build msi packages for dev & release jobs [#856]
 
 ### Changed
 
@@ -84,6 +85,7 @@ This release introduces the following breaking changes:
 [#839]: https://github.com/SumoLogic/sumologic-otel-collector/pull/839
 [#848]: https://github.com/SumoLogic/sumologic-otel-collector/pull/848
 [#852]: https://github.com/SumoLogic/sumologic-otel-collector/pull/852
+[#856]: https://github.com/SumoLogic/sumologic-otel-collector/pull/856
 [upgrade_guide_v0.66]: ./docs/upgrading.md#upgrading-to-v0660-sumo-0
 
 ## [v0.57.2-sumo-1]
