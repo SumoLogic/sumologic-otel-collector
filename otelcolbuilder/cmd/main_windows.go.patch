@@ -2,7 +2,7 @@
 +++ main_windows_patched.go	2022-12-14 15:27:42.320825400 -0800
 @@ -41,6 +41,11 @@
  }
- 
+
  func runService(params otelcol.CollectorSettings) error {
 +	err := UseCustomConfigProvider(&params)
 +	if err != nil {
