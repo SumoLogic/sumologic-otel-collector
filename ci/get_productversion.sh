@@ -34,7 +34,6 @@ else
 fi
 
 if [[ $ot_channel == "sumo" ]]; then
-    #channel="${sumo_channel}"
     if [[ $sumo_channel != "" ]]; then
         internal_version="${sumo_channel_version}"
     else
