@@ -12,7 +12,6 @@ declare -i major_version
 declare -i minor_version
 declare -i build_version
 declare -i internal_version
-#declare channel
 declare ot_channel
 declare -i ot_channel_version
 declare sumo_channel
