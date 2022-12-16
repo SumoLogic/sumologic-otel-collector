@@ -422,7 +422,7 @@ jobs:
         run: ./ci/fetch_current_branch.sh
 
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.1
+        uses: microsoft/setup-msbuild@v1.3
 
       - name: Fetch binary artifact for windows/amd64
         uses: actions/download-artifact@v3
