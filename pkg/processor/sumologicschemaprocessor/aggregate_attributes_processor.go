@@ -159,10 +159,13 @@ func (proc *aggregateAttributesProcessor) processAttributes(attributes pcommon.M
 			)
 		}
 
-		aggregated := attributes.PutEmptyMap(curr.attribute)
+		// Add a new attribute only if there's anything that should be put under it.
+		if len(names) > 0 {
+			aggregated := attributes.PutEmptyMap(curr.attribute)
 
-		for j := 0; j < len(names); j++ {
-			attrs[j].CopyTo(aggregated.PutEmpty(names[j]))
+			for j := 0; j < len(names); j++ {
+				attrs[j].CopyTo(aggregated.PutEmpty(names[j]))
+			}
 		}
 	}
 
