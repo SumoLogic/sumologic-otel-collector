@@ -938,6 +938,304 @@ func TestNestingAttributesForTraces(t *testing.T) {
 	}
 }
 
+// Tests for aggregating attributes.
+// Testing different edge cases should be done in translate_attributes_processor_test.go,
+// here are only e2e tests that mainly check if both resource and normal attributes are aggregated correctly.
+func TestAggregateAttributesForLogs(t *testing.T) {
+	testCases := []struct {
+		name       string
+		config     []aggregationPair
+		createLogs func() plog.Logs
+		test       func(plog.Logs)
+	}{
+		{
+			name: "simple aggregation",
+			config: []aggregationPair{
+				{
+					Attribute: "kubernetes.labels",
+					Patterns:  []string{"pod_labels_"},
+				},
+			},
+			createLogs: func() plog.Logs {
+				inputLogs := plog.NewLogs()
+				resourceAttrs := inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes()
+				resourceAttrs.PutStr("pod_labels_app", "demo")
+				resourceAttrs.PutStr("pod_labels_pod_template_hash", "123456#&")
+				resourceAttrs.PutStr("pod_labels_foo", "bar")
+
+				logAttrs := inputLogs.ResourceLogs().At(0).ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().Attributes()
+				logAttrs.PutStr("pod_labels_log_id", "42")
+
+				return inputLogs
+			},
+			test: func(l plog.Logs) {
+				resourceAttrs := l.ResourceLogs().At(0).Resource().Attributes()
+				require.Equal(t, resourceAttrs.AsRaw(), mapToPcommonMap(map[string]pcommon.Value{
+					"kubernetes.labels": mapToPcommonValue(map[string]pcommon.Value{
+						"app":               pcommon.NewValueStr("demo"),
+						"pod_template_hash": pcommon.NewValueStr("123456#&"),
+						"foo":               pcommon.NewValueStr("bar"),
+					}),
+				}).AsRaw())
+
+				logAttrs := l.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0).Attributes()
+				require.Equal(t, logAttrs.AsRaw(), mapToPcommonMap(map[string]pcommon.Value{
+					"kubernetes.labels": mapToPcommonValue(map[string]pcommon.Value{
+						"log_id": pcommon.NewValueStr("42"),
+					}),
+				}).AsRaw())
+			},
+		},
+		{
+			name: "no-op",
+			config: []aggregationPair{
+				{
+					Attribute: "kubernetes.labels",
+					Patterns:  []string{},
+				},
+			},
+			createLogs: func() plog.Logs {
+				inputLogs := plog.NewLogs()
+				resourceAttrs := inputLogs.ResourceLogs().AppendEmpty().Resource().Attributes()
+				resourceAttrs.PutStr("pod_labels_app", "demo")
+				resourceAttrs.PutStr("pod_labels_pod_template_hash", "123456#&")
+				resourceAttrs.PutStr("pod_labels_foo", "bar")
+
+				logAttrs := inputLogs.ResourceLogs().At(0).ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().Attributes()
+				logAttrs.PutStr("pod_labels_log_id", "42")
+
+				return inputLogs
+			},
+			test: func(l plog.Logs) {
+				resourceAttrs := l.ResourceLogs().At(0).Resource().Attributes()
+				require.Equal(t, resourceAttrs.AsRaw(), mapToPcommonMap(map[string]pcommon.Value{
+					"pod_labels_app":               pcommon.NewValueStr("demo"),
+					"pod_labels_pod_template_hash": pcommon.NewValueStr("123456#&"),
+					"pod_labels_foo":               pcommon.NewValueStr("bar"),
+				}).AsRaw())
+
+				logAttrs := l.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0).Attributes()
+				require.Equal(t, logAttrs.AsRaw(), mapToPcommonMap(map[string]pcommon.Value{
+					"pod_labels_log_id": pcommon.NewValueStr("42"),
+				}).AsRaw())
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			// Arrange
+			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newAggregateAttributesConfig(testCase.config))
+			require.NoError(t, err)
+
+			// Act
+			outputLogs, err := processor.processLogs(context.Background(), testCase.createLogs())
+			require.NoError(t, err)
+
+			// Assert
+			testCase.test(outputLogs)
+		})
+	}
+}
+
+func TestAggregateAttributesForMetrics(t *testing.T) {
+	testCases := []struct {
+		name          string
+		config        []aggregationPair
+		createMetrics func() pmetric.Metrics
+		test          func(pmetric.Metrics)
+	}{
+		{
+			name: "simple aggregation",
+			config: []aggregationPair{
+				{
+					Attribute: "kubernetes.labels",
+					Patterns:  []string{"pod_labels_"},
+				},
+			},
+			createMetrics: func() pmetric.Metrics {
+				inputMetrics := pmetric.NewMetrics()
+				resourceAttrs := inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes()
+				resourceAttrs.PutStr("pod_labels_app", "demo")
+				resourceAttrs.PutStr("pod_labels_pod_template_hash", "123456#&")
+				resourceAttrs.PutStr("pod_labels_foo", "bar")
+
+				metric := inputMetrics.ResourceMetrics().At(0).ScopeMetrics().AppendEmpty().Metrics()
+				// Test only for sum: tests for different metric types are in aggregate_attributes_processor_test.go
+				metricAttrs := metric.AppendEmpty().SetEmptySum().DataPoints().AppendEmpty().Attributes()
+				metricAttrs.PutStr("pod_labels_metric_id", "42")
+
+				return inputMetrics
+			},
+			test: func(l pmetric.Metrics) {
+				resourceAttrs := l.ResourceMetrics().At(0).Resource().Attributes()
+				require.Equal(t, resourceAttrs.AsRaw(), mapToPcommonMap(map[string]pcommon.Value{
+					"kubernetes.labels": mapToPcommonValue(map[string]pcommon.Value{
+						"app":               pcommon.NewValueStr("demo"),
+						"pod_template_hash": pcommon.NewValueStr("123456#&"),
+						"foo":               pcommon.NewValueStr("bar"),
+					}),
+				}).AsRaw())
+
+				metricAttrs := l.ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Sum().DataPoints().At(0).Attributes()
+				require.Equal(t, metricAttrs.AsRaw(), mapToPcommonMap(map[string]pcommon.Value{
+					"kubernetes.labels": mapToPcommonValue(map[string]pcommon.Value{
+						"metric_id": pcommon.NewValueStr("42"),
+					}),
+				}).AsRaw())
+			},
+		},
+		{
+			name: "no-op",
+			config: []aggregationPair{
+				{
+					Attribute: "kubernetes.labels",
+					Patterns:  []string{},
+				},
+			},
+			createMetrics: func() pmetric.Metrics {
+				inputMetrics := pmetric.NewMetrics()
+				resourceAttrs := inputMetrics.ResourceMetrics().AppendEmpty().Resource().Attributes()
+				resourceAttrs.PutStr("pod_labels_app", "demo")
+				resourceAttrs.PutStr("pod_labels_pod_template_hash", "123456#&")
+				resourceAttrs.PutStr("pod_labels_foo", "bar")
+
+				metric := inputMetrics.ResourceMetrics().At(0).ScopeMetrics().AppendEmpty().Metrics()
+				// Test only for sum: tests for different metric types are in aggregate_attributes_processor_test.go
+				metricAttrs := metric.AppendEmpty().SetEmptySum().DataPoints().AppendEmpty().Attributes()
+				metricAttrs.PutStr("pod_labels_metric_id", "42")
+
+				return inputMetrics
+			},
+			test: func(l pmetric.Metrics) {
+				resourceAttrs := l.ResourceMetrics().At(0).Resource().Attributes()
+				require.Equal(t, resourceAttrs.AsRaw(), mapToPcommonMap(map[string]pcommon.Value{
+					"pod_labels_app":               pcommon.NewValueStr("demo"),
+					"pod_labels_pod_template_hash": pcommon.NewValueStr("123456#&"),
+					"pod_labels_foo":               pcommon.NewValueStr("bar"),
+				}).AsRaw())
+
+				metricAttrs := l.ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Sum().DataPoints().At(0).Attributes()
+				require.Equal(t, metricAttrs.AsRaw(), mapToPcommonMap(map[string]pcommon.Value{
+					"pod_labels_metric_id": pcommon.NewValueStr("42"),
+				}).AsRaw())
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			// Arrange
+			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newAggregateAttributesConfig(testCase.config))
+			require.NoError(t, err)
+
+			// Act
+			outputMetrics, err := processor.processMetrics(context.Background(), testCase.createMetrics())
+			require.NoError(t, err)
+
+			// Assert
+			testCase.test(outputMetrics)
+		})
+	}
+}
+
+func TestAggregateAttributesForTraces(t *testing.T) {
+	testCases := []struct {
+		name         string
+		config       []aggregationPair
+		createTraces func() ptrace.Traces
+		test         func(ptrace.Traces)
+	}{
+		{
+			name: "simple aggregation",
+			config: []aggregationPair{
+				{
+					Attribute: "kubernetes.labels",
+					Patterns:  []string{"pod_labels_"},
+				},
+			},
+			createTraces: func() ptrace.Traces {
+				inputTraces := ptrace.NewTraces()
+				resourceAttrs := inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes()
+				resourceAttrs.PutStr("pod_labels_app", "demo")
+				resourceAttrs.PutStr("pod_labels_pod_template_hash", "123456#&")
+				resourceAttrs.PutStr("pod_labels_foo", "bar")
+
+				logAttrs := inputTraces.ResourceSpans().At(0).ScopeSpans().AppendEmpty().Spans().AppendEmpty().Attributes()
+				logAttrs.PutStr("pod_labels_span_id", "42")
+
+				return inputTraces
+			},
+			test: func(l ptrace.Traces) {
+				resourceAttrs := l.ResourceSpans().At(0).Resource().Attributes()
+				require.Equal(t, resourceAttrs.AsRaw(), mapToPcommonMap(map[string]pcommon.Value{
+					"kubernetes.labels": mapToPcommonValue(map[string]pcommon.Value{
+						"app":               pcommon.NewValueStr("demo"),
+						"pod_template_hash": pcommon.NewValueStr("123456#&"),
+						"foo":               pcommon.NewValueStr("bar"),
+					}),
+				}).AsRaw())
+
+				logAttrs := l.ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(0).Attributes()
+				require.Equal(t, logAttrs.AsRaw(), mapToPcommonMap(map[string]pcommon.Value{
+					"kubernetes.labels": mapToPcommonValue(map[string]pcommon.Value{
+						"span_id": pcommon.NewValueStr("42"),
+					}),
+				}).AsRaw())
+			},
+		},
+		{
+			name: "no-op",
+			config: []aggregationPair{
+				{
+					Attribute: "kubernetes.labels",
+					Patterns:  []string{},
+				},
+			},
+			createTraces: func() ptrace.Traces {
+				inputTraces := ptrace.NewTraces()
+				resourceAttrs := inputTraces.ResourceSpans().AppendEmpty().Resource().Attributes()
+				resourceAttrs.PutStr("pod_labels_app", "demo")
+				resourceAttrs.PutStr("pod_labels_pod_template_hash", "123456#&")
+				resourceAttrs.PutStr("pod_labels_foo", "bar")
+
+				logAttrs := inputTraces.ResourceSpans().At(0).ScopeSpans().AppendEmpty().Spans().AppendEmpty().Attributes()
+				logAttrs.PutStr("pod_labels_span_id", "42")
+
+				return inputTraces
+			},
+			test: func(l ptrace.Traces) {
+				resourceAttrs := l.ResourceSpans().At(0).Resource().Attributes()
+				require.Equal(t, resourceAttrs.AsRaw(), mapToPcommonMap(map[string]pcommon.Value{
+					"pod_labels_app":               pcommon.NewValueStr("demo"),
+					"pod_labels_pod_template_hash": pcommon.NewValueStr("123456#&"),
+					"pod_labels_foo":               pcommon.NewValueStr("bar"),
+				}).AsRaw())
+
+				logAttrs := l.ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(0).Attributes()
+				require.Equal(t, logAttrs.AsRaw(), mapToPcommonMap(map[string]pcommon.Value{
+					"pod_labels_span_id": pcommon.NewValueStr("42"),
+				}).AsRaw())
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			// Arrange
+			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newAggregateAttributesConfig(testCase.config))
+			require.NoError(t, err)
+
+			// Act
+			outputTraces, err := processor.processTraces(context.Background(), testCase.createTraces())
+			require.NoError(t, err)
+
+			// Assert
+			testCase.test(outputTraces)
+		})
+	}
+}
+
 func newProcessorCreateSettings() component.ProcessorCreateSettings {
 	return component.ProcessorCreateSettings{
 		TelemetrySettings: component.TelemetrySettings{
@@ -988,5 +1286,14 @@ func newNestAttributesConfig(separator string, enabled bool) *Config {
 		Separator: separator,
 		Enabled:   enabled,
 	}
+	return config
+}
+
+func newAggregateAttributesConfig(aggregations []aggregationPair) *Config {
+	config := createDefaultConfig().(*Config)
+	config.AddCloudNamespace = false
+	config.TranslateAttributes = false
+	config.TranslateTelegrafAttributes = false
+	config.AggregateAttributes = aggregations
 	return config
 }
