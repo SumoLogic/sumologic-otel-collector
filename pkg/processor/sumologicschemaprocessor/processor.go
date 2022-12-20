@@ -54,10 +54,16 @@ func newSumologicSchemaProcessor(set component.ProcessorCreateSettings, config *
 		return nil, err
 	}
 
+	nestingProcessor, err := newNestingProcessor(".", false)
+	if err != nil {
+		return nil, err
+	}
+
 	processors := []sumologicSchemaSubprocessor{
 		cloudNamespaceProcessor,
 		translateAttributesProcessor,
 		translateTelegrafMetricsProcessor,
+		nestingProcessor,
 	}
 
 	processor := &sumologicSchemaProcessor{
@@ -75,6 +81,7 @@ func (processor *sumologicSchemaProcessor) start(_ context.Context, host compone
 		zap.Bool(procs[0].ConfigPropertyName(), procs[0].isEnabled()),
 		zap.Bool(procs[1].ConfigPropertyName(), procs[1].isEnabled()),
 		zap.Bool(procs[2].ConfigPropertyName(), procs[2].isEnabled()),
+		zap.Bool(procs[3].ConfigPropertyName(), procs[3].isEnabled()),
 	)
 	return nil
 }
