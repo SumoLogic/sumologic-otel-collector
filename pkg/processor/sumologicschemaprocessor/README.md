@@ -32,6 +32,17 @@ processors:
     # See `translate_telegraf_metrics_processor.go` for full list of translations.
     # default = true
     translate_telegraf_attributes: {true, false}
+
+    # Specifies if attributes should be nested, basing on their keys.
+    # See "Nesting attributes" documentation chapter from this document.
+    nest_attributes:
+      # Defines whether attributes should be nested.
+      # default = false
+      enabled: {true, false}
+
+      # Defines the string used to separate key names in attributes that are to be nested.
+      # default = "."
+      separator: <separator>
 ```
 
 ## Features
@@ -98,3 +109,72 @@ Below is a list of all attribute keys that are being translated.
 | `k8s.statefulset.name`    | `statefulset`       |
 | `service.name`            | `service`           |
 | `log.file.path_resolved`  | `_sourceName`       |
+
+### Nesting attributes
+
+Nesting attributes allows to change the structure of attributes (both resource level and record level attributes)
+basing on their keys by nesting attributes with common paths into maps.
+Common path is defined as a common prefix that consists of strings separated by a given separator string (by default a dot - `.`)
+and end with that separator, for example: if the separator is `.`,
+then `xyz` is a common prefix path for `xyz.abc.qwe` and `xyz.foo`,
+but `sumo` **is not** a prefix path for neither `sumologic.foo.baz` nor `sumologic.bar.baz`.
+
+#### Example
+
+The following set of attributes:
+
+```json
+{
+  "kubernetes.container_name": "xyz",
+  "kubernetes.host.name": "the host",
+  "kubernetes.host.address": "127.0.0.1",
+  "kubernetes.namespace_name": "sumologic",
+  "another_attr": "42"
+}
+```
+
+Should be translated into such set:
+
+```json
+{
+  "kubernetes": {
+    "container_name": "xyz",
+    "namespace_name": "sumologic",
+    "host": {
+      "name": "the host",
+      "address": "127.0.0.1"
+    }
+  },
+ "another_attr": "42"
+}
+```
+
+#### Known issues
+
+This feature has undefined behavior when in input there are various keys that will be mapped to the same nested structure.
+For example, given the following attributes:
+
+```json
+{
+  "a.b.c.": "d",
+  "a": {
+    "b": {
+      "c": "e"
+    }
+  }
+}
+```
+
+It is not possible to predict, what will be the result. It will have the following structure:
+
+```json
+{
+  "a": {
+    "b": {
+      "c": ...
+    }
+  }
+}
+```
+
+However, it is not possible to know a priori if the value under key `c` will be equal to `d` or `e`.

@@ -51,6 +51,10 @@ func TestLoadConfig(t *testing.T) {
 			AddCloudNamespace:           false,
 			TranslateAttributes:         true,
 			TranslateTelegrafAttributes: true,
+			NestAttributes: &NestingProcessorConfig{
+				Enabled:   false,
+				Separator: ".",
+			},
 		})
 
 	p2 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-attribute-translation")]
@@ -64,6 +68,10 @@ func TestLoadConfig(t *testing.T) {
 			AddCloudNamespace:           true,
 			TranslateAttributes:         false,
 			TranslateTelegrafAttributes: true,
+			NestAttributes: &NestingProcessorConfig{
+				Enabled:   false,
+				Separator: ".",
+			},
 		})
 
 	p3 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-telegraf-attribute-translation")]
@@ -77,5 +85,26 @@ func TestLoadConfig(t *testing.T) {
 			AddCloudNamespace:           true,
 			TranslateAttributes:         true,
 			TranslateTelegrafAttributes: false,
+			NestAttributes: &NestingProcessorConfig{
+				Enabled:   false,
+				Separator: ".",
+			},
+		})
+
+	p4 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-nesting")]
+
+	assert.Equal(t, p4,
+		&Config{
+			ProcessorSettings: config.NewProcessorSettings(component.NewIDWithName(
+				typeStr,
+				"enabled-nesting",
+			)),
+			AddCloudNamespace:           true,
+			TranslateAttributes:         true,
+			TranslateTelegrafAttributes: true,
+			NestAttributes: &NestingProcessorConfig{
+				Enabled:   true,
+				Separator: "!",
+			},
 		})
 }
