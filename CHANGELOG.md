@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- feat(sumologicschemaprocessor): add nesting processor [#877]
+
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.67.0-sumo-0...main
+[#877]: https://github.com/SumoLogic/sumologic-otel-collector/pull/877
 
 ## [v0.67.0-sumo-0]
 

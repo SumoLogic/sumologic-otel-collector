@@ -95,7 +95,7 @@ func TestNestingAttributes(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			proc, err := newNestingProcessor(".", true)
+			proc, err := newNestingProcessor(&NestingProcessorConfig{Separator: ".", Enabled: true})
 			require.NoError(t, err)
 
 			attrs := mapToPcommonMap(testCase.input)

@@ -22,15 +22,20 @@ import (
 type Config struct {
 	config.ProcessorSettings `mapstructure:",squash"`
 
-	AddCloudNamespace           bool `mapstructure:"add_cloud_namespace"`
-	TranslateAttributes         bool `mapstructure:"translate_attributes"`
-	TranslateTelegrafAttributes bool `mapstructure:"translate_telegraf_attributes"`
+	AddCloudNamespace           bool                    `mapstructure:"add_cloud_namespace"`
+	TranslateAttributes         bool                    `mapstructure:"translate_attributes"`
+	TranslateTelegrafAttributes bool                    `mapstructure:"translate_telegraf_attributes"`
+	NestAttributes              *NestingProcessorConfig `mapstructure:"nest_attributes"`
 }
 
 const (
 	defaultAddCloudNamespace           = true
 	defaultTranslateAttributes         = true
 	defaultTranslateTelegrafAttributes = true
+
+	// Nesting processor default config
+	defaultNestingEnabled   = false
+	defaultNestingSeparator = "."
 )
 
 // Ensure the Config struct satisfies the config.Processor interface.
@@ -42,6 +47,10 @@ func createDefaultConfig() component.Config {
 		AddCloudNamespace:           defaultAddCloudNamespace,
 		TranslateAttributes:         defaultTranslateAttributes,
 		TranslateTelegrafAttributes: defaultTranslateTelegrafAttributes,
+		NestAttributes: &NestingProcessorConfig{
+			Separator: defaultNestingSeparator,
+			Enabled:   defaultNestingEnabled,
+		},
 	}
 }
 

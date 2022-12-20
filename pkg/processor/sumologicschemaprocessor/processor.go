@@ -54,7 +54,7 @@ func newSumologicSchemaProcessor(set component.ProcessorCreateSettings, config *
 		return nil, err
 	}
 
-	nestingProcessor, err := newNestingProcessor(".", false)
+	nestingProcessor, err := newNestingProcessor(config.NestAttributes)
 	if err != nil {
 		return nil, err
 	}

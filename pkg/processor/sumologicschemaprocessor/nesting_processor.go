@@ -23,15 +23,20 @@ import (
 	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
+type NestingProcessorConfig struct {
+	Separator string `mapstructure:"separator"`
+	Enabled   bool   `mapstructure:"enabled"`
+}
+
 type NestingProcessor struct {
 	separator string
 	enabled   bool
 }
 
-func newNestingProcessor(separator string, enabled bool) (*NestingProcessor, error) {
+func newNestingProcessor(config *NestingProcessorConfig) (*NestingProcessor, error) {
 	proc := &NestingProcessor{
-		separator: separator,
-		enabled:   enabled,
+		separator: config.Separator,
+		enabled:   config.Enabled,
 	}
 
 	return proc, nil

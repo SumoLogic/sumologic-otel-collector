@@ -9,6 +9,10 @@ processors:
     translate_attributes: false
   sumologic_schema/disabled-telegraf-attribute-translation:
     translate_telegraf_attributes: false
+  sumologic_schema/enabled-nesting:
+    nest_attributes:
+      enabled: true
+      separator: "!"
 
 exporters:
   nop:
@@ -36,6 +40,14 @@ service:
       - nop
       processors:
       - sumologic_schema/disabled-telegraf-attribute-translation
+      exporters:
+      - nop
+
+    metrics/3:
+      receivers:
+      - nop
+      processors:
+      - sumologic_schema/enabled-nesting
       exporters:
       - nop
 
