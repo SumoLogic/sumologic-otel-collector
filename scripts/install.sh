@@ -67,6 +67,7 @@ CONFIG_DIRECTORY=""
 USER_CONFIG_DIRECTORY=""
 USER_ENV_DIRECTORY=""
 SYSTEMD_CONFIG=""
+LAUNCHD_CONFIG=""
 UNINSTALL=""
 SUMO_BINARY_PATH=""
 SKIP_TOKEN=""
@@ -75,6 +76,7 @@ CONFIG_PATH=""
 COMMON_CONFIG_PATH=""
 PURGE=""
 DOWNLOAD_ONLY=""
+LOG_DIRECTORY=""
 
 USER_API_URL=""
 USER_TOKEN=""
@@ -94,6 +96,7 @@ KEEP_DOWNLOADS=false
 
 # set by check_dependencies therefore cannot be set by set_defaults
 SYSTEMD_DISABLED=false
+LAUNCHD_DISABLED=false
 
 # alternative commands
 TAC="tac"
@@ -139,14 +142,24 @@ function set_defaults() {
     FILE_STORAGE="${HOME_DIRECTORY}/file_storage"
     CONFIG_DIRECTORY="/etc/otelcol-sumo"
     SYSTEMD_CONFIG="/etc/systemd/system/otelcol-sumo.service"
+    LAUNCHD_CONFIG="/Library/LaunchDaemons/com.sumologic.otelcol-sumo.plist"
     SUMO_BINARY_PATH="/usr/local/bin/otelcol-sumo"
     USER_CONFIG_DIRECTORY="${CONFIG_DIRECTORY}/conf.d"
     USER_ENV_DIRECTORY="${CONFIG_DIRECTORY}/env"
     CONFIG_PATH="${CONFIG_DIRECTORY}/sumologic.yaml"
     COMMON_CONFIG_PATH="${USER_CONFIG_DIRECTORY}/common.yaml"
     COMMON_CONFIG_BAK_PATH="${USER_CONFIG_DIRECTORY}/common.yaml.bak"
+    LOG_DIRECTORY="/var/log/otelcol-sumo"
     INDENTATION="  "
     EXT_INDENTATION="${INDENTATION}${INDENTATION}"
+}
+
+function set_platform_overrides() {
+    case "$OS_TYPE" in
+      "darwin")
+        SYSTEM_USER="_${SYSTEM_USER}"
+        ;;
+    esac
 }
 
 function parse_options() {
@@ -309,6 +322,10 @@ function check_dependencies() {
 
     if [[ ! -d /run/systemd/system ]]; then
         SYSTEMD_DISABLED=true
+    fi
+
+    if [[ ! -d /Library/LaunchDaemons ]]; then
+        LAUNCHD_DISABLED=true
     fi
 
     if [[ "${error}" == "1" ]] ; then
@@ -517,8 +534,15 @@ function setup_config() {
     echo -e "Creating user configurations directory (${USER_CONFIG_DIRECTORY})"
     mkdir -p "${USER_CONFIG_DIRECTORY}"
 
-    echo -e "Creating user env directory (${USER_ENV_DIRECTORY})"
-    mkdir -p "${USER_ENV_DIRECTORY}"
+    if [[ "${OS_TYPE}" != "darwin" ]]; then
+        echo -e "Creating user env directory (${USER_ENV_DIRECTORY})"
+        mkdir -p "${USER_ENV_DIRECTORY}"
+    fi
+
+    if [[ "${LAUNCHD_DISABLED}" == "false" ]]; then
+        echo -e "Creating log directory (${LOG_DIRECTORY})"
+        mkdir -p "${LOG_DIRECTORY}"
+    fi
 
     echo "Generating configuration and saving as ${CONFIG_PATH}"
 
@@ -538,9 +562,11 @@ function setup_config() {
     chmod 440 "${CONFIG_PATH}"
     chmod -R 750 "${HOME_DIRECTORY}"
 
-    echo 'Changing permissions for user env directory'
-    chmod 440 "${USER_ENV_DIRECTORY}"
-    chmod g+s "${USER_ENV_DIRECTORY}"
+    if [[ -d "${USER_ENV_DIRECTORY}" ]]; then
+        echo 'Changing permissions for user env directory'
+        chmod 440 "${USER_ENV_DIRECTORY}"
+        chmod g+s "${USER_ENV_DIRECTORY}"
+    fi
 
     # Ensure that configuration is created
     if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
@@ -589,19 +615,34 @@ function uninstall() {
         systemctl disable otelcol-sumo || true
     fi
 
+    # disable launchd service
+    if [[ -f "${LAUNCHD_CONFIG}" ]]; then
+        launchctl stop otelcol-sumo || true
+        launchctl unload ${LAUNCHD_CONFIG} || true
+    fi
+
     # remove binary
     rm -f "${SUMO_BINARY_PATH}"
 
     if [[ "${PURGE}" == "true" ]]; then
         # remove configuration and data
-        rm -rf "${CONFIG_DIRECTORY}" "${FILE_STORAGE}" "${SYSTEMD_CONFIG}"
+        rm -rf "${CONFIG_DIRECTORY}" "${HOME_DIRECTORY}" "${SYSTEMD_CONFIG}" "${LAUNCHD_CONFIG}" "${LOG_DIRECTORY}"
 
-        # remove user and group only if getent exists (it was required in order to create the user)
-        if command -v "getent" &> /dev/null; then
-            # remove user
-            if getent passwd "${SYSTEM_USER}" > /dev/null; then
-                userdel -r -f "${SYSTEM_USER}"
-                groupdel -f "${SYSTEM_USER}"
+        if [[ "${OS_TYPE}" == "darwin" ]]; then
+            if dscl . -read /Users/${SYSTEM_USER} &> /dev/null; then
+                dscl . -delete /Users/${SYSTEM_USER}
+            fi
+            if dscl . -read /Groups/${SYSTEM_USER} &> /dev/null; then
+                dscl . -delete /Groups/${SYSTEM_USER}
+            fi
+        else
+            # remove user and group only if getent exists (it was required in order to create the user)
+            if command -v "getent" &> /dev/null; then
+                # remove user
+                if getent passwd "${SYSTEM_USER}" > /dev/null; then
+                    userdel -r -f "${SYSTEM_USER}"
+                    groupdel -f "${SYSTEM_USER}"
+                fi
             fi
         fi
     fi
@@ -990,9 +1031,25 @@ check_dependencies
 set_defaults
 parse_options "$@"
 
-readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
-readonly USER_CONFIG_DIRECTORY USER_ENV_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
+readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG LAUNCHD_CONFIG UNINSTALL
+readonly USER_CONFIG_DIRECTORY USER_ENV_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH LOG_DIRECTORY
 readonly ACL_LOG_FILE_PATHS
+
+OS_TYPE="$(get_os_type)"
+ARCH_TYPE="$(get_arch_type)"
+readonly OS_TYPE ARCH_TYPE
+
+echo -e "Detected OS type:\t${OS_TYPE}"
+echo -e "Detected architecture:\t${ARCH_TYPE}"
+
+set_platform_overrides
+
+if [ "${FIPS}" == "true" ]; then
+    if [ "${OS_TYPE}" != "linux" ] || [ "${ARCH_TYPE}" != "amd64" ]; then
+        echo "Error: The FIPS-approved binary is only available for linux/amd64"
+        exit 1
+    fi
+fi
 
 if [[ "${UNINSTALL}" == "true" ]]; then
     uninstall
@@ -1048,20 +1105,6 @@ if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && -z "${USER_TOKEN}" ]]; then
 fi
 
 readonly SYSTEMD_DISABLED
-
-OS_TYPE="$(get_os_type)"
-ARCH_TYPE="$(get_arch_type)"
-readonly OS_TYPE ARCH_TYPE
-
-echo -e "Detected OS type:\t${OS_TYPE}"
-echo -e "Detected architecture:\t${ARCH_TYPE}"
-
-if [ "${FIPS}" == "true" ]; then
-    if [ "${OS_TYPE}" != "linux" ] || [ "${ARCH_TYPE}" != "amd64" ]; then
-        echo "Error: The FIPS-approved binary is only available for linux/amd64"
-        exit 1
-    fi
-fi
 
 echo -e "Getting installed version..."
 INSTALLED_VERSION="$(get_installed_version)"
@@ -1145,7 +1188,7 @@ if [[ "${SKIP_CONFIG}" == "false" ]]; then
     setup_config
 fi
 
-if [[ "${SYSTEMD_DISABLED}" == "true" ]]; then
+if [[ "${SYSTEMD_DISABLED}" == "true" && "${LAUNCHD_DISABLED}" == "true" ]]; then
     COMMAND_SUFFIX=""
     # Add glob for versions above 0.57
     if (( $(echo "${VERSION_PREFIX} > 0.57" | bc -l) )); then
@@ -1157,61 +1200,170 @@ if [[ "${SYSTEMD_DISABLED}" == "true" ]]; then
     exit 0
 fi
 
-echo 'We are going to set up a systemd service'
+if [[ "${SYSTEMD_DISABLED}" == "false" ]]; then
+    echo 'We are going to set up a systemd service'
+fi
+
+if [[ "${LAUNCHD_DISABLED}" == "false" ]]; then
+    echo 'We are going to set up a launchd service'
+fi
 
 if [[ -f "${SYSTEMD_CONFIG}" ]]; then
-    echo "Configuration for systemd service (${SYSTEMD_CONFIG}) already exist. Restarting service"
+    echo "Configuration for systemd service (${SYSTEMD_CONFIG}) already exists. Restarting service"
     systemctl restart otelcol-sumo
     exit 0
 fi
 
-echo 'Creating user and group'
-if getent passwd "${SYSTEM_USER}" > /dev/null; then
-    echo 'User and group already created'
-else
-    useradd -mrUs /bin/false -d "${HOME_DIRECTORY}" "${SYSTEM_USER}"
+if [[ -f "${LAUNCHD_CONFIG}" ]]; then
+    echo "Configuration for launchd service (${LAUNCHD_CONFIG}) already exists. Restarting service"
+    launchctl stop otelcol-sumo
+    launchctl start otelcol-sumo
+    exit 0
 fi
 
-echo 'Creating ACL grants on log paths'
-set_acl_on_log_paths
+echo 'Creating user and group'
+if [[ "${OS_TYPE}" == "darwin" ]]; then
+    set +e
+    # attempt to get gid of group with name matching SYSTEM_USER
+    gid="$(dscl . -read /Groups/${SYSTEM_USER} PrimaryGroupID 2> /dev/null | awk '{print $2}' | grep -e '^\d\+$')"
+    group_rc=$?
+
+    # attempt to get uid of user with name matching SYSTEM_USER
+    uid="$(dscl . -read /Users/${SYSTEM_USER} UniqueID 2> /dev/null | awk '{print $2}' | grep -e '^\d\+$')"
+    user_rc=$?
+    set -e
+
+    if [ $group_rc -eq 0 ] && [ $user_rc -eq 0 ]; then
+        echo 'User and group already created'
+    elif [ $group_rc -eq 0 ]; then
+        echo 'Group already created'
+
+        # Find a uid to use for user creation
+        if dscl . -list /Users UniqueID | awk '{print $2}' | grep -e "^${gid}$"; then
+            # A uid matching the gid exists; find the next available uid >= 200
+            uid=200
+            while dscl . -list /Users UniqueID | awk '{print $2}' | grep -e "^${uid}$"; do
+                uid=$((uid + 1))
+            done
+        else
+            uid=$gid
+        fi
+    elif [ $user_rc -eq 0 ]; then
+        echo 'User already created'
+
+        # Find a gid to use for group creation
+        if dscl . -list /Groups PrimaryGroupID | awk '{print $2}' | grep -e "^${uid}$"; then
+            # A gid matching the uid exists; find the next available gid >= 200
+            gid=200
+            while dscl . -list /Groups UniqueID | awk '{print $2}' | grep -e "^${uid}$"; do
+                gid=$((gid + 1))
+            done
+        else
+            gid=$uid
+        fi
+    else
+        # Find a uid & gid to use for user & group creation
+        uid=200
+        while dscl . -list /Groups PrimaryGroupID | awk '{print $2}' | grep -e "^${uid}$" > /dev/null || dscl . -list /Users UniqueID | awk '{print $2}' | grep -e "^${uid}$" > /dev/null; do
+            uid=$((uid + 1))
+        done
+        gid=$uid
+    fi
+
+    # If group was not found, create group
+    if [ $group_rc -ne 0 ]; then
+        dscl . -create /Groups/${SYSTEM_USER} PrimaryGroupID $gid
+    fi
+
+    # If user was not found, create user
+    if [ $user_rc -ne 0 ]; then
+        dscl . -create /Users/${SYSTEM_USER} UniqueID $uid
+        dscl . -create /Users/${SYSTEM_USER} PrimaryGroupID $uid
+        dscl . -create /Users/${SYSTEM_USER} Home /var/empty
+        dscl . -create /Users/${SYSTEM_USER} UserShell /usr/bin/false
+    fi
+
+    # If user was found but group was not, add user to group
+    if [ $user_rc -eq 0 ] && [ $group_rc -ne 0 ]; then
+        dscl . -append /Groups/${SYSTEM_USER} GroupMembership $SYSTEM_USER
+    fi
+else
+    if getent passwd "${SYSTEM_USER}" > /dev/null; then
+        echo 'User and group already created'
+    else
+        useradd -mrUs /bin/false -d "${HOME_DIRECTORY}" "${SYSTEM_USER}"
+    fi
+fi
+
+if [[ "${OS_TYPE}" == "linux" ]]; then
+    echo 'Creating ACL grants on log paths'
+    set_acl_on_log_paths
+fi
 
 if [[ "${SKIP_CONFIG}" == "false" ]]; then
     echo 'Changing ownership for config and storage'
     chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOME_DIRECTORY}" "${CONFIG_PATH}"
-    chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}"
+    if [[ -d "${USER_ENV_DIRECTORY}" ]]; then
+        chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}"
+    fi
+fi
+
+if [[ -d "${LOG_DIRECTORY}" ]]; then
+    chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${LOG_DIRECTORY}"
 fi
 
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/systemd/otelcol-sumo.service"
+if [[ "${SYSTEMD_DISABLED}" == "false" ]]; then
+    TMP_SYSTEMD_CONFIG="otelcol-sumo.service"
+    TMP_SYSTEMD_CONFIG_BAK="${TMP_SYSTEMD_CONFIG}.bak"
+    echo 'Getting service configuration'
+    curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -fL "${SYSTEMD_CONFIG_URL}" --output "${TMP_SYSTEMD_CONFIG}" --progress-bar
+    sed -i.bak -e "s%/etc/otelcol-sumo%'${CONFIG_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
+    sed -i.bak -e "s%/etc/otelcol-sumo/env%'${USER_ENV_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
 
-TMP_SYSTEMD_CONFIG="otelcol-sumo.service"
-TMP_SYSTEMD_CONFIG_BAK="${TMP_SYSTEMD_CONFIG}.bak"
-echo 'Getting service configuration'
-curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -fL "${SYSTEMD_CONFIG_URL}" --output "${TMP_SYSTEMD_CONFIG}" --progress-bar
-sed -i.bak -e "s%/etc/otelcol-sumo%'${CONFIG_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
-sed -i.bak -e "s%/etc/otelcol-sumo/env%'${USER_ENV_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
+    # Remove glob for versions up to 0.57
+    if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then
+        sed -i.bak -e "s% --config \"glob.*\"% --config ${COMMON_CONFIG_PATH}%" "${TMP_SYSTEMD_CONFIG}"
+        # clean up bak file
+        rm -f "${TMP_SYSTEMD_CONFIG_BAK}"
+    fi
 
-# Remove glob for versions up to 0.57
-if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then
-    sed -i.bak -e "s% --config \"glob.*\"% --config ${COMMON_CONFIG_PATH}%" "${TMP_SYSTEMD_CONFIG}"
-    # clean up bak file
-    rm -f "${TMP_SYSTEMD_CONFIG_BAK}"
+    mv "${TMP_SYSTEMD_CONFIG}" "${SYSTEMD_CONFIG}"
+
+    if command -v sestatus && sestatus; then
+        echo "SELinux is enabled, relabeling binary and systemd unit file"
+        semanage fcontext -m -t bin_t /usr/local/bin/otelcol-sumo
+        restorecon -v "${SUMO_BINARY_PATH}"
+        restorecon -v "${SYSTEMD_CONFIG}"
+    fi
+
+    echo 'Enable otelcol-sumo service'
+    systemctl enable otelcol-sumo
+
+    echo 'Starting otelcol-sumo service'
+    systemctl start otelcol-sumo
+
+    echo 'Waiting 10s before checking status'
+    sleep 10
+    systemctl status otelcol-sumo
 fi
 
-mv "${TMP_SYSTEMD_CONFIG}" "${SYSTEMD_CONFIG}"
+LAUNCHD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/launchd/otelcol-sumo.plist"
+if [[ "${LAUNCHD_DISABLED}" == "false" ]]; then
+    TMP_LAUNCHD_CONFIG="otelcol-sumo.plist"
+    echo 'Getting service configuration'
+    curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -fL "${LAUNCHD_CONFIG_URL}" --output "${TMP_LAUNCHD_CONFIG}" --progress-bar
+    sed -i.bak -e "s%/etc/otelcol-sumo%${CONFIG_DIRECTORY}%" "${TMP_LAUNCHD_CONFIG}"
 
-if command -v sestatus && sestatus; then
-    echo "SELinux is enabled, relabeling binary and systemd unit file"
-    semanage fcontext -m -t bin_t /usr/local/bin/otelcol-sumo
-    restorecon -v "${SUMO_BINARY_PATH}"
-    restorecon -v "${SYSTEMD_CONFIG}"
+    mv "${TMP_LAUNCHD_CONFIG}" "${LAUNCHD_CONFIG}"
+
+    echo 'Load and enable otelcol-sumo service'
+    launchctl load -w ${LAUNCHD_CONFIG}
+
+    echo 'Starting otelcol-sumo service'
+    launchctl start otelcol-sumo
+
+    echo 'Waiting 10s before checking status'
+    sleep 10
+    launchctl print system/otelcol-sumo | grep '^[[:blank:]]state[[:blank:]]=' | sed 's/^[[:blank:]]state[[:blank:]]=[[:blank:]]//'
 fi
-
-echo 'Enable otelcol-sumo service'
-systemctl enable otelcol-sumo
-
-echo 'Starting otelcol-sumo service'
-systemctl start otelcol-sumo
-
-echo 'Waiting 10s before checking status'
-sleep 10
-systemctl status otelcol-sumo
