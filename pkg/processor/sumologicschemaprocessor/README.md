@@ -43,6 +43,16 @@ processors:
       # Defines the string used to separate key names in attributes that are to be nested.
       # default = "."
       separator: <separator>
+
+      # Defines a list of allowed prefixes to be nested.
+      # For example, if "kubernetes." is in this list, then all "kubernetes.*" attributes will be nested.
+      # default = []
+      include: [<prefix>]
+
+      # Defines a list of prefixes not allowed to be nested.
+      # For example, if "k8s." is in this list, then all "k8s.*" attributes will not be nested.
+      # default = []
+      exclude: [<prefix>]
 ```
 
 ## Features
@@ -146,6 +156,47 @@ Should be translated into such set:
     }
   },
  "another_attr": "42"
+}
+```
+
+#### Allowlist and denylist
+
+Properties `include` and `exclude` in the config allow to define list of prefixes that are allowed or not allowed to be nested.
+
+For example, with the following config:
+
+```yaml
+nest_attributes:
+  enabled: true
+  include: ["kubernetes.host."]
+  exclude: ["kubernetes.host.naming"]
+```
+
+and following input:
+
+```json
+{
+"kubernetes.container_name": "xyz",
+"kubernetes.host.name": "the host",
+"kubernetes.host.naming_convention": "random",
+"kubernetes.host.address": "127.0.0.1",
+"kubernetes.namespace_name": "sumologic",
+}
+```
+
+The output is:
+
+```json
+{
+"kubernetes.container_name": "xyz",
+"kubernetes": {
+  "host": {
+    "name": "the host",
+    "address": "127.0.0.1"
+    }
+  },
+"kubernetes.host.naming_convention": "random",
+"kubernetes.namespace_name": "sumologic",
 }
 ```
 

@@ -13,6 +13,8 @@ processors:
     nest_attributes:
       enabled: true
       separator: "!"
+      include: ["blep"]
+      exclude: ["nghu"]
 
 exporters:
   nop:

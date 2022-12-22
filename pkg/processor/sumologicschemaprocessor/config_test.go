@@ -54,6 +54,8 @@ func TestLoadConfig(t *testing.T) {
 			NestAttributes: &NestingProcessorConfig{
 				Enabled:   false,
 				Separator: ".",
+				Include:   []string{},
+				Exclude:   []string{},
 			},
 		})
 
@@ -71,6 +73,8 @@ func TestLoadConfig(t *testing.T) {
 			NestAttributes: &NestingProcessorConfig{
 				Enabled:   false,
 				Separator: ".",
+				Include:   []string{},
+				Exclude:   []string{},
 			},
 		})
 
@@ -88,6 +92,8 @@ func TestLoadConfig(t *testing.T) {
 			NestAttributes: &NestingProcessorConfig{
 				Enabled:   false,
 				Separator: ".",
+				Include:   []string{},
+				Exclude:   []string{},
 			},
 		})
 
@@ -105,6 +111,8 @@ func TestLoadConfig(t *testing.T) {
 			NestAttributes: &NestingProcessorConfig{
 				Enabled:   true,
 				Separator: "!",
+				Include:   []string{"blep"},
+				Exclude:   []string{"nghu"},
 			},
 		})
 }
