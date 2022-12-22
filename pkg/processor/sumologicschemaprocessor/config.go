@@ -39,7 +39,11 @@ const (
 )
 
 // Ensure the Config struct satisfies the config.Processor interface.
-var _ component.Config = (*Config)(nil)
+var (
+	_                     component.Config = (*Config)(nil)
+	defaultNestingInclude                  = []string{}
+	defaultNestingExclude                  = []string{}
+)
 
 func createDefaultConfig() component.Config {
 	return &Config{
@@ -50,6 +54,8 @@ func createDefaultConfig() component.Config {
 		NestAttributes: &NestingProcessorConfig{
 			Separator: defaultNestingSeparator,
 			Enabled:   defaultNestingEnabled,
+			Include:   defaultNestingInclude,
+			Exclude:   defaultNestingExclude,
 		},
 	}
 }

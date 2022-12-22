@@ -26,6 +26,8 @@ func TestNestingAttributes(t *testing.T) {
 		name     string
 		input    map[string]pcommon.Value
 		expected map[string]pcommon.Value
+		include  []string
+		exclude  []string
 	}{
 		{
 			name: "sample nesting",
@@ -47,6 +49,8 @@ func TestNestingAttributes(t *testing.T) {
 				}),
 				"another_attr": pcommon.NewValueStr("42"),
 			},
+			include: []string{},
+			exclude: []string{},
 		},
 		{
 			name: "single values",
@@ -77,6 +81,8 @@ func TestNestingAttributes(t *testing.T) {
 					}),
 				}),
 			},
+			include: []string{},
+			exclude: []string{},
 		},
 		{
 			name: "overwrite map with simple value",
@@ -90,12 +96,87 @@ func TestNestingAttributes(t *testing.T) {
 					"logic": pcommon.NewValueBool(true),
 				}),
 			},
+			include: []string{},
+			exclude: []string{},
+		},
+		{
+			name: "allowlist",
+			input: map[string]pcommon.Value{
+				"kubernetes.container_name": pcommon.NewValueStr("xyz"),
+				"kubernetes.host.name":      pcommon.NewValueStr("the host"),
+				"kubernetes.host.address":   pcommon.NewValueStr("127.0.0.1"),
+				"kubernetes.namespace_name": pcommon.NewValueStr("sumologic"),
+				"another_attr":              pcommon.NewValueStr("42"),
+			},
+			expected: map[string]pcommon.Value{
+				"kubernetes": mapToPcommonValue(map[string]pcommon.Value{
+					"container_name": pcommon.NewValueStr("xyz"),
+					"host": mapToPcommonValue(map[string]pcommon.Value{
+						"name": pcommon.NewValueStr("the host"),
+					}),
+				}),
+				"kubernetes.host.address":   pcommon.NewValueStr("127.0.0.1"),
+				"kubernetes.namespace_name": pcommon.NewValueStr("sumologic"),
+				"another_attr":              pcommon.NewValueStr("42"),
+			},
+			include: []string{"kubernetes.container", "kubernetes.host.name"},
+			exclude: []string{},
+		},
+		{
+			name: "denylist",
+			input: map[string]pcommon.Value{
+				"kubernetes.container_name": pcommon.NewValueStr("xyz"),
+				"kubernetes.host.name":      pcommon.NewValueStr("the host"),
+				"kubernetes.host.address":   pcommon.NewValueStr("127.0.0.1"),
+				"kubernetes.namespace_name": pcommon.NewValueStr("sumologic"),
+				"another_attr":              pcommon.NewValueStr("42"),
+			},
+			expected: map[string]pcommon.Value{
+				"kubernetes.container_name": pcommon.NewValueStr("xyz"),
+				"kubernetes.host.name":      pcommon.NewValueStr("the host"),
+				"kubernetes.host.address":   pcommon.NewValueStr("127.0.0.1"),
+				"kubernetes": mapToPcommonValue(map[string]pcommon.Value{
+					"namespace_name": pcommon.NewValueStr("sumologic"),
+				}),
+				"another_attr": pcommon.NewValueStr("42"),
+			},
+			include: []string{},
+			exclude: []string{"kubernetes.container", "kubernetes.host"},
+		},
+		{
+			name: "denylist and allowlist",
+			input: map[string]pcommon.Value{
+				"kubernetes.container_name":         pcommon.NewValueStr("xyz"),
+				"kubernetes.host.name":              pcommon.NewValueStr("the host"),
+				"kubernetes.host.naming_convention": pcommon.NewValueStr("random"),
+				"kubernetes.host.address":           pcommon.NewValueStr("127.0.0.1"),
+				"kubernetes.namespace_name":         pcommon.NewValueStr("sumologic"),
+				"another_attr":                      pcommon.NewValueStr("42"),
+				"and_end":                           pcommon.NewValueStr("fin"),
+			},
+			expected: map[string]pcommon.Value{
+				"kubernetes.container_name":         pcommon.NewValueStr("xyz"),
+				"kubernetes.host.naming_convention": pcommon.NewValueStr("random"),
+				"kubernetes.namespace_name":         pcommon.NewValueStr("sumologic"),
+				"kubernetes": mapToPcommonValue(map[string]pcommon.Value{
+					"host": mapToPcommonValue(map[string]pcommon.Value{
+						"name":    pcommon.NewValueStr("the host"),
+						"address": pcommon.NewValueStr("127.0.0.1"),
+					}),
+				}),
+				"another_attr": pcommon.NewValueStr("42"),
+				"and_end":      pcommon.NewValueStr("fin"),
+			},
+			include: []string{"kubernetes.host."},
+			exclude: []string{"kubernetes.host.naming"},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			proc, err := newNestingProcessor(&NestingProcessorConfig{Separator: ".", Enabled: true})
+			proc, err := newNestingProcessor(&NestingProcessorConfig{
+				Separator: ".", Enabled: true, Include: testCase.include, Exclude: testCase.exclude,
+			})
 			require.NoError(t, err)
 
 			attrs := mapToPcommonMap(testCase.input)

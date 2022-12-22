@@ -24,19 +24,25 @@ import (
 )
 
 type NestingProcessorConfig struct {
-	Separator string `mapstructure:"separator"`
-	Enabled   bool   `mapstructure:"enabled"`
+	Separator string   `mapstructure:"separator"`
+	Enabled   bool     `mapstructure:"enabled"`
+	Include   []string `mapstructure:"include"`
+	Exclude   []string `mapstructure:"exclude"`
 }
 
 type NestingProcessor struct {
 	separator string
 	enabled   bool
+	allowlist []string
+	denylist  []string
 }
 
 func newNestingProcessor(config *NestingProcessorConfig) (*NestingProcessor, error) {
 	proc := &NestingProcessor{
 		separator: config.Separator,
 		enabled:   config.Enabled,
+		allowlist: config.Include,
+		denylist:  config.Exclude,
 	}
 
 	return proc, nil
@@ -124,6 +130,12 @@ func (proc *NestingProcessor) processAttributes(attributes pcommon.Map) error {
 	newMap := pcommon.NewMap()
 
 	attributes.Range(func(k string, v pcommon.Value) bool {
+		// If key is not on allow list or is on deny list, skip translating it.
+		if !proc.shouldTranslateKey(k) {
+			v.CopyTo(newMap.PutEmpty(k))
+			return true
+		}
+
 		keys := strings.Split(k, proc.separator)
 		if len(keys) == 0 {
 			// Split returns empty slice only if both string and separator are empty
@@ -181,6 +193,34 @@ func (proc *NestingProcessor) processAttributes(attributes pcommon.Map) error {
 	newMap.CopyTo(attributes)
 
 	return nil
+}
+
+// Checks if given key fulfills the following conditions:
+// - has a prefix that exists in the allowlist (if it's not empty)
+// - does not have a prefix that exists in the denylist
+func (proc *NestingProcessor) shouldTranslateKey(k string) bool {
+	if len(proc.allowlist) > 0 {
+		isOk := false
+		for i := 0; i < len(proc.allowlist); i++ {
+			if strings.HasPrefix(k, proc.allowlist[i]) {
+				isOk = true
+				break
+			}
+		}
+		if !isOk {
+			return false
+		}
+	}
+
+	if len(proc.denylist) > 0 {
+		for i := 0; i < len(proc.denylist); i++ {
+			if strings.HasPrefix(k, proc.denylist[i]) {
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 func (proc *NestingProcessor) isEnabled() bool {
