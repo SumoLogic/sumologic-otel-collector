@@ -52,10 +52,11 @@ func TestLoadConfig(t *testing.T) {
 			TranslateAttributes:         true,
 			TranslateTelegrafAttributes: true,
 			NestAttributes: &NestingProcessorConfig{
-				Enabled:   false,
-				Separator: ".",
-				Include:   []string{},
-				Exclude:   []string{},
+				Enabled:            false,
+				Separator:          ".",
+				Include:            []string{},
+				Exclude:            []string{},
+				SquashSingleValues: false,
 			},
 			AggregateAttributes: []aggregationPair{},
 		})
@@ -72,10 +73,11 @@ func TestLoadConfig(t *testing.T) {
 			TranslateAttributes:         false,
 			TranslateTelegrafAttributes: true,
 			NestAttributes: &NestingProcessorConfig{
-				Enabled:   false,
-				Separator: ".",
-				Include:   []string{},
-				Exclude:   []string{},
+				Enabled:            false,
+				Separator:          ".",
+				Include:            []string{},
+				Exclude:            []string{},
+				SquashSingleValues: false,
 			},
 			AggregateAttributes: []aggregationPair{},
 		})
@@ -92,10 +94,11 @@ func TestLoadConfig(t *testing.T) {
 			TranslateAttributes:         true,
 			TranslateTelegrafAttributes: false,
 			NestAttributes: &NestingProcessorConfig{
-				Enabled:   false,
-				Separator: ".",
-				Include:   []string{},
-				Exclude:   []string{},
+				Enabled:            false,
+				Separator:          ".",
+				Include:            []string{},
+				Exclude:            []string{},
+				SquashSingleValues: false,
 			},
 			AggregateAttributes: []aggregationPair{},
 		})
@@ -112,10 +115,11 @@ func TestLoadConfig(t *testing.T) {
 			TranslateAttributes:         true,
 			TranslateTelegrafAttributes: true,
 			NestAttributes: &NestingProcessorConfig{
-				Enabled:   true,
-				Separator: "!",
-				Include:   []string{"blep"},
-				Exclude:   []string{"nghu"},
+				Enabled:            true,
+				Separator:          "!",
+				Include:            []string{"blep"},
+				Exclude:            []string{"nghu"},
+				SquashSingleValues: true,
 			},
 			AggregateAttributes: []aggregationPair{},
 		})
@@ -132,10 +136,11 @@ func TestLoadConfig(t *testing.T) {
 			TranslateAttributes:         true,
 			TranslateTelegrafAttributes: true,
 			NestAttributes: &NestingProcessorConfig{
-				Enabled:   false,
-				Separator: ".",
-				Include:   []string{},
-				Exclude:   []string{},
+				Enabled:            false,
+				Separator:          ".",
+				Include:            []string{},
+				Exclude:            []string{},
+				SquashSingleValues: false,
 			},
 			AggregateAttributes: []aggregationPair{
 				{

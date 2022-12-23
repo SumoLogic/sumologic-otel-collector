@@ -40,8 +40,9 @@ const (
 	defaultTranslateTelegrafAttributes = true
 
 	// Nesting processor default config
-	defaultNestingEnabled   = false
-	defaultNestingSeparator = "."
+	defaultNestingEnabled            = false
+	defaultNestingSeparator          = "."
+	defaultNestingSquashSingleValues = false
 )
 
 var (
@@ -62,10 +63,11 @@ func createDefaultConfig() component.Config {
 		TranslateAttributes:         defaultTranslateAttributes,
 		TranslateTelegrafAttributes: defaultTranslateTelegrafAttributes,
 		NestAttributes: &NestingProcessorConfig{
-			Separator: defaultNestingSeparator,
-			Enabled:   defaultNestingEnabled,
-			Include:   defaultNestingInclude,
-			Exclude:   defaultNestingExclude,
+			Separator:          defaultNestingSeparator,
+			Enabled:            defaultNestingEnabled,
+			Include:            defaultNestingInclude,
+			Exclude:            defaultNestingExclude,
+			SquashSingleValues: defaultNestingSquashSingleValues,
 		},
 		AggregateAttributes: defaultAggregateAttributes,
 	}
