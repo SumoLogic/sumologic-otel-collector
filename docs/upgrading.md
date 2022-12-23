@@ -95,18 +95,45 @@ The target release for the removal of feature gates is `v0.71`.
 
 ### `sumologic` exporter: drop support for source headers
 
-Since the exporter should not modify the data, setting the source headers is no longer supported in the `sumologic` exporter.
-This deprecation includes deprecating the source templates.
+The following properties of the [Sumo Logic exporter][sumologicexporter_docs] are deprecated in `v0.57.2-sumo-0`:
 
-If you need to set the `_source*` headers in the collector, use the `transform` processor, for example:
+- `source_category`
+- `source_host`
+- `source_name`
+
+To upgrade, move these properties from the Sumo Logic exporter configuration
+to the [Source processor][sourceprocessor_docs].
+
+For example, the following configuration:
+
+```yaml
+exporters:
+  sumologic:
+    source_category: my-source-category
+    source_host: my-source-host
+    source_name: my-source-name
+```
+
+should be changed to the following:
 
 ```yaml
 processors:
-  # ...
-  transform:
-    logs:
-      - set(attributes["_sourceHost"], "source_host")
+  source:
+    source_category: my-source-category
+    source_category_prefix: ""
+    source_category_replace_dash: "-"
+    source_host: my-source-host
+    source_name: my-source-name
 ```
+
+The reason for the additional `source_category_prefix` and `source_category_replace_dash`
+is that the Source processor has more features and these properties must be set
+to make it behave like the Sumo Logic exporter.
+
+See the [Source processor documentation][sourceprocessor_docs] for more details.
+
+[sumologicexporter_docs]: ../pkg/exporter/sumologicexporter/README.md
+[sourceprocessor_docs]: ../pkg/processor/sourceprocessor/README.md
 
 ## Upgrading to v0.56.0-sumo-0
 
