@@ -175,7 +175,77 @@ func TestNestingAttributes(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			proc, err := newNestingProcessor(&NestingProcessorConfig{
-				Separator: ".", Enabled: true, Include: testCase.include, Exclude: testCase.exclude,
+				Separator: ".", Enabled: true, Include: testCase.include, Exclude: testCase.exclude, SquashSingleValues: false,
+			})
+			require.NoError(t, err)
+
+			attrs := mapToPcommonMap(testCase.input)
+			err = proc.processAttributes(attrs)
+			require.NoError(t, err)
+
+			expected := mapToPcommonMap(testCase.expected)
+
+			require.Equal(t, expected.AsRaw(), attrs.AsRaw())
+		})
+	}
+}
+
+func TestSquashing(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    map[string]pcommon.Value
+		expected map[string]pcommon.Value
+	}{
+		{
+			name: "squash from example",
+			input: map[string]pcommon.Value{
+				"k8s": mapToPcommonValue(map[string]pcommon.Value{
+					"pods": mapToPcommonValue(map[string]pcommon.Value{
+						"a": pcommon.NewValueStr("A"),
+						"b": pcommon.NewValueStr("B"),
+					}),
+				}),
+			},
+			expected: map[string]pcommon.Value{
+				"k8s.pods": mapToPcommonValue(map[string]pcommon.Value{
+					"a": pcommon.NewValueStr("A"),
+					"b": pcommon.NewValueStr("B"),
+				}),
+			},
+		},
+		{
+			name: "many-value maps with squashed keys",
+			input: map[string]pcommon.Value{
+				"k8s": mapToPcommonValue(map[string]pcommon.Value{
+					"pods": mapToPcommonValue(map[string]pcommon.Value{
+						"a": mapToPcommonValue(map[string]pcommon.Value{
+							"b": mapToPcommonValue(map[string]pcommon.Value{
+								"c": pcommon.NewValueStr("A"),
+							}),
+						}),
+						"b": pcommon.NewValueStr("B"),
+					}),
+				}),
+				"sumo": mapToPcommonValue(map[string]pcommon.Value{
+					"logic": mapToPcommonValue(map[string]pcommon.Value{
+						"schema": pcommon.NewValueStr("processor"),
+					}),
+				}),
+			},
+			expected: map[string]pcommon.Value{
+				"k8s.pods": mapToPcommonValue(map[string]pcommon.Value{
+					"a.b.c": pcommon.NewValueStr("A"),
+					"b":     pcommon.NewValueStr("B"),
+				}),
+				"sumo.logic.schema": pcommon.NewValueStr("processor"),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			proc, err := newNestingProcessor(&NestingProcessorConfig{
+				Separator: ".", Enabled: true, Include: []string{}, Exclude: []string{}, SquashSingleValues: true,
 			})
 			require.NoError(t, err)
 

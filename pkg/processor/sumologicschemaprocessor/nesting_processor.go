@@ -24,25 +24,28 @@ import (
 )
 
 type NestingProcessorConfig struct {
-	Separator string   `mapstructure:"separator"`
-	Enabled   bool     `mapstructure:"enabled"`
-	Include   []string `mapstructure:"include"`
-	Exclude   []string `mapstructure:"exclude"`
+	Separator          string   `mapstructure:"separator"`
+	Enabled            bool     `mapstructure:"enabled"`
+	Include            []string `mapstructure:"include"`
+	Exclude            []string `mapstructure:"exclude"`
+	SquashSingleValues bool     `mapstructure:"squash_single_values"`
 }
 
 type NestingProcessor struct {
-	separator string
-	enabled   bool
-	allowlist []string
-	denylist  []string
+	separator          string
+	enabled            bool
+	allowlist          []string
+	denylist           []string
+	squashSingleValues bool
 }
 
 func newNestingProcessor(config *NestingProcessorConfig) (*NestingProcessor, error) {
 	proc := &NestingProcessor{
-		separator: config.Separator,
-		enabled:   config.Enabled,
-		allowlist: config.Include,
-		denylist:  config.Exclude,
+		separator:          config.Separator,
+		enabled:            config.Enabled,
+		allowlist:          config.Include,
+		denylist:           config.Exclude,
+		squashSingleValues: config.SquashSingleValues,
 	}
 
 	return proc, nil
@@ -190,6 +193,10 @@ func (proc *NestingProcessor) processAttributes(attributes pcommon.Map) error {
 		return true
 	})
 
+	if proc.squashSingleValues {
+		newMap = proc.squash(newMap)
+	}
+
 	newMap.CopyTo(attributes)
 
 	return nil
@@ -221,6 +228,75 @@ func (proc *NestingProcessor) shouldTranslateKey(k string) bool {
 	}
 
 	return true
+}
+
+// Squashes maps that have single values, eg. map {"a": {"b": {"c": "C", "d": "D"}}}}
+// gets squashes into {"a.b": {"c": "C", "d": "D"}}}
+func (proc *NestingProcessor) squash(attributes pcommon.Map) pcommon.Map {
+	newMap := pcommon.NewValueMap()
+	attributes.CopyTo(newMap.Map())
+	key := proc.squashAttribute(newMap)
+
+	if key != "" {
+		retMap := pcommon.NewMap()
+		newMap.Map().CopyTo(retMap.PutEmptyMap(key))
+		return retMap
+	}
+
+	return newMap.Map()
+}
+
+// A function that squashes keys in a value.
+// If this value contained a map with one element, it gets squished and its key gets returned.
+//
+// If this value contained a map with many elements, this function is called on these elements,
+// and the key gets replaced if needed, "" is returned.
+//
+// Else, nothing happens and "" is returned.
+func (proc *NestingProcessor) squashAttribute(value pcommon.Value) string {
+	if value.Type() == pcommon.ValueTypeMap {
+		m := value.Map()
+		if m.Len() == 1 {
+			// If the map contains only one key-value pair, squash it.
+			key := ""
+			val := pcommon.NewValueEmpty()
+			// This will iterate only over one value (the only one)
+			m.Range(func(k string, v pcommon.Value) bool {
+				keySuffix := proc.squashAttribute(v)
+				key = proc.squashKey(k, keySuffix)
+				val = v
+				return false
+			})
+
+			val.CopyTo(value)
+			return key
+		} else {
+			// This map doesn't get squashed, but its content might have keys replaced.
+			newMap := pcommon.NewMap()
+			m.Range(func(k string, v pcommon.Value) bool {
+				keySuffix := proc.squashAttribute(v)
+				// If "" was returned, the value was not a one-element map and did not get squashed.
+				if keySuffix == "" {
+					v.CopyTo(newMap.PutEmpty(k))
+				} else {
+					v.CopyTo(newMap.PutEmpty(proc.squashKey(k, keySuffix)))
+				}
+
+				return true
+			})
+			newMap.CopyTo(value.Map())
+		}
+	}
+
+	return ""
+}
+
+func (proc *NestingProcessor) squashKey(key string, keySuffix string) string {
+	if keySuffix == "" {
+		return key
+	} else {
+		return key + proc.separator + keySuffix
+	}
 }
 
 func (proc *NestingProcessor) isEnabled() bool {

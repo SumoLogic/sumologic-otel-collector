@@ -54,6 +54,12 @@ processors:
       # default = []
       exclude: [<prefix>]
 
+      # If enabled, then maps that would have only one value will be squashed.
+      # For example,{"k8s": {"pods": {"a": "A", "b": "B"}}}
+      # will be squashed to {"k8s.pods": {"a": "A", "b": "B"}}
+      # default = false
+      squash_single_values: {true, false}
+
     # Specifies if attributes matching given pattern should be mapped to a common key.
     # See "Aggregating attributes" documentation chapter from this document.
     # default = []

@@ -15,6 +15,7 @@ processors:
       separator: "!"
       include: ["blep"]
       exclude: ["nghu"]
+      squash_single_values: true
   sumologic_schema/aggregate-attributes:
     aggregate_attributes:
       - attribute: "attr1"
