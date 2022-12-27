@@ -27,6 +27,7 @@ type Config struct {
 	TranslateTelegrafAttributes bool                    `mapstructure:"translate_telegraf_attributes"`
 	NestAttributes              *NestingProcessorConfig `mapstructure:"nest_attributes"`
 	AggregateAttributes         []aggregationPair       `mapstructure:"aggregate_attributes"`
+	AddSeverityLevelAttribute   bool                    `mapstructure:"add_severity_level_attribute"`
 }
 
 type aggregationPair struct {
@@ -43,6 +44,8 @@ const (
 	defaultNestingEnabled            = false
 	defaultNestingSeparator          = "."
 	defaultNestingSquashSingleValues = false
+
+	defaultAddSeverityLevelAttribute = true
 )
 
 var (
@@ -69,7 +72,8 @@ func createDefaultConfig() component.Config {
 			Exclude:            defaultNestingExclude,
 			SquashSingleValues: defaultNestingSquashSingleValues,
 		},
-		AggregateAttributes: defaultAggregateAttributes,
+		AggregateAttributes:       defaultAggregateAttributes,
+		AddSeverityLevelAttribute: defaultAddSeverityLevelAttribute,
 	}
 }
 

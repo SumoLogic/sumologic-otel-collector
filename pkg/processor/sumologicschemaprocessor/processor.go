@@ -64,12 +64,18 @@ func newSumologicSchemaProcessor(set component.ProcessorCreateSettings, config *
 		return nil, err
 	}
 
+	logFieldsConversionProcessor, err := newLogFieldConversionProcessor(config.AddSeverityLevelAttribute)
+	if err != nil {
+		return nil, err
+	}
+
 	processors := []sumologicSchemaSubprocessor{
 		cloudNamespaceProcessor,
 		translateAttributesProcessor,
 		translateTelegrafMetricsProcessor,
 		nestingProcessor,
 		aggregateAttributesProcessor,
+		logFieldsConversionProcessor,
 	}
 
 	processor := &sumologicSchemaProcessor{
@@ -89,6 +95,7 @@ func (processor *sumologicSchemaProcessor) start(_ context.Context, host compone
 		zap.Bool(procs[2].ConfigPropertyName(), procs[2].isEnabled()),
 		zap.Bool(procs[3].ConfigPropertyName(), procs[3].isEnabled()),
 		zap.Bool(procs[4].ConfigPropertyName(), procs[4].isEnabled()),
+		zap.Bool(procs[5].ConfigPropertyName(), procs[5].isEnabled()),
 	)
 	return nil
 }

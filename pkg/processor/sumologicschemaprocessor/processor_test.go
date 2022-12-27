@@ -1236,6 +1236,45 @@ func TestAggregateAttributesForTraces(t *testing.T) {
 	}
 }
 
+func TestLogFieldsConversionLogs(t *testing.T) {
+	testCases := []struct {
+		name        string
+		addSeverity bool
+		createLogs  func() plog.Logs
+		test        func(plog.Logs)
+	}{
+		{
+			name:        "addSeverity",
+			addSeverity: true,
+			createLogs: func() plog.Logs {
+				logs := plog.NewLogs()
+				logs.ResourceLogs().AppendEmpty().ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().SetSeverityNumber(plog.SeverityNumberInfo)
+				return logs
+			},
+			test: func(outputLogs plog.Logs) {
+				attribute1, found := outputLogs.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0).Attributes().Get("loglevel")
+				assert.True(t, found)
+				assert.Equal(t, "INFO", attribute1.Str())
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			// Arrange
+			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newLogFieldsConversionConfig(testCase.addSeverity))
+			require.NoError(t, err)
+
+			// Act
+			outputLogs, err := processor.processLogs(context.Background(), testCase.createLogs())
+			require.NoError(t, err)
+
+			// Assert
+			testCase.test(outputLogs)
+		})
+	}
+}
+
 func newProcessorCreateSettings() component.ProcessorCreateSettings {
 	return component.ProcessorCreateSettings{
 		TelemetrySettings: component.TelemetrySettings{
@@ -1295,5 +1334,17 @@ func newAggregateAttributesConfig(aggregations []aggregationPair) *Config {
 	config.TranslateAttributes = false
 	config.TranslateTelegrafAttributes = false
 	config.AggregateAttributes = aggregations
+	return config
+}
+
+func newLogFieldsConversionConfig(logFieldsConversion bool) *Config {
+	config := createDefaultConfig().(*Config)
+	config.AddCloudNamespace = false
+	config.TranslateAttributes = false
+	config.TranslateTelegrafAttributes = false
+	config.NestAttributes = &NestingProcessorConfig{
+		Enabled: false,
+	}
+	config.AddSeverityLevelAttribute = true
 	return config
 }

@@ -58,7 +58,8 @@ func TestLoadConfig(t *testing.T) {
 				Exclude:            []string{},
 				SquashSingleValues: false,
 			},
-			AggregateAttributes: []aggregationPair{},
+			AggregateAttributes:       []aggregationPair{},
+			AddSeverityLevelAttribute: true,
 		})
 
 	p2 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-attribute-translation")]
@@ -79,7 +80,8 @@ func TestLoadConfig(t *testing.T) {
 				Exclude:            []string{},
 				SquashSingleValues: false,
 			},
-			AggregateAttributes: []aggregationPair{},
+			AggregateAttributes:       []aggregationPair{},
+			AddSeverityLevelAttribute: true,
 		})
 
 	p3 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-telegraf-attribute-translation")]
@@ -100,7 +102,8 @@ func TestLoadConfig(t *testing.T) {
 				Exclude:            []string{},
 				SquashSingleValues: false,
 			},
-			AggregateAttributes: []aggregationPair{},
+			AggregateAttributes:       []aggregationPair{},
+			AddSeverityLevelAttribute: true,
 		})
 
 	p4 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-nesting")]
@@ -121,7 +124,8 @@ func TestLoadConfig(t *testing.T) {
 				Exclude:            []string{"nghu"},
 				SquashSingleValues: true,
 			},
-			AggregateAttributes: []aggregationPair{},
+			AggregateAttributes:       []aggregationPair{},
+			AddSeverityLevelAttribute: true,
 		})
 
 	p5 := cfg.Processors[component.NewIDWithName(typeStr, "aggregate-attributes")]
@@ -152,5 +156,28 @@ func TestLoadConfig(t *testing.T) {
 					Patterns:  []string{"pattern4"},
 				},
 			},
+			AddSeverityLevelAttribute: true,
+		})
+
+	p6 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-severity-level-attribute")]
+
+	assert.Equal(t, p6,
+		&Config{
+			ProcessorSettings: config.NewProcessorSettings(component.NewIDWithName(
+				typeStr,
+				"disabled-severity-level-attribute",
+			)),
+			AddCloudNamespace:           true,
+			TranslateAttributes:         true,
+			TranslateTelegrafAttributes: true,
+			NestAttributes: &NestingProcessorConfig{
+				Enabled:            false,
+				Separator:          ".",
+				Include:            []string{},
+				Exclude:            []string{},
+				SquashSingleValues: false,
+			},
+			AggregateAttributes:       []aggregationPair{},
+			AddSeverityLevelAttribute: false,
 		})
 }

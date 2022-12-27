@@ -67,6 +67,10 @@ processors:
       - attribute: <attribute>
         prefixes: [<prefix>]
       - ...
+
+    # Defines whether `severity` attribute should be added to record attributes.
+    # default = true
+    add_severity_level_attribute: {true, false}
 ```
 
 ## Features
@@ -271,3 +275,9 @@ The result is:
   }
 }
 ```
+
+### Severity Attribute
+
+Some fields that log entries consist are not displayed as fields in Sumo Logic out of the box.
+One of them is `severity` which might be added/removed to/from attribute list by changing
+`add_severity_level_attribute` setting.
