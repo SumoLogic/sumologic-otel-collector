@@ -665,9 +665,10 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 	var buff bytes.Buffer
 	if err = json.NewEncoder(&buff).Encode(api.OpenMetadataRequestPayload{
 		HostDetails: api.OpenMetadataHostDetails{
-			Name:      info.Hostname,
-			OsName:    info.OS,
-			OsVersion: info.PlatformVersion,
+			Name:        info.Hostname,
+			OsName:      info.OS,
+			OsVersion:   info.PlatformVersion,
+			Environment: se.conf.CollectorDescription, // TODO: Replace with new configuration attribute?
 		},
 		AgentDetails: api.OpenMetadataAgentDetails{
 			RunningVersion: "1.0.0",

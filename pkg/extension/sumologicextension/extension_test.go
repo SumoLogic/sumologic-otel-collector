@@ -1342,6 +1342,7 @@ func TestUpdateMetadataRequestPayload(t *testing.T) {
 			require.NotEmpty(t, reqPayload.HostDetails.OsName)
 			require.NotEmpty(t, reqPayload.HostDetails.OsVersion)
 			require.NotEmpty(t, reqPayload.NetworkDetails.HostIpAddress)
+			require.EqualValues(t, reqPayload.HostDetails.Environment, "my description")
 			require.EqualValues(t,
 				map[string]interface{}{
 					"team": "A",

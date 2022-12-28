@@ -15,9 +15,10 @@
 package api
 
 type OpenMetadataHostDetails struct {
-	Name      string `json:"Name"`
-	OsName    string `json:"OsName,omitempty"`
-	OsVersion string `json:"OsVersion,omitempty"`
+	Name        string `json:"Name"`
+	OsName      string `json:"OsName,omitempty"`
+	OsVersion   string `json:"OsVersion,omitempty"`
+	Environment string `json:"Environment,omitempty"`
 }
 
 type OpenMetadataAgentDetails struct {
