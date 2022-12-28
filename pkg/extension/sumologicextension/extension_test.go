@@ -1094,13 +1094,18 @@ func TestRegistrationRedirect(t *testing.T) {
 				assert.Equal(t, heartbeatUrl, req.URL.Path)
 				w.WriteHeader(204)
 
-			// metadata
+			// heartbeat
 			case 4:
+				assert.Equal(t, heartbeatUrl, req.URL.Path)
+				w.WriteHeader(204)
+
+			// metadata
+			case 5:
 				assert.Equal(t, metadataUrl, req.URL.Path)
 				w.WriteHeader(200)
 
 			// heartbeat
-			case 5:
+			case 6:
 				assert.Equal(t, heartbeatUrl, req.URL.Path)
 				w.WriteHeader(204)
 
@@ -1163,6 +1168,26 @@ func TestRegistrationRedirect(t *testing.T) {
 			5*time.Second, 100*time.Millisecond,
 			"extension should make 3 requests (registration + metadata + heartbeat) to the destination server",
 		)
+		require.NoError(t, se.Shutdown(context.Background()))
+	})
+
+	t.Run("credentials store retrieves credentials with redirected api url", func(t *testing.T) {
+		se, err := newSumologicExtension(configFn(), logger, component.NewID("sumologic"))
+		require.NoError(t, err)
+		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
+
+		assert.Eventually(t, func() bool { return atomic.LoadInt32(&origReqCount) == 1 },
+			5*time.Second, 100*time.Millisecond,
+			"after restarting with locally stored credentials extension shouldn't call the original server",
+		)
+
+		assert.Eventually(t, func() bool { return atomic.LoadInt32(&destReqCount) == 6 },
+			5*time.Second, 100*time.Millisecond,
+			"extension should make 6 requests (registration + metadata + heartbeat, after restart "+
+				"heartbeat to validate credentials, metadata update, and then the first heartbeat on "+
+				"which we wait here) to the destination server",
+		)
+
 		require.NoError(t, se.Shutdown(context.Background()))
 	})
 }
