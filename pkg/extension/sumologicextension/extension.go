@@ -688,9 +688,6 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 		return fmt.Errorf("unable to create HTTP request %w", err)
 	}
 
-	addClientCredentials(req,
-		se.conf.Credentials,
-	)
 	addJSONHeaders(req)
 
 	se.logger.Info("Calling metadata API", zap.String("URL", u.String()))

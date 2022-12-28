@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/md5"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -790,6 +791,54 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 		configFn         func(url string) *Config
 	}{
 		{
+			name:             "collector checks found credentials via heartbeat call - no registration is done",
+			expectedReqCount: 3,
+			srvFn: func() (*httptest.Server, *int32) {
+				var reqCount int32
+
+				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+						reqNum := atomic.AddInt32(&reqCount, 1)
+
+						switch reqNum {
+
+						// heatbeat
+						case 1:
+							require.NotEqual(t, registerUrl, req.URL.Path,
+								"collector shouldn't call the register API when credentials locally retrieved")
+
+							assert.Equal(t, heartbeatUrl, req.URL.Path)
+
+							authHeader := req.Header.Get("Authorization")
+							token := base64.StdEncoding.EncodeToString(
+								[]byte("test-credential-id:test-credential-key"),
+							)
+							assert.Equal(t, "Basic "+token, authHeader,
+								"collector didn't send correct Authorization header with heartbeat request")
+
+							w.WriteHeader(204)
+
+						// metadata
+						case 2:
+							assert.Equal(t, metadataUrl, req.URL.Path)
+							w.WriteHeader(200)
+
+						// should not produce any more requests
+						default:
+							w.WriteHeader(http.StatusInternalServerError)
+						}
+					})),
+					&reqCount
+			},
+			configFn: func(url string) *Config {
+				cfg := createDefaultConfig().(*Config)
+				cfg.CollectorName = "test-name"
+				cfg.ApiBaseUrl = url
+				cfg.Credentials.InstallToken = "dummy_install_token"
+				cfg.CollectorCredentialsDirectory = dir
+				return cfg
+			},
+		},
+		{
 			name:             "collector registers when no matching credentials are found in local storage",
 			expectedReqCount: 3,
 			srvFn: func() (*httptest.Server, *int32) {
@@ -817,13 +866,13 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 								w.WriteHeader(http.StatusInternalServerError)
 							}
 
-						// metadata
-						case 3:
-							w.WriteHeader(200)
-
 						// heartbeat
 						case 2:
 							w.WriteHeader(204)
+
+						// metadata
+						case 3:
+							w.WriteHeader(200)
 
 						// should not produce any more requests
 						default:
