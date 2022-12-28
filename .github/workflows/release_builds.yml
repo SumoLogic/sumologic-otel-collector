@@ -13,6 +13,10 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-beta.[0-9]+'
       - 'v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-rc.[0-9]+'
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
 
   build:
@@ -25,6 +29,10 @@ jobs:
             runs_on: ubuntu-20.04
           - arch_os: linux_arm64
             runs_on: ubuntu-20.04
+          - arch_os: windows_amd64
+            runs_on: windows-2022
+            builder_bin_path: '${RUNNER_TEMP}\bin'
+            builder_bin_ext: .exe
     steps:
       - uses: actions/checkout@v3
 
@@ -43,16 +51,28 @@ jobs:
           path: |
             /home/runner/go/pkg/mod
             /home/runner/.cache/go-build
+            /c/Users/runneradmin/go/pkg/mod
+            /c/Users/runneradmin/AppData/Local/go-build
           key: ${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{matrix.arch_os}}-go-
+
+      - name: Set default BUILDER_BIN_PATH
+        run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
+
+      - name: Override BUILDER_BIN_PATH if set in matrix
+        run: echo "BUILDER_BIN_PATH=${{matrix.builder_bin_path}}" >> $GITHUB_ENV
+        if: matrix.builder_bin_path != ''
 
       - name: Extract tag
         id: extract_tag
         run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
 
+      - name: Print tag
+        run: echo "${{ steps.extract_tag.outputs.tag }}"
+
       - name: Add opentelemetry-collector-builder installation dir to PATH
-        run: echo "$HOME/bin" >> $GITHUB_PATH
+        run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
 
       - name: Install opentelemetry-collector-builder
         run: make install-builder
@@ -67,10 +87,10 @@ jobs:
 
       - name: Set filename
         id: set_filename
-        run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}})"
+        run: echo "::set-output name=filename::$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}})${{matrix.builder_bin_ext}}"
 
       - name: Rename to include tag in filename
-        run: cp otelcol-sumo-${{matrix.arch_os}} ${{ steps.set_filename.outputs.filename }}
+        run: cp otelcol-sumo-${{matrix.arch_os}}${{matrix.builder_bin_ext}} ${{ steps.set_filename.outputs.filename }}
         working-directory: ./otelcolbuilder/cmd
 
       - name: Show included modules
@@ -390,6 +410,47 @@ jobs:
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORMS="linux/amd64 linux/arm64"
 
+  package-msi:
+    name: Package MSI
+    runs-on: windows-2019
+    needs:
+      - build
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.3
+
+      - name: Fetch binary artifact for windows/amd64
+        uses: actions/download-artifact@v3
+        with:
+          name: windows_amd64
+          path: ./otelcolbuilder/cmd
+
+      - name: Rename binary for windows/amd64
+        working-directory: ./otelcolbuilder/cmd
+        run: mv otelcol-sumo-*-sumo-*-windows_amd64.exe otelcol-sumo-windows_amd64.exe
+
+      - name: Set VERSION_TAG
+        run: echo "VERSION_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Set PRODUCT_VERSION
+        run: echo "PRODUCT_VERSION=$(./ci/get_productversion.sh)" >> $GITHUB_ENV
+
+      - name: Build MSI for windows/amd64
+        working-directory: ./packaging/msi/wix
+        run: msbuild.exe -p:Configuration=Release -p:Platform=x64 -p:ProductVersion=$PRODUCT_VERSION -Restore
+
+      - name: Store MSI as action artifact for windows/amd64
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows_amd64_msi
+          path: ./packaging/msi/wix/bin/x64/en-US/*.msi
+          if-no-files-found: error
+
   create-release:
     name: Create Github release
     runs-on: ubuntu-20.04
@@ -399,6 +460,7 @@ jobs:
       - build-fips
       - build-container-images
       - push-docker-manifest
+      - package-msi
     steps:
       - name: Extract tag
         id: extract_tag

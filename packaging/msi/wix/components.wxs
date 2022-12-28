@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
   <?include variables.wxi ?>
 
   <Fragment>
@@ -39,13 +39,20 @@
       <!--   </RegistryKey> -->
       <!-- </Component> -->
 
-      <Component Id="cAPPDATAFOLDER" KeyPath="yes" Guid="0606049B-8268-4002-855F-586426F3EDFD">
-        <CreateFolder />
+      <Component Id="cAPPDATAFOLDER" Directory="APPDATAFOLDER" KeyPath="yes" Guid="0606049B-8268-4002-855F-586426F3EDFD">
+        <CreateFolder>
+          <!-- Restrict access to CREATOR OWNER, SYSTEM, and Administrators -->
+          <PermissionEx Sddl="O:SYG:SYD:PAI(A;OICIIO;FA;;;CO)(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)" />
+        </CreateFolder>
         <RemoveFolder On="uninstall" />
       </Component>
 
       <Component Directory="ConfigFolder">
         <File Id="SumoLogicConfig" Name="sumologic.yaml" Source="!(bindpath.examples)\sumologic-windows.yaml" />
+      </Component>
+
+      <Component Directory="ConfigFragmentsFolder">
+        <File Id="CommonConfig" Name="common.yaml" Source="!(bindpath.assets)\common.yaml" />
       </Component>
 
       <Component Id="cDataFolder" Directory="DataFolder" KeyPath="yes" Guid="B10962F8-B958-45E2-8B73-75C142A50B30">
@@ -61,13 +68,13 @@
 
     <ComponentGroup Id="ProgramComponents" Directory="INSTALLFOLDER">
       <Component Directory="BinFolder">
-        <File Source="!(bindpath.binaries)\otelcol-sumo.exe" />
+        <File Name="otelcol-sumo.exe" Source="!(bindpath.binaries)\$(OtelcolBinary)" />
 
         <!-- Add bin dir to System PATH -->
         <Environment Id="PATH" Name="PATH" Value="[INSTALLDIR]\bin" Permanent="yes" Part="last" Action="set" System="yes" />
 
         <!-- Add service for OTC -->
-        <ServiceInstall Id="Sevice" Name="!(loc.ServiceName)" DisplayName="!(loc.ServiceDisplayName)" Description="!(loc.ServiceDescription)" Type="ownProcess" Vital="yes" Start="auto" Account="LocalSystem" ErrorControl="normal" Arguments=" --config=&quot;[ConfigFolder]sumologic.yaml&quot;" Interactive="no" />
+        <ServiceInstall Id="Sevice" Name="!(loc.ServiceName)" DisplayName="!(loc.ServiceDisplayName)" Description="!(loc.ServiceDescription)" Type="ownProcess" Vital="yes" Start="auto" Account="LocalSystem" ErrorControl="normal" Arguments=" --config &quot;[ConfigFolder]sumologic.yaml&quot; --config &quot;glob:[ConfigFragmentsFolder]*.yaml&quot;" Interactive="no" />
 
         <!-- Start/Stop/Remove OTC service -->
         <ServiceControl Id="StartServiceControl" Name="!(loc.ServiceName)" Start="install" Stop="both" Remove="uninstall" Wait="no" />

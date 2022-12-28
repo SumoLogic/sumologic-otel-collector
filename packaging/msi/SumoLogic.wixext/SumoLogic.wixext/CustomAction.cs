@@ -12,7 +12,7 @@ namespace SumoLogic.wixext
         private const short ecConfigError = 9002;
 
         // WiX property names
-        private const string pConfigPath = "ConfigPath";
+        private const string pCommonConfigPath = "CommonConfigPath";
         private const string pInstallToken = "InstallToken";
         private const string pTags = "Tags";
 
@@ -23,9 +23,9 @@ namespace SumoLogic.wixext
             logger.Log("Begin");
 
             // Validate presence of required WiX properties
-            if (!session.CustomActionData.ContainsKey(pConfigPath))
+            if (!session.CustomActionData.ContainsKey(pCommonConfigPath))
             {
-                showErrorMessage(session, ecMissingCustomActionData, pConfigPath);
+                showErrorMessage(session, ecMissingCustomActionData, pCommonConfigPath);
                 return ActionResult.Failure;
             }
             if (!session.CustomActionData.ContainsKey(pInstallToken))
@@ -39,7 +39,7 @@ namespace SumoLogic.wixext
                 return ActionResult.Failure;
             }
 
-            var configPath = session.CustomActionData[pConfigPath];
+            var commonConfigPath = session.CustomActionData[pCommonConfigPath];
             var installToken = session.CustomActionData[pInstallToken];
             var tags = session.CustomActionData[pTags];
 
@@ -50,9 +50,9 @@ namespace SumoLogic.wixext
 
             try
             {
-                ConfigUpdater configUpdater = new ConfigUpdater(new StreamReader(configPath));
+                ConfigUpdater configUpdater = new ConfigUpdater(new StreamReader(commonConfigPath));
                 configUpdater.Update(config);
-                configUpdater.Save(new StreamWriter(configPath));
+                configUpdater.Save(new StreamWriter(commonConfigPath));
             }
             catch (Exception e)
             {

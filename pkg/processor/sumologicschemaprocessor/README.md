@@ -32,6 +32,41 @@ processors:
     # See `translate_telegraf_metrics_processor.go` for full list of translations.
     # default = true
     translate_telegraf_attributes: {true, false}
+
+    # Specifies if attributes should be nested, basing on their keys.
+    # See "Nesting attributes" documentation chapter from this document.
+    nest_attributes:
+      # Defines whether attributes should be nested.
+      # default = false
+      enabled: {true, false}
+
+      # Defines the string used to separate key names in attributes that are to be nested.
+      # default = "."
+      separator: <separator>
+
+      # Defines a list of allowed prefixes to be nested.
+      # For example, if "kubernetes." is in this list, then all "kubernetes.*" attributes will be nested.
+      # default = []
+      include: [<prefix>]
+
+      # Defines a list of prefixes not allowed to be nested.
+      # For example, if "k8s." is in this list, then all "k8s.*" attributes will not be nested.
+      # default = []
+      exclude: [<prefix>]
+
+      # If enabled, then maps that would have only one value will be squashed.
+      # For example,{"k8s": {"pods": {"a": "A", "b": "B"}}}
+      # will be squashed to {"k8s.pods": {"a": "A", "b": "B"}}
+      # default = false
+      squash_single_values: {true, false}
+
+    # Specifies if attributes matching given pattern should be mapped to a common key.
+    # See "Aggregating attributes" documentation chapter from this document.
+    # default = []
+    aggregate_attributes:
+      - attribute: <attribute>
+        prefixes: [<prefix>]
+      - ...
 ```
 
 ## Features
@@ -98,3 +133,141 @@ Below is a list of all attribute keys that are being translated.
 | `k8s.statefulset.name`    | `statefulset`       |
 | `service.name`            | `service`           |
 | `log.file.path_resolved`  | `_sourceName`       |
+
+### Nesting attributes
+
+Nesting attributes allows to change the structure of attributes (both resource level and record level attributes)
+basing on their keys by nesting attributes with common paths into maps.
+Common path is defined as a common prefix that consists of strings separated by a given separator string (by default a dot - `.`)
+and end with that separator, for example: if the separator is `.`,
+then `xyz` is a common prefix path for `xyz.abc.qwe` and `xyz.foo`,
+but `sumo` **is not** a prefix path for neither `sumologic.foo.baz` nor `sumologic.bar.baz`.
+
+#### Example
+
+The following set of attributes:
+
+```json
+{
+  "kubernetes.container_name": "xyz",
+  "kubernetes.host.name": "the host",
+  "kubernetes.host.address": "127.0.0.1",
+  "kubernetes.namespace_name": "sumologic",
+  "another_attr": "42"
+}
+```
+
+Should be translated into such set:
+
+```json
+{
+  "kubernetes": {
+    "container_name": "xyz",
+    "namespace_name": "sumologic",
+    "host": {
+      "name": "the host",
+      "address": "127.0.0.1"
+    }
+  },
+ "another_attr": "42"
+}
+```
+
+#### Allowlist and denylist
+
+Properties `include` and `exclude` in the config allow to define list of prefixes that are allowed or not allowed to be nested.
+
+For example, with the following config:
+
+```yaml
+nest_attributes:
+  enabled: true
+  include: ["kubernetes.host."]
+  exclude: ["kubernetes.host.naming"]
+```
+
+and following input:
+
+```json
+{
+"kubernetes.container_name": "xyz",
+"kubernetes.host.name": "the host",
+"kubernetes.host.naming_convention": "random",
+"kubernetes.host.address": "127.0.0.1",
+"kubernetes.namespace_name": "sumologic",
+}
+```
+
+The output is:
+
+```json
+{
+"kubernetes.container_name": "xyz",
+"kubernetes": {
+  "host": {
+    "name": "the host",
+    "address": "127.0.0.1"
+    }
+  },
+"kubernetes.host.naming_convention": "random",
+"kubernetes.namespace_name": "sumologic",
+}
+```
+
+#### Known issues
+
+This feature has undefined behavior when in input there are various keys that will be mapped to the same nested structure.
+For example, given the following attributes:
+
+```json
+{
+  "a.b.c.": "d",
+  "a": {
+    "b": {
+      "c": "e"
+    }
+  }
+}
+```
+
+It is not possible to predict, what will be the result. It will have the following structure:
+
+```json
+{
+  "a": {
+    "b": {
+      "c": ...
+    }
+  }
+}
+```
+
+However, it is not possible to know a priori if the value under key `c` will be equal to `d` or `e`.
+
+### Aggregating attributes
+
+Aggregating attributes allows to map attributes with keys with given prefixes to a common key.
+For example, it is possible to map all attributes with keys with prefixes `pod_` to a key `pods`.
+The names in resulting maps are the original key names with trimmed prefix.
+
+For given input, mapping keys with prefixes `pod_` to a key `pods`:
+
+```json
+{
+  "pod_a": "x",
+  "pod_b": "y",
+  "pod_c": "z"
+}
+```
+
+The result is:
+
+```json
+{
+  "pods": {
+    "a": "x",
+    "b": "y",
+    "c": "z"
+  }
+}
+```

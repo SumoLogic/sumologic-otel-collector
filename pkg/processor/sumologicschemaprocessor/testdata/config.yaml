@@ -9,17 +9,38 @@ processors:
     translate_attributes: false
   sumologic_schema/disabled-telegraf-attribute-translation:
     translate_telegraf_attributes: false
+  sumologic_schema/enabled-nesting:
+    nest_attributes:
+      enabled: true
+      separator: "!"
+      include: ["blep"]
+      exclude: ["nghu"]
+      squash_single_values: true
+  sumologic_schema/aggregate-attributes:
+    aggregate_attributes:
+      - attribute: "attr1"
+        prefixes: ["pattern1", "pattern2", "pattern3"]
+      - attribute: "attr2"
+        prefixes: ["pattern4"]
 
 exporters:
   nop:
 
 service:
   pipelines:
-    logs:
+    logs/1:
       receivers:
       - nop
       processors:
       - sumologic_schema/disabled-attribute-translation
+      exporters:
+      - nop
+
+    logs/2:
+      receivers:
+      - nop
+      processors:
+      - sumologic_schema/aggregate-attributes
       exporters:
       - nop
 
@@ -36,6 +57,14 @@ service:
       - nop
       processors:
       - sumologic_schema/disabled-telegraf-attribute-translation
+      exporters:
+      - nop
+
+    metrics/3:
+      receivers:
+      - nop
+      processors:
+      - sumologic_schema/enabled-nesting
       exporters:
       - nop
 
