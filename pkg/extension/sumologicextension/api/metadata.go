@@ -27,8 +27,6 @@ type OpenMetadataAgentDetails struct {
 
 type OpenMetadataNetworkDetails struct {
 	HostIpAddress string `json:"HostIpAddress"`
-	ProxyAddress  string `json:"ProxyAddress,omitempty"`
-	ProxyPort     int    `json:"ProxyPort,omitempty"`
 }
 
 type OpenMetadataRequestPayload struct {

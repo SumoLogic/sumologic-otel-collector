@@ -26,7 +26,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -613,34 +612,6 @@ func getHostIpAddress() (string, error) {
 	return a.String(), nil
 }
 
-func getProxyInfo() (string, int, error) {
-	p := os.Getenv("HTTPS_PROXY")
-	if p == "" {
-		p = os.Getenv("HTTP_PROXY")
-	}
-
-	if p == "" {
-		return "", 0, nil
-	}
-
-	u, err := url.Parse(p)
-	if err != nil {
-		return "", 0, err
-	}
-
-	h, ps, err := net.SplitHostPort(u.Host)
-	if err != nil {
-		return "", 0, err
-	}
-
-	pi, err := strconv.Atoi(ps)
-	if err != nil {
-		return "", 0, err
-	}
-
-	return h, pi, nil
-}
-
 func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, httpClient *http.Client) error {
 	u, err := url.Parse(se.BaseUrl() + metadataUrl)
 	if err != nil {
@@ -657,26 +628,19 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 		return err
 	}
 
-	pAddr, pPort, err := getProxyInfo()
-	if err != nil {
-		return err
-	}
-
 	var buff bytes.Buffer
 	if err = json.NewEncoder(&buff).Encode(api.OpenMetadataRequestPayload{
 		HostDetails: api.OpenMetadataHostDetails{
 			Name:        info.Hostname,
 			OsName:      info.OS,
 			OsVersion:   info.PlatformVersion,
-			Environment: se.conf.CollectorDescription, // TODO: Replace with new configuration attribute?
+			Environment: se.conf.CollectorEnvironment,
 		},
 		AgentDetails: api.OpenMetadataAgentDetails{
 			RunningVersion: "1.0.0",
 		},
 		NetworkDetails: api.OpenMetadataNetworkDetails{
 			HostIpAddress: ip,
-			ProxyAddress:  pAddr,
-			ProxyPort:     pPort,
 		},
 		TagDetails: se.conf.CollectorFields,
 	}); err != nil {
