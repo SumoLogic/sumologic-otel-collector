@@ -170,7 +170,7 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 		zap.String(collectorIdField, colCreds.Credentials.CollectorId),
 	)
 
-	err = se.updateMetadataWithHTTPClient(ctx, se.httpClient)
+	err = se.updateMetadataWithBackoff(ctx)
 	if err != nil {
 		return err
 	}
@@ -725,6 +725,31 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 	}
 
 	return nil
+}
+
+func (se *SumologicExtension) updateMetadataWithBackoff(ctx context.Context) error {
+	se.backOff.Reset()
+	for {
+		err := se.updateMetadataWithHTTPClient(ctx, se.httpClient)
+		if err == nil {
+			return nil
+		}
+
+		nbo := se.backOff.NextBackOff()
+		// Return error if backoff reaches the limit or uncoverable error is spotted
+		if _, ok := err.(*backoff.PermanentError); nbo == se.backOff.Stop || ok {
+			return fmt.Errorf("collector metadata update failed: %w", err)
+		}
+
+		t := time.NewTimer(nbo)
+		defer t.Stop()
+
+		select {
+		case <-t.C:
+		case <-ctx.Done():
+			return fmt.Errorf("collector metadata update cancelled: %w", ctx.Err())
+		}
+	}
 }
 
 func (se *SumologicExtension) ComponentID() component.ID {
