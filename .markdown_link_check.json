@@ -1,11 +1,24 @@
 {
+  "fallbackRetryDelay": "3s",
+  "httpHeaders": [
+    {
+      "headers": {
+        "Accept-Encoding": "zstd, br, gzip, deflate"
+      },
+      "urls": [
+        "https://github.com/",
+        "https://guides.github.com/",
+        "https://help.github.com/",
+        "https://docs.github.com/"
+      ]
+    }
+  ],
   "replacementPatterns": [
     {
       "pattern": "^/",
       "replacement": "{{BASEURL}}/"
     }
   ],
-  "retryOn429": true,
   "retryCount": 3,
-  "fallbackRetryDelay": "3s"
+  "retryOn429": true
 }
