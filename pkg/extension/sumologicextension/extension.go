@@ -609,7 +609,12 @@ func getHostIpAddress() (string, error) {
 
 	defer c.Close()
 	a := c.LocalAddr().(*net.UDPAddr)
-	return a.String(), nil
+	h, _, err := net.SplitHostPort(a.String())
+	if err != nil {
+		return "", err
+	}
+
+	return h, nil
 }
 
 func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, httpClient *http.Client) error {
@@ -628,6 +633,11 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 		return err
 	}
 
+	td := se.conf.CollectorFields
+	if td == nil {
+		td = map[string]interface{}{}
+	}
+
 	var buff bytes.Buffer
 	if err = json.NewEncoder(&buff).Encode(api.OpenMetadataRequestPayload{
 		HostDetails: api.OpenMetadataHostDetails{
@@ -642,7 +652,7 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 		NetworkDetails: api.OpenMetadataNetworkDetails{
 			HostIpAddress: ip,
 		},
-		TagDetails: se.conf.CollectorFields,
+		TagDetails: td,
 	}); err != nil {
 		return err
 	}
@@ -654,7 +664,9 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 
 	addJSONHeaders(req)
 
-	se.logger.Info("Calling metadata API", zap.String("URL", u.String()))
+	se.logger.Info("Calling metadata API",
+		zap.String("URL", u.String()),
+		zap.String("body", buff.String()))
 
 	res, err := httpClient.Do(req)
 	if err != nil {

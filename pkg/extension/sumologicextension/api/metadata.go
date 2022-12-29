@@ -33,5 +33,5 @@ type OpenMetadataRequestPayload struct {
 	HostDetails    OpenMetadataHostDetails    `json:"HostDetails"`
 	AgentDetails   OpenMetadataAgentDetails   `json:"AgentDetails"`
 	NetworkDetails OpenMetadataNetworkDetails `json:"NetworkDetails"`
-	TagDetails     map[string]interface{}     `json:"TagDetails,omitempty"`
+	TagDetails     map[string]interface{}     `json:"TagDetails"`
 }
