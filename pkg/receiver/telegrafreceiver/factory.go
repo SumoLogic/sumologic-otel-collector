@@ -22,7 +22,6 @@ import (
 	telegrafagent "github.com/influxdata/telegraf/agent"
 	telegrafconfig "github.com/influxdata/telegraf/config"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/receiver"
 )
@@ -46,10 +45,8 @@ func createDefaultConfig() component.Config {
 	// TypeVal: config.Type(typeStr),
 	// NameVal: typeStr,
 	//
-	rs := config.NewReceiverSettings(component.NewID(typeStr))
 	return &Config{
-		ReceiverSettings: &rs,
-		SeparateField:    false,
+		SeparateField: false,
 		// we mostly expect to get recoverable errors from the memory_limiter, which is unlikely to have
 		// a check interval less than 1s, so retrying much more frequently is pointless
 		ConsumeRetryDelay: 500 * time.Millisecond,

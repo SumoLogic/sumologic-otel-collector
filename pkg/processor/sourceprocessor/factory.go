@@ -18,8 +18,8 @@ import (
 	"context"
 
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer"
+	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/collector/processor/processorhelper"
 )
 
@@ -46,21 +46,19 @@ const (
 var processorCapabilities = consumer.Capabilities{MutatesData: true}
 
 // NewFactory returns a new factory for the Span processor.
-func NewFactory() component.ProcessorFactory {
-	return component.NewProcessorFactory(
+func NewFactory() processor.Factory {
+	return processor.NewFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithTracesProcessor(createTracesProcessor, stabilityLevel),
-		component.WithMetricsProcessor(createMetricsProcessor, stabilityLevel),
-		component.WithLogsProcessor(createLogsProcessor, stabilityLevel),
+		processor.WithTraces(createTracesProcessor, stabilityLevel),
+		processor.WithMetrics(createMetricsProcessor, stabilityLevel),
+		processor.WithLogs(createLogsProcessor, stabilityLevel),
 	)
 }
 
 // createDefaultConfig creates the default configuration for processor.
 func createDefaultConfig() component.Config {
-	ps := config.NewProcessorSettings(component.NewID(typeStr))
 	return &Config{
-		ProcessorSettings:         &ps,
 		Collector:                 defaultCollector,
 		SourceHost:                defaultSourceHost,
 		SourceName:                defaultSourceName,
@@ -85,9 +83,9 @@ func createDefaultConfig() component.Config {
 // CreateTraceProcessor creates a trace processor based on this config.
 func createTracesProcessor(
 	ctx context.Context,
-	params component.ProcessorCreateSettings,
+	params processor.CreateSettings,
 	cfg component.Config,
-	next consumer.Traces) (component.TracesProcessor, error) {
+	next consumer.Traces) (processor.Traces, error) {
 
 	oCfg := cfg.(*Config)
 
@@ -106,10 +104,10 @@ func createTracesProcessor(
 // createMetricsProcessor creates a metrics processor based on this config
 func createMetricsProcessor(
 	ctx context.Context,
-	params component.ProcessorCreateSettings,
+	params processor.CreateSettings,
 	cfg component.Config,
 	next consumer.Metrics,
-) (component.MetricsProcessor, error) {
+) (processor.Metrics, error) {
 	oCfg := cfg.(*Config)
 
 	sp := newSourceProcessor(oCfg)
@@ -126,10 +124,10 @@ func createMetricsProcessor(
 // createLogsProcessor creates a logs processor based on this config
 func createLogsProcessor(
 	ctx context.Context,
-	params component.ProcessorCreateSettings,
+	params processor.CreateSettings,
 	cfg component.Config,
 	next consumer.Logs,
-) (component.LogsProcessor, error) {
+) (processor.Logs, error) {
 	oCfg := cfg.(*Config)
 
 	sp := newSourceProcessor(oCfg)

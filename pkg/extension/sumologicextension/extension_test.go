@@ -34,7 +34,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
-	"go.opentelemetry.io/collector/config"
 	"go.uber.org/zap"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/api"
@@ -134,7 +133,6 @@ func TestBasicStart(t *testing.T) {
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = "collector_name"
-	cfg.ExtensionSettings = config.ExtensionSettings{}
 	cfg.ApiBaseUrl = srv.URL
 	cfg.Credentials.InstallToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
@@ -188,7 +186,6 @@ func TestStoreCredentials(t *testing.T) {
 	getConfig := func(url string) *Config {
 		cfg := createDefaultConfig().(*Config)
 		cfg.CollectorName = "collector_name"
-		cfg.ExtensionSettings = config.ExtensionSettings{}
 		cfg.ApiBaseUrl = url
 		cfg.Credentials.InstallToken = "dummy_install_token"
 		return cfg
@@ -333,7 +330,6 @@ func TestStoreCredentials_PreexistingCredentialsAreUsed(t *testing.T) {
 	getConfig := func(url string) *Config {
 		cfg := createDefaultConfig().(*Config)
 		cfg.CollectorName = "collector_name"
-		cfg.ExtensionSettings = config.ExtensionSettings{}
 		cfg.ApiBaseUrl = url
 		cfg.Credentials.InstallToken = "dummy_install_token"
 		return cfg
@@ -435,7 +431,6 @@ func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T
 	getConfig := func(url string) *Config {
 		cfg := createDefaultConfig().(*Config)
 		cfg.CollectorName = "collector_name"
-		cfg.ExtensionSettings = config.ExtensionSettings{}
 		cfg.ApiBaseUrl = url
 		cfg.Credentials.InstallToken = "dummy_install_token"
 		return cfg
@@ -546,7 +541,6 @@ func TestRegisterEmptyCollectorName(t *testing.T) {
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = ""
-	cfg.ExtensionSettings = config.ExtensionSettings{}
 	cfg.ApiBaseUrl = srv.URL
 	cfg.Credentials.InstallToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
@@ -626,7 +620,6 @@ func TestRegisterEmptyCollectorNameForceRegistration(t *testing.T) {
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = ""
-	cfg.ExtensionSettings = config.ExtensionSettings{}
 	cfg.ApiBaseUrl = srv.URL
 	cfg.Credentials.InstallToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
@@ -923,7 +916,6 @@ func TestRegisterEmptyCollectorNameWithBackoff(t *testing.T) {
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = ""
-	cfg.ExtensionSettings = config.ExtensionSettings{}
 	cfg.ApiBaseUrl = srv.URL
 	cfg.Credentials.InstallToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
@@ -976,7 +968,6 @@ func TestRegisterEmptyCollectorNameUnrecoverableError(t *testing.T) {
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = ""
-	cfg.ExtensionSettings = config.ExtensionSettings{}
 	cfg.ApiBaseUrl = srv.URL
 	cfg.Credentials.InstallToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
@@ -1061,7 +1052,6 @@ func TestRegistrationRedirect(t *testing.T) {
 	configFn := func() *Config {
 		cfg := createDefaultConfig().(*Config)
 		cfg.CollectorName = ""
-		cfg.ExtensionSettings = config.ExtensionSettings{}
 		cfg.ApiBaseUrl = origSrv.URL
 		cfg.Credentials.InstallToken = "dummy_install_token"
 		cfg.CollectorCredentialsDirectory = dir
@@ -1245,7 +1235,6 @@ func TestRegistrationRequestPayload(t *testing.T) {
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = ""
-	cfg.ExtensionSettings = config.ExtensionSettings{}
 	cfg.ApiBaseUrl = srv.URL
 	cfg.Credentials.InstallToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir

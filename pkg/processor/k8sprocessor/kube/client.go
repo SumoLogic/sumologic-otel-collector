@@ -131,12 +131,15 @@ func (c *WatchClient) Start() {
 		c.op.Start()
 	}
 
-	c.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err := c.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    c.handlePodAdd,
 		UpdateFunc: c.handlePodUpdate,
 		DeleteFunc: c.handlePodDelete,
 	})
-	err := c.informer.SetTransform(
+	if err != nil {
+		c.logger.Error("error adding event handler to pod informer", zap.Error(err))
+	}
+	err = c.informer.SetTransform(
 		func(object interface{}) (interface{}, error) {
 			originalPod, success := object.(*api_v1.Pod)
 			if !success {

@@ -18,8 +18,8 @@ import (
 	"context"
 
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer"
+	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/collector/processor/processorhelper"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
@@ -36,20 +36,19 @@ var kubeClientProvider = kube.ClientProvider(nil)
 var processorCapabilities = consumer.Capabilities{MutatesData: true}
 
 // NewFactory returns a new factory for the k8s processor.
-func NewFactory() component.ProcessorFactory {
-	return component.NewProcessorFactory(
+func NewFactory() processor.Factory {
+	return processor.NewFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithTracesProcessor(createTracesProcessor, stabilityLevel),
-		component.WithMetricsProcessor(createMetricsProcessor, stabilityLevel),
-		component.WithLogsProcessor(createLogsProcessor, stabilityLevel),
+		processor.WithTraces(createTracesProcessor, stabilityLevel),
+		processor.WithMetrics(createMetricsProcessor, stabilityLevel),
+		processor.WithLogs(createLogsProcessor, stabilityLevel),
 	)
 }
 
 func createDefaultConfig() component.Config {
 	return &Config{
-		ProcessorSettings: config.NewProcessorSettings(component.NewID(typeStr)),
-		APIConfig:         k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
+		APIConfig: k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
 		Extract: ExtractConfig{
 			Delimiter: DefaultDelimiter,
 		},
@@ -58,38 +57,38 @@ func createDefaultConfig() component.Config {
 
 func createTracesProcessor(
 	ctx context.Context,
-	params component.ProcessorCreateSettings,
+	params processor.CreateSettings,
 	cfg component.Config,
 	next consumer.Traces,
-) (component.TracesProcessor, error) {
+) (processor.Traces, error) {
 	return createTracesProcessorWithOptions(ctx, params, cfg, next)
 }
 
 func createLogsProcessor(
 	ctx context.Context,
-	params component.ProcessorCreateSettings,
+	params processor.CreateSettings,
 	cfg component.Config,
 	nextLogsConsumer consumer.Logs,
-) (component.LogsProcessor, error) {
+) (processor.Logs, error) {
 	return createLogsProcessorWithOptions(ctx, params, cfg, nextLogsConsumer)
 }
 
 func createMetricsProcessor(
 	ctx context.Context,
-	params component.ProcessorCreateSettings,
+	params processor.CreateSettings,
 	cfg component.Config,
 	nextMetricsConsumer consumer.Metrics,
-) (component.MetricsProcessor, error) {
+) (processor.Metrics, error) {
 	return createMetricsProcessorWithOptions(ctx, params, cfg, nextMetricsConsumer)
 }
 
 func createTracesProcessorWithOptions(
 	ctx context.Context,
-	params component.ProcessorCreateSettings,
+	params processor.CreateSettings,
 	cfg component.Config,
 	next consumer.Traces,
 	options ...Option,
-) (component.TracesProcessor, error) {
+) (processor.Traces, error) {
 	kp, err := createKubernetesProcessor(params, cfg, options...)
 	if err != nil {
 		return nil, err
@@ -108,11 +107,11 @@ func createTracesProcessorWithOptions(
 
 func createMetricsProcessorWithOptions(
 	ctx context.Context,
-	params component.ProcessorCreateSettings,
+	params processor.CreateSettings,
 	cfg component.Config,
 	nextMetricsConsumer consumer.Metrics,
 	options ...Option,
-) (component.MetricsProcessor, error) {
+) (processor.Metrics, error) {
 	kp, err := createKubernetesProcessor(params, cfg, options...)
 	if err != nil {
 		return nil, err
@@ -131,11 +130,11 @@ func createMetricsProcessorWithOptions(
 
 func createLogsProcessorWithOptions(
 	ctx context.Context,
-	params component.ProcessorCreateSettings,
+	params processor.CreateSettings,
 	cfg component.Config,
 	nextLogsConsumer consumer.Logs,
 	options ...Option,
-) (component.LogsProcessor, error) {
+) (processor.Logs, error) {
 	kp, err := createKubernetesProcessor(params, cfg, options...)
 	if err != nil {
 		return nil, err
@@ -153,7 +152,7 @@ func createLogsProcessorWithOptions(
 }
 
 func createKubernetesProcessor(
-	params component.ProcessorCreateSettings,
+	params processor.CreateSettings,
 	cfg component.Config,
 	options ...Option,
 ) (*kubernetesprocessor, error) {

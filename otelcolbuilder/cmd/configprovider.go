@@ -29,14 +29,13 @@ import (
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
 	"go.opentelemetry.io/collector/featuregate"
 	"go.opentelemetry.io/collector/otelcol"
-	"go.opentelemetry.io/collector/service"
 )
 
 // This file contains modifications to the collector settings which inject a custom config provider
 // Otherwise, it tries to be as close to the upstream defaults as defined here:
 // https://github.com/open-telemetry/opentelemetry-collector/blob/65dfc325d974be8ebb7c170b90c6646f9eaef27b/service/command.go#L38
 
-func UseCustomConfigProvider(params *service.CollectorSettings) error {
+func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
 	// feature flags, which are enabled by default in our distro
 	err := featuregate.GetRegistry().Apply(map[string]bool{
 		"receiver.apache.emitServerNameAsResourceAttribute":            true,
@@ -82,14 +81,14 @@ func UseCustomConfigProvider(params *service.CollectorSettings) error {
 
 func NewConfigProvider(locations []string) (otelcol.ConfigProvider, error) {
 	settings := NewConfigProviderSettings(locations)
-	return service.NewConfigProvider(settings)
+	return otelcol.NewConfigProvider(settings)
 }
 
 // see https://github.com/open-telemetry/opentelemetry-collector/blob/72011ca22dff6614d518768b3bb53a1193c6ad02/service/command.go#L38
 // for the logic we're emulating here
 // we only add the glob provider, everything else should be the same
-func NewConfigProviderSettings(locations []string) service.ConfigProviderSettings {
-	return service.ConfigProviderSettings{
+func NewConfigProviderSettings(locations []string) otelcol.ConfigProviderSettings {
+	return otelcol.ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
 			URIs:       locations,
 			Providers:  makeMapProvidersMap(fileprovider.New(), envprovider.New(), yamlprovider.New(), globprovider.New()),
