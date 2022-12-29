@@ -96,12 +96,16 @@ func (o *opampAgent) Start(_ context.Context, host component.Host) error {
 			OnErrorFunc: func(err *protobufs.ServerErrorResponse) {
 				o.logger.Error("OpAMP server returned an error response", zap.String("message", err.ErrorMessage))
 			},
+			SaveRemoteConfigStatusFunc: func(_ context.Context, status *protobufs.RemoteConfigStatus) {
+				o.remoteConfigStatus = status
+			},
 			GetEffectiveConfigFunc: func(ctx context.Context) (*protobufs.EffectiveConfig, error) {
 				o.logger.Info("OpAMP server requested the effective configuration")
 				return o.composeEffectiveConfig(), nil
 			},
 			OnMessageFunc: o.onMessage,
 		},
+		RemoteConfigStatus: o.remoteConfigStatus,
 		Capabilities: protobufs.AgentCapabilities_AgentCapabilities_AcceptsRemoteConfig |
 			protobufs.AgentCapabilities_AgentCapabilities_ReportsRemoteConfig |
 			protobufs.AgentCapabilities_AgentCapabilities_ReportsEffectiveConfig,
@@ -335,16 +339,24 @@ func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
 		var err error
 		configChanged, err = o.applyRemoteConfig(msg.RemoteConfig)
 		if err != nil {
-			o.opampClient.SetRemoteConfigStatus(&protobufs.RemoteConfigStatus{
+			err = o.opampClient.SetRemoteConfigStatus(&protobufs.RemoteConfigStatus{
 				LastRemoteConfigHash: msg.RemoteConfig.ConfigHash,
 				Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED,
 				ErrorMessage:         err.Error(),
 			})
+
+			if err != nil {
+				o.logger.Error("Failed to set OpAMP agent remote config status", zap.Error(err))
+			}
 		} else {
-			o.opampClient.SetRemoteConfigStatus(&protobufs.RemoteConfigStatus{
+			err = o.opampClient.SetRemoteConfigStatus(&protobufs.RemoteConfigStatus{
 				LastRemoteConfigHash: msg.RemoteConfig.ConfigHash,
 				Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED,
 			})
+
+			if err != nil {
+				o.logger.Error("Failed to set OpAMP agent remote config status", zap.Error(err))
+			}
 		}
 	}
 
