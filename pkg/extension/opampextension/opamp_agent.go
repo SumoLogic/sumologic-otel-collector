@@ -144,6 +144,10 @@ func (o *opampAgent) createAuthHeader() (http.Header, error) {
 
 	settings := o.cfg.HTTPClientSettings
 
+	if settings.Auth == nil {
+		return nil, nil
+	}
+
 	for _, e := range o.host.GetExtensions() {
 		v, ok := e.(*sumologicextension.SumologicExtension)
 		if ok && settings.Auth.AuthenticatorID == v.ComponentID() {

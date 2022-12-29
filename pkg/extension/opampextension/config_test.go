@@ -23,6 +23,8 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
+	"go.opentelemetry.io/collector/config/configauth"
+	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/confmaptest"
 )
@@ -43,8 +45,14 @@ func TestUnmarshalConfig(t *testing.T) {
 	assert.Equal(t,
 		&Config{
 			ExtensionSettings: config.NewExtensionSettings(component.NewID(typeStr)),
-			Endpoint:          "wss://127.0.0.1:4320/v1/opamp",
-			InstanceUID:       "01BX5ZZKBKACTAV9WEVGEMMVRZ",
+			HTTPClientSettings: confighttp.HTTPClientSettings{
+				Endpoint:    "wss://127.0.0.1:4320/v1/opamp",
+				Auth: &configauth.Authentication{
+					AuthenticatorID: component.NewID("sumologic"),
+				},
+			},
+			Endpoint:    "wss://127.0.0.1:4320/v1/opamp",
+			InstanceUID: "01BX5ZZKBKACTAV9WEVGEMMVRZ",
 		}, cfg)
 }
 

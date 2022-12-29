@@ -72,9 +72,10 @@ func TestComposeEffectiveConfig(t *testing.T) {
 }
 
 func TestShutdown(t *testing.T) {
-	cfg := createDefaultConfig()
+	cfg := createDefaultConfig().(*Config)
+	cfg.HTTPClientSettings.Auth = nil
 	set := componenttest.NewNopExtensionCreateSettings()
-	o, err := newOpampAgent(cfg.(*Config), set.Logger)
+	o, err := newOpampAgent(cfg, set.Logger)
 	assert.NoError(t, err)
 
 	// Shutdown with no OpAMP client
@@ -82,9 +83,10 @@ func TestShutdown(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
-	cfg := createDefaultConfig()
+	cfg := createDefaultConfig().(*Config)
+	cfg.HTTPClientSettings.Auth = nil
 	set := componenttest.NewNopExtensionCreateSettings()
-	o, err := newOpampAgent(cfg.(*Config), set.Logger)
+	o, err := newOpampAgent(cfg, set.Logger)
 	assert.NoError(t, err)
 
 	assert.NoError(t, o.Start(context.TODO(), componenttest.NewNopHost()))
