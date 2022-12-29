@@ -20,7 +20,11 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"sort"
 
+	"github.com/knadh/koanf"
+	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/oklog/ulid/v2"
 	"go.opentelemetry.io/collector/component"
 	"go.uber.org/zap"
@@ -84,7 +88,7 @@ func (o *opampAgent) Start(_ context.Context, host component.Host) error {
 		InstanceUid:    o.instanceId.String(),
 		Callbacks: types.CallbacksStruct{
 			OnConnectFunc: func() {
-				o.logger.Debug("Connected to the OpAMP server")
+				o.logger.Info("Connected to the OpAMP server")
 			},
 			OnConnectFailedFunc: func(err error) {
 				o.logger.Error("Failed to connect to the OpAMP server", zap.Error(err))
@@ -93,11 +97,14 @@ func (o *opampAgent) Start(_ context.Context, host component.Host) error {
 				o.logger.Error("OpAMP server returned an error response", zap.String("message", err.ErrorMessage))
 			},
 			GetEffectiveConfigFunc: func(ctx context.Context) (*protobufs.EffectiveConfig, error) {
+				o.logger.Info("OpAMP server requested the effective configuration")
 				return o.composeEffectiveConfig(), nil
 			},
 			OnMessageFunc: o.onMessage,
 		},
-		Capabilities: protobufs.AgentCapabilities_AgentCapabilities_ReportsEffectiveConfig,
+		Capabilities: protobufs.AgentCapabilities_AgentCapabilities_AcceptsRemoteConfig |
+			protobufs.AgentCapabilities_AgentCapabilities_ReportsRemoteConfig |
+			protobufs.AgentCapabilities_AgentCapabilities_ReportsEffectiveConfig,
 	}
 
 	if err := o.createAgentDescription(); err != nil {
@@ -233,12 +240,122 @@ func (o *opampAgent) composeEffectiveConfig() *protobufs.EffectiveConfig {
 	}
 }
 
+type agentConfigFileItem struct {
+	name string
+	file *protobufs.AgentConfigFile
+}
+
+type agentConfigFileSlice []agentConfigFileItem
+
+func (a agentConfigFileSlice) Less(i, j int) bool {
+	return a[i].name < a[j].name
+}
+
+func (a agentConfigFileSlice) Swap(i, j int) {
+	t := a[i]
+	a[i] = a[j]
+	a[j] = t
+}
+
+func (a agentConfigFileSlice) Len() int {
+	return len(a)
+}
+
+func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (configChanged bool, err error) {
+	o.logger.Debug("Received remote config from OpAMP server", zap.ByteString("hash", config.ConfigHash))
+
+	// Begin with local config. We will later merge received configs on top of it.
+	var k = koanf.New(".")
+	if err := k.Load(rawbytes.Provider([]byte(localConfig)), yaml.Parser()); err != nil {
+		return false, err
+	}
+
+	orderedConfigs := agentConfigFileSlice{}
+	for name, file := range config.Config.ConfigMap {
+		if name == "" {
+			// skip instance config
+			continue
+		}
+		orderedConfigs = append(orderedConfigs, agentConfigFileItem{
+			name: name,
+			file: file,
+		})
+	}
+
+	// Sort to make sure the order of merging is stable.
+	sort.Sort(orderedConfigs)
+
+	// Append instance config as the last item.
+	instanceConfig := config.Config.ConfigMap[""]
+	if instanceConfig != nil {
+		orderedConfigs = append(orderedConfigs, agentConfigFileItem{
+			name: "",
+			file: instanceConfig,
+		})
+	}
+
+	// Merge received configs.
+	for _, item := range orderedConfigs {
+		var k2 = koanf.New(".")
+		err := k2.Load(rawbytes.Provider(item.file.Body), yaml.Parser())
+		if err != nil {
+			return false, fmt.Errorf("cannot parse config named %s: %v", item.name, err)
+		}
+		err = k.Merge(k2)
+		if err != nil {
+			return false, fmt.Errorf("cannot merge config named %s: %v", item.name, err)
+		}
+	}
+
+	// The merged final result is our effective config.
+	effectiveConfigBytes, err := k.Marshal(yaml.Parser())
+	if err != nil {
+		return false, fmt.Errorf("cannot marshal the OpAMP effective config: %v", err)
+	}
+
+	newEffectiveConfig := string(effectiveConfigBytes)
+	configChanged = false
+	if o.effectiveConfig != newEffectiveConfig {
+		o.logger.Debug("OpAMP effective config change. Need to report to OpAMP server", zap.ByteString("hash", config.ConfigHash))
+		o.effectiveConfig = newEffectiveConfig
+		configChanged = true
+	}
+
+	return configChanged, nil
+}
+
 func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
+	configChanged := false
+
+	if msg.RemoteConfig != nil {
+		var err error
+		configChanged, err = o.applyRemoteConfig(msg.RemoteConfig)
+		if err != nil {
+			o.opampClient.SetRemoteConfigStatus(&protobufs.RemoteConfigStatus{
+				LastRemoteConfigHash: msg.RemoteConfig.ConfigHash,
+				Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED,
+				ErrorMessage:         err.Error(),
+			})
+		} else {
+			o.opampClient.SetRemoteConfigStatus(&protobufs.RemoteConfigStatus{
+				LastRemoteConfigHash: msg.RemoteConfig.ConfigHash,
+				Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED,
+			})
+		}
+	}
+
 	if msg.AgentIdentification != nil {
 		instanceId, err := ulid.Parse(msg.AgentIdentification.NewInstanceUid)
 		if err != nil {
-			o.logger.Error("Failed to parse a new agent identity", zap.Error(err))
+			o.logger.Error("Failed to parse a new OpAMP agent identity", zap.Error(err))
 		}
 		o.updateAgentIdentity(instanceId)
+	}
+
+	if configChanged {
+		err := o.opampClient.UpdateEffectiveConfig(ctx)
+		if err != nil {
+			o.logger.Error("Failed to update OpAMP agent effective configuration", zap.Error(err))
+		}
 	}
 }
