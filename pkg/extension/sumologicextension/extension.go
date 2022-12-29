@@ -68,7 +68,7 @@ type SumologicExtension struct {
 
 const (
 	heartbeatUrl = "/api/v1/collector/heartbeat"
-	metadataUrl  = "/api/v1/otCollector/metadata"
+	metadataUrl  = "/api/v1/otCollectors/metadata"
 	registerUrl  = "/api/v1/collector/register"
 
 	collectorIdField           = "collector_id"
@@ -671,6 +671,10 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 				res.StatusCode, err,
 			)
 		}
+
+		se.logger.Warn("Metadata API error response",
+			zap.Int("status", res.StatusCode),
+			zap.String("body", buff.String()))
 
 		return fmt.Errorf("collector metadata request failed: %w",
 			ErrorAPI{
