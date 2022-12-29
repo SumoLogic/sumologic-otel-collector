@@ -1214,4 +1214,4 @@ systemctl start otelcol-sumo
 
 echo 'Waiting 10s before checking status'
 sleep 10
-systemctl status otelcol-sumo
+systemctl status otelcol-sumo --no-pager

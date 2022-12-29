@@ -19,6 +19,7 @@ import (
 
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/confighttp"
+	"go.opentelemetry.io/collector/config/configopaque"
 )
 
 // Config has the configuration for the sumologic extension.
@@ -92,7 +93,7 @@ type Config struct {
 }
 
 type accessCredentials struct {
-	InstallToken string `mapstructure:"install_token"`
+	InstallToken configopaque.String `mapstructure:"install_token"`
 }
 
 // backOff configuration. See following link for details:
