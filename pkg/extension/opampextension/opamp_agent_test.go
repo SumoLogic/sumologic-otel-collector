@@ -41,7 +41,7 @@ func TestCreateAgentDescription(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Nil(t, o.agentDescription)
-	o.createAgentDescription()
+	assert.NoError(t, o.createAgentDescription())
 	assert.NotNil(t, o.agentDescription)
 }
 
