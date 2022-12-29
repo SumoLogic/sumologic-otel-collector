@@ -32,7 +32,8 @@ func NewFactory() component.ExtensionFactory {
 
 func createDefaultConfig() component.ExtensionConfig {
 	return &Config{
-		ExtensionSettings: config.NewExtensionSettings(component.NewID(typeStr)),
+		ExtensionSettings:  config.NewExtensionSettings(component.NewID(typeStr)),
+		HTTPClientSettings: CreateDefaultHTTPClientSettings(),
 	}
 }
 

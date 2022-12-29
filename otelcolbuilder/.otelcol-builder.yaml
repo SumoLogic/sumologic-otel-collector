@@ -155,6 +155,8 @@ extensions:
   # Processors with non-upstreamed changes:
   - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.0.0-00010101000000-000000000000"
     path: ./../pkg/extension/sumologicextension
+  - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/extension/opampextension v0.0.0-00010101000000-000000000000"
+    path: ./../pkg/extension/opampextension
 
   # Since include-code was removed we need to manually add all core components that we want to include:
   # https://github.com/open-telemetry/opentelemetry-collector/pull/4616
@@ -212,4 +214,5 @@ replaces:
   # version which gets then translated into a replace in go.mod file.
   # This does not replace the version that sumologicexporter depends on.
   - github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension => ../../pkg/extension/sumologicextension
+  - github.com/SumoLogic/sumologic-otel-collector/pkg/extension/opampextension => ../../pkg/configprovider/opampextension
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider => ../../pkg/configprovider/globprovider

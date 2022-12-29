@@ -16,6 +16,8 @@ package opampextension
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"os"
 	"runtime"
 
@@ -26,6 +28,8 @@ import (
 	"github.com/open-telemetry/opamp-go/client"
 	"github.com/open-telemetry/opamp-go/client/types"
 	"github.com/open-telemetry/opamp-go/protobufs"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension"
 )
 
 // TODO: Replace with https://github.com/open-telemetry/opentelemetry-collector/issues/6596
@@ -48,6 +52,7 @@ service:
 
 type opampAgent struct {
 	cfg    *Config
+	host   component.Host
 	logger *zap.Logger
 
 	agentType    string
@@ -64,10 +69,17 @@ type opampAgent struct {
 	remoteConfigStatus *protobufs.RemoteConfigStatus
 }
 
-func (o *opampAgent) Start(_ context.Context, _ component.Host) error {
+func (o *opampAgent) Start(_ context.Context, host component.Host) error {
+	o.host = host
 	o.opampClient = client.NewWebSocket(&Logger{Logger: o.logger.Sugar()})
 
+	auth, err := o.createAuthHeader()
+	if err != nil {
+		return err
+	}
+
 	settings := types.StartSettings{
+		Header:         auth,
 		OpAMPServerURL: o.cfg.Endpoint,
 		InstanceUid:    o.instanceId.String(),
 		Callbacks: types.CallbacksStruct{
@@ -115,6 +127,35 @@ func (o *opampAgent) Shutdown(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+func (o *opampAgent) createAuthHeader() (http.Header, error) {
+	var (
+		ext          *sumologicextension.SumologicExtension
+		foundSumoExt bool
+	)
+
+	settings := o.cfg.HTTPClientSettings
+
+	for _, e := range o.host.GetExtensions() {
+		v, ok := e.(*sumologicextension.SumologicExtension)
+		if ok && settings.Auth.AuthenticatorID == v.ComponentID() {
+			ext = v
+			foundSumoExt = true
+			break
+		}
+	}
+
+	if !foundSumoExt {
+		return nil, fmt.Errorf(
+			"sumologic was specified as auth extension (named: %q) but "+
+				"a matching extension was not found in the config, "+
+				"please re-check the config and/or define the sumologicextension",
+			settings.Auth.AuthenticatorID.String(),
+		)
+	}
+
+	return ext.CreateCredentialsHeader(), nil
 }
 
 func newOpampAgent(cfg *Config, logger *zap.Logger) (*opampAgent, error) {

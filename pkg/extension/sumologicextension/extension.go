@@ -612,6 +612,17 @@ func (se *SumologicExtension) SetBaseUrl(baseUrl string) {
 	se.baseUrlLock.Unlock()
 }
 
+func (se *SumologicExtension) CreateCredentialsHeader() http.Header {
+	token := base64.StdEncoding.EncodeToString(
+		[]byte(se.registrationInfo.CollectorCredentialId + ":" + se.registrationInfo.CollectorCredentialKey),
+	)
+
+	header := http.Header{}
+	header.Set("Authorization", "Basic "+token)
+
+	return header
+}
+
 // Implement [1] in order for this extension to be used as custom exporter
 // authenticator.
 //

@@ -18,12 +18,16 @@ import (
 	"errors"
 
 	"github.com/oklog/ulid/v2"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
+	"go.opentelemetry.io/collector/config/configauth"
+	"go.opentelemetry.io/collector/config/confighttp"
 )
 
 // Config has the configuration for the opamp extension.
 type Config struct {
-	config.ExtensionSettings `mapstructure:",squash"` // squash ensures fields are correctly decoded in embedded struct
+	config.ExtensionSettings      `mapstructure:",squash"` // squash ensures fields are correctly decoded in embedded struct
+	confighttp.HTTPClientSettings `mapstructure:",squash"`
 
 	// Endpoint is the OpAMP server URL. Transport based on the scheme of the URL.
 	Endpoint string `mapstructure:"endpoint"`
@@ -31,6 +35,15 @@ type Config struct {
 	// InstanceUID is a ULID formatted as a 26 character string in canonical
 	// representation. Auto-generated on start if missing.
 	InstanceUID string `mapstructure:"instance_uid"`
+}
+
+// CreateDefaultHTTPClientSettings returns default http client settings
+func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
+	return confighttp.HTTPClientSettings{
+		Auth: &configauth.Authentication{
+			AuthenticatorID: component.NewID("sumologic"),
+		},
+	}
 }
 
 // Validate checks if the extension configuration is valid
