@@ -253,7 +253,7 @@ func (op *OwnerCache) deleteNamespace(obj interface{}) {
 func (op *OwnerCache) addNamespaceInformer(factory informers.SharedInformerFactory) {
 	op.logger.Debug("adding informer for Namespace", zap.String("api_version", "v1"))
 	informer := factory.Core().V1().Namespaces().Informer()
-	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			observability.RecordOtherAdded()
 			op.upsertNamespace(obj)
@@ -267,6 +267,9 @@ func (op *OwnerCache) addNamespaceInformer(factory informers.SharedInformerFacto
 			op.deleteNamespace(obj)
 		},
 	})
+	if err != nil {
+		op.logger.Error("error adding event handler to namespace informer", zap.Error(err))
+	}
 
 	op.informers = append(op.informers, informer)
 }
@@ -276,7 +279,7 @@ func (op *OwnerCache) addOwnerInformer(
 	informer cache.SharedIndexInformer,
 	cacheFunc func(kind string, obj interface{}),
 	deleteFunc func(obj interface{})) {
-	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			cacheFunc(kind, obj)
 			observability.RecordOtherAdded()
@@ -290,6 +293,9 @@ func (op *OwnerCache) addOwnerInformer(
 			observability.RecordOtherDeleted()
 		},
 	})
+	if err != nil {
+		op.logger.Error("error adding event handler to namespace informer", zap.Error(err))
+	}
 
 	op.informers = append(op.informers, informer)
 }

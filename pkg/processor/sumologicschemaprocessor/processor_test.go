@@ -25,6 +25,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/ptrace"
+	"go.opentelemetry.io/collector/processor"
 	"go.uber.org/zap"
 )
 
@@ -1236,8 +1237,8 @@ func TestAggregateAttributesForTraces(t *testing.T) {
 	}
 }
 
-func newProcessorCreateSettings() component.ProcessorCreateSettings {
-	return component.ProcessorCreateSettings{
+func newProcessorCreateSettings() processor.CreateSettings {
+	return processor.CreateSettings{
 		TelemetrySettings: component.TelemetrySettings{
 			Logger: zap.NewNop(),
 		},

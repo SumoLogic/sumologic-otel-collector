@@ -14,14 +14,8 @@
 
 package sumologicsyslogprocessor
 
-import (
-	"go.opentelemetry.io/collector/config"
-)
-
 // Config holds the configuration for tail-based sampling.
 type Config struct {
-	config.ProcessorSettings `mapstructure:"-"`
-
 	// FacilityAttr is the name of the attribute the facility name should be placed into.
 	FacilityAttr string `mapstructure:"facility_attr"`
 }

@@ -22,15 +22,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/component/componenttest"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 
 	cfconfig "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
 )
 
 func TestLoadConfig(t *testing.T) {
-	factories, err := componenttest.NopFactories()
+	factories, err := otelcoltest.NopFactories()
 	assert.NoError(t, err)
 
 	factory := NewFactory()
@@ -49,13 +47,11 @@ func TestLoadConfig(t *testing.T) {
 	healthCheckNamePatternValue := "health.*"
 
 	id1 := component.NewIDWithName("cascading_filter", "1")
-	ps1 := config.NewProcessorSettings(id1)
 	assert.Equal(t, cfg.Processors[id1],
 		&cfconfig.Config{
 			DecisionWait:               30 * time.Second,
 			SpansPerSecond:             0,
 			NumTraces:                  100000,
-			ProcessorSettings:          &ps1,
 			ProbabilisticFilteringRate: &probFilteringRate,
 			TraceRejectCfgs: []cfconfig.TraceRejectCfg{
 				{
@@ -103,10 +99,8 @@ func TestLoadConfig(t *testing.T) {
 	id2 := component.NewIDWithName("cascading_filter", "2")
 	priorSpansRate2 := int32(600)
 	priorHistorySize2 := uint64(100)
-	ps2 := config.NewProcessorSettings(id2)
 	assert.Equal(t, cfg.Processors[id2],
 		&cfconfig.Config{
-			ProcessorSettings:           &ps2,
 			DecisionWait:                10 * time.Second,
 			NumTraces:                   100,
 			ExpectedNewTracesPerSec:     10,

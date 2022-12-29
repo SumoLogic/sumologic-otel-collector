@@ -2,14 +2,10 @@ package metricfrequencyprocessor
 
 import (
 	"time"
-
-	"go.opentelemetry.io/collector/config"
 )
 
 // Config defines configuration for metricfrequencyprocessor.
 type Config struct {
-	*config.ProcessorSettings `mapstructure:"-"`
-
 	sieveConfig `mapstructure:",squash"`
 	cacheConfig `mapstructure:",squash"`
 }
