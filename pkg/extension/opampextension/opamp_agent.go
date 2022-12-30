@@ -170,6 +170,9 @@ func (o *opampAgent) createAuthHeader() (http.Header, error) {
 		)
 	}
 
+	// Wait for the sumologic extension to successfully authenticate.
+	ext.WaitForCredentials()
+
 	return ext.CreateCredentialsHeader(), nil
 }
 

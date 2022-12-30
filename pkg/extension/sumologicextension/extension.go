@@ -49,6 +49,9 @@ type SumologicExtension struct {
 	baseUrlLock sync.RWMutex
 	baseUrl     string
 
+	credsNotifyLock sync.Mutex
+	credsNotifyCond sync.Cond
+
 	host             component.Host
 	conf             *Config
 	origLogger       *zap.Logger
@@ -126,9 +129,13 @@ func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID) (*
 	backOff.MaxElapsedTime = conf.BackOff.MaxElapsedTime
 	backOff.MaxInterval = conf.BackOff.MaxInterval
 
+	credsNotifyLock := new(sync.Mutex)
+
 	return &SumologicExtension{
 		collectorName:    collectorName,
 		baseUrl:          strings.TrimSuffix(conf.ApiBaseUrl, "/"),
+		credsNotifyLock:   *credsNotifyLock,
+		credsNotifyCond:   *sync.NewCond(credsNotifyLock),
 		conf:             conf,
 		origLogger:       logger,
 		logger:           logger,
@@ -203,6 +210,9 @@ func (se *SumologicExtension) validateCredentials(
 //   - into http client and its transport so that each request is using collector
 //     credentials as authentication keys
 func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCredentials) error {
+	se.credsNotifyLock.Lock()
+	defer se.credsNotifyLock.Unlock()
+
 	// Set the registration info so that it can be used in RoundTripper.
 	se.registrationInfo = colCreds.Credentials
 
@@ -212,6 +222,8 @@ func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCr
 	}
 
 	se.httpClient = httpClient
+
+	se.credsNotifyCond.Broadcast()
 
 	return nil
 }
@@ -610,6 +622,17 @@ func (se *SumologicExtension) SetBaseUrl(baseUrl string) {
 	se.baseUrlLock.Lock()
 	se.baseUrl = baseUrl
 	se.baseUrlLock.Unlock()
+}
+
+func (se *SumologicExtension) WaitForCredentials() {
+	se.credsNotifyLock.Lock()
+	defer se.credsNotifyLock.Unlock()
+
+	for se.registrationInfo.CollectorCredentialId == "" || se.registrationInfo.CollectorCredentialKey == "" {
+		se.credsNotifyCond.Wait()
+	}
+
+	return
 }
 
 func (se *SumologicExtension) CreateCredentialsHeader() http.Header {
