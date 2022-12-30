@@ -50,7 +50,7 @@ type SumologicExtension struct {
 	baseUrl     string
 
 	credsNotifyLock sync.Mutex
-	credsNotifyCond sync.Cond
+	credsNotifyDone chan struct{}
 
 	host             component.Host
 	conf             *Config
@@ -129,13 +129,10 @@ func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID) (*
 	backOff.MaxElapsedTime = conf.BackOff.MaxElapsedTime
 	backOff.MaxInterval = conf.BackOff.MaxInterval
 
-	credsNotifyLock := new(sync.Mutex)
-
 	return &SumologicExtension{
 		collectorName:    collectorName,
 		baseUrl:          strings.TrimSuffix(conf.ApiBaseUrl, "/"),
-		credsNotifyLock:  *credsNotifyLock,
-		credsNotifyCond:  *sync.NewCond(credsNotifyLock),
+		credsNotifyDone:  make(chan struct{}),
 		conf:             conf,
 		origLogger:       logger,
 		logger:           logger,
@@ -223,7 +220,8 @@ func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCr
 
 	se.httpClient = httpClient
 
-	se.credsNotifyCond.Broadcast()
+	close(se.credsNotifyDone)
+	se.credsNotifyDone = make(chan struct{})
 
 	return nil
 }
@@ -624,12 +622,17 @@ func (se *SumologicExtension) SetBaseUrl(baseUrl string) {
 	se.baseUrlLock.Unlock()
 }
 
-func (se *SumologicExtension) WaitForCredentials() {
+func (se *SumologicExtension) WaitForCredentials(ctx context.Context) {
 	se.credsNotifyLock.Lock()
 	defer se.credsNotifyLock.Unlock()
 
 	for se.registrationInfo.CollectorCredentialId == "" || se.registrationInfo.CollectorCredentialKey == "" {
-		se.credsNotifyCond.Wait()
+		select {
+		case <-ctx.Done():
+			return
+		case <-se.credsNotifyDone:
+			return
+		}
 	}
 }
 

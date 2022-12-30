@@ -57,7 +57,7 @@ type opampAgent struct {
 	remoteConfigStatus *protobufs.RemoteConfigStatus
 }
 
-func (o *opampAgent) Start(_ context.Context, host component.Host) error {
+func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 	o.host = host
 	o.opampClient = client.NewWebSocket(&Logger{Logger: o.logger.Sugar()})
 
@@ -70,7 +70,7 @@ func (o *opampAgent) Start(_ context.Context, host component.Host) error {
 		}
 	}
 
-	auth, err := o.createAuthHeader()
+	auth, err := o.createAuthHeader(ctx)
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (o *opampAgent) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (o *opampAgent) createAuthHeader() (http.Header, error) {
+func (o *opampAgent) createAuthHeader(ctx context.Context) (http.Header, error) {
 	var (
 		ext          *sumologicextension.SumologicExtension
 		foundSumoExt bool
@@ -164,7 +164,7 @@ func (o *opampAgent) createAuthHeader() (http.Header, error) {
 	}
 
 	// Wait for the sumologic extension to successfully authenticate.
-	ext.WaitForCredentials()
+	ext.WaitForCredentials(ctx)
 
 	return ext.CreateCredentialsHeader(), nil
 }
