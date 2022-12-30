@@ -134,8 +134,8 @@ func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID) (*
 	return &SumologicExtension{
 		collectorName:    collectorName,
 		baseUrl:          strings.TrimSuffix(conf.ApiBaseUrl, "/"),
-		credsNotifyLock:   *credsNotifyLock,
-		credsNotifyCond:   *sync.NewCond(credsNotifyLock),
+		credsNotifyLock:  *credsNotifyLock,
+		credsNotifyCond:  *sync.NewCond(credsNotifyLock),
 		conf:             conf,
 		origLogger:       logger,
 		logger:           logger,
@@ -631,8 +631,6 @@ func (se *SumologicExtension) WaitForCredentials() {
 	for se.registrationInfo.CollectorCredentialId == "" || se.registrationInfo.CollectorCredentialKey == "" {
 		se.credsNotifyCond.Wait()
 	}
-
-	return
 }
 
 func (se *SumologicExtension) CreateCredentialsHeader() http.Header {
