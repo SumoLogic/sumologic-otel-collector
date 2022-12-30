@@ -63,7 +63,11 @@ func (o *opampAgent) Start(_ context.Context, host component.Host) error {
 
 	path := filepath.Join(o.cfg.RemoteConfigurationDirectory, "opamp-remote-config.yaml")
 	if _, err := os.Stat(path); err == nil {
-		o.loadEffectiveConfig(path)
+		err := o.loadEffectiveConfig(path)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	auth, err := o.createAuthHeader()
@@ -357,7 +361,11 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 		o.effectiveConfig = newEffectiveConfig
 		configChanged = true
 		path := filepath.Join(o.cfg.RemoteConfigurationDirectory, "opamp-remote-config.yaml")
-		o.saveEffectiveConfig(path)
+		err := o.saveEffectiveConfig(path)
+
+		if err != nil {
+			o.logger.Error("Failed to save the OpAMP effective config to disk", zap.Error(err))
+		}
 	}
 
 	return configChanged, nil
