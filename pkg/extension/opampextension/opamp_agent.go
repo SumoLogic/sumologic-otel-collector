@@ -357,15 +357,14 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 	newEffectiveConfig := string(effectiveConfigBytes)
 	configChanged = false
 	if o.effectiveConfig != newEffectiveConfig {
-		o.logger.Debug("OpAMP effective config change. Need to report to OpAMP server", zap.ByteString("hash", config.ConfigHash))
-		o.effectiveConfig = newEffectiveConfig
-		configChanged = true
 		path := filepath.Join(o.cfg.RemoteConfigurationDirectory, "opamp-remote-config.yaml")
 		err := o.saveEffectiveConfig(path)
-
 		if err != nil {
-			o.logger.Error("Failed to save the OpAMP effective config to disk", zap.Error(err))
+			return false, fmt.Errorf("cannot save the OpAMP effective config to %s: %v", path, err)
 		}
+
+		o.effectiveConfig = newEffectiveConfig
+		configChanged = true
 	}
 
 	return configChanged, nil
