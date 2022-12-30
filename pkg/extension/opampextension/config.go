@@ -36,8 +36,8 @@ type Config struct {
 	// representation. Auto-generated on start if missing.
 	InstanceUID string `mapstructure:"instance_uid"`
 
-	// RemoteConfigurationDirectory is where receiverd OpAMP remote configuration
-	// is persisted.
+	// RemoteConfigurationDirectory is where received OpAMP remote configuration
+	// is stored.
 	RemoteConfigurationDirectory string `mapstructure:"remote_configuration_directory"`
 }
 

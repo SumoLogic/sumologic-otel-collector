@@ -265,7 +265,13 @@ func (o *opampAgent) saveEffectiveConfig(path string) error {
 }
 
 func (o *opampAgent) reloadCollectorConfig() error {
-	return syscall.Kill(syscall.Getpid(), syscall.SIGHUP)
+	p, err := os.FindProcess(os.Getpid())
+
+	if err != nil {
+		return err
+	}
+
+	return p.Signal(syscall.SIGHUP)
 }
 
 func (o *opampAgent) updateAgentIdentity(instanceId ulid.ULID) {
