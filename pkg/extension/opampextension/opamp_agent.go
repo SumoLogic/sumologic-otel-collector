@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"syscall"
 
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -259,6 +260,10 @@ func (o *opampAgent) saveEffectiveConfig(path string) error {
 	return nil
 }
 
+func (o *opampAgent) reloadCollectorConfig() error {
+	return syscall.Kill(syscall.Getpid(), syscall.SIGHUP)
+}
+
 func (o *opampAgent) updateAgentIdentity(instanceId ulid.ULID) {
 	o.logger.Debug("OpAMP agent identity is being changed",
 		zap.String("old_id", o.instanceId.String()),
@@ -399,5 +404,7 @@ func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
 		if err != nil {
 			o.logger.Error("Failed to update OpAMP agent effective configuration", zap.Error(err))
 		}
+
+		o.reloadCollectorConfig()
 	}
 }
