@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"sort"
 
@@ -35,24 +36,6 @@ import (
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension"
 )
-
-// TODO: Replace with https://github.com/open-telemetry/opentelemetry-collector/issues/6596
-const localConfig = `
-exporters:
-  otlp:
-    endpoint: localhost:1111
-receivers:
-  otlp:
-    protocols:
-      grpc: {}
-      http: {}
-service:
-  pipelines:
-    traces:
-      receivers: [otlp]
-      processors: []
-      exporters: [otlp]
-`
 
 type opampAgent struct {
 	cfg    *Config
@@ -76,6 +59,11 @@ type opampAgent struct {
 func (o *opampAgent) Start(_ context.Context, host component.Host) error {
 	o.host = host
 	o.opampClient = client.NewWebSocket(&Logger{Logger: o.logger.Sugar()})
+
+	path := filepath.Join(o.cfg.RemoteConfigurationDirectory, "opamp-remote-config.yaml")
+	if _, err := os.Stat(path); err == nil {
+		o.loadEffectiveConfig(path)
+	}
 
 	auth, err := o.createAuthHeader()
 	if err != nil {
@@ -188,12 +176,11 @@ func newOpampAgent(cfg *Config, logger *zap.Logger) (*opampAgent, error) {
 	}
 
 	agent := &opampAgent{
-		cfg:             cfg,
-		logger:          logger,
-		agentType:       "io.opentelemetry.collector",
-		agentVersion:    "1.0.0", // TODO: Replace with actual collector version info.
-		instanceId:      uid,
-		effectiveConfig: localConfig, // TODO: Replace with https://github.com/open-telemetry/opentelemetry-collector/issues/6596
+		cfg:          cfg,
+		logger:       logger,
+		agentType:    "io.opentelemetry.collector",
+		agentVersion: "1.0.0", // TODO: Replace with actual collector version info.
+		instanceId:   uid,
 	}
 
 	return agent, nil
@@ -229,6 +216,44 @@ func (o *opampAgent) createAgentDescription() error {
 	o.agentDescription = &protobufs.AgentDescription{
 		IdentifyingAttributes:    ident,
 		NonIdentifyingAttributes: nonIdent,
+	}
+
+	return nil
+}
+
+func (o *opampAgent) loadEffectiveConfig(path string) error {
+	var k = koanf.New(".")
+
+	rb, err := os.ReadFile(path)
+
+	if err != nil {
+		return err
+	}
+
+	if err := k.Load(rawbytes.Provider(rb), yaml.Parser()); err != nil {
+		return err
+	}
+
+	ecb, err := k.Marshal(yaml.Parser())
+	if err != nil {
+		return err
+	}
+
+	o.effectiveConfig = string(ecb)
+
+	return nil
+}
+
+func (o *opampAgent) saveEffectiveConfig(path string) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = f.Write([]byte(o.effectiveConfig))
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -275,11 +300,7 @@ func (a agentConfigFileSlice) Len() int {
 func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (configChanged bool, err error) {
 	o.logger.Debug("Received remote config from OpAMP server", zap.ByteString("hash", config.ConfigHash))
 
-	// Begin with local config. We will later merge received configs on top of it.
 	var k = koanf.New(".")
-	if err := k.Load(rawbytes.Provider([]byte(localConfig)), yaml.Parser()); err != nil {
-		return false, err
-	}
 
 	orderedConfigs := agentConfigFileSlice{}
 	for name, file := range config.Config.ConfigMap {
@@ -330,6 +351,8 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 		o.logger.Debug("OpAMP effective config change. Need to report to OpAMP server", zap.ByteString("hash", config.ConfigHash))
 		o.effectiveConfig = newEffectiveConfig
 		configChanged = true
+		path := filepath.Join(o.cfg.RemoteConfigurationDirectory, "opamp-remote-config.yaml")
+		o.saveEffectiveConfig(path)
 	}
 
 	return configChanged, nil

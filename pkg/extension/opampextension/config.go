@@ -35,6 +35,10 @@ type Config struct {
 	// InstanceUID is a ULID formatted as a 26 character string in canonical
 	// representation. Auto-generated on start if missing.
 	InstanceUID string `mapstructure:"instance_uid"`
+
+	// RemoteConfigurationDirectory is where receiverd OpAMP remote configuration
+	// is persisted.
+	RemoteConfigurationDirectory string `mapstructure:"remote_configuration_directory"`
 }
 
 // CreateDefaultHTTPClientSettings returns default http client settings
@@ -48,9 +52,16 @@ func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 
 // Validate checks if the extension configuration is valid
 func (cfg *Config) Validate() error {
-	_, err := ulid.ParseStrict(cfg.InstanceUID)
-	if err != nil {
-		return errors.New("opamp instance_uid is invalid")
+	if cfg.InstanceUID != "" {
+		_, err := ulid.ParseStrict(cfg.InstanceUID)
+		if err != nil {
+			return errors.New("opamp instance_uid is invalid")
+		}
 	}
+
+	if cfg.RemoteConfigurationDirectory == "" {
+		return errors.New("opamp remote_configuration_directory must be provided")
+	}
+
 	return nil
 }

@@ -51,14 +51,19 @@ func TestUnmarshalConfig(t *testing.T) {
 					AuthenticatorID: component.NewID("sumologic"),
 				},
 			},
-			Endpoint:    "wss://127.0.0.1:4320/v1/opamp",
-			InstanceUID: "01BX5ZZKBKACTAV9WEVGEMMVRZ",
+			Endpoint:                     "wss://127.0.0.1:4320/v1/opamp",
+			InstanceUID:                  "01BX5ZZKBKACTAV9WEVGEMMVRZ",
+			RemoteConfigurationDirectory: "/tmp/",
 		}, cfg)
 }
 
 func TestConfigValidate(t *testing.T) {
-	cfg := &Config{InstanceUID: "01BX5ZZKBKACTAV9WEVGEMMVRZFAIL"}
+	cfg := &Config{}
 	err := cfg.Validate()
+	require.Error(t, err)
+	assert.Equal(t, "opamp remote_configuration_directory must be provided", err.Error())
+	cfg.InstanceUID = "01BX5ZZKBKACTAV9WEVGEMMVRZFAIL"
+	err = cfg.Validate()
 	require.Error(t, err)
 	assert.Equal(t, "opamp instance_uid is invalid", err.Error())
 }

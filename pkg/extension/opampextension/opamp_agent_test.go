@@ -16,6 +16,8 @@ package opampextension
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/oklog/ulid/v2"
@@ -30,7 +32,7 @@ func TestNewOpampAgent(t *testing.T) {
 	o, err := newOpampAgent(cfg.(*Config), set.Logger)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, o.instanceId.String())
-	assert.NotEmpty(t, o.effectiveConfig)
+	assert.Empty(t, o.effectiveConfig)
 	assert.Nil(t, o.agentDescription)
 }
 
@@ -43,6 +45,32 @@ func TestCreateAgentDescription(t *testing.T) {
 	assert.Nil(t, o.agentDescription)
 	assert.NoError(t, o.createAgentDescription())
 	assert.NotNil(t, o.agentDescription)
+}
+
+func TestLoadEffectiveConfig(t *testing.T) {
+	cfg := createDefaultConfig()
+	set := extensiontest.NewNopCreateSettings()
+	o, err := newOpampAgent(cfg.(*Config), set.Logger)
+	assert.NoError(t, err)
+
+	assert.Empty(t, o.effectiveConfig)
+
+	path := filepath.Join("testdata", "opamp-remote-config.yaml")
+	assert.NoError(t, o.loadEffectiveConfig(path))
+	assert.NotEmpty(t, o.effectiveConfig)
+}
+
+func TestSaveEffectiveConfig(t *testing.T) {
+	cfg := createDefaultConfig()
+	set := extensiontest.NewNopCreateSettings()
+	o, err := newOpampAgent(cfg.(*Config), set.Logger)
+	assert.NoError(t, err)
+
+	f, err := os.CreateTemp("", "opamp-remote-config.yaml")
+	assert.NoError(t, err)
+	defer os.Remove(f.Name())
+
+	assert.NoError(t, o.saveEffectiveConfig(f.Name()))
 }
 
 func TestUpdateAgentIdentity(t *testing.T) {
@@ -66,7 +94,6 @@ func TestComposeEffectiveConfig(t *testing.T) {
 	set := extensiontest.NewNopCreateSettings()
 	o, err := newOpampAgent(cfg.(*Config), set.Logger)
 	assert.NoError(t, err)
-	assert.NotEmpty(t, o.effectiveConfig)
 
 	ec := o.composeEffectiveConfig()
 	assert.NotNil(t, ec)
