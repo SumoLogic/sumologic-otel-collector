@@ -412,6 +412,9 @@ func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
 			o.logger.Error("Failed to update OpAMP agent effective configuration", zap.Error(err))
 		}
 
-		o.reloadCollectorConfig()
+		err = o.reloadCollectorConfig()
+		if err != nil {
+			o.logger.Error("Failed to reload collector configuration via SIGHUP", zap.Error(err))
+		}
 	}
 }
