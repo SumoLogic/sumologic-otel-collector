@@ -49,8 +49,8 @@ type SumologicExtension struct {
 	baseUrlLock sync.RWMutex
 	baseUrl     string
 
-	credsNotifyLock sync.Mutex
-	credsNotifyDone chan struct{}
+	credsNotifyLock   sync.Mutex
+	credsNotifyUpdate chan struct{}
 
 	host             component.Host
 	conf             *Config
@@ -130,17 +130,17 @@ func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID) (*
 	backOff.MaxInterval = conf.BackOff.MaxInterval
 
 	return &SumologicExtension{
-		collectorName:    collectorName,
-		baseUrl:          strings.TrimSuffix(conf.ApiBaseUrl, "/"),
-		credsNotifyDone:  make(chan struct{}),
-		conf:             conf,
-		origLogger:       logger,
-		logger:           logger,
-		hashKey:          hashKey,
-		credentialsStore: credentialsStore,
-		closeChan:        make(chan struct{}),
-		backOff:          backOff,
-		id:               id,
+		collectorName:     collectorName,
+		baseUrl:           strings.TrimSuffix(conf.ApiBaseUrl, "/"),
+		credsNotifyUpdate: make(chan struct{}),
+		conf:              conf,
+		origLogger:        logger,
+		logger:            logger,
+		hashKey:           hashKey,
+		credentialsStore:  credentialsStore,
+		closeChan:         make(chan struct{}),
+		backOff:           backOff,
+		id:                id,
 	}, nil
 }
 
@@ -220,8 +220,8 @@ func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCr
 
 	se.httpClient = httpClient
 
-	close(se.credsNotifyDone)
-	se.credsNotifyDone = make(chan struct{})
+	close(se.credsNotifyUpdate)
+	se.credsNotifyUpdate = make(chan struct{})
 
 	return nil
 }
@@ -622,29 +622,38 @@ func (se *SumologicExtension) SetBaseUrl(baseUrl string) {
 	se.baseUrlLock.Unlock()
 }
 
-func (se *SumologicExtension) WaitForCredentials(ctx context.Context) {
+func (se *SumologicExtension) WaitForCredentials(ctx context.Context, old string) {
 	se.credsNotifyLock.Lock()
-	defer se.credsNotifyLock.Unlock()
+	v, ch := se.registrationInfo.CollectorCredentialKey, se.credsNotifyUpdate
+	se.credsNotifyLock.Unlock()
 
-	for se.registrationInfo.CollectorCredentialId == "" || se.registrationInfo.CollectorCredentialKey == "" {
+	for v == old {
 		select {
 		case <-ctx.Done():
 			return
-		case <-se.credsNotifyDone:
-			return
+		case <-ch:
+			se.credsNotifyLock.Lock()
+			v, ch = se.registrationInfo.CollectorCredentialKey, se.credsNotifyUpdate
+			se.credsNotifyLock.Unlock()
 		}
 	}
 }
 
-func (se *SumologicExtension) CreateCredentialsHeader() http.Header {
+func (se *SumologicExtension) CreateCredentialsHeader() (http.Header, error) {
+	id, key := se.registrationInfo.CollectorCredentialId, se.registrationInfo.CollectorCredentialKey
+
+	if id == "" || key == "" {
+		return nil, errors.New("collector credentials are not set")
+	}
+
 	token := base64.StdEncoding.EncodeToString(
-		[]byte(se.registrationInfo.CollectorCredentialId + ":" + se.registrationInfo.CollectorCredentialKey),
+		[]byte(id + ":" + key),
 	)
 
 	header := http.Header{}
 	header.Set("Authorization", "Basic "+token)
 
-	return header
+	return header, nil
 }
 
 // Implement [1] in order for this extension to be used as custom exporter
