@@ -85,21 +85,22 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 		return err
 	}
 
-	if o.authExtension != nil {
-		if err := o.createAuthHeader(); err != nil {
-			go func() {
-				// Wait for the authentication extension to start and produce credentials.
-				o.authExtension.WaitForCredentials(ctx, "")
-				if err := o.createAuthHeader(); err != nil {
-					return
-				}
-				o.startClient(ctx)
-			}()
-			return nil
-		}
+	if err := o.createAuthHeader(); err == nil {
+		return o.startClient(ctx)
 	}
 
-	return o.startClient(ctx)
+	go func() {
+		// Wait for the authentication extension to start and produce credentials.
+		o.authExtension.WaitForCredentials(ctx, "")
+		if err := o.createAuthHeader(); err != nil {
+			return
+		}
+		if err := o.startClient(ctx); err != nil {
+			return
+		}
+	}()
+
+	return nil
 }
 
 func (o *opampAgent) Shutdown(ctx context.Context) error {
@@ -123,10 +124,6 @@ func (o *opampAgent) Reload(ctx context.Context) error {
 }
 
 func (o *opampAgent) startClient(ctx context.Context) error {
-	if err := o.createAuthHeader(); err != nil {
-		return err
-	}
-
 	settings := types.StartSettings{
 		Header:         o.authHeader,
 		OpAMPServerURL: o.cfg.Endpoint,
@@ -199,12 +196,12 @@ func (o *opampAgent) createAuthHeader() error {
 		return nil
 	}
 
-	header, err := o.authExtension.CreateCredentialsHeader()
+	h, err := o.authExtension.CreateCredentialsHeader()
 	if err != nil {
 		return err
 	}
 
-	o.authHeader = header
+	o.authHeader = h
 
 	return nil
 }
