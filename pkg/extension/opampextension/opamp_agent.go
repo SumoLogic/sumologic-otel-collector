@@ -43,6 +43,9 @@ type opampAgent struct {
 	host   component.Host
 	logger *zap.Logger
 
+	authExtension *sumologicextension.SumologicExtension
+	authHeader    http.Header
+
 	agentType    string
 	agentVersion string
 
@@ -70,13 +73,62 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 		}
 	}
 
-	auth, err := o.createAuthHeader(ctx)
+	if err := o.createAgentDescription(); err != nil {
+		return err
+	}
+
+	if err := o.opampClient.SetAgentDescription(o.agentDescription); err != nil {
+		return err
+	}
+
+	if err := o.getAuthExtension(); err != nil {
+		return err
+	}
+
+	if o.authExtension != nil {
+		if err := o.createAuthHeader(); err != nil {
+			go func() {
+				// Wait for the authentication extension to start and produce credentials.
+				o.authExtension.WaitForCredentials(ctx, "")
+				if err := o.createAuthHeader(); err != nil {
+					return
+				}
+				o.startClient(ctx)
+			}()
+			return nil
+		}
+	}
+
+	return o.startClient(ctx)
+}
+
+func (o *opampAgent) Shutdown(ctx context.Context) error {
+	o.logger.Debug("OpAMP agent shutting down...")
+	if o.opampClient != nil {
+		o.logger.Debug("Stopping OpAMP client...")
+		err := o.opampClient.Stop(ctx)
+		return err
+	}
+	return nil
+}
+
+func (o *opampAgent) Reload(ctx context.Context) error {
+	err := o.Shutdown(ctx)
+
 	if err != nil {
 		return err
 	}
 
+	return o.Start(ctx, o.host)
+}
+
+func (o *opampAgent) startClient(ctx context.Context) error {
+	if err := o.createAuthHeader(); err != nil {
+		return err
+	}
+
 	settings := types.StartSettings{
-		Header:         auth,
+		Header:         o.authHeader,
 		OpAMPServerURL: o.cfg.Endpoint,
 		InstanceUid:    o.instanceId.String(),
 		Callbacks: types.CallbacksStruct{
@@ -104,17 +156,9 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 			protobufs.AgentCapabilities_AgentCapabilities_ReportsEffectiveConfig,
 	}
 
-	if err := o.createAgentDescription(); err != nil {
-		return err
-	}
-
-	if err := o.opampClient.SetAgentDescription(o.agentDescription); err != nil {
-		return err
-	}
-
 	o.logger.Debug("Starting OpAMP client...")
 
-	if err := o.opampClient.Start(context.Background(), settings); err != nil {
+	if err := o.opampClient.Start(ctx, settings); err != nil {
 		return err
 	}
 
@@ -123,39 +167,23 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 	return nil
 }
 
-func (o *opampAgent) Shutdown(ctx context.Context) error {
-	o.logger.Debug("OpAMP agent shutting down...")
-	if o.opampClient != nil {
-		o.logger.Debug("Stopping OpAMP client...")
-		err := o.opampClient.Stop(ctx)
-		return err
-	}
-	return nil
-}
-
-func (o *opampAgent) createAuthHeader(ctx context.Context) (http.Header, error) {
-	var (
-		ext          *sumologicextension.SumologicExtension
-		foundSumoExt bool
-	)
-
+func (o *opampAgent) getAuthExtension() error {
 	settings := o.cfg.HTTPClientSettings
 
 	if settings.Auth == nil {
-		return nil, nil
+		return nil
 	}
 
 	for _, e := range o.host.GetExtensions() {
 		v, ok := e.(*sumologicextension.SumologicExtension)
 		if ok && settings.Auth.AuthenticatorID == v.ComponentID() {
-			ext = v
-			foundSumoExt = true
+			o.authExtension = v
 			break
 		}
 	}
 
-	if !foundSumoExt {
-		return nil, fmt.Errorf(
+	if o.authExtension == nil {
+		return fmt.Errorf(
 			"sumologic was specified as auth extension (named: %q) but "+
 				"a matching extension was not found in the config, "+
 				"please re-check the config and/or define the sumologicextension",
@@ -163,10 +191,22 @@ func (o *opampAgent) createAuthHeader(ctx context.Context) (http.Header, error) 
 		)
 	}
 
-	// Wait for the sumologic extension to successfully authenticate.
-	ext.WaitForCredentials(ctx, "")
+	return nil
+}
 
-	return ext.CreateCredentialsHeader()
+func (o *opampAgent) createAuthHeader() error {
+	if o.authExtension == nil {
+		return nil
+	}
+
+	header, err := o.authExtension.CreateCredentialsHeader()
+	if err != nil {
+		return err
+	}
+
+	o.authHeader = header
+
+	return nil
 }
 
 func newOpampAgent(cfg *Config, logger *zap.Logger) (*opampAgent, error) {
