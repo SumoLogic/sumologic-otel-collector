@@ -422,13 +422,16 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 	configChanged = false
 	if o.effectiveConfig != newEffectiveConfig {
 		path := filepath.Join(o.cfg.RemoteConfigurationDirectory, "opamp-remote-config.yaml")
+		oldEffectiveConfig := o.effectiveConfig
 		o.effectiveConfig = newEffectiveConfig
-		configChanged = true
 
 		err := o.saveEffectiveConfig(path)
 		if err != nil {
+			o.effectiveConfig = oldEffectiveConfig
 			return false, fmt.Errorf("cannot save the OpAMP effective config to %s: %v", path, err)
 		}
+
+		configChanged = true
 	}
 
 	return configChanged, nil
