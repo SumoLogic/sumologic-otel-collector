@@ -622,7 +622,7 @@ func (se *SumologicExtension) SetBaseUrl(baseUrl string) {
 	se.baseUrlLock.Unlock()
 }
 
-func (se *SumologicExtension) WaitForCredentials(ctx context.Context, old string) {
+func (se *SumologicExtension) WatchCredentialKey(ctx context.Context, old string) string {
 	se.credsNotifyLock.Lock()
 	v, ch := se.registrationInfo.CollectorCredentialKey, se.credsNotifyUpdate
 	se.credsNotifyLock.Unlock()
@@ -630,13 +630,15 @@ func (se *SumologicExtension) WaitForCredentials(ctx context.Context, old string
 	for v == old {
 		select {
 		case <-ctx.Done():
-			return
+			return v
 		case <-ch:
 			se.credsNotifyLock.Lock()
 			v, ch = se.registrationInfo.CollectorCredentialKey, se.credsNotifyUpdate
 			se.credsNotifyLock.Unlock()
 		}
 	}
+
+	return v
 }
 
 func (se *SumologicExtension) CreateCredentialsHeader() (http.Header, error) {

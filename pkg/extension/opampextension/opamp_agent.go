@@ -91,7 +91,7 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 
 	go func() {
 		// Wait for the authentication extension to start and produce credentials.
-		o.authExtension.WaitForCredentials(ctx, "")
+		o.authExtension.WatchCredentialKey(ctx, "")
 		if err := o.createAuthHeader(); err != nil {
 			return
 		}
@@ -161,6 +161,10 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 
 	o.logger.Debug("OpAMP client started")
 
+	if err := o.watchCredentials(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -202,6 +206,21 @@ func (o *opampAgent) createAuthHeader() error {
 	}
 
 	o.authHeader = h
+
+	return nil
+}
+
+func (o *opampAgent) watchCredentials(ctx context.Context) error {
+	if o.authExtension == nil {
+		return nil
+	}
+
+	k := o.authExtension.WatchCredentialKey(ctx, "")
+
+	go func() {
+		o.authExtension.WatchCredentialKey(ctx, k)
+		o.Reload(ctx)
+	}()
 
 	return nil
 }
@@ -401,13 +420,13 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 	configChanged = false
 	if o.effectiveConfig != newEffectiveConfig {
 		path := filepath.Join(o.cfg.RemoteConfigurationDirectory, "opamp-remote-config.yaml")
+		o.effectiveConfig = newEffectiveConfig
+		configChanged = true
+
 		err := o.saveEffectiveConfig(path)
 		if err != nil {
 			return false, fmt.Errorf("cannot save the OpAMP effective config to %s: %v", path, err)
 		}
-
-		o.effectiveConfig = newEffectiveConfig
-		configChanged = true
 	}
 
 	return configChanged, nil
