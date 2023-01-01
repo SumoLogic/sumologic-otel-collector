@@ -219,7 +219,9 @@ func (o *opampAgent) watchCredentials(ctx context.Context) error {
 
 	go func() {
 		o.authExtension.WatchCredentialKey(ctx, k)
-		o.Reload(ctx)
+		if err := o.Reload(ctx); err != nil {
+			return
+		}
 	}()
 
 	return nil
