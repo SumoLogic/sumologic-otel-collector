@@ -220,6 +220,7 @@ func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCr
 
 	se.httpClient = httpClient
 
+	// Let components know that the credentials may have changed.
 	close(se.credsNotifyUpdate)
 	se.credsNotifyUpdate = make(chan struct{})
 

@@ -1283,6 +1283,9 @@ func TestWatchCredentialKey(t *testing.T) {
 	v := se.WatchCredentialKey(ctxc, "")
 	require.Equal(t, v, "")
 
+	v = se.WatchCredentialKey(ctxc, "foobar")
+	require.Equal(t, v, "")
+
 	go func() {
 		time.Sleep(time.Millisecond * 100)
 		se.registrationInfo.CollectorCredentialKey = "test-credential-key"
