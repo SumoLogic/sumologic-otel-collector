@@ -62,6 +62,9 @@ func TestConfigValidate(t *testing.T) {
 	err := cfg.Validate()
 	require.Error(t, err)
 	assert.Equal(t, "opamp remote_configuration_directory must be provided", err.Error())
+	cfg.RemoteConfigurationDirectory = "/tmp/"
+	err = cfg.Validate()
+	require.NoError(t, err)
 	cfg.InstanceUID = "01BX5ZZKBKACTAV9WEVGEMMVRZFAIL"
 	err = cfg.Validate()
 	require.Error(t, err)

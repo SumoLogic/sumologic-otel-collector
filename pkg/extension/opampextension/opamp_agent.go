@@ -166,7 +166,7 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 	o.logger.Debug("OpAMP client started")
 
 	if o.authExtension != nil {
-		if err := o.watchCredentials(ctx); err != nil {
+		if err := o.watchCredentials(ctx, o.Reload); err != nil {
 			return err
 		}
 	}
@@ -212,14 +212,12 @@ func (o *opampAgent) createAuthHeader() error {
 	return nil
 }
 
-func (o *opampAgent) watchCredentials(ctx context.Context) error {
+func (o *opampAgent) watchCredentials(ctx context.Context, callback func(ctx context.Context) error) error {
 	k := o.authExtension.WatchCredentialKey(ctx, "")
 
-	go func() {
+	go func() error {
 		o.authExtension.WatchCredentialKey(ctx, k)
-		if err := o.Reload(ctx); err != nil {
-			return
-		}
+		return callback(ctx)
 	}()
 
 	return nil

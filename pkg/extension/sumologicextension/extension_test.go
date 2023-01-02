@@ -1283,7 +1283,7 @@ func TestWatchCredentialKey(t *testing.T) {
 	v := se.WatchCredentialKey(ctxc, "")
 	require.Equal(t, v, "")
 
-	v = se.WatchCredentialKey(ctxc, "foobar")
+	v = se.WatchCredentialKey(context.Background(), "foobar")
 	require.Equal(t, v, "")
 
 	go func() {
