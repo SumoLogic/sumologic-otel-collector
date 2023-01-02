@@ -97,9 +97,11 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 		// Wait for the authentication extension to start and produce credentials.
 		o.authExtension.WatchCredentialKey(ctx, "")
 		if err := o.createAuthHeader(); err != nil {
+			o.logger.Error("Failed to start OpAMP agent", zap.Error(err))
 			return
 		}
 		if err := o.startClient(ctx); err != nil {
+			o.logger.Error("Failed to start OpAMP agent", zap.Error(err))
 			return
 		}
 	}()
