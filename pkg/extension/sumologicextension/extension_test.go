@@ -1270,3 +1270,47 @@ func TestRegistrationRequestPayload(t *testing.T) {
 
 	require.NoError(t, se.Shutdown(context.Background()))
 }
+
+func TestWatchCredentialKey(t *testing.T) {
+	cfg := createDefaultConfig().(*Config)
+	cfg.Credentials.InstallToken = "dummy_install_token"
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	ctxc, cancel := context.WithCancel(ctx)
+	cancel()
+	v := se.WatchCredentialKey(ctxc, "")
+	require.Equal(t, v, "")
+
+	go func() {
+		time.Sleep(time.Millisecond * 100)
+		se.registrationInfo.CollectorCredentialKey = "test-credential-key"
+		close(se.credsNotifyUpdate)
+	}()
+
+	v = se.WatchCredentialKey(context.Background(), "")
+	require.Equal(t, v, "test-credential-key")
+}
+
+func TestCreateCredentialsHeader(t *testing.T) {
+	cfg := createDefaultConfig().(*Config)
+	cfg.Credentials.InstallToken = "dummy_install_token"
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	require.NoError(t, err)
+
+	_, err = se.CreateCredentialsHeader()
+	require.Error(t, err)
+
+	se.registrationInfo.CollectorCredentialId = "test-credential-id"
+	se.registrationInfo.CollectorCredentialKey = "test-credential-key"
+
+	h, err := se.CreateCredentialsHeader()
+	require.NoError(t, err)
+
+	authHeader := h.Get("Authorization")
+	token := base64.StdEncoding.EncodeToString(
+		[]byte("test-credential-id:test-credential-key"),
+	)
+	assert.Equal(t, "Basic "+token, authHeader)
+}

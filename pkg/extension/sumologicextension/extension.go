@@ -622,6 +622,10 @@ func (se *SumologicExtension) SetBaseUrl(baseUrl string) {
 	se.baseUrlLock.Unlock()
 }
 
+// WatchCredentialKey watches for credential key updates. It makes use of a
+// channel close (done by injectCredentials) and string comparison with a
+// known/previous credential key (old). This function allows components to be
+// proactive when dealing with changes to authentication.
 func (se *SumologicExtension) WatchCredentialKey(ctx context.Context, old string) string {
 	se.credsNotifyLock.Lock()
 	v, ch := se.registrationInfo.CollectorCredentialKey, se.credsNotifyUpdate
@@ -641,6 +645,9 @@ func (se *SumologicExtension) WatchCredentialKey(ctx context.Context, old string
 	return v
 }
 
+// CreateCredentialsHeader produces an HTTP header containing authentication
+// credentials. This function is for components that do not make use of the
+// RoundTripper or have an HTTP request to build upon.
 func (se *SumologicExtension) CreateCredentialsHeader() (http.Header, error) {
 	id, key := se.registrationInfo.CollectorCredentialId, se.registrationInfo.CollectorCredentialKey
 
