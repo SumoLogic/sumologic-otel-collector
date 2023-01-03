@@ -25,7 +25,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/extension"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/credentials"
@@ -37,7 +36,6 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 	require.NoError(t, err)
 	defaultCredsPath := path.Join(homePath, credentials.DefaultCollectorCredentialsDirectory)
 	assert.Equal(t, &Config{
-		ExtensionSettings:             config.NewExtensionSettings(component.NewID(typeStr)),
 		HeartBeatInterval:             DefaultHeartbeatInterval,
 		ApiBaseUrl:                    DefaultApiBaseUrl,
 		CollectorCredentialsDirectory: defaultCredsPath,

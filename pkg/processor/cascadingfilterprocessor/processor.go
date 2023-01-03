@@ -29,6 +29,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/ptrace"
+	"go.opentelemetry.io/collector/processor"
 	"go.uber.org/zap"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
@@ -106,7 +107,7 @@ const (
 
 // newTraceProcessor returns a processor.TraceProcessor that will perform Cascading Filter according to the given
 // configuration.
-func newTraceProcessor(logger *zap.Logger, nextConsumer consumer.Traces, cfg config.Config, id component.ID) (component.TracesProcessor, error) {
+func newTraceProcessor(logger *zap.Logger, nextConsumer consumer.Traces, cfg config.Config, id component.ID) (processor.Traces, error) {
 	if nextConsumer == nil {
 		return nil, component.ErrNilNextConsumer
 	}

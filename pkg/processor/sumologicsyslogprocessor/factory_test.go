@@ -22,6 +22,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/consumer/consumertest"
+	"go.opentelemetry.io/collector/processor"
 )
 
 func TestCreateDefaultConfig(t *testing.T) {
@@ -37,7 +38,7 @@ func TestLogProcessor(t *testing.T) {
 	// Manually set required fields
 	cfg.FacilityAttr = "testAttrName"
 
-	params := component.ProcessorCreateSettings{
+	params := processor.CreateSettings{
 		TelemetrySettings: componenttest.NewNopTelemetrySettings(),
 	}
 	lp, err := factory.CreateLogsProcessor(context.Background(), params, cfg, consumertest.NewNop())

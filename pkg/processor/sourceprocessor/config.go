@@ -14,14 +14,8 @@
 
 package sourceprocessor
 
-import (
-	"go.opentelemetry.io/collector/config"
-)
-
 // Config defines configuration for Source processor.
 type Config struct {
-	*config.ProcessorSettings `mapstructure:"-"`
-
 	Collector                 string `mapstructure:"collector"`
 	SourceHost                string `mapstructure:"source_host"`
 	SourceName                string `mapstructure:"source_name"`

@@ -20,9 +20,9 @@ import (
 
 	"go.opencensus.io/stats/view"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/configtelemetry"
 	"go.opentelemetry.io/collector/consumer"
+	"go.opentelemetry.io/collector/processor"
 
 	cfconfig "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
 )
@@ -42,31 +42,27 @@ func init() {
 }
 
 // NewFactory returns a new factory for the Cascading Filter processor.
-func NewFactory() component.ProcessorFactory {
-	return component.NewProcessorFactory(
+func NewFactory() processor.Factory {
+	return processor.NewFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithTracesProcessor(createTraceProcessor, stabilityLevel))
+		processor.WithTraces(createTraceProcessor, stabilityLevel))
 }
 
 func createDefaultConfig() component.Config {
-	id := component.NewID("cascading_filter")
-	ps := config.NewProcessorSettings(id)
-
 	return &cfconfig.Config{
-		ProcessorSettings: &ps,
-		DecisionWait:      30 * time.Second,
-		NumTraces:         100000,
-		SpansPerSecond:    0,
+		DecisionWait:   30 * time.Second,
+		NumTraces:      100000,
+		SpansPerSecond: 0,
 	}
 }
 
 func createTraceProcessor(
 	_ context.Context,
-	settings component.ProcessorCreateSettings,
+	settings processor.CreateSettings,
 	cfg component.Config,
 	nextConsumer consumer.Traces,
-) (component.TracesProcessor, error) {
+) (processor.Traces, error) {
 	tCfg := cfg.(*cfconfig.Config)
 	return newTraceProcessor(settings.Logger, nextConsumer, *tCfg, settings.ID)
 }

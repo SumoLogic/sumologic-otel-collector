@@ -28,7 +28,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/otelcol"
-	"go.opentelemetry.io/collector/service"
 )
 
 func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
@@ -98,7 +97,7 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Creating new app...")
-			app, err := service.New(service.CollectorSettings{
+			app, err := otelcol.NewCollector(otelcol.CollectorSettings{
 				BuildInfo:      component.NewDefaultBuildInfo(),
 				Factories:      factories,
 				ConfigProvider: cp,
