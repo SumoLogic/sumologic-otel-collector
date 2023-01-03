@@ -115,7 +115,7 @@ func TestApplyRemoteConfig(t *testing.T) {
 	rc := &protobufs.AgentRemoteConfig{
 		Config: &protobufs.AgentConfigMap{
 			ConfigMap: map[string]*protobufs.AgentConfigFile{
-				"default": &protobufs.AgentConfigFile{
+				"default": {
 					Body: rb,
 				},
 			},
