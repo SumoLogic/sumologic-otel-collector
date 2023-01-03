@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer"
+	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/collector/processor/processorhelper"
 )
 
@@ -25,20 +25,16 @@ const (
 	stabilityLevel                        = component.StabilityLevelBeta
 )
 
-func NewFactory() component.ProcessorFactory {
-	return component.NewProcessorFactory(
+func NewFactory() processor.Factory {
+	return processor.NewFactory(
 		cfgType,
 		createDefaultConfig,
-		component.WithMetricsProcessor(createMetricsProcessor, stabilityLevel),
+		processor.WithMetrics(createMetricsProcessor, stabilityLevel),
 	)
 }
 
 func createDefaultConfig() component.Config {
-	id := component.NewID(cfgType)
-	ps := config.NewProcessorSettings(id)
-
 	return &Config{
-		&ps,
 		sieveConfig{
 			MinPointAccumulationTime:       defaultMinPointAccumulationTime,
 			ConstantMetricsReportFrequency: defaultConstantMetricsReportFrequency,
@@ -57,10 +53,10 @@ func createDefaultConfig() component.Config {
 
 func createMetricsProcessor(
 	ctx context.Context,
-	params component.ProcessorCreateSettings,
+	params processor.CreateSettings,
 	cfg component.Config,
 	nextConsumer consumer.Metrics,
-) (component.MetricsProcessor, error) {
+) (processor.Metrics, error) {
 	var internalProcessor = &metricsfrequencyprocessor{
 		sieve: newMetricSieve(cfg.(*Config)),
 	}

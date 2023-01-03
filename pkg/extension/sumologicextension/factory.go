@@ -19,7 +19,6 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/extension"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/credentials"
@@ -48,7 +47,6 @@ func createDefaultConfig() component.Config {
 	}
 
 	return &Config{
-		ExtensionSettings:             config.NewExtensionSettings(component.NewID(typeStr)),
 		ApiBaseUrl:                    DefaultApiBaseUrl,
 		HeartBeatInterval:             DefaultHeartbeatInterval,
 		CollectorCredentialsDirectory: defaultCredsPath,

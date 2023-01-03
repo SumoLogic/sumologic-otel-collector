@@ -16,12 +16,9 @@ package sumologicschemaprocessor
 
 import (
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/config"
 )
 
 type Config struct {
-	config.ProcessorSettings `mapstructure:",squash"`
-
 	AddCloudNamespace           bool                    `mapstructure:"add_cloud_namespace"`
 	TranslateAttributes         bool                    `mapstructure:"translate_attributes"`
 	TranslateTelegrafAttributes bool                    `mapstructure:"translate_telegraf_attributes"`
@@ -58,7 +55,6 @@ var (
 
 func createDefaultConfig() component.Config {
 	return &Config{
-		ProcessorSettings:           config.NewProcessorSettings(component.NewID(typeStr)),
 		AddCloudNamespace:           defaultAddCloudNamespace,
 		TranslateAttributes:         defaultTranslateAttributes,
 		TranslateTelegrafAttributes: defaultTranslateTelegrafAttributes,

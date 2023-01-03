@@ -22,7 +22,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
@@ -35,7 +34,6 @@ var testValue = 10 * time.Millisecond
 var probabilisticFilteringRate = int32(10)
 var healthCheckPattern = "health"
 var cfg = cfconfig.Config{
-	ProcessorSettings:       &config.ProcessorSettings{},
 	DecisionWait:            2 * time.Second,
 	NumTraces:               100,
 	ExpectedNewTracesPerSec: 100,
@@ -62,9 +60,8 @@ var cfg = cfconfig.Config{
 }
 
 var cfgJustDropping = cfconfig.Config{
-	ProcessorSettings: &config.ProcessorSettings{},
-	DecisionWait:      2 * time.Second,
-	NumTraces:         100,
+	DecisionWait: 2 * time.Second,
+	NumTraces:    100,
 	TraceRejectCfgs: []cfconfig.TraceRejectCfg{
 		{
 			Name:        "health-check",
@@ -74,7 +71,6 @@ var cfgJustDropping = cfconfig.Config{
 }
 
 var cfgAutoRate = cfconfig.Config{
-	ProcessorSettings:          &config.ProcessorSettings{},
 	DecisionWait:               2 * time.Second,
 	ProbabilisticFilteringRate: &probabilisticFilteringRate,
 	NumTraces:                  100,

@@ -19,6 +19,7 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
+	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/collector/processor/processorhelper"
 )
 
@@ -31,22 +32,22 @@ const (
 var processorCapabilities = consumer.Capabilities{MutatesData: true}
 
 // NewFactory returns a new factory for the processor.
-func NewFactory() component.ProcessorFactory {
-	return component.NewProcessorFactory(
+func NewFactory() processor.Factory {
+	return processor.NewFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithTracesProcessor(createTracesProcessor, stabilityLevel),
-		component.WithMetricsProcessor(createMetricsProcessor, stabilityLevel),
-		component.WithLogsProcessor(createLogsProcessor, stabilityLevel),
+		processor.WithTraces(createTracesProcessor, stabilityLevel),
+		processor.WithMetrics(createMetricsProcessor, stabilityLevel),
+		processor.WithLogs(createLogsProcessor, stabilityLevel),
 	)
 }
 
 func createLogsProcessor(
 	ctx context.Context,
-	set component.ProcessorCreateSettings,
+	set processor.CreateSettings,
 	cfg component.Config,
 	nextConsumer consumer.Logs,
-) (component.LogsProcessor, error) {
+) (processor.Logs, error) {
 	processor, err := newSumologicSchemaProcessor(set, cfg.(*Config))
 	if err != nil {
 		return nil, err
@@ -64,10 +65,10 @@ func createLogsProcessor(
 
 func createMetricsProcessor(
 	ctx context.Context,
-	set component.ProcessorCreateSettings,
+	set processor.CreateSettings,
 	cfg component.Config,
 	nextConsumer consumer.Metrics,
-) (component.MetricsProcessor, error) {
+) (processor.Metrics, error) {
 	processor, err := newSumologicSchemaProcessor(set, cfg.(*Config))
 	if err != nil {
 		return nil, err
@@ -85,10 +86,10 @@ func createMetricsProcessor(
 
 func createTracesProcessor(
 	ctx context.Context,
-	set component.ProcessorCreateSettings,
+	set processor.CreateSettings,
 	cfg component.Config,
 	nextConsumer consumer.Traces,
-) (component.TracesProcessor, error) {
+) (processor.Traces, error) {
 	processor, err := newSumologicSchemaProcessor(set, cfg.(*Config))
 	if err != nil {
 		return nil, err
