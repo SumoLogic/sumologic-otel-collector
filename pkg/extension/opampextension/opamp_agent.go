@@ -217,12 +217,12 @@ func (o *opampAgent) createAuthHeader() error {
 func (o *opampAgent) watchCredentials(ctx context.Context, callback func(ctx context.Context) error) error {
 	k := o.authExtension.WatchCredentialKey(ctx, "")
 
-	go func() error {
+	go func() {
 		o.authExtension.WatchCredentialKey(ctx, k)
 		if err := callback(ctx); err != nil {
-			return err
+			o.logger.Error("Failed to execute watch credential key callback", zap.Error(err))
 		}
-		return nil
+		return
 	}()
 
 	return nil

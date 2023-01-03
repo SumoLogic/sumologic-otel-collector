@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/oklog/ulid/v2"
+	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/extension/extensiontest"
@@ -99,6 +100,35 @@ func TestComposeEffectiveConfig(t *testing.T) {
 	assert.NotNil(t, ec)
 }
 
+func TestApplyRemoteConfig(t *testing.T) {
+	cfg := createDefaultConfig()
+	set := extensiontest.NewNopCreateSettings()
+	o, err := newOpampAgent(cfg.(*Config), set.Logger)
+	assert.NoError(t, err)
+
+	assert.Empty(t, o.effectiveConfig)
+
+	path := filepath.Join("testdata", "opamp-remote-config.yaml")
+	rb, err := os.ReadFile(path)
+	assert.NoError(t, err)
+
+	rc := &protobufs.AgentRemoteConfig{
+		Config: &protobufs.AgentConfigMap{
+			ConfigMap: map[string]*protobufs.AgentConfigFile{
+				"default": &protobufs.AgentConfigFile{
+					Body: rb,
+				},
+			},
+		},
+		ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
+	}
+
+	changed, err := o.applyRemoteConfig(rc)
+	assert.True(t, changed)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, o.effectiveConfig)
+}
+
 func TestShutdown(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.HTTPClientSettings.Auth = nil
@@ -107,7 +137,7 @@ func TestShutdown(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Shutdown with no OpAMP client
-	assert.NoError(t, o.Shutdown(context.TODO()))
+	assert.NoError(t, o.Shutdown(context.Background()))
 }
 
 func TestStart(t *testing.T) {
@@ -117,5 +147,17 @@ func TestStart(t *testing.T) {
 	o, err := newOpampAgent(cfg, set.Logger)
 	assert.NoError(t, err)
 
-	assert.NoError(t, o.Start(context.TODO(), componenttest.NewNopHost()))
+	assert.NoError(t, o.Start(context.Background(), componenttest.NewNopHost()))
+}
+
+func TestReload(t *testing.T) {
+	cfg := createDefaultConfig().(*Config)
+	cfg.HTTPClientSettings.Auth = nil
+	set := extensiontest.NewNopCreateSettings()
+	o, err := newOpampAgent(cfg, set.Logger)
+	assert.NoError(t, err)
+
+	ctx := context.Background()
+	assert.NoError(t, o.Start(ctx, componenttest.NewNopHost()))
+	assert.NoError(t, o.Reload(ctx))
 }
