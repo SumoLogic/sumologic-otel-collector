@@ -15,23 +15,23 @@
 package api
 
 type OpenMetadataHostDetails struct {
-	Name        string `json:"Name"`
-	OsName      string `json:"OsName,omitempty"`
-	OsVersion   string `json:"OsVersion,omitempty"`
-	Environment string `json:"Environment,omitempty"`
+	Name        string `json:"name"`
+	OsName      string `json:"osName,omitempty"`
+	OsVersion   string `json:"osVersion,omitempty"`
+	Environment string `json:"environment,omitempty"`
 }
 
-type OpenMetadataAgentDetails struct {
-	RunningVersion string `json:"RunningVersion"`
+type OpenMetadataCollectorDetails struct {
+	RunningVersion string `json:"runningVersion"`
 }
 
 type OpenMetadataNetworkDetails struct {
-	HostIpAddress string `json:"HostIpAddress"`
+	HostIpAddress string `json:"hostIpAddress"`
 }
 
 type OpenMetadataRequestPayload struct {
-	HostDetails    OpenMetadataHostDetails    `json:"HostDetails"`
-	AgentDetails   OpenMetadataAgentDetails   `json:"AgentDetails"`
-	NetworkDetails OpenMetadataNetworkDetails `json:"NetworkDetails"`
-	TagDetails     map[string]interface{}     `json:"TagDetails"`
+	HostDetails      OpenMetadataHostDetails      `json:"hostDetails"`
+	CollectorDetails OpenMetadataCollectorDetails `json:"collectorDetails"`
+	NetworkDetails   OpenMetadataNetworkDetails   `json:"networkDetails"`
+	TagDetails       map[string]interface{}       `json:"tagDetails"`
 }

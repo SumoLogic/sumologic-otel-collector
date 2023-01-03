@@ -1382,6 +1382,7 @@ func TestUpdateMetadataRequestPayload(t *testing.T) {
 			require.NotEmpty(t, reqPayload.HostDetails.OsVersion)
 			require.NotEmpty(t, reqPayload.NetworkDetails.HostIpAddress)
 			require.EqualValues(t, reqPayload.HostDetails.Environment, "EKS-1.20.2")
+			require.EqualValues(t, reqPayload.CollectorDetails.RunningVersion, "1.0.0")
 			require.EqualValues(t,
 				map[string]interface{}{
 					"team": "A",
@@ -1398,7 +1399,6 @@ func TestUpdateMetadataRequestPayload(t *testing.T) {
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = ""
-	cfg.ExtensionSettings = config.ExtensionSettings{}
 	cfg.ApiBaseUrl = srv.URL
 	cfg.Credentials.InstallToken = "dummy_install_token"
 	cfg.BackOff.InitialInterval = time.Millisecond
