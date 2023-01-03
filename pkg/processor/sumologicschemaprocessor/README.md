@@ -280,4 +280,4 @@ The result is:
 
 Some fields that log entries consist are not displayed as fields in Sumo Logic out of the box.
 One of them is `severity` which might be added/removed to/from attribute list by changing
-`add_severity_level_attribute` setting.
+`add_severity_number_attribute` setting.

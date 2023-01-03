@@ -1248,13 +1248,29 @@ func TestLogFieldsConversionLogs(t *testing.T) {
 			addSeverity: true,
 			createLogs: func() plog.Logs {
 				logs := plog.NewLogs()
-				logs.ResourceLogs().AppendEmpty().ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().SetSeverityNumber(plog.SeverityNumberInfo)
+				log := logs.ResourceLogs().AppendEmpty().ScopeLogs().AppendEmpty().LogRecords().AppendEmpty()
+				log.SetSeverityNumber(plog.SeverityNumberInfo)
+				log.SetSeverityText("severity")
+				var spanIDBytes [8]byte = [8]byte{1, 1, 1, 1, 1, 1, 1, 1}
+				log.SetSpanID(spanIDBytes)
+				var traceIDBytes [16]byte = [16]byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+				log.SetTraceID(traceIDBytes)
 				return logs
 			},
 			test: func(outputLogs plog.Logs) {
 				attribute1, found := outputLogs.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0).Attributes().Get("loglevel")
 				assert.True(t, found)
 				assert.Equal(t, "INFO", attribute1.Str())
+				attribute2, found := outputLogs.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0).Attributes().Get("severitytext")
+				assert.True(t, found)
+				assert.Equal(t, "severity", attribute2.Str())
+				attribute3, found := outputLogs.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0).Attributes().Get("spanid")
+				assert.True(t, found)
+				assert.Equal(t, "0101010101010101", attribute3.Str())
+				attribute4, found := outputLogs.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0).Attributes().Get("traceid")
+				assert.True(t, found)
+				assert.Equal(t, "01010101010101010101010101010101", attribute4.Str())
+
 			},
 		},
 	}
@@ -1345,6 +1361,6 @@ func newLogFieldsConversionConfig(logFieldsConversion bool) *Config {
 	config.NestAttributes = &NestingProcessorConfig{
 		Enabled: false,
 	}
-	config.AddSeverityLevelAttribute = true
+	config.AddSeverityNumberAttribute = true
 	return config
 }

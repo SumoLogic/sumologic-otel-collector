@@ -15,14 +15,38 @@
 package sumologicschemaprocessor
 
 import (
+	"encoding/hex"
+
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
 const (
-	levelAttributeName = "loglevel"
+	SeverityNumberAttributeName = "loglevel"
+	SeverityTextAttributeName   = "severitytext"
+	SpanIdAttributeName         = "spanid"
+	TraceIdAttributeName        = "traceid"
 )
+
+// SpanIDToHexOrEmptyString returns a hex string from SpanID.
+// An empty string is returned, if SpanID is empty.
+func SpanIDToHexOrEmptyString(id pcommon.SpanID) string {
+	if id.IsEmpty() {
+		return ""
+	}
+	return hex.EncodeToString(id[:])
+}
+
+// TraceIDToHexOrEmptyString returns a hex string from TraceID.
+// An empty string is returned, if TraceID is empty.
+func TraceIDToHexOrEmptyString(id pcommon.TraceID) string {
+	if id.IsEmpty() {
+		return ""
+	}
+	return hex.EncodeToString(id[:])
+}
 
 var severityNumberToLevel = map[string]string{
 	plog.SeverityNumberUnspecified.String(): "UNSPECIFIED",
@@ -55,27 +79,44 @@ var severityNumberToLevel = map[string]string{
 // logFieldsConversionProcessor converts specific log entries to attributes which leads to presenting them as fields
 // in the backend
 type logFieldsConversionProcessor struct {
-	shouldConvert bool
+	severityNumberEnabled bool
+	severityTextEnabled   bool
+	spanIdEnabled         bool
+	traceIdEnabled        bool
 }
 
-func newLogFieldConversionProcessor(shouldConvert bool) (*logFieldsConversionProcessor, error) {
+func newLogFieldConversionProcessor(severityNumberEnabled bool,
+	severityTextEnabled bool,
+	spanIdEnabled bool,
+	traceIdEnabled bool) (*logFieldsConversionProcessor, error) {
 	return &logFieldsConversionProcessor{
-		shouldConvert: shouldConvert,
+		severityNumberEnabled: severityNumberEnabled,
+		severityTextEnabled:   severityTextEnabled,
+		spanIdEnabled:         spanIdEnabled,
+		traceIdEnabled:        traceIdEnabled,
 	}, nil
 }
 
-func addLogLevelAttribute(log plog.LogRecord) {
-	if log.SeverityNumber() == plog.SeverityNumberUnspecified {
-		return
+func addAttributes(log plog.LogRecord) {
+	if log.SeverityNumber() != plog.SeverityNumberUnspecified {
+		if _, found := log.Attributes().Get(SeverityNumberAttributeName); !found {
+			level := severityNumberToLevel[log.SeverityNumber().String()]
+			log.Attributes().PutStr(SeverityNumberAttributeName, level)
+		}
 	}
-	if _, found := log.Attributes().Get(levelAttributeName); !found {
-		level := severityNumberToLevel[log.SeverityNumber().String()]
-		log.Attributes().PutStr(levelAttributeName, level)
+	if _, found := log.Attributes().Get(SeverityTextAttributeName); !found {
+		log.Attributes().PutStr(SeverityTextAttributeName, log.SeverityText())
+	}
+	if _, found := log.Attributes().Get(SpanIdAttributeName); !found {
+		log.Attributes().PutStr(SpanIdAttributeName, SpanIDToHexOrEmptyString(log.SpanID()))
+	}
+	if _, found := log.Attributes().Get(TraceIdAttributeName); !found {
+		log.Attributes().PutStr(TraceIdAttributeName, TraceIDToHexOrEmptyString(log.TraceID()))
 	}
 }
 
 func (proc *logFieldsConversionProcessor) processLogs(logs plog.Logs) error {
-	if proc.shouldConvert {
+	if proc.isEnabled() {
 		rls := logs.ResourceLogs()
 		for i := 0; i < rls.Len(); i++ {
 			ills := rls.At(i).ScopeLogs()
@@ -83,8 +124,7 @@ func (proc *logFieldsConversionProcessor) processLogs(logs plog.Logs) error {
 			for j := 0; j < ills.Len(); j++ {
 				logs := ills.At(j).LogRecords()
 				for k := 0; k < logs.Len(); k++ {
-					// adds level attribute from log.severityNumber
-					addLogLevelAttribute(logs.At(k))
+					addAttributes(logs.At(k))
 				}
 			}
 		}
@@ -103,7 +143,10 @@ func (proc *logFieldsConversionProcessor) processTraces(traces ptrace.Traces) er
 }
 
 func (proc *logFieldsConversionProcessor) isEnabled() bool {
-	return proc.shouldConvert
+	return proc.severityNumberEnabled ||
+		proc.severityTextEnabled ||
+		proc.spanIdEnabled ||
+		proc.traceIdEnabled
 }
 
 func (*logFieldsConversionProcessor) ConfigPropertyName() string {

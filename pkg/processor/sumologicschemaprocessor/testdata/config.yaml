@@ -22,9 +22,14 @@ processors:
         prefixes: ["pattern1", "pattern2", "pattern3"]
       - attribute: "attr2"
         prefixes: ["pattern4"]
-  sumologic_schema/disabled-severity-level-attribute:
-    add_severity_level_attribute: false
-
+  sumologic_schema/enabled-severity-number-attribute:
+    add_severity_number_attribute: true
+  sumologic_schema/enabled-severity-text-attribute:
+    add_severity_text_attribute: true
+  sumologic_schema/enabled-span-id-attribute:
+    add_span_id_attribute: true
+  sumologic_schema/enabled-trace-id-attribute:
+    add_trace_id_attribute: true
 exporters:
   nop:
 

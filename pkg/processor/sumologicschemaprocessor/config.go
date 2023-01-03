@@ -27,7 +27,10 @@ type Config struct {
 	TranslateTelegrafAttributes bool                    `mapstructure:"translate_telegraf_attributes"`
 	NestAttributes              *NestingProcessorConfig `mapstructure:"nest_attributes"`
 	AggregateAttributes         []aggregationPair       `mapstructure:"aggregate_attributes"`
-	AddSeverityLevelAttribute   bool                    `mapstructure:"add_severity_level_attribute"`
+	AddSeverityNumberAttribute  bool                    `mapstructure:"add_severity_number_attribute"`
+	AddSeverityTextAttribute    bool                    `mapstructure:"add_severity_text_attribute"`
+	AddSpanIdAttribute          bool                    `mapstructure:"add_span_id_attribute"`
+	AddTraceIdAttribute         bool                    `mapstructure:"add_trace_id_attribute"`
 }
 
 type aggregationPair struct {
@@ -45,7 +48,10 @@ const (
 	defaultNestingSeparator          = "."
 	defaultNestingSquashSingleValues = false
 
-	defaultAddSeverityLevelAttribute = true
+	defaultAddSeverityNumberAttribute = false
+	defaultAddSeverityTextAttribute   = false
+	defaultAddSpanIdAttribute         = false
+	defaultAddTraceIdAttribute        = false
 )
 
 var (
@@ -72,8 +78,11 @@ func createDefaultConfig() component.Config {
 			Exclude:            defaultNestingExclude,
 			SquashSingleValues: defaultNestingSquashSingleValues,
 		},
-		AggregateAttributes:       defaultAggregateAttributes,
-		AddSeverityLevelAttribute: defaultAddSeverityLevelAttribute,
+		AggregateAttributes:        defaultAggregateAttributes,
+		AddSeverityNumberAttribute: defaultAddSeverityNumberAttribute,
+		AddSeverityTextAttribute:   defaultAddSeverityTextAttribute,
+		AddSpanIdAttribute:         defaultAddSpanIdAttribute,
+		AddTraceIdAttribute:        defaultAddTraceIdAttribute,
 	}
 }
 
