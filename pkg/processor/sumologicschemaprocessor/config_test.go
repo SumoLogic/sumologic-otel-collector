@@ -21,13 +21,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/component/componenttest"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 )
 
 func TestLoadConfig(t *testing.T) {
-	factories, err := componenttest.NopFactories()
+	factories, err := otelcoltest.NopFactories()
 	assert.NoError(t, err)
 
 	factory := NewFactory()
@@ -44,10 +42,6 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Equal(t, p1,
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(component.NewIDWithName(
-				typeStr,
-				"disabled-cloud-namespace",
-			)),
 			AddCloudNamespace:           false,
 			TranslateAttributes:         true,
 			TranslateTelegrafAttributes: true,
@@ -69,10 +63,6 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Equal(t, p2,
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(component.NewIDWithName(
-				typeStr,
-				"disabled-attribute-translation",
-			)),
 			AddCloudNamespace:           true,
 			TranslateAttributes:         false,
 			TranslateTelegrafAttributes: true,
@@ -94,10 +84,6 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Equal(t, p3,
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(component.NewIDWithName(
-				typeStr,
-				"disabled-telegraf-attribute-translation",
-			)),
 			AddCloudNamespace:           true,
 			TranslateAttributes:         true,
 			TranslateTelegrafAttributes: false,
@@ -119,10 +105,6 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Equal(t, p4,
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(component.NewIDWithName(
-				typeStr,
-				"enabled-nesting",
-			)),
 			AddCloudNamespace:           true,
 			TranslateAttributes:         true,
 			TranslateTelegrafAttributes: true,
@@ -144,10 +126,6 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Equal(t, p5,
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(component.NewIDWithName(
-				typeStr,
-				"aggregate-attributes",
-			)),
 			AddCloudNamespace:           true,
 			TranslateAttributes:         true,
 			TranslateTelegrafAttributes: true,
@@ -178,10 +156,6 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Equal(t, p6,
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(component.NewIDWithName(
-				typeStr,
-				"enabled-severity-number-attribute",
-			)),
 			AddCloudNamespace:           true,
 			TranslateAttributes:         true,
 			TranslateTelegrafAttributes: true,
@@ -203,10 +177,6 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Equal(t, p7,
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(component.NewIDWithName(
-				typeStr,
-				"enabled-severity-text-attribute",
-			)),
 			AddCloudNamespace:           true,
 			TranslateAttributes:         true,
 			TranslateTelegrafAttributes: true,
@@ -228,10 +198,6 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Equal(t, p8,
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(component.NewIDWithName(
-				typeStr,
-				"enabled-span-id-attribute",
-			)),
 			AddCloudNamespace:           true,
 			TranslateAttributes:         true,
 			TranslateTelegrafAttributes: true,
@@ -253,10 +219,6 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Equal(t, p9,
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(component.NewIDWithName(
-				typeStr,
-				"enabled-trace-id-attribute",
-			)),
 			AddCloudNamespace:           true,
 			TranslateAttributes:         true,
 			TranslateTelegrafAttributes: true,

@@ -46,9 +46,20 @@ func NewFakeInformer(
 	}
 }
 
-func (f *FakeInformer) AddEventHandler(handler cache.ResourceEventHandler) {}
+func (f *FakeInformer) AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
+	return f.AddEventHandlerWithResyncPeriod(handler, time.Second)
+}
 
-func (f *FakeInformer) AddEventHandlerWithResyncPeriod(handler cache.ResourceEventHandler, period time.Duration) {
+func (f *FakeInformer) AddEventHandlerWithResyncPeriod(handler cache.ResourceEventHandler, resyncPeriod time.Duration) (cache.ResourceEventHandlerRegistration, error) {
+	return handler, nil
+}
+
+func (f *FakeInformer) RemoveEventHandler(handle cache.ResourceEventHandlerRegistration) error {
+	return nil
+}
+
+func (f *FakeInformer) IsStopped() bool {
+	return false
 }
 
 func (f *FakeInformer) GetStore() cache.Store {

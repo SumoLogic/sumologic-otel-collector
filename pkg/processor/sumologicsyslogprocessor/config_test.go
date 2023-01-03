@@ -21,13 +21,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/component/componenttest"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 )
 
 func TestLoadConfig(t *testing.T) {
-	factories, err := componenttest.NopFactories()
+	factories, err := otelcoltest.NopFactories()
 	require.NoError(t, err)
 
 	factory := NewFactory()
@@ -39,7 +37,6 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Equal(t, cfg.Processors[component.NewID("sumologic_syslog")],
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(component.NewID("sumologic_syslog")),
-			FacilityAttr:      "testAttrName",
+			FacilityAttr: "testAttrName",
 		})
 }

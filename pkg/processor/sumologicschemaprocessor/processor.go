@@ -22,6 +22,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/ptrace"
+	"go.opentelemetry.io/collector/processor"
 	"go.uber.org/zap"
 )
 
@@ -38,7 +39,7 @@ type sumologicSchemaProcessor struct {
 	subprocessors []sumologicSchemaSubprocessor
 }
 
-func newSumologicSchemaProcessor(set component.ProcessorCreateSettings, config *Config) (*sumologicSchemaProcessor, error) {
+func newSumologicSchemaProcessor(set processor.CreateSettings, config *Config) (*sumologicSchemaProcessor, error) {
 	cloudNamespaceProcessor, err := newCloudNamespaceProcessor(config.AddCloudNamespace)
 	if err != nil {
 		return nil, err

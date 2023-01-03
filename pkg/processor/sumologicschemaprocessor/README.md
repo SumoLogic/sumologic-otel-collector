@@ -281,7 +281,7 @@ The result is:
 Some fields that log entries consist are not displayed as fields in Sumo Logic out of the box.
 It's possible to convert specific attributes to fields. List of currently supported attributes is below:
 
-`add_severity_number_attribute` 
+`add_severity_number_attribute`
 `add_severity_text_attribute`
 `add_space_id_attribute`
 `add_trace_id_attribute`

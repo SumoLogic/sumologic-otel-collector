@@ -20,13 +20,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/component/componenttest"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 )
 
 func TestLoadConfig(t *testing.T) {
-	factories, err := componenttest.NopFactories()
+	factories, err := otelcoltest.NopFactories()
 	assert.NoError(t, err)
 
 	factory := NewFactory()
@@ -45,9 +43,7 @@ func TestLoadConfig(t *testing.T) {
 	p2, ok := cfg.Processors[id2]
 	assert.True(t, ok)
 
-	ps2 := config.NewProcessorSettings(id2)
 	assert.Equal(t, p2, &Config{
-		ProcessorSettings:         &ps2,
 		Collector:                 "somecollector",
 		SourceHost:                "%{k8s.pod.hostname}",
 		SourceName:                "%{k8s.namespace.name}.%{k8s.pod.name}.%{k8s.container.name}/foo",

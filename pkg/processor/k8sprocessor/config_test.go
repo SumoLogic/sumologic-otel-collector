@@ -21,15 +21,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/component/componenttest"
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
 )
 
 func TestLoadConfig(t *testing.T) {
-	factories, err := componenttest.NopFactories()
+	factories, err := otelcoltest.NopFactories()
 	require.NoError(t, err)
 	factory := NewFactory()
 	factories.Processors[component.Type(typeStr)] = factory
@@ -47,9 +45,8 @@ func TestLoadConfig(t *testing.T) {
 	p0 := cfg.Processors[component.NewID(typeStr)]
 	assert.EqualValues(t,
 		&Config{
-			ProcessorSettings: config.NewProcessorSettings(component.NewID(typeStr)),
-			APIConfig:         k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
-			Extract:           ExtractConfig{Delimiter: ", "},
+			APIConfig: k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
+			Extract:   ExtractConfig{Delimiter: ", "},
 		},
 		p0,
 	)
@@ -57,7 +54,6 @@ func TestLoadConfig(t *testing.T) {
 	p1 := cfg.Processors[component.NewIDWithName(typeStr, "2")]
 	assert.EqualValues(t,
 		&Config{
-			ProcessorSettings:  config.NewProcessorSettings(component.NewIDWithName(typeStr, "2")),
 			APIConfig:          k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeKubeConfig},
 			Passthrough:        false,
 			OwnerLookupEnabled: true,
