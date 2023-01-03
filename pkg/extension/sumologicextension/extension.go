@@ -664,7 +664,7 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 
 	addJSONHeaders(req)
 
-	se.logger.Info("Calling metadata API",
+	se.logger.Debug("Calling metadata API",
 		zap.String("URL", u.String()),
 		zap.String("body", buff.String()))
 
