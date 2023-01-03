@@ -279,5 +279,17 @@ The result is:
 ### Severity Attribute
 
 Some fields that log entries consist are not displayed as fields in Sumo Logic out of the box.
-One of them is `severity` which might be added/removed to/from attribute list by changing
-`add_severity_number_attribute` setting.
+It's possible to convert specific attributes to fields. List of currently supported attributes is below:
+
+`add_severity_number_attribute` 
+`add_severity_text_attribute`
+`add_space_id_attribute`
+`add_trace_id_attribute`
+
+In order to report one of them as field, following configuration is needed:
+
+```json
+    add_severity_number_attribute:
+        enabled: true
+        attribute_name: "loglevel"
+```

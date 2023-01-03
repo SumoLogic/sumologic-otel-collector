@@ -27,10 +27,10 @@ type Config struct {
 	TranslateTelegrafAttributes bool                    `mapstructure:"translate_telegraf_attributes"`
 	NestAttributes              *NestingProcessorConfig `mapstructure:"nest_attributes"`
 	AggregateAttributes         []aggregationPair       `mapstructure:"aggregate_attributes"`
-	AddSeverityNumberAttribute  bool                    `mapstructure:"add_severity_number_attribute"`
-	AddSeverityTextAttribute    bool                    `mapstructure:"add_severity_text_attribute"`
-	AddSpanIdAttribute          bool                    `mapstructure:"add_span_id_attribute"`
-	AddTraceIdAttribute         bool                    `mapstructure:"add_trace_id_attribute"`
+	AddSeverityNumberAttribute  *logFieldAttribute      `mapstructure:"add_severity_number_attribute"`
+	AddSeverityTextAttribute    *logFieldAttribute      `mapstructure:"add_severity_text_attribute"`
+	AddSpanIdAttribute          *logFieldAttribute      `mapstructure:"add_span_id_attribute"`
+	AddTraceIdAttribute         *logFieldAttribute      `mapstructure:"add_trace_id_attribute"`
 }
 
 type aggregationPair struct {
@@ -79,10 +79,10 @@ func createDefaultConfig() component.Config {
 			SquashSingleValues: defaultNestingSquashSingleValues,
 		},
 		AggregateAttributes:        defaultAggregateAttributes,
-		AddSeverityNumberAttribute: defaultAddSeverityNumberAttribute,
-		AddSeverityTextAttribute:   defaultAddSeverityTextAttribute,
-		AddSpanIdAttribute:         defaultAddSpanIdAttribute,
-		AddTraceIdAttribute:        defaultAddTraceIdAttribute,
+		AddSeverityNumberAttribute: &logFieldAttribute{defaultAddSeverityNumberAttribute, "loglevel"},
+		AddSeverityTextAttribute:   &logFieldAttribute{defaultAddSeverityTextAttribute, "severitytext"},
+		AddSpanIdAttribute:         &logFieldAttribute{defaultAddSpanIdAttribute, "spanid"},
+		AddTraceIdAttribute:        &logFieldAttribute{defaultAddTraceIdAttribute, "traceid"},
 	}
 }
 

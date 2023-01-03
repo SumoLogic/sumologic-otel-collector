@@ -30,6 +30,11 @@ const (
 	TraceIdAttributeName        = "traceid"
 )
 
+type logFieldAttribute struct {
+	Enabled       bool   `mapstructure:"enabled"`
+	AttributeName string `mapstructure:"attribute_name"`
+}
+
 // SpanIDToHexOrEmptyString returns a hex string from SpanID.
 // An empty string is returned, if SpanID is empty.
 func SpanIDToHexOrEmptyString(id pcommon.SpanID) string {
@@ -79,16 +84,16 @@ var severityNumberToLevel = map[string]string{
 // logFieldsConversionProcessor converts specific log entries to attributes which leads to presenting them as fields
 // in the backend
 type logFieldsConversionProcessor struct {
-	severityNumberEnabled bool
-	severityTextEnabled   bool
-	spanIdEnabled         bool
-	traceIdEnabled        bool
+	severityNumberEnabled *logFieldAttribute
+	severityTextEnabled   *logFieldAttribute
+	spanIdEnabled         *logFieldAttribute
+	traceIdEnabled        *logFieldAttribute
 }
 
-func newLogFieldConversionProcessor(severityNumberEnabled bool,
-	severityTextEnabled bool,
-	spanIdEnabled bool,
-	traceIdEnabled bool) (*logFieldsConversionProcessor, error) {
+func newLogFieldConversionProcessor(severityNumberEnabled *logFieldAttribute,
+	severityTextEnabled *logFieldAttribute,
+	spanIdEnabled *logFieldAttribute,
+	traceIdEnabled *logFieldAttribute) (*logFieldsConversionProcessor, error) {
 	return &logFieldsConversionProcessor{
 		severityNumberEnabled: severityNumberEnabled,
 		severityTextEnabled:   severityTextEnabled,
@@ -143,10 +148,10 @@ func (proc *logFieldsConversionProcessor) processTraces(traces ptrace.Traces) er
 }
 
 func (proc *logFieldsConversionProcessor) isEnabled() bool {
-	return proc.severityNumberEnabled ||
-		proc.severityTextEnabled ||
-		proc.spanIdEnabled ||
-		proc.traceIdEnabled
+	return proc.severityNumberEnabled.Enabled ||
+		proc.severityTextEnabled.Enabled ||
+		proc.spanIdEnabled.Enabled ||
+		proc.traceIdEnabled.Enabled
 }
 
 func (*logFieldsConversionProcessor) ConfigPropertyName() string {

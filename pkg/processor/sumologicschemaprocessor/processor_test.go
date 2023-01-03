@@ -1361,6 +1361,6 @@ func newLogFieldsConversionConfig(logFieldsConversion bool) *Config {
 	config.NestAttributes = &NestingProcessorConfig{
 		Enabled: false,
 	}
-	config.AddSeverityNumberAttribute = true
+	config.AddSeverityNumberAttribute = &logFieldAttribute{Enabled: true, AttributeName: SeverityNumberAttributeName}
 	return config
 }
