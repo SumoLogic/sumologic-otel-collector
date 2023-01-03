@@ -222,7 +222,6 @@ func (o *opampAgent) watchCredentials(ctx context.Context, callback func(ctx con
 		if err := callback(ctx); err != nil {
 			o.logger.Error("Failed to execute watch credential key callback", zap.Error(err))
 		}
-		return
 	}()
 
 	return nil
