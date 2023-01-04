@@ -36,6 +36,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/extension/auth"
+	"go.opentelemetry.io/collector/featuregate"
 	"go.uber.org/zap"
 	grpccredentials "google.golang.org/grpc/credentials"
 
@@ -59,6 +60,7 @@ type SumologicExtension struct {
 	hashKey          string
 	httpClient       *http.Client
 	registrationInfo api.OpenRegisterResponsePayload
+	updateMetadata   bool
 
 	closeChan chan struct{}
 	closeOnce sync.Once
@@ -77,8 +79,20 @@ const (
 )
 
 const (
+	updateCollectorMetadataID    = "extension.sumologic.updateCollectorMetadata"
+	updateCollectorMetadataStage = featuregate.StageAlpha
+
 	DefaultHeartbeatInterval = 15 * time.Second
 )
+
+func init() {
+	featuregate.GetRegistry().MustRegisterID(
+		updateCollectorMetadataID,
+		updateCollectorMetadataStage,
+		featuregate.WithRegisterDescription("When enabled, the collector will updated its Sumo Logic metadata."),
+		featuregate.WithRegisterReferenceURL("https://github.com/SumoLogic/sumologic-otel-collector/pull/858"),
+	)
+}
 
 var errGRPCNotSupported = fmt.Errorf("gRPC is not supported by sumologicextension")
 
@@ -137,6 +151,7 @@ func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID) (*
 		logger:           logger,
 		hashKey:          hashKey,
 		credentialsStore: credentialsStore,
+		updateMetadata:   featuregate.GetRegistry().IsEnabled(updateCollectorMetadataID),
 		closeChan:        make(chan struct{}),
 		backOff:          backOff,
 		id:               id,
@@ -169,9 +184,11 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 		zap.String(collectorIdField, colCreds.Credentials.CollectorId),
 	)
 
-	err = se.updateMetadataWithBackoff(ctx)
-	if err != nil {
-		return err
+	if se.updateMetadata {
+		err = se.updateMetadataWithBackoff(ctx)
+		if err != nil {
+			return err
+		}
 	}
 
 	go se.heartbeatLoop()
@@ -664,7 +681,7 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 
 	addJSONHeaders(req)
 
-	se.logger.Debug("Calling metadata API",
+	se.logger.Info("Updating collector metadata",
 		zap.String("URL", u.String()),
 		zap.String("body", buff.String()))
 

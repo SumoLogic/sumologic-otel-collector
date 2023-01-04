@@ -34,6 +34,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
+	"go.opentelemetry.io/collector/featuregate"
 	"go.uber.org/zap"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/api"
@@ -43,6 +44,15 @@ import (
 const (
 	uuidRegex = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 )
+
+func TestMain(m *testing.M) {
+	// Enable the feature gates before all tests to avoid flaky tests.
+	_ = featuregate.GetRegistry().Apply(map[string]bool{
+		updateCollectorMetadataID: true,
+	})
+	code := m.Run()
+	os.Exit(code)
+}
 
 func TestBasicExtensionConstruction(t *testing.T) {
 	t.Parallel()
