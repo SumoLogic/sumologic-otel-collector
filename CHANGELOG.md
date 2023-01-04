@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.68.0-sumo-0]
 
 ### Added
 
@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(sumologicschemaprocessor): add squashing single values in nesting processor [#881]
 - feat(extension/sumologic): mark install_token as opaque [#882]
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.67.0-sumo-0...main
+[v0.68.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.67.0-sumo-0...v0.68.0-sumo-0
 [#877]: https://github.com/SumoLogic/sumologic-otel-collector/pull/877
 [#880]: https://github.com/SumoLogic/sumologic-otel-collector/pull/880
 [#871]: https://github.com/SumoLogic/sumologic-otel-collector/pull/871
