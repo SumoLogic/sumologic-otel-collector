@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.68.0-sumo-0...main
+
+## [v0.68.0-sumo-0]
+
 ### Added
 
 - feat(sumologicschemaprocessor): add nesting processor [#877]
@@ -16,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(extension/sumologic): mark install_token as opaque [#882]
 - feat(extension/opamp): implemented an opamp agent for remote configuration [#885]
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.67.0-sumo-0...main
+[v0.68.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.67.0-sumo-0...v0.68.0-sumo-0
 [#877]: https://github.com/SumoLogic/sumologic-otel-collector/pull/877
 [#880]: https://github.com/SumoLogic/sumologic-otel-collector/pull/880
 [#871]: https://github.com/SumoLogic/sumologic-otel-collector/pull/871
