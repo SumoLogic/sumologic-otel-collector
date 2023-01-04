@@ -47,9 +47,14 @@ const (
 
 func TestMain(m *testing.M) {
 	// Enable the feature gates before all tests to avoid flaky tests.
-	_ = featuregate.GetRegistry().Apply(map[string]bool{
+	err := featuregate.GetRegistry().Apply(map[string]bool{
 		updateCollectorMetadataID: true,
 	})
+
+	if err != nil {
+		panic("unable to set feature gates")
+	}
+
 	code := m.Run()
 	os.Exit(code)
 }
