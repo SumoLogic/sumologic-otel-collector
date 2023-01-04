@@ -9,15 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- feat: Integrated collector with new metadata API [#858]
+
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.68.0-sumo-0...main
+[#858]: https://github.com/SumoLogic/sumologic-otel-collector/pull/858
+
+## [v0.68.0-sumo-0]
+
+### Added
+
 - feat(sumologicschemaprocessor): add nesting processor [#877]
 - feat(sumologicschemaprocessor): add allowlist and denylist to nesting processor [#880]
 - feat(sumologicschemaprocessor) allow aggregating attributes with given name patterns [#871]
 - feat(sumologicschemaprocessor): add squashing single values in nesting processor [#881]
-- feat: Integrated collector with new metadata API [#858]
 - feat(extension/sumologic): mark install_token as opaque [#882]
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.67.0-sumo-0...main
-[#858]: https://github.com/SumoLogic/sumologic-otel-collector/pull/858
+[v0.68.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.67.0-sumo-0...v0.68.0-sumo-0
 [#877]: https://github.com/SumoLogic/sumologic-otel-collector/pull/877
 [#880]: https://github.com/SumoLogic/sumologic-otel-collector/pull/880
 [#871]: https://github.com/SumoLogic/sumologic-otel-collector/pull/871
