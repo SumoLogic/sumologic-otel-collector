@@ -89,7 +89,7 @@ func init() {
 	featuregate.GetRegistry().MustRegisterID(
 		updateCollectorMetadataID,
 		updateCollectorMetadataStage,
-		featuregate.WithRegisterDescription("When enabled, the collector will updated its Sumo Logic metadata."),
+		featuregate.WithRegisterDescription("When enabled, the collector will update its Sumo Logic metadata on startup."),
 		featuregate.WithRegisterReferenceURL("https://github.com/SumoLogic/sumologic-otel-collector/pull/858"),
 	)
 }
