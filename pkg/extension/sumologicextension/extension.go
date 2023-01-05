@@ -621,7 +621,8 @@ func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, h
 }
 
 func getHostIpAddress() (string, error) {
-	c, err := net.Dial("udp", "8.8.8.8:53")
+	// This doesn't connect, we just need the connection object.
+	c, err := net.Dial("udp", "255.255.255.255:53")
 	if err != nil {
 		return "", err
 	}
