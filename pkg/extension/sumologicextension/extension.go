@@ -46,6 +46,7 @@ import (
 
 type SumologicExtension struct {
 	collectorName string
+	buildVersion  string
 
 	// The lock around baseUrl is needed because sumologicexporter is using
 	// it as base URL for API requests and this access has to be coordinated.
@@ -99,7 +100,7 @@ var errGRPCNotSupported = fmt.Errorf("gRPC is not supported by sumologicextensio
 // SumologicExtension implements ClientAuthenticator
 var _ auth.Client = (*SumologicExtension)(nil)
 
-func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID) (*SumologicExtension, error) {
+func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID, buildVersion string) (*SumologicExtension, error) {
 	if conf.Credentials.InstallToken == "" {
 		return nil, errors.New("access credentials not provided: need install_token")
 	}
@@ -145,6 +146,7 @@ func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID) (*
 
 	return &SumologicExtension{
 		collectorName:    collectorName,
+		buildVersion:     buildVersion,
 		baseUrl:          strings.TrimSuffix(conf.ApiBaseUrl, "/"),
 		conf:             conf,
 		origLogger:       logger,
@@ -664,7 +666,7 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 			Environment: se.conf.CollectorEnvironment,
 		},
 		CollectorDetails: api.OpenMetadataCollectorDetails{
-			RunningVersion: "1.0.0",
+			RunningVersion: se.buildVersion,
 		},
 		NetworkDetails: api.OpenMetadataNetworkDetails{
 			HostIpAddress: ip,

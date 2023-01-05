@@ -94,7 +94,7 @@ func TestBasicExtensionConstruction(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {
-			se, err := newSumologicExtension(tc.Config, zap.NewNop(), component.NewID("sumologic"))
+			se, err := newSumologicExtension(tc.Config, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 			if tc.WantErr {
 				assert.Error(t, err)
 			} else {
@@ -157,7 +157,7 @@ func TestBasicStart(t *testing.T) {
 	cfg.Credentials.InstallToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
 
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	assert.NotEmpty(t, se.registrationInfo.CollectorCredentialId)
@@ -233,7 +233,7 @@ func TestStoreCredentials(t *testing.T) {
 		// Ensure the directory doesn't exist before running the extension
 		require.NoError(t, os.RemoveAll(dir))
 
-		se, err := newSumologicExtension(cfg, logger, component.NewID("sumologic"))
+		se, err := newSumologicExtension(cfg, logger, component.NewID("sumologic"), "1.0.0")
 		require.NoError(t, err)
 		key := createHashKey(cfg)
 		fileName, err := credentials.HashKeyToFilename(key)
@@ -259,7 +259,7 @@ func TestStoreCredentials(t *testing.T) {
 		// Ensure the directory has 600 permissions
 		require.NoError(t, os.Chmod(dir, 0600))
 
-		se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+		se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 		require.NoError(t, err)
 		key := createHashKey(cfg)
 		fileName, err := credentials.HashKeyToFilename(key)
@@ -284,7 +284,7 @@ func TestStoreCredentials(t *testing.T) {
 		// Ensure the directory has 700 permissions
 		require.NoError(t, os.Chmod(dir, 0700))
 
-		se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+		se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 		require.NoError(t, err)
 		key := createHashKey(cfg)
 		fileName, err := credentials.HashKeyToFilename(key)
@@ -307,7 +307,7 @@ func TestStoreCredentials(t *testing.T) {
 		cfg := getConfig(srv.URL)
 		cfg.CollectorCredentialsDirectory = dir
 
-		se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+		se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 		require.NoError(t, err)
 		key := createHashKey(cfg)
 		fileName, err := credentials.HashKeyToFilename(key)
@@ -398,7 +398,7 @@ func TestStoreCredentials_PreexistingCredentialsAreUsed(t *testing.T) {
 		}),
 	)
 
-	se, err := newSumologicExtension(cfg, logger, component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, logger, component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 
 	fileName, err := credentials.HashKeyToFilename(hashKey)
@@ -499,7 +499,7 @@ func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T
 	logger2, err := zap.NewDevelopment(zap.Fields(zap.Int("#", 2)))
 	require.NoError(t, err)
 
-	se1, err := newSumologicExtension(cfg1, logger1, component.NewID("sumologic"))
+	se1, err := newSumologicExtension(cfg1, logger1, component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, se1.Shutdown(context.Background())) })
 	fileName1, err := credentials.HashKeyToFilename(createHashKey(cfg1))
@@ -509,7 +509,7 @@ func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T
 	require.NoError(t, se1.Start(context.Background(), componenttest.NewNopHost()))
 	require.FileExists(t, credsPath1)
 
-	se2, err := newSumologicExtension(cfg2, logger2, component.NewID("sumologic"))
+	se2, err := newSumologicExtension(cfg2, logger2, component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, se2.Shutdown(context.Background())) })
 	fileName2, err := credentials.HashKeyToFilename(createHashKey(cfg2))
@@ -585,7 +585,7 @@ func TestRegisterEmptyCollectorName(t *testing.T) {
 	cfg.Credentials.InstallToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
 
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	regexPattern := fmt.Sprintf("%s-%s", hostname, uuidRegex)
@@ -675,7 +675,7 @@ func TestRegisterEmptyCollectorNameForceRegistration(t *testing.T) {
 	cfg.CollectorCredentialsDirectory = dir
 	cfg.ForceRegistration = true
 
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	require.NoError(t, se.Shutdown(context.Background()))
@@ -687,7 +687,7 @@ func TestRegisterEmptyCollectorNameForceRegistration(t *testing.T) {
 	colCreds, err := se.credentialsStore.Get(se.hashKey)
 	require.NoError(t, err)
 	colName := colCreds.CollectorName
-	se, err = newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err = newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	assert.Equal(t, se.collectorName, colName)
@@ -751,7 +751,7 @@ func TestCollectorSendsBasicAuthHeadersOnRegistration(t *testing.T) {
 	cfg.Credentials.InstallToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
 
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	require.NoError(t, se.Shutdown(context.Background()))
@@ -913,7 +913,7 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 			logger, err := zap.NewDevelopment()
 			require.NoError(t, err)
 
-			se, err := newSumologicExtension(cfg, logger, component.NewID("sumologic"))
+			se, err := newSumologicExtension(cfg, logger, component.NewID("sumologic"), "1.0.0")
 			require.NoError(t, err)
 			require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 
@@ -1002,7 +1002,7 @@ func TestRegisterEmptyCollectorNameWithBackoff(t *testing.T) {
 	cfg.BackOff.InitialInterval = time.Millisecond
 	cfg.BackOff.MaxInterval = time.Millisecond
 
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	regexPattern := fmt.Sprintf("%s-%s", hostname, uuidRegex)
@@ -1054,7 +1054,7 @@ func TestRegisterEmptyCollectorNameUnrecoverableError(t *testing.T) {
 	cfg.BackOff.InitialInterval = time.Millisecond
 	cfg.BackOff.MaxInterval = time.Millisecond
 
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.EqualError(t, se.Start(context.Background(), componenttest.NewNopHost()),
 		"collector registration failed: failed to register the collector, got HTTP status code: 404")
@@ -1162,7 +1162,7 @@ func TestRegistrationRedirect(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("works correctly", func(t *testing.T) {
-		se, err := newSumologicExtension(configFn(), logger, component.NewID("sumologic"))
+		se, err := newSumologicExtension(configFn(), logger, component.NewID("sumologic"), "1.0.0")
 		require.NoError(t, err)
 		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 		assert.Eventually(t, func() bool { return atomic.LoadInt32(&origReqCount) == 1 },
@@ -1177,7 +1177,7 @@ func TestRegistrationRedirect(t *testing.T) {
 	})
 
 	t.Run("credentials store retrieves credentials with redirected api url", func(t *testing.T) {
-		se, err := newSumologicExtension(configFn(), logger, component.NewID("sumologic"))
+		se, err := newSumologicExtension(configFn(), logger, component.NewID("sumologic"), "1.0.0")
 		require.NoError(t, err)
 		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 
@@ -1274,7 +1274,7 @@ func TestCollectorReregistersAfterHTTPUnathorizedFromHeartbeat(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	se, err := newSumologicExtension(cfg, logger, component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, logger, component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 
@@ -1366,7 +1366,7 @@ func TestRegistrationRequestPayload(t *testing.T) {
 	}
 	cfg.TimeZone = "PST"
 
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	regexPattern := fmt.Sprintf("%s-%s", hostname, uuidRegex)
@@ -1428,7 +1428,7 @@ func TestUpdateMetadataRequestPayload(t *testing.T) {
 	}
 	cfg.TimeZone = "PST"
 
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 
 	httpClient, err := se.getHTTPClient(se.conf.HTTPClientSettings, api.OpenRegisterResponsePayload{})
