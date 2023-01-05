@@ -874,13 +874,13 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 								w.WriteHeader(http.StatusInternalServerError)
 							}
 
-						// heartbeat
-						case 2:
-							w.WriteHeader(204)
-
 						// metadata
-						case 3:
+						case 2:
 							w.WriteHeader(200)
+
+						// heartbeat
+						case 3:
+							w.WriteHeader(204)
 
 						// should not produce any more requests
 						default:
