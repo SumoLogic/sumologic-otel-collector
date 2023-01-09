@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -31,9 +32,11 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
+	"github.com/shirou/gopsutil/v3/host"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/extension/auth"
+	"go.opentelemetry.io/collector/featuregate"
 	"go.uber.org/zap"
 	grpccredentials "google.golang.org/grpc/credentials"
 
@@ -43,6 +46,7 @@ import (
 
 type SumologicExtension struct {
 	collectorName string
+	buildVersion  string
 
 	// The lock around baseUrl is needed because sumologicexporter is using
 	// it as base URL for API requests and this access has to be coordinated.
@@ -57,6 +61,7 @@ type SumologicExtension struct {
 	hashKey          string
 	httpClient       *http.Client
 	registrationInfo api.OpenRegisterResponsePayload
+	updateMetadata   bool
 
 	closeChan chan struct{}
 	closeOnce sync.Once
@@ -66,6 +71,7 @@ type SumologicExtension struct {
 
 const (
 	heartbeatUrl = "/api/v1/collector/heartbeat"
+	metadataUrl  = "/api/v1/otCollectors/metadata"
 	registerUrl  = "/api/v1/collector/register"
 
 	collectorIdField           = "collector_id"
@@ -74,15 +80,27 @@ const (
 )
 
 const (
+	updateCollectorMetadataID    = "extension.sumologic.updateCollectorMetadata"
+	updateCollectorMetadataStage = featuregate.StageAlpha
+
 	DefaultHeartbeatInterval = 15 * time.Second
 )
+
+func init() {
+	featuregate.GetRegistry().MustRegisterID(
+		updateCollectorMetadataID,
+		updateCollectorMetadataStage,
+		featuregate.WithRegisterDescription("When enabled, the collector will update its Sumo Logic metadata on startup."),
+		featuregate.WithRegisterReferenceURL("https://github.com/SumoLogic/sumologic-otel-collector/pull/858"),
+	)
+}
 
 var errGRPCNotSupported = fmt.Errorf("gRPC is not supported by sumologicextension")
 
 // SumologicExtension implements ClientAuthenticator
 var _ auth.Client = (*SumologicExtension)(nil)
 
-func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID) (*SumologicExtension, error) {
+func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID, buildVersion string) (*SumologicExtension, error) {
 	if conf.Credentials.InstallToken == "" {
 		return nil, errors.New("access credentials not provided: need install_token")
 	}
@@ -128,12 +146,14 @@ func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID) (*
 
 	return &SumologicExtension{
 		collectorName:    collectorName,
+		buildVersion:     buildVersion,
 		baseUrl:          strings.TrimSuffix(conf.ApiBaseUrl, "/"),
 		conf:             conf,
 		origLogger:       logger,
 		logger:           logger,
 		hashKey:          hashKey,
 		credentialsStore: credentialsStore,
+		updateMetadata:   featuregate.GetRegistry().IsEnabled(updateCollectorMetadataID),
 		closeChan:        make(chan struct{}),
 		backOff:          backOff,
 		id:               id,
@@ -165,6 +185,13 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 		zap.String(collectorNameField, colCreds.Credentials.CollectorName),
 		zap.String(collectorIdField, colCreds.Credentials.CollectorId),
 	)
+
+	if se.updateMetadata {
+		err = se.updateMetadataWithBackoff(ctx)
+		if err != nil {
+			return err
+		}
+	}
 
 	go se.heartbeatLoop()
 
@@ -539,6 +566,7 @@ func (se *SumologicExtension) heartbeatLoop() {
 }
 
 var errUnauthorizedHeartbeat = errors.New("heartbeat unauthorized")
+var errUnauthorizedMetadata = errors.New("metadata update unauthorized")
 
 type ErrorAPI struct {
 	status int
@@ -590,6 +618,134 @@ func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, h
 	}
 
 	return nil
+}
+
+func getHostIpAddress() (string, error) {
+	// This doesn't connect, we just need the connection object.
+	c, err := net.Dial("udp", "255.255.255.255:53")
+	if err != nil {
+		return "", err
+	}
+
+	defer c.Close()
+	a := c.LocalAddr().(*net.UDPAddr)
+	h, _, err := net.SplitHostPort(a.String())
+	if err != nil {
+		return "", err
+	}
+
+	return h, nil
+}
+
+func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, httpClient *http.Client) error {
+	u, err := url.Parse(se.BaseUrl() + metadataUrl)
+	if err != nil {
+		return fmt.Errorf("unable to parse metadata URL %w", err)
+	}
+
+	info, err := host.Info()
+	if err != nil {
+		return err
+	}
+
+	ip, err := getHostIpAddress()
+	if err != nil {
+		return err
+	}
+
+	td := se.conf.CollectorFields
+	if td == nil {
+		td = map[string]interface{}{}
+	}
+
+	var buff bytes.Buffer
+	if err = json.NewEncoder(&buff).Encode(api.OpenMetadataRequestPayload{
+		HostDetails: api.OpenMetadataHostDetails{
+			Name:        info.Hostname,
+			OsName:      info.OS,
+			OsVersion:   info.PlatformVersion,
+			Environment: se.conf.CollectorEnvironment,
+		},
+		CollectorDetails: api.OpenMetadataCollectorDetails{
+			RunningVersion: se.buildVersion,
+		},
+		NetworkDetails: api.OpenMetadataNetworkDetails{
+			HostIpAddress: ip,
+		},
+		TagDetails: td,
+	}); err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), &buff)
+	if err != nil {
+		return fmt.Errorf("unable to create HTTP request %w", err)
+	}
+
+	addJSONHeaders(req)
+
+	se.logger.Info("Updating collector metadata",
+		zap.String("URL", u.String()),
+		zap.String("body", buff.String()))
+
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("unable to send HTTP request: %w", err)
+	}
+	defer res.Body.Close()
+
+	switch res.StatusCode {
+	default:
+		var buff bytes.Buffer
+		if _, err := io.Copy(&buff, res.Body); err != nil {
+			return fmt.Errorf(
+				"failed to copy collector metadata response body, status code: %d, err: %w",
+				res.StatusCode, err,
+			)
+		}
+
+		se.logger.Warn("Metadata API error response",
+			zap.Int("status", res.StatusCode),
+			zap.String("body", buff.String()))
+
+		return fmt.Errorf("collector metadata request failed: %w",
+			ErrorAPI{
+				status: res.StatusCode,
+				body:   buff.String(),
+			},
+		)
+
+	case http.StatusUnauthorized:
+		return errUnauthorizedMetadata
+	case http.StatusOK:
+	}
+
+	return nil
+}
+
+func (se *SumologicExtension) updateMetadataWithBackoff(ctx context.Context) error {
+	se.backOff.Reset()
+	for {
+		err := se.updateMetadataWithHTTPClient(ctx, se.httpClient)
+		if err == nil {
+			return nil
+		}
+
+		nbo := se.backOff.NextBackOff()
+		// Return error if backoff reaches the limit or uncoverable error is spotted
+		if _, ok := err.(*backoff.PermanentError); nbo == se.backOff.Stop || ok {
+			return fmt.Errorf("collector metadata update failed: %w", err)
+		}
+
+		t := time.NewTimer(nbo)
+		defer t.Stop()
+
+		select {
+		case <-t.C:
+		case <-ctx.Done():
+			return fmt.Errorf("collector metadata update cancelled: %w", ctx.Err())
+		}
+	}
 }
 
 func (se *SumologicExtension) ComponentID() component.ID {

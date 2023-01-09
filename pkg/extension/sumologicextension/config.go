@@ -37,6 +37,9 @@ type Config struct {
 	// Please note that registering a collector under a name which is already
 	// used is not allowed.
 	CollectorName string `mapstructure:"collector_name"`
+	// CollectorEnvironment is the environment which will be used when updating
+	// the collector metadata.
+	CollectorEnvironment string `mapstructure:"collector_environment"`
 	// CollectorDescription is the description which will be used when the
 	// collector is being registered.
 	CollectorDescription string `mapstructure:"collector_description"`

@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- feat: Integrated collector with new metadata API [#858]
+
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.68.0-sumo-0...main
+[#858]: https://github.com/SumoLogic/sumologic-otel-collector/pull/858
 
 ## [v0.68.0-sumo-0]
 
