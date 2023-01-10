@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(sumologicschemaprocessor): add allowlist and denylist to nesting processor [#880]
 - feat(sumologicschemaprocessor) allow aggregating attributes with given name patterns [#871]
 - feat(sumologicschemaprocessor): add squashing single values in nesting processor [#881]
-- feat(sumologicschemaprocessor): add severity number as field [#874]
+- feat(sumologicschemaprocessor): report attributes as fields [#874]
 - feat(extension/sumologic): mark install_token as opaque [#882]
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.67.0-sumo-0...main
