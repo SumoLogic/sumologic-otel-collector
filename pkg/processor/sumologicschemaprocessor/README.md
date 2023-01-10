@@ -69,8 +69,11 @@ processors:
       - ...
 
     # Defines whether `severity` attribute should be added to record attributes.
-    # default = true
-    add_severity_level_attribute: {true, false}
+    add_severity_number_attribute:
+        enabled: true
+        attribute_name: "loglevel"
+
+    - ...
 ```
 
 ## Features
