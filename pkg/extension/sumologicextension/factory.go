@@ -64,5 +64,5 @@ func createDefaultConfig() component.Config {
 
 func createExtension(_ context.Context, params extension.CreateSettings, cfg component.Config) (extension.Extension, error) {
 	config := cfg.(*Config)
-	return newSumologicExtension(config, params.Logger, params.ID)
+	return newSumologicExtension(config, params.Logger, params.ID, params.BuildInfo.Version)
 }
