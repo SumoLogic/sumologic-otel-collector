@@ -717,6 +717,7 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 
 	case http.StatusUnauthorized:
 		return errUnauthorizedMetadata
+	case http.StatusNoContent:
 	case http.StatusOK:
 	}
 
