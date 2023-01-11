@@ -1200,10 +1200,14 @@ fi
 mv "${TMP_SYSTEMD_CONFIG}" "${SYSTEMD_CONFIG}"
 
 if command -v sestatus && sestatus; then
-    echo "SELinux is enabled, relabeling binary and systemd unit file"
-    semanage fcontext -m -t bin_t /usr/local/bin/otelcol-sumo
-    restorecon -v "${SUMO_BINARY_PATH}"
-    restorecon -v "${SYSTEMD_CONFIG}"
+    if command -v semanage &> /dev/null; then
+        echo "SELinux is enabled, relabeling binary and systemd unit file"
+        semanage fcontext -m -t bin_t /usr/local/bin/otelcol-sumo
+        restorecon -v "${SUMO_BINARY_PATH}"
+        restorecon -v "${SYSTEMD_CONFIG}"
+    else
+        echo "semanage command not found, skipping SELinux relabeling"
+    fi
 fi
 
 echo 'Enable otelcol-sumo service'
