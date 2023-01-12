@@ -1205,7 +1205,6 @@ if command -v sestatus && sestatus; then
     if ! command -v semanage &> /dev/null; then
         if [[ -f "/etc/redhat-release" ]]; then
             echo "semanage command not found, installing it..."
-            yum update
             yum install -y policycoreutils-python-utils
         fi
     fi
