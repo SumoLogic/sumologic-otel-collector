@@ -16,14 +16,10 @@ package telegrafreceiver
 
 import (
 	"time"
-
-	"go.opentelemetry.io/collector/config"
 )
 
 // Config defines configuration for the telegraf receiver.
 type Config struct {
-	*config.ReceiverSettings `mapstructure:"-"`
-
 	// AgentConfig is the yaml config used as telegraf configuration.
 	// Please note that only inputs should be configured as all metrics gathered
 	// by them will be passed through to otc pipeline for processing and export.
