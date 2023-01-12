@@ -1210,7 +1210,7 @@ if command -v sestatus && sestatus; then
     fi
 
     if command -v semanage &> /dev/null; then
-        semanage fcontext -m -t bin_t /usr/local/bin/otelcol-sumo
+        semanage fcontext -a -t bin_t /usr/local/bin/otelcol-sumo
         restorecon -v "${SUMO_BINARY_PATH}"
         restorecon -v "${SYSTEMD_CONFIG}"
     else
