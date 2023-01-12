@@ -51,6 +51,9 @@ type Config struct {
 	// https://help.sumologic.com/docs/manage/fields
 	CollectorFields map[string]interface{} `mapstructure:"collector_fields"`
 
+	// DiscoverCollectorTags enables collector metadata tag auto-discovery.
+	DiscoverCollectorTags bool `mapstructure:"discover_collector_tags"`
+
 	ApiBaseUrl string `mapstructure:"api_base_url"`
 
 	HeartBeatInterval time.Duration `mapstructure:"heartbeat_interval"`
