@@ -1213,7 +1213,7 @@ if command -v sestatus && sestatus; then
 
     if command -v semanage &> /dev/null; then
         # Check if there's already an fcontext record for the collector bin.
-        if command -v semanage fcontext -l | grep otelcol-sumo  &> /dev/null; then
+        if semanage fcontext -l | grep otelcol-sumo &> /dev/null; then
             # Modify the existing fcontext record.
             semanage fcontext -m -t bin_t /usr/local/bin/otelcol-sumo
         else
