@@ -4,13 +4,13 @@ go 1.18
 
 require (
 	github.com/cenkalti/backoff/v4 v4.2.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.68.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.69.0
 	github.com/openshift/client-go v0.0.0-20210521082421-73d9475a9142
 	github.com/stretchr/testify v1.8.1
-	go.opentelemetry.io/collector v0.68.0
-	go.opentelemetry.io/collector/component v0.68.0
-	go.opentelemetry.io/collector/consumer v0.68.0
-	go.opentelemetry.io/collector/pdata v1.0.0-rc2
+	go.opentelemetry.io/collector v0.69.0
+	go.opentelemetry.io/collector/component v0.69.0
+	go.opentelemetry.io/collector/consumer v0.69.0
+	go.opentelemetry.io/collector/pdata v1.0.0-rc3
 	go.uber.org/zap v1.24.0
 	k8s.io/api v0.23.5
 	k8s.io/apimachinery v0.23.5
@@ -40,7 +40,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/knadh/koanf v1.4.4 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.2 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
@@ -52,20 +52,20 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
-	github.com/prometheus/common v0.38.0 // indirect
+	github.com/prometheus/common v0.39.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/prometheus/statsd_exporter v0.22.7 // indirect
 	github.com/rogpeppe/go-internal v1.8.1 // indirect
-	github.com/shirou/gopsutil/v3 v3.22.10 // indirect
+	github.com/shirou/gopsutil/v3 v3.22.12 // indirect
 	github.com/spf13/cobra v1.6.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/collector/confmap v0.68.0 // indirect
-	go.opentelemetry.io/collector/featuregate v0.68.0 // indirect
-	go.opentelemetry.io/collector/semconv v0.68.0 // indirect
+	go.opentelemetry.io/collector/confmap v0.69.0 // indirect
+	go.opentelemetry.io/collector/featuregate v0.69.0 // indirect
+	go.opentelemetry.io/collector/semconv v0.69.0 // indirect
 	go.opentelemetry.io/contrib/propagators/b3 v1.12.0 // indirect
 	go.opentelemetry.io/otel v1.11.2 // indirect
 	go.opentelemetry.io/otel/exporters/prometheus v0.34.0 // indirect
@@ -76,7 +76,7 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/net v0.4.0 // indirect
-	golang.org/x/oauth2 v0.0.0-20220722155238-128564f6959c // indirect
+	golang.org/x/oauth2 v0.3.0 // indirect
 	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/term v0.3.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
@@ -95,3 +95,8 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
+
+// This component uses the otelcoltest package, which depends on zpagesextension, but uses a replace to refer to it in its go.mod
+// As a result, we pull the wrong version here without this replace
+// This can be removed once upstream updates the versions in zpagesextension go.mod or removes the dependency
+replace go.opentelemetry.io/collector/extension/zpagesextension => go.opentelemetry.io/collector/extension/zpagesextension v0.69.0

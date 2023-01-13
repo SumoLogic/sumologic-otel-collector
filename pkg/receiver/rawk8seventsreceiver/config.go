@@ -16,14 +16,11 @@ package rawk8seventsreceiver
 
 import (
 	"time"
-
-	"go.opentelemetry.io/collector/config"
 )
 
 // Config defines configuration for the receiver.
 type Config struct {
-	config.ReceiverSettings `mapstructure:",squash"`
-	APIConfig               `mapstructure:",squash"`
+	APIConfig `mapstructure:",squash"`
 	// List of ‘namespaces’ to collect events from.
 	// Empty list means all namespaces
 	Namespaces []string `mapstructure:"namespaces"`
