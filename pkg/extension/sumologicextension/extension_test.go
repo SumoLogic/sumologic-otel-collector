@@ -1380,7 +1380,7 @@ func TestRegistrationRequestPayload(t *testing.T) {
 func TestWatchCredentialKey(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.Credentials.InstallToken = "dummy_install_token"
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -1405,7 +1405,7 @@ func TestWatchCredentialKey(t *testing.T) {
 func TestCreateCredentialsHeader(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.Credentials.InstallToken = "dummy_install_token"
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 
 	_, err = se.CreateCredentialsHeader()

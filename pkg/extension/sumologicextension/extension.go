@@ -148,18 +148,19 @@ func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID, bu
 	backOff.MaxInterval = conf.BackOff.MaxInterval
 
 	return &SumologicExtension{
-		collectorName:    collectorName,
-		buildVersion:     buildVersion,
-		baseUrl:          strings.TrimSuffix(conf.ApiBaseUrl, "/"),
-		conf:             conf,
-		origLogger:       logger,
-		logger:           logger,
-		hashKey:          hashKey,
-		credentialsStore: credentialsStore,
-		updateMetadata:   featuregate.GetRegistry().IsEnabled(updateCollectorMetadataID),
-		closeChan:        make(chan struct{}),
-		backOff:          backOff,
-		id:               id,
+		collectorName:     collectorName,
+		buildVersion:      buildVersion,
+		baseUrl:           strings.TrimSuffix(conf.ApiBaseUrl, "/"),
+		credsNotifyUpdate: make(chan struct{}),
+		conf:              conf,
+		origLogger:        logger,
+		logger:            logger,
+		hashKey:           hashKey,
+		credentialsStore:  credentialsStore,
+		updateMetadata:    featuregate.GetRegistry().IsEnabled(updateCollectorMetadataID),
+		closeChan:         make(chan struct{}),
+		backOff:           backOff,
+		id:                id,
 	}, nil
 }
 
