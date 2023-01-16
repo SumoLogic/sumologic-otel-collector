@@ -38,8 +38,6 @@ import (
 func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
 	// feature flags, which are enabled by default in our distro
 	err := featuregate.GetRegistry().Apply(map[string]bool{
-		"receiver.apache.emitServerNameAsResourceAttribute":            true,
-		"receiver.apache.emitPortAsResourceAttribute":                  true,
 		"receiver.elasticsearch.emitClusterHealthDetailedShardMetrics": true,
 		"receiver.elasticsearch.emitAllIndexOperationMetrics":          true,
 	})

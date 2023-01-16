@@ -34,6 +34,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
+	"go.opentelemetry.io/collector/featuregate"
 	"go.uber.org/zap"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/api"
@@ -43,6 +44,20 @@ import (
 const (
 	uuidRegex = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 )
+
+func TestMain(m *testing.M) {
+	// Enable the feature gates before all tests to avoid flaky tests.
+	err := featuregate.GetRegistry().Apply(map[string]bool{
+		updateCollectorMetadataID: true,
+	})
+
+	if err != nil {
+		panic("unable to set feature gates")
+	}
+
+	code := m.Run()
+	os.Exit(code)
+}
 
 func TestBasicExtensionConstruction(t *testing.T) {
 	t.Parallel()
@@ -79,7 +94,7 @@ func TestBasicExtensionConstruction(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {
-			se, err := newSumologicExtension(tc.Config, zap.NewNop(), component.NewID("sumologic"))
+			se, err := newSumologicExtension(tc.Config, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 			if tc.WantErr {
 				assert.Error(t, err)
 			} else {
@@ -114,8 +129,13 @@ func TestBasicStart(t *testing.T) {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 
-			// heartbeat
+			// metadata
 			case 2:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+
+			// heartbeat
+			case 3:
 				assert.Equal(t, heartbeatUrl, req.URL.Path)
 				w.WriteHeader(204)
 
@@ -137,7 +157,7 @@ func TestBasicStart(t *testing.T) {
 	cfg.Credentials.InstallToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
 
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	assert.NotEmpty(t, se.registrationInfo.CollectorCredentialId)
@@ -171,8 +191,13 @@ func TestStoreCredentials(t *testing.T) {
 						w.WriteHeader(http.StatusInternalServerError)
 					}
 
-				// heartbeat
+				// metadata
 				case 2:
+					assert.Equal(t, metadataUrl, req.URL.Path)
+					w.WriteHeader(200)
+
+				// heartbeat
+				case 3:
 					assert.Equal(t, heartbeatUrl, req.URL.Path)
 					w.WriteHeader(204)
 
@@ -208,7 +233,7 @@ func TestStoreCredentials(t *testing.T) {
 		// Ensure the directory doesn't exist before running the extension
 		require.NoError(t, os.RemoveAll(dir))
 
-		se, err := newSumologicExtension(cfg, logger, component.NewID("sumologic"))
+		se, err := newSumologicExtension(cfg, logger, component.NewID("sumologic"), "1.0.0")
 		require.NoError(t, err)
 		key := createHashKey(cfg)
 		fileName, err := credentials.HashKeyToFilename(key)
@@ -234,7 +259,7 @@ func TestStoreCredentials(t *testing.T) {
 		// Ensure the directory has 600 permissions
 		require.NoError(t, os.Chmod(dir, 0600))
 
-		se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+		se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 		require.NoError(t, err)
 		key := createHashKey(cfg)
 		fileName, err := credentials.HashKeyToFilename(key)
@@ -259,7 +284,7 @@ func TestStoreCredentials(t *testing.T) {
 		// Ensure the directory has 700 permissions
 		require.NoError(t, os.Chmod(dir, 0700))
 
-		se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+		se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 		require.NoError(t, err)
 		key := createHashKey(cfg)
 		fileName, err := credentials.HashKeyToFilename(key)
@@ -282,7 +307,7 @@ func TestStoreCredentials(t *testing.T) {
 		cfg := getConfig(srv.URL)
 		cfg.CollectorCredentialsDirectory = dir
 
-		se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+		se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 		require.NoError(t, err)
 		key := createHashKey(cfg)
 		fileName, err := credentials.HashKeyToFilename(key)
@@ -319,6 +344,11 @@ func TestStoreCredentials_PreexistingCredentialsAreUsed(t *testing.T) {
 				case 1:
 					require.Equal(t, heartbeatUrl, req.URL.Path)
 					w.WriteHeader(204)
+
+				// metadata
+				case 2:
+					require.Equal(t, metadataUrl, req.URL.Path)
+					w.WriteHeader(200)
 
 				// should not produce any more requests
 				default:
@@ -368,7 +398,7 @@ func TestStoreCredentials_PreexistingCredentialsAreUsed(t *testing.T) {
 		}),
 	)
 
-	se, err := newSumologicExtension(cfg, logger, component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, logger, component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 
 	fileName, err := credentials.HashKeyToFilename(hashKey)
@@ -388,7 +418,7 @@ func TestStoreCredentials_PreexistingCredentialsAreUsed(t *testing.T) {
 	credsPathMd5 := path.Join(dir, fileNameMd5)
 	require.NoFileExists(t, credsPathMd5)
 
-	require.EqualValues(t, atomic.LoadInt32(&reqCount), 1)
+	require.EqualValues(t, atomic.LoadInt32(&reqCount), 2)
 }
 
 func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T) {
@@ -416,8 +446,13 @@ func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T
 						w.WriteHeader(http.StatusInternalServerError)
 					}
 
-				// heartbeat
+				// metadata
 				case 2:
+					assert.Equal(t, metadataUrl, req.URL.Path)
+					w.WriteHeader(200)
+
+				// heartbeat
+				case 3:
 					assert.Equal(t, heartbeatUrl, req.URL.Path)
 					w.WriteHeader(204)
 
@@ -464,7 +499,7 @@ func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T
 	logger2, err := zap.NewDevelopment(zap.Fields(zap.Int("#", 2)))
 	require.NoError(t, err)
 
-	se1, err := newSumologicExtension(cfg1, logger1, component.NewID("sumologic"))
+	se1, err := newSumologicExtension(cfg1, logger1, component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, se1.Shutdown(context.Background())) })
 	fileName1, err := credentials.HashKeyToFilename(createHashKey(cfg1))
@@ -474,7 +509,7 @@ func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T
 	require.NoError(t, se1.Start(context.Background(), componenttest.NewNopHost()))
 	require.FileExists(t, credsPath1)
 
-	se2, err := newSumologicExtension(cfg2, logger2, component.NewID("sumologic"))
+	se2, err := newSumologicExtension(cfg2, logger2, component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, se2.Shutdown(context.Background())) })
 	fileName2, err := credentials.HashKeyToFilename(createHashKey(cfg2))
@@ -520,8 +555,13 @@ func TestRegisterEmptyCollectorName(t *testing.T) {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 
-			// heartbeat
+			// metadata
 			case 2:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+
+			// heartbeat
+			case 3:
 				assert.Equal(t, heartbeatUrl, req.URL.Path)
 				w.WriteHeader(204)
 
@@ -545,7 +585,7 @@ func TestRegisterEmptyCollectorName(t *testing.T) {
 	cfg.Credentials.InstallToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
 
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	regexPattern := fmt.Sprintf("%s-%s", hostname, uuidRegex)
@@ -586,8 +626,13 @@ func TestRegisterEmptyCollectorNameForceRegistration(t *testing.T) {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 
-			// register again because force registration was set
+			// metadata
 			case 2:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+
+			// register again because force registration was set
+			case 3:
 				require.Equal(t, registerUrl, req.URL.Path)
 
 				authHeader := req.Header.Get("Authorization")
@@ -603,6 +648,11 @@ func TestRegisterEmptyCollectorNameForceRegistration(t *testing.T) {
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
+
+			// metadata
+			case 4:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
 
 			// should not produce any more requests
 			default:
@@ -625,7 +675,7 @@ func TestRegisterEmptyCollectorNameForceRegistration(t *testing.T) {
 	cfg.CollectorCredentialsDirectory = dir
 	cfg.ForceRegistration = true
 
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	require.NoError(t, se.Shutdown(context.Background()))
@@ -637,7 +687,7 @@ func TestRegisterEmptyCollectorNameForceRegistration(t *testing.T) {
 	colCreds, err := se.credentialsStore.Get(se.hashKey)
 	require.NoError(t, err)
 	colName := colCreds.CollectorName
-	se, err = newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err = newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	assert.Equal(t, se.collectorName, colName)
@@ -672,8 +722,13 @@ func TestCollectorSendsBasicAuthHeadersOnRegistration(t *testing.T) {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 
-			// heartbeat
+			// metadata
 			case 2:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+
+			// heartbeat
+			case 3:
 				assert.Equal(t, heartbeatUrl, req.URL.Path)
 				w.WriteHeader(204)
 
@@ -696,7 +751,7 @@ func TestCollectorSendsBasicAuthHeadersOnRegistration(t *testing.T) {
 	cfg.Credentials.InstallToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
 
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	require.NoError(t, se.Shutdown(context.Background()))
@@ -745,24 +800,40 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 	}{
 		{
 			name:             "collector checks found credentials via heartbeat call - no registration is done",
-			expectedReqCount: 2,
+			expectedReqCount: 3,
 			srvFn: func() (*httptest.Server, *int32) {
 				var reqCount int32
 
 				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-						atomic.AddInt32(&reqCount, 1)
+						reqNum := atomic.AddInt32(&reqCount, 1)
 
-						require.NotEqual(t, registerUrl, req.URL.Path,
-							"collector shouldn't call the register API when credentials locally retrieved")
-						require.Equal(t, heartbeatUrl, req.URL.Path)
-						w.WriteHeader(204)
+						switch reqNum {
 
-						authHeader := req.Header.Get("Authorization")
-						token := base64.StdEncoding.EncodeToString(
-							[]byte("test-credential-id:test-credential-key"),
-						)
-						assert.Equal(t, "Basic "+token, authHeader,
-							"collector didn't send correct Authorization header with heartbeat request")
+						// heatbeat
+						case 1:
+							require.NotEqual(t, registerUrl, req.URL.Path,
+								"collector shouldn't call the register API when credentials locally retrieved")
+
+							assert.Equal(t, heartbeatUrl, req.URL.Path)
+
+							authHeader := req.Header.Get("Authorization")
+							token := base64.StdEncoding.EncodeToString(
+								[]byte("test-credential-id:test-credential-key"),
+							)
+							assert.Equal(t, "Basic "+token, authHeader,
+								"collector didn't send correct Authorization header with heartbeat request")
+
+							w.WriteHeader(204)
+
+						// metadata
+						case 2:
+							assert.Equal(t, metadataUrl, req.URL.Path)
+							w.WriteHeader(200)
+
+						// should not produce any more requests
+						default:
+							w.WriteHeader(http.StatusInternalServerError)
+						}
 					})),
 					&reqCount
 			},
@@ -777,7 +848,7 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 		},
 		{
 			name:             "collector registers when no matching credentials are found in local storage",
-			expectedReqCount: 2,
+			expectedReqCount: 3,
 			srvFn: func() (*httptest.Server, *int32) {
 				var reqCount int32
 
@@ -803,8 +874,12 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 								w.WriteHeader(http.StatusInternalServerError)
 							}
 
-						// heartbeat
+						// metadata
 						case 2:
+							w.WriteHeader(200)
+
+						// heartbeat
+						case 3:
 							w.WriteHeader(204)
 
 						// should not produce any more requests
@@ -838,7 +913,7 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 			logger, err := zap.NewDevelopment()
 			require.NoError(t, err)
 
-			se, err := newSumologicExtension(cfg, logger, component.NewID("sumologic"))
+			se, err := newSumologicExtension(cfg, logger, component.NewID("sumologic"), "1.0.0")
 			require.NoError(t, err)
 			require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 
@@ -895,8 +970,13 @@ func TestRegisterEmptyCollectorNameWithBackoff(t *testing.T) {
 					}
 				}
 
-			// heartbeat
+			// metadata
 			case reqNum == retriesLimit+1:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+
+			// heartbeat
+			case reqNum == retriesLimit+2:
 				assert.Equal(t, heartbeatUrl, req.URL.Path)
 				w.WriteHeader(204)
 
@@ -922,7 +1002,7 @@ func TestRegisterEmptyCollectorNameWithBackoff(t *testing.T) {
 	cfg.BackOff.InitialInterval = time.Millisecond
 	cfg.BackOff.MaxInterval = time.Millisecond
 
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	regexPattern := fmt.Sprintf("%s-%s", hostname, uuidRegex)
@@ -974,7 +1054,7 @@ func TestRegisterEmptyCollectorNameUnrecoverableError(t *testing.T) {
 	cfg.BackOff.InitialInterval = time.Millisecond
 	cfg.BackOff.MaxInterval = time.Millisecond
 
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.EqualError(t, se.Start(context.Background(), componenttest.NewNopHost()),
 		"collector registration failed: failed to register the collector, got HTTP status code: 404")
@@ -1010,15 +1090,35 @@ func TestRegistrationRedirect(t *testing.T) {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 
-			// heartbeat, and 2 heartbeats after restart
-			case 2, 3, 4:
+			// metadata
+			case 2:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+
+			// heartbeat
+			case 3:
+				assert.Equal(t, heartbeatUrl, req.URL.Path)
+				w.WriteHeader(204)
+
+			// heartbeat
+			case 4:
+				assert.Equal(t, heartbeatUrl, req.URL.Path)
+				w.WriteHeader(204)
+
+			// metadata
+			case 5:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+
+			// heartbeat
+			case 6:
 				assert.Equal(t, heartbeatUrl, req.URL.Path)
 				w.WriteHeader(204)
 
 			// should not produce any more requests
 			default:
 				require.Fail(t,
-					"extension should not make more than 2 requests to the destination server",
+					"extension should not make more than 5 requests to the destination server",
 				)
 			}
 		},
@@ -1062,22 +1162,22 @@ func TestRegistrationRedirect(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("works correctly", func(t *testing.T) {
-		se, err := newSumologicExtension(configFn(), logger, component.NewID("sumologic"))
+		se, err := newSumologicExtension(configFn(), logger, component.NewID("sumologic"), "1.0.0")
 		require.NoError(t, err)
 		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 		assert.Eventually(t, func() bool { return atomic.LoadInt32(&origReqCount) == 1 },
 			5*time.Second, 100*time.Millisecond,
 			"extension should only make 1 request to the original server before redirect",
 		)
-		assert.Eventually(t, func() bool { return atomic.LoadInt32(&destReqCount) == 2 },
+		assert.Eventually(t, func() bool { return atomic.LoadInt32(&destReqCount) == 3 },
 			5*time.Second, 100*time.Millisecond,
-			"extension should make 2 requests (registration + heartbeat) to the destination server",
+			"extension should make 3 requests (registration + metadata + heartbeat) to the destination server",
 		)
 		require.NoError(t, se.Shutdown(context.Background()))
 	})
 
 	t.Run("credentials store retrieves credentials with redirected api url", func(t *testing.T) {
-		se, err := newSumologicExtension(configFn(), logger, component.NewID("sumologic"))
+		se, err := newSumologicExtension(configFn(), logger, component.NewID("sumologic"), "1.0.0")
 		require.NoError(t, err)
 		require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 
@@ -1086,10 +1186,10 @@ func TestRegistrationRedirect(t *testing.T) {
 			"after restarting with locally stored credentials extension shouldn't call the original server",
 		)
 
-		assert.Eventually(t, func() bool { return atomic.LoadInt32(&destReqCount) == 4 },
+		assert.Eventually(t, func() bool { return atomic.LoadInt32(&destReqCount) == 6 },
 			5*time.Second, 100*time.Millisecond,
-			"extension should make 4 requests (registration + heartbeat, after restart "+
-				"heartbeat to validate credentials and then the first heartbeat on "+
+			"extension should make 6 requests (registration + metadata + heartbeat, after restart "+
+				"heartbeat to validate credentials, metadata update, and then the first heartbeat on "+
 				"which we wait here) to the destination server",
 		)
 
@@ -1130,19 +1230,24 @@ func TestCollectorReregistersAfterHTTPUnathorizedFromHeartbeat(t *testing.T) {
 				assert.Equal(t, registerUrl, req.URL.Path)
 				handlerRegister()
 
-			// heartbeat
+			// metadata
 			case 2:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+
+			// heartbeat
+			case 3:
 				assert.Equal(t, heartbeatUrl, req.URL.Path)
 				w.WriteHeader(204)
 
 			// heartbeat
-			case 3:
+			case 4:
 				assert.Equal(t, heartbeatUrl, req.URL.Path)
 				// return unauthorized to mimic collector being removed from API
 				w.WriteHeader(http.StatusUnauthorized)
 
 			// register
-			case 4:
+			case 5:
 				assert.Equal(t, registerUrl, req.URL.Path)
 				handlerRegister()
 
@@ -1169,7 +1274,7 @@ func TestCollectorReregistersAfterHTTPUnathorizedFromHeartbeat(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	se, err := newSumologicExtension(cfg, logger, component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, logger, component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 
@@ -1193,36 +1298,48 @@ func TestRegistrationRequestPayload(t *testing.T) {
 
 	hostname, err := os.Hostname()
 	require.NoError(t, err)
+	var reqCount int32
 	srv := httptest.NewServer(func() http.HandlerFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			require.Equal(t, registerUrl, req.URL.Path)
+			reqNum := atomic.AddInt32(&reqCount, 1)
 
-			var reqPayload api.OpenRegisterRequestPayload
-			require.NoError(t, json.NewDecoder(req.Body).Decode(&reqPayload))
-			require.True(t, reqPayload.Clobber)
-			require.Equal(t, hostname, reqPayload.Hostname)
-			require.Equal(t, "my description", reqPayload.Description)
-			require.Equal(t, "my category/", reqPayload.Category)
-			require.EqualValues(t,
-				map[string]interface{}{
-					"field1": "value1",
-					"field2": "value2",
-				},
-				reqPayload.Fields,
-			)
-			require.Equal(t, "PST", reqPayload.TimeZone)
+			switch reqNum {
+			// register
+			case 1:
+				require.Equal(t, registerUrl, req.URL.Path)
 
-			authHeader := req.Header.Get("Authorization")
-			assert.Equal(t, "Bearer dummy_install_token", authHeader,
-				"collector didn't send correct Authorization header with registration request")
+				var reqPayload api.OpenRegisterRequestPayload
+				require.NoError(t, json.NewDecoder(req.Body).Decode(&reqPayload))
+				require.True(t, reqPayload.Clobber)
+				require.Equal(t, hostname, reqPayload.Hostname)
+				require.Equal(t, "my description", reqPayload.Description)
+				require.Equal(t, "my category/", reqPayload.Category)
+				require.EqualValues(t,
+					map[string]interface{}{
+						"field1": "value1",
+						"field2": "value2",
+					},
+					reqPayload.Fields,
+				)
+				require.Equal(t, "PST", reqPayload.TimeZone)
 
-			_, err = w.Write([]byte(`{
-				"collectorCredentialId": "mycredentialID",
-				"collectorCredentialKey": "mycredentialKey",
-				"collectorId": "0000000001231231",
-				"collectorName": "otc-test-123456123123"
-			}`))
-			require.NoError(t, err)
+				authHeader := req.Header.Get("Authorization")
+				assert.Equal(t, "Bearer dummy_install_token", authHeader,
+					"collector didn't send correct Authorization header with registration request")
+
+				_, err = w.Write([]byte(`{
+					"collectorCredentialId": "mycredentialID",
+					"collectorCredentialKey": "mycredentialKey",
+					"collectorId": "0000000001231231",
+					"collectorName": "otc-test-123456123123"
+					}`))
+				require.NoError(t, err)
+			// metadata
+			case 2:
+				assert.Equal(t, metadataUrl, req.URL.Path)
+				w.WriteHeader(200)
+			}
+
 		})
 	}())
 
@@ -1249,7 +1366,7 @@ func TestRegistrationRequestPayload(t *testing.T) {
 	}
 	cfg.TimeZone = "PST"
 
-	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"))
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	regexPattern := fmt.Sprintf("%s-%s", hostname, uuidRegex)
@@ -1305,4 +1422,65 @@ func TestCreateCredentialsHeader(t *testing.T) {
 		[]byte("test-credential-id:test-credential-key"),
 	)
 	assert.Equal(t, "Basic "+token, authHeader)
+}
+
+func TestGetHostIpAddress(t *testing.T) {
+	ip, err := getHostIpAddress()
+	require.NoError(t, err)
+	require.NotEmpty(t, ip)
+}
+
+func TestUpdateMetadataRequestPayload(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(func() http.HandlerFunc {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			require.Equal(t, metadataUrl, req.URL.Path)
+
+			var reqPayload api.OpenMetadataRequestPayload
+			require.NoError(t, json.NewDecoder(req.Body).Decode(&reqPayload))
+			require.NotEmpty(t, reqPayload.HostDetails.Name)
+			require.NotEmpty(t, reqPayload.HostDetails.OsName)
+			require.NotEmpty(t, reqPayload.HostDetails.OsVersion)
+			require.NotEmpty(t, reqPayload.NetworkDetails.HostIpAddress)
+			require.EqualValues(t, reqPayload.HostDetails.Environment, "EKS-1.20.2")
+			require.EqualValues(t, reqPayload.CollectorDetails.RunningVersion, "1.0.0")
+			require.EqualValues(t,
+				map[string]interface{}{
+					"team": "A",
+					"app":  "linux",
+				},
+				reqPayload.TagDetails,
+			)
+
+			_, err := w.Write([]byte(``))
+
+			require.NoError(t, err)
+		})
+	}())
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.CollectorName = ""
+	cfg.ApiBaseUrl = srv.URL
+	cfg.Credentials.InstallToken = "dummy_install_token"
+	cfg.BackOff.InitialInterval = time.Millisecond
+	cfg.BackOff.MaxInterval = time.Millisecond
+	cfg.Clobber = true
+	cfg.CollectorEnvironment = "EKS-1.20.2"
+	cfg.CollectorDescription = "my description"
+	cfg.CollectorCategory = "my category/"
+	cfg.CollectorFields = map[string]interface{}{
+		"team": "A",
+		"app":  "linux",
+	}
+	cfg.TimeZone = "PST"
+
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
+	require.NoError(t, err)
+
+	httpClient, err := se.getHTTPClient(se.conf.HTTPClientSettings, api.OpenRegisterResponsePayload{})
+	require.NoError(t, err)
+
+	err = se.updateMetadataWithHTTPClient(context.TODO(), httpClient)
+	require.NoError(t, err)
 }
