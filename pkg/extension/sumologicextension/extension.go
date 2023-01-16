@@ -684,7 +684,7 @@ func discoverTags() (map[string]interface{}, error) {
 	}
 
 	for _, v := range pl {
-		t["sumo.disco."+v] = "running"
+		t["sumo.disco."+v] = "" // We do not currently need a value, save bytes.
 	}
 
 	return t, nil
