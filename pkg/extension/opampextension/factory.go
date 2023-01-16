@@ -27,7 +27,7 @@ const (
 )
 
 func NewFactory() extension.Factory {
-	return extension.NewFactory(typeStr, createDefaultConfig, createExtension, component.StabilityLevelBeta)
+	return extension.NewFactory(typeStr, createDefaultConfig, createExtension, component.StabilityLevelAlpha)
 }
 
 func createDefaultConfig() component.Config {
