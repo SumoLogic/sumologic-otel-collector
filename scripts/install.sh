@@ -1201,9 +1201,30 @@ mv "${TMP_SYSTEMD_CONFIG}" "${SYSTEMD_CONFIG}"
 
 if command -v sestatus && sestatus; then
     echo "SELinux is enabled, relabeling binary and systemd unit file"
-    semanage fcontext -m -t bin_t /usr/local/bin/otelcol-sumo
-    restorecon -v "${SUMO_BINARY_PATH}"
-    restorecon -v "${SYSTEMD_CONFIG}"
+
+    # Check if semanage is available
+    if ! command -v semanage &> /dev/null; then
+        # Attempt to install it via yum if on a RHEL distribution.
+        if [[ -f "/etc/redhat-release" ]]; then
+            echo "semanage command not found, installing it..."
+            yum install -y policycoreutils-python-utils
+        fi
+    fi
+
+    if command -v semanage &> /dev/null; then
+        # Check if there's already an fcontext record for the collector bin.
+        if semanage fcontext -l | grep otelcol-sumo &> /dev/null; then
+            # Modify the existing fcontext record.
+            semanage fcontext -m -t bin_t /usr/local/bin/otelcol-sumo
+        else
+            # Add an fcontext record.
+            semanage fcontext -a -t bin_t /usr/local/bin/otelcol-sumo
+        fi
+        restorecon -v "${SUMO_BINARY_PATH}"
+        restorecon -v "${SYSTEMD_CONFIG}"
+    else
+        echo "semanage command not found, skipping SELinux relabeling"
+    fi
 fi
 
 echo 'Enable otelcol-sumo service'
