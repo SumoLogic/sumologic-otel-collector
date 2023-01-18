@@ -1,0 +1,62 @@
+receivers:
+  hostmetrics/linux/localhost:
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+      load: null
+      memory:
+        metrics:
+          system.memory.utilization:
+            enabled: true
+      disk: null
+      filesystem:
+        metrics:
+          system.filesystem.utilization:
+            enabled: true
+      network: null
+      paging: null
+      process:
+        metrics:
+          process.threads:
+            enabled: true
+  filelog/linux/localhost:
+    start_at: beginning
+    include_file_path_resolved: true
+    include:
+      - /var/log/auth.log
+      - /var/log/syslog
+      - /var/log/daemon.log
+      - /var/log/dpkg.log
+      - /var/log/kern.log
+processors:
+  resource/linux_resource_attributes/localhost:
+    attributes:
+      - key: sumo.datasource
+        value: linux
+        action: insert
+service:
+  pipelines:
+    metrics/linux/localhost:
+      receivers:
+        - hostmetrics/linux/localhost
+      processors:
+        - memory_limiter
+        - sumologic_schema
+        - resource/linux_resource_attributes/localhost
+        - resourcedetection/system
+        - batch
+      exporters:
+        - sumologic
+    logs/linux/localhost:
+      receivers:
+        - filelog/linux/localhost
+      processors:
+        - memory_limiter
+        - sumologic_schema
+        - resource/linux_resource_attributes/localhost
+        - resourcedetection/system
+        - batch
+      exporters:
+        - sumologic

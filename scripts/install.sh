@@ -545,6 +545,14 @@ function setup_config() {
         exit 1
     fi
 
+    if "${OS_TYPE}" == "linux"; then
+        LINUX_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/conf.d/linux.yaml"
+        if ! curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -f -s "${LINUX_CONFIG_URL}" -o "${CONFIG_DIRECTORY}/conf.d/"; then
+            echo "Cannot obtain Linux hostmetrics configuration for '${CONFIG_BRANCH}' branch"
+            exit 1
+        fi
+    fi
+    
     echo 'Changing permissions for config file and storage'
     chmod 440 "${CONFIG_PATH}"
     chmod -R 750 "${HOME_DIRECTORY}"
