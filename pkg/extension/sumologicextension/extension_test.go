@@ -1445,13 +1445,9 @@ func TestUpdateMetadataRequestPayload(t *testing.T) {
 			require.NotEmpty(t, reqPayload.NetworkDetails.HostIpAddress)
 			require.EqualValues(t, reqPayload.HostDetails.Environment, "EKS-1.20.2")
 			require.EqualValues(t, reqPayload.CollectorDetails.RunningVersion, "1.0.0")
-			require.EqualValues(t,
-				map[string]interface{}{
-					"team": "A",
-					"app":  "linux",
-				},
-				reqPayload.TagDetails,
-			)
+			require.EqualValues(t, reqPayload.TagDetails["team"], "A")
+			require.EqualValues(t, reqPayload.TagDetails["app"], "linux")
+			require.EqualValues(t, reqPayload.TagDetails["sumo.disco.enabled"], "true")
 
 			_, err := w.Write([]byte(``))
 
@@ -1473,6 +1469,7 @@ func TestUpdateMetadataRequestPayload(t *testing.T) {
 		"team": "A",
 		"app":  "linux",
 	}
+	cfg.DiscoverCollectorTags = true
 	cfg.TimeZone = "PST"
 
 	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
