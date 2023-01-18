@@ -1,0 +1,33 @@
+receivers:
+  hostmetrics/mac/localhost:
+    scrapers:
+      load: null
+      memory:
+        metrics:
+          system.memory.utilization:
+            enabled: true
+      filesystem:
+        metrics:
+          system.filesystem.utilization:
+            enabled: true
+      network: null
+      paging: null
+processors:
+  resource/mac_resource_attributes/localhost:
+    attributes:
+      - key: sumo.datasource
+        value: mac
+        action: insert
+service:
+  pipelines:
+    metrics/mac/localhost:
+      receivers:
+        - hostmetrics/mac/localhost
+      processors:
+        - memory_limiter
+        - sumologic_schema
+        - resource/mac_resource_attributes/localhost
+        - resourcedetection/system
+        - batch
+      exporters:
+        - sumologic
