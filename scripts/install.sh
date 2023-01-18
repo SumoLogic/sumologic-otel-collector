@@ -557,7 +557,7 @@ function setup_config() {
     if [[ "${OS_TYPE}" == "linux" && "${INSTALL_LINUX_APP}" == "true" ]]; then
         echo -e "Installing Linux App hostmetrics configuration"
         LINUX_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/conf.d/linux.yaml"
-        if ! curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -f -s "${LINUX_CONFIG_URL}" -o "${CONFIG_DIRECTORY}/conf.d/"; then
+        if ! curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -f -s "${LINUX_CONFIG_URL}" -o "${CONFIG_DIRECTORY}/conf.d/linux.yaml"; then
             echo "Cannot obtain Linux hostmetrics configuration for '${CONFIG_BRANCH}' branch"
             exit 1
         fi
@@ -1023,6 +1023,7 @@ parse_options "$@"
 readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
 readonly USER_CONFIG_DIRECTORY USER_ENV_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
 readonly ACL_LOG_FILE_PATHS
+readonly INSTALL_LINUX_APP
 
 if [[ "${UNINSTALL}" == "true" ]]; then
     uninstall
