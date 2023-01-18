@@ -66,11 +66,20 @@ option:
 |     `CA`      | `https://open-collectors.ca.sumologic.com`  |
 |     `IN`      | `https://open-collectors.in.sumologic.com`  |
 
-Here is a list of valid values for the OpAMP `endpoint` configuration option:
+Here is a list of valid values for the OpAMP `endpoint** configuration option:
+
+**Note:** As of Jan 2023, these endpoints are not yet available.
 
 |  Deployment   | API base URL                                |
 |:-------------:|---------------------------------------------|
-| default/`US1` | `TBD`                                       |
+| default/`US1` | `https://opamp-collectors.sumologic.com`     |
+|     `US2`     | `https://opamp-collectors.us2.sumologic.com` |
+|     `AU`      | `https://opamp-collectors.au.sumologic.com`  |
+|     `DE`      | `https://opamp-collectors.de.sumologic.com`  |
+|     `EU`      | `https://opamp-collectors.eu.sumologic.com`  |
+|     `JP`      | `https://opamp-collectors.jp.sumologic.com`  |
+|     `CA`      | `https://opamp-collectors.ca.sumologic.com`  |
+|     `IN`      | `https://opamp-collectors.in.sumologic.com`  |
 
 ## Storing local configuration
 
