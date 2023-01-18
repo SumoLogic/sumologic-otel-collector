@@ -126,6 +126,14 @@ func checkEnvTokenInConfig(c check) {
 	require.Equal(c.test, token, conf.Extensions.Sumologic.InstallToken, "install token is different than expected")
 }
 
+func checkHostmetricsConfigCreated(c check) {
+	require.FileExists(c.test, hostmetricsConfigPath, "hostmetrics configuration has not been created properly")
+}
+
+func checkHostmetricsConfigNotCreated(c check) {
+	require.NoFileExists(c.test, hostmetricsConfigPath, "hostmetrics configuration has been created")
+}
+
 func checkSystemdConfigCreated(c check) {
 	require.FileExists(c.test, systemdPath, "systemd configuration has not been created properly")
 }

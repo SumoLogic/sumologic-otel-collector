@@ -74,6 +74,27 @@ func TestInstallScript(t *testing.T) {
 				checkTokenInConfig,
 				checkSystemdConfigNotCreated,
 				checkUserNotExists,
+				checkHostmetricsConfigNotCreated,
+			},
+		},
+		{
+			name: "installation token and hostmetrics",
+			options: installOptions{
+				skipSystemd:  true,
+				installToken: installToken,
+				installHostmetrics: true,
+			},
+			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkConfigPathPermissions,
+				checkUserConfigCreated,
+				checkTokenInConfig,
+				checkSystemdConfigNotCreated,
+				checkUserNotExists,
+				checkHostmetricsConfigCreated,
 			},
 		},
 		{
