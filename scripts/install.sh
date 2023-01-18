@@ -132,7 +132,7 @@ Supported arguments:
   -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>               Version of Sumo Logic Distribution for OpenTelemetry Collector to install, e.g. 0.57.2-sumo-1.
                                         By default it gets latest version.
   -${ARG_SHORT_FIPS}, --${ARG_LONG_FIPS}                            Install the FIPS 140-2 compliant binary on Linux.
-  -${ARG_SHORT_INSTALL_HOSTMETRICS}, --${ARG_LONG_INSTALL_HOSTMETRICS}               Install the hostmetrics configuration to collect host metrics.
+  -${ARG_SHORT_INSTALL_HOSTMETRICS}, --${ARG_LONG_INSTALL_HOSTMETRICS}             Install the hostmetrics configuration to collect host metrics.
   -${ARG_SHORT_YES}, --${ARG_LONG_YES}                             Disable confirmation asks.
 
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                            Prints this help and usage.
