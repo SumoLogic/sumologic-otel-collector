@@ -132,7 +132,7 @@ Supported arguments:
   -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>               Version of Sumo Logic Distribution for OpenTelemetry Collector to install, e.g. 0.57.2-sumo-1.
                                         By default it gets latest version.
   -${ARG_SHORT_FIPS}, --${ARG_LONG_FIPS}                            Install the FIPS 140-2 compliant binary on Linux.
-  -${ARG_SHORT_INSTALL_LINUX_APP}, --${ARG_LONG_INSTALL_LINUX_APP}                    Install the Linux App, collect host metrics.
+  -${ARG_SHORT_INSTALL_LINUX_APP}, --${ARG_LONG_INSTALL_LINUX_APP}               Install the Linux App, collect host metrics.
   -${ARG_SHORT_YES}, --${ARG_LONG_YES}                             Disable confirmation asks.
 
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                            Prints this help and usage.
@@ -265,7 +265,7 @@ function parse_options() {
         if [[ -z "${CONFIG_BRANCH}" ]]; then
             CONFIG_BRANCH="${OPTARG}"
         fi ;;
-      "${ARG_SHORT_INSTALL_LINUX_APP}")   INSTALL_LINUX_APP=true ;;
+      "${ARG_SHORT_INSTALL_LINUX_APP}") INSTALL_LINUX_APP=true ;;
       "${ARG_SHORT_KEEP_DOWNLOADS}") KEEP_DOWNLOADS=true ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
@@ -555,6 +555,7 @@ function setup_config() {
     fi
 
     if [[ "${OS_TYPE}" == "linux" && "${INSTALL_LINUX_APP}" == "true" ]]; then
+        echo -e "Installing Linux App hostmetrics configuration"
         LINUX_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/conf.d/linux.yaml"
         if ! curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -f -s "${LINUX_CONFIG_URL}" -o "${CONFIG_DIRECTORY}/conf.d/"; then
             echo "Cannot obtain Linux hostmetrics configuration for '${CONFIG_BRANCH}' branch"
