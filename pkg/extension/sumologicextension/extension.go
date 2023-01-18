@@ -32,6 +32,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
+	ps "github.com/mitchellh/go-ps"
 	"github.com/shirou/gopsutil/v3/host"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/confighttp"
@@ -637,6 +638,58 @@ func getHostIpAddress() (string, error) {
 	return h, nil
 }
 
+var sumoAppProcesses = map[string]string{
+	"apache":                "apache",
+	"apache2":               "apache",
+	"httpd":                 "apache",
+	"docker":                "docker",
+	"elasticsearch":         "elasticsearch",
+	"mysql-server":          "mysql",
+	"mysqld":                "mysql",
+	"nginx":                 "nginx",
+	"postgresql":            "postgres",
+	"postgresql-9.5":        "postgres",
+	"rabbitmq-server":       "rabbitmq",
+	"redis":                 "redis",
+	"tomcat":                "tomcat",
+	"kafka-server-start.sh": "kafka", // Need to test this, most common shell wrapper.
+}
+
+func filteredProcessList() ([]string, error) {
+	var pl []string
+
+	p, err := ps.Processes()
+	if err != nil {
+		return pl, err
+	}
+
+	for _, v := range p {
+		e := strings.ToLower(v.Executable())
+		if a, i := sumoAppProcesses[e]; i {
+			pl = append(pl, a)
+		}
+	}
+
+	return pl, nil
+}
+
+func discoverTags() (map[string]interface{}, error) {
+	t := map[string]interface{}{
+		"sumo.disco.enabled": "true",
+	}
+
+	pl, err := filteredProcessList()
+	if err != nil {
+		return t, err
+	}
+
+	for _, v := range pl {
+		t["sumo.disco."+v] = "" // We do not currently need a value, save bytes.
+	}
+
+	return t, nil
+}
+
 func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, httpClient *http.Client) error {
 	u, err := url.Parse(se.BaseUrl() + metadataUrl)
 	if err != nil {
@@ -653,9 +706,17 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 		return err
 	}
 
-	td := se.conf.CollectorFields
-	if td == nil {
-		td = map[string]interface{}{}
+	td := map[string]interface{}{}
+
+	if se.conf.DiscoverCollectorTags {
+		td, err = discoverTags()
+		if err != nil {
+			return err
+		}
+	}
+
+	for k, v := range se.conf.CollectorFields {
+		td[k] = v
 	}
 
 	var buff bytes.Buffer
