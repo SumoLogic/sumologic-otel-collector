@@ -304,7 +304,7 @@ function check_dependencies() {
         error=1
     fi
 
-    for cmd in echo sed curl head grep sort mv chmod getopts hostname bc touch xargs; do
+    for cmd in echo sed curl head grep sort mv chmod getopts hostname bc touch xargs unzip; do
         if ! command -v "${cmd}" &> /dev/null; then
             echo "Command '${cmd}' not found. Please install it."
             error=1
