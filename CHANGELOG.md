@@ -11,10 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - feat: Collector metadata tag auto-discovery (local services, e.g. mysql) [#893]
 - feat(extension/opamp): implemented an opamp agent for remote configuration [#885]
+- feat: FIPS compliance [#902]
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.69.0-sumo-0...main
 [#893]: https://github.com/SumoLogic/sumologic-otel-collector/pull/893
 [#885]: https://github.com/SumoLogic/sumologic-otel-collector/pull/885
+[#902]: https://github.com/SumoLogic/sumologic-otel-collector/pull/902
 
 ## [v0.69.0-sumo-0]
 

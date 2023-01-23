@@ -7,6 +7,7 @@
 - [Performance](./performance.md)
 - [Best Practices](./best-practices.md)
 - [Mapping OpenTelemetry concepts to Sumo Logic](./open-telemetry-concepts.md)
+- [FIPS compliance](./fips.md)
 - [Known Issues](./known-issues.md)
 - [Troubleshooting](./troubleshooting.md)
 - [Purpose of Sumo Logic Distribution for OpenTelemetry Collector](./upstream-relation.md#purpose-of-sumo-logic-distribution-for-opentelemetry-collector)
