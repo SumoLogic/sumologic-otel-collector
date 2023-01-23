@@ -43,9 +43,9 @@ service:
         - hostmetrics/linux/localhost
       processors:
         - memory_limiter
-        - sumologic_schema
         - resource/linux_resource_attributes/localhost
         - resourcedetection/system
+        - sumologic_schema
         - batch
       exporters:
         - sumologic
