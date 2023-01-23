@@ -25,9 +25,9 @@ service:
         - hostmetrics/mac/localhost
       processors:
         - memory_limiter
-        - sumologic_schema
         - resource/mac_resource_attributes/localhost
         - resourcedetection/system
+        - sumologic_schema
         - batch
       exporters:
         - sumologic
