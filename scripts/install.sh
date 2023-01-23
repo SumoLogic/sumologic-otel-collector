@@ -281,6 +281,20 @@ function github_rate_limit() {
     curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -X GET https://api.github.com/rate_limit -v 2>&1 | grep x-ratelimit-remaining | grep -oE "[0-9]+"
 }
 
+# This function is applicable to very few platforms/distributions.
+function install_missing_dependencies() {
+    for cmd in echo bc unzip; do
+        if ! command -v "${cmd}" &> /dev/null; then
+            # Attempt to install it via yum if on a RHEL distribution.
+            if [[ -f "/etc/redhat-release" ]]; then
+                echo "Command '${cmd}' not found. Attempting to install '${cmd}'..."
+                # This only works if the tool/command matches the system package name.
+                yum install -y $cmd
+            fi
+        fi
+    done
+}
+
 function check_dependencies() {
     local error
     error=0
@@ -290,7 +304,7 @@ function check_dependencies() {
         error=1
     fi
 
-    for cmd in echo sed curl head grep sort mv chmod getopts hostname bc touch xargs; do
+    for cmd in echo sed curl head grep sort mv chmod getopts hostname bc touch xargs unzip; do
         if ! command -v "${cmd}" &> /dev/null; then
             echo "Command '${cmd}' not found. Please install it."
             error=1
@@ -986,6 +1000,7 @@ function set_acl_on_log_paths() {
 
 ############################ Main code
 
+install_missing_dependencies
 check_dependencies
 set_defaults
 parse_options "$@"
