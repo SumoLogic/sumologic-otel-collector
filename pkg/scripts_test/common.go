@@ -18,6 +18,9 @@ type testSpec struct {
 	installCode       int
 }
 
+// These checks always have to be true after a script execution
+var commonPostChecks = []checkFunc{checkNoBakFilesPresent}
+
 func tearDown(t *testing.T) {
 	t.Log("Cleaning up")
 	ch := check{
@@ -58,6 +61,10 @@ func runTest(t *testing.T, spec *testSpec) {
 
 	ch.code, ch.output, ch.err = runScript(ch)
 	checkRun(ch)
+
+	for _, c := range commonPostChecks {
+		c(ch)
+	}
 
 	for _, c := range spec.postChecks {
 		c(ch)
