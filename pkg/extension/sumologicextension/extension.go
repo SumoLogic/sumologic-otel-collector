@@ -54,6 +54,9 @@ type SumologicExtension struct {
 	baseUrlLock sync.RWMutex
 	baseUrl     string
 
+	credsNotifyLock   sync.Mutex
+	credsNotifyUpdate chan struct{}
+
 	host             component.Host
 	conf             *Config
 	origLogger       *zap.Logger
@@ -146,18 +149,19 @@ func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID, bu
 	backOff.MaxInterval = conf.BackOff.MaxInterval
 
 	return &SumologicExtension{
-		collectorName:    collectorName,
-		buildVersion:     buildVersion,
-		baseUrl:          strings.TrimSuffix(conf.ApiBaseUrl, "/"),
-		conf:             conf,
-		origLogger:       logger,
-		logger:           logger,
-		hashKey:          hashKey,
-		credentialsStore: credentialsStore,
-		updateMetadata:   featuregate.GetRegistry().IsEnabled(updateCollectorMetadataID),
-		closeChan:        make(chan struct{}),
-		backOff:          backOff,
-		id:               id,
+		collectorName:     collectorName,
+		buildVersion:      buildVersion,
+		baseUrl:           strings.TrimSuffix(conf.ApiBaseUrl, "/"),
+		credsNotifyUpdate: make(chan struct{}),
+		conf:              conf,
+		origLogger:        logger,
+		logger:            logger,
+		hashKey:           hashKey,
+		credentialsStore:  credentialsStore,
+		updateMetadata:    featuregate.GetRegistry().IsEnabled(updateCollectorMetadataID),
+		closeChan:         make(chan struct{}),
+		backOff:           backOff,
+		id:                id,
 	}, nil
 }
 
@@ -231,6 +235,9 @@ func (se *SumologicExtension) validateCredentials(
 //   - into http client and its transport so that each request is using collector
 //     credentials as authentication keys
 func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCredentials) error {
+	se.credsNotifyLock.Lock()
+	defer se.credsNotifyLock.Unlock()
+
 	// Set the registration info so that it can be used in RoundTripper.
 	se.registrationInfo = colCreds.Credentials
 
@@ -240,6 +247,10 @@ func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCr
 	}
 
 	se.httpClient = httpClient
+
+	// Let components know that the credentials may have changed.
+	close(se.credsNotifyUpdate)
+	se.credsNotifyUpdate = make(chan struct{})
 
 	return nil
 }
@@ -828,6 +839,49 @@ func (se *SumologicExtension) SetBaseUrl(baseUrl string) {
 	se.baseUrlLock.Lock()
 	se.baseUrl = baseUrl
 	se.baseUrlLock.Unlock()
+}
+
+// WatchCredentialKey watches for credential key updates. It makes use of a
+// channel close (done by injectCredentials) and string comparison with a
+// known/previous credential key (old). This function allows components to be
+// proactive when dealing with changes to authentication.
+func (se *SumologicExtension) WatchCredentialKey(ctx context.Context, old string) string {
+	se.credsNotifyLock.Lock()
+	v, ch := se.registrationInfo.CollectorCredentialKey, se.credsNotifyUpdate
+	se.credsNotifyLock.Unlock()
+
+	for v == old {
+		select {
+		case <-ctx.Done():
+			return v
+		case <-ch:
+			se.credsNotifyLock.Lock()
+			v, ch = se.registrationInfo.CollectorCredentialKey, se.credsNotifyUpdate
+			se.credsNotifyLock.Unlock()
+		}
+	}
+
+	return v
+}
+
+// CreateCredentialsHeader produces an HTTP header containing authentication
+// credentials. This function is for components that do not make use of the
+// RoundTripper or have an HTTP request to build upon.
+func (se *SumologicExtension) CreateCredentialsHeader() (http.Header, error) {
+	id, key := se.registrationInfo.CollectorCredentialId, se.registrationInfo.CollectorCredentialKey
+
+	if id == "" || key == "" {
+		return nil, errors.New("collector credentials are not set")
+	}
+
+	token := base64.StdEncoding.EncodeToString(
+		[]byte(id + ":" + key),
+	)
+
+	header := http.Header{}
+	header.Set("Authorization", "Basic "+token)
+
+	return header, nil
 }
 
 // Implement [1] in order for this extension to be used as custom exporter
