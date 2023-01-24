@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+############################ Constants
+readonly CURL_MAX_TIME=180
+
 ############################ Static variables
 
 ARG_SHORT_TOKEN='i'
@@ -928,7 +931,7 @@ function get_binary_from_branch() {
     curl_args=(
         "-fL"
         "--connect-timeout" "5"
-        "--max-time" "60"
+        "--max-time" "${CURL_MAX_TIME}"
         "--retry" "5"
         "--retry-delay" "0"
         "--retry-max-time" "150"
@@ -960,7 +963,7 @@ function get_binary_from_url() {
     curl_args=(
         "-fL"
         "--connect-timeout" "5"
-        "--max-time" "60"
+        "--max-time" "${CURL_MAX_TIME}"
         "--retry" "5"
         "--retry-delay" "0"
         "--retry-max-time" "150"
