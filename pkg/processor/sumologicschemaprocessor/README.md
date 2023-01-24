@@ -291,7 +291,7 @@ It's possible to convert specific attributes to fields. List of currently suppor
 
 In order to report one of them as field, following configuration is needed:
 
-```json
+```yaml
     add_severity_number_attribute:
         enabled: true
         attribute_name: "loglevel"
