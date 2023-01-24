@@ -95,6 +95,7 @@ func TestInstallScript(t *testing.T) {
 				checkSystemdConfigNotCreated,
 				checkUserNotExists,
 				checkHostmetricsConfigCreated,
+				checkHostmetricsOwnershipAndPermissions("root"),
 			},
 		},
 		{

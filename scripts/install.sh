@@ -562,9 +562,9 @@ function setup_config() {
             exit 1
         fi
     fi
-    
+
     echo 'Changing permissions for config file and storage'
-    chmod 440 "${CONFIG_PATH}"
+    chmod -R 440 "${CONFIG_PATH}" "${USER_CONFIG_DIRECTORY}"
     chmod -R 750 "${HOME_DIRECTORY}"
 
     echo 'Changing permissions for user env directory'
