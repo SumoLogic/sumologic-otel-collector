@@ -42,6 +42,8 @@ ARG_SHORT_BRANCH='b'
 ARG_LONG_BRANCH='branch'
 ARG_SHORT_KEEP_DOWNLOADS='n'
 ARG_LONG_KEEP_DOWNLOADS='keep-downloads'
+ARG_SHORT_INSTALL_HOSTMETRICS='H'
+ARG_LONG_INSTALL_HOSTMETRICS='install-hostmetrics'
 
 readonly ARG_SHORT_TOKEN ARG_LONG_TOKEN ARG_SHORT_HELP ARG_LONG_HELP ARG_SHORT_API ARG_LONG_API
 readonly ARG_SHORT_TAG ARG_LONG_TAG ARG_SHORT_VERSION ARG_LONG_VERSION ARG_SHORT_YES ARG_LONG_YES
@@ -50,6 +52,7 @@ readonly ARG_SHORT_PURGE ARG_LONG_PURGE ARG_SHORT_DOWNLOAD ARG_LONG_DOWNLOAD
 readonly ARG_SHORT_CONFIG_BRANCH ARG_LONG_CONFIG_BRANCH ARG_SHORT_BINARY_BRANCH ARG_LONG_CONFIG_BRANCH
 readonly ARG_SHORT_BRANCH ARG_LONG_BRANCH ARG_SHORT_SKIP_CONFIG ARG_LONG_SKIP_CONFIG
 readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ARG_SHORT_FIPS ARG_LONG_FIPS ENV_TOKEN
+readonly ARG_SHORT_INSTALL_HOSTMETRICS ARG_LONG_INSTALL_HOSTMETRICS
 
 ############################ Variables (see set_defaults function for default values)
 
@@ -78,6 +81,7 @@ CONFIG_PATH=""
 COMMON_CONFIG_PATH=""
 PURGE=""
 DOWNLOAD_ONLY=""
+INSTALL_HOSTMETRICS=false
 
 USER_API_URL=""
 USER_TOKEN=""
@@ -128,6 +132,7 @@ Supported arguments:
   -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>               Version of Sumo Logic Distribution for OpenTelemetry Collector to install, e.g. 0.57.2-sumo-1.
                                         By default it gets latest version.
   -${ARG_SHORT_FIPS}, --${ARG_LONG_FIPS}                            Install the FIPS 140-2 compliant binary on Linux.
+  -${ARG_SHORT_INSTALL_HOSTMETRICS}, --${ARG_LONG_INSTALL_HOSTMETRICS}             Install the hostmetrics configuration to collect host metrics.
   -${ARG_SHORT_YES}, --${ARG_LONG_YES}                             Disable confirmation asks.
 
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                            Prints this help and usage.
@@ -212,6 +217,9 @@ function parse_options() {
       "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_SKIP_CONFIG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_FIPS}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SKIP_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}")
         set -- "$@" "${arg}"
         ;;
+      "--${ARG_LONG_INSTALL_HOSTMETRICS}")
+        set -- "$@" "-${ARG_SHORT_INSTALL_HOSTMETRICS}"
+        ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
       *)
@@ -224,7 +232,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_FIPS}${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_SKIP_CONFIG}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_FIPS}${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_SKIP_CONFIG}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:${ARG_SHORT_INSTALL_HOSTMETRICS}" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -257,6 +265,7 @@ function parse_options() {
         if [[ -z "${CONFIG_BRANCH}" ]]; then
             CONFIG_BRANCH="${OPTARG}"
         fi ;;
+      "${ARG_SHORT_INSTALL_HOSTMETRICS}") INSTALL_HOSTMETRICS=true ;;
       "${ARG_SHORT_KEEP_DOWNLOADS}") KEEP_DOWNLOADS=true ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
@@ -545,8 +554,17 @@ function setup_config() {
         exit 1
     fi
 
+    if [[ "${INSTALL_HOSTMETRICS}" == "true" ]]; then
+        echo -e "Installing ${OS_TYPE} hostmetrics configuration"
+        HOSTMETRICS_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/conf.d/${OS_TYPE}.yaml"
+        if ! curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -f -s "${HOSTMETRICS_CONFIG_URL}" -o "${CONFIG_DIRECTORY}/conf.d/hostmetrics.yaml"; then
+            echo "Cannot obtain hostmetrics configuration for '${CONFIG_BRANCH}' branch"
+            exit 1
+        fi
+    fi
+
     echo 'Changing permissions for config file and storage'
-    chmod 440 "${CONFIG_PATH}"
+    chmod -R 440 "${CONFIG_PATH}" "${USER_CONFIG_DIRECTORY}"
     chmod -R 750 "${HOME_DIRECTORY}"
 
     echo 'Changing permissions for user env directory'
@@ -1005,6 +1023,7 @@ parse_options "$@"
 readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
 readonly USER_CONFIG_DIRECTORY USER_ENV_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
 readonly ACL_LOG_FILE_PATHS
+readonly INSTALL_HOSTMETRICS
 
 if [[ "${UNINSTALL}" == "true" ]]; then
     uninstall

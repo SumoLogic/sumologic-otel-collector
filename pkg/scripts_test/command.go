@@ -14,19 +14,20 @@ import (
 )
 
 type installOptions struct {
-	installToken      string
-	autoconfirm       bool
-	skipSystemd       bool
-	tags              map[string]string
-	skipConfig        bool
-	skipInstallToken  bool
-	fips              bool
-	envs              map[string]string
-	uninstall         bool
-	purge             bool
-	apiBaseURL        string
-	downloadOnly      bool
-	dontKeepDownloads bool
+	installToken       string
+	autoconfirm        bool
+	skipSystemd        bool
+	tags               map[string]string
+	skipConfig         bool
+	skipInstallToken   bool
+	fips               bool
+	envs               map[string]string
+	uninstall          bool
+	purge              bool
+	apiBaseURL         string
+	downloadOnly       bool
+	dontKeepDownloads  bool
+	installHostmetrics bool
 }
 
 func (io *installOptions) string() []string {
@@ -72,6 +73,10 @@ func (io *installOptions) string() []string {
 
 	if !io.dontKeepDownloads {
 		opts = append(opts, "--keep-downloads")
+	}
+
+	if io.installHostmetrics {
+		opts = append(opts, "--install-hostmetrics")
 	}
 
 	if len(io.tags) > 0 {

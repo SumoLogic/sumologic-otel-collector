@@ -11,6 +11,7 @@ const (
 	configPathPermissions uint32 = 0440
 	confDPath             string = etcPath + "/conf.d"
 	userConfigPath        string = confDPath + "/common.yaml"
+	hostmetricsConfigPath string = confDPath + "/hostmetrics.yaml"
 
 	systemdDirectoryPath string = "/run/systemd/system"
 
