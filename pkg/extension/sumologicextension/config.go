@@ -17,14 +17,12 @@ package sumologicextension
 import (
 	"time"
 
-	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/config/configopaque"
 )
 
 // Config has the configuration for the sumologic extension.
 type Config struct {
-	config.ExtensionSettings `mapstructure:"-"`
 	// squash ensures fields are correctly decoded in embedded struct.
 	confighttp.HTTPClientSettings `mapstructure:",squash"`
 
@@ -50,6 +48,9 @@ type Config struct {
 	// For more information on this subject visit:
 	// https://help.sumologic.com/docs/manage/fields
 	CollectorFields map[string]interface{} `mapstructure:"collector_fields"`
+
+	// DiscoverCollectorTags enables collector metadata tag auto-discovery.
+	DiscoverCollectorTags bool `mapstructure:"discover_collector_tags"`
 
 	ApiBaseUrl string `mapstructure:"api_base_url"`
 

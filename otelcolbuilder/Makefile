@@ -1,5 +1,5 @@
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.68.0
+BUILDER_VERSION ?= 0.69.0
 FIPS_SUFFIX ?= ""
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
 GO ?= go
@@ -87,7 +87,6 @@ _builder:
 _gobuild:
 	(cd cmd && \
 		CGO_ENABLED=$(CGO_ENABLED) go build -v \
-		-tags enable_unstable \
 		-ldflags=$(LDFLAGS) \
 		-trimpath \
 		-o ./$(BINARY_NAME)$(BUILDER_BIN_EXT) . \
@@ -98,7 +97,6 @@ _gobuild:
 _gobuild_debug:
 	(cd cmd && \
 		CGO_ENABLED=$(CGO_ENABLED) go build -v \
-		-tags enable_unstable \
 		-race \
 		-gcflags "all=-N -l" \
 		-o ./$(BINARY_NAME)-debug$(BUILDER_BIN_EXT) . \

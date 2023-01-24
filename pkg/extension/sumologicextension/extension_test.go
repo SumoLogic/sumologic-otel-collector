@@ -1377,6 +1377,53 @@ func TestRegistrationRequestPayload(t *testing.T) {
 	require.NoError(t, se.Shutdown(context.Background()))
 }
 
+func TestWatchCredentialKey(t *testing.T) {
+	cfg := createDefaultConfig().(*Config)
+	cfg.Credentials.InstallToken = "dummy_install_token"
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	ctxc, cancel := context.WithCancel(ctx)
+	cancel()
+	v := se.WatchCredentialKey(ctxc, "")
+	require.Equal(t, v, "")
+
+	v = se.WatchCredentialKey(context.Background(), "foobar")
+	require.Equal(t, v, "")
+
+	go func() {
+		time.Sleep(time.Millisecond * 100)
+		se.registrationInfo.CollectorCredentialKey = "test-credential-key"
+		close(se.credsNotifyUpdate)
+	}()
+
+	v = se.WatchCredentialKey(context.Background(), "")
+	require.Equal(t, v, "test-credential-key")
+}
+
+func TestCreateCredentialsHeader(t *testing.T) {
+	cfg := createDefaultConfig().(*Config)
+	cfg.Credentials.InstallToken = "dummy_install_token"
+	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
+	require.NoError(t, err)
+
+	_, err = se.CreateCredentialsHeader()
+	require.Error(t, err)
+
+	se.registrationInfo.CollectorCredentialId = "test-credential-id"
+	se.registrationInfo.CollectorCredentialKey = "test-credential-key"
+
+	h, err := se.CreateCredentialsHeader()
+	require.NoError(t, err)
+
+	authHeader := h.Get("Authorization")
+	token := base64.StdEncoding.EncodeToString(
+		[]byte("test-credential-id:test-credential-key"),
+	)
+	assert.Equal(t, "Basic "+token, authHeader)
+}
+
 func TestGetHostIpAddress(t *testing.T) {
 	ip, err := getHostIpAddress()
 	require.NoError(t, err)
@@ -1398,13 +1445,9 @@ func TestUpdateMetadataRequestPayload(t *testing.T) {
 			require.NotEmpty(t, reqPayload.NetworkDetails.HostIpAddress)
 			require.EqualValues(t, reqPayload.HostDetails.Environment, "EKS-1.20.2")
 			require.EqualValues(t, reqPayload.CollectorDetails.RunningVersion, "1.0.0")
-			require.EqualValues(t,
-				map[string]interface{}{
-					"team": "A",
-					"app":  "linux",
-				},
-				reqPayload.TagDetails,
-			)
+			require.EqualValues(t, reqPayload.TagDetails["team"], "A")
+			require.EqualValues(t, reqPayload.TagDetails["app"], "linux")
+			require.EqualValues(t, reqPayload.TagDetails["sumo.disco.enabled"], "true")
 
 			_, err := w.Write([]byte(``))
 
@@ -1426,6 +1469,7 @@ func TestUpdateMetadataRequestPayload(t *testing.T) {
 		"team": "A",
 		"app":  "linux",
 	}
+	cfg.DiscoverCollectorTags = true
 	cfg.TimeZone = "PST"
 
 	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")

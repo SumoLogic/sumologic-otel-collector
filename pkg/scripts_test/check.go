@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 	"strconv"
 	"syscall"
 	"testing"
@@ -83,6 +84,20 @@ func checkUserConfigCreated(c check) {
 
 func checkUserConfigNotCreated(c check) {
 	require.NoFileExists(c.test, userConfigPath, "user configuration has been created")
+}
+
+func checkNoBakFilesPresent(c check) {
+	cwd, err := os.Getwd()
+	require.NoError(c.test, err)
+	cwdGlob := filepath.Join(cwd, "*.bak")
+	etcPathGlob := filepath.Join(etcPath, "*.bak")
+	etcPathNestedGlob := filepath.Join(etcPath, "*", "*.bak")
+
+	for _, bakGlob := range []string{cwdGlob, etcPathGlob, etcPathNestedGlob} {
+		bakFiles, err := filepath.Glob(bakGlob)
+		require.NoError(c.test, err)
+		require.Empty(c.test, bakFiles)
+	}
 }
 
 func checkTokenInConfig(c check) {

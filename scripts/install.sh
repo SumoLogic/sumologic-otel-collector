@@ -281,6 +281,20 @@ function github_rate_limit() {
     curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -X GET https://api.github.com/rate_limit -v 2>&1 | grep x-ratelimit-remaining | grep -oE "[0-9]+"
 }
 
+# This function is applicable to very few platforms/distributions.
+function install_missing_dependencies() {
+    for cmd in echo bc unzip; do
+        if ! command -v "${cmd}" &> /dev/null; then
+            # Attempt to install it via yum if on a RHEL distribution.
+            if [[ -f "/etc/redhat-release" ]]; then
+                echo "Command '${cmd}' not found. Attempting to install '${cmd}'..."
+                # This only works if the tool/command matches the system package name.
+                yum install -y $cmd
+            fi
+        fi
+    done
+}
+
 function check_dependencies() {
     local error
     error=0
@@ -290,7 +304,7 @@ function check_dependencies() {
         error=1
     fi
 
-    for cmd in echo sed curl head grep sort mv chmod getopts hostname bc touch xargs; do
+    for cmd in echo sed curl head grep sort mv chmod getopts hostname bc touch xargs unzip; do
         if ! command -v "${cmd}" &> /dev/null; then
             echo "Command '${cmd}' not found. Please install it."
             error=1
@@ -527,12 +541,6 @@ function setup_config() {
         echo "Cannot obtain configuration for '${CONFIG_BRANCH}' branch"
         exit 1
     fi
-
-    # Fixing configuration for versions up to 0.57.2
-    # Normally the config branch is the same as the version tag, and in this case the config has a bug
-    # Instead of changing the branch, we fix it here, with the intent of removing this logic once 0.63.0 is released
-    # TODO: Remove this after 0.63.0 is released
-    sed -i.bak -e "s#~/.sumologic-otel-collector#/var/lib/otelcol-sumo/credentials#" "${CONFIG_PATH}"
 
     echo 'Changing permissions for config file and storage'
     chmod 440 "${CONFIG_PATH}"
@@ -986,6 +994,7 @@ function set_acl_on_log_paths() {
 
 ############################ Main code
 
+install_missing_dependencies
 check_dependencies
 set_defaults
 parse_options "$@"
@@ -1193,17 +1202,39 @@ sed -i.bak -e "s%/etc/otelcol-sumo/env%'${USER_ENV_DIRECTORY}'%" "${TMP_SYSTEMD_
 # Remove glob for versions up to 0.57
 if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then
     sed -i.bak -e "s% --config \"glob.*\"% --config ${COMMON_CONFIG_PATH}%" "${TMP_SYSTEMD_CONFIG}"
-    # clean up bak file
-    rm -f "${TMP_SYSTEMD_CONFIG_BAK}"
 fi
+
+# clean up bak file
+rm -f "${TMP_SYSTEMD_CONFIG_BAK}"
 
 mv "${TMP_SYSTEMD_CONFIG}" "${SYSTEMD_CONFIG}"
 
 if command -v sestatus && sestatus; then
     echo "SELinux is enabled, relabeling binary and systemd unit file"
-    semanage fcontext -m -t bin_t /usr/local/bin/otelcol-sumo
-    restorecon -v "${SUMO_BINARY_PATH}"
-    restorecon -v "${SYSTEMD_CONFIG}"
+
+    # Check if semanage is available
+    if ! command -v semanage &> /dev/null; then
+        # Attempt to install it via yum if on a RHEL distribution.
+        if [[ -f "/etc/redhat-release" ]]; then
+            echo "semanage command not found, installing it..."
+            yum install -y policycoreutils-python-utils
+        fi
+    fi
+
+    if command -v semanage &> /dev/null; then
+        # Check if there's already an fcontext record for the collector bin.
+        if semanage fcontext -l | grep otelcol-sumo &> /dev/null; then
+            # Modify the existing fcontext record.
+            semanage fcontext -m -t bin_t /usr/local/bin/otelcol-sumo
+        else
+            # Add an fcontext record.
+            semanage fcontext -a -t bin_t /usr/local/bin/otelcol-sumo
+        fi
+        restorecon -v "${SUMO_BINARY_PATH}"
+        restorecon -v "${SYSTEMD_CONFIG}"
+    else
+        echo "semanage command not found, skipping SELinux relabeling"
+    fi
 fi
 
 echo 'Enable otelcol-sumo service'

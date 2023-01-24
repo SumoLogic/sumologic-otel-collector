@@ -9,10 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- feat: Integrated collector with new metadata API [#858]
+- feat: Collector metadata tag auto-discovery (local services, e.g. mysql) [#893]
+- feat(extension/opamp): implemented an opamp agent for remote configuration [#885]
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.68.0-sumo-0...main
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.69.0-sumo-0...main
+[#893]: https://github.com/SumoLogic/sumologic-otel-collector/pull/893
+[#885]: https://github.com/SumoLogic/sumologic-otel-collector/pull/885
+
+## [v0.69.0-sumo-0]
+
+### Added
+
+- feat: Integrated collector with new metadata API [#858]
+- chore: upgrade OT core to v0.69.0 [#891]
+
+[v0.69.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.68.0-sumo-0...v0.69.0-sumo-0
 [#858]: https://github.com/SumoLogic/sumologic-otel-collector/pull/858
+[#891]: https://github.com/SumoLogic/sumologic-otel-collector/pull/891
 
 ## [v0.68.0-sumo-0]
 

@@ -32,6 +32,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
+	ps "github.com/mitchellh/go-ps"
 	"github.com/shirou/gopsutil/v3/host"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/confighttp"
@@ -52,6 +53,9 @@ type SumologicExtension struct {
 	// it as base URL for API requests and this access has to be coordinated.
 	baseUrlLock sync.RWMutex
 	baseUrl     string
+
+	credsNotifyLock   sync.Mutex
+	credsNotifyUpdate chan struct{}
 
 	host             component.Host
 	conf             *Config
@@ -145,18 +149,19 @@ func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID, bu
 	backOff.MaxInterval = conf.BackOff.MaxInterval
 
 	return &SumologicExtension{
-		collectorName:    collectorName,
-		buildVersion:     buildVersion,
-		baseUrl:          strings.TrimSuffix(conf.ApiBaseUrl, "/"),
-		conf:             conf,
-		origLogger:       logger,
-		logger:           logger,
-		hashKey:          hashKey,
-		credentialsStore: credentialsStore,
-		updateMetadata:   featuregate.GetRegistry().IsEnabled(updateCollectorMetadataID),
-		closeChan:        make(chan struct{}),
-		backOff:          backOff,
-		id:               id,
+		collectorName:     collectorName,
+		buildVersion:      buildVersion,
+		baseUrl:           strings.TrimSuffix(conf.ApiBaseUrl, "/"),
+		credsNotifyUpdate: make(chan struct{}),
+		conf:              conf,
+		origLogger:        logger,
+		logger:            logger,
+		hashKey:           hashKey,
+		credentialsStore:  credentialsStore,
+		updateMetadata:    featuregate.GetRegistry().IsEnabled(updateCollectorMetadataID),
+		closeChan:         make(chan struct{}),
+		backOff:           backOff,
+		id:                id,
 	}, nil
 }
 
@@ -230,6 +235,9 @@ func (se *SumologicExtension) validateCredentials(
 //   - into http client and its transport so that each request is using collector
 //     credentials as authentication keys
 func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCredentials) error {
+	se.credsNotifyLock.Lock()
+	defer se.credsNotifyLock.Unlock()
+
 	// Set the registration info so that it can be used in RoundTripper.
 	se.registrationInfo = colCreds.Credentials
 
@@ -239,6 +247,10 @@ func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCr
 	}
 
 	se.httpClient = httpClient
+
+	// Let components know that the credentials may have changed.
+	close(se.credsNotifyUpdate)
+	se.credsNotifyUpdate = make(chan struct{})
 
 	return nil
 }
@@ -637,6 +649,58 @@ func getHostIpAddress() (string, error) {
 	return h, nil
 }
 
+var sumoAppProcesses = map[string]string{
+	"apache":                "apache",
+	"apache2":               "apache",
+	"httpd":                 "apache",
+	"docker":                "docker",
+	"elasticsearch":         "elasticsearch",
+	"mysql-server":          "mysql",
+	"mysqld":                "mysql",
+	"nginx":                 "nginx",
+	"postgresql":            "postgres",
+	"postgresql-9.5":        "postgres",
+	"rabbitmq-server":       "rabbitmq",
+	"redis":                 "redis",
+	"tomcat":                "tomcat",
+	"kafka-server-start.sh": "kafka", // Need to test this, most common shell wrapper.
+}
+
+func filteredProcessList() ([]string, error) {
+	var pl []string
+
+	p, err := ps.Processes()
+	if err != nil {
+		return pl, err
+	}
+
+	for _, v := range p {
+		e := strings.ToLower(v.Executable())
+		if a, i := sumoAppProcesses[e]; i {
+			pl = append(pl, a)
+		}
+	}
+
+	return pl, nil
+}
+
+func discoverTags() (map[string]interface{}, error) {
+	t := map[string]interface{}{
+		"sumo.disco.enabled": "true",
+	}
+
+	pl, err := filteredProcessList()
+	if err != nil {
+		return t, err
+	}
+
+	for _, v := range pl {
+		t["sumo.disco."+v] = "" // We do not currently need a value, save bytes.
+	}
+
+	return t, nil
+}
+
 func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, httpClient *http.Client) error {
 	u, err := url.Parse(se.BaseUrl() + metadataUrl)
 	if err != nil {
@@ -653,9 +717,17 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 		return err
 	}
 
-	td := se.conf.CollectorFields
-	if td == nil {
-		td = map[string]interface{}{}
+	td := map[string]interface{}{}
+
+	if se.conf.DiscoverCollectorTags {
+		td, err = discoverTags()
+		if err != nil {
+			return err
+		}
+	}
+
+	for k, v := range se.conf.CollectorFields {
+		td[k] = v
 	}
 
 	var buff bytes.Buffer
@@ -717,6 +789,7 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 
 	case http.StatusUnauthorized:
 		return errUnauthorizedMetadata
+	case http.StatusNoContent:
 	case http.StatusOK:
 	}
 
@@ -766,6 +839,49 @@ func (se *SumologicExtension) SetBaseUrl(baseUrl string) {
 	se.baseUrlLock.Lock()
 	se.baseUrl = baseUrl
 	se.baseUrlLock.Unlock()
+}
+
+// WatchCredentialKey watches for credential key updates. It makes use of a
+// channel close (done by injectCredentials) and string comparison with a
+// known/previous credential key (old). This function allows components to be
+// proactive when dealing with changes to authentication.
+func (se *SumologicExtension) WatchCredentialKey(ctx context.Context, old string) string {
+	se.credsNotifyLock.Lock()
+	v, ch := se.registrationInfo.CollectorCredentialKey, se.credsNotifyUpdate
+	se.credsNotifyLock.Unlock()
+
+	for v == old {
+		select {
+		case <-ctx.Done():
+			return v
+		case <-ch:
+			se.credsNotifyLock.Lock()
+			v, ch = se.registrationInfo.CollectorCredentialKey, se.credsNotifyUpdate
+			se.credsNotifyLock.Unlock()
+		}
+	}
+
+	return v
+}
+
+// CreateCredentialsHeader produces an HTTP header containing authentication
+// credentials. This function is for components that do not make use of the
+// RoundTripper or have an HTTP request to build upon.
+func (se *SumologicExtension) CreateCredentialsHeader() (http.Header, error) {
+	id, key := se.registrationInfo.CollectorCredentialId, se.registrationInfo.CollectorCredentialKey
+
+	if id == "" || key == "" {
+		return nil, errors.New("collector credentials are not set")
+	}
+
+	token := base64.StdEncoding.EncodeToString(
+		[]byte(id + ":" + key),
+	)
+
+	header := http.Header{}
+	header.Set("Authorization", "Basic "+token)
+
+	return header, nil
 }
 
 // Implement [1] in order for this extension to be used as custom exporter
