@@ -31,15 +31,15 @@ const (
 )
 
 type logFieldAttribute struct {
-	Enabled       bool   `mapstructure:"enabled"`
-	AttributeName string `mapstructure:"attribute_name"`
+	Enabled bool   `mapstructure:"enabled"`
+	Name    string `mapstructure:"name"`
 }
 
 type logFieldAttributesConfig struct {
-	AddSeverityNumberAttribute *logFieldAttribute `mapstructure:"add_severity_number_attribute"`
-	AddSeverityTextAttribute   *logFieldAttribute `mapstructure:"add_severity_text_attribute"`
-	AddSpanIdAttribute         *logFieldAttribute `mapstructure:"add_span_id_attribute"`
-	AddTraceIdAttribute        *logFieldAttribute `mapstructure:"add_trace_id_attribute"`
+	SeverityNumberAttribute *logFieldAttribute `mapstructure:"severity_number"`
+	SeverityTextAttribute   *logFieldAttribute `mapstructure:"severity_text"`
+	SpanIdAttribute         *logFieldAttribute `mapstructure:"span_id"`
+	TraceIdAttribute        *logFieldAttribute `mapstructure:"trace_id"`
 }
 
 // SpanIDToHexOrEmptyString returns a hex string from SpanID.
@@ -91,39 +91,34 @@ var severityNumberToLevel = map[string]string{
 // logFieldsConversionProcessor converts specific log entries to attributes which leads to presenting them as fields
 // in the backend
 type logFieldsConversionProcessor struct {
-	severityNumberEnabled *logFieldAttribute
-	severityTextEnabled   *logFieldAttribute
-	spanIdEnabled         *logFieldAttribute
-	traceIdEnabled        *logFieldAttribute
+	LogFieldsAttributes *logFieldAttributesConfig
 }
 
-func newLogFieldConversionProcessor(severityNumberEnabled *logFieldAttribute,
-	severityTextEnabled *logFieldAttribute,
-	spanIdEnabled *logFieldAttribute,
-	traceIdEnabled *logFieldAttribute) (*logFieldsConversionProcessor, error) {
+func newLogFieldConversionProcessor(LogFieldsAttributes *logFieldAttributesConfig) (*logFieldsConversionProcessor, error) {
 	return &logFieldsConversionProcessor{
-		severityNumberEnabled: severityNumberEnabled,
-		severityTextEnabled:   severityTextEnabled,
-		spanIdEnabled:         spanIdEnabled,
-		traceIdEnabled:        traceIdEnabled,
+		LogFieldsAttributes,
 	}, nil
 }
 
 func (proc *logFieldsConversionProcessor) addAttributes(log plog.LogRecord) {
 	if log.SeverityNumber() != plog.SeverityNumberUnspecified {
-		if _, found := log.Attributes().Get(SeverityNumberAttributeName); !found && proc.severityNumberEnabled.Enabled {
+		if _, found := log.Attributes().Get(SeverityNumberAttributeName); !found &&
+			proc.LogFieldsAttributes.SeverityNumberAttribute.Enabled {
 			level := severityNumberToLevel[log.SeverityNumber().String()]
-			log.Attributes().PutStr(proc.severityNumberEnabled.AttributeName, level)
+			log.Attributes().PutStr(proc.LogFieldsAttributes.SeverityNumberAttribute.Name, level)
 		}
 	}
-	if _, found := log.Attributes().Get(SeverityTextAttributeName); !found && proc.severityTextEnabled.Enabled {
-		log.Attributes().PutStr(proc.severityTextEnabled.AttributeName, log.SeverityText())
+	if _, found := log.Attributes().Get(SeverityTextAttributeName); !found &&
+		proc.LogFieldsAttributes.SeverityTextAttribute.Enabled {
+		log.Attributes().PutStr(proc.LogFieldsAttributes.SeverityTextAttribute.Name, log.SeverityText())
 	}
-	if _, found := log.Attributes().Get(SpanIdAttributeName); !found && proc.spanIdEnabled.Enabled {
-		log.Attributes().PutStr(proc.spanIdEnabled.AttributeName, SpanIDToHexOrEmptyString(log.SpanID()))
+	if _, found := log.Attributes().Get(SpanIdAttributeName); !found &&
+		proc.LogFieldsAttributes.SpanIdAttribute.Enabled {
+		log.Attributes().PutStr(proc.LogFieldsAttributes.SpanIdAttribute.Name, SpanIDToHexOrEmptyString(log.SpanID()))
 	}
-	if _, found := log.Attributes().Get(TraceIdAttributeName); !found && proc.traceIdEnabled.Enabled {
-		log.Attributes().PutStr(proc.traceIdEnabled.AttributeName, TraceIDToHexOrEmptyString(log.TraceID()))
+	if _, found := log.Attributes().Get(TraceIdAttributeName); !found &&
+		proc.LogFieldsAttributes.TraceIdAttribute.Enabled {
+		log.Attributes().PutStr(proc.LogFieldsAttributes.TraceIdAttribute.Name, TraceIDToHexOrEmptyString(log.TraceID()))
 	}
 }
 
@@ -155,12 +150,12 @@ func (proc *logFieldsConversionProcessor) processTraces(traces ptrace.Traces) er
 }
 
 func (proc *logFieldsConversionProcessor) isEnabled() bool {
-	return proc.severityNumberEnabled.Enabled ||
-		proc.severityTextEnabled.Enabled ||
-		proc.spanIdEnabled.Enabled ||
-		proc.traceIdEnabled.Enabled
+	return proc.LogFieldsAttributes.SeverityNumberAttribute.Enabled ||
+		proc.LogFieldsAttributes.SeverityTextAttribute.Enabled ||
+		proc.LogFieldsAttributes.SpanIdAttribute.Enabled ||
+		proc.LogFieldsAttributes.TraceIdAttribute.Enabled
 }
 
 func (*logFieldsConversionProcessor) ConfigPropertyName() string {
-	return "add_severity_level_attribute"
+	return "field_attributes"
 }

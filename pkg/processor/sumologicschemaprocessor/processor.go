@@ -65,10 +65,7 @@ func newSumologicSchemaProcessor(set processor.CreateSettings, config *Config) (
 		return nil, err
 	}
 
-	logFieldsConversionProcessor, err := newLogFieldConversionProcessor(config.AddSeverityNumberAttribute,
-		config.AddSeverityTextAttribute,
-		config.AddSpanIdAttribute,
-		config.AddTraceIdAttribute)
+	logFieldsConversionProcessor, err := newLogFieldConversionProcessor(config.LogFieldsAttributes)
 	if err != nil {
 		return nil, err
 	}

@@ -1360,9 +1360,11 @@ func newLogFieldsConversionConfig() *Config {
 	config.NestAttributes = &NestingProcessorConfig{
 		Enabled: false,
 	}
-	config.AddSeverityNumberAttribute = &logFieldAttribute{Enabled: true, AttributeName: SeverityNumberAttributeName}
-	config.AddSeverityTextAttribute = &logFieldAttribute{Enabled: true, AttributeName: SeverityTextAttributeName}
-	config.AddSpanIdAttribute = &logFieldAttribute{Enabled: true, AttributeName: SpanIdAttributeName}
-	config.AddTraceIdAttribute = &logFieldAttribute{Enabled: true, AttributeName: TraceIdAttributeName}
+	config.LogFieldsAttributes = &logFieldAttributesConfig{
+		&logFieldAttribute{Enabled: true, Name: SeverityNumberAttributeName},
+		&logFieldAttribute{Enabled: true, Name: SeverityTextAttributeName},
+		&logFieldAttribute{Enabled: true, Name: SpanIdAttributeName},
+		&logFieldAttribute{Enabled: true, Name: TraceIdAttributeName},
+	}
 	return config
 }

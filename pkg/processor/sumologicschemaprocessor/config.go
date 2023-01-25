@@ -24,10 +24,6 @@ type Config struct {
 	TranslateTelegrafAttributes bool                      `mapstructure:"translate_telegraf_attributes"`
 	NestAttributes              *NestingProcessorConfig   `mapstructure:"nest_attributes"`
 	AggregateAttributes         []aggregationPair         `mapstructure:"aggregate_attributes"`
-	AddSeverityNumberAttribute  *logFieldAttribute        `mapstructure:"add_severity_number_attribute"`
-	AddSeverityTextAttribute    *logFieldAttribute        `mapstructure:"add_severity_text_attribute"`
-	AddSpanIdAttribute          *logFieldAttribute        `mapstructure:"add_span_id_attribute"`
-	AddTraceIdAttribute         *logFieldAttribute        `mapstructure:"add_trace_id_attribute"`
 	LogFieldsAttributes         *logFieldAttributesConfig `mapstructure:"field_attributes"`
 }
 
@@ -75,16 +71,12 @@ func createDefaultConfig() component.Config {
 			Exclude:            defaultNestingExclude,
 			SquashSingleValues: defaultNestingSquashSingleValues,
 		},
-		AggregateAttributes:        defaultAggregateAttributes,
-		AddSeverityNumberAttribute: &logFieldAttribute{defaultAddSeverityNumberAttribute, "loglevel"},
-		AddSeverityTextAttribute:   &logFieldAttribute{defaultAddSeverityTextAttribute, "severitytext"},
-		AddSpanIdAttribute:         &logFieldAttribute{defaultAddSpanIdAttribute, "spanid"},
-		AddTraceIdAttribute:        &logFieldAttribute{defaultAddTraceIdAttribute, "traceid"},
+		AggregateAttributes: defaultAggregateAttributes,
 		LogFieldsAttributes: &logFieldAttributesConfig{
-			AddSeverityNumberAttribute: &logFieldAttribute{defaultAddSeverityNumberAttribute, "loglevel"},
-			AddSeverityTextAttribute:   &logFieldAttribute{defaultAddSeverityTextAttribute, "severitytext"},
-			AddSpanIdAttribute:         &logFieldAttribute{defaultAddSpanIdAttribute, "spanid"},
-			AddTraceIdAttribute:        &logFieldAttribute{defaultAddTraceIdAttribute, "traceid"},
+			SeverityNumberAttribute: &logFieldAttribute{defaultAddSeverityNumberAttribute, "loglevel"},
+			SeverityTextAttribute:   &logFieldAttribute{defaultAddSeverityTextAttribute, "severitytext"},
+			SpanIdAttribute:         &logFieldAttribute{defaultAddSpanIdAttribute, "spanid"},
+			TraceIdAttribute:        &logFieldAttribute{defaultAddTraceIdAttribute, "traceid"},
 		},
 	}
 }

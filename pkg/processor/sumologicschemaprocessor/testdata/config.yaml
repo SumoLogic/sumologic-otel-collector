@@ -23,21 +23,25 @@ processors:
       - attribute: "attr2"
         prefixes: ["pattern4"]
   sumologic_schema/enabled-severity-number-attribute:
-    add_severity_number_attribute:
-        enabled: true
-        attribute_name: "loglevel"
+    field_attributes:
+        severity_number:
+          enabled: true
+          name: "loglevel"
   sumologic_schema/enabled-severity-text-attribute:
-    add_severity_text_attribute:
-        enabled: true
-        attribute_name: "severitytext"
+    field_attributes:
+        severity_text:
+          enabled: true
+          name: "severitytext"
   sumologic_schema/enabled-span-id-attribute:
-    add_span_id_attribute:
-        enabled: true
-        attribute_name: "spanid"
+    field_attributes:
+        span_id:
+          enabled: true
+          name: "spanid"
   sumologic_schema/enabled-trace-id-attribute:
-    add_trace_id_attribute:
-        enabled: true
-        attribute_name: "traceid"
+    field_attributes:
+        trace_id:
+          enabled: true
+          name: "traceid"
 exporters:
   nop:
 
