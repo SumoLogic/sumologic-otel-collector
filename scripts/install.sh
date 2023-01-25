@@ -563,14 +563,6 @@ function setup_config() {
         fi
     fi
 
-    echo 'Changing permissions for config file and storage'
-    chmod -R 440 "${CONFIG_PATH}" "${USER_CONFIG_DIRECTORY}"
-    chmod -R 750 "${HOME_DIRECTORY}"
-
-    echo 'Changing permissions for user env directory'
-    chmod 440 "${USER_ENV_DIRECTORY}"
-    chmod g+s "${USER_ENV_DIRECTORY}"
-
     # Ensure that configuration is created
     if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
         echo "User configuration (${COMMON_CONFIG_PATH}) already exist)"
@@ -598,6 +590,15 @@ function setup_config() {
         # clean up bak file
         rm -f "${COMMON_CONFIG_BAK_PATH}"
     fi
+
+    echo 'Changing permissions for config files and storage'
+    chmod 444 "${CONFIG_DIRECTORY}"
+    chmod -R 440 "${CONFIG_DIRECTORY}"/*
+    chmod -R 750 "${HOME_DIRECTORY}"
+
+    echo 'Changing permissions for user env directory'
+    chmod -R 440 "${USER_ENV_DIRECTORY}"
+    chmod g+s "${USER_ENV_DIRECTORY}"
 }
 
 # uninstall otelcol-sumo
@@ -1208,7 +1209,7 @@ set_acl_on_log_paths
 
 if [[ "${SKIP_CONFIG}" == "false" ]]; then
     echo 'Changing ownership for config and storage'
-    chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOME_DIRECTORY}" "${CONFIG_PATH}"
+    chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOME_DIRECTORY}" "${CONFIG_DIRECTORY}"/*
     chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}"
 fi
 

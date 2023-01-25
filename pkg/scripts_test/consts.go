@@ -5,6 +5,7 @@ const (
 	libPath               string = "/var/lib/otelcol-sumo"
 	fileStoragePath       string = libPath + "/file_storage"
 	etcPath               string = "/etc/otelcol-sumo"
+	etcPathPermissions    uint32 = 0444
 	systemdPath           string = "/etc/systemd/system/otelcol-sumo.service"
 	scriptPath            string = "../../scripts/install.sh"
 	configPath            string = etcPath + "/sumologic.yaml"
