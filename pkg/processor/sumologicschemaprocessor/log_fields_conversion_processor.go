@@ -35,6 +35,13 @@ type logFieldAttribute struct {
 	AttributeName string `mapstructure:"attribute_name"`
 }
 
+type logFieldAttributesConfig struct {
+	AddSeverityNumberAttribute *logFieldAttribute `mapstructure:"add_severity_number_attribute"`
+	AddSeverityTextAttribute   *logFieldAttribute `mapstructure:"add_severity_text_attribute"`
+	AddSpanIdAttribute         *logFieldAttribute `mapstructure:"add_span_id_attribute"`
+	AddTraceIdAttribute        *logFieldAttribute `mapstructure:"add_trace_id_attribute"`
+}
+
 // SpanIDToHexOrEmptyString returns a hex string from SpanID.
 // An empty string is returned, if SpanID is empty.
 func SpanIDToHexOrEmptyString(id pcommon.SpanID) string {

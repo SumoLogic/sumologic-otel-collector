@@ -19,15 +19,16 @@ import (
 )
 
 type Config struct {
-	AddCloudNamespace           bool                    `mapstructure:"add_cloud_namespace"`
-	TranslateAttributes         bool                    `mapstructure:"translate_attributes"`
-	TranslateTelegrafAttributes bool                    `mapstructure:"translate_telegraf_attributes"`
-	NestAttributes              *NestingProcessorConfig `mapstructure:"nest_attributes"`
-	AggregateAttributes         []aggregationPair       `mapstructure:"aggregate_attributes"`
-	AddSeverityNumberAttribute  *logFieldAttribute      `mapstructure:"add_severity_number_attribute"`
-	AddSeverityTextAttribute    *logFieldAttribute      `mapstructure:"add_severity_text_attribute"`
-	AddSpanIdAttribute          *logFieldAttribute      `mapstructure:"add_span_id_attribute"`
-	AddTraceIdAttribute         *logFieldAttribute      `mapstructure:"add_trace_id_attribute"`
+	AddCloudNamespace           bool                      `mapstructure:"add_cloud_namespace"`
+	TranslateAttributes         bool                      `mapstructure:"translate_attributes"`
+	TranslateTelegrafAttributes bool                      `mapstructure:"translate_telegraf_attributes"`
+	NestAttributes              *NestingProcessorConfig   `mapstructure:"nest_attributes"`
+	AggregateAttributes         []aggregationPair         `mapstructure:"aggregate_attributes"`
+	AddSeverityNumberAttribute  *logFieldAttribute        `mapstructure:"add_severity_number_attribute"`
+	AddSeverityTextAttribute    *logFieldAttribute        `mapstructure:"add_severity_text_attribute"`
+	AddSpanIdAttribute          *logFieldAttribute        `mapstructure:"add_span_id_attribute"`
+	AddTraceIdAttribute         *logFieldAttribute        `mapstructure:"add_trace_id_attribute"`
+	LogFieldsAttributes         *logFieldAttributesConfig `mapstructure:"field_attributes"`
 }
 
 type aggregationPair struct {
@@ -79,6 +80,12 @@ func createDefaultConfig() component.Config {
 		AddSeverityTextAttribute:   &logFieldAttribute{defaultAddSeverityTextAttribute, "severitytext"},
 		AddSpanIdAttribute:         &logFieldAttribute{defaultAddSpanIdAttribute, "spanid"},
 		AddTraceIdAttribute:        &logFieldAttribute{defaultAddTraceIdAttribute, "traceid"},
+		LogFieldsAttributes: &logFieldAttributesConfig{
+			AddSeverityNumberAttribute: &logFieldAttribute{defaultAddSeverityNumberAttribute, "loglevel"},
+			AddSeverityTextAttribute:   &logFieldAttribute{defaultAddSeverityTextAttribute, "severitytext"},
+			AddSpanIdAttribute:         &logFieldAttribute{defaultAddSpanIdAttribute, "spanid"},
+			AddTraceIdAttribute:        &logFieldAttribute{defaultAddTraceIdAttribute, "traceid"},
+		},
 	}
 }
 
