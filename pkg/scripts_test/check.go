@@ -55,12 +55,31 @@ func checkRun(c check) {
 	require.Equal(c.test, c.expectedInstallCode, c.code, "unexpected installation script error code")
 }
 
-func checkConfigCreated(c check) {
-	require.FileExists(c.test, configPath, "configuration has not been created properly")
+func checkConfigDirectoryOwnershipAndPermissions(c check) {
+	PathHasOwner(c.test, etcPath, "root", getRootGroupName())
+	PathHasPermissions(c.test, etcPath, etcPathPermissions)
 }
 
-func checkConfigPathPermissions(c check) {
-	PathHasPermissions(c.test, configPath, configPathPermissions)
+func checkConfigCreated(c check) {
+	require.FileExists(c.test, configPath, "configuration has not been created properly")
+	checkConfigDirectoryOwnershipAndPermissions(c)
+}
+
+func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
+	return func(c check) {
+		etcPathGlob := filepath.Join(etcPath, "*")
+		etcPathNestedGlob := filepath.Join(etcPath, "*", "*")
+
+		for _, glob := range []string{etcPathGlob, etcPathNestedGlob} {
+			configFiles, err := filepath.Glob(glob)
+			require.NoError(c.test, err)
+			for _, configFile := range configFiles {
+				PathHasPermissions(c.test, configFile, configPathPermissions)
+				PathHasOwner(c.test, configFile, ownerName, ownerGroup)
+			}
+		}
+		PathHasPermissions(c.test, configPath, configPathPermissions)
+	}
 }
 
 func checkConfigPathOwnership(c check) {
@@ -189,18 +208,24 @@ func preActionMockConfigs(c check) {
 }
 
 func preActionMockConfig(c check) {
-	err := os.MkdirAll(etcPath, os.ModePerm)
+	err := os.MkdirAll(etcPath, fs.FileMode(etcPathPermissions))
 	require.NoError(c.test, err)
 
-	_, err = os.Create(configPath)
+	f, err := os.Create(configPath)
+	require.NoError(c.test, err)
+
+	err = f.Chmod(fs.FileMode(configPathPermissions))
 	require.NoError(c.test, err)
 }
 
 func preActionMockUserConfig(c check) {
-	err := os.MkdirAll(confDPath, os.ModePerm)
+	err := os.MkdirAll(confDPath, fs.FileMode(configPathPermissions))
 	require.NoError(c.test, err)
 
-	_, err = os.Create(userConfigPath)
+	f, err := os.Create(userConfigPath)
+	require.NoError(c.test, err)
+
+	err = f.Chmod(fs.FileMode(configPathPermissions))
 	require.NoError(c.test, err)
 }
 
@@ -330,7 +355,7 @@ func checkVarLogACL(c check) {
 func PathHasPermissions(t *testing.T, path string, perms uint32) {
 	info, err := os.Stat(path)
 	require.NoError(t, err)
-	require.Equal(t, fs.FileMode(perms), info.Mode().Perm())
+	require.Equal(t, fs.FileMode(perms), info.Mode().Perm(), "%s should have %o permissions", path, perms)
 }
 
 func PathHasOwner(t *testing.T, path string, ownerName string, groupName string) {
@@ -348,8 +373,8 @@ func PathHasOwner(t *testing.T, path string, ownerName string, groupName string)
 	group, err := user.LookupGroupId(gid)
 	require.NoError(t, err)
 
-	require.Equal(t, ownerName, usr.Username)
-	require.Equal(t, groupName, group.Name)
+	require.Equal(t, ownerName, usr.Username, "%s should be owned by user '%s'", path, ownerName)
+	require.Equal(t, groupName, group.Name, "%s should be owned by group '%s'", path, groupName)
 }
 
 func PathHasUserACL(t *testing.T, path string, ownerName string, perms string) {
