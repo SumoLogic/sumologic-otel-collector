@@ -25,6 +25,7 @@ type installOptions struct {
 	uninstall          bool
 	purge              bool
 	apiBaseURL         string
+	configBranch       string
 	downloadOnly       bool
 	dontKeepDownloads  bool
 	installHostmetrics bool
@@ -87,6 +88,10 @@ func (io *installOptions) string() []string {
 
 	if io.apiBaseURL != "" {
 		opts = append(opts, "--api", io.apiBaseURL)
+	}
+
+	if io.configBranch != "" {
+		opts = append(opts, "--config-branch", io.configBranch)
 	}
 
 	return opts
