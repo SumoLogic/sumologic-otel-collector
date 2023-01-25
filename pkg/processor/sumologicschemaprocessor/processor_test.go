@@ -1239,14 +1239,12 @@ func TestAggregateAttributesForTraces(t *testing.T) {
 
 func TestLogFieldsConversionLogs(t *testing.T) {
 	testCases := []struct {
-		name        string
-		addSeverity bool
-		createLogs  func() plog.Logs
-		test        func(plog.Logs)
+		name       string
+		createLogs func() plog.Logs
+		test       func(plog.Logs)
 	}{
 		{
-			name:        "addSeverity",
-			addSeverity: true,
+			name: "logFieldsConversion",
 			createLogs: func() plog.Logs {
 				logs := plog.NewLogs()
 				log := logs.ResourceLogs().AppendEmpty().ScopeLogs().AppendEmpty().LogRecords().AppendEmpty()
@@ -1279,7 +1277,7 @@ func TestLogFieldsConversionLogs(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			// Arrange
-			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newLogFieldsConversionConfig(testCase.addSeverity))
+			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newLogFieldsConversionConfig())
 			require.NoError(t, err)
 
 			// Act
@@ -1354,7 +1352,7 @@ func newAggregateAttributesConfig(aggregations []aggregationPair) *Config {
 	return config
 }
 
-func newLogFieldsConversionConfig(logFieldsConversion bool) *Config {
+func newLogFieldsConversionConfig() *Config {
 	config := createDefaultConfig().(*Config)
 	config.AddCloudNamespace = false
 	config.TranslateAttributes = false
@@ -1363,5 +1361,8 @@ func newLogFieldsConversionConfig(logFieldsConversion bool) *Config {
 		Enabled: false,
 	}
 	config.AddSeverityNumberAttribute = &logFieldAttribute{Enabled: true, AttributeName: SeverityNumberAttributeName}
+	config.AddSeverityTextAttribute = &logFieldAttribute{Enabled: true, AttributeName: SeverityTextAttributeName}
+	config.AddSpanIdAttribute = &logFieldAttribute{Enabled: true, AttributeName: SpanIdAttributeName}
+	config.AddTraceIdAttribute = &logFieldAttribute{Enabled: true, AttributeName: TraceIdAttributeName}
 	return config
 }

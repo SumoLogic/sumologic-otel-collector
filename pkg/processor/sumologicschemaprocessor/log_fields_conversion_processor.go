@@ -102,21 +102,21 @@ func newLogFieldConversionProcessor(severityNumberEnabled *logFieldAttribute,
 	}, nil
 }
 
-func addAttributes(log plog.LogRecord) {
+func (proc *logFieldsConversionProcessor) addAttributes(log plog.LogRecord) {
 	if log.SeverityNumber() != plog.SeverityNumberUnspecified {
-		if _, found := log.Attributes().Get(SeverityNumberAttributeName); !found {
+		if _, found := log.Attributes().Get(SeverityNumberAttributeName); !found && proc.severityNumberEnabled.Enabled {
 			level := severityNumberToLevel[log.SeverityNumber().String()]
-			log.Attributes().PutStr(SeverityNumberAttributeName, level)
+			log.Attributes().PutStr(proc.severityNumberEnabled.AttributeName, level)
 		}
 	}
-	if _, found := log.Attributes().Get(SeverityTextAttributeName); !found {
-		log.Attributes().PutStr(SeverityTextAttributeName, log.SeverityText())
+	if _, found := log.Attributes().Get(SeverityTextAttributeName); !found && proc.severityTextEnabled.Enabled {
+		log.Attributes().PutStr(proc.severityTextEnabled.AttributeName, log.SeverityText())
 	}
-	if _, found := log.Attributes().Get(SpanIdAttributeName); !found {
-		log.Attributes().PutStr(SpanIdAttributeName, SpanIDToHexOrEmptyString(log.SpanID()))
+	if _, found := log.Attributes().Get(SpanIdAttributeName); !found && proc.spanIdEnabled.Enabled {
+		log.Attributes().PutStr(proc.spanIdEnabled.AttributeName, SpanIDToHexOrEmptyString(log.SpanID()))
 	}
-	if _, found := log.Attributes().Get(TraceIdAttributeName); !found {
-		log.Attributes().PutStr(TraceIdAttributeName, TraceIDToHexOrEmptyString(log.TraceID()))
+	if _, found := log.Attributes().Get(TraceIdAttributeName); !found && proc.traceIdEnabled.Enabled {
+		log.Attributes().PutStr(proc.traceIdEnabled.AttributeName, TraceIDToHexOrEmptyString(log.TraceID()))
 	}
 }
 
@@ -129,7 +129,7 @@ func (proc *logFieldsConversionProcessor) processLogs(logs plog.Logs) error {
 			for j := 0; j < ills.Len(); j++ {
 				logs := ills.At(j).LogRecords()
 				for k := 0; k < logs.Len(); k++ {
-					addAttributes(logs.At(k))
+					proc.addAttributes(logs.At(k))
 				}
 			}
 		}

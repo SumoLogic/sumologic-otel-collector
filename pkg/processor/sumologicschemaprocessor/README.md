@@ -286,7 +286,7 @@ It's possible to convert specific attributes to fields. List of currently suppor
 
 `add_severity_number_attribute`
 `add_severity_text_attribute`
-`add_space_id_attribute`
+`add_span_id_attribute`
 `add_trace_id_attribute`
 
 In order to report one of them as field, following configuration is needed:
