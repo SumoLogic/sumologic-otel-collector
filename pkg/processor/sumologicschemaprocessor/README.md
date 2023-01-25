@@ -68,10 +68,13 @@ processors:
         prefixes: [<prefix>]
       - ...
 
-    # Defines whether `severity` attribute should be added to record attributes.
-    add_severity_number_attribute:
+    # Defines whether attribute should be added to record attributes.
+    # Currently available attributes are `severity_number`, `severity_text`,
+    # `trace_id`, `span_id`
+    field_attributes:
+      severity_number:
         enabled: true
-        attribute_name: "loglevel"
+        name: "loglevel"
 
     - ...
 ```
@@ -281,18 +284,21 @@ The result is:
 
 ### Severity Attribute
 
-Some fields that log entries consist are not displayed as fields in Sumo Logic out of the box.
+Some fields that log entries consist of are not displayed as fields in Sumo Logic out of the box.
 It's possible to convert specific attributes to fields. List of currently supported attributes is below:
 
-`add_severity_number_attribute`
-`add_severity_text_attribute`
-`add_span_id_attribute`
-`add_trace_id_attribute`
+`severity_number`
+`severity_text`
+`span_id`
+`trace_id`
 
-In order to report one of them as field, following configuration is needed:
+In order to report one of them as field, following configuration is needed (below example for `severity_number`):
 
 ```yaml
-    add_severity_number_attribute:
+  field_attributes:
+      severity_number:
         enabled: true
-        attribute_name: "loglevel"
+        name: "loglevel"
 ```
+
+In this case severity_number from log record will be visible in sumo backend as a field named "loglevel".
