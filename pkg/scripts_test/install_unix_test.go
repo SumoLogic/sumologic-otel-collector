@@ -83,6 +83,7 @@ func TestInstallScript(t *testing.T) {
 				skipSystemd:        true,
 				installToken:       installToken,
 				installHostmetrics: true,
+				configBranch:       "main", // TODO: Remove this after v0.70.0 is released
 			},
 			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
 			postChecks: []checkFunc{
@@ -95,7 +96,7 @@ func TestInstallScript(t *testing.T) {
 				checkSystemdConfigNotCreated,
 				checkUserNotExists,
 				checkHostmetricsConfigCreated,
-				checkHostmetricsOwnershipAndPermissions("root"),
+				checkHostmetricsOwnershipAndPermissions("root", getRootGroupName()),
 			},
 		},
 		{

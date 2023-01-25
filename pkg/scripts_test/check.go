@@ -130,9 +130,9 @@ func checkHostmetricsConfigCreated(c check) {
 	require.FileExists(c.test, hostmetricsConfigPath, "hostmetrics configuration has not been created properly")
 }
 
-func checkHostmetricsOwnershipAndPermissions(owner string) func(c check) {
+func checkHostmetricsOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
 	return func(c check) {
-		PathHasOwner(c.test, hostmetricsConfigPath, owner, owner)
+		PathHasOwner(c.test, hostmetricsConfigPath, ownerName, ownerGroup)
 		PathHasPermissions(c.test, hostmetricsConfigPath, configPathPermissions)
 	}
 }

@@ -3,6 +3,8 @@
 package sumologic_scripts_tests
 
 import (
+	"fmt"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -69,4 +71,14 @@ func runTest(t *testing.T, spec *testSpec) {
 	for _, c := range spec.postChecks {
 		c(ch)
 	}
+}
+
+func getRootGroupName() string {
+	if runtime.GOOS == "darwin" {
+		return "wheel"
+	} else if runtime.GOOS == "linux" {
+		return "root"
+	}
+
+	panic(fmt.Sprintf("Encountered unsupported OS: %s", runtime.GOOS))
 }
