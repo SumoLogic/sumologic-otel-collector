@@ -1,0 +1,13 @@
+exporters:
+  syslog:
+receivers:
+  filelog:
+    include:
+    - /other/path/**/*.txt
+service:
+  pipelines:
+    logs:
+      receivers: 
+        - filelog
+      exporters:
+        - syslog
