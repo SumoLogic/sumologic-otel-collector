@@ -16,4 +16,7 @@ package syslogexporter
 
 // Config defines configuration for Syslog exporter.
 type Config struct {
+	Endpoint string `mapstructure:"endpoint"`
+	Protocol string `mapstructure:"protocol"`
+	Port     int    `mapstructure:"port"`
 }

@@ -1,9 +1,13 @@
 exporters:
   syslog:
+    protocol: tcp
+    port: 514
+    endpoint: 127.0.0.1
 receivers:
   filelog:
     include:
     - /other/path/**/*.txt
+    - /Users/kkujawa/go/src/github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/syslogexporter/examples/log.txt
 service:
   pipelines:
     logs:
