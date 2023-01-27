@@ -145,6 +145,7 @@ EOF
 function set_defaults() {
     HOME_DIRECTORY="/var/lib/otelcol-sumo"
     FILE_STORAGE="${HOME_DIRECTORY}/file_storage"
+    DOWNLOAD_CACHE_DIR="/var/cache/otelcol-sumo"  # this is in case we want to keep downloaded binaries
     CONFIG_DIRECTORY="/etc/otelcol-sumo"
     SYSTEMD_CONFIG="/etc/systemd/system/otelcol-sumo.service"
     SUMO_BINARY_PATH="/usr/local/bin/otelcol-sumo"
@@ -155,6 +156,9 @@ function set_defaults() {
     COMMON_CONFIG_BAK_PATH="${USER_CONFIG_DIRECTORY}/common.yaml.bak"
     INDENTATION="  "
     EXT_INDENTATION="${INDENTATION}${INDENTATION}"
+
+    # ensure the cache dir exists
+    mkdir -p "${DOWNLOAD_CACHE_DIR}"
 }
 
 function parse_options() {
@@ -305,6 +309,13 @@ function install_missing_dependencies() {
             fi
         fi
     done
+}
+
+# Ensure TMPDIR is set to a directory where we can safely store temporary files
+function set_tmpdir() {
+    # generate a new tmpdir using mktemp
+    # need to specify the template for some MacOS versions
+    TMPDIR=$(mktemp -d -t 'sumologic-otel-collector-XXXX')
 }
 
 function check_dependencies() {
@@ -594,7 +605,7 @@ function setup_config() {
     echo 'Changing permissions for config files and storage'
     chmod 555 "${CONFIG_DIRECTORY}"
     chmod -R 440 "${CONFIG_DIRECTORY}"/*  # all files only readable by the owner
-    find "${CONFIG_DIRECTORY}/" -type d -mindepth 1 -exec chmod 550 {} \;  # directories also traversable
+    find "${CONFIG_DIRECTORY}/" -mindepth 1 -type d -exec chmod 550 {} \;  # directories also traversable
     chmod -R 750 "${HOME_DIRECTORY}"
 
     echo 'Changing permissions for user env directory'
@@ -946,7 +957,7 @@ function get_binary_from_branch() {
 
     local artifact_url download_path curl_args
     readonly artifact_url="https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/artifacts/${artifact_id}/zip"
-    readonly download_path="/tmp/${name}.zip"
+    readonly download_path="${DOWNLOAD_CACHE_DIR}/${name}.zip"
     echo -e "Downloading binary from: ${artifact_url}"
     curl_args=(
         "-fL"
@@ -966,7 +977,7 @@ function get_binary_from_branch() {
         -H "Authorization: token ${GITHUB_TOKEN}" \
         "${artifact_url}"
 
-    unzip -p "$download_path" "${name}" >otelcol-sumo
+    unzip -p "$download_path" "${name}" >"${TMPDIR}"/otelcol-sumo
     if [ "${KEEP_DOWNLOADS}" == "false" ]; then
         rm -f "${download_path}"
     fi
@@ -979,7 +990,7 @@ function get_binary_from_url() {
 
     download_filename=$(basename "${url}")
     readonly download_filename
-    readonly download_path="/tmp/${download_filename}"
+    readonly download_path="${DOWNLOAD_CACHE_DIR}/${download_filename}"
     curl_args=(
         "-fL"
         "--connect-timeout" "5"
@@ -995,7 +1006,7 @@ function get_binary_from_url() {
     fi
     curl "${curl_args[@]}" "${url}"
 
-    cp -f "${download_path}" otelcol-sumo
+    cp -f "${download_path}" "${TMPDIR}"/otelcol-sumo
 
     if [ "${KEEP_DOWNLOADS}" == "false" ]; then
         rm -f "${download_path}"
@@ -1007,7 +1018,7 @@ function set_acl_on_log_paths() {
         for log_path in ${ACL_LOG_FILE_PATHS}; do
 	    if [ -d "$log_path" ]; then
 		echo -e "Running: setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}"
-		setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}
+		setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x "${log_path}"
 	    fi
         done
     else
@@ -1017,6 +1028,7 @@ function set_acl_on_log_paths() {
 
 ############################ Main code
 
+set_tmpdir
 install_missing_dependencies
 check_dependencies
 set_defaults
@@ -1163,7 +1175,7 @@ else
     fi
 
     echo -e "Moving otelcol-sumo to /usr/local/bin"
-    mv otelcol-sumo "${SUMO_BINARY_PATH}"
+    mv "${TMPDIR}"/otelcol-sumo "${SUMO_BINARY_PATH}"
     echo -e "Setting ${SUMO_BINARY_PATH} to be executable"
     chmod +x "${SUMO_BINARY_PATH}"
 
@@ -1216,7 +1228,7 @@ fi
 
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/systemd/otelcol-sumo.service"
 
-TMP_SYSTEMD_CONFIG="otelcol-sumo.service"
+TMP_SYSTEMD_CONFIG="${TMPDIR}/otelcol-sumo.service"
 TMP_SYSTEMD_CONFIG_BAK="${TMP_SYSTEMD_CONFIG}.bak"
 echo 'Getting service configuration'
 curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -fL "${SYSTEMD_CONFIG_URL}" --output "${TMP_SYSTEMD_CONFIG}" --progress-bar
