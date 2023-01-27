@@ -76,7 +76,7 @@ func (s *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
 	addr := fmt.Sprintf("%s:%d", s.config.Endpoint, s.config.Port)
 	w, err := Dial(s.config.Protocol, addr, LOG_ERR, "testtag")
 	if err != nil {
-		return nil
+		return fmt.Errorf("error connecting to syslog server: %s", err)
 	}
 	defer w.Close()
 	rls := ld.ResourceLogs()
@@ -88,7 +88,11 @@ func (s *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
 			for j := 0; j < slg.LogRecords().Len(); j++ {
 				lr := slg.LogRecords().At(j)
 				formattedLine := s.logToText(lr)
-				w.Info(formattedLine)
+				err = w.Info(formattedLine)
+				if err != nil {
+					//TODO: add handling of failures as it is in sumologic exporter
+					return err
+				}
 			}
 		}
 	}
