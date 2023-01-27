@@ -18,9 +18,13 @@ import "go.opentelemetry.io/collector/exporter/exporterhelper"
 
 // Config defines configuration for Syslog exporter.
 type Config struct {
-	Endpoint                     string `mapstructure:"endpoint"`
+	// Syslog server address
+	Endpoint string `mapstructure:"endpoint"`
+	// Syslog server port
+	Port int `mapstructure:"port"`
+	// Protocol for syslog communication
+	// options: tcp, udp, tcp+tls, tcp+mtls
 	Protocol                     string `mapstructure:"protocol"`
-	Port                         int    `mapstructure:"port"`
 	exporterhelper.QueueSettings `mapstructure:"sending_queue"`
 	exporterhelper.RetrySettings `mapstructure:"retry_on_failure"`
 }
