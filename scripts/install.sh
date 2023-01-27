@@ -592,12 +592,13 @@ function setup_config() {
     fi
 
     echo 'Changing permissions for config files and storage'
-    chmod 444 "${CONFIG_DIRECTORY}"
-    chmod -R 440 "${CONFIG_DIRECTORY}"/*
+    chmod 555 "${CONFIG_DIRECTORY}"
+    chmod -R 440 "${CONFIG_DIRECTORY}"/*  # all files only readable by the owner
+    find "${CONFIG_DIRECTORY}/" -type d -mindepth 1 -exec chmod 550 {} \;  # directories also traversable
     chmod -R 750 "${HOME_DIRECTORY}"
 
     echo 'Changing permissions for user env directory'
-    chmod -R 440 "${USER_ENV_DIRECTORY}"
+    chmod 550 "${USER_ENV_DIRECTORY}"
     chmod g+s "${USER_ENV_DIRECTORY}"
 }
 

@@ -71,14 +71,22 @@ func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string
 		etcPathNestedGlob := filepath.Join(etcPath, "*", "*")
 
 		for _, glob := range []string{etcPathGlob, etcPathNestedGlob} {
-			configFiles, err := filepath.Glob(glob)
+			paths, err := filepath.Glob(glob)
 			require.NoError(c.test, err)
-			for _, configFile := range configFiles {
-				PathHasPermissions(c.test, configFile, configPathPermissions)
-				PathHasOwner(c.test, configFile, ownerName, ownerGroup)
+			for _, path := range paths {
+				var permissions uint32
+				info, err := os.Stat(path)
+				require.NoError(c.test, err)
+				if info.IsDir() {
+					permissions = configPathDirPermissions
+				} else {
+					permissions = configPathFilePermissions
+				}
+				PathHasPermissions(c.test, path, permissions)
+				PathHasOwner(c.test, configPath, ownerName, ownerGroup)
 			}
 		}
-		PathHasPermissions(c.test, configPath, configPathPermissions)
+		PathHasPermissions(c.test, configPath, configPathFilePermissions)
 	}
 }
 
@@ -152,7 +160,7 @@ func checkHostmetricsConfigCreated(c check) {
 func checkHostmetricsOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
 	return func(c check) {
 		PathHasOwner(c.test, hostmetricsConfigPath, ownerName, ownerGroup)
-		PathHasPermissions(c.test, hostmetricsConfigPath, configPathPermissions)
+		PathHasPermissions(c.test, hostmetricsConfigPath, configPathFilePermissions)
 	}
 }
 
@@ -173,7 +181,7 @@ func checkSystemdEnvDirExists(c check) {
 }
 
 func checkSystemdEnvDirPermissions(c check) {
-	PathHasPermissions(c.test, etcPath+"/env", configPathPermissions)
+	PathHasPermissions(c.test, etcPath+"/env", configPathDirPermissions)
 }
 
 func checkTags(c check) {
@@ -214,18 +222,18 @@ func preActionMockConfig(c check) {
 	f, err := os.Create(configPath)
 	require.NoError(c.test, err)
 
-	err = f.Chmod(fs.FileMode(configPathPermissions))
+	err = f.Chmod(fs.FileMode(configPathFilePermissions))
 	require.NoError(c.test, err)
 }
 
 func preActionMockUserConfig(c check) {
-	err := os.MkdirAll(confDPath, fs.FileMode(configPathPermissions))
+	err := os.MkdirAll(confDPath, fs.FileMode(configPathDirPermissions))
 	require.NoError(c.test, err)
 
 	f, err := os.Create(userConfigPath)
 	require.NoError(c.test, err)
 
-	err = f.Chmod(fs.FileMode(configPathPermissions))
+	err = f.Chmod(fs.FileMode(configPathFilePermissions))
 	require.NoError(c.test, err)
 }
 
