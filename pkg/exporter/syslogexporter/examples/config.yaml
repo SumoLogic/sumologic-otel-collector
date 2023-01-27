@@ -45,7 +45,6 @@ receivers:
   filelog:
     include:
     - /other/path/**/*.txt
-    - /Users/kkujawa/go/src/github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/syslogexporter/examples/log.txt
 
 service:
   extensions:
