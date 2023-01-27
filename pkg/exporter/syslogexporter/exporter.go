@@ -61,8 +61,30 @@ func newLogsExporter(
 	)
 }
 
+func (s *syslogexporter) logToText(record plog.LogRecord) string {
+	return record.Body().AsString()
+}
+
 func (s *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
 	s.logger.Info("Syslog Exporter is pushing data")
+	w, err := Dial("udp", "127.0.0.1:514", LOG_ERR, "testtag")
+	if err != nil {
+		return nil
+	}
+	defer w.Close()
+	rls := ld.ResourceLogs()
+	for i := 0; i < rls.Len(); i++ {
+		rl := rls.At(i)
+		slgs := rl.ScopeLogs()
+		for i := 0; i < slgs.Len(); i++ {
+			slg := slgs.At(i)
+			for j := 0; j < slg.LogRecords().Len(); j++ {
+				lr := slg.LogRecords().At(j)
+				formattedLine := s.logToText(lr)
+				w.Info(formattedLine)
+			}
+		}
+	}
 	return nil
 }
 
