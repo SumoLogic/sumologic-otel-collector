@@ -38,7 +38,11 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sysloge
 		logger: createSettings.Logger,
 	}
 
-	s.logger.Info("Syslog Exporter configured")
+	s.logger.Info("Syslog Exporter configured",
+		zap.String("endpoint", cfg.Endpoint),
+		zap.String("protocol", cfg.Protocol),
+		zap.Int("port", cfg.Port),
+	)
 
 	return s, nil
 }
@@ -67,7 +71,8 @@ func (s *syslogexporter) logToText(record plog.LogRecord) string {
 
 func (s *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
 	s.logger.Info("Syslog Exporter is pushing data")
-	w, err := Dial("udp", "127.0.0.1:514", LOG_ERR, "testtag")
+	addr := fmt.Sprintf("%s:%d", s.config.Endpoint, s.config.Port)
+	w, err := Dial(s.config.Protocol, addr, LOG_ERR, "testtag")
 	if err != nil {
 		return nil
 	}
@@ -85,14 +90,5 @@ func (s *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
 			}
 		}
 	}
-	return nil
-}
-
-func (s *syslogexporter) start(ctx context.Context, host component.Host) error {
-	s.host = host
-	return s.configure(ctx)
-}
-
-func (s *syslogexporter) configure(ctx context.Context) error {
 	return nil
 }
