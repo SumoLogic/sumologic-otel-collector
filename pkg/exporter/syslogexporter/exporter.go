@@ -62,6 +62,8 @@ func newLogsExporter(
 		params,
 		cfg,
 		s.pushLogsData,
+		exporterhelper.WithRetry(cfg.RetrySettings),
+		exporterhelper.WithQueue(cfg.QueueSettings),
 	)
 }
 

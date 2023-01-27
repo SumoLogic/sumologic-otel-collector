@@ -14,9 +14,13 @@
 
 package syslogexporter
 
+import "go.opentelemetry.io/collector/exporter/exporterhelper"
+
 // Config defines configuration for Syslog exporter.
 type Config struct {
-	Endpoint string `mapstructure:"endpoint"`
-	Protocol string `mapstructure:"protocol"`
-	Port     int    `mapstructure:"port"`
+	Endpoint                     string `mapstructure:"endpoint"`
+	Protocol                     string `mapstructure:"protocol"`
+	Port                         int    `mapstructure:"port"`
+	exporterhelper.QueueSettings `mapstructure:"sending_queue"`
+	exporterhelper.RetrySettings `mapstructure:"retry_on_failure"`
 }
