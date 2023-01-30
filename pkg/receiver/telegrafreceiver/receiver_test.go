@@ -73,6 +73,14 @@ func TestStartShutdown(t *testing.T) {
 	require.NoError(t, receiver.Shutdown(ctx))
 }
 
+func TestShutdownBeforeStart(t *testing.T) {
+	ctx := context.Background()
+	cfg := createTestConfig()
+	receiver, err := createMetricsReceiver(ctx, receivertest.NewNopCreateSettings(), cfg, consumertest.NewNop())
+	require.NoError(t, err)
+	require.NoError(t, receiver.Shutdown(ctx))
+}
+
 func TestConsumeRetryOnRecoverableError(t *testing.T) {
 	ctx := context.Background()
 	maxRetries := 1
