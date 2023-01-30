@@ -3,6 +3,7 @@ module github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/syslogexporter
 go 1.18
 
 require (
+	github.com/RackSec/srslog v0.0.0-20180709174129-a4725f04ec91
 	go.opentelemetry.io/collector v0.69.0
 	go.opentelemetry.io/collector/component v0.69.0
 	go.opentelemetry.io/collector/pdata v1.0.0-rc3
