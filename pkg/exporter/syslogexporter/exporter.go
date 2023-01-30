@@ -16,28 +16,45 @@ package syslogexporter
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
+	"log/syslog"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
-
-	syslog "github.com/RackSec/srslog"
 )
 
 type syslogexporter struct {
-	config *Config
-	host   component.Host
-	logger *zap.Logger
+	config    *Config
+	host      component.Host
+	logger    *zap.Logger
+	tlsConfig *tls.Config
 }
 
 func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*syslogexporter, error) {
+	var tlsConfig *tls.Config
+	if cfg.CACertificate != "" {
+		serverCert, err := ioutil.ReadFile(cfg.CACertificate)
+		if err != nil {
+			return nil, err
+		}
+
+		pool := x509.NewCertPool()
+		pool.AppendCertsFromPEM(serverCert)
+		tlsConfig = &tls.Config{
+			RootCAs: pool,
+		}
+	}
 
 	s := &syslogexporter{
-		config: cfg,
-		logger: createSettings.Logger,
+		config:    cfg,
+		logger:    createSettings.Logger,
+		tlsConfig: tlsConfig,
 	}
 
 	s.logger.Info("Syslog Exporter configured",
@@ -76,11 +93,12 @@ func (s *syslogexporter) logToText(record plog.LogRecord) string {
 func (s *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
 	s.logger.Info("Syslog Exporter is pushing data")
 	addr := fmt.Sprintf("%s:%d", s.config.Endpoint, s.config.Port)
-	w, err := syslog.Dial(s.config.Protocol, addr, syslog.LOG_ERR, "testtag")
+
+	conn, err := Connect(s.config.Protocol, addr, syslog.LOG_ERR, "testtag", s.tlsConfig)
 	if err != nil {
 		return fmt.Errorf("error connecting to syslog server: %s", err)
 	}
-	defer w.Close()
+	defer conn.Close()
 	rls := ld.ResourceLogs()
 	for i := 0; i < rls.Len(); i++ {
 		rl := rls.At(i)
@@ -90,7 +108,7 @@ func (s *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
 			for j := 0; j < slg.LogRecords().Len(); j++ {
 				lr := slg.LogRecords().At(j)
 				formattedLine := s.logToText(lr)
-				err = w.Info(formattedLine)
+				err = conn.WriteAndRetry(syslog.LOG_INFO, formattedLine)
 				if err != nil {
 					//TODO: add handling of failures as it is in sumologic exporter
 					return err
