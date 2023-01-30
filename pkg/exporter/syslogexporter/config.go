@@ -24,7 +24,9 @@ type Config struct {
 	Port int `mapstructure:"port"`
 	// Protocol for syslog communication
 	// options: tcp, udp, tcp+tls, tcp+mtls
-	Protocol                     string `mapstructure:"protocol"`
+	Protocol string `mapstructure:"protocol"`
+	// CA certificate of syslog server
+	CACertificate                string `mapstructure:"ca_certificate"`
 	exporterhelper.QueueSettings `mapstructure:"sending_queue"`
 	exporterhelper.RetrySettings `mapstructure:"retry_on_failure"`
 }
