@@ -23,6 +23,8 @@ import (
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
+
+	syslog "github.com/RackSec/srslog"
 )
 
 type syslogexporter struct {
@@ -74,7 +76,7 @@ func (s *syslogexporter) logToText(record plog.LogRecord) string {
 func (s *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
 	s.logger.Info("Syslog Exporter is pushing data")
 	addr := fmt.Sprintf("%s:%d", s.config.Endpoint, s.config.Port)
-	w, err := Dial(s.config.Protocol, addr, LOG_ERR, "testtag")
+	w, err := syslog.Dial(s.config.Protocol, addr, syslog.LOG_ERR, "testtag")
 	if err != nil {
 		return fmt.Errorf("error connecting to syslog server: %s", err)
 	}
