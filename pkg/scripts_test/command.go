@@ -14,19 +14,21 @@ import (
 )
 
 type installOptions struct {
-	installToken      string
-	autoconfirm       bool
-	skipSystemd       bool
-	tags              map[string]string
-	skipConfig        bool
-	skipInstallToken  bool
-	fips              bool
-	envs              map[string]string
-	uninstall         bool
-	purge             bool
-	apiBaseURL        string
-	downloadOnly      bool
-	dontKeepDownloads bool
+	installToken       string
+	autoconfirm        bool
+	skipSystemd        bool
+	tags               map[string]string
+	skipConfig         bool
+	skipInstallToken   bool
+	fips               bool
+	envs               map[string]string
+	uninstall          bool
+	purge              bool
+	apiBaseURL         string
+	configBranch       string
+	downloadOnly       bool
+	dontKeepDownloads  bool
+	installHostmetrics bool
 }
 
 func (io *installOptions) string() []string {
@@ -74,6 +76,10 @@ func (io *installOptions) string() []string {
 		opts = append(opts, "--keep-downloads")
 	}
 
+	if io.installHostmetrics {
+		opts = append(opts, "--install-hostmetrics")
+	}
+
 	if len(io.tags) > 0 {
 		for k, v := range io.tags {
 			opts = append(opts, "--tag", fmt.Sprintf("%s=%s", k, v))
@@ -82,6 +88,10 @@ func (io *installOptions) string() []string {
 
 	if io.apiBaseURL != "" {
 		opts = append(opts, "--api", io.apiBaseURL)
+	}
+
+	if io.configBranch != "" {
+		opts = append(opts, "--config-branch", io.configBranch)
 	}
 
 	return opts

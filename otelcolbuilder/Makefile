@@ -1,5 +1,5 @@
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.69.0
+BUILDER_VERSION ?= 0.70.0
 FIPS_SUFFIX ?= ""
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
 GO ?= go
@@ -77,10 +77,7 @@ _builder:
 # Need to specify go path because otherwise opentelemetry-collector-builder
 # uses /usr/bin/go which on Github Actions is using preinstalled 1.15.12 by default.
 	CGO_ENABLED=$(CGO_ENABLED) $(BUILDER_BIN_NAME) \
-		--go $(GO) \
-		--version "$(VERSION)$(FIPS_SUFFIX)" \
 		--config .otelcol-builder.yaml \
-		--output-path ./cmd \
 		--skip-compilation=$(SKIP_COMPILATION)
 
 .PHONY: _gobuild
@@ -155,17 +152,9 @@ otelcol-sumo-darwin_arm64:
 darwin_amd64-sign:
 	gon -log-level=debug .gon_config_amd64.json
 
-.PHONY: fips-darwin_amd64-sign
-fips-darwin_amd64-sign:
-	gon -log-level=debug .gon_config_fips_amd64.json
-
 .PHONY: darwin_arm64-sign
 darwin_arm64-sign:
 	gon -log-level=debug .gon_config_arm64.json
-
-.PHONY: fips-darwin_arm64-sign
-fips-darwin_arm64-sign:
-	gon -log-level=debug .gon_config_fips_arm64.json
 
 .PHONY: otelcol-sumo-linux_amd64
 otelcol-sumo-linux_amd64:

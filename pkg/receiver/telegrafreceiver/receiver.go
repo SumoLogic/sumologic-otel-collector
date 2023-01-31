@@ -154,7 +154,9 @@ func (r *telegrafreceiver) Shutdown(context.Context) error {
 	err := ErrAlreadyStopped
 	r.stopOnce.Do(func() {
 		r.logger.Info("Stopping telegraf receiver")
-		r.cancel()
+		if r.cancel != nil { // need to check because Shutdown can be called before Start
+			r.cancel()
+		}
 		r.wg.Wait()
 		err = nil
 	})

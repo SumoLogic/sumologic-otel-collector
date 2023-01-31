@@ -91,7 +91,7 @@ const (
 )
 
 func init() {
-	featuregate.GetRegistry().MustRegisterID(
+	featuregate.GlobalRegistry().MustRegisterID(
 		updateCollectorMetadataID,
 		updateCollectorMetadataStage,
 		featuregate.WithRegisterDescription("When enabled, the collector will update its Sumo Logic metadata on startup."),
@@ -158,7 +158,7 @@ func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID, bu
 		logger:            logger,
 		hashKey:           hashKey,
 		credentialsStore:  credentialsStore,
-		updateMetadata:    featuregate.GetRegistry().IsEnabled(updateCollectorMetadataID),
+		updateMetadata:    featuregate.GlobalRegistry().IsEnabled(updateCollectorMetadataID),
 		closeChan:         make(chan struct{}),
 		backOff:           backOff,
 		id:                id,

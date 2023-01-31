@@ -55,12 +55,39 @@ func checkRun(c check) {
 	require.Equal(c.test, c.expectedInstallCode, c.code, "unexpected installation script error code")
 }
 
-func checkConfigCreated(c check) {
-	require.FileExists(c.test, configPath, "configuration has not been created properly")
+func checkConfigDirectoryOwnershipAndPermissions(c check) {
+	PathHasOwner(c.test, etcPath, "root", getRootGroupName())
+	PathHasPermissions(c.test, etcPath, etcPathPermissions)
 }
 
-func checkConfigPathPermissions(c check) {
-	PathHasPermissions(c.test, configPath, configPathPermissions)
+func checkConfigCreated(c check) {
+	require.FileExists(c.test, configPath, "configuration has not been created properly")
+	checkConfigDirectoryOwnershipAndPermissions(c)
+}
+
+func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
+	return func(c check) {
+		etcPathGlob := filepath.Join(etcPath, "*")
+		etcPathNestedGlob := filepath.Join(etcPath, "*", "*")
+
+		for _, glob := range []string{etcPathGlob, etcPathNestedGlob} {
+			paths, err := filepath.Glob(glob)
+			require.NoError(c.test, err)
+			for _, path := range paths {
+				var permissions uint32
+				info, err := os.Stat(path)
+				require.NoError(c.test, err)
+				if info.IsDir() {
+					permissions = configPathDirPermissions
+				} else {
+					permissions = configPathFilePermissions
+				}
+				PathHasPermissions(c.test, path, permissions)
+				PathHasOwner(c.test, configPath, ownerName, ownerGroup)
+			}
+		}
+		PathHasPermissions(c.test, configPath, configPathFilePermissions)
+	}
 }
 
 func checkConfigPathOwnership(c check) {
@@ -126,6 +153,21 @@ func checkEnvTokenInConfig(c check) {
 	require.Equal(c.test, token, conf.Extensions.Sumologic.InstallToken, "install token is different than expected")
 }
 
+func checkHostmetricsConfigCreated(c check) {
+	require.FileExists(c.test, hostmetricsConfigPath, "hostmetrics configuration has not been created properly")
+}
+
+func checkHostmetricsOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
+	return func(c check) {
+		PathHasOwner(c.test, hostmetricsConfigPath, ownerName, ownerGroup)
+		PathHasPermissions(c.test, hostmetricsConfigPath, configPathFilePermissions)
+	}
+}
+
+func checkHostmetricsConfigNotCreated(c check) {
+	require.NoFileExists(c.test, hostmetricsConfigPath, "hostmetrics configuration has been created")
+}
+
 func checkSystemdConfigCreated(c check) {
 	require.FileExists(c.test, systemdPath, "systemd configuration has not been created properly")
 }
@@ -139,7 +181,7 @@ func checkSystemdEnvDirExists(c check) {
 }
 
 func checkSystemdEnvDirPermissions(c check) {
-	PathHasPermissions(c.test, etcPath+"/env", configPathPermissions)
+	PathHasPermissions(c.test, etcPath+"/env", configPathDirPermissions)
 }
 
 func checkTags(c check) {
@@ -174,18 +216,24 @@ func preActionMockConfigs(c check) {
 }
 
 func preActionMockConfig(c check) {
-	err := os.MkdirAll(etcPath, os.ModePerm)
+	err := os.MkdirAll(etcPath, fs.FileMode(etcPathPermissions))
 	require.NoError(c.test, err)
 
-	_, err = os.Create(configPath)
+	f, err := os.Create(configPath)
+	require.NoError(c.test, err)
+
+	err = f.Chmod(fs.FileMode(configPathFilePermissions))
 	require.NoError(c.test, err)
 }
 
 func preActionMockUserConfig(c check) {
-	err := os.MkdirAll(confDPath, os.ModePerm)
+	err := os.MkdirAll(confDPath, fs.FileMode(configPathDirPermissions))
 	require.NoError(c.test, err)
 
-	_, err = os.Create(userConfigPath)
+	f, err := os.Create(userConfigPath)
+	require.NoError(c.test, err)
+
+	err = f.Chmod(fs.FileMode(configPathFilePermissions))
 	require.NoError(c.test, err)
 }
 
@@ -315,7 +363,7 @@ func checkVarLogACL(c check) {
 func PathHasPermissions(t *testing.T, path string, perms uint32) {
 	info, err := os.Stat(path)
 	require.NoError(t, err)
-	require.Equal(t, fs.FileMode(perms), info.Mode().Perm())
+	require.Equal(t, fs.FileMode(perms), info.Mode().Perm(), "%s should have %o permissions", path, perms)
 }
 
 func PathHasOwner(t *testing.T, path string, ownerName string, groupName string) {
@@ -333,8 +381,8 @@ func PathHasOwner(t *testing.T, path string, ownerName string, groupName string)
 	group, err := user.LookupGroupId(gid)
 	require.NoError(t, err)
 
-	require.Equal(t, ownerName, usr.Username)
-	require.Equal(t, groupName, group.Name)
+	require.Equal(t, ownerName, usr.Username, "%s should be owned by user '%s'", path, ownerName)
+	require.Equal(t, groupName, group.Name, "%s should be owned by group '%s'", path, groupName)
 }
 
 func PathHasUserACL(t *testing.T, path string, ownerName string, perms string) {

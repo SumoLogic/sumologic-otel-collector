@@ -37,7 +37,7 @@ import (
 
 func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
 	// feature flags, which are enabled by default in our distro
-	err := featuregate.GetRegistry().Apply(map[string]bool{
+	err := featuregate.GlobalRegistry().Apply(map[string]bool{
 		"receiver.elasticsearch.emitClusterHealthDetailedShardMetrics": true,
 		"receiver.elasticsearch.emitAllIndexOperationMetrics":          true,
 	})

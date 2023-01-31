@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+############################ Constants
+readonly CURL_MAX_TIME=180
+
 ############################ Static variables
 
 ARG_SHORT_TOKEN='i'
@@ -39,6 +42,8 @@ ARG_SHORT_BRANCH='b'
 ARG_LONG_BRANCH='branch'
 ARG_SHORT_KEEP_DOWNLOADS='n'
 ARG_LONG_KEEP_DOWNLOADS='keep-downloads'
+ARG_SHORT_INSTALL_HOSTMETRICS='H'
+ARG_LONG_INSTALL_HOSTMETRICS='install-hostmetrics'
 
 readonly ARG_SHORT_TOKEN ARG_LONG_TOKEN ARG_SHORT_HELP ARG_LONG_HELP ARG_SHORT_API ARG_LONG_API
 readonly ARG_SHORT_TAG ARG_LONG_TAG ARG_SHORT_VERSION ARG_LONG_VERSION ARG_SHORT_YES ARG_LONG_YES
@@ -47,6 +52,7 @@ readonly ARG_SHORT_PURGE ARG_LONG_PURGE ARG_SHORT_DOWNLOAD ARG_LONG_DOWNLOAD
 readonly ARG_SHORT_CONFIG_BRANCH ARG_LONG_CONFIG_BRANCH ARG_SHORT_BINARY_BRANCH ARG_LONG_CONFIG_BRANCH
 readonly ARG_SHORT_BRANCH ARG_LONG_BRANCH ARG_SHORT_SKIP_CONFIG ARG_LONG_SKIP_CONFIG
 readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ARG_SHORT_FIPS ARG_LONG_FIPS ENV_TOKEN
+readonly ARG_SHORT_INSTALL_HOSTMETRICS ARG_LONG_INSTALL_HOSTMETRICS
 
 ############################ Variables (see set_defaults function for default values)
 
@@ -75,6 +81,7 @@ CONFIG_PATH=""
 COMMON_CONFIG_PATH=""
 PURGE=""
 DOWNLOAD_ONLY=""
+INSTALL_HOSTMETRICS=false
 
 USER_API_URL=""
 USER_TOKEN=""
@@ -125,6 +132,7 @@ Supported arguments:
   -${ARG_SHORT_VERSION}, --${ARG_LONG_VERSION} <version>               Version of Sumo Logic Distribution for OpenTelemetry Collector to install, e.g. 0.57.2-sumo-1.
                                         By default it gets latest version.
   -${ARG_SHORT_FIPS}, --${ARG_LONG_FIPS}                            Install the FIPS 140-2 compliant binary on Linux.
+  -${ARG_SHORT_INSTALL_HOSTMETRICS}, --${ARG_LONG_INSTALL_HOSTMETRICS}             Install the hostmetrics configuration to collect host metrics.
   -${ARG_SHORT_YES}, --${ARG_LONG_YES}                             Disable confirmation asks.
 
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                            Prints this help and usage.
@@ -137,6 +145,7 @@ EOF
 function set_defaults() {
     HOME_DIRECTORY="/var/lib/otelcol-sumo"
     FILE_STORAGE="${HOME_DIRECTORY}/file_storage"
+    DOWNLOAD_CACHE_DIR="/var/cache/otelcol-sumo"  # this is in case we want to keep downloaded binaries
     CONFIG_DIRECTORY="/etc/otelcol-sumo"
     SYSTEMD_CONFIG="/etc/systemd/system/otelcol-sumo.service"
     SUMO_BINARY_PATH="/usr/local/bin/otelcol-sumo"
@@ -147,6 +156,9 @@ function set_defaults() {
     COMMON_CONFIG_BAK_PATH="${USER_CONFIG_DIRECTORY}/common.yaml.bak"
     INDENTATION="  "
     EXT_INDENTATION="${INDENTATION}${INDENTATION}"
+
+    # ensure the cache dir exists
+    mkdir -p "${DOWNLOAD_CACHE_DIR}"
 }
 
 function parse_options() {
@@ -209,6 +221,9 @@ function parse_options() {
       "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_SKIP_CONFIG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_FIPS}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SKIP_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}")
         set -- "$@" "${arg}"
         ;;
+      "--${ARG_LONG_INSTALL_HOSTMETRICS}")
+        set -- "$@" "-${ARG_SHORT_INSTALL_HOSTMETRICS}"
+        ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
       *)
@@ -221,7 +236,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_FIPS}${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_SKIP_CONFIG}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_FIPS}${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_SKIP_CONFIG}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:${ARG_SHORT_INSTALL_HOSTMETRICS}" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -254,6 +269,7 @@ function parse_options() {
         if [[ -z "${CONFIG_BRANCH}" ]]; then
             CONFIG_BRANCH="${OPTARG}"
         fi ;;
+      "${ARG_SHORT_INSTALL_HOSTMETRICS}") INSTALL_HOSTMETRICS=true ;;
       "${ARG_SHORT_KEEP_DOWNLOADS}") KEEP_DOWNLOADS=true ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
@@ -293,6 +309,13 @@ function install_missing_dependencies() {
             fi
         fi
     done
+}
+
+# Ensure TMPDIR is set to a directory where we can safely store temporary files
+function set_tmpdir() {
+    # generate a new tmpdir using mktemp
+    # need to specify the template for some MacOS versions
+    TMPDIR=$(mktemp -d -t 'sumologic-otel-collector-XXXX')
 }
 
 function check_dependencies() {
@@ -542,13 +565,14 @@ function setup_config() {
         exit 1
     fi
 
-    echo 'Changing permissions for config file and storage'
-    chmod 440 "${CONFIG_PATH}"
-    chmod -R 750 "${HOME_DIRECTORY}"
-
-    echo 'Changing permissions for user env directory'
-    chmod 440 "${USER_ENV_DIRECTORY}"
-    chmod g+s "${USER_ENV_DIRECTORY}"
+    if [[ "${INSTALL_HOSTMETRICS}" == "true" ]]; then
+        echo -e "Installing ${OS_TYPE} hostmetrics configuration"
+        HOSTMETRICS_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/conf.d/${OS_TYPE}.yaml"
+        if ! curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -f -s "${HOSTMETRICS_CONFIG_URL}" -o "${CONFIG_DIRECTORY}/conf.d/hostmetrics.yaml"; then
+            echo "Cannot obtain hostmetrics configuration for '${CONFIG_BRANCH}' branch"
+            exit 1
+        fi
+    fi
 
     # Ensure that configuration is created
     if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
@@ -577,6 +601,16 @@ function setup_config() {
         # clean up bak file
         rm -f "${COMMON_CONFIG_BAK_PATH}"
     fi
+
+    echo 'Changing permissions for config files and storage'
+    chmod 555 "${CONFIG_DIRECTORY}"
+    chmod -R 440 "${CONFIG_DIRECTORY}"/*  # all files only readable by the owner
+    find "${CONFIG_DIRECTORY}/" -mindepth 1 -type d -exec chmod 550 {} \;  # directories also traversable
+    chmod -R 750 "${HOME_DIRECTORY}"
+
+    echo 'Changing permissions for user env directory'
+    chmod 550 "${USER_ENV_DIRECTORY}"
+    chmod g+s "${USER_ENV_DIRECTORY}"
 }
 
 # uninstall otelcol-sumo
@@ -923,12 +957,12 @@ function get_binary_from_branch() {
 
     local artifact_url download_path curl_args
     readonly artifact_url="https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/artifacts/${artifact_id}/zip"
-    readonly download_path="/tmp/${name}.zip"
+    readonly download_path="${DOWNLOAD_CACHE_DIR}/${name}.zip"
     echo -e "Downloading binary from: ${artifact_url}"
     curl_args=(
         "-fL"
         "--connect-timeout" "5"
-        "--max-time" "60"
+        "--max-time" "${CURL_MAX_TIME}"
         "--retry" "5"
         "--retry-delay" "0"
         "--retry-max-time" "150"
@@ -943,7 +977,7 @@ function get_binary_from_branch() {
         -H "Authorization: token ${GITHUB_TOKEN}" \
         "${artifact_url}"
 
-    unzip -p "$download_path" "${name}" >otelcol-sumo
+    unzip -p "$download_path" "${name}" >"${TMPDIR}"/otelcol-sumo
     if [ "${KEEP_DOWNLOADS}" == "false" ]; then
         rm -f "${download_path}"
     fi
@@ -956,11 +990,11 @@ function get_binary_from_url() {
 
     download_filename=$(basename "${url}")
     readonly download_filename
-    readonly download_path="/tmp/${download_filename}"
+    readonly download_path="${DOWNLOAD_CACHE_DIR}/${download_filename}"
     curl_args=(
         "-fL"
         "--connect-timeout" "5"
-        "--max-time" "60"
+        "--max-time" "${CURL_MAX_TIME}"
         "--retry" "5"
         "--retry-delay" "0"
         "--retry-max-time" "150"
@@ -972,7 +1006,7 @@ function get_binary_from_url() {
     fi
     curl "${curl_args[@]}" "${url}"
 
-    cp -f "${download_path}" otelcol-sumo
+    cp -f "${download_path}" "${TMPDIR}"/otelcol-sumo
 
     if [ "${KEEP_DOWNLOADS}" == "false" ]; then
         rm -f "${download_path}"
@@ -984,7 +1018,7 @@ function set_acl_on_log_paths() {
         for log_path in ${ACL_LOG_FILE_PATHS}; do
 	    if [ -d "$log_path" ]; then
 		echo -e "Running: setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}"
-		setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}
+		setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x "${log_path}"
 	    fi
         done
     else
@@ -994,6 +1028,7 @@ function set_acl_on_log_paths() {
 
 ############################ Main code
 
+set_tmpdir
 install_missing_dependencies
 check_dependencies
 set_defaults
@@ -1002,6 +1037,7 @@ parse_options "$@"
 readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
 readonly USER_CONFIG_DIRECTORY USER_ENV_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
 readonly ACL_LOG_FILE_PATHS
+readonly INSTALL_HOSTMETRICS
 
 if [[ "${UNINSTALL}" == "true" ]]; then
     uninstall
@@ -1139,7 +1175,7 @@ else
     fi
 
     echo -e "Moving otelcol-sumo to /usr/local/bin"
-    mv otelcol-sumo "${SUMO_BINARY_PATH}"
+    mv "${TMPDIR}"/otelcol-sumo "${SUMO_BINARY_PATH}"
     echo -e "Setting ${SUMO_BINARY_PATH} to be executable"
     chmod +x "${SUMO_BINARY_PATH}"
 
@@ -1186,18 +1222,18 @@ set_acl_on_log_paths
 
 if [[ "${SKIP_CONFIG}" == "false" ]]; then
     echo 'Changing ownership for config and storage'
-    chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOME_DIRECTORY}" "${CONFIG_PATH}"
+    chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOME_DIRECTORY}" "${CONFIG_DIRECTORY}"/*
     chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}"
 fi
 
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/systemd/otelcol-sumo.service"
 
-TMP_SYSTEMD_CONFIG="otelcol-sumo.service"
+TMP_SYSTEMD_CONFIG="${TMPDIR}/otelcol-sumo.service"
 TMP_SYSTEMD_CONFIG_BAK="${TMP_SYSTEMD_CONFIG}.bak"
 echo 'Getting service configuration'
 curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -fL "${SYSTEMD_CONFIG_URL}" --output "${TMP_SYSTEMD_CONFIG}" --progress-bar
-sed -i.bak -e "s%/etc/otelcol-sumo%'${CONFIG_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
-sed -i.bak -e "s%/etc/otelcol-sumo/env%'${USER_ENV_DIRECTORY}'%" "${TMP_SYSTEMD_CONFIG}"
+sed -i.bak -e "s%/etc/otelcol-sumo%${CONFIG_DIRECTORY}%" "${TMP_SYSTEMD_CONFIG}"
+sed -i.bak -e "s%/etc/otelcol-sumo/env%${USER_ENV_DIRECTORY}%" "${TMP_SYSTEMD_CONFIG}"
 
 # Remove glob for versions up to 0.57
 if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then

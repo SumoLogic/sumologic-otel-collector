@@ -23,6 +23,8 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/ptrace"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/ptracetest"
 )
 
 func createConfig() *Config {
@@ -120,33 +122,22 @@ func newTraceDataWithSpans(_resourceLabels map[string]string, _spanLabels map[st
 	return td
 }
 
-func prepareAttributesForAssert(t ptrace.Traces) {
-	for i := 0; i < t.ResourceSpans().Len(); i++ {
-		rss := t.ResourceSpans().At(i)
-		rss.Resource().Attributes().Sort()
-		for j := 0; j < rss.ScopeSpans().Len(); j++ {
-			ss := rss.ScopeSpans().At(j).Spans()
-			for k := 0; k < ss.Len(); k++ {
-				ss.At(k).Attributes().Sort()
-			}
-		}
-	}
-}
-
 func assertTracesEqual(t *testing.T, t1 ptrace.Traces, t2 ptrace.Traces) {
-	prepareAttributesForAssert(t1)
-	prepareAttributesForAssert(t2)
-	assert.Equal(t, t1, t2)
+	err := ptracetest.CompareTraces(t1, t2)
+	assert.NoError(t, err)
 }
 
 func assertSpansEqual(t *testing.T, t1 ptrace.Traces, t2 ptrace.Traces) {
-	prepareAttributesForAssert(t1)
-	prepareAttributesForAssert(t2)
 	assert.Equal(t, t1.ResourceSpans().Len(), t2.ResourceSpans().Len())
 	for i := 0; i < t1.ResourceSpans().Len(); i++ {
 		rss1 := t1.ResourceSpans().At(i)
 		rss2 := t2.ResourceSpans().At(i)
-		assert.Equal(t, rss1.ScopeSpans(), rss2.ScopeSpans())
+		assert.Equal(t, rss1.ScopeSpans().Len(), rss2.ScopeSpans().Len())
+
+		for j := 0; j < rss1.ScopeSpans().Len(); j++ {
+			err := ptracetest.CompareScopeSpans(rss1.ScopeSpans().At(j), rss2.ScopeSpans().At(j))
+			assert.NoError(t, err)
+		}
 	}
 }
 
