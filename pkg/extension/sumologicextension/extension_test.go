@@ -20,12 +20,10 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path"
-	"regexp"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -39,10 +37,6 @@ import (
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/api"
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/credentials"
-)
-
-const (
-	uuidRegex = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 )
 
 func TestMain(m *testing.M) {
@@ -588,10 +582,8 @@ func TestRegisterEmptyCollectorName(t *testing.T) {
 	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
-	regexPattern := fmt.Sprintf("%s-%s", hostname, uuidRegex)
-	matched, err := regexp.MatchString(regexPattern, se.collectorName)
 	require.NoError(t, err)
-	assert.True(t, matched)
+	require.Equal(t, hostname, se.collectorName)
 }
 
 func TestRegisterEmptyCollectorNameForceRegistration(t *testing.T) {
@@ -680,10 +672,7 @@ func TestRegisterEmptyCollectorNameForceRegistration(t *testing.T) {
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
 	require.NoError(t, se.Shutdown(context.Background()))
 	assert.NotEmpty(t, se.collectorName)
-	regexPattern := fmt.Sprintf("%s-%s", hostname, uuidRegex)
-	matched, err := regexp.MatchString(regexPattern, se.collectorName)
-	require.NoError(t, err)
-	assert.True(t, matched)
+	assert.Equal(t, hostname, se.collectorName)
 	colCreds, err := se.credentialsStore.Get(se.hashKey)
 	require.NoError(t, err)
 	colName := colCreds.CollectorName
@@ -1005,10 +994,7 @@ func TestRegisterEmptyCollectorNameWithBackoff(t *testing.T) {
 	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
-	regexPattern := fmt.Sprintf("%s-%s", hostname, uuidRegex)
-	matched, err := regexp.MatchString(regexPattern, se.collectorName)
-	require.NoError(t, err)
-	assert.True(t, matched)
+	require.Equal(t, hostname, se.collectorName)
 }
 
 func TestRegisterEmptyCollectorNameUnrecoverableError(t *testing.T) {
@@ -1058,10 +1044,7 @@ func TestRegisterEmptyCollectorNameUnrecoverableError(t *testing.T) {
 	require.NoError(t, err)
 	require.EqualError(t, se.Start(context.Background(), componenttest.NewNopHost()),
 		"collector registration failed: failed to register the collector, got HTTP status code: 404")
-	regexPattern := fmt.Sprintf("%s-%s", hostname, uuidRegex)
-	matched, err := regexp.MatchString(regexPattern, se.collectorName)
-	require.NoError(t, err)
-	assert.True(t, matched)
+	require.Equal(t, hostname, se.collectorName)
 }
 
 func TestRegistrationRedirect(t *testing.T) {
@@ -1133,7 +1116,7 @@ func TestRegistrationRedirect(t *testing.T) {
 			// register
 			case 1:
 				require.Equal(t, registerUrl, req.URL.Path)
-				http.Redirect(w, req, destSrv.URL, 301)
+				http.Redirect(w, req, destSrv.URL, http.StatusMovedPermanently)
 
 			// should not produce any more requests
 			default:
@@ -1369,10 +1352,7 @@ func TestRegistrationRequestPayload(t *testing.T) {
 	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 	require.NoError(t, se.Start(context.Background(), componenttest.NewNopHost()))
-	regexPattern := fmt.Sprintf("%s-%s", hostname, uuidRegex)
-	matched, err := regexp.MatchString(regexPattern, se.collectorName)
-	require.NoError(t, err)
-	assert.True(t, matched)
+	require.Equal(t, hostname, se.collectorName)
 
 	require.NoError(t, se.Shutdown(context.Background()))
 }
@@ -1394,6 +1374,8 @@ func TestWatchCredentialKey(t *testing.T) {
 
 	go func() {
 		time.Sleep(time.Millisecond * 100)
+		se.credsNotifyLock.Lock()
+		defer se.credsNotifyLock.Unlock()
 		se.registrationInfo.CollectorCredentialKey = "test-credential-key"
 		close(se.credsNotifyUpdate)
 	}()
