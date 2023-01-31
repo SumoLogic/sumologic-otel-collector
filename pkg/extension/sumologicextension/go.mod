@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	github.com/cenkalti/backoff/v4 v4.2.0
-	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/shirou/gopsutil/v3 v3.22.12
