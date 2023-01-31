@@ -23,7 +23,7 @@ type Config struct {
 	// Syslog server port
 	Port int `mapstructure:"port"`
 	// Protocol for syslog communication
-	// options: tcp, udp, tcp+tls, tcp+mtls
+	// options: tcp, udp
 	Protocol string `mapstructure:"protocol"`
 	// CA certificate of syslog server
 	CACertificate                string `mapstructure:"ca_certificate"`
