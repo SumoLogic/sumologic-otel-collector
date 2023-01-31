@@ -86,19 +86,20 @@ func newLogsExporter(
 	)
 }
 
-func (s *syslogexporter) logToText(record plog.LogRecord) string {
+func (se *syslogexporter) logToText(record plog.LogRecord) string {
 	return record.Body().AsString()
 }
 
-func (s *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
-	s.logger.Info("Syslog Exporter is pushing data")
-	addr := fmt.Sprintf("%s:%d", s.config.Endpoint, s.config.Port)
+func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
+	se.logger.Info("Syslog Exporter is pushing data")
+	addr := fmt.Sprintf("%s:%d", se.config.Endpoint, se.config.Port)
 
-	conn, err := Connect(s.config.Protocol, addr, syslog.LOG_ERR, "testtag", s.tlsConfig)
+	s, err := Connect(se.config.Protocol, addr, syslog.LOG_ERR, "testtag", se.tlsConfig)
 	if err != nil {
 		return fmt.Errorf("error connecting to syslog server: %s", err)
 	}
-	defer conn.Close()
+	defer s.Close()
+
 	rls := ld.ResourceLogs()
 	for i := 0; i < rls.Len(); i++ {
 		rl := rls.At(i)
@@ -107,8 +108,8 @@ func (s *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
 			slg := slgs.At(i)
 			for j := 0; j < slg.LogRecords().Len(); j++ {
 				lr := slg.LogRecords().At(j)
-				formattedLine := s.logToText(lr)
-				err = conn.WriteAndRetry(syslog.LOG_INFO, formattedLine)
+				formattedLine := se.logToText(lr)
+				err = s.WriteAndRetry(syslog.LOG_INFO, formattedLine)
 				if err != nil {
 					//TODO: add handling of failures as it is in sumologic exporter
 					return err
