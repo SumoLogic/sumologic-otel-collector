@@ -87,24 +87,16 @@ function build_push() {
     readonly LATEST_TAG="${REPO_URL}:latest${LATEST_TAG_FIPS_SUFFIX}-${BUILD_ARCH}"
 
     if [[ "${PUSH}" == true ]]; then
-        echo "Building tag: ${TAG}"
+        echo "Building tags: ${TAG}, ${LATEST_TAG}"
         docker buildx build \
             --push \
             --file "${DOCKERFILE}" \
             --build-arg BUILD_TAG="${BUILD_TAG}" \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --platform="${PLATFORM}" \
+            --tag "${LATEST_TAG}" \
             --tag "${TAG}" \
             .
-
-        # This is needed on CI because the above build command does not include
-        # --load flag, which is forbidded to be used together with --push, hence
-        # the docker pull.
-        docker pull "${TAG}"
-
-        echo "Tagging: ${LATEST_TAG}"
-        docker tag "${TAG}" "${LATEST_TAG}"
-        docker push "${LATEST_TAG}"
     else
         echo "Building tag: latest${LATEST_TAG_FIPS_SUFFIX}"
         # load flag is needed so that docker loads this image
