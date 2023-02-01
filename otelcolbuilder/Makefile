@@ -86,7 +86,7 @@ _builder:
 .PHONY: _gobuild
 _gobuild:
 	(cd cmd && \
-		CGO_ENABLED=$(CGO_ENABLED) go build -v \
+		GODEBUG=netdns=go CGO_ENABLED=$(CGO_ENABLED) go build -v \
 		-ldflags=$(LDFLAGS) \
 		-trimpath \
 		-o ./$(BINARY_NAME)$(BUILDER_BIN_EXT) . \
@@ -96,7 +96,7 @@ _gobuild:
 .PHONY: _gobuild_debug
 _gobuild_debug:
 	(cd cmd && \
-		CGO_ENABLED=$(CGO_ENABLED) go build -v \
+		GODEBUG=netdns=go CGO_ENABLED=$(CGO_ENABLED) go build -v \
 		-race \
 		-gcflags "all=-N -l" \
 		-o ./$(BINARY_NAME)-debug$(BUILDER_BIN_EXT) . \
