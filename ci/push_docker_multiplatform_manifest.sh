@@ -67,15 +67,13 @@ function push_manifest() {
 
     echo
     set -x
-    docker manifest create --amend \
+    docker buildx imagetools create --tag \
         "${REPO_URL}:${BUILD_TAG}" \
         "${TAGS_IN_MANIFEST[@]}"
-    docker manifest push "${REPO_URL}:${BUILD_TAG}"
 
-    docker manifest create --amend \
+    docker buildx imagetools create --tag \
         "${REPO_URL}:latest${LATEST_TAG_FIPS_SUFFIX}" \
         "${TAGS_IN_MANIFEST[@]}"
-    docker manifest push "${REPO_URL}:latest${LATEST_TAG_FIPS_SUFFIX}"
 }
 
 push_manifest
