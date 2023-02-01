@@ -9,6 +9,8 @@ exporters:
     protocol: tcp
     port: 514
     endpoint: 127.0.0.1
+    format: RFC5424
+    drop_invalid_messages: false
 
     # for below described queueing and retry related configuration please refer to:
     # https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/exporterhelper/README.md#configuration
@@ -43,10 +45,14 @@ exporters:
       queue_size: 10000
 receivers:
   filelog:
+    start_at: beginning
     include:
     - /other/path/**/*.txt
 
 service:
+  telemetry:
+      logs:
+        level: "debug"
   extensions:
     - file_storage/syslog
   pipelines:
