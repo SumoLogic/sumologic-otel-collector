@@ -557,6 +557,13 @@ function setup_config() {
     echo -e "Creating user env directory (${USER_ENV_DIRECTORY})"
     mkdir -p "${USER_ENV_DIRECTORY}"
 
+    echo 'Changing permissions for config files and storage'
+    chmod 551 "${CONFIG_DIRECTORY}"  # config directory world traversable, as is the /etc/ standard
+
+    echo 'Changing permissions for user env directory'
+    chmod 550 "${USER_ENV_DIRECTORY}"
+    chmod g+s "${USER_ENV_DIRECTORY}"
+
     echo "Generating configuration and saving as ${CONFIG_PATH}"
 
     CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/sumologic.yaml"
@@ -602,15 +609,9 @@ function setup_config() {
         rm -f "${COMMON_CONFIG_BAK_PATH}"
     fi
 
-    echo 'Changing permissions for config files and storage'
-    chmod 555 "${CONFIG_DIRECTORY}"
+    # Finish setting permissions after we're done creating config files
     chmod -R 440 "${CONFIG_DIRECTORY}"/*  # all files only readable by the owner
     find "${CONFIG_DIRECTORY}/" -mindepth 1 -type d -exec chmod 550 {} \;  # directories also traversable
-    chmod -R 750 "${HOME_DIRECTORY}"
-
-    echo 'Changing permissions for user env directory'
-    chmod 550 "${USER_ENV_DIRECTORY}"
-    chmod g+s "${USER_ENV_DIRECTORY}"
 }
 
 # uninstall otelcol-sumo
@@ -805,6 +806,7 @@ function create_user_config_file() {
     fi
 
     touch "${file}"
+    chmod 440 "${file}"
 }
 
 # write extensions section to user configuration file
