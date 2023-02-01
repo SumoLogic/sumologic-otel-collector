@@ -27,9 +27,9 @@ type Config struct {
 	Protocol string `mapstructure:"protocol"`
 	// CA certificate of syslog server
 	CACertificate string `mapstructure:"ca_certificate"`
-
+	// Format of syslog messages
 	Format string `mapstructure:"format"`
-
+	// Flag to control dropping messages in wrong format
 	DropInvalidMsg bool `mapstructure:"drop_invalid_messages"`
 
 	exporterhelper.QueueSettings `mapstructure:"sending_queue"`
