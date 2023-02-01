@@ -26,7 +26,12 @@ type Config struct {
 	// options: tcp, udp
 	Protocol string `mapstructure:"protocol"`
 	// CA certificate of syslog server
-	CACertificate                string `mapstructure:"ca_certificate"`
+	CACertificate string `mapstructure:"ca_certificate"`
+
+	Format string `mapstructure:"format"`
+
+	DropInvalidMsg bool `mapstructure:"drop_invalid_messages"`
+
 	exporterhelper.QueueSettings `mapstructure:"sending_queue"`
 	exporterhelper.RetrySettings `mapstructure:"retry_on_failure"`
 }

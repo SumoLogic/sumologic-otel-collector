@@ -20,7 +20,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
-	"log/syslog"
+	"os"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/exporter"
@@ -29,17 +29,24 @@ import (
 	"go.uber.org/zap"
 )
 
+const maxLengthAppName = 48 // limit to 48 chars according to RFC5424
+
 type syslogexporter struct {
 	config    *Config
 	host      component.Host
 	logger    *zap.Logger
 	tlsConfig *tls.Config
+	hostname  string
+	pid       int
+	app       string
 }
 
 func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*syslogexporter, error) {
 	var tlsConfig *tls.Config
+	var err error
 	if cfg.CACertificate != "" {
-		serverCert, err := ioutil.ReadFile(cfg.CACertificate)
+		var serverCert []byte
+		serverCert, err = ioutil.ReadFile(cfg.CACertificate)
 		if err != nil {
 			return nil, err
 		}
@@ -51,10 +58,19 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sysloge
 		}
 	}
 
+	var hostname string
+	hostname, err = os.Hostname()
+	if err != nil {
+		return nil, err
+	}
+
 	s := &syslogexporter{
 		config:    cfg,
 		logger:    createSettings.Logger,
 		tlsConfig: tlsConfig,
+		hostname:  hostname,
+		pid:       os.Getpid(),
+		app:       getAppName(),
 	}
 
 	s.logger.Info("Syslog Exporter configured",
@@ -92,9 +108,8 @@ func (se *syslogexporter) logToText(record plog.LogRecord) string {
 
 func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
 	se.logger.Info("Syslog Exporter is pushing data")
-	addr := fmt.Sprintf("%s:%d", se.config.Endpoint, se.config.Port)
 
-	s, err := Connect(se.config.Protocol, addr, syslog.LOG_ERR, "testtag", se.tlsConfig)
+	s, err := Connect(se.config, se.tlsConfig, se.hostname, se.pid, se.app)
 	if err != nil {
 		return fmt.Errorf("error connecting to syslog server: %s", err)
 	}
@@ -109,7 +124,7 @@ func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error 
 			for j := 0; j < slg.LogRecords().Len(); j++ {
 				lr := slg.LogRecords().At(j)
 				formattedLine := se.logToText(lr)
-				err = s.WriteAndRetry(syslog.LOG_INFO, formattedLine)
+				err = s.Write(formattedLine)
 				if err != nil {
 					//TODO: add handling of failures as it is in sumologic exporter
 					return err
@@ -118,4 +133,12 @@ func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error 
 		}
 	}
 	return nil
+}
+
+func getAppName() string {
+	app := os.Args[0]
+	if len(app) > maxLengthAppName {
+		return app[len(app)-maxLengthAppName:]
+	}
+	return app
 }
