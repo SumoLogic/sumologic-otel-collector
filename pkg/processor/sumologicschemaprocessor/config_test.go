@@ -53,6 +53,12 @@ func TestLoadConfig(t *testing.T) {
 				SquashSingleValues: false,
 			},
 			AggregateAttributes: []aggregationPair{},
+			LogFieldsAttributes: &logFieldAttributesConfig{
+				SeverityNumberAttribute: &logFieldAttribute{false, SeverityNumberAttributeName},
+				SeverityTextAttribute:   &logFieldAttribute{false, SeverityTextAttributeName},
+				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
+				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
+			},
 		})
 
 	p2 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-attribute-translation")]
@@ -70,6 +76,12 @@ func TestLoadConfig(t *testing.T) {
 				SquashSingleValues: false,
 			},
 			AggregateAttributes: []aggregationPair{},
+			LogFieldsAttributes: &logFieldAttributesConfig{
+				SeverityNumberAttribute: &logFieldAttribute{false, SeverityNumberAttributeName},
+				SeverityTextAttribute:   &logFieldAttribute{false, SeverityTextAttributeName},
+				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
+				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
+			},
 		})
 
 	p3 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-telegraf-attribute-translation")]
@@ -87,6 +99,12 @@ func TestLoadConfig(t *testing.T) {
 				SquashSingleValues: false,
 			},
 			AggregateAttributes: []aggregationPair{},
+			LogFieldsAttributes: &logFieldAttributesConfig{
+				SeverityNumberAttribute: &logFieldAttribute{false, SeverityNumberAttributeName},
+				SeverityTextAttribute:   &logFieldAttribute{false, SeverityTextAttributeName},
+				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
+				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
+			},
 		})
 
 	p4 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-nesting")]
@@ -104,6 +122,12 @@ func TestLoadConfig(t *testing.T) {
 				SquashSingleValues: true,
 			},
 			AggregateAttributes: []aggregationPair{},
+			LogFieldsAttributes: &logFieldAttributesConfig{
+				SeverityNumberAttribute: &logFieldAttribute{false, SeverityNumberAttributeName},
+				SeverityTextAttribute:   &logFieldAttribute{false, SeverityTextAttributeName},
+				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
+				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
+			},
 		})
 
 	p5 := cfg.Processors[component.NewIDWithName(typeStr, "aggregate-attributes")]
@@ -129,6 +153,104 @@ func TestLoadConfig(t *testing.T) {
 					Attribute: "attr2",
 					Patterns:  []string{"pattern4"},
 				},
+			},
+			LogFieldsAttributes: &logFieldAttributesConfig{
+				SeverityNumberAttribute: &logFieldAttribute{false, SeverityNumberAttributeName},
+				SeverityTextAttribute:   &logFieldAttribute{false, SeverityTextAttributeName},
+				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
+				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
+			},
+		})
+
+	p6 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-severity-number-attribute")]
+
+	assert.Equal(t, p6,
+		&Config{
+			AddCloudNamespace:           true,
+			TranslateAttributes:         true,
+			TranslateTelegrafAttributes: true,
+			NestAttributes: &NestingProcessorConfig{
+				Enabled:            false,
+				Separator:          ".",
+				Include:            []string{},
+				Exclude:            []string{},
+				SquashSingleValues: false,
+			},
+			AggregateAttributes: []aggregationPair{},
+			LogFieldsAttributes: &logFieldAttributesConfig{
+				SeverityNumberAttribute: &logFieldAttribute{true, SeverityNumberAttributeName},
+				SeverityTextAttribute:   &logFieldAttribute{false, SeverityTextAttributeName},
+				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
+				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
+			},
+		})
+
+	p7 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-severity-text-attribute")]
+
+	assert.Equal(t, p7,
+		&Config{
+			AddCloudNamespace:           true,
+			TranslateAttributes:         true,
+			TranslateTelegrafAttributes: true,
+			NestAttributes: &NestingProcessorConfig{
+				Enabled:            false,
+				Separator:          ".",
+				Include:            []string{},
+				Exclude:            []string{},
+				SquashSingleValues: false,
+			},
+			AggregateAttributes: []aggregationPair{},
+			LogFieldsAttributes: &logFieldAttributesConfig{
+				SeverityNumberAttribute: &logFieldAttribute{false, SeverityNumberAttributeName},
+				SeverityTextAttribute:   &logFieldAttribute{true, SeverityTextAttributeName},
+				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
+				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
+			},
+		})
+
+	p8 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-span-id-attribute")]
+
+	assert.Equal(t, p8,
+		&Config{
+			AddCloudNamespace:           true,
+			TranslateAttributes:         true,
+			TranslateTelegrafAttributes: true,
+			NestAttributes: &NestingProcessorConfig{
+				Enabled:            false,
+				Separator:          ".",
+				Include:            []string{},
+				Exclude:            []string{},
+				SquashSingleValues: false,
+			},
+			AggregateAttributes: []aggregationPair{},
+			LogFieldsAttributes: &logFieldAttributesConfig{
+				SeverityNumberAttribute: &logFieldAttribute{false, SeverityNumberAttributeName},
+				SeverityTextAttribute:   &logFieldAttribute{false, SeverityTextAttributeName},
+				SpanIdAttribute:         &logFieldAttribute{true, SpanIdAttributeName},
+				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
+			},
+		})
+
+	p9 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-trace-id-attribute")]
+
+	assert.Equal(t, p9,
+		&Config{
+			AddCloudNamespace:           true,
+			TranslateAttributes:         true,
+			TranslateTelegrafAttributes: true,
+			NestAttributes: &NestingProcessorConfig{
+				Enabled:            false,
+				Separator:          ".",
+				Include:            []string{},
+				Exclude:            []string{},
+				SquashSingleValues: false,
+			},
+			AggregateAttributes: []aggregationPair{},
+			LogFieldsAttributes: &logFieldAttributesConfig{
+				SeverityNumberAttribute: &logFieldAttribute{false, SeverityNumberAttributeName},
+				SeverityTextAttribute:   &logFieldAttribute{false, SeverityTextAttributeName},
+				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
+				TraceIdAttribute:        &logFieldAttribute{true, TraceIdAttributeName},
 			},
 		})
 }

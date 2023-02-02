@@ -19,11 +19,12 @@ import (
 )
 
 type Config struct {
-	AddCloudNamespace           bool                    `mapstructure:"add_cloud_namespace"`
-	TranslateAttributes         bool                    `mapstructure:"translate_attributes"`
-	TranslateTelegrafAttributes bool                    `mapstructure:"translate_telegraf_attributes"`
-	NestAttributes              *NestingProcessorConfig `mapstructure:"nest_attributes"`
-	AggregateAttributes         []aggregationPair       `mapstructure:"aggregate_attributes"`
+	AddCloudNamespace           bool                      `mapstructure:"add_cloud_namespace"`
+	TranslateAttributes         bool                      `mapstructure:"translate_attributes"`
+	TranslateTelegrafAttributes bool                      `mapstructure:"translate_telegraf_attributes"`
+	NestAttributes              *NestingProcessorConfig   `mapstructure:"nest_attributes"`
+	AggregateAttributes         []aggregationPair         `mapstructure:"aggregate_attributes"`
+	LogFieldsAttributes         *logFieldAttributesConfig `mapstructure:"field_attributes"`
 }
 
 type aggregationPair struct {
@@ -40,6 +41,11 @@ const (
 	defaultNestingEnabled            = false
 	defaultNestingSeparator          = "."
 	defaultNestingSquashSingleValues = false
+
+	defaultAddSeverityNumberAttribute = false
+	defaultAddSeverityTextAttribute   = false
+	defaultAddSpanIdAttribute         = false
+	defaultAddTraceIdAttribute        = false
 )
 
 var (
@@ -66,6 +72,12 @@ func createDefaultConfig() component.Config {
 			SquashSingleValues: defaultNestingSquashSingleValues,
 		},
 		AggregateAttributes: defaultAggregateAttributes,
+		LogFieldsAttributes: &logFieldAttributesConfig{
+			SeverityNumberAttribute: &logFieldAttribute{defaultAddSeverityNumberAttribute, SeverityNumberAttributeName},
+			SeverityTextAttribute:   &logFieldAttribute{defaultAddSeverityTextAttribute, SeverityTextAttributeName},
+			SpanIdAttribute:         &logFieldAttribute{defaultAddSpanIdAttribute, SpanIdAttributeName},
+			TraceIdAttribute:        &logFieldAttribute{defaultAddTraceIdAttribute, TraceIdAttributeName},
+		},
 	}
 }
 

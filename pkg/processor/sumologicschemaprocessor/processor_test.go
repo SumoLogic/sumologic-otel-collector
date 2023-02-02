@@ -1237,6 +1237,59 @@ func TestAggregateAttributesForTraces(t *testing.T) {
 	}
 }
 
+func TestLogFieldsConversionLogs(t *testing.T) {
+	testCases := []struct {
+		name       string
+		createLogs func() plog.Logs
+		test       func(plog.Logs)
+	}{
+		{
+			name: "logFieldsConversion",
+			createLogs: func() plog.Logs {
+				logs := plog.NewLogs()
+				log := logs.ResourceLogs().AppendEmpty().ScopeLogs().AppendEmpty().LogRecords().AppendEmpty()
+				log.SetSeverityNumber(plog.SeverityNumberInfo)
+				log.SetSeverityText("severity")
+				var spanIDBytes [8]byte = [8]byte{1, 1, 1, 1, 1, 1, 1, 1}
+				log.SetSpanID(spanIDBytes)
+				var traceIDBytes [16]byte = [16]byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+				log.SetTraceID(traceIDBytes)
+				return logs
+			},
+			test: func(outputLogs plog.Logs) {
+				attribute1, found := outputLogs.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0).Attributes().Get("definitely_not_default_name")
+				assert.True(t, found)
+				assert.Equal(t, "INFO", attribute1.Str())
+				attribute2, found := outputLogs.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0).Attributes().Get("severitytext")
+				assert.True(t, found)
+				assert.Equal(t, "severity", attribute2.Str())
+				attribute3, found := outputLogs.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0).Attributes().Get("spanid")
+				assert.True(t, found)
+				assert.Equal(t, "0101010101010101", attribute3.Str())
+				attribute4, found := outputLogs.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0).Attributes().Get("traceid")
+				assert.True(t, found)
+				assert.Equal(t, "01010101010101010101010101010101", attribute4.Str())
+
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			// Arrange
+			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newLogFieldsConversionConfig())
+			require.NoError(t, err)
+
+			// Act
+			outputLogs, err := processor.processLogs(context.Background(), testCase.createLogs())
+			require.NoError(t, err)
+
+			// Assert
+			testCase.test(outputLogs)
+		})
+	}
+}
+
 func newProcessorCreateSettings() processor.CreateSettings {
 	return processor.CreateSettings{
 		TelemetrySettings: component.TelemetrySettings{
@@ -1296,5 +1349,22 @@ func newAggregateAttributesConfig(aggregations []aggregationPair) *Config {
 	config.TranslateAttributes = false
 	config.TranslateTelegrafAttributes = false
 	config.AggregateAttributes = aggregations
+	return config
+}
+
+func newLogFieldsConversionConfig() *Config {
+	config := createDefaultConfig().(*Config)
+	config.AddCloudNamespace = false
+	config.TranslateAttributes = false
+	config.TranslateTelegrafAttributes = false
+	config.NestAttributes = &NestingProcessorConfig{
+		Enabled: false,
+	}
+	config.LogFieldsAttributes = &logFieldAttributesConfig{
+		&logFieldAttribute{Enabled: true, Name: "definitely_not_default_name"},
+		&logFieldAttribute{Enabled: true, Name: SeverityTextAttributeName},
+		&logFieldAttribute{Enabled: true, Name: SpanIdAttributeName},
+		&logFieldAttribute{Enabled: true, Name: TraceIdAttributeName},
+	}
 	return config
 }
