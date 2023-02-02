@@ -299,7 +299,7 @@ function github_rate_limit() {
 
 # This function is applicable to very few platforms/distributions.
 function install_missing_dependencies() {
-    REQUIRED_COMMANDS=(echo bc)
+    REQUIRED_COMMANDS=(echo)
     if [[ -n "${BINARY_BRANCH}" ]]; then  # unzip is only necessary for downloading from GHA artifacts
         REQUIRED_COMMANDS+=(unzip)
     fi
@@ -331,7 +331,7 @@ function check_dependencies() {
         error=1
     fi
 
-    REQUIRED_COMMANDS=(echo sed curl head grep sort mv chmod getopts hostname bc touch xargs)
+    REQUIRED_COMMANDS=(echo sed curl head grep sort mv chmod getopts hostname touch xargs)
     if [[ -n "${BINARY_BRANCH}" ]]; then  # unzip is only necessary for downloading from GHA artifacts
         REQUIRED_COMMANDS+=(unzip)
     fi
@@ -1131,15 +1131,18 @@ if [[ -z "${VERSION}" ]]; then
     VERSION="$(get_latest_version "${VERSIONS}")"
 fi
 
-VERSION_PREFIX="$(echo "${VERSION}" | grep -oE '^[^.]+\.[^.]+')"
+VERSION_PREFIX="${VERSION%.*}"       # cut off the suffix starting with the last stop
+MAJOR_VERSION="${VERSION_PREFIX%.*}" # take the prefix from before the first stop
+MINOR_VERSION="${VERSION_PREFIX#*.}" # take the suffix after the first stop
 
-readonly VERSIONS VERSION INSTALLED_VERSION VERSION_PREFIX
+
+readonly VERSIONS VERSION INSTALLED_VERSION VERSION_PREFIX MAJOR_VERSION MINOR_VERSION
 
 echo -e "Version to install:\t${VERSION}"
 
 if [[ -z "${CONFIG_BRANCH}" ]]; then
     # Remove glob for versions up to 0.57
-    if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then
+    if (( MAJOR_VERSION == 0 && MINOR_VERSION <= 57 )); then
         CONFIG_BRANCH="9e06ada346b5e7fb3df582f28e582e07730899de"
     else
         CONFIG_BRANCH="v${VERSION}"
@@ -1204,7 +1207,7 @@ fi
 if [[ "${SYSTEMD_DISABLED}" == "true" ]]; then
     COMMAND_SUFFIX=""
     # Add glob for versions above 0.57
-    if (( $(echo "${VERSION_PREFIX} > 0.57" | bc -l) )); then
+    if (( MAJOR_VERSION >= 0 && MINOR_VERSION > 57 )); then
         COMMAND_SUFFIX=" --config \"glob:${CONFIG_DIRECTORY}/conf.d/*.yaml\""
     else
         COMMAND_SUFFIX=" --config ${COMMON_CONFIG_PATH}"
@@ -1247,7 +1250,7 @@ sed -i.bak -e "s%/etc/otelcol-sumo%${CONFIG_DIRECTORY}%" "${TMP_SYSTEMD_CONFIG}"
 sed -i.bak -e "s%/etc/otelcol-sumo/env%${USER_ENV_DIRECTORY}%" "${TMP_SYSTEMD_CONFIG}"
 
 # Remove glob for versions up to 0.57
-if (( $(echo "${VERSION_PREFIX} <= 0.57" | bc -l) )); then
+if (( MAJOR_VERSION == 0 && MINOR_VERSION <= 57 )); then
     sed -i.bak -e "s% --config \"glob.*\"% --config ${COMMON_CONFIG_PATH}%" "${TMP_SYSTEMD_CONFIG}"
 fi
 
