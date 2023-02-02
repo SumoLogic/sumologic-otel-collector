@@ -27,6 +27,7 @@ action :default do
   install_command = get_install_script_command(new_resource)
   execute INSTALL_SCRIPT_PATH do
     command install_command
+    environment ({"SUMOLOGIC_INSTALL_TOKEN" => resource.install_token})
   end
   run_action :prepare_config
   if new_resource.systemd_service
@@ -58,7 +59,7 @@ end
 
 
 def get_install_script_command(resource)
-  command_parts = ["bash", INSTALL_SCRIPT_PATH, "--installation-token #{resource.install_token}"]
+  command_parts = ["bash", INSTALL_SCRIPT_PATH]
   command_parts += resource.collector_tags.map { |key, value| "--tag #{key}=#{value}" }
   if property_is_set?(:version)
      command_parts.push("--version #{resource.version}")

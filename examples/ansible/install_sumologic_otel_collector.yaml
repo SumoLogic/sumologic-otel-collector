@@ -12,8 +12,7 @@
         mode: 0755
     - name: Create install script argument list
       ansible.builtin.set_fact:
-        install_script_args:
-          - "--installation-token {{ install_token | mandatory }}"
+        install_script_args: []
     - name: Add tags to install script argument list
       ansible.builtin.set_fact:
         install_script_args: "{{ install_script_args + [ '--tag ' ~ item.key ~ '=' ~ item.value ] }}"
@@ -31,6 +30,8 @@
         install_script_args: "{{ install_script_args + ['--skip-systemd'] }}"
       when: not systemd_service
     - name: Run install script
+      environment:
+        SUMOLOGIC_INSTALL_TOKEN: "{{ install_token | mandatory }}"
       ansible.builtin.command: "bash /tmp/install.sh {{ install_script_args | join(' ') }}"
       changed_when: true
     - name: "Copy configuration files to /etc/otelcol-sumo/conf.d"

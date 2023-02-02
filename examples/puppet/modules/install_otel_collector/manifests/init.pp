@@ -47,9 +47,7 @@ class install_otel_collector (
   } else {
     $systemd_command_args = ['--skip-systemd']
   }
-  $install_command_args = [
-    "--installation-token ${install_token}",
-  ] + $tags_command_args + $version_command_args + $api_command_args + $systemd_command_args
+  $install_command_args = $tags_command_args + $version_command_args + $api_command_args + $systemd_command_args
 
   file { 'download the install script':
     source => $install_script_url,
@@ -59,9 +57,10 @@ class install_otel_collector (
   $install_command_parts = ['bash', $install_script_path] + $install_command_args
   $install_command = join($install_command_parts, ' ')
   exec { 'run the installation script':
-    command => $install_command,
-    path    => ['/usr/local/bin/', '/usr/bin', '/usr/sbin', '/bin'],
-    user    => 'root',
+    command     => $install_command,
+    path        => ['/usr/local/bin/', '/usr/bin', '/usr/sbin', '/bin'],
+    user        => 'root',
+    environment => ["SUMOLOGIC_INSTALL_TOKEN=${install_token}"]
   }
 
   file { '/etc/otelcol-sumo/conf.d':

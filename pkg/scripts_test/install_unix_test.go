@@ -121,26 +121,6 @@ func TestInstallScript(t *testing.T) {
 			},
 		},
 		{
-			name: "installation token only (envs)",
-			options: installOptions{
-				skipSystemd: true,
-				envs: map[string]string{
-					"SUMOLOGIC_INSTALL_TOKEN": installToken,
-				},
-			},
-			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated},
-			postChecks: []checkFunc{
-				checkBinaryCreated,
-				checkBinaryIsRunning,
-				checkConfigCreated,
-				checkConfigFilesOwnershipAndPermissions("root", getRootGroupName()),
-				checkUserConfigCreated,
-				checkEnvTokenInConfig,
-				checkSystemdConfigNotCreated,
-				checkUserNotExists,
-			},
-		},
-		{
 			name: "same installation token",
 			options: installOptions{
 				skipSystemd:  true,

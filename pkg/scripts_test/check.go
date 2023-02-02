@@ -143,16 +143,6 @@ func checkDifferentTokenInConfig(c check) {
 	require.Equal(c.test, "different"+c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "install token is different than expected")
 }
 
-func checkEnvTokenInConfig(c check) {
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err, "error while reading configuration")
-
-	token, ok := c.installOptions.envs["SUMOLOGIC_INSTALL_TOKEN"]
-	require.True(c.test, ok, "SUMOLOGIC_INSTALL_TOKEN env hash not been set")
-
-	require.Equal(c.test, token, conf.Extensions.Sumologic.InstallToken, "install token is different than expected")
-}
-
 func checkHostmetricsConfigCreated(c check) {
 	require.FileExists(c.test, hostmetricsConfigPath, "hostmetrics configuration has not been created properly")
 }
@@ -269,7 +259,7 @@ func checkAbortedDueToDifferentToken(c check) {
 
 func checkAbortedDueToNoToken(c check) {
 	require.Greater(c.test, len(c.output), 1)
-	require.Contains(c.test, c.output[len(c.output)-2], "Install token has not been provided. Please use '--installation-token <token>' or 'SUMOLOGIC_INSTALL_TOKEN' env.")
+	require.Contains(c.test, c.output[len(c.output)-2], "Install token has not been provided. Please set the 'SUMOLOGIC_INSTALL_TOKEN' environment variable.")
 	require.Contains(c.test, c.output[len(c.output)-1], "You can ignore this requirement by adding '--skip-install-token argument.")
 }
 
