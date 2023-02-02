@@ -299,7 +299,11 @@ function github_rate_limit() {
 
 # This function is applicable to very few platforms/distributions.
 function install_missing_dependencies() {
-    for cmd in echo bc unzip; do
+    REQUIRED_COMMANDS=(echo bc)
+    if [[ -n "${BINARY_BRANCH}" ]]; then  # unzip is only necessary for downloading from GHA artifacts
+        REQUIRED_COMMANDS+=(unzip)
+    fi
+    for cmd in "${REQUIRED_COMMANDS[@]}"; do
         if ! command -v "${cmd}" &> /dev/null; then
             # Attempt to install it via yum if on a RHEL distribution.
             if [[ -f "/etc/redhat-release" ]]; then
@@ -327,7 +331,12 @@ function check_dependencies() {
         error=1
     fi
 
-    for cmd in echo sed curl head grep sort mv chmod getopts hostname bc touch xargs unzip; do
+    REQUIRED_COMMANDS=(echo sed curl head grep sort mv chmod getopts hostname bc touch xargs)
+    if [[ -n "${BINARY_BRANCH}" ]]; then  # unzip is only necessary for downloading from GHA artifacts
+        REQUIRED_COMMANDS+=(unzip)
+    fi
+
+    for cmd in "${REQUIRED_COMMANDS[@]}"; do
         if ! command -v "${cmd}" &> /dev/null; then
             echo "Command '${cmd}' not found. Please install it."
             error=1
@@ -1030,11 +1039,11 @@ function set_acl_on_log_paths() {
 
 ############################ Main code
 
+set_defaults
+parse_options "$@"
 set_tmpdir
 install_missing_dependencies
 check_dependencies
-set_defaults
-parse_options "$@"
 
 readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
 readonly USER_CONFIG_DIRECTORY USER_ENV_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
