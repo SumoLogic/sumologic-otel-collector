@@ -496,15 +496,22 @@ function ask_to_continue() {
         return 0
     fi
 
-    local choice
-    read -rp "Continue (y/N)? " choice
-    case "${choice}" in
-    y|Y ) ;;
-    n|N | * )
-        echo "Aborting..."
-        exit 1
-        ;;
-    esac
+    # Just fail if we're not running in uninteractive mode
+    # TODO: Figure out a way to reliably ask for confirmation with stdin redirected
+
+    echo "Please use the --yes flag to continue"
+    exit 1
+
+    # local choice
+    # read -rp "Continue (y/N)? " choice
+    # case "${choice}" in
+    # y|Y ) ;;
+    # n|N | * )
+    #     echo "Aborting..."
+    #     exit 1
+    #     ;;
+    # esac
+
 }
 
 # Get changelog for specific version

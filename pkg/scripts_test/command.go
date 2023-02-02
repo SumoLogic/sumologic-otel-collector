@@ -170,11 +170,6 @@ func runScript(ch check) (int, []string, error) {
 			continue
 		}
 
-		if strings.Contains(strLine, "Going to remove") {
-			// approve installation config
-			_, err = in.Write([]byte("y\n"))
-			require.NoError(ch.test, err)
-		}
 	}
 
 	code, err := exitCode(cmd)
