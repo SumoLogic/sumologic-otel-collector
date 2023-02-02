@@ -325,13 +325,14 @@ func TestInstallScript(t *testing.T) {
 			installCode:       3, // because of invalid install token
 		},
 		{
-			name: "uninstallation",
+			name: "uninstallation without autoconfirm fails",
 			options: installOptions{
 				uninstall: true,
 			},
-			preActions: []checkFunc{preActionMockStructure},
-			preChecks:  []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkUserNotExists},
-			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigCreated, checkUserConfigCreated},
+			installCode: 1,
+			preActions:  []checkFunc{preActionMockStructure},
+			preChecks:   []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkUserNotExists},
+			postChecks:  []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated},
 		},
 		{
 			name: "uninstallation with autoconfirm",
@@ -346,7 +347,8 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "systemd uninstallation",
 			options: installOptions{
-				uninstall: true,
+				autoconfirm: true,
+				uninstall:   true,
 			},
 			preActions:        []checkFunc{preActionMockSystemdStructure},
 			preChecks:         []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkSystemdConfigCreated, checkUserNotExists},
@@ -356,8 +358,9 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "purge",
 			options: installOptions{
-				uninstall: true,
-				purge:     true,
+				uninstall:   true,
+				purge:       true,
+				autoconfirm: true,
 			},
 			preActions: []checkFunc{preActionMockStructure},
 			preChecks:  []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkUserNotExists},
@@ -366,8 +369,9 @@ func TestInstallScript(t *testing.T) {
 		{
 			name: "systemd purge",
 			options: installOptions{
-				uninstall: true,
-				purge:     true,
+				uninstall:   true,
+				purge:       true,
+				autoconfirm: true,
 			},
 			preActions:        []checkFunc{preActionMockSystemdStructure},
 			preChecks:         []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkSystemdConfigCreated, checkUserNotExists},
