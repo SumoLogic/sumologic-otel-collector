@@ -71,12 +71,12 @@ processors:
     # Defines whether attribute should be added to record attributes.
     # Currently available attributes are `severity_number`, `severity_text`,
     # `trace_id`, `span_id`
+    # all are disabled by default, enabled: false
     field_attributes:
       severity_number:
         enabled: true
         name: "loglevel"
 
-    - ...
 ```
 
 ## Features

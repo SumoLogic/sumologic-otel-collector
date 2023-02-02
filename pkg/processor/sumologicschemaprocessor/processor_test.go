@@ -1257,7 +1257,7 @@ func TestLogFieldsConversionLogs(t *testing.T) {
 				return logs
 			},
 			test: func(outputLogs plog.Logs) {
-				attribute1, found := outputLogs.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0).Attributes().Get("loglevel")
+				attribute1, found := outputLogs.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0).Attributes().Get("definitely_not_default_name")
 				assert.True(t, found)
 				assert.Equal(t, "INFO", attribute1.Str())
 				attribute2, found := outputLogs.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0).Attributes().Get("severitytext")
@@ -1361,7 +1361,7 @@ func newLogFieldsConversionConfig() *Config {
 		Enabled: false,
 	}
 	config.LogFieldsAttributes = &logFieldAttributesConfig{
-		&logFieldAttribute{Enabled: true, Name: SeverityNumberAttributeName},
+		&logFieldAttribute{Enabled: true, Name: "definitely_not_default_name"},
 		&logFieldAttribute{Enabled: true, Name: SeverityTextAttributeName},
 		&logFieldAttribute{Enabled: true, Name: SpanIdAttributeName},
 		&logFieldAttribute{Enabled: true, Name: TraceIdAttributeName},

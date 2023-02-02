@@ -73,10 +73,10 @@ func createDefaultConfig() component.Config {
 		},
 		AggregateAttributes: defaultAggregateAttributes,
 		LogFieldsAttributes: &logFieldAttributesConfig{
-			SeverityNumberAttribute: &logFieldAttribute{defaultAddSeverityNumberAttribute, "loglevel"},
-			SeverityTextAttribute:   &logFieldAttribute{defaultAddSeverityTextAttribute, "severitytext"},
-			SpanIdAttribute:         &logFieldAttribute{defaultAddSpanIdAttribute, "spanid"},
-			TraceIdAttribute:        &logFieldAttribute{defaultAddTraceIdAttribute, "traceid"},
+			SeverityNumberAttribute: &logFieldAttribute{defaultAddSeverityNumberAttribute, SeverityNumberAttributeName},
+			SeverityTextAttribute:   &logFieldAttribute{defaultAddSeverityTextAttribute, SeverityTextAttributeName},
+			SpanIdAttribute:         &logFieldAttribute{defaultAddSpanIdAttribute, SpanIdAttributeName},
+			TraceIdAttribute:        &logFieldAttribute{defaultAddTraceIdAttribute, TraceIdAttributeName},
 		},
 	}
 }
