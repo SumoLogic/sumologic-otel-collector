@@ -11,6 +11,8 @@ exporters:
     endpoint: 127.0.0.1
     format: RFC5424
     drop_invalid_messages: false
+    additional_structured_data: # only if messages are in RFC5424 format
+    - tab=abc
 
     # for below described queueing and retry related configuration please refer to:
     # https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/exporterhelper/README.md#configuration

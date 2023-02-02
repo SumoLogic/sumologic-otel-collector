@@ -31,6 +31,8 @@ type Config struct {
 	Format string `mapstructure:"format"`
 	// Flag to control dropping messages in wrong format
 	DropInvalidMsg bool `mapstructure:"drop_invalid_messages"`
+	//Additional structured data added to structured data in RFC5424
+	AdditionalStructuredData []string `mapstructure:"additional_structured_data"`
 
 	exporterhelper.QueueSettings `mapstructure:"sending_queue"`
 	exporterhelper.RetrySettings `mapstructure:"retry_on_failure"`
