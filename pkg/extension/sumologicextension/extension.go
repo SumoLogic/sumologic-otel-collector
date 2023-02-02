@@ -31,7 +31,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/google/uuid"
 	ps "github.com/mitchellh/go-ps"
 	"github.com/shirou/gopsutil/v3/host"
 	"go.opentelemetry.io/collector/component"
@@ -130,7 +129,7 @@ func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID, bu
 		// and that we can reuse collector name save in credentials store.
 		if creds, err := credentialsStore.Get(hashKey); err != nil {
 			// If credentials file is not stored on filesystem generate collector name
-			collectorName = fmt.Sprintf("%s-%s", hostname, uuid.New())
+			collectorName = hostname
 		} else {
 			collectorName = creds.CollectorName
 		}
@@ -433,6 +432,10 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 	var resp api.OpenRegisterResponsePayload
 	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
 		return credentials.CollectorCredentials{}, err
+	}
+
+	if collectorName != resp.CollectorName {
+		se.logger.Warn("Collector name already in use, registered modified name", zap.String("registered_name", resp.CollectorName))
 	}
 
 	return credentials.CollectorCredentials{

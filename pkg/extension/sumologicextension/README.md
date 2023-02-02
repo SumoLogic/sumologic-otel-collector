@@ -30,8 +30,7 @@ and can be used as an authenticator for the
 
 - `install_token`: (required) collector install token for the Sumo Logic service, see
   [help][credentials_help] for more details
-- `collector_name`: name that will be used for registration; by default it is a
-   hostname followed by UUID
+- `collector_name`: name that will be used for registration; by default the hostname is used. In the event of a conflict, a timestamp will be appended to the name. See [here][clobber] for more information.
 - `collector_description`: collector description that will be used for registration
 - `collector_category`: collector category that will be used for registration
 - `collector_fields`: a map of key value pairs that will be used as collector
@@ -49,7 +48,7 @@ and can be used as an authenticator for the
 - `collector_credentials_directory`: directory where state files with registration
   info will be stored after successful collector registration
   (default: `$HOME/.sumologic-otel-collector`)
-- `clobber`: defines whether to delete any existing collector with the same name
+- `clobber`: defines whether to delete any existing collector with the same name. See [here][clobber] for more information.
 - `force_registration`: defines whether to force registration every time the
   collector starts.
   This will cause the collector to not look at the locally stored credentials
@@ -71,6 +70,7 @@ and can be used as an authenticator for the
 
 [credentials_help]: https://help.sumologic.com/docs/manage/security/installation-tokens
 [fields_help]: https://help.sumologic.com/docs/manage/fields
+[clobber]: https://help.sumologic.com/docs/send-data/installed-collectors/collector-installation-reference/force-collectors-name-clobber/
 
 ## Example Config
 

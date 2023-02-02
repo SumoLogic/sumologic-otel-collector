@@ -121,8 +121,8 @@ func TestProcessEventE2E(t *testing.T) {
 	assert.NoError(t, err)
 	listWatch.Add(getEvent())
 	assert.Eventually(t, func() bool {
-		return assert.Equal(t, 1, sink.LogRecordCount())
-	}, time.Second, time.Millisecond)
+		return sink.LogRecordCount() == 1
+	}, time.Second, time.Millisecond, "expected one event, got 0")
 
 	err = r.Shutdown(ctx)
 	assert.NoError(t, err)
