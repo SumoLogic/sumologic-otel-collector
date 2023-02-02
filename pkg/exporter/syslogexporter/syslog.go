@@ -27,49 +27,56 @@ import (
 	"go.uber.org/zap"
 )
 
-const severityMask = 0x07
-const facilityMask = 0xf8
-
-const emptyTag = "-"
+const emptyStructuredData = "-"
 const defaultPriority = syslog.LOG_INFO
+const emptyMessageID = "-"
+const versionRFC5424 = 1
 
 const formatRFC5424 = "RFC5424"
 const formatRFC3164 = "RFC3164"
 const formatAny = "any"
 
-const regexpRFC5424 = "^\\<(?P<priority>\\d+)\\>\\d+ (?P<timestamp>\\S+) (?P<hostname>\\S+) (?P<app>\\S+) (?P<pid>\\S+) (?P<msgid>\\S+) (?P<structured_data>\\-|\\[.*\\]) (?P<message>.*)"
-const regexpRFC3164 = "^\\<(?P<priority>\\d+)\\>(?P<timestamp>\\w+\\s+\\d+\\s+\\d+:\\d+:\\S+) (?P<hostname>\\S+) (?P<other_fields>.*)"
+const priority = "priority"
+const version = "version"
+const timestamp = "timestamp"
+const hostname = "hostname"
+const app = "app"
+const pid = "pid"
+const msgid = "msgid"
+const structuredData = "structured_data"
+const message = "message"
+
+var regexpRFC5424 = regexp.MustCompile("^\\<(?P<priority>\\d+)\\>(?P<version>\\d+) (?P<timestamp>\\S+) (?P<hostname>\\S+) (?P<app>\\S+) (?P<pid>\\S+) (?P<msgid>\\S+) (?P<structured_data>\\-|\\[.*\\]) (?P<message>.*)")
+var regexpRFC3164 = regexp.MustCompile("^\\<(?P<priority>\\d+)\\>(?P<timestamp>\\w+\\s+\\d+\\s+\\d+:\\d+:\\S+) (?P<hostname>\\S+) (?P<other_fields>.*)")
 
 type Syslog struct {
-	hostname        string
-	network         string
-	addr            string
-	format          string
-	app             string
-	dropInvalidMsg  bool
-	pid             int
-	tlsConfig       *tls.Config
-	formatRegexp    *regexp.Regexp
-	formatRegexpStr string
-	logger          *zap.Logger
-	mu              sync.Mutex
-	conn            net.Conn
+	hostname                 string
+	network                  string
+	addr                     string
+	format                   string
+	app                      string
+	dropInvalidMsg           bool
+	pid                      int
+	additionalStructuredData []string
+	tlsConfig                *tls.Config
+	logger                   *zap.Logger
+	mu                       sync.Mutex
+	conn                     net.Conn
 }
 
 func Connect(logger *zap.Logger, cfg *Config, tlsConfig *tls.Config, hostname string, pid int, app string) (*Syslog, error) {
 	s := &Syslog{
-		logger:         logger,
-		hostname:       hostname,
-		network:        cfg.Protocol,
-		addr:           fmt.Sprintf("%s:%d", cfg.Endpoint, cfg.Port),
-		format:         cfg.Format,
-		tlsConfig:      tlsConfig,
-		pid:            pid,
-		app:            app,
-		dropInvalidMsg: cfg.DropInvalidMsg,
+		logger:                   logger,
+		hostname:                 hostname,
+		network:                  cfg.Protocol,
+		addr:                     fmt.Sprintf("%s:%d", cfg.Endpoint, cfg.Port),
+		format:                   cfg.Format,
+		tlsConfig:                tlsConfig,
+		pid:                      pid,
+		app:                      app,
+		additionalStructuredData: cfg.AdditionalStructuredData,
+		dropInvalidMsg:           cfg.DropInvalidMsg,
 	}
-
-	s.setFormatRegexp()
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -116,13 +123,14 @@ func (s *Syslog) Write(msg string) error {
 	if !isFormatCorrect && s.dropInvalidMsg {
 		s.logger.Debug("Invalid message format",
 			zap.String("format", s.format),
-			zap.String("formatRegexp", s.formatRegexpStr),
 			zap.String("msg", msg),
 		)
 		return nil
 	} else if !isFormatCorrect {
 		msg = s.formatMsg(msg)
 	}
+
+	msg = s.addStructuredData(msg)
 
 	if s.conn != nil {
 		if err := s.write(msg); err == nil {
@@ -144,14 +152,24 @@ func (s *Syslog) write(msg string) error {
 	return err
 }
 
-func (s *Syslog) setFormatRegexp() {
-	switch s.format {
-	case formatRFC3164:
-		s.formatRegexpStr = regexpRFC3164
-	case formatRFC5424:
-		s.formatRegexpStr = regexpRFC5424
+func (s *Syslog) addStructuredData(msg string) string {
+	c := getMessageComponents(regexpRFC5424, msg)
+	if len(s.additionalStructuredData) == 0 || len(c) == 0 {
+		return msg
 	}
-	s.formatRegexp = regexp.MustCompile(s.formatRegexpStr)
+	var sd []string
+	if len(c[structuredData]) == 1 && c[structuredData] == emptyStructuredData {
+		sd = s.additionalStructuredData
+	} else {
+		c[structuredData] = strings.ReplaceAll(c[structuredData], "[", "")
+		c[structuredData] = strings.ReplaceAll(c[structuredData], "]", "")
+		sd = append(s.additionalStructuredData, strings.Split(c[structuredData], " ")...)
+	}
+	structuredData := fmt.Sprintf("[%s]", strings.Join(sd, " "))
+
+	return fmt.Sprintf("<%s>%s %s %s %s %s %s %s %s",
+		c[priority], c[version], c[timestamp], c[hostname],
+		c[app], c[pid], c[msgid], structuredData, c[message])
 }
 
 func (s Syslog) validateFormat(msg string) bool {
@@ -159,9 +177,9 @@ func (s Syslog) validateFormat(msg string) bool {
 	case formatAny:
 		return true
 	case formatRFC3164:
-		return s.isRFC3164(msg)
+		return isRFC3164(msg)
 	case formatRFC5424:
-		return s.isRFC5424(msg)
+		return isRFC5424(msg)
 	default:
 		return false
 	}
@@ -187,7 +205,7 @@ func (s Syslog) formatRFC3164(msg string) string {
 
 func (s Syslog) formatRFC5424(msg string) string {
 	timestamp := time.Now().Format(time.RFC3339)
-	return fmt.Sprintf("<%d>%d %s %s %s %d %s - %s", defaultPriority, 1, timestamp, s.hostname, s.app, s.pid, emptyTag, msg)
+	return fmt.Sprintf("<%d>%d %s %s %s %d %s %s %s", defaultPriority, versionRFC5424, timestamp, s.hostname, s.app, s.pid, emptyMessageID, emptyStructuredData, msg)
 }
 
 // Example messages RFC5424 compliant
@@ -196,14 +214,26 @@ func (s Syslog) formatRFC5424(msg string) string {
 // <165>1 2003-10-11T22:14:15.003Z mymachine.example.com evntslog - ID47 [exampleSDID@32473 iut="3" eventSource="Application" eventID="1011"] BOMAn application event log entry...
 // <165>1 2003-10-11T22:14:15.003Z mymachine.example.com evntslog - ID47 [exampleSDID@32473 iut="3" eventSource="Application" eventID="1011"][examplePriority@32473 class="high"]
 // for more information see: https://www.rfc-editor.org/rfc/rfc5424
-func (s Syslog) isRFC5424(msg string) bool {
-	return s.formatRegexp.MatchString(msg)
+func isRFC5424(msg string) bool {
+	return regexpRFC5424.MatchString(msg)
 }
 
 // Example messages RFC3164 compliant
 // <34>Oct 11 22:14:15 mymachine su: 'su root' failed for lonvick on /dev/pts/8
 // <13>Feb  5 17:32:18 10.0.0.99 Use the BFG!
 // for more information see: https://www.ietf.org/rfc/rfc3164.txt
-func (s Syslog) isRFC3164(msg string) bool {
-	return s.formatRegexp.MatchString(msg)
+func isRFC3164(msg string) bool {
+	return regexpRFC3164.MatchString(msg)
+}
+
+func getMessageComponents(r *regexp.Regexp, msg string) map[string]string {
+	match := r.FindStringSubmatch(msg)
+
+	components := make(map[string]string)
+	for i, name := range r.SubexpNames() {
+		if i > 0 && i <= len(match) {
+			components[name] = match[i]
+		}
+	}
+	return components
 }
