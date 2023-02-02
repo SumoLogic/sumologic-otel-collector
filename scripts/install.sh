@@ -299,11 +299,11 @@ function github_rate_limit() {
 
 # This function is applicable to very few platforms/distributions.
 function install_missing_dependencies() {
-    REQUIRED_COMMANDS=(echo)
+    REQUIRED_COMMANDS=()
     if [[ -n "${BINARY_BRANCH}" ]]; then  # unzip is only necessary for downloading from GHA artifacts
         REQUIRED_COMMANDS+=(unzip)
     fi
-    for cmd in "${REQUIRED_COMMANDS[@]}"; do
+    for cmd in "${REQUIRED_COMMANDS[@]-}"; do
         if ! command -v "${cmd}" &> /dev/null; then
             # Attempt to install it via yum if on a RHEL distribution.
             if [[ -f "/etc/redhat-release" ]]; then
