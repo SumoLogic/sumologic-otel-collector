@@ -39,14 +39,14 @@ To run it as a standalone process you only need to run the binary file downloade
     Either by piping `curl` straight into `bash`:
 
     ```bash
-    curl -s https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh | sudo -E bash -s -- --installation-token "${SUMOLOGIC_INSTALL_TOKEN}"
+    curl -s https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh | sudo -E bash -s
     ```
 
     or by first downloading the script, inspecting its contents for security, and then running it:
 
    ```bash
    curl -o install-otelcol-sumo.sh https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh
-   sudo -E bash ./install-otelcol-sumo.sh --installation-token "${SUMOLOGIC_INSTALL_TOKEN}"
+   sudo -E bash ./install-otelcol-sumo.sh
    ```
 
    The `-E` argument to `sudo` is needed to preserve the `SUMOLOGIC_INSTALL_TOKEN` environment variable in `sudo` session.
@@ -69,7 +69,6 @@ The following arguments can be passed to the script:
 
 | long name                        | short name | description                                                                                                                                                                  | takes value                |
 |----------------------------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------|
-| `--installation-token`           | `i`        | Installation token. It has precedence over `SUMOLOGIC_INSTALL_TOKEN` env variable.                                                                                           | yes                        |
 | `--skip-install-token`           | `k`        | Skips requirement for installation token. This option do not disable default configuration creation.                                                                         | no                         |
 | `--tag`                          | `t`        | Sets tag for collector. This argument can be use multiple times. One per tag.                                                                                                | yes, in `key=value` format |
 | `--download-only`                | `w`        | Download new binary only and skip configuration part.                                                                                                                        | no                         |
@@ -86,7 +85,7 @@ The following env variables can be used along with script:
 
 | name                      | description                                                                  |
 |---------------------------|------------------------------------------------------------------------------|
-| `SUMOLOGIC_INSTALL_TOKEN` | Installation token. It can be overridden by `--installation-token` argument. |
+| `SUMOLOGIC_INSTALL_TOKEN` | Installation token                                                           |
 
 ### Manual installation
 

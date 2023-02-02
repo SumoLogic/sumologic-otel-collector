@@ -36,10 +36,6 @@ func (io *installOptions) string() []string {
 		scriptPath,
 	}
 
-	if io.installToken != "" {
-		opts = append(opts, "--installation-token", io.installToken)
-	}
-
 	if io.autoconfirm {
 		opts = append(opts, "--yes")
 	}
@@ -102,6 +98,10 @@ func (io *installOptions) buildEnvs() []string {
 
 	for k, v := range io.envs {
 		e = append(e, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	if io.installToken != "" {
+		e = append(e, fmt.Sprintf("%s=%s", installTokenEnv, io.installToken))
 	}
 
 	return e

@@ -17,8 +17,9 @@ const (
 
 	systemdDirectoryPath string = "/run/systemd/system"
 
-	installToken string = "token"
-	apiBaseURL   string = "https://open-collectors.sumologic.com"
+	installToken    string = "token"
+	installTokenEnv string = "SUMOLOGIC_INSTALL_TOKEN"
+	apiBaseURL      string = "https://open-collectors.sumologic.com"
 
 	systemUser string = "otelcol-sumo"
 )
