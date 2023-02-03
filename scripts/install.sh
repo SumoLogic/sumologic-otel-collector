@@ -303,7 +303,12 @@ function install_missing_dependencies() {
     if [[ -n "${BINARY_BRANCH}" ]]; then  # unzip is only necessary for downloading from GHA artifacts
         REQUIRED_COMMANDS+=(unzip)
     fi
-    for cmd in "${REQUIRED_COMMANDS[@]-}"; do
+    if [ "${#REQUIRED_COMMANDS[@]}" == 0 ]; then
+        # not all bash versions handle empty array expansion correctly
+        # therefore we guard against this explicitly here
+        return
+    fi
+    for cmd in "${REQUIRED_COMMANDS[@]}"; do
         if ! command -v "${cmd}" &> /dev/null; then
             # Attempt to install it via yum if on a RHEL distribution.
             if [[ -f "/etc/redhat-release" ]]; then
