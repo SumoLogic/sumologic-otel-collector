@@ -91,11 +91,11 @@ function build_push() {
         docker buildx build \
             --push \
             --file "${DOCKERFILE}" \
-            --build-arg BUILD_TAG="${BUILD_TAG}-build" \
+            --build-arg BUILD_TAG="${BUILD_TAG}" \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --platform="${PLATFORM}" \
             --tag "${TAG}" \
-            --tag "${LATEST_TAG}" \
+            # --tag "${LATEST_TAG}" \
             .
     else
         echo "Building tag: latest${LATEST_TAG_FIPS_SUFFIX}"
