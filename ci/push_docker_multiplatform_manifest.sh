@@ -69,7 +69,8 @@ function push_manifest() {
 
     for T in "$TAGS_IN_MANIFEST[@]"
     do
-        TAGS_WITH_AMEND_COMMAND+=("--amend ${T}")
+        TAGS_WITH_AMEND_COMMAND+=("--amend")
+        TAGS_WITH_AMEND_COMMAND+=("${T}")
     done
 
     echo
