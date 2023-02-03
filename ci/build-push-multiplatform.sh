@@ -91,7 +91,7 @@ function build_push() {
         docker buildx build \
             --push \
             --file "${DOCKERFILE}" \
-            --build-arg BUILD_TAG="${BUILD_TAG}" \
+            --build-arg BUILD_TAG="${BUILD_TAG}-build" \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --platform="${PLATFORM}" \
             --tag "${TAG}" \
