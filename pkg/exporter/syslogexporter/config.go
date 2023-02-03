@@ -14,21 +14,23 @@
 
 package syslogexporter
 
-import "go.opentelemetry.io/collector/exporter/exporterhelper"
+import (
+	"go.opentelemetry.io/collector/exporter/exporterhelper"
+)
 
 // Config defines configuration for Syslog exporter.
 type Config struct {
 	// Syslog server address
-	Endpoint string `mapstructure:"endpoint"`
+	Endpoint string `mapstructure:"endpoint" validate:"required,fqdn"`
 	// Syslog server port
-	Port int `mapstructure:"port"`
+	Port int `mapstructure:"port" validate:"required,port"`
 	// Protocol for syslog communication
 	// options: tcp, udp
-	Protocol string `mapstructure:"protocol"`
+	Protocol string `mapstructure:"protocol" validate:"required,protocol type"`
 	// CA certificate of syslog server
 	CACertificate string `mapstructure:"ca_certificate"`
 	// Format of syslog messages
-	Format string `mapstructure:"format"`
+	Format string `mapstructure:"format" validate:"required,format"`
 	// Flag to control dropping messages in wrong format
 	DropInvalidMsg bool `mapstructure:"drop_invalid_messages"`
 	//Additional structured data added to structured data in RFC5424
