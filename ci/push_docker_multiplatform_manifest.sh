@@ -65,16 +65,23 @@ function push_manifest() {
         echo "${tag}"
     done
 
+    TAGS_WITH_AMEND_COMMAND=()
+
+    for T in "$TAGS_IN_MANIFEST[@]"
+    do
+        TAGS_WITH_AMEND_COMMAND+=("--amend ${T}")
+    done
+
     echo
     set -x
-    docker manifest create --amend \
+    docker manifest create \
         "${REPO_URL}:${BUILD_TAG}" \
-        "${TAGS_IN_MANIFEST[@]}"
+        "${TAGS_WITH_AMEND_COMMAND[@]}"
     docker manifest push "${REPO_URL}:${BUILD_TAG}"
 
-    docker manifest create --amend \
+    docker manifest create \
         "${REPO_URL}:latest${LATEST_TAG_FIPS_SUFFIX}" \
-        "${TAGS_IN_MANIFEST[@]}"
+        "${TAGS_WITH_AMEND_COMMAND[@]}"
     docker manifest push "${REPO_URL}:latest${LATEST_TAG_FIPS_SUFFIX}"
 }
 

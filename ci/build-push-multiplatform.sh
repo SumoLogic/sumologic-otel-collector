@@ -95,6 +95,7 @@ function build_push() {
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --platform="${PLATFORM}" \
             --tag "${TAG}" \
+            --tag "${LATEST_TAG}" \
             .
     else
         echo "Building tag: latest${LATEST_TAG_FIPS_SUFFIX}"
