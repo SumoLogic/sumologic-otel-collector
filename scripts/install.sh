@@ -138,7 +138,7 @@ Supported arguments:
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                            Prints this help and usage.
 
 Supported env variables:
-  ${ENV_TOKEN}=<token>       Installation token. It can be overridden by '--installation-token' argument.'
+  ${ENV_TOKEN}=<token>       Installation token.'
 EOF
 }
 
@@ -299,9 +299,14 @@ function github_rate_limit() {
 
 # This function is applicable to very few platforms/distributions.
 function install_missing_dependencies() {
-    REQUIRED_COMMANDS=(echo)
+    REQUIRED_COMMANDS=()
     if [[ -n "${BINARY_BRANCH}" ]]; then  # unzip is only necessary for downloading from GHA artifacts
         REQUIRED_COMMANDS+=(unzip)
+    fi
+    if [ "${#REQUIRED_COMMANDS[@]}" == 0 ]; then
+        # not all bash versions handle empty array expansion correctly
+        # therefore we guard against this explicitly here
+        return
     fi
     for cmd in "${REQUIRED_COMMANDS[@]}"; do
         if ! command -v "${cmd}" &> /dev/null; then
@@ -496,15 +501,22 @@ function ask_to_continue() {
         return 0
     fi
 
-    local choice
-    read -rp "Continue (y/N)? " choice
-    case "${choice}" in
-    y|Y ) ;;
-    n|N | * )
-        echo "Aborting..."
-        exit 1
-        ;;
-    esac
+    # Just fail if we're not running in uninteractive mode
+    # TODO: Figure out a way to reliably ask for confirmation with stdin redirected
+
+    echo "Please use the --yes flag to continue"
+    exit 1
+
+    # local choice
+    # read -rp "Continue (y/N)? " choice
+    # case "${choice}" in
+    # y|Y ) ;;
+    # n|N | * )
+    #     echo "Aborting..."
+    #     exit 1
+    #     ;;
+    # esac
+
 }
 
 # Get changelog for specific version
@@ -1060,7 +1072,7 @@ readonly USER_TOKEN
 
 # Exit if install token is not set and there is no user configuration
 if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && "${SKIP_TOKEN}" != "true" && -z "${USER_TOKEN}" && -z "${DOWNLOAD_ONLY}" ]]; then
-    echo "Install token has not been provided. Please use '--${ARG_LONG_TOKEN} <token>' or '${ENV_TOKEN}' env."
+    echo "Install token has not been provided. Please set the '${ENV_TOKEN}' environment variable."
     echo "You can ignore this requirement by adding '--${ARG_LONG_SKIP_TOKEN} argument."
     exit 1
 fi
