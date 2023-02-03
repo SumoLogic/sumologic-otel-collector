@@ -11,7 +11,12 @@ This release introduces the following breaking changes:
 
 - feat(sumologicextension): use hostname as default collector name [#918]
 
+### Changed
+
+- chore(deps): upgrade Telegraf to 1.25.1 [#828]
+
 [#918]: https://github.com/SumoLogic/sumologic-otel-collector/pull/918
+[#932]: https://github.com/SumoLogic/sumologic-otel-collector/pull/932
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.70.0-sumo-0...main
 
 ## [v0.70.0-sumo-0]
