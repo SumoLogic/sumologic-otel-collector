@@ -442,7 +442,6 @@ jobs:
           certificatesha1: '${{ secrets.MICROSOFT_CERTHASH }}'
           certificatename: '${{ secrets.MICROSOFT_CERTNAME }}'
           description: '${{ secrets.MICROSOFT_DESCRIPTION }}'
-          timestampUrl: 'http://timestamp.digicert.com'
           folder: ./otelcolbuilder/cmd
 
       - name: Set VERSION_TAG
@@ -463,7 +462,6 @@ jobs:
           certificatesha1: '${{ secrets.MICROSOFT_CERTHASH }}'
           certificatename: '${{ secrets.MICROSOFT_CERTNAME }}'
           description: '${{ secrets.MICROSOFT_DESCRIPTION }}'
-          timestampUrl: 'http://timestamp.digicert.com'
           folder: ./packaging/msi/wix/bin/x64/en-US
 
       - name: Store MSI as action artifact for windows/amd64
