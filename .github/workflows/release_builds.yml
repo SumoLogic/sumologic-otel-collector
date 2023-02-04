@@ -434,6 +434,17 @@ jobs:
         working-directory: ./otelcolbuilder/cmd
         run: mv otelcol-sumo-*-sumo-*-windows_amd64.exe otelcol-sumo-windows_amd64.exe
 
+      - name: Sign binary
+        uses: skymatic/code-sign-action@v1
+        with:
+          certificate: '${{ secrets.MICROSOFT_CERTIFICATE }}'
+          password: '${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}'
+          certificatesha1: '${{ secrets.MICROSOFT_CERTHASH }}'
+          certificatename: '${{ secrets.MICROSOFT_CERTNAME }}'
+          description: '${{ secrets.MICROSOFT_DESCRIPTION }}'
+          timestampUrl: 'http://timestamp.digicert.com'
+          folder: ./otelcolbuilder/cmd
+
       - name: Set VERSION_TAG
         run: echo "VERSION_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
@@ -443,6 +454,17 @@ jobs:
       - name: Build MSI for windows/amd64
         working-directory: ./packaging/msi/wix
         run: msbuild.exe -p:Configuration=Release -p:Platform=x64 -p:ProductVersion=$PRODUCT_VERSION -Restore
+
+      - name: Sign MSI
+        uses: skymatic/code-sign-action@v1
+        with:
+          certificate: '${{ secrets.MICROSOFT_CERTIFICATE }}'
+          password: '${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}'
+          certificatesha1: '${{ secrets.MICROSOFT_CERTHASH }}'
+          certificatename: '${{ secrets.MICROSOFT_CERTNAME }}'
+          description: '${{ secrets.MICROSOFT_DESCRIPTION }}'
+          timestampUrl: 'http://timestamp.digicert.com'
+          folder: ./packaging/msi/wix/bin/x64/en-US
 
       - name: Store MSI as action artifact for windows/amd64
         uses: actions/upload-artifact@v3
