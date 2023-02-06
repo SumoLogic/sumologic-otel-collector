@@ -247,21 +247,42 @@ func (c *WatchClient) deleteLoop(interval time.Duration, gracePeriod time.Durati
 	}
 }
 
-// GetPod takes an IP address or Pod UID and returns the pod the identifier is associated with.
-func (c *WatchClient) GetPod(identifier PodIdentifier) (*Pod, bool) {
+// getPod takes an IP address or Pod UID and returns the pod the identifier is associated with.
+func (c *WatchClient) getPod(identifier PodIdentifier) (*Pod, bool) {
 	c.m.RLock()
 	defer c.m.RUnlock()
 	pod, ok := c.Pods[identifier]
-	if ok {
-		if pod.Ignore {
-			return nil, false
-		}
-
-		c.updatePodOwnerMetadata(pod)
-		return pod, ok
+	if !ok {
+		observability.RecordIPLookupMiss()
+		return nil, ok
 	}
-	observability.RecordIPLookupMiss()
-	return nil, false
+	if pod.Ignore {
+		return nil, false
+	}
+	return pod, true
+}
+
+// GetPodAttributes takes an IP address or Pod UID and returns the metadata attributes of the Pod the
+// identifier is associated with
+func (c *WatchClient) GetPodAttributes(identifier PodIdentifier) (map[string]string, bool) {
+	pod, ok := c.getPod(identifier)
+	if !ok {
+		return nil, false
+	}
+	ownerAttributes := c.getPodOwnerMetadataAttributes(pod)
+
+	// we need to take a lock here because pod.Attributes may be modified concurrently
+	// TODO: clean up the locking in this function and the ones it calls
+	c.m.RLock()
+	defer c.m.RUnlock()
+	attributes := make(map[string]string, len(pod.Attributes))
+	for key, value := range pod.Attributes {
+		attributes[key] = value
+	}
+	for key, value := range ownerAttributes {
+		attributes[key] = value
+	}
+	return attributes, ok
 }
 
 func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
@@ -340,7 +361,10 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 	return tags
 }
 
-func (c *WatchClient) updatePodOwnerMetadata(pod *Pod) {
+func (c *WatchClient) getPodOwnerMetadataAttributes(pod *Pod) map[string]string {
+	c.m.RLock()
+	defer c.m.RUnlock()
+	attributes := map[string]string{}
 	if c.Rules.OwnerLookupEnabled {
 		c.logger.Debug("pod owner lookup",
 			zap.String("pod.Name", pod.Name),
@@ -352,27 +376,27 @@ func (c *WatchClient) updatePodOwnerMetadata(pod *Pod) {
 			switch owner.kind {
 			case "DaemonSet":
 				if c.Rules.DaemonSetName {
-					pod.Attributes[c.Rules.Tags.DaemonSetName] = owner.name
+					attributes[c.Rules.Tags.DaemonSetName] = owner.name
 				}
 			case "Deployment":
 				if c.Rules.DeploymentName {
-					pod.Attributes[c.Rules.Tags.DeploymentName] = owner.name
+					attributes[c.Rules.Tags.DeploymentName] = owner.name
 				}
 			case "ReplicaSet":
 				if c.Rules.ReplicaSetName {
-					pod.Attributes[c.Rules.Tags.ReplicaSetName] = owner.name
+					attributes[c.Rules.Tags.ReplicaSetName] = owner.name
 				}
 			case "StatefulSet":
 				if c.Rules.StatefulSetName {
-					pod.Attributes[c.Rules.Tags.StatefulSetName] = owner.name
+					attributes[c.Rules.Tags.StatefulSetName] = owner.name
 				}
 			case "Job":
 				if c.Rules.JobName {
-					pod.Attributes[c.Rules.Tags.JobName] = owner.name
+					attributes[c.Rules.Tags.JobName] = owner.name
 				}
 			case "CronJob":
 				if c.Rules.CronJobName {
-					pod.Attributes[c.Rules.Tags.CronJobName] = owner.name
+					attributes[c.Rules.Tags.CronJobName] = owner.name
 				}
 
 			default:
@@ -382,9 +406,10 @@ func (c *WatchClient) updatePodOwnerMetadata(pod *Pod) {
 
 		if c.Rules.ServiceName {
 			services := c.op.GetServices(pod.Name)
-			pod.Attributes[c.Rules.Tags.ServiceName] = strings.Join(services, c.delimiter)
+			attributes[c.Rules.Tags.ServiceName] = strings.Join(services, c.delimiter)
 		}
 	}
+	return attributes
 }
 
 // This function removes all data from the Pod except what is required by extraction rules
@@ -533,18 +558,18 @@ func generatePodIDFromName(p Namer) PodIdentifier {
 }
 
 func (c *WatchClient) forgetPod(pod *api_v1.Pod) {
-	p, ok := c.GetPod(PodIdentifier(pod.Status.PodIP))
+	p, ok := c.getPod(PodIdentifier(pod.Status.PodIP))
 	if ok && p.Name == pod.Name {
 		c.appendDeleteQueue(PodIdentifier(pod.Status.PodIP), pod.Name)
 	}
 
-	p, ok = c.GetPod(PodIdentifier(pod.UID))
+	p, ok = c.getPod(PodIdentifier(pod.UID))
 	if ok && p.Name == pod.Name {
 		c.appendDeleteQueue(PodIdentifier(pod.UID), pod.Name)
 	}
 
 	id := generatePodIDFromName(pod)
-	p, ok = c.GetPod(id)
+	p, ok = c.getPod(id)
 	if ok && p.Name == pod.Name {
 		c.appendDeleteQueue(id, pod.Name)
 	}
