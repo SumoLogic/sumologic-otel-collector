@@ -1,6 +1,5 @@
 extensions:
   file_storage/syslog:
-    #directory: /var/lib/storage/syslog
     directory: /tmp/otc
     timeout: 10s
 
@@ -9,7 +8,8 @@ exporters:
     protocol: tcp
     port: 514
     endpoint: 127.0.0.1
-    format: RFC5424
+    ca_certificate: certs/servercert.pem
+    format: any
     drop_invalid_messages: false
     additional_structured_data: # only if messages are in RFC5424 format
     - tab=abc
