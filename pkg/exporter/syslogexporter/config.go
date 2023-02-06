@@ -39,3 +39,16 @@ type Config struct {
 	exporterhelper.QueueSettings `mapstructure:"sending_queue"`
 	exporterhelper.RetrySettings `mapstructure:"retry_on_failure"`
 }
+
+const (
+	// Syslog Protocol
+	DefaultProtocol = "tcp"
+	// Syslog Port
+	DefaultPort = 514
+	// Syslog Endpoint
+	DefaultEndpoint = "syslog-server.sumologic.net"
+	// Syslog format
+	DefaultFormat = "any"
+	// Drop message if not in the above format
+	DropInvalidMessagesDefault = false
+)
