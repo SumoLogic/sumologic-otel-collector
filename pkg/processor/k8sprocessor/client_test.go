@@ -77,6 +77,16 @@ func (f *fakeClient) GetPod(identifier kube.PodIdentifier) (*kube.Pod, bool) {
 	return p, ok
 }
 
+// GetPod looks up FakeClient.Pods map by the provided string,
+// which might represent either IP address or Pod UID.
+func (f *fakeClient) GetPodAttributes(identifier kube.PodIdentifier) (map[string]string, bool) {
+	p, ok := f.Pods[identifier]
+	if !ok {
+		return map[string]string{}, ok
+	}
+	return p.Attributes, ok
+}
+
 // Start is a noop for FakeClient.
 func (f *fakeClient) Start() {
 	if f.Informer != nil {

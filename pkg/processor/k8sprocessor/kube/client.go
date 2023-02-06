@@ -264,6 +264,26 @@ func (c *WatchClient) GetPod(identifier PodIdentifier) (*Pod, bool) {
 	return nil, false
 }
 
+// GetPod takes an IP address or Pod UID and returns the pod the identifier is associated with.
+func (c *WatchClient) GetPodAttributes(identifier PodIdentifier) (map[string]string, bool) {
+	pod, err := c.GetPod(identifier)
+
+	if err != true {
+		return map[string]string{}, err
+	}
+
+	c.m.RLock()
+	defer c.m.RUnlock()
+
+	attrs := map[string]string{}
+
+	for key, val := range pod.Attributes {
+		attrs[key] = val
+	}
+
+	return attrs, true
+}
+
 func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 	tags := map[string]string{}
 	if c.Rules.PodName {
