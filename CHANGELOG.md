@@ -14,7 +14,7 @@ This release introduces the following breaking changes:
 [#918]: https://github.com/SumoLogic/sumologic-otel-collector/pull/918
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.70.0-sumo-0...main
 
-## [v0.70.0-sumo-0]
+## [v0.70.0-sumo-1]
 
 ### Added
 
@@ -24,12 +24,18 @@ This release introduces the following breaking changes:
 - fix(telegrafreceiver): make shutdown safe to call before start [#913]
 - chore: update OT core to v0.70.0 [#915]
 
-[v0.70.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.69.0-sumo-0...v0.70.0-sumo-0
+[v0.70.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.69.0-sumo-0...v0.70.0-sumo-1
 [#893]: https://github.com/SumoLogic/sumologic-otel-collector/pull/893
 [#885]: https://github.com/SumoLogic/sumologic-otel-collector/pull/885
 [#902]: https://github.com/SumoLogic/sumologic-otel-collector/pull/902
 [#913]: https://github.com/SumoLogic/sumologic-otel-collector/pull/913
 [#915]: https://github.com/SumoLogic/sumologic-otel-collector/pull/915
+
+## [v0.70.0-sumo-0]
+
+This was a failed release. Use [v0.70.0-sumo-1] instead.
+
+[v0.70.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.69.0-sumo-0...v0.70.0-sumo-0
 
 ## [v0.69.0-sumo-0]
 
