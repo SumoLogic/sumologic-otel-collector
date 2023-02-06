@@ -249,8 +249,8 @@ func (c *WatchClient) deleteLoop(interval time.Duration, gracePeriod time.Durati
 
 // GetPod takes an IP address or Pod UID and returns the pod the identifier is associated with.
 func (c *WatchClient) GetPod(identifier PodIdentifier) (*Pod, bool) {
-	c.m.RLock()
-	defer c.m.RUnlock()
+	c.m.Lock()
+	defer c.m.Unlock()
 	pod, ok := c.Pods[identifier]
 	if ok {
 		if pod.Ignore {
