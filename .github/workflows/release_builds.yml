@@ -100,6 +100,17 @@ jobs:
           grep -E "/(receiver|exporter|processor|extension)/" | \
           tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
 
+      - name: Sign Windows binary
+        if: runner.os == "Windows"
+        uses: skymatic/code-sign-action@v1
+        with:
+          certificate: '${{ secrets.MICROSOFT_CERTIFICATE }}'
+          password: '${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}'
+          certificatesha1: '${{ secrets.MICROSOFT_CERTHASH }}'
+          certificatename: '${{ secrets.MICROSOFT_CERTNAME }}'
+          description: '${{ secrets.MICROSOFT_DESCRIPTION }}'
+          folder: ./otelcolbuilder/cmd
+
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v3
         with:
@@ -433,16 +444,6 @@ jobs:
       - name: Rename binary for windows/amd64
         working-directory: ./otelcolbuilder/cmd
         run: mv otelcol-sumo-*-sumo-*-windows_amd64.exe otelcol-sumo-windows_amd64.exe
-
-      - name: Sign binary
-        uses: skymatic/code-sign-action@v1
-        with:
-          certificate: '${{ secrets.MICROSOFT_CERTIFICATE }}'
-          password: '${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}'
-          certificatesha1: '${{ secrets.MICROSOFT_CERTHASH }}'
-          certificatename: '${{ secrets.MICROSOFT_CERTNAME }}'
-          description: '${{ secrets.MICROSOFT_DESCRIPTION }}'
-          folder: ./otelcolbuilder/cmd
 
       - name: Set VERSION_TAG
         run: echo "VERSION_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
