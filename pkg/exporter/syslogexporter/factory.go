@@ -26,7 +26,7 @@ import (
 const (
 	// The value of "type" key in configuration.
 	typeStr        = "syslog"
-	stabilityLevel = component.StabilityLevelBeta
+	stabilityLevel = component.StabilityLevelAlpha
 )
 
 // NewFactory returns a new factory for the syslog exporter.
@@ -42,7 +42,13 @@ func createDefaultConfig() component.Config {
 	qs := exporterhelper.NewDefaultQueueSettings()
 	qs.Enabled = false
 
-	return &Config{}
+	return &Config{
+		Endpoint:       DefaultEndpoint,
+		Port:           DefaultPort,
+		Format:         DefaultFormat,
+		Protocol:       DefaultProtocol,
+		DropInvalidMsg: DropInvalidMessagesDefault,
+	}
 }
 
 func createLogsExporter(
