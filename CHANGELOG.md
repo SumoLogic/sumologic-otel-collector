@@ -11,7 +11,12 @@ This release introduces the following breaking changes:
 
 - feat(sumologicextension): use hostname as default collector name [#918]
 
+### Fixed
+
+- fix(k8sprocessor): race condition when getting Pod data [#938]
+
 [#918]: https://github.com/SumoLogic/sumologic-otel-collector/pull/918
+[#938]: https://github.com/SumoLogic/sumologic-otel-collector/pull/938
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.70.0-sumo-0...main
 
 ## [v0.70.0-sumo-1]

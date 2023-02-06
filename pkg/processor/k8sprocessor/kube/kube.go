@@ -57,7 +57,7 @@ const (
 
 // Client defines the main interface that allows querying pods by metadata.
 type Client interface {
-	GetPod(PodIdentifier) (*Pod, bool)
+	GetPodAttributes(PodIdentifier) (map[string]string, bool)
 	Start()
 	Stop()
 }

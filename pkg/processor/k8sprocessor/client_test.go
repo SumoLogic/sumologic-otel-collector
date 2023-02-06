@@ -70,11 +70,12 @@ func newFakeClient(
 	}, nil
 }
 
-// GetPod looks up FakeClient.Pods map by the provided string,
-// which might represent either IP address or Pod UID.
-func (f *fakeClient) GetPod(identifier kube.PodIdentifier) (*kube.Pod, bool) {
+func (f *fakeClient) GetPodAttributes(identifier kube.PodIdentifier) (map[string]string, bool) {
 	p, ok := f.Pods[identifier]
-	return p, ok
+	if !ok {
+		return map[string]string{}, ok
+	}
+	return p.Attributes, ok
 }
 
 // Start is a noop for FakeClient.

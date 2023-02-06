@@ -143,10 +143,10 @@ func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pco
 }
 
 func (kp *kubernetesprocessor) getAttributesForPod(identifier kube.PodIdentifier) map[string]string {
-	pod, ok := kp.kc.GetPod(identifier)
+	attributes, ok := kp.kc.GetPodAttributes(identifier)
 	if !ok {
 		kp.logger.Debug("No pod with given id found", zap.Any("pod_id", identifier))
 		return nil
 	}
-	return pod.Attributes
+	return attributes
 }
