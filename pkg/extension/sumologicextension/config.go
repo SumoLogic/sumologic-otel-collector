@@ -26,7 +26,7 @@ type Config struct {
 	// squash ensures fields are correctly decoded in embedded struct.
 	confighttp.HTTPClientSettings `mapstructure:",squash"`
 
-	// Credentials contains Install Token for Sumo Logic service.
+	// Credentials contains Installation Token for Sumo Logic service.
 	// Please refer to https://help.sumologic.com/docs/manage/security/installation-tokens
 	// for detailed instructions how to obtain the token.
 	Credentials accessCredentials `mapstructure:",squash"`

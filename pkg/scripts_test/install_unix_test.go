@@ -33,7 +33,7 @@ func TestInstallScript(t *testing.T) {
 			postChecks: []checkFunc{checkBinaryCreated, checkConfigNotCreated, checkUserConfigNotCreated},
 		},
 		{
-			name: "skip install token",
+			name: "skip installation token",
 			options: installOptions{
 				skipInstallToken: true,
 			},
@@ -302,7 +302,7 @@ func TestInstallScript(t *testing.T) {
 				checkVarLogACL,
 			},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
-			installCode:       3, // because of invalid install token
+			installCode:       3, // because of invalid installation token
 		},
 		{
 			name: "uninstallation without autoconfirm fails",
@@ -366,7 +366,7 @@ func TestInstallScript(t *testing.T) {
 			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkDifferentTokenInConfig, checkSystemdConfigCreated,
 				checkUserExists},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
-			installCode:       3, // because of invalid install token
+			installCode:       3, // because of invalid installation token
 		},
 		{
 			name: "don't keep downloads",

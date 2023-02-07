@@ -13,7 +13,7 @@ dist:
   # These options were formerly CLI arguments of otelcol-builder
   # They are being set in Makefile.
   go: $(GO)
-  version: $(VERSION)$(FIPS_SUFFIX)
+  version: ${VERSION}${FIPS_SUFFIX}
 
 exporters:
   # Exporters with non-upstreamed changes:

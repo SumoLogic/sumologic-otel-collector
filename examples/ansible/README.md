@@ -4,7 +4,7 @@ This playbook will install Sumo Logic Distro of [OpenTelemetry Collector][otc_li
 
 ## Running playbook
 
-- Get an [install token][install_token] from Sumo Logic, see
+- Get an [install installation token][installation_token] from Sumo Logic, see
 - Prepare [configuration](../../docs/configuration.md) file for Sumo Logic Distribution for OpenTelemetry Collector and put the file in a directory of your choice. You can put multiple configuration files in this directory, and all of them will be used.
 
   **NOTE**: The playbook will prepare a [base configuration][base_configuration] for you, and configure the [extension][sumologicextension] as well.
@@ -20,7 +20,7 @@ This playbook will install Sumo Logic Distro of [OpenTelemetry Collector][otc_li
 
 ## Playbook variables
 
-- `install_token`: Sumo Logic [install token][install_token]
+- `install_token`: Sumo Logic [installation token][installation_token]
 - `collector_tags`: Collector tags, these are applied to all processed data
 - `api_url`: Sumo Logic API url. You shouldn't need to set this in most normal circumstances.
 - `version`: version of Sumo Logic Distribution for OpenTelemetry Collector. The default is the latest stable version.
@@ -28,6 +28,6 @@ This playbook will install Sumo Logic Distro of [OpenTelemetry Collector][otc_li
 - `src_config_path`: path to configuration directory for Sumo Logic Distribution for OpenTelemetry Collector
 
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
-[install_token]: https://help.sumologic.com/docs/manage/security/installation-tokens/
+[installation_token]: https://help.sumologic.com/docs/manage/security/installation-tokens/
 [base_configuration]: ../sumologic.yaml
 [sumologicextension]: ../../pkg/extension/sumologicextension/
