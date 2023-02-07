@@ -10,11 +10,6 @@ dist:
   # the path to write the output (sources and binary).
   output_path: ./cmd
 
-  # These options were formerly CLI arguments of otelcol-builder
-  # They are being set in Makefile.
-  go: $(GO)
-  version: ${VERSION}${FIPS_SUFFIX}
-
 exporters:
   # Exporters with non-upstreamed changes:
   - gomod: "github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter v0.0.0-00010101000000-000000000000"

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"sync"
 	"testing"
 	"time"
 
@@ -390,7 +391,7 @@ func TestGetIgnoredPod(t *testing.T) {
 	pod.Status.PodIP = "1.1.1.1"
 	c.handlePodAdd(pod)
 	c.Pods[PodIdentifier(pod.Status.PodIP)].Ignore = true
-	got, ok := c.GetPod(PodIdentifier(pod.Status.PodIP))
+	got, ok := c.getPod(PodIdentifier(pod.Status.PodIP))
 	assert.Nil(t, got)
 	assert.False(t, ok)
 }
@@ -422,17 +423,97 @@ func TestGetPod(t *testing.T) {
 		OwnerReferences: &pod.OwnerReferences,
 	}
 
-	got, ok := c.GetPod(PodIdentifier("1.1.1.1"))
+	got, ok := c.getPod(PodIdentifier("1.1.1.1"))
 	assert.Equal(t, got, expected)
 	assert.True(t, ok)
 
-	got, ok = c.GetPod(PodIdentifier("1234"))
+	got, ok = c.getPod(PodIdentifier("1234"))
 	assert.Equal(t, got, expected)
 	assert.True(t, ok)
 
-	got, ok = c.GetPod(PodIdentifier("pod_name.namespace_name"))
+	got, ok = c.getPod(PodIdentifier("pod_name.namespace_name"))
 	assert.Equal(t, got, expected)
 	assert.True(t, ok)
+}
+
+func TestGetPodConcurrent(t *testing.T) {
+	c, _ := newTestClient(t)
+
+	pod := &api_v1.Pod{}
+	pod.Status.PodIP = "1.1.1.1"
+	pod.UID = "1234"
+	pod.Name = "pod_name"
+	pod.Namespace = "namespace_name"
+	pod.OwnerReferences = []meta_v1.OwnerReference{
+		{
+			Kind: "StatefulSet",
+			Name: "snug-sts",
+			UID:  "f15f0585-a0bc-43a3-96e4-dd2eace75391",
+		},
+	}
+	c.handlePodAdd(pod)
+
+	expected := &Pod{
+		Name:            "pod_name",
+		Namespace:       "namespace_name",
+		Address:         "1.1.1.1",
+		PodUID:          "1234",
+		Attributes:      map[string]string{},
+		OwnerReferences: &pod.OwnerReferences,
+	}
+
+	numThreads := 2
+	wg := sync.WaitGroup{}
+	for i := 0; i < numThreads; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			got, ok := c.getPod(PodIdentifier("1.1.1.1"))
+			assert.Equal(t, got, expected)
+			assert.True(t, ok)
+		}()
+	}
+	wg.Wait()
+}
+
+func TestGetPodOwnerAttributesConcurrent(t *testing.T) {
+	rules := ExtractionRules{
+		OwnerLookupEnabled: true,
+		StatefulSetName:    true,
+		Tags:               NewExtractionFieldTags(),
+	}
+	c, _ := newTestClientWithRulesAndFilters(t, rules, Filters{})
+
+	pod := &api_v1.Pod{}
+	pod.Status.PodIP = "1.1.1.1"
+	pod.UID = "1234"
+	pod.Name = "pod_name"
+	pod.Namespace = "namespace_name"
+	pod.OwnerReferences = []meta_v1.OwnerReference{
+		{
+			Kind: "StatefulSet",
+			Name: "snug-sts",
+			UID:  "f15f0585-a0bc-43a3-96e4-dd2eace75391",
+		},
+	}
+	c.handlePodAdd(pod)
+
+	expected := map[string]string{
+		rules.Tags.StatefulSetName: "snug-sts",
+	}
+
+	numThreads := 2
+	wg := sync.WaitGroup{}
+	for i := 0; i < numThreads; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			got, ok := c.GetPodAttributes(PodIdentifier("1.1.1.1"))
+			assert.Equal(t, got, expected)
+			assert.True(t, ok)
+		}()
+	}
+	wg.Wait()
 }
 
 func TestGetPodWhenNamespaceInExtractedMetadata(t *testing.T) {
@@ -459,15 +540,15 @@ func TestGetPodWhenNamespaceInExtractedMetadata(t *testing.T) {
 		OwnerReferences: &pod.OwnerReferences,
 	}
 
-	got, ok := c.GetPod(PodIdentifier("1.1.1.1"))
+	got, ok := c.getPod(PodIdentifier("1.1.1.1"))
 	assert.Equal(t, got, expected)
 	assert.True(t, ok)
 
-	got, ok = c.GetPod(PodIdentifier("1234"))
+	got, ok = c.getPod(PodIdentifier("1234"))
 	assert.Equal(t, got, expected)
 	assert.True(t, ok)
 
-	got, ok = c.GetPod(PodIdentifier("pod_name.namespace_name"))
+	got, ok = c.getPod(PodIdentifier("pod_name.namespace_name"))
 	assert.Equal(t, got, expected)
 	assert.True(t, ok)
 }
@@ -505,7 +586,7 @@ func TestNoHostnameExtractionRules(t *testing.T) {
 	}
 
 	c.handlePodAdd(pod)
-	p, _ := c.GetPod(PodIdentifier(pod.Status.PodIP))
+	p, _ := c.getPod(PodIdentifier(pod.Status.PodIP))
 	assert.Equal(t, p.Attributes["k8s.pod.hostname"], podName)
 }
 
@@ -784,12 +865,12 @@ func TestExtractionRules(t *testing.T) {
 			// normally the informer does this, but fully emulating the informer in this test is annoying
 			transformedPod := removeUnnecessaryPodData(pod, c.Rules)
 			c.handlePodAdd(transformedPod)
-			p, ok := c.GetPod(PodIdentifier(pod.Status.PodIP))
+			attributes, ok := c.GetPodAttributes(PodIdentifier(pod.Status.PodIP))
 			require.True(t, ok)
 
-			assert.Equal(t, len(tc.attributes), len(p.Attributes))
+			assert.Equal(t, len(tc.attributes), len(attributes))
 			for k, v := range tc.attributes {
-				got, ok := p.Attributes[k]
+				got, ok := attributes[k]
 				if assert.True(t, ok, "Attribute '%s' not found.", k) {
 					assert.Equal(t, v, got, "Value of '%s' is incorrect", k)
 				}
@@ -1223,11 +1304,11 @@ func TestServiceInfoArrivesLate(t *testing.T) {
 
 	client.handlePodAdd(pod)
 
-	podResult, ok := client.GetPod(PodIdentifier(podUID))
+	attributes, ok := client.GetPodAttributes(PodIdentifier(podUID))
 	assert.True(t, ok)
 
-	logger.Debug("pod: ", zap.Any("pod", podResult))
-	serviceName, ok := podResult.Attributes["ServiceName"]
+	logger.Debug("pod attributes: ", zap.Any("attributes", attributes))
+	serviceName, ok := attributes["ServiceName"]
 	assert.True(t, ok)
 
 	// After PodAdd, there are two services:
@@ -1235,11 +1316,11 @@ func TestServiceInfoArrivesLate(t *testing.T) {
 
 	cache.podServices["pod"] = []string{"firstService", "secondService", "thirdService"}
 
-	podResult, ok = client.GetPod(PodIdentifier(podUID))
+	attributes, ok = client.GetPodAttributes(PodIdentifier(podUID))
 	assert.True(t, ok)
 
-	logger.Debug("pod: ", zap.Any("pod", podResult))
-	serviceName, ok = podResult.Attributes["ServiceName"]
+	logger.Debug("pod attributes: ", zap.Any("attributes", attributes))
+	serviceName, ok = attributes["ServiceName"]
 	assert.True(t, ok)
 
 	// Desired behavior: we get all three service names in response:
