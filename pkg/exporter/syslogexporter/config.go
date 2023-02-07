@@ -29,6 +29,10 @@ type Config struct {
 	Protocol string `mapstructure:"protocol" validate:"required,protocol type"`
 	// CA certificate of syslog server
 	CACertificate string `mapstructure:"ca_certificate"`
+	// Certificate for mTLS communication
+	Certificate string `mapstructure:"certificate"`
+	// Key for mTLS communication
+	Key string `mapstructure:"key"`
 	// Format of syslog messages
 	Format string `mapstructure:"format" validate:"required,format"`
 	// Flag to control dropping messages in wrong format

@@ -52,6 +52,7 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sysloge
 			return nil, errors.New(e.Translate(trans))
 		}
 	}
+
 	if cfg.CACertificate != "" {
 		var serverCert []byte
 		serverCert, err = os.ReadFile(cfg.CACertificate)
@@ -64,6 +65,15 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sysloge
 		tlsConfig = &tls.Config{
 			RootCAs: pool,
 		}
+	}
+
+	if cfg.Certificate != "" && cfg.Key != "" {
+		var certificate tls.Certificate
+		certificate, err = tls.LoadX509KeyPair(cfg.Certificate, cfg.Key)
+		if err != nil {
+			return nil, err
+		}
+		tlsConfig.Certificates = []tls.Certificate{certificate}
 	}
 
 	var hostname string
