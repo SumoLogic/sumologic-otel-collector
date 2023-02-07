@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This release introduces the following breaking changes:
 
 - feat(sumologicextension): use hostname as default collector name [#918]
+- feat(script)!: be consistent with installation token naming [#941]
+
+  We renamed `--skip-install-token` to `--skip-installation-token`
+  and `SUMOLOGIC_INSTALL_TOKEN` environmental variable to `SUMOLOGIC_INSTALLATION_TOKEN`.
+  Please update your configuration and automation scripts.
 
 [#918]: https://github.com/SumoLogic/sumologic-otel-collector/pull/918
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.70.0-sumo-0...main
