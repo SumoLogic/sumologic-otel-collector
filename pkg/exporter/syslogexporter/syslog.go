@@ -17,7 +17,6 @@ package syslogexporter
 import (
 	"crypto/tls"
 	"fmt"
-	"log/syslog"
 	"net"
 	"regexp"
 	"strings"
@@ -28,7 +27,7 @@ import (
 )
 
 const emptyStructuredData = "-"
-const defaultPriority = syslog.LOG_INFO
+const defaultPriority = 165
 const emptyMessageID = "-"
 const versionRFC5424 = 1
 
@@ -46,8 +45,8 @@ const msgid = "msgid"
 const structuredData = "structured_data"
 const message = "message"
 
-var regexpRFC5424 = regexp.MustCompile("^\\<(?P<priority>\\d+)\\>(?P<version>\\d+) (?P<timestamp>\\S+) (?P<hostname>\\S+) (?P<app>\\S+) (?P<pid>\\S+) (?P<msgid>\\S+) (?P<structured_data>\\-|\\[.*\\]) (?P<message>.*)")
-var regexpRFC3164 = regexp.MustCompile("^\\<(?P<priority>\\d+)\\>(?P<timestamp>\\w+\\s+\\d+\\s+\\d+:\\d+:\\S+) (?P<hostname>\\S+) (?P<other_fields>.*)")
+var regexpRFC5424 = regexp.MustCompile(`^\<(?P<priority>\d+)\>(?P<version>\d+) (?P<timestamp>\S+) (?P<hostname>\S+) (?P<app>\S+) (?P<pid>\S+) (?P<msgid>\S+) (?P<structured_data>\-|\[.*\]) (?P<message>.*)`)
+var regexpRFC3164 = regexp.MustCompile(`^\<(?P<priority>\d+)\>(?P<timestamp>\w+\s+\d+\s+\d+:\d+:\S+) (?P<hostname>\S+) (?P<other_fields>.*)`)
 
 type Syslog struct {
 	hostname                 string
@@ -172,7 +171,7 @@ func (s *Syslog) addStructuredData(msg string) string {
 		c[app], c[pid], c[msgid], structuredData, c[message])
 }
 
-func (s Syslog) validateFormat(msg string) bool {
+func (s *Syslog) validateFormat(msg string) bool {
 	switch s.format {
 	case formatAny:
 		return true
@@ -185,7 +184,7 @@ func (s Syslog) validateFormat(msg string) bool {
 	}
 }
 
-func (s Syslog) formatMsg(msg string) string {
+func (s *Syslog) formatMsg(msg string) string {
 	switch s.format {
 	case formatAny:
 		return msg
@@ -198,12 +197,12 @@ func (s Syslog) formatMsg(msg string) string {
 	}
 }
 
-func (s Syslog) formatRFC3164(msg string) string {
+func (s *Syslog) formatRFC3164(msg string) string {
 	timestamp := time.Now().Format(time.Stamp)
 	return fmt.Sprintf("<%d>%s %s %s", defaultPriority, timestamp, s.hostname, msg)
 }
 
-func (s Syslog) formatRFC5424(msg string) string {
+func (s *Syslog) formatRFC5424(msg string) string {
 	timestamp := time.Now().Format(time.RFC3339)
 	return fmt.Sprintf("<%d>%d %s %s %s %d %s %s %s", defaultPriority, versionRFC5424, timestamp, s.hostname, s.app, s.pid, emptyMessageID, emptyStructuredData, msg)
 }
