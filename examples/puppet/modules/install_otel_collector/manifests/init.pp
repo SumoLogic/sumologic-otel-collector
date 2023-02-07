@@ -60,7 +60,7 @@ class install_otel_collector (
     command     => $install_command,
     path        => ['/usr/local/bin/', '/usr/bin', '/usr/sbin', '/bin'],
     user        => 'root',
-    environment => ["SUMOLOGIC_INSTALL_TOKEN=${install_token}"]
+    environment => ["SUMOLOGIC_INSTALLATION_TOKEN=${install_token}"]
   }
 
   file { '/etc/otelcol-sumo/conf.d':

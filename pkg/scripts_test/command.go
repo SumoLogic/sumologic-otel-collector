@@ -53,7 +53,7 @@ func (io *installOptions) string() []string {
 	}
 
 	if io.skipInstallToken {
-		opts = append(opts, "--skip-install-token")
+		opts = append(opts, "--skip-installation-token")
 	}
 
 	if io.uninstall {

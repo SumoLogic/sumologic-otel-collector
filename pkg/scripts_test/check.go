@@ -102,7 +102,7 @@ func checkConfigOverrided(c check) {
 	conf, err := getConfig(configPath)
 	require.NoError(c.test, err)
 
-	require.Equal(c.test, "${SUMOLOGIC_INSTALL_TOKEN}", conf.Extensions.Sumologic.InstallToken)
+	require.Equal(c.test, "${SUMOLOGIC_INSTALLATION_TOKEN}", conf.Extensions.Sumologic.InstallToken)
 }
 
 func checkUserConfigCreated(c check) {
@@ -259,8 +259,8 @@ func checkAbortedDueToDifferentToken(c check) {
 
 func checkAbortedDueToNoToken(c check) {
 	require.Greater(c.test, len(c.output), 1)
-	require.Contains(c.test, c.output[len(c.output)-2], "Install token has not been provided. Please set the 'SUMOLOGIC_INSTALL_TOKEN' environment variable.")
-	require.Contains(c.test, c.output[len(c.output)-1], "You can ignore this requirement by adding '--skip-install-token argument.")
+	require.Contains(c.test, c.output[len(c.output)-2], "Install token has not been provided. Please set the 'SUMOLOGIC_INSTALLATION_TOKEN' environment variable.")
+	require.Contains(c.test, c.output[len(c.output)-1], "You can ignore this requirement by adding '--skip-installation-token argument.")
 }
 
 func preActionWriteAPIBaseURLToUserConfig(c check) {

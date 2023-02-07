@@ -31,7 +31,7 @@
       when: not systemd_service
     - name: Run install script
       environment:
-        SUMOLOGIC_INSTALL_TOKEN: "{{ install_token | mandatory }}"
+        SUMOLOGIC_INSTALLATION_TOKEN: "{{ install_token | mandatory }}"
       ansible.builtin.command: "bash /tmp/install.sh {{ install_script_args | join(' ') }}"
       changed_when: true
     - name: "Copy configuration files to /etc/otelcol-sumo/conf.d"
