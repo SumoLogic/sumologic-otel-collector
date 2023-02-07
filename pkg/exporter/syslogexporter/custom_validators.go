@@ -10,10 +10,7 @@ import (
 func numericPort(fl validator.FieldLevel) bool {
 	port := fl.Field().String()
 	_, err := strconv.Atoi(port)
-	if err != nil {
-		return true
-	}
-	return false
+	return err != nil
 }
 
 func numericPortTranslator(ut ut.Translator) error {
@@ -21,7 +18,10 @@ func numericPortTranslator(ut ut.Translator) error {
 }
 
 func numericPortValidator(ut ut.Translator, fe validator.FieldError) string {
-	t, _ := ut.T("numeric_port", fe.Field())
+	t, err := ut.T("numeric_port", fe.Field())
+	if err != nil {
+		return ""
+	}
 	return t
 }
 
@@ -38,7 +38,10 @@ func protocolsTranslator(ut ut.Translator) error {
 }
 
 func protocolsValidator(ut ut.Translator, fe validator.FieldError) string {
-	t, _ := ut.T("protocols", fe.Field())
+	t, err := ut.T("protocols", fe.Field())
+	if err != nil {
+		return ""
+	}
 	return t
 }
 
@@ -55,7 +58,10 @@ func formatTranslator(ut ut.Translator) error {
 }
 
 func formatValidator(ut ut.Translator, fe validator.FieldError) string {
-	t, _ := ut.T("format", fe.Field())
+	t, err := ut.T("format", fe.Field())
+	if err != nil {
+		return ""
+	}
 	return t
 }
 
@@ -64,7 +70,10 @@ func requiredTranslator(ut ut.Translator) error {
 }
 
 func requiredValidator(ut ut.Translator, fe validator.FieldError) string {
-	t, _ := ut.T("required", fe.Field())
+	t, err := ut.T("required", fe.Field())
+	if err != nil {
+		return ""
+	}
 	return t
 }
 
@@ -73,6 +82,9 @@ func fqdnTranslator(ut ut.Translator) error {
 }
 
 func fqdnValidator(ut ut.Translator, fe validator.FieldError) string {
-	t, _ := ut.T("fqdn", fe.Field())
+	t, err := ut.T("fqdn", fe.Field())
+	if err != nil {
+		return ""
+	}
 	return t
 }

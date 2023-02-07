@@ -20,11 +20,9 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	ut "github.com/go-playground/universal-translator"
-	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -36,7 +34,6 @@ const maxLengthAppName = 48 // limit to 48 chars according to RFC5424
 
 type syslogexporter struct {
 	config    *Config
-	host      component.Host
 	logger    *zap.Logger
 	tlsConfig *tls.Config
 	hostname  string
@@ -57,7 +54,7 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sysloge
 	}
 	if cfg.CACertificate != "" {
 		var serverCert []byte
-		serverCert, err = ioutil.ReadFile(cfg.CACertificate)
+		serverCert, err = os.ReadFile(cfg.CACertificate)
 		if err != nil {
 			return nil, err
 		}

@@ -72,7 +72,7 @@ service:
     - file_storage/syslog
   pipelines:
     logs:
-      receivers: 
+      receivers:
         - filelog
       exporters:
         - syslog

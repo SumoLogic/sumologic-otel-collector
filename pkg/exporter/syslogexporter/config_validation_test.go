@@ -1,6 +1,7 @@
 package syslogexporter
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -43,7 +44,10 @@ var formatInput = []struct {
 
 func TestValidateProtocol(t *testing.T) {
 	validate := validator.New()
-	validate.RegisterValidation("protocol type", protocols)
+	var merr []error
+	err := validate.RegisterValidation("protocol type", protocols)
+	merr = append(merr, err)
+	fmt.Println(merr)
 	for _, item := range protocolInput {
 		err := validate.Var(item.protocol, "protocol type")
 		if item.result {
@@ -56,7 +60,10 @@ func TestValidateProtocol(t *testing.T) {
 
 func TestValidatePort(t *testing.T) {
 	validate := validator.New()
-	validate.RegisterValidation("port", numericPort)
+	var merr []error
+	err := validate.RegisterValidation("port", numericPort)
+	merr = append(merr, err)
+	fmt.Println(merr)
 	for _, item := range portInput {
 		err := validate.Var(item.port, "port")
 		if item.result {
@@ -69,7 +76,10 @@ func TestValidatePort(t *testing.T) {
 
 func TestValidateformat(t *testing.T) {
 	validate := validator.New()
-	validate.RegisterValidation("format", format)
+	var merr []error
+	err := validate.RegisterValidation("format", format)
+	merr = append(merr, err)
+	fmt.Println(merr)
 	for _, item := range formatInput {
 		err := validate.Var(item.format, "format")
 		if item.result {
