@@ -30,14 +30,14 @@ ARG_LONG_UNINSTALL='uninstall'
 ARG_SHORT_PURGE='p'
 ARG_LONG_PURGE='purge'
 ARG_SHORT_SKIP_TOKEN='k'
-ARG_LONG_SKIP_TOKEN='skip-install-token'
+ARG_LONG_SKIP_TOKEN='skip-installation-token'
 ARG_SHORT_DOWNLOAD='w'
 ARG_LONG_DOWNLOAD='download-only'
 ARG_SHORT_CONFIG_BRANCH='c'
 ARG_LONG_CONFIG_BRANCH='config-branch'
 ARG_SHORT_BINARY_BRANCH='e'
 ARG_LONG_BINARY_BRANCH='binary-branch'
-ENV_TOKEN="SUMOLOGIC_INSTALL_TOKEN"
+ENV_TOKEN="SUMOLOGIC_INSTALLATION_TOKEN"
 ARG_SHORT_BRANCH='b'
 ARG_LONG_BRANCH='branch'
 ARG_SHORT_KEEP_DOWNLOADS='n'
@@ -58,8 +58,8 @@ readonly ARG_SHORT_INSTALL_HOSTMETRICS ARG_LONG_INSTALL_HOSTMETRICS
 
 # Support providing install_token as env
 set +u
-if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
-    SUMOLOGIC_INSTALL_TOKEN=""
+if [[ -z "${SUMOLOGIC_INSTALLATION_TOKEN}" ]]; then
+    SUMOLOGIC_INSTALLATION_TOKEN=""
 fi
 set -u
 
@@ -114,7 +114,7 @@ Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_TAG} <key>=<v
                        [--${ARG_LONG_YES}] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
 
 Supported arguments:
-  -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>      Installation token. It has precedence over 'SUMOLOGIC_INSTALL_TOKEN' env variable.
+  -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>      Installation token. It has precedence over 'SUMOLOGIC_INSTALLATION_TOKEN' env variable.
   -${ARG_SHORT_SKIP_TOKEN}, --${ARG_LONG_SKIP_TOKEN}              Skips requirement for installation token.
                                         This option do not disable default configuration creation.
   -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                 Sets tag for collector. This argument can be use multiple times. One per tag.
@@ -249,7 +249,7 @@ function parse_options() {
     # Validate opt and set arguments
     case "$opt" in
       "${ARG_SHORT_HELP}")          usage; exit 0 ;;
-      "${ARG_SHORT_TOKEN}")         SUMOLOGIC_INSTALL_TOKEN="${OPTARG}" ;;
+      "${ARG_SHORT_TOKEN}")         SUMOLOGIC_INSTALLATION_TOKEN="${OPTARG}" ;;
       "${ARG_SHORT_API}")           API_BASE_URL="${OPTARG}" ;;
       "${ARG_SHORT_SKIP_CONFIG}")   SKIP_CONFIG=true ;;
       "${ARG_SHORT_VERSION}")       VERSION="${OPTARG}" ;;
@@ -608,13 +608,13 @@ function setup_config() {
     fi
 
     ## Check if there is anything to update in configuration
-    if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
+    if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
         create_user_config_file "${COMMON_CONFIG_PATH}"
         add_extension_to_config "${COMMON_CONFIG_PATH}"
         write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
 
-        if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" && -z "${USER_TOKEN}" ]]; then
-            write_install_token "${SUMOLOGIC_INSTALL_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
+        if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" ]]; then
+            write_installation_token "${SUMOLOGIC_INSTALLATION_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
         fi
 
         # fill in api base url
@@ -860,8 +860,8 @@ function write_sumologic_extension() {
 ${indentation}sumologic:/" "${file}"
 }
 
-# write install token to user configuration file
-function write_install_token() {
+# write installation token to user configuration file
+function write_installation_token() {
     local token
     readonly token="${1}"
 
@@ -875,7 +875,7 @@ function write_install_token() {
     if grep "install_token" "${file}" > /dev/null; then
         sed -i.bak -e "s/install_token:.*$/install_token: $(escape_sed "${token}")/" "${file}"
     else
-        # write install token on the top of sumologic: extension
+        # write installation token on the top of sumologic: extension
         sed -i.bak -e "s/sumologic:/sumologic:\\
 \\${ext_indentation}install_token: $(escape_sed "${token}")/" "${file}"
     fi
@@ -896,7 +896,7 @@ function write_api_url() {
     if grep "api_base_url" "${file}" > /dev/null; then
         sed -i.bak -e "s/api_base_url:.*$/api_base_url: $(escape_sed "${api_url}")/" "${file}"
     else
-        # write install token on the top of sumologic: extension
+        # write installation token on the top of sumologic: extension
         sed -i.bak -e "s/sumologic:/sumologic:\\
 \\${ext_indentation}api_base_url: $(escape_sed "${api_url}")/" "${file}"
     fi
@@ -927,7 +927,7 @@ function write_tags() {
     if grep "collector_fields" "${file}" > /dev/null; then
         sed -i.bak -e "s/collector_fields:.*$/collector_fields: ${fields_to_write}/" "${file}"
     else
-        # write install token on the top of sumologic: extension
+        # write installation token on the top of sumologic: extension
         sed -i.bak -e "s/sumologic:/sumologic:\\
 \\${ext_indentation}collector_fields: ${fields_to_write}/" "${file}"
     fi
@@ -1057,7 +1057,7 @@ set_tmpdir
 install_missing_dependencies
 check_dependencies
 
-readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
+readonly SUMOLOGIC_INSTALLATION_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
 readonly USER_CONFIG_DIRECTORY USER_ENV_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
 readonly ACL_LOG_FILE_PATHS
 readonly INSTALL_HOSTMETRICS
@@ -1070,9 +1070,9 @@ fi
 USER_TOKEN="$(get_user_config "${COMMON_CONFIG_PATH}")"
 readonly USER_TOKEN
 
-# Exit if install token is not set and there is no user configuration
-if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && "${SKIP_TOKEN}" != "true" && -z "${USER_TOKEN}" && -z "${DOWNLOAD_ONLY}" ]]; then
-    echo "Install token has not been provided. Please set the '${ENV_TOKEN}' environment variable."
+# Exit if installation token is not set and there is no user configuration
+if [[ -z "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SKIP_TOKEN}" != "true" && -z "${USER_TOKEN}" && -z "${DOWNLOAD_ONLY}" ]]; then
+    echo "Installation token has not been provided. Please set the '${ENV_TOKEN}' environment variable."
     echo "You can ignore this requirement by adding '--${ARG_LONG_SKIP_TOKEN} argument."
     exit 1
 fi
@@ -1083,7 +1083,7 @@ if [[ -f "${COMMON_CONFIG_PATH}" && -z "${DOWNLOAD_ONLY}" ]]; then
     EXT_INDENTATION="$(get_extension_indentation "${COMMON_CONFIG_PATH}" "${INDENTATION}")"
     readonly INDENTATION EXT_INDENTATION
 
-    if [[ -n "${USER_TOKEN}" && -n "${SUMOLOGIC_INSTALL_TOKEN}" && "${USER_TOKEN}" != "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
+    if [[ -n "${USER_TOKEN}" && -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${USER_TOKEN}" != "${SUMOLOGIC_INSTALLATION_TOKEN}" ]]; then
         echo "You are trying to install with different token than in your configuration file!"
         exit 1
     fi
@@ -1111,7 +1111,7 @@ fi
 set -u
 
 # Disable systemd if token is not specified at all
-if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && -z "${USER_TOKEN}" ]]; then
+if [[ -z "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" ]]; then
     SYSTEMD_DISABLED=true
 fi
 
