@@ -89,7 +89,7 @@ func createTracesProcessor(
 
 	oCfg := cfg.(*Config)
 
-	sp := newSourceProcessor(oCfg)
+	sp := newSourceProcessor(params, oCfg)
 
 	return processorhelper.NewTracesProcessor(
 		ctx,
@@ -110,7 +110,7 @@ func createMetricsProcessor(
 ) (processor.Metrics, error) {
 	oCfg := cfg.(*Config)
 
-	sp := newSourceProcessor(oCfg)
+	sp := newSourceProcessor(params, oCfg)
 	return processorhelper.NewMetricsProcessor(
 		ctx,
 		params,
@@ -130,7 +130,7 @@ func createLogsProcessor(
 ) (processor.Logs, error) {
 	oCfg := cfg.(*Config)
 
-	sp := newSourceProcessor(oCfg)
+	sp := newSourceProcessor(params, oCfg)
 	return processorhelper.NewLogsProcessor(
 		ctx,
 		params,
