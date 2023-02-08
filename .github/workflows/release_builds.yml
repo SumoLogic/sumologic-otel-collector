@@ -100,6 +100,17 @@ jobs:
           grep -E "/(receiver|exporter|processor|extension)/" | \
           tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
 
+      - name: Sign Windows binary
+        if: runner.os == "Windows"
+        uses: skymatic/code-sign-action@v1
+        with:
+          certificate: '${{ secrets.MICROSOFT_CERTIFICATE }}'
+          password: '${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}'
+          certificatesha1: '${{ secrets.MICROSOFT_CERTHASH }}'
+          certificatename: '${{ secrets.MICROSOFT_CERTNAME }}'
+          description: '${{ secrets.MICROSOFT_DESCRIPTION }}'
+          folder: ./otelcolbuilder/cmd
+
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v3
         with:
@@ -443,6 +454,16 @@ jobs:
       - name: Build MSI for windows/amd64
         working-directory: ./packaging/msi/wix
         run: msbuild.exe -p:Configuration=Release -p:Platform=x64 -p:ProductVersion=$PRODUCT_VERSION -Restore
+
+      - name: Sign MSI
+        uses: skymatic/code-sign-action@v1
+        with:
+          certificate: '${{ secrets.MICROSOFT_CERTIFICATE }}'
+          password: '${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}'
+          certificatesha1: '${{ secrets.MICROSOFT_CERTHASH }}'
+          certificatename: '${{ secrets.MICROSOFT_CERTNAME }}'
+          description: '${{ secrets.MICROSOFT_DESCRIPTION }}'
+          folder: ./packaging/msi/wix/bin/x64/en-US
 
       - name: Store MSI as action artifact for windows/amd64
         uses: actions/upload-artifact@v3
