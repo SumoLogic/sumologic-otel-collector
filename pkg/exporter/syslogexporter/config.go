@@ -46,7 +46,5 @@ const (
 	// Syslog Endpoint
 	DefaultEndpoint = ""
 	// Syslog format
-	DefaultFormat = "any"
-	// Drop message if not in the above format
-	DropInvalidMessagesDefault = false
+	DefaultFormat = "rfc5424"
 )

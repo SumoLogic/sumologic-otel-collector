@@ -21,6 +21,6 @@ func TestInitExporter(t *testing.T) {
 	_, err := initExporter(&Config{Endpoint: "test.com",
 		Protocol: "tcp",
 		Port:     514,
-		Format:   "RFC5424"}, createExporterCreateSettings())
+		Format:   "rfc5424"}, createExporterCreateSettings())
 	assert.NoError(t, err)
 }

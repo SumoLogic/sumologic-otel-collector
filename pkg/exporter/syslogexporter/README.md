@@ -22,8 +22,7 @@ exporters:
     port: 514
     endpoint: 127.0.0.1
     ca_certificate: certs/servercert.pem
-    format: RFC5424
-    drop_invalid_messages: false
+    format: rfc5424
     additional_structured_data: # only if messages are in RFC5424 format
     - tab=abc
 
@@ -86,8 +85,8 @@ The following are a few configuration options available to forward syslog messag
 - `endpoint` - syslog endpoint (fqdn)
 - `protocol` - tcp/udp
 - `port` - A syslog port
-- `format` - any/RFC5424/RFC3614
-  - `RFC5424` - Checks whether a syslog messages is compliant with RFC 5424
-  - `RFC3614` - Checks whether a syslog messages is compliant with RFC 3614
+- `format` - rfc5424/rfc3164
+  - `rfc5424` - Checks whether a syslog messages is compliant with RFC 5424
+  - `rfc3164` - Checks whether a syslog messages is compliant with RFC 3164
 - `additional_structured_data` - Additional [structured data](https://www.rfc-editor.org/rfc/rfc5424#page-15) to specify in the syslog message (Example: An authentication token)
 - `ca_certificate` - A publicly verifiable server certificate (`note`: Self signed certificates are not supported in this version)

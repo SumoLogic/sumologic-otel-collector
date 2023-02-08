@@ -54,7 +54,7 @@ func format(fl validator.FieldLevel) bool {
 }
 
 func formatTranslator(ut ut.Translator) error {
-	return ut.Add("format", "Invalid format, {0} must be any/RFC5424/RFC3164", true) // see universal-translator for details
+	return ut.Add("format", "Invalid format, {0} must be any/rfc5424/rfc3164", true) // see universal-translator for details
 }
 
 func formatValidator(ut ut.Translator, fe validator.FieldError) string {

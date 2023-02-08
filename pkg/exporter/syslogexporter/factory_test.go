@@ -25,7 +25,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 		Port:                     514,
 		Protocol:                 "tcp",
 		CACertificate:            "",
-		Format:                   "any",
+		Format:                   "rfc5424",
 		AdditionalStructuredData: []string(nil),
 		QueueSettings: exporterhelper.QueueSettings{
 			Enabled:      false,

@@ -28,8 +28,8 @@ const defaultPriority = 165
 const defaultFacility = 1
 const versionRFC5424 = 1
 
-const formatRFC5424Str = "RFC5424"
-const formatRFC3164Str = "RFC3164"
+const formatRFC5424Str = "rfc5424"
+const formatRFC3164Str = "rfc3164"
 
 const priority = "priority"
 const facility = "facility"
