@@ -26,7 +26,19 @@ This release introduces the following breaking changes:
 [#945]: https://github.com/SumoLogic/sumologic-otel-collector/pull/945
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.70.0-sumo-0...main
 
+## [v0.70.0-sumo-2]
+
+### Fixed
+
+- fix release binary versions [#943]
+
+[v0.70.0-sumo-2]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.70.0-sumo-1...v0.70.0-sumo-2
+[#943]: https://github.com/SumoLogic/sumologic-otel-collector/pull/943
+
 ## [v0.70.0-sumo-1]
+
+> **Warning**
+> This release had incorrect version strings set in binaries. The problem is fixed in [v0.70.0-sumo-2].
 
 ### Added
 
