@@ -140,7 +140,7 @@ func (s *Syslog) formatMsg(msg map[string]any) string {
 	case formatRFC5424Str:
 		return formatRFC5424(msg)
 	default:
-		return ""
+		panic(fmt.Sprintf("unsupported syslog format, format: %s", s.format))
 	}
 }
 
