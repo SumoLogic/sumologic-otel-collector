@@ -49,7 +49,6 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sysloge
 	err, trans = validation(cfg)
 	if err != nil {
 		for _, e := range err.(validator.ValidationErrors) {
-			fmt.Println(e.Translate(trans))
 			return nil, errors.New(e.Translate(trans))
 		}
 	}
@@ -113,13 +112,11 @@ func newLogsExporter(
 
 func (se *syslogexporter) logToJson(record plog.LogRecord) map[string]any {
 	attributes := record.Attributes().AsRaw()
-	se.logger.Info(fmt.Sprint(attributes))
 	return attributes
 }
 
 func (se *syslogexporter) getTimestamp(record plog.LogRecord) string {
 	timestamp := record.Timestamp().String()
-	se.logger.Info(timestamp)
 	return timestamp
 }
 
@@ -145,7 +142,6 @@ func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error 
 				if err != nil {
 					return err
 				}
-				se.logger.Info(string(jsonStr[:]))
 				err = s.Write(formattedLine)
 				if err != nil {
 					//TODO: add handling of failures as it is in sumologic exporter

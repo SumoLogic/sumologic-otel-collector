@@ -109,17 +109,6 @@ func (s *Syslog) Write(msg map[string]any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	/* isFormatCorrect := s.validateFormat(msg)
-
-	if !isFormatCorrect && s.dropInvalidMsg {
-		s.logger.Debug("Invalid message format",
-			zap.String("format", s.format),
-			zap.String("msg", msg),
-		)
-		return nil
-	} else if !isFormatCorrect {
-		msg = s.formatMsg(msg)
-	}*/
 	s.addStructuredData(msg)
 	msgStr := s.formatMsg(msg)
 
@@ -188,7 +177,6 @@ func populateDefaults(msg map[string]any, msgProperty string) {
 }
 
 func formatRFC3164(msg map[string]any) string {
-	// timestamp := time.Now().Format(time.Stamp)
 	msgProperties := []string{priority, hostname, message}
 	for _, msgProperty := range msgProperties {
 		populateDefaults(msg, msgProperty)
@@ -197,7 +185,6 @@ func formatRFC3164(msg map[string]any) string {
 }
 
 func formatRFC5424(msg map[string]any) string {
-	// timestamp := time.Now().Format(time.RFC3339)
 	msgProperties := []string{priority, version, hostname, app, pid, msgId, message, structuredData}
 	for _, msgProperty := range msgProperties {
 		populateDefaults(msg, msgProperty)
