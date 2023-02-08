@@ -13,14 +13,14 @@ This playbook will install Sumo Logic Distro of [OpenTelemetry Collector][otc_li
 
     ```bash
     ansible-playbook -i inventory install_sumologic_otel_collector.yaml \
-      -e '{"install_token": "<your_token>", "collector_tags": {"tag_name": "tag_value"}, "src_config_path": "<your_config_path>"}'
+      -e '{"installation_token": "<your_token>", "collector_tags": {"tag_name": "tag_value"}, "src_config_path": "<your_config_path>"}'
     ```
 
   *Notice*: If you need to specify a password for sudo, run `ansible-playbook` with `--ask-become-pass` (`-K` for short).
 
 ## Playbook variables
 
-- `install_token`: Sumo Logic [installation token][installation_token]
+- `installation_token`: Sumo Logic [installation token][installation_token]
 - `collector_tags`: Collector tags, these are applied to all processed data
 - `api_url`: Sumo Logic API url. You shouldn't need to set this in most normal circumstances.
 - `version`: version of Sumo Logic Distribution for OpenTelemetry Collector. The default is the latest stable version.
