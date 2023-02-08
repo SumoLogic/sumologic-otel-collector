@@ -42,6 +42,8 @@ const msgId = "msg_id"
 const structuredData = "structured_data"
 const message = "message"
 
+const emptyValue = "-"
+
 type Syslog struct {
 	hostname                 string
 	network                  string
@@ -109,7 +111,6 @@ func (s *Syslog) Write(msg map[string]any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.addStructuredData(msg)
 	msgStr := s.formatMsg(msg)
 
 	if s.conn != nil {
@@ -136,26 +137,44 @@ func (s *Syslog) write(msg string) error {
 func (s *Syslog) formatMsg(msg map[string]any) string {
 	switch s.format {
 	case formatRFC3164Str:
-		return formatRFC3164(msg)
+		return s.formatRFC3164(msg)
 	case formatRFC5424Str:
-		return formatRFC5424(msg)
+		return s.formatRFC5424(msg)
 	default:
 		panic(fmt.Sprintf("unsupported syslog format, format: %s", s.format))
 	}
 }
 
-func (s *Syslog) addStructuredData(msg map[string]any) {
-	if len(s.additionalStructuredData) == 0 {
+func (s Syslog) addStructuredData(msg map[string]any) {
+	if s.format != formatRFC5424Str {
 		return
 	}
-	_, ok := msg[structuredData]
+
+	sd, ok := msg[structuredData].(map[string]map[string]string)
 	if !ok {
-		msg[structuredData] = s.additionalStructuredData
+		if len(s.additionalStructuredData) == 0 {
+			msg[structuredData] = emptyValue
+		} else {
+			msg[structuredData] = s.additionalStructuredData
+		}
+	} else {
+		sdElements := []string{}
+		if len(s.additionalStructuredData) != 0 {
+			sdElements = append(sdElements, s.additionalStructuredData...)
+
+		}
+		for key, val := range sd {
+			sdElements = append(sdElements, key)
+			for k, v := range val {
+				sdElements = append(sdElements, fmt.Sprintf("%s=\"%s\"", k, v))
+			}
+		}
+		msg[structuredData] = sdElements
 	}
 }
 
 func populateDefaults(msg map[string]any, msgProperties []string) {
-	const emptyValue = "-"
+
 	for _, msgProperty := range msgProperties {
 		msgValue, ok := msg[msgProperty]
 		if !ok && msgProperty == priority {
@@ -178,14 +197,15 @@ func populateDefaults(msg map[string]any, msgProperties []string) {
 	}
 }
 
-func formatRFC3164(msg map[string]any) string {
+func (s Syslog) formatRFC3164(msg map[string]any) string {
 	msgProperties := []string{priority, hostname, message}
 	populateDefaults(msg, msgProperties)
 	return fmt.Sprintf("<%d>%s %s %s", msg[priority], msg[timestamp], msg[hostname], msg[message])
 }
 
-func formatRFC5424(msg map[string]any) string {
+func (s Syslog) formatRFC5424(msg map[string]any) string {
 	msgProperties := []string{priority, version, hostname, app, pid, msgId, message, structuredData}
 	populateDefaults(msg, msgProperties)
+	s.addStructuredData(msg)
 	return fmt.Sprintf("<%d>%d %s %s %s %s %s %s %s", msg[priority], msg[version], msg[timestamp], msg[hostname], msg[app], msg[pid], msg[msgId], msg[structuredData], msg[message])
 }

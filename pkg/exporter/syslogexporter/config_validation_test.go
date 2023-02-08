@@ -36,7 +36,6 @@ var formatInput = []struct {
 	format string
 	result bool
 }{
-	{"any", false},
 	{"rfc5424", true},
 	{"rfc3164", true},
 	{"all", false},

@@ -120,8 +120,6 @@ func (se *syslogexporter) getTimestamp(record plog.LogRecord) string {
 }
 
 func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
-	se.logger.Info("Syslog Exporter is pushing data")
-
 	s, err := Connect(se.logger, se.config, se.tlsConfig, se.hostname, se.pid, se.app)
 	if err != nil {
 		return fmt.Errorf("error connecting to syslog server: %s", err)
