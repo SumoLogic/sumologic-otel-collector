@@ -154,40 +154,38 @@ func (s *Syslog) addStructuredData(msg map[string]any) {
 	}
 }
 
-func populateDefaults(msg map[string]any, msgProperty string) {
+func populateDefaults(msg map[string]any, msgProperties []string) {
 	const emptyValue = "-"
-	msgValue, ok := msg[msgProperty]
-	if !ok && msgProperty == priority {
-		msg[msgProperty] = defaultPriority
-		return
+	for _, msgProperty := range msgProperties {
+		msgValue, ok := msg[msgProperty]
+		if !ok && msgProperty == priority {
+			msg[msgProperty] = defaultPriority
+			return
+		}
+		if !ok && msgProperty == version {
+			msg[msgProperty] = versionRFC5424
+			return
+		}
+		if !ok && msgProperty == facility {
+			msg[msgProperty] = defaultFacility
+			return
+		}
+		if !ok {
+			msg[msgProperty] = emptyValue
+			return
+		}
+		msg[msgProperty] = msgValue
 	}
-	if !ok && msgProperty == version {
-		msg[msgProperty] = versionRFC5424
-		return
-	}
-	if !ok && msgProperty == facility {
-		msg[msgProperty] = defaultFacility
-		return
-	}
-	if !ok {
-		msg[msgProperty] = emptyValue
-		return
-	}
-	msg[msgProperty] = msgValue
 }
 
 func formatRFC3164(msg map[string]any) string {
 	msgProperties := []string{priority, hostname, message}
-	for _, msgProperty := range msgProperties {
-		populateDefaults(msg, msgProperty)
-	}
+	populateDefaults(msg, msgProperties)
 	return fmt.Sprintf("<%d>%s %s %s", msg[priority], msg[timestamp], msg[hostname], msg[message])
 }
 
 func formatRFC5424(msg map[string]any) string {
 	msgProperties := []string{priority, version, hostname, app, pid, msgId, message, structuredData}
-	for _, msgProperty := range msgProperties {
-		populateDefaults(msg, msgProperty)
-	}
+	populateDefaults(msg, msgProperties)
 	return fmt.Sprintf("<%d>%d %s %s %s %s %s %s %s", msg[priority], msg[version], msg[timestamp], msg[hostname], msg[app], msg[pid], msg[msgId], msg[structuredData], msg[message])
 }
