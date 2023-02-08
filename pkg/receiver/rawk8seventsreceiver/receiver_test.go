@@ -416,7 +416,7 @@ func TestStorage(t *testing.T) {
 
 	// Create the second k8s event.
 	secondEvent := getEvent()
-	firstEvent.UID = types.UID("ec279341-e2d8-4b2a-b17d-6e0566481002")
+	secondEvent.UID = types.UID("ec279341-e2d8-4b2a-b17d-6e0566481002")
 	listWatch.Add(secondEvent)
 
 	// Both events should be picked up by the receiver.

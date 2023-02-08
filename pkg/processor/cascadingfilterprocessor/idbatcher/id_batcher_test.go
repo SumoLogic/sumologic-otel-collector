@@ -116,7 +116,10 @@ func concurrencyTest(t *testing.T, numBatches, newBatchesInitialCapacity, batchC
 		}
 	}()
 
-	ids := generateSequentialIds(10000)
+	// don't set this too high, we spawn a goroutine for each one, and the race detector on Windows has
+	// a limit of 8192
+	traceIdCount := 1000
+	ids := generateSequentialIds(uint64(traceIdCount))
 	wg := &sync.WaitGroup{}
 	for i := 0; i < len(ids); i++ {
 		wg.Add(1)
