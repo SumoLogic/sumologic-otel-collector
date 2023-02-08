@@ -18,7 +18,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -138,10 +137,6 @@ func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error 
 				lr := slg.LogRecords().At(j)
 				formattedLine := se.logsToMap(lr)
 				formattedLine["timestamp"] = se.getTimestamp(lr)
-				jsonStr, err := json.Marshal(formattedLine)
-				if err != nil {
-					return err
-				}
 				err = s.Write(formattedLine)
 				if err != nil {
 					//TODO: add handling of failures as it is in sumologic exporter
