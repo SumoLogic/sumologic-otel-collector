@@ -103,6 +103,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 |                    [sapm][sapmreceiver]                    |                                                              |                                          |                                                  |
 |                [signalfx][signalfxreceiver]                |                                                              |                                          |                                                  |
 |              [skywalking][skywalkingreceiver]              |                                                              |                                          |                                                  |
+|                    [snmp][snmpreceiver]                    |                                                              |                                          |                                                  |
 |              [splunk_hec][splunkhecreceiver]               |                                                              |                                          |                                                  |
 |                [sqlquery][sqlqueryreceiver]                |                                                              |                                          |                                                  |
 |               [sqlserver][sqlserverreceiver]               |                                                              |                                          |                                                  |
@@ -172,6 +173,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 [sapmreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.70.0/receiver/sapmreceiver
 [signalfxreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.70.0/receiver/signalfxreceiver
 [skywalkingreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.70.0/receiver/skywalkingreceiver
+[snmpreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.70.0/receiver/snmpreceiver
 [splunkhecreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.70.0/receiver/splunkhecreceiver
 [sqlqueryreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.70.0/receiver/sqlqueryreceiver
 [sqlserverreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.70.0/receiver/sqlserverreceiver
