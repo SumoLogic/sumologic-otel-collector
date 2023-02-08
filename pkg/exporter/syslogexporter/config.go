@@ -31,9 +31,7 @@ type Config struct {
 	CACertificate string `mapstructure:"ca_certificate"`
 	// Format of syslog messages
 	Format string `mapstructure:"format" validate:"required,format"`
-	// Flag to control dropping messages in wrong format
-	DropInvalidMsg bool `mapstructure:"drop_invalid_messages"`
-	//Additional structured data added to structured data in RFC5424
+	// Additional structured data added to structured data in RFC5424
 	AdditionalStructuredData []string `mapstructure:"additional_structured_data"`
 
 	exporterhelper.QueueSettings `mapstructure:"sending_queue"`
@@ -46,7 +44,7 @@ const (
 	// Syslog Port
 	DefaultPort = 514
 	// Syslog Endpoint
-	DefaultEndpoint = "syslog-server.sumologic.net"
+	DefaultEndpoint = ""
 	// Syslog format
 	DefaultFormat = "any"
 	// Drop message if not in the above format

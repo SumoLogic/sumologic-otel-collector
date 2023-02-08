@@ -18,35 +18,29 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
-	"regexp"
 	"strings"
 	"sync"
-	"time"
 
 	"go.uber.org/zap"
 )
 
-const emptyStructuredData = "-"
 const defaultPriority = 165
-const emptyMessageID = "-"
+const defaultFacility = 1
 const versionRFC5424 = 1
 
-const formatRFC5424 = "RFC5424"
-const formatRFC3164 = "RFC3164"
-const formatAny = "any"
+const formatRFC5424Str = "RFC5424"
+const formatRFC3164Str = "RFC3164"
 
 const priority = "priority"
+const facility = "facility"
 const version = "version"
 const timestamp = "timestamp"
 const hostname = "hostname"
-const app = "app"
-const pid = "pid"
-const msgid = "msgid"
+const app = "appname"
+const pid = "proc_id"
+const msgId = "msg_id"
 const structuredData = "structured_data"
 const message = "message"
-
-var regexpRFC5424 = regexp.MustCompile(`^\<(?P<priority>\d+)\>(?P<version>\d+) (?P<timestamp>\S+) (?P<hostname>\S+) (?P<app>\S+) (?P<pid>\S+) (?P<msgid>\S+) (?P<structured_data>\-|\[.*\]) (?P<message>.*)`)
-var regexpRFC3164 = regexp.MustCompile(`^\<(?P<priority>\d+)\>(?P<timestamp>\w+\s+\d+\s+\d+:\d+:\S+) (?P<hostname>\S+) (?P<other_fields>.*)`)
 
 type Syslog struct {
 	hostname                 string
@@ -54,7 +48,6 @@ type Syslog struct {
 	addr                     string
 	format                   string
 	app                      string
-	dropInvalidMsg           bool
 	pid                      int
 	additionalStructuredData []string
 	tlsConfig                *tls.Config
@@ -74,7 +67,6 @@ func Connect(logger *zap.Logger, cfg *Config, tlsConfig *tls.Config, hostname st
 		pid:                      pid,
 		app:                      app,
 		additionalStructuredData: cfg.AdditionalStructuredData,
-		dropInvalidMsg:           cfg.DropInvalidMsg,
 	}
 
 	s.mu.Lock()
@@ -113,11 +105,11 @@ func (s *Syslog) connect() error {
 	return err
 }
 
-func (s *Syslog) Write(msg string) error {
+func (s *Syslog) Write(msg map[string]any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	isFormatCorrect := s.validateFormat(msg)
+	/* isFormatCorrect := s.validateFormat(msg)
 
 	if !isFormatCorrect && s.dropInvalidMsg {
 		s.logger.Debug("Invalid message format",
@@ -127,19 +119,20 @@ func (s *Syslog) Write(msg string) error {
 		return nil
 	} else if !isFormatCorrect {
 		msg = s.formatMsg(msg)
-	}
-
-	msg = s.addStructuredData(msg)
+	}*/
+	s.addStructuredData(msg)
+	msgStr := s.formatMsg(msg)
 
 	if s.conn != nil {
-		if err := s.write(msg); err == nil {
+		if err := s.write(msgStr); err == nil {
 			return nil
 		}
 	}
 	if err := s.connect(); err != nil {
 		return err
 	}
-	return s.write(msg)
+
+	return s.write(msgStr)
 }
 
 func (s *Syslog) write(msg string) error {
@@ -151,88 +144,63 @@ func (s *Syslog) write(msg string) error {
 	return err
 }
 
-func (s *Syslog) addStructuredData(msg string) string {
-	c := getMessageComponents(regexpRFC5424, msg)
-	if len(s.additionalStructuredData) == 0 || len(c) == 0 {
-		return msg
-	}
-	var sd []string
-	if len(c[structuredData]) == 1 && c[structuredData] == emptyStructuredData {
-		sd = s.additionalStructuredData
-	} else {
-		c[structuredData] = strings.ReplaceAll(c[structuredData], "[", "")
-		c[structuredData] = strings.ReplaceAll(c[structuredData], "]", "")
-		sd = append(s.additionalStructuredData, strings.Split(c[structuredData], " ")...)
-	}
-	structuredData := fmt.Sprintf("[%s]", strings.Join(sd, " "))
-
-	return fmt.Sprintf("<%s>%s %s %s %s %s %s %s %s",
-		c[priority], c[version], c[timestamp], c[hostname],
-		c[app], c[pid], c[msgid], structuredData, c[message])
-}
-
-func (s *Syslog) validateFormat(msg string) bool {
+func (s *Syslog) formatMsg(msg map[string]any) string {
 	switch s.format {
-	case formatAny:
-		return true
-	case formatRFC3164:
-		return isRFC3164(msg)
-	case formatRFC5424:
-		return isRFC5424(msg)
-	default:
-		return false
-	}
-}
-
-func (s *Syslog) formatMsg(msg string) string {
-	switch s.format {
-	case formatAny:
-		return msg
-	case formatRFC3164:
-		return s.formatRFC3164(msg)
-	case formatRFC5424:
-		return s.formatRFC5424(msg)
+	case formatRFC3164Str:
+		return formatRFC3164(msg)
+	case formatRFC5424Str:
+		return formatRFC5424(msg)
 	default:
 		return ""
 	}
 }
 
-func (s *Syslog) formatRFC3164(msg string) string {
-	timestamp := time.Now().Format(time.Stamp)
-	return fmt.Sprintf("<%d>%s %s %s", defaultPriority, timestamp, s.hostname, msg)
-}
-
-func (s *Syslog) formatRFC5424(msg string) string {
-	timestamp := time.Now().Format(time.RFC3339)
-	return fmt.Sprintf("<%d>%d %s %s %s %d %s %s %s", defaultPriority, versionRFC5424, timestamp, s.hostname, s.app, s.pid, emptyMessageID, emptyStructuredData, msg)
-}
-
-// Example messages RFC5424 compliant
-// <34>1 2003-10-11T22:14:15.003Z mymachine.example.com su - ID47 - BOM'su root' failed for lonvick on /dev/pts/8
-// <165>1 2003-08-24T05:14:15.000003-07:00 192.0.2.1 myproc 8710 - - %% It's time to make the do-nuts.
-// <165>1 2003-10-11T22:14:15.003Z mymachine.example.com evntslog - ID47 [exampleSDID@32473 iut="3" eventSource="Application" eventID="1011"] BOMAn application event log entry...
-// <165>1 2003-10-11T22:14:15.003Z mymachine.example.com evntslog - ID47 [exampleSDID@32473 iut="3" eventSource="Application" eventID="1011"][examplePriority@32473 class="high"]
-// for more information see: https://www.rfc-editor.org/rfc/rfc5424
-func isRFC5424(msg string) bool {
-	return regexpRFC5424.MatchString(msg)
-}
-
-// Example messages RFC3164 compliant
-// <34>Oct 11 22:14:15 mymachine su: 'su root' failed for lonvick on /dev/pts/8
-// <13>Feb  5 17:32:18 10.0.0.99 Use the BFG!
-// for more information see: https://www.ietf.org/rfc/rfc3164.txt
-func isRFC3164(msg string) bool {
-	return regexpRFC3164.MatchString(msg)
-}
-
-func getMessageComponents(r *regexp.Regexp, msg string) map[string]string {
-	match := r.FindStringSubmatch(msg)
-
-	components := make(map[string]string)
-	for i, name := range r.SubexpNames() {
-		if i > 0 && i <= len(match) {
-			components[name] = match[i]
-		}
+func (s *Syslog) addStructuredData(msg map[string]any) {
+	if len(s.additionalStructuredData) == 0 {
+		return
 	}
-	return components
+	_, ok := msg[structuredData]
+	if !ok {
+		msg[structuredData] = s.additionalStructuredData
+	}
+}
+
+func populateDefaults(msg map[string]any, msgProperty string) {
+	const emptyValue = "-"
+	msgValue, ok := msg[msgProperty]
+	if !ok && msgProperty == priority {
+		msg[msgProperty] = defaultPriority
+		return
+	}
+	if !ok && msgProperty == version {
+		msg[msgProperty] = versionRFC5424
+		return
+	}
+	if !ok && msgProperty == facility {
+		msg[msgProperty] = defaultFacility
+		return
+	}
+	if !ok {
+		msg[msgProperty] = emptyValue
+		return
+	}
+	msg[msgProperty] = msgValue
+}
+
+func formatRFC3164(msg map[string]any) string {
+	// timestamp := time.Now().Format(time.Stamp)
+	msgProperties := []string{priority, hostname, message}
+	for _, msgProperty := range msgProperties {
+		populateDefaults(msg, msgProperty)
+	}
+	return fmt.Sprintf("<%d>%s %s %s", msg[priority], msg[timestamp], msg[hostname], msg[message])
+}
+
+func formatRFC5424(msg map[string]any) string {
+	// timestamp := time.Now().Format(time.RFC3339)
+	msgProperties := []string{priority, version, hostname, app, pid, msgId, message, structuredData}
+	for _, msgProperty := range msgProperties {
+		populateDefaults(msg, msgProperty)
+	}
+	return fmt.Sprintf("<%d>%d %s %s %s %s %s %s %s", msg[priority], msg[version], msg[timestamp], msg[hostname], msg[app], msg[pid], msg[msgId], msg[structuredData], msg[message])
 }

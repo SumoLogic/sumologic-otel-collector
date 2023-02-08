@@ -47,7 +47,7 @@ func protocolsValidator(ut ut.Translator, fe validator.FieldError) string {
 
 func format(fl validator.FieldLevel) bool {
 	format := fl.Field().String()
-	if format == formatRFC5424 || format == formatRFC3164 || format == formatAny {
+	if format == formatRFC5424Str || format == formatRFC3164Str {
 		return true
 	}
 	return false

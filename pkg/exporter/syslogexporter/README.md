@@ -63,6 +63,9 @@ receivers:
     start_at: beginning
     include:
     - /other/path/**/*.txt
+    operators:
+      - type: syslog_parser
+        protocol: rfc5424
 
 service:
   telemetry:
@@ -84,9 +87,7 @@ The following are a few configuration options available to forward syslog messag
 - `protocol` - tcp/udp
 - `port` - A syslog port
 - `format` - any/RFC5424/RFC3614
-  - `any` - forwards any syslog message
   - `RFC5424` - Checks whether a syslog messages is compliant with RFC 5424
   - `RFC3614` - Checks whether a syslog messages is compliant with RFC 3614
-- `drop_invalid_messages` - (true/false) Drop messages that do not comply with the above format
 - `additional_structured_data` - Additional [structured data](https://www.rfc-editor.org/rfc/rfc5424#page-15) to specify in the syslog message (Example: An authentication token)
 - `ca_certificate` - A publicly verifiable server certificate (`note`: Self signed certificates are not supported in this version)

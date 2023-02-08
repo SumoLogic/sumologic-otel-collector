@@ -43,11 +43,10 @@ func createDefaultConfig() component.Config {
 	qs.Enabled = false
 
 	return &Config{
-		Endpoint:       DefaultEndpoint,
-		Port:           DefaultPort,
-		Format:         DefaultFormat,
-		Protocol:       DefaultProtocol,
-		DropInvalidMsg: DropInvalidMessagesDefault,
+		Endpoint: DefaultEndpoint,
+		Port:     DefaultPort,
+		Format:   DefaultFormat,
+		Protocol: DefaultProtocol,
 	}
 }
 

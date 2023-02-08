@@ -21,12 +21,11 @@ func TestCreateDefaultConfig(t *testing.T) {
 	qs.Enabled = false
 
 	assert.Equal(t, cfg, &Config{
-		Endpoint:                 "syslog-server.sumologic.net",
+		Endpoint:                 "",
 		Port:                     514,
 		Protocol:                 "tcp",
 		CACertificate:            "",
 		Format:                   "any",
-		DropInvalidMsg:           false,
 		AdditionalStructuredData: []string(nil),
 		QueueSettings: exporterhelper.QueueSettings{
 			Enabled:      false,

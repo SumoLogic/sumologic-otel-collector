@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -110,8 +111,16 @@ func newLogsExporter(
 	)
 }
 
-func (se *syslogexporter) logToText(record plog.LogRecord) string {
-	return record.Body().AsString()
+func (se *syslogexporter) logToJson(record plog.LogRecord) map[string]any {
+	attributes := record.Attributes().AsRaw()
+	se.logger.Info(fmt.Sprint(attributes))
+	return attributes
+}
+
+func (se *syslogexporter) getTimestamp(record plog.LogRecord) string {
+	timestamp := record.Timestamp().String()
+	se.logger.Info(timestamp)
+	return timestamp
 }
 
 func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
@@ -122,7 +131,6 @@ func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error 
 		return fmt.Errorf("error connecting to syslog server: %s", err)
 	}
 	defer s.Close()
-
 	rls := ld.ResourceLogs()
 	for i := 0; i < rls.Len(); i++ {
 		rl := rls.At(i)
@@ -131,7 +139,13 @@ func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error 
 			slg := slgs.At(i)
 			for j := 0; j < slg.LogRecords().Len(); j++ {
 				lr := slg.LogRecords().At(j)
-				formattedLine := se.logToText(lr)
+				formattedLine := se.logToJson(lr)
+				formattedLine["timestamp"] = se.getTimestamp(lr)
+				jsonStr, err := json.Marshal(formattedLine)
+				if err != nil {
+					return err
+				}
+				se.logger.Info(string(jsonStr[:]))
 				err = s.Write(formattedLine)
 				if err != nil {
 					//TODO: add handling of failures as it is in sumologic exporter
