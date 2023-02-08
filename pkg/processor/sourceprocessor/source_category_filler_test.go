@@ -19,13 +19,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.uber.org/zap"
 )
 
 func TestNewSourceCategoryFiller(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.SourceCategory = "qwerty-%{k8s.namespace.name}-%{k8s.pod.uid}"
 
-	filler := newSourceCategoryFiller(cfg)
+	filler := newSourceCategoryFiller(cfg, zap.NewNop())
 
 	assert.Len(t, filler.templateAttributes, 2)
 	assert.Equal(t, "k8s.namespace.name", filler.templateAttributes[0])
@@ -40,7 +41,7 @@ func TestFill(t *testing.T) {
 	attrs.PutStr("k8s.namespace.name", "ns-1")
 	attrs.PutStr("k8s.pod.uid", "123asd")
 
-	filler := newSourceCategoryFiller(cfg)
+	filler := newSourceCategoryFiller(cfg, zap.NewNop())
 	filler.fill(&attrs)
 
 	assertAttribute(t, attrs, "_sourceCategory", "kubernetes/source/ns/1/123asd/cat")
@@ -56,7 +57,7 @@ func TestFillWithAnnotations(t *testing.T) {
 	attrs.PutStr("k8s.pod.annotation.sumologic.com/sourceCategoryPrefix", "annoPrefix:")
 	attrs.PutStr("k8s.pod.annotation.sumologic.com/sourceCategoryReplaceDash", "#")
 
-	filler := newSourceCategoryFiller(cfg)
+	filler := newSourceCategoryFiller(cfg, zap.NewNop())
 	filler.fill(&attrs)
 
 	assertAttribute(t, attrs, "_sourceCategory", "annoPrefix:sc#from#annot#ns#1#123asd")
@@ -72,7 +73,7 @@ func TestFillWithContainerAnnotations(t *testing.T) {
 		attrs.PutStr("k8s.pod.annotation.sumologic.com/container-name-2.sourceCategory", "another/source-category")
 		attrs.PutStr("k8s.container.name", "container-name-1")
 
-		filler := newSourceCategoryFiller(cfg)
+		filler := newSourceCategoryFiller(cfg, zap.NewNop())
 		filler.fill(&attrs)
 
 		assertAttribute(t, attrs, "_sourceCategory", "kubernetes/my/source/category")
@@ -88,7 +89,7 @@ func TestFillWithContainerAnnotations(t *testing.T) {
 		attrs.PutStr("k8s.pod.annotation.sumologic.com/container-name-2.sourceCategory", "another/source-category")
 		attrs.PutStr("k8s.container.name", "container-name-1")
 
-		filler := newSourceCategoryFiller(cfg)
+		filler := newSourceCategoryFiller(cfg, zap.NewNop())
 		filler.fill(&attrs)
 
 		assertAttribute(t, attrs, "_sourceCategory", "first_source-category")
@@ -104,7 +105,7 @@ func TestFillWithContainerAnnotations(t *testing.T) {
 		attrs.PutStr("k8s.pod.annotation.sumologic.com/container-name-2.sourceCategory", "another/source-category")
 		attrs.PutStr("k8s.container.name", "container-name-2")
 
-		filler := newSourceCategoryFiller(cfg)
+		filler := newSourceCategoryFiller(cfg, zap.NewNop())
 		filler.fill(&attrs)
 
 		assertAttribute(t, attrs, "_sourceCategory", "another/source-category")
@@ -125,7 +126,7 @@ func TestFillWithContainerAnnotations(t *testing.T) {
 		attrs.PutStr("k8s.pod.annotation.customAnno_prefix:container-name-3.sourceCategory", "THIRD_s-c!")
 		attrs.PutStr("k8s.container.name", "container-name-3")
 
-		filler := newSourceCategoryFiller(cfg)
+		filler := newSourceCategoryFiller(cfg, zap.NewNop())
 		filler.fill(&attrs)
 
 		assertAttribute(t, attrs, "_sourceCategory", "THIRD_s-c!")

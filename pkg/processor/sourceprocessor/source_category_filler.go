@@ -19,10 +19,12 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.uber.org/zap"
 )
 
 // sourceCategoryFiller adds source category attribute to a collection of attributes.
 type sourceCategoryFiller struct {
+	logger                       *zap.Logger
 	valueTemplate                string
 	templateAttributes           []string
 	prefix                       string
@@ -33,12 +35,13 @@ type sourceCategoryFiller struct {
 }
 
 // newSourceCategoryFiller creates a new sourceCategoryFiller.
-func newSourceCategoryFiller(cfg *Config) sourceCategoryFiller {
+func newSourceCategoryFiller(cfg *Config, logger *zap.Logger) sourceCategoryFiller {
 
 	valueTemplate := cfg.SourceCategory
 	templateAttributes := extractTemplateAttributes(valueTemplate)
 
 	return sourceCategoryFiller{
+		logger:                       logger,
 		valueTemplate:                valueTemplate,
 		templateAttributes:           templateAttributes,
 		prefix:                       cfg.SourceCategoryPrefix,
@@ -103,6 +106,7 @@ func (f *sourceCategoryFiller) getSourceCategoryFromContainerAnnotation(attribut
 
 	containerName, found := attributes.Get("k8s.container.name")
 	if !found || containerName.Str() == "" {
+		f.logger.Debug("Couldn't fill source category from container annotation: k8s.container.name attribute not found.")
 		return ""
 	}
 
@@ -110,9 +114,15 @@ func (f *sourceCategoryFiller) getSourceCategoryFromContainerAnnotation(attribut
 		annotationKey := fmt.Sprintf("%s%s.sourceCategory", containerAnnotationPrefix, containerName.Str())
 		annotationValue := getAnnotationAttributeValue(f.annotationPrefix, annotationKey, attributes)
 		if annotationValue != "" {
+			f.logger.Debug("Filled source category from container annotation",
+				zap.String("annotation", annotationKey),
+				zap.String("source_category", annotationValue),
+				zap.String("container", containerName.Str()))
 			return annotationValue
 		}
 	}
+
+	f.logger.Debug("Couldn't fill source category from container annotation: no matching annotation found for container.", zap.String("container", containerName.Str()))
 	return ""
 }
 

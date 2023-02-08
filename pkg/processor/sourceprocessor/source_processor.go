@@ -26,6 +26,8 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/ptrace"
+	"go.opentelemetry.io/collector/processor"
+	"go.uber.org/zap"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/sourceprocessor/observability"
 )
@@ -45,6 +47,7 @@ type dockerLog struct {
 }
 
 type sourceProcessor struct {
+	logger               *zap.Logger
 	collector            string
 	sourceCategoryFiller sourceCategoryFiller
 	sourceNameFiller     attributeFiller
@@ -85,7 +88,7 @@ func compileRegex(regex string) *regexp.Regexp {
 	return re
 }
 
-func newSourceProcessor(cfg *Config) *sourceProcessor {
+func newSourceProcessor(set processor.CreateSettings, cfg *Config) *sourceProcessor {
 	keys := sourceKeys{
 		annotationPrefix:   cfg.AnnotationPrefix,
 		podKey:             cfg.PodKey,
@@ -101,10 +104,11 @@ func newSourceProcessor(cfg *Config) *sourceProcessor {
 	}
 
 	return &sourceProcessor{
+		logger:               set.Logger,
 		collector:            cfg.Collector,
 		keys:                 keys,
 		sourceHostFiller:     createSourceHostFiller(cfg),
-		sourceCategoryFiller: newSourceCategoryFiller(cfg),
+		sourceCategoryFiller: newSourceCategoryFiller(cfg, set.Logger),
 		sourceNameFiller:     createSourceNameFiller(cfg),
 		exclude:              exclude,
 	}

@@ -16,15 +16,34 @@ This release introduces the following breaking changes:
   and `SUMOLOGIC_INSTALL_TOKEN` environmental variable in favor of `SUMOLOGIC_INSTALLATION_TOKEN`.
   Please update your configuration and automation scripts.
 
+### Added
+
+- feat(sourceprocessor): add debug logs for source category filler [#944]
+- feat(snmpreceiver): add SNMP receiver to distro [#945]
+
 ### Fixed
 
 - fix(k8sprocessor): race condition when getting Pod data [#938]
 
 [#918]: https://github.com/SumoLogic/sumologic-otel-collector/pull/918
 [#938]: https://github.com/SumoLogic/sumologic-otel-collector/pull/938
+[#944]: https://github.com/SumoLogic/sumologic-otel-collector/pull/944
+[#945]: https://github.com/SumoLogic/sumologic-otel-collector/pull/945
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.70.0-sumo-0...main
 
+## [v0.70.0-sumo-2]
+
+### Fixed
+
+- fix release binary versions [#943]
+
+[v0.70.0-sumo-2]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.70.0-sumo-1...v0.70.0-sumo-2
+[#943]: https://github.com/SumoLogic/sumologic-otel-collector/pull/943
+
 ## [v0.70.0-sumo-1]
+
+> **Warning**
+> This release had incorrect version strings set in binaries. The problem is fixed in [v0.70.0-sumo-2].
 
 ### Added
 
