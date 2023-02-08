@@ -110,7 +110,7 @@ func newLogsExporter(
 	)
 }
 
-func (se *syslogexporter) logToJson(record plog.LogRecord) map[string]any {
+func (se *syslogexporter) logsToMap(record plog.LogRecord) map[string]any {
 	attributes := record.Attributes().AsRaw()
 	return attributes
 }
@@ -136,7 +136,7 @@ func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error 
 			slg := slgs.At(i)
 			for j := 0; j < slg.LogRecords().Len(); j++ {
 				lr := slg.LogRecords().At(j)
-				formattedLine := se.logToJson(lr)
+				formattedLine := se.logsToMap(lr)
 				formattedLine["timestamp"] = se.getTimestamp(lr)
 				jsonStr, err := json.Marshal(formattedLine)
 				if err != nil {
