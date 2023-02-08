@@ -64,7 +64,8 @@ func TestLoadConfig(t *testing.T) {
 		PodTemplateHashKey: "pod_labels_pod-template-hash",
 
 		ContainerAnnotations: ContainerAnnotationsConfig{
-			Enabled: false,
+			Enabled:          false,
+			ContainerNameKey: "k8s.container.name",
 			Prefixes: []string{
 				"sumologic.com/",
 			},

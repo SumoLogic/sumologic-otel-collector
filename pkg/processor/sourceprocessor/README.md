@@ -66,6 +66,9 @@ processors:
       # Specifies whether container-level annotations are enabled.
       # default: false
       enabled: {true, false}
+      # Name of the attribute that contains the container name.
+      # default: "k8s.container.name"
+      container_name_key: <container_name_key>
       # List of prefixes for container-level pod annotations.
       # default: ["sumologic.com/"]
       prefixes:

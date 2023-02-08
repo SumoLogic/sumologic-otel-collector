@@ -31,6 +31,7 @@ type sourceCategoryFiller struct {
 	dashReplacement              string
 	annotationPrefix             string
 	containerAnnotationsEnabled  bool
+	containerNameKey             string
 	containerAnnotationsPrefixes []string
 }
 
@@ -48,6 +49,7 @@ func newSourceCategoryFiller(cfg *Config, logger *zap.Logger) sourceCategoryFill
 		dashReplacement:              cfg.SourceCategoryReplaceDash,
 		annotationPrefix:             cfg.AnnotationPrefix,
 		containerAnnotationsEnabled:  cfg.ContainerAnnotations.Enabled,
+		containerNameKey:             cfg.ContainerAnnotations.ContainerNameKey,
 		containerAnnotationsPrefixes: cfg.ContainerAnnotations.Prefixes,
 	}
 }
@@ -104,9 +106,10 @@ func (f *sourceCategoryFiller) getSourceCategoryFromContainerAnnotation(attribut
 		return ""
 	}
 
-	containerName, found := attributes.Get("k8s.container.name")
+	containerName, found := attributes.Get(f.containerNameKey)
 	if !found || containerName.Str() == "" {
-		f.logger.Debug("Couldn't fill source category from container annotation: k8s.container.name attribute not found.")
+		f.logger.Debug("Couldn't fill source category from container annotation: container name attribute not found.",
+			zap.String("container_name_key", f.containerNameKey))
 		return ""
 	}
 
