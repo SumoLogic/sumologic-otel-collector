@@ -9,6 +9,7 @@ readonly CURL_MAX_TIME=180
 
 ARG_SHORT_TOKEN='i'
 ARG_LONG_TOKEN='installation-token'
+DEPRECATED_ARG_LONG_TOKEN='installation-token'
 ARG_SHORT_HELP='h'
 ARG_LONG_HELP='help'
 ARG_SHORT_API='a'
@@ -31,6 +32,7 @@ ARG_SHORT_PURGE='p'
 ARG_LONG_PURGE='purge'
 ARG_SHORT_SKIP_TOKEN='k'
 ARG_LONG_SKIP_TOKEN='skip-installation-token'
+DEPRECATED_ARG_LONG_SKIP_TOKEN='skip-install-token'
 ARG_SHORT_DOWNLOAD='w'
 ARG_LONG_DOWNLOAD='download-only'
 ARG_SHORT_CONFIG_BRANCH='c'
@@ -38,6 +40,7 @@ ARG_LONG_CONFIG_BRANCH='config-branch'
 ARG_SHORT_BINARY_BRANCH='e'
 ARG_LONG_BINARY_BRANCH='binary-branch'
 ENV_TOKEN="SUMOLOGIC_INSTALLATION_TOKEN"
+DEPRECATED_ENV_TOKEN="SUMOLOGIC_INSTALL_TOKEN"
 ARG_SHORT_BRANCH='b'
 ARG_LONG_BRANCH='branch'
 ARG_SHORT_KEEP_DOWNLOADS='n'
@@ -53,13 +56,17 @@ readonly ARG_SHORT_CONFIG_BRANCH ARG_LONG_CONFIG_BRANCH ARG_SHORT_BINARY_BRANCH 
 readonly ARG_SHORT_BRANCH ARG_LONG_BRANCH ARG_SHORT_SKIP_CONFIG ARG_LONG_SKIP_CONFIG
 readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ARG_SHORT_FIPS ARG_LONG_FIPS ENV_TOKEN
 readonly ARG_SHORT_INSTALL_HOSTMETRICS ARG_LONG_INSTALL_HOSTMETRICS
+readonly DEPRECATED_ARG_LONG_TOKEN DEPRECATED_ENV_TOKEN DEPRECATED_ARG_LONG_SKIP_TOKEN
 
 ############################ Variables (see set_defaults function for default values)
 
 # Support providing install_token as env
 set +u
-if [[ -z "${SUMOLOGIC_INSTALLATION_TOKEN}" ]]; then
+if [[ -z "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
     SUMOLOGIC_INSTALLATION_TOKEN=""
+elif [[ -z "${SUMOLOGIC_INSTALLATION_TOKEN}" ]]; then
+    echo "${DEPRECATED_ENV_TOKEN} environmental variable is deprecated. Please use ${ENV_TOKEN} instead."
+    SUMOLOGIC_INSTALLATION_TOKEN="${SUMOLOGIC_INSTALL_TOKEN}"
 fi
 set -u
 
@@ -173,6 +180,10 @@ function parse_options() {
       "--${ARG_LONG_TOKEN}")
         set -- "$@" "-${ARG_SHORT_TOKEN}"
         ;;
+      "--${DEPRECATED_ARG_LONG_TOKEN}")
+        echo "--${DEPRECATED_ARG_LONG_TOKEN}" is deprecated. Please use "--${ARG_LONG_TOKEN}" instead.
+        set -- "$@" "-${ARG_SHORT_TOKEN}"
+        ;;
       "--${ARG_LONG_API}")
         set -- "$@" "-${ARG_SHORT_API}"
         ;;
@@ -201,6 +212,10 @@ function parse_options() {
         set -- "$@" "-${ARG_SHORT_PURGE}"
         ;;
       "--${ARG_LONG_SKIP_TOKEN}")
+        set -- "$@" "-${ARG_SHORT_SKIP_TOKEN}"
+        ;;
+      "--${DEPRECATED_ARG_LONG_SKIP_TOKEN}")
+        echo "--${DEPRECATED_ARG_LONG_SKIP_TOKEN}" is deprecated. Please use "--${ARG_SHORT_SKIP_TOKEN}" instead.
         set -- "$@" "-${ARG_SHORT_SKIP_TOKEN}"
         ;;
       "--${ARG_LONG_DOWNLOAD}")

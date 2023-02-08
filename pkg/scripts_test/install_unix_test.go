@@ -78,6 +78,25 @@ func TestInstallScript(t *testing.T) {
 			},
 		},
 		{
+			name: "deprecated installation token only",
+			options: installOptions{
+				skipSystemd:            true,
+				deprecatedInstallToken: installToken,
+			},
+			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkConfigFilesOwnershipAndPermissions("root", getRootGroupName()),
+				checkUserConfigCreated,
+				checkDeprecatedTokenInConfig,
+				checkSystemdConfigNotCreated,
+				checkUserNotExists,
+				checkHostmetricsConfigNotCreated,
+			},
+		},
+		{
 			name: "installation token and hostmetrics",
 			options: installOptions{
 				skipSystemd:        true,

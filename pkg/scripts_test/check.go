@@ -31,6 +31,10 @@ func checkSystemdAvailability(c check) bool {
 	return assert.DirExists(&testing.T{}, systemdDirectoryPath, "systemd is not supported")
 }
 
+func checkACLAvailability(c check) bool {
+	return assert.FileExists(&testing.T{}, "/usr/bin/getfacl", "File ACLS is not supported")
+}
+
 type checkFunc func(check)
 
 func checkBinaryCreated(c check) {
@@ -102,7 +106,17 @@ func checkConfigOverrided(c check) {
 	conf, err := getConfig(configPath)
 	require.NoError(c.test, err)
 
-	require.Equal(c.test, "${SUMOLOGIC_INSTALLATION_TOKEN}", conf.Extensions.Sumologic.InstallToken)
+	require.Condition(c.test, func() (success bool) {
+		switch conf.Extensions.Sumologic.InstallToken {
+		case "${SUMOLOGIC_INSTALLATION_TOKEN}":
+			return true
+		// ToDo: Remove after new release
+		case "${SUMOLOGIC_INSTALL_TOKEN}":
+			return true
+		default:
+			return false
+		}
+	}, "invalid value for install token")
 }
 
 func checkUserConfigCreated(c check) {
@@ -134,6 +148,15 @@ func checkTokenInConfig(c check) {
 	require.NoError(c.test, err, "error while reading configuration")
 
 	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
+}
+
+func checkDeprecatedTokenInConfig(c check) {
+	require.NotEmpty(c.test, c.installOptions.deprecatedInstallToken, "installation token has not been provided")
+
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	require.Equal(c.test, c.installOptions.deprecatedInstallToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
 }
 
 func checkDifferentTokenInConfig(c check) {
@@ -347,6 +370,10 @@ func checkUserNotExists(c check) {
 }
 
 func checkVarLogACL(c check) {
+	if !checkACLAvailability(c) {
+		return
+	}
+
 	PathHasUserACL(c.test, "/var/log", systemUser, "r-x")
 }
 
