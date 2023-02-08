@@ -1,20 +1,20 @@
 package syslogexporter
 
 import (
-	"strconv"
-
 	ut "github.com/go-playground/universal-translator"
 	"gopkg.in/go-playground/validator.v9"
 )
 
 func numericPort(fl validator.FieldLevel) bool {
-	port := fl.Field().String()
-	_, err := strconv.Atoi(port)
-	return err != nil
+	port := fl.Field().Int()
+	if port >= 1 && port <= 65525 {
+		return true
+	}
+	return false
 }
 
 func numericPortTranslator(ut ut.Translator) error {
-	return ut.Add("numeric_port", "Invalid port, {0} must be a number", true) // see universal-translator for details
+	return ut.Add("numeric_port", "Unsupported port used, {0} must be between 1 - 65535)", true) // see universal-translator for details
 }
 
 func numericPortValidator(ut ut.Translator, fe validator.FieldError) string {
@@ -54,7 +54,7 @@ func format(fl validator.FieldLevel) bool {
 }
 
 func formatTranslator(ut ut.Translator) error {
-	return ut.Add("format", "Invalid format, {0} must be any/rfc5424/rfc3164", true) // see universal-translator for details
+	return ut.Add("format", "Invalid format, {0} must be rfc5424/rfc3164", true) // see universal-translator for details
 }
 
 func formatValidator(ut ut.Translator, fe validator.FieldError) string {
