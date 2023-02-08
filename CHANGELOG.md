@@ -12,8 +12,8 @@ This release introduces the following breaking changes:
 - feat(sumologicextension): use hostname as default collector name [#918]
 - feat(script)!: be consistent with installation token naming [#941]
 
-  We renamed `--skip-install-token` to `--skip-installation-token`
-  and `SUMOLOGIC_INSTALL_TOKEN` environmental variable to `SUMOLOGIC_INSTALLATION_TOKEN`.
+  We depracated `--skip-install-token` in favor of `--skip-installation-token`
+  and `SUMOLOGIC_INSTALL_TOKEN` environmental variable in favor of `SUMOLOGIC_INSTALLATION_TOKEN`.
   Please update your configuration and automation scripts.
 
 ### Fixed
