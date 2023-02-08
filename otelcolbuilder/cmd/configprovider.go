@@ -37,10 +37,8 @@ import (
 
 func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
 	// feature flags, which are enabled by default in our distro
-	err := featuregate.GlobalRegistry().Apply(map[string]bool{
-		"receiver.elasticsearch.emitClusterHealthDetailedShardMetrics": true,
-		"receiver.elasticsearch.emitAllIndexOperationMetrics":          true,
-	})
+	// currently none, but keeping this here for convenience
+	err := featuregate.GlobalRegistry().Apply(map[string]bool{})
 
 	if err != nil {
 		return fmt.Errorf("setting feature gate flags failed: %s", err)
