@@ -2,7 +2,7 @@ ifeq ($(OS),Windows_NT)
 	OS=windows
 endif
 
-GOTEST=go test -count 1
+GOTEST=go test -count 1 -race
 LINT=golangci-lint
 
 .PHONY: test
