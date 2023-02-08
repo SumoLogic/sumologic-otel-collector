@@ -29,7 +29,7 @@ func TestNoAddStructuredData(t *testing.T) {
 	assert.Equal(t, expected, formatRFC5424(msg2))
 }
 
-func TestIsRFC5424(t *testing.T) {
+func TestRFC5424(t *testing.T) {
 	msg1 := map[string]any{"timestamp": "2003-10-11T22:14:15.003Z", "appname": "evntslog", "facility": 20,
 		"hostname": "mymachine.example.com", "log.file.name": "syslog", "message": "BOMAn application event log entry...",
 		"msg_id": "ID47", "priority": 165, "proc_id": "111", "version": 1}
