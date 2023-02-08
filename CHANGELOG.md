@@ -16,6 +16,7 @@ This release introduces the following breaking changes:
 - feat(sourceprocessor): add debug logs for source category filler [#944]
 - feat(snmpreceiver): add SNMP receiver to distro [#945]
 - feat(syslogexporter): add syslog exporter [#936]
+- feat(sourceprocessor): make container name attribute configurable [#950]
 
 ### Fixed
 
@@ -26,6 +27,7 @@ This release introduces the following breaking changes:
 [#944]: https://github.com/SumoLogic/sumologic-otel-collector/pull/944
 [#945]: https://github.com/SumoLogic/sumologic-otel-collector/pull/945
 [#936]: https://github.com/SumoLogic/sumologic-otel-collector/pull/936
+[#950]: https://github.com/SumoLogic/sumologic-otel-collector/pull/950
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.70.0-sumo-0...main
 
 ## [v0.70.0-sumo-2]

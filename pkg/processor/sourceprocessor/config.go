@@ -38,6 +38,7 @@ type Config struct {
 }
 
 type ContainerAnnotationsConfig struct {
-	Enabled  bool     `mapstructure:"enabled"`
-	Prefixes []string `mapstructure:"prefixes"`
+	Enabled          bool     `mapstructure:"enabled"`
+	ContainerNameKey string   `mapstructure:"container_name_key"`
+	Prefixes         []string `mapstructure:"prefixes"`
 }
