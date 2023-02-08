@@ -40,12 +40,12 @@ namespace SumoLogic.wixext
             }
 
             var commonConfigPath = session.CustomActionData[pCommonConfigPath];
-            var installToken = session.CustomActionData[pInstallationToken];
+            var installationToken = session.CustomActionData[pInstallationToken];
             var tags = session.CustomActionData[pTags];
 
             // Load config from disk and replace values
             Config config = new Config();
-            config.InstallationToken = installToken;
+            config.InstallationToken = installationToken;
             config.SetCollectorFieldsFromTags(tags);
 
             try

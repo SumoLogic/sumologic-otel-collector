@@ -27,7 +27,7 @@ namespace SumoLogicTests
 
             Assert.IsTrue(sumologic.Children.ContainsKey("install_token"));
             Assert.AreEqual(YamlNodeType.Scalar, sumologic.Children["install_token"].NodeType);
-            Assert.AreEqual(config.InstallToken, sumologic.Children["install_token"].ToString());
+            Assert.AreEqual(config.InstallationToken, sumologic.Children["install_token"].ToString());
 
             Assert.IsTrue(sumologic.Children.ContainsKey("collector_fields"));
             Assert.AreEqual(YamlNodeType.Mapping, sumologic.Children["collector_fields"].NodeType);
@@ -49,7 +49,7 @@ namespace SumoLogicTests
         {
             var filePath = Path.Combine(testDataPath, "with-extensions-block.yaml");
             var config = new Config();
-            config.InstallToken = "foobar";
+            config.InstallationToken = "foobar";
             config.SetCollectorFieldsFromTags(@"foo=bar,baz=kaz,xaz=yaz");
 
             using (MemoryStream ms = new MemoryStream())
@@ -77,7 +77,7 @@ namespace SumoLogicTests
         {
             var filePath = Path.Combine(testDataPath, "without-extensions-block.yaml");
             var config = new Config();
-            config.InstallToken = "foobar";
+            config.InstallationToken = "foobar";
             config.SetCollectorFieldsFromTags(@"foo=bar,baz=kaz,xaz=yaz");
 
             using (MemoryStream ms = new MemoryStream())
@@ -105,7 +105,7 @@ namespace SumoLogicTests
         {
             var filePath = Path.Combine(testDataPath, "no-indentation.yaml");
             var config = new Config();
-            config.InstallToken = "foobar";
+            config.InstallationToken = "foobar";
             config.SetCollectorFieldsFromTags(@"foo=bar,baz=kaz,xaz=yaz");
 
             using (MemoryStream ms = new MemoryStream())
@@ -134,7 +134,7 @@ namespace SumoLogicTests
         {
             var filePath = Path.Combine(testDataPath, "empty.yaml");
             var config = new Config();
-            config.InstallToken = "foobar";
+            config.InstallationToken = "foobar";
             config.SetCollectorFieldsFromTags(@"foo=bar,baz=kaz,xaz=yaz");
 
             using (MemoryStream ms = new MemoryStream())
@@ -149,7 +149,7 @@ namespace SumoLogicTests
         {
             var filePath = Path.Combine(testDataPath, "invalid.yaml");
             var config = new Config();
-            config.InstallToken = "foobar";
+            config.InstallationToken = "foobar";
             config.SetCollectorFieldsFromTags(@"foo=bar,baz=kaz,xaz=yaz");
 
             using (MemoryStream ms = new MemoryStream())
