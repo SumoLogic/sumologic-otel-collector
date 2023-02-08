@@ -20,9 +20,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/ptrace"
+	"go.opentelemetry.io/collector/processor"
+	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/ptracetest"
 )
@@ -176,7 +179,7 @@ func TestLogsSourceHostKey(t *testing.T) {
 
 		pLogs := newLogsDataWithLogs(resourceAttrs, logAttrs)
 
-		sp := newSourceProcessor(config)
+		sp := newSourceProcessor(newProcessorCreateSettings(), config)
 		out, err := sp.ProcessLogs(context.Background(), pLogs)
 		require.NoError(t, err)
 
@@ -208,7 +211,7 @@ func TestLogsSourceHostKey(t *testing.T) {
 
 		pLogs := newLogsDataWithLogs(resourceAttrs, logAttrs)
 
-		sp := newSourceProcessor(config)
+		sp := newSourceProcessor(newProcessorCreateSettings(), config)
 		out, err := sp.ProcessLogs(context.Background(), pLogs)
 		require.NoError(t, err)
 
@@ -229,7 +232,7 @@ func TestTraceSourceProcessor(t *testing.T) {
 	want := newTraceData(mergedK8sLabels)
 	test := newTraceData(k8sLabels)
 
-	rtp := newSourceProcessor(cfg)
+	rtp := newSourceProcessor(newProcessorCreateSettings(), cfg)
 
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
@@ -241,7 +244,7 @@ func TestTraceSourceProcessorEmpty(t *testing.T) {
 	want := newTraceData(limitedLabelsWithMeta)
 	test := newTraceData(limitedLabels)
 
-	rtp := newSourceProcessor(cfg)
+	rtp := newSourceProcessor(newProcessorCreateSettings(), cfg)
 
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
@@ -317,7 +320,7 @@ func TestTraceSourceFilteringOutByRegex(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			test := newTraceDataWithSpans(mergedK8sLabels, k8sLabels)
 
-			rtp := newSourceProcessor(tc.cfg)
+			rtp := newSourceProcessor(newProcessorCreateSettings(), tc.cfg)
 
 			td, err := rtp.ProcessTraces(context.Background(), test)
 			assert.NoError(t, err)
@@ -336,7 +339,7 @@ func TestTraceSourceFilteringOutByExclude(t *testing.T) {
 	want.ResourceSpans().At(0).ScopeSpans().
 		RemoveIf(func(ptrace.ScopeSpans) bool { return true })
 
-	rtp := newSourceProcessor(cfg)
+	rtp := newSourceProcessor(newProcessorCreateSettings(), cfg)
 
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
@@ -355,7 +358,7 @@ func TestTraceSourceIncludePrecedence(t *testing.T) {
 	cfg1.Exclude = map[string]string{
 		"pod": ".*",
 	}
-	rtp := newSourceProcessor(cfg)
+	rtp := newSourceProcessor(newProcessorCreateSettings(), cfg)
 
 	td, err := rtp.ProcessTraces(context.Background(), test)
 	assert.NoError(t, err)
@@ -368,7 +371,7 @@ func TestSourceHostAnnotation(t *testing.T) {
 	inputAttributes["pod_annotation_sumologic.com/sourceHost"] = "sh:%{k8s.pod.uid}"
 	inputTraces := newTraceData(inputAttributes)
 
-	processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+	processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), cfg).ProcessTraces(context.Background(), inputTraces)
 	assert.NoError(t, err)
 
 	processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
@@ -380,7 +383,7 @@ func TestSourceNameAnnotation(t *testing.T) {
 	inputAttributes["pod_annotation_sumologic.com/sourceName"] = "sn:%{k8s.pod.name}"
 	inputTraces := newTraceData(inputAttributes)
 
-	processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+	processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), cfg).ProcessTraces(context.Background(), inputTraces)
 	assert.NoError(t, err)
 
 	processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
@@ -393,7 +396,7 @@ func TestSourceCategoryAnnotations(t *testing.T) {
 		inputAttributes["pod_annotation_sumologic.com/sourceCategory"] = "sc-%{k8s.namespace.name}"
 		inputTraces := newTraceData(inputAttributes)
 
-		processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+		processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), cfg).ProcessTraces(context.Background(), inputTraces)
 		assert.NoError(t, err)
 
 		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
@@ -405,7 +408,7 @@ func TestSourceCategoryAnnotations(t *testing.T) {
 		inputAttributes["pod_annotation_sumologic.com/sourceCategoryPrefix"] = "annot>"
 		inputTraces := newTraceData(inputAttributes)
 
-		processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+		processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), cfg).ProcessTraces(context.Background(), inputTraces)
 		assert.NoError(t, err)
 
 		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
@@ -417,7 +420,7 @@ func TestSourceCategoryAnnotations(t *testing.T) {
 		inputAttributes["pod_annotation_sumologic.com/sourceCategoryReplaceDash"] = "^"
 		inputTraces := newTraceData(inputAttributes)
 
-		processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+		processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), cfg).ProcessTraces(context.Background(), inputTraces)
 		assert.NoError(t, err)
 
 		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
@@ -431,7 +434,7 @@ func TestSourceCategoryAnnotations(t *testing.T) {
 		inputAttributes["pod_annotation_sumologic.com/sourceCategoryReplaceDash"] = "^"
 		inputTraces := newTraceData(inputAttributes)
 
-		processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+		processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), cfg).ProcessTraces(context.Background(), inputTraces)
 		assert.NoError(t, err)
 
 		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
@@ -444,7 +447,7 @@ func TestSourceCategoryAnnotations(t *testing.T) {
 		inputTraces := newTraceData(inputAttributes)
 
 		cfg.ContainerAnnotations.Enabled = true
-		processedTraces, err := newSourceProcessor(cfg).ProcessTraces(context.Background(), inputTraces)
+		processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), cfg).ProcessTraces(context.Background(), inputTraces)
 		assert.NoError(t, err)
 
 		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
@@ -461,7 +464,7 @@ func TestSourceCategoryTemplateWithCustomAttribute(t *testing.T) {
 		config := createDefaultConfig().(*Config)
 		config.SourceCategory = "abc/%{someattr}/123"
 
-		processedTraces, err := newSourceProcessor(config).ProcessTraces(context.Background(), traces)
+		processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), config).ProcessTraces(context.Background(), traces)
 		assert.NoError(t, err)
 
 		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
@@ -476,7 +479,7 @@ func TestSourceCategoryTemplateWithCustomAttribute(t *testing.T) {
 		config := createDefaultConfig().(*Config)
 		config.SourceCategory = "abc/%{some.attr}/123"
 
-		processedTraces, err := newSourceProcessor(config).ProcessTraces(context.Background(), traces)
+		processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), config).ProcessTraces(context.Background(), traces)
 		assert.NoError(t, err)
 
 		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
@@ -490,7 +493,7 @@ func TestSourceCategoryTemplateWithCustomAttribute(t *testing.T) {
 		config := createDefaultConfig().(*Config)
 		config.SourceCategory = "abc/%{nonexistent.attr}/123"
 
-		processedTraces, err := newSourceProcessor(config).ProcessTraces(context.Background(), traces)
+		processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), config).ProcessTraces(context.Background(), traces)
 		assert.NoError(t, err)
 
 		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
@@ -505,7 +508,7 @@ func TestSourceCategoryTemplateWithCustomAttribute(t *testing.T) {
 		config.SourceCategory = "abc/%{_collector}/123"
 		config.Collector = "my-collector"
 
-		processedTraces, err := newSourceProcessor(config).ProcessTraces(context.Background(), traces)
+		processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), config).ProcessTraces(context.Background(), traces)
 		assert.NoError(t, err)
 
 		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
@@ -590,7 +593,7 @@ func TestLogProcessorJson(t *testing.T) {
 				Body().
 				SetStr(tc.body)
 
-			rtp := newSourceProcessor(cfg)
+			rtp := newSourceProcessor(newProcessorCreateSettings(), cfg)
 
 			td, err := rtp.ProcessLogs(context.Background(), inputLog)
 			assert.NoError(t, err)
@@ -613,5 +616,13 @@ func TestLogProcessorJson(t *testing.T) {
 				assert.Equal(t, value, attr.AsString())
 			}
 		})
+	}
+}
+
+func newProcessorCreateSettings() processor.CreateSettings {
+	return processor.CreateSettings{
+		TelemetrySettings: component.TelemetrySettings{
+			Logger: zap.NewNop(),
+		},
 	}
 }
