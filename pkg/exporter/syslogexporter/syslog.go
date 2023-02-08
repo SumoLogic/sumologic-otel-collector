@@ -145,7 +145,7 @@ func (s *Syslog) formatMsg(msg map[string]any) string {
 	}
 }
 
-func (s Syslog) addStructuredData(msg map[string]any) {
+func (s *Syslog) addStructuredData(msg map[string]any) {
 	if s.format != formatRFC5424Str {
 		return
 	}
@@ -197,13 +197,13 @@ func populateDefaults(msg map[string]any, msgProperties []string) {
 	}
 }
 
-func (s Syslog) formatRFC3164(msg map[string]any) string {
+func (s *Syslog) formatRFC3164(msg map[string]any) string {
 	msgProperties := []string{priority, hostname, message}
 	populateDefaults(msg, msgProperties)
 	return fmt.Sprintf("<%d>%s %s %s", msg[priority], msg[timestamp], msg[hostname], msg[message])
 }
 
-func (s Syslog) formatRFC5424(msg map[string]any) string {
+func (s *Syslog) formatRFC5424(msg map[string]any) string {
 	msgProperties := []string{priority, version, hostname, app, pid, msgId, message, structuredData}
 	populateDefaults(msg, msgProperties)
 	s.addStructuredData(msg)

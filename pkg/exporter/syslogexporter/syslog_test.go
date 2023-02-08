@@ -48,7 +48,8 @@ func TestFormatRFC5424(t *testing.T) {
 		},
 	}
 
-	expectedForm := "\\<165\\>1 2003-08-24T05:14:15\\.000003-07:00 192\\.0\\.2\\.1 myproc 8710 - \\[9HFxoa6\\+lXBmvSM9koPjGzvTaxXDQvJ4POE/WCURPAo\\+w4H7PmZm8H3mSEKxPl0Q@41123 \\S+ \\S+ \\S+ \\S+ \\S+\\] It's time to make the do-nuts\\."
+	expectedForm := "\\<165\\>1 2003-08-24T05:14:15\\.000003-07:00 192\\.0\\.2\\.1 myproc 8710 - " +
+		"\\[9HFxoa6\\+lXBmvSM9koPjGzvTaxXDQvJ4POE/WCURPAo\\+w4H7PmZm8H3mSEKxPl0Q@41123 \\S+ \\S+ \\S+ \\S+ \\S+\\] It's time to make the do-nuts\\."
 	formattedMsg := s3.formatRFC5424(msg3)
 	matched, err := regexp.MatchString(expectedForm, formattedMsg)
 	assert.Nil(t, err)
