@@ -305,6 +305,36 @@ func TestInstallScript(t *testing.T) {
 			installCode:       3, // because of invalid install token
 		},
 		{
+			name: "installation token with existing user directory",
+			options: installOptions{
+				installToken: installToken,
+			},
+			preActions: []checkFunc{preActionCreateHomeDirectory},
+			preChecks: []checkFunc{
+				checkBinaryNotCreated,
+				checkConfigNotCreated,
+				checkUserConfigNotCreated,
+				checkUserNotExists,
+				checkHomeDirectoryCreated,
+			},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkConfigFilesOwnershipAndPermissions(systemUser, systemUser),
+				checkUserConfigCreated,
+				checkTokenInConfig,
+				checkSystemdConfigCreated,
+				checkSystemdEnvDirExists,
+				checkSystemdEnvDirPermissions,
+				checkUserExists,
+				checkVarLogACL,
+				checkOutputUserAddWarnings,
+			},
+			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
+			installCode: 3, // because of invalid install token
+		},
+		{
 			name: "uninstallation without autoconfirm fails",
 			options: installOptions{
 				uninstall: true,

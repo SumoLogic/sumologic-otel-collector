@@ -1240,7 +1240,15 @@ echo 'Creating user and group'
 if getent passwd "${SYSTEM_USER}" > /dev/null; then
     echo 'User and group already created'
 else
-    useradd -mrUs /bin/false -d "${HOME_DIRECTORY}" "${SYSTEM_USER}"
+    ADDITIONAL_OPTIONS=""
+    if [[ -d "${HOME_DIRECTORY}" ]]; then
+        # do not create home directory as it already exists
+        ADDITIONAL_OPTIONS="-M"
+    else
+        # create home directory
+        ADDITIONAL_OPTIONS="-m"
+    fi
+    useradd "${ADDITIONAL_OPTIONS}" -rUs /bin/false -d "${HOME_DIRECTORY}" "${SYSTEM_USER}"
 fi
 
 echo 'Creating ACL grants on log paths'

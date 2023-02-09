@@ -121,7 +121,7 @@ func exitCode(cmd *exec.Cmd) (int, error) {
 	return 0, fmt.Errorf("cannot obtain exit code: %v", err)
 }
 
-func runScript(ch check) (int, []string, error) {
+func runScript(ch check) (int, []string, []string, error) {
 	cmd := exec.Command("bash", ch.installOptions.string()...)
 	cmd.Env = ch.installOptions.buildEnvs()
 	output := []string{}
@@ -137,8 +137,13 @@ func runScript(ch check) (int, []string, error) {
 	if err != nil {
 		require.NoError(ch.test, err)
 	}
-
 	defer out.Close()
+
+	errOut, err := cmd.StderrPipe()
+	if err != nil {
+		require.NoError(ch.test, err)
+	}
+	defer errOut.Close()
 
 	// We want to read line by line
 	bufOut := bufio.NewReader(out)
@@ -172,6 +177,23 @@ func runScript(ch check) (int, []string, error) {
 
 	}
 
+	// Handle stderr separately
+	bufErrOut := bufio.NewReader(errOut)
+	errorOutput := []string{}
+	for {
+		line, _, err := bufErrOut.ReadLine()
+		strLine := strings.TrimSpace(string(line))
+
+		if len(strLine) > 0 {
+			errorOutput = append(errorOutput, strLine)
+		}
+
+		// exit if script finished
+		if err == io.EOF {
+			break
+		}
+	}
+
 	code, err := exitCode(cmd)
-	return code, output, err
+	return code, output, errorOutput, err
 }
