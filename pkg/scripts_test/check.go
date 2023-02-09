@@ -9,6 +9,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 	"testing"
 
@@ -23,6 +24,7 @@ type check struct {
 	err                 error
 	expectedInstallCode int
 	output              []string
+	errorOutput         []string
 }
 
 type condCheckFunc func(check) bool
@@ -111,6 +113,10 @@ func checkUserConfigCreated(c check) {
 
 func checkUserConfigNotCreated(c check) {
 	require.NoFileExists(c.test, userConfigPath, "user configuration has been created")
+}
+
+func checkHomeDirectoryCreated(c check) {
+	require.DirExists(c.test, libPath, "home directory has not been created properly")
 }
 
 func checkNoBakFilesPresent(c check) {
@@ -234,6 +240,11 @@ func preActionMockSystemdStructure(c check) {
 	require.NoError(c.test, err)
 }
 
+func preActionCreateHomeDirectory(c check) {
+	err := os.MkdirAll(libPath, fs.FileMode(etcPathPermissions))
+	require.NoError(c.test, err)
+}
+
 func preActionWriteTokenToUserConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err)
@@ -261,6 +272,14 @@ func checkAbortedDueToNoToken(c check) {
 	require.Greater(c.test, len(c.output), 1)
 	require.Contains(c.test, c.output[len(c.output)-2], "Install token has not been provided. Please set the 'SUMOLOGIC_INSTALL_TOKEN' environment variable.")
 	require.Contains(c.test, c.output[len(c.output)-1], "You can ignore this requirement by adding '--skip-install-token argument.")
+}
+
+func checkOutputUserAddWarnings(c check) {
+	output := strings.Join(c.output, "\n")
+	require.NotContains(c.test, output, "useradd", "unexpected useradd output")
+
+	errOutput := strings.Join(c.errorOutput, "\n")
+	require.NotContains(c.test, errOutput, "useradd", "unexpected useradd output")
 }
 
 func preActionWriteAPIBaseURLToUserConfig(c check) {
