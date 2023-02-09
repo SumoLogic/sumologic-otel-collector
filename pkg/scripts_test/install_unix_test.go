@@ -332,7 +332,7 @@ func TestInstallScript(t *testing.T) {
 				checkOutputUserAddWarnings,
 			},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
-			installCode: 3, // because of invalid install token
+			installCode:       3, // because of invalid install token
 		},
 		{
 			name: "uninstallation without autoconfirm fails",

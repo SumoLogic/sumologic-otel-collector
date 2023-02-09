@@ -34,7 +34,7 @@ func tearDown(t *testing.T) {
 		},
 	}
 
-	_, _, _,  err := runScript(ch)
+	_, _, _, err := runScript(ch)
 	require.NoError(t, err)
 }
 
