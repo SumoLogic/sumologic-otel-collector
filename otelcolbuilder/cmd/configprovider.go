@@ -17,7 +17,6 @@ package main
 import (
 	"errors"
 	"flag"
-	"fmt"
 	"io"
 	"os"
 
@@ -27,7 +26,6 @@ import (
 	"go.opentelemetry.io/collector/confmap/provider/envprovider"
 	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
-	"go.opentelemetry.io/collector/featuregate"
 	"go.opentelemetry.io/collector/otelcol"
 )
 
@@ -36,14 +34,7 @@ import (
 // https://github.com/open-telemetry/opentelemetry-collector/blob/65dfc325d974be8ebb7c170b90c6646f9eaef27b/service/command.go#L38
 
 func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
-	// feature flags, which are enabled by default in our distro
-	// currently none, but keeping this here for convenience
-	err := featuregate.GlobalRegistry().Apply(map[string]bool{})
-
-	if err != nil {
-		return fmt.Errorf("setting feature gate flags failed: %s", err)
-	}
-
+	var err error
 	// to create the provider, we need config locations passed in via the command line
 	// to get these, we take the command the service uses to start, parse the flags, and read the values
 	flagset := flags()

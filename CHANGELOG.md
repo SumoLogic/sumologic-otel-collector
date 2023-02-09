@@ -18,6 +18,10 @@ This release introduces the following breaking changes:
 - feat(syslogexporter): add syslog exporter [#936]
 - feat(sourceprocessor): make container name attribute configurable [#950]
 
+### Changed
+
+- chore: update OT core to v0.71.0 [#958]
+
 ### Fixed
 
 - fix(k8sprocessor): race condition when getting Pod data [#938]
@@ -28,6 +32,7 @@ This release introduces the following breaking changes:
 [#945]: https://github.com/SumoLogic/sumologic-otel-collector/pull/945
 [#936]: https://github.com/SumoLogic/sumologic-otel-collector/pull/936
 [#950]: https://github.com/SumoLogic/sumologic-otel-collector/pull/950
+[#958]: https://github.com/SumoLogic/sumologic-otel-collector/pull/958
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.70.0-sumo-0...main
 
 ## [v0.70.0-sumo-2]

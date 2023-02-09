@@ -30,16 +30,16 @@ For example: <https://github.com/SumoLogic/sumologic-otel-collector/releases/dow
 ### Docker images
 
 Docker images containing the binaries have their tag suffixed with `-fips`. For example, where the normal image for
-version `0.69.0-sumo-0` is:
+version `0.70.0-sumo-0` is:
 
 ```text
-docker pull public.ecr.aws/sumologic/sumologic-otel-collector:0.69.0-sumo-0
+docker pull public.ecr.aws/sumologic/sumologic-otel-collector:0.70.0-sumo-0
 ```
 
 The FIPS-approved version would be:
 
 ```text
-docker pull public.ecr.aws/sumologic/sumologic-otel-collector:0.69.0-sumo-0-fips
+docker pull public.ecr.aws/sumologic/sumologic-otel-collector:0.70.0-sumo-0-fips
 ```
 
 > **Note**
