@@ -21,7 +21,7 @@ func TestValidate(t *testing.T) {
 				Format:   "rfc5424",
 				Protocol: "udp",
 			},
-			err: "Unsupported Port: Port is required, must be in the range 1-65535",
+			err: "Unsupported port: port is required, must be in the range 1-65535",
 		},
 
 		{
@@ -32,7 +32,7 @@ func TestValidate(t *testing.T) {
 				Format:   "rfc5424",
 				Protocol: "udp",
 			},
-			err: "Invalid FQDN: Endpoint is required, must be a valid FQDN",
+			err: "Invalid endpoint: endpoint is required, must be a valid FQDN or IP address",
 		},
 
 		{
@@ -43,7 +43,7 @@ func TestValidate(t *testing.T) {
 				Format:   "rfc5424",
 				Protocol: "ftp",
 			},
-			err: "Unsupported protocol: Protocol is required, only tcp/udp supported",
+			err: "Unsupported protocol: protocol is required, only tcp/udp supported",
 		},
 		{
 			name: "Unsupported Format",

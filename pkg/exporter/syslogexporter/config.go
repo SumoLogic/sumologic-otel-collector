@@ -24,9 +24,9 @@ import (
 )
 
 var (
-	unsupportedPort     = errors.New("Unsupported Port: Port is required, must be in the range 1-65535")
-	invalidFQDN         = errors.New("Invalid FQDN: Endpoint is required, must be a valid FQDN")
-	unsupportedProtocol = errors.New("Unsupported protocol: Protocol is required, only tcp/udp supported")
+	unsupportedPort     = errors.New("Unsupported port: port is required, must be in the range 1-65535")
+	invalidEndpoint     = errors.New("Invalid endpoint: endpoint is required, must be a valid FQDN or IP address")
+	unsupportedProtocol = errors.New("Unsupported protocol: protocol is required, only tcp/udp supported")
 	unsupportedFormat   = errors.New("Unsupported format: Only rfc5424 and rfc3164 supported")
 )
 
@@ -56,8 +56,8 @@ func (cfg *Config) Validate() error {
 		return unsupportedPort
 	}
 
-	if !net.IsFQDN(cfg.Endpoint) || cfg.Endpoint == "" {
-		return invalidFQDN
+	if !net.IsFQDN(cfg.Endpoint) && !net.IsIPAddr(cfg.Endpoint) {
+		return invalidEndpoint
 	}
 
 	if strings.ToLower(cfg.Protocol) != "tcp" && strings.ToLower(cfg.Protocol) != "udp" {

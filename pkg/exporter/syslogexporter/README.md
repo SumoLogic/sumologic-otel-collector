@@ -82,7 +82,7 @@ service:
 
 The following are a few configuration options available to forward syslog messages
 
-- `endpoint` - syslog endpoint (fqdn)
+- `endpoint` - syslog endpoint (FQDN or IP address)
 - `protocol` - tcp/udp
 - `port` - A syslog port
 - `format` - rfc5424/rfc3164
