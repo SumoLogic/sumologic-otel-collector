@@ -20,6 +20,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -34,7 +35,6 @@ const formatRFC3164Str = "rfc3164"
 const priority = "priority"
 const facility = "facility"
 const version = "version"
-const timestamp = "timestamp"
 const hostname = "hostname"
 const app = "appname"
 const pid = "proc_id"
@@ -107,11 +107,11 @@ func (s *Syslog) connect() error {
 	return err
 }
 
-func (s *Syslog) Write(msg map[string]any) error {
+func (s *Syslog) Write(msg map[string]any, timestamp time.Time) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	msgStr := s.formatMsg(msg)
+	msgStr := s.formatMsg(msg, timestamp)
 
 	if s.conn != nil {
 		if err := s.write(msgStr); err == nil {
@@ -134,12 +134,12 @@ func (s *Syslog) write(msg string) error {
 	return err
 }
 
-func (s *Syslog) formatMsg(msg map[string]any) string {
+func (s *Syslog) formatMsg(msg map[string]any, timestamp time.Time) string {
 	switch s.format {
 	case formatRFC3164Str:
-		return s.formatRFC3164(msg)
+		return s.formatRFC3164(msg, timestamp)
 	case formatRFC5424Str:
-		return s.formatRFC5424(msg)
+		return s.formatRFC5424(msg, timestamp)
 	default:
 		panic(fmt.Sprintf("unsupported syslog format, format: %s", s.format))
 	}
@@ -197,15 +197,17 @@ func populateDefaults(msg map[string]any, msgProperties []string) {
 	}
 }
 
-func (s *Syslog) formatRFC3164(msg map[string]any) string {
+func (s *Syslog) formatRFC3164(msg map[string]any, timestamp time.Time) string {
 	msgProperties := []string{priority, hostname, message}
 	populateDefaults(msg, msgProperties)
-	return fmt.Sprintf("<%d>%s %s %s", msg[priority], msg[timestamp], msg[hostname], msg[message])
+	timestampString := timestamp.Format("2006-01-02T15:04:05.000-03:00")
+	return fmt.Sprintf("<%d>%s %s %s", msg[priority], timestampString, msg[hostname], msg[message])
 }
 
-func (s *Syslog) formatRFC5424(msg map[string]any) string {
+func (s *Syslog) formatRFC5424(msg map[string]any, timestamp time.Time) string {
 	msgProperties := []string{priority, version, hostname, app, pid, msgId, message, structuredData}
 	populateDefaults(msg, msgProperties)
 	s.addStructuredData(msg)
-	return fmt.Sprintf("<%d>%d %s %s %s %s %s %s %s", msg[priority], msg[version], msg[timestamp], msg[hostname], msg[app], msg[pid], msg[msgId], msg[structuredData], msg[message])
+	timestampString := timestamp.Format(time.RFC3339)
+	return fmt.Sprintf("<%d>%d %s %s %s %s %s %s %s", msg[priority], msg[version], timestampString, msg[hostname], msg[app], msg[pid], msg[msgId], msg[structuredData], msg[message])
 }

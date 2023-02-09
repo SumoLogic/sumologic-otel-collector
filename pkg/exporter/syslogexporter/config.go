@@ -15,27 +15,63 @@
 package syslogexporter
 
 import (
+	"errors"
+	"strings"
+
+	"github.com/THREATINT/go-net"
+
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
+)
+
+var (
+	unsupportedPort     = errors.New("Unsupported Port: Port is required, must be in the range 1-65535")
+	invalidFQDN         = errors.New("Invalid FQDN: Endpoint is required, must be a valid FQDN")
+	unsupportedProtocol = errors.New("Unsupported protocol: Protocol is required, only tcp/udp supported")
+	unsupportedFormat   = errors.New("Unsupported format: Only rfc5424 and rfc3164 supported")
 )
 
 // Config defines configuration for Syslog exporter.
 type Config struct {
 	// Syslog server address
-	Endpoint string `mapstructure:"endpoint" validate:"required,fqdn"`
+	Endpoint string `mapstructure:"endpoint"`
 	// Syslog server port
-	Port int `mapstructure:"port" validate:"required,port"`
+	Port int `mapstructure:"port"`
 	// Protocol for syslog communication
 	// options: tcp, udp
-	Protocol string `mapstructure:"protocol" validate:"required,protocol type"`
+	Protocol string `mapstructure:"protocol"`
 	// CA certificate of syslog server
 	CACertificate string `mapstructure:"ca_certificate"`
 	// Format of syslog messages
-	Format string `mapstructure:"format" validate:"required,format"`
+	Format string `mapstructure:"format"`
 	// Additional structured data added to structured data in RFC5424
 	AdditionalStructuredData []string `mapstructure:"additional_structured_data"`
 
 	exporterhelper.QueueSettings `mapstructure:"sending_queue"`
 	exporterhelper.RetrySettings `mapstructure:"retry_on_failure"`
+}
+
+// Validate the configuration for errors. This is required by component.Config.
+func (cfg *Config) Validate() error {
+	if cfg.Port < 1 || cfg.Port > 65525 {
+		return unsupportedPort
+	}
+
+	if !net.IsFQDN(cfg.Endpoint) || cfg.Endpoint == "" {
+		return invalidFQDN
+	}
+
+	if strings.ToLower(cfg.Protocol) != "tcp" && strings.ToLower(cfg.Protocol) != "udp" {
+		return unsupportedProtocol
+	}
+
+	switch cfg.Format {
+	case formatRFC3164Str:
+	case formatRFC5424Str:
+	default:
+		return unsupportedFormat
+	}
+
+	return nil
 }
 
 const (
@@ -44,7 +80,7 @@ const (
 	// Syslog Port
 	DefaultPort = 514
 	// Syslog Endpoint
-	DefaultEndpoint = ""
+	DefaultEndpoint = "host.domain.com"
 	// Syslog format
 	DefaultFormat = "rfc5424"
 )

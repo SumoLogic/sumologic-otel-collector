@@ -21,7 +21,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 	qs.Enabled = false
 
 	assert.Equal(t, cfg, &Config{
-		Endpoint:                 "",
+		Endpoint:                 "host.domain.com",
 		Port:                     514,
 		Protocol:                 "tcp",
 		CACertificate:            "",

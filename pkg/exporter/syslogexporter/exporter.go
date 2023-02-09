@@ -18,16 +18,14 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"os"
+	"time"
 
-	ut "github.com/go-playground/universal-translator"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
-	"gopkg.in/go-playground/validator.v9"
 )
 
 const maxLengthAppName = 48 // limit to 48 chars according to RFC5424
@@ -44,13 +42,6 @@ type syslogexporter struct {
 func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*syslogexporter, error) {
 	var tlsConfig *tls.Config
 	var err error
-	var trans ut.Translator
-	err, trans = validation(cfg)
-	if err != nil {
-		for _, e := range err.(validator.ValidationErrors) {
-			return nil, errors.New(e.Translate(trans))
-		}
-	}
 	if cfg.CACertificate != "" {
 		var serverCert []byte
 		serverCert, err = os.ReadFile(cfg.CACertificate)
@@ -114,8 +105,8 @@ func (se *syslogexporter) logsToMap(record plog.LogRecord) map[string]any {
 	return attributes
 }
 
-func (se *syslogexporter) getTimestamp(record plog.LogRecord) string {
-	timestamp := record.Timestamp().String()
+func (se *syslogexporter) getTimestamp(record plog.LogRecord) time.Time {
+	timestamp := record.Timestamp().AsTime()
 	return timestamp
 }
 
@@ -134,8 +125,8 @@ func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error 
 			for j := 0; j < slg.LogRecords().Len(); j++ {
 				lr := slg.LogRecords().At(j)
 				formattedLine := se.logsToMap(lr)
-				formattedLine["timestamp"] = se.getTimestamp(lr)
-				err = s.Write(formattedLine)
+				timestamp := se.getTimestamp(lr)
+				err = s.Write(formattedLine, timestamp)
 				if err != nil {
 					//TODO: add handling of failures as it is in sumologic exporter
 					return err
