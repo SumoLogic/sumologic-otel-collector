@@ -10,7 +10,6 @@ exporters:
     endpoint: 127.0.0.1
     ca_certificate: certs/servercert.pem
     format: rfc5424
-    drop_invalid_messages: false
     additional_structured_data: # only if messages are in RFC5424 format
     - tab=abc
 
