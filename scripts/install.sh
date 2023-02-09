@@ -670,6 +670,7 @@ function uninstall() {
         fi
     fi
 
+    echo "Uninstallation completed"
     exit 0
 }
 
