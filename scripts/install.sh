@@ -1248,7 +1248,7 @@ else
         # create home directory
         ADDITIONAL_OPTIONS="-m"
     fi
-readonly ADDITIONAL_OPTIONS
+    readonly ADDITIONAL_OPTIONS
     useradd "${ADDITIONAL_OPTIONS}" -rUs /bin/false -d "${HOME_DIRECTORY}" "${SYSTEM_USER}"
 fi
 
