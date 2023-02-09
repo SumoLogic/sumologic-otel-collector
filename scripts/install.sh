@@ -671,7 +671,6 @@ function uninstall() {
     fi
 
     echo "Uninstallation completed"
-    exit 0
 }
 
 function escape_sed() {
