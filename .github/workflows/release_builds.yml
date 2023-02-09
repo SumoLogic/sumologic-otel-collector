@@ -101,7 +101,7 @@ jobs:
           tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
 
       - name: Sign Windows binary
-        if: runner.os == "Windows"
+        if: runner.os == 'Windows'
         uses: skymatic/code-sign-action@v2
         with:
           certificate: '${{ secrets.MICROSOFT_CERTIFICATE }}'
