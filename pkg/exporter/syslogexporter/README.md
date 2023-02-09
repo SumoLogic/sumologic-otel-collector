@@ -1,29 +1,46 @@
 # Syslog Exporter
 
-Export/Forward syslog messages to a syslog server
-
 **Stability level**: Experimental
 
-This exporter can forward syslog messages to a third party [syslog server](https://www.rsyslog.com/)
+## About The Exporter
 
-This exporter/forwarder also supports sending syslog messages to the [Cloud Syslog](https://help.sumologic.com/docs/send-data/hosted-collectors/cloud-syslog-source/).
+The syslog exporter/forwarder supports sending messages to a remote syslog server.
 
-Configuration is specified via the yaml in the following structure:
+- This exporter/forwarder can forward syslog messages to a third party [syslog server](https://www.rsyslog.com/) using RFC5424 and RFC3164
+- It also supports sending syslog messages to the [Cloud Syslog Source](https://help.sumologic.com/docs/send-data/hosted-collectors/cloud-syslog-source/) configured on a Sumo Logic hosted collector using the RFC5424 format
+- The syslog exporter must be used with the [syslog_parser](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/docs/operators/syslog_parser.md)
+
+`Note` - Syslog over UDP doesn't support certificate verifiction (ca_certificate).
+
+## Configuration
+
+**The following are a few configuration options available to forward syslog messages**:
+
+- `endpoint` - syslog endpoint (FQDN or IP address)
+- `protocol` - tcp/udp
+- `port` - A syslog port
+- `format` - rfc5424/rfc3164
+  - `rfc5424` - Expects the syslog messages to be rfc5424 compliant
+  - `rfc3164` - Expects the syslog messages to be rfc3164 compliant
+- `additional_structured_data` [rfc5424 only] - Additional [structured data](https://www.rfc-editor.org/rfc/rfc5424#page-15) to specify in the syslog message
+- `ca_certificate` [tcp only] - A publicly verifiable server certificate (`note`: Self signed certificates are not supported in this version)
+
+Please refer to the yaml below to configure the syslog exporter:
 
 ```yaml
 extensions:
   file_storage/syslog:
-    directory: /tmp/otc
+    directory: /tmp/otc # Please ensure this directory exists
     timeout: 10s
 
 exporters:
   syslog:
     protocol: tcp
-    port: 514
-    endpoint: 127.0.0.1
-    ca_certificate: certs/servercert.pem
-    format: rfc5424
-    additional_structured_data: # only if messages are in RFC5424 format
+    port: 6514 # 514 (UDP)
+    endpoint: 127.0.0.1 # FQDN or IP address
+    ca_certificate: certs/servercert.pem # tcp only
+    format: rfc5424 # RFC5424 or RFC3164
+    additional_structured_data: # tcp only, to be used with the RFC5424 format
     - tab=abc
 
     # for below described queueing and retry related configuration please refer to:
@@ -64,12 +81,12 @@ receivers:
     - /other/path/**/*.txt
     operators:
       - type: syslog_parser
-        protocol: rfc5424
+        protocol: rfc5424 # the format used here must match the syslog exporter
 
 service:
   telemetry:
       logs:
-        level: "debug"
+        level: "info"
   extensions:
     - file_storage/syslog
   pipelines:
@@ -79,14 +96,3 @@ service:
       exporters:
         - syslog
 ```
-
-The following are a few configuration options available to forward syslog messages
-
-- `endpoint` - syslog endpoint (FQDN or IP address)
-- `protocol` - tcp/udp
-- `port` - A syslog port
-- `format` - rfc5424/rfc3164
-  - `rfc5424` - Checks whether a syslog messages is compliant with RFC 5424
-  - `rfc3164` - Checks whether a syslog messages is compliant with RFC 3164
-- `additional_structured_data` - Additional [structured data](https://www.rfc-editor.org/rfc/rfc5424#page-15) to specify in the syslog message (Example: An authentication token)
-- `ca_certificate` - A publicly verifiable server certificate (`note`: Self signed certificates are not supported in this version)
