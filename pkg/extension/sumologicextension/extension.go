@@ -89,8 +89,10 @@ const (
 	DefaultHeartbeatInterval = 15 * time.Second
 )
 
+var updateCollectorMetadataFeatureGate *featuregate.Gate
+
 func init() {
-	featuregate.GlobalRegistry().MustRegisterID(
+	updateCollectorMetadataFeatureGate = featuregate.GlobalRegistry().MustRegister(
 		updateCollectorMetadataID,
 		updateCollectorMetadataStage,
 		featuregate.WithRegisterDescription("When enabled, the collector will update its Sumo Logic metadata on startup."),
@@ -157,7 +159,7 @@ func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID, bu
 		logger:            logger,
 		hashKey:           hashKey,
 		credentialsStore:  credentialsStore,
-		updateMetadata:    featuregate.GlobalRegistry().IsEnabled(updateCollectorMetadataID),
+		updateMetadata:    updateCollectorMetadataFeatureGate.IsEnabled(),
 		closeChan:         make(chan struct{}),
 		backOff:           backOff,
 		id:                id,

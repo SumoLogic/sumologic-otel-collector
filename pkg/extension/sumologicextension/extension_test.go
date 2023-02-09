@@ -41,9 +41,7 @@ import (
 
 func TestMain(m *testing.M) {
 	// Enable the feature gates before all tests to avoid flaky tests.
-	err := featuregate.GlobalRegistry().Apply(map[string]bool{
-		updateCollectorMetadataID: true,
-	})
+	err := featuregate.GlobalRegistry().Set(updateCollectorMetadataID, true)
 
 	if err != nil {
 		panic("unable to set feature gates")
