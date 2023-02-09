@@ -766,8 +766,12 @@ function get_user_config() {
 
     # extract install_token and strip quotes
     grep -m 1 install_token "${file}" \
-        | sed 's/.*install_token:[[:blank:]]*\|[[:blank:]]*$//g' \
-        | sed "s/^\"\\|^'\\|\"\$\\|'\$//g" \
+        | sed 's/.*install_token:[[:blank:]]*//' \
+        | sed 's/[[:blank:]]*$//' \
+        | sed 's/^"//' \
+        | sed "s/^'//" \
+        | sed 's/"$//' \
+        | sed "s/'\$//" \
     || echo ""
 }
 
@@ -781,8 +785,12 @@ function get_user_api_url() {
 
     # extract api_base_url and strip quotes
     grep -m 1 api_base_url "${file}" \
-        | sed 's/.*api_base_url:[[:blank:]]*\|[[:blank:]]*$//g' \
-        | sed "s/^\"\\|^'\\|\"\$\\|'\$//g" \
+        | sed 's/.*api_base_url:[[:blank:]]*//' \
+        | sed 's/[[:blank:]]*$//' \
+        | sed 's/^"//' \
+        | sed "s/^'//" \
+        | sed 's/"$//' \
+        | sed "s/'\$//" \
     || echo ""
 }
 
