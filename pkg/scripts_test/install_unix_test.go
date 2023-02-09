@@ -322,7 +322,7 @@ func TestInstallScript(t *testing.T) {
 			},
 			preActions: []checkFunc{preActionMockStructure},
 			preChecks:  []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkUserNotExists},
-			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigCreated, checkUserConfigCreated},
+			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigCreated, checkUserConfigCreated, checkUninstallationOutput},
 		},
 		{
 			name: "systemd uninstallation",

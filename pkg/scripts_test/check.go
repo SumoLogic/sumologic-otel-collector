@@ -350,6 +350,11 @@ func checkVarLogACL(c check) {
 	PathHasUserACL(c.test, "/var/log", systemUser, "r-x")
 }
 
+func checkUninstallationOutput(c check) {
+	require.Greater(c.test, len(c.output), 1)
+	require.Contains(c.test, c.output[len(c.output)-1], "Uninstallation completed")
+}
+
 func PathHasPermissions(t *testing.T, path string, perms uint32) {
 	info, err := os.Stat(path)
 	require.NoError(t, err)
