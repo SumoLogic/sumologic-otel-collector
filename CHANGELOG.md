@@ -41,9 +41,6 @@ This release introduces the following breaking changes:
 
 ## [v0.70.0-sumo-1]
 
-> **Warning**
-> This release had incorrect version strings set in binaries. The problem is fixed in [v0.70.0-sumo-2].
-
 ### Added
 
 - feat: Collector metadata tag auto-discovery (local services, e.g. mysql) [#893]
