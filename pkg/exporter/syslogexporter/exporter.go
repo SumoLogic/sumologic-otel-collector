@@ -17,12 +17,16 @@ package syslogexporter
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 )
 
@@ -83,7 +87,25 @@ func (se *syslogexporter) getTimestamp(record plog.LogRecord) time.Time {
 	return timestamp
 }
 
+func (se *syslogexporter) handleWriteErrors(ctx context.Context, errs ...error) {
+	var errUnauthorized = errors.New("Unable to write to remote server")
+	for _, err := range errs {
+		if errors.Is(err, errUnauthorized) {
+			se.logger.Warn("Unable to write to remote server")
+			return
+		}
+	}
+}
+
 func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
+	type droppedResourceRecords struct {
+		resource pcommon.Resource
+		records  []plog.LogRecord
+	}
+	var (
+		errs    []error
+		dropped []droppedResourceRecords
+	)
 	s, err := Connect(se.logger, se.config, se.tlsConfig)
 	if err != nil {
 		return fmt.Errorf("error connecting to syslog server: %s", err)
@@ -101,11 +123,31 @@ func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error 
 				timestamp := se.getTimestamp(lr)
 				err = s.Write(formattedLine, timestamp)
 				if err != nil {
-					//TODO: add handling of failures as it is in sumologic exporter
+					dropped = append(dropped, droppedResourceRecords{
+						resource: rl.Resource(),
+						records:  []plog.LogRecord{lr},
+					})
+					errs = append(errs, err)
 					return err
 				}
 			}
 		}
+	}
+	if len(dropped) > 0 {
+		ld = plog.NewLogs()
+		for i := range dropped {
+			rls := ld.ResourceLogs().AppendEmpty()
+			dropped[i].resource.MoveTo(rls.Resource())
+
+			for j := 0; j < len(dropped[i].records); j++ {
+				dropped[i].records[j].MoveTo(
+					rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty(),
+				)
+			}
+		}
+		errs = deduplicateErrors(errs)
+		se.handleWriteErrors(ctx, errs...)
+		return consumererror.NewLogs(multierr.Combine(errs...), ld)
 	}
 	return nil
 }
