@@ -665,7 +665,7 @@ function uninstall() {
             # remove user
             if getent passwd "${SYSTEM_USER}" > /dev/null; then
                 userdel -r -f "${SYSTEM_USER}"
-                groupdel -f "${SYSTEM_USER}"
+                groupdel "${SYSTEM_USER}"
             fi
         fi
     fi
