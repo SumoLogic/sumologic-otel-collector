@@ -11,7 +11,7 @@ namespace SumoLogicTests
     {
         string testDataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TestData");
 
-        public void InstallTokenAssertions(Config config, StreamReader sr)
+        public void InstallationTokenAssertions(Config config, StreamReader sr)
         {
             YamlStream ys = new YamlStream();
             ys.Load(sr);
@@ -68,7 +68,7 @@ namespace SumoLogicTests
 
                 ms.Seek(0, SeekOrigin.Begin);
 
-                InstallTokenAssertions(config, sr);
+                InstallationTokenAssertions(config, sr);
             }
         }
 
@@ -96,7 +96,7 @@ namespace SumoLogicTests
 
                 ms.Seek(0, SeekOrigin.Begin);
 
-                InstallTokenAssertions(config, sr);
+                InstallationTokenAssertions(config, sr);
             }
         }
 
@@ -124,7 +124,7 @@ namespace SumoLogicTests
 
                 ms.Seek(0, SeekOrigin.Begin);
 
-                InstallTokenAssertions(config, sr);
+                InstallationTokenAssertions(config, sr);
             }
         }
 
