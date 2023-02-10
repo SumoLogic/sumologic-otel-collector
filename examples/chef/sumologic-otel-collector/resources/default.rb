@@ -27,7 +27,7 @@ action :default do
   install_command = get_install_script_command(new_resource)
   execute INSTALL_SCRIPT_PATH do
     command install_command
-    environment ({"SUMOLOGIC_INSTALL_TOKEN" => resource.install_token})
+    environment ({"SUMOLOGIC_INSTALL_TOKEN" => new_resource.install_token})
   end
   run_action :prepare_config
   if new_resource.systemd_service
