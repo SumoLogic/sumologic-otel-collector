@@ -4,13 +4,14 @@
 
 ## About The Exporter
 
-The syslog exporter/forwarder supports sending messages to a remote syslog server.
+The syslog exporter supports sending messages to a remote syslog server.
 
-- This exporter/forwarder can forward syslog messages to a third party [syslog server](https://www.rsyslog.com/) using RFC5424 and RFC3164
+- This exporter can forward syslog messages to a third party [syslog server](https://www.rsyslog.com/) using RFC5424 and RFC3164
 - It also supports sending syslog messages to the [Cloud Syslog Source](https://help.sumologic.com/docs/send-data/hosted-collectors/cloud-syslog-source/) configured on a Sumo Logic hosted collector using the RFC5424 format
-- The syslog exporter must be used with the [syslog_parser](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/docs/operators/syslog_parser.md)
+- It is recommended that this syslog exporter be used with the [syslog_parser](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/docs/operators/syslog_parser.md) configured in the receiver. This ensures that all the syslog message headers are populated with the expected values
+- Not using the `syslog_parser` will result in the syslog message being populated with default header values
 
-`Note` - Syslog over UDP doesn't support certificate verifiction (ca_certificate).
+`Note` - Syslog over UDP doesn't support certificate verification (ca_certificate).
 
 ## Configuration
 
@@ -30,7 +31,7 @@ Please refer to the yaml below to configure the syslog exporter:
 ```yaml
 extensions:
   file_storage/syslog:
-    directory: /tmp/otc # Please ensure this directory exists
+    directory: .
     timeout: 10s
 
 exporters:
