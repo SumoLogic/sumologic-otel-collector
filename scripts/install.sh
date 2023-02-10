@@ -1165,7 +1165,8 @@ INSTALLED_VERSION="$(get_installed_version)"
 echo -e "Installed version:\t${INSTALLED_VERSION:-none}"
 
 echo -e "Getting versions..."
-VERSIONS="$(get_versions)"
+# Get versions, but ignore errors are we fallback to other methods later
+VERSIONS="$(get_versions || echo "")"
 
 # Use user's version if set, otherwise get latest version from API (or website)
 if [[ -z "${VERSION}" ]]; then
