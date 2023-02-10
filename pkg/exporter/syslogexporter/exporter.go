@@ -17,6 +17,7 @@ package syslogexporter
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"time"
 
@@ -85,6 +86,16 @@ func (se *syslogexporter) logsToMap(record plog.LogRecord) map[string]any {
 func (se *syslogexporter) getTimestamp(record plog.LogRecord) time.Time {
 	timestamp := record.Timestamp().AsTime()
 	return timestamp
+}
+
+func (se *syslogexporter) handleWriteErrors(ctx context.Context, errs ...error) {
+	var errUnauthorized = errors.New("Unable to write to remote server")
+	for _, err := range errs {
+		if errors.Is(err, errUnauthorized) {
+			se.logger.Warn("Unable to write to remote server")
+			return
+		}
+	}
 }
 
 func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
