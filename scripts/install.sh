@@ -899,9 +899,11 @@ function write_installation_token() {
 
     # ToDo: ensure we override only sumologic `install_token`
     if grep "install_token" "${file}" > /dev/null; then
+        # Do not expose token in sed command as it can be saw on processes list
         echo "s/install_token:.*$/install_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
     else
         # write installation token on the top of sumologic: extension
+        Do not expose token in sed command as it can be saw on processes list
         echo "s/sumologic:/sumologic:\\
 \\${ext_indentation}install_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
     fi
