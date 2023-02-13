@@ -887,6 +887,7 @@ ${indentation}sumologic:/" "${file}"
 
 # write installation token to user configuration file
 function write_installation_token() {
+    set -x
     local token
     readonly token="${1}"
 
@@ -898,12 +899,15 @@ function write_installation_token() {
 
     # ToDo: ensure we override only sumologic `install_token`
     if grep "install_token" "${file}" > /dev/null; then
-        sed -i.bak -e "s/install_token:.*$/install_token: $(escape_sed "${token}")/" "${file}"
+        # Do not expose token in sed command as it can be saw on processes list
+        echo "s/install_token:.*$/install_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
     else
         # write installation token on the top of sumologic: extension
-        sed -i.bak -e "s/sumologic:/sumologic:\\
-\\${ext_indentation}install_token: $(escape_sed "${token}")/" "${file}"
+        # Do not expose token in sed command as it can be saw on processes list
+        echo "s/sumologic:/sumologic:\\
+\\${ext_indentation}install_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
     fi
+    set +x
 }
 
 # write api_url to user configuration file
