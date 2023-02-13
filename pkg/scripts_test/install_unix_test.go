@@ -33,7 +33,7 @@ func TestInstallScript(t *testing.T) {
 			postChecks: []checkFunc{checkBinaryCreated, checkConfigNotCreated, checkUserConfigNotCreated},
 		},
 		{
-			name: "skip install token",
+			name: "skip installation token",
 			options: installOptions{
 				skipInstallToken: true,
 			},
@@ -72,6 +72,25 @@ func TestInstallScript(t *testing.T) {
 				checkConfigFilesOwnershipAndPermissions("root", getRootGroupName()),
 				checkUserConfigCreated,
 				checkTokenInConfig,
+				checkSystemdConfigNotCreated,
+				checkUserNotExists,
+				checkHostmetricsConfigNotCreated,
+			},
+		},
+		{
+			name: "deprecated installation token only",
+			options: installOptions{
+				skipSystemd:            true,
+				deprecatedInstallToken: installToken,
+			},
+			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkConfigFilesOwnershipAndPermissions("root", getRootGroupName()),
+				checkUserConfigCreated,
+				checkDeprecatedTokenInConfig,
 				checkSystemdConfigNotCreated,
 				checkUserNotExists,
 				checkHostmetricsConfigNotCreated,
@@ -301,7 +320,7 @@ func TestInstallScript(t *testing.T) {
 				checkVarLogACL,
 			},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
-			installCode:       3, // because of invalid install token
+			installCode:       3, // because of invalid installation token
 		},
 		{
 			name: "installation token with existing user directory",
@@ -395,7 +414,7 @@ func TestInstallScript(t *testing.T) {
 			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkDifferentTokenInConfig, checkSystemdConfigCreated,
 				checkUserExists},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
-			installCode:       3, // because of invalid install token
+			installCode:       3, // because of invalid installation token
 		},
 		{
 			name: "don't keep downloads",

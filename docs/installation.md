@@ -31,7 +31,7 @@ To run it as a standalone process you only need to run the binary file downloade
 1. Get your [installation token][sumologic_docs_install_token] if you don't have it already and assign it to environment variable:
 
    ```bash
-   export SUMOLOGIC_INSTALL_TOKEN=<TOKEN>
+   export SUMOLOGIC_INSTALLATION_TOKEN=<TOKEN>
    ```
 
 1. Run installation script:
@@ -49,7 +49,7 @@ To run it as a standalone process you only need to run the binary file downloade
    sudo -E bash ./install-otelcol-sumo.sh
    ```
 
-   The `-E` argument to `sudo` is needed to preserve the `SUMOLOGIC_INSTALL_TOKEN` environment variable in `sudo` session.
+   The `-E` argument to `sudo` is needed to preserve the `SUMOLOGIC_INSTALLATION_TOKEN` environment variable in `sudo` session.
 
     It is going to perform the following operations:
 
@@ -69,7 +69,7 @@ The following arguments can be passed to the script:
 
 | long name                        | short name | description                                                                                                                                                                  | takes value                |
 |----------------------------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------|
-| `--skip-install-token`           | `k`        | Skips requirement for installation token. This option do not disable default configuration creation.                                                                         | no                         |
+| `--skip-installation-token`      | `k`        | Skips requirement for installation token. This option do not disable default configuration creation.                                                                         | no                         |
 | `--tag`                          | `t`        | Sets tag for collector. This argument can be use multiple times. One per tag.                                                                                                | yes, in `key=value` format |
 | `--download-only`                | `w`        | Download new binary only and skip configuration part.                                                                                                                        | no                         |
 | `--version`                      | `v`        | Version of Sumo Logic Distribution for OpenTelemetry Collector to install. By defult it gets latest version.                                                                 | yes, e.g. `0.57.2-sumo-1`  |
@@ -85,7 +85,7 @@ The following env variables can be used along with script:
 
 | name                      | description                                                                  |
 |---------------------------|------------------------------------------------------------------------------|
-| `SUMOLOGIC_INSTALL_TOKEN` | Installation token                                                           |
+| `SUMOLOGIC_INSTALLATION_TOKEN` | Installation token                                                           |
 
 ### Manual installation
 
@@ -261,7 +261,7 @@ for potential breaking changes that would require manual migration steps.
        directory: .
      sumologic:
        collector_name: sumologic-demo
-       install_token: ${SUMOLOGIC_INSTALL_TOKEN}
+       install_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
 
    receivers:
      filelog:
@@ -286,7 +286,7 @@ for potential breaking changes that would require manual migration steps.
    If you have an installation token, you can run otelcol with the example configuration:
 
    ```bash
-   export SUMOLOGIC_INSTALL_TOKEN=<TOKEN>
+   export SUMOLOGIC_INSTALLATION_TOKEN=<TOKEN>
    ./otelcol-sumo --config=config.yaml
    ```
 

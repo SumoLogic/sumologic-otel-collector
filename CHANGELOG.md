@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This release introduces the following breaking changes:
 
 - feat(sumologicextension): use hostname as default collector name [#918]
+- feat(script)!: be consistent with installation token naming [#941]
+
+  We depracated `--skip-install-token` in favor of `--skip-installation-token`
+  and `SUMOLOGIC_INSTALL_TOKEN` environmental variable in favor of `SUMOLOGIC_INSTALLATION_TOKEN`.
+  Please update your configuration and automation scripts.
 
 ### Added
 

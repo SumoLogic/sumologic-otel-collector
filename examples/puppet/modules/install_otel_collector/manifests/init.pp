@@ -2,12 +2,12 @@
 #
 # @example Basic usage
 #   class { 'install_otel_collector':
-#     install_token => '...'
+#     installation_token => '...'
 #     collector_tags => { 'key' => 'value' }
 #   }
 #
-# @param install_token
-#   Sumo Logic install token, rel: https://help.sumologic.com/docs/manage/security/installation-tokens/
+# @param installation_token
+#   Sumo Logic installation token, rel: https://help.sumologic.com/docs/manage/security/installation-tokens/
 # @param collector_tags
 #   Collector tags, these are applied to all processed data
 # @param api_url
@@ -20,7 +20,7 @@
 #   Path to a directory with config files.
 #
 class install_otel_collector (
-  String $install_token,
+  String $installation_token,
   Hash[String, String] $collector_tags = {},
   Optional[String] $api_url = undef,
   Boolean $systemd_service = true,
@@ -60,7 +60,7 @@ class install_otel_collector (
     command     => $install_command,
     path        => ['/usr/local/bin/', '/usr/bin', '/usr/sbin', '/bin'],
     user        => 'root',
-    environment => ["SUMOLOGIC_INSTALL_TOKEN=${install_token}"]
+    environment => ["SUMOLOGIC_INSTALLATION_TOKEN=${installation_token}"]
   }
 
   file { '/etc/otelcol-sumo/conf.d':

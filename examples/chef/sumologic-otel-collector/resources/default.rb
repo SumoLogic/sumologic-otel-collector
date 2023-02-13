@@ -1,9 +1,9 @@
 # enable unified mode
 unified_mode true
 
-# Sumo Logic install token
+# Sumo Logic installation token
 # rel: https://help.sumologic.com/docs/manage/security/installation-tokens/
-property :install_token, String, required: true
+property :installation_token, String, required: true
 # Collector tags, these are applied to all processed data
 property :collector_tags, Hash, default: {}
 # Sumo Logic API url
@@ -27,7 +27,7 @@ action :default do
   install_command = get_install_script_command(new_resource)
   execute INSTALL_SCRIPT_PATH do
     command install_command
-    environment ({"SUMOLOGIC_INSTALL_TOKEN" => resource.install_token})
+    environment ({"SUMOLOGIC_INSTALLATION_TOKEN" => resource.installation_token})
   end
   run_action :prepare_config
   if new_resource.systemd_service

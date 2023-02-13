@@ -5,7 +5,7 @@ This [Puppet][puppet] [manifest](manifest/../manifests/install_otel_collector.pp
 
 ## Using the module
 
-- Get an [install token][install_token] from Sumo Logic
+- Get an [installation token][installation_token] from Sumo Logic
 - Prepare [configuration](../../docs/configuration.md) file for Sumo Logic Distribution for OpenTelemetry Collector and put the file in a directory of your choice. You can put multiple configuration files in this directory, and all of them will be used.
 
   **NOTE**: The playbook will prepare a [base configuration][base_configuration] for you, and configure the [extension][sumologicextension] as well.
@@ -13,7 +13,7 @@ This [Puppet][puppet] [manifest](manifest/../manifests/install_otel_collector.pp
 
   ```ruby
   class install_otel_collector {
-     $install_token => "<your_token>"
+     $installation_token => "<your_token>"
      $collector_tags => {"key" => "value"}
      src_config_path => <your_config_path>
   }
@@ -27,7 +27,7 @@ This [Puppet][puppet] [manifest](manifest/../manifests/install_otel_collector.pp
 
 ### Properties
 
-- `install_token`: Sumo Logic install token, rel: [install_token]
+- `installation_token`: Sumo Logic installation token, rel: [installation_token]
 - `collector_tags`: Collector tags, these are applied to all processed data
 - `api_url`: Sumo Logic API url. You shouldn't need to set this in most normal circumstances.
 - `version`: version of Sumo Logic Distribution for OpenTelemetry Collector
@@ -85,6 +85,6 @@ To install Sumo Logic Distribution for OpenTelemetry Collector with Puppet on Va
 
 [puppet]: https://puppet.com/
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
-[install_token]: https://help.sumologic.com/docs/manage/security/installation-tokens/
+[installation_token]: https://help.sumologic.com/docs/manage/security/installation-tokens/
 [base_configuration]: ../sumologic.yaml
 [sumologicextension]: ../../pkg/extension/sumologicextension/
