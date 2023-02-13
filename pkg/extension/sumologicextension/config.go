@@ -94,6 +94,7 @@ type Config struct {
 }
 
 type accessCredentials struct {
+	InstallationToken configopaque.String `mapstructure:"installation_token"`
 	InstallToken configopaque.String `mapstructure:"install_token"`
 }
 
