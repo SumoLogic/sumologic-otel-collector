@@ -31,7 +31,7 @@ To run it as a standalone process you only need to run the binary file downloade
 
 ### Installation using script
 
-1. Get your [installation token][sumologic_docs_install_token] if you don't have it already and assign it to environment variable:
+1. Get your [installation token][sumologic_docs_installation_token] if you don't have it already and assign it to environment variable:
 
    ```bash
    export SUMOLOGIC_INSTALLATION_TOKEN=<TOKEN>
@@ -302,7 +302,7 @@ for potential breaking changes that would require manual migration steps.
        directory: .
      sumologic:
        collector_name: sumologic-demo
-       install_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
+       installation_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
 
    receivers:
      filelog:
@@ -322,7 +322,7 @@ for potential breaking changes that would require manual migration steps.
 
    Please save this configuration as `config.yaml`.
 
-1. In order to send data to Sumo you will also need an [installation token][sumologic_docs_install_token].
+1. In order to send data to Sumo you will also need an [installation token][sumologic_docs_installation_token].
 
    If you have an installation token, you can run otelcol with the example configuration:
 
@@ -343,7 +343,7 @@ for potential breaking changes that would require manual migration steps.
 
    ![live_tail_image](../images/live_tail.png)
 
-[sumologic_docs_install_token]: https://help.sumologic.com/docs/manage/security/installation-tokens
+[sumologic_docs_installation_token]: https://help.sumologic.com/docs/manage/security/installation-tokens
 [live_tail]: https://help.sumologic.com/docs/search/live-tail/about-live-tail#start-a-live-tail-session
 
 ## Container image

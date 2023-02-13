@@ -1,6 +1,6 @@
 extensions:
   sumologic:
-    install_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
+    installation_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
     collector_name: ${SUMOLOGIC_COLLECTOR_NAME}
 
 receivers:
