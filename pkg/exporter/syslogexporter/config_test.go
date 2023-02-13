@@ -18,10 +18,11 @@ func TestValidate(t *testing.T) {
 			cfg: &Config{
 				Port:     515444,
 				Endpoint: "host.domain.com",
-				Format:   "rfc5424",
+				Format:   "rfc542",
 				Protocol: "udp",
 			},
-			err: "Unsupported port: port is required, must be in the range 1-65535",
+			err: "Unsupported port: port is required, must be in the range 1-65535\n" +
+				"Unsupported format: Only rfc5424 and rfc3164 supported",
 		},
 
 		{

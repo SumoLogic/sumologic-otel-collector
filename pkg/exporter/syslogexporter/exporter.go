@@ -19,12 +19,11 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
-	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
-	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -72,6 +71,7 @@ func newLogsExporter(
 		params,
 		cfg,
 		s.pushLogsData,
+		exporterhelper.WithTimeout(exporterhelper.TimeoutSettings{Timeout: 0}),
 		exporterhelper.WithRetry(cfg.RetrySettings),
 		exporterhelper.WithQueue(cfg.QueueSettings),
 	)
@@ -87,67 +87,44 @@ func (se *syslogexporter) getTimestamp(record plog.LogRecord) time.Time {
 	return timestamp
 }
 
-func (se *syslogexporter) handleWriteErrors(ctx context.Context, errs ...error) {
-	var errUnauthorized = errors.New("Unable to write to remote server")
-	for _, err := range errs {
-		if errors.Is(err, errUnauthorized) {
-			se.logger.Warn("Unable to write to remote server")
-			return
-		}
-	}
-}
-
 func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
-	type droppedResourceRecords struct {
-		resource pcommon.Resource
-		records  []plog.LogRecord
-	}
-	var (
-		errs    []error
-		dropped []droppedResourceRecords
-	)
-	s, err := Connect(se.logger, se.config, se.tlsConfig)
-	if err != nil {
-		return fmt.Errorf("error connecting to syslog server: %s", err)
+	var errs []error
+	s, errConn := Connect(se.logger, se.config, se.tlsConfig)
+	if errConn != nil {
+		errs = append(errs, errConn)
+		errStr := fmt.Sprintf("Unable to send syslog messages: %s", strings.Join(errorListToStringSlice(errs), ", "))
+		return errors.New(errStr)
 	}
 	defer s.Close()
 	rls := ld.ResourceLogs()
 	for i := 0; i < rls.Len(); i++ {
 		rl := rls.At(i)
-		slgs := rl.ScopeLogs()
-		for i := 0; i < slgs.Len(); i++ {
-			slg := slgs.At(i)
-			for j := 0; j < slg.LogRecords().Len(); j++ {
-				lr := slg.LogRecords().At(j)
-				formattedLine := se.logsToMap(lr)
-				timestamp := se.getTimestamp(lr)
-				err = s.Write(formattedLine, timestamp)
-				if err != nil {
-					dropped = append(dropped, droppedResourceRecords{
-						resource: rl.Resource(),
-						records:  []plog.LogRecord{lr},
-					})
-					errs = append(errs, err)
-					return err
-				}
-			}
+		if err := se.sendSyslogs(ctx, s, rl, errs); err != nil {
+			errs = append(errs, err)
 		}
 	}
-	if len(dropped) > 0 {
-		ld = plog.NewLogs()
-		for i := range dropped {
-			rls := ld.ResourceLogs().AppendEmpty()
-			dropped[i].resource.MoveTo(rls.Resource())
-
-			for j := 0; j < len(dropped[i].records); j++ {
-				dropped[i].records[j].MoveTo(
-					rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty(),
-				)
-			}
-		}
+	if len(errs) > 0 {
 		errs = deduplicateErrors(errs)
-		se.handleWriteErrors(ctx, errs...)
-		return consumererror.NewLogs(multierr.Combine(errs...), ld)
+		errStr := fmt.Sprintf("Unable to send syslog messages: %s", strings.Join(errorListToStringSlice(errs), ", "))
+		return errors.New(errStr)
 	}
+	se.logger.Info("Connected successfully, exporting logs...")
 	return nil
+}
+
+func (se *syslogexporter) sendSyslogs(ctx context.Context, s *Syslog, rl plog.ResourceLogs, errs []error) error {
+	slgs := rl.ScopeLogs()
+	for i := 0; i < slgs.Len(); i++ {
+		slg := slgs.At(i)
+		for j := 0; j < slg.LogRecords().Len(); j++ {
+			lr := slg.LogRecords().At(j)
+			formattedLine := se.logsToMap(lr)
+			timestamp := se.getTimestamp(lr)
+			err := s.Write(formattedLine, timestamp)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+	return multierr.Combine(errs...)
 }

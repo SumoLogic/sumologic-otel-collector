@@ -2,6 +2,11 @@ package syslogexporter
 
 import "fmt"
 
+type errorWithCount struct {
+	err   error
+	count int
+}
+
 // deduplicateErrors replaces duplicate instances of the same error in a slice
 // with a single error containing the number of times it occurred added as a suffix.
 // For example, three occurrences of "error: 502 Bad Gateway"
@@ -10,7 +15,6 @@ func deduplicateErrors(errs []error) []error {
 	if len(errs) < 2 {
 		return errs
 	}
-
 	errorsWithCounts := []errorWithCount{}
 	for _, err := range errs {
 		found := false
@@ -28,7 +32,6 @@ func deduplicateErrors(errs []error) []error {
 			})
 		}
 	}
-
 	var uniqueErrors []error
 	for _, errorWithCount := range errorsWithCounts {
 		if errorWithCount.count == 1 {
@@ -40,7 +43,10 @@ func deduplicateErrors(errs []error) []error {
 	return uniqueErrors
 }
 
-type errorWithCount struct {
-	err   error
-	count int
+func errorListToStringSlice(errList []error) []string {
+	errStrList := make([]string, len(errList))
+	for i, err := range errList {
+		errStrList[i] = err.Error()
+	}
+	return errStrList
 }
