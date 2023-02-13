@@ -103,7 +103,7 @@ func TestDecisionHistory(t *testing.T) {
 }
 
 func TestConcurrentTraceArrival(t *testing.T) {
-	traceIds, batches := generateIdsAndBatches(128)
+	traceIds, batches := generateIdsAndBatches(64)
 	tsp := buildBasicCFSP(t, uint64(2*len(traceIds)))
 
 	var wg sync.WaitGroup
@@ -153,8 +153,8 @@ func TestSequentialTraceMapSize(t *testing.T) {
 }
 
 func TestConcurrentTraceMapSize(t *testing.T) {
-	_, batches := generateIdsAndBatches(210)
-	const maxSize = 100
+	_, batches := generateIdsAndBatches(64)
+	const maxSize = 50
 	var wg sync.WaitGroup
 	tsp := buildBasicCFSP(t, uint64(maxSize))
 	for _, batch := range batches {

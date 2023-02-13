@@ -102,7 +102,6 @@ func TestInstallScript(t *testing.T) {
 				skipSystemd:        true,
 				installToken:       installToken,
 				installHostmetrics: true,
-				configBranch:       "main", // TODO: Remove this after v0.70.0 is released
 			},
 			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
 			postChecks: []checkFunc{
@@ -324,6 +323,36 @@ func TestInstallScript(t *testing.T) {
 			installCode:       3, // because of invalid installation token
 		},
 		{
+			name: "installation token with existing user directory",
+			options: installOptions{
+				installToken: installToken,
+			},
+			preActions: []checkFunc{preActionCreateHomeDirectory},
+			preChecks: []checkFunc{
+				checkBinaryNotCreated,
+				checkConfigNotCreated,
+				checkUserConfigNotCreated,
+				checkUserNotExists,
+				checkHomeDirectoryCreated,
+			},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkConfigFilesOwnershipAndPermissions(systemUser, systemUser),
+				checkUserConfigCreated,
+				checkTokenInConfig,
+				checkSystemdConfigCreated,
+				checkSystemdEnvDirExists,
+				checkSystemdEnvDirPermissions,
+				checkUserExists,
+				checkVarLogACL,
+				checkOutputUserAddWarnings,
+			},
+			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
+			installCode:       3, // because of invalid install token
+		},
+		{
 			name: "uninstallation without autoconfirm fails",
 			options: installOptions{
 				uninstall: true,
@@ -341,7 +370,7 @@ func TestInstallScript(t *testing.T) {
 			},
 			preActions: []checkFunc{preActionMockStructure},
 			preChecks:  []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkUserNotExists},
-			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigCreated, checkUserConfigCreated},
+			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigCreated, checkUserConfigCreated, checkUninstallationOutput},
 		},
 		{
 			name: "systemd uninstallation",

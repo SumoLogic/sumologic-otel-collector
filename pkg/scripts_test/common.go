@@ -34,7 +34,7 @@ func tearDown(t *testing.T) {
 		},
 	}
 
-	_, _, err := runScript(ch)
+	_, _, _, err := runScript(ch)
 	require.NoError(t, err)
 }
 
@@ -61,7 +61,7 @@ func runTest(t *testing.T, spec *testSpec) {
 		c(ch)
 	}
 
-	ch.code, ch.output, ch.err = runScript(ch)
+	ch.code, ch.output, ch.errorOutput, ch.err = runScript(ch)
 	checkRun(ch)
 
 	for _, c := range commonPostChecks {

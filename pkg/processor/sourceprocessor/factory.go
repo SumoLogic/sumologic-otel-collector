@@ -39,6 +39,7 @@ const (
 	defaultPodKey             = "k8s.pod.name"
 	defaultPodNameKey         = "k8s.pod.pod_name"
 	defaultPodTemplateHashKey = "k8s.pod.label.pod-template-hash"
+	defaultContainerNameKey   = "k8s.container.name"
 
 	stabilityLevel = component.StabilityLevelBeta
 )
@@ -72,7 +73,8 @@ func createDefaultConfig() component.Config {
 		PodTemplateHashKey: defaultPodTemplateHashKey,
 
 		ContainerAnnotations: ContainerAnnotationsConfig{
-			Enabled: false,
+			Enabled:          false,
+			ContainerNameKey: defaultContainerNameKey,
 			Prefixes: []string{
 				"sumologic.com/",
 			},

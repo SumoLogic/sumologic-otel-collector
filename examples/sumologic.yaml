@@ -85,6 +85,9 @@ service:
     - sumologic
     - health_check
     - file_storage
+  telemetry:
+    metrics:
+      address: localhost:8888
   pipelines:
     metrics/default:
       receivers:

@@ -685,7 +685,7 @@ function uninstall() {
         fi
     fi
 
-    exit 0
+    echo "Uninstallation completed"
 }
 
 function escape_sed() {
@@ -779,9 +779,14 @@ function get_user_config() {
         return
     fi
 
+    # extract install_token and strip quotes
     grep -m 1 install_token "${file}" \
         | sed 's/.*install_token:[[:blank:]]*//' \
-        | xargs \
+        | sed 's/[[:blank:]]*$//' \
+        | sed 's/^"//' \
+        | sed "s/^'//" \
+        | sed 's/"$//' \
+        | sed "s/'\$//" \
     || echo ""
 }
 
@@ -793,9 +798,14 @@ function get_user_api_url() {
         return
     fi
 
+    # extract api_base_url and strip quotes
     grep -m 1 api_base_url "${file}" \
         | sed 's/.*api_base_url:[[:blank:]]*//' \
-        | xargs \
+        | sed 's/[[:blank:]]*$//' \
+        | sed 's/^"//' \
+        | sed "s/^'//" \
+        | sed 's/"$//' \
+        | sed "s/'\$//" \
     || echo ""
 }
 
@@ -1255,7 +1265,16 @@ echo 'Creating user and group'
 if getent passwd "${SYSTEM_USER}" > /dev/null; then
     echo 'User and group already created'
 else
-    useradd -mrUs /bin/false -d "${HOME_DIRECTORY}" "${SYSTEM_USER}"
+    ADDITIONAL_OPTIONS=""
+    if [[ -d "${HOME_DIRECTORY}" ]]; then
+        # do not create home directory as it already exists
+        ADDITIONAL_OPTIONS="-M"
+    else
+        # create home directory
+        ADDITIONAL_OPTIONS="-m"
+    fi
+    readonly ADDITIONAL_OPTIONS
+    useradd "${ADDITIONAL_OPTIONS}" -rUs /bin/false -d "${HOME_DIRECTORY}" "${SYSTEM_USER}"
 fi
 
 echo 'Creating ACL grants on log paths'

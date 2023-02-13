@@ -441,12 +441,29 @@ func TestSourceCategoryAnnotations(t *testing.T) {
 		assertAttribute(t, processedAttributes, "_sourceCategory", "annot>sc^namespace^1")
 	})
 
-	t.Run("container-level annotations", func(t *testing.T) {
+	t.Run("container-level annotations with default settings", func(t *testing.T) {
 		inputAttributes := createK8sLabels()
 		inputAttributes["pod_annotation_sumologic.com/container-1.sourceCategory"] = "container-sc"
 		inputTraces := newTraceData(inputAttributes)
 
 		cfg.ContainerAnnotations.Enabled = true
+		processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), cfg).ProcessTraces(context.Background(), inputTraces)
+		assert.NoError(t, err)
+
+		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, processedAttributes, "_sourceCategory", "container-sc")
+	})
+
+	t.Run("container-level annotations with custom settings", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		delete(inputAttributes, "k8s.container.name")
+		inputAttributes["containername"] = "container-2"
+		inputAttributes["pod_annotation_custom.prefix/container-2.sourceCategory"] = "container-sc"
+		inputTraces := newTraceData(inputAttributes)
+
+		cfg.ContainerAnnotations.Enabled = true
+		cfg.ContainerAnnotations.ContainerNameKey = "containername"
+		cfg.ContainerAnnotations.Prefixes = []string{"custom.prefix/"}
 		processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), cfg).ProcessTraces(context.Background(), inputTraces)
 		assert.NoError(t, err)
 

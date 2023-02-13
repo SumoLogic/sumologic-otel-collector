@@ -101,8 +101,8 @@ jobs:
           tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
 
       - name: Sign Windows binary
-        if: runner.os == "Windows"
-        uses: skymatic/code-sign-action@v1
+        if: runner.os == 'Windows'
+        uses: skymatic/code-sign-action@v2
         with:
           certificate: '${{ secrets.MICROSOFT_CERTIFICATE }}'
           password: '${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}'
@@ -456,7 +456,7 @@ jobs:
         run: msbuild.exe -p:Configuration=Release -p:Platform=x64 -p:ProductVersion=$PRODUCT_VERSION -Restore
 
       - name: Sign MSI
-        uses: skymatic/code-sign-action@v1
+        uses: skymatic/code-sign-action@v2
         with:
           certificate: '${{ secrets.MICROSOFT_CERTIFICATE }}'
           password: '${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}'
