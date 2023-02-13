@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- feat(sumologicextension): deprecate `install_token` [#969]
+
+[#969]: https://github.com/SumoLogic/sumologic-otel-collector/pull/969
+[unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.71.0-sumo-0...main
+
 ## [v0.71.0-sumo-0]
 
 ### Released 2023-02-09
