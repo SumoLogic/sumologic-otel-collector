@@ -6,12 +6,15 @@
 
 The syslog exporter supports sending messages to a remote syslog server.
 
-- This exporter can forward syslog messages to a third party [syslog server](https://www.rsyslog.com/) using RFC5424 and RFC3164
-- It also supports sending syslog messages to the [Cloud Syslog Source](https://help.sumologic.com/docs/send-data/hosted-collectors/cloud-syslog-source/) configured on a Sumo Logic hosted collector using the RFC5424 format, token required by Cloud Syslog Source can be added using logstransform processor, please see [example configuration](./examples/config_with_token.yaml)
-- It is recommended that this syslog exporter be used with the [syslog_parser](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/docs/operators/syslog_parser.md) configured in the receiver. This ensures that all the syslog message headers are populated with the expected values
-- Not using the `syslog_parser` will result in the syslog message being populated with default header values
+- This exporter can forward syslog messages to a third party [syslog server][rsyslog] using [RFC5424][RFC5424] and [RFC3164][RFC3164].
+- It also supports sending syslog messages to the [Cloud Syslog Source][CloudSyslogSource] configured on a Sumo Logic hosted collector
+  using the [RFC5424][RFC5424] format, token required by [Cloud Syslog Source][CloudSyslogSource] can be added using [Logs Transform Processor][logstransform],
+  please see [example configuration][configWithToken].
+- It is recommended that this syslog exporter be used with the [syslog_parser][syslog_parser] configured in the receiver.
+  This ensures that all the syslog message headers are populated with the expected values.
+- Not using the `syslog_parser` will result in the syslog message being populated with default header values.
 
-`Note` - Syslog over UDP doesn't support certificate verification (ca_certificate).
+__Note__: Syslog over UDP doesn't support certificate verification (`ca_certificate`).
 
 ## Configuration
 
@@ -94,3 +97,11 @@ service:
       exporters:
         - syslog
 ```
+
+[rsyslog]: https://www.rsyslog.com/
+[RFC5424]: https://www.rfc-editor.org/rfc/rfc5424
+[RFC3164]: https://www.rfc-editor.org/rfc/rfc3164
+[CloudSyslogSource]: https://help.sumologic.com/docs/send-data/hosted-collectors/cloud-syslog-source/
+[logstransform]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/logstransformprocessor
+[configWithToken]: ./examples/config_with_token.yaml
+[syslog_parser]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/docs/operators/syslog_parser.md
