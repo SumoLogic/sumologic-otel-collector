@@ -558,19 +558,9 @@ function print_breaking_changes() {
         fi
     done
 
-    echo ""
     if [[ -n "${message}" ]]; then
         echo "The following versions contain breaking changes: ${message}! Please make sure to read the linked Changelog file."
     fi
-}
-
-# Print changelog link for specific branch
-function print_changelog_link() {
-    local branch
-    readonly branch="${1}"
-
-    echo -e "Changelog:\t\thttps://github.com/SumoLogic/sumologic-otel-collector/blob/${branch}/CHANGELOG.md"
-    echo ""
 }
 
 # set up configuration
@@ -1193,6 +1183,8 @@ if [[ "${INSTALLED_VERSION}" == "${VERSION}" && -z "${BINARY_BRANCH}" ]]; then
     echo -e "OpenTelemetry collector is already in newest (${VERSION}) version"
 else
 
+    # add newline before breaking changes and changelog
+    echo ""
     if [[ -n "${INSTALLED_VERSION}" && -z "${BINARY_BRANCH}" ]]; then
         # Take versions from installed up to the newest
         BETWEEN_VERSIONS="$(get_versions_from "${VERSIONS}" "${INSTALLED_VERSION}")"
@@ -1200,11 +1192,9 @@ else
         print_breaking_changes "${BETWEEN_VERSIONS}"
     fi
 
-    if [[ -z "${BINARY_BRANCH}" ]]; then
-        print_changelog_link "v${VERSION}"
-    else
-        print_changelog_link "${BINARY_BRANCH}"
-    fi
+    echo -e "Changelog:\t\thttps://github.com/SumoLogic/sumologic-otel-collector/blob/main/CHANGELOG.md"
+    # add newline after breaking changes and changelog
+    echo ""
 
     # Add -fips to the suffix if necessary
     binary_suffix="${OS_TYPE}_${ARCH_TYPE}"
