@@ -9,6 +9,8 @@ exporters:
     port: 514
     endpoint: 127.0.0.1
     ca_certificate: certs/servercert.pem
+    certificate: certs/cert.pem # tcp only
+    key: certs/key.pem # tcp only
     format: rfc5424
 
     # for below described queueing and retry related configuration please refer to:

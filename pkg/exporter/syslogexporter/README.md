@@ -27,6 +27,8 @@ __Note__: Syslog over UDP doesn't support certificate verification (`ca_certific
   - `rfc5424` - Expects the syslog messages to be rfc5424 compliant
   - `rfc3164` - Expects the syslog messages to be rfc3164 compliant
 - `ca_certificate` [tcp only] - A publicly verifiable server certificate (`note`: Self signed certificates are not supported in this version)
+- `certificate` [tcp only] - certificate for mTLS communication (client certificate)
+- `key` [tcp only] -  Key for mTLS communication (client key)
 
 Please refer to the yaml below to configure the syslog exporter:
 
@@ -42,7 +44,10 @@ exporters:
     port: 6514 # 514 (UDP)
     endpoint: 127.0.0.1 # FQDN or IP address
     ca_certificate: certs/servercert.pem # tcp only
-    format: rfc5424 # RFC5424 or RFC3164
+    certificate: certs/cert.pem # tcp only
+    key: certs/key.pem # tcp only
+    format: rfc5424 # rfc5424 or rfc3164
+
 
     # for below described queueing and retry related configuration please refer to:
     # https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/exporterhelper/README.md#configuration
