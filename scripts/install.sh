@@ -534,47 +534,12 @@ function ask_to_continue() {
 
 }
 
-# Get changelog for specific version
-# Only version description and breaking changes are taken
-function get_changelog() {
-    local version
-    readonly version="${1}"
+# Print changelog link for specific branch
+function print_changelog_link() {
+    local branch
+    readonly branch="${1}"
 
-    # 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g' replaces [$1][*] with $1
-    # 's/\[\([^\[]*\)\]([^\()]*)/\1/g' replaces [$1](*) with $1
-    local notes
-    notes="$(echo -e "$(curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -s "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/releases/tags/v${version}" | grep -o "body.*"  | sed 's/body": "//;s/"$//' | sed 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g;s/\[\([^\[]*\)\]([^\()]*)/\1/g')")"
-    readonly notes
-
-    local changelog
-    # sed '$ d' removes last line
-    changelog="$(echo "${notes}" | sed -e "/## v${version}/,/###/!d" | sed '$ d')"
-    changelog="${changelog}\n### Release address\n\nhttps://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v${version}\n"
-    # 's/\[#.*//' remove everything starting from `[#`
-    # 's/\[\([^\[]*\)\]/\1/g' replaces [$1] with $1
-    changelog="${changelog}\n$(echo "${notes}" | sed -e '/### Changelog/,/###/!d' | sed '$ d' | sed 's/\[#.*//;s/\[\([^\[]*\)\]/\1/g')"
-    changelog="${changelog}\n$(echo "${notes}" | sed -e '/### Breaking changes/,/###/!d' | sed '$ d' | sed 's/\[#.*//;s/\[\([^\[]*\)\]/\1/g')"
-    echo -e "${changelog}"
-}
-
-# Get full changelog if there is no versions from API
-function get_full_changelog() {
-    local version
-    readonly version="${1}"
-
-    local notes
-    notes="$(echo -e "$(curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -s "https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${version}/CHANGELOG.md")")"
-    readonly notes
-
-    local changelog
-    # 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g' replaces [$1][*] with $1
-    # 's/\[\([^\[]*\)\]([^\()]*)/\1/g' replaces [$1](*) with $1
-    changelog="$(echo "${notes}" | sed 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g;s/\[\([^\[]*\)\]([^\()]*)/\1/g' | sed "s%# Changelog%# Changelog\n\nAddress: https://github.com/SumoLogic/sumologic-otel-collector/blob/v${version}/CHANGELOG.md%g")"
-    # s/## \[\(.*\)\]/## \1/g changes `## [$1]` to `## $1`
-    # 's/\[.*//' remove everything starting from `[#`
-    # 's/\[\([^\[]*\)\]/\1/g' replaces [$1] with $1
-    changelog="$(echo "${changelog}" | sed 's/^## \[\(.*\)\]/## \1/g' | sed '/^\[.*/d;;s/\[\([^\[]*\)\]/\1/g'))"
-    echo -e "${changelog}"
+    echo -e "Changelog:\t\thttps://github.com/SumoLogic/sumologic-otel-collector/blob/${branch}/CHANGELOG.md"
 }
 
 # set up configuration
@@ -1196,22 +1161,10 @@ readonly CONFIG_BRANCH BINARY_BRANCH
 if [[ "${INSTALLED_VERSION}" == "${VERSION}" && -z "${BINARY_BRANCH}" ]]; then
     echo -e "OpenTelemetry collector is already in newest (${VERSION}) version"
 else
-    if [[ -z "${INSTALLED_VERSION}" && -z "${BINARY_BRANCH}" ]]; then
-        # Take versions from installed up to the newest
-        BETWEEN_VERSIONS="$(get_versions_from "${VERSIONS}" "${INSTALLED_VERSION}")"
-        readonly BETWEEN_VERSIONS
-        echo "${BETWEEN_VERSIONS}"
-
-        # Get full changelog if we were unable to access github API
-        if [[ -z "${BETWEEN_VERSIONS}" ]] || [[ "$(github_rate_limit)" < "$(echo BETWEEN_VERSIONS | wc -w)" ]]; then
-            echo -e "Showing full changelog up to ${VERSION}"
-            get_full_changelog "${VERSION}"
-        else
-            for version in ${BETWEEN_VERSIONS}; do
-                # Print changelog for every version
-                get_changelog "${version}"
-            done
-        fi
+    if [[ -z "${BINARY_BRANCH}" ]]; then
+        print_changelog_link "v${VERSION}"
+    else
+        print_changelog_link "${BINARY_BRANCH}"
     fi
 
     # Add -fips to the suffix if necessary
