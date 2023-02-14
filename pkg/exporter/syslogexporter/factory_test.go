@@ -21,12 +21,11 @@ func TestCreateDefaultConfig(t *testing.T) {
 	qs.Enabled = false
 
 	assert.Equal(t, cfg, &Config{
-		Endpoint:                 "host.domain.com",
-		Port:                     514,
-		Protocol:                 "tcp",
-		CACertificate:            "",
-		Format:                   "rfc5424",
-		AdditionalStructuredData: []string(nil),
+		Endpoint:      "host.domain.com",
+		Port:          514,
+		Protocol:      "tcp",
+		CACertificate: "",
+		Format:        "rfc5424",
 		QueueSettings: exporterhelper.QueueSettings{
 			Enabled:      false,
 			NumConsumers: 0,

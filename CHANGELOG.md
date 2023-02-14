@@ -37,6 +37,7 @@ This release introduces the following breaking changes:
 ### Changed
 
 - chore: update OT core to v0.71.0 [#958]
+- feat(syslogexporter): remove adding additional structure data in syslog exporter [#975]
 
 ### Fixed
 
@@ -49,6 +50,7 @@ This release introduces the following breaking changes:
 [#936]: https://github.com/SumoLogic/sumologic-otel-collector/pull/936
 [#950]: https://github.com/SumoLogic/sumologic-otel-collector/pull/950
 [#958]: https://github.com/SumoLogic/sumologic-otel-collector/pull/958
+[#975]: https://github.com/SumoLogic/sumologic-otel-collector/pull/975
 [v0.71.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.70.0-sumo-0...v0.71.0-sumo-0
 
 ## [v0.70.0-sumo-2]
