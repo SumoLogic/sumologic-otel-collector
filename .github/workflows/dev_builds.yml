@@ -343,11 +343,11 @@ jobs:
           name: otelcol-sumo-windows_amd64
           path: ./otelcolbuilder/cmd
 
-      - name: Set OVERRIDE_INTERNAL_VERSION
-        run: echo "OVERRIDE_INTERNAL_VERSION=$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+      - name: Set OVERRIDE_BUILD_NUMBER
+        run: echo "OVERRIDE_BUILD_VERSION=$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
 
       - name: Set PRODUCT_VERSION
-        run: echo "PRODUCT_VERSION=$(./ci/get_productversion.sh)" >> $GITHUB_ENV
+        run: echo "PRODUCT_VERSION=$(./ci/get_version.sh productversion)" >> $GITHUB_ENV
 
       - name: Build MSI for windows/amd64
         working-directory: ./packaging/msi/wix
@@ -359,3 +359,50 @@ jobs:
           name: windows_amd64_msi
           path: ./packaging/msi/wix/bin/x64/en-US/*.msi
           if-no-files-found: error
+
+  # Triggers build_packages workflow in the sumologic-otel-collector-packaging
+  # repository. It must be the last job run as artifacts only become available
+  # to download after all jobs have completed. The lint, package-msi and
+  # push-docker-manifest jobs are independent or depend on all other jobs so
+  # we add them as "need" dependencies to ensure this job runs last.
+  trigger-packaging:
+    name: Trigger Packaging
+    needs:
+      - lint
+      - package-msi
+      - push-docker-manifest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Fetch tags
+        run: git fetch --tags origin
+
+      - name: Determine version core
+        id: version-core
+        run: >
+          ./ci/get_version.sh core > /tmp/version_core &&
+          cat /tmp/version_core &&
+          echo version=$(cat /tmp/version_core) >> $GITHUB_OUTPUT
+
+      - name: Determine sumo version
+        id: sumo-version
+        run: >
+          ./ci/get_version.sh sumo > /tmp/sumo_version &&
+          cat /tmp/sumo_version &&
+          echo version=$(cat /tmp/sumo_version) >> $GITHUB_OUTPUT
+
+      - name: Trigger packaging workflow
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: build_packages.yml
+          repo: SumoLogic/sumologic-otel-collector-packaging
+          token: ${{ secrets.PACKAGING_GH_TOKEN }}
+          ref: main
+          inputs: |-
+            {
+              "workflow_id": "${{ github.run_id }}",
+              "otc_version": "${{ steps.version-core.outputs.version }}",
+              "otc_sumo_version": "${{ steps.sumo-version.outputs.version }}"
+            }
