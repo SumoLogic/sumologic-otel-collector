@@ -28,7 +28,7 @@ and can be used as an authenticator for the
 
 ## Configuration
 
-- `install_token`: (required) collector install token for the Sumo Logic service, see
+- `installation_token`: (required) collector install token for the Sumo Logic service, see
   [help][credentials_help] for more details
 - `collector_name`: name that will be used for registration; by default the hostname is used. In the event of a conflict, a timestamp will be appended to the name. See [here][clobber] for more information.
 - `collector_description`: collector description that will be used for registration
@@ -77,7 +77,7 @@ and can be used as an authenticator for the
 ```yaml
 extensions:
   sumologic:
-    install_token: <token>
+    installation_token: <token>
     collector_name: my_collector
 
 receivers:
@@ -124,7 +124,7 @@ Here is a list of valid values for this configuration option:
 
 ## Storing credentials
 
-When collector is starting for the first time, Sumo Logic extension is using the `install_token`
+When collector is starting for the first time, Sumo Logic extension is using the `installation_token`
 to register the collector with API.
 Upon registration, the extension gets collector credentials which are used to authenticate the collector
 when sending request to API (heartbeats, sending data etc).
@@ -136,7 +136,7 @@ set to `$HOME/.sumologic-otel-collector`.
 Name of that file that contains the credentials is created in the following manner:
 
 ```go
-filename := hash(collector_name, install_token, api_base_url)
+filename := hash(collector_name, installation_token, api_base_url)
 ```
 
 This mechanism allows to keep the state of the collector (whether it is registered or not).
