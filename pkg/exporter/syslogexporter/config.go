@@ -43,8 +43,6 @@ type Config struct {
 	CACertificate string `mapstructure:"ca_certificate"`
 	// Format of syslog messages
 	Format string `mapstructure:"format"`
-	// Additional structured data added to structured data in RFC5424
-	AdditionalStructuredData []string `mapstructure:"additional_structured_data"`
 
 	exporterhelper.QueueSettings `mapstructure:"sending_queue"`
 	exporterhelper.RetrySettings `mapstructure:"retry_on_failure"`
