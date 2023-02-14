@@ -78,7 +78,7 @@ func TestBasicExtensionConstruction(t *testing.T) {
 			Config: func() *Config {
 				cfg := createDefaultConfig().(*Config)
 				cfg.CollectorName = "collector_name"
-				cfg.Credentials.InstallToken = "install_token_123456"
+				cfg.Credentials.InstallationToken = "install_token_123456"
 				return cfg
 			}(),
 		},
@@ -146,7 +146,7 @@ func TestBasicStart(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = "collector_name"
 	cfg.ApiBaseUrl = srv.URL
-	cfg.Credentials.InstallToken = "dummy_install_token"
+	cfg.Credentials.InstallationToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
 
 	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
@@ -204,7 +204,7 @@ func TestStoreCredentials(t *testing.T) {
 		cfg := createDefaultConfig().(*Config)
 		cfg.CollectorName = "collector_name"
 		cfg.ApiBaseUrl = url
-		cfg.Credentials.InstallToken = "dummy_install_token"
+		cfg.Credentials.InstallationToken = "dummy_install_token"
 		return cfg
 	}
 
@@ -353,7 +353,7 @@ func TestStoreCredentials_PreexistingCredentialsAreUsed(t *testing.T) {
 		cfg := createDefaultConfig().(*Config)
 		cfg.CollectorName = "collector_name"
 		cfg.ApiBaseUrl = url
-		cfg.Credentials.InstallToken = "dummy_install_token"
+		cfg.Credentials.InstallationToken = "dummy_install_token"
 		return cfg
 	}
 
@@ -459,7 +459,7 @@ func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T
 		cfg := createDefaultConfig().(*Config)
 		cfg.CollectorName = "collector_name"
 		cfg.ApiBaseUrl = url
-		cfg.Credentials.InstallToken = "dummy_install_token"
+		cfg.Credentials.InstallationToken = "dummy_install_token"
 		return cfg
 	}
 
@@ -574,7 +574,7 @@ func TestRegisterEmptyCollectorName(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = ""
 	cfg.ApiBaseUrl = srv.URL
-	cfg.Credentials.InstallToken = "dummy_install_token"
+	cfg.Credentials.InstallationToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
 
 	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
@@ -661,7 +661,7 @@ func TestRegisterEmptyCollectorNameForceRegistration(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = ""
 	cfg.ApiBaseUrl = srv.URL
-	cfg.Credentials.InstallToken = "dummy_install_token"
+	cfg.Credentials.InstallationToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
 	cfg.ForceRegistration = true
 
@@ -735,7 +735,7 @@ func TestCollectorSendsBasicAuthHeadersOnRegistration(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = ""
 	cfg.ApiBaseUrl = srv.URL
-	cfg.Credentials.InstallToken = "dummy_install_token"
+	cfg.Credentials.InstallationToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
 
 	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
@@ -771,7 +771,7 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 		storageKey := createHashKey(&Config{
 			CollectorName: "test-name",
 			Credentials: accessCredentials{
-				InstallToken: "dummy_install_token",
+				InstallationToken: "dummy_install_token",
 			},
 			ApiBaseUrl: url,
 		})
@@ -828,7 +828,7 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 				cfg := createDefaultConfig().(*Config)
 				cfg.CollectorName = "test-name"
 				cfg.ApiBaseUrl = url
-				cfg.Credentials.InstallToken = "dummy_install_token"
+				cfg.Credentials.InstallationToken = "dummy_install_token"
 				cfg.CollectorCredentialsDirectory = dir
 				return cfg
 			},
@@ -880,7 +880,7 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 				cfg := createDefaultConfig().(*Config)
 				cfg.CollectorName = "test-name-not-in-the-credentials-store"
 				cfg.ApiBaseUrl = url
-				cfg.Credentials.InstallToken = "dummy_install_token"
+				cfg.Credentials.InstallationToken = "dummy_install_token"
 				cfg.CollectorCredentialsDirectory = dir
 				return cfg
 			},
@@ -984,7 +984,7 @@ func TestRegisterEmptyCollectorNameWithBackoff(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = ""
 	cfg.ApiBaseUrl = srv.URL
-	cfg.Credentials.InstallToken = "dummy_install_token"
+	cfg.Credentials.InstallationToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
 	cfg.BackOff.InitialInterval = time.Millisecond
 	cfg.BackOff.MaxInterval = time.Millisecond
@@ -1033,7 +1033,7 @@ func TestRegisterEmptyCollectorNameUnrecoverableError(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = ""
 	cfg.ApiBaseUrl = srv.URL
-	cfg.Credentials.InstallToken = "dummy_install_token"
+	cfg.Credentials.InstallationToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
 	cfg.BackOff.InitialInterval = time.Millisecond
 	cfg.BackOff.MaxInterval = time.Millisecond
@@ -1134,7 +1134,7 @@ func TestRegistrationRedirect(t *testing.T) {
 		cfg := createDefaultConfig().(*Config)
 		cfg.CollectorName = ""
 		cfg.ApiBaseUrl = origSrv.URL
-		cfg.Credentials.InstallToken = "dummy_install_token"
+		cfg.Credentials.InstallationToken = "dummy_install_token"
 		cfg.CollectorCredentialsDirectory = dir
 		return cfg
 	}
@@ -1248,7 +1248,7 @@ func TestCollectorReregistersAfterHTTPUnathorizedFromHeartbeat(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = ""
 	cfg.ApiBaseUrl = srv.URL
-	cfg.Credentials.InstallToken = "dummy_install_token"
+	cfg.Credentials.InstallationToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
 	cfg.HeartBeatInterval = 100 * time.Millisecond
 
@@ -1334,7 +1334,7 @@ func TestRegistrationRequestPayload(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = ""
 	cfg.ApiBaseUrl = srv.URL
-	cfg.Credentials.InstallToken = "dummy_install_token"
+	cfg.Credentials.InstallationToken = "dummy_install_token"
 	cfg.CollectorCredentialsDirectory = dir
 	cfg.BackOff.InitialInterval = time.Millisecond
 	cfg.BackOff.MaxInterval = time.Millisecond
@@ -1357,7 +1357,7 @@ func TestRegistrationRequestPayload(t *testing.T) {
 
 func TestWatchCredentialKey(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
-	cfg.Credentials.InstallToken = "dummy_install_token"
+	cfg.Credentials.InstallationToken = "dummy_install_token"
 	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 
@@ -1384,7 +1384,7 @@ func TestWatchCredentialKey(t *testing.T) {
 
 func TestCreateCredentialsHeader(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
-	cfg.Credentials.InstallToken = "dummy_install_token"
+	cfg.Credentials.InstallationToken = "dummy_install_token"
 	se, err := newSumologicExtension(cfg, zap.NewNop(), component.NewID("sumologic"), "1.0.0")
 	require.NoError(t, err)
 
@@ -1438,7 +1438,7 @@ func TestUpdateMetadataRequestPayload(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.CollectorName = ""
 	cfg.ApiBaseUrl = srv.URL
-	cfg.Credentials.InstallToken = "dummy_install_token"
+	cfg.Credentials.InstallationToken = "dummy_install_token"
 	cfg.BackOff.InitialInterval = time.Millisecond
 	cfg.BackOff.MaxInterval = time.Millisecond
 	cfg.Clobber = true

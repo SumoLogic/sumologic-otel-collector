@@ -142,7 +142,7 @@ All of the above metrics have the following dimensions:
 ```yaml
 extensions:
   sumologic:
-    install_token: <token>
+    installation_token: <token>
     collector_name: my_collector
 
 receivers:

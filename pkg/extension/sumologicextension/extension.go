@@ -106,9 +106,13 @@ var errGRPCNotSupported = fmt.Errorf("gRPC is not supported by sumologicextensio
 var _ auth.Client = (*SumologicExtension)(nil)
 
 func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID, buildVersion string) (*SumologicExtension, error) {
-	if conf.Credentials.InstallToken == "" {
-		return nil, errors.New("access credentials not provided: need install_token")
+	if conf.Credentials.InstallationToken == "" && conf.Credentials.InstallToken == "" {
+		return nil, errors.New("access credentials not provided: need installation_token")
+	} else if conf.Credentials.InstallationToken == "" {
+		logger.Warn("install_token is deprecated. Please use installation_token instead")
+		conf.Credentials.InstallationToken = conf.Credentials.InstallToken
 	}
+
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, err
@@ -169,7 +173,7 @@ func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID, bu
 func createHashKey(conf *Config) string {
 	return fmt.Sprintf("%s%s%s",
 		conf.CollectorName,
-		conf.Credentials.InstallToken,
+		conf.Credentials.InstallationToken,
 		strings.TrimSuffix(conf.ApiBaseUrl, "/"),
 	)
 }
@@ -929,8 +933,8 @@ func addCollectorCredentials(req *http.Request, collectorCredentialId string, co
 
 func addClientCredentials(req *http.Request, credentials accessCredentials) {
 	var authHeaderValue string
-	if credentials.InstallToken != "" {
-		authHeaderValue = fmt.Sprintf("Bearer %s", credentials.InstallToken)
+	if credentials.InstallationToken != "" {
+		authHeaderValue = fmt.Sprintf("Bearer %s", credentials.InstallationToken)
 	}
 
 	req.Header.Del("Authorization")
