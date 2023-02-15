@@ -534,12 +534,33 @@ function ask_to_continue() {
 
 }
 
-# Print changelog link for specific branch
-function print_changelog_link() {
-    local branch
-    readonly branch="${1}"
+# Print information about breaking changes
+function print_breaking_changes() {
+    local versions
+    readonly versions="${1}"
 
-    echo -e "Changelog:\t\thttps://github.com/SumoLogic/sumologic-otel-collector/blob/${branch}/CHANGELOG.md"
+    local changelog
+    readonly changelog="$(echo -e "$(curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -sS https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/CHANGELOG.md)")"
+
+    local is_breaking_change
+    local message
+    message=""
+
+    for version in ${versions}; do
+        # Print changelog for every version
+        is_breaking_change=$(echo -e "${changelog}" | grep -E '^## |^### Breaking|breaking changes' | sed -e '/## \[v'"${version}"'/,/## \[v/!d' | grep -E 'Breaking|breaking' || echo "")
+
+        if [[ -n "${is_breaking_change}" ]]; then
+            if [[ -n "${message}" ]]; then
+                message="${message}, "
+            fi
+            message="${message}v${version}"
+        fi
+    done
+
+    if [[ -n "${message}" ]]; then
+        echo "The following versions contain breaking changes: ${message}! Please make sure to read the linked Changelog file."
+    fi
 }
 
 # set up configuration
@@ -1161,11 +1182,19 @@ readonly CONFIG_BRANCH BINARY_BRANCH
 if [[ "${INSTALLED_VERSION}" == "${VERSION}" && -z "${BINARY_BRANCH}" ]]; then
     echo -e "OpenTelemetry collector is already in newest (${VERSION}) version"
 else
-    if [[ -z "${BINARY_BRANCH}" ]]; then
-        print_changelog_link "v${VERSION}"
-    else
-        print_changelog_link "${BINARY_BRANCH}"
+
+    # add newline before breaking changes and changelog
+    echo ""
+    if [[ -n "${INSTALLED_VERSION}" && -z "${BINARY_BRANCH}" ]]; then
+        # Take versions from installed up to the newest
+        BETWEEN_VERSIONS="$(get_versions_from "${VERSIONS}" "${INSTALLED_VERSION}")"
+        readonly BETWEEN_VERSIONS
+        print_breaking_changes "${BETWEEN_VERSIONS}"
     fi
+
+    echo -e "Changelog:\t\thttps://github.com/SumoLogic/sumologic-otel-collector/blob/main/CHANGELOG.md"
+    # add newline after breaking changes and changelog
+    echo ""
 
     # Add -fips to the suffix if necessary
     binary_suffix="${OS_TYPE}_${ARCH_TYPE}"
