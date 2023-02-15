@@ -50,7 +50,7 @@ extensions:
     directory: .
   sumologic:
     collector_name: sumologic-demo
-    install_token: ${SUMOLOGIC_INSTALL_TOKEN}
+    install_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
 ```
 
 ### `apache` receiver: turn on feature gates for resource attributes

@@ -22,10 +22,10 @@
       </Component>
 
       <!-- TODO: fix permissions to allow securely storing secrets in the registry -->
-      <!-- Add InstallToken to Registry -->
+      <!-- Add InstallationToken to Registry -->
       <!-- <Component> -->
       <!--   <RegistryKey Root="HKLM" Key="$(RegKeyPath)" ForceCreateOnInstall="yes"> -->
-      <!--     <RegistryValue Name="InstallToken" Value="[INSTALLTOKEN]" Type="string" KeyPath="yes" /> -->
+      <!--     <RegistryValue Name="InstallationToken" Value="[INSTALLATIONTOKEN]" Type="string" KeyPath="yes" /> -->
       <!--     <PermissionEx Sddl="O:BAG:S-1-5-21-3988832304-4192099344-2875098712-513D:PAI(A;CI;KA;;;SY)(A;CI;KA;;;BA)" /> -->
       <!--   </RegistryKey> -->
       <!-- </Component> -->

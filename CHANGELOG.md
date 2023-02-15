@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- feat(sumologicextension): deprecate `install_token` [#969]
+
+[#969]: https://github.com/SumoLogic/sumologic-otel-collector/pull/969
+[unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.71.0-sumo-0...main
+
 ## [v0.71.0-sumo-0]
 
 ### Released 2023-02-09
@@ -12,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This release introduces the following breaking changes:
 
 - feat(sumologicextension): use hostname as default collector name [#918]
+- feat(script)!: be consistent with installation token naming [#941]
+
+  We depracated `--skip-install-token` in favor of `--skip-installation-token`
+  and `SUMOLOGIC_INSTALL_TOKEN` environmental variable in favor of `SUMOLOGIC_INSTALLATION_TOKEN`.
+  Please update your configuration and automation scripts.
 
 ### Added
 
@@ -23,6 +37,7 @@ This release introduces the following breaking changes:
 ### Changed
 
 - chore: update OT core to v0.71.0 [#958]
+- feat(syslogexporter): remove adding additional structure data in syslog exporter [#975]
 
 ### Fixed
 
@@ -35,6 +50,7 @@ This release introduces the following breaking changes:
 [#936]: https://github.com/SumoLogic/sumologic-otel-collector/pull/936
 [#950]: https://github.com/SumoLogic/sumologic-otel-collector/pull/950
 [#958]: https://github.com/SumoLogic/sumologic-otel-collector/pull/958
+[#975]: https://github.com/SumoLogic/sumologic-otel-collector/pull/975
 [v0.71.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.70.0-sumo-0...v0.71.0-sumo-0
 
 ## [v0.70.0-sumo-2]

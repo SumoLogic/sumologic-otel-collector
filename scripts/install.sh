@@ -9,6 +9,7 @@ readonly CURL_MAX_TIME=180
 
 ARG_SHORT_TOKEN='i'
 ARG_LONG_TOKEN='installation-token'
+DEPRECATED_ARG_LONG_TOKEN='installation-token'
 ARG_SHORT_HELP='h'
 ARG_LONG_HELP='help'
 ARG_SHORT_API='a'
@@ -30,14 +31,16 @@ ARG_LONG_UNINSTALL='uninstall'
 ARG_SHORT_PURGE='p'
 ARG_LONG_PURGE='purge'
 ARG_SHORT_SKIP_TOKEN='k'
-ARG_LONG_SKIP_TOKEN='skip-install-token'
+ARG_LONG_SKIP_TOKEN='skip-installation-token'
+DEPRECATED_ARG_LONG_SKIP_TOKEN='skip-install-token'
 ARG_SHORT_DOWNLOAD='w'
 ARG_LONG_DOWNLOAD='download-only'
 ARG_SHORT_CONFIG_BRANCH='c'
 ARG_LONG_CONFIG_BRANCH='config-branch'
 ARG_SHORT_BINARY_BRANCH='e'
 ARG_LONG_BINARY_BRANCH='binary-branch'
-ENV_TOKEN="SUMOLOGIC_INSTALL_TOKEN"
+ENV_TOKEN="SUMOLOGIC_INSTALLATION_TOKEN"
+DEPRECATED_ENV_TOKEN="SUMOLOGIC_INSTALL_TOKEN"
 ARG_SHORT_BRANCH='b'
 ARG_LONG_BRANCH='branch'
 ARG_SHORT_KEEP_DOWNLOADS='n'
@@ -53,13 +56,17 @@ readonly ARG_SHORT_CONFIG_BRANCH ARG_LONG_CONFIG_BRANCH ARG_SHORT_BINARY_BRANCH 
 readonly ARG_SHORT_BRANCH ARG_LONG_BRANCH ARG_SHORT_SKIP_CONFIG ARG_LONG_SKIP_CONFIG
 readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ARG_SHORT_FIPS ARG_LONG_FIPS ENV_TOKEN
 readonly ARG_SHORT_INSTALL_HOSTMETRICS ARG_LONG_INSTALL_HOSTMETRICS
+readonly DEPRECATED_ARG_LONG_TOKEN DEPRECATED_ENV_TOKEN DEPRECATED_ARG_LONG_SKIP_TOKEN
 
 ############################ Variables (see set_defaults function for default values)
 
 # Support providing install_token as env
 set +u
-if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
-    SUMOLOGIC_INSTALL_TOKEN=""
+if [[ -z "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
+    SUMOLOGIC_INSTALLATION_TOKEN=""
+elif [[ -z "${SUMOLOGIC_INSTALLATION_TOKEN}" ]]; then
+    echo "${DEPRECATED_ENV_TOKEN} environmental variable is deprecated. Please use ${ENV_TOKEN} instead."
+    SUMOLOGIC_INSTALLATION_TOKEN="${SUMOLOGIC_INSTALL_TOKEN}"
 fi
 set -u
 
@@ -114,7 +121,7 @@ Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_TAG} <key>=<v
                        [--${ARG_LONG_YES}] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
 
 Supported arguments:
-  -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>      Installation token. It has precedence over 'SUMOLOGIC_INSTALL_TOKEN' env variable.
+  -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>      Installation token. It has precedence over 'SUMOLOGIC_INSTALLATION_TOKEN' env variable.
   -${ARG_SHORT_SKIP_TOKEN}, --${ARG_LONG_SKIP_TOKEN}              Skips requirement for installation token.
                                         This option do not disable default configuration creation.
   -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                 Sets tag for collector. This argument can be use multiple times. One per tag.
@@ -173,6 +180,10 @@ function parse_options() {
       "--${ARG_LONG_TOKEN}")
         set -- "$@" "-${ARG_SHORT_TOKEN}"
         ;;
+      "--${DEPRECATED_ARG_LONG_TOKEN}")
+        echo "--${DEPRECATED_ARG_LONG_TOKEN}" is deprecated. Please use "--${ARG_LONG_TOKEN}" instead.
+        set -- "$@" "-${ARG_SHORT_TOKEN}"
+        ;;
       "--${ARG_LONG_API}")
         set -- "$@" "-${ARG_SHORT_API}"
         ;;
@@ -201,6 +212,10 @@ function parse_options() {
         set -- "$@" "-${ARG_SHORT_PURGE}"
         ;;
       "--${ARG_LONG_SKIP_TOKEN}")
+        set -- "$@" "-${ARG_SHORT_SKIP_TOKEN}"
+        ;;
+      "--${DEPRECATED_ARG_LONG_SKIP_TOKEN}")
+        echo "--${DEPRECATED_ARG_LONG_SKIP_TOKEN}" is deprecated. Please use "--${ARG_SHORT_SKIP_TOKEN}" instead.
         set -- "$@" "-${ARG_SHORT_SKIP_TOKEN}"
         ;;
       "--${ARG_LONG_DOWNLOAD}")
@@ -249,7 +264,7 @@ function parse_options() {
     # Validate opt and set arguments
     case "$opt" in
       "${ARG_SHORT_HELP}")          usage; exit 0 ;;
-      "${ARG_SHORT_TOKEN}")         SUMOLOGIC_INSTALL_TOKEN="${OPTARG}" ;;
+      "${ARG_SHORT_TOKEN}")         SUMOLOGIC_INSTALLATION_TOKEN="${OPTARG}" ;;
       "${ARG_SHORT_API}")           API_BASE_URL="${OPTARG}" ;;
       "${ARG_SHORT_SKIP_CONFIG}")   SKIP_CONFIG=true ;;
       "${ARG_SHORT_VERSION}")       VERSION="${OPTARG}" ;;
@@ -519,47 +534,33 @@ function ask_to_continue() {
 
 }
 
-# Get changelog for specific version
-# Only version description and breaking changes are taken
-function get_changelog() {
-    local version
-    readonly version="${1}"
-
-    # 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g' replaces [$1][*] with $1
-    # 's/\[\([^\[]*\)\]([^\()]*)/\1/g' replaces [$1](*) with $1
-    local notes
-    notes="$(echo -e "$(curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -s "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/releases/tags/v${version}" | grep -o "body.*"  | sed 's/body": "//;s/"$//' | sed 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g;s/\[\([^\[]*\)\]([^\()]*)/\1/g')")"
-    readonly notes
+# Print information about breaking changes
+function print_breaking_changes() {
+    local versions
+    readonly versions="${1}"
 
     local changelog
-    # sed '$ d' removes last line
-    changelog="$(echo "${notes}" | sed -e "/## v${version}/,/###/!d" | sed '$ d')"
-    changelog="${changelog}\n### Release address\n\nhttps://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v${version}\n"
-    # 's/\[#.*//' remove everything starting from `[#`
-    # 's/\[\([^\[]*\)\]/\1/g' replaces [$1] with $1
-    changelog="${changelog}\n$(echo "${notes}" | sed -e '/### Changelog/,/###/!d' | sed '$ d' | sed 's/\[#.*//;s/\[\([^\[]*\)\]/\1/g')"
-    changelog="${changelog}\n$(echo "${notes}" | sed -e '/### Breaking changes/,/###/!d' | sed '$ d' | sed 's/\[#.*//;s/\[\([^\[]*\)\]/\1/g')"
-    echo -e "${changelog}"
-}
+    readonly changelog="$(echo -e "$(curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -sS https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/CHANGELOG.md)")"
 
-# Get full changelog if there is no versions from API
-function get_full_changelog() {
-    local version
-    readonly version="${1}"
+    local is_breaking_change
+    local message
+    message=""
 
-    local notes
-    notes="$(echo -e "$(curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -s "https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${version}/CHANGELOG.md")")"
-    readonly notes
+    for version in ${versions}; do
+        # Print changelog for every version
+        is_breaking_change=$(echo -e "${changelog}" | grep -E '^## |^### Breaking|breaking changes' | sed -e '/## \[v'"${version}"'/,/## \[v/!d' | grep -E 'Breaking|breaking' || echo "")
 
-    local changelog
-    # 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g' replaces [$1][*] with $1
-    # 's/\[\([^\[]*\)\]([^\()]*)/\1/g' replaces [$1](*) with $1
-    changelog="$(echo "${notes}" | sed 's/\[\([^\[]*\)\]\[[^\[]*\]/\1/g;s/\[\([^\[]*\)\]([^\()]*)/\1/g' | sed "s%# Changelog%# Changelog\n\nAddress: https://github.com/SumoLogic/sumologic-otel-collector/blob/v${version}/CHANGELOG.md%g")"
-    # s/## \[\(.*\)\]/## \1/g changes `## [$1]` to `## $1`
-    # 's/\[.*//' remove everything starting from `[#`
-    # 's/\[\([^\[]*\)\]/\1/g' replaces [$1] with $1
-    changelog="$(echo "${changelog}" | sed 's/^## \[\(.*\)\]/## \1/g' | sed '/^\[.*/d;;s/\[\([^\[]*\)\]/\1/g'))"
-    echo -e "${changelog}"
+        if [[ -n "${is_breaking_change}" ]]; then
+            if [[ -n "${message}" ]]; then
+                message="${message}, "
+            fi
+            message="${message}v${version}"
+        fi
+    done
+
+    if [[ -n "${message}" ]]; then
+        echo "The following versions contain breaking changes: ${message}! Please make sure to read the linked Changelog file."
+    fi
 }
 
 # set up configuration
@@ -608,13 +609,13 @@ function setup_config() {
     fi
 
     ## Check if there is anything to update in configuration
-    if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
+    if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
         create_user_config_file "${COMMON_CONFIG_PATH}"
         add_extension_to_config "${COMMON_CONFIG_PATH}"
         write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
 
-        if [[ -n "${SUMOLOGIC_INSTALL_TOKEN}" && -z "${USER_TOKEN}" ]]; then
-            write_install_token "${SUMOLOGIC_INSTALL_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
+        if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" ]]; then
+            write_installation_token "${SUMOLOGIC_INSTALLATION_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
         fi
 
         # fill in api base url
@@ -870,8 +871,8 @@ function write_sumologic_extension() {
 ${indentation}sumologic:/" "${file}"
 }
 
-# write install token to user configuration file
-function write_install_token() {
+# write installation token to user configuration file
+function write_installation_token() {
     local token
     readonly token="${1}"
 
@@ -883,11 +884,13 @@ function write_install_token() {
 
     # ToDo: ensure we override only sumologic `install_token`
     if grep "install_token" "${file}" > /dev/null; then
-        sed -i.bak -e "s/install_token:.*$/install_token: $(escape_sed "${token}")/" "${file}"
+        # Do not expose token in sed command as it can be saw on processes list
+        echo "s/install_token:.*$/install_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
     else
-        # write install token on the top of sumologic: extension
-        sed -i.bak -e "s/sumologic:/sumologic:\\
-\\${ext_indentation}install_token: $(escape_sed "${token}")/" "${file}"
+        # write installation token on the top of sumologic: extension
+        # Do not expose token in sed command as it can be saw on processes list
+        echo "s/sumologic:/sumologic:\\
+\\${ext_indentation}install_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
     fi
 }
 
@@ -906,7 +909,7 @@ function write_api_url() {
     if grep "api_base_url" "${file}" > /dev/null; then
         sed -i.bak -e "s/api_base_url:.*$/api_base_url: $(escape_sed "${api_url}")/" "${file}"
     else
-        # write install token on the top of sumologic: extension
+        # write installation token on the top of sumologic: extension
         sed -i.bak -e "s/sumologic:/sumologic:\\
 \\${ext_indentation}api_base_url: $(escape_sed "${api_url}")/" "${file}"
     fi
@@ -937,7 +940,7 @@ function write_tags() {
     if grep "collector_fields" "${file}" > /dev/null; then
         sed -i.bak -e "s/collector_fields:.*$/collector_fields: ${fields_to_write}/" "${file}"
     else
-        # write install token on the top of sumologic: extension
+        # write installation token on the top of sumologic: extension
         sed -i.bak -e "s/sumologic:/sumologic:\\
 \\${ext_indentation}collector_fields: ${fields_to_write}/" "${file}"
     fi
@@ -1067,7 +1070,7 @@ set_tmpdir
 install_missing_dependencies
 check_dependencies
 
-readonly SUMOLOGIC_INSTALL_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
+readonly SUMOLOGIC_INSTALLATION_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
 readonly USER_CONFIG_DIRECTORY USER_ENV_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
 readonly ACL_LOG_FILE_PATHS
 readonly INSTALL_HOSTMETRICS
@@ -1080,9 +1083,9 @@ fi
 USER_TOKEN="$(get_user_config "${COMMON_CONFIG_PATH}")"
 readonly USER_TOKEN
 
-# Exit if install token is not set and there is no user configuration
-if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && "${SKIP_TOKEN}" != "true" && -z "${USER_TOKEN}" && -z "${DOWNLOAD_ONLY}" ]]; then
-    echo "Install token has not been provided. Please set the '${ENV_TOKEN}' environment variable."
+# Exit if installation token is not set and there is no user configuration
+if [[ -z "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SKIP_TOKEN}" != "true" && -z "${USER_TOKEN}" && -z "${DOWNLOAD_ONLY}" ]]; then
+    echo "Installation token has not been provided. Please set the '${ENV_TOKEN}' environment variable."
     echo "You can ignore this requirement by adding '--${ARG_LONG_SKIP_TOKEN} argument."
     exit 1
 fi
@@ -1093,7 +1096,7 @@ if [[ -f "${COMMON_CONFIG_PATH}" && -z "${DOWNLOAD_ONLY}" ]]; then
     EXT_INDENTATION="$(get_extension_indentation "${COMMON_CONFIG_PATH}" "${INDENTATION}")"
     readonly INDENTATION EXT_INDENTATION
 
-    if [[ -n "${USER_TOKEN}" && -n "${SUMOLOGIC_INSTALL_TOKEN}" && "${USER_TOKEN}" != "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
+    if [[ -n "${USER_TOKEN}" && -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${USER_TOKEN}" != "${SUMOLOGIC_INSTALLATION_TOKEN}" ]]; then
         echo "You are trying to install with different token than in your configuration file!"
         exit 1
     fi
@@ -1121,7 +1124,7 @@ fi
 set -u
 
 # Disable systemd if token is not specified at all
-if [[ -z "${SUMOLOGIC_INSTALL_TOKEN}" && -z "${USER_TOKEN}" ]]; then
+if [[ -z "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" ]]; then
     SYSTEMD_DISABLED=true
 fi
 
@@ -1146,7 +1149,8 @@ INSTALLED_VERSION="$(get_installed_version)"
 echo -e "Installed version:\t${INSTALLED_VERSION:-none}"
 
 echo -e "Getting versions..."
-VERSIONS="$(get_versions)"
+# Get versions, but ignore errors are we fallback to other methods later
+VERSIONS="$(get_versions || echo "")"
 
 # Use user's version if set, otherwise get latest version from API (or website)
 if [[ -z "${VERSION}" ]]; then
@@ -1176,23 +1180,19 @@ readonly CONFIG_BRANCH BINARY_BRANCH
 if [[ "${INSTALLED_VERSION}" == "${VERSION}" && -z "${BINARY_BRANCH}" ]]; then
     echo -e "OpenTelemetry collector is already in newest (${VERSION}) version"
 else
-    if [[ -z "${INSTALLED_VERSION}" && -z "${BINARY_BRANCH}" ]]; then
+
+    # add newline before breaking changes and changelog
+    echo ""
+    if [[ -n "${INSTALLED_VERSION}" && -z "${BINARY_BRANCH}" ]]; then
         # Take versions from installed up to the newest
         BETWEEN_VERSIONS="$(get_versions_from "${VERSIONS}" "${INSTALLED_VERSION}")"
         readonly BETWEEN_VERSIONS
-        echo "${BETWEEN_VERSIONS}"
-
-        # Get full changelog if we were unable to access github API
-        if [[ -z "${BETWEEN_VERSIONS}" ]] || [[ "$(github_rate_limit)" < "$(echo BETWEEN_VERSIONS | wc -w)" ]]; then
-            echo -e "Showing full changelog up to ${VERSION}"
-            get_full_changelog "${VERSION}"
-        else
-            for version in ${BETWEEN_VERSIONS}; do
-                # Print changelog for every version
-                get_changelog "${version}"
-            done
-        fi
+        print_breaking_changes "${BETWEEN_VERSIONS}"
     fi
+
+    echo -e "Changelog:\t\thttps://github.com/SumoLogic/sumologic-otel-collector/blob/main/CHANGELOG.md"
+    # add newline after breaking changes and changelog
+    echo ""
 
     # Add -fips to the suffix if necessary
     binary_suffix="${OS_TYPE}_${ARCH_TYPE}"

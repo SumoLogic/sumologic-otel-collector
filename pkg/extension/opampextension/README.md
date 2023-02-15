@@ -37,7 +37,7 @@ It manages:
 ```yaml
 extensions:
   sumologic:
-    install_token: <token>
+    installation_token: <token>
     api_base_url: <api_endpoint_url>
   opamp:
     instance_uid: <uniq_uid>

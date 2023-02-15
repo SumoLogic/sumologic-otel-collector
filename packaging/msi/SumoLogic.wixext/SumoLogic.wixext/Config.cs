@@ -6,7 +6,7 @@ namespace SumoLogic.wixext
 {
     public class Config
     {
-        public string InstallToken { get; set; }
+        public string InstallationToken { get; set; }
         public Dictionary<string, string> CollectorFields { get; set; }
 
         public Config() {

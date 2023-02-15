@@ -15,9 +15,9 @@
                 <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
                 <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
 
-                <Control Id="InstallationTokenTitle" Type="Text" X="20" Y="60" Width="290" Height="14" NoPrefix="yes" Text="!(loc.ConfigurationDlgInstallTokenTitle)" />
-                <Control Id="InstallationTokenDesc" Type="Hyperlink" X="20" Y="74" Width="290" Height="20" Text="!(loc.ConfigurationDlgInstallTokenDescription)" />
-                <Control Id="InstallationTokenVar" Type="Edit" X="20" Y="100" Width="290" Height="18" Property="INSTALLTOKEN" Indirect="no" />
+                <Control Id="InstallationTokenTitle" Type="Text" X="20" Y="60" Width="290" Height="14" NoPrefix="yes" Text="!(loc.ConfigurationDlgInstallationTokenTitle)" />
+                <Control Id="InstallationTokenDesc" Type="Hyperlink" X="20" Y="74" Width="290" Height="20" Text="!(loc.ConfigurationDlgInstallationTokenDescription)" />
+                <Control Id="InstallationTokenVar" Type="Edit" X="20" Y="100" Width="290" Height="18" Property="INSTALLATIONTOKEN" Indirect="no" />
 
                 <Control Id="TagsTitle" Type="Text" X="20" Y="130" Width="290" Height="14" NoPrefix="yes" Text="!(loc.ConfigurationDlgTagsTitle)" />
                 <Control Id="TagsDesc" Type="Text" X="20" Y="144" Width="290" Height="18" NoPrefix="yes" Text="!(loc.ConfigurationDlgTagsDescription)" />

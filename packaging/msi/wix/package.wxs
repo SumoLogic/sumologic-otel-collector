@@ -54,13 +54,13 @@
     </Property>
 
     <!--
-        Determine the INSTALLTOKEN of a previous installation (if one exists)
-        If not, INSTALLTOKEN stays empty
+        Determine the INSTALLATIONTOKEN of a previous installation (if one exists)
+        If not, INSTALLATIONTOKEN stays empty
     -->
-    <Property Id="INSTALLTOKEN" Hidden="yes" />
+    <Property Id="INSTALLATIONTOKEN" Hidden="yes" />
     <!-- TODO: fix permissions to allow securely storing secrets in the registry -->
-    <!-- <Property Id="INSTALLTOKEN"> -->
-    <!--   <RegistrySearch Id="DetermineInstallToken" Type="raw" Root="HKLM" Key="$(RegKeyPath)" Name="InstallToken" /> -->
+    <!-- <Property Id="INSTALLATIONTOKEN"> -->
+    <!--   <RegistrySearch Id="DetermineInstallationToken" Type="raw" Root="HKLM" Key="$(RegKeyPath)" Name="InstallationToken" /> -->
     <!-- </Property> -->
 
     <!--
@@ -81,7 +81,7 @@
 
     <Binary Id="SumoLogicDll" SourceFile="$(SumoLogic.TargetDir)\SumoLogic.wixext.CA.dll" />
     <CustomAction Id="UpdateConfigAction" BinaryRef="SumoLogicDll" DllEntry="UpdateConfig" Execute="deferred" Return="check" Impersonate="no" />
-    <CustomAction Id="UpdateConfigActionData" Property="UpdateConfigAction" Value="CommonConfigPath=[ConfigFragmentsFolder]common.yaml;InstallToken=[INSTALLTOKEN];Tags=[TAGS]" />
+    <CustomAction Id="UpdateConfigActionData" Property="UpdateConfigAction" Value="CommonConfigPath=[ConfigFragmentsFolder]common.yaml;InstallationToken=[INSTALLATIONTOKEN];Tags=[TAGS]" />
 
     <!-- Execute Sequence -->
     <InstallExecuteSequence>

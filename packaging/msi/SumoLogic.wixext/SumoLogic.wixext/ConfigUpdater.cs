@@ -36,10 +36,10 @@ namespace SumoLogic.wixext
             EnsureMapKey(extensions, "sumologic");
             YamlMappingNode sumologic = (YamlMappingNode)extensions.Children["sumologic"];
 
-            if (config.InstallToken != "")
+            if (config.InstallationToken != "")
             {
                 EnsureScalarKey(sumologic, "install_token");
-                sumologic.Children["install_token"] = config.InstallToken;
+                sumologic.Children["install_token"] = config.InstallationToken;
             }
 
             if (config.CollectorFields.Count > 0)

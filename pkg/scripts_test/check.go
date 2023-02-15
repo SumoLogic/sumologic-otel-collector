@@ -33,6 +33,10 @@ func checkSystemdAvailability(c check) bool {
 	return assert.DirExists(&testing.T{}, systemdDirectoryPath, "systemd is not supported")
 }
 
+func checkACLAvailability(c check) bool {
+	return assert.FileExists(&testing.T{}, "/usr/bin/getfacl", "File ACLS is not supported")
+}
+
 type checkFunc func(check)
 
 func checkBinaryCreated(c check) {
@@ -104,7 +108,17 @@ func checkConfigOverrided(c check) {
 	conf, err := getConfig(configPath)
 	require.NoError(c.test, err)
 
-	require.Equal(c.test, "${SUMOLOGIC_INSTALL_TOKEN}", conf.Extensions.Sumologic.InstallToken)
+	require.Condition(c.test, func() (success bool) {
+		switch conf.Extensions.Sumologic.InstallToken {
+		case "${SUMOLOGIC_INSTALLATION_TOKEN}":
+			return true
+		// ToDo: Remove after new release
+		case "${SUMOLOGIC_INSTALL_TOKEN}":
+			return true
+		default:
+			return false
+		}
+	}, "invalid value for install token")
 }
 
 func checkUserConfigCreated(c check) {
@@ -134,19 +148,28 @@ func checkNoBakFilesPresent(c check) {
 }
 
 func checkTokenInConfig(c check) {
-	require.NotEmpty(c.test, c.installOptions.installToken, "install token has not been provided")
+	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
 
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
-	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "install token is different than expected")
+	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
+}
+
+func checkDeprecatedTokenInConfig(c check) {
+	require.NotEmpty(c.test, c.installOptions.deprecatedInstallToken, "installation token has not been provided")
+
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	require.Equal(c.test, c.installOptions.deprecatedInstallToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
 }
 
 func checkDifferentTokenInConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
-	require.Equal(c.test, "different"+c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "install token is different than expected")
+	require.Equal(c.test, "different"+c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
 }
 
 func checkHostmetricsConfigCreated(c check) {
@@ -185,7 +208,7 @@ func checkTags(c check) {
 	require.NoError(c.test, err, "error while reading configuration")
 
 	for k, v := range c.installOptions.tags {
-		require.Equal(c.test, v, conf.Extensions.Sumologic.Tags[k], "install token is different than expected")
+		require.Equal(c.test, v, conf.Extensions.Sumologic.Tags[k], "installation token is different than expected")
 	}
 }
 
@@ -193,7 +216,7 @@ func checkDifferentTags(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
-	require.Equal(c.test, "tag", conf.Extensions.Sumologic.Tags["some"], "install token is different than expected")
+	require.Equal(c.test, "tag", conf.Extensions.Sumologic.Tags["some"], "installation token is different than expected")
 }
 
 func preActionMockStructure(c check) {
@@ -270,8 +293,8 @@ func checkAbortedDueToDifferentToken(c check) {
 
 func checkAbortedDueToNoToken(c check) {
 	require.Greater(c.test, len(c.output), 1)
-	require.Contains(c.test, c.output[len(c.output)-2], "Install token has not been provided. Please set the 'SUMOLOGIC_INSTALL_TOKEN' environment variable.")
-	require.Contains(c.test, c.output[len(c.output)-1], "You can ignore this requirement by adding '--skip-install-token argument.")
+	require.Contains(c.test, c.output[len(c.output)-2], "Installation token has not been provided. Please set the 'SUMOLOGIC_INSTALLATION_TOKEN' environment variable.")
+	require.Contains(c.test, c.output[len(c.output)-1], "You can ignore this requirement by adding '--skip-installation-token argument.")
 }
 
 func checkOutputUserAddWarnings(c check) {
@@ -366,6 +389,10 @@ func checkUserNotExists(c check) {
 }
 
 func checkVarLogACL(c check) {
+	if !checkACLAvailability(c) {
+		return
+	}
+
 	PathHasUserACL(c.test, "/var/log", systemUser, "r-x")
 }
 
