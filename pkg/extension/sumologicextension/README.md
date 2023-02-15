@@ -61,7 +61,7 @@ and can be used as an authenticator for the
 - `ephemeral`: defines whether the collector will be deleted after 12 hours
   of inactivity (default: `false`)
 - `time_zone`: defines the time zone of the collector. For a list of all possible
-  values, refer to the `TZ` column in
+  values, refer to the `TZ database name` or `Time zone abbreviation` columns in
   https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
 - `backoff`: defines backoff mechanism for retry in case of failed registration.
   [Exponential algorithm](https://pkg.go.dev/github.com/cenkalti/backoff/v4#ExponentialBackOff) is being used.
@@ -80,6 +80,7 @@ extensions:
   sumologic:
     installation_token: <token>
     collector_name: my_collector
+    time_zone: CET
 
 receivers:
   hostmetrics:
