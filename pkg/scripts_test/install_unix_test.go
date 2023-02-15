@@ -371,7 +371,6 @@ func TestInstallScript(t *testing.T) {
 				checkHostmetricsConfigCreated,
 				checkHostmetricsOwnershipAndPermissions(systemUser, systemUser),
 			},
-			installCode: 1, // because of invalid installation token
 		},
 		{
 			name: "uninstallation without autoconfirm fails",
