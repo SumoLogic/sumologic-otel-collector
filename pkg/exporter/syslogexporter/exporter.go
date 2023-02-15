@@ -17,7 +17,6 @@ package syslogexporter
 import (
 	"context"
 	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"os"
 	"time"
@@ -43,27 +42,9 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sysloge
 	var tlsConfig *tls.Config
 	var err error
 
-	if cfg.CACertificate != "" {
-		var serverCert []byte
-		serverCert, err = os.ReadFile(cfg.CACertificate)
-		if err != nil {
-			return nil, err
-		}
-
-		pool := x509.NewCertPool()
-		pool.AppendCertsFromPEM(serverCert)
-		tlsConfig = &tls.Config{
-			RootCAs: pool,
-		}
-	}
-
-	if cfg.Certificate != "" && cfg.Key != "" {
-		var certificate tls.Certificate
-		certificate, err = tls.LoadX509KeyPair(cfg.Certificate, cfg.Key)
-		if err != nil {
-			return nil, err
-		}
-		tlsConfig.Certificates = []tls.Certificate{certificate}
+	tlsConfig, err = cfg.TLSSetting.LoadTLSConfig()
+	if err != nil {
+		return nil, err
 	}
 
 	var hostname string
