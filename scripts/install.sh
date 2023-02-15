@@ -1241,6 +1241,13 @@ fi
 echo 'We are going to set up a systemd service'
 
 if [[ -f "${SYSTEMD_CONFIG}" ]]; then
+    # This is required for configuration being installed after systemd setup
+    # for example first installation without hostmetrics and second with hostmetrics
+    if getent passwd "${SYSTEM_USER}" > /dev/null && [[ "${SKIP_CONFIG}" == "false" ]]; then
+        echo 'Ensuring that ownership for config and storage is correct'
+        chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOME_DIRECTORY}" "${CONFIG_DIRECTORY}"/*
+        chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}"
+    fi
     echo "Configuration for systemd service (${SYSTEMD_CONFIG}) already exist. Restarting service"
     systemctl restart otelcol-sumo
     exit 0

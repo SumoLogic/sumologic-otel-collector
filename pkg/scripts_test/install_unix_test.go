@@ -353,6 +353,27 @@ func TestInstallScript(t *testing.T) {
 			installCode:       3, // because of invalid install token
 		},
 		{
+			name: "installation of hostmetrics in systemd during upgrade",
+			options: installOptions{
+				installToken:       installToken,
+				installHostmetrics: true,
+			},
+			preActions:        []checkFunc{preActionMockSystemdStructure, preActionCreateUser},
+			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
+			preChecks:         []checkFunc{checkBinaryCreated, checkConfigCreated, checkUserConfigCreated, checkUserExists},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkUserConfigCreated,
+				checkTokenInConfig,
+				checkUserExists,
+				checkHostmetricsConfigCreated,
+				checkHostmetricsOwnershipAndPermissions(systemUser, systemUser),
+			},
+			installCode: 1, // because of invalid installation token
+		},
+		{
 			name: "uninstallation without autoconfirm fails",
 			options: installOptions{
 				uninstall: true,
