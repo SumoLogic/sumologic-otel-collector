@@ -43,6 +43,10 @@ type Config struct {
 	CACertificate string `mapstructure:"ca_certificate"`
 	// Format of syslog messages
 	Format string `mapstructure:"format"`
+	// Certificate for mTLS communication (client certificate)
+	Certificate string `mapstructure:"certificate"`
+	// Key for mTLS communication (client key)
+	Key string `mapstructure:"key"`
 
 	exporterhelper.QueueSettings `mapstructure:"sending_queue"`
 	exporterhelper.RetrySettings `mapstructure:"retry_on_failure"`
@@ -54,7 +58,7 @@ func (cfg *Config) Validate() error {
 		return unsupportedPort
 	}
 
-	if !net.IsFQDN(cfg.Endpoint) && !net.IsIPAddr(cfg.Endpoint) {
+	if !net.IsFQDN(cfg.Endpoint) && !net.IsIPAddr(cfg.Endpoint) && cfg.Endpoint != "localhost" {
 		return invalidEndpoint
 	}
 
