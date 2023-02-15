@@ -394,15 +394,23 @@ jobs:
           echo version=$(cat /tmp/sumo_version) >> $GITHUB_OUTPUT
 
       - name: Trigger packaging workflow
-        uses: benc-uk/workflow-dispatch@v1
+        id: trigger-packaging-workflow
+        uses: aurelien-baudet/workflow-dispatch@v2
         with:
           workflow: build_packages.yml
           repo: SumoLogic/sumologic-otel-collector-packaging
           token: ${{ secrets.PACKAGING_GH_TOKEN }}
           ref: main
+          wait-for-completion: false
+          display-workflow-run-url: true
           inputs: |-
             {
               "workflow_id": "${{ github.run_id }}",
               "otc_version": "${{ steps.version-core.outputs.version }}",
               "otc_sumo_version": "${{ steps.sumo-version.outputs.version }}"
             }
+
+      # Outputs the Packaging Workflow URL as an Annotation in the UI after the
+      # packaging workflow has completed.
+      - name: Packaging Workflow URL
+        run: echo ::notice title=Packaging Workflow URL::${{ steps.trigger-packaging-workflow.outputs.workflow-url }}
