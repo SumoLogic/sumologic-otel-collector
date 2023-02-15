@@ -873,7 +873,6 @@ ${indentation}sumologic:/" "${file}"
 
 # write installation token to user configuration file
 function write_installation_token() {
-    set -x
     local token
     readonly token="${1}"
 
@@ -893,7 +892,6 @@ function write_installation_token() {
         echo "s/sumologic:/sumologic:\\
 \\${ext_indentation}install_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
     fi
-    set +x
 }
 
 # write api_url to user configuration file
