@@ -398,9 +398,8 @@ To run opentelemetry collector as Systemd Service please apply following steps:
 
 1. Create configuration:
 
-- Get [recommended configuration](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.57.2-sumo-1/examples/sumologic.yaml) from Sumo Logic repository and save it as `/etc/otelcol-sumo/sumologic.yaml`.
-
-- Create your custom configuration in `/etc/otelcol-sumo/conf.d`, e.g. `/etc/otelcol-sumo/conf.d/common.yaml`
+   - Get [recommended configuration](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.57.2-sumo-1/examples/sumologic.yaml) from Sumo Logic repository and save it as `/etc/otelcol-sumo/sumologic.yaml`.
+   - Create your custom configuration in `/etc/otelcol-sumo/conf.d`, e.g. `/etc/otelcol-sumo/conf.d/common.yaml`
 
    > **IMPORTANT NOTE**:
    > It is recommended to limit access to the configuration file as it contains sensitive information.
