@@ -25,10 +25,10 @@ import (
 )
 
 var (
-	unsupportedPort     = "Unsupported port: port is required, must be in the range 1-65535"
-	invalidEndpoint     = "Invalid endpoint: endpoint is required, must be a valid FQDN or IP address"
-	unsupportedProtocol = "Unsupported protocol: protocol is required, only tcp/udp supported"
-	unsupportedFormat   = "Unsupported format: Only rfc5424 and rfc3164 supported"
+	unsupportedPort     = "unsupported port: port is required, must be in the range 1-65535"
+	invalidEndpoint     = "invalid endpoint: endpoint is required, must be a valid FQDN or IP address"
+	unsupportedProtocol = "unsupported protocol: protocol is required, only tcp/udp supported"
+	unsupportedFormat   = "unsupported format: Only rfc5424 and rfc3164 supported"
 )
 
 // Config defines configuration for Syslog exporter.
@@ -73,7 +73,7 @@ func (cfg *Config) Validate() error {
 	}
 
 	if len(invalidFields) > 0 {
-		return fmt.Errorf("%s", strings.Join(invalidFields, "\n"))
+		return fmt.Errorf("%s", strings.Join(invalidFields, "; "))
 	}
 
 	return nil
