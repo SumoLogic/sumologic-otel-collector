@@ -18,7 +18,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"os"
 	"time"
 
 	"go.opentelemetry.io/collector/exporter"
@@ -27,28 +26,14 @@ import (
 	"go.uber.org/zap"
 )
 
-const maxLengthAppName = 48 // limit to 48 chars according to RFC5424
-
 type syslogexporter struct {
 	config    *Config
 	logger    *zap.Logger
 	tlsConfig *tls.Config
-	hostname  string
-	pid       int
-	app       string
 }
 
 func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*syslogexporter, error) {
-	var tlsConfig *tls.Config
-	var err error
-
-	tlsConfig, err = cfg.TLSSetting.LoadTLSConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	var hostname string
-	hostname, err = os.Hostname()
+	tlsConfig, err := cfg.TLSSetting.LoadTLSConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -57,9 +42,6 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sysloge
 		config:    cfg,
 		logger:    createSettings.Logger,
 		tlsConfig: tlsConfig,
-		hostname:  hostname,
-		pid:       os.Getpid(),
-		app:       getAppName(),
 	}
 
 	s.logger.Info("Syslog Exporter configured",
@@ -102,7 +84,7 @@ func (se *syslogexporter) getTimestamp(record plog.LogRecord) time.Time {
 }
 
 func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
-	s, err := Connect(se.logger, se.config, se.tlsConfig, se.hostname, se.pid, se.app)
+	s, err := Connect(se.logger, se.config, se.tlsConfig)
 	if err != nil {
 		return fmt.Errorf("error connecting to syslog server: %s", err)
 	}
@@ -126,12 +108,4 @@ func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error 
 		}
 	}
 	return nil
-}
-
-func getAppName() string {
-	app := os.Args[0]
-	if len(app) > maxLengthAppName {
-		return app[len(app)-maxLengthAppName:]
-	}
-	return app
 }
