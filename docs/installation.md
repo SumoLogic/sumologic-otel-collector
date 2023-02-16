@@ -483,7 +483,7 @@ To run opentelemetry collector as Systemd Service please apply following steps:
    sudo journalctl -u otelcol-sumo  # checks logs
    ```
 
-### Using environmental variables
+### Using environmental variable to store installation token
 
 We recommend to keep install token in environmental variable for Systemd installation:
 
