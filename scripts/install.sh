@@ -1052,13 +1052,21 @@ function get_binary_from_url() {
 function set_acl_on_log_paths() {
     if command -v setfacl &> /dev/null; then
         for log_path in ${ACL_LOG_FILE_PATHS}; do
-	    if [ -d "$log_path" ]; then
-		echo -e "Running: setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}"
-		setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x "${log_path}"
-	    fi
+	      if [ -d "$log_path" ]; then
+		    echo -e "Running: setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}"
+		    setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x "${log_path}"
+	      fi
         done
     else
+        echo ""
         echo "setfacl command not found, skipping ACL creation for system log file paths."
+        echo -e "You can fix it manually by installing setfacl and executing the following commands:"
+        for log_path in ${ACL_LOG_FILE_PATHS}; do
+	      if [ -d "$log_path" ]; then
+		    echo -e "-> setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}"
+	      fi
+        done
+        echo ""
     fi
 }
 
