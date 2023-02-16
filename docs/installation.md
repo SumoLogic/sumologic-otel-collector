@@ -16,7 +16,7 @@ the container images stored in AWS Public ECR under the following repository:
   - [Verify the installation](#verify-the-installation)
 - [Container image](#container-image)
 - [Systemd service](#systemd-service)
-  - [Using environmental variables](#using-environmental-variables)
+  - [Using environmental variable to store installation token](#using-environmental-variable-to-store-installation-token)
 - [Ansible](#ansible)
 - [Puppet](#puppet)
 - [Chef](#chef)
