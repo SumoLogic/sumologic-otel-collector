@@ -496,7 +496,7 @@ We recommend to keep install token in environmental variable for Systemd install
    EnvironmentFile=-/etc/otelcol-sumo/env/*.env
    ```
 
-1. Ensure that the directory exists:
+1. Ensure that the `/etc/otelcol-sumo/env` directory exists:
 
    ```bash
    sudo mkdir -p /etc/otelcol-sumo/env
