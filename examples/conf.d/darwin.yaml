@@ -1,4 +1,4 @@
-lreceivers:
+receivers:
   hostmetrics/mac/localhost:
     scrapers:
       load: null
