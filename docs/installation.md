@@ -37,13 +37,13 @@ To run it as a standalone process you only need to run the binary file downloade
 
 1. Run installation script:
 
-    Either by piping `curl` straight into `bash`:
+   Either by piping `curl` straight into `bash`:
 
-    ```bash
-    curl -s https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh | sudo -E bash -s
-    ```
+   ```bash
+   curl -s https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh | sudo -E bash -s
+   ```
 
-    or by first downloading the script, inspecting its contents for security, and then running it:
+   or by first downloading the script, inspecting its contents for security, and then running it:
 
    ```bash
    curl -o install-otelcol-sumo.sh https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh
@@ -54,15 +54,15 @@ To run it as a standalone process you only need to run the binary file downloade
 
     It is going to perform the following operations:
 
-      - install or upgrade operation by placing the latest version as `/usr/local/bin/otelcol-sumo`,
-      - get [static configuration](../examples/sumologic.yaml) and place it as `/etc/otelcol-sumo/sumologic.yaml`
-      - create user configuration directory (`/etc/otelcol-sumo/conf.d`) with `common.yaml` file which will contain installation token
-      - for Systemd:
+    - install or upgrade operation by placing the latest version as `/usr/local/bin/otelcol-sumo`,
+    - get [static configuration](../examples/sumologic.yaml) and place it as `/etc/otelcol-sumo/sumologic.yaml`
+    - create user configuration directory (`/etc/otelcol-sumo/conf.d`) with `common.yaml` file which will contain installation token
+    - for Systemd:
 
-        - the script is going to get [Systemd service configuration](../examples/systemd/otelcol-sumo.service) and place it as `/etc/systemd/system/otelcol-sumo.service`
-        - create a `otelcol-sumo` user and group which will be used to run the service
-        - enable `otelcol-sumo` service
-        - start `otelcol-sumo` service
+      - the script is going to get [Systemd service configuration](../examples/systemd/otelcol-sumo.service) and place it as `/etc/systemd/system/otelcol-sumo.service`
+      - create a `otelcol-sumo` user and group which will be used to run the service
+      - enable `otelcol-sumo` service
+      - start `otelcol-sumo` service
 
 #### Script options
 
