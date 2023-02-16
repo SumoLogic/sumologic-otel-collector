@@ -20,6 +20,7 @@ import (
 
 	"github.com/THREATINT/go-net"
 
+	"go.opentelemetry.io/collector/config/configtls"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 )
 
@@ -39,14 +40,11 @@ type Config struct {
 	// Protocol for syslog communication
 	// options: tcp, udp
 	Protocol string `mapstructure:"protocol"`
-	// CA certificate of syslog server
-	CACertificate string `mapstructure:"ca_certificate"`
 	// Format of syslog messages
 	Format string `mapstructure:"format"`
-	// Certificate for mTLS communication (client certificate)
-	Certificate string `mapstructure:"certificate"`
-	// Key for mTLS communication (client key)
-	Key string `mapstructure:"key"`
+
+	// TLSSetting struct exposes TLS client configuration.
+	TLSSetting configtls.TLSClientSetting `mapstructure:"tls"`
 
 	exporterhelper.QueueSettings `mapstructure:"sending_queue"`
 	exporterhelper.RetrySettings `mapstructure:"retry_on_failure"`

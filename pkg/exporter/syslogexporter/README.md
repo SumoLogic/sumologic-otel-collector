@@ -14,21 +14,25 @@ The syslog exporter supports sending messages to a remote syslog server.
   This ensures that all the syslog message headers are populated with the expected values.
 - Not using the `syslog_parser` will result in the syslog message being populated with default header values.
 
-__Note__: Syslog over UDP doesn't support certificate verification (`ca_certificate`).
-
 ## Configuration
 
 **The following are a few configuration options available to forward syslog messages**:
 
-- `endpoint` - syslog endpoint (FQDN or IP address)
-- `protocol` - tcp/udp
-- `port` - A syslog port
-- `format` - rfc5424/rfc3164
+- `endpoint` - (default = `host.domain.com`) syslog endpoint (FQDN or IP address)
+- `protocol` - (default = `tcp`) tcp/udp
+- `port` - (default = `514`) A syslog port
+- `format` - (default = `rfc5424`) rfc5424/rfc3164
   - `rfc5424` - Expects the syslog messages to be rfc5424 compliant
   - `rfc3164` - Expects the syslog messages to be rfc3164 compliant
-- `ca_certificate` [tcp only] - A publicly verifiable server certificate (`note`: Self signed certificates are not supported in this version)
-- `certificate` [tcp only] - certificate for mTLS communication (client certificate)
-- `key` [tcp only] -  Key for mTLS communication (client key)
+- `tls` - configuration for TLS/mTLS
+  - `insecure` (default = `false`) whether to enable client transport security, by default, TLS is enabled.
+  - `cert_file` - Path to the TLS cert to use for TLS required connections. Should only be used if `insecure` is set to `false`.
+  - `key_file` - Path to the TLS key to use for TLS required connections. Should only be used if `insecure` is set to `false`.
+  - `ca_file` - Path to the CA cert. For a client this verifies the server certificate. For a server this verifies client certificates. If empty uses system root CA. Should only be used if `insecure` is set to `false`.
+  - `insecure_skip_verify` -  (default = `false`) whether to skip verifying the certificate or not.
+  - `min_version` (default = `1.2`) Minimum acceptable TLS version
+  - `max_version` (default = `""` handled by [crypto/tls][cryptoTLS] - currently TLS 1.3) Maximum acceptable TLS version.
+  - `reload_interval` - Specifies the duration after which the certificate will be reloaded. If not set, it will never be reloaded.
 
 Please refer to the yaml below to configure the syslog exporter:
 
@@ -43,9 +47,10 @@ exporters:
     protocol: tcp
     port: 6514 # 514 (UDP)
     endpoint: 127.0.0.1 # FQDN or IP address
-    ca_certificate: certs/servercert.pem # tcp only
-    certificate: certs/cert.pem # tcp only
-    key: certs/key.pem # tcp only
+    tls:
+      ca_file: certs/servercert.pem
+      cert_file: certs/cert.pem
+      key_file: certs/key.pem
     format: rfc5424 # rfc5424 or rfc3164
 
 
@@ -110,3 +115,4 @@ service:
 [logstransform]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/logstransformprocessor
 [configWithToken]: ./examples/config_with_token.yaml
 [syslog_parser]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/docs/operators/syslog_parser.md
+[cryptoTLS]: https://github.com/golang/go/blob/518889b35cb07f3e71963f2ccfc0f96ee26a51ce/src/crypto/tls/common.go#L706-L709
