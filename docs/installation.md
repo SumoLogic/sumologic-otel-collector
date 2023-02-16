@@ -518,7 +518,7 @@ We recommend to keep install token in environmental variable for Systemd install
    ```
 
 1. Remove `install_token` overrides from `/etc/otelcol-sumo/conf.d/*.yaml`.
-   You can find them using the following grep:
+   You can find them using the following command:
 
    ```shell
    $ sudo grep -Rn install_token /etc/otelcol-sumo/conf.d
