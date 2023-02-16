@@ -421,8 +421,7 @@ To run opentelemetry collector as Systemd Service please apply following steps:
    > This command will create a home directory for the user. By default, the `sumologic` extension stores the credentials in a subdirectory of the home directory.
    > However, if the user with name `otelcol-sumo` already exists, it won't be overwritten, so you should make sure that a home directory has been created for this user.
    >
-   > If you don't want the user to have a home directory, you should use `useradd` with the `M` flag
-   > instead of `m` (`sudo useradd -MrUs ...`)
+   > If you don't want the user to have a home directory, you should use `useradd` with the `M` flag instead of `m` (`sudo useradd -MrUs ...`)
    > and explicitly change the directory for saving the credentials, for example:
    >
    > ```yaml
