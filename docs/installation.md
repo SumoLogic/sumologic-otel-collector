@@ -16,6 +16,7 @@ the container images stored in AWS Public ECR under the following repository:
   - [Verify the installation](#verify-the-installation)
 - [Container image](#container-image)
 - [Systemd service](#systemd-service)
+  - [Using environmental variable to store installation token](#using-environmental-variable-to-store-installation-token)
 - [Ansible](#ansible)
 - [Puppet](#puppet)
 - [Chef](#chef)
@@ -36,13 +37,13 @@ To run it as a standalone process you only need to run the binary file downloade
 
 1. Run installation script:
 
-    Either by piping `curl` straight into `bash`:
+   Either by piping `curl` straight into `bash`:
 
-    ```bash
-    curl -s https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh | sudo -E bash -s
-    ```
+   ```bash
+   curl -s https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh | sudo -E bash -s
+   ```
 
-    or by first downloading the script, inspecting its contents for security, and then running it:
+   or by first downloading the script, inspecting its contents for security, and then running it:
 
    ```bash
    curl -o install-otelcol-sumo.sh https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh
@@ -53,15 +54,15 @@ To run it as a standalone process you only need to run the binary file downloade
 
     It is going to perform the following operations:
 
-      - install or upgrade operation by placing the latest version as `/usr/local/bin/otelcol-sumo`,
-      - get [static configuration](../examples/sumologic.yaml) and place it as `/etc/otelcol-sumo/sumologic.yaml`
-      - create user configuration directory (`/etc/otelcol-sumo/conf.d`) with `common.yaml` file which will contain installation token
-      - for Systemd:
+    - install or upgrade operation by placing the latest version as `/usr/local/bin/otelcol-sumo`,
+    - get [static configuration](../examples/sumologic.yaml) and place it as `/etc/otelcol-sumo/sumologic.yaml`
+    - create user configuration directory (`/etc/otelcol-sumo/conf.d`) with `common.yaml` file which will contain installation token
+    - for Systemd:
 
-        - the script is going to get [Systemd service configuration](../examples/systemd/otelcol-sumo.service) and place it as `/etc/systemd/system/otelcol-sumo.service`
-        - create a `otelcol-sumo` user and group which will be used to run the service
-        - enable `otelcol-sumo` service
-        - start `otelcol-sumo` service
+      - the script is going to get [Systemd service configuration](../examples/systemd/otelcol-sumo.service) and place it as `/etc/systemd/system/otelcol-sumo.service`
+      - create a `otelcol-sumo` user and group which will be used to run the service
+      - enable `otelcol-sumo` service
+      - start `otelcol-sumo` service
 
 #### Script options
 
@@ -72,7 +73,7 @@ The following arguments can be passed to the script:
 | `--skip-installation-token`      | `k`        | Skips requirement for installation token. This option do not disable default configuration creation.                                                                         | no                         |
 | `--tag`                          | `t`        | Sets tag for collector. This argument can be use multiple times. One per tag.                                                                                                | yes, in `key=value` format |
 | `--download-only`                | `w`        | Download new binary only and skip configuration part.                                                                                                                        | no                         |
-| `--version`                      | `v`        | Version of Sumo Logic Distribution for OpenTelemetry Collector to install. By defult it gets latest version.                                                                 | yes, e.g. `0.57.2-sumo-1`  |
+| `--version`                      | `v`        | Version of Sumo Logic Distribution for OpenTelemetry Collector to install. By defult it gets latest version.                                                                 | yes, e.g. `0.71.0-sumo-0`  |
 | `--skip-config`                  | `s`        | Do not create default configuration                                                                                                                                          | no                         |
 | `--skip-systemd` | `d`        | Preserves from Systemd service installation.                                                                                                                                 | no                         |
 | `--fips`                          | `f`        | Install the FIPS-compliant binary. See [this document](fips.md) for more details.                                                                                                                                                  | no                         |
@@ -96,7 +97,7 @@ Follow the steps for your platform below.
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.57.2-sumo-1/otelcol-sumo-0.57.2-sumo-1-linux_amd64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.71.0-sumo-0/otelcol-sumo-0.71.0-sumo-0-linux_amd64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -129,7 +130,7 @@ Follow the steps for your platform below.
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.57.2-sumo-1/otelcol-sumo-0.57.2-sumo-1-linux_arm64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.71.0-sumo-0/otelcol-sumo-0.71.0-sumo-0-linux_arm64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -162,7 +163,7 @@ Follow the steps for your platform below.
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.57.2-sumo-1/otelcol-sumo-0.57.2-sumo-1-darwin_amd64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.71.0-sumo-0/otelcol-sumo-0.71.0-sumo-0-darwin_amd64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -195,7 +196,7 @@ Follow the steps for your platform below.
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.57.2-sumo-1/otelcol-sumo-0.57.2-sumo-1-darwin_arm64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.71.0-sumo-0/otelcol-sumo-0.71.0-sumo-0-darwin_arm64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -315,7 +316,7 @@ repository.
 1. Set the release version variable:
 
    ```bash
-   export RELEASE_VERSION=0.57.2-sumo-1
+   export RELEASE_VERSION=0.71.0-sumo-0
    ```
 
 1. Prepare the configuration according to [this](configuration.md) document and save it in `config.yaml`.
@@ -364,6 +365,10 @@ repository.
 
 ## Systemd Service
 
+We recommend to use [installation script](#installation-using-script) as it supports Systemd scenario.
+
+This section describes how to install it manually.
+
 > **IMPORTANT NOTE**:
 >
 > Make sure that the user that will run the `otelcol-sumo` process has access to
@@ -391,65 +396,72 @@ To run opentelemetry collector as Systemd Service please apply following steps:
    /usr/local/bin/otelcol-sumo --version
    ```
 
-1. Create configuration file and save it as `/etc/otelcol-sumo/config.yaml`.
+1. Create configuration:
+
+   - Get [recommended configuration](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.71.0-sumo-0/examples/sumologic.yaml) from Sumo Logic repository and save it as `/etc/otelcol-sumo/sumologic.yaml`.
+   - Create your custom configuration in `/etc/otelcol-sumo/conf.d`, e.g. `/etc/otelcol-sumo/conf.d/common.yaml`
 
    > **IMPORTANT NOTE**:
    > It is recommended to limit access to the configuration file as it contains sensitive information.
    > You can change access permissions to the configuration file using:
    >
    > ```bash
-   > chmod 640 config.yaml
+   > mkdir -p /etc/otelcol-sumo/{conf.d,env}
+   > chmod 551 /etc/otelcol-sumo /etc/otelcol-sumo/{conf.d,env}
+   > chmod 440 /etc/otelcol-sumo/conf.d/common.yaml /etc/otelcol-sumo/sumologic.yaml
    > ```
 
 1. Create `user` and `group` to run opentelemetry by:
 
    ```bash
-   sudo useradd -mrUs /bin/false otelcol-sumo
+   sudo useradd -mrUs /bin/false -d /var/lib/otelcol-sumo otelcol-sumo
    ```
 
    > **IMPORTANT NOTE**:
    > This command will create a home directory for the user. By default, the `sumologic` extension stores the credentials in a subdirectory of the home directory.
    > However, if the user with name `otelcol-sumo` already exists, it won't be overwritten, so you should make sure that a home directory has been created for this user.
    >
-   > If you don't want the user to have a home directory, you should use `useradd` without the `m` flag
-   > and explicitely change the directory for saving the credentials, for example:
+   > If you don't want the user to have a home directory, you should use `useradd` with the `M` flag instead of `m` (`sudo useradd -MrUs ...`)
+   > and explicitly change the directory for saving the credentials, for example:
    >
    > ```yaml
    > extensions:
    >   sumologic:
    >     # ...
-   >     collector_credentials_directory: /etc/otelcol-sumo/credentials
+   >     collector_credentials_directory: /var/lib/otelcol-sumo/credentials
    > ```
    >
    > For more information, please refer to the documentation of [sumologic extension][sumologicextension].
 
-1. Ensure that `/etc/otelcol-sumo/config.yaml` can be accessed by `otelcol-sumo` user
+1. Ensure that configuration can be accessed by `otelcol-sumo` user
    which will be used to run the service.
 
    ```bash
-   $ ls -la /etc/otelcol-sumo/config.yaml
-   -rw-r--r-- 1 otelcol-sumo daemon 0 Feb 16 16:23 /etc/otelcol-sumo/config.yaml
+   $ sudo find /etc/otelcol-sumo/ -type 'f' | sudo xargs ls -al
+   -r--r----- 1 otelcol-sumo otelcol-sumo   48 Feb 16 09:00 /etc/otelcol-sumo/conf.d/common.yaml
+   -r--r----- 1 otelcol-sumo otelcol-sumo 4569 Feb 16 09:00 /etc/otelcol-sumo/sumologic.yaml
    ```
 
 1. Verify if opentelemetry collector runs without errors:
 
    ```bash
-   sudo su -s /bin/bash otelcol-sumo -c '/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yaml'
+   sudo su -s /bin/bash otelcol-sumo -c '/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/sumologic.yaml --config "glob:/etc/otelcol-sumo/conf.d/*.yaml"'
    ```
 
 1. Create service file: `/etc/systemd/system/otelcol-sumo.service`:
 
    ```conf
    [Unit]
-   Description=Sumologic Opentelemetry Collector
+   Description=Sumo Logic Distribution for OpenTelemetry Collector
 
    [Service]
-   ExecStart=/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/config.yaml
+   ExecStart=/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/sumologic.yaml --config "glob:/etc/otelcol-sumo/conf.d/*.yaml"
    User=otelcol-sumo
    Group=otelcol-sumo
-   MemoryHigh=200M
-   MemoryMax=300M
+   MemoryHigh=2000M
+   MemoryMax=3000M
    TimeoutStopSec=20
+   EnvironmentFile=-/etc/otelcol-sumo/env/*.env
 
    [Install]
    WantedBy=multi-user.target
@@ -469,6 +481,54 @@ To run opentelemetry collector as Systemd Service please apply following steps:
    sudo systemctl start otelcol-sumo
    sudo systemctl status otelcol-sumo  # checks status
    sudo journalctl -u otelcol-sumo  # checks logs
+   ```
+
+### Using environmental variable to store installation token
+
+We recommend to keep install token in environmental variable for Systemd installation:
+
+1. Ensure that service file `/etc/systemd/system/otelcol-sumo.service` contains `EnvironmentFile=-/etc/otelcol-sumo/env/*.env`:
+
+   ```shell
+   $ sudo cat /etc/systemd/system/otelcol-sumo.service
+   [Service]
+   ...
+   EnvironmentFile=-/etc/otelcol-sumo/env/*.env
+   ```
+
+1. Ensure that the `/etc/otelcol-sumo/env` directory exists:
+
+   ```bash
+   sudo mkdir -p /etc/otelcol-sumo/env
+   ```
+
+1. Create `/etc/otelcol-sumo/env/token.env` with your installation token, eg:
+
+   ```text
+   SUMOLOGIC_INSTALLATION_TOKEN=<your token>
+   ```
+
+   We use `SUMOLOGIC_INSTALLATION_TOKEN` in example, as it will be autoamtically used by [recommended configuration](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.71.0-sumo-0/examples/sumologic.yaml)
+
+1. Ensure that file has correct owner and permissions:
+
+   ```bash
+   sudo chmod 440 /etc/otelcol-sumo/env/token.env
+   sudo chown otelcol-sumo:otelcol-sumo /etc/otelcol-sumo/env/token.env
+   ```
+
+1. Remove `install_token` overrides from `/etc/otelcol-sumo/conf.d/*.yaml`.
+   You can find them using the following command:
+
+   ```shell
+   $ sudo grep -Rn install_token /etc/otelcol-sumo/conf.d
+   /etc/otelcol-sumo/conf.d/common.yaml:3:    install_token: <some token>
+   ```
+
+1. Restart `otelcol-sumo` service:
+
+   ```bash
+   sudo systemctl restart otelcol-sumo
    ```
 
 ## Ansible
