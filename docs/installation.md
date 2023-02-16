@@ -485,7 +485,7 @@ To run opentelemetry collector as Systemd Service please apply following steps:
 
 ### Using environmental variables
 
-We recommend to keep install token in evironmental variable for Systemd installation:
+We recommend to keep install token in environmental variable for Systemd installation:
 
 1. Ensure that service file `/etc/systemd/system/otelcol-sumo.service` contains `EnvironmentFile=-/etc/otelcol-sumo/env/*.env`:
 
