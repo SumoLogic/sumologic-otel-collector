@@ -407,7 +407,7 @@ To run opentelemetry collector as Systemd Service please apply following steps:
    >
    > ```bash
    > mkdir -p /etc/otelcol-sumo/{conf.d,env}
-   > chmod 551 /etc/otelcol-sumo /etc/otelcol-sumo/conf.d
+   > chmod 551 /etc/otelcol-sumo /etc/otelcol-sumo/{conf.d,env}
    > chmod 440 /etc/otelcol-sumo/conf.d/common.yaml /etc/otelcol-sumo/sumologic.yaml
    > ```
 
