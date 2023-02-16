@@ -1,4 +1,4 @@
-receivers:
+lreceivers:
   hostmetrics/mac/localhost:
     scrapers:
       load: null
@@ -27,7 +27,6 @@ service:
         - memory_limiter
         - resource/mac_resource_attributes/localhost
         - resourcedetection/system
-        - sumologic_schema
         - batch
       exporters:
         - sumologic
