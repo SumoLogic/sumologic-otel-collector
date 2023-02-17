@@ -356,7 +356,7 @@ func TestInstallScript(t *testing.T) {
 			installCode:       3, // because of invalid install token
 		},
 		{
-			name: "systemd existing installation different token env ",
+			name: "systemd existing installation different token env",
 			options: installOptions{
 				installToken: installToken,
 			},
