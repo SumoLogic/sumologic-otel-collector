@@ -136,7 +136,7 @@ func (se *syslogexporter) sendSyslogs(ctx context.Context, rl plog.ResourceLogs)
 			lr := slg.LogRecords().At(j)
 			formattedLine := se.logsToMap(lr)
 			timestamp := se.getTimestamp(lr)
-			s, errConn := Connect(se.logger, se.config, se.tlsConfig, se.hostname, se.pid, se.app)
+			s, errConn := Connect(se.logger, se.config, se.tlsConfig)
 			if errConn != nil {
 				droppedRecords = append(droppedRecords, lr)
 				errs = append(errs, errConn)
