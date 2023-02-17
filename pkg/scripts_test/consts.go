@@ -14,6 +14,8 @@ const (
 	confDPath                 string = etcPath + "/conf.d"
 	userConfigPath            string = confDPath + "/common.yaml"
 	hostmetricsConfigPath     string = confDPath + "/hostmetrics.yaml"
+	envDirectoryPath          string = etcPath + "/env"
+	tokenEnvFilePath          string = envDirectoryPath + "/token.env"
 
 	systemdDirectoryPath string = "/run/systemd/system"
 

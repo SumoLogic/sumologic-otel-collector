@@ -158,6 +158,7 @@ function set_defaults() {
     SUMO_BINARY_PATH="/usr/local/bin/otelcol-sumo"
     USER_CONFIG_DIRECTORY="${CONFIG_DIRECTORY}/conf.d"
     USER_ENV_DIRECTORY="${CONFIG_DIRECTORY}/env"
+    TOKEN_ENV_FILE="${USER_ENV_DIRECTORY}/token.env"
     CONFIG_PATH="${CONFIG_DIRECTORY}/sumologic.yaml"
     COMMON_CONFIG_PATH="${USER_CONFIG_DIRECTORY}/common.yaml"
     COMMON_CONFIG_BAK_PATH="${USER_CONFIG_DIRECTORY}/common.yaml.bak"
@@ -609,12 +610,12 @@ function setup_config() {
     fi
 
     ## Check if there is anything to update in configuration
-    if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
+    if [[ ( -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ) || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
         create_user_config_file "${COMMON_CONFIG_PATH}"
         add_extension_to_config "${COMMON_CONFIG_PATH}"
         write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
 
-        if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" ]]; then
+        if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ]]; then
             write_installation_token "${SUMOLOGIC_INSTALLATION_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
         fi
 
@@ -776,6 +777,25 @@ function get_user_config() {
     || echo ""
 }
 
+function get_user_env_config() {
+    local file
+    readonly file="${1}"
+
+    if [[ ! -f "${file}" ]]; then
+        return
+    fi
+
+    # extract install_token and strip quotes
+    grep -m 1 "${ENV_TOKEN}" "${file}" \
+        | sed "s/.*${ENV_TOKEN}=[[:blank:]]*//" \
+        | sed 's/[[:blank:]]*$//' \
+        | sed 's/^"//' \
+        | sed "s/^'//" \
+        | sed 's/"$//' \
+        | sed "s/'\$//" \
+    || echo ""
+}
+
 function get_user_api_url() {
     local file
     readonly file="${1}"
@@ -891,6 +911,23 @@ function write_installation_token() {
         # Do not expose token in sed command as it can be saw on processes list
         echo "s/sumologic:/sumologic:\\
 \\${ext_indentation}install_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
+    fi
+}
+
+# write ${ENV_TOKEN}" to systemd env configuration file
+function write_installation_token_env() {
+    local token
+    readonly token="${1}"
+
+    local file
+    readonly file="${2}"
+
+    # ToDo: ensure we override only ${ENV_TOKEN}" env value
+    if grep "${ENV_TOKEN}" "${file}" > /dev/null 2>&1; then
+        # Do not expose token in sed command as it can be saw on processes list
+        echo "s/${ENV_TOKEN}=.*$/${ENV_TOKEN}=$(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
+    else
+        echo "${ENV_TOKEN}=${token}" > "${file}"
     fi
 }
 
@@ -1089,6 +1126,11 @@ if [[ "${UNINSTALL}" == "true" ]]; then
 fi
 
 USER_TOKEN="$(get_user_config "${COMMON_CONFIG_PATH}")"
+
+# If Systemd is not disabled, try to extract token from systemd env file
+if [[ -z "${USER_TOKEN}" && "${SYSTEMD_DISABLED}" == "false" ]]; then
+    USER_TOKEN="$(get_user_env_config "${TOKEN_ENV_FILE}")"
+fi
 readonly USER_TOKEN
 
 # Exit if installation token is not set and there is no user configuration
@@ -1099,28 +1141,30 @@ if [[ -z "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SKIP_TOKEN}" != "true" && -z "$
 fi
 
 # verify if passed arguments are the same like in user's configuration
-if [[ -f "${COMMON_CONFIG_PATH}" && -z "${DOWNLOAD_ONLY}" ]]; then
-    INDENTATION="$(get_indentation "${COMMON_CONFIG_PATH}" "${INDENTATION}")"
-    EXT_INDENTATION="$(get_extension_indentation "${COMMON_CONFIG_PATH}" "${INDENTATION}")"
-    readonly INDENTATION EXT_INDENTATION
-
+if [[ -z "${DOWNLOAD_ONLY}" ]]; then
     if [[ -n "${USER_TOKEN}" && -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${USER_TOKEN}" != "${SUMOLOGIC_INSTALLATION_TOKEN}" ]]; then
         echo "You are trying to install with different token than in your configuration file!"
         exit 1
     fi
 
-    USER_API_URL="$(get_user_api_url "${COMMON_CONFIG_PATH}")"
-    if [[ -n "${USER_API_URL}" && -n "${API_BASE_URL}" && "${USER_API_URL}" != "${API_BASE_URL}" ]]; then
-        echo "You are trying to install with different api base url than in your configuration file!"
-        exit 1
-    fi
+    if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
+        INDENTATION="$(get_indentation "${COMMON_CONFIG_PATH}" "${INDENTATION}")"
+        EXT_INDENTATION="$(get_extension_indentation "${COMMON_CONFIG_PATH}" "${INDENTATION}")"
+        readonly INDENTATION EXT_INDENTATION
 
-    USER_FIELDS="$(get_user_tags "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}")"
-    FIELDS_TO_COMPARE="$(get_fields_to_compare "${FIELDS}")"
+        USER_API_URL="$(get_user_api_url "${COMMON_CONFIG_PATH}")"
+        if [[ -n "${USER_API_URL}" && -n "${API_BASE_URL}" && "${USER_API_URL}" != "${API_BASE_URL}" ]]; then
+            echo "You are trying to install with different api base url than in your configuration file!"
+            exit 1
+        fi
 
-    if [[ -n "${USER_FIELDS}" && -n "${FIELDS_TO_COMPARE}" && "${USER_FIELDS}" != "${FIELDS_TO_COMPARE}" ]]; then
-        echo "You are trying to install with different tags than in your configuration file!"
-        exit 1
+        USER_FIELDS="$(get_user_tags "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}")"
+        FIELDS_TO_COMPARE="$(get_fields_to_compare "${FIELDS}")"
+
+        if [[ -n "${USER_FIELDS}" && -n "${FIELDS_TO_COMPARE}" && "${USER_FIELDS}" != "${FIELDS_TO_COMPARE}" ]]; then
+            echo "You are trying to install with different tags than in your configuration file!"
+            exit 1
+        fi
     fi
 fi
 
@@ -1247,6 +1291,12 @@ if [[ "${SYSTEMD_DISABLED}" == "true" ]]; then
 fi
 
 echo 'We are going to set up a systemd service'
+
+if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" ]]; then
+    echo 'Writing installation token to env file'
+    write_installation_token_env "${SUMOLOGIC_INSTALLATION_TOKEN}" "${TOKEN_ENV_FILE}"
+    chmod -R 440 "${TOKEN_ENV_FILE}"
+fi
 
 if [[ -f "${SYSTEMD_CONFIG}" ]]; then
     # This is required for configuration being installed after systemd setup

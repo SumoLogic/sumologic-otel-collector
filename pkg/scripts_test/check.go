@@ -3,7 +3,9 @@
 package sumologic_scripts_tests
 
 import (
+	"fmt"
 	"io/fs"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"os/user"
@@ -13,6 +15,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -129,6 +132,14 @@ func checkUserConfigNotCreated(c check) {
 	require.NoFileExists(c.test, userConfigPath, "user configuration has been created")
 }
 
+func checkTokenEnvFileCreated(c check) {
+	require.FileExists(c.test, tokenEnvFilePath, "env token file has not been created")
+}
+
+func checkTokenEnvFileNotCreated(c check) {
+	require.NoFileExists(c.test, tokenEnvFilePath, "env token file not been created")
+}
+
 func checkHomeDirectoryCreated(c check) {
 	require.DirExists(c.test, libPath, "home directory has not been created properly")
 }
@@ -170,6 +181,24 @@ func checkDifferentTokenInConfig(c check) {
 	require.NoError(c.test, err, "error while reading configuration")
 
 	require.Equal(c.test, "different"+c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
+}
+
+func checkTokenInEnvFile(c check) {
+	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
+
+	envs, err := godotenv.Read(tokenEnvFilePath)
+
+	require.NoError(c.test, err)
+	require.Equal(c.test, c.installOptions.installToken, envs["SUMOLOGIC_INSTALLATION_TOKEN"], "installation token is different than expected")
+}
+
+func checkDifferentTokenInEnvFile(c check) {
+	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
+
+	envs, err := godotenv.Read(tokenEnvFilePath)
+
+	require.NoError(c.test, err)
+	require.Equal(c.test, "different"+c.installOptions.installToken, envs["SUMOLOGIC_INSTALLATION_TOKEN"], "installation token is different than expected")
 }
 
 func checkHostmetricsConfigCreated(c check) {
@@ -245,6 +274,17 @@ func preActionMockConfig(c check) {
 	require.NoError(c.test, err)
 }
 
+func preActionMockEnvFiles(c check) {
+	err := os.MkdirAll(envDirectoryPath, fs.FileMode(etcPathPermissions))
+	require.NoError(c.test, err)
+
+	f, err := os.Create(configPath)
+	require.NoError(c.test, err)
+
+	err = f.Chmod(fs.FileMode(configPathFilePermissions))
+	require.NoError(c.test, err)
+}
+
 func preActionMockUserConfig(c check) {
 	err := os.MkdirAll(confDPath, fs.FileMode(configPathDirPermissions))
 	require.NoError(c.test, err)
@@ -283,6 +323,14 @@ func preActionWriteDifferentTokenToUserConfig(c check) {
 
 	conf.Extensions.Sumologic.InstallToken = "different" + c.installOptions.installToken
 	err = saveConfig(userConfigPath, conf)
+	require.NoError(c.test, err)
+}
+
+func preActionWriteDifferentTokenToEnvFile(c check) {
+	preActionMockEnvFiles(c)
+
+	content := fmt.Sprintf("SUMOLOGIC_INSTALLATION_TOKEN=different%s", c.installOptions.installToken)
+	err := ioutil.WriteFile(tokenEnvFilePath, []byte(content), fs.FileMode(etcPathPermissions))
 	require.NoError(c.test, err)
 }
 
