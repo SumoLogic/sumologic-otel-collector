@@ -5,7 +5,6 @@ package sumologic_scripts_tests
 import (
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"os/user"
@@ -330,7 +329,7 @@ func preActionWriteDifferentTokenToEnvFile(c check) {
 	preActionMockEnvFiles(c)
 
 	content := fmt.Sprintf("SUMOLOGIC_INSTALLATION_TOKEN=different%s", c.installOptions.installToken)
-	err := ioutil.WriteFile(tokenEnvFilePath, []byte(content), fs.FileMode(etcPathPermissions))
+	err := os.WriteFile(tokenEnvFilePath, []byte(content), fs.FileMode(etcPathPermissions))
 	require.NoError(c.test, err)
 }
 
