@@ -793,6 +793,13 @@ function get_user_env_config() {
         | sed "s/^'//" \
         | sed 's/"$//' \
         | sed "s/'\$//" \
+    || grep -m 1 "${DEPRECATED_ENV_TOKEN}" "${file}" \
+        | sed "s/.*${DEPRECATED_ENV_TOKEN}=[[:blank:]]*//" \
+        | sed 's/[[:blank:]]*$//' \
+        | sed 's/^"//' \
+        | sed "s/^'//" \
+        | sed 's/"$//' \
+        | sed "s/'\$//" \
     || echo ""
 }
 
@@ -922,12 +929,20 @@ function write_installation_token_env() {
     local file
     readonly file="${2}"
 
-    # ToDo: ensure we override only ${ENV_TOKEN}" env value
-    if grep "${ENV_TOKEN}" "${file}" > /dev/null 2>&1; then
-        # Do not expose token in sed command as it can be saw on processes list
-        echo "s/${ENV_TOKEN}=.*$/${ENV_TOKEN}=$(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
+    local token_name
+    if (( MAJOR_VERSION == 0 && MINOR_VERSION <= 71 )); then
+        token_name="${DEPRECATED_ENV_TOKEN}"
     else
-        echo "${ENV_TOKEN}=${token}" > "${file}"
+        token_name="${ENV_TOKEN}"
+    fi
+    readonly token_name
+
+    # ToDo: ensure we override only ${ENV_TOKEN}" env value
+    if grep "${token_name}" "${file}" > /dev/null 2>&1; then
+        # Do not expose token in sed command as it can be saw on processes list
+        echo "s/${token_name}=.*$/${token_name}=$(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
+    else
+        echo "${token_name}=${token}" > "${file}"
     fi
 }
 

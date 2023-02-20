@@ -188,7 +188,11 @@ func checkTokenInEnvFile(c check) {
 	envs, err := godotenv.Read(tokenEnvFilePath)
 
 	require.NoError(c.test, err)
-	require.Equal(c.test, c.installOptions.installToken, envs["SUMOLOGIC_INSTALLATION_TOKEN"], "installation token is different than expected")
+	if _, ok := envs["SUMOLOGIC_INSTALL_TOKEN"]; ok {
+		require.Equal(c.test, c.installOptions.installToken, envs["SUMOLOGIC_INSTALL_TOKEN"], "installation token is different than expected")
+	} else {
+		require.Equal(c.test, c.installOptions.installToken, envs["SUMOLOGIC_INSTALLATION_TOKEN"], "installation token is different than expected")
+	}
 }
 
 func checkDifferentTokenInEnvFile(c check) {
@@ -197,7 +201,11 @@ func checkDifferentTokenInEnvFile(c check) {
 	envs, err := godotenv.Read(tokenEnvFilePath)
 
 	require.NoError(c.test, err)
-	require.Equal(c.test, "different"+c.installOptions.installToken, envs["SUMOLOGIC_INSTALLATION_TOKEN"], "installation token is different than expected")
+	if _, ok := envs["SUMOLOGIC_INSTALL_TOKEN"]; ok {
+		require.Equal(c.test, "different"+c.installOptions.installToken, envs["SUMOLOGIC_INSTALL_TOKEN"], "installation token is different than expected")
+	} else {
+		require.Equal(c.test, "different"+c.installOptions.installToken, envs["SUMOLOGIC_INSTALLATION_TOKEN"], "installation token is different than expected")
+	}
 }
 
 func checkHostmetricsConfigCreated(c check) {
@@ -329,6 +337,14 @@ func preActionWriteDifferentTokenToEnvFile(c check) {
 	preActionMockEnvFiles(c)
 
 	content := fmt.Sprintf("SUMOLOGIC_INSTALLATION_TOKEN=different%s", c.installOptions.installToken)
+	err := os.WriteFile(tokenEnvFilePath, []byte(content), fs.FileMode(etcPathPermissions))
+	require.NoError(c.test, err)
+}
+
+func preActionWriteDifferentDeprecatedTokenToEnvFile(c check) {
+	preActionMockEnvFiles(c)
+
+	content := fmt.Sprintf("SUMOLOGIC_INSTALL_TOKEN=different%s", c.installOptions.installToken)
 	err := os.WriteFile(tokenEnvFilePath, []byte(content), fs.FileMode(etcPathPermissions))
 	require.NoError(c.test, err)
 }

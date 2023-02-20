@@ -481,6 +481,17 @@ func TestInstallScript(t *testing.T) {
 			installCode:       1, // because of invalid installation token
 		},
 		{
+			name: "systemd installation if deprecated token in file",
+			options: installOptions{
+				installToken: installToken,
+			},
+			preActions:        []checkFunc{preActionWriteDifferentDeprecatedTokenToEnvFile},
+			preChecks:         []checkFunc{checkBinaryNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			postChecks:        []checkFunc{checkDifferentTokenInEnvFile, checkAbortedDueToDifferentToken},
+			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
+			installCode:       1, // because of invalid installation token
+		},
+		{
 			name: "don't keep downloads",
 			options: installOptions{
 				skipInstallToken:  true,
