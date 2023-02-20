@@ -18,6 +18,8 @@ import (
 	"errors"
 	"strings"
 
+	"go.uber.org/multierr"
+
 	"github.com/THREATINT/go-net"
 
 	"go.opentelemetry.io/collector/config/configtls"
@@ -25,10 +27,10 @@ import (
 )
 
 var (
-	unsupportedPort     = errors.New("Unsupported port: port is required, must be in the range 1-65535")
-	invalidEndpoint     = errors.New("Invalid endpoint: endpoint is required, must be a valid FQDN or IP address")
-	unsupportedProtocol = errors.New("Unsupported protocol: protocol is required, only tcp/udp supported")
-	unsupportedFormat   = errors.New("Unsupported format: Only rfc5424 and rfc3164 supported")
+	unsupportedPort     = errors.New("unsupported port: port is required, must be in the range 1-65535")
+	invalidEndpoint     = errors.New("invalid endpoint: endpoint is required, must be a valid FQDN or IP address")
+	unsupportedProtocol = errors.New("unsupported protocol: protocol is required, only tcp/udp supported")
+	unsupportedFormat   = errors.New("unsupported format: Only rfc5424 and rfc3164 supported")
 )
 
 // Config defines configuration for Syslog exporter.
@@ -52,23 +54,28 @@ type Config struct {
 
 // Validate the configuration for errors. This is required by component.Config.
 func (cfg *Config) Validate() error {
+	invalidFields := []error{}
 	if cfg.Port < 1 || cfg.Port > 65525 {
-		return unsupportedPort
+		invalidFields = append(invalidFields, unsupportedPort)
 	}
 
 	if !net.IsFQDN(cfg.Endpoint) && !net.IsIPAddr(cfg.Endpoint) && cfg.Endpoint != "localhost" {
-		return invalidEndpoint
+		invalidFields = append(invalidFields, invalidEndpoint)
 	}
 
 	if strings.ToLower(cfg.Protocol) != "tcp" && strings.ToLower(cfg.Protocol) != "udp" {
-		return unsupportedProtocol
+		invalidFields = append(invalidFields, unsupportedProtocol)
 	}
 
 	switch cfg.Format {
 	case formatRFC3164Str:
 	case formatRFC5424Str:
 	default:
-		return unsupportedFormat
+		invalidFields = append(invalidFields, unsupportedFormat)
+	}
+
+	if len(invalidFields) > 0 {
+		return multierr.Combine(invalidFields...)
 	}
 
 	return nil

@@ -20,9 +20,12 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 )
 
@@ -68,6 +71,7 @@ func newLogsExporter(
 		params,
 		cfg,
 		s.pushLogsData,
+		exporterhelper.WithTimeout(exporterhelper.TimeoutSettings{Timeout: 0}),
 		exporterhelper.WithRetry(cfg.RetrySettings),
 		exporterhelper.WithQueue(cfg.QueueSettings),
 	)
@@ -84,28 +88,67 @@ func (se *syslogexporter) getTimestamp(record plog.LogRecord) time.Time {
 }
 
 func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
-	s, err := Connect(se.logger, se.config, se.tlsConfig)
-	if err != nil {
-		return fmt.Errorf("error connecting to syslog server: %s", err)
+	type droppedResourceRecords struct {
+		resource pcommon.Resource
+		records  []plog.LogRecord
 	}
-	defer s.Close()
+	var (
+		errs    []error
+		dropped []droppedResourceRecords
+	)
 	rls := ld.ResourceLogs()
 	for i := 0; i < rls.Len(); i++ {
 		rl := rls.At(i)
-		slgs := rl.ScopeLogs()
-		for i := 0; i < slgs.Len(); i++ {
-			slg := slgs.At(i)
-			for j := 0; j < slg.LogRecords().Len(); j++ {
-				lr := slg.LogRecords().At(j)
-				formattedLine := se.logsToMap(lr)
-				timestamp := se.getTimestamp(lr)
-				err = s.Write(formattedLine, timestamp)
-				if err != nil {
-					//TODO: add handling of failures as it is in sumologic exporter
-					return err
-				}
+		if droppedRecords, err := se.sendSyslogs(ctx, rl); err != nil {
+			dropped = append(dropped, droppedResourceRecords{
+				resource: rl.Resource(),
+				records:  droppedRecords,
+			})
+			errs = append(errs, err)
+		}
+	}
+	if len(dropped) > 0 {
+		ld = plog.NewLogs()
+		for i := range dropped {
+			rls := ld.ResourceLogs().AppendEmpty()
+			logRecords := rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty()
+			dropped[i].resource.MoveTo(rls.Resource())
+			for j := 0; j < len(dropped[i].records); j++ {
+				dropped[i].records[j].MoveTo(logRecords)
+			}
+		}
+		errs = deduplicateErrors(errs)
+		return consumererror.NewLogs(multierr.Combine(errs...), ld)
+	}
+	se.logger.Info("Connected successfully, exporting logs....")
+	return nil
+}
+
+func (se *syslogexporter) sendSyslogs(ctx context.Context, rl plog.ResourceLogs) ([]plog.LogRecord, error) {
+	var (
+		errs           []error
+		droppedRecords []plog.LogRecord
+	)
+	slgs := rl.ScopeLogs()
+	for i := 0; i < slgs.Len(); i++ {
+		slg := slgs.At(i)
+		for j := 0; j < slg.LogRecords().Len(); j++ {
+			lr := slg.LogRecords().At(j)
+			formattedLine := se.logsToMap(lr)
+			timestamp := se.getTimestamp(lr)
+			s, errConn := Connect(se.logger, se.config, se.tlsConfig)
+			if errConn != nil {
+				droppedRecords = append(droppedRecords, lr)
+				errs = append(errs, errConn)
+				continue
+			}
+			defer s.Close()
+			err := s.Write(formattedLine, timestamp)
+			if err != nil {
+				droppedRecords = append(droppedRecords, lr)
+				errs = append(errs, err)
 			}
 		}
 	}
-	return nil
+	return droppedRecords, multierr.Combine(errs...)
 }
