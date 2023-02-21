@@ -403,6 +403,7 @@ jobs:
           ref: main
           wait-for-completion: false
           display-workflow-run-url: true
+          display-workflow-run-url-interval: 1s
           inputs: |-
             {
               "workflow_id": "${{ github.run_id }}",
