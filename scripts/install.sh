@@ -1312,8 +1312,9 @@ if command -v sestatus && sestatus; then
     if ! command -v semanage &> /dev/null; then
         # Attempt to install it via yum if on a RHEL distribution.
         if [[ -f "/etc/redhat-release" ]]; then
-            echo "semanage command not found, installing it..."
-            yum install -y policycoreutils-python-utils
+            echo "semanage command not found, trying to install it..."
+            # Try to install semange but ignore error
+            yum install -y policycoreutils-python-utils || true
         fi
     fi
 
