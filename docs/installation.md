@@ -11,10 +11,11 @@ the container images stored in AWS Public ECR under the following repository:
     - [Linux on amd64 (x86-64)](#linux-on-amd64-x86-64)
     - [Linux on arm64](#linux-on-arm64)
     - [MacOS on amd64 (x86-64)](#macos-on-amd64-x86-64)
-    - [MacOS on arm64 (Apple M1)](#macos-on-arm64-apple-m1-x86-64)
+    - [MacOS on arm64 (Apple silicon)](#macos-on-arm64-apple-silicon)
     - [Upgrading standalone installation](#upgrading-standalone-installation)
   - [Verify the installation](#verify-the-installation)
 - [Container image](#container-image)
+  - [Important note about local state files when using `sumologicextension`](#important-note-about-local-state-files-when-using-sumologicextension)
 - [Systemd service](#systemd-service)
   - [Using environmental variable to store installation token](#using-environmental-variable-to-store-installation-token)
 - [Ansible](#ansible)
@@ -191,7 +192,7 @@ Follow the steps for your platform below.
    otelcol-sumo --config config.yaml
    ```
 
-#### MacOS on arm64 (Apple M1) (x86-64)
+#### MacOS on arm64 (Apple silicon)
 
 1. Download the release binary:
 
@@ -363,7 +364,7 @@ repository.
 [sumologicextension]: ./../pkg/extension/sumologicextension/README.md
 [sumologicextension_storing_credentials]: ./../pkg/extension/sumologicextension/README.md#Storing-credentials
 
-## Systemd Service
+## Systemd service
 
 We recommend to use [installation script](#installation-using-script) as it supports Systemd scenario.
 
