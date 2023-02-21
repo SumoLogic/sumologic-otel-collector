@@ -2,13 +2,13 @@ package syslogexporter
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net"
 	"strconv"
 	"testing"
 	"time"
 
+	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 
 	"github.com/stretchr/testify/assert"
@@ -20,25 +20,20 @@ import (
 )
 
 var expectedForm = "<165>1 2003-08-24T12:14:15Z 192.0.2.1 myproc 8710 - - It's time to make the do-nuts.\n"
+var originalForm = "<165>1 2003-08-24T05:14:15-07:00 192.0.2.1 myproc 8710 - - It's time to make the do-nuts."
 
 type exporterTest struct {
 	srv net.TCPListener
 	exp *syslogexporter
 }
 
-type testPort struct {
-	isIncorrect bool
-}
-
-func exampleLog() plog.LogRecord {
+func exampleLog(t *testing.T) plog.LogRecord {
 	buffer := plog.NewLogRecord()
-	buffer.Body().SetStr("<165>1 2003-08-24T05:14:15-07:00 192.0.2.1 myproc 8710 - - It's time to make the do-nuts.")
+	buffer.Body().SetStr(originalForm)
 	timestamp := "2003-08-24T05:14:15-07:00"
-	t, err := time.Parse(time.RFC3339, timestamp)
-	if err != nil {
-		fmt.Print(err)
-	}
-	ts := pcommon.NewTimestampFromTime(t)
+	timeStr, err := time.Parse(time.RFC3339, timestamp)
+	require.NoError(t, err, "failed to start test syslog server")
+	ts := pcommon.NewTimestampFromTime(timeStr)
 	buffer.SetTimestamp(ts)
 	attrMap := map[string]any{"proc_id": "8710", "message": "It's time to make the do-nuts.",
 		"appname": "myproc", "hostname": "192.0.2.1", "priority": int64(165),
@@ -56,8 +51,8 @@ func exampleLog() plog.LogRecord {
 func LogRecordsToLogs(record plog.LogRecord) plog.Logs {
 	logs := plog.NewLogs()
 	logsSlice := logs.ResourceLogs().AppendEmpty().ScopeLogs().AppendEmpty().LogRecords()
-	tgt := logsSlice.AppendEmpty()
-	record.CopyTo(tgt)
+	ls := logsSlice.AppendEmpty()
+	record.CopyTo(ls)
 	return logs
 }
 
@@ -77,33 +72,57 @@ func TestInitExporter(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func prepareExporterTest(t *testing.T, cfg *Config, userPort ...testPort) *exporterTest {
-	// Start a test syslog server
+func buildValidExporter(t *testing.T, server net.TCPListener, cfg *Config) (*syslogexporter, error) {
 	var port string
+	var err error
+	hostPort := server.Addr().String()
+	cfg.Endpoint, port, err = net.SplitHostPort(hostPort)
+	require.NoError(t, err, "could not parse port")
+	cfg.Port, err = strconv.Atoi(port)
+	require.NoError(t, err, "type error")
+	exp, err := initExporter(cfg, createExporterCreateSettings())
+	require.NoError(t, err)
+	return exp, err
+}
+
+func buildInvalidExporter(t *testing.T, server net.TCPListener, cfg *Config) (*syslogexporter, error) {
+	var port string
+	var err error
+	hostPort := server.Addr().String()
+	cfg.Endpoint, port, err = net.SplitHostPort(hostPort)
+	require.NoError(t, err, "could not parse endpoint")
+	require.NotNil(t, port)
+	invalidPort := "112" // Assign invalid port
+	cfg.Port, err = strconv.Atoi(invalidPort)
+	require.NoError(t, err, "type error")
+	exp, err := initExporter(cfg, createExporterCreateSettings())
+	require.NoError(t, err)
+	return exp, err
+}
+
+func createServer() (net.TCPListener, error) {
 	var addr net.TCPAddr
 	addr.IP = net.IP{127, 0, 0, 1}
 	addr.Port = 0
 	testServer, err := net.ListenTCP("tcp", &addr)
-	if err != nil {
-		t.Fatal("failed to start test syslog server:", err)
+	return *testServer, err
+}
+
+func prepareExporterTest(t *testing.T, cfg *Config, invalidExporter bool) *exporterTest {
+	// Start a test syslog server
+	var err error
+	testServer, err := createServer()
+	require.NoError(t, err, "failed to start test syslog server")
+	var exp *syslogexporter
+	if invalidExporter {
+		exp, err = buildInvalidExporter(t, testServer, cfg)
+	} else {
+		exp, err = buildValidExporter(t, testServer, cfg)
 	}
-	t.Cleanup(func() { testServer.Close() })
-	hostPort := testServer.Addr().String()
-	cfg.Endpoint, port, err = net.SplitHostPort(hostPort)
-	if err != nil {
-		t.Fatalf("could not parse port: %s", err)
-	}
-	if userPort[0].isIncorrect {
-		port = "112"
-	}
-	cfg.Port, err = strconv.Atoi(port)
-	if err != nil {
-		t.Fatalf("type error: %s", err)
-	}
-	exp, err := initExporter(cfg, createExporterCreateSettings())
-	require.NoError(t, err)
+	require.NoError(t, err, "Error building exporter")
+	require.NotNil(t, exp)
 	return &exporterTest{
-		srv: *testServer,
+		srv: testServer,
 		exp: exp,
 	}
 
@@ -117,51 +136,44 @@ func createTestConfig() *Config {
 }
 
 func TestSyslogExportSuccess(t *testing.T) {
-	userPort := testPort{isIncorrect: false}
-	test := prepareExporterTest(t, createTestConfig(), userPort)
+	test := prepareExporterTest(t, createTestConfig(), false)
+	require.NotNil(t, test.exp)
 	defer test.srv.Close()
 	go func() {
-		buffer := exampleLog()
+		buffer := exampleLog(t)
 		logs := LogRecordsToLogs(buffer)
 		err := test.exp.pushLogsData(context.Background(), logs)
-		if err != nil {
-			fmt.Printf("could not send message: %s", err)
-		}
+		require.NoError(t, err, "could not send message")
 	}()
 	err := test.srv.SetDeadline(time.Now().Add(time.Second * 1))
-	if err != nil {
-		t.Fatalf("could not accept connection: %s", err)
-	}
+	require.NoError(t, err, "cannot set deadline")
 	conn, err := test.srv.AcceptTCP()
-	if err != nil {
-		t.Fatalf("could not accept connection: %s", err)
-	}
+	require.NoError(t, err, "could not accept connection")
 	defer conn.Close()
 	b, err := io.ReadAll(conn)
-	if err != nil {
-		t.Fatalf("could not read all: %s", err)
-	}
+	require.NoError(t, err, "could not read all")
 	assert.Equal(t, string(b), expectedForm)
 }
 
 func TestSyslogExportFail(t *testing.T) {
-	userPort := testPort{isIncorrect: true}
-	test := prepareExporterTest(t, createTestConfig(), userPort)
+	test := prepareExporterTest(t, createTestConfig(), true)
 	defer test.srv.Close()
-	buffer := exampleLog()
+	buffer := exampleLog(t)
 	logs := LogRecordsToLogs(buffer)
 	consumerErr := test.exp.pushLogsData(context.Background(), logs)
-	if consumerErr != nil {
-		t.Logf("could not send message: %s", consumerErr)
-	}
+	consumerLogs := consumererror.Logs.GetLogs(consumerErr.(consumererror.Logs))
+	rls := consumerLogs.ResourceLogs()
+	require.Equal(t, 1, rls.Len())
+	scl := rls.At(0).ScopeLogs()
+	require.Equal(t, 1, scl.Len())
+	lrs := scl.At(0).LogRecords()
+	require.Equal(t, 1, lrs.Len())
+	droppedLog := lrs.At(0).Body().AsString()
 	err := test.srv.SetDeadline(time.Now().Add(time.Second * 1))
-	if err != nil {
-		t.Fatalf("could not accept connection: %s", err)
-	}
+	require.NoError(t, err, "cannot set deadline")
 	conn, err := test.srv.AcceptTCP()
-	if err != nil {
-		t.Logf("could not accept connection: %s", err)
-		t.Log(conn)
-	}
-	assert.Contains(t, consumerErr.Error(), "dial tcp 127.0.0.1:112: connect")
+	require.ErrorContains(t, err, "i/o timeout")
+	require.Nil(t, conn)
+	assert.ErrorContains(t, consumerErr, "dial tcp 127.0.0.1:112: connect")
+	assert.Equal(t, droppedLog, originalForm)
 }
