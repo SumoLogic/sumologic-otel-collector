@@ -377,6 +377,30 @@ func checkAbortedDueToDifferentTags(c check) {
 	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different tags than in your configuration file!")
 }
 
+// preActionCreateUser creates systemUser and then set it as owner of configPath
+func preActionCreateUser(c check) {
+	preActionMockUserConfig(c)
+
+	cmd := exec.Command("useradd", systemUser)
+	_, err := cmd.CombinedOutput()
+	require.NoError(c.test, err)
+
+	f, err := os.Open(configPath)
+	require.NoError(c.test, err)
+
+	user, err := user.Lookup(systemUser)
+	require.NoError(c.test, err)
+
+	uid, err := strconv.Atoi(user.Uid)
+	require.NoError(c.test, err)
+
+	gid, err := strconv.Atoi(user.Gid)
+	require.NoError(c.test, err)
+
+	err = f.Chown(uid, gid)
+	require.NoError(c.test, err)
+}
+
 func checkUserExists(c check) {
 	_, err := user.Lookup(systemUser)
 	require.NoError(c.test, err)

@@ -18,18 +18,39 @@ receivers:
       network: null
       paging: null
       process:
+        mute_process_name_error: true
         metrics:
           process.threads:
             enabled: true
-  filelog/linux/localhost:
-    start_at: beginning
-    include_file_path_resolved: true
+          process.paging.faults:
+            enabled: true
+          process.cpu.utilization:
+            enabled: true
+          process.memory.utilization:
+            enabled: true
+          process.signals_pending:
+            enabled: true
+          process.open_file_descriptors:
+            enabled: true
+          process.context_switches:
+            enabled: true
+          process.disk.operations:
+            enabled: true
+  filelog/linux/logs/localhost:
+    operators:
+      - type: move
+        from: attributes["log.file.name"]
+        to: resource["log.file.name"]
     include:
       - /var/log/auth.log
       - /var/log/syslog
       - /var/log/daemon.log
       - /var/log/dpkg.log
       - /var/log/kern.log
+      - /var/log/audit/audit.log
+      - /var/log/secure
+      - /var/log/messages
+      - /var/log/yum.log
 processors:
   resource/linux_resource_attributes/localhost:
     attributes:
@@ -45,18 +66,16 @@ service:
         - memory_limiter
         - resource/linux_resource_attributes/localhost
         - resourcedetection/system
-        - sumologic_schema
         - batch
       exporters:
         - sumologic
     logs/linux/localhost:
       receivers:
-        - filelog/linux/localhost
+        - filelog/linux/logs/localhost
       processors:
         - memory_limiter
         - resource/linux_resource_attributes/localhost
         - resourcedetection/system
-        - sumologic_schema
         - batch
       exporters:
         - sumologic

@@ -534,12 +534,33 @@ function ask_to_continue() {
 
 }
 
-# Print changelog link for specific branch
-function print_changelog_link() {
-    local branch
-    readonly branch="${1}"
+# Print information about breaking changes
+function print_breaking_changes() {
+    local versions
+    readonly versions="${1}"
 
-    echo -e "Changelog:\t\thttps://github.com/SumoLogic/sumologic-otel-collector/blob/${branch}/CHANGELOG.md"
+    local changelog
+    readonly changelog="$(echo -e "$(curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -sS https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/CHANGELOG.md)")"
+
+    local is_breaking_change
+    local message
+    message=""
+
+    for version in ${versions}; do
+        # Print changelog for every version
+        is_breaking_change=$(echo -e "${changelog}" | grep -E '^## |^### Breaking|breaking changes' | sed -e '/## \[v'"${version}"'/,/## \[v/!d' | grep -E 'Breaking|breaking' || echo "")
+
+        if [[ -n "${is_breaking_change}" ]]; then
+            if [[ -n "${message}" ]]; then
+                message="${message}, "
+            fi
+            message="${message}v${version}"
+        fi
+    done
+
+    if [[ -n "${message}" ]]; then
+        echo "The following versions contain breaking changes: ${message}! Please make sure to read the linked Changelog file."
+    fi
 }
 
 # set up configuration
@@ -645,7 +666,7 @@ function uninstall() {
             # remove user
             if getent passwd "${SYSTEM_USER}" > /dev/null; then
                 userdel -r -f "${SYSTEM_USER}"
-                groupdel -f "${SYSTEM_USER}"
+                groupdel "${SYSTEM_USER}" 2>/dev/null || true
             fi
         fi
     fi
@@ -852,7 +873,6 @@ ${indentation}sumologic:/" "${file}"
 
 # write installation token to user configuration file
 function write_installation_token() {
-    set -x
     local token
     readonly token="${1}"
 
@@ -872,7 +892,6 @@ function write_installation_token() {
         echo "s/sumologic:/sumologic:\\
 \\${ext_indentation}install_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
     fi
-    set +x
 }
 
 # write api_url to user configuration file
@@ -1033,13 +1052,21 @@ function get_binary_from_url() {
 function set_acl_on_log_paths() {
     if command -v setfacl &> /dev/null; then
         for log_path in ${ACL_LOG_FILE_PATHS}; do
-	    if [ -d "$log_path" ]; then
-		echo -e "Running: setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}"
-		setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x "${log_path}"
-	    fi
+	      if [ -d "$log_path" ]; then
+		    echo -e "Running: setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}"
+		    setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x "${log_path}"
+	      fi
         done
     else
+        echo ""
         echo "setfacl command not found, skipping ACL creation for system log file paths."
+        echo -e "You can fix it manually by installing setfacl and executing the following commands:"
+        for log_path in ${ACL_LOG_FILE_PATHS}; do
+	      if [ -d "$log_path" ]; then
+		    echo -e "-> setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}"
+	      fi
+        done
+        echo ""
     fi
 }
 
@@ -1161,11 +1188,19 @@ readonly CONFIG_BRANCH BINARY_BRANCH
 if [[ "${INSTALLED_VERSION}" == "${VERSION}" && -z "${BINARY_BRANCH}" ]]; then
     echo -e "OpenTelemetry collector is already in newest (${VERSION}) version"
 else
-    if [[ -z "${BINARY_BRANCH}" ]]; then
-        print_changelog_link "v${VERSION}"
-    else
-        print_changelog_link "${BINARY_BRANCH}"
+
+    # add newline before breaking changes and changelog
+    echo ""
+    if [[ -n "${INSTALLED_VERSION}" && -z "${BINARY_BRANCH}" ]]; then
+        # Take versions from installed up to the newest
+        BETWEEN_VERSIONS="$(get_versions_from "${VERSIONS}" "${INSTALLED_VERSION}")"
+        readonly BETWEEN_VERSIONS
+        print_breaking_changes "${BETWEEN_VERSIONS}"
     fi
+
+    echo -e "Changelog:\t\thttps://github.com/SumoLogic/sumologic-otel-collector/blob/main/CHANGELOG.md"
+    # add newline after breaking changes and changelog
+    echo ""
 
     # Add -fips to the suffix if necessary
     binary_suffix="${OS_TYPE}_${ARCH_TYPE}"
@@ -1214,6 +1249,13 @@ fi
 echo 'We are going to set up a systemd service'
 
 if [[ -f "${SYSTEMD_CONFIG}" ]]; then
+    # This is required for configuration being installed after systemd setup
+    # for example first installation without hostmetrics and second with hostmetrics
+    if getent passwd "${SYSTEM_USER}" > /dev/null && [[ "${SKIP_CONFIG}" == "false" ]]; then
+        echo 'Ensuring that ownership for config and storage is correct'
+        chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOME_DIRECTORY}" "${CONFIG_DIRECTORY}"/*
+        chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}"
+    fi
     echo "Configuration for systemd service (${SYSTEMD_CONFIG}) already exist. Restarting service"
     systemctl restart otelcol-sumo
     exit 0
@@ -1270,8 +1312,9 @@ if command -v sestatus && sestatus; then
     if ! command -v semanage &> /dev/null; then
         # Attempt to install it via yum if on a RHEL distribution.
         if [[ -f "/etc/redhat-release" ]]; then
-            echo "semanage command not found, installing it..."
-            yum install -y policycoreutils-python-utils
+            echo "semanage command not found, trying to install it..."
+            # Try to install semange but ignore error
+            yum install -y policycoreutils-python-utils || true
         fi
     fi
 

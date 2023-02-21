@@ -43,6 +43,11 @@ else
 LDFLAGS="-w"
 endif
 
+# We want to enforce go dns for all types of binaries, as cgo has been used by fips binaries (which supports CGO)
+# and it leaded to error with resolution for .local domain in our docker containers
+# ref: https://pkg.go.dev/net#hdr-Name_Resolution
+GODEBUG=netdns=go
+
 .PHONY: _install-bin
 _install-bin:
 	@mkdir -p $(BUILDER_BIN_PATH)
@@ -86,7 +91,7 @@ _builder:
 .PHONY: _gobuild
 _gobuild:
 	(cd cmd && \
-		CGO_ENABLED=$(CGO_ENABLED) go build -v \
+		GODEBUG=$(GODEBUG) CGO_ENABLED=$(CGO_ENABLED) go build -v \
 		-ldflags=$(LDFLAGS) \
 		-trimpath \
 		-o ./$(BINARY_NAME)$(BUILDER_BIN_EXT) . \
@@ -96,7 +101,7 @@ _gobuild:
 .PHONY: _gobuild_debug
 _gobuild_debug:
 	(cd cmd && \
-		CGO_ENABLED=$(CGO_ENABLED) go build -v \
+		GODEBUG=$(GODEBUG) CGO_ENABLED=$(CGO_ENABLED) go build -v \
 		-race \
 		-gcflags "all=-N -l" \
 		-o ./$(BINARY_NAME)-debug$(BUILDER_BIN_EXT) . \

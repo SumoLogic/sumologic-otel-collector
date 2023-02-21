@@ -18,16 +18,19 @@ import (
 	"errors"
 	"strings"
 
+	"go.uber.org/multierr"
+
 	"github.com/THREATINT/go-net"
 
+	"go.opentelemetry.io/collector/config/configtls"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 )
 
 var (
-	unsupportedPort     = errors.New("Unsupported port: port is required, must be in the range 1-65535")
-	invalidEndpoint     = errors.New("Invalid endpoint: endpoint is required, must be a valid FQDN or IP address")
-	unsupportedProtocol = errors.New("Unsupported protocol: protocol is required, only tcp/udp supported")
-	unsupportedFormat   = errors.New("Unsupported format: Only rfc5424 and rfc3164 supported")
+	unsupportedPort     = errors.New("unsupported port: port is required, must be in the range 1-65535")
+	invalidEndpoint     = errors.New("invalid endpoint: endpoint is required, must be a valid FQDN or IP address")
+	unsupportedProtocol = errors.New("unsupported protocol: protocol is required, only tcp/udp supported")
+	unsupportedFormat   = errors.New("unsupported format: Only rfc5424 and rfc3164 supported")
 )
 
 // Config defines configuration for Syslog exporter.
@@ -39,12 +42,11 @@ type Config struct {
 	// Protocol for syslog communication
 	// options: tcp, udp
 	Protocol string `mapstructure:"protocol"`
-	// CA certificate of syslog server
-	CACertificate string `mapstructure:"ca_certificate"`
 	// Format of syslog messages
 	Format string `mapstructure:"format"`
-	// Additional structured data added to structured data in RFC5424
-	AdditionalStructuredData []string `mapstructure:"additional_structured_data"`
+
+	// TLSSetting struct exposes TLS client configuration.
+	TLSSetting configtls.TLSClientSetting `mapstructure:"tls"`
 
 	exporterhelper.QueueSettings `mapstructure:"sending_queue"`
 	exporterhelper.RetrySettings `mapstructure:"retry_on_failure"`
@@ -52,23 +54,28 @@ type Config struct {
 
 // Validate the configuration for errors. This is required by component.Config.
 func (cfg *Config) Validate() error {
+	invalidFields := []error{}
 	if cfg.Port < 1 || cfg.Port > 65525 {
-		return unsupportedPort
+		invalidFields = append(invalidFields, unsupportedPort)
 	}
 
-	if !net.IsFQDN(cfg.Endpoint) && !net.IsIPAddr(cfg.Endpoint) {
-		return invalidEndpoint
+	if !net.IsFQDN(cfg.Endpoint) && !net.IsIPAddr(cfg.Endpoint) && cfg.Endpoint != "localhost" {
+		invalidFields = append(invalidFields, invalidEndpoint)
 	}
 
 	if strings.ToLower(cfg.Protocol) != "tcp" && strings.ToLower(cfg.Protocol) != "udp" {
-		return unsupportedProtocol
+		invalidFields = append(invalidFields, unsupportedProtocol)
 	}
 
 	switch cfg.Format {
 	case formatRFC3164Str:
 	case formatRFC5424Str:
 	default:
-		return unsupportedFormat
+		invalidFields = append(invalidFields, unsupportedFormat)
+	}
+
+	if len(invalidFields) > 0 {
+		return multierr.Combine(invalidFields...)
 	}
 
 	return nil

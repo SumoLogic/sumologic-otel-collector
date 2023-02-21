@@ -45,30 +45,22 @@ const message = "message"
 const emptyValue = "-"
 
 type Syslog struct {
-	hostname                 string
-	network                  string
-	addr                     string
-	format                   string
-	app                      string
-	pid                      int
-	additionalStructuredData []string
-	tlsConfig                *tls.Config
-	logger                   *zap.Logger
-	mu                       sync.Mutex
-	conn                     net.Conn
+	network   string
+	addr      string
+	format    string
+	tlsConfig *tls.Config
+	logger    *zap.Logger
+	mu        sync.Mutex
+	conn      net.Conn
 }
 
-func Connect(logger *zap.Logger, cfg *Config, tlsConfig *tls.Config, hostname string, pid int, app string) (*Syslog, error) {
+func Connect(logger *zap.Logger, cfg *Config, tlsConfig *tls.Config) (*Syslog, error) {
 	s := &Syslog{
-		logger:                   logger,
-		hostname:                 hostname,
-		network:                  cfg.Protocol,
-		addr:                     fmt.Sprintf("%s:%d", cfg.Endpoint, cfg.Port),
-		format:                   cfg.Format,
-		tlsConfig:                tlsConfig,
-		pid:                      pid,
-		app:                      app,
-		additionalStructuredData: cfg.AdditionalStructuredData,
+		logger:    logger,
+		network:   cfg.Protocol,
+		addr:      fmt.Sprintf("%s:%d", cfg.Endpoint, cfg.Port),
+		format:    cfg.Format,
+		tlsConfig: tlsConfig,
 	}
 
 	s.mu.Lock()
@@ -152,17 +144,9 @@ func (s *Syslog) addStructuredData(msg map[string]any) {
 
 	sd, ok := msg[structuredData].(map[string]map[string]string)
 	if !ok {
-		if len(s.additionalStructuredData) == 0 {
-			msg[structuredData] = emptyValue
-		} else {
-			msg[structuredData] = s.additionalStructuredData
-		}
+		msg[structuredData] = emptyValue
 	} else {
 		sdElements := []string{}
-		if len(s.additionalStructuredData) != 0 {
-			sdElements = append(sdElements, s.additionalStructuredData...)
-
-		}
 		for key, val := range sd {
 			sdElements = append(sdElements, key)
 			for k, v := range val {

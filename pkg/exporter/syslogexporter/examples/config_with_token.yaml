@@ -53,7 +53,12 @@ receivers:
     operators:
       - type: syslog_parser
         protocol: rfc5424
-
+processors:
+  logstransform:
+    operators:
+      - type: add
+        field: attributes.message
+        value: EXPR("YOUR_TOKEN " + attributes.message)
 service:
   telemetry:
       logs:
@@ -64,5 +69,7 @@ service:
     logs:
       receivers:
         - filelog
+      processors:
+        - logstransform
       exporters:
         - syslog
