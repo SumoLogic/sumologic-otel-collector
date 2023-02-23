@@ -258,7 +258,7 @@ jobs:
         if: matrix.arch_os == 'linux_amd64'
         run: |
           cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
-          make build-push-container-multiplatform-dev-fips \
+          make build-push-container-multiplatform-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
             PLATFORM=${{ matrix.arch_os }} \
             LATEST_TAG_FIPS_SUFFIX="-fips"
