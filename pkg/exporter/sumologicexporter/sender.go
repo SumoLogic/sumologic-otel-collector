@@ -324,19 +324,16 @@ func (s *sender) handleReceiverResponse(resp *http.Response) error {
 
 func (s *sender) createRequest(ctx context.Context, pipeline PipelineType, data io.Reader) (*http.Request, error) {
 	var url string
-	if s.config.HTTPClientSettings.Endpoint == "" {
-		switch pipeline {
-		case MetricsPipeline:
-			url = s.dataUrlMetrics
-		case LogsPipeline:
-			url = s.dataUrlLogs
-		case TracesPipeline:
-			url = s.dataUrlTraces
-		default:
-			return nil, fmt.Errorf("unknown pipeline type: %s", pipeline)
-		}
-	} else {
-		url = s.config.HTTPClientSettings.Endpoint
+
+	switch pipeline {
+	case MetricsPipeline:
+		url = s.dataUrlMetrics
+	case LogsPipeline:
+		url = s.dataUrlLogs
+	case TracesPipeline:
+		url = s.dataUrlTraces
+	default:
+		return nil, fmt.Errorf("unknown pipeline type: %s", pipeline)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, data)

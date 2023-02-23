@@ -97,9 +97,9 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 			},
 			&c,
 			pf,
-			"",
-			"",
-			"",
+			testServer.URL,
+			testServer.URL,
+			testServer.URL,
 			component.ID{},
 		),
 	}
@@ -928,7 +928,7 @@ func TestLogsHandlesReceiverResponses(t *testing.T) {
 func TestInvalidEndpoint(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
 
-	test.s.config.HTTPClientSettings.Endpoint = ":"
+	test.s.dataUrlLogs = ":"
 
 	rls := plog.NewResourceLogs()
 	rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().Body().SetStr("Example log")
@@ -940,7 +940,7 @@ func TestInvalidEndpoint(t *testing.T) {
 func TestInvalidPostRequest(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
 
-	test.s.config.HTTPClientSettings.Endpoint = ""
+	test.s.dataUrlLogs = ""
 	rls := plog.NewResourceLogs()
 	rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty().Body().SetStr("Example log")
 
@@ -961,7 +961,7 @@ func TestInvalidPipeline(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
 
 	err := test.s.send(context.Background(), "invalidPipeline", newCountingReader(0).withString(""), fields{})
-	assert.EqualError(t, err, `unexpected pipeline: invalidPipeline`)
+	assert.EqualError(t, err, `unknown pipeline type: invalidPipeline`)
 }
 
 func TestSendCompressGzip(t *testing.T) {
