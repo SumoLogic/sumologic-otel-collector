@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
+	"strings"
 	"sync"
 
 	"go.opentelemetry.io/collector/component"
@@ -419,7 +421,19 @@ func (se *sumologicexporter) configure(ctx context.Context) error {
 		se.setDataURLs(logsUrl.String(), metricsUrl.String(), tracesUrl.String())
 
 	} else if httpSettings.Endpoint != "" {
-		se.setDataURLs(httpSettings.Endpoint, httpSettings.Endpoint, httpSettings.Endpoint)
+		logsUrl, err := getSignalURL(se.config, httpSettings.Endpoint, component.DataTypeLogs)
+		if err != nil {
+			return err
+		}
+		metricsUrl, err := getSignalURL(se.config, httpSettings.Endpoint, component.DataTypeMetrics)
+		if err != nil {
+			return err
+		}
+		tracesUrl, err := getSignalURL(se.config, httpSettings.Endpoint, component.DataTypeTraces)
+		if err != nil {
+			return err
+		}
+		se.setDataURLs(logsUrl, metricsUrl, tracesUrl)
 
 		// Clean authenticator if set to sumologic.
 		// Setting to null in configuration doesn't work, so we have to force it that way.
@@ -453,6 +467,7 @@ func (se *sumologicexporter) getHTTPClient() *http.Client {
 
 func (se *sumologicexporter) setDataURLs(logs, metrics, traces string) {
 	se.dataUrlsLock.Lock()
+	se.logger.Info("setting data urls", zap.String("logs_url", logs), zap.String("metrics_url", metrics), zap.String("traces_url", traces))
 	se.dataUrlLogs, se.dataUrlMetrics, se.dataUrlTraces = logs, metrics, traces
 	se.dataUrlsLock.Unlock()
 }
@@ -469,4 +484,34 @@ func (se *sumologicexporter) shutdown(context.Context) error {
 
 func (se *sumologicexporter) dropRoutingAttribute(attr pcommon.Map) {
 	attr.Remove(se.config.DropRoutingAttribute)
+}
+
+// get the destination url for a given signal type
+// this mostly adds signal-specific suffixes if the format is otlp
+func getSignalURL(oCfg *Config, endpointUrl string, signal component.DataType) (string, error) {
+	url, err := url.Parse(endpointUrl)
+	if err != nil {
+		return "", err
+	}
+
+	switch signal {
+	case component.DataTypeLogs:
+		if oCfg.LogFormat != "otlp" {
+			return url.String(), nil
+		}
+	case component.DataTypeMetrics:
+		if oCfg.MetricFormat != "otlp" {
+			return url.String(), nil
+		}
+	case component.DataTypeTraces:
+	default:
+		return "", fmt.Errorf("unknown signal type: %s", signal)
+	}
+
+	signalUrlSuffix := fmt.Sprintf("/v1/%s", signal)
+	if !strings.HasSuffix(url.Path, signalUrlSuffix) {
+		url.Path = path.Join(url.Path, signalUrlSuffix)
+	}
+
+	return url.String(), nil
 }
