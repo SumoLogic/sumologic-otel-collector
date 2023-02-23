@@ -38,8 +38,11 @@ endif
 
 # We don't want to strip symbols for FIPS builds, as they're useful for verifying the build
 ifeq ($(FIPS_SUFFIX),"")
+GOEXPERIMENT=""
 LDFLAGS="-s -w"
+# We want to use boringcrypto for fips setup
 else
+GOEXPERIMENT=boringcrypto
 LDFLAGS="-w"
 endif
 
@@ -91,7 +94,7 @@ _builder:
 .PHONY: _gobuild
 _gobuild:
 	(cd cmd && \
-		GODEBUG=$(GODEBUG) CGO_ENABLED=$(CGO_ENABLED) go build -v \
+		GODEBUG=$(GODEBUG) CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
 		-ldflags=$(LDFLAGS) \
 		-trimpath \
 		-o ./$(BINARY_NAME)$(BUILDER_BIN_EXT) . \
@@ -101,7 +104,7 @@ _gobuild:
 .PHONY: _gobuild_debug
 _gobuild_debug:
 	(cd cmd && \
-		GODEBUG=$(GODEBUG) CGO_ENABLED=$(CGO_ENABLED) go build -v \
+		GODEBUG=$(GODEBUG) CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
 		-race \
 		-gcflags "all=-N -l" \
 		-o ./$(BINARY_NAME)-debug$(BUILDER_BIN_EXT) . \
