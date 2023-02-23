@@ -38,8 +38,11 @@ endif
 
 # We don't want to strip symbols for FIPS builds, as they're useful for verifying the build
 ifeq ($(FIPS_SUFFIX),"")
+GOEXPERIMENT=""
 LDFLAGS="-s -w"
+# We want to use boringcrypto for fips setup
 else
+GOEXPERIMENT=boringcrypto
 LDFLAGS="-w"
 endif
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export GO_VERSION=1.18
+export GO_VERSION=1.19
 
 sudo apt update -y
 sudo apt install -y \

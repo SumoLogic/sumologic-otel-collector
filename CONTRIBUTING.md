@@ -100,12 +100,12 @@ directory.
 
 This repository contains multiple Go packages with their own dependencies. Some IDEs
 (VS Code for example) do not like this kind of setup and demand that you work on each
-package in a separate workspace. As of [Go 1.18](https://tip.golang.org/doc/go1.18#go-work)
+package in a separate workspace. As of [Go 1.19](https://tip.golang.org/doc/go1.19#go-work)
 this can be solved by configuring a single Go workspace covering all the packages.
 This can be done by adding a `go.work` file to the repository root:
 
 ```go
-go 1.18
+go 1.19
 
 use (
         ./otelcolbuilder/cmd
