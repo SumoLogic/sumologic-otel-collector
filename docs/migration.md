@@ -779,8 +779,8 @@ extensions:
     time_zone: America/Tijuana
 
 receivers:
-  ## Use tcpreceiver for TCP protocol
-  tcpreceiver/first receiver:
+  ## Use TCP receiver for TCP protocol
+  tcplog/first receiver:
     ## listen address in format host:port
     ## host 0.0.0.0 mean all network interfaces
     listen_address: 0.0.0.0:514
@@ -788,8 +788,8 @@ receivers:
     ## `net.peer.name` is going to be used as exporters.sumologic.source_host
     ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/tcplogreceiver#configuration
     add_attributes: true
-  ## Use udpreceiver for UDP protocol
-  udpreceiver/first receiver:
+  ## Use UDP receiver for UDP protocol
+  udplog/first receiver:
     ## listen address in format host:port
     ## host 0.0.0.0 mean all network interfaces
     listen_address: 0.0.0.0:514
@@ -876,13 +876,13 @@ You can use multiple receivers with different names nad ports like in the follow
 
 ```yaml
 receivers:
-  tcpreceiver/first receiver:
+  tcplog/first receiver:
     listen_address: 0.0.0.0:514
-  tcpreceiver/second receiver:
+  tcplog/second receiver:
     listen_address: 127.0.0.1:5140
-  udpreceiver/first receiver:
+  udplog/first receiver:
     listen_address: 0.0.0.0:514
-  udpreceiver/second receiver:
+  udplog/second receiver:
     listen_address: 127.0.0.1:5150
 processor:
   ## All my example logs
@@ -898,13 +898,13 @@ For example, the following snippet configures the Source Category as `My Categor
 
 ```yaml
 receivers:
-  tcpreceiver/first receiver:
+  tcplog/first receiver:
     listen_address: 0.0.0.0:514
-  tcpreceiver/second receiver:
+  tcplog/second receiver:
     listen_address: 127.0.0.1:5140
-  udpreceiver/first receiver:
+  udplog/first receiver:
     listen_address: 0.0.0.0:514
-  udpreceiver/second receiver:
+  udplog/second receiver:
     listen_address: 127.0.0.1:5150
 processor:
   ## All my example logs
@@ -923,13 +923,13 @@ For example, the following snippet configures two fields, `cloud.availability_zo
 
 ```yaml
 receivers:
-  tcpreceiver/first receiver:
+  tcplog/first receiver:
     listen_address: 0.0.0.0:514
-  tcpreceiver/second receiver:
+  tcplog/second receiver:
     listen_address: 127.0.0.1:5140
-  udpreceiver/first receiver:
+  udplog/first receiver:
     listen_address: 0.0.0.0:514
-  udpreceiver/second receiver:
+  udplog/second receiver:
     listen_address: 127.0.0.1:5150
 processors:
   ## All my example logs
@@ -965,13 +965,13 @@ extensions:
   sumologic:
     time_zone: America/Tijuana
 receivers:
-  tcpreceiver/first receiver:
+  tcplog/first receiver:
     listen_address: 0.0.0.0:514
-  tcpreceiver/second receiver:
+  tcplog/second receiver:
     listen_address: 127.0.0.1:5140
-  udpreceiver/first receiver:
+  udplog/first receiver:
     listen_address: 0.0.0.0:514
-  udpreceiver/second receiver:
+  udplog/second receiver:
     listen_address: 127.0.0.1:5150
 processors:
   ## All my example logs
@@ -998,7 +998,7 @@ extensions:
   sumologic:
     time_zone: America/Tijuana
 receivers:
-  tcpreceiver/first receiver:
+  tcplog/first receiver:
     listen_address: 0.0.0.0:514
     operators:
     ## Extract timestamp into timestamp field using regex
@@ -1038,7 +1038,7 @@ extensions:
   sumologic:
     time_zone: America/Tijuana
 receivers:
-  tcpreceiver/first receiver:
+  tcplog/first receiver:
     listen_address: 0.0.0.0:514
 processors:
   ## All my example logs
@@ -1074,7 +1074,7 @@ extensions:
   sumologic:
     time_zone: America/Tijuana
 receivers:
-  tcpreceiver/first receiver:
+  tcplog/first receiver:
     listen_address: 0.0.0.0:514
 processors:
   ## All my example logs
@@ -1111,7 +1111,7 @@ extensions:
   sumologic:
     time_zone: America/Tijuana
 receivers:
-  tcpreceiver/first receiver:
+  tcplog/first receiver:
     listen_address: 0.0.0.0:514
     add_attributes: true
 processors:
