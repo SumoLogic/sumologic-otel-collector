@@ -16,11 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(sumologicextension): deprecate `install_token` [#969]
 - feat(syslogexporter): remove adding additional structure data in syslog exporter [#975]
 - feat(syslogexporter): change TLS configuration options to opentelemetry configtls [#983]
+- chore: bump golang to 1.19 [#1011]
 
 [#969]: https://github.com/SumoLogic/sumologic-otel-collector/pull/969
 [#975]: https://github.com/SumoLogic/sumologic-otel-collector/pull/975
 [#980]: https://github.com/SumoLogic/sumologic-otel-collector/pull/980
 [#983]: https://github.com/SumoLogic/sumologic-otel-collector/pull/983
+[#1011]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1011
 [unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.71.0-sumo-0...main
 
 ## [v0.71.0-sumo-0]
