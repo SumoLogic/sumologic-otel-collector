@@ -75,6 +75,7 @@ func TestInstallScript(t *testing.T) {
 				checkSystemdConfigNotCreated,
 				checkUserNotExists,
 				checkHostmetricsConfigNotCreated,
+				checkTokenEnvFileNotCreated,
 			},
 		},
 		{
@@ -306,16 +307,18 @@ func TestInstallScript(t *testing.T) {
 			options: installOptions{
 				installToken: installToken,
 			},
-			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists, checkTokenEnvFileNotCreated},
 			postChecks: []checkFunc{
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
 				checkConfigFilesOwnershipAndPermissions(systemUser, systemUser),
-				checkTokenInConfig,
+				checkUserConfigNotCreated,
 				checkSystemdConfigCreated,
 				checkSystemdEnvDirExists,
 				checkSystemdEnvDirPermissions,
+				checkTokenEnvFileCreated,
+				checkTokenInEnvFile,
 				checkUserExists,
 				checkVarLogACL,
 			},
@@ -323,7 +326,7 @@ func TestInstallScript(t *testing.T) {
 			installCode:       3, // because of invalid installation token
 		},
 		{
-			name: "installation token with existing user directory",
+			name: "systemd installation token with existing user directory",
 			options: installOptions{
 				installToken: installToken,
 			},
@@ -340,11 +343,41 @@ func TestInstallScript(t *testing.T) {
 				checkBinaryIsRunning,
 				checkConfigCreated,
 				checkConfigFilesOwnershipAndPermissions(systemUser, systemUser),
-				checkUserConfigCreated,
-				checkTokenInConfig,
 				checkSystemdConfigCreated,
 				checkSystemdEnvDirExists,
 				checkSystemdEnvDirPermissions,
+				checkTokenEnvFileCreated,
+				checkTokenInEnvFile,
+				checkUserExists,
+				checkVarLogACL,
+				checkOutputUserAddWarnings,
+			},
+			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
+			installCode:       3, // because of invalid install token
+		},
+		{
+			name: "systemd existing installation different token env",
+			options: installOptions{
+				installToken: installToken,
+			},
+			preActions: []checkFunc{preActionCreateHomeDirectory},
+			preChecks: []checkFunc{
+				checkBinaryNotCreated,
+				checkConfigNotCreated,
+				checkUserConfigNotCreated,
+				checkUserNotExists,
+				checkHomeDirectoryCreated,
+			},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkConfigFilesOwnershipAndPermissions(systemUser, systemUser),
+				checkSystemdConfigCreated,
+				checkSystemdEnvDirExists,
+				checkSystemdEnvDirPermissions,
+				checkTokenEnvFileCreated,
+				checkTokenInEnvFile,
 				checkUserExists,
 				checkVarLogACL,
 				checkOutputUserAddWarnings,
@@ -366,7 +399,7 @@ func TestInstallScript(t *testing.T) {
 				checkBinaryIsRunning,
 				checkConfigCreated,
 				checkUserConfigCreated,
-				checkTokenInConfig,
+				checkTokenInEnvFile,
 				checkUserExists,
 				checkHostmetricsConfigCreated,
 				checkHostmetricsOwnershipAndPermissions(systemUser, systemUser),
@@ -432,9 +465,31 @@ func TestInstallScript(t *testing.T) {
 			preActions: []checkFunc{preActionMockUserConfig, preActionWriteDifferentTokenToUserConfig, preActionWriteDefaultAPIBaseURLToUserConfig},
 			preChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigCreated, checkUserNotExists},
 			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkDifferentTokenInConfig, checkSystemdConfigCreated,
-				checkUserExists},
+				checkUserExists, checkTokenEnvFileNotCreated},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
 			installCode:       3, // because of invalid installation token
+		},
+		{
+			name: "systemd installation if token in file",
+			options: installOptions{
+				installToken: installToken,
+			},
+			preActions:        []checkFunc{preActionWriteDifferentTokenToEnvFile},
+			preChecks:         []checkFunc{checkBinaryNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			postChecks:        []checkFunc{checkDifferentTokenInEnvFile, checkAbortedDueToDifferentToken},
+			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
+			installCode:       1, // because of invalid installation token
+		},
+		{
+			name: "systemd installation if deprecated token in file",
+			options: installOptions{
+				installToken: installToken,
+			},
+			preActions:        []checkFunc{preActionWriteDifferentDeprecatedTokenToEnvFile},
+			preChecks:         []checkFunc{checkBinaryNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			postChecks:        []checkFunc{checkDifferentTokenInEnvFile, checkAbortedDueToDifferentToken},
+			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
+			installCode:       1, // because of invalid installation token
 		},
 		{
 			name: "don't keep downloads",
