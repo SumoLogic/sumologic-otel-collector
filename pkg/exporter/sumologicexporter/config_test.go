@@ -111,8 +111,8 @@ func TestInitExporterInvalidConfiguration(t *testing.T) {
 		},
 		{
 			name: "deprecated metadata_attributes",
-			expectedError: errors.New(`metadata_attributes is not supported anymore.
-Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.49.0-sumo-0`,
+			expectedError: errors.New(`the property metadata_attributes was removed in v0.49.0-sumo-0.
+See upgrade guide at https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#sumo-logic-exporter-metadata-handling`,
 			),
 			cfg: &Config{
 				MetadataAttributes: []string{"some_attribute"},
