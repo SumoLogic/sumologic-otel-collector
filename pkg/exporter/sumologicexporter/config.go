@@ -114,26 +114,26 @@ func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 func (cfg *Config) Validate() error {
 
 	if len(cfg.MetadataAttributes) > 0 {
-		return fmt.Errorf(`metadata_attributes is not supported anymore.
-Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.49.0-sumo-0`,
+		return fmt.Errorf(`the property metadata_attributes was removed in v0.49.0-sumo-0.
+See upgrade guide at https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#sumo-logic-exporter-metadata-handling`,
 		)
 	}
 
 	if cfg.TranslateTelegrafMetrics {
-		return fmt.Errorf(`translate_telegraf_attributes is not supported anymore.
-Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.59.0-sumo-0`,
+		return fmt.Errorf(`the property translate_telegraf_attributes was removed in v0.66.0-sumo-0.
+See upgrade guide at https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#sumologic-exporter-drop-support-for-translating-telegraf-metric-names`,
 		)
 	}
 
 	if cfg.TranslateAttributes {
-		return fmt.Errorf(`translate_attributes is not supported anymore.
-Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.59.0-sumo-0`,
+		return fmt.Errorf(`the property translate_attributes was removed in v0.66.0-sumo-0.
+See upgrade guide at https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#sumologic-exporter-drop-support-for-translating-attributes`,
 		)
 	}
 
 	if cfg.SourceCategory != "" || cfg.SourceHost != "" || cfg.SourceName != "" {
-		return fmt.Errorf(`setting source headers is not supported anymore.
-Please consult the changelog at https://github.com/SumoLogic/sumologic-otel-collector/releases/tag/v0.60.0-sumo-0`,
+		return fmt.Errorf(`the properties source_category, source_host, source_name was removed in v0.66.0-sumo-0.
+See upgrade guide at https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#sumologic-exporter-drop-support-for-source-headers`,
 		)
 	}
 
