@@ -445,7 +445,7 @@ jobs:
         run: echo "VERSION_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Set PRODUCT_VERSION
-        run: echo "PRODUCT_VERSION=$(./ci/get_productversion.sh)" >> $GITHUB_ENV
+        run: echo "PRODUCT_VERSION=$(./ci/get_version.sh productversion)" >> $GITHUB_ENV
 
       - name: Build MSI for windows/amd64
         working-directory: ./packaging/msi/wix
