@@ -53,9 +53,9 @@ GODEBUG=netdns=go
 
 .PHONY: _install-bin
 _install-bin:
-	@mkdir -p $(BUILDER_BIN_PATH)
-	curl -L -o $(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME) https://$(BUILDER_REPO)/releases/download/cmd/builder/v$(BUILDER_VERSION)/ocb_$(BUILDER_VERSION)_$(PLATFORM)_$(ARCH)$(BUILDER_BIN_EXT)
-	@chmod +x $(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME)
+	@mkdir -p '$(BUILDER_BIN_PATH)'
+	curl -L -o '$(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME)' https://$(BUILDER_REPO)/releases/download/cmd/builder/v$(BUILDER_VERSION)/ocb_$(BUILDER_VERSION)_$(PLATFORM)_$(ARCH)$(BUILDER_BIN_EXT)
+	@chmod +x '$(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME)'
 	@$(MAKE) ensure-correct-builder-version
 
 .PHONY: install-builder
