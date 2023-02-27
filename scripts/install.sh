@@ -1092,7 +1092,8 @@ function get_binary_from_url() {
     if [ "${KEEP_DOWNLOADS}" == "true" ]; then
         curl_args+=("-z" "${download_path}")
     fi
-    curl "${curl_args[@]}" "${url}"
+    # ensures curl cache is cleared before attempting download
+    rm -f "${download_path}" && curl "${curl_args[@]}" "${url}"
 
     cp -f "${download_path}" "${TMPDIR}"/otelcol-sumo
 
