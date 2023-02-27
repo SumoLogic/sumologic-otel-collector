@@ -17,8 +17,8 @@ type extensions struct {
 }
 
 type sumologicExtension struct {
-	InstallToken      string            `yaml:"install_token"`
-	InstallationToken string            `yaml:"installation_token"`
+	InstallToken      string            `yaml:"install_token,omitempty"`
+	InstallationToken string            `yaml:"installation_token,omitempty"`
 	Tags              map[string]string `yaml:"collector_fields"`
 	APIBaseURL        string            `yaml:"api_base_url"`
 }
