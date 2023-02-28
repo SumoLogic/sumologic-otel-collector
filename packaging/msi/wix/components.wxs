@@ -53,6 +53,7 @@
 
       <Component Directory="ConfigFragmentsFolder">
         <File Id="CommonConfig" Name="common.yaml" Source="!(bindpath.assets)\common.yaml" />
+        <File Id="HostMetricsConfig" Name="hostmetrics.yaml" Source="!(bindpath.examples)\conf.d\windows.yaml" />
       </Component>
 
       <Component Id="cDataFolder" Directory="DataFolder" KeyPath="yes" Guid="B10962F8-B958-45E2-8B73-75C142A50B30">

@@ -99,6 +99,10 @@
       <ComponentGroupRef Id="ProgramComponents" />
     </Feature>
 
+    <Feature Id="HOSTMETRICS" Title="Collect Host Metrics" Level="1" >
+      <ComponentRef Id="HostMetricsConfig" />
+    </Feature>
+
     <!-- UI -->
     <UI>
       <ui:WixUI Id="WixUI_OtelcolSumo" />

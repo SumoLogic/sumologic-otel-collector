@@ -1,0 +1,61 @@
+receivers:
+  windowseventlog/application/localhost:
+    channel: Application
+  windowseventlog/security/localhost:
+    channel: Security
+  windowseventlog/system/localhost:
+    channel: System
+  hostmetrics/localhost:
+    collection_interval: 1m
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+      load: null
+      memory:
+        metrics:
+          system.memory.utilization:
+            enabled: true
+      disk: null
+      filesystem:
+        metrics:
+          system.filesystem.utilization:
+            enabled: true
+      network: null
+      paging: null
+      process:
+        mute_process_name_error: true
+        metrics:
+          process.threads:
+            enabled: true
+processors:
+  resource/windows_resource_attributes/localhost:
+    attributes:
+      - key: sumo.datasource
+        value: windows
+        action: insert
+service:
+  pipelines:
+    metrics/windows/localhost:
+      receivers:
+        - hostmetrics/localhost
+      processors:
+        - memory_limiter
+        - resourcedetection/system
+        - resource/windows_resource_attributes/localhost
+        - batch
+      exporters:
+        - sumologic
+    logs/windows/localhost:
+      receivers:
+        - windowseventlog/application/localhost
+        - windowseventlog/system/localhost
+        - windowseventlog/security/localhost
+      processors:
+        - memory_limiter
+        - resourcedetection/system
+        - resource/windows_resource_attributes/localhost
+        - batch
+      exporters:
+        - sumologic
