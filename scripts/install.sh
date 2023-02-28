@@ -60,7 +60,7 @@ readonly DEPRECATED_ARG_LONG_TOKEN DEPRECATED_ENV_TOKEN DEPRECATED_ARG_LONG_SKIP
 
 ############################ Variables (see set_defaults function for default values)
 
-# Support providing install_token as env
+# Support providing installation_token as env
 set +u
 if [[ -z "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${SUMOLOGIC_INSTALL_TOKEN}" ]]; then
     SUMOLOGIC_INSTALLATION_TOKEN=""
@@ -766,8 +766,16 @@ function get_user_config() {
         return
     fi
 
-    # extract install_token and strip quotes
-    grep -m 1 install_token "${file}" \
+    # extract installation_token and strip quotes
+    # fallback to deprecated install_token
+    grep -m 1 installation_token "${file}" \
+        | sed 's/.*installation_token:[[:blank:]]*//' \
+        | sed 's/[[:blank:]]*$//' \
+        | sed 's/^"//' \
+        | sed "s/^'//" \
+        | sed 's/"$//' \
+        | sed "s/'\$//" \
+    || grep -m 1 install_token "${file}" \
         | sed 's/.*install_token:[[:blank:]]*//' \
         | sed 's/[[:blank:]]*$//' \
         | sed 's/^"//' \

@@ -5,7 +5,7 @@ extensions:
   ## Manages registration, heartbeats and authentication to Sumo Logic
   ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/extension/sumologicextension
   sumologic:
-    install_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
+    installation_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
     collector_credentials_directory: /var/lib/otelcol-sumo/credentials
 
   ## Configuration for Health Check Extension

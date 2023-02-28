@@ -38,8 +38,8 @@ namespace SumoLogic.wixext
 
             if (config.InstallationToken != "")
             {
-                EnsureScalarKey(sumologic, "install_token");
-                sumologic.Children["install_token"] = config.InstallationToken;
+                EnsureScalarKey(sumologic, "installation_token");
+                sumologic.Children["installation_token"] = config.InstallationToken;
             }
 
             if (config.CollectorFields.Count > 0)
