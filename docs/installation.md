@@ -228,7 +228,7 @@ Follow the steps for your platform below.
 
 #### Windows
 
-1. Go to the [latest release page](https://github.com/SumoLogic/sumologic-otel-collector/releases/latest).
+1. Go to the [latest release page][latest_release].
 
 1. Download `otelcol-sumo_x.y.z.0_en-US.x64.msi` from `Assets` section.
 
@@ -261,6 +261,8 @@ Follow the steps for your platform below.
 1. You can modify configuration, which should be placed in `C:\ProgramData\Sumo Logic\OpenTelemetry Collector\config` directory.
 
    `C:\ProgramData` directory is hidden by default.
+
+[latest_release]: https://github.com/SumoLogic/sumologic-otel-collector/releases/latest
 
 #### Upgrading standalone installation
 
