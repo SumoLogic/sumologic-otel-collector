@@ -230,33 +230,33 @@ Follow the steps for your platform below.
 
 1. Go to the [latest release page](https://github.com/SumoLogic/sumologic-otel-collector/releases/latest).
 
-1. Download `otelcol-sumo_x.y.z.0_en-US.x64.msi` from `Assets section`:
+1. Download `otelcol-sumo_x.y.z.0_en-US.x64.msi` from `Assets` section.
 
    ![windows_installation_0](../images/windows_installation_0.png)
 
-1. Run installer
+1. Run installer.
 
    ![windows_installation_1](../images/windows_installation_1.png)
 
-1. Read and accept End-User License Agreement
+1. Read and accept End-User License Agreement.
 
    ![windows_installation_1](../images/windows_installation_2.png)
 
-1. Select binary destination
+1. Select binary destination.
 
    ![windows_installation_1](../images/windows_installation_3.png)
 
-1. Set `Installation Token` and `Tags` properties
+1. Set `Installation Token` and `Tags` properties.
 
    ![windows_installation_1](../images/windows_installation_4.png)
 
-1. Click `Install` to begin installation
+1. Click `Install` to begin installation.
 
    ![windows_installation_1](../images/windows_installation_5.png)
 
-1. Wait for installation to be completed
+1. Wait for installation to be completed.
 
-  ![windows_installation_1](../images/windows_installation_6.png)
+   ![windows_installation_1](../images/windows_installation_6.png)
 
 1. You can modify configuration, which should be placed in `C:\ProgramData\Sumo Logic\OpenTelemetry Collector\config` directory.
 
