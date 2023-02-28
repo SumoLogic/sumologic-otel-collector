@@ -25,9 +25,9 @@ namespace SumoLogicTests
             Assert.AreEqual(YamlNodeType.Mapping, extensions.Children["sumologic"].NodeType);
             var sumologic = (YamlMappingNode)extensions.Children["sumologic"];
 
-            Assert.IsTrue(sumologic.Children.ContainsKey("install_token"));
-            Assert.AreEqual(YamlNodeType.Scalar, sumologic.Children["install_token"].NodeType);
-            Assert.AreEqual(config.InstallationToken, sumologic.Children["install_token"].ToString());
+            Assert.IsTrue(sumologic.Children.ContainsKey("installation_token"));
+            Assert.AreEqual(YamlNodeType.Scalar, sumologic.Children["installation_token"].NodeType);
+            Assert.AreEqual(config.InstallationToken, sumologic.Children["installation_token"].ToString());
 
             Assert.IsTrue(sumologic.Children.ContainsKey("collector_fields"));
             Assert.AreEqual(YamlNodeType.Mapping, sumologic.Children["collector_fields"].NodeType);
