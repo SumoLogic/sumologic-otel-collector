@@ -10,7 +10,7 @@ extensions:
     directory: .
   sumologic:
     collector_name: sumologic-demo
-    install_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
+    installation_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
 
 receivers:
   filelog:
