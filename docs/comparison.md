@@ -34,14 +34,11 @@
   <li>Linux
   <li>MacOS
   <li>Kubernetes
+  <li>Windows
   </li>
 </ul>
    </td>
    <td>
-<ul>
-  <li>Windows OS
-  </li>
-</ul>
   </td>
   </tr>
   <tr>
@@ -60,12 +57,12 @@
 <li>Streaming Metrics
 <li>Transaction Tracing
 <li>All Telegraf Input Plugins
+<li>Windows Collection
 </li>
 </ul>
    </td>
    <td>
 <ul>
-<li>Windows Collection
 <li>Script Sources
 <li>Script Actions
 <li>Docker Stats / Logs
@@ -275,3 +272,76 @@ that don't have equivalents in the OpenTelemetry Collector:
 - `TCP_Idle`
 - `Disk_Queue`
 - `Disk_Available`
+
+### Windows collection
+
+The OpenTelemetry collector currently supports the following kinds of Windows data.
+
+#### Windows Log Event Receiver
+
+This receiver tails and parses logs from the windows event log API.
+
+##### Configuration Fields
+
+| Field           | Default  | Description                                                                                                                                                                                                                                    |
+|-----------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `channel`       | required | The windows event log channel to monitor                                                                                                                                                                                                       |
+| `max_reads`     | 100      | The maximum number of records read into memory, before beginning a new batch                                                                                                                                                                   |
+| `start_at`      | `end`    | On first startup, where to start reading logs from the API. Options are `beginning` or `end`                                                                                                                                                   |
+| `poll_interval` | 1s       | The interval at which the channel is checked for new log entries. This check begins again after all new bodies have been read.                                                                                                                 |
+| `attributes`    | {}       | A map of `key: value` pairs to add to the entry's attributes.                                                                                                                                                                                  |
+| `resource`      | {}       | A map of `key: value` pairs to add to the entry's resource.                                                                                                                                                                                    |
+| `operators`     | []       | An array of [operators](https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/operators/README.md#what-operators-are-available). See below for more details                                                            |
+| `raw`           | false    | If true, the windows events are not processed and sent as XML.                                                                                                                                                                                 |
+| `storage`       | none     | The ID of a storage extension to be used to store bookmarks. Bookmarks allow the receiver to pick up where it left off in the case of a collector restart. If no storage extension is used, the receiver will manage bookmarks in memory only. |
+
+For more information, please refer to the [windows event log receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/windowseventlogreceiver/README.md) readme.
+
+#### Windows Performance Counters Receiver
+
+This receiver, for Windows only, captures the configured system, application, or custom performance counter data from the Windows registry using the [PDH interface](https://learn.microsoft.com/en-us/windows/win32/perfctrs/using-the-pdh-functions-to-consume-counter-data). It is based on the [Telegraf Windows Performance Counters Input Plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/win_perf_counters)
+
+- `Memory\Committed Bytes`
+- `Processor\% Processor Time`, with a datapoint for each `Instance` label = (`_Total`, `1`, `2`, `3`, ... )
+
+If one of the specified performance counters cannot be loaded on startup, a
+warning will be printed, but the application will not fail fast. It is expected
+that some performance counters may not exist on some systems due to different OS
+configuration.
+
+##### Configuration
+
+The collection interval and the list of performance counters to be scraped can
+be configured:
+
+```yaml
+windowsperfcounters:
+  collection_interval: <duration> # default = "1m"
+  metrics:
+    <metric name>:
+      description: <description>
+      unit: <unit type>
+      gauge:
+    <metric name>:
+      description: <description>
+      unit: <unit type>
+      sum:
+        aggregation: <cumulative or delta>
+        monotonic: <true or false>
+  perfcounters:
+    - object: <object name>
+      instances: [<instance name>]*
+      counters:
+        - name: <counter name>
+          metric: <metric name>
+          attributes:
+            <key>: <value>
+```
+
+For more information, please refer to the [windows performance counter receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/windowsperfcountersreceiver/README.md) readme.
+
+*Note: The following sources are not supported by the OpenTelemetry collector yet:
+
+- [Windows Active Directory Source](https://help.sumologic.com/docs/send-data/installed-collectors/sources/windows-active-directory-inventory-source)
+
+- [Remote Windows Event Log Source](https://help.sumologic.com/docs/send-data/installed-collectors/sources/remote-windows-event-log-source)
