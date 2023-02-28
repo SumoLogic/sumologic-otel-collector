@@ -12,6 +12,7 @@ the container images stored in AWS Public ECR under the following repository:
     - [Linux on arm64](#linux-on-arm64)
     - [MacOS on amd64 (x86-64)](#macos-on-amd64-x86-64)
     - [MacOS on arm64 (Apple silicon)](#macos-on-arm64-apple-silicon)
+    - [Windows](#windows)
     - [Upgrading standalone installation](#upgrading-standalone-installation)
   - [Verify the installation](#verify-the-installation)
 - [Container image](#container-image)
@@ -30,7 +31,7 @@ To run it as a standalone process you only need to run the binary file downloade
 
 ### Installation using script
 
-1. Get your [installation token][sumologic_docs_install_token] if you don't have it already and assign it to environment variable:
+1. Get your [installation token][sumologic_docs_installation_token] if you don't have it already and assign it to environment variable:
 
    ```bash
    export SUMOLOGIC_INSTALLATION_TOKEN=<TOKEN>
@@ -225,6 +226,44 @@ Follow the steps for your platform below.
    otelcol-sumo --config config.yaml
    ```
 
+#### Windows
+
+1. Go to the [latest release page][latest_release].
+
+1. Download `otelcol-sumo_x.y.z.0_en-US.x64.msi` from `Assets` section.
+
+   ![windows_installation_0](../images/windows_installation_0.png)
+
+1. Run installer.
+
+   ![windows_installation_1](../images/windows_installation_1.png)
+
+1. Read and accept End-User License Agreement.
+
+   ![windows_installation_1](../images/windows_installation_2.png)
+
+1. Select binary destination.
+
+   ![windows_installation_1](../images/windows_installation_3.png)
+
+1. Set `Installation Token` and `Tags` properties.
+
+   ![windows_installation_1](../images/windows_installation_4.png)
+
+1. Click `Install` to begin installation.
+
+   ![windows_installation_1](../images/windows_installation_5.png)
+
+1. Wait for installation to be completed.
+
+   ![windows_installation_1](../images/windows_installation_6.png)
+
+1. You can modify configuration, which should be placed in `C:\ProgramData\Sumo Logic\OpenTelemetry Collector\config` directory.
+
+   `C:\ProgramData` directory is hidden by default.
+
+[latest_release]: https://github.com/SumoLogic/sumologic-otel-collector/releases/latest
+
 #### Upgrading standalone installation
 
 To upgrade, simply perform the above installation steps again,
@@ -263,7 +302,7 @@ for potential breaking changes that would require manual migration steps.
        directory: .
      sumologic:
        collector_name: sumologic-demo
-       install_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
+       installation_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
 
    receivers:
      filelog:
@@ -283,7 +322,7 @@ for potential breaking changes that would require manual migration steps.
 
    Please save this configuration as `config.yaml`.
 
-1. In order to send data to Sumo you will also need an [installation token][sumologic_docs_install_token].
+1. In order to send data to Sumo you will also need an [installation token][sumologic_docs_installation_token].
 
    If you have an installation token, you can run otelcol with the example configuration:
 
@@ -304,7 +343,7 @@ for potential breaking changes that would require manual migration steps.
 
    ![live_tail_image](../images/live_tail.png)
 
-[sumologic_docs_install_token]: https://help.sumologic.com/docs/manage/security/installation-tokens
+[sumologic_docs_installation_token]: https://help.sumologic.com/docs/manage/security/installation-tokens
 [live_tail]: https://help.sumologic.com/docs/search/live-tail/about-live-tail#start-a-live-tail-session
 
 ## Container image

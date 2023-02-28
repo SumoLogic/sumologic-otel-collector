@@ -14,6 +14,7 @@ namespace SumoLogic.wixext
         // WiX property names
         private const string pCommonConfigPath = "CommonConfigPath";
         private const string pInstallationToken = "InstallationToken";
+        private const string pInstallToken = "InstallToken";
         private const string pTags = "Tags";
 
         [CustomAction]
@@ -28,7 +29,7 @@ namespace SumoLogic.wixext
                 showErrorMessage(session, ecMissingCustomActionData, pCommonConfigPath);
                 return ActionResult.Failure;
             }
-            if (!session.CustomActionData.ContainsKey(pInstallationToken))
+            if (!session.CustomActionData.ContainsKey(pInstallToken) && !session.CustomActionData.ContainsKey(pInstallationToken))
             {
                 showErrorMessage(session, ecMissingCustomActionData, pInstallationToken);
                 return ActionResult.Failure;
@@ -40,8 +41,14 @@ namespace SumoLogic.wixext
             }
 
             var commonConfigPath = session.CustomActionData[pCommonConfigPath];
-            var installationToken = session.CustomActionData[pInstallationToken];
             var tags = session.CustomActionData[pTags];
+
+            var installationToken = "";
+            if (session.CustomActionData.ContainsKey(pInstallationToken) && session.CustomActionData[pInstallationToken] != "") {
+                installationToken = session.CustomActionData[pInstallationToken];
+            } else if (session.CustomActionData.ContainsKey(pInstallToken)){
+                installationToken = session.CustomActionData[pInstallToken];
+            }
 
             // Load config from disk and replace values
             Config config = new Config();
