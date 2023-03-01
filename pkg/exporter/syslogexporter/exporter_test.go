@@ -22,13 +22,12 @@ import (
 	"testing"
 	"time"
 
-	"go.opentelemetry.io/collector/consumer/consumererror"
-	"go.opentelemetry.io/collector/pdata/pcommon"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/exporter"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
 )
