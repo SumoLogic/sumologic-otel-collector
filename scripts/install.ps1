@@ -6,7 +6,7 @@ param (
     [string] $Version,
 
     # InstallationToken is used to pass a Sumo Logic installation token to
-    # this script. The default value is set to the value of the 
+    # this script. The default value is set to the value of the
     # SUMOLOGIC_INSTALLATION_TOKEN environment variable.
     [string] $InstallationToken = $env:SUMOLOGIC_INSTALLATION_TOKEN,
 
@@ -352,7 +352,7 @@ function Get-BinaryFromUri {
         [System.IO.FileMode]::Create,
         [System.IO.FileAccess]::Write
     )
-    
+
     $copier = $httpStream.CopyToAsync($fileStream)
     Write-Host "Downloading ${requestUri}"
     $copier.Wait()
@@ -397,7 +397,7 @@ try {
     # Get versions, but ignore errors as we fallback to other methods later
     Write-Host "Getting versions..."
     $versions = Get-Version -Command All -HttpClient $httpClient
-    
+
     # Use user's version if set, otherwise get latest version from API (or website)
     if ($Version -eq "") {
         if ($versions.Count -gt 0) {
