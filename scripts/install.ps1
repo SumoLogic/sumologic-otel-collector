@@ -394,7 +394,7 @@ try {
     }
     Write-Host "Installed version:`t${installedVersionStr}"
 
-    # Get versions, but ignore errors are we fallback to other methods later
+    # Get versions, but ignore errors as we fallback to other methods later
     Write-Host "Getting versions..."
     $versions = Get-Version -Command All -HttpClient $httpClient
     
