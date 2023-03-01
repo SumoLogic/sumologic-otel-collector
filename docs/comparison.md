@@ -57,7 +57,8 @@
 <li>Streaming Metrics
 <li>Transaction Tracing
 <li>All Telegraf Input Plugins
-<li>Windows Collection
+<li>Windows Log Event Receiver
+<li>Windows Performance Counters Receiver
 </li>
 </ul>
    </td>
@@ -67,6 +68,8 @@
 <li>Script Actions
 <li>Docker Stats / Logs
 <li>Remote File
+<li>Windows Active Directory Source
+<li>Remote Windows Event Log Source
 </li>
 </ul>
    </td>
@@ -295,7 +298,7 @@ This receiver tails and parses logs from the windows event log API.
 | `raw`           | false    | If true, the windows events are not processed and sent as XML.                                                                                                                                                                                 |
 | `storage`       | none     | The ID of a storage extension to be used to store bookmarks. Bookmarks allow the receiver to pick up where it left off in the case of a collector restart. If no storage extension is used, the receiver will manage bookmarks in memory only. |
 
-For more information, please refer to the [windows event log receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/windowseventlogreceiver/README.md) readme.
+For more information, please refer to the [windows event log receiver][windowseventlogreceiver] readme.
 
 #### Windows Performance Counters Receiver
 
@@ -338,10 +341,7 @@ windowsperfcounters:
             <key>: <value>
 ```
 
-For more information, please refer to the [windows performance counter receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/windowsperfcountersreceiver/README.md) readme.
+For more information, please refer to the [windows performance counter receiver][windowsperfcountersreceiver] readme.
 
-*Note: The following sources are not supported by the OpenTelemetry collector yet:
-
-- [Windows Active Directory Source](https://help.sumologic.com/docs/send-data/installed-collectors/sources/windows-active-directory-inventory-source)
-
-- [Remote Windows Event Log Source](https://help.sumologic.com/docs/send-data/installed-collectors/sources/remote-windows-event-log-source)
+[windowsperfcountersreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/windowsperfcountersreceiver/README.md
+[windowseventlogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/windowseventlogreceiver/README.md
