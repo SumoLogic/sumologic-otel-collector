@@ -258,8 +258,8 @@ The Installed Collector and OpenTelemetry Collector have different
 codebases that cause some host metrics to have different names.
 
 Use the
-[translate_telegraf_attributes](../pkg/exporter/sumologicexporter/README.md#configuration)
-Sumo Logic Exporter option to keep metric names compatible
+[translate_telegraf_attributes](../pkg/processor/sumologicschemaprocessor/README.md#configuration)
+Sumo Logic Schema Processor option to keep metric names compatible
 with Sumo Logic Apps and consistent with the Installed Collector.
 
 There may be differences between metric values calculated by the Installed Collector
