@@ -38,6 +38,13 @@
     <!-- <Property Id="RegKeyPath" Value="Software\!(loc.ManufacturerName)\InstalledProducts\!(loc.ApplicationFullName)" /> -->
 
     <!--
+        Determine if host metrics collection is enabled.
+    -->
+    <Property Id="HOSTMETRICS">
+      <RegistrySearch Id="DetermineHostMetrics" Type="raw" Root="HKLM" Key="$(RegKeyPath)" Name="HostMetrics" />
+    </Property>
+
+    <!--
         Determine the program directory of a previous installation (if one exists)
         If not, INSTALLFOLDER stays empty
     -->
