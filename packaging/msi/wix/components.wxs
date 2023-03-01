@@ -3,6 +3,12 @@
   <?include variables.wxi ?>
 
   <Fragment>
+    <ComponentGroup Id="HostMetricsComponents" Directory="APPDATAFOLDER">
+      <Component Id="HostMetricsConfig" Directory="ConfigFragmentsFolder">
+        <File Id="HostMetricsConfig" Name="hostmetrics.yaml" Source="!(bindpath.examples)\conf.d\windows.yaml" />
+      </Component>
+    </ComponentGroup>
+
     <ComponentGroup Id="AppDataComponents" Directory="APPDATAFOLDER">
       <!-- Add InstallLocation to Registry -->
       <Component>
@@ -53,10 +59,6 @@
 
       <Component Directory="ConfigFragmentsFolder">
         <File Id="CommonConfig" Name="common.yaml" Source="!(bindpath.assets)\common.yaml" />
-      </Component>
-
-      <Component Id="HostMetricsConfig" Directory="ConfigFragmentsFolder">
-        <File Id="HostMetricsConfig" Name="hostmetrics.yaml" Source="!(bindpath.examples)\conf.d\windows.yaml" />
       </Component>
 
       <Component Id="cDataFolder" Directory="DataFolder" KeyPath="yes" Guid="B10962F8-B958-45E2-8B73-75C142A50B30">
