@@ -62,10 +62,4 @@
 
         <UIRef Id="WixUI_Common" />
     </Fragment>
-
-    <Fragment>
-        <UI Id="WixUI_FeatureTree">
-            <UIRef Id="WixUI_FeatureTree"/>
-        </UI>
-    </Fragment>
 </Wix>
