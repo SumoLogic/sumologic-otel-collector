@@ -13,7 +13,10 @@ param (
     # Tags is used to specify a list of tags for the collector. Specified via a
     # hash table.
     # e.g. -Tags @{ tag1 = "foo" ; tag2 = "bar" }
-    [Hashtable] $Tags
+    [Hashtable] $Tags,
+
+    # InstallHostMetrics is used to install host metric collection.
+    [bool] $InstallHostMetrics
 )
 
 ##
@@ -456,6 +459,9 @@ try {
         })
         $tagsProperty = $tagStrs -Join ","
         $msiProperties += "TAGS=`"${tagsProperty}`""
+    }
+    if ($InstallHostMetrics -eq $true) {
+        $msiProperties += "HOSTMETRICS=1"
     }
     msiexec.exe /i "$msiPath" /passive $msiProperties
 } catch [HttpRequestException] {
