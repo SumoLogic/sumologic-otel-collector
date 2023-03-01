@@ -6,12 +6,12 @@
     <ComponentGroup Id="HostMetricsComponents" Directory="APPDATAFOLDER">
       <Component Id="HostMetricsConfig" Directory="ConfigFragmentsFolder">
         <File Id="HostMetricsConfig" Name="hostmetrics.yaml" Source="!(bindpath.examples)\conf.d\windows.yaml" />
-      </Component>
 
-      <RegistryKey Root="HKLM" Key="$(RegKeyPath)" ForceCreateOnInstall="yes">
-        <RegistryValue Name="HostMetrics" Value="1" Type="string" KeyPath="yes" />
-        <PermissionEx Sddl="O:BAG:S-1-5-21-3988832304-4192099344-2875098712-513D:PAI(A;CI;KA;;;SY)(A;CI;KA;;;BA)" />
-      </RegistryKey>
+        <RegistryKey Root="HKLM" Key="$(RegKeyPath)" ForceCreateOnInstall="yes">
+          <RegistryValue Name="HostMetrics" Value="1" Type="string" KeyPath="yes" />
+          <PermissionEx Sddl="O:BAG:S-1-5-21-3988832304-4192099344-2875098712-513D:PAI(A;CI;KA;;;SY)(A;CI;KA;;;BA)" />
+        </RegistryKey>
+      </Component>
     </ComponentGroup>
 
     <ComponentGroup Id="AppDataComponents" Directory="APPDATAFOLDER">
