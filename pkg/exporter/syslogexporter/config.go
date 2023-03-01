@@ -18,12 +18,10 @@ import (
 	"errors"
 	"strings"
 
-	"go.uber.org/multierr"
-
 	"github.com/THREATINT/go-net"
-
 	"go.opentelemetry.io/collector/config/configtls"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
+	"go.uber.org/multierr"
 )
 
 var (
