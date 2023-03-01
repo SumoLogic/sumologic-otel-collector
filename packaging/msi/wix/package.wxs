@@ -102,6 +102,7 @@
 
     <Feature Id="HOSTMETRICS" Title="Collect Host Metrics" Level="0" >
       <ComponentGroupRef Id="HostMetricsComponents" />
+      <Level Condition="HOSTMETRICS" Value="1" />
     </Feature>
 
     <!-- UI -->
