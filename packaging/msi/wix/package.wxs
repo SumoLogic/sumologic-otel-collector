@@ -100,7 +100,7 @@
       <ComponentGroupRef Id="ProgramComponents" />
     </Feature>
 
-    <Feature Id="HOSTMETRICS" Title="Collect Host Metrics" Level="1" >
+    <Feature Id="HOSTMETRICS" Title="Collect Host Metrics" Level="0" >
       <ComponentRef Id="HostMetricsConfig" />
     </Feature>
 
