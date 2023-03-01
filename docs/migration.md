@@ -210,7 +210,8 @@ exporters:
 
 ### Fields
 
-Fields in the Opentelemetry Collector can be added with the [resourceprocessor][resourceprocessor].
+Fields in the Opentelemetry Collector can be added with the `collector_fields` property of [Sumo Logic Extension][sumologicextension].
+
 For example, to add a field with the key `author` with the value `me` to every record,
 you could use the following configuration:
 
@@ -221,12 +222,9 @@ extensions:
     collector_name: my_collector
     collector_description: This is my and only my collector
     collector_category: example
-processors:
-  resource:
-    attributes:
-    - key: author
-      value: me
-      action: insert
+    collector_fields:
+      author: me
+
 exporters:
   sumologic:
     source_host: My hostname
@@ -249,12 +247,8 @@ extensions:
     collector_description: This is my and only my collector
     collector_category: example
     time_zone: America/Tijuana
-processors:
-  resource:
-    attributes:
-    - key: author
-      value: me
-      action: insert
+    collector_fields:
+      author: me
 exporters:
   sumologic:
     source_host: My hostname
@@ -292,6 +286,10 @@ extensions:
     ## Full list of time zones is available on wikipedia:
     ## https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
     time_zone: America/Tijuana
+    ## The following configuration will add two fields to every record
+    collection_fields:
+      cloud.availability_zone: zone-1
+      k8s.cluster.name: my-cluster
 receivers:
   ## There is no substitute for `Description` in current project phase.
   ## It is recommended to use comments for that purpose, like this one.
@@ -302,36 +300,26 @@ receivers:
     ## Installed Collector `File path` substitute.
     include:
     - /var/log/*.log
-     - /opt/app/logs/*.log
+    - /opt/app/logs/*.log
     ## List of local files which shouldn't be read.
     ## Installed Collector `Denylist` substitute.
     exclude:
     - /var/log/auth.log
     - /opt/app/logs/security_*.log
-    ## There is no substitute of Installed Collector `Collection should begin`.
-    ## This is nearest config and can take one of two values: `beginning` or `end`.
+    ## This config can take one of two values: `beginning` or `end`.
+    ## If you are looking for `Collection should begin`, please look at `Collection should begin` section in this document
     start_at: beginning
     ## encoding is substitute for Installed Collector `Encoding`.
     ## List of supported encodings:
-    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver
+    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver
     encoding: utf-8
     ## multiline is Opentelemetry Collector substitute for `Enable Multiline Processing`.
     ## As multiline detection behaves slightly different than in Installed Collector
     ## the following section in filelog documentation is recommended to read:
-    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#multiline-configuration
+    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver#multiline-configuration
     multiline:
       ## line_start_pattern is substitute of `Boundary Regex`.
       line_start_pattern: ^\d{4}
-processors:
-  ## The following configuration will add two fields to every record
-  resource/log source:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: insert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
 exporters:
   sumologic:
     ## Set _sourceName
@@ -355,8 +343,6 @@ service:
     logs/log source:
       receivers:
       - filelog/log source
-      processors:
-      - resource/log source
       exporters:
       - sumologic
 ```
@@ -418,11 +404,69 @@ exporters:
 
 ##### Collection should begin
 
-The OpenTelemetry Collector doesn't have a substitute for this Installed Collector option.
-It supports two options, starting at the beginning or end of a file.
-Starting at the `beginning` will read the entire file every time it's started.
-Starting at the `end` will read only logs appended to file after it's started.
-This is configurable with the `start_at` option.
+The OpenTelemetry Collector substitution for this Installed Collector option require manual timestamp parsing.
+Then you can use [Filter Processor][filterprocessor] to filter out logs before specific date.
+
+Let's consider the following example. We want to get logs from `tmp/logs.log` which are at least from `Dec 31 2022 23:00:00`
+
+- `tmp/logs.log`
+
+  ```text
+  2020-04-01 10:12:14 Log from 2020
+  2021-01-02 12:13:54 Log from 2021
+  2022-03-07 11:15:29 Log from 2022
+  2023-01-02 10:37:12 Log from 2023
+  ```
+
+- `config.yaml` (only essential parts)
+
+  ```yaml
+  receivers:
+    filelog/log source:
+      include:
+      - tmp/logs.log
+      # - ...
+      ## Adds file path log.file.path attribute, which will be used further in pipeline
+      include_file_path: true
+      ## We would like to read from beginning, as we can choose only between end and beginning
+      start_at: beginning
+      operators:
+      - type: regex_parser
+        ## Applies only to tmp/logs.log file
+        if: 'attributes["log.file.path"] == "tmp/logs.log"'
+        ## Extracts timestamp to timestamp_field using regex parser
+        regex: '^(?P<timestamp_field>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}).*'
+        timestamp:
+          parse_from: attributes.timestamp_field
+          layout: '%Y-%m-%d %H:%M:%S'
+      ## cleanup timestamp_field
+      - type: remove
+        field: attributes.timestamp_field
+      # ...
+  processors:
+    ## Remove logs with timestamp before Sat Dec 31 2022 23:00:00 GMT+0000
+    filter/remove older:
+      logs:
+        log_record:
+        ## 1672527600000000000 ns is equal to Dec 31 2022 23:00:00 GMT+0000,
+        ## but do not remove logs which do not have correct timestamp
+        - 'time_unix_nano < 1672527600000000000 and time_unix_nano > 0'
+  exporters:
+    logging:
+      verbosity: detailed
+  service:
+    pipelines:
+      logs/log source:
+        receivers:
+        - filelog/log source
+        processors:
+        # ...
+        - filter/remove older
+        # ...
+  ```
+
+If you want to get logs which are appended after OpenTelemetry Collector Installation,
+you can simply use `start_at: end`:
 
 For example, the following snippet configures the Collector to only read appended logs:
 
@@ -485,34 +529,51 @@ exporters:
 
 #### Fields
 
-Use the [resourceprocessor][resourceprocessor] to set custom fields.
+There are multiple ways to set fields in OpenTelemetry Collector
 
-For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
+- For fields which are going to be the same for all data points and metrics,
+  you should use `collector_fields` in [Sumo Logic Extension][sumologicextension].
 
-```yaml
-receivers:
-  ## All my example logs
-  filelog/my example name:
-    include:
-    - /var/log/*.log
-    - /opt/my_app/*.log
-    start_at: end
-  # ...
-processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
-exporters:
-  sumologic/some name:
-    source_name: my example name
-    source_host: My Host
-    source_category: My Category
-```
+  For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
+
+  ```yaml
+  extensions:
+    sumologic:
+      collector_fields:
+        cloud.availability_zone: zone-1
+        k8s.cluster.name: my-cluster
+  ```
+
+- For fields, which should be set for specific data, you should use [Transform Processor][transformprocessor].
+
+  For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
+
+  ```yaml
+    transform/custom fields:
+      log_statements:
+      - context: resource
+        statements:
+        - set(attributes["cloud.availability_zone"], "zone-1")
+        - set(attributes["k8s.cluster.name"], "my-cluster")
+  ```
+
+- You can also use [resourceprocessor][resourceprocessor] to set custom fields:
+
+  For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
+
+  ```yaml
+  processors:
+    resource/my example name fields:
+      attributes:
+      - key: cloud.availability_zone
+        value: zone-1
+        ## upsert will override existing cloud.availability_zone field
+        action: upsert
+      - key: k8s.cluster.name
+        value: my-cluster
+        ## insert will add cloud.availability_zone field if it doesn't exist
+        action: insert
+  ```
 
 #### Advanced Options for Logs
 
@@ -786,7 +847,7 @@ receivers:
     listen_address: 0.0.0.0:514
     ## Add network attributes
     ## `net.peer.name` is going to be used as exporters.sumologic.source_host
-    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/tcplogreceiver#configuration
+    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/tcplogreceiver#configuration
     add_attributes: true
   ## Use UDP receiver for UDP protocol
   udplog/first receiver:
@@ -795,7 +856,7 @@ receivers:
     listen_address: 0.0.0.0:514
     ## Add network attributes
     ## `net.peer.name` is going to be used as exporters.sumologic.source_host
-    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/udplogreceiver#configuration
+    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/udplogreceiver#configuration
     add_attributes: true
 
 processors:
@@ -2142,13 +2203,16 @@ Remote Windows Performance Source is not supported by the OpenTelemetry Collecto
 
 Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 
-[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.33.0/processor/resourceprocessor
-[multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#multiline-configuration
-[supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#supported-encodings
-[udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/udplogreceiver
-[tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/tcplogreceiver
-[filelogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver
-[syslogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/syslogreceiver
+[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/resourceprocessor
+[multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver#multiline-configuration
+[supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver#supported-encodings
+[udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/udplogreceiver
+[tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/tcplogreceiver
+[filelogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver
+[logstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/logstransformprocessor
+[transformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/transformprocessor
+[filterprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/filterprocessor
+[syslogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/syslogreceiver
 [sumologicsyslog]: ../pkg/processor/sumologicsyslogprocessor/README.md
 [network-semantic-convention]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/span-general.md#general-network-connection-attributes
 [sumologicextension]: ../pkg/extension/sumologicextension/README.md
