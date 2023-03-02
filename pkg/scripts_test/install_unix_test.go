@@ -27,7 +27,7 @@ func TestInstallScript(t *testing.T) {
 			name: "download only with timeout",
 			options: installOptions{
 				downloadOnly:      true,
-				timeout:           0.001,
+				timeout:           1,
 				dontKeepDownloads: true,
 			},
 			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
