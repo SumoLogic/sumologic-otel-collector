@@ -299,7 +299,7 @@ exporters:
 
 A description can be added as a comment just above the receiver name.
 
-For example, the following snippet configures the description [Filelog Receiver][filelogreceiver] instnace as `All my example logs`:
+For example, the following snippet configures the description for [Filelog Receiver][filelogreceiver] instance as `All my example logs`:
 
 ```yaml
 receivers:
