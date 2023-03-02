@@ -284,7 +284,7 @@ Define the name after the slash `/` in the receiver name.
 To set `_sourceName`, use [resourceprocessor][resourceprocessor]
 or set it in [sumologicexporter][sumologicexporter].
 
-For example, the following snippet configures the name for [Filelog Receiver][filelogreceiver] instnace as `my example name`:
+For example, the following snippet configures the name for [Filelog Receiver][filelogreceiver] instance as `my example name`:
 
 ```yaml
 receivers:
