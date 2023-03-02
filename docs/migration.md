@@ -404,8 +404,8 @@ exporters:
 
 ##### Collection should begin
 
-The OpenTelemetry Collector substitution for this Installed Collector option require manual timestamp parsing.
-Then you can use [Filter Processor][filterprocessor] to filter out logs before specific date.
+The OpenTelemetry Collector substitution for this Installed Collector option requires manual timestamp parsing.
+Then you can use [Filter Processor][filterprocessor] to filter out logs before a specific date.
 
 Let's consider the following example. We want to get logs from `tmp/logs.log` which are at least from `Dec 31 2022 23:00:00`
 
