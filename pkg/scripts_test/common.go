@@ -70,7 +70,7 @@ func runTest(t *testing.T, spec *testSpec) {
 	ch.code, ch.output, ch.errorOutput, ch.err = runScript(ch)
 
 	// Remove cache in case of curl issue
-	if ch.code == 28 {
+	if ch.code == curlTimeoutErrorCode {
 		cleanCache(t)
 	}
 

@@ -26,4 +26,6 @@ const (
 	apiBaseURL                string = "https://open-collectors.sumologic.com"
 
 	systemUser string = "otelcol-sumo"
+
+	curlTimeoutErrorCode int = 28
 )

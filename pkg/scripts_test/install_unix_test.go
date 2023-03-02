@@ -35,7 +35,7 @@ func TestInstallScript(t *testing.T) {
 			preChecks:         []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
 			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated, checkUserNotExists,
 				checkDownloadTimeout},
-			installCode: 28,
+			installCode: curlTimeoutErrorCode,
 		},
 		{
 			name: "skip config",
