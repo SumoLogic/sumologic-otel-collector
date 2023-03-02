@@ -17,7 +17,7 @@ processors:
 
 exporters:
   logging:
-    loglevel: debug
+    verbosity: detailed
 
 service:
   extensions: [sumologic]
