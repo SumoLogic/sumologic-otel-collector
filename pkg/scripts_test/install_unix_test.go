@@ -24,6 +24,18 @@ func TestInstallScript(t *testing.T) {
 			postChecks: []checkFunc{checkBinaryCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated, checkUserNotExists},
 		},
 		{
+			name: "download only with timeout",
+			options: installOptions{
+				downloadOnly:      true,
+				timeout:           1,
+				dontKeepDownloads: true,
+			},
+			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated, checkUserNotExists,
+				checkDownloadTimeout},
+			installCode: 28,
+		},
+		{
 			name: "skip config",
 			options: installOptions{
 				skipConfig:       true,

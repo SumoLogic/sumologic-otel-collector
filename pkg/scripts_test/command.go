@@ -30,6 +30,7 @@ type installOptions struct {
 	downloadOnly           bool
 	dontKeepDownloads      bool
 	installHostmetrics     bool
+	timeout                int
 }
 
 func (io *installOptions) string() []string {
@@ -89,6 +90,10 @@ func (io *installOptions) string() []string {
 
 	if io.configBranch != "" {
 		opts = append(opts, "--config-branch", io.configBranch)
+	}
+
+	if io.timeout != 0 {
+		opts = append(opts, "--download-timeout", fmt.Sprintf("%d", io.timeout))
 	}
 
 	return opts

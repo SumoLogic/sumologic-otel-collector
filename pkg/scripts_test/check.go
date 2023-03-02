@@ -368,6 +368,12 @@ func checkOutputUserAddWarnings(c check) {
 	require.NotContains(c.test, errOutput, "useradd", "unexpected useradd output")
 }
 
+func checkDownloadTimeout(c check) {
+	output := strings.Join(c.errorOutput, "\n")
+	count := strings.Count(output, "Operation timed out after")
+	require.Equal(c.test, 6, count)
+}
+
 func preActionWriteAPIBaseURLToUserConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err)
