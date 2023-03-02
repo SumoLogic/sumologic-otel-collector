@@ -24,6 +24,20 @@ func TestInstallScript(t *testing.T) {
 			postChecks: []checkFunc{checkBinaryCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated, checkUserNotExists},
 		},
 		{
+			name: "download only with timeout",
+			options: installOptions{
+				downloadOnly:      true,
+				timeout:           1,
+				dontKeepDownloads: true,
+			},
+			// Skip this test as getting binary in github actions takes less than one second
+			conditionalChecks: []condCheckFunc{checkSkipTest},
+			preChecks:         []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated, checkUserNotExists,
+				checkDownloadTimeout},
+			installCode: curlTimeoutErrorCode,
+		},
+		{
 			name: "skip config",
 			options: installOptions{
 				skipConfig:       true,
