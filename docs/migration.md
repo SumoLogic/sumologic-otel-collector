@@ -275,7 +275,7 @@ This section describes migration steps for Sources managed from the Cloud.
 
 ### Common configuration
 
-There is set of configuration common for all of the sources and this secsion is going to cover details of the migration for them.
+There is set of configuration common for all of the sources and this section is going to cover details of the migration for them.
 
 #### Name
 
