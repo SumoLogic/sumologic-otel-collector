@@ -30,7 +30,9 @@ func TestInstallScript(t *testing.T) {
 				timeout:           1,
 				dontKeepDownloads: true,
 			},
-			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			// Skip this test as getting binary in github actions takes less than one second
+			conditionalChecks: []condCheckFunc{checkSkipTest},
+			preChecks:         []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
 			postChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkSystemdConfigNotCreated, checkUserNotExists,
 				checkDownloadTimeout},
 			installCode: 28,

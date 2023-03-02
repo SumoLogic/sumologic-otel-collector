@@ -31,6 +31,10 @@ type check struct {
 
 type condCheckFunc func(check) bool
 
+func checkSkipTest(c check) bool {
+	return false
+}
+
 func checkSystemdAvailability(c check) bool {
 	return assert.DirExists(&testing.T{}, systemdDirectoryPath, "systemd is not supported")
 }
