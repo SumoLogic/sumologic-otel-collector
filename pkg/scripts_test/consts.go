@@ -16,6 +16,7 @@ const (
 	hostmetricsConfigPath     string = confDPath + "/hostmetrics.yaml"
 	envDirectoryPath          string = etcPath + "/env"
 	tokenEnvFilePath          string = envDirectoryPath + "/token.env"
+	cacheDirectory            string = "/var/cache/otelcol-sumo/"
 
 	systemdDirectoryPath string = "/run/systemd/system"
 
@@ -25,4 +26,6 @@ const (
 	apiBaseURL                string = "https://open-collectors.sumologic.com"
 
 	systemUser string = "otelcol-sumo"
+
+	curlTimeoutErrorCode int = 28
 )
