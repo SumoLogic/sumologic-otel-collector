@@ -106,7 +106,7 @@ receivers:
     protocol: rfc5424
 exporters:
   logging:
-    logLevel: debug
+    loglevel: debug
 service:
   pipelines:
     logs:
@@ -188,7 +188,7 @@ exporters:
     ## Set Source Host to client hostname
     source_host: "%{net.peer.name}"
   logging:
-    logLevel: debug
+    loglevel: debug
 service:
   extensions: [sumologic]
   pipelines:
