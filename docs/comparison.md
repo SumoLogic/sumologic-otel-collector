@@ -7,14 +7,11 @@
 - leverage the **Supported Sources** and **Supported Platforms** listed below
 - are looking for a single agent as opposed to managing multiple agents
 - are having scale issues with FluentD on Kubernetes Collection
-- are looking for ARM support
 
 **Avoid use cases** that:
 
 - are using an **Unsupported Source** or **Unsupported Platform**
-- use CSE due to lack of Windows support
 - require remote management and remote configuration
-- require FIPS support
 - require Ingest Budgets
 - use the Collector Management API (e.g. for Health Events or CRUD operations)
 - require CPU target
