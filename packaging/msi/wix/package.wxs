@@ -38,13 +38,6 @@
     <!-- <Property Id="RegKeyPath" Value="Software\!(loc.ManufacturerName)\InstalledProducts\!(loc.ApplicationFullName)" /> -->
 
     <!--
-        Determine if host metrics collection is enabled.
-    -->
-    <Property Id="HOSTMETRICS">
-      <RegistrySearch Id="DetermineHostMetrics" Type="raw" Root="HKLM" Key="$(RegKeyPath)" Name="HostMetrics" />
-    </Property>
-
-    <!--
         Determine the program directory of a previous installation (if one exists)
         If not, INSTALLFOLDER stays empty
     -->
@@ -102,14 +95,13 @@
     </InstallExecuteSequence>
 
     <!-- Features -->
-    <Feature Id="Main" ConfigurableDirectory="INSTALLFOLDER">
+    <Feature Id="Main" ConfigurableDirectory="INSTALLFOLDER" Title="OpenTelemetry Collector" AllowAbsent="no" AllowAdvertise="yes" Display="expand">
       <ComponentGroupRef Id="AppDataComponents" />
       <ComponentGroupRef Id="ProgramComponents" />
-    </Feature>
 
-    <Feature Id="HOSTMETRICS" Title="Collect Host Metrics" Level="0" >
-      <ComponentGroupRef Id="HostMetricsComponents" />
-      <Level Condition="HOSTMETRICS" Value="1" />
+      <Feature Id="HOSTMETRICS" Title="Collect Host Metrics" Level="2" AllowAbsent="yes" AllowAdvertise="yes" TypicalDefault="advertise">
+        <ComponentGroupRef Id="HostMetricsComponents" />
+      </Feature>
     </Feature>
 
     <!-- UI -->

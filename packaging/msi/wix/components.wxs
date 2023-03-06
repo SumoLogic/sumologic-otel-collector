@@ -11,12 +11,6 @@
       <Component Id="UninstallHostMetricsConfig" Directory="ConfigFragmentsFolder" Guid="891d5683-d4f8-4574-b20a-a7ea184c5118">
         <RemoveFile Name="hostmetrics.yaml" On="uninstall" />
       </Component>
-
-      <Component>
-        <RegistryKey Root="HKLM" Key="$(RegKeyPath)" ForceCreateOnInstall="yes">
-          <RegistryValue Name="HostMetrics" Value="1" Type="string" KeyPath="yes" />
-        </RegistryKey>
-      </Component>
     </ComponentGroup>
 
     <ComponentGroup Id="AppDataComponents" Directory="APPDATAFOLDER">
