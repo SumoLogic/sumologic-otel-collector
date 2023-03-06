@@ -16,10 +16,13 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [CPU Target](#cpu-target)
     - [Collector Management](#collector-management)
 - [Cloud Based Management](#cloud-based-management)
-  - [Local File Source](#local-file-source)
-    - [Overall example](#overall-example)
+  - [Common configuration](#common-configuration)
     - [Name](#name-1)
     - [Description](#description-1)
+  - [Local File Source](#local-file-source)
+    - [Overall example](#overall-example)
+    - [Name](#name-2)
+    - [Description](#description-2)
     - [File Path](#file-path)
       - [Collection should begin](#collection-should-begin)
     - [Source Host](#source-host)
@@ -33,8 +36,8 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
   - [Remote File Source](#remote-file-source)
   - [Syslog Source](#syslog-source)
     - [Overall example](#overall-example-1)
-    - [Name](#name-2)
-    - [Description](#description-2)
+    - [Name](#name-3)
+    - [Description](#description-3)
     - [Protocol and Port](#protocol-and-port)
     - [Source Category](#source-category-1)
     - [Fields](#fields-2)
@@ -48,16 +51,16 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
   - [Script Source](#script-source)
   - [Streaming Metrics Source](#streaming-metrics-source)
     - [Overall example](#overall-example-2)
-    - [Name](#name-3)
-    - [Description](#description-3)
+    - [Name](#name-4)
+    - [Description](#description-4)
     - [Protocol and Port](#protocol-and-port-1)
     - [Content Type](#content-type)
     - [Source Category](#source-category-2)
     - [Metadata](#metadata)
   - [Host Metrics Source](#host-metrics-source)
     - [Overall Example](#overall-example-3)
-    - [Name](#name-4)
-    - [Description](#description-4)
+    - [Name](#name-5)
+    - [Description](#description-5)
     - [Source Host](#source-host-2)
     - [Source Category](#source-category-3)
     - [Metadata](#metadata-1)
@@ -270,7 +273,47 @@ or [Local Configuration File](#local-configuration-file) for migration details.
 
 This section describes migration steps for Sources managed from the Cloud.
 
+### Common configuration
+
+There is set of configuration common for all of the sources and this section is going to cover details of the migration for them.
+
+#### Name
+
+Define the name after the slash `/` in the receiver name.
+
+To set `_sourceName`, use [resourceprocessor][resourceprocessor]
+or set it in [sumologicexporter][sumologicexporter].
+
+For example, the following snippet configures the name for [Filelog Receiver][filelogreceiver] instance as `my example name`:
+
+```yaml
+receivers:
+  filelog/my example name:
+  # ...
+exporters:
+  sumologic:
+    source_name: my example name
+```
+
+#### Description
+
+A description can be added as a comment just above the receiver name.
+
+For example, the following snippet configures the description for [Filelog Receiver][filelogreceiver] instance as `All my example logs`:
+
+```yaml
+receivers:
+  ## All my example logs
+  filelog/my example name:
+  # ...
+exporters:
+  sumologic:
+    source_name: my example name
+```
+
 ### Local File Source
+
+Local File Source functionality is covered by OpenTelemetry [Filelog Receiver][filelogreceiver].
 
 #### Overall example
 
@@ -353,37 +396,11 @@ service:
 
 #### Name
 
-Define the name after the slash `/` in the receiver name.
-
-To set `_sourceName`, use [resourceprocessor][resourceprocessor]
-or set it in [sumologicexporter][sumologicexporter].
-
-For example, the following snippet configures the name as `my example name`:
-
-```yaml
-receivers:
-  filelog/my example name:
-  # ...
-exporters:
-  sumologic:
-    source_name: my example name
-```
+Please refer to [the Name section of Common configuration](#name-1).
 
 #### Description
 
-A description can be added as a comment just above the receiver name.
-
-For example, the following snippet configures the description as `All my example logs`:
-
-```yaml
-receivers:
-  ## All my example logs
-  filelog/my example name:
-  # ...
-exporters:
-  sumologic:
-    source_name: my example name
-```
+Please refer to [the Description section of Common configuration](#description-1).
 
 #### File Path
 
@@ -2094,11 +2111,11 @@ This section describes migration steps for [common parameters][common-parameters
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `name`                            | [processors.source.source_name](#name-1)                                                                      |
-| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-1) |
+| `name`                            | [processors.source.source_name](#name-2)                                                                        |
+| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-2) |
 | `fields`                          | Use the [resourceprocessor][resourceprocessor] to set custom fields. [See the linked example.](#fields-1)       |
-| `hostName`                        | [processors.source.source_host][source-templates]; [See the linked example.](#source-host)                    |
-| `category`                        | [processors.source.source_category][source-templates]                                                         |
+| `hostName`                        | [processors.source.source_host][source-templates]; [See the linked example.](#source-host)                      |
+| `category`                        | [processors.source.source_category][source-templates]                                                           |
 | `automaticDateParsing`            | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
 | `timeZone`                        | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
 | `forceTimeZone`                   | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
@@ -2160,9 +2177,9 @@ More useful information can be found in [Streaming Metrics Source for Cloud Base
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `name`                            | [processors.source.source_name](#name-3)                                                                      |
-| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-3) |
-| `category`                        | [processors.source.source_category](#source-category-2)                                                       |
+| `name`                            | [processors.source.source_name](#name-4)                                                                        |
+| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-4) |
+| `category`                        | [processors.source.source_category](#source-category-2)                                                         |
 | `contentType`                     | [receivers.telegraf.agent_config('inputs.socket_listener'.data_format)](#content-type)                          |
 | `protocol`                        | [receivers.telegraf.agent_config('inputs.socket_listener'.service_address)](#protocol-and-port-1)               |
 | `port`                            | [receivers.telegraf.agent_config('inputs.socket_listener'.service_address)](#protocol-and-port-1)               |
@@ -2177,12 +2194,12 @@ See [this document](comparison.md#host-metrics) to learn more.__
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `name`                            | [processors.source.source_name](#name-4)                                                                      |
-| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-4) |
-| `category`                        | [processors.source.source_category](#source-category-3)                                                       |
+| `name`                            | [processors.source.source_name](#name-5)                                                                        |
+| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-5) |
+| `category`                        | [processors.source.source_category](#source-category-3)                                                         |
 | `metrics`                         | [Appropiate plugins have to be configured.](#metrics) By default no metrics are being processed.                |
 | `interval (ms)`                   | [receivers.telegraf.agent_config('agent'.interval)](#scan-interval)                                             |
-| `hostName`                        | [processors.source.source_host](#source-host-2)                                                               |
+| `hostName`                        | [processors.source.source_host](#source-host-2)                                                                 |
 
 ### Local Windows Event Log Source (LocalWindowsEventLog)
 

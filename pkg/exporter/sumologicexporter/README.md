@@ -153,6 +153,9 @@ receivers:
 
 exporters:
   sumologic:
+
+processors:
+  source:
     source_category: "custom category"
     source_name: "custom name"
     source_host: "%{k8s.pod.name}"
@@ -162,6 +165,7 @@ service:
   pipelines:
     metrics:
       receivers: [hostmetrics]
+      processors: [source]
       exporters: [sumologic]
 ```
 
@@ -175,6 +179,8 @@ exporters:
     max_request_body_size: "1_048_576"  # 1MB
     log_format: "text"
     metric_format: "prometheus"
+processors:
+  source:
     source_category: "custom category"
     source_name: "custom name"
     source_host: "custom host"
