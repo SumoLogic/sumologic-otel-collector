@@ -451,6 +451,7 @@ try {
 
     # Install MSI
     [string[]] $msiProperties = @()
+    [string[]] $msiAddLocal = @()
     $msiProperties += "INSTALLATIONTOKEN=${InstallationToken}"
     if ($Tags.Count -gt 0) {
         [string[]] $tagStrs = @()
@@ -461,7 +462,11 @@ try {
         $msiProperties += "TAGS=`"${tagsProperty}`""
     }
     if ($InstallHostMetrics -eq $true) {
-        $msiProperties += "HOSTMETRICS=1"
+        $msiAddLocal += "HOSTMETRICS"
+    }
+    if ($msiAddLocal.Count -gt 0) {
+        $addLocalStr = $msiAddLocal -Join ","
+        $msiProperties += "ADDLOCAL=${addLocalStr}"
     }
     msiexec.exe /i "$msiPath" /passive $msiProperties
 } catch [HttpRequestException] {
