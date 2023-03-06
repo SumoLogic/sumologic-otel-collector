@@ -95,9 +95,13 @@
     </InstallExecuteSequence>
 
     <!-- Features -->
-    <Feature Id="Main" ConfigurableDirectory="INSTALLFOLDER">
+    <Feature Id="Main" ConfigurableDirectory="INSTALLFOLDER" Title="OpenTelemetry Collector" AllowAbsent="no" AllowAdvertise="yes" Display="expand">
       <ComponentGroupRef Id="AppDataComponents" />
       <ComponentGroupRef Id="ProgramComponents" />
+
+      <Feature Id="HOSTMETRICS" Title="Collect Host Metrics" Level="2" AllowAbsent="yes" AllowAdvertise="yes" TypicalDefault="advertise">
+        <ComponentGroupRef Id="HostMetricsComponents" />
+      </Feature>
     </Feature>
 
     <!-- UI -->
