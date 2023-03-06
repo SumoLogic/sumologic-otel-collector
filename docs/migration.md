@@ -16,10 +16,13 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [CPU Target](#cpu-target)
     - [Collector Management](#collector-management)
 - [Cloud Based Management](#cloud-based-management)
-  - [Local File Source](#local-file-source)
-    - [Overall example](#overall-example)
+  - [Common configuration](#common-configuration)
     - [Name](#name-1)
     - [Description](#description-1)
+  - [Local File Source](#local-file-source)
+    - [Overall example](#overall-example)
+    - [Name](#name-2)
+    - [Description](#description-2)
     - [File Path](#file-path)
       - [Collection should begin](#collection-should-begin)
     - [Source Host](#source-host)
@@ -33,8 +36,8 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
   - [Remote File Source](#remote-file-source)
   - [Syslog Source](#syslog-source)
     - [Overall example](#overall-example-1)
-    - [Name](#name-2)
-    - [Description](#description-2)
+    - [Name](#name-3)
+    - [Description](#description-3)
     - [Protocol and Port](#protocol-and-port)
     - [Source Category](#source-category-1)
     - [Fields](#fields-2)
@@ -48,16 +51,16 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
   - [Script Source](#script-source)
   - [Streaming Metrics Source](#streaming-metrics-source)
     - [Overall example](#overall-example-2)
-    - [Name](#name-3)
-    - [Description](#description-3)
+    - [Name](#name-4)
+    - [Description](#description-4)
     - [Protocol and Port](#protocol-and-port-1)
     - [Content Type](#content-type)
     - [Source Category](#source-category-2)
     - [Metadata](#metadata)
   - [Host Metrics Source](#host-metrics-source)
     - [Overall Example](#overall-example-3)
-    - [Name](#name-4)
-    - [Description](#description-4)
+    - [Name](#name-5)
+    - [Description](#description-5)
     - [Source Host](#source-host-2)
     - [Source Category](#source-category-3)
     - [Metadata](#metadata-1)
@@ -178,8 +181,8 @@ extensions:
 
 ### Host Name
 
-Host name can be set in the sumologic exporter configuration.
-The exporter will set the host name for every record sent to Sumo Logic:
+Host name can be set in the [Source Processor][source-templates] configuration.
+The processor will set the host name for every record sent to Sumo Logic:
 
 ```yaml
 extensions:
@@ -187,8 +190,8 @@ extensions:
     installation_token: <installation_token>
     collector_name: my_collector
     collector_description: This is my and only my collector
-exporters:
-  sumologic:
+processors:
+  source:
     source_host: My hostname
 ```
 
@@ -203,14 +206,15 @@ extensions:
     collector_name: my_collector
     collector_description: This is my and only my collector
     collector_category: example
-exporters:
-  sumologic:
+processors:
+  source:
     source_host: My hostname
 ```
 
 ### Fields
 
-Fields in the Opentelemetry Collector can be added with the [resourceprocessor][resourceprocessor].
+Fields in the Opentelemetry Collector can be added with the `collector_fields` property of [Sumo Logic Extension][sumologicextension].
+
 For example, to add a field with the key `author` with the value `me` to every record,
 you could use the following configuration:
 
@@ -221,14 +225,11 @@ extensions:
     collector_name: my_collector
     collector_description: This is my and only my collector
     collector_category: example
+    collector_fields:
+      author: me
+
 processors:
-  resource:
-    attributes:
-    - key: author
-      value: me
-      action: insert
-exporters:
-  sumologic:
+  source:
     source_host: My hostname
 ```
 
@@ -249,14 +250,10 @@ extensions:
     collector_description: This is my and only my collector
     collector_category: example
     time_zone: America/Tijuana
+    collector_fields:
+      author: me
 processors:
-  resource:
-    attributes:
-    - key: author
-      value: me
-      action: insert
-exporters:
-  sumologic:
+  source:
     source_host: My hostname
 ```
 
@@ -276,7 +273,47 @@ or [Local Configuration File](#local-configuration-file) for migration details.
 
 This section describes migration steps for Sources managed from the Cloud.
 
+### Common configuration
+
+There is set of configuration common for all of the sources and this section is going to cover details of the migration for them.
+
+#### Name
+
+Define the name after the slash `/` in the receiver name.
+
+To set `_sourceName`, use [resourceprocessor][resourceprocessor]
+or set it in [sumologicexporter][sumologicexporter].
+
+For example, the following snippet configures the name for [Filelog Receiver][filelogreceiver] instance as `my example name`:
+
+```yaml
+receivers:
+  filelog/my example name:
+  # ...
+exporters:
+  sumologic:
+    source_name: my example name
+```
+
+#### Description
+
+A description can be added as a comment just above the receiver name.
+
+For example, the following snippet configures the description for [Filelog Receiver][filelogreceiver] instance as `All my example logs`:
+
+```yaml
+receivers:
+  ## All my example logs
+  filelog/my example name:
+  # ...
+exporters:
+  sumologic:
+    source_name: my example name
+```
+
 ### Local File Source
+
+Local File Source functionality is covered by OpenTelemetry [Filelog Receiver][filelogreceiver].
 
 #### Overall example
 
@@ -292,6 +329,10 @@ extensions:
     ## Full list of time zones is available on wikipedia:
     ## https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
     time_zone: America/Tijuana
+    ## The following configuration will add two fields to every record
+    collection_fields:
+      cloud.availability_zone: zone-1
+      k8s.cluster.name: my-cluster
 receivers:
   ## There is no substitute for `Description` in current project phase.
   ## It is recommended to use comments for that purpose, like this one.
@@ -302,44 +343,36 @@ receivers:
     ## Installed Collector `File path` substitute.
     include:
     - /var/log/*.log
-     - /opt/app/logs/*.log
+    - /opt/app/logs/*.log
     ## List of local files which shouldn't be read.
     ## Installed Collector `Denylist` substitute.
     exclude:
     - /var/log/auth.log
     - /opt/app/logs/security_*.log
-    ## There is no substitute of Installed Collector `Collection should begin`.
-    ## This is nearest config and can take one of two values: `beginning` or `end`.
+    ## This config can take one of two values: `beginning` or `end`.
+    ## If you are looking for `Collection should begin`, please look at `Collection should begin` section in this document
     start_at: beginning
     ## encoding is substitute for Installed Collector `Encoding`.
     ## List of supported encodings:
-    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver
+    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver
     encoding: utf-8
     ## multiline is Opentelemetry Collector substitute for `Enable Multiline Processing`.
     ## As multiline detection behaves slightly different than in Installed Collector
     ## the following section in filelog documentation is recommended to read:
-    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#multiline-configuration
+    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver#multiline-configuration
     multiline:
       ## line_start_pattern is substitute of `Boundary Regex`.
       line_start_pattern: ^\d{4}
 processors:
-  ## The following configuration will add two fields to every record
-  resource/log source:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: insert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
-exporters:
-  sumologic:
+  source:
     ## Set _sourceName
     source_name: my example name
     ## Installed Collector substitute for `Source Category`.
     source_category: example category
     ## Installed Collector substitute for `Source Host`.
     source_host: example host
+exporters:
+  sumologic:
     ## clear_logs_timestamp is by default set to True.
     ## If it's set to true, it works like `Enable Timestamp Parsing`,
     ## and `Time Zone` is going to be taken from `extensions` section.
@@ -356,44 +389,18 @@ service:
       receivers:
       - filelog/log source
       processors:
-      - resource/log source
+      - source
       exporters:
       - sumologic
 ```
 
 #### Name
 
-Define the name after the slash `/` in the receiver name.
-
-To set `_sourceName`, use [resourceprocessor][resourceprocessor]
-or set it in [sumologicexporter][sumologicexporter].
-
-For example, the following snippet configures the name as `my example name`:
-
-```yaml
-receivers:
-  filelog/my example name:
-  # ...
-exporters:
-  sumologic:
-    source_name: my example name
-```
+Please refer to [the Name section of Common configuration](#name-1).
 
 #### Description
 
-A description can be added as a comment just above the receiver name.
-
-For example, the following snippet configures the description as `All my example logs`:
-
-```yaml
-receivers:
-  ## All my example logs
-  filelog/my example name:
-  # ...
-exporters:
-  sumologic:
-    source_name: my example name
-```
+Please refer to [the Description section of Common configuration](#description-1).
 
 #### File Path
 
@@ -418,11 +425,69 @@ exporters:
 
 ##### Collection should begin
 
-The OpenTelemetry Collector doesn't have a substitute for this Installed Collector option.
-It supports two options, starting at the beginning or end of a file.
-Starting at the `beginning` will read the entire file every time it's started.
-Starting at the `end` will read only logs appended to file after it's started.
-This is configurable with the `start_at` option.
+The OpenTelemetry Collector substitution for this Installed Collector option requires manual timestamp parsing.
+Then you can use [Filter Processor][filterprocessor] to filter out logs before a specific date.
+
+Let's consider the following example. We want to get logs from `tmp/logs.log` which are at least from `Dec 31 2022 23:00:00`
+
+- `tmp/logs.log`
+
+  ```text
+  2020-04-01 10:12:14 Log from 2020
+  2021-01-02 12:13:54 Log from 2021
+  2022-03-07 11:15:29 Log from 2022
+  2023-01-02 10:37:12 Log from 2023
+  ```
+
+- `config.yaml` (only essential parts)
+
+  ```yaml
+  receivers:
+    filelog/log source:
+      include:
+      - tmp/logs.log
+      # - ...
+      ## Adds file path log.file.path attribute, which will be used further in pipeline
+      include_file_path: true
+      ## We would like to read from beginning, as we can choose only between end and beginning
+      start_at: beginning
+      operators:
+      - type: regex_parser
+        ## Applies only to tmp/logs.log file
+        if: 'attributes["log.file.path"] == "tmp/logs.log"'
+        ## Extracts timestamp to timestamp_field using regex parser
+        regex: '^(?P<timestamp_field>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}).*'
+        timestamp:
+          parse_from: attributes.timestamp_field
+          layout: '%Y-%m-%d %H:%M:%S'
+      ## cleanup timestamp_field
+      - type: remove
+        field: attributes.timestamp_field
+      # ...
+  processors:
+    ## Remove logs with timestamp before Sat Dec 31 2022 23:00:00 GMT+0000
+    filter/remove older:
+      logs:
+        log_record:
+        ## 1672527600000000000 ns is equal to Dec 31 2022 23:00:00 GMT+0000,
+        ## but do not remove logs which do not have correct timestamp
+        - 'time_unix_nano < 1672527600000000000 and time_unix_nano > 0'
+  exporters:
+    logging:
+      verbosity: detailed
+  service:
+    pipelines:
+      logs/log source:
+        receivers:
+        - filelog/log source
+        processors:
+        # ...
+        - filter/remove older
+        # ...
+  ```
+
+If you want to get logs which are appended after OpenTelemetry Collector Installation,
+you can simply use `start_at: end`:
 
 For example, the following snippet configures the Collector to only read appended logs:
 
@@ -442,7 +507,7 @@ exporters:
 
 #### Source Host
 
-The Source Host is set in the exporter configuration with the `source_host` option.
+The Source Host is set in the [Source Processor][source-templates] configuration with the `source_host` option.
 
 For example, the following snippet configures the Source Host as `My Host`:
 
@@ -455,15 +520,15 @@ receivers:
     - /opt/my_app/*.log
     start_at: end
   # ...
-exporters:
-  sumologic/some name:
+processors:
+  source:
     source_name: my example name
     source_host: My Host
 ```
 
 #### Source Category
 
-The Source Category is set in the exporter configuration with the `source_category` option.
+The Source Category is set in the [Source Processor][source-templates] configuration with the `source_category` option.
 
 For example, the following snippet configures the Source Category as `My Category`:
 
@@ -476,8 +541,8 @@ receivers:
     - /opt/my_app/*.log
     start_at: end
   # ...
-exporters:
-  sumologic/some name:
+processors:
+  source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
@@ -485,34 +550,51 @@ exporters:
 
 #### Fields
 
-Use the [resourceprocessor][resourceprocessor] to set custom fields.
+There are multiple ways to set fields in OpenTelemetry Collector
 
-For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
+- For fields which are going to be the same for all data points and metrics,
+  you should use `collector_fields` in [Sumo Logic Extension][sumologicextension].
 
-```yaml
-receivers:
-  ## All my example logs
-  filelog/my example name:
-    include:
-    - /var/log/*.log
-    - /opt/my_app/*.log
-    start_at: end
-  # ...
-processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
-exporters:
-  sumologic/some name:
-    source_name: my example name
-    source_host: My Host
-    source_category: My Category
-```
+  For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
+
+  ```yaml
+  extensions:
+    sumologic:
+      collector_fields:
+        cloud.availability_zone: zone-1
+        k8s.cluster.name: my-cluster
+  ```
+
+- For fields, which should be set for specific data, you should use [Transform Processor][transformprocessor].
+
+  For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
+
+  ```yaml
+    transform/custom fields:
+      log_statements:
+      - context: resource
+        statements:
+        - set(attributes["cloud.availability_zone"], "zone-1")
+        - set(attributes["k8s.cluster.name"], "my-cluster")
+  ```
+
+- You can also use [resourceprocessor][resourceprocessor] to set custom fields:
+
+  For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
+
+  ```yaml
+  processors:
+    resource/my example name fields:
+      attributes:
+      - key: cloud.availability_zone
+        value: zone-1
+        ## upsert will override existing cloud.availability_zone field
+        action: upsert
+      - key: k8s.cluster.name
+        value: my-cluster
+        ## insert will add cloud.availability_zone field if it doesn't exist
+        action: insert
+  ```
 
 #### Advanced Options for Logs
 
@@ -542,8 +624,7 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+  source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
@@ -582,8 +663,7 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+  source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
@@ -627,11 +707,12 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+  source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
+exporters:
+  sumologic/some_name:
     ## Keep manually parsed timestamps
     clear_logs_timestamp: true
 ```
@@ -661,11 +742,12 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+  source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
+exporters:
+  sumologic/some_name:
     ## Keep manually parsed timestamps (use Receipt Time by default)
     clear_logs_timestamp: true
 ```
@@ -700,8 +782,7 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+  source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
@@ -739,8 +820,7 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+  source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
@@ -785,8 +865,8 @@ receivers:
     ## host 0.0.0.0 mean all network interfaces
     listen_address: 0.0.0.0:514
     ## Add network attributes
-    ## `net.peer.name` is going to be used as exporters.sumologic.source_host
-    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/tcplogreceiver#configuration
+    ## `net.peer.name` is going to be used as processors.source.source_host
+    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/tcplogreceiver#configuration
     add_attributes: true
   ## Use UDP receiver for UDP protocol
   udplog/first receiver:
@@ -794,8 +874,8 @@ receivers:
     ## host 0.0.0.0 mean all network interfaces
     listen_address: 0.0.0.0:514
     ## Add network attributes
-    ## `net.peer.name` is going to be used as exporters.sumologic.source_host
-    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/udplogreceiver#configuration
+    ## `net.peer.name` is going to be used as processors.source.source_host
+    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/udplogreceiver#configuration
     add_attributes: true
 
 processors:
@@ -814,10 +894,15 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/syslog:
+  source/syslog source:
     ## Installed Collector substitute for `Source Category`.
     source_category: example category
+    ## Set Source Name to be facility name
+    source_name: "%{facility}"
+    ## Set Source Host to `net.peer.name`
+    source_host: "%{net.peer.name}"
+exporters:
+  sumologic/syslog:
     ## clear_logs_timestamp is by default set to True.
     ## If it's set to true, it works like `Enable Timestamp Parsing`,
     ## and `Time Zone` is going to be taken from `extensions` section.
@@ -826,10 +911,6 @@ exporters:
     ## `Timestamp Format` would be set to `Automatically detect the format`
     ## in terms of Installed Collector configuration.
     clear_logs_timestamp: true
-    ## Set Source Name to be facility name
-    source_name: "%{facility}"
-    ## Set Source Host to `net.peer.name`
-    source_host: "%{net.peer.name}
 service:
   extensions:
   - sumologic
@@ -839,6 +920,7 @@ service:
       - filelog/syslog source
       processors:
       - resource/syslog source
+      - source/syslog source
       exporters:
       - sumologic/syslog
 ```
@@ -892,7 +974,7 @@ processor:
 
 #### Source Category
 
-A Source Category can be set in the exporter configuration with the `source_category` option.
+A Source Category can be set in the [Source Processor][source-templates] configuration with the `source_category` option.
 
 For example, the following snippet configures the Source Category as `My Category`:
 
@@ -910,8 +992,7 @@ processor:
   ## All my example logs
   sumologic_syslog/my example name:
   # ...
-exporters:
-  sumologic/some name:
+  source/some name:
     source_category: My Category
 ```
 
@@ -943,8 +1024,7 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+  source/some name:
     source_category: My Category
 ```
 
@@ -985,8 +1065,7 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+  source/some name:
     source_category: My Category
 ```
 
@@ -1024,11 +1103,12 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
+  source/some name:
+    source_category: My Category
 exporters:
   sumologic/some name:
-    source_category: My Category
     ## Keep manually parsed timestamps
-    clear_logs_timestamp: true
+    clear_logs_timestamp: false
 ```
 
 The following example snippet skips timestamp parsing so the Collector uses Receipt Time:
@@ -1052,10 +1132,11 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
+  source/some name:
+    source_category: My Category
 exporters:
   sumologic/some name:
-    source_category: My Category
-    ## Keep manually parsed timestamps
+    ## Let leave timestamp parsing to Sumo Logic backend
     clear_logs_timestamp: true
 ```
 
@@ -1088,13 +1169,14 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
+  source/some name:
+    source_category: My Category
+    ## Set Source Name to facility, which is set by sumologicsyslogprocessor
+    source_name: "%{facility}"
 exporters:
   sumologic/some name:
-    source_category: My Category
-    ## Keep manually parsed timestamps
+    ## Let leave timestamp parsing to Sumo Logic backend
     clear_logs_timestamp: true
-    ## Set Source Name to facility, which is set by sumologicsyslogprocessor
-    source_name: "%{facility}
 ```
 
 ##### Source Host
@@ -1126,14 +1208,15 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+  source/some name:
     source_category: My Category
-    ## Keep manually parsed timestamps
-    clear_logs_timestamp: true
     ## Set Source Name to facility, which is set by sumologicsyslogprocessor
     source_name: "%{facility}
     source_host: "%{net.peer.name}
+exporters:
+  sumologic/some name:
+    ## Let leave timestamp parsing to Sumo Logic backend
+    clear_logs_timestamp: true
 ```
 
 ### Docker Logs Source
@@ -1200,14 +1283,15 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic:
+  source:
     ## Set _sourceName
     source_name: my example name
     ## Installed Collector substitute for `Source Category`.
     source_category: example category
     ## Installed Collector substitute for `Source Host`.
     source_host: example host
+exporters:
+  sumologic:
 service:
   extensions:
   - sumologic
@@ -1226,7 +1310,7 @@ service:
 Define the name after the slash `/` in the receiver name.
 
 To set `_sourceName`, use [resourceprocessor][resourceprocessor]
-or set it in [sumologicexporter][sumologicexporter].
+or set it in [Source Processor][source-templates].
 
 For example, the following snippet configures the name as `my example name`:
 
@@ -1234,8 +1318,8 @@ For example, the following snippet configures the name as `my example name`:
 receivers:
   telegraf/my example name:
   # ...
-exporters:
-  sumologic:
+processors:
+  source:
     source_name: my example name
 ```
 
@@ -1250,8 +1334,8 @@ receivers:
   ## All my example metrics
   telegraf/my example name:
   # ...
-exporters:
-  sumologic:
+processors:
+  source:
     source_name: my example name
 ```
 
@@ -1278,8 +1362,8 @@ receivers:
           _contentType = "Carbon2"
           _primaryMetricType = "carbon"
   # ...
-exporters:
-  sumologic:
+processors:
+  source:
     source_name: my example name
 ```
 
@@ -1303,14 +1387,14 @@ receivers:
         ## Get metrics in carbon2 format
         data_format = "carbon2"
   # ...
-exporters:
-  sumologic:
+processors:
+  source:
     source_name: my example name
 ```
 
 #### Source Category
 
-A Source Category can be set in the exporter configuration with the `source_category` option.
+A Source Category can be set in the [Source Processor][source-templates] configuration with the `source_category` option.
 
 For example, the following snippet configures the Source Category as `My Category`:
 
@@ -1326,8 +1410,8 @@ receivers:
         service_address = "udp://localhost:2006"
         ## Get metrics in carbon2 format
         data_format = "carbon2"
-exporters:
-  sumologic/some name:
+processors:
+  source:
     source_name: my example name
     source_category: My Category
 ```
@@ -1361,8 +1445,7 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+  source:
     source_name: my example name
     source_category: My Category
 ```
@@ -1450,14 +1533,15 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic:
+  source:
     ## Set _sourceName
     source_name: my example name
     ## Installed Collector substitute for `Source Category`.
     source_category: example category
     ## Installed Collector substitute for `Source Host`.
     source_host: example host
+exporters:
+  sumologic:
     ## Ensure compability with Installed Colllector metric name
     translate_telegraf_attributes: true
 service:
@@ -1469,6 +1553,7 @@ service:
       - telegraf/metrics source
       processors:
       - resource/metric source
+      - source
       exporters:
       - sumologic
 ```
@@ -1478,7 +1563,7 @@ service:
 Define the name after the slash `/` in the receiver name.
 
 To set `_sourceName`, use [resourceprocessor][resourceprocessor]
-or set it in [sumologicexporter][sumologicexporter].
+or set it in [Source Processor][source-templates].
 
 For example, the following snippet configures the name as `my example name`:
 
@@ -1486,8 +1571,8 @@ For example, the following snippet configures the name as `my example name`:
 receivers:
   telegraf/my example name:
   # ...
-exporters:
-  sumologic:
+processors:
+  source:
     source_name: my example name
 ```
 
@@ -1502,14 +1587,14 @@ receivers:
   ## All my example metrics
   telegraf/my example name:
   # ...
-exporters:
-  sumologic:
+processors:
+  source:
     source_name: my example name
 ```
 
 #### Source Host
 
-A Source Host can be set in the exporter configuration with the `source_host` option.
+A Source Host can be set in the [Source Processor][source-templates] configuration with the `source_host` option.
 
 For example, the following snippet configures the Source Host as `my_host`:
 
@@ -1518,15 +1603,15 @@ receivers:
   ## All my example metrics
   telegraf/my example name:
   # ...
-exporters:
-  sumologic/some name:
+processors:
+  source/some name:
     source_name: my example name
     source_host: my_host
 ```
 
 #### Source Category
 
-A Source Category can be set in the exporter configuration with the `source_category` option.
+A Source Category can be set in the [Source Processor][source-templates] configuration with the `source_category` option.
 
 For example, the following snippet configures the Source Category as `My Category`:
 
@@ -1535,8 +1620,8 @@ receivers:
   ## All my example metrics
   telegraf/my example name:
   # ...
-exporters:
-  sumologic/some name:
+processors:
+  source/some name:
     source_name: my example name
     source_host: my_host
     source_category: My Category
@@ -1563,8 +1648,8 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+processors:
+  source/some name:
     source_name: my example name
     source_host: my_host
     source_category: My Category
@@ -1594,8 +1679,7 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+  source/some name:
     source_name: my example name
     source_host: my_host
     source_category: My Category
@@ -1670,8 +1754,7 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+  source/some name:
     source_name: my example name
     source_host: my_host
     source_category: My Category
@@ -1730,8 +1813,7 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+  source/some name:
     source_name: my example name
     source_host: my_host
     source_category: My Category
@@ -1795,8 +1877,7 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+  source/some name:
     source_name: my example name
     source_host: my_host
     source_category: My Category
@@ -1861,8 +1942,7 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+  source/some name:
     source_name: my example name
     source_host: my_host
     source_category: My Category
@@ -1943,8 +2023,7 @@ processors:
     - key: k8s.cluster.name
       value: my-cluster
       action: insert
-exporters:
-  sumologic/some name:
+  source/some name:
     source_name: my example name
     source_host: my_host
     source_category: My Category
@@ -1992,7 +2071,7 @@ The following table shows the equivalent [user.properties][user.properties] for 
 | `ephemeral=true/false`                        | N/A                                                        |
 | `fields=[list of fields]`                     | [processors.resource](#fields)                             |
 | `fipsJce=true/false`                          | N/A                                                        |
-| `hostName=hostname`                           | `exporters.sumologic.source_host`                          |
+| `hostName=hostname`                           | `processors.source.source_host`                          |
 | `name=name`                                   | [extensions.sumologic.collector_name](#name)               |
 | `proxyHost=host`                              | [plese see OTC documentation][proxy]                       |
 | `proxyNtlmDomain=NTLM domain`                 | [plese see OTC documentation][proxy]                       |
@@ -2032,11 +2111,11 @@ This section describes migration steps for [common parameters][common-parameters
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `name`                            | [exporters.sumologic.source_name](#name-1)                                                                      |
-| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-1) |
+| `name`                            | [processors.source.source_name](#name-2)                                                                        |
+| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-2) |
 | `fields`                          | Use the [resourceprocessor][resourceprocessor] to set custom fields. [See the linked example.](#fields-1)       |
-| `hostName`                        | [exporters.sumologic.source_host][source-templates]; [See the linked example.](#source-host)                    |
-| `category`                        | [exporters.sumologic.source_category][source-templates]                                                         |
+| `hostName`                        | [processors.source.source_host][source-templates]; [See the linked example.](#source-host)                      |
+| `category`                        | [processors.source.source_category][source-templates]                                                           |
 | `automaticDateParsing`            | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
 | `timeZone`                        | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
 | `forceTimeZone`                   | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
@@ -2098,9 +2177,9 @@ More useful information can be found in [Streaming Metrics Source for Cloud Base
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `name`                            | [exporters.sumologic.source_name](#name-3)                                                                      |
-| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-3) |
-| `category`                        | [exporters.sumologic.source_category](#source-category-2)                                                       |
+| `name`                            | [processors.source.source_name](#name-4)                                                                        |
+| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-4) |
+| `category`                        | [processors.source.source_category](#source-category-2)                                                         |
 | `contentType`                     | [receivers.telegraf.agent_config('inputs.socket_listener'.data_format)](#content-type)                          |
 | `protocol`                        | [receivers.telegraf.agent_config('inputs.socket_listener'.service_address)](#protocol-and-port-1)               |
 | `port`                            | [receivers.telegraf.agent_config('inputs.socket_listener'.service_address)](#protocol-and-port-1)               |
@@ -2115,12 +2194,12 @@ See [this document](comparison.md#host-metrics) to learn more.__
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `name`                            | [exporters.sumologic.source_name](#name-4)                                                                      |
-| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-4) |
-| `category`                        | [exporters.sumologic.source_category](#source-category-3)                                                       |
+| `name`                            | [processors.source.source_name](#name-5)                                                                        |
+| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-5) |
+| `category`                        | [processors.source.source_category](#source-category-3)                                                         |
 | `metrics`                         | [Appropiate plugins have to be configured.](#metrics) By default no metrics are being processed.                |
 | `interval (ms)`                   | [receivers.telegraf.agent_config('agent'.interval)](#scan-interval)                                             |
-| `hostName`                        | [exporters.sumologic.source_host](#source-host-2)                                                               |
+| `hostName`                        | [processors.source.source_host](#source-host-2)                                                                 |
 
 ### Local Windows Event Log Source (LocalWindowsEventLog)
 
@@ -2142,13 +2221,16 @@ Remote Windows Performance Source is not supported by the OpenTelemetry Collecto
 
 Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 
-[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.33.0/processor/resourceprocessor
-[multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#multiline-configuration
-[supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#supported-encodings
-[udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/udplogreceiver
-[tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/tcplogreceiver
-[filelogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver
-[syslogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/syslogreceiver
+[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/resourceprocessor
+[multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver#multiline-configuration
+[supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver#supported-encodings
+[udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/udplogreceiver
+[tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/tcplogreceiver
+[filelogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver
+[logstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/logstransformprocessor
+[transformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/transformprocessor
+[filterprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/filterprocessor
+[syslogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/syslogreceiver
 [sumologicsyslog]: ../pkg/processor/sumologicsyslogprocessor/README.md
 [network-semantic-convention]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/span-general.md#general-network-connection-attributes
 [sumologicextension]: ../pkg/extension/sumologicextension/README.md
@@ -2156,7 +2238,7 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [user.properties]: https://help.sumologic.com/docs/send-data/installed-collectors/collector-installation-reference/user-properties
 [proxy]: https://opentelemetry.io/docs/collector/configuration/#proxy-support
 [common-parameters]: https://help.sumologic.com/docs/send-data/use-json-configure-sources#common-parameters-for-log-source-types
-[source-templates]: ../pkg/exporter/sumologicexporter/README.md#source-templates
+[source-templates]: ../pkg/processor/sourceprocessor//README.md#source-templates
 [telegrafreceiver]: ../pkg/receiver/telegrafreceiver/README.md
 [telegraf-socket_listener]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/socket_listener#socket-listener-input-plugin
 [telegraf-input-formats]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/parsers

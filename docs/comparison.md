@@ -7,14 +7,11 @@
 - leverage the **Supported Sources** and **Supported Platforms** listed below
 - are looking for a single agent as opposed to managing multiple agents
 - are having scale issues with FluentD on Kubernetes Collection
-- are looking for ARM support
 
 **Avoid use cases** that:
 
 - are using an **Unsupported Source** or **Unsupported Platform**
-- use CSE due to lack of Windows support
 - require remote management and remote configuration
-- require FIPS support
 - require Ingest Budgets
 - use the Collector Management API (e.g. for Health Events or CRUD operations)
 - require CPU target
@@ -109,7 +106,7 @@ receivers:
     protocol: rfc5424
 exporters:
   logging:
-    logLevel: debug
+    verbosity: detailed
 service:
   pipelines:
     logs:
@@ -191,7 +188,7 @@ exporters:
     ## Set Source Host to client hostname
     source_host: "%{net.peer.name}"
   logging:
-    logLevel: debug
+    verbosity: detailed
 service:
   extensions: [sumologic]
   pipelines:
@@ -258,8 +255,8 @@ The Installed Collector and OpenTelemetry Collector have different
 codebases that cause some host metrics to have different names.
 
 Use the
-[translate_telegraf_attributes](../pkg/exporter/sumologicexporter/README.md#configuration)
-Sumo Logic Exporter option to keep metric names compatible
+[translate_telegraf_attributes](../pkg/processor/sumologicschemaprocessor/README.md#configuration)
+Sumo Logic Schema Processor option to keep metric names compatible
 with Sumo Logic Apps and consistent with the Installed Collector.
 
 There may be differences between metric values calculated by the Installed Collector

@@ -4,6 +4,7 @@ package sumologic_scripts_tests
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"testing"
 
@@ -38,6 +39,11 @@ func tearDown(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func cleanCache(t *testing.T) {
+	err := os.RemoveAll(cacheDirectory)
+	require.NoError(t, err)
+}
+
 func runTest(t *testing.T, spec *testSpec) {
 	ch := check{
 		test:                t,
@@ -62,6 +68,12 @@ func runTest(t *testing.T, spec *testSpec) {
 	}
 
 	ch.code, ch.output, ch.errorOutput, ch.err = runScript(ch)
+
+	// Remove cache in case of curl issue
+	if ch.code == curlTimeoutErrorCode {
+		cleanCache(t)
+	}
+
 	checkRun(ch)
 
 	for _, c := range commonPostChecks {

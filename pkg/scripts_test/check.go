@@ -31,6 +31,10 @@ type check struct {
 
 type condCheckFunc func(check) bool
 
+func checkSkipTest(c check) bool {
+	return false
+}
+
 func checkSystemdAvailability(c check) bool {
 	return assert.DirExists(&testing.T{}, systemdDirectoryPath, "systemd is not supported")
 }
@@ -366,6 +370,12 @@ func checkOutputUserAddWarnings(c check) {
 
 	errOutput := strings.Join(c.errorOutput, "\n")
 	require.NotContains(c.test, errOutput, "useradd", "unexpected useradd output")
+}
+
+func checkDownloadTimeout(c check) {
+	output := strings.Join(c.errorOutput, "\n")
+	count := strings.Count(output, "Operation timed out after")
+	require.Equal(c.test, 6, count)
 }
 
 func preActionWriteAPIBaseURLToUserConfig(c check) {

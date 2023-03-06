@@ -11,7 +11,8 @@ extensions:
   ## Configuration for Health Check Extension
   ## Health Check extension enables an HTTP url that can be probed to check the status of the OpenTelemetry Collector
   ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/healthcheckextension
-  health_check: {}
+  health_check:
+    endpoint: localhost:13133
 
   ## Configuration for File Storage Extension
   ## The File Storage extension can persist state to the local file system
@@ -84,6 +85,9 @@ service:
     - sumologic
     - health_check
     - file_storage
+  telemetry:
+    metrics:
+      address: localhost:8888
   pipelines:
     metrics/default:
       receivers:
