@@ -51,24 +51,34 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
       - [Source Host](#source-host-2)
   - [Docker Logs Source](#docker-logs-source)
   - [Docker Stats Source](#docker-stats-source)
-  - [Script Source](#script-source)
-  - [Streaming Metrics Source](#streaming-metrics-source)
     - [Overall example](#overall-example-2)
     - [Name](#name-4)
     - [Description](#description-4)
+    - [URI](#uri)
+    - [Container filters](#container-filters)
+    - [Source Host](#source-host-3)
+    - [Source Category](#source-category-3)
+    - [Fields](#fields-4)
+    - [Scan interval](#scan-interval)
+    - [Metrics](#metrics)
+  - [Script Source](#script-source)
+  - [Streaming Metrics Source](#streaming-metrics-source)
+    - [Overall example](#overall-example-3)
+    - [Name](#name-5)
+    - [Description](#description-5)
     - [Protocol and Port](#protocol-and-port-1)
     - [Content Type](#content-type)
     - [Source Category](#source-category-3)
     - [Metadata](#metadata)
   - [Host Metrics Source](#host-metrics-source)
-    - [Overall Example](#overall-example-3)
-    - [Name](#name-5)
-    - [Description](#description-5)
-    - [Source Host](#source-host-3)
+    - [Overall Example](#overall-example-4)
+    - [Name](#name-6)
+    - [Description](#description-6)
+    - [Source Host](#source-host-4)
     - [Source Category](#source-category-4)
     - [Metadata](#metadata-1)
-    - [Scan Interval](#scan-interval)
-    - [Metrics](#metrics)
+    - [Scan Interval](#scan-interval-1)
+    - [Metrics](#metrics-1)
       - [CPU](#cpu)
       - [Memory](#memory)
       - [TCP](#tcp)
@@ -1204,7 +1214,193 @@ Docker Logs Source is not supported by the OpenTelemetry Collector.
 
 ### Docker Stats Source
 
-Docker Stats Source is not supported by the OpenTelemetry Collector.
+Docker Stats Source can be accessed with [the Dockerstats receiver][dockerstatsreceiver].
+
+#### Overall example
+
+Below is an example of an OpenTelemetry configuration for a Docker Stats Source.
+
+```yaml
+extensions:
+  sumologic:
+    installation_token: <installation_token>
+    ## Time Zone is a substitute of Installed Collector `Time Zone`
+    ## with `Use time zone from log file. If none is detected use:` option.
+    ## This is used only if `clear_logs_timestamp` is set to `true` in sumologic exporter.
+    ## Full list of time zones is available on wikipedia:
+    ## https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
+    time_zone: America/Tijuana
+
+receivers:
+  docker_stats:
+    ## Docker daemon's socket address.
+    ## Example for running Docker on MacOS with Colima, default is "unix:///var/run/docker.sock"
+    endpoint: "unix:///Users/<user>/.colima/default/docker.sock"
+
+    ## Default is 10s
+    collection_interval: 20s
+
+    ## A list of images for which corresponding containers won't be scraped.
+    ## Strings, regexes and globs are supported, more information in the receiver's readme:
+    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver#configuration
+    excluded_images:
+      ## Exclude particular image
+      - docker.io/library/nginx:1.2
+      ## Exclude by regex
+      ## Note: regex must be but between / characters
+      - /other-docker-registry.*nginx/
+      ## Exclude by glob
+      - exclude-*-this/nginx
+      ## Use negation: scrape metrics only from nginx containers
+      - !*nginx*
+      ## Negation for regexes requires using ! before the slash character
+      - !/.*nginx.*/
+
+    ## Timeout for any Docker daemon query.
+    timeout: 5s
+    ## Must be 1.22 or above
+    api_version: 1.22
+
+    ## Enable or disable particular metrics.
+    ## Full list of metrics with their default config is available at https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver/documentation.md
+    metrics:
+      container.cpu.usage.percpu:
+        enabled: true
+      container.network.io.usage.tx_dropped:
+        enabled: false
+
+processors:
+  filter/dockerstats:
+    metrics:
+      ## To filter out, use "exclude" instead
+      include:
+        match_type: regexp
+        resource_attributes:
+          - key: container.name
+            value: sumo-container-.*
+
+exporters:
+  sumologic/dockerstats:
+
+service:
+  extensions:
+  - sumologic
+  pipelines:
+    metrics/docker_stats source:
+      receivers:
+      - docker_stats
+      processors:
+      - filter/dockerstats
+      exporters:
+      - sumologic/dockerstats
+```
+
+#### Name
+
+Please refer to [the Name section of Common configuration](#name-1).
+
+#### Description
+
+Please refer to [the Description section of Common configuration](#description-1).
+
+#### URI
+
+To specify URI, use `endpoint` option:
+
+```yaml
+receivers:
+  docker_stats:
+    ## Docker daemon's socket address.
+    ## Example for running Docker on MacOS with Colima, default is "unix:///var/run/docker.sock"
+    endpoint: "unix:///Users/<user>/.colima/default/docker.sock"
+```
+
+`Cert Path` option is not supported in OpenTelemetry Collector.
+
+#### Container filters
+
+Containers cannot be filtered by their name directly in the receiver. [Filter Processor][filterprocessor] has to be used for that purpose.
+To filter in containers by their name, use the following processor config:
+
+```yaml
+receivers:
+  docker_stats:
+    ## ...
+
+processors:
+  filter:
+    metrics:
+      ## To filter out, use "exclude" instead
+      include:
+        match_type: regexp
+        resource_attributes:
+          - key: container.name
+            value: sumo-container-.*
+```
+
+You can also filter out containers by their image name through `excluded_images` option:
+
+```yaml
+receivers:
+  docker_stats:
+    ## A list of images for which corresponding containers won't be scraped.
+    ## Strings, regexes and globs are supported, more information in the receiver's readme:
+    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver#configuration
+    excluded_images:
+      ## Exclude particular image
+      - docker.io/library/nginx:1.2
+      ## Exclude by regex
+      ## Note: regex must be but between / characters
+      - /other-docker-registry.*nginx/
+      ## Exclude by glob
+      - exclude-*-this/nginx
+      ## Use negation: scrape metrics only from nginx containers
+      - !*nginx*
+      ## Negation for regexes requires using ! before the slash character
+      - !/.*nginx.*/
+```
+
+Valid names are strings, [regexes](https://pkg.go.dev/regexp) and [globs](https://github.com/gobwas/glob).
+Negation can also be used, for example glob `!my*container` will exclude all containers for which the image name doesn't match glob `my*container`.
+
+#### Source Host
+
+Please refer to [the Source Host section of Common configuration](#source-host).
+
+#### Source Category
+
+Please refer to [the Source Category section of Common configuration](#source-category).
+
+#### Fields
+
+Please refer to [the Fields section of Common configuration](#fields-1).
+
+#### Scan interval
+
+To indicate a scan interval, use `collection_interval` option:
+
+```yaml
+receivers:
+  docker_stats:
+    ## Default is 10s
+    collection_interval: 20s
+```
+
+#### Metrics
+
+In OpenTelemetry Collector, some metrics are being emitted by default, meanwhile some have to be enabled. You can enable emitting a metric by setting `metrics.<metric_name>.enabled` to `true` and disable it by setting this option to `false`, for example:
+
+```yaml
+receivers:
+  dockerstats:
+    metrics:
+      container.cpu.usage.percpu:
+        enabled: true
+      container.network.io.usage.tx_dropped:
+        enabled: false
+```
+
+Full list of metrics available in this receiver can be found [here][dockerstatsmetrics].
 
 ### Script Source
 
@@ -2229,3 +2425,5 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [telegraf-input-netstat]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/net/NETSTAT_README.md
 [telegraf-input-diskio]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/diskio
 [telegraf-input-disk]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/disk
+[dockerstatsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver
+[dockerstatsmetrics]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver/documentation.md
