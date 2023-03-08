@@ -174,7 +174,7 @@ func TestSyslogExportFail(t *testing.T) {
 	buffer := exampleLog(t)
 	logs := LogRecordsToLogs(buffer)
 	consumerErr := test.exp.pushLogsData(context.Background(), logs)
-	consumerLogs := consumererror.Logs.GetLogs(consumerErr.(consumererror.Logs))
+	consumerLogs := consumererror.Logs.Data(consumerErr.(consumererror.Logs))
 	rls := consumerLogs.ResourceLogs()
 	require.Equal(t, 1, rls.Len())
 	scl := rls.At(0).ScopeLogs()
