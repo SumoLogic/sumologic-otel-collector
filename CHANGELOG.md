@@ -5,11 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.72.0-sumo-1]
+
+- feat(sumologicextension): enable updateCollectorMetadata feature gate by default [#1027]
+  The original feature has been added in [#858].
+
+[#858]: https://github.com/SumoLogic/sumologic-otel-collector/pull/858
+[#1027]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1027
 
 ### Released TBA
 
-[unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.72.0-sumo-0...main
+[v0.72.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.72.0-sumo-0...v0.72.0-sumo-1
 
 ## [v0.72.0-sumo-0]
 
