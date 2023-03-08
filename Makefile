@@ -1,4 +1,5 @@
 GOLANGCI_LINT_VERSION ?= v1.49
+PRETTIER_VERSION ?= 2.8.4
 TOWNCRIER_VERSION ?= 22.12.0
 SHELL := /usr/bin/env bash
 
@@ -24,6 +25,10 @@ install-gsed:
 ifeq ($(shell go env GOOS),darwin)
 	@which gsed || brew install gsed
 endif
+
+.PHONY: install-prettier
+install-prettier:
+	npm install --global prettier@$(PRETTIER_VERSION)
 
 .PHONY: mdl
 mdl:
