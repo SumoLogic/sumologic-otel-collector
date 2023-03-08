@@ -377,7 +377,7 @@ receivers:
       timestamp:
         parse_from: attributes.timestamp_field
         layout: '%Y-%m-%d %H:%M:%S'
-    ## cleanup timestamp_field
+    ## Cleanup timestamp_field
     - type: remove
       field: attributes.timestamp_field
 processors:
@@ -389,7 +389,7 @@ processors:
     ## Installed Collector substitute for `Source Host`.
     source_host: example host
   transform/clear_logs_timestamp:
-    ## By default every data has timestamp (usually set to receive time)
+    ## By default every data has timestamp (usually set to receipt time)
     ## and therefore Sumo Logic backend do not try to parse it from log body.
     ## Using this processor works like `Enable Timestamp Parsing`,
     ## where `Time Zone` is going to be taken from `extensions` section.
