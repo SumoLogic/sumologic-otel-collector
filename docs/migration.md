@@ -2104,39 +2104,39 @@ This section describes migration steps for an Installed Collector managed with a
 
 The following table shows the equivalent [user.properties][user.properties] for OpenTelemetry.
 
-| user.properties key                           | The OpenTelemetry Collector Key                            |
-|-----------------------------------------------|------------------------------------------------------------|
-| `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
-| ~~`accessid=accessId`~~                       | N/A, use `extensions.sumologic.installation_token`         |
-| ~~`accesskey=accessKey`~~                     | N/A, use `extensions.sumologic.installation_token`         |
-| `category=category`                           | [extensions.sumologic.collector_category](#category)       |
-| `clobber=true/false`                          | `extensions.sumologic.clobber`                             |
-| `description=description`                     | [extensions.sumologic.collector_description](#description) |
-| `disableActionSource=true/false`              | N/A                                                        |
-| `disableScriptSource=true/false`              | N/A                                                        |
-| `disableUpgrade=true/false`                   | N/A                                                        |
-| `enableActionSource=true/false`               | N/A                                                        |
-| `enableScriptSource=true/false`               | N/A                                                        |
-| `ephemeral=true/false`                        | N/A                                                        |
-| `fields=[list of fields]`                     | [extensions.sumologic.collector_fields](#fields)           |
-| `fipsJce=true/false`                          | N/A                                                        |
-| `hostName=hostname`                           | `processors.source.source_host`                            |
-| `name=name`                                   | [extensions.sumologic.collector_name](#name)               |
-| `proxyHost=host`                              | [plese see OTC documentation][proxy]                       |
-| `proxyNtlmDomain=NTLM domain`                 | [plese see OTC documentation][proxy]                       |
-| `proxyPassword=password`                      | [plese see OTC documentation][proxy]                       |
-| `proxyPort=port`                              | [plese see OTC documentation][proxy]                       |
-| `proxyUser=username`                          | [plese see OTC documentation][proxy]                       |
-| `skipAccessKeyRemoval=true/false`             | N/A                                                        |
-| `sources=absolute filepath or folderpath`     | N/A                                                        |
-| `syncSources=absolute filepath or folderpath` | N/A                                                        |
-| `targetCPU=target`                            | N/A                                                        |
-| `timeZone=timezone`                           | [extensions.sumologic.time_zone](#time-zone)               |
-| `token=token`                                 | N/A                                                        |
-| `url=collection endpoint`                     | `extensions.sumologic.api_base_url`                        |
-| `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
-| `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
-| `wrapper.java.maxmemory=size`                 | N/A                                                        |
+| user.properties key                           | The OpenTelemetry Collector Key                                                           |
+|-----------------------------------------------|-------------------------------------------------------------------------------------------|
+| `wrapper.java.command=JRE Bin Location`       | N/A                                                                                       |
+| ~~`accessid=accessId`~~                       | N/A, use [extensions.sumologic.installation_token](/docs/configuration.md#authentication) |
+| ~~`accesskey=accessKey`~~                     | N/A, use [extensions.sumologic.installation_token](/docs/configuration.md#authentication) |
+| `category=category`                           | [extensions.sumologic.collector_category](#category)                                      |
+| `clobber=true/false`                          | [extensions.sumologic.clobber][sumologicextension]                                        |
+| `description=description`                     | [extensions.sumologic.collector_description](#description)                                |
+| `disableActionSource=true/false`              | N/A                                                                                       |
+| `disableScriptSource=true/false`              | N/A                                                                                       |
+| `disableUpgrade=true/false`                   | N/A                                                                                       |
+| `enableActionSource=true/false`               | N/A                                                                                       |
+| `enableScriptSource=true/false`               | N/A                                                                                       |
+| `ephemeral=true/false`                        | N/A                                                                                       |
+| `fields=[list of fields]`                     | [extensions.sumologic.collector_fields](#fields)                                          |
+| `fipsJce=true/false`                          | N/A                                                                                       |
+| `hostName=hostname`                           | [processors.source.source_host][source-templates]                                         |
+| `name=name`                                   | [extensions.sumologic.collector_name](#name)                                              |
+| `proxyHost=host`                              | [plese see OTC documentation][proxy]                                                      |
+| `proxyNtlmDomain=NTLM domain`                 | [plese see OTC documentation][proxy]                                                      |
+| `proxyPassword=password`                      | [plese see OTC documentation][proxy]                                                      |
+| `proxyPort=port`                              | [plese see OTC documentation][proxy]                                                      |
+| `proxyUser=username`                          | [plese see OTC documentation][proxy]                                                      |
+| `skipAccessKeyRemoval=true/false`             | N/A                                                                                       |
+| `sources=absolute filepath or folderpath`     | [Use --config flag](/docs/configuration.md#command-line-configuration-options)            |
+| `syncSources=absolute filepath or folderpath` | [Use --config flag](/docs/configuration.md#command-line-configuration-options)            |
+| `targetCPU=target`                            | N/A                                                                                       |
+| `timeZone=timezone`                           | [extensions.sumologic.time_zone](#time-zone)                                              |
+| `token=token`                                 | [extensions.sumologic.installation_token](/docs/configuration.md#authentication)          |
+| `url=collection endpoint`                     | [extensions.sumologic.api_base_url][sumologicextension]                                   |
+| `wrapper.java.command=JRE Bin Location`       | N/A                                                                                       |
+| `wrapper.java.command=JRE Bin Location`       | N/A                                                                                       |
+| `wrapper.java.maxmemory=size`                 | N/A                                                                                       |
 
 ### Common Parameters
 
