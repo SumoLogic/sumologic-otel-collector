@@ -344,6 +344,7 @@ receivers:
     include:
     - /var/log/*.log
     - /opt/app/logs/*.log
+    - tmp/logs.log"
     ## List of local files which shouldn't be read.
     ## Installed Collector `Denylist` substitute.
     exclude:
@@ -363,6 +364,22 @@ receivers:
     multiline:
       ## line_start_pattern is substitute of `Boundary Regex`.
       line_start_pattern: ^\d{4}
+    ## Adds file path log.file.path attribute, which can be used for timestamp parsing
+    ## See operators configuration
+    include_file_path: true
+    ## `Operators allows to perform more advanced operations like per file timestamp parsing
+    operators:
+    - type: regex_parser
+      ## Applies only to tmp/logs.log file
+      if: 'attributes["log.file.path"] == "tmp/logs.log"'
+      ## Extracts timestamp to timestamp_field using regex parser
+      regex: '^(?P<timestamp_field>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}).*'
+      timestamp:
+        parse_from: attributes.timestamp_field
+        layout: '%Y-%m-%d %H:%M:%S'
+    ## cleanup timestamp_field
+    - type: remove
+      field: attributes.timestamp_field
 processors:
   source:
     ## Set _sourceName
@@ -371,15 +388,29 @@ processors:
     source_category: example category
     ## Installed Collector substitute for `Source Host`.
     source_host: example host
+  transform/clear_logs_timestamp:
+    ## By default every data has timestamp (usually set to receive time)
+    ## and therefore Sumo Logic backend do not try to parse it from log body.
+    ## Using this processor works like `Enable Timestamp Parsing`,
+    ## where `Time Zone` is going to be taken from `extensions` section.
+    ## There is no possibility to configure several time zones in one exporter.
+    ## It behaves like `Timestamp Format` would be set to `Automatically detect the format`
+    ## in terms of Installed Collector configuration.
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+    ## Remove logs with timestamp before Sat Dec 31 2022 23:00:00 GMT+0000
+    ## This configuration covers `Collection should begin` functionality.
+    ## Please ensure that timestamps are correctly set (eg. use operators in filelog receiver)
+    filter/remove older:
+      logs:
+        log_record:
+        ## 1672527600000000000 ns is equal to Dec 31 2022 23:00:00 GMT+0000,
+        ## but do not remove logs which do not have correct timestamp
+        - 'time_unix_nano < 1672527600000000000 and time_unix_nano > 0'
 exporters:
   sumologic:
-    ## clear_logs_timestamp is by default set to True.
-    ## If it's set to true, it works like `Enable Timestamp Parsing`,
-    ## and `Time Zone` is going to be taken from `extensions` section.
-    ## There is no possibility to configure several time zones in one exporter.
-    ## clear_logs_timestamp sets to true also behaves like
-    ## `Timestamp Format` would be set to `Automatically detect the format`
-    ## in terms of Installed Collector configuration.
     clear_logs_timestamp: true
 service:
   extensions:
@@ -389,7 +420,9 @@ service:
       receivers:
       - filelog/log source
       processors:
+      - filter/remove older
       - source
+      - transform/clear_logs_timestamp
       exporters:
       - sumologic
 ```
@@ -633,7 +666,15 @@ processors:
 ##### Timestamp Parsing
 
 The Installed Collector option to `Extract timestamp information from log file entries` in an
-OpenTelemtry configuration is `clear_logs_timestamp`. This is set to `true` by default.
+OpenTelemetry configuration can be achieved with [Transform Processor][transformprocessor]:
+
+```yaml
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+```
 
 This works like `Extract timestamp information from log file entries` combined with
 `Ignore time zone from log file and instead use:` set to `Use Collector Default`.
@@ -667,9 +708,14 @@ processors:
     source_name: my example name
     source_host: My Host
     source_category: My Category
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
 ```
 
-If `clear_logs_timestamp` is set to `false`, timestamp parsing should be configured
+If `transform/clear_logs_timestamp` is not used, timestamp parsing should be configured
 manually, like in the following snippet:
 
 ```yaml
@@ -713,8 +759,6 @@ processors:
     source_category: My Category
 exporters:
   sumologic/some_name:
-    ## Keep manually parsed timestamps
-    clear_logs_timestamp: true
 ```
 
 The following example snippet skips timestamp parsing so the Collector uses Receipt Time:
@@ -748,13 +792,11 @@ processors:
     source_category: My Category
 exporters:
   sumologic/some_name:
-    ## Keep manually parsed timestamps (use Receipt Time by default)
-    clear_logs_timestamp: true
 ```
 
 ##### Encoding
 
-Use `encoding` to set the encoding of your data. Full list of supporter encodings can be obtained from [filelogreceiver documentation][supported_encodings].
+Use `encoding` to set the encoding of your data. Full list of supporter encodings can be obtained from [Filelog Receiver documentation][supported_encodings].
 
 The following snippet sets the encoding to UTF-8:
 
@@ -828,7 +870,7 @@ processors:
 
 If your multiline logs have a known end pattern use the `line_end_pattern` option.
 
-More information is available in [filelogreceiver documentation][multiline].
+More information is available in [Filelog Receiver documentation][multiline].
 
 ### Remote File Source
 
