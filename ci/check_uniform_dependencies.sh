@@ -13,7 +13,7 @@ function check(){
   local VERSIONS
   VERSIONS="$( find . -name go.mod -print0 | \
     xargs -0 "${GREP}" -E --no-filename "${package} v" | \
-    "${GREP}" -v module )"
+    "${GREP}" -v module | sed 's| // indirect||' )"
 
   local VERSIONS_UNIQ
   VERSIONS_UNIQ="$( echo "${VERSIONS}" | sort | uniq )"
