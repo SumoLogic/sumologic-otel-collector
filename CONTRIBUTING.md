@@ -193,7 +193,19 @@ Add a `Skip Changelog` label to your pull request in GitHub.
 
 ### How do I update the changelog while releasing?
 
-```bash
+Apart from Towncrier, you'll also need [Prettier](https://prettier.io/) for this.
+
+Prerequisites:
+
+- [Node.js](https://nodejs.org/)
+
+```shell
+make install-prettier
+```
+
+After you have Towncrier and Prettier available in your console, run:
+
+```shell
 make update-changelog VERSION=x.x.x-sumo-x
 ```
 

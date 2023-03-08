@@ -311,7 +311,7 @@ ifndef VERSION
 	$(error Usage: make update-changelog VERSION=x.x.x-sumo-x)
 endif
 	towncrier build --yes --version $(VERSION)
-#	prettier -w CHANGELOG.md
+	prettier -w CHANGELOG.md
 	git add CHANGELOG.md
 
 ## Check if the branch relative to main adds a changelog entry.
