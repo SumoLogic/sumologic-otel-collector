@@ -1,4 +1,5 @@
 GOLANGCI_LINT_VERSION ?= v1.49
+TOWNCRIER_VERSION ?= 22.12.0
 SHELL := /usr/bin/env bash
 
 ifeq ($(OS),Windows_NT)
@@ -282,6 +283,37 @@ push-container-manifest:
 	BUILD_TAG="$(BUILD_TAG)" \
 		REPO_URL="$(OPENSOURCE_REPO_URL)" \
 		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
+
+#-------------------------------------------------------------------------------
+# Changelog management
+# We use Towncrier (https://towncrier.readthedocs.io) for changelog management
+
+.PHONY: install-towncrier
+install-towncrier:
+	python3 -m pip install towncrier==$(TOWNCRIER_VERSION)
+
+## Usage: make add-changelog-entry
+.PHONY: add-changelog-entry
+add-changelog-entry:
+	./ci/add-changelog-entry.sh
+
+## Consume the files in .changelog and update CHANGELOG.md
+## We also format it afterwards to make sure it's consistent with our style
+## Usage: make update-changelog VERSION=x.x.x-sumo-x
+.PHONY: update-changelog
+update-changelog:
+ifndef VERSION
+	$(error Usage: make update-changelog VERSION=x.x.x-sumo-x)
+endif
+	towncrier build --yes --version $(VERSION)
+#	prettier -w CHANGELOG.md
+	git add CHANGELOG.md
+
+## Check if the branch relative to main adds a changelog entry.
+## This target is used in the CI `changelog` check.
+.PHONY: check-changelog
+check-changelog:
+	towncrier check
 
 #-------------------------------------------------------------------------------
 

@@ -16,7 +16,9 @@
 
 ### Update Changelog and upgrading guide
 
-Edit the [CHANGELOG.md][changelog] and [upgrading.md][upgrading] files and add entries for the release that will be created.
+Update the [CHANGELOG.md][changelog] by running `make update-changelog VERSION=x.x.x-sumo-x`.
+
+Make sure the [upgrading.md][upgrading] file has entries for the breaking changes for this release.
 
 Here are some example pull requests: [#602], [#652], [#684]
 
