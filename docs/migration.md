@@ -388,27 +388,34 @@ processors:
     source_category: example category
     ## Installed Collector substitute for `Source Host`.
     source_host: example host
-  transform/clear_logs_timestamp:
-    ## By default every data has timestamp (usually set to receipt time)
-    ## and therefore Sumo Logic backend do not try to parse it from log body.
-    ## Using this processor works like `Enable Timestamp Parsing`,
-    ## where `Time Zone` is going to be taken from `extensions` section.
-    ## There is no possibility to configure several time zones in one exporter.
-    ## It behaves like `Timestamp Format` would be set to `Automatically detect the format`
-    ## in terms of Installed Collector configuration.
+  transform/logs source:
     log_statements:
+      ## By default every data has timestamp (usually set to receipt time)
+      ## and therefore Sumo Logic backend do not try to parse it from log body.
+      ## Using this processor works like `Enable Timestamp Parsing`,
+      ## where `Time Zone` is going to be taken from `extensions` section.
+      ## There is no possibility to configure several time zones in one exporter.
+      ## It behaves like `Timestamp Format` would be set to `Automatically detect the format`
+      ## in terms of Installed Collector configuration.
       - context: log
         statements:
           - set(time_unix_nano, 0)
-    ## Remove logs with timestamp before Sat Dec 31 2022 23:00:00 GMT+0000
-    ## This configuration covers `Collection should begin` functionality.
-    ## Please ensure that timestamps are correctly set (eg. use operators in filelog receiver)
-    filter/remove older:
-      logs:
-        log_record:
-        ## 1672527600000000000 ns is equal to Dec 31 2022 23:00:00 GMT+0000,
-        ## but do not remove logs which do not have correct timestamp
-        - 'time_unix_nano < 1672527600000000000 and time_unix_nano > 0'
+      ## Adds custom fields:
+      ## - cloud.availability_zone=zone-1
+      ## - k8s.cluster.name=my-cluster
+      - context: resource
+        statements:
+        - set(attributes["cloud.availability_zone"], "zone-1")
+        - set(attributes["k8s.cluster.name"], "my-cluster")
+  ## Remove logs with timestamp before Sat Dec 31 2022 23:00:00 GMT+0000
+  ## This configuration covers `Collection should begin` functionality.
+  ## Please ensure that timestamps are correctly set (eg. use operators in filelog receiver)
+  filter/remove older:
+    logs:
+      log_record:
+      ## - 1672527600000000000 ns is equal to Dec 31 2022 23:00:00 GMT+0000
+      ## - do not remove logs which do not have correct timestamp
+      - 'time_unix_nano < 1672527600000000000 and time_unix_nano > 0'
 exporters:
   sumologic:
     clear_logs_timestamp: true
@@ -421,8 +428,8 @@ service:
       - filelog/log source
       processors:
       - filter/remove older
+      - transform/logs source
       - source
-      - transform/clear_logs_timestamp
       exporters:
       - sumologic
 ```
@@ -2111,9 +2118,9 @@ The following table shows the equivalent [user.properties][user.properties] for 
 | `enableActionSource=true/false`               | N/A                                                        |
 | `enableScriptSource=true/false`               | N/A                                                        |
 | `ephemeral=true/false`                        | N/A                                                        |
-| `fields=[list of fields]`                     | [processors.resource](#fields)                             |
+| `fields=[list of fields]`                     | [extensions.sumologic.collector_fields](#fields)           |
 | `fipsJce=true/false`                          | N/A                                                        |
-| `hostName=hostname`                           | `processors.source.source_host`                          |
+| `hostName=hostname`                           | `processors.source.source_host`                            |
 | `name=name`                                   | [extensions.sumologic.collector_name](#name)               |
 | `proxyHost=host`                              | [plese see OTC documentation][proxy]                       |
 | `proxyNtlmDomain=NTLM domain`                 | [plese see OTC documentation][proxy]                       |
@@ -2126,7 +2133,7 @@ The following table shows the equivalent [user.properties][user.properties] for 
 | `targetCPU=target`                            | N/A                                                        |
 | `timeZone=timezone`                           | [extensions.sumologic.time_zone](#time-zone)               |
 | `token=token`                                 | N/A                                                        |
-| `url=collection endpoint`                     | `extensions.sumologic.api.base.url`                        |
+| `url=collection endpoint`                     | `extensions.sumologic.api_base_url`                        |
 | `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
 | `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
 | `wrapper.java.maxmemory=size`                 | N/A                                                        |
@@ -2155,7 +2162,7 @@ This section describes migration steps for [common parameters][common-parameters
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | `name`                            | [processors.source.source_name](#name-2)                                                                        |
 | `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-2) |
-| `fields`                          | Use the [resourceprocessor][resourceprocessor] to set custom fields. [See the linked example.](#fields-1)       |
+| `fields`                          | Use [Transform Processor][transformprocessor] to set custom fields. [See the linked example.](#fields-1)        |
 | `hostName`                        | [processors.source.source_host][source-templates]; [See the linked example.](#source-host)                      |
 | `category`                        | [processors.source.source_category][source-templates]                                                           |
 | `automaticDateParsing`            | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
@@ -2167,7 +2174,7 @@ This section describes migration steps for [common parameters][common-parameters
 | `useAutolineMatching`             | [See Multiline Processing explanation](#multiline-processing)                                                   |
 | `manualPrefixRegexp`              | [See Multiline Processing explanation](#multiline-processing)                                                   |
 | `filters`                         | N/A                                                                                                             |
-| `cutoffTimestamp`                 | N/A                                                                                                             |
+| `cutoffTimestamp`                 | [Use Filter Processor](#collection-should-begin)                                                                |
 | `cutoffRelativeTime`              | N/A                                                                                                             |
 
 ### Local File Source (LocalFile)
@@ -2178,7 +2185,7 @@ More useful information can be found in [Local File Source for Cloud Based Manag
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                         |
 |-----------------------------------|---------------------------------------------------------|
 | `pathExpression`                  | element of [receivers.filelog.include](#file-path) list |
-| `denylist`                        | elemets of [receivers.filelog.exclude](#denylist) list  |
+| `denylist`                        | [receivers.filelog.exclude](#denylist)                  |
 | `encoding`                        | [receivers.filelog.encoding](#encoding)                 |
 
 ### Remote File Source (RemoteFileV2)
