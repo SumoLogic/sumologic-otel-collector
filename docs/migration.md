@@ -832,7 +832,7 @@ More information is available in [filelogreceiver documentation][multiline].
 
 ### Remote File Source
 
-Remote File Source is not supported by the Opentelemetry Collector.
+Remote File Source is not supported by the OpenTelemetry Collector.
 
 ### Syslog Source
 
