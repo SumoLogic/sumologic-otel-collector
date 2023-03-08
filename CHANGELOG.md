@@ -14,8 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(sumologicextension): enable updateCollectorMetadata feature gate by default [#1027]
   The original feature has been added in [#858].
 
+### Changed
+
+- chore: update OT core to v0.73.0 [#1029]
+
 [#858]: https://github.com/SumoLogic/sumologic-otel-collector/pull/858
 [#1027]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1027
+[#1029]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1029
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.72.0-sumo-0...main
 

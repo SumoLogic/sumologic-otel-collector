@@ -244,7 +244,7 @@ func TestAllFailed(t *testing.T) {
 
 	var partial consumererror.Logs
 	require.True(t, errors.As(err, &partial))
-	assert.Equal(t, logsExpected, partial.GetLogs())
+	assert.Equal(t, logsExpected, partial.Data())
 }
 
 func TestPartiallyFailed(t *testing.T) {
@@ -281,7 +281,7 @@ func TestPartiallyFailed(t *testing.T) {
 
 	var partial consumererror.Logs
 	require.True(t, errors.As(err, &partial))
-	assert.Equal(t, logsExpected, partial.GetLogs())
+	assert.Equal(t, logsExpected, partial.Data())
 }
 
 func TestInvalidHTTPCLient(t *testing.T) {
