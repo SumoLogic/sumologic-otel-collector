@@ -2111,11 +2111,11 @@ The following table shows the equivalent [user.properties][user.properties] for 
 | `fipsJce=true/false`                          | N/A                                                                                       |
 | `hostName=hostname`                           | [processors.source.source_host][source-templates]                                         |
 | `name=name`                                   | [extensions.sumologic.collector_name](#name)                                              |
-| `proxyHost=host`                              | [plese see OTC documentation][proxy]                                                      |
-| `proxyNtlmDomain=NTLM domain`                 | [plese see OTC documentation][proxy]                                                      |
-| `proxyPassword=password`                      | [plese see OTC documentation][proxy]                                                      |
-| `proxyPort=port`                              | [plese see OTC documentation][proxy]                                                      |
-| `proxyUser=username`                          | [plese see OTC documentation][proxy]                                                      |
+| `proxyHost=host`                              | [please see OTC documentation][proxy]                                                     |
+| `proxyNtlmDomain=NTLM domain`                 | [please see OTC documentation][proxy]                                                     |
+| `proxyPassword=password`                      | [please see OTC documentation][proxy]                                                     |
+| `proxyPort=port`                              | [please see OTC documentation][proxy]                                                     |
+| `proxyUser=username`                          | [please see OTC documentation][proxy]                                                     |
 | `skipAccessKeyRemoval=true/false`             | N/A                                                                                       |
 | `sources=absolute filepath or folderpath`     | [Use --config flag](/docs/configuration.md#command-line-configuration-options)            |
 | `syncSources=absolute filepath or folderpath` | [Use --config flag](/docs/configuration.md#command-line-configuration-options)            |
