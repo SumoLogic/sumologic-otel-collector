@@ -330,7 +330,7 @@ extensions:
     ## https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
     time_zone: America/Tijuana
     ## The following configuration will add two fields to every record
-    collection_fields:
+    collector_fields:
       cloud.availability_zone: zone-1
       k8s.cluster.name: my-cluster
 receivers:
@@ -418,7 +418,6 @@ processors:
       - 'time_unix_nano < 1672527600000000000 and time_unix_nano > 0'
 exporters:
   sumologic:
-    clear_logs_timestamp: true
 service:
   extensions:
   - sumologic
