@@ -325,7 +325,7 @@ extensions:
     installation_token: <installation_token>
     ## Time Zone is a substitute of Installed Collector `Time Zone`
     ## with `Use time zone from log file. If none is detected use:` option.
-    ## This is used only if `clear_logs_timestamp` is set to `true` in sumologic exporter.
+    ## This is used only if log timestamp is set to 0 by transform processor.
     ## Full list of time zones is available on wikipedia:
     ## https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
     time_zone: America/Tijuana
