@@ -58,3 +58,4 @@ read -rp "Leave blank to use default (\"${DEFAULT_TEXT}\") " ENTRY_TEXT
 ENTRY_TEXT="${ENTRY_TEXT:-${DEFAULT_TEXT}}"
 
 towncrier create -c "${ENTRY_TEXT}" "${PR_NUMBER}.${CHANGE_TYPE}.txt"
+echo "" >> ".changelog/${PR_NUMBER}.${CHANGE_TYPE}.txt"
