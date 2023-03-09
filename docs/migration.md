@@ -21,13 +21,14 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [Description](#description-1)
     - [Source Category](#source-category)
     - [Fields](#fields-1)
+    - [Source Host](#source-host)
   - [Local File Source](#local-file-source)
     - [Overall example](#overall-example)
     - [Name](#name-2)
     - [Description](#description-2)
     - [File Path](#file-path)
       - [Collection should begin](#collection-should-begin)
-    - [Source Host](#source-host)
+    - [Source Host](#source-host-1)
     - [Source Category](#source-category-1)
     - [Fields](#fields-2)
     - [Advanced Options for Logs](#advanced-options-for-logs)
@@ -47,7 +48,7 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
       - [Timestamp Parsing](#timestamp-parsing-1)
     - [Additional Configuration](#additional-configuration)
       - [Source Name](#source-name)
-      - [Source Host](#source-host-1)
+      - [Source Host](#source-host-2)
   - [Docker Logs Source](#docker-logs-source)
   - [Docker Stats Source](#docker-stats-source)
   - [Script Source](#script-source)
@@ -63,7 +64,7 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [Overall Example](#overall-example-3)
     - [Name](#name-5)
     - [Description](#description-5)
-    - [Source Host](#source-host-2)
+    - [Source Host](#source-host-3)
     - [Source Category](#source-category-4)
     - [Metadata](#metadata-1)
     - [Scan Interval](#scan-interval)
@@ -356,6 +357,18 @@ There are multiple ways to set fields in OpenTelemetry Collector
         action: insert
   ```
 
+#### Source Host
+
+A Source Host can be set in the [Source Processor][source-templates] configuration with the `source_host` option.
+
+For example, the following snippet configures the Source Host as `my_host`:
+
+```yaml
+processors:
+  source/some name:
+    source_host: my_host
+```
+
 ### Local File Source
 
 Local File Source functionality is covered by OpenTelemetry [Filelog Receiver][filelogreceiver].
@@ -552,24 +565,7 @@ exporters:
 
 #### Source Host
 
-The Source Host is set in the [Source Processor][source-templates] configuration with the `source_host` option.
-
-For example, the following snippet configures the Source Host as `My Host`:
-
-```yaml
-receivers:
-  ## All my example logs
-  filelog/my example name:
-    include:
-    - /var/log/*.log
-    - /opt/my_app/*.log
-    start_at: end
-  # ...
-processors:
-  source:
-    source_name: my example name
-    source_host: My Host
-```
+Please refer to [the Source Host section of Common configuration](#source-host).
 
 #### Source Category
 
@@ -2097,7 +2093,7 @@ This section describes migration steps for [common parameters][common-parameters
 | `name`                            | [processors.source.source_name](#name-2)                                                                        |
 | `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-2) |
 | `fields`                          | Use the [resourceprocessor][resourceprocessor] to set custom fields. [See the linked example.](#fields-2)       |
-| `hostName`                        | [processors.source.source_host][source-templates]; [See the linked example.](#source-host)                      |
+| `hostName`                        | [processors.source.source_host][source-templates]; [See the linked example.](#source-host-1)                    |
 | `category`                        | [processors.source.source_category][source-templates]                                                           |
 | `automaticDateParsing`            | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
 | `timeZone`                        | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
@@ -2182,7 +2178,7 @@ See [this document](comparison.md#host-metrics) to learn more.__
 | `category`                        | [processors.source.source_category](#source-category-4)                                                         |
 | `metrics`                         | [Appropiate plugins have to be configured.](#metrics) By default no metrics are being processed.                |
 | `interval (ms)`                   | [receivers.telegraf.agent_config('agent'.interval)](#scan-interval)                                             |
-| `hostName`                        | [processors.source.source_host](#source-host-2)                                                                 |
+| `hostName`                        | [processors.source.source_host](#source-host-3)                                                                 |
 
 ### Local Windows Event Log Source (LocalWindowsEventLog)
 
