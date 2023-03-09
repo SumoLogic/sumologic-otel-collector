@@ -457,9 +457,6 @@ receivers:
     - /var/log/*.log
     - /opt/my_app/*.log
   # ...
-exporters:
-  sumologic:
-    source_name: my example name
 ```
 
 ##### Collection should begin
@@ -511,9 +508,6 @@ Let's consider the following example. We want to get logs from `tmp/logs.log` wh
         ## 1672527600000000000 ns is equal to Dec 31 2022 23:00:00 GMT+0000,
         ## but do not remove logs which do not have correct timestamp
         - 'time_unix_nano < 1672527600000000000 and time_unix_nano > 0'
-  exporters:
-    logging:
-      verbosity: detailed
   service:
     pipelines:
       logs/log source:
@@ -655,14 +649,12 @@ receivers:
     start_at: end
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/custom fields:
+    log_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: My Host
@@ -702,14 +694,12 @@ receivers:
     start_at: end
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/custom fields:
+    log_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: My Host
@@ -719,6 +709,8 @@ processors:
       - context: log
         statements:
           - set(time_unix_nano, 0)
+exporters:
+  sumologic/some_name:
 ```
 
 If `transform/clear_logs_timestamp` is not used, timestamp parsing should be configured
@@ -751,14 +743,12 @@ receivers:
         layout: '2006-01-02 15:04:05,000 -0700'
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/custom fields:
+    log_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: My Host
@@ -822,18 +812,18 @@ receivers:
     encoding: utf-8
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/custom fields:
+    log_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
+exporters:
+  sumologic/some_name:
 ```
 
 ##### Multiline Processing
@@ -860,18 +850,18 @@ receivers:
       line_start_pattern: ^\d{4}-\d{2}-\d{2}
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/custom fields:
+    log_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
+exporters:
+  sumologic/some_name:
 ```
 
 If your multiline logs have a known end pattern use the `line_end_pattern` option.
