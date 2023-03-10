@@ -147,4 +147,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.24.3-sumo-3
+replace github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.24.3-sumo-4

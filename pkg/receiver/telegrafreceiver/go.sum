@@ -27,8 +27,8 @@ github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0
 github.com/Microsoft/go-winio v0.5.2 h1:a9IhgEQBCUEk6QCdml9CiJGhAws+YwffDHEMp1VMrpA=
 github.com/Microsoft/go-winio v0.5.2/go.mod h1:WpS1mjBmmwHBEWmogvA2mj8546UReBk4v8QkMxJ6pZY=
 github.com/Microsoft/hcsshim v0.9.4 h1:mnUj0ivWy6UzbB1uLFqKR6F+ZyiDc7j4iGgHTpO+5+I=
-github.com/SumoLogic/telegraf v1.24.3-sumo-3 h1:u7+BqXNw2bx2Z6KwCphQAzwtzOJz6TJQI5AeY6UCCgk=
-github.com/SumoLogic/telegraf v1.24.3-sumo-3/go.mod h1:XZaZl9Se+s8RM02Rko5xi8uXzPioe2g3TRimBf9hAq8=
+github.com/SumoLogic/telegraf v1.24.3-sumo-4 h1:IiBbvsbcHSkAQ3hX/F0ageuNwG5BVLEg3rC38GR+krU=
+github.com/SumoLogic/telegraf v1.24.3-sumo-4/go.mod h1:XZaZl9Se+s8RM02Rko5xi8uXzPioe2g3TRimBf9hAq8=
 github.com/alecthomas/go-thrift v0.0.0-20170109061633-7914173639b2/go.mod h1:CxCgO+NdpMdi9SsTlGbc0W+/UNxO3I0AabOEJZ3w61w=
 github.com/alecthomas/kong v0.2.1/go.mod h1:+inYUSluD+p4L8KdviBSgzcqEjUQOfC5fQDRFuc36lI=
 github.com/alecthomas/participle v0.4.1 h1:P2PJWzwrSpuCWXKnzqvw0b0phSfH1kJo4p2HvLynVsI=
