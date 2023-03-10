@@ -25,6 +25,7 @@ type Config struct {
 	NestAttributes              *NestingProcessorConfig   `mapstructure:"nest_attributes"`
 	AggregateAttributes         []aggregationPair         `mapstructure:"aggregate_attributes"`
 	LogFieldsAttributes         *logFieldAttributesConfig `mapstructure:"field_attributes"`
+	TranslateDockerMetrics      bool                      `mapstructure:"translate_docker_metrics"`
 }
 
 type aggregationPair struct {
@@ -36,6 +37,7 @@ const (
 	defaultAddCloudNamespace           = true
 	defaultTranslateAttributes         = true
 	defaultTranslateTelegrafAttributes = true
+	defaultTranlateDockerMetrics       = false
 
 	// Nesting processor default config
 	defaultNestingEnabled            = false
@@ -78,6 +80,7 @@ func createDefaultConfig() component.Config {
 			SpanIdAttribute:         &logFieldAttribute{defaultAddSpanIdAttribute, SpanIdAttributeName},
 			TraceIdAttribute:        &logFieldAttribute{defaultAddTraceIdAttribute, TraceIdAttributeName},
 		},
+		TranslateDockerMetrics: defaultTranlateDockerMetrics,
 	}
 }
 

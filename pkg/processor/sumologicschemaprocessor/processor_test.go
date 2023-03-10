@@ -665,6 +665,51 @@ func TestTranslateTelegrafMetrics(t *testing.T) {
 	}
 }
 
+func TestTranslateDockerMetrics(t *testing.T) {
+	testCases := []struct {
+		testName        string
+		originalNames   []string
+		translatedNames []string
+		shouldTranslate bool
+	}{
+		{
+			testName:        "translates two names",
+			originalNames:   []string{"container.cpu.usage.percpu", "container.blockio.io_serviced_recursive"},
+			translatedNames: []string{"cpu_usage.percpu_usage", "io_serviced_recursive"},
+			shouldTranslate: true,
+		},
+		{
+			testName:        "does not translate",
+			originalNames:   []string{"container.cpu.usage.percpu", "container.blockio.io_serviced_recursive"},
+			translatedNames: []string{"container.cpu.usage.percpu", "container.blockio.io_serviced_recursive"},
+			shouldTranslate: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.testName, func(t *testing.T) {
+			// Arrange
+			processor, err := newSumologicSchemaProcessor(newProcessorCreateSettings(), newTranslateDockerMetricsConfig(testCase.shouldTranslate))
+			require.NoError(t, err)
+
+			// Prepare metrics
+			metrics := pmetric.NewMetrics()
+			for _, name := range testCase.originalNames {
+				metrics.ResourceMetrics().AppendEmpty().ScopeMetrics().AppendEmpty().Metrics().AppendEmpty().SetName(name)
+			}
+
+			// Act
+			resultMetrics, err := processor.processMetrics(context.Background(), metrics)
+			require.NoError(t, err)
+
+			// Assert
+			for index, name := range testCase.translatedNames {
+				assert.Equal(t, name, resultMetrics.ResourceMetrics().At(index).ScopeMetrics().At(0).Metrics().At(0).Name())
+			}
+		})
+	}
+}
+
 func TestNestingAttributesForLogs(t *testing.T) {
 	testCases := []struct {
 		name       string
@@ -1303,6 +1348,7 @@ func newCloudNamespaceConfig(addCloudNamespace bool) *Config {
 	config.AddCloudNamespace = addCloudNamespace
 	config.TranslateAttributes = false
 	config.TranslateTelegrafAttributes = false
+	config.TranslateDockerMetrics = false
 	config.NestAttributes = &NestingProcessorConfig{
 		Enabled: false,
 	}
@@ -1314,6 +1360,7 @@ func newTranslateAttributesConfig(translateAttributes bool) *Config {
 	config.AddCloudNamespace = false
 	config.TranslateAttributes = translateAttributes
 	config.TranslateTelegrafAttributes = false
+	config.TranslateDockerMetrics = false
 	config.NestAttributes = &NestingProcessorConfig{
 		Enabled: false,
 	}
@@ -1325,6 +1372,19 @@ func newTranslateTelegrafAttributesConfig(translateTelegrafAttributes bool) *Con
 	config.AddCloudNamespace = false
 	config.TranslateAttributes = false
 	config.TranslateTelegrafAttributes = translateTelegrafAttributes
+	config.TranslateDockerMetrics = false
+	config.NestAttributes = &NestingProcessorConfig{
+		Enabled: false,
+	}
+	return config
+}
+
+func newTranslateDockerMetricsConfig(translateDockerMetrics bool) *Config {
+	config := createDefaultConfig().(*Config)
+	config.AddCloudNamespace = false
+	config.TranslateAttributes = false
+	config.TranslateTelegrafAttributes = false
+	config.TranslateDockerMetrics = translateDockerMetrics
 	config.NestAttributes = &NestingProcessorConfig{
 		Enabled: false,
 	}
@@ -1336,6 +1396,7 @@ func newNestAttributesConfig(separator string, enabled bool) *Config {
 	config.AddCloudNamespace = false
 	config.TranslateAttributes = false
 	config.TranslateTelegrafAttributes = false
+	config.TranslateDockerMetrics = false
 	config.NestAttributes = &NestingProcessorConfig{
 		Separator: separator,
 		Enabled:   enabled,
@@ -1348,6 +1409,7 @@ func newAggregateAttributesConfig(aggregations []aggregationPair) *Config {
 	config.AddCloudNamespace = false
 	config.TranslateAttributes = false
 	config.TranslateTelegrafAttributes = false
+	config.TranslateDockerMetrics = false
 	config.AggregateAttributes = aggregations
 	return config
 }
@@ -1357,6 +1419,7 @@ func newLogFieldsConversionConfig() *Config {
 	config.AddCloudNamespace = false
 	config.TranslateAttributes = false
 	config.TranslateTelegrafAttributes = false
+	config.TranslateDockerMetrics = false
 	config.NestAttributes = &NestingProcessorConfig{
 		Enabled: false,
 	}

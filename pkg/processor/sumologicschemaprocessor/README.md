@@ -33,6 +33,13 @@ processors:
     # default = true
     translate_telegraf_attributes: {true, false}
 
+    # Specifies whether docker stats metric names should be translated to match
+    # Sumo Logic conventions expected in Sumo Logic host related apps (for example
+    # `container.cpu.usage.kernelmode` => `cpu_usage.usage_in_kernelmode` or `container.memory.usage.max` => `max_usage`).
+    # See `translate_docker_metrics_processor.go` for full list of translations.
+    # default = false
+    translate_docker_metrics: {true, false}
+
     # Specifies if attributes should be nested, basing on their keys.
     # See "Nesting attributes" documentation chapter from this document.
     nest_attributes:
