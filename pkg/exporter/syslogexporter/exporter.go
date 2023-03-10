@@ -99,7 +99,7 @@ func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error 
 	rls := ld.ResourceLogs()
 	for i := 0; i < rls.Len(); i++ {
 		rl := rls.At(i)
-		if droppedRecords, err := se.sendSyslogs(ctx, rl); err != nil {
+		if droppedRecords, err := se.sendSyslogs(rl); err != nil {
 			dropped = append(dropped, droppedResourceRecords{
 				resource: rl.Resource(),
 				records:  droppedRecords,
@@ -124,7 +124,7 @@ func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error 
 	return nil
 }
 
-func (se *syslogexporter) sendSyslogs(ctx context.Context, rl plog.ResourceLogs) ([]plog.LogRecord, error) {
+func (se *syslogexporter) sendSyslogs(rl plog.ResourceLogs) ([]plog.LogRecord, error) {
 	var (
 		errs           []error
 		droppedRecords []plog.LogRecord

@@ -25,10 +25,10 @@ import (
 )
 
 var (
-	unsupportedPort     = errors.New("unsupported port: port is required, must be in the range 1-65535")
-	invalidEndpoint     = errors.New("invalid endpoint: endpoint is required, must be a valid FQDN or IP address")
-	unsupportedProtocol = errors.New("unsupported protocol: protocol is required, only tcp/udp supported")
-	unsupportedFormat   = errors.New("unsupported format: Only rfc5424 and rfc3164 supported")
+	errUnsupportedPort     = errors.New("unsupported port: port is required, must be in the range 1-65535")
+	errInvalidEndpoint     = errors.New("invalid endpoint: endpoint is required, must be a valid FQDN or IP address")
+	errUnsupportedProtocol = errors.New("unsupported protocol: protocol is required, only tcp/udp supported")
+	errUnsupportedFormat   = errors.New("unsupported format: Only rfc5424 and rfc3164 supported")
 )
 
 // Config defines configuration for Syslog exporter.
@@ -54,22 +54,22 @@ type Config struct {
 func (cfg *Config) Validate() error {
 	invalidFields := []error{}
 	if cfg.Port < 1 || cfg.Port > 65525 {
-		invalidFields = append(invalidFields, unsupportedPort)
+		invalidFields = append(invalidFields, errUnsupportedPort)
 	}
 
 	if !net.IsFQDN(cfg.Endpoint) && !net.IsIPAddr(cfg.Endpoint) && cfg.Endpoint != "localhost" {
-		invalidFields = append(invalidFields, invalidEndpoint)
+		invalidFields = append(invalidFields, errInvalidEndpoint)
 	}
 
 	if strings.ToLower(cfg.Protocol) != "tcp" && strings.ToLower(cfg.Protocol) != "udp" {
-		invalidFields = append(invalidFields, unsupportedProtocol)
+		invalidFields = append(invalidFields, errUnsupportedProtocol)
 	}
 
 	switch cfg.Format {
 	case formatRFC3164Str:
 	case formatRFC5424Str:
 	default:
-		invalidFields = append(invalidFields, unsupportedFormat)
+		invalidFields = append(invalidFields, errUnsupportedFormat)
 	}
 
 	if len(invalidFields) > 0 {

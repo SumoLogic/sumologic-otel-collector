@@ -16,6 +16,7 @@ package syslogexporter
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -54,8 +55,8 @@ func TestDeduplicateErrors(t *testing.T) {
 				errors.New("failed sending data: 502 Bad Gateway"),
 			},
 			expected: []error{
-				errors.New("failed sending data: 502 Bad Gateway (x3)"),
-				errors.New("dial tcp 127.0.0.1:514: connect: connection refused (x4)"),
+				fmt.Errorf("%w (x3)", errors.New("failed sending data: 502 Bad Gateway")),
+				fmt.Errorf("%w (x4)", errors.New("dial tcp 127.0.0.1:514: connect: connection refused")),
 				errors.New("failed sending data: 504 Gateway Timeout"),
 			},
 		},
@@ -80,8 +81,8 @@ func TestErrorString(t *testing.T) {
 				errors.New("failed sending data: 502 Bad Gateway"),
 				errors.New("dial tcp 127.0.0.1:514: connect: connection refused"),
 			},
-			expected: []string([]string{"failed sending data: 502 Bad Gateway",
-				"dial tcp 127.0.0.1:514: connect: connection refused"}),
+			expected: []string{"failed sending data: 502 Bad Gateway",
+				"dial tcp 127.0.0.1:514: connect: connection refused"},
 		},
 	}
 
