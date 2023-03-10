@@ -9,11 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released TBA
 
+### Added
+
+- feat!(sumologicschemaprocessor): add translating docker stats metric names [#1055]
+
 ### Changed
 
 - fix: fix carbon2 parser for telegrafreceiver [#1058]
 
 [#1058]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1058
+[#1055]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1055
 
 [unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.73.0-sumo-0...main
 

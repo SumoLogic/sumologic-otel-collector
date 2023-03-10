@@ -59,6 +59,7 @@ func TestLoadConfig(t *testing.T) {
 				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
 				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
 			},
+			TranslateDockerMetrics: false,
 		})
 
 	p2 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-attribute-translation")]
@@ -82,6 +83,7 @@ func TestLoadConfig(t *testing.T) {
 				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
 				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
 			},
+			TranslateDockerMetrics: false,
 		})
 
 	p3 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-telegraf-attribute-translation")]
@@ -105,6 +107,7 @@ func TestLoadConfig(t *testing.T) {
 				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
 				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
 			},
+			TranslateDockerMetrics: false,
 		})
 
 	p4 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-nesting")]
@@ -128,6 +131,7 @@ func TestLoadConfig(t *testing.T) {
 				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
 				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
 			},
+			TranslateDockerMetrics: false,
 		})
 
 	p5 := cfg.Processors[component.NewIDWithName(typeStr, "aggregate-attributes")]
@@ -160,6 +164,7 @@ func TestLoadConfig(t *testing.T) {
 				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
 				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
 			},
+			TranslateDockerMetrics: false,
 		})
 
 	p6 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-severity-number-attribute")]
@@ -183,6 +188,7 @@ func TestLoadConfig(t *testing.T) {
 				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
 				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
 			},
+			TranslateDockerMetrics: false,
 		})
 
 	p7 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-severity-text-attribute")]
@@ -206,6 +212,7 @@ func TestLoadConfig(t *testing.T) {
 				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
 				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
 			},
+			TranslateDockerMetrics: false,
 		})
 
 	p8 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-span-id-attribute")]
@@ -229,6 +236,7 @@ func TestLoadConfig(t *testing.T) {
 				SpanIdAttribute:         &logFieldAttribute{true, SpanIdAttributeName},
 				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
 			},
+			TranslateDockerMetrics: false,
 		})
 
 	p9 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-trace-id-attribute")]
@@ -252,5 +260,30 @@ func TestLoadConfig(t *testing.T) {
 				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
 				TraceIdAttribute:        &logFieldAttribute{true, TraceIdAttributeName},
 			},
+			TranslateDockerMetrics: false,
+		})
+
+	p10 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-docker-metrics-translation")]
+
+	assert.Equal(t, p10,
+		&Config{
+			AddCloudNamespace:           true,
+			TranslateAttributes:         true,
+			TranslateTelegrafAttributes: true,
+			NestAttributes: &NestingProcessorConfig{
+				Enabled:            false,
+				Separator:          ".",
+				Include:            []string{},
+				Exclude:            []string{},
+				SquashSingleValues: false,
+			},
+			AggregateAttributes: []aggregationPair{},
+			LogFieldsAttributes: &logFieldAttributesConfig{
+				SeverityNumberAttribute: &logFieldAttribute{false, SeverityNumberAttributeName},
+				SeverityTextAttribute:   &logFieldAttribute{false, SeverityTextAttributeName},
+				SpanIdAttribute:         &logFieldAttribute{false, SpanIdAttributeName},
+				TraceIdAttribute:        &logFieldAttribute{false, TraceIdAttributeName},
+			},
+			TranslateDockerMetrics: true,
 		})
 }
