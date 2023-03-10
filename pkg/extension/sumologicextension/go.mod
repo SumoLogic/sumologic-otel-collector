@@ -3,6 +3,7 @@ module github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicexte
 go 1.19
 
 require (
+	github.com/Showmax/go-fqdn v1.0.0
 	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/mitchellh/go-ps v1.0.0

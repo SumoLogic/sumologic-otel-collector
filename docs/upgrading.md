@@ -25,6 +25,22 @@
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
+## Upgrading to Unreleased
+
+### The default collector name for sumologic extension is now the host FQDN
+
+In an effort to make defaults consistent between [resource detection] processor and the Sumo extension,
+we've changed the default collector name and the host name it reports in its metadata to be the host
+FQDN instead of the hostname reported by the OS. This makes the value consistent with the value of the
+`host.name` attribute [resource detection] processor sets by default.
+
+This will only affect newly registered collectors. If you have local credentials on your host, the
+existing collector will be used, but if those credentials are cleared, a new collector will be created
+with a different name. If you'd like to keep using the old name, set `CollectorName` explicitly in the
+extension settings.
+
+[resource detection]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/resourcedetectionprocessor
+
 ## Upgrading to v0.66.0-sumo-0
 
 ### `filelog` receiver: has been removed from sub-parsers
