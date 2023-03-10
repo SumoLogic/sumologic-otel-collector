@@ -864,11 +864,14 @@ Remote File Source is not supported by the OpenTelemetry Collector.
 ### Syslog Source
 
 The equivalent of the Syslog Source is a combination of
-[the tcplog][tcplogreceiver] or [the udplog][udplogreceiver] receivers
-and [the sumologicsyslog processor][sumologicsyslog].
+[the TCP][tcplogreceiver] or [the UDP][udplogreceiver] receivers
+and [the Sumo logic Syslog Processor][sumologicsyslog].
 
-__Note: The OpenTelemetry Collector provides also [Syslog Receiver][syslogreceiver].
+__Note: The OpenTelemetry Collector also provides the [Syslog Receiver][syslogreceiver].
 See [this document](comparison.md#syslog) for details.__
+
+__The syslog messages could also be sent to sumologic using the [syslog exporter][syslogexporter] with the
+[syslog parser][syslogparser]__
 
 #### Overall example
 
@@ -909,18 +912,26 @@ processors:
   ## There is no substitute for `Description` in current project phase.
   ## It is recommended to use comments for that purpose, like this one.
   ## sumologic_syslog/<source group name>:
-  ## <source group name> can be substitute of Installed Collector `Name`.
+  ## <source group name> can be substitute of Installed Collector `Name`
   sumologic_syslog/syslog source:
-
-  ## The following configuration will add two fields to every record
-  resource/syslog source:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: insert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  ## re-associates record attributes to a resource to make them available to be used by Source Processor
+  groupbyattrs:
+    keys:
+      - net.peer.name
+      - facility
+  ## Leave the timestamp parsing to the Sumo Logic backend
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+  ## The following configuration will add two fields to every resource
+  transform/syslog source:
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["cloud.availability_zone"], "zone-1")
+          - set(attributes["k8s.cluster.name"], "my-cluster")
   source/syslog source:
     ## Installed Collector substitute for `Source Category`.
     source_category: example category
@@ -928,25 +939,23 @@ processors:
     source_name: "%{facility}"
     ## Set Source Host to `net.peer.name`
     source_host: "%{net.peer.name}"
+
 exporters:
   sumologic/syslog:
-    ## clear_logs_timestamp is by default set to True.
-    ## If it's set to true, it works like `Enable Timestamp Parsing`,
-    ## and `Time Zone` is going to be taken from `extensions` section.
-    ## There is no possibility to configure several time zones in one exporter.
-    ## clear_logs_timestamp sets to true also behaves like
-    ## `Timestamp Format` would be set to `Automatically detect the format`
-    ## in terms of Installed Collector configuration.
-    clear_logs_timestamp: true
+
 service:
   extensions:
   - sumologic
   pipelines:
     logs/syslog source:
       receivers:
-      - filelog/syslog source
+      - tcplog/first receiver
+      - udplog/first receiver
       processors:
-      - resource/syslog source
+      - transform/clear_logs_timestamp
+      - sumologic_syslog/syslog source
+      - groupbyattrs
+      - transform/syslog source
       - source/syslog source
       exporters:
       - sumologic/syslog
@@ -954,28 +963,11 @@ service:
 
 #### Name
 
-Define the name after the slash `/` in the processor name.
-
-For example, the following snippet configures the name as `my example name`:
-
-```yaml
-processor:
-  sumologic_syslog/my example name:
-  # ...
-```
+Please refer to [the Name section of Common configuration](#name-1)
 
 #### Description
 
-A description can be added as a comment just above the processor name.
-
-For example, the following snippet configures the description as `All my example logs`:
-
-```yaml
-processor:
-  ## All my example logs
-  sumologic_syslog/my example name:
-  # ...
-```
+Please refer to [the Description section of Common configuration](#description-1).
 
 #### Protocol and Port
 
@@ -993,6 +985,7 @@ receivers:
     listen_address: 0.0.0.0:514
   udplog/second receiver:
     listen_address: 127.0.0.1:5150
+
 processor:
   ## All my example logs
   sumologic_syslog/my example name:
@@ -1043,14 +1036,12 @@ processors:
   ## All my example logs
   sumologic_syslog/my example name:
   # ...
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/my example name fields:
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["cloud.availability_zone"], "zone-1")
+          - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_category: My Category
 ```
@@ -1084,14 +1075,12 @@ processors:
   ## All my example logs
   sumologic_syslog/my example name:
   # ...
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/my example name fields:
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["cloud.availability_zone"], "zone-1")
+          - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_category: My Category
 ```
@@ -1122,14 +1111,12 @@ processors:
   ## All my example logs
   sumologic_syslog/my example name:
   # ...
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/my example name fields:
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["cloud.availability_zone"], "zone-1")
+          - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_category: My Category
 exporters:
@@ -1151,20 +1138,21 @@ processors:
   ## All my example logs
   sumologic_syslog/my example name:
   # ...
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+  transform/my example name fields:
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["cloud.availability_zone"], "zone-1")
+          - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_category: My Category
 exporters:
   sumologic/some name:
-    ## Let leave timestamp parsing to Sumo Logic backend
-    clear_logs_timestamp: true
 ```
 
 #### Additional Configuration
@@ -1188,22 +1176,23 @@ processors:
   ## All my example logs
   sumologic_syslog/my example name:
   # ...
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+  transform/my example name fields:
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["cloud.availability_zone"], "zone-1")
+          - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_category: My Category
     ## Set Source Name to facility, which is set by sumologicsyslogprocessor
     source_name: "%{facility}"
 exporters:
   sumologic/some name:
-    ## Let leave timestamp parsing to Sumo Logic backend
-    clear_logs_timestamp: true
 ```
 
 ##### Source Host
@@ -1227,14 +1216,17 @@ processors:
   ## All my example logs
   sumologic_syslog/my example name:
   # ...
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+  transform/my example name fields:
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["cloud.availability_zone"], "zone-1")
+          - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_category: My Category
     ## Set Source Name to facility, which is set by sumologicsyslogprocessor
@@ -1242,8 +1234,6 @@ processors:
     source_host: "%{net.peer.name}
 exporters:
   sumologic/some name:
-    ## Let leave timestamp parsing to Sumo Logic backend
-    clear_logs_timestamp: true
 ```
 
 ### Docker Logs Source
@@ -2359,12 +2349,7 @@ Remote File Source is not supported by the OpenTelemetry Collector.
 ### Syslog Source (Syslog)
 
 The equivalent of the Syslog Source is a combination of
-[the tcplog][tcplogreceiver] or [the udplog][udplogreceiver] receivers
-and [the sumologicsyslog processor][sumologicsyslog].
-More useful information can be found in [Syslog Source for Cloud Based Management](#syslog-source).
-
-__Note: The OpenTelemetry Collector provides also [Syslog Receiver][syslogreceiver].
-See [this document](comparison.md#syslog) for details.__
+[the TCP][tcplogreceiver] or [the UDP][udplogreceiver] receivers and [the sumologicsyslog processor][sumologicsyslog].
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                      |
 |-----------------------------------|----------------------------------------------------------------------------------------------------------------------|
@@ -2434,24 +2419,23 @@ Remote Windows Performance Source is not supported by the OpenTelemetry Collecto
 
 Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 
-[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/resourceprocessor
-[multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver#multiline-configuration
-[supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver#supported-encodings
-[udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/udplogreceiver
-[tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/tcplogreceiver
-[filelogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver
-[logstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/logstransformprocessor
-[transformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/transformprocessor
-[filterprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/filterprocessor
-[syslogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/syslogreceiver
+[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.33.0/processor/resourceprocessor
+[multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#multiline-configuration
+[supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#supported-encodings
+[udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/udplogreceiver
+[tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/tcplogreceiver
+[filelogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver
+[syslogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/syslogreceiver
 [sumologicsyslog]: ../pkg/processor/sumologicsyslogprocessor/README.md
 [network-semantic-convention]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/span-general.md#general-network-connection-attributes
 [sumologicextension]: ../pkg/extension/sumologicextension/README.md
 [sumologicexporter]: ../pkg/exporter/sumologicexporter/README.md
+[syslogexporter]: ../pkg/exporter/syslogexporter/README.md
 [user.properties]: https://help.sumologic.com/docs/send-data/installed-collectors/collector-installation-reference/user-properties
 [proxy]: https://opentelemetry.io/docs/collector/configuration/#proxy-support
 [common-parameters]: https://help.sumologic.com/docs/send-data/use-json-configure-sources#common-parameters-for-log-source-types
 [source-templates]: ../pkg/processor/sourceprocessor//README.md#source-templates
+[syslogparser]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/docs/operators/syslog_parser.md
 [telegrafreceiver]: ../pkg/receiver/telegrafreceiver/README.md
 [telegraf-socket_listener]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/socket_listener#socket-listener-input-plugin
 [telegraf-input-formats]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/parsers
