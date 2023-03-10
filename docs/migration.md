@@ -20,7 +20,7 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [Name](#name-1)
     - [Description](#description-1)
     - [Source Category](#source-category)
-    - [Fields](#fields-1)
+    - [Fields](#fieldsmetadata)
     - [Source Host](#source-host)
   - [Local File Source](#local-file-source)
     - [Overall example](#overall-example)
@@ -30,7 +30,7 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
       - [Collection should begin](#collection-should-begin)
     - [Source Host](#source-host-1)
     - [Source Category](#source-category-1)
-    - [Fields](#fields-2)
+    - [Fields](#fields-1)
     - [Advanced Options for Logs](#advanced-options-for-logs)
       - [Denylist](#denylist)
       - [Timestamp Parsing](#timestamp-parsing)
@@ -43,7 +43,7 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [Description](#description-3)
     - [Protocol and Port](#protocol-and-port)
     - [Source Category](#source-category-2)
-    - [Fields](#fields-3)
+    - [Fields](#fields-2)
     - [Advanced Options for Logs](#advanced-options-for-logs-1)
       - [Timestamp Parsing](#timestamp-parsing-1)
     - [Additional Configuration](#additional-configuration)
@@ -58,7 +58,7 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [Container filters](#container-filters)
     - [Source Host](#source-host-3)
     - [Source Category](#source-category-3)
-    - [Fields](#fields-4)
+    - [Fields](#fields-3)
     - [Scan interval](#scan-interval)
     - [Metrics](#metrics)
   - [Script Source](#script-source)
@@ -330,15 +330,15 @@ processors:
     source_category: My Category
 ```
 
-#### Fields
+#### Fields/Metadata
 
-There are multiple ways to set fields in OpenTelemetry Collector
+There are multiple ways to set fields/metadata in OpenTelemetry Collector
 
-- For fields which are going to be the same for all sources, please refer to [Collector Fields](#fields)
+- For fields/metadata which are going to be the same for all sources, please refer to [Collector Fields](#fields)
 
-- For fields, which should be set for specific source, you should use [Transform Processor][transformprocessor].
+- For fields/metadata, which should be set for specific source, you should use [Transform Processor][transformprocessor].
 
-  For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
+  For example, the following snippet configures two fields for logs, `cloud.availability_zone` and `k8s.cluster.name`:
 
   ```yaml
     transform/custom fields:
@@ -349,7 +349,18 @@ There are multiple ways to set fields in OpenTelemetry Collector
         - set(attributes["k8s.cluster.name"], "my-cluster")
   ```
 
-- You can alternatively use [resourceprocessor][resourceprocessor] to set custom fields for source:
+  The following example add two metadata for metrics, `cloud.availability_zone` and `k8s.cluster.name`:
+
+  ```yaml
+    transform/custom fields:
+      metric_statements:
+      - context: resource
+        statements:
+        - set(attributes["cloud.availability_zone"], "zone-1")
+        - set(attributes["k8s.cluster.name"], "my-cluster")
+  ```
+
+- You can alternatively use [resourceprocessor][resourceprocessor] to set custom fields/metadata for source:
 
   For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
 
@@ -583,7 +594,7 @@ Please refer to [the Source Category section of Common configuration](#source-ca
 
 #### Fields
 
-Please refer to [the Fields section of Common configuration](#fields-1).
+Please refer to [the Fields/Metadata section of Common configuration](#fieldsmetadata).
 
 #### Advanced Options for Logs
 
@@ -1373,7 +1384,7 @@ Please refer to [the Source Category section of Common configuration](#source-ca
 
 #### Fields
 
-Please refer to [the Fields section of Common configuration](#fields-1).
+Please refer to [the Fields/Metadata section of Common configuration](#fieldsmetadata).
 
 #### Scan interval
 
@@ -1444,20 +1455,14 @@ receivers:
         service_address = "udp://localhost:2006"
         ## Get metrics in carbon2 format
         data_format = "carbon2"
-        ## Add additional metadata
-        [inputs.socket_listener.tags]
-          _contentType = "Carbon2"
-          _primaryMetricType = "carbon"
 processors:
   ## The following configuration will add two metadata properties to every record
-  resource/metric source:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: insert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/metric source:
+    metric_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source:
     ## Set _sourceName
     source_name: my example name
@@ -1475,44 +1480,18 @@ service:
       receivers:
       - telegraf/metrics source
       processors:
-      - resource/metric source
+      - transform/metric source
       exporters:
       - sumologic
 ```
 
 #### Name
 
-Define the name after the slash `/` in the receiver name.
-
-To set `_sourceName`, use [resourceprocessor][resourceprocessor]
-or set it in [Source Processor][source-templates].
-
-For example, the following snippet configures the name as `my example name`:
-
-```yaml
-receivers:
-  telegraf/my example name:
-  # ...
-processors:
-  source:
-    source_name: my example name
-```
+Please refer to [the Name section of Common configuration](#name-1).
 
 #### Description
 
-A description can be added as a comment just above the receiver name.
-
-For example, the following snippet configures the description as `All my example logs`:
-
-```yaml
-receivers:
-  ## All my example metrics
-  telegraf/my example name:
-  # ...
-processors:
-  source:
-    source_name: my example name
-```
+Please refer to [the Description section of Common configuration](#description-1).
 
 #### Protocol and Port
 
@@ -1532,10 +1511,6 @@ receivers:
         service_address = "udp://localhost:2006"
         ## Get metrics in carbon2 format
         data_format = "carbon2"
-        ## Add additional metadata
-        [inputs.socket_listener.tags]
-          _contentType = "Carbon2"
-          _primaryMetricType = "carbon"
   # ...
 processors:
   source:
@@ -1569,61 +1544,11 @@ processors:
 
 #### Source Category
 
-A Source Category can be set in the [Source Processor][source-templates] configuration with the `source_category` option.
-
-For example, the following snippet configures the Source Category as `My Category`:
-
-```yaml
-receivers:
-  ## All my example metrics
-  telegraf/my example name:
-    ## Telegraf configuration
-    agent_config: |
-      ## socket_listener listen on given protocol://hostname:port for metrics
-      [[inputs.socket_listener]]
-        ## listen for metrics on UDP port 2006 on localhost
-        service_address = "udp://localhost:2006"
-        ## Get metrics in carbon2 format
-        data_format = "carbon2"
-processors:
-  source:
-    source_name: my example name
-    source_category: My Category
-```
+Please refer to [the Source Category section of Common configuration](#source-category).
 
 #### Metadata
 
-Use the [resourceprocessor][resourceprocessor] to set custom metadata.
-
-For example, the following snippet configures two additional metadata properties,
-`cloud.availability_zone` and `k8s.cluster.name`:
-
-```yaml
-receivers:
-  ## All my example metrics
-  telegraf/my example name:
-    ## Telegraf configuration
-    agent_config: |
-      ## socket_listener listen on given protocol://hostname:port for metrics
-      [[inputs.socket_listener]]
-        ## listen for metrics on UDP port 2006 on localhost
-        service_address = "udp://localhost:2006"
-        ## Get metrics in carbon2 format
-        data_format = "carbon2"
-processors:
-  # ...
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
-  source:
-    source_name: my example name
-    source_category: My Category
-```
+Please refer to [the Fields/Metadata section of Common configuration](#fields).
 
 ### Host Metrics Source
 
@@ -2246,7 +2171,7 @@ The following table shows the equivalent [user.properties][user.properties] for 
 | `ephemeral=true/false`                        | N/A                                                        |
 | `fields=[list of fields]`                     | [processors.resource](#fields)                             |
 | `fipsJce=true/false`                          | N/A                                                        |
-| `hostName=hostname`                           | `processors.source.source_host`                          |
+| `hostName=hostname`                           | `processors.source.source_host`                            |
 | `name=name`                                   | [extensions.sumologic.collector_name](#name)               |
 | `proxyHost=host`                              | [plese see OTC documentation][proxy]                       |
 | `proxyNtlmDomain=NTLM domain`                 | [plese see OTC documentation][proxy]                       |
@@ -2288,7 +2213,7 @@ This section describes migration steps for [common parameters][common-parameters
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | `name`                            | [processors.source.source_name](#name-2)                                                                        |
 | `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-2) |
-| `fields`                          | Use the [resourceprocessor][resourceprocessor] to set custom fields. [See the linked example.](#fields-2)       |
+| `fields`                          | Use the [resourceprocessor][resourceprocessor] to set custom fields. [See the linked example.](#fields-1)       |
 | `hostName`                        | [processors.source.source_host][source-templates]; [See the linked example.](#source-host-1)                    |
 | `category`                        | [processors.source.source_category][source-templates]                                                           |
 | `automaticDateParsing`            | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
