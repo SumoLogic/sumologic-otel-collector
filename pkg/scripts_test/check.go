@@ -115,11 +115,8 @@ func checkConfigOverrided(c check) {
 	require.NoError(c.test, err)
 
 	require.Condition(c.test, func() (success bool) {
-		switch conf.Extensions.Sumologic.InstallToken {
+		switch conf.Extensions.Sumologic.InstallationToken {
 		case "${SUMOLOGIC_INSTALLATION_TOKEN}":
-			return true
-		// ToDo: Remove after new release
-		case "${SUMOLOGIC_INSTALL_TOKEN}":
 			return true
 		default:
 			return false

@@ -19,15 +19,18 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
   - [Common configuration](#common-configuration)
     - [Name](#name-1)
     - [Description](#description-1)
+    - [Source Category](#source-category)
+    - [Fields](#fields-1)
+    - [Source Host](#source-host)
   - [Local File Source](#local-file-source)
     - [Overall example](#overall-example)
     - [Name](#name-2)
     - [Description](#description-2)
     - [File Path](#file-path)
       - [Collection should begin](#collection-should-begin)
-    - [Source Host](#source-host)
-    - [Source Category](#source-category)
-    - [Fields](#fields-1)
+    - [Source Host](#source-host-1)
+    - [Source Category](#source-category-1)
+    - [Fields](#fields-2)
     - [Advanced Options for Logs](#advanced-options-for-logs)
       - [Denylist](#denylist)
       - [Timestamp Parsing](#timestamp-parsing)
@@ -39,33 +42,43 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [Name](#name-3)
     - [Description](#description-3)
     - [Protocol and Port](#protocol-and-port)
-    - [Source Category](#source-category-1)
-    - [Fields](#fields-2)
+    - [Source Category](#source-category-2)
+    - [Fields](#fields-3)
     - [Advanced Options for Logs](#advanced-options-for-logs-1)
       - [Timestamp Parsing](#timestamp-parsing-1)
     - [Additional Configuration](#additional-configuration)
       - [Source Name](#source-name)
-      - [Source Host](#source-host-1)
+      - [Source Host](#source-host-2)
   - [Docker Logs Source](#docker-logs-source)
   - [Docker Stats Source](#docker-stats-source)
-  - [Script Source](#script-source)
-  - [Streaming Metrics Source](#streaming-metrics-source)
     - [Overall example](#overall-example-2)
     - [Name](#name-4)
     - [Description](#description-4)
-    - [Protocol and Port](#protocol-and-port-1)
-    - [Content Type](#content-type)
-    - [Source Category](#source-category-2)
-    - [Metadata](#metadata)
-  - [Host Metrics Source](#host-metrics-source)
-    - [Overall Example](#overall-example-3)
+    - [URI](#uri)
+    - [Container filters](#container-filters)
+    - [Source Host](#source-host-3)
+    - [Source Category](#source-category-3)
+    - [Fields](#fields-4)
+    - [Scan interval](#scan-interval)
+    - [Metrics](#metrics)
+  - [Script Source](#script-source)
+  - [Streaming Metrics Source](#streaming-metrics-source)
+    - [Overall example](#overall-example-3)
     - [Name](#name-5)
     - [Description](#description-5)
-    - [Source Host](#source-host-2)
+    - [Protocol and Port](#protocol-and-port-1)
+    - [Content Type](#content-type)
     - [Source Category](#source-category-3)
+    - [Metadata](#metadata)
+  - [Host Metrics Source](#host-metrics-source)
+    - [Overall Example](#overall-example-4)
+    - [Name](#name-6)
+    - [Description](#description-6)
+    - [Source Host](#source-host-4)
+    - [Source Category](#source-category-4)
     - [Metadata](#metadata-1)
-    - [Scan Interval](#scan-interval)
-    - [Metrics](#metrics)
+    - [Scan Interval](#scan-interval-1)
+    - [Metrics](#metrics-1)
       - [CPU](#cpu)
       - [Memory](#memory)
       - [TCP](#tcp)
@@ -279,7 +292,7 @@ There is set of configuration common for all of the sources and this section is 
 
 #### Name
 
-Define the name after the slash `/` in the receiver name.
+Define the name after the slash `/` in the component name.
 
 To set `_sourceName`, use [resourceprocessor][resourceprocessor]
 or set it in [sumologicexporter][sumologicexporter].
@@ -290,9 +303,6 @@ For example, the following snippet configures the name for [Filelog Receiver][fi
 receivers:
   filelog/my example name:
   # ...
-exporters:
-  sumologic:
-    source_name: my example name
 ```
 
 #### Description
@@ -306,9 +316,67 @@ receivers:
   ## All my example logs
   filelog/my example name:
   # ...
-exporters:
-  sumologic:
-    source_name: my example name
+```
+
+#### Source Category
+
+The Source Category is set in the [Source Processor][source-templates] configuration with the `source_category` option.
+
+For example, the following snippet configures the Source Category as `My Category`:
+
+```yaml
+processors:
+  source/some name:
+    source_category: My Category
+```
+
+#### Fields
+
+There are multiple ways to set fields in OpenTelemetry Collector
+
+- For fields which are going to be the same for all sources, please refer to [Collector Fields](#fields)
+
+- For fields, which should be set for specific source, you should use [Transform Processor][transformprocessor].
+
+  For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
+
+  ```yaml
+    transform/custom fields:
+      log_statements:
+      - context: resource
+        statements:
+        - set(attributes["cloud.availability_zone"], "zone-1")
+        - set(attributes["k8s.cluster.name"], "my-cluster")
+  ```
+
+- You can alternatively use [resourceprocessor][resourceprocessor] to set custom fields for source:
+
+  For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
+
+  ```yaml
+  processors:
+    resource/my example name fields:
+      attributes:
+      - key: cloud.availability_zone
+        value: zone-1
+        ## upsert will override existing cloud.availability_zone field
+        action: upsert
+      - key: k8s.cluster.name
+        value: my-cluster
+        ## insert will add cloud.availability_zone field if it doesn't exist
+        action: insert
+  ```
+
+#### Source Host
+
+A Source Host can be set in the [Source Processor][source-templates] configuration with the `source_host` option.
+
+For example, the following snippet configures the Source Host as `my_host`:
+
+```yaml
+processors:
+  source/some name:
+    source_host: my_host
 ```
 
 ### Local File Source
@@ -540,94 +608,15 @@ exporters:
 
 #### Source Host
 
-The Source Host is set in the [Source Processor][source-templates] configuration with the `source_host` option.
-
-For example, the following snippet configures the Source Host as `My Host`:
-
-```yaml
-receivers:
-  ## All my example logs
-  filelog/my example name:
-    include:
-    - /var/log/*.log
-    - /opt/my_app/*.log
-    start_at: end
-  # ...
-processors:
-  source:
-    source_name: my example name
-    source_host: My Host
-```
+Please refer to [the Source Host section of Common configuration](#source-host).
 
 #### Source Category
 
-The Source Category is set in the [Source Processor][source-templates] configuration with the `source_category` option.
-
-For example, the following snippet configures the Source Category as `My Category`:
-
-```yaml
-receivers:
-  ## All my example logs
-  filelog/my example name:
-    include:
-    - /var/log/*.log
-    - /opt/my_app/*.log
-    start_at: end
-  # ...
-processors:
-  source/some name:
-    source_name: my example name
-    source_host: My Host
-    source_category: My Category
-```
+Please refer to [the Source Category section of Common configuration](#source-category).
 
 #### Fields
 
-There are multiple ways to set fields in OpenTelemetry Collector
-
-- For fields which are going to be the same for all data points and metrics,
-  you should use `collector_fields` in [Sumo Logic Extension][sumologicextension].
-
-  For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
-
-  ```yaml
-  extensions:
-    sumologic:
-      collector_fields:
-        cloud.availability_zone: zone-1
-        k8s.cluster.name: my-cluster
-  ```
-
-- For fields, which should be set for specific data, you should use [Transform Processor][transformprocessor].
-
-  For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
-
-  ```yaml
-    transform/custom fields:
-      log_statements:
-      - context: resource
-        statements:
-        - set(attributes["cloud.availability_zone"], "zone-1")
-        - set(attributes["k8s.cluster.name"], "my-cluster")
-  ```
-
-- You can also use [resourceprocessor][resourceprocessor] to set custom fields:
-
-  For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
-
-  ```yaml
-  processors:
-    resource/my example name fields:
-      attributes:
-      - key: cloud.availability_zone
-        value: zone-1
-        ## upsert will override existing cloud.availability_zone field
-        action: upsert
-      - key: k8s.cluster.name
-        value: my-cluster
-        ## insert will add cloud.availability_zone field if it doesn't exist
-        action: insert
-  ```
+Please refer to [the Fields section of Common configuration](#fields-1).
 
 #### Advanced Options for Logs
 
@@ -1263,7 +1252,193 @@ Docker Logs Source is not supported by the OpenTelemetry Collector.
 
 ### Docker Stats Source
 
-Docker Stats Source is not supported by the OpenTelemetry Collector.
+Docker Stats Source can be accessed with [the Dockerstats receiver][dockerstatsreceiver].
+
+#### Overall example
+
+Below is an example of an OpenTelemetry configuration for a Docker Stats Source.
+
+```yaml
+extensions:
+  sumologic:
+    installation_token: <installation_token>
+    ## Time Zone is a substitute of Installed Collector `Time Zone`
+    ## with `Use time zone from log file. If none is detected use:` option.
+    ## This is used only if `clear_logs_timestamp` is set to `true` in sumologic exporter.
+    ## Full list of time zones is available on wikipedia:
+    ## https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
+    time_zone: America/Tijuana
+
+receivers:
+  docker_stats:
+    ## Docker daemon's socket address.
+    ## Example for running Docker on MacOS with Colima, default is "unix:///var/run/docker.sock"
+    endpoint: "unix:///Users/<user>/.colima/default/docker.sock"
+
+    ## Default is 10s
+    collection_interval: 20s
+
+    ## A list of images for which corresponding containers won't be scraped.
+    ## Strings, regexes and globs are supported, more information in the receiver's readme:
+    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver#configuration
+    excluded_images:
+      ## Exclude particular image
+      - docker.io/library/nginx:1.2
+      ## Exclude by regex
+      ## Note: regex must be but between / characters
+      - /other-docker-registry.*nginx/
+      ## Exclude by glob
+      - exclude-*-this/nginx
+      ## Use negation: scrape metrics only from nginx containers
+      - !*nginx*
+      ## Negation for regexes requires using ! before the slash character
+      - !/.*nginx.*/
+
+    ## Timeout for any Docker daemon query.
+    timeout: 5s
+    ## Must be 1.22 or above
+    api_version: 1.22
+
+    ## Enable or disable particular metrics.
+    ## Full list of metrics with their default config is available at https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver/documentation.md
+    metrics:
+      container.cpu.usage.percpu:
+        enabled: true
+      container.network.io.usage.tx_dropped:
+        enabled: false
+
+processors:
+  filter/dockerstats:
+    metrics:
+      ## To filter out, use "exclude" instead
+      include:
+        match_type: regexp
+        resource_attributes:
+          - key: container.name
+            value: sumo-container-.*
+
+exporters:
+  sumologic/dockerstats:
+
+service:
+  extensions:
+  - sumologic
+  pipelines:
+    metrics/docker_stats source:
+      receivers:
+      - docker_stats
+      processors:
+      - filter/dockerstats
+      exporters:
+      - sumologic/dockerstats
+```
+
+#### Name
+
+Please refer to [the Name section of Common configuration](#name-1).
+
+#### Description
+
+Please refer to [the Description section of Common configuration](#description-1).
+
+#### URI
+
+To specify URI, use `endpoint` option:
+
+```yaml
+receivers:
+  docker_stats:
+    ## Docker daemon's socket address.
+    ## Example for running Docker on MacOS with Colima, default is "unix:///var/run/docker.sock"
+    endpoint: "unix:///Users/<user>/.colima/default/docker.sock"
+```
+
+`Cert Path` option is not supported in OpenTelemetry Collector.
+
+#### Container filters
+
+Containers cannot be filtered by their name directly in the receiver. [Filter Processor][filterprocessor] has to be used for that purpose.
+To filter in containers by their name, use the following processor config:
+
+```yaml
+receivers:
+  docker_stats:
+    ## ...
+
+processors:
+  filter:
+    metrics:
+      ## To filter out, use "exclude" instead
+      include:
+        match_type: regexp
+        resource_attributes:
+          - key: container.name
+            value: sumo-container-.*
+```
+
+You can also filter out containers by their image name through `excluded_images` option:
+
+```yaml
+receivers:
+  docker_stats:
+    ## A list of images for which corresponding containers won't be scraped.
+    ## Strings, regexes and globs are supported, more information in the receiver's readme:
+    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver#configuration
+    excluded_images:
+      ## Exclude particular image
+      - docker.io/library/nginx:1.2
+      ## Exclude by regex
+      ## Note: regex must be but between / characters
+      - /other-docker-registry.*nginx/
+      ## Exclude by glob
+      - exclude-*-this/nginx
+      ## Use negation: scrape metrics only from nginx containers
+      - !*nginx*
+      ## Negation for regexes requires using ! before the slash character
+      - !/.*nginx.*/
+```
+
+Valid names are strings, [regexes](https://pkg.go.dev/regexp) and [globs](https://github.com/gobwas/glob).
+Negation can also be used, for example glob `!my*container` will exclude all containers for which the image name doesn't match glob `my*container`.
+
+#### Source Host
+
+Please refer to [the Source Host section of Common configuration](#source-host).
+
+#### Source Category
+
+Please refer to [the Source Category section of Common configuration](#source-category).
+
+#### Fields
+
+Please refer to [the Fields section of Common configuration](#fields-1).
+
+#### Scan interval
+
+To indicate a scan interval, use `collection_interval` option:
+
+```yaml
+receivers:
+  docker_stats:
+    ## Default is 10s
+    collection_interval: 20s
+```
+
+#### Metrics
+
+In OpenTelemetry Collector, some metrics are being emitted by default, meanwhile some have to be enabled. You can enable emitting a metric by setting `metrics.<metric_name>.enabled` to `true` and disable it by setting this option to `false`, for example:
+
+```yaml
+receivers:
+  dockerstats:
+    metrics:
+      container.cpu.usage.percpu:
+        enabled: true
+      container.network.io.usage.tx_dropped:
+        enabled: false
+```
+
+Full list of metrics available in this receiver can be found [here][dockerstatsmetrics].
 
 ### Script Source
 
@@ -2151,8 +2326,8 @@ This section describes migration steps for [common parameters][common-parameters
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | `name`                            | [processors.source.source_name](#name-2)                                                                        |
 | `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-2) |
-| `fields`                          | Use [Transform Processor][transformprocessor] to set custom fields. [See the linked example.](#fields-1)        |
-| `hostName`                        | [processors.source.source_host][source-templates]; [See the linked example.](#source-host)                      |
+| `fields`                          | Use [Transform Processor][transformprocessor] to set custom fields. [See the linked example.](#fields-2)        |
+| `hostName`                        | [processors.source.source_host][source-templates]; [See the linked example.](#source-host-1)                    |
 | `category`                        | [processors.source.source_category][source-templates]                                                           |
 | `automaticDateParsing`            | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
 | `timeZone`                        | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
@@ -2217,7 +2392,7 @@ More useful information can be found in [Streaming Metrics Source for Cloud Base
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | `name`                            | [processors.source.source_name](#name-4)                                                                        |
 | `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-4) |
-| `category`                        | [processors.source.source_category](#source-category-2)                                                         |
+| `category`                        | [processors.source.source_category](#source-category-3)                                                         |
 | `contentType`                     | [receivers.telegraf.agent_config('inputs.socket_listener'.data_format)](#content-type)                          |
 | `protocol`                        | [receivers.telegraf.agent_config('inputs.socket_listener'.service_address)](#protocol-and-port-1)               |
 | `port`                            | [receivers.telegraf.agent_config('inputs.socket_listener'.service_address)](#protocol-and-port-1)               |
@@ -2234,10 +2409,10 @@ See [this document](comparison.md#host-metrics) to learn more.__
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | `name`                            | [processors.source.source_name](#name-5)                                                                        |
 | `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-5) |
-| `category`                        | [processors.source.source_category](#source-category-3)                                                         |
+| `category`                        | [processors.source.source_category](#source-category-4)                                                         |
 | `metrics`                         | [Appropiate plugins have to be configured.](#metrics) By default no metrics are being processed.                |
 | `interval (ms)`                   | [receivers.telegraf.agent_config('agent'.interval)](#scan-interval)                                             |
-| `hostName`                        | [processors.source.source_host](#source-host-2)                                                                 |
+| `hostName`                        | [processors.source.source_host](#source-host-3)                                                                 |
 
 ### Local Windows Event Log Source (LocalWindowsEventLog)
 
@@ -2288,3 +2463,5 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [telegraf-input-netstat]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/net/NETSTAT_README.md
 [telegraf-input-diskio]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/diskio
 [telegraf-input-disk]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/disk
+[dockerstatsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver
+[dockerstatsmetrics]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver/documentation.md

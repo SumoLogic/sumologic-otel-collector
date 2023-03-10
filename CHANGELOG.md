@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Released TBA
+
+### Changed
+
+- fix: fix carbon2 parser for telegrafreceiver [#1058]
+
+[#1058]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1058
+
+[unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.73.0-sumo-0...main
+
 ## [v0.73.0-sumo-0]
 
 ### Released 2023-03-08
