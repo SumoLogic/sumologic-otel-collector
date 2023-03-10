@@ -43,10 +43,12 @@ func createDefaultConfig() component.Config {
 	qs.Enabled = false
 
 	return &Config{
-		Endpoint: DefaultEndpoint,
-		Port:     DefaultPort,
-		Format:   DefaultFormat,
-		Protocol: DefaultProtocol,
+		Endpoint:      DefaultEndpoint,
+		Port:          DefaultPort,
+		Format:        DefaultFormat,
+		Protocol:      DefaultProtocol,
+		RetrySettings: exporterhelper.NewDefaultRetrySettings(),
+		QueueSettings: qs,
 	}
 }
 
