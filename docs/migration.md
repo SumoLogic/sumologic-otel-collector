@@ -1307,6 +1307,9 @@ processors:
           - key: container.name
             value: sumo-container-.*
 
+  sumologicschema/dockerstats:
+    translate_docker_metrics: true
+
 exporters:
   sumologic/dockerstats:
 
@@ -1319,6 +1322,7 @@ service:
       - docker_stats
       processors:
       - filter/dockerstats
+      - sumologicschema/dockerstats
       exporters:
       - sumologic/dockerstats
 ```
@@ -1428,7 +1432,75 @@ receivers:
         enabled: false
 ```
 
+The table below shows how some metrics commonly used by the Installed Collector map to OpenTelemetry metrics.
+
+| Installed Collector name          | OpenTelemetry name                              | Notes               |
+|-----------------------------------|-------------------------------------------------|---------------------|
+| cpu_percentage                    | container.cpu.percent                           |                     |
+| online_cpus                       | _not available_                                 |                     |
+| system_cpu_usage                  | container.cpu.usage.system                      | disabled by default |
+| cpu_usage.percpu_usage            | container.cpu.usage.percpu                      | disabled by default |
+| cpu_usage.total_usage             | container.cpu.usage.total                       |                     |
+| cpu_usage.usage_in_kernelmode     | container.cpu.usage.kernelmode                  |                     |
+| cpu_usage.usage_in_usermode       | container.cpu.usage.usermode                    |                     |
+| throttling_data.periods           | container.cpu.throttling_data.periods           | disabled by default |
+| throttling_data.throttled_periods | container.cpu.throttling_data.throttled_periods | disabled by default |
+| throttling_data.throttled_time    | container.cpu.throttling_data.throttled_time    | disabled by default |
+|                                   |                                                 |                     |
+| failcnt                           | _not available_                                 |                     |
+| limit                             | container.memory.usage.limit                    |                     |
+| max_usage                         | container.memory.usage.max                      | disabled by default |
+| memory_percentage                 | container.memory.percent                        |                     |
+| usage                             | container.memory.usage.total                    |                     |
+| stats.active_anon                 | container.memory.active_anon                    | disabled by default |
+| stats.active_file                 | container.memory.active_file                    | disabled by default |
+| stats.cache                       | container.memory.cache                          |                     |
+| stats.hierarchical_memory_limit   | container.memory.hierarchical_memory_limit      | disabled by default |
+| stats.inactive_anon               | container.memory.inactive_anon                  | disabled by default |
+| stats.inactive_file               | container.memory.inactive_file                  | disabled by default |
+| stats.mapped_file                 | container.memory.mapped_file                    | disabled by default |
+| stats.pgfault                     | container.memory.pgfault                        | disabled by default |
+| stats.pgmajfault                  | container.memory.pgmajfault                     | disabled by default |
+| stats.pgpgin                      | container.memory.pgpgin                         | disabled by default |
+| stats.pgpgout                     | container.memory.pgpgout                        | disabled by default |
+| stats.rss                         | container.memory.rss                            | disabled by default |
+| stats.rss_huge                    | container.memory.rss_huge                       | disabled by default |
+| stats.unevictable                 | container.memory.unevictable                    | disabled by default |
+| stats.writeback                   | container.memory.writeback                      | disabled by default |
+| stats.total_active_anon           | container.memory.total_active_anon              | disabled by default |
+| stats.total_active_file           | container.memory.total_active_file              | disabled by default |
+| stats.total_cache                 | container.memory.total_cache                    |                     |
+| stats.total_inactive_anon         | container.memory.total_inactive_anon            | disabled by default |
+| stats.total_mapped_file           | container.memory.total_mapped_file              | disabled by default |
+| stats.total_pgfault               | container.memory.total_pgfault                  | disabled by default |
+| stats.total_pgmajfault            | container.memory.total_pgmajfault               | disabled by default |
+| stats.total_pgpgin                | container.memory.total_pgpgin                   | disabled by default |
+| stats.total_pgpgout               | container.memory.total_pgpgout                  | disabled by default |
+| stats.total_rss                   | container.memory.total_rss                      | disabled by default |
+| stats.total_rss_huge              | container.memory.total_rss_huge                 | disabled by default |
+| stats.total_unevictable           | container.memory.total_unevictable              | disabled by default |
+| stats.total_writeback             | container.memory.total_writeback                | disabled by default |
+|                                   |                                                 |                     |
+| io_merged_recursive               | container.blockio.io_merged_recursive           | disabled by default |
+| io_queue_recursive                | container.blockio.io_queued_recursive           | disabled by default |
+| io_service_bytes_recursive        | container.blockio.io_service_bytes_recursive    |                     |
+| io_service_time_recursive         | container.blockio.io_service_time_recursive     | disabled by default |
+| io_serviced_recursive             | container.blockio.io_serviced_recursive         | disabled by default |
+| io_time_recursive                 | container.blockio.io_time_recursive             | disabled by default |
+| io_wait_time_recursive            | container.blockio.io_wait_time_recursive        | disabled by default |
+| sectors_recursive                 | container.blockio.sectors_recursive             | disabled by default |
+|                                   |                                                 |                     |
+| current                           | _not available_                                 |                     |
+
 Full list of metrics available in this receiver can be found [here][dockerstatsmetrics].
+
+Unfortunately, Sumo Logic apps don't work with these metric names yet. To convieniently translate them, use [Sumo Logic Schema Processor][sumologicschemaprocessor]:
+
+```yaml
+processors:
+  sumologicschema/dockerstats:
+    translate_docker_metrics: true
+```
 
 ### Script Source
 
@@ -2449,3 +2521,4 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [telegraf-input-disk]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/disk
 [dockerstatsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver
 [dockerstatsmetrics]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver/documentation.md
+[sumologicschemaprocessor]: ../pkg/processor/sumologicschemaprocessor/README.md
