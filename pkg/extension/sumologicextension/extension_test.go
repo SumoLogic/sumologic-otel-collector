@@ -519,7 +519,7 @@ func TestLocalFSCredentialsStore_WorkCorrectlyForMultipleExtensions(t *testing.T
 func TestRegisterEmptyCollectorName(t *testing.T) {
 	t.Parallel()
 
-	hostname, err := os.Hostname()
+	hostname, err := getHostname(zap.NewNop())
 	require.NoError(t, err)
 	srv := httptest.NewServer(func() http.HandlerFunc {
 		var reqCount int32
@@ -587,7 +587,7 @@ func TestRegisterEmptyCollectorName(t *testing.T) {
 func TestRegisterEmptyCollectorNameForceRegistration(t *testing.T) {
 	t.Parallel()
 
-	hostname, err := os.Hostname()
+	hostname, err := getHostname(zap.NewNop())
 	require.NoError(t, err)
 	srv := httptest.NewServer(func() http.HandlerFunc {
 		var reqCount int32
@@ -924,7 +924,7 @@ func TestRegisterEmptyCollectorNameWithBackoff(t *testing.T) {
 	var retriesLimit int32 = 5
 	t.Parallel()
 
-	hostname, err := os.Hostname()
+	hostname, err := getHostname(zap.NewNop())
 	require.NoError(t, err)
 	srv := httptest.NewServer(func() http.HandlerFunc {
 		var reqCount int32
@@ -998,7 +998,7 @@ func TestRegisterEmptyCollectorNameWithBackoff(t *testing.T) {
 func TestRegisterEmptyCollectorNameUnrecoverableError(t *testing.T) {
 	t.Parallel()
 
-	hostname, err := os.Hostname()
+	hostname, err := getHostname(zap.NewNop())
 	require.NoError(t, err)
 	srv := httptest.NewServer(func() http.HandlerFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -1277,7 +1277,7 @@ func TestCollectorReregistersAfterHTTPUnathorizedFromHeartbeat(t *testing.T) {
 func TestRegistrationRequestPayload(t *testing.T) {
 	t.Parallel()
 
-	hostname, err := os.Hostname()
+	hostname, err := getHostname(zap.NewNop())
 	require.NoError(t, err)
 	var reqCount int32
 	srv := httptest.NewServer(func() http.HandlerFunc {

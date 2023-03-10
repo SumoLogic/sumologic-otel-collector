@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released TBA
 
+This release introduces the following breaking changes:
+
+- fix(sumologicextension)!: use fqdn before os.Hostname
+
+See the [upgrade guide][upgrade_guide_v0.74] for more details.
+
 ### Added
 
 - feat!(sumologicschemaprocessor): add translating docker stats metric names [#1055]
@@ -24,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1058]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1058
 [#1055]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1055
 [#1061]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1061
-
+[upgrade_guide_v0.74]: ./docs/upgrading.md#upgrading-to-v0660-sumo-0
 [unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.73.0-sumo-0...main
 
 ## [v0.73.0-sumo-0]

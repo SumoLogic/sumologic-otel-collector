@@ -30,6 +30,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Showmax/go-fqdn"
 	"github.com/cenkalti/backoff/v4"
 	ps "github.com/mitchellh/go-ps"
 	"github.com/shirou/gopsutil/v3/host"
@@ -113,7 +114,7 @@ func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID, bu
 		conf.Credentials.InstallationToken = conf.Credentials.InstallToken
 	}
 
-	hostname, err := os.Hostname()
+	hostname, err := getHostname(logger)
 	if err != nil {
 		return nil, err
 	}
@@ -378,9 +379,7 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 	}
 	u.Path = registerUrl
 
-	// TODO: just plain hostname or we want to add some custom logic when setting
-	// hostname in request?
-	hostname, err := os.Hostname()
+	hostname, err := getHostname(se.logger)
 	if err != nil {
 		return credentials.CollectorCredentials{}, fmt.Errorf("cannot get hostname: %w", err)
 	}
@@ -721,6 +720,11 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 		return err
 	}
 
+	hostname, err := getHostname(se.logger)
+	if err != nil {
+		return err
+	}
+
 	ip, err := getHostIpAddress()
 	if err != nil {
 		return err
@@ -742,7 +746,7 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 	var buff bytes.Buffer
 	if err = json.NewEncoder(&buff).Encode(api.OpenMetadataRequestPayload{
 		HostDetails: api.OpenMetadataHostDetails{
-			Name:        info.Hostname,
+			Name:        hostname,
 			OsName:      info.OS,
 			OsVersion:   info.PlatformVersion,
 			Environment: se.conf.CollectorEnvironment,
@@ -939,4 +943,16 @@ func addClientCredentials(req *http.Request, credentials accessCredentials) {
 
 	req.Header.Del("Authorization")
 	req.Header.Add("Authorization", authHeaderValue)
+}
+
+// getHostname returns the host name consistently with the resource detection processor's defaults
+// TODO: try to dynamically extract this from the resource processor in the pipeline
+func getHostname(logger *zap.Logger) (string, error) {
+	fqdnHostname, err := fqdn.FqdnHostname()
+	if err == nil {
+		return fqdnHostname, nil
+	}
+	logger.Debug("failed to get fqdn", zap.Error(err))
+
+	return os.Hostname()
 }
