@@ -106,7 +106,7 @@ BINARY_BRANCH=""
 
 KEEP_DOWNLOADS=false
 
-CURL_MAX_TIME=180
+CURL_MAX_TIME=300
 
 # set by check_dependencies therefore cannot be set by set_defaults
 SYSTEMD_DISABLED=false
