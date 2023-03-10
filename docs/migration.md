@@ -393,12 +393,12 @@ extensions:
     installation_token: <installation_token>
     ## Time Zone is a substitute of Installed Collector `Time Zone`
     ## with `Use time zone from log file. If none is detected use:` option.
-    ## This is used only if `clear_logs_timestamp` is set to `true` in sumologic exporter.
+    ## This is used only if log timestamp is set to 0 by transform processor.
     ## Full list of time zones is available on wikipedia:
     ## https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
     time_zone: America/Tijuana
     ## The following configuration will add two fields to every record
-    collection_fields:
+    collector_fields:
       cloud.availability_zone: zone-1
       k8s.cluster.name: my-cluster
 receivers:
@@ -412,6 +412,7 @@ receivers:
     include:
     - /var/log/*.log
     - /opt/app/logs/*.log
+    - tmp/logs.log"
     ## List of local files which shouldn't be read.
     ## Installed Collector `Denylist` substitute.
     exclude:
@@ -431,6 +432,22 @@ receivers:
     multiline:
       ## line_start_pattern is substitute of `Boundary Regex`.
       line_start_pattern: ^\d{4}
+    ## Adds file path log.file.path attribute, which can be used for timestamp parsing
+    ## See operators configuration
+    include_file_path: true
+    ## `Operators allows to perform more advanced operations like per file timestamp parsing
+    operators:
+    - type: regex_parser
+      ## Applies only to tmp/logs.log file
+      if: 'attributes["log.file.path"] == "tmp/logs.log"'
+      ## Extracts timestamp to timestamp_field using regex parser
+      regex: '^(?P<timestamp_field>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}).*'
+      timestamp:
+        parse_from: attributes.timestamp_field
+        layout: '%Y-%m-%d %H:%M:%S'
+    ## Cleanup timestamp_field
+    - type: remove
+      field: attributes.timestamp_field
 processors:
   source:
     ## Set _sourceName
@@ -439,16 +456,36 @@ processors:
     source_category: example category
     ## Installed Collector substitute for `Source Host`.
     source_host: example host
+  transform/logs source:
+    log_statements:
+      ## By default every data has timestamp (usually set to receipt time)
+      ## and therefore Sumo Logic backend do not try to parse it from log body.
+      ## Using this processor works like `Enable Timestamp Parsing`,
+      ## where `Time Zone` is going to be taken from `extensions` section.
+      ## There is no possibility to configure several time zones in one exporter.
+      ## It behaves like `Timestamp Format` would be set to `Automatically detect the format`
+      ## in terms of Installed Collector configuration.
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+      ## Adds custom fields:
+      ## - cloud.availability_zone=zone-1
+      ## - k8s.cluster.name=my-cluster
+      - context: resource
+        statements:
+        - set(attributes["cloud.availability_zone"], "zone-1")
+        - set(attributes["k8s.cluster.name"], "my-cluster")
+  ## Remove logs with timestamp before Sat Dec 31 2022 23:00:00 GMT+0000
+  ## This configuration covers `Collection should begin` functionality.
+  ## Please ensure that timestamps are correctly set (eg. use operators in filelog receiver)
+  filter/remove older:
+    logs:
+      log_record:
+      ## - 1672527600000000000 ns is equal to Dec 31 2022 23:00:00 GMT+0000
+      ## - do not remove logs which do not have correct timestamp
+      - 'time_unix_nano < 1672527600000000000 and time_unix_nano > 0'
 exporters:
   sumologic:
-    ## clear_logs_timestamp is by default set to True.
-    ## If it's set to true, it works like `Enable Timestamp Parsing`,
-    ## and `Time Zone` is going to be taken from `extensions` section.
-    ## There is no possibility to configure several time zones in one exporter.
-    ## clear_logs_timestamp sets to true also behaves like
-    ## `Timestamp Format` would be set to `Automatically detect the format`
-    ## in terms of Installed Collector configuration.
-    clear_logs_timestamp: true
 service:
   extensions:
   - sumologic
@@ -457,6 +494,8 @@ service:
       receivers:
       - filelog/log source
       processors:
+      - filter/remove older
+      - transform/logs source
       - source
       exporters:
       - sumologic
@@ -486,9 +525,6 @@ receivers:
     - /var/log/*.log
     - /opt/my_app/*.log
   # ...
-exporters:
-  sumologic:
-    source_name: my example name
 ```
 
 ##### Collection should begin
@@ -540,9 +576,6 @@ Let's consider the following example. We want to get logs from `tmp/logs.log` wh
         ## 1672527600000000000 ns is equal to Dec 31 2022 23:00:00 GMT+0000,
         ## but do not remove logs which do not have correct timestamp
         - 'time_unix_nano < 1672527600000000000 and time_unix_nano > 0'
-  exporters:
-    logging:
-      verbosity: detailed
   service:
     pipelines:
       logs/log source:
@@ -605,14 +638,12 @@ receivers:
     start_at: end
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/custom fields:
+    log_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: My Host
@@ -622,7 +653,15 @@ processors:
 ##### Timestamp Parsing
 
 The Installed Collector option to `Extract timestamp information from log file entries` in an
-OpenTelemtry configuration is `clear_logs_timestamp`. This is set to `true` by default.
+OpenTelemetry configuration can be achieved with [Transform Processor][transformprocessor]:
+
+```yaml
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+```
 
 This works like `Extract timestamp information from log file entries` combined with
 `Ignore time zone from log file and instead use:` set to `Use Collector Default`.
@@ -644,21 +683,26 @@ receivers:
     start_at: end
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/custom fields:
+    log_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+exporters:
+  sumologic/some_name:
 ```
 
-If `clear_logs_timestamp` is set to `false`, timestamp parsing should be configured
+If `transform/clear_logs_timestamp` is not used, timestamp parsing should be configured
 manually, like in the following snippet:
 
 ```yaml
@@ -688,22 +732,18 @@ receivers:
         layout: '2006-01-02 15:04:05,000 -0700'
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/custom fields:
+    log_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
 exporters:
   sumologic/some_name:
-    ## Keep manually parsed timestamps
-    clear_logs_timestamp: true
 ```
 
 The following example snippet skips timestamp parsing so the Collector uses Receipt Time:
@@ -737,13 +777,11 @@ processors:
     source_category: My Category
 exporters:
   sumologic/some_name:
-    ## Keep manually parsed timestamps (use Receipt Time by default)
-    clear_logs_timestamp: true
 ```
 
 ##### Encoding
 
-Use `encoding` to set the encoding of your data. Full list of supporter encodings can be obtained from [filelogreceiver documentation][supported_encodings].
+Use `encoding` to set the encoding of your data. Full list of supporter encodings can be obtained from [Filelog Receiver documentation][supported_encodings].
 
 The following snippet sets the encoding to UTF-8:
 
@@ -763,18 +801,18 @@ receivers:
     encoding: utf-8
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/custom fields:
+    log_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
+exporters:
+  sumologic/some_name:
 ```
 
 ##### Multiline Processing
@@ -801,23 +839,23 @@ receivers:
       line_start_pattern: ^\d{4}-\d{2}-\d{2}
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/custom fields:
+    log_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
+exporters:
+  sumologic/some_name:
 ```
 
 If your multiline logs have a known end pattern use the `line_end_pattern` option.
 
-More information is available in [filelogreceiver documentation][multiline].
+More information is available in [Filelog Receiver documentation][multiline].
 
 ### Remote File Source
 
@@ -2230,39 +2268,39 @@ This section describes migration steps for an Installed Collector managed with a
 
 The following table shows the equivalent [user.properties][user.properties] for OpenTelemetry.
 
-| user.properties key                           | The OpenTelemetry Collector Key                            |
-|-----------------------------------------------|------------------------------------------------------------|
-| `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
-| ~~`accessid=accessId`~~                       | N/A, use `extensions.sumologic.installation_token`         |
-| ~~`accesskey=accessKey`~~                     | N/A, use `extensions.sumologic.installation_token`         |
-| `category=category`                           | [extensions.sumologic.collector_category](#category)       |
-| `clobber=true/false`                          | `extensions.sumologic.clobber`                             |
-| `description=description`                     | [extensions.sumologic.collector_description](#description) |
-| `disableActionSource=true/false`              | N/A                                                        |
-| `disableScriptSource=true/false`              | N/A                                                        |
-| `disableUpgrade=true/false`                   | N/A                                                        |
-| `enableActionSource=true/false`               | N/A                                                        |
-| `enableScriptSource=true/false`               | N/A                                                        |
-| `ephemeral=true/false`                        | N/A                                                        |
-| `fields=[list of fields]`                     | [processors.resource](#fields)                             |
-| `fipsJce=true/false`                          | N/A                                                        |
-| `hostName=hostname`                           | `processors.source.source_host`                          |
-| `name=name`                                   | [extensions.sumologic.collector_name](#name)               |
-| `proxyHost=host`                              | [plese see OTC documentation][proxy]                       |
-| `proxyNtlmDomain=NTLM domain`                 | [plese see OTC documentation][proxy]                       |
-| `proxyPassword=password`                      | [plese see OTC documentation][proxy]                       |
-| `proxyPort=port`                              | [plese see OTC documentation][proxy]                       |
-| `proxyUser=username`                          | [plese see OTC documentation][proxy]                       |
-| `skipAccessKeyRemoval=true/false`             | N/A                                                        |
-| `sources=absolute filepath or folderpath`     | N/A                                                        |
-| `syncSources=absolute filepath or folderpath` | N/A                                                        |
-| `targetCPU=target`                            | N/A                                                        |
-| `timeZone=timezone`                           | [extensions.sumologic.time_zone](#time-zone)               |
-| `token=token`                                 | N/A                                                        |
-| `url=collection endpoint`                     | `extensions.sumologic.api.base.url`                        |
-| `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
-| `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
-| `wrapper.java.maxmemory=size`                 | N/A                                                        |
+| user.properties key                           | The OpenTelemetry Collector Key                                                           |
+|-----------------------------------------------|-------------------------------------------------------------------------------------------|
+| `wrapper.java.command=JRE Bin Location`       | N/A                                                                                       |
+| ~~`accessid=accessId`~~                       | N/A, use [extensions.sumologic.installation_token](/docs/configuration.md#authentication) |
+| ~~`accesskey=accessKey`~~                     | N/A, use [extensions.sumologic.installation_token](/docs/configuration.md#authentication) |
+| `category=category`                           | [extensions.sumologic.collector_category](#category)                                      |
+| `clobber=true/false`                          | [extensions.sumologic.clobber][sumologicextension]                                        |
+| `description=description`                     | [extensions.sumologic.collector_description](#description)                                |
+| `disableActionSource=true/false`              | N/A                                                                                       |
+| `disableScriptSource=true/false`              | N/A                                                                                       |
+| `disableUpgrade=true/false`                   | N/A                                                                                       |
+| `enableActionSource=true/false`               | N/A                                                                                       |
+| `enableScriptSource=true/false`               | N/A                                                                                       |
+| `ephemeral=true/false`                        | N/A                                                                                       |
+| `fields=[list of fields]`                     | [extensions.sumologic.collector_fields](#fields)                                          |
+| `fipsJce=true/false`                          | N/A                                                                                       |
+| `hostName=hostname`                           | [processors.source.source_host][source-templates]                                         |
+| `name=name`                                   | [extensions.sumologic.collector_name](#name)                                              |
+| `proxyHost=host`                              | [please see OTC documentation][proxy]                                                     |
+| `proxyNtlmDomain=NTLM domain`                 | [please see OTC documentation][proxy]                                                     |
+| `proxyPassword=password`                      | [please see OTC documentation][proxy]                                                     |
+| `proxyPort=port`                              | [please see OTC documentation][proxy]                                                     |
+| `proxyUser=username`                          | [please see OTC documentation][proxy]                                                     |
+| `skipAccessKeyRemoval=true/false`             | N/A                                                                                       |
+| `sources=absolute filepath or folderpath`     | [Use --config flag](/docs/configuration.md#command-line-configuration-options)            |
+| `syncSources=absolute filepath or folderpath` | [Use --config flag](/docs/configuration.md#command-line-configuration-options)            |
+| `targetCPU=target`                            | N/A                                                                                       |
+| `timeZone=timezone`                           | [extensions.sumologic.time_zone](#time-zone)                                              |
+| `token=token`                                 | [extensions.sumologic.installation_token](/docs/configuration.md#authentication)          |
+| `url=collection endpoint`                     | [extensions.sumologic.api_base_url][sumologicextension]                                   |
+| `wrapper.java.command=JRE Bin Location`       | N/A                                                                                       |
+| `wrapper.java.command=JRE Bin Location`       | N/A                                                                                       |
+| `wrapper.java.maxmemory=size`                 | N/A                                                                                       |
 
 ### Common Parameters
 
@@ -2288,7 +2326,7 @@ This section describes migration steps for [common parameters][common-parameters
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | `name`                            | [processors.source.source_name](#name-2)                                                                        |
 | `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-2) |
-| `fields`                          | Use the [resourceprocessor][resourceprocessor] to set custom fields. [See the linked example.](#fields-2)       |
+| `fields`                          | Use [Transform Processor][transformprocessor] to set custom fields. [See the linked example.](#fields-2)        |
 | `hostName`                        | [processors.source.source_host][source-templates]; [See the linked example.](#source-host-1)                    |
 | `category`                        | [processors.source.source_category][source-templates]                                                           |
 | `automaticDateParsing`            | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
@@ -2300,7 +2338,7 @@ This section describes migration steps for [common parameters][common-parameters
 | `useAutolineMatching`             | [See Multiline Processing explanation](#multiline-processing)                                                   |
 | `manualPrefixRegexp`              | [See Multiline Processing explanation](#multiline-processing)                                                   |
 | `filters`                         | N/A                                                                                                             |
-| `cutoffTimestamp`                 | N/A                                                                                                             |
+| `cutoffTimestamp`                 | [Use Filter Processor](#collection-should-begin)                                                                |
 | `cutoffRelativeTime`              | N/A                                                                                                             |
 
 ### Local File Source (LocalFile)
@@ -2311,7 +2349,7 @@ More useful information can be found in [Local File Source for Cloud Based Manag
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                         |
 |-----------------------------------|---------------------------------------------------------|
 | `pathExpression`                  | element of [receivers.filelog.include](#file-path) list |
-| `denylist`                        | elemets of [receivers.filelog.exclude](#denylist) list  |
+| `denylist`                        | [receivers.filelog.exclude](#denylist)                  |
 | `encoding`                        | [receivers.filelog.encoding](#encoding)                 |
 
 ### Remote File Source (RemoteFileV2)
