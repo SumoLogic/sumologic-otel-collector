@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released TBA
 
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.73.0-sumo-1...main
+
+## [v0.73.0-sumo-1]
+
+### Released 2023-03-13
+
 This release introduces the following breaking changes:
 
 - fix(sumologicextension)!: use fqdn before os.Hostname
@@ -33,7 +39,7 @@ See the [upgrade guide][upgrade_guide_v0.74] for more details.
 [#1061]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1061
 [#1056]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1056
 [upgrade_guide_v0.74]: ./docs/upgrading.md#upgrading-to-v0660-sumo-0
-[unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.73.0-sumo-0...main
+[v0.73.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.73.0-sumo-0...v0.73.0-sumo-1
 
 ## [v0.73.0-sumo-0]
 

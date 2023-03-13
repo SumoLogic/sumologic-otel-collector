@@ -25,7 +25,7 @@
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
-## Upgrading to Unreleased
+## Upgrading to v0.73.0-sumo-1
 
 ### The default collector name for sumologic extension is now the host FQDN
 
