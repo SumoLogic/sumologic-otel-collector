@@ -85,6 +85,10 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
       - [Network](#network)
       - [Disk](#disk)
   - [Local Windows Event Log Source](#local-windows-event-log-source)
+    - [Name](#name-6)
+    - [Description](#description-6)
+    - [Source Category](#source-category-5)
+    - [Fields](#fields-5)
   - [Local Windows Performance Monitor Log Source](#local-windows-performance-monitor-log-source)
   - [Windows Active Directory Source](#windows-active-directory-source)
   - [Script Action](#script-action)
@@ -2308,6 +2312,22 @@ processors:
 
 Local Windows Event Log Source is not supported by the OpenTelemetry Collector.
 
+#### Name
+
+Please refer to [the Name section of Common configuration](#name-1).
+
+#### Description
+
+Please refer to [the Description section of Common configuration](#description-1).
+
+#### Source Category
+
+Please refer to [the Source Category section of Common configuration](#source-category).
+
+#### Fields
+
+Please refer to [the Fields section of Common configuration](#fields-1).
+
 ### Local Windows Performance Monitor Log Source
 
 Local Windows Performance Monitor Log Source is not supported by the OpenTelemetry Collector.
@@ -2425,8 +2445,8 @@ The equivalent of the Syslog Source is a combination of
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                      |
 |-----------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| `protocol`                        | using tcplog or udplog receiver. [See syslog explanation](#protocol-and-port)                                        |
 | `port`                            | `receivers.tcplog.listen_address` or `receivers.udplog.listen_address`. [See syslog explanation](#protocol-and-port) |
+| `protocol`                        | using tcplog or udplog receiver. [See syslog explanation](#protocol-and-port)                                        |
 
 ### Docker Logs Source (DockerLog)
 
