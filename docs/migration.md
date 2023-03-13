@@ -92,6 +92,10 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
   - [Collector](#collector-1)
     - [user.properties](#userproperties)
   - [Common Parameters](#common-parameters)
+    - [Filtering](#filtering)
+      - [Include and exclude](#include-and-exclude)
+      - [Masks](#masks)
+      - [Data forwarding](#data-forwarding)
   - [Local File Source (LocalFile)](#local-file-source-localfile)
   - [Remote File Source (RemoteFileV2)](#remote-file-source-remotefilev2)
   - [Syslog Source (Syslog)](#syslog-source-syslog)
@@ -2331,9 +2335,126 @@ This section describes migration steps for [common parameters][common-parameters
 | `multilineProcessingEnabled`      | [See Multiline Processing explanation](#multiline-processing)                                                   |
 | `useAutolineMatching`             | [See Multiline Processing explanation](#multiline-processing)                                                   |
 | `manualPrefixRegexp`              | [See Multiline Processing explanation](#multiline-processing)                                                   |
-| `filters`                         | N/A                                                                                                             |
+| `filters`                         | [See filtering explanation](#filtering)                                                                         |
 | `cutoffTimestamp`                 | [Use Filter Processor](#collection-should-begin)                                                                |
 | `cutoffRelativeTime`              | N/A                                                                                                             |
+
+#### Filtering
+
+##### Include and exclude
+
+[Filter processor][filterprocessor] can be used to filter data that will be sent to Sumo Logic.
+Like in case of Installed Collector's filters, you can `include` or `exclude` data.
+Below is an example of how to filter data.
+
+```yaml
+processors:
+  filter/bodies:
+    logs:
+      exclude:
+        match_type: regexp
+
+        ## Exclude logs that start with "unimportant-log-prefix"
+        bodies:
+          - unimportant-log-prefix.*
+
+    metrics:
+      include:
+        match_type: regexp
+
+        ## Include metrics that end with "_percentage"
+        metric_names:
+          - .*_percentage
+
+        ## Include metrics that have a field "server.endpoint" with value "desired-endpoint"
+        resource_attributes:
+          - key: server.endpoint
+            value: desired-endpoint
+      exclude:
+        match_type: strict
+
+        ## Exclude metrics that have names "dummy_metric" or "another_one"
+        metric_names:
+          - dummy_metric
+          - another_one
+```
+
+All possible options for filters can be found in the [Filter processor's documentation][filterprocessor].
+
+##### Masks
+
+To achieve the [Mask filter][mask-filter], you can use [Transform processor][transformprocessor].
+It can be used on log bodies, attributes and fields. Below is an example config of that processor.
+
+```yaml
+processors:
+  transform:
+    metric_statements:
+      ## Replace EVERY attribute that matches a regex.
+      - context: datapoint
+        statements:
+          - replace_all_matches(attributes, ".*password", "***")
+
+    trace_statements:
+      ## Replace a particular field if the value matches.
+      ## For patterns, you can use regex capture groups by using regexp.Expand syntax: https://pkg.go.dev/regexp#Regexp.Expand
+      - context: resource
+        statements:
+          - replace_pattern(attributes["name"], "^kubernetes_([0-9A-Za-z]+_)", "k8s.$$1.")
+
+      ## Replace an attribute with value matching a regex.
+      - context: span
+        statements:
+          - replace_match(attributes["http.target"], "/user/*/list/*", "/user/{userId}/list/{listId}")
+
+    log_statements:
+      ## Replace sensitive data inside log body
+      - context: log
+        statements:
+          - replace_pattern(body, "token - ([a-zA-Z0-9]{32})", "token - ***")
+```
+
+All possible options for masking can be seen in the [Transform processor's documentation][transformprocessor]
+and [the documentation of OTTL functions][ottlfuncs] (functions `replace_match`, `replace_all_matches`, `replace_pattern`, `replace_all_patterns`).
+
+##### Data forwarding
+
+To forward data to some other place than `Sumo Logic` (for example, a syslog server or a generic http API),
+you should define exporters that will send data to desired places and use them in the same pipeline as Sumo Logic exporter:
+
+```yaml
+receivers:
+  filelog:
+    ## ...
+
+exporters:
+  sumologic:
+    ## ...
+
+  syslog:
+    protocol: tcp # or udp
+    port: 6514 # 514 (UDP)
+    endpoint: 127.0.0.1 # FQDN or IP address
+    tls:
+      ca_file: certs/servercert.pem
+      cert_file: certs/cert.pem
+      key_file: certs/key.pem
+    format: rfc5424 # rfc5424 or rfc3164
+
+  ## Note: otlphttp exporter sends data only in otlp format
+  otlphttp:
+    logs_endpoint: http://example.com:4318/v1/logs
+
+
+service:
+  pipelines:
+    logs:
+      receivers: [filelog]
+      processors: []
+      exporters: [sumologic, syslog, otlphttp]
+```
+
+Out of [methods available in Installed Collector][forward-data], only Syslog is available now in the OpenTelemetry Collector.
 
 ### Local File Source (LocalFile)
 
@@ -2468,3 +2589,8 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [dockerstatsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver
 [dockerstatsmetrics]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver/documentation.md
 [sumologicschemaprocessor]: ../pkg/processor/sumologicschemaprocessor/README.md
+[filterprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.73.0/processor/filterprocessor
+[transformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.73.0/processor/transformprocessor
+[mask-filter]: https://help.sumologic.com/docs/send-data/use-json-configure-sources/#example-mask-filter
+[ottlfuncs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.73.0/pkg/ottl/ottlfuncs#functions
+[forward-data]: https://help.sumologic.com/docs/manage/data-forwarding/installed-collectors/
