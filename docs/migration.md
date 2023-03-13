@@ -2306,7 +2306,8 @@ processors:
 
 ### Local Windows Event Log Source
 
-Local Windows Event Log Source is not supported by the OpenTelemetry Collector.
+There is no migration process from Installed Collector to OpenTelemetry Collector.
+In order to use OpenTelemetry Collector, dedicated app needs to be installed.
 
 ### Local Windows Performance Monitor Log Source
 
@@ -2473,7 +2474,8 @@ See [this document](comparison.md#host-metrics) to learn more.__
 
 ### Local Windows Event Log Source (LocalWindowsEventLog)
 
-Local Windows Event Log Source is not supported by the OpenTelemetry Collector.
+There is no migration process from Installed Collector to OpenTelemetry Collector.
+In order to use OpenTelemetry Collector, dedicated app needs to be installed.
 
 ### Remote Windows Event Log Source (RemoteWindowsEventLog)
 
