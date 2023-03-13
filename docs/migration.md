@@ -2328,6 +2328,26 @@ Please refer to [the Source Category section of Common configuration](#source-ca
 
 Please refer to [the Fields section of Common configuration](#fields-1).
 
+#### Event Format
+
+#### Windows Event Types
+
+##### Standard Event Channels
+
+##### Custom Event Channels
+
+#### Event IDs
+
+##### AllowList Events
+
+##### DenyList Events
+
+#### Metadata (Only collect event metadata)
+
+#### Security Identifier
+
+#### Collection should begin
+
 ### Local Windows Performance Monitor Log Source
 
 Local Windows Performance Monitor Log Source is not supported by the OpenTelemetry Collector.
