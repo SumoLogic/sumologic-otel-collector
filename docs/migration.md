@@ -2436,7 +2436,18 @@ Docker Logs Source is not supported by the OpenTelemetry Collector.
 
 ### Docker Stats Source (DockerStats)
 
-Docker Stats Source is not supported by the OpenTelemetry Collector.
+The equivalent of the Docker Stats Source is [the Docker Stats receiver][dockerstatsreceiver].
+More useful information can be found in [Docker Stats Source for Cloud Based Management](#docker-stats-source).
+
+| The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                    |
+|-----------------------------------|----------------------------------------------------------------------------------------------------|
+| contentType                       | N/A                                                                                                |
+| metrics                           | [receivers.docker_stats.metrics](#metrics)                                                         |
+| uri                               | [receivers.docker_stats.endpoint](#uri)                                                            |
+| specifiedContainers               | [processors.filter.metrics.include](#container-filters)                                            |
+| allContainers                     | N/A, list of containers can be controlled by using [processors.filter.metrics](#container-filters) |
+| certPath                          | N/A                                                                                                |
+| pollInterval                      | [receivers.docker_stats.collection_interval](#scan-interval)                                       |
 
 ### Script Source (Script)
 
