@@ -1,6 +1,6 @@
 # Syslog Exporter
 
-**Stability level**: Experimental
+**Stability level**: Alpha
 
 ## About The Exporter
 
