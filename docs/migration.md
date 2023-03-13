@@ -2307,7 +2307,8 @@ processors:
 ### Local Windows Event Log Source
 
 There is no migration process from Installed Collector to OpenTelemetry Collector.
-In order to use OpenTelemetry Collector, dedicated app needs to be installed.
+In order to use OpenTelemetry Collector, dedicated Sumo Logic app needs to be
+installed.
 
 ### Local Windows Performance Monitor Log Source
 
