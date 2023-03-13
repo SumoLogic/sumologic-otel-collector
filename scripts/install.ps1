@@ -163,6 +163,12 @@ function Get-InstalledVersion {
 
     $installLocation = $product.InstallLocation
     $binPath = "${installLocation}bin\otelcol-sumo.exe"
+
+    if (!(Test-Path -Path $binPath -PathType Leaf)) {
+        Write-Warning "Sumo Logic OpenTelemtry Collector is installed but otelcol-sumo.exe could not be found. Continuing as if it were not installed."
+        return
+    }
+
     $version = . $binPath --version | Out-String
 
     $versionRegex = '(\d)\.(\d+)\.(\d+)(.*(\d+))'
