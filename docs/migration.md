@@ -72,7 +72,7 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [Source Category](#source-category-4)
     - [Metadata](#metadata-1)
   - [Host Metrics Source](#host-metrics-source)
-    - [Using Telegraf Receiver (deprecated)](#using-telegraf-receiver-deprecated)
+    - [Using Telegraf Receiver (deprecated)](#using-telegraf-receiver)
       - [Overall Example](#overall-example-4)
       - [Name](#name-6)
       - [Description](#description-6)
@@ -1687,7 +1687,7 @@ Please refer to [the Fields/Metadata section of Common configuration](#fields).
 
 It is recommended to use dedicated Sumo Logic app for Host Metrics for OpenTelemetry Collector.
 
-#### Using Telegraf Receiver (deprecated)
+#### Using Telegraf Receiver
 
 The equivalent of the Host Metrics Source is [the telegraf receiver][telegrafreceiver] with appropiate plugins.
 
