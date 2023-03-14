@@ -606,7 +606,7 @@ function setup_config() {
         echo -e "Installing ${OS_TYPE} hostmetrics configuration"
         HOSTMETRICS_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/conf.d/${OS_TYPE}.yaml"
         if ! curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -f -s "${HOSTMETRICS_CONFIG_URL}" -o "${CONFIG_DIRECTORY}/conf.d/hostmetrics.yaml"; then
-            echo "Cannot obtain hostmetrics configuration for '${CONFIG_BRANCH}' branch. Either '${HOSTMETRICS_CONFIG_URL}' is invalid, or your network connection is unstable."
+            echo "Cannot obtain hostmetrics configuration for '${CONFIG_BRANCH}' branch. Either '${HOSTMETRICS_CONFIG_URL}' is invalid, or the network connection is unstable."
             exit 1
         fi
     fi
