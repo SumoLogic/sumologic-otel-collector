@@ -2242,7 +2242,7 @@ installed.
 
 ### Local Windows Performance Monitor Log Source
 
-Local Windows Performance Monitor Log Source is not supported by the OpenTelemetry Collector.
+There is no migration process from Installed Collector to OpenTelemetry Collector.
 
 ### Windows Active Directory Source
 
@@ -2427,7 +2427,7 @@ Remote Windows Event Log Source is not supported by the OpenTelemetry Collector.
 
 ### Local Windows Performance Source (LocalWindowsPerfMon)
 
-Local Windows Performance Source is not supported by the OpenTelemetry Collector.
+There is no migration process from Installed Collector to OpenTelemetry Collector.
 
 ### Remote Windows Performance Source (RemoteWindowsPerfMon)
 
