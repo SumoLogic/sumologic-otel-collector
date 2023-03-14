@@ -360,7 +360,7 @@ There are multiple ways to set fields/metadata in OpenTelemetry Collector
         - set(attributes["k8s.cluster.name"], "my-cluster")
   ```
 
-- You can alternatively use [resourceprocessor][resourceprocessor] to set custom fields/metadata for source:
+- As an alternative, you can  use [resourceprocessor][resourceprocessor] to set custom fields/metadata for source:
 
   For example, the following snippet configures two fields, `cloud.availability_zone` and `k8s.cluster.name`:
 
