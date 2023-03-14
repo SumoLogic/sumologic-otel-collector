@@ -349,7 +349,7 @@ There are multiple ways to set fields/metadata in OpenTelemetry Collector
         - set(attributes["k8s.cluster.name"], "my-cluster")
   ```
 
-  The following example add two metadata for metrics, `cloud.availability_zone` and `k8s.cluster.name`:
+  The following example adds two metadata for metrics, `cloud.availability_zone` and `k8s.cluster.name`:
 
   ```yaml
     transform/custom fields:
