@@ -2418,6 +2418,8 @@ See [this document](comparison.md#host-metrics) to learn more.__
 ### Local Windows Event Log Source (LocalWindowsEventLog)
 
 There is no migration process from Installed Collector to OpenTelemetry Collector.
+In order to use OpenTelemetry Collector, dedicated Sumo Logic app needs to be
+installed.
 
 ### Remote Windows Event Log Source (RemoteWindowsEventLog)
 
