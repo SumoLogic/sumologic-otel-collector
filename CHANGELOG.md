@@ -9,13 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released TBA
 
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.73.0-sumo-1...main
+
+## [v0.73.0-sumo-1]
+
+### Released 2023-03-13
+
+This release introduces the following breaking changes:
+
+- fix(sumologicextension)!: use fqdn before os.Hostname
+
+See the [upgrade guide][upgrade_guide_v0.74] for more details.
+
+### Added
+
+- feat!(sumologicschemaprocessor): add translating docker stats metric names [#1055]
+
 ### Changed
 
 - fix: fix carbon2 parser for telegrafreceiver [#1058]
 
-[#1058]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1058
+### Fixed
 
-[unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.73.0-sumo-0...main
+- fix(scripts/install.ps1): treat app as not installed if otelcol-sumo.exe is missing [#1061]
+- fix(syslogexporter): set default settings for sending_queue and retry_on_failure [#1056]
+
+[#1058]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1058
+[#1055]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1055
+[#1061]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1061
+[#1056]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1056
+[upgrade_guide_v0.74]: ./docs/upgrading.md#upgrading-to-v0660-sumo-0
+[v0.73.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.73.0-sumo-0...v0.73.0-sumo-1
 
 ## [v0.73.0-sumo-0]
 

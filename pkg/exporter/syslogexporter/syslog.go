@@ -38,7 +38,7 @@ const version = "version"
 const hostname = "hostname"
 const app = "appname"
 const pid = "proc_id"
-const msgId = "msg_id"
+const msgID = "msg_id"
 const structuredData = "structured_data"
 const message = "message"
 
@@ -189,9 +189,9 @@ func (s *Syslog) formatRFC3164(msg map[string]any, timestamp time.Time) string {
 }
 
 func (s *Syslog) formatRFC5424(msg map[string]any, timestamp time.Time) string {
-	msgProperties := []string{priority, version, hostname, app, pid, msgId, message, structuredData}
+	msgProperties := []string{priority, version, hostname, app, pid, msgID, message, structuredData}
 	populateDefaults(msg, msgProperties)
 	s.addStructuredData(msg)
 	timestampString := timestamp.Format(time.RFC3339)
-	return fmt.Sprintf("<%d>%d %s %s %s %s %s %s %s", msg[priority], msg[version], timestampString, msg[hostname], msg[app], msg[pid], msg[msgId], msg[structuredData], msg[message])
+	return fmt.Sprintf("<%d>%d %s %s %s %s %s %s %s", msg[priority], msg[version], timestampString, msg[hostname], msg[app], msg[pid], msg[msgID], msg[structuredData], msg[message])
 }

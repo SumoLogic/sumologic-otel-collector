@@ -404,12 +404,12 @@ extensions:
     installation_token: <installation_token>
     ## Time Zone is a substitute of Installed Collector `Time Zone`
     ## with `Use time zone from log file. If none is detected use:` option.
-    ## This is used only if `clear_logs_timestamp` is set to `true` in sumologic exporter.
+    ## This is used only if log timestamp is set to 0 by transform processor.
     ## Full list of time zones is available on wikipedia:
     ## https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
     time_zone: America/Tijuana
     ## The following configuration will add two fields to every record
-    collection_fields:
+    collector_fields:
       cloud.availability_zone: zone-1
       k8s.cluster.name: my-cluster
 receivers:
@@ -423,6 +423,7 @@ receivers:
     include:
     - /var/log/*.log
     - /opt/app/logs/*.log
+    - tmp/logs.log"
     ## List of local files which shouldn't be read.
     ## Installed Collector `Denylist` substitute.
     exclude:
@@ -442,6 +443,22 @@ receivers:
     multiline:
       ## line_start_pattern is substitute of `Boundary Regex`.
       line_start_pattern: ^\d{4}
+    ## Adds file path log.file.path attribute, which can be used for timestamp parsing
+    ## See operators configuration
+    include_file_path: true
+    ## `Operators allows to perform more advanced operations like per file timestamp parsing
+    operators:
+    - type: regex_parser
+      ## Applies only to tmp/logs.log file
+      if: 'attributes["log.file.path"] == "tmp/logs.log"'
+      ## Extracts timestamp to timestamp_field using regex parser
+      regex: '^(?P<timestamp_field>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}).*'
+      timestamp:
+        parse_from: attributes.timestamp_field
+        layout: '%Y-%m-%d %H:%M:%S'
+    ## Cleanup timestamp_field
+    - type: remove
+      field: attributes.timestamp_field
 processors:
   source:
     ## Set _sourceName
@@ -450,16 +467,36 @@ processors:
     source_category: example category
     ## Installed Collector substitute for `Source Host`.
     source_host: example host
+  transform/logs source:
+    log_statements:
+      ## By default every data has timestamp (usually set to receipt time)
+      ## and therefore Sumo Logic backend do not try to parse it from log body.
+      ## Using this processor works like `Enable Timestamp Parsing`,
+      ## where `Time Zone` is going to be taken from `extensions` section.
+      ## There is no possibility to configure several time zones in one exporter.
+      ## It behaves like `Timestamp Format` would be set to `Automatically detect the format`
+      ## in terms of Installed Collector configuration.
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+      ## Adds custom fields:
+      ## - cloud.availability_zone=zone-1
+      ## - k8s.cluster.name=my-cluster
+      - context: resource
+        statements:
+        - set(attributes["cloud.availability_zone"], "zone-1")
+        - set(attributes["k8s.cluster.name"], "my-cluster")
+  ## Remove logs with timestamp before Sat Dec 31 2022 23:00:00 GMT+0000
+  ## This configuration covers `Collection should begin` functionality.
+  ## Please ensure that timestamps are correctly set (eg. use operators in filelog receiver)
+  filter/remove older:
+    logs:
+      log_record:
+      ## - 1672527600000000000 ns is equal to Dec 31 2022 23:00:00 GMT+0000
+      ## - do not remove logs which do not have correct timestamp
+      - 'time_unix_nano < 1672527600000000000 and time_unix_nano > 0'
 exporters:
   sumologic:
-    ## clear_logs_timestamp is by default set to True.
-    ## If it's set to true, it works like `Enable Timestamp Parsing`,
-    ## and `Time Zone` is going to be taken from `extensions` section.
-    ## There is no possibility to configure several time zones in one exporter.
-    ## clear_logs_timestamp sets to true also behaves like
-    ## `Timestamp Format` would be set to `Automatically detect the format`
-    ## in terms of Installed Collector configuration.
-    clear_logs_timestamp: true
 service:
   extensions:
   - sumologic
@@ -468,6 +505,8 @@ service:
       receivers:
       - filelog/log source
       processors:
+      - filter/remove older
+      - transform/logs source
       - source
       exporters:
       - sumologic
@@ -497,9 +536,6 @@ receivers:
     - /var/log/*.log
     - /opt/my_app/*.log
   # ...
-exporters:
-  sumologic:
-    source_name: my example name
 ```
 
 ##### Collection should begin
@@ -551,9 +587,6 @@ Let's consider the following example. We want to get logs from `tmp/logs.log` wh
         ## 1672527600000000000 ns is equal to Dec 31 2022 23:00:00 GMT+0000,
         ## but do not remove logs which do not have correct timestamp
         - 'time_unix_nano < 1672527600000000000 and time_unix_nano > 0'
-  exporters:
-    logging:
-      verbosity: detailed
   service:
     pipelines:
       logs/log source:
@@ -616,14 +649,12 @@ receivers:
     start_at: end
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/custom fields:
+    log_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: My Host
@@ -633,7 +664,15 @@ processors:
 ##### Timestamp Parsing
 
 The Installed Collector option to `Extract timestamp information from log file entries` in an
-OpenTelemtry configuration is `clear_logs_timestamp`. This is set to `true` by default.
+OpenTelemetry configuration can be achieved with [Transform Processor][transformprocessor]:
+
+```yaml
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+```
 
 This works like `Extract timestamp information from log file entries` combined with
 `Ignore time zone from log file and instead use:` set to `Use Collector Default`.
@@ -655,21 +694,26 @@ receivers:
     start_at: end
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/custom fields:
+    log_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+exporters:
+  sumologic/some_name:
 ```
 
-If `clear_logs_timestamp` is set to `false`, timestamp parsing should be configured
+If `transform/clear_logs_timestamp` is not used, timestamp parsing should be configured
 manually, like in the following snippet:
 
 ```yaml
@@ -699,22 +743,18 @@ receivers:
         layout: '2006-01-02 15:04:05,000 -0700'
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/custom fields:
+    log_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
 exporters:
   sumologic/some_name:
-    ## Keep manually parsed timestamps
-    clear_logs_timestamp: true
 ```
 
 The following example snippet skips timestamp parsing so the Collector uses Receipt Time:
@@ -748,13 +788,11 @@ processors:
     source_category: My Category
 exporters:
   sumologic/some_name:
-    ## Keep manually parsed timestamps (use Receipt Time by default)
-    clear_logs_timestamp: true
 ```
 
 ##### Encoding
 
-Use `encoding` to set the encoding of your data. Full list of supporter encodings can be obtained from [filelogreceiver documentation][supported_encodings].
+Use `encoding` to set the encoding of your data. Full list of supporter encodings can be obtained from [Filelog Receiver documentation][supported_encodings].
 
 The following snippet sets the encoding to UTF-8:
 
@@ -774,18 +812,18 @@ receivers:
     encoding: utf-8
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/custom fields:
+    log_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
+exporters:
+  sumologic/some_name:
 ```
 
 ##### Multiline Processing
@@ -812,23 +850,23 @@ receivers:
       line_start_pattern: ^\d{4}-\d{2}-\d{2}
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/custom fields:
+    log_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: My Host
     source_category: My Category
+exporters:
+  sumologic/some_name:
 ```
 
 If your multiline logs have a known end pattern use the `line_end_pattern` option.
 
-More information is available in [filelogreceiver documentation][multiline].
+More information is available in [Filelog Receiver documentation][multiline].
 
 ### Remote File Source
 
@@ -837,11 +875,14 @@ Remote File Source is not supported by the OpenTelemetry Collector.
 ### Syslog Source
 
 The equivalent of the Syslog Source is a combination of
-[the tcplog][tcplogreceiver] or [the udplog][udplogreceiver] receivers
-and [the sumologicsyslog processor][sumologicsyslog].
+[the TCP][tcplogreceiver] or [the UDP][udplogreceiver] receivers
+and [the Sumo logic Syslog Processor][sumologicsyslog].
 
-__Note: The OpenTelemetry Collector provides also [Syslog Receiver][syslogreceiver].
+__Note: The OpenTelemetry Collector also provides the [Syslog Receiver][syslogreceiver].
 See [this document](comparison.md#syslog) for details.__
+
+__The syslog messages could also be sent to sumologic using the [syslog exporter][syslogexporter] with the
+[syslog parser][syslogparser]__
 
 #### Overall example
 
@@ -882,18 +923,26 @@ processors:
   ## There is no substitute for `Description` in current project phase.
   ## It is recommended to use comments for that purpose, like this one.
   ## sumologic_syslog/<source group name>:
-  ## <source group name> can be substitute of Installed Collector `Name`.
+  ## <source group name> can be substitute of Installed Collector `Name`
   sumologic_syslog/syslog source:
-
-  ## The following configuration will add two fields to every record
-  resource/syslog source:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: insert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  ## re-associates record attributes to a resource to make them available to be used by Source Processor
+  groupbyattrs:
+    keys:
+      - net.peer.name
+      - facility
+  ## Leave the timestamp parsing to the Sumo Logic backend
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+  ## The following configuration will add two fields to every resource
+  transform/syslog source:
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["cloud.availability_zone"], "zone-1")
+          - set(attributes["k8s.cluster.name"], "my-cluster")
   source/syslog source:
     ## Installed Collector substitute for `Source Category`.
     source_category: example category
@@ -901,25 +950,23 @@ processors:
     source_name: "%{facility}"
     ## Set Source Host to `net.peer.name`
     source_host: "%{net.peer.name}"
+
 exporters:
   sumologic/syslog:
-    ## clear_logs_timestamp is by default set to True.
-    ## If it's set to true, it works like `Enable Timestamp Parsing`,
-    ## and `Time Zone` is going to be taken from `extensions` section.
-    ## There is no possibility to configure several time zones in one exporter.
-    ## clear_logs_timestamp sets to true also behaves like
-    ## `Timestamp Format` would be set to `Automatically detect the format`
-    ## in terms of Installed Collector configuration.
-    clear_logs_timestamp: true
+
 service:
   extensions:
   - sumologic
   pipelines:
     logs/syslog source:
       receivers:
-      - filelog/syslog source
+      - tcplog/first receiver
+      - udplog/first receiver
       processors:
-      - resource/syslog source
+      - transform/clear_logs_timestamp
+      - sumologic_syslog/syslog source
+      - groupbyattrs
+      - transform/syslog source
       - source/syslog source
       exporters:
       - sumologic/syslog
@@ -927,28 +974,11 @@ service:
 
 #### Name
 
-Define the name after the slash `/` in the processor name.
-
-For example, the following snippet configures the name as `my example name`:
-
-```yaml
-processor:
-  sumologic_syslog/my example name:
-  # ...
-```
+Please refer to [the Name section of Common configuration](#name-1)
 
 #### Description
 
-A description can be added as a comment just above the processor name.
-
-For example, the following snippet configures the description as `All my example logs`:
-
-```yaml
-processor:
-  ## All my example logs
-  sumologic_syslog/my example name:
-  # ...
-```
+Please refer to [the Description section of Common configuration](#description-1).
 
 #### Protocol and Port
 
@@ -966,6 +996,7 @@ receivers:
     listen_address: 0.0.0.0:514
   udplog/second receiver:
     listen_address: 127.0.0.1:5150
+
 processor:
   ## All my example logs
   sumologic_syslog/my example name:
@@ -1016,14 +1047,12 @@ processors:
   ## All my example logs
   sumologic_syslog/my example name:
   # ...
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/my example name fields:
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["cloud.availability_zone"], "zone-1")
+          - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_category: My Category
 ```
@@ -1057,14 +1086,12 @@ processors:
   ## All my example logs
   sumologic_syslog/my example name:
   # ...
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/my example name fields:
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["cloud.availability_zone"], "zone-1")
+          - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_category: My Category
 ```
@@ -1095,14 +1122,12 @@ processors:
   ## All my example logs
   sumologic_syslog/my example name:
   # ...
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/my example name fields:
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["cloud.availability_zone"], "zone-1")
+          - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_category: My Category
 exporters:
@@ -1124,20 +1149,21 @@ processors:
   ## All my example logs
   sumologic_syslog/my example name:
   # ...
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+  transform/my example name fields:
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["cloud.availability_zone"], "zone-1")
+          - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_category: My Category
 exporters:
   sumologic/some name:
-    ## Let leave timestamp parsing to Sumo Logic backend
-    clear_logs_timestamp: true
 ```
 
 #### Additional Configuration
@@ -1161,22 +1187,23 @@ processors:
   ## All my example logs
   sumologic_syslog/my example name:
   # ...
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+  transform/my example name fields:
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["cloud.availability_zone"], "zone-1")
+          - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_category: My Category
     ## Set Source Name to facility, which is set by sumologicsyslogprocessor
     source_name: "%{facility}"
 exporters:
   sumologic/some name:
-    ## Let leave timestamp parsing to Sumo Logic backend
-    clear_logs_timestamp: true
 ```
 
 ##### Source Host
@@ -1200,14 +1227,17 @@ processors:
   ## All my example logs
   sumologic_syslog/my example name:
   # ...
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+  transform/my example name fields:
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["cloud.availability_zone"], "zone-1")
+          - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_category: My Category
     ## Set Source Name to facility, which is set by sumologicsyslogprocessor
@@ -1215,8 +1245,6 @@ processors:
     source_host: "%{net.peer.name}
 exporters:
   sumologic/some name:
-    ## Let leave timestamp parsing to Sumo Logic backend
-    clear_logs_timestamp: true
 ```
 
 ### Docker Logs Source
@@ -1290,6 +1318,9 @@ processors:
           - key: container.name
             value: sumo-container-.*
 
+  sumologicschema/dockerstats:
+    translate_docker_metrics: true
+
 exporters:
   sumologic/dockerstats:
 
@@ -1302,6 +1333,7 @@ service:
       - docker_stats
       processors:
       - filter/dockerstats
+      - sumologicschema/dockerstats
       exporters:
       - sumologic/dockerstats
 ```
@@ -1411,7 +1443,75 @@ receivers:
         enabled: false
 ```
 
+The table below shows how some metrics commonly used by the Installed Collector map to OpenTelemetry metrics.
+
+| Installed Collector name          | OpenTelemetry name                              | Notes               |
+|-----------------------------------|-------------------------------------------------|---------------------|
+| cpu_percentage                    | container.cpu.percent                           |                     |
+| online_cpus                       | _not available_                                 |                     |
+| system_cpu_usage                  | container.cpu.usage.system                      | disabled by default |
+| cpu_usage.percpu_usage            | container.cpu.usage.percpu                      | disabled by default |
+| cpu_usage.total_usage             | container.cpu.usage.total                       |                     |
+| cpu_usage.usage_in_kernelmode     | container.cpu.usage.kernelmode                  |                     |
+| cpu_usage.usage_in_usermode       | container.cpu.usage.usermode                    |                     |
+| throttling_data.periods           | container.cpu.throttling_data.periods           | disabled by default |
+| throttling_data.throttled_periods | container.cpu.throttling_data.throttled_periods | disabled by default |
+| throttling_data.throttled_time    | container.cpu.throttling_data.throttled_time    | disabled by default |
+|                                   |                                                 |                     |
+| failcnt                           | _not available_                                 |                     |
+| limit                             | container.memory.usage.limit                    |                     |
+| max_usage                         | container.memory.usage.max                      | disabled by default |
+| memory_percentage                 | container.memory.percent                        |                     |
+| usage                             | container.memory.usage.total                    |                     |
+| stats.active_anon                 | container.memory.active_anon                    | disabled by default |
+| stats.active_file                 | container.memory.active_file                    | disabled by default |
+| stats.cache                       | container.memory.cache                          |                     |
+| stats.hierarchical_memory_limit   | container.memory.hierarchical_memory_limit      | disabled by default |
+| stats.inactive_anon               | container.memory.inactive_anon                  | disabled by default |
+| stats.inactive_file               | container.memory.inactive_file                  | disabled by default |
+| stats.mapped_file                 | container.memory.mapped_file                    | disabled by default |
+| stats.pgfault                     | container.memory.pgfault                        | disabled by default |
+| stats.pgmajfault                  | container.memory.pgmajfault                     | disabled by default |
+| stats.pgpgin                      | container.memory.pgpgin                         | disabled by default |
+| stats.pgpgout                     | container.memory.pgpgout                        | disabled by default |
+| stats.rss                         | container.memory.rss                            | disabled by default |
+| stats.rss_huge                    | container.memory.rss_huge                       | disabled by default |
+| stats.unevictable                 | container.memory.unevictable                    | disabled by default |
+| stats.writeback                   | container.memory.writeback                      | disabled by default |
+| stats.total_active_anon           | container.memory.total_active_anon              | disabled by default |
+| stats.total_active_file           | container.memory.total_active_file              | disabled by default |
+| stats.total_cache                 | container.memory.total_cache                    |                     |
+| stats.total_inactive_anon         | container.memory.total_inactive_anon            | disabled by default |
+| stats.total_mapped_file           | container.memory.total_mapped_file              | disabled by default |
+| stats.total_pgfault               | container.memory.total_pgfault                  | disabled by default |
+| stats.total_pgmajfault            | container.memory.total_pgmajfault               | disabled by default |
+| stats.total_pgpgin                | container.memory.total_pgpgin                   | disabled by default |
+| stats.total_pgpgout               | container.memory.total_pgpgout                  | disabled by default |
+| stats.total_rss                   | container.memory.total_rss                      | disabled by default |
+| stats.total_rss_huge              | container.memory.total_rss_huge                 | disabled by default |
+| stats.total_unevictable           | container.memory.total_unevictable              | disabled by default |
+| stats.total_writeback             | container.memory.total_writeback                | disabled by default |
+|                                   |                                                 |                     |
+| io_merged_recursive               | container.blockio.io_merged_recursive           | disabled by default |
+| io_queue_recursive                | container.blockio.io_queued_recursive           | disabled by default |
+| io_service_bytes_recursive        | container.blockio.io_service_bytes_recursive    |                     |
+| io_service_time_recursive         | container.blockio.io_service_time_recursive     | disabled by default |
+| io_serviced_recursive             | container.blockio.io_serviced_recursive         | disabled by default |
+| io_time_recursive                 | container.blockio.io_time_recursive             | disabled by default |
+| io_wait_time_recursive            | container.blockio.io_wait_time_recursive        | disabled by default |
+| sectors_recursive                 | container.blockio.sectors_recursive             | disabled by default |
+|                                   |                                                 |                     |
+| current                           | _not available_                                 |                     |
+
 Full list of metrics available in this receiver can be found [here][dockerstatsmetrics].
+
+Unfortunately, Sumo Logic apps don't work with these metric names yet. To convieniently translate them, use [Sumo Logic Schema Processor][sumologicschemaprocessor]:
+
+```yaml
+processors:
+  sumologicschema/dockerstats:
+    translate_docker_metrics: true
+```
 
 ### Script Source
 
@@ -2131,7 +2231,9 @@ processors:
 
 ### Local Windows Event Log Source
 
-Local Windows Event Log Source is not supported by the OpenTelemetry Collector.
+There is no migration process from Installed Collector to OpenTelemetry Collector.
+In order to use OpenTelemetry Collector, dedicated Sumo Logic app needs to be
+installed.
 
 ### Local Windows Performance Monitor Log Source
 
@@ -2155,39 +2257,39 @@ This section describes migration steps for an Installed Collector managed with a
 
 The following table shows the equivalent [user.properties][user.properties] for OpenTelemetry.
 
-| user.properties key                           | The OpenTelemetry Collector Key                            |
-|-----------------------------------------------|------------------------------------------------------------|
-| `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
-| ~~`accessid=accessId`~~                       | N/A, use `extensions.sumologic.installation_token`         |
-| ~~`accesskey=accessKey`~~                     | N/A, use `extensions.sumologic.installation_token`         |
-| `category=category`                           | [extensions.sumologic.collector_category](#category)       |
-| `clobber=true/false`                          | `extensions.sumologic.clobber`                             |
-| `description=description`                     | [extensions.sumologic.collector_description](#description) |
-| `disableActionSource=true/false`              | N/A                                                        |
-| `disableScriptSource=true/false`              | N/A                                                        |
-| `disableUpgrade=true/false`                   | N/A                                                        |
-| `enableActionSource=true/false`               | N/A                                                        |
-| `enableScriptSource=true/false`               | N/A                                                        |
-| `ephemeral=true/false`                        | N/A                                                        |
-| `fields=[list of fields]`                     | [processors.resource](#fields)                             |
-| `fipsJce=true/false`                          | N/A                                                        |
-| `hostName=hostname`                           | `processors.source.source_host`                            |
-| `name=name`                                   | [extensions.sumologic.collector_name](#name)               |
-| `proxyHost=host`                              | [plese see OTC documentation][proxy]                       |
-| `proxyNtlmDomain=NTLM domain`                 | [plese see OTC documentation][proxy]                       |
-| `proxyPassword=password`                      | [plese see OTC documentation][proxy]                       |
-| `proxyPort=port`                              | [plese see OTC documentation][proxy]                       |
-| `proxyUser=username`                          | [plese see OTC documentation][proxy]                       |
-| `skipAccessKeyRemoval=true/false`             | N/A                                                        |
-| `sources=absolute filepath or folderpath`     | N/A                                                        |
-| `syncSources=absolute filepath or folderpath` | N/A                                                        |
-| `targetCPU=target`                            | N/A                                                        |
-| `timeZone=timezone`                           | [extensions.sumologic.time_zone](#time-zone)               |
-| `token=token`                                 | N/A                                                        |
-| `url=collection endpoint`                     | `extensions.sumologic.api.base.url`                        |
-| `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
-| `wrapper.java.command=JRE Bin Location`       | N/A                                                        |
-| `wrapper.java.maxmemory=size`                 | N/A                                                        |
+| user.properties key                           | The OpenTelemetry Collector Key                                                           |
+|-----------------------------------------------|-------------------------------------------------------------------------------------------|
+| `wrapper.java.command=JRE Bin Location`       | N/A                                                                                       |
+| ~~`accessid=accessId`~~                       | N/A, use [extensions.sumologic.installation_token](/docs/configuration.md#authentication) |
+| ~~`accesskey=accessKey`~~                     | N/A, use [extensions.sumologic.installation_token](/docs/configuration.md#authentication) |
+| `category=category`                           | [extensions.sumologic.collector_category](#category)                                      |
+| `clobber=true/false`                          | [extensions.sumologic.clobber][sumologicextension]                                        |
+| `description=description`                     | [extensions.sumologic.collector_description](#description)                                |
+| `disableActionSource=true/false`              | N/A                                                                                       |
+| `disableScriptSource=true/false`              | N/A                                                                                       |
+| `disableUpgrade=true/false`                   | N/A                                                                                       |
+| `enableActionSource=true/false`               | N/A                                                                                       |
+| `enableScriptSource=true/false`               | N/A                                                                                       |
+| `ephemeral=true/false`                        | N/A                                                                                       |
+| `fields=[list of fields]`                     | [extensions.sumologic.collector_fields](#fields)                                          |
+| `fipsJce=true/false`                          | N/A                                                                                       |
+| `hostName=hostname`                           | [processors.source.source_host][source-templates]                                         |
+| `name=name`                                   | [extensions.sumologic.collector_name](#name)                                              |
+| `proxyHost=host`                              | [please see OTC documentation][proxy]                                                     |
+| `proxyNtlmDomain=NTLM domain`                 | [please see OTC documentation][proxy]                                                     |
+| `proxyPassword=password`                      | [please see OTC documentation][proxy]                                                     |
+| `proxyPort=port`                              | [please see OTC documentation][proxy]                                                     |
+| `proxyUser=username`                          | [please see OTC documentation][proxy]                                                     |
+| `skipAccessKeyRemoval=true/false`             | N/A                                                                                       |
+| `sources=absolute filepath or folderpath`     | [Use --config flag](/docs/configuration.md#command-line-configuration-options)            |
+| `syncSources=absolute filepath or folderpath` | [Use --config flag](/docs/configuration.md#command-line-configuration-options)            |
+| `targetCPU=target`                            | N/A                                                                                       |
+| `timeZone=timezone`                           | [extensions.sumologic.time_zone](#time-zone)                                              |
+| `token=token`                                 | [extensions.sumologic.installation_token](/docs/configuration.md#authentication)          |
+| `url=collection endpoint`                     | [extensions.sumologic.api_base_url][sumologicextension]                                   |
+| `wrapper.java.command=JRE Bin Location`       | N/A                                                                                       |
+| `wrapper.java.command=JRE Bin Location`       | N/A                                                                                       |
+| `wrapper.java.maxmemory=size`                 | N/A                                                                                       |
 
 ### Common Parameters
 
@@ -2213,7 +2315,7 @@ This section describes migration steps for [common parameters][common-parameters
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | `name`                            | [processors.source.source_name](#name-2)                                                                        |
 | `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-2) |
-| `fields`                          | Use the [resourceprocessor][resourceprocessor] to set custom fields. [See the linked example.](#fields-1)       |
+| `fields`                          | Use [Transform Processor][transformprocessor] to set custom fields. [See the linked example.](#fields-1)        |
 | `hostName`                        | [processors.source.source_host][source-templates]; [See the linked example.](#source-host-1)                    |
 | `category`                        | [processors.source.source_category][source-templates]                                                           |
 | `automaticDateParsing`            | [See Timestamp Parsing explanation](#timestamp-parsing-1)                                                       |
@@ -2225,7 +2327,7 @@ This section describes migration steps for [common parameters][common-parameters
 | `useAutolineMatching`             | [See Multiline Processing explanation](#multiline-processing)                                                   |
 | `manualPrefixRegexp`              | [See Multiline Processing explanation](#multiline-processing)                                                   |
 | `filters`                         | N/A                                                                                                             |
-| `cutoffTimestamp`                 | N/A                                                                                                             |
+| `cutoffTimestamp`                 | [Use Filter Processor](#collection-should-begin)                                                                |
 | `cutoffRelativeTime`              | N/A                                                                                                             |
 
 ### Local File Source (LocalFile)
@@ -2236,7 +2338,7 @@ More useful information can be found in [Local File Source for Cloud Based Manag
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                         |
 |-----------------------------------|---------------------------------------------------------|
 | `pathExpression`                  | element of [receivers.filelog.include](#file-path) list |
-| `denylist`                        | elemets of [receivers.filelog.exclude](#denylist) list  |
+| `denylist`                        | [receivers.filelog.exclude](#denylist)                  |
 | `encoding`                        | [receivers.filelog.encoding](#encoding)                 |
 
 ### Remote File Source (RemoteFileV2)
@@ -2246,12 +2348,7 @@ Remote File Source is not supported by the OpenTelemetry Collector.
 ### Syslog Source (Syslog)
 
 The equivalent of the Syslog Source is a combination of
-[the tcplog][tcplogreceiver] or [the udplog][udplogreceiver] receivers
-and [the sumologicsyslog processor][sumologicsyslog].
-More useful information can be found in [Syslog Source for Cloud Based Management](#syslog-source).
-
-__Note: The OpenTelemetry Collector provides also [Syslog Receiver][syslogreceiver].
-See [this document](comparison.md#syslog) for details.__
+[the TCP][tcplogreceiver] or [the UDP][udplogreceiver] receivers and [the sumologicsyslog processor][sumologicsyslog].
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                      |
 |-----------------------------------|----------------------------------------------------------------------------------------------------------------------|
@@ -2264,7 +2361,18 @@ Docker Logs Source is not supported by the OpenTelemetry Collector.
 
 ### Docker Stats Source (DockerStats)
 
-Docker Stats Source is not supported by the OpenTelemetry Collector.
+The equivalent of the Docker Stats Source is [the Docker Stats receiver][dockerstatsreceiver].
+More useful information can be found in [Docker Stats Source for Cloud Based Management](#docker-stats-source).
+
+| The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                    |
+|-----------------------------------|----------------------------------------------------------------------------------------------------|
+| contentType                       | N/A                                                                                                |
+| metrics                           | [receivers.docker_stats.metrics](#metrics)                                                         |
+| uri                               | [receivers.docker_stats.endpoint](#uri)                                                            |
+| specifiedContainers               | [processors.filter.metrics.include](#container-filters)                                            |
+| allContainers                     | N/A, list of containers can be controlled by using [processors.filter.metrics](#container-filters) |
+| certPath                          | N/A                                                                                                |
+| pollInterval                      | [receivers.docker_stats.collection_interval](#scan-interval)                                       |
 
 ### Script Source (Script)
 
@@ -2303,7 +2411,9 @@ See [this document](comparison.md#host-metrics) to learn more.__
 
 ### Local Windows Event Log Source (LocalWindowsEventLog)
 
-Local Windows Event Log Source is not supported by the OpenTelemetry Collector.
+There is no migration process from Installed Collector to OpenTelemetry Collector.
+In order to use OpenTelemetry Collector, dedicated Sumo Logic app needs to be
+installed.
 
 ### Remote Windows Event Log Source (RemoteWindowsEventLog)
 
@@ -2321,24 +2431,23 @@ Remote Windows Performance Source is not supported by the OpenTelemetry Collecto
 
 Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 
-[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/resourceprocessor
-[multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver#multiline-configuration
-[supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver#supported-encodings
-[udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/udplogreceiver
-[tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/tcplogreceiver
-[filelogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver
-[logstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/logstransformprocessor
-[transformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/transformprocessor
-[filterprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/filterprocessor
-[syslogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/syslogreceiver
+[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.33.0/processor/resourceprocessor
+[multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#multiline-configuration
+[supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#supported-encodings
+[udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/udplogreceiver
+[tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/tcplogreceiver
+[filelogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver
+[syslogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/syslogreceiver
 [sumologicsyslog]: ../pkg/processor/sumologicsyslogprocessor/README.md
 [network-semantic-convention]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/span-general.md#general-network-connection-attributes
 [sumologicextension]: ../pkg/extension/sumologicextension/README.md
 [sumologicexporter]: ../pkg/exporter/sumologicexporter/README.md
+[syslogexporter]: ../pkg/exporter/syslogexporter/README.md
 [user.properties]: https://help.sumologic.com/docs/send-data/installed-collectors/collector-installation-reference/user-properties
 [proxy]: https://opentelemetry.io/docs/collector/configuration/#proxy-support
 [common-parameters]: https://help.sumologic.com/docs/send-data/use-json-configure-sources#common-parameters-for-log-source-types
 [source-templates]: ../pkg/processor/sourceprocessor//README.md#source-templates
+[syslogparser]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/docs/operators/syslog_parser.md
 [telegrafreceiver]: ../pkg/receiver/telegrafreceiver/README.md
 [telegraf-socket_listener]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/socket_listener#socket-listener-input-plugin
 [telegraf-input-formats]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/parsers
@@ -2352,3 +2461,4 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [telegraf-input-disk]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/disk
 [dockerstatsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver
 [dockerstatsmetrics]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver/documentation.md
+[sumologicschemaprocessor]: ../pkg/processor/sumologicschemaprocessor/README.md

@@ -16,6 +16,7 @@ package syslogexporter
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net"
 	"strconv"
@@ -174,7 +175,10 @@ func TestSyslogExportFail(t *testing.T) {
 	buffer := exampleLog(t)
 	logs := LogRecordsToLogs(buffer)
 	consumerErr := test.exp.pushLogsData(context.Background(), logs)
-	consumerLogs := consumererror.Logs.Data(consumerErr.(consumererror.Logs))
+	var consumerErrorLogs consumererror.Logs
+	ok := errors.As(consumerErr, &consumerErrorLogs)
+	assert.Equal(t, ok, true)
+	consumerLogs := consumererror.Logs.Data(consumerErrorLogs)
 	rls := consumerLogs.ResourceLogs()
 	require.Equal(t, 1, rls.Len())
 	scl := rls.At(0).ScopeLogs()

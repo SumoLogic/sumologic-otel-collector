@@ -16,7 +16,9 @@ package syslogexporter
 
 import (
 	"testing"
+	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
@@ -29,10 +31,7 @@ func TestType(t *testing.T) {
 }
 
 func TestCreateDefaultConfig(t *testing.T) {
-	factory := NewFactory()
-	cfg := factory.CreateDefaultConfig()
-	qs := exporterhelper.NewDefaultQueueSettings()
-	qs.Enabled = false
+	cfg := createDefaultConfig()
 
 	assert.Equal(t, cfg, &Config{
 		Endpoint: "host.domain.com",
@@ -41,14 +40,16 @@ func TestCreateDefaultConfig(t *testing.T) {
 		Format:   "rfc5424",
 		QueueSettings: exporterhelper.QueueSettings{
 			Enabled:      false,
-			NumConsumers: 0,
-			QueueSize:    0,
-			StorageID:    (*component.ID)(nil)},
+			NumConsumers: 10,
+			QueueSize:    5000,
+		},
 		RetrySettings: exporterhelper.RetrySettings{
-			Enabled:         false,
-			InitialInterval: 0,
-			MaxInterval:     0,
-			MaxElapsedTime:  0,
+			Enabled:             true,
+			InitialInterval:     5 * time.Second,
+			RandomizationFactor: backoff.DefaultRandomizationFactor,
+			Multiplier:          backoff.DefaultMultiplier,
+			MaxInterval:         30 * time.Second,
+			MaxElapsedTime:      5 * time.Minute,
 		},
 	})
 	assert.NoError(t, component.ValidateConfig(cfg))

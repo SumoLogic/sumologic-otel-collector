@@ -70,6 +70,11 @@ func newSumologicSchemaProcessor(set processor.CreateSettings, config *Config) (
 		return nil, err
 	}
 
+	translateDockerMetricsProcessor, err := newTranslateDockerMetricsProcessor(config.TranslateDockerMetrics)
+	if err != nil {
+		return nil, err
+	}
+
 	processors := []sumologicSchemaSubprocessor{
 		cloudNamespaceProcessor,
 		translateAttributesProcessor,
@@ -77,6 +82,7 @@ func newSumologicSchemaProcessor(set processor.CreateSettings, config *Config) (
 		nestingProcessor,
 		aggregateAttributesProcessor,
 		logFieldsConversionProcessor,
+		translateDockerMetricsProcessor,
 	}
 
 	processor := &sumologicSchemaProcessor{

@@ -35,7 +35,7 @@ func deduplicateErrors(errs []error) []error {
 		for i := range errorsWithCounts {
 			if errorsWithCounts[i].err.Error() == err.Error() {
 				found = true
-				errorsWithCounts[i].count += 1
+				errorsWithCounts[i].count++
 				break
 			}
 		}
@@ -51,7 +51,7 @@ func deduplicateErrors(errs []error) []error {
 		if errorWithCount.count == 1 {
 			uniqueErrors = append(uniqueErrors, errorWithCount.err)
 		} else {
-			uniqueErrors = append(uniqueErrors, fmt.Errorf("%s (x%d)", errorWithCount.err, errorWithCount.count))
+			uniqueErrors = append(uniqueErrors, fmt.Errorf("%w (x%d)", errorWithCount.err, errorWithCount.count))
 		}
 	}
 	return uniqueErrors

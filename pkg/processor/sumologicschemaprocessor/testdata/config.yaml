@@ -42,6 +42,8 @@ processors:
         trace_id:
           enabled: true
           name: "traceid"
+  sumologic_schema/enabled-docker-metrics-translation:
+    translate_docker_metrics: true
 exporters:
   nop:
 
