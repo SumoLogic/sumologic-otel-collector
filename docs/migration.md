@@ -1249,7 +1249,12 @@ exporters:
 
 ### Docker Logs Source
 
-Docker Logs Source is not supported by the OpenTelemetry Collector.
+It is possible to scrape docker logs using [Filelog Receiver][filelogreceiver], but the following features are not supported yet:
+
+- metadata enrichment (sending container name along with container id)
+- docker events
+
+therefore we do not provide migration process for Docker Logs Source (DockerLog).
 
 ### Docker Stats Source
 
@@ -2357,7 +2362,8 @@ The equivalent of the Syslog Source is a combination of
 
 ### Docker Logs Source (DockerLog)
 
-Docker Logs Source is not supported by the OpenTelemetry Collector.
+Docker Logs Source (DockerLog) is not supported by the OpenTelemetry Collector.
+Refer to [Docker Logs Source](#docker-logs-source) for details.
 
 ### Docker Stats Source (DockerStats)
 
