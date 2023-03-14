@@ -2237,12 +2237,10 @@ processors:
 ### Local Windows Event Log Source
 
 There is no migration process from Installed Collector to OpenTelemetry Collector.
-In order to use OpenTelemetry Collector, dedicated Sumo Logic app needs to be
-installed.
 
 ### Local Windows Performance Monitor Log Source
 
-Local Windows Performance Monitor Log Source is not supported by the OpenTelemetry Collector.
+There is no migration process from Installed Collector to OpenTelemetry Collector.
 
 ### Windows Active Directory Source
 
@@ -2418,8 +2416,6 @@ See [this document](comparison.md#host-metrics) to learn more.__
 ### Local Windows Event Log Source (LocalWindowsEventLog)
 
 There is no migration process from Installed Collector to OpenTelemetry Collector.
-In order to use OpenTelemetry Collector, dedicated Sumo Logic app needs to be
-installed.
 
 ### Remote Windows Event Log Source (RemoteWindowsEventLog)
 
@@ -2427,7 +2423,7 @@ Remote Windows Event Log Source is not supported by the OpenTelemetry Collector.
 
 ### Local Windows Performance Source (LocalWindowsPerfMon)
 
-Local Windows Performance Source is not supported by the OpenTelemetry Collector.
+There is no migration process from Installed Collector to OpenTelemetry Collector.
 
 ### Remote Windows Performance Source (RemoteWindowsPerfMon)
 
