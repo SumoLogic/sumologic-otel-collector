@@ -598,7 +598,7 @@ function setup_config() {
 
     CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/sumologic.yaml"
     if ! curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -f -s "${CONFIG_URL}" -o "${CONFIG_PATH}"; then
-        echo "Cannot obtain configuration for '${CONFIG_BRANCH}' branch. Either '${CONFIG_URL}' is invalid, or your network connection is unstable."
+        echo "Cannot obtain configuration for '${CONFIG_BRANCH}' branch. Either '${CONFIG_URL}' is invalid, or the network connection is unstable."
         exit 1
     fi
 
