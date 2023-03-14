@@ -2558,13 +2558,15 @@ Remote Windows Performance Source is not supported by the OpenTelemetry Collecto
 
 Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 
-[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.33.0/processor/resourceprocessor
-[multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#multiline-configuration
-[supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver#supported-encodings
-[udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/udplogreceiver
-[tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/tcplogreceiver
-[filelogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/filelogreceiver
-[syslogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.33.0/receiver/syslogreceiver
+[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/resourceprocessor
+[multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver#multiline-configuration
+[supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver#supported-encodings
+[udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/udplogreceiver
+[tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/tcplogreceiver
+[filelogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver
+[syslogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/syslogreceiver
+[transformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/transformprocessor
+[filterprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/processor/filterprocessor
 [sumologicsyslog]: ../pkg/processor/sumologicsyslogprocessor/README.md
 [network-semantic-convention]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/span-general.md#general-network-connection-attributes
 [sumologicextension]: ../pkg/extension/sumologicextension/README.md
