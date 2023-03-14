@@ -72,19 +72,20 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [Source Category](#source-category-4)
     - [Metadata](#metadata-1)
   - [Host Metrics Source](#host-metrics-source)
-    - [Overall Example](#overall-example-4)
-    - [Name](#name-6)
-    - [Description](#description-6)
-    - [Source Host](#source-host-4)
-    - [Source Category](#source-category-5)
-    - [Metadata](#metadata-2)
-    - [Scan Interval](#scan-interval-1)
-    - [Metrics](#metrics-1)
-      - [CPU](#cpu)
-      - [Memory](#memory)
-      - [TCP](#tcp)
-      - [Network](#network)
-      - [Disk](#disk)
+    - [Using Telegraf Receiver (deprecated)](#using-telegraf-receiver-deprecated)
+      - [Overall Example](#overall-example-4)
+      - [Name](#name-6)
+      - [Description](#description-6)
+      - [Source Host](#source-host-4)
+      - [Source Category](#source-category-5)
+      - [Metadata](#metadata-5)
+      - [Scan Interval](#scan-interval-1)
+      - [Metrics](#metrics-1)
+        - [CPU](#cpu)
+        - [Memory](#memory)
+        - [TCP](#tcp)
+        - [Network](#network)
+        - [Disk](#disk)
   - [Local Windows Event Log Source](#local-windows-event-log-source)
   - [Local Windows Performance Monitor Log Source](#local-windows-performance-monitor-log-source)
   - [Windows Active Directory Source](#windows-active-directory-source)
@@ -1684,12 +1685,16 @@ Please refer to [the Fields/Metadata section of Common configuration](#fields).
 
 ### Host Metrics Source
 
+It is recommended to use dedicated Sumo Logic app for Host Metrics for OpenTelemetry Collector.
+
+#### Using Telegraf Receiver (deprecated)
+
 The equivalent of the Host Metrics Source is [the telegraf receiver][telegrafreceiver] with appropiate plugins.
 
 __Note: The are differences between the Installed Collector and the Openelemetry Collector host metrics.
 See [this document](comparison.md#host-metrics) to learn more.__
 
-#### Overall Example
+##### Overall Example
 
 Below is an example of an OpenTelemetry configuration for a Host Metrics Source.
 
@@ -1757,14 +1762,12 @@ receivers:
         fieldpass = [ "reads", "read_bytes", "writes", "write_bytes" ]
 processors:
   ## The following configuration will add two metadata properties to every record
-  resource/metric source:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: insert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/metrics source:
+    metric_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source:
     ## Set _sourceName
     source_name: my example name
@@ -1784,110 +1787,33 @@ service:
       receivers:
       - telegraf/metrics source
       processors:
-      - resource/metric source
+      - transform/metrics source
       - source
       exporters:
       - sumologic
 ```
 
-#### Name
+##### Name
 
-Define the name after the slash `/` in the receiver name.
+Please refer to [the Name section of Common configuration](#name-1).
 
-To set `_sourceName`, use [resourceprocessor][resourceprocessor]
-or set it in [Source Processor][source-templates].
+##### Description
 
-For example, the following snippet configures the name as `my example name`:
+Please refer to [the Description section of Common configuration](#description-1).
 
-```yaml
-receivers:
-  telegraf/my example name:
-  # ...
-processors:
-  source:
-    source_name: my example name
-```
+##### Source Host
 
-#### Description
+Please refer to [the Source Host section of Common configuration](#source-host).
 
-A description can be added as a comment just above the receiver name.
+##### Source Category
 
-For example, the following snippet configures the description as `All my example logs`:
+Please refer to [the Source Category section of Common configuration](#source-category).
 
-```yaml
-receivers:
-  ## All my example metrics
-  telegraf/my example name:
-  # ...
-processors:
-  source:
-    source_name: my example name
-```
+##### Metadata
 
-#### Source Host
+Please refer to [the Fields/Metadata section of Common configuration](#fields).
 
-A Source Host can be set in the [Source Processor][source-templates] configuration with the `source_host` option.
-
-For example, the following snippet configures the Source Host as `my_host`:
-
-```yaml
-receivers:
-  ## All my example metrics
-  telegraf/my example name:
-  # ...
-processors:
-  source/some name:
-    source_name: my example name
-    source_host: my_host
-```
-
-#### Source Category
-
-A Source Category can be set in the [Source Processor][source-templates] configuration with the `source_category` option.
-
-For example, the following snippet configures the Source Category as `My Category`:
-
-```yaml
-receivers:
-  ## All my example metrics
-  telegraf/my example name:
-  # ...
-processors:
-  source/some name:
-    source_name: my example name
-    source_host: my_host
-    source_category: My Category
-```
-
-#### Metadata
-
-Use the [resourceprocessor][resourceprocessor] to set custom metadata.
-
-For example, the following snippet configures two additional metadata properties,
-`cloud.availability_zone` and `k8s.cluster.name`:
-
-```yaml
-receivers:
-  ## All my example metrics
-  telegraf/my example name:
-  # ...
-processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
-processors:
-  source/some name:
-    source_name: my example name
-    source_host: my_host
-    source_category: My Category
-```
-
-#### Scan Interval
+##### Scan Interval
 
 To set Scan Interval use `interval` in Telegraf's agent configuration.
 
@@ -1903,21 +1829,19 @@ receivers:
         flush_interval = "1m"
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/my example name fields:
+    metric_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: my_host
     source_category: My Category
 ```
 
-#### Metrics
+##### Metrics
 
 Telegraf offers a set of various plugins you can use to get metrics.
 In this section, we are describing only plugins that are required
@@ -1932,7 +1856,7 @@ Telegraf metric names are translated to the Installed Collector by [sumologicexp
 You can disable this by setting `translate_telegraf_attributes` to `false`,
 but in this case you need to update your dashboards.
 
-##### CPU
+###### CPU
 
 To get CPU metrics we are using the [inputs.cpu][telegraf-input-cpu]
 and the [inputs.system][telegraf-input-system] Telegraf plugins.
@@ -1978,21 +1902,19 @@ receivers:
         fieldpass = [ "load1", "load5", "load15" ]
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/my example name fields:
+    metric_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: my_host
     source_category: My Category
 ```
 
-##### Memory
+###### Memory
 
 To get CPU metrics we are using the [inputs.mem][telegraf-input-mem] Telegraf plugin.
 
@@ -2037,21 +1959,19 @@ receivers:
         fieldpass = [ "total", "free", "used", "used_percent", "available", "available_percent" ]
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/my example name fields:
+    metric_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: my_host
     source_category: My Category
 ```
 
-##### TCP
+###### TCP
 
 To get TCP metrics we are using the [inputs.netstat][telegraf-input-netstat] Telegraf plugin.
 
@@ -2101,21 +2021,19 @@ receivers:
         fieldpass = [ "tcp_close", "tcp_close_wait", "tcp_closing", "tcp_established", "tcp_listen", "tcp_time_wait" ]
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/my example name fields:
+    metric_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: my_host
     source_category: My Category
 ```
 
-##### Network
+###### Network
 
 To get network metrics we are using the [inputs.net][telegraf-input-net] Telegraf plugin.
 
@@ -2166,21 +2084,19 @@ receivers:
         fieldpass = [ "bytes_sent", "bytes_recv", "packets_sent", "packets_recv" ]
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/my example name fields:
+    metric_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: my_host
     source_category: My Category
 ```
 
-##### Disk
+###### Disk
 
 To get disk metrics we are using the [inputs.diskio][telegraf-input-diskio]
 and the [inputs.disk][telegraf-input-disk] Telegraf plugins.
@@ -2247,14 +2163,12 @@ receivers:
         fieldpass = [ "reads", "read_bytes", "writes", "write_bytes" ]
   # ...
 processors:
-  resource/my example name fields:
-    attributes:
-    - key: cloud.availability_zone
-      value: zone-1
-      action: upsert
-    - key: k8s.cluster.name
-      value: my-cluster
-      action: insert
+  transform/my example name fields:
+    metric_statements:
+    - context: resource
+      statements:
+      - set(attributes["cloud.availability_zone"], "zone-1")
+      - set(attributes["k8s.cluster.name"], "my-cluster")
   source/some name:
     source_name: my example name
     source_host: my_host
