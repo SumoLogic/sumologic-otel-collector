@@ -20,7 +20,7 @@ property :src_config_path, String
 BINARY_PATH = '/usr/local/bin/otelcol-sumo'
 BINARY_CONFIG = '/etc/otelcol-sumo/conf.d'
 INSTALL_SCRIPT_PATH = "/tmp/install.sh"
-INSTALL_SCRIPT_URL = "https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh"
+INSTALL_SCRIPT_URL = "https://github.com/SumoLogic/sumologic-otel-collector/releases/latest/download/install.sh"
 
 action :default do
   run_action :get_install_script
