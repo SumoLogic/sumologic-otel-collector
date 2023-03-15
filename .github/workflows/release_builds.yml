@@ -468,6 +468,29 @@ jobs:
           path: ./packaging/msi/wix/bin/x64/en-US/*.msi
           if-no-files-found: error
 
+  install-script:
+    name: Store install script
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
+
+      - name: Store Linux install script as action artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: install.sh
+          path: ./scripts/install.sh
+          if-no-files-found: error
+
+      - name: Store Windows install script as action artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: install.ps1
+          path: ./scripts/install.ps1
+          if-no-files-found: error
+
   create-release:
     name: Create Github release
     runs-on: ubuntu-20.04
