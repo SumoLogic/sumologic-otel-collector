@@ -42,13 +42,13 @@ To run it as a standalone process you only need to run the binary file downloade
    Either by piping `curl` straight into `bash`:
 
    ```bash
-   curl -s https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh | sudo -E bash -s
+   curl -sL https://github.com/SumoLogic/sumologic-otel-collector/releases/latest/download/install.sh | sudo -E bash -s
    ```
 
    or by first downloading the script, inspecting its contents for security, and then running it:
 
    ```bash
-   curl -o install-otelcol-sumo.sh https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh
+   curl -L -o install-otelcol-sumo.sh https://github.com/SumoLogic/sumologic-otel-collector/releases/latest/download/install.sh
    sudo -E bash ./install-otelcol-sumo.sh
    ```
 
