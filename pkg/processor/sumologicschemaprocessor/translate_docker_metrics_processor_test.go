@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 )
 
@@ -83,6 +84,29 @@ func TestTranslateDockerMetric_NamesAreTranslatedCorrectly(t *testing.T) {
 			actual.SetName(tc.nameIn)
 			translateDockerMetric(actual)
 			assert.Equal(t, tc.nameOut, actual.Name())
+		})
+	}
+}
+
+func TestTranslateDockerMetric_ResourceAttrbutesAreTranslatedCorrectly(t *testing.T) {
+	testcases := []struct {
+		nameIn  string
+		nameOut string
+	}{
+		{nameIn: "container.id", nameOut: "container.FullID"},
+		{nameIn: "container.image.name", nameOut: "container.ImageName"},
+		{nameIn: "container.name", nameOut: "container.Name"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.nameIn+"-"+tc.nameOut, func(t *testing.T) {
+			actual := pcommon.NewMap()
+			actual.PutStr(tc.nameIn, "a")
+			translateDockerResourceAttributes(actual)
+
+			res, ok := actual.Get(tc.nameOut)
+			assert.True(t, ok)
+			assert.Equal(t, res.AsString(), "a")
 		})
 	}
 }

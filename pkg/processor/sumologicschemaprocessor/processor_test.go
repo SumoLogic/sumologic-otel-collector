@@ -667,21 +667,43 @@ func TestTranslateTelegrafMetrics(t *testing.T) {
 
 func TestTranslateDockerMetrics(t *testing.T) {
 	testCases := []struct {
-		testName        string
-		originalNames   []string
-		translatedNames []string
-		shouldTranslate bool
+		testName                     string
+		originalNames                []string
+		translatedNames              []string
+		originalResourceAttributes   map[string]string
+		translatedResourceAttributes map[string]interface{}
+		shouldTranslate              bool
 	}{
 		{
 			testName:        "translates two names",
 			originalNames:   []string{"container.cpu.usage.percpu", "container.blockio.io_serviced_recursive"},
 			translatedNames: []string{"cpu_usage.percpu_usage", "io_serviced_recursive"},
+			originalResourceAttributes: map[string]string{
+				"container.id":         "a",
+				"container.image.name": "a",
+				"container.name":       "a",
+			},
+			translatedResourceAttributes: map[string]interface{}{
+				"container.FullID":    "a",
+				"container.ImageName": "a",
+				"container.Name":      "a",
+			},
 			shouldTranslate: true,
 		},
 		{
 			testName:        "does not translate",
 			originalNames:   []string{"container.cpu.usage.percpu", "container.blockio.io_serviced_recursive"},
 			translatedNames: []string{"container.cpu.usage.percpu", "container.blockio.io_serviced_recursive"},
+			originalResourceAttributes: map[string]string{
+				"container.id":         "a",
+				"container.image.name": "a",
+				"container.name":       "a",
+			},
+			translatedResourceAttributes: map[string]interface{}{
+				"container.id":         "a",
+				"container.image.name": "a",
+				"container.name":       "a",
+			},
 			shouldTranslate: false,
 		},
 	}
@@ -698,6 +720,12 @@ func TestTranslateDockerMetrics(t *testing.T) {
 				metrics.ResourceMetrics().AppendEmpty().ScopeMetrics().AppendEmpty().Metrics().AppendEmpty().SetName(name)
 			}
 
+			// Prepare resource attributes
+			ra := metrics.ResourceMetrics().At(0).Resource().Attributes()
+			for k, v := range testCase.originalResourceAttributes {
+				ra.PutStr(k, v)
+			}
+
 			// Act
 			resultMetrics, err := processor.processMetrics(context.Background(), metrics)
 			require.NoError(t, err)
@@ -706,6 +734,7 @@ func TestTranslateDockerMetrics(t *testing.T) {
 			for index, name := range testCase.translatedNames {
 				assert.Equal(t, name, resultMetrics.ResourceMetrics().At(index).ScopeMetrics().At(0).Metrics().At(0).Name())
 			}
+			assert.Equal(t, testCase.translatedResourceAttributes, metrics.ResourceMetrics().At(0).Resource().Attributes().AsRaw())
 		})
 	}
 }

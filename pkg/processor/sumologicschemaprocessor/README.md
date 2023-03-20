@@ -36,6 +36,7 @@ processors:
     # Specifies whether docker stats metric names should be translated to match
     # Sumo Logic conventions expected in Sumo Logic host related apps (for example
     # `container.cpu.usage.kernelmode` => `cpu_usage.usage_in_kernelmode` or `container.memory.usage.max` => `max_usage`).
+    # It also translates some resource attribute names (for example `container.id` => `container.FullID`).
     # See `translate_docker_metrics_processor.go` for full list of translations.
     # default = false
     translate_docker_metrics: {true, false}

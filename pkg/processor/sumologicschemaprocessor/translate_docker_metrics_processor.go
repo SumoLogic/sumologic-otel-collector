@@ -15,6 +15,7 @@
 package sumologicschemaprocessor
 
 import (
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/ptrace"
@@ -78,6 +79,12 @@ var dockerMetricsTranslations = map[string]string{
 	"container.blockio.sectors_recursive":             "sectors_recursive",
 }
 
+var dockerReasourceAttributeTranslations = map[string]string{
+	"container.id":         "container.FullID",
+	"container.image.name": "container.ImageName",
+	"container.name":       "container.Name",
+}
+
 func newTranslateDockerMetricsProcessor(shouldTranslate bool) (*translateDockerMetricsProcessor, error) {
 	return &translateDockerMetricsProcessor{
 		shouldTranslate: shouldTranslate,
@@ -93,6 +100,7 @@ func (proc *translateDockerMetricsProcessor) processMetrics(metrics pmetric.Metr
 	if proc.shouldTranslate {
 		for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
 			rm := metrics.ResourceMetrics().At(i)
+			translateDockerResourceAttributes(rm.Resource().Attributes())
 
 			for j := 0; j < rm.ScopeMetrics().Len(); j++ {
 				metricsSlice := rm.ScopeMetrics().At(j).Metrics()
@@ -126,4 +134,33 @@ func translateDockerMetric(m pmetric.Metric) {
 	if exists {
 		m.SetName(name)
 	}
+}
+
+func translateDockerResourceAttributes(attributes pcommon.Map) {
+	result := pcommon.NewMap()
+	result.EnsureCapacity(attributes.Len())
+
+	attributes.Range(func(otKey string, value pcommon.Value) bool {
+		if sumoKey, ok := dockerReasourceAttributeTranslations[otKey]; ok {
+			// Only insert if it doesn't exist yet to prevent overwriting.
+			// We have to do it this way since the final return value is not
+			// ready yet to rely on .Insert() not overwriting.
+			if _, exists := attributes.Get(sumoKey); !exists {
+				if _, ok := result.Get(sumoKey); !ok {
+					value.CopyTo(result.PutEmpty(sumoKey))
+				}
+			} else {
+				if _, ok := result.Get(otKey); !ok {
+					value.CopyTo(result.PutEmpty(otKey))
+				}
+			}
+		} else {
+			if _, ok := result.Get(otKey); !ok {
+				value.CopyTo(result.PutEmpty(otKey))
+			}
+		}
+		return true
+	})
+
+	result.CopyTo(attributes)
 }
