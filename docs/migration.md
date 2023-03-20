@@ -61,6 +61,7 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [Fields](#fields-3)
     - [Scan interval](#scan-interval)
     - [Metrics](#metrics)
+    - [Metadata](#metadata)
   - [Script Source](#script-source)
   - [Streaming Metrics Source](#streaming-metrics-source)
     - [Overall example](#overall-example-3)
@@ -69,14 +70,14 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [Protocol and Port](#protocol-and-port-1)
     - [Content Type](#content-type)
     - [Source Category](#source-category-3)
-    - [Metadata](#metadata)
+    - [Metadata](#metadata-1)
   - [Host Metrics Source](#host-metrics-source)
     - [Overall Example](#overall-example-4)
     - [Name](#name-6)
     - [Description](#description-6)
     - [Source Host](#source-host-4)
     - [Source Category](#source-category-4)
-    - [Metadata](#metadata-1)
+    - [Metadata](#metadata-2)
     - [Scan Interval](#scan-interval-1)
     - [Metrics](#metrics-1)
       - [CPU](#cpu)
@@ -1521,6 +1522,28 @@ processors:
   sumologicschema/dockerstats:
     translate_docker_metrics: true
 ```
+
+#### Metadata
+
+The metadata sent by Installed Collector correspond to the metadata sent by OpenTelemetry Collector in the following way:
+
+- `container.FullID` corresponds to `container.id`
+- `container.ID`, which is a shorter version of `container.FullID` is not being emitted - if needed, `transform` processor can be used to trim it
+- `container.ImageName` corresponds to `container.image.name`
+- `container.Name` corresponds to `container.name`
+- `container.ImageID` and `container.ImageFullID` are not being emitted
+
+These metadata is represented as resource attributes and can be translated by using [Sumo Logic Schema Processor][sumologicschemaprocessor]
+in the same way as for translating metric names, by using the following config:
+
+```yaml
+processors:
+  sumologicschema/dockerstats:
+    translate_docker_metrics: true
+```
+
+In addition, there is some additional metadata sent by the OpenTelemetry Collector. Full list of it can be seen [here]
+[dockerstatsmetrics].
 
 ### Script Source
 
