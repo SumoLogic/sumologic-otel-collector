@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released TBA
 
+- feat(sumologicschemaprocessor): add translating docker stats resource attributes [#1081]
+
+[#1081]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1081
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.73.0-sumo-1...main
 
 ## [v0.73.0-sumo-1]
