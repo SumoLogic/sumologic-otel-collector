@@ -9,23 +9,17 @@ This document explains how to obtain FIPS-capable binaries and how to run them i
 
 ## Obtaining the binaries
 
-For general installation instructions, see [here](installation.md).
+### Linux
 
-### Using the install script
+Refer to [FIPS section of installation documentation](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-linux/#fips)
 
-Pass the `--fips` flag to the [script](./installation.md#installation-using-script). If you try to do this on an unsupported platform,
-the script will error.
+### MacOS
 
-### Get the binaries directly
+We do not provde FIPS-compliant binary for macOS.
 
-The binaries can be downloaded from OT release pages. They are distinguished from others by containing the
-`-fips-` infix. More specifically, the binary name follow the format:
+### Windows
 
-```text
-otelcol-sumo-${VERSION}-fips-${OS}-${ARCH}
-```
-
-For example: <https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.75.0-sumo-0/otelcol-sumo-0.75.0-sumo-0-fips-linux_amd64>
+We do not provde FIPS-compliant binary for Windows.
 
 ### Docker images
 

@@ -12,7 +12,15 @@ In order to learn more, pleasee see [purpose of Sumo Logic Distribution for Open
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
 [sumologic]: https://www.sumologic.com
 
-- [Installation](docs/installation.md)
+- Installation
+  - [Linux][linux_installation]
+  - [MacOS][macos_installation]
+  - [Windows][windows_installation]
+  - [Container image](/docs/installation.md#container-image)
+    - [Important note about local state files when using `sumologicextension`](/docs/installation.md#important-note-about-local-state-files-when-using-sumologicextension)
+  - [Ansible](/docs/installation.md#ansible)
+  - [Puppet](/docs/installation.md#puppet)
+  - [Chef](/docs/installation.md#chef)
 - [Configuration](docs/configuration.md)
 - [Migration from Installed Collector](docs/migration.md)
 - [Comparison between the Installed Collector and OpenTelemetry Collector](docs/comparison.md)
@@ -24,6 +32,10 @@ In order to learn more, pleasee see [purpose of Sumo Logic Distribution for Open
 - [Purpose of Sumo Logic Distribution for OpenTelemetry Collector](./docs/upstream-relation.md#purpose-of-sumo-logic-distribution-for-opentelemetry-collector)
 - [Versioning policy](./docs/upstream-relation.md#versioning-policy)
 - [Breaking changes policy](./docs/upstream-relation.md#breaking-changes-policy)
+
+[linux_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-linux/
+[macos_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-macos/
+[windows_installation]:https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-windows/
 
 ## Supported OS and architectures
 
