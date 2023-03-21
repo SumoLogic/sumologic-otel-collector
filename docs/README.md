@@ -13,9 +13,9 @@
 - [FIPS compliance](./fips.md)
 - [Known Issues][known issues]
 - [Troubleshooting]
-- [Purpose of Sumo Logic Distribution for OpenTelemetry Collector](./upstream-relation.md#purpose-of-sumo-logic-distribution-for-opentelemetry-collector)
-- [Versioning policy](./upstream-relation.md#versioning-policy)
-- [Breaking changes policy](./upstream-relation.md#breaking-changes-policy)
+- [Purpose of Sumo Logic Distribution for OpenTelemetry Collector][purpose]
+- [Versioning policy][versioning]
+- [Breaking changes policy][breaking]
 
 [linux_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-linux/
 [macos_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-macos/
@@ -24,3 +24,6 @@
 [performance]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/#performance
 [known issues]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/troubleshooting-faq/#known-issues
 [troubleshooting]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/troubleshooting-faq/
+[purpose]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/
+[versioning]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/#versioning-policy
+[breaking]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/#versioning-policy

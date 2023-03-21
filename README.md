@@ -7,7 +7,7 @@ It is a single agent to send logs, metrics and traces to [Sumo Logic][sumologic]
 
 **Our aim is to extend and not to replace the OpenTelemetry Collector.**
 
-In order to learn more, pleasee see [purpose of Sumo Logic Distribution for OpenTelemetry Collector](./docs/upstream-relation.md#purpose-of-sumo-logic-distribution-for-opentelemetry-collector)
+In order to learn more, pleasee see [purpose of Sumo Logic Distribution for OpenTelemetry Collector][purpose]
 
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
 [sumologic]: https://www.sumologic.com
@@ -29,15 +29,18 @@ In order to learn more, pleasee see [purpose of Sumo Logic Distribution for Open
 - [Known Issues][known issues]
 - [Contributing](./CONTRIBUTING.md)
 - [Changelog](./CHANGELOG.md)
-- [Purpose of Sumo Logic Distribution for OpenTelemetry Collector](./docs/upstream-relation.md#purpose-of-sumo-logic-distribution-for-opentelemetry-collector)
-- [Versioning policy](./docs/upstream-relation.md#versioning-policy)
-- [Breaking changes policy](./docs/upstream-relation.md#breaking-changes-policy)
+- [Purpose of Sumo Logic Distribution for OpenTelemetry Collector][purpose]
+- [Versioning policy][versioning]
+- [Breaking changes policy][breaking]
 
 [linux_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-linux/
 [macos_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-macos/
 [windows_installation]:https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-windows/
 [performance]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/#performance
-[known issues]: https://d2t1s0ah22jxsa.cloudfront.net/1872/merge/docs/send-data/opentelemetry-collector/troubleshooting-faq/#known-issues
+[known issues]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/troubleshooting-faq/#known-issues
+[purpose]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/
+[versioning]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/#versioning-policy
+[breaking]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/#versioning-policy
 
 ## Supported OS and architectures
 
