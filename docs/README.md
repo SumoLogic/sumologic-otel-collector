@@ -9,7 +9,7 @@
 - [Differences between Installed Collector and Opentelemetry Collector](./comparison.md)
 - [Performance]
 - [Additional configurations reference (best practices)][additional_reference]
-- [Mapping OpenTelemetry concepts to Sumo Logic](./open-telemetry-concepts.md)
+- [Mapping OpenTelemetry concepts to Sumo Logic][mapping]
 - [FIPS compliance](./fips.md)
 - [Known Issues][known issues]
 - [Troubleshooting]
@@ -27,3 +27,4 @@
 [purpose]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/
 [versioning]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/#versioning-policy
 [breaking]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/#versioning-policy
+[mapping]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/data-source-and-configurations/additional-configurations-reference/#mapping-opentelemetry-concepts-to-sumo-logic
