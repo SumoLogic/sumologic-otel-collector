@@ -5,6 +5,9 @@ Make sure to read [OpenTelemetry Collector Troubleshooting][otc_troubleshooting]
 See below for more information.
 
 - [Accessing the collector's logs](#accessing-the-collectors-logs)
+  - [Systemd](#systemd)
+  - [Standalone Binary](#standalone-binary)
+  - [Windows](#windows)
 - [Accessing the collector's metrics](#accessing-the-collectors-metrics)
 - [Accessing the collector's configuration](#accessing-the-collectors-configuration)
 - [Collector registration failure](#collector-registration-failure)
@@ -15,13 +18,25 @@ See below for more information.
 
 ## Accessing the collector's logs
 
+### Systemd
+
 On systems with systemd, the logs are available in journald:
 
 ```sh
 journalctl --unit otelcol-sumo
 ```
 
+### Standalone Binary
+
 On systems without systemd, the logs are available in the console output of the running process.
+
+### Windows
+
+On Windows the logs are available in the Event Viewer, or they can be listed using PowerShell:
+
+```powershell
+Get-EventLog -LogName Application -Newest 100 -Source OtelcolSumo | Select-Object -Property ReplacementStrings
+```
 
 ## Accessing the collector's metrics
 
