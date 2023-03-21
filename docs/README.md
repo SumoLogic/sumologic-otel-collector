@@ -12,7 +12,7 @@
 - [Mapping OpenTelemetry concepts to Sumo Logic](./open-telemetry-concepts.md)
 - [FIPS compliance](./fips.md)
 - [Known Issues][known issues]
-- [Troubleshooting](./troubleshooting.md)
+- [Troubleshooting]
 - [Purpose of Sumo Logic Distribution for OpenTelemetry Collector](./upstream-relation.md#purpose-of-sumo-logic-distribution-for-opentelemetry-collector)
 - [Versioning policy](./upstream-relation.md#versioning-policy)
 - [Breaking changes policy](./upstream-relation.md#breaking-changes-policy)
@@ -23,3 +23,4 @@
 [additional_reference]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/data-source-configurations/additional-configurations-reference/
 [performance]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/#performance
 [known issues]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/troubleshooting-faq/#known-issues
+[troubleshooting]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/troubleshooting-faq/
