@@ -25,7 +25,7 @@ In order to learn more, pleasee see [purpose of Sumo Logic Distribution for Open
 - [Migration from Installed Collector](docs/migration.md)
 - [Comparison between the Installed Collector and OpenTelemetry Collector](docs/comparison.md)
 - [OpenTelemetry Collector builder](./otelcolbuilder/README.md)
-- [Performance](docs/performance.md)
+- [Performance]
 - [Known Issues](docs/known-issues.md)
 - [Contributing](./CONTRIBUTING.md)
 - [Changelog](./CHANGELOG.md)
@@ -36,6 +36,7 @@ In order to learn more, pleasee see [purpose of Sumo Logic Distribution for Open
 [linux_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-linux/
 [macos_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-macos/
 [windows_installation]:https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-windows/
+[performance]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/#performance
 
 ## Supported OS and architectures
 

@@ -7,7 +7,7 @@
 - [Configuration](./configuration.md)
 - [Migration from Installed Collector](./migration.md)
 - [Differences between Installed Collector and Opentelemetry Collector](./comparison.md)
-- [Performance](./performance.md)
+- [Performance]
 - [Additional configurations reference (best practices)][additional_reference]
 - [Mapping OpenTelemetry concepts to Sumo Logic](./open-telemetry-concepts.md)
 - [FIPS compliance](./fips.md)
@@ -21,3 +21,4 @@
 [macos_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-macos/
 [windows_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-windows/
 [additional_reference]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/data-source-configurations/additional-configurations-reference/
+[performance]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/#performance
