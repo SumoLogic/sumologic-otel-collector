@@ -32,7 +32,7 @@ On systems without systemd, the logs are available in the console output of the 
 
 ### Windows
 
-On Windows the logs are available in event viewer, or they can be listed using PowerShell:
+On Windows the logs are available in the Event Viewer, or they can be listed using PowerShell:
 
 ```powershell
 Get-EventLog -LogName Application -Newest 100 -Source OtelcolSumo | Select-Object -Property ReplacementStrings
