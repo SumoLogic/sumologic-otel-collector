@@ -69,14 +69,14 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [Description](#description-5)
     - [Protocol and Port](#protocol-and-port-1)
     - [Content Type](#content-type)
-    - [Source Category](#source-category-3)
+    - [Source Category](#source-category-4)
     - [Metadata](#metadata-1)
   - [Host Metrics Source](#host-metrics-source)
     - [Overall Example](#overall-example-4)
     - [Name](#name-6)
     - [Description](#description-6)
     - [Source Host](#source-host-4)
-    - [Source Category](#source-category-4)
+    - [Source Category](#source-category-5)
     - [Metadata](#metadata-2)
     - [Scan Interval](#scan-interval-1)
     - [Metrics](#metrics-1)
@@ -2555,8 +2555,8 @@ See [this document](comparison.md#host-metrics) to learn more.__
 | `name`                            | [processors.source.source_name](#name-5)                                                                        |
 | `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-5) |
 | `category`                        | [processors.source.source_category](#source-category-4)                                                         |
-| `metrics`                         | [Appropiate plugins have to be configured.](#metrics) By default no metrics are being processed.                |
-| `interval (ms)`                   | [receivers.telegraf.agent_config('agent'.interval)](#scan-interval)                                             |
+| `metrics`                         | [Appropiate plugins have to be configured.](#metrics-1) By default no metrics are being processed.                |
+| `interval (ms)`                   | [receivers.telegraf.agent_config('agent'.interval)](#scan-interval-1)                                             |
 | `hostName`                        | [processors.source.source_host](#source-host-3)                                                                 |
 
 ### Local Windows Event Log Source (LocalWindowsEventLog)
