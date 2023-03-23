@@ -3,7 +3,7 @@ module github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexpor
 go 1.19
 
 require (
-	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.0.54-beta.0
+	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.73.0-sumo-0
 	github.com/klauspost/compress v1.16.0
 	github.com/stretchr/testify v1.8.2
 	go.opencensus.io v0.24.0
