@@ -3,7 +3,7 @@ module github.com/open-telemetry/opentelemetry-collector-contrib/extension/opamp
 go 1.19
 
 require (
-	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.67.0-sumo-0
+	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.73.0-sumo-0
 	github.com/knadh/koanf v1.5.0
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/open-telemetry/opamp-go v0.5.0
