@@ -9,9 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released TBA
 
+### Added
+
 - feat(sumologicschemaprocessor): add translating docker stats resource attributes [#1081]
 
+### Fixed
+
+- fix(sumologicexporter): Prometheus histogram metric names [#1087]
+
 [#1081]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1081
+[#1087]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1087
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.73.0-sumo-1...main
 
 ## [v0.73.0-sumo-1]
