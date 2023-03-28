@@ -244,6 +244,11 @@ func (f *prometheusFormatter) countMetric(name string) string {
 	return fmt.Sprintf("%s_count", name)
 }
 
+// bucketMetric returns _bucket suffixed metric name
+func (f *prometheusFormatter) bucketMetric(name string) string {
+	return fmt.Sprintf("%s_bucket", name)
+}
+
 // mergeAttributes gets two pcommon.Maps and returns new which contains values from both of them
 func (f *prometheusFormatter) mergeAttributes(attributes pcommon.Map, additionalAttributes pcommon.Map) pcommon.Map {
 	mergedAttributes := pcommon.NewMap()
@@ -358,7 +363,7 @@ func (f *prometheusFormatter) histogram2Strings(metric pmetric.Metric, attribute
 			additionalAttributes.PutDouble(prometheusLeTag, bound)
 
 			line := f.uintValueLine(
-				metric.Name(),
+				f.bucketMetric(metric.Name()),
 				cumulative,
 				dp,
 				f.mergeAttributes(attributes, additionalAttributes),
@@ -369,7 +374,7 @@ func (f *prometheusFormatter) histogram2Strings(metric pmetric.Metric, attribute
 		cumulative += dp.BucketCounts().At(explicitBounds.Len())
 		additionalAttributes.PutStr(prometheusLeTag, prometheusInfValue)
 		line := f.uintValueLine(
-			metric.Name(),
+			f.bucketMetric(metric.Name()),
 			cumulative,
 			dp,
 			f.mergeAttributes(attributes, additionalAttributes),
