@@ -33,10 +33,10 @@ var (
 	statusSecondChanceExceeded = "SecondChanceRateExceeded"
 	statusDropped              = "Dropped"
 
-	tagPolicyKey, _                  = tag.NewKey("policy")
-	tagCascadingFilterDecisionKey, _ = tag.NewKey("cascading_filter_decision")
-	tagPolicyDecisionKey, _          = tag.NewKey("policy_decision")
-	tagProcessorKey, _               = tag.NewKey("processor")
+	tagPolicyKey, _                  = tag.NewKey("policy")                    // nolint:errcheck
+	tagCascadingFilterDecisionKey, _ = tag.NewKey("cascading_filter_decision") // nolint:errcheck
+	tagPolicyDecisionKey, _          = tag.NewKey("policy_decision")           // nolint:errcheck
+	tagProcessorKey, _               = tag.NewKey("processor")                 // nolint:errcheck
 
 	statDecisionLatencyMicroSec  = stats.Int64("policy_decision_latency", "Latency (in microseconds) of a given filtering policy", "µs")
 	statOverallDecisionLatencyus = stats.Int64("cascading_filtering_batch_processing_latency", "Latency (in microseconds) of each run of the cascading filter timer", "µs")

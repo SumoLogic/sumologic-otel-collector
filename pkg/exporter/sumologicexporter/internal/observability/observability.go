@@ -42,10 +42,10 @@ var (
 	mRequestsBytes    = stats.Int64("exporter/requests/bytes", "Total size of requests (in bytes)", "0")
 	mRequestsRecords  = stats.Int64("exporter/requests/records", "Total size of requests (in number of records)", "0")
 
-	statusKey, _   = tag.NewKey("status_code")
-	endpointKey, _ = tag.NewKey("endpoint")
-	pipelineKey, _ = tag.NewKey("pipeline")
-	exporterKey, _ = tag.NewKey("exporter")
+	statusKey, _   = tag.NewKey("status_code") // nolint:errcheck
+	endpointKey, _ = tag.NewKey("endpoint")    // nolint:errcheck
+	pipelineKey, _ = tag.NewKey("pipeline")    // nolint:errcheck
+	exporterKey, _ = tag.NewKey("exporter")    // nolint:errcheck
 )
 
 var viewRequestsSent = &view.View{
