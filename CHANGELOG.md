@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - feat(sumologicschemaprocessor): add translating docker stats resource attributes [#1081]
+- chore: add new components [#1091]
+  - cloudflarereceiver
+  - lokireceiver
+  - spanmetricsconnector
 
 ### Changed
 
@@ -24,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1081]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1081
 [#1087]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1087
 [#1089]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1089
+[#1091]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1091
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.73.0-sumo-1...main
 
 ## [v0.73.0-sumo-1]
