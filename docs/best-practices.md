@@ -24,7 +24,7 @@ batch:
 **NOTE**: when using [Sumo Logic exporter][sumologicexporter] and sending data that is **not** in otlp format,
 you can explicitly limit size of the requests in bytes using config option `max_request_body_size`.
 
-[batchprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.71.0/processor/batchprocessor
-[memorylimiterprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.71.0/processor/memorylimiterprocessor
+[batchprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.73.0/processor/batchprocessor
+[memorylimiterprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.73.0/processor/memorylimiterprocessor
 [filterprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
 [sumologicexporter]: ../pkg/exporter/sumologicexporter
