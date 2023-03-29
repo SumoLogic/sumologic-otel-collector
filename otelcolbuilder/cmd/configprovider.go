@@ -44,7 +44,7 @@ func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
 	}
 	// to create the provider, we need config locations passed in via the command line
 	// to get these, we take the command the service uses to start, parse the flags, and read the values
-	flagset := flags()
+	flagset := flags(featuregate.GlobalRegistry())
 
 	// drop the output from the flagset, we only want to parse
 	// by default it prints error messages to stdout :(

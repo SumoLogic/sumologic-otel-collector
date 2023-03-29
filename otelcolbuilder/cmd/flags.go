@@ -45,7 +45,7 @@ func (s *configFlagValue) String() string {
 	return "[" + strings.Join(s.values, ", ") + "]"
 }
 
-func flags() *flag.FlagSet {
+func flags(reg *featuregate.Registry) *flag.FlagSet {
 	flagSet := new(flag.FlagSet)
 
 	cfgs := new(configFlagValue)
@@ -65,7 +65,7 @@ func flags() *flag.FlagSet {
 			return nil
 		})
 
-	flagSet.Var(featuregate.FlagValue{}, featureGatesFlag,
+	flagSet.Var(featuregate.NewFlag(reg), featureGatesFlag,
 		"Comma-delimited list of feature gate identifiers. Prefix with '-' to disable the feature. '+' or no prefix will enable the feature.")
 
 	return flagSet
