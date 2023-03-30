@@ -113,6 +113,13 @@ update-ot-core: install-gsed
 update-journalctl: install-gsed
 	$(SED) -i "s/FROM debian.*/FROM debian:${DEBIAN_VERSION} as systemd/" Dockerfile*
 
+LATEST_OT_VERSION := $(shell git describe --match 'v*' --abbrev=0 | cut -c2-)
+PREVIOUS_OT_VERSION := $(shell git describe --match 'v*' --abbrev=0 `git describe --match 'v*' --abbrev=0`^ | cut -c2-)
+PREVIOUS_CORE_VERSION := $(shell echo ${PREVIOUS_OT_VERSION} | sed -e 's/-sumo-.*//')
+.PHONY: update-docs
+update-docs: install-gsed
+	@find docs/ -type f \( -name "*.md" ! -name "upgrading.md" \) -exec $(SED) -i 's#$(PREVIOUS_CORE_VERSION)#$(OT_CORE_VERSION)#g' {} \;
+	@find docs/ -type f \( -name "*.md" ! -name "upgrading.md" \) -exec $(SED) -i 's#$(PREVIOUS_OT_VERSION)#$(LATEST_OT_VERSION)#g' {} \;
 ################################################################################
 # Release
 ################################################################################
