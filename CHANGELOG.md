@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released TBA
 
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.74.0-sumo-0...main
+
+## [v0.74.0-sumo-0]
+
+### Released 2023-03-30
+
 ### Added
 
 - feat(sumologicschemaprocessor): add translating docker stats resource attributes [#1081]
@@ -29,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1087]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1087
 [#1089]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1089
 [#1091]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1091
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.73.0-sumo-1...main
+[v0.74.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.73.0-sumo-1...v0.74.0-sumo-0
 
 ## [v0.73.0-sumo-1]
 
