@@ -28,7 +28,7 @@ and to provide better customer support:
 ## Versioning policy
 
 We are using upstream OpenTelemetry Collector version numbers as the base for the Sumo Logic Distribution for OpenTelemetry Collector version numbers.
-This means that Sumo Logic Distribution for OpenTelemetry Collector `v0.47.0-sumo-0` is based on `v0.47.0`
+This means that Sumo Logic Distribution for OpenTelemetry Collector `v0.74.0-sumo-0` is based on `v0.74.0`
 of the OpenTelemetry Collector core and contrib packages.
 
 In order to prevent confusion we are going to add Sumo Logic specific features
@@ -36,7 +36,7 @@ when updating the OpenTelemetry Collector version.
 The OpenTelemetry Collector is released every two weeks and we are releasing up to week after the date.
 
 In case of critical fixes in our code, we will provide version with the same base like OT Distro,
-but changed suffix, e.g. `v0.47.0-sumo-1`.
+but changed suffix, e.g. `v0.74.0-sumo-0`.
 
 ## Breaking changes policy
 

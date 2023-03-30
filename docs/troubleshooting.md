@@ -66,7 +66,7 @@ By default, the collector's configuration can be found in `/etc/otelcol-sumo/` d
 If you see a log containing `"token:invalid_token_format"` in the collector logs, similar to the following:
 
 ```console
-2022-11-09T12:07:07.171+0100        warn        sumologicextension@v0.57.2-sumo-1/extension.go:423        Collector registration failed        {"kind": "extension", "name": "sumologic", "status_code": 401, "error_id": "DC0JU-XI3IY-Z703S", "errors": [{"code":"token:invalid_token_format","message":"The Sumo Logic credentials could not be verified."}]}
+2022-11-09T12:07:07.171+0100        warn        sumologicextension@v0.74.0-sumo-0/extension.go:423        Collector registration failed        {"kind": "extension", "name": "sumologic", "status_code": 401, "error_id": "DC0JU-XI3IY-Z703S", "errors": [{"code":"token:invalid_token_format","message":"The Sumo Logic credentials could not be verified."}]}
 ```
 
 this means that the installation token used in the Sumo Logic extension's configuration is invalid.
