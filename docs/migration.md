@@ -439,12 +439,12 @@ receivers:
     start_at: beginning
     ## encoding is substitute for Installed Collector `Encoding`.
     ## List of supported encodings:
-    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver
+    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/receiver/filelogreceiver
     encoding: utf-8
     ## multiline is Opentelemetry Collector substitute for `Enable Multiline Processing`.
     ## As multiline detection behaves slightly different than in Installed Collector
     ## the following section in filelog documentation is recommended to read:
-    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/filelogreceiver#multiline-configuration
+    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/receiver/filelogreceiver#multiline-configuration
     multiline:
       ## line_start_pattern is substitute of `Boundary Regex`.
       line_start_pattern: ^\d{4}
@@ -736,11 +736,11 @@ receivers:
     start_at: end
     operators:
     ## Extract timestamp into timestamp field using regex
-    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.60.0/pkg/stanza/docs/operators/regex_parser.md
+    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.74.0/pkg/stanza/docs/operators/regex_parser.md
     - type: regex_parser
       regex: (?P<timestamp>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (\+|\-)\d{4})
       ## Parse timestamp from timestamp field
-      ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.60.0/pkg/stanza/docs/operators/time_parser.md
+      ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.74.0/pkg/stanza/docs/operators/time_parser.md
       timestamp:
         parse_from: attributes.timestamp
         ## Layout are substitute for Timestamp Format configuration
@@ -912,7 +912,7 @@ receivers:
     listen_address: 0.0.0.0:514
     ## Add network attributes
     ## `net.peer.name` is going to be used as processors.source.source_host
-    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/tcplogreceiver#configuration
+    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/receiver/tcplogreceiver#configuration
     add_attributes: true
   ## Use UDP receiver for UDP protocol
   udplog/first receiver:
@@ -921,7 +921,7 @@ receivers:
     listen_address: 0.0.0.0:514
     ## Add network attributes
     ## `net.peer.name` is going to be used as processors.source.source_host
-    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.72.0/receiver/udplogreceiver#configuration
+    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/receiver/udplogreceiver#configuration
     add_attributes: true
 
 processors:
@@ -1113,11 +1113,11 @@ receivers:
     listen_address: 0.0.0.0:514
     operators:
     ## Extract timestamp into timestamp field using regex
-    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.60.0/pkg/stanza/docs/operators/regex_parser.md
+    ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.74.0/pkg/stanza/docs/operators/regex_parser.md
     - type: regex_parser
       regex: (?P<timestamp>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (\+|\-)\d{4})
       ## Parse timestamp from timestamp field
-      ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.60.0/pkg/stanza/docs/operators//time_parser.md
+      ## rel: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.74.0/pkg/stanza/docs/operators//time_parser.md
       timestamp:
         parse_from: attributes.timestamp
         ## Layout are substitute for Timestamp Format configuration
@@ -1291,7 +1291,7 @@ receivers:
 
     ## A list of images for which corresponding containers won't be scraped.
     ## Strings, regexes and globs are supported, more information in the receiver's readme:
-    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver#configuration
+    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.74.0/receiver/dockerstatsreceiver#configuration
     excluded_images:
       ## Exclude particular image
       - docker.io/library/nginx:1.2
@@ -1311,7 +1311,7 @@ receivers:
     api_version: 1.22
 
     ## Enable or disable particular metrics.
-    ## Full list of metrics with their default config is available at https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver/documentation.md
+    ## Full list of metrics with their default config is available at https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.74.0/receiver/dockerstatsreceiver/documentation.md
     metrics:
       container.cpu.usage.percpu:
         enabled: true
@@ -1398,7 +1398,7 @@ receivers:
   docker_stats:
     ## A list of images for which corresponding containers won't be scraped.
     ## Strings, regexes and globs are supported, more information in the receiver's readme:
-    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver#configuration
+    ## https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.74.0/receiver/dockerstatsreceiver#configuration
     excluded_images:
       ## Exclude particular image
       - docker.io/library/nginx:1.2
@@ -2581,15 +2581,15 @@ Remote Windows Performance Source is not supported by the OpenTelemetry Collecto
 
 Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 
-[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.73.0/processor/resourceprocessor
-[multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.73.0/receiver/filelogreceiver#multiline-configuration
-[supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.73.0/receiver/filelogreceiver#supported-encodings
-[udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.73.0/receiver/udplogreceiver
-[tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.73.0/receiver/tcplogreceiver
-[filelogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.73.0/receiver/filelogreceiver
-[syslogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.73.0/receiver/syslogreceiver
-[transformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.73.0/processor/transformprocessor
-[filterprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.73.0/processor/filterprocessor
+[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/processor/resourceprocessor
+[multiline]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/receiver/filelogreceiver#multiline-configuration
+[supported_encodings]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/receiver/filelogreceiver#supported-encodings
+[udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/receiver/udplogreceiver
+[tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/receiver/tcplogreceiver
+[filelogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/receiver/filelogreceiver
+[syslogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/receiver/syslogreceiver
+[transformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/processor/transformprocessor
+[filterprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/processor/filterprocessor
 [sumologicsyslog]: ../pkg/processor/sumologicsyslogprocessor/README.md
 [network-semantic-convention]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/span-general.md#general-network-connection-attributes
 [sumologicextension]: ../pkg/extension/sumologicextension/README.md
@@ -2601,21 +2601,21 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [source-templates]: ../pkg/processor/sourceprocessor//README.md#source-templates
 [syslogparser]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/docs/operators/syslog_parser.md
 [telegrafreceiver]: ../pkg/receiver/telegrafreceiver/README.md
-[telegraf-socket_listener]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/socket_listener#socket-listener-input-plugin
-[telegraf-input-formats]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/parsers
-[telegraf-input-plugins]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs
-[telegraf-input-cpu]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/cpu
-[telegraf-input-system]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/system
-[telegraf-input-mem]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/mem
-[telegraf-input-net]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/net/NET_README.md
-[telegraf-input-netstat]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/net/NETSTAT_README.md
-[telegraf-input-diskio]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/diskio
-[telegraf-input-disk]: https://github.com/SumoLogic/telegraf/tree/v1.19.0-sumo-3/plugins/inputs/disk
-[dockerstatsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver
-[dockerstatsmetrics]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.73.0/receiver/dockerstatsreceiver/documentation.md
+[telegraf-socket_listener]: https://github.com/SumoLogic/telegraf/tree/v1.24.3-sumo-4/plugins/inputs/socket_listener#socket-listener-input-plugin
+[telegraf-input-formats]: https://github.com/SumoLogic/telegraf/tree/v1.24.3-sumo-4/plugins/parsers
+[telegraf-input-plugins]: https://github.com/SumoLogic/telegraf/tree/v1.24.3-sumo-4/plugins/inputs
+[telegraf-input-cpu]: https://github.com/SumoLogic/telegraf/tree/v1.24.3-sumo-4/plugins/inputs/cpu
+[telegraf-input-system]: https://github.com/SumoLogic/telegraf/tree/v1.24.3-sumo-4/plugins/inputs/system
+[telegraf-input-mem]: https://github.com/SumoLogic/telegraf/tree/v1.24.3-sumo-4/plugins/inputs/mem
+[telegraf-input-net]: https://github.com/SumoLogic/telegraf/tree/v1.24.3-sumo-4/plugins/inputs/net/README.md
+[telegraf-input-netstat]: https://github.com/SumoLogic/telegraf/tree/v1.24.3-sumo-4/plugins/inputs/netstat/README.md
+[telegraf-input-diskio]: https://github.com/SumoLogic/telegraf/tree/v1.24.3-sumo-4/plugins/inputs/diskio
+[telegraf-input-disk]: https://github.com/SumoLogic/telegraf/tree/v1.24.3-sumo-4/plugins/inputs/disk
+[dockerstatsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.74.0/receiver/dockerstatsreceiver
+[dockerstatsmetrics]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.74.0/receiver/dockerstatsreceiver/documentation.md
 [sumologicschemaprocessor]: ../pkg/processor/sumologicschemaprocessor/README.md
-[filterprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.73.0/processor/filterprocessor
-[transformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.73.0/processor/transformprocessor
+[filterprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/processor/filterprocessor
+[transformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/processor/transformprocessor
 [mask-filter]: https://help.sumologic.com/docs/send-data/use-json-configure-sources/#example-mask-filter
-[ottlfuncs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.73.0/pkg/ottl/ottlfuncs#functions
+[ottlfuncs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/pkg/ottl/ottlfuncs#functions
 [forward-data]: https://help.sumologic.com/docs/manage/data-forwarding/installed-collectors/
