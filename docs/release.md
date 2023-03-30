@@ -78,6 +78,10 @@ edit the release draft and fill in missing information:
 
 After verifying that the release text and all links are good, publish the release.
 
+### Update documentation with the newly released version
+
+Run `make update-docs` in the project root and submit a PR with the changes.
+
 ### Add `Unreleased` section to the changelog and upgrading guide
 
 Edit the [CHANGELOG.md][changelog] and [upgrading.md][upgrading] files and prepare unreleased section.
