@@ -214,7 +214,8 @@ replaces:
   # failed to download go modules: exit status 1.
   # Output: go: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver@v0.75.0 requires
   #  github.com/open-telemetry/opentelemetry-collector-contrib/internal/stanza@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
-  - github.com/open-telemetry/opentelemetry-collector-contrib/internal/stanza => github.com/open-telemetry/opentelemetry-collector-contrib/internal/stanza v0.75.0
+  # Patch stanza with https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/20548
+  - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza => github.com/swiatekm-sumo/opentelemetry-collector-contrib/pkg/stanza 3e2ca378debe3a197a88d2157f77472eb52b9962
 
   # ----------------------------------------------------------------------------
   # Needed for telegrafreceiver
