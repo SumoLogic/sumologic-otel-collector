@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released TBA
 
+### Changed
+
+- chore: upgrade OT core to 0.75.0 [#1094]
+
+[#1094]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1094
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.74.0-sumo-0...main
 
 ## [v0.74.0-sumo-0]

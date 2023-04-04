@@ -138,7 +138,7 @@ to persist the position in the files it reads between restarts.
 
 See section below on [Collecting logs from files](#collecting-logs-from-files) for details on configuring the Filelog receiver.
 
-[filestorageextension_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/extension/storage/filestorage
+[filestorageextension_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/extension/storage/filestorage
 
 ### Basic configuration for metrics
 
@@ -200,7 +200,7 @@ service:
       exporters: [sumologic]
 ```
 
-[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.74.0/receiver/otlpreceiver
+[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.75.0/receiver/otlpreceiver
 
 ### Putting it all together
 
@@ -303,7 +303,7 @@ More information about this feature can be found in the [extension's documentati
 [sumologic_webpage]: https://www.sumologic.com/
 [sumologicextension]: ../pkg/extension/sumologicextension/
 [sumologicexporter]: ../pkg/exporter/sumologicexporter/
-[hostmetricsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/receiver/hostmetricsreceiver
+[hostmetricsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/receiver/hostmetricsreceiver
 [sumologicextension_configuration]: ../pkg/extension/sumologicextension#configuration
 [sumologicextension_store_credentials]: ../pkg/extension/sumologicextension/README.md#storing-credentials
 
@@ -510,9 +510,9 @@ Flags: 0
 Example configuration with example log can be found in [/examples/logs_json/](/examples/logs_json/) directory.
 
 [json_parser]: https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/operators/json_parser.md
-[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/receiver/filelogreceiver
+[filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/receiver/filelogreceiver
 [opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
-[loggingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.74.0/exporter/loggingexporter
+[loggingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.75.0/exporter/loggingexporter
 
 ## Setting source category
 
@@ -629,7 +629,7 @@ The first example creates a `_sourceCategory` label with a hardcoded value of `d
 The second example creates a `_sourceCategory` label by copying to it the value of Prometheus' `job` label,
 which contains the name of the job - in this case, `otelcol-metrics`.
 
-[prometheusreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.74.0/receiver/prometheusreceiver/README.md
+[prometheusreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.75.0/receiver/prometheusreceiver/README.md
 [prometheus_website]: https://prometheus.io/
 [prometheus_relabel_config]: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
 
@@ -685,7 +685,7 @@ service:
       - statsd/another-app
 ```
 
-[resourceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.74.0/processor/resourceprocessor/README.md
+[resourceprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.75.0/processor/resourceprocessor/README.md
 
 ## Setting source host
 
@@ -757,8 +757,8 @@ Only the first Resource processor's action is required to correctly set the `_so
 The other two actions perform an optional metadata cleanup - they delete the unneeded attributes.
 
 [sumologic_source_host_docs]: https://help.sumologic.com/docs/send-data/reference-information/metadata-naming-conventions#source-host
-[resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.74.0/processor/resourcedetectionprocessor/README.md
-[resourcedetectionprocessor_system_detector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.74.0/processor/resourcedetectionprocessor/README.md#system-metadata
+[resourcedetectionprocessor_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.75.0/processor/resourcedetectionprocessor/README.md
+[resourcedetectionprocessor_system_detector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.75.0/processor/resourcedetectionprocessor/README.md#system-metadata
 
 ## Command-line configuration options
 
@@ -829,5 +829,5 @@ service:
 # ...
 ```
 
-[metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/processor/metricstransformprocessor
+[metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/processor/metricstransformprocessor
 [prometheus_data_model]: https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
