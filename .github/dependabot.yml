@@ -5,12 +5,21 @@ updates:
     schedule:
       interval: "daily"
 
+    labels:
+      - skip-changelog
+
   - package-ecosystem: "gomod"
     directory: "/pkg"
     schedule:
       interval: "daily"
 
+    labels:
+      - skip-changelog
+
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "daily"
+
+    labels:
+      - skip-changelog
