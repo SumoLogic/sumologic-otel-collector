@@ -17,6 +17,7 @@ property :version, String
 # path to a directory with config files for Sumo Logic Distribution for OpenTelemetry Collector
 property :src_config_path, String
 
+DOWNLOAD_TIMEOUT = 300
 BINARY_PATH = '/usr/local/bin/otelcol-sumo'
 BINARY_CONFIG = '/etc/otelcol-sumo/conf.d'
 INSTALL_SCRIPT_PATH = "/tmp/install.sh"
@@ -60,7 +61,7 @@ end
 
 
 def get_install_script_command(resource)
-  command_parts = ["bash", INSTALL_SCRIPT_PATH]
+  command_parts = ["bash", INSTALL_SCRIPT_PATH, "--download-timeout 300"]
   command_parts += resource.collector_tags.map { |key, value| "--tag #{key}=#{value}" }
   if property_is_set?(:version)
      command_parts.push("--version #{resource.version}")
