@@ -12,7 +12,7 @@
         mode: 0755
     - name: Create install script argument list
       ansible.builtin.set_fact:
-        install_script_args: []
+        install_script_args: ['--download-timeout 300']
     - name: Add tags to install script argument list
       ansible.builtin.set_fact:
         install_script_args: "{{ install_script_args + [ '--tag ' ~ item.key ~ '=' ~ item.value ] }}"

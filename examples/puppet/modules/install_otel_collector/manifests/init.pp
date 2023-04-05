@@ -29,6 +29,7 @@ class install_otel_collector (
 ) {
   $install_script_url = 'https://github.com/SumoLogic/sumologic-otel-collector/releases/latest/download/install.sh'
   $install_script_path = '/tmp/install.sh'
+  $download_timeout = 300
 
   # construct the install command arguments from class parameters
   $tags_command_args = $collector_tags.map |$key, $value| { "--tag ${key}=${value}" }
@@ -47,7 +48,7 @@ class install_otel_collector (
   } else {
     $systemd_command_args = ['--skip-systemd']
   }
-  $install_command_args = $tags_command_args + $version_command_args + $api_command_args + $systemd_command_args
+  $install_command_args = ["--download_timeout ${download_timeout}"] + $tags_command_args + $version_command_args + $api_command_args + $systemd_command_args
 
   file { 'download the install script':
     source => $install_script_url,
@@ -60,7 +61,7 @@ class install_otel_collector (
     command     => $install_command,
     path        => ['/usr/local/bin/', '/usr/bin', '/usr/sbin', '/bin'],
     user        => 'root',
-    environment => ["SUMOLOGIC_INSTALLATION_TOKEN=${installation_token}"]
+    environment => ["SUMOLOGIC_INSTALLATION_TOKEN=${installation_token}"],
   }
 
   file { '/etc/otelcol-sumo/conf.d':
