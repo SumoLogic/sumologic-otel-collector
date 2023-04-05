@@ -1,8 +1,8 @@
 # Shamelessly copied from contrib
 
 # This action requires that any PR targeting the main branch should touch at
-# least one CHANGELOG file. If a CHANGELOG entry is not required, add the "Skip
-# Changelog" label to disable this action.
+# least one CHANGELOG file. If a CHANGELOG entry is not required, add the "skip-changelog
+# label to disable this action.
 
 name: changelog
 
@@ -14,7 +14,7 @@ on:
 jobs:
   changelog:
     runs-on: ubuntu-latest
-    if: "!contains(github.event.pull_request.labels.*.name, 'Skip Changelog')"
+    if: "!contains(github.event.pull_request.labels.*.name, 'skip-changelog')"
 
     steps:
       - uses: actions/checkout@v3
@@ -30,6 +30,6 @@ jobs:
             echo "A CHANGELOG was modified. Looks good!"
           else
             echo "No CHANGELOG was modified."
-            echo "Please add a CHANGELOG entry, or add the \"Skip Changelog\" label if not required."
+            echo "Please add a CHANGELOG entry, or add the \"skip-changelog\" label if not required."
             false
           fi
