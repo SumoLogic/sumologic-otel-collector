@@ -71,7 +71,7 @@ fi
 set -u
 
 API_BASE_URL=""
-FIELDS=""
+declare -A FIELDS=()
 VERSION=""
 FIPS=false
 CONTINUE=false
@@ -92,7 +92,7 @@ INSTALL_HOSTMETRICS=false
 
 USER_API_URL=""
 USER_TOKEN=""
-USER_FIELDS=""
+declare -A USER_FIELDS=()
 
 ACL_LOG_FILE_PATHS="/var/log/ /srv/log/"
 
@@ -301,9 +301,9 @@ function parse_options() {
             exit 1
         fi
 
-        # Cannot use `\n` and have to use `\\` as break line due to OSx sed implementation
-        FIELDS="${FIELDS}\\
-$(escape_sed "${OPTARG/=/: }")" ;;
+        declare -a PARTS="(${OPTARG//=/ })"
+        FIELDS[${PARTS[0]}]=${PARTS[1]}
+        ;;
     "?")                            ;;
       *)                            usage; exit 1 ;;
     esac
@@ -617,7 +617,7 @@ function setup_config() {
     fi
 
     ## Check if there is anything to update in configuration
-    if [[ ( -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ) || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
+    if [[ ( -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ) || -n "${API_BASE_URL}" || "${#FIELDS[@]}" -ge 1 ]]; then
         create_user_config_file "${COMMON_CONFIG_PATH}"
         add_extension_to_config "${COMMON_CONFIG_PATH}"
         write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
@@ -631,8 +631,8 @@ function setup_config() {
             write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
         fi
 
-        if [[ -n "${FIELDS}" && -z "${USER_FIELDS}" ]]; then
-            write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
+        if [[ "${#FIELDS[@]}" -ge 1 && ${#USER_FIELDS[@]} -eq 0 ]]; then
+            write_tags FIELDS "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
         fi
 
         # clean up bak file
@@ -847,18 +847,26 @@ function get_user_tags() {
     local ext_indentation
     readonly ext_indentation="${3}"
 
+    declare -n tags=$4
+
     if [[ ! -f "${file}" ]]; then
         return
     fi
 
-    sed -e '/^extensions/,/^[a-z]/!d' "${file}" \
+    lines=$(sed -e '/^extensions/,/^[a-z]/!d' "${file}" \
         | sed -e "/^${indentation}sumologic/,/^${indentation}[a-z]/!d" \
         | sed -e "/^${ext_indentation}collector_fields/,/^${ext_indentation}[a-z]/!d;" \
         | grep -vE "^${ext_indentation}\\S" \
         | sed -e 's/^[[:blank:]]*//' \
-        | sed -E -e "s/^(.*:)[[:blank:]]*('|\")(.*)('|\")[[:blank:]]*$/\1 \3/" \
+        | sed -E -e "s/^(.*:)[[:blank:]]*('|\")?(.*)('|\")?[[:blank:]]*$/\1\3/" \
         | sort \
-        || echo ""
+        || echo "")
+
+    for line in $lines; do
+        declare -a parts="(${line//:/ })"
+        # shellcheck disable=SC2034
+        tags[${parts[0]}]=${parts[1]}
+    done
 }
 
 function get_fields_to_compare() {
@@ -984,8 +992,7 @@ function write_api_url() {
 
 # write tags to user configuration file
 function write_tags() {
-    local fields
-    readonly fields="${1}"
+    local -n fields=$1
 
     local file
     readonly file="${2}"
@@ -999,8 +1006,12 @@ function write_tags() {
     local fields_indentation
     readonly fields_indentation="${ext_indentation}${indentation}"
 
-    local fields_to_write
-    fields_to_write="$(escape_sed "${fields}" | sed -e "s/^\\([^\\]\\)/${fields_indentation}\\1/")"
+    local fields_to_write=""
+    # fields_to_write="$(escape_sed "${fields}" | sed -e "s/^\\([^\\]\\)/${fields_indentation}\\1/")"
+    for key in "${!fields[@]}"; do
+        fields_to_write="${fields_to_write}\\
+${fields_indentation}${key}: ${fields[${key}]}"
+    done
     readonly fields_to_write
 
     # ToDo: ensure we override only sumologic `collector_fields`
@@ -1189,10 +1200,10 @@ if [[ -z "${DOWNLOAD_ONLY}" ]]; then
             exit 1
         fi
 
-        USER_FIELDS="$(get_user_tags "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}")"
-        FIELDS_TO_COMPARE="$(get_fields_to_compare "${FIELDS}")"
+        get_user_tags "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}" USER_FIELDS
+        mapfile -d '' FIELDS_TO_COMPARE < <(printf '%s\0' "${FIELDS[@]}" | sort -z)
 
-        if [[ -n "${USER_FIELDS}" && -n "${FIELDS_TO_COMPARE}" && "${USER_FIELDS}" != "${FIELDS_TO_COMPARE}" ]]; then
+        if [[ ${#USER_FIELDS[@]} -ge 1 && ${#FIELDS_TO_COMPARE[@]} -ge 1 && "${USER_FIELDS[*]}" != "${FIELDS_TO_COMPARE[*]}" ]]; then
             echo "You are trying to install with different tags than in your configuration file!"
             exit 1
         fi
