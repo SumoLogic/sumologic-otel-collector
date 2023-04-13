@@ -25,21 +25,21 @@ The binaries can be downloaded from OT release pages. They are distinguished fro
 otelcol-sumo-${VERSION}-fips-${OS}-${ARCH}
 ```
 
-For example: <https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.74.0-sumo-0/otelcol-sumo-0.74.0-sumo-0-fips-linux_amd64>
+For example: <https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.75.0-sumo-0/otelcol-sumo-0.75.0-sumo-0-fips-linux_amd64>
 
 ### Docker images
 
 Docker images containing the binaries have their tag suffixed with `-fips`. For example, where the normal image for
-version `0.74.0-sumo-0` is:
+version `0.75.0-sumo-0` is:
 
 ```text
-docker pull public.ecr.aws/sumologic/sumologic-otel-collector:0.74.0-sumo-0
+docker pull public.ecr.aws/sumologic/sumologic-otel-collector:0.75.0-sumo-0
 ```
 
 The FIPS-approved version would be:
 
 ```text
-docker pull public.ecr.aws/sumologic/sumologic-otel-collector:0.74.0-sumo-0-fips
+docker pull public.ecr.aws/sumologic/sumologic-otel-collector:0.75.0-sumo-0-fips
 ```
 
 > **Note**

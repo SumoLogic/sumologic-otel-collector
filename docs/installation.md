@@ -75,7 +75,7 @@ The following arguments can be passed to the script:
 | `--skip-installation-token`      | `k`        | Skips requirement for installation token. This option do not disable default configuration creation.                                                                         | no                         |
 | `--tag`                          | `t`        | Sets tag for collector. This argument can be use multiple times. One per tag.                                                                                                | yes, in `key=value` format |
 | `--download-only`                | `w`        | Download new binary only and skip configuration part.                                                                                                                        | no                         |
-| `--version`                      | `v`        | Version of Sumo Logic Distribution for OpenTelemetry Collector to install. By defult it gets latest version.                                                                 | yes, e.g. `0.74.0-sumo-0`  |
+| `--version`                      | `v`        | Version of Sumo Logic Distribution for OpenTelemetry Collector to install. By defult it gets latest version.                                                                 | yes, e.g. `0.75.0-sumo-0`  |
 | `--skip-config`                  | `s`        | Do not create default configuration                                                                                                                                          | no                         |
 | `--skip-systemd` | `d`        | Preserves from Systemd service installation.                                                                                                                                 | no                         |
 | `--fips`                          | `f`        | Install the FIPS-compliant binary. See [this document](fips.md) for more details.                                                                                                                                                  | no                         |
@@ -100,7 +100,7 @@ Follow the steps for your platform below.
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.74.0-sumo-0/otelcol-sumo-0.74.0-sumo-0-linux_amd64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.75.0-sumo-0/otelcol-sumo-0.75.0-sumo-0-linux_amd64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -133,7 +133,7 @@ Follow the steps for your platform below.
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.74.0-sumo-0/otelcol-sumo-0.74.0-sumo-0-linux_arm64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.75.0-sumo-0/otelcol-sumo-0.75.0-sumo-0-linux_arm64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -166,7 +166,7 @@ Follow the steps for your platform below.
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.74.0-sumo-0/otelcol-sumo-0.74.0-sumo-0-darwin_amd64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.75.0-sumo-0/otelcol-sumo-0.75.0-sumo-0-darwin_amd64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -199,7 +199,7 @@ Follow the steps for your platform below.
 1. Download the release binary:
 
     ```bash
-    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.74.0-sumo-0/otelcol-sumo-0.74.0-sumo-0-darwin_arm64"
+    curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.75.0-sumo-0/otelcol-sumo-0.75.0-sumo-0-darwin_arm64"
     ```
 
 1. Install the release binary in your `PATH`:
@@ -357,7 +357,7 @@ repository.
 1. Set the release version variable:
 
    ```bash
-   export RELEASE_VERSION=0.74.0-sumo-0
+   export RELEASE_VERSION=0.75.0-sumo-0
    ```
 
 1. Prepare the configuration according to [this](configuration.md) document and save it in `config.yaml`.
@@ -439,7 +439,7 @@ To run opentelemetry collector as Systemd Service please apply following steps:
 
 1. Create configuration:
 
-   - Get [recommended configuration](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.74.0-sumo-0/examples/sumologic.yaml) from Sumo Logic repository and save it as `/etc/otelcol-sumo/sumologic.yaml`.
+   - Get [recommended configuration](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.75.0-sumo-0/examples/sumologic.yaml) from Sumo Logic repository and save it as `/etc/otelcol-sumo/sumologic.yaml`.
    - Create your custom configuration in `/etc/otelcol-sumo/conf.d`, e.g. `/etc/otelcol-sumo/conf.d/common.yaml`
 
    > **IMPORTANT NOTE**:
@@ -549,7 +549,7 @@ We recommend to keep install token in environmental variable for Systemd install
    SUMOLOGIC_INSTALLATION_TOKEN=<your token>
    ```
 
-   We use `SUMOLOGIC_INSTALLATION_TOKEN` in example, as it will be autoamtically used by [recommended configuration](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.74.0-sumo-0/examples/sumologic.yaml)
+   We use `SUMOLOGIC_INSTALLATION_TOKEN` in example, as it will be autoamtically used by [recommended configuration](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.75.0-sumo-0/examples/sumologic.yaml)
 
 1. Ensure that file has correct owner and permissions:
 
