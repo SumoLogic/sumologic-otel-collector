@@ -13,9 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - chore: upgrade OT core to 0.75.0 [#1094]
 - feat: add Service Graph connector [#1102]
+- feat!: remove Dotnet Diagnostics receiver [#1103]
 
 [#1094]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1094
 [#1102]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1102
+[#1103]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1103
 [unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.74.0-sumo-0...main
 
 ## [v0.74.0-sumo-0]
