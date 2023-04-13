@@ -3,12 +3,15 @@
 - [How to release](#how-to-release)
   - [Update Changelog and upgrading guide](#update-changelog-and-upgrading-guide)
   - [Create and push Git tag](#create-and-push-git-tag)
+    - [Remove tag in case of a failed release job](#remove-tag-in-case-of-a-failed-release-job)
   - [Publish GitHub release](#publish-github-release)
+  - [Update documentation with the newly released version](#update-documentation-with-the-newly-released-version)
   - [Add `Unreleased` section to the changelog and upgrading guide](#add-unreleased-section-to-the-changelog-and-upgrading-guide)
 - [Updating OT core](#updating-ot-core)
   - [Updating patched processors](#updating-patched-processors)
   - [Updating OT distro](#updating-ot-distro)
   - [Add missing upstream components](#add-missing-upstream-components)
+    - [Adding components from scratch](#adding-components-from-scratch)
 - [Running Tracing E2E tests](#running-tracing-e2e-tests)
 - [Updating journalctl](#updating-journalctl)
 
@@ -143,7 +146,7 @@ Additionally, the following components are supported:
 - [ecs_observer][ecsobserver]
 - [ecs_task_observer][ecstaskobserver]
 
-As a fourth step, please check [OpenTelemetry Collector][OT_release] and [OpenTelemetry Collector Contrib][OTC_release]
+As a fourth step, please check [OpenTelemetry Collector][ot_release] and [OpenTelemetry Collector Contrib][otc_release]
 release pages for new components and update [builder configuration][builder_config] and [README.md] if they are any.
 New exporters should not be added without a reason.
 Please consider example pull request: [#604]
@@ -154,7 +157,7 @@ This shouldn't be required as long as list of components is regularly updated,
 but in case you want to generate full list of components, the following instruction can be helpful:
 
 1. [update builder configuration][builder_config]
-   You can use the following snippet inside [OpenTelemetry Contrib repository][OTC_repository]
+   You can use the following snippet inside [OpenTelemetry Contrib repository][otc_repository]
    in order to get list of components:
 
    ```bash
@@ -173,7 +176,7 @@ but in case you want to generate full list of components, the following instruct
 1. Update markdown table:
 
    1. Prepare `local/receiver.txt`, `local/exporter.txt`, `local/extension.txt` and `local/processor.txt`
-      in [OpenTelemetry Contrib repository][OTC_repository] based on components file.
+      in [OpenTelemetry Contrib repository][otc_repository] based on components file.
       Example content of `local/extension.txt`:
 
       ```text
@@ -256,11 +259,11 @@ make update-journalctl
 [debian_versions]: https://hub.docker.com/_/debian/?tab=description
 [otelcol_components]: https://github.com/open-telemetry/opentelemetry-collector-releases/blob/main/distributions/otelcol/manifest.yaml
 [otelcol_contrib_components]: https://github.com/open-telemetry/opentelemetry-collector-releases/blob/main/distributions/otelcol-contrib/manifest.yaml
-[OTC_repository]: https://github.com/open-telemetry/opentelemetry-collector-contrib
-[README.md]: ../README.md
+[otc_repository]: https://github.com/open-telemetry/opentelemetry-collector-contrib
+[readme.md]: ../README.md
 [#604]: https://github.com/SumoLogic/sumologic-otel-collector/pull/604/files
-[OTC_release]: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases
-[OT_release]: https://github.com/open-telemetry/opentelemetry-collector/releases
+[otc_release]: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases
+[ot_release]: https://github.com/open-telemetry/opentelemetry-collector/releases
 [updating_patched]: https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.74.0-sumo-0/docs/release.md#updating-patched-processors
 [windowseventlogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/receiver/windowseventlogreceiver
 [logstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/processor/logstransformprocessor
