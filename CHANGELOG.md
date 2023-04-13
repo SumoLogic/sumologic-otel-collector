@@ -12,9 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - chore: upgrade OT core to 0.75.0 [#1094]
+- feat: add Service Graph connector [#1102]
 
 [#1094]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1094
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.74.0-sumo-0...main
+[#1102]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1102
+[unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.74.0-sumo-0...main
 
 ## [v0.74.0-sumo-0]
 
@@ -88,7 +90,6 @@ See the [upgrade guide][upgrade_guide_v0.74] for more details.
 [#858]: https://github.com/SumoLogic/sumologic-otel-collector/pull/858
 [#1027]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1027
 [#1048]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1048
-
 [v0.73.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.72.0-sumo-0...v0.73.0-sumo-0
 
 ## [v0.72.0-sumo-0]
@@ -287,7 +288,7 @@ This release introduces the following breaking changes:
 - fix(k8sprocessor): keep pod's services information up to date [#710]
 - chore(deps): bump golang from 1.18.4 to 1.19.2 [#745]
 - chore(deps): bump go-boringcrypto to 1.18.7b7 [#746]
-- feat(sourceprocessor): ensure that '_collector' is set before other source headers [#824]
+- feat(sourceprocessor): ensure that '\_collector' is set before other source headers [#824]
 - chore(deps): upgrade Telegraf to 1.24.3-sumo-1 [#828]
 - chore: upgrade OT core to v0.66.0 [#769] [#826] [#844] [#849]
 
