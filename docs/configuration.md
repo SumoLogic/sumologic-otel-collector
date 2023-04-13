@@ -142,7 +142,7 @@ See section below on [Collecting logs from files](#collecting-logs-from-files) f
 
 ### Basic configuration for metrics
 
-Sumo Logic Distribution for OpenTelemetry Collector uses the [Telegraf Receiver][telegrafreceiver_docs] to ingest metrics.
+Sumo Logic Distribution for OpenTelemetry Collector uses the [Host Metrics Receiver][hostmetricsreceiver_docs] to ingest metrics.
 
 Here's a minimal `config.yaml` file that sends the host's memory metrics to Sumo Logic:
 
@@ -155,23 +155,21 @@ extensions:
     installation_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
 
 receivers:
-  telegraf:
-    separate_field: false
-    agent_config: |
-      [agent]
-        interval = "3s"
-        flush_interval = "3s"
-      [[inputs.mem]]
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+      memory:
 
 service:
   extensions: [sumologic]
   pipelines:
     metrics:
-      receivers: [telegraf]
+      receivers: [hostmetrics]
       exporters: [sumologic]
 ```
 
-[telegrafreceiver_docs]: ../pkg/receiver/telegrafreceiver/README.md
+[hostmetricsreceiver_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.75.0/receiver/hostmetricsreceiver/README.md
 
 ### Basic configuration for traces
 
@@ -231,13 +229,11 @@ receivers:
       from: attributes["log.file.path_resolved"]
       to: resource["log.file.path_resolved"]
     start_at: beginning
-  telegraf:
-    separate_field: false
-    agent_config: |
-      [agent]
-        interval = "3s"
-        flush_interval = "3s"
-      [[inputs.mem]]
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+      memory:
   otlp:
     protocols:
       grpc:
@@ -249,7 +245,7 @@ service:
       receivers: [filelog]
       exporters: [sumologic]
     metrics:
-      receivers: [telegraf]
+      receivers: [hostmetrics]
       exporters: [sumologic]
     traces:
       receivers: [otlp]
