@@ -71,7 +71,8 @@ fi
 set -u
 
 API_BASE_URL=""
-declare -A FIELDS=()
+declare -a FIELDS_KEYS=()
+declare -a FIELDS_VALUES=()
 VERSION=""
 FIPS=false
 CONTINUE=false
@@ -92,7 +93,8 @@ INSTALL_HOSTMETRICS=false
 
 USER_API_URL=""
 USER_TOKEN=""
-declare -A USER_FIELDS=()
+declare -a USER_FIELDS_KEYS=()
+declare -a USER_FIELDS_VALUES=()
 
 ACL_LOG_FILE_PATHS="/var/log/ /srv/log/"
 
@@ -302,7 +304,8 @@ function parse_options() {
         fi
 
         declare -a PARTS="(${OPTARG//=/ })"
-        FIELDS[${PARTS[0]}]=${PARTS[1]}
+        FIELDS_KEYS+=("${PARTS[0]}")
+        FIELDS_VALUES+=("${PARTS[1]}")
         ;;
     "?")                            ;;
       *)                            usage; exit 1 ;;
@@ -617,7 +620,7 @@ function setup_config() {
     fi
 
     ## Check if there is anything to update in configuration
-    if [[ ( -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ) || -n "${API_BASE_URL}" || "${#FIELDS[@]}" -ge 1 ]]; then
+    if [[ ( -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ) || -n "${API_BASE_URL}" || "${#FIELDS_KEYS[@]}" -ge 1 ]]; then
         create_user_config_file "${COMMON_CONFIG_PATH}"
         add_extension_to_config "${COMMON_CONFIG_PATH}"
         write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
@@ -631,8 +634,8 @@ function setup_config() {
             write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
         fi
 
-        if [[ "${#FIELDS[@]}" -ge 1 && ${#USER_FIELDS[@]} -eq 0 ]]; then
-            write_tags FIELDS "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
+        if [[ "${#FIELDS_KEYS[@]}" -ge 1 && ${#USER_FIELDS_KEYS[@]} -eq 0 ]]; then
+            write_tags FIELDS_KEYS FIELDS_VALUES "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
         fi
 
         # clean up bak file
@@ -847,7 +850,8 @@ function get_user_tags() {
     local ext_indentation
     readonly ext_indentation="${3}"
 
-    declare -n tags=$4
+    declare -n tags_keys=$4
+    declare -n tags_values=$5
 
     if [[ ! -f "${file}" ]]; then
         return
@@ -865,7 +869,8 @@ function get_user_tags() {
     for line in $lines; do
         declare -a parts="(${line//:/ })"
         # shellcheck disable=SC2034
-        tags[${parts[0]}]=${parts[1]}
+        tags_keys+=("${parts[0]}")
+        tags_values+=("${parts[1]}")
     done
 }
 
@@ -992,25 +997,26 @@ function write_api_url() {
 
 # write tags to user configuration file
 function write_tags() {
-    local -n fields=$1
+    local -n fields_keys=${1}
+    local -n fields_values=${2}
 
     local file
-    readonly file="${2}"
+    readonly file="${3}"
 
     local indentation
-    readonly indentation="${3}"
+    readonly indentation="${4}"
 
     local ext_indentation
-    readonly ext_indentation="${4}"
+    readonly ext_indentation="${5}"
 
     local fields_indentation
     readonly fields_indentation="${ext_indentation}${indentation}"
 
     local fields_to_write=""
-    # fields_to_write="$(escape_sed "${fields}" | sed -e "s/^\\([^\\]\\)/${fields_indentation}\\1/")"
-    for key in "${!fields[@]}"; do
+    for (( i=0; i<${#fields_keys[@]}; i++ ));
+    do
         fields_to_write="${fields_to_write}\\
-${fields_indentation}${key}: ${fields[${key}]}"
+${fields_indentation}${fields_keys[$i]}: ${fields_values[$i]}"
     done
     readonly fields_to_write
 
@@ -1156,7 +1162,7 @@ set_tmpdir
 install_missing_dependencies
 check_dependencies
 
-readonly SUMOLOGIC_INSTALLATION_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
+readonly SUMOLOGIC_INSTALLATION_TOKEN API_BASE_URL FIELDS_KEYS FIELDS_VALUES CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
 readonly USER_CONFIG_DIRECTORY USER_ENV_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
 readonly ACL_LOG_FILE_PATHS
 readonly INSTALL_HOSTMETRICS
@@ -1200,10 +1206,10 @@ if [[ -z "${DOWNLOAD_ONLY}" ]]; then
             exit 1
         fi
 
-        get_user_tags "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}" USER_FIELDS
-        mapfile -d '' FIELDS_TO_COMPARE < <(printf '%s\0' "${FIELDS[@]}" | sort -z)
+        get_user_tags "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}" USER_FIELDS_KEYS USER_FIELDS_VALUES
+        mapfile -d '' FIELDS_TO_COMPARE < <(printf '%s\0' "${FIELDS_VALUES[@]}" | sort -z)
 
-        if [[ ${#USER_FIELDS[@]} -ge 1 && ${#FIELDS_TO_COMPARE[@]} -ge 1 && "${USER_FIELDS[*]}" != "${FIELDS_TO_COMPARE[*]}" ]]; then
+        if [[ ${#USER_FIELDS_KEYS[@]} -ge 1 && ${#FIELDS_TO_COMPARE[@]} -ge 1 && "${USER_FIELDS_VALUES[*]}" != "${FIELDS_TO_COMPARE[*]}" ]]; then
             echo "You are trying to install with different tags than in your configuration file!"
             exit 1
         fi
