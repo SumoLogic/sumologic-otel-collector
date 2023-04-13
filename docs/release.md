@@ -37,7 +37,7 @@ that for you as well as pushing tags for all the plugins in this repo so that
 they can be imported from other repositories.
 
 ```shell
-export TAG=v0.74.0-sumo-0
+export TAG=v0.75.0-sumo-0
 make add-tag push-tag
 ```
 
@@ -65,7 +65,7 @@ you might need to remove the created tags, perhaps change something, and create 
 To delete the tags both locally and remotely, run the following commands:
 
 ```shell
-export TAG=v0.74.0-sumo-0
+export TAG=v0.75.0-sumo-0
 make delete-tag delete-remote-tag
 ```
 
@@ -110,7 +110,7 @@ Updating OT core involves:
 
 We currently do not maintain patches for upstream components.
 
-Historical process can be taken from [v0.74.0-sumo-0][updating_patched] if needed.
+Historical process can be taken from [v0.57.2-sumo-0][updating_patched] if needed.
 
 ### Updating OT distro
 
@@ -255,7 +255,7 @@ make update-journalctl
 [circleci_approve]: ../images/circleci_approve_workflow.png
 [changelog]: ../CHANGELOG.md
 [upgrading]: ./upgrading.md
-[journaldreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/receiver/journaldreceiver
+[journaldreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/receiver/journaldreceiver
 [debian_versions]: https://hub.docker.com/_/debian/?tab=description
 [otelcol_components]: https://github.com/open-telemetry/opentelemetry-collector-releases/blob/main/distributions/otelcol/manifest.yaml
 [otelcol_contrib_components]: https://github.com/open-telemetry/opentelemetry-collector-releases/blob/main/distributions/otelcol-contrib/manifest.yaml
@@ -264,10 +264,10 @@ make update-journalctl
 [#604]: https://github.com/SumoLogic/sumologic-otel-collector/pull/604/files
 [otc_release]: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases
 [ot_release]: https://github.com/open-telemetry/opentelemetry-collector/releases
-[updating_patched]: https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.74.0-sumo-0/docs/release.md#updating-patched-processors
-[windowseventlogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/receiver/windowseventlogreceiver
-[logstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/processor/logstransformprocessor
-[dbstorage]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/extension/storage/dbstorage
-[dockerobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/extension/observer/dockerobserver
-[ecsobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/extension/observer/ecsobserver
-[ecstaskobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.74.0/extension/observer/ecstaskobserver
+[updating_patched]: https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.57.2-sumo-0/docs/release.md#updating-patched-processors
+[windowseventlogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/receiver/windowseventlogreceiver
+[logstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/processor/logstransformprocessor
+[dbstorage]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/extension/storage/dbstorage
+[dockerobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/extension/observer/dockerobserver
+[ecsobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/extension/observer/ecsobserver
+[ecstaskobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/extension/observer/ecstaskobserver
