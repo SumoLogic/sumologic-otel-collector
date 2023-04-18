@@ -33,9 +33,9 @@ In order to learn more, pleasee see [purpose of Sumo Logic Distribution for Open
 - [Versioning policy][versioning]
 - [Breaking changes policy][breaking]
 
-[linux_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-linux/
-[macos_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-macos/
-[windows_installation]:https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-windows/
+[linux_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-linux/
+[macos_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-macos/
+[windows_installation]:https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-windows/
 [performance]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/#performance
 [known issues]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/troubleshooting-faq/#known-issues
 [purpose]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/

@@ -11,7 +11,7 @@ This document explains how to obtain FIPS-capable binaries and how to run them i
 
 ### Linux
 
-Refer to [FIPS section of installation documentation](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-on-linux/#fips)
+Refer to [FIPS section of installation documentation](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-linux/#fips)
 
 ### MacOS
 
