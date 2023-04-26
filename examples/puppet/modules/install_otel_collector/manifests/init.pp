@@ -27,7 +27,7 @@ class install_otel_collector (
   Optional[String] $version = undef,
   String $src_config_path = 'puppet:///modules/install_otel_collector/conf.d',
 ) {
-  $install_script_url = 'https://github.com/SumoLogic/sumologic-otel-collector/releases/latest/download/install.sh'
+  $install_script_url = 'https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh'
   $install_script_path = '/tmp/install.sh'
   $download_timeout = 300
 
@@ -48,11 +48,12 @@ class install_otel_collector (
   } else {
     $systemd_command_args = ['--skip-systemd']
   }
-  $install_command_args = ["--download_timeout ${download_timeout}"] + $tags_command_args + $version_command_args + $api_command_args + $systemd_command_args
+  $install_command_args = ["--download-timeout ${download_timeout}"] + $tags_command_args + $version_command_args + $api_command_args + $systemd_command_args
 
   file { 'download the install script':
     source => $install_script_url,
     path   => $install_script_path,
+    mode   => '0755',
   }
 
   $install_command_parts = ['bash', $install_script_path] + $install_command_args
@@ -62,11 +63,13 @@ class install_otel_collector (
     path        => ['/usr/local/bin/', '/usr/bin', '/usr/sbin', '/bin'],
     user        => 'root',
     environment => ["SUMOLOGIC_INSTALLATION_TOKEN=${installation_token}"],
+    require     => File[$install_script_path],
   }
 
   file { '/etc/otelcol-sumo/conf.d':
     ensure  => directory,
     recurse => true,
     source  => $src_config_path,
+    require => Exec['run the installation script'],
   }
 }
