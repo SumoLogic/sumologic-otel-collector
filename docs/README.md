@@ -1,15 +1,30 @@
 # Sumo Logic Distribution for OpenTelemetry
 
-- [Installation](./installation.md)
+- Installation
+  - [Linux][linux_installation]
+  - [MacOS][macos_installation]
+  - [Windows][windows_installation]
 - [Configuration](./configuration.md)
 - [Migration from Installed Collector](./migration.md)
 - [Differences between Installed Collector and Opentelemetry Collector](./comparison.md)
-- [Performance](./performance.md)
-- [Best Practices](./best-practices.md)
-- [Mapping OpenTelemetry concepts to Sumo Logic](./open-telemetry-concepts.md)
+- [Performance]
+- [Additional configurations reference (best practices)][additional_reference]
+- [Mapping OpenTelemetry concepts to Sumo Logic][mapping]
 - [FIPS compliance](./fips.md)
-- [Known Issues](./known-issues.md)
-- [Troubleshooting](./troubleshooting.md)
-- [Purpose of Sumo Logic Distribution for OpenTelemetry Collector](./upstream-relation.md#purpose-of-sumo-logic-distribution-for-opentelemetry-collector)
-- [Versioning policy](./upstream-relation.md#versioning-policy)
-- [Breaking changes policy](./upstream-relation.md#breaking-changes-policy)
+- [Known Issues][known issues]
+- [Troubleshooting]
+- [Purpose of Sumo Logic Distribution for OpenTelemetry Collector][purpose]
+- [Versioning policy][versioning]
+- [Breaking changes policy][breaking]
+
+[linux_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-linux/
+[macos_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-macos/
+[windows_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-windows/
+[additional_reference]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/data-source-configurations/additional-configurations-reference/
+[performance]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/#performance
+[known issues]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/troubleshooting-faq/#known-issues
+[troubleshooting]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/troubleshooting-faq/
+[purpose]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/
+[versioning]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/#versioning-policy
+[breaking]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/#versioning-policy
+[mapping]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/data-source-configurations/additional-configurations-reference/#mapping-opentelemetry-concepts-to-sumo-logic
