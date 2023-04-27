@@ -1121,7 +1121,7 @@ function set_acl_on_log_paths() {
         for log_path in ${ACL_LOG_FILE_PATHS}; do
 	      if [ -d "$log_path" ]; then
 		    echo -e "Running: setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}"
-		    setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x "${log_path}"
+		    setfacl -R -m d:u:${SYSTEM_USER}:r-x,d:g:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x "${log_path}"
 	      fi
         done
     else
@@ -1130,7 +1130,7 @@ function set_acl_on_log_paths() {
         echo -e "You can fix it manually by installing setfacl and executing the following commands:"
         for log_path in ${ACL_LOG_FILE_PATHS}; do
 	      if [ -d "$log_path" ]; then
-		    echo -e "-> setfacl -R -m d:u:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}"
+		    echo -e "-> setfacl -R -m d:u:${SYSTEM_USER}:r-x,d:g:${SYSTEM_USER}:r-x,u:${SYSTEM_USER}:r-x,g:${SYSTEM_USER}:r-x ${log_path}"
 	      fi
         done
         echo ""

@@ -7,23 +7,40 @@ It is a single agent to send logs, metrics and traces to [Sumo Logic][sumologic]
 
 **Our aim is to extend and not to replace the OpenTelemetry Collector.**
 
-In order to learn more, pleasee see [purpose of Sumo Logic Distribution for OpenTelemetry Collector](./docs/upstream-relation.md#purpose-of-sumo-logic-distribution-for-opentelemetry-collector)
+In order to learn more, pleasee see [purpose of Sumo Logic Distribution for OpenTelemetry Collector][purpose]
 
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
 [sumologic]: https://www.sumologic.com
 
-- [Installation](docs/installation.md)
+- Installation
+  - [Linux][linux_installation]
+  - [MacOS][macos_installation]
+  - [Windows][windows_installation]
+  - [Container image](/docs/installation.md#container-image)
+    - [Important note about local state files when using `sumologicextension`](/docs/installation.md#important-note-about-local-state-files-when-using-sumologicextension)
+  - [Ansible](/docs/installation.md#ansible)
+  - [Puppet](/docs/installation.md#puppet)
+  - [Chef](/docs/installation.md#chef)
 - [Configuration](docs/configuration.md)
 - [Migration from Installed Collector](docs/migration.md)
 - [Comparison between the Installed Collector and OpenTelemetry Collector](docs/comparison.md)
 - [OpenTelemetry Collector builder](./otelcolbuilder/README.md)
-- [Performance](docs/performance.md)
-- [Known Issues](docs/known-issues.md)
+- [Performance]
+- [Known Issues][known issues]
 - [Contributing](./CONTRIBUTING.md)
 - [Changelog](./CHANGELOG.md)
-- [Purpose of Sumo Logic Distribution for OpenTelemetry Collector](./docs/upstream-relation.md#purpose-of-sumo-logic-distribution-for-opentelemetry-collector)
-- [Versioning policy](./docs/upstream-relation.md#versioning-policy)
-- [Breaking changes policy](./docs/upstream-relation.md#breaking-changes-policy)
+- [Purpose of Sumo Logic Distribution for OpenTelemetry Collector][purpose]
+- [Versioning policy][versioning]
+- [Breaking changes policy][breaking]
+
+[linux_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-linux/
+[macos_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-macos/
+[windows_installation]:https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-windows/
+[performance]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/#performance
+[known issues]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/troubleshooting-faq/#known-issues
+[purpose]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/
+[versioning]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/#versioning-policy
+[breaking]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/#versioning-policy
 
 ## Supported OS and architectures
 
