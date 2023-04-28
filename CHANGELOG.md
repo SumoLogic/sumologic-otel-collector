@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Released TBA
+
+### Changed
+
+- chore: upgrade OT core to 0.76.1 [#1112]
+
+[#1102]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1112
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.75.0-sumo-0...main
+
 ## [v0.75.0-sumo-0]
 
 ### Released 2023-04-13
