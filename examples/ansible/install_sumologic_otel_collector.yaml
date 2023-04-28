@@ -42,3 +42,16 @@
         group: otelcol-sumo
         mode: 0640
       when: src_config_path is defined
+    - name: "Copy environment files to /etc/otelcol-sumo/env"
+      ansible.builtin.copy:
+        src: "{{ src_env_path }}"
+        dest: /etc/otelcol-sumo/env
+        owner: root
+        group: root
+        mode: 0600
+      when: src_env_path is defined
+    - name: Restart service
+      service:
+        name: otelcol-sumo
+        state: restarted
+      when: (src_config_path is defined) or (src_env_path is defined)
