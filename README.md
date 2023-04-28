@@ -160,11 +160,11 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 [bigipreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/bigipreceiver
 [carbonreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/carbonreceiver
 [cloudfoundryreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/cloudfoundryreceiver
+[cloudflarereceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/cloudflarereceiver
 [collectdreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/collectdreceiver
 [couchdbreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/couchdbreceiver
 [datadogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/datadogreceiver
 [dockerstatsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/dockerstatsreceiver
-[dotnetdiagnosticsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/dotnetdiagnosticsreceiver
 [elasticsearchreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/elasticsearchreceiver
 [expvarreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/expvarreceiver
 [filelogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/filelogreceiver
@@ -186,6 +186,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 [kafkareceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/kafkareceiver
 [kafkametricsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/kafkametricsreceiver
 [kubeletstatsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/kubeletstatsreceiver
+[lokireceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/lokireceiver
 [memcachedreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/memcachedreceiver
 [mongodbreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/mongodbreceiver
 [mongodbatlasreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/receiver/mongodbatlasreceiver
@@ -295,3 +296,5 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 
 [forwardconnector]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.76.0/connector/forwardconnector
 [countconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/connector/countconnector
+[servicegraphconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/connector/servicegraphconnector
+[spanmetricsconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.76.3/connector/spanmetricsconnector

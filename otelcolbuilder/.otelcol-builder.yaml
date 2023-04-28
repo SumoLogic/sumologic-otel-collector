@@ -127,6 +127,7 @@ receivers:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kafkametricsreceiver v0.76.3
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kafkareceiver v0.76.3
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver v0.76.3
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/lokireceiver v0.76.3
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/memcachedreceiver v0.76.3
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/mongodbatlasreceiver v0.76.3
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/mongodbreceiver v0.76.3
@@ -223,3 +224,6 @@ replaces:
   - github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension => ../../pkg/extension/sumologicextension
   - github.com/SumoLogic/sumologic-otel-collector/pkg/extension/opampextension => ../../pkg/configprovider/opampextension
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider => ../../pkg/configprovider/globprovider
+
+  # lokireceiver does a replace for this, so we need to as well
+  - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/loki => github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/loki v0.76.3
