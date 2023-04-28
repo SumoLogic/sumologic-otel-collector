@@ -95,6 +95,9 @@ Here is the example pull request: [#677].
 
 ## Updating OT core
 
+> **Warning**: For version 0.76.*, the core version is 0.76.1, and the contrib version is 0.76.3.
+> Take care when updating, and delete this note afterwards.
+
 Updating OT core involves:
 
 1. Rebasing our upstream processor patches on the new core version
