@@ -21,7 +21,7 @@ readonly GREP=grep
 fi
 
 readonly BUILDER_CONFIG="otelcolbuilder/.otelcol-builder.yaml"
-OT_VERSION=$(yq e '.dist.otelcol_version' "${BUILDER_CONFIG}")
+OT_VERSION=$(yq e '.dist.otelcol_version' "${BUILDER_CONFIG}" | cut -f1,2 -d'.')
 readonly OT_VERSION
 readonly CONTRIB_PLUGIN_HTTP_URL_REGEX="https://github.com/open-telemetry/opentelemetry-collector(-contrib)?/tree/(v[0-9]+.[0-9]+.[0-9]+)/(receiver|processor|exporter|extension)/([a-zA-Z]+)"
 readonly CONTRIB_PLUGIN_REGEX="github.com/open-telemetry/opentelemetry-collector(-contrib)?/(receiver|processor|exporter|extension)/([a-zA-Z]+)"
@@ -34,10 +34,10 @@ do
     # ... check if the version in the README.md is the same as in the builder config
     if [[ ${plugin_url} =~ ${CONTRIB_PLUGIN_HTTP_URL_REGEX} ]]
     then
-        PLUGIN_VERSION_FROM_README="${BASH_REMATCH[2]}"
+        PLUGIN_VERSION_FROM_README=$(echo "${BASH_REMATCH[2]}" | cut -f1,2 -d'.' )
         if [[ ${PLUGIN_VERSION_FROM_README} != v${OT_VERSION} ]]
         then
-            printf "There's an unexpected plugin version in README.md for %s (should be %s)\n" "${plugin_url}" "${OT_VERSION}"
+            printf "There's an unexpected plugin version in README.md for %s (should be %s)\n" "${plugin_url}" "${OT_VERSION}.*"
             fail=1
         fi
 
