@@ -68,16 +68,14 @@ func (c *compressor) compress(data io.Reader) (io.Reader, error) {
 		return data, nil
 	}
 
-	var dataBytes bytes.Buffer
-	if _, err := dataBytes.ReadFrom(data); err != nil {
-		return nil, err
-	}
-
 	// Reset c.buf to start with empty message
 	c.buf.Reset()
 	c.writer.Reset(&c.buf)
 
-	if _, err := c.writer.Write(dataBytes.Bytes()); err != nil {
+	// use io.Copy here to do the smart thing depending on what the destination and source implement
+	// in most cases this results in no buffer being needed
+	// the above is definitely the case for strings.NewReader and bytes.NewReader which we use in the sender
+	if _, err := io.Copy(c.writer, data); err != nil {
 		return nil, err
 	}
 

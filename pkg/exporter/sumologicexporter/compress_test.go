@@ -35,6 +35,9 @@ func (e mockedEncrypter) Reset(dst io.Writer) {
 }
 
 func (e mockedEncrypter) Write(p []byte) (n int, err error) {
+	if e.writeError == nil {
+		return len(p), nil
+	}
 	return 0, e.writeError
 }
 
