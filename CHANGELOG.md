@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released TBA
 
+### Fixed
+
+- fix(sumologicexporter): avoid allocations in compressor [#1118]
+
+[#1118]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1118
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.76.1-sumo-0...main
 
 ## [0.76.1-sumo-0]
