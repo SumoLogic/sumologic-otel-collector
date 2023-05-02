@@ -227,7 +227,7 @@ jobs:
 
       - name: Extract tag
         id: extract_tag
-        run: echo "::set-output name=tag::$(git rev-parse HEAD)"
+        run: echo "tag=$(git rev-parse HEAD)" > $GITHUB_OUTPUT
 
       - name: Print tag
         run: echo "Running dev build for ${{ steps.extract_tag.outputs.tag }}"
@@ -285,7 +285,7 @@ jobs:
 
       - name: Extract tag
         id: extract_tag
-        run: echo "::set-output name=tag::$(git rev-parse HEAD)"
+        run: echo "tag=$(git rev-parse HEAD)" > $GITHUB_OUTPUT
 
       - name: Print tag
         run: echo "Running dev build for ${{ steps.extract_tag.outputs.tag }}"
