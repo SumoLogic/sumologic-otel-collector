@@ -13,6 +13,7 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	api_v1 "k8s.io/api/core/v1"
+	discovery_v1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -464,7 +465,7 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 	require.NoError(t, err)
 
 	client := c.(*fake.Clientset)
-	ch := waitForWatchToBeEstablished(client, "endpoints")
+	ch := waitForWatchToBeEstablished(client, "endpointslices")
 
 	op.Start()
 	t.Cleanup(func() {
@@ -479,65 +480,77 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 				UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75392",
 			},
 		}
-		endpoints1 = &api_v1.Endpoints{
+		endpointSlice1 = &discovery_v1.EndpointSlice{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-service",
+				Name:      "my-service-abc",
 				Namespace: namespace,
 				UID:       "88125104-a4f6-40ac-906b-fcd385c127f3",
+				Labels: map[string]string{
+					"kubernetes.io/service-name": "my-service",
+				},
 			},
 			TypeMeta: metav1.TypeMeta{
-				Kind: "Endpoint",
+				Kind: "EndpointSlice",
 			},
-			Subsets: []api_v1.EndpointSubset{
+			Endpoints: []discovery_v1.Endpoint{
 				{
-					Addresses: []api_v1.EndpointAddress{
-						{
-							TargetRef: &api_v1.ObjectReference{
-								Name:      pod.Name,
-								Namespace: namespace,
-								Kind:      "Pod",
-								UID:       pod.UID,
-							},
-						},
+					TargetRef: &api_v1.ObjectReference{
+						Name:      pod.Name,
+						Namespace: namespace,
+						Kind:      "Pod",
+						UID:       pod.UID,
 					},
 				},
 			},
 		}
-		endpoints2 = &api_v1.Endpoints{
+		endpointSlice2 = &discovery_v1.EndpointSlice{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-service-2",
+				Name:      "my-service-2-def",
 				Namespace: namespace,
 				UID:       "07ffe4a1-ca89-4d28-acb5-808b0c0bb20f",
+				Labels: map[string]string{
+					"kubernetes.io/service-name": "my-service-2",
+				},
 			},
 			TypeMeta: metav1.TypeMeta{
-				Kind: "Endpoint",
+				Kind: "EndpointSlice",
 			},
-			Subsets: []api_v1.EndpointSubset{
+			Endpoints: []discovery_v1.Endpoint{
 				{
-					Addresses: []api_v1.EndpointAddress{
-						{
-							TargetRef: &api_v1.ObjectReference{
-								Name:      pod.Name,
-								Namespace: namespace,
-								Kind:      "Pod",
-								UID:       pod.UID,
-							},
-						},
+					TargetRef: &api_v1.ObjectReference{
+						Name:      pod.Name,
+						Namespace: namespace,
+						Kind:      "Pod",
+						UID:       pod.UID,
 					},
 				},
 			},
+		}
+		endpointSlice2Updated = &discovery_v1.EndpointSlice{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-service-2-def",
+				Namespace: namespace,
+				UID:       "07ffe4a1-ca89-4d28-acb5-808b0c0bb20f",
+				Labels: map[string]string{
+					"kubernetes.io/service-name": "my-service-2",
+				},
+			},
+			TypeMeta: metav1.TypeMeta{
+				Kind: "EndpointSlice",
+			},
+			Endpoints: []discovery_v1.Endpoint{},
 		}
 	)
 
 	<-ch
 
 	t.Run("adding endpoints", func(t *testing.T) {
-		_, err = c.CoreV1().Endpoints(namespace).
-			Create(context.Background(), endpoints1, metav1.CreateOptions{})
+		_, err = c.DiscoveryV1().EndpointSlices(namespace).
+			Create(context.Background(), endpointSlice1, metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		_, err = c.CoreV1().Endpoints(namespace).
-			Create(context.Background(), endpoints2, metav1.CreateOptions{})
+		_, err = c.DiscoveryV1().EndpointSlices(namespace).
+			Create(context.Background(), endpointSlice2, metav1.CreateOptions{})
 		require.NoError(t, err)
 
 		_, err = c.CoreV1().Pods(namespace).
@@ -555,9 +568,24 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 		}, 5*time.Second, 10*time.Millisecond)
 	})
 
+	t.Run("updating endpoints", func(t *testing.T) {
+		_, err = c.DiscoveryV1().EndpointSlices(namespace).
+			Update(context.Background(), endpointSlice2Updated, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		assert.Eventually(t, func() bool {
+			services := op.GetServices(pod.Name)
+			if len(services) != 1 {
+				t.Logf("services: %v", services)
+				return false
+			}
+
+			return len(services) == 1
+		}, 5*time.Second, 10*time.Millisecond)
+	})
+
 	t.Run("deleting endpoints", func(t *testing.T) {
-		err = c.CoreV1().Endpoints(namespace).
-			Delete(context.Background(), endpoints1.Name, metav1.DeleteOptions{})
+		err = c.DiscoveryV1().EndpointSlices(namespace).
+			Delete(context.Background(), endpointSlice1.Name, metav1.DeleteOptions{})
 		require.NoError(t, err)
 		assert.Eventually(t, func() bool {
 			services := op.GetServices(pod.Name)
@@ -570,8 +598,8 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 		}, 5*time.Second, 10*time.Millisecond)
 
 		deleteSentAt := time.Now()
-		err = c.CoreV1().Endpoints(namespace).
-			Delete(context.Background(), endpoints2.Name, metav1.DeleteOptions{})
+		err = c.DiscoveryV1().EndpointSlices(namespace).
+			Delete(context.Background(), endpointSlice2.Name, metav1.DeleteOptions{})
 		require.NoError(t, err)
 
 		var ttd time.Duration
