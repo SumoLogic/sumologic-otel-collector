@@ -59,11 +59,11 @@ func TestLoadConfig(t *testing.T) {
 			OwnerLookupEnabled: true,
 			Extract: ExtractConfig{
 				Metadata: []string{
-					"podName",
-					"podUID",
-					"deployment",
-					"namespace",
-					"node",
+					"k8s.pod.name",
+					"k8s.pod.uid",
+					"k8s.deployment.name",
+					"k8s.namespace.name",
+					"k8s.node.name",
 					"startTime",
 				},
 				Annotations: []FieldExtractConfig{

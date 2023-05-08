@@ -49,22 +49,22 @@ processors:
       # See "Extracting metadata" documentation section below for details.
       # default: []
       metadata:
-      - containerId
-      - containerImage
-      - containerName
-      - cronJobName
-      - daemonSetName
-      - deploymentName
-      - hostName
-      - jobName
-      - namespace
-      - nodeName
-      - podId
-      - podName
-      - replicaSetName
-      - serviceName
-      - startTime
-      - statefulSetName
+      - container.id
+      - container.image
+      - container.name
+      - k8s.cronjob.name
+      - k8s.daemonset.name
+      - k8s.deployment.name
+      - host.name
+      - k8s.job.name
+      - k8s.namespace.name
+      - k8s.node.name
+      - k8s.pod.uid
+      - k8s.pod.name
+      - k8s.replicaset.name
+      - k8s.service.name
+      - k8s.statefulset.name
+      - k8s.pod.startTime
 
       # List of rules to extract namespace labels into attributes.
       # See the "Field extract config" documentation section below for details on how to use it.
@@ -148,16 +148,57 @@ The `extract` configuration section allows to specify rules to extract metadata 
 The `extract.metadata` section defines which metadata should be retrieved.
 The `extract.tags` section defines the names of the attributes that the metadata will be put in.
 
+#### Specifying metadata attributes
+
+The attributes are specified using the [Otel Resource Semantic Conventions for Kubernetes][k8s_semconv].
+The following attributes are supported:
+
+- `container.id`
+- `container.image`
+- `container.name`
+- `k8s.cronjob.name`
+- `k8s.daemonset.name`
+- `k8s.deployment.name`
+- `host.name`
+- `k8s.job.name`
+- `k8s.namespace.name`
+- `k8s.node.name`
+- `k8s.pod.uid`
+- `k8s.pod.name`
+- `k8s.replicaset.name`
+- `k8s.service.name`
+- `k8s.statefulset.name`
+- `k8s.pod.startTime`
+
 Some of the metadata is only extracted when the `owner_lookup_enabled` property is set to `true`.
 The attributes that require this are:
 
+- `k8s.cronjob.name`
+- `k8s.daemonset.name`
+- `k8s.deployment.name`
+- `k8s.job.name`
+- `k8s.replicaset.name`
+- `k8s.service.name`
+- `k8s.statefulset.name`
+
+It's also possible to use the following legacy attribute names, though they will be deprecated at some point in the future:
+
+- `containerId`
+- `containerImage`
+- `containerName`
 - `cronJobName`
 - `daemonSetName`
 - `deploymentName`
+- `hostName`
 - `jobName`
+- `namespace`
+- `nodeName`
+- `podId`
+- `podName`
 - `replicaSetName`
 - `serviceName`
 - `statefulSetName`
+- `startTime`
 
 ### Field Extract Config
 
@@ -421,3 +462,5 @@ The processor does not support detecting containers from the same pods when runn
 as a sidecar. While this can be done, we think it is simpler to just use the kubernetes
 downward API to inject environment variables into the pods and directly use their values
 as tags.
+
+[k8s_semconv]: https://opentelemetry.io/docs/specification/otel/resource/semantic_conventions/k8s/

@@ -22,6 +22,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	conventions "go.opentelemetry.io/collector/semconv/v1.18.0"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
@@ -283,6 +284,45 @@ func TestWithExtractMetadata(t *testing.T) {
 	assert.False(t, p.rules.StartTime)
 	assert.False(t, p.rules.DeploymentName)
 	assert.False(t, p.rules.NodeName)
+}
+
+func TestWithExtractMetadataSemanticConventions(t *testing.T) {
+	p := &kubernetesprocessor{}
+	fields := []string{
+		conventions.AttributeContainerID,
+		conventions.AttributeContainerImageName,
+		conventions.AttributeContainerName,
+		conventions.AttributeK8SCronJobName,
+		conventions.AttributeK8SDaemonSetName,
+		conventions.AttributeK8SDeploymentName,
+		conventions.AttributeHostName,
+		conventions.AttributeK8SJobName,
+		conventions.AttributeK8SNamespaceName,
+		conventions.AttributeK8SNodeName,
+		conventions.AttributeK8SPodUID,
+		conventions.AttributeK8SPodName,
+		conventions.AttributeK8SReplicaSetName,
+		metadataOtelSemconvServiceName,
+		conventions.AttributeK8SStatefulSetName,
+		metadataOtelPodStartTime,
+	}
+	assert.NoError(t, WithExtractMetadata(fields...)(p))
+	assert.True(t, p.rules.ContainerID)
+	assert.True(t, p.rules.ContainerImage)
+	assert.True(t, p.rules.ContainerName)
+	assert.True(t, p.rules.CronJobName)
+	assert.True(t, p.rules.DaemonSetName)
+	assert.True(t, p.rules.DeploymentName)
+	assert.True(t, p.rules.HostName)
+	assert.True(t, p.rules.JobName)
+	assert.True(t, p.rules.Namespace)
+	assert.True(t, p.rules.NodeName)
+	assert.True(t, p.rules.PodName)
+	assert.True(t, p.rules.PodUID)
+	assert.True(t, p.rules.ReplicaSetName)
+	assert.True(t, p.rules.ServiceName)
+	assert.True(t, p.rules.StatefulSetName)
+	assert.True(t, p.rules.StartTime)
 }
 
 func TestWithExtractMetadataDeprecatedOption(t *testing.T) {
