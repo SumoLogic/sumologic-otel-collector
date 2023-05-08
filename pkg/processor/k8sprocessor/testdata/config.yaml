@@ -10,11 +10,11 @@ processors:
     extract:
       metadata:
         # extract the following well-known metadata fields
-        - podName
-        - podUID
-        - deployment
-        - namespace
-        - node
+        - k8s.pod.name
+        - k8s.pod.uid
+        - k8s.deployment.name
+        - k8s.namespace.name
+        - k8s.node.name
         - startTime
       tags:
         # It is possible to provide your custom key names for each of the extracted metadata:
