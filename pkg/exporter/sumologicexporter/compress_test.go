@@ -35,6 +35,9 @@ func (e mockedEncrypter) Reset(dst io.Writer) {
 }
 
 func (e mockedEncrypter) Write(p []byte) (n int, err error) {
+	if e.writeError == nil {
+		return len(p), nil
+	}
 	return 0, e.writeError
 }
 
@@ -154,9 +157,14 @@ func TestCompressCloseError(t *testing.T) {
 
 func BenchmarkCompression(b *testing.B) {
 	const (
-		message       = "This is an example log"
-		secondMessage = "This is an another example log"
+		messageBlock       = "This is an example log"
+		secondMessageBlock = "This is an another example log"
 	)
+
+	// around 200kb, which is a reasonable estimate for the strings we'd be compressing in practice
+	message := strings.Repeat(messageBlock, 10000)
+	secondMessage := strings.Repeat(secondMessageBlock, 10000)
+
 	decompress := func(compression string, data io.Reader) (string, error) {
 		switch compression {
 		case string(GZIPCompression):
@@ -210,17 +218,20 @@ func BenchmarkCompression(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				data, err := c.compress(body1)
 				require.NoError(b, err)
+				b.StopTimer()
 				out, err := decompress(tc.encoding, data)
 				require.NoError(b, err)
 				assert.Equal(b, message, out)
 
+				b.StartTimer()
 				data, err = c.compress(body2)
 				require.NoError(b, err)
+
+				b.StopTimer()
 				out, err = decompress(tc.encoding, data)
 				require.NoError(b, err)
 				assert.Equal(b, secondMessage, out)
 
-				b.StopTimer()
 				_, err = body1.Seek(0, 0)
 				require.NoError(b, err)
 				_, err = body2.Seek(0, 0)
