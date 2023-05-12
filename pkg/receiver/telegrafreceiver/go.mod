@@ -6,10 +6,10 @@ require (
 	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/influxdata/telegraf v1.24.3
 	github.com/stretchr/testify v1.8.2
-	go.opentelemetry.io/collector/component v0.76.1
-	go.opentelemetry.io/collector/consumer v0.76.1
+	go.opentelemetry.io/collector/component v0.77.0
+	go.opentelemetry.io/collector/consumer v0.77.0
 	go.opentelemetry.io/collector/pdata v1.0.0-rcv0011
-	go.opentelemetry.io/collector/receiver v0.76.1
+	go.opentelemetry.io/collector/receiver v0.77.0
 	go.uber.org/zap v1.24.0
 )
 
@@ -98,7 +98,6 @@ require (
 	github.com/naoina/go-stringutil v0.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
-	github.com/pelletier/go-toml v1.9.3 // indirect
 	github.com/philhofer/fwd v1.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -125,12 +124,12 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.mongodb.org/mongo-driver v1.10.2 // indirect
-	go.opentelemetry.io/collector v0.76.1 // indirect
-	go.opentelemetry.io/collector/confmap v0.76.1 // indirect
-	go.opentelemetry.io/collector/featuregate v0.76.1 // indirect
-	go.opentelemetry.io/otel v1.14.0 // indirect
-	go.opentelemetry.io/otel/metric v0.37.0 // indirect
-	go.opentelemetry.io/otel/trace v1.14.0 // indirect
+	go.opentelemetry.io/collector v0.77.0 // indirect
+	go.opentelemetry.io/collector/confmap v0.77.0 // indirect
+	go.opentelemetry.io/collector/featuregate v0.77.0 // indirect
+	go.opentelemetry.io/otel v1.15.1 // indirect
+	go.opentelemetry.io/otel/metric v0.38.1 // indirect
+	go.opentelemetry.io/otel/trace v1.15.1 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be // indirect
