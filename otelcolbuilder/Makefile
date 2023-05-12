@@ -46,10 +46,10 @@ GOEXPERIMENT=boringcrypto
 LDFLAGS="-w"
 endif
 
-# We want to enforce go dns for all types of binaries, as cgo has been used by fips binaries (which supports CGO)
-# and it leaded to error with resolution for .local domain in our docker containers
+# We want to enforce go dns for all types of binaries. The FIPS binaries are built with CGO enabled and use
+# the CGO resolver. This has caused a DNS resolution error for .local domains in our K8s containers.
 # ref: https://pkg.go.dev/net#hdr-Name_Resolution
-GODEBUG=netdns=go
+GOFLAGS=-tags=netgo
 
 .PHONY: _install-bin
 _install-bin:
@@ -94,7 +94,7 @@ _builder:
 .PHONY: _gobuild
 _gobuild:
 	(cd cmd && \
-		GODEBUG=$(GODEBUG) CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
+		GOFLAGS=$(GOFLAGS) CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
 		-ldflags=$(LDFLAGS) \
 		-trimpath \
 		-o ./$(BINARY_NAME)$(BUILDER_BIN_EXT) . \
@@ -104,7 +104,7 @@ _gobuild:
 .PHONY: _gobuild_debug
 _gobuild_debug:
 	(cd cmd && \
-		GODEBUG=$(GODEBUG) CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
+		GOFLAGS=$(GOFLAGS) CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
 		-race \
 		-gcflags "all=-N -l" \
 		-o ./$(BINARY_NAME)-debug$(BUILDER_BIN_EXT) . \
