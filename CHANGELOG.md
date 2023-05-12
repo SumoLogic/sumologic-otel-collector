@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - feat(k8sprocessor): support otel semantic convention in config [#1122]
-- chore: upgrade OT core to 0.75.0 [#1125]
+- chore: upgrade OT core to 0.77.0 [#1125]
 
 ### Fixed
 
