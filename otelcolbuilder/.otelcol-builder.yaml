@@ -229,3 +229,6 @@ replaces:
 
   # lokireceiver does a replace for this, so we need to as well
   - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/loki => github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/loki v0.76.3
+
+  # use patched routingprocessor
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/routingprocessor => github.com/swiatekm-sumo/opentelemetry-collector-contrib/processor/routingprocessor d9d5926
