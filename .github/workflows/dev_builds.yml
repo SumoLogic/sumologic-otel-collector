@@ -44,10 +44,163 @@ jobs:
 
       - name: Run golangci-lint
         run: make golint
+  test:
+    name: Test
+    runs-on: ${{ matrix.runs_on }}
+    strategy:
+      matrix:
+        include:
+          - arch_os: linux_amd64
+            runs_on: ubuntu-20.04
+          - arch_os: darwin_amd64
+            runs_on: macos-latest
+          - arch_os: windows_amd64
+            runs_on: windows-2022
+            builder_bin_path: '${RUNNER_TEMP}\bin'
+            builder_bin_ext: .exe
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check if test related files changed
+        id: changed-files
+        uses: tj-actions/changed-files@v35
+        with:
+          files: |
+            **/go.mod
+            **/go.sum
+            **/*.go
+            **/*.yaml
+            **/*.yml
+            **/Makefile
+            **/Makefile.common
+            scripts/install.sh
+
+      - name: Setup go
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.19'
+          cache-dependency-path: '**/go.sum'
+
+      - name: Set default BUILDER_BIN_PATH
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
+
+      - name: Override BUILDER_BIN_PATH if set in matrix
+        if: matrix.builder_bin_path != '' && steps.changed-files.outputs.any_changed == 'true'
+        run: echo "BUILDER_BIN_PATH=${{matrix.builder_bin_path}}" >> $GITHUB_ENV
+
+      - name: Add opentelemetry-collector-builder installation dir to PATH
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
+
+      - name: Run tests
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make gotest
+
+  test-install-script:
+    name: Test Install Script
+    runs-on: ${{ matrix.runs_on }}
+    strategy:
+      matrix:
+        include:
+          - arch_os: linux_amd64
+            runs_on: ubuntu-20.04
+          - arch_os: darwin_amd64
+            runs_on: macos-latest
+          - arch_os: windows_amd64
+            runs_on: windows-2022
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check if test related files changed
+        id: changed-files
+        uses: tj-actions/changed-files@v35
+        with:
+          files: |
+            pkg/scripts_test/*
+            scripts/install.sh
+
+      - name: Setup go
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.19'
+          cache-dependency-path: 'pkg/scripts_test/go.sum'
+
+      - name: Run install script tests
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make test-install-script
+
+  # pipeline to test using Go+BoringCrypto
+  test-go-boringcrypto:
+    name: Test
+    runs-on: ${{ matrix.runs_on }}
+    strategy:
+      matrix:
+        include:
+          - arch_os: linux_amd64
+            runs_on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check if test related files changed
+        id: changed-files
+        uses: tj-actions/changed-files@v35
+        with:
+          files: |
+            **/go.mod
+            **/go.sum
+            **/*.go
+            **/*.yaml
+            **/*.yml
+            **/Makefile
+            **/Makefile.common
+            scripts/install.sh
+
+      - name: Setup go
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.19'
+          cache-dependency-path: '**/go.sum'
+
+      - name: Add opentelemetry-collector-builder installation dir to PATH
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Run tests
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make gotest
+
+  test-wixext:
+    name: Test (SumoLogic.wixext)
+    runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.3
+
+      - name: Restore NuGet packages
+        working-directory: ./packaging/msi/SumoLogic.wixext/SumoLogicTests
+        run: nuget.exe restore -PackagesDirectory ../packages
+
+      - name: Build unit tests
+        working-directory: ./packaging/msi/SumoLogic.wixext/SumoLogicTests
+        run: msbuild.exe -p:Configuration=Release -p:Platform=AnyCPU -Restore
+
+      - name: Run unit tests
+        working-directory: ./packaging/msi/SumoLogic.wixext/SumoLogicTests/bin/Release
+        run: dotnet test -v:n ./SumoLogicTests.dll
 
   build:
     name: Build
     runs-on: ${{ matrix.runs_on }}
+    needs: [test]
     strategy:
       matrix:
         include:
@@ -124,6 +277,7 @@ jobs:
   build-fips:
     name: Build
     runs-on: ubuntu-20.04
+    needs: [test-go-boringcrypto]
     strategy:
       matrix:
         arch_os: [ 'linux_amd64']
