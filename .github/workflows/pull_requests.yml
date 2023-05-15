@@ -320,6 +320,7 @@ jobs:
   build:
     name: Build
     runs-on: ${{ matrix.runs_on }}
+    needs: [test]
     strategy:
       matrix:
         include:
@@ -409,6 +410,7 @@ jobs:
   build-fips:
     name: Build
     runs-on: ubuntu-20.04
+    needs: [test-go-boringcrypto]
     strategy:
       matrix:
         arch_os: [ 'linux_amd64']
