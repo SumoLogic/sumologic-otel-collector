@@ -142,7 +142,6 @@ jobs:
             **/*.yml
             **/Makefile
             **/Makefile.common
-            scripts/install.sh
 
       - name: Setup go
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -226,7 +225,6 @@ jobs:
             **/*.yml
             **/Makefile
             **/Makefile.common
-            scripts/install.sh
 
       - name: Setup go
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -284,8 +282,7 @@ jobs:
             **/go.mod
             **/go.sum
             **/*.go
-            **/*.yaml
-            **/*.yml
+            **/golangci.yaml
             **/Makefile
             **/Makefile.common
 
@@ -435,7 +432,6 @@ jobs:
         uses: tj-actions/changed-files@v35
         with:
           files: |
-            otelcolbuilder/.gon_config.json
             **/go.mod
             **/go.sum
             **/*.go
