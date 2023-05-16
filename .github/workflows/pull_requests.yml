@@ -361,7 +361,21 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.19'
-          cache-dependency-path: '**/go.sum'
+          cache: false
+
+      - name: Get GOCACHE and GOMODCACHE
+        run: |
+          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
+          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ${{ env.GOMODCACHE }}
+            ${{ env.GOCACHE }}
+          key: build-go-${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            build-go-${{matrix.arch_os}}-go-${{matrix.arch_os}}-go-
 
       - name: Set default BUILDER_BIN_PATH
         run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
@@ -431,12 +445,19 @@ jobs:
             **/Makefile.common
             **/Dockerfile*
 
-      - name: Setup go
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/setup-go@v4
+      - name: Get GOCACHE and GOMODCACHE
+        run: |
+          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
+          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+
+      - uses: actions/cache@v3
         with:
-          go-version: '1.19'
-          cache-dependency-path: '**/go.sum'
+          path: |
+            ${{ env.GOMODCACHE }}
+            ${{ env.GOCACHE }}
+          key: build-go-${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            build-go-${{matrix.arch_os}}-go-${{matrix.arch_os}}-go-
 
       - name: Fetch current branch
         run: ./ci/fetch_current_branch.sh
