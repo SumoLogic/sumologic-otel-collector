@@ -204,7 +204,7 @@ jobs:
 
   # pipeline to test using Go+BoringCrypto
   test-go-boringcrypto:
-    name: Test
+    name: Test BoringCrypto
     runs-on: ${{ matrix.runs_on }}
     strategy:
       matrix:
@@ -421,7 +421,7 @@ jobs:
 
   # pipeline to build FIPS compliance binary on Go+BoringCrypto for linux
   build-fips:
-    name: Build
+    name: Build FIPS
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -455,9 +455,9 @@ jobs:
           path: |
             ${{ env.GOMODCACHE }}
             ${{ env.GOCACHE }}
-          key: build-go-${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
+          key: build-go-boringcrypto-${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            build-go-${{matrix.arch_os}}-go-${{matrix.arch_os}}-go-
+            build-go-boringcrypto-${{matrix.arch_os}}-go-${{matrix.arch_os}}-go-
 
       - name: Fetch current branch
         run: ./ci/fetch_current_branch.sh
