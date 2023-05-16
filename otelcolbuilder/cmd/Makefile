@@ -1,6 +1,6 @@
 .PHONY: test
 test:
-	go test $(FLAGS) -trimpath -count 1 -parallel 1 ./...
+	go test $(FLAGS) -trimpath -parallel 1 ./...
 
 .PHONY: test-v
 test-v:
