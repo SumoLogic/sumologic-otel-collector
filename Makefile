@@ -59,7 +59,7 @@ list-modules:
 
 .PHONY: gotest
 gotest:
-	@$(MAKE) for-all CMD="make test" ALL_MODULES=$(ALL_MODULES_WITHOUT_SCRIPT_TESTS)
+	@$(MAKE) for-all CMD="make test" ALL_MODULES="$(ALL_MODULES_WITHOUT_SCRIPT_TESTS)"
 
 .PHONY: test-install-script
 test-install-script:
@@ -84,6 +84,7 @@ print-all-modules:
 .PHONY: for-all
 for-all:
 	@echo "running $${CMD} in all modules..."
+	@echo "ALL_MODULES=$(ALL_MODULES)"
 	@set -e; for dir in $(ALL_MODULES); do \
 	  (cd "$${dir}" && \
 	  	echo "running $${CMD} in $${dir}" && \
