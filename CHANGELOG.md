@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(k8sprocessor): support otel semantic convention in config [#1122]
 - chore: upgrade OT core to 0.77.0 [#1125]
 
+### Changed
+
+- feat: retry validation and exit in case of connection issues [#1134]
+
 ### Fixed
 
 - fix(sumologicexporter): avoid allocations in compressor [#1118]
@@ -21,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1118]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1118
 [#1122]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1122
 [#1125]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1125
+[#1134]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1134
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.76.1-sumo-0...main
 
 ## [0.76.1-sumo-0]
