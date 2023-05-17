@@ -81,9 +81,6 @@ const (
 	collectorIdField           = "collector_id"
 	collectorNameField         = "collector_name"
 	collectorCredentialIdField = "collector_credential_id"
-
-	validationRetries = 3
-	validationSleep   = 10
 )
 
 const (
