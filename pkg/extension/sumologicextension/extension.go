@@ -223,27 +223,30 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 func (se *SumologicExtension) validateCredentials(
 	ctx context.Context,
 	colCreds credentials.CollectorCredentials,
-) (recoverable bool, err error) {
+) error {
 	se.logger.Info("Validating collector credentials...",
 		zap.String(collectorCredentialIdField, colCreds.Credentials.CollectorCredentialId),
 		zap.String(collectorIdField, colCreds.Credentials.CollectorId),
 	)
 
 	if err := se.injectCredentials(colCreds); err != nil {
-		return false, err
+		return errUnauthorizedHeartbeat
 	}
 
 	se.backOff.Reset()
+	var err error
+
 	for {
-		recoverable, err = se.sendHeartbeatWithHTTPClient(ctx, se.httpClient)
-		if err == nil || recoverable {
-			return
+		err = se.sendHeartbeatWithHTTPClient(ctx, se.httpClient)
+
+		if err == errUnauthorizedHeartbeat || err == nil {
+			return err
 		}
 
 		nbo := se.backOff.NextBackOff()
 		// Return error if backoff reaches the limit or uncoverable error is spotted
 		if _, ok := err.(*backoff.PermanentError); nbo == se.backOff.Stop || ok {
-			return
+			return err
 		}
 
 		se.logger.Info(fmt.Sprintf("Retrying credentials validation due to error %s", err))
@@ -254,7 +257,7 @@ func (se *SumologicExtension) validateCredentials(
 		select {
 		case <-t.C:
 		case <-ctx.Done():
-			return false, fmt.Errorf("credential validation cancelled: %w", ctx.Err())
+			return fmt.Errorf("credential validation cancelled: %w", ctx.Err())
 		}
 	}
 }
@@ -319,16 +322,17 @@ func (se *SumologicExtension) getCredentials(ctx context.Context) (credentials.C
 	if !se.conf.ForceRegistration {
 		colCreds, err = se.getLocalCredentials(ctx)
 		if err == nil {
-			recoverable, errV := se.validateCredentials(ctx, colCreds)
-			if !recoverable {
-				return credentials.CollectorCredentials{}, errV
-			}
+			errV := se.validateCredentials(ctx, colCreds)
 
 			if errV == nil {
 				se.logger.Info("Found stored credentials, skipping registration",
 					zap.String(collectorNameField, colCreds.Credentials.CollectorName),
 				)
 				return colCreds, nil
+			}
+
+			if errV != errUnauthorizedHeartbeat {
+				return credentials.CollectorCredentials{}, errV
 			}
 
 			// Credentials might have ended up being invalid or the collector
@@ -571,7 +575,7 @@ func (se *SumologicExtension) heartbeatLoop() {
 			return
 
 		default:
-			_, err := se.sendHeartbeatWithHTTPClient(ctx, se.httpClient)
+			err := se.sendHeartbeatWithHTTPClient(ctx, se.httpClient)
 
 			if err != nil {
 				if errors.Is(err, errUnauthorizedHeartbeat) {
@@ -624,40 +628,35 @@ func (e ErrorAPI) Error() string {
 	return fmt.Sprintf("API error (status code: %d): %s", e.status, e.body)
 }
 
-func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, httpClient *http.Client) (recoverable bool, err error) {
+func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, httpClient *http.Client) error {
 	u, err := url.Parse(se.BaseUrl() + heartbeatUrl)
 	if err != nil {
-		return false, fmt.Errorf("unable to parse heartbeat URL %w", err)
+		return fmt.Errorf("unable to parse heartbeat URL %w", err)
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), nil)
 	if err != nil {
-		return false, fmt.Errorf("unable to create HTTP request %w", err)
+		return fmt.Errorf("unable to create HTTP request %w", err)
 	}
 
 	addJSONHeaders(req)
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return false, fmt.Errorf("unable to send HTTP request: %w", err)
+		return fmt.Errorf("unable to send HTTP request: %w", err)
 	}
 	defer res.Body.Close()
 
 	switch res.StatusCode {
 	default:
 		var buff bytes.Buffer
-		recoverable = true
-
-		if res.StatusCode >= 500 && res.StatusCode <= 599 {
-			recoverable = false
-		}
 
 		if _, err := io.Copy(&buff, res.Body); err != nil {
-			return recoverable, fmt.Errorf(
+			return fmt.Errorf(
 				"failed to copy collector heartbeat response body, status code: %d, err: %w",
 				res.StatusCode, err,
 			)
 		}
 
-		return recoverable, fmt.Errorf("collector heartbeat request failed: %w",
+		return fmt.Errorf("collector heartbeat request failed: %w",
 			ErrorAPI{
 				status: res.StatusCode,
 				body:   buff.String(),
@@ -665,12 +664,12 @@ func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, h
 		)
 
 	case http.StatusUnauthorized:
-		return true, errUnauthorizedHeartbeat
+		return errUnauthorizedHeartbeat
 
 	case http.StatusNoContent:
 	}
 
-	return true, nil
+	return nil
 }
 
 func getHostIpAddress() (string, error) {
