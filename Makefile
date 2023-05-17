@@ -59,7 +59,7 @@ list-modules:
 
 .PHONY: gotest
 gotest:
-	@$(MAKE) for-all CMD="make test" ALL_MODULES=$(ALL_MODULES_WITHOUT_SCRIPT_TESTS)
+	@$(MAKE) for-all CMD="make test" ALL_MODULES="$(ALL_MODULES_WITHOUT_SCRIPT_TESTS)"
 
 .PHONY: test-install-script
 test-install-script:
