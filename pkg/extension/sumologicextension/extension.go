@@ -226,7 +226,7 @@ func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 func (se *SumologicExtension) validateCredentials(
 	ctx context.Context,
 	colCreds credentials.CollectorCredentials,
-) (bool, error) {
+) (recoverable bool, err error) {
 	se.logger.Info("Validating collector credentials...",
 		zap.String(collectorCredentialIdField, colCreds.Credentials.CollectorCredentialId),
 		zap.String(collectorIdField, colCreds.Credentials.CollectorId),
@@ -235,9 +235,6 @@ func (se *SumologicExtension) validateCredentials(
 	if err := se.injectCredentials(colCreds); err != nil {
 		return false, err
 	}
-
-	var recoverable bool
-	var err error
 
 	for i := 0; i <= validationRetries; i++ {
 		recoverable, err = se.sendHeartbeatWithHTTPClient(ctx, se.httpClient)
@@ -616,7 +613,7 @@ func (e ErrorAPI) Error() string {
 	return fmt.Sprintf("API error (status code: %d): %s", e.status, e.body)
 }
 
-func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, httpClient *http.Client) (bool, error) {
+func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, httpClient *http.Client) (recoverable bool, err error) {
 	u, err := url.Parse(se.BaseUrl() + heartbeatUrl)
 	if err != nil {
 		return false, fmt.Errorf("unable to parse heartbeat URL %w", err)
