@@ -313,7 +313,7 @@ func (se *SumologicExtension) getCredentials(ctx context.Context) (credentials.C
 		if err == nil {
 			recoverable, errV := se.validateCredentials(ctx, colCreds)
 			if !recoverable {
-				return credentials.CollectorCredentials{}, err
+				return credentials.CollectorCredentials{}, errV
 			}
 
 			if errV == nil {
