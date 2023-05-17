@@ -359,6 +359,7 @@ jobs:
     strategy:
       matrix:
         arch_os: [ 'linux_amd64' ]
+    needs: [test-and-build]
     steps:
       - uses: actions/checkout@v3
 
@@ -380,16 +381,32 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.19'
-          cache-dependency-path: '**/go.sum'
+          cache: false
+      - name: Get GOCACHE, GOMODCACHE and GOPATH
+        run: |
+          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
+          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+          echo "GOPATH=$(go env GOPATH)" >> "$GITHUB_ENV"
+
+      - uses: actions/cache/restore@v3
+        id: cache
+        with:
+          path: |
+            ${{ env.GOMODCACHE }}/cache
+            ${{ env.GOCACHE }}
+          key: build-go-${{matrix.arch_os}}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            build-go-${{matrix.arch_os}}-
 
       - uses: actions/cache@v3
         if: steps.changed-files.outputs.any_changed == 'true'
         with:
           path: |
             /home/runner/.cache/golangci-lint
-          key: ${{matrix.arch_os}}-golangcilint-${{ hashFiles('**/go.sum') }}
+            ${{ env.GOPATH }}/bin
+          key: golangcilint-${{matrix.arch_os}}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            ${{matrix.arch_os}}-golangcilint-
+            golangcilint-${{matrix.arch_os}}-
 
       - name: Install golangci-lint
         if: steps.changed-files.outputs.any_changed == 'true'
