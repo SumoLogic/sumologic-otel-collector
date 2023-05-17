@@ -113,15 +113,19 @@ jobs:
       - name: shellcheck
         run: make shellcheck
 
-  test:
-    name: Test
+  test-and-build:
+    name: Test and Build
     runs-on: ${{ matrix.runs_on }}
     strategy:
       matrix:
         include:
           - arch_os: linux_amd64
             runs_on: ubuntu-20.04
+          - arch_os: linux_arm64
+            runs_on: ubuntu-20.04
           - arch_os: darwin_amd64
+            runs_on: macos-latest
+          - arch_os: darwin_arm64
             runs_on: macos-latest
           - arch_os: windows_amd64
             runs_on: windows-2022
@@ -144,12 +148,29 @@ jobs:
             **/Makefile.common
             scripts/install.sh
 
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
+
       - name: Setup go
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-go@v4
         with:
           go-version: '1.19'
-          cache-dependency-path: '**/go.sum'
+          cache: false
+
+      - name: Get GOCACHE and GOMODCACHE
+        run: |
+          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
+          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ${{ env.GOMODCACHE }}/cache
+            ${{ env.GOCACHE }}
+          key: build-go-${{matrix.arch_os}}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            build-go-${{matrix.arch_os}}-${{matrix.arch_os}}-
 
       - name: Set default BUILDER_BIN_PATH
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -163,9 +184,34 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
 
+      - name: Install opentelemetry-collector-builder
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make install-builder
+        working-directory: ./otelcolbuilder
+
       - name: Run package tests
         if: steps.changed-files.outputs.any_changed == 'true'
         run: make gotest
+
+      - name: Build
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make otelcol-sumo-${{matrix.arch_os}}
+        working-directory: ./otelcolbuilder
+
+      - name: Show included modules
+        if: steps.changed-files.outputs.any_changed == 'true'
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          go version -m otelcol-sumo-${{matrix.arch_os}}${{matrix.builder_bin_ext}} | \
+          grep -E "/(receiver|exporter|processor|extension)/"
+
+      - name: Store binary as action artifact
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: otelcol-sumo-${{matrix.arch_os}}
+          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}${{matrix.builder_bin_ext}}
+          if-no-files-found: error
 
   test-install-script:
     name: Test Install Script
@@ -203,8 +249,8 @@ jobs:
 
 
   # pipeline to test using Go+BoringCrypto
-  test-go-boringcrypto:
-    name: Test
+  test-and-build-boringcrypto:
+    name: Test and Build with BoringCrypto
     runs-on: ${{ matrix.runs_on }}
     strategy:
       matrix:
@@ -228,20 +274,60 @@ jobs:
             **/Makefile.common
             scripts/install.sh
 
-      - name: Setup go
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/setup-go@v4
+      - name: Get GOCACHE and GOMODCACHE
+        run: |
+          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
+          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+
+      - uses: actions/cache@v3
         with:
-          go-version: '1.19'
-          cache-dependency-path: '**/go.sum'
+          path: |
+            ${{ env.GOMODCACHE }}/cache
+            ${{ env.GOCACHE }}
+          key: build-go-boringcrypto-${{matrix.arch_os}}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            build-go-boringcrypto-${{matrix.arch_os}}-
 
       - name: Add opentelemetry-collector-builder installation dir to PATH
         if: steps.changed-files.outputs.any_changed == 'true'
         run: echo "$HOME/bin" >> $GITHUB_PATH
 
-      - name: Run tests
+      - name: Run package tests
         if: steps.changed-files.outputs.any_changed == 'true'
         run: make gotest
+
+      - name: Install opentelemetry-collector-builder
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make install-builder
+        working-directory: ./otelcolbuilder
+
+      - name: Build
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make otelcol-sumo-${{matrix.arch_os}} FIPS_SUFFIX="-fips" CGO_ENABLED=1
+        working-directory: ./otelcolbuilder
+
+      - name: Show included modules
+        if: steps.changed-files.outputs.any_changed == 'true'
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          go version -m otelcol-sumo-fips-${{matrix.arch_os}} | \
+          grep -E "/(receiver|exporter|processor|extension)/"
+
+      - name: Show BoringSSL symbols
+        if: steps.changed-files.outputs.any_changed == 'true'
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          go tool nm otelcol-sumo-fips-${{matrix.arch_os}} | \
+          grep "_Cfunc__goboringcrypto_"
+
+      - name: Store binary as action artifact
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: otelcol-sumo-fips-${{matrix.arch_os}}
+          path: ./otelcolbuilder/cmd/otelcol-sumo-fips-${{matrix.arch_os}}
+          if-no-files-found: error
+
 
   test-wixext:
     name: Test (SumoLogic.wixext)
@@ -317,172 +403,12 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         run: make golint
 
-  build:
-    name: Build
-    runs-on: ${{ matrix.runs_on }}
-    strategy:
-      matrix:
-        include:
-          - arch_os: linux_amd64
-            runs_on: ubuntu-20.04
-          - arch_os: linux_arm64
-            runs_on: ubuntu-20.04
-          - arch_os: darwin_amd64
-            runs_on: macos-latest
-          - arch_os: darwin_arm64
-            runs_on: macos-latest
-          - arch_os: windows_amd64
-            runs_on: windows-2022
-            builder_bin_path: '${RUNNER_TEMP}\bin'
-            builder_bin_ext: .exe
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Check if build related files changed
-        id: changed-files
-        uses: tj-actions/changed-files@v35
-        with:
-          files: |
-            otelcolbuilder/.gon_config.json
-            **/go.mod
-            **/go.sum
-            **/*.go
-            **/*.yaml
-            **/*.yml
-            **/Makefile
-            **/Makefile.common
-            **/Dockerfile*
-
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
-
-      - name: Setup go
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.19'
-          cache-dependency-path: '**/go.sum'
-
-      - name: Set default BUILDER_BIN_PATH
-        run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
-
-      - name: Override BUILDER_BIN_PATH if set in matrix
-        run: echo "BUILDER_BIN_PATH=${{matrix.builder_bin_path}}" >> $GITHUB_ENV
-        if: matrix.builder_bin_path != ''
-
-      - name: Add opentelemetry-collector-builder installation dir to PATH
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
-
-      - name: Install opentelemetry-collector-builder
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: make install-builder
-        working-directory: ./otelcolbuilder
-
-      - name: Build
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: make otelcol-sumo-${{matrix.arch_os}}
-        working-directory: ./otelcolbuilder
-
-      # TODO:
-      # Move that out to a separate job and run on a corresponding's OS runner.
-      # - name: Run the binary
-      #   run: ./otelcol-sumo-${{matrix.arch_os}} --version
-      #   working-directory: ./otelcolbuilder/cmd/
-
-      - name: Show included modules
-        if: steps.changed-files.outputs.any_changed == 'true'
-        working-directory: ./otelcolbuilder/cmd
-        run: |
-          go version -m otelcol-sumo-${{matrix.arch_os}}${{matrix.builder_bin_ext}} | \
-          grep -E "/(receiver|exporter|processor|extension)/"
-
-      - name: Store binary as action artifact
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/upload-artifact@v3
-        with:
-          name: otelcol-sumo-${{matrix.arch_os}}
-          path: ./otelcolbuilder/cmd/otelcol-sumo-${{matrix.arch_os}}${{matrix.builder_bin_ext}}
-          if-no-files-found: error
-
-  # pipeline to build FIPS compliance binary on Go+BoringCrypto for linux
-  build-fips:
-    name: Build
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        arch_os: [ 'linux_amd64']
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Check if build related files changed
-        id: changed-files
-        uses: tj-actions/changed-files@v35
-        with:
-          files: |
-            otelcolbuilder/.gon_config.json
-            **/go.mod
-            **/go.sum
-            **/*.go
-            **/*.yaml
-            **/*.yml
-            **/Makefile
-            **/Makefile.common
-            **/Dockerfile*
-
-      - name: Setup go
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.19'
-          cache-dependency-path: '**/go.sum'
-
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
-
-      - name: Add opentelemetry-collector-builder installation dir to PATH
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: echo "$HOME/bin" >> $GITHUB_PATH
-
-      - name: Install opentelemetry-collector-builder
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: make install-builder
-        working-directory: ./otelcolbuilder
-
-      - name: Build
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: make otelcol-sumo-${{matrix.arch_os}} FIPS_SUFFIX="-fips" CGO_ENABLED=1
-        working-directory: ./otelcolbuilder
-
-      - name: Show included modules
-        if: steps.changed-files.outputs.any_changed == 'true'
-        working-directory: ./otelcolbuilder/cmd
-        run: |
-          go version -m otelcol-sumo-fips-${{matrix.arch_os}} | \
-          grep -E "/(receiver|exporter|processor|extension)/"
-
-      - name: Show BoringSSL symbols
-        if: steps.changed-files.outputs.any_changed == 'true'
-        working-directory: ./otelcolbuilder/cmd
-        run: |
-          go tool nm otelcol-sumo-fips-${{matrix.arch_os}} | \
-          grep "_Cfunc__goboringcrypto_"
-
-      - name: Store binary as action artifact
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/upload-artifact@v3
-        with:
-          name: otelcol-sumo-fips-${{matrix.arch_os}}
-          path: ./otelcolbuilder/cmd/otelcol-sumo-fips-${{matrix.arch_os}}
-          if-no-files-found: error
-
   build-and-test-container-images:
     name: Build container
     runs-on: ubuntu-20.04
     needs:
-      - build
-      - build-fips
+      - test-and-build
+      - test-and-build-boringcrypto
     strategy:
       matrix:
         arch_os: [ 'linux_amd64', 'linux_arm64']
