@@ -343,8 +343,8 @@ func TestNoStorage(t *testing.T) {
 
 	// Both events should be picked up by the receiver.
 	assert.Eventually(t, func() bool {
-		return assert.Equal(t, 2, logsSink.LogRecordCount())
-	}, 100*time.Millisecond, 10*time.Millisecond)
+		return logsSink.LogRecordCount() == 2
+	}, 100*time.Millisecond, 10*time.Millisecond, "expected two events")
 
 	// Shutdown the receiver.
 	assert.NoError(t, receiver.Shutdown(ctx))
@@ -372,8 +372,8 @@ func TestNoStorage(t *testing.T) {
 	// Since the receiver has no storage, it should pick up events from last minute on start
 	// which means it should get all three events.
 	assert.Eventually(t, func() bool {
-		return assert.Equal(t, 3, logsSink.LogRecordCount())
-	}, 100*time.Millisecond, 10*time.Millisecond)
+		return logsSink.LogRecordCount() == 3
+	}, 100*time.Millisecond, 10*time.Millisecond, "expected 3 events")
 }
 
 func TestStorage(t *testing.T) {
@@ -422,8 +422,8 @@ func TestStorage(t *testing.T) {
 	// Both events should be picked up by the receiver.
 	// The last resource version processed should be saved in storage.
 	assert.Eventually(t, func() bool {
-		return assert.Equal(t, 2, logsSink.LogRecordCount())
-	}, 100*time.Millisecond, 10*time.Millisecond)
+		return logsSink.LogRecordCount() == 2
+	}, 100*time.Millisecond, 10*time.Millisecond, "expected 2 events")
 
 	// Shutdown the receiver.
 	require.NoError(t, receiver.Shutdown(ctx))
@@ -452,8 +452,8 @@ func TestStorage(t *testing.T) {
 	// The receiver should only pick up the third event,
 	// as it is the only one with newer resource version.
 	assert.Eventually(t, func() bool {
-		return assert.Equal(t, 1, logsSink.LogRecordCount())
-	}, 100*time.Millisecond, 10*time.Millisecond)
+		return logsSink.LogRecordCount() == 1
+	}, 100*time.Millisecond, 10*time.Millisecond, "expected one event")
 }
 
 func getEvent() *corev1.Event {
