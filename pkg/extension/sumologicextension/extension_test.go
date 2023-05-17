@@ -20,6 +20,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -819,6 +820,7 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 
 						// should not produce any more requests
 						default:
+							fmt.Printf("%s\n", req.URL.Path)
 							w.WriteHeader(http.StatusInternalServerError)
 						}
 					})),

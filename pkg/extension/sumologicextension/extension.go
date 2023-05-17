@@ -240,12 +240,12 @@ func (se *SumologicExtension) validateCredentials(
 		recoverable, err = se.sendHeartbeatWithHTTPClient(ctx, se.httpClient)
 
 		if err == nil {
-			return recoverable, err
+			return
 		}
 		time.Sleep(validationSleep * time.Second)
 	}
 
-	return recoverable, err
+	return
 }
 
 // injectCredentials injects the collector credentials:
@@ -653,7 +653,7 @@ func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, h
 	case http.StatusNoContent:
 	}
 
-	return false, nil
+	return true, nil
 }
 
 func getHostIpAddress() (string, error) {
