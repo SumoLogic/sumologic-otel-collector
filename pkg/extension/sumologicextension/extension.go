@@ -230,7 +230,7 @@ func (se *SumologicExtension) validateCredentials(
 	)
 
 	if err := se.injectCredentials(colCreds); err != nil {
-		return errUnauthorizedHeartbeat
+		return err
 	}
 
 	se.backOff.Reset()
@@ -331,6 +331,7 @@ func (se *SumologicExtension) getCredentials(ctx context.Context) (credentials.C
 				return colCreds, nil
 			}
 
+			// We are unable to confirm if credentials are valid or not as we do not have (clear) response from the API
 			if errV != errUnauthorizedHeartbeat {
 				return credentials.CollectorCredentials{}, errV
 			}
