@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- feat: retry validation and exit in case of connection issues [#1134]
+- feat(sumologicextension): retry validation and exit in case of connection issues [#1134]
 
 ### Fixed
 
