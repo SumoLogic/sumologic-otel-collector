@@ -12,6 +12,17 @@ receivers:
             enabled: true
       network: null
       paging: null
+  filelog/mac/logs/localhost:
+    include_file_name: false
+    include_file_path: true
+    operators:
+      - type: move
+        from: attributes["log.file.path"]
+        to: resource["log.file.path"]
+    include:
+      - /var/log/system.log
+      - /var/log/install.log
+      - /var/log/shutdown_monitor.log
 processors:
   resource/mac_resource_attributes/localhost:
     attributes:
@@ -23,6 +34,16 @@ service:
     metrics/mac/localhost:
       receivers:
         - hostmetrics/mac/localhost
+      processors:
+        - memory_limiter
+        - resource/mac_resource_attributes/localhost
+        - resourcedetection/system
+        - batch
+      exporters:
+        - sumologic
+    logs/mac/localhost:
+      receivers:
+        - filelog/mac/logs/localhost
       processors:
         - memory_limiter
         - resource/mac_resource_attributes/localhost
