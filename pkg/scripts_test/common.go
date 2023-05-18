@@ -84,17 +84,6 @@ func tearDownDarwin(t *testing.T) {
 	removeDirectoryIfExists(t, logDirPath)
 	removeDirectoryIfExists(t, appSupportDirPath)
 
-	// uninstaller, err := os.Stat(darwinUninstallScriptPath)
-	// if err != nil {
-	// 	require.ErrorIs(t, err, os.ErrNotExist)
-	// } else if uninstaller.IsDir() {
-	// 	t.Error("Uninstall script path is a directory")
-	// } else {
-	// 	cmd := exec.Command(darwinUninstallScriptPath)
-	// 	output, err := cmd.Output()
-	// 	require.NoErrorf(t, err, "error while running uninstall.sh: %s", output)
-	// }
-
 	// Remove user & group
 	systemUser := getSystemUser()
 	if dsclKeyExistsForPath(t, "/Users", systemUser) {
