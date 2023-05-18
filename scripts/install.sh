@@ -47,7 +47,7 @@ ARG_LONG_INSTALL_HOSTMETRICS='install-hostmetrics'
 ARG_SHORT_TIMEOUT='m'
 ARG_LONG_TIMEOUT='download-timeout'
 
-PACKAGE_GITHUB_ORG="SumoLogic"
+PACKAGE_GITHUB_ORG="sensu"
 PACKAGE_GITHUB_REPO="sumologic-otel-collector-packaging"
 
 readonly ARG_SHORT_TOKEN ARG_LONG_TOKEN ARG_SHORT_HELP ARG_LONG_HELP ARG_SHORT_API ARG_LONG_API
@@ -84,7 +84,6 @@ CONFIG_DIRECTORY=""
 USER_CONFIG_DIRECTORY=""
 USER_ENV_DIRECTORY=""
 SYSTEMD_CONFIG=""
-LAUNCHD_CONFIG=""
 UNINSTALL=""
 SUMO_BINARY_PATH=""
 SKIP_TOKEN=""
@@ -94,6 +93,10 @@ COMMON_CONFIG_PATH=""
 PURGE=""
 DOWNLOAD_ONLY=""
 INSTALL_HOSTMETRICS=false
+
+LAUNCHD_CONFIG=""
+LAUNCHD_ENV_KEY=""
+LAUNCHD_TOKEN_KEY=""
 
 USER_API_URL=""
 USER_TOKEN=""
@@ -163,7 +166,6 @@ function set_defaults() {
     DOWNLOAD_CACHE_DIR="/var/cache/otelcol-sumo"  # this is in case we want to keep downloaded binaries
     CONFIG_DIRECTORY="/etc/otelcol-sumo"
     SYSTEMD_CONFIG="/etc/systemd/system/otelcol-sumo.service"
-    LAUNCHD_CONFIG="/Library/LaunchDaemons/com.sumologic.otelcol-sumo.plist"
     SUMO_BINARY_PATH="/usr/local/bin/otelcol-sumo"
     USER_CONFIG_DIRECTORY="${CONFIG_DIRECTORY}/conf.d"
     USER_ENV_DIRECTORY="${CONFIG_DIRECTORY}/env"
@@ -173,6 +175,10 @@ function set_defaults() {
     COMMON_CONFIG_BAK_PATH="${USER_CONFIG_DIRECTORY}/common.yaml.bak"
     INDENTATION="  "
     EXT_INDENTATION="${INDENTATION}${INDENTATION}"
+
+    LAUNCHD_CONFIG="/Library/LaunchDaemons/com.sumologic.otelcol-sumo.plist"
+    LAUNCHD_ENV_KEY="EnvironmentVariables"
+    LAUNCHD_TOKEN_KEY="${LAUNCHD_ENV_KEY}.${ENV_TOKEN}"
 
     # ensure the cache dir exists
     mkdir -p "${DOWNLOAD_CACHE_DIR}"
@@ -711,8 +717,56 @@ function setup_config() {
     find "${CONFIG_DIRECTORY}/" -mindepth 1 -type d -exec chmod 550 {} \;  # directories also traversable
 }
 
+function setup_config_darwin() {
+    create_user_config_file "${COMMON_CONFIG_PATH}"
+    add_extension_to_config "${COMMON_CONFIG_PATH}"
+    write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
+
+    # fill in api base url
+    if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
+        write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
+    fi
+
+    if [[ -n "${FIELDS}" && -z "${USER_FIELDS}" ]]; then
+        write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
+    fi
+
+    # clean up bak file
+    rm -f "${COMMON_CONFIG_BAK_PATH}"
+}
+
 # uninstall otelcol-sumo
 function uninstall() {
+    case "${OS_TYPE}" in
+    "darwin") uninstall_darwin ;;
+    "linux") uninstall_linux ;;
+    *)
+      echo "Uninstallation is not supported by this script for OS: ${OS_TYPE}"
+      exit 1
+      ;;
+    esac
+
+    echo "Uninstallation completed"
+}
+
+# uninstall otelcol-sumo on darwin
+function uninstall_darwin() {
+    local UNINSTALL_SCRIPT_PATH
+    UNINSTALL_SCRIPT_PATH="/Library/Application Support/otelcol-sumo/uninstall.sh"
+
+    echo "Going to uninstall otelcol-sumo."
+
+    if [[ "${PURGE}" == "true" ]]; then
+        echo "WARNING: purge is not yet supported on darwin"
+    fi
+
+    ask_to_continue
+
+    "${UNINSTALL_SCRIPT_PATH}"
+}
+
+# uninstall otelcol-sumo on linux
+function uninstall_linux() {
     local MSG
     MSG="Going to remove Otelcol binary"
 
@@ -1028,6 +1082,40 @@ function write_installation_token_env() {
     fi
 }
 
+# write ${ENV_TOKEN} to launchd configuration file
+function write_installation_token_launchd() {
+    local token
+    readonly token="${1}"
+
+    local file
+    readonly file="${2}"
+
+    if [[ ! -f "${file}" ]]; then
+        echo "The LaunchDaemon configuration file is missing: ${file}"
+        exit 1
+    fi
+
+    # Create EnvironmentVariables key if it does not exist
+    if ! plutil_key_exists "${file}" "${LAUNCHD_ENV_KEY}"; then
+        plutil_create_key "${file}" "${LAUNCHD_ENV_KEY}" "xml" "<dict/>"
+    fi
+
+    # Replace EnvironmentVariables key if it has an incorrect type
+    if ! plutil_key_is_type "${file}" "${LAUNCHD_ENV_KEY}" "dictionary"; then
+        plutil_replace_key "${file}" "${LAUNCHD_ENV_KEY}" "xml" "<dict/>"
+    fi
+
+    # Create SUMOLOGIC_INSTALLATION_TOKEN key if it does not exist
+    if ! plutil_key_exists "${file}" "${LAUNCHD_TOKEN_KEY}"; then
+        plutil_create_key "${file}" "${LAUNCHD_TOKEN_KEY}" "string" "${SUMOLOGIC_INSTALLATION_TOKEN}"
+    fi
+
+    # Replace SUMOLOGIC_INSTALLATION_TOKEN key if it has an incorrect type
+    if ! plutil_key_is_type "${LAUNCHD_CONFIG}" "${LAUNCHD_TOKEN_KEY}" "string"; then
+        plutil_replace_key "${LAUNCHD_CONFIG}" "${LAUNCHD_TOKEN_KEY}" "string" "${SUMOLOGIC_INSTALLATION_TOKEN}"
+    fi
+}
+
 # write api_url to user configuration file
 function write_api_url() {
     local api_url
@@ -1309,6 +1397,72 @@ function set_acl_on_log_paths() {
     fi
 }
 
+function plutil_create_key() {
+    local file key type value
+    readonly file="${1}"
+    readonly key="${2}"
+    readonly type="${3}"
+    readonly value="${4}"
+
+    if ! plutil -insert "${key}" -"${type}" "${value}" "${file}"; then
+        echo "plutil_create_key error: key=${key}, type=${type}, value=${value}, file=${file}"
+        exit 1
+    fi
+}
+
+function plutil_delete_key() {
+    local file key
+    readonly file="${1}"
+    readonly key="${2}"
+
+    if ! plutil -remove "${key}" "${file}"; then
+        echo "plutil_delete_key error: key=${key}, file=${file}"
+        exit 1
+    fi
+}
+
+function plutil_extract_key() {
+    local file key output
+    readonly file="${1}"
+    readonly key="${2}"
+
+    if output="$(plutil -extract "${key}" raw -o - "${file}")"; then
+        echo "${output}"
+    else
+        echo
+    fi
+}
+
+function plutil_key_exists() {
+    local file key
+    readonly file="${1}"
+    readonly key="${2}"
+
+    plutil -type "${key}" "${file}" > /dev/null 2>&1
+}
+
+function plutil_key_is_type() {
+    local file key type
+    readonly file="${1}"
+    readonly key="${2}"
+    readonly type="${3}"
+
+    plutil -type "${key}" -expect "${type}" "${file}" > /dev/null 2>&1
+}
+
+function plutil_replace_key() {
+    local file key type value
+    readonly file="${1}"
+    readonly key="${2}"
+    readonly type="${3}"
+    readonly value="${4}"
+
+    if ! plutil -replace "${key}" -"${type}" "${value}" "${file}"; then
+        echo "plutil_replace_key error: key=${key}, file=${file}"
+        exit 1
+    fi
+}
+
 ############################ Main code
 
 OS_TYPE="$(get_os_type)"
@@ -1329,23 +1483,27 @@ readonly USER_CONFIG_DIRECTORY USER_ENV_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH C
 readonly ACL_LOG_FILE_PATHS
 readonly INSTALL_HOSTMETRICS
 readonly CURL_MAX_TIME
+readonly LAUNCHD_CONFIG LAUNCHD_ENV_KEY LAUNCHD_TOKEN_KEY
 
 if [[ "${UNINSTALL}" == "true" ]]; then
-    if [[ "${OS_TYPE}" != "linux" ]]; then
-        echo "Uninstallation is not supported by this script for OS: ${OS_TYPE}"
-        exit 1
-    fi
-
     uninstall
     exit 0
 fi
 
-USER_TOKEN="$(get_user_config "${COMMON_CONFIG_PATH}")"
+# Attempt to find a token from an existing installation
+case "${OS_TYPE}" in
+darwin)
+  USER_TOKEN="$(plutil_extract_key "${LAUNCHD_CONFIG}" "${LAUNCHD_TOKEN_KEY}")"
+  ;;
+*)
+  USER_TOKEN="$(get_user_config "${COMMON_CONFIG_PATH}")"
 
-# If Systemd is not disabled, try to extract token from systemd env file
-if [[ -z "${USER_TOKEN}" && "${SYSTEMD_DISABLED}" == "false" ]]; then
-    USER_TOKEN="$(get_user_env_config "${TOKEN_ENV_FILE}")"
-fi
+  # If Systemd is not disabled, try to extract token from systemd env file
+  if [[ -z "${USER_TOKEN}" && "${SYSTEMD_DISABLED}" == "false" ]]; then
+      USER_TOKEN="$(get_user_env_config "${TOKEN_ENV_FILE}")"
+  fi
+  ;;
+esac
 readonly USER_TOKEN
 
 # Exit if installation token is not set and there is no user configuration
@@ -1410,11 +1568,16 @@ if [[ "${OS_TYPE}" == "darwin" ]]; then
       "amd64") package_arch="intel" ;;
       "arm64") package_arch="apple" ;;
       *)
-        echo "Unsupported architecture for macOS: ${ARCH_TYPE}"
+        echo "Unsupported architecture for darwin: ${ARCH_TYPE}"
         exit 1
         ;;
     esac
     readonly package_arch
+
+    if [[ "${SKIP_CONFIG}" == "true" ]]; then
+        echo "SKIP_CONFIG is not supported on darwin"
+        exit 1
+    fi
 
     echo -e "Getting versions..."
     # Get versions, but ignore errors as we fallback to other methods later
@@ -1452,35 +1615,40 @@ if [[ "${OS_TYPE}" == "darwin" ]]; then
     choices="${TMPDIR}/otelcol-sumo-choices.xml"
     readonly pkg choices
 
+    if [[ "${DOWNLOAD_ONLY}" == "true" ]]; then
+        echo "Package downloaded to: ${pkg}"
+        exit 0
+    fi
+
     # Extract choices xml from meta package, override the choices to enable
     # optional choices, and then install using the new choice selections
-    installer -showChoiceChangesXML -pkg "$pkg" -target / > "$choices"
+    installer -showChoiceChangesXML -pkg "${pkg}" -target / > "${choices}"
 
     # Determine how many installation choices exist
-    choices_count=$(plutil -convert raw -o - "$choices")
+    choices_count=$(plutil -convert raw -o - "${choices}")
     readonly choices_count
 
     # Loop through each installation choice
-    for (( i=0; i < "$choices_count"; i++ )); do
+    for (( i=0; i < "${choices_count}"; i++ )); do
         choice_id_key="${i}.choiceIdentifier"
         choice_attr_key="${i}.choiceAttribute"
         attr_setting_key="${i}.attributeSetting"
 
         # Skip if choiceAttribute does not equal selected
-        choice_attr="$(plutil -extract "$choice_attr_key" raw -o - "$choices")"
+        choice_attr="$(plutil_extract_key "${choices}" "${choice_attr_key}")"
         if [ "$choice_attr" != "selected" ]; then
             continue
         fi
 
         # Get the choice identifier
-        choice_id="$(plutil -extract "$choice_id_key" raw -o - "$choices")"
+        choice_id="$(plutil_extract_key "${choices}" "${choice_id_key}")"
 
         # Mark the choice as selected if the feature flag is true
-        case "$choice_id" in
+        case "${choice_id}" in
         "otelcol-sumo-hostmetricsChoice")
           if [[ "${INSTALL_HOSTMETRICS}" == "true" ]]; then
               echo -e "Enabling ${OS_TYPE} hostmetrics install option"
-              plutil -replace "$attr_setting_key" -integer 1 "$choices"
+              plutil_replace_key "${choices}" "${attr_setting_key}" "integer" 1
           fi
           ;;
         esac
@@ -1488,49 +1656,15 @@ if [[ "${OS_TYPE}" == "darwin" ]]; then
 
     installer -applyChoiceChangesXML "$choices" -pkg "$pkg" -target /
 
-    launchd_token_key="EnvironmentVariables.${ENV_TOKEN}"
-    readonly launchd_token_key
-
-    # Check if EnvironmentVariables key exists
-    set +e
-    plutil \
-        -type "EnvironmentVariables" \
-        -expect dictionary \
-        "${LAUNCHD_CONFIG}" > /dev/null 2>&1
-    launchd_env_key_missing="$?"
-    readonly launchd_env_key_missing
-    set -e
-
-    # Create EnvironmentVariables key if it does not exist
-    if [[ "$launchd_env_key_missing" != "0" ]]; then
-        plutil \
-            -insert EnvironmentVariables \
-            -xml '<dict/>' \
-            "${LAUNCHD_CONFIG}" > /dev/null 2>&1
+    if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" && "${SKIP_TOKEN}" != "true" ]]; then
+        echo "Writing installation token to launchd config"
+        write_installation_token_launchd "${SUMOLOGIC_INSTALLATION_TOKEN}" "${LAUNCHD_CONFIG}"
     fi
 
-    # Check if token key exists
-    set +e
-    plutil \
-        -type "${launchd_token_key}" \
-        -expect string \
-        "${LAUNCHD_CONFIG}" > /dev/null 2>&1
-    launchd_token_key_missing="$?"
-    readonly launchd_token_key_missing
-    set -e
+    setup_config_darwin
 
-    # Set installation token in launchd config
-    if [[ "$launchd_token_key_missing" != "0" ]]; then
-        plutil \
-            -insert "${launchd_token_key}" \
-            -string "${SUMOLOGIC_INSTALLATION_TOKEN}" \
-            "${LAUNCHD_CONFIG}"
-    else
-        plutil \
-            -replace "${launchd_token_key}" \
-            -string "${SUMOLOGIC_INSTALLATION_TOKEN}" \
-            "${LAUNCHD_CONFIG}"
-    fi
+    ls -l /etc/otelcol-sumo
+    ls -l /etc/otelcol-sumo/conf.d
 
     # Run an unload/load launchd config to pull in new changes & restart the service
     launchctl unload "${LAUNCHD_CONFIG}"

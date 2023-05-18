@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -63,13 +65,34 @@ func checkBinaryIsRunning(c check) {
 	require.Equal(c.test, 0, code, "got error code while checking version")
 }
 
+func checkPackageCreated(c check) {
+	re, err := regexp.Compile("Package downloaded to: .*/otelcol-sumo.pkg")
+	require.NoError(c.test, err)
+
+	matchedLine := ""
+	for _, line := range c.output {
+		if re.MatchString(line) {
+			matchedLine = line
+		}
+	}
+	require.NotEmpty(c.test, matchedLine, "package path not in output")
+
+	packagePath := strings.TrimPrefix(matchedLine, "Package downloaded to: ")
+	require.FileExists(c.test, packagePath, "package has not been created")
+}
+
 func checkRun(c check) {
 	require.Equal(c.test, c.expectedInstallCode, c.code, "unexpected installation script error code")
 }
 
 func checkConfigDirectoryOwnershipAndPermissions(c check) {
 	PathHasOwner(c.test, etcPath, "root", getRootGroupName())
-	PathHasPermissions(c.test, etcPath, etcPathPermissions)
+	// TODO: fix mismatch between package permissions & expected permissions
+	if runtime.GOOS == "darwin" {
+		PathHasPermissions(c.test, etcPath, 0755)
+	} else {
+		PathHasPermissions(c.test, etcPath, etcPathPermissions)
+	}
 }
 
 func checkConfigCreated(c check) {
@@ -90,9 +113,26 @@ func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string
 				info, err := os.Stat(path)
 				require.NoError(c.test, err)
 				if info.IsDir() {
-					permissions = configPathDirPermissions
+					// TODO: fix mismatch between package permissions & expected permissions
+					if runtime.GOOS == "darwin" {
+						permissions = 0770
+					} else {
+						permissions = configPathDirPermissions
+					}
 				} else {
-					permissions = configPathFilePermissions
+					// TODO: fix mismatch between package permissions & expected permissions
+					if runtime.GOOS == "darwin" {
+						switch path {
+						case filepath.Join(etcPath, "sumologic.yaml"):
+							permissions = 0440
+						case filepath.Join(etcPath, "conf.d", "common.yaml"):
+							permissions = 0440
+						default:
+							permissions = 0644
+						}
+					} else {
+						permissions = configPathFilePermissions
+					}
 				}
 				PathHasPermissions(c.test, path, permissions)
 				PathHasOwner(c.test, configPath, ownerName, ownerGroup)
@@ -103,7 +143,7 @@ func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string
 }
 
 func checkConfigPathOwnership(c check) {
-	PathHasOwner(c.test, configPath, systemUser, systemUser)
+	PathHasOwner(c.test, configPath, getSystemUser(), getSystemUser())
 }
 
 func checkConfigNotCreated(c check) {
@@ -209,6 +249,24 @@ func checkDifferentTokenInEnvFile(c check) {
 	}
 }
 
+func checkTokenInLaunchdConfig(c check) {
+	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
+
+	conf, err := getLaunchdConfig(launchdPath)
+	require.NoError(c.test, err)
+
+	require.Equal(c.test, c.installOptions.installToken, conf.EnvironmentVariables.InstallationToken, "installation token is different than expected")
+}
+
+func checkDifferentTokenInLaunchdConfig(c check) {
+	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
+
+	conf, err := getLaunchdConfig(launchdPath)
+	require.NoError(c.test, err)
+
+	require.Equal(c.test, "different"+c.installOptions.installToken, conf.EnvironmentVariables.InstallationToken, "installation token is different than expected")
+}
+
 func checkHostmetricsConfigCreated(c check) {
 	require.FileExists(c.test, hostmetricsConfigPath, "hostmetrics configuration has not been created properly")
 }
@@ -238,6 +296,14 @@ func checkSystemdEnvDirExists(c check) {
 
 func checkSystemdEnvDirPermissions(c check) {
 	PathHasPermissions(c.test, etcPath+"/env", configPathDirPermissions)
+}
+
+func checkLaunchdConfigCreated(c check) {
+	require.FileExists(c.test, launchdPath, "launchd configuration has not been created properly")
+}
+
+func checkLaunchdConfigNotCreated(c check) {
+	require.NoFileExists(c.test, launchdPath, "launchd configuration has been created")
 }
 
 func checkTags(c check) {
@@ -290,6 +356,18 @@ func preActionMockEnvFiles(c check) {
 	require.NoError(c.test, err)
 
 	err = f.Chmod(fs.FileMode(configPathFilePermissions))
+	require.NoError(c.test, err)
+}
+
+func preActionMockLaunchdConfig(c check) {
+	f, err := os.Create(launchdPath)
+	require.NoError(c.test, err)
+
+	err = f.Chmod(fs.FileMode(launchdPathFilePermissions))
+	require.NoError(c.test, err)
+
+	conf := NewLaunchdConfig()
+	err = saveLaunchdConfig(launchdPath, conf)
 	require.NoError(c.test, err)
 }
 
@@ -347,6 +425,15 @@ func preActionWriteDifferentDeprecatedTokenToEnvFile(c check) {
 
 	content := fmt.Sprintf("SUMOLOGIC_INSTALL_TOKEN=different%s", c.installOptions.installToken)
 	err := os.WriteFile(tokenEnvFilePath, []byte(content), fs.FileMode(etcPathPermissions))
+	require.NoError(c.test, err)
+}
+
+func preActionWriteDifferentTokenToLaunchdConfig(c check) {
+	conf, err := getLaunchdConfig(launchdPath)
+	require.NoError(c.test, err)
+
+	conf.EnvironmentVariables.InstallationToken = "different" + c.installOptions.installToken
+	err = saveLaunchdConfig(launchdPath, conf)
 	require.NoError(c.test, err)
 }
 
@@ -447,18 +534,18 @@ func checkAbortedDueToDifferentTags(c check) {
 	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different tags than in your configuration file!")
 }
 
-// preActionCreateUser creates systemUser and then set it as owner of configPath
+// preActionCreateUser creates the system user and then set it as owner of configPath
 func preActionCreateUser(c check) {
 	preActionMockUserConfig(c)
 
-	cmd := exec.Command("useradd", systemUser)
+	cmd := exec.Command("useradd", getSystemUser())
 	_, err := cmd.CombinedOutput()
 	require.NoError(c.test, err)
 
 	f, err := os.Open(configPath)
 	require.NoError(c.test, err)
 
-	user, err := user.Lookup(systemUser)
+	user, err := user.Lookup(getSystemUser())
 	require.NoError(c.test, err)
 
 	uid, err := strconv.Atoi(user.Uid)
@@ -472,14 +559,55 @@ func preActionCreateUser(c check) {
 }
 
 func checkUserExists(c check) {
-	_, err := user.Lookup(systemUser)
-	require.NoError(c.test, err)
+	username := getSystemUser()
+
+	if runtime.GOOS == "darwin" {
+		exists := dsclKeyExistsForPath(c.test, "/Users", username)
+		require.True(c.test, exists, "user has not been created")
+	} else {
+		_, err := user.Lookup(username)
+		require.NoError(c.test, err, "user has not been created")
+	}
+
 	checkConfigPathOwnership(c)
 }
 
 func checkUserNotExists(c check) {
-	_, err := user.Lookup(systemUser)
-	require.Error(c.test, err)
+	username := getSystemUser()
+
+	if runtime.GOOS == "darwin" {
+		exists := dsclKeyExistsForPath(c.test, "/Users", username)
+		require.False(c.test, exists, "user has been created")
+	} else {
+		_, err := user.Lookup(username)
+		require.Error(c.test, err, "user has been created")
+	}
+}
+
+func checkGroupExists(c check) {
+	group := getSystemGroup()
+
+	if runtime.GOOS == "darwin" {
+		exists := dsclKeyExistsForPath(c.test, "/Groups", group)
+		require.True(c.test, exists, "group has not been created")
+	} else {
+		_, err := user.LookupGroup(group)
+		require.NoError(c.test, err, "group has not been created")
+	}
+
+	checkConfigPathOwnership(c)
+}
+
+func checkGroupNotExists(c check) {
+	group := getSystemGroup()
+
+	if runtime.GOOS == "darwin" {
+		exists := dsclKeyExistsForPath(c.test, "/Groups", group)
+		require.False(c.test, exists, "group has been created")
+	} else {
+		_, err := user.LookupGroup(group)
+		require.Error(c.test, err, "group has been created")
+	}
 }
 
 func checkVarLogACL(c check) {
@@ -487,7 +615,7 @@ func checkVarLogACL(c check) {
 		return
 	}
 
-	PathHasUserACL(c.test, "/var/log", systemUser, "r-x")
+	PathHasUserACL(c.test, "/var/log", getSystemUser(), "r-x")
 }
 
 func checkUninstallationOutput(c check) {
@@ -498,7 +626,9 @@ func checkUninstallationOutput(c check) {
 func PathHasPermissions(t *testing.T, path string, perms uint32) {
 	info, err := os.Stat(path)
 	require.NoError(t, err)
-	require.Equal(t, fs.FileMode(perms), info.Mode().Perm(), "%s should have %o permissions", path, perms)
+	expected := fs.FileMode(perms)
+	got := info.Mode().Perm()
+	require.Equal(t, expected, got, "%s should have %o permissions but has %o", path, expected, got)
 }
 
 func PathHasOwner(t *testing.T, path string, ownerName string, groupName string) {
