@@ -1,0 +1,22 @@
+exporters:
+  logging:
+
+receivers:
+  statsd:
+    endpoint: "localhost:8130"
+    aggregation_interval: 70s
+    enable_metric_type: false
+    timer_histogram_mapping:
+      - statsd_type: "histogram"
+        observer_type: "gauge"
+      - statsd_type: "timing"
+        observer_type: "histogram"
+        histogram:
+          max_size: 170
+service:
+  pipelines:
+    metrics/level-platform:
+      exporters:
+        - logging
+      receivers:
+        - statsd
