@@ -37,10 +37,12 @@ receivers:
           process.disk.operations:
             enabled: true
   filelog/linux/logs/localhost:
+    include_file_name: false
+    include_file_path: true
     operators:
       - type: move
-        from: attributes["log.file.name"]
-        to: resource["log.file.name"]
+        from: attributes["log.file.path"]
+        to: resource["log.file.path"]
     include:
       - /var/log/auth.log
       - /var/log/syslog
