@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released TBA
 
+This release introduces the following breaking changes:
+
+- feat!: disable Prometheus metrics name normalization by default [#1138]
+
+See the [upgrade guide][upgrade_guide_unreleased] for more details.
+
 ### Added
 
 - feat(k8sprocessor): support otel semantic convention in config [#1122]
@@ -32,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1122]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1122
 [#1125]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1125
 [#1134]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1134
+[#1138]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1138
+[upgrade_guide_unreleased]: ./docs/upgrading.md#upgrading-to-unreleased
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.76.1-sumo-0...main
 
 ## [0.76.1-sumo-0]
