@@ -233,7 +233,33 @@ func (se *SumologicExtension) validateCredentials(
 		return err
 	}
 
-	return se.sendHeartbeatWithHTTPClient(ctx, se.httpClient)
+	se.backOff.Reset()
+	var err error
+
+	for {
+		err = se.sendHeartbeatWithHTTPClient(ctx, se.httpClient)
+
+		if err == errUnauthorizedHeartbeat || err == nil {
+			return err
+		}
+
+		nbo := se.backOff.NextBackOff()
+		// Return error if backoff reaches the limit or uncoverable error is spotted
+		if _, ok := err.(*backoff.PermanentError); nbo == se.backOff.Stop || ok {
+			return err
+		}
+
+		se.logger.Info(fmt.Sprintf("Retrying credentials validation due to error %s", err))
+
+		t := time.NewTimer(nbo)
+		defer t.Stop()
+
+		select {
+		case <-t.C:
+		case <-ctx.Done():
+			return fmt.Errorf("credential validation cancelled: %w", ctx.Err())
+		}
+	}
 }
 
 // injectCredentials injects the collector credentials:
@@ -297,11 +323,17 @@ func (se *SumologicExtension) getCredentials(ctx context.Context) (credentials.C
 		colCreds, err = se.getLocalCredentials(ctx)
 		if err == nil {
 			errV := se.validateCredentials(ctx, colCreds)
+
 			if errV == nil {
 				se.logger.Info("Found stored credentials, skipping registration",
 					zap.String(collectorNameField, colCreds.Credentials.CollectorName),
 				)
 				return colCreds, nil
+			}
+
+			// We are unable to confirm if credentials are valid or not as we do not have (clear) response from the API
+			if errV != errUnauthorizedHeartbeat {
+				return credentials.CollectorCredentials{}, errV
 			}
 
 			// Credentials might have ended up being invalid or the collector
@@ -617,6 +649,7 @@ func (se *SumologicExtension) sendHeartbeatWithHTTPClient(ctx context.Context, h
 	switch res.StatusCode {
 	default:
 		var buff bytes.Buffer
+
 		if _, err := io.Copy(&buff, res.Body); err != nil {
 			return fmt.Errorf(
 				"failed to copy collector heartbeat response body, status code: %d, err: %w",

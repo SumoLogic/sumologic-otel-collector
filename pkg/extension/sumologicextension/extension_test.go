@@ -834,6 +834,138 @@ func TestCollectorCheckingCredentialsFoundInLocalStorage(t *testing.T) {
 			},
 		},
 		{
+			name:             "collector checks network issues - no registration is done",
+			expectedReqCount: 4,
+			srvFn: func() (*httptest.Server, *int32) {
+				var reqCount int32
+
+				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+						reqNum := atomic.AddInt32(&reqCount, 1)
+
+						switch reqNum {
+
+						// failing heatbeat
+						case 1:
+							require.NotEqual(t, registerUrl, req.URL.Path,
+								"collector shouldn't call the register API when credentials locally retrieved")
+
+							assert.Equal(t, heartbeatUrl, req.URL.Path)
+
+							authHeader := req.Header.Get("Authorization")
+							token := base64.StdEncoding.EncodeToString(
+								[]byte("test-credential-id:test-credential-key"),
+							)
+							assert.Equal(t, "Basic "+token, authHeader,
+								"collector didn't send correct Authorization header with heartbeat request")
+
+							w.WriteHeader(http.StatusInternalServerError)
+
+						// successful heatbeat
+						case 2:
+							require.NotEqual(t, registerUrl, req.URL.Path,
+								"collector shouldn't call the register API when credentials locally retrieved")
+
+							assert.Equal(t, heartbeatUrl, req.URL.Path)
+
+							authHeader := req.Header.Get("Authorization")
+							token := base64.StdEncoding.EncodeToString(
+								[]byte("test-credential-id:test-credential-key"),
+							)
+							assert.Equal(t, "Basic "+token, authHeader,
+								"collector didn't send correct Authorization header with heartbeat request")
+
+							w.WriteHeader(204)
+
+						// metadata
+						case 3:
+							assert.Equal(t, metadataUrl, req.URL.Path)
+							w.WriteHeader(200)
+
+						// should not produce any more requests
+						default:
+							w.WriteHeader(http.StatusInternalServerError)
+						}
+					})),
+					&reqCount
+			},
+			configFn: func(url string) *Config {
+				cfg := createDefaultConfig().(*Config)
+				cfg.CollectorName = "test-name"
+				cfg.ApiBaseUrl = url
+				cfg.Credentials.InstallationToken = "dummy_install_token"
+				cfg.CollectorCredentialsDirectory = dir
+				return cfg
+			},
+		},
+		{
+			name:             "collector checks network issues - registration is done",
+			expectedReqCount: 4,
+			srvFn: func() (*httptest.Server, *int32) {
+				var reqCount int32
+
+				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+						reqNum := atomic.AddInt32(&reqCount, 1)
+
+						switch reqNum {
+
+						// failing heatbeat
+						case 1:
+							require.NotEqual(t, registerUrl, req.URL.Path,
+								"collector shouldn't call the register API when credentials locally retrieved")
+
+							assert.Equal(t, heartbeatUrl, req.URL.Path)
+
+							authHeader := req.Header.Get("Authorization")
+							token := base64.StdEncoding.EncodeToString(
+								[]byte("test-credential-id:test-credential-key"),
+							)
+							assert.Equal(t, "Basic "+token, authHeader,
+								"collector didn't send correct Authorization header with heartbeat request")
+
+							w.WriteHeader(http.StatusUnauthorized)
+
+						// register
+						case 2:
+							require.Equal(t, registerUrl, req.URL.Path)
+
+							authHeader := req.Header.Get("Authorization")
+							assert.Equal(t, "Bearer dummy_install_token", authHeader,
+								"collector didn't send correct Authorization header with registration request")
+
+							_, err := w.Write([]byte(`{
+							"collectorCredentialId": "aaaaaaaaaaaaaaaaaaaa",
+							"collectorCredentialKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+							"collectorId": "000000000FFFFFFF"
+						}`))
+							if err != nil {
+								w.WriteHeader(http.StatusInternalServerError)
+							}
+
+						// metadata
+						case 3:
+							w.WriteHeader(200)
+
+						// heartbeat
+						case 4:
+							w.WriteHeader(204)
+
+						// should not produce any more requests
+						default:
+							w.WriteHeader(http.StatusInternalServerError)
+						}
+					})),
+					&reqCount
+			},
+			configFn: func(url string) *Config {
+				cfg := createDefaultConfig().(*Config)
+				cfg.CollectorName = "test-name"
+				cfg.ApiBaseUrl = url
+				cfg.Credentials.InstallationToken = "dummy_install_token"
+				cfg.CollectorCredentialsDirectory = dir
+				return cfg
+			},
+		},
+		{
 			name:             "collector registers when no matching credentials are found in local storage",
 			expectedReqCount: 3,
 			srvFn: func() (*httptest.Server, *int32) {
