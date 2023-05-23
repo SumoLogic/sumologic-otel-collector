@@ -25,6 +25,32 @@
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
+## Upgrading to Unreleased
+
+### Full Prometheus metric name normalization is now disabled by default
+
+Prometheus and otel metric naming conventions aren't entirely compatible. Prometheus metric name normalization is a feature intended
+to convert metrics between the two conventions. See the [upstream documentation][prometheus_naming] for details.
+
+In the 0.76.1 release, the feature flag for this normalization was [enabled by default][feature_pr].
+
+The feature primarily affects the `prometheus` and `prometheusremotewrite` exporters. However, it also modifies some metrics collected
+by the `prometheus` receiver. More specifically, it trims certain suffixes from metric names. Unfortunately, this affects a lot of
+widely used metrics. For example, the standard container CPU usage metric:
+
+`container_cpu_usage_seconds_total` -> `container_cpu_usage_seconds`
+
+This change breaks a lot of content built using existing metric names and prevents the Prometheus receiver from being used as a drop-in
+replacement for Prometheus. Therefore, we've decided to default to having this flag disabled.
+
+The current behaviour can be re-enabled by passing the `--feature-gates=+pkg.translator.prometheus.NormalizeName` flag to the collector at startup.
+
+There is an ongoing discussion about making this behaviour configurable at runtime. Please follow [this issue][runtime_issue] if you'd like to learn more.
+
+[prometheus_naming]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/translator/prometheus#metric-name
+[feature_pr]: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/20519
+[runtime_issue]: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/21743
+
 ## Upgrading to v0.73.0-sumo-1
 
 ### The default collector name for sumologic extension is now the host FQDN

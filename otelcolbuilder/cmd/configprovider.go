@@ -36,12 +36,19 @@ import (
 // https://github.com/open-telemetry/opentelemetry-collector/blob/65dfc325d974be8ebb7c170b90c6646f9eaef27b/service/command.go#L38
 
 func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
+	var err error
 	// feature flags, which are enabled by default in our distro
-	err := featuregate.GlobalRegistry().Set("extension.sumologic.updateCollectorMetadata", true)
-
+	err = featuregate.GlobalRegistry().Set("extension.sumologic.updateCollectorMetadata", true)
 	if err != nil {
 		return fmt.Errorf("setting feature gate flags failed: %s", err)
 	}
+
+	// see: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/21743
+	err = featuregate.GlobalRegistry().Set("pkg.translator.prometheus.NormalizeName", false)
+	if err != nil {
+		return fmt.Errorf("setting feature gate flags failed: %s", err)
+	}
+
 	// to create the provider, we need config locations passed in via the command line
 	// to get these, we take the command the service uses to start, parse the flags, and read the values
 	flagset := flags(featuregate.GlobalRegistry())
