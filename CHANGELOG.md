@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - feat(sumologicextension): retry validation and exit in case of connection issues [#1134]
 
+### Removed
+
+- feat(datadogprocessor)!: remove DataDog processor
+
+  It doesn't make much sense to include it if the DataDog exporter is not included.
+
 ### Fixed
 
 - fix(sumologicexporter): avoid allocations in compressor [#1118]
