@@ -95,17 +95,29 @@ check-uniform-dependencies:
 	./ci/check_uniform_dependencies.sh
 
 OT_CORE_VERSION := $(shell grep "otelcol_version: .*" otelcolbuilder/.otelcol-builder.yaml | cut -f 4 -d " ")
-# usage: make update-ot-core OT_CORE_NEW_VERSION=x.x.x
-.PHONY: update-ot-core
-update-ot-core: install-gsed
-	@test $(OT_CORE_NEW_VERSION) || (echo "usage: make update-otc-core OT_CORE_NEW_VERSION=x.x.x"; exit 1);
-	@echo "updating OT core from $(OT_CORE_VERSION) to $(OT_CORE_NEW_VERSION)"
-	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" otelcolbuilder/.otelcol-builder.yaml
-	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" otelcolbuilder/Makefile
-	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" README.md
-	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" docs/configuration.md
-	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" pkg/receiver/telegrafreceiver/README.md
-	@find . -type f -name "go.mod" -exec $(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW_VERSION)/" {} \;
+OT_CONTRIB_VERSION := $(shell grep --max-count=1 '^  - gomod: github\.com/open-telemetry/opentelemetry-collector-contrib/' otelcolbuilder/.otelcol-builder.yaml | cut --delimiter=" " --fields=6 | $(SED) "s/v//")
+# usage: make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y
+.PHONY: update-ot
+update-ot: install-gsed
+	@test $(OT_CORE_NEW)    || (echo "usage: make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y"; exit 1);
+	@test $(OT_CONTRIB_NEW) || (echo "usage: make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y"; exit 1);
+	@echo "Updating OT core from $(OT_CORE_VERSION) to $(OT_CORE_NEW) and OT contrib from $(OT_CONTRIB_VERSION) to $(OT_CONTRIB_NEW)"
+	$(SED) -i "s/\(otelcol_version:\) $(OT_CORE_VERSION)$$/\1 $(OT_CORE_NEW)/" otelcolbuilder/.otelcol-builder.yaml
+	$(SED) -i "s/\(go\.opentelemetry\.io\/collector\/.*\) v$(OT_CORE_VERSION)$$/\1 v$(OT_CORE_NEW)/" otelcolbuilder/.otelcol-builder.yaml
+	$(SED) -i "s/\(github\.com\/open-telemetry\/opentelemetry-collector-contrib\/.*\) v$(OT_CONTRIB_VERSION)$$/\1 v$(OT_CONTRIB_NEW)/" otelcolbuilder/.otelcol-builder.yaml
+	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW)/" otelcolbuilder/Makefile
+	$(SED) -i "s/\(collector\/\(blob\|tree\)\/v\)$(OT_CORE_VERSION)/\1$(OT_CORE_NEW)/" \
+		README.md \
+		docs/configuration.md \
+		docs/migration.md \
+		pkg/exporter/sumologicexporter/README.md
+	$(SED) -i "s/\(contrib\/\(blob\|tree\)\/v\)$(OT_CONTRIB_VERSION)/\1$(OT_CONTRIB_NEW)/" \
+		README.md \
+		docs/configuration.md \
+		docs/migration.md \
+		pkg/receiver/telegrafreceiver/README.md
+	@find . -type f -name "go.mod" -exec $(SED) -i "s/\(go\.opentelemetry\.io\/collector.*\) v$(OT_CORE_VERSION)$$/\1 v$(OT_CORE_NEW)/" {} \;
+	@find . -type f -name "go.mod" -exec $(SED) -i "s/\(github\.com\/open-telemetry\/opentelemetry-collector-contrib\/.*\) v$(OT_CONTRIB_VERSION)$$/\1 v$(OT_CONTRIB_NEW)/" {} \;
 	@echo "building OT distro to check for breakage"
 	make gomod-download-all
 	pushd otelcolbuilder \

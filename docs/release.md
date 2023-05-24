@@ -5,11 +5,10 @@
   - [Create and push Git tag](#create-and-push-git-tag)
     - [Remove tag in case of a failed release job](#remove-tag-in-case-of-a-failed-release-job)
   - [Publish GitHub release](#publish-github-release)
-  - [Update documentation with the newly released version](#update-documentation-with-the-newly-released-version)
   - [Add `Unreleased` section to the changelog and upgrading guide](#add-unreleased-section-to-the-changelog-and-upgrading-guide)
-- [Updating OT core](#updating-ot-core)
-  - [Updating patched processors](#updating-patched-processors)
-  - [Updating OT distro](#updating-ot-distro)
+- [Updating OT to next version](#updating-ot-to-next-version)
+  - [Update OT version](#update-ot-version)
+  - [Fix lint errors and tests](#fix-lint-errors-and-tests)
   - [Add missing upstream components](#add-missing-upstream-components)
     - [Adding components from scratch](#adding-components-from-scratch)
 - [Running Tracing E2E tests](#running-tracing-e2e-tests)
@@ -81,10 +80,6 @@ edit the release draft and fill in missing information:
 
 After verifying that the release text and all links are good, publish the release.
 
-### Update documentation with the newly released version
-
-Run `make update-docs` in the project root and submit a PR with the changes.
-
 ### Add `Unreleased` section to the changelog and upgrading guide
 
 Edit the [CHANGELOG.md][changelog] and [upgrading.md][upgrading] files and prepare unreleased section.
@@ -93,45 +88,40 @@ Here is the example pull request: [#677].
 
 [#677]: https://github.com/SumoLogic/sumologic-otel-collector/pull/677
 
-## Updating OT core
+## Updating OT to next version
 
-> **Warning**: For version 0.76.*, the core version is 0.76.1, and the contrib version is 0.76.3.
-> Take care when updating, and delete this note afterwards.
+Here are the steps to update OT to next version:
 
-Updating OT core involves:
-
-1. Rebasing our upstream processor patches on the new core version
-1. Updating the version number where necessary
-1. Verifying that Sumo OT distro builds correctly
-1. Fixing lint errors from deprecations
+1. Update the version number where necessary
+1. Verify that Sumo OT distro builds correctly
+1. Fix lint and test errors
 1. Add missing upstream components
 1. Ensure all [milestone] tasks and issues have been done
 
 [milestone]: https://github.com/SumoLogic/sumologic-otel-collector/milestones
 
-### Updating patched processors
+### Update OT version
 
-We currently do not maintain patches for upstream components.
+Take note of the [core][otcore_releases] and [contrib][otcontrib_releases] versions you want to update to.
+They are often the same version (e.g. v0.77.0),
+but for some releases, these versions are different (e.g. v0.76.1/v0.76.3 or v0.78.2/v0.78.0).
 
-Historical process can be taken from [v0.57.2-sumo-0][updating_patched] if needed.
-
-### Updating OT distro
-
-The second and third step of this list are covered by the `update-ot-core` Makefile target. Run:
+Run:
 
 ```shell
-make update-ot-core OT_CORE_NEW_VERSION=x.x.x
+make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y
 ```
 
-to carry these steps out.
-Afterwards, you can run tests and check for lint errors by running:
+This make target also builds the Sumo OT distro binary to check that there are no build errors.
+
+### Fix lint errors and tests
+
+Run:
 
 ```shell
 make golint
 make gotest
 ```
-
-in the repository root.
 
 ### Add missing upstream components
 
@@ -149,7 +139,7 @@ Additionally, the following components are supported:
 - [ecs_observer][ecsobserver]
 - [ecs_task_observer][ecstaskobserver]
 
-As a fourth step, please check [OpenTelemetry Collector][ot_release] and [OpenTelemetry Collector Contrib][otc_release]
+As a fourth step, please check [OpenTelemetry Collector][otcore_releases] and [OpenTelemetry Collector Contrib][otcontrib_releases]
 release pages for new components and update [builder configuration][builder_config] and [README.md] if they are any.
 New exporters should not be added without a reason.
 Please consider example pull request: [#604]
@@ -265,9 +255,8 @@ make update-journalctl
 [otc_repository]: https://github.com/open-telemetry/opentelemetry-collector-contrib
 [readme.md]: ../README.md
 [#604]: https://github.com/SumoLogic/sumologic-otel-collector/pull/604/files
-[otc_release]: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases
-[ot_release]: https://github.com/open-telemetry/opentelemetry-collector/releases
-[updating_patched]: https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.57.2-sumo-0/docs/release.md#updating-patched-processors
+[otcontrib_releases]: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases
+[otcore_releases]: https://github.com/open-telemetry/opentelemetry-collector/releases
 [windowseventlogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/receiver/windowseventlogreceiver
 [logstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/processor/logstransformprocessor
 [dbstorage]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/extension/storage/dbstorage
