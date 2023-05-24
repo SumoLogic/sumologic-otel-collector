@@ -1,12 +1,16 @@
 # Upgrading
 
+- [Upgrading to v0.77.0-sumo-0](#upgrading-to-v0770-sumo-0)
+  - [Full Prometheus metric name normalization is now disabled by default](#full-prometheus-metric-name-normalization-is-now-disabled-by-default)
+- [Upgrading to v0.73.0-sumo-1](#upgrading-to-v0730-sumo-1)
+  - [The default collector name for sumologic extension is now the host FQDN](#the-default-collector-name-for-sumologic-extension-is-now-the-host-fqdn)
 - [Upgrading to v0.66.0-sumo-0](#upgrading-to-v0660-sumo-0)
   - [`filelog` receiver: has been removed from sub-parsers](#filelog-receiver-has-been-removed-from-sub-parsers)
   - [`sending_queue`: require explicit storage set](#sending_queue-require-explicit-storage-set)
   - [`apache` receiver: turn on feature gates for resource attributes](#apache-receiver-turn-on-feature-gates-for-resource-attributes)
   - [`elasticsearch` receiver: turn on more datapoints](#elasticsearch-receiver-turn-on-more-datapoints)
 - [Upgrading to v0.57.2-sumo-0](#upgrading-to-v0572-sumo-0)
-  - [`sumologic` exporter: drop support for source templates](#sumologic-exporter-drop-support-for-source-headers)
+  - [`sumologic` exporter: drop support for source headers](#sumologic-exporter-drop-support-for-source-headers)
 - [Upgrading to v0.56.0-sumo-0](#upgrading-to-v0560-sumo-0)
   - [`sumologic` exporter: drop support for translating attributes](#sumologic-exporter-drop-support-for-translating-attributes)
   - [`sumologic` exporter: drop support for translating Telegraf metric names](#sumologic-exporter-drop-support-for-translating-telegraf-metric-names)
@@ -25,7 +29,7 @@
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
-## Upgrading to Unreleased
+## Upgrading to v0.77.0-sumo-0
 
 ### Full Prometheus metric name normalization is now disabled by default
 

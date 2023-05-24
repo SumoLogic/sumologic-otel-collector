@@ -5,15 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.77.0-sumo-0]
 
-### Released TBA
+### Released 2023-05-24
 
 This release introduces the following breaking changes:
 
 - feat!: disable Prometheus metrics name normalization by default [#1138]
 
-See the [upgrade guide][upgrade_guide_unreleased] for more details.
+- feat(datadogprocessor)!: remove DataDog processor [#1135]
+
+  It doesn't make much sense to include it if the DataDog exporter is not included.
+
+See the [upgrade guide][upgrade_guide_v0.77] for more details.
 
 ### Added
 
@@ -24,27 +28,22 @@ See the [upgrade guide][upgrade_guide_unreleased] for more details.
 
 - feat(sumologicextension): retry validation and exit in case of connection issues [#1134]
 
-### Removed
-
-- feat(datadogprocessor)!: remove DataDog processor
-
-  It doesn't make much sense to include it if the DataDog exporter is not included.
-
 ### Fixed
 
 - fix(sumologicexporter): avoid allocations in compressor [#1118]
 
+[v0.77.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.76.1-sumo-0...v0.77.0-sumo-0
 [#1118]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1118
 [#1122]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1122
 [#1125]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1125
 [#1134]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1134
+[#1135]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1135
 [#1138]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1138
-[upgrade_guide_unreleased]: ./docs/upgrading.md#upgrading-to-unreleased
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.76.1-sumo-0...main
+[upgrade_guide_v0.77]: ./docs/upgrading.md#upgrading-to-v0770-sumo-0
 
 ## [0.76.1-sumo-0]
 
-### Released 28.04.2023
+### Released 2023-28-04
 
 ### Changed
 
