@@ -47,7 +47,7 @@ ARG_LONG_INSTALL_HOSTMETRICS='install-hostmetrics'
 ARG_SHORT_TIMEOUT='m'
 ARG_LONG_TIMEOUT='download-timeout'
 
-PACKAGE_GITHUB_ORG="sensu"
+PACKAGE_GITHUB_ORG="SumoLogic"
 PACKAGE_GITHUB_REPO="sumologic-otel-collector-packaging"
 
 readonly ARG_SHORT_TOKEN ARG_LONG_TOKEN ARG_SHORT_HELP ARG_LONG_HELP ARG_SHORT_API ARG_LONG_API
@@ -1605,7 +1605,7 @@ if [[ "${OS_TYPE}" == "darwin" ]]; then
         artifact_name="otelcol-sumo_${VERSION}-${package_suffix}"
         readonly artifact_name
 
-        LINK="https://github.com/sensu/sumologic-otel-collector-packaging/releases/download/v${VERSION}/${artifact_name}"
+        LINK="https://github.com/${PACKAGE_GITHUB_ORG}/${PACKAGE_GITHUB_REPO}/releases/download/v${VERSION}/${artifact_name}"
         readonly LINK
 
         get_package_from_url "${LINK}"
