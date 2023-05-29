@@ -214,7 +214,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 [snmpreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.78.0/receiver/snmpreceiver
 [solacereceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.78.0/receiver/solacereceiver
 [splunkhecreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.78.0/receiver/splunkhecreceiver
-[sqlqueryreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.78.0/receiver/sqlqueryreceiver
+[sqlqueryreceiver]: https://github.com/dmolenda-sumo/opentelemetry-collector-contrib/tree/sqlquery-receiver-add-logs-v0.78.0/receiver/sqlqueryreceiver
 [sqlserverreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.78.0/receiver/sqlserverreceiver
 [sshcheckreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.78.0/receiver/sshcheckreceiver
 [statsdreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.78.0/receiver/statsdreceiver
