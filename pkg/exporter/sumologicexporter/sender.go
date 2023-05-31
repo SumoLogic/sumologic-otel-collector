@@ -372,12 +372,16 @@ func (s *sender) logToJSON(record plog.LogRecord) (string, error) {
 		}
 	}
 
-	nextLine, err := json.Marshal(record.Attributes().AsRaw())
+	nextLine := new(bytes.Buffer)
+	enc := json.NewEncoder(nextLine)
+	enc.SetEscapeHTML(false)
+	err := enc.Encode(record.Attributes().AsRaw())
+
 	if err != nil {
 		return "", err
 	}
 
-	return bytes.NewBuffer(nextLine).String(), nil
+	return strings.TrimSuffix(nextLine.String(), "\n"), nil
 }
 
 var timeZeroUTC = time.Unix(0, 0).UTC()

@@ -577,6 +577,45 @@ func TestSendLogsJson(t *testing.T) {
 	assert.EqualValues(t, 1, *test.reqCounter)
 }
 
+func TestSendLogsJsonHTLM(t *testing.T) {
+	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			body := extractBody(t, req)
+			var regex string
+			regex += `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}`
+			regex += `\n`
+			regex += `{"key1":"value1","key2":"value2","log":"<p>Another example log</p>","timestamp":\d{13}}`
+			assert.Regexp(t, regex, body)
+
+			assert.Equal(t, "key=value", req.Header.Get("X-Sumo-Fields"))
+			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
+			assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
+		},
+	})
+	test.s.config.LogFormat = JSONFormat
+
+	rls := plog.NewResourceLogs()
+	slgs := rls.ScopeLogs().AppendEmpty()
+	log := slgs.LogRecords().AppendEmpty()
+
+	log.Body().SetStr("Example log")
+	log.Attributes().PutStr("key1", "value1")
+	log.Attributes().PutStr("key2", "value2")
+
+	log = slgs.LogRecords().AppendEmpty()
+	log.Body().SetStr("<p>Another example log</p>")
+	log.Attributes().PutStr("key1", "value1")
+	log.Attributes().PutStr("key2", "value2")
+
+	_, err := test.s.sendNonOTLPLogs(context.Background(),
+		rls,
+		fieldsFromMap(map[string]string{"key": "value"}),
+	)
+	assert.NoError(t, err)
+
+	assert.EqualValues(t, 1, *test.reqCounter)
+}
+
 func TestSendLogsJsonMultitype(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
