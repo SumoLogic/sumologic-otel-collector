@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - chore: update OT to v0.78.0 [#1142]
 - feat(receiver/sqlquery): add experimental logs support [#1144]
+- feat(receiver/filestats): add File Stats receiver [#1146]
 
 ### Fixed
 
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1142]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1142
 [#1144]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1144
 [#1145]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1145
+[#1146]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1146
 
 ## [v0.77.0-sumo-0]
 
