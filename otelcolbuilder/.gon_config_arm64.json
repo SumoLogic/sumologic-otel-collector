@@ -1,6 +1,6 @@
 {
   "apple_id": {
-    "username" : "it-apple-developer@sumologic.com",
+    "username" : "otel-mac-certs@sumologic.com",
     "password":  "@env:AC_PASSWORD"
   },
 
