@@ -62,7 +62,7 @@ func WithCredentialsDirectory(dir string) LocalFsStoreOpt {
 }
 
 func NewLocalFsStore(opts ...LocalFsStoreOpt) (Store, error) {
-	dir, err := GetDefaultCollectorCredentialsDirectory()
+	defaultDir, err := GetDefaultCollectorCredentialsDirectory()
 	if err != nil {
 		return nil, err
 	}
@@ -73,12 +73,17 @@ func NewLocalFsStore(opts ...LocalFsStoreOpt) (Store, error) {
 	}
 
 	store := LocalFsStore{
-		collectorCredentialsDirectory: dir,
+		collectorCredentialsDirectory: defaultDir,
 		logger:                        logger,
 	}
 	for _, opt := range opts {
 		opt(&store)
 	}
+
+	if err := ensureDir(store.collectorCredentialsDirectory); err != nil {
+		return nil, fmt.Errorf("failed to ensure the local credentials directory is writable: %w", err)
+	}
+
 	return store, err
 }
 
@@ -165,7 +170,7 @@ func (cr LocalFsStore) Get(key string) (CollectorCredentials, error) {
 // in CollectorCredentialsDirectory.
 // The credentials are encrypted using the provided key.
 func (cr LocalFsStore) Store(key string, creds CollectorCredentials) error {
-	if err := ensureDirExists(cr.collectorCredentialsDirectory); err != nil {
+	if err := ensureDir(cr.collectorCredentialsDirectory); err != nil {
 		return err
 	}
 
@@ -250,9 +255,9 @@ func (cr LocalFsStore) Delete(key string) error {
 	return errResult
 }
 
-// ensureDirExists checks if the specified directory exists,
+// ensureDir checks if the specified directory exists and has the right permissions
 // if it doesn't then it tries to create it.
-func ensureDirExists(path string) error {
+func ensureDir(path string) error {
 	fi, err := os.Stat(path)
 	if err != nil {
 		if err := os.Mkdir(path, 0700); err != nil {
