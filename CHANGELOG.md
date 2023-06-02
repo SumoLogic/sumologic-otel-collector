@@ -5,20 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-<!--
 ## [Unreleased]
 
-[unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.78.0-sumo-0...main
--->
-
-## [v0.78.0-sumo-0]
-
-### Released 2023-05-31
+### Released TBA
 
 ### Added
 
 - feat(receiver/filestats): add File Stats receiver [#1146]
 - feat(receiver/sqlquery): add experimental logs support [#1144]
+- feat(exporter/awss3): add AWS S3 exporter [#1149]
 
 ### Changed
 
@@ -28,11 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fix: do not send html special characters as unicode [#1145]
 
-[v0.78.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.77.0-sumo-0...v0.78.0-sumo-0
+[unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.77.0-sumo-0...main
 [#1142]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1142
 [#1144]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1144
 [#1145]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1145
 [#1146]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1146
+[#1149]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1149
 
 ## [v0.77.0-sumo-0]
 
