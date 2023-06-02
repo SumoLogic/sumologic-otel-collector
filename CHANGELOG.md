@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - fix: do not send html special characters as unicode [#1145]
+- fix(sumologicextension): check credentials dir at start [#1152]
 
 [unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.77.0-sumo-0...main
 [#1142]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1142
@@ -29,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1145]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1145
 [#1146]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1146
 [#1149]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1149
+[#1152]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1152
 
 ## [v0.77.0-sumo-0]
 
