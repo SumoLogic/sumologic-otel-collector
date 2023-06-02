@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - feat(receiver/filestats): add File Stats receiver [#1146]
 - feat(receiver/sqlquery): add experimental logs support [#1144]
+- feat(exporter/awss3): add AWS S3 exporter [#1149]
 
 ### Changed
 
@@ -33,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1144]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1144
 [#1145]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1145
 [#1146]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1146
+[#1149]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1149
 
 ## [v0.77.0-sumo-0]
 
