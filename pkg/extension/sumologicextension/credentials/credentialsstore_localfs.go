@@ -80,10 +80,6 @@ func NewLocalFsStore(opts ...LocalFsStoreOpt) (Store, error) {
 		opt(&store)
 	}
 
-	if err := ensureDir(store.collectorCredentialsDirectory); err != nil {
-		return nil, fmt.Errorf("failed to ensure the local credentials directory is writable: %w", err)
-	}
-
 	return store, err
 }
 
@@ -253,6 +249,16 @@ func (cr LocalFsStore) Delete(key string) error {
 	}
 
 	return errResult
+}
+
+// Validate checks if the store is operating correctly
+// This mostly means file permissions and the like
+func (cr LocalFsStore) Validate() error {
+	if err := ensureDir(cr.collectorCredentialsDirectory); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ensureDir checks if the specified directory exists and has the right permissions
