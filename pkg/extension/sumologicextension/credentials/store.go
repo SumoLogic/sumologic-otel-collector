@@ -48,4 +48,7 @@ type Store interface {
 
 	// Delete deletes collector credentials stored under the specified key.
 	Delete(key string) error
+
+	// Validate checks if the store is operating correctly
+	Validate() error
 }

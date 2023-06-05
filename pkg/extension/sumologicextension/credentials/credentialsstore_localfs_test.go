@@ -76,7 +76,7 @@ func TestCredentialsStoreLocalFs(t *testing.T) {
 	require.EqualValues(t, fileCounter, 0)
 }
 
-func TestCredentialsStoreEnsureWritable(t *testing.T) {
+func TestCredentialsStoreValidate(t *testing.T) {
 	var expectedFileMode fs.FileMode
 	dir := filepath.Join(t.TempDir(), "store")
 	if runtime.GOOS == "windows" { // on Windows, we get 0777 for writable directories
@@ -87,7 +87,9 @@ func TestCredentialsStoreEnsureWritable(t *testing.T) {
 	err := os.Mkdir(dir, 0400)
 	require.NoError(t, err)
 
-	_, err = NewLocalFsStore(WithCredentialsDirectory(dir), WithLogger(zap.NewNop()))
+	store, err := NewLocalFsStore(WithCredentialsDirectory(dir), WithLogger(zap.NewNop()))
+	require.NoError(t, err)
+	err = store.Validate()
 	require.NoError(t, err)
 
 	stat, err := os.Stat(dir)

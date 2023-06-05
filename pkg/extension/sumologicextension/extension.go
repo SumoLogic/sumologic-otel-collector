@@ -180,7 +180,16 @@ func createHashKey(conf *Config) string {
 }
 
 func (se *SumologicExtension) Start(ctx context.Context, host component.Host) error {
+	var err error
 	se.host = host
+
+	// if force registration is not enabled, verify that the store is correctly configured
+	if !se.conf.ForceRegistration {
+		err = se.credentialsStore.Validate()
+		if err != nil {
+			return err
+		}
+	}
 
 	colCreds, err := se.getCredentials(ctx)
 	if err != nil {
