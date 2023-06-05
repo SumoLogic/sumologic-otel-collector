@@ -109,7 +109,7 @@ exporters:
       # default = None
       storage: <storage_name>
       # maximum number of batches kept in memory before data;
-      # ignored if enabled is false, default = 5000
+      # ignored if enabled is false, default = 1000
       #
       # user should calculate this as num_seconds * requests_per_second where:
       # num_seconds is the number of seconds to buffer in case of a backend outage,
