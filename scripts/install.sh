@@ -1317,7 +1317,9 @@ if [[ "${SYSTEMD_DISABLED}" == "true" ]]; then
     else
         COMMAND_SUFFIX=" --config ${COMMON_CONFIG_PATH}"
     fi
-    echo "Use 'sudo otelcol-sumo --config=${CONFIG_PATH}${COMMAND_SUFFIX}' to run Sumo Logic Distribution for OpenTelemetry Collector"
+    echo ""
+    echo Warning: running as a service is not supported on your operation system.
+    echo "Please use 'sudo otelcol-sumo --config=${CONFIG_PATH}${COMMAND_SUFFIX}' to run Sumo Logic Distribution for OpenTelemetry Collector"
     exit 0
 fi
 
