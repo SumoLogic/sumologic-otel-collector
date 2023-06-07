@@ -3,8 +3,8 @@ module github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/glob
 go 1.19
 
 require (
-	github.com/stretchr/testify v1.8.2
-	go.opentelemetry.io/collector/confmap v0.78.2
+	github.com/stretchr/testify v1.8.4
+	go.opentelemetry.io/collector/confmap v0.79.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
