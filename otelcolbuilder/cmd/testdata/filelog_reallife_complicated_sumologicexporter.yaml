@@ -624,6 +624,8 @@ exporters:
   sumologic/1:
     endpoint: http://dummy.endpoint.com
     compress_encoding: ""
+    retry_on_failure:
+      enabled: false
     sending_queue:
       enabled: true
       queue_size: 50000

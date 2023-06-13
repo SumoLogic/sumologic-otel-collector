@@ -11,6 +11,8 @@ receivers:
 exporters:
   sumologic:
     endpoint: http://dummy.endpoint.com:8888/api
+    retry_on_failure:
+      enabled: false
     sending_queue:
       enabled: true
       queue_size: 100
