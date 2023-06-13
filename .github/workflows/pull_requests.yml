@@ -204,7 +204,7 @@ jobs:
 
   # pipeline to test using Go+BoringCrypto
   test-go-boringcrypto:
-    name: Test
+    name: Test BoringCrypto
     runs-on: ${{ matrix.runs_on }}
     strategy:
       matrix:
@@ -241,7 +241,7 @@ jobs:
 
       - name: Run tests
         if: steps.changed-files.outputs.any_changed == 'true'
-        run: make gotest
+        run: make gotest CGO_ENABLED=1 GOEXPERIMENT=boringcrypto
 
   test-wixext:
     name: Test (SumoLogic.wixext)
