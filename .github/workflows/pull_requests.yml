@@ -9,6 +9,9 @@ defaults:
   run:
     shell: bash
 
+env:
+  GO_VERSION: "1.20"
+
 jobs:
 
   markdownlint:
@@ -148,7 +151,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-go@v4
         with:
-          go-version: '1.19'
+          go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: '**/go.sum'
 
       - name: Set default BUILDER_BIN_PATH
@@ -194,7 +197,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-go@v4
         with:
-          go-version: '1.19'
+          go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: 'pkg/scripts_test/go.sum'
 
       - name: Run install script tests
@@ -232,7 +235,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-go@v4
         with:
-          go-version: '1.19'
+          go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: '**/go.sum'
 
       - name: Add opentelemetry-collector-builder installation dir to PATH
@@ -293,7 +296,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-go@v4
         with:
-          go-version: '1.19'
+          go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: '**/go.sum'
 
       - uses: actions/cache@v3
@@ -360,7 +363,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-go@v4
         with:
-          go-version: '1.19'
+          go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: '**/go.sum'
 
       - name: Set default BUILDER_BIN_PATH
@@ -435,7 +438,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-go@v4
         with:
-          go-version: '1.19'
+          go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: '**/go.sum'
 
       - name: Fetch current branch
