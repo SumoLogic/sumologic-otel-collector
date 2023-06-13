@@ -53,11 +53,15 @@ receivers:
       - /var/log/secure
       - /var/log/messages
       - /var/log/yum.log
+      - /var/log/dnf.log
 processors:
   resource/linux_resource_attributes/localhost:
     attributes:
       - key: sumo.datasource
         value: linux
+        action: insert
+      - key: _sourceCategory
+        value: otel/linux
         action: insert
 service:
   pipelines:
