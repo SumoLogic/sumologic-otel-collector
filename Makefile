@@ -1,4 +1,4 @@
-GOLANGCI_LINT_VERSION ?= v1.49
+GOLANGCI_LINT_VERSION ?= v1.53.2
 SHELL := /usr/bin/env bash
 
 ifeq ($(OS),Windows_NT)
