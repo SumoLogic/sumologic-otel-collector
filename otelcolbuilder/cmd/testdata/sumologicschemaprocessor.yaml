@@ -1,6 +1,8 @@
 exporters:
   sumologic:
     endpoint: http://dummy.endpoint.com:8888/api
+    retry_on_failure:
+      enabled: false
 
 processors:
   sumologic_schema:
