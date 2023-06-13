@@ -138,7 +138,7 @@ generate-sources:
 test:
 	@$(MAKE) ensure-correct-builder-version || $(MAKE) install-builder
 	@$(MAKE) generate-sources
-	@$(MAKE) -C cmd test CGO_ENABLED=${CGO_ENABLED}
+	CGO_ENABLED=${CGO_ENABLED} GOEXPERIMENT=$(GOEXPERIMENT) $(MAKE) -C cmd test
 
 .PHONY: lint
 lint: install-builder generate-sources
