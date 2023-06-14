@@ -56,12 +56,6 @@ type Config struct {
 
 	// DEPRECATED: The below attributes only exist so we can print a nicer error
 	// message about not supporting them anymore.
-	TranslateAttributes      bool     `mapstructure:"translate_attributes"`
-	TranslateTelegrafMetrics bool     `mapstructure:"translate_telegraf_attributes"`
-	MetadataAttributes       []string `mapstructure:"metadata_attributes"`
-	SourceCategory           string   `mapstructure:"source_category"`
-	SourceName               string   `mapstructure:"source_name"`
-	SourceHost               string   `mapstructure:"source_host"`
 
 	// Attribute used by routingprocessor which should be dropped during data ingestion
 	// This is workaround for the following issue:
@@ -112,30 +106,6 @@ func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 }
 
 func (cfg *Config) Validate() error {
-
-	if len(cfg.MetadataAttributes) > 0 {
-		return fmt.Errorf(`the property metadata_attributes was removed in v0.49.0-sumo-0.
-See upgrade guide at https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#sumo-logic-exporter-metadata-handling`,
-		)
-	}
-
-	if cfg.TranslateTelegrafMetrics {
-		return fmt.Errorf(`the property translate_telegraf_attributes was removed in v0.66.0-sumo-0.
-See upgrade guide at https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#sumologic-exporter-drop-support-for-translating-telegraf-metric-names`,
-		)
-	}
-
-	if cfg.TranslateAttributes {
-		return fmt.Errorf(`the property translate_attributes was removed in v0.66.0-sumo-0.
-See upgrade guide at https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#sumologic-exporter-drop-support-for-translating-attributes`,
-		)
-	}
-
-	if cfg.SourceCategory != "" || cfg.SourceHost != "" || cfg.SourceName != "" {
-		return fmt.Errorf(`the properties source_category, source_host, source_name was removed in v0.66.0-sumo-0.
-See upgrade guide at https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#sumologic-exporter-drop-support-for-source-headers`,
-		)
-	}
 
 	switch cfg.LogFormat {
 	case OTLPLogFormat:
