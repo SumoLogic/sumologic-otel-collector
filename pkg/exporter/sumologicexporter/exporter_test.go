@@ -468,9 +468,6 @@ func TestPushLogs_DontRemoveSourceAttributes(t *testing.T) {
 	}
 
 	config := createTestConfig()
-	config.SourceCategory = "%{_sourceCategory}"
-	config.SourceName = "%{_sourceName}"
-	config.SourceHost = "%{_sourceHost}"
 	config.LogFormat = TextFormat
 	config.MaxRequestBodySize = 32
 
@@ -739,7 +736,6 @@ func Benchmark_ExporterPushLogs(b *testing.B) {
 		config.CompressEncoding = GZIPCompression
 		config.MetricFormat = PrometheusFormat
 		config.LogFormat = TextFormat
-		config.SourceCategory = "testing_source_templates %{_sourceCategory}"
 		config.HTTPClientSettings.Auth = nil
 		return config
 	}
