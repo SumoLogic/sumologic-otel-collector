@@ -1,3 +1,5 @@
+//go:build darwin
+
 package sumologic_scripts_tests
 
 import (
@@ -13,7 +15,7 @@ type launchdConfig struct {
 	Label                string               `plist:"Label"`
 	ProgramArguments     []string             `plist:"ProgramArguments"`
 	RunAtLoad            bool                 `plist:"RunAtLoad"`
-	StandardErrorPath    string               `plist:"StandardErrorPath"'`
+	StandardErrorPath    string               `plist:"StandardErrorPath"`
 	StandardOutPath      string               `plist:"StandardOutPath"`
 	UserName             string               `plist:"UserName"`
 }

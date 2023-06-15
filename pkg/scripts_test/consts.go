@@ -32,8 +32,5 @@ const (
 	systemUser  string = "otelcol-sumo"
 	systemGroup string = "otelcol-sumo"
 
-	darwinPackageName         string = "otelcol-sumo.pkg"
-	darwinUninstallScriptPath string = appSupportDirPath + "/uninstall.sh"
-
 	curlTimeoutErrorCode int = 28
 )

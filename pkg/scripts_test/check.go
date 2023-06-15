@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -63,22 +62,6 @@ func checkBinaryIsRunning(c check) {
 	code, err := exitCode(cmd)
 	require.NoError(c.test, err, "error while checking exit code")
 	require.Equal(c.test, 0, code, "got error code while checking version")
-}
-
-func checkPackageCreated(c check) {
-	re, err := regexp.Compile("Package downloaded to: .*/otelcol-sumo.pkg")
-	require.NoError(c.test, err)
-
-	matchedLine := ""
-	for _, line := range c.output {
-		if re.MatchString(line) {
-			matchedLine = line
-		}
-	}
-	require.NotEmpty(c.test, matchedLine, "package path not in output")
-
-	packagePath := strings.TrimPrefix(matchedLine, "Package downloaded to: ")
-	require.FileExists(c.test, packagePath, "package has not been created")
 }
 
 func checkRun(c check) {
@@ -172,14 +155,6 @@ func checkUserConfigNotCreated(c check) {
 	require.NoFileExists(c.test, userConfigPath, "user configuration has been created")
 }
 
-func checkTokenEnvFileCreated(c check) {
-	require.FileExists(c.test, tokenEnvFilePath, "env token file has not been created")
-}
-
-func checkTokenEnvFileNotCreated(c check) {
-	require.NoFileExists(c.test, tokenEnvFilePath, "env token file not been created")
-}
-
 func checkHomeDirectoryCreated(c check) {
 	require.DirExists(c.test, libPath, "home directory has not been created properly")
 }
@@ -249,24 +224,6 @@ func checkDifferentTokenInEnvFile(c check) {
 	}
 }
 
-func checkTokenInLaunchdConfig(c check) {
-	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
-
-	conf, err := getLaunchdConfig(launchdPath)
-	require.NoError(c.test, err)
-
-	require.Equal(c.test, c.installOptions.installToken, conf.EnvironmentVariables.InstallationToken, "installation token is different than expected")
-}
-
-func checkDifferentTokenInLaunchdConfig(c check) {
-	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
-
-	conf, err := getLaunchdConfig(launchdPath)
-	require.NoError(c.test, err)
-
-	require.Equal(c.test, "different"+c.installOptions.installToken, conf.EnvironmentVariables.InstallationToken, "installation token is different than expected")
-}
-
 func checkHostmetricsConfigCreated(c check) {
 	require.FileExists(c.test, hostmetricsConfigPath, "hostmetrics configuration has not been created properly")
 }
@@ -296,14 +253,6 @@ func checkSystemdEnvDirExists(c check) {
 
 func checkSystemdEnvDirPermissions(c check) {
 	PathHasPermissions(c.test, etcPath+"/env", configPathDirPermissions)
-}
-
-func checkLaunchdConfigCreated(c check) {
-	require.FileExists(c.test, launchdPath, "launchd configuration has not been created properly")
-}
-
-func checkLaunchdConfigNotCreated(c check) {
-	require.NoFileExists(c.test, launchdPath, "launchd configuration has been created")
 }
 
 func checkTags(c check) {
@@ -356,18 +305,6 @@ func preActionMockEnvFiles(c check) {
 	require.NoError(c.test, err)
 
 	err = f.Chmod(fs.FileMode(configPathFilePermissions))
-	require.NoError(c.test, err)
-}
-
-func preActionMockLaunchdConfig(c check) {
-	f, err := os.Create(launchdPath)
-	require.NoError(c.test, err)
-
-	err = f.Chmod(fs.FileMode(launchdPathFilePermissions))
-	require.NoError(c.test, err)
-
-	conf := NewLaunchdConfig()
-	err = saveLaunchdConfig(launchdPath, conf)
 	require.NoError(c.test, err)
 }
 
@@ -425,15 +362,6 @@ func preActionWriteDifferentDeprecatedTokenToEnvFile(c check) {
 
 	content := fmt.Sprintf("SUMOLOGIC_INSTALL_TOKEN=different%s", c.installOptions.installToken)
 	err := os.WriteFile(tokenEnvFilePath, []byte(content), fs.FileMode(etcPathPermissions))
-	require.NoError(c.test, err)
-}
-
-func preActionWriteDifferentTokenToLaunchdConfig(c check) {
-	conf, err := getLaunchdConfig(launchdPath)
-	require.NoError(c.test, err)
-
-	conf.EnvironmentVariables.InstallationToken = "different" + c.installOptions.installToken
-	err = saveLaunchdConfig(launchdPath, conf)
 	require.NoError(c.test, err)
 }
 
@@ -581,32 +509,6 @@ func checkUserNotExists(c check) {
 	} else {
 		_, err := user.Lookup(username)
 		require.Error(c.test, err, "user has been created")
-	}
-}
-
-func checkGroupExists(c check) {
-	group := getSystemGroup()
-
-	if runtime.GOOS == "darwin" {
-		exists := dsclKeyExistsForPath(c.test, "/Groups", group)
-		require.True(c.test, exists, "group has not been created")
-	} else {
-		_, err := user.LookupGroup(group)
-		require.NoError(c.test, err, "group has not been created")
-	}
-
-	checkConfigPathOwnership(c)
-}
-
-func checkGroupNotExists(c check) {
-	group := getSystemGroup()
-
-	if runtime.GOOS == "darwin" {
-		exists := dsclKeyExistsForPath(c.test, "/Groups", group)
-		require.False(c.test, exists, "group has been created")
-	} else {
-		_, err := user.LookupGroup(group)
-		require.Error(c.test, err, "group has been created")
 	}
 }
 

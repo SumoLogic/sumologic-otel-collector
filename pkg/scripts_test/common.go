@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
 	"runtime"
 	"testing"
 
@@ -198,20 +197,6 @@ func getRootGroupName() string {
 	}
 
 	panic(fmt.Sprintf("Encountered unsupported OS: %s", runtime.GOOS))
-}
-
-func getPackagePath() string {
-	tmpDir := os.Getenv("TMPDIR")
-	packageName := fmt.Sprintf("%s-package-name-not-defined", runtime.GOOS)
-
-	switch runtime.GOOS {
-	case "darwin":
-		packageName = darwinPackageName
-	default:
-		panic(fmt.Sprintf("Encountered unsupported OS: %s", runtime.GOOS))
-	}
-
-	return path.Join(tmpDir, packageName)
 }
 
 // The user.Lookup() and user.LookupGroup() functions do not appear to work
