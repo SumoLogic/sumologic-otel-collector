@@ -15,8 +15,6 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/joho/godotenv"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,14 +32,6 @@ type condCheckFunc func(check) bool
 
 func checkSkipTest(c check) bool {
 	return false
-}
-
-func checkSystemdAvailability(c check) bool {
-	return assert.DirExists(&testing.T{}, systemdDirectoryPath, "systemd is not supported")
-}
-
-func checkACLAvailability(c check) bool {
-	return assert.FileExists(&testing.T{}, "/usr/bin/getfacl", "File ACLS is not supported")
 }
 
 type checkFunc func(check)
@@ -69,7 +59,7 @@ func checkRun(c check) {
 }
 
 func checkConfigDirectoryOwnershipAndPermissions(c check) {
-	PathHasOwner(c.test, etcPath, "root", getRootGroupName())
+	PathHasOwner(c.test, etcPath, "root", rootGroup)
 	// TODO: fix mismatch between package permissions & expected permissions
 	if runtime.GOOS == "darwin" {
 		PathHasPermissions(c.test, etcPath, 0755)
@@ -123,10 +113,6 @@ func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string
 		}
 		PathHasPermissions(c.test, configPath, configPathFilePermissions)
 	}
-}
-
-func checkConfigPathOwnership(c check) {
-	PathHasOwner(c.test, configPath, getSystemUser(), getSystemUser())
 }
 
 func checkConfigNotCreated(c check) {
@@ -198,32 +184,6 @@ func checkDifferentTokenInConfig(c check) {
 	require.Equal(c.test, "different"+c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
 }
 
-func checkTokenInEnvFile(c check) {
-	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
-
-	envs, err := godotenv.Read(tokenEnvFilePath)
-
-	require.NoError(c.test, err)
-	if _, ok := envs["SUMOLOGIC_INSTALL_TOKEN"]; ok {
-		require.Equal(c.test, c.installOptions.installToken, envs["SUMOLOGIC_INSTALL_TOKEN"], "installation token is different than expected")
-	} else {
-		require.Equal(c.test, c.installOptions.installToken, envs["SUMOLOGIC_INSTALLATION_TOKEN"], "installation token is different than expected")
-	}
-}
-
-func checkDifferentTokenInEnvFile(c check) {
-	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
-
-	envs, err := godotenv.Read(tokenEnvFilePath)
-
-	require.NoError(c.test, err)
-	if _, ok := envs["SUMOLOGIC_INSTALL_TOKEN"]; ok {
-		require.Equal(c.test, "different"+c.installOptions.installToken, envs["SUMOLOGIC_INSTALL_TOKEN"], "installation token is different than expected")
-	} else {
-		require.Equal(c.test, "different"+c.installOptions.installToken, envs["SUMOLOGIC_INSTALLATION_TOKEN"], "installation token is different than expected")
-	}
-}
-
 func checkHostmetricsConfigCreated(c check) {
 	require.FileExists(c.test, hostmetricsConfigPath, "hostmetrics configuration has not been created properly")
 }
@@ -237,22 +197,6 @@ func checkHostmetricsOwnershipAndPermissions(ownerName string, ownerGroup string
 
 func checkHostmetricsConfigNotCreated(c check) {
 	require.NoFileExists(c.test, hostmetricsConfigPath, "hostmetrics configuration has been created")
-}
-
-func checkSystemdConfigCreated(c check) {
-	require.FileExists(c.test, systemdPath, "systemd configuration has not been created properly")
-}
-
-func checkSystemdConfigNotCreated(c check) {
-	require.NoFileExists(c.test, systemdPath, "systemd configuration has been created")
-}
-
-func checkSystemdEnvDirExists(c check) {
-	require.DirExists(c.test, etcPath+"/env", "systemd env directory does not exist")
-}
-
-func checkSystemdEnvDirPermissions(c check) {
-	PathHasPermissions(c.test, etcPath+"/env", configPathDirPermissions)
 }
 
 func checkTags(c check) {
@@ -316,13 +260,6 @@ func preActionMockUserConfig(c check) {
 	require.NoError(c.test, err)
 
 	err = f.Chmod(fs.FileMode(configPathFilePermissions))
-	require.NoError(c.test, err)
-}
-
-func preActionMockSystemdStructure(c check) {
-	preActionMockStructure(c)
-
-	_, err := os.Create(systemdPath)
 	require.NoError(c.test, err)
 }
 
@@ -466,14 +403,14 @@ func checkAbortedDueToDifferentTags(c check) {
 func preActionCreateUser(c check) {
 	preActionMockUserConfig(c)
 
-	cmd := exec.Command("useradd", getSystemUser())
+	cmd := exec.Command("useradd", systemUser)
 	_, err := cmd.CombinedOutput()
 	require.NoError(c.test, err)
 
 	f, err := os.Open(configPath)
 	require.NoError(c.test, err)
 
-	user, err := user.Lookup(getSystemUser())
+	user, err := user.Lookup(systemUser)
 	require.NoError(c.test, err)
 
 	uid, err := strconv.Atoi(user.Uid)
@@ -484,45 +421,6 @@ func preActionCreateUser(c check) {
 
 	err = f.Chown(uid, gid)
 	require.NoError(c.test, err)
-}
-
-func checkUserExists(c check) {
-	username := getSystemUser()
-
-	if runtime.GOOS == "darwin" {
-		exists := dsclKeyExistsForPath(c.test, "/Users", username)
-		require.True(c.test, exists, "user has not been created")
-	} else {
-		_, err := user.Lookup(username)
-		require.NoError(c.test, err, "user has not been created")
-	}
-
-	checkConfigPathOwnership(c)
-}
-
-func checkUserNotExists(c check) {
-	username := getSystemUser()
-
-	if runtime.GOOS == "darwin" {
-		exists := dsclKeyExistsForPath(c.test, "/Users", username)
-		require.False(c.test, exists, "user has been created")
-	} else {
-		_, err := user.Lookup(username)
-		require.Error(c.test, err, "user has been created")
-	}
-}
-
-func checkVarLogACL(c check) {
-	if !checkACLAvailability(c) {
-		return
-	}
-
-	PathHasUserACL(c.test, "/var/log", getSystemUser(), "r-x")
-}
-
-func checkUninstallationOutput(c check) {
-	require.Greater(c.test, len(c.output), 1)
-	require.Contains(c.test, c.output[len(c.output)-1], "Uninstallation completed")
 }
 
 func PathHasPermissions(t *testing.T, path string, perms uint32) {

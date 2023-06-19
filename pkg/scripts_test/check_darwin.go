@@ -9,6 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func checkConfigPathOwnership(c check) {
+	PathHasOwner(c.test, configPath, systemUser, systemUser)
+}
+
 func checkDifferentTokenInLaunchdConfig(c check) {
 	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
 
@@ -19,18 +23,12 @@ func checkDifferentTokenInLaunchdConfig(c check) {
 }
 
 func checkGroupExists(c check) {
-	group := getSystemGroup()
-
-	exists := dsclKeyExistsForPath(c.test, "/Groups", group)
+	exists := dsclKeyExistsForPath(c.test, "/Groups", systemGroup)
 	require.True(c.test, exists, "group has not been created")
-
-	checkConfigPathOwnership(c)
 }
 
 func checkGroupNotExists(c check) {
-	group := getSystemGroup()
-
-	exists := dsclKeyExistsForPath(c.test, "/Groups", group)
+	exists := dsclKeyExistsForPath(c.test, "/Groups", systemGroup)
 	require.False(c.test, exists, "group has been created")
 }
 
@@ -65,6 +63,16 @@ func checkTokenInLaunchdConfig(c check) {
 	require.NoError(c.test, err)
 
 	require.Equal(c.test, c.installOptions.installToken, conf.EnvironmentVariables.InstallationToken, "installation token is different than expected")
+}
+
+func checkUserExists(c check) {
+	exists := dsclKeyExistsForPath(c.test, "/Users", systemUser)
+	require.True(c.test, exists, "user has not been created")
+}
+
+func checkUserNotExists(c check) {
+	exists := dsclKeyExistsForPath(c.test, "/Users", systemUser)
+	require.False(c.test, exists, "user has been created")
 }
 
 func preActionMockLaunchdConfig(c check) {
