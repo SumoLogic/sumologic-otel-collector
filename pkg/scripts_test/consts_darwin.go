@@ -5,9 +5,10 @@ const (
 	packageName                string = "otelcol-sumo.pkg"
 	launchdPath                string = "/Library/LaunchDaemons/com.sumologic.otelcol-sumo.plist"
 	launchdPathFilePermissions uint32 = 0640
-	rootGroup                  string = "wheel"
 	uninstallScriptPath        string = appSupportDirPath + "/uninstall.sh"
 
-	systemUser  string = "_otelcol-sumo"
+	rootGroup   string = "wheel"
+	rootUser    string = "root"
 	systemGroup string = "otelcol-sumo"
+	systemUser  string = "_otelcol-sumo"
 )

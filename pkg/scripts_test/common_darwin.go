@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -55,11 +54,6 @@ func dsclKeyExistsForPath(t *testing.T, path, key string) bool {
 	}
 
 	return false
-}
-
-func getPackagePath() string {
-	tmpDir := os.Getenv("TMPDIR")
-	return path.Join(tmpDir, packageName)
 }
 
 func removeFileIfExists(t *testing.T, path string) {

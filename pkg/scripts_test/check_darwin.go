@@ -9,10 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func checkConfigPathOwnership(c check) {
-	PathHasOwner(c.test, configPath, systemUser, systemUser)
-}
-
 func checkDifferentTokenInLaunchdConfig(c check) {
 	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
 

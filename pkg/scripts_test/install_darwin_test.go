@@ -79,6 +79,7 @@ func TestInstallScriptDarwin(t *testing.T) {
 				checkConfigFilesOwnershipAndPermissions(systemUser, systemGroup),
 				checkUserConfigCreated,
 				checkLaunchdConfigCreated,
+				checkHomeDirectoryCreated,
 			},
 		},
 		{
@@ -98,6 +99,29 @@ func TestInstallScriptDarwin(t *testing.T) {
 				checkUserExists,
 				checkGroupExists,
 				checkHostmetricsConfigNotCreated,
+				checkHomeDirectoryCreated,
+			},
+		},
+		{
+			name: "override default config",
+			options: installOptions{
+				skipInstallToken: true,
+				autoconfirm:      true,
+			},
+			preActions: []checkFunc{preActionMockConfig},
+			preChecks: []checkFunc{
+				checkBinaryNotCreated,
+				checkConfigCreated,
+				checkUserConfigNotCreated,
+				checkUserNotExists,
+			},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkConfigOverrided,
+				checkUserConfigNotCreated,
+				checkLaunchdConfigCreated,
 			},
 		},
 		{
@@ -118,7 +142,8 @@ func TestInstallScriptDarwin(t *testing.T) {
 				checkUserExists,
 				checkGroupExists,
 				checkHostmetricsConfigCreated,
-				checkConfigFilesOwnershipAndPermissions(systemUser, systemGroup),
+				checkHostmetricsOwnershipAndPermissions(rootUser, rootGroup),
+				checkHomeDirectoryCreated,
 			},
 		},
 		{
@@ -140,39 +165,261 @@ func TestInstallScriptDarwin(t *testing.T) {
 				checkTokenInLaunchdConfig,
 				checkUserExists,
 				checkGroupExists,
+				checkHomeDirectoryCreated,
 			},
 		},
 		{
-			name: "same installation token",
+			name: "same installation token in launchd config",
 			options: installOptions{
 				installToken: installToken,
 			},
 			preActions: []checkFunc{preActionMockLaunchdConfig},
 			preChecks: []checkFunc{
-				checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated,
-				checkUserNotExists, checkGroupNotExists, checkLaunchdConfigCreated,
+				checkBinaryNotCreated,
+				checkConfigNotCreated,
+				checkUserConfigNotCreated,
+				checkUserNotExists,
+				checkGroupNotExists,
+				checkLaunchdConfigCreated,
 			},
 			postChecks: []checkFunc{
-				checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated,
-				checkUserConfigCreated, checkLaunchdConfigCreated, checkTokenInLaunchdConfig,
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkUserConfigCreated,
+				checkLaunchdConfigCreated,
+				checkTokenInLaunchdConfig,
+				checkHomeDirectoryCreated,
 			},
 		},
 		{
-			name: "different installation token",
+			name: "different installation token in launchd config",
 			options: installOptions{
 				installToken: installToken,
 			},
-			preActions: []checkFunc{preActionMockLaunchdConfig, preActionWriteDifferentTokenToLaunchdConfig},
+			preActions: []checkFunc{
+				preActionMockLaunchdConfig,
+				preActionWriteDifferentTokenToLaunchdConfig,
+			},
 			preChecks: []checkFunc{
-				checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated,
-				checkUserNotExists, checkGroupNotExists, checkLaunchdConfigCreated,
+				checkBinaryNotCreated,
+				checkConfigNotCreated,
+				checkUserConfigNotCreated,
+				checkUserNotExists,
+				checkGroupNotExists,
+				checkLaunchdConfigCreated,
 			},
 			postChecks: []checkFunc{
-				checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated,
-				checkUserNotExists, checkGroupNotExists, checkLaunchdConfigCreated,
+				checkBinaryNotCreated,
+				checkConfigNotCreated,
+				checkUserConfigNotCreated,
+				checkUserNotExists,
+				checkGroupNotExists,
+				checkLaunchdConfigCreated,
 				checkAbortedDueToDifferentToken,
+				checkDifferentTokenInLaunchdConfig,
 			},
 			installCode: 1,
+		},
+		{
+			name: "same api base url",
+			options: installOptions{
+				apiBaseURL:       apiBaseURL,
+				skipInstallToken: true,
+			},
+			preActions: []checkFunc{
+				preActionMockUserConfig,
+				preActionWriteAPIBaseURLToUserConfig,
+			},
+			preChecks: []checkFunc{
+				checkBinaryNotCreated,
+				checkConfigNotCreated,
+				checkUserConfigCreated,
+				checkUserNotExists,
+			},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkUserConfigCreated,
+				checkAPIBaseURLInConfig,
+			},
+		},
+		{
+			name: "different api base url",
+			options: installOptions{
+				apiBaseURL:       apiBaseURL,
+				skipInstallToken: true,
+			},
+			preActions: []checkFunc{
+				preActionMockUserConfig,
+				preActionWriteDifferentAPIBaseURLToUserConfig,
+			},
+			preChecks: []checkFunc{
+				checkBinaryNotCreated,
+				checkConfigNotCreated,
+				checkUserConfigCreated,
+				checkUserNotExists,
+			},
+			postChecks: []checkFunc{
+				checkBinaryNotCreated,
+				checkConfigNotCreated,
+				checkUserConfigCreated,
+				checkLaunchdConfigNotCreated,
+				checkAbortedDueToDifferentAPIBaseURL,
+			},
+			installCode: 1,
+		},
+		{
+			name: "adding api base url",
+			options: installOptions{
+				apiBaseURL:       apiBaseURL,
+				skipInstallToken: true,
+			},
+			preActions: []checkFunc{preActionMockUserConfig},
+			preChecks: []checkFunc{
+				checkBinaryNotCreated,
+				checkConfigNotCreated,
+				checkUserConfigCreated,
+				checkUserNotExists,
+			},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkConfigCreated,
+				checkUserConfigCreated,
+				checkAPIBaseURLInConfig,
+			},
+		},
+		{
+			name: "editing api base url",
+			options: installOptions{
+				apiBaseURL:       apiBaseURL,
+				skipInstallToken: true,
+			},
+			preActions: []checkFunc{
+				preActionMockUserConfig,
+				preActionWriteEmptyUserConfig,
+			},
+			preChecks: []checkFunc{
+				checkBinaryNotCreated,
+				checkConfigNotCreated,
+				checkUserConfigCreated,
+				checkUserNotExists,
+			},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkConfigCreated,
+				checkUserConfigCreated,
+				checkAPIBaseURLInConfig,
+			},
+		},
+		{
+			name: "configuration with tags",
+			options: installOptions{
+				skipInstallToken: true,
+				tags: map[string]string{
+					"lorem": "ipsum",
+					"foo":   "bar",
+				},
+			},
+			preChecks: []checkFunc{
+				checkBinaryNotCreated,
+				checkConfigNotCreated,
+				checkUserConfigNotCreated,
+				checkUserNotExists,
+			},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkConfigFilesOwnershipAndPermissions(rootUser, rootGroup),
+				checkTags,
+				checkLaunchdConfigCreated,
+			},
+		},
+		{
+			name: "same tags",
+			options: installOptions{
+				skipInstallToken: true,
+				tags: map[string]string{
+					"lorem": "ipsum",
+					"foo":   "bar",
+				},
+			},
+			preActions: []checkFunc{
+				preActionMockUserConfig,
+				preActionWriteTagsToUserConfig,
+			},
+			preChecks: []checkFunc{
+				checkBinaryNotCreated,
+				checkConfigNotCreated,
+				checkUserConfigCreated,
+				checkUserNotExists,
+			},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkUserConfigCreated,
+				checkTags,
+				checkLaunchdConfigCreated,
+			},
+		},
+		{
+			name: "different tags",
+			options: installOptions{
+				skipInstallToken: true,
+				tags: map[string]string{
+					"lorem": "ipsum",
+					"foo":   "bar",
+				},
+			},
+			preActions: []checkFunc{
+				preActionMockUserConfig,
+				preActionWriteDifferentTagsToUserConfig,
+			},
+			preChecks: []checkFunc{
+				checkBinaryNotCreated,
+				checkConfigNotCreated,
+				checkUserConfigCreated,
+				checkUserNotExists,
+			},
+			postChecks: []checkFunc{
+				checkBinaryNotCreated,
+				checkConfigNotCreated,
+				checkUserConfigCreated,
+				checkDifferentTags,
+				checkLaunchdConfigNotCreated,
+				checkAbortedDueToDifferentTags,
+			},
+			installCode: 1,
+		},
+		{
+			name: "editing tags",
+			options: installOptions{
+				skipInstallToken: true,
+				tags: map[string]string{
+					"lorem": "ipsum",
+					"foo":   "bar",
+				},
+			},
+			preActions: []checkFunc{
+				preActionMockUserConfig,
+				preActionWriteEmptyUserConfig,
+			},
+			preChecks: []checkFunc{
+				checkBinaryNotCreated,
+				checkConfigNotCreated,
+				checkUserConfigCreated,
+				checkUserNotExists,
+			},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkTags,
+				checkLaunchdConfigCreated,
+			},
 		},
 	} {
 		t.Run(spec.name, func(t *testing.T) {

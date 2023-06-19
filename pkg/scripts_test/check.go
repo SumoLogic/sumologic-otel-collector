@@ -3,7 +3,6 @@
 package sumologic_scripts_tests
 
 import (
-	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -11,7 +10,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
-	"strings"
 	"syscall"
 	"testing"
 
@@ -59,7 +57,7 @@ func checkRun(c check) {
 }
 
 func checkConfigDirectoryOwnershipAndPermissions(c check) {
-	PathHasOwner(c.test, etcPath, "root", rootGroup)
+	PathHasOwner(c.test, etcPath, rootUser, rootGroup)
 	// TODO: fix mismatch between package permissions & expected permissions
 	if runtime.GOOS == "darwin" {
 		PathHasPermissions(c.test, etcPath, 0755)
@@ -159,31 +157,6 @@ func checkNoBakFilesPresent(c check) {
 	}
 }
 
-func checkTokenInConfig(c check) {
-	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
-
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err, "error while reading configuration")
-
-	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
-}
-
-func checkDeprecatedTokenInConfig(c check) {
-	require.NotEmpty(c.test, c.installOptions.deprecatedInstallToken, "installation token has not been provided")
-
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err, "error while reading configuration")
-
-	require.Equal(c.test, c.installOptions.deprecatedInstallToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
-}
-
-func checkDifferentTokenInConfig(c check) {
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err, "error while reading configuration")
-
-	require.Equal(c.test, "different"+c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
-}
-
 func checkHostmetricsConfigCreated(c check) {
 	require.FileExists(c.test, hostmetricsConfigPath, "hostmetrics configuration has not been created properly")
 }
@@ -215,34 +188,19 @@ func checkDifferentTags(c check) {
 	require.Equal(c.test, "tag", conf.Extensions.Sumologic.Tags["some"], "installation token is different than expected")
 }
 
-func preActionMockStructure(c check) {
-	preActionMockConfigs(c)
-
-	err := os.MkdirAll(fileStoragePath, os.ModePerm)
-	require.NoError(c.test, err)
-
-	_, err = os.Create(binaryPath)
-	require.NoError(c.test, err)
+func checkAbortedDueToDifferentToken(c check) {
+	require.Greater(c.test, len(c.output), 0)
+	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different token than in your configuration file!")
 }
 
-func preActionMockConfigs(c check) {
-	preActionMockConfig(c)
-	preActionMockUserConfig(c)
+func checkAbortedDueToNoToken(c check) {
+	require.Greater(c.test, len(c.output), 1)
+	require.Contains(c.test, c.output[len(c.output)-2], "Installation token has not been provided. Please set the 'SUMOLOGIC_INSTALLATION_TOKEN' environment variable.")
+	require.Contains(c.test, c.output[len(c.output)-1], "You can ignore this requirement by adding '--skip-installation-token argument.")
 }
 
 func preActionMockConfig(c check) {
 	err := os.MkdirAll(etcPath, fs.FileMode(etcPathPermissions))
-	require.NoError(c.test, err)
-
-	f, err := os.Create(configPath)
-	require.NoError(c.test, err)
-
-	err = f.Chmod(fs.FileMode(configPathFilePermissions))
-	require.NoError(c.test, err)
-}
-
-func preActionMockEnvFiles(c check) {
-	err := os.MkdirAll(envDirectoryPath, fs.FileMode(etcPathPermissions))
 	require.NoError(c.test, err)
 
 	f, err := os.Create(configPath)
@@ -263,70 +221,6 @@ func preActionMockUserConfig(c check) {
 	require.NoError(c.test, err)
 }
 
-func preActionCreateHomeDirectory(c check) {
-	err := os.MkdirAll(libPath, fs.FileMode(etcPathPermissions))
-	require.NoError(c.test, err)
-}
-
-func preActionWriteTokenToUserConfig(c check) {
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err)
-
-	conf.Extensions.Sumologic.InstallToken = c.installOptions.installToken
-	err = saveConfig(userConfigPath, conf)
-	require.NoError(c.test, err)
-}
-
-func preActionWriteDifferentTokenToUserConfig(c check) {
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err)
-
-	conf.Extensions.Sumologic.InstallToken = "different" + c.installOptions.installToken
-	err = saveConfig(userConfigPath, conf)
-	require.NoError(c.test, err)
-}
-
-func preActionWriteDifferentTokenToEnvFile(c check) {
-	preActionMockEnvFiles(c)
-
-	content := fmt.Sprintf("SUMOLOGIC_INSTALLATION_TOKEN=different%s", c.installOptions.installToken)
-	err := os.WriteFile(tokenEnvFilePath, []byte(content), fs.FileMode(etcPathPermissions))
-	require.NoError(c.test, err)
-}
-
-func preActionWriteDifferentDeprecatedTokenToEnvFile(c check) {
-	preActionMockEnvFiles(c)
-
-	content := fmt.Sprintf("SUMOLOGIC_INSTALL_TOKEN=different%s", c.installOptions.installToken)
-	err := os.WriteFile(tokenEnvFilePath, []byte(content), fs.FileMode(etcPathPermissions))
-	require.NoError(c.test, err)
-}
-
-func checkAbortedDueToDifferentToken(c check) {
-	require.Greater(c.test, len(c.output), 0)
-	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different token than in your configuration file!")
-}
-
-func checkAbortedDueToNoToken(c check) {
-	require.Greater(c.test, len(c.output), 1)
-	require.Contains(c.test, c.output[len(c.output)-2], "Installation token has not been provided. Please set the 'SUMOLOGIC_INSTALLATION_TOKEN' environment variable.")
-	require.Contains(c.test, c.output[len(c.output)-1], "You can ignore this requirement by adding '--skip-installation-token argument.")
-}
-
-func checkOutputUserAddWarnings(c check) {
-	output := strings.Join(c.output, "\n")
-	require.NotContains(c.test, output, "useradd", "unexpected useradd output")
-
-	errOutput := strings.Join(c.errorOutput, "\n")
-	require.NotContains(c.test, errOutput, "useradd", "unexpected useradd output")
-}
-
-func checkDownloadTimeout(c check) {
-	output := strings.Join(c.errorOutput, "\n")
-	count := strings.Count(output, "Operation timed out after")
-	require.Equal(c.test, 6, count)
-}
-
 func preActionWriteAPIBaseURLToUserConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err)
@@ -345,25 +239,15 @@ func preActionWriteDifferentAPIBaseURLToUserConfig(c check) {
 	require.NoError(c.test, err)
 }
 
-func preActionWriteDefaultAPIBaseURLToUserConfig(c check) {
+func preActionWriteDifferentTagsToUserConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err)
 
-	conf.Extensions.Sumologic.APIBaseURL = apiBaseURL
+	conf.Extensions.Sumologic.Tags = map[string]string{
+		"some": "tag",
+	}
 	err = saveConfig(userConfigPath, conf)
 	require.NoError(c.test, err)
-}
-
-func checkAbortedDueToDifferentAPIBaseURL(c check) {
-	require.Greater(c.test, len(c.output), 0)
-	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different api base url than in your configuration file!")
-}
-
-func checkAPIBaseURLInConfig(c check) {
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err, "error while reading configuration")
-
-	require.Equal(c.test, c.installOptions.apiBaseURL, conf.Extensions.Sumologic.APIBaseURL, "api base url is different than expected")
 }
 
 func preActionWriteEmptyUserConfig(c check) {
@@ -383,44 +267,21 @@ func preActionWriteTagsToUserConfig(c check) {
 	require.NoError(c.test, err)
 }
 
-func preActionWriteDifferentTagsToUserConfig(c check) {
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err)
+func checkAbortedDueToDifferentAPIBaseURL(c check) {
+	require.Greater(c.test, len(c.output), 0)
+	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different api base url than in your configuration file!")
+}
 
-	conf.Extensions.Sumologic.Tags = map[string]string{
-		"some": "tag",
-	}
-	err = saveConfig(userConfigPath, conf)
-	require.NoError(c.test, err)
+func checkAPIBaseURLInConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	require.Equal(c.test, c.installOptions.apiBaseURL, conf.Extensions.Sumologic.APIBaseURL, "api base url is different than expected")
 }
 
 func checkAbortedDueToDifferentTags(c check) {
 	require.Greater(c.test, len(c.output), 0)
 	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different tags than in your configuration file!")
-}
-
-// preActionCreateUser creates the system user and then set it as owner of configPath
-func preActionCreateUser(c check) {
-	preActionMockUserConfig(c)
-
-	cmd := exec.Command("useradd", systemUser)
-	_, err := cmd.CombinedOutput()
-	require.NoError(c.test, err)
-
-	f, err := os.Open(configPath)
-	require.NoError(c.test, err)
-
-	user, err := user.Lookup(systemUser)
-	require.NoError(c.test, err)
-
-	uid, err := strconv.Atoi(user.Uid)
-	require.NoError(c.test, err)
-
-	gid, err := strconv.Atoi(user.Gid)
-	require.NoError(c.test, err)
-
-	err = f.Chown(uid, gid)
-	require.NoError(c.test, err)
 }
 
 func PathHasPermissions(t *testing.T, path string, perms uint32) {

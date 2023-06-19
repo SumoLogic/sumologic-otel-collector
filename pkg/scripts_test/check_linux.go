@@ -1,8 +1,13 @@
 package sumologic_scripts_tests
 
 import (
+	"fmt"
+	"io/fs"
 	"os"
+	"os/exec"
 	"os/user"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/joho/godotenv"
@@ -12,6 +17,22 @@ import (
 
 func checkACLAvailability(c check) bool {
 	return assert.FileExists(&testing.T{}, "/usr/bin/getfacl", "File ACLS is not supported")
+}
+
+func checkDeprecatedTokenInConfig(c check) {
+	require.NotEmpty(c.test, c.installOptions.deprecatedInstallToken, "installation token has not been provided")
+
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	require.Equal(c.test, c.installOptions.deprecatedInstallToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
+}
+
+func checkDifferentTokenInConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	require.Equal(c.test, "different"+c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
 }
 
 func checkDifferentTokenInEnvFile(c check) {
@@ -25,6 +46,20 @@ func checkDifferentTokenInEnvFile(c check) {
 	} else {
 		require.Equal(c.test, "different"+c.installOptions.installToken, envs["SUMOLOGIC_INSTALLATION_TOKEN"], "installation token is different than expected")
 	}
+}
+
+func checkDownloadTimeout(c check) {
+	output := strings.Join(c.errorOutput, "\n")
+	count := strings.Count(output, "Operation timed out after")
+	require.Equal(c.test, 6, count)
+}
+
+func checkOutputUserAddWarnings(c check) {
+	output := strings.Join(c.output, "\n")
+	require.NotContains(c.test, output, "useradd", "unexpected useradd output")
+
+	errOutput := strings.Join(c.errorOutput, "\n")
+	require.NotContains(c.test, errOutput, "useradd", "unexpected useradd output")
 }
 
 func checkSystemdAvailability(c check) bool {
@@ -53,6 +88,15 @@ func checkTokenEnvFileCreated(c check) {
 
 func checkTokenEnvFileNotCreated(c check) {
 	require.NoFileExists(c.test, tokenEnvFilePath, "env token file not been created")
+}
+
+func checkTokenInConfig(c check) {
+	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
+
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
 }
 
 func checkTokenInEnvFile(c check) {
@@ -91,9 +135,107 @@ func checkVarLogACL(c check) {
 	PathHasUserACL(c.test, "/var/log", systemUser, "r-x")
 }
 
+func preActionCreateHomeDirectory(c check) {
+	err := os.MkdirAll(libPath, fs.FileMode(etcPathPermissions))
+	require.NoError(c.test, err)
+}
+
+// preActionCreateUser creates the system user and then set it as owner of configPath
+func preActionCreateUser(c check) {
+	preActionMockUserConfig(c)
+
+	cmd := exec.Command("useradd", systemUser)
+	_, err := cmd.CombinedOutput()
+	require.NoError(c.test, err)
+
+	f, err := os.Open(configPath)
+	require.NoError(c.test, err)
+
+	user, err := user.Lookup(systemUser)
+	require.NoError(c.test, err)
+
+	uid, err := strconv.Atoi(user.Uid)
+	require.NoError(c.test, err)
+
+	gid, err := strconv.Atoi(user.Gid)
+	require.NoError(c.test, err)
+
+	err = f.Chown(uid, gid)
+	require.NoError(c.test, err)
+}
+
+func preActionMockConfigs(c check) {
+	preActionMockConfig(c)
+	preActionMockUserConfig(c)
+}
+
+func preActionMockEnvFiles(c check) {
+	err := os.MkdirAll(envDirectoryPath, fs.FileMode(etcPathPermissions))
+	require.NoError(c.test, err)
+
+	f, err := os.Create(configPath)
+	require.NoError(c.test, err)
+
+	err = f.Chmod(fs.FileMode(configPathFilePermissions))
+	require.NoError(c.test, err)
+}
+
+func preActionMockStructure(c check) {
+	preActionMockConfigs(c)
+
+	err := os.MkdirAll(fileStoragePath, os.ModePerm)
+	require.NoError(c.test, err)
+
+	_, err = os.Create(binaryPath)
+	require.NoError(c.test, err)
+}
+
 func preActionMockSystemdStructure(c check) {
 	preActionMockStructure(c)
 
 	_, err := os.Create(systemdPath)
+	require.NoError(c.test, err)
+}
+
+func preActionWriteDefaultAPIBaseURLToUserConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err)
+
+	conf.Extensions.Sumologic.APIBaseURL = apiBaseURL
+	err = saveConfig(userConfigPath, conf)
+	require.NoError(c.test, err)
+}
+
+func preActionWriteDifferentDeprecatedTokenToEnvFile(c check) {
+	preActionMockEnvFiles(c)
+
+	content := fmt.Sprintf("SUMOLOGIC_INSTALL_TOKEN=different%s", c.installOptions.installToken)
+	err := os.WriteFile(tokenEnvFilePath, []byte(content), fs.FileMode(etcPathPermissions))
+	require.NoError(c.test, err)
+}
+
+func preActionWriteDifferentTokenToEnvFile(c check) {
+	preActionMockEnvFiles(c)
+
+	content := fmt.Sprintf("SUMOLOGIC_INSTALLATION_TOKEN=different%s", c.installOptions.installToken)
+	err := os.WriteFile(tokenEnvFilePath, []byte(content), fs.FileMode(etcPathPermissions))
+	require.NoError(c.test, err)
+}
+
+func preActionWriteDifferentTokenToUserConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err)
+
+	conf.Extensions.Sumologic.InstallToken = "different" + c.installOptions.installToken
+	err = saveConfig(userConfigPath, conf)
+	require.NoError(c.test, err)
+}
+
+func preActionWriteTokenToUserConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err)
+
+	conf.Extensions.Sumologic.InstallToken = c.installOptions.installToken
+	err = saveConfig(userConfigPath, conf)
 	require.NoError(c.test, err)
 }
