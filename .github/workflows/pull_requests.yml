@@ -291,6 +291,9 @@ jobs:
         include:
           - arch_os: linux_amd64
             runs-on: ubuntu-20.04
+          - arch_os: linux_amd64
+            runs-on: ubuntu-20.04
+            fips: true
           - arch_os: linux_arm64
             runs-on: ubuntu-20.04
           - arch_os: darwin_amd64
@@ -302,86 +305,14 @@ jobs:
     with:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
+      fips: ${{ matrix.fips == true }}
       only-if-changed: true
-
-  # pipeline to build FIPS compliance binary on Go+BoringCrypto for linux
-  build-fips:
-    name: Build
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        arch_os: [ 'linux_amd64']
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Check if build related files changed
-        id: changed-files
-        uses: tj-actions/changed-files@v35
-        with:
-          files: |
-            otelcolbuilder/.gon_config.json
-            **/go.mod
-            **/go.sum
-            **/*.go
-            **/*.yaml
-            **/*.yml
-            **/Makefile
-            **/Makefile.common
-            **/Dockerfile*
-
-      - name: Setup go
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/setup-go@v4
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: '**/go.sum'
-
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
-
-      - name: Add opentelemetry-collector-builder installation dir to PATH
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: echo "$HOME/bin" >> $GITHUB_PATH
-
-      - name: Install opentelemetry-collector-builder
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: make install-builder
-        working-directory: ./otelcolbuilder
-
-      - name: Build
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: make otelcol-sumo-${{matrix.arch_os}} FIPS_SUFFIX="-fips" CGO_ENABLED=1
-        working-directory: ./otelcolbuilder
-
-      - name: Show included modules
-        if: steps.changed-files.outputs.any_changed == 'true'
-        working-directory: ./otelcolbuilder/cmd
-        run: |
-          go version -m otelcol-sumo-fips-${{matrix.arch_os}} | \
-          grep -E "/(receiver|exporter|processor|extension)/"
-
-      - name: Show BoringSSL symbols
-        if: steps.changed-files.outputs.any_changed == 'true'
-        working-directory: ./otelcolbuilder/cmd
-        run: |
-          go tool nm otelcol-sumo-fips-${{matrix.arch_os}} | \
-          grep "_Cfunc__goboringcrypto_"
-
-      - name: Store binary as action artifact
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/upload-artifact@v3
-        with:
-          name: otelcol-sumo-fips-${{matrix.arch_os}}
-          path: ./otelcolbuilder/cmd/otelcol-sumo-fips-${{matrix.arch_os}}
-          if-no-files-found: error
 
   build-and-test-container-images:
     name: Build container
     runs-on: ubuntu-20.04
     needs:
       - build
-      - build-fips
     strategy:
       matrix:
         arch_os: [ 'linux_amd64', 'linux_arm64']

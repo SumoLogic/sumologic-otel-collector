@@ -7,6 +7,10 @@ on:
         description: Architecture and OS in the form "{arch}_{os}". See GOARCH and GOOS for accepted values.
         default: linux_amd64
         type: string
+      fips:
+        description: Build binary with FIPS support
+        default: false
+        type: boolean
       runs-on:
         default: ubuntu-20.04
         type: string
@@ -32,6 +36,7 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
     env:
       OTELCOL_BINARY_EXTENSION: ${{ contains(inputs.arch_os, 'windows') && '.exe' || '' }}
+      OTELCOL_FIPS_SUFFIX: ${{ inputs.fips && '-fips' || '' }}
     steps:
       - uses: actions/checkout@v3
 
@@ -71,8 +76,8 @@ jobs:
         id: get-cache-key
         if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         run: |
-          echo "cache-key=go-build-${{ env.GO_VERSION }}-${{inputs.arch_os}}${OTELCOL_FIPS_SUFFIX}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}" >> $GITHUB_OUTPUT
-          echo "restore-keys=go-build-${{ env.GO_VERSION }}-${{inputs.arch_os}}${OTELCOL_FIPS_SUFFIX}-" >> $GITHUB_OUTPUT
+          echo "cache-key=go-build-${{ env.GO_VERSION }}${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}" >> $GITHUB_OUTPUT
+          echo "restore-keys=go-build-${{ env.GO_VERSION }}${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}-" >> $GITHUB_OUTPUT
 
       - uses: actions/cache/restore@v3
         if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
@@ -99,20 +104,28 @@ jobs:
 
       - name: Build
         if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
-        run: make otelcol-sumo-${{inputs.arch_os}}
+        run: make otelcol-sumo-${{inputs.arch_os}}${{ inputs.fips && ' FIPS_SUFFIX="$OTELCOL_FIPS_SUFFIX" CGO_ENABLED=1' || '' }}
         working-directory: ./otelcolbuilder
 
       - name: Set binary name
         id: set-binary-name
         if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
-        run: echo "binary_name=otelcol-sumo-${{inputs.arch_os}}${OTELCOL_BINARY_EXTENSION}" >> $GITHUB_OUTPUT
+        run: echo "binary_name=otelcol-sumo${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}${OTELCOL_BINARY_EXTENSION}" >> $GITHUB_OUTPUT
 
       - name: Show included modules
         if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         working-directory: ./otelcolbuilder/cmd
         run: |
           go version -m ${{ steps.set-binary-name.outputs.binary_name }} | \
-          grep -E "/(receiver|exporter|processor|extension)/"
+          grep -E "/(receiver|exporter|processor|extension)/" | \
+          tee ${{ steps.set-binary-name.outputs.binary_name }}_modules.txt
+
+      - name: Show BoringSSL symbols
+        if: ${{ inputs.fips && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
+          grep "_Cfunc__goboringcrypto_"
 
       - name: Store binary as action artifact
         if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
@@ -120,6 +133,14 @@ jobs:
         with:
           name: ${{ steps.set-binary-name.outputs.binary_name }}
           path: ./otelcolbuilder/cmd/${{ steps.set-binary-name.outputs.binary_name }}
+          if-no-files-found: error
+
+      - name: Store list of included modules as action artifact
+        if: ${{ inputs.fips && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ steps.set-binary-name.outputs.binary_name }}_modules.txt
+          path: ./otelcolbuilder/cmd/${{ steps.set-binary-name.outputs.binary_name }}_modules.txt
           if-no-files-found: error
 
       - uses: actions/cache/save@v3
