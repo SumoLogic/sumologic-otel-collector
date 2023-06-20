@@ -9,6 +9,6 @@ const (
 
 	rootGroup   string = "wheel"
 	rootUser    string = "root"
-	systemGroup string = "otelcol-sumo"
+	systemGroup string = "_otelcol-sumo"
 	systemUser  string = "_otelcol-sumo"
 )
