@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -56,6 +57,15 @@ func dsclKeyExistsForPath(t *testing.T, path, key string) bool {
 	return false
 }
 
+func forgetPackage(t *testing.T, name string) {
+	noReceiptMsg := fmt.Sprintf("No receipt for '%s' found at '/'.", name)
+
+	output, err := exec.Command("pkgutil", "--forget", name).CombinedOutput()
+	if err != nil && !strings.Contains(string(output), noReceiptMsg) {
+		require.NoErrorf(t, err, "error forgetting package: %s", string(output))
+	}
+}
+
 func removeFileIfExists(t *testing.T, path string) {
 	if _, err := os.Stat(path); err != nil {
 		return
@@ -103,6 +113,10 @@ func tearDown(t *testing.T) {
 	if dsclKeyExistsForPath(t, "/Groups", systemGroup) {
 		panic(fmt.Sprintf("group exists after deletion: %s", systemGroup))
 	}
+
+	// Remove packages
+	forgetPackage(t, "com.sumologic.otelcol-sumo-hostmetrics")
+	forgetPackage(t, "com.sumologic.otelcol-sumo")
 }
 
 func unloadLaunchdService(t *testing.T) {
@@ -115,5 +129,4 @@ func unloadLaunchdService(t *testing.T) {
 
 	output, err := exec.Command("launchctl", "unload", "-w", "otelcol-sumo").Output()
 	require.NoErrorf(t, err, "error stopping service: %s", string(output))
-
 }

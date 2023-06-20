@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"syscall"
 	"testing"
@@ -58,12 +57,7 @@ func checkRun(c check) {
 
 func checkConfigDirectoryOwnershipAndPermissions(c check) {
 	PathHasOwner(c.test, etcPath, rootUser, rootGroup)
-	// TODO: fix mismatch between package permissions & expected permissions
-	if runtime.GOOS == "darwin" {
-		PathHasPermissions(c.test, etcPath, 0755)
-	} else {
-		PathHasPermissions(c.test, etcPath, etcPathPermissions)
-	}
+	PathHasPermissions(c.test, etcPath, etcPathPermissions)
 }
 
 func checkConfigCreated(c check) {
@@ -84,25 +78,18 @@ func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string
 				info, err := os.Stat(path)
 				require.NoError(c.test, err)
 				if info.IsDir() {
-					// TODO: fix mismatch between package permissions & expected permissions
-					if runtime.GOOS == "darwin" {
-						permissions = 0770
-					} else {
+					switch path {
+					case etcPath:
+						permissions = etcPathPermissions
+					default:
 						permissions = configPathDirPermissions
 					}
 				} else {
-					// TODO: fix mismatch between package permissions & expected permissions
-					if runtime.GOOS == "darwin" {
-						switch path {
-						case filepath.Join(etcPath, "sumologic.yaml"):
-							permissions = 0440
-						case filepath.Join(etcPath, "conf.d", "common.yaml"):
-							permissions = 0440
-						default:
-							permissions = 0644
-						}
-					} else {
+					switch path {
+					case configPath, userConfigPath:
 						permissions = configPathFilePermissions
+					default:
+						permissions = confDPathFilePermissions
 					}
 				}
 				PathHasPermissions(c.test, path, permissions)
@@ -128,7 +115,7 @@ func checkConfigOverrided(c check) {
 		default:
 			return false
 		}
-	}, "invalid value for install token")
+	}, "invalid value for installation token")
 }
 
 func checkUserConfigCreated(c check) {
@@ -164,7 +151,7 @@ func checkHostmetricsConfigCreated(c check) {
 func checkHostmetricsOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
 	return func(c check) {
 		PathHasOwner(c.test, hostmetricsConfigPath, ownerName, ownerGroup)
-		PathHasPermissions(c.test, hostmetricsConfigPath, configPathFilePermissions)
+		PathHasPermissions(c.test, hostmetricsConfigPath, confDPathFilePermissions)
 	}
 }
 
@@ -211,7 +198,10 @@ func preActionMockConfig(c check) {
 }
 
 func preActionMockUserConfig(c check) {
-	err := os.MkdirAll(confDPath, fs.FileMode(configPathDirPermissions))
+	err := os.MkdirAll(etcPath, fs.FileMode(etcPathPermissions))
+	require.NoError(c.test, err)
+
+	err = os.MkdirAll(confDPath, fs.FileMode(configPathDirPermissions))
 	require.NoError(c.test, err)
 
 	f, err := os.Create(userConfigPath)

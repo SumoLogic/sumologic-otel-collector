@@ -1663,9 +1663,6 @@ if [[ "${OS_TYPE}" == "darwin" ]]; then
 
     setup_config_darwin
 
-    ls -l /etc/otelcol-sumo
-    ls -l /etc/otelcol-sumo/conf.d
-
     # Run an unload/load launchd config to pull in new changes & restart the service
     launchctl unload "${LAUNCHD_CONFIG}"
     launchctl load -w "${LAUNCHD_CONFIG}"
