@@ -48,6 +48,23 @@ jobs:
       - name: Run golangci-lint
         run: make golint
 
+  test:
+    name: Test
+    uses: ./.github/workflows/workflow-test.yml
+    strategy:
+      matrix:
+        include:
+          - arch_os: linux_amd64
+            runs-on: ubuntu-20.04
+          - arch_os: darwin_amd64
+            runs-on: macos-latest
+          - arch_os: windows_amd64
+            runs-on: windows-2022
+    with:
+      arch_os: ${{ matrix.arch_os }}
+      runs-on: ${{ matrix.runs-on }}
+      save-cache: true
+
   build:
     name: Build
     runs-on: ${{ matrix.runs_on }}
