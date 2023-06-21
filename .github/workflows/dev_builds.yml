@@ -25,19 +25,34 @@ jobs:
         arch_os: [ 'linux_amd64' ]
     steps:
       - uses: actions/checkout@v3
+
       - name: Setup go
         uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: '**/go.sum'
+          cache: false
+
+      - name: Get GOCACHE and GOMODCACHE
+        run: |
+          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
+          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+
+      - uses: actions/cache/restore@v3
+        with:
+          path: |
+            ${{ env.GOMODCACHE }}/cache
+            ${{ env.GOCACHE }}
+          key: go-test-${{ env.GO_VERSION }}-${{matrix.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
+          restore-keys: |
+            go-test-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
 
       - uses: actions/cache@v3
         with:
           path: |
             /home/runner/.cache/golangci-lint
-          key: ${{matrix.arch_os}}-golangcilint-${{ hashFiles('**/go.sum') }}
+          key: golangci-lint-${{ env.GO_VERSION }}-${{matrix.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
           restore-keys: |
-            ${{matrix.arch_os}}-golangcilint-
+            golangci-lint-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
 
       - name: Install golangci-lint
         run: make install-golangci-lint
