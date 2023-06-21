@@ -124,6 +124,9 @@ jobs:
         include:
           - arch_os: linux_amd64
             runs-on: ubuntu-20.04
+          - arch_os: linux_amd64
+            runs-on: ubuntu-20.04
+            boringcrypto: true
           - arch_os: darwin_amd64
             runs-on: macos-latest
           - arch_os: windows_amd64
@@ -132,6 +135,7 @@ jobs:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
       only-if-changed: true
+      boringcrypto: ${{ matrix.boringcrypto == true }}
 
   test-install-script:
     name: Test Install Script
@@ -166,48 +170,6 @@ jobs:
       - name: Run install script tests
         if: steps.changed-files.outputs.any_changed == 'true'
         run: make test-install-script
-
-
-  # pipeline to test using Go+BoringCrypto
-  test-go-boringcrypto:
-    name: Test BoringCrypto
-    runs-on: ${{ matrix.runs_on }}
-    strategy:
-      matrix:
-        include:
-          - arch_os: linux_amd64
-            runs_on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Check if test related files changed
-        id: changed-files
-        uses: tj-actions/changed-files@v35
-        with:
-          files: |
-            **/go.mod
-            **/go.sum
-            **/*.go
-            **/*.yaml
-            **/*.yml
-            **/Makefile
-            **/Makefile.common
-            scripts/install.sh
-
-      - name: Setup go
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/setup-go@v4
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: '**/go.sum'
-
-      - name: Add opentelemetry-collector-builder installation dir to PATH
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: echo "$HOME/bin" >> $GITHUB_PATH
-
-      - name: Run tests
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: make gotest CGO_ENABLED=1 GOEXPERIMENT=boringcrypto
 
   test-wixext:
     name: Test (SumoLogic.wixext)
