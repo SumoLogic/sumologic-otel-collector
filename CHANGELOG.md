@@ -12,8 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - chore(sumologicexporter): remove deprecation error messages [#1167]
+- chore: update OT core to v0.80.0 [#1169]
 
 [#1167]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1167
+[#1169]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1169
 
 [unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.79.0-sumo-0...main
 
