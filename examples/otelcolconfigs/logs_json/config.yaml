@@ -6,7 +6,7 @@ exporters:
 receivers:
   filelog:
     include:
-    - /sumologic/examples/otelcolconfigs/logs_json/example.log
+    - examples/otelcolconfigs/logs_json/example.log
     start_at: beginning
     operators:
       - type: json_parser
