@@ -120,7 +120,7 @@ func TestInstallScriptDarwin(t *testing.T) {
 				checkBinaryIsRunning,
 				checkConfigCreated,
 				checkConfigOverrided,
-				checkUserConfigNotCreated,
+				checkUserConfigCreated,
 				checkLaunchdConfigCreated,
 			},
 		},

@@ -65,41 +65,6 @@ func checkConfigCreated(c check) {
 	checkConfigDirectoryOwnershipAndPermissions(c)
 }
 
-func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
-	return func(c check) {
-		etcPathGlob := filepath.Join(etcPath, "*")
-		etcPathNestedGlob := filepath.Join(etcPath, "*", "*")
-
-		for _, glob := range []string{etcPathGlob, etcPathNestedGlob} {
-			paths, err := filepath.Glob(glob)
-			require.NoError(c.test, err)
-			for _, path := range paths {
-				var permissions uint32
-				info, err := os.Stat(path)
-				require.NoError(c.test, err)
-				if info.IsDir() {
-					switch path {
-					case etcPath:
-						permissions = etcPathPermissions
-					default:
-						permissions = configPathDirPermissions
-					}
-				} else {
-					switch path {
-					case configPath, userConfigPath:
-						permissions = configPathFilePermissions
-					default:
-						permissions = confDPathFilePermissions
-					}
-				}
-				PathHasPermissions(c.test, path, permissions)
-				PathHasOwner(c.test, configPath, ownerName, ownerGroup)
-			}
-		}
-		PathHasPermissions(c.test, configPath, configPathFilePermissions)
-	}
-}
-
 func checkConfigNotCreated(c check) {
 	require.NoFileExists(c.test, configPath, "configuration has been created")
 }
@@ -146,13 +111,6 @@ func checkNoBakFilesPresent(c check) {
 
 func checkHostmetricsConfigCreated(c check) {
 	require.FileExists(c.test, hostmetricsConfigPath, "hostmetrics configuration has not been created properly")
-}
-
-func checkHostmetricsOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
-	return func(c check) {
-		PathHasOwner(c.test, hostmetricsConfigPath, ownerName, ownerGroup)
-		PathHasPermissions(c.test, hostmetricsConfigPath, confDPathFilePermissions)
-	}
 }
 
 func checkHostmetricsConfigNotCreated(c check) {

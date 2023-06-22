@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -17,6 +18,31 @@ import (
 
 func checkACLAvailability(c check) bool {
 	return assert.FileExists(&testing.T{}, "/usr/bin/getfacl", "File ACLS is not supported")
+}
+
+func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
+	return func(c check) {
+		etcPathGlob := filepath.Join(etcPath, "*")
+		etcPathNestedGlob := filepath.Join(etcPath, "*", "*")
+
+		for _, glob := range []string{etcPathGlob, etcPathNestedGlob} {
+			paths, err := filepath.Glob(glob)
+			require.NoError(c.test, err)
+			for _, path := range paths {
+				var permissions uint32
+				info, err := os.Stat(path)
+				require.NoError(c.test, err)
+				if info.IsDir() {
+					permissions = configPathDirPermissions
+				} else {
+					permissions = configPathFilePermissions
+				}
+				PathHasPermissions(c.test, path, permissions)
+				PathHasOwner(c.test, configPath, ownerName, ownerGroup)
+			}
+		}
+		PathHasPermissions(c.test, configPath, configPathFilePermissions)
+	}
 }
 
 func checkDeprecatedTokenInConfig(c check) {
@@ -52,6 +78,13 @@ func checkDownloadTimeout(c check) {
 	output := strings.Join(c.errorOutput, "\n")
 	count := strings.Count(output, "Operation timed out after")
 	require.Equal(c.test, 6, count)
+}
+
+func checkHostmetricsOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
+	return func(c check) {
+		PathHasOwner(c.test, hostmetricsConfigPath, ownerName, ownerGroup)
+		PathHasPermissions(c.test, hostmetricsConfigPath, configPathFilePermissions)
+	}
 }
 
 func checkOutputUserAddWarnings(c check) {

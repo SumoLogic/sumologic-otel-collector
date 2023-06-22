@@ -3,11 +3,45 @@ package sumologic_scripts_tests
 import (
 	"io/fs"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/stretchr/testify/require"
 )
+
+func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
+	return func(c check) {
+		etcPathGlob := filepath.Join(etcPath, "*")
+		etcPathNestedGlob := filepath.Join(etcPath, "*", "*")
+
+		for _, glob := range []string{etcPathGlob, etcPathNestedGlob} {
+			paths, err := filepath.Glob(glob)
+			require.NoError(c.test, err)
+			for _, path := range paths {
+				var permissions uint32
+				info, err := os.Stat(path)
+				require.NoError(c.test, err)
+				if info.IsDir() {
+					if path == etcPath {
+						permissions = etcPathPermissions
+					} else {
+						permissions = configPathDirPermissions
+					}
+				} else {
+					if filepath.Dir(path) != confDPath || path == userConfigPath {
+						permissions = configPathFilePermissions
+					} else {
+						permissions = confDPathFilePermissions
+					}
+				}
+				PathHasPermissions(c.test, path, permissions)
+				PathHasOwner(c.test, configPath, ownerName, ownerGroup)
+			}
+		}
+		PathHasPermissions(c.test, configPath, configPathFilePermissions)
+	}
+}
 
 func checkDifferentTokenInLaunchdConfig(c check) {
 	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
@@ -26,6 +60,13 @@ func checkGroupExists(c check) {
 func checkGroupNotExists(c check) {
 	exists := dsclKeyExistsForPath(c.test, "/Groups", systemGroup)
 	require.False(c.test, exists, "group has been created")
+}
+
+func checkHostmetricsOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
+	return func(c check) {
+		PathHasOwner(c.test, hostmetricsConfigPath, ownerName, ownerGroup)
+		PathHasPermissions(c.test, hostmetricsConfigPath, confDPathFilePermissions)
+	}
 }
 
 func checkLaunchdConfigCreated(c check) {

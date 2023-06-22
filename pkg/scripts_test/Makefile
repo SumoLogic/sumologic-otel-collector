@@ -11,4 +11,3 @@ GOTESTBINARY=sumologic_scripts_tests.test
 test:
 	$(GOTEST) -c
 	$(GOTESTPREFIX) ./$(GOTESTBINARY)
-#-test.run TestInstallScriptDarwin/configuration_with_tags
