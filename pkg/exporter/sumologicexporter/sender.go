@@ -400,11 +400,20 @@ func addJSONTimestamp(attrs pcommon.Map, timestampKey string, pt pcommon.Timesta
 }
 
 func isEmptyAttributeValue(att pcommon.Value) bool {
-	t := att.Type()
-	return !(t == pcommon.ValueTypeStr && len(att.Str()) > 0 ||
-		t == pcommon.ValueTypeSlice && att.Slice().Len() > 0 ||
-		t == pcommon.ValueTypeMap && att.Map().Len() > 0 ||
-		t == pcommon.ValueTypeBytes && att.Bytes().Len() > 0)
+	switch att.Type() {
+	case pcommon.ValueTypeEmpty:
+		return true
+	case pcommon.ValueTypeStr:
+		return len(att.Str()) == 0
+	case pcommon.ValueTypeSlice:
+		return att.Slice().Len() == 0
+	case pcommon.ValueTypeMap:
+		return att.Map().Len() == 0
+	case pcommon.ValueTypeBytes:
+		return att.Bytes().Len() == 0
+	}
+
+	return false
 }
 
 // sendNonOTLPLogs sends log records from the logBuffer formatted according
