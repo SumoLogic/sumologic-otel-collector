@@ -435,6 +435,31 @@ func TestSendLogsJsonConfig(t *testing.T) {
 			logsFunc: twoLogsFunc,
 		},
 		{
+			name: "empty body",
+			configOpts: []func(*Config){
+				func(c *Config) {
+					c.JSONLogs = JSONLogs{
+						LogKey:       DefaultLogKey,
+						AddTimestamp: DefaultAddTimestamp,
+						TimestampKey: DefaultTimestampKey,
+						FlattenBody:  DefaultFlattenBody,
+					}
+				},
+			},
+			bodyRegex: `{"key1":"value1","key2":"value2","timestamp":\d{13}}`,
+
+			logsFunc: func() plog.ResourceLogs {
+				rls := plog.NewResourceLogs()
+				slgs := rls.ScopeLogs().AppendEmpty()
+				log := slgs.LogRecords().AppendEmpty()
+
+				log.Attributes().PutStr("key1", "value1")
+				log.Attributes().PutStr("key2", "value2")
+
+				return rls
+			},
+		},
+		{
 			name: "disabled add timestamp",
 			configOpts: []func(*Config){
 				func(c *Config) {
