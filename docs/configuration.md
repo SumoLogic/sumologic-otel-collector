@@ -503,7 +503,7 @@ Span ID:
 Flags: 0
 ```
 
-Example configuration with example log can be found in [/examples/logs_json/](/examples/logs_json/) directory.
+Example configuration with example log can be found in [/examples/otelcolconfigs/logs_json/](/examples/otelcolconfigs/logs_json/) directory.
 
 [json_parser]: https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/operators/json_parser.md
 [filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.80.0/receiver/filelogreceiver

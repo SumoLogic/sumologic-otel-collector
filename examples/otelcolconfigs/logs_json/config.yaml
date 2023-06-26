@@ -6,12 +6,12 @@ exporters:
 receivers:
   filelog:
     include:
-    - /sumologic/examples/logs_json/example.log
+    - examples/otelcolconfigs/logs_json/example.log
     start_at: beginning
     operators:
       - type: json_parser
       - type: json_parser
-        parse_from: message
+        parse_from: body.message
 service:
   pipelines:
     logs:
