@@ -228,6 +228,7 @@ IMAGE_NAME_DEV = sumologic-otel-collector-dev
 OPENSOURCE_ECR_URL = public.ecr.aws/sumologic
 OPENSOURCE_REPO_URL = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME)
 OPENSOURCE_REPO_URL_DEV = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME_DEV)
+REPO_URL = $(OPENSOURCE_REPO_URL)
 
 .PHONY: _build
 _build:
@@ -248,42 +249,33 @@ build-container-local:
 .PHONY: build-container-dev
 build-container-dev:
 	$(MAKE) _build \
-		IMG="$(IMAGE_NAME)-dev" \
-		DOCKERFILE="Dockerfile_dev" \
+		IMG="$(IMAGE_NAME_DEV)" \
 		TAG="$(BUILD_TAG)"
 
 #-------------------------------------------------------------------------------
 
 # dev
 
-.PHONY: _build-container-multiplatform-dev
-_build-container-multiplatform-dev:
-	BUILD_TAG="$(BUILD_TAG)" \
-		REPO_URL="$(OPENSOURCE_REPO_URL_DEV)" \
-		DOCKERFILE="Dockerfile_dev" \
-		PLATFORM="$(PLATFORM)" \
-		./ci/build-push-multiplatform.sh $(PUSH)
-
 .PHONY: build-container-multiplatform-dev
-build-container-multiplatform-dev:
-	$(MAKE) _build-container-multiplatform-dev PUSH=
+build-container-multiplatform-dev: REPO_URL = "$(OPENSOURCE_REPO_URL_DEV)"
+build-container-multiplatform-dev: build-container-multiplatform
 
-.PHONY: build-container-multiplatform-dev
-build-push-container-multiplatform-dev:
-	$(MAKE) _build-container-multiplatform-dev PUSH=--push
+.PHONY: build-push-container-multiplatform-dev
+build-push-container-multiplatform-dev: REPO_URL = "$(OPENSOURCE_REPO_URL_DEV)"
+build-push-container-multiplatform-dev: build-push-container-multiplatform
 
 .PHONY: push-container-manifest-dev
-push-container-manifest-dev:
-	BUILD_TAG="$(BUILD_TAG)" \
-		REPO_URL="$(OPENSOURCE_REPO_URL_DEV)" \
-		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
+push-container-manifest-dev: REPO_URL="$(OPENSOURCE_REPO_URL_DEV)"
+push-container-manifest-dev: push-container-manifest
+
+#-------------------------------------------------------------------------------
 
 # release
 
 .PHONY: _build-container-multiplatform
 _build-container-multiplatform:
 	BUILD_TAG="$(BUILD_TAG)" \
-		REPO_URL="$(OPENSOURCE_REPO_URL)" \
+		REPO_URL="$(REPO_URL)" \
 		DOCKERFILE="Dockerfile" \
 		PLATFORM="$(PLATFORM)" \
 		./ci/build-push-multiplatform.sh $(PUSH)
@@ -298,12 +290,12 @@ build-push-container-multiplatform:
 
 .PHONY: test-built-image
 test-built-image:
-	docker run --rm "$(OPENSOURCE_REPO_URL):$(BUILD_TAG)" --version
+	docker run --rm "$(REPO_URL):$(BUILD_TAG)" --version
 
 .PHONY: push-container-manifest
 push-container-manifest:
 	BUILD_TAG="$(BUILD_TAG)" \
-		REPO_URL="$(OPENSOURCE_REPO_URL)" \
+		REPO_URL="$(REPO_URL)" \
 		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
 
 #-------------------------------------------------------------------------------
