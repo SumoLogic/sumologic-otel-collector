@@ -31,6 +31,8 @@ type installOptions struct {
 	dontKeepDownloads      bool
 	installHostmetrics     bool
 	timeout                float64
+	useNativePackaging     bool
+	version                string
 }
 
 func (io *installOptions) string() []string {
@@ -96,6 +98,14 @@ func (io *installOptions) string() []string {
 		opts = append(opts, "--download-timeout", fmt.Sprintf("%f", io.timeout))
 	}
 
+	if io.useNativePackaging {
+		opts = append(opts, "--use-native-packaging")
+	}
+
+	if io.version != "" {
+		opts = append(opts, "--version", io.version)
+	}
+
 	return opts
 }
 
@@ -113,6 +123,11 @@ func (io *installOptions) buildEnvs() []string {
 	if io.deprecatedInstallToken != "" {
 		e = append(e, fmt.Sprintf("%s=%s", deprecatedInstallTokenEnv, io.deprecatedInstallToken))
 	}
+
+	// Enable non-interactive deb package installation & force default config
+	// conflict resolution
+	e = append(e, "DEBIAN_FRONTEND=noninteractive")
+	e = append(e, "DPKG_FORCE=confdef")
 
 	return e
 }

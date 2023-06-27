@@ -18,6 +18,7 @@ import (
 type check struct {
 	test                *testing.T
 	installOptions      installOptions
+	installType         installType
 	code                int
 	err                 error
 	expectedInstallCode int
@@ -55,6 +56,44 @@ func checkRun(c check) {
 	require.Equal(c.test, c.expectedInstallCode, c.code, "unexpected installation script error code")
 }
 
+func checkConfigFilesOwnershipAndPermissions(c check) {
+	ownerName := getConfigFilesOwner(c)
+	groupName := getConfigFilesGroup(c)
+	etcPathGlob := filepath.Join(etcPath, "*")
+	etcPathNestedGlob := filepath.Join(etcPath, "*", "*")
+
+	for _, glob := range []string{etcPathGlob, etcPathNestedGlob} {
+		paths, err := filepath.Glob(glob)
+		require.NoError(c.test, err)
+		for _, path := range paths {
+			var permissions uint32
+			info, err := os.Stat(path)
+			require.NoError(c.test, err)
+			if info.IsDir() {
+				permissions = configPathDirPermissions
+			} else {
+				switch path {
+				case configPath:
+					// /etc/otelcol-sumo/sumologic.yaml
+					permissions = configPathFilePermissions
+				case userConfigPath:
+					// /etc/otelcol-sumo/conf.d/common.yaml
+					permissions = commonConfigPathFilePermissions
+				case tokenEnvFilePath:
+					// /etc/otelcol-sumo/env/token.env
+					permissions = commonConfigPathFilePermissions
+				default:
+					// /etc/otelcol-sumo/conf.d/**/
+					permissions = confDPathFilePermissions
+				}
+			}
+			PathHasPermissions(c.test, path, permissions)
+			PathHasOwner(c.test, configPath, ownerName, groupName)
+		}
+	}
+	PathHasPermissions(c.test, configPath, configPathFilePermissions)
+}
+
 func checkConfigCreated(c check) {
 	require.FileExists(c.test, configPath, "configuration has not been created properly")
 }
@@ -75,6 +114,13 @@ func checkConfigOverrided(c check) {
 			return false
 		}
 	}, "invalid value for installation token")
+}
+
+func checkHostmetricsOwnershipAndPermissions(c check) {
+	ownerName := getConfigFilesOwner(c)
+	groupName := getConfigFilesGroup(c)
+	PathHasOwner(c.test, hostmetricsConfigPath, ownerName, groupName)
+	PathHasPermissions(c.test, hostmetricsConfigPath, confDPathFilePermissions)
 }
 
 func checkUserConfigCreated(c check) {
@@ -138,75 +184,67 @@ func checkAbortedDueToNoToken(c check) {
 	require.Contains(c.test, c.output[len(c.output)-1], "You can ignore this requirement by adding '--skip-installation-token argument.")
 }
 
-func preActionMockConfig(c check) {
-	err := os.MkdirAll(etcPath, fs.FileMode(etcPathPermissions))
-	require.NoError(c.test, err)
-
-	f, err := os.Create(configPath)
-	require.NoError(c.test, err)
-
-	err = f.Chmod(fs.FileMode(configPathFilePermissions))
-	require.NoError(c.test, err)
-}
-
-func preActionMockUserConfig(c check) {
-	err := os.MkdirAll(etcPath, fs.FileMode(etcPathPermissions))
-	require.NoError(c.test, err)
-
-	err = os.MkdirAll(confDPath, fs.FileMode(configPathDirPermissions))
-	require.NoError(c.test, err)
-
-	f, err := os.Create(userConfigPath)
-	require.NoError(c.test, err)
-
-	err = f.Chmod(fs.FileMode(commonConfigPathFilePermissions))
-	require.NoError(c.test, err)
-}
-
-func preActionWriteAPIBaseURLToUserConfig(c check) {
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err)
-
-	conf.Extensions.Sumologic.APIBaseURL = c.installOptions.apiBaseURL
-	err = saveConfig(userConfigPath, conf)
-	require.NoError(c.test, err)
-}
-
-func preActionWriteDifferentAPIBaseURLToUserConfig(c check) {
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err)
-
-	conf.Extensions.Sumologic.APIBaseURL = "different" + c.installOptions.apiBaseURL
-	err = saveConfig(userConfigPath, conf)
-	require.NoError(c.test, err)
-}
-
-func preActionWriteDifferentTagsToUserConfig(c check) {
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err)
-
-	conf.Extensions.Sumologic.Tags = map[string]string{
-		"some": "tag",
+func getConfigFilesOwner(c check) string {
+	if c.installOptions.uninstall {
+		if c.installType&PACKAGE_INSTALL != 0 {
+			return systemUser
+		}
+		return rootUser
 	}
-	err = saveConfig(userConfigPath, conf)
-	require.NoError(c.test, err)
+	if c.installOptions.skipSystemd || c.installOptions.skipInstallToken {
+		return rootUser
+	}
+	return systemUser
 }
 
-func preActionWriteEmptyUserConfig(c check) {
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err)
-
-	err = saveConfig(userConfigPath, conf)
-	require.NoError(c.test, err)
+func getConfigFilesGroup(c check) string {
+	if c.installOptions.uninstall {
+		if c.installType&PACKAGE_INSTALL != 0 {
+			return systemGroup
+		}
+		return rootGroup
+	}
+	if c.installOptions.skipSystemd || c.installOptions.skipInstallToken {
+		return rootGroup
+	}
+	return systemGroup
 }
 
-func preActionWriteTagsToUserConfig(c check) {
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err)
+func preActionInstallPackage(c check) {
+	c.installOptions.installToken = installToken
+	c.installOptions.uninstall = false
+	c.installOptions.purge = false
+	c.installOptions.apiBaseURL = mockAPIBaseURL
+	c.code, c.output, c.errorOutput, c.err = runScript(c)
+}
 
-	conf.Extensions.Sumologic.Tags = c.installOptions.tags
-	err = saveConfig(userConfigPath, conf)
-	require.NoError(c.test, err)
+func preActionInstallPackageVersion(version string) checkFunc {
+	return func(c check) {
+		c.installOptions.installToken = installToken
+		c.installOptions.uninstall = false
+		c.installOptions.purge = false
+		c.installOptions.version = version
+		c.installOptions.apiBaseURL = mockAPIBaseURL
+		c.code, c.output, c.errorOutput, c.err = runScript(c)
+	}
+}
+
+func preActionInstallPreviousVersion(c check) {
+	if c.installType&PACKAGE_INSTALL != 0 {
+		preActionInstallPackageVersion(previousPackageVersion)(c)
+	}
+	preActionInstallVersion(previousBinaryVersion)(c)
+}
+
+func preActionInstallVersion(version string) checkFunc {
+	return func(c check) {
+		c.installOptions.installToken = installToken
+		c.installOptions.uninstall = false
+		c.installOptions.purge = false
+		c.installOptions.version = version
+		c.installOptions.apiBaseURL = mockAPIBaseURL
+		c.code, c.output, c.errorOutput, c.err = runScript(c)
+	}
 }
 
 func checkAbortedDueToDifferentAPIBaseURL(c check) {
