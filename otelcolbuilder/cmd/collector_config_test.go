@@ -82,6 +82,14 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			name:       "multiple config files can be handled by the glob config provider",
 			configFile: "glob:testdata/multiple/*.yaml",
 		},
+		{
+			name:       "collect CPU load metrics using Host Metrics Receiver",
+			configFile: "../../examples/otelcolconfigs/config_logging.yaml",
+		},
+		{
+			name:       "config to parse logs using json_parser",
+			configFile: "../../examples/otelcolconfigs/logs_json/config.yaml",
+		},
 	}
 
 	for _, tc := range testcases {
