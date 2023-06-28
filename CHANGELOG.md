@@ -17,10 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - fix(sumologicexporter): don't send empty attributes [#1174]
+- fix(build): allow otel commands to be used [#1180]
 
 [#1167]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1167
 [#1169]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1169
 [#1174]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1174
+[#1180]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1180
 
 [unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.79.0-sumo-0...main
 

@@ -15,7 +15,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -61,7 +60,9 @@ func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
 
 	locations := getConfigFlag(flagset)
 	if len(locations) == 0 {
-		return errors.New("at least one config flag must be provided")
+		// if no locations, use defaults
+		// either this is a command, or the default provider will throw an error
+		return nil
 	}
 
 	// create the config provider using the locations
