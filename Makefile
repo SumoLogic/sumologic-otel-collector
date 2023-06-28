@@ -265,7 +265,7 @@ build-push-container-multiplatform-dev: REPO_URL = "$(OPENSOURCE_REPO_URL_DEV)"
 build-push-container-multiplatform-dev: build-push-container-multiplatform
 
 .PHONY: push-container-manifest-dev
-push-container-manifest-dev: REPO_URL="$(OPENSOURCE_REPO_URL_DEV)"
+push-container-manifest-dev: REPO_URL = "$(OPENSOURCE_REPO_URL_DEV)"
 push-container-manifest-dev: push-container-manifest
 
 #-------------------------------------------------------------------------------
@@ -281,12 +281,11 @@ _build-container-multiplatform:
 		./ci/build-push-multiplatform.sh $(PUSH)
 
 .PHONY: build-container-multiplatform
-build-container-multiplatform:
-	$(MAKE) _build-container-multiplatform PUSH=
+build-container-multiplatform: _build-container-multiplatform
 
 .PHONY: build-push-container-multiplatform
-build-push-container-multiplatform:
-	$(MAKE) _build-container-multiplatform PUSH=--push
+build-push-container-multiplatform: PUSH = --push
+build-push-container-multiplatform: _build-container-multiplatform
 
 .PHONY: test-built-image
 test-built-image:
