@@ -231,7 +231,7 @@ jobs:
       - name: Fetch binary artifact for windows/amd64
         uses: actions/download-artifact@v3
         with:
-          name: otelcol-sumo-windows_amd64
+          name: otelcol-sumo-windows_amd64.exe
           path: ./otelcolbuilder/cmd
 
       - name: Set OVERRIDE_BUILD_NUMBER
