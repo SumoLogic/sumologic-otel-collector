@@ -29,9 +29,14 @@ func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string
 						permissions = configPathDirPermissions
 					}
 				} else {
-					if filepath.Dir(path) != confDPath || path == userConfigPath {
+					if path == configPath {
+						// /etc/otelcol-sumo/sumologic.yaml
 						permissions = configPathFilePermissions
+					} else if path == userConfigPath {
+						// /etc/otelcol-sumo/conf.d/common.yaml
+						permissions = commonConfigPathFilePermissions
 					} else {
+						// /etc/otelcol-sumo/conf.d/*
 						permissions = confDPathFilePermissions
 					}
 				}
@@ -110,6 +115,32 @@ func checkUserExists(c check) {
 func checkUserNotExists(c check) {
 	exists := dsclKeyExistsForPath(c.test, "/Users", systemUser)
 	require.False(c.test, exists, "user has been created")
+}
+
+func preActionInstallPackage(c check) {
+	c.code, c.output, c.errorOutput, c.err = runScript(c)
+}
+
+func preActionInstallPackageWithDifferentAPIBaseURL(c check) {
+	c.installOptions.apiBaseURL = "different" + c.installOptions.apiBaseURL
+	c.code, c.output, c.errorOutput, c.err = runScript(c)
+}
+
+func preActionInstallPackageWithDifferentTags(c check) {
+	c.installOptions.tags = map[string]string{
+		"some": "tag",
+	}
+	c.code, c.output, c.errorOutput, c.err = runScript(c)
+}
+
+func preActionInstallPackageWithNoAPIBaseURL(c check) {
+	c.installOptions.apiBaseURL = ""
+	c.code, c.output, c.errorOutput, c.err = runScript(c)
+}
+
+func preActionInstallPackageWithNoTags(c check) {
+	c.installOptions.tags = nil
+	c.code, c.output, c.errorOutput, c.err = runScript(c)
 }
 
 func preActionMockLaunchdConfig(c check) {

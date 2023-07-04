@@ -723,11 +723,11 @@ function setup_config_darwin() {
     write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
 
     # fill in api base url
-    if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
+    if [[ -n "${API_BASE_URL}" ]]; then
         write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
     fi
 
-    if [[ -n "${FIELDS}" && -z "${USER_FIELDS}" ]]; then
+    if [[ -n "${FIELDS}" ]]; then
         write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
     fi
 

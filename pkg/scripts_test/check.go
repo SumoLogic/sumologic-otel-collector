@@ -122,7 +122,7 @@ func checkTags(c check) {
 	require.NoError(c.test, err, "error while reading configuration")
 
 	for k, v := range c.installOptions.tags {
-		require.Equal(c.test, v, conf.Extensions.Sumologic.Tags[k], "installation token is different than expected")
+		require.Equal(c.test, v, conf.Extensions.Sumologic.Tags[k], "tag is different than expected")
 	}
 }
 
@@ -130,7 +130,7 @@ func checkDifferentTags(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
-	require.Equal(c.test, "tag", conf.Extensions.Sumologic.Tags["some"], "installation token is different than expected")
+	require.Equal(c.test, "tag", conf.Extensions.Sumologic.Tags["some"], "tag is different than expected")
 }
 
 func checkAbortedDueToDifferentToken(c check) {
@@ -165,7 +165,7 @@ func preActionMockUserConfig(c check) {
 	f, err := os.Create(userConfigPath)
 	require.NoError(c.test, err)
 
-	err = f.Chmod(fs.FileMode(configPathFilePermissions))
+	err = f.Chmod(fs.FileMode(commonConfigPathFilePermissions))
 	require.NoError(c.test, err)
 }
 
