@@ -1,4 +1,8 @@
 # Learn about CODEOWNERS file format:
 #  https://help.github.com/en/articles/about-code-owners
 
+# Default owners for everything in the repo
 * @SumoLogic/open-source-collection-team
+
+# Owners of default configuration file
+/examples/sumologic.yaml @SumoLogic/sumoappdev @SumoLogic/open-source-collection-team

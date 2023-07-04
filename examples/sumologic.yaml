@@ -76,7 +76,7 @@ processors:
   ## OpenTelemetry resource semantic conventions, and append or override the resource value in telemetry data with this information.
   ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/resourcedetectionprocessor
   resourcedetection/system:
-    detectors: ["system"]
+    detectors: ["system", "ec2", "gcp", "azure"]
     system:
       hostname_sources: ["dns","os"]
 

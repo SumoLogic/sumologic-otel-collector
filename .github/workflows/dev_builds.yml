@@ -132,7 +132,7 @@ jobs:
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v2.7.0
+        uses: docker/setup-buildx-action@v2.8.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -190,7 +190,7 @@ jobs:
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v2.7.0
+        uses: docker/setup-buildx-action@v2.8.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -231,7 +231,7 @@ jobs:
       - name: Fetch binary artifact for windows/amd64
         uses: actions/download-artifact@v3
         with:
-          name: otelcol-sumo-windows_amd64
+          name: otelcol-sumo-windows_amd64.exe
           path: ./otelcolbuilder/cmd
 
       - name: Set OVERRIDE_BUILD_NUMBER

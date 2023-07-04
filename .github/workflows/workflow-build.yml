@@ -66,11 +66,14 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           cache: false
 
-      - name: Get GOCACHE and GOMODCACHE
+      - name: Get Go env values
         if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         run: |
           echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
           echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+          echo "GOARCH=$(go env GOARCH)" >> "$GITHUB_ENV"
+          echo "GOOS=$(go env GOOS)" >> "$GITHUB_ENV"
+          echo "ARCH_OS=$(go env GOOS)_$(go env GOARCH)" >> $GITHUB_ENV
 
       - name: Get cache key
         id: get-cache-key
@@ -126,6 +129,14 @@ jobs:
         run: |
           go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
           grep "_Cfunc__goboringcrypto_"
+
+      - name: Test binary
+        if: ${{ (inputs.arch_os == env.ARCH_OS) && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          ./${{ steps.set-binary-name.outputs.binary_name }} help
+          ./${{ steps.set-binary-name.outputs.binary_name }} components
+          ./${{ steps.set-binary-name.outputs.binary_name }} completion bash
 
       - name: Store binary as action artifact
         if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
