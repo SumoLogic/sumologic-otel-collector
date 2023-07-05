@@ -3,19 +3,15 @@
 package sumologic_scripts_tests
 
 import (
-	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"syscall"
 	"testing"
 
-	"github.com/joho/godotenv"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,14 +29,6 @@ type condCheckFunc func(check) bool
 
 func checkSkipTest(c check) bool {
 	return false
-}
-
-func checkSystemdAvailability(c check) bool {
-	return assert.DirExists(&testing.T{}, systemdDirectoryPath, "systemd is not supported")
-}
-
-func checkACLAvailability(c check) bool {
-	return assert.FileExists(&testing.T{}, "/usr/bin/getfacl", "File ACLS is not supported")
 }
 
 type checkFunc func(check)
@@ -68,42 +56,13 @@ func checkRun(c check) {
 }
 
 func checkConfigDirectoryOwnershipAndPermissions(c check) {
-	PathHasOwner(c.test, etcPath, "root", getRootGroupName())
+	PathHasOwner(c.test, etcPath, rootUser, rootGroup)
 	PathHasPermissions(c.test, etcPath, etcPathPermissions)
 }
 
 func checkConfigCreated(c check) {
 	require.FileExists(c.test, configPath, "configuration has not been created properly")
 	checkConfigDirectoryOwnershipAndPermissions(c)
-}
-
-func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
-	return func(c check) {
-		etcPathGlob := filepath.Join(etcPath, "*")
-		etcPathNestedGlob := filepath.Join(etcPath, "*", "*")
-
-		for _, glob := range []string{etcPathGlob, etcPathNestedGlob} {
-			paths, err := filepath.Glob(glob)
-			require.NoError(c.test, err)
-			for _, path := range paths {
-				var permissions uint32
-				info, err := os.Stat(path)
-				require.NoError(c.test, err)
-				if info.IsDir() {
-					permissions = configPathDirPermissions
-				} else {
-					permissions = configPathFilePermissions
-				}
-				PathHasPermissions(c.test, path, permissions)
-				PathHasOwner(c.test, configPath, ownerName, ownerGroup)
-			}
-		}
-		PathHasPermissions(c.test, configPath, configPathFilePermissions)
-	}
-}
-
-func checkConfigPathOwnership(c check) {
-	PathHasOwner(c.test, configPath, systemUser, systemUser)
 }
 
 func checkConfigNotCreated(c check) {
@@ -121,7 +80,7 @@ func checkConfigOverrided(c check) {
 		default:
 			return false
 		}
-	}, "invalid value for install token")
+	}, "invalid value for installation token")
 }
 
 func checkUserConfigCreated(c check) {
@@ -130,14 +89,6 @@ func checkUserConfigCreated(c check) {
 
 func checkUserConfigNotCreated(c check) {
 	require.NoFileExists(c.test, userConfigPath, "user configuration has been created")
-}
-
-func checkTokenEnvFileCreated(c check) {
-	require.FileExists(c.test, tokenEnvFilePath, "env token file has not been created")
-}
-
-func checkTokenEnvFileNotCreated(c check) {
-	require.NoFileExists(c.test, tokenEnvFilePath, "env token file not been created")
 }
 
 func checkHomeDirectoryCreated(c check) {
@@ -158,86 +109,12 @@ func checkNoBakFilesPresent(c check) {
 	}
 }
 
-func checkTokenInConfig(c check) {
-	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
-
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err, "error while reading configuration")
-
-	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
-}
-
-func checkDeprecatedTokenInConfig(c check) {
-	require.NotEmpty(c.test, c.installOptions.deprecatedInstallToken, "installation token has not been provided")
-
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err, "error while reading configuration")
-
-	require.Equal(c.test, c.installOptions.deprecatedInstallToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
-}
-
-func checkDifferentTokenInConfig(c check) {
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err, "error while reading configuration")
-
-	require.Equal(c.test, "different"+c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
-}
-
-func checkTokenInEnvFile(c check) {
-	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
-
-	envs, err := godotenv.Read(tokenEnvFilePath)
-
-	require.NoError(c.test, err)
-	if _, ok := envs["SUMOLOGIC_INSTALL_TOKEN"]; ok {
-		require.Equal(c.test, c.installOptions.installToken, envs["SUMOLOGIC_INSTALL_TOKEN"], "installation token is different than expected")
-	} else {
-		require.Equal(c.test, c.installOptions.installToken, envs["SUMOLOGIC_INSTALLATION_TOKEN"], "installation token is different than expected")
-	}
-}
-
-func checkDifferentTokenInEnvFile(c check) {
-	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
-
-	envs, err := godotenv.Read(tokenEnvFilePath)
-
-	require.NoError(c.test, err)
-	if _, ok := envs["SUMOLOGIC_INSTALL_TOKEN"]; ok {
-		require.Equal(c.test, "different"+c.installOptions.installToken, envs["SUMOLOGIC_INSTALL_TOKEN"], "installation token is different than expected")
-	} else {
-		require.Equal(c.test, "different"+c.installOptions.installToken, envs["SUMOLOGIC_INSTALLATION_TOKEN"], "installation token is different than expected")
-	}
-}
-
 func checkHostmetricsConfigCreated(c check) {
 	require.FileExists(c.test, hostmetricsConfigPath, "hostmetrics configuration has not been created properly")
 }
 
-func checkHostmetricsOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
-	return func(c check) {
-		PathHasOwner(c.test, hostmetricsConfigPath, ownerName, ownerGroup)
-		PathHasPermissions(c.test, hostmetricsConfigPath, configPathFilePermissions)
-	}
-}
-
 func checkHostmetricsConfigNotCreated(c check) {
 	require.NoFileExists(c.test, hostmetricsConfigPath, "hostmetrics configuration has been created")
-}
-
-func checkSystemdConfigCreated(c check) {
-	require.FileExists(c.test, systemdPath, "systemd configuration has not been created properly")
-}
-
-func checkSystemdConfigNotCreated(c check) {
-	require.NoFileExists(c.test, systemdPath, "systemd configuration has been created")
-}
-
-func checkSystemdEnvDirExists(c check) {
-	require.DirExists(c.test, etcPath+"/env", "systemd env directory does not exist")
-}
-
-func checkSystemdEnvDirPermissions(c check) {
-	PathHasPermissions(c.test, etcPath+"/env", configPathDirPermissions)
 }
 
 func checkTags(c check) {
@@ -245,7 +122,7 @@ func checkTags(c check) {
 	require.NoError(c.test, err, "error while reading configuration")
 
 	for k, v := range c.installOptions.tags {
-		require.Equal(c.test, v, conf.Extensions.Sumologic.Tags[k], "installation token is different than expected")
+		require.Equal(c.test, v, conf.Extensions.Sumologic.Tags[k], "tag is different than expected")
 	}
 }
 
@@ -253,101 +130,7 @@ func checkDifferentTags(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
-	require.Equal(c.test, "tag", conf.Extensions.Sumologic.Tags["some"], "installation token is different than expected")
-}
-
-func preActionMockStructure(c check) {
-	preActionMockConfigs(c)
-
-	err := os.MkdirAll(fileStoragePath, os.ModePerm)
-	require.NoError(c.test, err)
-
-	_, err = os.Create(binaryPath)
-	require.NoError(c.test, err)
-}
-
-func preActionMockConfigs(c check) {
-	preActionMockConfig(c)
-	preActionMockUserConfig(c)
-}
-
-func preActionMockConfig(c check) {
-	err := os.MkdirAll(etcPath, fs.FileMode(etcPathPermissions))
-	require.NoError(c.test, err)
-
-	f, err := os.Create(configPath)
-	require.NoError(c.test, err)
-
-	err = f.Chmod(fs.FileMode(configPathFilePermissions))
-	require.NoError(c.test, err)
-}
-
-func preActionMockEnvFiles(c check) {
-	err := os.MkdirAll(envDirectoryPath, fs.FileMode(etcPathPermissions))
-	require.NoError(c.test, err)
-
-	f, err := os.Create(configPath)
-	require.NoError(c.test, err)
-
-	err = f.Chmod(fs.FileMode(configPathFilePermissions))
-	require.NoError(c.test, err)
-}
-
-func preActionMockUserConfig(c check) {
-	err := os.MkdirAll(confDPath, fs.FileMode(configPathDirPermissions))
-	require.NoError(c.test, err)
-
-	f, err := os.Create(userConfigPath)
-	require.NoError(c.test, err)
-
-	err = f.Chmod(fs.FileMode(configPathFilePermissions))
-	require.NoError(c.test, err)
-}
-
-func preActionMockSystemdStructure(c check) {
-	preActionMockStructure(c)
-
-	_, err := os.Create(systemdPath)
-	require.NoError(c.test, err)
-}
-
-func preActionCreateHomeDirectory(c check) {
-	err := os.MkdirAll(libPath, fs.FileMode(etcPathPermissions))
-	require.NoError(c.test, err)
-}
-
-func preActionWriteTokenToUserConfig(c check) {
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err)
-
-	conf.Extensions.Sumologic.InstallToken = c.installOptions.installToken
-	err = saveConfig(userConfigPath, conf)
-	require.NoError(c.test, err)
-}
-
-func preActionWriteDifferentTokenToUserConfig(c check) {
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err)
-
-	conf.Extensions.Sumologic.InstallToken = "different" + c.installOptions.installToken
-	err = saveConfig(userConfigPath, conf)
-	require.NoError(c.test, err)
-}
-
-func preActionWriteDifferentTokenToEnvFile(c check) {
-	preActionMockEnvFiles(c)
-
-	content := fmt.Sprintf("SUMOLOGIC_INSTALLATION_TOKEN=different%s", c.installOptions.installToken)
-	err := os.WriteFile(tokenEnvFilePath, []byte(content), fs.FileMode(etcPathPermissions))
-	require.NoError(c.test, err)
-}
-
-func preActionWriteDifferentDeprecatedTokenToEnvFile(c check) {
-	preActionMockEnvFiles(c)
-
-	content := fmt.Sprintf("SUMOLOGIC_INSTALL_TOKEN=different%s", c.installOptions.installToken)
-	err := os.WriteFile(tokenEnvFilePath, []byte(content), fs.FileMode(etcPathPermissions))
-	require.NoError(c.test, err)
+	require.Equal(c.test, "tag", conf.Extensions.Sumologic.Tags["some"], "tag is different than expected")
 }
 
 func checkAbortedDueToDifferentToken(c check) {
@@ -361,18 +144,29 @@ func checkAbortedDueToNoToken(c check) {
 	require.Contains(c.test, c.output[len(c.output)-1], "You can ignore this requirement by adding '--skip-installation-token argument.")
 }
 
-func checkOutputUserAddWarnings(c check) {
-	output := strings.Join(c.output, "\n")
-	require.NotContains(c.test, output, "useradd", "unexpected useradd output")
+func preActionMockConfig(c check) {
+	err := os.MkdirAll(etcPath, fs.FileMode(etcPathPermissions))
+	require.NoError(c.test, err)
 
-	errOutput := strings.Join(c.errorOutput, "\n")
-	require.NotContains(c.test, errOutput, "useradd", "unexpected useradd output")
+	f, err := os.Create(configPath)
+	require.NoError(c.test, err)
+
+	err = f.Chmod(fs.FileMode(configPathFilePermissions))
+	require.NoError(c.test, err)
 }
 
-func checkDownloadTimeout(c check) {
-	output := strings.Join(c.errorOutput, "\n")
-	count := strings.Count(output, "Operation timed out after")
-	require.Equal(c.test, 6, count)
+func preActionMockUserConfig(c check) {
+	err := os.MkdirAll(etcPath, fs.FileMode(etcPathPermissions))
+	require.NoError(c.test, err)
+
+	err = os.MkdirAll(confDPath, fs.FileMode(configPathDirPermissions))
+	require.NoError(c.test, err)
+
+	f, err := os.Create(userConfigPath)
+	require.NoError(c.test, err)
+
+	err = f.Chmod(fs.FileMode(commonConfigPathFilePermissions))
+	require.NoError(c.test, err)
 }
 
 func preActionWriteAPIBaseURLToUserConfig(c check) {
@@ -393,25 +187,15 @@ func preActionWriteDifferentAPIBaseURLToUserConfig(c check) {
 	require.NoError(c.test, err)
 }
 
-func preActionWriteDefaultAPIBaseURLToUserConfig(c check) {
+func preActionWriteDifferentTagsToUserConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err)
 
-	conf.Extensions.Sumologic.APIBaseURL = apiBaseURL
+	conf.Extensions.Sumologic.Tags = map[string]string{
+		"some": "tag",
+	}
 	err = saveConfig(userConfigPath, conf)
 	require.NoError(c.test, err)
-}
-
-func checkAbortedDueToDifferentAPIBaseURL(c check) {
-	require.Greater(c.test, len(c.output), 0)
-	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different api base url than in your configuration file!")
-}
-
-func checkAPIBaseURLInConfig(c check) {
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err, "error while reading configuration")
-
-	require.Equal(c.test, c.installOptions.apiBaseURL, conf.Extensions.Sumologic.APIBaseURL, "api base url is different than expected")
 }
 
 func preActionWriteEmptyUserConfig(c check) {
@@ -431,15 +215,16 @@ func preActionWriteTagsToUserConfig(c check) {
 	require.NoError(c.test, err)
 }
 
-func preActionWriteDifferentTagsToUserConfig(c check) {
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err)
+func checkAbortedDueToDifferentAPIBaseURL(c check) {
+	require.Greater(c.test, len(c.output), 0)
+	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different api base url than in your configuration file!")
+}
 
-	conf.Extensions.Sumologic.Tags = map[string]string{
-		"some": "tag",
-	}
-	err = saveConfig(userConfigPath, conf)
-	require.NoError(c.test, err)
+func checkAPIBaseURLInConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	require.Equal(c.test, c.installOptions.apiBaseURL, conf.Extensions.Sumologic.APIBaseURL, "api base url is different than expected")
 }
 
 func checkAbortedDueToDifferentTags(c check) {
@@ -447,58 +232,12 @@ func checkAbortedDueToDifferentTags(c check) {
 	require.Contains(c.test, c.output[len(c.output)-1], "You are trying to install with different tags than in your configuration file!")
 }
 
-// preActionCreateUser creates systemUser and then set it as owner of configPath
-func preActionCreateUser(c check) {
-	preActionMockUserConfig(c)
-
-	cmd := exec.Command("useradd", systemUser)
-	_, err := cmd.CombinedOutput()
-	require.NoError(c.test, err)
-
-	f, err := os.Open(configPath)
-	require.NoError(c.test, err)
-
-	user, err := user.Lookup(systemUser)
-	require.NoError(c.test, err)
-
-	uid, err := strconv.Atoi(user.Uid)
-	require.NoError(c.test, err)
-
-	gid, err := strconv.Atoi(user.Gid)
-	require.NoError(c.test, err)
-
-	err = f.Chown(uid, gid)
-	require.NoError(c.test, err)
-}
-
-func checkUserExists(c check) {
-	_, err := user.Lookup(systemUser)
-	require.NoError(c.test, err)
-	checkConfigPathOwnership(c)
-}
-
-func checkUserNotExists(c check) {
-	_, err := user.Lookup(systemUser)
-	require.Error(c.test, err)
-}
-
-func checkVarLogACL(c check) {
-	if !checkACLAvailability(c) {
-		return
-	}
-
-	PathHasUserACL(c.test, "/var/log", systemUser, "r-x")
-}
-
-func checkUninstallationOutput(c check) {
-	require.Greater(c.test, len(c.output), 1)
-	require.Contains(c.test, c.output[len(c.output)-1], "Uninstallation completed")
-}
-
 func PathHasPermissions(t *testing.T, path string, perms uint32) {
 	info, err := os.Stat(path)
 	require.NoError(t, err)
-	require.Equal(t, fs.FileMode(perms), info.Mode().Perm(), "%s should have %o permissions", path, perms)
+	expected := fs.FileMode(perms)
+	got := info.Mode().Perm()
+	require.Equal(t, expected, got, "%s should have %o permissions but has %o", path, expected, got)
 }
 
 func PathHasOwner(t *testing.T, path string, ownerName string, groupName string) {
