@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1184]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1184
 [#1127]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1127
 
+[v0.80.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.80.0-sumo-0...v0.80.0-sumo-1
+
 ## [v0.80.0-sumo-0]
 
 ### Released 2023-06-30
@@ -38,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1174]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1174
 [#1180]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1180
 
-[v0.80.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.79.0-sumo-0...v0.78.0-sumo-0
+[v0.80.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.79.0-sumo-0...v0.80.0-sumo-0
 
 ## [v0.79.0-sumo-0]
 
