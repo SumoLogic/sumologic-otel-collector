@@ -1,4 +1,4 @@
-//go:build !windows
+//go:build !(windows || darwin)
 
 package sumologic_scripts_tests
 
@@ -56,7 +56,7 @@ func TestInstallScript(t *testing.T) {
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
-				checkConfigFilesOwnershipAndPermissions("root", getRootGroupName()),
+				checkConfigFilesOwnershipAndPermissions(rootUser, rootGroup),
 				checkUserConfigNotCreated,
 				checkSystemdConfigNotCreated,
 			},
@@ -83,7 +83,7 @@ func TestInstallScript(t *testing.T) {
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
-				checkConfigFilesOwnershipAndPermissions("root", getRootGroupName()),
+				checkConfigFilesOwnershipAndPermissions(rootUser, rootGroup),
 				checkUserConfigCreated,
 				checkTokenInConfig,
 				checkSystemdConfigNotCreated,
@@ -103,7 +103,7 @@ func TestInstallScript(t *testing.T) {
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
-				checkConfigFilesOwnershipAndPermissions("root", getRootGroupName()),
+				checkConfigFilesOwnershipAndPermissions(rootUser, rootGroup),
 				checkUserConfigCreated,
 				checkDeprecatedTokenInConfig,
 				checkSystemdConfigNotCreated,
@@ -123,13 +123,13 @@ func TestInstallScript(t *testing.T) {
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
-				checkConfigFilesOwnershipAndPermissions("root", getRootGroupName()),
+				checkConfigFilesOwnershipAndPermissions(rootUser, rootGroup),
 				checkUserConfigCreated,
 				checkTokenInConfig,
 				checkSystemdConfigNotCreated,
 				checkUserNotExists,
 				checkHostmetricsConfigCreated,
-				checkHostmetricsOwnershipAndPermissions("root", getRootGroupName()),
+				checkHostmetricsOwnershipAndPermissions(rootUser, rootGroup),
 			},
 		},
 		{
@@ -146,7 +146,7 @@ func TestInstallScript(t *testing.T) {
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
-				checkConfigFilesOwnershipAndPermissions("root", getRootGroupName()),
+				checkConfigFilesOwnershipAndPermissions(rootUser, rootGroup),
 				checkUserConfigCreated,
 				checkTokenInConfig,
 				checkSystemdConfigNotCreated,
@@ -266,7 +266,7 @@ func TestInstallScript(t *testing.T) {
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
-				checkConfigFilesOwnershipAndPermissions("root", getRootGroupName()),
+				checkConfigFilesOwnershipAndPermissions(rootUser, rootGroup),
 				checkTags,
 				checkSystemdConfigNotCreated,
 			},
