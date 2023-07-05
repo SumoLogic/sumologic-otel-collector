@@ -29,13 +29,14 @@ func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string
 						permissions = configPathDirPermissions
 					}
 				} else {
-					if path == configPath {
+					switch path {
+					case configPath:
 						// /etc/otelcol-sumo/sumologic.yaml
 						permissions = configPathFilePermissions
-					} else if path == userConfigPath {
+					case userConfigPath:
 						// /etc/otelcol-sumo/conf.d/common.yaml
 						permissions = commonConfigPathFilePermissions
-					} else {
+					default:
 						// /etc/otelcol-sumo/conf.d/*
 						permissions = confDPathFilePermissions
 					}
