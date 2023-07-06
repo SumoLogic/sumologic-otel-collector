@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [Unreleased]
+
+### Changed
+
+- chore: update opentelemetry core and contrib to v0.81.0 [#1187]
+
+[#1187]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1187
+[unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.80.0-sumo-1...main
 
 ## [v0.80.0-sumo-1]
 
