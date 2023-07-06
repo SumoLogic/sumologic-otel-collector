@@ -119,6 +119,7 @@ jobs:
         if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         working-directory: ./otelcolbuilder/cmd
         run: |
+          go version -m ${{ steps.set-binary-name.outputs.binary_name }}
           go version -m ${{ steps.set-binary-name.outputs.binary_name }} | \
           grep -E "/(receiver|exporter|processor|extension)/" | \
           tee ${{ steps.set-binary-name.outputs.binary_name }}_modules.txt
