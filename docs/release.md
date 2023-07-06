@@ -127,8 +127,8 @@ make gotest
 
 We include all of the components from the following list:
 
-- [OpenTelemetry Collector][otelcol_components] extensions, receivers, processors
-- [OpenTelemetry Collector Contrib][otelcol_contrib_components] extensions, receivers, processors
+- [OpenTelemetry Collector][otelcol_components] extensions, receivers, processors, connectors
+- [OpenTelemetry Collector Contrib][otelcol_contrib_components] extensions, receivers, processors, connectors
 
 Additionally, the following components are supported:
 
