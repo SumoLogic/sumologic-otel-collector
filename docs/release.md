@@ -125,7 +125,7 @@ make gotest
 
 ### Add missing upstream components
 
-We include all of the components from the following list:
+We include all of the components from the following list which are at list in *alpha* stability level:
 
 - [OpenTelemetry Collector][otelcol_components] extensions, receivers, processors, connectors
 - [OpenTelemetry Collector Contrib][otelcol_contrib_components] extensions, receivers, processors, connectors
