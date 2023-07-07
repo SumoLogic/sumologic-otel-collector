@@ -21,6 +21,15 @@ BUILDER_BIN_PATH ?= $(HOME)/bin
 
 INSTALLED_BUILDER_VERSION := $(shell $(BUILDER_BIN_NAME) version 2>&1)
 
+# Settings for macOS builds
+ifeq ($(OS),darwin)
+	AC_USERNAME ?= it-apple-developer@sumologic.com
+	AC_PASSWORD ?= $(shell echo $$AC_PASSWORD)
+	DEVELOPER_TEAM_ID ?= 8F28635Z7X
+	DEVELOPER_SIGNING_IDENTITY ?= Developer ID Application: Sumo Logic, Inc. ($(DEVELOPER_TEAM_ID))
+	DMG_VOLUME_NAME ?= Sumo Logic Distribution for OpenTelemetry Collector
+endif
+
 # Builds for darwin need to be built with CGO_ENABLED set to 1 because some telegraf
 # plugins that are used within the telegrafreceiver are implemented with CGO.
 # Example of this might be the cpu input plugin using gopsutil to the cpu stats.
@@ -159,13 +168,24 @@ otelcol-sumo-darwin_amd64:
 otelcol-sumo-darwin_arm64:
 	GOOS=darwin  GOARCH=arm64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-darwin_arm64
 
+.PHONY: darwin-sign
+darwin-sign: BINARY_PATH = cmd/$(BINARY_NAME)
+darwin-sign: DMG_PATH = $(BINARY_PATH).dmg
+darwin-sign:
+	$(eval DMG_SOURCE_DIR = $(shell mktemp -d -t "$(BINARY_NAME)-dmg"))
+	codesign --timestamp --options=runtime -s "$(DEVELOPER_SIGNING_IDENTITY)" -v "$(BINARY_PATH)"
+	cp "$(BINARY_PATH)" "$(DMG_SOURCE_DIR)"
+	hdiutil create "$(DMG_PATH)" -ov -volname "$(DMG_VOLUME_NAME)" -fs APFS -format UDZO -srcfolder "$(DMG_SOURCE_DIR)"
+	xcrun notarytool submit --apple-id "$(AC_USERNAME)" --password "$(AC_PASSWORD)" --team-id "$(DEVELOPER_TEAM_ID)" --progress --wait "$(DMG_PATH)"
+	xcrun stapler staple "$(DMG_PATH)"
+
 .PHONY: darwin_amd64-sign
-darwin_amd64-sign:
-	gon -log-level=debug .gon_config_amd64.json
+darwin_amd64-sign: BINARY_NAME=otelcol-sumo-darwin_amd64
+darwin_amd64-sign: darwin-sign
 
 .PHONY: darwin_arm64-sign
-darwin_arm64-sign:
-	gon -log-level=debug .gon_config_arm64.json
+darwin_arm64-sign: BINARY_NAME=otelcol-sumo-darwin_arm64
+darwin_arm64-sign: darwin-sign
 
 .PHONY: otelcol-sumo-linux_amd64
 otelcol-sumo-linux_amd64:
