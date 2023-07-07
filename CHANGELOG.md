@@ -13,9 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore(packaging): wix 4.0.1 [#1184]
 - updated install.sh to use packages on macOS [#1127]
 
+### Added
+
+- feat: adding new components [#1188]:
+
+  - chronyreceiver
+  - oracledbreceiver
+  - pulsarreceiver
+  - snowflakereceiver
+
 [#1184]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1184
 [#1127]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1127
 [#1187]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1187
+[#1188]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1188
 [unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.80.0-sumo-0...main
 
 ## [v0.80.0-sumo-0]
