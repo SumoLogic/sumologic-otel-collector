@@ -3,9 +3,7 @@
 package sumologic_scripts_tests
 
 import (
-	"fmt"
 	"os"
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -24,21 +22,6 @@ type testSpec struct {
 // These checks always have to be true after a script execution
 var commonPostChecks = []checkFunc{checkNoBakFilesPresent}
 
-func tearDown(t *testing.T) {
-	t.Log("Cleaning up")
-	ch := check{
-		test: t,
-		installOptions: installOptions{
-			uninstall:   true,
-			purge:       true,
-			autoconfirm: true,
-		},
-	}
-
-	_, _, _, err := runScript(ch)
-	require.NoError(t, err)
-}
-
 func cleanCache(t *testing.T) {
 	err := os.RemoveAll(cacheDirectory)
 	require.NoError(t, err)
@@ -51,6 +34,7 @@ func runTest(t *testing.T, spec *testSpec) {
 		expectedInstallCode: spec.installCode,
 	}
 
+	t.Log("Running conditional checks")
 	for _, a := range spec.conditionalChecks {
 		if !a(ch) {
 			t.SkipNow()
@@ -59,10 +43,12 @@ func runTest(t *testing.T, spec *testSpec) {
 
 	defer tearDown(t)
 
+	t.Log("Running pre actions")
 	for _, a := range spec.preActions {
 		a(ch)
 	}
 
+	t.Log("Running pre checks")
 	for _, c := range spec.preChecks {
 		c(ch)
 	}
@@ -76,21 +62,13 @@ func runTest(t *testing.T, spec *testSpec) {
 
 	checkRun(ch)
 
+	t.Log("Running common post checks")
 	for _, c := range commonPostChecks {
 		c(ch)
 	}
 
+	t.Log("Running post checks")
 	for _, c := range spec.postChecks {
 		c(ch)
 	}
-}
-
-func getRootGroupName() string {
-	if runtime.GOOS == "darwin" {
-		return "wheel"
-	} else if runtime.GOOS == "linux" {
-		return "root"
-	}
-
-	panic(fmt.Sprintf("Encountered unsupported OS: %s", runtime.GOOS))
 }

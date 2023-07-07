@@ -119,7 +119,7 @@ jobs:
         working-directory: ./otelcolbuilder/cmd
         run: |
           go version -m ${{ steps.set-binary-name.outputs.binary_name }} | \
-          grep -E "/(receiver|exporter|processor|extension)/" | \
+          { grep -E "/(receiver|exporter|processor|extension)/" || true; } | \
           tee ${{ steps.set-binary-name.outputs.binary_name }}_modules.txt
 
       - name: Show BoringSSL symbols

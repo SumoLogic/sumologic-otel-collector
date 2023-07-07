@@ -88,7 +88,7 @@ jobs:
         working-directory: ./otelcolbuilder/cmd
         run: |
           go version -m ${{ steps.set_filename.outputs.filename }} | \
-          grep -E "/(receiver|exporter|processor|extension)/" | \
+          { grep -E "/(receiver|exporter|processor|extension)/" || true; } | \
           tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
 
       - name: Sign Windows binary
@@ -189,7 +189,7 @@ jobs:
         working-directory: ./otelcolbuilder/cmd
         run: |
           go version -m ${{ steps.set_filename.outputs.filename }} | \
-          grep -E "/(receiver|exporter|processor|extension)/" | \
+          { grep -E "/(receiver|exporter|processor|extension)/" || true; } | \
           tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
 
       # Store binary and .dmg into pipeline artifacts after they have been signed
@@ -263,7 +263,7 @@ jobs:
         working-directory: ./otelcolbuilder/cmd
         run: |
           go version -m ${{ steps.set_filename.outputs.filename }} | \
-          grep -E "/(receiver|exporter|processor|extension)/" | \
+          { grep -E "/(receiver|exporter|processor|extension)/" || true; } | \
           tee otelcol-sumo-fips-${{matrix.arch_os}}_modules.txt
 
       - name: Store binary as action artifact
@@ -297,7 +297,7 @@ jobs:
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v2.8.0
+        uses: docker/setup-buildx-action@v2.9.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -361,7 +361,7 @@ jobs:
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v2.8.0
+        uses: docker/setup-buildx-action@v2.9.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
