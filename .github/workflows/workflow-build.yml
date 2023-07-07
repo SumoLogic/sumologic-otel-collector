@@ -45,7 +45,6 @@ jobs:
         uses: tj-actions/changed-files@v35
         with:
           files: |
-            otelcolbuilder/.gon_config.json
             **/go.mod
             **/go.sum
             **/*.go
