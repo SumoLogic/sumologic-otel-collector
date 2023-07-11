@@ -45,10 +45,5 @@ func saveConfig(path string, conf config) error {
 		return err
 	}
 
-	err = os.WriteFile(path, out, os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return os.WriteFile(path, out, os.ModePerm)
 }

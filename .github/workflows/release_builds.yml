@@ -88,7 +88,7 @@ jobs:
         working-directory: ./otelcolbuilder/cmd
         run: |
           go version -m ${{ steps.set_filename.outputs.filename }} | \
-          grep -E "/(receiver|exporter|processor|extension)/" | \
+          { grep -E "/(receiver|exporter|processor|extension)/" || true; } | \
           tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
 
       - name: Sign Windows binary
@@ -171,20 +171,7 @@ jobs:
           # The password used to import the PKCS12 file.
           p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
 
-      # NOTE: gon's brew tap (as many others) has stopped working for some reason.
-      # Related issue: https://github.com/mitchellh/gon/issues/56
-      # - name: Install gon via HomeBrew for code signing and app notarization
-      #   run: |
-      #     brew tap mitchellh/gon
-      #     brew install mitchellh/gon/gon
-
-      - name: Install gon for code signing and app notarization
-        run: |
-          curl -Lo gon.dmg https://github.com/mitchellh/gon/releases/download/v0.2.3/gon_macos.dmg
-          sudo hdiutil attach gon.dmg
-          cp /Volumes/gon/gon "$HOME/bin"
-
-      - name: Sign the mac binaries with Gon
+      - name: Sign the mac binaries
         env:
           AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
         working-directory: ./otelcolbuilder/
@@ -202,7 +189,7 @@ jobs:
         working-directory: ./otelcolbuilder/cmd
         run: |
           go version -m ${{ steps.set_filename.outputs.filename }} | \
-          grep -E "/(receiver|exporter|processor|extension)/" | \
+          { grep -E "/(receiver|exporter|processor|extension)/" || true; } | \
           tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
 
       # Store binary and .dmg into pipeline artifacts after they have been signed
@@ -276,7 +263,7 @@ jobs:
         working-directory: ./otelcolbuilder/cmd
         run: |
           go version -m ${{ steps.set_filename.outputs.filename }} | \
-          grep -E "/(receiver|exporter|processor|extension)/" | \
+          { grep -E "/(receiver|exporter|processor|extension)/" || true; } | \
           tee otelcol-sumo-fips-${{matrix.arch_os}}_modules.txt
 
       - name: Store binary as action artifact
@@ -310,7 +297,7 @@ jobs:
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v2.8.0
+        uses: docker/setup-buildx-action@v2.9.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -374,7 +361,7 @@ jobs:
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v2.8.0
+        uses: docker/setup-buildx-action@v2.9.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
