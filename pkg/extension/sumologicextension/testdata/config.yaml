@@ -1,7 +1,7 @@
 extensions:
   sumologic:
     collector_name: my_custom_collector
-    collector_desription: "My custom OTC description"
+    collector_description: "My custom OTC description"
     collector_category: collector_category
     installation_token: <token>
     heartbeat_interval: 15s
