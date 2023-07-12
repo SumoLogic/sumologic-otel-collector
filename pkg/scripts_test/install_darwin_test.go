@@ -315,8 +315,9 @@ func TestInstallScriptDarwin(t *testing.T) {
 			options: installOptions{
 				skipInstallToken: true,
 				tags: map[string]string{
-					"lorem": "ipsum",
-					"foo":   "bar",
+					"lorem":     "ipsum",
+					"foo":       "bar",
+					"escape_me": "'\\/",
 				},
 			},
 			preChecks: notInstalledChecks,

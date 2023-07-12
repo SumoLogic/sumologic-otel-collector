@@ -257,8 +257,9 @@ func TestInstallScript(t *testing.T) {
 				skipSystemd:      true,
 				skipInstallToken: true,
 				tags: map[string]string{
-					"lorem": "ipsum",
-					"foo":   "bar",
+					"lorem":     "ipsum",
+					"foo":       "bar",
+					"escape_me": "'\\/",
 				},
 			},
 			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
