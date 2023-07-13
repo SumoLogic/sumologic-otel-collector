@@ -315,8 +315,10 @@ func TestInstallScriptDarwin(t *testing.T) {
 			options: installOptions{
 				skipInstallToken: true,
 				tags: map[string]string{
-					"lorem": "ipsum",
-					"foo":   "bar",
+					"lorem":     "ipsum",
+					"foo":       "bar",
+					"escape_me": "'\\/",
+					"numeric":   "1_024",
 				},
 			},
 			preChecks: notInstalledChecks,
@@ -334,8 +336,10 @@ func TestInstallScriptDarwin(t *testing.T) {
 			options: installOptions{
 				skipInstallToken: true,
 				tags: map[string]string{
-					"lorem": "ipsum",
-					"foo":   "bar",
+					"lorem":     "ipsum",
+					"foo":       "bar",
+					"escape_me": "'\\/",
+					"numeric":   "1_024",
 				},
 			},
 			preActions: []checkFunc{
@@ -361,8 +365,10 @@ func TestInstallScriptDarwin(t *testing.T) {
 			options: installOptions{
 				skipInstallToken: true,
 				tags: map[string]string{
-					"lorem": "ipsum",
-					"foo":   "bar",
+					"lorem":     "ipsum",
+					"foo":       "bar",
+					"escape_me": "'\\/",
+					"numeric":   "1_024",
 				},
 			},
 			preActions: []checkFunc{
@@ -389,8 +395,10 @@ func TestInstallScriptDarwin(t *testing.T) {
 			options: installOptions{
 				skipInstallToken: true,
 				tags: map[string]string{
-					"lorem": "ipsum",
-					"foo":   "bar",
+					"lorem":     "ipsum",
+					"foo":       "bar",
+					"escape_me": "'\\/",
+					"numeric":   "1_024",
 				},
 			},
 			preActions: []checkFunc{

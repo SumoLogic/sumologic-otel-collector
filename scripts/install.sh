@@ -313,9 +313,13 @@ function parse_options() {
             exit 1
         fi
 
+        value="$(echo -e "${OPTARG}" | sed 's/.*=//')"
+        key="$(echo -e "${OPTARG}" | sed 's/\(.*\)=.*/\1/')"
+        line="${key}: $(escape_yaml_value "${value}")"
+
         # Cannot use `\n` and have to use `\\` as break line due to OSx sed implementation
         FIELDS="${FIELDS}\\
-$(escape_sed "${OPTARG/=/: }")" ;;
+$(escape_sed "${line}")" ;;
     "?")                            ;;
       *)                            usage; exit 1 ;;
     esac
@@ -349,7 +353,7 @@ function install_missing_dependencies() {
             if [[ -f "/etc/redhat-release" ]]; then
                 echo "Command '${cmd}' not found. Attempting to install '${cmd}'..."
                 # This only works if the tool/command matches the system package name.
-                yum install -y $cmd
+                yum install -y "${cmd}"
             fi
         fi
     done
@@ -913,6 +917,63 @@ function get_user_config() {
     || echo ""
 }
 
+# remove quotes and double quotes from yaml `value`` for `key: value` form
+function unescape_yaml() {
+    local fields
+    readonly fields="${1}"
+
+    local unescaped
+    unescaped=""
+
+    # Process the string line by line
+    echo -e "${fields}" | while IFS= read -r line; do
+        # strip `\` from the end of the line
+        line="$(echo "${line}" | sed 's/\\$//')"
+        # extract key
+        key="$(echo -e "${line}" | sed 's/\(.*\):.*/\1/')"
+
+        # extract value
+        value="$(echo -e "${line}" | sed 's/.*:[[:blank:]]*//')"
+        # remove quote, double quote and escapes
+        value="$(unescape_yaml_value "${value}")"
+        if [[ -n "${key}" && -n "${value}" ]]; then
+            echo "${key}: ${value}"
+        fi
+    done
+}
+
+# escape yaml value by replacing `'` with `''` and adding surrounding `'`
+function escape_yaml_value() {
+    local value
+    readonly value="${1}"
+
+    echo "'$(echo -e "${value}" | sed "s/'/''/")'"
+}
+
+function unescape_yaml_value() {
+    local value
+    readonly value="${1}"
+
+    if echo -e "${value}" | grep -oqE "^'"; then
+        # remove `'` from beginning and end of the string
+        # replace `''` with `'`
+        echo -e "${value}" \
+        | sed "s/'[[:blank:]]*$//" \
+        | sed "s/^[[:blank:]]*'//" \
+        | sed "s/''/'/"
+    elif echo -e "${value}" | grep -oqE '^"'; then
+        # remove `"` from beginning and end of the string
+        # remove `'` from beginning and end of the string
+        # replace `\"` with `"`
+        echo -e "${value}" \
+        | sed 's/"[[:blank:]]*$//' \
+        | sed 's/^[[:blank:]]*"//' \
+        | sed 's/\"/"/'
+    else
+        echo -e "${value}"
+    fi
+}
+
 function get_user_env_config() {
     local file
     readonly file="${1}"
@@ -972,21 +1033,23 @@ function get_user_tags() {
         return
     fi
 
-    sed -e '/^extensions/,/^[a-z]/!d' "${file}" \
+    local fields
+    fields="$(sed -e '/^extensions/,/^[a-z]/!d' "${file}" \
         | sed -e "/^${indentation}sumologic/,/^${indentation}[a-z]/!d" \
         | sed -e "/^${ext_indentation}collector_fields/,/^${ext_indentation}[a-z]/!d;" \
         | grep -vE "^${ext_indentation}\\S" \
         | sed -e 's/^[[:blank:]]*//' \
-        | sed -E -e "s/^(.*:)[[:blank:]]*('|\")(.*)('|\")[[:blank:]]*$/\1 \3/" \
+        || echo "")"
+    unescape_yaml "${fields}" \
         | sort \
         || echo ""
 }
 
 function get_fields_to_compare() {
     local fields
-    readonly fields="${1}"
+    readonly fields="$(unescape_yaml "${FIELDS}")"
 
-    echo "${FIELDS//\\/}" \
+    echo "${fields}" \
         | grep -vE '^$' \
         | sort \
     || echo ""
