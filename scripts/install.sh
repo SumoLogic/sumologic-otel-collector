@@ -353,7 +353,7 @@ function install_missing_dependencies() {
             if [[ -f "/etc/redhat-release" ]]; then
                 echo "Command '${cmd}' not found. Attempting to install '${cmd}'..."
                 # This only works if the tool/command matches the system package name.
-                yum install -y $cmd
+                yum install -y "${cmd}"
             fi
         fi
     done
@@ -928,12 +928,12 @@ function unescape_yaml() {
     # Process the string line by line
     echo -e "${fields}" | while IFS= read -r line; do
         # strip `\` from the end of the line
-        line="$(echo ${line} | sed 's/\\$//')"
+        line="$(echo "${line}" | sed 's/\\$//')"
         # extract key
-        key="$(echo -e $line | sed 's/\(.*\):.*/\1/')"
+        key="$(echo -e "${line}" | sed 's/\(.*\):.*/\1/')"
 
         # extract value
-        value="$(echo -e $line | sed 's/.*:[[:blank:]]*//')"
+        value="$(echo -e "${line}" | sed 's/.*:[[:blank:]]*//')"
         # remove quote, double quote and escapes
         value="$(unescape_yaml_value "${value}")"
         if [[ -n "${key}" && -n "${value}" ]]; then
@@ -1040,7 +1040,7 @@ function get_user_tags() {
         | grep -vE "^${ext_indentation}\\S" \
         | sed -e 's/^[[:blank:]]*//' \
         || echo "")"
-    echo "$(unescape_yaml "${fields}")" \
+    unescape_yaml "${fields}" \
         | sort \
         || echo ""
 }
@@ -1596,7 +1596,7 @@ if [[ -z "${DOWNLOAD_ONLY}" ]]; then
 
         USER_FIELDS="$(get_user_tags "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}")"
         FIELDS_TO_COMPARE="$(get_fields_to_compare "${FIELDS}")"
-    
+
         if [[ -n "${USER_FIELDS}" && -n "${FIELDS_TO_COMPARE}" && "${USER_FIELDS}" != "${FIELDS_TO_COMPARE}" ]]; then
             echo "You are trying to install with different tags than in your configuration file!"
             exit 1
