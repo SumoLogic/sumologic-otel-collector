@@ -1135,37 +1135,53 @@ func TestSendMetricsSplit(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
-			expected := `test.metric.data{test="test_value",test2="second_value"} 14500 1605534165000`
-			assert.Equal(t, expected, body)
-		},
-		func(w http.ResponseWriter, req *http.Request) {
-			body := extractBody(t, req)
 			expected := `` +
+				`test.metric.data{test="test_value",test2="second_value"} 14500 1605534165000` + "\n" +
 				`gauge_metric_name{test="test_value",test2="second_value",remote_name="156920",url="http://example_url"} 124 1608124661166` + "\n" +
 				`gauge_metric_name{test="test_value",test2="second_value",remote_name="156955",url="http://another_url"} 245 1608124662166`
 			assert.Equal(t, expected, body)
+			assert.Equal(t, "otelcol", req.Header.Get("X-Sumo-Client"))
+			assert.Equal(t, "application/vnd.sumologic.prometheus", req.Header.Get("Content-Type"))
 		},
 	})
-	// note that the max request size only applies after each resource
-	test.s.config.MaxRequestBodySize = 10
+
 	test.s.config.MetricFormat = PrometheusFormat
 
 	metricSum, attrs := exampleIntMetric()
 	metricGauge, _ := exampleIntGaugeMetric()
-
-	metrics := pmetric.NewMetrics()
-	metrics.ResourceMetrics().EnsureCapacity(2)
-
-	rmsSum := metrics.ResourceMetrics().AppendEmpty()
-	attrs.CopyTo(rmsSum.Resource().Attributes())
-	metricSum.CopyTo(rmsSum.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
-
-	rmsGauge := metrics.ResourceMetrics().AppendEmpty()
-	attrs.CopyTo(rmsGauge.Resource().Attributes())
-	metricGauge.CopyTo(rmsGauge.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
+	metrics := metricAndAttrsToPdataMetrics(
+		attrs,
+		metricSum, metricGauge,
+	)
 
 	_, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
 	assert.Empty(t, errs)
+}
+
+func TestSendOTLPHistogram(t *testing.T) {
+	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+		func(w http.ResponseWriter, req *http.Request) {
+			unmarshaler := pmetric.ProtoUnmarshaler{}
+			body, err := io.ReadAll(req.Body)
+			require.NoError(t, err)
+			metrics, err := unmarshaler.UnmarshalMetrics(body)
+			require.NoError(t, err)
+			assert.Equal(t, 3, metrics.MetricCount())
+			assert.Equal(t, 16, metrics.DataPointCount())
+		},
+	})
+	test.s.config.DecomposeOtlpHistograms = true
+
+	metricHistogram, attrs := exampleHistogramMetric()
+
+	metrics := pmetric.NewMetrics()
+
+	rms := metrics.ResourceMetrics().AppendEmpty()
+	attrs.CopyTo(rms.Resource().Attributes())
+	metricHistogram.CopyTo(rms.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
+
+	err := test.s.sendOTLPMetrics(context.Background(), metrics)
+	assert.NoError(t, err)
 }
 
 func TestSendMetricsSplitBySource(t *testing.T) {

@@ -611,6 +611,9 @@ func (s *sender) sendOTLPMetrics(ctx context.Context, md pmetric.Metrics) error 
 		s.logger.Debug("there are no metrics to send, moving on")
 		return nil
 	}
+	if s.config.DecomposeOtlpHistograms {
+		md = DecomposeHistograms(md)
+	}
 
 	body, err := metricsMarshaler.MarshalMetrics(md)
 	if err != nil {
