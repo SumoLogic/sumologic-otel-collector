@@ -50,6 +50,9 @@ type Config struct {
 	// The format of metrics you will be sending, either otlp or prometheus (Default is otlp)
 	MetricFormat MetricFormatType `mapstructure:"metric_format"`
 
+	// Decompose OTLP Histograms into individual metrics, similar to how they're represented in Prometheus format
+	DecomposeOtlpHistograms bool `mapstructure:"decompose_otlp_histograms"`
+
 	// Traces related configuration
 	// The format of traces you will be sending, currently only otlp format is supported
 	TraceFormat TraceFormatType `mapstructure:"trace_format"`
