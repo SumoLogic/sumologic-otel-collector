@@ -859,6 +859,8 @@ func (se *SumologicExtension) updateMetadataWithBackoff(ctx context.Context) err
 			return nil
 		}
 
+		se.logger.Warn(fmt.Sprintf("collector metadata update failed: %s", err))
+
 		nbo := se.backOff.NextBackOff()
 		// Return error if backoff reaches the limit or uncoverable error is spotted
 		if _, ok := err.(*backoff.PermanentError); nbo == se.backOff.Stop || ok {
