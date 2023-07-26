@@ -811,7 +811,10 @@ function escape_sed() {
     local text
     readonly text="${1}"
 
-    echo "${text}" | sed -e 's/\\/\\\\/g' | sed -e 's|/|\\/|g'
+    # replaces `\` with `\\` and `/` with `\/`
+    echo "${text}" \
+        | sed -e 's/\\/\\\\/g' \
+        | sed -e 's|/|\\/|g'
 }
 
 function get_indentation() {
