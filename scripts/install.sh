@@ -1218,7 +1218,7 @@ function write_tags() {
     readonly fields_indentation="${ext_indentation}${indentation}"
 
     local fields_to_write
-    fields_to_write="$(escape_sed "${fields}" | sed -e "s/^\\([^\\]\\)/${fields_indentation}\\1/")"
+    fields_to_write="$(echo "${fields}" | sed -e "s/^\\([^\\]\\)/${fields_indentation}\\1/")"
     readonly fields_to_write
 
     # ToDo: ensure we override only sumologic `collector_fields`
