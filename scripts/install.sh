@@ -811,7 +811,10 @@ function escape_sed() {
     local text
     readonly text="${1}"
 
-    echo "${text//\//\\/}"
+    # replaces `\` with `\\` and `/` with `\/`
+    echo "${text}" \
+        | sed -e 's/\\/\\\\/g' \
+        | sed -e 's|/|\\/|g'
 }
 
 function get_indentation() {
@@ -1047,9 +1050,10 @@ function get_user_tags() {
 
 function get_fields_to_compare() {
     local fields
-    readonly fields="$(unescape_yaml "${FIELDS}")"
+    # replace \/ with /
+    readonly fields="$(echo "${FIELDS}" | sed -e 's|\\/|/|')"
 
-    echo "${fields}" \
+    unescape_yaml "${fields}" \
         | grep -vE '^$' \
         | sort \
     || echo ""
@@ -1218,7 +1222,7 @@ function write_tags() {
     readonly fields_indentation="${ext_indentation}${indentation}"
 
     local fields_to_write
-    fields_to_write="$(escape_sed "${fields}" | sed -e "s/^\\([^\\]\\)/${fields_indentation}\\1/")"
+    fields_to_write="$(echo "${fields}" | sed -e "s/^\\([^\\]\\)/${fields_indentation}\\1/")"
     readonly fields_to_write
 
     # ToDo: ensure we override only sumologic `collector_fields`
