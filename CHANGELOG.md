@@ -18,9 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - chore: upgrade otelcol core to v0.82.0 [#1206]
 
+### Fixed
+
+- fix: bump vulnerable module go-restful to v3.9.0 [#1208]
+
 [#1197]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1197
 [#1206]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1206
 [#1207]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1207
+[#1208]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1208
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.81.0-sumo-0...main
 
 ## [v0.81.0-sumo-0]
