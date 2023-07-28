@@ -12,6 +12,17 @@ receivers:
             enabled: true
       network: null
       paging: null
+      process:
+        mute_process_name_error: true
+        mute_process_exe_error: true
+        mute_process_io_error: true
+        metrics:
+          process.threads:
+            enabled: true
+          process.cpu.utilization:
+            enabled: true
+          process.memory.utilization:
+            enabled: true
   filelog/mac/logs/localhost:
     include_file_name: false
     include_file_path: true
@@ -28,6 +39,9 @@ processors:
     attributes:
       - key: sumo.datasource
         value: mac
+        action: insert
+      - key: _sourceCategory
+        value: otel/mac
         action: insert
 service:
   pipelines:
