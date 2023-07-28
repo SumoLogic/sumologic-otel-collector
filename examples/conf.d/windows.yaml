@@ -31,11 +31,20 @@ receivers:
         metrics:
           process.threads:
             enabled: true
+          process.cpu.utilization:
+            enabled: true
+          process.memory.utilization:
+            enabled: true
+          process.disk.operations:
+            enabled: true
 processors:
   resource/windows_resource_attributes/localhost:
     attributes:
       - key: sumo.datasource
         value: windows
+        action: insert
+      - key: _sourceCategory
+        value: otel/windows
         action: insert
 service:
   pipelines:
