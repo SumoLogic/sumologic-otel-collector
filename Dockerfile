@@ -1,5 +1,5 @@
 # For FIPS binary, there are some debian runtime dependencies
-FROM debian:12.0 as otelcol
+FROM debian:12.1 as otelcol
 COPY otelcol-sumo /
 # This shouldn't be necessary but sometimes we end up with execution bit not set.
 # ref: https://github.com/open-telemetry/opentelemetry-collector/issues/1317
@@ -18,7 +18,7 @@ RUN apk --update add ca-certificates
 FROM alpine:3.18.2 as directories
 RUN mkdir /etc/otel/
 
-FROM debian:12.0 as systemd
+FROM debian:12.1 as systemd
 RUN apt update && apt install -y systemd
 # prepare package with journald and it's dependencies keeping original paths
 # h stands for dereference of symbolic links
