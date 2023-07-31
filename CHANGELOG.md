@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - feat(sumologicexporter): add option to decompose OTLP Histograms [#1197]
+- feat: add remoteobserverprocessor [#1207]
 
 ### Changed
 
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [#1197]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1197
 [#1206]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1206
+[#1207]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1207
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.81.0-sumo-0...main
 
 ## [v0.81.0-sumo-0]
