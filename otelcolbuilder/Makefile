@@ -1,5 +1,5 @@
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.81.0
+BUILDER_VERSION ?= 0.82.0
 FIPS_SUFFIX ?= ""
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
 GO ?= go
