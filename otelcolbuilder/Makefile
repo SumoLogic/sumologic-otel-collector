@@ -23,7 +23,7 @@ INSTALLED_BUILDER_VERSION := $(shell $(BUILDER_BIN_NAME) version 2>&1)
 
 # Settings for macOS builds
 ifeq ($(OS),darwin)
-	AC_USERNAME ?= it-apple-developer@sumologic.com
+	AC_USERNAME ?= otel-mac-certs@sumologic.com
 	AC_PASSWORD ?= $(shell echo $$AC_PASSWORD)
 	DEVELOPER_TEAM_ID ?= 8F28635Z7X
 	DEVELOPER_SIGNING_IDENTITY ?= Developer ID Application: Sumo Logic, Inc. ($(DEVELOPER_TEAM_ID))
