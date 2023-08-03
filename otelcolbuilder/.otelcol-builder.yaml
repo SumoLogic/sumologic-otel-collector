@@ -236,3 +236,13 @@ replaces:
   # lokireceiver does a replace for this, so we need to as well
   - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/loki => github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/loki v0.82.0
   - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/sqlqueryreceiver => github.com/dmolenda-sumo/opentelemetry-collector-contrib/receiver/sqlqueryreceiver sqlquery-receiver-add-logs-v0.78.0
+
+  # Add extract_sum_metric and extract_count_metric functions to transform processor
+  # See:
+  # - https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/24368
+  # - https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/24897
+  - github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor => github.com/swiatekm-sumo/opentelemetry-collector-contrib/processor/transformprocessor 45c39e93b2beb2dbb1bfa709a77acada11b03cc3
+
+  # Add the following changes to prometheus receiver:
+  # https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/23448
+  - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver => github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver c91e7b6b58cdec26f93884345b6f0196f899bd74
