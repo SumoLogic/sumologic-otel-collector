@@ -157,7 +157,7 @@ histogram_metric_double_test_count{bar="foo",container="sit",branch="main"} 98 1
 	assert.Equal(t, expected, result)
 }
 
-func TestPrometheusMetrics(t *testing.T) {
+func TestEmptyPrometheusMetrics(t *testing.T) {
 	type testCase struct {
 		name       string
 		metricFunc func(fillData bool) (pmetric.Metric, pcommon.Map)
@@ -191,9 +191,9 @@ func TestPrometheusMetrics(t *testing.T) {
 			expected:   "",
 		},
 		{
-			name:       "empty histogram",
+			name:       "histogram with one datapoint, no sum or buckets",
 			metricFunc: buildExampleHistogramMetric,
-			expected:   "",
+			expected:   `histogram_metric_double_test_count{bar="foo"} 0 0`,
 		},
 	}
 
