@@ -91,6 +91,11 @@ type Config struct {
 	// Exponential algorithm is being used.
 	// Please see following link for details: https://github.com/cenkalti/backoff
 	BackOff backOffConfig `mapstructure:"backoff"`
+
+	// IsRemotelyManaged field defines management status of the OT Collector based on
+	// if it is remotely or locally managed
+	// By default this is false.
+	IsRemotelyManaged bool `mapstructure:"isRemotelyManaged"`
 }
 
 type accessCredentials struct {

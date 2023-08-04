@@ -427,14 +427,15 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 
 	var buff bytes.Buffer
 	if err = json.NewEncoder(&buff).Encode(api.OpenRegisterRequestPayload{
-		CollectorName: collectorName,
-		Description:   se.conf.CollectorDescription,
-		Category:      se.conf.CollectorCategory,
-		Fields:        se.conf.CollectorFields,
-		Hostname:      hostname,
-		Ephemeral:     se.conf.Ephemeral,
-		Clobber:       se.conf.Clobber,
-		TimeZone:      se.conf.TimeZone,
+		CollectorName:     collectorName,
+		Description:       se.conf.CollectorDescription,
+		Category:          se.conf.CollectorCategory,
+		Fields:            se.conf.CollectorFields,
+		Hostname:          hostname,
+		Ephemeral:         se.conf.Ephemeral,
+		Clobber:           se.conf.Clobber,
+		TimeZone:          se.conf.TimeZone,
+		IsRemotelyManaged: se.conf.IsRemotelyManaged,
 	}); err != nil {
 		return credentials.CollectorCredentials{}, err
 	}
