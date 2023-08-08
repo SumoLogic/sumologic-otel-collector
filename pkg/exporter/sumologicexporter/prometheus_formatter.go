@@ -350,9 +350,6 @@ func (f *prometheusFormatter) histogram2Strings(metric pmetric.Metric, attribute
 		dp := dps.At(i)
 
 		explicitBounds := dp.ExplicitBounds()
-		if explicitBounds.Len() == 0 {
-			continue
-		}
 
 		var cumulative uint64
 		additionalAttributes := pcommon.NewMap()
@@ -370,24 +367,30 @@ func (f *prometheusFormatter) histogram2Strings(metric pmetric.Metric, attribute
 			)
 			lines = append(lines, line)
 		}
+		var line string
 
-		cumulative += dp.BucketCounts().At(explicitBounds.Len())
-		additionalAttributes.PutStr(prometheusLeTag, prometheusInfValue)
-		line := f.uintValueLine(
-			f.bucketMetric(metric.Name()),
-			cumulative,
-			dp,
-			f.mergeAttributes(attributes, additionalAttributes),
-		)
-		lines = append(lines, line)
+		// according to the spec, it's valid to have no buckets at all
+		if dp.BucketCounts().Len() > 0 {
+			cumulative += dp.BucketCounts().At(explicitBounds.Len())
+			additionalAttributes.PutStr(prometheusLeTag, prometheusInfValue)
+			line = f.uintValueLine(
+				f.bucketMetric(metric.Name()),
+				cumulative,
+				dp,
+				f.mergeAttributes(attributes, additionalAttributes),
+			)
+			lines = append(lines, line)
+		}
 
-		line = f.doubleValueLine(
-			f.sumMetric(metric.Name()),
-			dp.Sum(),
-			dp,
-			attributes,
-		)
-		lines = append(lines, line)
+		if dp.HasSum() {
+			line = f.doubleValueLine(
+				f.sumMetric(metric.Name()),
+				dp.Sum(),
+				dp,
+				attributes,
+			)
+			lines = append(lines, line)
+		}
 
 		line = f.uintValueLine(
 			f.countMetric(metric.Name()),

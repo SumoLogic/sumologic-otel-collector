@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released TBD
 
+### Fixed
+
+- fix(sumologicexporter): handle empty histograms correctly [#1214]
+
+[#1214]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1214
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.82.0-sumo-0...main
 
 ## [v0.82.0-sumo-0]
