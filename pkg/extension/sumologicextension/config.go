@@ -95,7 +95,7 @@ type Config struct {
 	// IsRemotelyManaged field defines management status of the OT Collector based on
 	// if it is remotely or locally managed
 	// By default this is false.
-	IsRemotelyManaged bool `mapstructure:"isRemotelyManaged"`
+	IsRemotelyManaged bool `mapstructure:"is_remotely_managed"`
 }
 
 type accessCredentials struct {
