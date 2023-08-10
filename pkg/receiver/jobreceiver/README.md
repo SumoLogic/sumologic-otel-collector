@@ -1,8 +1,8 @@
 # Monitoring Job Receiver
 
-| Status        |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| ------------- | -----------                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| Stability     | [development]: logs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Status        |                     |
+| ------------- | -----------         |
+| Stability     | [development]: logs |
 
 This receiver makes it possible to collect telemetry data from sources that
 do not instrument well. The monitoring job receiver executes a script or
@@ -12,27 +12,59 @@ of downloading runtime assets necessary to run a particular monitoring job.
 
 ## Configuration
 
-For each `monitoringjob` receiver defined in configuration, the specified
-command will be run according to the schedule. The command _should_ start
-a binary that writes to either stdout or stderr.
+| Configuration | Default | Description
+| ------------ | ------------ | ------------
+| exec | required | A `exec` configuration block. See details [below](#execution-configuration)
+| interval | required | [Time](#time-parameters) between executions
+| attributes | | A map of key value pairs to add as log attributes
+| resource | | A map of key value pairs to add as resource attributes
+| encoding | utf-8 | The encoding of the output produced by the command
+| multiline | | A `multiline` configuration block. See details [below](#multiline-configuration)
 
-The following settings are required:
+### Execution Configuration
 
-- `exec.command`: The command to run.
-- `schedule.interval`: How often to run the monitoring job, specified as a decimal number followed by a unit suffix. e.g. `60s`, `45m`, `2h30m`
+| Configuration | Default | Description
+| ------------ | ------------ | ------------
+| command | required | The `command` to run. Should start a binary that writes to stdout and/or stderr
+| arguments | | A list of string arguments to pass the command
+| timeout | | [Time](#time-parameters) to wait for the process to exit before attempting to make it exit
+| runtime_assets | | A list of `runtime_assets` required for the monitoring job
 
-The following settings are optional:
+### Multiline Configuration
 
-- `exec.arguments`: List of string argumets to pass the command
-- `exec.runtime_assets`: List of runtime assets required for the job
-- `exec.timeout`:  How long to wait for the process to exit before attempting to make it exit.
+By default the monitoringjob receiver will split command output into log events
+using a newline delimiter. When desired, the `multiline` configuration block
+must contain either the `line_start_pattern` or the `line_end_pattern` option.
+These are [re2] regex patterns that match either the beginning of a log event
+or the end of a log entry.
 
-### Example configuration
+To capture the entirety of command output as a single log event use `line_end_pattern: "\z"`
+
+[re2]: https://github.com/google/re2/wiki/Syntax
+
+### Runtime Asset Configuration
+
+//todo(ck)
+
+## Additional Features
+
+### Time Parameters
+
+Time parameters are specified as sets of decimal numbers followed by a
+unit suffix. e.g. `60s`, `45m`, `2h30m40s`.
+
+### Log Attributes
+
+The monitorinjob receiver includes several attributes in its output.
+
+- `command.name`: name of the command executed
+- `command.output.stream`: Either `stdout` or `stderr`
+
+## Example configuration
 
 ```yaml
 monitoringjob:
-  schedule:
-    interval: 1h
+  interval: 1h
   exec:
     command: check_ntp_time
     runtime_assets:
@@ -48,4 +80,6 @@ monitoringjob:
         - "--critical"
         - 1.0
     timeout: 8s
+  multiline:
+    line_end_pattern: "\z"
 ```

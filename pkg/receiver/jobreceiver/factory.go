@@ -2,7 +2,6 @@ package jobreceiver
 
 import (
 	"context"
-	"time"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
@@ -13,7 +12,7 @@ const (
 	typeStr   = "monitoringjob"
 	stability = component.StabilityLevelDevelopment
 
-	defaultInterval = 5 * time.Minute
+	defaultEncoding = "utf-8"
 )
 
 // NewFactory creates a factory for the prometheusexec receiver
@@ -26,8 +25,8 @@ func NewFactory() receiver.Factory {
 
 func createDefaultConfig() component.Config {
 	return &Config{
-		Schedule: ScheduleConfig{
-			Interval: defaultInterval,
+		Output: OutputConfig{
+			Encoding: defaultEncoding,
 		},
 	}
 }

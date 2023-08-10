@@ -1,8 +1,6 @@
 package jobreceiver
 
 import (
-	"errors"
-	"fmt"
 	"time"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/asset"
@@ -10,8 +8,9 @@ import (
 
 // Config for monitoringjob receiver
 type Config struct {
-	Schedule ScheduleConfig  `mapstructure:"schedule"`
 	Exec     ExecutionConfig `mapstructure:"exec"`
+	Schedule ScheduleConfig  `mapstructure:",squash"`
+	Output   OutputConfig    `mapstructure:",squash"`
 }
 
 // ExecutionConfig defines the configuration for execution of a monitorinjob
@@ -31,21 +30,37 @@ type ExecutionConfig struct {
 // ScheduleConfig defines configuration for the scheduling of the monitoringjob
 // receiver
 type ScheduleConfig struct {
+	// Interval to schedule monitoring job at
 	Interval time.Duration `mapstructure:"interval,omitempty"`
+}
+
+type OutputConfig struct {
+	// Attributes to include with log events
+	Attributes map[string]string `mapstructure:"attributes,omitempty"`
+	// Resource attributes to include with log events
+	Resource map[string]string `mapstructure:"resource,omitempty"`
+	// Encoding expected in output streams
+	Encoding string `mapstructure:"encoding,omitempty"`
+	// Multiline configuration for augmenting how log events are delimeted
+	Multiline MultilineConfig `mapstructure:"multiline,omitempty"`
+}
+
+func (cfg *OutputConfig) Validate() error {
+	return nil
+}
+
+type MultilineConfig struct {
+	// LineStartPattern regex pattern for detecting the start of a log line
+	LineStartPattern string `mapstructure:"line_start_pattern"`
+	// LineEndPattern regex pattern for detecting the end of a log line
+	LineEndPattern string `mapstructure:"line_end_pattern"`
+}
+
+func (cfg *MultilineConfig) Validate() error {
+	return nil
 }
 
 // Validate checks the configuration is valid
 func (cfg *Config) Validate() error {
-	if cfg.Exec.Command == "" {
-		return errors.New("command to execute must be non-empty")
-	}
-	if cfg.Schedule.Interval <= 0 {
-		return errors.New("schedule must be set")
-	}
-	for i, a := range cfg.Exec.RuntimeAssets {
-		if err := a.Validate(); err != nil {
-			return fmt.Errorf("invalid runtime asset %d: %w", i, err)
-		}
-	}
 	return nil
 }
