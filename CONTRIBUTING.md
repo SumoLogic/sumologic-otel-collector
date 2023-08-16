@@ -105,7 +105,7 @@ this can be solved by configuring a single Go workspace covering all the package
 This can be done by adding a `go.work` file to the repository root:
 
 ```go
-go 1.19
+go 1.20
 
 use (
         ./otelcolbuilder/cmd

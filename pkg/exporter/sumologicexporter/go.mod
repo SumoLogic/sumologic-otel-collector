@@ -1,6 +1,6 @@
 module github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter
 
-go 1.19
+go 1.20
 
 require (
 	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.77.0-sumo-0
