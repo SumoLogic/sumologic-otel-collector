@@ -1,6 +1,6 @@
 module github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension
 
-go 1.19
+go 1.20
 
 require (
 	github.com/Showmax/go-fqdn v1.0.0
