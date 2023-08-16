@@ -80,3 +80,9 @@ func (h *ByteSize) UnmarshalText(text []byte) (err error) {
 	*h = ByteSize(int64(multiplier * numeral))
 	return nil
 }
+
+// MultilineConfig configures how log entries should be delimited
+type MultilineConfig struct {
+	LineStartPattern string `mapstructure:"line_start_pattern"`
+	LineEndPattern   string `mapstructure:"line_end_pattern"`
+}

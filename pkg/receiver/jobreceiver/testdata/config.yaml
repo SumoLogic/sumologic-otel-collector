@@ -20,13 +20,14 @@ monitoringjob/log_ntp:
         - time.nist.gov
     timeout: 8s
   output:
-    type: log_entries
-    include_command_name: true
-    include_stream_name: true
-    max_log_size: '16kb'
-    encoding: 'utf-8'
-    multiline:
-      line_start_pattern: '$start'
+    format: log_entries
+    log_entries:
+      include_command_name: true
+      include_stream_name: true
+      max_log_size: '16kb'
+      encoding: 'utf-8'
+      multiline:
+        line_start_pattern: '$start'
 
 monitoringjob/event_ntp:
   schedule:
@@ -38,8 +39,9 @@ monitoringjob/event_ntp:
         - time.nist.gov
     timeout: 8s
   output:
-    type: event
-    include_command_name: false
-    include_command_status: false
-    include_command_duration: false
-    max_body_size: '32kib'
+    format: event
+    event:
+      include_command_name: false
+      include_command_status: false
+      include_command_duration: false
+      max_body_size: '32kib'

@@ -48,8 +48,8 @@ func TestConfigValidate(t *testing.T) {
 				}
 				c.Exec.Arguments = []string{"-H", "time.nist.gov"}
 				c.Exec.Timeout = time.Second * 8
+				c.Output.Format = "log_entries"
 				c.Output.Builder = &output.LogEntriesConfig{
-					Type:               "log_entries",
 					IncludeCommandName: true,
 					IncludeStreamName:  true,
 					MaxLogSize:         16 * 1000,

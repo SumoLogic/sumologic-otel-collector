@@ -10,74 +10,72 @@ import (
 	"go.uber.org/zap"
 )
 
+var factories map[string]builderConfigFactory = map[string]builderConfigFactory{
+	"event":       eventConfigFactory{},
+	"log_entries": logEntriesConfigFactory{},
+}
+
 // Config for the output stage
 // Dynamic configuration uses key 'type' to establish the configuration type
 type Config struct {
+	Format string `mapstructure:"format"`
 	Builder
 }
 
 // NewDefaultConfig builds the default output configuration
 func NewDefaultConfig() Config {
 	return Config{
-		Builder: newDefaultEventConfig(),
-	}
-}
-
-func newDefaultEventConfig() *EventConfig {
-	return &EventConfig{
-		Type:                 "event",
-		IncludeCommandName:   true,
-		IncludeCommandStatus: true,
-		IncludeDuration:      true,
-	}
-}
-
-func newDefaultLogEntriesConfig() *LogEntriesConfig {
-	return &LogEntriesConfig{
-		Type:               "log_entries",
-		IncludeCommandName: true,
-		IncludeStreamName:  true,
+		Format:  "event",
+		Builder: eventConfigFactory{}.CreateDefaultConfig(),
 	}
 }
 
 // Unmarshal dynamic Builder underlying Config
 func (c *Config) Unmarshal(component *confmap.Conf) error {
-	if !component.IsSet("type") {
-		return fmt.Errorf("missing required field 'type'")
+	if component == nil {
+		return nil
 	}
 
-	typeInterface := component.Get("type")
-	typeName, ok := typeInterface.(string)
+	// Load non-dynamic parts like normal
+	if err := component.Unmarshal(c); err != nil {
+		return err
+	}
+
+	if !component.IsSet("format") {
+		return fmt.Errorf("missing required field 'format'")
+	}
+
+	formatInterface := component.Get("format")
+	format, ok := formatInterface.(string)
 	if !ok {
-		return fmt.Errorf("invalid type %T for field 'type'", typeInterface)
+		return fmt.Errorf("invalid type %T for field 'format'", formatInterface)
 	}
 
-	switch typeName {
-	case "event":
-		builder := newDefaultEventConfig()
-		if err := component.Unmarshal(builder, confmap.WithErrorUnused()); err != nil {
-			return err
-		}
-		c.Builder = builder
-	case "log_entries":
-		builder := newDefaultLogEntriesConfig()
-		if err := component.Unmarshal(builder, confmap.WithErrorUnused()); err != nil {
-			return err
-		}
-		c.Builder = builder
-	default:
-		return fmt.Errorf("unsupported value %s for field 'type'", typeName)
+	factory, ok := getOutputFormatFactory(format)
+	if !ok {
+		return fmt.Errorf("invalid value %s for field 'format'", format)
 	}
+
+	formatComponent, err := component.Sub(format)
+	if err != nil {
+		return err
+	}
+
+	builder := factory.CreateDefaultConfig()
+	if err := formatComponent.Unmarshal(builder, confmap.WithErrorUnused()); err != nil {
+		return err
+	}
+	c.Builder = builder
 	return nil
 }
 
 // Builder
 type Builder interface {
-	Build(*zap.Logger, consumer.Logs) Emitter
+	Build(*zap.Logger, consumer.Logs) Consumer
 }
 
-// Emitter consumes command output and emits telemetry data
-type Emitter interface {
+// Consumer consumes command output and emits telemetry data
+type Consumer interface {
 	Consume(stdin, stderr io.Reader) CloseFunc
 }
 
@@ -100,7 +98,6 @@ type ExecutionSummary struct {
 // EventConfig handles output as if it is a monitoring job.
 // Should emit a single event per command execution summarizing the execution.
 type EventConfig struct {
-	Type string `mapstructure:"type"`
 	// IncludeCommandName indicates to include the attribute `command.name`
 	IncludeCommandName bool `mapstructure:"include_command_name,omitempty"`
 	// IncludeCommandStatus indicates to include the attribute `command.status`
@@ -113,13 +110,12 @@ type EventConfig struct {
 	MaxBodySize ByteSize `mapstructure:"max_body_size,omitempty"`
 }
 
-func (c *EventConfig) Build(logger *zap.Logger, next consumer.Logs) Emitter {
+func (c *EventConfig) Build(logger *zap.Logger, next consumer.Logs) Consumer {
 	return nopEmitter{}
 }
 
 // LogEntriesConfig handles output as if it is a stream of distinct log events
 type LogEntriesConfig struct {
-	Type string `mapstructure:"type"`
 	// IncludeCommandName indicates to include the attribute `command.name`
 	IncludeCommandName bool `mapstructure:"include_command_name,omitempty"`
 	// IncludeStreamName indicates to include the attribute `command.stream.name`
@@ -134,12 +130,34 @@ type LogEntriesConfig struct {
 	Multiline MultilineConfig `mapstructure:"multiline"`
 }
 
-func (c *LogEntriesConfig) Build(logger *zap.Logger, next consumer.Logs) Emitter {
+func (c *LogEntriesConfig) Build(logger *zap.Logger, next consumer.Logs) Consumer {
 	return nopEmitter{}
 }
 
-// MultilineConfig configures how log entries should be delimited
-type MultilineConfig struct {
-	LineStartPattern string `mapstructure:"line_start_pattern"`
-	LineEndPattern   string `mapstructure:"line_end_pattern"`
+func getOutputFormatFactory(format string) (builderConfigFactory, bool) {
+	factory, ok := factories[format]
+	return factory, ok
+}
+
+type builderConfigFactory interface {
+	CreateDefaultConfig() Builder
+}
+
+type eventConfigFactory struct{}
+
+func (eventConfigFactory) CreateDefaultConfig() Builder {
+	return &EventConfig{
+		IncludeCommandName:   true,
+		IncludeCommandStatus: true,
+		IncludeDuration:      true,
+	}
+}
+
+type logEntriesConfigFactory struct{}
+
+func (logEntriesConfigFactory) CreateDefaultConfig() Builder {
+	return &LogEntriesConfig{
+		IncludeCommandName: true,
+		IncludeStreamName:  true,
+	}
 }
