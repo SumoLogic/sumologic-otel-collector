@@ -1,7 +1,94 @@
 package jobreceiver
 
-import "testing"
+import (
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/asset"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/confmap/confmaptest"
+)
 
 func TestConfigValidate(t *testing.T) {
-	createDefaultConfig()
+	cm, err := confmaptest.LoadConf(filepath.Join("testdata", "config.yaml"))
+	require.NoError(t, err)
+
+	factory := NewFactory()
+
+	testCases := []struct {
+		Name     string
+		Expected func() component.Config
+	}{
+		{
+			Name: "minimal",
+			Expected: func() component.Config {
+				c := factory.CreateDefaultConfig().(*Config)
+				c.Schedule.Interval = time.Hour
+				c.Exec.Command = "echo"
+				c.Exec.Arguments = []string{"hello world"}
+				return c
+			},
+		},
+		{
+			Name: "log_ntp",
+			Expected: func() component.Config {
+				c := factory.CreateDefaultConfig().(*Config)
+				c.Schedule.Interval = time.Hour
+				c.Exec.Command = "check_ntp_time"
+				c.Exec.RuntimeAssets = []asset.Spec{
+					{
+						Name: "monitoring-plugins",
+						URL:  "https://assets.bonsai.sensu.io/asset.zip",
+						Path: "/opt/monitoring-plugins",
+					},
+				}
+				c.Exec.Arguments = []string{"-H", "time.nist.gov"}
+				c.Exec.Timeout = time.Second * 8
+				c.Output.Builder = &output.LogEntriesConfig{
+					Type:               "log_entries",
+					IncludeCommandName: true,
+					IncludeStreamName:  true,
+					MaxLogSize:         16 * 1000,
+					Encoding:           "utf-8",
+					Multiline: output.MultilineConfig{
+						LineStartPattern: "$start",
+					},
+				}
+				return c
+			},
+		},
+		{
+			Name: "event_ntp",
+			Expected: func() component.Config {
+				c := factory.CreateDefaultConfig().(*Config)
+				c.Schedule.Interval = time.Hour
+				c.Exec.Command = "check_ntp_time"
+				c.Exec.Arguments = []string{"-H", "time.nist.gov"}
+				c.Exec.Timeout = time.Second * 8
+				eventCfg := c.Output.Builder.(*output.EventConfig)
+				require.NotNil(t, eventCfg)
+				eventCfg.IncludeCommandName = false
+				eventCfg.IncludeCommandStatus = false
+				eventCfg.IncludeDuration = false
+				eventCfg.MaxBodySize = 32 << 10
+				return c
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			actual := factory.CreateDefaultConfig()
+			expected := tc.Expected()
+			sub, err := cm.Sub(component.NewIDWithName(typeStr, tc.Name).String())
+			require.NoError(t, err)
+			require.NoError(t, component.UnmarshalConfig(sub, actual))
+
+			assert.Equal(t, expected, actual)
+		})
+	}
 }

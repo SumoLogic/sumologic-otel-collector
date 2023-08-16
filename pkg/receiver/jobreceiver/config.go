@@ -4,13 +4,14 @@ import (
 	"time"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/asset"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output"
 )
 
 // Config for monitoringjob receiver
 type Config struct {
 	Exec     ExecutionConfig `mapstructure:"exec"`
-	Schedule ScheduleConfig  `mapstructure:",squash"`
-	Output   OutputConfig    `mapstructure:",squash"`
+	Schedule ScheduleConfig  `mapstructure:"schedule"`
+	Output   output.Config   `mapstructure:"output"`
 }
 
 // ExecutionConfig defines the configuration for execution of a monitorinjob
@@ -32,32 +33,6 @@ type ExecutionConfig struct {
 type ScheduleConfig struct {
 	// Interval to schedule monitoring job at
 	Interval time.Duration `mapstructure:"interval,omitempty"`
-}
-
-type OutputConfig struct {
-	// Attributes to include with log events
-	Attributes map[string]string `mapstructure:"attributes,omitempty"`
-	// Resource attributes to include with log events
-	Resource map[string]string `mapstructure:"resource,omitempty"`
-	// Encoding expected in output streams
-	Encoding string `mapstructure:"encoding,omitempty"`
-	// Multiline configuration for augmenting how log events are delimeted
-	Multiline MultilineConfig `mapstructure:"multiline,omitempty"`
-}
-
-func (cfg *OutputConfig) Validate() error {
-	return nil
-}
-
-type MultilineConfig struct {
-	// LineStartPattern regex pattern for detecting the start of a log line
-	LineStartPattern string `mapstructure:"line_start_pattern"`
-	// LineEndPattern regex pattern for detecting the end of a log line
-	LineEndPattern string `mapstructure:"line_end_pattern"`
-}
-
-func (cfg *MultilineConfig) Validate() error {
-	return nil
 }
 
 // Validate checks the configuration is valid

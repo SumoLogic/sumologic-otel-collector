@@ -9,7 +9,7 @@ type Spec struct {
 	// Path is the absolute path to where the asset should be installed
 	Path string `mapstructure:"path"`
 	// Url is the remote address used for fetching the asset
-	Url string `mapstructure:"url"`
+	URL string `mapstructure:"url"`
 	// SHA512 is the hash of the asset tarball
 	SHA512 string `mapstructure:"sha512"`
 }

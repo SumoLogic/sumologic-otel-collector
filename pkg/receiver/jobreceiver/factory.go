@@ -3,6 +3,7 @@ package jobreceiver
 import (
 	"context"
 
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/receiver"
@@ -11,8 +12,6 @@ import (
 const (
 	typeStr   = "monitoringjob"
 	stability = component.StabilityLevelDevelopment
-
-	defaultEncoding = "utf-8"
 )
 
 // NewFactory creates a factory for the prometheusexec receiver
@@ -25,9 +24,7 @@ func NewFactory() receiver.Factory {
 
 func createDefaultConfig() component.Config {
 	return &Config{
-		Output: OutputConfig{
-			Encoding: defaultEncoding,
-		},
+		Output: output.NewDefaultConfig(),
 	}
 }
 
