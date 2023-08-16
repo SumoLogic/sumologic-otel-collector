@@ -43,4 +43,3 @@ monitoringjob/event_ntp:
     include_command_status: false
     include_command_duration: false
     max_body_size: '32kib'
-
