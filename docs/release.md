@@ -123,6 +123,12 @@ make golint
 make gotest
 ```
 
+### Check out the developer changelog
+
+Contrib maintains a [separate changelog][otelcol_api_changelog] for distribution maintainers and component authors.
+Check this for any changes that may affect our components or distribution. One example of this is increases
+to the minimal supported Go version.
+
 ### Add missing upstream components
 
 We include all of the components from the following list which are at least in *alpha* stability level:
@@ -253,6 +259,7 @@ make update-journalctl
 [otelcol_components]: https://github.com/open-telemetry/opentelemetry-collector-releases/blob/main/distributions/otelcol/manifest.yaml
 [otelcol_contrib_components]: https://github.com/open-telemetry/opentelemetry-collector-releases/blob/main/distributions/otelcol-contrib/manifest.yaml
 [otc_repository]: https://github.com/open-telemetry/opentelemetry-collector-contrib
+[otelcol_api_changelog]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/CHANGELOG-API.md
 [readme.md]: ../README.md
 [#604]: https://github.com/SumoLogic/sumologic-otel-collector/pull/604/files
 [otcontrib_releases]: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases
