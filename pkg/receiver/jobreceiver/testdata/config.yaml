@@ -1,0 +1,52 @@
+monitoringjob/minimal:
+  schedule:
+    interval: 1h
+  exec:
+    command: echo
+    arguments:
+        - "hello world"
+
+monitoringjob/log_ntp:
+  schedule:
+    interval: 1h
+  exec:
+    command: check_ntp_time
+    runtime_assets:
+        - name: monitoring-plugins
+          url: https://assets.bonsai.sensu.io/asset.zip
+          path: /opt/monitoring-plugins
+    arguments:
+        - "-H"
+        - time.nist.gov
+    timeout: 8s
+  output:
+    type: log_entries
+    log_entries:
+      include_command_name: true
+      include_stream_name: true
+      max_log_size: '16kb'
+      encoding: 'utf-8'
+      multiline:
+        line_start_pattern: '$start'
+    attributes:
+      label: foo
+    resource:
+      label: bar
+
+
+monitoringjob/event_ntp:
+  schedule:
+    interval: 1h
+  exec:
+    command: check_ntp_time
+    arguments:
+        - "-H"
+        - time.nist.gov
+    timeout: 8s
+  output:
+    type: event
+    event:
+      include_command_name: false
+      include_command_status: false
+      include_command_duration: false
+      max_body_size: '32kib'
