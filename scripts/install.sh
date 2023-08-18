@@ -686,6 +686,12 @@ function setup_config() {
             echo "Cannot obtain hostmetrics configuration for '${CONFIG_BRANCH}' branch. Either '${HOSTMETRICS_CONFIG_URL}' is invalid, or the network connection is unstable."
             exit 1
         fi
+        if [[ "${OS_TYPE}" == "linux" ]]; then
+            echo -e "Setting the CAP_DAC_READ_SEARCH Linux capability on the collector binary to allow it to read host metrics from /proc directory: setcap 'cap_dac_read_search=ep' \"${SUMO_BINARY_PATH}\""
+            echo -e "You can remove it with the following command: sudo setcap -r \"${SUMO_BINARY_PATH}\""
+            echo -e "Without this capability, the collector will not be able to collect some of the host metrics."
+            setcap 'cap_dac_read_search=ep' "${SUMO_BINARY_PATH}"
+        fi
     fi
 
     # Ensure that configuration is created
