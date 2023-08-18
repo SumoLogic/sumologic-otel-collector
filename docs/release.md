@@ -88,6 +88,30 @@ Here is the example pull request: [#677].
 
 [#677]: https://github.com/SumoLogic/sumologic-otel-collector/pull/677
 
+## Build packages
+
+1. Open the [Build packages workflow][build_packages_workflow] in GitHub Actions for the
+   [sumologic-otel-collector-packaging repository][package_repo].
+
+1. Click `Run workflow`.
+
+1. Enter the version of the release. (e.g. `0.83.0`)
+
+1. Enter the Sumo version of the release. (e.g. `0`)
+
+1. Click `Publish release`.
+
+1. Click `Run workflow` and wait fo the CI job to finish. Take note of the job number.
+
+1. After the release draft is created, go to [GitHub Releases][package_releases], find the release
+   with the build iteration matching the CI job number, and then edit the release draft and fill in
+   missing information:
+
+- Specify versions for upstream OT core and contrib releases
+- Copy and paste the Changelog entry for this release from [CHANGELOG.md][otelcol_changelog]
+
+After verifying that the release text and all links are good, publish the release.
+
 ## Updating OT to next version
 
 Here are the steps to update OT to next version:
@@ -253,6 +277,7 @@ make update-journalctl
 [circleci]: https://app.circleci.com/pipelines/github/SumoLogic/sumologic-otel-collector
 [circleci_approve]: ../images/circleci_approve_workflow.png
 [changelog]: ../CHANGELOG.md
+[otelcol_changelog]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/CHANGELOG.md
 [upgrading]: ./upgrading.md
 [journaldreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/receiver/journaldreceiver
 [debian_versions]: https://hub.docker.com/_/debian/?tab=description
@@ -270,3 +295,6 @@ make update-journalctl
 [dockerobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/extension/observer/dockerobserver
 [ecsobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/extension/observer/ecsobserver
 [ecstaskobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/extension/observer/ecstaskobserver
+[build_packages_workflow]: https://github.com/SumoLogic/sumologic-otel-collector-packaging/actions/workflows/build_packages.yml
+[package_repo]: https://github.com/SumoLogic/sumologic-otel-collector-packaging
+[package_releases]: https://github.com/SumoLogic/sumologic-otel-collector-packaging/releases
