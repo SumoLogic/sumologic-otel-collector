@@ -30,7 +30,6 @@ and can be used as an authenticator for the
 
 - `installation_token`: (required) collector installation token for the Sumo Logic service, see
   [help][credentials_help] for more details
-- `install_token`: (deprecated) collector installation token for the Sumo Logic service. Please use `installation_token` instead.
 - `collector_name`: name that will be used for registration; by default the hostname is used. In the event of a conflict, a timestamp will be appended to the name. See [here][clobber] for more information.
 - `collector_description`: collector description that will be used for registration
 - `collector_category`: collector category that will be used for registration
