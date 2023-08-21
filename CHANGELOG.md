@@ -14,7 +14,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(sumologicextension)!: remove support for `install_token` [#1225]
 
 [#1225]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1225
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.82.0-sumo-0...main
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.83.0-sumo-0...main
+
+## [v0.83.0-sumo-0]
+
+### Released 2023-08-17
+
+### Changed
+
+- chore: upgrade otelcol core to v0.83.0 [#1221]
+- chore(build): require go 1.20 to build components [#1221]
+
+### Fixed
+
+- fix(sumologicexporter): handle empty histograms correctly [#1214]
+
+[#1214]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1214
+[#1221]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1221
+[v0.83.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.82.0-sumo-0...v0.83.0-sumo-0
 
 ## [v0.82.0-sumo-0]
 

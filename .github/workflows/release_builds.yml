@@ -84,13 +84,6 @@ jobs:
         run: cp otelcol-sumo-${{matrix.arch_os}}${{matrix.builder_bin_ext}} ${{ steps.set_filename.outputs.filename }}
         working-directory: ./otelcolbuilder/cmd
 
-      - name: Show included modules
-        working-directory: ./otelcolbuilder/cmd
-        run: |
-          go version -m ${{ steps.set_filename.outputs.filename }} | \
-          { grep -E "/(receiver|exporter|processor|extension)/" || true; } | \
-          tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
-
       - name: Sign Windows binary
         if: runner.os == 'Windows'
         uses: skymatic/code-sign-action@v2
@@ -185,13 +178,6 @@ jobs:
         run: cp otelcol-sumo-${{matrix.arch_os}} ${{ steps.set_filename.outputs.filename }}
         working-directory: ./otelcolbuilder/cmd
 
-      - name: Show included modules
-        working-directory: ./otelcolbuilder/cmd
-        run: |
-          go version -m ${{ steps.set_filename.outputs.filename }} | \
-          { grep -E "/(receiver|exporter|processor|extension)/" || true; } | \
-          tee otelcol-sumo-${{matrix.arch_os}}_modules.txt
-
       # Store binary and .dmg into pipeline artifacts after they have been signed
 
       - name: Store .dmg as action artifact
@@ -258,13 +244,6 @@ jobs:
         run: |
           go tool nm ${{ steps.set_filename.outputs.filename }} | \
           grep "_Cfunc__goboringcrypto_"
-
-      - name: Show included modules
-        working-directory: ./otelcolbuilder/cmd
-        run: |
-          go version -m ${{ steps.set_filename.outputs.filename }} | \
-          { grep -E "/(receiver|exporter|processor|extension)/" || true; } | \
-          tee otelcol-sumo-fips-${{matrix.arch_os}}_modules.txt
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v3
