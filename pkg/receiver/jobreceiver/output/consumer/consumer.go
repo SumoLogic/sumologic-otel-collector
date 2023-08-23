@@ -13,7 +13,7 @@ import (
 
 // Interface consumes command output and emits telemetry data
 type Interface interface {
-	Consume(stdin, stderr io.Reader) CloseFunc
+	Consume(ctx context.Context, stdin, stderr io.ReadCloser) CloseFunc
 }
 
 // CloseFunc
@@ -45,10 +45,12 @@ type DemoConsumer struct {
 }
 
 // Consume reads stdout line by line and produces entries
-func (p *DemoConsumer) Consume(stdout, _ io.Reader) CloseFunc {
-	ctx, cancel := context.WithCancel(context.Background())
+func (p *DemoConsumer) Consume(ctx context.Context, stdout, stderr io.ReadCloser) CloseFunc {
+	ctx, cancel := context.WithCancel(ctx)
+	stderr.Close()
 	go func() {
 		scanner := bufio.NewScanner(stdout)
+		defer stdout.Close()
 		for {
 			select {
 			case <-ctx.Done():
@@ -56,6 +58,9 @@ func (p *DemoConsumer) Consume(stdout, _ io.Reader) CloseFunc {
 			default:
 			}
 			if !scanner.Scan() {
+				if scanner.Err() != nil {
+					panic(scanner.Err())
+				}
 				return
 			}
 			ent, err := p.NewEntry(scanner.Text())
