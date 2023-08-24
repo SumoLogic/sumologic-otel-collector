@@ -15,6 +15,8 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -58,17 +60,29 @@ func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
 		return nil
 	}
 
+	// ensure that --config and --opamp-config are not both passed
+	if err := validateConfigFlags(flagset); err != nil {
+		return err
+	}
+
 	locations := getConfigFlag(flagset)
-	if len(locations) == 0 {
+	opAmpPath := flagset.Lookup(opAmpConfigFlag)
+
+	if len(locations) == 0 && opAmpPath.Value.String() == "" {
 		// if no locations, use defaults
 		// either this is a command, or the default provider will throw an error
 		return nil
 	}
 
 	// create the config provider using the locations
-	params.ConfigProvider, err = NewConfigProvider(locations)
-	if err != nil {
-		return err
+	if len(locations) > 0 {
+		params.ConfigProvider, err = NewConfigProvider(locations)
+		if err != nil {
+			return err
+		}
+	} else {
+		// TODO(eric): change after opampProvider is written
+		params.ConfigProvider = &opampProvider{}
 	}
 
 	return nil
@@ -98,4 +112,41 @@ func makeMapProvidersMap(providers ...confmap.Provider) map[string]confmap.Provi
 		ret[provider.Scheme()] = provider
 	}
 	return ret
+}
+
+func validateConfigFlags(flags *flag.FlagSet) error {
+	// test configFlag and opAmpConfigFlag for mutual exclusion
+	config := flags.Lookup(configFlag)
+	if config == nil {
+		return nil
+	}
+	opAmp := flags.Lookup(opAmpConfigFlag)
+	if opAmp == nil {
+		return nil
+	}
+	configVal := config.Value.String()
+	opAmpVal := opAmp.Value.String()
+	if configVal != config.DefValue && opAmpVal != "" {
+		return fmt.Errorf("cannot use --%s and --%s flags together", configFlag, opAmpConfigFlag)
+	}
+	return nil
+}
+
+// opampProvider is a stub awaiting further development
+type opampProvider struct {
+}
+
+func (*opampProvider) Get(ctx context.Context, factories otelcol.Factories) (*otelcol.Config, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (*opampProvider) Watch() <-chan error {
+	ch := make(chan error, 1)
+	ch <- errors.New("unimplemented")
+	close(ch)
+	return ch
+}
+
+func (*opampProvider) Shutdown(ctx context.Context) error {
+	return nil
 }
