@@ -45,12 +45,21 @@ func (s *configFlagValue) String() string {
 	return "[" + strings.Join(s.values, ", ") + "]"
 }
 
+// opAmpConfigFlag is a SumoLogic-specific flag for configuring the collector with OpAmp.
+// It is mutually exclusive with the --config flag.
+const opAmpConfigFlag = "opamp-config"
+
+// opAmpConfig houses the contents of the flag
+var opAmpConfig string
+
 func flags(reg *featuregate.Registry) *flag.FlagSet {
 	flagSet := new(flag.FlagSet)
 
 	cfgs := new(configFlagValue)
 	flagSet.Var(cfgs, configFlag, "Locations to the config file(s), note that only a"+
 		" single location can be set per flag entry e.g. `--config=file:/path/to/first --config=file:path/to/second`.")
+
+	flagSet.StringVar(&opAmpConfig, opAmpConfigFlag, "", "configure collector with op-amp config file")
 
 	flagSet.Func("set",
 		"Set arbitrary component config property. The component has to be defined in the config file and the flag"+
