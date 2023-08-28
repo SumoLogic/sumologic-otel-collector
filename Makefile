@@ -7,10 +7,6 @@ endif
 
 all: markdownlint yamllint
 
-.PHONY: markdownlint
-markdownlint: mdl
-
-MD_FILES := $(shell find . -type f -name "*.md")
 
 ifeq ($(shell go env GOOS),darwin)
 SED ?= gsed
@@ -24,9 +20,17 @@ ifeq ($(shell go env GOOS),darwin)
 	@which gsed || brew install gsed
 endif
 
-.PHONY: mdl
-mdl:
-	mdl --style .markdownlint/style.rb $(MD_FILES)
+.PHONY: install-markdownlint
+install-markdownlint:
+	npm install --global markdownlint-cli
+
+.PHONY: markdownlint
+markdownlint:
+	markdownlint '**/*.md'
+
+.PHONY: markdownlint-docker
+markdownlint-docker:
+	docker run --rm -v ${PWD}:/workdir ghcr.io/igorshubovych/markdownlint-cli:latest '**/*.md'
 
 yamllint:
 	yamllint -c .yamllint.yaml \
