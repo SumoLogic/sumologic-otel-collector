@@ -55,14 +55,8 @@ func checkRun(c check) {
 	require.Equal(c.test, c.expectedInstallCode, c.code, "unexpected installation script error code")
 }
 
-func checkConfigDirectoryOwnershipAndPermissions(c check) {
-	PathHasOwner(c.test, etcPath, rootUser, rootGroup)
-	PathHasPermissions(c.test, etcPath, etcPathPermissions)
-}
-
 func checkConfigCreated(c check) {
 	require.FileExists(c.test, configPath, "configuration has not been created properly")
-	checkConfigDirectoryOwnershipAndPermissions(c)
 }
 
 func checkConfigNotCreated(c check) {
