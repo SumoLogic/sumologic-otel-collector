@@ -1,12 +1,15 @@
 package command
 
 import (
+	"bytes"
 	"context"
+	"flag"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -14,18 +17,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestHelperProcess is a target that helps this suite emulate
-// platform specific executables in a way that is platform agnostic.
-func TestHelperProcess(t *testing.T) {
-	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
-		return
-	}
-	var args []string
-	command := os.Args[3]
-	if len(os.Args) > 4 {
-		args = os.Args[4:]
+// TestMain lets the test binary emulate other processes
+func TestMain(m *testing.M) {
+	flag.Parse()
+
+	pid := os.Getpid()
+	if os.Getenv("GO_EXEC_TEST_PID") == "" {
+		os.Setenv("GO_EXEC_TEST_PID", strconv.Itoa(pid))
+		os.Exit(m.Run())
 	}
 
+	args := flag.Args()
+	if len(args) == 0 {
+		fmt.Fprintf(os.Stderr, "No command\n")
+		os.Exit(2)
+	}
+
+	command, args := args[0], args[1:]
 	switch command {
 	case "echo":
 		fmt.Fprintf(os.Stdout, "%s", strings.Join(args, " "))
@@ -43,110 +51,133 @@ func TestHelperProcess(t *testing.T) {
 			time.Sleep(time.Second * time.Duration(i))
 			return
 		}
+	case "fork":
+		childCommand := NewExecution(context.Background(), ExecutionRequest{
+			Command:   os.Args[0],
+			Arguments: args,
+		})
+		_, err := childCommand.Run()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "fork error: %v", err)
+			os.Exit(3)
+		}
 	}
-
 }
 
 //nolint:all
 func TestExecute(t *testing.T) {
-
 	ctx := context.Background()
 	// Basic command execution
-	echo := fakeCommand(t, "echo", "hello", "world")
-	outC := eventualOutput(echo)
-	resp, err := echo.Run(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, 0, resp.Status)
-	require.NoError(t, err)
-	assert.Contains(t, <-outC, "hello world")
+	t.Run("basic", func(t *testing.T) {
+		echo := NewExecution(ctx, withTestHelper(t, ExecutionRequest{Command: "echo", Arguments: []string{"hello", "world"}}))
+		outC := eventualOutput(echo)
+		resp, err := echo.Run()
+		require.NoError(t, err)
+		assert.Equal(t, 0, resp.Status)
+		require.NoError(t, err)
+		assert.Contains(t, <-outC, "hello world")
+	})
 
 	// Command exits non-zero
-	exitCmd := fakeCommand(t, "exit", "1")
-	eventualOutput(exitCmd)
-	resp, err = exitCmd.Run(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, 1, resp.Status)
-	exitCmd = fakeCommand(t, "exit", "33")
-	eventualOutput(exitCmd)
-	resp, err = exitCmd.Run(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, 33, resp.Status)
-
-	// Command canceled by context
-	timeoutCtx, cancel := context.WithTimeout(ctx, time.Millisecond*100)
-	sleepCmd := fakeCommand(t, "sleep", "1m")
-	eventualOutput(sleepCmd)
-	done := make(chan struct{})
-	go func() {
-		resp, err = sleepCmd.Run(timeoutCtx)
+	t.Run("exit code 1", func(t *testing.T) {
+		exitCmd := NewExecution(ctx, withTestHelper(t, ExecutionRequest{Command: "exit", Arguments: []string{"1"}}))
+		resp, err := exitCmd.Run()
 		require.NoError(t, err)
-		close(done)
-	}()
-	select {
-	case <-time.After(time.Second):
-		t.Errorf("command context expired but was not killed")
-	case <-done:
-		// okay
-	}
-	cancel()
+		assert.Equal(t, 1, resp.Status)
+		exitCmd = NewExecution(ctx, withTestHelper(t, ExecutionRequest{Command: "exit", Arguments: []string{"33"}}))
+		resp, err = exitCmd.Run()
+		require.NoError(t, err)
+		assert.Equal(t, 33, resp.Status)
+	})
 
 	// Command exceeds timeout
-	sleepCmd = fakeCommand(t, "sleep", "1m")
-	sleepCmd.Timeout = time.Millisecond * 100
-	eventualOutput(sleepCmd)
-	done = make(chan struct{})
-	go func() {
-		resp, err := sleepCmd.Run(ctx)
-		assert.NoError(t, err)
-		assert.Equal(t, TimeoutExitStatus, resp.Status)
-		close(done)
-	}()
-	select {
-	case <-time.After(5 * time.Second):
-		t.Errorf("command timeout exceeded but was not killed")
-	case <-done:
-		// okay
-	}
+	t.Run("exceeds timeout", func(t *testing.T) {
+		timeout := time.Millisecond * 100
+		sleepCmd := NewExecution(ctx, withTestHelper(t, ExecutionRequest{Command: "sleep", Arguments: []string{"1m"}, Timeout: timeout}))
+		done := make(chan struct{})
+		go func() {
+			resp, err := sleepCmd.Run()
+			assert.NoError(t, err)
+			assert.NotEqual(t, OKExitStatus, resp.Status)
+			assert.LessOrEqual(t, timeout, resp.Duration)
+			close(done)
+		}()
+		select {
+		case <-time.After(5 * time.Second):
+			t.Errorf("command timeout exceeded but was not killed")
+		case <-done:
+			// okay
+		}
+	})
+	// Command exceeds timeout with child process
+	t.Run("exceeds timeout with child", func(t *testing.T) {
+		timeout := time.Millisecond * 100
+		sleepCmd := NewExecution(ctx, withTestHelper(t, ExecutionRequest{Command: "fork", Arguments: []string{"sleep", "1m"}, Timeout: timeout}))
+		done := make(chan struct{})
+		go func() {
+			resp, err := sleepCmd.Run()
+			assert.NoError(t, err)
+			assert.NotEqual(t, OKExitStatus, resp.Status)
+			assert.LessOrEqual(t, timeout, resp.Duration)
+			close(done)
+		}()
+		select {
+		case <-time.After(5 * time.Second):
+			t.Fatal("command timeout exceeded but was not killed")
+		case <-done:
+			// okay
+		}
+	})
 
 	// Invocation cannot be spuriously re-invoked
-	echo = fakeCommand(t, "echo", "hello", "world")
-	outC = eventualOutput(echo)
-	echo.Run(ctx)
-	_, err = echo.Run(ctx)
-	assert.ErrorIs(t, ErrAlreadyExecuted, err)
-	assert.Contains(t, <-outC, "hello world")
+	t.Run("cannot be ran twice", func(t *testing.T) {
+		echo := NewExecution(ctx, withTestHelper(t, ExecutionRequest{Command: "echo", Arguments: []string{"hello", "world"}}))
+		outC := eventualOutput(echo)
+		echo.Run()
+		_, err := echo.Run()
+		assert.ErrorIs(t, ErrAlreadyExecuted, err)
+		assert.Contains(t, <-outC, "hello world")
+	})
 }
 
-// fakeCommand takes a command and (optionally) command args and will execute
-// the TestHelperProcess test within the package FakeCommand is called from.
-func fakeCommand(t *testing.T, command string, args ...string) *invocation {
-	cargs := []string{"-test.run=TestHelperProcess", "--", command}
-	cargs = append(cargs, args...)
-	env := []string{"GO_WANT_HELPER_PROCESS=1"}
+// withTestHelper takes an ExecutionRequest and adjusts it to run with the
+// test binary. TestMain will handle emulating the command.
+func withTestHelper(t *testing.T, request ExecutionRequest) ExecutionRequest {
+	t.Helper()
 
-	execution := ExecutionRequest{
-		Command:   os.Args[0],
-		Arguments: cargs,
-		Env:       env,
-	}
-
-	c, err := NewInvocation(execution)
-	require.NoError(t, err)
-	cmd, ok := c.(*invocation)
-	require.True(t, ok)
-	return cmd
+	request.Arguments = append([]string{request.Command}, request.Arguments...)
+	request.Command = os.Args[0]
+	return request
 }
 
-func eventualOutput(i Invocation) <-chan string {
+//nolint:all
+func eventualOutput(i *Execution) <-chan string {
 	out := make(chan string, 1)
+	stdout, _ := i.Stdout()
+	stderr, _ := i.Stderr()
 	go func() {
-		var buf SyncBuffer
-		defer i.Stdout().Close()
-		defer i.Stderr().Close()
-		io.Copy(&buf, i.Stdout())
-		io.Copy(&buf, i.Stderr())
+		var buf syncBuffer
+		io.Copy(&buf, stdout)
+		io.Copy(&buf, stderr)
 		out <- buf.String()
 		close(out)
 	}()
 	return out
+}
+
+type syncBuffer struct {
+	buf bytes.Buffer
+	mu  sync.Mutex
+}
+
+func (s *syncBuffer) Write(p []byte) (n int, err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.buf.Write(p)
+}
+
+func (s *syncBuffer) String() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.buf.String()
 }

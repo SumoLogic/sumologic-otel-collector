@@ -29,18 +29,23 @@ type stubRunner struct {
 func (r *stubRunner) Start(operator.Persister) error {
 	go func() {
 		ctx := context.Background()
-		cmd, err := command.NewInvocation(command.ExecutionRequest{
+		cmd := command.NewExecution(ctx, command.ExecutionRequest{
 			Command:   r.Exec.Command,
 			Arguments: r.Exec.Arguments,
 			Timeout:   r.Exec.Timeout,
 		})
 
+		stdout, err := cmd.Stdout()
 		if err != nil {
 			panic(err)
 		}
-		cb := r.Consumer.Consume(ctx, cmd.Stdout(), cmd.Stderr())
+		stderr, err := cmd.Stderr()
+		if err != nil {
+			panic(err)
+		}
+		cb := r.Consumer.Consume(ctx, stdout, stderr)
 
-		resp, err := cmd.Run(ctx)
+		resp, err := cmd.Run()
 		if err != nil {
 			panic(err)
 		}
