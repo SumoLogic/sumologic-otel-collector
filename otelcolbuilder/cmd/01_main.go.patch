@@ -4,7 +4,7 @@
  
  func runInteractive(params otelcol.CollectorSettings) error {
  	cmd := otelcol.NewCommand(params)
-+	cmd.Flags().StringVarP(&opAmpConfig, "opamp-config", "", "", "path to op-amp config file")
++	cmd.Flags().StringVarP(&opAmpConfig, "opamp-config", "", "", "path to opamp config file")
  	if err := cmd.Execute(); err != nil {
  		log.Fatalf("collector server run finished with error: %v", err)
  	}
