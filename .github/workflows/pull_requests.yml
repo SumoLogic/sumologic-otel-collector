@@ -26,8 +26,6 @@ jobs:
             **/*.md
       - uses: actions/setup-node@v3
         if: steps.changed-files.outputs.any_changed == 'true'
-        with:
-          bundler-cache: true
       - name: Install markdownlint
         if: steps.changed-files.outputs.any_changed == 'true'
         run: make install-markdownlint
