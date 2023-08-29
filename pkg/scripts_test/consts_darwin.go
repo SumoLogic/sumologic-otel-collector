@@ -13,7 +13,7 @@ const (
 	configPathDirPermissions        uint32 = 0770
 	configPathFilePermissions       uint32 = 0440
 	confDPathFilePermissions        uint32 = 0644
-	etcPathPermissions              uint32 = 0755
+	etcPathPermissions              uint32 = 0751
 
 	rootGroup   string = "wheel"
 	rootUser    string = "root"

@@ -12,6 +12,9 @@ import (
 
 func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
 	return func(c check) {
+		PathHasPermissions(c.test, etcPath, etcPathPermissions)
+		PathHasOwner(c.test, etcPath, ownerName, ownerGroup)
+
 		etcPathGlob := filepath.Join(etcPath, "*")
 		etcPathNestedGlob := filepath.Join(etcPath, "*", "*")
 
