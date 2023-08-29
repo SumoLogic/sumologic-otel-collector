@@ -59,7 +59,7 @@ func flags(reg *featuregate.Registry) *flag.FlagSet {
 	flagSet.Var(cfgs, configFlag, "Locations to the config file(s), note that only a"+
 		" single location can be set per flag entry e.g. `--config=file:/path/to/first --config=file:path/to/second`.")
 
-	flagSet.StringVar(&opAmpConfig, opAmpConfigFlag, "", "configure collector with op-amp config file")
+	flagSet.StringVar(&opAmpConfig, opAmpConfigFlag, "", "configure collector with opamp config file")
 
 	flagSet.Func("set",
 		"Set arbitrary component config property. The component has to be defined in the config file and the flag"+
