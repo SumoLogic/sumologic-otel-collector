@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released TBD
 
+- feat(install.sh): prevent permission error when collecting host metrics [#1228]
+
+[#1228]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1228
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.83.0-sumo-0...main
 
 ## [v0.83.0-sumo-0]
