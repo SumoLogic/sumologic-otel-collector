@@ -18,7 +18,7 @@ It manages:
 - collector configuration reloads (SIGHUP reloads on local configuration changes)
 
 [opamp_spec]: https://github.com/open-telemetry/opamp-spec/blob/main/specification.md#opamp-open-agent-management-protocol
-[sumologicexporter]: ../sumologicextension/
+[sumologicextension]: ../sumologicextension/
 [sumologic]: https://www.sumologic.com/
 
 ## Configuration
