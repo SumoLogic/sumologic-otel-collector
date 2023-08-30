@@ -42,8 +42,8 @@ output.
 | Configuration | Default | Description
 | ------------ | ------------ | ------------
 | `type`                              | `event` | The output handler type [see below](#output-handler-type). Valid values are `event` and `log_entries`.                                                                                                            |
-| `event`                             | {}      | When `type` == `event` this block may be configured with additional properties as described [below](#output-handler-types).                                                                                       |
-| `log_entries`                       | {}      | When `type` == `log_entries` this block may be configured with additional properties as described [below](#output-handler-types).                                                                                 |
+| `event`                             | {}      | When `type` == `event` this block may be configured with additional properties as described [below](#output-handler-type).                                                                                       |
+| `log_entries`                       | {}      | When `type` == `log_entries` this block may be configured with additional properties as described [below](#output-handler-type).                                                                                 |
 | `operators`                         | []      | An array of [stanza][stanza] operators to act on the output.                                                                                                                                                      |
 | `retry_on_failure.enabled`          | `false` | If `true`, the receiver will pause reading a file and attempt to resend the current batch of logs if it encounters an error from downstream components.                                                           |
 | `retry_on_failure.initial_interval` | `1s`    | [Time](#time-parameters) to wait after the first failure before retrying.                                                                                                                                         |
@@ -70,7 +70,8 @@ bridge to third party logs and other log events that may not be straightforward
 to access.
 
 [stanza]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/docs/operators/README.md
-**Output Configuration - event**
+
+#### Output Configuration - event
 
 | Configuration | Default | Description
 | ------------ | ------------ | ------------
@@ -79,7 +80,7 @@ to access.
 | include_command_duration | true | When set, includes the attribute `command.duration` in the log event.
 | max_body_size | | When set, restricts the length of command output to a specified [ByteSize](#bytesize-parameters).
 
-**Output Configuration - log_entries**
+#### Output Configuration - log_entries
 
 | Configuration | Default | Description
 | ------------ | ------------ | ------------
