@@ -25,7 +25,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
-	"go.opentelemetry.io/collector/config/configopaque"
 	"go.opentelemetry.io/collector/extension"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension/credentials"
@@ -76,20 +75,4 @@ func TestFactory_CreateExtension(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.NotNil(t, ext)
-}
-
-func TestFactory_CreateExtensionWithInstallToken(t *testing.T) {
-	cfg := createDefaultConfig().(*Config)
-	cfg.CollectorName = "test_collector"
-	cfg.Credentials.InstallToken = "dummy_install_token"
-
-	ext, err := createExtension(context.Background(),
-		extension.CreateSettings{
-			TelemetrySettings: componenttest.NewNopTelemetrySettings(),
-		},
-		cfg,
-	)
-	require.NoError(t, err)
-	require.NotNil(t, ext)
-	require.Equal(t, configopaque.String("dummy_install_token"), cfg.Credentials.InstallationToken)
 }

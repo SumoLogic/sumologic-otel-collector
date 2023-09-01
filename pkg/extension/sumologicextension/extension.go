@@ -107,11 +107,8 @@ var errGRPCNotSupported = fmt.Errorf("gRPC is not supported by sumologicextensio
 var _ auth.Client = (*SumologicExtension)(nil)
 
 func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID, buildVersion string) (*SumologicExtension, error) {
-	if conf.Credentials.InstallationToken == "" && conf.Credentials.InstallToken == "" {
+	if conf.Credentials.InstallationToken == "" {
 		return nil, errors.New("access credentials not provided: need installation_token")
-	} else if conf.Credentials.InstallationToken == "" {
-		logger.Warn("install_token is deprecated. Please use installation_token instead")
-		conf.Credentials.InstallationToken = conf.Credentials.InstallToken
 	}
 
 	hostname, err := getHostname(logger)
