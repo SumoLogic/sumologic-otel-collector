@@ -148,5 +148,4 @@ To contribute you will need to ensure you have the following setup:
 
 [go-msi]: https://go.dev/dl/
 [make-for-windows]: https://gnuwin32.sourceforge.net/downlinks/make.php
-[windows-terminal]: https://apps.microsoft.com/store/detail/windows-terminal/9N0DX20HK701
 [git-for-windows]: https://git-scm.com/download/win

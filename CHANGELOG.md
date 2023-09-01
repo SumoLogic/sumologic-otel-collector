@@ -12,7 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - feat(sumologicextension)!: remove support for `install_token` [#1225]
+- feat(install.sh): prevent permission error when collecting host metrics [#1228]
 
+[#1228]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1228
 [#1225]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1225
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.83.0-sumo-0...main
 
@@ -283,7 +285,6 @@ See the [upgrade guide][upgrade_guide_v0.74] for more details.
 
 - chore: update OT core to v0.73.0 [#1048]
 
-[#858]: https://github.com/SumoLogic/sumologic-otel-collector/pull/858
 [#1027]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1027
 [#1048]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1048
 [v0.73.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.72.0-sumo-0...v0.73.0-sumo-0
@@ -442,7 +443,7 @@ This was a failed release. Use [v0.70.0-sumo-1] instead.
 
 ### Added
 
-- feature(packaging/msi): add conf.d dir, mv token/tags to common.yaml [869]
+- feature(packaging/msi): add conf.d dir, mv token/tags to common.yaml [#869]
 - feat(ci): build msi packages for dev & release jobs [#856]
 
 ### Changed
@@ -814,7 +815,7 @@ for more details.
 
 ### Fixed
 
-- fix(sumologicexporter): treat resource attributes as fields for otlp #536
+- fix(sumologicexporter): treat resource attributes as fields for otlp [#536]
 
 ### Other
 

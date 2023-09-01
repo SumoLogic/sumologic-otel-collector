@@ -15,6 +15,12 @@ curl -LJ "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" -o go.linux-
     && rm go.linux-amd64.tar.gz \
     && ln -s /usr/local/go/bin/go /usr/local/bin
 
+# Install Node.js (for tools like linters etc.)
+curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+apt-get install -y nodejs
+
+make -C /sumologic install-markdownlint
+
 # Install opentelemetry-collector-builder
 
 su vagrant -c 'export PATH="${PATH}:/home/vagrant/bin"; make -C /sumologic/otelcolbuilder/ install-builder'
