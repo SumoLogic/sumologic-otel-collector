@@ -37,7 +37,7 @@ jobs:
     env:
       BORINGCRYPTO_SUFFIX: ${{ inputs.boringcrypto && '-boringcrypto' || '' }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Check if test related files changed
         id: changed-files

@@ -38,7 +38,7 @@ jobs:
       OTELCOL_BINARY_EXTENSION: ${{ contains(inputs.arch_os, 'windows') && '.exe' || '' }}
       OTELCOL_FIPS_SUFFIX: ${{ inputs.fips && '-fips' || '' }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Check if build related files changed
         id: changed-files

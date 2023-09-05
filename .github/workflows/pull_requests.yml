@@ -17,7 +17,7 @@ jobs:
   markdownlint:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Check if related files changed
         id: changed-files
         uses: tj-actions/changed-files@v35
@@ -36,7 +36,7 @@ jobs:
   yamllint:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install yamllint
         run: pip install yamllint
       - name: yamllint
@@ -45,7 +45,7 @@ jobs:
   markdown-link-check:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Check if related files changed
         id: changed-files
         uses: tj-actions/changed-files@v35
@@ -63,7 +63,7 @@ jobs:
   md-links-lint:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Check if related files changed
         id: changed-files
         uses: tj-actions/changed-files@v35
@@ -78,7 +78,7 @@ jobs:
   plugins-check:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install yq
         run: |
           sudo wget https://github.com/mikefarah/yq/releases/download/v4.12.1/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
@@ -88,7 +88,7 @@ jobs:
   pre-commit-check:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
       - uses: pre-commit/action@v3.0.0
 
@@ -96,7 +96,7 @@ jobs:
     name: Check uniform dependencies
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Check uniform dependencies
         run: make check-uniform-dependencies
@@ -106,7 +106,7 @@ jobs:
     env:
       SHELLCHECK_VERSION: 0.8.0
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: install shellcheck
         run: |
             curl --retry 10 --retry-max-time 120 --retry-delay 5 -Lo- https://github.com/koalaman/shellcheck/releases/download/v${{ env.SHELLCHECK_VERSION }}/shellcheck-v${{ env.SHELLCHECK_VERSION }}.linux.x86_64.tar.xz | tar -xJf -
@@ -148,7 +148,7 @@ jobs:
           - arch_os: windows_amd64
             runs_on: windows-2022
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Check if test related files changed
         id: changed-files
@@ -173,7 +173,7 @@ jobs:
     name: Test (SumoLogic.wixext)
     runs-on: windows-2019
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Fetch current branch
         run: ./ci/fetch_current_branch.sh
@@ -200,7 +200,7 @@ jobs:
       matrix:
         arch_os: [ 'linux_amd64' ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Check if files changed that need linting
         id: changed-files
@@ -292,7 +292,7 @@ jobs:
       matrix:
         arch_os: [ 'linux_amd64', 'linux_arm64']
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Check if build related files changed
         id: changed-files
