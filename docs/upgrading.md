@@ -1,5 +1,7 @@
 # Upgrading
 
+- [Upgrading to v0.84.0-sumo-0](#upgrading-to-v0840-sumo-0)
+  - [`sumologic` extension: removed `install_token` in favor of `installation_token`](#sumologic-extension-removed-install_token-in-favor-of-installation_token)
 - [Upgrading to v0.77.0-sumo-0](#upgrading-to-v0770-sumo-0)
   - [Full Prometheus metric name normalization is now disabled by default](#full-prometheus-metric-name-normalization-is-now-disabled-by-default)
 - [Upgrading to v0.73.0-sumo-1](#upgrading-to-v0730-sumo-1)
@@ -28,6 +30,29 @@
   - [Sumo Logic exporter metadata handling](#sumo-logic-exporter-metadata-handling)
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
+
+## Upgrading to v0.84.0-sumo-0
+
+### `sumologic` extension: removed `install_token` in favor of `installation_token`
+
+The `install_token` configuration property was deprecated in `v0.72.0-sumo-0` in February 2023 in favor of `installation_token`.
+It is now being removed in `v0.84.0-sumo-0`. To upgrade, replace `install_token` property with `installation_token` in your Sumo Logic extension configuration.
+
+For example, change this:
+
+```yaml
+extensions:
+  sumologic:
+    install_token: xyz
+```
+
+to this:
+
+```yaml
+extensions:
+  sumologic:
+    installation_token: xyz
+```
 
 ## Upgrading to v0.77.0-sumo-0
 
