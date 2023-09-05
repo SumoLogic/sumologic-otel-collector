@@ -139,6 +139,7 @@ jobs:
     name: Test Install Script
     runs-on: ${{ matrix.runs_on }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - arch_os: linux_amd64

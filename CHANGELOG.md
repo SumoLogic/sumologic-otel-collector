@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - feat(sumologicextension)!: remove support for `install_token` [#1225]
 - feat(install.sh): prevent permission error when collecting host metrics [#1228]
+- feat(install.sh): add linux deb & rpm package support [#1219]
 
 [#1228]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1228
 [#1225]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1225

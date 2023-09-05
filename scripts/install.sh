@@ -46,6 +46,11 @@ ARG_SHORT_INSTALL_HOSTMETRICS='H'
 ARG_LONG_INSTALL_HOSTMETRICS='install-hostmetrics'
 ARG_SHORT_TIMEOUT='m'
 ARG_LONG_TIMEOUT='download-timeout'
+ARG_SHORT_USE_NATIVE_PACKAGING='x'
+ARG_LONG_USE_NATIVE_PACKAGING='use-native-packaging'
+
+BINARY_GITHUB_ORG="SumoLogic"
+BINARY_GITHUB_REPO="sumologic-otel-collector"
 
 PACKAGE_GITHUB_ORG="SumoLogic"
 PACKAGE_GITHUB_REPO="sumologic-otel-collector-packaging"
@@ -59,6 +64,7 @@ readonly ARG_SHORT_BRANCH ARG_LONG_BRANCH ARG_SHORT_SKIP_CONFIG ARG_LONG_SKIP_CO
 readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ARG_SHORT_FIPS ARG_LONG_FIPS ENV_TOKEN
 readonly ARG_SHORT_INSTALL_HOSTMETRICS ARG_LONG_INSTALL_HOSTMETRICS
 readonly ARG_SHORT_TIMEOUT ARG_LONG_TIMEOUT
+readonly ARG_SHORT_USE_NATIVE_PACKAGING ARG_LONG_USE_NATIVE_PACKAGING
 readonly DEPRECATED_ARG_LONG_TOKEN DEPRECATED_ENV_TOKEN DEPRECATED_ARG_LONG_SKIP_TOKEN
 readonly PACKAGE_GITHUB_ORG PACKAGE_GITHUB_REPO
 
@@ -90,9 +96,13 @@ SKIP_TOKEN=""
 SKIP_CONFIG=false
 CONFIG_PATH=""
 COMMON_CONFIG_PATH=""
+HOSTMETRICS_CONFIG_PATH=""
 PURGE=""
 DOWNLOAD_ONLY=""
 INSTALL_HOSTMETRICS=false
+USE_NATIVE_PACKAGING=false
+
+SYSTEMD_SERVICE_NAME="otelcol-sumo"
 
 LAUNCHD_CONFIG=""
 LAUNCHD_ENV_KEY=""
@@ -128,14 +138,15 @@ function usage() {
   cat << EOF
 
 Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_TAG} <key>=<value> [ --${ARG_LONG_TAG} ...]] [--${ARG_LONG_API} <url>] [--${ARG_LONG_VERSION} <version>] \\
-                       [--${ARG_LONG_YES}] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_HELP}]
+                       [--${ARG_LONG_YES}] [--${ARG_LONG_VERSION} <version>] [--${ARG_LONG_USE_NATIVE_PACKAGING}] [--${ARG_LONG_HELP}]
 
 Supported arguments:
   -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>      Installation token. It has precedence over 'SUMOLOGIC_INSTALLATION_TOKEN' env variable.
-  -${ARG_SHORT_SKIP_TOKEN}, --${ARG_LONG_SKIP_TOKEN}              Skips requirement for installation token.
+  -${ARG_SHORT_SKIP_TOKEN}, --${ARG_LONG_SKIP_TOKEN}         Skips requirement for installation token.
                                         This option do not disable default configuration creation.
+  -${ARG_SHORT_USE_NATIVE_PACKAGING}, --${ARG_LONG_USE_NATIVE_PACKAGING}             Use native package installation rather than binary installation.
   -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                 Sets tag for collector. This argument can be use multiple times. One per tag.
-  -${ARG_SHORT_DOWNLOAD}, --${ARG_LONG_DOWNLOAD}                   Download new binary only and skip configuration part.
+  -${ARG_SHORT_DOWNLOAD}, --${ARG_LONG_DOWNLOAD}                   Download new binary or package only and skip configuration part.
 
   -${ARG_SHORT_UNINSTALL}, --${ARG_LONG_UNINSTALL}                       Removes Sumo Logic Distribution for OpenTelemetry Collector from the system and
                                         disable Systemd service eventually.
@@ -156,7 +167,7 @@ Supported arguments:
   -${ARG_SHORT_HELP}, --${ARG_LONG_HELP}                            Prints this help and usage.
 
 Supported env variables:
-  ${ENV_TOKEN}=<token>       Installation token.'
+  ${ENV_TOKEN}=<token>       Installation token.
 EOF
 }
 
@@ -165,7 +176,7 @@ function set_defaults() {
     FILE_STORAGE="${HOME_DIRECTORY}/file_storage"
     DOWNLOAD_CACHE_DIR="/var/cache/otelcol-sumo"  # this is in case we want to keep downloaded binaries
     CONFIG_DIRECTORY="/etc/otelcol-sumo"
-    SYSTEMD_CONFIG="/etc/systemd/system/otelcol-sumo.service"
+    SYSTEMD_CONFIG="/lib/systemd/system/otelcol-sumo.service"
     SUMO_BINARY_PATH="/usr/local/bin/otelcol-sumo"
     USER_CONFIG_DIRECTORY="${CONFIG_DIRECTORY}/conf.d"
     USER_ENV_DIRECTORY="${CONFIG_DIRECTORY}/env"
@@ -173,6 +184,7 @@ function set_defaults() {
     CONFIG_PATH="${CONFIG_DIRECTORY}/sumologic.yaml"
     COMMON_CONFIG_PATH="${USER_CONFIG_DIRECTORY}/common.yaml"
     COMMON_CONFIG_BAK_PATH="${USER_CONFIG_DIRECTORY}/common.yaml.bak"
+    HOSTMETRICS_CONFIG_PATH="${CONFIG_DIRECTORY}/conf.d/hostmetrics.yaml"
     INDENTATION="  "
     EXT_INDENTATION="${INDENTATION}${INDENTATION}"
 
@@ -258,6 +270,9 @@ function parse_options() {
       "--${ARG_LONG_INSTALL_HOSTMETRICS}")
         set -- "$@" "-${ARG_SHORT_INSTALL_HOSTMETRICS}"
         ;;
+      "-${ARG_SHORT_USE_NATIVE_PACKAGING}"|--"${ARG_LONG_USE_NATIVE_PACKAGING}")
+        set -- "$@" "-${ARG_SHORT_USE_NATIVE_PACKAGING}"
+        ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
       *)
@@ -270,7 +285,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_FIPS}${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_SKIP_CONFIG}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:${ARG_SHORT_INSTALL_HOSTMETRICS}${ARG_SHORT_TIMEOUT}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_FIPS}${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_SKIP_CONFIG}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:${ARG_SHORT_INSTALL_HOSTMETRICS}${ARG_SHORT_TIMEOUT}:${ARG_SHORT_USE_NATIVE_PACKAGING}" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -306,6 +321,7 @@ function parse_options() {
       "${ARG_SHORT_INSTALL_HOSTMETRICS}") INSTALL_HOSTMETRICS=true ;;
       "${ARG_SHORT_KEEP_DOWNLOADS}") KEEP_DOWNLOADS=true ;;
       "${ARG_SHORT_TIMEOUT}") CURL_MAX_TIME="${OPTARG}" ;;
+      "${ARG_SHORT_USE_NATIVE_PACKAGING}") USE_NATIVE_PACKAGING=true ;;
       "${ARG_SHORT_TAG}")
         if [[ "${OPTARG}" != ?*"="* ]]; then
             echo "Invalid tag: '${OPTARG}'. Should be in 'key=value' format"
@@ -486,7 +502,7 @@ function get_package_versions() {
 }
 
 # Get versions from provided one to the latest
-get_versions_from() {
+function get_versions_from() {
     local versions
     readonly versions="${1}"
 
@@ -507,7 +523,7 @@ get_versions_from() {
     return 0
 }
 
-get_package_versions_from() {
+function get_package_versions_from() {
     local versions
     readonly versions="${1}"
 
@@ -648,6 +664,65 @@ function print_breaking_changes() {
     fi
 }
 
+function write_env_token() {
+    if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" ]]; then
+        echo 'Writing installation token to env file'
+        write_installation_token_env "${SUMOLOGIC_INSTALLATION_TOKEN}" "${TOKEN_ENV_FILE}"
+    fi
+}
+
+function install_hostmetrics() {
+    if [[ "${INSTALL_HOSTMETRICS}" == "true" ]]; then
+        echo -e "Installing ${OS_TYPE} hostmetrics configuration"
+
+        if [[ "${USE_NATIVE_PACKAGING}" == "true" ]]; then
+            HOSTMETRICS_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector-packaging/${CONFIG_BRANCH}/assets/conf.d/${OS_TYPE}.yaml"
+        else
+            HOSTMETRICS_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/conf.d/${OS_TYPE}.yaml"
+        fi
+
+        if ! curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -f -s "${HOSTMETRICS_CONFIG_URL}" -o "${HOSTMETRICS_CONFIG_PATH}"; then
+            echo "Cannot obtain hostmetrics configuration for '${CONFIG_BRANCH}' branch. Either '${HOSTMETRICS_CONFIG_URL}' is invalid, or the network connection is unstable."
+            exit 1
+        fi
+
+        chmod 644 "${HOSTMETRICS_CONFIG_PATH}"
+
+        if [[ "${OS_TYPE}" == "linux" ]]; then
+            echo -e "Setting the CAP_DAC_READ_SEARCH Linux capability on the collector binary to allow it to read host metrics from /proc directory: setcap 'cap_dac_read_search=ep' \"${SUMO_BINARY_PATH}\""
+            echo -e "You can remove it with the following command: sudo setcap -r \"${SUMO_BINARY_PATH}\""
+            echo -e "Without this capability, the collector will not be able to collect some of the host metrics."
+            setcap 'cap_dac_read_search=ep' "${SUMO_BINARY_PATH}"
+        fi
+    fi
+}
+
+function set_hostmetrics_ownership() {
+    if [[ -f "${HOSTMETRICS_CONFIG_PATH}" ]]; then
+        chown "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOSTMETRICS_CONFIG_PATH}"
+    fi
+}
+
+function update_api_base_url() {
+    # get user api url again as it may have changed after package installation
+    USER_API_URL="$(get_user_api_url "${COMMON_CONFIG_PATH}")"
+
+    # fill in api base url
+    if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
+        write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
+    fi
+}
+
+function update_tags() {
+    # get user fields again as they may have changed after package installation
+    USER_FIELDS="$(get_user_tags "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}")"
+
+    # fill in tags
+    if [[ -n "${FIELDS}" && -z "${USER_FIELDS}" ]]; then
+        write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
+    fi
+}
+
 # set up configuration
 function setup_config() {
     echo 'We are going to get and set up a default configuration for you'
@@ -665,10 +740,10 @@ function setup_config() {
     mkdir -p "${USER_ENV_DIRECTORY}"
 
     echo 'Changing permissions for config files and storage'
-    chmod 551 "${CONFIG_DIRECTORY}"  # config directory world traversable, as is the /etc/ standard
+    chmod 751 "${CONFIG_DIRECTORY}"  # config directory world traversable, as is the /etc/ standard
 
     echo 'Changing permissions for user env directory'
-    chmod 550 "${USER_ENV_DIRECTORY}"
+    chmod 770 "${USER_ENV_DIRECTORY}"
     chmod g+s "${USER_ENV_DIRECTORY}"
 
     echo "Generating configuration and saving as ${CONFIG_PATH}"
@@ -679,20 +754,7 @@ function setup_config() {
         exit 1
     fi
 
-    if [[ "${INSTALL_HOSTMETRICS}" == "true" ]]; then
-        echo -e "Installing ${OS_TYPE} hostmetrics configuration"
-        HOSTMETRICS_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/conf.d/${OS_TYPE}.yaml"
-        if ! curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -f -s "${HOSTMETRICS_CONFIG_URL}" -o "${CONFIG_DIRECTORY}/conf.d/hostmetrics.yaml"; then
-            echo "Cannot obtain hostmetrics configuration for '${CONFIG_BRANCH}' branch. Either '${HOSTMETRICS_CONFIG_URL}' is invalid, or the network connection is unstable."
-            exit 1
-        fi
-        if [[ "${OS_TYPE}" == "linux" ]]; then
-            echo -e "Setting the CAP_DAC_READ_SEARCH Linux capability on the collector binary to allow it to read host metrics from /proc directory: setcap 'cap_dac_read_search=ep' \"${SUMO_BINARY_PATH}\""
-            echo -e "You can remove it with the following command: sudo setcap -r \"${SUMO_BINARY_PATH}\""
-            echo -e "Without this capability, the collector will not be able to collect some of the host metrics."
-            setcap 'cap_dac_read_search=ep' "${SUMO_BINARY_PATH}"
-        fi
-    fi
+    install_hostmetrics
 
     # Ensure that configuration is created
     if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
@@ -709,14 +771,8 @@ function setup_config() {
             write_installation_token "${SUMOLOGIC_INSTALLATION_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
         fi
 
-        # fill in api base url
-        if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
-            write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
-        fi
-
-        if [[ -n "${FIELDS}" && -z "${USER_FIELDS}" ]]; then
-            write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
-        fi
+        update_api_base_url
+        update_tags
 
         # clean up bak file
         rm -f "${COMMON_CONFIG_BAK_PATH}"
@@ -724,22 +780,35 @@ function setup_config() {
 
     # Finish setting permissions after we're done creating config files
     chmod -R 440 "${CONFIG_DIRECTORY}"/*  # all files only readable by the owner
-    find "${CONFIG_DIRECTORY}/" -mindepth 1 -type d -exec chmod 550 {} \;  # directories also traversable
+    if [[ -f "${USER_CONFIG_DIRECTORY}" ]]; then
+        chmod -R 640 "${USER_CONFIG_DIRECTORY}"
+    fi
+    if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
+        chmod 660 "${COMMON_CONFIG_PATH}"
+    fi
+    if [[ -f "${HOSTMETRICS_CONFIG_PATH}" ]]; then
+        chmod 644 "${HOSTMETRICS_CONFIG_PATH}"
+    fi
+    find "${CONFIG_DIRECTORY}/" -mindepth 1 -type d -exec chmod 770 {} \;  # directories also traversable
 }
 
 function setup_config_darwin() {
-    create_user_config_file "${COMMON_CONFIG_PATH}"
     add_extension_to_config "${COMMON_CONFIG_PATH}"
     write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
+    update_api_base_url
+    update_tags
 
-    # fill in api base url
-    if [[ -n "${API_BASE_URL}" ]]; then
-        write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
-    fi
+    # clean up bak file
+    rm -f "${COMMON_CONFIG_BAK_PATH}"
+}
 
-    if [[ -n "${FIELDS}" ]]; then
-        write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
-    fi
+# setup config for linux packages
+function setup_config_linux() {
+    add_extension_to_config "${COMMON_CONFIG_PATH}"
+    write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
+    update_api_base_url
+    update_tags
+    write_env_token
 
     # clean up bak file
     rm -f "${COMMON_CONFIG_BAK_PATH}"
@@ -764,7 +833,7 @@ function uninstall_darwin() {
     local UNINSTALL_SCRIPT_PATH
     UNINSTALL_SCRIPT_PATH="/Library/Application Support/otelcol-sumo/uninstall.sh"
 
-    echo "Going to uninstall otelcol-sumo."
+    echo "Going to uninstall otelcol-sumo otelcol-sumo package"
 
     if [[ "${PURGE}" == "true" ]]; then
         echo "WARNING: purge is not yet supported on darwin"
@@ -775,26 +844,70 @@ function uninstall_darwin() {
     "${UNINSTALL_SCRIPT_PATH}"
 }
 
+function deb_is_installed() {
+    local name
+    readonly name="${1}"
+
+    command -v dpkg &> /dev/null && dpkg -s "${name}"
+}
+
+function rpm_is_installed() {
+    local name
+    readonly name="${1}"
+
+    command -v rpm &> /dev/null && rpm -q "${name}"
+}
+
 # uninstall otelcol-sumo on linux
 function uninstall_linux() {
-    local MSG
-    MSG="Going to remove Otelcol binary"
+    local INSTALL_TYPE
+    INSTALL_TYPE="binary"
 
-    if [[ "${PURGE}" == "true" ]]; then
-        MSG="${MSG}, user, file storage and configurations"
+    if rpm_is_installed "otelcol-sumo"; then
+        INSTALL_TYPE="rpm"
     fi
 
-    echo "${MSG}."
-    ask_to_continue
-
-    # disable systemd service
-    if [[ -f "${SYSTEMD_CONFIG}" ]]; then
-        systemctl stop otelcol-sumo || true
-        systemctl disable otelcol-sumo || true
+    if deb_is_installed "otelcol-sumo"; then
+        INSTALL_TYPE="deb"
     fi
 
-    # remove binary
-    rm -f "${SUMO_BINARY_PATH}"
+    case "$INSTALL_TYPE" in
+    deb)
+      echo "Going to remove otelcol-sumo deb package"
+      ask_to_continue
+
+      if [[ "${PURGE}" == "true" ]]; then
+          dpkg -P otelcol-sumo
+      else
+          dpkg -r otelcol-sumo
+      fi
+      ;;
+    rpm)
+      echo "Going to remove otelcol-sumo rpm package"
+      ask_to_continue
+      rpm -e otelcol-sumo
+      ;;
+    binary)
+      local MSG
+      MSG="Going to remove Otelcol binary"
+
+      if [[ "${PURGE}" == "true" ]]; then
+          MSG="${MSG}, user, file storage and configurations"
+      fi
+
+      echo "${MSG}."
+      ask_to_continue
+
+      # disable systemd service
+      if [[ -f "${SYSTEMD_CONFIG}" ]]; then
+          systemctl stop otelcol-sumo || true
+          systemctl disable otelcol-sumo || true
+      fi
+
+      # remove binary
+      rm -f "${SUMO_BINARY_PATH}"
+      ;;
+    esac
 
     if [[ "${PURGE}" == "true" ]]; then
         # remove configuration and data
@@ -809,8 +922,6 @@ function uninstall_linux() {
             fi
         fi
     fi
-
-    echo "Uninstallation completed"
 }
 
 function escape_sed() {
@@ -1074,7 +1185,7 @@ function create_user_config_file() {
     fi
 
     touch "${file}"
-    chmod 440 "${file}"
+    chmod 660 "${file}"
 }
 
 # write extensions section to user configuration file
@@ -1241,212 +1352,129 @@ function write_tags() {
     fi
 }
 
-function get_binary_from_branch() {
-    local branch
-    readonly branch="${1}"
+function get_file_from_url() {
+    local url download_path download_filename extra_curl_args
+    readonly url="${1}"
+    readonly download_path="${2}"
+    shift 2
+    readonly extra_curl_args=("$@")
 
-    local name
-    readonly name="${2}"
+    local download_filename download_cache_path
+    download_filename="$(basename "${download_path}")"
+    download_cache_path="${DOWNLOAD_CACHE_DIR}/${download_filename}"
+    readonly download_filename download_cache_path
 
+    echo -e "Downloading:\t\t${url}"
+    curl_args=(
+        "-fL"
+        "--connect-timeout" "5"
+        "--max-time" "${CURL_MAX_TIME}"
+        "--retry" "5"
+        "--retry-delay" "0"
+        "--retry-max-time" "150"
+        "--output" "${download_cache_path}"
+        "--progress-bar"
+    )
+    set +u
+    curl_args+=( "${extra_curl_args[@]}" )
+    set -u
 
-    local actions_url actions_output artifacts_link artifact_id
-    readonly actions_url="https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/runs?status=success&branch=${branch}&event=push&per_page=1"
+    if [ "${KEEP_DOWNLOADS}" == "true" ]; then
+        curl_args+=("-z" "${download_cache_path}")
+    fi
+
+    curl "${curl_args[@]}" "${url}"
+
+    cp -f "${download_cache_path}" "${download_path}"
+
+    if [ "${KEEP_DOWNLOADS}" == "false" ]; then
+        rm -f "${download_cache_path}"
+    fi
+}
+
+function get_output_from_github_api() {
+    local url
+    readonly url="${1}"
+
+    curl_args=(
+        "-f"
+        "-sS"
+        "--connect-timeout" "5"
+        "--max-time" "30"
+        "--retry" "5"
+        "--retry-delay" "0"
+        "--retry-max-time" "150"
+        "-H" "Accept: application/vnd.github+json"
+        "-H" "Authorization: token ${GITHUB_TOKEN}"
+    )
+
+    curl "${curl_args[@]}" "${url}"
+}
+
+function get_github_actions_artifact() {
+    local org repo branch artifact_regex destination_path
+    readonly org="${1}"
+    readonly repo="${2}"
+    readonly branch="${3}"
+    readonly artifact_regex="${4}"
+    readonly destination_path="${5}"
+
+    local base_url actions_url
+    readonly base_url="https://api.github.com/repos/${org}/${repo}/actions"
+    readonly actions_url="${base_url}/runs?status=success&branch=${branch}&event=push&per_page=1"
+
     echo -e "Getting artifacts from latest CI run for branch \"${branch}\":\t\t${actions_url}"
-    actions_output="$(curl -f -sS \
-      --connect-timeout 5 \
-      --max-time 30 \
-      --retry 5 \
-      --retry-delay 0 \
-      --retry-max-time 150 \
-      -H "Accept: application/vnd.github+json" \
-      -H "Authorization: token ${GITHUB_TOKEN}" \
-      "${actions_url}")"
+    actions_output="$(get_output_from_github_api "${actions_url}")"
     readonly actions_output
 
     # get latest action run
-    artifacts_link="$(echo "${actions_output}" | grep '"url"' | grep -oE '"https.*collector/actions.*"' -m 1)"
+    url_regex="\"https.*${org}/${repo}/actions.*\""
+    artifacts_link="$(echo "${actions_output}" | grep '"url"' | grep -oE "${url_regex}" -m 1)"
     # strip first and last double-quote from $artifacts_link
     artifacts_link=${artifacts_link%\"}
     artifacts_link="${artifacts_link#\"}"
     artifacts_link="${artifacts_link}/artifacts"
     readonly artifacts_link
 
-    echo -e "Getting artifact id for CI run:\t\t${artifacts_link}"
-    artifact_id="$(curl -f -sS \
-    --connect-timeout 5 \
-    --max-time 30 \
-    --retry 5 \
-    --retry-delay 0 \
-    --retry-max-time 150 \
-    -H "Accept: application/vnd.github+json" \
-    -H "Authorization: token ${GITHUB_TOKEN}" \
-    "${artifacts_link}" \
-        | grep -E '"(id|name)"' \
-        | grep -B 1 "\"${name}\"" -m 1 \
-        | grep -oE "[0-9]+" -m 1)"
+    echo -e "Getting artifact id and name from CI run:\t\t${artifacts_link}"
+    artifacts_output="$(get_output_from_github_api "${artifacts_link}")"
+    artifact_name_ids="$(echo "${artifacts_output}" | grep -E '"(id|name)"')"
+    artifact_name_id="$(echo "${artifact_name_ids}" | grep -B 1 "\"${artifact_regex}\"" -m 1)"
+    artifact_id="$(echo "${artifact_name_id}" | grep -oE "[0-9]+" -m 1)"
     readonly artifact_id
 
-    local artifact_url download_path curl_args
-    readonly artifact_url="https://api.github.com/repos/SumoLogic/sumologic-otel-collector/actions/artifacts/${artifact_id}/zip"
-    readonly download_path="${DOWNLOAD_CACHE_DIR}/${name}.zip"
-    echo -e "Downloading binary from: ${artifact_url}"
-    curl_args=(
-        "-fL"
-        "--connect-timeout" "5"
-        "--max-time" "${CURL_MAX_TIME}"
-        "--retry" "5"
-        "--retry-delay" "0"
-        "--retry-max-time" "150"
-        "--output" "${download_path}"
-        "--progress-bar"
-    )
-    if [ "${KEEP_DOWNLOADS}" == "true" ]; then
-        curl_args+=("-z" "${download_path}")
-    fi
-    curl "${curl_args[@]}" \
-        -H "Accept: application/vnd.github+json" \
-        -H "Authorization: token ${GITHUB_TOKEN}" \
-        "${artifact_url}"
+    artifact_name="$(echo "${artifact_name_ids}" | grep -oE "\"${artifact_regex}\"" -m 1)"
+    # strip first and last double-quote from $artifact_name
+    artifact_name=${artifact_name%\"}
+    artifact_name="${artifact_name#\"}"
+    readonly artifact_name
 
-    unzip -p "$download_path" "${name}" >"${TMPDIR}"/otelcol-sumo
-    if [ "${KEEP_DOWNLOADS}" == "false" ]; then
-        rm -f "${download_path}"
-    fi
+    local artifact_url artifact_zip extra_curl_args
+    readonly artifact_url="${base_url}/artifacts/${artifact_id}/zip"
+    readonly artifact_zip="${TMPDIR}/${artifact_name}.zip"
+    readonly extra_curl_args=(
+        "-H" "Accept: application/vnd.github+json"
+        "-H" "Authorization: token ${GITHUB_TOKEN}"
+    )
+
+    get_file_from_url "${artifact_url}" "${artifact_zip}" "${extra_curl_args[@]}"
+
+    unzip -p "${artifact_zip}" "${artifact_name}" > "${destination_path}"
 }
 
-function get_binary_from_url() {
-    local url download_filename download_path curl_args
-    readonly url="${1}"
-    echo -e "Downloading:\t\t${url}"
+function get_github_release_artifact() {
+    local org repo artifact_name version destination_path
+    readonly org="${1}"
+    readonly repo="${2}"
+    readonly artifact_name="${3}"
+    readonly version="${4}"
+    readonly destination_path="${5}"
 
-    download_filename=$(basename "${url}")
-    readonly download_filename
-    readonly download_path="${DOWNLOAD_CACHE_DIR}/${download_filename}"
-    curl_args=(
-        "-fL"
-        "--connect-timeout" "5"
-        "--max-time" "${CURL_MAX_TIME}"
-        "--retry" "5"
-        "--retry-delay" "0"
-        "--retry-max-time" "150"
-        "--output" "${download_path}"
-        "--progress-bar"
-    )
-    if [ "${KEEP_DOWNLOADS}" == "true" ]; then
-        curl_args+=("-z" "${download_path}")
-    fi
-    curl "${curl_args[@]}" "${url}"
+    local url
+    url="https://github.com/${org}/${repo}/releases/download/v${version}/${artifact_name}"
+    readonly url
 
-    cp -f "${download_path}" "${TMPDIR}"/otelcol-sumo
-
-    if [ "${KEEP_DOWNLOADS}" == "false" ]; then
-        rm -f "${download_path}"
-    fi
-}
-
-function get_package_from_branch() {
-    local branch
-    readonly branch="${1}"
-
-    local name
-    readonly name="${2}"
-
-    local actions_url actions_output artifacts_link artifact_id
-    readonly actions_url="https://api.github.com/repos/${PACKAGE_GITHUB_ORG}/${PACKAGE_GITHUB_REPO}/actions/runs?status=success&branch=${branch}&event=push&per_page=1"
-    echo -e "Getting artifacts from latest CI run for branch \"${branch}\":\t\t${actions_url}"
-    actions_output="$(curl -f -sS \
-      --connect-timeout 5 \
-      --max-time 30 \
-      --retry 5 \
-      --retry-delay 0 \
-      --retry-max-time 150 \
-      -H "Accept: application/vnd.github+json" \
-      -H "Authorization: token ${GITHUB_TOKEN}" \
-      "${actions_url}")"
-    readonly actions_output
-
-    # get latest action run
-    artifacts_link="$(echo "${actions_output}" | grep '"url"' | grep -oE '"https.*packaging/actions.*"' -m 1)"
-
-    # strip first and last double-quote from $artifacts_link
-    artifacts_link=${artifacts_link%\"}
-    artifacts_link="${artifacts_link#\"}"
-    artifacts_link="${artifacts_link}/artifacts"
-    readonly artifacts_link
-
-    echo -e "Getting artifact id for CI run:\t\t${artifacts_link}"
-    artifact_id="$(curl -f -sS \
-    --connect-timeout 5 \
-    --max-time 30 \
-    --retry 5 \
-    --retry-delay 0 \
-    --retry-max-time 150 \
-    -H "Accept: application/vnd.github+json" \
-    -H "Authorization: token ${GITHUB_TOKEN}" \
-    "${artifacts_link}" \
-        | grep -E '"(id|name)"' \
-        | grep -B 1 "\"${name}\"" -m 1 \
-        | grep -oE "[0-9]+" -m 1)"
-    readonly artifact_id
-
-    echo "Artifact ID: ${artifact_id}"
-
-    local artifact_url download_path curl_args
-    readonly artifact_url="https://api.github.com/repos/${PACKAGE_GITHUB_ORG}/${PACKAGE_GITHUB_REPO}/actions/artifacts/${artifact_id}/zip"
-    readonly download_path="${DOWNLOAD_CACHE_DIR}/${artifact_id}.zip"
-    echo -e "Downloading package from: ${artifact_url}"
-    curl_args=(
-        "-fL"
-        "--connect-timeout" "5"
-        "--max-time" "${CURL_MAX_TIME}"
-        "--retry" "5"
-        "--retry-delay" "0"
-        "--retry-max-time" "150"
-        "--output" "${download_path}"
-        "--progress-bar"
-    )
-    if [ "${KEEP_DOWNLOADS}" == "true" ]; then
-        curl_args+=("-z" "${download_path}")
-    fi
-    curl "${curl_args[@]}" \
-        -H "Accept: application/vnd.github+json" \
-        -H "Authorization: token ${GITHUB_TOKEN}" \
-        "${artifact_url}"
-
-    unzip -p "$download_path" > "${TMPDIR}/otelcol-sumo.pkg"
-    if [ "${KEEP_DOWNLOADS}" == "false" ]; then
-        rm -f "${download_path}"
-    fi
-}
-
-function get_package_from_url() {
-    local url download_filename download_path curl_args
-    readonly url="${1}"
-    echo -e "Downloading:\t\t${url}"
-
-    download_filename=$(basename "${url}")
-    readonly download_filename
-    readonly download_path="${DOWNLOAD_CACHE_DIR}/${download_filename}"
-    curl_args=(
-        "-fL"
-        "--connect-timeout" "5"
-        "--max-time" "${CURL_MAX_TIME}"
-        "--retry" "5"
-        "--retry-delay" "0"
-        "--retry-max-time" "150"
-        "--output" "${download_path}"
-        "--progress-bar"
-    )
-    if [ "${KEEP_DOWNLOADS}" == "true" ]; then
-        curl_args+=("-z" "${download_path}")
-    fi
-    curl "${curl_args[@]}" "${url}"
-
-    cp -f "${download_path}" "${TMPDIR}/otelcol-sumo.pkg"
-
-    if [ "${KEEP_DOWNLOADS}" == "false" ]; then
-        rm -f "${download_path}"
-    fi
+    get_file_from_url "${url}" "${destination_path}"
 }
 
 function set_acl_on_log_paths() {
@@ -1536,6 +1564,336 @@ function plutil_replace_key() {
     fi
 }
 
+function get_existing_user_token() {
+    local user_token
+
+    # Attempt to find a token from an existing installation
+    case "${OS_TYPE}" in
+    darwin)
+      user_token="$(plutil_extract_key "${LAUNCHD_CONFIG}" "${LAUNCHD_TOKEN_KEY}")"
+      ;;
+    linux)
+      user_token="$(get_user_config "${COMMON_CONFIG_PATH}")"
+
+      # If Systemd is not disabled, try to extract token from systemd env file
+      if [[ -z "${user_token}" && "${SYSTEMD_DISABLED}" == "false" ]]; then
+          user_token="$(get_user_env_config "${TOKEN_ENV_FILE}")"
+      fi
+      ;;
+    *)
+      user_token="$(get_user_config "${COMMON_CONFIG_PATH}")"
+      ;;
+    esac
+
+    echo "${user_token}"
+}
+
+function detect_distro_type() {
+    if test -f /etc/debian_version; then
+        echo "debian"
+    elif test -f /etc/redhat-release; then
+        echo "redhat"
+    fi
+}
+
+function install_package() {
+    if [[ "${SKIP_CONFIG}" == "true" ]]; then
+        echo "SKIP_CONFIG is not supported"
+        exit 1
+    fi
+
+    if [[ "${SKIP_TOKEN}" == "true" ]]; then
+        echo "SKIP_TOKEN is not supported"
+        exit 1
+    fi
+
+    echo -e "Getting versions..."
+    # Get versions, but ignore errors as we fallback to other methods later
+    VERSIONS="$(get_package_versions || echo "")"
+
+    # Use user's version if set, otherwise get latest version from API (or website)
+    if [[ -z "${VERSION}" ]]; then
+        VERSION="$(get_latest_package_version "${VERSIONS}")"
+    fi
+
+    VERSION_PREFIX="${VERSION%.*}"       # cut off the suffix starting with the last stop
+    MAJOR_VERSION="${VERSION_PREFIX%.*}" # take the prefix from before the first stop
+    MINOR_VERSION="${VERSION_PREFIX#*.}" # take the suffix after the first stop
+
+    readonly VERSIONS VERSION INSTALLED_VERSION VERSION_PREFIX MAJOR_VERSION MINOR_VERSION
+
+    echo -e "Version to install:\t${VERSION}"
+
+    if [[ -z "${CONFIG_BRANCH}" ]]; then
+        CONFIG_BRANCH="v${VERSION}"
+    fi
+    readonly CONFIG_BRANCH
+
+    case "${OS_TYPE}" in
+    "darwin")
+      install_darwin_package "${ARCH_TYPE}"
+      ;;
+    "linux")
+      install_linux_package "${ARCH_TYPE}"
+      ;;
+    *)
+      echo "Error: Unsupported OS for package installation"
+      exit 1
+      ;;
+    esac
+}
+
+function install_darwin_package() {
+    local arch_type
+    readonly arch_type="${1}"
+
+    package_arch=""
+    case "${arch_type}" in
+      "amd64") package_arch="intel" ;;
+      "arm64") package_arch="apple" ;;
+      *)
+        echo "Unsupported architecture for darwin: ${ARCH_TYPE}"
+        exit 1
+        ;;
+    esac
+    readonly package_arch
+
+    package_suffix="${package_arch}.pkg"
+    pkg="${TMPDIR}/otelcol-sumo-${package_suffix}"
+    readonly package_suffix pkg
+
+    if [[ -n "${BINARY_BRANCH}" ]]; then
+        get_github_actions_artifact \
+            "${PACKAGE_GITHUB_ORG}" \
+            "${PACKAGE_GITHUB_REPO}" \
+            "${BINARY_BRANCH}" \
+            "otelcol-sumo_.*-${package_suffix}" \
+            "${pkg}"
+    else
+        get_github_release_artifact \
+            "${PACKAGE_GITHUB_ORG}" \
+            "${PACKAGE_GITHUB_REPO}" \
+            "otelcol-sumo_${VERSION}-${package_suffix}" \
+            "${VERSION}" \
+            "${pkg}"
+    fi
+
+    if [[ "${DOWNLOAD_ONLY}" == "true" ]]; then
+        echo "Package downloaded to: ${pkg}"
+        exit 0
+    fi
+
+    choices="${TMPDIR}/otelcol-sumo-choices.xml"
+    readonly choices
+
+    # Extract choices xml from meta package, override the choices to enable
+    # optional choices, and then install using the new choice selections
+    set +e
+    installer -showChoiceChangesXML -pkg "${pkg}" -target / > "${choices}"
+    RC=$?
+    set -e
+    if [[ "${RC}" != "0" ]]; then
+        echo "Error extracting choices xml from pkg"
+        cat "${choices}"
+        exit 1
+    fi
+
+    # Determine how many installation choices exist
+    choices_count=$(plutil -convert raw -o - "${choices}")
+    readonly choices_count
+
+    # Loop through each installation choice
+    for (( i=0; i < "${choices_count}"; i++ )); do
+        choice_id_key="${i}.choiceIdentifier"
+        choice_attr_key="${i}.choiceAttribute"
+        attr_setting_key="${i}.attributeSetting"
+
+        # Skip if choiceAttribute does not equal selected
+        choice_attr="$(plutil_extract_key "${choices}" "${choice_attr_key}")"
+        if [ "$choice_attr" != "selected" ]; then
+            continue
+        fi
+
+        # Get the choice identifier
+        choice_id="$(plutil_extract_key "${choices}" "${choice_id_key}")"
+
+        # Mark the choice as selected if the feature flag is true
+        case "${choice_id}" in
+        "otelcol-sumo-hostmetricsChoice")
+          if [[ "${INSTALL_HOSTMETRICS}" == "true" ]]; then
+              echo -e "Enabling ${OS_TYPE} hostmetrics install option"
+              plutil_replace_key "${choices}" "${attr_setting_key}" "integer" 1
+          fi
+          ;;
+        esac
+    done
+
+    installer -applyChoiceChangesXML "$choices" -pkg "$pkg" -target /
+
+    if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" ]]; then
+        echo "Writing installation token to launchd config"
+        write_installation_token_launchd "${SUMOLOGIC_INSTALLATION_TOKEN}" "${LAUNCHD_CONFIG}"
+    fi
+
+    setup_config_darwin
+
+    # Run an unload/load launchd config to pull in new changes & restart the service
+    launchctl unload "${LAUNCHD_CONFIG}"
+    launchctl load -w "${LAUNCHD_CONFIG}"
+}
+
+function install_linux_package() {
+    local arch_type
+    readonly arch_type="${1}"
+
+    local distro_type
+    distro_type="$(detect_distro_type)"
+    readonly distro_type
+
+    case "${distro_type}" in
+    "debian") install_linux_deb_package "${arch_type}" ;;
+    "redhat") install_linux_rpm_package "${arch_type}" ;;
+    *)
+      echo "Error: Could not detect if OS is debian or redhat based"
+      exit 1
+    esac
+}
+
+function install_linux_deb_package() {
+    local arch_type
+    readonly arch_type="${1}"
+
+    package_arch=""
+    case "${arch_type}" in
+      "amd64") package_arch="amd64" ;;
+      "arm64") package_arch="arm64" ;;
+      *)
+        echo "Error: Unsupported architecture for linux deb packages: ${arch_type}"
+        exit 1
+        ;;
+    esac
+    readonly package_arch
+
+    package_suffix="${package_arch}.deb"
+    pkg="${TMPDIR}/otelcol-sumo_${package_suffix}"
+    readonly package_suffix pkg
+
+    if [[ -n "${BINARY_BRANCH}" ]]; then
+        get_package_from_branch \
+            "${PACKAGE_GITHUB_ORG}" \
+            "${PACKAGE_GITHUB_REPO}" \
+            "${BINARY_BRANCH}" \
+            "${pkg}"
+    else
+        get_github_release_artifact \
+            "${PACKAGE_GITHUB_ORG}" \
+            "${PACKAGE_GITHUB_REPO}" \
+            "otelcol-sumo_${VERSION}_${package_suffix}" \
+            "${VERSION}" \
+            "${pkg}"
+    fi
+
+    if [[ "${DOWNLOAD_ONLY}" == "true" ]]; then
+        echo "Package downloaded to: ${pkg}"
+        exit 0
+    fi
+
+    echo "Installing otelcol-sumo package"
+    dpkg -i "${pkg}"
+
+    setup_config_linux
+    install_hostmetrics
+    set_hostmetrics_ownership
+
+    # Enable and start the systemd service for otelcol-sumo
+    systemd_enable_service "${SYSTEMD_SERVICE_NAME}"
+    systemd_start_service "${SYSTEMD_SERVICE_NAME}"
+    systemd_check_service_status "${SYSTEMD_SERVICE_NAME}"
+}
+
+function install_linux_rpm_package() {
+    local arch_type
+    readonly arch_type="${1}"
+
+    package_arch=""
+    case "${arch_type}" in
+      "amd64") package_arch="x86_64" ;;
+      "arm64") package_arch="aarch64" ;;
+      *)
+        echo "Error: Unsupported architecture for linux rpm packages: ${arch_type}"
+        exit 1
+        ;;
+    esac
+    readonly package_arch
+
+    package_suffix="${package_arch}.rpm"
+    pkg="${TMPDIR}/otelcol-sumo.${package_suffix}"
+    readonly package_suffix pkg
+
+    if [[ -n "${BINARY_BRANCH}" ]]; then
+        get_package_from_branch \
+            "${PACKAGE_GITHUB_ORG}" \
+            "${PACKAGE_GITHUB_REPO}" \
+            "${BINARY_BRANCH}" \
+            "otelcol-sumo-.*.${package_suffix}" \
+            "${pkg}"
+    else
+        get_github_release_artifact \
+            "${PACKAGE_GITHUB_ORG}" \
+            "${PACKAGE_GITHUB_REPO}" \
+            "otelcol-sumo-${VERSION}.${package_suffix}" \
+            "${VERSION}" \
+            "${pkg}"
+    fi
+
+    if [[ "${DOWNLOAD_ONLY}" == "true" ]]; then
+        echo "Package downloaded to: ${pkg}"
+        exit 0
+    fi
+
+    if rpm_is_installed "otelcol-sumo"; then
+        echo "Upgrading otelcol-sumo package"
+        rpm -Uvh "${pkg}"
+    else
+        echo "Installing otelcol-sumo package"
+        rpm -ivh "${pkg}"
+    fi
+
+    setup_config_linux
+    install_hostmetrics
+    set_hostmetrics_ownership
+
+    # Enable and start the systemd service for otelcol-sumo
+    systemd_enable_service "${SYSTEMD_SERVICE_NAME}"
+    systemd_start_service "${SYSTEMD_SERVICE_NAME}"
+    systemd_check_service_status "${SYSTEMD_SERVICE_NAME}"
+}
+
+function systemd_enable_service() {
+    local service
+    service="${1}"
+
+    echo "Enabling ${service} service"
+    systemctl enable "${service}"
+}
+
+function systemd_start_service() {
+    local service
+    service="${1}"
+
+    echo "Starting ${service} service"
+    systemctl start "${service}"
+}
+
+function systemd_check_service_status() {
+    local service
+    service="${1}"
+
+    echo "Waiting 10s before checking status"
+    sleep 10
+    systemctl status "${service}" --no-pager
+}
+
 ############################ Main code
 
 OS_TYPE="$(get_os_type)"
@@ -1551,32 +1909,32 @@ set_tmpdir
 install_missing_dependencies
 check_dependencies
 
+# Force native packaging on darwin
+if [[ "${OS_TYPE}" == "darwin" ]]; then
+    USE_NATIVE_PACKAGING="true"
+fi
+
+if [ "${FIPS}" == "true" ]; then
+    if [ "${OS_TYPE}" != "linux" ] || [ "${ARCH_TYPE}" != "amd64" ] || [ "${USE_NATIVE_PACKAGING}" == "true" ]; then
+        echo "Error: The FIPS-approved binary is only available for linux/amd64"
+        exit 1
+    fi
+fi
+
 readonly SUMOLOGIC_INSTALLATION_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE CONFIG_DIRECTORY SYSTEMD_CONFIG UNINSTALL
 readonly USER_CONFIG_DIRECTORY USER_ENV_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
 readonly ACL_LOG_FILE_PATHS
 readonly INSTALL_HOSTMETRICS
 readonly CURL_MAX_TIME
 readonly LAUNCHD_CONFIG LAUNCHD_ENV_KEY LAUNCHD_TOKEN_KEY
+readonly USE_NATIVE_PACKAGING
 
 if [[ "${UNINSTALL}" == "true" ]]; then
     uninstall
     exit 0
 fi
 
-# Attempt to find a token from an existing installation
-case "${OS_TYPE}" in
-darwin)
-  USER_TOKEN="$(plutil_extract_key "${LAUNCHD_CONFIG}" "${LAUNCHD_TOKEN_KEY}")"
-  ;;
-*)
-  USER_TOKEN="$(get_user_config "${COMMON_CONFIG_PATH}")"
-
-  # If Systemd is not disabled, try to extract token from systemd env file
-  if [[ -z "${USER_TOKEN}" && "${SYSTEMD_DISABLED}" == "false" ]]; then
-      USER_TOKEN="$(get_user_env_config "${TOKEN_ENV_FILE}")"
-  fi
-  ;;
-esac
+USER_TOKEN="$(get_existing_user_token)"
 readonly USER_TOKEN
 
 # Exit if installation token is not set and there is no user configuration
@@ -1628,120 +1986,18 @@ fi
 
 readonly SYSTEMD_DISABLED
 
-if [ "${FIPS}" == "true" ]; then
-    if [ "${OS_TYPE}" != "linux" ] || [ "${ARCH_TYPE}" != "amd64" ]; then
-        echo "Error: The FIPS-approved binary is only available for linux/amd64"
-        exit 1
-    fi
-fi
+################################################################################
+# Native package installation
+################################################################################
 
-if [[ "${OS_TYPE}" == "darwin" ]]; then
-    package_arch=""
-    case "${ARCH_TYPE}" in
-      "amd64") package_arch="intel" ;;
-      "arm64") package_arch="apple" ;;
-      *)
-        echo "Unsupported architecture for darwin: ${ARCH_TYPE}"
-        exit 1
-        ;;
-    esac
-    readonly package_arch
-
-    if [[ "${SKIP_CONFIG}" == "true" ]]; then
-        echo "SKIP_CONFIG is not supported on darwin"
-        exit 1
-    fi
-
-    echo -e "Getting versions..."
-    # Get versions, but ignore errors as we fallback to other methods later
-    VERSIONS="$(get_package_versions || echo "")"
-
-    # Use user's version if set, otherwise get latest version from API (or website)
-    if [[ -z "${VERSION}" ]]; then
-        VERSION="$(get_latest_package_version "${VERSIONS}")"
-    fi
-
-    VERSION_PREFIX="${VERSION%.*}"       # cut off the suffix starting with the last stop
-    MAJOR_VERSION="${VERSION_PREFIX%.*}" # take the prefix from before the first stop
-    MINOR_VERSION="${VERSION_PREFIX#*.}" # take the suffix after the first stop
-
-    readonly VERSIONS VERSION INSTALLED_VERSION VERSION_PREFIX MAJOR_VERSION MINOR_VERSION
-
-    echo -e "Version to install:\t${VERSION}"
-
-    package_suffix="${package_arch}.pkg"
-
-    if [[ -n "${BINARY_BRANCH}" ]]; then
-        artifact_name="otelcol-sumo_.*-${package_suffix}"
-        get_package_from_branch "${BINARY_BRANCH}" "${artifact_name}"
-    else
-        artifact_name="otelcol-sumo_${VERSION}-${package_suffix}"
-        readonly artifact_name
-
-        LINK="https://github.com/${PACKAGE_GITHUB_ORG}/${PACKAGE_GITHUB_REPO}/releases/download/v${VERSION}/${artifact_name}"
-        readonly LINK
-
-        get_package_from_url "${LINK}"
-    fi
-
-    pkg="${TMPDIR}/otelcol-sumo.pkg"
-    choices="${TMPDIR}/otelcol-sumo-choices.xml"
-    readonly pkg choices
-
-    if [[ "${DOWNLOAD_ONLY}" == "true" ]]; then
-        echo "Package downloaded to: ${pkg}"
-        exit 0
-    fi
-
-    # Extract choices xml from meta package, override the choices to enable
-    # optional choices, and then install using the new choice selections
-    installer -showChoiceChangesXML -pkg "${pkg}" -target / > "${choices}"
-
-    # Determine how many installation choices exist
-    choices_count=$(plutil -convert raw -o - "${choices}")
-    readonly choices_count
-
-    # Loop through each installation choice
-    for (( i=0; i < "${choices_count}"; i++ )); do
-        choice_id_key="${i}.choiceIdentifier"
-        choice_attr_key="${i}.choiceAttribute"
-        attr_setting_key="${i}.attributeSetting"
-
-        # Skip if choiceAttribute does not equal selected
-        choice_attr="$(plutil_extract_key "${choices}" "${choice_attr_key}")"
-        if [ "$choice_attr" != "selected" ]; then
-            continue
-        fi
-
-        # Get the choice identifier
-        choice_id="$(plutil_extract_key "${choices}" "${choice_id_key}")"
-
-        # Mark the choice as selected if the feature flag is true
-        case "${choice_id}" in
-        "otelcol-sumo-hostmetricsChoice")
-          if [[ "${INSTALL_HOSTMETRICS}" == "true" ]]; then
-              echo -e "Enabling ${OS_TYPE} hostmetrics install option"
-              plutil_replace_key "${choices}" "${attr_setting_key}" "integer" 1
-          fi
-          ;;
-        esac
-    done
-
-    installer -applyChoiceChangesXML "$choices" -pkg "$pkg" -target /
-
-    if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" && "${SKIP_TOKEN}" != "true" ]]; then
-        echo "Writing installation token to launchd config"
-        write_installation_token_launchd "${SUMOLOGIC_INSTALLATION_TOKEN}" "${LAUNCHD_CONFIG}"
-    fi
-
-    setup_config_darwin
-
-    # Run an unload/load launchd config to pull in new changes & restart the service
-    launchctl unload "${LAUNCHD_CONFIG}"
-    launchctl load -w "${LAUNCHD_CONFIG}"
-
+if [[ "${USE_NATIVE_PACKAGING}" == "true" || "${OS_TYPE}" == "darwin" ]]; then
+    install_package
     exit 0
 fi
+
+################################################################################
+# Binary installation
+################################################################################
 
 echo -e "Getting installed version..."
 INSTALLED_VERSION="$(get_installed_version)"
@@ -1759,7 +2015,6 @@ fi
 VERSION_PREFIX="${VERSION%.*}"       # cut off the suffix starting with the last stop
 MAJOR_VERSION="${VERSION_PREFIX%.*}" # take the prefix from before the first stop
 MINOR_VERSION="${VERSION_PREFIX#*.}" # take the suffix after the first stop
-
 
 readonly VERSIONS VERSION INSTALLED_VERSION VERSION_PREFIX MAJOR_VERSION MINOR_VERSION
 
@@ -1799,18 +2054,26 @@ else
         echo "Getting FIPS-compliant binary"
         binary_suffix="fips-${binary_suffix}"
     fi
+    binary_path="${TMPDIR}/otelcol-sumo"
 
     if [[ -n "${BINARY_BRANCH}" ]]; then
-        get_binary_from_branch "${BINARY_BRANCH}" "otelcol-sumo-${binary_suffix}"
+        get_github_actions_artifact \
+            "${BINARY_GITHUB_ORG}" \
+            "${BINARY_GITHUB_REPO}" \
+            "${BINARY_BRANCH}" \
+            "otelcol-sumo-${binary_suffix}" \
+            "${binary_path}"
     else
-        LINK="https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v${VERSION}/otelcol-sumo-${VERSION}-${binary_suffix}"
-        readonly LINK
-
-        get_binary_from_url "${LINK}"
+        get_github_release_artifact \
+            "${BINARY_GITHUB_ORG}" \
+            "${BINARY_GITHUB_REPO}" \
+            "otelcol-sumo-${VERSION}-${binary_suffix}" \
+            "${VERSION}" \
+            "${binary_path}"
     fi
 
     echo -e "Moving otelcol-sumo to /usr/local/bin"
-    mv "${TMPDIR}"/otelcol-sumo "${SUMO_BINARY_PATH}"
+    mv "${binary_path}" "${SUMO_BINARY_PATH}"
     echo -e "Setting ${SUMO_BINARY_PATH} to be executable"
     chmod +x "${SUMO_BINARY_PATH}"
 
@@ -1841,10 +2104,9 @@ fi
 
 echo 'We are going to set up a systemd service'
 
-if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" ]]; then
-    echo 'Writing installation token to env file'
-    write_installation_token_env "${SUMOLOGIC_INSTALLATION_TOKEN}" "${TOKEN_ENV_FILE}"
-    chmod -R 440 "${TOKEN_ENV_FILE}"
+write_env_token
+if [[ -f "${TOKEN_ENV_FILE}" ]]; then
+    chmod -R 660 "${TOKEN_ENV_FILE}"
 fi
 
 if [[ -f "${SYSTEMD_CONFIG}" ]]; then
@@ -1852,8 +2114,11 @@ if [[ -f "${SYSTEMD_CONFIG}" ]]; then
     # for example first installation without hostmetrics and second with hostmetrics
     if getent passwd "${SYSTEM_USER}" > /dev/null && [[ "${SKIP_CONFIG}" == "false" ]]; then
         echo 'Ensuring that ownership for config and storage is correct'
-        chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOME_DIRECTORY}" "${CONFIG_DIRECTORY}"/*
-        chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}"
+        chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" \
+            "${HOME_DIRECTORY}" \
+            "${CONFIG_DIRECTORY}" \
+            "${USER_ENV_DIRECTORY}"
+        set_hostmetrics_ownership
     fi
     echo "Configuration for systemd service (${SYSTEMD_CONFIG}) already exist. Restarting service"
     systemctl restart otelcol-sumo
@@ -1863,7 +2128,7 @@ fi
 echo 'Creating user and group'
 if getent passwd "${SYSTEM_USER}" > /dev/null; then
     echo 'User and group already created'
-else
+    else
     ADDITIONAL_OPTIONS=""
     if [[ -d "${HOME_DIRECTORY}" ]]; then
         # do not create home directory as it already exists
@@ -1881,8 +2146,11 @@ set_acl_on_log_paths
 
 if [[ "${SKIP_CONFIG}" == "false" ]]; then
     echo 'Changing ownership for config and storage'
-    chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOME_DIRECTORY}" "${CONFIG_DIRECTORY}"/*
-    chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}"
+    chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" \
+        "${HOME_DIRECTORY}" \
+        "${CONFIG_DIRECTORY}" \
+        "${USER_ENV_DIRECTORY}"
+    set_hostmetrics_ownership
 fi
 
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/systemd/otelcol-sumo.service"
@@ -1933,12 +2201,6 @@ if command -v sestatus && sestatus; then
     fi
 fi
 
-echo 'Enable otelcol-sumo service'
-systemctl enable otelcol-sumo
-
-echo 'Starting otelcol-sumo service'
-systemctl start otelcol-sumo
-
-echo 'Waiting 10s before checking status'
-sleep 10
-systemctl status otelcol-sumo --no-pager
+systemd_enable_service "${SYSTEMD_SERVICE_NAME}"
+systemd_start_service "${SYSTEMD_SERVICE_NAME}"
+systemd_check_service_status "${SYSTEMD_SERVICE_NAME}"

@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"os/exec"
 	"os/user"
-	"path/filepath"
-	"strconv"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -16,42 +14,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func checkAbortedDueToSkipConfigUnsupported(c check) {
+	require.Greater(c.test, len(c.output), 0)
+	require.Contains(c.test, c.output[len(c.output)-1], "SKIP_CONFIG is not supported")
+}
+
 func checkACLAvailability(c check) bool {
 	return assert.FileExists(&testing.T{}, "/usr/bin/getfacl", "File ACLS is not supported")
-}
-
-func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
-	return func(c check) {
-		etcPathGlob := filepath.Join(etcPath, "*")
-		etcPathNestedGlob := filepath.Join(etcPath, "*", "*")
-
-		for _, glob := range []string{etcPathGlob, etcPathNestedGlob} {
-			paths, err := filepath.Glob(glob)
-			require.NoError(c.test, err)
-			for _, path := range paths {
-				var permissions uint32
-				info, err := os.Stat(path)
-				require.NoError(c.test, err)
-				if info.IsDir() {
-					permissions = configPathDirPermissions
-				} else {
-					permissions = configPathFilePermissions
-				}
-				PathHasPermissions(c.test, path, permissions)
-				PathHasOwner(c.test, configPath, ownerName, ownerGroup)
-			}
-		}
-		PathHasPermissions(c.test, configPath, configPathFilePermissions)
-	}
-}
-
-func checkDeprecatedTokenInConfig(c check) {
-	require.NotEmpty(c.test, c.installOptions.deprecatedInstallToken, "installation token has not been provided")
-
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err, "error while reading configuration")
-
-	require.Equal(c.test, c.installOptions.deprecatedInstallToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
 }
 
 func checkDifferentTokenInConfig(c check) {
@@ -80,11 +49,14 @@ func checkDownloadTimeout(c check) {
 	require.Equal(c.test, 6, count)
 }
 
-func checkHostmetricsOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
-	return func(c check) {
-		PathHasOwner(c.test, hostmetricsConfigPath, ownerName, ownerGroup)
-		PathHasPermissions(c.test, hostmetricsConfigPath, configPathFilePermissions)
-	}
+func checkGroupExists(c check) {
+	_, err := user.LookupGroup(systemGroup)
+	require.NoError(c.test, err, "group has not been created")
+}
+
+func checkGroupNotExists(c check) {
+	_, err := user.LookupGroup(systemGroup)
+	require.Error(c.test, err, "group has been created")
 }
 
 func checkOutputUserAddWarnings(c check) {
@@ -93,6 +65,22 @@ func checkOutputUserAddWarnings(c check) {
 
 	errOutput := strings.Join(c.errorOutput, "\n")
 	require.NotContains(c.test, errOutput, "useradd", "unexpected useradd output")
+}
+
+func checkPackageCreated(c check) {
+	re, err := regexp.Compile(`^Package downloaded to: .*/otelcol\-sumo(_|\.).*.(deb|rpm)$`)
+	require.NoError(c.test, err)
+
+	matchedLine := ""
+	for _, line := range c.output {
+		if re.MatchString(line) {
+			matchedLine = line
+		}
+	}
+	require.NotEmpty(c.test, matchedLine, "package path not in output")
+
+	packagePath := strings.TrimPrefix(matchedLine, "Package downloaded to: ")
+	require.FileExists(c.test, packagePath, "package has not been created")
 }
 
 func checkSystemdAvailability(c check) bool {
@@ -105,6 +93,12 @@ func checkSystemdConfigCreated(c check) {
 
 func checkSystemdConfigNotCreated(c check) {
 	require.NoFileExists(c.test, systemdPath, "systemd configuration has been created")
+}
+
+func checkSystemdConfigOrBackupCreated(c check) {
+	if configOrBackupMissing(tokenEnvFilePath) {
+		c.test.Fatalf("unable to find file: \"%s\"", tokenEnvFilePath)
+	}
 }
 
 func checkSystemdEnvDirExists(c check) {
@@ -150,6 +144,12 @@ func checkUninstallationOutput(c check) {
 	require.Contains(c.test, c.output[len(c.output)-1], "Uninstallation completed")
 }
 
+func checkUserConfigOrBackupCreated(c check) {
+	if configOrBackupMissing(userConfigPath) {
+		c.test.Fatalf("unable to find file: \"%s\"", userConfigPath)
+	}
+}
+
 func checkUserExists(c check) {
 	_, err := user.Lookup(systemUser)
 	require.NoError(c.test, err, "user has not been created")
@@ -168,32 +168,34 @@ func checkVarLogACL(c check) {
 	PathHasUserACL(c.test, "/var/log", systemUser, "r-x")
 }
 
+func configOrBackupMissing(p string) bool {
+	backupPath := fmt.Sprintf("%s.rpmsave", p)
+	_, cErr := os.Stat(p)
+	_, bErr := os.Stat(backupPath)
+	return os.IsNotExist(cErr) && os.IsNotExist(bErr)
+}
+
 func preActionCreateHomeDirectory(c check) {
 	err := os.MkdirAll(libPath, fs.FileMode(etcPathPermissions))
 	require.NoError(c.test, err)
 }
 
-// preActionCreateUser creates the system user and then set it as owner of configPath
-func preActionCreateUser(c check) {
-	preActionMockUserConfig(c)
+func preActionInstallPackageWithOptions(o installOptions) checkFunc {
+	return func(c check) {
+		o.useNativePackaging = true
+		c.installOptions = o
+		c.code, c.output, c.errorOutput, c.err = runScript(c)
+	}
+}
 
-	cmd := exec.Command("useradd", systemUser)
-	_, err := cmd.CombinedOutput()
+func preActionMockConfig(c check) {
+	err := os.MkdirAll(etcPath, fs.FileMode(etcPathPermissions))
 	require.NoError(c.test, err)
 
-	f, err := os.Open(configPath)
+	f, err := os.Create(configPath)
 	require.NoError(c.test, err)
 
-	user, err := user.Lookup(systemUser)
-	require.NoError(c.test, err)
-
-	uid, err := strconv.Atoi(user.Uid)
-	require.NoError(c.test, err)
-
-	gid, err := strconv.Atoi(user.Gid)
-	require.NoError(c.test, err)
-
-	err = f.Chown(uid, gid)
+	err = f.Chmod(fs.FileMode(configPathFilePermissions))
 	require.NoError(c.test, err)
 }
 
@@ -230,6 +232,29 @@ func preActionMockSystemdStructure(c check) {
 	require.NoError(c.test, err)
 }
 
+func preActionMockUserConfig(c check) {
+	err := os.MkdirAll(etcPath, fs.FileMode(etcPathPermissions))
+	require.NoError(c.test, err)
+
+	err = os.MkdirAll(confDPath, fs.FileMode(configPathDirPermissions))
+	require.NoError(c.test, err)
+
+	f, err := os.Create(userConfigPath)
+	require.NoError(c.test, err)
+
+	err = f.Chmod(fs.FileMode(commonConfigPathFilePermissions))
+	require.NoError(c.test, err)
+}
+
+func preActionWriteAPIBaseURLToUserConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err)
+
+	conf.Extensions.Sumologic.APIBaseURL = c.installOptions.apiBaseURL
+	err = saveConfig(userConfigPath, conf)
+	require.NoError(c.test, err)
+}
+
 func preActionWriteDefaultAPIBaseURLToUserConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err)
@@ -239,11 +264,31 @@ func preActionWriteDefaultAPIBaseURLToUserConfig(c check) {
 	require.NoError(c.test, err)
 }
 
+func preActionWriteDifferentAPIBaseURLToUserConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err)
+
+	conf.Extensions.Sumologic.APIBaseURL = "different" + c.installOptions.apiBaseURL
+	err = saveConfig(userConfigPath, conf)
+	require.NoError(c.test, err)
+}
+
 func preActionWriteDifferentDeprecatedTokenToEnvFile(c check) {
 	preActionMockEnvFiles(c)
 
 	content := fmt.Sprintf("SUMOLOGIC_INSTALL_TOKEN=different%s", c.installOptions.installToken)
 	err := os.WriteFile(tokenEnvFilePath, []byte(content), fs.FileMode(etcPathPermissions))
+	require.NoError(c.test, err)
+}
+
+func preActionWriteDifferentTagsToUserConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err)
+
+	conf.Extensions.Sumologic.Tags = map[string]string{
+		"some": "tag",
+	}
+	err = saveConfig(userConfigPath, conf)
 	require.NoError(c.test, err)
 }
 
@@ -260,6 +305,20 @@ func preActionWriteDifferentTokenToUserConfig(c check) {
 	require.NoError(c.test, err)
 
 	conf.Extensions.Sumologic.InstallToken = "different" + c.installOptions.installToken
+	err = saveConfig(userConfigPath, conf)
+	require.NoError(c.test, err)
+}
+
+func preActionWriteEmptyUserConfig(c check) {
+	err := saveConfig(userConfigPath, config{})
+	require.NoError(c.test, err)
+}
+
+func preActionWriteTagsToUserConfig(c check) {
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err)
+
+	conf.Extensions.Sumologic.Tags = c.installOptions.tags
 	err = saveConfig(userConfigPath, conf)
 	require.NoError(c.test, err)
 }

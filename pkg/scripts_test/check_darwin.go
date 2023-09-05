@@ -3,54 +3,11 @@ package sumologic_scripts_tests
 import (
 	"io/fs"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/stretchr/testify/require"
 )
-
-func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
-	return func(c check) {
-		PathHasPermissions(c.test, etcPath, etcPathPermissions)
-		PathHasOwner(c.test, etcPath, ownerName, ownerGroup)
-
-		etcPathGlob := filepath.Join(etcPath, "*")
-		etcPathNestedGlob := filepath.Join(etcPath, "*", "*")
-
-		for _, glob := range []string{etcPathGlob, etcPathNestedGlob} {
-			paths, err := filepath.Glob(glob)
-			require.NoError(c.test, err)
-			for _, path := range paths {
-				var permissions uint32
-				info, err := os.Stat(path)
-				require.NoError(c.test, err)
-				if info.IsDir() {
-					if path == etcPath {
-						permissions = etcPathPermissions
-					} else {
-						permissions = configPathDirPermissions
-					}
-				} else {
-					switch path {
-					case configPath:
-						// /etc/otelcol-sumo/sumologic.yaml
-						permissions = configPathFilePermissions
-					case userConfigPath:
-						// /etc/otelcol-sumo/conf.d/common.yaml
-						permissions = commonConfigPathFilePermissions
-					default:
-						// /etc/otelcol-sumo/conf.d/*
-						permissions = confDPathFilePermissions
-					}
-				}
-				PathHasPermissions(c.test, path, permissions)
-				PathHasOwner(c.test, configPath, ownerName, ownerGroup)
-			}
-		}
-		PathHasPermissions(c.test, configPath, configPathFilePermissions)
-	}
-}
 
 func checkDifferentTokenInLaunchdConfig(c check) {
 	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
@@ -71,13 +28,6 @@ func checkGroupNotExists(c check) {
 	require.False(c.test, exists, "group has been created")
 }
 
-func checkHostmetricsOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
-	return func(c check) {
-		PathHasOwner(c.test, hostmetricsConfigPath, ownerName, ownerGroup)
-		PathHasPermissions(c.test, hostmetricsConfigPath, confDPathFilePermissions)
-	}
-}
-
 func checkLaunchdConfigCreated(c check) {
 	require.FileExists(c.test, launchdPath, "launchd configuration has not been created properly")
 }
@@ -87,7 +37,7 @@ func checkLaunchdConfigNotCreated(c check) {
 }
 
 func checkPackageCreated(c check) {
-	re, err := regexp.Compile("Package downloaded to: .*/otelcol-sumo.pkg")
+	re, err := regexp.Compile(`^Package downloaded to: .*/otelcol-sumo-(apple|intel)\.pkg$`)
 	require.NoError(c.test, err)
 
 	matchedLine := ""
@@ -119,10 +69,6 @@ func checkUserExists(c check) {
 func checkUserNotExists(c check) {
 	exists := dsclKeyExistsForPath(c.test, "/Users", systemUser)
 	require.False(c.test, exists, "user has been created")
-}
-
-func preActionInstallPackage(c check) {
-	c.code, c.output, c.errorOutput, c.err = runScript(c)
 }
 
 func preActionInstallPackageWithDifferentAPIBaseURL(c check) {

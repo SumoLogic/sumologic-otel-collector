@@ -3,6 +3,7 @@
 package sumologic_scripts_tests
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -71,16 +72,9 @@ func TestInstallScriptDarwin(t *testing.T) {
 			options: installOptions{
 				skipInstallToken: true,
 			},
-			preChecks: notInstalledChecks,
-			postChecks: []checkFunc{
-				checkBinaryCreated,
-				checkBinaryIsRunning,
-				checkConfigCreated,
-				checkConfigFilesOwnershipAndPermissions(systemUser, systemGroup),
-				checkUserConfigCreated,
-				checkLaunchdConfigCreated,
-				checkHomeDirectoryCreated,
-			},
+			preChecks:   notInstalledChecks,
+			postChecks:  notInstalledChecks,
+			installCode: 1,
 		},
 		{
 			name: "installation token only",
@@ -92,7 +86,7 @@ func TestInstallScriptDarwin(t *testing.T) {
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
-				checkConfigFilesOwnershipAndPermissions(systemUser, systemGroup),
+				checkConfigFilesOwnershipAndPermissions,
 				checkUserConfigCreated,
 				checkLaunchdConfigCreated,
 				checkTokenInLaunchdConfig,
@@ -105,15 +99,16 @@ func TestInstallScriptDarwin(t *testing.T) {
 		{
 			name: "override default config",
 			options: installOptions{
-				skipInstallToken: true,
-				autoconfirm:      true,
+				autoconfirm: true,
 			},
-			preActions: []checkFunc{preActionMockConfig},
+			preActions: []checkFunc{
+				preActionInstallPreviousVersion,
+			},
 			preChecks: []checkFunc{
-				checkBinaryNotCreated,
+				checkBinaryCreated,
 				checkConfigCreated,
-				checkUserConfigNotCreated,
-				checkUserNotExists,
+				checkUserConfigCreated,
+				checkUserExists,
 			},
 			postChecks: []checkFunc{
 				checkBinaryCreated,
@@ -135,14 +130,14 @@ func TestInstallScriptDarwin(t *testing.T) {
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
-				checkConfigFilesOwnershipAndPermissions(systemUser, systemGroup),
+				checkConfigFilesOwnershipAndPermissions,
 				checkUserConfigCreated,
 				checkLaunchdConfigCreated,
 				checkTokenInLaunchdConfig,
 				checkUserExists,
 				checkGroupExists,
 				checkHostmetricsConfigCreated,
-				checkHostmetricsOwnershipAndPermissions(systemUser, systemGroup),
+				checkHostmetricsOwnershipAndPermissions,
 				checkHomeDirectoryCreated,
 			},
 		},
@@ -159,7 +154,7 @@ func TestInstallScriptDarwin(t *testing.T) {
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
-				checkConfigFilesOwnershipAndPermissions(systemUser, systemGroup),
+				checkConfigFilesOwnershipAndPermissions,
 				checkUserConfigCreated,
 				checkLaunchdConfigCreated,
 				checkTokenInLaunchdConfig,
@@ -224,11 +219,10 @@ func TestInstallScriptDarwin(t *testing.T) {
 		{
 			name: "same api base url",
 			options: installOptions{
-				apiBaseURL:       apiBaseURL,
-				skipInstallToken: true,
+				apiBaseURL: mockAPIBaseURL,
 			},
 			preActions: []checkFunc{
-				preActionInstallPackage,
+				preActionInstallPreviousVersion,
 			},
 			preChecks: []checkFunc{
 				checkBinaryCreated,
@@ -247,8 +241,8 @@ func TestInstallScriptDarwin(t *testing.T) {
 		{
 			name: "different api base url",
 			options: installOptions{
-				apiBaseURL:       apiBaseURL,
-				skipInstallToken: true,
+				apiBaseURL:   apiBaseURL,
+				installToken: installToken,
 			},
 			preActions: []checkFunc{
 				preActionInstallPackageWithDifferentAPIBaseURL,
@@ -271,10 +265,12 @@ func TestInstallScriptDarwin(t *testing.T) {
 		{
 			name: "adding api base url",
 			options: installOptions{
-				apiBaseURL:       apiBaseURL,
-				skipInstallToken: true,
+				apiBaseURL:   apiBaseURL,
+				installToken: installToken,
 			},
-			preActions: []checkFunc{preActionInstallPackageWithNoAPIBaseURL},
+			preActions: []checkFunc{
+				preActionInstallPackageWithNoAPIBaseURL,
+			},
 			preChecks: []checkFunc{
 				checkBinaryCreated,
 				checkConfigCreated,
@@ -291,8 +287,8 @@ func TestInstallScriptDarwin(t *testing.T) {
 		{
 			name: "editing api base url",
 			options: installOptions{
-				apiBaseURL:       apiBaseURL,
-				skipInstallToken: true,
+				apiBaseURL:   apiBaseURL,
+				installToken: installToken,
 			},
 			preActions: []checkFunc{
 				preActionInstallPackageWithNoAPIBaseURL,
@@ -313,7 +309,7 @@ func TestInstallScriptDarwin(t *testing.T) {
 		{
 			name: "configuration with tags",
 			options: installOptions{
-				skipInstallToken: true,
+				installToken: installToken,
 				tags: map[string]string{
 					"lorem":     "ipsum",
 					"foo":       "bar",
@@ -327,7 +323,7 @@ func TestInstallScriptDarwin(t *testing.T) {
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
-				checkConfigFilesOwnershipAndPermissions(systemUser, systemGroup),
+				checkConfigFilesOwnershipAndPermissions,
 				checkTags,
 				checkLaunchdConfigCreated,
 			},
@@ -335,7 +331,6 @@ func TestInstallScriptDarwin(t *testing.T) {
 		{
 			name: "same tags",
 			options: installOptions{
-				skipInstallToken: true,
 				tags: map[string]string{
 					"lorem":     "ipsum",
 					"foo":       "bar",
@@ -365,7 +360,7 @@ func TestInstallScriptDarwin(t *testing.T) {
 		{
 			name: "different tags",
 			options: installOptions{
-				skipInstallToken: true,
+				installToken: installToken,
 				tags: map[string]string{
 					"lorem":     "ipsum",
 					"foo":       "bar",
@@ -396,7 +391,7 @@ func TestInstallScriptDarwin(t *testing.T) {
 		{
 			name: "editing tags",
 			options: installOptions{
-				skipInstallToken: true,
+				installToken: installToken,
 				tags: map[string]string{
 					"lorem":     "ipsum",
 					"foo":       "bar",
@@ -423,8 +418,16 @@ func TestInstallScriptDarwin(t *testing.T) {
 			},
 		},
 	} {
-		t.Run(spec.name, func(t *testing.T) {
-			runTest(t, &spec)
-		})
+		// Always use native packaging on Darwin
+		spec.installType = PACKAGE_INSTALL
+
+		if spec.installType&PACKAGE_INSTALL != 0 {
+			spec.name = fmt.Sprintf("native packaging -- %s", spec.name)
+			spec.options.useNativePackaging = true
+
+			t.Run(spec.name, func(t *testing.T) {
+				runTest(t, &spec)
+			})
+		}
 	}
 }

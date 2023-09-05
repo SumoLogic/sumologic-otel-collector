@@ -39,6 +39,7 @@ func getConfig(path string) (config, error) {
 	return conf, err
 }
 
+//nolint:unused
 func saveConfig(path string, conf config) error {
 	out, err := yaml.Marshal(conf)
 	if err != nil {
