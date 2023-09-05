@@ -13,9 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - feat(sumologicextension)!: remove support for `install_token` [#1225]
 - feat(install.sh): prevent permission error when collecting host metrics [#1228]
+- chore: update otelcol core to v0.84.0 [#1235]
 
 [#1228]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1228
 [#1225]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1225
+[#1235]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1235
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.83.0-sumo-0...main
 
 ## [v0.83.0-sumo-0]

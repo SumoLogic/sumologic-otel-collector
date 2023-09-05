@@ -6,10 +6,10 @@ require (
 	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/influxdata/telegraf v1.24.3
 	github.com/stretchr/testify v1.8.4
-	go.opentelemetry.io/collector/component v0.83.0
-	go.opentelemetry.io/collector/consumer v0.83.0
+	go.opentelemetry.io/collector/component v0.84.0
+	go.opentelemetry.io/collector/consumer v0.84.0
 	go.opentelemetry.io/collector/pdata v1.0.0-rcv0014
-	go.opentelemetry.io/collector/receiver v0.83.0
+	go.opentelemetry.io/collector/receiver v0.84.0
 	go.uber.org/zap v1.25.0
 )
 
@@ -126,8 +126,8 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.mongodb.org/mongo-driver v1.12.0 // indirect
-	go.opentelemetry.io/collector/config/configtelemetry v0.83.0 // indirect
-	go.opentelemetry.io/collector/confmap v0.83.0 // indirect
+	go.opentelemetry.io/collector/config/configtelemetry v0.84.0 // indirect
+	go.opentelemetry.io/collector/confmap v0.84.0 // indirect
 	go.opentelemetry.io/collector/featuregate v1.0.0-rcv0014 // indirect
 	go.opentelemetry.io/otel v1.16.0 // indirect
 	go.opentelemetry.io/otel/metric v1.16.0 // indirect
