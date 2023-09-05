@@ -24,9 +24,9 @@ import (
 	"sort"
 	"syscall"
 
-	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
+	"github.com/knadh/koanf/v2"
 	"github.com/oklog/ulid/v2"
 	"go.opentelemetry.io/collector/component"
 	"go.uber.org/zap"

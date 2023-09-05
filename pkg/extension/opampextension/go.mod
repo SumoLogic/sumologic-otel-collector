@@ -4,7 +4,9 @@ go 1.20
 
 require (
 	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.77.0-sumo-0
-	github.com/knadh/koanf v1.5.0
+	github.com/knadh/koanf/parsers/yaml v0.1.0
+	github.com/knadh/koanf/providers/rawbytes v0.1.0
+	github.com/knadh/koanf/v2 v2.0.1
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/open-telemetry/opamp-go v0.5.0
 	github.com/stretchr/testify v1.8.4
@@ -32,7 +34,8 @@ require (
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
-	github.com/knadh/koanf/v2 v2.0.1 // indirect
+	github.com/knadh/koanf/maps v0.1.1 // indirect
+	github.com/knadh/koanf/providers/confmap v0.1.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
