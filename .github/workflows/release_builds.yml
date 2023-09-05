@@ -37,7 +37,7 @@ jobs:
             builder_bin_path: '${RUNNER_TEMP}\bin'
             builder_bin_ext: .exe
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Fetch current branch
         run: ./ci/fetch_current_branch.sh
@@ -113,7 +113,7 @@ jobs:
           - arch_os: darwin_arm64
             runs_on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Fetch current branch
         run: ./ci/fetch_current_branch.sh
@@ -202,7 +202,7 @@ jobs:
       matrix:
         arch_os: [ 'linux_amd64' ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup go
         uses: actions/setup-go@v4
@@ -262,7 +262,7 @@ jobs:
       matrix:
         arch_os: [ 'linux_amd64', 'linux_arm64']
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Extract tag
         id: extract_tag
@@ -326,7 +326,7 @@ jobs:
       - build-darwin
       - build-container-images
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Extract tag
         id: extract_tag
@@ -370,7 +370,7 @@ jobs:
     needs:
       - build
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Fetch current branch
         run: ./ci/fetch_current_branch.sh
@@ -419,7 +419,7 @@ jobs:
     name: Store install script
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Fetch current branch
         run: ./ci/fetch_current_branch.sh
@@ -442,7 +442,7 @@ jobs:
     name: Store Chef cookbook, Puppet module, and Ansible playbook
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Fetch current branch
         run: ./ci/fetch_current_branch.sh
