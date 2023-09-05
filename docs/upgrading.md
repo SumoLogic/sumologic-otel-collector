@@ -420,7 +420,7 @@ processors:
 
 ## Upgrading to 0.49.0-sumo-0
 
-### Several changes to receivers using [opentelemetry-log-collection][opentelemetry-log-collection]
+### Several changes to receivers using opentelemetry-log-collection
 
 The affected receivers are: `filelog`, `syslog`, `tcplog`, `udplog`, and `journald`.
 
@@ -448,7 +448,7 @@ upstream OTLP exporter. This is why we are changing the behaviour. From now on:
 In order to retain current behaviour, processors should be used to transform the data before it is exported. This
 potentially involves two transformations:
 
-#### Removing unnecessary metadata using the [resourceprocessor][resourceprocessor]
+#### Removing unnecessary metadata using the resourceprocessor
 
 `metadata_attributes` allowed filtering based on regular expressions. An equivalent processor doesn't yet
 exist, but resource-level attributed can be dropped using the [resourceprocessor][resourceprocessor]. For example:
