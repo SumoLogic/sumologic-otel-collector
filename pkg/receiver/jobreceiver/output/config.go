@@ -56,11 +56,6 @@ func (c *Config) Unmarshal(component *confmap.Conf) error {
 		return err
 	}
 
-	// Load non-dynamic parts like normal
-	if err := component.Unmarshal(c); err != nil {
-		return err
-	}
-
 	if !component.IsSet("type") {
 		return fmt.Errorf("missing required field 'type'")
 	}

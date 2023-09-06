@@ -100,8 +100,10 @@ to access.
 
 ### Time Parameters
 
-Time parameters are specified as sets of decimal numbers followed by a
-unit suffix. e.g. `60s`, `45m`, `2h30m40s`.
+Time parameters are expressed as go duration strings as defined by
+[time.ParseDuration](https://pkg.go.dev/time#ParseDuration).
+
+Examples: `60s`, `45m`, `2h30m40s`.
 
 ### ByteSize Parameters
 
