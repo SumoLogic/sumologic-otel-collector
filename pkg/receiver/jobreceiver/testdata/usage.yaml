@@ -1,0 +1,94 @@
+
+receivers:
+  monitoringjob/log:
+    schedule:
+      interval: 1h
+    exec:
+      command: echo
+      arguments:
+          - "hello world"
+    output:
+      type: log_entries
+      log_entries:
+        include_command_name: true
+        include_stream_name: true
+        max_log_size: '16kb'
+        encoding: 'utf-8'
+      attributes:
+        type: log
+      resource:
+        bingo: bango
+      operators:
+        - type: regex_parser
+          parse_from: body
+          regex: '^(?P<first>\w+).*$'
+        - type: severity_parser
+          parse_from: attributes.first
+          mapping:
+            error: total
+            warn:
+              - nonsense
+              - '.'
+              - hello
+  monitoringjob/event:
+    schedule:
+      interval: 1h
+    exec:
+      command: echo
+      arguments:
+          - "hello world"
+    output:
+      type: event
+      event:
+        include_command_name: false
+        include_command_status: true
+        include_command_duration: true
+        max_body_size: 1024
+      attributes:
+        type: event
+      resource:
+        bingo: bango
+      operators:
+        - type: regex_parser
+          parse_from: body
+          regex: '^(?P<first>\w+).*$'
+        - type: severity_parser
+          parse_from: attributes.first
+          mapping:
+            error: total
+            warn:
+              - nonsense
+              - '.'
+              - hello
+
+
+exporters:
+  logging:
+    verbosity: detailed
+
+processors:
+  memory_limiter:
+    check_interval: 5s
+    limit_percentage: 75
+    spike_limit_percentage: 20
+  batch:
+    send_batch_size: 1_024
+    timeout: 1s
+
+  resourcedetection/system:
+    detectors: ["system"]
+    system:
+      hostname_sources: ["dns","os"]
+
+service:
+  pipelines:
+    logs/monitorinjob:
+      receivers:
+        - monitoringjob/event
+        - monitoringjob/log
+      processors:
+        - memory_limiter
+        - batch
+        - resourcedetection/system
+      exporters:
+        - logging
