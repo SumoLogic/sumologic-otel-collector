@@ -41,6 +41,8 @@ func NewExecution(ctx context.Context, request ExecutionRequest) *Execution {
 	if len(request.Env) > 0 {
 		cmd.Env = request.Env
 	}
+
+	setOptions(cmd)
 	return &Execution{
 		cmd:     cmd,
 		ctx:     ctx,
@@ -119,11 +121,4 @@ type ExecutionResponse struct {
 
 	// Error is passed when the outcome of the execution is uncertain
 	Error error
-}
-
-// cError const error type for sentinels
-type cError string
-
-func (e cError) Error() string {
-	return string(e)
 }
