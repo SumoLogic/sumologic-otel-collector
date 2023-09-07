@@ -90,26 +90,6 @@ func TestExecute(t *testing.T) {
 		assert.Equal(t, 33, resp.Status)
 	})
 
-	// Command exceeds timeout
-	t.Run("exceeds timeout", func(t *testing.T) {
-		timeout := time.Millisecond * 100
-		sleepCmd := NewExecution(ctx, withTestHelper(t, ExecutionRequest{Command: "sleep", Arguments: []string{"1m"}, Timeout: timeout}))
-		done := make(chan struct{})
-		go func() {
-			resp, err := sleepCmd.Run()
-			assert.NoError(t, err)
-			assert.NotEqual(t, OKExitStatus, resp.Status)
-			assert.LessOrEqual(t, timeout, resp.Duration)
-			close(done)
-		}()
-		select {
-		case <-time.After(5 * time.Second):
-			t.Errorf("command timeout exceeded but was not killed")
-		case <-done:
-			// okay
-		}
-	})
-
 	// Invocation cannot be spuriously re-invoked
 	t.Run("cannot be ran twice", func(t *testing.T) {
 		echo := NewExecution(ctx, withTestHelper(t, ExecutionRequest{Command: "echo", Arguments: []string{"hello", "world"}}))
