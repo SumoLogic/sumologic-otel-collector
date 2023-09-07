@@ -3,14 +3,10 @@ package command
 import (
 	"fmt"
 	"os/exec"
-	"syscall"
 )
 
 // setOptions sets the process group of the command process
 func setOptions(cmd *exec.Cmd) {
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP,
-	}
 	// Cancel functiona adapted from sensu-go's command package
 	// TODO(ck) may be worth looking into the windows Job Object api
 	cmd.Cancel = func() error {
