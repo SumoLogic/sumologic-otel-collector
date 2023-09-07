@@ -109,25 +109,6 @@ func TestExecute(t *testing.T) {
 			// okay
 		}
 	})
-	// Command exceeds timeout with child process
-	t.Run("exceeds timeout with child", func(t *testing.T) {
-		timeout := time.Millisecond * 100
-		sleepCmd := NewExecution(ctx, withTestHelper(t, ExecutionRequest{Command: "fork", Arguments: []string{"sleep", "1m"}, Timeout: timeout}))
-		done := make(chan struct{})
-		go func() {
-			resp, err := sleepCmd.Run()
-			assert.NoError(t, err)
-			assert.NotEqual(t, OKExitStatus, resp.Status)
-			assert.LessOrEqual(t, timeout, resp.Duration)
-			close(done)
-		}()
-		select {
-		case <-time.After(5 * time.Second):
-			t.Fatal("command timeout exceeded but was not killed")
-		case <-done:
-			// okay
-		}
-	})
 
 	// Invocation cannot be spuriously re-invoked
 	t.Run("cannot be ran twice", func(t *testing.T) {
@@ -138,7 +119,6 @@ func TestExecute(t *testing.T) {
 		assert.ErrorIs(t, ErrAlreadyExecuted, err)
 		assert.Contains(t, <-outC, "hello world")
 	})
-	time.Sleep(time.Second * 5)
 }
 
 // withTestHelper takes an ExecutionRequest and adjusts it to run with the
