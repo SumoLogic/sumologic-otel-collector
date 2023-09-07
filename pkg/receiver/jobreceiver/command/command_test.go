@@ -138,6 +138,7 @@ func TestExecute(t *testing.T) {
 		assert.ErrorIs(t, ErrAlreadyExecuted, err)
 		assert.Contains(t, <-outC, "hello world")
 	})
+	time.Sleep(time.Second * 5)
 }
 
 // withTestHelper takes an ExecutionRequest and adjusts it to run with the
