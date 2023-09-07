@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"os/exec"
-	"sync"
 	"syscall"
 	"time"
 )
@@ -18,9 +17,6 @@ const (
 	// status used when golang is unable to determine the exit
 	// status.
 	FallbackExitStatus int = 3
-
-	// ErrAlreadyExecuted don't do that.
-	ErrAlreadyExecuted = cError("invocation has already been started once")
 )
 
 // ExecutionRequest
@@ -58,9 +54,6 @@ type Execution struct {
 	ctx     context.Context
 	cancel  func()
 	timeout time.Duration
-
-	mu      sync.Mutex
-	started bool
 }
 
 // Stdout and Stderr return Readers for the underlying execution's output
@@ -74,14 +67,6 @@ func (c *Execution) Stderr() (io.Reader, error) {
 
 // Run the command. May only be invoked once.
 func (c *Execution) Run() (resp ExecutionResponse, err error) {
-	c.mu.Lock()
-	if c.started {
-		defer c.mu.Unlock()
-		return resp, ErrAlreadyExecuted
-	}
-	c.started = true
-	c.mu.Unlock()
-
 	defer c.cancel()
 
 	started := time.Now()

@@ -135,7 +135,7 @@ func TestExecute(t *testing.T) {
 		outC := eventualOutput(echo)
 		echo.Run()
 		_, err := echo.Run()
-		assert.ErrorIs(t, ErrAlreadyExecuted, err)
+		assert.Error(t, err)
 		assert.Contains(t, <-outC, "hello world")
 	})
 }
