@@ -29,6 +29,7 @@ type stubRunner struct {
 func (r *stubRunner) Start(operator.Persister) error {
 	go func() {
 		ctx := context.Background()
+		ctx = context.WithValue(ctx, consumer.ContextKeyCommandName, r.Exec.Command)
 		cmd := command.NewExecution(ctx, command.ExecutionRequest{
 			Command:   r.Exec.Command,
 			Arguments: r.Exec.Arguments,

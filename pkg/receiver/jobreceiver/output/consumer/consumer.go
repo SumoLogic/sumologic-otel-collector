@@ -1,9 +1,7 @@
 package consumer
 
 import (
-	"bufio"
 	"context"
-	"fmt"
 	"io"
 	"time"
 
@@ -37,38 +35,6 @@ type WriterOp interface {
 	Write(ctx context.Context, e *entry.Entry)
 }
 
-// DemoConsumer stub consumer implementation.
-// todo(ck) delete - this is a stub implementation for PoC purposes only.
-type DemoConsumer struct {
-	WriterOp
-	Logger *zap.SugaredLogger
-}
+type contextKey string
 
-// Consume reads stdout line by line and produces entries
-func (p *DemoConsumer) Consume(ctx context.Context, stdout, stderr io.Reader) CloseFunc {
-	ctx, cancel := context.WithCancel(ctx)
-	go func() {
-		scanner := bufio.NewScanner(stdout)
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
-			if !scanner.Scan() {
-				if scanner.Err() != nil {
-					panic(scanner.Err())
-				}
-				return
-			}
-			ent, err := p.NewEntry(scanner.Text())
-			if err != nil {
-				ent = entry.New()
-				ent.Body = fmt.Sprintf("error: %s", err)
-			}
-			p.Write(ctx, ent)
-
-		}
-	}()
-	return func(_ ExecutionSummary) { cancel() }
-}
+const ContextKeyCommandName = contextKey("commandName")

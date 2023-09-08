@@ -4,9 +4,11 @@ receivers:
     schedule:
       interval: 1h
     exec:
-      command: echo
+      command: /bin/sh
+      timeout: 1m
       arguments:
-          - "hello world"
+        - '-c'
+        - 'for i in {0..120}; do echo -n "werning: " && date -Iseconds --date "90 seconds ago" && sleep 1 && echo "multi line $(head -c 12 /dev/urandom | base64)"; done;'
     output:
       type: log_entries
       log_entries:
@@ -14,6 +16,8 @@ receivers:
         include_stream_name: true
         max_log_size: '16kb'
         encoding: 'utf-8'
+        multiline:
+          line_start_pattern: '\w+:.*'
       attributes:
         type: log
       resource:
@@ -21,28 +25,30 @@ receivers:
       operators:
         - type: regex_parser
           parse_from: body
-          regex: '^(?P<first>\w+).*$'
+          regex: '^(?P<level>\w+):\s+(?P<ts>.*)'
         - type: severity_parser
-          parse_from: attributes.first
+          parse_from: attributes.level
           mapping:
-            error: total
+            error: errrrer
             warn:
+              - werning
               - nonsense
-              - '.'
-              - hello
+              - 'w.a.r.n.'
+        - type: time_parser
+          parse_from: attributes.ts
+          layout_type: gotime
+          layout: '2006-01-02T15:04:05-07:00'
+
   monitoringjob/event:
     schedule:
       interval: 1h
     exec:
-      command: /bin/sh
+      command: uptime
       timeout: 1m
-      arguments:
-        - '-c'
-        - 'for i in {0..120}; do date -Iseconds --date "90 seconds ago" && sleep 1; done;'
     output:
       type: event
       event:
-        include_command_name: false
+        include_command_name: true
         include_command_status: true
         include_command_duration: true
         max_body_size: 1024
@@ -50,11 +56,6 @@ receivers:
         type: event
       resource:
         bingo: bango
-      operators:
-        - type: time_parser
-          parse_from: body
-          layout_type: gotime
-          layout: '2006-01-02T15:04:05-07:00'
 
 
 exporters:
