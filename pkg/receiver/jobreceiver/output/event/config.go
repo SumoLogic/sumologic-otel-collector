@@ -6,6 +6,12 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	commandNameLabel     = "command.name"
+	commandStatusLabel   = "command.status"
+	commandDurationLabel = "command.duration"
+)
+
 // EventConfig handles output as if it is a monitoring job.
 // Should emit a single event per command execution summarizing the execution.
 type EventConfig struct {
@@ -22,7 +28,7 @@ type EventConfig struct {
 }
 
 func (c *EventConfig) Build(logger *zap.SugaredLogger, op consumer.WriterOp) (consumer.Interface, error) {
-	return &consumer.DemoConsumer{WriterOp: op, Logger: logger}, nil
+	return &handler{writer: op, logger: logger, config: *c}, nil
 }
 
 type EventConfigFactory struct{}
