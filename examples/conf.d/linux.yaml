@@ -45,6 +45,9 @@ receivers:
       - type: move
         from: attributes["log.file.path"]
         to: resource["log.file.path"]
+      - type: copy
+        from: resource["log.file.path"]
+        to: resource["_sourceName"]
     include:
       - /var/log/auth.log
       - /var/log/syslog
@@ -62,8 +65,24 @@ processors:
       - key: sumo.datasource
         value: linux
         action: insert
+      - key: _contentType
+        value: OpenTelemetry
+        action: insert
       - key: _sourceCategory
         value: otel/linux
+        action: insert
+  resource/linux_resource_attributes/metrics/localhost:
+    attributes:
+      - key: _source
+        value: linux/hostmetrics
+        action: insert
+      - key: _sourceName
+        value: linux
+        action: insert
+  resource/linux_resource_attributes/logs/localhost:
+    attributes:
+      - key: _source
+        value: linux/filelog
         action: insert
 service:
   pipelines:
@@ -74,6 +93,7 @@ service:
         - memory_limiter
         - resource/linux_resource_attributes/localhost
         - resourcedetection/system
+        - resource/linux_resource_attributes/metrics/localhost
         - batch
       exporters:
         - sumologic
@@ -84,6 +104,7 @@ service:
         - memory_limiter
         - resource/linux_resource_attributes/localhost
         - resourcedetection/system
+        - resource/linux_resource_attributes/logs/localhost
         - batch
       exporters:
         - sumologic
