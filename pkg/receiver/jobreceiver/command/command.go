@@ -19,9 +19,10 @@ const (
 	FallbackExitStatus int = 3
 )
 
-// ExecutionRequest
+// ExecutionRequest describes an external command to be executed.
 type ExecutionRequest struct {
-	// Command is the command to be executed.
+	// Command is the command to be executed. This is the only field that must
+	// be set non-zero. Behaves like os/exec.Cmd's Path field.
 	Command string
 
 	// Arguments to execute the command with.
@@ -30,7 +31,8 @@ type ExecutionRequest struct {
 	// Env variables to include
 	Env []string
 
-	// Execution timeout
+	// Timeout when set non-zero functions as a timer for starting and running
+	// a command on Execution.Run
 	Timeout time.Duration
 }
 
