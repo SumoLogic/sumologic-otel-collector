@@ -9,7 +9,7 @@ import (
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output/event"
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output/logentries"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/helper"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/tokenize"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/split"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
@@ -59,7 +59,7 @@ func TestConfigValidate(t *testing.T) {
 					IncludeStreamName:  true,
 					MaxLogSize:         16 * 1000,
 					Encoding:           "utf-8",
-					Multiline: tokenize.MultilineConfig{
+					Multiline: split.MultilineConfig{
 						LineStartPattern: "$start",
 					},
 				}
