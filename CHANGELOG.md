@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.85.0-sumo-0...main
 
+### Fixed
+
+- fix: ensure selinux records are created [#1249]
+
+[#1249]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1249
+
 ## [v0.85.0-sumo-0]
 
 ### Released 2023-09-12

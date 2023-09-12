@@ -219,7 +219,8 @@ func preActionMockStructure(c check) {
 	err := os.MkdirAll(fileStoragePath, os.ModePerm)
 	require.NoError(c.test, err)
 
-	_, err = os.Create(binaryPath)
+	content := []byte("#!/bin/sh\necho hello world\n")
+	err = os.WriteFile(binaryPath, content, 0755)
 	require.NoError(c.test, err)
 }
 
