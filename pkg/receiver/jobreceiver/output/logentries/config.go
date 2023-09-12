@@ -3,7 +3,7 @@ package logentries
 import (
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output/consumer"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/helper"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/tokenize"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/split"
 	"go.uber.org/zap"
 )
 
@@ -20,7 +20,7 @@ type LogEntriesConfig struct {
 	// Encoding to expect from output
 	Encoding string `mapstructure:"encoding"`
 	// Multiline configures alternate log line deliniation
-	Multiline tokenize.MultilineConfig `mapstructure:"multiline"`
+	Multiline split.Config `mapstructure:"multiline"`
 }
 
 func (c *LogEntriesConfig) Build(logger *zap.SugaredLogger, op consumer.WriterOp) (consumer.Interface, error) {

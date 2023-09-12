@@ -1,10 +1,22 @@
 receivers:
   windowseventlog/application/localhost:
     channel: Application
+    operators:
+      - type: add
+        field: resource["_sourceName"]
+        value: Application
   windowseventlog/security/localhost:
     channel: Security
+    operators:
+      - type: add
+        field: resource["_sourceName"]
+        value: Security
   windowseventlog/system/localhost:
     channel: System
+    operators:
+      - type: add
+        field: resource["_sourceName"]
+        value: System
   hostmetrics/localhost:
     collection_interval: 1m
     scrapers:
@@ -43,8 +55,24 @@ processors:
       - key: sumo.datasource
         value: windows
         action: insert
+      - key: _contentType
+        value: OpenTelemetry
+        action: insert
       - key: _sourceCategory
         value: otel/windows
+        action: insert
+  resource/windows_resource_attributes/metrics/localhost:
+    attributes:
+      - key: _source
+        value: windows/hostmetrics
+        action: insert
+      - key: _sourceName
+        value: windows
+        action: insert
+  resource/windows_resource_attributes/logs/localhost:
+    attributes:
+      - key: _source
+        value: windows/windowseventlog
         action: insert
 service:
   pipelines:
@@ -54,6 +82,7 @@ service:
       processors:
         - memory_limiter
         - resourcedetection/system
+        - resource/windows_resource_attributes/metrics/localhost
         - resource/windows_resource_attributes/localhost
         - batch
       exporters:
@@ -66,6 +95,7 @@ service:
       processors:
         - memory_limiter
         - resourcedetection/system
+        - resource/windows_resource_attributes/logs/localhost
         - resource/windows_resource_attributes/localhost
         - batch
       exporters:

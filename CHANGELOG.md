@@ -9,7 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released TBD
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.84.0-sumo-0...main
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.85.0-sumo-0...main
+
+## [v0.85.0-sumo-0]
+
+### Released 2023-09-12
+
+### Changed
+
+- chore: update otelcol core to v0.85.0 [#1247]
+
+[#1247]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1247
+[v0.85.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.84.0-sumo-0...v0.85.0-sumo-0
 
 ## [v0.84.0-sumo-0]
 
