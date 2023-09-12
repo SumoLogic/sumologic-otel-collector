@@ -19,8 +19,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/rogpeppe/go-internal v1.10.0 h1:TMyTOH3F/DB16zRVcYyreMH6GnZZrwQVAoYjRBZyWFQ=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
-go.opentelemetry.io/collector/confmap v0.84.0 h1:fS62yIRrsTQwe1gyuEc8TQM0yUNfSAzPVi0A1665ZpQ=
-go.opentelemetry.io/collector/confmap v0.84.0/go.mod h1:/SNHqYkLagF0TjBjQyCy2Gt3ZF6hTK8VKbaan/ZHuJs=
+go.opentelemetry.io/collector/confmap v0.85.0 h1:xyshTMElkpCJRCbg9OyGL41f7ToCr+PRBJKuAbGR17I=
+go.opentelemetry.io/collector/confmap v0.85.0/go.mod h1:/SNHqYkLagF0TjBjQyCy2Gt3ZF6hTK8VKbaan/ZHuJs=
 go.opentelemetry.io/collector/featuregate v1.0.0-rcv0014 h1:C9o0mbP0MyygqFnKueVQK/v9jef6zvuttmTGlKaqhgw=
 go.opentelemetry.io/collector/featuregate v1.0.0-rcv0014/go.mod h1:0mE3mDLmUrOXVoNsuvj+7dV14h/9HFl/Fy9YTLoLObo=
 go.uber.org/multierr v1.11.0 h1:blXXJkSxSSfBVBlC76pxqeO+LN3aDfLQo+309xJstO0=
