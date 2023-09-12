@@ -3,6 +3,10 @@
 package sumologic_scripts_tests
 
 import (
+	"context"
+	"io"
+	"net"
+	"net/http"
 	"os"
 	"testing"
 
@@ -42,6 +46,29 @@ func runTest(t *testing.T, spec *testSpec) {
 	}
 
 	defer tearDown(t)
+
+	t.Log("Starting HTTP server")
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		_, err := io.WriteString(w, "200 OK\n")
+		require.NoError(t, err)
+	})
+
+	listener, err := net.Listen("tcp", ":3333")
+	require.NoError(t, err)
+
+	httpServer := &http.Server{
+		Handler: mux,
+	}
+	go func() {
+		err := httpServer.Serve(listener)
+		if err != nil && err != http.ErrServerClosed {
+			require.NoError(t, err)
+		}
+	}()
+	defer func() {
+		require.NoError(t, httpServer.Shutdown(context.Background()))
+	}()
 
 	t.Log("Running pre actions")
 	for _, a := range spec.preActions {

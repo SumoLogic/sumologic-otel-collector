@@ -1847,19 +1847,6 @@ if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" ]]; then
     chmod -R 440 "${TOKEN_ENV_FILE}"
 fi
 
-if [[ -f "${SYSTEMD_CONFIG}" ]]; then
-    # This is required for configuration being installed after systemd setup
-    # for example first installation without hostmetrics and second with hostmetrics
-    if getent passwd "${SYSTEM_USER}" > /dev/null && [[ "${SKIP_CONFIG}" == "false" ]]; then
-        echo 'Ensuring that ownership for config and storage is correct'
-        chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOME_DIRECTORY}" "${CONFIG_DIRECTORY}"/*
-        chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}"
-    fi
-    echo "Configuration for systemd service (${SYSTEMD_CONFIG}) already exist. Restarting service"
-    systemctl restart otelcol-sumo
-    exit 0
-fi
-
 echo 'Creating user and group'
 if getent passwd "${SYSTEM_USER}" > /dev/null; then
     echo 'User and group already created'
@@ -1907,16 +1894,6 @@ mv "${TMP_SYSTEMD_CONFIG}" "${SYSTEMD_CONFIG}"
 if command -v sestatus && sestatus; then
     echo "SELinux is enabled, relabeling binary and systemd unit file"
 
-    # Check if semanage is available
-    if ! command -v semanage &> /dev/null; then
-        # Attempt to install it via yum if on a RHEL distribution.
-        if [[ -f "/etc/redhat-release" ]]; then
-            echo "semanage command not found, trying to install it..."
-            # Try to install semange but ignore error
-            yum install -y policycoreutils-python-utils || true
-        fi
-    fi
-
     if command -v semanage &> /dev/null; then
         # Check if there's already an fcontext record for the collector bin.
         if semanage fcontext -l | grep otelcol-sumo &> /dev/null; then
@@ -1933,11 +1910,14 @@ if command -v sestatus && sestatus; then
     fi
 fi
 
+echo 'Reloading systemd'
+systemctl daemon-reload
+
 echo 'Enable otelcol-sumo service'
 systemctl enable otelcol-sumo
 
 echo 'Starting otelcol-sumo service'
-systemctl start otelcol-sumo
+systemctl restart otelcol-sumo
 
 echo 'Waiting 10s before checking status'
 sleep 10
