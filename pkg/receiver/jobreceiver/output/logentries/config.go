@@ -20,7 +20,7 @@ type LogEntriesConfig struct {
 	// Encoding to expect from output
 	Encoding string `mapstructure:"encoding"`
 	// Multiline configures alternate log line deliniation
-	Multiline split.MultilineConfig `mapstructure:"multiline"`
+	Multiline split.Config `mapstructure:"multiline"`
 }
 
 func (c *LogEntriesConfig) Build(logger *zap.SugaredLogger, op consumer.WriterOp) (consumer.Interface, error) {

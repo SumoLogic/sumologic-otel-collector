@@ -59,7 +59,7 @@ func TestConfigValidate(t *testing.T) {
 					IncludeStreamName:  true,
 					MaxLogSize:         16 * 1000,
 					Encoding:           "utf-8",
-					Multiline: split.MultilineConfig{
+					Multiline: split.Config{
 						LineStartPattern: "$start",
 					},
 				}
