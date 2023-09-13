@@ -122,7 +122,7 @@ receivers:
     operators:
     - type: move
       from: attributes["log.file.path_resolved"]
-      to: resource["log.file.path_resolved"]
+      to: resource["_sourceName"]
     start_at: beginning
 
 service:
@@ -227,7 +227,7 @@ receivers:
     operators:
     - type: move
       from: attributes["log.file.path_resolved"]
-      to: resource["log.file.path_resolved"]
+      to: resource["_sourceName"]
     start_at: beginning
   hostmetrics:
     collection_interval: 30s
@@ -398,9 +398,9 @@ service:
 
 ## Collecting logs from files
 
-The Filelog Receiver tails and parses logs from files using the [opentelemetry-log-collection][opentelemetry-log-collection] library.
+The Filelog receiver tails and parses logs from files on local file system.
 
-The following is a basic configuration for the Filelog Receiver:
+The following is a basic configuration for the Filelog receiver:
 
 ```yaml
 receivers:
@@ -413,16 +413,15 @@ receivers:
     operators:
     - type: move
       from: attributes["log.file.path_resolved"]
-      to: resource["log.file.path_resolved"]
+      to: resource["_sourceName"]
 ```
 
 The `include_file_name: false` prevents the receiver from adding `log.file.name` attribute to the logs.
 Instead, we are using `include_file_path_resolved: true`,
 which adds a `log.file.path_resolved` attribute to the logs
 that contains the whole path of the file, as opposed to just the name of the file.
-What's more, the `log.file.path_resolved` attribute is automatically recognized by the `sumologicexporter`
-and translated to `_sourceName` attribute in Sumo Logic.
-We just need the `move` operator to move the attribute from record level to resource level.
+The configuration then uses the `move` operator to move the record-level attribute `log.file.path_resolved`
+to resource-level attribute `_sourceName`, so that it is displayed as source name in Sumo Logic.
 
 ### Keeping track of position in files
 
@@ -449,7 +448,7 @@ receivers:
     operators:
     - type: move
       from: attributes["log.file.path_resolved"]
-      to: resource["log.file.path_resolved"]
+      to: resource["_sourceName"]
     start_at: beginning
 ```
 
@@ -507,7 +506,6 @@ Example configuration with example log can be found in [/examples/otelcolconfigs
 
 [json_parser]: https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/operators/json_parser.md
 [filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/receiver/filelogreceiver
-[opentelemetry-log-collection]: https://github.com/open-telemetry/opentelemetry-log-collection
 [loggingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.85.0/exporter/loggingexporter
 
 ## Setting source category
