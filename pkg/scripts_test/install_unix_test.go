@@ -416,6 +416,7 @@ func TestInstallScript(t *testing.T) {
 			options: installOptions{
 				installToken:       installToken,
 				installHostmetrics: true,
+				apiBaseURL:         "http://127.0.0.1:3333",
 			},
 			preActions:        []checkFunc{preActionMockSystemdStructure, preActionCreateUser},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
