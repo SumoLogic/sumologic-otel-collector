@@ -2,64 +2,120 @@ package jobreceiver
 
 import (
 	"context"
+	"sync"
+	"time"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/builder"
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/command"
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output/consumer"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator"
+	"go.opentelemetry.io/collector/featuregate"
 	"go.uber.org/zap"
 )
+
+const (
+	featureEnabledId          = "receiver.monitoringjob.enabled"
+	featureEnabledStage       = featuregate.StageAlpha
+	featureEnabledDescription = "When enabled, the collector will schedule monitoring jobs."
+)
+
+var enabledGate *featuregate.Gate
+
+func init() {
+	enabledGate = featuregate.GlobalRegistry().MustRegister(
+		featureEnabledId,
+		featureEnabledStage,
+		featuregate.WithRegisterDescription(featureEnabledDescription),
+	)
+}
 
 // Build returns the job runner, the process responsible for scheduling and
 // running commands and piping their output to the output consumer.
 func (c Config) Build(logger *zap.SugaredLogger, out consumer.Interface) (builder.JobRunner, error) {
-	return &stubRunner{
-		Exec:     c.Exec,
-		Consumer: out,
+	if !enabledGate.IsEnabled() {
+		logger.Warn("monitoringjob feature is not enabled, will not run.")
+		return &nopRunner{}, nil
+	}
+	return &runner{
+		exec:     c.Exec,
+		schedule: c.Schedule,
+		consumer: out,
 	}, nil
 }
 
-// stubRunner is a stub implementation.
-type stubRunner struct {
-	Exec     ExecutionConfig
-	Consumer consumer.Interface
+// runner schedules and executes commands
+type runner struct {
+	exec     ExecutionConfig
+	schedule ScheduleConfig
+	consumer consumer.Interface
+
+	logger *zap.SugaredLogger
+
+	wg     sync.WaitGroup
+	cancel func()
 }
 
 // Start stub impl. runs command once at startup then idles indefinitely.
-func (r *stubRunner) Start(operator.Persister) error {
+func (r *runner) Start(operator.Persister) error {
+	r.wg.Add(1)
+
+	ctx := context.WithValue(context.Background(), consumer.ContextKeyCommandName, r.exec.Command)
+	ctx, r.cancel = context.WithCancel(ctx)
 	go func() {
-		ctx := context.Background()
-		ctx = context.WithValue(ctx, consumer.ContextKeyCommandName, r.Exec.Command)
-		cmd := command.NewExecution(ctx, command.ExecutionRequest{
-			Command:   r.Exec.Command,
-			Arguments: r.Exec.Arguments,
-			Timeout:   r.Exec.Timeout,
-		})
+		defer r.wg.Done()
 
-		stdout, err := cmd.Stdout()
-		if err != nil {
-			panic(err)
-		}
-		stderr, err := cmd.Stderr()
-		if err != nil {
-			panic(err)
-		}
-		cb := r.Consumer.Consume(ctx, stdout, stderr)
+		// TODO(ck) spec using persistence for interval timing.
+		ticker := time.NewTicker(r.schedule.Interval)
+		defer ticker.Stop()
 
-		resp, err := cmd.Run()
-		if err != nil {
-			panic(err)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+			}
+
+			cmd := command.NewExecution(ctx, command.ExecutionRequest{
+				Command:   r.exec.Command,
+				Arguments: r.exec.Arguments,
+				Timeout:   r.exec.Timeout,
+			})
+
+			stdout, err := cmd.Stdout()
+			if err != nil {
+				r.logger.Errorf("monitoringjob runner failed to create command Stdout pipe: %s", err)
+				continue
+			}
+			stderr, err := cmd.Stderr()
+			if err != nil {
+				r.logger.Errorf("monitoringjob runner failed to create command Stderr pipe: %s", err)
+				continue
+			}
+			cb := r.consumer.Consume(ctx, stdout, stderr)
+
+			resp, err := cmd.Run()
+			if err != nil {
+				r.logger.Errorf("monitoringjob runner failed to run command: %s", err)
+				continue
+			}
+			cb(consumer.ExecutionSummary{
+				Command:     r.exec.Command,
+				ExitCode:    resp.Status,
+				RunDuration: resp.Duration,
+			})
 		}
-		cb(consumer.ExecutionSummary{
-			Command:     r.Exec.Command,
-			ExitCode:    resp.Status,
-			RunDuration: resp.Duration,
-		})
 
 	}()
 	return nil
 }
 
-func (r *stubRunner) Stop() error {
+func (r *runner) Stop() error {
+	r.cancel()
+	r.wg.Wait()
 	return nil
 }
+
+type nopRunner struct{}
+
+func (_ *nopRunner) Start(operator.Persister) error { return nil }
+func (_ *nopRunner) Stop() error                    { return nil }
