@@ -2,7 +2,7 @@
 receivers:
   monitoringjob/log:
     schedule:
-      interval: 1h
+      interval: 1m
     exec:
       command: /bin/sh
       timeout: 1m
@@ -41,7 +41,7 @@ receivers:
 
   monitoringjob/event:
     schedule:
-      interval: 1h
+      interval: 10s
     exec:
       command: uptime
       timeout: 1m
@@ -79,7 +79,7 @@ processors:
 
 service:
   pipelines:
-    logs/monitorinjob:
+    logs/monitoringjob:
       receivers:
         - monitoringjob/event
         - monitoringjob/log

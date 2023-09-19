@@ -6,7 +6,7 @@ import (
 	"io"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output/consumer"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/decoder"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/decode"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/helper"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/split"
 	"go.uber.org/zap"
@@ -35,11 +35,11 @@ type LogEntriesConfig struct {
 
 func (c *LogEntriesConfig) Build(logger *zap.SugaredLogger, op consumer.WriterOp) (consumer.Interface, error) {
 
-	encoding, err := decoder.LookupEncoding(c.Encoding)
+	encoding, err := decode.LookupEncoding(c.Encoding)
 	if err != nil {
 		return nil, fmt.Errorf("log_entries configuration unable to use encoding %s: %w", c.Encoding, err)
 	}
-	splitFunc, err := c.Multiline.Build(encoding, true, true, true, nil, int(c.MaxLogSize))
+	splitFunc, err := c.Multiline.Func(encoding, true, int(c.MaxLogSize))
 	if err != nil {
 		return nil, fmt.Errorf("log_entries configuration could not build split function: %w", err)
 	}
@@ -95,3 +95,5 @@ func (f scannerFactory) splitWithTruncate() bufio.SplitFunc {
 		return
 	}
 }
+
+func nopTrim(b []byte) []byte { return b }
