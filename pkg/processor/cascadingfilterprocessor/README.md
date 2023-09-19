@@ -12,9 +12,9 @@ The Cascading Filter processor is a fork of [tailsamplingprocessor][tailsampling
 
 The following configuration options should be configured as desired:
 
-- `trace_reject_rules` (no default): policies used to explicitly drop matching traces
-- `trace_accept_rules` (no default): policies used to pass matching traces, within a specified limit
-- `spans_per_second` (no default): maximum total number of emitted spans per second. When set, the total number of spans each second is never exceeded. This value can be also calculated automatically when `probabilistic_filtering_rate` and/or `trace_accept_rules` are set
+- `trace_reject_filters` (no default): policies used to explicitly drop matching traces
+- `trace_accept_filters` (no default): policies used to pass matching traces, within a specified limit
+- `spans_per_second` (no default): maximum total number of emitted spans per second. When set, the total number of spans each second is never exceeded. This value can be also calculated automatically when `probabilistic_filtering_rate` and/or `trace_accept_filters` are set
 - `probabilistic_filtering_rate` (no default): number of spans that are always probabilistically filtered (hence might be used for metrics calculation).
 - `probabilistic_filtering_ratio` (no default): alternative way to specify the ratio of spans which are always probabilistically filtered (hence might be used for metrics calculation). The ratio is specified as portion of output spans (defined by `spans_per_second`) rather than input spans. So filtering rate of `0.2` and max span rate of `1500` produces at most `300` probabilistically sampled spans per second.
 
