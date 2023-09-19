@@ -109,6 +109,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 |           [kubeletstats][kubeletstatsreceiver]           |                                                              |                                        |                                              |                                       |
 |                   [loki][lokireceiver]                   |                                                              |                                        |                                              |                                       |
 |              [memcached][memcachedreceiver]              |                                                              |                                        |                                              |                                       |
+|          [monitoringjob][monitoringjobreceiver]          |                                                              |                                        |                                              |                                       |
 |                [mongodb][mongodbreceiver]                |                                                              |                                        |                                              |                                       |
 |           [mongodbatlas][mongodbatlasreceiver]           |                                                              |                                        |                                              |                                       |
 |                  [mysql][mysqlreceiver]                  |                                                              |                                        |                                              |                                       |
@@ -195,6 +196,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 [kubeletstatsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/receiver/kubeletstatsreceiver
 [lokireceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/receiver/lokireceiver
 [memcachedreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/receiver/memcachedreceiver
+[monitoringjobreceiver]: ./pkg/receiver/jobreceiver
 [mongodbreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/receiver/mongodbreceiver
 [mongodbatlasreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/receiver/mongodbatlasreceiver
 [mysqlreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/receiver/mysqlreceiver
