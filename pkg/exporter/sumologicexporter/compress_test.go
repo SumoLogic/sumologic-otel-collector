@@ -22,6 +22,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/klauspost/compress/zstd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -155,6 +156,31 @@ func TestCompressCloseError(t *testing.T) {
 	assert.EqualError(t, err, "close error")
 }
 
+func TestCompressZSTD(t *testing.T) {
+	const message = "This is an example log"
+
+	c, err := newCompressor(ZSTDCompression)
+	require.NoError(t, err)
+
+	body := strings.NewReader(message)
+
+	data, err := c.compress(body)
+	require.NoError(t, err)
+
+	assert.Equal(t, message, decodeZstd(t, data))
+}
+
+func decodeZstd(t *testing.T, data io.Reader) string {
+	r, err := zstd.NewReader(data)
+	require.NoError(t, err)
+
+	var buf []byte
+	buf, err = io.ReadAll(r)
+	require.NoError(t, err)
+
+	return string(buf)
+}
+
 func BenchmarkCompression(b *testing.B) {
 	const (
 		messageBlock       = "This is an example log"
@@ -189,6 +215,19 @@ func BenchmarkCompression(b *testing.B) {
 			}
 
 			return string(buf), nil
+		case string(ZSTDCompression):
+			r, err := zstd.NewReader(data)
+			if err != nil {
+				return "", err
+			}
+
+			var buf []byte
+			buf, err = io.ReadAll(r)
+			if err != nil {
+				return "", err
+			}
+
+			return string(buf), nil
 
 		default:
 			return "", errors.New("unknown compression method: " + compression)
@@ -203,6 +242,9 @@ func BenchmarkCompression(b *testing.B) {
 		},
 		{
 			encoding: string(GZIPCompression),
+		},
+		{
+			encoding: string(ZSTDCompression),
 		},
 	}
 

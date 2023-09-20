@@ -21,6 +21,7 @@ import (
 
 	"github.com/klauspost/compress/flate"
 	"github.com/klauspost/compress/gzip"
+	"github.com/klauspost/compress/zstd"
 )
 
 type compressor struct {
@@ -46,6 +47,11 @@ func newCompressor(format CompressEncodingType) (compressor, error) {
 		writer = gzip.NewWriter(io.Discard)
 	case DeflateCompression:
 		writer, err = flate.NewWriter(io.Discard, flate.BestSpeed)
+		if err != nil {
+			return compressor{}, err
+		}
+	case ZSTDCompression:
+		writer, err = zstd.NewWriter(io.Discard)
 		if err != nil {
 			return compressor{}, err
 		}

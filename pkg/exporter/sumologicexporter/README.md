@@ -17,7 +17,7 @@ exporters:
     # if sumologicextension is not being used, the endpoint is required
     endpoint: <HTTP_Source_URL>
     # Compression encoding format, empty string means no compression, default = gzip
-    compress_encoding: {gzip, deflate, ""}
+    compress_encoding: {gzip, deflate, ztsd, ""}
     # max HTTP request body size in bytes before compression (if applied),
     # NOTE: this limit does not apply to data sent in otlp format,
     #   to limit size of otlp requests, please use the batch processor:

@@ -32,7 +32,7 @@ type Config struct {
 	exporterhelper.QueueSettings  `mapstructure:"sending_queue"`
 	exporterhelper.RetrySettings  `mapstructure:"retry_on_failure"`
 
-	// Compression encoding format, either empty string, gzip or deflate (default gzip)
+	// Compression encoding format, either empty string, gzip, deflate or zstd (default gzip)
 	// Empty string means no compression
 	CompressEncoding CompressEncodingType `mapstructure:"compress_encoding"`
 	// Max HTTP request body size in bytes before compression (if applied).
@@ -176,6 +176,7 @@ func (cet CompressEncodingType) Validate() error {
 	case GZIPCompression:
 	case NoCompression:
 	case DeflateCompression:
+	case ZSTDCompression:
 
 	default:
 		return fmt.Errorf("invalid compression encoding type: %v", cet)
@@ -205,6 +206,8 @@ const (
 	GZIPCompression CompressEncodingType = "gzip"
 	// DeflateCompression represents compress_encoding: deflate
 	DeflateCompression CompressEncodingType = "deflate"
+	// ZSTDCompression represents compress_encoding: zstd
+	ZSTDCompression CompressEncodingType = "zstd"
 	// NoCompression represents disabled compression
 	NoCompression CompressEncodingType = ""
 	// MetricsPipeline represents metrics pipeline
