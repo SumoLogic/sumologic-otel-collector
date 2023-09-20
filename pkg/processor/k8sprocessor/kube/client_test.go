@@ -1335,7 +1335,7 @@ func TestServiceInfoArrivesLate(t *testing.T) {
 //		DaemonSetName:   true,
 //		DeploymentName:  true,
 //		HostName:        true,
-//		PodUID:           true,
+//		PodUID:          true,
 //		PodName:         true,
 //		ReplicaSetName:  true,
 //		ServiceName:     true,
@@ -1345,9 +1345,21 @@ func TestServiceInfoArrivesLate(t *testing.T) {
 //		NodeName:        true,
 //		Tags:            NewExtractionFieldTags(),
 //	}
-//	f := Filters{}
 //
-//	c, _ := New(zap.NewNop(), e, f, newFakeAPIClientset, newFakeInformer, newFakeOwnerProvider, newFakeOwnerProvider)
+//	c, _ := New(
+//		zap.NewNop(),
+//		k8sconfig.APIConfig{},
+//		e,
+//		Filters{},
+//		[]Association{},
+//		Excludes{},
+//		newFakeAPIClientset,
+//		NewFakeInformer,
+//		newFakeOwnerProvider,
+//		"",
+//		30*time.Second,
+//		DefaultPodDeleteGracePeriod,
+//	)
 //	return c.(*WatchClient)
 //}
 //
@@ -1399,7 +1411,7 @@ func TestServiceInfoArrivesLate(t *testing.T) {
 //		}
 //
 //		c.handlePodAdd(pod)
-//		_, ok := c.GetPodByIP(pod.Status.PodIP)
+//		_, ok := c.getPod(PodIdentifier(pod.Status.PodIP))
 //		require.True(b, ok)
 //
 //	}

@@ -70,6 +70,8 @@ func Test_OwnerProvider_GetOwners_ReplicaSet(t *testing.T) {
 			Tags:               NewExtractionFieldTags(),
 		},
 		"kube-system",
+		// relatively short delete interval and grace periods for expediencey
+		time.Millisecond*10, time.Millisecond*500,
 	)
 	require.NoError(t, err)
 
@@ -133,6 +135,15 @@ func Test_OwnerProvider_GetOwners_ReplicaSet(t *testing.T) {
 
 		return true
 	}, 5*time.Second, 5*time.Millisecond)
+
+	err = c.AppsV1().ReplicaSets("kube-system").Delete(
+		context.Background(), "my-rs", metav1.DeleteOptions{})
+	require.NoError(t, err)
+
+	assert.Eventually(t, func() bool {
+		owners := op.GetOwners(&Pod{OwnerReferences: &pod.OwnerReferences})
+		return len(owners) == 0
+	}, 5*time.Second, 5*time.Millisecond)
 }
 
 func Test_OwnerProvider_GetOwners_Deployment(t *testing.T) {
@@ -156,6 +167,7 @@ func Test_OwnerProvider_GetOwners_Deployment(t *testing.T) {
 			Tags:               NewExtractionFieldTags(),
 		},
 		"kube-system",
+		time.Second*30, DefaultPodDeleteGracePeriod,
 	)
 	require.NoError(t, err)
 
@@ -268,6 +280,7 @@ func Test_OwnerProvider_GetOwners_Statefulset(t *testing.T) {
 			Tags:               NewExtractionFieldTags(),
 		},
 		"kube-system",
+		time.Second*30, DefaultPodDeleteGracePeriod,
 	)
 	require.NoError(t, err)
 
@@ -354,6 +367,7 @@ func Test_OwnerProvider_GetOwners_Daemonset(t *testing.T) {
 			Tags:               NewExtractionFieldTags(),
 		},
 		"kube-system",
+		time.Second*30, DefaultPodDeleteGracePeriod,
 	)
 	require.NoError(t, err)
 
@@ -444,6 +458,7 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 			Tags:               NewExtractionFieldTags(),
 		},
 		namespace,
+		time.Millisecond*10, time.Millisecond*500,
 	)
 	require.NoError(t, err)
 
@@ -590,6 +605,7 @@ func Test_OwnerProvider_GetOwners_Job(t *testing.T) {
 			Tags:               NewExtractionFieldTags(),
 		},
 		"kube-system",
+		time.Second*30, DefaultPodDeleteGracePeriod,
 	)
 	require.NoError(t, err)
 
@@ -676,6 +692,7 @@ func Test_OwnerProvider_GetOwners_CronJob(t *testing.T) {
 			Tags:               NewExtractionFieldTags(),
 		},
 		"kube-system",
+		time.Second*30, DefaultPodDeleteGracePeriod,
 	)
 	require.NoError(t, err)
 
@@ -764,5 +781,87 @@ func Test_OwnerProvider_GetOwners_CronJob(t *testing.T) {
 		}
 
 		return true
+	}, 5*time.Second, 5*time.Millisecond)
+}
+
+func Test_OwnerProvider_GetNamespace(t *testing.T) {
+	c, err := newFakeAPIClientset(k8sconfig.APIConfig{})
+	require.NoError(t, err)
+
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+
+	op, err := newOwnerProvider(
+		logger,
+		c,
+		labels.Everything(),
+		fields.Everything(),
+		ExtractionRules{
+			Namespace:          true,
+			OwnerLookupEnabled: true,
+			PodUID:             true,
+			PodName:            true,
+			ReplicaSetName:     true,
+			Tags:               NewExtractionFieldTags(),
+		},
+		"kube-system",
+		// relatively short delete interval and grace periods for expediencey
+		time.Millisecond*10, time.Millisecond*500,
+	)
+	require.NoError(t, err)
+
+	client := c.(*fake.Clientset)
+	replicaSetWatchEstablished := waitForWatchToBeEstablished(client, "namespaces")
+
+	op.Start()
+	t.Cleanup(func() {
+		op.Stop()
+	})
+
+	<-replicaSetWatchEstablished
+
+	nsUID := types.UID("fb9e6935-8936-4959-bd90-4e975a4c2b07")
+	_, err = c.CoreV1().Namespaces().Create(context.Background(),
+		&api_v1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "testns",
+				UID:  nsUID,
+			},
+		}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	pod := &api_v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-pod",
+			Namespace: "testns",
+			UID:       "e98a3d3e-fde9-4b10-8f61-cc37d0357c28",
+		},
+	}
+
+	_, err = c.CoreV1().Pods("testns").
+		Create(context.Background(), pod, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	assert.Eventually(t, func() bool {
+		ns := op.GetNamespace(pod)
+		if ns == nil {
+			return false
+		}
+
+		if uid := ns.UID; uid != nsUID {
+			t.Logf("wrong namespace UID: %v", uid)
+			return false
+		}
+
+		return true
+	}, 5*time.Second, 5*time.Millisecond)
+
+	err = c.CoreV1().Namespaces().Delete(
+		context.Background(), "testns", metav1.DeleteOptions{})
+	require.NoError(t, err)
+
+	assert.Eventually(t, func() bool {
+		ns := op.GetNamespace(pod)
+		return ns == nil
 	}, 5*time.Second, 5*time.Millisecond)
 }

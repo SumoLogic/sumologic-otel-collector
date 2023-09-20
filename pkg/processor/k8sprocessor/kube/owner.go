@@ -17,6 +17,7 @@ package kube
 import (
 	"sort"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 	api_v1 "k8s.io/api/core/v1"
@@ -39,6 +40,8 @@ type OwnerProvider func(
 	fieldSelector fields.Selector,
 	extractionRules ExtractionRules,
 	namespace string,
+	deleteInterval time.Duration,
+	gracePeriod time.Duration,
 ) (OwnerAPI, error)
 
 // ObjectOwner keeps single entry
@@ -70,13 +73,19 @@ type OwnerCache struct {
 	namespaces map[string]*api_v1.Namespace
 	nsMutex    sync.RWMutex
 
+	deleteQueue []ownerCacheEviction
+	deleteMu    sync.Mutex
+
 	logger *zap.Logger
 
 	stopCh    chan struct{}
 	informers []cache.SharedIndexInformer
 }
 
-func newOwnerCache(logger *zap.Logger) OwnerCache {
+func newOwnerCache(logger *zap.Logger,
+	deleteInterval time.Duration,
+	gracePeriod time.Duration,
+) OwnerCache {
 	return OwnerCache{
 		objectOwners: map[string]*ObjectOwner{},
 		podServices:  map[string][]string{},
@@ -105,9 +114,13 @@ func newOwnerProvider(
 	labelSelector labels.Selector,
 	fieldSelector fields.Selector,
 	extractionRules ExtractionRules,
-	namespace string) (OwnerAPI, error) {
+	namespace string,
+	deleteInterval time.Duration,
+	gracePeriod time.Duration,
+) (OwnerAPI, error) {
 
-	ownerCache := newOwnerCache(logger)
+	ownerCache := newOwnerCache(logger, deleteInterval, gracePeriod)
+	go ownerCache.deleteLoop(deleteInterval, gracePeriod)
 
 	factory := informers.NewSharedInformerFactoryWithOptions(client, watchSyncPeriod,
 		informers.WithNamespace(namespace),
@@ -262,10 +275,10 @@ func (op *OwnerCache) addNamespaceInformer(factory informers.SharedInformerFacto
 			observability.RecordOtherUpdated()
 			op.upsertNamespace(obj)
 		},
-		DeleteFunc: func(obj interface{}) {
+		DeleteFunc: op.deferredDelete(func(obj interface{}) {
 			observability.RecordOtherDeleted()
 			op.deleteNamespace(obj)
-		},
+		}),
 	})
 	if err != nil {
 		op.logger.Error("error adding event handler to namespace informer", zap.Error(err))
@@ -274,6 +287,16 @@ func (op *OwnerCache) addNamespaceInformer(factory informers.SharedInformerFacto
 	op.informers = append(op.informers, informer)
 }
 
+func (op *OwnerCache) deferredDelete(evict func(obj any)) func(any) {
+	return func(obj any) {
+		op.deleteMu.Lock()
+		op.deleteQueue = append(op.deleteQueue, ownerCacheEviction{
+			ts:    time.Now(),
+			evict: func() { evict(obj) },
+		})
+		op.deleteMu.Unlock()
+	}
+}
 func (op *OwnerCache) addOwnerInformer(
 	kind string,
 	informer cache.SharedIndexInformer,
@@ -288,10 +311,10 @@ func (op *OwnerCache) addOwnerInformer(
 			cacheFunc(kind, obj)
 			observability.RecordOtherUpdated()
 		},
-		DeleteFunc: func(obj interface{}) {
+		DeleteFunc: op.deferredDelete(func(obj any) {
 			deleteFunc(obj)
 			observability.RecordOtherDeleted()
-		},
+		}),
 	})
 	if err != nil {
 		op.logger.Error("error adding event handler to namespace informer", zap.Error(err))
@@ -468,4 +491,38 @@ func (op *OwnerCache) GetOwners(pod *Pod) []*ObjectOwner {
 	}
 
 	return objectOwners
+}
+
+func (op *OwnerCache) deleteLoop(interval time.Duration, gracePeriod time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			var cutoff int
+			now := time.Now()
+			op.deleteMu.Lock()
+			for i, d := range op.deleteQueue {
+				if d.ts.Add(gracePeriod).After(now) {
+					break
+				}
+				cutoff = i + 1
+			}
+			toDelete := op.deleteQueue[:cutoff]
+			op.deleteQueue = op.deleteQueue[cutoff:]
+			op.deleteMu.Unlock()
+
+			for _, d := range toDelete {
+				d.evict()
+			}
+		case <-op.stopCh:
+			return
+		}
+	}
+}
+
+type ownerCacheEviction struct {
+	ts    time.Time
+	evict func()
 }
