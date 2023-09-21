@@ -448,13 +448,13 @@ func (op *OwnerCache) GetNamespace(pod *api_v1.Pod) *api_v1.Namespace {
 
 func (op *OwnerCache) GetServices(podName string) []string {
 	op.podServicesMutex.RLock()
+	defer op.podServicesMutex.RUnlock()
 	oo, found := op.podServices[podName]
-	op.podServicesMutex.RUnlock()
-
-	if found {
-		return oo
+	if !found {
+		return []string{}
 	}
-	return []string{}
+
+	return append([]string(nil), oo...)
 }
 
 // GetOwners goes through the cached data and assigns relevant metadata for pod
