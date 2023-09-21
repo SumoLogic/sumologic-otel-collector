@@ -82,10 +82,7 @@ type OwnerCache struct {
 	informers []cache.SharedIndexInformer
 }
 
-func newOwnerCache(logger *zap.Logger,
-	deleteInterval time.Duration,
-	gracePeriod time.Duration,
-) OwnerCache {
+func newOwnerCache(logger *zap.Logger) OwnerCache {
 	return OwnerCache{
 		objectOwners: map[string]*ObjectOwner{},
 		podServices:  map[string][]string{},
@@ -119,7 +116,7 @@ func newOwnerProvider(
 	gracePeriod time.Duration,
 ) (OwnerAPI, error) {
 
-	ownerCache := newOwnerCache(logger, deleteInterval, gracePeriod)
+	ownerCache := newOwnerCache(logger)
 	go ownerCache.deleteLoop(deleteInterval, gracePeriod)
 
 	factory := informers.NewSharedInformerFactoryWithOptions(client, watchSyncPeriod,
