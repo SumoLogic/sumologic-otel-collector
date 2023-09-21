@@ -497,26 +497,29 @@ func (op *OwnerCache) deleteLoop(interval time.Duration, gracePeriod time.Durati
 	for {
 		select {
 		case <-ticker.C:
-			var cutoff int
-			now := time.Now()
-			op.deleteMu.Lock()
-			for i, d := range op.deleteQueue {
-				if d.ts.Add(gracePeriod).After(now) {
-					break
-				}
-				cutoff = i + 1
-			}
-			toDelete := op.deleteQueue[:cutoff]
-			op.deleteQueue = op.deleteQueue[cutoff:]
-			op.deleteMu.Unlock()
-
-			for _, d := range toDelete {
+			for _, d := range op.nextDeleteQueue(gracePeriod) {
 				d.evict()
 			}
 		case <-op.stopCh:
 			return
 		}
 	}
+}
+
+func (op *OwnerCache) nextDeleteQueue(gracePeriod time.Duration) []ownerCacheEviction {
+	var cutoff int
+	now := time.Now()
+	op.deleteMu.Lock()
+	defer op.deleteMu.Unlock()
+	for i, d := range op.deleteQueue {
+		if d.ts.Add(gracePeriod).After(now) {
+			break
+		}
+		cutoff = i + 1
+	}
+	toDelete := op.deleteQueue[:cutoff]
+	op.deleteQueue = op.deleteQueue[cutoff:]
+	return toDelete
 }
 
 type ownerCacheEviction struct {
