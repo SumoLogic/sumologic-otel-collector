@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - fix: ensure selinux records are created [#1249]
+- fix(k8sprocessor): delay deleting the metadata from owner resources [#1242]
 
 [#1249]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1249
 
