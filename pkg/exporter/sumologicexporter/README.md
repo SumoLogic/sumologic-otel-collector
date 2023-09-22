@@ -36,6 +36,7 @@ exporters:
     # Decompose OTLP Histograms into individual metrics, similar to how they're represented in Prometheus format.
     # The Sumo OTLP source currently doesn't support Histograms, and they are quietly dropped. This option produces
     # metrics similar to when metric_format is set to prometheus.
+    # default = false
     decompose_otlp_histograms: {true, false}
 
     # format to use when sending traces to Sumo Logic,

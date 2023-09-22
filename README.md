@@ -256,8 +256,8 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 [metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/processor/metricstransformprocessor
 [probabilisticsamplerprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/processor/probabilisticsamplerprocessor
 [redactionprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/processor/redactionprocessor
-[remoteobserverprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/processor/resourceprocessor
-[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/processor/remoteobserverprocessor
+[remoteobserverprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/processor/remoteobserverprocessor
+[resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/processor/resourceprocessor
 [resourcedetectionprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/processor/resourcedetectionprocessor
 [routingprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/processor/routingprocessor
 [schemaprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.85.0/processor/schemaprocessor
