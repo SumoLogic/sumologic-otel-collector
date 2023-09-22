@@ -9,7 +9,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -64,13 +63,12 @@ func TestMain(m *testing.M) {
 	}
 }
 
-//nolint:all
 func TestExecute(t *testing.T) {
 	ctx := context.Background()
 	// Basic command execution
 	t.Run("basic", func(t *testing.T) {
 		echo := NewExecution(ctx, withTestHelper(t, ExecutionRequest{Command: "echo", Arguments: []string{"hello", "world"}}))
-		outC := eventualOutput(echo)
+		outC := eventualOutput(t, echo)
 		resp, err := echo.Run()
 		require.NoError(t, err)
 		assert.Equal(t, 0, resp.Status)
@@ -132,9 +130,10 @@ func TestExecute(t *testing.T) {
 	// Invocation cannot be spuriously re-invoked
 	t.Run("cannot be ran twice", func(t *testing.T) {
 		echo := NewExecution(ctx, withTestHelper(t, ExecutionRequest{Command: "echo", Arguments: []string{"hello", "world"}}))
-		outC := eventualOutput(echo)
-		echo.Run()
+		outC := eventualOutput(t, echo)
 		_, err := echo.Run()
+		require.NoError(t, err)
+		_, err = echo.Run()
 		assert.Error(t, err)
 		assert.Contains(t, <-outC, "hello world")
 	})
@@ -150,34 +149,21 @@ func withTestHelper(t *testing.T, request ExecutionRequest) ExecutionRequest {
 	return request
 }
 
-//nolint:all
-func eventualOutput(i *Execution) <-chan string {
+func eventualOutput(t *testing.T, i *Execution) <-chan string {
+	t.Helper()
 	out := make(chan string, 1)
-	stdout, _ := i.Stdout()
-	stderr, _ := i.Stderr()
+	stdout, err := i.Stdout()
+	require.NoError(t, err)
+	stderr, err := i.Stderr()
+	require.NoError(t, err)
 	go func() {
-		var buf syncBuffer
-		io.Copy(&buf, stdout)
-		io.Copy(&buf, stderr)
+		var buf bytes.Buffer
+		_, err := io.Copy(&buf, stdout)
+		require.NoError(t, err)
+		_, err = io.Copy(&buf, stderr)
+		require.NoError(t, err)
 		out <- buf.String()
 		close(out)
 	}()
 	return out
-}
-
-type syncBuffer struct {
-	buf bytes.Buffer
-	mu  sync.Mutex
-}
-
-func (s *syncBuffer) Write(p []byte) (n int, err error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.buf.Write(p)
-}
-
-func (s *syncBuffer) String() string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.buf.String()
 }
