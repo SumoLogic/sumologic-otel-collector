@@ -2,7 +2,7 @@
 Description=Sumo Logic Distribution for OpenTelemetry Collector
 
 [Service]
-ExecStart=/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/sumologic.yaml --config "glob:/etc/otelcol-sumo/conf.d/*.yaml"
+ExecStart=/usr/local/bin/otelcol-sumo --config /etc/otelcol-sumo/sumologic.yaml --config "glob:/etc/otelcol-sumo/conf.d/*.yaml" --feature-gates=receiver.monitoringjob.enabled
 User=otelcol-sumo
 Group=otelcol-sumo
 MemoryHigh=2000M
