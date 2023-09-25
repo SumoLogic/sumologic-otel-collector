@@ -11,11 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.85.0-sumo-0...main
 
+### Changed
+
+- chore(ci): build fips binary w/glibc 2.26 [#1257]
+
 ### Fixed
 
 - fix: ensure selinux records are created [#1249]
 
 [#1249]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1249
+[#1257]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1257
 
 ## [v0.85.0-sumo-0]
 
