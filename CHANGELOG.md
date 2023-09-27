@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- chore(ci): build fips binary w/glibc 2.26 [#1257]
+- chore(ci): build fips binary w/ glibc 2.26 [#1257]
 
 ### Fixed
 
