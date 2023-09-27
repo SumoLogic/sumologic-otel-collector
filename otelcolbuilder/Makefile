@@ -136,7 +136,7 @@ build-debug: ensure-correct-builder-version
 
 .PHONY: build-fips
 build-fips:
-	docker build --platform linux/amd64	-t otelcol-sumo-builder-fips -f ../ci/build-fips-action/Dockerfile ../ci/build-fips-action
+	docker build --platform linux/amd64 -t otelcol-sumo-builder-fips -f ../ci/build-fips-action/Dockerfile ../ci/build-fips-action
 	docker run -it --platform linux/amd64 --rm -v $(PWD)/../:/github/workspace -w /github/workspace --tmpfs /tmp otelcol-sumo-builder-fips
 
 .PHONY: generate-sources
