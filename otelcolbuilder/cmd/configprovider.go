@@ -60,13 +60,12 @@ func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
 		return nil
 	}
 
-	// ensure that --config and --opamp-config are not both passed
-	if err := validateConfigFlags(flagset); err != nil {
-		return err
-	}
-
 	locations := getConfigFlag(flagset)
 	opAmpPath := flagset.Lookup(opAmpConfigFlag)
+
+	if len(locations) > 0 && opAmpPath.Value.String() != "" {
+		return fmt.Errorf("cannot use --%s and --%s flags together", configFlag, opAmpConfigFlag)
+	}
 
 	if len(locations) == 0 && opAmpPath.Value.String() == "" {
 		// if no locations, use defaults
@@ -112,24 +111,6 @@ func makeMapProvidersMap(providers ...confmap.Provider) map[string]confmap.Provi
 		ret[provider.Scheme()] = provider
 	}
 	return ret
-}
-
-func validateConfigFlags(flags *flag.FlagSet) error {
-	// test configFlag and opAmpConfigFlag for mutual exclusion
-	config := flags.Lookup(configFlag)
-	if config == nil {
-		return nil
-	}
-	opAmp := flags.Lookup(opAmpConfigFlag)
-	if opAmp == nil {
-		return nil
-	}
-	configVal := config.Value.String()
-	opAmpVal := opAmp.Value.String()
-	if configVal != config.DefValue && opAmpVal != "" {
-		return fmt.Errorf("cannot use --%s and --%s flags together", configFlag, opAmpConfigFlag)
-	}
-	return nil
 }
 
 // opampProvider is a stub awaiting further development
