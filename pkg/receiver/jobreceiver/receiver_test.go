@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/consumer/consumertest"
-	"go.opentelemetry.io/collector/featuregate"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 )
 
@@ -22,9 +21,6 @@ func TestMain(m *testing.M) {
 
 func TestMonitoringJob(t *testing.T) {
 	// basic test
-	require.NoError(t, featuregate.GlobalRegistry().Set(featureEnabledId, true))
-	t.Cleanup(func() { require.NoError(t, featuregate.GlobalRegistry().Set(featureEnabledId, false)) })
-
 	f := NewFactory()
 	cfg := testdataConfigSimple()
 
@@ -43,24 +39,6 @@ func TestMonitoringJob(t *testing.T) {
 	first := sink.AllLogs()[0]
 	firstRecord := first.ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0)
 	assert.Equal(t, "hello world", firstRecord.Body().AsString())
-
-	t.Run("disabled by feature gate", func(t *testing.T) {
-		require.NoError(t, featuregate.GlobalRegistry().Set(featureEnabledId, false))
-
-		f := NewFactory()
-		cfg := testdataConfigSimple()
-
-		sink := new(consumertest.LogsSink)
-
-		rec, err := f.CreateLogsReceiver(context.Background(), receivertest.NewNopCreateSettings(), cfg, sink)
-		require.NoError(t, err)
-
-		require.NoError(t, rec.Start(context.Background(), componenttest.NewNopHost()))
-		// TODO(ck) bleh.
-		<-time.After(time.Millisecond * 1500)
-
-		assert.Equal(t, 0, sink.LogRecordCount())
-	})
 }
 
 func testdataConfigSimple() *Config {
