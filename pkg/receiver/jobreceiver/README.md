@@ -10,14 +10,6 @@ executable at defined intervals, and propagates the output from that process
 as log events. In addition, the monitoring job receiver simplifies the process
 of downloading runtime assets necessary to run a particular monitoring job.
 
-## Feature Gate
-
-This receiver is currently gated behind a [featuregate][featuregate]
-`receiver.monitoringjob.enabled`. To start the collector with monitoringjobs
-enabled use the `--feature-gates=receiver.monitoringjob.enabled` flag.
-
-[featuregate]: https://github.com/open-telemetry/opentelemetry-collector/tree/main/featuregate
-
 ## Configuration
 
 | Configuration | Default | Description

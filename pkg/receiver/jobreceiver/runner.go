@@ -9,33 +9,12 @@ import (
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/command"
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output/consumer"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator"
-	"go.opentelemetry.io/collector/featuregate"
 	"go.uber.org/zap"
 )
-
-const (
-	featureEnabledId          = "receiver.monitoringjob.enabled"
-	featureEnabledStage       = featuregate.StageAlpha
-	featureEnabledDescription = "When enabled, the collector will schedule monitoring jobs."
-)
-
-var enabledGate *featuregate.Gate
-
-func init() {
-	enabledGate = featuregate.GlobalRegistry().MustRegister(
-		featureEnabledId,
-		featureEnabledStage,
-		featuregate.WithRegisterDescription(featureEnabledDescription),
-	)
-}
 
 // Build returns the job runner, the process responsible for scheduling and
 // running commands and piping their output to the output consumer.
 func (c Config) Build(logger *zap.SugaredLogger, out consumer.Interface) (builder.JobRunner, error) {
-	if !enabledGate.IsEnabled() {
-		logger.Warn("monitoringjob feature is not enabled, will not run.")
-		return &nopRunner{}, nil
-	}
 	return &runner{
 		exec:     c.Exec,
 		schedule: c.Schedule,
@@ -114,8 +93,3 @@ func (r *runner) Stop() error {
 	r.wg.Wait()
 	return nil
 }
-
-type nopRunner struct{}
-
-func (_ *nopRunner) Start(operator.Persister) error { return nil }
-func (_ *nopRunner) Stop() error                    { return nil }
