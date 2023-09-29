@@ -23,24 +23,44 @@ import (
 	"github.com/oklog/ulid/v2"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/stretchr/testify/assert"
+
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/extension/extensiontest"
+	semconv "go.opentelemetry.io/collector/semconv/v1.18.0"
 )
 
 func TestNewOpampAgent(t *testing.T) {
 	cfg := createDefaultConfig()
 	set := extensiontest.NewNopCreateSettings()
-	o, err := newOpampAgent(cfg.(*Config), set.Logger)
+	set.BuildInfo = component.BuildInfo{Version: "test version", Command: "otelcoltest"}
+	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
+	assert.Equal(t, o.agentType, "otelcoltest")
+	assert.Equal(t, o.agentVersion, "test version")
 	assert.NotEmpty(t, o.instanceId.String())
 	assert.Empty(t, o.effectiveConfig)
 	assert.Nil(t, o.agentDescription)
 }
 
+func TestNewOpampAgentAttributes(t *testing.T) {
+	cfg := createDefaultConfig()
+	set := extensiontest.NewNopCreateSettings()
+	set.BuildInfo = component.BuildInfo{Version: "test version", Command: "otelcoltest"}
+	set.Resource.Attributes().PutStr(semconv.AttributeServiceName, "otelcol-sumo")
+	set.Resource.Attributes().PutStr(semconv.AttributeServiceVersion, "sumo.0")
+	set.Resource.Attributes().PutStr(semconv.AttributeServiceInstanceID, "01BX5ZZKBKACTAV9WEVGEMMVRZ")
+	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+	assert.Equal(t, o.agentType, "otelcol-sumo")
+	assert.Equal(t, o.agentVersion, "sumo.0")
+	assert.Equal(t, o.instanceId.String(), "01BX5ZZKBKACTAV9WEVGEMMVRZ")
+}
+
 func TestCreateAgentDescription(t *testing.T) {
 	cfg := createDefaultConfig()
 	set := extensiontest.NewNopCreateSettings()
-	o, err := newOpampAgent(cfg.(*Config), set.Logger)
+	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
 	assert.Nil(t, o.agentDescription)
@@ -51,7 +71,7 @@ func TestCreateAgentDescription(t *testing.T) {
 func TestLoadEffectiveConfig(t *testing.T) {
 	cfg := createDefaultConfig()
 	set := extensiontest.NewNopCreateSettings()
-	o, err := newOpampAgent(cfg.(*Config), set.Logger)
+	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
 	assert.Empty(t, o.effectiveConfig)
@@ -64,7 +84,7 @@ func TestLoadEffectiveConfig(t *testing.T) {
 func TestSaveEffectiveConfig(t *testing.T) {
 	cfg := createDefaultConfig()
 	set := extensiontest.NewNopCreateSettings()
-	o, err := newOpampAgent(cfg.(*Config), set.Logger)
+	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
 	f, err := os.CreateTemp("", "opamp-remote-config.yaml")
@@ -77,7 +97,7 @@ func TestSaveEffectiveConfig(t *testing.T) {
 func TestUpdateAgentIdentity(t *testing.T) {
 	cfg := createDefaultConfig()
 	set := extensiontest.NewNopCreateSettings()
-	o, err := newOpampAgent(cfg.(*Config), set.Logger)
+	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
 	olduid := o.instanceId
@@ -93,7 +113,7 @@ func TestUpdateAgentIdentity(t *testing.T) {
 func TestComposeEffectiveConfig(t *testing.T) {
 	cfg := createDefaultConfig()
 	set := extensiontest.NewNopCreateSettings()
-	o, err := newOpampAgent(cfg.(*Config), set.Logger)
+	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
 	ec := o.composeEffectiveConfig()
@@ -103,7 +123,7 @@ func TestComposeEffectiveConfig(t *testing.T) {
 func TestApplyRemoteConfig(t *testing.T) {
 	cfg := createDefaultConfig()
 	set := extensiontest.NewNopCreateSettings()
-	o, err := newOpampAgent(cfg.(*Config), set.Logger)
+	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
 	assert.Empty(t, o.effectiveConfig)
@@ -133,7 +153,7 @@ func TestShutdown(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.HTTPClientSettings.Auth = nil
 	set := extensiontest.NewNopCreateSettings()
-	o, err := newOpampAgent(cfg, set.Logger)
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
 	// Shutdown with no OpAMP client
@@ -144,7 +164,7 @@ func TestStart(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.HTTPClientSettings.Auth = nil
 	set := extensiontest.NewNopCreateSettings()
-	o, err := newOpampAgent(cfg, set.Logger)
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
 	assert.NoError(t, o.Start(context.Background(), componenttest.NewNopHost()))
@@ -154,7 +174,7 @@ func TestReload(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.HTTPClientSettings.Auth = nil
 	set := extensiontest.NewNopCreateSettings()
-	o, err := newOpampAgent(cfg, set.Logger)
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
 	ctx := context.Background()
