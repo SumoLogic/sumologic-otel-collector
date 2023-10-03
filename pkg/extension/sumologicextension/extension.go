@@ -742,7 +742,7 @@ func discoverTags() (map[string]interface{}, error) {
 	}
 
 	for _, v := range pl {
-		t["sumo.disco."+v] = "" // We do not currently need a value, save bytes.
+		t["sumo.disco."+v] = 1 // Sumo does not allow empty tag values, let's set it to anything.
 	}
 
 	return t, nil
