@@ -34,6 +34,8 @@ import (
 	"github.com/open-telemetry/opamp-go/client"
 	"github.com/open-telemetry/opamp-go/client/types"
 	"github.com/open-telemetry/opamp-go/protobufs"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	semconv "go.opentelemetry.io/collector/semconv/v1.18.0"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension"
 )
@@ -227,8 +229,31 @@ func (o *opampAgent) watchCredentials(ctx context.Context, callback func(ctx con
 	return nil
 }
 
-func newOpampAgent(cfg *Config, logger *zap.Logger) (*opampAgent, error) {
-	uid := ulid.Make() // TODO: Replace with https://github.com/open-telemetry/opentelemetry-collector/issues/6599
+func newOpampAgent(cfg *Config, logger *zap.Logger, build component.BuildInfo, res pcommon.Resource) (*opampAgent, error) {
+	agentType := build.Command
+
+	sn, ok := res.Attributes().Get(semconv.AttributeServiceName)
+	if ok {
+		agentType = sn.AsString()
+	}
+
+	agentVersion := build.Version
+
+	sv, ok := res.Attributes().Get(semconv.AttributeServiceVersion)
+	if ok {
+		agentVersion = sv.AsString()
+	}
+
+	uid := ulid.Make()
+
+	sid, ok := res.Attributes().Get(semconv.AttributeServiceInstanceID)
+	if ok {
+		puid, err := ulid.Parse(sid.AsString())
+		if err != nil {
+			return nil, err
+		}
+		uid = puid
+	}
 
 	if cfg.InstanceUID != "" {
 		puid, err := ulid.Parse(cfg.InstanceUID)
@@ -241,8 +266,8 @@ func newOpampAgent(cfg *Config, logger *zap.Logger) (*opampAgent, error) {
 	agent := &opampAgent{
 		cfg:          cfg,
 		logger:       logger,
-		agentType:    "io.opentelemetry.collector",
-		agentVersion: "1.0.0", // TODO: Replace with actual collector version info.
+		agentType:    agentType,
+		agentVersion: agentVersion,
 		instanceId:   uid,
 	}
 
