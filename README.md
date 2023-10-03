@@ -69,16 +69,16 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 |:--------------------------------------------------------:|:------------------------------------------------------------:|:--------------------------------------:|:--------------------------------------------:|:-------------------------------------:|
 |     [active_directory_ds][activedirectorydsreceiver]     |              [attributes][attributesprocessor]               |         [awss3][awss3exporter]         |       [asapclient][asapauthextension]        |      [forward][forwardconnector]      |
 |              [aerospike][aerospikereceiver]              |                   [batch][batchprocessor]                    |        [carbon][carbonexporter]        |             [awsproxy][awsproxy]             |        [count][countconnector]        |
-|                 [apache][apachereceiver]                 |        [`cascading_filter`][cascadingfilterprocessor]        |          [file][fileexporter]          |       [basicauth][basicauthextension]        | [servicegraph][servicegraphconnector] |
-|          [awscloudwatch][awscloudwatchreceiver]          |       [cumulativetodelta][cumulativetodeltaprocessor]        |         [kafka][kafkaexporter]         | [bearertokenauth][bearertokenauthextension]  |  [spanmetrics][spanmetricsconnector]  |
-|    [awscontainerinsight][awscontainerinsightreceiver]    |             [deltatorate][deltatorateprocessor]              | [loadbalancing][loadbalancingexporter] |           [db_storage][dbstorage]            |                                       |
-| [awsecscontainermetrics][awsecscontainermetricsreceiver] | [experimental_metricsgeneration][metricsgenerationprocessor] |       [logging][loggingexporter]       |      [docker_observer][dockerobserver]       |                                       |
-|            [awsfirehose][awsfirehosereceiver]            |                  [filter][filterprocessor]                   |          [otlp][otlpexporter]          |         [ecs_observer][ecsobserver]          |                                       |
-|                [awsxray][awsxrayreceiver]                |            [groupbyattrs][groupbyattrsprocessor]             |      [otlphttp][otlphttpexporter]      |     [ecs_task_observer][ecstaskobserver]     |                                       |
-|          [azureeventhub][azureeventhubreceiver]          |            [groupbytrace][groupbytraceprocessor]             |    [prometheus][prometheusexporter]    |         [file_storage][filestorage]          |                                       |
-|                  [bigip][bigipreceiver]                  |                 [`k8s_tagger`][k8sprocessor]                 |    [`sumologic`][sumologicexporter]    |   [headerssetter][headerssetterextension]    |                                       |
-|                 [carbon][carbonreceiver]                 |           [k8sattributes][k8sattributesprocessor]            |       [`syslog`][syslogexporter]       |     [health_check][healthcheckextension]     |                                       |
-|                 [chrony][chronyreceiver]                 |           [logstransform][logstransformprocessor]            |                                        |        [host_observer][hostobserver]         |                                       |
+|                 [apache][apachereceiver]                 |        [`cascading_filter`][cascadingfilterprocessor]        |         [debug][debugexporter]         |       [basicauth][basicauthextension]        |      [routing][routingconnector]      |
+|          [awscloudwatch][awscloudwatchreceiver]          |       [cumulativetodelta][cumulativetodeltaprocessor]        |          [file][fileexporter]          | [bearertokenauth][bearertokenauthextension]  | [servicegraph][servicegraphconnector] |
+|    [awscontainerinsight][awscontainerinsightreceiver]    |             [deltatorate][deltatorateprocessor]              |         [kafka][kafkaexporter]         |           [db_storage][dbstorage]            |  [spanmetrics][spanmetricsconnector]  |
+| [awsecscontainermetrics][awsecscontainermetricsreceiver] | [experimental_metricsgeneration][metricsgenerationprocessor] | [loadbalancing][loadbalancingexporter] |      [docker_observer][dockerobserver]       |                                       |
+|            [awsfirehose][awsfirehosereceiver]            |                  [filter][filterprocessor]                   |       [logging][loggingexporter]       |         [ecs_observer][ecsobserver]          |                                       |
+|                [awsxray][awsxrayreceiver]                |            [groupbyattrs][groupbyattrsprocessor]             |          [otlp][otlpexporter]          |     [ecs_task_observer][ecstaskobserver]     |                                       |
+|          [azureeventhub][azureeventhubreceiver]          |            [groupbytrace][groupbytraceprocessor]             |      [otlphttp][otlphttpexporter]      |         [file_storage][filestorage]          |                                       |
+|                  [bigip][bigipreceiver]                  |                 [`k8s_tagger`][k8sprocessor]                 |    [prometheus][prometheusexporter]    |   [headerssetter][headerssetterextension]    |                                       |
+|                 [carbon][carbonreceiver]                 |           [k8sattributes][k8sattributesprocessor]            |    [`sumologic`][sumologicexporter]    |     [health_check][healthcheckextension]     |                                       |
+|                 [chrony][chronyreceiver]                 |           [logstransform][logstransformprocessor]            |       [`syslog`][syslogexporter]       |        [host_observer][hostobserver]         |                                       |
 |             [cloudflare][cloudflarereceiver]             |           [memory_limiter][memorylimiterprocessor]           |                                        |       [http_forwarder][httpforwarder]        |                                       |
 |           [cloudfoundry][cloudfoundryreceiver]           |        [`metric_frequency`][metricfrequencyprocessor]        |                                        | [jaegerremotesampling][jaegerremotesampling] |                                       |
 |               [collectd][collectdreceiver]               |        [metricstransform][metricstransformprocessor]         |                                        |         [k8s_observer][k8sobserver]          |                                       |
@@ -272,6 +272,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 
 [awss3exporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.86.0/exporter/awss3exporter
 [carbonexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.86.0/exporter/carbonexporter
+[debugexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.86.0/exporter/debugexporter
 [fileexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.86.0/exporter/fileexporter
 [kafkaexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.86.0/exporter/kafkaexporter
 [loadbalancingexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.86.0/exporter/loadbalancingexporter
@@ -307,5 +308,6 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 
 [forwardconnector]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.86.0/connector/forwardconnector
 [countconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.86.0/connector/countconnector
+[routingconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.86.0/connector/routingconnector
 [servicegraphconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.86.0/connector/servicegraphconnector
 [spanmetricsconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.86.0/connector/spanmetricsconnector

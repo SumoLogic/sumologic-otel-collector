@@ -21,6 +21,7 @@ exporters:
 
   # Since include-code was removed we need to manually add all core components that we want to include:
   # https://github.com/open-telemetry/opentelemetry-collector/pull/4616
+  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.86.0
   - gomod: go.opentelemetry.io/collector/exporter/loggingexporter v0.86.0
   - gomod: go.opentelemetry.io/collector/exporter/otlpexporter v0.86.0
   - gomod: go.opentelemetry.io/collector/exporter/otlphttpexporter v0.86.0
@@ -211,6 +212,7 @@ extensions:
 connectors:
   - gomod: go.opentelemetry.io/collector/connector/forwardconnector v0.86.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/countconnector v0.86.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/routingconnector v0.86.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/servicegraphconnector v0.86.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/spanmetricsconnector v0.86.0
 
