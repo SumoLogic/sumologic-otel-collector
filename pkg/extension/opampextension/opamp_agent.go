@@ -64,7 +64,7 @@ type opampAgent struct {
 
 func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 	o.host = host
-	o.opampClient = client.NewWebSocket(&Logger{Logger: o.logger.Sugar()})
+	o.opampClient = client.NewWebSocket(o.logger.Sugar())
 
 	path := filepath.Join(o.cfg.RemoteConfigurationDirectory, "opamp-remote-config.yaml")
 	if _, err := os.Stat(path); err == nil {
