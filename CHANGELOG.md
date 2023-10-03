@@ -11,9 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.85.0-sumo-0...main
 
+### Added
+
+- feat: add `debug` exporter [#1268]
+- feat: add `routing` connector [#1268]
+
 ### Changed
 
-- chore: update otelcol core to `v0.86.0`
+- chore: update otelcol core to `v0.86.0` [#1264]
 - chore(ci): build fips binary w/ glibc 2.26 [#1257]
 
 ### Fixed
@@ -23,7 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [#1249]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1249
 [#1257]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1257
+[#1264]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1264
 [#1265]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1265
+[#1268]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1268
 
 ## [v0.85.0-sumo-0]
 
