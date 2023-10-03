@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - chore: update otelcol core to `v0.86.0` [#1264]
 - chore(ci): build fips binary w/ glibc 2.26 [#1257]
+- feat(opampextension): opamp agent type, version, and uid from collector resource and build info [#1260]
 
 ### Fixed
 
@@ -28,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [#1249]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1249
 [#1257]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1257
+[#1260]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1260
 [#1264]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1264
 [#1265]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1265
 [#1268]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1268
