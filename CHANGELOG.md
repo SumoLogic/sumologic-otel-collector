@@ -19,9 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - fix: ensure selinux records are created [#1249]
+- fix(extension/sumologic): send non-empty autodiscovery tag values [#1265]
 
 [#1249]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1249
 [#1257]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1257
+[#1265]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1265
 
 ## [v0.85.0-sumo-0]
 
