@@ -284,6 +284,9 @@ func (op *OwnerCache) addNamespaceInformer(factory informers.SharedInformerFacto
 	op.informers = append(op.informers, informer)
 }
 
+// deferredDelete returns a function that will handle deleting an object from
+// the owner cache eventually through the owner cache deleteQueue. Takes an
+// evict function that should contain the logic for processing the deletion.
 func (op *OwnerCache) deferredDelete(evict func(obj any)) func(any) {
 	return func(obj any) {
 		op.deleteMu.Lock()
@@ -294,11 +297,13 @@ func (op *OwnerCache) deferredDelete(evict func(obj any)) func(any) {
 		op.deleteMu.Unlock()
 	}
 }
+
 func (op *OwnerCache) addOwnerInformer(
 	kind string,
 	informer cache.SharedIndexInformer,
 	cacheFunc func(kind string, obj interface{}),
-	deleteFunc func(obj interface{})) {
+	deleteFunc func(obj interface{}),
+) {
 	_, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			cacheFunc(kind, obj)
@@ -490,6 +495,9 @@ func (op *OwnerCache) GetOwners(pod *Pod) []*ObjectOwner {
 	return objectOwners
 }
 
+// deleteLoop runs along side the owner cache, checking for and deleting cache
+// entries that have been marked for deletion for over the duration of the
+// grace period.
 func (op *OwnerCache) deleteLoop(interval time.Duration, gracePeriod time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -506,6 +514,8 @@ func (op *OwnerCache) deleteLoop(interval time.Duration, gracePeriod time.Durati
 	}
 }
 
+// nextDeleteQueue pops the evictions older than the gracePeriod from the
+// cache's deleteQueue
 func (op *OwnerCache) nextDeleteQueue(gracePeriod time.Duration) []ownerCacheEviction {
 	var cutoff int
 	now := time.Now()
