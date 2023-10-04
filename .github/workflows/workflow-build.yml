@@ -92,22 +92,29 @@ jobs:
             ${{ steps.get-cache-key.outputs.restore-keys }}
 
       - name: Set default BUILDER_BIN_PATH
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
+        if: ${{ ! inputs.fips && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
 
       - name: Add opentelemetry-collector-builder installation dir to PATH
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
+        if: ${{ ! inputs.fips && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
 
       - name: Install opentelemetry-collector-builder
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
+        if: ${{ ! inputs.fips && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         run: make install-builder
         working-directory: ./otelcolbuilder
 
       - name: Build
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
-        run: make otelcol-sumo-${{inputs.arch_os}}${{ inputs.fips && ' FIPS_SUFFIX="$OTELCOL_FIPS_SUFFIX" CGO_ENABLED=1' || '' }}
+        if: ${{ ! inputs.fips && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        run: make otelcol-sumo-${{inputs.arch_os}}
         working-directory: ./otelcolbuilder
+
+      - name: Build (FIPS)
+        if: ${{ inputs.fips && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        id: containerized-build
+        uses: ./ci/build-fips-action
+        with:
+          go-version: ${{ env.GO_VERSION }}
 
       - name: Set binary name
         id: set-binary-name

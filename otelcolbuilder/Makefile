@@ -1,5 +1,5 @@
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.85.0
+BUILDER_VERSION ?= 0.86.0
 FIPS_SUFFIX ?= ""
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
 GO ?= go
@@ -133,6 +133,11 @@ build-debug: ensure-correct-builder-version
 # and run 'go build ...' by hand.
 	@$(MAKE) generate-sources
 	@$(MAKE) _gobuild_debug
+
+.PHONY: build-fips
+build-fips:
+	docker build --platform linux/amd64 -t otelcol-sumo-builder-fips -f ../ci/build-fips-action/Dockerfile ../ci/build-fips-action
+	docker run -it --platform linux/amd64 --rm -v $(PWD)/../:/github/workspace -w /github/workspace --tmpfs /tmp otelcol-sumo-builder-fips
 
 .PHONY: generate-sources
 generate-sources:

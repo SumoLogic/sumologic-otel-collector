@@ -49,7 +49,6 @@ func TestUnmarshalConfig(t *testing.T) {
 					AuthenticatorID: component.NewID("sumologic"),
 				},
 			},
-			Endpoint:                     "wss://127.0.0.1:4320/v1/opamp",
 			InstanceUID:                  "01BX5ZZKBKACTAV9WEVGEMMVRZ",
 			RemoteConfigurationDirectory: "/tmp/",
 		}, cfg)
