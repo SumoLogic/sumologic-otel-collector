@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"os"
 	"sync"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output/consumer"
@@ -63,7 +64,11 @@ func (b *eventOutputBuffer) consume(in io.Reader) {
 	if errors.Is(err, errSizeLimitExceeded) {
 		_, err = io.Copy(io.Discard, in)
 	}
-	if err != nil {
+	// os.ErrClosed likely when an OS Pipe is closed due to a problem executing
+	// a command.
+	if errors.Is(err, os.ErrClosed) {
+		b.logger.Infof("input from closed file: %s", err)
+	} else if err != nil {
 		b.logger.Errorf("io error consuming event input: %s", err)
 	}
 }

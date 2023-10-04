@@ -95,5 +95,3 @@ func (f scannerFactory) splitWithTruncate() bufio.SplitFunc {
 		return
 	}
 }
-
-func nopTrim(b []byte) []byte { return b }
