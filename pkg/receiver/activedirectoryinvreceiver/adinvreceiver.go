@@ -35,7 +35,7 @@ func newLogsReceiver(cfg *ADConfig, logger *zap.Logger, consumer consumer.Logs) 
 }
 
 func (l *ADReceiver) Start(ctx context.Context, _ component.Host) error {
-	l.logger.Debug("starting to poll for Cloudwatch logs")
+	l.logger.Debug("starting to poll for active directory inventory records")
 	l.wg.Add(1)
 	go l.startPolling(ctx)
 	return nil
@@ -50,7 +50,7 @@ func (l *ADReceiver) Shutdown(_ context.Context) error {
 
 func (l *ADReceiver) startPolling(ctx context.Context) {
 	defer l.wg.Done()
-	t := time.NewTicker(l.config.PollInterval)
+	t := time.NewTicker(l.config.PollInterval * time.Second)
 	for {
 		select {
 		case <-ctx.Done():

@@ -28,8 +28,8 @@ func CreateDefaultConfig() component.Config {
 		CN:           "test user",
 		OU:           "test",
 		Password:     "test",
-		DC:           "exampledomain",
-		Host:         "examplehost",
+		DC:           "exampledomain.com",
+		Host:         "hostname.exampledomain.com",
 		PollInterval: 60,
 	}
 }
