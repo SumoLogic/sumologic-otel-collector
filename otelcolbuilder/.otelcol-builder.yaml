@@ -85,7 +85,7 @@ receivers:
 
   - gomod: github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/rawk8seventsreceiver v0.0.0-00010101000000-000000000000
     path: ./../pkg/receiver/rawk8seventsreceiver
-  
+
   - gomod: github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/activedirectoryinvreceiver v0.0.0-00010101000000-000000000000
     path: ./../pkg/receiver/activedirectoryinvreceiver
   # Upstream receivers:
