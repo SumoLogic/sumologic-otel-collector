@@ -1,9 +1,10 @@
---- main.go	2023-08-24 11:29:26.976310545 -0700
-+++ main_patched.go	2023-08-24 11:29:53.876416794 -0700
-@@ -29,6 +29,7 @@
+--- main.go	2023-10-05 14:07:54.808446767 -0700
++++ mainpatch.go	2023-10-05 14:08:28.426592750 -0700
+@@ -34,6 +34,8 @@
+ 	}
  
- func runInteractive(params otelcol.CollectorSettings) error {
  	cmd := otelcol.NewCommand(params)
++	// this is only here so that the flag can be recognized by the upstream parser and displayed in help
 +	cmd.Flags().StringVarP(&opAmpConfig, "opamp-config", "", "", "path to opamp config file")
  	if err := cmd.Execute(); err != nil {
  		log.Fatalf("collector server run finished with error: %v", err)
