@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/go-ldap/ldap/v3"
 	"go.opentelemetry.io/collector/component"
@@ -17,6 +19,8 @@ type ADReceiver struct {
 	config   *ADConfig
 	logger   *zap.Logger
 	consumer consumer.Logs
+	wg       *sync.WaitGroup
+	doneChan chan bool
 }
 
 func newLogsReceiver(cfg *ADConfig, logger *zap.Logger, consumer consumer.Logs) *ADReceiver {
@@ -25,10 +29,44 @@ func newLogsReceiver(cfg *ADConfig, logger *zap.Logger, consumer consumer.Logs) 
 		config:   cfg,
 		logger:   logger,
 		consumer: consumer,
+		wg:       &sync.WaitGroup{},
+		doneChan: make(chan bool),
 	}
 }
 
-func (r *ADReceiver) Start(ctx context.Context, host component.Host) error {
+func (l *ADReceiver) Start(ctx context.Context, _ component.Host) error {
+	l.logger.Debug("starting to poll for Cloudwatch logs")
+	l.wg.Add(1)
+	go l.startPolling(ctx)
+	return nil
+}
+
+func (l *ADReceiver) Shutdown(_ context.Context) error {
+	l.logger.Debug("shutting down logs receiver")
+	close(l.doneChan)
+	l.wg.Wait()
+	return nil
+}
+
+func (l *ADReceiver) startPolling(ctx context.Context) {
+	defer l.wg.Done()
+	t := time.NewTicker(l.config.PollInterval)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-l.doneChan:
+			return
+		case <-t.C:
+			err := l.poll(ctx)
+			if err != nil {
+				l.logger.Error("there was an error during the poll", zap.Error(err))
+			}
+		}
+	}
+}
+
+func (r *ADReceiver) poll(ctx context.Context) error {
 	go func() {
 		l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", r.config.Host, 389))
 		if err != nil {
@@ -57,12 +95,18 @@ func (r *ADReceiver) Start(ctx context.Context, host component.Host) error {
 			log.Fatal(err)
 		}
 
+		logs := plog.NewLogs()
+		rl := logs.ResourceLogs().AppendEmpty()
+		resourceLogs := &rl
+		resourceAttributes := resourceLogs.Resource().Attributes()
+		resourceAttributes.PutStr("host.name", r.config.Host)
+		_ = resourceLogs.ScopeLogs().AppendEmpty()
+
 		for _, entry := range sr.Entries {
 			if ctx.Err() != nil {
 				// If the collector has been shutdown
 				break
 			}
-
 			var attributes string
 			attributes += fmt.Sprintf("CN: %s, ", entry.GetAttributeValue("cn"))
 			attributes += fmt.Sprintf("sAMAccountName: %s, ", entry.GetAttributeValue("sAMAccountName"))
@@ -71,11 +115,6 @@ func (r *ADReceiver) Start(ctx context.Context, host component.Host) error {
 			attributes += fmt.Sprintf("manager: %s, ", entry.GetAttributeValue("manager"))
 			attributes += fmt.Sprintf("memberOf: %v, ", entry.GetAttributeValues("memberOf"))
 			fmt.Println(attributes)
-
-			logs := plog.NewLogs()
-			rl := logs.ResourceLogs().AppendEmpty()
-			resourceLogs := &rl
-			_ = resourceLogs.ScopeLogs().AppendEmpty()
 			logRecord := resourceLogs.ScopeLogs().At(0).LogRecords().AppendEmpty()
 			logRecord.Body().SetStr(attributes)
 			err := r.consumer.ConsumeLogs(ctx, logs)
@@ -85,10 +124,5 @@ func (r *ADReceiver) Start(ctx context.Context, host component.Host) error {
 		}
 	}()
 
-	return nil
-}
-
-func (r *ADReceiver) Shutdown(ctx context.Context) error {
-	// Implement your shutdown logic here
 	return nil
 }
