@@ -16,9 +16,7 @@ func TestVerify(t *testing.T) {
 	f, err := os.Open(assetPath)
 	require.NoError(t, err)
 
-	shaFileContent, err := os.ReadFile(fixturePath("helloworld.tar.gz.sha512"))
-	require.NoError(t, err)
-	expectedSha := strings.TrimSpace(string(shaFileContent))
+	expectedSha := ExtractSHA(t, "helloworld.tar.gz.sha512")
 	err = new(sha512Verifier).Verify(f, expectedSha)
 	assert.NoError(t, err)
 
@@ -26,4 +24,11 @@ func TestVerify(t *testing.T) {
 	// Check that a muddled sha512 does not match
 	err = new(sha512Verifier).Verify(f, badSha)
 	assert.Error(t, err)
+}
+
+func ExtractSHA(t *testing.T, fileName string) string {
+	t.Helper()
+	shaFileContent, err := os.ReadFile(fixturePath(fileName))
+	require.NoError(t, err)
+	return strings.TrimSpace(string(shaFileContent))
 }

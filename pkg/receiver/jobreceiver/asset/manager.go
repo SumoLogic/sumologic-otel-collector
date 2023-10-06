@@ -41,54 +41,33 @@ func (m *Manager) Validate(assets []Spec) error {
 
 // InstallAll runtime assets on the host file system under the StoragePath
 // directory.
+//
+// Loops through the provided asset Specs and ensures they are installed at the
+// Manager's StoragePath. Returns the first error encountered in the install.
 func (m *Manager) InstallAll(ctx context.Context, all []Spec) ([]Reference, error) {
-
-	type installTuple struct {
-		Err error
-		Ref Reference
-	}
-
-	results := make(chan installTuple)
-	ictx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	references := make([]Reference, 0, len(all))
 
 	for _, asset := range all {
-		go func(a Spec) {
-			var result installTuple
-			if ref, exists, err := m.get(a); exists {
-				m.Logger.With(
-					"asset", result.Ref.Name,
-					"path", result.Ref.Path,
-				).Info("reusing previously installed runtime asset")
-				result.Ref = ref
-			} else if err != nil {
-				result.Err = fmt.Errorf("failed to access asset storage: %s", err)
-			} else {
-				result.Ref, result.Err = m.install(ictx, a)
-				if result.Err == nil {
-					m.Logger.With(
-						"asset", result.Ref.Name,
-						"path", result.Ref.Path,
-					).Info("successfully installed asset")
-				}
-			}
-			results <- result
-		}(asset)
-	}
-
-	var references []Reference
-	for i := 0; i < len(all); i++ {
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		case r := <-results:
-			if r.Err != nil {
-				return references, r.Err
-			}
-			references = append(references, r.Ref)
+		if ref, exists, err := m.get(asset); exists {
+			m.Logger.With(
+				"asset", ref.Name,
+				"path", ref.Path,
+			).Info("reusing previously installed runtime asset")
+			references = append(references, ref)
+			continue
+		} else if err != nil {
+			return references, fmt.Errorf("failed to access asset storage: %s", err)
 		}
+		ref, err := m.install(ctx, asset)
+		if err != nil {
+			return references, fmt.Errorf("failed to retrieve runtime asset %s: %s", asset.Name, err)
+		}
+		references = append(references, ref)
+		m.Logger.With(
+			"asset", asset.Name,
+			"path", ref.Path,
+		).Info("successfully installed asset")
 	}
-
 	return references, nil
 }
 

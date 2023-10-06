@@ -21,8 +21,9 @@ type Fetcher interface {
 
 // An HTTPFetcher fetches the contents of files at a given URL.
 type httpFetcher struct {
-	client *http.Client
-	logger *zap.SugaredLogger
+	client      *http.Client
+	logger      *zap.SugaredLogger
+	makeBackoff func() backoff.BackOff
 }
 
 // NewFetcher creates a new HTTP based Fetcher.
@@ -30,8 +31,9 @@ type httpFetcher struct {
 // Uses an exponential backoff to retry failed requests.
 func NewFetcher(log *zap.SugaredLogger, client *http.Client) Fetcher {
 	return &httpFetcher{
-		client: client,
-		logger: log,
+		client:      client,
+		logger:      log,
+		makeBackoff: func() backoff.BackOff { return backoff.NewExponentialBackOff() },
 	}
 }
 
@@ -40,7 +42,7 @@ func NewFetcher(log *zap.SugaredLogger, client *http.Client) Fetcher {
 func (h *httpFetcher) Fetch(ctx context.Context, url string) (*os.File, error) {
 	var fetchErr error
 	var attempts int
-	b := backoff.NewExponentialBackOff()
+	b := h.makeBackoff()
 	for {
 		duration := b.NextBackOff()
 		if duration == backoff.Stop {
@@ -56,7 +58,7 @@ func (h *httpFetcher) Fetch(ctx context.Context, url string) (*os.File, error) {
 			h.logger.Errorf("retrying failed asset fetch for %s: %s", url, fetchErr)
 		}
 
-		attempts++
+		attempts = attempts + 1
 		out, err := h.tryFetch(ctx, url)
 		if err != nil {
 			fetchErr = err
