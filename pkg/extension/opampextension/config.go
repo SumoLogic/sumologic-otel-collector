@@ -16,6 +16,8 @@ package opampextension
 
 import (
 	"errors"
+	"fmt"
+	"os"
 
 	"github.com/oklog/ulid/v2"
 	"go.opentelemetry.io/collector/component"
@@ -59,6 +61,11 @@ func (cfg *Config) Validate() error {
 
 	if cfg.RemoteConfigurationDirectory == "" {
 		return errors.New("opamp remote_configuration_directory must be provided")
+	}
+
+	d := cfg.RemoteConfigurationDirectory
+	if _, err := os.Stat(d); err != nil {
+		return fmt.Errorf("opamp remote_configuration_directory %s must be readable: %v", d, err)
 	}
 
 	return nil

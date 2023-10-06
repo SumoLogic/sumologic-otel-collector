@@ -15,6 +15,8 @@
 package opampextension
 
 import (
+	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -60,9 +62,19 @@ func TestConfigValidate(t *testing.T) {
 	err := cfg.Validate()
 	require.Error(t, err)
 	assert.Equal(t, "opamp remote_configuration_directory must be provided", err.Error())
+
 	cfg.RemoteConfigurationDirectory = "/tmp/opamp.d"
 	err = cfg.Validate()
-	require.NoError(t, err)
+	assert.Equal(t, "opamp remote_configuration_directory /tmp/opamp.d must be readable: stat /tmp/opamp.d: no such file or directory", err.Error())
+
+	d, err := ioutil.TempDir("", "opamp.d")
+	assert.NoError(t, err)
+	defer os.RemoveAll(d)
+
+	cfg.RemoteConfigurationDirectory = d
+	err = cfg.Validate()
+	assert.NoError(t, err)
+
 	cfg.InstanceUID = "01BX5ZZKBKACTAV9WEVGEMMVRZFAIL"
 	err = cfg.Validate()
 	require.Error(t, err)

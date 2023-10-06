@@ -268,9 +268,7 @@ func newOpampAgent(cfg *Config, logger *zap.Logger, build component.BuildInfo, r
 }
 
 func (o *opampAgent) getAgentCapabilities() protobufs.AgentCapabilities {
-	var c protobufs.AgentCapabilities
-
-	c = protobufs.AgentCapabilities_AgentCapabilities_ReportsEffectiveConfig
+	c := protobufs.AgentCapabilities_AgentCapabilities_ReportsEffectiveConfig
 
 	if o.cfg.AcceptsRemoteConfiguration {
 		c = c |
