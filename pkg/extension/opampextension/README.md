@@ -40,9 +40,8 @@ extensions:
     installation_token: <token>
     api_base_url: <api_endpoint_url>
   opamp:
-    instance_uid: <uniq_uid>
     endpoint: <wss_endpoint_url>
-    remote_configuration_directory: /etc/otelcol-sumo/conf.d
+    remote_configuration_directory: /etc/otelcol-sumo/opamp.d
 ```
 
 ## API URLs
@@ -68,7 +67,7 @@ option:
 
 Here is a list of valid values for the OpAMP `endpoint** configuration option:
 
-**Note:** As of Jan 2023, these endpoints are not yet available.
+**Note:** As of Oct 2023, these endpoints are not yet available.
 
 |  Deployment   | API base URL                                |
 |:-------------:|---------------------------------------------|
@@ -84,11 +83,8 @@ Here is a list of valid values for the OpAMP `endpoint** configuration option:
 ## Storing local configuration
 
 When the OpAMP extension receives a remote configuration from the OpAMP server,
-it persists the YAML configuration to a local file. The path of this file is
-determined by the `remote_configuration_directory` configuration option and the
-file name is `opamp-remote-config.yaml`. For example, if
-`remote_configuration_directory` is set to `/etc/otelcol-sumo/conf.d`, the
-resulting local configuration file path would be
-`/etc/otelcol-sumo/conf.d/opamp-remote-config.yaml`. A configuration provider
-must be used in order to load the stored configuration, for example: `--config
-"glob:/etc/otelcol-sumo/conf.d/*"`.
+it persists each received YAML configuration to a local file in the
+`remote_configuration_directory`. The existing contents of the
+`remote_configuration_directory` are removed before doing so. A configuration
+provider must be used in order to load the stored configuration, for example:
+`--config "glob:/etc/otelcol-sumo/opamp.d/*"`.
