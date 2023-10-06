@@ -444,6 +444,7 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
+	gracePeriod := 333 * time.Millisecond
 	op, err := newOwnerProvider(
 		logger,
 		c,
@@ -458,7 +459,7 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 			Tags:               NewExtractionFieldTags(),
 		},
 		namespace,
-		time.Millisecond*10, time.Millisecond*500,
+		time.Millisecond*10, gracePeriod,
 	)
 	require.NoError(t, err)
 
@@ -571,16 +572,20 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 		err = c.CoreV1().Endpoints(namespace).
 			Delete(context.Background(), endpoints2.Name, metav1.DeleteOptions{})
 		require.NoError(t, err)
+		deleteSentAt := time.Now()
 
+		var ttd time.Duration
 		assert.Eventually(t, func() bool {
 			services := op.GetServices(pod.Name)
 			if len(services) != 0 {
 				t.Logf("services: %v", services)
 				return false
 			}
+			ttd = time.Since(deleteSentAt)
 
 			return len(services) == 0
 		}, 5*time.Second, 10*time.Millisecond)
+		assert.GreaterOrEqual(t, ttd, gracePeriod)
 	})
 }
 
@@ -791,6 +796,7 @@ func Test_OwnerProvider_GetNamespace(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
+	gracePeriod := 333 * time.Millisecond
 	op, err := newOwnerProvider(
 		logger,
 		c,
@@ -806,7 +812,7 @@ func Test_OwnerProvider_GetNamespace(t *testing.T) {
 		},
 		"kube-system",
 		// relatively short delete interval and grace periods for expediencey
-		time.Millisecond*10, time.Millisecond*500,
+		time.Millisecond*10, gracePeriod,
 	)
 	require.NoError(t, err)
 
@@ -859,9 +865,47 @@ func Test_OwnerProvider_GetNamespace(t *testing.T) {
 	err = c.CoreV1().Namespaces().Delete(
 		context.Background(), "testns", metav1.DeleteOptions{})
 	require.NoError(t, err)
+	deleteSentAt := time.Now()
 
+	var ttd time.Duration
 	assert.Eventually(t, func() bool {
 		ns := op.GetNamespace(pod)
-		return ns == nil
+		if ns != nil {
+			return false
+		}
+		ttd = time.Since(deleteSentAt)
+		return true
 	}, 5*time.Second, 5*time.Millisecond)
+
+	assert.GreaterOrEqual(t, ttd, gracePeriod)
+}
+
+func Test_OwnerCache_DeferredDeleteLoop(t *testing.T) {
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+
+	gracePeriod := 333 * time.Millisecond
+	ownerCache := newOwnerCache(logger)
+	go ownerCache.deleteLoop(5*time.Millisecond, gracePeriod)
+
+	deferredChannelClose := ownerCache.deferredDelete(func(c any) {
+		close(c.(chan struct{}))
+	})
+	done := make(chan struct{})
+
+	start := time.Now()
+	deferredChannelClose(done)
+
+	var delta time.Duration
+	assert.Eventually(t, func() bool {
+		select {
+		case <-done:
+			delta = time.Since(start)
+			return true
+		default:
+			return false
+		}
+	}, 3*time.Second, 10*time.Millisecond)
+
+	assert.GreaterOrEqual(t, delta, gracePeriod)
 }
