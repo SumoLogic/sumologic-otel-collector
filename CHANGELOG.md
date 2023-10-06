@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.86.0-sumo-0...main
 
+### Changed
+
+- feat(opampextension): opamp effective configuration is only derived from the
+  remote_configuration_directory contents and the contents are managed by the
+  extension [#1274]
+
+[#1274]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1274
+
 ## [v0.86.0-sumo-0]
 
 ### Released 2023-10-04
