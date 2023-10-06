@@ -34,6 +34,9 @@ type Config struct {
 	// RemoteConfigurationDirectory is where received OpAMP remote configuration
 	// is stored.
 	RemoteConfigurationDirectory string `mapstructure:"remote_configuration_directory"`
+
+	// AcceptsRemoteConfiguration indicates if the OpAMP agent will accept remote configuration.
+	AcceptsRemoteConfiguration bool `mapstructure:"accepts_remote_configuration"`
 }
 
 // CreateDefaultHTTPClientSettings returns default http client settings

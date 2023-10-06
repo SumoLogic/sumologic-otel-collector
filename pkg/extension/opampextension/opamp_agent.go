@@ -151,9 +151,7 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 			OnMessageFunc: o.onMessage,
 		},
 		RemoteConfigStatus: o.remoteConfigStatus,
-		Capabilities: protobufs.AgentCapabilities_AgentCapabilities_AcceptsRemoteConfig |
-			protobufs.AgentCapabilities_AgentCapabilities_ReportsRemoteConfig |
-			protobufs.AgentCapabilities_AgentCapabilities_ReportsEffectiveConfig,
+		Capabilities:       o.getAgentCapabilities(),
 	}
 
 	o.logger.Debug("Starting OpAMP client...")
@@ -267,6 +265,20 @@ func newOpampAgent(cfg *Config, logger *zap.Logger, build component.BuildInfo, r
 	}
 
 	return agent, nil
+}
+
+func (o *opampAgent) getAgentCapabilities() protobufs.AgentCapabilities {
+	var c protobufs.AgentCapabilities
+
+	c = protobufs.AgentCapabilities_AgentCapabilities_ReportsEffectiveConfig
+
+	if o.cfg.AcceptsRemoteConfiguration {
+		c = c |
+			protobufs.AgentCapabilities_AgentCapabilities_AcceptsRemoteConfig |
+			protobufs.AgentCapabilities_AgentCapabilities_ReportsRemoteConfig
+	}
+
+	return c
 }
 
 func stringKeyValue(key, value string) *protobufs.KeyValue {

@@ -32,7 +32,8 @@ func NewFactory() extension.Factory {
 
 func createDefaultConfig() component.Config {
 	return &Config{
-		HTTPClientSettings: CreateDefaultHTTPClientSettings(),
+		HTTPClientSettings:         CreateDefaultHTTPClientSettings(),
+		AcceptsRemoteConfiguration: true,
 	}
 }
 

@@ -51,6 +51,7 @@ func TestUnmarshalConfig(t *testing.T) {
 			},
 			InstanceUID:                  "01BX5ZZKBKACTAV9WEVGEMMVRZ",
 			RemoteConfigurationDirectory: "/tmp/opamp.d",
+			AcceptsRemoteConfiguration:   true,
 		}, cfg)
 }
 

@@ -58,6 +58,18 @@ func TestNewOpampAgentAttributes(t *testing.T) {
 	assert.Equal(t, o.instanceId.String(), "01BX5ZZKBKACTAV9WEVGEMMVRZ")
 }
 
+func TestGetAgentCapabilities(t *testing.T) {
+	cfg := createDefaultConfig().(*Config)
+	set := extensiontest.NewNopCreateSettings()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	assert.Equal(t, o.getAgentCapabilities(), protobufs.AgentCapabilities(4102))
+
+	cfg.AcceptsRemoteConfiguration = false
+	assert.Equal(t, o.getAgentCapabilities(), protobufs.AgentCapabilities(4))
+}
+
 func TestCreateAgentDescription(t *testing.T) {
 	cfg := createDefaultConfig()
 	set := extensiontest.NewNopCreateSettings()
