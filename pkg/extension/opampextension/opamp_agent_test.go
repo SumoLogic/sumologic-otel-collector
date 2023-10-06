@@ -16,7 +16,6 @@ package opampextension
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -99,7 +98,7 @@ func TestSaveEffectiveConfig(t *testing.T) {
 	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
-	d, err := ioutil.TempDir("", "opamp.d")
+	d, err := os.MkdirTemp("", "opamp.d")
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
 
@@ -133,7 +132,7 @@ func TestComposeEffectiveConfig(t *testing.T) {
 }
 
 func TestApplyRemoteConfig(t *testing.T) {
-	d, err := ioutil.TempDir("", "opamp.d")
+	d, err := os.MkdirTemp("", "opamp.d")
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
 
@@ -178,7 +177,7 @@ func TestShutdown(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
-	d, err := ioutil.TempDir("", "opamp.d")
+	d, err := os.MkdirTemp("", "opamp.d")
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
 
@@ -193,7 +192,7 @@ func TestStart(t *testing.T) {
 }
 
 func TestReload(t *testing.T) {
-	d, err := ioutil.TempDir("", "opamp.d")
+	d, err := os.MkdirTemp("", "opamp.d")
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
 

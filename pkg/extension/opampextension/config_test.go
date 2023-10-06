@@ -15,7 +15,6 @@
 package opampextension
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -67,7 +66,7 @@ func TestConfigValidate(t *testing.T) {
 	err = cfg.Validate()
 	assert.Equal(t, "opamp remote_configuration_directory /tmp/opamp.d must be readable: stat /tmp/opamp.d: no such file or directory", err.Error())
 
-	d, err := ioutil.TempDir("", "opamp.d")
+	d, err := os.MkdirTemp("", "opamp.d")
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
 
