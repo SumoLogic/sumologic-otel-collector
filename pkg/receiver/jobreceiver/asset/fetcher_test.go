@@ -93,7 +93,7 @@ func TestFetcherBackOff(t *testing.T) {
 		assert.Greater(t, time.Millisecond*1500, interval)
 	}
 
-	// respond to fetcher sucessfully with payload
+	// respond to fetcher successfully with payload
 	respondOK <- []byte("sensu")
 
 	assert.Eventually(t, func() bool {
