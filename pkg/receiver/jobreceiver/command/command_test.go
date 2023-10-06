@@ -87,6 +87,7 @@ func TestExecute(t *testing.T) {
 		outC := eventualOutput(t, echo)
 		_, err := echo.Run()
 		require.NoError(t, err)
+		time.Sleep(time.Millisecond * 100)
 		_, err = echo.Run()
 		assert.Error(t, err)
 		assert.Contains(t, <-outC, "hello world")
