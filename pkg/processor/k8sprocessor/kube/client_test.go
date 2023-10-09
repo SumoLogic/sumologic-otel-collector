@@ -37,6 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/tools/cache"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
 )
@@ -1231,6 +1232,36 @@ func Test_PodsGetAddedAndDeletedFromCache(t *testing.T) {
 		err = c.kc.CoreV1().Pods(namespace).
 			Delete(context.Background(), pod.Name, metav1.DeleteOptions{})
 		require.NoError(t, err)
+		eventuallyNPodsInCache(t, 0)
+	})
+
+	t.Run("with deleted final state unknown", func(t *testing.T) {
+		pod := &api_v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-pod",
+				Namespace: namespace,
+				UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75392",
+			},
+		}
+
+		_, err = c.kc.CoreV1().Pods(namespace).
+			Create(context.Background(), pod, metav1.CreateOptions{})
+		require.NoError(t, err)
+		eventuallyNPodsInCache(t, 2)
+
+		// Rather than set up a stub Informer just for this case, bypass the
+		// informer + fake k8s client entirely. Manually call the delete
+		// handler with DeletedFinalStateUnknown.
+		c.handlePodDelete(cache.DeletedFinalStateUnknown{
+			Key: fmt.Sprintf("%s/my-pod", namespace),
+			Obj: pod,
+		})
+		defer func() {
+			err = c.kc.CoreV1().Pods(namespace).
+				Delete(context.Background(), pod.Name, metav1.DeleteOptions{})
+			require.NoError(t, err)
+		}()
+
 		eventuallyNPodsInCache(t, 0)
 	})
 }
