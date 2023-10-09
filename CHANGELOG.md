@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released TBD
 
+### Fixed
+
+- fix(k8sprocessor): delay deleting the metadata from owner resources [#1242]
+
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.86.0-sumo-0...main
 
 ## [v0.86.0-sumo-0]
