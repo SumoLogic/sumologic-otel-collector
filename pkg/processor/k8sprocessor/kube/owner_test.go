@@ -569,10 +569,10 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 			return services[0] == "my-service-2"
 		}, 5*time.Second, 10*time.Millisecond)
 
+		deleteSentAt := time.Now()
 		err = c.CoreV1().Endpoints(namespace).
 			Delete(context.Background(), endpoints2.Name, metav1.DeleteOptions{})
 		require.NoError(t, err)
-		deleteSentAt := time.Now()
 
 		var ttd time.Duration
 		assert.Eventually(t, func() bool {
@@ -862,10 +862,10 @@ func Test_OwnerProvider_GetNamespace(t *testing.T) {
 		return true
 	}, 5*time.Second, 5*time.Millisecond)
 
+	deleteSentAt := time.Now()
 	err = c.CoreV1().Namespaces().Delete(
 		context.Background(), "testns", metav1.DeleteOptions{})
 	require.NoError(t, err)
-	deleteSentAt := time.Now()
 
 	var ttd time.Duration
 	assert.Eventually(t, func() bool {
