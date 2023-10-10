@@ -3,6 +3,7 @@ package asset
 import (
 	"context"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -49,6 +50,7 @@ func TestFetcher(t *testing.T) {
 		err = new(sha512Verifier).Verify(f, tarSHA)
 		assert.NoError(t, err)
 	})
+
 }
 
 func TestFetcherBackOff(t *testing.T) {
@@ -172,6 +174,53 @@ func TestFetcherBackOffExpires(t *testing.T) {
 			return false
 		}
 	}, time.Second*2, time.Millisecond*50, "expected fetcher to return")
+
+	assert.Error(t, fetchErr)
+	if fetchResponse != nil {
+		assert.NoError(t, fetchResponse.Close())
+	}
+}
+
+func TestFetcherInvalidURL(t *testing.T) {
+	t.Parallel()
+
+	failFastClient := &http.Client{
+		Transport: &http.Transport{
+			DialContext: (&net.Dialer{
+				Timeout: time.Millisecond * 500,
+			}).DialContext,
+		},
+	}
+	fetcher := NewFetcher(zap.NewNop().Sugar(), failFastClient)
+	// set backoff max elapsed time to 1s
+	fetcher.(*httpFetcher).makeBackoff = func() backoff.BackOff {
+		b := backoff.NewExponentialBackOff()
+		b.InitialInterval = 50 * time.Millisecond
+		b.Multiplier = 1
+		b.RandomizationFactor = 0.1
+		b.MaxElapsedTime = 1 * time.Second
+		return b
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	fetchDone := make(chan struct{})
+	var fetchResponse *os.File
+	var fetchErr error
+	go func() {
+		fetchResponse, fetchErr = fetcher.Fetch(ctx, "https://sumo-otel-collector.invalid/myasset.tar.gz")
+		close(fetchDone)
+	}()
+
+	assert.Eventually(t, func() bool {
+		select {
+		case <-fetchDone:
+			return true
+		default:
+			return false
+		}
+	}, time.Second*5, time.Millisecond*50, "expected fetcher to return")
 
 	assert.Error(t, fetchErr)
 	if fetchResponse != nil {
