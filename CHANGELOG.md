@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- feat(otelcol-sumo): add --opamp-config flag (provider unimplemented)
+
 ### Released TBD
 
 ### Fixed
