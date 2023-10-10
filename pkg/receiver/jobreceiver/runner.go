@@ -75,6 +75,7 @@ func (r *runner) Start(operator.Persister) error {
 		refs, err := assetManager.InstallAll(ctx, runtimeAssets)
 		if err != nil {
 			r.logger.Errorf("failed to load runtime assets. monitoringjob will not be scheduled: %s", err)
+			return
 		}
 		commandEnv := os.Environ()
 		for _, ref := range refs {
