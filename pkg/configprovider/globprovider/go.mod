@@ -1,4 +1,4 @@
-module github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/glob
+module github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider
 
 go 1.20
 
