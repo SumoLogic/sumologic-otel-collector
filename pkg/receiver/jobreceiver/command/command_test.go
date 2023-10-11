@@ -3,64 +3,18 @@ package command
 import (
 	"bytes"
 	"context"
-	"flag"
-	"fmt"
 	"io"
-	"os"
-	"strconv"
-	"strings"
 	"testing"
 	"time"
 
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/internal/commandtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // TestMain lets the test binary emulate other processes
 func TestMain(m *testing.M) {
-	flag.Parse()
-
-	pid := os.Getpid()
-	if os.Getenv("GO_EXEC_TEST_PID") == "" {
-		os.Setenv("GO_EXEC_TEST_PID", strconv.Itoa(pid))
-		os.Exit(m.Run())
-	}
-
-	args := flag.Args()
-	if len(args) == 0 {
-		fmt.Fprintf(os.Stderr, "No command\n")
-		os.Exit(2)
-	}
-
-	command, args := args[0], args[1:]
-	switch command {
-	case "echo":
-		fmt.Fprintf(os.Stdout, "%s", strings.Join(args, " "))
-	case "exit":
-		if i, err := strconv.ParseInt(args[0], 10, 32); err == nil {
-			os.Exit(int(i))
-		}
-		panic("unexpected exit argument")
-	case "sleep":
-		if d, err := time.ParseDuration(args[0]); err == nil {
-			time.Sleep(d)
-			return
-		}
-		if i, err := strconv.ParseInt(args[0], 10, 64); err == nil {
-			time.Sleep(time.Second * time.Duration(i))
-			return
-		}
-	case "fork":
-		childCommand := NewExecution(context.Background(), ExecutionRequest{
-			Command:   os.Args[0],
-			Arguments: args,
-		})
-		_, err := childCommand.Run()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "fork error: %v", err)
-			os.Exit(3)
-		}
-	}
+	commandtest.WrapTestMain(m)
 }
 
 func TestExecute(t *testing.T) {
@@ -133,6 +87,7 @@ func TestExecute(t *testing.T) {
 		outC := eventualOutput(t, echo)
 		_, err := echo.Run()
 		require.NoError(t, err)
+		time.Sleep(time.Millisecond * 100)
 		_, err = echo.Run()
 		assert.Error(t, err)
 		assert.Contains(t, <-outC, "hello world")
@@ -141,12 +96,11 @@ func TestExecute(t *testing.T) {
 
 // withTestHelper takes an ExecutionRequest and adjusts it to run with the
 // test binary. TestMain will handle emulating the command.
-func withTestHelper(t *testing.T, request ExecutionRequest) ExecutionRequest {
+func withTestHelper(t *testing.T, r ExecutionRequest) ExecutionRequest {
 	t.Helper()
 
-	request.Arguments = append([]string{request.Command}, request.Arguments...)
-	request.Command = os.Args[0]
-	return request
+	r.Command, r.Arguments = commandtest.WrapCommand(r.Command, r.Arguments)
+	return r
 }
 
 func eventualOutput(t *testing.T, i *Execution) <-chan string {
