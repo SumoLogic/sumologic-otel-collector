@@ -7,16 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Released TBD
+
 ### Added
 
-- feat(otelcol-sumo): add --opamp-config flag (provider unimplemented)
+- feat(otelcol-sumo): add --opamp-config flag (provider unimplemented) [#1230]
 
-### Released TBD
+### Changed
+
+- chore: update otelcol core to `v0.87.0` [#1279]
 
 ### Fixed
 
 - fix(k8sprocessor): delay deleting the metadata from owner resources [#1242]
 
+[#1230]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1230
+[#1242]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1242
+[#1279]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1279
 [Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.86.0-sumo-0...main
 
 ## [v0.86.0-sumo-0]
