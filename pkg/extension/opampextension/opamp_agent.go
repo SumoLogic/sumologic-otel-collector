@@ -321,7 +321,7 @@ func (o *opampAgent) loadEffectiveConfig(dir string) error {
 
 	ec := map[string]*protobufs.AgentConfigFile{}
 
-	paths, err := filepath.Glob(dir + "/*.yaml")
+	paths, err := filepath.Glob(filepath.Join(dir, "*.yaml"))
 	if err != nil {
 		return err
 	}
