@@ -810,7 +810,8 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 
 	se.logger.Info("Updating collector metadata",
 		zap.String("URL", u.String()),
-		zap.String("body", buff.String()))
+		zap.String("body", buff.String()),
+		zap.String("collectorId", se.registrationInfo.CollectorCredentialId))
 
 	res, err := httpClient.Do(req)
 	if err != nil {
