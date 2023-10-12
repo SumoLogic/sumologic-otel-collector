@@ -15,6 +15,8 @@
 package kube
 
 import (
+	"time"
+
 	"go.uber.org/zap"
 	api_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,7 +42,9 @@ func newFakeOwnerProvider(logger *zap.Logger,
 	labelSelector labels.Selector,
 	fieldSelector fields.Selector,
 	extractionRules ExtractionRules,
-	namespace string) (OwnerAPI, error) {
+	namespace string,
+	_ time.Duration, _ time.Duration,
+) (OwnerAPI, error) {
 	ownerCache := fakeOwnerCache{
 		labelSelector:   labelSelector,
 		fieldSelector:   fieldSelector,

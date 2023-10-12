@@ -17,6 +17,7 @@ package kube
 import (
 	"sort"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 	api_v1 "k8s.io/api/core/v1"
@@ -39,6 +40,8 @@ type OwnerProvider func(
 	fieldSelector fields.Selector,
 	extractionRules ExtractionRules,
 	namespace string,
+	deleteInterval time.Duration,
+	gracePeriod time.Duration,
 ) (OwnerAPI, error)
 
 // ObjectOwner keeps single entry
@@ -69,6 +72,9 @@ type OwnerCache struct {
 
 	namespaces map[string]*api_v1.Namespace
 	nsMutex    sync.RWMutex
+
+	deleteQueue []ownerCacheEviction
+	deleteMu    sync.Mutex
 
 	logger *zap.Logger
 
@@ -105,9 +111,13 @@ func newOwnerProvider(
 	labelSelector labels.Selector,
 	fieldSelector fields.Selector,
 	extractionRules ExtractionRules,
-	namespace string) (OwnerAPI, error) {
+	namespace string,
+	deleteInterval time.Duration,
+	gracePeriod time.Duration,
+) (OwnerAPI, error) {
 
 	ownerCache := newOwnerCache(logger)
+	go ownerCache.deleteLoop(deleteInterval, gracePeriod)
 
 	factory := informers.NewSharedInformerFactoryWithOptions(client, watchSyncPeriod,
 		informers.WithNamespace(namespace),
@@ -244,9 +254,28 @@ func (op *OwnerCache) upsertNamespace(obj interface{}) {
 }
 
 func (op *OwnerCache) deleteNamespace(obj interface{}) {
-	namespace := obj.(*api_v1.Namespace)
+	var ns *api_v1.Namespace
+
+	switch obj := obj.(type) {
+	case *api_v1.Namespace:
+		ns = obj
+	case cache.DeletedFinalStateUnknown:
+		prev, ok := obj.Obj.(*api_v1.Namespace)
+		if !ok {
+			op.logger.Error(
+				"object received was DeletedFinalStateUnknown but did not contain api_v1.Namespace",
+				zap.Any("received", obj),
+			)
+			return
+		}
+		ns = prev
+	default:
+		op.logger.Error("object received was not of type api_v1.Namespace", zap.Any("received", obj))
+		return
+	}
+
 	op.nsMutex.Lock()
-	delete(op.namespaces, namespace.Name)
+	delete(op.namespaces, ns.Name)
 	op.nsMutex.Unlock()
 }
 
@@ -262,10 +291,10 @@ func (op *OwnerCache) addNamespaceInformer(factory informers.SharedInformerFacto
 			observability.RecordOtherUpdated()
 			op.upsertNamespace(obj)
 		},
-		DeleteFunc: func(obj interface{}) {
+		DeleteFunc: op.deferredDelete(func(obj interface{}) {
 			observability.RecordOtherDeleted()
 			op.deleteNamespace(obj)
-		},
+		}),
 	})
 	if err != nil {
 		op.logger.Error("error adding event handler to namespace informer", zap.Error(err))
@@ -274,11 +303,26 @@ func (op *OwnerCache) addNamespaceInformer(factory informers.SharedInformerFacto
 	op.informers = append(op.informers, informer)
 }
 
+// deferredDelete returns a function that will handle deleting an object from
+// the owner cache eventually through the owner cache deleteQueue. Takes an
+// evict function that should contain the logic for processing the deletion.
+func (op *OwnerCache) deferredDelete(evict func(obj any)) func(any) {
+	return func(obj any) {
+		op.deleteMu.Lock()
+		op.deleteQueue = append(op.deleteQueue, ownerCacheEviction{
+			ts:    time.Now(),
+			evict: func() { evict(obj) },
+		})
+		op.deleteMu.Unlock()
+	}
+}
+
 func (op *OwnerCache) addOwnerInformer(
 	kind string,
 	informer cache.SharedIndexInformer,
 	cacheFunc func(kind string, obj interface{}),
-	deleteFunc func(obj interface{})) {
+	deleteFunc func(obj interface{}),
+) {
 	_, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			cacheFunc(kind, obj)
@@ -288,10 +332,10 @@ func (op *OwnerCache) addOwnerInformer(
 			cacheFunc(kind, obj)
 			observability.RecordOtherUpdated()
 		},
-		DeleteFunc: func(obj interface{}) {
+		DeleteFunc: op.deferredDelete(func(obj any) {
 			deleteFunc(obj)
 			observability.RecordOtherDeleted()
-		},
+		}),
 	})
 	if err != nil {
 		op.logger.Error("error adding event handler to namespace informer", zap.Error(err))
@@ -301,8 +345,31 @@ func (op *OwnerCache) addOwnerInformer(
 }
 
 func (op *OwnerCache) deleteObject(obj interface{}) {
+	var metaObj meta_v1.Object
+
+	switch obj := obj.(type) {
+	case meta_v1.Object:
+		metaObj = obj
+	case cache.DeletedFinalStateUnknown:
+		prev, ok := obj.Obj.(meta_v1.Object)
+		if !ok {
+			op.logger.Error(
+				"object received was DeletedFinalStateUnknown but did not contain meta_v1.Object",
+				zap.Any("received", obj),
+			)
+			return
+		}
+		metaObj = prev
+	default:
+		op.logger.Error(
+			"object received was not of type meta_v1.Object",
+			zap.Any("received", obj),
+		)
+		return
+	}
+
 	op.ownersMutex.Lock()
-	delete(op.objectOwners, string(obj.(meta_v1.Object).GetUID()))
+	delete(op.objectOwners, string(metaObj.GetUID()))
 	op.ownersMutex.Unlock()
 }
 
@@ -385,7 +452,28 @@ func (op *OwnerCache) deleteEndpointFromPod(pod string, endpoint string) {
 }
 
 func (op *OwnerCache) genericEndpointOp(obj interface{}, endpointFunc func(pod string, endpoint string)) {
-	ep := obj.(*api_v1.Endpoints)
+	var ep *api_v1.Endpoints
+
+	switch obj := obj.(type) {
+	case *api_v1.Endpoints:
+		ep = obj
+	case cache.DeletedFinalStateUnknown:
+		prev, ok := obj.Obj.(*api_v1.Endpoints)
+		if !ok {
+			op.logger.Error(
+				"object received was DeletedFinalStateUnknown but did not contain api_v1.Endpoints",
+				zap.Any("received", obj),
+			)
+			return
+		}
+		ep = prev
+	default:
+		op.logger.Error(
+			"object received was not of type api_v1.Endpoints",
+			zap.Any("received", obj),
+		)
+		return
+	}
 
 	for _, it := range ep.Subsets {
 		for _, addr := range it.Addresses {
@@ -425,13 +513,13 @@ func (op *OwnerCache) GetNamespace(pod *api_v1.Pod) *api_v1.Namespace {
 
 func (op *OwnerCache) GetServices(podName string) []string {
 	op.podServicesMutex.RLock()
+	defer op.podServicesMutex.RUnlock()
 	oo, found := op.podServices[podName]
-	op.podServicesMutex.RUnlock()
-
-	if found {
-		return oo
+	if !found {
+		return []string{}
 	}
-	return []string{}
+
+	return append([]string(nil), oo...)
 }
 
 // GetOwners goes through the cached data and assigns relevant metadata for pod
@@ -468,4 +556,46 @@ func (op *OwnerCache) GetOwners(pod *Pod) []*ObjectOwner {
 	}
 
 	return objectOwners
+}
+
+// deleteLoop runs along side the owner cache, checking for and deleting cache
+// entries that have been marked for deletion for over the duration of the
+// grace period.
+func (op *OwnerCache) deleteLoop(interval time.Duration, gracePeriod time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			for _, d := range op.nextDeleteQueue(gracePeriod) {
+				d.evict()
+			}
+		case <-op.stopCh:
+			return
+		}
+	}
+}
+
+// nextDeleteQueue pops the evictions older than the gracePeriod from the
+// cache's deleteQueue
+func (op *OwnerCache) nextDeleteQueue(gracePeriod time.Duration) []ownerCacheEviction {
+	var cutoff int
+	now := time.Now()
+	op.deleteMu.Lock()
+	defer op.deleteMu.Unlock()
+	for i, d := range op.deleteQueue {
+		if d.ts.Add(gracePeriod).After(now) {
+			break
+		}
+		cutoff = i + 1
+	}
+	toDelete := op.deleteQueue[:cutoff]
+	op.deleteQueue = op.deleteQueue[cutoff:]
+	return toDelete
+}
+
+type ownerCacheEviction struct {
+	ts    time.Time
+	evict func()
 }

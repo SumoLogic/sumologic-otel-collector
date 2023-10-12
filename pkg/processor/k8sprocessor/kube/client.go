@@ -101,7 +101,7 @@ func New(
 			newOwnerProviderFunc = newOwnerProvider
 		}
 
-		c.op, err = newOwnerProviderFunc(logger, c.kc, labelSelector, fieldSelector, rules, c.Filters.Namespace)
+		c.op, err = newOwnerProviderFunc(logger, c.kc, labelSelector, fieldSelector, rules, c.Filters.Namespace, deleteInterval, gracePeriod)
 		if err != nil {
 			return nil, err
 		}
@@ -193,15 +193,28 @@ func (c *WatchClient) handlePodUpdate(old, new interface{}) {
 
 func (c *WatchClient) handlePodDelete(obj interface{}) {
 	observability.RecordPodDeleted()
-	if pod, ok := obj.(*api_v1.Pod); ok {
-		c.forgetPod(pod)
-	} else {
+
+	var pod *api_v1.Pod
+
+	switch obj := obj.(type) {
+	case *api_v1.Pod:
+		pod = obj
+	case cache.DeletedFinalStateUnknown:
+		prev, ok := obj.Obj.(*api_v1.Pod)
+		if !ok {
+			c.logger.Error(
+				"object received was DeletedFinalStateUnknown but did not contain api_v1.Pod",
+				zap.Any("received", obj),
+			)
+			return
+		}
+		pod = prev
+	default:
 		c.logger.Error("object received was not of type api_v1.Pod", zap.Any("received", obj))
+		return
 	}
-	c.m.RLock()
-	podTableSize := len(c.Pods)
-	c.m.RUnlock()
-	observability.RecordPodTableSize(int64(podTableSize))
+
+	c.forgetPod(pod)
 }
 
 func (c *WatchClient) deleteLoop(interval time.Duration, gracePeriod time.Duration) {

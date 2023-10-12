@@ -37,6 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/tools/cache"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
 )
@@ -1233,6 +1234,36 @@ func Test_PodsGetAddedAndDeletedFromCache(t *testing.T) {
 		require.NoError(t, err)
 		eventuallyNPodsInCache(t, 0)
 	})
+
+	t.Run("with deleted final state unknown", func(t *testing.T) {
+		pod := &api_v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-pod",
+				Namespace: namespace,
+				UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75392",
+			},
+		}
+
+		_, err = c.kc.CoreV1().Pods(namespace).
+			Create(context.Background(), pod, metav1.CreateOptions{})
+		require.NoError(t, err)
+		eventuallyNPodsInCache(t, 2)
+
+		// Rather than set up a stub Informer just for this case, bypass the
+		// informer + fake k8s client entirely. Manually call the delete
+		// handler with DeletedFinalStateUnknown.
+		c.handlePodDelete(cache.DeletedFinalStateUnknown{
+			Key: fmt.Sprintf("%s/my-pod", namespace),
+			Obj: pod,
+		})
+		defer func() {
+			err = c.kc.CoreV1().Pods(namespace).
+				Delete(context.Background(), pod.Name, metav1.DeleteOptions{})
+			require.NoError(t, err)
+		}()
+
+		eventuallyNPodsInCache(t, 0)
+	})
 }
 
 func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters) (*WatchClient, *observer.ObservedLogs) {
@@ -1326,90 +1357,3 @@ func TestServiceInfoArrivesLate(t *testing.T) {
 	// Desired behavior: we get all three service names in response:
 	assert.Equal(t, "firstService, secondService, thirdService", serviceName)
 }
-
-//func newBenchmarkClient(b *testing.B) *WatchClient {
-//	e := ExtractionRules{
-//		ContainerID:     true,
-//		ContainerImage:  true,
-//		ContainerName:   true,
-//		DaemonSetName:   true,
-//		DeploymentName:  true,
-//		HostName:        true,
-//		PodUID:           true,
-//		PodName:         true,
-//		ReplicaSetName:  true,
-//		ServiceName:     true,
-//		StatefulSetName: true,
-//		StartTime:       true,
-//		Namespace:       true,
-//		NodeName:        true,
-//		Tags:            NewExtractionFieldTags(),
-//	}
-//	f := Filters{}
-//
-//	c, _ := New(zap.NewNop(), e, f, newFakeAPIClientset, newFakeInformer, newFakeOwnerProvider, newFakeOwnerProvider)
-//	return c.(*WatchClient)
-//}
-//
-//// benchmark actually checks what's the impact of adding new Pod, which is mostly impacted by duration of API call
-//func benchmark(b *testing.B, podsPerUniqueOwner int) {
-//	c := newBenchmarkClient(b)
-//
-//	b.ResetTimer()
-//	for i := 0; i < b.N; i++ {
-//		pod := &api_v1.Pod{
-//			ObjectMeta: meta_v1.ObjectMeta{
-//				Name:              fmt.Sprintf("pod-number-%d", i),
-//				Namespace:         "ns1",
-//				UID:               types.UID(fmt.Sprintf("33333-%d", i)),
-//				CreationTimestamp: meta_v1.Now(),
-//				Labels: map[string]string{
-//					"label1": fmt.Sprintf("lv1-%d", i),
-//					"label2": "k1=v1 k5=v5 extra!",
-//				},
-//				Annotations: map[string]string{
-//					"annotation1": fmt.Sprintf("av%d", i),
-//				},
-//				OwnerReferences: []meta_v1.OwnerReference{
-//					{
-//						Kind: "ReplicaSet",
-//						Name: "foo-bar-rs",
-//						UID:  types.UID(fmt.Sprintf("1a1658f9-7818-11e9-90f1-02324f7e0d1e-%d", i/podsPerUniqueOwner)),
-//					},
-//				},
-//			},
-//			Spec: api_v1.PodSpec{
-//				NodeName: "node1",
-//				Hostname: "auth-hostname3",
-//				Containers: []api_v1.Container{
-//					{
-//						Image: "auth-service-image",
-//						Name:  "auth-service-container-name",
-//					},
-//				},
-//			},
-//			Status: api_v1.PodStatus{
-//				PodIP: fmt.Sprintf("%d.%d.%d.%d", (i>>24)%256, (i>>16)%256, (i>>8)%256, i%256),
-//				ContainerStatuses: []api_v1.ContainerStatus{
-//					{
-//						ContainerID: fmt.Sprintf("111-222-333-%d", i),
-//					},
-//				},
-//			},
-//		}
-//
-//		c.handlePodAdd(pod)
-//		_, ok := c.GetPodByIP(pod.Status.PodIP)
-//		require.True(b, ok)
-//
-//	}
-//
-//}
-//
-//func BenchmarkManyPodsPerOwner(b *testing.B) {
-//	benchmark(b, 100000)
-//}
-//
-//func BenchmarkFewPodsPerOwner(b *testing.B) {
-//	benchmark(b, 10)
-//}

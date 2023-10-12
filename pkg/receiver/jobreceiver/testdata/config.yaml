@@ -14,7 +14,6 @@ monitoringjob/log_ntp:
     runtime_assets:
         - name: monitoring-plugins
           url: https://assets.bonsai.sensu.io/asset.zip
-          path: /opt/monitoring-plugins
     arguments:
         - "-H"
         - time.nist.gov
