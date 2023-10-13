@@ -414,6 +414,10 @@ func (o *opampAgent) composeEffectiveConfig() *protobufs.EffectiveConfig {
 func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (configChanged bool, err error) {
 	o.logger.Debug("Received remote config from OpAMP server", zap.ByteString("hash", config.ConfigHash))
 
+	if !o.cfg.AcceptsRemoteConfiguration {
+		return false, fmt.Errorf("OpAMP agent does not accept remote configuration")
+	}
+
 	nec := map[string]*protobufs.AgentConfigFile{}
 
 	for n, f := range config.Config.ConfigMap {

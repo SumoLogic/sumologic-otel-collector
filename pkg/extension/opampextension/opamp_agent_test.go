@@ -163,6 +163,12 @@ func TestApplyRemoteConfig(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, changed)
 	assert.NotEqual(t, len(o.effectiveConfig), 0)
+
+	cfg.AcceptsRemoteConfiguration = false
+	changed, err = o.applyRemoteConfig(rc)
+	assert.False(t, changed)
+	assert.Error(t, err)
+	assert.Equal(t, "OpAMP agent does not accept remote configuration", err.Error())
 }
 
 func TestShutdown(t *testing.T) {
