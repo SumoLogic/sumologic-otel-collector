@@ -16,6 +16,8 @@ package opampextension
 
 import (
 	"errors"
+	"fmt"
+	"os"
 
 	"github.com/oklog/ulid/v2"
 	"go.opentelemetry.io/collector/component"
@@ -34,6 +36,9 @@ type Config struct {
 	// RemoteConfigurationDirectory is where received OpAMP remote configuration
 	// is stored.
 	RemoteConfigurationDirectory string `mapstructure:"remote_configuration_directory"`
+
+	// AcceptsRemoteConfiguration indicates if the OpAMP agent will accept remote configuration.
+	AcceptsRemoteConfiguration bool `mapstructure:"accepts_remote_configuration"`
 }
 
 // CreateDefaultHTTPClientSettings returns default http client settings
@@ -56,6 +61,11 @@ func (cfg *Config) Validate() error {
 
 	if cfg.RemoteConfigurationDirectory == "" {
 		return errors.New("opamp remote_configuration_directory must be provided")
+	}
+
+	d := cfg.RemoteConfigurationDirectory
+	if _, err := os.Stat(d); err != nil {
+		return fmt.Errorf("opamp remote_configuration_directory %s must be readable: %v", d, err)
 	}
 
 	return nil
