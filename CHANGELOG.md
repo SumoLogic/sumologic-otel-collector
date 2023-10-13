@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released TBD
 
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.87.0-sumo-0...main
+
+## [v0.87.0-sumo-0]
+
+### Released 2023-10-13
+
 ### Added
 
 - feat(otelcol-sumo): add --opamp-config flag (provider unimplemented) [#1230]
@@ -25,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1230]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1230
 [#1242]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1242
 [#1279]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1279
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.86.0-sumo-0...main
+[v0.87.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.86.0-sumo-0...v0.87.0-sumo-0
 
 ### Changed
 
