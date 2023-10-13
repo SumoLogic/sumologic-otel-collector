@@ -273,6 +273,10 @@ func (se *SumologicExtension) validateCredentials(
 //   - into http client and its transport so that each request is using collector
 //     credentials as authentication keys
 func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCredentials) error {
+	se.logger.Info("Got collector metadata",
+		zap.String("collectorId", se.CollectorID()),
+		zap.String("credentialsId", colCreds.Credentials.CollectorCredentialId),
+		zap.String("credentialsKey", colCreds.Credentials.CollectorCredentialKey))
 	se.credsNotifyLock.Lock()
 	defer se.credsNotifyLock.Unlock()
 
@@ -811,7 +815,9 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 	se.logger.Info("Updating collector metadata",
 		zap.String("URL", u.String()),
 		zap.String("body", buff.String()),
-		zap.String("collectorId", se.registrationInfo.CollectorCredentialId))
+		zap.String("collectorId", se.CollectorID()),
+		zap.String("credentialId", se.registrationInfo.CollectorCredentialId),
+		zap.String("credentialKey", se.registrationInfo.CollectorCredentialKey))
 
 	res, err := httpClient.Do(req)
 	if err != nil {
