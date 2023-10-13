@@ -15,8 +15,9 @@ package opampprovider
 
 import (
 	"context"
-	"io/ioutil"
 	"net/url"
+	"os"
+	"path/filepath"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
 	"go.opentelemetry.io/collector/confmap"
@@ -52,7 +53,7 @@ func (p *Provider) Retrieve(ctx context.Context, uri string, fn confmap.WatcherF
 	if err != nil {
 		return nil, err
 	}
-	data, err := ioutil.ReadFile(url.Path)
+	data, err := os.ReadFile(url.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +61,7 @@ func (p *Provider) Retrieve(ctx context.Context, uri string, fn confmap.WatcherF
 		return nil, err
 	}
 	glob := p.GlobProvider
-	return glob.Retrieve(ctx, glob.Scheme()+":"+cfg.RemoteConfigurationDirectory+"/*.yaml", fn)
+	return glob.Retrieve(ctx, glob.Scheme()+":"+filepath.Join(cfg.RemoteConfigurationDirectory, "*.yaml"), fn)
 }
 
 func (*Provider) Scheme() string {

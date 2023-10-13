@@ -79,7 +79,7 @@ func TestInvalidYAML(t *testing.T) {
 
 func TestValid(t *testing.T) {
 	p := New()
-	defer p.Shutdown(context.Background())
+	defer func() { _ = p.Shutdown(context.Background()) }()
 	ret, err := p.Retrieve(context.Background(), "opamp:"+absolutePath(t, filepath.Join("testdata", "valid.yaml")), nil)
 	if err != nil {
 		t.Fatal(err)
