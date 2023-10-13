@@ -15,6 +15,7 @@ package opampprovider
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -55,10 +56,10 @@ func (p *Provider) Retrieve(ctx context.Context, uri string, fn confmap.WatcherF
 	}
 	data, err := os.ReadFile(url.Path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("couldn't load opamp config file: %s", err)
 	}
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("couldn't parse opamp config file: %s", err)
 	}
 	glob := p.GlobProvider
 	return glob.Retrieve(ctx, glob.Scheme()+":"+filepath.Join(cfg.RemoteConfigurationDirectory, "*.yaml"), fn)
