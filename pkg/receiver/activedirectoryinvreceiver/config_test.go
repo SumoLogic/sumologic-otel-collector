@@ -27,31 +27,41 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name: "Valid Config",
+			name: "Valid Config CN",
 			config: ADConfig{
-				CN:           "test user",
-				OU:           "test",
-				Password:     "test",
-				DC:           "exampledomain.com",
-				Host:         "hostname.exampledomain.com",
+				DN:           "CN=Guest,CN=Users,DC=exampledomain,DC=com",
+				Attributes:   []string{"name"},
+				PollInterval: 60,
+			},
+		},
+		{
+			name: "Valid Config DC",
+			config: ADConfig{
+				DN:           "DC=exampledomain,DC=com",
+				Attributes:   []string{"name"},
+				PollInterval: 60,
+			},
+		},
+		{
+			name: "Valid Config OU",
+			config: ADConfig{
+				DN:           "CN=Guest,OU=Users,DC=exampledomain,DC=com",
+				Attributes:   []string{"name"},
 				PollInterval: 60,
 			},
 		},
 		{
 			name: "Invalid No CN",
 			config: ADConfig{
-				CN: "",
+				DN: "",
 			},
-			expectedErr: errNoCN,
+			expectedErr: errInvalidDN,
 		},
 		{
 			name: "Invalid Poll Interval",
 			config: ADConfig{
-				CN:           "test user",
-				OU:           "test",
-				Password:     "test",
-				DC:           "exampledomain.com",
-				Host:         "hostname.exampledomain.com",
+				DN:           "CN=Users,DC=exampledomain,DC=com",
+				Attributes:   []string{"name"},
 				PollInterval: -1,
 			},
 			expectedErr: errInvalidPollInterval,

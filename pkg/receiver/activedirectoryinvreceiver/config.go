@@ -16,49 +16,35 @@ package activedirectoryinvreceiver
 
 import (
 	"errors"
+	"regexp"
 	"time"
 )
 
 // ADConfig defines configuration for Active Directory Inventory receiver.
 
 type ADConfig struct {
-	CN           string        `mapstructure:"cn"`
-	OU           string        `mapstructure:"ou"`
-	Password     string        `mapstructure:"password"`
-	DC           string        `mapstructure:"domain"`
-	Host         string        `mapstructure:"host"`
+	DN           string        `mapstructure:"base_dn"` // DN is the base distinguished name to search from
+	Attributes   []string      `mapstructure:"attributes"`
 	PollInterval time.Duration `mapstructure:"poll_interval"`
 }
 
 var (
-	errNoCN                = errors.New("no common name configured")
-	errNoOU                = errors.New("no organizational unit configured")
-	errNoPassword          = errors.New("no password configured")
-	errNoDC                = errors.New("no domain configured")
-	errNoHost              = errors.New("no host configured")
+	errInvalidDN           = errors.New("Base DN is incorrect, it must be in the format of CN=Users,DC=exampledomain,DC=com")
 	errInvalidPollInterval = errors.New("poll interval is incorrect, it must be a duration greater than one second")
 )
 
 // Validate validates all portions of the relevant config
 func (c *ADConfig) Validate() error {
-	if c.CN == "" {
-		return errNoCN
-	}
 
-	if c.OU == "" {
-		return errNoOU
-	}
+	// Define the regular expression pattern for a valid Base DN
+	pattern := `^((CN|OU)=[^,]+(,|$))*((DC=[^,]+),?)+$`
 
-	if c.Password == "" {
-		return errNoPassword
-	}
+	// Compile the regular expression pattern
+	regex := regexp.MustCompile(pattern)
 
-	if c.DC == "" {
-		return errNoDC
-	}
-
-	if c.Host == "" {
-		return errNoHost
+	// Check if the Base DN is valid
+	if !regex.MatchString(c.DN) {
+		return errInvalidDN
 	}
 
 	if c.PollInterval < 0 {

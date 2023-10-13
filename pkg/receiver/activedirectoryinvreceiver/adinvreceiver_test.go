@@ -24,12 +24,20 @@ import (
 	"go.uber.org/zap"
 )
 
+type MockClient struct{}
+
+func (c MockClient) Open(path string) (interface{}, error) {
+	return nil, nil
+}
+
 func TestStart(t *testing.T) {
 	cfg := CreateDefaultConfig().(*ADConfig)
-	cfg.CN = "test user"
+	cfg.DN = "CN=Guest,CN=Users,DC=exampledomain,DC=com"
 
 	sink := &consumertest.LogsSink{}
-	logsRcvr := newLogsReceiver(cfg, zap.NewNop(), sink)
+	mockClient := MockClient{}
+
+	logsRcvr := newLogsReceiver(cfg, zap.NewNop(), mockClient, sink)
 
 	err := logsRcvr.Start(context.Background(), componenttest.NewNopHost())
 	require.NoError(t, err)
