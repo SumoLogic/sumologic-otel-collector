@@ -67,7 +67,7 @@ option:
 
 Here is a list of valid values for the OpAMP `endpoint** configuration option:
 
-**Note:** As of Oct 2023, these endpoints are not yet available.
+**Note:** These endpoints are not yet available.
 
 |  Deployment   | API base URL                                |
 |:-------------:|---------------------------------------------|
