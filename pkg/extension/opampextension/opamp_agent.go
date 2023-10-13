@@ -365,7 +365,10 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 	}
 
 	for _, f := range files {
-		os.Remove(filepath.Join(dir, f.Name()))
+		err := os.Remove(filepath.Join(dir, f.Name()))
+		if err != nil {
+			return err
+		}
 	}
 
 	for k, v := range o.effectiveConfig {
