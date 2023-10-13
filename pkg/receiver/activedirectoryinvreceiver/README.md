@@ -11,29 +11,15 @@ Supported pipeline types: logs
 ```yaml
 receivers:
   activedirectoryinv:
-    # Common name
-    # default: "test user"
-    CN: "test user"
+    # Base DN
+    base_dn: "CN=Users,DC=exampledomain,DC=com"
 
-    # Organizational Unit
-    # default: "test"
-    OU: "test"
-
-    # Password for authenticating with the AD server
-    # default: "test"
-    Password: "test"
-
-    # Domain name
-    # default: "exampledomain.com"
-    DC: "exampledomain.com"
-
-    # The fully qualified domain name (FQDN).
-    # default: "examplehost"
-    Host: "hostname.exampledomain.com"
+    # User attributes
+    attributes: [name, mail, department, manager, memberOf]
 
     # The polling interval.
     # default = 60
-    PollInterval: 60
+    poll_interval: 60
 ```
 
 The full list of settings exposed for this receiver are documented in
@@ -44,12 +30,10 @@ Example configuration:
 ```yaml
 receivers:
   ## All my example logs
-  activedirectoryinvreceiver:
-    cn: "test user"
-    ou: "test"
-    password: "Exampledomain@123"
-    domain: "exampledomain"
-    host: "EC2AMAZ.exampledomain.com"
+  activedirectoryinv:
+    base_dn: "CN=Users,DC=exampledomain,DC=com"
+    attributes: [name, mail, department, manager, memberOf]
+    poll_interval: 60
 
 exporters:
   logging:

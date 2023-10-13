@@ -39,11 +39,8 @@ func NewFactory() receiver.Factory {
 // CreateDefaultConfig creates the default configuration for the receiver
 func CreateDefaultConfig() component.Config {
 	return &ADConfig{
-		CN:           "test user",
-		OU:           "test",
-		Password:     "test",
-		DC:           "exampledomain.com",
-		Host:         "hostname.exampledomain.com",
+		DN:           "CN=Guest,CN=Users,DC=exampledomain,DC=com",
+		Attributes:   []string{"name"},
 		PollInterval: 60,
 	}
 }

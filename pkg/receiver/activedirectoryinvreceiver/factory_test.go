@@ -30,7 +30,7 @@ func TestType(t *testing.T) {
 
 func TestCreateLogsReceiver(t *testing.T) {
 	cfg := CreateDefaultConfig().(*ADConfig)
-	cfg.CN = "test user"
+	cfg.DN = "CN=Guest,CN=Users,DC=exampledomain,DC=com" // valid DN
 	_, err := NewFactory().CreateLogsReceiver(
 		context.Background(),
 		receivertest.NewNopCreateSettings(),

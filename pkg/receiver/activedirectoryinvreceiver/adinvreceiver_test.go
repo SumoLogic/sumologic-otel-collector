@@ -26,7 +26,7 @@ import (
 
 func TestStart(t *testing.T) {
 	cfg := CreateDefaultConfig().(*ADConfig)
-	cfg.CN = "test user"
+	cfg.DN = "CN=Guest,CN=Users,DC=exampledomain,DC=com"
 
 	sink := &consumertest.LogsSink{}
 	logsRcvr := newLogsReceiver(cfg, zap.NewNop(), sink)
