@@ -24,6 +24,7 @@ import (
 	"runtime"
 	"syscall"
 
+	"github.com/google/uuid"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/knadh/koanf/v2"
@@ -248,11 +249,11 @@ func newOpampAgent(cfg *Config, logger *zap.Logger, build component.BuildInfo, r
 	} else {
 		sid, ok := res.Attributes().Get(semconv.AttributeServiceInstanceID)
 		if ok {
-			puid, err := ulid.Parse(sid.AsString())
+			uuid, err := uuid.Parse(sid.AsString())
 			if err != nil {
 				return nil, err
 			}
-			uid = puid
+			uid = ulid.ULID(uuid)
 		}
 	}
 
