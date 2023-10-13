@@ -450,7 +450,10 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 	)
 	addJSONHeaders(req)
 
-	se.logger.Info("Calling register API", zap.String("URL", u.String()))
+	se.logger.Info("Calling register API",
+		zap.String("URL", u.String()),
+		zap.String("headers", fmt.Sprintf("%v", map[string][]string(req.Header))),
+		zap.String("Body", buff.String()))
 
 	client := *http.DefaultClient
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
@@ -478,6 +481,8 @@ func (se *SumologicExtension) registerCollector(ctx context.Context, collectorNa
 
 	var resp api.OpenRegisterResponsePayload
 	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		se.logger.Info("Registered successfully",
+			zap.String("Body", fmt.Sprintf("%v", res.Body)))
 		return credentials.CollectorCredentials{}, err
 	}
 
@@ -816,6 +821,7 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 		zap.String("URL", u.String()),
 		zap.String("body", buff.String()),
 		zap.String("collectorId", se.CollectorID()),
+		zap.String("headers", fmt.Sprintf("%v", map[string][]string(req.Header))),
 		zap.String("credentialId", se.registrationInfo.CollectorCredentialId),
 		zap.String("credentialKey", se.registrationInfo.CollectorCredentialKey))
 
@@ -969,6 +975,7 @@ type roundTripper struct {
 
 func (rt roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	addCollectorCredentials(req, rt.collectorCredentialId, rt.collectorCredentialKey)
+	fmt.Printf("Roundtripper %v: %v\n", map[string][]string(req.Header), req.Body)
 	return rt.base.RoundTrip(req)
 }
 
