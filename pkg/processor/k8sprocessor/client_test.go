@@ -81,7 +81,7 @@ func (f *fakeClient) GetPodAttributes(identifier kube.PodIdentifier) (map[string
 // Start is a noop for FakeClient.
 func (f *fakeClient) Start() {
 	if f.Informer != nil {
-		f.Informer.Run(f.StopCh)
+		go f.Informer.Run(f.StopCh)
 	}
 }
 

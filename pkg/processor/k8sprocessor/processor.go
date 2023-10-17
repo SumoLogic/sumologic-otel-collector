@@ -75,7 +75,7 @@ func (kp *kubernetesprocessor) initKubeClient(logger *zap.Logger, kubeClient kub
 
 func (kp *kubernetesprocessor) Start(_ context.Context, _ component.Host) error {
 	if !kp.passthroughMode {
-		go kp.kc.Start()
+		kp.kc.Start()
 	}
 	return nil
 }

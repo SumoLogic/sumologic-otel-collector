@@ -33,6 +33,11 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/observability"
 )
 
+const (
+	sleepInterval = time.Millisecond * 100
+	sleepMaxTime  = time.Second * 10
+)
+
 // WatchClient is the main interface provided by this package to a kubernetes cluster.
 type WatchClient struct {
 	m           sync.RWMutex
@@ -131,11 +136,12 @@ func (c *WatchClient) Start() {
 		c.op.Start()
 	}
 
-	_, err := c.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	handler, err := c.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    c.handlePodAdd,
 		UpdateFunc: c.handlePodUpdate,
 		DeleteFunc: c.handlePodDelete,
 	})
+
 	if err != nil {
 		c.logger.Error("error adding event handler to pod informer", zap.Error(err))
 	}
@@ -152,7 +158,18 @@ func (c *WatchClient) Start() {
 	if err != nil {
 		c.logger.Warn("error setting Pod data transformer, continuing without it", zap.Error(err))
 	}
-	c.informer.Run(c.stopCh)
+	go c.informer.Run(c.stopCh)
+
+	t := time.Now()
+	for handler != nil && !handler.HasSynced() {
+		if time.Until(t) > sleepMaxTime {
+			c.logger.Warn("timed out while waiting for pods metadata")
+			break
+		}
+		time.Sleep(sleepInterval)
+	}
+
+	c.logger.Info("k8s event handler has been synced")
 }
 
 // Stop signals the the k8s watcher/informer to stop watching for new events.
@@ -556,6 +573,7 @@ func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
 					continue
 				}
 			}
+
 			c.Pods[identifier] = newPod
 		}
 	}
