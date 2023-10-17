@@ -338,22 +338,32 @@ function github_rate_limit() {
 
 # This function is applicable to very few platforms/distributions.
 function install_missing_dependencies() {
+    local REQUIRED_COMMANDS
+    local REQUIRED_PACKAGES
     REQUIRED_COMMANDS=()
+    REQUIRED_PACKAGES=()
     if [[ -n "${BINARY_BRANCH}" ]]; then  # unzip is only necessary for downloading from GHA artifacts
         REQUIRED_COMMANDS+=(unzip)
+        REQUIRED_PACKAGES+=(unzip)
+    fi
+    if [[ -f "/etc/redhat-release" ]]; then # this will install semanage, which is necessary for SELinux relabeling
+        REQUIRED_COMMANDS+=(semanage)
+        REQUIRED_PACKAGES+=(policycoreutils-python-utils)
     fi
     if [ "${#REQUIRED_COMMANDS[@]}" == 0 ]; then
         # not all bash versions handle empty array expansion correctly
         # therefore we guard against this explicitly here
         return
     fi
-    for cmd in "${REQUIRED_COMMANDS[@]}"; do
+    for i in "${!REQUIRED_COMMANDS[@]}"; do
+        cmd=${REQUIRED_COMMANDS[i]}
+        pkg=${REQUIRED_PACKAGES[i]}
         if ! command -v "${cmd}" &> /dev/null; then
             # Attempt to install it via yum if on a RHEL distribution.
             if [[ -f "/etc/redhat-release" ]]; then
-                echo "Command '${cmd}' not found. Attempting to install '${cmd}'..."
+                echo "Command '${cmd}' not found. Attempting to install '${pkg}'..."
                 # This only works if the tool/command matches the system package name.
-                yum install -y "${cmd}"
+                yum install -y "${pkg}"
             fi
         fi
     done
