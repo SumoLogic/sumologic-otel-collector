@@ -266,6 +266,8 @@ func (c *WatchClient) getPod(identifier PodIdentifier) (*Pod, bool) {
 	defer c.m.RUnlock()
 	pod, ok := c.Pods[identifier]
 	if !ok {
+		c.logger.Debug("Cannot find Pod",
+			zap.String("identifier", string(identifier)))
 		observability.RecordIPLookupMiss()
 		return nil, ok
 	}
@@ -556,6 +558,9 @@ func (c *WatchClient) addOrUpdatePod(pod *api_v1.Pod) {
 					continue
 				}
 			}
+
+			c.logger.Debug("Adding Pod",
+				zap.String("identifier", string(identifier)))
 			c.Pods[identifier] = newPod
 		}
 	}
