@@ -92,7 +92,10 @@ func TestValid(t *testing.T) {
 		validFile = "valid_windows.yaml"
 	}
 
-	ret, err := p.Retrieve(context.Background(), "opamp:"+absolutePath(t, filepath.Join("testdata", validFile)), nil)
+	configPath := "opamp:" + absolutePath(t, filepath.Join("testdata", validFile))
+	t.Logf("loading opamp config file: %s", configPath)
+
+	ret, err := p.Retrieve(context.Background(), configPath, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
