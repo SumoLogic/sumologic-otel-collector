@@ -17,7 +17,6 @@ package activedirectoryinvreceiver
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -29,19 +28,31 @@ import (
 	"go.uber.org/zap"
 )
 
+// Client is an interface for an Active Directory client
 type Client interface {
-	Open(path string) (interface{}, error)
+	Open(path string, resourceLogs *plog.ResourceLogs) (Container, error)
 }
 
+// ADSIClient is a wrapper for an Active Directory client
 type ADSIClient struct{}
 
-func (c ADSIClient) Open(path string) (interface{}, error) {
+// Open an Active Directory container
+func (c *ADSIClient) Open(path string, resourceLogs *plog.ResourceLogs) (Container, error) {
 	client, err := adsi.NewClient()
 	if err != nil {
 		return nil, err
 	}
 	ldapPath := fmt.Sprintf("LDAP://%s", path)
-	return client.Open(ldapPath)
+	root, err := client.Open(ldapPath)
+	if err != nil {
+		return nil, err
+	}
+	rootContainer, err := root.ToContainer()
+	if err != nil {
+		return nil, err
+	}
+	windowsContainer := &ADSIContainer{rootContainer}
+	return windowsContainer, nil
 }
 
 type ADReceiver struct {
@@ -53,6 +64,7 @@ type ADReceiver struct {
 	doneChan chan bool
 }
 
+// newLogsReceiver creates a new Active Directory Inventory receiver
 func newLogsReceiver(cfg *ADConfig, logger *zap.Logger, client Client, consumer consumer.Logs) *ADReceiver {
 
 	return &ADReceiver{
@@ -65,20 +77,23 @@ func newLogsReceiver(cfg *ADConfig, logger *zap.Logger, client Client, consumer 
 	}
 }
 
+// Start the logs receiver
 func (l *ADReceiver) Start(ctx context.Context, _ component.Host) error {
-	l.logger.Debug("starting to poll for active directory inventory records")
+	l.logger.Debug("Starting to poll for active directory inventory records")
 	l.wg.Add(1)
 	go l.startPolling(ctx)
 	return nil
 }
 
+// Shutdown the logs receiver
 func (l *ADReceiver) Shutdown(_ context.Context) error {
-	l.logger.Debug("shutting down logs receiver")
+	l.logger.Debug("Shutting down logs receiver")
 	close(l.doneChan)
 	l.wg.Wait()
 	return nil
 }
 
+// Start polling for Active Directory inventory records
 func (l *ADReceiver) startPolling(ctx context.Context) {
 	defer l.wg.Done()
 	t := time.NewTicker(l.config.PollInterval * time.Second)
@@ -97,40 +112,56 @@ func (l *ADReceiver) startPolling(ctx context.Context) {
 	}
 }
 
-func (r *ADReceiver) poll(ctx context.Context) error {
-	go func() {
-		root, err := r.client.Open(r.config.DN)
+// Traverse the Active Directory tree and set user attributes to log records
+func (r *ADReceiver) traverse(node Container, attrs []string, resourceLogs *plog.ResourceLogs) {
+	nodeObject, err := node.ToObject()
+	if err != nil {
+		r.logger.Error("Failed to convert container to object", zap.Error(err))
+		return
+	}
+	setUserAttributes(nodeObject, attrs, resourceLogs)
+	children, err := node.Children()
+	if err != nil {
+		r.logger.Error("Failed to retrieve children", zap.Error(err))
+		return
+	}
+	for child, err := children.Next(); err == nil; child, err = children.Next() {
+		windowsChildContainer, err := child.ToContainer()
 		if err != nil {
-			r.logger.Error("Failed to open root object:", zap.Error(err))
+			r.logger.Error("Failed to convert child object to container", zap.Error(err))
 			return
 		}
-		rootObject := root.(*adsi.Object)
-		rootContainer, err := rootObject.ToContainer()
-		if err != nil {
-			r.logger.Error("Failed to open root object:", zap.Error(err))
-			return
-		}
-		defer rootContainer.Close()
-		logs := plog.NewLogs()
-		rl := logs.ResourceLogs().AppendEmpty()
-		resourceLogs := &rl
-		_ = resourceLogs.ScopeLogs().AppendEmpty()
-		r.traverse(rootContainer, resourceLogs)
-		err = r.consumer.ConsumeLogs(ctx, logs)
-		if err != nil {
-			r.logger.Error("Error consuming log", zap.Error(err))
-		}
-	}()
+		childContainer := &ADSIContainer{windowsChildContainer}
+		r.traverse(childContainer, attrs, resourceLogs)
+	}
+	defer node.Close()
+	children.Close()
+}
 
+// Poll for Active Directory inventory records
+func (r *ADReceiver) poll(ctx context.Context) error {
+	logs := plog.NewLogs()
+	rl := logs.ResourceLogs().AppendEmpty()
+	resourceLogs := &rl
+	_ = resourceLogs.ScopeLogs().AppendEmpty()
+	root, err := r.client.Open(r.config.DN, resourceLogs)
+	r.traverse(root, r.config.Attributes, resourceLogs)
+	if err != nil {
+		return err
+	}
+	err = r.consumer.ConsumeLogs(ctx, logs)
+	if err != nil {
+		r.logger.Error("Error consuming log", zap.Error(err))
+	}
 	return nil
 }
 
-func (l *ADReceiver) printAttrs(user *adsi.Object, resourceLogs *plog.ResourceLogs) {
-	attrs := l.config.Attributes
+// Set user attributes to a log record body
+func setUserAttributes(user Object, attrs []string, resourceLogs *plog.ResourceLogs) {
 	observedTime := pcommon.NewTimestampFromTime(time.Now())
 	attributes := ""
 	for _, attr := range attrs {
-		values, err := user.Attr(attr)
+		values, err := user.Attrs(attr)
 		if err == nil && len(values) > 0 {
 			attributes += fmt.Sprintf("%s: %v\n", attr, values)
 		}
@@ -139,27 +170,4 @@ func (l *ADReceiver) printAttrs(user *adsi.Object, resourceLogs *plog.ResourceLo
 	logRecord.SetObservedTimestamp(observedTime)
 	logRecord.SetTimestamp(observedTime)
 	logRecord.Body().SetStr(attributes)
-}
-
-func (l *ADReceiver) traverse(node *adsi.Container, resourceLogs *plog.ResourceLogs) {
-	nodeObject, err := node.ToObject()
-	if err != nil {
-		log.Printf("Error creating objects: %v\n", err)
-		return
-	}
-	l.printAttrs(nodeObject, resourceLogs)
-	children, err := node.Children()
-	if err != nil {
-		log.Printf("Error retrieving children: %v\n", err)
-		return
-	}
-	for child, err := children.Next(); err == nil; child, err = children.Next() {
-		childContainer, err := child.ToContainer()
-		if err != nil {
-			log.Println("Failed to traverse child object:", err)
-			return
-		}
-		l.traverse(childContainer, resourceLogs)
-	}
-	children.Close()
 }

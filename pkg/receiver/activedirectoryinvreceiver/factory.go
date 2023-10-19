@@ -52,7 +52,7 @@ func createLogsReceiver(
 	consumer consumer.Logs,
 ) (receiver.Logs, error) {
 	cfg := rConf.(*ADConfig)
-	adsiClient := ADSIClient{}
+	adsiClient := &ADSIClient{}
 	rcvr := newLogsReceiver(cfg, params.Logger, adsiClient, consumer)
 	return rcvr, nil
 }

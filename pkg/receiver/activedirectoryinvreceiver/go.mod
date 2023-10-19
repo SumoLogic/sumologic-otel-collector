@@ -30,6 +30,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/scjalliance/comshim v0.0.0-20230315213746-5e51f40bd3b9 // indirect
 	github.com/scjalliance/comutil v0.0.0-20230315211610-645474dab300 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	go.opentelemetry.io/collector/config/configtelemetry v0.86.0 // indirect
 	go.opentelemetry.io/collector/confmap v0.86.0 // indirect
 	go.opentelemetry.io/collector/featuregate v1.0.0-rcv0015 // indirect
