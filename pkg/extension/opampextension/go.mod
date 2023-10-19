@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.77.0-sumo-0
+	github.com/google/uuid v1.3.0
 	github.com/knadh/koanf/parsers/yaml v0.1.0
 	github.com/knadh/koanf/providers/rawbytes v0.1.0
 	github.com/knadh/koanf/v2 v2.0.1
