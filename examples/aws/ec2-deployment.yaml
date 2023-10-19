@@ -173,7 +173,7 @@ Resources:
 
             # Setup Sumo Logic OTLP/HTTP Endpoint Url ENV
             echo "export SUMO_OTLP_HTTP_ENDPOINT_URL=${SUMO_OTLP_HTTP_ENDPOINT_URL}" > /etc/profile.d/setSumoVar.sh
-        
+
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackId} --resource EC2Instance --region ${AWS::Region} --configsets default
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource EC2Instance --region ${AWS::Region}
         - SUMO_OTLP_HTTP_ENDPOINT_URL: !Ref SumoOtlpHttpEndpointURL
