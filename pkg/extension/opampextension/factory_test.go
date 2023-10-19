@@ -37,6 +37,7 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 				AuthenticatorID: component.NewID("sumologic"),
 			},
 		},
+		AcceptsRemoteConfiguration: true,
 	})
 
 	assert.NoError(t, componenttest.CheckConfigStruct(cfg))

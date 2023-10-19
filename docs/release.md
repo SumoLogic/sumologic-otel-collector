@@ -6,9 +6,11 @@
     - [Remove tag in case of a failed release job](#remove-tag-in-case-of-a-failed-release-job)
   - [Publish GitHub release](#publish-github-release)
   - [Add `Unreleased` section to the changelog and upgrading guide](#add-unreleased-section-to-the-changelog-and-upgrading-guide)
+  - [Build packages](#build-packages)
 - [Updating OT to next version](#updating-ot-to-next-version)
   - [Update OT version](#update-ot-version)
   - [Fix lint errors and tests](#fix-lint-errors-and-tests)
+  - [Check out the developer changelog](#check-out-the-developer-changelog)
   - [Add missing upstream components](#add-missing-upstream-components)
     - [Adding components from scratch](#adding-components-from-scratch)
 - [Running Tracing E2E tests](#running-tracing-e2e-tests)
@@ -88,7 +90,7 @@ Here is the example pull request: [#677].
 
 [#677]: https://github.com/SumoLogic/sumologic-otel-collector/pull/677
 
-## Build packages
+### Build packages
 
 1. Open the [Build packages workflow][build_packages_workflow] in GitHub Actions for the
    [sumologic-otel-collector-packaging repository][package_repo].

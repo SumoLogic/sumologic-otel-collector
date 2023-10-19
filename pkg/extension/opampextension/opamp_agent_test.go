@@ -36,8 +36,8 @@ func TestNewOpampAgent(t *testing.T) {
 	set.BuildInfo = component.BuildInfo{Version: "test version", Command: "otelcoltest"}
 	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
-	assert.Equal(t, o.agentType, "otelcoltest")
-	assert.Equal(t, o.agentVersion, "test version")
+	assert.Equal(t, "otelcoltest", o.agentType)
+	assert.Equal(t, "test version", o.agentVersion)
 	assert.NotEmpty(t, o.instanceId.String())
 	assert.Empty(t, o.effectiveConfig)
 	assert.Nil(t, o.agentDescription)
@@ -49,12 +49,24 @@ func TestNewOpampAgentAttributes(t *testing.T) {
 	set.BuildInfo = component.BuildInfo{Version: "test version", Command: "otelcoltest"}
 	set.Resource.Attributes().PutStr(semconv.AttributeServiceName, "otelcol-sumo")
 	set.Resource.Attributes().PutStr(semconv.AttributeServiceVersion, "sumo.0")
-	set.Resource.Attributes().PutStr(semconv.AttributeServiceInstanceID, "01BX5ZZKBKACTAV9WEVGEMMVRZ")
+	set.Resource.Attributes().PutStr(semconv.AttributeServiceInstanceID, "f8999bc1-4c9b-4619-9bae-7f009d2411ec")
 	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
-	assert.Equal(t, o.agentType, "otelcol-sumo")
-	assert.Equal(t, o.agentVersion, "sumo.0")
-	assert.Equal(t, o.instanceId.String(), "01BX5ZZKBKACTAV9WEVGEMMVRZ")
+	assert.Equal(t, "otelcol-sumo", o.agentType)
+	assert.Equal(t, "sumo.0", o.agentVersion)
+	assert.Equal(t, "7RK6DW2K4V8RCSQBKZ02EJ84FC", o.instanceId.String())
+}
+
+func TestGetAgentCapabilities(t *testing.T) {
+	cfg := createDefaultConfig().(*Config)
+	set := extensiontest.NewNopCreateSettings()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	assert.Equal(t, o.getAgentCapabilities(), protobufs.AgentCapabilities(4102))
+
+	cfg.AcceptsRemoteConfiguration = false
+	assert.Equal(t, o.getAgentCapabilities(), protobufs.AgentCapabilities(4))
 }
 
 func TestCreateAgentDescription(t *testing.T) {
@@ -74,11 +86,10 @@ func TestLoadEffectiveConfig(t *testing.T) {
 	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
-	assert.Empty(t, o.effectiveConfig)
+	assert.Equal(t, len(o.effectiveConfig), 0)
 
-	path := filepath.Join("testdata", "opamp-remote-config.yaml")
-	assert.NoError(t, o.loadEffectiveConfig(path))
-	assert.NotEmpty(t, o.effectiveConfig)
+	assert.NoError(t, o.loadEffectiveConfig("testdata"))
+	assert.NotEqual(t, len(o.effectiveConfig), 0)
 }
 
 func TestSaveEffectiveConfig(t *testing.T) {
@@ -87,11 +98,11 @@ func TestSaveEffectiveConfig(t *testing.T) {
 	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
-	f, err := os.CreateTemp("", "opamp-remote-config.yaml")
+	d, err := os.MkdirTemp("", "opamp.d")
 	assert.NoError(t, err)
-	defer os.Remove(f.Name())
+	defer os.RemoveAll(d)
 
-	assert.NoError(t, o.saveEffectiveConfig(f.Name()))
+	assert.NoError(t, o.saveEffectiveConfig(d))
 }
 
 func TestUpdateAgentIdentity(t *testing.T) {
@@ -121,14 +132,19 @@ func TestComposeEffectiveConfig(t *testing.T) {
 }
 
 func TestApplyRemoteConfig(t *testing.T) {
-	cfg := createDefaultConfig()
+	d, err := os.MkdirTemp("", "opamp.d")
+	assert.NoError(t, err)
+	defer os.RemoveAll(d)
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.RemoteConfigurationDirectory = d
 	set := extensiontest.NewNopCreateSettings()
-	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
-	assert.Empty(t, o.effectiveConfig)
+	assert.Equal(t, len(o.effectiveConfig), 0)
 
-	path := filepath.Join("testdata", "opamp-remote-config.yaml")
+	path := filepath.Join("testdata", "opamp.d", "opamp-remote-config.yaml")
 	rb, err := os.ReadFile(path)
 	assert.NoError(t, err)
 
@@ -144,9 +160,15 @@ func TestApplyRemoteConfig(t *testing.T) {
 	}
 
 	changed, err := o.applyRemoteConfig(rc)
-	assert.True(t, changed)
 	assert.NoError(t, err)
-	assert.NotEmpty(t, o.effectiveConfig)
+	assert.True(t, changed)
+	assert.NotEqual(t, len(o.effectiveConfig), 0)
+
+	cfg.AcceptsRemoteConfiguration = false
+	changed, err = o.applyRemoteConfig(rc)
+	assert.False(t, changed)
+	assert.Error(t, err)
+	assert.Equal(t, "OpAMP agent does not accept remote configuration", err.Error())
 }
 
 func TestShutdown(t *testing.T) {
@@ -161,8 +183,13 @@ func TestShutdown(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
+	d, err := os.MkdirTemp("", "opamp.d")
+	assert.NoError(t, err)
+	defer os.RemoveAll(d)
+
 	cfg := createDefaultConfig().(*Config)
 	cfg.HTTPClientSettings.Auth = nil
+	cfg.RemoteConfigurationDirectory = d
 	set := extensiontest.NewNopCreateSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
@@ -171,8 +198,13 @@ func TestStart(t *testing.T) {
 }
 
 func TestReload(t *testing.T) {
+	d, err := os.MkdirTemp("", "opamp.d")
+	assert.NoError(t, err)
+	defer os.RemoveAll(d)
+
 	cfg := createDefaultConfig().(*Config)
 	cfg.HTTPClientSettings.Auth = nil
+	cfg.RemoteConfigurationDirectory = d
 	set := extensiontest.NewNopCreateSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
