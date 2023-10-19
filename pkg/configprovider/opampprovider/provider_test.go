@@ -17,7 +17,6 @@ package opampprovider
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -118,11 +117,11 @@ func TestValid(t *testing.T) {
 
 func absolutePath(t *testing.T, relativePath string) string {
 	t.Helper()
-	dir, err := os.Getwd()
+	pth, err := filepath.Abs(relativePath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return filepath.Join(dir, relativePath)
+	return pth
 }
 
 // TODO: Replace this with the upstream exporter version after we upgrade to v0.58.0
