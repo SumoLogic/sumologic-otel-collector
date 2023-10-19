@@ -19,8 +19,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
-	"runtime"
-	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -86,12 +84,7 @@ func TestValid(t *testing.T) {
 		}
 	}()
 
-	validFile := "valid.yaml"
-	if strings.HasPrefix(runtime.GOOS, "windows") {
-		validFile = "valid_windows.yaml"
-	}
-
-	configPath := "opamp:" + absolutePath(t, filepath.Join("testdata", validFile))
+	configPath := "opamp:" + absolutePath(t, filepath.Join("testdata", "valid.yaml"))
 	t.Logf("loading opamp config file: %s", configPath)
 
 	ret, err := p.Retrieve(context.Background(), configPath, nil)
