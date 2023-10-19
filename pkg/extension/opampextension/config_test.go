@@ -15,7 +15,9 @@
 package opampextension
 
 import (
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -50,7 +52,8 @@ func TestUnmarshalConfig(t *testing.T) {
 				},
 			},
 			InstanceUID:                  "01BX5ZZKBKACTAV9WEVGEMMVRZ",
-			RemoteConfigurationDirectory: "/tmp/",
+			RemoteConfigurationDirectory: "/tmp/opamp.d",
+			AcceptsRemoteConfiguration:   true,
 		}, cfg)
 }
 
@@ -59,9 +62,19 @@ func TestConfigValidate(t *testing.T) {
 	err := cfg.Validate()
 	require.Error(t, err)
 	assert.Equal(t, "opamp remote_configuration_directory must be provided", err.Error())
-	cfg.RemoteConfigurationDirectory = "/tmp/"
+
+	cfg.RemoteConfigurationDirectory = "/tmp/opamp.d"
 	err = cfg.Validate()
-	require.NoError(t, err)
+	assert.True(t, strings.HasPrefix(err.Error(), "opamp remote_configuration_directory /tmp/opamp.d must be readable:"))
+
+	d, err := os.MkdirTemp("", "opamp.d")
+	assert.NoError(t, err)
+	defer os.RemoveAll(d)
+
+	cfg.RemoteConfigurationDirectory = d
+	err = cfg.Validate()
+	assert.NoError(t, err)
+
 	cfg.InstanceUID = "01BX5ZZKBKACTAV9WEVGEMMVRZFAIL"
 	err = cfg.Validate()
 	require.Error(t, err)

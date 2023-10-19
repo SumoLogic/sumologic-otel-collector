@@ -3,6 +3,7 @@ BUILDER_VERSION ?= 0.87.0
 FIPS_SUFFIX ?= ""
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
 GO ?= go
+GOTAGS ?=
 
 ifeq ($(OS),Windows_NT)
 	OS=windows
@@ -51,14 +52,20 @@ GOEXPERIMENT=""
 LDFLAGS="-s -w"
 # We want to use boringcrypto for fips setup
 else
+ifeq ($(shell go env GOOS),windows)
+GOEXPERIMENT=cngcrypto
+GOTAGS := $(GOTAGS) requirefips
+LDFLAGS="-w"
+else
 GOEXPERIMENT=boringcrypto
 LDFLAGS="-w"
+endif
 endif
 
 # We want to enforce go dns for all types of binaries. The FIPS binaries are built with CGO enabled and use
 # the CGO resolver. This has caused a DNS resolution error for .local domains in our K8s containers.
 # ref: https://pkg.go.dev/net#hdr-Name_Resolution
-GOFLAGS=-tags=netgo
+GOTAGS := $(GOTAGS) netgo
 
 .PHONY: _install-bin
 _install-bin:
@@ -103,7 +110,8 @@ _builder:
 .PHONY: _gobuild
 _gobuild:
 	(cd cmd && \
-		GOFLAGS=$(GOFLAGS) CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
+		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
+		-tags "$(GOTAGS)" \
 		-ldflags=$(LDFLAGS) \
 		-trimpath \
 		-o ./$(BINARY_NAME)$(BUILDER_BIN_EXT) . \
@@ -113,7 +121,8 @@ _gobuild:
 .PHONY: _gobuild_debug
 _gobuild_debug:
 	(cd cmd && \
-		GOFLAGS=$(GOFLAGS) CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
+		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
+		-tags "$(GOTAGS)" \
 		-race \
 		-gcflags "all=-N -l" \
 		-o ./$(BINARY_NAME)-debug$(BUILDER_BIN_EXT) . \
