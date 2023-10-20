@@ -988,7 +988,7 @@ func addClientCredentials(req *http.Request, credentials accessCredentials) {
 
 // TODO(ck): Test whether or not this sus function is the root of our darwin
 // problems
-var hostname func() (string, error) = fqdn.FqdnHostname
+var hostname = fqdn.FqdnHostname
 
 // getHostname returns the host name consistently with the resource detection processor's defaults
 // TODO: try to dynamically extract this from the resource processor in the pipeline
