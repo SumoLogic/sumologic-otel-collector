@@ -2,7 +2,7 @@
 
 | Status        |                     |
 | ------------- | -----------         |
-| Stability     | [development]: logs |
+| Stability     | [alpha]: logs |
 
 This receiver makes it possible to collect telemetry data from sources that
 do not instrument well. The monitoring job receiver executes a script or
@@ -25,7 +25,7 @@ of downloading runtime assets necessary to run a particular monitoring job.
 | command | required | The `command` to run. Should start a binary that writes to stdout and/or stderr
 | arguments | | A list of string arguments to pass the command
 | timeout | | [Time](#time-parameters) to wait for the process to exit before attempting to make it exit
-| runtime_assets | | A list of `runtime_assets` required for the monitoring job
+| runtime_assets | | A list of `runtime_assets` required for the monitoring job. See details [below](#runtime-assets)
 
 ### Schedule Configuration
 
@@ -92,9 +92,30 @@ to access.
 | multiline.line_start_pattern | | Regex pattern for the beginning of a log entry. Mutualy exclusive with end pattern.
 | multiline.line_end_pattern | | Regex pattern for the ending of a log entry. Mutualy exclusive with start pattern.
 
-### Runtime Asset Configuration
+### Runtime Assets
 
-//todo(ck)
+Runtime assets can be specified on a monitoring job to make it easier to
+distribute monitoring instrumentation to collectors. When a runtime asset is
+specified on a monitoring job receiver, the collector will download and install
+the asset locally before the monitoring job is ran. This eliminates the need to
+pre-install monitoring instrumentation alongside the collector.
+
+Runtime assets are packaged according to the [sensu-go asset
+specification][sensu-go-assets-spec], allowing users to take advantage of the
+existing asset definitions in [Bonsai](https://bonsai.sensu.io/), sensu-go's
+asset hub. Packaging an asset yourself is relatively straight-forward. Simply
+serve a tar archive (optionally gzipped) containing a `bin` directory
+containing one or multiple executables. The asset will be unpacked and the
+monitoring job will be executed with `./bin` included in the `PATH` environment
+variable, `./lib` included in `LD_LIBRARY_PATH` and `./include` in `CPATH`.
+
+[sensu-go-assets-spec]: https://docs.sensu.io/sensu-go/latest/plugins/assets/#dynamic-runtime-asset-format-specification
+
+| Configuration | Default | Description
+| ------------ | ------------ | ------------
+| name | required | Name for the asset.
+| url | required | HTTP URL used to fetch the asset.
+| sha512 | required | SHA512 hash of the asset archive.
 
 ## Additional Features
 
