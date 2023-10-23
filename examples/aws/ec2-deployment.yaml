@@ -1,0 +1,249 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Template to install Sumo Logic Distribution for OpenTelemetry Collector on EC2 - Amazon Linux.'
+Parameters:
+  SSHKeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.medium
+    ConstraintDescription: must be a valid EC2 instance type.
+  InstanceAMI:
+    Description: Managed AMI ID for EC2 Instance
+    Type : String
+  IAMRole:
+    Description: EC2 attached IAM role
+    Type: String
+    Default: SumoLogicOTelColRoleEC2
+    ConstraintDescription: must be an existing IAM role which will be attached to EC2 instance.
+  IAMPolicy:
+    Description: IAM Role attached IAM Managed Policy
+    Type: String
+    Default: SumoLogicOTelColPolicyEC2
+    ConstraintDescription: Must be an existing IAM Managed Policy which will be attached to IAM Role.
+  IAMInstanceProfileName:
+    Description: IAM Role attached IAM Instance Profile
+    Type: String
+    Default: SumoLogicOTelColRoleEC2
+    ConstraintDescription: Must be an existing IAM Instance Profile which will be attached to IAM Role.
+  SumoOtlpHttpEndpointURL:
+    Type: String
+    Description: Enter the Sumo Logic OTLP/HTTP Endpoint URL
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          default:
+            - 01_setupCfnHup
+            - 02_config-sumo-logic-otel-collector
+            - 03_restart-sumo-logic-otel-collector
+          UpdateEnvironment:
+            - 02_config-sumo-logic-otel-collector
+            - 03_restart-sumo-logic-otel-collector
+        # Definition of YAML configuration of collector, you can change the configuration below.
+        02_config-sumo-logic-otel-collector:
+          files:
+            '/etc/otelcol-sumo/conf.d/config.yaml':
+              content: !Sub
+              - |
+                  extensions:
+                    health_check:
+                  receivers:
+                    otlp:
+                      protocols:
+                        grpc:
+                          endpoint:
+                        http:
+                          endpoint:
+                  processors:
+                    memory_limiter:
+                        check_interval: 1s
+                        limit_percentage: 80
+                        spike_limit_percentage: 20
+                    batch/traces:
+                      timeout: 1s
+                      send_batch_size: 256
+                    batch/metrics:
+                      timeout: 60s
+                    resourcedetection:
+                      detectors: [env, ec2, ecs, system]
+                      timeout: 5s
+                      override: true
+                  exporters:
+                    otlphttp:
+                      endpoint: ${SUMO_OTLP_HTTP_ENDPOINT_URL}
+                  service:
+                    extensions: [health_check]
+                    pipelines:
+                      traces:
+                        receivers: [otlp]
+                        processors: [memory_limiter, resourcedetection, batch/traces]
+                        exporters: [otlphttp]
+                      metrics:
+                        receivers: [otlp]
+                        processors: [memory_limiter, resourcedetection, batch/metrics]
+                        exporters: [otlphttp]
+              - SUMO_OTLP_HTTP_ENDPOINT_URL: !Ref SumoOtlpHttpEndpointURL
+        # Invoke collector-ctl to restart otel-collector.
+        03_restart-sumo-logic-otel-collector:
+          commands:
+            01_stop_service:
+              command: systemctl stop otelcol-sumo.service
+            02_start_service:
+              command: systemctl start otelcol-sumo.service
+        # Cfn-hup setting, it is to monitor the change of metadata.
+        # When there is change in the contents of json file in the metadata section, cfn-hup will call cfn-init to restart sumo-logic-otel-collector.
+        01_setupCfnHup:
+          files:
+            '/etc/cfn/cfn-hup.conf':
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+                interval=1
+              mode: '000400'
+              owner: root
+              group: root
+            '/etc/cfn/hooks.d/sumo-logic-otel-collector-auto-reloader.conf':
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.EC2Instance.Metadata.AWS::CloudFormation::Init.02_config-sumo-logic-otel-collector
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackId} --resource EC2Instance --region ${AWS::Region} --configsets UpdateEnvironment
+                runas=root
+              mode: '000400'
+              owner: root
+              group: root
+            "/lib/systemd/system/otelcol-sumo.service":
+              content: !Sub |
+                [Unit]
+                Description=Sumo Logic Distribution for OpenTelemetry Collector
+                [Service]
+                ExecStart=/usr/local/bin/otelcol-sumo --config "/etc/otelcol-sumo/conf.d/config.yaml"
+                User=otelcol-sumo
+                Group=otelcol-sumo
+                MemoryHigh=1000M
+                MemoryMax=2000M
+                TimeoutStopSec=20
+                [Install]
+                WantedBy=multi-user.target
+          commands:
+            01enable_cfn_hup:
+              command: !Sub |
+                systemctl enable otelcol-sumo.service
+            02start_cfn_hup:
+              command: !Sub |
+                systemctl start otelcol-sumo.service
+
+    Properties:
+      InstanceType:
+        Ref: InstanceType
+      IamInstanceProfile:
+        Ref: IAMRole
+      KeyName:
+        Ref: SSHKeyName
+      ImageId:
+        Ref: InstanceAMI
+      SecurityGroups:
+        - Ref: InstanceSecurityGroup
+      Tags:
+        - Key: Name
+          Value: sumologic-otel-col-ec2
+      UserData:
+        # This script below is to install sumo-logic-otel-collector, restart collector and tell the result to cloudformation.
+        Fn::Base64: !Sub
+        - |
+            #!/bin/bash
+
+            mkdir -p /etc/otelcol-sumo/conf.d
+            chmod 551 /etc/otelcol-sumo /etc/otelcol-sumo/conf.d
+
+            sudo useradd -mrUs /bin/false -d /var/lib/otelcol-sumo otelcol-sumo
+
+            # Download Sumo Logic Distribution for OpenTelemetry Collector binary
+            sudo curl -sLo otelcol-sumo "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/v0.86.0-sumo-0/otelcol-sumo-0.86.0-sumo-0-linux_amd64"
+
+            sudo chmod +x otelcol-sumo
+            sudo mv otelcol-sumo /usr/local/bin/otelcol-sumo
+
+            # Setup Sumo Logic OTLP/HTTP Endpoint Url ENV
+            echo "export SUMO_OTLP_HTTP_ENDPOINT_URL=${SUMO_OTLP_HTTP_ENDPOINT_URL}" > /etc/profile.d/setSumoVar.sh
+
+            /opt/aws/bin/cfn-init -v --stack ${AWS::StackId} --resource EC2Instance --region ${AWS::Region} --configsets default
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource EC2Instance --region ${AWS::Region}
+        - SUMO_OTLP_HTTP_ENDPOINT_URL: !Ref SumoOtlpHttpEndpointURL
+    DependsOn:
+      - EC2Role
+      - IAMInstanceProfile
+      - InstanceSecurityGroup
+
+  IAMInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      InstanceProfileName: !Ref IAMInstanceProfileName
+      Path: /
+      Roles:
+        - !Ref IAMRole
+    DependsOn: EC2Role
+
+  EC2Role:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      Description: Allows EC2 to call AWS services on your behalf.
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/${IAMPolicy}'
+      RoleName: !Ref IAMRole
+    DependsOn: EC2Policy
+
+  EC2Policy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      Description: Allows EC2 to call AWS services on your behalf.
+      Path: /
+      ManagedPolicyName: !Ref IAMPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:PutLogEvents
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:DescribeLogStreams
+              - logs:DescribeLogGroups
+              - ssm:GetParameters
+            Resource: '*'
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable access via ports 22, 4317, 4318
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 4317
+          ToPort: 4317
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 4318
+          ToPort: 4318
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8888
+          ToPort: 8888
+          CidrIp: 0.0.0.0/0

@@ -1,0 +1,37 @@
+extensions:
+  health_check:
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint:
+      http:
+        endpoint:
+processors:
+  memory_limiter:
+      check_interval: 1s
+      limit_percentage: 80
+      spike_limit_percentage: 20
+  batch/traces:
+    timeout: 1s
+    send_batch_size: 256
+  batch/metrics:
+    timeout: 60s
+  resourcedetection:
+    detectors: [env, ec2, ecs]
+    timeout: 5s
+    override: true
+exporters:
+  otlphttp:
+    endpoint: SUMO_OTLP_HTTP_ENDPOINT_URL
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resourcedetection, batch/traces]
+      exporters: [otlphttp]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, resourcedetection, batch/metrics]
+      exporters: [otlphttp]
