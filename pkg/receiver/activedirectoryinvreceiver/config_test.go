@@ -31,7 +31,7 @@ func TestValidate(t *testing.T) {
 			config: ADConfig{
 				DN:           "CN=Guest,CN=Users,DC=exampledomain,DC=com",
 				Attributes:   []string{"name"},
-				PollInterval: 60,
+				PollInterval: "60s",
 			},
 		},
 		{
@@ -39,7 +39,7 @@ func TestValidate(t *testing.T) {
 			config: ADConfig{
 				DN:           "DC=exampledomain,DC=com",
 				Attributes:   []string{"name"},
-				PollInterval: 60,
+				PollInterval: "60s",
 			},
 		},
 		{
@@ -47,22 +47,32 @@ func TestValidate(t *testing.T) {
 			config: ADConfig{
 				DN:           "CN=Guest,OU=Users,DC=exampledomain,DC=com",
 				Attributes:   []string{"name"},
-				PollInterval: 60,
+				PollInterval: "24h",
 			},
 		},
 		{
-			name: "Invalid No CN",
+			name: "Invalid DN",
 			config: ADConfig{
-				DN: "",
+				DN:           "NA",
+				Attributes:   []string{"name"},
+				PollInterval: "24h",
 			},
 			expectedErr: errInvalidDN,
+		},
+		{
+			name: "Empty DN",
+			config: ADConfig{
+				DN:           "",
+				Attributes:   []string{"name"},
+				PollInterval: "24h",
+			},
 		},
 		{
 			name: "Invalid Poll Interval",
 			config: ADConfig{
 				DN:           "CN=Users,DC=exampledomain,DC=com",
 				Attributes:   []string{"name"},
-				PollInterval: -1,
+				PollInterval: "test",
 			},
 			expectedErr: errInvalidPollInterval,
 		},

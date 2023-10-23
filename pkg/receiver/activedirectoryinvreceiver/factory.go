@@ -39,9 +39,9 @@ func NewFactory() receiver.Factory {
 // CreateDefaultConfig creates the default configuration for the receiver
 func CreateDefaultConfig() component.Config {
 	return &ADConfig{
-		DN:           "CN=Guest,CN=Users,DC=exampledomain,DC=com",
-		Attributes:   []string{"name"},
-		PollInterval: 60,
+		DN:           "",
+		Attributes:   []string{"name", "mail", "department", "manager", "memberOf"},
+		PollInterval: "24h",
 	}
 }
 
@@ -53,6 +53,7 @@ func createLogsReceiver(
 ) (receiver.Logs, error) {
 	cfg := rConf.(*ADConfig)
 	adsiClient := &ADSIClient{}
-	rcvr := newLogsReceiver(cfg, params.Logger, adsiClient, consumer)
+	adRuntime := &ADRuntimeInfo{}
+	rcvr := newLogsReceiver(cfg, params.Logger, adsiClient, adRuntime, consumer)
 	return rcvr, nil
 }

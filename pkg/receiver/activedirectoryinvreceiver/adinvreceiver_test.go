@@ -29,6 +29,15 @@ import (
 	"go.uber.org/zap"
 )
 
+type MockRuntime struct {
+	mock.Mock
+}
+
+func (mr *MockRuntime) SupportedOS() bool {
+	args := mr.Called()
+	return args.Bool(0)
+}
+
 type MockClient struct {
 	mock.Mock
 }
@@ -89,8 +98,10 @@ func TestStart(t *testing.T) {
 
 	sink := &consumertest.LogsSink{}
 	mockClient := &MockClient{}
+	mockRuntime := &MockRuntime{}
+	mockRuntime.On("SupportedOS").Return(true)
 
-	logsRcvr := newLogsReceiver(cfg, zap.NewNop(), mockClient, sink)
+	logsRcvr := newLogsReceiver(cfg, zap.NewNop(), mockClient, mockRuntime, sink)
 
 	err := logsRcvr.Start(context.Background(), componenttest.NewNopHost())
 	require.NoError(t, err)
@@ -99,16 +110,32 @@ func TestStart(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestStartUnsupportedOS(t *testing.T) {
+	cfg := CreateDefaultConfig().(*ADConfig)
+	cfg.DN = "CN=Guest,CN=Users,DC=exampledomain,DC=com"
+
+	sink := &consumertest.LogsSink{}
+	mockClient := &MockClient{}
+	mockRuntime := &MockRuntime{}
+	mockRuntime.On("SupportedOS").Return(false)
+
+	logsRcvr := newLogsReceiver(cfg, zap.NewNop(), mockClient, mockRuntime, sink)
+
+	err := logsRcvr.Start(context.Background(), componenttest.NewNopHost())
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "activedirectoryinv is only supported on Windows")
+}
+
 func TestPoll(t *testing.T) {
 	cfg := CreateDefaultConfig().(*ADConfig)
 	cfg.DN = "CN=Guest,CN=Users,DC=exampledomain,DC=com"
-	cfg.PollInterval = 1
+	cfg.PollInterval = "1s"
 	cfg.Attributes = []string{"name"}
-
 	sink := &consumertest.LogsSink{}
 	mockClient := defaultMockClient()
-
-	logsRcvr := newLogsReceiver(cfg, zap.NewNop(), mockClient, sink)
+	mockRuntime := &MockRuntime{}
+	mockRuntime.On("SupportedOS").Return(true)
+	logsRcvr := newLogsReceiver(cfg, zap.NewNop(), mockClient, mockRuntime, sink)
 
 	err := logsRcvr.Start(context.Background(), componenttest.NewNopHost())
 	require.NoError(t, err)

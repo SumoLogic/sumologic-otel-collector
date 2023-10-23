@@ -15,6 +15,8 @@
 package activedirectoryinvreceiver
 
 import (
+	"runtime"
+
 	adsi "github.com/go-adsi/adsi"
 )
 
@@ -69,6 +71,7 @@ func (o *ADObject) Attrs(key string) ([]interface{}, error) {
 	return o.windowsADObject.Attr(key)
 }
 
+// ToContainer converts an Active Directory object to an Active Directory container
 func (o *ADObject) ToContainer() (Container, error) {
 	container, err := o.windowsADObject.ToContainer()
 	if err != nil {
@@ -96,4 +99,17 @@ func (o *ADObjectIter) Next() (*adsi.Object, error) {
 // Close closes an Active Directory object iterator
 func (o *ADObjectIter) Close() {
 	o.windowsADObjectIter.Close()
+}
+
+// RuntimeInfo is an interface for runtime information
+type RuntimeInfo interface {
+	SupportedOS() bool
+}
+
+// ADRuntimeInfo is a wrapper for runtime information
+type ADRuntimeInfo struct{}
+
+// SupportedOS returns whether the runtime is supported
+func (r *ADRuntimeInfo) SupportedOS() bool {
+	return (runtime.GOOS == "windows")
 }

@@ -59,18 +59,20 @@ type ADReceiver struct {
 	config   *ADConfig
 	logger   *zap.Logger
 	client   Client
+	runtime  RuntimeInfo
 	consumer consumer.Logs
 	wg       *sync.WaitGroup
 	doneChan chan bool
 }
 
 // newLogsReceiver creates a new Active Directory Inventory receiver
-func newLogsReceiver(cfg *ADConfig, logger *zap.Logger, client Client, consumer consumer.Logs) *ADReceiver {
+func newLogsReceiver(cfg *ADConfig, logger *zap.Logger, client Client, runtime RuntimeInfo, consumer consumer.Logs) *ADReceiver {
 
 	return &ADReceiver{
 		config:   cfg,
 		logger:   logger,
 		client:   client,
+		runtime:  runtime,
 		consumer: consumer,
 		wg:       &sync.WaitGroup{},
 		doneChan: make(chan bool),
@@ -79,6 +81,9 @@ func newLogsReceiver(cfg *ADConfig, logger *zap.Logger, client Client, consumer 
 
 // Start the logs receiver
 func (l *ADReceiver) Start(ctx context.Context, _ component.Host) error {
+	if !l.runtime.SupportedOS() {
+		return errSupportedOS
+	}
 	l.logger.Debug("Starting to poll for active directory inventory records")
 	l.wg.Add(1)
 	go l.startPolling(ctx)
@@ -96,7 +101,13 @@ func (l *ADReceiver) Shutdown(_ context.Context) error {
 // Start polling for Active Directory inventory records
 func (l *ADReceiver) startPolling(ctx context.Context) {
 	defer l.wg.Done()
-	t := time.NewTicker(l.config.PollInterval * time.Second)
+	duration, err := time.ParseDuration(l.config.PollInterval)
+	if err != nil {
+		l.logger.Error("Failed to parse poll interval", zap.Error(err))
+		return
+	}
+	l.logger.Info("Polling interval: ", zap.Duration("interval", duration))
+	t := time.NewTicker(duration)
 	for {
 		select {
 		case <-ctx.Done():
@@ -145,10 +156,10 @@ func (r *ADReceiver) poll(ctx context.Context) error {
 	resourceLogs := &rl
 	_ = resourceLogs.ScopeLogs().AppendEmpty()
 	root, err := r.client.Open(r.config.DN, resourceLogs)
-	r.traverse(root, r.config.Attributes, resourceLogs)
 	if err != nil {
-		return err
+		return fmt.Errorf("Invalid Distinguished Name, please verify that the domain exists: %w", err)
 	}
+	r.traverse(root, r.config.Attributes, resourceLogs)
 	err = r.consumer.ConsumeLogs(ctx, logs)
 	if err != nil {
 		r.logger.Error("Error consuming log", zap.Error(err))

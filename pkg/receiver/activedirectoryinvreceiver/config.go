@@ -23,21 +23,27 @@ import (
 // ADConfig defines configuration for Active Directory Inventory receiver.
 
 type ADConfig struct {
-	DN           string        `mapstructure:"base_dn"` // DN is the base distinguished name to search from
-	Attributes   []string      `mapstructure:"attributes"`
-	PollInterval time.Duration `mapstructure:"poll_interval"`
+	DN           string   `mapstructure:"base_dn"` // DN is the base distinguished name to search from
+	Attributes   []string `mapstructure:"attributes"`
+	PollInterval string   `mapstructure:"poll_interval"`
 }
 
 var (
-	errInvalidDN           = errors.New("Base DN is incorrect, it must be in the format of CN=Users,DC=exampledomain,DC=com")
-	errInvalidPollInterval = errors.New("poll interval is incorrect, it must be a duration greater than one second")
+	errInvalidDN           = errors.New("Base DN is incorrect, it must be a valid distinguished name (CN=Guest,OU=Users,DC=example,DC=com)")
+	errInvalidPollInterval = errors.New("poll interval is incorrect, invalid duration")
+	errSupportedOS         = errors.New(typeStr + " is only supported on Windows.")
 )
+
+func isValidDuration(durationStr string) bool {
+	_, err := time.ParseDuration(durationStr)
+	return err == nil
+}
 
 // Validate validates all portions of the relevant config
 func (c *ADConfig) Validate() error {
 
 	// Define the regular expression pattern for a valid Base DN
-	pattern := `^((CN|OU)=[^,]+(,|$))*((DC=[^,]+),?)+$`
+	pattern := `^((CN|OU)=[^,]+(,|$))*((DC=[^,]+),?)*$`
 
 	// Compile the regular expression pattern
 	regex := regexp.MustCompile(pattern)
@@ -47,7 +53,7 @@ func (c *ADConfig) Validate() error {
 		return errInvalidDN
 	}
 
-	if c.PollInterval < 0 {
+	if !isValidDuration(c.PollInterval) {
 		return errInvalidPollInterval
 	}
 
