@@ -1,9 +1,18 @@
 # Contributing Guide
 
 - [Setting up development environment](#setting-up-development-environment)
+  - [Preparing the development environment (Windows)](#preparing-the-development-environment-windows)
   - [How to build](#how-to-build)
+  - [How to build packages (Windows MSI)](#how-to-build-packages-windows-msi)
   - [Running Tests](#running-tests)
   - [Setting up Go workspaces](#setting-up-go-workspaces)
+- [Changelog management](#changelog-management)
+  - [Installing Towncrier](#installing-towncrier)
+  - [Adding a changelog entry](#adding-a-changelog-entry)
+  - [My change doesn't need a changelog entry](#my-change-doesnt-need-a-changelog-entry)
+  - [How do I update the changelog while releasing?](#how-do-i-update-the-changelog-while-releasing)
+  - [How do I add multiple entries for the same PR?](#how-do-i-add-multiple-entries-for-the-same-pr)
+  - [How do I add an entry with multiple PR links?](#how-do-i-add-an-entry-with-multiple-pr-links)
 
 ---
 
@@ -149,3 +158,62 @@ To contribute you will need to ensure you have the following setup:
 [go-msi]: https://go.dev/dl/
 [make-for-windows]: https://gnuwin32.sourceforge.net/downlinks/make.php
 [git-for-windows]: https://git-scm.com/download/win
+
+## Changelog management
+
+We use [Towncrier](https://towncrier.readthedocs.io) for changelog management. We keep the changelog entries for currently unreleased
+changed in the [.changelog] directory. The contents of this directory are consumed when the changelog is updated prior to a release.
+
+### Installing Towncrier
+
+Towncrier is written in Python and can be installed with [pip](https://pypi.org/project/pip/).
+
+Prerequisites:
+
+- [Python v3](https://www.python.org/)
+- [pip](https://pypi.org/project/pip/)
+
+```shell
+make install-towncrier
+```
+
+### Adding a changelog entry
+
+If you want to add a changelog entry for your PR, run:
+
+```bash
+make add-changelog-entry
+```
+
+You can also just create the file manually. The filename format is `<PR NUMBER>.<CHANGE TYPE>(.<FRAGMENT NUMBER>).txt`, and the content is
+the entry text.
+
+### My change doesn't need a changelog entry
+
+Add a `skip-changelog` label to your pull request in GitHub.
+
+### How do I update the changelog while releasing?
+
+Apart from Towncrier, you'll also need [Prettier](https://prettier.io/) for this.
+
+Prerequisites:
+
+- [Node.js](https://nodejs.org/)
+
+```shell
+make install-prettier
+```
+
+After you have Towncrier and Prettier available in your console, run:
+
+```shell
+make update-changelog VERSION=x.x.x-sumo-x
+```
+
+### How do I add multiple entries for the same PR?
+
+Run `make add-changelog-entry` again. Another change file will be created.
+
+### How do I add an entry with multiple PR links?
+
+Just add an entry with the same text for each PR, they will be grouped together.

@@ -5,23 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+<!-- towncrier release notes -->
 
-### Released TBD
+## [v0.88.0-sumo-0]
+
+### Released 2023-10-24
 
 ### Added
 
-- feat(receiver/monitorinjob): add Monitoring Job receiver [#1292]
+- feat(receiver/monitoringjob): add Monitoring Job receiver [#1292]
 
 ### Changed
 
-- feat(opampextension): opamp effective configuration is only derived from the
-  remote_configuration_directory contents and the contents are managed by the
-  extension [#1274]
+- feat(extension/opamp): OpAMP effective configuration is only derived from the remote_configuration_directory contents and the contents are managed by the extension [#1274]
+- chore: update otelcol to `v0.88.0` [#1300]
 
-[#1274]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1274
 [#1292]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1292
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.87.0-sumo-0...main
+[#1274]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1274
+[#1300]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1300
+[v0.88.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.88.0-sumo-0
 
 ## [v0.87.0-sumo-0]
 
@@ -188,7 +190,6 @@ See the [upgrade guide][upgrade_guide_v0.84] for more details.
 [#1169]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1169
 [#1174]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1174
 [#1180]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1180
-
 [v0.80.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.79.0-sumo-0...v0.80.0-sumo-0
 
 ## [v0.79.0-sumo-0]

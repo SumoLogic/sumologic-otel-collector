@@ -986,10 +986,13 @@ func addClientCredentials(req *http.Request, credentials accessCredentials) {
 	req.Header.Add("Authorization", authHeaderValue)
 }
 
+// TODO(ck): hostname allows the darwin tests to bypass fqdn.
+var hostname = fqdn.FqdnHostname
+
 // getHostname returns the host name consistently with the resource detection processor's defaults
 // TODO: try to dynamically extract this from the resource processor in the pipeline
 func getHostname(logger *zap.Logger) (string, error) {
-	fqdnHostname, err := fqdn.FqdnHostname()
+	fqdnHostname, err := hostname()
 	if err == nil {
 		return fqdnHostname, nil
 	}
