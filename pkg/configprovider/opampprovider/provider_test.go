@@ -101,6 +101,7 @@ func TestValid(t *testing.T) {
 		"processors::batch/second":         nil,
 		"exporters::otlp/first::endpoint":  "localhost:4317",
 		"exporters::otlp/second::endpoint": "localhost:4318",
+		"remote_configuration_directory":   "./testdata/multiple",
 	})
 	want := exp.ToStringMap()
 	if diff := cmp.Diff(want, got); diff != "" {

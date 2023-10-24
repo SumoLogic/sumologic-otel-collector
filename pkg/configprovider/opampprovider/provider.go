@@ -22,6 +22,7 @@ import (
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
 	"go.opentelemetry.io/collector/confmap"
+	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
 	"gopkg.in/yaml.v2"
 )
 
@@ -58,8 +59,33 @@ func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.W
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, fmt.Errorf("couldn't parse opamp config file: %s", err)
 	}
+	conf := confmap.New()
 	glob := p.GlobProvider
-	return glob.Retrieve(ctx, glob.Scheme()+":"+filepath.Join(cfg.RemoteConfigurationDirectory, "*.yaml"), fn)
+	retrieved, err := glob.Retrieve(ctx, glob.Scheme()+":"+filepath.Join(cfg.RemoteConfigurationDirectory, "*.yaml"), fn)
+	if err != nil {
+		return nil, err
+	}
+	retConf, err := retrieved.AsConf()
+	if err != nil {
+		return nil, err
+	}
+	addl, err := fileprovider.New().Retrieve(ctx, "file:"+configPath, fn)
+	if err != nil {
+		return nil, err
+	}
+	addlConf, err := addl.AsConf()
+	if err != nil {
+		return nil, err
+	}
+	// merge the file config in
+	if err := conf.Merge(addlConf); err != nil {
+		return nil, err
+	}
+	// merge the glob config in, potentially overriding file config
+	if err := conf.Merge(retConf); err != nil {
+		return nil, err
+	}
+	return confmap.NewRetrieved(conf.ToStringMap())
 }
 
 func (*Provider) Scheme() string {
