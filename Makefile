@@ -47,6 +47,14 @@ markdown-link-check:
 shellcheck:
 	./ci/shellcheck.sh
 
+.PHONY: install-pre-commit
+install-pre-commit:
+	python3 -m pip install pre-commit
+
+.PHONY: install-pre-commit-hook
+install-pre-commit-hook:
+	pre-commit install
+
 # ref: https://pre-commit.com/
 .PHONY: pre-commit-check
 pre-commit-check:
