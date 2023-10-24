@@ -1,0 +1,1 @@
+feat(receiver/monitoringjob): add Monitoring Job receiver

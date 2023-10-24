@@ -5,23 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Released TBD
-
-### Added
-
-- feat(receiver/monitorinjob): add Monitoring Job receiver [#1292]
-
-### Changed
-
-- feat(opampextension): opamp effective configuration is only derived from the
-  remote_configuration_directory contents and the contents are managed by the
-  extension [#1274]
-
-[#1274]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1274
-[#1292]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1292
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.87.0-sumo-0...main
+<!-- towncrier release notes -->
 
 ## [v0.87.0-sumo-0]
 
