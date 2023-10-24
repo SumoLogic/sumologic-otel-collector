@@ -97,11 +97,12 @@ func TestValid(t *testing.T) {
 	}
 	got := conf.ToStringMap()
 	exp := confmap.NewFromStringMap(map[string]any{
-		"processors::batch/first":          nil,
-		"processors::batch/second":         nil,
-		"exporters::otlp/first::endpoint":  "localhost:4317",
-		"exporters::otlp/second::endpoint": "localhost:4318",
-		"remote_configuration_directory":   "./testdata/multiple",
+		"processors::batch/first":                           nil,
+		"processors::batch/second":                          nil,
+		"exporters::otlp/first::endpoint":                   "localhost:4317",
+		"exporters::otlp/second::endpoint":                  "localhost:4318",
+		"extensions::opamp::remote_configuration_directory": "./testdata/multiple",
+		"extensions::opamp::endpoint":                       "wss://example.com/v1/opamp",
 	})
 	want := exp.ToStringMap()
 	if diff := cmp.Diff(want, got); diff != "" {

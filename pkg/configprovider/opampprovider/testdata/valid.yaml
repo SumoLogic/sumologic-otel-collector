@@ -1,1 +1,4 @@
-remote_configuration_directory: ./testdata/multiple
+extensions:
+  opamp:
+    endpoint: "wss://example.com/v1/opamp"
+    remote_configuration_directory: ./testdata/multiple

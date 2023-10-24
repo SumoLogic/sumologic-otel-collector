@@ -34,7 +34,18 @@ const (
 // To avoid creating a dependency on other packages, we only specify what
 // is needed for the OpAmp provider to work.
 type ConfigFragment struct {
-	RemoteConfigurationDirectory string `yaml:"remote_configuration_directory"`
+	Extensions struct {
+		OpAmp struct {
+			RemoteConfigurationDirectory string `yaml:"remote_configuration_directory"`
+		} `yaml:"opamp"`
+	} `yaml:"extensions"`
+}
+
+func (c ConfigFragment) ConfigDir() string {
+	return c.Extensions.OpAmp.RemoteConfigurationDirectory
+}
+
+type OpAmpExtension struct {
 }
 
 // Provider is an OpAmp configuration provider. It requires a GlobProvider to
@@ -61,7 +72,7 @@ func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.W
 	}
 	conf := confmap.New()
 	glob := p.GlobProvider
-	retrieved, err := glob.Retrieve(ctx, glob.Scheme()+":"+filepath.Join(cfg.RemoteConfigurationDirectory, "*.yaml"), fn)
+	retrieved, err := glob.Retrieve(ctx, glob.Scheme()+":"+filepath.Join(cfg.ConfigDir(), "*.yaml"), fn)
 	if err != nil {
 		return nil, err
 	}
