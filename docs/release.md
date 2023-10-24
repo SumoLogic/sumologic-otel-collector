@@ -20,13 +20,11 @@
 
 ### Update Changelog and upgrading guide
 
-Edit the [CHANGELOG.md][changelog] and [upgrading.md][upgrading] files and add entries for the release that will be created.
+Update the [CHANGELOG.md][changelog] by running `make update-changelog VERSION=x.x.x-sumo-x`.
 
-Here are some example pull requests: [#602], [#652], [#684]
+Make sure the [upgrading.md][upgrading] file has entries for the breaking changes for this release.
 
-[#602]: https://github.com/SumoLogic/sumologic-otel-collector/pull/602
-[#652]: https://github.com/SumoLogic/sumologic-otel-collector/pull/652
-[#684]: https://github.com/SumoLogic/sumologic-otel-collector/pull/684
+Here are some example pull requests: [#602], [#652], [#684].
 
 ### Create and push Git tag
 
