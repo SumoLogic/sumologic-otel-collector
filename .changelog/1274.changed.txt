@@ -1,1 +1,0 @@
-feat(extension/opamp): OpAMP effective configuration is only derived from the remote_configuration_directory contents and the contents are managed by the extension
