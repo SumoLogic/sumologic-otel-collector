@@ -17,11 +17,8 @@ package opampprovider
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"regexp"
-	"runtime"
-	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -87,12 +84,10 @@ func TestValid(t *testing.T) {
 		}
 	}()
 
-	validFile := "valid.yaml"
-	if strings.HasPrefix(runtime.GOOS, "windows") {
-		validFile = "valid_windows.yaml"
-	}
+	configPath := "opamp:" + absolutePath(t, filepath.Join("testdata", "valid.yaml"))
+	t.Logf("loading opamp config file: %s", configPath)
 
-	ret, err := p.Retrieve(context.Background(), "opamp:"+absolutePath(t, filepath.Join("testdata", validFile)), nil)
+	ret, err := p.Retrieve(context.Background(), configPath, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,11 +110,11 @@ func TestValid(t *testing.T) {
 
 func absolutePath(t *testing.T, relativePath string) string {
 	t.Helper()
-	dir, err := os.Getwd()
+	pth, err := filepath.Abs(relativePath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return filepath.Join(dir, relativePath)
+	return pth
 }
 
 // TODO: Replace this with the upstream exporter version after we upgrade to v0.58.0

@@ -16,7 +16,7 @@ type Config struct {
 	Output   output.Config   `mapstructure:"output"`
 }
 
-// ExecutionConfig defines the configuration for execution of a monitorinjob
+// ExecutionConfig defines the configuration for execution of a monitoringjob
 // process
 type ExecutionConfig struct {
 	// Command is the name of the binary to be executed

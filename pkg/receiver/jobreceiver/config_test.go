@@ -46,7 +46,6 @@ func TestConfigValidate(t *testing.T) {
 					{
 						Name: "monitoring-plugins",
 						URL:  "https://assets.bonsai.sensu.io/asset.zip",
-						Path: "/opt/monitoring-plugins",
 					},
 				}
 				c.Exec.Arguments = []string{"-H", "time.nist.gov"}

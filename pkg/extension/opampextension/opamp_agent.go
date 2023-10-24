@@ -20,10 +20,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
-	"sort"
 	"syscall"
 
+	"github.com/google/uuid"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/knadh/koanf/v2"
@@ -53,7 +54,7 @@ type opampAgent struct {
 
 	instanceId ulid.ULID
 
-	effectiveConfig string
+	effectiveConfig map[string]*protobufs.AgentConfigFile
 
 	agentDescription *protobufs.AgentDescription
 
@@ -66,13 +67,8 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 	o.host = host
 	o.opampClient = client.NewWebSocket(o.logger.Sugar())
 
-	path := filepath.Join(o.cfg.RemoteConfigurationDirectory, "opamp-remote-config.yaml")
-	if _, err := os.Stat(path); err == nil {
-		err := o.loadEffectiveConfig(path)
-
-		if err != nil {
-			return err
-		}
+	if err := o.loadEffectiveConfig(o.cfg.RemoteConfigurationDirectory); err != nil {
+		return err
 	}
 
 	if err := o.createAgentDescription(); err != nil {
@@ -156,9 +152,7 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 			OnMessageFunc: o.onMessage,
 		},
 		RemoteConfigStatus: o.remoteConfigStatus,
-		Capabilities: protobufs.AgentCapabilities_AgentCapabilities_AcceptsRemoteConfig |
-			protobufs.AgentCapabilities_AgentCapabilities_ReportsRemoteConfig |
-			protobufs.AgentCapabilities_AgentCapabilities_ReportsEffectiveConfig,
+		Capabilities:       o.getAgentCapabilities(),
 	}
 
 	o.logger.Debug("Starting OpAMP client...")
@@ -246,21 +240,21 @@ func newOpampAgent(cfg *Config, logger *zap.Logger, build component.BuildInfo, r
 
 	uid := ulid.Make()
 
-	sid, ok := res.Attributes().Get(semconv.AttributeServiceInstanceID)
-	if ok {
-		puid, err := ulid.Parse(sid.AsString())
-		if err != nil {
-			return nil, err
-		}
-		uid = puid
-	}
-
 	if cfg.InstanceUID != "" {
 		puid, err := ulid.Parse(cfg.InstanceUID)
 		if err != nil {
 			return nil, err
 		}
 		uid = puid
+	} else {
+		sid, ok := res.Attributes().Get(semconv.AttributeServiceInstanceID)
+		if ok {
+			uuid, err := uuid.Parse(sid.AsString())
+			if err != nil {
+				return nil, err
+			}
+			uid = ulid.ULID(uuid)
+		}
 	}
 
 	agent := &opampAgent{
@@ -272,6 +266,18 @@ func newOpampAgent(cfg *Config, logger *zap.Logger, build component.BuildInfo, r
 	}
 
 	return agent, nil
+}
+
+func (o *opampAgent) getAgentCapabilities() protobufs.AgentCapabilities {
+	c := protobufs.AgentCapabilities_AgentCapabilities_ReportsEffectiveConfig
+
+	if o.cfg.AcceptsRemoteConfiguration {
+		c = c |
+			protobufs.AgentCapabilities_AgentCapabilities_AcceptsRemoteConfig |
+			protobufs.AgentCapabilities_AgentCapabilities_ReportsRemoteConfig
+	}
+
+	return c
 }
 
 func stringKeyValue(key, value string) *protobufs.KeyValue {
@@ -290,9 +296,9 @@ func (o *opampAgent) createAgentDescription() error {
 	}
 
 	ident := []*protobufs.KeyValue{
-		stringKeyValue("service.instance.id", o.instanceId.String()),
-		stringKeyValue("service.name", o.agentType),
-		stringKeyValue("service.version", o.agentVersion),
+		stringKeyValue(semconv.AttributeServiceInstanceID, o.instanceId.String()),
+		stringKeyValue(semconv.AttributeServiceName, o.agentType),
+		stringKeyValue(semconv.AttributeServiceVersion, o.agentVersion),
 	}
 
 	nonIdent := []*protobufs.KeyValue{
@@ -309,39 +315,75 @@ func (o *opampAgent) createAgentDescription() error {
 	return nil
 }
 
-func (o *opampAgent) loadEffectiveConfig(path string) error {
-	var k = koanf.New(".")
+func (o *opampAgent) loadEffectiveConfig(dir string) error {
+	if _, err := os.Stat(dir); err != nil {
+		return err
+	}
 
-	rb, err := os.ReadFile(path)
+	ec := map[string]*protobufs.AgentConfigFile{}
 
+	paths, err := filepath.Glob(filepath.Join(dir, "*.yaml"))
 	if err != nil {
 		return err
 	}
 
-	if err := k.Load(rawbytes.Provider(rb), yaml.Parser()); err != nil {
-		return err
+	for _, p := range paths {
+		var k = koanf.New(".")
+
+		rb, err := os.ReadFile(p)
+
+		if err != nil {
+			return err
+		}
+
+		if err := k.Load(rawbytes.Provider(rb), yaml.Parser()); err != nil {
+			return err
+		}
+
+		fb, err := k.Marshal(yaml.Parser())
+		if err != nil {
+			return err
+		}
+
+		ec[filepath.Base(p)] = &protobufs.AgentConfigFile{Body: fb}
 	}
 
-	ecb, err := k.Marshal(yaml.Parser())
-	if err != nil {
-		return err
-	}
-
-	o.effectiveConfig = string(ecb)
+	o.effectiveConfig = ec
 
 	return nil
 }
 
-func (o *opampAgent) saveEffectiveConfig(path string) error {
-	f, err := os.Create(path)
+func (o *opampAgent) saveEffectiveConfig(dir string) error {
+	d, err := os.Open(dir)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
-	_, err = f.Write([]byte(o.effectiveConfig))
+	files, err := d.Readdir(0)
 	if err != nil {
 		return err
+	}
+
+	for _, f := range files {
+		err := os.Remove(filepath.Join(dir, f.Name()))
+		if err != nil {
+			return err
+		}
+	}
+
+	for k, v := range o.effectiveConfig {
+		p := filepath.Join(dir, k)
+
+		f, err := os.Create(p)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		_, err = f.Write(v.Body)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -367,93 +409,45 @@ func (o *opampAgent) updateAgentIdentity(instanceId ulid.ULID) {
 func (o *opampAgent) composeEffectiveConfig() *protobufs.EffectiveConfig {
 	return &protobufs.EffectiveConfig{
 		ConfigMap: &protobufs.AgentConfigMap{
-			ConfigMap: map[string]*protobufs.AgentConfigFile{
-				"": {Body: []byte(o.effectiveConfig)},
-			},
+			ConfigMap: o.effectiveConfig,
 		},
 	}
-}
-
-type agentConfigFileItem struct {
-	name string
-	file *protobufs.AgentConfigFile
-}
-
-type agentConfigFileSlice []agentConfigFileItem
-
-func (a agentConfigFileSlice) Less(i, j int) bool {
-	return a[i].name < a[j].name
-}
-
-func (a agentConfigFileSlice) Swap(i, j int) {
-	t := a[i]
-	a[i] = a[j]
-	a[j] = t
-}
-
-func (a agentConfigFileSlice) Len() int {
-	return len(a)
 }
 
 func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (configChanged bool, err error) {
 	o.logger.Debug("Received remote config from OpAMP server", zap.ByteString("hash", config.ConfigHash))
 
-	var k = koanf.New(".")
-
-	orderedConfigs := agentConfigFileSlice{}
-	for name, file := range config.Config.ConfigMap {
-		if name == "" {
-			// skip instance config
-			continue
-		}
-		orderedConfigs = append(orderedConfigs, agentConfigFileItem{
-			name: name,
-			file: file,
-		})
+	if !o.cfg.AcceptsRemoteConfiguration {
+		return false, fmt.Errorf("OpAMP agent does not accept remote configuration")
 	}
 
-	// Sort to make sure the order of merging is stable.
-	sort.Sort(orderedConfigs)
+	nec := map[string]*protobufs.AgentConfigFile{}
 
-	// Append instance config as the last item.
-	instanceConfig := config.Config.ConfigMap[""]
-	if instanceConfig != nil {
-		orderedConfigs = append(orderedConfigs, agentConfigFileItem{
-			name: "",
-			file: instanceConfig,
-		})
-	}
+	for n, f := range config.Config.ConfigMap {
+		var k = koanf.New(".")
 
-	// Merge received configs.
-	for _, item := range orderedConfigs {
-		var k2 = koanf.New(".")
-		err := k2.Load(rawbytes.Provider(item.file.Body), yaml.Parser())
+		err := k.Load(rawbytes.Provider(f.Body), yaml.Parser())
 		if err != nil {
-			return false, fmt.Errorf("cannot parse config named %s: %v", item.name, err)
+			return false, fmt.Errorf("cannot parse config named %s: %v", n, err)
 		}
-		err = k.Merge(k2)
+
+		fb, err := k.Marshal(yaml.Parser())
 		if err != nil {
-			return false, fmt.Errorf("cannot merge config named %s: %v", item.name, err)
+			return false, fmt.Errorf("cannot marshal config named %s: %v", n, err)
 		}
+
+		nec[n] = &protobufs.AgentConfigFile{Body: fb}
 	}
 
-	// The merged final result is our effective config.
-	effectiveConfigBytes, err := k.Marshal(yaml.Parser())
-	if err != nil {
-		return false, fmt.Errorf("cannot marshal the OpAMP effective config: %v", err)
-	}
-
-	newEffectiveConfig := string(effectiveConfigBytes)
 	configChanged = false
-	if o.effectiveConfig != newEffectiveConfig {
-		path := filepath.Join(o.cfg.RemoteConfigurationDirectory, "opamp-remote-config.yaml")
-		oldEffectiveConfig := o.effectiveConfig
-		o.effectiveConfig = newEffectiveConfig
+	if !reflect.DeepEqual(o.effectiveConfig, nec) {
+		oec := o.effectiveConfig
+		o.effectiveConfig = nec
 
-		err := o.saveEffectiveConfig(path)
+		err := o.saveEffectiveConfig(o.cfg.RemoteConfigurationDirectory)
 		if err != nil {
-			o.effectiveConfig = oldEffectiveConfig
-			return false, fmt.Errorf("cannot save the OpAMP effective config to %s: %v", path, err)
+			o.effectiveConfig = oec
+			return false, fmt.Errorf("cannot save the OpAMP effective config to %s: %v", o.cfg.RemoteConfigurationDirectory, err)
 		}
 
 		configChanged = true

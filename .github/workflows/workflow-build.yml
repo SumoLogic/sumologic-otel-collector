@@ -59,11 +59,24 @@ jobs:
         run: ./ci/fetch_current_branch.sh
 
       - name: Setup go
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
+        if: |
+          ! (contains(inputs.arch_os, 'windows') && inputs.fips) &&
+          (! inputs.only-if-changed ||
+          steps.changed-files.outputs.any_changed == 'true')
         uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
+
+      - name: Setup go (Microsoft fork)
+        if: |
+          (contains(inputs.arch_os, 'windows') && inputs.fips) &&
+          (! inputs.only-if-changed ||
+          steps.changed-files.outputs.any_changed == 'true')
+        run: |
+          curl -Lo go.zip https://aka.ms/golang/release/latest/go${{ env.GO_VERSION }}.windows-amd64.zip &&
+          powershell -command "Expand-Archive go.zip D:\\a\\_work\\1\\s" &&
+          echo "/d/a/_work/1/s/go/bin" >> $GITHUB_PATH
 
       - name: Get Go env values
         if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
@@ -92,15 +105,15 @@ jobs:
             ${{ steps.get-cache-key.outputs.restore-keys }}
 
       - name: Set default BUILDER_BIN_PATH
-        if: ${{ ! inputs.fips && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        if: ${{ ! (inputs.fips && contains(inputs.arch_os, 'linux')) && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
 
       - name: Add opentelemetry-collector-builder installation dir to PATH
-        if: ${{ ! inputs.fips && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        if: ${{ ! (inputs.fips && contains(inputs.arch_os, 'linux')) && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
 
       - name: Install opentelemetry-collector-builder
-        if: ${{ ! inputs.fips && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        if: ${{ ! (inputs.fips && contains(inputs.arch_os, 'linux')) && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         run: make install-builder
         working-directory: ./otelcolbuilder
 
@@ -110,11 +123,16 @@ jobs:
         working-directory: ./otelcolbuilder
 
       - name: Build (FIPS)
-        if: ${{ inputs.fips && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        if: ${{ inputs.fips && contains(inputs.arch_os, 'linux') && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         id: containerized-build
         uses: ./ci/build-fips-action
         with:
           go-version: ${{ env.GO_VERSION }}
+
+      - name: Build (FIPS)
+        if: ${{ inputs.fips && ! contains(inputs.arch_os, 'linux') && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        run: make otelcol-sumo-${{inputs.arch_os}} FIPS_SUFFIX="-fips" CGO_ENABLED=1
+        working-directory: ./otelcolbuilder
 
       - name: Set binary name
         id: set-binary-name
@@ -122,11 +140,26 @@ jobs:
         run: echo "binary_name=otelcol-sumo${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}${OTELCOL_BINARY_EXTENSION}" >> $GITHUB_OUTPUT
 
       - name: Show BoringSSL symbols
-        if: ${{ inputs.fips && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        if: |
+          inputs.fips &&
+          contains(inputs.arch_os, 'linux') &&
+          (! inputs.only-if-changed ||
+          steps.changed-files.outputs.any_changed == 'true')
         working-directory: ./otelcolbuilder/cmd
         run: |
           go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
           grep "_Cfunc__goboringcrypto_"
+
+      - name: Show Microsoft Cryptography Next-Generation symbols
+        if: |
+          inputs.fips &&
+          contains(inputs.arch_os, 'windows') &&
+          (! inputs.only-if-changed ||
+          steps.changed-files.outputs.any_changed == 'true')
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
+          grep "vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt.GetFipsAlgorithmMode"
 
       - name: Test binary
         if: ${{ (inputs.arch_os == env.ARCH_OS) && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}

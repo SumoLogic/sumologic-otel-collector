@@ -7,17 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Released TBD
+
 ### Added
 
-- feat(otelcol-sumo): add --opamp-config flag (provider unimplemented)
+- feat(receiver/monitorinjob): add Monitoring Job receiver [#1292]
 
-### Released TBD
+### Changed
+
+- feat(opampextension): opamp effective configuration is only derived from the
+  remote_configuration_directory contents and the contents are managed by the
+  extension [#1274]
+
+[#1274]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1274
+[#1292]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1292
+[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.87.0-sumo-0...main
+
+## [v0.87.0-sumo-0]
+
+### Released 2023-10-13
+
+### Added
+
+- feat(otelcol-sumo): add --opamp-config flag (provider unimplemented) [#1230]
+
+### Changed
+
+- chore: update otelcol core to `v0.87.0` [#1279]
 
 ### Fixed
 
 - fix(k8sprocessor): delay deleting the metadata from owner resources [#1242]
+- fix(k8sprocessor): handle missed k8s resource deletions correctly [#1277]
 
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.86.0-sumo-0...main
+[#1230]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1230
+[#1242]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1242
+[#1279]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1279
+[v0.87.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.86.0-sumo-0...v0.87.0-sumo-0
 
 ## [v0.86.0-sumo-0]
 

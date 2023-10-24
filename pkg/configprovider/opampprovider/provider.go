@@ -16,9 +16,9 @@ package opampprovider
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
 	"go.opentelemetry.io/collector/confmap"
@@ -48,13 +48,10 @@ func New() confmap.Provider {
 	return &Provider{GlobProvider: globprovider.New()}
 }
 
-func (p *Provider) Retrieve(ctx context.Context, uri string, fn confmap.WatcherFunc) (*confmap.Retrieved, error) {
+func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.WatcherFunc) (*confmap.Retrieved, error) {
 	var cfg ConfigFragment
-	url, err := url.Parse(uri)
-	if err != nil {
-		return nil, err
-	}
-	data, err := os.ReadFile(url.Path)
+	configPath = strings.TrimPrefix(configPath, "opamp:")
+	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't load opamp config file: %s", err)
 	}

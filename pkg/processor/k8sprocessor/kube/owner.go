@@ -254,9 +254,28 @@ func (op *OwnerCache) upsertNamespace(obj interface{}) {
 }
 
 func (op *OwnerCache) deleteNamespace(obj interface{}) {
-	namespace := obj.(*api_v1.Namespace)
+	var ns *api_v1.Namespace
+
+	switch obj := obj.(type) {
+	case *api_v1.Namespace:
+		ns = obj
+	case cache.DeletedFinalStateUnknown:
+		prev, ok := obj.Obj.(*api_v1.Namespace)
+		if !ok {
+			op.logger.Error(
+				"object received was DeletedFinalStateUnknown but did not contain api_v1.Namespace",
+				zap.Any("received", obj),
+			)
+			return
+		}
+		ns = prev
+	default:
+		op.logger.Error("object received was not of type api_v1.Namespace", zap.Any("received", obj))
+		return
+	}
+
 	op.nsMutex.Lock()
-	delete(op.namespaces, namespace.Name)
+	delete(op.namespaces, ns.Name)
 	op.nsMutex.Unlock()
 }
 
@@ -326,8 +345,31 @@ func (op *OwnerCache) addOwnerInformer(
 }
 
 func (op *OwnerCache) deleteObject(obj interface{}) {
+	var metaObj meta_v1.Object
+
+	switch obj := obj.(type) {
+	case meta_v1.Object:
+		metaObj = obj
+	case cache.DeletedFinalStateUnknown:
+		prev, ok := obj.Obj.(meta_v1.Object)
+		if !ok {
+			op.logger.Error(
+				"object received was DeletedFinalStateUnknown but did not contain meta_v1.Object",
+				zap.Any("received", obj),
+			)
+			return
+		}
+		metaObj = prev
+	default:
+		op.logger.Error(
+			"object received was not of type meta_v1.Object",
+			zap.Any("received", obj),
+		)
+		return
+	}
+
 	op.ownersMutex.Lock()
-	delete(op.objectOwners, string(obj.(meta_v1.Object).GetUID()))
+	delete(op.objectOwners, string(metaObj.GetUID()))
 	op.ownersMutex.Unlock()
 }
 
@@ -410,7 +452,28 @@ func (op *OwnerCache) deleteEndpointFromPod(pod string, endpoint string) {
 }
 
 func (op *OwnerCache) genericEndpointOp(obj interface{}, endpointFunc func(pod string, endpoint string)) {
-	ep := obj.(*api_v1.Endpoints)
+	var ep *api_v1.Endpoints
+
+	switch obj := obj.(type) {
+	case *api_v1.Endpoints:
+		ep = obj
+	case cache.DeletedFinalStateUnknown:
+		prev, ok := obj.Obj.(*api_v1.Endpoints)
+		if !ok {
+			op.logger.Error(
+				"object received was DeletedFinalStateUnknown but did not contain api_v1.Endpoints",
+				zap.Any("received", obj),
+			)
+			return
+		}
+		ep = prev
+	default:
+		op.logger.Error(
+			"object received was not of type api_v1.Endpoints",
+			zap.Any("received", obj),
+		)
+		return
+	}
 
 	for _, it := range ep.Subsets {
 		for _, addr := range it.Addresses {
