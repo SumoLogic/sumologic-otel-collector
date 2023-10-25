@@ -16,6 +16,7 @@ package activedirectoryinvreceiver
 
 import (
 	"context"
+	"time"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
@@ -24,7 +25,7 @@ import (
 
 const (
 	// The value of "type" key in configuration.
-	typeStr = "activedirectoryinv"
+	typeStr = "active_directory_inv"
 )
 
 // NewFactory creates a factory for Active Directory Inventory receiver
@@ -41,7 +42,7 @@ func CreateDefaultConfig() component.Config {
 	return &ADConfig{
 		DN:           "",
 		Attributes:   []string{"name", "mail", "department", "manager", "memberOf"},
-		PollInterval: "24h",
+		PollInterval: 24 * time.Hour,
 	}
 }
 

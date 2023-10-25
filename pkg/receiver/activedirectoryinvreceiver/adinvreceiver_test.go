@@ -16,11 +16,13 @@ package activedirectoryinvreceiver
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/go-adsi/adsi"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"
@@ -100,52 +102,53 @@ func TestStart(t *testing.T) {
 	mockClient := &MockClient{}
 	mockRuntime := &MockRuntime{}
 	mockRuntime.On("SupportedOS").Return(true)
-
 	logsRcvr := newLogsReceiver(cfg, zap.NewNop(), mockClient, mockRuntime, sink)
-
+	// Start the receiver
 	err := logsRcvr.Start(context.Background(), componenttest.NewNopHost())
 	require.NoError(t, err)
-
+	// Shutdown the receiver
 	err = logsRcvr.Shutdown(context.Background())
 	require.NoError(t, err)
 }
 
 func TestStartUnsupportedOS(t *testing.T) {
 	cfg := CreateDefaultConfig().(*ADConfig)
-	cfg.DN = "CN=Guest,CN=Users,DC=exampledomain,DC=com"
-
 	sink := &consumertest.LogsSink{}
 	mockClient := &MockClient{}
 	mockRuntime := &MockRuntime{}
 	mockRuntime.On("SupportedOS").Return(false)
-
 	logsRcvr := newLogsReceiver(cfg, zap.NewNop(), mockClient, mockRuntime, sink)
-
+	// Start the receiver
 	err := logsRcvr.Start(context.Background(), componenttest.NewNopHost())
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "activedirectoryinv is only supported on Windows")
+	require.Contains(t, err.Error(), "active_directory_inv is only supported on Windows")
 }
 
-func TestPoll(t *testing.T) {
+func TestLogRecord(t *testing.T) {
+	expectedBody := `{"name":"test","mail":"test","department":"test","manager":"test","memberOf":"test"}`
+	var expectedResult, actualResult map[string]interface{}
 	cfg := CreateDefaultConfig().(*ADConfig)
-	cfg.DN = "CN=Guest,CN=Users,DC=exampledomain,DC=com"
-	cfg.PollInterval = "1s"
-	cfg.Attributes = []string{"name"}
+	cfg.PollInterval = 1 * time.Second // Set poll interval to 1s to speed up test
 	sink := &consumertest.LogsSink{}
 	mockClient := defaultMockClient()
 	mockRuntime := &MockRuntime{}
 	mockRuntime.On("SupportedOS").Return(true)
 	logsRcvr := newLogsReceiver(cfg, zap.NewNop(), mockClient, mockRuntime, sink)
-
+	// Start the receiver
 	err := logsRcvr.Start(context.Background(), componenttest.NewNopHost())
 	require.NoError(t, err)
-
 	require.Eventually(t, func() bool {
 		return sink.LogRecordCount() > 0
 	}, 2*time.Second, 10*time.Millisecond)
-
+	result := sink.AllLogs()[0].ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0).Body().AsRaw()
+	err = json.Unmarshal([]byte(expectedBody), &expectedResult)
+	require.NoError(t, err)
+	err = json.Unmarshal([]byte(result.(string)), &actualResult)
+	require.NoError(t, err)
+	// Shutdown the receiver
 	err = logsRcvr.Shutdown(context.Background())
 	require.NoError(t, err)
+	assert.Equal(t, expectedResult, actualResult)
 }
 
 func defaultMockClient() Client {
@@ -153,7 +156,7 @@ func defaultMockClient() Client {
 	mockContainer := &MockContainer{}
 	mockObject := &MockObject{}
 	mockObjectIter := &MockObjectIter{}
-	attrs := []interface{}{"Guest", "test"}
+	attrs := []interface{}{"test"}
 	mockContainer.On("ToObject").Return(mockObject, nil)
 	mockContainer.On("Children").Return(mockObjectIter, fmt.Errorf("no children"))
 	mockContainer.On("Close").Return(nil)

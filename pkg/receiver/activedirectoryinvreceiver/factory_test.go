@@ -25,12 +25,11 @@ import (
 func TestType(t *testing.T) {
 	factory := NewFactory()
 	ft := factory.Type()
-	require.EqualValues(t, "activedirectoryinv", ft)
+	require.EqualValues(t, "active_directory_inv", ft)
 }
 
 func TestCreateLogsReceiver(t *testing.T) {
 	cfg := CreateDefaultConfig().(*ADConfig)
-	cfg.DN = "CN=Guest,CN=Users,DC=exampledomain,DC=com" // valid DN
 	_, err := NewFactory().CreateLogsReceiver(
 		context.Background(),
 		receivertest.NewNopCreateSettings(),

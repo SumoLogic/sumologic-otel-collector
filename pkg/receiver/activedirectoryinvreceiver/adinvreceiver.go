@@ -16,6 +16,7 @@ package activedirectoryinvreceiver
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -101,13 +102,8 @@ func (l *ADReceiver) Shutdown(_ context.Context) error {
 // Start polling for Active Directory inventory records
 func (l *ADReceiver) startPolling(ctx context.Context) {
 	defer l.wg.Done()
-	duration, err := time.ParseDuration(l.config.PollInterval)
-	if err != nil {
-		l.logger.Error("Failed to parse poll interval", zap.Error(err))
-		return
-	}
-	l.logger.Info("Polling interval: ", zap.Duration("interval", duration))
-	t := time.NewTicker(duration)
+	l.logger.Info("Polling interval: ", zap.Duration("interval", l.config.PollInterval))
+	t := time.NewTicker(l.config.PollInterval)
 	for {
 		select {
 		case <-ctx.Done():
@@ -130,7 +126,11 @@ func (r *ADReceiver) traverse(node Container, attrs []string, resourceLogs *plog
 		r.logger.Error("Failed to convert container to object", zap.Error(err))
 		return
 	}
-	setUserAttributes(nodeObject, attrs, resourceLogs)
+	err = setUserAttributes(nodeObject, attrs, resourceLogs)
+	if err != nil {
+		r.logger.Error("Failed to set user attributes", zap.Error(err))
+		return
+	}
 	children, err := node.Children()
 	if err != nil {
 		r.logger.Error("Failed to retrieve children", zap.Error(err))
@@ -168,17 +168,26 @@ func (r *ADReceiver) poll(ctx context.Context) error {
 }
 
 // Set user attributes to a log record body
-func setUserAttributes(user Object, attrs []string, resourceLogs *plog.ResourceLogs) {
+func setUserAttributes(user Object, attrs []string, resourceLogs *plog.ResourceLogs) error {
 	observedTime := pcommon.NewTimestampFromTime(time.Now())
-	attributes := ""
+	attributes := make(map[string]interface{})
 	for _, attr := range attrs {
 		values, err := user.Attrs(attr)
 		if err == nil && len(values) > 0 {
-			attributes += fmt.Sprintf("%s: %v\n", attr, values)
+			if len(values) == 1 {
+				attributes[attr] = values[0]
+				continue
+			}
+			attributes[attr] = values
 		}
+	}
+	attributesJSON, err := json.Marshal(attributes)
+	if err != nil {
+		return err
 	}
 	logRecord := resourceLogs.ScopeLogs().At(0).LogRecords().AppendEmpty()
 	logRecord.SetObservedTimestamp(observedTime)
 	logRecord.SetTimestamp(observedTime)
-	logRecord.Body().SetStr(attributes)
+	logRecord.Body().SetStr(string(attributesJSON))
+	return nil
 }

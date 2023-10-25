@@ -7,17 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
-## [Unreleased]
-
-### Released TBD
-
-### Added
-
-- feat(receiver/activedirectoryinvreceiver): Add the Windows Active Directory inventory receiver [#1273]
-
-[#1273]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1273
-[Unreleased]: https://github.com/SumoLogic/sumologic-otel-collector/compare/v0.88.0-sumo-0...main
-
 ## [v0.88.0-sumo-0]
 
 ### Released 2023-10-24

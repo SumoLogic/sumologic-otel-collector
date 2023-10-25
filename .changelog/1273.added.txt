@@ -1,0 +1,1 @@
+Adding the Windows AD Inventory Receiver to the collector

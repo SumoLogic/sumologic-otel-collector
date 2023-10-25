@@ -16,6 +16,7 @@ package activedirectoryinvreceiver
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -31,7 +32,7 @@ func TestValidate(t *testing.T) {
 			config: ADConfig{
 				DN:           "CN=Guest,CN=Users,DC=exampledomain,DC=com",
 				Attributes:   []string{"name"},
-				PollInterval: "60s",
+				PollInterval: 60 * time.Second,
 			},
 		},
 		{
@@ -39,7 +40,7 @@ func TestValidate(t *testing.T) {
 			config: ADConfig{
 				DN:           "DC=exampledomain,DC=com",
 				Attributes:   []string{"name"},
-				PollInterval: "60s",
+				PollInterval: 60 * time.Second,
 			},
 		},
 		{
@@ -47,7 +48,7 @@ func TestValidate(t *testing.T) {
 			config: ADConfig{
 				DN:           "CN=Guest,OU=Users,DC=exampledomain,DC=com",
 				Attributes:   []string{"name"},
-				PollInterval: "24h",
+				PollInterval: 24 * time.Hour,
 			},
 		},
 		{
@@ -55,24 +56,25 @@ func TestValidate(t *testing.T) {
 			config: ADConfig{
 				DN:           "NA",
 				Attributes:   []string{"name"},
-				PollInterval: "24h",
+				PollInterval: 24 * time.Hour,
 			},
 			expectedErr: errInvalidDN,
 		},
 		{
-			name: "Empty DN",
+			name: "Invalid Empty DN",
 			config: ADConfig{
 				DN:           "",
 				Attributes:   []string{"name"},
-				PollInterval: "24h",
+				PollInterval: 24 * time.Hour,
 			},
+			expectedErr: errInvalidDN,
 		},
 		{
 			name: "Invalid Poll Interval",
 			config: ADConfig{
 				DN:           "CN=Users,DC=exampledomain,DC=com",
 				Attributes:   []string{"name"},
-				PollInterval: "test",
+				PollInterval: 0,
 			},
 			expectedErr: errInvalidPollInterval,
 		},

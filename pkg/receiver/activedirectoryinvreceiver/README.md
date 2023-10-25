@@ -1,4 +1,4 @@
-# Windows Active Directory inventory Receiver
+# Windows Active Directory Inventory Receiver
 
 **Stability level**: Alpha
 
@@ -10,7 +10,7 @@ Supported pipeline types: logs
 
 ```yaml
 receivers:
-  activedirectoryinv:
+  active_directory_inv:
     # Base DN
     # default = ""
     base_dn: "CN=Users,DC=exampledomain,DC=com"
@@ -32,7 +32,7 @@ Example configuration:
 ```yaml
 receivers:
   ## All my example logs
-  activedirectoryinv:
+  active_directory_inv:
     base_dn: "CN=Users,DC=exampledomain,DC=com"
     attributes: [name, mail, department, manager, memberOf]
     poll_interval: 24h
@@ -48,7 +48,7 @@ service:
   pipelines:
     logs/syslog source:
       receivers:
-        - activedirectoryinvreceiver
+        - active_directory_inv
       exporters:
         - logging
 ```

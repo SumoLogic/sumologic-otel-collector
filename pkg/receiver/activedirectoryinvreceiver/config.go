@@ -23,9 +23,9 @@ import (
 // ADConfig defines configuration for Active Directory Inventory receiver.
 
 type ADConfig struct {
-	DN           string   `mapstructure:"base_dn"` // DN is the base distinguished name to search from
-	Attributes   []string `mapstructure:"attributes"`
-	PollInterval string   `mapstructure:"poll_interval"`
+	DN           string        `mapstructure:"base_dn"` // DN is the base distinguished name to search from
+	Attributes   []string      `mapstructure:"attributes"`
+	PollInterval time.Duration `mapstructure:"poll_interval"`
 }
 
 var (
@@ -34,16 +34,20 @@ var (
 	errSupportedOS         = errors.New(typeStr + " is only supported on Windows.")
 )
 
-func isValidDuration(durationStr string) bool {
-	_, err := time.ParseDuration(durationStr)
-	return err == nil
+func isValidDuration(duration time.Duration) bool {
+	return duration > 0
 }
 
 // Validate validates all portions of the relevant config
 func (c *ADConfig) Validate() error {
 
-	// Define the regular expression pattern for a valid Base DN
-	pattern := `^((CN|OU)=[^,]+(,|$))*((DC=[^,]+),?)*$`
+	// Regular expression pattern for a valid DN
+	// CN=Guest,CN=Users,DC=exampledomain,DC=com
+	// CN=Guest,OU=Users,DC=exampledomain,DC=com
+	// DC=exampledomain,DC=com
+	// CN=Guest,DC=exampledomain,DC=com
+	// OU=Users,DC=exampledomain,DC=com
+	pattern := `^((CN|OU)=[^,]+(,|$))*((DC=[^,]+),?)+$`
 
 	// Compile the regular expression pattern
 	regex := regexp.MustCompile(pattern)
