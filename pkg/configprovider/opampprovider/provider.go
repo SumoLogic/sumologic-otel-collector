@@ -15,6 +15,7 @@ package opampprovider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -45,7 +46,11 @@ func (c ConfigFragment) ConfigDir() string {
 	return c.Extensions.OpAmp.RemoteConfigurationDirectory
 }
 
-type OpAmpExtension struct {
+func (c ConfigFragment) Validate() error {
+	if c.ConfigDir() == "" {
+		return errors.New("remote_configuration_dir missing")
+	}
+	return nil
 }
 
 // Provider is an OpAmp configuration provider. It requires a GlobProvider to
@@ -69,6 +74,9 @@ func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.W
 	}
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, fmt.Errorf("couldn't parse opamp config file: %s", err)
+	}
+	if err := cfg.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid opamp config file: %s", err)
 	}
 	conf := confmap.New()
 	glob := p.GlobProvider

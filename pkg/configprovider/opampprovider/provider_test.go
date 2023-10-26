@@ -76,6 +76,17 @@ func TestInvalidYAML(t *testing.T) {
 	}
 }
 
+func TestMissingRemoteConfigurationDir(t *testing.T) {
+	p := New()
+	_, err := p.Retrieve(context.Background(), "opamp:"+filepath.Join("testdata", "missing_config_dir.yaml"), nil)
+	if err == nil {
+		t.Error("expected non-nil error")
+	}
+	if err := p.Shutdown(context.Background()); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestValid(t *testing.T) {
 	p := New()
 	defer func() {
