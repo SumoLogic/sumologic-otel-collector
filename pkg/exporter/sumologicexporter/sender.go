@@ -32,7 +32,6 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/ptrace"
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter/internal/observability"
@@ -465,7 +464,7 @@ func (s *sender) sendNonOTLPLogs(ctx context.Context, rl plog.ResourceLogs, flds
 		}
 	}
 
-	return droppedRecords, multierr.Combine(errs...)
+	return droppedRecords, errors.Join(errs...)
 }
 
 func (s *sender) formatLogLine(lr plog.LogRecord) (string, error) {
