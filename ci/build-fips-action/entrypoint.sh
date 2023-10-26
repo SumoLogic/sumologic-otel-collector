@@ -9,4 +9,4 @@ export PATH="${HOME}/bin:${PATH}"
 make install-builder
 
 # Build otelcol-sumo
-make otelcol-sumo-linux_amd64 FIPS_SUFFIX="-fips" CGO_ENABLED="1"
+make otelcol-sumo-native FIPS_SUFFIX="-fips" CGO_ENABLED="1"

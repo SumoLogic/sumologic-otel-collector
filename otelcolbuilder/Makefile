@@ -143,10 +143,15 @@ build-debug: ensure-correct-builder-version
 	@$(MAKE) generate-sources
 	@$(MAKE) _gobuild_debug
 
-.PHONY: build-fips
-build-fips:
+.PHONY: build-fips-linux-amd64
+build-fips-linux-amd64:
 	docker build --platform linux/amd64 -t otelcol-sumo-builder-fips -f ../ci/build-fips-action/Dockerfile ../ci/build-fips-action
 	docker run -it --platform linux/amd64 --rm -v $(PWD)/../:/github/workspace -w /github/workspace --tmpfs /tmp otelcol-sumo-builder-fips
+
+.PHONY: build-fips-linux-arm64
+build-fips-linux-arm64:
+	docker build --platform linux/arm64 -t otelcol-sumo-builder-fips -f ../ci/build-fips-action/Dockerfile ../ci/build-fips-action
+	docker run -it --platform linux/arm64 --rm -v $(PWD)/../:/github/workspace -w /github/workspace --tmpfs /tmp otelcol-sumo-builder-fips
 
 .PHONY: generate-sources
 generate-sources:
@@ -201,6 +206,10 @@ darwin_amd64-sign: darwin-sign
 .PHONY: darwin_arm64-sign
 darwin_arm64-sign: BINARY_NAME=otelcol-sumo-darwin_arm64
 darwin_arm64-sign: darwin-sign
+
+.PHONY: otelcol-sumo-native
+otelcol-sumo-native:
+	$(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-$(shell go env GOOS)_$(shell go env GOARCH)
 
 .PHONY: otelcol-sumo-linux_amd64
 otelcol-sumo-linux_amd64:
