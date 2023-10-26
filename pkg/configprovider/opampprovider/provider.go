@@ -48,7 +48,7 @@ func (c ConfigFragment) ConfigDir() string {
 
 func (c ConfigFragment) Validate() error {
 	if c.ConfigDir() == "" {
-		return errors.New("remote_configuration_dir missing")
+		return errors.New("remote_configuration_directory missing from opamp extension")
 	}
 	return nil
 }
