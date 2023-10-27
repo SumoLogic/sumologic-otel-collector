@@ -174,7 +174,6 @@ EOF
 }
 
 function reporter {
-    echo "Reporting Sumo OpenTelemetry collector installation..."
     echo "SUMOLOGIC_INSTALLATION_TOKEN=${SUMOLOGIC_INSTALLATION_TOKEN}" >> $INSTALLATION_LOGFILE
 
     if command -v "gzip" &> /dev/null; then
