@@ -174,9 +174,14 @@ EOF
 }
 
 function reporter {
-  echo "Reporting Sumo OpenTelemetry collector installation..."
-  echo "SUMOLOGIC_INSTALLATION_TOKEN=${SUMOLOGIC_INSTALLATION_TOKEN}" >> $INSTALLATION_LOGFILE
-  gzip < "${INSTALLATION_LOGFILE}" | curl --silent --location --post302 --header 'Content-Encoding:gzip' --data-binary @- "${INSTALLATION_LOGFILE_ENDPOINT}"
+    echo "Reporting Sumo OpenTelemetry collector installation..."
+    echo "SUMOLOGIC_INSTALLATION_TOKEN=${SUMOLOGIC_INSTALLATION_TOKEN}" >> $INSTALLATION_LOGFILE
+
+    if command -v "gzip" &> /dev/null; then
+        gzip < "${INSTALLATION_LOGFILE}" | curl --silent --location --post302 --header 'Content-Encoding:gzip' --data-binary @- "${INSTALLATION_LOGFILE_ENDPOINT}"
+    else
+        curl --silent --location --post302 --data-binary @"${INSTALLATION_LOGFILE}" "${INSTALLATION_LOGFILE_ENDPOINT}"
+    fi
 }
 trap reporter EXIT
 
