@@ -70,10 +70,7 @@ func createMetricsReceiver(
 	if err := tConfig.LoadConfigData([]byte(tCfg.AgentConfig)); err != nil {
 		return nil, fmt.Errorf("failed loading telegraf agent config: %w", err)
 	}
-	tAgent, err := telegrafagent.NewAgent(tConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed creating telegraf agent: %w", err)
-	}
+	tAgent := telegrafagent.NewAgent(tConfig)
 
 	return &telegrafreceiver{
 		agent:             tAgent,
