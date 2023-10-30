@@ -49,7 +49,7 @@ func (h *handler) consume(ctx context.Context, in io.Reader, stream string) {
 		h.writer.Write(ctx, ent)
 	}
 	if err := scanner.Err(); err != nil {
-		h.logger.Errorf("error reading input stream %s: %s", stream, err)
+		h.logger.Errorf("error reading input stream", zap.String("stream", stream), zap.Error(err))
 	}
 }
 
