@@ -17,7 +17,6 @@ require (
 require (
 	go.opentelemetry.io/collector/component v0.88.0
 	go.opentelemetry.io/collector/consumer v0.88.0
-	go.opentelemetry.io/collector/model v0.50.0
 	go.opentelemetry.io/collector/otelcol v0.88.0
 	go.opentelemetry.io/collector/pdata v1.0.0-rcv0017
 	go.opentelemetry.io/collector/processor v0.88.0
