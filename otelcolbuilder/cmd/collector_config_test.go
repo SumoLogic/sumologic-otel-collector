@@ -75,8 +75,8 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			configFile: "testdata/attribute_attraction_pattern.yaml",
 		},
 		{
-			name:       "sumologic_schema processor can be used in logs, metrics and traces pipelines",
-			configFile: "testdata/sumologicschemaprocessor.yaml",
+			name:       "sumologic processor can be used in logs, metrics and traces pipelines",
+			configFile: "testdata/sumologicprocessor.yaml",
 		},
 		{
 			name:       "multiple config files can be handled by the glob config provider",
