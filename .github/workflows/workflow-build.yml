@@ -122,6 +122,10 @@ jobs:
         run: make otelcol-sumo-${{inputs.arch_os}}
         working-directory: ./otelcolbuilder
 
+      - name: Set up QEMU
+        if: ${{ inputs.fips && contains(inputs.arch_os, 'linux') && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        uses: docker/setup-qemu-action@v3.0.0
+
       - name: Build (FIPS)
         if: ${{ inputs.fips && contains(inputs.arch_os, 'linux') && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         id: containerized-build
