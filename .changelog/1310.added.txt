@@ -1,1 +1,1 @@
-feat(opamp): Support OpAmp remote management for the opentelemetry collector, via the --opamp-config flag
+feat(opamp): Support OpAmp remote management for the opentelemetry collector, via the --remote-config flag
