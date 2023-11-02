@@ -227,9 +227,11 @@ jobs:
       - name: Prepare tags in otelcolbuilder's config
         run: make prepare-tag TAG=${{ steps.extract_tag.outputs.tag }}
 
-      - name: Build
-        run: make otelcol-sumo-${{matrix.arch_os}} FIPS_SUFFIX="-fips" CGO_ENABLED=1
-        working-directory: ./otelcolbuilder
+      - name: Build (FIPS)
+        id: containerized-build
+        uses: ./ci/build-fips-action
+        with:
+          go-version: ${{ env.GO_VERSION }}
 
       - name: Set filename
         id: set_filename
