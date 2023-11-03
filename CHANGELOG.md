@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.88.0-sumo-1]
+
+### Released 2023-11-03
+
+### Fixed
+
+- fix(install): install policycoreutils on RHEL if missing This dependency is necessary for using semanage, which is needed to do SELinux relabeling. [#1306]
+- fix: build release fips binary w/glibc 2.26 [#1317]
+
+[#1306]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1306
+[#1317]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1317
+[v0.88.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.88.0-sumo-1
+
 ## [v0.88.0-sumo-0]
 
 ### Released 2023-10-24
