@@ -40,7 +40,7 @@ func NewFactory() receiver.Factory {
 // CreateDefaultConfig creates the default configuration for the receiver
 func CreateDefaultConfig() component.Config {
 	return &ADConfig{
-		DN:           "",
+		BaseDN:       "",
 		Attributes:   []string{"name", "mail", "department", "manager", "memberOf"},
 		PollInterval: 24 * time.Hour,
 	}

@@ -155,7 +155,7 @@ func (r *ADReceiver) poll(ctx context.Context) error {
 	rl := logs.ResourceLogs().AppendEmpty()
 	resourceLogs := &rl
 	_ = resourceLogs.ScopeLogs().AppendEmpty()
-	root, err := r.client.Open(r.config.DN, resourceLogs)
+	root, err := r.client.Open(r.config.BaseDN, resourceLogs)
 	if err != nil {
 		return fmt.Errorf("Invalid Distinguished Name, please verify that the domain exists: %w", err)
 	}

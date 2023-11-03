@@ -23,14 +23,14 @@ import (
 // ADConfig defines configuration for Active Directory Inventory receiver.
 
 type ADConfig struct {
-	DN           string        `mapstructure:"base_dn"` // DN is the base distinguished name to search from
+	BaseDN       string        `mapstructure:"base_dn"` // DN is the base distinguished name to search from
 	Attributes   []string      `mapstructure:"attributes"`
 	PollInterval time.Duration `mapstructure:"poll_interval"`
 }
 
 var (
-	errInvalidDN           = errors.New("Base DN is incorrect, it must be a valid distinguished name (CN=Guest,OU=Users,DC=example,DC=com)")
-	errInvalidPollInterval = errors.New("poll interval is incorrect, invalid duration")
+	errInvalidDN           = errors.New("base_dn is required, it must be a valid distinguished name (CN=Guest,OU=Users,DC=example,DC=com)")
+	errInvalidPollInterval = errors.New("poll_interval is incorrect, invalid duration")
 	errSupportedOS         = errors.New(typeStr + " is only supported on Windows.")
 )
 
@@ -53,7 +53,7 @@ func (c *ADConfig) Validate() error {
 	regex := regexp.MustCompile(pattern)
 
 	// Check if the Base DN is valid
-	if !regex.MatchString(c.DN) {
+	if !regex.MatchString(c.BaseDN) {
 		return errInvalidDN
 	}
 

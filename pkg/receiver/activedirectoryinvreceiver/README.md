@@ -13,6 +13,7 @@ receivers:
   active_directory_inv:
     # Base DN
     # default = ""
+    # Base DN is a required field and cannot remain empty (default)
     base_dn: "CN=Users,DC=exampledomain,DC=com"
 
     # User attributes

@@ -96,7 +96,7 @@ func (mo *MockObjectIter) Close() {
 
 func TestStart(t *testing.T) {
 	cfg := CreateDefaultConfig().(*ADConfig)
-	cfg.DN = "CN=Guest,CN=Users,DC=exampledomain,DC=com"
+	cfg.BaseDN = "CN=Guest,CN=Users,DC=exampledomain,DC=com"
 
 	sink := &consumertest.LogsSink{}
 	mockClient := &MockClient{}
