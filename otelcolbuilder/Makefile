@@ -58,7 +58,7 @@ GOTAGS := $(GOTAGS) requirefips
 LDFLAGS="-w"
 else
 GOEXPERIMENT=boringcrypto
-LDFLAGS="-w"
+LDFLAGS="-w -linkmode external -extldflags '-static'"
 endif
 endif
 

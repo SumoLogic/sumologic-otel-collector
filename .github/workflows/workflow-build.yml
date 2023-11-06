@@ -128,6 +128,7 @@ jobs:
         uses: ./ci/build-fips-action
         with:
           go-version: ${{ env.GO_VERSION }}
+          arch_os: ${{ inputs.arch_os }}
 
       - name: Build (FIPS)
         if: ${{ inputs.fips && ! contains(inputs.arch_os, 'linux') && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
