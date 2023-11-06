@@ -98,6 +98,9 @@ jobs:
             fips: true
           - arch_os: linux_arm64
             runs-on: ubuntu-20.04
+          - arch_os: linux_arm64
+            runs-on: ubuntu-20.04
+            fips: true
           - arch_os: darwin_amd64
             runs-on: macos-latest
           - arch_os: darwin_arm64
@@ -148,13 +151,11 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
 
       - name: Download FIPS binary action artifact from build phase
-        if: matrix.arch_os == 'linux_amd64'
         uses: actions/download-artifact@v3
         with:
           name: otelcol-sumo-fips-${{matrix.arch_os}}
 
       - name: Build and push FIPS image to Open Source ECR
-        if: matrix.arch_os == 'linux_amd64'
         run: |
           cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-multiplatform-dev \
