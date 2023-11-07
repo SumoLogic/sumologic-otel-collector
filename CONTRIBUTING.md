@@ -107,10 +107,10 @@ directory.
 
 ### Setting up Go workspaces
 
-This repository contains multiple Go packages with their own dependencies. Some IDEs
+This repository contains multiple Go modules with their own dependencies. Some IDEs
 (VS Code for example) do not like this kind of setup and demand that you work on each
-package in a separate workspace. As of [Go 1.19](https://tip.golang.org/doc/go1.19#go-work)
-this can be solved by configuring a single Go workspace covering all the packages.
+module in a separate workspace. As of [Go 1.19](https://tip.golang.org/doc/go1.19#go-work)
+this can be solved by configuring a single Go workspace covering all the modules.
 This can be done by adding a `go.work` file to the repository root:
 
 ```go
@@ -129,6 +129,7 @@ use (
         ./pkg/processor/sumologicsyslogprocessor
         ./pkg/receiver/telegrafreceiver
         ./pkg/configprovider/globprovider
+        ./pkg/configprovider/opampprovider
         ./pkg/scripts_test
         ./pkg/tools/udpdemux
 )

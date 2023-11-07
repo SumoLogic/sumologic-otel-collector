@@ -15,14 +15,13 @@
 package main
 
 import (
-	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
 	"go.opentelemetry.io/collector/confmap/provider/envprovider"
@@ -80,8 +79,11 @@ func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
 			return err
 		}
 	} else {
-		// TODO(eric): change after opampProvider is written
-		params.ConfigProvider = &opampProvider{}
+		settings := NewOpAmpConfigProviderSettings(opAmpPath.Value.String())
+		params.ConfigProvider, err = otelcol.NewConfigProvider(settings)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -105,29 +107,22 @@ func NewConfigProviderSettings(locations []string) otelcol.ConfigProviderSetting
 	}
 }
 
+// NewOpAmpConfigProviderSettings is like NewConfigProviderSettings, but only
+// the OpAmp config provider is configured.
+func NewOpAmpConfigProviderSettings(location string) otelcol.ConfigProviderSettings {
+	return otelcol.ConfigProviderSettings{
+		ResolverSettings: confmap.ResolverSettings{
+			URIs:       []string{location},
+			Providers:  makeMapProvidersMap(opampprovider.New()),
+			Converters: []confmap.Converter{expandconverter.New()},
+		},
+	}
+}
+
 func makeMapProvidersMap(providers ...confmap.Provider) map[string]confmap.Provider {
 	ret := make(map[string]confmap.Provider, len(providers))
 	for _, provider := range providers {
 		ret[provider.Scheme()] = provider
 	}
 	return ret
-}
-
-// opampProvider is a stub awaiting further development
-type opampProvider struct {
-}
-
-func (*opampProvider) Get(ctx context.Context, factories otelcol.Factories) (*otelcol.Config, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (*opampProvider) Watch() <-chan error {
-	ch := make(chan error, 1)
-	ch <- errors.New("unimplemented")
-	close(ch)
-	return ch
-}
-
-func (*opampProvider) Shutdown(ctx context.Context) error {
-	return nil
 }
