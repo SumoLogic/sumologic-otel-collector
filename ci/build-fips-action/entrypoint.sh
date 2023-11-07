@@ -12,18 +12,15 @@ make install-builder
 
 # Detect if cross CC needs set
 case $PLATFORM in
-        'linux_amd64')
-                ARCH='x86_64';
-                ;;
-        'linux_arm64')
-                ARCH='aarch64';
-                ;;
+'linux_amd64')
+        ARCH='x86_64';
+        ;;
+'linux_arm64')
+        ARCH='aarch64';
+        ;;
 esac
 
-CC=''
-if [ "$(uname -m)" != "$ARCH" ]; then
-        CC="/opt/cross/${ARCH}-linux-musl/bin/${ARCH}-linux-musl-gcc"
-fi
+CC="/opt/${ARCH}-linux-musl/bin/${ARCH}-linux-musl-gcc"
 
 
 # Build otelcol-sumo
