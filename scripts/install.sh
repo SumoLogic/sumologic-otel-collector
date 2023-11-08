@@ -1639,10 +1639,18 @@ fi
 readonly SYSTEMD_DISABLED
 
 if [ "${FIPS}" == "true" ]; then
-    if [ "${OS_TYPE}" != "linux" ] || [ "${ARCH_TYPE}" != "amd64" ]; then
-        echo "Error: The FIPS-approved binary is only available for linux/amd64"
+    case "${OS_TYPE}" in
+    linux)
+        if  [ "${ARCH_TYPE}" != "amd64" ] && [ "${ARCH_TYPE}" != "arm64" ]; then
+            echo "Error: The FIPS-approved binary is only available for linux/amd64 and linux/arm64"
+            exit 1
+        fi
+        ;;
+    *)
+        echo "Error: The FIPS-approved binary is only available for linux"
         exit 1
-    fi
+        ;;
+    esac
 fi
 
 if [[ "${OS_TYPE}" == "darwin" ]]; then
