@@ -31,16 +31,26 @@ RUN make -j$PARALLEL TARGET=x86_64-linux-musl install \
 		&& mv output /opt/x86_64-linux-musl
 
 
-# golang alpine image ready to build sumologic-otel-collector
-# includes native and cross CC toolchains ready for CGO.
-FROM golang:1.20.10-alpine3.18 as build
+FROM alpine:latest as archive
+
+COPY --from=build-musl-amd64	/opt/x86_64-linux-musl	/cross/x86_64-linux-musl
+COPY --from=build-musl-aarch64  /opt/aarch64-linux-musl /cross/aarch64-linux-musl
+
+RUN mkdir $(apk --print-arch) \
+		&& tar czvf $(apk --print-arch)/x86_64-linux-musl.tar.gz -C /cross x86_64-linux-musl \
+		&& tar czvf $(apk --print-arch)/aarch64-linux-musl.tar.gz -C /cross aarch64-linux-musl \
+		&& sha512sum $(apk --print-arch)/* > SHA512SUMS && mv SHA512SUMS $(apk --print-arch)
+
+# golang alpine image ready to build sumologic-otel-collector includes native
+# and cross CC toolchains ready to build static executables. Hard coded for
+# x86_64 for github runners.
+FROM golang:1.20.10-alpine3.18 as FINAL
 
 RUN apk add alpine-sdk
 
-ARG TARGETARCH=aarch64
+WORKDIR /tmp
 
-COPY --from=build-musl-amd64	/opt/x86_64-linux-musl	/opt/x86_64-linux-musl
-COPY --from=build-musl-aarch64  /opt/aarch64-linux-musl /opt/aarch64-linux-musl
+ADD x86_64/* /opt
 
 WORKDIR /
 

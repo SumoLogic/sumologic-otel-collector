@@ -22,6 +22,14 @@ esac
 
 CC="/opt/${ARCH}-linux-musl/bin/${ARCH}-linux-musl-gcc"
 
+if [ ! -f "$CC" ]; then
+    echo "$CC not found.";
+	exit 1;
+fi
 
 # Build otelcol-sumo
-make otelcol-sumo-"${PLATFORM}" FIPS_SUFFIX="-fips" CGO_ENABLED="1" CC="$CC"
+make otelcol-sumo-"${PLATFORM}" \
+		FIPS_SUFFIX="-fips" \
+		CGO_ENABLED="1" \
+		CC="$CC" \
+		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"

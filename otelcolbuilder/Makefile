@@ -31,6 +31,10 @@ ifeq ($(OS),darwin)
 	DMG_VOLUME_NAME ?= Sumo Logic Distribution for OpenTelemetry Collector
 endif
 
+# Add additional LDFLAGS
+# ex: to get a staticly executable with CGO use EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
+LDFLAGS:=$(EXTRA_LDFLAGS)
+
 # Builds for darwin need to be built with CGO_ENABLED set to 1 because some telegraf
 # plugins that are used within the telegrafreceiver are implemented with CGO.
 # Example of this might be the cpu input plugin using gopsutil to the cpu stats.
@@ -49,16 +53,16 @@ endif
 # We don't want to strip symbols for FIPS builds, as they're useful for verifying the build
 ifeq ($(FIPS_SUFFIX),"")
 GOEXPERIMENT=""
-LDFLAGS="-s -w"
+LDFLAGS+= -s -w
 # We want to use boringcrypto for fips setup
 else
 ifeq ($(shell go env GOOS),windows)
 GOEXPERIMENT=cngcrypto
 GOTAGS := $(GOTAGS) requirefips
-LDFLAGS="-w"
+LDFLAGS+= -w
 else
 GOEXPERIMENT=boringcrypto
-LDFLAGS="-w -linkmode external -extldflags '-static'"
+LDFLAGS+= -w
 endif
 endif
 
@@ -112,7 +116,7 @@ _gobuild:
 	(cd cmd && \
 		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
 		-tags "$(GOTAGS)" \
-		-ldflags=$(LDFLAGS) \
+		-ldflags="$(LDFLAGS)" \
 		-trimpath \
 		-o ./$(BINARY_NAME)$(BUILDER_BIN_EXT) . \
 	)
