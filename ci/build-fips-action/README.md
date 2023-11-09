@@ -22,7 +22,7 @@ executables. This is achieved by using the musl C library instead of the
 standard glibc implementation (which does not allow for reliable static
 linking.)
 
-##  Why not just Alpine Linux?
+## Why not just Alpine Linux?
 
 This would be ideal. Unfortunately the combination of our limited build
 infrastructure (x86_64-only Github hosted runners) and the size and scale of
@@ -48,4 +48,3 @@ make toolchain-linux_amd64 OUTPUT=/opt/x86_64-toolchain -j8
 In order to build the toolchain you'll need `git`, `wget`, `xz` an existing gcc
 toolchain and some other build essentials. This should be enough on ubuntu:
 `apt-get install -y git wget xz-utils build-essential`.
-
