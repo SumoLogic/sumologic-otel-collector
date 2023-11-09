@@ -140,6 +140,7 @@ jobs:
         if: ${{ inputs.fips && contains(inputs.arch_os, 'linux') && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         run: |
           CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
+          test "$CC"
           echo "Using toolchain: $CC"
           make otelcol-sumo-${{inputs.arch_os}} \
             FIPS_SUFFIX="-fips" \
