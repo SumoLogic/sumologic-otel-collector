@@ -93,6 +93,32 @@ and after that let's put that all together.
 
 [sumologic_docs_installation_token]: https://help.sumologic.com/docs/manage/security/installation-tokens
 
+### Alternative: OpAmp remote-managed configuration
+
+If you would like to leverage OpAmp for remote configuration management, then
+you can use the `--remote-config` flag instead of the `--config` flag.
+
+```shell
+otelcol-sumo --remote-config opamp:remote-config.yaml
+```
+
+The `--remote-config` and `--config` flags are mutually exclusive and cannot be
+used together. The remote configuration details are loaded from `remote-config.yaml`
+and used to connect to the configured OpAmp server.
+
+The `remote-config.yaml` also specifies the local directory that will be used
+by the OpAmp client to keep configuration synchronized with the server's
+prescribed configuration for the collector.
+
+```yaml
+extensions:
+  sumologic:
+    installation_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
+  opamp:
+    endpoint: "wss://example.com/v1/opamp"
+    remote_configuration_directory: /etc/opamp-config
+```
+
 ### Basic configuration for logs
 
 To send logs from local files, use the [Filelog Receiver][filelogreceiver_readme].
