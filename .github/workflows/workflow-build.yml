@@ -106,15 +106,15 @@ jobs:
             ${{ steps.get-cache-key.outputs.restore-keys }}
 
       - name: Set default BUILDER_BIN_PATH
-        if: ${{ ! (inputs.fips && contains(inputs.arch_os, 'linux')) && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        if: ${{ (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
 
       - name: Add opentelemetry-collector-builder installation dir to PATH
-        if: ${{ ! (inputs.fips && contains(inputs.arch_os, 'linux')) && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        if: ${{ (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
 
       - name: Install opentelemetry-collector-builder
-        if: ${{ ! (inputs.fips && contains(inputs.arch_os, 'linux')) && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        if: ${{ (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         run: make install-builder
         working-directory: ./otelcolbuilder
 
@@ -128,18 +128,18 @@ jobs:
         if: ${{ inputs.fips && contains(inputs.arch_os, 'linux') && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         with:
           path: |
-            /opt
+            /opt/toolchain
           key: ${{ steps.get-cache-key.outputs.toolchain-cache-key }}
 
       - name: Rebuild Toolchains
         id: rebuild-toolchain
-        if: ${{ steps.restore-toolchain-cache.outputs.cache-hit == 'false' }}
-        run: OUTPUT=/opt make -C ./ci/build-fips-action toolchain-${{ inputs.arch_os }} -j2
+        if: ${{ steps.restore-toolchain-cache.outcome == 'success' && steps.restore-toolchain-cache.outputs.cache-hit != 'true' }}
+        run: make -C ./ci/build-fips-action toolchain-${{ inputs.arch_os }} OUTPUT=/opt/toolchain -j3
 
       - name: Build (FIPS)
         if: ${{ inputs.fips && contains(inputs.arch_os, 'linux') && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         run: |
-          CC=$(find /opt/bin -type f -name "*-linux-musl-gcc")
+          CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
           echo "Using toolchain: $CC"
           make otelcol-sumo-${{inputs.arch_os}} \
             FIPS_SUFFIX="-fips" \
@@ -200,7 +200,7 @@ jobs:
         if: ${{ steps.rebuild-toolchain.outcome == 'success' }}
         with:
           path: |
-            /opt
+            /opt/toolchain
           key: ${{ steps.get-cache-key.outputs.toolchain-cache-key }}
 
       - uses: actions/cache/save@v3

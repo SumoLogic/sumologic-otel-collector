@@ -8,3 +8,5 @@ MUSL_VER = 1.2.3
 COMMON_CONFIG += CFLAGS="-g0 -Os" CXXFLAGS="-g0 -Os" LDFLAGS="-s"
 # build c toolchain only
 GCC_CONFIG += --enable-languages=c
+# add -nv to download command for tidy CI output
+DL_CMD = wget -nv -c -O
