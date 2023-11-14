@@ -52,7 +52,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 		TraceFormat: "otlp",
 
 		HTTPClientSettings: confighttp.HTTPClientSettings{
-			Timeout: 5 * time.Second,
+			Timeout: 30 * time.Second,
 			Auth: &configauth.Authentication{
 				AuthenticatorID: component.NewID("sumologic"),
 			},
