@@ -1,0 +1,1 @@
+Increasing the default timeout in the sumologic exporter
