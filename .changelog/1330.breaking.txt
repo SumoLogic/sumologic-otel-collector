@@ -1,0 +1,1 @@
+feat(extension/sumologic)!: change `discover_collector_tags` to be `true` by default
