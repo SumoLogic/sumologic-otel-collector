@@ -1,0 +1,1 @@
+chore: update otel core to `v0.89.0`
