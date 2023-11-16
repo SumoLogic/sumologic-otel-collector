@@ -84,7 +84,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 |               [collectd][collectdreceiver]               |        [metricstransform][metricstransformprocessor]         |                                        |         [k8s_observer][k8sobserver]          |                                       |
 |                [couchdb][couchdbreceiver]                |    [probabilistic_sampler][probabilisticsamplerprocessor]    |                                        |      [memory_ballast][ballastextension]      |                                       |
 |                [datadog][datadogreceiver]                |               [redaction][redactionprocessor]                |                                        |  [oauth2client][oauth2clientauthextension]   |                                       |
-|           [docker_stats][dockerstatsreceiver]            |          [remoteobserver][remoteobserverprocessor]           |                                        |          [oidc][oidcauthextension]           |                                       |
+|           [docker_stats][dockerstatsreceiver]            |               [remotetap][remotetapprocessor]                |                                        |          [oidc][oidcauthextension]           |                                       |
 |          [elasticsearch][elasticsearchreceiver]          |                [resource][resourceprocessor]                 |                                        |           [pprof][pprofextension]            |                                       |
 |                 [expvar][expvarreceiver]                 |       [resourcedetection][resourcedetectionprocessor]        |                                        |       [sigv4auth][sigv4authextension]        |                                       |
 |                [filelog][filelogreceiver]                |                 [routing][routingprocessor]                  |                                        |      [`sumologic`][sumologicextension]       |                                       |
@@ -256,7 +256,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 [metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.88.0/processor/metricstransformprocessor
 [probabilisticsamplerprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.88.0/processor/probabilisticsamplerprocessor
 [redactionprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.88.0/processor/redactionprocessor
-[remoteobserverprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.88.0/processor/remoteobserverprocessor
+[remotetapprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.88.0/processor/remotetapprocessor
 [resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.88.0/processor/resourceprocessor
 [resourcedetectionprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.88.0/processor/resourcedetectionprocessor
 [routingprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.88.0/processor/routingprocessor
