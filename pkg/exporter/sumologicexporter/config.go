@@ -214,7 +214,7 @@ const (
 	// TracesPipeline represents traces pipeline
 	TracesPipeline PipelineType = "traces"
 	// defaultTimeout
-	defaultTimeout time.Duration = 5 * time.Second
+	defaultTimeout time.Duration = 30 * time.Second
 	// DefaultCompress defines default Compress
 	DefaultCompress bool = true
 	// DefaultCompressEncoding defines default CompressEncoding

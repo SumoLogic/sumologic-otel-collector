@@ -44,7 +44,7 @@ exporters:
     trace_format: {otlp}
 
     # timeout is the timeout for every attempt to send data to the backend,
-    # maximum connection timeout is 55s, default = 5s
+    # maximum connection timeout is 55s, default = 30s
     timeout: <timeout>
 
     # defines if timestamp for logs should be set to 0,
