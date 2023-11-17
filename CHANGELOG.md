@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.89.0-sumo-0]
+
+### Released 2023-11-17
+
+### Breaking Changes
+
+- feat(extension/sumologic)!: change `discover_collector_tags` to be `true` by default [#1330]
+
+### Added
+
+- feat(receiver/active_directory_inv): add Windows Active Directory Inventory receiver [#1273]
+- feat(opamp): Support OpAmp remote management for the opentelemetry collector, via the --remote-config flag [#1310]
+- feat(processor/sumologic): add upstream `sumologic` processor [#1334]
+
+### Changed
+
+- Increasing the default timeout in the sumologic exporter [#1332]
+- feat(processor/remoteobserver)!: rename `remoteobserver` processor to `remotetap` [#1333]
+- chore: update otel core to `v0.89.0` [#1333]
+- feat(processor/sumologicschema): deprecate `sumologic_schema` processor in favor of newly added upstream `sumologic` processor [#1334]
+  To migrate, simply change the name `sumologic_schema` to `sumologic` in your configuration files.
+
+[#1330]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1330
+[#1273]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1273
+[#1310]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1310
+[#1334]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1334
+[#1332]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1332
+[#1333]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1333
+[v0.89.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.89.0-sumo-0
+
 ## [v0.88.0-sumo-1]
 
 ### Released 2023-11-03

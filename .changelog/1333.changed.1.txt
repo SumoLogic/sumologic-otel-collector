@@ -1,1 +1,0 @@
-feat(processor/remoteobserver)!: rename `remoteobserver` processor to `remotetap`

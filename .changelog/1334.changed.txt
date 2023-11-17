@@ -1,3 +1,0 @@
-feat(processor/sumologicschema): deprecate `sumologic_schema` processor in favor of newly added upstream `sumologic` processor
-
-To migrate, simply change the name `sumologic_schema` to `sumologic` in your configuration files.
