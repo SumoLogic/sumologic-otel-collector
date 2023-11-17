@@ -45,7 +45,7 @@ In order to learn more, pleasee see [purpose of Sumo Logic Distribution for Open
 ## Supported OS and architectures
 
 | Linux                         | MacOS                         | Windows                     |
-|-------------------------------|-------------------------------|-----------------------------|
+| ----------------------------- | ----------------------------- | --------------------------- |
 | [amd64 (x86_64)][linux_amd64] | [amd64 (x86_64)][mac_amd64]   | [amd64 (x86_64)][win_amd64] |
 | [arm64][linux_arm64]          | [arm64 (Apple M1)][mac_arm64] |                             |
 
@@ -63,15 +63,17 @@ The `highlighted` components are delivered by Sumo Logic.
 
 The rest of the components in the table are pure upstream OpenTelemetry components.
 
+The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
+
 |                        Receivers                         |                          Processors                          |               Exporters                |                  Extensions                  |              Connectors               |
-|:--------------------------------------------------------:|:------------------------------------------------------------:|:--------------------------------------:|:--------------------------------------------:|:-------------------------------------:|
+| :------------------------------------------------------: | :----------------------------------------------------------: | :------------------------------------: | :------------------------------------------: | :-----------------------------------: |
 |     [active_directory_ds][activedirectorydsreceiver]     |              [attributes][attributesprocessor]               |         [awss3][awss3exporter]         |       [asapclient][asapauthextension]        |      [forward][forwardconnector]      |
 |              [aerospike][aerospikereceiver]              |                   [batch][batchprocessor]                    |        [carbon][carbonexporter]        |             [awsproxy][awsproxy]             |        [count][countconnector]        |
 |                 [apache][apachereceiver]                 |        [`cascading_filter`][cascadingfilterprocessor]        |         [debug][debugexporter]         |       [basicauth][basicauthextension]        |      [routing][routingconnector]      |
 |          [awscloudwatch][awscloudwatchreceiver]          |       [cumulativetodelta][cumulativetodeltaprocessor]        |          [file][fileexporter]          | [bearertokenauth][bearertokenauthextension]  | [servicegraph][servicegraphconnector] |
 |    [awscontainerinsight][awscontainerinsightreceiver]    |             [deltatorate][deltatorateprocessor]              |         [kafka][kafkaexporter]         |           [db_storage][dbstorage]            |  [spanmetrics][spanmetricsconnector]  |
 | [awsecscontainermetrics][awsecscontainermetricsreceiver] | [experimental_metricsgeneration][metricsgenerationprocessor] | [loadbalancing][loadbalancingexporter] |      [docker_observer][dockerobserver]       |                                       |
-|            [awsfirehose][awsfirehosereceiver]            |                  [filter][filterprocessor]                   |       [logging][loggingexporter]       |         [ecs_observer][ecsobserver]          |                                       |
+|            [awsfirehose][awsfirehosereceiver]            |                  [filter][filterprocessor]                   |   ⚠️ ~~[logging][loggingexporter]~~ ⚠️   |         [ecs_observer][ecsobserver]          |                                       |
 |                [awsxray][awsxrayreceiver]                |            [groupbyattrs][groupbyattrsprocessor]             |          [otlp][otlpexporter]          |     [ecs_task_observer][ecstaskobserver]     |                                       |
 |          [azureeventhub][azureeventhubreceiver]          |            [groupbytrace][groupbytraceprocessor]             |      [otlphttp][otlphttpexporter]      |         [file_storage][filestorage]          |                                       |
 |                  [bigip][bigipreceiver]                  |                 [`k8s_tagger`][k8sprocessor]                 |    [prometheus][prometheusexporter]    |   [headerssetter][headerssetterextension]    |                                       |
@@ -87,12 +89,12 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 |                 [expvar][expvarreceiver]                 |       [resourcedetection][resourcedetectionprocessor]        |                                        |       [sigv4auth][sigv4authextension]        |                                       |
 |                [filelog][filelogreceiver]                |                 [routing][routingprocessor]                  |                                        |      [`sumologic`][sumologicextension]       |                                       |
 |              [filestats][filestatsreceiver]              |                  [schema][schemaprocessor]                   |                                        |          [zpages][zpagesextension]           |                                       |
-|           [flinkmetrics][flinkmetricsreceiver]           |            [servicegraph][servicegraphprocessor]             |                                        |                                              |                                       |
+|           [flinkmetrics][flinkmetricsreceiver]           |        ⚠️ ~~[servicegraph][servicegraphprocessor]~~ ⚠️         |                                        |                                              |                                       |
 |          [fluentforward][fluentforwardreceiver]          |                 [`source`][sourceprocessor]                  |                                        |                                              |                                       |
 |      [googlecloudpubsub][googlecloudpubsubreceiver]      |                    [span][spanprocessor]                     |                                        |                                              |                                       |
-|     [googlecloudspanner][googlecloudspannerreceiver]     |             [spanmetrics][spanmetricsprocessor]              |                                        |                                              |                                       |
+|     [googlecloudspanner][googlecloudspannerreceiver]     |         ⚠️ ~~[spanmetrics][spanmetricsprocessor]~~ ⚠️          |                                        |                                              |                                       |
 |                [haproxy][haproxyreceiver]                |               [sumologic][sumologicprocessor]                |                                        |                                              |                                       |
-|            [hostmetrics][hostmetricsreceiver]            |        [`sumologic_schema`][sumologicschemaprocessor]        |                                        |                                              |                                       |
+|            [hostmetrics][hostmetricsreceiver]            |    ⚠️ ~~[`sumologic_schema`][sumologicschemaprocessor]~~ ⚠️    |                                        |                                              |                                       |
 |              [httpcheck][httpcheckreceiver]              |        [`sumologic_syslog`][sumologicsyslogprocessor]        |                                        |                                              |                                       |
 |                    [iis][iisreceiver]                    |            [tail_sampling][tailsamplingprocessor]            |                                        |                                              |                                       |
 |               [influxdb][influxdbreceiver]               |               [transform][transformprocessor]                |                                        |                                              |                                       |
