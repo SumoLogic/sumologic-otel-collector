@@ -93,11 +93,11 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 |          [fluentforward][fluentforwardreceiver]          |                 [`source`][sourceprocessor]                  |                                        |                                              |                                       |
 |      [googlecloudpubsub][googlecloudpubsubreceiver]      |                    [span][spanprocessor]                     |                                        |                                              |                                       |
 |     [googlecloudspanner][googlecloudspannerreceiver]     |             [spanmetrics][spanmetricsprocessor]              |                                        |                                              |                                       |
-|                [haproxy][haproxyreceiver]                |        [`sumologic_schema`][sumologicschemaprocessor]        |                                        |                                              |                                       |
-|            [hostmetrics][hostmetricsreceiver]            |        [`sumologic_syslog`][sumologicsyslogprocessor]        |                                        |                                              |                                       |
-|              [httpcheck][httpcheckreceiver]              |            [tail_sampling][tailsamplingprocessor]            |                                        |                                              |                                       |
-|                    [iis][iisreceiver]                    |               [transform][transformprocessor]                |                                        |                                              |                                       |
-|               [influxdb][influxdbreceiver]               |                                                              |                                        |                                              |                                       |
+|                [haproxy][haproxyreceiver]                |               [sumologic][sumologicprocessor]                |                                        |                                              |                                       |
+|            [hostmetrics][hostmetricsreceiver]            |        [`sumologic_schema`][sumologicschemaprocessor]        |                                        |                                              |                                       |
+|              [httpcheck][httpcheckreceiver]              |        [`sumologic_syslog`][sumologicsyslogprocessor]        |                                        |                                              |                                       |
+|                    [iis][iisreceiver]                    |            [tail_sampling][tailsamplingprocessor]            |                                        |                                              |                                       |
+|               [influxdb][influxdbreceiver]               |               [transform][transformprocessor]                |                                        |                                              |                                       |
 |                 [jaeger][jaegerreceiver]                 |                                                              |                                        |                                              |                                       |
 |                    [jmx][jmxreceiver]                    |                                                              |                                        |                                              |                                       |
 |               [journald][journaldreceiver]               |                                                              |                                        |                                              |                                       |
@@ -265,6 +265,7 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 [sourceprocessor]: ./pkg/processor/sourceprocessor
 [spanprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.89.0/processor/spanprocessor
 [spanmetricsprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.89.0/processor/spanmetricsprocessor
+[sumologicprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.89.0/processor/sumologicprocessor
 [sumologicschemaprocessor]: ./pkg/processor/sumologicschemaprocessor
 [sumologicsyslogprocessor]: ./pkg/processor/sumologicsyslogprocessor
 [tailsamplingprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.89.0/processor/tailsamplingprocessor
