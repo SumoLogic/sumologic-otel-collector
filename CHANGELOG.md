@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 
 - feat(extension/sumologic)!: change `discover_collector_tags` to be `true` by default [#1330]
+- feat(exporter/sumologic)!: change default timeout from `5s` to `30s` [#1332]
+- feat(processor/remoteobserver)!: rename `remoteobserver` processor to `remotetap` [#1333]
 
 ### Added
 
@@ -23,10 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Increasing the default timeout in the sumologic exporter [#1332]
-- feat(processor/remoteobserver)!: rename `remoteobserver` processor to `remotetap` [#1333]
 - chore: update otel core to `v0.89.0` [#1333]
 - feat(processor/sumologicschema): deprecate `sumologic_schema` processor in favor of newly added upstream `sumologic` processor [#1334]
+
   To migrate, simply change the name `sumologic_schema` to `sumologic` in your configuration files.
 
 [#1330]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1330
