@@ -61,8 +61,6 @@ This section lists the components that are included in Sumo Logic Distribution f
 
 The `highlighted` components are delivered by Sumo Logic.
 
-The components with an asterisk `*` are upstream OpenTelemetry components with a minor addition by Sumo Logic.
-
 The rest of the components in the table are pure upstream OpenTelemetry components.
 
 |                        Receivers                         |                          Processors                          |               Exporters                |                  Extensions                  |              Connectors               |
