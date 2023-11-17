@@ -1,1 +1,0 @@
-feat(receiver/active_directory_inv): add Windows Active Directory Inventory receiver
