@@ -1,1 +1,1 @@
-Adding the Windows AD Inventory Receiver to the collector
+feat(receiver/active_directory_inv): add Windows Active Directory Inventory receiver
