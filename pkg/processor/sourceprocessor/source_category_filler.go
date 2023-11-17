@@ -84,13 +84,14 @@ func (f *sourceCategoryFiller) fill(attributes *pcommon.Map) {
 		valueTemplate = f.valueTemplate
 		templateAttributes = f.templateAttributes
 	}
-	sourceCategoryValue := f.replaceTemplateAttributes(valueTemplate, templateAttributes, attributes)
 
 	prefix := getAnnotationAttributeValue(f.annotationPrefix, sourceCategoryPrefixAnnotation, attributes)
 	if prefix == "" {
 		prefix = f.prefix
 	}
-	sourceCategoryValue = prefix + sourceCategoryValue
+	valueTemplate = prefix + valueTemplate
+
+	sourceCategoryValue := f.replaceTemplateAttributes(valueTemplate, templateAttributes, attributes)
 
 	dashReplacement := getAnnotationAttributeValue(f.annotationPrefix, sourceCategoryReplaceDashAnnotation, attributes)
 	if dashReplacement == "" {
