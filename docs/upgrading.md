@@ -1,5 +1,9 @@
 # Upgrading
 
+- [Upgrading to v0.89.0-sumo-0](#upgrading-to-v0890-sumo-0)
+  - [`remoteobserver` processor: renamed to `remotetap` processor](#remoteobserver-processor-renamed-to-remotetap-processor)
+  - [`sumologic` exporter: changed default `timeout` from `5s` to `30s`](#sumologic-exporter-changed-default-timeout-from-5s-to-30s)
+  - [`sumologic` extension: changed default `discover_collector_tags` from `false` to `true`](#sumologic-extension-changed-default-discover_collector_tags-from-false-to-true)
 - [Upgrading to v0.84.0-sumo-0](#upgrading-to-v0840-sumo-0)
   - [`sumologic` extension: removed `install_token` in favor of `installation_token`](#sumologic-extension-removed-install_token-in-favor-of-installation_token)
 - [Upgrading to v0.77.0-sumo-0](#upgrading-to-v0770-sumo-0)
@@ -30,6 +34,79 @@
   - [Sumo Logic exporter metadata handling](#sumo-logic-exporter-metadata-handling)
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
+
+## Upgrading to v0.89.0-sumo-0
+
+### `remoteobserver` processor: renamed to `remotetap` processor
+
+To migrate, change the processor name `remoteobserver` to `remotetap` in your configuration files.
+
+For example, given the following configuration:
+
+```yaml
+processors:
+  remoteobserver:
+    port: 1234
+  remoteobserver/another-one:
+    limit: 2
+
+pipelines:
+  logs:
+    exporters: ["..."]
+    processors:
+    - remoteobserver
+    receivers: ["..."]
+  metrics:
+    exporters: ["..."]
+    processors:
+    - remoteobserver/another-one
+    receivers: ["..."]
+```
+
+change it to:
+
+```yaml
+processors:
+  remotetap:
+    port: 1234
+  remotetap/another-one:
+    limit: 2
+
+pipelines:
+  logs:
+    exporters: ["..."]
+    processors:
+    - remotetap
+    receivers: ["..."]
+  metrics:
+    exporters: ["..."]
+    processors:
+    - remotetap/another-one
+    receivers: ["..."]
+```
+
+### `sumologic` exporter: changed default `timeout` from `5s` to `30s`
+
+We believe 30 seconds is a better default timeout for the Sumo Logic exporter.
+The bigger the payload is, the longer it takes for the Sumo Logic backend to process it.
+
+If you want to revert to the previous behavior, set the `timeout` property to `5s` or another value. Example:
+
+```yaml
+exporters:
+  sumologic:
+    timeout: 5s
+```
+
+### `sumologic` extension: changed default `discover_collector_tags` from `false` to `true`
+
+If you want to revert to the previous behavior, set the `discover_collector_tags` property to `false`. Example:
+
+```yaml
+extensions:
+  sumologic:
+    discover_collector_tags: false
+```
 
 ## Upgrading to v0.84.0-sumo-0
 

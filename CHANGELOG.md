@@ -11,11 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released 2023-11-17
 
+See the [upgrade guide][upgrade_guide_v0.89] for more details on the breaking changes.
+
 ### Breaking Changes
 
-- feat(extension/sumologic)!: change `discover_collector_tags` to be `true` by default [#1330]
-- feat(exporter/sumologic)!: change default timeout from `5s` to `30s` [#1332]
 - feat(processor/remoteobserver)!: rename `remoteobserver` processor to `remotetap` [#1333]
+- feat(exporter/sumologic)!: change default timeout from `5s` to `30s` [#1332]
+- feat(extension/sumologic)!: change `discover_collector_tags` to be `true` by default [#1330]
 
 ### Added
 
@@ -37,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1332]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1332
 [#1333]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1333
 [v0.89.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.89.0-sumo-0
+[upgrade_guide_v0.89]: ./docs/upgrading.md#upgrading-to-v0890-sumo-0
 
 ## [v0.88.0-sumo-1]
 
