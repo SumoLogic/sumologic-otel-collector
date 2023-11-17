@@ -26,7 +26,7 @@ import (
 const (
 	// The value of "type" key in configuration.
 	typeStr        = "sumologic_schema"
-	stabilityLevel = component.StabilityLevelBeta
+	stabilityLevel = component.StabilityLevelDeprecated
 )
 
 var processorCapabilities = consumer.Capabilities{MutatesData: true}
