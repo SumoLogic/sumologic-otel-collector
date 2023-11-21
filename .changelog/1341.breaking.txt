@@ -1,0 +1,1 @@
+feat(exporter/syslog)!: replace syslog exporter with syslog exporter from opentelemetry-collector-contrib
