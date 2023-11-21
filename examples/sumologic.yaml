@@ -20,6 +20,13 @@ extensions:
   file_storage:
     directory: /var/lib/otelcol-sumo/file_storage
 
+  ## Configuration for OpAMP Extension
+  ## The OpAMP extension remotely manages collector configuration.
+  ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/extension/opampextension
+  opamp:
+    remote_configuration_directory: /etc/otelcol-sumo/conf.d
+    endpoint: wss://opamp-events.sumologic.com/v1/opamp
+
 receivers:
   ## Configuration for OTLP Receiver
   ## Receives data via gRPC or HTTP using OTLP format.
