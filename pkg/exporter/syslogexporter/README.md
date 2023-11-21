@@ -1,6 +1,45 @@
 # Syslog Exporter
 
-**Stability level**: Alpha
+**Stability level**: Deprecated
+
+This exporter is deprecated in favor of the [syslog exporter][syslog_exporter_contrib] that lives in the [OpenTelemetry Collector Contrib][contrib_repo] repository.
+The functionality is the same but the configuration is slightly different.
+
+To migrate, rename the following keys in configuration for `syslogexporter`:
+
+- rename `protocol` property to `network`
+- rename `format` property to `protocol`
+
+For example, given the following configuration:
+
+```yaml
+  syslog:
+    protocol: tcp
+    port: 514
+    endpoint: 127.0.0.1
+    format: rfc5424
+    tls:
+      ca_file: ca.pem
+      cert_file: cert.pem
+      key_file: key.pem
+```
+
+change it to:
+
+```yaml
+  syslog:
+    network: tcp
+    port: 514
+    endpoint: 127.0.0.1
+    protocol: rfc5424
+    tls:
+      ca_file: ca.pem
+      cert_file: cert.pem
+      key_file:  key.pem
+```
+
+[syslog_exporter_contrib]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/syslogexporter/README.md
+[contrib_repo]: https://github.com/open-telemetry/opentelemetry-collector-contrib/
 
 ## About The Exporter
 
