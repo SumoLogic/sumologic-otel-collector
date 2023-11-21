@@ -14,8 +14,6 @@ exporters:
   # Exporters with non-upstreamed changes:
   - gomod: github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter v0.0.0-00010101000000-000000000000
     path: ./../pkg/exporter/sumologicexporter
-  - gomod: github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/syslogexporter v0.0.0-00010101000000-000000000000
-    path: ./../pkg/exporter/syslogexporter
 
   # Upstream exporters:
 
@@ -32,6 +30,7 @@ exporters:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.89.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/loadbalancingexporter v0.89.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusexporter v0.89.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/syslogexporter v0.89.0
 
 processors:
   # Processors with non-upstreamed changes:
