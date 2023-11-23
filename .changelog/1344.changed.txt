@@ -1,1 +1,0 @@
-chore: update Go to `v1.21`
