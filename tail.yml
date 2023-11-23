@@ -1,0 +1,25 @@
+receivers:
+  filelog:
+    include:
+    - otelcol-sumo.log
+    start_at: beginning
+
+exporters:
+  file:
+    path: /dev/stdout
+    encoding: text_encoding
+
+extensions:
+  text_encoding:
+
+service:
+  extensions:
+    - text_encoding
+  telemetry:
+    logs:
+      output_paths:
+        - ./otelcol-sumo.log
+  pipelines:
+    logs:
+      exporters: [file]
+      receivers: [filelog]

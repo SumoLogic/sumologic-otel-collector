@@ -214,6 +214,8 @@ extensions:
     import: github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.90.1
     import: github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/dbstorage
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/encoding v0.90.1
+    import: github.com/open-telemetry/opentelemetry-collector-contrib/extension/encoding/textencodingextension
 
 connectors:
   - gomod: go.opentelemetry.io/collector/connector/forwardconnector v0.90.1
@@ -246,3 +248,5 @@ replaces:
 
   # lokireceiver does a replace for this, so we need to as well
   - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/loki => github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/loki v0.90.1
+  - github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter => github.com/SumoLogic/opentelemetry-collector-contrib/exporter/fileexporter 687035f9f64c57e96d74d523b398f526e698f9e4
+  - github.com/open-telemetry/opentelemetry-collector-contrib/extension/encoding/textencodingextension =>  github.com/SumoLogic/opentelemetry-collector-contrib/extension/encoding/textencodingextension 687035f9f64c57e96d74d523b398f526e698f9e4
