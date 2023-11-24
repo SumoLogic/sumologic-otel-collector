@@ -1,1 +1,0 @@
-build: revert back to Go 1.20
