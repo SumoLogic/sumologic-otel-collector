@@ -7,21 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
-## [v0.89.0-sumo-1]
+## [v0.89.0-sumo-2]
 
-### Released 2023-11-23
+### Released 2023-11-24
 
 ### Changed
 
-- chore: update Go to `v1.21` [#1340], [#1344]
+- chore: update Go to `v1.20.11` [#1340]
 
 ### Fixed
 
 - fix(sourceprocessor): add templating to sourceCategoryPrefix [#1339]
 
 [#1340]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1340
-[#1344]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1344
 [#1339]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1339
+[v0.89.0-sumo-2]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.89.0-sumo-2
+
+## [v0.89.0-sumo-1]
+
+This was a failed release. Use [v0.89.0-sumo-2] instead.
+
 [v0.89.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.89.0-sumo-1
 
 ## [v0.89.0-sumo-0]
