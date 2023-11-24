@@ -277,6 +277,9 @@ jobs:
             runs-on: macos-latest
           - arch_os: windows_amd64
             runs-on: windows-2022
+          - arch_os: windows_amd64
+            runs-on: windows-2022
+            fips: true
     with:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
