@@ -1,5 +1,7 @@
 # Upgrading
 
+- [Upgrading to v0.90.0-sumo-0](#upgrading-to-v0900-sumo-0)
+  - [Change configuration for `syslogexporter`](#change-configuration-for-syslogexporter)
 - [Upgrading to v0.89.0-sumo-0](#upgrading-to-v0890-sumo-0)
   - [`remoteobserver` processor: renamed to `remotetap` processor](#remoteobserver-processor-renamed-to-remotetap-processor)
   - [`sumologic` exporter: changed default `timeout` from `5s` to `30s`](#sumologic-exporter-changed-default-timeout-from-5s-to-30s)
