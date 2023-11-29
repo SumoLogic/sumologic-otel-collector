@@ -44,8 +44,8 @@ ARG_SHORT_KEEP_DOWNLOADS='n'
 ARG_LONG_KEEP_DOWNLOADS='keep-downloads'
 ARG_SHORT_INSTALL_HOSTMETRICS='H'
 ARG_LONG_INSTALL_HOSTMETRICS='install-hostmetrics'
-ARG_SHORT_REMOTE='r'
-ARG_LONG_REMOTE='remotely-managed'
+ARG_SHORT_REMOTELY_MANAGED='r'
+ARG_LONG_REMOTELY_MANAGED='remotely-managed'
 ARG_SHORT_TIMEOUT='m'
 ARG_LONG_TIMEOUT='download-timeout'
 
@@ -60,7 +60,7 @@ readonly ARG_SHORT_CONFIG_BRANCH ARG_LONG_CONFIG_BRANCH ARG_SHORT_BINARY_BRANCH 
 readonly ARG_SHORT_BRANCH ARG_LONG_BRANCH ARG_SHORT_SKIP_CONFIG ARG_LONG_SKIP_CONFIG
 readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ARG_SHORT_FIPS ARG_LONG_FIPS ENV_TOKEN
 readonly ARG_SHORT_INSTALL_HOSTMETRICS ARG_LONG_INSTALL_HOSTMETRICS
-readonly ARG_SHORT_REMOTE ARG_LONG_REMOTE
+readonly ARG_SHORT_REMOTELY_MANAGED ARG_LONG_REMOTELY_MANAGED
 readonly ARG_SHORT_TIMEOUT ARG_LONG_TIMEOUT
 readonly DEPRECATED_ARG_LONG_TOKEN DEPRECATED_ENV_TOKEN DEPRECATED_ARG_LONG_SKIP_TOKEN
 readonly PACKAGE_GITHUB_ORG PACKAGE_GITHUB_REPO
@@ -154,7 +154,7 @@ Supported arguments:
                                         By default it gets latest version.
   -${ARG_SHORT_FIPS}, --${ARG_LONG_FIPS}                            Install the FIPS 140-2 compliant binary on Linux.
   -${ARG_SHORT_INSTALL_HOSTMETRICS}, --${ARG_LONG_INSTALL_HOSTMETRICS}             Install the hostmetrics configuration to collect host metrics.
-  -${ARG_SHORT_REMOTE}, --${ARG_LONG_REMOTE}                Remotely manage the collector configuration with Sumo Logic.
+  -${ARG_SHORT_REMOTELY_MANAGED}, --${ARG_LONG_REMOTELY_MANAGED}                Remotely manage the collector configuration with Sumo Logic.
   -${ARG_SHORT_TIMEOUT}, --${ARG_LONG_TIMEOUT} <timeout>      Timeout in seconds after which download will fail. Default is ${CURL_MAX_TIME}.
   -${ARG_SHORT_YES}, --${ARG_LONG_YES}                             Disable confirmation asks.
 
@@ -176,6 +176,7 @@ function set_defaults() {
     USER_ENV_DIRECTORY="${CONFIG_DIRECTORY}/env"
     TOKEN_ENV_FILE="${USER_ENV_DIRECTORY}/token.env"
     CONFIG_PATH="${CONFIG_DIRECTORY}/sumologic.yaml"
+    CONFIG_BAK_PATH="${CONFIG_PATH}.bak"
     COMMON_CONFIG_PATH="${USER_CONFIG_DIRECTORY}/common.yaml"
     COMMON_CONFIG_BAK_PATH="${USER_CONFIG_DIRECTORY}/common.yaml.bak"
     INDENTATION="  "
@@ -257,14 +258,14 @@ function parse_options() {
       "--${ARG_LONG_TIMEOUT}")
         set -- "$@" "-${ARG_SHORT_TIMEOUT}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_SKIP_CONFIG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_FIPS}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SKIP_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}"|"-${ARG_SHORT_TIMEOUT}"|"-${ARG_SHORT_INSTALL_HOSTMETRICS}"|"-${ARG_SHORT_REMOTE}")
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_SKIP_CONFIG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_FIPS}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SKIP_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}"|"-${ARG_SHORT_TIMEOUT}"|"-${ARG_SHORT_INSTALL_HOSTMETRICS}"|"-${ARG_SHORT_REMOTELY_MANAGED}")
         set -- "$@" "${arg}"
         ;;
       "--${ARG_LONG_INSTALL_HOSTMETRICS}")
         set -- "$@" "-${ARG_SHORT_INSTALL_HOSTMETRICS}"
         ;;
-      "--${ARG_LONG_REMOTE}")
-        set -- "$@" "-${ARG_SHORT_REMOTE}"
+      "--${ARG_LONG_REMOTELY_MANAGED}")
+        set -- "$@" "-${ARG_SHORT_REMOTELY_MANAGED}"
         ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -278,7 +279,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_FIPS}${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_SKIP_CONFIG}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:${ARG_SHORT_INSTALL_HOSTMETRICS}${ARG_SHORT_REMOTE}:${ARG_SHORT_TIMEOUT}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_FIPS}${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_SKIP_CONFIG}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:${ARG_SHORT_REMOTELY_MANAGED}:${ARG_SHORT_INSTALL_HOSTMETRICS}${ARG_SHORT_TIMEOUT}:" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -312,7 +313,7 @@ function parse_options() {
             CONFIG_BRANCH="${OPTARG}"
         fi ;;
       "${ARG_SHORT_INSTALL_HOSTMETRICS}") INSTALL_HOSTMETRICS=true ;;
-      "${ARG_SHORT_REMOTE}") REMOTELY_MANAGE=true ;;
+      "${ARG_SHORT_REMOTELY_MANAGED}") REMOTELY_MANAGED=true ;;
       "${ARG_SHORT_KEEP_DOWNLOADS}") KEEP_DOWNLOADS=true ;;
       "${ARG_SHORT_TIMEOUT}") CURL_MAX_TIME="${OPTARG}" ;;
       "${ARG_SHORT_TAG}")
@@ -738,9 +739,11 @@ function setup_config() {
         fi
 
         if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
-            write_opamp_extension "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}" "${API_BASE_URL}"
+            write_opamp_extension "${CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}" "${API_BASE_URL}"
         fi
+
         # clean up bak file
+        rm -f "${CONFIG_BAK_PATH}"
         rm -f "${COMMON_CONFIG_BAK_PATH}"
     fi
 
@@ -764,10 +767,11 @@ function setup_config_darwin() {
     fi
 
     if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
-        write_opamp_extension "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}" "${API_BASE_URL}"
+        write_opamp_extension "${CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}" "${API_BASE_URL}"
     fi
 
     # clean up bak file
+    rm -f "${CONFIG_BAK_PATH}"
     rm -f "${COMMON_CONFIG_BAK_PATH}"
 }
 
@@ -1272,11 +1276,14 @@ function write_opamp_extension() {
     local file
     readonly file="${1}"
 
+    local indentation
+    readonly indentation="${2}"
+
     local ext_indentation
-    readonly ext_indentation="${2}"
+    readonly ext_indentation="${3}"
 
     local api_url
-    readonly api_url="${3}"
+    readonly api_url="${4}"
 
     # if a different base url is specified, configure the corresponding opamp endpoint
     if [[ -n "${api_url}" ]]; then
@@ -1286,19 +1293,15 @@ function write_opamp_extension() {
         if grep "endpoint: wss:" "${file}" > /dev/null; then
             sed -i.bak -e "s/endpoint: wss:.*$/endpoint: $(escape_sed "${wss_url}")/" "${file}"
         else
-            # write installation token on the top of sumologic: extension
-            sed -i.bak -e "s/opamp:\\
-\\${ext_indentation}endpoint: wss:.*$/opamp:\\
+            sed -i.bak -e "s/opamp:/opamp:\\
 \\${ext_indentation}endpoint: $(escape_sed "${wss_url}")/" "${file}"
         fi
     fi
 
     # enable the opamp extension
-    if ! grep "- opamp" "${file}" > /dev/null; then
-        sed -i.bak -e "s/service:\\
-\\${ext_indentation}extensions:/service:\\
-\\${ext_indentation}extensions:\\
-\\${ext_indentation}\\${ext_indentation}- opamp/"
+    if ! grep "\- opamp" "${file}" > /dev/null; then
+        sed -i.bak -e "s/${indentation}extensions:/${indentation}extensions:\\
+\\${ext_indentation}- opamp/" "${file}"
     fi
 }
 
