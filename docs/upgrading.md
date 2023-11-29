@@ -1,5 +1,7 @@
 # Upgrading
 
+- [Upgrading to v0.90.0-sumo-0](#upgrading-to-v0900-sumo-0)
+  - [Change configuration for `syslogexporter`](#change-configuration-for-syslogexporter)
 - [Upgrading to v0.89.0-sumo-0](#upgrading-to-v0890-sumo-0)
   - [`remoteobserver` processor: renamed to `remotetap` processor](#remoteobserver-processor-renamed-to-remotetap-processor)
   - [`sumologic` exporter: changed default `timeout` from `5s` to `30s`](#sumologic-exporter-changed-default-timeout-from-5s-to-30s)
@@ -34,6 +36,43 @@
   - [Sumo Logic exporter metadata handling](#sumo-logic-exporter-metadata-handling)
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
+
+## Upgrading to v0.90.0-sumo-0
+
+### Change configuration for `syslogexporter`
+
+To migrate, rename the following keys in configuration for `syslogexporter`:
+
+- rename `protocol` property to `network`
+- rename `format` property to `protocol`
+
+For example, given the following configuration:
+
+```yaml
+  syslog:
+    protocol: tcp
+    port: 514
+    endpoint: 127.0.0.1
+    format: rfc5424
+    tls:
+      ca_file: ca.pem
+      cert_file: cert.pem
+      key_file: key.pem
+```
+
+change it to:
+
+```yaml
+  syslog:
+    network: tcp
+    port: 514
+    endpoint: 127.0.0.1
+    protocol: rfc5424
+    tls:
+      ca_file: ca.pem
+      cert_file: cert.pem
+      key_file:  key.pem
+```
 
 ## Upgrading to v0.89.0-sumo-0
 
