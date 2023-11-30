@@ -115,6 +115,15 @@ func checkSystemdEnvDirPermissions(c check) {
 	PathHasPermissions(c.test, etcPath+"/env", configPathDirPermissions)
 }
 
+func checkRemoteFlagInSystemdFile(c check) {
+	contents, err := getSystemdConfig(systemdPath)
+
+	require.NoError(c.test, err)
+
+	assert.Contains(t, contents, "--remote-config")
+	assert.NotContains(t, contents, "--config")
+}
+
 func checkTokenEnvFileCreated(c check) {
 	require.FileExists(c.test, tokenEnvFilePath, "env token file has not been created")
 }

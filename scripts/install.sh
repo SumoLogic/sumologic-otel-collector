@@ -1323,7 +1323,6 @@ function write_opamp_extension() {
 
     # add opamp extension if its missing
     if ! grep "opamp:" "${file}" > /dev/null; then
-
         sed -i.bak -e "1,/extensions:/ s/extensions:/extensions:\\
 ${indentation}opamp:/" "${file}"
     fi

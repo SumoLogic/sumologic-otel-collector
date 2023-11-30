@@ -453,6 +453,32 @@ func TestInstallScript(t *testing.T) {
 			},
 		},
 		{
+			name: "systemd with remotely-managed",
+			options: installOptions{
+				installToken:    installToken,
+				remotelyManaged: true,
+			},
+			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists, checkTokenEnvFileNotCreated},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkRemoteConfigDirectoryCreated,
+				checkConfigFilesOwnershipAndPermissions(systemUser, systemUser),
+				checkUserConfigNotCreated,
+				checkSystemdConfigCreated,
+				checkRemoteFlagInSystemdFile,
+				checkSystemdEnvDirExists,
+				checkSystemdEnvDirPermissions,
+				checkTokenEnvFileCreated,
+				checkTokenInEnvFile,
+				checkUserExists,
+				checkVarLogACL,
+			},
+			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
+			installCode:       3, // because of invalid installation token
+		},
+		{
 			name: "uninstallation without autoconfirm fails",
 			options: installOptions{
 				uninstall: true,
