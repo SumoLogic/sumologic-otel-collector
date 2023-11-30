@@ -24,7 +24,7 @@ extensions:
   ## The OpAMP extension remotely manages collector configuration.
   ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/extension/opampextension
   opamp:
-    remote_configuration_directory: /etc/otelcol-sumo/conf.d
+    remote_configuration_directory: /etc/otelcol-sumo/opamp.d
     endpoint: wss://opamp-events.sumologic.com/v1/opamp
 
 receivers:

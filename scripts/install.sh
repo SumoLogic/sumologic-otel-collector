@@ -173,6 +173,7 @@ function set_defaults() {
     SYSTEMD_CONFIG="/etc/systemd/system/otelcol-sumo.service"
     SUMO_BINARY_PATH="/usr/local/bin/otelcol-sumo"
     USER_CONFIG_DIRECTORY="${CONFIG_DIRECTORY}/conf.d"
+    REMOTE_CONFIG_DIRECTORY="${CONFIG_DIRECTORY}/opamp.d"
     USER_ENV_DIRECTORY="${CONFIG_DIRECTORY}/env"
     TOKEN_ENV_FILE="${USER_ENV_DIRECTORY}/token.env"
     CONFIG_PATH="${CONFIG_DIRECTORY}/sumologic.yaml"
@@ -700,8 +701,11 @@ function setup_config() {
     fi
 
     if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
+        echo -e "Creating remote configurations directory (${REMOTE_CONFIG_DIRECTORY})"
+        mkdir -p "${REMOTE_CONFIG_DIRECTORY}"
+
         write_sumologic_extension "${CONFIG_PATH}" "${INDENTATION}"
-        write_opamp_extension "${CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}" "${API_BASE_URL}"
+        write_opamp_extension "${CONFIG_PATH}" "${REMOTE_CONFIG_DIRECTORY}" "${INDENTATION}" "${EXT_INDENTATION}" "${API_BASE_URL}"
 
         if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ]]; then
             write_installation_token "${SUMOLOGIC_INSTALLATION_TOKEN}" "${CONFIG_PATH}" "${EXT_INDENTATION}"
@@ -793,7 +797,10 @@ function setup_config_darwin() {
     fi
 
     if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
-        write_opamp_extension "${config_path}" "${INDENTATION}" "${EXT_INDENTATION}" "${API_BASE_URL}"
+        echo -e "Creating remote configurations directory (${REMOTE_CONFIG_DIRECTORY})"
+        mkdir -p "${REMOTE_CONFIG_DIRECTORY}"
+
+        write_opamp_extension "${config_path}" "${REMOTE_CONFIG_DIRECTORY}" "${INDENTATION}" "${EXT_INDENTATION}" "${API_BASE_URL}"
     fi
 
     # clean up bak files
@@ -1302,14 +1309,20 @@ function write_opamp_extension() {
     local file
     readonly file="${1}"
 
+    local directory
+    readonly directory="${2}"
+
     local indentation
-    readonly indentation="${2}"
+    readonly indentation="${3}"
 
     local ext_indentation
-    readonly ext_indentation="${3}"
+    readonly ext_indentation="${4}"
 
     local api_url
-    readonly api_url="${4}"
+    readonly api_url="${5}"
+
+    # set the remote_configuration_directory
+    sed -i.bak -e "s/remote_configuration_directory:.*$/remote_configuration_directory: $(escape_sed "${directory}")/" "${file}"
 
     # if a different base url is specified, configure the corresponding opamp endpoint
     if [[ -n "${api_url}" ]]; then
@@ -1975,6 +1988,10 @@ sed -i.bak -e "s%/etc/otelcol-sumo/env%${USER_ENV_DIRECTORY}%" "${TMP_SYSTEMD_CO
 # Remove glob for versions up to 0.57
 if (( MAJOR_VERSION == 0 && MINOR_VERSION <= 57 )); then
     sed -i.bak -e "s% --config \"glob.*\"% --config ${COMMON_CONFIG_PATH}%" "${TMP_SYSTEMD_CONFIG}"
+fi
+
+if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
+    sed -i.bak -e "s% --config.*$% --remote-config \"opamp:/${CONFIG_PATH}\"%" "${TMP_SYSTEMD_CONFIG}"
 fi
 
 # clean up bak file
