@@ -801,6 +801,8 @@ function setup_config_darwin() {
         mkdir -p "${REMOTE_CONFIG_DIRECTORY}"
 
         write_opamp_extension "${config_path}" "${REMOTE_CONFIG_DIRECTORY}" "${INDENTATION}" "${EXT_INDENTATION}" "${API_BASE_URL}"
+
+        write_remote_config_launchd "${LAUNCHD_CONFIG}"
     fi
 
     # clean up bak files
@@ -1250,6 +1252,22 @@ function write_installation_token_launchd() {
     if ! plutil_key_is_type "${LAUNCHD_CONFIG}" "${LAUNCHD_TOKEN_KEY}" "string"; then
         plutil_replace_key "${LAUNCHD_CONFIG}" "${LAUNCHD_TOKEN_KEY}" "string" "${SUMOLOGIC_INSTALLATION_TOKEN}"
     fi
+}
+
+function write_remote_config_launchd() {
+    local file
+    readonly file="${1}"
+
+    if [[ ! -f "${file}" ]]; then
+        echo "The LaunchDaemon configuration file is missing: ${file}"
+        exit 1
+    fi
+
+    # Delete existing ProgramArguments
+    plutil_delete_key "${file}" "ProgramArguments"
+
+    # Create new ProgramArguments with --remote-config
+    plutil_create_key "${file}" "ProgramArguments" "json" "[ \"/usr/local/bin/otelcol-sumo\", \"--remote-config\", \"opamp:${CONFIG_PATH}\" ]"
 }
 
 # write api_url to user configuration file
