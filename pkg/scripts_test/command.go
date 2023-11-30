@@ -30,6 +30,7 @@ type installOptions struct {
 	downloadOnly           bool
 	dontKeepDownloads      bool
 	installHostmetrics     bool
+	remotelyManaged        bool
 	timeout                float64
 }
 
