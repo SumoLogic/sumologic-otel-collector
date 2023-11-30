@@ -132,6 +132,15 @@ func checkTokenInConfig(c check) {
 	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
 }
 
+func checkTokenInSumoConfig(c check) {
+	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
+
+	conf, err := getConfig(configPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
+}
+
 func checkTokenInEnvFile(c check) {
 	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
 

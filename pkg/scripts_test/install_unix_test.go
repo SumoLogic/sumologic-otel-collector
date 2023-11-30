@@ -133,6 +133,25 @@ func TestInstallScript(t *testing.T) {
 			},
 		},
 		{
+			name: "installation token and remotely-managed",
+			options: installOptions{
+				skipSystemd:     true,
+				installToken:    installToken,
+				remotelyManaged: true,
+			},
+			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkRemoteConfigDirectoryCreated,
+				checkConfigFilesOwnershipAndPermissions(rootUser, rootGroup),
+				checkTokenInSumoConfig,
+				checkSystemdConfigNotCreated,
+				checkUserNotExists,
+			},
+		},
+		{
 			name: "installation token only, binary not in PATH",
 			options: installOptions{
 				skipSystemd:  true,

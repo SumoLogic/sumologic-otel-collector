@@ -78,6 +78,10 @@ func (io *installOptions) string() []string {
 		opts = append(opts, "--install-hostmetrics")
 	}
 
+	if io.remotelyManaged {
+		opts = append(opts, "--remotely-managed")
+	}
+
 	if len(io.tags) > 0 {
 		for k, v := range io.tags {
 			opts = append(opts, "--tag", fmt.Sprintf("%s=%s", k, v))
