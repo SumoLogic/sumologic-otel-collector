@@ -123,6 +123,7 @@ func TestInstallScript(t *testing.T) {
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
+				checkRemoteConfigDirectoryNotCreated,
 				checkConfigFilesOwnershipAndPermissions(rootUser, rootGroup),
 				checkUserConfigCreated,
 				checkTokenInConfig,
