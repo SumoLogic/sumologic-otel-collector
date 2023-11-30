@@ -1337,7 +1337,10 @@ ${indentation}opamp:/" "${file}"
 
     # if a different base url is specified, configure the corresponding opamp endpoint
     if [[ -n "${api_url}" ]]; then
-        wss_url=${api_url/https:\/\/open-collectors/"wss://opamp-events"}
+        wss_url=${api_url/https:/"wss:"}
+        wss_url=${wss_url%/}
+        wss_url=${wss_url/open-collectors/"opamp-events"}
+        wss_url=${wss_url/\.net/".net/v1/opamp"}
         wss_url=${wss_url/\.com/".com/v1/opamp"}
 
         if grep "endpoint: wss:" "${file}" > /dev/null; then
