@@ -116,7 +116,7 @@ func checkRemoteConfigDirectoryCreated(c check) {
 }
 
 func checkRemoteConfigDirectoryNotCreated(c check) {
-	require.DirExists(c.test, opampDPath, "remote configuration directory has been created")
+	require.NoDirExists(c.test, opampDPath, "remote configuration directory has been created")
 }
 
 func checkTags(c check) {
