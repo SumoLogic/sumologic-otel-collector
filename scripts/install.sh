@@ -703,7 +703,7 @@ function setup_config() {
         write_sumologic_extension "${CONFIG_PATH}" "${INDENTATION}"
         write_opamp_extension "${CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}" "${API_BASE_URL}"
 
-        if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ]]; then
+        if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ]]; then
             write_installation_token "${SUMOLOGIC_INSTALLATION_TOKEN}" "${CONFIG_PATH}" "${EXT_INDENTATION}"
         fi
 
@@ -716,6 +716,13 @@ function setup_config() {
         fi
 
         rm -f "${CONFIG_BAK_PATH}"
+
+        # Finish setting permissions after we're done creating config files
+        chmod -R 440 "${CONFIG_DIRECTORY}"/*  # all files only readable by the owner
+        find "${CONFIG_DIRECTORY}/" -mindepth 1 -type d -exec chmod 550 {} \;  # directories also traversable
+
+        # Return/stop function execution
+        return
     fi
 
     if [[ "${INSTALL_HOSTMETRICS}" == "true" ]]; then
@@ -733,34 +740,32 @@ function setup_config() {
         fi
     fi
 
-    if [[ "${REMOTELY_MANAGED}" == "false" ]]; then
-      # Ensure that configuration is created
-      if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
-          echo "User configuration (${COMMON_CONFIG_PATH}) already exist)"
-      fi
+    # Ensure that configuration is created
+    if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
+        echo "User configuration (${COMMON_CONFIG_PATH}) already exist)"
+    fi
 
-      ## Check if there is anything to update in configuration
-      if [[ ( -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ) || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
-          create_user_config_file "${COMMON_CONFIG_PATH}"
-          add_extension_to_config "${COMMON_CONFIG_PATH}"
-          write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
+    ## Check if there is anything to update in configuration
+    if [[ ( -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ) || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
+        create_user_config_file "${COMMON_CONFIG_PATH}"
+        add_extension_to_config "${COMMON_CONFIG_PATH}"
+        write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
 
-          if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ]]; then
-              write_installation_token "${SUMOLOGIC_INSTALLATION_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
-          fi
+        if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ]]; then
+            write_installation_token "${SUMOLOGIC_INSTALLATION_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
+        fi
 
-          # fill in api base url
-          if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
-              write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
-          fi
+        # fill in api base url
+        if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
+            write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
+        fi
 
-          if [[ -n "${FIELDS}" && -z "${USER_FIELDS}" ]]; then
-              write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
-          fi
+        if [[ -n "${FIELDS}" && -z "${USER_FIELDS}" ]]; then
+            write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
+        fi
 
-          # clean up bak file
-          rm -f "${COMMON_CONFIG_BAK_PATH}"
-      fi
+        # clean up bak file
+        rm -f "${COMMON_CONFIG_BAK_PATH}"
     fi
     # Finish setting permissions after we're done creating config files
     chmod -R 440 "${CONFIG_DIRECTORY}"/*  # all files only readable by the owner
@@ -768,24 +773,30 @@ function setup_config() {
 }
 
 function setup_config_darwin() {
-    create_user_config_file "${COMMON_CONFIG_PATH}"
-    add_extension_to_config "${COMMON_CONFIG_PATH}"
-    write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
+    config_path="${COMMON_CONFIG_PATH}"
+
+    if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
+        config_path="${CONFIG_PATH}"
+    fi
+
+    create_user_config_file "${config_path}"
+    add_extension_to_config "${config_path}"
+    write_sumologic_extension "${config_path}" "${INDENTATION}"
 
     # fill in api base url
     if [[ -n "${API_BASE_URL}" ]]; then
-        write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
+        write_api_url "${API_BASE_URL}" "${config_path}" "${EXT_INDENTATION}"
     fi
 
     if [[ -n "${FIELDS}" ]]; then
-        write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
+        write_tags "${FIELDS}" "${config_path}" "${INDENTATION}" "${EXT_INDENTATION}"
     fi
 
     if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
-        write_opamp_extension "${CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}" "${API_BASE_URL}"
+        write_opamp_extension "${config_path}" "${INDENTATION}" "${EXT_INDENTATION}" "${API_BASE_URL}"
     fi
 
-    # clean up bak file
+    # clean up bak files
     rm -f "${CONFIG_BAK_PATH}"
     rm -f "${COMMON_CONFIG_BAK_PATH}"
 }
