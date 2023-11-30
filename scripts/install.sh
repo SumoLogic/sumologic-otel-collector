@@ -1268,7 +1268,7 @@ function write_api_url() {
         sed -i.bak -e "s/api_base_url:.*$/api_base_url: $(escape_sed "${api_url}")/" "${file}"
     else
         # write installation token on the top of sumologic: extension
-        sed -i.bak -e "0,/sumologic:/ s/sumologic:/sumologic:\\
+        sed -i.bak -e "1,/sumologic:/ s/sumologic:/sumologic:\\
 \\${ext_indentation}api_base_url: $(escape_sed "${api_url}")/" "${file}"
     fi
 }
@@ -1299,7 +1299,7 @@ function write_tags() {
         sed -i.bak -e "s/collector_fields:.*$/collector_fields: ${fields_to_write}/" "${file}"
     else
         # write installation token on the top of sumologic: extension
-        sed -i.bak -e "0,/sumologic:/ s/sumologic:/sumologic:\\
+        sed -i.bak -e "1,/sumologic:/ s/sumologic:/sumologic:\\
 \\${ext_indentation}collector_fields: ${fields_to_write}/" "${file}"
     fi
 }
