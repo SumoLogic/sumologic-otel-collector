@@ -1941,16 +1941,23 @@ if [[ "${SKIP_CONFIG}" == "false" ]]; then
 fi
 
 if [[ "${SYSTEMD_DISABLED}" == "true" ]]; then
-    COMMAND_SUFFIX=""
-    # Add glob for versions above 0.57
-    if (( MAJOR_VERSION >= 0 && MINOR_VERSION > 57 )); then
-        COMMAND_SUFFIX=" --config \"glob:${CONFIG_DIRECTORY}/conf.d/*.yaml\""
+    COMMAND_FLAGS=""
+
+    if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
+        COMMAND_FLAGS="--remote-config \"opamp:${CONFIG_PATH}\""
     else
-        COMMAND_SUFFIX=" --config ${COMMON_CONFIG_PATH}"
+        COMMAND_FLAGS="--config=${CONFIG_PATH}"
+        # Add glob for versions above 0.57
+        if (( MAJOR_VERSION >= 0 && MINOR_VERSION > 57 )); then
+            COMMAND_FLAGS="${COMMAND_FLAGS} --config \"glob:${CONFIG_DIRECTORY}/conf.d/*.yaml\""
+        else
+            COMMAND_FLAGS="${COMMAND_FLAGS} --config ${COMMON_CONFIG_PATH}"
+        fi
     fi
+
     echo ""
     echo Warning: running as a service is not supported on your operation system.
-    echo "Please use 'sudo otelcol-sumo --config=${CONFIG_PATH}${COMMAND_SUFFIX}' to run Sumo Logic Distribution for OpenTelemetry Collector"
+    echo "Please use 'sudo otelcol-sumo ${COMMAND_FLAGS}' to run Sumo Logic Distribution for OpenTelemetry Collector"
     exit 0
 fi
 
@@ -2002,7 +2009,7 @@ if (( MAJOR_VERSION == 0 && MINOR_VERSION <= 57 )); then
 fi
 
 if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
-    sed -i.bak -e "s% --config.*$% --remote-config \"opamp:/${CONFIG_PATH}\"%" "${TMP_SYSTEMD_CONFIG}"
+    sed -i.bak -e "s% --config.*$% --remote-config \"opamp:${CONFIG_PATH}\"%" "${TMP_SYSTEMD_CONFIG}"
 fi
 
 # clean up bak file

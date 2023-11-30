@@ -450,6 +450,7 @@ func TestInstallScript(t *testing.T) {
 				checkUserExists,
 				checkHostmetricsConfigCreated,
 				checkHostmetricsOwnershipAndPermissions(systemUser, systemUser),
+				checkRemoteConfigDirectoryNotCreated,
 			},
 		},
 		{
