@@ -1321,8 +1321,20 @@ function write_opamp_extension() {
     local api_url
     readonly api_url="${5}"
 
+    # add opamp extension if its missing
+    if ! grep "opamp:" "${file}" > /dev/null; then
+
+        sed -i.bak -e "1,/extensions:/ s/extensions:/extensions:\\
+${indentation}opamp:/" "${file}"
+    fi
+
     # set the remote_configuration_directory
-    sed -i.bak -e "s/remote_configuration_directory:.*$/remote_configuration_directory: $(escape_sed "${directory}")/" "${file}"
+    if grep "remote_configuration_directory:" "${file}" > /dev/null; then
+        sed -i.bak -e "s/remote_configuration_directory:.*$/remote_configuration_directory: $(escape_sed "${directory}")/" "${file}"
+    else
+        sed -i.bak -e "s/opamp:/opamp:\\
+\\${ext_indentation}remote_configuration_directory: $(escape_sed "${directory}")/" "${file}"
+    fi
 
     # if a different base url is specified, configure the corresponding opamp endpoint
     if [[ -n "${api_url}" ]]; then
