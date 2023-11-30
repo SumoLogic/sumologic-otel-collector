@@ -699,6 +699,25 @@ function setup_config() {
         exit 1
     fi
 
+    if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
+        write_sumologic_extension "${CONFIG_PATH}" "${INDENTATION}"
+        write_opamp_extension "${CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}" "${API_BASE_URL}"
+
+        if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ]]; then
+            write_installation_token "${SUMOLOGIC_INSTALLATION_TOKEN}" "${CONFIG_PATH}" "${EXT_INDENTATION}"
+        fi
+
+        if [[ -n "${API_BASE_URL}" ]]; then
+            write_api_url "${API_BASE_URL}" "${CONFIG_PATH}" "${EXT_INDENTATION}"
+        fi
+
+        if [[ -n "${FIELDS}" ]]; then
+            write_tags "${FIELDS}" "${CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
+        fi
+
+        rm -f "${CONFIG_BAK_PATH}"
+    fi
+
     if [[ "${INSTALL_HOSTMETRICS}" == "true" ]]; then
         echo -e "Installing ${OS_TYPE} hostmetrics configuration"
         HOSTMETRICS_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/conf.d/${OS_TYPE}.yaml"
@@ -714,39 +733,35 @@ function setup_config() {
         fi
     fi
 
-    # Ensure that configuration is created
-    if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
-        echo "User configuration (${COMMON_CONFIG_PATH}) already exist)"
+    if [[ "${REMOTELY_MANAGED}" == "false" ]]; then
+      # Ensure that configuration is created
+      if [[ -f "${COMMON_CONFIG_PATH}" ]]; then
+          echo "User configuration (${COMMON_CONFIG_PATH}) already exist)"
+      fi
+
+      ## Check if there is anything to update in configuration
+      if [[ ( -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ) || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
+          create_user_config_file "${COMMON_CONFIG_PATH}"
+          add_extension_to_config "${COMMON_CONFIG_PATH}"
+          write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
+
+          if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ]]; then
+              write_installation_token "${SUMOLOGIC_INSTALLATION_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
+          fi
+
+          # fill in api base url
+          if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
+              write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
+          fi
+
+          if [[ -n "${FIELDS}" && -z "${USER_FIELDS}" ]]; then
+              write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
+          fi
+
+          # clean up bak file
+          rm -f "${COMMON_CONFIG_BAK_PATH}"
+      fi
     fi
-
-    ## Check if there is anything to update in configuration
-    if [[ ( -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ) || -n "${API_BASE_URL}" || -n "${FIELDS}" || "${REMOTELY_MANAGED}" == "true" ]]; then
-        create_user_config_file "${COMMON_CONFIG_PATH}"
-        add_extension_to_config "${COMMON_CONFIG_PATH}"
-        write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
-
-        if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ]]; then
-            write_installation_token "${SUMOLOGIC_INSTALLATION_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
-        fi
-
-        # fill in api base url
-        if [[ -n "${API_BASE_URL}" && -z "${USER_API_URL}" ]]; then
-            write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
-        fi
-
-        if [[ -n "${FIELDS}" && -z "${USER_FIELDS}" ]]; then
-            write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
-        fi
-
-        if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
-            write_opamp_extension "${CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}" "${API_BASE_URL}"
-        fi
-
-        # clean up bak file
-        rm -f "${CONFIG_BAK_PATH}"
-        rm -f "${COMMON_CONFIG_BAK_PATH}"
-    fi
-
     # Finish setting permissions after we're done creating config files
     chmod -R 440 "${CONFIG_DIRECTORY}"/*  # all files only readable by the owner
     find "${CONFIG_DIRECTORY}/" -mindepth 1 -type d -exec chmod 550 {} \;  # directories also traversable
