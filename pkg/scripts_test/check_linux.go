@@ -120,8 +120,8 @@ func checkRemoteFlagInSystemdFile(c check) {
 
 	require.NoError(c.test, err)
 
-	assert.Contains(t, contents, "--remote-config")
-	assert.NotContains(t, contents, "--config")
+	assert.Contains(c.test, contents, "--remote-config")
+	assert.NotContains(c.test, contents, "--config")
 }
 
 func checkTokenEnvFileCreated(c check) {
