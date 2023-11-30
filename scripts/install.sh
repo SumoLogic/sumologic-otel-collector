@@ -1357,6 +1357,7 @@ ${indentation}opamp:/" "${file}"
     if [[ -n "${api_url}" ]]; then
         wss_url=${api_url/https:/"wss:"}
         wss_url=${wss_url%/}
+        wss_url=${wss_url/open-events/"opamp-events"}
         wss_url=${wss_url/open-collectors/"opamp-events"}
         wss_url=${wss_url/\.net/".net/v1/opamp"}
         wss_url=${wss_url/\.com/".com/v1/opamp"}
