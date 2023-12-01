@@ -725,6 +725,9 @@ function setup_config() {
         chmod -R 440 "${CONFIG_DIRECTORY}"/*  # all files only readable by the owner
         find "${CONFIG_DIRECTORY}/" -mindepth 1 -type d -exec chmod 550 {} \;  # directories also traversable
 
+        # Remote configuration directory must be writable
+        chmod 750 "${REMOTE_CONFIG_DIRECTORY}"
+
         # Return/stop function execution
         return
     fi
@@ -2014,6 +2017,10 @@ if [[ "${SKIP_CONFIG}" == "false" ]]; then
     echo 'Changing ownership for config and storage'
     chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOME_DIRECTORY}" "${CONFIG_DIRECTORY}"/*
     chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}"
+
+    if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
+        chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${REMOTE_CONFIG_DIRECTORY}"
+    fi
 fi
 
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/systemd/otelcol-sumo.service"
