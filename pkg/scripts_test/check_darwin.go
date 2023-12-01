@@ -29,7 +29,7 @@ func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string
 					switch path {
 					case etcdPath:
 						permissions = etcPathPermissions
-					case opampDPath
+					case opampDPath:
 						// /etc/otelcol-sumo/opamp.d
 						permissions = opampDPermissions
 					default:
