@@ -8,6 +8,7 @@ const (
 	scriptPath            string = "../../scripts/install.sh"
 	configPath            string = etcPath + "/sumologic.yaml"
 	confDPath             string = etcPath + "/conf.d"
+	opampDPath            string = etcPath + "/opamp.d"
 	userConfigPath        string = confDPath + "/common.yaml"
 	hostmetricsConfigPath string = confDPath + "/hostmetrics.yaml"
 	cacheDirectory        string = "/var/cache/otelcol-sumo/"

@@ -33,7 +33,11 @@ func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string
 				info, err := os.Stat(path)
 				require.NoError(c.test, err)
 				if info.IsDir() {
-					permissions = configPathDirPermissions
+					if path == opampDPath {
+						permissions = opampDPermissions
+					} else {
+						permissions = configPathDirPermissions
+					}
 				} else {
 					permissions = configPathFilePermissions
 				}
@@ -115,6 +119,15 @@ func checkSystemdEnvDirPermissions(c check) {
 	PathHasPermissions(c.test, etcPath+"/env", configPathDirPermissions)
 }
 
+func checkRemoteFlagInSystemdFile(c check) {
+	contents, err := getSystemdConfig(systemdPath)
+
+	require.NoError(c.test, err)
+
+	assert.Contains(c.test, contents, "--remote-config")
+	assert.NotContains(c.test, contents, "--config")
+}
+
 func checkTokenEnvFileCreated(c check) {
 	require.FileExists(c.test, tokenEnvFilePath, "env token file has not been created")
 }
@@ -127,6 +140,15 @@ func checkTokenInConfig(c check) {
 	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
 
 	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
+}
+
+func checkTokenInSumoConfig(c check) {
+	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
+
+	conf, err := getConfig(configPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
 	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")

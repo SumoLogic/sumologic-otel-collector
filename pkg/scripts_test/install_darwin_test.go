@@ -147,6 +147,27 @@ func TestInstallScriptDarwin(t *testing.T) {
 			},
 		},
 		{
+			name: "installation token and remotely-managed",
+			options: installOptions{
+				installToken:       installToken,
+				remotelyManaged:    true,
+			},
+			preChecks: notInstalledChecks,
+			postChecks: []checkFunc{
+				checkBinaryCreated,
+				checkBinaryIsRunning,
+				checkConfigCreated,
+				checkRemoteConfigDirectoryCreated,
+				checkConfigFilesOwnershipAndPermissions(systemUser, systemGroup),
+				checkUserConfigCreated,
+				checkLaunchdConfigCreated,
+				checkTokenInLaunchdConfig,
+				checkUserExists,
+				checkGroupExists,
+				checkHomeDirectoryCreated,
+			},
+		},
+		{
 			name: "installation token only, binary not in PATH",
 			options: installOptions{
 				installToken: installToken,

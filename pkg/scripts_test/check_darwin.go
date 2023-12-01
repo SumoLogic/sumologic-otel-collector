@@ -26,9 +26,13 @@ func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string
 				info, err := os.Stat(path)
 				require.NoError(c.test, err)
 				if info.IsDir() {
-					if path == etcPath {
+					switch path {
+					case etcPath:
 						permissions = etcPathPermissions
-					} else {
+					case opampDPath:
+						// /etc/otelcol-sumo/opamp.d
+						permissions = opampDPermissions
+					default:
 						permissions = configPathDirPermissions
 					}
 				} else {
