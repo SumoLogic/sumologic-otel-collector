@@ -544,6 +544,12 @@ func getSumoCollectorInstancesNo(logger *zap.Logger) int {
 }
 
 func calculateSpansPerSecond(spansPerSecond int32, sumoCollectorInstances int) int32 {
-	calculatedSpansPerSecond := math.Ceil(float64(spansPerSecond / int32(sumoCollectorInstances)))
-	return int32(calculatedSpansPerSecond)
+	if sumoCollectorInstances == 0 {
+		return 0
+	}
+
+	calculateSpansPerSecond := float64(spansPerSecond) / float64(sumoCollectorInstances)
+	roundedSpansPerSecond := int32(math.Ceil(calculateSpansPerSecond))
+
+	return roundedSpansPerSecond
 }
