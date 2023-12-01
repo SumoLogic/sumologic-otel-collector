@@ -28,6 +28,9 @@ The following configuration options can also be modified:
 
 Whenever rate limiting is applied, only full traces are accepted (if trace won't fit within the limit, it will never be filtered). For spans that are arriving late, previous decision are kept for some time.
 
+In case of multiple deployments **sharing single conifugration file** of the `cascadingfilter`, environment variable called `SUMO_COLLECTOR_INSTANCES` should be used to scale down properly `spans_per_second` global and policy limits. `SUMO_COLLECTOR_INSTANCES` should be positive integer corresponding to the number of collectors with configured cascadingfilters e.g. `SUMO_COLLECTOR_INSTANCES=5`.
+As a result configured `spans_per_second` limit will be divided by `5` for global and policy limits.
+
 ## Updated span attributes
 
 The processor modifies each span attributes, by setting following two attributes:
