@@ -158,7 +158,6 @@ func TestInstallScriptDarwin(t *testing.T) {
 				checkBinaryIsRunning,
 				checkConfigCreated,
 				checkRemoteConfigDirectoryCreated,
-				checkOpampDOwnershipAndPermissions(systemUser, systemUser),
 				checkConfigFilesOwnershipAndPermissions(systemUser, systemGroup),
 				checkUserConfigCreated,
 				checkLaunchdConfigCreated,

@@ -33,7 +33,11 @@ func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string
 				info, err := os.Stat(path)
 				require.NoError(c.test, err)
 				if info.IsDir() {
-					permissions = configPathDirPermissions
+					if path == opampDPath {
+						permissions = opampDPermissions
+					} else {
+						permissions = configPathDirPermissions
+					}
 				} else {
 					permissions = configPathFilePermissions
 				}
@@ -84,13 +88,6 @@ func checkHostmetricsOwnershipAndPermissions(ownerName string, ownerGroup string
 	return func(c check) {
 		PathHasOwner(c.test, hostmetricsConfigPath, ownerName, ownerGroup)
 		PathHasPermissions(c.test, hostmetricsConfigPath, configPathFilePermissions)
-	}
-}
-
-func checkOpampDOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
-	return func(c check) {
-		PathHasOwner(c.test, opampDPath, ownerName, ownerGroup)
-		PathHasPermissions(c.test, opampDPath, opampDPermissions)
 	}
 }
 

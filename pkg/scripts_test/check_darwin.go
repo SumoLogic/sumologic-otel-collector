@@ -26,9 +26,13 @@ func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string
 				info, err := os.Stat(path)
 				require.NoError(c.test, err)
 				if info.IsDir() {
-					if path == etcPath {
+					switch path {
+					case etcdPath:
 						permissions = etcPathPermissions
-					} else {
+					case opampDPath
+						// /etc/otelcol-sumo/opamp.d
+						permissions = opampDPermissions
+					default:
 						permissions = configPathDirPermissions
 					}
 				} else {
@@ -75,13 +79,6 @@ func checkHostmetricsOwnershipAndPermissions(ownerName string, ownerGroup string
 	return func(c check) {
 		PathHasOwner(c.test, hostmetricsConfigPath, ownerName, ownerGroup)
 		PathHasPermissions(c.test, hostmetricsConfigPath, confDPathFilePermissions)
-	}
-}
-
-func checkOpampDOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
-	return func(c check) {
-		PathHasOwner(c.test, opampDPath, ownerName, ownerGroup)
-		PathHasPermissions(c.test, opampDPath, opampDPermissions)
 	}
 }
 
