@@ -18,6 +18,10 @@ receivers:
       network: null
       paging: null
       process:
+        include:
+          match_type: strict
+          names:
+            - otelcol-sumo
         mute_process_exe_error: true
         mute_process_io_error: true
         mute_process_name_error: true

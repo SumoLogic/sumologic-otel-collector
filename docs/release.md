@@ -5,7 +5,6 @@
   - [Create and push Git tag](#create-and-push-git-tag)
     - [Remove tag in case of a failed release job](#remove-tag-in-case-of-a-failed-release-job)
   - [Publish GitHub release](#publish-github-release)
-  - [Add `Unreleased` section to the changelog and upgrading guide](#add-unreleased-section-to-the-changelog-and-upgrading-guide)
   - [Build packages](#build-packages)
 - [Updating OT to next version](#updating-ot-to-next-version)
   - [Update OT version](#update-ot-version)
@@ -20,13 +19,9 @@
 
 ### Update Changelog and upgrading guide
 
-Edit the [CHANGELOG.md][changelog] and [upgrading.md][upgrading] files and add entries for the release that will be created.
+Update the [CHANGELOG.md][changelog] by running `make update-changelog VERSION=x.x.x-sumo-x`.
 
-Here are some example pull requests: [#602], [#652], [#684]
-
-[#602]: https://github.com/SumoLogic/sumologic-otel-collector/pull/602
-[#652]: https://github.com/SumoLogic/sumologic-otel-collector/pull/652
-[#684]: https://github.com/SumoLogic/sumologic-otel-collector/pull/684
+Make sure the [upgrading.md][upgrading] file has entries for the breaking changes for this release.
 
 ### Create and push Git tag
 
@@ -81,14 +76,6 @@ edit the release draft and fill in missing information:
 - Copy and paste the Changelog entry for this release from [CHANGELOG.md][changelog]
 
 After verifying that the release text and all links are good, publish the release.
-
-### Add `Unreleased` section to the changelog and upgrading guide
-
-Edit the [CHANGELOG.md][changelog] and [upgrading.md][upgrading] files and prepare unreleased section.
-
-Here is the example pull request: [#677].
-
-[#677]: https://github.com/SumoLogic/sumologic-otel-collector/pull/677
 
 ### Build packages
 

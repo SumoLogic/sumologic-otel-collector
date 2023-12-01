@@ -26,7 +26,7 @@ processors:
     # Template for source category, put in `_sourceCategory` tag.
     # default: "%{k8s.namespace.name}/%{k8s.pod.pod_name}"
     source_category: <source_category>
-    # Prefix added before each `_sourceCategory` value.
+    # Template added before each `_sourceCategory` value.
     # default: "kubernetes/"
     source_category_prefix: <source_category_prefix>
     # Character which all dashes ("-") in source category value are being replaced to.

@@ -36,8 +36,8 @@ and can be used as an authenticator for the
 - `collector_fields`: a map of key value pairs that will be used as collector
   fields that will be used for registration.
   For more information on this subject please visit [this help document][fields_help]
-  - `discover_collector_tags`: defines whether to auto-discover collector metadata
-  tags (for local services, e.g. mysql).
+- `discover_collector_tags`: defines whether to auto-discover collector metadata
+  tags (for local services, e.g. mysql) (default: `true`)
 
   **NOTE**: collector metadata tag auto-discovery is an alpha feature.
 - `api_base_url`: base API URL that will be used for creating API requests,

@@ -97,9 +97,6 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			tc := tc
 			t.Parallel()
 
-			factories, err := components()
-			require.NoError(t, err)
-
 			locations := []string{tc.configFile}
 			cp, err := NewConfigProvider(locations)
 			require.NoError(t, err)
@@ -107,7 +104,7 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			t.Log("Creating new app...")
 			app, err := otelcol.NewCollector(otelcol.CollectorSettings{
 				BuildInfo:      component.NewDefaultBuildInfo(),
-				Factories:      factories,
+				Factories:      components,
 				ConfigProvider: cp,
 			})
 			require.NoError(t, err)

@@ -16,8 +16,14 @@ param (
     [Hashtable] $Tags,
 
     # InstallHostMetrics is used to install host metric collection.
-    [bool] $InstallHostMetrics
+    [bool] $InstallHostMetrics,
+
+    # Fips is used to download a fips binary installer.
+    [bool] $Fips
 )
+
+$PackageGithubOrg = "SumoLogic"
+$PackageGithubRepo = "sumologic-otel-collector"
 
 ##
 # Security tweaks
@@ -196,7 +202,7 @@ function Get-Version {
         All {
             $request = [HttpRequestMessage]::new()
             $request.Method = "GET"
-            $request.RequestURI = "https://api.github.com/repos/SumoLogic/sumologic-otel-collector/releases"
+            $request.RequestURI = "https://api.github.com/repos/" + $PackageGithubOrg + "/" + $PackageGithubRepo + "/releases"
             $request.Headers.Add("Accept", "application/vnd.github+json")
             $request.Headers.Add("X-GitHub-Api-Version", "2022-11-28")
 
@@ -240,7 +246,7 @@ function Get-Version {
         Latest {
             $request = [HttpRequestMessage]::new()
             $request.Method = "GET"
-            $request.RequestURI = "https://github.com/SumoLogic/sumologic-otel-collector/releases/latest"
+            $request.RequestURI = "https://github.com/" + $PackageGithubOrg + "/" + $PackageGithubRepo + "/releases/latest"
             $request.Headers.Add("Accept", "application/json")
 
             $response = $HttpClient.SendAsync($request).GetAwaiter().GetResult()
@@ -395,6 +401,12 @@ try {
     # set http client timeout to 30 seconds
     $httpClient.Timeout = New-Object System.TimeSpan(0, 0, 30)
 
+    if ($Fips -eq $true) {
+        if ($osName -ne "Win32NT" -or $archName -ne "x64") {
+            Write-Error "Error: The FIPS-approved binary is only available for windows/amd64"
+        }
+    }
+
     Write-Host "Getting installed version..."
     $installedVersion = Get-InstalledVersion
     $installedVersionStr = "none"
@@ -409,7 +421,9 @@ try {
 
     # Use user's version if set, otherwise get latest version from API (or website)
     if ($Version -eq "") {
-        if ($versions.Count -gt 0) {
+        if ($versions.Count -eq 1) {
+            $Version = $versions
+        } elseif ($versions.Count -gt 1) {
             $Version = $versions[0]
         } else {
             $Version = Get-Version -Command Latest -HttpClient $httpClient
@@ -447,10 +461,17 @@ try {
     # add newline after breaking changes and changelog
     Write-Host ""
 
+    # Add -fips to the msi filename if necessary
+    $fipsSuffix = ""
+    if ($Fips -eq $true) {
+        Write-Host "Getting FIPS-compliant binary"
+        $fipsSuffix = "-fips"
+    }
+
     # Download MSI
     $msiLanguage = "en-US"
-    $msiFileName = "otelcol-sumo_${productVersion}_${msiLanguage}.${archName}.msi"
-    $msiUri = "https://github.com/SumoLogic/sumologic-otel-collector/releases/download/"
+    $msiFileName = "otelcol-sumo_${productVersion}_${msiLanguage}.${archName}${fipsSuffix}.msi"
+    $msiUri = "https://github.com/" + $PackageGithubOrg + "/" + $PackageGithubRepo + "/releases/download/"
     $msiUri += "v${Version}/${msiFileName}"
     $msiPath = "${env:TEMP}\${msiFileName}"
     Get-BinaryFromUri $msiUri -Path $msiPath -HttpClient $httpClient
