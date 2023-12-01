@@ -701,6 +701,8 @@ function setup_config() {
     fi
 
     if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
+        echo "Warning: remote management is currently in beta."
+
         echo -e "Creating remote configurations directory (${REMOTE_CONFIG_DIRECTORY})"
         mkdir -p "${REMOTE_CONFIG_DIRECTORY}"
 
@@ -780,11 +782,14 @@ function setup_config() {
 }
 
 function setup_config_darwin() {
+    local config_path
     config_path="${COMMON_CONFIG_PATH}"
 
     if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
         config_path="${CONFIG_PATH}"
     fi
+
+    readonly config_path
 
     create_user_config_file "${config_path}"
     add_extension_to_config "${config_path}"
@@ -800,6 +805,8 @@ function setup_config_darwin() {
     fi
 
     if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
+        echo "Warning: remote management is currently in beta."
+
         echo -e "Creating remote configurations directory (${REMOTE_CONFIG_DIRECTORY})"
         mkdir -p "${REMOTE_CONFIG_DIRECTORY}"
 
@@ -809,6 +816,9 @@ function setup_config_darwin() {
 
         # Remote configuration directory must be writable
         chmod 750 "${REMOTE_CONFIG_DIRECTORY}"
+
+        # Remote configuration directory must be owned by the mac pkg service user
+        chown _otelcol-sumo:_otelcol-sumo "${REMOTE_CONFIG_DIRECTORY}"
     fi
 
     # clean up bak files
