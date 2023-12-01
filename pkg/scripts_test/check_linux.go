@@ -167,22 +167,26 @@ func checkTokenInEnvFile(c check) {
 	}
 }
 
-func checkEphemeralInConfig(c check, p string) {
-	assert.True(c.test, c.installOptions.ephemeral, "ephemeral was not specified")
+func checkEphemeralInConfig(p string) func(c check) {
+	return func(c check) {
+		assert.True(c.test, c.installOptions.ephemeral, "ephemeral was not specified")
 
-	conf, err := getConfig(p)
-	require.NoError(c.test, err, "error while reading configuration")
+		conf, err := getConfig(p)
+		require.NoError(c.test, err, "error while reading configuration")
 
-	assert.True(c.test, conf.Extensions.Sumologic.Ephemeral, "ephemeral is not true")
+		assert.True(c.test, conf.Extensions.Sumologic.Ephemeral, "ephemeral is not true")
+	}
 }
 
-func checkEphemeralNotInConfig(c check, p string) {
-	assert.False(c.test, c.installOptions.ephemeral, "ephemeral was specified")
+func checkEphemeralNotInConfig(p string) func(c check) {
+	return func(c check) {
+		assert.False(c.test, c.installOptions.ephemeral, "ephemeral was specified")
 
-	conf, err := getConfig(p)
-	require.NoError(c.test, err, "error while reading configuration")
+		conf, err := getConfig(p)
+		require.NoError(c.test, err, "error while reading configuration")
 
-	assert.False(c.test, conf.Extensions.Sumologic.Ephemeral, "ephemeral is true")
+		assert.False(c.test, conf.Extensions.Sumologic.Ephemeral, "ephemeral is true")
+	}
 }
 
 func checkUninstallationOutput(c check) {
