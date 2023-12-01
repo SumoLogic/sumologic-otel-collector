@@ -115,6 +115,24 @@ func checkTokenInLaunchdConfig(c check) {
 	require.Equal(c.test, c.installOptions.installToken, conf.EnvironmentVariables.InstallationToken, "installation token is different than expected")
 }
 
+func checkEphemeralInConfig(c check, p string) {
+	assert.True(c.test, c.installOptions.ephemeral, "ephemeral was not specified")
+
+	conf, err := getConfig(p)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	assert.True(c.test, conf.Extensions.Sumologic.Ephemeral, "ephemeral is not true")
+}
+
+func checkEphemeralNotInConfig(c check, p string) {
+	assert.False(c.test, c.installOptions.ephemeral, "ephemeral was specified")
+
+	conf, err := getConfig(p)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	assert.False(c.test, conf.Extensions.Sumologic.Ephemeral, "ephemeral is true")
+}
+
 func checkUserExists(c check) {
 	exists := dsclKeyExistsForPath(c.test, "/Users", systemUser)
 	require.True(c.test, exists, "user has not been created")

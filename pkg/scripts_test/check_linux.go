@@ -167,19 +167,19 @@ func checkTokenInEnvFile(c check) {
 	}
 }
 
-func checkEphemeralInConfig(c check) {
+func checkEphemeralInConfig(c check, p string) {
 	assert.True(c.test, c.installOptions.ephemeral, "ephemeral was not specified")
 
-	conf, err := getConfig(userConfigPath)
+	conf, err := getConfig(p)
 	require.NoError(c.test, err, "error while reading configuration")
 
 	assert.True(c.test, conf.Extensions.Sumologic.Ephemeral, "ephemeral is not true")
 }
 
-func checkEphemeralNotInConfig(c check) {
+func checkEphemeralNotInConfig(c check, p string) {
 	assert.False(c.test, c.installOptions.ephemeral, "ephemeral was specified")
 
-	conf, err := getConfig(userConfigPath)
+	conf, err := getConfig(p)
 	require.NoError(c.test, err, "error while reading configuration")
 
 	assert.False(c.test, conf.Extensions.Sumologic.Ephemeral, "ephemeral is true")
