@@ -806,6 +806,9 @@ function setup_config_darwin() {
         write_opamp_extension "${config_path}" "${REMOTE_CONFIG_DIRECTORY}" "${INDENTATION}" "${EXT_INDENTATION}" "${API_BASE_URL}"
 
         write_remote_config_launchd "${LAUNCHD_CONFIG}"
+
+        # Remote configuration directory must be writable
+        chmod 750 "${REMOTE_CONFIG_DIRECTORY}"
     fi
 
     # clean up bak files
