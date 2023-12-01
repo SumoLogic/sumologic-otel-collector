@@ -21,7 +21,7 @@ exporters:
     # max HTTP request body size in bytes before compression (if applied),
     # NOTE: this limit does not apply to data sent in otlp format,
     #   to limit size of otlp requests, please use the batch processor:
-    #   https://github.com/open-telemetry/opentelemetry-collector/tree/v0.87.0/processor/batchprocessor
+    #   https://github.com/open-telemetry/opentelemetry-collector/tree/v0.90.0/processor/batchprocessor
     # default = 1_048_576 (1MB)
     max_request_body_size: <max_request_body_size>
 
@@ -44,7 +44,7 @@ exporters:
     trace_format: {otlp}
 
     # timeout is the timeout for every attempt to send data to the backend,
-    # maximum connection timeout is 55s, default = 5s
+    # maximum connection timeout is 55s, default = 30s
     timeout: <timeout>
 
     # defines if timestamp for logs should be set to 0,

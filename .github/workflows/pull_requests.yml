@@ -10,7 +10,7 @@ defaults:
     shell: bash
 
 env:
-  GO_VERSION: "1.20.5"
+  GO_VERSION: "1.20.11"
 
 jobs:
 
@@ -24,7 +24,7 @@ jobs:
         with:
           files: |
             **/*.md
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         if: steps.changed-files.outputs.any_changed == 'true'
       - name: Install markdownlint
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -277,6 +277,9 @@ jobs:
             runs-on: macos-latest
           - arch_os: windows_amd64
             runs-on: windows-2022
+          - arch_os: windows_amd64
+            runs-on: windows-2022
+            fips: true
     with:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}

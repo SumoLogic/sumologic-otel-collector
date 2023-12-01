@@ -44,6 +44,16 @@ func (h *httpFetcher) Fetch(ctx context.Context, url string) (*os.File, error) {
 	var attempts int
 	b := h.makeBackoff()
 	for {
+		if attempts > 0 {
+			h.logger.Errorf("retrying failed asset fetch for %s: %s", url, fetchErr)
+		}
+
+		out, err := h.tryFetch(ctx, url)
+		if err == nil {
+			return out, nil
+		}
+		attempts += 1
+		fetchErr = err
 		duration := b.NextBackOff()
 		if duration == backoff.Stop {
 			break
@@ -54,17 +64,6 @@ func (h *httpFetcher) Fetch(ctx context.Context, url string) (*os.File, error) {
 			return nil, ctx.Err()
 		}
 
-		if attempts > 0 {
-			h.logger.Errorf("retrying failed asset fetch for %s: %s", url, fetchErr)
-		}
-
-		attempts = attempts + 1
-		out, err := h.tryFetch(ctx, url)
-		if err != nil {
-			fetchErr = err
-			continue
-		}
-		return out, nil
 	}
 	return nil, fmt.Errorf("failed to fetch resource after %d attempts: %s", attempts, fetchErr)
 }

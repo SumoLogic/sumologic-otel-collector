@@ -32,7 +32,6 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/ptrace"
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension"
@@ -251,7 +250,7 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld plog.Logs) err
 
 		errs = deduplicateErrors(errs)
 		se.handleUnauthorizedErrors(ctx, errs...)
-		return consumererror.NewLogs(multierr.Combine(errs...), ld)
+		return consumererror.NewLogs(errors.Join(errs...), ld)
 	}
 
 	return nil
@@ -302,7 +301,7 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pmetric.Met
 
 	if len(errs) > 0 {
 		se.handleUnauthorizedErrors(ctx, errs...)
-		return consumererror.NewMetrics(multierr.Combine(errs...), droppedMetrics)
+		return consumererror.NewMetrics(errors.Join(errs...), droppedMetrics)
 	}
 
 	return nil

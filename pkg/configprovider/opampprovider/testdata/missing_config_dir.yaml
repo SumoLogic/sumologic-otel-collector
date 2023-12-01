@@ -1,0 +1,3 @@
+extensions:
+  opamp:
+    remote_configuration_directory: ''

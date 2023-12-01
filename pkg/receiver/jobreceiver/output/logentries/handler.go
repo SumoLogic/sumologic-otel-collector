@@ -28,8 +28,9 @@ func (h *handler) Consume(ctx context.Context, stdout, stderr io.Reader) consume
 	go h.consume(ctx, stderr, streamNameStderr)
 	return nopCloser
 }
-func (h *handler) consume(ctx context.Context, in io.Reader, stream string) {
 
+// TODO(ck) add buffer between reading and processing #1309
+func (h *handler) consume(ctx context.Context, in io.Reader, stream string) {
 	scanner := h.scanFactory.Build(in)
 	for scanner.Scan() {
 		ent, err := h.writer.NewEntry(scanner.Text())
@@ -48,7 +49,7 @@ func (h *handler) consume(ctx context.Context, in io.Reader, stream string) {
 		h.writer.Write(ctx, ent)
 	}
 	if err := scanner.Err(); err != nil {
-		h.logger.Errorf("error reading input stream %s: %w", stream, err)
+		h.logger.Errorf("error reading input stream", zap.String("stream", stream), zap.Error(err))
 	}
 }
 

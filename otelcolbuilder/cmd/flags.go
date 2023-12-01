@@ -47,7 +47,7 @@ func (s *configFlagValue) String() string {
 
 // opAmpConfigFlag is a SumoLogic-specific flag for configuring the collector with OpAmp.
 // It is mutually exclusive with the --config flag.
-const opAmpConfigFlag = "opamp-config"
+const opAmpConfigFlag = "remote-config"
 
 // opAmpConfig houses the contents of the flag
 var opAmpConfig string
@@ -74,8 +74,7 @@ func flags(reg *featuregate.Registry) *flag.FlagSet {
 			return nil
 		})
 
-	flagSet.Var(featuregate.NewFlag(reg), featureGatesFlag,
-		"Comma-delimited list of feature gate identifiers. Prefix with '-' to disable the feature. '+' or no prefix will enable the feature.")
+	reg.RegisterFlags(flagSet)
 
 	return flagSet
 }

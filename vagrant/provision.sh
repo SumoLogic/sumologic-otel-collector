@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export GO_VERSION="1.20.5"
+export GO_VERSION="1.20.11"
 
 sudo apt update -y
 sudo apt install -y \

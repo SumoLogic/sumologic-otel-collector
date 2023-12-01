@@ -4,8 +4,9 @@ repos:
   hooks:
   -   id: check-json
   -   id: check-yaml
-      exclude: invalid.yaml
+      exclude: (invalid.yaml|examples/aws/)
   -   id: double-quote-string-fixer
   -   id: end-of-file-fixer
+      exclude: ^.changelog/.*.txt$
   -   id: trailing-whitespace
 exclude: (.vscode|go.sum|go.mod|\.patch$)

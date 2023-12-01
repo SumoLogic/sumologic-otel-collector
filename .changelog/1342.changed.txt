@@ -1,0 +1,1 @@
+feat(exporter/syslog): deprecate syslog exporter in favor of upstream version of syslog exporter

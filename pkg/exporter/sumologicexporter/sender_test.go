@@ -351,7 +351,7 @@ func TestSendLogsSplitFailedAll(t *testing.T) {
 	assert.EqualError(
 		t,
 		err,
-		"failed sending data: status: 500 Internal Server Error; failed sending data: status: 404 Not Found",
+		"failed sending data: status: 500 Internal Server Error\nfailed sending data: status: 404 Not Found",
 	)
 	assert.Len(t, dropped, 2)
 
@@ -825,7 +825,7 @@ func TestSendLogsJsonSplitFailedAll(t *testing.T) {
 	assert.EqualError(
 		t,
 		err,
-		"failed sending data: status: 500 Internal Server Error; failed sending data: status: 404 Not Found",
+		"failed sending data: status: 500 Internal Server Error\nfailed sending data: status: 404 Not Found",
 	)
 	assert.Len(t, dropped, 2)
 
