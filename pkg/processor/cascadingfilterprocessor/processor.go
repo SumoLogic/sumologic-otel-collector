@@ -540,14 +540,18 @@ func getSumoCollectorInstancesNo(logger *zap.Logger) int {
 		return defaultSumoCollectorInstancesNo
 	}
 
+	if val == 0 {
+		logger.Error("Provided value is not valid. Using default value: 1.",
+			zap.String("variable_name", sumoCollectorInstancesNoEnvVar),
+			zap.Int("variable_value", val),
+		)
+		return defaultSumoCollectorInstancesNo
+	}
+
 	return val
 }
 
 func calculateSpansPerSecond(spansPerSecond int32, sumoCollectorInstances int) int32 {
-	if sumoCollectorInstances == 0 {
-		return 0
-	}
-
 	calculateSpansPerSecond := float64(spansPerSecond) / float64(sumoCollectorInstances)
 	roundedSpansPerSecond := int32(math.Ceil(calculateSpansPerSecond))
 
