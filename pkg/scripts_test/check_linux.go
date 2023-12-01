@@ -87,6 +87,13 @@ func checkHostmetricsOwnershipAndPermissions(ownerName string, ownerGroup string
 	}
 }
 
+func checkOpampDOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
+	return func(c check) {
+		PathHasOwner(c.test, opampDPath, ownerName, ownerGroup)
+		PathHasPermissions(c.test, opampDPath, opampDPermissions)
+	}
+}
+
 func checkOutputUserAddWarnings(c check) {
 	output := strings.Join(c.output, "\n")
 	require.NotContains(c.test, output, "useradd", "unexpected useradd output")

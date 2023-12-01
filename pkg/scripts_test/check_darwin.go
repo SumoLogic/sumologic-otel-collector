@@ -78,6 +78,13 @@ func checkHostmetricsOwnershipAndPermissions(ownerName string, ownerGroup string
 	}
 }
 
+func checkOpampDOwnershipAndPermissions(ownerName string, ownerGroup string) func(c check) {
+	return func(c check) {
+		PathHasOwner(c.test, opampDPath, ownerName, ownerGroup)
+		PathHasPermissions(c.test, opampDPath, opampDPermissions)
+	}
+}
+
 func checkLaunchdConfigCreated(c check) {
 	require.FileExists(c.test, launchdPath, "launchd configuration has not been created properly")
 }
