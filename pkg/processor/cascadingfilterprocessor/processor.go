@@ -174,6 +174,13 @@ func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.T
 		if err != nil {
 			return nil, err
 		}
+
+		if policyCfg.SpansPerSecond > 0 {
+			policyCalculatedSpansPerSecond := calculateSpansPerSecond(policyCfg.SpansPerSecond, sumoCollectorInstancesNo)
+			policyCfg.SpansPerSecond = policyCalculatedSpansPerSecond
+			totalRate += policyCfg.SpansPerSecond
+		}
+
 		eval, err := buildPolicyEvaluator(logger, &policyCfg)
 		if err != nil {
 			return nil, err
@@ -185,19 +192,18 @@ func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.T
 			probabilisticFilter: false,
 		}
 
-		if policyCfg.SpansPerSecond > 0 {
-			policyCalculatedSpansPerSecond := calculateSpansPerSecond(policyCfg.SpansPerSecond, sumoCollectorInstancesNo)
-			policyCfg.SpansPerSecond = policyCalculatedSpansPerSecond
-			totalRate += policyCfg.SpansPerSecond
-		}
 		logger.Info("Adding trace accept rule",
 			zap.String("name", policyCfg.Name),
-			zap.Int32("spans_per_second", policyCfg.SpansPerSecond))
+			zap.Int32("spans_per_second", policyCfg.SpansPerSecond),
+			zap.Int("sumo_collector_instances", sumoCollectorInstancesNo),
+		)
+
 		policies = append(policies, policy)
 	}
 
 	// Recalculate the total spans per second rate if needed
 	calculatedGlobalSpansPerSecond := calculateSpansPerSecond(cfg.SpansPerSecond, sumoCollectorInstancesNo)
+	cfg.SpansPerSecond = calculatedGlobalSpansPerSecond
 	spansPerSecond := calculatedGlobalSpansPerSecond
 	if spansPerSecond == 0 {
 		spansPerSecond = totalRate
@@ -207,7 +213,10 @@ func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.T
 	}
 
 	if spansPerSecond != 0 {
-		logger.Info("Setting total spans per second limit", zap.Int32("spans_per_second", spansPerSecond))
+		logger.Info("Setting total spans per second limit, based on configured collector instances",
+			zap.Int32("spans_per_second", spansPerSecond),
+			zap.Int("sumo_collector_instances", sumoCollectorInstancesNo),
+		)
 	} else {
 		logger.Info("Not setting total spans per second limit (only selected traces will be filtered out)")
 	}
