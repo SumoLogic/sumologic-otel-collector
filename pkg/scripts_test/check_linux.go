@@ -167,6 +167,24 @@ func checkTokenInEnvFile(c check) {
 	}
 }
 
+func checkEphemeralInConfig(c check) {
+	require.NotEmpty(c.test, c.installOptions.ephemeral, "ephemeral was not specified")
+
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	require.Equal(c.test, true, conf.Extensions.Sumologic.Ephemeral, "ephemeral is not true")
+}
+
+func checkEphemeralNotInConfig(c check) {
+	require.NotEmpty(c.test, c.installOptions.ephemeral, "ephemeral was specified")
+
+	conf, err := getConfig(userConfigPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	require.Equal(c.test, false, conf.Extensions.Sumologic.Ephemeral, "ephemeral is true")
+}
+
 func checkUninstallationOutput(c check) {
 	require.Greater(c.test, len(c.output), 1)
 	require.Contains(c.test, c.output[len(c.output)-1], "Uninstallation completed")

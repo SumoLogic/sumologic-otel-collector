@@ -31,6 +31,7 @@ type installOptions struct {
 	dontKeepDownloads      bool
 	installHostmetrics     bool
 	remotelyManaged        bool
+	ephemeral              bool
 	timeout                float64
 }
 
@@ -81,6 +82,10 @@ func (io *installOptions) string() []string {
 
 	if io.remotelyManaged {
 		opts = append(opts, "--remotely-managed")
+	}
+
+	if io.ephemeral {
+		opts = append(opts, "--ephemeral")
 	}
 
 	if len(io.tags) > 0 {
