@@ -142,7 +142,7 @@ func checkTokenInConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
-	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
+	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallationToken, "installation token is different than expected")
 }
 
 func checkTokenInSumoConfig(c check) {
@@ -151,7 +151,7 @@ func checkTokenInSumoConfig(c check) {
 	conf, err := getConfig(configPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
-	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
+	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallationToken, "installation token is different than expected")
 }
 
 func checkTokenInEnvFile(c check) {
