@@ -76,6 +76,10 @@ type Config struct {
 	ClearLogsTimestamp bool `mapstructure:"clear_logs_timestamp"`
 
 	JSONLogs `mapstructure:"json_logs"`
+
+	// StickySessionEnabled defines if sticky session suppoer is enable.
+	// By default this is false.
+	StickySessionEnabled bool `mapstructure:"sticky_session_enabled"`
 }
 
 type JSONLogs struct {
@@ -239,4 +243,6 @@ const (
 	DefaultFlattenBody bool = false
 	// DefaultDropRoutingAttribute defines default DropRoutingAttribute
 	DefaultDropRoutingAttribute string = ""
+	// DefaultStickySessionEnabled defines default StickySessionEnabled value
+	DefaultStickySessionEnabled bool = false
 )

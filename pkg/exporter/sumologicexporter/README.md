@@ -121,6 +121,9 @@ exporters:
       # num_seconds is the number of seconds to buffer in case of a backend outage,
       # requests_per_second is the average number of requests per seconds.
       queue_size: <queue_size>
+
+    # default = false
+    sticky_session_enabled: {true, false}
 ```
 
 ## Metrics

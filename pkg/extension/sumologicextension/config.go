@@ -91,6 +91,10 @@ type Config struct {
 	// Exponential algorithm is being used.
 	// Please see following link for details: https://github.com/cenkalti/backoff
 	BackOff backOffConfig `mapstructure:"backoff"`
+
+	// StickySessionEnabled defines if sticky session suppoer is enable.
+	// By default this is false.
+	StickySessionEnabled bool `mapstructure:"sticky_session_enabled"`
 }
 
 type accessCredentials struct {
@@ -104,3 +108,4 @@ type backOffConfig struct {
 	MaxInterval     time.Duration `mapstructure:"max_interval"`
 	MaxElapsedTime  time.Duration `mapstructure:"max_elapsed_time"`
 }
+

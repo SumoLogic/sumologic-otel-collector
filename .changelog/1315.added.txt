@@ -1,0 +1,1 @@
+feat: add support for sticky session in sumologic extension and sumologic exporter

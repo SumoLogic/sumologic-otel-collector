@@ -63,6 +63,7 @@ func createDefaultConfig() component.Config {
 		RetrySettings:        exporterhelper.NewDefaultRetrySettings(),
 		QueueSettings:        qs,
 		DropRoutingAttribute: DefaultDropRoutingAttribute,
+		StickySessionEnabled: DefaultStickySessionEnabled,
 	}
 }
 
