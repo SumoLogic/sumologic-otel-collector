@@ -21,6 +21,7 @@ type sumologicExtension struct {
 	InstallationToken string            `yaml:"installation_token,omitempty"`
 	Tags              map[string]string `yaml:"collector_fields"`
 	APIBaseURL        string            `yaml:"api_base_url"`
+	Ephemeral         bool              `yaml:"ephemeral"`
 }
 
 func getConfig(path string) (config, error) {

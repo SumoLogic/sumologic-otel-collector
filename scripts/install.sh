@@ -46,6 +46,8 @@ ARG_SHORT_INSTALL_HOSTMETRICS='H'
 ARG_LONG_INSTALL_HOSTMETRICS='install-hostmetrics'
 ARG_SHORT_REMOTELY_MANAGED='r'
 ARG_LONG_REMOTELY_MANAGED='remotely-managed'
+ARG_SHORT_EPHEMERAL='E'
+ARG_LONG_EPHEMERAL='ephemeral'
 ARG_SHORT_TIMEOUT='m'
 ARG_LONG_TIMEOUT='download-timeout'
 
@@ -61,6 +63,7 @@ readonly ARG_SHORT_BRANCH ARG_LONG_BRANCH ARG_SHORT_SKIP_CONFIG ARG_LONG_SKIP_CO
 readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ARG_SHORT_FIPS ARG_LONG_FIPS ENV_TOKEN
 readonly ARG_SHORT_INSTALL_HOSTMETRICS ARG_LONG_INSTALL_HOSTMETRICS
 readonly ARG_SHORT_REMOTELY_MANAGED ARG_LONG_REMOTELY_MANAGED
+readonly ARG_SHORT_EPHEMERAL ARG_LONG_EPHEMERAL
 readonly ARG_SHORT_TIMEOUT ARG_LONG_TIMEOUT
 readonly DEPRECATED_ARG_LONG_TOKEN DEPRECATED_ENV_TOKEN DEPRECATED_ARG_LONG_SKIP_TOKEN
 readonly PACKAGE_GITHUB_ORG PACKAGE_GITHUB_REPO
@@ -97,6 +100,7 @@ PURGE=""
 DOWNLOAD_ONLY=""
 INSTALL_HOSTMETRICS=false
 REMOTELY_MANAGED=false
+EPHEMERAL=false
 
 LAUNCHD_CONFIG=""
 LAUNCHD_ENV_KEY=""
@@ -155,6 +159,7 @@ Supported arguments:
   -${ARG_SHORT_FIPS}, --${ARG_LONG_FIPS}                            Install the FIPS 140-2 compliant binary on Linux.
   -${ARG_SHORT_INSTALL_HOSTMETRICS}, --${ARG_LONG_INSTALL_HOSTMETRICS}             Install the hostmetrics configuration to collect host metrics.
   -${ARG_SHORT_REMOTELY_MANAGED}, --${ARG_LONG_REMOTELY_MANAGED}                Remotely manage the collector configuration with Sumo Logic.
+  -${ARG_SHORT_EPHEMERAL}, --${ARG_LONG_EPHEMERAL}                       Delete the collector from Sumo Logic after 12 hours of inactivity.
   -${ARG_SHORT_TIMEOUT}, --${ARG_LONG_TIMEOUT} <timeout>      Timeout in seconds after which download will fail. Default is ${CURL_MAX_TIME}.
   -${ARG_SHORT_YES}, --${ARG_LONG_YES}                             Disable confirmation asks.
 
@@ -259,7 +264,7 @@ function parse_options() {
       "--${ARG_LONG_TIMEOUT}")
         set -- "$@" "-${ARG_SHORT_TIMEOUT}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_SKIP_CONFIG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_FIPS}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SKIP_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}"|"-${ARG_SHORT_TIMEOUT}"|"-${ARG_SHORT_INSTALL_HOSTMETRICS}"|"-${ARG_SHORT_REMOTELY_MANAGED}")
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_SKIP_CONFIG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_FIPS}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SKIP_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}"|"-${ARG_SHORT_TIMEOUT}"|"-${ARG_SHORT_INSTALL_HOSTMETRICS}"|"-${ARG_SHORT_REMOTELY_MANAGED}"|"-${ARG_SHORT_EPHEMERAL}")
         set -- "$@" "${arg}"
         ;;
       "--${ARG_LONG_INSTALL_HOSTMETRICS}")
@@ -267,6 +272,9 @@ function parse_options() {
         ;;
       "--${ARG_LONG_REMOTELY_MANAGED}")
         set -- "$@" "-${ARG_SHORT_REMOTELY_MANAGED}"
+        ;;
+      "--${ARG_LONG_EPHEMERAL}")
+        set -- "$@" "-${ARG_SHORT_EPHEMERAL}"
         ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -280,7 +288,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_FIPS}${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_SKIP_CONFIG}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:${ARG_SHORT_REMOTELY_MANAGED}${ARG_SHORT_INSTALL_HOSTMETRICS}${ARG_SHORT_TIMEOUT}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_FIPS}${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_SKIP_CONFIG}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:${ARG_SHORT_EPHEMERAL}${ARG_SHORT_REMOTELY_MANAGED}${ARG_SHORT_INSTALL_HOSTMETRICS}${ARG_SHORT_TIMEOUT}:" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -315,6 +323,7 @@ function parse_options() {
         fi ;;
       "${ARG_SHORT_INSTALL_HOSTMETRICS}") INSTALL_HOSTMETRICS=true ;;
       "${ARG_SHORT_REMOTELY_MANAGED}") REMOTELY_MANAGED=true ;;
+      "${ARG_SHORT_EPHEMERAL}") EPHEMERAL=true ;;
       "${ARG_SHORT_KEEP_DOWNLOADS}") KEEP_DOWNLOADS=true ;;
       "${ARG_SHORT_TIMEOUT}") CURL_MAX_TIME="${OPTARG}" ;;
       "${ARG_SHORT_TAG}")
@@ -713,6 +722,10 @@ function setup_config() {
             write_installation_token "${SUMOLOGIC_INSTALLATION_TOKEN}" "${CONFIG_PATH}" "${EXT_INDENTATION}"
         fi
 
+        if [[ "${EPHEMERAL}" == "true" ]]; then
+            write_ephemeral_true "${CONFIG_PATH}" "${EXT_INDENTATION}"
+        fi
+
         if [[ -n "${API_BASE_URL}" ]]; then
             write_api_url "${API_BASE_URL}" "${CONFIG_PATH}" "${EXT_INDENTATION}"
         fi
@@ -755,13 +768,17 @@ function setup_config() {
     fi
 
     ## Check if there is anything to update in configuration
-    if [[ ( -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ) || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
+    if [[ ( -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ) || -n "${API_BASE_URL}" || -n "${FIELDS}" || "${EPHEMERAL}" == "true" ]]; then
         create_user_config_file "${COMMON_CONFIG_PATH}"
         add_extension_to_config "${COMMON_CONFIG_PATH}"
         write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
 
         if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ]]; then
             write_installation_token "${SUMOLOGIC_INSTALLATION_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
+        fi
+
+        if [[ "${EPHEMERAL}" == "true" ]]; then
+            write_ephemeral_true "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
         fi
 
         # fill in api base url
@@ -794,6 +811,10 @@ function setup_config_darwin() {
     create_user_config_file "${config_path}"
     add_extension_to_config "${config_path}"
     write_sumologic_extension "${config_path}" "${INDENTATION}"
+
+    if [[ "${EPHEMERAL}" == "true" ]]; then
+        write_ephemeral_true "${config_path}" "${EXT_INDENTATION}"
+    fi
 
     # fill in api base url
     if [[ -n "${API_BASE_URL}" ]]; then
@@ -1286,6 +1307,23 @@ function write_remote_config_launchd() {
     plutil_create_key "${file}" "ProgramArguments" "json" "[ \"/usr/local/bin/otelcol-sumo\", \"--remote-config\", \"opamp:${CONFIG_PATH}\" ]"
 }
 
+# write sumologic ephemeral: true to user configuration file
+function write_ephemeral_true() {
+    local file
+    readonly file="${1}"
+
+    local ext_indentation
+    readonly ext_indentation="${2}"
+
+    if grep "ephemeral:" "${file}" > /dev/null; then
+        sed -i.bak -e "1,/ephemeral:/ s/ephemeral:.*$/ephemeral: true/" "${file}"
+    else
+        # write ephemeral: true on the top of sumologic: extension
+        sed -i.bak -e "1,/sumologic:/ s/sumologic:/sumologic:\\
+\\${ext_indentation}ephemeral: true/" "${file}"
+    fi
+}
+
 # write api_url to user configuration file
 function write_api_url() {
     local api_url
@@ -1301,7 +1339,7 @@ function write_api_url() {
     if grep "api_base_url" "${file}" > /dev/null; then
         sed -i.bak -e "s/api_base_url:.*$/api_base_url: $(escape_sed "${api_url}")/" "${file}"
     else
-        # write installation token on the top of sumologic: extension
+        # write api_url on the top of sumologic: extension
         sed -i.bak -e "1,/sumologic:/ s/sumologic:/sumologic:\\
 \\${ext_indentation}api_base_url: $(escape_sed "${api_url}")/" "${file}"
     fi
