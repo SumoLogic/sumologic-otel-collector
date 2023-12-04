@@ -989,16 +989,16 @@ function get_user_config() {
     fi
 
     # extract installation_token and strip quotes
-    # fallback to deprecated install_token
-    grep -m 1 installation_token "${file}" \
-        | sed 's/.*installation_token:[[:blank:]]*//' \
+    # begin with deprecated install_token to support migrating to installation_token
+    grep -m 1 install_token "${file}" \
+        | sed 's/.*install_token:[[:blank:]]*//' \
         | sed 's/[[:blank:]]*$//' \
         | sed 's/^"//' \
         | sed "s/^'//" \
         | sed 's/"$//' \
         | sed "s/'\$//" \
-    || grep -m 1 install_token "${file}" \
-        | sed 's/.*install_token:[[:blank:]]*//' \
+    || grep -m 1 installation_token "${file}" \
+        | sed 's/.*installation_token:[[:blank:]]*//' \
         | sed 's/[[:blank:]]*$//' \
         | sed 's/^"//' \
         | sed "s/^'//" \
