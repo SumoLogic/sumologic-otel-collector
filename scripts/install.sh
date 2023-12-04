@@ -175,12 +175,7 @@ EOF
 
 function reporter {
     echo "SUMOLOGIC_INSTALLATION_TOKEN=${SUMOLOGIC_INSTALLATION_TOKEN}" >> $INSTALLATION_LOGFILE
-
-    if command -v "gzip" &> /dev/null; then
-        gzip < "${INSTALLATION_LOGFILE}" | curl --silent --location -X POST --header 'Content-Encoding:gzip' --data-binary @- "${INSTALLATION_LOGFILE_ENDPOINT}"
-    else
-        curl --silent --location -X POST --data-binary @"${INSTALLATION_LOGFILE}" "${INSTALLATION_LOGFILE_ENDPOINT}"
-    fi
+    curl --silent --location -X POST --data-binary @"${INSTALLATION_LOGFILE}" "${INSTALLATION_LOGFILE_ENDPOINT}"
 }
 trap reporter EXIT
 
