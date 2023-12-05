@@ -76,7 +76,8 @@ jobs:
         run: |
           curl -Lo go.zip https://aka.ms/golang/release/latest/go${{ env.GO_VERSION }}.windows-amd64.zip &&
           powershell -command "Expand-Archive go.zip D:\\a\\_work\\1\\s" &&
-          echo "/d/a/_work/1/s/go/bin" >> $GITHUB_PATH
+          echo "/d/a/_work/1/s/go/bin" >> $GITHUB_PATH &&
+          powershell -command "Set-ItemProperty -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy -Name Enabled -Value \$true"
 
       - name: Get Go env values
         if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
