@@ -1220,6 +1220,14 @@ function write_installation_token() {
     local ext_indentation
     readonly ext_indentation="${3}"
 
+    # ToDo: ensure we override only sumologic `installation_token`
+    if grep "installation_token" "${file}" > /dev/null; then
+        # Do not expose token in sed command as it can be saw on processes list
+        echo "s/installation_token:.*$/installation_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
+
+        return
+    fi
+
     # ToDo: ensure we override only sumologic `install_token`
     if grep "install_token" "${file}" > /dev/null; then
         # Do not expose token in sed command as it can be saw on processes list
@@ -1227,8 +1235,8 @@ function write_installation_token() {
     else
         # write installation token on the top of sumologic: extension
         # Do not expose token in sed command as it can be saw on processes list
-        echo "s/sumologic:/sumologic:\\
-\\${ext_indentation}install_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
+        echo "1,/sumologic:/ s/sumologic:/sumologic:\\
+\\${ext_indentation}installation_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
     fi
 }
 
