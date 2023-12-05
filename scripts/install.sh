@@ -1236,7 +1236,7 @@ function write_installation_token() {
         # write installation token on the top of sumologic: extension
         # Do not expose token in sed command as it can be saw on processes list
         echo "1,/sumologic:/ s/sumologic:/sumologic:\\
-\\${ext_indentation}installation_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
+\\${ext_indentation}install_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
     fi
 }
 
