@@ -24,12 +24,12 @@ require (
 )
 
 require (
-	go.opentelemetry.io/collector/component v0.90.0
-	go.opentelemetry.io/collector/consumer v0.90.0
-	go.opentelemetry.io/collector/otelcol v0.90.0
+	go.opentelemetry.io/collector/component v0.90.1
+	go.opentelemetry.io/collector/consumer v0.90.1
+	go.opentelemetry.io/collector/otelcol v0.90.1
 	go.opentelemetry.io/collector/pdata v1.0.0
-	go.opentelemetry.io/collector/processor v0.90.0
-	go.opentelemetry.io/collector/semconv v0.90.0
+	go.opentelemetry.io/collector/processor v0.90.1
+	go.opentelemetry.io/collector/semconv v0.90.1
 )
 
 require (

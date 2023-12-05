@@ -3,11 +3,11 @@ module github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8spr
 go 1.20
 
 require (
-	github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig v0.90.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig v0.90.1
 	github.com/stretchr/testify v1.8.4
 	go.opencensus.io v0.24.0
-	go.opentelemetry.io/collector v0.90.0
-	go.opentelemetry.io/collector/semconv v0.90.0
+	go.opentelemetry.io/collector v0.90.1
+	go.opentelemetry.io/collector/semconv v0.90.1
 	go.uber.org/zap v1.26.0
 	k8s.io/api v0.28.4
 	k8s.io/apimachinery v0.28.4
@@ -15,11 +15,11 @@ require (
 )
 
 require (
-	go.opentelemetry.io/collector/component v0.90.0
-	go.opentelemetry.io/collector/consumer v0.90.0
-	go.opentelemetry.io/collector/otelcol v0.90.0
+	go.opentelemetry.io/collector/component v0.90.1
+	go.opentelemetry.io/collector/consumer v0.90.1
+	go.opentelemetry.io/collector/otelcol v0.90.1
 	go.opentelemetry.io/collector/pdata v1.0.0
-	go.opentelemetry.io/collector/processor v0.90.0
+	go.opentelemetry.io/collector/processor v0.90.1
 )
 
 require (

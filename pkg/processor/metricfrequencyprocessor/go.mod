@@ -5,11 +5,11 @@ go 1.20
 require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/stretchr/testify v1.8.4
-	go.opentelemetry.io/collector/component v0.90.0
-	go.opentelemetry.io/collector/consumer v0.90.0
-	go.opentelemetry.io/collector/otelcol v0.90.0
+	go.opentelemetry.io/collector/component v0.90.1
+	go.opentelemetry.io/collector/consumer v0.90.1
+	go.opentelemetry.io/collector/otelcol v0.90.1
 	go.opentelemetry.io/collector/pdata v1.0.0
-	go.opentelemetry.io/collector/processor v0.90.0
+	go.opentelemetry.io/collector/processor v0.90.1
 )
 
 require (

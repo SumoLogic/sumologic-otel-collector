@@ -4,15 +4,15 @@ go 1.20
 
 require (
 	github.com/cenkalti/backoff/v4 v4.2.1
-	github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.90.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.90.1
 	github.com/openshift/client-go v0.0.0-20230718165156-6014fb98e86a
 	github.com/stretchr/testify v1.8.4
-	go.opentelemetry.io/collector/component v0.90.0
-	go.opentelemetry.io/collector/consumer v0.90.0
-	go.opentelemetry.io/collector/extension v0.90.0
-	go.opentelemetry.io/collector/otelcol v0.90.0
+	go.opentelemetry.io/collector/component v0.90.1
+	go.opentelemetry.io/collector/consumer v0.90.1
+	go.opentelemetry.io/collector/extension v0.90.1
+	go.opentelemetry.io/collector/otelcol v0.90.1
 	go.opentelemetry.io/collector/pdata v1.0.0
-	go.opentelemetry.io/collector/receiver v0.90.0
+	go.opentelemetry.io/collector/receiver v0.90.1
 	go.uber.org/zap v1.26.0
 	k8s.io/api v0.27.2
 	k8s.io/apimachinery v0.27.2
@@ -77,8 +77,8 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/collector v0.90.0 // indirect
-	go.opentelemetry.io/collector/config/configtelemetry v0.90.0 // indirect
-	go.opentelemetry.io/collector/confmap v0.90.0 // indirect
+	go.opentelemetry.io/collector/config/configtelemetry v0.90.1 // indirect
+	go.opentelemetry.io/collector/confmap v0.90.1 // indirect
 	go.opentelemetry.io/collector/connector v0.90.0 // indirect
 	go.opentelemetry.io/collector/exporter v0.90.0 // indirect
 	go.opentelemetry.io/collector/featuregate v1.0.0 // indirect

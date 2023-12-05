@@ -14,6 +14,7 @@ const (
 	configPathFilePermissions       uint32 = 0440
 	confDPathFilePermissions        uint32 = 0644
 	etcPathPermissions              uint32 = 0751
+	opampDPermissions               uint32 = 0750
 
 	rootGroup   string = "wheel"
 	rootUser    string = "root"
