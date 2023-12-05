@@ -1931,6 +1931,13 @@ if [[ "${OS_TYPE}" == "darwin" ]]; then
     launchctl unload "${LAUNCHD_CONFIG}"
     launchctl load -w "${LAUNCHD_CONFIG}"
 
+    echo 'Waiting 10s before checking status'
+    sleep 10
+    if launchctl print system/otelcol-sumo | grep "last exit code = 1"; then
+        echo "Failed to launch otelcol"
+        tail /var/log/otelcol-sumo/otelcol-sumo.log
+        exit 1
+    fi
     exit 0
 fi
 
@@ -2127,4 +2134,9 @@ systemctl restart otelcol-sumo
 
 echo 'Waiting 10s before checking status'
 sleep 10
-systemctl status otelcol-sumo --no-pager
+if ! systemctl status otelcol-sumo --no-pager; then
+    echo "Failed to launch otelcol"
+    exit 1
+fi
+
+exit 0
