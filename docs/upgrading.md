@@ -4,7 +4,7 @@
   - [Upgrading to v0.90.0-sumo-1](#upgrading-to-v0900-sumo-1)
     - [Change configuration for `syslogexporter`](#change-configuration-for-syslogexporter)
     - [`sumologic` exporter: deprecate `clear_logs_timestamp`](#sumologic-exporter-deprecate-clear_logs_timestamp)
-    - [Removing `routing_attributes_to_drop` from `sumologic` exporter](#removing-routing_attributes_to_drop-from-sumologic-exporter)
+    - [`sumologic` exporter: remove `routing_attributes_to_drop`](#sumologic-exporter-remove-routing_attributes_to_drop)
   - [Upgrading to v0.89.0-sumo-0](#upgrading-to-v0890-sumo-0)
     - [`remoteobserver` processor: renamed to `remotetap` processor](#remoteobserver-processor-renamed-to-remotetap-processor)
     - [`sumologic` exporter: changed default `timeout` from `5s` to `30s`](#sumologic-exporter-changed-default-timeout-from-5s-to-30s)
@@ -120,7 +120,7 @@ service:
         - transform/clear_logs_timestamp
 ```
 
-### Removing `routing_attributes_to_drop` from `sumologic` exporter
+### `sumologic` exporter: remove `routing_attributes_to_drop`
 
 `routing_attributes_to_drop` has been removed from `sumologic` exporter in favor of `routing` processor's `drop_resource_routing_attribute`.
 
