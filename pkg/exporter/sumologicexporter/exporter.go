@@ -97,7 +97,7 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sumolog
 	)
 
 	if cfg.ClearLogsTimestamp {
-		se.logger.Warn("'clear_logs_timestamps' is deprecated and suboptimal. It is going to be removed in 'v0.95.0-sumo-0'. Please follow the upgrading document: " +
+		se.logger.Warn("'clear_logs_timestamps' is deprecated and suboptimal. It is going to be removed in 'v0.95.0-sumo-0'. Please follow the upgrade guide: " +
 			"https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#sumologic-exporter-deprecate-clear_logs_timestamp")
 	}
 
