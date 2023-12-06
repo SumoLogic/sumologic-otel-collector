@@ -4,6 +4,7 @@
   - [Upgrading to v0.90.0-sumo-1](#upgrading-to-v0900-sumo-1)
     - [Change configuration for `syslogexporter`](#change-configuration-for-syslogexporter)
     - [`sumologic` exporter: deprecate `clear_logs_timestamp`](#sumologic-exporter-deprecate-clear_logs_timestamp)
+    - [`sumologic` exporter: remove `routing_attributes_to_drop`](#sumologic-exporter-remove-routing_attributes_to_drop)
   - [Upgrading to v0.89.0-sumo-0](#upgrading-to-v0890-sumo-0)
     - [`remoteobserver` processor: renamed to `remotetap` processor](#remoteobserver-processor-renamed-to-remotetap-processor)
     - [`sumologic` exporter: changed default `timeout` from `5s` to `30s`](#sumologic-exporter-changed-default-timeout-from-5s-to-30s)
@@ -117,6 +118,47 @@ service:
       processors:
         # - ...
         - transform/clear_logs_timestamp
+```
+
+### `sumologic` exporter: remove `routing_attributes_to_drop`
+
+`routing_attributes_to_drop` has been removed from `sumologic` exporter in favor of `routing` processor's `drop_resource_routing_attribute`.
+
+To migrate, perform the following steps:
+
+- remove `routing_attributes_to_drop` from `sumologic` exporter
+- add `drop_resource_routing_attribute` to `routing` processor
+
+For example, given the following configuration:
+
+```yaml
+processors:
+  routing:
+    from_attribute: X-Tenant
+    default_exporters:
+    - jaeger
+    table:
+    - value: acme
+      exporters: [jaeger/acme]
+exporters:
+  sumologic:
+    routing_attributes_to_drop: X-Tenant
+```
+
+change it to:
+
+```yaml
+processors:
+  routing:
+    drop_resource_routing_attribute: true
+    from_attribute: X-Tenant
+    default_exporters:
+    - jaeger
+    table:
+    - value: acme
+      exporters: [jaeger/acme]
+exporters:
+  sumologic:
 ```
 
 ## Upgrading to v0.89.0-sumo-0
