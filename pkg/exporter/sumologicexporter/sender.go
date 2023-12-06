@@ -350,31 +350,33 @@ func (s *sender) logToText(record plog.LogRecord) string {
 
 // logToJSON converts LogRecord to a json line, returns it and error eventually
 func (s *sender) logToJSON(record plog.LogRecord) (string, error) {
+	recordCopy := plog.NewLogRecord()
+	record.CopyTo(recordCopy)
 	if s.jsonLogsConfig.AddTimestamp {
-		addJSONTimestamp(record.Attributes(), s.jsonLogsConfig.TimestampKey, record.Timestamp())
+		addJSONTimestamp(recordCopy.Attributes(), s.jsonLogsConfig.TimestampKey, recordCopy.Timestamp())
 	}
 
 	// Only append the body when it's not empty to prevent sending 'null' log.
-	if body := record.Body(); !isEmptyAttributeValue(body) {
+	if body := recordCopy.Body(); !isEmptyAttributeValue(body) {
 		if s.jsonLogsConfig.FlattenBody && body.Type() == pcommon.ValueTypeMap {
 			// Cannot use CopyTo, as it overrides data.orig's values
 			body.Map().Range(func(k string, v pcommon.Value) bool {
-				_, ok := record.Attributes().Get(k)
+				_, ok := recordCopy.Attributes().Get(k)
 
 				if !ok {
-					v.CopyTo(record.Attributes().PutEmpty(k))
+					v.CopyTo(recordCopy.Attributes().PutEmpty(k))
 				}
 				return true
 			})
 		} else {
-			body.CopyTo(record.Attributes().PutEmpty(s.jsonLogsConfig.LogKey))
+			body.CopyTo(recordCopy.Attributes().PutEmpty(s.jsonLogsConfig.LogKey))
 		}
 	}
 
 	nextLine := new(bytes.Buffer)
 	enc := json.NewEncoder(nextLine)
 	enc.SetEscapeHTML(false)
-	err := enc.Encode(record.Attributes().AsRaw())
+	err := enc.Encode(recordCopy.Attributes().AsRaw())
 
 	if err != nil {
 		return "", err
