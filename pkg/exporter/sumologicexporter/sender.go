@@ -485,12 +485,19 @@ func (s *sender) formatLogLine(lr plog.LogRecord) (string, error) {
 
 // TODO: add support for HTTP limits
 func (s *sender) sendOTLPLogs(ctx context.Context, ld plog.Logs) error {
-	rls := ld.ResourceLogs()
-	for i := 0; i < rls.Len(); i++ {
-		rl := rls.At(i)
+	var lld plog.Logs
 
-		// Clear timestamps if required
-		if s.config.ClearLogsTimestamp {
+	// Clear timestamps if required
+	if s.config.ClearLogsTimestamp {
+		// make a copy to preserve immutability
+		lld = plog.NewLogs()
+		ld.CopyTo(lld)
+
+		rls := lld.ResourceLogs()
+		for i := 0; i < rls.Len(); i++ {
+			rl := rls.At(i)
+			// rl.ScopeLogs().CopyTo(rl.ScopeLogs())
+
 			slgs := rl.ScopeLogs()
 			for j := 0; j < slgs.Len(); j++ {
 				log := slgs.At(j)
@@ -499,9 +506,11 @@ func (s *sender) sendOTLPLogs(ctx context.Context, ld plog.Logs) error {
 				}
 			}
 		}
+	} else {
+		lld = ld
 	}
 
-	body, err := logsMarshaler.MarshalLogs(ld)
+	body, err := logsMarshaler.MarshalLogs(lld)
 	if err != nil {
 		return err
 	}
