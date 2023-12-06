@@ -50,6 +50,7 @@ exporters:
     # defines if timestamp for logs should be set to 0,
     # it indicates that backend will extract timestamp from logs,
     # this option affects OTLP format only
+    # Deprecated, please use transformprocessor to clear logs timestamp
     # default = true
     clear_logs_timestamp: {true, false}
 

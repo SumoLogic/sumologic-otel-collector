@@ -3,6 +3,7 @@
 - [Upgrading](#upgrading)
   - [Upgrading to v0.90.0-sumo-1](#upgrading-to-v0900-sumo-1)
     - [Change configuration for `syslogexporter`](#change-configuration-for-syslogexporter)
+    - [`sumologic` exporter: deprecate `clear_logs_timestamp`](#sumologic-exporter-deprecate-clear_logs_timestamp)
   - [Upgrading to v0.89.0-sumo-0](#upgrading-to-v0890-sumo-0)
     - [`remoteobserver` processor: renamed to `remotetap` processor](#remoteobserver-processor-renamed-to-remotetap-processor)
     - [`sumologic` exporter: changed default `timeout` from `5s` to `30s`](#sumologic-exporter-changed-default-timeout-from-5s-to-30s)
@@ -73,6 +74,49 @@ change it to:
       ca_file: ca.pem
       cert_file: cert.pem
       key_file:  key.pem
+```
+
+### `sumologic` exporter: deprecate `clear_logs_timestamp`
+
+`clear_logs_timestamp` has been deprecated in favor of `transform` processor. It is going to be removed in `v0.95.0-sumo-0`. To migrate:
+
+- set `clear_logs_timestamp` to `false`
+- add the following processor:
+
+  ```yaml
+  processors:
+    transform/clear_logs_timestamp:
+      log_statements:
+        - context: log
+          statements:
+            - set(time_unix_nano, 0)
+  ```
+
+For example, given the following configuration:
+
+```yaml
+exporters:
+  sumologic:
+```
+
+change it to:
+
+```yaml
+exporters:
+  sumologic:
+    clear_logs_timestamp: false
+processors:
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+service:
+  pipelines:
+    logs:
+      processors:
+        # - ...
+        - transform/clear_logs_timestamp
 ```
 
 ## Upgrading to v0.89.0-sumo-0

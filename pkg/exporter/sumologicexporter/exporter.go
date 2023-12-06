@@ -66,6 +66,7 @@ type sumologicexporter struct {
 }
 
 func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sumologicexporter, error) {
+
 	pf, err := newPrometheusFormatter()
 	if err != nil {
 		return nil, err
@@ -94,6 +95,11 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sumolog
 		zap.String("metric_format", string(cfg.MetricFormat)),
 		zap.String("trace_format", string(cfg.TraceFormat)),
 	)
+
+	if cfg.ClearLogsTimestamp {
+		se.logger.Warn("'clear_logs_timestamps' is deprecated and suboptimal. It is going to be removed in 'v0.95.0-sumo-0'. Please follow the upgrade guide: " +
+			"https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#sumologic-exporter-deprecate-clear_logs_timestamp")
+	}
 
 	return se, nil
 }
