@@ -532,10 +532,10 @@ go.mongodb.org/mongo-driver v1.12.0/go.mod h1:AZkxhPnFJUoH7kZlFkVKucV20K387miPfm
 go.opentelemetry.io/collector v0.90.0 h1:Wyiiu+78tV5zZDvza9hvZu6FgOkFqURNzPHkKcI+asw=
 go.opentelemetry.io/collector/component v0.90.1 h1:86YCHdtfIHkJmyTDXoZPTo25ayyC5OUCwSD5ueE7pXM=
 go.opentelemetry.io/collector/component v0.90.1/go.mod h1:+WX5h5I98AwL256AdFvn8EpPZ02Q+UrKo9AdI8LLfuQ=
-go.opentelemetry.io/collector/config/configtelemetry v0.90.0 h1:1exyNLDVSSkdDLUoVTLiy5pfzB7ak802JhOaOTOe2Zo=
-go.opentelemetry.io/collector/config/configtelemetry v0.90.0/go.mod h1:+LAXM5WFMW/UbTlAuSs6L/W72WC+q8TBJt/6z39FPOU=
-go.opentelemetry.io/collector/confmap v0.90.0 h1:vU+759p/4zLeet8yeI8uVq4+xCm73/5K8t2Tx0MzX/8=
-go.opentelemetry.io/collector/confmap v0.90.0/go.mod h1:uxV+fZ85kG31oovL6Cl3fAMQ3RRPwUvfAbbA9WT1Yhk=
+go.opentelemetry.io/collector/config/configtelemetry v0.90.1 h1:aZXur4yICzjj2MBjSjkyxzkT2o/SGAGZonQ2TwNLIME=
+go.opentelemetry.io/collector/config/configtelemetry v0.90.1/go.mod h1:+LAXM5WFMW/UbTlAuSs6L/W72WC+q8TBJt/6z39FPOU=
+go.opentelemetry.io/collector/confmap v0.90.1 h1:hyxRwH1zQT4UIwAOId1w5YZrBn/eefUey3wXiwJdW+U=
+go.opentelemetry.io/collector/confmap v0.90.1/go.mod h1:uxV+fZ85kG31oovL6Cl3fAMQ3RRPwUvfAbbA9WT1Yhk=
 go.opentelemetry.io/collector/consumer v0.90.1 h1:VzGEGiK609dHqcJ0xhbu+wAaon5K69ihQxz99U/X1OA=
 go.opentelemetry.io/collector/consumer v0.90.1/go.mod h1:mh/eEA0UClEtgQMDICQVL7oSylgbskFfueBO0i5HkSQ=
 go.opentelemetry.io/collector/featuregate v1.0.0 h1:5MGqe2v5zxaoo73BUOvUTunftX5J8RGrbFsC2Ha7N3g=
