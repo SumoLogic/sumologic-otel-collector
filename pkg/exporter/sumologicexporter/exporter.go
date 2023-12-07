@@ -486,10 +486,6 @@ func (se *sumologicexporter) shutdown(context.Context) error {
 	return nil
 }
 
-func (se *sumologicexporter) dropRoutingAttribute(attr pcommon.Map) {
-	attr.Remove(se.config.DropRoutingAttribute)
-}
-
 func (se *sumologicexporter) StickySessionCookie() string {
 	if se.foundSumologicExtension {
 		return se.sumologicExtension.StickySessionCookie()

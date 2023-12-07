@@ -211,7 +211,7 @@ func (s *sender) send(ctx context.Context, pipeline PipelineType, reader *counti
 	}
 
 	if s.config.StickySessionEnabled {
-		s.addStickySessionCookie(req)     
+		s.addStickySessionCookie(req)
 	}
 
 	s.logger.Debug("Sending data",

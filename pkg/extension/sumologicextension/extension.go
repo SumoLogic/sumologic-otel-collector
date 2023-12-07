@@ -961,11 +961,11 @@ func (se *SumologicExtension) CreateCredentialsHeader() (http.Header, error) {
 // [1]: https://github.com/open-telemetry/opentelemetry-collector/blob/2e84285efc665798d76773b9901727e8836e9d8f/config/configauth/clientauth.go#L34-L39
 func (se *SumologicExtension) RoundTripper(base http.RoundTripper) (http.RoundTripper, error) {
 	return roundTripper{
-		collectorCredentialId:  	se.registrationInfo.CollectorCredentialId,
-		collectorCredentialKey: 	se.registrationInfo.CollectorCredentialKey,
-		addStickySessionCookie: 	se.addStickySessionCookie,
-		updateStickySessionCookie: 	se.updateStickySessionCookie,
-		base:                   	base,
+		collectorCredentialId:     se.registrationInfo.CollectorCredentialId,
+		collectorCredentialKey:    se.registrationInfo.CollectorCredentialKey,
+		addStickySessionCookie:    se.addStickySessionCookie,
+		updateStickySessionCookie: se.updateStickySessionCookie,
+		base:                      base,
 	}, nil
 }
 
@@ -973,18 +973,17 @@ func (se *SumologicExtension) PerRPCCredentials() (grpccredentials.PerRPCCredent
 	return nil, errGRPCNotSupported
 }
 
-
 func (se *SumologicExtension) addStickySessionCookie(req *http.Request) {
-	if se.conf.StickySessionEnabled {
-		currectCookieValue := se.StickySessionCookie()
-		if currectCookieValue != "" {
-			cookie := &http.Cookie{
-				Name:  stickySessionKey,
-				Value: currectCookieValue,
-				// Add other cookie attributes if needed (e.g., Path, Domain, etc.)
-			}
-			req.AddCookie(cookie)
+	if !se.conf.StickySessionEnabled {
+		return
+	}
+	currectCookieValue := se.StickySessionCookie()
+	if currectCookieValue != "" {
+		cookie := &http.Cookie{
+			Name:  stickySessionKey,
+			Value: currectCookieValue,
 		}
+		req.AddCookie(cookie)
 	}
 }
 
@@ -1003,11 +1002,11 @@ func (se *SumologicExtension) updateStickySessionCookie(resp *http.Response) {
 }
 
 type roundTripper struct {
-	collectorCredentialId  		string
-	collectorCredentialKey 		string
-	addStickySessionCookie 		func(*http.Request)
-	updateStickySessionCookie 	func(*http.Response)
-	base                   		http.RoundTripper
+	collectorCredentialId     string
+	collectorCredentialKey    string
+	addStickySessionCookie    func(*http.Request)
+	updateStickySessionCookie func(*http.Response)
+	base                      http.RoundTripper
 }
 
 func (rt roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {

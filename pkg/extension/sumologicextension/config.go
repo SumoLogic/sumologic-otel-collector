@@ -108,4 +108,3 @@ type backOffConfig struct {
 	MaxInterval     time.Duration `mapstructure:"max_interval"`
 	MaxElapsedTime  time.Duration `mapstructure:"max_elapsed_time"`
 }
-
