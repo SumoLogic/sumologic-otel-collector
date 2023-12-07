@@ -108,6 +108,11 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sumolog
 			"https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#sumologic-exporter-deprecate-clear_logs_timestamp")
 	}
 
+	if cfg.LogFormat == JSONFormat {
+		se.logger.Warn("'json_logs' is deprecated and suboptimal. It is going to be removed in 'v0.95.0-sumo-0'. Please follow the upgrade guide: " +
+			"https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#sumologic-exporter-deprecate-json_logs")
+	}
+
 	return se, nil
 }
 
