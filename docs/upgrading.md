@@ -5,6 +5,7 @@
     - [Change configuration for `syslogexporter`](#change-configuration-for-syslogexporter)
     - [`sumologic` exporter: deprecate `clear_logs_timestamp`](#sumologic-exporter-deprecate-clear_logs_timestamp)
     - [`sumologic` exporter: remove `routing_attributes_to_drop`](#sumologic-exporter-remove-routing_attributes_to_drop)
+    - [`sumologic` exporter: deprecate `json_logs`](#sumologic-exporter-deprecate-json_logs)
   - [Upgrading to v0.89.0-sumo-0](#upgrading-to-v0890-sumo-0)
     - [`remoteobserver` processor: renamed to `remotetap` processor](#remoteobserver-processor-renamed-to-remotetap-processor)
     - [`sumologic` exporter: changed default `timeout` from `5s` to `30s`](#sumologic-exporter-changed-default-timeout-from-5s-to-30s)
@@ -159,6 +160,155 @@ processors:
       exporters: [jaeger/acme]
 exporters:
   sumologic:
+```
+
+### `sumologic` exporter: deprecate `json_logs`
+
+`json_logs` has been deprecated in favor of `transform` processor. It is going to be removed in `v0.95.0-sumo-0`.
+
+To migrate perform the following steps:
+
+- use `transform` processor in replace of `json_logs.add_timestamp` and `json_logs.timestamp_key`:
+
+  ```yaml
+  processors:
+    transform/add_timestamp:
+      log_statements:
+        - context: log
+          statements:
+            - set(attributes["timestamp"], Int(time_unix_nano / 1000000))
+  ```
+
+- use `transform` processor in replace of `json_logs.flatten_body`:
+
+  ```yaml
+  processors:
+    transform/flatten:
+      error_mode: ignore
+      log_statements:
+        - context: log
+          statements:
+            - merge_maps(attributes, body, "insert") where IsMap(body)
+            - set(body, "") where IsMap(body)
+
+  ```
+
+- use `transform` processor in replace of `json_logs.log_key`:
+
+  ```yaml
+  processors:
+    transform/set_log_key:
+      log_statements:
+        - context: log
+          statements:
+            - set(attributes["log"], body)
+            - set(body, "")
+  ```
+
+#### Migration example for `add_timestamp` and `timestamp_key`
+
+Given the following configuration:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+      timestamp_key: timestamp_key
+      add_timestamp: true
+```
+
+change it to:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+      add_timestamp: false
+processors:
+  transform/add_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(attributes["timestamp_key"], Int(time_unix_nano / 1000000))
+          - set(attributes["timestamp_key"], Int(now() / 1000000)) where attributes["timestamp_key"] == 0
+service:
+  pipelines:
+    logs:
+      processors:
+        # ...
+        - transform/add_timestamp
+```
+
+#### Migration example for `flatten_body`
+
+Given the following configuration:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+      flatten_body: true
+```
+
+change it to:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+      flatten_body: false
+processors:
+  transform/flatten:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - merge_maps(attributes, body, "insert") where IsMap(body)
+          - set(body, "") where IsMap(body)
+service:
+  pipelines:
+    logs:
+      processors:
+        # ...
+        - transform/flatten
+```
+
+#### Migration example for `log_key`
+
+Given the following configuration:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+      log_key: my_log
+```
+
+change it to:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+processors:
+  transform/set_log_key:
+    log_statements:
+      - context: log
+        statements:
+          - set(attributes["my_log"], body)
+          - set(body, "")
+service:
+  pipelines:
+    logs:
+      processors:
+        # ...
+        - transform/set_log_key
 ```
 
 ## Upgrading to v0.89.0-sumo-0
