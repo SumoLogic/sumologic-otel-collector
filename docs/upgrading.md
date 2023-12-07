@@ -176,7 +176,8 @@ To migrate perform the following steps:
       log_statements:
         - context: log
           statements:
-            - set(attributes["timestamp"], Int(time_unix_nano / 1000000))
+            - set(time, Now()) where time_unix_nano == 0
+            - set(attributes["timestamp_key"], Int(time_unix_nano / 1000000))
   ```
 
 - use `transform` processor in replace of `json_logs.flatten_body`:
