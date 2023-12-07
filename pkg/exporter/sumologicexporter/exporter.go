@@ -239,15 +239,15 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld plog.Logs) err
 	if len(dropped) > 0 {
 		ld = plog.NewLogs()
 
-		// Move all dropped records to Logs
+		// Copy all dropped records to Logs
 		// NOTE: we only copy resource and log records here.
 		// Scope is not handled properly but it never was.
 		for i := range dropped {
 			rls := ld.ResourceLogs().AppendEmpty()
-			dropped[i].resource.MoveTo(rls.Resource())
+			dropped[i].resource.CopyTo(rls.Resource())
 
 			for j := 0; j < len(dropped[i].records); j++ {
-				dropped[i].records[j].MoveTo(
+				dropped[i].records[j].CopyTo(
 					rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty(),
 				)
 			}
