@@ -51,6 +51,7 @@ func createDefaultConfig() component.Config {
 		HeartBeatInterval:             DefaultHeartbeatInterval,
 		CollectorCredentialsDirectory: defaultCredsPath,
 		Clobber:                       false,
+		DiscoverCollectorTags:         true,
 		ForceRegistration:             false,
 		Ephemeral:                     false,
 		TimeZone:                      "",

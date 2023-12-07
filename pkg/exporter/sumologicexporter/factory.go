@@ -59,10 +59,9 @@ func createDefaultConfig() component.Config {
 		},
 		TraceFormat: OTLPTraceFormat,
 
-		HTTPClientSettings:   CreateDefaultHTTPClientSettings(),
-		RetrySettings:        exporterhelper.NewDefaultRetrySettings(),
-		QueueSettings:        qs,
-		DropRoutingAttribute: DefaultDropRoutingAttribute,
+		HTTPClientSettings: CreateDefaultHTTPClientSettings(),
+		RetrySettings:      exporterhelper.NewDefaultRetrySettings(),
+		QueueSettings:      qs,
 	}
 }
 

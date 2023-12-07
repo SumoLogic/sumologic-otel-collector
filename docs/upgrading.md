@@ -1,35 +1,389 @@
 # Upgrading
 
-- [Upgrading to v0.84.0-sumo-0](#upgrading-to-v0840-sumo-0)
-  - [`sumologic` extension: removed `install_token` in favor of `installation_token`](#sumologic-extension-removed-install_token-in-favor-of-installation_token)
-- [Upgrading to v0.77.0-sumo-0](#upgrading-to-v0770-sumo-0)
-  - [Full Prometheus metric name normalization is now disabled by default](#full-prometheus-metric-name-normalization-is-now-disabled-by-default)
-- [Upgrading to v0.73.0-sumo-1](#upgrading-to-v0730-sumo-1)
-  - [The default collector name for sumologic extension is now the host FQDN](#the-default-collector-name-for-sumologic-extension-is-now-the-host-fqdn)
-- [Upgrading to v0.66.0-sumo-0](#upgrading-to-v0660-sumo-0)
-  - [`filelog` receiver: has been removed from sub-parsers](#filelog-receiver-has-been-removed-from-sub-parsers)
-  - [`sending_queue`: require explicit storage set](#sending_queue-require-explicit-storage-set)
-  - [`apache` receiver: turn on feature gates for resource attributes](#apache-receiver-turn-on-feature-gates-for-resource-attributes)
-  - [`elasticsearch` receiver: turn on more datapoints](#elasticsearch-receiver-turn-on-more-datapoints)
-- [Upgrading to v0.57.2-sumo-0](#upgrading-to-v0572-sumo-0)
-  - [`sumologic` exporter: drop support for source headers](#sumologic-exporter-drop-support-for-source-headers)
-- [Upgrading to v0.56.0-sumo-0](#upgrading-to-v0560-sumo-0)
-  - [`sumologic` exporter: drop support for translating attributes](#sumologic-exporter-drop-support-for-translating-attributes)
-  - [`sumologic` exporter: drop support for translating Telegraf metric names](#sumologic-exporter-drop-support-for-translating-telegraf-metric-names)
-- [Upgrading to v0.55.0-sumo-0](#upgrading-to-v0550-sumo-0)
-  - [`filter` processor: drop support for `expr` language](#filter-processor-drop-support-for-expr-language)
-- [Upgrading to v0.52.0-sumo-0](#upgrading-to-v0520-sumo-0)
-  - [`sumologic` exporter: Removed `carbon2` and `graphite` metric formats](#sumologic-exporter-removed-carbon2-and-graphite-metric-formats)
-- [Upgrading to v0.51.0-sumo-0](#upgrading-to-v0510-sumo-0)
-  - [`k8s_tagger` processor: removed `clusterName` metadata extraction option](#k8s_tagger-processor-removed-clustername-metadata-extraction-option)
-    - [How to upgrade](#how-to-upgrade)
-  - [`sumologic` exporter: metadata translation: changed the attribute that is translated to `_sourceName` from `file.path.resolved` to `log.file.path_resolved`](#sumologic-exporter-metadata-translation-changed-the-attribute-that-is-translated-to-_sourcename-from-filepathresolved-to-logfilepath_resolved)
-    - [How to upgrade](#how-to-upgrade-1)
-- [Upgrading to 0.49.0-sumo-0](#upgrading-to-0490-sumo-0)
-  - [Several changes to receivers using opentelemetry-log-collection](#several-changes-to-receivers-using-opentelemetry-log-collection)
-  - [Sumo Logic exporter metadata handling](#sumo-logic-exporter-metadata-handling)
-    - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
-    - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
+- [Upgrading](#upgrading)
+  - [Upgrading to v0.90.0-sumo-1](#upgrading-to-v0900-sumo-1)
+    - [Change configuration for `syslogexporter`](#change-configuration-for-syslogexporter)
+    - [`sumologic` exporter: deprecate `clear_logs_timestamp`](#sumologic-exporter-deprecate-clear_logs_timestamp)
+    - [`sumologic` exporter: remove `routing_attributes_to_drop`](#sumologic-exporter-remove-routing_attributes_to_drop)
+    - [`sumologic` exporter: deprecate `json_logs`](#sumologic-exporter-deprecate-json_logs)
+  - [Upgrading to v0.89.0-sumo-0](#upgrading-to-v0890-sumo-0)
+    - [`remoteobserver` processor: renamed to `remotetap` processor](#remoteobserver-processor-renamed-to-remotetap-processor)
+    - [`sumologic` exporter: changed default `timeout` from `5s` to `30s`](#sumologic-exporter-changed-default-timeout-from-5s-to-30s)
+    - [`sumologic` extension: changed default `discover_collector_tags` from `false` to `true`](#sumologic-extension-changed-default-discover_collector_tags-from-false-to-true)
+  - [Upgrading to v0.84.0-sumo-0](#upgrading-to-v0840-sumo-0)
+    - [`sumologic` extension: removed `install_token` in favor of `installation_token`](#sumologic-extension-removed-install_token-in-favor-of-installation_token)
+  - [Upgrading to v0.77.0-sumo-0](#upgrading-to-v0770-sumo-0)
+    - [Full Prometheus metric name normalization is now disabled by default](#full-prometheus-metric-name-normalization-is-now-disabled-by-default)
+  - [Upgrading to v0.73.0-sumo-1](#upgrading-to-v0730-sumo-1)
+    - [The default collector name for sumologic extension is now the host FQDN](#the-default-collector-name-for-sumologic-extension-is-now-the-host-fqdn)
+  - [Upgrading to v0.66.0-sumo-0](#upgrading-to-v0660-sumo-0)
+    - [`filelog` receiver: has been removed from sub-parsers](#filelog-receiver-has-been-removed-from-sub-parsers)
+    - [`sending_queue`: require explicit storage set](#sending_queue-require-explicit-storage-set)
+    - [`apache` receiver: turn on feature gates for resource attributes](#apache-receiver-turn-on-feature-gates-for-resource-attributes)
+    - [`elasticsearch` receiver: turn on more datapoints](#elasticsearch-receiver-turn-on-more-datapoints)
+  - [Upgrading to v0.57.2-sumo-0](#upgrading-to-v0572-sumo-0)
+    - [`sumologic` exporter: drop support for source headers](#sumologic-exporter-drop-support-for-source-headers)
+  - [Upgrading to v0.56.0-sumo-0](#upgrading-to-v0560-sumo-0)
+    - [`sumologic` exporter: drop support for translating attributes](#sumologic-exporter-drop-support-for-translating-attributes)
+    - [`sumologic` exporter: drop support for translating Telegraf metric names](#sumologic-exporter-drop-support-for-translating-telegraf-metric-names)
+  - [Upgrading to v0.55.0-sumo-0](#upgrading-to-v0550-sumo-0)
+    - [`filter` processor: drop support for `expr` language](#filter-processor-drop-support-for-expr-language)
+  - [Upgrading to v0.52.0-sumo-0](#upgrading-to-v0520-sumo-0)
+    - [`sumologic` exporter: Removed `carbon2` and `graphite` metric formats](#sumologic-exporter-removed-carbon2-and-graphite-metric-formats)
+  - [Upgrading to v0.51.0-sumo-0](#upgrading-to-v0510-sumo-0)
+    - [`k8s_tagger` processor: removed `clusterName` metadata extraction option](#k8s_tagger-processor-removed-clustername-metadata-extraction-option)
+      - [How to upgrade](#how-to-upgrade)
+    - [`sumologic` exporter: metadata translation: changed the attribute that is translated to `_sourceName` from `file.path.resolved` to `log.file.path_resolved`](#sumologic-exporter-metadata-translation-changed-the-attribute-that-is-translated-to-_sourcename-from-filepathresolved-to-logfilepath_resolved)
+      - [How to upgrade](#how-to-upgrade-1)
+  - [Upgrading to 0.49.0-sumo-0](#upgrading-to-0490-sumo-0)
+    - [Several changes to receivers using opentelemetry-log-collection](#several-changes-to-receivers-using-opentelemetry-log-collection)
+    - [Sumo Logic exporter metadata handling](#sumo-logic-exporter-metadata-handling)
+      - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
+      - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
+
+## Upgrading to v0.90.0-sumo-1
+
+### Change configuration for `syslogexporter`
+
+To migrate, rename the following keys in configuration for `syslogexporter`:
+
+- rename `protocol` property to `network`
+- rename `format` property to `protocol`
+
+For example, given the following configuration:
+
+```yaml
+  syslog:
+    protocol: tcp
+    port: 514
+    endpoint: 127.0.0.1
+    format: rfc5424
+    tls:
+      ca_file: ca.pem
+      cert_file: cert.pem
+      key_file: key.pem
+```
+
+change it to:
+
+```yaml
+  syslog:
+    network: tcp
+    port: 514
+    endpoint: 127.0.0.1
+    protocol: rfc5424
+    tls:
+      ca_file: ca.pem
+      cert_file: cert.pem
+      key_file:  key.pem
+```
+
+### `sumologic` exporter: deprecate `clear_logs_timestamp`
+
+`clear_logs_timestamp` has been deprecated in favor of `transform` processor. It is going to be removed in `v0.95.0-sumo-0`. To migrate:
+
+- set `clear_logs_timestamp` to `false`
+- add the following processor:
+
+  ```yaml
+  processors:
+    transform/clear_logs_timestamp:
+      log_statements:
+        - context: log
+          statements:
+            - set(time_unix_nano, 0)
+  ```
+
+For example, given the following configuration:
+
+```yaml
+exporters:
+  sumologic:
+```
+
+change it to:
+
+```yaml
+exporters:
+  sumologic:
+    clear_logs_timestamp: false
+processors:
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+service:
+  pipelines:
+    logs:
+      processors:
+        # - ...
+        - transform/clear_logs_timestamp
+```
+
+### `sumologic` exporter: remove `routing_attributes_to_drop`
+
+`routing_attributes_to_drop` has been removed from `sumologic` exporter in favor of `routing` processor's `drop_resource_routing_attribute`.
+
+To migrate, perform the following steps:
+
+- remove `routing_attributes_to_drop` from `sumologic` exporter
+- add `drop_resource_routing_attribute` to `routing` processor
+
+For example, given the following configuration:
+
+```yaml
+processors:
+  routing:
+    from_attribute: X-Tenant
+    default_exporters:
+    - jaeger
+    table:
+    - value: acme
+      exporters: [jaeger/acme]
+exporters:
+  sumologic:
+    routing_attributes_to_drop: X-Tenant
+```
+
+change it to:
+
+```yaml
+processors:
+  routing:
+    drop_resource_routing_attribute: true
+    from_attribute: X-Tenant
+    default_exporters:
+    - jaeger
+    table:
+    - value: acme
+      exporters: [jaeger/acme]
+exporters:
+  sumologic:
+```
+
+### `sumologic` exporter: deprecate `json_logs`
+
+`json_logs` has been deprecated in favor of `transform` processor. It is going to be removed in `v0.95.0-sumo-0`.
+
+To migrate perform the following steps:
+
+- use `transform` processor in replace of `json_logs.add_timestamp` and `json_logs.timestamp_key`:
+
+  ```yaml
+  processors:
+    transform/add_timestamp:
+      log_statements:
+        - context: log
+          statements:
+            - set(time, Now()) where time_unix_nano == 0
+            - set(attributes["timestamp_key"], Int(time_unix_nano / 1000000))
+  ```
+
+- use `transform` processor in replace of `json_logs.flatten_body`:
+
+  ```yaml
+  processors:
+    transform/flatten:
+      error_mode: ignore
+      log_statements:
+        - context: log
+          statements:
+            - merge_maps(attributes, body, "insert") where IsMap(body)
+            - set(body, "") where IsMap(body)
+
+  ```
+
+- use `transform` processor in replace of `json_logs.log_key`:
+
+  ```yaml
+  processors:
+    transform/set_log_key:
+      log_statements:
+        - context: log
+          statements:
+            - set(attributes["log"], body)
+            - set(body, "")
+  ```
+
+#### Migration example for `add_timestamp` and `timestamp_key`
+
+Given the following configuration:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+      timestamp_key: timestamp_key
+      add_timestamp: true
+```
+
+change it to:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+      add_timestamp: false
+processors:
+  transform/add_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time, Now()) where time_unix_nano == 0
+          - set(attributes["timestamp_key"], Int(time_unix_nano / 1000000))
+service:
+  pipelines:
+    logs:
+      processors:
+        # ...
+        - transform/add_timestamp
+```
+
+#### Migration example for `flatten_body`
+
+Given the following configuration:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+      flatten_body: true
+```
+
+change it to:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+      flatten_body: false
+processors:
+  transform/flatten:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - merge_maps(attributes, body, "insert") where IsMap(body)
+          - set(body, "") where IsMap(body)
+service:
+  pipelines:
+    logs:
+      processors:
+        # ...
+        - transform/flatten
+```
+
+#### Migration example for `log_key`
+
+Given the following configuration:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+      log_key: my_log
+```
+
+change it to:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+processors:
+  transform/set_log_key:
+    log_statements:
+      - context: log
+        statements:
+          - set(attributes["my_log"], body)
+          - set(body, "")
+service:
+  pipelines:
+    logs:
+      processors:
+        # ...
+        - transform/set_log_key
+```
+
+## Upgrading to v0.89.0-sumo-0
+
+### `remoteobserver` processor: renamed to `remotetap` processor
+
+To migrate, change the processor name `remoteobserver` to `remotetap` in your configuration files.
+
+For example, given the following configuration:
+
+```yaml
+processors:
+  remoteobserver:
+    port: 1234
+  remoteobserver/another-one:
+    limit: 2
+
+pipelines:
+  logs:
+    exporters: ["..."]
+    processors:
+    - remoteobserver
+    receivers: ["..."]
+  metrics:
+    exporters: ["..."]
+    processors:
+    - remoteobserver/another-one
+    receivers: ["..."]
+```
+
+change it to:
+
+```yaml
+processors:
+  remotetap:
+    port: 1234
+  remotetap/another-one:
+    limit: 2
+
+pipelines:
+  logs:
+    exporters: ["..."]
+    processors:
+    - remotetap
+    receivers: ["..."]
+  metrics:
+    exporters: ["..."]
+    processors:
+    - remotetap/another-one
+    receivers: ["..."]
+```
+
+### `sumologic` exporter: changed default `timeout` from `5s` to `30s`
+
+We believe 30 seconds is a better default timeout for the Sumo Logic exporter.
+The bigger the payload is, the longer it takes for the Sumo Logic backend to process it.
+
+If you want to revert to the previous behavior, set the `timeout` property to `5s` or another value. Example:
+
+```yaml
+exporters:
+  sumologic:
+    timeout: 5s
+```
+
+### `sumologic` extension: changed default `discover_collector_tags` from `false` to `true`
+
+If you want to revert to the previous behavior, set the `discover_collector_tags` property to `false`. Example:
+
+```yaml
+extensions:
+  sumologic:
+    discover_collector_tags: false
+```
 
 ## Upgrading to v0.84.0-sumo-0
 

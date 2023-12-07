@@ -54,13 +54,13 @@ func TestFillWithAnnotations(t *testing.T) {
 	attrs.PutStr("k8s.namespace.name", "ns-1")
 	attrs.PutStr("k8s.pod.uid", "123asd")
 	attrs.PutStr("k8s.pod.annotation.sumologic.com/sourceCategory", "sc-from-annot-%{k8s.namespace.name}-%{k8s.pod.uid}")
-	attrs.PutStr("k8s.pod.annotation.sumologic.com/sourceCategoryPrefix", "annoPrefix:")
+	attrs.PutStr("k8s.pod.annotation.sumologic.com/sourceCategoryPrefix", "%{k8s.pod.uid}-Prefix:")
 	attrs.PutStr("k8s.pod.annotation.sumologic.com/sourceCategoryReplaceDash", "#")
 
 	filler := newSourceCategoryFiller(cfg, zap.NewNop())
 	filler.fill(&attrs)
 
-	assertAttribute(t, attrs, "_sourceCategory", "annoPrefix:sc#from#annot#ns#1#123asd")
+	assertAttribute(t, attrs, "_sourceCategory", "123asd#Prefix:sc#from#annot#ns#1#123asd")
 }
 
 func TestFillWithContainerAnnotations(t *testing.T) {

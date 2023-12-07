@@ -60,11 +60,6 @@ type Config struct {
 	// DEPRECATED: The below attributes only exist so we can print a nicer error
 	// message about not supporting them anymore.
 
-	// Attribute used by routingprocessor which should be dropped during data ingestion
-	// This is workaround for the following issue:
-	// https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/7407
-	DropRoutingAttribute string `mapstructure:"routing_atttribute_to_drop"`
-
 	// Sumo specific options
 	// Name of the client
 	Client string `mapstructure:"client"`
@@ -214,7 +209,7 @@ const (
 	// TracesPipeline represents traces pipeline
 	TracesPipeline PipelineType = "traces"
 	// defaultTimeout
-	defaultTimeout time.Duration = 5 * time.Second
+	defaultTimeout time.Duration = 30 * time.Second
 	// DefaultCompress defines default Compress
 	DefaultCompress bool = true
 	// DefaultCompressEncoding defines default CompressEncoding

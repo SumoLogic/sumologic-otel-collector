@@ -21,7 +21,7 @@ exporters:
     # max HTTP request body size in bytes before compression (if applied),
     # NOTE: this limit does not apply to data sent in otlp format,
     #   to limit size of otlp requests, please use the batch processor:
-    #   https://github.com/open-telemetry/opentelemetry-collector/tree/v0.88.0/processor/batchprocessor
+    #   https://github.com/open-telemetry/opentelemetry-collector/tree/v0.90.1/processor/batchprocessor
     # default = 1_048_576 (1MB)
     max_request_body_size: <max_request_body_size>
 
@@ -44,22 +44,15 @@ exporters:
     trace_format: {otlp}
 
     # timeout is the timeout for every attempt to send data to the backend,
-    # maximum connection timeout is 55s, default = 5s
+    # maximum connection timeout is 55s, default = 30s
     timeout: <timeout>
 
     # defines if timestamp for logs should be set to 0,
     # it indicates that backend will extract timestamp from logs,
     # this option affects OTLP format only
+    # Deprecated, please use transformprocessor to clear logs timestamp
     # default = true
     clear_logs_timestamp: {true, false}
-
-    # name of resource attribute which should be dropped for records
-    # this is for attribute used by routing processor
-    # other attributes should be removed by processors in pipelines before
-    # This is workaround for the following issue:
-    # https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/7407
-    # default = ``
-    routing_atttribute_to_drop: <routing_atttribute_to_drop>
 
     json_logs:
       # defines which key will be used to attach the log body at.

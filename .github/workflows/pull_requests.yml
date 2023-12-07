@@ -10,7 +10,7 @@ defaults:
     shell: bash
 
 env:
-  GO_VERSION: "1.20.5"
+  GO_VERSION: "1.21.4"
 
 jobs:
 
@@ -89,7 +89,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
       - uses: pre-commit/action@v3.0.0
 
   check-uniform-dependencies:
@@ -160,7 +160,7 @@ jobs:
 
       - name: Setup go
         if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: 'pkg/scripts_test/go.sum'
@@ -217,7 +217,7 @@ jobs:
 
       - name: Setup go
         if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
@@ -277,6 +277,9 @@ jobs:
             runs-on: macos-latest
           - arch_os: windows_amd64
             runs-on: windows-2022
+          - arch_os: windows_amd64
+            runs-on: windows-2022
+            fips: true
     with:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}

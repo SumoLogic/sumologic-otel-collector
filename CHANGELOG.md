@@ -7,6 +7,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.89.0-sumo-2]
+
+### Released 2023-11-24
+
+### Changed
+
+- chore: update Go to `v1.20.11` [#1340]
+
+### Fixed
+
+- fix(sourceprocessor): add templating to sourceCategoryPrefix [#1339]
+
+[#1340]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1340
+[#1339]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1339
+[v0.89.0-sumo-2]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.89.0-sumo-2
+
+## [v0.89.0-sumo-1]
+
+This was a failed release. Use [v0.89.0-sumo-2] instead.
+
+[v0.89.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.89.0-sumo-1
+
+## [v0.89.0-sumo-0]
+
+### Released 2023-11-17
+
+See the [upgrade guide][upgrade_guide_v0.89] for more details on the breaking changes.
+
+### Breaking Changes
+
+- feat(processor/remoteobserver)!: rename `remoteobserver` processor to `remotetap` [#1333]
+- feat(exporter/sumologic)!: change default timeout from `5s` to `30s` [#1332]
+- feat(extension/sumologic)!: change `discover_collector_tags` to be `true` by default [#1330]
+
+### Added
+
+- feat(receiver/active_directory_inv): add Windows Active Directory Inventory receiver [#1273]
+- feat(opamp): Support OpAmp remote management for the opentelemetry collector, via the --remote-config flag [#1310]
+- feat(processor/sumologic): add upstream `sumologic` processor [#1334]
+
+### Changed
+
+- chore: update otel core to `v0.89.0` [#1333]
+- feat(processor/sumologicschema): deprecate `sumologic_schema` processor in favor of newly added upstream `sumologic` processor [#1334]
+
+  To migrate, simply change the name `sumologic_schema` to `sumologic` in your configuration files.
+
+[#1330]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1330
+[#1273]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1273
+[#1310]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1310
+[#1334]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1334
+[#1332]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1332
+[#1333]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1333
+[v0.89.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.89.0-sumo-0
+[upgrade_guide_v0.89]: ./docs/upgrading.md#upgrading-to-v0890-sumo-0
+
 ## [v0.88.0-sumo-1]
 
 ### Released 2023-11-03

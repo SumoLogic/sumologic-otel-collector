@@ -33,7 +33,11 @@ func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string
 				info, err := os.Stat(path)
 				require.NoError(c.test, err)
 				if info.IsDir() {
-					permissions = configPathDirPermissions
+					if path == opampDPath {
+						permissions = opampDPermissions
+					} else {
+						permissions = configPathDirPermissions
+					}
 				} else {
 					permissions = configPathFilePermissions
 				}
@@ -115,6 +119,15 @@ func checkSystemdEnvDirPermissions(c check) {
 	PathHasPermissions(c.test, etcPath+"/env", configPathDirPermissions)
 }
 
+func checkRemoteFlagInSystemdFile(c check) {
+	contents, err := getSystemdConfig(systemdPath)
+
+	require.NoError(c.test, err)
+
+	assert.Contains(c.test, contents, "--remote-config")
+	assert.NotContains(c.test, contents, "--config")
+}
+
 func checkTokenEnvFileCreated(c check) {
 	require.FileExists(c.test, tokenEnvFilePath, "env token file has not been created")
 }
@@ -132,6 +145,15 @@ func checkTokenInConfig(c check) {
 	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
 }
 
+func checkTokenInSumoConfig(c check) {
+	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
+
+	conf, err := getConfig(configPath)
+	require.NoError(c.test, err, "error while reading configuration")
+
+	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
+}
+
 func checkTokenInEnvFile(c check) {
 	require.NotEmpty(c.test, c.installOptions.installToken, "installation token has not been provided")
 
@@ -142,6 +164,28 @@ func checkTokenInEnvFile(c check) {
 		require.Equal(c.test, c.installOptions.installToken, envs["SUMOLOGIC_INSTALL_TOKEN"], "installation token is different than expected")
 	} else {
 		require.Equal(c.test, c.installOptions.installToken, envs["SUMOLOGIC_INSTALLATION_TOKEN"], "installation token is different than expected")
+	}
+}
+
+func checkEphemeralInConfig(p string) func(c check) {
+	return func(c check) {
+		assert.True(c.test, c.installOptions.ephemeral, "ephemeral was not specified")
+
+		conf, err := getConfig(p)
+		require.NoError(c.test, err, "error while reading configuration")
+
+		assert.True(c.test, conf.Extensions.Sumologic.Ephemeral, "ephemeral is not true")
+	}
+}
+
+func checkEphemeralNotInConfig(p string) func(c check) {
+	return func(c check) {
+		assert.False(c.test, c.installOptions.ephemeral, "ephemeral was specified")
+
+		conf, err := getConfig(p)
+		require.NoError(c.test, err, "error while reading configuration")
+
+		assert.False(c.test, conf.Extensions.Sumologic.Ephemeral, "ephemeral is true")
 	}
 }
 
