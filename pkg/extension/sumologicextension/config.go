@@ -92,7 +92,7 @@ type Config struct {
 	// Please see following link for details: https://github.com/cenkalti/backoff
 	BackOff backOffConfig `mapstructure:"backoff"`
 
-	// StickySessionEnabled defines if sticky session suppoer is enable.
+	// StickySessionEnabled defines if sticky session support is enable.
 	// By default this is false.
 	StickySessionEnabled bool `mapstructure:"sticky_session_enabled"`
 }
