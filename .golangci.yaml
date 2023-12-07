@@ -8,14 +8,14 @@ linters-settings:
     check-blank: true
 
   gosimple:
-    go: "1.20"
+    go: "1.21"
 
   maligned:
     # print struct with more effective memory layout or not, false by default
     suggest-new: true
 
   unused:
-    go: "1.20"
+    go: "1.21"
 
   lll:
     # max line length, lines longer will be reported. Default is 120.

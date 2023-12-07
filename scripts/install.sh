@@ -44,6 +44,10 @@ ARG_SHORT_KEEP_DOWNLOADS='n'
 ARG_LONG_KEEP_DOWNLOADS='keep-downloads'
 ARG_SHORT_INSTALL_HOSTMETRICS='H'
 ARG_LONG_INSTALL_HOSTMETRICS='install-hostmetrics'
+ARG_SHORT_REMOTELY_MANAGED='r'
+ARG_LONG_REMOTELY_MANAGED='remotely-managed'
+ARG_SHORT_EPHEMERAL='E'
+ARG_LONG_EPHEMERAL='ephemeral'
 ARG_SHORT_TIMEOUT='m'
 ARG_LONG_TIMEOUT='download-timeout'
 
@@ -58,6 +62,8 @@ readonly ARG_SHORT_CONFIG_BRANCH ARG_LONG_CONFIG_BRANCH ARG_SHORT_BINARY_BRANCH 
 readonly ARG_SHORT_BRANCH ARG_LONG_BRANCH ARG_SHORT_SKIP_CONFIG ARG_LONG_SKIP_CONFIG
 readonly ARG_SHORT_SKIP_TOKEN ARG_LONG_SKIP_TOKEN ARG_SHORT_FIPS ARG_LONG_FIPS ENV_TOKEN
 readonly ARG_SHORT_INSTALL_HOSTMETRICS ARG_LONG_INSTALL_HOSTMETRICS
+readonly ARG_SHORT_REMOTELY_MANAGED ARG_LONG_REMOTELY_MANAGED
+readonly ARG_SHORT_EPHEMERAL ARG_LONG_EPHEMERAL
 readonly ARG_SHORT_TIMEOUT ARG_LONG_TIMEOUT
 readonly DEPRECATED_ARG_LONG_TOKEN DEPRECATED_ENV_TOKEN DEPRECATED_ARG_LONG_SKIP_TOKEN
 readonly PACKAGE_GITHUB_ORG PACKAGE_GITHUB_REPO
@@ -93,6 +99,8 @@ COMMON_CONFIG_PATH=""
 PURGE=""
 DOWNLOAD_ONLY=""
 INSTALL_HOSTMETRICS=false
+REMOTELY_MANAGED=false
+EPHEMERAL=false
 
 LAUNCHD_CONFIG=""
 LAUNCHD_ENV_KEY=""
@@ -132,7 +140,7 @@ Usage: bash install.sh [--${ARG_LONG_TOKEN} <token>] [--${ARG_LONG_TAG} <key>=<v
 
 Supported arguments:
   -${ARG_SHORT_TOKEN}, --${ARG_LONG_TOKEN} <token>      Installation token. It has precedence over 'SUMOLOGIC_INSTALLATION_TOKEN' env variable.
-  -${ARG_SHORT_SKIP_TOKEN}, --${ARG_LONG_SKIP_TOKEN}              Skips requirement for installation token.
+  -${ARG_SHORT_SKIP_TOKEN}, --${ARG_LONG_SKIP_TOKEN}         Skips requirement for installation token.
                                         This option do not disable default configuration creation.
   -${ARG_SHORT_TAG}, --${ARG_LONG_TAG} <key=value>                 Sets tag for collector. This argument can be use multiple times. One per tag.
   -${ARG_SHORT_DOWNLOAD}, --${ARG_LONG_DOWNLOAD}                   Download new binary only and skip configuration part.
@@ -150,6 +158,8 @@ Supported arguments:
                                         By default it gets latest version.
   -${ARG_SHORT_FIPS}, --${ARG_LONG_FIPS}                            Install the FIPS 140-2 compliant binary on Linux.
   -${ARG_SHORT_INSTALL_HOSTMETRICS}, --${ARG_LONG_INSTALL_HOSTMETRICS}             Install the hostmetrics configuration to collect host metrics.
+  -${ARG_SHORT_REMOTELY_MANAGED}, --${ARG_LONG_REMOTELY_MANAGED}                Remotely manage the collector configuration with Sumo Logic.
+  -${ARG_SHORT_EPHEMERAL}, --${ARG_LONG_EPHEMERAL}                       Delete the collector from Sumo Logic after 12 hours of inactivity.
   -${ARG_SHORT_TIMEOUT}, --${ARG_LONG_TIMEOUT} <timeout>      Timeout in seconds after which download will fail. Default is ${CURL_MAX_TIME}.
   -${ARG_SHORT_YES}, --${ARG_LONG_YES}                             Disable confirmation asks.
 
@@ -168,9 +178,11 @@ function set_defaults() {
     SYSTEMD_CONFIG="/etc/systemd/system/otelcol-sumo.service"
     SUMO_BINARY_PATH="/usr/local/bin/otelcol-sumo"
     USER_CONFIG_DIRECTORY="${CONFIG_DIRECTORY}/conf.d"
+    REMOTE_CONFIG_DIRECTORY="${CONFIG_DIRECTORY}/opamp.d"
     USER_ENV_DIRECTORY="${CONFIG_DIRECTORY}/env"
     TOKEN_ENV_FILE="${USER_ENV_DIRECTORY}/token.env"
     CONFIG_PATH="${CONFIG_DIRECTORY}/sumologic.yaml"
+    CONFIG_BAK_PATH="${CONFIG_PATH}.bak"
     COMMON_CONFIG_PATH="${USER_CONFIG_DIRECTORY}/common.yaml"
     COMMON_CONFIG_BAK_PATH="${USER_CONFIG_DIRECTORY}/common.yaml.bak"
     INDENTATION="  "
@@ -252,11 +264,17 @@ function parse_options() {
       "--${ARG_LONG_TIMEOUT}")
         set -- "$@" "-${ARG_SHORT_TIMEOUT}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_SKIP_CONFIG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_FIPS}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SKIP_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}"|"-${ARG_SHORT_TIMEOUT}"|"-${ARG_SHORT_INSTALL_HOSTMETRICS}")
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_SKIP_CONFIG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_FIPS}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SKIP_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}"|"-${ARG_SHORT_TIMEOUT}"|"-${ARG_SHORT_INSTALL_HOSTMETRICS}"|"-${ARG_SHORT_REMOTELY_MANAGED}"|"-${ARG_SHORT_EPHEMERAL}")
         set -- "$@" "${arg}"
         ;;
       "--${ARG_LONG_INSTALL_HOSTMETRICS}")
         set -- "$@" "-${ARG_SHORT_INSTALL_HOSTMETRICS}"
+        ;;
+      "--${ARG_LONG_REMOTELY_MANAGED}")
+        set -- "$@" "-${ARG_SHORT_REMOTELY_MANAGED}"
+        ;;
+      "--${ARG_LONG_EPHEMERAL}")
+        set -- "$@" "-${ARG_SHORT_EPHEMERAL}"
         ;;
       -*)
         echo "Unknown option ${arg}"; usage; exit 1 ;;
@@ -270,7 +288,7 @@ function parse_options() {
 
   while true; do
     set +e
-    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_FIPS}${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_SKIP_CONFIG}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:${ARG_SHORT_INSTALL_HOSTMETRICS}${ARG_SHORT_TIMEOUT}:" opt
+    getopts "${ARG_SHORT_HELP}${ARG_SHORT_TOKEN}:${ARG_SHORT_API}:${ARG_SHORT_TAG}:${ARG_SHORT_VERSION}:${ARG_SHORT_FIPS}${ARG_SHORT_YES}${ARG_SHORT_SKIP_SYSTEMD}${ARG_SHORT_UNINSTALL}${ARG_SHORT_PURGE}${ARG_SHORT_SKIP_TOKEN}${ARG_SHORT_SKIP_CONFIG}${ARG_SHORT_DOWNLOAD}${ARG_SHORT_KEEP_DOWNLOADS}${ARG_SHORT_CONFIG_BRANCH}:${ARG_SHORT_BINARY_BRANCH}:${ARG_SHORT_BRANCH}:${ARG_SHORT_EPHEMERAL}${ARG_SHORT_REMOTELY_MANAGED}${ARG_SHORT_INSTALL_HOSTMETRICS}${ARG_SHORT_TIMEOUT}:" opt
     set -e
 
     # Invalid argument catched, print and exit
@@ -304,6 +322,8 @@ function parse_options() {
             CONFIG_BRANCH="${OPTARG}"
         fi ;;
       "${ARG_SHORT_INSTALL_HOSTMETRICS}") INSTALL_HOSTMETRICS=true ;;
+      "${ARG_SHORT_REMOTELY_MANAGED}") REMOTELY_MANAGED=true ;;
+      "${ARG_SHORT_EPHEMERAL}") EPHEMERAL=true ;;
       "${ARG_SHORT_KEEP_DOWNLOADS}") KEEP_DOWNLOADS=true ;;
       "${ARG_SHORT_TIMEOUT}") CURL_MAX_TIME="${OPTARG}" ;;
       "${ARG_SHORT_TAG}")
@@ -689,6 +709,44 @@ function setup_config() {
         exit 1
     fi
 
+    if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
+        echo "Warning: remote management is currently in beta."
+
+        echo -e "Creating remote configurations directory (${REMOTE_CONFIG_DIRECTORY})"
+        mkdir -p "${REMOTE_CONFIG_DIRECTORY}"
+
+        write_sumologic_extension "${CONFIG_PATH}" "${INDENTATION}"
+        write_opamp_extension "${CONFIG_PATH}" "${REMOTE_CONFIG_DIRECTORY}" "${INDENTATION}" "${EXT_INDENTATION}" "${API_BASE_URL}"
+
+        if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ]]; then
+            write_installation_token "${SUMOLOGIC_INSTALLATION_TOKEN}" "${CONFIG_PATH}" "${EXT_INDENTATION}"
+        fi
+
+        if [[ "${EPHEMERAL}" == "true" ]]; then
+            write_ephemeral_true "${CONFIG_PATH}" "${EXT_INDENTATION}"
+        fi
+
+        if [[ -n "${API_BASE_URL}" ]]; then
+            write_api_url "${API_BASE_URL}" "${CONFIG_PATH}" "${EXT_INDENTATION}"
+        fi
+
+        if [[ -n "${FIELDS}" ]]; then
+            write_tags "${FIELDS}" "${CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
+        fi
+
+        rm -f "${CONFIG_BAK_PATH}"
+
+        # Finish setting permissions after we're done creating config files
+        chmod -R 440 "${CONFIG_DIRECTORY}"/*  # all files only readable by the owner
+        find "${CONFIG_DIRECTORY}/" -mindepth 1 -type d -exec chmod 550 {} \;  # directories also traversable
+
+        # Remote configuration directory must be writable
+        chmod 750 "${REMOTE_CONFIG_DIRECTORY}"
+
+        # Return/stop function execution
+        return
+    fi
+
     if [[ "${INSTALL_HOSTMETRICS}" == "true" ]]; then
         echo -e "Installing ${OS_TYPE} hostmetrics configuration"
         HOSTMETRICS_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/conf.d/${OS_TYPE}.yaml"
@@ -710,13 +768,17 @@ function setup_config() {
     fi
 
     ## Check if there is anything to update in configuration
-    if [[ ( -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ) || -n "${API_BASE_URL}" || -n "${FIELDS}" ]]; then
+    if [[ ( -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ) || -n "${API_BASE_URL}" || -n "${FIELDS}" || "${EPHEMERAL}" == "true" ]]; then
         create_user_config_file "${COMMON_CONFIG_PATH}"
         add_extension_to_config "${COMMON_CONFIG_PATH}"
         write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
 
         if [[ -n "${SUMOLOGIC_INSTALLATION_TOKEN}" && -z "${USER_TOKEN}" && "${SYSTEMD_DISABLED}" == "true" ]]; then
             write_installation_token "${SUMOLOGIC_INSTALLATION_TOKEN}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
+        fi
+
+        if [[ "${EPHEMERAL}" == "true" ]]; then
+            write_ephemeral_true "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
         fi
 
         # fill in api base url
@@ -731,27 +793,57 @@ function setup_config() {
         # clean up bak file
         rm -f "${COMMON_CONFIG_BAK_PATH}"
     fi
-
     # Finish setting permissions after we're done creating config files
     chmod -R 440 "${CONFIG_DIRECTORY}"/*  # all files only readable by the owner
     find "${CONFIG_DIRECTORY}/" -mindepth 1 -type d -exec chmod 550 {} \;  # directories also traversable
 }
 
 function setup_config_darwin() {
-    create_user_config_file "${COMMON_CONFIG_PATH}"
-    add_extension_to_config "${COMMON_CONFIG_PATH}"
-    write_sumologic_extension "${COMMON_CONFIG_PATH}" "${INDENTATION}"
+    local config_path
+    config_path="${COMMON_CONFIG_PATH}"
+
+    if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
+        config_path="${CONFIG_PATH}"
+    fi
+
+    readonly config_path
+
+    create_user_config_file "${config_path}"
+    add_extension_to_config "${config_path}"
+    write_sumologic_extension "${config_path}" "${INDENTATION}"
+
+    if [[ "${EPHEMERAL}" == "true" ]]; then
+        write_ephemeral_true "${config_path}" "${EXT_INDENTATION}"
+    fi
 
     # fill in api base url
     if [[ -n "${API_BASE_URL}" ]]; then
-        write_api_url "${API_BASE_URL}" "${COMMON_CONFIG_PATH}" "${EXT_INDENTATION}"
+        write_api_url "${API_BASE_URL}" "${config_path}" "${EXT_INDENTATION}"
     fi
 
     if [[ -n "${FIELDS}" ]]; then
-        write_tags "${FIELDS}" "${COMMON_CONFIG_PATH}" "${INDENTATION}" "${EXT_INDENTATION}"
+        write_tags "${FIELDS}" "${config_path}" "${INDENTATION}" "${EXT_INDENTATION}"
     fi
 
-    # clean up bak file
+    if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
+        echo "Warning: remote management is currently in beta."
+
+        echo -e "Creating remote configurations directory (${REMOTE_CONFIG_DIRECTORY})"
+        mkdir -p "${REMOTE_CONFIG_DIRECTORY}"
+
+        write_opamp_extension "${config_path}" "${REMOTE_CONFIG_DIRECTORY}" "${INDENTATION}" "${EXT_INDENTATION}" "${API_BASE_URL}"
+
+        write_remote_config_launchd "${LAUNCHD_CONFIG}"
+
+        # Remote configuration directory must be writable
+        chmod 750 "${REMOTE_CONFIG_DIRECTORY}"
+
+        # Remote configuration directory must be owned by the mac pkg service user
+        chown _otelcol-sumo:_otelcol-sumo "${REMOTE_CONFIG_DIRECTORY}"
+    fi
+
+    # clean up bak files
+    rm -f "${CONFIG_BAK_PATH}"
     rm -f "${COMMON_CONFIG_BAK_PATH}"
 }
 
@@ -1199,6 +1291,39 @@ function write_installation_token_launchd() {
     fi
 }
 
+function write_remote_config_launchd() {
+    local file
+    readonly file="${1}"
+
+    if [[ ! -f "${file}" ]]; then
+        echo "The LaunchDaemon configuration file is missing: ${file}"
+        exit 1
+    fi
+
+    # Delete existing ProgramArguments
+    plutil_delete_key "${file}" "ProgramArguments"
+
+    # Create new ProgramArguments with --remote-config
+    plutil_create_key "${file}" "ProgramArguments" "json" "[ \"/usr/local/bin/otelcol-sumo\", \"--remote-config\", \"opamp:${CONFIG_PATH}\" ]"
+}
+
+# write sumologic ephemeral: true to user configuration file
+function write_ephemeral_true() {
+    local file
+    readonly file="${1}"
+
+    local ext_indentation
+    readonly ext_indentation="${2}"
+
+    if grep "ephemeral:" "${file}" > /dev/null; then
+        sed -i.bak -e "1,/ephemeral:/ s/ephemeral:.*$/ephemeral: true/" "${file}"
+    else
+        # write ephemeral: true on the top of sumologic: extension
+        sed -i.bak -e "1,/sumologic:/ s/sumologic:/sumologic:\\
+\\${ext_indentation}ephemeral: true/" "${file}"
+    fi
+}
+
 # write api_url to user configuration file
 function write_api_url() {
     local api_url
@@ -1214,8 +1339,8 @@ function write_api_url() {
     if grep "api_base_url" "${file}" > /dev/null; then
         sed -i.bak -e "s/api_base_url:.*$/api_base_url: $(escape_sed "${api_url}")/" "${file}"
     else
-        # write installation token on the top of sumologic: extension
-        sed -i.bak -e "s/sumologic:/sumologic:\\
+        # write api_url on the top of sumologic: extension
+        sed -i.bak -e "1,/sumologic:/ s/sumologic:/sumologic:\\
 \\${ext_indentation}api_base_url: $(escape_sed "${api_url}")/" "${file}"
     fi
 }
@@ -1246,8 +1371,63 @@ function write_tags() {
         sed -i.bak -e "s/collector_fields:.*$/collector_fields: ${fields_to_write}/" "${file}"
     else
         # write installation token on the top of sumologic: extension
-        sed -i.bak -e "s/sumologic:/sumologic:\\
+        sed -i.bak -e "1,/sumologic:/ s/sumologic:/sumologic:\\
 \\${ext_indentation}collector_fields: ${fields_to_write}/" "${file}"
+    fi
+}
+
+# configure and enable the opamp extension for remote management
+function write_opamp_extension() {
+    local file
+    readonly file="${1}"
+
+    local directory
+    readonly directory="${2}"
+
+    local indentation
+    readonly indentation="${3}"
+
+    local ext_indentation
+    readonly ext_indentation="${4}"
+
+    local api_url
+    readonly api_url="${5}"
+
+    # add opamp extension if its missing
+    if ! grep "opamp:" "${file}" > /dev/null; then
+        sed -i.bak -e "1,/extensions:/ s/extensions:/extensions:\\
+${indentation}opamp:/" "${file}"
+    fi
+
+    # set the remote_configuration_directory
+    if grep "remote_configuration_directory:" "${file}" > /dev/null; then
+        sed -i.bak -e "s/remote_configuration_directory:.*$/remote_configuration_directory: $(escape_sed "${directory}")/" "${file}"
+    else
+        sed -i.bak -e "s/opamp:/opamp:\\
+\\${ext_indentation}remote_configuration_directory: $(escape_sed "${directory}")/" "${file}"
+    fi
+
+    # if a different base url is specified, configure the corresponding opamp endpoint
+    if [[ -n "${api_url}" ]]; then
+        wss_url=${api_url/https:/"wss:"}
+        wss_url=${wss_url%/}
+        wss_url=${wss_url/open-events/"opamp-events"}
+        wss_url=${wss_url/open-collectors/"opamp-collectors"}
+        wss_url=${wss_url/\.net/".net/v1/opamp"}
+        wss_url=${wss_url/\.com/".com/v1/opamp"}
+
+        if grep "endpoint: wss:" "${file}" > /dev/null; then
+            sed -i.bak -e "s/endpoint: wss:.*$/endpoint: $(escape_sed "${wss_url}")/" "${file}"
+        else
+            sed -i.bak -e "s/opamp:/opamp:\\
+\\${ext_indentation}endpoint: $(escape_sed "${wss_url}")/" "${file}"
+        fi
+    fi
+
+    # enable the opamp extension
+    if ! grep "\- opamp" "${file}" > /dev/null; then
+        sed -i.bak -e "s/${indentation}extensions:/${indentation}extensions:\\
+\\${ext_indentation}- opamp/" "${file}"
     fi
 }
 
@@ -1565,6 +1745,7 @@ readonly SUMOLOGIC_INSTALLATION_TOKEN API_BASE_URL FIELDS CONTINUE FILE_STORAGE 
 readonly USER_CONFIG_DIRECTORY USER_ENV_DIRECTORY CONFIG_DIRECTORY CONFIG_PATH COMMON_CONFIG_PATH
 readonly ACL_LOG_FILE_PATHS
 readonly INSTALL_HOSTMETRICS
+readonly REMOTELY_MANAGED
 readonly CURL_MAX_TIME
 readonly LAUNCHD_CONFIG LAUNCHD_ENV_KEY LAUNCHD_TOKEN_KEY
 
@@ -1836,16 +2017,23 @@ if [[ "${SKIP_CONFIG}" == "false" ]]; then
 fi
 
 if [[ "${SYSTEMD_DISABLED}" == "true" ]]; then
-    COMMAND_SUFFIX=""
-    # Add glob for versions above 0.57
-    if (( MAJOR_VERSION >= 0 && MINOR_VERSION > 57 )); then
-        COMMAND_SUFFIX=" --config \"glob:${CONFIG_DIRECTORY}/conf.d/*.yaml\""
+    COMMAND_FLAGS=""
+
+    if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
+        COMMAND_FLAGS="--remote-config \"opamp:${CONFIG_PATH}\""
     else
-        COMMAND_SUFFIX=" --config ${COMMON_CONFIG_PATH}"
+        COMMAND_FLAGS="--config=${CONFIG_PATH}"
+        # Add glob for versions above 0.57
+        if (( MAJOR_VERSION >= 0 && MINOR_VERSION > 57 )); then
+            COMMAND_FLAGS="${COMMAND_FLAGS} --config \"glob:${CONFIG_DIRECTORY}/conf.d/*.yaml\""
+        else
+            COMMAND_FLAGS="${COMMAND_FLAGS} --config ${COMMON_CONFIG_PATH}"
+        fi
     fi
+
     echo ""
     echo Warning: running as a service is not supported on your operation system.
-    echo "Please use 'sudo otelcol-sumo --config=${CONFIG_PATH}${COMMAND_SUFFIX}' to run Sumo Logic Distribution for OpenTelemetry Collector"
+    echo "Please use 'sudo otelcol-sumo ${COMMAND_FLAGS}' to run Sumo Logic Distribution for OpenTelemetry Collector"
     exit 0
 fi
 
@@ -1880,6 +2068,10 @@ if [[ "${SKIP_CONFIG}" == "false" ]]; then
     echo 'Changing ownership for config and storage'
     chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${HOME_DIRECTORY}" "${CONFIG_DIRECTORY}"/*
     chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${USER_ENV_DIRECTORY}"
+
+    if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
+        chown -R "${SYSTEM_USER}":"${SYSTEM_USER}" "${REMOTE_CONFIG_DIRECTORY}"
+    fi
 fi
 
 SYSTEMD_CONFIG_URL="https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/${CONFIG_BRANCH}/examples/systemd/otelcol-sumo.service"
@@ -1894,6 +2086,10 @@ sed -i.bak -e "s%/etc/otelcol-sumo/env%${USER_ENV_DIRECTORY}%" "${TMP_SYSTEMD_CO
 # Remove glob for versions up to 0.57
 if (( MAJOR_VERSION == 0 && MINOR_VERSION <= 57 )); then
     sed -i.bak -e "s% --config \"glob.*\"% --config ${COMMON_CONFIG_PATH}%" "${TMP_SYSTEMD_CONFIG}"
+fi
+
+if [[ "${REMOTELY_MANAGED}" == "true" ]]; then
+    sed -i.bak -e "s% --config.*$% --remote-config \"opamp:${CONFIG_PATH}\"%" "${TMP_SYSTEMD_CONFIG}"
 fi
 
 # clean up bak file

@@ -111,6 +111,14 @@ func checkHostmetricsConfigNotCreated(c check) {
 	require.NoFileExists(c.test, hostmetricsConfigPath, "hostmetrics configuration has been created")
 }
 
+func checkRemoteConfigDirectoryCreated(c check) {
+	require.DirExists(c.test, opampDPath, "remote configuration directory has not been created properly")
+}
+
+func checkRemoteConfigDirectoryNotCreated(c check) {
+	require.NoDirExists(c.test, opampDPath, "remote configuration directory has been created")
+}
+
 func checkTags(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")

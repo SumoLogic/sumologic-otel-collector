@@ -72,6 +72,7 @@ type sumologicexporter struct {
 }
 
 func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sumologicexporter, error) {
+
 	pf, err := newPrometheusFormatter()
 	if err != nil {
 		return nil, err
@@ -101,6 +102,11 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sumolog
 		zap.String("metric_format", string(cfg.MetricFormat)),
 		zap.String("trace_format", string(cfg.TraceFormat)),
 	)
+
+	if cfg.ClearLogsTimestamp {
+		se.logger.Warn("'clear_logs_timestamps' is deprecated and suboptimal. It is going to be removed in 'v0.95.0-sumo-0'. Please follow the upgrade guide: " +
+			"https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#sumologic-exporter-deprecate-clear_logs_timestamp")
+	}
 
 	return se, nil
 }
@@ -228,7 +234,6 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld plog.Logs) err
 	for i := 0; i < rls.Len(); i++ {
 		rl := rls.At(i)
 
-		se.dropRoutingAttribute(rl.Resource().Attributes())
 		currentMetadata := newFields(rl.Resource().Attributes())
 
 		if droppedRecords, err := sdr.sendNonOTLPLogs(ctx, rl, currentMetadata); err != nil {
@@ -243,15 +248,15 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld plog.Logs) err
 	if len(dropped) > 0 {
 		ld = plog.NewLogs()
 
-		// Move all dropped records to Logs
+		// Copy all dropped records to Logs
 		// NOTE: we only copy resource and log records here.
 		// Scope is not handled properly but it never was.
 		for i := range dropped {
 			rls := ld.ResourceLogs().AppendEmpty()
-			dropped[i].resource.MoveTo(rls.Resource())
+			dropped[i].resource.CopyTo(rls.Resource())
 
 			for j := 0; j < len(dropped[i].records); j++ {
-				dropped[i].records[j].MoveTo(
+				dropped[i].records[j].CopyTo(
 					rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty(),
 				)
 			}
@@ -289,15 +294,6 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pmetric.Met
 		se.SetStickySessionCookie,
 		se.id,
 	)
-
-	// Transform metrics metadata
-	// this includes dropping the routing attribute and translating attributes
-	rms := md.ResourceMetrics()
-	for i := 0; i < rms.Len(); i++ {
-		rm := rms.At(i)
-
-		se.dropRoutingAttribute(rm.Resource().Attributes())
-	}
 
 	var droppedMetrics pmetric.Metrics
 	var errs []error
@@ -357,12 +353,6 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td ptrace.Trace
 		se.SetStickySessionCookie,
 		se.id,
 	)
-
-	// Drop routing attribute from ResourceSpans
-	rss := td.ResourceSpans()
-	for i := 0; i < rss.Len(); i++ {
-		se.dropRoutingAttribute(rss.At(i).Resource().Attributes())
-	}
 
 	err = sdr.sendTraces(ctx, td)
 	se.handleUnauthorizedErrors(ctx, err)

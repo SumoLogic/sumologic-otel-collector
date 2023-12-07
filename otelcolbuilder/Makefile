@@ -1,5 +1,5 @@
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.90.0
+BUILDER_VERSION ?= 0.90.1
 FIPS_SUFFIX ?= ""
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
 GO ?= go
@@ -50,10 +50,11 @@ endif
 ifeq ($(FIPS_SUFFIX),"")
 GOEXPERIMENT=""
 LDFLAGS="-s -w"
+GOFIPS=1
 # We want to use boringcrypto for fips setup
 else
 ifeq ($(shell go env GOOS),windows)
-GOEXPERIMENT=cngcrypto
+GOEXPERIMENT=systemcrypto
 GOTAGS := $(GOTAGS) requirefips
 LDFLAGS="-w"
 else

@@ -1,0 +1,1 @@
+chore(sumologicexporter): do not mutate data with json_logs configuration

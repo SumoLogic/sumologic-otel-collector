@@ -1,0 +1,1 @@
+feat(sumologicexporter)!:depreacate clear_logs_timestamps

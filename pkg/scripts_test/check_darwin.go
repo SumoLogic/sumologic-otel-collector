@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,9 +27,13 @@ func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string
 				info, err := os.Stat(path)
 				require.NoError(c.test, err)
 				if info.IsDir() {
-					if path == etcPath {
+					switch path {
+					case etcPath:
 						permissions = etcPathPermissions
-					} else {
+					case opampDPath:
+						// /etc/otelcol-sumo/opamp.d
+						permissions = opampDPermissions
+					default:
 						permissions = configPathDirPermissions
 					}
 				} else {
@@ -109,6 +114,28 @@ func checkTokenInLaunchdConfig(c check) {
 	require.NoError(c.test, err)
 
 	require.Equal(c.test, c.installOptions.installToken, conf.EnvironmentVariables.InstallationToken, "installation token is different than expected")
+}
+
+func checkEphemeralInConfig(p string) func(c check) {
+	return func(c check) {
+		assert.True(c.test, c.installOptions.ephemeral, "ephemeral was not specified")
+
+		conf, err := getConfig(p)
+		require.NoError(c.test, err, "error while reading configuration")
+
+		assert.True(c.test, conf.Extensions.Sumologic.Ephemeral, "ephemeral is not true")
+	}
+}
+
+func checkEphemeralNotInConfig(p string) func(c check) {
+	return func(c check) {
+		assert.False(c.test, c.installOptions.ephemeral, "ephemeral was specified")
+
+		conf, err := getConfig(p)
+		require.NoError(c.test, err, "error while reading configuration")
+
+		assert.False(c.test, conf.Extensions.Sumologic.Ephemeral, "ephemeral is true")
+	}
 }
 
 func checkUserExists(c check) {
