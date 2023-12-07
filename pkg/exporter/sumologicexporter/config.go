@@ -77,7 +77,7 @@ type Config struct {
 
 	JSONLogs `mapstructure:"json_logs"`
 
-	// StickySessionEnabled defines if sticky session suppoer is enable.
+	// StickySessionEnabled defines if sticky session support is enable.
 	// By default this is false.
 	StickySessionEnabled bool `mapstructure:"sticky_session_enabled"`
 }
