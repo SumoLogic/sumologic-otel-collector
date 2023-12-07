@@ -231,8 +231,8 @@ processors:
     log_statements:
       - context: log
         statements:
+          - set(time, Now()) where time_unix_nano == 0
           - set(attributes["timestamp_key"], Int(time_unix_nano / 1000000))
-          - set(attributes["timestamp_key"], Int(now() / 1000000)) where attributes["timestamp_key"] == 0
 service:
   pipelines:
     logs:
