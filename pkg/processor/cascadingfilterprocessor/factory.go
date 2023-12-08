@@ -51,9 +51,10 @@ func NewFactory() processor.Factory {
 
 func createDefaultConfig() component.Config {
 	return &cfconfig.Config{
-		DecisionWait:   30 * time.Second,
-		NumTraces:      100000,
-		SpansPerSecond: 0,
+		CollectorInstances: 1,
+		DecisionWait:       30 * time.Second,
+		NumTraces:          100000,
+		SpansPerSecond:     0,
 	}
 }
 
