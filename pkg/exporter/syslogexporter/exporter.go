@@ -112,9 +112,9 @@ func (se *syslogexporter) pushLogsData(ctx context.Context, ld plog.Logs) error 
 		for i := range dropped {
 			rls := ld.ResourceLogs().AppendEmpty()
 			logRecords := rls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty()
-			dropped[i].resource.MoveTo(rls.Resource())
+			dropped[i].resource.CopyTo(rls.Resource())
 			for j := 0; j < len(dropped[i].records); j++ {
-				dropped[i].records[j].MoveTo(logRecords)
+				dropped[i].records[j].CopyTo(logRecords)
 			}
 		}
 		errs = deduplicateErrors(errs)
