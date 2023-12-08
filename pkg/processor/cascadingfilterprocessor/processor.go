@@ -196,7 +196,7 @@ func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.T
 		logger.Info("Adding trace accept rule",
 			zap.String("name", policyCfg.Name),
 			zap.Int32("spans_per_second", policyCfg.SpansPerSecond),
-			zap.Uint("sumo_collector_instances", cfg.CollectorInstances),
+			zap.Uint("collector_instances", cfg.CollectorInstances),
 		)
 
 		policies = append(policies, policy)
@@ -216,7 +216,7 @@ func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.T
 	if spansPerSecond != 0 {
 		logger.Info("Setting total spans per second limit, based on configured collector instances",
 			zap.Int32("spans_per_second", spansPerSecond),
-			zap.Uint("sumo_collector_instances", cfg.CollectorInstances),
+			zap.Uint("collector_instances", cfg.CollectorInstances),
 		)
 	} else {
 		logger.Info("Not setting total spans per second limit (only selected traces will be filtered out)")
