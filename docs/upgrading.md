@@ -3,6 +3,9 @@
 - [Upgrading](#upgrading)
   - [Upgrading to v0.90.0-sumo-1](#upgrading-to-v0900-sumo-1)
     - [Change configuration for `syslogexporter`](#change-configuration-for-syslogexporter)
+    - [`sumologic` exporter: deprecate `clear_logs_timestamp`](#sumologic-exporter-deprecate-clear_logs_timestamp)
+    - [`sumologic` exporter: remove `routing_attributes_to_drop`](#sumologic-exporter-remove-routing_attributes_to_drop)
+    - [`sumologic` exporter: deprecate `json_logs`](#sumologic-exporter-deprecate-json_logs)
   - [Upgrading to v0.89.0-sumo-0](#upgrading-to-v0890-sumo-0)
     - [`remoteobserver` processor: renamed to `remotetap` processor](#remoteobserver-processor-renamed-to-remotetap-processor)
     - [`sumologic` exporter: changed default `timeout` from `5s` to `30s`](#sumologic-exporter-changed-default-timeout-from-5s-to-30s)
@@ -73,6 +76,240 @@ change it to:
       ca_file: ca.pem
       cert_file: cert.pem
       key_file:  key.pem
+```
+
+### `sumologic` exporter: deprecate `clear_logs_timestamp`
+
+`clear_logs_timestamp` has been deprecated in favor of `transform` processor. It is going to be removed in `v0.95.0-sumo-0`. To migrate:
+
+- set `clear_logs_timestamp` to `false`
+- add the following processor:
+
+  ```yaml
+  processors:
+    transform/clear_logs_timestamp:
+      log_statements:
+        - context: log
+          statements:
+            - set(time_unix_nano, 0)
+  ```
+
+For example, given the following configuration:
+
+```yaml
+exporters:
+  sumologic:
+```
+
+change it to:
+
+```yaml
+exporters:
+  sumologic:
+    clear_logs_timestamp: false
+processors:
+  transform/clear_logs_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time_unix_nano, 0)
+service:
+  pipelines:
+    logs:
+      processors:
+        # - ...
+        - transform/clear_logs_timestamp
+```
+
+### `sumologic` exporter: remove `routing_attributes_to_drop`
+
+`routing_attributes_to_drop` has been removed from `sumologic` exporter in favor of `routing` processor's `drop_resource_routing_attribute`.
+
+To migrate, perform the following steps:
+
+- remove `routing_attributes_to_drop` from `sumologic` exporter
+- add `drop_resource_routing_attribute` to `routing` processor
+
+For example, given the following configuration:
+
+```yaml
+processors:
+  routing:
+    from_attribute: X-Tenant
+    default_exporters:
+    - jaeger
+    table:
+    - value: acme
+      exporters: [jaeger/acme]
+exporters:
+  sumologic:
+    routing_attributes_to_drop: X-Tenant
+```
+
+change it to:
+
+```yaml
+processors:
+  routing:
+    drop_resource_routing_attribute: true
+    from_attribute: X-Tenant
+    default_exporters:
+    - jaeger
+    table:
+    - value: acme
+      exporters: [jaeger/acme]
+exporters:
+  sumologic:
+```
+
+### `sumologic` exporter: deprecate `json_logs`
+
+`json_logs` has been deprecated in favor of `transform` processor. It is going to be removed in `v0.95.0-sumo-0`.
+
+To migrate perform the following steps:
+
+- use `transform` processor in replace of `json_logs.add_timestamp` and `json_logs.timestamp_key`:
+
+  ```yaml
+  processors:
+    transform/add_timestamp:
+      log_statements:
+        - context: log
+          statements:
+            - set(time, Now()) where time_unix_nano == 0
+            - set(attributes["timestamp_key"], Int(time_unix_nano / 1000000))
+  ```
+
+- use `transform` processor in replace of `json_logs.flatten_body`:
+
+  ```yaml
+  processors:
+    transform/flatten:
+      error_mode: ignore
+      log_statements:
+        - context: log
+          statements:
+            - merge_maps(attributes, body, "insert") where IsMap(body)
+            - set(body, "") where IsMap(body)
+
+  ```
+
+- use `transform` processor in replace of `json_logs.log_key`:
+
+  ```yaml
+  processors:
+    transform/set_log_key:
+      log_statements:
+        - context: log
+          statements:
+            - set(attributes["log"], body)
+            - set(body, "")
+  ```
+
+#### Migration example for `add_timestamp` and `timestamp_key`
+
+Given the following configuration:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+      timestamp_key: timestamp_key
+      add_timestamp: true
+```
+
+change it to:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+      add_timestamp: false
+processors:
+  transform/add_timestamp:
+    log_statements:
+      - context: log
+        statements:
+          - set(time, Now()) where time_unix_nano == 0
+          - set(attributes["timestamp_key"], Int(time_unix_nano / 1000000))
+service:
+  pipelines:
+    logs:
+      processors:
+        # ...
+        - transform/add_timestamp
+```
+
+#### Migration example for `flatten_body`
+
+Given the following configuration:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+      flatten_body: true
+```
+
+change it to:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+      flatten_body: false
+processors:
+  transform/flatten:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - merge_maps(attributes, body, "insert") where IsMap(body)
+          - set(body, "") where IsMap(body)
+service:
+  pipelines:
+    logs:
+      processors:
+        # ...
+        - transform/flatten
+```
+
+#### Migration example for `log_key`
+
+Given the following configuration:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+      log_key: my_log
+```
+
+change it to:
+
+```yaml
+exporters:
+  sumologic:
+    log_format: json
+    json_logs:
+processors:
+  transform/set_log_key:
+    log_statements:
+      - context: log
+        statements:
+          - set(attributes["my_log"], body)
+          - set(body, "")
+service:
+  pipelines:
+    logs:
+      processors:
+        # ...
+        - transform/set_log_key
 ```
 
 ## Upgrading to v0.89.0-sumo-0

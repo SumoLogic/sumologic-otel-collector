@@ -265,6 +265,7 @@ func metricPairToMetrics(mp ...metricPair) pmetric.Metrics {
 		record.metric.CopyTo(rms.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
 	}
 
+	metrics.MarkReadOnly()
 	return metrics
 }
 
@@ -316,5 +317,6 @@ func exampleTrace() ptrace.Traces {
 	span.SetStartTimestamp(1544712660000000000)
 	span.SetEndTimestamp(1544712661000000000)
 	span.Attributes().PutInt("attr1", 55)
+	td.MarkReadOnly()
 	return td
 }

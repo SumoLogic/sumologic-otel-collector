@@ -53,12 +53,12 @@ require (
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
-	go.opentelemetry.io/collector v0.90.0 // indirect
-	go.opentelemetry.io/collector/config/configcompression v0.90.0 // indirect
+	go.opentelemetry.io/collector v0.90.1 // indirect
+	go.opentelemetry.io/collector/config/configcompression v0.90.1 // indirect
 	go.opentelemetry.io/collector/config/configopaque v0.90.1 // indirect
-	go.opentelemetry.io/collector/config/configtelemetry v0.90.0 // indirect
-	go.opentelemetry.io/collector/config/configtls v0.90.0 // indirect
-	go.opentelemetry.io/collector/config/internal v0.90.0 // indirect
+	go.opentelemetry.io/collector/config/configtelemetry v0.90.1 // indirect
+	go.opentelemetry.io/collector/config/configtls v0.90.1 // indirect
+	go.opentelemetry.io/collector/config/internal v0.90.1 // indirect
 	go.opentelemetry.io/collector/extension/auth v0.90.1 // indirect
 	go.opentelemetry.io/collector/featuregate v1.0.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.1 // indirect
