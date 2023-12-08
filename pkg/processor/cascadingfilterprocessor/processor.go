@@ -17,9 +17,7 @@ package cascadingfilterprocessor
 import (
 	"context"
 	"math"
-	"os"
 	"runtime"
-	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -107,8 +105,7 @@ const (
 
 	AttributeSamplingProbability = "sampling.probability"
 
-	sumoCollectorInstancesNoEnvVar  = "SUMO_COLLECTOR_INSTANCES"
-	defaultSumoCollectorInstancesNo = 1
+	defaultCollectorInstancesNo = 1
 )
 
 // newTraceProcessor returns a processor.TraceProcessor that will perform Cascading Filter according to the given
@@ -131,6 +128,12 @@ func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.T
 	ctx := context.Background()
 	var policies []*TraceAcceptEvaluator
 	var dropTraceEvals []*TraceRejectEvaluator
+
+	// In case of lack of collectorInstances set default.
+	if cfg.CollectorInstances == 0 {
+		cfg.CollectorInstances = defaultCollectorInstancesNo
+		logger.Info("Using default collector instances", zap.Uint("value", defaultCollectorInstancesNo))
+	}
 
 	// Prepare Trace Reject config
 
@@ -166,8 +169,6 @@ func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.T
 		policyCfgs = append(policyCfgs, cfg.PolicyCfgs...)
 	}
 
-	sumoCollectorInstancesNo := getSumoCollectorInstancesNo(logger)
-
 	for i := range policyCfgs {
 		policyCfg := policyCfgs[i]
 		policyCtx, err := tag.New(ctx, tag.Upsert(tagPolicyKey, policyCfg.Name))
@@ -176,7 +177,7 @@ func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.T
 		}
 
 		if policyCfg.SpansPerSecond > 0 {
-			policyCalculatedSpansPerSecond := calculateSpansPerSecond(policyCfg.SpansPerSecond, sumoCollectorInstancesNo)
+			policyCalculatedSpansPerSecond := calculateSpansPerSecond(policyCfg.SpansPerSecond, cfg.CollectorInstances)
 			policyCfg.SpansPerSecond = policyCalculatedSpansPerSecond
 			totalRate += policyCfg.SpansPerSecond
 		}
@@ -195,14 +196,14 @@ func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.T
 		logger.Info("Adding trace accept rule",
 			zap.String("name", policyCfg.Name),
 			zap.Int32("spans_per_second", policyCfg.SpansPerSecond),
-			zap.Int("sumo_collector_instances", sumoCollectorInstancesNo),
+			zap.Uint("sumo_collector_instances", cfg.CollectorInstances),
 		)
 
 		policies = append(policies, policy)
 	}
 
 	// Recalculate the total spans per second rate if needed
-	calculatedGlobalSpansPerSecond := calculateSpansPerSecond(cfg.SpansPerSecond, sumoCollectorInstancesNo)
+	calculatedGlobalSpansPerSecond := calculateSpansPerSecond(cfg.SpansPerSecond, cfg.CollectorInstances)
 	cfg.SpansPerSecond = calculatedGlobalSpansPerSecond
 	spansPerSecond := calculatedGlobalSpansPerSecond
 	if spansPerSecond == 0 {
@@ -215,7 +216,7 @@ func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.T
 	if spansPerSecond != 0 {
 		logger.Info("Setting total spans per second limit, based on configured collector instances",
 			zap.Int32("spans_per_second", spansPerSecond),
-			zap.Int("sumo_collector_instances", sumoCollectorInstancesNo),
+			zap.Uint("sumo_collector_instances", cfg.CollectorInstances),
 		)
 	} else {
 		logger.Info("Not setting total spans per second limit (only selected traces will be filtered out)")
@@ -533,35 +534,8 @@ func (pt *policyTicker) Stop() {
 
 var _ tTicker = (*policyTicker)(nil)
 
-func getSumoCollectorInstancesNo(logger *zap.Logger) int {
-	collectorInstances := os.Getenv(sumoCollectorInstancesNoEnvVar)
-	if collectorInstances == "" {
-		logger.Info("Using default collector instances", zap.Int("value", defaultSumoCollectorInstancesNo))
-		return defaultSumoCollectorInstancesNo
-	}
-
-	val, err := strconv.Atoi(collectorInstances)
-	if err != nil {
-		logger.Error("Provided value is not valid. Using default value: 1.",
-			zap.String("variable_name", sumoCollectorInstancesNoEnvVar),
-			zap.Error(err),
-		)
-		return defaultSumoCollectorInstancesNo
-	}
-
-	if val == 0 {
-		logger.Error("Provided value is not valid. Using default value: 1.",
-			zap.String("variable_name", sumoCollectorInstancesNoEnvVar),
-			zap.Int("variable_value", val),
-		)
-		return defaultSumoCollectorInstancesNo
-	}
-
-	return val
-}
-
-func calculateSpansPerSecond(spansPerSecond int32, sumoCollectorInstances int) int32 {
-	calculateSpansPerSecond := float64(spansPerSecond) / float64(sumoCollectorInstances)
+func calculateSpansPerSecond(spansPerSecond int32, collectorInstances uint) int32 {
+	calculateSpansPerSecond := float64(spansPerSecond) / float64(collectorInstances)
 	roundedSpansPerSecond := int32(math.Ceil(calculateSpansPerSecond))
 
 	return roundedSpansPerSecond
