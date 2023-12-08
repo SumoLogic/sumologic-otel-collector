@@ -105,6 +105,10 @@ type TraceRejectCfg struct {
 
 // Config holds the configuration for cascading-filter-based sampling.
 type Config struct {
+	// CollectorInstances is the number of collectors sharing single configuration for
+	// cascadingfilter processor. This number is used to calculate global and policy limits
+	// for spans_per_second. Default value is 1.
+	CollectorInstances uint `mapstructure:"collector_instances"`
 	// DecisionWait is the desired wait time from the arrival of the first span of
 	// trace until the decision about sampling it or not is evaluated.
 	DecisionWait time.Duration `mapstructure:"decision_wait"`
