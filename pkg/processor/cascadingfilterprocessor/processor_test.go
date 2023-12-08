@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
-	"os"
 	"sort"
 	"sync"
 	"testing"
@@ -59,14 +58,26 @@ var testPolicy = []cfconfig.TraceAcceptCfg{
 		SpansPerSecond: -1,
 	}}
 
-func buildBasicCFSP(t *testing.T, numTraces uint64, spansPerSecond int32) *cascadingFilterSpanProcessor {
-	cfg := cfconfig.Config{
-		DecisionWait:            defaultTestDecisionWait,
-		NumTraces:               numTraces,
-		ExpectedNewTracesPerSec: 64,
-		PolicyCfgs:              testPolicy,
-		SpansPerSecond:          spansPerSecond,
+func buildBasicCFSP(t *testing.T, numTraces uint64, spansPerSecond int32, collectorInstances uint) *cascadingFilterSpanProcessor {
+	if collectorInstances != 1 {
+		cfg = cfconfig.Config{
+			CollectorInstances:      collectorInstances,
+			DecisionWait:            defaultTestDecisionWait,
+			NumTraces:               numTraces,
+			ExpectedNewTracesPerSec: 64,
+			PolicyCfgs:              testPolicy,
+			SpansPerSecond:          spansPerSecond,
+		}
+	} else {
+		cfg = cfconfig.Config{
+			DecisionWait:            defaultTestDecisionWait,
+			NumTraces:               numTraces,
+			ExpectedNewTracesPerSec: 64,
+			PolicyCfgs:              testPolicy,
+			SpansPerSecond:          spansPerSecond,
+		}
 	}
+
 	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg, component.NewID("cascading_filter"))
 	require.NoError(t, err)
 
@@ -74,56 +85,50 @@ func buildBasicCFSP(t *testing.T, numTraces uint64, spansPerSecond int32) *casca
 }
 
 func TestTotalSpansPerSecondForSumoCollectorInstancesDefault(t *testing.T) {
-	tsp := buildBasicCFSP(t, uint64(1000), int32(1000))
+	tsp := buildBasicCFSP(t, uint64(1000), int32(1000), 1)
 
 	require.Equal(t, tsp.decisionSpansLimitter.maxSpansPerSecond, int32(1000))
 }
 
 func TestTotalSpansPerSecondForSumoCollectorInstances0(t *testing.T) {
-	os.Setenv(sumoCollectorInstancesNoEnvVar, "0")
-	tsp := buildBasicCFSP(t, uint64(1000), int32(1000))
+	tsp := buildBasicCFSP(t, uint64(1000), int32(1000), 0)
 
 	require.Equal(t, tsp.decisionSpansLimitter.maxSpansPerSecond, int32(1000))
 }
 
 func TestTotalSpansPerSecondForSumoCollectorInstances10(t *testing.T) {
-	os.Setenv(sumoCollectorInstancesNoEnvVar, "10")
-	tsp := buildBasicCFSP(t, uint64(1000), int32(1000))
+	tsp := buildBasicCFSP(t, uint64(1000), int32(1000), 10)
 
 	require.Equal(t, tsp.decisionSpansLimitter.maxSpansPerSecond, int32(100))
 }
 
 func TestTotalSpansPerSecondForSumoCollectorInstancesRoundedUp(t *testing.T) {
-	os.Setenv(sumoCollectorInstancesNoEnvVar, "325")
-	tsp := buildBasicCFSP(t, uint64(1000), int32(1000))
+	tsp := buildBasicCFSP(t, uint64(1000), int32(1000), 325)
 
 	require.Equal(t, tsp.decisionSpansLimitter.maxSpansPerSecond, int32(4))
 }
 
 func TestTotalSpansPerSecondForSumoCollectorInstances0AndNoGlobalSpansPerSecondLimit(t *testing.T) {
-	os.Setenv(sumoCollectorInstancesNoEnvVar, "0")
-	tsp := buildBasicCFSP(t, uint64(1000), int32(0))
+	tsp := buildBasicCFSP(t, uint64(1000), int32(0), 0)
 
 	require.Equal(t, tsp.decisionSpansLimitter.maxSpansPerSecond, int32(110))
 }
 
 func TestTotalSpansPerSecondForSumoCollectorInstances10AndNoGlobalSpansPerSecondLimit(t *testing.T) {
-	os.Setenv(sumoCollectorInstancesNoEnvVar, "10")
-	tsp := buildBasicCFSP(t, uint64(1000), int32(0))
+	tsp := buildBasicCFSP(t, uint64(1000), int32(0), 10)
 
 	require.Equal(t, tsp.decisionSpansLimitter.maxSpansPerSecond, int32(11))
 }
 
 func TestTotalSpansPerSecondForSumoCollectorInstances0AndGlobalSpansPerSecondLimitLowerThanPolicies(t *testing.T) {
-	os.Setenv(sumoCollectorInstancesNoEnvVar, "0")
-	tsp := buildBasicCFSP(t, uint64(1000), int32(60))
+	tsp := buildBasicCFSP(t, uint64(1000), int32(60), 0)
 
 	require.Equal(t, tsp.decisionSpansLimitter.maxSpansPerSecond, int32(60))
 }
 
 func TestSequentialTraceArrival(t *testing.T) {
 	traceIds, batches := generateIdsAndBatches(128)
-	tsp := buildBasicCFSP(t, uint64(2*len(traceIds)), int32(1000))
+	tsp := buildBasicCFSP(t, uint64(2*len(traceIds)), int32(1000), 1)
 	for _, batch := range batches {
 		assert.NoError(t, tsp.ConsumeTraces(context.Background(), batch))
 	}
@@ -137,7 +142,7 @@ func TestSequentialTraceArrival(t *testing.T) {
 }
 
 func TestDecisionHistory(t *testing.T) {
-	tsp := buildBasicCFSP(t, uint64(100), int32(1000))
+	tsp := buildBasicCFSP(t, uint64(100), int32(1000), 1)
 
 	id1 := bigendianconverter.UInt64ToTraceID(1, uint64(100))
 	id2 := bigendianconverter.UInt64ToTraceID(1, uint64(101))
@@ -163,7 +168,7 @@ func TestDecisionHistory(t *testing.T) {
 
 func TestConcurrentTraceArrival(t *testing.T) {
 	traceIds, batches := generateIdsAndBatches(64)
-	tsp := buildBasicCFSP(t, uint64(2*len(traceIds)), int32(1000))
+	tsp := buildBasicCFSP(t, uint64(2*len(traceIds)), int32(1000), 1)
 
 	var wg sync.WaitGroup
 	for _, batch := range batches {
@@ -196,7 +201,7 @@ func TestConcurrentTraceArrival(t *testing.T) {
 func TestSequentialTraceMapSize(t *testing.T) {
 	traceIds, batches := generateIdsAndBatches(210)
 	const maxSize = 100
-	tsp := buildBasicCFSP(t, uint64(maxSize), int32(1000))
+	tsp := buildBasicCFSP(t, uint64(maxSize), int32(1000), 1)
 
 	for _, batch := range batches {
 		if err := tsp.ConsumeTraces(context.Background(), batch); err != nil {
@@ -215,7 +220,7 @@ func TestConcurrentTraceMapSize(t *testing.T) {
 	_, batches := generateIdsAndBatches(64)
 	const maxSize = 50
 	var wg sync.WaitGroup
-	tsp := buildBasicCFSP(t, uint64(maxSize), int32(1000))
+	tsp := buildBasicCFSP(t, uint64(maxSize), int32(1000), 1)
 	for _, batch := range batches {
 		wg.Add(1)
 		go func(td ptrace.Traces) {
