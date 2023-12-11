@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.90.1-sumo-0]
+
+### Released 2023-12-11
+
+### Breaking Changes
+
+- chore: remove routing_attributes_to_drop [#1201]
+  This option is duplication of `drop_resource_routing_attribute` of routingprocessor
+- feat(exporter/syslog)!: replace syslog exporter with syslog exporter from opentelemetry-collector-contrib [#1341]
+- feat(sumologicexporter)!: deprecate clear_logs_timestamps [#1372]
+
+### Changed
+
+- feat(exporter/syslog): deprecate syslog exporter in favor of upstream version of syslog exporter [#1342]
+- chore: upgrade otel core to 0.90.1 [#1351], [#1362]
+- chore: update golang version to 1.21.4 [#1364]
+- chore(sumologicexporter): do not mutate data with json_logs configuration [#1374]
+- chore(sumologicexporter): deprecate json_logs [#1377]
+- feat(sumologicexporter): ensure immutability [#1383]
+
+### Fixed
+
+- fix(sourceprocessor): fix templating for sourceCategoryPrefix [#1350]
+
+[#1201]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1201
+[#1341]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1341
+[#1372]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1372
+[#1342]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1342
+[#1351]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1351
+[#1362]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1362
+[#1364]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1364
+[#1374]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1374
+[#1377]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1377
+[#1383]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1383
+[#1350]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1350
+[v0.90.1-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.90.1-sumo-0
+
 ## [v0.89.0-sumo-2]
 
 ### Released 2023-11-24
