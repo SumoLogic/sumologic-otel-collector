@@ -1,1 +1,0 @@
-fix(sourceprocessor): fix templating for sourceCategoryPrefix
