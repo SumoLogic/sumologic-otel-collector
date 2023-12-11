@@ -17,6 +17,8 @@ RUN apk --update add ca-certificates
 
 FROM alpine:3.19.0 as directories
 RUN mkdir /etc/otel/
+RUN mkdir /var/lib/otc
+RUN touch /var/log/otelcol.log
 
 FROM debian:12.2 as systemd
 RUN apt update && apt install -y systemd
@@ -40,6 +42,11 @@ COPY --from=systemd /output/ /
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=otelcol /output/ /
 COPY --from=directories --chown=${USER_UID}:${USER_UID} /etc/otel/ /etc/otel/
+COPY --from=directories --chown=${USER_UID}:${USER_UID} /var/lib/otc /var/lib/otc
+COPY --from=directories --chown=${USER_UID}:${USER_UID} /var/log/otelcol.log /var/log/otelcol.log
+
+# copy the default tailing-sidecar configuration file
+COPY tail.yml /etc/otel/config.yaml
 
 ENTRYPOINT ["/otelcol-sumo"]
 CMD ["--config", "/etc/otel/config.yaml"]

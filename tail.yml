@@ -1,8 +1,9 @@
 receivers:
   filelog:
     include:
-    - otelcol-sumo.log
+    - ${PATH_TO_TAIL}
     start_at: beginning
+    storage: file_storage
 
 exporters:
   file:
@@ -11,14 +12,17 @@ exporters:
 
 extensions:
   text_encoding:
+  file_storage:
+    directory: /var/lib/otc
 
 service:
   extensions:
     - text_encoding
+    - file_storage
   telemetry:
     logs:
       output_paths:
-        - ./otelcol-sumo.log
+        - /var/log/otelcol.log
   pipelines:
     logs:
       exporters: [file]
