@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: remove routing_attributes_to_drop [#1201]
   This option is duplication of `drop_resource_routing_attribute` of routingprocessor
 - feat(exporter/syslog)!: replace syslog exporter with syslog exporter from opentelemetry-collector-contrib [#1341]
-- feat(sumologicexporter)!:depreacate clear_logs_timestamps [#1372]
+- feat(sumologicexporter)!: deprecate clear_logs_timestamps [#1372]
 
 ### Changed
 
