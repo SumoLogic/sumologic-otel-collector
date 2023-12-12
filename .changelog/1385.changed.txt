@@ -1,0 +1,1 @@
+Removed OpAMP extension remote configuration directory readable validation.
