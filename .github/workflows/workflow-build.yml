@@ -94,7 +94,7 @@ jobs:
         run: |
           echo "cache-key=go-build-${{ env.GO_VERSION }}${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}" >> $GITHUB_OUTPUT
           echo "restore-keys=go-build-${{ env.GO_VERSION }}${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}-" >> $GITHUB_OUTPUT
-          echo "toolchain-cache-key=toolchain-${{inputs.arch_os}}-${{ hashFiles('ci/build-fips-action/config.mak', 'ci/build-fips-action/Makefile') }}" >> $GITHUB_OUTPUT
+          echo "toolchain-cache-key=toolchain-${{inputs.arch_os}}-${{ hashFiles('otelcolbuilder/build-fips/config.mak', 'otelcolbuilder/build-fips/Makefile') }}" >> $GITHUB_OUTPUT
 
       - uses: actions/cache/restore@v3
         if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
@@ -135,7 +135,8 @@ jobs:
       - name: Rebuild Toolchains
         id: rebuild-toolchain
         if: ${{ steps.restore-toolchain-cache.outcome == 'success' && steps.restore-toolchain-cache.outputs.cache-hit != 'true' }}
-        run: make -C ./ci/build-fips-action toolchain-${{ inputs.arch_os }} OUTPUT=/opt/toolchain -j3
+        run: make toolchain-${{ inputs.arch_os }} OUTPUT=/opt/toolchain -j3
+        working-directory: ./otelcolbuilder
 
       - name: Build (FIPS)
         if: ${{ inputs.fips && contains(inputs.arch_os, 'linux') && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}

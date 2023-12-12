@@ -5,3 +5,7 @@ cmd/*
 !cmd/main.go.patch
 !cmd/fips.go
 !cmd/flags.go
+
+# FIPS Static
+musl-cross-make
+toolchain
