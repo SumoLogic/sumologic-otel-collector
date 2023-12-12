@@ -350,31 +350,33 @@ func (s *sender) logToText(record plog.LogRecord) string {
 
 // logToJSON converts LogRecord to a json line, returns it and error eventually
 func (s *sender) logToJSON(record plog.LogRecord) (string, error) {
+	recordCopy := plog.NewLogRecord()
+	record.CopyTo(recordCopy)
 	if s.jsonLogsConfig.AddTimestamp {
-		addJSONTimestamp(record.Attributes(), s.jsonLogsConfig.TimestampKey, record.Timestamp())
+		addJSONTimestamp(recordCopy.Attributes(), s.jsonLogsConfig.TimestampKey, recordCopy.Timestamp())
 	}
 
 	// Only append the body when it's not empty to prevent sending 'null' log.
-	if body := record.Body(); !isEmptyAttributeValue(body) {
+	if body := recordCopy.Body(); !isEmptyAttributeValue(body) {
 		if s.jsonLogsConfig.FlattenBody && body.Type() == pcommon.ValueTypeMap {
 			// Cannot use CopyTo, as it overrides data.orig's values
 			body.Map().Range(func(k string, v pcommon.Value) bool {
-				_, ok := record.Attributes().Get(k)
+				_, ok := recordCopy.Attributes().Get(k)
 
 				if !ok {
-					v.CopyTo(record.Attributes().PutEmpty(k))
+					v.CopyTo(recordCopy.Attributes().PutEmpty(k))
 				}
 				return true
 			})
 		} else {
-			body.CopyTo(record.Attributes().PutEmpty(s.jsonLogsConfig.LogKey))
+			body.CopyTo(recordCopy.Attributes().PutEmpty(s.jsonLogsConfig.LogKey))
 		}
 	}
 
 	nextLine := new(bytes.Buffer)
 	enc := json.NewEncoder(nextLine)
 	enc.SetEscapeHTML(false)
-	err := enc.Encode(record.Attributes().AsRaw())
+	err := enc.Encode(recordCopy.Attributes().AsRaw())
 
 	if err != nil {
 		return "", err
@@ -485,12 +487,19 @@ func (s *sender) formatLogLine(lr plog.LogRecord) (string, error) {
 
 // TODO: add support for HTTP limits
 func (s *sender) sendOTLPLogs(ctx context.Context, ld plog.Logs) error {
-	rls := ld.ResourceLogs()
-	for i := 0; i < rls.Len(); i++ {
-		rl := rls.At(i)
+	var lld plog.Logs
 
-		// Clear timestamps if required
-		if s.config.ClearLogsTimestamp {
+	// Clear timestamps if required
+	if s.config.ClearLogsTimestamp {
+		// make a copy to preserve immutability
+		lld = plog.NewLogs()
+		ld.CopyTo(lld)
+
+		rls := lld.ResourceLogs()
+		for i := 0; i < rls.Len(); i++ {
+			rl := rls.At(i)
+			// rl.ScopeLogs().CopyTo(rl.ScopeLogs())
+
 			slgs := rl.ScopeLogs()
 			for j := 0; j < slgs.Len(); j++ {
 				log := slgs.At(j)
@@ -499,9 +508,11 @@ func (s *sender) sendOTLPLogs(ctx context.Context, ld plog.Logs) error {
 				}
 			}
 		}
+	} else {
+		lld = ld
 	}
 
-	body, err := logsMarshaler.MarshalLogs(ld)
+	body, err := logsMarshaler.MarshalLogs(lld)
 	if err != nil {
 		return err
 	}
@@ -541,7 +552,7 @@ func (s *sender) sendNonOTLPMetrics(ctx context.Context, md pmetric.Metrics) (pm
 				if err := s.send(ctx, MetricsPipeline, body.toCountingReader(), previousFields); err != nil {
 					errs = append(errs, err)
 					for _, resource := range currentResources {
-						resource.MoveTo(droppedMetrics.ResourceMetrics().AppendEmpty())
+						resource.CopyTo(droppedMetrics.ResourceMetrics().AppendEmpty())
 					}
 				}
 				body.Reset()
@@ -578,7 +589,7 @@ func (s *sender) sendNonOTLPMetrics(ctx context.Context, md pmetric.Metrics) (pm
 				// failed at sending, add the resource to the dropped metrics
 				// move instead of copy here to avoid duplicating data in memory on failure
 				for _, resource := range currentResources {
-					resource.MoveTo(droppedMetrics.ResourceMetrics().AppendEmpty())
+					resource.CopyTo(droppedMetrics.ResourceMetrics().AppendEmpty())
 				}
 			}
 		}
@@ -596,7 +607,7 @@ func (s *sender) sendNonOTLPMetrics(ctx context.Context, md pmetric.Metrics) (pm
 		if err := s.send(ctx, MetricsPipeline, body.toCountingReader(), flds); err != nil {
 			errs = append(errs, err)
 			for _, resource := range currentResources {
-				resource.MoveTo(droppedMetrics.ResourceMetrics().AppendEmpty())
+				resource.CopyTo(droppedMetrics.ResourceMetrics().AppendEmpty())
 			}
 		}
 	}

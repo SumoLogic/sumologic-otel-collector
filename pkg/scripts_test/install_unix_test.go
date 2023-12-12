@@ -414,7 +414,7 @@ func TestInstallScript(t *testing.T) {
 				checkVarLogACL,
 			},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
-			installCode:       3, // because of invalid installation token
+			installCode:       1, // because of invalid installation token
 		},
 		{
 			name: "systemd installation token with existing user directory",
@@ -444,7 +444,7 @@ func TestInstallScript(t *testing.T) {
 				checkOutputUserAddWarnings,
 			},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
-			installCode:       3, // because of invalid install token
+			installCode:       1, // because of invalid install token
 		},
 		{
 			name: "systemd existing installation different token env",
@@ -474,7 +474,7 @@ func TestInstallScript(t *testing.T) {
 				checkOutputUserAddWarnings,
 			},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
-			installCode:       3, // because of invalid install token
+			installCode:       1, // because of invalid install token
 		},
 		{
 			name: "installation of hostmetrics in systemd during upgrade",
@@ -522,7 +522,7 @@ func TestInstallScript(t *testing.T) {
 				checkVarLogACL,
 			},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
-			installCode:       3, // because of invalid installation token
+			installCode:       1, // because of invalid installation token
 		},
 		{
 			name: "uninstallation without autoconfirm fails",
@@ -586,7 +586,7 @@ func TestInstallScript(t *testing.T) {
 			postChecks: []checkFunc{checkBinaryCreated, checkBinaryIsRunning, checkConfigCreated, checkDifferentTokenInConfig, checkSystemdConfigCreated,
 				checkUserExists, checkTokenEnvFileNotCreated},
 			conditionalChecks: []condCheckFunc{checkSystemdAvailability},
-			installCode:       3, // because of invalid installation token
+			installCode:       1, // because of invalid installation token
 		},
 		{
 			name: "systemd installation if token in file",
