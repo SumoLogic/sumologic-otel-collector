@@ -243,18 +243,18 @@ toolchain-linux_amd64: musl-cross-make
 
 .PHONY: otelcol-sumo-linux-fips_arm64
 otelcol-sumo-linux-fips_arm64:
-	$(MAKE) toolchain-linux_arm64 OUTPUT=$(shell pwd)/toolchain_arm64 -j3
+	$(MAKE) toolchain-linux_arm64 OUTPUT=$(PWD)/toolchain_arm64 -j3
 	$(MAKE) otelcol-sumo-linux_arm64 \
 		FIPS_SUFFIX="-fips" \
 		CGO_ENABLED="1" \
-		CC="$(shell pwd)/$(shell find toolchain_arm64/bin -type f -name "*-linux-musl-gcc")" \
+		CC="$(PWD)/toolchain_arm64/bin/aarch64-linux-musl-gcc" \
 		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
 
 .PHONY: otelcol-sumo-linux-fips_amd64
 otelcol-sumo-linux-fips_amd64:
-	$(MAKE) toolchain-linux_amd64 OUTPUT=$(shell pwd)/toolchain_amd64 -j3
+	$(MAKE) toolchain-linux_amd64 OUTPUT=$(PWD)/toolchain_amd64 -j3
 	$(MAKE) otelcol-sumo-linux_amd64 \
 		FIPS_SUFFIX="-fips" \
 		CGO_ENABLED="1" \
-		CC="$(shell pwd)/$(shell find toolchain_amd64/bin -type f -name "*-linux-musl-gcc")" \
+		CC="$(PWD)/toolchain_arm64/bin/x86_64-linux-musl-gcc" \
 		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
