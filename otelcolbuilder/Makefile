@@ -228,6 +228,11 @@ otelcol-sumo-windows_amd64:
 MUSL_X_MAKE_REPO=https://github.com/richfelker/musl-cross-make.git
 MUSL_X_MAKE_REF=fe915821b652a7fa37b34a596f47d8e20bc72338
 
+musl-cross-make:
+	git clone $(MUSL_X_MAKE_REPO);
+	cd musl-cross-make && git checkout $(MUSL_X_MAKE_REF);
+	cp ./build-fips/config.mak ./musl-cross-make/config.mak;
+
 .PHONY: toolchain-linux_arm64
 toolchain-linux_arm64: musl-cross-make
 	TARGET=aarch64-linux-musl $(MAKE) -C musl-cross-make install
@@ -236,7 +241,20 @@ toolchain-linux_arm64: musl-cross-make
 toolchain-linux_amd64: musl-cross-make
 	TARGET=x86_64-linux-musl $(MAKE) -C musl-cross-make install
 
-musl-cross-make:
-	git clone $(MUSL_X_MAKE_REPO);
-	cd musl-cross-make && git checkout $(MUSL_X_MAKE_REF);
-	cp ./build-fips/config.mak ./musl-cross-make/config.mak;
+.PHONY: otelcol-sumo-linux-fips_arm64
+otelcol-sumo-linux-fips_arm64:
+        $(MAKE) toolchain-linux_arm64 OUTPUT=$(shell pwd)/toolchain_arm64 -j3
+        $(MAKE) otelcol-sumo-linux_arm64 \
+                FIPS_SUFFIX="-fips" \
+                CGO_ENABLED="1" \
+                CC="$(shell pwd)/$(shell find toolchain_arm64/bin -type f -name "*-linux-musl-gcc")" \
+                EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
+
+.PHONY: otelcol-sumo-linux-fips_amd64
+otelcol-sumo-linux-fips_amd64:
+        $(MAKE) toolchain-linux_amd64 OUTPUT=$(shell pwd)/toolchain_amd64 -j3
+        $(MAKE) otelcol-sumo-linux_amd64 \
+                FIPS_SUFFIX="-fips" \
+                CGO_ENABLED="1" \
+                CC="$(shell pwd)/$(shell find toolchain_amd64/bin -type f -name "*-linux-musl-gcc")" \
+                EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"

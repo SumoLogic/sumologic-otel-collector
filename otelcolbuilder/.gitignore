@@ -8,4 +8,4 @@ cmd/*
 
 # FIPS Static
 musl-cross-make
-toolchain
+toolchain_*
