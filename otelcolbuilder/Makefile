@@ -256,5 +256,5 @@ otelcol-sumo-linux-fips_amd64:
 	$(MAKE) otelcol-sumo-linux_amd64 \
 		FIPS_SUFFIX="-fips" \
 		CGO_ENABLED="1" \
-		CC="$(PWD)/toolchain_arm64/bin/x86_64-linux-musl-gcc" \
+		CC="$(PWD)/toolchain_amd64/bin/x86_64-linux-musl-gcc" \
 		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
