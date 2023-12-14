@@ -1,0 +1,1 @@
+fix(sourceprocessor): support / in source category template attribute
