@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.90.1-sumo-1]
+
+### Released 2023-12-14
+
+### Changed
+
+- Removed OpAMP extension remote configuration directory readable validation. [#1385]
+
+### Fixed
+
+- fix(sourceprocessor): support / in source category template attribute [#1389]
+
+[#1385]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1385
+[#1389]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1389
+[v0.90.1-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.90.1-sumo-1
+
 ## [v0.90.1-sumo-0]
 
 ### Released 2023-12-11
