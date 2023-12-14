@@ -531,20 +531,20 @@ func TestSourceCategoryTemplateWithCustomAttribute(t *testing.T) {
 		assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/undefined/123")
 	})
 
-        t.Run("attribute contains a slash", func(t *testing.T) {
-                inputAttributes := createK8sLabels()
+	t.Run("attribute contains a slash", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
 		inputAttributes["pod_labels_app.kubernetes.io/name"] = "foobar"
-                traces := newTraceData(inputAttributes)
+		traces := newTraceData(inputAttributes)
 
-                config := createDefaultConfig().(*Config)
-                config.SourceCategory = "abc/%{pod_labels_app.kubernetes.io/name}/123"
+		config := createDefaultConfig().(*Config)
+		config.SourceCategory = "abc/%{pod_labels_app.kubernetes.io/name}/123"
 
-                processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), config).ProcessTraces(context.Background(), traces)
-                assert.NoError(t, err)
+		processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), config).ProcessTraces(context.Background(), traces)
+		assert.NoError(t, err)
 
-                attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
-                assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/foobar/123")
-        })
+		attributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, attributes, "_sourceCategory", "kubernetes/abc/foobar/123")
+	})
 
 	t.Run("attribute is a collector name", func(t *testing.T) {
 		inputAttributes := createK8sLabels()
