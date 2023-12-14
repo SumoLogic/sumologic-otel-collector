@@ -50,9 +50,9 @@ endif
 ifeq ($(FIPS_SUFFIX),"")
 GOEXPERIMENT=""
 LDFLAGS="-s -w"
-GOFIPS=1
 # We want to use boringcrypto for fips setup
 else
+GOFIPS=1
 ifeq ($(shell go env GOOS),windows)
 GOEXPERIMENT=systemcrypto
 GOTAGS := $(GOTAGS) requirefips
