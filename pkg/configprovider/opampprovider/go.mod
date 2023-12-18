@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider v0.86.0-sumo-1
 	github.com/google/go-cmp v0.5.9
-	go.opentelemetry.io/collector/confmap v0.90.1
+	go.opentelemetry.io/collector/confmap v0.91.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
