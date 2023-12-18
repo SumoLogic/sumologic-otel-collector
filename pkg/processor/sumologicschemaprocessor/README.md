@@ -1,17 +1,12 @@
 # Sumo Logic Schema Processor
 
-<<<<<<< HEAD
 **Stability level**: Deprecated
 
 This processor is deprecated in favor of the [Sumo Logic processor][sumologic_processor_docs] that lives in the [OpenTelemetry Collector Contrib][contrib_repo] repository.
 To migrate, change the name of the processor in configuration from `sumologic_schema` to `sumologic`.
 All the functionality and configuration is the same.
-=======
-**Sumologic Schema processor is depracated. Please use [Sumologic processor][sumologicprocessor] instead.**
-**Refer to [upgrading document](/docs/upgrading.md#upgrading-to-v0890-sumo-0).**
 
-**Stability level**: Beta
->>>>>>> 61b6305 (feat(sumologicschemaprocessor)!:deprecate in favor of sumologicprocessor)
+**Refer to [upgrading document](/docs/upgrading.md#upgrading-to-v0890-sumo-0).**
 
 The Sumo Logic Schema processor (config name: `sumologic_schema`)
 modifies the metadata on logs, metrics and traces sent to [Sumo Logic][sumologic_webpage]
@@ -23,7 +18,6 @@ Supported pipeline types: logs, metrics, traces.
 [contrib_repo]: https://github.com/open-telemetry/opentelemetry-collector-contrib/
 [sumologic_webpage]: https://www.sumologic.com
 [sumologic_apps]: https://www.sumologic.com/applications/
-[sumologicprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/sumologicprocessor
 
 ## Configuration
 
