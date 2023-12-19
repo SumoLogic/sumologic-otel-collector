@@ -20,6 +20,7 @@ The following configuration options should be configured as desired:
 
 The following configuration options can also be modified:
 
+- `collector_instances` (default = 1): In case of multiple deployments **sharing single configuration** of the `cascadingfilter`, should be used to scale down properly `spans_per_second` global and policy limits. Value should be positive integer corresponding to the number of collectors with configured cascadingfilters e.g. `collector_instances=5`. As a result configured `spans_per_second` limit will be divided by `5` for global and policy limits.
 - `decision_wait` (default = 30s): Wait time since the first span of a trace before making a filtering decision
 - `num_traces` (default = 100000): Max number of traces for which decisions are kept in memory
 - `history_size` (default = `num_traces` value): Max size of LRU cache used for storing decisions on already processed traces
@@ -27,6 +28,9 @@ The following configuration options can also be modified:
 - `prior_spans_rate` (default = `50%` of `spans_per_second`): number of spans that arrived late and are coming from traces which were previously sampled; this limit is not included in the overall total limit
 
 Whenever rate limiting is applied, only full traces are accepted (if trace won't fit within the limit, it will never be filtered). For spans that are arriving late, previous decision are kept for some time.
+
+In case of multiple deployments **sharing single conifugration file** of the `cascadingfilter`, environment variable called `SUMO_COLLECTOR_INSTANCES` should be used to scale down properly `spans_per_second` global and policy limits. `SUMO_COLLECTOR_INSTANCES` should be positive integer corresponding to the number of collectors with configured cascadingfilters e.g. `SUMO_COLLECTOR_INSTANCES=5`.
+As a result configured `spans_per_second` limit will be divided by `5` for global and policy limits.
 
 ## Updated span attributes
 

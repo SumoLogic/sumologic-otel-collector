@@ -49,6 +49,7 @@ func TestLoadConfig(t *testing.T) {
 	id1 := component.NewIDWithName("cascading_filter", "1")
 	assert.Equal(t, cfg.Processors[id1],
 		&cfconfig.Config{
+			CollectorInstances:         1,
 			DecisionWait:               30 * time.Second,
 			SpansPerSecond:             0,
 			NumTraces:                  100000,
@@ -101,6 +102,7 @@ func TestLoadConfig(t *testing.T) {
 	priorHistorySize2 := uint64(100)
 	assert.Equal(t, cfg.Processors[id2],
 		&cfconfig.Config{
+			CollectorInstances:          1,
 			DecisionWait:                10 * time.Second,
 			NumTraces:                   100,
 			ExpectedNewTracesPerSec:     10,
