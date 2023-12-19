@@ -68,8 +68,8 @@ processors:
   ## Configuration for Sumo Logic Schema Processor
   ## The Sumo Logic Schema processor modifies the metadata on logs, metrics and traces sent to Sumo Logic
   ## so that the Sumo Logic apps can make full use of the ingested data.
-  ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/sumologicschemaprocessor
-  sumologic_schema:
+  ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/sumologicprocessor
+  sumologic:
 
   ## Configuration for Resource Detection Processor
   ## The resource detection processor can be used to detect resource information from the host, in a format that conforms to the
@@ -95,7 +95,7 @@ service:
       processors:
         - memory_limiter
         - batch
-        - sumologic_schema
+        - sumologic
       exporters:
         - sumologic
     logs/default:
@@ -104,7 +104,7 @@ service:
       processors:
         - memory_limiter
         - batch
-        - sumologic_schema
+        - sumologic
       exporters:
         - sumologic
     traces/default:
@@ -113,6 +113,6 @@ service:
       processors:
         - memory_limiter
         - batch
-        - sumologic_schema
+        - sumologic
       exporters:
         - sumologic
