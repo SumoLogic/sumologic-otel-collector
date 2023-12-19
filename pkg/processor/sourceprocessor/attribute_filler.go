@@ -28,7 +28,7 @@ var (
 
 func init() {
 	var err error
-	formatRegex, err = regexp.Compile(`\%\{([\w\.]+)\}`)
+	formatRegex, err = regexp.Compile(`\%\{([\w\.\/]+)\}`)
 	if err != nil {
 		panic("failed to parse regex: " + err.Error())
 	}

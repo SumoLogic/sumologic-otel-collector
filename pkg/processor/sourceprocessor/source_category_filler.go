@@ -38,12 +38,11 @@ type sourceCategoryFiller struct {
 // newSourceCategoryFiller creates a new sourceCategoryFiller.
 func newSourceCategoryFiller(cfg *Config, logger *zap.Logger) sourceCategoryFiller {
 
-	valueTemplate := cfg.SourceCategory
-	templateAttributes := extractTemplateAttributes(valueTemplate)
+	templateAttributes := extractTemplateAttributes(cfg.SourceCategoryPrefix + cfg.SourceCategory)
 
 	return sourceCategoryFiller{
 		logger:                       logger,
-		valueTemplate:                valueTemplate,
+		valueTemplate:                cfg.SourceCategory,
 		templateAttributes:           templateAttributes,
 		prefix:                       cfg.SourceCategoryPrefix,
 		dashReplacement:              cfg.SourceCategoryReplaceDash,
@@ -76,20 +75,29 @@ func (f *sourceCategoryFiller) fill(attributes *pcommon.Map) {
 		return
 	}
 
-	valueTemplate := getAnnotationAttributeValue(f.annotationPrefix, sourceCategorySpecialAnnotation, attributes)
 	var templateAttributes []string
-	if valueTemplate != "" {
-		templateAttributes = extractTemplateAttributes(valueTemplate)
-	} else {
+	doesUseAnnotation := false
+
+	valueTemplate := getAnnotationAttributeValue(f.annotationPrefix, sourceCategorySpecialAnnotation, attributes)
+	if valueTemplate == "" {
 		valueTemplate = f.valueTemplate
-		templateAttributes = f.templateAttributes
+	} else {
+		doesUseAnnotation = true
 	}
 
 	prefix := getAnnotationAttributeValue(f.annotationPrefix, sourceCategoryPrefixAnnotation, attributes)
 	if prefix == "" {
 		prefix = f.prefix
+	} else {
+		doesUseAnnotation = true
 	}
 	valueTemplate = prefix + valueTemplate
+
+	if doesUseAnnotation {
+		templateAttributes = extractTemplateAttributes(valueTemplate)
+	} else {
+		templateAttributes = f.templateAttributes
+	}
 
 	sourceCategoryValue := f.replaceTemplateAttributes(valueTemplate, templateAttributes, attributes)
 

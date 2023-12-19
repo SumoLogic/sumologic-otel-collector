@@ -5,7 +5,7 @@ exporters:
       enabled: false
 
 processors:
-  sumologic_schema:
+  sumologic:
     add_cloud_namespace: true
 
 receivers:
@@ -28,7 +28,7 @@ service:
       exporters:
       - sumologic
       processors:
-      - sumologic_schema
+      - sumologic
       receivers:
       - filelog
 
@@ -36,7 +36,7 @@ service:
       exporters:
       - sumologic
       processors:
-      - sumologic_schema
+      - sumologic
       receivers:
       - hostmetrics
 
@@ -44,6 +44,6 @@ service:
       exporters:
       - sumologic
       processors:
-      - sumologic_schema
+      - sumologic
       receivers:
       - otlp

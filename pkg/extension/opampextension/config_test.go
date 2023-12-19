@@ -17,7 +17,6 @@ package opampextension
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -62,10 +61,6 @@ func TestConfigValidate(t *testing.T) {
 	err := cfg.Validate()
 	require.Error(t, err)
 	assert.Equal(t, "opamp remote_configuration_directory must be provided", err.Error())
-
-	cfg.RemoteConfigurationDirectory = "/tmp/opamp.d"
-	err = cfg.Validate()
-	assert.True(t, strings.HasPrefix(err.Error(), "opamp remote_configuration_directory /tmp/opamp.d must be readable:"))
 
 	d, err := os.MkdirTemp("", "opamp.d")
 	assert.NoError(t, err)

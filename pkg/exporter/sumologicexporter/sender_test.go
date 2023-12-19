@@ -888,6 +888,8 @@ func TestSendLogsOTLP(t *testing.T) {
 		logRecords[i].MoveTo(ls.ScopeLogs().AppendEmpty().LogRecords().AppendEmpty())
 	}
 
+	l.MarkReadOnly()
+
 	assert.NoError(t, test.s.sendOTLPLogs(context.Background(), l))
 	assert.EqualValues(t, 1, *test.reqCounter)
 }
@@ -1126,6 +1128,7 @@ func TestSendMetrics(t *testing.T) {
 		attrs,
 		metricSum, metricGauge,
 	)
+	metrics.MarkReadOnly()
 
 	_, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
 	assert.Empty(t, errs)
@@ -1153,6 +1156,7 @@ func TestSendMetricsSplit(t *testing.T) {
 		attrs,
 		metricSum, metricGauge,
 	)
+	metrics.MarkReadOnly()
 
 	_, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
 	assert.Empty(t, errs)
@@ -1179,6 +1183,7 @@ func TestSendOTLPHistogram(t *testing.T) {
 	rms := metrics.ResourceMetrics().AppendEmpty()
 	attrs.CopyTo(rms.Resource().Attributes())
 	metricHistogram.CopyTo(rms.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
+	metrics.MarkReadOnly()
 
 	err := test.s.sendOTLPMetrics(context.Background(), metrics)
 	assert.NoError(t, err)
@@ -1216,6 +1221,7 @@ func TestSendMetricsSplitBySource(t *testing.T) {
 	attrs.CopyTo(rmsGauge.Resource().Attributes())
 	rmsGauge.Resource().Attributes().PutStr("_sourceHost", "value2")
 	metricGauge.CopyTo(rmsGauge.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
+	metrics.MarkReadOnly()
 
 	_, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
 	assert.Empty(t, errs)
@@ -1253,6 +1259,7 @@ func TestSendMetricsSplitFailedOne(t *testing.T) {
 	rmsGauge := metrics.ResourceMetrics().AppendEmpty()
 	attrs.CopyTo(rmsGauge.Resource().Attributes())
 	metricGauge.CopyTo(rmsGauge.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
+	metrics.MarkReadOnly()
 
 	dropped, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
 	assert.Len(t, errs, 1)
@@ -1295,6 +1302,7 @@ func TestSendMetricsSplitFailedAll(t *testing.T) {
 	rmsGauge := metrics.ResourceMetrics().AppendEmpty()
 	attrs.CopyTo(rmsGauge.Resource().Attributes())
 	metricGauge.CopyTo(rmsGauge.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty())
+	metrics.MarkReadOnly()
 
 	dropped, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
 	assert.Len(t, errs, 2)
@@ -1320,6 +1328,7 @@ func TestSendMetricsUnexpectedFormat(t *testing.T) {
 
 	metricSum, attrs := exampleIntMetric()
 	metrics := metricAndAttrsToPdataMetrics(attrs, metricSum)
+	metrics.MarkReadOnly()
 
 	dropped, errs := test.s.sendNonOTLPMetrics(context.Background(), metrics)
 	assert.Len(t, errs, 1)
