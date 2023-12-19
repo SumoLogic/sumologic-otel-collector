@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 
-cp -r /root/workspace /root/build
+# Mac security suite is interferring, can't build in bind mount workspace
+cp -r /root/workspace/* /root/build/
 cd /root/build
 
 # Install builder
@@ -12,3 +13,6 @@ make install-builder
 # Build otelcol-sumo
 make otelcol-sumo-linux-fips_amd64
 make otelcol-sumo-linux-fips_arm64
+
+# Copy produced binaries to bind mount workspace
+cp cmd/otelcol-sumo-fips-linux_* /root/workspace/otelcolbuilder/cmd/
