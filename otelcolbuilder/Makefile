@@ -31,6 +31,10 @@ ifeq ($(OS),darwin)
 	DMG_VOLUME_NAME ?= Sumo Logic Distribution for OpenTelemetry Collector
 endif
 
+# Add additional LDFLAGS
+# ex: to get a staticly executable with CGO use EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
+LDFLAGS:=$(EXTRA_LDFLAGS)
+
 # Builds for darwin need to be built with CGO_ENABLED set to 1 because some telegraf
 # plugins that are used within the telegrafreceiver are implemented with CGO.
 # Example of this might be the cpu input plugin using gopsutil to the cpu stats.
@@ -49,17 +53,18 @@ endif
 # We don't want to strip symbols for FIPS builds, as they're useful for verifying the build
 ifeq ($(FIPS_SUFFIX),"")
 GOEXPERIMENT=""
-LDFLAGS="-s -w"
+LDFLAGS+= -s -w
 GOFIPS=1
+
 # We want to use boringcrypto for fips setup
 else
 ifeq ($(shell go env GOOS),windows)
 GOEXPERIMENT=systemcrypto
 GOTAGS := $(GOTAGS) requirefips
-LDFLAGS="-w"
+LDFLAGS+= -w
 else
 GOEXPERIMENT=boringcrypto
-LDFLAGS="-w"
+LDFLAGS+= -w
 endif
 endif
 
@@ -113,7 +118,7 @@ _gobuild:
 	(cd cmd && \
 		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
 		-tags "$(GOTAGS)" \
-		-ldflags=$(LDFLAGS) \
+		-ldflags="$(LDFLAGS)" \
 		-trimpath \
 		-o ./$(BINARY_NAME)$(BUILDER_BIN_EXT) . \
 	)
@@ -146,8 +151,9 @@ build-debug: ensure-correct-builder-version
 
 .PHONY: build-fips
 build-fips:
-	docker build --platform linux/amd64 -t otelcol-sumo-builder-fips -f ../ci/build-fips-action/Dockerfile ../ci/build-fips-action
-	docker run -it --platform linux/amd64 --rm -v $(PWD)/../:/github/workspace -w /github/workspace --tmpfs /tmp otelcol-sumo-builder-fips
+	docker volume create build-fips
+	docker build --platform linux/amd64 -t otelcol-sumo-builder-fips -f ./build-fips/Dockerfile ./build-fips
+	docker run -it --platform linux/amd64 --rm -v build-fips:/root/build -v $(PWD)/../:/root/workspace -w /root/workspace --tmpfs /tmp otelcol-sumo-builder-fips
 
 .PHONY: generate-sources
 generate-sources:
@@ -219,3 +225,37 @@ otelcol-sumo-linux_arm:
 .PHONY: otelcol-sumo-windows_amd64
 otelcol-sumo-windows_amd64:
 	GOOS=windows GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-windows_amd64
+
+MUSL_X_MAKE_REPO=https://github.com/richfelker/musl-cross-make.git
+MUSL_X_MAKE_REF=fe915821b652a7fa37b34a596f47d8e20bc72338
+
+musl-cross-make:
+	git clone $(MUSL_X_MAKE_REPO);
+	cd musl-cross-make && git checkout $(MUSL_X_MAKE_REF);
+	cp ./build-fips/config.mak ./musl-cross-make/config.mak;
+
+.PHONY: toolchain-linux_arm64
+toolchain-linux_arm64: musl-cross-make
+	TARGET=aarch64-linux-musl $(MAKE) -C musl-cross-make install
+
+.PHONY: toolchain-linux_amd64
+toolchain-linux_amd64: musl-cross-make
+	TARGET=x86_64-linux-musl $(MAKE) -C musl-cross-make install
+
+.PHONY: otelcol-sumo-linux-fips_arm64
+otelcol-sumo-linux-fips_arm64:
+	$(MAKE) toolchain-linux_arm64 OUTPUT=$(PWD)/toolchain_arm64 -j3
+	$(MAKE) otelcol-sumo-linux_arm64 \
+		FIPS_SUFFIX="-fips" \
+		CGO_ENABLED="1" \
+		CC="$(PWD)/toolchain_arm64/bin/aarch64-linux-musl-gcc" \
+		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
+
+.PHONY: otelcol-sumo-linux-fips_amd64
+otelcol-sumo-linux-fips_amd64:
+	$(MAKE) toolchain-linux_amd64 OUTPUT=$(PWD)/toolchain_amd64 -j3
+	$(MAKE) otelcol-sumo-linux_amd64 \
+		FIPS_SUFFIX="-fips" \
+		CGO_ENABLED="1" \
+		CC="$(PWD)/toolchain_amd64/bin/x86_64-linux-musl-gcc" \
+		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
