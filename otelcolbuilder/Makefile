@@ -153,7 +153,7 @@ build-debug: ensure-correct-builder-version
 build-fips:
 	docker volume create build-fips
 	docker build --platform linux/amd64 -t otelcol-sumo-builder-fips -f ./build-fips/Dockerfile ./build-fips
-	docker run -it --platform linux/amd64 --rm -v build-fips:/root/build -v $(PWD)/../:/root/workspace -w /root/workspace otelcol-sumo-builder-fips
+	docker run -it --platform linux/amd64 --rm -v build-fips:/root/build -v $(PWD)/../:/root/workspace -w /root/workspace --tmpfs /tmp otelcol-sumo-builder-fips
 
 .PHONY: generate-sources
 generate-sources:
