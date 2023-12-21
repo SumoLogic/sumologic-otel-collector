@@ -240,8 +240,6 @@ func (o *opampAgent) setEndpoint() {
 	e = strings.Replace(e, "open-events", "opamp-events", 1)
 	e = strings.Replace(e, "open-collectors", "opamp-collectors", 1)
 	o.endpoint = strings.TrimRight(e, "/") + "/v1/opamp"
-
-	return
 }
 
 func newOpampAgent(cfg *Config, logger *zap.Logger, build component.BuildInfo, res pcommon.Resource) (*opampAgent, error) {
