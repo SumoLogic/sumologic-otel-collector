@@ -567,7 +567,7 @@ func (s *sender) sendNonOTLPMetrics(ctx context.Context, md pmetric.Metrics) (pm
 				if err := s.send(ctx, MetricsPipeline, body.toCountingReader(), previousFields); err != nil {
 					errs = append(errs, err)
 					for _, resource := range currentResources {
-						resource.MoveTo(droppedMetrics.ResourceMetrics().AppendEmpty())
+						resource.CopyTo(droppedMetrics.ResourceMetrics().AppendEmpty())
 					}
 				}
 				body.Reset()
@@ -604,7 +604,7 @@ func (s *sender) sendNonOTLPMetrics(ctx context.Context, md pmetric.Metrics) (pm
 				// failed at sending, add the resource to the dropped metrics
 				// move instead of copy here to avoid duplicating data in memory on failure
 				for _, resource := range currentResources {
-					resource.MoveTo(droppedMetrics.ResourceMetrics().AppendEmpty())
+					resource.CopyTo(droppedMetrics.ResourceMetrics().AppendEmpty())
 				}
 			}
 		}
@@ -622,7 +622,7 @@ func (s *sender) sendNonOTLPMetrics(ctx context.Context, md pmetric.Metrics) (pm
 		if err := s.send(ctx, MetricsPipeline, body.toCountingReader(), flds); err != nil {
 			errs = append(errs, err)
 			for _, resource := range currentResources {
-				resource.MoveTo(droppedMetrics.ResourceMetrics().AppendEmpty())
+				resource.CopyTo(droppedMetrics.ResourceMetrics().AppendEmpty())
 			}
 		}
 	}

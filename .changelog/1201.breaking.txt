@@ -1,3 +1,0 @@
-chore: remove routing_attributes_to_drop
-
-This option is duplication of `drop_resource_routing_attribute` of routingprocessor

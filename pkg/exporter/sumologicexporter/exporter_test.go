@@ -155,6 +155,7 @@ func TestAllSuccess(t *testing.T) {
 	})
 
 	logs := LogRecordsToLogs(exampleLog())
+	logs.MarkReadOnly()
 
 	err := test.exp.pushLogsData(context.Background(), logs)
 	assert.NoError(t, err)
@@ -200,6 +201,7 @@ func TestLogsResourceAttributesSentAsFields(t *testing.T) {
 				logs := LogRecordsToLogs(buffer)
 				logs.ResourceLogs().At(0).Resource().Attributes().PutStr("res_attr1", "1")
 				logs.ResourceLogs().At(0).Resource().Attributes().PutStr("res_attr2", "2")
+				logs.MarkReadOnly()
 				return logs
 			},
 		},
@@ -235,6 +237,8 @@ func TestAllFailed(t *testing.T) {
 
 	logsRecords2 := logsSlice.ScopeLogs().AppendEmpty().LogRecords()
 	logsRecords2.AppendEmpty().Body().SetStr("Another example log")
+
+	logs.MarkReadOnly()
 
 	logsExpected := plog.NewLogs()
 	logsSlice.CopyTo(logsExpected.ResourceLogs().AppendEmpty())
@@ -272,6 +276,8 @@ func TestPartiallyFailed(t *testing.T) {
 	logsSlice2 := logs.ResourceLogs().AppendEmpty()
 	logsRecords2 := logsSlice2.ScopeLogs().AppendEmpty().LogRecords()
 	logsRecords2.AppendEmpty().Body().SetStr("Another example log")
+
+	logs.MarkReadOnly()
 
 	logsExpected := plog.NewLogs()
 	logsSlice2.CopyTo(logsExpected.ResourceLogs().AppendEmpty())
@@ -311,6 +317,7 @@ func TestPushInvalidCompressor(t *testing.T) {
 	test.exp.config.CompressEncoding = "invalid"
 
 	logs := LogRecordsToLogs(exampleLog())
+	logs.MarkReadOnly()
 
 	err := test.exp.pushLogsData(context.Background(), logs)
 	assert.EqualError(t, err, "failed to initialize compressor: invalid format: invalid")
@@ -346,6 +353,7 @@ func TestPushFailedBatch(t *testing.T) {
 
 	logs := LogRecordsToLogs(exampleLog())
 	logs.ResourceLogs().EnsureCapacity(maxBufferSize + 1)
+	logs.MarkReadOnly()
 	log := logs.ResourceLogs().At(0)
 	rLogs := logs.ResourceLogs()
 
@@ -362,6 +370,7 @@ func TestPushOTLPLogsClearTimestamp(t *testing.T) {
 		exampleLogs := exampleLog()
 		exampleLogs[0].SetTimestamp(12345)
 		logs := LogRecordsToLogs(exampleLogs)
+		logs.MarkReadOnly()
 		return logs
 	}
 
@@ -438,6 +447,7 @@ func TestPushLogs_DontRemoveSourceAttributes(t *testing.T) {
 		resourceAttrs.PutStr("_sourceCategory", "my-source-category")
 		resourceAttrs.PutStr("_sourceHost", "my-source-host")
 		resourceAttrs.PutStr("_sourceName", "my-source-name")
+		logs.MarkReadOnly()
 
 		return logs
 	}
@@ -506,6 +516,7 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 			test.exp.config.MetricFormat = PrometheusFormat
 
 			metric := metricAndAttributesToPdataMetrics(tc.metricFunc())
+			metric.MarkReadOnly()
 
 			err := test.exp.pushMetricsData(context.Background(), metric)
 			assert.NoError(t, err)
@@ -575,6 +586,7 @@ gauge_metric_name{test="test_value",test2="second_value",remote_name="156955",ur
 					attrs,
 					metricSum, metricGauge,
 				)
+				metrics.MarkReadOnly()
 				return metrics
 			},
 			expectedError: "failed sending data: status: 500 Internal Server Error",
@@ -632,6 +644,7 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 
 func TestPushMetricsInvalidCompressor(t *testing.T) {
 	metrics := metricAndAttributesToPdataMetrics(exampleIntMetric())
+	metrics.MarkReadOnly()
 
 	// Expect no requests
 	test := prepareExporterTest(t, createTestConfig(), nil)
@@ -657,6 +670,8 @@ func TestMetricsPrometheusFormatMetadataFilter(t *testing.T) {
 	attrs := metrics.ResourceMetrics().At(0).Resource().Attributes()
 	attrs.PutStr("key1", "value1")
 	attrs.PutStr("key2", "value2")
+
+	metrics.MarkReadOnly()
 
 	err := test.exp.pushMetricsData(context.Background(), metrics)
 	assert.NoError(t, err)
@@ -692,7 +707,9 @@ func Benchmark_ExporterPushLogs(b *testing.B) {
 		for i := 0; i < 10; i++ {
 			wg.Add(1)
 			go func() {
-				err := exp.pushLogsData(context.Background(), LogRecordsToLogs(exampleNLogs(128)))
+				logs := LogRecordsToLogs(exampleNLogs(128))
+				logs.MarkReadOnly()
+				err := exp.pushLogsData(context.Background(), logs)
 				if err != nil {
 					b.Logf("Failed pushing logs: %v", err)
 				}
@@ -710,6 +727,7 @@ func TestSendEmptyLogsOTLP(t *testing.T) {
 	})
 
 	logs := plog.NewLogs()
+	logs.MarkReadOnly()
 
 	err := test.exp.pushLogsData(context.Background(), logs)
 	assert.NoError(t, err)

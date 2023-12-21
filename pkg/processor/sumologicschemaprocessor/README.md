@@ -6,6 +6,8 @@ This processor is deprecated in favor of the [Sumo Logic processor][sumologic_pr
 To migrate, change the name of the processor in configuration from `sumologic_schema` to `sumologic`.
 All the functionality and configuration is the same.
 
+**Refer to [upgrading document](/docs/upgrading.md#upgrading-to-v0890-sumo-0).**
+
 The Sumo Logic Schema processor (config name: `sumologic_schema`)
 modifies the metadata on logs, metrics and traces sent to [Sumo Logic][sumologic_webpage]
 so that the Sumo Logic [apps][sumologic_apps] can make full use of the ingested data.

@@ -16,6 +16,7 @@ package cascadingfilterprocessor
 
 import (
 	"context"
+	"math"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -103,6 +104,8 @@ const (
 	AttributeSamplingLateArrival  = "sampling.late_arrival"
 
 	AttributeSamplingProbability = "sampling.probability"
+
+	defaultCollectorInstancesNo = 1
 )
 
 // newTraceProcessor returns a processor.TraceProcessor that will perform Cascading Filter according to the given
@@ -125,6 +128,12 @@ func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.T
 	ctx := context.Background()
 	var policies []*TraceAcceptEvaluator
 	var dropTraceEvals []*TraceRejectEvaluator
+
+	// In case of lack of collectorInstances set default.
+	if cfg.CollectorInstances == 0 {
+		cfg.CollectorInstances = defaultCollectorInstancesNo
+		logger.Info("Using default collector instances", zap.Uint("value", defaultCollectorInstancesNo))
+	}
 
 	// Prepare Trace Reject config
 
@@ -166,6 +175,13 @@ func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.T
 		if err != nil {
 			return nil, err
 		}
+
+		if policyCfg.SpansPerSecond > 0 {
+			policyCalculatedSpansPerSecond := calculateSpansPerSecond(policyCfg.SpansPerSecond, cfg.CollectorInstances)
+			policyCfg.SpansPerSecond = policyCalculatedSpansPerSecond
+			totalRate += policyCfg.SpansPerSecond
+		}
+
 		eval, err := buildPolicyEvaluator(logger, &policyCfg)
 		if err != nil {
 			return nil, err
@@ -176,17 +192,20 @@ func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.T
 			ctx:                 policyCtx,
 			probabilisticFilter: false,
 		}
-		if policyCfg.SpansPerSecond > 0 {
-			totalRate += policyCfg.SpansPerSecond
-		}
+
 		logger.Info("Adding trace accept rule",
 			zap.String("name", policyCfg.Name),
-			zap.Int32("spans_per_second", policyCfg.SpansPerSecond))
+			zap.Int32("spans_per_second", policyCfg.SpansPerSecond),
+			zap.Uint("collector_instances", cfg.CollectorInstances),
+		)
+
 		policies = append(policies, policy)
 	}
 
 	// Recalculate the total spans per second rate if needed
-	spansPerSecond := cfg.SpansPerSecond
+	calculatedGlobalSpansPerSecond := calculateSpansPerSecond(cfg.SpansPerSecond, cfg.CollectorInstances)
+	cfg.SpansPerSecond = calculatedGlobalSpansPerSecond
+	spansPerSecond := calculatedGlobalSpansPerSecond
 	if spansPerSecond == 0 {
 		spansPerSecond = totalRate
 		if cfg.ProbabilisticFilteringRate != nil && *cfg.ProbabilisticFilteringRate > 0 {
@@ -195,7 +214,10 @@ func newCascadingFilterSpanProcessor(logger *zap.Logger, nextConsumer consumer.T
 	}
 
 	if spansPerSecond != 0 {
-		logger.Info("Setting total spans per second limit", zap.Int32("spans_per_second", spansPerSecond))
+		logger.Info("Setting total spans per second limit, based on configured collector instances",
+			zap.Int32("spans_per_second", spansPerSecond),
+			zap.Uint("collector_instances", cfg.CollectorInstances),
+		)
 	} else {
 		logger.Info("Not setting total spans per second limit (only selected traces will be filtered out)")
 	}
@@ -511,3 +533,10 @@ func (pt *policyTicker) Stop() {
 }
 
 var _ tTicker = (*policyTicker)(nil)
+
+func calculateSpansPerSecond(spansPerSecond int32, collectorInstances uint) int32 {
+	calculateSpansPerSecond := float64(spansPerSecond) / float64(collectorInstances)
+	roundedSpansPerSecond := int32(math.Ceil(calculateSpansPerSecond))
+
+	return roundedSpansPerSecond
+}
