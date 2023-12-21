@@ -47,6 +47,10 @@ exporters:
     # maximum connection timeout is 55s, default = 30s
     timeout: <timeout>
 
+    # defines client name used for Sumo Logic statistics
+    # default = "otelcol"
+    client: <client name>
+
     # defines if timestamp for logs should be set to 0,
     # it indicates that backend will extract timestamp from logs,
     # this option affects OTLP format only
