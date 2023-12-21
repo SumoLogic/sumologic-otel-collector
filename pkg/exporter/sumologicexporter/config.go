@@ -57,9 +57,6 @@ type Config struct {
 	// The format of traces you will be sending, currently only otlp format is supported
 	TraceFormat TraceFormatType `mapstructure:"trace_format"`
 
-	// DEPRECATED: The below attributes only exist so we can print a nicer error
-	// message about not supporting them anymore.
-
 	// Sumo specific options
 	// Name of the client
 	Client string `mapstructure:"client"`
