@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strings"
 	"syscall"
 
 	"github.com/google/uuid"
@@ -48,6 +49,8 @@ type opampAgent struct {
 
 	authExtension *sumologicextension.SumologicExtension
 	authHeader    http.Header
+
+	endpoint string
 
 	agentType    string
 	agentVersion string
@@ -82,6 +85,8 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 	if err := o.getAuthExtension(); err != nil {
 		return err
 	}
+
+	o.setEndpoint()
 
 	if o.authExtension == nil {
 		return o.startClient(ctx)
@@ -130,7 +135,7 @@ func (o *opampAgent) Reload(ctx context.Context) error {
 func (o *opampAgent) startClient(ctx context.Context) error {
 	settings := types.StartSettings{
 		Header:         o.authHeader,
-		OpAMPServerURL: o.cfg.Endpoint,
+		OpAMPServerURL: o.endpoint,
 		InstanceUid:    o.instanceId.String(),
 		Callbacks: types.CallbacksStruct{
 			OnConnectFunc: func() {
@@ -221,6 +226,22 @@ func (o *opampAgent) watchCredentials(ctx context.Context, callback func(ctx con
 	}()
 
 	return nil
+}
+
+func (o *opampAgent) setEndpoint() {
+	if o.authExtension == nil {
+		o.endpoint = o.cfg.Endpoint
+		return
+	}
+
+	b := o.authExtension.BaseUrl()
+
+	e := strings.Replace(b, "https:", "wss:", 1)
+	e = strings.Replace(e, "open-events", "opamp-events", 1)
+	e = strings.Replace(e, "open-collectors", "opamp-collectors", 1)
+	o.endpoint = strings.TrimRight(e, "/") + "/v1/opamp"
+
+	return
 }
 
 func newOpampAgent(cfg *Config, logger *zap.Logger, build component.BuildInfo, res pcommon.Resource) (*opampAgent, error) {
