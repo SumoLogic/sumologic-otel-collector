@@ -1,7 +1,10 @@
 # Upgrading
 
 - [Upgrading](#upgrading)
-  - [Upgrading to v0.90.1-sumo-0](#upgrading-to-v0910-sumo-0)
+  - [Upgrading to v0.91.0-sumo-0](#upgrading-to-v0910-sumo-0)
+    - [Sumo Logic Schema processor replaced with Sumo Logic processor](#sumo-logic-schema-processor-replaced-with-sumo-logic-processor)
+    - [`k8s_tagger` processor: default name of podID attribute has changed](#k8s_tagger-processor-default-name-of-podid-attribute-has-changed)
+  - [Upgrading to v0.90.1-sumo-0](#upgrading-to-v0901-sumo-0)
     - [Change configuration for `syslogexporter`](#change-configuration-for-syslogexporter)
     - [`sumologic` exporter: deprecate `clear_logs_timestamp`](#sumologic-exporter-deprecate-clear_logs_timestamp)
     - [`sumologic` exporter: remove `routing_attributes_to_drop`](#sumologic-exporter-remove-routing_attributes_to_drop)
@@ -76,6 +79,20 @@ service:
 
 [sumologicschema]: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/sumologicschemaprocessor
 [sumologicprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/sumologicprocessor
+
+### `k8s_tagger` processor: default name of podID attribute has changed
+
+By a mistake, in the [k8s_tagger][k8staggerprocessor], the default name for podID was set to `k8s.pod.id`. It has been changed to `k8s.pod.uid`.
+If you want to still use the old name, add the following option to the config of the `k8s_tagger`:
+
+```yaml
+processors:
+  k8s_tagger:
+    tags:
+      podID: k8s.pod.id
+```
+
+[k8staggerprocessor]: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/k8sprocessor
 
 ## Upgrading to v0.90.1-sumo-0
 

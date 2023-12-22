@@ -91,7 +91,7 @@ processors:
         jobName: k8s.job.name
         namespaceName: k8s.namespace.name
         nodeName: k8s.node.name
-        podID: k8s.pod.id
+        podID: k8s.pod.uid
         podName: k8s.pod.name
         replicaSetName: k8s.replicaset.name
         serviceName: k8s.service.name
