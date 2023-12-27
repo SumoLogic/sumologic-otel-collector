@@ -327,7 +327,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Download binary action artifact from build phase (regular binary and FIPS binary)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{matrix.arch_os}}
           path: artifacts/
@@ -426,7 +426,7 @@ jobs:
         run: echo "${{ steps.extract_tag.outputs.tag }}"
 
       - name: Fetch binary artifact for ${{ matrix.arch_os }}
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: windows_amd64_fips
           path: ./otelcolbuilder/cmd
@@ -544,7 +544,7 @@ jobs:
         run: echo "v${{ steps.extract_tag.outputs.tag }}"
 
       - name: Download all binaries stored as artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: artifacts/
 
