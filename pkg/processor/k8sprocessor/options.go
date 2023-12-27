@@ -156,7 +156,7 @@ func WithExtractTags(tagsMap map[string]string) Option {
 	return func(p *kubernetesprocessor) error {
 		var tags = kube.NewExtractionFieldTags()
 		for field, tag := range tagsMap {
-			switch field {
+			switch strings.ToLower(field) {
 			case strings.ToLower(metadataContainerID):
 				tags.ContainerID = tag
 			case strings.ToLower(metadataContainerName):

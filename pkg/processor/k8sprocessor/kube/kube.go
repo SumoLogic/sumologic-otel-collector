@@ -40,7 +40,7 @@ const (
 	defaultTagCronJobName     = "k8s.cronjob.name"
 	defaultTagJobName         = "k8s.job.name"
 	defaultTagNodeName        = "k8s.node.name"
-	defaultTagPodUID          = "k8s.pod.id"
+	defaultTagPodUID          = "k8s.pod.uid"
 	defaultTagReplicaSetName  = "k8s.replicaset.name"
 	defaultTagServiceName     = "k8s.service.name"
 	defaultTagStatefulSetName = "k8s.statefulset.name"
