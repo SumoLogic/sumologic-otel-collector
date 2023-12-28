@@ -991,7 +991,7 @@ func (se *SumologicExtension) updateStickySessionCookie(resp *http.Response) {
 	cookies := resp.Cookies()
 	if se.conf.StickySessionEnabled && len(cookies) > 0 {
 		for _, cookie := range cookies {
-			if cookie.Name == se.stickySessionCookie {
+			if cookie.Name == stickySessionKey {
 				if cookie.Value != se.StickySessionCookie() {
 					se.SetStickySessionCookie(cookie.Value)
 				}

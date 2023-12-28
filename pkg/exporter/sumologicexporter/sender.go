@@ -234,7 +234,9 @@ func (s *sender) send(ctx context.Context, pipeline PipelineType, reader *counti
 
 func (s *sender) handleReceiverResponse(resp *http.Response) error {
 
-	//TODO: UPDATE sticky session cookie if necessary
+	if s.config.StickySessionEnabled {
+		s.updateStickySessionCookie(resp)
+	}
 
 	// API responds with a 200 or 204 with ConentLength set to 0 when all data
 	// has been successfully ingested.
@@ -845,5 +847,19 @@ func (s *sender) addStickySessionCookie(req *http.Request) {
 			Value: currectCookieValue,
 		}
 		req.AddCookie(cookie)
+	}
+}
+
+func (s *sender) updateStickySessionCookie(resp *http.Response) {
+	cookies := resp.Cookies()
+	if len(cookies) > 0 {
+		for _, cookie := range cookies {
+			if cookie.Name == stickySessionKey {
+				if cookie.Value != s.stickySessionCookieFunc() {
+					s.setStickySessionCookieFunc(cookie.Value)
+				}
+				return
+			}
+		}
 	}
 }
