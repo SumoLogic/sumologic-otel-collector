@@ -233,7 +233,6 @@ func (s *sender) send(ctx context.Context, pipeline PipelineType, reader *counti
 }
 
 func (s *sender) handleReceiverResponse(resp *http.Response) error {
-
 	if s.config.StickySessionEnabled {
 		s.updateStickySessionCookie(resp)
 	}
