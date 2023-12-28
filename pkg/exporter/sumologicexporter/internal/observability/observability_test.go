@@ -64,15 +64,14 @@ func (e *exporter) ExportMetrics(ctx context.Context, data []*metricdata.Metric)
 // Creates metrics reader and forward metrics from it to chData
 // Sens empty structs to fail chan afterwards
 func metricReader(chData chan []*metricdata.Metric, fail chan struct{}, count int) {
-	reader := metricexport.NewReader()
-	e := newExporter()
-	ch := e.ReturnAfter(count)
 
 	// Add a manual retry mechanism in case there's a hiccup reading the
 	// metrics from producers in ReadAndExport(): we can wait for the metrics
 	// to come instead of failing because they didn't come right away.
 	for i := 0; i < 10; i++ {
-		go reader.ReadAndExport(e)
+		e := newExporter()
+		ch := e.ReturnAfter(count)
+		go metricexport.NewReader().ReadAndExport(e)
 
 		select {
 		case <-time.After(500 * time.Millisecond):
@@ -168,7 +167,7 @@ func TestMetrics(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Len(t, data, len(tests))
 			d := data[i]
-			assert.Equal(t, d.Descriptor.Name, tt.name)
+			assert.Equal(t, tt.name, d.Descriptor.Name, "Expected %v at index %v, but got %v.", tt.name, i, d.Descriptor.Name)
 			require.Len(t, d.TimeSeries, 1)
 			require.Len(t, d.TimeSeries[0].Points, 1)
 			assert.Equal(t, d.TimeSeries[0].Points[0].Value, int64(1))
