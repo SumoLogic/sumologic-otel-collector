@@ -756,3 +756,23 @@ func TestWithExcludes(t *testing.T) {
 		})
 	}
 }
+
+func TestExtractTags(t *testing.T) {
+	p := &kubernetesprocessor{}
+	tags := map[string]string{
+		"containerid": "cntrid",
+		"podId":       "the id",
+		"hOsTnAmE":    "host",
+		"SERVICENAME": "blep",
+	}
+	assert.NoError(t, WithExtractTags(tags)(p))
+	assert.Equal(t, "cntrid", p.rules.Tags.ContainerID)
+	assert.Equal(t, "the id", p.rules.Tags.PodUID)
+	assert.Equal(t, "host", p.rules.Tags.HostName)
+	assert.Equal(t, "blep", p.rules.Tags.ServiceName)
+
+	p = &kubernetesprocessor{}
+	err := WithExtractTags(map[string]string{"randomfield": "randomvalue"})(p)
+	assert.Error(t, err)
+	assert.Equal(t, err.Error(), `"randomfield" is not a supported metadata field`)
+}
