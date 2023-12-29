@@ -100,6 +100,8 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 			testServer.URL,
 			testServer.URL,
 			testServer.URL,
+			func() string { return "" },
+			func(string) {},
 			component.ID{},
 		),
 	}

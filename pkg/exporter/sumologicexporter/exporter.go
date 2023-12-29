@@ -62,6 +62,12 @@ type sumologicexporter struct {
 	dataUrlLogs    string
 	dataUrlTraces  string
 
+	foundSumologicExtension bool
+	sumologicExtension      *sumologicextension.SumologicExtension
+
+	stickySessionCookieLock sync.RWMutex
+	stickySessionCookie     string
+
 	id component.ID
 }
 
@@ -85,8 +91,9 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sumolog
 			},
 		},
 		// NOTE: client is now set in start()
-		prometheusFormatter: pf,
-		id:                  createSettings.ID,
+		prometheusFormatter:     pf,
+		id:                      createSettings.ID,
+		foundSumologicExtension: false,
 	}
 
 	se.logger.Info(
@@ -204,6 +211,8 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld plog.Logs) err
 		metricsUrl,
 		logsUrl,
 		tracesUrl,
+		se.StickySessionCookie,
+		se.SetStickySessionCookie,
 		se.id,
 	)
 
@@ -286,6 +295,8 @@ func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pmetric.Met
 		metricsUrl,
 		logsUrl,
 		tracesUrl,
+		se.StickySessionCookie,
+		se.SetStickySessionCookie,
 		se.id,
 	)
 
@@ -343,6 +354,8 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td ptrace.Trace
 		metricsUrl,
 		logsUrl,
 		tracesUrl,
+		se.StickySessionCookie,
+		se.SetStickySessionCookie,
 		se.id,
 	)
 
@@ -380,6 +393,8 @@ func (se *sumologicexporter) configure(ctx context.Context) error {
 		if ok && httpSettings.Auth.AuthenticatorID == v.ComponentID() {
 			ext = v
 			foundSumoExt = true
+			se.foundSumologicExtension = true
+			se.sumologicExtension = ext
 			break
 		}
 	}
@@ -474,6 +489,26 @@ func (se *sumologicexporter) getDataURLs() (logs, metrics, traces string) {
 
 func (se *sumologicexporter) shutdown(context.Context) error {
 	return nil
+}
+
+func (se *sumologicexporter) StickySessionCookie() string {
+	if se.foundSumologicExtension {
+		return se.sumologicExtension.StickySessionCookie()
+	} else {
+		se.stickySessionCookieLock.RLock()
+		defer se.stickySessionCookieLock.RUnlock()
+		return se.stickySessionCookie
+	}
+}
+
+func (se *sumologicexporter) SetStickySessionCookie(stickySessionCookie string) {
+	if se.foundSumologicExtension {
+		se.sumologicExtension.SetStickySessionCookie(stickySessionCookie)
+	} else {
+		se.stickySessionCookieLock.Lock()
+		se.stickySessionCookie = stickySessionCookie
+		se.stickySessionCookieLock.Unlock()
+	}
 }
 
 // get the destination url for a given signal type

@@ -118,6 +118,12 @@ exporters:
       # num_seconds is the number of seconds to buffer in case of a backend outage,
       # requests_per_second is the average number of requests per seconds.
       queue_size: <queue_size>
+
+    # defines if sticky session support is enable
+    # more details about sticky sessions for ALB could be found here:
+    # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/sticky-sessions.html
+    # default = false
+    sticky_session_enabled: {true, false}
 ```
 
 ## Metrics
