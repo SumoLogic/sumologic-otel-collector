@@ -59,9 +59,10 @@ func createDefaultConfig() component.Config {
 		},
 		TraceFormat: OTLPTraceFormat,
 
-		HTTPClientSettings: CreateDefaultHTTPClientSettings(),
-		RetrySettings:      exporterhelper.NewDefaultRetrySettings(),
-		QueueSettings:      qs,
+		HTTPClientSettings:   CreateDefaultHTTPClientSettings(),
+		RetrySettings:        exporterhelper.NewDefaultRetrySettings(),
+		QueueSettings:        qs,
+		StickySessionEnabled: DefaultStickySessionEnabled,
 	}
 }
 

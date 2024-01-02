@@ -6,6 +6,7 @@ exporters:
 
 processors:
   cascading_filter/1:
+    collector_instances: 1
     probabilistic_filtering_rate: 100
     trace_reject_filters:
       - name: healthcheck-rule
@@ -30,6 +31,7 @@ processors:
             values:
               - abc
   cascading_filter/2:
+    collector_instances: 1
     decision_wait: 10s
     num_traces: 100
     expected_new_traces_per_sec: 10

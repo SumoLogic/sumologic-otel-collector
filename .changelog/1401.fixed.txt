@@ -1,0 +1,1 @@
+fix(k8stagger)!: change default pod id attribute name to k8s.pod.uid

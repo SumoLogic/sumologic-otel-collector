@@ -67,6 +67,9 @@ type SumologicExtension struct {
 	registrationInfo api.OpenRegisterResponsePayload
 	updateMetadata   bool
 
+	stickySessionCookieLock sync.RWMutex
+	stickySessionCookie     string
+
 	closeChan chan struct{}
 	closeOnce sync.Once
 	backOff   *backoff.ExponentialBackOff
@@ -81,6 +84,8 @@ const (
 	collectorIdField           = "collector_id"
 	collectorNameField         = "collector_name"
 	collectorCredentialIdField = "collector_credential_id"
+
+	stickySessionKey = "AWSALB"
 )
 
 const (
@@ -895,6 +900,18 @@ func (se *SumologicExtension) SetBaseUrl(baseUrl string) {
 	se.baseUrlLock.Unlock()
 }
 
+func (se *SumologicExtension) StickySessionCookie() string {
+	se.stickySessionCookieLock.RLock()
+	defer se.stickySessionCookieLock.RUnlock()
+	return se.stickySessionCookie
+}
+
+func (se *SumologicExtension) SetStickySessionCookie(stickySessionCookie string) {
+	se.stickySessionCookieLock.Lock()
+	se.stickySessionCookie = stickySessionCookie
+	se.stickySessionCookieLock.Unlock()
+}
+
 // WatchCredentialKey watches for credential key updates. It makes use of a
 // channel close (done by injectCredentials) and string comparison with a
 // known/previous credential key (old). This function allows components to be
@@ -944,9 +961,11 @@ func (se *SumologicExtension) CreateCredentialsHeader() (http.Header, error) {
 // [1]: https://github.com/open-telemetry/opentelemetry-collector/blob/2e84285efc665798d76773b9901727e8836e9d8f/config/configauth/clientauth.go#L34-L39
 func (se *SumologicExtension) RoundTripper(base http.RoundTripper) (http.RoundTripper, error) {
 	return roundTripper{
-		collectorCredentialId:  se.registrationInfo.CollectorCredentialId,
-		collectorCredentialKey: se.registrationInfo.CollectorCredentialKey,
-		base:                   base,
+		collectorCredentialId:     se.registrationInfo.CollectorCredentialId,
+		collectorCredentialKey:    se.registrationInfo.CollectorCredentialKey,
+		addStickySessionCookie:    se.addStickySessionCookie,
+		updateStickySessionCookie: se.updateStickySessionCookie,
+		base:                      base,
 	}, nil
 }
 
@@ -954,15 +973,51 @@ func (se *SumologicExtension) PerRPCCredentials() (grpccredentials.PerRPCCredent
 	return nil, errGRPCNotSupported
 }
 
+func (se *SumologicExtension) addStickySessionCookie(req *http.Request) {
+	if !se.conf.StickySessionEnabled {
+		return
+	}
+	currectCookieValue := se.StickySessionCookie()
+	if currectCookieValue != "" {
+		cookie := &http.Cookie{
+			Name:  stickySessionKey,
+			Value: currectCookieValue,
+		}
+		req.AddCookie(cookie)
+	}
+}
+
+func (se *SumologicExtension) updateStickySessionCookie(resp *http.Response) {
+	cookies := resp.Cookies()
+	if se.conf.StickySessionEnabled && len(cookies) > 0 {
+		for _, cookie := range cookies {
+			if cookie.Name == stickySessionKey {
+				if cookie.Value != se.StickySessionCookie() {
+					se.SetStickySessionCookie(cookie.Value)
+				}
+				return
+			}
+		}
+	}
+}
+
 type roundTripper struct {
-	collectorCredentialId  string
-	collectorCredentialKey string
-	base                   http.RoundTripper
+	collectorCredentialId     string
+	collectorCredentialKey    string
+	addStickySessionCookie    func(*http.Request)
+	updateStickySessionCookie func(*http.Response)
+	base                      http.RoundTripper
 }
 
 func (rt roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	addCollectorCredentials(req, rt.collectorCredentialId, rt.collectorCredentialKey)
-	return rt.base.RoundTrip(req)
+	rt.addStickySessionCookie(req)
+	resp, err := rt.base.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
+	rt.updateStickySessionCookie(resp)
+	return resp, err
 }
 
 func addCollectorCredentials(req *http.Request, collectorCredentialId string, collectorCredentialKey string) {
