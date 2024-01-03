@@ -49,15 +49,6 @@ func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string
 	}
 }
 
-func checkDeprecatedTokenInConfig(c check) {
-	require.NotEmpty(c.test, c.installOptions.deprecatedInstallToken, "installation token has not been provided")
-
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err, "error while reading configuration")
-
-	require.Equal(c.test, c.installOptions.deprecatedInstallToken, conf.Extensions.Sumologic.InstallationToken, "installation token is different than expected")
-}
-
 func checkDifferentTokenInConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")
