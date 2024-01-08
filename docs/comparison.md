@@ -13,7 +13,6 @@
 - are using an **Unsupported Source** or **Unsupported Platform**
 - require remote management and remote configuration
 - require Ingest Budgets
-- use the Collector Management API (e.g. for Health Events or CRUD operations)
 - require CPU target
 
 ## Support Matrix
