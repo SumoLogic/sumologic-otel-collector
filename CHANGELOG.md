@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 
-- feat(sumologicschemaprocessor)!:deprecate in favor of sumologicprocessor [#1316]
+- feat(sumologicschemaprocessor)!: deprecate in favor of sumologicprocessor [#1316]
 - Removed deprecated InstallToken [#1367]
 
 ### Added
