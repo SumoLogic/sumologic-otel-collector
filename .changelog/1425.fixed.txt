@@ -1,0 +1,1 @@
+fix(k8sprocessor): Pod Service cache invalidation
