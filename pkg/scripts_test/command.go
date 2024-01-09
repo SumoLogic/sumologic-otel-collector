@@ -14,25 +14,24 @@ import (
 )
 
 type installOptions struct {
-	installToken           string
-	deprecatedInstallToken string
-	autoconfirm            bool
-	skipSystemd            bool
-	tags                   map[string]string
-	skipConfig             bool
-	skipInstallToken       bool
-	fips                   bool
-	envs                   map[string]string
-	uninstall              bool
-	purge                  bool
-	apiBaseURL             string
-	configBranch           string
-	downloadOnly           bool
-	dontKeepDownloads      bool
-	installHostmetrics     bool
-	remotelyManaged        bool
-	ephemeral              bool
-	timeout                float64
+	installToken       string
+	autoconfirm        bool
+	skipSystemd        bool
+	tags               map[string]string
+	skipConfig         bool
+	skipInstallToken   bool
+	fips               bool
+	envs               map[string]string
+	uninstall          bool
+	purge              bool
+	apiBaseURL         string
+	configBranch       string
+	downloadOnly       bool
+	dontKeepDownloads  bool
+	installHostmetrics bool
+	remotelyManaged    bool
+	ephemeral          bool
+	timeout            float64
 }
 
 func (io *installOptions) string() []string {
@@ -118,10 +117,6 @@ func (io *installOptions) buildEnvs() []string {
 
 	if io.installToken != "" {
 		e = append(e, fmt.Sprintf("%s=%s", installTokenEnv, io.installToken))
-	}
-
-	if io.deprecatedInstallToken != "" {
-		e = append(e, fmt.Sprintf("%s=%s", deprecatedInstallTokenEnv, io.deprecatedInstallToken))
 	}
 
 	return e

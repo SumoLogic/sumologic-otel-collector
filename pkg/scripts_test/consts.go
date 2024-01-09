@@ -14,10 +14,9 @@ const (
 	cacheDirectory        string = "/var/cache/otelcol-sumo/"
 	logDirPath            string = "/var/log/otelcol-sumo"
 
-	installToken              string = "token"
-	installTokenEnv           string = "SUMOLOGIC_INSTALLATION_TOKEN"
-	deprecatedInstallTokenEnv string = "SUMOLOGIC_INSTALL_TOKEN"
-	apiBaseURL                string = "https://open-collectors.sumologic.com"
+	installToken    string = "token"
+	installTokenEnv string = "SUMOLOGIC_INSTALLATION_TOKEN"
+	apiBaseURL      string = "https://open-collectors.sumologic.com"
 
 	curlTimeoutErrorCode int = 28
 )
