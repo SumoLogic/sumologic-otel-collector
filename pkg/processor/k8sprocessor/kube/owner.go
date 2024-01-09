@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"golang.org/x/exp/slices"
 	api_v1 "k8s.io/api/core/v1"
 	discovery_v1 "k8s.io/api/discovery/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -70,7 +71,9 @@ type OwnerCache struct {
 	objectOwners map[string]*ObjectOwner
 	ownersMutex  sync.RWMutex
 
+	// we need to track the Service <-> Pod relationship both ways to be able to do incremental updates
 	podServices      map[string][]string
+	servicePods      map[string][]string
 	podServicesMutex sync.RWMutex
 
 	namespaces map[string]*api_v1.Namespace
@@ -89,6 +92,7 @@ func newOwnerCache(logger *zap.Logger) OwnerCache {
 	return OwnerCache{
 		objectOwners: map[string]*ObjectOwner{},
 		podServices:  map[string][]string{},
+		servicePods:  map[string][]string{},
 		namespaces:   map[string]*api_v1.Namespace{},
 		logger:       logger,
 		stopCh:       make(chan struct{}),
@@ -332,13 +336,20 @@ func (op *OwnerCache) addNamespaceInformer(factory informers.SharedInformerFacto
 // evict function that should contain the logic for processing the deletion.
 func (op *OwnerCache) deferredDelete(evict func(obj any)) func(any) {
 	return func(obj any) {
-		op.deleteMu.Lock()
-		op.deleteQueue = append(op.deleteQueue, ownerCacheEviction{
-			ts:    time.Now(),
-			evict: func() { evict(obj) },
+		op.scheduleDelete(func() {
+			evict(obj)
 		})
-		op.deleteMu.Unlock()
 	}
+}
+
+// scheduleDelete schedules the evict function to run after a grace period.
+func (op *OwnerCache) scheduleDelete(evict func()) {
+	op.deleteMu.Lock()
+	op.deleteQueue = append(op.deleteQueue, ownerCacheEviction{
+		ts:    time.Now(),
+		evict: func() { evict() },
+	})
+	op.deleteMu.Unlock()
 }
 
 func (op *OwnerCache) addOwnerInformer(
@@ -427,6 +438,17 @@ func (op *OwnerCache) addServiceToPod(pod string, serviceName string) {
 	op.podServicesMutex.Lock()
 	defer op.podServicesMutex.Unlock()
 
+	// track the Service to Pod relationship
+	pods, ok := op.servicePods[serviceName]
+	if !ok {
+		// If there's no record of this Service, add it
+		pods = []string{}
+	}
+	if idx := slices.Index(pods, pod); idx == -1 {
+		pods = append(pods, pod)
+		op.servicePods[serviceName] = pods
+	}
+
 	services, ok := op.podServices[pod]
 	if !ok {
 		// If there's no services/endpoints for a given pod then just update the cache
@@ -435,10 +457,8 @@ func (op *OwnerCache) addServiceToPod(pod string, serviceName string) {
 		return
 	}
 
-	for _, it := range services {
-		if it == serviceName {
-			return
-		}
+	if idx := slices.Index(services, serviceName); idx >= 0 {
+		return
 	}
 
 	services = append(services, serviceName)
@@ -446,33 +466,31 @@ func (op *OwnerCache) addServiceToPod(pod string, serviceName string) {
 	op.podServices[pod] = services
 }
 
-func (op *OwnerCache) deleteServiceFromPod(pod string, endpoint string) {
+func (op *OwnerCache) deleteServiceFromPod(pod string, serviceName string) {
 	op.podServicesMutex.Lock()
 	defer op.podServicesMutex.Unlock()
+
+	// track the Service to Pod relationship
+	pods, ok := op.servicePods[serviceName]
+	if ok {
+		pods = slices.DeleteFunc(pods, func(s string) bool {
+			return s == pod
+		})
+		if len(pods) == 0 {
+			delete(op.servicePods, serviceName)
+		} else {
+			op.servicePods[serviceName] = pods
+		}
+	}
 
 	services, ok := op.podServices[pod]
 	if !ok {
 		return
 	}
 
-	for i := 0; len(services) > 0; {
-		service := services[i]
-		if service == endpoint {
-			// Remove the ith entry by...
-			l := len(services)
-			last := services[l-1]
-			// ...moving it at the very end (swapping it with the last entry)...
-			services[l-1], services[i] = service, last
-			// ... and by truncating the slice by one elem
-			services = services[:l-1]
-		} else {
-			i++
-		}
-
-		if i == len(services)-1 {
-			break
-		}
-	}
+	services = slices.DeleteFunc(services, func(s string) bool {
+		return s == serviceName
+	})
 
 	if len(services) == 0 {
 		delete(op.podServices, pod)
@@ -508,9 +526,22 @@ func (op *OwnerCache) genericEndpointSliceOp(obj interface{}, serviceFunc func(p
 	epLabels := endpointSlice.GetLabels()
 	serviceName := epLabels[endpointSliceServiceLabel] // see: https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#ownership
 
+	previousPods := slices.Clone(op.servicePods[serviceName])
+	currentPods := []string{}
 	for _, endpoint := range endpointSlice.Endpoints {
 		if endpoint.TargetRef != nil && endpoint.TargetRef.Kind == "Pod" {
-			serviceFunc(endpoint.TargetRef.Name, serviceName)
+			podName := endpoint.TargetRef.Name
+			serviceFunc(podName, serviceName)
+			currentPods = append(currentPods, podName)
+		}
+	}
+
+	// if any Pods were removed from the Service, we need to delete them
+	for _, pod := range previousPods {
+		if idx := slices.Index(currentPods, pod); idx == -1 {
+			op.scheduleDelete(func() {
+				op.deleteServiceFromPod(pod, serviceName)
+			})
 		}
 	}
 }

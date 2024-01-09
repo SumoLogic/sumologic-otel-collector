@@ -37,7 +37,7 @@ func waitForWatchToBeEstablished(client *fake.Clientset, resource string) <-chan
 		gvr := action.GetResource()
 		ns := action.GetNamespace()
 
-		watch, err := client.Tracker().Watch(gvr, ns)
+		watcher, err := client.Tracker().Watch(gvr, ns)
 		if err != nil {
 			return false, nil, err
 		}
@@ -45,7 +45,7 @@ func waitForWatchToBeEstablished(client *fake.Clientset, resource string) <-chan
 		if action.GetVerb() == "watch" {
 			close(ch)
 		}
-		return true, watch, nil
+		return true, watcher, nil
 	})
 	return ch
 }
@@ -569,6 +569,8 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 	})
 
 	t.Run("updating endpoints", func(t *testing.T) {
+		updateSentAt := time.Now()
+		var ttd time.Duration
 		_, err = c.DiscoveryV1().EndpointSlices(namespace).
 			Update(context.Background(), endpointSlice2Updated, metav1.UpdateOptions{})
 		require.NoError(t, err)
@@ -578,31 +580,18 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 				t.Logf("services: %v", services)
 				return false
 			}
-
+			ttd = time.Since(updateSentAt)
 			return len(services) == 1
 		}, 5*time.Second, 10*time.Millisecond)
+		assert.GreaterOrEqual(t, ttd, gracePeriod)
 	})
 
 	t.Run("deleting endpoints", func(t *testing.T) {
+		deleteSentAt := time.Now()
+		var ttd time.Duration
 		err = c.DiscoveryV1().EndpointSlices(namespace).
 			Delete(context.Background(), endpointSlice1.Name, metav1.DeleteOptions{})
 		require.NoError(t, err)
-		assert.Eventually(t, func() bool {
-			services := op.GetServices(pod.Name)
-			if len(services) != 1 {
-				t.Logf("services: %v", services)
-				return false
-			}
-
-			return services[0] == "my-service-2"
-		}, 5*time.Second, 10*time.Millisecond)
-
-		deleteSentAt := time.Now()
-		err = c.DiscoveryV1().EndpointSlices(namespace).
-			Delete(context.Background(), endpointSlice2.Name, metav1.DeleteOptions{})
-		require.NoError(t, err)
-
-		var ttd time.Duration
 		assert.Eventually(t, func() bool {
 			services := op.GetServices(pod.Name)
 			if len(services) != 0 {
@@ -610,9 +599,9 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 				return false
 			}
 			ttd = time.Since(deleteSentAt)
-
 			return len(services) == 0
 		}, 5*time.Second, 10*time.Millisecond)
+
 		assert.GreaterOrEqual(t, ttd, gracePeriod)
 	})
 }
