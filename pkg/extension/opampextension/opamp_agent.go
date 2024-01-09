@@ -18,7 +18,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -86,7 +88,14 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 		return err
 	}
 
-	o.setEndpoint()
+	var baseURL string
+	if o.authExtension != nil {
+		baseURL = o.authExtension.BaseUrl()
+	}
+
+	if err := o.setEndpoint(baseURL); err != nil {
+		return err
+	}
 
 	if o.authExtension == nil {
 		return o.startClient(ctx)
@@ -228,18 +237,32 @@ func (o *opampAgent) watchCredentials(ctx context.Context, callback func(ctx con
 	return nil
 }
 
-func (o *opampAgent) setEndpoint() {
-	if o.authExtension == nil {
+// setEndpoint sets the OpAMP endpoint based on the collector endpoint.
+// This is a hack, and it should be removed when the backend is able to
+// correctly redirect our OpAMP client to the correct URL.
+func (o *opampAgent) setEndpoint(baseURL string) error {
+	if baseURL == "" {
+		// default behaviour
 		o.endpoint = o.cfg.Endpoint
-		return
+		return nil
+	}
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return fmt.Errorf("url error, cannot set opamp endpoint: %s", err)
 	}
 
-	b := o.authExtension.BaseUrl()
+	u.Scheme = "wss"
+	u.Path = path.Join(u.Path, "/v1/opamp")
 
-	e := strings.Replace(b, "https:", "wss:", 1)
-	e = strings.Replace(e, "open-events", "opamp-events", 1)
-	e = strings.Replace(e, "open-collectors", "opamp-collectors", 1)
-	o.endpoint = strings.TrimRight(e, "/") + "/v1/opamp"
+	// These replacements are specific to Sumo Logic's current domain naming,
+	// and are made provisionally for the OTRM beta. In the future, the backend
+	// will inform the agent of the correct OpAMP URL to use.
+	u.Host = strings.Replace(u.Host, "open-events", "opamp-events", 1)
+	u.Host = strings.Replace(u.Host, "open-collectors", "opamp-collectors", 1)
+
+	o.endpoint = u.String()
+
+	return nil
 }
 
 func newOpampAgent(cfg *Config, logger *zap.Logger, build component.BuildInfo, res pcommon.Resource) (*opampAgent, error) {
