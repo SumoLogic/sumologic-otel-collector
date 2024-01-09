@@ -16,7 +16,6 @@ package observability
 
 import (
 	"context"
-	"fmt"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
@@ -26,7 +25,7 @@ import (
 // mechanism should be used by the collector to discover views from all components
 
 func init() {
-	err := view.Register(
+	_ = view.Register(
 		viewPodsUpdated,
 		viewPodsAdded,
 		viewPodsDeleted,
@@ -36,9 +35,6 @@ func init() {
 		viewIPLookupMiss,
 		viewPodTableSize,
 	)
-	if err != nil {
-		fmt.Printf("Failed to register k8sprocessor's views: %v\n", err)
-	}
 }
 
 var (
