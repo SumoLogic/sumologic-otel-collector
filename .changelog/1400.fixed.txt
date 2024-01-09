@@ -1,1 +1,0 @@
-fix(k8stagger): allow uppercase characters inside tag keys

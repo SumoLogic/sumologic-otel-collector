@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.91.0-sumo-0]
+
+### Released 2024-01-09
+
+### Breaking Changes
+
+- feat(sumologicschemaprocessor)!:deprecate in favor of sumologicprocessor [#1316]
+- Removed deprecated InstallToken [#1367]
+
+### Added
+
+- feat(cascadingfilter): add collector_instances config option for spans_per_second global and policy limits scaling [#1358]
+- feat: add support for sticky session in sumologic extension and sumologic exporter [#1363]
+- Include a FIPS Capable linux/arm64 binary [#1381]
+
+### Changed
+
+- chore: upgrade otel core to `v0.91.0` [#1393]
+
+### Fixed
+
+- fix(k8stagger): allow uppercase characters inside tag keys [#1400]
+- fix(k8stagger)!: change default pod id attribute name to k8s.pod.uid [#1401]
+- sec: don't allow other users to read configuration files [#1408]
+
+[#1316]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1316
+[#1367]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1367
+[#1358]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1358
+[#1363]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1363
+[#1381]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1381
+[#1393]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1393
+[#1400]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1400
+[#1401]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1401
+[#1408]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1408
+[v0.91.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.91.0-sumo-0
+
 ## [v0.90.1-sumo-1]
 
 ### Released 2023-12-14

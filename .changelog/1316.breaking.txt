@@ -1,1 +1,0 @@
-feat(sumologicschemaprocessor)!:deprecate in favor of sumologicprocessor
