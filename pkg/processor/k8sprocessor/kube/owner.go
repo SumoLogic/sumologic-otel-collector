@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"golang.org/x/exp/slices"
 	api_v1 "k8s.io/api/core/v1"
 	discovery_v1 "k8s.io/api/discovery/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -139,6 +140,7 @@ func newOwnerProvider(
 			ownerCache.cacheObject,
 			ownerCache.deleteObject,
 			nil,
+			nil,
 		)
 	}
 
@@ -149,6 +151,7 @@ func newOwnerProvider(
 			factory.Apps().V1().ReplicaSets().Informer(),
 			ownerCache.cacheObject,
 			ownerCache.deleteObject,
+			nil,
 			nil,
 		)
 	}
@@ -161,6 +164,7 @@ func newOwnerProvider(
 			ownerCache.cacheObject,
 			ownerCache.deleteObject,
 			nil,
+			nil,
 		)
 	}
 
@@ -172,6 +176,7 @@ func newOwnerProvider(
 			ownerCache.cacheObject,
 			ownerCache.deleteObject,
 			nil,
+			nil,
 		)
 	}
 
@@ -182,6 +187,7 @@ func newOwnerProvider(
 			factory.Discovery().V1().EndpointSlices().Informer(),
 			ownerCache.cacheEndpointSlice,
 			ownerCache.deleteEndpointSlice,
+			ownerCache.updateEndpointSlice,
 			func(object interface{}) (interface{}, error) {
 				originalES, success := object.(*discovery_v1.EndpointSlice)
 				if !success {
@@ -200,6 +206,7 @@ func newOwnerProvider(
 			factory.Batch().V1().Jobs().Informer(),
 			ownerCache.cacheObject,
 			ownerCache.deleteObject,
+			nil,
 			nil,
 		)
 	}
@@ -222,6 +229,7 @@ func newOwnerProvider(
 					informer,
 					ownerCache.cacheObject,
 					ownerCache.deleteObject,
+					nil,
 					nil,
 				)
 			}
@@ -344,17 +352,24 @@ func (op *OwnerCache) deferredDelete(evict func(obj any)) func(any) {
 func (op *OwnerCache) addOwnerInformer(
 	kind string,
 	informer cache.SharedIndexInformer,
-	cacheFunc func(kind string, obj interface{}),
+	addFunc func(kind string, obj interface{}),
 	deleteFunc func(obj interface{}),
+	updateFunc func(oldObj, newObj interface{}),
 	transformFunc cache.TransformFunc,
 ) {
+	// if updatefunc is not specified, use addFunc
+	if updateFunc == nil {
+		updateFunc = func(_, obj interface{}) {
+			addFunc(kind, obj)
+		}
+	}
 	_, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			cacheFunc(kind, obj)
+			addFunc(kind, obj)
 			observability.RecordOtherAdded(kind)
 		},
-		UpdateFunc: func(_, obj interface{}) {
-			cacheFunc(kind, obj)
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			updateFunc(oldObj, newObj)
 			observability.RecordOtherUpdated(kind)
 		},
 		DeleteFunc: op.deferredDelete(func(obj any) {
@@ -440,10 +455,8 @@ func (op *OwnerCache) addServiceToPod(pod string, serviceName string) {
 		return
 	}
 
-	for _, it := range services {
-		if it == serviceName {
-			return
-		}
+	if idx := slices.Index(services, serviceName); idx >= 0 {
+		return
 	}
 
 	services = append(services, serviceName)
@@ -460,24 +473,9 @@ func (op *OwnerCache) deleteServiceFromPod(pod string, serviceName string) {
 		return
 	}
 
-	for i := 0; len(services) > 0; {
-		service := services[i]
-		if service == serviceName {
-			// Remove the ith entry by...
-			l := len(services)
-			last := services[l-1]
-			// ...moving it at the very end (swapping it with the last entry)...
-			services[l-1], services[i] = service, last
-			// ... and by truncating the slice by one elem
-			services = services[:l-1]
-		} else {
-			i++
-		}
-
-		if i == len(services)-1 {
-			break
-		}
-	}
+	services = slices.DeleteFunc(services, func(s string) bool {
+		return s == serviceName
+	})
 
 	if len(services) == 0 {
 		delete(op.podServices, pod)
@@ -511,12 +509,43 @@ func (op *OwnerCache) genericEndpointSliceOp(obj interface{}, serviceFunc func(p
 		return
 	}
 
-	epLabels := endpointSlice.GetLabels()
-	serviceName := epLabels[endpointSliceServiceLabel] // see: https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#ownership
+	serviceName := getServiceName(endpointSlice)
 
 	for _, endpoint := range endpointSlice.Endpoints {
 		if endpoint.TargetRef != nil && endpoint.TargetRef.Kind == "Pod" {
-			serviceFunc(endpoint.TargetRef.Name, serviceName)
+			podName := endpoint.TargetRef.Name
+			serviceFunc(podName, serviceName)
+		}
+	}
+}
+
+func (op *OwnerCache) updateEndpointSlice(oldObj interface{}, newObj interface{}) {
+	// for updates, we're guaranteed the objects will be the right type
+	oldEndpointSlice := oldObj.(*discovery_v1.EndpointSlice)
+	newEndpointSlice := newObj.(*discovery_v1.EndpointSlice)
+
+	// add the new endpointslice first, the logic is the same
+	op.cacheEndpointSlice("EndpointSlice", newObj)
+
+	// we also need to remove the Service from Pods which were deleted from the endpointslice
+	serviceName := getServiceName(newEndpointSlice)
+
+	newPodNames := []string{}
+	for _, endpoint := range newEndpointSlice.Endpoints {
+		if endpoint.TargetRef != nil && endpoint.TargetRef.Kind == "Pod" {
+			podName := endpoint.TargetRef.Name
+			newPodNames = append(newPodNames, podName)
+		}
+	}
+
+	// for each Pod name which was in the old slice, but not in the new slice, schedule a delete
+	for _, endpoint := range oldEndpointSlice.Endpoints {
+		if endpoint.TargetRef != nil && endpoint.TargetRef.Kind == "Pod" {
+			podName := endpoint.TargetRef.Name
+			if slices.Index(newPodNames, podName) == -1 {
+				// not a deferred delete, as this is a dynamic property which can change often
+				op.deleteServiceFromPod(podName, serviceName)
+			}
 		}
 	}
 }
@@ -657,4 +686,12 @@ func removeUnnecessaryEndpointSliceData(endpointSlice *discovery_v1.EndpointSlic
 	}
 
 	return &transformedEndpointSlice
+}
+
+// Get the Service name from an EndpointSlice based on a standard label.
+// see: https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#ownership
+func getServiceName(endpointSlice *discovery_v1.EndpointSlice) string {
+	epLabels := endpointSlice.GetLabels()
+	serviceName := epLabels[endpointSliceServiceLabel]
+	return serviceName
 }

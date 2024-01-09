@@ -37,7 +37,7 @@ func waitForWatchToBeEstablished(client *fake.Clientset, resource string) <-chan
 		gvr := action.GetResource()
 		ns := action.GetNamespace()
 
-		watch, err := client.Tracker().Watch(gvr, ns)
+		watcher, err := client.Tracker().Watch(gvr, ns)
 		if err != nil {
 			return false, nil, err
 		}
@@ -45,7 +45,7 @@ func waitForWatchToBeEstablished(client *fake.Clientset, resource string) <-chan
 		if action.GetVerb() == "watch" {
 			close(ch)
 		}
-		return true, watch, nil
+		return true, watcher, nil
 	})
 	return ch
 }
@@ -569,7 +569,6 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 	})
 
 	t.Run("updating endpoints", func(t *testing.T) {
-		t.Skip("Known bug, see https://github.com/SumoLogic/sumologic-otel-collector/issues/1414")
 		_, err = c.DiscoveryV1().EndpointSlices(namespace).
 			Update(context.Background(), endpointSlice2Updated, metav1.UpdateOptions{})
 		require.NoError(t, err)
@@ -579,8 +578,20 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 				t.Logf("services: %v", services)
 				return false
 			}
+			return assert.Equal(t, []string{"my-service"}, services)
+		}, 5*time.Second, 10*time.Millisecond)
 
-			return len(services) == 1
+		// update back to the original value
+		_, err = c.DiscoveryV1().EndpointSlices(namespace).
+			Update(context.Background(), endpointSlice2, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		assert.Eventually(t, func() bool {
+			services := op.GetServices(pod.Name)
+			if len(services) != 2 {
+				t.Logf("services: %v", services)
+				return false
+			}
+			return assert.Equal(t, []string{"my-service", "my-service-2"}, services)
 		}, 5*time.Second, 10*time.Millisecond)
 	})
 
