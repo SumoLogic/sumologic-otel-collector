@@ -1,0 +1,1 @@
+sec: don't allow other users to read configuration files
