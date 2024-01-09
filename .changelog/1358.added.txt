@@ -1,1 +1,0 @@
-feat(cascadingfilter): add collector_instances config option for spans_per_second global and policy limits scaling
