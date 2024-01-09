@@ -589,6 +589,127 @@ func Test_OwnerProvider_GetServices(t *testing.T) {
 	})
 }
 
+func Test_OwnerProvider_UpdateEndpoints(t *testing.T) {
+	const (
+		namespace = "kube-system"
+	)
+
+	c, err := newFakeAPIClientset(k8sconfig.APIConfig{})
+	require.NoError(t, err)
+
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+
+	gracePeriod := 333 * time.Millisecond
+	op, err := newOwnerProvider(
+		logger,
+		c,
+		labels.Everything(),
+		fields.Everything(),
+		ExtractionRules{
+			PodUID:             true,
+			PodName:            true,
+			Namespace:          true,
+			ServiceName:        true,
+			OwnerLookupEnabled: true,
+			Tags:               NewExtractionFieldTags(),
+		},
+		namespace,
+		time.Millisecond*10, gracePeriod,
+	)
+	require.NoError(t, err)
+
+	client := c.(*fake.Clientset)
+	ch := waitForWatchToBeEstablished(client, "endpoints")
+
+	op.Start()
+	t.Cleanup(func() {
+		op.Stop()
+	})
+
+	var (
+		pod = &api_v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-pod",
+				Namespace: namespace,
+				UID:       "f15f0585-a0bc-43a3-96e4-dd2eace75392",
+			},
+		}
+		endpoints = &api_v1.Endpoints{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-service",
+				Namespace: namespace,
+				UID:       "88125104-a4f6-40ac-906b-fcd385c127f3",
+			},
+			TypeMeta: metav1.TypeMeta{
+				Kind: "Endpoint",
+			},
+			Subsets: []api_v1.EndpointSubset{
+				{
+					Addresses: []api_v1.EndpointAddress{
+						{
+							TargetRef: &api_v1.ObjectReference{
+								Name:      pod.Name,
+								Namespace: namespace,
+								Kind:      "Pod",
+								UID:       pod.UID,
+							},
+						},
+					},
+				},
+			},
+		}
+		endpoints_updated = &api_v1.Endpoints{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-service",
+				Namespace: namespace,
+				UID:       "88125104-a4f6-40ac-906b-fcd385c127f3",
+			},
+			TypeMeta: metav1.TypeMeta{
+				Kind: "Endpoint",
+			},
+			Subsets: []api_v1.EndpointSubset{},
+		}
+	)
+
+	<-ch
+
+	t.Run("adding endpoints", func(t *testing.T) {
+		_, err = c.CoreV1().Endpoints(namespace).
+			Create(context.Background(), endpoints, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		_, err = c.CoreV1().Pods(namespace).
+			Create(context.Background(), pod, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		assert.Eventually(t, func() bool {
+			services := op.GetServices(pod.Name)
+			if len(services) != 1 {
+				t.Logf("services: %v", services)
+				return false
+			}
+
+			return assert.Equal(t, []string{"my-service"}, services)
+		}, 5*time.Second, 10*time.Millisecond)
+	})
+
+	t.Run("updating endpoints", func(t *testing.T) {
+		_, err = c.CoreV1().Endpoints(namespace).
+			Update(context.Background(), endpoints_updated, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		assert.Eventually(t, func() bool {
+			services := op.GetServices(pod.Name)
+			if len(services) != 0 {
+				t.Logf("services: %v", services)
+				return false
+			}
+
+			return len(services) == 0
+		}, 5*time.Second, 10*time.Millisecond)
+	})
+}
+
 func Test_OwnerProvider_GetOwners_Job(t *testing.T) {
 	c, err := newFakeAPIClientset(k8sconfig.APIConfig{})
 	require.NoError(t, err)
