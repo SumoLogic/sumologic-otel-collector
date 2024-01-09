@@ -244,6 +244,11 @@ func TestHackSetEndpoint(t *testing.T) {
 			url:          "https://example.com",
 			wantEndpoint: "wss://example.com/v1/opamp",
 		},
+		{
+			name:         "real sumologic url",
+			url:          "https://long-open-events.sumologic.net",
+			wantEndpoint: "wss://long-opamp-events.sumologic.net/v1/opamp",
+		},
 	}
 
 	for _, test := range tests {
