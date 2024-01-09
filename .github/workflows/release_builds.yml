@@ -279,7 +279,7 @@ jobs:
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{matrix.arch_os}}
+          name: ${{matrix.arch_os}}_fips
           path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
           if-no-files-found: error
 
