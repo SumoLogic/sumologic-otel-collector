@@ -242,7 +242,6 @@ func (o *opampAgent) watchCredentials(ctx context.Context, callback func(ctx con
 // correctly redirect our OpAMP client to the correct URL.
 func (o *opampAgent) setEndpoint(baseURL string) error {
 	if baseURL == "" {
-		// default behaviour
 		o.endpoint = o.cfg.Endpoint
 		return nil
 	}

@@ -227,7 +227,7 @@ func TestHackSetEndpoint(t *testing.T) {
 	}{
 		{
 			name:         "empty url defaults to config endpoint",
-			wantEndpoint: "https://example.com",
+			wantEndpoint: "wss://example.com",
 		},
 		{
 			name:         "url variant a",
@@ -250,7 +250,7 @@ func TestHackSetEndpoint(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			agent := &opampAgent{cfg: &Config{
 				HTTPClientSettings: confighttp.HTTPClientSettings{
-					Endpoint: "https://example.com",
+					Endpoint: "wss://example.com",
 				},
 			}}
 			if err := agent.setEndpoint(test.url); err != nil {
