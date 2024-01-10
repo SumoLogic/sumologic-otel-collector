@@ -229,7 +229,9 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        arch_os: [ 'linux_amd64' ]
+        arch_os:
+          - 'linux_amd64'
+          - 'linux_arm64'
     steps:
       - uses: actions/checkout@v4
 
