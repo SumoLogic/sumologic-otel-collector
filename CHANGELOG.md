@@ -20,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - feat(cascadingfilter): add collector_instances config option for spans_per_second global and policy limits scaling [#1358]
 - feat: add support for sticky session in sumologic extension and sumologic exporter [#1363]
-- Include a FIPS Capable linux/arm64 binary [#1381]
 
 ### Changed
 
