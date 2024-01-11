@@ -3,7 +3,7 @@ module github.com/open-telemetry/opentelemetry-collector-contrib/extension/opamp
 go 1.20
 
 require (
-	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.91.0-sumo-0-rc.0
+	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.91.0-sumo-0
 	github.com/google/uuid v1.3.1
 	github.com/knadh/koanf/parsers/yaml v0.1.0
 	github.com/knadh/koanf/providers/rawbytes v0.1.0
