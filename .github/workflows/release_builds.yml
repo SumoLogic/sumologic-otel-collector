@@ -229,7 +229,9 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        arch_os: [ 'linux_amd64' ]
+        arch_os:
+          - 'linux_amd64'
+          - 'linux_arm64'
     steps:
       - uses: actions/checkout@v4
 
@@ -256,11 +258,22 @@ jobs:
       - name: Prepare tags in otelcolbuilder's config
         run: make prepare-tag TAG=${{ steps.extract_tag.outputs.tag }}
 
+      - name: Build Toolchains
+        run: make toolchain-${{ matrix.arch_os }} OUTPUT=/opt/toolchain -j3
+        working-directory: ./otelcolbuilder
+
       - name: Build (FIPS)
-        id: containerized-build
-        uses: ./ci/build-fips-action
-        with:
-          go-version: ${{ env.GO_VERSION }}
+        if: ${{ contains(matrix.arch_os, 'linux') }}
+        run: |
+          CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
+          test "$CC"
+          echo "Using toolchain: $CC"
+          make otelcol-sumo-${{matrix.arch_os}} \
+            FIPS_SUFFIX="-fips" \
+            CGO_ENABLED="1" \
+            CC="$CC" \
+            EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
+        working-directory: ./otelcolbuilder
 
       - name: Set filename
         id: set_filename
@@ -279,7 +292,7 @@ jobs:
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{matrix.arch_os}}_fips
+          name: "${{matrix.arch_os}}-fips"
           path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
           if-no-files-found: error
 
@@ -333,10 +346,9 @@ jobs:
           path: artifacts/
 
       - name: Download binary action artifact from build phase (FIPS)
-        if: matrix.arch_os == 'linux_amd64'
         uses: actions/download-artifact@v4
         with:
-          name: ${{matrix.arch_os}}_fips
+          name: ${{matrix.arch_os}}-fips
           path: artifacts/
 
       - name: Build and push FIPS image to Open Source ECR
