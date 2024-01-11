@@ -1,5 +1,0 @@
-use non-FIPS Windows binary in non-FIPS MSI package
-
-This fixes a bug where the non-FIPS MSI package was bundling the FIPS Windows binary.
-Starting from now, the non-FIPS MSI package bundles the non-FIPS binary.
-The FIPS MSI package continues to correctly bundle the FIPS Windows binary, no change here.
