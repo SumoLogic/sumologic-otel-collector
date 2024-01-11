@@ -245,14 +245,19 @@ func TestHackSetEndpoint(t *testing.T) {
 			wantEndpoint: "wss://example.com/v1/opamp",
 		},
 		{
-			name:         "real sumologic url",
-			url:          "https://long-open-events.sumologic.net",
+			name:         "dev sumologic url",
+			url:          "https://long-open-events.sumologic.net/api/v1",
 			wantEndpoint: "wss://long-opamp-events.sumologic.net/v1/opamp",
 		},
 		{
-			name:         "real sumologic url b",
-			url:          "https://stag-open-collectors.sumologic.net",
-			wantEndpoint: "wss://stag-opamp-collectors.sumologic.net/v1/opamp",
+			name:         "prod sumologic url",
+			url:          "https://open-collectors.sumologic.com/api/v1",
+			wantEndpoint: "wss://opamp-collectors.sumologic.com/v1/opamp",
+		},
+		{
+			name:         "prod sumologic url with region",
+			url:          "https://open-collectors.au.sumologic.com/api/v1/",
+			wantEndpoint: "wss://opamp-collectors.au.sumologic.com/v1/opamp",
 		},
 	}
 

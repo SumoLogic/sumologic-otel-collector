@@ -20,7 +20,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -251,7 +250,7 @@ func (o *opampAgent) setEndpoint(baseURL string) error {
 	}
 
 	u.Scheme = "wss"
-	u.Path = path.Join(u.Path, "/v1/opamp")
+	u.Path = "/v1/opamp"
 
 	// These replacements are specific to Sumo Logic's current domain naming,
 	// and are made provisionally for the OTRM beta. In the future, the backend
