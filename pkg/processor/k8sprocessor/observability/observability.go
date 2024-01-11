@@ -19,6 +19,7 @@ import (
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/tag"
 )
 
 func init() {
@@ -48,6 +49,8 @@ var (
 	mOtherDeleted = stats.Int64("otelsvc/k8s/other_deleted", "Number of other delete events received", "1")
 
 	mIPLookupMiss = stats.Int64("otelsvc/k8s/ip_lookup_miss", "Number of times pod by IP lookup failed.", "1")
+
+	resourceKind, _ = tag.NewKey("kind") // nolint:errcheck
 )
 
 var viewPodsUpdated = &view.View{
@@ -75,6 +78,7 @@ var viewOtherUpdated = &view.View{
 	Name:        mOtherUpdated.Name(),
 	Description: mOtherUpdated.Description(),
 	Measure:     mOtherUpdated,
+	TagKeys:     []tag.Key{resourceKind},
 	Aggregation: view.Sum(),
 }
 
@@ -82,6 +86,7 @@ var viewOtherAdded = &view.View{
 	Name:        mOtherAdded.Name(),
 	Description: mOtherAdded.Description(),
 	Measure:     mOtherAdded,
+	TagKeys:     []tag.Key{resourceKind},
 	Aggregation: view.Sum(),
 }
 
@@ -89,6 +94,7 @@ var viewOtherDeleted = &view.View{
 	Name:        mOtherDeleted.Name(),
 	Description: mOtherDeleted.Description(),
 	Measure:     mOtherDeleted,
+	TagKeys:     []tag.Key{resourceKind},
 	Aggregation: view.Sum(),
 }
 
@@ -121,18 +127,33 @@ func RecordPodDeleted() {
 }
 
 // RecordOtherUpdated increments the metric that records other update events received.
-func RecordOtherUpdated() {
-	stats.Record(context.Background(), mOtherUpdated.M(int64(1)))
+func RecordOtherUpdated(kind string) {
+	stats.RecordWithTags( // nolint:errcheck
+		context.Background(),
+		[]tag.Mutator{
+			tag.Insert(resourceKind, kind),
+		},
+		mOtherUpdated.M(int64(1)))
 }
 
 // RecordOtherAdded increments the metric that records other add events receiver.
-func RecordOtherAdded() {
-	stats.Record(context.Background(), mOtherAdded.M(int64(1)))
+func RecordOtherAdded(kind string) {
+	stats.RecordWithTags( // nolint:errcheck
+		context.Background(),
+		[]tag.Mutator{
+			tag.Insert(resourceKind, kind),
+		},
+		mOtherAdded.M(int64(1)))
 }
 
 // RecordOtherDeleted increments the metric that records other events deleted.
-func RecordOtherDeleted() {
-	stats.Record(context.Background(), mOtherDeleted.M(int64(1)))
+func RecordOtherDeleted(kind string) {
+	stats.RecordWithTags( // nolint:errcheck
+		context.Background(),
+		[]tag.Mutator{
+			tag.Insert(resourceKind, kind),
+		},
+		mOtherAdded.M(int64(1)))
 }
 
 // RecordIPLookupMiss increments the metric that records Pod lookup by IP misses.
