@@ -81,6 +81,12 @@ func TestMetrics(t *testing.T) {
 			"otelsvc/k8s/ip_lookup_miss",
 			RecordIPLookupMiss,
 		},
+		{
+			"otelsvc/k8s/owner_table_size",
+			func() {
+				RecordOwnerTableSize(1)
+			},
+		},
 	}
 
 	var (
