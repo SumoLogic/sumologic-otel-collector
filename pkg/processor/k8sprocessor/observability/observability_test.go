@@ -89,15 +89,14 @@ func TestMetrics(t *testing.T) {
 	)
 
 	go func() {
-		reader := metricexport.NewReader()
-		e := newExporter()
-		ch := e.ReturnAfter(len(tests))
 
 		// Add a manual retry mechanism in case there's a hiccup reading the
 		// metrics from producers in ReadAndExport(): we can wait for the metrics
 		// to come instead of failing because they didn't come right away.
 		for i := 0; i < 10; i++ {
-			go reader.ReadAndExport(e)
+			e := newExporter()
+			ch := e.ReturnAfter(len(tests))
+			go metricexport.NewReader().ReadAndExport(e)
 
 			select {
 			case <-time.After(500 * time.Millisecond):
@@ -133,7 +132,7 @@ func TestMetrics(t *testing.T) {
 	for i, tt := range tests {
 		require.Len(t, data, len(tests))
 		d := data[i]
-		assert.Equal(t, d.Descriptor.Name, tt.name)
+		assert.Equal(t, tt.name, d.Descriptor.Name, "Expected %v at index %v, but got %v.", tt.name, i, d.Descriptor.Name)
 		require.Len(t, d.TimeSeries, 1)
 		require.Len(t, d.TimeSeries[0].Points, 1)
 		assert.Equal(t, d.TimeSeries[0].Points[0].Value, int64(1))
