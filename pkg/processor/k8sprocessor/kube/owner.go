@@ -308,15 +308,15 @@ func (op *OwnerCache) addNamespaceInformer(factory informers.SharedInformerFacto
 	informer := factory.Core().V1().Namespaces().Informer()
 	_, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			observability.RecordOtherAdded()
+			observability.RecordOtherAdded("Namespace")
 			op.upsertNamespace(obj)
 		},
 		UpdateFunc: func(_, obj interface{}) {
-			observability.RecordOtherUpdated()
+			observability.RecordOtherUpdated("Namespace")
 			op.upsertNamespace(obj)
 		},
 		DeleteFunc: op.deferredDelete(func(obj interface{}) {
-			observability.RecordOtherDeleted()
+			observability.RecordOtherDeleted("Namespace")
 			op.deleteNamespace(obj)
 		}),
 	})
@@ -351,15 +351,15 @@ func (op *OwnerCache) addOwnerInformer(
 	_, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			cacheFunc(kind, obj)
-			observability.RecordOtherAdded()
+			observability.RecordOtherAdded(kind)
 		},
 		UpdateFunc: func(_, obj interface{}) {
 			cacheFunc(kind, obj)
-			observability.RecordOtherUpdated()
+			observability.RecordOtherUpdated(kind)
 		},
 		DeleteFunc: op.deferredDelete(func(obj any) {
 			deleteFunc(obj)
-			observability.RecordOtherDeleted()
+			observability.RecordOtherDeleted(kind)
 		}),
 	})
 	if err != nil {
