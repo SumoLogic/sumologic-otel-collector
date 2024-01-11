@@ -22,6 +22,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/configauth"
 	"go.opentelemetry.io/collector/config/confighttp"
+	"go.opentelemetry.io/collector/config/configretry"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 )
 
@@ -57,7 +58,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 				AuthenticatorID: component.NewID("sumologic"),
 			},
 		},
-		RetrySettings: exporterhelper.NewDefaultRetrySettings(),
+		RetrySettings: configretry.NewDefaultBackOffConfig(),
 		QueueSettings: qs,
 	})
 
