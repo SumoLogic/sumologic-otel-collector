@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
-## [v0.91.0-sumo-0]
+## [v0.91.0-sumo-1]
+
+### Released 2024-01-10
+
+### Changed
+
+- feat: FIPS binary can now be used irrespective of host system's libc & add linux_arm64 FIPS binary. [#1416]
+
+[#1416]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1416
+
+[v0.91.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.91.0-sumo-1## [v0.91.0-sumo-0]
 
 ### Released 2024-01-09
 
