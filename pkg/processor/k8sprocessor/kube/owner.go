@@ -401,7 +401,9 @@ func (op *OwnerCache) deleteObject(obj interface{}) {
 
 	op.ownersMutex.Lock()
 	delete(op.objectOwners, string(metaObj.GetUID()))
+	ownerTableSize := len(op.objectOwners)
 	op.ownersMutex.Unlock()
+	observability.RecordOwnerTableSize(int64(ownerTableSize))
 }
 
 func (op *OwnerCache) cacheObject(kind string, obj interface{}) {
@@ -420,7 +422,9 @@ func (op *OwnerCache) cacheObject(kind string, obj interface{}) {
 
 	op.ownersMutex.Lock()
 	op.objectOwners[string(oo.UID)] = &oo
+	ownerTableSize := len(op.objectOwners)
 	op.ownersMutex.Unlock()
+	observability.RecordOwnerTableSize(int64(ownerTableSize))
 }
 
 func (op *OwnerCache) addServiceToPod(pod string, serviceName string) {
