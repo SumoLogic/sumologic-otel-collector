@@ -444,10 +444,10 @@ jobs:
       - name: Print tag
         run: echo "${{ steps.extract_tag.outputs.tag }}"
 
-      - name: Fetch binary artifact for ${{ matrix.arch_os }}
+      - name: Fetch binary artifact for ${{ matrix.arch_os }} ${{ matrix.fips && '(FIPS)' || '' }}
         uses: actions/download-artifact@v4
         with:
-          name: windows_amd64_fips
+          name: windows_amd64${{ matrix.fips && '_fips' || '' }}
           path: ./otelcolbuilder/cmd
 
       - name: Rename binary artifact for ${{ matrix.arch_os }}
