@@ -1,1 +1,0 @@
-fix: prevent the message "Failed to register k8sprocessor's views" on collector startup

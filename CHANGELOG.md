@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.91.0-sumo-1]
+
+### Released 2024-01-11
+
+### Changed
+
+- feat: Use sumologic extension base URL to determine the appropriate OpAMP endpoint [#1399]
+- feat: FIPS binary can now be used irrespective of host system's libc & add linux_arm64 FIPS binary. [#1416]
+
+### Fixed
+
+- fix: prevent the message "Failed to register k8sprocessor's views" on collector startup [#1415]
+- use non-FIPS Windows binary in non-FIPS MSI package [#1419]
+  This fixes a bug where the non-FIPS MSI package was bundling the FIPS Windows binary.
+  Starting from now, the non-FIPS MSI package bundles the non-FIPS binary.
+  The FIPS MSI package continues to correctly bundle the FIPS Windows binary, no change here.
+
+[#1399]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1399
+[#1416]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1416
+[#1415]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1415
+[#1419]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1419
+[v0.91.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.91.0-sumo-1
+
 ## [v0.91.0-sumo-0]
 
 ### Released 2024-01-09
