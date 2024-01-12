@@ -52,7 +52,7 @@ func (c *Config) Unmarshal(component *confmap.Conf) error {
 		return nil
 	}
 	// Load non-dynamic parts like normal
-	if err := component.Unmarshal(c); err != nil {
+	if err := component.Unmarshal(c, confmap.WithIgnoreUnused()); err != nil {
 		return err
 	}
 
