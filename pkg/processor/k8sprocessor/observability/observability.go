@@ -34,6 +34,7 @@ func init() {
 		viewOtherAdded,
 		viewOtherDeleted,
 		viewOwnerTableSize,
+		viewServiceTableSize,
 		viewIPLookupMiss,
 		viewPodTableSize,
 	)
@@ -45,10 +46,11 @@ var (
 	mPodsDeleted  = stats.Int64("otelsvc/k8s/pod_deleted", "Number of pod delete events received", "1")
 	mPodTableSize = stats.Int64("otelsvc/k8s/pod_table_size", "Size of table containing pod info", "1")
 
-	mOtherUpdated   = stats.Int64("otelsvc/k8s/other_updated", "Number of other update events received", "1")
-	mOtherAdded     = stats.Int64("otelsvc/k8s/other_added", "Number of other add events received", "1")
-	mOtherDeleted   = stats.Int64("otelsvc/k8s/other_deleted", "Number of other delete events received", "1")
-	mOwnerTableSize = stats.Int64("otelsvc/k8s/owner_table_size", "Size of table containing owner info", "1")
+	mOtherUpdated     = stats.Int64("otelsvc/k8s/other_updated", "Number of other update events received", "1")
+	mOtherAdded       = stats.Int64("otelsvc/k8s/other_added", "Number of other add events received", "1")
+	mOtherDeleted     = stats.Int64("otelsvc/k8s/other_deleted", "Number of other delete events received", "1")
+	mOwnerTableSize   = stats.Int64("otelsvc/k8s/owner_table_size", "Size of table containing owner info", "1")
+	mServiceTableSize = stats.Int64("otelsvc/k8s/service_table_size", "Size of table containing service info", "1")
 
 	mIPLookupMiss = stats.Int64("otelsvc/k8s/ip_lookup_miss", "Number of times pod by IP lookup failed.", "1")
 
@@ -104,6 +106,13 @@ var viewOwnerTableSize = &view.View{
 	Name:        mOwnerTableSize.Name(),
 	Description: mOwnerTableSize.Description(),
 	Measure:     mOwnerTableSize,
+	Aggregation: view.LastValue(),
+}
+
+var viewServiceTableSize = &view.View{
+	Name:        mServiceTableSize.Name(),
+	Description: mServiceTableSize.Description(),
+	Measure:     mServiceTableSize,
 	Aggregation: view.LastValue(),
 }
 
@@ -168,6 +177,11 @@ func RecordOtherDeleted(kind string) {
 // RecordPodTableSize store size of the Pod owner table.
 func RecordOwnerTableSize(ownerTableSize int64) {
 	stats.Record(context.Background(), mOwnerTableSize.M(ownerTableSize))
+}
+
+// RecordServiceTableSize store size of the Pod to Service table.
+func RecordServiceTableSize(serviceTableSize int64) {
+	stats.Record(context.Background(), mServiceTableSize.M(serviceTableSize))
 }
 
 // RecordIPLookupMiss increments the metric that records Pod lookup by IP misses.

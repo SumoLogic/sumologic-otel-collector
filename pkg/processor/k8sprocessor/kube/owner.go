@@ -460,6 +460,7 @@ func (op *OwnerCache) addServiceToPod(pod string, serviceName string) {
 		// If there's no services/endpoints for a given pod then just update the cache
 		// with the provided enpoint.
 		op.podServices[pod] = []string{serviceName}
+		observability.RecordServiceTableSize(int64(len(op.podServices)))
 		return
 	}
 
@@ -487,6 +488,7 @@ func (op *OwnerCache) deleteServiceFromPod(pod string, serviceName string) {
 
 	if len(services) == 0 {
 		delete(op.podServices, pod)
+		observability.RecordServiceTableSize(int64(len(op.podServices)))
 	} else {
 		sort.Strings(services)
 		op.podServices[pod] = services
