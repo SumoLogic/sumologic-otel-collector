@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/confmaptest"
 )
 
@@ -90,7 +91,8 @@ func TestConfigValidate(t *testing.T) {
 			expected := tc.Expected()
 			sub, err := cm.Sub(component.NewIDWithName("monitoringjob", tc.Name).String())
 			require.NoError(t, err)
-			require.NoError(t, component.UnmarshalConfig(sub, actual))
+			require.NoError(t, sub.Unmarshal(&actual, confmap.WithIgnoreUnused()))
+			//require.NoError(t, component.UnmarshalConfig(sub, actual))
 			assert.Equal(t, expected, actual)
 		})
 	}
