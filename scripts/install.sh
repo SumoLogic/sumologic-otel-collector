@@ -1220,15 +1220,23 @@ function write_installation_token() {
     local ext_indentation
     readonly ext_indentation="${3}"
 
+    # ToDo: ensure we override only sumologic `installation_token`
+    if grep "installation_token" "${file}" > /dev/null; then
+        # Do not expose token in sed command as it can be saw on processes list
+        echo "s/installation_token:.*$/installation_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
+
+        return
+    fi
+
     # ToDo: ensure we override only sumologic `install_token`
     if grep "install_token" "${file}" > /dev/null; then
         # Do not expose token in sed command as it can be saw on processes list
-        echo "s/install_token:.*$/install_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
+        echo "s/install_token:.*$/installation_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
     else
         # write installation token on the top of sumologic: extension
         # Do not expose token in sed command as it can be saw on processes list
-        echo "s/sumologic:/sumologic:\\
-\\${ext_indentation}install_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
+        echo "1,/sumologic:/ s/sumologic:/sumologic:\\
+\\${ext_indentation}installation_token: $(escape_sed "${token}")/" | sed -i.bak -f - "${file}"
     fi
 }
 
@@ -1820,10 +1828,18 @@ fi
 readonly SYSTEMD_DISABLED
 
 if [ "${FIPS}" == "true" ]; then
-    if [ "${OS_TYPE}" != "linux" ] || [ "${ARCH_TYPE}" != "amd64" ]; then
-        echo "Error: The FIPS-approved binary is only available for linux/amd64"
+    case "${OS_TYPE}" in
+    linux)
+        if  [ "${ARCH_TYPE}" != "amd64" ] && [ "${ARCH_TYPE}" != "arm64" ]; then
+            echo "Error: The FIPS-approved binary is only available for linux/amd64 and linux/arm64"
+            exit 1
+        fi
+        ;;
+    *)
+        echo "Error: The FIPS-approved binary is only available for linux"
         exit 1
-    fi
+        ;;
+    esac
 fi
 
 if [[ "${OS_TYPE}" == "darwin" ]]; then

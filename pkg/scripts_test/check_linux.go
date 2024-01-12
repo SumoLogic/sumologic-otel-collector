@@ -49,20 +49,11 @@ func checkConfigFilesOwnershipAndPermissions(ownerName string, ownerGroup string
 	}
 }
 
-func checkDeprecatedTokenInConfig(c check) {
-	require.NotEmpty(c.test, c.installOptions.deprecatedInstallToken, "installation token has not been provided")
-
-	conf, err := getConfig(userConfigPath)
-	require.NoError(c.test, err, "error while reading configuration")
-
-	require.Equal(c.test, c.installOptions.deprecatedInstallToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
-}
-
 func checkDifferentTokenInConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
-	require.Equal(c.test, "different"+c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
+	require.Equal(c.test, "different"+c.installOptions.installToken, conf.Extensions.Sumologic.InstallationToken, "installation token is different than expected")
 }
 
 func checkDifferentTokenInEnvFile(c check) {
@@ -142,7 +133,7 @@ func checkTokenInConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
-	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
+	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallationToken, "installation token is different than expected")
 }
 
 func checkTokenInSumoConfig(c check) {
@@ -151,7 +142,7 @@ func checkTokenInSumoConfig(c check) {
 	conf, err := getConfig(configPath)
 	require.NoError(c.test, err, "error while reading configuration")
 
-	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallToken, "installation token is different than expected")
+	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallationToken, "installation token is different than expected")
 }
 
 func checkTokenInEnvFile(c check) {
@@ -304,7 +295,7 @@ func preActionWriteDifferentTokenToUserConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err)
 
-	conf.Extensions.Sumologic.InstallToken = "different" + c.installOptions.installToken
+	conf.Extensions.Sumologic.InstallationToken = "different" + c.installOptions.installToken
 	err = saveConfig(userConfigPath, conf)
 	require.NoError(c.test, err)
 }
@@ -313,7 +304,7 @@ func preActionWriteTokenToUserConfig(c check) {
 	conf, err := getConfig(userConfigPath)
 	require.NoError(c.test, err)
 
-	conf.Extensions.Sumologic.InstallToken = c.installOptions.installToken
+	conf.Extensions.Sumologic.InstallationToken = c.installOptions.installToken
 	err = saveConfig(userConfigPath, conf)
 	require.NoError(c.test, err)
 }

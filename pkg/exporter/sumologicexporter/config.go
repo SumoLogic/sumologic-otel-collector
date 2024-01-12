@@ -57,9 +57,6 @@ type Config struct {
 	// The format of traces you will be sending, currently only otlp format is supported
 	TraceFormat TraceFormatType `mapstructure:"trace_format"`
 
-	// DEPRECATED: The below attributes only exist so we can print a nicer error
-	// message about not supporting them anymore.
-
 	// Sumo specific options
 	// Name of the client
 	Client string `mapstructure:"client"`
@@ -71,6 +68,10 @@ type Config struct {
 	ClearLogsTimestamp bool `mapstructure:"clear_logs_timestamp"`
 
 	JSONLogs `mapstructure:"json_logs"`
+
+	// StickySessionEnabled defines if sticky session support is enable.
+	// By default this is false.
+	StickySessionEnabled bool `mapstructure:"sticky_session_enabled"`
 }
 
 type JSONLogs struct {
@@ -234,4 +235,6 @@ const (
 	DefaultFlattenBody bool = false
 	// DefaultDropRoutingAttribute defines default DropRoutingAttribute
 	DefaultDropRoutingAttribute string = ""
+	// DefaultStickySessionEnabled defines default StickySessionEnabled value
+	DefaultStickySessionEnabled bool = false
 )

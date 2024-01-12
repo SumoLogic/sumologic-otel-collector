@@ -59,14 +59,15 @@ and can be used as an authenticator for the
   and create a new one upon registration.
 - `ephemeral`: defines whether the collector will be deleted after 12 hours
   of inactivity (default: `false`)
-- `time_zone`: defines the time zone of the collector. For a list of all possible
-  values, refer to the `TZ database name` or `Time zone abbreviation` columns in
+- `time_zone`: defines the time zone of the collector, for example "America/Los_Angeles".
+  For a list of all possible values, refer to the `TZ identifier` column in
   https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
 - `backoff`: defines backoff mechanism for retry in case of failed registration.
   [Exponential algorithm](https://pkg.go.dev/github.com/cenkalti/backoff/v4#ExponentialBackOff) is being used.
   - `initial_interval` - initial interval of backoff (default: `500ms`)
   - `max_interval` - maximum interval of backoff (default: `1m`)
   - `max_elapsed_time` - time after which registration fails definitely (default: `15m`)
+  - `sticky_session_enabled` - default value is `false`
 
 [credentials_help]: https://help.sumologic.com/docs/manage/security/installation-tokens
 [fields_help]: https://help.sumologic.com/docs/manage/fields

@@ -16,17 +16,16 @@ package observability
 
 import (
 	"context"
-	"fmt"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 )
 
-// TODO: re-think if processor should register it's own telemetry views or if some other
-// mechanism should be used by the collector to discover views from all components
-
 func init() {
-	err := view.Register(
+	// To get rid of this nolint directive, we want to get rid of OpenCensus dependency and report metrics in Otel native way
+	// See https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/29867
+	//nolint:errcheck
+	_ = view.Register(
 		viewPodsUpdated,
 		viewPodsAdded,
 		viewPodsDeleted,
@@ -36,9 +35,6 @@ func init() {
 		viewIPLookupMiss,
 		viewPodTableSize,
 	)
-	if err != nil {
-		fmt.Printf("Failed to register k8sprocessor's views: %v\n", err)
-	}
 }
 
 var (

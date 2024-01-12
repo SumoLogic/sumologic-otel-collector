@@ -1,7 +1,10 @@
 # Upgrading
 
 - [Upgrading](#upgrading)
-  - [Upgrading to v0.90.0-sumo-1](#upgrading-to-v0900-sumo-1)
+  - [Upgrading to v0.91.0-sumo-0](#upgrading-to-v0910-sumo-0)
+    - [Sumo Logic Schema processor replaced with Sumo Logic processor](#sumo-logic-schema-processor-replaced-with-sumo-logic-processor)
+    - [`k8s_tagger` processor: default name of podID attribute has changed](#k8s_tagger-processor-default-name-of-podid-attribute-has-changed)
+  - [Upgrading to v0.90.1-sumo-0](#upgrading-to-v0901-sumo-0)
     - [Change configuration for `syslogexporter`](#change-configuration-for-syslogexporter)
     - [`sumologic` exporter: deprecate `clear_logs_timestamp`](#sumologic-exporter-deprecate-clear_logs_timestamp)
     - [`sumologic` exporter: remove `routing_attributes_to_drop`](#sumologic-exporter-remove-routing_attributes_to_drop)
@@ -41,7 +44,57 @@
       - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
       - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
-## Upgrading to v0.90.0-sumo-1
+## Upgrading to v0.91.0-sumo-0
+
+### Sumo Logic Schema processor replaced with Sumo Logic processor
+
+The [Sumo Logic Schema processor][sumologicschema] has been deprecated in favor of the [Sumo Logic processor][sumologicprocessor].
+To ensure you are using the latest version change `sumologic_schema` to `sumologic` in your configuration.
+
+For example, change this:
+
+```yaml
+processors:
+  sumologic_schema:
+    # ...
+service:
+  pipelines:
+    logs:
+      processors:
+        - sumologic_schema
+```
+
+to this:
+
+```yaml
+processors:
+  sumologic:
+    # ...
+service:
+  pipelines:
+    logs:
+      processors:
+        - sumologic
+```
+
+[sumologicschema]: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/sumologicschemaprocessor
+[sumologicprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/sumologicprocessor
+
+### `k8s_tagger` processor: default name of podID attribute has changed
+
+By a mistake, in the [k8s_tagger][k8staggerprocessor], the default name for podID was set to `k8s.pod.id`. It has been changed to `k8s.pod.uid`.
+If you want to still use the old name, add the following option to the config of the `k8s_tagger`:
+
+```yaml
+processors:
+  k8s_tagger:
+    tags:
+      podID: k8s.pod.id
+```
+
+[k8staggerprocessor]: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/k8sprocessor
+
+## Upgrading to v0.90.1-sumo-0
 
 ### Change configuration for `syslogexporter`
 

@@ -7,6 +7,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.91.0-sumo-1]
+
+### Released 2024-01-11
+
+### Changed
+
+- feat: Use sumologic extension base URL to determine the appropriate OpAMP endpoint [#1399]
+- feat: FIPS binary can now be used irrespective of host system's libc & add linux_arm64 FIPS binary. [#1416]
+
+### Fixed
+
+- fix: prevent the message "Failed to register k8sprocessor's views" on collector startup [#1415]
+- use non-FIPS Windows binary in non-FIPS MSI package [#1419]
+  This fixes a bug where the non-FIPS MSI package was bundling the FIPS Windows binary.
+  Starting from now, the non-FIPS MSI package bundles the non-FIPS binary.
+  The FIPS MSI package continues to correctly bundle the FIPS Windows binary, no change here.
+
+[#1399]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1399
+[#1416]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1416
+[#1415]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1415
+[#1419]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1419
+[v0.91.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.91.0-sumo-1
+
+## [v0.91.0-sumo-0]
+
+### Released 2024-01-09
+
+### Breaking Changes
+
+- feat(sumologicschemaprocessor)!: deprecate in favor of sumologicprocessor [#1316]
+- Removed deprecated InstallToken [#1367]
+
+### Added
+
+- feat(cascadingfilter): add collector_instances config option for spans_per_second global and policy limits scaling [#1358]
+- feat: add support for sticky session in sumologic extension and sumologic exporter [#1363]
+
+### Changed
+
+- chore: upgrade otel core to `v0.91.0` [#1393]
+
+### Fixed
+
+- fix(k8stagger): allow uppercase characters inside tag keys [#1400]
+- fix(k8stagger)!: change default pod id attribute name to k8s.pod.uid [#1401]
+- sec: don't allow other users to read configuration files [#1408]
+
+[#1316]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1316
+[#1367]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1367
+[#1358]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1358
+[#1363]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1363
+[#1393]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1393
+[#1400]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1400
+[#1401]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1401
+[#1408]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1408
+[v0.91.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.91.0-sumo-0
+
+## [v0.90.1-sumo-1]
+
+### Released 2023-12-14
+
+### Changed
+
+- Removed OpAMP extension remote configuration directory readable validation. [#1385]
+
+### Fixed
+
+- fix(sourceprocessor): support / in source category template attribute [#1389]
+
+[#1385]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1385
+[#1389]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1389
+[v0.90.1-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.90.1-sumo-1
+
 ## [v0.90.1-sumo-0]
 
 ### Released 2023-12-11

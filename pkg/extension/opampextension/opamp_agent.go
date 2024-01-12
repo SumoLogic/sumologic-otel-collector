@@ -18,10 +18,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strings"
 	"syscall"
 
 	"github.com/google/uuid"
@@ -48,6 +50,8 @@ type opampAgent struct {
 
 	authExtension *sumologicextension.SumologicExtension
 	authHeader    http.Header
+
+	endpoint string
 
 	agentType    string
 	agentVersion string
@@ -80,6 +84,15 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 	}
 
 	if err := o.getAuthExtension(); err != nil {
+		return err
+	}
+
+	var baseURL string
+	if o.authExtension != nil {
+		baseURL = o.authExtension.BaseUrl()
+	}
+
+	if err := o.setEndpoint(baseURL); err != nil {
 		return err
 	}
 
@@ -130,7 +143,7 @@ func (o *opampAgent) Reload(ctx context.Context) error {
 func (o *opampAgent) startClient(ctx context.Context) error {
 	settings := types.StartSettings{
 		Header:         o.authHeader,
-		OpAMPServerURL: o.cfg.Endpoint,
+		OpAMPServerURL: o.endpoint,
 		InstanceUid:    o.instanceId.String(),
 		Callbacks: types.CallbacksStruct{
 			OnConnectFunc: func() {
@@ -219,6 +232,33 @@ func (o *opampAgent) watchCredentials(ctx context.Context, callback func(ctx con
 			o.logger.Error("Failed to execute watch credential key callback", zap.Error(err))
 		}
 	}()
+
+	return nil
+}
+
+// setEndpoint sets the OpAMP endpoint based on the collector endpoint.
+// This is a hack, and it should be removed when the backend is able to
+// correctly redirect our OpAMP client to the correct URL.
+func (o *opampAgent) setEndpoint(baseURL string) error {
+	if baseURL == "" {
+		o.endpoint = o.cfg.Endpoint
+		return nil
+	}
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return fmt.Errorf("url error, cannot set opamp endpoint: %s", err)
+	}
+
+	u.Scheme = "wss"
+	u.Path = "/v1/opamp"
+
+	// These replacements are specific to Sumo Logic's current domain naming,
+	// and are made provisionally for the OTRM beta. In the future, the backend
+	// will inform the agent of the correct OpAMP URL to use.
+	u.Host = strings.Replace(u.Host, "open-events", "opamp-events", 1)
+	u.Host = strings.Replace(u.Host, "open-collectors", "opamp-collectors", 1)
+
+	o.endpoint = u.String()
 
 	return nil
 }
@@ -374,7 +414,8 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 	for k, v := range o.effectiveConfig {
 		p := filepath.Join(dir, k)
 
-		f, err := os.Create(p)
+		// OpenFile the same way os.Create does it, but with 0600 perms
+		f, err := os.OpenFile(p, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 		if err != nil {
 			return err
 		}

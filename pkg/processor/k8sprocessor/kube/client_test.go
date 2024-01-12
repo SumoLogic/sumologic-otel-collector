@@ -759,7 +759,7 @@ func TestExtractionRules(t *testing.T) {
 				"k8s.container.name":  "auth-service-container-name",
 				"k8s.deployment.name": "dearest-deploy",
 				"k8s.pod.hostname":    "auth-hostname3",
-				"k8s.pod.id":          "33333",
+				"k8s.pod.uid":         "33333",
 				"k8s.pod.name":        "auth-service-abc12-xyz3",
 				"k8s.pod.startTime":   pod.GetCreationTimestamp().String(),
 				"k8s.replicaset.name": "dearest-deploy-77c99ccb96",

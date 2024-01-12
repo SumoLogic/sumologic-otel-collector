@@ -21,7 +21,7 @@ exporters:
     # max HTTP request body size in bytes before compression (if applied),
     # NOTE: this limit does not apply to data sent in otlp format,
     #   to limit size of otlp requests, please use the batch processor:
-    #   https://github.com/open-telemetry/opentelemetry-collector/tree/v0.90.1/processor/batchprocessor
+    #   https://github.com/open-telemetry/opentelemetry-collector/tree/v0.91.0/processor/batchprocessor
     # default = 1_048_576 (1MB)
     max_request_body_size: <max_request_body_size>
 
@@ -46,6 +46,10 @@ exporters:
     # timeout is the timeout for every attempt to send data to the backend,
     # maximum connection timeout is 55s, default = 30s
     timeout: <timeout>
+
+    # defines client name used for Sumo Logic statistics
+    # default = "otelcol"
+    client: <client name>
 
     # defines if timestamp for logs should be set to 0,
     # it indicates that backend will extract timestamp from logs,
@@ -114,6 +118,12 @@ exporters:
       # num_seconds is the number of seconds to buffer in case of a backend outage,
       # requests_per_second is the average number of requests per seconds.
       queue_size: <queue_size>
+
+    # defines if sticky session support is enable
+    # more details about sticky sessions for ALB could be found here:
+    # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/sticky-sessions.html
+    # default = false
+    sticky_session_enabled: {true, false}
 ```
 
 ## Metrics
