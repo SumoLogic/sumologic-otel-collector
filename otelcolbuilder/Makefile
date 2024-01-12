@@ -52,7 +52,6 @@ GOEXPERIMENT=""
 LDFLAGS="-s -w"
 # We want to use boringcrypto for fips setup
 else
-GOFIPS=1
 ifeq ($(shell go env GOOS),windows)
 GOEXPERIMENT=systemcrypto
 GOTAGS := $(GOTAGS) requirefips
