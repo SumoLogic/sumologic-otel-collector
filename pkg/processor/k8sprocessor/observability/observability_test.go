@@ -87,6 +87,12 @@ func TestMetrics(t *testing.T) {
 				RecordOwnerTableSize(1)
 			},
 		},
+		{
+			"otelsvc/k8s/service_table_size",
+			func() {
+				RecordServiceTableSize(1)
+			},
+		},
 	}
 
 	var (
