@@ -1,1 +1,0 @@
-fix: fix prometheus formatter for non-string data point labels
