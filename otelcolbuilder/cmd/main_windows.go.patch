@@ -1,14 +1,21 @@
---- main_windows.go	2022-12-14 15:28:41.207327800 -0800
-+++ main_windows_patched.go	2022-12-14 15:27:42.320825400 -0800
-@@ -41,6 +41,11 @@
- }
-
- func runService(params otelcol.CollectorSettings) error {
+--- main_windows.go
++++ main_windows_patched.go
+@@ -16,6 +16,10 @@ import (
+ func run(params otelcol.CollectorSettings) error {
+ 	// No need to supply service name when startup is invoked through
+ 	// the Service Control Manager directly.
 +	err := UseCustomConfigProvider(&params)
 +	if err != nil {
 +		return err
 +	}
-+
- 	// do not need to supply service name when startup is invoked through Service Control Manager directly
  	if err := svc.Run("", otelcol.NewSvcHandler(params)); err != nil {
+ 		if errors.Is(err, windows.ERROR_FAILED_SERVICE_CONTROLLER_CONNECT) {
+ 			// Per https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-startservicectrldispatchera#return-value
+@@ -25,6 +29,7 @@ func run(params otelcol.CollectorSettings) error {
+ 
  		return fmt.Errorf("failed to start collector server: %w", err)
+ 	}
++	
+ 
+ 	return nil
+ }
