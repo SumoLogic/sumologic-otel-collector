@@ -1,0 +1,1 @@
+feat(telegrafreceiver): update telegraf to 1.28.3
