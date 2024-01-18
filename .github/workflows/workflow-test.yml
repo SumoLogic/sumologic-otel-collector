@@ -73,7 +73,7 @@ jobs:
           echo "cache-key=go-test-${{ env.GO_VERSION }}${BORINGCRYPTO_SUFFIX}-${{inputs.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}" >> $GITHUB_OUTPUT
           echo "restore-keys=go-test-${{ env.GO_VERSION }}${BORINGCRYPTO_SUFFIX}-${{inputs.arch_os}}-" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache/restore@v3
+      - uses: actions/cache/restore@v4
         if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         with:
           path: |
@@ -95,7 +95,7 @@ jobs:
         if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         run: make gotest ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
 
-      - uses: actions/cache/save@v3
+      - uses: actions/cache/save@v4
         if: ${{ inputs.save-cache && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         with:
           path: |
