@@ -96,7 +96,7 @@ jobs:
           echo "restore-keys=go-build-${{ env.GO_VERSION }}${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}-" >> $GITHUB_OUTPUT
           echo "toolchain-cache-key=toolchain-${{inputs.arch_os}}-${{ hashFiles('otelcolbuilder/build-fips/config.mak', 'otelcolbuilder/build-fips/Makefile') }}" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache/restore@v3
+      - uses: actions/cache/restore@v4
         if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         with:
           path: |
@@ -124,7 +124,7 @@ jobs:
         run: make otelcol-sumo-${{inputs.arch_os}}
         working-directory: ./otelcolbuilder
 
-      - uses: actions/cache/restore@v3
+      - uses: actions/cache/restore@v4
         id: restore-toolchain-cache
         if: ${{ inputs.fips && contains(inputs.arch_os, 'linux') && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         with:
@@ -199,14 +199,14 @@ jobs:
           path: ./otelcolbuilder/cmd/${{ steps.set-binary-name.outputs.binary_name }}
           if-no-files-found: error
 
-      - uses: actions/cache/save@v3
+      - uses: actions/cache/save@v4
         if: ${{ steps.rebuild-toolchain.outcome == 'success' }}
         with:
           path: |
             /opt/toolchain
           key: ${{ steps.get-cache-key.outputs.toolchain-cache-key }}
 
-      - uses: actions/cache/save@v3
+      - uses: actions/cache/save@v4
         if: ${{ inputs.save-cache && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         with:
           path: |

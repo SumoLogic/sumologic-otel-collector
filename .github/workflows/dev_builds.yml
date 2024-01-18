@@ -37,7 +37,7 @@ jobs:
           echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
           echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
 
-      - uses: actions/cache/restore@v3
+      - uses: actions/cache/restore@v4
         with:
           path: |
             ${{ env.GOMODCACHE }}/cache
@@ -46,7 +46,7 @@ jobs:
           restore-keys: |
             go-test-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             /home/runner/.cache/golangci-lint
