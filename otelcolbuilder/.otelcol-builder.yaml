@@ -229,7 +229,7 @@ excludes:
 replaces:
   # ----------------------------------------------------------------------------
   # Needed for telegrafreceiver
-  - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.28.3-sumo-2
+  - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.28.3-sumo-3
 
   # Some of the upstream packages have this replaced
   # See https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/16423
