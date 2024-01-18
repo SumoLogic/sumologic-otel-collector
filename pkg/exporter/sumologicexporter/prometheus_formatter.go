@@ -68,7 +68,7 @@ func (f *prometheusFormatter) tags2String(attr pcommon.Map, labels pcommon.Map) 
 
 	attr.CopyTo(mergedAttributes)
 	labels.Range(func(k string, v pcommon.Value) bool {
-		mergedAttributes.PutStr(k, v.Str())
+		mergedAttributes.PutStr(k, v.AsString())
 		return true
 	})
 	length := mergedAttributes.Len()

@@ -57,10 +57,16 @@ func TestTags2String(t *testing.T) {
 	require.NoError(t, err)
 
 	_, attributes := exampleIntMetric()
+	attributes.PutInt("int", 200)
+
+	labels := pcommon.NewMap()
+	labels.PutInt("l_int", 200)
+	labels.PutStr("l_str", "two")
+
 	assert.Equal(
 		t,
-		prometheusTags(`{test="test_value",test2="second_value"}`),
-		f.tags2String(attributes, pcommon.NewMap()),
+		prometheusTags(`{test="test_value",test2="second_value",int="200",l_int="200",l_str="two"}`),
+		f.tags2String(attributes, labels),
 	)
 }
 
