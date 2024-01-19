@@ -1,3 +1,0 @@
-feat(k8sprocessor)!: use Endpointslices for Service metadata
-
-If Service metadata is enabled in k8sprocessor configuration, it needs get/list/watch RBAC permission for EndpointSlices.
