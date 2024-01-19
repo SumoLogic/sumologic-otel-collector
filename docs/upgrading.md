@@ -56,7 +56,7 @@ In previous versions, when an exporter (e.g. Sumo Logic exporter) was configured
 This was because after reaching the retry limit configured in `retry_on_failure.max_elapsed_time`, the data would be put back in the sending queue, if the queue wasn't full.
 Starting in `v0.92.0-sumo-0`, this behavior is changed. Now the data is only retried for `retry_on_failure.max_elapsed_time`
 (which currently defaults to five minutes) and dropped after that.
-To prevent the exporter form ever dropping data, set `retry_on_failure.max_elapsed_time` to `0`.
+To prevent the exporter form ever dropping data that was successfully queued, set `retry_on_failure.max_elapsed_time` to `0`.
 
 For example, change this:
 
