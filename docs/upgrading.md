@@ -52,8 +52,8 @@
 
 ### Exporters: changed retry logic when using persistent queue
 
-In previous versions, when an exporter (e.g. Sumo Logic exporter) was configured to use retries and persistent queue, the data would be retried indefinitely.
-This was because after reaching the retry limit configured in `retry_on_failure.max_elapsed_time`, the data would be put back in the sending queue.
+In previous versions, when an exporter (e.g. Sumo Logic exporter) was configured to use retries and persistent queue, the data would be retried indefinitely as long as the queue wasn't full.
+This was because after reaching the retry limit configured in `retry_on_failure.max_elapsed_time`, the data would be put back in the sending queue, if the queue wasn't full.
 Starting in `v0.92.0-sumo-0`, this behavior is changed. Now the data is only retried for `retry_on_failure.max_elapsed_time`
 (which currently defaults to five minutes) and dropped after that.
 To prevent the exporter form ever dropping data, set `retry_on_failure.max_elapsed_time` to `0`.
