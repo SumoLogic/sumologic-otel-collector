@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/config/configretry"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 )
@@ -47,7 +48,7 @@ func createDefaultConfig() component.Config {
 		Port:          DefaultPort,
 		Format:        DefaultFormat,
 		Protocol:      DefaultProtocol,
-		RetrySettings: exporterhelper.NewDefaultRetrySettings(),
+		RetrySettings: configretry.NewDefaultBackOffConfig(),
 		QueueSettings: qs,
 	}
 }
