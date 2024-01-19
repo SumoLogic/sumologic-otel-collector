@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.92.0-sumo-0]
 
+See the [upgrade guide][upgrade_guide_v0.92] for more details on the breaking changes.
+
 ### Released 2024-01-19
 
 ### Breaking Changes
@@ -203,6 +205,7 @@ See the [upgrade guide][upgrade_guide_v0.89] for more details on the breaking ch
 [#1333]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1333
 [v0.89.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.89.0-sumo-0
 [upgrade_guide_v0.89]: ./docs/upgrading.md#upgrading-to-v0890-sumo-0
+[upgrade_guide_v0.92]: ./docs/upgrading.md#upgrading-to-v0920-sumo-0
 
 ## [v0.88.0-sumo-1]
 
