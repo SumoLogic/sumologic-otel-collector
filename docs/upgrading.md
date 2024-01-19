@@ -1,48 +1,91 @@
 # Upgrading
 
-- [Upgrading](#upgrading)
-  - [Upgrading to v0.91.0-sumo-0](#upgrading-to-v0910-sumo-0)
-    - [Sumo Logic Schema processor replaced with Sumo Logic processor](#sumo-logic-schema-processor-replaced-with-sumo-logic-processor)
-    - [`k8s_tagger` processor: default name of podID attribute has changed](#k8s_tagger-processor-default-name-of-podid-attribute-has-changed)
-  - [Upgrading to v0.90.1-sumo-0](#upgrading-to-v0901-sumo-0)
-    - [Change configuration for `syslogexporter`](#change-configuration-for-syslogexporter)
-    - [`sumologic` exporter: deprecate `clear_logs_timestamp`](#sumologic-exporter-deprecate-clear_logs_timestamp)
-    - [`sumologic` exporter: remove `routing_attributes_to_drop`](#sumologic-exporter-remove-routing_attributes_to_drop)
-    - [`sumologic` exporter: deprecate `json_logs`](#sumologic-exporter-deprecate-json_logs)
-  - [Upgrading to v0.89.0-sumo-0](#upgrading-to-v0890-sumo-0)
-    - [`remoteobserver` processor: renamed to `remotetap` processor](#remoteobserver-processor-renamed-to-remotetap-processor)
-    - [`sumologic` exporter: changed default `timeout` from `5s` to `30s`](#sumologic-exporter-changed-default-timeout-from-5s-to-30s)
-    - [`sumologic` extension: changed default `discover_collector_tags` from `false` to `true`](#sumologic-extension-changed-default-discover_collector_tags-from-false-to-true)
-  - [Upgrading to v0.84.0-sumo-0](#upgrading-to-v0840-sumo-0)
-    - [`sumologic` extension: removed `install_token` in favor of `installation_token`](#sumologic-extension-removed-install_token-in-favor-of-installation_token)
-  - [Upgrading to v0.77.0-sumo-0](#upgrading-to-v0770-sumo-0)
-    - [Full Prometheus metric name normalization is now disabled by default](#full-prometheus-metric-name-normalization-is-now-disabled-by-default)
-  - [Upgrading to v0.73.0-sumo-1](#upgrading-to-v0730-sumo-1)
-    - [The default collector name for sumologic extension is now the host FQDN](#the-default-collector-name-for-sumologic-extension-is-now-the-host-fqdn)
-  - [Upgrading to v0.66.0-sumo-0](#upgrading-to-v0660-sumo-0)
-    - [`filelog` receiver: has been removed from sub-parsers](#filelog-receiver-has-been-removed-from-sub-parsers)
-    - [`sending_queue`: require explicit storage set](#sending_queue-require-explicit-storage-set)
-    - [`apache` receiver: turn on feature gates for resource attributes](#apache-receiver-turn-on-feature-gates-for-resource-attributes)
-    - [`elasticsearch` receiver: turn on more datapoints](#elasticsearch-receiver-turn-on-more-datapoints)
-  - [Upgrading to v0.57.2-sumo-0](#upgrading-to-v0572-sumo-0)
-    - [`sumologic` exporter: drop support for source headers](#sumologic-exporter-drop-support-for-source-headers)
-  - [Upgrading to v0.56.0-sumo-0](#upgrading-to-v0560-sumo-0)
-    - [`sumologic` exporter: drop support for translating attributes](#sumologic-exporter-drop-support-for-translating-attributes)
-    - [`sumologic` exporter: drop support for translating Telegraf metric names](#sumologic-exporter-drop-support-for-translating-telegraf-metric-names)
-  - [Upgrading to v0.55.0-sumo-0](#upgrading-to-v0550-sumo-0)
-    - [`filter` processor: drop support for `expr` language](#filter-processor-drop-support-for-expr-language)
-  - [Upgrading to v0.52.0-sumo-0](#upgrading-to-v0520-sumo-0)
-    - [`sumologic` exporter: Removed `carbon2` and `graphite` metric formats](#sumologic-exporter-removed-carbon2-and-graphite-metric-formats)
-  - [Upgrading to v0.51.0-sumo-0](#upgrading-to-v0510-sumo-0)
-    - [`k8s_tagger` processor: removed `clusterName` metadata extraction option](#k8s_tagger-processor-removed-clustername-metadata-extraction-option)
-      - [How to upgrade](#how-to-upgrade)
-    - [`sumologic` exporter: metadata translation: changed the attribute that is translated to `_sourceName` from `file.path.resolved` to `log.file.path_resolved`](#sumologic-exporter-metadata-translation-changed-the-attribute-that-is-translated-to-_sourcename-from-filepathresolved-to-logfilepath_resolved)
-      - [How to upgrade](#how-to-upgrade-1)
-  - [Upgrading to 0.49.0-sumo-0](#upgrading-to-0490-sumo-0)
-    - [Several changes to receivers using opentelemetry-log-collection](#several-changes-to-receivers-using-opentelemetry-log-collection)
-    - [Sumo Logic exporter metadata handling](#sumo-logic-exporter-metadata-handling)
-      - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
-      - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
+- [Upgrading to v0.92.0-sumo-0](#upgrading-to-v0920-sumo-0)
+  - [Exporters: changed retry logic when using persistent queue](#exporters-changed-retry-logic-when-using-persistent-queue)
+- [Upgrading to v0.91.0-sumo-0](#upgrading-to-v0910-sumo-0)
+  - [Sumo Logic Schema processor replaced with Sumo Logic processor](#sumo-logic-schema-processor-replaced-with-sumo-logic-processor)
+  - [`k8s_tagger` processor: default name of podID attribute has changed](#k8s_tagger-processor-default-name-of-podid-attribute-has-changed)
+- [Upgrading to v0.90.1-sumo-0](#upgrading-to-v0901-sumo-0)
+  - [Change configuration for `syslogexporter`](#change-configuration-for-syslogexporter)
+  - [`sumologic` exporter: deprecate `clear_logs_timestamp`](#sumologic-exporter-deprecate-clear_logs_timestamp)
+  - [`sumologic` exporter: remove `routing_attributes_to_drop`](#sumologic-exporter-remove-routing_attributes_to_drop)
+  - [`sumologic` exporter: deprecate `json_logs`](#sumologic-exporter-deprecate-json_logs)
+    - [Migration example for `add_timestamp` and `timestamp_key`](#migration-example-for-add_timestamp-and-timestamp_key)
+    - [Migration example for `flatten_body`](#migration-example-for-flatten_body)
+    - [Migration example for `log_key`](#migration-example-for-log_key)
+- [Upgrading to v0.89.0-sumo-0](#upgrading-to-v0890-sumo-0)
+  - [`remoteobserver` processor: renamed to `remotetap` processor](#remoteobserver-processor-renamed-to-remotetap-processor)
+  - [`sumologic` exporter: changed default `timeout` from `5s` to `30s`](#sumologic-exporter-changed-default-timeout-from-5s-to-30s)
+  - [`sumologic` extension: changed default `discover_collector_tags` from `false` to `true`](#sumologic-extension-changed-default-discover_collector_tags-from-false-to-true)
+- [Upgrading to v0.84.0-sumo-0](#upgrading-to-v0840-sumo-0)
+  - [`sumologic` extension: removed `install_token` in favor of `installation_token`](#sumologic-extension-removed-install_token-in-favor-of-installation_token)
+- [Upgrading to v0.77.0-sumo-0](#upgrading-to-v0770-sumo-0)
+  - [Full Prometheus metric name normalization is now disabled by default](#full-prometheus-metric-name-normalization-is-now-disabled-by-default)
+- [Upgrading to v0.73.0-sumo-1](#upgrading-to-v0730-sumo-1)
+  - [The default collector name for sumologic extension is now the host FQDN](#the-default-collector-name-for-sumologic-extension-is-now-the-host-fqdn)
+- [Upgrading to v0.66.0-sumo-0](#upgrading-to-v0660-sumo-0)
+  - [`filelog` receiver: has been removed from sub-parsers](#filelog-receiver-has-been-removed-from-sub-parsers)
+  - [`sending_queue`: require explicit storage set](#sending_queue-require-explicit-storage-set)
+  - [`apache` receiver: turn on feature gates for resource attributes](#apache-receiver-turn-on-feature-gates-for-resource-attributes)
+  - [`elasticsearch` receiver: turn on more datapoints](#elasticsearch-receiver-turn-on-more-datapoints)
+- [Upgrading to v0.57.2-sumo-0](#upgrading-to-v0572-sumo-0)
+  - [`sumologic` exporter: drop support for source headers](#sumologic-exporter-drop-support-for-source-headers)
+- [Upgrading to v0.56.0-sumo-0](#upgrading-to-v0560-sumo-0)
+  - [`sumologic` exporter: drop support for translating attributes](#sumologic-exporter-drop-support-for-translating-attributes)
+  - [`sumologic` exporter: drop support for translating Telegraf metric names](#sumologic-exporter-drop-support-for-translating-telegraf-metric-names)
+- [Upgrading to v0.55.0-sumo-0](#upgrading-to-v0550-sumo-0)
+  - [`filter` processor: drop support for `expr` language](#filter-processor-drop-support-for-expr-language)
+- [Upgrading to v0.52.0-sumo-0](#upgrading-to-v0520-sumo-0)
+  - [`sumologic` exporter: Removed `carbon2` and `graphite` metric formats](#sumologic-exporter-removed-carbon2-and-graphite-metric-formats)
+- [Upgrading to v0.51.0-sumo-0](#upgrading-to-v0510-sumo-0)
+  - [`k8s_tagger` processor: removed `clusterName` metadata extraction option](#k8s_tagger-processor-removed-clustername-metadata-extraction-option)
+    - [How to upgrade](#how-to-upgrade)
+  - [`sumologic` exporter: metadata translation: changed the attribute that is translated to `_sourceName` from `file.path.resolved` to `log.file.path_resolved`](#sumologic-exporter-metadata-translation-changed-the-attribute-that-is-translated-to-_sourcename-from-filepathresolved-to-logfilepath_resolved)
+    - [How to upgrade](#how-to-upgrade-1)
+- [Upgrading to 0.49.0-sumo-0](#upgrading-to-0490-sumo-0)
+  - [Several changes to receivers using opentelemetry-log-collection](#several-changes-to-receivers-using-opentelemetry-log-collection)
+  - [Sumo Logic exporter metadata handling](#sumo-logic-exporter-metadata-handling)
+    - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
+    - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
+
+## Upgrading to v0.92.0-sumo-0
+
+### Exporters: changed retry logic when using persistent queue
+
+In previous versions, when an exporter (e.g. Sumo Logic exporter) was configured to use retries and persistent queue, the data would be retried indefinitely as long as the queue wasn't full.
+This was because after reaching the retry limit configured in `retry_on_failure.max_elapsed_time`, the data would be put back in the sending queue, if the queue wasn't full.
+Starting in `v0.92.0-sumo-0`, this behavior is changed. Now the data is only retried for `retry_on_failure.max_elapsed_time`
+(which currently defaults to five minutes) and dropped after that.
+To prevent the exporter form ever dropping data that was successfully queued, set `retry_on_failure.max_elapsed_time` to `0`.
+
+For example, change this:
+
+```yaml
+exporters:
+  sumologic:
+    endpoint: ...
+    retry_on_failure:
+      enabled: true
+    sending_queue:
+      enabled: true
+      storage: file_storage
+```
+
+to this:
+
+```yaml
+exporters:
+  sumologic:
+    endpoint: ...
+    retry_on_failure:
+      enabled: true
+      max_elapsed_time: 0
+    sending_queue:
+      enabled: true
+      storage: file_storage
+```
+
+See the change for details: https://github.com/open-telemetry/opentelemetry-collector/pull/9090.
 
 ## Upgrading to v0.91.0-sumo-0
 
