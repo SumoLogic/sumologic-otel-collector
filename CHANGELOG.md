@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.92.0-sumo-0]
+
+### Released 2024-01-19
+
+### Breaking Changes
+
+- feat(k8sprocessor)!: use Endpointslices for Service metadata [#1422]
+  If Service metadata is enabled in k8sprocessor configuration, it needs get/list/watch RBAC permission for EndpointSlices.
+
+### Added
+
+- feat(k8sprocessor): add new owner metrics [#1426]
+
+### Changed
+
+- feat(telegrafreceiver): update telegraf to 1.28.3 [#1314]
+- chore: upgrade otelcol core to 0.92.0 [#1423]
+
+### Fixed
+
+- fix(k8sprocessor): Pod Service cache invalidation [#1425]
+- fix(sumologicexporter): fix prometheus formatter for non-string data point [#1428]
+
+[#1422]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1422
+[#1426]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1426
+[#1314]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1314
+[#1423]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1423
+[#1425]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1425
+[#1428]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1428
+[v0.92.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.92.0-sumo-0
+
 ## [v0.91.0-sumo-1]
 
 ### Released 2024-01-11

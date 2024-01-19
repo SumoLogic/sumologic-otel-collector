@@ -1,1 +1,0 @@
-fix(sumologicexporter): fix prometheus formatter for non-string data point
