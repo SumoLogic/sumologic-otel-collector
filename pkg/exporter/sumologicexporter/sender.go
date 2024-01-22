@@ -126,7 +126,6 @@ type sender struct {
 	logger                     *zap.Logger
 	config                     *Config
 	client                     *http.Client
-	compressor                 *compressor
 	prometheusFormatter        prometheusFormatter
 	jsonLogsConfig             JSONLogs
 	dataUrlMetrics             string
@@ -167,7 +166,6 @@ func newSender(
 	logger *zap.Logger,
 	cfg *Config,
 	cl *http.Client,
-	c *compressor,
 	pf prometheusFormatter,
 	metricsUrl string,
 	logsUrl string,
@@ -180,7 +178,6 @@ func newSender(
 		logger:                     logger,
 		config:                     cfg,
 		client:                     cl,
-		compressor:                 c,
 		prometheusFormatter:        pf,
 		jsonLogsConfig:             cfg.JSONLogs,
 		dataUrlMetrics:             metricsUrl,
@@ -196,12 +193,7 @@ var errUnauthorized = errors.New("unauthorized")
 
 // send sends data to sumologic
 func (s *sender) send(ctx context.Context, pipeline PipelineType, reader *countingReader, flds fields) error {
-	data, err := s.compressor.compress(reader.reader)
-	if err != nil {
-		return err
-	}
-
-	req, err := s.createRequest(ctx, pipeline, data)
+	req, err := s.createRequest(ctx, pipeline, reader.reader)
 	if err != nil {
 		return err
 	}

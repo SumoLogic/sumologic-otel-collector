@@ -18,7 +18,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -75,9 +74,6 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 		cfgOpt(cfg)
 	}
 
-	c, err := newCompressor(cfg.CompressEncoding)
-	require.NoError(t, err)
-
 	pf, err := newPrometheusFormatter()
 	require.NoError(t, err)
 
@@ -95,7 +91,6 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 			&http.Client{
 				Timeout: cfg.HTTPClientSettings.Timeout,
 			},
-			&c,
 			pf,
 			testServer.URL,
 			testServer.URL,
@@ -1049,13 +1044,9 @@ func TestSendCompressGzip(t *testing.T) {
 
 	test.s.config.CompressEncoding = "gzip"
 
-	c, err := newCompressor("gzip")
-	require.NoError(t, err)
-
-	test.s.compressor = &c
 	reader := newCountingReader(0).withString("Some example log")
 
-	err = test.s.send(context.Background(), LogsPipeline, reader, fields{})
+	err := test.s.send(context.Background(), LogsPipeline, reader, fields{})
 	require.NoError(t, err)
 }
 
@@ -1077,20 +1068,15 @@ func TestSendCompressDeflate(t *testing.T) {
 
 	test.s.config.CompressEncoding = "deflate"
 
-	c, err := newCompressor("deflate")
-	require.NoError(t, err)
-
-	test.s.compressor = &c
 	reader := newCountingReader(0).withString("Some example log")
 
-	err = test.s.send(context.Background(), LogsPipeline, reader, fields{})
+	err := test.s.send(context.Background(), LogsPipeline, reader, fields{})
 	require.NoError(t, err)
 }
 
 func TestCompressionError(t *testing.T) {
 	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
 
-	test.s.compressor = getTestCompressor(errors.New("read error"), nil)
 	reader := newCountingReader(0).withString("Some example log")
 
 	err := test.s.send(context.Background(), LogsPipeline, reader, fields{})
@@ -1100,8 +1086,6 @@ func TestCompressionError(t *testing.T) {
 func TestInvalidContentEncoding(t *testing.T) {
 	// Expect to requests
 	test := prepareSenderTest(t, nil)
-
-	test.s.config.CompressEncoding = "test"
 	reader := newCountingReader(0).withString("Some example log")
 
 	err := test.s.send(context.Background(), LogsPipeline, reader, fields{})
