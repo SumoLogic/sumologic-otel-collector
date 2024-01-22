@@ -58,7 +58,6 @@ type exporterTest struct {
 
 func createTestConfig() *Config {
 	config := createDefaultConfig().(*Config)
-	config.CompressEncoding = NoCompression
 	config.LogFormat = TextFormat
 	config.MaxRequestBodySize = 20_971_520
 	config.MetricFormat = OTLPMetricFormat
@@ -120,10 +119,9 @@ func prepareExporterTest(t *testing.T, cfg *Config, cb []func(w http.ResponseWri
 
 func TestInitExporter(t *testing.T) {
 	_, err := initExporter(&Config{
-		LogFormat:        "json",
-		MetricFormat:     "otlp",
-		CompressEncoding: "gzip",
-		TraceFormat:      "otlp",
+		LogFormat:    "json",
+		MetricFormat: "otlp",
+		TraceFormat:  "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout:  defaultTimeout,
 			Endpoint: "test_endpoint",
@@ -292,10 +290,9 @@ func TestPartiallyFailed(t *testing.T) {
 
 func TestInvalidHTTPCLient(t *testing.T) {
 	exp, err := initExporter(&Config{
-		LogFormat:        "json",
-		MetricFormat:     "otlp",
-		CompressEncoding: "gzip",
-		TraceFormat:      "otlp",
+		LogFormat:    "json",
+		MetricFormat: "otlp",
+		TraceFormat:  "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Endpoint: "test_endpoint",
 			CustomRoundTripper: func(next http.RoundTripper) (http.RoundTripper, error) {
@@ -309,18 +306,6 @@ func TestInvalidHTTPCLient(t *testing.T) {
 		exp.start(context.Background(), componenttest.NewNopHost()),
 		"failed to create HTTP Client: roundTripperException",
 	)
-}
-
-func TestPushInvalidCompressor(t *testing.T) {
-	// Expect no requests
-	test := prepareExporterTest(t, createTestConfig(), nil)
-	test.exp.config.CompressEncoding = "invalid"
-
-	logs := LogRecordsToLogs(exampleLog())
-	logs.MarkReadOnly()
-
-	err := test.exp.pushLogsData(context.Background(), logs)
-	assert.EqualError(t, err, "failed to initialize compressor: invalid format: invalid")
 }
 
 func TestPushFailedBatch(t *testing.T) {
@@ -642,18 +627,6 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 	}
 }
 
-func TestPushMetricsInvalidCompressor(t *testing.T) {
-	metrics := metricAndAttributesToPdataMetrics(exampleIntMetric())
-	metrics.MarkReadOnly()
-
-	// Expect no requests
-	test := prepareExporterTest(t, createTestConfig(), nil)
-	test.exp.config.CompressEncoding = "invalid"
-
-	err := test.exp.pushMetricsData(context.Background(), metrics)
-	assert.EqualError(t, err, "failed to initialize compressor: invalid format: invalid")
-}
-
 func TestMetricsPrometheusFormatMetadataFilter(t *testing.T) {
 	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
@@ -680,10 +653,10 @@ func TestMetricsPrometheusFormatMetadataFilter(t *testing.T) {
 func Benchmark_ExporterPushLogs(b *testing.B) {
 	createConfig := func() *Config {
 		config := createDefaultConfig().(*Config)
-		config.CompressEncoding = GZIPCompression
 		config.MetricFormat = PrometheusFormat
 		config.LogFormat = TextFormat
 		config.HTTPClientSettings.Auth = nil
+		config.HTTPClientSettings.Compression = "gzip"
 		return config
 	}
 

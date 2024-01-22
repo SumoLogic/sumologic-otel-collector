@@ -33,9 +33,6 @@ type Config struct {
 	exporterhelper.QueueSettings  `mapstructure:"sending_queue"`
 	configretry.BackOffConfig     `mapstructure:"retry_on_failure"`
 
-	// Compression encoding format, either empty string, gzip or deflate (default gzip)
-	// Empty string means no compression
-	CompressEncoding CompressEncodingType `mapstructure:"compress_encoding"`
 	// Max HTTP request body size in bytes before compression (if applied).
 	// By default 1MB is recommended.
 	MaxRequestBodySize int `mapstructure:"max_request_body_size"`
@@ -98,8 +95,7 @@ type JSONLogs struct {
 // CreateDefaultHTTPClientSettings returns default http client settings
 func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 	return confighttp.HTTPClientSettings{
-		Timeout:     defaultTimeout,
-		Compression: "gzip",
+		Timeout: defaultTimeout,
 		Auth: &configauth.Authentication{
 			AuthenticatorID: component.NewID("sumologic"),
 		},
@@ -131,10 +127,6 @@ func (cfg *Config) Validate() error {
 	case OTLPTraceFormat:
 	default:
 		return fmt.Errorf("unexpected trace format: %s", cfg.TraceFormat)
-	}
-
-	if err := cfg.CompressEncoding.Validate(); err != nil {
-		return err
 	}
 
 	if len(cfg.HTTPClientSettings.Endpoint) == 0 && cfg.HTTPClientSettings.Auth == nil {

@@ -781,10 +781,7 @@ func addTracesHeaders(req *http.Request, tf TraceFormatType) error {
 
 func (s *sender) addRequestHeaders(req *http.Request, pipeline PipelineType, flds fields) error {
 	req.Header.Add(headerClient, s.config.Client)
-
-	if err := addCompressHeader(req, s.config.CompressEncoding); err != nil {
-		return err
-	}
+	// req.Header.Set(headerContentEncoding, s.config.Client.Compression)
 	addSourcesHeaders(req, flds)
 
 	switch pipeline {

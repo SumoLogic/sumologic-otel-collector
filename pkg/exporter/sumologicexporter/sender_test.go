@@ -65,7 +65,6 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 	t.Cleanup(func() { testServer.Close() })
 
 	cfg := createDefaultConfig().(*Config)
-	cfg.CompressEncoding = NoCompression
 	cfg.HTTPClientSettings.Endpoint = testServer.URL
 	cfg.LogFormat = TextFormat
 	cfg.MetricFormat = OTLPMetricFormat
@@ -1025,71 +1024,6 @@ func TestInvalidPipeline(t *testing.T) {
 
 	err := test.s.send(context.Background(), "invalidPipeline", newCountingReader(0).withString(""), fields{})
 	assert.EqualError(t, err, `unknown pipeline type: invalidPipeline`)
-}
-
-func TestSendCompressGzip(t *testing.T) {
-	test := prepareSenderTest(t, []func(res http.ResponseWriter, req *http.Request){
-		func(res http.ResponseWriter, req *http.Request) {
-			res.WriteHeader(200)
-			if _, err := res.Write([]byte("")); err != nil {
-				res.WriteHeader(http.StatusInternalServerError)
-				assert.FailNow(t, "err: %v", err)
-				return
-			}
-			body := decodeGzip(t, req.Body)
-			assert.Equal(t, "gzip", req.Header.Get("Content-Encoding"))
-			assert.Equal(t, "Some example log", body)
-		},
-	})
-
-	test.s.config.CompressEncoding = "gzip"
-
-	reader := newCountingReader(0).withString("Some example log")
-
-	err := test.s.send(context.Background(), LogsPipeline, reader, fields{})
-	require.NoError(t, err)
-}
-
-func TestSendCompressDeflate(t *testing.T) {
-	test := prepareSenderTest(t, []func(res http.ResponseWriter, req *http.Request){
-		func(res http.ResponseWriter, req *http.Request) {
-			res.WriteHeader(200)
-
-			if _, err := res.Write([]byte("")); err != nil {
-				res.WriteHeader(http.StatusInternalServerError)
-				assert.FailNow(t, "err: %v", err)
-				return
-			}
-			body := decodeDeflate(t, req.Body)
-			assert.Equal(t, "deflate", req.Header.Get("Content-Encoding"))
-			assert.Equal(t, "Some example log", body)
-		},
-	})
-
-	test.s.config.CompressEncoding = "deflate"
-
-	reader := newCountingReader(0).withString("Some example log")
-
-	err := test.s.send(context.Background(), LogsPipeline, reader, fields{})
-	require.NoError(t, err)
-}
-
-func TestCompressionError(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-
-	reader := newCountingReader(0).withString("Some example log")
-
-	err := test.s.send(context.Background(), LogsPipeline, reader, fields{})
-	assert.EqualError(t, err, "read error")
-}
-
-func TestInvalidContentEncoding(t *testing.T) {
-	// Expect to requests
-	test := prepareSenderTest(t, nil)
-	reader := newCountingReader(0).withString("Some example log")
-
-	err := test.s.send(context.Background(), LogsPipeline, reader, fields{})
-	assert.EqualError(t, err, "invalid content encoding: test")
 }
 
 func TestSendMetrics(t *testing.T) {
