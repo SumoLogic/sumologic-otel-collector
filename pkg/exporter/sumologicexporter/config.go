@@ -22,6 +22,7 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/configauth"
+	"go.opentelemetry.io/collector/config/configcompression"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/config/configretry"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
@@ -96,7 +97,7 @@ type JSONLogs struct {
 func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 	return confighttp.HTTPClientSettings{
 		Timeout:     defaultTimeout,
-		Compression: "gzip",
+		Compression: DefaultCompressEncoding,
 		Auth: &configauth.Authentication{
 			AuthenticatorID: component.NewID("sumologic"),
 		},
@@ -104,6 +105,15 @@ func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 }
 
 func (cfg *Config) Validate() error {
+
+	switch cfg.HTTPClientSettings.Compression {
+	case GZIPCompression:
+	case NoCompression:
+	case DeflateCompression:
+
+	default:
+		return fmt.Errorf("invalid compression encoding type: %v", cfg.HTTPClientSettings.Compression)
+	}
 
 	switch cfg.LogFormat {
 	case OTLPLogFormat:
@@ -159,22 +169,6 @@ type TraceFormatType string
 // PipelineType represents type of the pipeline
 type PipelineType string
 
-// CompressEncodingType represents type of the pipeline
-type CompressEncodingType string
-
-func (cet CompressEncodingType) Validate() error {
-	switch cet {
-	case GZIPCompression:
-	case NoCompression:
-	case DeflateCompression:
-
-	default:
-		return fmt.Errorf("invalid compression encoding type: %v", cet)
-	}
-
-	return nil
-}
-
 const (
 	// TextFormat represents log_format: text
 	TextFormat LogFormatType = "text"
@@ -193,11 +187,11 @@ const (
 	// OTLPTraceFormat represents trace_format: otlp
 	OTLPTraceFormat TraceFormatType = "otlp"
 	// GZIPCompression represents compress_encoding: gzip
-	GZIPCompression CompressEncodingType = "gzip"
+	GZIPCompression configcompression.CompressionType = "gzip"
 	// DeflateCompression represents compress_encoding: deflate
-	DeflateCompression CompressEncodingType = "deflate"
+	DeflateCompression configcompression.CompressionType = "deflate"
 	// NoCompression represents disabled compression
-	NoCompression CompressEncodingType = ""
+	NoCompression configcompression.CompressionType = ""
 	// MetricsPipeline represents metrics pipeline
 	MetricsPipeline PipelineType = "metrics"
 	// LogsPipeline represents metrics pipeline
@@ -209,7 +203,7 @@ const (
 	// DefaultCompress defines default Compress
 	DefaultCompress bool = true
 	// DefaultCompressEncoding defines default CompressEncoding
-	DefaultCompressEncoding CompressEncodingType = "gzip"
+	DefaultCompressEncoding configcompression.CompressionType = "gzip"
 	// DefaultMaxRequestBodySize defines default MaxRequestBodySize in bytes
 	DefaultMaxRequestBodySize int = 1 * 1024 * 1024
 	// DefaultLogFormat defines default LogFormat

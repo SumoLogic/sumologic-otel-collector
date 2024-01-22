@@ -58,7 +58,7 @@ type exporterTest struct {
 
 func createTestConfig() *Config {
 	config := createDefaultConfig().(*Config)
-	config.HTTPClientSettings.Compression = ""
+	config.HTTPClientSettings.Compression = NoCompression
 	config.LogFormat = TextFormat
 	config.MaxRequestBodySize = 20_971_520
 	config.MetricFormat = OTLPMetricFormat
@@ -657,7 +657,7 @@ func Benchmark_ExporterPushLogs(b *testing.B) {
 		config.MetricFormat = PrometheusFormat
 		config.LogFormat = TextFormat
 		config.HTTPClientSettings.Auth = nil
-		config.HTTPClientSettings.Compression = "gzip"
+		config.HTTPClientSettings.Compression = GZIPCompression
 		return config
 	}
 

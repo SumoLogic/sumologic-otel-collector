@@ -152,10 +152,12 @@ const (
 	attributeKeySourceName     = "_sourceName"
 	attributeKeySourceCategory = "_sourceCategory"
 
-	contentTypeLogs       string = "application/x-www-form-urlencoded"
-	contentTypePrometheus string = "application/vnd.sumologic.prometheus"
-	contentTypeOTLP       string = "application/x-protobuf"
-	stickySessionKey      string = "AWSALB"
+	contentTypeLogs        string = "application/x-www-form-urlencoded"
+	contentTypePrometheus  string = "application/vnd.sumologic.prometheus"
+	contentTypeOTLP        string = "application/x-protobuf"
+	contentEncodingGzip    string = "gzip"
+	contentEncodingDeflate string = "deflate"
+	stickySessionKey       string = "AWSALB"
 )
 
 func newSender(
@@ -763,7 +765,6 @@ func addTracesHeaders(req *http.Request, tf TraceFormatType) error {
 
 func (s *sender) addRequestHeaders(req *http.Request, pipeline PipelineType, flds fields) error {
 	req.Header.Add(headerClient, s.config.Client)
-	// req.Header.Set(headerContentEncoding, s.config.Client.Compression)
 	addSourcesHeaders(req, flds)
 
 	switch pipeline {
