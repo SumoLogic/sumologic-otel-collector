@@ -155,11 +155,7 @@ const (
 	contentTypeLogs       string = "application/x-www-form-urlencoded"
 	contentTypePrometheus string = "application/vnd.sumologic.prometheus"
 	contentTypeOTLP       string = "application/x-protobuf"
-
-	contentEncodingGzip    string = "gzip"
-	contentEncodingDeflate string = "deflate"
-
-	stickySessionKey string = "AWSALB"
+	stickySessionKey      string = "AWSALB"
 )
 
 func newSender(
@@ -697,20 +693,6 @@ func (s *sender) sendOTLPTraces(ctx context.Context, td ptrace.Traces) error {
 	if err := s.send(ctx, TracesPipeline, newCountingReader(capacity).withBytes(body), fields{}); err != nil {
 		return err
 	}
-	return nil
-}
-
-func addCompressHeader(req *http.Request, enc CompressEncodingType) error {
-	switch enc {
-	case GZIPCompression:
-		req.Header.Set(headerContentEncoding, contentEncodingGzip)
-	case DeflateCompression:
-		req.Header.Set(headerContentEncoding, contentEncodingDeflate)
-	case NoCompression:
-	default:
-		return fmt.Errorf("invalid content encoding: %s", enc)
-	}
-
 	return nil
 }
 

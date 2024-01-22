@@ -51,8 +51,6 @@ type sumologicexporter struct {
 	clientLock sync.RWMutex
 	client     *http.Client
 
-	compressorPool sync.Pool
-
 	prometheusFormatter prometheusFormatter
 
 	// Lock around data URLs is needed because the reconfiguration of the exporter

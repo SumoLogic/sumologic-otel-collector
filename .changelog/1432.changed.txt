@@ -1,0 +1,1 @@
+Remove compress_encoding and all of our own compression code fin favor of using the confighttp hhelper
