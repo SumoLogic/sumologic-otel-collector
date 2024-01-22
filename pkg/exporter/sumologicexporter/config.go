@@ -95,7 +95,8 @@ type JSONLogs struct {
 // CreateDefaultHTTPClientSettings returns default http client settings
 func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 	return confighttp.HTTPClientSettings{
-		Timeout: defaultTimeout,
+		Timeout:     defaultTimeout,
+		Compression: "gzip",
 		Auth: &configauth.Authentication{
 			AuthenticatorID: component.NewID("sumologic"),
 		},

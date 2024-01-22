@@ -35,7 +35,6 @@ func TestType(t *testing.T) {
 func TestCreateDefaultConfig(t *testing.T) {
 	factory := NewFactory()
 	cfg := factory.CreateDefaultConfig()
-	cfg.(*Config).HTTPClientSettings.Compression = "gzip"
 	qs := exporterhelper.NewDefaultQueueSettings()
 	qs.Enabled = false
 
