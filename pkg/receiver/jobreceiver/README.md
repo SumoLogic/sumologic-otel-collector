@@ -12,6 +12,7 @@ of downloading runtime assets necessary to run a particular monitoring job.
 
 ## Configuration
 
+<<<<<<< HEAD
 | Configuration | Default  | Description                                                                    |
 | ------------- | -------- | ------------------------------------------------------------------------------ |
 | exec          | required | A `exec` configuration block. See details [below](#execution-configuration)    |
@@ -26,6 +27,22 @@ of downloading runtime assets necessary to run a particular monitoring job.
 | arguments      |          | A list of string arguments to pass the command                                                   |
 | timeout        |          | [Time](#time-parameters) to wait for the process to exit before attempting to make it exit       |
 | runtime_assets |          | A list of `runtime_assets` required for the monitoring job. See details [below](#runtime-assets) |
+=======
+| Configuration | Default | Description|
+| ------------ | ------------ | ------------|
+| exec | required | A `exec` configuration block. See details [below](#execution-configuration)|
+| schedule | required | A `schedule` configuration block. See details [below](#schedule-configuration)|
+| output | | An `output` configuration block. See details [below](#output-configuration)|
+
+### Execution Configuration
+
+| Configuration | Default | Description|
+| ------------ | ------------ | ------------|
+| command | required | The `command` to run. Should start a binary that writes to stdout and/or stderr|
+| arguments | | A list of string arguments to pass the command|
+| timeout | | [Time](#time-parameters) to wait for the process to exit before attempting to make it exit|
+| runtime_assets | | A list of `runtime_assets` required for the monitoring job. See details [below](#runtime-assets)|
+>>>>>>> 3bb7f20b (Deprecation notice for compress_encoding and test additions)
 
 ### Schedule Configuration
 
@@ -39,8 +56,13 @@ The monitoringjob receiver output is a configurable as a [Stanza][stanza]
 pipeline. This allows complex operators to be chained to parse the command
 output.
 
+<<<<<<< HEAD
 | Configuration                       | Default | Description                                                                                                                                                                                                       |
 | ----------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+=======
+| Configuration | Default | Description|
+| ------------ | ------------ | ------------|
+>>>>>>> 3bb7f20b (Deprecation notice for compress_encoding and test additions)
 | `type`                              | `event` | The output handler type [see below](#output-handler-type). Valid values are `event` and `log_entries`.                                                                                                            |
 | `event`                             | {}      | When `type` == `event` this block may be configured with additional properties as described [below](#output-handler-type).                                                                                        |
 | `log_entries`                       | {}      | When `type` == `log_entries` this block may be configured with additional properties as described [below](#output-handler-type).                                                                                  |
@@ -73,6 +95,7 @@ to access.
 
 #### Output Configuration - event
 
+<<<<<<< HEAD
 | Configuration            | Default | Description                                                                                       |
 | ------------------------ | ------- | ------------------------------------------------------------------------------------------------- |
 | include_command_name     | true    | When set, includes the attribute `command.name` in the log event.                                 |
@@ -91,6 +114,26 @@ to access.
 | multiline                    |         | Used to override the default newline delimited log entries.                                                                         |
 | multiline.line_start_pattern |         | Regex pattern for the beginning of a log entry. Mutualy exclusive with end pattern.                                                 |
 | multiline.line_end_pattern   |         | Regex pattern for the ending of a log entry. Mutualy exclusive with start pattern.                                                  |
+=======
+| Configuration | Default | Description|
+| ------------ | ------------ | ------------|
+| include_command_name | true | When set, includes the attribute `command.name` in the log event.|
+| include_command_status | true | When set, includes the attribute `command.status` in the log event.|
+| include_command_duration | true | When set, includes the attribute `command.duration` in the log event.|
+| max_body_size | | When set, restricts the length of command output to a specified [ByteSize](#bytesize-parameters).|
+
+#### Output Configuration - log_entries
+
+| Configuration | Default | Description|
+| ------------ | ------------ | ------------|
+| include_command_name | true | When set, includes the attribute `command.name` in the log event.|
+| include_stream_name | true | When set, includes the attribute `command.stream.name` in the log event. Indicating `stdin` or `stderr` as the origin of the event.|
+| max_log_size | | When set, restricts the length of a log entry to a specified [ByteSize](#bytesize-parameters).|
+| encoding | utf-8 | Encoding to expect from the command output. Used to detect log entry boundaries.|
+| multiline | | Used to override the default newline delimited log entries.|
+| multiline.line_start_pattern | | Regex pattern for the beginning of a log entry. Mutualy exclusive with end pattern.|
+| multiline.line_end_pattern | | Regex pattern for the ending of a log entry. Mutualy exclusive with start pattern.|
+>>>>>>> 3bb7f20b (Deprecation notice for compress_encoding and test additions)
 
 ### Runtime Assets
 
@@ -111,11 +154,19 @@ variable, `./lib` included in `LD_LIBRARY_PATH` and `./include` in `CPATH`.
 
 [sensu-go-assets-spec]: https://docs.sensu.io/sensu-go/latest/plugins/assets/#dynamic-runtime-asset-format-specification
 
+<<<<<<< HEAD
 | Configuration | Default  | Description                       |
 | ------------- | -------- | --------------------------------- |
 | name          | required | Name for the asset.               |
 | url           | required | HTTP URL used to fetch the asset. |
 | sha512        | required | SHA512 hash of the asset archive. |
+=======
+| Configuration | Default | Description|
+| ------------ | ------------ | ------------|
+| name | required | Name for the asset.|
+| url | required | HTTP URL used to fetch the asset.|
+| sha512 | required | SHA512 hash of the asset archive.|
+>>>>>>> 3bb7f20b (Deprecation notice for compress_encoding and test additions)
 
 ## Additional Features
 

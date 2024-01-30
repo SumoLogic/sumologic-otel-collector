@@ -34,6 +34,10 @@ type Config struct {
 	exporterhelper.QueueSettings  `mapstructure:"sending_queue"`
 	configretry.BackOffConfig     `mapstructure:"retry_on_failure"`
 
+	// Compression encoding format, either empty string, gzip or deflate (default gzip)
+	// Empty string means no compression
+	// NOTE: CompressEncoding is deprecated and will be removed in an upcoming release
+	CompressEncoding CompressEncodingType `mapstructure:"compress_encoding"`
 	// Max HTTP request body size in bytes before compression (if applied).
 	// By default 1MB is recommended.
 	MaxRequestBodySize int `mapstructure:"max_request_body_size"`
@@ -110,6 +114,7 @@ func (cfg *Config) Validate() error {
 	case GZIPCompression:
 	case NoCompression:
 	case DeflateCompression:
+	case ZSTDCompression:
 
 	default:
 		return fmt.Errorf("invalid compression encoding type: %v", cfg.HTTPClientSettings.Compression)
@@ -169,6 +174,22 @@ type TraceFormatType string
 // PipelineType represents type of the pipeline
 type PipelineType string
 
+type CompressEncodingType string
+
+func (cet CompressEncodingType) Validate() error {
+	switch configcompression.CompressionType(cet) {
+	case GZIPCompression:
+	case ZSTDCompression:
+	case NoCompression:
+	case DeflateCompression:
+
+	default:
+		return fmt.Errorf("invalid compression encoding type: %v", cet)
+	}
+
+	return nil
+}
+
 const (
 	// TextFormat represents log_format: text
 	TextFormat LogFormatType = "text"
@@ -188,6 +209,8 @@ const (
 	OTLPTraceFormat TraceFormatType = "otlp"
 	// GZIPCompression represents compress_encoding: gzip
 	GZIPCompression configcompression.CompressionType = "gzip"
+	// ZSTDCompression represents compress_encoding: zstd
+	ZSTDCompression configcompression.CompressionType = "zstd"
 	// DeflateCompression represents compress_encoding: deflate
 	DeflateCompression configcompression.CompressionType = "deflate"
 	// NoCompression represents disabled compression
