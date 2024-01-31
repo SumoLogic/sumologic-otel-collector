@@ -30,6 +30,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
+	"go.opentelemetry.io/collector/config/configcompression"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/exporter"
@@ -658,7 +659,7 @@ func Benchmark_ExporterPushLogs(b *testing.B) {
 		config.MetricFormat = PrometheusFormat
 		config.LogFormat = TextFormat
 		config.HTTPClientSettings.Auth = nil
-		config.HTTPClientSettings.Compression = GZIPCompression
+		config.HTTPClientSettings.Compression = configcompression.Gzip
 		return config
 	}
 

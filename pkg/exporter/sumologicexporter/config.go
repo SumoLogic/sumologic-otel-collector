@@ -111,22 +111,26 @@ func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 func (cfg *Config) Validate() error {
 
 	switch cfg.CompressEncoding {
-	case GZIPCompression:
+	case configcompression.Gzip:
+	case configcompression.Deflate:
 	case NoCompression:
-	case DeflateCompression:
 
 	default:
 		return fmt.Errorf("invalid compression encoding type: %v", cfg.HTTPClientSettings.Compression)
 	}
 
 	switch cfg.HTTPClientSettings.Compression {
-	case GZIPCompression:
+	case configcompression.Gzip:
+	case configcompression.Deflate:
+	case configcompression.Zstd:
 	case NoCompression:
-	case DeflateCompression:
-	case ZSTDCompression:
 
 	default:
 		return fmt.Errorf("invalid compression encoding type: %v", cfg.HTTPClientSettings.Compression)
+	}
+
+	if cfg.CompressEncoding != NoCompression && cfg.HTTPClientSettings.Compression != DefaultCompressEncoding {
+		return fmt.Errorf("compress_encoding is deprecated and should not be used when compression is set to a non-default value")
 	}
 
 	switch cfg.LogFormat {
@@ -200,12 +204,6 @@ const (
 	OTLPMetricFormat MetricFormatType = "otlp"
 	// OTLPTraceFormat represents trace_format: otlp
 	OTLPTraceFormat TraceFormatType = "otlp"
-	// GZIPCompression represents compress_encoding: gzip
-	GZIPCompression configcompression.CompressionType = "gzip"
-	// ZSTDCompression represents compress_encoding: zstd
-	ZSTDCompression configcompression.CompressionType = "zstd"
-	// DeflateCompression represents compress_encoding: deflate
-	DeflateCompression configcompression.CompressionType = "deflate"
 	// NoCompression represents disabled compression
 	NoCompression configcompression.CompressionType = ""
 	// MetricsPipeline represents metrics pipeline
