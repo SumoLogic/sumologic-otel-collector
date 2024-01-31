@@ -80,7 +80,7 @@ func prepareSenderTest(t *testing.T, compression configcompression.CompressionTy
 	case DeflateCompression:
 		cfg.HTTPClientSettings.Compression = DeflateCompression
 	default:
-		cfg.CompressEncoding = "gzip"
+		cfg.CompressEncoding = GZIPCompression
 	}
 	cfg.HTTPClientSettings.Auth = nil
 	httpSettings := cfg.HTTPClientSettings

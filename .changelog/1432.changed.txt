@@ -1,1 +1,1 @@
-Remove compress_encoding and all of our own compression code in favor of using the confighttp hhelper
+feat: Deprecate compress_encoding and remove all of our own compression code in favor of using the confighttp helper

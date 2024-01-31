@@ -120,9 +120,10 @@ func prepareExporterTest(t *testing.T, cfg *Config, cb []func(w http.ResponseWri
 
 func TestInitExporter(t *testing.T) {
 	_, err := initExporter(&Config{
-		LogFormat:    "json",
-		MetricFormat: "otlp",
-		TraceFormat:  "otlp",
+		LogFormat:        "json",
+		MetricFormat:     "otlp",
+		CompressEncoding: "gzip",
+		TraceFormat:      "otlp",
 		HTTPClientSettings: confighttp.HTTPClientSettings{
 			Timeout:  defaultTimeout,
 			Endpoint: "test_endpoint",

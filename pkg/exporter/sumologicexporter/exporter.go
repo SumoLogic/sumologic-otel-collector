@@ -25,7 +25,6 @@ import (
 	"sync"
 
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/config/configcompression"
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
@@ -344,8 +343,8 @@ func (se *sumologicexporter) configure(ctx context.Context) error {
 		foundSumoExt bool
 	)
 
-	if se.config.CompressEncoding != "" {
-		se.config.HTTPClientSettings.Compression = configcompression.CompressionType(se.config.CompressEncoding)
+	if se.config.CompressEncoding != NoCompression {
+		se.config.HTTPClientSettings.Compression = se.config.CompressEncoding
 	}
 
 	httpSettings := se.config.HTTPClientSettings

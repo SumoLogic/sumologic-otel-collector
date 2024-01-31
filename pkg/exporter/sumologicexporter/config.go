@@ -37,7 +37,7 @@ type Config struct {
 	// Compression encoding format, either empty string, gzip or deflate (default gzip)
 	// Empty string means no compression
 	// NOTE: CompressEncoding is deprecated and will be removed in an upcoming release
-	CompressEncoding CompressEncodingType `mapstructure:"compress_encoding"`
+	CompressEncoding configcompression.CompressionType `mapstructure:"compress_encoding"`
 	// Max HTTP request body size in bytes before compression (if applied).
 	// By default 1MB is recommended.
 	MaxRequestBodySize int `mapstructure:"max_request_body_size"`
@@ -110,6 +110,15 @@ func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 
 func (cfg *Config) Validate() error {
 
+	switch cfg.CompressEncoding {
+	case GZIPCompression:
+	case NoCompression:
+	case DeflateCompression:
+
+	default:
+		return fmt.Errorf("invalid compression encoding type: %v", cfg.HTTPClientSettings.Compression)
+	}
+
 	switch cfg.HTTPClientSettings.Compression {
 	case GZIPCompression:
 	case NoCompression:
@@ -173,22 +182,6 @@ type TraceFormatType string
 
 // PipelineType represents type of the pipeline
 type PipelineType string
-
-type CompressEncodingType string
-
-func (cet CompressEncodingType) Validate() error {
-	switch configcompression.CompressionType(cet) {
-	case GZIPCompression:
-	case ZSTDCompression:
-	case NoCompression:
-	case DeflateCompression:
-
-	default:
-		return fmt.Errorf("invalid compression encoding type: %v", cet)
-	}
-
-	return nil
-}
 
 const (
 	// TextFormat represents log_format: text
