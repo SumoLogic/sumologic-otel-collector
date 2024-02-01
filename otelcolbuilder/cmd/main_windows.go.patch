@@ -1,21 +1,18 @@
---- main_windows.go
-+++ main_windows_patched.go
-@@ -16,6 +16,10 @@ import (
+--- ./main_windows.go
++++ ./main_windows.go.patched
+@@ -17,7 +17,14 @@ import (
  func run(params otelcol.CollectorSettings) error {
  	// No need to supply service name when startup is invoked through
  	// the Service Control Manager directly.
+-	if err := svc.Run("", otelcol.NewSvcHandler(params)); err != nil {
 +	err := UseCustomConfigProvider(&params)
 +	if err != nil {
 +		return err
 +	}
- 	if err := svc.Run("", otelcol.NewSvcHandler(params)); err != nil {
++	cmd := otelcol.NewCommand(params)
++	// this is only here so that the flag can be recognized by the upstream parser and displayed in help
++	cmd.Flags().StringVarP(&opAmpConfig, "remote-config", "", "", "path to opamp config file")
++	if err := svc.Run("", NewSvcHandler(params)); err != nil {
  		if errors.Is(err, windows.ERROR_FAILED_SERVICE_CONTROLLER_CONNECT) {
  			// Per https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-startservicectrldispatchera#return-value
-@@ -25,6 +29,7 @@ func run(params otelcol.CollectorSettings) error {
- 
- 		return fmt.Errorf("failed to start collector server: %w", err)
- 	}
-+	
- 
- 	return nil
- }
+ 			// this means that the process is not running as a service, so run interactively.
