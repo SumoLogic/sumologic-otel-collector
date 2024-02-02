@@ -74,24 +74,51 @@
     <!--   <RegistrySearch Id="DetermineTags" Type="raw" Root="HKLM" Key="$(RegKeyPath)" Name="Tags" /> -->
     <!-- </Property> -->
 
+    <!-- Whether or not the remotely managed and ephemeral features are selected -->
+    <Property Id="REMOTELYMANAGEDSELECTED" Value="false" Hidden="yes" />
+	<Property Id="EPHEMERALSELECTED" Value="false" Hidden="yes" />
+
+    <!-- The API base URL if overriden -->
+    <Property Id="API" Hidden="yes" />
+
     <!-- UI Properties -->
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+
+    <!-- The service arguments, to be updated in teh UpdateConfigAction if necessary -->
+    <Property Id="SERVICEARGUMENTS" Value="empty" Hidden="yes"/>
 
     <!-- Custom Actions -->
     <CustomAction Id="SetARPINSTALLLOCATION" Property="ARPINSTALLLOCATION" Value="[INSTALLFOLDER]" />
 
     <Binary Id="SumoLogicDll" SourceFile="$(SumoLogic.TargetDir)\SumoLogic.wixext.CA.dll" />
-    <CustomAction Id="UpdateConfigAction" BinaryRef="SumoLogicDll" DllEntry="UpdateConfig" Execute="deferred" Return="check" Impersonate="no" />
-    <CustomAction Id="UpdateConfigActionData" Property="UpdateConfigAction" Value="CommonConfigPath=[ConfigFragmentsFolder]common.yaml;InstallToken=[INSTALLTOKEN];InstallationToken=[INSTALLATIONTOKEN];Tags=[TAGS]" />
+    <CustomAction Id="PopulateServiceArgumentsAction" BinaryRef="SumoLogicDll" DllEntry="PopulateServiceArguments"
+      Return="check" Impersonate="no" />
+	<CustomAction Id="UpdateConfigAction" BinaryRef="SumoLogicDll" DllEntry="UpdateConfig" Execute="deferred"
+	  Return="check" Impersonate="no" />
+	<!-- Split the properties into multiple sections and merge them to avoid size limit -->
+    <CustomAction Id="UpdateConfigActionData1" Property="UpdateConfigAction1"
+      Value="CommonConfigPath=[ConfigFragmentsFolder]common.yaml;SumoLogicConfigPath=[ConfigFolder]sumologic.yaml;InstallToken=[INSTALLTOKEN];InstallationToken=[INSTALLATIONTOKEN]" />
+    <CustomAction Id="UpdateConfigActionData2" Property="UpdateConfigAction2"
+      Value="Tags=[TAGS];OpAmpFolder=[OpAmpFolder];Ephemeral=[EPHEMERALSELECTED];RemotelyManaged=[REMOTELYMANAGEDSELECTED];Api=[API]" />
+    <CustomAction Id="UpdateConfigActionData" Property="UpdateConfigAction" Value="[UpdateConfigAction1];[UpdateConfigAction2]" />
+
+    <!-- Before updating the config files set the properties indicating whether or not the remotely managed and ephemeral features are selected -->
+    <SetProperty Id="REMOTELYMANAGEDSELECTED" Value="true" Sequence="execute" Before="UpdateConfigActionData"  Condition="&amp;REMOTELYMANAGED=3" />
+    <SetProperty Id="EPHEMERALSELECTED" Value="true" Sequence="execute" Before="UpdateConfigActionData" Condition="&amp;EPHEMERAL=3" />
 
     <!-- Execute Sequence -->
     <InstallExecuteSequence>
       <!-- Determine the install location after the install path has been validated -->
       <Custom Action="SetARPINSTALLLOCATION" After="InstallValidate" />
 
+      <!-- Update service arguments before the service is installed -->
+      <Custom Action="PopulateServiceArgumentsAction" Before="InstallServices" Condition="NOT REMOVE" />
+
       <!-- Run config updating before the service is installed -->
       <Custom Action="UpdateConfigAction" Before="InstallServices" Condition="NOT REMOVE" />
       <Custom Action="UpdateConfigActionData" Before="UpdateConfigAction" Condition="NOT REMOVE" />
+      <Custom Action="UpdateConfigActionData1" Before="UpdateConfigActionData" Condition="NOT REMOVE" />
+      <Custom Action="UpdateConfigActionData2" Before="UpdateConfigActionData" Condition="NOT REMOVE" />
     </InstallExecuteSequence>
 
     <!-- Features -->
@@ -101,6 +128,14 @@
 
       <Feature Id="HOSTMETRICS" Title="Collect Host Metrics" Level="2" AllowAbsent="yes" AllowAdvertise="yes" TypicalDefault="advertise">
         <ComponentGroupRef Id="HostMetricsComponents" />
+      </Feature>
+
+      <Feature Id="REMOTELYMANAGED" Title="Remotely Managed" Level="2" AllowAbsent="yes" AllowAdvertise="no" TypicalDefault="install" >
+        <Component Id="RemotelyManagedComponent" Location="local" Directory="INSTALLFOLDER" Guid="5169967a-f9e9-43f7-abb4-6b69273932a3" />
+      </Feature>
+
+      <Feature Id="EPHEMERAL" Title="Ephemeral" Level="2" AllowAbsent="yes" AllowAdvertise="no" TypicalDefault="install" >
+        <Component Id="EphemeralComponent" Location="local" Directory="INSTALLFOLDER" Guid="4095b4ee-d011-49c3-b7a7-755aa36fcc5e" />
       </Feature>
     </Feature>
 

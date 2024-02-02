@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 using WixToolset.Dtf.WindowsInstaller;
 
 namespace SumoLogic.wixext
@@ -13,9 +14,21 @@ namespace SumoLogic.wixext
 
         // WiX property names
         private const string pCommonConfigPath = "CommonConfigPath";
+        private const string pSumoLogicConfigPath = "SumoLogicConfigPath";
         private const string pInstallationToken = "InstallationToken";
         private const string pInstallToken = "InstallToken";
         private const string pTags = "Tags";
+        private const string pApi = "Api";
+        private const string pRemotelyManaged = "RemotelyManaged";
+        private const string pEphemeral = "Ephemeral";
+        private const string pConfigFolder = "ConfigFolder";
+        private const string pOpAmpFolder = "OpAmpFolder";
+        private const string pConfigFragmentsFolder = "ConfigFragmentsFolder";
+        private const string pServiceArgumentsProperty = "ServiceArgumentsProperty";
+
+        // WiX features
+        private const string fEphemeral = "EPHEMERALD";
+        private const string fRemotelyManaged = "REMOTELYMANAGED";
 
         [CustomAction]
         public static ActionResult UpdateConfig(Session session)
@@ -41,25 +54,39 @@ namespace SumoLogic.wixext
             }
 
             var commonConfigPath = session.CustomActionData[pCommonConfigPath];
+            var sumoLogicConfigPath = session.CustomActionData[pSumoLogicConfigPath];
             var tags = session.CustomActionData[pTags];
 
             var installationToken = "";
-            if (session.CustomActionData.ContainsKey(pInstallationToken) && session.CustomActionData[pInstallationToken] != "") {
+            if (session.CustomActionData.ContainsKey(pInstallationToken) && session.CustomActionData[pInstallationToken] != "")
+            {
                 installationToken = session.CustomActionData[pInstallationToken];
-            } else if (session.CustomActionData.ContainsKey(pInstallToken)){
+            }
+            else if (session.CustomActionData.ContainsKey(pInstallToken))
+            {
                 installationToken = session.CustomActionData[pInstallToken];
             }
+
+            var remotelyManaged = (session.CustomActionData.ContainsKey(pRemotelyManaged) && session.CustomActionData[pRemotelyManaged] == "true");
+            var ephemeral = (session.CustomActionData.ContainsKey(pEphemeral) && session.CustomActionData[pEphemeral] == "true");
+            var opAmpFolder = session.CustomActionData[pOpAmpFolder];
+            var api = session.CustomActionData[pApi];
 
             // Load config from disk and replace values
             Config config = new Config();
             config.InstallationToken = installationToken;
             config.SetCollectorFieldsFromTags(tags);
+            config.RemotelyManaged = remotelyManaged;
+            config.Ephemeral = ephemeral;
+            config.OpAmpFolder = opAmpFolder;
+            config.Api = api;
 
+            var configFile = remotelyManaged ? sumoLogicConfigPath : commonConfigPath;
             try
             {
-                ConfigUpdater configUpdater = new ConfigUpdater(new StreamReader(commonConfigPath));
+                ConfigUpdater configUpdater = new ConfigUpdater(new StreamReader(configFile));
                 configUpdater.Update(config);
-                configUpdater.Save(new StreamWriter(commonConfigPath));
+                configUpdater.Save(new StreamWriter(configFile));
             }
             catch (Exception e)
             {
@@ -68,6 +95,33 @@ namespace SumoLogic.wixext
             }
 
             logger.Log("End");
+
+            return ActionResult.Success;
+        }
+
+        [CustomAction]
+        public static ActionResult PopulateServiceArguments(Session session)
+        {
+            try
+            {
+                var configFolder = session.GetTargetPath(pConfigFolder);
+                var configFragmentsFolder = session.GetTargetPath(pConfigFragmentsFolder);
+                var remotelyManaged = session.Features.Contains(fRemotelyManaged) && session.Features[fRemotelyManaged].RequestState == InstallState.Local;
+
+                if (remotelyManaged)
+                {
+                    session["SERVICEARGUMENTS"] = " --remote-config \"opamp:" + configFolder + "sumologic.yaml\"";
+                }
+                else
+                {
+                    session["SERVICEARGUMENTS"] = " --config \"" + configFolder + "sumologic.yaml\" --config \"glob:" + configFragmentsFolder + "*.yaml\"";
+                }
+            }
+            catch (Exception e)
+            {
+                showErrorMessage(session, ecConfigError, e.Message + e.StackTrace);
+                return ActionResult.Failure;
+            }
 
             return ActionResult.Success;
         }

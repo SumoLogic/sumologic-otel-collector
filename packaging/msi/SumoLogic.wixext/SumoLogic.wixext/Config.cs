@@ -8,6 +8,10 @@ namespace SumoLogic.wixext
     {
         public string InstallationToken { get; set; }
         public Dictionary<string, string> CollectorFields { get; set; }
+        public bool RemotelyManaged { get; set; }
+        public bool Ephemeral { get; set; }
+        public string OpAmpFolder { get; set; }
+        public string Api { get; set; }
 
         public Config() {
             this.CollectorFields = new Dictionary<string, string>();

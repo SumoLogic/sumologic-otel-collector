@@ -70,6 +70,11 @@
         <RemoveFolder On="uninstall" />
       </Component>
 
+      <Component Id="cOpAmpFolder" Directory="OpAmpFolder" KeyPath="yes" Guid="DB8F7CF1-B793-4C37-8B96-03E1A2FF7F92">
+        <CreateFolder />
+        <RemoveFolder On="uninstall" />
+      </Component>
+
       <Component Id="cFileStorageFolder" Directory="FileStorageFolder" KeyPath="yes" Guid="0A7EFA54-26F3-46A9-BA12-9D12CDAEF1CD">
         <CreateFolder />
         <RemoveFolder On="uninstall" />
@@ -84,7 +89,9 @@
         <Environment Id="PATH" Name="PATH" Value="[INSTALLDIR]\bin" Permanent="yes" Part="last" Action="set" System="yes" />
 
         <!-- Add service for OTC -->
-        <ServiceInstall Id="Sevice" Name="!(loc.ServiceName)" DisplayName="!(loc.ServiceDisplayName)" Description="!(loc.ServiceDescription)" Type="ownProcess" Vital="yes" Start="auto" Account="LocalSystem" ErrorControl="normal" Arguments=" --config &quot;[ConfigFolder]sumologic.yaml&quot; --config &quot;glob:[ConfigFragmentsFolder]*.yaml&quot;" Interactive="no" />
+        <ServiceInstall Id="Service" Name="!(loc.ServiceName)" DisplayName="!(loc.ServiceDisplayName)"
+          Description="!(loc.ServiceDescription)" Type="ownProcess" Vital="yes" Start="auto" Account="LocalSystem"
+          ErrorControl="normal" Arguments="[SERVICEARGUMENTS]" Interactive="no" />
 
         <!-- Start/Stop/Remove OTC service -->
         <ServiceControl Id="StartServiceControl" Name="!(loc.ServiceName)" Start="install" Stop="both" Remove="uninstall" Wait="no" />
