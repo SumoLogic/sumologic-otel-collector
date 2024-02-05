@@ -29,7 +29,6 @@ import (
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
 	api_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -244,7 +243,7 @@ func TestPodAddOutOfSync(t *testing.T) {
 	pod.Name = "podA"
 	pod.Namespace = "namespace"
 	pod.Status.PodIP = "1.1.1.1"
-	startTime := meta_v1.NewTime(time.Now())
+	startTime := metav1.NewTime(time.Now())
 	pod.Status.StartTime = &startTime
 	c.handlePodAdd(pod)
 	assert.Equal(t, len(c.Pods), 2)
@@ -256,7 +255,7 @@ func TestPodAddOutOfSync(t *testing.T) {
 	pod2.Name = "podB"
 	pod2.Namespace = "namespace"
 	pod2.Status.PodIP = "1.1.1.1"
-	startTime2 := meta_v1.NewTime(time.Now().Add(-time.Second * 10))
+	startTime2 := metav1.NewTime(time.Now().Add(-time.Second * 10))
 	pod2.Status.StartTime = &startTime2
 	c.handlePodAdd(pod2)
 	assert.Equal(t, len(c.Pods), 3)
@@ -405,7 +404,7 @@ func TestGetPod(t *testing.T) {
 	pod.UID = "1234"
 	pod.Name = "pod_name"
 	pod.Namespace = "namespace_name"
-	pod.OwnerReferences = []meta_v1.OwnerReference{
+	pod.OwnerReferences = []metav1.OwnerReference{
 		metav1.OwnerReference{
 			Name: "A reference",
 		},
@@ -445,7 +444,7 @@ func TestGetPodConcurrent(t *testing.T) {
 	pod.UID = "1234"
 	pod.Name = "pod_name"
 	pod.Namespace = "namespace_name"
-	pod.OwnerReferences = []meta_v1.OwnerReference{
+	pod.OwnerReferences = []metav1.OwnerReference{
 		{
 			Kind: "StatefulSet",
 			Name: "snug-sts",
@@ -490,7 +489,7 @@ func TestGetPodOwnerAttributesConcurrent(t *testing.T) {
 	pod.UID = "1234"
 	pod.Name = "pod_name"
 	pod.Namespace = "namespace_name"
-	pod.OwnerReferences = []meta_v1.OwnerReference{
+	pod.OwnerReferences = []metav1.OwnerReference{
 		{
 			Kind: "StatefulSet",
 			Name: "snug-sts",
@@ -572,7 +571,7 @@ func TestNoHostnameExtractionRules(t *testing.T) {
 	podName := "auth-service-abc12-xyz3"
 
 	pod := &api_v1.Pod{
-		ObjectMeta: meta_v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: podName,
 		},
 		Spec: api_v1.PodSpec{},
@@ -596,11 +595,11 @@ func TestExtractionRules(t *testing.T) {
 	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{OwnerLookupEnabled: true}, Filters{})
 
 	pod := &api_v1.Pod{
-		ObjectMeta: meta_v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              "auth-service-abc12-xyz3",
 			Namespace:         "ns1",
 			UID:               "33333",
-			CreationTimestamp: meta_v1.Now(),
+			CreationTimestamp: metav1.Now(),
 			Labels: map[string]string{
 				"label1": "lv1",
 				"label2": "k1=v1 k5=v5 extra!",
@@ -631,7 +630,7 @@ func TestExtractionRules(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		podOwner   *meta_v1.OwnerReference
+		podOwner   *metav1.OwnerReference
 		rules      ExtractionRules
 		attributes map[string]string
 	}{
@@ -650,7 +649,7 @@ func TestExtractionRules(t *testing.T) {
 		},
 		{
 			name: "deployment name with owner lookup",
-			podOwner: &meta_v1.OwnerReference{
+			podOwner: &metav1.OwnerReference{
 				Kind: "ReplicaSet",
 				Name: "dearest-deploy-77c99ccb96",
 				UID:  "1a1658f9-7818-11e9-90f1-02324f7e0d1e",
@@ -666,7 +665,7 @@ func TestExtractionRules(t *testing.T) {
 		},
 		{
 			name: "statefulset name",
-			podOwner: &meta_v1.OwnerReference{
+			podOwner: &metav1.OwnerReference{
 				Kind: "StatefulSet",
 				Name: "snug-sts",
 				UID:  "f15f0585-a0bc-43a3-96e4-dd2eace75391",
@@ -683,7 +682,7 @@ func TestExtractionRules(t *testing.T) {
 		},
 		{
 			name: "job name and cron job are not added by default",
-			podOwner: &meta_v1.OwnerReference{
+			podOwner: &metav1.OwnerReference{
 				Kind: "Job",
 				Name: "hello-job",
 				UID:  "f15f0585-a0bc-43a3-96e4-dd2ea9975391",
@@ -696,7 +695,7 @@ func TestExtractionRules(t *testing.T) {
 		},
 		{
 			name: "job name is added properly",
-			podOwner: &meta_v1.OwnerReference{
+			podOwner: &metav1.OwnerReference{
 				Kind: "Job",
 				Name: "hello-job",
 				UID:  "f15f0585-a0bc-43a3-96e4-dd2ea9975391",
@@ -712,7 +711,7 @@ func TestExtractionRules(t *testing.T) {
 		},
 		{
 			name: "job name and cron job name are added properly",
-			podOwner: &meta_v1.OwnerReference{
+			podOwner: &metav1.OwnerReference{
 				Kind: "Job",
 				Name: "hello-job",
 				UID:  "f15f0585-a0bc-43a3-96e4-dd2ea9975391",
@@ -730,7 +729,7 @@ func TestExtractionRules(t *testing.T) {
 		},
 		{
 			name: "metadata",
-			podOwner: &meta_v1.OwnerReference{
+			podOwner: &metav1.OwnerReference{
 				Kind: "ReplicaSet",
 				Name: "foo-bar-rs",
 				UID:  "1a1658f9-7818-11e9-90f1-02324f7e0d1e",
@@ -863,7 +862,7 @@ func TestExtractionRules(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.podOwner != nil {
-				pod.OwnerReferences = []meta_v1.OwnerReference{
+				pod.OwnerReferences = []metav1.OwnerReference{
 					*tc.podOwner,
 				}
 			}
@@ -986,7 +985,7 @@ func TestPodIgnorePatterns(t *testing.T) {
 		}, {
 			ignore: true,
 			pod: api_v1.Pod{
-				ObjectMeta: meta_v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
 						"opentelemetry.io/k8s-processor/ignore": "True ",
 					},
@@ -995,7 +994,7 @@ func TestPodIgnorePatterns(t *testing.T) {
 		}, {
 			ignore: true,
 			pod: api_v1.Pod{
-				ObjectMeta: meta_v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
 						"opentelemetry.io/k8s-processor/ignore": "true",
 					},
@@ -1004,7 +1003,7 @@ func TestPodIgnorePatterns(t *testing.T) {
 		}, {
 			ignore: false,
 			pod: api_v1.Pod{
-				ObjectMeta: meta_v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
 						"opentelemetry.io/k8s-processor/ignore": "false",
 					},
@@ -1013,7 +1012,7 @@ func TestPodIgnorePatterns(t *testing.T) {
 		}, {
 			ignore: false,
 			pod: api_v1.Pod{
-				ObjectMeta: meta_v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
 						"opentelemetry.io/k8s-processor/ignore": "",
 					},
@@ -1022,28 +1021,28 @@ func TestPodIgnorePatterns(t *testing.T) {
 		}, {
 			ignore: true,
 			pod: api_v1.Pod{
-				ObjectMeta: meta_v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name: "jaeger-agent",
 				},
 			},
 		}, {
 			ignore: true,
 			pod: api_v1.Pod{
-				ObjectMeta: meta_v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name: "jaeger-collector",
 				},
 			},
 		}, {
 			ignore: true,
 			pod: api_v1.Pod{
-				ObjectMeta: meta_v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name: "jaeger-agent-b2zdv",
 				},
 			},
 		}, {
 			ignore: false,
 			pod: api_v1.Pod{
-				ObjectMeta: meta_v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-pod-name",
 				},
 			},
