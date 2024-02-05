@@ -24,10 +24,8 @@ namespace SumoLogic.wixext
         private const string pConfigFolder = "ConfigFolder";
         private const string pOpAmpFolder = "OpAmpFolder";
         private const string pConfigFragmentsFolder = "ConfigFragmentsFolder";
-        private const string pServiceArgumentsProperty = "ServiceArgumentsProperty";
 
         // WiX features
-        private const string fEphemeral = "EPHEMERALD";
         private const string fRemotelyManaged = "REMOTELYMANAGED";
 
         [CustomAction]
@@ -39,17 +37,17 @@ namespace SumoLogic.wixext
             // Validate presence of required WiX properties
             if (!session.CustomActionData.ContainsKey(pCommonConfigPath))
             {
-                showErrorMessage(session, ecMissingCustomActionData, pCommonConfigPath);
+                ShowErrorMessage(session, ecMissingCustomActionData, pCommonConfigPath);
                 return ActionResult.Failure;
             }
             if (!session.CustomActionData.ContainsKey(pInstallToken) && !session.CustomActionData.ContainsKey(pInstallationToken))
             {
-                showErrorMessage(session, ecMissingCustomActionData, pInstallationToken);
+                ShowErrorMessage(session, ecMissingCustomActionData, pInstallationToken);
                 return ActionResult.Failure;
             }
             if (!session.CustomActionData.ContainsKey(pTags))
             {
-                showErrorMessage(session, ecMissingCustomActionData, pTags);
+                ShowErrorMessage(session, ecMissingCustomActionData, pTags);
                 return ActionResult.Failure;
             }
 
@@ -73,13 +71,9 @@ namespace SumoLogic.wixext
             var api = session.CustomActionData[pApi];
 
             // Load config from disk and replace values
-            Config config = new Config();
-            config.InstallationToken = installationToken;
+            Config config = new Config { InstallationToken = installationToken, RemotelyManaged = remotelyManaged, Ephemeral = ephemeral,
+                OpAmpFolder = opAmpFolder, Api = api };
             config.SetCollectorFieldsFromTags(tags);
-            config.RemotelyManaged = remotelyManaged;
-            config.Ephemeral = ephemeral;
-            config.OpAmpFolder = opAmpFolder;
-            config.Api = api;
 
             var configFile = remotelyManaged ? sumoLogicConfigPath : commonConfigPath;
             try
@@ -90,7 +84,7 @@ namespace SumoLogic.wixext
             }
             catch (Exception e)
             {
-                showErrorMessage(session, ecConfigError, e.Message);
+                ShowErrorMessage(session, ecConfigError, e.Message);
                 return ActionResult.Failure;
             }
 
@@ -119,14 +113,14 @@ namespace SumoLogic.wixext
             }
             catch (Exception e)
             {
-                showErrorMessage(session, ecConfigError, e.Message + e.StackTrace);
+                ShowErrorMessage(session, ecConfigError, e.Message + e.StackTrace);
                 return ActionResult.Failure;
             }
 
             return ActionResult.Success;
         }
 
-        private static void showErrorMessage(Session session, short errCode, string key)
+        private static void ShowErrorMessage(Session session, short errCode, string key)
         {
             Record record = new Record(3);
             record.SetInteger(1, errCode);
