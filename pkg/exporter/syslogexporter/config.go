@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/THREATINT/go-net"
+	"go.opentelemetry.io/collector/config/configretry"
 	"go.opentelemetry.io/collector/config/configtls"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 	"go.uber.org/multierr"
@@ -47,7 +48,7 @@ type Config struct {
 	TLSSetting configtls.TLSClientSetting `mapstructure:"tls"`
 
 	exporterhelper.QueueSettings `mapstructure:"sending_queue"`
-	exporterhelper.RetrySettings `mapstructure:"retry_on_failure"`
+	configretry.BackOffConfig    `mapstructure:"retry_on_failure"`
 }
 
 // Validate the configuration for errors. This is required by component.Config.

@@ -44,7 +44,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 			NumConsumers: 10,
 			QueueSize:    1000,
 		},
-		RetrySettings: configretry.BackOffConfig{
+		BackOffConfig: configretry.BackOffConfig{
 			Enabled:             true,
 			InitialInterval:     5 * time.Second,
 			RandomizationFactor: backoff.DefaultRandomizationFactor,

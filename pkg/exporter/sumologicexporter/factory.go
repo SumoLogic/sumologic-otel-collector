@@ -61,7 +61,7 @@ func createDefaultConfig() component.Config {
 		TraceFormat: OTLPTraceFormat,
 
 		HTTPClientSettings:   CreateDefaultHTTPClientSettings(),
-		RetrySettings:        configretry.NewDefaultBackOffConfig(),
+		BackOffConfig:        configretry.NewDefaultBackOffConfig(),
 		QueueSettings:        qs,
 		StickySessionEnabled: DefaultStickySessionEnabled,
 	}

@@ -1034,7 +1034,7 @@ func addCollectorCredentials(req *http.Request, collectorCredentialId string, co
 func addClientCredentials(req *http.Request, credentials accessCredentials) {
 	var authHeaderValue string
 	if credentials.InstallationToken != "" {
-		authHeaderValue = fmt.Sprintf("Bearer %s", credentials.InstallationToken)
+		authHeaderValue = fmt.Sprintf("Bearer %s", string(credentials.InstallationToken))
 	}
 
 	req.Header.Del("Authorization")
