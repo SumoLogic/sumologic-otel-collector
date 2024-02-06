@@ -1,0 +1,1 @@
+chore: upgrade otelcol core to `v0.93.0`
