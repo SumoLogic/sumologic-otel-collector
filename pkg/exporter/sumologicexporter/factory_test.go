@@ -58,7 +58,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 				AuthenticatorID: component.NewID("sumologic"),
 			},
 		},
-		RetrySettings: configretry.NewDefaultBackOffConfig(),
+		BackOffConfig: configretry.NewDefaultBackOffConfig(),
 		QueueSettings: qs,
 	})
 
