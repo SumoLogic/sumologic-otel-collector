@@ -1,8 +1,10 @@
 ARG BUILD_TAG
 ARG REPO_URL=sumologic-otel-collector
+ARG BUILD_ARCH
 
 ## Use original image to copy files from
-FROM ${REPO_URL}:${BUILD_TAG} as builder
+
+FROM ${REPO_URL}:${BUILD_TAG}-${BUILD_ARCH} as builder
 
 ## Build RedHat compliant image
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9
