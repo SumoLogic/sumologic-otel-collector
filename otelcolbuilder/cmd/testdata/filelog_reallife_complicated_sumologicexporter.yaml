@@ -623,7 +623,7 @@ receivers:
 exporters:
   sumologic/1:
     endpoint: http://dummy.endpoint.com
-    compress_encoding: ""
+    compression: ""
     retry_on_failure:
       enabled: false
     sending_queue:

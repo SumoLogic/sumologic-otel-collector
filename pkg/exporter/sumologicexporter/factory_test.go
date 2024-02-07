@@ -39,7 +39,6 @@ func TestCreateDefaultConfig(t *testing.T) {
 	qs.Enabled = false
 
 	assert.Equal(t, cfg, &Config{
-		CompressEncoding:   "gzip",
 		MaxRequestBodySize: 1_048_576,
 		LogFormat:          "otlp",
 		MetricFormat:       "otlp",
@@ -53,7 +52,8 @@ func TestCreateDefaultConfig(t *testing.T) {
 		TraceFormat: "otlp",
 
 		HTTPClientSettings: confighttp.HTTPClientSettings{
-			Timeout: 30 * time.Second,
+			Timeout:     30 * time.Second,
+			Compression: "gzip",
 			Auth: &configauth.Authentication{
 				AuthenticatorID: component.NewID("sumologic"),
 			},

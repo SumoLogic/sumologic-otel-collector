@@ -126,7 +126,6 @@ type sender struct {
 	logger                     *zap.Logger
 	config                     *Config
 	client                     *http.Client
-	compressor                 *compressor
 	prometheusFormatter        prometheusFormatter
 	jsonLogsConfig             JSONLogs
 	dataUrlMetrics             string
@@ -153,21 +152,18 @@ const (
 	attributeKeySourceName     = "_sourceName"
 	attributeKeySourceCategory = "_sourceCategory"
 
-	contentTypeLogs       string = "application/x-www-form-urlencoded"
-	contentTypePrometheus string = "application/vnd.sumologic.prometheus"
-	contentTypeOTLP       string = "application/x-protobuf"
-
+	contentTypeLogs        string = "application/x-www-form-urlencoded"
+	contentTypePrometheus  string = "application/vnd.sumologic.prometheus"
+	contentTypeOTLP        string = "application/x-protobuf"
 	contentEncodingGzip    string = "gzip"
 	contentEncodingDeflate string = "deflate"
-
-	stickySessionKey string = "AWSALB"
+	stickySessionKey       string = "AWSALB"
 )
 
 func newSender(
 	logger *zap.Logger,
 	cfg *Config,
 	cl *http.Client,
-	c *compressor,
 	pf prometheusFormatter,
 	metricsUrl string,
 	logsUrl string,
@@ -180,7 +176,6 @@ func newSender(
 		logger:                     logger,
 		config:                     cfg,
 		client:                     cl,
-		compressor:                 c,
 		prometheusFormatter:        pf,
 		jsonLogsConfig:             cfg.JSONLogs,
 		dataUrlMetrics:             metricsUrl,
@@ -196,12 +191,7 @@ var errUnauthorized = errors.New("unauthorized")
 
 // send sends data to sumologic
 func (s *sender) send(ctx context.Context, pipeline PipelineType, reader *countingReader, flds fields) error {
-	data, err := s.compressor.compress(reader.reader)
-	if err != nil {
-		return err
-	}
-
-	req, err := s.createRequest(ctx, pipeline, data)
+	req, err := s.createRequest(ctx, pipeline, reader.reader)
 	if err != nil {
 		return err
 	}
@@ -708,20 +698,6 @@ func (s *sender) sendOTLPTraces(ctx context.Context, td ptrace.Traces) error {
 	return nil
 }
 
-func addCompressHeader(req *http.Request, enc CompressEncodingType) error {
-	switch enc {
-	case GZIPCompression:
-		req.Header.Set(headerContentEncoding, contentEncodingGzip)
-	case DeflateCompression:
-		req.Header.Set(headerContentEncoding, contentEncodingDeflate)
-	case NoCompression:
-	default:
-		return fmt.Errorf("invalid content encoding: %s", enc)
-	}
-
-	return nil
-}
-
 func addSourcesHeaders(req *http.Request, flds fields) {
 	sourceHeaderValues := getSourcesHeaders(flds)
 
@@ -789,10 +765,6 @@ func addTracesHeaders(req *http.Request, tf TraceFormatType) error {
 
 func (s *sender) addRequestHeaders(req *http.Request, pipeline PipelineType, flds fields) error {
 	req.Header.Add(headerClient, s.config.Client)
-
-	if err := addCompressHeader(req, s.config.CompressEncoding); err != nil {
-		return err
-	}
 	addSourcesHeaders(req, flds)
 
 	switch pipeline {
