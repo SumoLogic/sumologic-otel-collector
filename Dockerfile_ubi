@@ -21,7 +21,7 @@ LABEL name="sumologic-otel-collector" \
       io.k8s.description="$DESCRIPTION" \
       maintainer="collection@sumologic.com"
 
-ADD https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/v${BUILD_TAG}/LICENSE \
+ADD https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/LICENSE \
     /licenses/LICENSE
 
 ARG USER_UID=10001
