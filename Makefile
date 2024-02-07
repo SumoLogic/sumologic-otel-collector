@@ -244,6 +244,8 @@ OPENSOURCE_REPO_URL = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME)
 OPENSOURCE_REPO_URL_DEV = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME_DEV)
 REPO_URL = $(OPENSOURCE_REPO_URL)
 
+DOCKERFILE = Dockerfile
+
 .PHONY: _build
 _build:
 	DOCKER_BUILDKIT=1 docker build \
@@ -282,6 +284,10 @@ build-push-container-multiplatform-dev: build-push-container-multiplatform
 push-container-manifest-dev: REPO_URL = "$(OPENSOURCE_REPO_URL_DEV)"
 push-container-manifest-dev: push-container-manifest
 
+.PHONY: build-push-container-ubi
+build-push-container-ubi-dev: REPO_URL = "$(OPENSOURCE_REPO_URL_DEV)"
+build-push-container-ubi-dev: build-push-container-ubi
+
 #-------------------------------------------------------------------------------
 
 # release
@@ -290,7 +296,7 @@ push-container-manifest-dev: push-container-manifest
 _build-container-multiplatform:
 	BUILD_TAG="$(BUILD_TAG)" \
 		REPO_URL="$(REPO_URL)" \
-		DOCKERFILE="Dockerfile" \
+		DOCKERFILE="$(DOCKERFILE)" \
 		PLATFORM="$(PLATFORM)" \
 		./ci/build-push-multiplatform.sh $(PUSH)
 
@@ -300,6 +306,11 @@ build-container-multiplatform: _build-container-multiplatform
 .PHONY: build-push-container-multiplatform
 build-push-container-multiplatform: PUSH = --push
 build-push-container-multiplatform: _build-container-multiplatform
+
+.PHONY: build-push-container-ubi
+build-push-container-ubi: PUSH = --push
+build-push-container-ubi: DOCKERFILE = Dockerfile_ubi
+build-push-container-ubi: _build-container-multiplatform
 
 .PHONY: test-built-image
 test-built-image:
