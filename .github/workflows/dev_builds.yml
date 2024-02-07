@@ -175,6 +175,13 @@ jobs:
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }}
 
+      - name: Build and push image to Open Source ECR
+        run: |
+          cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
+          make build-push-container-ubi-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }}
+
   push-docker-manifest:
     name: Push joint container manifest
     runs-on: ubuntu-20.04
@@ -218,6 +225,13 @@ jobs:
           make push-container-manifest-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORMS="linux/amd64 linux/arm64"
+
+      - name: Push joint UBI-based container manifest for all platforms to Open Source ECR
+        run: |
+          make push-container-manifest-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-ubi \
+            PLATFORMS="linux/amd64" \
+            LATEST_TAG_FIPS_SUFFIX="-ubi"
 
   package-msi:
     name: Package MSI
