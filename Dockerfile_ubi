@@ -2,9 +2,11 @@ ARG BUILD_TAG
 ARG REPO_URL=sumologic-otel-collector
 ARG BUILD_ARCH
 
-## Use original image to copy files from
+FROM alpine:3.19.1 as certs
+RUN apk --update add ca-certificates
 
-FROM ${REPO_URL}:${BUILD_TAG}-${BUILD_ARCH} as builder
+FROM alpine:3.19.1 as directories
+RUN mkdir /etc/otel/
 
 ## Build RedHat compliant image
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9
@@ -24,14 +26,16 @@ LABEL name="sumologic-otel-collector" \
 ADD https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/LICENSE \
     /licenses/LICENSE
 
+RUN microdnf update && microdnf install systemd
+
+ENV TAG $BUILD_TAG
 ARG USER_UID=10001
 USER ${USER_UID}
 ENV HOME /etc/otel/
 
-# copy journalctl and it's dependencies as base structure
-COPY --from=builder / /
-COPY --from=builder --chown=${USER_UID}:${USER_UID} /etc/otel/ /etc/otel/
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=builder /otelcol-sumo /otelcol-sumo
+COPY otelcol-sumo /
+COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=directories --chown=${USER_UID}:${USER_UID} /etc/otel/ /etc/otel/
+
 ENTRYPOINT ["/otelcol-sumo"]
 CMD ["--config", "/etc/otel/config.yaml"]
