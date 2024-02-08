@@ -28,6 +28,11 @@ namespace SumoLogic.wixext
 
         public void Update(Config config)
         {
+            if (config.RemotelyManaged && string.IsNullOrEmpty(config.OpAmpFolder))
+            {
+                throw new MissingConfigurationException("OpAmpFolder");
+            }
+
             YamlMappingNode root = (YamlMappingNode)this.Document.RootNode;
 
             EnsureMapKey(root, "extensions");
@@ -51,6 +56,48 @@ namespace SumoLogic.wixext
                 {
                     EnsureScalarKey(collectorFields, field.Key);
                     collectorFields.Children[field.Key] = field.Value;
+                }
+            }
+
+            if (config.RemotelyManaged)
+            {
+                EnsureMapKey(extensions, "opamp");
+                YamlMappingNode opamp = (YamlMappingNode)extensions.Children["opamp"];
+                EnsureScalarKey(opamp, "remote_configuration_directory");
+                opamp.Children["remote_configuration_directory"] = config.OpAmpFolder;
+
+                // Add OpAmp extension to service section
+                EnsureMapKey(root, "service");
+                YamlMappingNode service = (YamlMappingNode)root.Children["service"];
+                EnsureSequenceKey(service, "extensions");
+                YamlSequenceNode serviceExtensions = (YamlSequenceNode)service.Children["extensions"];
+                if (!serviceExtensions.Children.Contains("opamp"))
+                {
+                    serviceExtensions.Children.Add("opamp");
+                }
+            }
+
+            if (config.Ephemeral)
+            {
+                EnsureScalarKey(sumologic, "ephemeral");
+                sumologic.Children["ephemeral"] = "true";
+            }
+
+            if (!string.IsNullOrEmpty(config.Api))
+            {
+                EnsureScalarKey(sumologic, "api_base_url");
+                sumologic.Children["api_base_url"] = config.Api;
+            }
+
+            // Make sure the sumologic processor node is a map node, otherwise an empty string
+            // is generated as the value instead of an empty node.
+            if (root.Children.ContainsKey("processors"))
+            {
+                EnsureMapKey(root, "processors");
+                YamlMappingNode processors = (YamlMappingNode)root.Children["processors"];
+                if (processors.Children.ContainsKey("sumologic"))
+                {
+                    EnsureMapKey(processors, "sumologic");
                 }
             }
         }
@@ -99,6 +146,23 @@ namespace SumoLogic.wixext
             }
             // Add empty YamlScalarNode to key
             node.Children.Add(key, new YamlScalarNode());
+        }
+
+        private void EnsureSequenceKey(YamlMappingNode node, string key)
+        {
+            if (node.Children.ContainsKey(key))
+            {
+                if (node.Children[key].NodeType == YamlNodeType.Sequence)
+                {
+                    return;
+                }
+
+                // TODO: is this how we want to handle incorrect node types?
+                // YamlNode is wrong type, remove it
+                node.Children.Remove(key);
+            }
+            // Add empty YamlScalarNode to key
+            node.Children.Add(key, new YamlSequenceNode());
         }
     }
 }
