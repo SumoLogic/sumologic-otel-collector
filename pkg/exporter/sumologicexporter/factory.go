@@ -46,7 +46,6 @@ func createDefaultConfig() component.Config {
 	qs.Enabled = false
 
 	return &Config{
-		CompressEncoding:   DefaultCompressEncoding,
 		MaxRequestBodySize: DefaultMaxRequestBodySize,
 		LogFormat:          DefaultLogFormat,
 		MetricFormat:       DefaultMetricFormat,
@@ -61,7 +60,7 @@ func createDefaultConfig() component.Config {
 		TraceFormat: OTLPTraceFormat,
 
 		HTTPClientSettings:   CreateDefaultHTTPClientSettings(),
-		RetrySettings:        configretry.NewDefaultBackOffConfig(),
+		BackOffConfig:        configretry.NewDefaultBackOffConfig(),
 		QueueSettings:        qs,
 		StickySessionEnabled: DefaultStickySessionEnabled,
 	}

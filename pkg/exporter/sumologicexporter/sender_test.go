@@ -17,8 +17,8 @@ package sumologicexporter
 import (
 	"bufio"
 	"bytes"
+	"compress/gzip"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -27,9 +27,12 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/klauspost/compress/zstd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/component/componenttest"
+	"go.opentelemetry.io/collector/config/configcompression"
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -50,7 +53,7 @@ type senderTest struct {
 // Provided cfgOpts additionally configure the sender after the sendible default
 // for tests have been applied.
 // The enclosed httptest.Server is closed automatically using test.Cleanup.
-func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.Request), cfgOpts ...func(*Config)) *senderTest {
+func prepareSenderTest(t *testing.T, compression configcompression.CompressionType, cb []func(w http.ResponseWriter, req *http.Request), cfgOpts ...func(*Config)) *senderTest {
 	var reqCounter int32
 	// generate a test server so we can capture and inspect the request
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -66,17 +69,33 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 	t.Cleanup(func() { testServer.Close() })
 
 	cfg := createDefaultConfig().(*Config)
-	cfg.CompressEncoding = NoCompression
 	cfg.HTTPClientSettings.Endpoint = testServer.URL
+	switch compression {
+	case configcompression.Gzip:
+		cfg.HTTPClientSettings.Compression = configcompression.Gzip
+	case configcompression.Zstd:
+		cfg.HTTPClientSettings.Compression = configcompression.Zstd
+	case NoCompression:
+		cfg.HTTPClientSettings.Compression = NoCompression
+	case configcompression.Deflate:
+		cfg.HTTPClientSettings.Compression = configcompression.Deflate
+	default:
+		cfg.CompressEncoding = configcompression.Gzip
+	}
+	cfg.HTTPClientSettings.Auth = nil
+	httpSettings := cfg.HTTPClientSettings
+	host := componenttest.NewNopHost()
+	client, err := httpSettings.ToClient(host, component.TelemetrySettings{})
+	require.NoError(t, err)
+	if err != nil {
+		return nil
+	}
 	cfg.LogFormat = TextFormat
 	cfg.MetricFormat = OTLPMetricFormat
 	cfg.MaxRequestBodySize = 20_971_520
 	for _, cfgOpt := range cfgOpts {
 		cfgOpt(cfg)
 	}
-
-	c, err := newCompressor(cfg.CompressEncoding)
-	require.NoError(t, err)
 
 	pf, err := newPrometheusFormatter()
 	require.NoError(t, err)
@@ -92,10 +111,7 @@ func prepareSenderTest(t *testing.T, cb []func(w http.ResponseWriter, req *http.
 		s: newSender(
 			logger,
 			cfg,
-			&http.Client{
-				Timeout: cfg.HTTPClientSettings.Timeout,
-			},
-			&c,
+			client,
 			pf,
 			testServer.URL,
 			testServer.URL,
@@ -146,12 +162,33 @@ func exampleTwoLogs() []plog.LogRecord {
 	return buffer
 }
 
+func decodeGzip(t *testing.T, data io.Reader) string {
+	r, err := gzip.NewReader(data)
+	require.NoError(t, err)
+
+	var buf []byte
+	buf, err = io.ReadAll(r)
+	require.NoError(t, err)
+
+	return string(buf)
+}
+
+func decodeZstd(t *testing.T, data io.Reader) string {
+	r, err := zstd.NewReader(data)
+	require.NoError(t, err)
+	var buf []byte
+	buf, err = io.ReadAll(r)
+	require.NoError(t, err)
+
+	return string(buf)
+}
+
 func TestSendTrace(t *testing.T) {
 	tracesMarshaler = ptrace.ProtoMarshaler{}
 	td := exampleTrace()
 	traceBody, err := tracesMarshaler.MarshalTraces(td)
 	assert.NoError(t, err)
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, string(traceBody), body)
@@ -165,7 +202,7 @@ func TestSendTrace(t *testing.T) {
 }
 
 func TestSendLogs(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, "Example log\nAnother example log", body)
@@ -191,7 +228,7 @@ func TestSendLogs(t *testing.T) {
 }
 
 func TestSendLogsWithEmptyField(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, "Example log\nAnother example log", body)
@@ -217,7 +254,7 @@ func TestSendLogsWithEmptyField(t *testing.T) {
 }
 
 func TestSendLogsMultitype(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			expected := `{"lk1":"lv1","lk2":13}
@@ -257,7 +294,7 @@ func TestSendLogsMultitype(t *testing.T) {
 }
 
 func TestSendLogsSplit(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			assert.Equal(t, "Example log", body)
@@ -286,7 +323,7 @@ func TestSendLogsSplit(t *testing.T) {
 }
 
 func TestSendLogsSplitFailedOne(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 			_, err := fmt.Fprintf(
@@ -325,7 +362,7 @@ func TestSendLogsSplitFailedOne(t *testing.T) {
 }
 
 func TestSendLogsSplitFailedAll(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -545,7 +582,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+			test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 				func(w http.ResponseWriter, req *http.Request) {
 					body := extractBody(t, req)
 					assert.Regexp(t, tc.bodyRegex, body)
@@ -566,7 +603,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 }
 
 func TestSendLogsJson(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			var regex string
@@ -605,7 +642,7 @@ func TestSendLogsJson(t *testing.T) {
 }
 
 func TestSendLogsJsonHTLM(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			var regex string
@@ -644,7 +681,7 @@ func TestSendLogsJsonHTLM(t *testing.T) {
 }
 
 func TestSendLogsJsonMultitype(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			var regex string
@@ -698,7 +735,7 @@ func TestSendLogsJsonMultitype(t *testing.T) {
 }
 
 func TestSendLogsJsonSplit(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			var regex string
@@ -738,7 +775,7 @@ func TestSendLogsJsonSplit(t *testing.T) {
 }
 
 func TestSendLogsJsonSplitFailedOne(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -783,7 +820,7 @@ func TestSendLogsJsonSplitFailedOne(t *testing.T) {
 }
 
 func TestSendLogsJsonSplitFailedAll(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -835,7 +872,7 @@ func TestSendLogsJsonSplitFailedAll(t *testing.T) {
 }
 
 func TestSendLogsUnexpectedFormat(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 		},
 	})
@@ -856,7 +893,7 @@ func TestSendLogsUnexpectedFormat(t *testing.T) {
 }
 
 func TestSendLogsOTLP(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			//nolint:lll
@@ -898,7 +935,7 @@ func TestSendLogsOTLP(t *testing.T) {
 
 func TestLogsHandlesReceiverResponses(t *testing.T) {
 	t.Run("json with too many fields logs a warning", func(t *testing.T) {
-		test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+		test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 			func(w http.ResponseWriter, req *http.Request) {
 				fmt.Fprintf(w, `{
 					"status" : 200,
@@ -994,7 +1031,7 @@ func TestLogsHandlesReceiverResponses(t *testing.T) {
 }
 
 func TestInvalidEndpoint(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){})
 
 	test.s.dataUrlLogs = ":"
 
@@ -1006,7 +1043,7 @@ func TestInvalidEndpoint(t *testing.T) {
 }
 
 func TestInvalidPostRequest(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){})
 
 	test.s.dataUrlLogs = ""
 	rls := plog.NewResourceLogs()
@@ -1017,7 +1054,7 @@ func TestInvalidPostRequest(t *testing.T) {
 }
 
 func TestInvalidMetricFormat(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){})
 
 	test.s.config.MetricFormat = "invalid"
 
@@ -1026,14 +1063,14 @@ func TestInvalidMetricFormat(t *testing.T) {
 }
 
 func TestInvalidPipeline(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){})
 
 	err := test.s.send(context.Background(), "invalidPipeline", newCountingReader(0).withString(""), fields{})
 	assert.EqualError(t, err, `unknown pipeline type: invalidPipeline`)
 }
 
 func TestSendCompressGzip(t *testing.T) {
-	test := prepareSenderTest(t, []func(res http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, configcompression.Gzip, []func(res http.ResponseWriter, req *http.Request){
 		func(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(200)
 			if _, err := res.Write([]byte("")); err != nil {
@@ -1047,69 +1084,56 @@ func TestSendCompressGzip(t *testing.T) {
 		},
 	})
 
-	test.s.config.CompressEncoding = "gzip"
-
-	c, err := newCompressor("gzip")
-	require.NoError(t, err)
-
-	test.s.compressor = &c
 	reader := newCountingReader(0).withString("Some example log")
 
-	err = test.s.send(context.Background(), LogsPipeline, reader, fields{})
+	err := test.s.send(context.Background(), LogsPipeline, reader, fields{})
 	require.NoError(t, err)
 }
 
-func TestSendCompressDeflate(t *testing.T) {
-	test := prepareSenderTest(t, []func(res http.ResponseWriter, req *http.Request){
+func TestSendCompressGzipDeprecated(t *testing.T) {
+	test := prepareSenderTest(t, "default", []func(res http.ResponseWriter, req *http.Request){
 		func(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(200)
-
 			if _, err := res.Write([]byte("")); err != nil {
 				res.WriteHeader(http.StatusInternalServerError)
 				assert.FailNow(t, "err: %v", err)
 				return
 			}
-			body := decodeDeflate(t, req.Body)
-			assert.Equal(t, "deflate", req.Header.Get("Content-Encoding"))
+			body := decodeGzip(t, req.Body)
+			assert.Equal(t, "gzip", req.Header.Get("Content-Encoding"))
 			assert.Equal(t, "Some example log", body)
 		},
 	})
 
-	test.s.config.CompressEncoding = "deflate"
-
-	c, err := newCompressor("deflate")
-	require.NoError(t, err)
-
-	test.s.compressor = &c
-	reader := newCountingReader(0).withString("Some example log")
-
-	err = test.s.send(context.Background(), LogsPipeline, reader, fields{})
-	require.NoError(t, err)
-}
-
-func TestCompressionError(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){})
-
-	test.s.compressor = getTestCompressor(errors.New("read error"), nil)
 	reader := newCountingReader(0).withString("Some example log")
 
 	err := test.s.send(context.Background(), LogsPipeline, reader, fields{})
-	assert.EqualError(t, err, "read error")
+	require.NoError(t, err)
 }
 
-func TestInvalidContentEncoding(t *testing.T) {
-	// Expect to requests
-	test := prepareSenderTest(t, nil)
+func TestSendCompressZstd(t *testing.T) {
+	test := prepareSenderTest(t, configcompression.Zstd, []func(res http.ResponseWriter, req *http.Request){
+		func(res http.ResponseWriter, req *http.Request) {
+			res.WriteHeader(200)
+			if _, err := res.Write([]byte("")); err != nil {
+				res.WriteHeader(http.StatusInternalServerError)
+				assert.FailNow(t, "err: %v", err)
+				return
+			}
+			body := decodeZstd(t, req.Body)
+			assert.Equal(t, "zstd", req.Header.Get("Content-Encoding"))
+			assert.Equal(t, "Some example log", body)
+		},
+	})
 
-	test.s.config.CompressEncoding = "test"
 	reader := newCountingReader(0).withString("Some example log")
 
 	err := test.s.send(context.Background(), LogsPipeline, reader, fields{})
-	assert.EqualError(t, err, "invalid content encoding: test")
+	require.NoError(t, err)
 }
 
 func TestSendMetrics(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			expected := `` +
@@ -1137,7 +1161,7 @@ func TestSendMetrics(t *testing.T) {
 }
 
 func TestSendMetricsSplit(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			expected := `` +
@@ -1165,7 +1189,7 @@ func TestSendMetricsSplit(t *testing.T) {
 }
 
 func TestSendOTLPHistogram(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			unmarshaler := pmetric.ProtoUnmarshaler{}
 			body, err := io.ReadAll(req.Body)
@@ -1192,7 +1216,7 @@ func TestSendOTLPHistogram(t *testing.T) {
 }
 
 func TestSendMetricsSplitBySource(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			expected := `test.metric.data{test="test_value",test2="second_value",_sourceHost="value1"} 14500 1605534165000`
@@ -1230,7 +1254,7 @@ func TestSendMetricsSplitBySource(t *testing.T) {
 }
 
 func TestSendMetricsSplitFailedOne(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -1271,7 +1295,7 @@ func TestSendMetricsSplitFailedOne(t *testing.T) {
 }
 
 func TestSendMetricsSplitFailedAll(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(500)
 
@@ -1325,7 +1349,7 @@ func TestSendMetricsSplitFailedAll(t *testing.T) {
 
 func TestSendMetricsUnexpectedFormat(t *testing.T) {
 	// Expect no requestes
-	test := prepareSenderTest(t, nil)
+	test := prepareSenderTest(t, NoCompression, nil)
 	test.s.config.MetricFormat = "invalid"
 
 	metricSum, attrs := exampleIntMetric()
@@ -1340,7 +1364,7 @@ func TestSendMetricsUnexpectedFormat(t *testing.T) {
 }
 
 func TestBadRequestCausesPermanentError(t *testing.T) {
-	test := prepareSenderTest(t, []func(w http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, NoCompression, []func(w http.ResponseWriter, req *http.Request){
 		func(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(400)
 		},
