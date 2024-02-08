@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"compress/zlib"
 	"context"
 	"fmt"
 	"io"
@@ -176,6 +177,18 @@ func decodeGzip(t *testing.T, data io.Reader) string {
 func decodeZstd(t *testing.T, data io.Reader) string {
 	r, err := zstd.NewReader(data)
 	require.NoError(t, err)
+	var buf []byte
+	buf, err = io.ReadAll(r)
+	require.NoError(t, err)
+
+	return string(buf)
+}
+
+func decodeZlib(t *testing.T, data io.Reader) string {
+	r, err := zlib.NewReader(data)
+	if err != nil {
+		return ""
+	}
 	var buf []byte
 	buf, err = io.ReadAll(r)
 	require.NoError(t, err)
@@ -1122,6 +1135,27 @@ func TestSendCompressZstd(t *testing.T) {
 			}
 			body := decodeZstd(t, req.Body)
 			assert.Equal(t, "zstd", req.Header.Get("Content-Encoding"))
+			assert.Equal(t, "Some example log", body)
+		},
+	})
+
+	reader := newCountingReader(0).withString("Some example log")
+
+	err := test.s.send(context.Background(), LogsPipeline, reader, fields{})
+	require.NoError(t, err)
+}
+
+func TestSendCompressDeflate(t *testing.T) {
+	test := prepareSenderTest(t, configcompression.Deflate, []func(res http.ResponseWriter, req *http.Request){
+		func(res http.ResponseWriter, req *http.Request) {
+			res.WriteHeader(200)
+			if _, err := res.Write([]byte("")); err != nil {
+				res.WriteHeader(http.StatusInternalServerError)
+				assert.FailNow(t, "err: %v", err)
+				return
+			}
+			body := decodeZlib(t, req.Body)
+			assert.Equal(t, "deflate", req.Header.Get("Content-Encoding"))
 			assert.Equal(t, "Some example log", body)
 		},
 	})
