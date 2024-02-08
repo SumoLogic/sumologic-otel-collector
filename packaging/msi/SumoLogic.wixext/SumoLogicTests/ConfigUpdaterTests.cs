@@ -97,6 +97,56 @@ namespace SumoLogicTests
             }
         }
 
+        public void EphemeralAssertions(Config config, StreamReader sr)
+        {
+            YamlStream ys = new YamlStream();
+            ys.Load(sr);
+            YamlMappingNode root = (YamlMappingNode)ys.Documents[0].RootNode;
+
+            Assert.IsTrue(root.Children.ContainsKey("extensions"));
+            Assert.AreEqual(YamlNodeType.Mapping, root.Children["extensions"].NodeType);
+            var extensions = (YamlMappingNode)root.Children["extensions"];
+
+            Assert.IsTrue(extensions.Children.ContainsKey("sumologic"));
+            Assert.AreEqual(YamlNodeType.Mapping, extensions.Children["sumologic"].NodeType);
+            var sumologic = (YamlMappingNode)extensions.Children["sumologic"];
+
+            if (config.Ephemeral)
+            {
+                Assert.IsTrue(sumologic.Children.ContainsKey("ephemeral"));
+                Assert.AreEqual(YamlNodeType.Scalar, sumologic.Children["ephemeral"].NodeType);
+                Assert.AreEqual("true", sumologic.Children["ephemeral"].ToString());
+            }
+            else
+            {
+                if (sumologic.Children.ContainsKey("ephemeral"))
+                {
+                    Assert.AreEqual(YamlNodeType.Scalar, sumologic.Children["ephemeral"].NodeType);
+                    Assert.AreEqual("false", sumologic.Children["ephemeral"].ToString());
+                }
+            }
+        }
+
+        public void ApiAssertions(Config config, StreamReader sr)
+        {
+            YamlStream ys = new YamlStream();
+            ys.Load(sr);
+            YamlMappingNode root = (YamlMappingNode)ys.Documents[0].RootNode;
+
+            Assert.IsTrue(root.Children.ContainsKey("extensions"));
+            Assert.AreEqual(YamlNodeType.Mapping, root.Children["extensions"].NodeType);
+            var extensions = (YamlMappingNode)root.Children["extensions"];
+
+            Assert.IsTrue(extensions.Children.ContainsKey("sumologic"));
+            Assert.AreEqual(YamlNodeType.Mapping, extensions.Children["sumologic"].NodeType);
+            var sumologic = (YamlMappingNode)extensions.Children["sumologic"];
+
+            Assert.IsTrue(sumologic.Children.ContainsKey("api_base_url"));
+            Assert.AreEqual(YamlNodeType.Scalar, sumologic.Children["api_base_url"].NodeType);
+            var apiBaseUrl = (YamlScalarNode)sumologic.Children["api_base_url"];
+            Assert.AreEqual(config.Api, apiBaseUrl.ToString());
+        }
+
         [TestMethod]
         public void TestUpdate_WithExtensionsBlock()
         {
@@ -276,5 +326,85 @@ namespace SumoLogicTests
             }
         }
 
+        [TestMethod]
+        public void TestUpdate_Ephemeral()
+        {
+            var filePath = Path.Combine(testDataPath, "with-extensions-block.yaml");
+            var config = new Config { InstallationToken = "foobar", Ephemeral = true };
+            config.SetCollectorFieldsFromTags(@"foo=bar,baz=kaz,xaz=yaz");
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                var configUpdater = new ConfigUpdater(new StreamReader(filePath));
+                configUpdater.Update(config);
+                configUpdater.Save(new StreamWriter(ms));
+
+                ms.Seek(0, SeekOrigin.Begin);
+
+                StreamReader sr = new StreamReader(ms);
+                while (!sr.EndOfStream)
+                {
+                    Console.WriteLine(sr.ReadLine());
+                }
+
+                ms.Seek(0, SeekOrigin.Begin);
+
+                EphemeralAssertions(config, sr);
+            }
+        }
+
+        [TestMethod]
+        public void TestUpdate_NotEphemeral()
+        {
+            var filePath = Path.Combine(testDataPath, "with-extensions-block.yaml");
+            var config = new Config { InstallationToken = "foobar", Ephemeral = false };
+            config.SetCollectorFieldsFromTags(@"foo=bar,baz=kaz,xaz=yaz");
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                var configUpdater = new ConfigUpdater(new StreamReader(filePath));
+                configUpdater.Update(config);
+                configUpdater.Save(new StreamWriter(ms));
+
+                ms.Seek(0, SeekOrigin.Begin);
+
+                StreamReader sr = new StreamReader(ms);
+                while (!sr.EndOfStream)
+                {
+                    Console.WriteLine(sr.ReadLine());
+                }
+
+                ms.Seek(0, SeekOrigin.Begin);
+
+                EphemeralAssertions(config, sr);
+            }
+        }
+
+        [TestMethod]
+        public void TestUpdate_Api()
+        {
+            var filePath = Path.Combine(testDataPath, "with-extensions-block.yaml");
+            var config = new Config { InstallationToken = "foobar", Api = "http://apiurl.local" };
+            config.SetCollectorFieldsFromTags(@"foo=bar,baz=kaz,xaz=yaz");
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                var configUpdater = new ConfigUpdater(new StreamReader(filePath));
+                configUpdater.Update(config);
+                configUpdater.Save(new StreamWriter(ms));
+
+                ms.Seek(0, SeekOrigin.Begin);
+
+                StreamReader sr = new StreamReader(ms);
+                while (!sr.EndOfStream)
+                {
+                    Console.WriteLine(sr.ReadLine());
+                }
+
+                ms.Seek(0, SeekOrigin.Begin);
+
+                ApiAssertions(config, sr);
+            }
+        }
     }
 }
