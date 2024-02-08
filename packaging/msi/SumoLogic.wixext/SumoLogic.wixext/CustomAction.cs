@@ -70,6 +70,12 @@ namespace SumoLogic.wixext
             var opAmpFolder = session.CustomActionData[pOpAmpFolder];
             var api = session.CustomActionData[pApi];
 
+            if (remotelyManaged && string.IsNullOrEmpty(opAmpFolder))
+            {
+                ShowErrorMessage(session, ecMissingCustomActionData, pOpAmpFolder);
+                return ActionResult.Failure;
+            }
+
             // Load config from disk and replace values
             Config config = new Config { InstallationToken = installationToken, RemotelyManaged = remotelyManaged, Ephemeral = ephemeral,
                 OpAmpFolder = opAmpFolder, Api = api };

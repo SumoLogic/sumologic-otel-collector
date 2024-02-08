@@ -28,6 +28,11 @@ namespace SumoLogic.wixext
 
         public void Update(Config config)
         {
+            if (config.RemotelyManaged && string.IsNullOrEmpty(config.OpAmpFolder))
+            {
+                throw new MissingConfigurationException("OpAmpFolder");
+            }
+
             YamlMappingNode root = (YamlMappingNode)this.Document.RootNode;
 
             EnsureMapKey(root, "extensions");
