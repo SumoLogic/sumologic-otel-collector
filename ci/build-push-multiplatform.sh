@@ -92,8 +92,6 @@ function build_push() {
             --push \
             --file "${DOCKERFILE}" \
             --build-arg BUILD_TAG="${BUILD_TAG}" \
-            --build-arg REPO_URL="${REPO_URL}" \
-            --build-arg BUILD_ARCH="${BUILD_ARCH}" \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --platform="${PLATFORM}" \
             --tag "${LATEST_TAG}" \

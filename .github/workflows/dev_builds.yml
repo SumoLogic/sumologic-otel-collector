@@ -105,7 +105,11 @@ jobs:
             runs-on: macos-latest
           - arch_os: darwin_arm64
             runs-on: macos-latest
-
+          - arch_os: windows_amd64
+            runs-on: windows-2022
+          - arch_os: windows_amd64
+            runs-on: windows-2022
+            fips: true
     with:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
@@ -177,6 +181,7 @@ jobs:
           make build-push-container-ubi-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }}
+            LATEST_TAG_FIPS_SUFFIX="-ubi"
 
   push-docker-manifest:
     name: Push joint container manifest
