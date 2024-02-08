@@ -180,7 +180,7 @@ jobs:
           cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-ubi-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
-            PLATFORM=${{ matrix.arch_os }}
+            PLATFORM=${{ matrix.arch_os }} \
             LATEST_TAG_FIPS_SUFFIX="-ubi"
 
   push-docker-manifest:
