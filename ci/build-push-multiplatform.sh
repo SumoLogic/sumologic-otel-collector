@@ -82,7 +82,7 @@ function build_push() {
     esac
 
     local TAG
-    readonly TAG="${REPO_URL}:${BUILD_TAG}-${BUILD_ARCH}"
+    readonly TAG="${REPO_URL}:${BUILD_TAG}${LATEST_TAG_FIPS_SUFFIX}-${BUILD_ARCH}"
     local LATEST_TAG
     readonly LATEST_TAG="${REPO_URL}:latest${LATEST_TAG_FIPS_SUFFIX}-${BUILD_ARCH}"
 
