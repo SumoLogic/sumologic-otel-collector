@@ -88,6 +88,7 @@ namespace SumoLogic.wixext
             // is generated as the value instead of an empty node.
             if (root.Children.ContainsKey("processors"))
             {
+                EnsureMapKey(root, "processors");
                 YamlMappingNode processors = (YamlMappingNode)root.Children["processors"];
                 if (processors.Children.ContainsKey("sumologic"))
                 {

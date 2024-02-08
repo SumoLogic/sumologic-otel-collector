@@ -1,0 +1,1 @@
++ feat(install): add support for remote management, ephemeral and api url in Windows installer
