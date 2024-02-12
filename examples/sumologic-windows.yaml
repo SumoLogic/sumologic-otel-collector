@@ -18,6 +18,9 @@ extensions:
   ## The File Storage extension can persist state to the local file system
   ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/storage/filestorage
   file_storage:
+    compaction:
+      directory: ${PROGRAMDATA}\Sumo Logic\OpenTelemetry Collector\data\file_storage
+      on_rebound: true
     directory: ${PROGRAMDATA}\Sumo Logic\OpenTelemetry Collector\data\file_storage
 
 receivers:
@@ -39,6 +42,8 @@ exporters:
     sending_queue:
       enabled: true
       storage: file_storage
+    retry_on_failure:
+        max_elapsed_time: 0
 
 processors:
 
