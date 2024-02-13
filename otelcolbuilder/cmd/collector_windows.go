@@ -237,11 +237,19 @@ func newCollectorWithFlags(set otelcol.CollectorSettings, flags *flag.FlagSet) (
 }
 
 func newDefaultConfigProviderSettings(uris []string) otelcol.ConfigProviderSettings {
+	converterSet := confmap.ConverterSettings{}
+	providerSet := confmap.ProviderSettings{}
 	return otelcol.ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
-			URIs:       uris,
-			Providers:  makeMapProvidersMap(fileprovider.New(), envprovider.New(), yamlprovider.New(), httpprovider.New(), httpsprovider.New()),
-			Converters: []confmap.Converter{expandconverter.New()},
+			URIs: uris,
+			Providers: makeMapProvidersMap(
+				fileprovider.NewWithSettings(providerSet),
+				envprovider.NewWithSettings(providerSet),
+				yamlprovider.NewWithSettings(providerSet),
+				httpprovider.NewWithSettings(providerSet),
+				httpsprovider.NewWithSettings(providerSet),
+			),
+			Converters: []confmap.Converter{expandconverter.New(converterSet)},
 		},
 	}
 }
