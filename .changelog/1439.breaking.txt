@@ -1,3 +1,0 @@
-feat(servicegraphprocessor)!: remove `servicegraph` processor
-
-Use the Service Graph connector instead.
