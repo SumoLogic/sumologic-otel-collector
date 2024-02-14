@@ -319,7 +319,7 @@ function parse_options() {
 
     # Validate opt and set arguments
     case "$opt" in
-      "${ARG_SHORT_HELP}")          usage; exit 0 ;;
+      "${ARG_SHORT_HELP}")          usage; DISABLE_INSTALLATION_TELEMETRY=true exit 0 ;;
       "${ARG_SHORT_TOKEN}")         SUMOLOGIC_INSTALLATION_TOKEN="${OPTARG}" ;;
       "${ARG_SHORT_API}")           API_BASE_URL="${OPTARG}" ;;
       "${ARG_SHORT_SKIP_CONFIG}")   SKIP_CONFIG=true ;;
