@@ -23,7 +23,11 @@ param (
 
     # DisableInstallationTelemetry is used to disable reporting the installation
     # to Sumologic.
-    [bool] $DisableInstallationTelemetry
+    [bool] $DisableInstallationTelemetry,
+
+    # InstallationLogfileEndpoint is used to configure the endpoint where
+    # installation logs will be sent.
+    [string] $InstallationLogfileEndpoint
 )
 
 $PackageGithubOrg = "SumoLogic"
@@ -417,7 +421,10 @@ function Send-Installation-Logs {
 
 try {
     $InstallationLogFile = New-TemporaryFile
-    $InstallationLogFileEndpoint = "https://stag-open-events.sumologic.net/api/v1/collector/installation/logs"
+
+    if ($InstallationLogFileEndpoint -eq "") {
+        $InstallationLogFileEndpoint = "https://stag-open-events.sumologic.net/api/v1/collector/installation/logs"
+    }
 
     Start-Transcript $InstallationLogFile | Out-Null
 
