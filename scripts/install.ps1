@@ -19,7 +19,11 @@ param (
     [bool] $InstallHostMetrics,
 
     # Fips is used to download a fips binary installer.
-    [bool] $Fips
+    [bool] $Fips,
+
+    # DisableInstallationTelemetry is used to disable reporting the installation
+    # to Sumologic.
+    [bool] $DisableInstallationTelemetry
 )
 
 $PackageGithubOrg = "SumoLogic"
@@ -535,6 +539,10 @@ try {
     Write-Error $_.Exception.InnerException.Message
 } finally {
     Stop-Transcript | Out-Null
-    Send-Installation-Logs -Endpoint $InstallationLogFileEndpoint -Path $InstallationLogFile -HttpClient $httpClient
+
+    if ($DisableInstallationTelemetry -eq $false) {
+        Send-Installation-Logs -Endpoint $InstallationLogFileEndpoint -Path $InstallationLogFile -HttpClient $httpClient
+    }
+
     Remove-Item $InstallationLogFile
 }
