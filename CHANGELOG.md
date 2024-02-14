@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- - feat(install): add support for remote management, ephemeral and api url in Windows installer [#1437]
+- feat(install): add support for remote management, ephemeral and api url in Windows installer [#1437]
 
 ### Changed
 
@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- - fix(install): support --remote-config startup option with Windows services [#1443]
+- fix(install): support --remote-config startup option with Windows services [#1443]
 
 [#1439]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1439
 [#1437]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1437
