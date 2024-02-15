@@ -612,6 +612,22 @@ func (op *OwnerCache) GetOwners(pod *Pod) []*ObjectOwner {
 					visited[ownerUID] = true
 				}
 			}
+		} else {
+			// try to find the owner
+			var ownerReference meta_v1.OwnerReference
+			for _, or := range *pod.OwnerReferences {
+				if or.UID == uid {
+					ownerReference = or
+				}
+			}
+			// ownerReference may be empty
+			op.logger.Warn(
+				"missing owner data for Pod, cache may be out of sync",
+				zap.String("pod", pod.Name),
+				zap.String("owner_id", string(uid)),
+				zap.String("owner_kind", ownerReference.Kind),
+				zap.String("owner_name", ownerReference.Name),
+			)
 		}
 		op.ownersMutex.RUnlock()
 	}

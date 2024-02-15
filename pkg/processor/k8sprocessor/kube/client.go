@@ -30,6 +30,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/observability"
 )
 
@@ -321,6 +322,9 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 	}
 
 	if c.Rules.NodeName {
+		if len(pod.Spec.NodeName) == 0 {
+			c.logger.Warn("missing Node name for Pod, cache may be out of sync", zap.String("pod", pod.Name))
+		}
 		tags[c.Rules.Tags.NodeName] = pod.Spec.NodeName
 	}
 
@@ -340,6 +344,9 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 	if len(pod.Status.ContainerStatuses) > 0 {
 		cs := pod.Status.ContainerStatuses[0]
 		if c.Rules.ContainerID {
+			if len(cs.ContainerID) == 0 {
+				c.logger.Warn("missing container ID for Pod, cache may be out of sync", zap.String("pod", pod.Name), zap.String("container_name", cs.Name))
+			}
 			tags[c.Rules.Tags.ContainerID] = cs.ContainerID
 		}
 	}
