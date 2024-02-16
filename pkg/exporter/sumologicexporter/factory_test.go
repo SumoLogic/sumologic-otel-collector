@@ -44,11 +44,6 @@ func TestCreateDefaultConfig(t *testing.T) {
 		MetricFormat:       "otlp",
 		Client:             "otelcol",
 		ClearLogsTimestamp: true,
-		JSONLogs: JSONLogs{
-			LogKey:       "log",
-			AddTimestamp: true,
-			TimestampKey: "timestamp",
-		},
 		TraceFormat: "otlp",
 
 		HTTPClientSettings: confighttp.HTTPClientSettings{

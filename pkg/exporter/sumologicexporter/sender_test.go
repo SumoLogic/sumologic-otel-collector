@@ -471,34 +471,14 @@ func TestSendLogsJsonConfig(t *testing.T) {
 	}{
 		{
 			name: "default config",
-			configOpts: []func(*Config){
-				func(c *Config) {
-					c.JSONLogs = JSONLogs{
-						LogKey:       DefaultLogKey,
-						AddTimestamp: DefaultAddTimestamp,
-						TimestampKey: DefaultTimestampKey,
-						FlattenBody:  DefaultFlattenBody,
-					}
-				},
-			},
-			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}` +
+			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log"}` +
 				`\n` +
-				`{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`,
+				`{"key1":"value1","key2":"value2","log":"Another example log"}`,
 			logsFunc: twoLogsFunc,
 		},
 		{
 			name: "empty body",
-			configOpts: []func(*Config){
-				func(c *Config) {
-					c.JSONLogs = JSONLogs{
-						LogKey:       DefaultLogKey,
-						AddTimestamp: DefaultAddTimestamp,
-						TimestampKey: DefaultTimestampKey,
-						FlattenBody:  DefaultFlattenBody,
-					}
-				},
-			},
-			bodyRegex: `{"key1":"value1","key2":"value2","timestamp":\d{13}}`,
+			bodyRegex: `{"key1":"value1","key2":"value2"}`,
 
 			logsFunc: func() plog.ResourceLogs {
 				rls := plog.NewResourceLogs()
@@ -512,83 +492,9 @@ func TestSendLogsJsonConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "disabled add timestamp",
-			configOpts: []func(*Config){
-				func(c *Config) {
-					c.JSONLogs = JSONLogs{
-						LogKey:       DefaultLogKey,
-						AddTimestamp: false,
-					}
-				},
-			},
-			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log"}` +
-				`\n` +
-				`{"key1":"value1","key2":"value2","log":"Another example log"}`,
-			logsFunc: twoLogsFunc,
-		},
-		{
-			name: "enabled add timestamp with custom timestamp key",
-			configOpts: []func(*Config){
-				func(c *Config) {
-					c.JSONLogs = JSONLogs{
-						LogKey:       DefaultLogKey,
-						AddTimestamp: true,
-						TimestampKey: "xxyy_zz",
-					}
-				},
-			},
-			bodyRegex: `{"key1":"value1","key2":"value2","log":"Example log","xxyy_zz":\d{13}}` +
-				`\n` +
-				`{"key1":"value1","key2":"value2","log":"Another example log","xxyy_zz":\d{13}}`,
-			logsFunc: twoLogsFunc,
-		},
-		{
-			name: "custom log key",
-			configOpts: []func(*Config){
-				func(c *Config) {
-					c.JSONLogs = JSONLogs{
-						LogKey:       "log_vendor_key",
-						AddTimestamp: DefaultAddTimestamp,
-						TimestampKey: DefaultTimestampKey,
-						FlattenBody:  DefaultFlattenBody,
-					}
-				},
-			},
-			bodyRegex: `{"key1":"value1","key2":"value2","log_vendor_key":"Example log","timestamp":\d{13}}` +
-				`\n` +
-				`{"key1":"value1","key2":"value2","log_vendor_key":"Another example log","timestamp":\d{13}}`,
-			logsFunc: twoLogsFunc,
-		},
-		{
-			name: "flatten body",
-			configOpts: []func(*Config){
-				func(c *Config) {
-					c.JSONLogs = JSONLogs{
-						LogKey:       "log_vendor_key",
-						AddTimestamp: DefaultAddTimestamp,
-						TimestampKey: DefaultTimestampKey,
-						FlattenBody:  true,
-					}
-				},
-			},
-			bodyRegex: `{"a":"b","c":false,"d":20,"e":20.5,"f":\["p",true,13,19.3\],` +
-				`"g":{"h":"i","j":false,"k":12,"l":11.1},"m":"n","timestamp":\d{13}}`,
-			logsFunc: twoComplexBodyLogsFunc,
-		},
-		{
 			name: "complex body",
-			configOpts: []func(*Config){
-				func(c *Config) {
-					c.JSONLogs = JSONLogs{
-						LogKey:       "log_vendor_key",
-						AddTimestamp: DefaultAddTimestamp,
-						TimestampKey: DefaultTimestampKey,
-						FlattenBody:  DefaultFlattenBody,
-					}
-				},
-			},
-			bodyRegex: `{"log_vendor_key":{"a":"b","c":false,"d":20,"e":20.5,"f":\["p",true,13,19.3\],` +
-				`"g":{"h":"i","j":false,"k":12,"l":11.1}},"m":"n","timestamp":\d{13}}`,
+			bodyRegex: `{"log":{"a":"b","c":false,"d":20,"e":20.5,"f":\["p",true,13,19.3\],` +
+				`"g":{"h":"i","j":false,"k":12,"l":11.1}},"m":"n"}`,
 			logsFunc: twoComplexBodyLogsFunc,
 		},
 	}
@@ -620,9 +526,9 @@ func TestSendLogsJson(t *testing.T) {
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			var regex string
-			regex += `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}`
+			regex += `{"key1":"value1","key2":"value2","log":"Example log"}`
 			regex += `\n`
-			regex += `{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`
+			regex += `{"key1":"value1","key2":"value2","log":"Another example log"}`
 			assert.Regexp(t, regex, body)
 
 			assert.Equal(t, "key=value", req.Header.Get("X-Sumo-Fields"))
@@ -659,9 +565,9 @@ func TestSendLogsJsonHTLM(t *testing.T) {
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			var regex string
-			regex += `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}`
+			regex += `{"key1":"value1","key2":"value2","log":"Example log"}`
 			regex += `\n`
-			regex += `{"key1":"value1","key2":"value2","log":"<p>Another example log</p>","timestamp":\d{13}}`
+			regex += `{"key1":"value1","key2":"value2","log":"<p>Another example log</p>"}`
 			assert.Regexp(t, regex, body)
 
 			assert.Equal(t, "key=value", req.Header.Get("X-Sumo-Fields"))
@@ -698,9 +604,9 @@ func TestSendLogsJsonMultitype(t *testing.T) {
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			var regex string
-			regex += `{"key1":"value1","key2":"value2","log":{"lk1":"lv1","lk2":13},"timestamp":\d{13}}`
+			regex += `{"key1":"value1","key2":"value2","log":{"lk1":"lv1","lk2":13}}`
 			regex += `\n`
-			regex += `{"key1":"value1","key2":"value2","log":\["lv2",13\],"timestamp":\d{13}}`
+			regex += `{"key1":"value1","key2":"value2","log":\["lv2",13\]}`
 			assert.Regexp(t, regex, body)
 
 			assert.Equal(t, "key=value", req.Header.Get("X-Sumo-Fields"))
@@ -752,13 +658,13 @@ func TestSendLogsJsonSplit(t *testing.T) {
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			var regex string
-			regex += `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}`
+			regex += `{"key1":"value1","key2":"value2","log":"Example log"}`
 			assert.Regexp(t, regex, body)
 		},
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 			var regex string
-			regex += `{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`
+			regex += `{"key1":"value1","key2":"value2","log":"Another example log"}`
 			assert.Regexp(t, regex, body)
 		},
 	})
@@ -795,14 +701,14 @@ func TestSendLogsJsonSplitFailedOne(t *testing.T) {
 			body := extractBody(t, req)
 
 			var regex string
-			regex += `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}`
+			regex += `{"key1":"value1","key2":"value2","log":"Example log"}`
 			assert.Regexp(t, regex, body)
 		},
 		func(w http.ResponseWriter, req *http.Request) {
 			body := extractBody(t, req)
 
 			var regex string
-			regex += `{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`
+			regex += `{"key1":"value1","key2":"value2","log":"Another example log"}`
 			assert.Regexp(t, regex, body)
 		},
 	})
@@ -840,7 +746,7 @@ func TestSendLogsJsonSplitFailedAll(t *testing.T) {
 			body := extractBody(t, req)
 
 			var regex string
-			regex += `{"key1":"value1","key2":"value2","log":"Example log","timestamp":\d{13}}`
+			regex += `{"key1":"value1","key2":"value2","log":"Example log"}`
 			assert.Regexp(t, regex, body)
 		},
 		func(w http.ResponseWriter, req *http.Request) {
@@ -849,7 +755,7 @@ func TestSendLogsJsonSplitFailedAll(t *testing.T) {
 			body := extractBody(t, req)
 
 			var regex string
-			regex += `{"key1":"value1","key2":"value2","log":"Another example log","timestamp":\d{13}}`
+			regex += `{"key1":"value1","key2":"value2","log":"Another example log"}`
 			assert.Regexp(t, regex, body)
 		},
 	})

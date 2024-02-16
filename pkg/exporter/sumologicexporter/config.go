@@ -70,31 +70,9 @@ type Config struct {
 	// By default this is true.
 	ClearLogsTimestamp bool `mapstructure:"clear_logs_timestamp"`
 
-	JSONLogs `mapstructure:"json_logs"`
-
 	// StickySessionEnabled defines if sticky session support is enable.
 	// By default this is false.
 	StickySessionEnabled bool `mapstructure:"sticky_session_enabled"`
-}
-
-type JSONLogs struct {
-	// LogKey defines which key will be used to attach the log body at.
-	// This option affects JSON log format only.
-	// By default this is "log".
-	LogKey string `mapstructure:"log_key"`
-	// AddTimestamp defines whether to include a timestamp field when sending
-	// JSON logs, which would contain UNIX epoch timestamp in milliseconds.
-	// This option affects JSON log format only.
-	// By default this is true.
-	AddTimestamp bool `mapstructure:"add_timestamp"`
-	// When add_timestamp is set to true then this key defines what is the name
-	// of the timestamp key.
-	// By default this is "timestamp".
-	TimestampKey string `mapstructure:"timestamp_key"`
-	// When flatten_body is set to true and log is a map,
-	// log's body is going to be flattened and `log_key` won't be used
-	// By default this is false.
-	FlattenBody bool `mapstructure:"flatten_body"`
 }
 
 // CreateDefaultHTTPClientSettings returns default http client settings
