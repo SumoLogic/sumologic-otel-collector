@@ -92,7 +92,7 @@
         <ServiceInstall Id="Service" Name="!(loc.ServiceName)" DisplayName="!(loc.ServiceDisplayName)"
           Description="!(loc.ServiceDescription)" Type="ownProcess" Vital="yes" Start="auto" Account="LocalSystem"
           ErrorControl="normal" Arguments="[SERVICEARGUMENTS]" Interactive="no">
-          <ServiceConfig FirstFailureActionType="restart" SecondFailureActionType="restart"
+          <util:ServiceConfig FirstFailureActionType="restart" SecondFailureActionType="restart"
             ThirdFailureActionType="none" RestartServiceDelayInSeconds="0"/>
         </ServiceInstall>
 
