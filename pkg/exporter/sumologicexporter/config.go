@@ -37,7 +37,7 @@ type Config struct {
 	// Compression encoding format, either empty string, gzip or deflate (default gzip)
 	// Empty string means no compression
 	// NOTE: CompressEncoding is deprecated and will be removed in an upcoming release
-	CompressEncoding configcompression.CompressionType `mapstructure:"compress_encoding"`
+	CompressEncoding configcompression.Type `mapstructure:"compress_encoding"`
 	// Max HTTP request body size in bytes before compression (if applied).
 	// By default 1MB is recommended.
 	MaxRequestBodySize int `mapstructure:"max_request_body_size"`
@@ -205,7 +205,7 @@ const (
 	// OTLPTraceFormat represents trace_format: otlp
 	OTLPTraceFormat TraceFormatType = "otlp"
 	// NoCompression represents disabled compression
-	NoCompression configcompression.CompressionType = ""
+	NoCompression configcompression.Type = ""
 	// MetricsPipeline represents metrics pipeline
 	MetricsPipeline PipelineType = "metrics"
 	// LogsPipeline represents metrics pipeline
@@ -217,7 +217,7 @@ const (
 	// DefaultCompress defines default Compress
 	DefaultCompress bool = true
 	// DefaultCompressEncoding defines default CompressEncoding
-	DefaultCompressEncoding configcompression.CompressionType = "gzip"
+	DefaultCompressEncoding configcompression.Type = "gzip"
 	// DefaultMaxRequestBodySize defines default MaxRequestBodySize in bytes
 	DefaultMaxRequestBodySize int = 1 * 1024 * 1024
 	// DefaultLogFormat defines default LogFormat

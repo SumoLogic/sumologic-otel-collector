@@ -54,7 +54,7 @@ type senderTest struct {
 // Provided cfgOpts additionally configure the sender after the sendible default
 // for tests have been applied.
 // The enclosed httptest.Server is closed automatically using test.Cleanup.
-func prepareSenderTest(t *testing.T, compression configcompression.CompressionType, cb []func(w http.ResponseWriter, req *http.Request), cfgOpts ...func(*Config)) *senderTest {
+func prepareSenderTest(t *testing.T, compression configcompression.Type, cb []func(w http.ResponseWriter, req *http.Request), cfgOpts ...func(*Config)) *senderTest {
 	var reqCounter int32
 	// generate a test server so we can capture and inspect the request
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
