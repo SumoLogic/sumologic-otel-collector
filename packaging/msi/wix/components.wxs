@@ -91,7 +91,10 @@
         <!-- Add service for OTC -->
         <ServiceInstall Id="Service" Name="!(loc.ServiceName)" DisplayName="!(loc.ServiceDisplayName)"
           Description="!(loc.ServiceDescription)" Type="ownProcess" Vital="yes" Start="auto" Account="LocalSystem"
-          ErrorControl="normal" Arguments="[SERVICEARGUMENTS]" Interactive="no" />
+          ErrorControl="normal" Arguments="[SERVICEARGUMENTS]" Interactive="no">
+          <ServiceConfig FirstFailureActionType="restart" SecondFailureActionType="restart"
+            ThirdFailureActionType="none" RestartServiceDelayInSeconds="0"/>
+        </ServiceInstall>
 
         <!-- Start/Stop/Remove OTC service -->
         <ServiceControl Id="StartServiceControl" Name="!(loc.ServiceName)" Start="install" Stop="both" Remove="uninstall" Wait="no" />

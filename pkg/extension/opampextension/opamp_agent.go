@@ -24,7 +24,6 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
-	"syscall"
 
 	"github.com/google/uuid"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -430,16 +429,6 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 	return nil
 }
 
-func (o *opampAgent) reloadCollectorConfig() error {
-	p, err := os.FindProcess(os.Getpid())
-
-	if err != nil {
-		return err
-	}
-
-	return p.Signal(syscall.SIGHUP)
-}
-
 func (o *opampAgent) updateAgentIdentity(instanceId ulid.ULID) {
 	o.logger.Debug("OpAMP agent identity is being changed",
 		zap.String("old_id", o.instanceId.String()),
@@ -539,7 +528,7 @@ func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
 			o.logger.Error("Failed to update OpAMP agent effective configuration", zap.Error(err))
 		}
 
-		err = o.reloadCollectorConfig()
+		err = reloadCollectorConfig()
 		if err != nil {
 			o.logger.Error("Failed to reload collector configuration via SIGHUP", zap.Error(err))
 		}
