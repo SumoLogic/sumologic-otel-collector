@@ -93,7 +93,7 @@
           Description="!(loc.ServiceDescription)" Type="ownProcess" Vital="yes" Start="auto" Account="LocalSystem"
           ErrorControl="normal" Arguments="[SERVICEARGUMENTS]" Interactive="no">
           <util:ServiceConfig FirstFailureActionType="restart" SecondFailureActionType="restart"
-            ThirdFailureActionType="none" RestartServiceDelayInSeconds="0"/>
+            ThirdFailureActionType="restart" RestartServiceDelayInSeconds="0" ResetPeriodInDays="0" />
         </ServiceInstall>
 
         <!-- Start/Stop/Remove OTC service -->
