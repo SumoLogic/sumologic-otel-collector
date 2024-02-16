@@ -65,7 +65,7 @@ receivers:
 
 
 exporters:
-  logging:
+  debug:
     verbosity: detailed
     sampling_initial: 32
 
@@ -94,7 +94,7 @@ service:
         - batch
         - resourcedetection/system
       exporters:
-        - logging
+        - debug
   telemetry:
     logs:
       level: debug

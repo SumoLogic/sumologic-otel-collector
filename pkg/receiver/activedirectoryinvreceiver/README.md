@@ -39,7 +39,7 @@ receivers:
     poll_interval: 24h
 
 exporters:
-  logging:
+  debug:
     verbosity: detailed
 
 service:
@@ -51,5 +51,5 @@ service:
       receivers:
         - active_directory_inv
       exporters:
-        - logging
+        - debug
 ```
