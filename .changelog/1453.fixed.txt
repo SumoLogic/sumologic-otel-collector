@@ -1,0 +1,1 @@
++ fix(windows): restart windows service when configuration update is received via opamp
