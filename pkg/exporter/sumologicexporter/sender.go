@@ -359,7 +359,7 @@ func (s *sender) logToJSON(record plog.LogRecord) (string, error) {
 
 	// Only append the body when it's not empty to prevent sending 'null' log.
 	if body := recordCopy.Body(); !isEmptyAttributeValue(body) {
-		body.CopyTo(recordCopy.Attributes().PutEmpty("log"))
+		body.CopyTo(recordCopy.Attributes().PutEmpty(DefaultLogKey))
 	}
 
 	nextLine := new(bytes.Buffer)

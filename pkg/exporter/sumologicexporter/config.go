@@ -208,12 +208,6 @@ const (
 	DefaultClearLogsTimestamp bool = true
 	// DefaultLogKey defines default LogKey value
 	DefaultLogKey string = "log"
-	// DefaultAddTimestamp defines default AddTimestamp value
-	DefaultAddTimestamp bool = true
-	// DefaultTimestampKey defines default TimestampKey value
-	DefaultTimestampKey string = "timestamp"
-	// DefaultFlattenBody defines default FlattenBody value
-	DefaultFlattenBody bool = false
 	// DefaultDropRoutingAttribute defines default DropRoutingAttribute
 	DefaultDropRoutingAttribute string = ""
 	// DefaultStickySessionEnabled defines default StickySessionEnabled value
