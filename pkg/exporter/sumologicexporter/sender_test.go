@@ -477,7 +477,7 @@ func TestSendLogsJsonConfig(t *testing.T) {
 			logsFunc: twoLogsFunc,
 		},
 		{
-			name: "empty body",
+			name:      "empty body",
 			bodyRegex: `{"key1":"value1","key2":"value2"}`,
 
 			logsFunc: func() plog.ResourceLogs {

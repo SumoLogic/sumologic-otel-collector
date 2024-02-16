@@ -51,7 +51,7 @@ func createDefaultConfig() component.Config {
 		MetricFormat:       DefaultMetricFormat,
 		Client:             DefaultClient,
 		ClearLogsTimestamp: DefaultClearLogsTimestamp,
-		TraceFormat: OTLPTraceFormat,
+		TraceFormat:        OTLPTraceFormat,
 
 		HTTPClientSettings:   CreateDefaultHTTPClientSettings(),
 		BackOffConfig:        configretry.NewDefaultBackOffConfig(),
