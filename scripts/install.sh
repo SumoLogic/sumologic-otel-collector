@@ -1947,9 +1947,20 @@ if [[ "${OS_TYPE}" == "darwin" ]]; then
     launchctl unload "${LAUNCHD_CONFIG}"
     launchctl load -w "${LAUNCHD_CONFIG}"
 
-    echo 'Waiting 10s before checking status'
-    sleep 10
-    if launchctl print system/otelcol-sumo | grep "last exit code = 1"; then
+    echo "Waiting for otelcol to start"
+    while ! launchctl print system/otelcol-sumo | grep -q "state = running"; do
+        sleep 0.1
+    done
+    OTEL_EXITED_WITH_ERROR=false
+    echo 'Checking otelcol status'
+    for i in {1..15}; do
+        if launchctl print system/otelcol-sumo | grep -q "last exit code = 1"; then
+            OTEL_EXITED_WITH_ERROR=true
+            break;
+        fi
+        sleep 1
+    done
+    if [[ "${OTEL_EXITED_WITH_ERROR}" == "true" ]]; then
         echo "Failed to launch otelcol"
         tail /var/log/otelcol-sumo/otelcol-sumo.log
         exit 1
