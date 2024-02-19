@@ -354,7 +354,7 @@ jobs:
         run: |
           cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-container-multiplatform \
-            PLATFORM=${{ matrix.arch_os }} LATEST_TAG_FIPS_SUFFIX="-fips"
+            PLATFORM=${{ matrix.arch_os }} BUILD_TYPE_SUFFIX="-fips"
 
       - name: Test built FIPS image
         if: steps.changed-files.outputs.any_changed == 'true' && matrix.arch_os == 'linux_amd64'

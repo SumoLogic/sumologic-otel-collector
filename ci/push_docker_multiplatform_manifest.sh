@@ -15,8 +15,8 @@ if [[ -z "${BUILD_TAG}" ]]; then
     BUILD_TAG="latest"
 fi
 
-if [[ -z "${LATEST_TAG_FIPS_SUFFIX}" ]]; then
-    LATEST_TAG_FIPS_SUFFIX=""
+if [[ -z "${BUILD_TYPE_SUFFIX}" ]]; then
+    BUILD_TYPE_SUFFIX=""
 fi
 
 if [[ -z "${REPO_URL}" ]]; then
@@ -72,7 +72,7 @@ function push_manifest() {
         "${TAGS_IN_MANIFEST[@]}"
 
     docker buildx imagetools create --tag \
-        "${REPO_URL}:latest${LATEST_TAG_FIPS_SUFFIX}" \
+        "${REPO_URL}:latest${BUILD_TYPE_SUFFIX}" \
         "${TAGS_IN_MANIFEST[@]}"
 }
 
