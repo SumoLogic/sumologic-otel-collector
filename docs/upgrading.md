@@ -1,5 +1,7 @@
 # Upgrading
 
+- [Upgrading to v0.95.0-sumo-0](#upgrading-to-v0950-sumo-0)
+  - [`sumologic` exporter: remove `json_logs`](#sumologic-exporter-remove-json_logs)
 - [Upgrading to v0.94.0-sumo-0](#upgrading-to-v0940-sumo-0)
   - [`servicegraph` processor: removed in favor of `servicegraph` connector](#servicegraph-processor-removed-in-favor-of-servicegraph-connector)
 - [Upgrading to v0.92.0-sumo-0](#upgrading-to-v0920-sumo-0)
@@ -49,6 +51,14 @@
   - [Sumo Logic exporter metadata handling](#sumo-logic-exporter-metadata-handling)
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
+
+## Upgrading to v0.95.0-sumo-0
+
+### `sumologic` exporter: remove `json_logs`
+
+`json_logs` has been removed in favor of `transform` processor.
+
+Please follow [the migration process](#sumologic-exporter-deprecate-json_logs)
 
 ## Upgrading to v0.94.0-sumo-0
 

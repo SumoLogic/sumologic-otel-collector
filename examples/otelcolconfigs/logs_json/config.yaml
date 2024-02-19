@@ -1,5 +1,5 @@
 exporters:
-  logging:
+  debug:
     verbosity: detailed
     sampling_initial: 0
     sampling_thereafter: 1
@@ -15,5 +15,5 @@ receivers:
 service:
   pipelines:
     logs:
-      exporters: [logging]
+      exporters: [debug]
       receivers: [filelog]

@@ -127,7 +127,6 @@ type sender struct {
 	config                     *Config
 	client                     *http.Client
 	prometheusFormatter        prometheusFormatter
-	jsonLogsConfig             JSONLogs
 	dataUrlMetrics             string
 	dataUrlLogs                string
 	dataUrlTraces              string
@@ -177,7 +176,6 @@ func newSender(
 		config:                     cfg,
 		client:                     cl,
 		prometheusFormatter:        pf,
-		jsonLogsConfig:             cfg.JSONLogs,
 		dataUrlMetrics:             metricsUrl,
 		dataUrlLogs:                logsUrl,
 		dataUrlTraces:              tracesUrl,
@@ -358,25 +356,10 @@ func (s *sender) logToText(record plog.LogRecord) string {
 func (s *sender) logToJSON(record plog.LogRecord) (string, error) {
 	recordCopy := plog.NewLogRecord()
 	record.CopyTo(recordCopy)
-	if s.jsonLogsConfig.AddTimestamp {
-		addJSONTimestamp(recordCopy.Attributes(), s.jsonLogsConfig.TimestampKey, recordCopy.Timestamp())
-	}
 
 	// Only append the body when it's not empty to prevent sending 'null' log.
 	if body := recordCopy.Body(); !isEmptyAttributeValue(body) {
-		if s.jsonLogsConfig.FlattenBody && body.Type() == pcommon.ValueTypeMap {
-			// Cannot use CopyTo, as it overrides data.orig's values
-			body.Map().Range(func(k string, v pcommon.Value) bool {
-				_, ok := recordCopy.Attributes().Get(k)
-
-				if !ok {
-					v.CopyTo(recordCopy.Attributes().PutEmpty(k))
-				}
-				return true
-			})
-		} else {
-			body.CopyTo(recordCopy.Attributes().PutEmpty(s.jsonLogsConfig.LogKey))
-		}
+		body.CopyTo(recordCopy.Attributes().PutEmpty(DefaultLogKey))
 	}
 
 	nextLine := new(bytes.Buffer)
@@ -389,21 +372,6 @@ func (s *sender) logToJSON(record plog.LogRecord) (string, error) {
 	}
 
 	return strings.TrimSuffix(nextLine.String(), "\n"), nil
-}
-
-var timeZeroUTC = time.Unix(0, 0).UTC()
-
-// addJSONTimestamp adds a timestamp field to record attribtues before sending
-// out the logs as JSON.
-// If the attached timestamp is equal to 0 (millisecond based UNIX timestamp)
-// then send out current time formatted as milliseconds since January 1, 1970.
-func addJSONTimestamp(attrs pcommon.Map, timestampKey string, pt pcommon.Timestamp) {
-	t := pt.AsTime()
-	if t == timeZeroUTC {
-		attrs.PutInt(timestampKey, time.Now().UnixMilli())
-	} else {
-		attrs.PutInt(timestampKey, t.UnixMilli())
-	}
 }
 
 func isEmptyAttributeValue(att pcommon.Value) bool {
@@ -428,7 +396,7 @@ func isEmptyAttributeValue(att pcommon.Value) bool {
 // returns array of records which has not been sent correctly and error
 func (s *sender) sendNonOTLPLogs(ctx context.Context, rl plog.ResourceLogs, flds fields) ([]plog.LogRecord, error) {
 	if s.config.LogFormat == OTLPLogFormat {
-		return nil, fmt.Errorf("Attempting to send OTLP logs as non-OTLP data")
+		return nil, fmt.Errorf("attempting to send OTLP logs as non-OTLP data")
 	}
 
 	var (

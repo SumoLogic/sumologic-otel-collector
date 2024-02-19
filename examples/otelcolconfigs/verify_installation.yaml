@@ -3,7 +3,7 @@ exporters:
     sending_queue:
       enabled: true
       storage: file_storage
-  logging:
+  debug:
 
 extensions:
   file_storage:
@@ -25,4 +25,4 @@ service:
   pipelines:
     logs:
       receivers: [filelog]
-      exporters: [sumologic, logging]
+      exporters: [sumologic, debug]

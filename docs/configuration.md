@@ -505,7 +505,7 @@ receivers:
         parse_from: message
 ```
 
-and the parsed log entry can be observed in [logging exporter][loggingexporter_docs]'s output as:
+and the parsed log entry can be observed in [Debug exporter][debugexporter_docs]'s output as:
 
 ```console
 2022-02-24T10:23:37.809Z        INFO    loggingexporter/logging_exporter.go:69  LogsExporter    {"#logs": 1}
@@ -532,7 +532,7 @@ Example configuration with example log can be found in [/examples/otelcolconfigs
 
 [json_parser]: https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/operators/json_parser.md
 [filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.94.0/receiver/filelogreceiver
-[loggingexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.94.1/exporter/loggingexporter
+[debugexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.94.1/exporter/debugexporter
 
 ## Setting source category
 
