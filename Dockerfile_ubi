@@ -11,7 +11,7 @@ ENV SUMMARY="UBI based sumologic-otel-collector" \
 LABEL name="sumologic-otel-collector" \
       vendor="Sumo Logic" \
       version="$BUILD_TAG" \
-      release="4" \
+      release="0" \
       summary="$SUMMARY" \
       description="$DESCRIPTION" \
       io.k8s.description="$DESCRIPTION" \
@@ -20,7 +20,7 @@ LABEL name="sumologic-otel-collector" \
 ADD https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/LICENSE \
     /licenses/LICENSE
 
-RUN microdnf update && microdnf install systemd
+RUN microdnf update && microdnf install systemd && microdnf clean all
 
 ENV TAG $BUILD_TAG
 ARG USER_UID=10001
