@@ -159,7 +159,7 @@ jobs:
         run: |
           cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-multiplatform-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }} \
             BUILD_TYPE_SUFFIX="-fips"
 
