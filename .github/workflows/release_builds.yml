@@ -358,7 +358,7 @@ jobs:
           make build-push-container-multiplatform \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
             PLATFORM=${{ matrix.arch_os }} \
-            LATEST_TAG_FIPS_SUFFIX="-fips"
+            BUILD_TYPE_SUFFIX="-fips"
 
       - name: Build and push image to Open Source ECR
         run: |
@@ -406,7 +406,7 @@ jobs:
           make push-container-manifest \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
             PLATFORMS="linux/amd64" \
-            LATEST_TAG_FIPS_SUFFIX="-fips"
+            BUILD_TYPE_SUFFIX="-fips"
 
       - name: Push joint container manifest for all platforms to Open Source ECR
         run: |
