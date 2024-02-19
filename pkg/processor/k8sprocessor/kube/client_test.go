@@ -838,6 +838,12 @@ func TestExtractionRules(t *testing.T) {
 						Key:  "*",
 					},
 				},
+				NamespaceAnnotations: []FieldExtractionRule{
+					{
+						Name: "namespace_annotations_%s",
+						Key:  "*",
+					},
+				},
 				NamespaceLabels: []FieldExtractionRule{
 					{
 						Name: "namespace_labels_%s",
@@ -846,10 +852,11 @@ func TestExtractionRules(t *testing.T) {
 				},
 			},
 			attributes: map[string]string{
-				"k8s.pod.label.label1":           "lv1",
-				"k8s.pod.label.label2":           "k1=v1 k5=v5 extra!",
-				"k8s.pod.annotation.annotation1": "av1",
-				"namespace_labels_label":         "namespace_label_value",
+				"k8s.pod.label.label1":             "lv1",
+				"k8s.pod.label.label2":             "k1=v1 k5=v5 extra!",
+				"k8s.pod.annotation.annotation1":   "av1",
+				"namespace_labels_label":           "namespace_label_value",
+				"namespace_annotations_annotation": "namespace_annotation_value",
 			},
 		},
 	}
