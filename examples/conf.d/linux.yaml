@@ -43,6 +43,7 @@ receivers:
           process.disk.operations:
             enabled: true
   filelog/linux/logs/localhost:
+    storage: file_storage
     include_file_name: false
     include_file_path: true
     operators:
