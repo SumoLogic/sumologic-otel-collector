@@ -2,6 +2,7 @@
 
 - [Upgrading to v0.95.0-sumo-0](#upgrading-to-v0950-sumo-0)
   - [`sumologic` exporter: remove `json_logs`](#sumologic-exporter-remove-json_logs)
+  - [`sumologic` exporter: remove `clear_logs_timestamp`](#sumologic-exporter-remove-clear_logs_timestamp)
 - [Upgrading to v0.94.0-sumo-0](#upgrading-to-v0940-sumo-0)
   - [`servicegraph` processor: removed in favor of `servicegraph` connector](#servicegraph-processor-removed-in-favor-of-servicegraph-connector)
 - [Upgrading to v0.92.0-sumo-0](#upgrading-to-v0920-sumo-0)
@@ -59,6 +60,12 @@
 `json_logs` has been removed in favor of `transform` processor.
 
 Please follow [the migration process](#sumologic-exporter-deprecate-json_logs)
+
+### `sumologic` exporter: remove `clear_logs_timestamp`
+
+`clear_logs_timestamp` has been removed in favor of `transform` processor.
+
+Please follow [the migration process](#sumologic-exporter-deprecate-clear_logs_timestamp)
 
 ## Upgrading to v0.94.0-sumo-0
 
