@@ -181,7 +181,7 @@ jobs:
           make build-push-container-ubi-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }} \
-            LATEST_TAG_FIPS_SUFFIX="-ubi"
+            BUILD_TYPE_SUFFIX="-ubi"
 
   push-docker-manifest:
     name: Push joint container manifest
@@ -217,7 +217,7 @@ jobs:
       - name: Push joint FIPS container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORMS="linux/amd64" \
             BUILD_TYPE_SUFFIX="-fips"
 
@@ -230,9 +230,9 @@ jobs:
       - name: Push joint UBI-based container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-ubi \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORMS="linux/amd64" \
-            LATEST_TAG_FIPS_SUFFIX="-ubi"
+            BUILD_TYPE_SUFFIX="-ubi"
 
   package-msi:
     name: Package MSI
