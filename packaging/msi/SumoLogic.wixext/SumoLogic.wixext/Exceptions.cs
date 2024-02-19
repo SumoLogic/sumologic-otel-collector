@@ -34,4 +34,9 @@ namespace SumoLogic.wixext
     {
         public TagValueLengthExceededException(string message) { }
     }
+
+    public class MissingConfigurationException : Exception
+    {
+        public MissingConfigurationException(string message) { }
+    }
 }

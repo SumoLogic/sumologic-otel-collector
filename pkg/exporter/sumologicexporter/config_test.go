@@ -19,10 +19,9 @@ func TestInitExporterInvalidConfiguration(t *testing.T) {
 			name:          "unexpected log format",
 			expectedError: errors.New("unexpected log format: test_format"),
 			cfg: &Config{
-				LogFormat:        "test_format",
-				MetricFormat:     "otlp",
-				CompressEncoding: "gzip",
-				TraceFormat:      "otlp",
+				LogFormat:    "test_format",
+				MetricFormat: "otlp",
+				TraceFormat:  "otlp",
 				HTTPClientSettings: confighttp.HTTPClientSettings{
 					Timeout:  defaultTimeout,
 					Endpoint: "test_endpoint",
@@ -36,10 +35,10 @@ func TestInitExporterInvalidConfiguration(t *testing.T) {
 				LogFormat:    "json",
 				MetricFormat: "test_format",
 				HTTPClientSettings: confighttp.HTTPClientSettings{
-					Timeout:  defaultTimeout,
-					Endpoint: "test_endpoint",
+					Timeout:     defaultTimeout,
+					Endpoint:    "test_endpoint",
+					Compression: "gzip",
 				},
-				CompressEncoding: "gzip",
 			},
 		},
 		{
@@ -49,10 +48,10 @@ func TestInitExporterInvalidConfiguration(t *testing.T) {
 				LogFormat:    "json",
 				MetricFormat: "carbon2",
 				HTTPClientSettings: confighttp.HTTPClientSettings{
-					Timeout:  defaultTimeout,
-					Endpoint: "test_endpoint",
+					Timeout:     defaultTimeout,
+					Endpoint:    "test_endpoint",
+					Compression: "gzip",
 				},
-				CompressEncoding: "gzip",
 			},
 		},
 		{
@@ -62,10 +61,10 @@ func TestInitExporterInvalidConfiguration(t *testing.T) {
 				LogFormat:    "json",
 				MetricFormat: "graphite",
 				HTTPClientSettings: confighttp.HTTPClientSettings{
-					Timeout:  defaultTimeout,
-					Endpoint: "test_endpoint",
+					Timeout:     defaultTimeout,
+					Endpoint:    "test_endpoint",
+					Compression: "gzip",
 				},
-				CompressEncoding: "gzip",
 			},
 		},
 		{
@@ -76,23 +75,9 @@ func TestInitExporterInvalidConfiguration(t *testing.T) {
 				MetricFormat: "otlp",
 				TraceFormat:  "text",
 				HTTPClientSettings: confighttp.HTTPClientSettings{
-					Timeout:  defaultTimeout,
-					Endpoint: "test_endpoint",
-				},
-				CompressEncoding: "gzip",
-			},
-		},
-		{
-			name:          "unexpected compression encoding",
-			expectedError: errors.New("invalid compression encoding type: test_format; invalid compression encoding type: test_format"),
-			cfg: &Config{
-				LogFormat:        "json",
-				MetricFormat:     "otlp",
-				CompressEncoding: "test_format",
-				TraceFormat:      "otlp",
-				HTTPClientSettings: confighttp.HTTPClientSettings{
-					Timeout:  defaultTimeout,
-					Endpoint: "test_endpoint",
+					Timeout:     defaultTimeout,
+					Endpoint:    "test_endpoint",
+					Compression: "gzip",
 				},
 			},
 		},
@@ -100,12 +85,12 @@ func TestInitExporterInvalidConfiguration(t *testing.T) {
 			name:          "no endpoint and no auth extension specified",
 			expectedError: errors.New("no endpoint and no auth extension specified"),
 			cfg: &Config{
-				LogFormat:        "json",
-				MetricFormat:     "otlp",
-				CompressEncoding: "gzip",
-				TraceFormat:      "otlp",
+				LogFormat:    "json",
+				MetricFormat: "otlp",
+				TraceFormat:  "otlp",
 				HTTPClientSettings: confighttp.HTTPClientSettings{
-					Timeout: defaultTimeout,
+					Timeout:     defaultTimeout,
+					Compression: "gzip",
 				},
 			},
 		},

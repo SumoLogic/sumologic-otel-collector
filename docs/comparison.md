@@ -104,13 +104,13 @@ receivers:
       listen_address: "0.0.0.0:54526"
     protocol: rfc5424
 exporters:
-  logging:
+  debug:
     verbosity: detailed
 service:
   pipelines:
     logs:
       receivers: [syslog]
-      exporters: [logging]
+      exporters: [debug]
 ```
 
 and the following example logs:
@@ -186,7 +186,7 @@ exporters:
     source_name: "%{facility}"
     ## Set Source Host to client hostname
     source_host: "%{net.peer.name}"
-  logging:
+  debug:
     verbosity: detailed
 service:
   extensions: [sumologic]
@@ -194,7 +194,7 @@ service:
     logs:
       receivers: [tcplog]
       processors: [sumologic_syslog, groupbyattrs]
-      exporters: [logging, sumologic]
+      exporters: [debug, sumologic]
 ```
 
 and the following example logs:

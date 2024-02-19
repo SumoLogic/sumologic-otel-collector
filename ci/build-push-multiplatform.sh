@@ -24,8 +24,8 @@ if [[ -z "${BUILD_TAG}" ]]; then
     BUILD_TAG="latest"
 fi
 
-if [[ -z "${LATEST_TAG_FIPS_SUFFIX}" ]]; then
-    LATEST_TAG_FIPS_SUFFIX=""
+if [[ -z "${BUILD_TYPE_SUFFIX}" ]]; then
+    BUILD_TYPE_SUFFIX=""
 fi
 
 if [[ -z "${REPO_URL}" ]]; then
@@ -84,7 +84,7 @@ function build_push() {
     local TAG
     readonly TAG="${REPO_URL}:${BUILD_TAG}${LATEST_TAG_FIPS_SUFFIX}-${BUILD_ARCH}"
     local LATEST_TAG
-    readonly LATEST_TAG="${REPO_URL}:latest${LATEST_TAG_FIPS_SUFFIX}-${BUILD_ARCH}"
+    readonly LATEST_TAG="${REPO_URL}:latest${BUILD_TYPE_SUFFIX}-${BUILD_ARCH}"
 
     if [[ "${PUSH}" == true ]]; then
         echo "Building tags: ${TAG}, ${LATEST_TAG}"
@@ -98,16 +98,16 @@ function build_push() {
             --tag "${TAG}" \
             .
     else
-        echo "Building tag: latest${LATEST_TAG_FIPS_SUFFIX}"
+        echo "Building tag: latest${BUILD_TYPE_SUFFIX}"
         # load flag is needed so that docker loads this image
         # for subsequent steps on github actions
         docker buildx build \
             --file "${DOCKERFILE}" \
-            --build-arg BUILD_TAG="latest${LATEST_TAG_FIPS_SUFFIX}" \
+            --build-arg BUILD_TAG="latest${BUILD_TYPE_SUFFIX}" \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --platform="${PLATFORM}" \
             --load \
-            --tag "${REPO_URL}:latest${LATEST_TAG_FIPS_SUFFIX}" \
+            --tag "${REPO_URL}:latest${BUILD_TYPE_SUFFIX}" \
             .
     fi
 }

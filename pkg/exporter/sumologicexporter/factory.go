@@ -46,19 +46,12 @@ func createDefaultConfig() component.Config {
 	qs.Enabled = false
 
 	return &Config{
-		CompressEncoding:   DefaultCompressEncoding,
 		MaxRequestBodySize: DefaultMaxRequestBodySize,
 		LogFormat:          DefaultLogFormat,
 		MetricFormat:       DefaultMetricFormat,
 		Client:             DefaultClient,
 		ClearLogsTimestamp: DefaultClearLogsTimestamp,
-		JSONLogs: JSONLogs{
-			LogKey:       DefaultLogKey,
-			AddTimestamp: DefaultAddTimestamp,
-			TimestampKey: DefaultTimestampKey,
-			FlattenBody:  DefaultFlattenBody,
-		},
-		TraceFormat: OTLPTraceFormat,
+		TraceFormat:        OTLPTraceFormat,
 
 		HTTPClientSettings:   CreateDefaultHTTPClientSettings(),
 		BackOffConfig:        configretry.NewDefaultBackOffConfig(),

@@ -22,6 +22,7 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/configauth"
+	"go.opentelemetry.io/collector/config/configcompression"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/config/configretry"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
@@ -35,7 +36,8 @@ type Config struct {
 
 	// Compression encoding format, either empty string, gzip or deflate (default gzip)
 	// Empty string means no compression
-	CompressEncoding CompressEncodingType `mapstructure:"compress_encoding"`
+	// NOTE: CompressEncoding is deprecated and will be removed in an upcoming release
+	CompressEncoding configcompression.Type `mapstructure:"compress_encoding"`
 	// Max HTTP request body size in bytes before compression (if applied).
 	// By default 1MB is recommended.
 	MaxRequestBodySize int `mapstructure:"max_request_body_size"`
@@ -68,37 +70,16 @@ type Config struct {
 	// By default this is true.
 	ClearLogsTimestamp bool `mapstructure:"clear_logs_timestamp"`
 
-	JSONLogs `mapstructure:"json_logs"`
-
 	// StickySessionEnabled defines if sticky session support is enable.
 	// By default this is false.
 	StickySessionEnabled bool `mapstructure:"sticky_session_enabled"`
 }
 
-type JSONLogs struct {
-	// LogKey defines which key will be used to attach the log body at.
-	// This option affects JSON log format only.
-	// By default this is "log".
-	LogKey string `mapstructure:"log_key"`
-	// AddTimestamp defines whether to include a timestamp field when sending
-	// JSON logs, which would contain UNIX epoch timestamp in milliseconds.
-	// This option affects JSON log format only.
-	// By default this is true.
-	AddTimestamp bool `mapstructure:"add_timestamp"`
-	// When add_timestamp is set to true then this key defines what is the name
-	// of the timestamp key.
-	// By default this is "timestamp".
-	TimestampKey string `mapstructure:"timestamp_key"`
-	// When flatten_body is set to true and log is a map,
-	// log's body is going to be flattened and `log_key` won't be used
-	// By default this is false.
-	FlattenBody bool `mapstructure:"flatten_body"`
-}
-
 // CreateDefaultHTTPClientSettings returns default http client settings
 func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 	return confighttp.HTTPClientSettings{
-		Timeout: defaultTimeout,
+		Timeout:     defaultTimeout,
+		Compression: DefaultCompressEncoding,
 		Auth: &configauth.Authentication{
 			AuthenticatorID: component.NewID("sumologic"),
 		},
@@ -106,6 +87,29 @@ func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 }
 
 func (cfg *Config) Validate() error {
+
+	switch cfg.CompressEncoding {
+	case configcompression.Gzip:
+	case configcompression.Deflate:
+	case NoCompression:
+
+	default:
+		return fmt.Errorf("invalid compression encoding type: %v", cfg.HTTPClientSettings.Compression)
+	}
+
+	switch cfg.HTTPClientSettings.Compression {
+	case configcompression.Gzip:
+	case configcompression.Deflate:
+	case configcompression.Zstd:
+	case NoCompression:
+
+	default:
+		return fmt.Errorf("invalid compression encoding type: %v", cfg.HTTPClientSettings.Compression)
+	}
+
+	if cfg.CompressEncoding != NoCompression && cfg.HTTPClientSettings.Compression != DefaultCompressEncoding {
+		return fmt.Errorf("compress_encoding is deprecated and should not be used when compression is set to a non-default value")
+	}
 
 	switch cfg.LogFormat {
 	case OTLPLogFormat:
@@ -130,10 +134,6 @@ func (cfg *Config) Validate() error {
 	case OTLPTraceFormat:
 	default:
 		return fmt.Errorf("unexpected trace format: %s", cfg.TraceFormat)
-	}
-
-	if err := cfg.CompressEncoding.Validate(); err != nil {
-		return err
 	}
 
 	if len(cfg.HTTPClientSettings.Endpoint) == 0 && cfg.HTTPClientSettings.Auth == nil {
@@ -165,22 +165,6 @@ type TraceFormatType string
 // PipelineType represents type of the pipeline
 type PipelineType string
 
-// CompressEncodingType represents type of the pipeline
-type CompressEncodingType string
-
-func (cet CompressEncodingType) Validate() error {
-	switch cet {
-	case GZIPCompression:
-	case NoCompression:
-	case DeflateCompression:
-
-	default:
-		return fmt.Errorf("invalid compression encoding type: %v", cet)
-	}
-
-	return nil
-}
-
 const (
 	// TextFormat represents log_format: text
 	TextFormat LogFormatType = "text"
@@ -198,12 +182,8 @@ const (
 	OTLPMetricFormat MetricFormatType = "otlp"
 	// OTLPTraceFormat represents trace_format: otlp
 	OTLPTraceFormat TraceFormatType = "otlp"
-	// GZIPCompression represents compress_encoding: gzip
-	GZIPCompression CompressEncodingType = "gzip"
-	// DeflateCompression represents compress_encoding: deflate
-	DeflateCompression CompressEncodingType = "deflate"
 	// NoCompression represents disabled compression
-	NoCompression CompressEncodingType = ""
+	NoCompression configcompression.Type = ""
 	// MetricsPipeline represents metrics pipeline
 	MetricsPipeline PipelineType = "metrics"
 	// LogsPipeline represents metrics pipeline
@@ -215,7 +195,7 @@ const (
 	// DefaultCompress defines default Compress
 	DefaultCompress bool = true
 	// DefaultCompressEncoding defines default CompressEncoding
-	DefaultCompressEncoding CompressEncodingType = "gzip"
+	DefaultCompressEncoding configcompression.Type = "gzip"
 	// DefaultMaxRequestBodySize defines default MaxRequestBodySize in bytes
 	DefaultMaxRequestBodySize int = 1 * 1024 * 1024
 	// DefaultLogFormat defines default LogFormat
@@ -228,12 +208,6 @@ const (
 	DefaultClearLogsTimestamp bool = true
 	// DefaultLogKey defines default LogKey value
 	DefaultLogKey string = "log"
-	// DefaultAddTimestamp defines default AddTimestamp value
-	DefaultAddTimestamp bool = true
-	// DefaultTimestampKey defines default TimestampKey value
-	DefaultTimestampKey string = "timestamp"
-	// DefaultFlattenBody defines default FlattenBody value
-	DefaultFlattenBody bool = false
 	// DefaultDropRoutingAttribute defines default DropRoutingAttribute
 	DefaultDropRoutingAttribute string = ""
 	// DefaultStickySessionEnabled defines default StickySessionEnabled value

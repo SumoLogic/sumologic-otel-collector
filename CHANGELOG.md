@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.94.0-sumo-0]
+
+### Released 2024-02-14
+
+### Breaking Changes
+
+- feat(servicegraphprocessor)!: remove `servicegraph` processor [#1439]
+  Use the Service Graph connector instead.
+
+### Added
+
+- feat(install): add support for remote management, ephemeral and api url in Windows installer [#1437]
+
+### Changed
+
+- feat(sumologicexporter): Deprecate compress_encoding and remove all of our own compression code in favor of using the confighttp helper [#1432]
+- chore: update otelcol core to v0.94.1 [#1446]
+
+### Fixed
+
+- fix(install): support --remote-config startup option with Windows services [#1443]
+
+[#1439]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1439
+[#1437]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1437
+[#1432]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1432
+[#1446]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1446
+[#1443]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1443
+[v0.94.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.94.0-sumo-0
+
+## [v0.93.0-sumo-0]
+
+### Released 2024-02-07
+
+### Changed
+
+- chore: upgrade otelcol core to `v0.93.0` [#1435]
+
+[#1435]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1435
+[v0.93.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.93.0-sumo-0
+
 ## [v0.92.0-sumo-0]
 
 See the [upgrade guide][upgrade_guide_v0.92] for more details on the breaking changes.

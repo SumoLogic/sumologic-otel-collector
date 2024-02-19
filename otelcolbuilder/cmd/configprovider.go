@@ -102,7 +102,7 @@ func NewConfigProviderSettings(locations []string) otelcol.ConfigProviderSetting
 		ResolverSettings: confmap.ResolverSettings{
 			URIs:       locations,
 			Providers:  makeMapProvidersMap(fileprovider.New(), envprovider.New(), yamlprovider.New(), globprovider.New()),
-			Converters: []confmap.Converter{expandconverter.New()},
+			Converters: []confmap.Converter{expandconverter.New(confmap.ConverterSettings{})},
 		},
 	}
 }
@@ -114,7 +114,7 @@ func NewOpAmpConfigProviderSettings(location string) otelcol.ConfigProviderSetti
 		ResolverSettings: confmap.ResolverSettings{
 			URIs:       []string{location},
 			Providers:  makeMapProvidersMap(opampprovider.New()),
-			Converters: []confmap.Converter{expandconverter.New()},
+			Converters: []confmap.Converter{expandconverter.New(confmap.ConverterSettings{})},
 		},
 	}
 }
