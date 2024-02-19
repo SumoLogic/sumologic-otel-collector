@@ -2,12 +2,6 @@ ARG BUILD_TAG
 ARG REPO_URL=sumologic-otel-collector
 ARG BUILD_ARCH
 
-FROM alpine:3.19.1 as certs
-RUN apk --update add ca-certificates
-
-FROM alpine:3.19.1 as directories
-RUN mkdir /etc/otel/
-
 ## Build RedHat compliant image
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9
 
@@ -34,8 +28,6 @@ USER ${USER_UID}
 ENV HOME /etc/otel/
 
 COPY otelcol-sumo /
-COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=directories --chown=${USER_UID}:${USER_UID} /etc/otel/ /etc/otel/
 
 ENTRYPOINT ["/otelcol-sumo"]
 CMD ["--config", "/etc/otel/config.yaml"]
