@@ -461,32 +461,7 @@ func (s *sender) formatLogLine(lr plog.LogRecord) (string, error) {
 
 // TODO: add support for HTTP limits
 func (s *sender) sendOTLPLogs(ctx context.Context, ld plog.Logs) error {
-	var lld plog.Logs
-
-	// Clear timestamps if required
-	if s.config.ClearLogsTimestamp {
-		// make a copy to preserve immutability
-		lld = plog.NewLogs()
-		ld.CopyTo(lld)
-
-		rls := lld.ResourceLogs()
-		for i := 0; i < rls.Len(); i++ {
-			rl := rls.At(i)
-			// rl.ScopeLogs().CopyTo(rl.ScopeLogs())
-
-			slgs := rl.ScopeLogs()
-			for j := 0; j < slgs.Len(); j++ {
-				log := slgs.At(j)
-				for k := 0; k < log.LogRecords().Len(); k++ {
-					log.LogRecords().At(k).SetTimestamp(0)
-				}
-			}
-		}
-	} else {
-		lld = ld
-	}
-
-	body, err := logsMarshaler.MarshalLogs(lld)
+	body, err := logsMarshaler.MarshalLogs(ld)
 	if err != nil {
 		return err
 	}
@@ -497,7 +472,7 @@ func (s *sender) sendOTLPLogs(ctx context.Context, ld plog.Logs) error {
 // sendNonOTLPMetrics sends metrics in right format basing on the s.config.MetricFormat
 func (s *sender) sendNonOTLPMetrics(ctx context.Context, md pmetric.Metrics) (pmetric.Metrics, []error) {
 	if s.config.MetricFormat == OTLPMetricFormat {
-		return md, []error{fmt.Errorf("Attempting to send OTLP metrics as non-OTLP data")}
+		return md, []error{fmt.Errorf("attempting to send OTLP metrics as non-OTLP data")}
 	}
 
 	var (
