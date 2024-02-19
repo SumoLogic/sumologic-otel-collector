@@ -47,6 +47,7 @@
   <ItemGroup>
     <PackageReference Include="WixToolset.Netfx.wixext" Version="4.0.1" />
     <PackageReference Include="WixToolset.UI.wixext" Version="4.0.1" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="4.0.1" />
   </ItemGroup>
 
   <!-- <PropertyGroup Condition="'$(Platform)' == 'arm64'"> -->

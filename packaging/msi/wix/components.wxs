@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
   <?include variables.wxi ?>
 
   <Fragment>
@@ -91,7 +91,10 @@
         <!-- Add service for OTC -->
         <ServiceInstall Id="Service" Name="!(loc.ServiceName)" DisplayName="!(loc.ServiceDisplayName)"
           Description="!(loc.ServiceDescription)" Type="ownProcess" Vital="yes" Start="auto" Account="LocalSystem"
-          ErrorControl="normal" Arguments="[SERVICEARGUMENTS]" Interactive="no" />
+          ErrorControl="normal" Arguments="[SERVICEARGUMENTS]" Interactive="no">
+          <util:ServiceConfig FirstFailureActionType="restart" SecondFailureActionType="restart"
+            ThirdFailureActionType="restart" RestartServiceDelayInSeconds="0" ResetPeriodInDays="0" />
+        </ServiceInstall>
 
         <!-- Start/Stop/Remove OTC service -->
         <ServiceControl Id="StartServiceControl" Name="!(loc.ServiceName)" Start="install" Stop="both" Remove="uninstall" Wait="no" />
