@@ -1,0 +1,1 @@
+feat(k8sprocessor): extract namespace annotations

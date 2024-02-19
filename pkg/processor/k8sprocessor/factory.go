@@ -189,6 +189,7 @@ func createProcessorOpts(cfg component.Config) []Option {
 	opts = append(opts, WithExtractLabels(oCfg.Extract.Labels...))
 	opts = append(opts, WithExtractNamespaceLabels(oCfg.Extract.NamespaceLabels...))
 	opts = append(opts, WithExtractAnnotations(oCfg.Extract.Annotations...))
+	opts = append(opts, WithExtractNamespaceAnnotations(oCfg.Extract.NamespaceAnnotations...))
 	opts = append(opts, WithExtractTags(oCfg.Extract.Tags))
 
 	if oCfg.OwnerLookupEnabled {

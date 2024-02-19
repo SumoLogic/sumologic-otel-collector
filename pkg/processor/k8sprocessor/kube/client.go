@@ -366,11 +366,15 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 		c.extractLabelsIntoTags(r, pod.Labels, tags)
 	}
 
-	if len(c.Rules.NamespaceLabels) > 0 && c.Rules.OwnerLookupEnabled {
+	if (len(c.Rules.NamespaceLabels) > 0 || len(c.Rules.NamespaceAnnotations) > 0) && c.Rules.OwnerLookupEnabled {
 		namespace := c.op.GetNamespace(pod)
 		if namespace != nil {
 			for _, r := range c.Rules.NamespaceLabels {
 				c.extractLabelsIntoTags(r, namespace.Labels, tags)
+			}
+
+			for _, r := range c.Rules.NamespaceAnnotations {
+				c.extractLabelsIntoTags(r, namespace.Annotations, tags)
 			}
 		}
 	}

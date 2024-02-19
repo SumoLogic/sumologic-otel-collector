@@ -157,10 +157,11 @@ type ExtractionRules struct {
 
 	OwnerLookupEnabled bool
 
-	Tags            ExtractionFieldTags
-	Annotations     []FieldExtractionRule
-	Labels          []FieldExtractionRule
-	NamespaceLabels []FieldExtractionRule
+	Tags                 ExtractionFieldTags
+	Annotations          []FieldExtractionRule
+	NamespaceAnnotations []FieldExtractionRule
+	Labels               []FieldExtractionRule
+	NamespaceLabels      []FieldExtractionRule
 }
 
 // ExtractionFieldTags is used to describe selected exported key names for the extracted data

@@ -83,6 +83,12 @@ type ExtractConfig struct {
 	// documentation for more details.
 	Labels []FieldExtractConfig `mapstructure:"labels"`
 
+	// NamespaceAnnotations allows extracting data from namespace annotations and record it
+	// as resource attributes.
+	// It is a list of FieldExtractConfig type. See FieldExtractConfig
+	// documentation for more details.
+	NamespaceAnnotations []FieldExtractConfig `mapstructure:"namespace_annotations"`
+
 	// NamespaceLabels allows extracting data from namespace labels and record it
 	// as resource attributes.
 	// It is a list of FieldExtractConfig type. See FieldExtractConfig

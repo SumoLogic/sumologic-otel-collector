@@ -232,6 +232,18 @@ func WithExtractAnnotations(annotations ...FieldExtractConfig) Option {
 	}
 }
 
+// WithExtractNamespaceAnnotations allows specifying options to control extraction of namespace annotations tags.
+func WithExtractNamespaceAnnotations(annotations ...FieldExtractConfig) Option {
+	return func(p *kubernetesprocessor) error {
+		annotations, err := extractFieldRules("namespace_annotations", annotations...)
+		if err != nil {
+			return err
+		}
+		p.rules.NamespaceAnnotations = annotations
+		return nil
+	}
+}
+
 func extractFieldRules(fieldType string, fields ...FieldExtractConfig) ([]kube.FieldExtractionRule, error) {
 	rules := []kube.FieldExtractionRule{}
 	for _, a := range fields {
