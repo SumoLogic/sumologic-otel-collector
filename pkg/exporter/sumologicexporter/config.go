@@ -64,12 +64,6 @@ type Config struct {
 	// Name of the client
 	Client string `mapstructure:"client"`
 
-	// ClearTimestamp defines if timestamp for logs should be set to 0.
-	// It indicates that backend will extract timestamp from logs.
-	// This option affects OTLP format only.
-	// By default this is true.
-	ClearLogsTimestamp bool `mapstructure:"clear_logs_timestamp"`
-
 	// StickySessionEnabled defines if sticky session support is enable.
 	// By default this is false.
 	StickySessionEnabled bool `mapstructure:"sticky_session_enabled"`
@@ -204,8 +198,6 @@ const (
 	DefaultMetricFormat MetricFormatType = OTLPMetricFormat
 	// DefaultClient defines default Client
 	DefaultClient string = "otelcol"
-	// DefaultClearTimestamp defines default ClearLogsTimestamp value
-	DefaultClearLogsTimestamp bool = true
 	// DefaultLogKey defines default LogKey value
 	DefaultLogKey string = "log"
 	// DefaultDropRoutingAttribute defines default DropRoutingAttribute

@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.94.0-sumo-1]
+
+### Released 2024-02-19
+
+### Breaking Changes
+
+- feat(sumologicexporter)!: remove deprecated json_logs [#1452]
+- feat(sumologicexporter)!: remove deprecated clear_logs_timestamp [#1455]
+
+### Changed
+
+- chore(k8sprocessor): Improve logging of missing data events [#1448]
+
+### Fixed
+
+- fix(opamp): restart windows service when configuration update is received via opamp [#1453]
+
+[#1452]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1452
+[#1455]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1455
+[#1448]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1448
+[#1453]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1453
+[v0.94.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.94.0-sumo-1
+
 ## [v0.94.0-sumo-0]
 
 ### Released 2024-02-14
