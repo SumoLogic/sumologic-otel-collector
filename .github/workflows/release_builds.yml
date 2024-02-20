@@ -356,9 +356,18 @@ jobs:
         run: |
           cp artifacts/${{ steps.set_filename_fips.outputs.filename_fips }} otelcol-sumo
           make build-push-container-multiplatform \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }} \
             BUILD_TYPE_SUFFIX="-fips"
+
+      - name: Build and push UBI-based FIPS image to Open Source ECR
+        if: matrix.arch_os == 'linux_amd64'
+        run: |
+          cp artifacts/${{ steps.set_filename.outputs.filename_fips }} otelcol-sumo
+          make build-push-container-ubi \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }}
+            BUILD_TYPE_SUFFIX="-ubi-fips"
 
       - name: Build and push image to Open Source ECR
         run: |
@@ -372,7 +381,7 @@ jobs:
         run: |
           cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
           make build-push-container-ubi \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-ubi \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }}
             BUILD_TYPE_SUFFIX="-ubi"
 
@@ -416,6 +425,13 @@ jobs:
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORMS="linux/amd64" \
             BUILD_TYPE_SUFFIX="-fips"
+
+      - name: Push joint UBI-based FIPS container manifest for all platforms to Open Source ECR
+        run: |
+          make push-container-manifest \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORMS="linux/amd64"
+            BUILD_TYPE_SUFFIX="-ubi-fips"
 
       - name: Push joint container manifest for all platforms to Open Source ECR
         run: |
