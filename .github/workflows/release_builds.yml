@@ -115,7 +115,7 @@ jobs:
 
       - name: Sign Windows binary
         if: runner.os == 'Windows'
-        uses: skymatic/code-sign-action@v2
+        uses: skymatic/code-sign-action@v3
         with:
           certificate: '${{ secrets.MICROSOFT_CERTIFICATE }}'
           password: '${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}'
@@ -481,7 +481,7 @@ jobs:
         run: msbuild.exe -p:Configuration=Release -p:Platform=${{ matrix.platform }} -p:ProductVersion=$PRODUCT_VERSION -p:FIPSEnabled=${{ matrix.fips }} -Restore
 
       - name: Sign MSI
-        uses: skymatic/code-sign-action@v2
+        uses: skymatic/code-sign-action@v3
         with:
           certificate: '${{ secrets.MICROSOFT_CERTIFICATE }}'
           password: '${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}'
