@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1453]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1453
 [v0.94.0-sumo-2]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.94.0-sumo-2
 
+## [v0.94.0-sumo-1]
+
+This was a failed release. Use [v0.94.0-sumo-2] instead.
+
+[v0.94.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.94.0-sumo-1
+
 ## [v0.94.0-sumo-0]
 
 ### Released 2024-02-14
