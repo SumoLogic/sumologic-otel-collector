@@ -1,6 +1,6 @@
 # Upgrading
 
-- [Upgrading to v0.95.0-sumo-0](#upgrading-to-v0950-sumo-0)
+- [Upgrading to v0.94.0-sumo-1](#upgrading-to-v0940-sumo-1)
   - [`sumologic` exporter: remove `json_logs`](#sumologic-exporter-remove-json_logs)
   - [`sumologic` exporter: remove `clear_logs_timestamp`](#sumologic-exporter-remove-clear_logs_timestamp)
 - [Upgrading to v0.94.0-sumo-0](#upgrading-to-v0940-sumo-0)
@@ -53,7 +53,7 @@
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
-## Upgrading to v0.95.0-sumo-0
+## Upgrading to v0.94.0-sumo-1
 
 ### `sumologic` exporter: remove `json_logs`
 
