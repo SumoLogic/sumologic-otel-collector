@@ -1,0 +1,33 @@
+ARG BUILD_TAG
+ARG REPO_URL=sumologic-otel-collector
+ARG BUILD_ARCH
+
+## Build RedHat compliant image
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9
+
+ENV SUMMARY="UBI based sumologic-otel-collector" \
+    DESCRIPTION="Sumo Logic Distribution for OpenTelemetry Collector is a Sumo Logic-supported distribution of the OpenTelemetry Collector. It is a single agent to send logs, metrics and traces to Sumo Logic."
+
+LABEL name="sumologic-otel-collector" \
+      vendor="Sumo Logic" \
+      version="$BUILD_TAG" \
+      release="0" \
+      summary="$SUMMARY" \
+      description="$DESCRIPTION" \
+      io.k8s.description="$DESCRIPTION" \
+      maintainer="collection@sumologic.com"
+
+ADD https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/LICENSE \
+    /licenses/LICENSE
+
+RUN microdnf update && microdnf install systemd && microdnf clean all
+
+ENV TAG $BUILD_TAG
+ARG USER_UID=10001
+USER ${USER_UID}
+ENV HOME /etc/otel/
+
+COPY otelcol-sumo /
+
+ENTRYPOINT ["/otelcol-sumo"]
+CMD ["--config", "/etc/otel/config.yaml"]
