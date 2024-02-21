@@ -66,6 +66,24 @@ func TestFillWithAnnotations(t *testing.T) {
 	assertAttribute(t, attrs, "_sourceCategory", "ABC#123asd#Prefix:sc#from#annot#ns#1#123asd")
 }
 
+// TODO: add more test cases
+func TestFillWithNamespaceAnnotations(t *testing.T) {
+	cfg := createDefaultConfig().(*Config)
+
+	attrs := pcommon.NewMap()
+	attrs.PutStr("k8s.namespace.name", "ns-1")
+	attrs.PutStr("k8s.pod.uid", "123asd")
+	attrs.PutStr("k8s.pod.name", "ABC")
+	attrs.PutStr("k8s.namespace.annotation.sumologic.com/sourceCategory", "sc-from-annot-%{k8s.namespace.name}-%{k8s.pod.uid}")
+	attrs.PutStr("k8s.namespace.annotation.sumologic.com/sourceCategoryPrefix", "%{k8s.pod.name}-%{k8s.pod.uid}-Prefix:")
+	attrs.PutStr("k8s.namespace.annotation.sumologic.com/sourceCategoryReplaceDash", "#")
+
+	filler := newSourceCategoryFiller(cfg, zap.NewNop())
+	filler.fill(&attrs)
+
+	assertAttribute(t, attrs, "_sourceCategory", "ABC#123asd#Prefix:sc#from#annot#ns#1#123asd")
+}
+
 func TestFillWithContainerAnnotations(t *testing.T) {
 	t.Run("container annotations are disabled by default", func(t *testing.T) {
 		cfg := createDefaultConfig().(*Config)

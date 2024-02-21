@@ -30,6 +30,7 @@ type sourceCategoryFiller struct {
 	prefix                       string
 	dashReplacement              string
 	annotationPrefix             string
+	namespaceAnnotationPrefix    string
 	containerAnnotationsEnabled  bool
 	containerNameKey             string
 	containerAnnotationsPrefixes []string
@@ -47,6 +48,7 @@ func newSourceCategoryFiller(cfg *Config, logger *zap.Logger) sourceCategoryFill
 		prefix:                       cfg.SourceCategoryPrefix,
 		dashReplacement:              cfg.SourceCategoryReplaceDash,
 		annotationPrefix:             cfg.AnnotationPrefix,
+		namespaceAnnotationPrefix:    cfg.NamespaceAnnotationPrefix,
 		containerAnnotationsEnabled:  cfg.ContainerAnnotations.Enabled,
 		containerNameKey:             cfg.ContainerAnnotations.ContainerNameKey,
 		containerAnnotationsPrefixes: cfg.ContainerAnnotations.Prefixes,
@@ -64,9 +66,10 @@ func extractTemplateAttributes(template string) []string {
 
 // fill takes a collection of attributes for a record and adds to it a new attribute with the source category for the record.
 //
-// The source category is retrieved from one of three places (in the following precedence):
+// The source category is retrieved from one of four places (in the following precedence):
 // - the source category container-level annotation (e.g. "k8s.pod.annotation.sumologic.com/container-name.sourceCategory"),
 // - the source category pod-level annotation (e.g. "k8s.pod.annotation.sumologic.com/sourceCategory"),
+// - the source category namespace-level annotation (e.g. "k8s.namespace.annotation.sumologic.com/sourceCategory"),
 // - the source category configured in the processor's "source_category" configuration option.
 func (f *sourceCategoryFiller) fill(attributes *pcommon.Map) {
 	containerSourceCategory := f.getSourceCategoryFromContainerAnnotation(attributes)
@@ -78,20 +81,13 @@ func (f *sourceCategoryFiller) fill(attributes *pcommon.Map) {
 	var templateAttributes []string
 	doesUseAnnotation := false
 
-	valueTemplate := getAnnotationAttributeValue(f.annotationPrefix, sourceCategorySpecialAnnotation, attributes)
-	if valueTemplate == "" {
-		valueTemplate = f.valueTemplate
-	} else {
-		doesUseAnnotation = true
-	}
+	// get sourceCategory and sourceCategoryPrefix from Pod Annotation
+	valueTemplate, doesUseAnnotation := f.getSourceCategoryFromAnnotation(f.annotationPrefix, attributes)
 
-	prefix := getAnnotationAttributeValue(f.annotationPrefix, sourceCategoryPrefixAnnotation, attributes)
-	if prefix == "" {
-		prefix = f.prefix
-	} else {
-		doesUseAnnotation = true
+	if !doesUseAnnotation {
+		// get sourceCategory and sourceCategoryPrefix from Namespace Annotation
+		valueTemplate, doesUseAnnotation = f.getSourceCategoryFromAnnotation(f.namespaceAnnotationPrefix, attributes)
 	}
-	valueTemplate = prefix + valueTemplate
 
 	if doesUseAnnotation {
 		templateAttributes = extractTemplateAttributes(valueTemplate)
@@ -101,13 +97,43 @@ func (f *sourceCategoryFiller) fill(attributes *pcommon.Map) {
 
 	sourceCategoryValue := f.replaceTemplateAttributes(valueTemplate, templateAttributes, attributes)
 
-	dashReplacement := getAnnotationAttributeValue(f.annotationPrefix, sourceCategoryReplaceDashAnnotation, attributes)
-	if dashReplacement == "" {
-		dashReplacement = f.dashReplacement
-	}
+	dashReplacement := f.getSourceCategoryDashReplacement(attributes)
 	sourceCategoryValue = strings.ReplaceAll(sourceCategoryValue, "-", dashReplacement)
 
 	attributes.PutStr(sourceCategoryKey, sourceCategoryValue)
+}
+
+func (f *sourceCategoryFiller) getSourceCategoryDashReplacement(attributes *pcommon.Map) string {
+	dashReplacement := getAnnotationAttributeValue(f.annotationPrefix, sourceCategoryReplaceDashAnnotation, attributes)
+	if dashReplacement != "" {
+		return dashReplacement
+	}
+
+	dashReplacement = getAnnotationAttributeValue(f.namespaceAnnotationPrefix, sourceCategoryReplaceDashAnnotation, attributes)
+	if dashReplacement != "" {
+		return dashReplacement
+	}
+	return f.dashReplacement
+}
+
+func (f *sourceCategoryFiller) getSourceCategoryFromAnnotation(annotationPrefix string, attributes *pcommon.Map) (string, bool) {
+	doesUseAnnotation := false
+
+	valueTemplate := getAnnotationAttributeValue(annotationPrefix, sourceCategorySpecialAnnotation, attributes)
+	if valueTemplate == "" {
+		valueTemplate = f.valueTemplate
+	} else {
+		doesUseAnnotation = true
+	}
+
+	prefix := getAnnotationAttributeValue(annotationPrefix, sourceCategoryPrefixAnnotation, attributes)
+	if prefix == "" {
+		prefix = f.prefix
+	} else {
+		doesUseAnnotation = true
+	}
+	valueTemplate = prefix + valueTemplate
+	return valueTemplate, doesUseAnnotation
 }
 
 func (f *sourceCategoryFiller) getSourceCategoryFromContainerAnnotation(attributes *pcommon.Map) string {

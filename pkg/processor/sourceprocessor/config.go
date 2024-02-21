@@ -29,10 +29,11 @@ type Config struct {
 	// the processed entry is dropped.
 	Exclude map[string]string `mapstructure:"exclude"`
 
-	AnnotationPrefix   string `mapstructure:"annotation_prefix"`
-	PodKey             string `mapstructure:"pod_key"`
-	PodNameKey         string `mapstructure:"pod_name_key"`
-	PodTemplateHashKey string `mapstructure:"pod_template_hash_key"`
+	AnnotationPrefix          string `mapstructure:"annotation_prefix"`
+	NamespaceAnnotationPrefix string `mapstructure:"namespace_annotation_prefix"`
+	PodKey                    string `mapstructure:"pod_key"`
+	PodNameKey                string `mapstructure:"pod_name_key"`
+	PodTemplateHashKey        string `mapstructure:"pod_template_hash_key"`
 
 	ContainerAnnotations ContainerAnnotationsConfig `mapstructure:"container_annotations"`
 }

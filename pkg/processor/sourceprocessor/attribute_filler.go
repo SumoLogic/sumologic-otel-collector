@@ -69,15 +69,25 @@ func createSourceNameFiller(cfg *Config) attributeFiller {
 	return filler
 }
 
-func (f *attributeFiller) fillResourceOrUseAnnotation(atts *pcommon.Map, annotationKey string) bool {
+func (f *attributeFiller) fillResourceOrUseAnnotation(atts *pcommon.Map, annotationKey string, namespaceAnnotationKey string) bool {
 	val, found := atts.Get(annotationKey)
 	if found {
-		annotationFiller := extractFormat(val.Str(), f.name)
-		annotationFiller.dashReplacement = f.dashReplacement
-		annotationFiller.compiledFormat = f.prefix + annotationFiller.compiledFormat
-		return annotationFiller.fillAttributes(atts)
+		return f.useAnnotation(atts, val)
 	}
+
+	val, found = atts.Get(namespaceAnnotationKey)
+	if found {
+		return f.useAnnotation(atts, val)
+	}
+
 	return f.fillAttributes(atts)
+}
+
+func (f *attributeFiller) useAnnotation(atts *pcommon.Map, annotation pcommon.Value) bool {
+	annotationFiller := extractFormat(annotation.Str(), f.name)
+	annotationFiller.dashReplacement = f.dashReplacement
+	annotationFiller.compiledFormat = f.prefix + annotationFiller.compiledFormat
+	return annotationFiller.fillAttributes(atts)
 }
 
 func (f *attributeFiller) fillAttributes(atts *pcommon.Map) bool {

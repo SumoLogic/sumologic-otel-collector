@@ -33,10 +33,11 @@ import (
 )
 
 type sourceKeys struct {
-	annotationPrefix   string
-	podKey             string
-	podNameKey         string
-	podTemplateHashKey string
+	annotationPrefix          string
+	namespaceAnnotationPrefix string
+	podKey                    string
+	podNameKey                string
+	podTemplateHashKey        string
 }
 
 // dockerLog represents log from k8s using docker log driver send by FluentBit
@@ -90,10 +91,11 @@ func compileRegex(regex string) *regexp.Regexp {
 
 func newSourceProcessor(set processor.CreateSettings, cfg *Config) *sourceProcessor {
 	keys := sourceKeys{
-		annotationPrefix:   cfg.AnnotationPrefix,
-		podKey:             cfg.PodKey,
-		podNameKey:         cfg.PodNameKey,
-		podTemplateHashKey: cfg.PodTemplateHashKey,
+		annotationPrefix:          cfg.AnnotationPrefix,
+		namespaceAnnotationPrefix: cfg.NamespaceAnnotationPrefix,
+		podKey:                    cfg.PodKey,
+		podNameKey:                cfg.PodNameKey,
+		podTemplateHashKey:        cfg.PodTemplateHashKey,
 	}
 
 	exclude := make(map[string]*regexp.Regexp)
@@ -124,20 +126,14 @@ func (sp *sourceProcessor) isFilteredOut(atts pcommon.Map) bool {
 	// TODO: This is quite inefficient when done for each package (ore even more so, span) separately.
 	// It should be moved to K8S Meta Processor and done once per new pod/changed pod
 
-	if value, found := atts.Get(sp.annotationAttribute(excludeAnnotation)); found {
-		if value.Type() == pcommon.ValueTypeStr && value.Str() == "true" {
-			return true
-		} else if value.Type() == pcommon.ValueTypeBool && value.Bool() {
-			return true
-		}
+	isFiltered, useAnnotation := sp.isFilteredOutUsingAnnotation(atts, sp.annotationAttribute)
+	if useAnnotation {
+		return isFiltered
 	}
 
-	if value, found := atts.Get(sp.annotationAttribute(includeAnnotation)); found {
-		if value.Type() == pcommon.ValueTypeStr && value.Str() == "true" {
-			return false
-		} else if value.Type() == pcommon.ValueTypeBool && value.Bool() {
-			return false
-		}
+	isFilteredNamespace, useNamespaceAnnotation := sp.isFilteredOutUsingAnnotation(atts, sp.NamespaceAnnotationAttribute)
+	if useNamespaceAnnotation {
+		return isFilteredNamespace
 	}
 
 	// Check fields by matching them against field exclusion regexes
@@ -151,8 +147,38 @@ func (sp *sourceProcessor) isFilteredOut(atts pcommon.Map) bool {
 	return false
 }
 
+func (sp *sourceProcessor) isFilteredOutUsingAnnotation(atts pcommon.Map, formatter func(string) string) (bool, bool) {
+	useAnnotations := false
+	isFiltered := false
+
+	if value, found := atts.Get(formatter(excludeAnnotation)); found {
+		if value.Type() == pcommon.ValueTypeStr && value.Str() == "true" {
+			useAnnotations = true
+			isFiltered = true
+		} else if value.Type() == pcommon.ValueTypeBool && value.Bool() {
+			useAnnotations = true
+			isFiltered = true
+		}
+	}
+
+	if value, found := atts.Get(formatter(includeAnnotation)); found {
+		if value.Type() == pcommon.ValueTypeStr && value.Str() == "true" {
+			useAnnotations = true
+			isFiltered = false
+		} else if value.Type() == pcommon.ValueTypeBool && value.Bool() {
+			useAnnotations = true
+			isFiltered = false
+		}
+	}
+	return isFiltered, useAnnotations
+}
+
 func (sp *sourceProcessor) annotationAttribute(annotationKey string) string {
 	return sp.keys.annotationPrefix + annotationKey
+}
+
+func (sp *sourceProcessor) NamespaceAnnotationAttribute(annotationKey string) string {
+	return sp.keys.namespaceAnnotationPrefix + annotationKey
 }
 
 // ProcessTraces processes traces
@@ -266,10 +292,13 @@ func (sp *sourceProcessor) processResource(res pcommon.Resource) pcommon.Resourc
 
 	sp.sourceHostFiller.fillResourceOrUseAnnotation(&atts,
 		sp.annotationAttribute(sourceHostSpecialAnnotation),
+		sp.NamespaceAnnotationAttribute(sourceHostSpecialAnnotation),
 	)
 	sp.sourceCategoryFiller.fill(&atts)
+
 	sp.sourceNameFiller.fillResourceOrUseAnnotation(&atts,
 		sp.annotationAttribute(sourceNameSpecialAnnotation),
+		sp.NamespaceAnnotationAttribute(sourceNameSpecialAnnotation),
 	)
 
 	return res

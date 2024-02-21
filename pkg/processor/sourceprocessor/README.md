@@ -41,9 +41,15 @@ processors:
       <attribute_key_1>: <attribute_value_regex_1>
       <attribute_key_2>: <attribute_value_regex_2>
 
-    # Prefix which allows to find given annotation; it is used for including/excluding pods, among other attributes.
+    # Prefix which allows to find given pod annotation among other attributes.
+    # It is used for including/excluding pods from collection or to set sourceCategory, sourceHost, and sourceName
     # default: "k8s.pod.annotation."
     annotation_prefix: <annotation_prefix>
+
+    # Prefix which allows to find given namespace annotation among other attributes.
+    # It is used for including/excluding namespace from collection or to set sourceCategory, sourceHost, and sourceName
+    # default: "k8s.namespace.annotation."
+    namespace_annotation_prefix: <namespace_annotation_prefix>
 
     # Name of the attribute that contains the full name of the pod.
     # default: "k8s.pod.name"
@@ -114,17 +120,17 @@ processors:
       pod: "custom-pod-.*"
 ```
 
-## Pod annotations
+## Pod and namespace annotations
 
-The following [Kubernetes annotations][k8s_annotations_doc] can be used on pods:
+The following [Kubernetes annotations][k8s_annotations_doc] can be used on pods or namespace:
 
-- `sumologic.com/exclude` - records from a pod that has this annotation set to
+- `sumologic.com/exclude` - records from a pod/namespace that has this annotation set to
   `true` are dropped,
 
   **NOTE**: this has precedence over `sumologic.com/include` if both are set at
-  the same time for one pod.
+  the same time for one pod/namespace.
 
-- `sumologic.com/include` - records from a pod that has this annotation set to
+- `sumologic.com/include` - records from a pod/namespace that has this annotation set to
   `true` are not checked against exclusion regexes from `exclude` processor settings
 
 - `sumologic.com/sourceCategory` - overrides `source_category` config option
@@ -142,6 +148,8 @@ This can be achieved with the [Kubernetes processor](../k8sprocessor).
 For example, if a resource has the `k8s.pod.annotation.sumologic.com/exclude`
 attribute set to `true`, the resource will be dropped.
 
+*Note:** Pod annotations take precedence over namespace annotations.
+
 [k8s_annotations_doc]: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
 
 ### Container-level pod annotations
@@ -151,7 +159,7 @@ it is possible to set pod annotations that are container-specific.
 
 The following rules apply:
 
-- Container-level annotations take precendence over other forms of setting the source category.
+- Container-level annotations take precedence over other forms of setting the source category.
 - No other transformations are applied to the source categories retrieved from
   container-level annotations, like adding source category prefix or replacing the dash.
 
