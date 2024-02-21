@@ -19,7 +19,7 @@ We do not provde FIPS-compliant binary for macOS.
 
 ### Windows
 
-We do not provde FIPS-compliant binary for Windows.
+Refer to [FIPS section of installation documentation](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-windows/#fips)
 
 ### Docker images
 
