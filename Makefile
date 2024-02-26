@@ -300,6 +300,15 @@ _build-container-multiplatform:
 		PLATFORM="$(PLATFORM)" \
 		./ci/build-push-multiplatform.sh $(PUSH)
 
+.PHONY: _build-container-windows
+_build-container-windows:
+	docker \
+		build \
+		-f $(DOCKERFILE) \
+		. \
+		-t ${REPO_URL}/${BUILD_TAG}-windows \
+		--platform="$(PLATFORM)"
+
 .PHONY: build-container-multiplatform
 build-container-multiplatform: _build-container-multiplatform
 
@@ -311,6 +320,11 @@ build-push-container-multiplatform: _build-container-multiplatform
 build-push-container-ubi: PUSH = --push
 build-push-container-ubi: DOCKERFILE = Dockerfile_ubi
 build-push-container-ubi: _build-container-multiplatform
+
+.PHONY: build-push-container-windows
+build-push-container-windows: PUSH = --push
+build-push-container-windows: DOCKERFILE = Dockerfile_windows
+build-push-container-windows: _build-container-windows
 
 .PHONY: test-built-image
 test-built-image:
