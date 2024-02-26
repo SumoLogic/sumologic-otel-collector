@@ -389,7 +389,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/download-artifact@v4
         with:
-          name: otelcol-sumo-${{matrix.arch_os}}
+          name: otelcol-sumo-${{matrix.arch_os}}.exe
           path: artifacts/
 
       - name: Build the container image
