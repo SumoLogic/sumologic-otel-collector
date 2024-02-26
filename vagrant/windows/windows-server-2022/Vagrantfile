@@ -1,0 +1,14 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+common_vagrantfile = "../Vagrantfile.common"
+load common_vagrantfile
+
+Vagrant.configure('2') do |config|
+  config.vm.box = 'gusztavvargadr/windows-server-2022-standard'
+  config.vm.host_name = 'windows-server-2022'
+
+  config.vm.provider 'virtualbox' do |vb|
+    vb.name = 'windows-server-2022'
+  end
+end

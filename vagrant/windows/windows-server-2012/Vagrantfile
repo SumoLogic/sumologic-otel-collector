@@ -1,0 +1,13 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+common_vagrantfile = "../Vagrantfile.common"
+load common_vagrantfile
+
+Vagrant.configure('2') do |config|
+  config.vm.box = 'devopsgroup-io/boxes/windows_server-2012r2-standard-amd64-nocm'
+  config.vm.host_name = 'windows-server-2012'
+  config.vm.provider 'virtualbox' do |vb|
+    vb.name = 'windows-server-2012'
+  end
+end
