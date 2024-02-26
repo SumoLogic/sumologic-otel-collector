@@ -5,6 +5,7 @@ go 1.21
 toolchain go1.21.4
 
 require (
+	github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter v0.94.0-sumo-2
 	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.91.0-sumo-0
 	github.com/google/uuid v1.4.0
 	github.com/knadh/koanf/parsers/yaml v0.1.0
@@ -88,3 +89,4 @@ require (
 )
 
 replace github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension => ./../../extension/sumologicextension
+replace github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter => ./../../exporter/sumologicexporter

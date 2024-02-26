@@ -31,6 +31,7 @@ import (
 	"github.com/knadh/koanf/v2"
 	"github.com/oklog/ulid/v2"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opamp-go/client"
@@ -146,7 +147,7 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 		InstanceUid:    o.instanceId.String(),
 		Callbacks: types.CallbacksStruct{
 			OnConnectFunc: func() {
-				o.logger.Info("Connected to the OpAMP server")
+				o.logger.Info("==================Connected to the OpAMP server!!!!!!!")
 			},
 			OnConnectFailedFunc: func(err error) {
 				o.logger.Error("Failed to connect to the OpAMP server", zap.Error(err))
@@ -158,7 +159,7 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 				o.remoteConfigStatus = status
 			},
 			GetEffectiveConfigFunc: func(ctx context.Context) (*protobufs.EffectiveConfig, error) {
-				o.logger.Info("OpAMP server requested the effective configuration")
+				o.logger.Info("===================OpAMP server requested the effective configuration!!!!!!!!!!!!!!!")
 				return o.composeEffectiveConfig(), nil
 			},
 			OnMessageFunc: o.onMessage,
@@ -424,6 +425,18 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 		if err != nil {
 			return err
 		}
+		o.logger.Debug("Loading Component Factories...")
+		factories, err := Components()
+		if err != nil {
+			return fmt.Errorf("cannot get the list of factories: %v", err)
+		}
+		o.logger.Info("Loading Configuration to Validate...")
+		_, errValidate := otelcoltest.LoadConfigAndValidate(p, factories)
+		if errValidate != nil {
+			o.logger.Error("Validation Failed... %v", zap.Error(errValidate))
+			return fmt.Errorf("cannot validate config named %v", errValidate)
+		}
+		o.logger.Info("Config Validation Successful...")
 	}
 
 	return nil
