@@ -386,7 +386,7 @@ jobs:
             **/Dockerfile*
 
       - name: Download binary action artifact from build phase
-        # if: steps.changed-files.outputs.any_changed == 'true'
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/download-artifact@v4
         with:
           name: otelcol-sumo-${{matrix.arch_os}}
@@ -395,7 +395,7 @@ jobs:
       - name: Build the container image
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
-          cp artifacts/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo.exe
+          cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
           make build-push-container-windows
 
       - name: Test built image
