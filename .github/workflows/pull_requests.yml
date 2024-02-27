@@ -403,3 +403,17 @@ jobs:
       - name: Test built image
         if: steps.changed-files.outputs.any_changed == 'true'
         run: make test-built-image
+
+      # ToDo: build windows FIPS image
+      # - name: Build the FIPS container image
+      #   if: steps.changed-files.outputs.any_changed == 'true'
+      #   run: |
+      #     cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}}.exe otelcol-sumo.exe
+      #     make build-container-multiplatform \
+      #       PLATFORM=${{ matrix.arch_os }} \
+      #       DOCKERFILE=Dockerfile_windows \
+      #       BUILD_TYPE_SUFFIX="-fips"
+
+      # - name: Test built FIPS image
+      #   if: steps.changed-files.outputs.any_changed == 'true'
+      #   run: make test-built-image BUILD_TAG="latest-fips"

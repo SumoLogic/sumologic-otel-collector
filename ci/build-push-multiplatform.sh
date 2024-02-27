@@ -134,16 +134,11 @@ function build_push() {
         if [[ "${BUILD_PLATFORM}" == "windows" ]]; then
             docker build \
                 --file "${DOCKERFILE}" \
-                --build-arg BUILD_TAG="${BUILD_TAG}" \
+                --build-arg BUILD_TAG="latest${BUILD_TYPE_SUFFIX}" \
                 --build-arg BUILDKIT_INLINE_CACHE=1 \
                 --platform="${PLATFORM}" \
                 --tag "${REPO_URL}:latest${BUILD_TYPE_SUFFIX}" \
                 .
-
-            docker tag "${LATEST_TAG}" "${TAG}"
-
-            docker push "${LATEST_TAG}"
-            docker push "${TAG}"
         else
             # load flag is needed so that docker loads this image
             # for subsequent steps on github actions
