@@ -1,0 +1,1 @@
+Add config validation for otel config in the opamp agent

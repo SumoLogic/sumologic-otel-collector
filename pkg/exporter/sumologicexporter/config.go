@@ -83,8 +83,8 @@ func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
 func (cfg *Config) Validate() error {
 
 	switch cfg.CompressEncoding {
-	case configcompression.TypeGzip:
-	case configcompression.TypeDeflate:
+	case configcompression.Gzip:
+	case configcompression.Deflate:
 	case NoCompression:
 
 	default:
@@ -92,9 +92,9 @@ func (cfg *Config) Validate() error {
 	}
 
 	switch cfg.HTTPClientSettings.Compression {
-	case configcompression.TypeGzip:
-	case configcompression.TypeDeflate:
-	case configcompression.TypeZstd:
+	case configcompression.Gzip:
+	case configcompression.Deflate:
+	case configcompression.Zstd:
 	case NoCompression:
 
 	default:

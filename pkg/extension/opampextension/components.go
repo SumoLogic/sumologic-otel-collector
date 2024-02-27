@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/collector/processor/batchprocessor"
 	"go.opentelemetry.io/collector/processor/memorylimiterprocessor"
 	"go.opentelemetry.io/collector/receiver"
+	"go.opentelemetry.io/collector/receiver/otlpreceiver"
 	"go.uber.org/multierr"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter"
@@ -35,6 +36,7 @@ func Components() (
 
 	receivers, err := receiver.MakeFactoryMap(
 		filelogreceiver.NewFactory(),
+		otlpreceiver.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 

@@ -147,7 +147,7 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 		InstanceUid:    o.instanceId.String(),
 		Callbacks: types.CallbacksStruct{
 			OnConnectFunc: func() {
-				o.logger.Info("==================Connected to the OpAMP server!!!!!!!")
+				o.logger.Info("Connected to the OpAMP server")
 			},
 			OnConnectFailedFunc: func(err error) {
 				o.logger.Error("Failed to connect to the OpAMP server", zap.Error(err))
@@ -159,7 +159,7 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 				o.remoteConfigStatus = status
 			},
 			GetEffectiveConfigFunc: func(ctx context.Context) (*protobufs.EffectiveConfig, error) {
-				o.logger.Info("===================OpAMP server requested the effective configuration!!!!!!!!!!!!!!!")
+				o.logger.Info("OpAMP server requested the effective configuration")
 				return o.composeEffectiveConfig(), nil
 			},
 			OnMessageFunc: o.onMessage,
@@ -506,6 +506,7 @@ func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
 		var err error
 		configChanged, err = o.applyRemoteConfig(msg.RemoteConfig)
 		if err != nil {
+			o.logger.Error("Failed to apply OpAMP agent remote config", zap.Error(err))
 			err = o.opampClient.SetRemoteConfigStatus(&protobufs.RemoteConfigStatus{
 				LastRemoteConfigHash: msg.RemoteConfig.ConfigHash,
 				Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED,

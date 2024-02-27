@@ -172,6 +172,78 @@ func TestApplyRemoteConfig(t *testing.T) {
 	assert.Equal(t, "OpAMP agent does not accept remote configuration", err.Error())
 }
 
+func TestApplyRemoteConfigFailed(t *testing.T) {
+	d, err := os.MkdirTemp("", "opamp.d")
+	assert.NoError(t, err)
+	defer os.RemoveAll(d)
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.RemoteConfigurationDirectory = d
+	set := extensiontest.NewNopCreateSettings()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	assert.Equal(t, len(o.effectiveConfig), 0)
+
+	path := filepath.Join("testdata", "opamp.d", "opamp-invalid-remote-config.yaml")
+	rb, err := os.ReadFile(path)
+	assert.NoError(t, err)
+
+	rc := &protobufs.AgentRemoteConfig{
+		Config: &protobufs.AgentConfigMap{
+			ConfigMap: map[string]*protobufs.AgentConfigFile{
+				"default": {
+					Body: rb,
+				},
+			},
+		},
+		ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
+	}
+
+	changed, err := o.applyRemoteConfig(rc)
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "'max_elapsed' time must be non-negative")
+	assert.False(t, changed)
+	assert.Equal(t, len(o.effectiveConfig), 0)
+}
+
+func TestApplyRemoteConfigMissingProcessor(t *testing.T) {
+	d, err := os.MkdirTemp("", "opamp.d")
+	assert.NoError(t, err)
+	defer os.RemoveAll(d)
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.RemoteConfigurationDirectory = d
+	set := extensiontest.NewNopCreateSettings()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	assert.Equal(t, len(o.effectiveConfig), 0)
+
+	path := filepath.Join("testdata", "opamp.d", "opamp-missing-processor.yaml")
+	rb, err := os.ReadFile(path)
+	assert.NoError(t, err)
+
+	rc := &protobufs.AgentRemoteConfig{
+		Config: &protobufs.AgentConfigMap{
+			ConfigMap: map[string]*protobufs.AgentConfigFile{
+				"default": {
+					Body: rb,
+				},
+			},
+		},
+		ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
+	}
+
+	changed, err := o.applyRemoteConfig(rc)
+	assert.Error(t, err)
+	expectedErrSubstring := "cannot validate config named service::pipelines::logs/localfilesource/0aa79379-c764-4d3d-9d66-03f6df029a07:" +
+		" references processor \"batch\" which is not configured"
+	assert.ErrorContains(t, err, expectedErrSubstring)
+	assert.False(t, changed)
+	assert.Equal(t, len(o.effectiveConfig), 0)
+}
+
 func TestShutdown(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.HTTPClientSettings.Auth = nil
