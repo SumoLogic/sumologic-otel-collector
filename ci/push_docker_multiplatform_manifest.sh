@@ -39,24 +39,31 @@ function push_manifest() {
         echo "${platform}"
         case "${platform}" in
         "linux/amd64")
-            BUILD_ARCH="amd64"
+            readonly BUILD_ARCH="amd64"
+            readonly BUILD_PLATFORM="linux"
             ;;
 
         "linux/arm64")
-            BUILD_ARCH="arm64"
+            readonly BUILD_ARCH="arm64"
+            readonly BUILD_PLATFORM="linux"
             ;;
 
         "linux/arm/v7")
-            BUILD_ARCH="arm_v7"
+            readonly BUILD_ARCH="arm_v7"
+            readonly BUILD_PLATFORM="linux"
             ;;
 
+        "windows/amd64")
+            readonly BUILD_ARCH="amd64"
+            readonly BUILD_PLATFORM="windows"
+            ;;
         *)
             echo "Unsupported platform ${platform}"
             exit 1
             ;;
         esac
 
-        TAGS_IN_MANIFEST+=("${REPO_URL}:${BUILD_TAG}-${BUILD_ARCH}")
+        TAGS_IN_MANIFEST+=("${REPO_URL}:${BUILD_TAG}-${BUILD_PLATFORM}-${BUILD_ARCH}")
     done
 
     echo "Tags in the manifest:"

@@ -396,7 +396,9 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
-          make build-push-container-windows
+          make build-container-multiplatform \
+            PLATFORM=${{ matrix.arch_os }} \
+            DOCKERFILE=Dockerfile_windows
 
       - name: Test built image
         if: steps.changed-files.outputs.any_changed == 'true'

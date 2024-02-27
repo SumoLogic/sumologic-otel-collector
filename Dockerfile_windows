@@ -1,3 +1,7 @@
-FROM mcr.microsoft.com/windows/nanoserver:ltsc2022
+FROM mcr.microsoft.com/windows/servercore:ltsc2019
+ARG BUILD_TAG=latest
+ENV TAG $BUILD_TAG
+
 ADD /otelcol-sumo.exe /otelcol-sumo.exe
 ENTRYPOINT ["/otelcol-sumo.exe"]
+CMD ["--config", "/etc/otel/config.yaml"]
