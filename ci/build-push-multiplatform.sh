@@ -3,11 +3,10 @@
 set -eo pipefail
 
 if echo "${PLATFORM}" | grep windows; then
-    echo ''
-    # while ! docker images; do
-    #     echo "Cannot connect to docker daemon"
-    #     sleep 1
-    # done
+    while ! docker images; do
+        echo "Cannot connect to docker daemon"
+        sleep 1
+    done
 else
     while ! docker buildx ls; do
         echo "Cannot connect to docker daemon"
