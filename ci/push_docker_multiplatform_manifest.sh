@@ -63,7 +63,7 @@ function push_manifest() {
             ;;
         esac
 
-        TAGS_IN_MANIFEST+=("${REPO_URL}:${BUILD_TAG}-${BUILD_PLATFORM}-${BUILD_ARCH}")
+        TAGS_IN_MANIFEST+=("${REPO_URL}:${BUILD_TAG}${BUILD_TYPE_SUFFIX}-${BUILD_PLATFORM}-${BUILD_ARCH}")
     done
 
     echo "Tags in the manifest:"
@@ -76,11 +76,11 @@ function push_manifest() {
     set -x
     # Use docker manifest as docker buildx didn't create "${REPO_URL}:${BUILD_TAG}" correctly. It was containing only linux/amd64 image
     docker manifest create \
-        "${REPO_URL}:${BUILD_TAG}" \
+        "${REPO_URL}:${BUILD_TAG}${BUILD_TYPE_SUFFIX}" \
         "${TAGS_IN_MANIFEST[@]}"
 
     docker manifest push \
-        "${REPO_URL}:${BUILD_TAG}"
+        "${REPO_URL}:${BUILD_TAG}${BUILD_TYPE_SUFFIX}"
 
     docker manifest create \
         "${REPO_URL}:latest${BUILD_TYPE_SUFFIX}" \
