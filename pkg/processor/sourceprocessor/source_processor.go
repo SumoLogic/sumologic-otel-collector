@@ -148,29 +148,29 @@ func (sp *sourceProcessor) isFilteredOut(atts pcommon.Map) bool {
 }
 
 func (sp *sourceProcessor) isFilteredOutUsingAnnotation(atts pcommon.Map, formatter func(string) string) (bool, bool) {
-	useAnnotations := false
+	useAnnotation := false
 	isFiltered := false
 
 	if value, found := atts.Get(formatter(excludeAnnotation)); found {
 		if value.Type() == pcommon.ValueTypeStr && value.Str() == "true" {
-			useAnnotations = true
+			useAnnotation = true
 			isFiltered = true
 		} else if value.Type() == pcommon.ValueTypeBool && value.Bool() {
-			useAnnotations = true
+			useAnnotation = true
 			isFiltered = true
 		}
 	}
 
 	if value, found := atts.Get(formatter(includeAnnotation)); found {
 		if value.Type() == pcommon.ValueTypeStr && value.Str() == "true" {
-			useAnnotations = true
+			useAnnotation = true
 			isFiltered = false
 		} else if value.Type() == pcommon.ValueTypeBool && value.Bool() {
-			useAnnotations = true
+			useAnnotation = true
 			isFiltered = false
 		}
 	}
-	return isFiltered, useAnnotations
+	return isFiltered, useAnnotation
 }
 
 func (sp *sourceProcessor) annotationAttribute(annotationKey string) string {

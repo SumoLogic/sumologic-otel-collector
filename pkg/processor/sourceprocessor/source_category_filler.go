@@ -81,11 +81,11 @@ func (f *sourceCategoryFiller) fill(attributes *pcommon.Map) {
 	var templateAttributes []string
 	doesUseAnnotation := false
 
-	// get sourceCategory and sourceCategoryPrefix from Pod Annotation
+	// get sourceCategory and sourceCategoryPrefix from pod annotation
 	valueTemplate, doesUseAnnotation := f.getSourceCategoryFromAnnotation(f.annotationPrefix, attributes)
 
 	if !doesUseAnnotation {
-		// get sourceCategory and sourceCategoryPrefix from Namespace Annotation
+		// get sourceCategory and sourceCategoryPrefix from namespace annotation
 		valueTemplate, doesUseAnnotation = f.getSourceCategoryFromAnnotation(f.namespaceAnnotationPrefix, attributes)
 	}
 
