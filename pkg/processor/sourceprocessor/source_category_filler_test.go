@@ -66,7 +66,6 @@ func TestFillWithAnnotations(t *testing.T) {
 	assertAttribute(t, attrs, "_sourceCategory", "ABC#123asd#Prefix:sc#from#annot#ns#1#123asd")
 }
 
-// TODO: add more test cases
 func TestFillWithNamespaceAnnotations(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 

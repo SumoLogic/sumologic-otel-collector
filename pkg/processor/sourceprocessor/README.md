@@ -41,13 +41,15 @@ processors:
       <attribute_key_1>: <attribute_value_regex_1>
       <attribute_key_2>: <attribute_value_regex_2>
 
-    # Prefix which allows to find given pod annotation among other attributes.
-    # It is used for including/excluding pods from collection or to set sourceCategory, sourceHost, and sourceName
+    # The processor assumes that pod annotations will be present as resource attributes,
+    # one attribute per annotation, and that these attributes have a common prefix.
+    # This setting controls the prefix.
     # default: "k8s.pod.annotation."
     annotation_prefix: <annotation_prefix>
 
-    # Prefix which allows to find given namespace annotation among other attributes.
-    # It is used for including/excluding namespace from collection or to set sourceCategory, sourceHost, and sourceName
+    # The processor assumes that namespace annotations will be present as resource attributes,
+    # one attribute per annotation, and that these attributes have a common prefix.
+    # This setting controls the prefix.
     # default: "k8s.namespace.annotation."
     namespace_annotation_prefix: <namespace_annotation_prefix>
 

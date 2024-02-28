@@ -1,1 +1,1 @@
-feat: use namespace annotations to include/exclude namespace from collection or set sourceCategory, sourceHost, and sourceName
+feat(sourceprocessor): use namespace annotations to include/exclude namespace from collection or set sourceCategory, sourceHost, and sourceName

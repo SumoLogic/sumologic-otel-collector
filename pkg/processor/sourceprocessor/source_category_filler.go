@@ -66,7 +66,7 @@ func extractTemplateAttributes(template string) []string {
 
 // fill takes a collection of attributes for a record and adds to it a new attribute with the source category for the record.
 //
-// The source category is retrieved from one of four places (in the following precedence):
+// The source category is retrieved from one of the following locations, listed in descending order of precedence:
 // - the source category container-level annotation (e.g. "k8s.pod.annotation.sumologic.com/container-name.sourceCategory"),
 // - the source category pod-level annotation (e.g. "k8s.pod.annotation.sumologic.com/sourceCategory"),
 // - the source category namespace-level annotation (e.g. "k8s.namespace.annotation.sumologic.com/sourceCategory"),
