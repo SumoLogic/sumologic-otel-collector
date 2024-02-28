@@ -58,10 +58,11 @@ func TestLoadConfig(t *testing.T) {
 			"_SYSTEMD_UNIT":      "excluded_systemd_unit_regex",
 		},
 
-		AnnotationPrefix:   "pod_annotation_",
-		PodKey:             "k8s.pod.name",
-		PodNameKey:         "k8s.pod.pod_name",
-		PodTemplateHashKey: "pod_labels_pod-template-hash",
+		AnnotationPrefix:          "pod_annotation_",
+		NamespaceAnnotationPrefix: "namespace_annotation_",
+		PodKey:                    "k8s.pod.name",
+		PodNameKey:                "k8s.pod.pod_name",
+		PodTemplateHashKey:        "pod_labels_pod-template-hash",
 
 		ContainerAnnotations: ContainerAnnotationsConfig{
 			Enabled:          false,

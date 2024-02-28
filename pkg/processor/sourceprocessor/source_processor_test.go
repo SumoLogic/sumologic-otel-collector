@@ -40,6 +40,7 @@ func createConfig() *Config {
 	config.PodKey = "k8s.pod.name"
 	config.PodTemplateHashKey = "k8s.pod.label.pod-template-hash"
 	config.AnnotationPrefix = "pod_annotation_"
+	config.NamespaceAnnotationPrefix = "namespace_annotation_"
 	return config
 }
 
@@ -347,17 +348,74 @@ func TestTraceSourceFilteringOutByExclude(t *testing.T) {
 	assertSpansEqual(t, want, td)
 }
 
-func TestTraceSourceIncludePrecedence(t *testing.T) {
+func TestTraceSourceFilteringOutByExcludeNamespaceAnnotation(t *testing.T) {
+	test := newTraceDataWithSpans(k8sLabels, k8sLabels)
+	test.ResourceSpans().At(0).Resource().Attributes().
+		PutStr("namespace_annotation_sumologic.com/exclude", "true")
+
+	want := newTraceDataWithSpans(limitedLabelsWithMeta, mergedK8sLabels)
+	want.ResourceSpans().At(0).ScopeSpans().
+		RemoveIf(func(ptrace.ScopeSpans) bool { return true })
+
+	rtp := newSourceProcessor(newProcessorCreateSettings(), cfg)
+
+	td, err := rtp.ProcessTraces(context.Background(), test)
+	assert.NoError(t, err)
+
+	assertSpansEqual(t, want, td)
+}
+
+func TestTraceSourceIncludePrecedenceByNamespaceAnnotation(t *testing.T) {
 	test := newTraceDataWithSpans(limitedLabels, k8sLabels)
-	test.ResourceSpans().At(0).Resource().Attributes().PutStr("pod_annotation_sumologic.com/include", "true")
+	test.ResourceSpans().At(0).Resource().Attributes().PutStr("namespace_annotation_sumologic.com/include", "true")
 
 	want := newTraceDataWithSpans(limitedLabelsWithMeta, k8sLabels)
-	want.ResourceSpans().At(0).Resource().Attributes().PutStr("pod_annotation_sumologic.com/include", "true")
+	want.ResourceSpans().At(0).Resource().Attributes().PutStr("namespace_annotation_sumologic.com/include", "true")
 
 	cfg1 := createConfig()
 	cfg1.Exclude = map[string]string{
 		"pod": ".*",
 	}
+	rtp := newSourceProcessor(newProcessorCreateSettings(), cfg1)
+
+	td, err := rtp.ProcessTraces(context.Background(), test)
+	assert.NoError(t, err)
+
+	assertTracesEqual(t, want, td)
+}
+
+func TestTraceSourceIncludePrecedence(t *testing.T) {
+	test := newTraceDataWithSpans(limitedLabels, k8sLabels)
+	test.ResourceSpans().At(0).Resource().Attributes().PutStr("pod_annotation_sumologic.com/include", "true")
+	test.ResourceSpans().At(0).Resource().Attributes().PutStr("namespace_annotation_sumologic.com/exclude", "true")
+
+	want := newTraceDataWithSpans(limitedLabelsWithMeta, k8sLabels)
+	want.ResourceSpans().At(0).Resource().Attributes().PutStr("pod_annotation_sumologic.com/include", "true")
+	want.ResourceSpans().At(0).Resource().Attributes().PutStr("namespace_annotation_sumologic.com/exclude", "true")
+
+	cfg1 := createConfig()
+	cfg1.Exclude = map[string]string{
+		"pod": ".*",
+	}
+	rtp := newSourceProcessor(newProcessorCreateSettings(), cfg1)
+
+	td, err := rtp.ProcessTraces(context.Background(), test)
+	assert.NoError(t, err)
+
+	assertTracesEqual(t, want, td)
+}
+
+func TestTraceSourceExcludePrecedence(t *testing.T) {
+	test := newTraceDataWithSpans(limitedLabels, k8sLabels)
+	test.ResourceSpans().At(0).Resource().Attributes().PutStr("pod_annotation_sumologic.com/exclude", "true")
+	test.ResourceSpans().At(0).Resource().Attributes().PutStr("namespace_annotation_sumologic.com/include", "true")
+
+	want := newTraceDataWithSpans(limitedLabelsWithMeta, k8sLabels)
+	want.ResourceSpans().At(0).Resource().Attributes().PutStr("pod_annotation_sumologic.com/exclude", "true")
+	want.ResourceSpans().At(0).Resource().Attributes().PutStr("namespace_annotation_sumologic.com/include", "true")
+	want.ResourceSpans().At(0).ScopeSpans().
+		RemoveIf(func(ptrace.ScopeSpans) bool { return true })
+
 	rtp := newSourceProcessor(newProcessorCreateSettings(), cfg)
 
 	td, err := rtp.ProcessTraces(context.Background(), test)
@@ -369,6 +427,7 @@ func TestTraceSourceIncludePrecedence(t *testing.T) {
 func TestSourceHostAnnotation(t *testing.T) {
 	inputAttributes := createK8sLabels()
 	inputAttributes["pod_annotation_sumologic.com/sourceHost"] = "sh:%{k8s.pod.uid}"
+	inputAttributes["namespace_annotation_sumologic.com/sourceHost"] = "namespaceTest:%{k8s.pod.uid}"
 	inputTraces := newTraceData(inputAttributes)
 
 	processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), cfg).ProcessTraces(context.Background(), inputTraces)
@@ -378,9 +437,22 @@ func TestSourceHostAnnotation(t *testing.T) {
 	assertAttribute(t, processedAttributes, "_sourceHost", "sh:pod-1234")
 }
 
+func TestSourceHostNamespaceAnnotation(t *testing.T) {
+	inputAttributes := createK8sLabels()
+	inputAttributes["namespace_annotation_sumologic.com/sourceHost"] = "namespaceTest:%{k8s.pod.uid}"
+	inputTraces := newTraceData(inputAttributes)
+
+	processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), cfg).ProcessTraces(context.Background(), inputTraces)
+	assert.NoError(t, err)
+
+	processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+	assertAttribute(t, processedAttributes, "_sourceHost", "namespaceTest:pod-1234")
+}
+
 func TestSourceNameAnnotation(t *testing.T) {
 	inputAttributes := createK8sLabels()
 	inputAttributes["pod_annotation_sumologic.com/sourceName"] = "sn:%{k8s.pod.name}"
+	inputAttributes["namespace_annotation_sumologic.com/sourceName"] = "namespaceTest:%{k8s.pod.name}"
 	inputTraces := newTraceData(inputAttributes)
 
 	processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), cfg).ProcessTraces(context.Background(), inputTraces)
@@ -388,6 +460,18 @@ func TestSourceNameAnnotation(t *testing.T) {
 
 	processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
 	assertAttribute(t, processedAttributes, "_sourceName", "sn:pod-5db86d8867-sdqlj")
+}
+
+func TestSourceNameNamespaceAnnotation(t *testing.T) {
+	inputAttributes := createK8sLabels()
+	inputAttributes["namespace_annotation_sumologic.com/sourceName"] = "namespaceTest:%{k8s.pod.name}"
+	inputTraces := newTraceData(inputAttributes)
+
+	processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), cfg).ProcessTraces(context.Background(), inputTraces)
+	assert.NoError(t, err)
+
+	processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+	assertAttribute(t, processedAttributes, "_sourceName", "namespaceTest:pod-5db86d8867-sdqlj")
 }
 
 func TestSourceCategoryAnnotations(t *testing.T) {

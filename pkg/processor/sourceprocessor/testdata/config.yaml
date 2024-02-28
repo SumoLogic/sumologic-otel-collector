@@ -20,6 +20,7 @@ processors:
       _SYSTEMD_UNIT: "excluded_systemd_unit_regex"
 
     annotation_prefix: "pod_annotation_"
+    namespace_annotation_prefix: "namespace_annotation_"
     pod_template_hash_key: "pod_labels_pod-template-hash"
     pod_name_key: "k8s.pod.pod_name"
     pod_key: "k8s.pod.name"
