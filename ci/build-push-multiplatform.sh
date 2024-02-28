@@ -127,6 +127,7 @@ function build_push() {
                 --platform="${PLATFORM}" \
                 --tag "${LATEST_TAG}" \
                 --tag "${TAG}" \
+                --provenance=false \
                 .
         fi
     else
