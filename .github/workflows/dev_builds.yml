@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - 'dev-build/*'
+      - drosiek-windows-container
 
 defaults:
   run:
@@ -191,11 +192,54 @@ jobs:
             PLATFORM=${{ matrix.arch_os }} \
             BUILD_TYPE_SUFFIX="-ubi"
 
+  build-windows-container-images:
+    name: Build Windows container
+    runs-on: windows-2022
+    needs:
+      - build
+    strategy:
+      matrix:
+        arch_os: [ 'windows_amd64']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract tag
+        id: extract_tag
+        run: echo "tag=$(git rev-parse HEAD)" > $GITHUB_OUTPUT
+
+      - name: Print tag
+        run: echo "Running dev build for ${{ steps.extract_tag.outputs.tag }}"
+
+      - name: Login to Open Source ECR
+        run: |
+          USERNAME=$(powershell.exe "echo \$Env:UserName")
+          # remove wincred entry and fix json format by replacing }, with }
+          cat "C:\\Users\\${USERNAME}\\.docker\\config.json" | grep -v "wincred" | sed 's/},$/}/' > "C:\\Users\\${USERNAME}\\.docker\\config.json.tmp"
+          mv "C:\\Users\\${USERNAME}\\.docker\\config.json.tmp" "C:\\Users\\${USERNAME}\\.docker\\config.json"
+          make login
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+
+      - name: Download binary action artifact from build phase
+        uses: actions/download-artifact@v4
+        with:
+          name: otelcol-sumo-${{matrix.arch_os}}.exe
+          path: artifacts/
+
+      - name: Build and push image to Open Source ECR
+        run: |
+          cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
+          make build-push-container-windows-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }}
+
   push-docker-manifest:
     name: Push joint container manifest
     runs-on: ubuntu-20.04
     needs:
       - build-container-images
+      - build-windows-container-images
     steps:
       - uses: actions/checkout@v4
 
@@ -240,7 +284,7 @@ jobs:
         run: |
           make push-container-manifest-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
-            PLATFORMS="linux/amd64 linux/arm64"
+            PLATFORMS="linux/amd64 linux/arm64 windows/amd64"
 
       - name: Push joint UBI-based container manifest for all platforms to Open Source ECR
         run: |

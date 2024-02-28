@@ -280,6 +280,10 @@ build-container-multiplatform-dev: build-container-multiplatform
 build-push-container-multiplatform-dev: REPO_URL = "$(OPENSOURCE_REPO_URL_DEV)"
 build-push-container-multiplatform-dev: build-push-container-multiplatform
 
+.PHONY: build-push-container-windows-dev
+build-push-container-windows-dev: DOCKERFILE = Dockerfile_windows
+build-push-container-windows-dev: build-push-container-multiplatform-dev
+
 .PHONY: push-container-manifest-dev
 push-container-manifest-dev: REPO_URL = "$(OPENSOURCE_REPO_URL_DEV)"
 push-container-manifest-dev: push-container-manifest
@@ -303,6 +307,14 @@ _build-container-multiplatform:
 .PHONY: build-container-multiplatform
 build-container-multiplatform: _build-container-multiplatform
 
+.PHONY: build-container-windows
+build-container-windows: DOCKERFILE = Dockerfile_windows
+build-container-windows: _build-container-multiplatform
+
+.PHONY: build-push-container-windows
+build-push-container-windows: PUSH = --push
+build-push-container-windows: build-container-windows
+
 .PHONY: build-push-container-multiplatform
 build-push-container-multiplatform: PUSH = --push
 build-push-container-multiplatform: _build-container-multiplatform
@@ -311,11 +323,6 @@ build-push-container-multiplatform: _build-container-multiplatform
 build-push-container-ubi: PUSH = --push
 build-push-container-ubi: DOCKERFILE = Dockerfile_ubi
 build-push-container-ubi: _build-container-multiplatform
-
-.PHONY: build-push-container-windows
-build-push-container-windows: PUSH = --push
-build-push-container-windows: DOCKERFILE = Dockerfile_windows
-build-push-container-windows: _build-container-multiplatform
 
 .PHONY: test-built-image
 test-built-image:
