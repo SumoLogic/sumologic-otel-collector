@@ -39,23 +39,23 @@ function push_manifest() {
         echo "${platform}"
         case "${platform}" in
         "linux/amd64")
-            readonly BUILD_ARCH="amd64"
-            readonly BUILD_PLATFORM="linux"
+            BUILD_ARCH="amd64"
+            BUILD_PLATFORM="linux"
             ;;
 
         "linux/arm64")
-            readonly BUILD_ARCH="arm64"
-            readonly BUILD_PLATFORM="linux"
+            BUILD_ARCH="arm64"
+            BUILD_PLATFORM="linux"
             ;;
 
         "linux/arm/v7")
-            readonly BUILD_ARCH="arm_v7"
-            readonly BUILD_PLATFORM="linux"
+            BUILD_ARCH="arm_v7"
+            BUILD_PLATFORM="linux"
             ;;
 
         "windows/amd64")
-            readonly BUILD_ARCH="amd64"
-            readonly BUILD_PLATFORM="windows"
+            BUILD_ARCH="amd64"
+            BUILD_PLATFORM="windows"
             ;;
         *)
             echo "Unsupported platform ${platform}"
