@@ -149,6 +149,7 @@ function build_push() {
                 --platform="${PLATFORM}" \
                 --load \
                 --tag "${REPO_URL}:latest${BUILD_TYPE_SUFFIX}" \
+                --provenance=false \
                 .
         fi
     fi
