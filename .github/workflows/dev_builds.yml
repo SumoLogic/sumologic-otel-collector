@@ -194,7 +194,7 @@ jobs:
 
   build-windows-container-images:
     name: Build Windows container
-    runs-on: ${{ matrix.runs_on }}
+    runs-on: ${{ matrix.runs-on }}
     needs:
       - build
     strategy:

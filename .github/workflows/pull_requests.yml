@@ -364,7 +364,7 @@ jobs:
     name: Build windows container
     needs:
       - build
-    runs-on: ${{ matrix.runs_on }}
+    runs-on: ${{ matrix.runs-on }}
     strategy:
       matrix:
         include:
