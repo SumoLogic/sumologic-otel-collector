@@ -101,6 +101,7 @@ function build_push() {
     local LATEST_TAG
     readonly LATEST_TAG="${REPO_URL}:latest${BUILD_TYPE_SUFFIX}-${BUILD_PLATFORM}-${BUILD_ARCH}"
 
+    # --provenance=false for docker buildx ensures that we create manifest instead of manifest list
     if [[ "${PUSH}" == true ]]; then
         echo "Building tags: ${TAG}, ${LATEST_TAG}"
 
