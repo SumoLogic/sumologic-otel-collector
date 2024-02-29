@@ -179,7 +179,7 @@ jobs:
         run: ./ci/fetch_current_branch.sh
 
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.3
+        uses: microsoft/setup-msbuild@v2
 
       - name: Restore NuGet packages
         working-directory: ./packaging/msi/SumoLogic.wixext/SumoLogicTests
