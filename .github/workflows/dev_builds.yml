@@ -194,7 +194,7 @@ jobs:
 
   build-windows-container-images:
     name: Build Windows container
-    runs-on: windows-2022
+    runs-on: ${{ matrix.runs_on }}
     needs:
       - build
     strategy:
@@ -202,8 +202,10 @@ jobs:
         include:
           - arch_os: windows_amd64
             base_image_tag: ltsc2022
+            runs-on: windows-2022
           - arch_os: windows_amd64
             base_image_tag: ltsc2019
+            runs-on: windows-2019
     steps:
       - uses: actions/checkout@v4
 
