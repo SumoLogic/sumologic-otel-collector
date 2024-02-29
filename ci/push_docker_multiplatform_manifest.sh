@@ -53,9 +53,16 @@ function push_manifest() {
             BUILD_PLATFORM="linux"
             ;;
 
-        "windows/amd64")
+        "windows/amd64/ltsc2022")
             BUILD_ARCH="amd64"
             BUILD_PLATFORM="windows"
+            BASE_IMAGE_TAG_SUFFIX="-ltsc2022"
+            ;;
+
+        "windows/amd64/ltsc2019")
+            BUILD_ARCH="amd64"
+            BUILD_PLATFORM="windows"
+            BASE_IMAGE_TAG_SUFFIX="-ltsc2019"
             ;;
         *)
             echo "Unsupported platform ${platform}"
@@ -63,7 +70,7 @@ function push_manifest() {
             ;;
         esac
 
-        TAGS_IN_MANIFEST+=("${REPO_URL}:${BUILD_TAG}${BUILD_TYPE_SUFFIX}-${BUILD_PLATFORM}-${BUILD_ARCH}")
+        TAGS_IN_MANIFEST+=("${REPO_URL}:${BUILD_TAG}${BUILD_TYPE_SUFFIX}-${BUILD_PLATFORM}-${BUILD_ARCH}${BASE_IMAGE_TAG_SUFFIX}")
     done
 
     echo "Tags in the manifest:"

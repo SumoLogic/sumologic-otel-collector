@@ -199,7 +199,11 @@ jobs:
       - build
     strategy:
       matrix:
-        arch_os: [ 'windows_amd64']
+        include:
+          - arch_os: windows_amd64
+            base_image_tag: ltsc2022
+          - arch_os: windows_amd64
+            base_image_tag: ltsc2019
     steps:
       - uses: actions/checkout@v4
 
@@ -227,12 +231,12 @@ jobs:
           name: otelcol-sumo-${{matrix.arch_os}}.exe
           path: artifacts/
 
-      - name: Build and push image to Open Source ECR
+      - name: Build and push images to Open Source ECR
         run: |
           cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
           make build-push-container-windows-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
-            PLATFORM=${{ matrix.arch_os }}
+            PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
 
   push-docker-manifest:
     name: Push joint container manifest
@@ -284,7 +288,7 @@ jobs:
         run: |
           make push-container-manifest-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
-            PLATFORMS="linux/amd64 linux/arm64 windows/amd64"
+            PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022 windows/amd64/ltsc2019"
 
       - name: Push joint UBI-based container manifest for all platforms to Open Source ECR
         run: |

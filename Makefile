@@ -243,6 +243,7 @@ OPENSOURCE_ECR_URL = public.ecr.aws/sumologic
 OPENSOURCE_REPO_URL = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME)
 OPENSOURCE_REPO_URL_DEV = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME_DEV)
 REPO_URL = $(OPENSOURCE_REPO_URL)
+BASE_IMAGE_TAG ?= ""
 
 DOCKERFILE = Dockerfile
 
@@ -302,14 +303,21 @@ _build-container-multiplatform:
 		REPO_URL="$(REPO_URL)" \
 		DOCKERFILE="$(DOCKERFILE)" \
 		PLATFORM="$(PLATFORM)" \
+		BASE_IMAGE_TAG="${BASE_IMAGE_TAG}" \
 		./ci/build-push-multiplatform.sh $(PUSH)
 
 .PHONY: build-container-multiplatform
 build-container-multiplatform: _build-container-multiplatform
 
 .PHONY: build-container-windows
-build-container-windows: DOCKERFILE = Dockerfile_windows
-build-container-windows: _build-container-multiplatform
+build-container-windows:
+	$(MAKE) _build-container-multiplatform \
+		DOCKERFILE=Dockerfile_windows \
+		BASE_IMAGE_TAG=ltsc2022
+
+	$(MAKE) _build-container-multiplatform \
+		DOCKERFILE=Dockerfile_windows \
+		BASE_IMAGE_TAG=ltsc2019
 
 .PHONY: build-push-container-windows
 build-push-container-windows: PUSH = --push

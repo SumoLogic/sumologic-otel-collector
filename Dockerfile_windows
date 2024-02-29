@@ -1,4 +1,5 @@
-FROM mcr.microsoft.com/windows/servercore:ltsc2022
+ARG BASE_IMAGE_TAG=ltsc2022
+FROM mcr.microsoft.com/windows/servercore:${BASE_IMAGE_TAG}
 ARG BUILD_TAG=latest
 ENV TAG $BUILD_TAG
 

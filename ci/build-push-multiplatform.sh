@@ -40,6 +40,10 @@ if [[ -z "${REPO_URL}" ]]; then
     exit 1
 fi
 
+if [[ ! -z "${BASE_IMAGE_TAG}" ]]; then
+    BASE_IMAGE_TAG="-${BASE_IMAGE_TAG}"
+fi
+
 if [[ -z "${PLATFORM}" ]]; then
     echo "No PLATFORM passed in"
     exit 1
@@ -59,6 +63,7 @@ fi
 # linux/arm/v7, linux/arm/v6
 function build_push() {
     local BUILD_ARCH
+    local BASE_IMAGE_TAG_SUFFIX
     set -x
 
     case "${PLATFORM}" in
@@ -76,7 +81,23 @@ function build_push() {
 
     "windows/amd64"|"windows_amd64")
         readonly BUILD_ARCH="amd64"
+        readonly BASE_IMAGE_TAG_SUFFIX="windows"
+        PLATFORM="windows/amd64"
+        ;;
+
+    "windows/amd64/ltsc2022"|"windows_amd64_ltsc2022")
+        readonly BUILD_ARCH="amd64"
         readonly BUILD_PLATFORM="windows"
+        readonly BASE_IMAGE_TAG_SUFFIX="-ltsc2022"
+        readonly BASE_IMAGE_TAG="ltsc2022"
+        PLATFORM="windows/amd64"
+        ;;
+
+    "windows/amd64/ltsc2019"|"windows_amd64_ltsc2019")
+        readonly BUILD_ARCH="amd64"
+        readonly BUILD_PLATFORM="windows"
+        readonly BASE_IMAGE_TAG_SUFFIX="-ltsc2019"
+        readonly BASE_IMAGE_TAG="ltsc2019"
         PLATFORM="windows/amd64"
         ;;
 
@@ -97,9 +118,9 @@ function build_push() {
     esac
 
     local TAG
-    readonly TAG="${REPO_URL}:${BUILD_TAG}${BUILD_TYPE_SUFFIX}-${BUILD_PLATFORM}-${BUILD_ARCH}"
+    readonly TAG="${REPO_URL}:${BUILD_TAG}${BUILD_TYPE_SUFFIX}-${BUILD_PLATFORM}-${BUILD_ARCH}${BASE_IMAGE_TAG_SUFFIX}"
     local LATEST_TAG
-    readonly LATEST_TAG="${REPO_URL}:latest${BUILD_TYPE_SUFFIX}-${BUILD_PLATFORM}-${BUILD_ARCH}"
+    readonly LATEST_TAG="${REPO_URL}:latest${BUILD_TYPE_SUFFIX}-${BUILD_PLATFORM}-${BUILD_ARCH}${BASE_IMAGE_TAG_SUFFIX}"
 
     # --provenance=false for docker buildx ensures that we create manifest instead of manifest list
     if [[ "${PUSH}" == true ]]; then
@@ -109,6 +130,7 @@ function build_push() {
             docker build \
                 --file "${DOCKERFILE}" \
                 --build-arg BUILD_TAG="${BUILD_TAG}" \
+                --build-arg BASE_IMAGE_TAG="${BASE_IMAGE_TAG}" \
                 --build-arg BUILDKIT_INLINE_CACHE=1 \
                 --platform="${PLATFORM}" \
                 --tag "${LATEST_TAG}" \
@@ -123,6 +145,7 @@ function build_push() {
                 --push \
                 --file "${DOCKERFILE}" \
                 --build-arg BUILD_TAG="${BUILD_TAG}" \
+                --build-arg BASE_IMAGE_TAG="${BASE_IMAGE_TAG}" \
                 --build-arg BUILDKIT_INLINE_CACHE=1 \
                 --platform="${PLATFORM}" \
                 --tag "${LATEST_TAG}" \
@@ -136,6 +159,7 @@ function build_push() {
             docker build \
                 --file "${DOCKERFILE}" \
                 --build-arg BUILD_TAG="latest${BUILD_TYPE_SUFFIX}" \
+                --build-arg BASE_IMAGE_TAG="${BASE_IMAGE_TAG}" \
                 --build-arg BUILDKIT_INLINE_CACHE=1 \
                 --platform="${PLATFORM}" \
                 --tag "${REPO_URL}:latest${BUILD_TYPE_SUFFIX}" \
@@ -146,6 +170,7 @@ function build_push() {
             docker buildx build \
                 --file "${DOCKERFILE}" \
                 --build-arg BUILD_TAG="latest${BUILD_TYPE_SUFFIX}" \
+                --build-arg BASE_IMAGE_TAG="${BASE_IMAGE_TAG}" \
                 --build-arg BUILDKIT_INLINE_CACHE=1 \
                 --platform="${PLATFORM}" \
                 --load \
