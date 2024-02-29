@@ -364,6 +364,7 @@ jobs:
     name: Build windows container
     needs:
       - build
+    runs-on: ${{ matrix.runs_on }}
     strategy:
       matrix:
         include:
@@ -373,10 +374,6 @@ jobs:
           - arch_os: windows_amd64
             base_image_tag: ltsc2019
             runs-on: windows-2019
-    with:
-      arch_os: ${{ matrix.arch_os }}
-      runs-on: ${{ matrix.runs-on }}
-      base_image_tag: ${{ matrix.base_image_tag }}
     steps:
       - uses: actions/checkout@v4
 
