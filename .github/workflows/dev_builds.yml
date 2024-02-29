@@ -270,7 +270,7 @@ jobs:
         run: ./ci/fetch_current_branch.sh
 
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.3
+        uses: microsoft/setup-msbuild@v2
 
       - name: Fetch binary artifact for ${{ matrix.arch_os }}
         uses: actions/download-artifact@v4
