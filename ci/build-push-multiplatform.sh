@@ -2,16 +2,7 @@
 
 set -eo pipefail
 
-if echo "${PLATFORM}" | grep windows; then
-    while ! docker images; do
-        echo "Cannot connect to docker daemon"
-        sleep 1
-    done
-else
-    while ! docker buildx ls; do
-        echo "Cannot connect to docker daemon"
-        sleep 1
-    done
+if echo "${PLATFORM}" | grep -v windows; then
 
     DOCKER_BUILDX_LS_OUT=$(docker buildx ls <<-END
 END
