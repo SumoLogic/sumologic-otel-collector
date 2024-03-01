@@ -1,0 +1,14 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+common_vagrantfile = "../Vagrantfile.common"
+load common_vagrantfile
+
+Vagrant.configure('2') do |config|
+  config.vm.box = 'gusztavvargadr/docker-windows'
+  config.vm.host_name = 'docker-windows'
+
+  config.vm.provider 'virtualbox' do |vb|
+    vb.name = 'docker-windows'
+  end
+end
