@@ -1,5 +1,3 @@
-//go:build linux || darwin
-
 package sumologic_scripts_tests
 
 import (
@@ -15,94 +13,43 @@ import (
 
 type installOptions struct {
 	installToken       string
-	autoconfirm        bool
-	skipSystemd        bool
 	tags               map[string]string
-	skipConfig         bool
-	skipInstallToken   bool
 	fips               bool
 	envs               map[string]string
-	uninstall          bool
-	purge              bool
 	apiBaseURL         string
-	configBranch       string
-	downloadOnly       bool
-	dontKeepDownloads  bool
 	installHostmetrics bool
 	remotelyManaged    bool
 	ephemeral          bool
-	timeout            float64
 }
 
 func (io *installOptions) string() []string {
 	opts := []string{
+		"-Command",
 		scriptPath,
 	}
 
-	if io.autoconfirm {
-		opts = append(opts, "--yes")
-	}
-
 	if io.fips {
-		opts = append(opts, "--fips")
-	}
-
-	if io.skipSystemd {
-		opts = append(opts, "--skip-systemd")
-	}
-
-	if io.skipConfig {
-		opts = append(opts, "--skip-config")
-	}
-
-	if io.skipInstallToken {
-		opts = append(opts, "--skip-installation-token")
-	}
-
-	if io.uninstall {
-		opts = append(opts, "--uninstall")
-	}
-
-	if io.purge {
-		opts = append(opts, "--purge")
-	}
-
-	if io.downloadOnly {
-		opts = append(opts, "--download-only")
-	}
-
-	if !io.dontKeepDownloads {
-		opts = append(opts, "--keep-downloads")
+		opts = append(opts, "-Fips", "1")
 	}
 
 	if io.installHostmetrics {
-		opts = append(opts, "--install-hostmetrics")
+		opts = append(opts, "-InstallHostMetrics", "1")
 	}
 
 	if io.remotelyManaged {
-		opts = append(opts, "--remotely-managed")
+		opts = append(opts, "-RemotelyManaged", "1")
 	}
 
 	if io.ephemeral {
-		opts = append(opts, "--ephemeral")
+		opts = append(opts, "-Ephemeral", "1")
 	}
 
 	if len(io.tags) > 0 {
-		for k, v := range io.tags {
-			opts = append(opts, "--tag", fmt.Sprintf("%s=%s", k, v))
-		}
+		opts = append(opts, "-Tags", getTagOptValue(io.tags))
 	}
 
 	if io.apiBaseURL != "" {
-		opts = append(opts, "--api", io.apiBaseURL)
-	}
-
-	if io.configBranch != "" {
-		opts = append(opts, "--config-branch", io.configBranch)
-	}
-
-	if io.timeout != 0 {
-		opts = append(opts, "--download-timeout", fmt.Sprintf("%f", io.timeout))
+		opts = append(opts, "-Api", io.apiBaseURL)
 	}
 
 	return opts
@@ -137,7 +84,7 @@ func exitCode(cmd *exec.Cmd) (int, error) {
 }
 
 func runScript(ch check) (int, []string, []string, error) {
-	cmd := exec.Command("bash", ch.installOptions.string()...)
+	cmd := exec.Command("powershell", ch.installOptions.string()...)
 	cmd.Env = ch.installOptions.buildEnvs()
 	output := []string{}
 
@@ -186,10 +133,6 @@ func runScript(ch check) (int, []string, []string, error) {
 		// otherwise ensure there is no error
 		require.NoError(ch.test, err)
 
-		if ch.installOptions.autoconfirm {
-			continue
-		}
-
 	}
 
 	// Handle stderr separately
@@ -212,4 +155,13 @@ func runScript(ch check) (int, []string, []string, error) {
 
 	code, err := exitCode(cmd)
 	return code, output, errorOutput, err
+}
+
+func getTagOptValue(tags map[string]string) string {
+	tagOpts := []string{}
+	for k, v := range tags {
+		tagOpts = append(tagOpts, fmt.Sprintf("%s = \"%s\"", k, v))
+	}
+	tagOptString := strings.Join(tagOpts, " ; ")
+	return fmt.Sprintf("@{ %s }", tagOptString)
 }
