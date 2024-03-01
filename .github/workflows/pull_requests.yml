@@ -359,3 +359,54 @@ jobs:
       - name: Test built FIPS image
         if: steps.changed-files.outputs.any_changed == 'true' && matrix.arch_os == 'linux_amd64'
         run: make test-built-image BUILD_TAG="latest-fips"
+
+  build-windows-container:
+    name: Build windows container
+    needs:
+      - build
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      matrix:
+        include:
+          - arch_os: windows_amd64
+            base_image_tag: ltsc2022
+            runs-on: windows-2022
+          - arch_os: windows_amd64
+            base_image_tag: ltsc2019
+            runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check if build related files changed
+        id: changed-files
+        uses: tj-actions/changed-files@v41
+        with:
+          files: |
+            **/go.mod
+            **/go.sum
+            **/*.go
+            **/*.yaml
+            **/*.yml
+            **/Makefile
+            **/Makefile.common
+            **/Dockerfile*
+
+      - name: Download binary action artifact from build phase
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: otelcol-sumo-${{matrix.arch_os}}.exe
+          path: artifacts/
+
+      - name: Build the container image
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
+          make build-container-windows \
+            PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
+
+      - name: Test built image
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make test-built-image
+
+      # ToDo: build windows FIPS image
