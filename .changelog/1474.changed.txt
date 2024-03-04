@@ -1,0 +1,1 @@
+chore: update otelcol core to v0.95.0

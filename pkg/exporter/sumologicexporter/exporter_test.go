@@ -597,7 +597,7 @@ func Benchmark_ExporterPushLogs(b *testing.B) {
 		config.MetricFormat = PrometheusFormat
 		config.LogFormat = TextFormat
 		config.HTTPClientSettings.Auth = nil
-		config.HTTPClientSettings.Compression = configcompression.Gzip
+		config.HTTPClientSettings.Compression = configcompression.TypeGzip
 		return config
 	}
 
