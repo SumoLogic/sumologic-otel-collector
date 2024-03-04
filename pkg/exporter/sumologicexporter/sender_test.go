@@ -72,16 +72,16 @@ func prepareSenderTest(t *testing.T, compression configcompression.Type, cb []fu
 	cfg := createDefaultConfig().(*Config)
 	cfg.HTTPClientSettings.Endpoint = testServer.URL
 	switch compression {
-	case configcompression.Gzip:
-		cfg.HTTPClientSettings.Compression = configcompression.Gzip
-	case configcompression.Zstd:
-		cfg.HTTPClientSettings.Compression = configcompression.Zstd
+	case configcompression.TypeGzip:
+		cfg.HTTPClientSettings.Compression = configcompression.TypeGzip
+	case configcompression.TypeZstd:
+		cfg.HTTPClientSettings.Compression = configcompression.TypeZstd
 	case NoCompression:
 		cfg.HTTPClientSettings.Compression = NoCompression
-	case configcompression.Deflate:
-		cfg.HTTPClientSettings.Compression = configcompression.Deflate
+	case configcompression.TypeDeflate:
+		cfg.HTTPClientSettings.Compression = configcompression.TypeDeflate
 	default:
-		cfg.CompressEncoding = configcompression.Gzip
+		cfg.CompressEncoding = configcompression.TypeGzip
 	}
 	cfg.HTTPClientSettings.Auth = nil
 	httpSettings := cfg.HTTPClientSettings
@@ -989,7 +989,7 @@ func TestInvalidPipeline(t *testing.T) {
 }
 
 func TestSendCompressGzip(t *testing.T) {
-	test := prepareSenderTest(t, configcompression.Gzip, []func(res http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, configcompression.TypeGzip, []func(res http.ResponseWriter, req *http.Request){
 		func(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(200)
 			if _, err := res.Write([]byte("")); err != nil {
@@ -1031,7 +1031,7 @@ func TestSendCompressGzipDeprecated(t *testing.T) {
 }
 
 func TestSendCompressZstd(t *testing.T) {
-	test := prepareSenderTest(t, configcompression.Zstd, []func(res http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, configcompression.TypeZstd, []func(res http.ResponseWriter, req *http.Request){
 		func(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(200)
 			if _, err := res.Write([]byte("")); err != nil {
@@ -1052,7 +1052,7 @@ func TestSendCompressZstd(t *testing.T) {
 }
 
 func TestSendCompressDeflate(t *testing.T) {
-	test := prepareSenderTest(t, configcompression.Deflate, []func(res http.ResponseWriter, req *http.Request){
+	test := prepareSenderTest(t, configcompression.TypeDeflate, []func(res http.ResponseWriter, req *http.Request){
 		func(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(200)
 			if _, err := res.Write([]byte("")); err != nil {
