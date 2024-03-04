@@ -1,7 +1,9 @@
 exporters:
     sumologic:
         retry_on_failure:
-            max_elapsed_time: 0
+            initial_interval: 1s
+            max_elapsed_time: 2s
+            max_interval: 1s
         sending_queue:
             enabled: true
             storage: file_storage

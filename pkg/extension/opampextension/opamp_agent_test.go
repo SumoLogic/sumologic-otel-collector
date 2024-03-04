@@ -202,7 +202,7 @@ func TestApplyRemoteConfigFailed(t *testing.T) {
 
 	changed, err := o.applyRemoteConfig(rc)
 	assert.Error(t, err)
-	assert.ErrorContains(t, err, "'max_elapsed' time must be non-negative")
+	assert.ErrorContains(t, err, "'max_elapsed_time' must be non-negative")
 	assert.False(t, changed)
 	assert.Equal(t, len(o.effectiveConfig), 0)
 }
