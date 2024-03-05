@@ -31,6 +31,7 @@ import (
 	"github.com/knadh/koanf/v2"
 	"github.com/oklog/ulid/v2"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opamp-go/client"
@@ -424,6 +425,18 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 		if err != nil {
 			return err
 		}
+		o.logger.Debug("Loading Component Factories...")
+		factories, err := Components()
+		if err != nil {
+			return fmt.Errorf("cannot get the list of factories: %v", err)
+		}
+		o.logger.Info("Loading Configuration to Validate...")
+		_, errValidate := otelcoltest.LoadConfigAndValidate(p, factories)
+		if errValidate != nil {
+			o.logger.Error("Validation Failed... %v", zap.Error(errValidate))
+			return fmt.Errorf("cannot validate config named %v", errValidate)
+		}
+		o.logger.Info("Config Validation Successful...")
 	}
 
 	return nil
@@ -493,6 +506,7 @@ func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
 		var err error
 		configChanged, err = o.applyRemoteConfig(msg.RemoteConfig)
 		if err != nil {
+			o.logger.Error("Failed to apply OpAMP agent remote config", zap.Error(err))
 			err = o.opampClient.SetRemoteConfigStatus(&protobufs.RemoteConfigStatus{
 				LastRemoteConfigHash: msg.RemoteConfig.ConfigHash,
 				Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED,

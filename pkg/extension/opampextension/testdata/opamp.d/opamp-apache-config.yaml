@@ -1,0 +1,129 @@
+  receivers:
+    apache/1278d323-eabc-4061-a62d-db5e7dd6ca25:
+        endpoint: http://localhost:8080/server-status?auto
+        collection_interval: 1m
+    filelog/errorFile/1278d323-eabc-4061-a62d-db5e7dd6ca25:
+      include_file_name: false
+      include_file_path: true
+      operators:
+        - type: move
+          from: attributes["log.file.path"]
+          to: resource["log.file.path"]
+        - type: copy
+          from: resource["log.file.path"]
+          to: resource["_sourceName"]
+      include:
+          - /var/log/httpd/error_log
+      exclude:
+          - ''
+      start_at: beginning
+      encoding: utf-8
+      storage: file_storage
+      multiline:
+          line_start_pattern: ^\[\S{3}\s\S{3}\s\d{1,2}\s[^\]]+\].*
+    filelog/otherLogs/1278d323-eabc-4061-a62d-db5e7dd6ca25:
+      include_file_name: false
+      include_file_path: true
+      operators:
+        - type: move
+          from: attributes["log.file.path"]
+          to: resource["log.file.path"]
+        - type: copy
+          from: resource["log.file.path"]
+          to: resource["_sourceName"]
+      include:
+          - /var/log/httpd/error_log-20240117
+      exclude:
+          - ''
+      start_at: beginning
+      encoding: utf-8
+      storage: file_storage
+    filelog/accessFile/1278d323-eabc-4061-a62d-db5e7dd6ca25:
+      include_file_name: false
+      include_file_path: true
+      operators:
+        - type: move
+          from: attributes["log.file.path"]
+          to: resource["log.file.path"]
+        - type: copy
+          from: resource["log.file.path"]
+          to: resource["_sourceName"]
+      include:
+          - /var/log/httpd/access_log
+      exclude:
+          - ''
+      start_at: beginning
+      encoding: utf-8
+      storage: file_storage
+  processors:
+    memory_limiter:
+      check_interval: 5s
+      limit_percentage: 75
+      spike_limit_percentage: 20
+    batch:
+      send_batch_size: 1_024
+      timeout: 1s
+    resourcedetection/system:
+      detectors: ["system"]
+      system:
+        hostname_sources: ["dns","os"]
+    resource/metrics/1278d323-eabc-4061-a62d-db5e7dd6ca25:
+      attributes:
+      - key: _sourceName
+        value: apache
+        action: insert
+    resource/1278d323-eabc-4061-a62d-db5e7dd6ca25:
+      attributes:
+      - key: _source
+        value: apache
+        action: insert
+      - key: _contentType
+        value: OpenTelemetry
+        action: insert
+      - key: sumo.datasource
+        value: apache
+        action: insert
+      - key: webengine.node.name
+        action: insert
+        from_attribute: host.name
+      - key: webengine.cluster.name
+        value: apache
+        action: insert
+      - key: _sourceCategory
+        value: otel/apache
+        action: insert
+      - key: typex
+        value: testing
+        action: insert
+  exporters:
+    sumologic:
+      sending_queue:
+        enabled: true
+        storage: file_storage
+      retry_on_failure:
+        max_elapsed_time: 0
+  service:
+    pipelines:
+      metrics/apache/1278d323-eabc-4061-a62d-db5e7dd6ca25:
+        receivers:
+          - apache/1278d323-eabc-4061-a62d-db5e7dd6ca25
+        processors:
+          - memory_limiter
+          - resourcedetection/system
+          - batch
+          - resource/metrics/1278d323-eabc-4061-a62d-db5e7dd6ca25
+          - resource/1278d323-eabc-4061-a62d-db5e7dd6ca25
+        exporters:
+          - sumologic
+      logs/localfilesource/1278d323-eabc-4061-a62d-db5e7dd6ca25:
+        receivers:
+          - filelog/errorFile/1278d323-eabc-4061-a62d-db5e7dd6ca25
+          - filelog/otherLogs/1278d323-eabc-4061-a62d-db5e7dd6ca25
+          - filelog/accessFile/1278d323-eabc-4061-a62d-db5e7dd6ca25
+        processors:
+          - memory_limiter
+          - resourcedetection/system
+          - batch
+          - resource/1278d323-eabc-4061-a62d-db5e7dd6ca25
+        exporters:
+          - sumologic

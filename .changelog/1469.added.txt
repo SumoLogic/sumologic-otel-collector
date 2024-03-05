@@ -1,0 +1,1 @@
+feat(otrm): Add validation for otel configuration in the opamp agent
