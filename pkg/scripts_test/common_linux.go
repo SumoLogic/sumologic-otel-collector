@@ -1,3 +1,5 @@
+// go:
+
 package sumologic_scripts_tests
 
 import (
