@@ -18,7 +18,9 @@ import (
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/apachereceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver"
 )
 
 // Components returns the set of components for tests
@@ -35,7 +37,9 @@ func Components() (
 	errs = multierr.Append(errs, err)
 
 	receivers, err := receiver.MakeFactoryMap(
+		apachereceiver.NewFactory(),
 		filelogreceiver.NewFactory(),
+		hostmetricsreceiver.NewFactory(),
 		otlpreceiver.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
