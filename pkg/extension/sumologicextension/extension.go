@@ -284,7 +284,7 @@ func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCr
 	// Set the registration info so that it can be used in RoundTripper.
 	se.registrationInfo = colCreds.Credentials
 
-	httpClient, err := se.getHTTPClient(se.conf.HTTPClientSettings, colCreds.Credentials)
+	httpClient, err := se.getHTTPClient(se.conf.ClientConfig, colCreds.Credentials)
 	if err != nil {
 		return err
 	}
@@ -299,10 +299,10 @@ func (se *SumologicExtension) injectCredentials(colCreds credentials.CollectorCr
 }
 
 func (se *SumologicExtension) getHTTPClient(
-	httpClientSettings confighttp.HTTPClientSettings,
+	ClientConfig confighttp.ClientConfig,
 	regInfo api.OpenRegisterResponsePayload,
 ) (*http.Client, error) {
-	httpClient, err := httpClientSettings.ToClient(
+	httpClient, err := ClientConfig.ToClient(
 		se.host,
 		component.TelemetrySettings{},
 	)

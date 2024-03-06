@@ -30,9 +30,9 @@ import (
 
 // Config defines configuration for Sumo Logic exporter.
 type Config struct {
-	confighttp.HTTPClientSettings `mapstructure:",squash"` // squash ensures fields are correctly decoded in embedded struct.
-	exporterhelper.QueueSettings  `mapstructure:"sending_queue"`
-	configretry.BackOffConfig     `mapstructure:"retry_on_failure"`
+	confighttp.ClientConfig      `mapstructure:",squash"` // squash ensures fields are correctly decoded in embedded struct.
+	exporterhelper.QueueSettings `mapstructure:"sending_queue"`
+	configretry.BackOffConfig    `mapstructure:"retry_on_failure"`
 
 	// Compression encoding format, either empty string, gzip or deflate (default gzip)
 	// Empty string means no compression
@@ -69,9 +69,9 @@ type Config struct {
 	StickySessionEnabled bool `mapstructure:"sticky_session_enabled"`
 }
 
-// CreateDefaultHTTPClientSettings returns default http client settings
-func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
-	return confighttp.HTTPClientSettings{
+// CreateDefaultClientConfig returns default http client settings
+func CreateDefaultClientConfig() confighttp.ClientConfig {
+	return confighttp.ClientConfig{
 		Timeout:     defaultTimeout,
 		Compression: DefaultCompressEncoding,
 		Auth: &configauth.Authentication{
@@ -88,20 +88,20 @@ func (cfg *Config) Validate() error {
 	case NoCompression:
 
 	default:
-		return fmt.Errorf("invalid compression encoding type: %v", cfg.HTTPClientSettings.Compression)
+		return fmt.Errorf("invalid compression encoding type: %v", cfg.ClientConfig.Compression)
 	}
 
-	switch cfg.HTTPClientSettings.Compression {
+	switch cfg.ClientConfig.Compression {
 	case configcompression.TypeGzip:
 	case configcompression.TypeDeflate:
 	case configcompression.TypeZstd:
 	case NoCompression:
 
 	default:
-		return fmt.Errorf("invalid compression encoding type: %v", cfg.HTTPClientSettings.Compression)
+		return fmt.Errorf("invalid compression encoding type: %v", cfg.ClientConfig.Compression)
 	}
 
-	if cfg.CompressEncoding != NoCompression && cfg.HTTPClientSettings.Compression != DefaultCompressEncoding {
+	if cfg.CompressEncoding != NoCompression && cfg.ClientConfig.Compression != DefaultCompressEncoding {
 		return fmt.Errorf("compress_encoding is deprecated and should not be used when compression is set to a non-default value")
 	}
 
@@ -130,13 +130,13 @@ func (cfg *Config) Validate() error {
 		return fmt.Errorf("unexpected trace format: %s", cfg.TraceFormat)
 	}
 
-	if len(cfg.HTTPClientSettings.Endpoint) == 0 && cfg.HTTPClientSettings.Auth == nil {
+	if len(cfg.ClientConfig.Endpoint) == 0 && cfg.ClientConfig.Auth == nil {
 		return errors.New("no endpoint and no auth extension specified")
 	}
 
-	if _, err := url.Parse(cfg.HTTPClientSettings.Endpoint); err != nil {
+	if _, err := url.Parse(cfg.ClientConfig.Endpoint); err != nil {
 		return fmt.Errorf("failed parsing endpoint URL: %s; err: %w",
-			cfg.HTTPClientSettings.Endpoint, err,
+			cfg.ClientConfig.Endpoint, err,
 		)
 	}
 

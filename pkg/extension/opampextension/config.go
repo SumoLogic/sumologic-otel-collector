@@ -25,7 +25,7 @@ import (
 
 // Config has the configuration for the opamp extension.
 type Config struct {
-	confighttp.HTTPClientSettings `mapstructure:",squash"`
+	confighttp.ClientConfig `mapstructure:",squash"`
 
 	// InstanceUID is a ULID formatted as a 26 character string in canonical
 	// representation. Auto-generated on start if missing.
@@ -39,9 +39,9 @@ type Config struct {
 	AcceptsRemoteConfiguration bool `mapstructure:"accepts_remote_configuration"`
 }
 
-// CreateDefaultHTTPClientSettings returns default http client settings
-func CreateDefaultHTTPClientSettings() confighttp.HTTPClientSettings {
-	return confighttp.HTTPClientSettings{
+// CreateDefaultClientConfig returns default http client settings
+func CreateDefaultClientConfig() confighttp.ClientConfig {
+	return confighttp.ClientConfig{
 		Auth: &configauth.Authentication{
 			AuthenticatorID: component.NewID("sumologic"),
 		},

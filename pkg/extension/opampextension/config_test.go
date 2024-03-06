@@ -44,7 +44,7 @@ func TestUnmarshalConfig(t *testing.T) {
 	assert.NoError(t, component.UnmarshalConfig(cm, cfg))
 	assert.Equal(t,
 		&Config{
-			HTTPClientSettings: confighttp.HTTPClientSettings{
+			ClientConfig: confighttp.ClientConfig{
 				Endpoint: "wss://127.0.0.1:4320/v1/opamp",
 				Auth: &configauth.Authentication{
 					AuthenticatorID: component.NewID("sumologic"),

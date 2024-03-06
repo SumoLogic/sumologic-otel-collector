@@ -59,7 +59,7 @@ type exporterTest struct {
 
 func createTestConfig() *Config {
 	config := createDefaultConfig().(*Config)
-	config.HTTPClientSettings.Compression = NoCompression
+	config.ClientConfig.Compression = NoCompression
 	config.LogFormat = TextFormat
 	config.MaxRequestBodySize = 20_971_520
 	config.MetricFormat = OTLPMetricFormat
@@ -101,8 +101,8 @@ func prepareExporterTest(t *testing.T, cfg *Config, cb []func(w http.ResponseWri
 		)
 	})
 
-	cfg.HTTPClientSettings.Endpoint = testServer.URL
-	cfg.HTTPClientSettings.Auth = nil
+	cfg.ClientConfig.Endpoint = testServer.URL
+	cfg.ClientConfig.Auth = nil
 	for _, cfgOpt := range cfgOpts {
 		cfgOpt(cfg)
 	}
@@ -125,7 +125,7 @@ func TestInitExporter(t *testing.T) {
 		MetricFormat:     "otlp",
 		CompressEncoding: "gzip",
 		TraceFormat:      "otlp",
-		HTTPClientSettings: confighttp.HTTPClientSettings{
+		ClientConfig: confighttp.ClientConfig{
 			Timeout:  defaultTimeout,
 			Endpoint: "test_endpoint",
 		},
@@ -136,7 +136,7 @@ func TestInitExporter(t *testing.T) {
 func TestConfigureExporter(t *testing.T) {
 	host := componenttest.NewNopHost()
 	config := createDefaultConfig().(*Config)
-	config.HTTPClientSettings.Endpoint = "http://test_endpoint"
+	config.ClientConfig.Endpoint = "http://test_endpoint"
 	exporter, err := initExporter(config, createExporterCreateSettings())
 	require.NoError(t, err)
 	err = exporter.start(context.Background(), host)
@@ -296,7 +296,7 @@ func TestInvalidHTTPCLient(t *testing.T) {
 		LogFormat:    "json",
 		MetricFormat: "otlp",
 		TraceFormat:  "otlp",
-		HTTPClientSettings: confighttp.HTTPClientSettings{
+		ClientConfig: confighttp.ClientConfig{
 			Endpoint: "test_endpoint",
 			CustomRoundTripper: func(next http.RoundTripper) (http.RoundTripper, error) {
 				return nil, errors.New("roundTripperException")
@@ -596,8 +596,8 @@ func Benchmark_ExporterPushLogs(b *testing.B) {
 		config := createDefaultConfig().(*Config)
 		config.MetricFormat = PrometheusFormat
 		config.LogFormat = TextFormat
-		config.HTTPClientSettings.Auth = nil
-		config.HTTPClientSettings.Compression = configcompression.TypeGzip
+		config.ClientConfig.Auth = nil
+		config.ClientConfig.Compression = configcompression.TypeGzip
 		return config
 	}
 
@@ -606,7 +606,7 @@ func Benchmark_ExporterPushLogs(b *testing.B) {
 	b.Cleanup(func() { testServer.Close() })
 
 	cfg := createConfig()
-	cfg.HTTPClientSettings.Endpoint = testServer.URL
+	cfg.ClientConfig.Endpoint = testServer.URL
 
 	exp, err := initExporter(cfg, createExporterCreateSettings())
 	require.NoError(b, err)

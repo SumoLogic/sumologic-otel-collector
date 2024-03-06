@@ -334,10 +334,10 @@ func (se *sumologicexporter) configure(ctx context.Context) error {
 	)
 
 	if se.config.CompressEncoding != NoCompression {
-		se.config.HTTPClientSettings.Compression = se.config.CompressEncoding
+		se.config.ClientConfig.Compression = se.config.CompressEncoding
 	}
 
-	httpSettings := se.config.HTTPClientSettings
+	httpSettings := se.config.ClientConfig
 
 	for _, e := range se.host.GetExtensions() {
 		v, ok := e.(*sumologicextension.SumologicExtension)
