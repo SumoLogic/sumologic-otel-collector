@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.95.0-sumo-0]
+
+### Released 2024-03-06
+
+### Breaking Changes
+
+- feat(sumologicexporter)!: remove deprecated json_logs [#1452]
+- feat(sumologicexporter)!: remove deprecated clear_logs_timestamp [#1455]
+
+### Added
+
+- ci: build ubi-based images [#1440]
+- feat(k8sprocessor): extract namespace annotations [#1457]
+- ci: build UBI-based FIPS images [#1463]
+- feat: build windows containers [#1467]
+- feat(otrm): Add validation for otel configuration in the opamp agent [#1469]
+- feat(sourceprocessor): use namespace annotations to include/exclude namespace from collection or set sourceCategory, sourceHost, and sourceName [#1471]
+
+### Changed
+
+- chore(k8sprocessor): Improve logging of missing data events [#1448]
+- chore: update otelcol core to v0.95.0 [#1474]
+
+[#1452]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1452
+[#1455]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1455
+[#1440]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1440
+[#1457]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1457
+[#1463]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1463
+[#1467]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1467
+[#1469]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1469
+[#1471]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1471
+[#1448]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1448
+[#1474]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1474
+[v0.95.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.95.0-sumo-0
+
 ## [v0.94.0-sumo-2]
 
 ### Released 2024-02-20
