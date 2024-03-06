@@ -74,16 +74,9 @@ func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
 
 	// create the config provider using the locations
 	if len(locations) > 0 {
-		params.ConfigProvider, err = NewConfigProvider(locations)
-		if err != nil {
-			return err
-		}
+		params.ConfigProviderSettings = NewConfigProviderSettings(locations)
 	} else {
-		settings := NewOpAmpConfigProviderSettings(opAmpPath.Value.String())
-		params.ConfigProvider, err = otelcol.NewConfigProvider(settings)
-		if err != nil {
-			return err
-		}
+		params.ConfigProviderSettings = NewOpAmpConfigProviderSettings(opAmpPath.Value.String())
 	}
 
 	return nil

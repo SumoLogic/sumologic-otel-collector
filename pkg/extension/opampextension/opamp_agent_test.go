@@ -326,7 +326,7 @@ func TestApplyRemoteConfigMissingProcessor(t *testing.T) {
 
 func TestShutdown(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
-	cfg.HTTPClientSettings.Auth = nil
+	cfg.ClientConfig.Auth = nil
 	set := extensiontest.NewNopCreateSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
@@ -341,7 +341,7 @@ func TestStart(t *testing.T) {
 	defer os.RemoveAll(d)
 
 	cfg := createDefaultConfig().(*Config)
-	cfg.HTTPClientSettings.Auth = nil
+	cfg.ClientConfig.Auth = nil
 	cfg.RemoteConfigurationDirectory = d
 	set := extensiontest.NewNopCreateSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
@@ -356,7 +356,7 @@ func TestReload(t *testing.T) {
 	defer os.RemoveAll(d)
 
 	cfg := createDefaultConfig().(*Config)
-	cfg.HTTPClientSettings.Auth = nil
+	cfg.ClientConfig.Auth = nil
 	cfg.RemoteConfigurationDirectory = d
 	set := extensiontest.NewNopCreateSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
@@ -416,7 +416,7 @@ func TestHackSetEndpoint(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			agent := &opampAgent{cfg: &Config{
-				HTTPClientSettings: confighttp.HTTPClientSettings{
+				ClientConfig: confighttp.ClientConfig{
 					Endpoint: "wss://example.com",
 				},
 			}}

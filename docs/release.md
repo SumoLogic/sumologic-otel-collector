@@ -201,7 +201,7 @@ but in case you want to generate full list of components, the following instruct
       bearertokenauthextension.NewFactory(),
       fluentbitextension.NewFactory(),
       healthcheckextension.NewFactory(),
-      httpforwarder.NewFactory(),
+      httpforwarderextension.NewFactory(),
       jaegerremotesampling.NewFactory(),
       oauth2clientauthextension.NewFactory(),
       dockerobserver.NewFactory(),

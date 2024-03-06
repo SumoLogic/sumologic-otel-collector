@@ -32,7 +32,7 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 	cfg := createDefaultConfig()
 
 	assert.Equal(t, cfg, &Config{
-		HTTPClientSettings: confighttp.HTTPClientSettings{
+		ClientConfig: confighttp.ClientConfig{
 			Auth: &configauth.Authentication{
 				AuthenticatorID: component.NewID("sumologic"),
 			},

@@ -186,7 +186,7 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 }
 
 func (o *opampAgent) getAuthExtension() error {
-	settings := o.cfg.HTTPClientSettings
+	settings := o.cfg.ClientConfig
 
 	if settings.Auth == nil {
 		return nil

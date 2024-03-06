@@ -70,21 +70,21 @@ func prepareSenderTest(t *testing.T, compression configcompression.Type, cb []fu
 	t.Cleanup(func() { testServer.Close() })
 
 	cfg := createDefaultConfig().(*Config)
-	cfg.HTTPClientSettings.Endpoint = testServer.URL
+	cfg.ClientConfig.Endpoint = testServer.URL
 	switch compression {
 	case configcompression.TypeGzip:
-		cfg.HTTPClientSettings.Compression = configcompression.TypeGzip
+		cfg.ClientConfig.Compression = configcompression.TypeGzip
 	case configcompression.TypeZstd:
-		cfg.HTTPClientSettings.Compression = configcompression.TypeZstd
+		cfg.ClientConfig.Compression = configcompression.TypeZstd
 	case NoCompression:
-		cfg.HTTPClientSettings.Compression = NoCompression
+		cfg.ClientConfig.Compression = NoCompression
 	case configcompression.TypeDeflate:
-		cfg.HTTPClientSettings.Compression = configcompression.TypeDeflate
+		cfg.ClientConfig.Compression = configcompression.TypeDeflate
 	default:
 		cfg.CompressEncoding = configcompression.TypeGzip
 	}
-	cfg.HTTPClientSettings.Auth = nil
-	httpSettings := cfg.HTTPClientSettings
+	cfg.ClientConfig.Auth = nil
+	httpSettings := cfg.ClientConfig
 	host := componenttest.NewNopHost()
 	client, err := httpSettings.ToClient(host, component.TelemetrySettings{})
 	require.NoError(t, err)

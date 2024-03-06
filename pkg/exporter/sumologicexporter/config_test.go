@@ -22,7 +22,7 @@ func TestInitExporterInvalidConfiguration(t *testing.T) {
 				LogFormat:    "test_format",
 				MetricFormat: "otlp",
 				TraceFormat:  "otlp",
-				HTTPClientSettings: confighttp.HTTPClientSettings{
+				ClientConfig: confighttp.ClientConfig{
 					Timeout:  defaultTimeout,
 					Endpoint: "test_endpoint",
 				},
@@ -34,7 +34,7 @@ func TestInitExporterInvalidConfiguration(t *testing.T) {
 			cfg: &Config{
 				LogFormat:    "json",
 				MetricFormat: "test_format",
-				HTTPClientSettings: confighttp.HTTPClientSettings{
+				ClientConfig: confighttp.ClientConfig{
 					Timeout:     defaultTimeout,
 					Endpoint:    "test_endpoint",
 					Compression: "gzip",
@@ -47,7 +47,7 @@ func TestInitExporterInvalidConfiguration(t *testing.T) {
 			cfg: &Config{
 				LogFormat:    "json",
 				MetricFormat: "carbon2",
-				HTTPClientSettings: confighttp.HTTPClientSettings{
+				ClientConfig: confighttp.ClientConfig{
 					Timeout:     defaultTimeout,
 					Endpoint:    "test_endpoint",
 					Compression: "gzip",
@@ -60,7 +60,7 @@ func TestInitExporterInvalidConfiguration(t *testing.T) {
 			cfg: &Config{
 				LogFormat:    "json",
 				MetricFormat: "graphite",
-				HTTPClientSettings: confighttp.HTTPClientSettings{
+				ClientConfig: confighttp.ClientConfig{
 					Timeout:     defaultTimeout,
 					Endpoint:    "test_endpoint",
 					Compression: "gzip",
@@ -74,7 +74,7 @@ func TestInitExporterInvalidConfiguration(t *testing.T) {
 				LogFormat:    "json",
 				MetricFormat: "otlp",
 				TraceFormat:  "text",
-				HTTPClientSettings: confighttp.HTTPClientSettings{
+				ClientConfig: confighttp.ClientConfig{
 					Timeout:     defaultTimeout,
 					Endpoint:    "test_endpoint",
 					Compression: "gzip",
@@ -88,7 +88,7 @@ func TestInitExporterInvalidConfiguration(t *testing.T) {
 				LogFormat:    "json",
 				MetricFormat: "otlp",
 				TraceFormat:  "otlp",
-				HTTPClientSettings: confighttp.HTTPClientSettings{
+				ClientConfig: confighttp.ClientConfig{
 					Timeout:     defaultTimeout,
 					Compression: "gzip",
 				},

@@ -45,7 +45,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 		Client:             "otelcol",
 		TraceFormat:        "otlp",
 
-		HTTPClientSettings: confighttp.HTTPClientSettings{
+		ClientConfig: confighttp.ClientConfig{
 			Timeout:     30 * time.Second,
 			Compression: "gzip",
 			Auth: &configauth.Authentication{
