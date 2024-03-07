@@ -1,6 +1,6 @@
 # Upgrading
 
-- [Upgrading to v0.95.0-sumo-0](#upgrading-to-v0950-sumo-0)
+- [Upgrading to v0.96.0-sumo-0](#upgrading-to-v0960-sumo-0)
   - [`sumologic` exporter: remove `json_logs`](#sumologic-exporter-remove-json_logs)
   - [`sumologic` exporter: remove `clear_logs_timestamp`](#sumologic-exporter-remove-clear_logs_timestamp)
 - [Upgrading to v0.94.0-sumo-0](#upgrading-to-v0940-sumo-0)
@@ -53,7 +53,7 @@
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
-## Upgrading to v0.95.0-sumo-0
+## Upgrading to v0.96.0-sumo-0
 
 ### `sumologic` exporter: remove `json_logs`
 
@@ -798,7 +798,7 @@ processors:
 ```
 
 [logstransform]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.55.0/processor/logstransformprocessor
-[filter]: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.54.0-filterprocessor/processor/filterprocessor
+[filter]: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
 
 ## Upgrading to v0.52.0-sumo-0
 
