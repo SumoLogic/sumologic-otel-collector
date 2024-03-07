@@ -6,7 +6,7 @@ toolchain go1.21.4
 
 require (
 	github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter v0.0.0-00010101000000-000000000000
-	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.77.0-sumo-0
+	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.0.0-00010101000000-000000000000
 	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf/parsers/yaml v0.1.0
 	github.com/knadh/koanf/providers/rawbytes v0.1.0
