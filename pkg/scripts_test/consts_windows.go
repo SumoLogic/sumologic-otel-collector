@@ -3,8 +3,8 @@
 package sumologic_scripts_tests
 
 const (
-	systemGroup string = "otelcol-sumo"
-	systemUser  string = "otelcol-sumo"
+	// See: https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/understand-security-identifiers
+	localSystemSID string = "S-1-5-18"
 
 	packageName string = "OpenTelemetry Collector"
 
@@ -23,10 +23,10 @@ const (
 	installTokenEnv string = "SUMOLOGIC_INSTALLATION_TOKEN"
 	apiBaseURL      string = "https://open-collectors.sumologic.com"
 
-	commonConfigPathFilePermissions uint32 = 0550
-	configPathDirPermissions        uint32 = 0550
-	configPathFilePermissions       uint32 = 0440
-	confDPathFilePermissions        uint32 = 0644
-	etcPathPermissions              uint32 = 0551
-	opampDPermissions               uint32 = 0750
+	commonConfigPathFilePermissions uint32 = 0777
+	configPathDirPermissions        uint32 = 0777
+	configPathFilePermissions       uint32 = 0666
+	confDPathFilePermissions        uint32 = 0777
+	etcPathPermissions              uint32 = 0777
+	opampDPermissions               uint32 = 0777
 )

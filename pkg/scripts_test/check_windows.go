@@ -1,17 +1,23 @@
 package sumologic_scripts_tests
 
 import (
-	"os/user"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sys/windows"
 )
 
 func checkAbortedDueToNoToken(c check) {
 	require.Greater(c.test, len(c.output), 1)
 	require.Greater(c.test, len(c.errorOutput), 1)
-	require.Contains(c.test, c.errorOutput[0], "Installation token has not been provided.")
-	require.Contains(c.test, c.errorOutput[1], "Please set the SUMOLOGIC_INSTALLATION_TOKEN environment variable.")
+	// The exact formatting of the error message can be different depending on Powershell version
+	errorOutput := strings.Join(c.errorOutput, " ")
+	require.Contains(c.test, errorOutput, "Installation token has not been provided.")
+	require.Contains(c.test, errorOutput, "Please set the SUMOLOGIC_INSTALLATION_TOKEN environment variable.")
 }
 
 func checkEphemeralNotInConfig(p string) func(c check) {
@@ -54,12 +60,46 @@ func checkTokenInSumoConfig(c check) {
 	require.Equal(c.test, c.installOptions.installToken, conf.Extensions.Sumologic.InstallationToken, "installation token is different than expected")
 }
 
-func checkUserExists(c check) {
-	_, err := user.Lookup(systemUser)
-	require.NoError(c.test, err, "user has not been created")
+func checkConfigFilesOwnershipAndPermissions(ownerSid string) func(c check) {
+	return func(c check) {
+		etcPathGlob := filepath.Join(etcPath, "*")
+		etcPathNestedGlob := filepath.Join(etcPath, "*", "*")
+
+		for _, glob := range []string{etcPathGlob, etcPathNestedGlob} {
+			paths, err := filepath.Glob(glob)
+			require.NoError(c.test, err)
+			for _, path := range paths {
+				var permissions uint32
+				info, err := os.Stat(path)
+				require.NoError(c.test, err)
+				if info.IsDir() {
+					if path == opampDPath {
+						permissions = opampDPermissions
+					} else {
+						permissions = configPathDirPermissions
+					}
+				} else {
+					permissions = configPathFilePermissions
+				}
+				PathHasPermissions(c.test, path, permissions)
+				PathHasOwner(c.test, configPath, ownerSid)
+			}
+		}
+		PathHasPermissions(c.test, configPath, configPathFilePermissions)
+	}
 }
 
-func checkUserNotExists(c check) {
-	_, err := user.Lookup(systemUser)
-	require.Error(c.test, err, "user has been created")
+func PathHasOwner(t *testing.T, path string, ownerSID string) {
+	securityDescriptor, err := windows.GetNamedSecurityInfo(
+		path,
+		windows.SE_FILE_OBJECT,
+		windows.OWNER_SECURITY_INFORMATION,
+	)
+	require.NoError(t, err)
+
+	// get the owning user
+	owner, _, err := securityDescriptor.Owner()
+	require.NoError(t, err)
+
+	require.Equal(t, ownerSID, owner.String(), "%s should be owned by user '%s'", path, ownerSID)
 }

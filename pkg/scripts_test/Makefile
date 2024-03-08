@@ -11,4 +11,4 @@ GOTESTBINARY=sumologic_scripts_tests.test
 .PHONY: test
 test:
 	$(GOTEST) -c
-	$(GOTESTPREFIX) ./$(GOTESTBINARY)
+	$(GOTESTPREFIX) ./$(GOTESTBINARY) -test.v

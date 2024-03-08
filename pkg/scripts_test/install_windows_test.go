@@ -7,7 +7,6 @@ import (
 	"testing"
 )
 
-// TODO: Check file ownership
 // TODO: Set up file permissions to be able to modify config files on Windows
 
 func TestInstallScript(t *testing.T) {
@@ -15,8 +14,8 @@ func TestInstallScript(t *testing.T) {
 		{
 			name:        "no arguments",
 			options:     installOptions{},
-			preChecks:   []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
-			postChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkAbortedDueToNoToken, checkUserNotExists},
+			preChecks:   []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated},
+			postChecks:  []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkAbortedDueToNoToken},
 			installCode: 1,
 		},
 		{
@@ -24,16 +23,15 @@ func TestInstallScript(t *testing.T) {
 			options: installOptions{
 				installToken: installToken,
 			},
-			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated},
 			postChecks: []checkFunc{
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
-				// checkConfigFilesOwnershipAndPermissions(rootUser, rootGroup),
+				checkConfigFilesOwnershipAndPermissions(localSystemSID),
 				checkUserConfigCreated,
 				checkEphemeralNotInConfig(userConfigPath),
 				checkTokenInConfig,
-				checkUserNotExists,
 				checkHostmetricsConfigNotCreated,
 			},
 		},
@@ -43,16 +41,15 @@ func TestInstallScript(t *testing.T) {
 				installToken: installToken,
 				ephemeral:    true,
 			},
-			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated},
 			postChecks: []checkFunc{
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
-				// checkConfigFilesOwnershipAndPermissions(rootUser, rootGroup),
+				checkConfigFilesOwnershipAndPermissions(localSystemSID),
 				checkUserConfigCreated,
 				checkTokenInConfig,
 				checkEphemeralInConfig(userConfigPath),
-				checkUserNotExists,
 				checkHostmetricsConfigNotCreated,
 			},
 		},
@@ -62,15 +59,14 @@ func TestInstallScript(t *testing.T) {
 				installToken:       installToken,
 				installHostmetrics: true,
 			},
-			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated},
 			postChecks: []checkFunc{
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
-				// checkConfigFilesOwnershipAndPermissions(rootUser, rootGroup),
+				checkConfigFilesOwnershipAndPermissions(localSystemSID),
 				checkUserConfigCreated,
 				checkTokenInConfig,
-				checkUserNotExists,
 				checkHostmetricsConfigCreated,
 			},
 		},
@@ -80,16 +76,15 @@ func TestInstallScript(t *testing.T) {
 				installToken:    installToken,
 				remotelyManaged: true,
 			},
-			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated},
 			postChecks: []checkFunc{
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
-				// checkConfigFilesOwnershipAndPermissions(rootUser, rootGroup),
+				checkConfigFilesOwnershipAndPermissions(localSystemSID),
 				checkRemoteConfigDirectoryCreated,
 				checkTokenInSumoConfig,
 				checkEphemeralNotInConfig(configPath),
-				checkUserNotExists,
 			},
 		},
 		{
@@ -99,16 +94,15 @@ func TestInstallScript(t *testing.T) {
 				remotelyManaged: true,
 				ephemeral:       true,
 			},
-			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated},
 			postChecks: []checkFunc{
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
-				// checkConfigFilesOwnershipAndPermissions(rootUser, rootGroup),
+				checkConfigFilesOwnershipAndPermissions(localSystemSID),
 				checkRemoteConfigDirectoryCreated,
 				checkTokenInSumoConfig,
 				checkEphemeralInConfig(configPath),
-				checkUserNotExists,
 			},
 		},
 		{
@@ -123,12 +117,12 @@ func TestInstallScript(t *testing.T) {
 					"numeric":   "1_024",
 				},
 			},
-			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated, checkUserNotExists},
+			preChecks: []checkFunc{checkBinaryNotCreated, checkConfigNotCreated, checkUserConfigNotCreated},
 			postChecks: []checkFunc{
 				checkBinaryCreated,
 				checkBinaryIsRunning,
 				checkConfigCreated,
-				// checkConfigFilesOwnershipAndPermissions(rootUser, rootGroup),
+				checkConfigFilesOwnershipAndPermissions(localSystemSID),
 				checkTags,
 			},
 		},
