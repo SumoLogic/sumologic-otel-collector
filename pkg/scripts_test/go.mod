@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/stretchr/testify v1.7.0
+	golang.org/x/sys v0.18.0
 	gopkg.in/yaml.v2 v2.4.0
 	howett.net/plist v1.0.0
 )
