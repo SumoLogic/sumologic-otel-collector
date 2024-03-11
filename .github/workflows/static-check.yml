@@ -13,24 +13,24 @@ jobs:
     strategy:
       matrix:
         module:
-          - configprovider/globprovider
-          - configprovider/opampprovider
-          - exporter/sumologicexporter
-          - exporter/syslogexporter
-          - extension/opampextension
-          - extension/sumologicextension
-          - processor/cascadingfilterprocessor
-          - processor/k8sprocessor
-          - processor/metricfrequencyprocessor
-          - processor/sourceprocessor
-          - processor/sumologicschemaprocessor
-          - processor/sumologicsyslogprocessor
-          - receiver/activedirectoryinvreceiver
-          - receiver/jobreceiver
-          - receiver/rawk8seventsreceiver
-          - receiver/telegrafreceiver
-          - scripts_test
-          - test
+          - pkg/configprovider/globprovider
+          - pkg/configprovider/opampprovider
+          - pkg/exporter/sumologicexporter
+          - pkg/exporter/syslogexporter
+          - pkg/extension/opampextension
+          - pkg/extension/sumologicextension
+          - pkg/processor/cascadingfilterprocessor
+          - pkg/processor/k8sprocessor
+          - pkg/processor/metricfrequencyprocessor
+          - pkg/processor/sourceprocessor
+          - pkg/processor/sumologicschemaprocessor
+          - pkg/processor/sumologicsyslogprocessor
+          - pkg/receiver/activedirectoryinvreceiver
+          - pkg/receiver/jobreceiver
+          - pkg/receiver/rawk8seventsreceiver
+          - pkg/receiver/telegrafreceiver
+          - pkg/scripts_test
+          - pkg/test
     name: staticcheck (${{ matrix.module }})
     runs-on: ubuntu-latest
     steps:
