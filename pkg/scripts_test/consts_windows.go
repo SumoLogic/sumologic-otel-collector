@@ -2,6 +2,8 @@
 
 package sumologic_scripts_tests
 
+import "golang.org/x/sys/windows"
+
 const (
 	// See: https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/understand-security-identifiers
 	localSystemSID string = "S-1-5-18"
@@ -23,10 +25,19 @@ const (
 	installTokenEnv string = "SUMOLOGIC_INSTALLATION_TOKEN"
 	apiBaseURL      string = "https://open-collectors.sumologic.com"
 
-	commonConfigPathFilePermissions uint32 = 0777
-	configPathDirPermissions        uint32 = 0777
-	configPathFilePermissions       uint32 = 0666
-	confDPathFilePermissions        uint32 = 0777
-	etcPathPermissions              uint32 = 0777
-	opampDPermissions               uint32 = 0777
+	allFilePermissions = windows.STANDARD_RIGHTS_ALL | windows.FILE_GENERIC_READ | windows.FILE_GENERIC_WRITE | windows.FILE_GENERIC_EXECUTE | 0x00000040
+)
+
+var (
+	pathPermissions = []ACLRecord{
+		{
+			SID:               localSystemSID,
+			AccessPermissions: allFilePermissions,
+			AccessMode:        windows.GRANT_ACCESS,
+		},
+	}
+	filePermissions           = []ACLRecord{}
+	opampDPermissions         = pathPermissions
+	configPathDirPermissions  = pathPermissions
+	configPathFilePermissions = filePermissions
 )
