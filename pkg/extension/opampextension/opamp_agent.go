@@ -67,9 +67,22 @@ type opampAgent struct {
 	remoteConfigStatus *protobufs.RemoteConfigStatus
 }
 
+// opampLogShim translates between zap and opamp-go's bespoke logging interface
+type opampLogShim struct {
+	logger *zap.SugaredLogger
+}
+
+func (o opampLogShim) Debugf(_ context.Context, fmt string, v ...interface{}) {
+	o.logger.Debugf(fmt, v...)
+}
+
+func (o opampLogShim) Errorf(_ context.Context, fmt string, v ...interface{}) {
+	o.logger.Errorf(fmt, v...)
+}
+
 func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 	o.host = host
-	o.opampClient = client.NewWebSocket(o.logger.Sugar())
+	o.opampClient = client.NewWebSocket(opampLogShim{o.logger.Sugar()})
 
 	if err := o.loadEffectiveConfig(o.cfg.RemoteConfigurationDirectory); err != nil {
 		return err
@@ -146,13 +159,13 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 		OpAMPServerURL: o.endpoint,
 		InstanceUid:    o.instanceId.String(),
 		Callbacks: types.CallbacksStruct{
-			OnConnectFunc: func() {
+			OnConnectFunc: func(ctx context.Context) {
 				o.logger.Info("Connected to the OpAMP server")
 			},
-			OnConnectFailedFunc: func(err error) {
+			OnConnectFailedFunc: func(ctx context.Context, err error) {
 				o.logger.Error("Failed to connect to the OpAMP server", zap.Error(err))
 			},
-			OnErrorFunc: func(err *protobufs.ServerErrorResponse) {
+			OnErrorFunc: func(ctx context.Context, err *protobufs.ServerErrorResponse) {
 				o.logger.Error("OpAMP server returned an error response", zap.String("message", err.ErrorMessage))
 			},
 			SaveRemoteConfigStatusFunc: func(_ context.Context, status *protobufs.RemoteConfigStatus) {
