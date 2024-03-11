@@ -10,7 +10,28 @@ on:
 
 jobs:
   staticcheck:
-    name: staticcheck (project)
+    strategy:
+      matrix:
+        module:
+          - configprovider/globprovider
+          - configprovider/opampprovider
+          - exporter/sumologicexporter
+          - exporter/syslogexporter
+          - extension/opampextension
+          - extension/sumologicextension
+          - processor/cascadingfilterprocessor
+          - processor/k8sprocessor
+          - processor/metricfrequencyprocessor
+          - processor/sourceprocessor
+          - processor/sumologicschemaprocessor
+          - processor/sumologicsyslogprocessor
+          - receiver/activedirectoryinvreceiver
+          - receiver/jobreceiver
+          - receiver/rawk8seventsreceiver
+          - receiver/telegrafreceiver
+          - scripts_test
+          - test
+    name: staticcheck (${{ matrix.module }})
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -21,6 +42,8 @@ jobs:
           go-version: "1.21.x"
       - uses: dominikh/staticcheck-action@v1.0.0
         with:
+          working_directory:
+            ${{ matrix.module }}
           version: "2023.1.6"
           install-go: false
           cache-key: "1.21.x"
