@@ -363,7 +363,7 @@ jobs:
       - name: Build and push UBI-based FIPS image to Open Source ECR
         if: matrix.arch_os == 'linux_amd64'
         run: |
-          cp artifacts/${{ steps.set_filename.outputs.filename_fips }} otelcol-sumo
+          cp artifacts/${{ steps.set_filename_fips.outputs.filename_fips }} otelcol-sumo
           make build-push-container-ubi \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }}
