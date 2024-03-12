@@ -12,6 +12,7 @@ jobs:
   staticcheck:
     strategy:
       matrix:
+        go: "1.21.x"
         module:
           - pkg/configprovider/globprovider
           - pkg/configprovider/opampprovider
@@ -31,7 +32,7 @@ jobs:
           - pkg/receiver/telegrafreceiver
           - pkg/scripts_test
           - pkg/test
-    name: staticcheck (${{ matrix.module }})
+    name: ${{ matrix.module }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -39,13 +40,13 @@ jobs:
           fetch-depth: 1
       - uses: WillAbides/setup-go-faster@v1.8.0
         with:
-          go-version: "1.21.x"
+          go-version: "${{ matrix.go }}"
       - uses: dominikh/staticcheck-action@v1.3.0
         with:
           working-directory:
             ${{ matrix.module }}
           version: "2023.1.6"
           install-go: false
-          cache-key: "1.21.x"
+          cache-key: "${{ matrix.go }}"
 env:
   GO_VERSION: 1.21.3
