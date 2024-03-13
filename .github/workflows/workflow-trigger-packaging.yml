@@ -55,7 +55,7 @@ jobs:
             {
               "workflow_id": "${{ github.run_id }}",
               "otc_version": "${{ steps.version-core.outputs.version }}",
-              "otc_sumo_version": "${{ steps.sumo-version.outputs.version }}"
+              "otc_sumo_version": "${{ steps.sumo-version.outputs.version }}",
               "release": ${{ inputs.create_release }}
             }
 
