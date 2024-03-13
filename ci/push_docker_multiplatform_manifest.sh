@@ -82,14 +82,14 @@ function push_manifest() {
     echo
     set -x
     # Use docker manifest as docker buildx didn't create "${REPO_URL}:${BUILD_TAG}" correctly. It was containing only linux/amd64 image
-    docker manifest create \
+    docker manifest create --amend \
         "${REPO_URL}:${BUILD_TAG}${BUILD_TYPE_SUFFIX}" \
         "${TAGS_IN_MANIFEST[@]}"
 
     docker manifest push \
         "${REPO_URL}:${BUILD_TAG}${BUILD_TYPE_SUFFIX}"
 
-    docker manifest create \
+    docker manifest create --amend \
         "${REPO_URL}:latest${BUILD_TYPE_SUFFIX}" \
         "${TAGS_IN_MANIFEST[@]}"
 
