@@ -356,5 +356,6 @@ jobs:
       - package-msi
       - push-docker-manifest
     uses: ./.github/workflows/workflow-trigger-packaging.yml
+    secrets: inherit
     with:
       create_release: false
