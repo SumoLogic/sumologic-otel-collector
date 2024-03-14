@@ -62,6 +62,11 @@ If you use `recombine` operator you will observe that logs which do not match re
 
 ### Released 2024-02-20
 
+### Known issue
+
+Behavior of [recombine][recombine] operator has been changed. Now it recombines also partial logs, for details please see [pull request][opentelemetry-collector-contrib#30797].
+If you use `recombine` operator you will observe that logs which do not match regular expression are combined into one log entry.
+
 ### Fixed
 
 - fix(opamp): restart windows service when configuration update is received via opamp [#1453]
@@ -78,6 +83,11 @@ This was a failed release. Use [v0.94.0-sumo-2] instead.
 ## [v0.94.0-sumo-0]
 
 ### Released 2024-02-14
+
+### Known issue
+
+Behavior of [recombine][recombine] operator has been changed. Now it recombines also partial logs, for details please see [pull request][opentelemetry-collector-contrib#30797].
+If you use `recombine` operator you will observe that logs which do not match regular expression are combined into one log entry.
 
 ### Breaking Changes
 
