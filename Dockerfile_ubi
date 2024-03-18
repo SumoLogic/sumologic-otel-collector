@@ -28,6 +28,8 @@ USER ${USER_UID}
 ENV HOME /etc/otel/
 
 COPY otelcol-sumo /
+# This shouldn't be necessary but sometimes we end up with execution bit not set
+RUN chmod 755 /otelcol-sumo
 
 ENTRYPOINT ["/otelcol-sumo"]
 CMD ["--config", "/etc/otel/config.yaml"]
