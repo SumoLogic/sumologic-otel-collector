@@ -13,11 +13,15 @@ require (
 	github.com/knadh/koanf/v2 v2.1.0
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/open-telemetry/opamp-go v0.12.1-0.20240229161006-7e92da0f17ef
+	github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.96.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.96.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage v0.96.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.96.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.96.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/apachereceiver v0.96.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver v0.96.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver v0.96.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver v0.96.0
 	github.com/stretchr/testify v1.8.4
 	go.opentelemetry.io/collector/component v0.96.0
 	go.opentelemetry.io/collector/config/configauth v0.96.0
@@ -140,6 +144,7 @@ require (
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/valyala/fastjson v1.6.4 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
+	go.etcd.io/bbolt v1.3.9 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/collector v0.96.0 // indirect
 	go.opentelemetry.io/collector/config/configcompression v0.96.0 // indirect
@@ -192,7 +197,7 @@ require (
 	gonum.org/v1/gonum v0.14.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240123012728-ef4313101c80 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240123012728-ef4313101c80 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240125205218-1f4bbc51befe // indirect
 	google.golang.org/grpc v1.62.0 // indirect
 	google.golang.org/protobuf v1.32.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

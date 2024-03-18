@@ -16,11 +16,15 @@ import (
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter"
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/apachereceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver"
 )
 
 // Components returns the set of components for tests
@@ -33,6 +37,10 @@ func Components() (
 	extensions, err := extension.MakeFactoryMap(
 		ballastextension.NewFactory(),
 		sumologicextension.NewFactory(),
+		healthcheckextension.NewFactory(),
+		pprofextension.NewFactory(),
+		NewFactory(), // opampextension
+		filestorage.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
@@ -41,6 +49,7 @@ func Components() (
 		filelogreceiver.NewFactory(),
 		hostmetricsreceiver.NewFactory(),
 		otlpreceiver.NewFactory(),
+		windowseventlogreceiver.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
