@@ -28,7 +28,7 @@ param (
     # InstallationLogfileEndpoint is used to configure the endpoint where
     # installation logs will be sent.
     [string] $InstallationLogfileEndpoint,
-    
+
     # Specifies wether or not remote management is enabled
     [bool] $RemotelyManaged,
 
