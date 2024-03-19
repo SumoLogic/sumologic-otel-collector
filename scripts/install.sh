@@ -183,8 +183,10 @@ EOF
 
 function reporter {
     if ! $DISABLE_INSTALLATION_TELEMETRY; then
-        echo "SUMOLOGIC_INSTALLATION_TOKEN=${SUMOLOGIC_INSTALLATION_TOKEN}" >> $INSTALLATION_LOGFILE
-        curl --silent --location -X POST --data-binary @"${INSTALLATION_LOGFILE}" "${INSTALLATION_LOGFILE_ENDPOINT}"
+        HASHED_INSTALLATION_TOKEN=$(echo -n "${SUMOLOGIC_INSTALLATION_TOKEN}" | shasum -a 256 | cut -d ' ' -f1)
+        curl --silent --location -X POST \
+            --header "X-Sumo-Fields:installation-token-sha256=$HASHED_INSTALLATION_TOKEN" \
+            --data-binary @"${INSTALLATION_LOGFILE}" "${INSTALLATION_LOGFILE_ENDPOINT}"
     fi
 }
 trap reporter EXIT
