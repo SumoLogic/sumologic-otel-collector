@@ -1,0 +1,79 @@
+
+extensions:
+  opamp:
+    endpoint: wss://test.sumologic.net/v1/opamp
+    remote_configuration_directory: /etc/otelcol-sumo/opamp.d
+  sumologic:
+  health_check:
+  file_storage:
+    directory: .
+receivers:
+  hostmetrics/79130394-7f26-44a6-a801-a0a68d8a7df7:
+    collection_interval: 5m
+    scrapers:
+      load:
+      memory:
+        metrics:
+          system.memory.utilization:
+            enabled: true
+      filesystem:
+        metrics:
+          system.filesystem.utilization:
+            enabled: true
+      network:
+      paging:
+      processes:
+processors:
+  memory_limiter:
+    check_interval: 5s
+    limit_percentage: 75
+    spike_limit_percentage: 20
+  batch:
+    send_batch_size: 1_024
+    timeout: 1s
+  resourcedetection/system:
+    detectors: ["system"]
+    system:
+      hostname_sources: ["dns","os"]
+  resource/metrics/79130394-7f26-44a6-a801-a0a68d8a7df7:
+    attributes:
+    - key: _sourceName
+      value: mac
+      action: insert
+  resource/79130394-7f26-44a6-a801-a0a68d8a7df7:
+    attributes:
+    - key: _source
+      value: mac_source
+      action: insert
+    - key: _contentType
+      value: OpenTelemetry
+      action: insert
+    - key: sumo.datasource
+      value: mac
+      action: insert
+    - key: _sourceCategory
+      value: otel/mac
+      action: insert
+exporters:
+  sumologic:
+    sending_queue:
+      enabled: true
+      storage: file_storage
+service:
+  extensions:
+    - opamp
+    - sumologic
+    - health_check
+    - file_storage
+  pipelines:
+    metrics/mac/79130394-7f26-44a6-a801-a0a68d8a7df7:
+      receivers:
+        - hostmetrics/79130394-7f26-44a6-a801-a0a68d8a7df7
+      processors:
+        - memory_limiter
+        - resourcedetection/system
+        - batch
+        - resource/metrics/79130394-7f26-44a6-a801-a0a68d8a7df7
+        - resource/79130394-7f26-44a6-a801-a0a68d8a7df7
+      exporters:
+        - sumologic
