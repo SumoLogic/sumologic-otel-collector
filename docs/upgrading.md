@@ -1,5 +1,10 @@
 # Upgrading
 
+- [Upgrading to v0.96.0-sumo-0](#upgrading-to-v0960-sumo-0)
+  - [`sumologic` exporter: remove `json_logs`](#sumologic-exporter-remove-json_logs)
+  - [`sumologic` exporter: remove `clear_logs_timestamp`](#sumologic-exporter-remove-clear_logs_timestamp)
+- [Upgrading to v0.94.0-sumo-0](#upgrading-to-v0940-sumo-0)
+  - [`servicegraph` processor: removed in favor of `servicegraph` connector](#servicegraph-processor-removed-in-favor-of-servicegraph-connector)
 - [Upgrading to v0.92.0-sumo-0](#upgrading-to-v0920-sumo-0)
   - [Exporters: changed retry logic when using persistent queue](#exporters-changed-retry-logic-when-using-persistent-queue)
 - [Upgrading to v0.91.0-sumo-0](#upgrading-to-v0910-sumo-0)
@@ -47,6 +52,30 @@
   - [Sumo Logic exporter metadata handling](#sumo-logic-exporter-metadata-handling)
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
+
+## Upgrading to v0.96.0-sumo-0
+
+### `sumologic` exporter: remove `json_logs`
+
+`json_logs` has been removed in favor of `transform` processor.
+
+Please follow [the migration process](#sumologic-exporter-deprecate-json_logs)
+
+### `sumologic` exporter: remove `clear_logs_timestamp`
+
+`clear_logs_timestamp` has been removed in favor of `transform` processor.
+
+Please follow [the migration process](#sumologic-exporter-deprecate-clear_logs_timestamp)
+
+## Upgrading to v0.94.0-sumo-0
+
+### `servicegraph` processor: removed in favor of `servicegraph` connector
+
+The deprecated [Service Graph processor][servicegraphprocessor] has been removed.
+Use the [Service Graph connector][servicegraphconnector] instead.
+
+[servicegraphprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.92.0/processor/servicegraphprocessor
+[servicegraphconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.94.0/connector/servicegraphconnector
 
 ## Upgrading to v0.92.0-sumo-0
 
@@ -769,7 +798,7 @@ processors:
 ```
 
 [logstransform]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.55.0/processor/logstransformprocessor
-[filter]: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/v0.54.0-filterprocessor/processor/filterprocessor
+[filter]: https://github.com/SumoLogic/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
 
 ## Upgrading to v0.52.0-sumo-0
 

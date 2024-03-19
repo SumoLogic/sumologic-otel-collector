@@ -18,6 +18,9 @@ extensions:
   ## The File Storage extension can persist state to the local file system
   ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/storage/filestorage
   file_storage:
+    compaction:
+      directory: /var/lib/otelcol-sumo/file_storage
+      on_rebound: true
     directory: /var/lib/otelcol-sumo/file_storage
 
   ## Configuration for OpAMP Extension
@@ -46,6 +49,8 @@ exporters:
     sending_queue:
       enabled: true
       storage: file_storage
+    retry_on_failure:
+        max_elapsed_time: 0
 
 processors:
 

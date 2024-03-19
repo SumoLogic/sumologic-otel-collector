@@ -1,3 +1,5 @@
+//go:build linux || darwin
+
 package sumologic_scripts_tests
 
 const (

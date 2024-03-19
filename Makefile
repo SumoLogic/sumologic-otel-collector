@@ -243,6 +243,9 @@ OPENSOURCE_ECR_URL = public.ecr.aws/sumologic
 OPENSOURCE_REPO_URL = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME)
 OPENSOURCE_REPO_URL_DEV = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME_DEV)
 REPO_URL = $(OPENSOURCE_REPO_URL)
+BASE_IMAGE_TAG ?= ""
+
+DOCKERFILE = Dockerfile
 
 .PHONY: _build
 _build:
@@ -278,9 +281,17 @@ build-container-multiplatform-dev: build-container-multiplatform
 build-push-container-multiplatform-dev: REPO_URL = "$(OPENSOURCE_REPO_URL_DEV)"
 build-push-container-multiplatform-dev: build-push-container-multiplatform
 
+.PHONY: build-push-container-windows-dev
+build-push-container-windows-dev: DOCKERFILE = Dockerfile_windows
+build-push-container-windows-dev: build-push-container-multiplatform-dev
+
 .PHONY: push-container-manifest-dev
 push-container-manifest-dev: REPO_URL = "$(OPENSOURCE_REPO_URL_DEV)"
 push-container-manifest-dev: push-container-manifest
+
+.PHONY: build-push-container-ubi
+build-push-container-ubi-dev: REPO_URL = "$(OPENSOURCE_REPO_URL_DEV)"
+build-push-container-ubi-dev: build-push-container-ubi
 
 #-------------------------------------------------------------------------------
 
@@ -290,16 +301,36 @@ push-container-manifest-dev: push-container-manifest
 _build-container-multiplatform:
 	BUILD_TAG="$(BUILD_TAG)" \
 		REPO_URL="$(REPO_URL)" \
-		DOCKERFILE="Dockerfile" \
+		DOCKERFILE="$(DOCKERFILE)" \
 		PLATFORM="$(PLATFORM)" \
+		BASE_IMAGE_TAG="${BASE_IMAGE_TAG}" \
 		./ci/build-push-multiplatform.sh $(PUSH)
 
 .PHONY: build-container-multiplatform
 build-container-multiplatform: _build-container-multiplatform
 
+.PHONY: build-container-windows
+build-container-windows:
+	$(MAKE) _build-container-multiplatform \
+		DOCKERFILE=Dockerfile_windows \
+		BASE_IMAGE_TAG=ltsc2022
+
+	$(MAKE) _build-container-multiplatform \
+		DOCKERFILE=Dockerfile_windows \
+		BASE_IMAGE_TAG=ltsc2019
+
+.PHONY: build-push-container-windows
+build-push-container-windows: PUSH = --push
+build-push-container-windows: build-container-windows
+
 .PHONY: build-push-container-multiplatform
 build-push-container-multiplatform: PUSH = --push
 build-push-container-multiplatform: _build-container-multiplatform
+
+.PHONY: build-push-container-ubi
+build-push-container-ubi: PUSH = --push
+build-push-container-ubi: DOCKERFILE = Dockerfile_ubi
+build-push-container-ubi: _build-container-multiplatform
 
 .PHONY: test-built-image
 test-built-image:

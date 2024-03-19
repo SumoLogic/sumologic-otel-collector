@@ -15,8 +15,8 @@ if [[ -z "${BUILD_TAG}" ]]; then
     BUILD_TAG="latest"
 fi
 
-if [[ -z "${LATEST_TAG_FIPS_SUFFIX}" ]]; then
-    LATEST_TAG_FIPS_SUFFIX=""
+if [[ -z "${BUILD_TYPE_SUFFIX}" ]]; then
+    BUILD_TYPE_SUFFIX=""
 fi
 
 if [[ -z "${REPO_URL}" ]]; then
@@ -40,23 +40,37 @@ function push_manifest() {
         case "${platform}" in
         "linux/amd64")
             BUILD_ARCH="amd64"
+            BUILD_PLATFORM="linux"
             ;;
 
         "linux/arm64")
             BUILD_ARCH="arm64"
+            BUILD_PLATFORM="linux"
             ;;
 
         "linux/arm/v7")
             BUILD_ARCH="arm_v7"
+            BUILD_PLATFORM="linux"
             ;;
 
+        "windows/amd64/ltsc2022")
+            BUILD_ARCH="amd64"
+            BUILD_PLATFORM="windows"
+            BASE_IMAGE_TAG_SUFFIX="-ltsc2022"
+            ;;
+
+        "windows/amd64/ltsc2019")
+            BUILD_ARCH="amd64"
+            BUILD_PLATFORM="windows"
+            BASE_IMAGE_TAG_SUFFIX="-ltsc2019"
+            ;;
         *)
             echo "Unsupported platform ${platform}"
             exit 1
             ;;
         esac
 
-        TAGS_IN_MANIFEST+=("${REPO_URL}:${BUILD_TAG}-${BUILD_ARCH}")
+        TAGS_IN_MANIFEST+=("${REPO_URL}:${BUILD_TAG}${BUILD_TYPE_SUFFIX}-${BUILD_PLATFORM}-${BUILD_ARCH}${BASE_IMAGE_TAG_SUFFIX}")
     done
 
     echo "Tags in the manifest:"
@@ -67,13 +81,20 @@ function push_manifest() {
 
     echo
     set -x
-    docker buildx imagetools create --tag \
-        "${REPO_URL}:${BUILD_TAG}" \
+    # Use docker manifest as docker buildx didn't create "${REPO_URL}:${BUILD_TAG}" correctly. It was containing only linux/amd64 image
+    docker manifest create \
+        "${REPO_URL}:${BUILD_TAG}${BUILD_TYPE_SUFFIX}" \
         "${TAGS_IN_MANIFEST[@]}"
 
-    docker buildx imagetools create --tag \
-        "${REPO_URL}:latest${LATEST_TAG_FIPS_SUFFIX}" \
+    docker manifest push \
+        "${REPO_URL}:${BUILD_TAG}${BUILD_TYPE_SUFFIX}"
+
+    docker manifest create \
+        "${REPO_URL}:latest${BUILD_TYPE_SUFFIX}" \
         "${TAGS_IN_MANIFEST[@]}"
+
+    docker manifest push \
+        "${REPO_URL}:latest${BUILD_TYPE_SUFFIX}"
 }
 
 push_manifest

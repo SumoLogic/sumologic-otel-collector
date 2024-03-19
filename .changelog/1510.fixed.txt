@@ -1,0 +1,1 @@
+fix: set execution bit on executable for UBI based images

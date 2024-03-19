@@ -27,7 +27,16 @@ param (
 
     # InstallationLogfileEndpoint is used to configure the endpoint where
     # installation logs will be sent.
-    [string] $InstallationLogfileEndpoint
+    [string] $InstallationLogfileEndpoint,
+    
+    # Specifies wether or not remote management is enabled
+    [bool] $RemotelyManaged,
+
+    # Ephemeral option enabled
+    [bool] $Ephemeral,
+
+    # The API URL used to communicate with the SumoLogic backend
+    [string] $Api
 )
 
 $PackageGithubOrg = "SumoLogic"
@@ -534,8 +543,17 @@ try {
         $tagsProperty = $tagStrs -Join ","
         $msiProperties += "TAGS=`"${tagsProperty}`""
     }
+    if ($Api.Length -gt 0) {
+        $msiProperties += "API=`"${Api}`""
+    }
     if ($InstallHostMetrics -eq $true) {
         $msiAddLocal += "HOSTMETRICS"
+    }
+    if ($RemotelyManaged -eq $true) {
+        $msiAddLocal += "REMOTELYMANAGED"
+    }
+    if ($Ephemeral -eq $true) {
+        $msiAddLocal += "EPHEMERAL"
     }
     if ($msiAddLocal.Count -gt 0) {
         $addLocalStr = $msiAddLocal -Join ","

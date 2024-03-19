@@ -90,7 +90,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-      - uses: pre-commit/action@v3.0.0
+      - uses: pre-commit/action@v3.0.1
 
   check-uniform-dependencies:
     name: Check uniform dependencies
@@ -179,7 +179,7 @@ jobs:
         run: ./ci/fetch_current_branch.sh
 
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.3
+        uses: microsoft/setup-msbuild@v2
 
       - name: Restore NuGet packages
         working-directory: ./packaging/msi/SumoLogic.wixext/SumoLogicTests
@@ -318,7 +318,7 @@ jobs:
       - name: Set up Buildx
         if: steps.changed-files.outputs.any_changed == 'true'
         id: buildx
-        uses: docker/setup-buildx-action@v3.0.0
+        uses: docker/setup-buildx-action@v3.2.0
 
       - name: Show Buildx platforms
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -354,8 +354,59 @@ jobs:
         run: |
           cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-container-multiplatform \
-            PLATFORM=${{ matrix.arch_os }} LATEST_TAG_FIPS_SUFFIX="-fips"
+            PLATFORM=${{ matrix.arch_os }} BUILD_TYPE_SUFFIX="-fips"
 
       - name: Test built FIPS image
         if: steps.changed-files.outputs.any_changed == 'true' && matrix.arch_os == 'linux_amd64'
         run: make test-built-image BUILD_TAG="latest-fips"
+
+  build-windows-container:
+    name: Build windows container
+    needs:
+      - build
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      matrix:
+        include:
+          - arch_os: windows_amd64
+            base_image_tag: ltsc2022
+            runs-on: windows-2022
+          - arch_os: windows_amd64
+            base_image_tag: ltsc2019
+            runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check if build related files changed
+        id: changed-files
+        uses: tj-actions/changed-files@v41
+        with:
+          files: |
+            **/go.mod
+            **/go.sum
+            **/*.go
+            **/*.yaml
+            **/*.yml
+            **/Makefile
+            **/Makefile.common
+            **/Dockerfile*
+
+      - name: Download binary action artifact from build phase
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: otelcol-sumo-${{matrix.arch_os}}.exe
+          path: artifacts/
+
+      - name: Build the container image
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
+          make build-container-windows \
+            PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
+
+      - name: Test built image
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make test-built-image
+
+      # ToDo: build windows FIPS image

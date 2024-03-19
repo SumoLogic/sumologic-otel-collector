@@ -117,8 +117,9 @@ func (op *fakeOwnerCache) GetServices(podName string) []string {
 func (op *fakeOwnerCache) GetNamespace(pod *api_v1.Pod) *api_v1.Namespace {
 	namespace := api_v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   pod.Namespace,
-			Labels: map[string]string{"label": "namespace_label_value"},
+			Name:        pod.Namespace,
+			Labels:      map[string]string{"label": "namespace_label_value"},
+			Annotations: map[string]string{"annotation": "namespace_annotation_value"},
 		},
 	}
 	return &namespace

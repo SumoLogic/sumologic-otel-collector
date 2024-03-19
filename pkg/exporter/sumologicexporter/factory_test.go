@@ -39,26 +39,20 @@ func TestCreateDefaultConfig(t *testing.T) {
 	qs.Enabled = false
 
 	assert.Equal(t, cfg, &Config{
-		CompressEncoding:   "gzip",
 		MaxRequestBodySize: 1_048_576,
 		LogFormat:          "otlp",
 		MetricFormat:       "otlp",
 		Client:             "otelcol",
-		ClearLogsTimestamp: true,
-		JSONLogs: JSONLogs{
-			LogKey:       "log",
-			AddTimestamp: true,
-			TimestampKey: "timestamp",
-		},
-		TraceFormat: "otlp",
+		TraceFormat:        "otlp",
 
-		HTTPClientSettings: confighttp.HTTPClientSettings{
-			Timeout: 30 * time.Second,
+		ClientConfig: confighttp.ClientConfig{
+			Timeout:     30 * time.Second,
+			Compression: "gzip",
 			Auth: &configauth.Authentication{
 				AuthenticatorID: component.NewID("sumologic"),
 			},
 		},
-		RetrySettings: configretry.NewDefaultBackOffConfig(),
+		BackOffConfig: configretry.NewDefaultBackOffConfig(),
 		QueueSettings: qs,
 	})
 

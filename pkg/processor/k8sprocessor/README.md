@@ -66,6 +66,14 @@ processors:
       - k8s.statefulset.name
       - k8s.pod.startTime
 
+      # List of rules to extract namespace annotations into attributes.
+      # See the "Field extract config" documentation section below for details on how to use it.
+      # By default, no namespace annotations are extracted into attributes.
+      # default: []
+      namespace_annotations:
+      - key: "*"
+        tag_name: k8s.namespace.annotation.%s
+
       # List of rules to extract namespace labels into attributes.
       # See the "Field extract config" documentation section below for details on how to use it.
       # By default, no namespace labels are extracted into attributes.

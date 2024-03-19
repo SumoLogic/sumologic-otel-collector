@@ -139,7 +139,7 @@ jobs:
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3.0.0
+        uses: docker/setup-buildx-action@v3.2.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -159,9 +159,17 @@ jobs:
         run: |
           cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-multiplatform-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }} \
-            LATEST_TAG_FIPS_SUFFIX="-fips"
+            BUILD_TYPE_SUFFIX="-fips"
+
+      - name: Build and push UBI-based FIPS image to Open Source ECR
+        run: |
+          cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
+          make build-push-container-ubi-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }} \
+            BUILD_TYPE_SUFFIX="-ubi-fips"
 
       - name: Download binary action artifact from build phase
         uses: actions/download-artifact@v4
@@ -175,11 +183,68 @@ jobs:
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }}
 
+      - name: Build and push UBI-based image to Open Source ECR
+        run: |
+          cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
+          make build-push-container-ubi-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }} \
+            BUILD_TYPE_SUFFIX="-ubi"
+
+  build-windows-container-images:
+    name: Build Windows container
+    runs-on: ${{ matrix.runs-on }}
+    needs:
+      - build
+    strategy:
+      matrix:
+        include:
+          - arch_os: windows_amd64
+            base_image_tag: ltsc2022
+            runs-on: windows-2022
+          - arch_os: windows_amd64
+            base_image_tag: ltsc2019
+            runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract tag
+        id: extract_tag
+        run: echo "tag=$(git rev-parse HEAD)" > $GITHUB_OUTPUT
+
+      - name: Print tag
+        run: echo "Running dev build for ${{ steps.extract_tag.outputs.tag }}"
+
+      - name: Login to Open Source ECR
+        run: |
+          USERNAME=$(powershell.exe "echo \$Env:UserName")
+          # remove wincred entry and fix json format by replacing }, with }
+          cat "C:\\Users\\${USERNAME}\\.docker\\config.json" | grep -v "wincred" | sed 's/},$/}/' > "C:\\Users\\${USERNAME}\\.docker\\config.json.tmp"
+          mv "C:\\Users\\${USERNAME}\\.docker\\config.json.tmp" "C:\\Users\\${USERNAME}\\.docker\\config.json"
+          make login
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+
+      - name: Download binary action artifact from build phase
+        uses: actions/download-artifact@v4
+        with:
+          name: otelcol-sumo-${{matrix.arch_os}}.exe
+          path: artifacts/
+
+      - name: Build and push images to Open Source ECR
+        run: |
+          cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
+          make build-push-container-windows-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
+
   push-docker-manifest:
     name: Push joint container manifest
     runs-on: ubuntu-20.04
     needs:
       - build-container-images
+      - build-windows-container-images
     steps:
       - uses: actions/checkout@v4
 
@@ -195,7 +260,7 @@ jobs:
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3.0.0
+        uses: docker/setup-buildx-action@v3.2.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -209,15 +274,29 @@ jobs:
       - name: Push joint FIPS container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORMS="linux/amd64" \
-            LATEST_TAG_FIPS_SUFFIX="-fips"
+            BUILD_TYPE_SUFFIX="-fips"
+
+      - name: Push joint UBI-based FIPS container manifest for all platforms to Open Source ECR
+        run: |
+          make push-container-manifest-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORMS="linux/amd64" \
+            BUILD_TYPE_SUFFIX="-ubi-fips"
 
       - name: Push joint container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
-            PLATFORMS="linux/amd64 linux/arm64"
+            PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022 windows/amd64/ltsc2019"
+
+      - name: Push joint UBI-based container manifest for all platforms to Open Source ECR
+        run: |
+          make push-container-manifest-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORMS="linux/amd64" \
+            BUILD_TYPE_SUFFIX="-ubi"
 
   package-msi:
     name: Package MSI
@@ -240,7 +319,7 @@ jobs:
         run: ./ci/fetch_current_branch.sh
 
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.3
+        uses: microsoft/setup-msbuild@v2
 
       - name: Fetch binary artifact for ${{ matrix.arch_os }}
         uses: actions/download-artifact@v4
@@ -270,58 +349,13 @@ jobs:
           path: ./packaging/msi/wix/bin/${{ matrix.platform }}/en-US/*.msi
           if-no-files-found: error
 
-  # Triggers build_packages workflow in the sumologic-otel-collector-packaging
-  # repository. It must be the last job run as artifacts only become available
-  # to download after all jobs have completed. The lint, package-msi and
-  # push-docker-manifest jobs are independent or depend on all other jobs so
-  # we add them as "need" dependencies to ensure this job runs last.
   trigger-packaging:
     name: Trigger Packaging
     needs:
       - lint
       - package-msi
       - push-docker-manifest
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Fetch tags
-        run: git fetch --tags origin
-
-      - name: Determine version core
-        id: version-core
-        run: >
-          ./ci/get_version.sh core > /tmp/version_core &&
-          cat /tmp/version_core &&
-          echo version=$(cat /tmp/version_core) >> $GITHUB_OUTPUT
-
-      - name: Determine sumo version
-        id: sumo-version
-        run: >
-          ./ci/get_version.sh sumo > /tmp/sumo_version &&
-          cat /tmp/sumo_version &&
-          echo version=$(cat /tmp/sumo_version) >> $GITHUB_OUTPUT
-
-      - name: Trigger packaging workflow
-        id: trigger-packaging-workflow
-        uses: aurelien-baudet/workflow-dispatch@v2
-        with:
-          workflow: build_packages.yml
-          repo: SumoLogic/sumologic-otel-collector-packaging
-          token: ${{ secrets.PACKAGING_GH_TOKEN }}
-          ref: main
-          wait-for-completion: false
-          display-workflow-run-url: true
-          display-workflow-run-url-interval: 1s
-          inputs: |-
-            {
-              "workflow_id": "${{ github.run_id }}",
-              "otc_version": "${{ steps.version-core.outputs.version }}",
-              "otc_sumo_version": "${{ steps.sumo-version.outputs.version }}"
-            }
-
-      # Outputs the Packaging Workflow URL as an Annotation in the UI after the
-      # packaging workflow has completed.
-      - name: Packaging Workflow URL
-        run: echo ::notice title=Packaging Workflow URL::${{ steps.trigger-packaging-workflow.outputs.workflow-url }}
+    uses: ./.github/workflows/workflow-trigger-packaging.yml
+    secrets: inherit
+    with:
+      create_release: false

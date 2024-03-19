@@ -16,6 +16,7 @@
         <Directory Id="APPDATAFOLDER" Name="!(bind.Property.ProductName)">
           <Directory Id="ConfigFolder" Name="config">
             <Directory Id="ConfigFragmentsFolder" Name="conf.d" />
+            <Directory Id="OpAmpFolder" Name="opamp.d" />
           </Directory>
           <Directory Id="DataFolder" Name="data">
             <Directory Id="FileStorageFolder" Name="file_storage" />

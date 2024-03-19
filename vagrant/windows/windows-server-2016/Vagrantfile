@@ -1,0 +1,13 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+common_vagrantfile = "../Vagrantfile.common"
+load common_vagrantfile
+
+Vagrant.configure('2') do |config|
+  config.vm.box = 'dstoliker/winserver2016'
+  config.vm.host_name = 'windows-server-2016'
+  config.vm.provider 'virtualbox' do |vb|
+    vb.name = 'windows-server-2016'
+  end
+end

@@ -115,7 +115,7 @@ jobs:
 
       - name: Sign Windows binary
         if: runner.os == 'Windows'
-        uses: skymatic/code-sign-action@v2
+        uses: skymatic/code-sign-action@v3
         with:
           certificate: '${{ secrets.MICROSOFT_CERTIFICATE }}'
           password: '${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}'
@@ -320,7 +320,7 @@ jobs:
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3.0.0
+        uses: docker/setup-buildx-action@v3.2.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -356,9 +356,18 @@ jobs:
         run: |
           cp artifacts/${{ steps.set_filename_fips.outputs.filename_fips }} otelcol-sumo
           make build-push-container-multiplatform \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }} \
-            LATEST_TAG_FIPS_SUFFIX="-fips"
+            BUILD_TYPE_SUFFIX="-fips"
+
+      - name: Build and push UBI-based FIPS image to Open Source ECR
+        if: matrix.arch_os == 'linux_amd64'
+        run: |
+          cp artifacts/${{ steps.set_filename_fips.outputs.filename_fips }} otelcol-sumo
+          make build-push-container-ubi \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }} \
+            BUILD_TYPE_SUFFIX="-ubi-fips"
 
       - name: Build and push image to Open Source ECR
         run: |
@@ -366,6 +375,15 @@ jobs:
           make build-push-container-multiplatform \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }}
+
+      - name: Build and push UBI-based image to Open Source ECR
+        if: matrix.arch_os == 'linux_amd64'
+        run: |
+          cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
+          make build-push-container-ubi \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }} \
+            BUILD_TYPE_SUFFIX="-ubi"
 
   push-docker-manifest:
     name: Push joint container manifest
@@ -390,7 +408,7 @@ jobs:
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3.0.0
+        uses: docker/setup-buildx-action@v3.2.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -404,15 +422,29 @@ jobs:
       - name: Push joint FIPS container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }}-fips \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORMS="linux/amd64" \
-            LATEST_TAG_FIPS_SUFFIX="-fips"
+            BUILD_TYPE_SUFFIX="-fips"
+
+      - name: Push joint UBI-based FIPS container manifest for all platforms to Open Source ECR
+        run: |
+          make push-container-manifest \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORMS="linux/amd64" \
+            BUILD_TYPE_SUFFIX="-ubi-fips"
 
       - name: Push joint container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORMS="linux/amd64 linux/arm64"
+
+      - name: Push joint UBI-based container manifest for all platforms to Open Source ECR
+        run: |
+          make push-container-manifest \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORMS="linux/amd64" \
+            BUILD_TYPE_SUFFIX="-ubi"
 
   package-msi:
     name: Package MSI
@@ -435,7 +467,7 @@ jobs:
         run: ./ci/fetch_current_branch.sh
 
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.3
+        uses: microsoft/setup-msbuild@v2
 
       - name: Extract tag
         id: extract_tag
@@ -465,7 +497,7 @@ jobs:
         run: msbuild.exe -p:Configuration=Release -p:Platform=${{ matrix.platform }} -p:ProductVersion=$PRODUCT_VERSION -p:FIPSEnabled=${{ matrix.fips }} -Restore
 
       - name: Sign MSI
-        uses: skymatic/code-sign-action@v2
+        uses: skymatic/code-sign-action@v3
         with:
           certificate: '${{ secrets.MICROSOFT_CERTIFICATE }}'
           password: '${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}'
@@ -600,3 +632,10 @@ jobs:
           artifacts: "artifacts/*/*"
           artifactErrorsFailBuild: true
           replacesArtifacts: true
+
+  trigger-packaging:
+    name: Trigger Packaging
+    uses: ./.github/workflows/workflow-trigger-packaging.yml
+    secrets: inherit
+    with:
+      create_release: true

@@ -30,6 +30,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
+	"go.opentelemetry.io/collector/config/configcompression"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/exporter"
@@ -58,7 +59,7 @@ type exporterTest struct {
 
 func createTestConfig() *Config {
 	config := createDefaultConfig().(*Config)
-	config.CompressEncoding = NoCompression
+	config.ClientConfig.Compression = NoCompression
 	config.LogFormat = TextFormat
 	config.MaxRequestBodySize = 20_971_520
 	config.MetricFormat = OTLPMetricFormat
@@ -100,8 +101,8 @@ func prepareExporterTest(t *testing.T, cfg *Config, cb []func(w http.ResponseWri
 		)
 	})
 
-	cfg.HTTPClientSettings.Endpoint = testServer.URL
-	cfg.HTTPClientSettings.Auth = nil
+	cfg.ClientConfig.Endpoint = testServer.URL
+	cfg.ClientConfig.Auth = nil
 	for _, cfgOpt := range cfgOpts {
 		cfgOpt(cfg)
 	}
@@ -124,7 +125,7 @@ func TestInitExporter(t *testing.T) {
 		MetricFormat:     "otlp",
 		CompressEncoding: "gzip",
 		TraceFormat:      "otlp",
-		HTTPClientSettings: confighttp.HTTPClientSettings{
+		ClientConfig: confighttp.ClientConfig{
 			Timeout:  defaultTimeout,
 			Endpoint: "test_endpoint",
 		},
@@ -135,7 +136,7 @@ func TestInitExporter(t *testing.T) {
 func TestConfigureExporter(t *testing.T) {
 	host := componenttest.NewNopHost()
 	config := createDefaultConfig().(*Config)
-	config.HTTPClientSettings.Endpoint = "http://test_endpoint"
+	config.ClientConfig.Endpoint = "http://test_endpoint"
 	exporter, err := initExporter(config, createExporterCreateSettings())
 	require.NoError(t, err)
 	err = exporter.start(context.Background(), host)
@@ -292,11 +293,10 @@ func TestPartiallyFailed(t *testing.T) {
 
 func TestInvalidHTTPCLient(t *testing.T) {
 	exp, err := initExporter(&Config{
-		LogFormat:        "json",
-		MetricFormat:     "otlp",
-		CompressEncoding: "gzip",
-		TraceFormat:      "otlp",
-		HTTPClientSettings: confighttp.HTTPClientSettings{
+		LogFormat:    "json",
+		MetricFormat: "otlp",
+		TraceFormat:  "otlp",
+		ClientConfig: confighttp.ClientConfig{
 			Endpoint: "test_endpoint",
 			CustomRoundTripper: func(next http.RoundTripper) (http.RoundTripper, error) {
 				return nil, errors.New("roundTripperException")
@@ -309,18 +309,6 @@ func TestInvalidHTTPCLient(t *testing.T) {
 		exp.start(context.Background(), componenttest.NewNopHost()),
 		"failed to create HTTP Client: roundTripperException",
 	)
-}
-
-func TestPushInvalidCompressor(t *testing.T) {
-	// Expect no requests
-	test := prepareExporterTest(t, createTestConfig(), nil)
-	test.exp.config.CompressEncoding = "invalid"
-
-	logs := LogRecordsToLogs(exampleLog())
-	logs.MarkReadOnly()
-
-	err := test.exp.pushLogsData(context.Background(), logs)
-	assert.EqualError(t, err, "failed to initialize compressor: invalid format: invalid")
 }
 
 func TestPushFailedBatch(t *testing.T) {
@@ -363,68 +351,6 @@ func TestPushFailedBatch(t *testing.T) {
 
 	err := test.exp.pushLogsData(context.Background(), logs)
 	assert.EqualError(t, err, "failed sending data: status: 500 Internal Server Error")
-}
-
-func TestPushOTLPLogsClearTimestamp(t *testing.T) {
-	createLogs := func() plog.Logs {
-		exampleLogs := exampleLog()
-		exampleLogs[0].SetTimestamp(12345)
-		logs := LogRecordsToLogs(exampleLogs)
-		logs.MarkReadOnly()
-		return logs
-	}
-
-	testcases := []struct {
-		name         string
-		configFunc   func() *Config
-		expectedBody string
-	}{
-		{
-			name: "enabled",
-			configFunc: func() *Config {
-				config := createTestConfig()
-				config.ClearLogsTimestamp = true
-				config.LogFormat = OTLPLogFormat
-				return config
-			},
-			expectedBody: "\n\x1b\n\x00\x12\x17\n\x00\x12\x13*\r\n\vExample logJ\x00R\x00",
-		},
-		{
-			name: "disabled",
-			configFunc: func() *Config {
-				config := createTestConfig()
-				config.ClearLogsTimestamp = false
-				config.LogFormat = OTLPLogFormat
-				return config
-			},
-			expectedBody: "\n$\n\x00\x12 \n\x00\x12\x1c\t90\x00\x00\x00\x00\x00\x00*\r\n\vExample logJ\x00R\x00",
-		},
-		{
-			name: "default does clear the timestamp",
-			configFunc: func() *Config {
-				config := createTestConfig()
-				// Don't set the clear timestamp config value
-				config.LogFormat = OTLPLogFormat
-				return config
-			},
-			expectedBody: "\n\x1b\n\x00\x12\x17\n\x00\x12\x13*\r\n\vExample logJ\x00R\x00",
-		},
-	}
-
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			expectedRequests := []func(w http.ResponseWriter, req *http.Request){
-				func(w http.ResponseWriter, req *http.Request) {
-					body := extractBody(t, req)
-					assert.Equal(t, tc.expectedBody, body)
-				},
-			}
-			test := prepareExporterTest(t, tc.configFunc(), expectedRequests)
-
-			err := test.exp.pushLogsData(context.Background(), createLogs())
-			assert.NoError(t, err)
-		})
-	}
 }
 
 func TestPushLogs_DontRemoveSourceAttributes(t *testing.T) {
@@ -642,18 +568,6 @@ gauge_metric_name{foo="bar",remote_name="156955",url="http://another_url"} 245 1
 	}
 }
 
-func TestPushMetricsInvalidCompressor(t *testing.T) {
-	metrics := metricAndAttributesToPdataMetrics(exampleIntMetric())
-	metrics.MarkReadOnly()
-
-	// Expect no requests
-	test := prepareExporterTest(t, createTestConfig(), nil)
-	test.exp.config.CompressEncoding = "invalid"
-
-	err := test.exp.pushMetricsData(context.Background(), metrics)
-	assert.EqualError(t, err, "failed to initialize compressor: invalid format: invalid")
-}
-
 func TestMetricsPrometheusFormatMetadataFilter(t *testing.T) {
 	test := prepareExporterTest(t, createTestConfig(), []func(w http.ResponseWriter, req *http.Request){
 		func(w http.ResponseWriter, req *http.Request) {
@@ -680,10 +594,10 @@ func TestMetricsPrometheusFormatMetadataFilter(t *testing.T) {
 func Benchmark_ExporterPushLogs(b *testing.B) {
 	createConfig := func() *Config {
 		config := createDefaultConfig().(*Config)
-		config.CompressEncoding = GZIPCompression
 		config.MetricFormat = PrometheusFormat
 		config.LogFormat = TextFormat
-		config.HTTPClientSettings.Auth = nil
+		config.ClientConfig.Auth = nil
+		config.ClientConfig.Compression = configcompression.TypeGzip
 		return config
 	}
 
@@ -692,7 +606,7 @@ func Benchmark_ExporterPushLogs(b *testing.B) {
 	b.Cleanup(func() { testServer.Close() })
 
 	cfg := createConfig()
-	cfg.HTTPClientSettings.Endpoint = testServer.URL
+	cfg.ClientConfig.Endpoint = testServer.URL
 
 	exp, err := initExporter(cfg, createExporterCreateSettings())
 	require.NoError(b, err)

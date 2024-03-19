@@ -1,0 +1,61 @@
+exporters:
+    sumologic:
+        retry_on_failure:
+            max_elapsed_time: -1
+        sending_queue:
+            enabled: true
+            storage: file_storage
+processors:
+    batch:
+        send_batch_size: 1024
+        timeout: 1s
+    memory_limiter:
+        check_interval: 5s
+        limit_percentage: 75
+        spike_limit_percentage: 20
+    resource/0aa79379-c764-4d3d-9d66-03f6df029a07:
+        attributes:
+            - action: insert
+              key: _source
+              value: custom-test
+            - action: insert
+              key: _contentType
+              value: OpenTelemetry
+            - action: insert
+              key: _sourceCategory
+              value: otel/localfile
+    resourcedetection/system:
+        detectors:
+            - system
+        system:
+            hostname_sources:
+                - dns
+                - os
+receivers:
+    filelog/0aa79379-c764-4d3d-9d66-03f6df029a07:
+        encoding: utf-8
+        include:
+            - /tmp/test.log
+        include_file_name: false
+        include_file_path: true
+        operators:
+            - from: attributes["log.file.path"]
+              to: resource["log.file.path"]
+              type: move
+            - from: resource["log.file.path"]
+              to: resource["_sourceName"]
+              type: copy
+        start_at: end
+        storage: file_storage
+service:
+    pipelines:
+        logs/localfilesource/0aa79379-c764-4d3d-9d66-03f6df029a07:
+            exporters:
+                - sumologic
+            processors:
+                - memory_limiter
+                - resourcedetection/system
+                - batch
+                - resource/0aa79379-c764-4d3d-9d66-03f6df029a07
+            receivers:
+                - filelog/0aa79379-c764-4d3d-9d66-03f6df029a07

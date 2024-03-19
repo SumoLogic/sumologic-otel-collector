@@ -7,6 +7,124 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.96.0-sumo-0]
+
+See the [upgrade guide][upgrade_guide_v0.96] for more details on the breaking changes.
+
+[upgrade_guide_v0.96]: ./docs/upgrading.md#upgrading-to-v0960-sumo-0
+
+### Released 2024-03-12
+
+### Known issue
+
+Behavior of [recombine][recombine] operator has been changed. Now it recombines also partial logs, for details please see [pull request][opentelemetry-collector-contrib#30797].
+If you use `recombine` operator you will observe that logs which do not match regular expression are combined into one log entry.
+
+[recombine]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.96.0/pkg/stanza/docs/operators/recombine.md
+[opentelemetry-collector-contrib#30797]: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/30797
+
+### Breaking Changes
+
+- feat(sumologicexporter)!: remove deprecated json_logs [#1452]
+- feat(sumologicexporter)!: remove deprecated clear_logs_timestamp [#1455]
+
+### Added
+
+- ci: build ubi-based images [#1440]
+- feat(k8sprocessor): extract namespace annotations [#1457]
+- ci: build UBI-based FIPS images [#1463]
+- feat: build development version of windows containers [#1467]
+- feat(otrm): Add validation for otel configuration in the opamp agent [#1469]
+- feat(sourceprocessor): use namespace annotations to include/exclude namespace from collection or set sourceCategory, sourceHost, and sourceName [#1471]
+- opampextension: add support for redirection on websocket connect [#1481]
+
+### Changed
+
+- chore(k8sprocessor): Improve logging of missing data events [#1448]
+- chore: update otelcol core to v0.95.0 [#1474]
+- chore: update otelcol core to v0.96.0 [#1478]
+
+[#1452]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1452
+[#1455]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1455
+[#1440]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1440
+[#1457]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1457
+[#1463]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1463
+[#1467]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1467
+[#1469]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1469
+[#1471]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1471
+[#1448]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1448
+[#1474]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1474
+[#1478]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1478
+[#1481]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1481
+[v0.96.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.96.0-sumo-0
+
+## [v0.94.0-sumo-2]
+
+### Released 2024-02-20
+
+### Known issue
+
+Behavior of [recombine][recombine] operator has been changed. Now it recombines also partial logs, for details please see [pull request][opentelemetry-collector-contrib#30797].
+If you use `recombine` operator you will observe that logs which do not match regular expression are combined into one log entry.
+
+### Fixed
+
+- fix(opamp): restart windows service when configuration update is received via opamp [#1453]
+
+[#1453]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1453
+[v0.94.0-sumo-2]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.94.0-sumo-2
+
+## [v0.94.0-sumo-1]
+
+This was a failed release. Use [v0.94.0-sumo-2] instead.
+
+[v0.94.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.94.0-sumo-1
+
+## [v0.94.0-sumo-0]
+
+### Released 2024-02-14
+
+### Known issue
+
+Behavior of [recombine][recombine] operator has been changed. Now it recombines also partial logs, for details please see [pull request][opentelemetry-collector-contrib#30797].
+If you use `recombine` operator you will observe that logs which do not match regular expression are combined into one log entry.
+
+### Breaking Changes
+
+- feat(servicegraphprocessor)!: remove `servicegraph` processor [#1439]
+  Use the Service Graph connector instead.
+
+### Added
+
+- feat(install): add support for remote management, ephemeral and api url in Windows installer [#1437]
+
+### Changed
+
+- feat(sumologicexporter): Deprecate compress_encoding and remove all of our own compression code in favor of using the confighttp helper [#1432]
+- chore: update otelcol core to v0.94.1 [#1446]
+
+### Fixed
+
+- fix(install): support --remote-config startup option with Windows services [#1443]
+
+[#1439]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1439
+[#1437]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1437
+[#1432]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1432
+[#1446]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1446
+[#1443]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1443
+[v0.94.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.94.0-sumo-0
+
+## [v0.93.0-sumo-0]
+
+### Released 2024-02-07
+
+### Changed
+
+- chore: upgrade otelcol core to `v0.93.0` [#1435]
+
+[#1435]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1435
+[v0.93.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.93.0-sumo-0
+
 ## [v0.92.0-sumo-0]
 
 See the [upgrade guide][upgrade_guide_v0.92] for more details on the breaking changes.

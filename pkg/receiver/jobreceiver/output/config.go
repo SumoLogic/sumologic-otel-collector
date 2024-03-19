@@ -77,7 +77,7 @@ func (c *Config) Unmarshal(component *confmap.Conf) error {
 	}
 
 	c.Builder = factory.CreateDefaultConfig()
-	if err := subComponent.Unmarshal(c.Builder, confmap.WithErrorUnused()); err != nil {
+	if err := subComponent.Unmarshal(c.Builder); err != nil {
 		return err
 	}
 	return nil

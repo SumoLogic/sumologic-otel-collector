@@ -74,16 +74,9 @@ func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
 
 	// create the config provider using the locations
 	if len(locations) > 0 {
-		params.ConfigProvider, err = NewConfigProvider(locations)
-		if err != nil {
-			return err
-		}
+		params.ConfigProviderSettings = NewConfigProviderSettings(locations)
 	} else {
-		settings := NewOpAmpConfigProviderSettings(opAmpPath.Value.String())
-		params.ConfigProvider, err = otelcol.NewConfigProvider(settings)
-		if err != nil {
-			return err
-		}
+		params.ConfigProviderSettings = NewOpAmpConfigProviderSettings(opAmpPath.Value.String())
 	}
 
 	return nil
@@ -102,7 +95,7 @@ func NewConfigProviderSettings(locations []string) otelcol.ConfigProviderSetting
 		ResolverSettings: confmap.ResolverSettings{
 			URIs:       locations,
 			Providers:  makeMapProvidersMap(fileprovider.New(), envprovider.New(), yamlprovider.New(), globprovider.New()),
-			Converters: []confmap.Converter{expandconverter.New()},
+			Converters: []confmap.Converter{expandconverter.New(confmap.ConverterSettings{})},
 		},
 	}
 }
@@ -114,7 +107,7 @@ func NewOpAmpConfigProviderSettings(location string) otelcol.ConfigProviderSetti
 		ResolverSettings: confmap.ResolverSettings{
 			URIs:       []string{location},
 			Providers:  makeMapProvidersMap(opampprovider.New()),
-			Converters: []confmap.Converter{expandconverter.New()},
+			Converters: []confmap.Converter{expandconverter.New(confmap.ConverterSettings{})},
 		},
 	}
 }

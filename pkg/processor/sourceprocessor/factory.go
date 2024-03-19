@@ -35,11 +35,12 @@ const (
 	defaultSourceCategoryPrefix      = "kubernetes/"
 	defaultSourceCategoryReplaceDash = "/"
 
-	defaultAnnotationPrefix   = "k8s.pod.annotation."
-	defaultPodKey             = "k8s.pod.name"
-	defaultPodNameKey         = "k8s.pod.pod_name"
-	defaultPodTemplateHashKey = "k8s.pod.label.pod-template-hash"
-	defaultContainerNameKey   = "k8s.container.name"
+	defaultAnnotationPrefix          = "k8s.pod.annotation."
+	defaultNamespaceAnnotationPrefix = "k8s.namespace.annotation."
+	defaultPodKey                    = "k8s.pod.name"
+	defaultPodNameKey                = "k8s.pod.pod_name"
+	defaultPodTemplateHashKey        = "k8s.pod.label.pod-template-hash"
+	defaultContainerNameKey          = "k8s.container.name"
 
 	stabilityLevel = component.StabilityLevelBeta
 )
@@ -67,10 +68,11 @@ func createDefaultConfig() component.Config {
 		SourceCategoryPrefix:      defaultSourceCategoryPrefix,
 		SourceCategoryReplaceDash: defaultSourceCategoryReplaceDash,
 
-		AnnotationPrefix:   defaultAnnotationPrefix,
-		PodKey:             defaultPodKey,
-		PodNameKey:         defaultPodNameKey,
-		PodTemplateHashKey: defaultPodTemplateHashKey,
+		AnnotationPrefix:          defaultAnnotationPrefix,
+		NamespaceAnnotationPrefix: defaultNamespaceAnnotationPrefix,
+		PodKey:                    defaultPodKey,
+		PodNameKey:                defaultPodNameKey,
+		PodTemplateHashKey:        defaultPodTemplateHashKey,
 
 		ContainerAnnotations: ContainerAnnotationsConfig{
 			Enabled:          false,

@@ -1,0 +1,72 @@
+  receivers:
+    hostmetrics/8613f4d2-365f-4f94-abc1-066622d9b028:
+      collection_interval: 5m
+      scrapers:
+        cpu:
+          metrics:
+            system.cpu.utilization:
+              enabled: true
+        load:
+        memory:
+          metrics:
+            system.memory.utilization:
+              enabled: true
+        disk:
+        filesystem:
+          metrics:
+            system.filesystem.utilization:
+              enabled: true
+        network:
+        paging:
+        processes:
+  processors:
+    memory_limiter:
+      check_interval: 5s
+      limit_percentage: 75
+      spike_limit_percentage: 20
+    batch:
+      send_batch_size: 1_024
+      timeout: 1s
+    resourcedetection/system:
+      detectors: ["system"]
+      system:
+        hostname_sources: ["dns","os"]
+    resource/metrics/8613f4d2-365f-4f94-abc1-066622d9b028:
+      attributes:
+      - key: _sourceName
+        value: linux
+        action: insert
+    resource/8613f4d2-365f-4f94-abc1-066622d9b028:
+      attributes:
+      - key: _source
+        value: Linux-machine
+        action: insert
+      - key: _contentType
+        value: OpenTelemetry
+        action: insert
+      - key: sumo.datasource
+        value: linux
+        action: insert
+      - key: _sourceCategory
+        value: otel/linux
+        action: insert
+  exporters:
+    sumologic:
+      sending_queue:
+        enabled: true
+        storage: file_storage
+      retry_on_failure:
+        max_elapsed_time: 0
+  service:
+    pipelines:
+      metrics/linux/8613f4d2-365f-4f94-abc1-066622d9b028:
+        receivers:
+          - hostmetrics/8613f4d2-365f-4f94-abc1-066622d9b028
+        processors:
+          - memory_limiter
+          - resourcedetection/system
+          - batch
+          - resource/metrics/8613f4d2-365f-4f94-abc1-066622d9b028
+          - resource/8613f4d2-365f-4f94-abc1-066622d9b028
+        exporters:
+          - sumologic

@@ -1,0 +1,65 @@
+name: Trigger Packaging
+
+on:
+  workflow_call:
+    inputs:
+      create_release:
+        description: The packaging workflow will create a draft release in the packaging repository.
+        required: true
+        type: boolean
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  # Triggers build_packages workflow in the sumologic-otel-collector-packaging
+  # repository. It must be the last job run as artifacts only become available
+  # to download after all jobs have completed.
+  trigger-packaging:
+    name: Trigger Packaging
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch tags
+        run: git fetch --tags origin
+
+      - name: Determine version core
+        id: version-core
+        run: >
+          ./ci/get_version.sh core > /tmp/version_core &&
+          cat /tmp/version_core &&
+          echo version=$(cat /tmp/version_core) >> $GITHUB_OUTPUT
+
+      - name: Determine sumo version
+        id: sumo-version
+        run: >
+          ./ci/get_version.sh sumo > /tmp/sumo_version &&
+          cat /tmp/sumo_version &&
+          echo version=$(cat /tmp/sumo_version) >> $GITHUB_OUTPUT
+
+      - name: Trigger packaging workflow
+        id: trigger-packaging-workflow
+        uses: aurelien-baudet/workflow-dispatch@v2
+        with:
+          workflow: build_packages.yml
+          repo: SumoLogic/sumologic-otel-collector-packaging
+          token: ${{ secrets.PACKAGING_GH_TOKEN }}
+          ref: main
+          wait-for-completion: false
+          display-workflow-run-url: true
+          display-workflow-run-url-interval: 1s
+          inputs: |-
+            {
+              "workflow_id": "${{ github.run_id }}",
+              "otc_version": "${{ steps.version-core.outputs.version }}",
+              "otc_sumo_version": "${{ steps.sumo-version.outputs.version }}",
+              "release": ${{ inputs.create_release }}
+            }
+
+      # Outputs the Packaging Workflow URL as an Annotation in the UI after the
+      # packaging workflow has completed.
+      - name: Packaging Workflow URL
+        run: echo ::notice title=Packaging Workflow URL::${{ steps.trigger-packaging-workflow.outputs.workflow-url }}

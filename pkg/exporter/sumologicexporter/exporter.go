@@ -51,8 +51,6 @@ type sumologicexporter struct {
 	clientLock sync.RWMutex
 	client     *http.Client
 
-	compressorPool sync.Pool
-
 	prometheusFormatter prometheusFormatter
 
 	// Lock around data URLs is needed because the reconfiguration of the exporter
@@ -81,15 +79,6 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sumolog
 	se := &sumologicexporter{
 		config: cfg,
 		logger: createSettings.Logger,
-		compressorPool: sync.Pool{
-			New: func() any {
-				c, err := newCompressor(cfg.CompressEncoding)
-				if err != nil {
-					return fmt.Errorf("failed to initialize compressor: %w", err)
-				}
-				return &c
-			},
-		},
 		// NOTE: client is now set in start()
 		prometheusFormatter:     pf,
 		id:                      createSettings.ID,
@@ -102,16 +91,6 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sumolog
 		zap.String("metric_format", string(cfg.MetricFormat)),
 		zap.String("trace_format", string(cfg.TraceFormat)),
 	)
-
-	if cfg.ClearLogsTimestamp {
-		se.logger.Warn("'clear_logs_timestamps' is deprecated and suboptimal. It is going to be removed in 'v0.95.0-sumo-0'. Please follow the upgrade guide: " +
-			"https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#sumologic-exporter-deprecate-clear_logs_timestamp")
-	}
-
-	if cfg.LogFormat == JSONFormat {
-		se.logger.Warn("'json_logs' is deprecated and suboptimal. It is going to be removed in 'v0.95.0-sumo-0'. Please follow the upgrade guide: " +
-			"https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#sumologic-exporter-deprecate-json_logs")
-	}
 
 	return se, nil
 }
@@ -134,7 +113,7 @@ func newLogsExporter(
 		// Disable exporterhelper Timeout, since we are using a custom mechanism
 		// within exporter itself
 		exporterhelper.WithTimeout(exporterhelper.TimeoutSettings{Timeout: 0}),
-		exporterhelper.WithRetry(cfg.RetrySettings),
+		exporterhelper.WithRetry(cfg.BackOffConfig),
 		exporterhelper.WithQueue(cfg.QueueSettings),
 		exporterhelper.WithStart(se.start),
 		exporterhelper.WithShutdown(se.shutdown),
@@ -159,7 +138,7 @@ func newMetricsExporter(
 		// Disable exporterhelper Timeout, since we are using a custom mechanism
 		// within exporter itself
 		exporterhelper.WithTimeout(exporterhelper.TimeoutSettings{Timeout: 0}),
-		exporterhelper.WithRetry(cfg.RetrySettings),
+		exporterhelper.WithRetry(cfg.BackOffConfig),
 		exporterhelper.WithQueue(cfg.QueueSettings),
 		exporterhelper.WithStart(se.start),
 		exporterhelper.WithShutdown(se.shutdown),
@@ -184,7 +163,7 @@ func newTracesExporter(
 		// Disable exporterhelper Timeout, since we are using a custom mechanism
 		// within exporter itself
 		exporterhelper.WithTimeout(exporterhelper.TimeoutSettings{Timeout: 0}),
-		exporterhelper.WithRetry(cfg.RetrySettings),
+		exporterhelper.WithRetry(cfg.BackOffConfig),
 		exporterhelper.WithQueue(cfg.QueueSettings),
 		exporterhelper.WithStart(se.start),
 		exporterhelper.WithShutdown(se.shutdown),
@@ -195,18 +174,11 @@ func newTracesExporter(
 // It returns the number of unsent logs and an error which contains a list of dropped records
 // so they can be handled by OTC retry mechanism
 func (se *sumologicexporter) pushLogsData(ctx context.Context, ld plog.Logs) error {
-	compr, err := se.getCompressor()
-	if err != nil {
-		return consumererror.NewLogs(err, ld)
-	}
-	defer se.compressorPool.Put(compr)
-
 	logsUrl, metricsUrl, tracesUrl := se.getDataURLs()
 	sdr := newSender(
 		se.logger,
 		se.config,
 		se.getHTTPClient(),
-		compr,
 		se.prometheusFormatter,
 		metricsUrl,
 		logsUrl,
@@ -279,18 +251,11 @@ func (se *sumologicexporter) pushLogsData(ctx context.Context, ld plog.Logs) err
 // it returns number of unsent metrics and error which contains list of dropped records
 // so they can be handle by the OTC retry mechanism
 func (se *sumologicexporter) pushMetricsData(ctx context.Context, md pmetric.Metrics) error {
-	compr, err := se.getCompressor()
-	if err != nil {
-		return consumererror.NewMetrics(err, md)
-	}
-	defer se.compressorPool.Put(compr)
-
 	logsUrl, metricsUrl, tracesUrl := se.getDataURLs()
 	sdr := newSender(
 		se.logger,
 		se.config,
 		se.getHTTPClient(),
-		compr,
 		se.prometheusFormatter,
 		metricsUrl,
 		logsUrl,
@@ -338,18 +303,11 @@ func (se *sumologicexporter) handleUnauthorizedErrors(ctx context.Context, errs 
 }
 
 func (se *sumologicexporter) pushTracesData(ctx context.Context, td ptrace.Traces) error {
-	compr, err := se.getCompressor()
-	if err != nil {
-		return consumererror.NewTraces(err, td)
-	}
-	defer se.compressorPool.Put(compr)
-
 	logsUrl, metricsUrl, tracesUrl := se.getDataURLs()
 	sdr := newSender(
 		se.logger,
 		se.config,
 		se.getHTTPClient(),
-		compr,
 		se.prometheusFormatter,
 		metricsUrl,
 		logsUrl,
@@ -359,20 +317,9 @@ func (se *sumologicexporter) pushTracesData(ctx context.Context, td ptrace.Trace
 		se.id,
 	)
 
-	err = sdr.sendTraces(ctx, td)
+	err := sdr.sendTraces(ctx, td)
 	se.handleUnauthorizedErrors(ctx, err)
 	return err
-}
-
-func (se *sumologicexporter) getCompressor() (*compressor, error) {
-	switch c := se.compressorPool.Get().(type) {
-	case error:
-		return &compressor{}, fmt.Errorf("%v", c)
-	case *compressor:
-		return c, nil
-	default:
-		return &compressor{}, fmt.Errorf("unknown compressor type: %T", c)
-	}
 }
 
 func (se *sumologicexporter) start(ctx context.Context, host component.Host) error {
@@ -386,7 +333,11 @@ func (se *sumologicexporter) configure(ctx context.Context) error {
 		foundSumoExt bool
 	)
 
-	httpSettings := se.config.HTTPClientSettings
+	if se.config.CompressEncoding != NoCompression {
+		se.config.ClientConfig.Compression = se.config.CompressEncoding
+	}
+
+	httpSettings := se.config.ClientConfig
 
 	for _, e := range se.host.GetExtensions() {
 		v, ok := e.(*sumologicextension.SumologicExtension)

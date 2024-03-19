@@ -1,0 +1,26 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure('2') do |config|
+  config.vm.disk :disk, size: "30GB", primary: true
+  config.vm.box_check_update = false
+  # Vbox 6.1.28+ restricts host-only adapters to 192.168.56.0/21
+  # See: https://www.virtualbox.org/manual/ch06.html#network_hostonly
+  config.vm.network :private_network, ip: "192.168.56.13"
+
+  # See: https://github.com/hashicorp/vagrant/issues/13242
+  config.winrm.transport = :plaintext
+  config.winrm.basic_auth_only = true
+
+  config.ssh.shell = "powershell"
+
+  config.vm.provider 'virtualbox' do |vb|
+    vb.gui = false
+    vb.cpus = 8
+    vb.memory = 16384
+  end
+
+  config.vm.provision 'shell', path: '../provision.ps1', privileged: false
+
+  config.vm.synced_folder "../../..", "/sumologic"
+end

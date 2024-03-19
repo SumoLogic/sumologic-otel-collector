@@ -24,7 +24,6 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
-	"syscall"
 
 	"github.com/google/uuid"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -32,6 +31,7 @@ import (
 	"github.com/knadh/koanf/v2"
 	"github.com/oklog/ulid/v2"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opamp-go/client"
@@ -67,9 +67,22 @@ type opampAgent struct {
 	remoteConfigStatus *protobufs.RemoteConfigStatus
 }
 
+// opampLogShim translates between zap and opamp-go's bespoke logging interface
+type opampLogShim struct {
+	logger *zap.SugaredLogger
+}
+
+func (o opampLogShim) Debugf(_ context.Context, fmt string, v ...interface{}) {
+	o.logger.Debugf(fmt, v...)
+}
+
+func (o opampLogShim) Errorf(_ context.Context, fmt string, v ...interface{}) {
+	o.logger.Errorf(fmt, v...)
+}
+
 func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 	o.host = host
-	o.opampClient = client.NewWebSocket(o.logger.Sugar())
+	o.opampClient = client.NewWebSocket(opampLogShim{o.logger.Sugar()})
 
 	if err := o.loadEffectiveConfig(o.cfg.RemoteConfigurationDirectory); err != nil {
 		return err
@@ -146,13 +159,13 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 		OpAMPServerURL: o.endpoint,
 		InstanceUid:    o.instanceId.String(),
 		Callbacks: types.CallbacksStruct{
-			OnConnectFunc: func() {
+			OnConnectFunc: func(ctx context.Context) {
 				o.logger.Info("Connected to the OpAMP server")
 			},
-			OnConnectFailedFunc: func(err error) {
+			OnConnectFailedFunc: func(ctx context.Context, err error) {
 				o.logger.Error("Failed to connect to the OpAMP server", zap.Error(err))
 			},
-			OnErrorFunc: func(err *protobufs.ServerErrorResponse) {
+			OnErrorFunc: func(ctx context.Context, err *protobufs.ServerErrorResponse) {
 				o.logger.Error("OpAMP server returned an error response", zap.String("message", err.ErrorMessage))
 			},
 			SaveRemoteConfigStatusFunc: func(_ context.Context, status *protobufs.RemoteConfigStatus) {
@@ -186,7 +199,7 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 }
 
 func (o *opampAgent) getAuthExtension() error {
-	settings := o.cfg.HTTPClientSettings
+	settings := o.cfg.ClientConfig
 
 	if settings.Auth == nil {
 		return nil
@@ -425,19 +438,21 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 		if err != nil {
 			return err
 		}
+		o.logger.Debug("Loading Component Factories...")
+		factories, err := Components()
+		if err != nil {
+			return fmt.Errorf("cannot get the list of factories: %v", err)
+		}
+		o.logger.Info("Loading Configuration to Validate...")
+		_, errValidate := otelcoltest.LoadConfigAndValidate(p, factories)
+		if errValidate != nil {
+			o.logger.Error("Validation Failed... %v", zap.Error(errValidate))
+			return fmt.Errorf("cannot validate config named %v", errValidate)
+		}
+		o.logger.Info("Config Validation Successful...")
 	}
 
 	return nil
-}
-
-func (o *opampAgent) reloadCollectorConfig() error {
-	p, err := os.FindProcess(os.Getpid())
-
-	if err != nil {
-		return err
-	}
-
-	return p.Signal(syscall.SIGHUP)
 }
 
 func (o *opampAgent) updateAgentIdentity(instanceId ulid.ULID) {
@@ -504,6 +519,7 @@ func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
 		var err error
 		configChanged, err = o.applyRemoteConfig(msg.RemoteConfig)
 		if err != nil {
+			o.logger.Error("Failed to apply OpAMP agent remote config", zap.Error(err))
 			err = o.opampClient.SetRemoteConfigStatus(&protobufs.RemoteConfigStatus{
 				LastRemoteConfigHash: msg.RemoteConfig.ConfigHash,
 				Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED,
@@ -539,7 +555,7 @@ func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
 			o.logger.Error("Failed to update OpAMP agent effective configuration", zap.Error(err))
 		}
 
-		err = o.reloadCollectorConfig()
+		err = reloadCollectorConfig()
 		if err != nil {
 			o.logger.Error("Failed to reload collector configuration via SIGHUP", zap.Error(err))
 		}

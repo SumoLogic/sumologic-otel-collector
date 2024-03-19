@@ -126,9 +126,7 @@ type sender struct {
 	logger                     *zap.Logger
 	config                     *Config
 	client                     *http.Client
-	compressor                 *compressor
 	prometheusFormatter        prometheusFormatter
-	jsonLogsConfig             JSONLogs
 	dataUrlMetrics             string
 	dataUrlLogs                string
 	dataUrlTraces              string
@@ -153,21 +151,18 @@ const (
 	attributeKeySourceName     = "_sourceName"
 	attributeKeySourceCategory = "_sourceCategory"
 
-	contentTypeLogs       string = "application/x-www-form-urlencoded"
-	contentTypePrometheus string = "application/vnd.sumologic.prometheus"
-	contentTypeOTLP       string = "application/x-protobuf"
-
+	contentTypeLogs        string = "application/x-www-form-urlencoded"
+	contentTypePrometheus  string = "application/vnd.sumologic.prometheus"
+	contentTypeOTLP        string = "application/x-protobuf"
 	contentEncodingGzip    string = "gzip"
 	contentEncodingDeflate string = "deflate"
-
-	stickySessionKey string = "AWSALB"
+	stickySessionKey       string = "AWSALB"
 )
 
 func newSender(
 	logger *zap.Logger,
 	cfg *Config,
 	cl *http.Client,
-	c *compressor,
 	pf prometheusFormatter,
 	metricsUrl string,
 	logsUrl string,
@@ -180,9 +175,7 @@ func newSender(
 		logger:                     logger,
 		config:                     cfg,
 		client:                     cl,
-		compressor:                 c,
 		prometheusFormatter:        pf,
-		jsonLogsConfig:             cfg.JSONLogs,
 		dataUrlMetrics:             metricsUrl,
 		dataUrlLogs:                logsUrl,
 		dataUrlTraces:              tracesUrl,
@@ -196,12 +189,7 @@ var errUnauthorized = errors.New("unauthorized")
 
 // send sends data to sumologic
 func (s *sender) send(ctx context.Context, pipeline PipelineType, reader *countingReader, flds fields) error {
-	data, err := s.compressor.compress(reader.reader)
-	if err != nil {
-		return err
-	}
-
-	req, err := s.createRequest(ctx, pipeline, data)
+	req, err := s.createRequest(ctx, pipeline, reader.reader)
 	if err != nil {
 		return err
 	}
@@ -368,25 +356,10 @@ func (s *sender) logToText(record plog.LogRecord) string {
 func (s *sender) logToJSON(record plog.LogRecord) (string, error) {
 	recordCopy := plog.NewLogRecord()
 	record.CopyTo(recordCopy)
-	if s.jsonLogsConfig.AddTimestamp {
-		addJSONTimestamp(recordCopy.Attributes(), s.jsonLogsConfig.TimestampKey, recordCopy.Timestamp())
-	}
 
 	// Only append the body when it's not empty to prevent sending 'null' log.
 	if body := recordCopy.Body(); !isEmptyAttributeValue(body) {
-		if s.jsonLogsConfig.FlattenBody && body.Type() == pcommon.ValueTypeMap {
-			// Cannot use CopyTo, as it overrides data.orig's values
-			body.Map().Range(func(k string, v pcommon.Value) bool {
-				_, ok := recordCopy.Attributes().Get(k)
-
-				if !ok {
-					v.CopyTo(recordCopy.Attributes().PutEmpty(k))
-				}
-				return true
-			})
-		} else {
-			body.CopyTo(recordCopy.Attributes().PutEmpty(s.jsonLogsConfig.LogKey))
-		}
+		body.CopyTo(recordCopy.Attributes().PutEmpty(DefaultLogKey))
 	}
 
 	nextLine := new(bytes.Buffer)
@@ -399,21 +372,6 @@ func (s *sender) logToJSON(record plog.LogRecord) (string, error) {
 	}
 
 	return strings.TrimSuffix(nextLine.String(), "\n"), nil
-}
-
-var timeZeroUTC = time.Unix(0, 0).UTC()
-
-// addJSONTimestamp adds a timestamp field to record attribtues before sending
-// out the logs as JSON.
-// If the attached timestamp is equal to 0 (millisecond based UNIX timestamp)
-// then send out current time formatted as milliseconds since January 1, 1970.
-func addJSONTimestamp(attrs pcommon.Map, timestampKey string, pt pcommon.Timestamp) {
-	t := pt.AsTime()
-	if t == timeZeroUTC {
-		attrs.PutInt(timestampKey, time.Now().UnixMilli())
-	} else {
-		attrs.PutInt(timestampKey, t.UnixMilli())
-	}
 }
 
 func isEmptyAttributeValue(att pcommon.Value) bool {
@@ -438,7 +396,7 @@ func isEmptyAttributeValue(att pcommon.Value) bool {
 // returns array of records which has not been sent correctly and error
 func (s *sender) sendNonOTLPLogs(ctx context.Context, rl plog.ResourceLogs, flds fields) ([]plog.LogRecord, error) {
 	if s.config.LogFormat == OTLPLogFormat {
-		return nil, fmt.Errorf("Attempting to send OTLP logs as non-OTLP data")
+		return nil, fmt.Errorf("attempting to send OTLP logs as non-OTLP data")
 	}
 
 	var (
@@ -503,32 +461,7 @@ func (s *sender) formatLogLine(lr plog.LogRecord) (string, error) {
 
 // TODO: add support for HTTP limits
 func (s *sender) sendOTLPLogs(ctx context.Context, ld plog.Logs) error {
-	var lld plog.Logs
-
-	// Clear timestamps if required
-	if s.config.ClearLogsTimestamp {
-		// make a copy to preserve immutability
-		lld = plog.NewLogs()
-		ld.CopyTo(lld)
-
-		rls := lld.ResourceLogs()
-		for i := 0; i < rls.Len(); i++ {
-			rl := rls.At(i)
-			// rl.ScopeLogs().CopyTo(rl.ScopeLogs())
-
-			slgs := rl.ScopeLogs()
-			for j := 0; j < slgs.Len(); j++ {
-				log := slgs.At(j)
-				for k := 0; k < log.LogRecords().Len(); k++ {
-					log.LogRecords().At(k).SetTimestamp(0)
-				}
-			}
-		}
-	} else {
-		lld = ld
-	}
-
-	body, err := logsMarshaler.MarshalLogs(lld)
+	body, err := logsMarshaler.MarshalLogs(ld)
 	if err != nil {
 		return err
 	}
@@ -539,7 +472,7 @@ func (s *sender) sendOTLPLogs(ctx context.Context, ld plog.Logs) error {
 // sendNonOTLPMetrics sends metrics in right format basing on the s.config.MetricFormat
 func (s *sender) sendNonOTLPMetrics(ctx context.Context, md pmetric.Metrics) (pmetric.Metrics, []error) {
 	if s.config.MetricFormat == OTLPMetricFormat {
-		return md, []error{fmt.Errorf("Attempting to send OTLP metrics as non-OTLP data")}
+		return md, []error{fmt.Errorf("attempting to send OTLP metrics as non-OTLP data")}
 	}
 
 	var (
@@ -708,20 +641,6 @@ func (s *sender) sendOTLPTraces(ctx context.Context, td ptrace.Traces) error {
 	return nil
 }
 
-func addCompressHeader(req *http.Request, enc CompressEncodingType) error {
-	switch enc {
-	case GZIPCompression:
-		req.Header.Set(headerContentEncoding, contentEncodingGzip)
-	case DeflateCompression:
-		req.Header.Set(headerContentEncoding, contentEncodingDeflate)
-	case NoCompression:
-	default:
-		return fmt.Errorf("invalid content encoding: %s", enc)
-	}
-
-	return nil
-}
-
 func addSourcesHeaders(req *http.Request, flds fields) {
 	sourceHeaderValues := getSourcesHeaders(flds)
 
@@ -789,10 +708,6 @@ func addTracesHeaders(req *http.Request, tf TraceFormatType) error {
 
 func (s *sender) addRequestHeaders(req *http.Request, pipeline PipelineType, flds fields) error {
 	req.Header.Add(headerClient, s.config.Client)
-
-	if err := addCompressHeader(req, s.config.CompressEncoding); err != nil {
-		return err
-	}
 	addSourcesHeaders(req, flds)
 
 	switch pipeline {

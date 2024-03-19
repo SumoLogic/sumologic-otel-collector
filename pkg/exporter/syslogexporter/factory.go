@@ -48,7 +48,7 @@ func createDefaultConfig() component.Config {
 		Port:          DefaultPort,
 		Format:        DefaultFormat,
 		Protocol:      DefaultProtocol,
-		RetrySettings: configretry.NewDefaultBackOffConfig(),
+		BackOffConfig: configretry.NewDefaultBackOffConfig(),
 		QueueSettings: qs,
 	}
 }
