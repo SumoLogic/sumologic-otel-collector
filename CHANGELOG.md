@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.96.0-sumo-1]
+
+### Released 2024-03-21
+
+### Known issue
+
+Behavior of [recombine][recombine] operator has been changed. Now it recombines also partial logs, for details please see [pull request][opentelemetry-collector-contrib#30797].
+If you use `recombine` operator you will observe that logs which do not match regular expression are combined into one log entry.
+
+### Added
+
+- feat(opamp): Support adding and validating more receivers and extensions in the source templates [#1509]
+
+### Changed
+
+- chore(deps): bump google.golang.org/protobuf to 1.33.0 [#1500]
+
+### Fixed
+
+- fix(windows): Fixed startup problem when running as a Windows service [#1512]
+
+[#1500]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1500
+[#1509]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1509
+[#1512]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1512
+[v0.96.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.96.0-sumo-1
+
 ## [v0.96.0-sumo-0]
 
 See the [upgrade guide][upgrade_guide_v0.96] for more details on the breaking changes.

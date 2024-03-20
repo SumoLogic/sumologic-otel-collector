@@ -1,1 +1,0 @@
-+ fix(windows): Fixed startup problem when running as a Windows service
