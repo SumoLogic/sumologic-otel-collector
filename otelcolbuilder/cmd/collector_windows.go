@@ -105,13 +105,17 @@ func (s *windowsService) start(elog *eventlog.Log, colErrorChannel chan error) e
 	// Parse all the flags manually.
 	_ = elog.Info(6668, "parsing arguments")
 	if err := s.flags.Parse(os.Args[1:]); err != nil {
-		_ = elog.Info(6669, fmt.Sprintf("error parsing argumetn: %v", err))
+		_ = elog.Info(6669, fmt.Sprintf("error parsing argument: %v", err))
 		return err
 	}
 
 	_ = elog.Info(6670, "new collector with flags")
 	var err error
-	s.col, err = newCollectorWithFlags(s.settings, s.flags)
+	err = updateSettingsUsingFlags(&s.settings, s.flags)
+	if err != nil {
+		return err
+	}
+	s.col, err = otelcol.NewCollector(s.settings)
 	if err != nil {
 		return err
 	}
@@ -220,20 +224,25 @@ func withWindowsCore(elog *eventlog.Log) func(zapcore.Core) zapcore.Core {
 	}
 }
 
-func newCollectorWithFlags(set otelcol.CollectorSettings, flags *flag.FlagSet) (*otelcol.Collector, error) {
+func updateSettingsUsingFlags(set *otelcol.CollectorSettings, flags *flag.FlagSet) error {
 	if set.ConfigProvider == nil {
+		resolverSet := &set.ConfigProviderSettings.ResolverSettings
 		configFlags := getConfigFlag(flags)
-		if len(configFlags) == 0 {
-			return nil, errors.New("at least one config flag must be provided")
-		}
 
-		var err error
-		set.ConfigProvider, err = otelcol.NewConfigProvider(newDefaultConfigProviderSettings(configFlags))
-		if err != nil {
-			return nil, err
+		if len(configFlags) > 0 {
+			resolverSet.URIs = configFlags
+		}
+		if len(resolverSet.URIs) == 0 {
+			return errors.New("at least one config flag must be provided")
+		}
+		// Provide a default set of providers and converters if none have been specified.
+		// TODO: Remove this after CollectorSettings.ConfigProvider is removed and instead
+		// do it in the builder.
+		if len(resolverSet.Providers) == 0 && len(resolverSet.Converters) == 0 {
+			set.ConfigProviderSettings = newDefaultConfigProviderSettings(resolverSet.URIs)
 		}
 	}
-	return otelcol.NewCollector(set)
+	return nil
 }
 
 func newDefaultConfigProviderSettings(uris []string) otelcol.ConfigProviderSettings {
