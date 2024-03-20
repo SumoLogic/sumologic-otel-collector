@@ -16,11 +16,23 @@ import (
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter"
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/syslogexporter"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/apachereceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/dockerstatsreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kafkareceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/nginxreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/rabbitmqreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/redisreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/syslogreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowsperfcountersreceiver"
 )
 
 // Components returns the set of components for tests
@@ -33,6 +45,10 @@ func Components() (
 	extensions, err := extension.MakeFactoryMap(
 		ballastextension.NewFactory(),
 		sumologicextension.NewFactory(),
+		healthcheckextension.NewFactory(),
+		pprofextension.NewFactory(),
+		NewFactory(), // opampextension
+		filestorage.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
@@ -41,12 +57,21 @@ func Components() (
 		filelogreceiver.NewFactory(),
 		hostmetricsreceiver.NewFactory(),
 		otlpreceiver.NewFactory(),
+		windowseventlogreceiver.NewFactory(),
+		nginxreceiver.NewFactory(),
+		redisreceiver.NewFactory(),
+		kafkareceiver.NewFactory(),
+		dockerstatsreceiver.NewFactory(),
+		rabbitmqreceiver.NewFactory(),
+		windowsperfcountersreceiver.NewFactory(),
+		syslogreceiver.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
 	exporters, err := exporter.MakeFactoryMap(
 		otlpexporter.NewFactory(),
 		sumologicexporter.NewFactory(),
+		syslogexporter.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 

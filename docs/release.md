@@ -79,22 +79,9 @@ After verifying that the release text and all links are good, publish the releas
 
 ### Build packages
 
-1. Open the [Build packages workflow][build_packages_workflow] in GitHub Actions for the
-   [sumologic-otel-collector-packaging repository][package_repo].
+1. Go to the releases section of the [sumologic-otel-collector-packaging repository][package_releases].
 
-1. Click `Run workflow`.
-
-1. Enter the version of the release. (e.g. `0.83.0`)
-
-1. Enter the Sumo version of the release. (e.g. `0`)
-
-1. Click `Publish release`.
-
-1. Click `Run workflow` and wait fo the CI job to finish. Take note of the job number.
-
-1. After the release draft is created, go to [GitHub Releases][package_releases], find the release
-   with the build iteration matching the CI job number, and then edit the release draft and fill in
-   missing information:
+1. Find the draft release for the new version. Edit the release draft and fill in missing information:
 
 - Specify versions for upstream OT core and contrib releases
 - Copy and paste the Changelog entry for this release from [CHANGELOG.md][otelcol_changelog]
@@ -284,6 +271,4 @@ make update-journalctl
 [dockerobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/extension/observer/dockerobserver
 [ecsobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/extension/observer/ecsobserver
 [ecstaskobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/extension/observer/ecstaskobserver
-[build_packages_workflow]: https://github.com/SumoLogic/sumologic-otel-collector-packaging/actions/workflows/build_packages.yml
-[package_repo]: https://github.com/SumoLogic/sumologic-otel-collector-packaging
 [package_releases]: https://github.com/SumoLogic/sumologic-otel-collector-packaging/releases
