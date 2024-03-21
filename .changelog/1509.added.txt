@@ -1,1 +1,0 @@
-feat(opamp): Support adding and validating more receivers and extensions in the source templates
