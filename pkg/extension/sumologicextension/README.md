@@ -1,6 +1,8 @@
 # Sumo Logic Extension
 
-**Stability level**: Beta
+**Stability level**: Deprecated
+
+This extension is deprecated in favor of the [Sumo Logic extension][sumologic_extension_docs] that lives in the [OpenTelemetry Collector Contrib][contrib_repo] repository.
 
 This extension is to be used as part of Sumo Logic collector in conjuction with
 [`sumologicexporter`][sumologicexporter] in order to export telemetry data to
@@ -16,6 +18,8 @@ It manages:
 
 [sumologicexporter]: ../../exporter/sumologicexporter/
 [sumologic]: https://www.sumologic.com/
+[sumologic_extension_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/extension/sumologicextension/README.md
+[contrib_repo]: https://github.com/open-telemetry/opentelemetry-collector-contrib/
 
 ## Implementation
 
