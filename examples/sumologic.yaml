@@ -3,7 +3,7 @@
 extensions:
   ## Configuration for Sumo Logic Extension
   ## Manages registration, heartbeats and authentication to Sumo Logic
-  ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/extension/sumologicextension
+  ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/sumologicextension
   sumologic:
     installation_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
     collector_credentials_directory: /var/lib/otelcol-sumo/credentials
