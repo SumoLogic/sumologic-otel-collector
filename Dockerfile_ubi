@@ -23,11 +23,14 @@ ADD https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/LI
 RUN microdnf update && microdnf install systemd && microdnf clean all
 
 ENV TAG $BUILD_TAG
+
+COPY otelcol-sumo /
+# This shouldn't be necessary but sometimes we end up with execution bit not set
+RUN chmod 755 /otelcol-sumo
+
 ARG USER_UID=10001
 USER ${USER_UID}
 ENV HOME /etc/otel/
-
-COPY otelcol-sumo /
 
 ENTRYPOINT ["/otelcol-sumo"]
 CMD ["--config", "/etc/otel/config.yaml"]
