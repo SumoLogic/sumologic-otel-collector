@@ -1,11 +1,11 @@
 module github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter
 
-go 1.21
+go 1.21.0
 
-toolchain go1.21.4
+toolchain go1.22.2
 
 require (
-	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.0.0-00010101000000-000000000000
+	github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.99.0-sumo-0-rc.2
 	github.com/klauspost/compress v1.17.8
 	github.com/stretchr/testify v1.9.0
 	go.opencensus.io v0.24.0
@@ -86,5 +86,3 @@ require (
 	google.golang.org/protobuf v1.34.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension => ./../../extension/sumologicextension
