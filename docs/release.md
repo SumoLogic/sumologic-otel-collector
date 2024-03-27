@@ -1,6 +1,7 @@
 # Releasing
 
 - [How to release](#how-to-release)
+  - [Check end-to-end tests](#check-end-to-end-tests)
   - [Update Changelog and upgrading guide](#update-changelog-and-upgrading-guide)
   - [Create and push Git tag](#create-and-push-git-tag)
     - [Remove tag in case of a failed release job](#remove-tag-in-case-of-a-failed-release-job)
@@ -16,6 +17,10 @@
 - [Updating journalctl](#updating-journalctl)
 
 ## How to release
+
+### Check end-to-end tests
+
+Check if the Sumo internal e2e tests are passing.
 
 ### Update Changelog and upgrading guide
 
