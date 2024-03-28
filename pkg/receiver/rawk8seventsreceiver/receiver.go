@@ -226,7 +226,7 @@ func (r *rawK8sEventsReceiver) getLatestResourceVersion(ctx context.Context) (ui
 	return latestResourceVersion, nil
 }
 
-// Consume metrics and retry on recoverable errors
+// Consume logs and retry on recoverable errors
 func (r *rawK8sEventsReceiver) consumeWithRetry(ctx context.Context, logs plog.Logs) error {
 	constantBackoff := backoff.WithMaxRetries(backoff.NewConstantBackOff(r.cfg.ConsumeRetryDelay), r.cfg.ConsumeMaxRetries)
 
@@ -248,7 +248,7 @@ func (r *rawK8sEventsReceiver) consumeWithRetry(ctx context.Context, logs plog.L
 		},
 		constantBackoff,
 		func(err error, delay time.Duration) {
-			r.logger.Warn("ConsumeMetrics() recoverable error, will retry",
+			r.logger.Warn("ConsumeLogs() recoverable error, will retry",
 				zap.Error(err), zap.Duration("delay", delay),
 			)
 		},
@@ -284,7 +284,7 @@ func (r *rawK8sEventsReceiver) processEventChange(ctx context.Context, eventChan
 	}
 	err = r.consumeWithRetry(ctx, logs)
 	if err != nil {
-		r.logger.Error("ConsumeMetrics() error",
+		r.logger.Error("ConsumeLogs() error",
 			zap.String("error", err.Error()),
 		)
 	}

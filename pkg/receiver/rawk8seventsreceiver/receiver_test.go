@@ -175,7 +175,7 @@ func TestConsumeRetryOnRecoverableError(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, int(rCfg.ConsumeMaxRetries+1), consumer.CallCount)
 	assert.Equal(t, int(rCfg.ConsumeMaxRetries), observedLogs.Len())
-	assert.Equal(t, int(rCfg.ConsumeMaxRetries), observedLogs.FilterMessage("ConsumeMetrics() recoverable error, will retry").Len())
+	assert.Equal(t, int(rCfg.ConsumeMaxRetries), observedLogs.FilterMessage("ConsumeLogs() recoverable error, will retry").Len())
 }
 
 func TestConsumeNoRetryOnPermanentError(t *testing.T) {
