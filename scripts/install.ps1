@@ -32,7 +32,7 @@ param (
 )
 
 $PackageGithubOrg = "SumoLogic"
-$PackageGithubRepo = "sumologic-otel-collector"
+$PackageGithubRepo = "sumologic-otel-collector-packaging"
 
 ##
 # Security tweaks
@@ -167,7 +167,7 @@ function Get-ArchName {
     return $archName
 }
 
-function Get-InstalledVersion {
+function Get-InstalledApplicationVersion {
     $product = Get-CimInstance Win32_Product | Where-Object {
         $_.Name -eq "OpenTelemetry Collector" -and $_.Vendor -eq "Sumo Logic"
     }
@@ -195,6 +195,16 @@ function Get-InstalledVersion {
     $buildVersion = $Matches[0].Groups[5].Value
 
     return "${majorVersion}.${minorVersion}.${patchVersion}-sumo-${buildVersion}"
+}
+
+function Get-InstalledPackageVersion {
+    $package = Get-Package -name "OpenTelemetry Collector"
+
+    if ($package -eq $null) {
+        return
+    }
+
+    return $package.Version.Replace("-", ".")
 }
 
 function Get-Version {
@@ -417,12 +427,18 @@ try {
     }
 
     Write-Host "Getting installed version..."
-    $installedVersion = Get-InstalledVersion
-    $installedVersionStr = "none"
-    if ($installedVersion -ne $null) {
-        $installedVersionStr = $installedVersion
+    $installedAppVersion = Get-InstalledApplicationVersion
+    $installedAppVersionStr = "none"
+    if ($installedAppVersion -ne $null) {
+        $installedAppVersionStr = $installedAppVersion
     }
-    Write-Host "Installed version:`t${installedVersionStr}"
+    $installedPackageVersion = Get-InstalledPackageVersion
+    $installedPackageVersionStr = "none"
+    if ($installedPackageVersion -ne $null) {
+        $installedPackageVersionStr = $installedPackageVersion
+    }
+    Write-Host "Installed app version:`t${installedAppVersionStr}"
+    Write-Host "Installed package version:`t${installedPackageVersionStr}"
 
     # Get versions, but ignore errors as we fallback to other methods later
     Write-Host "Getting versions..."
@@ -439,19 +455,14 @@ try {
         }
     }
 
-    $versionRegex = '(\d)\.(\d+)\.(\d+)(.*(\d+))'
-    $Matches = [Regex]::Matches($Version, $versionRegex)
-    $majorVersion = $Matches[0].Groups[1].Value
-    $minorVersion = $Matches[0].Groups[2].Value
-    $patchVersion = $Matches[0].Groups[3].Value
-    $suffix = $Matches[0].Groups[4].Value
-    $buildVersion = $Matches[0].Groups[5].Value
-    $productVersion = "${majorVersion}.${minorVersion}.${patchVersion}.${buildVersion}"
+    # tags in the packaging repository have a dash before the build number, the Windows convention is a stop
+    $Tag = $Version
+    $Version = $Version.Replace("-", ".")
 
-    Write-Host "Version to install:`t${Version}"
+    Write-Host "Package version to install:`t${Version}"
 
     # Check if otelcol is already in newest version
-    if ($installedVersion -eq $Version) {
+    if ($installedPackageVersion -eq $Version) {
         Write-Host "OpenTelemetry collector is already in newest (${Version}) version"
     } else {
         # add newline before breaking changes and changelog
@@ -479,9 +490,9 @@ try {
 
     # Download MSI
     $msiLanguage = "en-US"
-    $msiFileName = "otelcol-sumo_${productVersion}_${msiLanguage}.${archName}${fipsSuffix}.msi"
+    $msiFileName = "otelcol-sumo_${Version}_${msiLanguage}.${archName}${fipsSuffix}.msi"
     $msiUri = "https://github.com/" + $PackageGithubOrg + "/" + $PackageGithubRepo + "/releases/download/"
-    $msiUri += "v${Version}/${msiFileName}"
+    $msiUri += "v${Tag}/${msiFileName}"
     $msiPath = "${env:TEMP}\${msiFileName}"
     Get-BinaryFromUri $msiUri -Path $msiPath -HttpClient $httpClient
 
