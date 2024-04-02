@@ -31,7 +31,7 @@ if [[ -z "${REPO_URL}" ]]; then
     exit 1
 fi
 
-if [[ ! -z "${BASE_IMAGE_TAG}" ]]; then
+if [[ -n "${BASE_IMAGE_TAG}" ]]; then
     BASE_IMAGE_TAG="-${BASE_IMAGE_TAG}"
 fi
 

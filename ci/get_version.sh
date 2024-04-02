@@ -32,7 +32,6 @@ bad_usage() {
     echo "${1}"
     echo
     usage
-    exit 1
 }
 
 parse_params() {
@@ -54,6 +53,7 @@ parse_params() {
 }
 
 parse_version_tag() {
+    # shellcheck disable=SC2153
     version_tag="${VERSION_TAG}"
     if [ -z "${version_tag}" ]; then
         version_tag=$(git tag -l --sort -version:refname | head -n 1)
