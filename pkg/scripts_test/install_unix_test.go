@@ -82,6 +82,7 @@ func TestInstallScript(t *testing.T) {
 			postChecks: []checkFunc{
 				checkBinaryCreated,
 				checkBinaryIsRunning,
+				checkLatestAppVersion,
 				checkConfigCreated,
 				checkConfigFilesOwnershipAndPermissions(rootUser, rootGroup),
 				checkUserConfigCreated,

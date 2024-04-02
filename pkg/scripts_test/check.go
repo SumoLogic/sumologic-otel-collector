@@ -46,6 +46,14 @@ func checkBinaryIsRunning(c check) {
 	require.Equal(c.test, 0, code, "got error code while checking version")
 }
 
+func checkLatestAppVersion(c check) {
+	cmd := exec.Command(binaryPath, "--version")
+	output, err := cmd.Output()
+	c.test.Logf("latest app version: %s", latestAppVersion)
+	require.NoError(c.test, err, "error while checking version")
+	require.Contains(c.test, string(output), latestAppVersion, "must install latest app version")
+}
+
 func checkRun(c check) {
 	require.Equal(c.test, c.expectedInstallCode, c.code, "unexpected installation script error code")
 }
