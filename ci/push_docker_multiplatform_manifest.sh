@@ -3,7 +3,7 @@
 set -eo pipefail
 
 # check for arm support only if we try to build it
-if echo "${PLATFORM}" | grep -q arm && ! docker buildx ls | grep -q arm ; then
+if echo "${PLATFORMS}" | grep -q arm && ! docker buildx ls | grep -q arm ; then
     echo "Your Buildx seems to lack ARM architecture support"
     echo
     docker buildx ls
