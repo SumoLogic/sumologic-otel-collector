@@ -11,4 +11,13 @@ Vagrant.configure('2') do |config|
   config.vm.provider 'virtualbox' do |vb|
     vb.name = 'windows-server-2022'
   end
+
+  config.vm.provider 'qemu' do |qe,override|
+    override.vm.box = "jborean93/WindowsServer2022"
+    qe.gui = false
+    qe.smp = 8
+    qe.memory = 16384
+    qe.name = 'windows-server-2019'
+  end
+
 end
