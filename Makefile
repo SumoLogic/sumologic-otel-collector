@@ -45,7 +45,7 @@ markdown-link-check:
 	./ci/markdown_link_check.sh
 
 shellcheck:
-	./ci/shellcheck.sh
+	shellcheck --severity=info ci/*.sh scripts/install.sh
 
 .PHONY: install-pre-commit
 install-pre-commit:
