@@ -127,9 +127,6 @@ CURL_MAX_TIME=1800
 # set by check_dependencies therefore cannot be set by set_defaults
 SYSTEMD_DISABLED=false
 
-# alternative commands
-TAC="tac"
-
 ############################ Functions
 
 function usage() {
@@ -417,16 +414,6 @@ function check_dependencies() {
         fi
     done
 
-    # verify if `tac` is supported, otherwise check for `tail -r`
-    if ! command -v "tac" &> /dev/null; then
-        if echo '' | tail -r  &> /dev/null; then
-            TAC="tail -r"
-        else
-            echo "Neither command 'tac' nor support for 'tail -r' not found. Please install it."
-            error=1
-        fi
-    fi
-
     if [[ ! -d /run/systemd/system ]]; then
         SYSTEMD_DISABLED=true
     fi
@@ -486,10 +473,8 @@ function get_versions() {
     -sH "Accept: application/vnd.github.v3+json" \
     https://api.github.com/repos/SumoLogic/sumologic-otel-collector/releases \
     | grep -E '(tag_name|"(draft|prerelease)")' \
-    | ${TAC} \
     | sed 'N;N;s/.*true.*//' \
     | grep -o 'v.*"' \
-    | sort -r \
     | sed 's/^v//;s/"$//'
 }
 
@@ -508,10 +493,8 @@ function get_package_versions() {
     -sH "Accept: application/vnd.github.v3+json" \
     https://api.github.com/repos/${PACKAGE_GITHUB_ORG}/${PACKAGE_GITHUB_REPO}/releases \
     | grep -E '(tag_name|"(draft|prerelease)")' \
-    | ${TAC} \
     | sed 'N;N;s/.*true.*//' \
     | grep -o 'v.*"' \
-    | sort -r \
     | sed 's/^v//;s/"$//'
 }
 
