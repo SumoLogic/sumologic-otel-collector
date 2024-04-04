@@ -4,6 +4,7 @@ package sumologic_scripts_tests
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -35,6 +36,18 @@ func checkAbortedDueToNoToken(c check) {
 	errorOutput := strings.Join(c.errorOutput, " ")
 	require.Contains(c.test, errorOutput, "Installation token has not been provided.")
 	require.Contains(c.test, errorOutput, "Please set the SUMOLOGIC_INSTALLATION_TOKEN environment variable.")
+}
+
+func checkBinaryFipsError(c check) {
+	cmd := exec.Command(binaryPath, "--version")
+	_, err := cmd.Output()
+	require.Error(c.test, err, "running on a non-FIPS system must error")
+
+	exitErr, ok := err.(*exec.ExitError)
+	require.True(c.test, ok, "returned error must be of type ExitError")
+
+	require.Equal(c.test, 2, exitErr.ExitCode(), "got error code while checking version")
+	require.Contains(c.test, string(exitErr.Stderr), "not in FIPS mode")
 }
 
 func checkEphemeralNotInConfig(p string) func(c check) {
