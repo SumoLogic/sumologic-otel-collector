@@ -513,14 +513,19 @@ jobs:
           path: ./packaging/msi/wix/bin/${{ matrix.platform }}/en-US/*.msi
           if-no-files-found: error
 
+
+  # Store the install script from the packaging repository as a release artifact.
+  # Originally, this script was stored in this repository, and the official download url pointed
+  # to the most recent release here. The script has since been moved to the packaging repository.
+  # It is kept here for backwards compatibility. Once the download count for this artifact
+  # reaches 0 for new releases, this can be removed.
   install-script:
     name: Store install script
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
+        with:
+          repository: SumoLogic/sumologic-otel-collector-packaging
 
       - name: Store Linux install script as action artifact
         uses: actions/upload-artifact@v4
