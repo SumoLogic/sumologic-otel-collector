@@ -26,6 +26,8 @@ import (
 	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
 	"go.opentelemetry.io/collector/confmap/provider/envprovider"
 	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
+	"go.opentelemetry.io/collector/confmap/provider/httpprovider"
+	"go.opentelemetry.io/collector/confmap/provider/httpsprovider"
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
 	"go.opentelemetry.io/collector/featuregate"
 	"go.opentelemetry.io/collector/otelcol"
@@ -91,11 +93,20 @@ func NewConfigProvider(locations []string) (otelcol.ConfigProvider, error) {
 // for the logic we're emulating here
 // we only add the glob provider, everything else should be the same
 func NewConfigProviderSettings(locations []string) otelcol.ConfigProviderSettings {
+	converterSet := confmap.ConverterSettings{}
+	providerSet := confmap.ProviderSettings{}
 	return otelcol.ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
-			URIs:       locations,
-			Providers:  makeMapProvidersMap(fileprovider.New(), envprovider.New(), yamlprovider.New(), globprovider.New()),
-			Converters: []confmap.Converter{expandconverter.New(confmap.ConverterSettings{})},
+			URIs: locations,
+			Providers: makeMapProvidersMap(
+				fileprovider.NewWithSettings(providerSet),
+				envprovider.NewWithSettings(providerSet),
+				yamlprovider.NewWithSettings(providerSet),
+				httpprovider.NewWithSettings(providerSet),
+				httpsprovider.NewWithSettings(providerSet),
+				globprovider.New(),
+			),
+			Converters: []confmap.Converter{expandconverter.New(converterSet)},
 		},
 	}
 }
