@@ -28,7 +28,7 @@ import (
 func TestType(t *testing.T) {
 	factory := NewFactory()
 	pType := factory.Type()
-	assert.Equal(t, pType, component.Type("syslog"))
+	assert.Equal(t, pType, Type)
 }
 
 func TestCreateDefaultConfig(t *testing.T) {

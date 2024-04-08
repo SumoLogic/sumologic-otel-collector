@@ -727,7 +727,7 @@ func TestGetSignalUrl(t *testing.T) {
 		},
 		{
 			description:  "error if signal type is unknown",
-			signalType:   "unknown",
+			signalType:   component.MustNewType("unknown"),
 			endpointUrl:  "http://localhost",
 			errorMessage: `unknown signal type: unknown`,
 		},

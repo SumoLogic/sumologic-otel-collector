@@ -23,6 +23,7 @@ import (
 	"go.opentelemetry.io/collector/processor/processorhelper"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube"
 )
 
@@ -32,13 +33,15 @@ const (
 	stabilityLevel = component.StabilityLevelBeta
 )
 
+var Type = component.MustNewType(typeStr)
+
 var kubeClientProvider = kube.ClientProvider(nil)
 var processorCapabilities = consumer.Capabilities{MutatesData: true}
 
 // NewFactory returns a new factory for the k8s processor.
 func NewFactory() processor.Factory {
 	return processor.NewFactory(
-		typeStr,
+		Type,
 		createDefaultConfig,
 		processor.WithTraces(createTracesProcessor, stabilityLevel),
 		processor.WithMetrics(createMetricsProcessor, stabilityLevel),

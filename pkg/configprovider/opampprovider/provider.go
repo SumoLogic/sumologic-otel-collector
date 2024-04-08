@@ -61,8 +61,8 @@ type Provider struct {
 
 // New creates a new Provider, with its GlobProvider set to the result of
 // globprovider.New().
-func New() confmap.Provider {
-	return &Provider{GlobProvider: globprovider.New()}
+func NewWithSettings(settings confmap.ProviderSettings) confmap.Provider {
+	return &Provider{GlobProvider: globprovider.NewWithSettings(settings)}
 }
 
 func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.WatcherFunc) (*confmap.Retrieved, error) {
@@ -88,7 +88,7 @@ func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.W
 	if err != nil {
 		return nil, err
 	}
-	addl, err := fileprovider.New().Retrieve(ctx, "file:"+configPath, fn)
+	addl, err := fileprovider.NewWithSettings(confmap.ProviderSettings{}).Retrieve(ctx, "file:"+configPath, fn)
 	if err != nil {
 		return nil, err
 	}

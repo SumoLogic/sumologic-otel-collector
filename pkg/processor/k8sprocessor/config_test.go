@@ -30,7 +30,7 @@ func TestLoadConfig(t *testing.T) {
 	factories, err := otelcoltest.NopFactories()
 	require.NoError(t, err)
 	factory := NewFactory()
-	factories.Processors[component.Type(typeStr)] = factory
+	factories.Processors[Type] = factory
 
 	require.NoError(t, component.ValidateConfig(factory.CreateDefaultConfig()))
 
@@ -42,7 +42,7 @@ func TestLoadConfig(t *testing.T) {
 	require.NotNil(t, cfg)
 	require.NoError(t, cfg.Validate())
 
-	p0 := cfg.Processors[component.NewID(typeStr)]
+	p0 := cfg.Processors[component.NewID(Type)]
 	assert.EqualValues(t,
 		&Config{
 			APIConfig: k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
@@ -51,7 +51,7 @@ func TestLoadConfig(t *testing.T) {
 		p0,
 	)
 
-	p1 := cfg.Processors[component.NewIDWithName(typeStr, "2")]
+	p1 := cfg.Processors[component.NewIDWithName(Type, "2")]
 	assert.EqualValues(t,
 		&Config{
 			APIConfig:          k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeKubeConfig},

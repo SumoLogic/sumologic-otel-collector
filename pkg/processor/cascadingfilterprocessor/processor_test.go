@@ -78,10 +78,10 @@ func buildBasicCFSP(t *testing.T, numTraces uint64, spansPerSecond int32, collec
 		}
 	}
 
-	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg, component.NewID("cascading_filter"))
+	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg, component.NewID(Type))
 	require.NoError(t, err)
 
-	return sp.(*cascadingFilterSpanProcessor)
+	return sp
 }
 
 func TestTotalSpansPerSecondForSumoCollectorInstancesDefault(t *testing.T) {

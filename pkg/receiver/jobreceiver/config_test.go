@@ -5,15 +5,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/asset"
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output/event"
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output/logentries"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/helper"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/split"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/confmap/confmaptest"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/asset"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output/event"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output/logentries"
 )
 
 func TestConfigValidate(t *testing.T) {
@@ -88,7 +89,7 @@ func TestConfigValidate(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			actual := factory.CreateDefaultConfig()
 			expected := tc.Expected()
-			sub, err := cm.Sub(component.NewIDWithName("monitoringjob", tc.Name).String())
+			sub, err := cm.Sub(component.NewIDWithName(Type, tc.Name).String())
 			require.NoError(t, err)
 			require.NoError(t, component.UnmarshalConfig(sub, actual))
 			assert.Equal(t, expected, actual)

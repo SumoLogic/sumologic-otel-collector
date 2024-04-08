@@ -30,7 +30,7 @@ func TestLoadConfig(t *testing.T) {
 	assert.NoError(t, err)
 
 	factory := NewFactory()
-	factories.Receivers[typeStr] = factory
+	factories.Receivers[Type] = factory
 	cfg, err := otelcoltest.LoadConfigAndValidate(filepath.Join("testdata", "config.yaml"), factories)
 
 	require.NoError(t, err)
@@ -38,5 +38,5 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Len(t, cfg.Receivers, 2)
 
-	assert.Equal(t, cfg.Receivers[component.NewID(typeStr)], factory.CreateDefaultConfig())
+	assert.Equal(t, cfg.Receivers[component.NewID(Type)], factory.CreateDefaultConfig())
 }

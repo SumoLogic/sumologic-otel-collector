@@ -351,7 +351,7 @@ func (se *sumologicexporter) configure(ctx context.Context) error {
 	}
 
 	if httpSettings.Endpoint == "" && httpSettings.Auth != nil &&
-		string(httpSettings.Auth.AuthenticatorID.Type()) == "sumologic" {
+		httpSettings.Auth.AuthenticatorID.Type() == sumologicextension.Type {
 		// If user specified using sumologicextension as auth but none was
 		// found then return an error.
 		if !foundSumoExt {
@@ -397,7 +397,7 @@ func (se *sumologicexporter) configure(ctx context.Context) error {
 
 		// Clean authenticator if set to sumologic.
 		// Setting to null in configuration doesn't work, so we have to force it that way.
-		if httpSettings.Auth != nil && string(httpSettings.Auth.AuthenticatorID.Type()) == "sumologic" {
+		if httpSettings.Auth != nil && httpSettings.Auth.AuthenticatorID.Type() == sumologicextension.Type {
 			httpSettings.Auth = nil
 		}
 	} else {

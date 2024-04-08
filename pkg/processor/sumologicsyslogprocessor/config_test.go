@@ -35,7 +35,7 @@ func TestLoadConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	assert.Equal(t, cfg.Processors[component.NewID("sumologic_syslog")],
+	assert.Equal(t, cfg.Processors[component.NewID(Type)],
 		&Config{
 			FacilityAttr: "testAttrName",
 		})

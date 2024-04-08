@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	cfgType = "metric_frequency"
+	typeStr = "metric_frequency"
 
 	defaultMinPointAccumulationTime       = 15 * time.Minute
 	defaultConstantMetricsReportFrequency = 5 * time.Minute
@@ -25,9 +25,11 @@ const (
 	stabilityLevel                        = component.StabilityLevelBeta
 )
 
+var Type = component.MustNewType(typeStr)
+
 func NewFactory() processor.Factory {
 	return processor.NewFactory(
-		cfgType,
+		Type,
 		createDefaultConfig,
 		processor.WithMetrics(createMetricsProcessor, stabilityLevel),
 	)

@@ -34,7 +34,7 @@ const (
 
 type provider struct{}
 
-func New() confmap.Provider {
+func NewWithSettings(_ confmap.ProviderSettings) confmap.Provider {
 	return &provider{}
 }
 

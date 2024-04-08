@@ -32,10 +32,12 @@ const (
 	stabilityLevel = component.StabilityLevelBeta
 )
 
+var Type = component.MustNewType(typeStr)
+
 // NewFactory creates a factory for rawk8sevents receiver.
 func NewFactory() receiver.Factory {
 	return receiver.NewFactory(
-		typeStr,
+		Type,
 		createDefaultConfig,
 		receiver.WithLogs(createLogsReceiver, stabilityLevel))
 }
