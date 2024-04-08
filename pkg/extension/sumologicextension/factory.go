@@ -30,10 +30,12 @@ const (
 	DefaultApiBaseUrl = "https://open-collectors.sumologic.com"
 )
 
+var Type = component.MustNewType(typeStr)
+
 // NewFactory creates a factory for Sumo Logic extension.
 func NewFactory() extension.Factory {
 	return extension.NewFactory(
-		typeStr,
+		Type,
 		createDefaultConfig,
 		createExtension,
 		component.StabilityLevelBeta,

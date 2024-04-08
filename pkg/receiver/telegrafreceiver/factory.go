@@ -32,10 +32,12 @@ const (
 	stabilityLevel = component.StabilityLevelBeta
 )
 
+var Type = component.MustNewType(typeStr)
+
 // NewFactory creates a factory for telegraf receiver.
 func NewFactory() receiver.Factory {
 	return receiver.NewFactory(
-		typeStr,
+		Type,
 		createDefaultConfig,
 		receiver.WithMetrics(createMetricsReceiver, stabilityLevel),
 	)

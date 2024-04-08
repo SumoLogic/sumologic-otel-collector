@@ -28,10 +28,12 @@ const (
 	typeStr = "active_directory_inv"
 )
 
+var Type = component.MustNewType(typeStr)
+
 // NewFactory creates a factory for Active Directory Inventory receiver
 func NewFactory() receiver.Factory {
 	return receiver.NewFactory(
-		typeStr,
+		Type,
 		CreateDefaultConfig,
 		receiver.WithLogs(createLogsReceiver, component.StabilityLevelAlpha),
 	)

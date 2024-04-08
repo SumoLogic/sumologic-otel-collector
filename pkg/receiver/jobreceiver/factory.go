@@ -1,15 +1,16 @@
 package jobreceiver
 
 import (
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/builder"
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/adapter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/receiver"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/builder"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output"
 )
 
-const jobType = "monitoringjob"
+var Type = component.MustNewType("monitoringjob")
 
 // NewFactory uses the stanza adapter factory to facilitate the initialization
 // and running of the stanza output pipeline.
@@ -37,7 +38,7 @@ func (stanzaAdapter) CreateDefaultConfig() component.Config {
 }
 
 func (stanzaAdapter) Type() component.Type {
-	return jobType
+	return Type
 }
 
 func (stanzaAdapter) BaseConfig(cfg component.Config) adapter.BaseConfig {

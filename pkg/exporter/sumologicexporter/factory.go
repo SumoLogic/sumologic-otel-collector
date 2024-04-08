@@ -30,10 +30,12 @@ const (
 	stabilityLevel = component.StabilityLevelBeta
 )
 
+var Type = component.MustNewType(typeStr)
+
 // NewFactory returns a new factory for the sumologic exporter.
 func NewFactory() exporter.Factory {
 	return exporter.NewFactory(
-		typeStr,
+		Type,
 		createDefaultConfig,
 		exporter.WithLogs(createLogsExporter, stabilityLevel),
 		exporter.WithMetrics(createMetricsExporter, stabilityLevel),

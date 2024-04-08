@@ -29,7 +29,7 @@ import (
 func TestType(t *testing.T) {
 	factory := NewFactory()
 	pType := factory.Type()
-	assert.Equal(t, pType, component.Type("sumologic"))
+	assert.Equal(t, pType, Type)
 }
 
 func TestCreateDefaultConfig(t *testing.T) {
@@ -49,7 +49,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 			Timeout:     30 * time.Second,
 			Compression: "gzip",
 			Auth: &configauth.Authentication{
-				AuthenticatorID: component.NewID("sumologic"),
+				AuthenticatorID: component.NewID(Type),
 			},
 		},
 		BackOffConfig: configretry.NewDefaultBackOffConfig(),
