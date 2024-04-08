@@ -18,50 +18,45 @@ var (
 	latestAppVersion string
 )
 
-func getAppReleaseVersions() ([]string, error) {
+func getLatestAppReleaseVersion() (string, error) {
 	githubApiBaseUrl, err := url.Parse(GithubApiBaseUrl)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	githubApiReleasesUrl := githubApiBaseUrl.JoinPath(
+	githubApiLatestReleaseUrl := githubApiBaseUrl.JoinPath(
 		"repos",
 		GithubOrg,
 		GithubAppRepository,
-		"releases")
-	response, err := http.Get(githubApiReleasesUrl.String()) //nolint:noctx
+		"releases",
+		"latest")
+	response, err := http.Get(githubApiLatestReleaseUrl.String()) //nolint:noctx
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get releases: %s", response.Status)
+		return "", fmt.Errorf("failed to get release: %s", response.Status)
 	}
 
-	var releases []struct {
+	var release struct {
 		TagName string `json:"tag_name"`
 	}
 	decoder := json.NewDecoder(response.Body)
-	err = decoder.Decode(&releases)
+	err = decoder.Decode(&release)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	releaseVersions := make([]string, len(releases))
-	for i, release := range releases {
-		releaseVersions[i] = release.TagName
-	}
-	return releaseVersions, nil
+	return release.TagName, nil
 }
 
 func init() {
-	releaseVersions, err := getAppReleaseVersions()
+	latestReleaseVersion, err := getLatestAppReleaseVersion()
 	if err != nil {
-		fmt.Printf("error fetching releases: %v", err)
+		fmt.Printf("error fetching release: %v", err)
 		os.Exit(1)
 	}
-	// the Github API returns these in descending creation order by default
-	latestReleaseVersion := releaseVersions[0]
 	if latestReleaseVersion == "" {
 		fmt.Println("No app release versions found")
 		os.Exit(1)
