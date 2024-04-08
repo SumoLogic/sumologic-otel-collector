@@ -475,6 +475,7 @@ function get_versions() {
     | grep -E '(tag_name|"(draft|prerelease)")' \
     | sed 'N;N;s/.*true.*//' \
     | grep -o 'v.*"' \
+    | sort -rV \
     | sed 's/^v//;s/"$//'
 }
 
@@ -495,6 +496,7 @@ function get_package_versions() {
     | grep -E '(tag_name|"(draft|prerelease)")' \
     | sed 'N;N;s/.*true.*//' \
     | grep -o 'v.*"' \
+    | sort -rV \
     | sed 's/^v//;s/"$//'
 }
 
