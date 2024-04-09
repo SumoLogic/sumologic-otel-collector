@@ -136,7 +136,7 @@ func createCascade(t *testing.T) *cascade {
 }
 
 func createCascadeWithConfig(t *testing.T, conf cfconfig.Config) *cascade {
-	cascading, err := newCascadingFilterSpanProcessor(zap.NewNop(), nil, conf, component.NewID("cascading_filter"))
+	cascading, err := newTraceProcessor(zap.NewNop(), nil, conf, component.NewID(Type))
 	assert.NoError(t, err)
 	return newCascade(cascading)
 }

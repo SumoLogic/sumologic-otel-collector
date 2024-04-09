@@ -29,25 +29,25 @@ import (
 )
 
 func TestValidateProviderScheme(t *testing.T) {
-	assert.NoError(t, ValidateProviderScheme(New()))
+	assert.NoError(t, ValidateProviderScheme(NewWithSettings(confmap.ProviderSettings{})))
 }
 
 func TestEmptyName(t *testing.T) {
-	fp := New()
+	fp := NewWithSettings(confmap.ProviderSettings{})
 	_, err := fp.Retrieve(context.Background(), "", nil)
 	require.Error(t, err)
 	require.NoError(t, fp.Shutdown(context.Background()))
 }
 
 func TestUnsupportedScheme(t *testing.T) {
-	fp := New()
+	fp := NewWithSettings(confmap.ProviderSettings{})
 	_, err := fp.Retrieve(context.Background(), "https://", nil)
 	assert.Error(t, err)
 	assert.NoError(t, fp.Shutdown(context.Background()))
 }
 
 func TestNonExistent(t *testing.T) {
-	fp := New()
+	fp := NewWithSettings(confmap.ProviderSettings{})
 	expectedMap := confmap.New()
 
 	ret, err := fp.Retrieve(context.Background(), schemePrefix+filepath.Join("testdata", "non-existent/*.yaml"), nil)
@@ -66,7 +66,7 @@ func TestNonExistent(t *testing.T) {
 }
 
 func TestInvalidYAML(t *testing.T) {
-	fp := New()
+	fp := NewWithSettings(confmap.ProviderSettings{})
 	_, err := fp.Retrieve(context.Background(), schemePrefix+filepath.Join("testdata", "invalid-yaml.*"), nil)
 	assert.Error(t, err)
 	_, err = fp.Retrieve(context.Background(), schemePrefix+absolutePath(t, filepath.Join("testdata", "invalid-yaml.*")), nil)
@@ -75,7 +75,7 @@ func TestInvalidYAML(t *testing.T) {
 }
 
 func TestInvalidPattern(t *testing.T) {
-	fp := New()
+	fp := NewWithSettings(confmap.ProviderSettings{})
 	pattern := "["
 	_, err := fp.Retrieve(context.Background(), schemePrefix+pattern, nil)
 	assert.Error(t, err)
@@ -87,7 +87,7 @@ func TestInvalidPattern(t *testing.T) {
 }
 
 func TestRelativePath(t *testing.T) {
-	fp := New()
+	fp := NewWithSettings(confmap.ProviderSettings{})
 	ret, err := fp.Retrieve(context.Background(), schemePrefix+filepath.Join("testdata", "multiple", "*.yaml"), nil)
 	require.NoError(t, err)
 	retMap, err := ret.AsConf()
@@ -103,7 +103,7 @@ func TestRelativePath(t *testing.T) {
 }
 
 func TestAbsolutePath(t *testing.T) {
-	fp := New()
+	fp := NewWithSettings(confmap.ProviderSettings{})
 	ret, err := fp.Retrieve(context.Background(), schemePrefix+absolutePath(t, filepath.Join("testdata", "multiple", "*.yaml")), nil)
 	require.NoError(t, err)
 	retMap, err := ret.AsConf()
@@ -119,7 +119,7 @@ func TestAbsolutePath(t *testing.T) {
 }
 
 func TestMergeOrder(t *testing.T) {
-	fp := New()
+	fp := NewWithSettings(confmap.ProviderSettings{})
 	ret, err := fp.Retrieve(context.Background(), schemePrefix+absolutePath(t, filepath.Join("testdata", "ordered", "*.yaml")), nil)
 	require.NoError(t, err)
 	retMap, err := ret.AsConf()

@@ -29,12 +29,15 @@ const (
 	stabilityLevel = component.StabilityLevelBeta
 )
 
-var processorCapabilities = consumer.Capabilities{MutatesData: true}
+var (
+	processorCapabilities = consumer.Capabilities{MutatesData: true}
+	Type                  = component.MustNewType(typeStr)
+)
 
 // NewFactory returns a new factory for the Tail Sampling processor.
 func NewFactory() processor.Factory {
 	return processor.NewFactory(
-		typeStr,
+		Type,
 		createDefaultConfig,
 		processor.WithLogs(createLogProcessor, stabilityLevel))
 }

@@ -20,8 +20,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
 	"go.opentelemetry.io/collector/confmap/provider/envprovider"
@@ -31,6 +29,10 @@ import (
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
 	"go.opentelemetry.io/collector/featuregate"
 	"go.opentelemetry.io/collector/otelcol"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
 )
 
 // This file contains modifications to the collector settings which inject a custom config provider
@@ -93,20 +95,19 @@ func NewConfigProvider(locations []string) (otelcol.ConfigProvider, error) {
 // for the logic we're emulating here
 // we only add the glob provider, everything else should be the same
 func NewConfigProviderSettings(locations []string) otelcol.ConfigProviderSettings {
-	converterSet := confmap.ConverterSettings{}
-	providerSet := confmap.ProviderSettings{}
+	settings := confmap.ProviderSettings{}
 	return otelcol.ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
 			URIs: locations,
 			Providers: makeMapProvidersMap(
-				fileprovider.NewWithSettings(providerSet),
-				envprovider.NewWithSettings(providerSet),
-				yamlprovider.NewWithSettings(providerSet),
-				httpprovider.NewWithSettings(providerSet),
-				httpsprovider.NewWithSettings(providerSet),
-				globprovider.New(),
+				fileprovider.NewWithSettings(settings),
+				envprovider.NewWithSettings(settings),
+				yamlprovider.NewWithSettings(settings),
+				httpprovider.NewWithSettings(settings),
+				httpsprovider.NewWithSettings(settings),
+				globprovider.NewWithSettings(settings),
 			),
-			Converters: []confmap.Converter{expandconverter.New(converterSet)},
+			Converters: []confmap.Converter{expandconverter.New(confmap.ConverterSettings{})},
 		},
 	}
 }
@@ -117,7 +118,7 @@ func NewOpAmpConfigProviderSettings(location string) otelcol.ConfigProviderSetti
 	return otelcol.ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
 			URIs:       []string{location},
-			Providers:  makeMapProvidersMap(opampprovider.New()),
+			Providers:  makeMapProvidersMap(opampprovider.NewWithSettings(confmap.ProviderSettings{})),
 			Converters: []confmap.Converter{expandconverter.New(confmap.ConverterSettings{})},
 		},
 	}

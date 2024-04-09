@@ -26,13 +26,13 @@ import (
 )
 
 func TestValidateProviderScheme(t *testing.T) {
-	if err := ValidateProviderScheme(New()); err != nil {
+	if err := ValidateProviderScheme(NewWithSettings(confmap.ProviderSettings{})); err != nil {
 		t.Error(err)
 	}
 }
 
 func TestEmptyURI(t *testing.T) {
-	p := New()
+	p := NewWithSettings(confmap.ProviderSettings{})
 	_, err := p.Retrieve(context.Background(), "", nil)
 	if err == nil {
 		t.Error("expected non-nil error")
@@ -43,7 +43,7 @@ func TestEmptyURI(t *testing.T) {
 }
 
 func TestUnsupportedScheme(t *testing.T) {
-	p := New()
+	p := NewWithSettings(confmap.ProviderSettings{})
 	_, err := p.Retrieve(context.Background(), "https://foo", nil)
 	if err == nil {
 		t.Error("expected non-nil error")
@@ -54,7 +54,7 @@ func TestUnsupportedScheme(t *testing.T) {
 }
 
 func TestNonExistent(t *testing.T) {
-	p := New()
+	p := NewWithSettings(confmap.ProviderSettings{})
 
 	_, err := p.Retrieve(context.Background(), "opamp:/tmp/does/not/exist", nil)
 	if err == nil {
@@ -66,7 +66,7 @@ func TestNonExistent(t *testing.T) {
 }
 
 func TestInvalidYAML(t *testing.T) {
-	p := New()
+	p := NewWithSettings(confmap.ProviderSettings{})
 	_, err := p.Retrieve(context.Background(), "opamp:"+filepath.Join("testdata", "invalid-yaml.txt"), nil)
 	if err == nil {
 		t.Error("expected non-nil error")
@@ -77,7 +77,7 @@ func TestInvalidYAML(t *testing.T) {
 }
 
 func TestMissingRemoteConfigurationDir(t *testing.T) {
-	p := New()
+	p := NewWithSettings(confmap.ProviderSettings{})
 	_, err := p.Retrieve(context.Background(), "opamp:"+filepath.Join("testdata", "missing_config_dir.yaml"), nil)
 	if err == nil {
 		t.Error("expected non-nil error")
@@ -88,7 +88,7 @@ func TestMissingRemoteConfigurationDir(t *testing.T) {
 }
 
 func TestValid(t *testing.T) {
-	p := New()
+	p := NewWithSettings(confmap.ProviderSettings{})
 	defer func() {
 		if err := p.Shutdown(context.Background()); err != nil {
 			t.Error(err)

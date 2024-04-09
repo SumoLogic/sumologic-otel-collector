@@ -45,12 +45,14 @@ const (
 	stabilityLevel = component.StabilityLevelBeta
 )
 
+var Type = component.MustNewType(typeStr)
+
 var processorCapabilities = consumer.Capabilities{MutatesData: true}
 
 // NewFactory returns a new factory for the Span processor.
 func NewFactory() processor.Factory {
 	return processor.NewFactory(
-		typeStr,
+		Type,
 		createDefaultConfig,
 		processor.WithTraces(createTracesProcessor, stabilityLevel),
 		processor.WithMetrics(createMetricsProcessor, stabilityLevel),

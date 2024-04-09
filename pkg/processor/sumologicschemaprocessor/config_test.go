@@ -29,16 +29,16 @@ func TestLoadConfig(t *testing.T) {
 	assert.NoError(t, err)
 
 	factory := NewFactory()
-	factories.Processors[typeStr] = factory
+	factories.Processors[Type] = factory
 	cfg, err := otelcoltest.LoadConfigAndValidate(filepath.Join("testdata", "config.yaml"), factories)
 
 	require.Nil(t, err)
 	require.NotNil(t, cfg)
 
-	p0 := cfg.Processors[component.NewID(typeStr)]
+	p0 := cfg.Processors[component.NewID(Type)]
 	assert.Equal(t, p0, factory.CreateDefaultConfig())
 
-	p1 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-cloud-namespace")]
+	p1 := cfg.Processors[component.NewIDWithName(Type, "disabled-cloud-namespace")]
 
 	assert.Equal(t, p1,
 		&Config{
@@ -62,7 +62,7 @@ func TestLoadConfig(t *testing.T) {
 			TranslateDockerMetrics: false,
 		})
 
-	p2 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-attribute-translation")]
+	p2 := cfg.Processors[component.NewIDWithName(Type, "disabled-attribute-translation")]
 
 	assert.Equal(t, p2,
 		&Config{
@@ -86,7 +86,7 @@ func TestLoadConfig(t *testing.T) {
 			TranslateDockerMetrics: false,
 		})
 
-	p3 := cfg.Processors[component.NewIDWithName(typeStr, "disabled-telegraf-attribute-translation")]
+	p3 := cfg.Processors[component.NewIDWithName(Type, "disabled-telegraf-attribute-translation")]
 
 	assert.Equal(t, p3,
 		&Config{
@@ -110,7 +110,7 @@ func TestLoadConfig(t *testing.T) {
 			TranslateDockerMetrics: false,
 		})
 
-	p4 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-nesting")]
+	p4 := cfg.Processors[component.NewIDWithName(Type, "enabled-nesting")]
 
 	assert.Equal(t, p4,
 		&Config{
@@ -134,7 +134,7 @@ func TestLoadConfig(t *testing.T) {
 			TranslateDockerMetrics: false,
 		})
 
-	p5 := cfg.Processors[component.NewIDWithName(typeStr, "aggregate-attributes")]
+	p5 := cfg.Processors[component.NewIDWithName(Type, "aggregate-attributes")]
 
 	assert.Equal(t, p5,
 		&Config{
@@ -167,7 +167,7 @@ func TestLoadConfig(t *testing.T) {
 			TranslateDockerMetrics: false,
 		})
 
-	p6 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-severity-number-attribute")]
+	p6 := cfg.Processors[component.NewIDWithName(Type, "enabled-severity-number-attribute")]
 
 	assert.Equal(t, p6,
 		&Config{
@@ -191,7 +191,7 @@ func TestLoadConfig(t *testing.T) {
 			TranslateDockerMetrics: false,
 		})
 
-	p7 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-severity-text-attribute")]
+	p7 := cfg.Processors[component.NewIDWithName(Type, "enabled-severity-text-attribute")]
 
 	assert.Equal(t, p7,
 		&Config{
@@ -215,7 +215,7 @@ func TestLoadConfig(t *testing.T) {
 			TranslateDockerMetrics: false,
 		})
 
-	p8 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-span-id-attribute")]
+	p8 := cfg.Processors[component.NewIDWithName(Type, "enabled-span-id-attribute")]
 
 	assert.Equal(t, p8,
 		&Config{
@@ -239,7 +239,7 @@ func TestLoadConfig(t *testing.T) {
 			TranslateDockerMetrics: false,
 		})
 
-	p9 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-trace-id-attribute")]
+	p9 := cfg.Processors[component.NewIDWithName(Type, "enabled-trace-id-attribute")]
 
 	assert.Equal(t, p9,
 		&Config{
@@ -263,7 +263,7 @@ func TestLoadConfig(t *testing.T) {
 			TranslateDockerMetrics: false,
 		})
 
-	p10 := cfg.Processors[component.NewIDWithName(typeStr, "enabled-docker-metrics-translation")]
+	p10 := cfg.Processors[component.NewIDWithName(Type, "enabled-docker-metrics-translation")]
 
 	assert.Equal(t, p10,
 		&Config{

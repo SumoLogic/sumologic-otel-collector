@@ -19,13 +19,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/bigendianconverter"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/bigendianconverter"
 
 	cfconfig "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/sampling"
@@ -115,9 +116,9 @@ func newLongRunningTraceProcessor(t *testing.T, decisionWait time.Duration) *cas
 		ProbabilisticFilteringRate: &outputRate,
 		NumTraces:                  100,
 	}
-	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg, component.NewID("cascading_filter"))
+	sp, err := newTraceProcessor(zap.NewNop(), consumertest.NewNop(), cfg, component.NewID(Type))
 	require.NoError(t, err)
-	return sp.(*cascadingFilterSpanProcessor)
+	return sp
 }
 
 func generateAndConsumeTraces(t *testing.T, tsp *cascadingFilterSpanProcessor) map[pcommon.TraceID]interface{} {

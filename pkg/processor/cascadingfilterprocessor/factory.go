@@ -33,6 +33,8 @@ const (
 	stabilityLevel = component.StabilityLevelBeta
 )
 
+var Type = component.MustNewType(typeStr)
+
 func init() {
 	// TODO: this is hardcoding the metrics level
 	err := view.Register(CascadingFilterMetricViews(configtelemetry.LevelNormal)...)
@@ -44,7 +46,7 @@ func init() {
 // NewFactory returns a new factory for the Cascading Filter processor.
 func NewFactory() processor.Factory {
 	return processor.NewFactory(
-		typeStr,
+		Type,
 		createDefaultConfig,
 		processor.WithTraces(createTraceProcessor, stabilityLevel))
 }
@@ -59,7 +61,7 @@ func createDefaultConfig() component.Config {
 }
 
 func createTraceProcessor(
-	_ context.Context,
+	ctx context.Context,
 	settings processor.CreateSettings,
 	cfg component.Config,
 	nextConsumer consumer.Traces,

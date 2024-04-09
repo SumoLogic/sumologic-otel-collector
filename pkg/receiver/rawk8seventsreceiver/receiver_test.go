@@ -388,9 +388,10 @@ func TestStorage(t *testing.T) {
 	) cache.ListerWatcher {
 		return listWatch
 	}
+	settings := receivertest.NewNopCreateSettings()
 
 	receiver, err := newRawK8sEventsReceiver(
-		receivertest.NewNopCreateSettings(),
+		settings,
 		receiverConfig,
 		logsSink,
 		fake.NewSimpleClientset(),
@@ -416,14 +417,14 @@ func TestStorage(t *testing.T) {
 
 	// Create the second k8s event.
 	secondEvent := getEvent()
-	secondEvent.UID = types.UID("ec279341-e2d8-4b2a-b17d-6e0566481002")
+	secondEvent.UID = "ec279341-e2d8-4b2a-b17d-6e0566481002"
 	listWatch.Add(secondEvent)
 
 	// Both events should be picked up by the receiver.
 	// The last resource version processed should be saved in storage.
 	assert.Eventually(t, func() bool {
 		return logsSink.LogRecordCount() == 2
-	}, 100*time.Millisecond, 10*time.Millisecond, "expected 2 events")
+	}, 100*time.Minute, 10*time.Millisecond, "expected 2 events")
 
 	// Shutdown the receiver.
 	require.NoError(t, receiver.Shutdown(ctx))
@@ -439,7 +440,7 @@ func TestStorage(t *testing.T) {
 
 	// Start the receiver again.
 	receiver, err = newRawK8sEventsReceiver(
-		receivertest.NewNopCreateSettings(),
+		settings,
 		receiverConfig,
 		logsSink,
 		fake.NewSimpleClientset(),

@@ -47,7 +47,7 @@ func TestUnmarshalConfig(t *testing.T) {
 			ClientConfig: confighttp.ClientConfig{
 				Endpoint: "wss://127.0.0.1:4320/v1/opamp",
 				Auth: &configauth.Authentication{
-					AuthenticatorID: component.NewID("sumologic"),
+					AuthenticatorID: component.NewID(Type),
 				},
 			},
 			InstanceUID:                  "01BX5ZZKBKACTAV9WEVGEMMVRZ",

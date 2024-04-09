@@ -46,7 +46,7 @@ func TestLoadConfig(t *testing.T) {
 	namePatternValue := "foo.*"
 	healthCheckNamePatternValue := "health.*"
 
-	id1 := component.NewIDWithName("cascading_filter", "1")
+	id1 := component.NewIDWithName(Type, "1")
 	assert.Equal(t, cfg.Processors[id1],
 		&cfconfig.Config{
 			CollectorInstances:         1,
@@ -97,7 +97,7 @@ func TestLoadConfig(t *testing.T) {
 			},
 		})
 
-	id2 := component.NewIDWithName("cascading_filter", "2")
+	id2 := component.NewIDWithName(Type, "2")
 	priorSpansRate2 := int32(600)
 	priorHistorySize2 := uint64(100)
 	assert.Equal(t, cfg.Processors[id2],

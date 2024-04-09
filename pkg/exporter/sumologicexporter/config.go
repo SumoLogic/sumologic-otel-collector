@@ -75,7 +75,7 @@ func CreateDefaultClientConfig() confighttp.ClientConfig {
 		Timeout:     defaultTimeout,
 		Compression: DefaultCompressEncoding,
 		Auth: &configauth.Authentication{
-			AuthenticatorID: component.NewID("sumologic"),
+			AuthenticatorID: component.NewID(Type),
 		},
 	}
 }

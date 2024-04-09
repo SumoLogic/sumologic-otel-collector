@@ -26,8 +26,10 @@ const (
 	typeStr = "opamp"
 )
 
+var Type = component.MustNewType(typeStr)
+
 func NewFactory() extension.Factory {
-	return extension.NewFactory(typeStr, createDefaultConfig, createExtension, component.StabilityLevelAlpha)
+	return extension.NewFactory(Type, createDefaultConfig, createExtension, component.StabilityLevelAlpha)
 }
 
 func createDefaultConfig() component.Config {

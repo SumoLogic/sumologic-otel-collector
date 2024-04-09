@@ -25,7 +25,7 @@ import (
 func TestType(t *testing.T) {
 	factory := NewFactory()
 	ft := factory.Type()
-	require.EqualValues(t, "active_directory_inv", ft)
+	require.EqualValues(t, Type, ft)
 }
 
 func TestCreateLogsReceiver(t *testing.T) {
