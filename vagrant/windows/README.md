@@ -37,6 +37,13 @@ Windows VM. You can start `bash` by running:
 bash
 ```
 
+### ARM hosts (Apple M1, and so on)
+
+You can use [UTM](https://mac.getutm.app/) or any other VM provider that supports M1, and manually run the [provisioning script](provision.ps1) inside
+your VM.
+
+TODO: Try and make this work with Vagrant.
+
 ## Building the application
 
 After starting `bash` as per the previous section, you can use the same command as on Unix. So:
