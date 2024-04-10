@@ -531,14 +531,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: install.sh
-          path: ./scripts/install.sh
+          path: ./install-script/install.sh
           if-no-files-found: error
 
       - name: Store Windows install script as action artifact
         uses: actions/upload-artifact@v4
         with:
           name: install.ps1
-          path: ./scripts/install.ps1
+          path: ./install-script/install.ps1
           if-no-files-found: error
 
   config-management-assets:
