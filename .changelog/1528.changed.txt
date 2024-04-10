@@ -1,1 +1,1 @@
-feat: add missing configproviders (httpprovider, httpsprovider, yamlprovider)
+feat: add missing configproviders (httpprovider, httpsprovider)
