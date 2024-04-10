@@ -86,12 +86,7 @@ After verifying that the release text and all links are good, publish the releas
 
 1. Go to the releases section of the [sumologic-otel-collector-packaging repository][package_releases].
 
-1. Find the draft release for the new version. Edit the release draft and fill in missing information:
-
-- Specify versions for upstream OT core and contrib releases
-- Copy and paste the Changelog entry for this release from [CHANGELOG.md][otelcol_changelog]
-
-After verifying that the release text and all links are good, publish the release.
+2. Find the draft release for the new version. After verifying that the release text and all links are good, publish the release.
 
 ## Updating OT to next version
 
@@ -258,7 +253,6 @@ make update-journalctl
 [circleci]: https://app.circleci.com/pipelines/github/SumoLogic/sumologic-otel-collector
 [circleci_approve]: ../images/circleci_approve_workflow.png
 [changelog]: ../CHANGELOG.md
-[otelcol_changelog]: https://github.com/SumoLogic/sumologic-otel-collector/blob/main/CHANGELOG.md
 [upgrading]: ./upgrading.md
 [journaldreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.75.0/receiver/journaldreceiver
 [debian_versions]: https://hub.docker.com/_/debian/?tab=description
