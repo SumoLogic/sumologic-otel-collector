@@ -1,0 +1,5 @@
+chore: remove install scripts
+
+The install scripts were moved to the [packaging repository](https://github.com/SumoLogic/sumologic-otel-collector-packaging).
+They will continue to be shipped as artifacts for collector releases for the foreseeable future, but it is strongly
+suggested to switch any urls to the new location.
