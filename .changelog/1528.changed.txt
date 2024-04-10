@@ -1,1 +1,0 @@
-feat: add missing configproviders (httpprovider, httpsprovider)

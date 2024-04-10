@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.97.0-sumo-0]
+
+### Released 2024-04-10
+
+### Changed
+
+- feat: add missing configproviders (httpprovider, httpsprovider) [#1528]
+- chore: update otelcol core to v0.97.0 [#1530]
+
+### Fixed
+
+- chore: fix building UBI images [#1517]
+
+[#1528]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1528
+[#1530]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1530
+[#1517]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1517
+
+[v0.97.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.97.0-sumo-0## [v0.96.0-sumo-1]
+
 ## [v0.96.0-sumo-1]
 
 ### Released 2024-03-21
