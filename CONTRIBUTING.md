@@ -130,7 +130,6 @@ use (
         ./pkg/receiver/telegrafreceiver
         ./pkg/configprovider/globprovider
         ./pkg/configprovider/opampprovider
-        ./pkg/scripts_test
         ./pkg/tools/udpdemux
 )
 ```
