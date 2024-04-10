@@ -45,7 +45,7 @@ markdown-link-check:
 	./ci/markdown_link_check.sh
 
 shellcheck:
-	shellcheck --severity=info ci/*.sh scripts/install.sh
+	shellcheck --severity=info ci/*.sh
 
 .PHONY: install-pre-commit
 install-pre-commit:
@@ -63,7 +63,6 @@ pre-commit-check:
 # ALL_MODULES includes ./* dirs (excludes . dir and example with go code)
 ALL_MODULES := $(shell find ./pkg -type f -name "go.mod" -exec dirname {} \; | sort | egrep  '^./' )
 ALL_MODULES += ./otelcolbuilder
-ALL_MODULES_WITHOUT_SCRIPT_TESTS := $(filter-out ./pkg/scripts_test,$(ALL_MODULES))
 
 ALL_EXPORTABLE_MODULES += $(shell find ./pkg -type f -name "go.mod" ! -path "*pkg/test/*" -exec dirname {} \; | sort )
 
@@ -73,11 +72,7 @@ list-modules:
 
 .PHONY: gotest
 gotest:
-	@$(MAKE) for-all CMD="make test" ALL_MODULES="$(ALL_MODULES_WITHOUT_SCRIPT_TESTS)"
-
-.PHONY: test-install-script
-test-install-script:
-	cd ./pkg/scripts_test && $(MAKE) test
+	@$(MAKE) for-all CMD="make test"
 
 .PHONY: golint
 golint:
