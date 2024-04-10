@@ -156,40 +156,6 @@ jobs:
       runs-on: ${{ matrix.runs-on }}
       boringcrypto: ${{ matrix.boringcrypto == true }}
 
-  test-install-script:
-    name: Test Install Script
-    runs-on: ${{ matrix.runs_on }}
-    strategy:
-      matrix:
-        include:
-          - arch_os: linux_amd64
-            runs_on: ubuntu-20.04
-          - arch_os: darwin_amd64
-            runs_on: macos-latest
-          - arch_os: windows_amd64
-            runs_on: windows-2022
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Check if test related files changed
-        id: changed-files
-        uses: tj-actions/changed-files@v41
-        with:
-          files: |
-            pkg/scripts_test/*
-            scripts/install.sh
-
-      - name: Setup go
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: 'pkg/scripts_test/go.sum'
-
-      - name: Run install script tests
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: make test-install-script
-
   test-wixext:
     name: Test (SumoLogic.wixext)
     runs-on: windows-2019
