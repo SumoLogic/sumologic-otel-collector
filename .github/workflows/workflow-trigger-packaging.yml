@@ -7,6 +7,10 @@ on:
         description: The packaging workflow will create a draft release in the packaging repository.
         required: true
         type: boolean
+      workflow_id:
+        description: ID of the workflow to fetch artifacts from. If empty, artifacts will be fetched from the latest release.
+        type: number
+        required: false
 
 defaults:
   run:
@@ -53,7 +57,7 @@ jobs:
           display-workflow-run-url-interval: 1s
           inputs: |-
             {
-              "workflow_id": "${{ github.run_id }}",
+              "workflow_id": "${{ inputs.workflow_id }}",
               "otc_version": "${{ steps.version-core.outputs.version }}",
               "otc_sumo_version": "${{ steps.sumo-version.outputs.version }}",
               "release": ${{ inputs.create_release }}

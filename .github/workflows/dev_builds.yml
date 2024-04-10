@@ -380,4 +380,5 @@ jobs:
     uses: ./.github/workflows/workflow-trigger-packaging.yml
     secrets: inherit
     with:
+      workflow_id: ${{ github.run_id }}
       create_release: false
