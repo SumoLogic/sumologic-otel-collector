@@ -26,6 +26,8 @@ import (
 	"go.opentelemetry.io/collector/config/configauth"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/extension/extensiontest"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension"
 )
 
 func TestFactory_CreateDefaultConfig(t *testing.T) {
@@ -34,7 +36,7 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 	assert.Equal(t, cfg, &Config{
 		ClientConfig: confighttp.ClientConfig{
 			Auth: &configauth.Authentication{
-				AuthenticatorID: component.NewID(Type),
+				AuthenticatorID: component.NewID(sumologicextension.Type),
 			},
 		},
 		AcceptsRemoteConfiguration: true,

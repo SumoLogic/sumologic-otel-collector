@@ -1,0 +1,1 @@
+fix: default authenticator for sumo extension and exporter
