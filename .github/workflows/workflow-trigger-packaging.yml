@@ -9,7 +9,7 @@ on:
         type: boolean
       workflow_id:
         description: ID of the workflow to fetch artifacts from. If empty, artifacts will be fetched from the latest release.
-        type: number
+        type: string
         required: false
 
 defaults:
