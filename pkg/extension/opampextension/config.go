@@ -21,6 +21,8 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/configauth"
 	"go.opentelemetry.io/collector/config/confighttp"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension"
 )
 
 // Config has the configuration for the opamp extension.
@@ -43,7 +45,7 @@ type Config struct {
 func CreateDefaultClientConfig() confighttp.ClientConfig {
 	return confighttp.ClientConfig{
 		Auth: &configauth.Authentication{
-			AuthenticatorID: component.NewID(Type),
+			AuthenticatorID: component.NewID(sumologicextension.Type),
 		},
 	}
 }

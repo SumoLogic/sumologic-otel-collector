@@ -27,6 +27,8 @@ import (
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/confmaptest"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension"
 )
 
 func TestUnmarshalDefaultConfig(t *testing.T) {
@@ -47,7 +49,7 @@ func TestUnmarshalConfig(t *testing.T) {
 			ClientConfig: confighttp.ClientConfig{
 				Endpoint: "wss://127.0.0.1:4320/v1/opamp",
 				Auth: &configauth.Authentication{
-					AuthenticatorID: component.NewID(Type),
+					AuthenticatorID: component.NewID(sumologicextension.Type),
 				},
 			},
 			InstanceUID:                  "01BX5ZZKBKACTAV9WEVGEMMVRZ",
