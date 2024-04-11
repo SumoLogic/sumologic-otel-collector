@@ -227,10 +227,6 @@ replaces:
   # Needed for telegrafreceiver
   - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.28.3-sumo-3
 
-  # Some of the upstream packages have this replaced
-  # See https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/16423
-  - github.com/mattn/go-ieproxy => github.com/mattn/go-ieproxy v0.0.1
-
   # This is to make sure we build the with the sumologicextension from the tree.
   # The reason this is needed is that sumologicexporter depends on sumologicextension in its go.mod.
   # We add a dependency in the builder config in this file but only for a particular (placeholder)
@@ -240,6 +236,3 @@ replaces:
   - github.com/SumoLogic/sumologic-otel-collector/pkg/extension/opampextension => ../../pkg/extension/opampextension
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider => ../../pkg/configprovider/globprovider
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider => ../../pkg/configprovider/opampprovider
-
-  # lokireceiver does a replace for this, so we need to as well
-  - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/loki => github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/loki v0.98.0
