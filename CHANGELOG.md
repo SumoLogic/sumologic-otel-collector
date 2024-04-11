@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.97.0-sumo-1]
+
+### Released 2024-04-11
+
+### Fixed
+
+- fix(build): opampextension replace statement [#1539]
+- fix: default authenticator for sumo extension and exporter [#1540]
+
+[#1539]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1539
+[#1540]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1540
+
+[v0.97.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.97.0-sumo-1
+
 ## [v0.97.0-sumo-0]
 
 ### Released 2024-04-10
@@ -24,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1530]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1530
 [#1517]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1517
 
-[v0.97.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.97.0-sumo-0## [v0.96.0-sumo-1]
+[v0.97.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.97.0-sumo-0
 
 ## [v0.96.0-sumo-1]
 
