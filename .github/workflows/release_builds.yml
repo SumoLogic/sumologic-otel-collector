@@ -637,10 +637,3 @@ jobs:
           artifacts: "artifacts/*/*"
           artifactErrorsFailBuild: true
           replacesArtifacts: true
-
-  trigger-packaging:
-    name: Trigger Packaging
-    uses: ./.github/workflows/workflow-trigger-packaging.yml
-    secrets: inherit
-    with:
-      create_release: true
