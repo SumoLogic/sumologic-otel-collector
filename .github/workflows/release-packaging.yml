@@ -1,0 +1,13 @@
+name: Trigger packaging for release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  trigger-packaging:
+    name: Trigger Packaging for release ${{ github.event.release.name }}
+    uses: ./.github/workflows/workflow-trigger-packaging.yml
+    secrets: inherit
+    with:
+      create_release: true
