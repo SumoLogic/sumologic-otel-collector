@@ -1,5 +1,4 @@
-github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider v0.86.0-sumo-1 h1:Lz1sI+ExKnhtl8k6AmqzR3daE6ks82BhH4PXu4cPIow=
-github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider v0.86.0-sumo-1/go.mod h1:mimcwMHeENoTteoNSMwFtC6xFSn2ilg++AIx4wkl2VA=
+github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider v0.89.0-sumo-1 h1:pvIg73ak7VLO2IKmLabC3fdA0rNTFxrSD/98yAjTuW8=
 github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider v0.89.0-sumo-1/go.mod h1:NjvrwY1MBy/yFr6VPlQy6UseWQWp4EFeA6gP2Eqau1E=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
