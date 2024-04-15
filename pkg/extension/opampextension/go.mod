@@ -12,7 +12,7 @@ require (
 	github.com/knadh/koanf/providers/rawbytes v0.1.0
 	github.com/knadh/koanf/v2 v2.1.1
 	github.com/oklog/ulid/v2 v2.1.0
-	github.com/open-telemetry/opamp-go v0.12.1-0.20240229161006-7e92da0f17ef
+	github.com/open-telemetry/opamp-go v0.14.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/syslogexporter v0.98.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.98.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.98.0
