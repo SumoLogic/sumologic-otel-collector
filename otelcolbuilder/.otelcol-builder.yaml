@@ -244,6 +244,10 @@ replaces:
   - github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension => ../../pkg/extension/sumologicextension
   - github.com/SumoLogic/sumologic-otel-collector/pkg/extension/opampextension => ../../pkg/configprovider/opampextension
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider => ../../pkg/configprovider/globprovider
+  - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider => ../../pkg/configprovider/opampprovider
 
   # lokireceiver does a replace for this, so we need to as well
   - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/loki => github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/loki v0.89.0
+
+  # Backport https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/32100
+  - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza => github.com/swiatekm-sumo/opentelemetry-collector-contrib/pkg/stanza 8c88fd91a682c991ddd6f465a936efdf7aa24812
