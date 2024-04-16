@@ -1,0 +1,103 @@
+  receivers:
+    hostmetrics/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      collection_interval: 5m
+      scrapers:
+        network:
+    windowseventlog/Application/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      channel: Application
+      operators:
+        - type: add
+          field: resource["_sourceName"]
+          value: Application
+    windowseventlog/Security/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      channel: Security
+      operators:
+        - type: add
+          field: resource["_sourceName"]
+          value: Security
+    windowseventlog/System/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      channel: System
+      operators:
+        - type: add
+          field: resource["_sourceName"]
+          value: System
+    windowseventlog/Microsoft-Windows-PowerShell/Operational/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      channel: Microsoft-Windows-PowerShell/Operational
+      operators:
+        - type: add
+          field: resource["_sourceName"]
+          value: Microsoft-Windows-PowerShell/Operational
+    windowseventlog/Amazon EC2Launch/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      channel: Amazon EC2Launch
+      operators:
+        - type: add
+          field: resource["_sourceName"]
+          value: Amazon EC2Launch
+  processors:
+    memory_limiter:
+      check_interval: 5s
+      limit_percentage: 75
+      spike_limit_percentage: 20
+    batch:
+      send_batch_size: 1_024
+      timeout: 1s
+    resourcedetection/system:
+      detectors: ["system"]
+      system:
+        hostname_sources: ["dns","os"]
+    resource/metrics/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      attributes:
+      - key: _sourceName
+        value: windows
+        action: insert
+    resource/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      attributes:
+      - key: _source
+        value: sample_win_st
+        action: insert
+      - key: _contentType
+        value: OpenTelemetry
+        action: insert
+      - key: sumo.datasource
+        value: windows
+        action: insert
+    filter/logs/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      logs:
+        log_record:
+          - not(IsMatch(body, ".*\"id\":40962.*") or IsMatch(body, ".*\"id\":8197.*"))
+          - IsMatch(body, ".*\"id\":8197.*")
+  exporters:
+    sumologic:
+      sending_queue:
+        enabled: true
+        storage: file_storage
+      retry_on_failure:
+        max_elapsed_time: 0
+  service:
+    pipelines:
+      metrics/windows/09c98ea4-6686-4ab9-b3cd-f04070906441:
+        receivers:
+          - hostmetrics/09c98ea4-6686-4ab9-b3cd-f04070906441
+        processors:
+          - memory_limiter
+          - resourcedetection/system
+          - batch
+          - resource/metrics/09c98ea4-6686-4ab9-b3cd-f04070906441
+          - resource/09c98ea4-6686-4ab9-b3cd-f04070906441
+        exporters:
+          - sumologic
+      logs/windows/09c98ea4-6686-4ab9-b3cd-f04070906441:
+        receivers:
+          - windowseventlog/Application/09c98ea4-6686-4ab9-b3cd-f04070906441
+          - windowseventlog/Security/09c98ea4-6686-4ab9-b3cd-f04070906441
+          - windowseventlog/System/09c98ea4-6686-4ab9-b3cd-f04070906441
+          - windowseventlog/Microsoft-Windows-PowerShell/Operational/09c98ea4-6686-4ab9-b3cd-f04070906441
+          - windowseventlog/Amazon EC2Launch/09c98ea4-6686-4ab9-b3cd-f04070906441
+        processors:
+          - memory_limiter
+          - resourcedetection/system
+          - batch
+          - resource/09c98ea4-6686-4ab9-b3cd-f04070906441
+          - filter/logs/09c98ea4-6686-4ab9-b3cd-f04070906441
+        exporters:
+          - sumologic
