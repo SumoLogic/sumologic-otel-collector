@@ -1,0 +1,40 @@
+  receivers:
+    hostmetrics/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      collection_interval: 5m
+      scrapers:
+        network:
+  processors:
+    filter/ottl/metric:
+      metrics:
+        datapoint:
+          - IsMatch(metric.name, "system.disk.io")==false
+          - IsMatch(attributes["direction"],"read")==false
+    filter/logs/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      logs:
+        log_record:
+          - not(IsMatch(body, ".*\"id\":40962.*") or IsMatch(body, ".*\"id\":8197.*"))
+          - IsMatch(body, ".*\"id\":8197.*")
+    transform/logs/masking/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      log_statements:
+        - context: log
+          statements:
+            - replace_pattern(body, "password=[a-z]+", "password=***")
+  exporters:
+    sumologic:
+  service:
+    pipelines:
+      metrics/windows/09c98ea4-6686-4ab9-b3cd-f04070906441:
+        receivers:
+          - hostmetrics/09c98ea4-6686-4ab9-b3cd-f04070906441
+        processors:
+          - filter/ottl/metric
+        exporters:
+          - sumologic
+      logs/windows/09c98ea4-6686-4ab9-b3cd-f04070906441:
+        receivers:
+          - hostmetrics/09c98ea4-6686-4ab9-b3cd-f04070906441
+        processors:
+          - filter/logs/09c98ea4-6686-4ab9-b3cd-f04070906441
+          - transform/logs/masking/09c98ea4-6686-4ab9-b3cd-f04070906441
+        exporters:
+          - sumologic
