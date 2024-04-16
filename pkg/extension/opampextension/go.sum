@@ -489,8 +489,8 @@ github.com/onsi/gomega v0.0.0-20170829124025-dcabb60a477c/go.mod h1:C1qb7wdrVGGV
 github.com/onsi/gomega v1.7.0/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/onsi/gomega v1.29.0 h1:KIA/t2t5UBzoirT4H9tsML45GEbo3ouUnBHsCfD2tVg=
 github.com/onsi/gomega v1.29.0/go.mod h1:9sxs+SwGrKI0+PWe4Fxa9tFQQBG5xSsSbMXOI8PPpoQ=
-github.com/open-telemetry/opamp-go v0.12.1-0.20240229161006-7e92da0f17ef h1:4doR37wy5rKwhSS33cUfCs6AYyguuvL75jRZmCmsQU8=
-github.com/open-telemetry/opamp-go v0.12.1-0.20240229161006-7e92da0f17ef/go.mod h1:bk3WZ4RjbVdzsHT3gaPZscUdGvoz9Bi2+AvG8/5X824=
+github.com/open-telemetry/opamp-go v0.14.0 h1:KoziIK+wsFojhUXNTkCSTnCPf0eCMqFAaccOs0HrWIY=
+github.com/open-telemetry/opamp-go v0.14.0/go.mod h1:XOGCigljsLSTZ8FfLwvat0M1QDj3conIIgRa77BWrKs=
 github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.98.0 h1:qqbNZig9IqIed6mj9FUJVWabiP+mxY09vF+aW/hX2cU=
 github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.98.0/go.mod h1:hYMt6wWecJJF60oWxRvXgA2LU207PwhMEvVg+/yxBvE=
 github.com/open-telemetry/opentelemetry-collector-contrib/exporter/syslogexporter v0.98.0 h1:on0TmjYy4YF6gCS84g4fvxfa2dNrMZpds6l24JuHQ/M=
