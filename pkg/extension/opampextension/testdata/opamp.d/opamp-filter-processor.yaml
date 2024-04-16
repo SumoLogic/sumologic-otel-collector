@@ -4,9 +4,6 @@
       scrapers:
         network:
   processors:
-    batch:
-      send_batch_size: 1_024
-      timeout: 1s
     filter/ottl/metric:
       metrics:
         datapoint:
@@ -30,7 +27,6 @@
         receivers:
           - hostmetrics/09c98ea4-6686-4ab9-b3cd-f04070906441
         processors:
-          - batch
           - filter/ottl/metric
         exporters:
           - sumologic
@@ -38,7 +34,6 @@
         receivers:
           - hostmetrics/09c98ea4-6686-4ab9-b3cd-f04070906441
         processors:
-          - batch
           - filter/logs/09c98ea4-6686-4ab9-b3cd-f04070906441
           - transform/logs/masking/09c98ea4-6686-4ab9-b3cd-f04070906441
         exporters:
