@@ -149,18 +149,31 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+      
+      - name: Login to Docker Hub
+        run: |
+          docker login --username ${{ secrets.DOCKERHUB_LOGIN_DEV }} --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
 
       - name: Download FIPS binary action artifact from build phase
         uses: actions/download-artifact@v4
         with:
           name: otelcol-sumo-fips-${{matrix.arch_os}}
 
-      - name: Build and push FIPS image to Open Source ECR
+      - name: Build and push FIPS images to Open Source ECR
         run: |
           cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-multiplatform-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }} \
+            BUILD_TYPE_SUFFIX="-fips"
+      
+      - name: Build and push FIPS images to DockerHub
+        run: |
+          cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
+          make build-push-container-multiplatform-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }} \
+            REPO_URL=sumologic/sumologic-otel-collector-dev \
             BUILD_TYPE_SUFFIX="-fips"
 
       - name: Build and push UBI-based FIPS image to Open Source ECR
@@ -169,6 +182,15 @@ jobs:
           make build-push-container-ubi-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }} \
+            BUILD_TYPE_SUFFIX="-ubi-fips"
+
+      - name: Build and push UBI-based FIPS image to DockerHub
+        run: |
+          cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
+          make build-push-container-ubi-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }} \
+            REPO_URL=sumologic/sumologic-otel-collector-dev \
             BUILD_TYPE_SUFFIX="-ubi-fips"
 
       - name: Download binary action artifact from build phase
@@ -183,12 +205,29 @@ jobs:
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }}
 
+      - name: Build and push image to DockerHub
+        run: |
+          cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
+          make build-push-container-multiplatform-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }} \
+            REPO_URL=sumologic/sumologic-otel-collector-dev
+
       - name: Build and push UBI-based image to Open Source ECR
         run: |
           cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-ubi-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }} \
+            BUILD_TYPE_SUFFIX="-ubi"
+
+      - name: Build and push UBI-based image to DockerHub
+        run: |
+          cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
+          make build-push-container-ubi-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }} \
+            REPO_URL=sumologic/sumologic-otel-collector-dev \
             BUILD_TYPE_SUFFIX="-ubi"
 
   build-windows-container-images:
@@ -225,6 +264,10 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+      
+      - name: Login to Docker Hub
+        run: |
+          docker login --username ${{ secrets.DOCKERHUB_LOGIN_DEV }} --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
 
       - name: Download binary action artifact from build phase
         uses: actions/download-artifact@v4
@@ -237,6 +280,14 @@ jobs:
           cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
           make build-push-container-windows-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
+
+      - name: Build and push images to DockerHub
+        run: |
+          cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
+          make build-push-container-windows-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            REPO_URL=sumologic/sumologic-otel-collector-dev \
             PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
 
   push-docker-manifest:
@@ -270,12 +321,24 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+      
+      - name: Login to Docker Hub
+        run: |
+          docker login --username ${{ secrets.DOCKERHUB_LOGIN_DEV }} --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
 
       - name: Push joint FIPS container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORMS="linux/amd64" \
+            BUILD_TYPE_SUFFIX="-fips"
+
+      - name: Push joint FIPS container manifest for all platforms to DockerHub
+        run: |
+          make push-container-manifest-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORMS="linux/amd64" \
+            REPO_URL=sumologic/sumologic-otel-collector-dev \
             BUILD_TYPE_SUFFIX="-fips"
 
       - name: Push joint UBI-based FIPS container manifest for all platforms to Open Source ECR
@@ -285,17 +348,40 @@ jobs:
             PLATFORMS="linux/amd64" \
             BUILD_TYPE_SUFFIX="-ubi-fips"
 
+      - name: Push joint UBI-based FIPS container manifest for all platforms to DockerHub
+        run: |
+          make push-container-manifest-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORMS="linux/amd64" \
+            REPO_URL=sumologic/sumologic-otel-collector-dev \
+            BUILD_TYPE_SUFFIX="-ubi-fips"
+
       - name: Push joint container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022 windows/amd64/ltsc2019"
 
+      - name: Push joint container manifest for all platforms to DockerHub
+        run: |
+          make push-container-manifest-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022 windows/amd64/ltsc2019" \
+            REPO_URL=sumologic/sumologic-otel-collector-dev
+
       - name: Push joint UBI-based container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest-dev \
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORMS="linux/amd64" \
+            BUILD_TYPE_SUFFIX="-ubi"
+
+      - name: Push joint UBI-based container manifest for all platforms to DockerHub
+        run: |
+          make push-container-manifest-dev \
+            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            PLATFORMS="linux/amd64" \
+            REPO_URL=sumologic/sumologic-otel-collector-dev \
             BUILD_TYPE_SUFFIX="-ubi"
 
   package-msi:
