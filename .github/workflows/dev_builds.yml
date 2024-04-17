@@ -149,10 +149,12 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
-      
+
       - name: Login to Docker Hub
         run: |
-          docker login --username ${{ secrets.DOCKERHUB_LOGIN_DEV }} --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
+          docker login \
+            --username ${{ secrets.DOCKERHUB_LOGIN_DEV }} \
+            --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
 
       - name: Download FIPS binary action artifact from build phase
         uses: actions/download-artifact@v4
@@ -166,7 +168,7 @@ jobs:
             BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
             PLATFORM=${{ matrix.arch_os }} \
             BUILD_TYPE_SUFFIX="-fips"
-      
+
       - name: Build and push FIPS images to DockerHub
         run: |
           cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
@@ -264,10 +266,12 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
-      
+
       - name: Login to Docker Hub
         run: |
-          docker login --username ${{ secrets.DOCKERHUB_LOGIN_DEV }} --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
+          docker login \
+            --username ${{ secrets.DOCKERHUB_LOGIN_DEV }} \
+            --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
 
       - name: Download binary action artifact from build phase
         uses: actions/download-artifact@v4
@@ -321,10 +325,12 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
-      
+
       - name: Login to Docker Hub
         run: |
-          docker login --username ${{ secrets.DOCKERHUB_LOGIN_DEV }} --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
+          docker login \
+            --username ${{ secrets.DOCKERHUB_LOGIN_DEV }} \
+            --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
 
       - name: Push joint FIPS container manifest for all platforms to Open Source ECR
         run: |
