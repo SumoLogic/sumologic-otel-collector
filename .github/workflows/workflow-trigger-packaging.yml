@@ -57,7 +57,7 @@ jobs:
               "workflow_id": "${{ inputs.workflow_id }}",
               "otc_version": "${{ steps.version-core.outputs.version }}",
               "otc_sumo_version": "${{ steps.sumo-version.outputs.version }}",
-              "release": ${{ inputs.create_release }}
+              "release": "${{ inputs.create_release }}"
             }
           EOF
 
