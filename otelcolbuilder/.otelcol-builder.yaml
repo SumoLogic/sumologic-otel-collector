@@ -250,4 +250,4 @@ replaces:
   - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/loki => github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/loki v0.89.0
 
   # Backport https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/32100
-  - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza => github.com/swiatekm-sumo/opentelemetry-collector-contrib/pkg/stanza 8c88fd91a682c991ddd6f465a936efdf7aa24812
+  - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza => github.com/swiatekm-sumo/opentelemetry-collector-contrib/pkg/stanza 0aa1b0a889e09c91c9435dfc113d64a0ddef50a6
