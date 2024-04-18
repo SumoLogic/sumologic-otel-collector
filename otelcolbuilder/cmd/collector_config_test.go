@@ -108,6 +108,7 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			t.Parallel()
 
 			locations := []string{tc.configFile}
+
 			// this is copied from the generated main.go
 			settings := otelcol.ConfigProviderSettings{
 				ResolverSettings: confmap.ResolverSettings{
