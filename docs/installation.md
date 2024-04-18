@@ -78,14 +78,14 @@ repository.
 ## Ansible
 
 Example installation of Sumo Logic Distribution for OpenTelemetry Collector with Ansible is described in
-[examples/ansible](../examples/ansible/README.md).
+[examples/ansible](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector/ansible/).
 
 ## Puppet
 
 Example installation of Sumo Logic Distribution for OpenTelemetry Collector with Puppet is described in
-[examples/puppet](../examples/puppet/README.md).
+[examples/puppet](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector/puppet/).
 
 ## Chef
 
 Example installation of Sumo Logic Distribution for OpenTelemetry Collector with Chef is described in
-[examples/chef](../examples/chef/README.md).
+[examples/chef](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector/chef/.
