@@ -5,7 +5,7 @@
  
  	cmd := otelcol.NewCommand(params)
 +	// this is only here so that the flag can be recognized by the upstream parser and displayed in help
-+	cmd.Flags().StringVarP(&opAmpConfig, "remote-config", "", "", "path to opamp config file")
++	addOpampConfigFlag(cmd.Flags())
  	if err := cmd.Execute(); err != nil {
  		log.Fatalf("collector server run finished with error: %v", err)
  	}
