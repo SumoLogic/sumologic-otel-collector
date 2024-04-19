@@ -1,8 +1,10 @@
 # Installation
 
 The Sumo Logic Distribution for OpenTelemetry Collector can be run using either the binary file available in [Github releases][github_releases] or
-the container images stored in AWS Public ECR under the following repository:
-[public.ecr.aws/sumologic/sumologic-otel-collector](https://gallery.ecr.aws/sumologic/sumologic-otel-collector).
+the container images stored in AWS Public ECR under the following repositories:
+
+- [public.ecr.aws/sumologic/sumologic-otel-collector](https://gallery.ecr.aws/sumologic/sumologic-otel-collector)
+- [sumologic/sumologic-otel-collector](https://hub.docker.com/repository/docker/sumologic/sumologic-otel-collector)
 
 - [Linux][linux_installation]
 - [Windows][windows_installation]
@@ -21,9 +23,10 @@ the container images stored in AWS Public ECR under the following repository:
 ## Container image
 
 To run the Sumo Logic Distribution for OpenTelemetry Collector in a container, you only need to run the container
-using the image available in the
-[public.ecr.aws/sumologic/sumologic-otel-collector](https://gallery.ecr.aws/sumologic/sumologic-otel-collector)
-repository.
+using the image available in the one of the following repositories:
+
+- [public.ecr.aws/sumologic/sumologic-otel-collector](https://gallery.ecr.aws/sumologic/sumologic-otel-collector)
+- [sumologic/sumologic-otel-collector](https://hub.docker.com/repository/docker/sumologic/sumologic-otel-collector)
 
 1. Set the release version variable:
 
