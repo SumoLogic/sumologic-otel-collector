@@ -45,7 +45,7 @@ processors:
 extensions:
   health_check: {}
 exporters:
-  ## Load-balancing exporter 
+  ## Load-balancing exporter
   ## https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/loadbalancingexporter/README.md
   loadbalancing:
     resolver:

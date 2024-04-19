@@ -17,12 +17,6 @@ receivers:
         endpoint: "0.0.0.0:4317"
       http:
         endpoint: "0.0.0.0:4318"
-  ## When OpenTelemetry Collector v0.43+ is being used, the 55681 port is no longer included for OTLP/HTTP
-  ## To enable it back, additional receiver can be set and then enabled in exporters section , e.g. 
-  ## otlp/legacy:
-  ##   protocols:
-  ##     http:
-  ##       endpoint: "0.0.0.0:55681"
   zipkin:
     endpoint: "0.0.0.0:9411"
 processors:
