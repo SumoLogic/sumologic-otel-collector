@@ -4,6 +4,11 @@
 - [config_logging.yaml](config_logging.yaml) - example configuration to collect CPU load metrics using
   [Host Metrics Receiver][hostmetricsreceiver] without sending them to Sumo Logic.
 - [logs_json](logs_json) - example configuration to parse logs using [json_parser][json_parser] with example log
+- [agent_configuration_template.yaml](agent_configuration_templates.yaml) - example configuration to collect traces.
+- [gateway_configuration_template.yaml](gateway_configuration_templates.yaml) - example configuration to load balance traces using [loadbalancingexporter](loadbalancingexporter).
+- [sampler_configuration_template.yaml](sampler_configuration_templates.yaml) - example configuration to filter traces using [cascadingfilterprocessor].
 
 [hostmetricsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.52.0/receiver/hostmetricsreceiver
 [json_parser]: https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/operators/json_parser.md
+[loadbalancingexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/loadbalancingexporter
+[cascadingfilterprocessor]: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/processor/cascadingfilterprocessor
