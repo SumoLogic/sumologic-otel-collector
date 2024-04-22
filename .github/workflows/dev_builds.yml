@@ -119,6 +119,11 @@ jobs:
       apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
       apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
       app_store_connect_password: ${{ secrets.AC_PASSWORD }}
+      microsoft_certificate: ${{ secrets.MICROSOFT_CERTIFICATE }}
+      microsoft_certificate_password: ${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}
+      microsoft_certificate_hash: ${{ secrets.MICROSOFT_CERTHASH }}
+      microsoft_certificate_name: ${{ secrets.MICROSOFT_CERTNAME }}
+      microsoft_description: ${{ secrets.MICROSOFT_DESCRIPTION }}
 
   build-container-images:
     name: Build container
