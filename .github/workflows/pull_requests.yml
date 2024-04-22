@@ -13,6 +13,25 @@ env:
   GO_VERSION: "1.21.4"
 
 jobs:
+  build-changed:
+    runs-on: ubuntu-22.04
+    outputs:
+      any_changed: ${{ steps.changed-files.outputs.any_changed }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check if build related files changed
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            **/go.mod
+            **/go.sum
+            **/*.go
+            **/*.yaml
+            **/*.yml
+            **/Makefile
+            **/Makefile.common
+            **/Dockerfile*
 
   markdownlint:
     runs-on: ubuntu-20.04
@@ -196,40 +215,26 @@ jobs:
   lint:
     name: Lint (golangci-lint)
     runs-on: ubuntu-20.04
+    needs: [ build-changed ]
+    if: needs.build-changed.outputs.any_changed == 'true'
     strategy:
       matrix:
         arch_os: [ 'linux_amd64' ]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check if files changed that need linting
-        id: changed-files
-        uses: tj-actions/changed-files@v41
-        with:
-          files: |
-            **/go.mod
-            **/go.sum
-            **/*.go
-            **/*.yaml
-            **/*.yml
-            **/Makefile
-            **/Makefile.common
-
       - name: Setup go
-        if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
 
       - name: Get GOCACHE and GOMODCACHE
-        if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
           echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
 
       - uses: actions/cache/restore@v4
-        if: steps.changed-files.outputs.any_changed == 'true'
         with:
           path: |
             ${{ env.GOMODCACHE }}/cache
@@ -247,15 +252,12 @@ jobs:
             golangci-lint-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
 
       - name: Install golangci-lint
-        if: steps.changed-files.outputs.any_changed == 'true'
         run: make install-golangci-lint
 
       - name: Add opentelemetry-collector-builder installation dir to PATH
-        if: steps.changed-files.outputs.any_changed == 'true'
         run: echo "$HOME/bin" >> $GITHUB_PATH
 
       - name: Run golangci-lint
-        if: steps.changed-files.outputs.any_changed == 'true'
         run: make golint
 
   build:
@@ -284,86 +286,69 @@ jobs:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
-      only-if-changed: true
 
   build-and-test-container-images:
     name: Build container
     runs-on: ubuntu-20.04
     needs:
+      - build-changed
       - build
+    if: needs.build-changed.outputs.any_changed == 'true'
     strategy:
       matrix:
         arch_os: [ 'linux_amd64', 'linux_arm64']
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check if build related files changed
-        id: changed-files
-        uses: tj-actions/changed-files@v41
-        with:
-          files: |
-            **/go.mod
-            **/go.sum
-            **/*.go
-            **/*.yaml
-            **/*.yml
-            **/Makefile
-            **/Makefile.common
-            **/Dockerfile*
-
       - name: Set up QEMU
-        if: steps.changed-files.outputs.any_changed == 'true'
         uses: docker/setup-qemu-action@v3.0.0
 
       - name: Set up Buildx
-        if: steps.changed-files.outputs.any_changed == 'true'
         id: buildx
         uses: docker/setup-buildx-action@v3.3.0
 
       - name: Show Buildx platforms
-        if: steps.changed-files.outputs.any_changed == 'true'
         run: echo ${{ steps.buildx.outputs.platforms }}
 
       - name: Download binary action artifact from build phase
-        if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/download-artifact@v4
         with:
           name: otelcol-sumo-${{matrix.arch_os}}
           path: artifacts/
 
       - name: Build the container image
-        if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           cp artifacts/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
           make build-container-multiplatform \
             PLATFORM=${{ matrix.arch_os }}
 
       - name: Test built image
-        if: steps.changed-files.outputs.any_changed == 'true'
         run: make test-built-image
 
       - name: Download FIPS binary action artifact from build phase
-        if: steps.changed-files.outputs.any_changed == 'true' && matrix.arch_os == 'linux_amd64'
+        if: matrix.arch_os == 'linux_amd64'
         uses: actions/download-artifact@v4
         with:
           name: otelcol-sumo-fips-${{matrix.arch_os}}
           path: artifacts/
 
       - name: Build the FIPS container image
-        if: steps.changed-files.outputs.any_changed == 'true' && matrix.arch_os == 'linux_amd64'
+        if: matrix.arch_os == 'linux_amd64'
         run: |
           cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-container-multiplatform \
             PLATFORM=${{ matrix.arch_os }} BUILD_TYPE_SUFFIX="-fips"
 
       - name: Test built FIPS image
-        if: steps.changed-files.outputs.any_changed == 'true' && matrix.arch_os == 'linux_amd64'
+        if: matrix.arch_os == 'linux_amd64'
         run: make test-built-image BUILD_TAG="latest-fips"
 
   build-windows-container:
     name: Build windows container
     needs:
+      - build-changed
       - build
+    if: needs.build-changed.outputs.any_changed == 'true'
     runs-on: ${{ matrix.runs-on }}
     strategy:
       matrix:
@@ -377,36 +362,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check if build related files changed
-        id: changed-files
-        uses: tj-actions/changed-files@v41
-        with:
-          files: |
-            **/go.mod
-            **/go.sum
-            **/*.go
-            **/*.yaml
-            **/*.yml
-            **/Makefile
-            **/Makefile.common
-            **/Dockerfile*
-
       - name: Download binary action artifact from build phase
-        if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/download-artifact@v4
         with:
           name: otelcol-sumo-${{matrix.arch_os}}.exe
           path: artifacts/
 
       - name: Build the container image
-        if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
           make build-container-windows \
             PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
 
       - name: Test built image
-        if: steps.changed-files.outputs.any_changed == 'true'
         run: make test-built-image
 
       # ToDo: build windows FIPS image
