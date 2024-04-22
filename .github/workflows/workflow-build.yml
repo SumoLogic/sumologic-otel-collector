@@ -14,10 +14,6 @@ on:
       runs-on:
         default: ubuntu-20.04
         type: string
-      only-if-changed:
-        description: Run only if relevant files changed.
-        default: false
-        type: boolean
       save-cache:
         description: Save the module and build caches.
         default: false
@@ -40,39 +36,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check if build related files changed
-        id: changed-files
-        uses: tj-actions/changed-files@v41
-        with:
-          files: |
-            **/go.mod
-            **/go.sum
-            **/*.go
-            **/*.yaml
-            **/*.yml
-            **/Makefile
-            **/Makefile.common
-            **/Dockerfile*
-
       - name: Fetch current branch
-        if: steps.changed-files.outputs.any_changed == 'true'
         run: ./ci/fetch_current_branch.sh
 
       - name: Setup go
-        if: |
-          ! (contains(inputs.arch_os, 'windows') && inputs.fips) &&
-          (! inputs.only-if-changed ||
-          steps.changed-files.outputs.any_changed == 'true')
+        if: (! (contains(inputs.arch_os, 'windows') && inputs.fips))
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
 
       - name: Setup go (Microsoft fork) and enable FIPS on Windows
-        if: |
-          (contains(inputs.arch_os, 'windows') && inputs.fips) &&
-          (! inputs.only-if-changed ||
-          steps.changed-files.outputs.any_changed == 'true')
+        if: contains(inputs.arch_os, 'windows') && inputs.fips
         run: |
           curl -Lo go.zip https://aka.ms/golang/release/latest/go${{ env.GO_VERSION }}.windows-amd64.zip &&
           powershell -command "Expand-Archive go.zip D:\\a\\_work\\1\\s" &&
@@ -80,7 +55,6 @@ jobs:
           powershell -command "Set-ItemProperty -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy -Name Enabled -Value \$true"
 
       - name: Get Go env values
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         run: |
           echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
           echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
@@ -90,14 +64,12 @@ jobs:
 
       - name: Get cache key
         id: get-cache-key
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         run: |
           echo "cache-key=go-build-${{ env.GO_VERSION }}${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}" >> $GITHUB_OUTPUT
           echo "restore-keys=go-build-${{ env.GO_VERSION }}${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}-" >> $GITHUB_OUTPUT
           echo "toolchain-cache-key=toolchain-${{inputs.arch_os}}-${{ hashFiles('otelcolbuilder/build-fips/config.mak', 'otelcolbuilder/build-fips/Makefile') }}" >> $GITHUB_OUTPUT
 
       - uses: actions/cache/restore@v4
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         with:
           path: |
             ${{ env.GOMODCACHE }}/cache
@@ -107,26 +79,23 @@ jobs:
             ${{ steps.get-cache-key.outputs.restore-keys }}
 
       - name: Set default BUILDER_BIN_PATH
-        if: ${{ (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
 
       - name: Add opentelemetry-collector-builder installation dir to PATH
-        if: ${{ (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
 
       - name: Install opentelemetry-collector-builder
-        if: ${{ (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         run: make install-builder
         working-directory: ./otelcolbuilder
 
       - name: Build
-        if: ${{ ! inputs.fips && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        if: '! inputs.fips'
         run: make otelcol-sumo-${{inputs.arch_os}}
         working-directory: ./otelcolbuilder
 
       - uses: actions/cache/restore@v4
         id: restore-toolchain-cache
-        if: ${{ inputs.fips && contains(inputs.arch_os, 'linux') && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        if: inputs.fips && contains(inputs.arch_os, 'linux')
         with:
           path: |
             /opt/toolchain
@@ -139,7 +108,7 @@ jobs:
         working-directory: ./otelcolbuilder
 
       - name: Build (FIPS)
-        if: ${{ inputs.fips && contains(inputs.arch_os, 'linux') && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        if: inputs.fips && contains(inputs.arch_os, 'linux')
         run: |
           CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
           test "$CC"
@@ -152,39 +121,30 @@ jobs:
         working-directory: ./otelcolbuilder
 
       - name: Build (FIPS)
-        if: ${{ inputs.fips && ! contains(inputs.arch_os, 'linux') && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        if: inputs.fips && ! contains(inputs.arch_os, 'linux')
         run: make otelcol-sumo-${{inputs.arch_os}} FIPS_SUFFIX="-fips" CGO_ENABLED=1
         working-directory: ./otelcolbuilder
 
       - name: Set binary name
         id: set-binary-name
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         run: echo "binary_name=otelcol-sumo${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}${OTELCOL_BINARY_EXTENSION}" >> $GITHUB_OUTPUT
 
       - name: Show BoringSSL symbols
-        if: |
-          inputs.fips &&
-          contains(inputs.arch_os, 'linux') &&
-          (! inputs.only-if-changed ||
-          steps.changed-files.outputs.any_changed == 'true')
+        if: inputs.fips && contains(inputs.arch_os, 'linux')
         working-directory: ./otelcolbuilder/cmd
         run: |
           go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
           grep "_Cfunc__goboringcrypto_"
 
       - name: Show Microsoft Cryptography Next-Generation symbols
-        if: |
-          inputs.fips &&
-          contains(inputs.arch_os, 'windows') &&
-          (! inputs.only-if-changed ||
-          steps.changed-files.outputs.any_changed == 'true')
+        if: inputs.fips && contains(inputs.arch_os, 'windows')
         working-directory: ./otelcolbuilder/cmd
         run: |
           go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
           grep "vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt.GetFipsAlgorithmMode"
 
       - name: Test binary
-        if: ${{ (inputs.arch_os == env.ARCH_OS) && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        if: inputs.arch_os == env.ARCH_OS
         working-directory: ./otelcolbuilder/cmd
         run: |
           ./${{ steps.set-binary-name.outputs.binary_name }} help
@@ -192,7 +152,6 @@ jobs:
           ./${{ steps.set-binary-name.outputs.binary_name }} completion bash
 
       - name: Store binary as action artifact
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.set-binary-name.outputs.binary_name }}
@@ -207,7 +166,7 @@ jobs:
           key: ${{ steps.get-cache-key.outputs.toolchain-cache-key }}
 
       - uses: actions/cache/save@v4
-        if: ${{ inputs.save-cache && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
+        if: inputs.save-cache
         with:
           path: |
             ${{ env.GOMODCACHE }}/cache
