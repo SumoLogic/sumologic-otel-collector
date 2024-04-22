@@ -136,6 +136,9 @@ jobs:
   test:
     name: Test
     uses: ./.github/workflows/workflow-test.yml
+    needs:
+      - build-changed
+    if: needs.build-changed.outputs.any_changed == 'true'
     strategy:
       matrix:
         include:
@@ -151,7 +154,6 @@ jobs:
     with:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
-      only-if-changed: true
       boringcrypto: ${{ matrix.boringcrypto == true }}
 
   test-install-script:
