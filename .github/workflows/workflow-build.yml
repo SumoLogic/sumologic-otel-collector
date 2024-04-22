@@ -215,6 +215,14 @@ jobs:
           path: ./otelcolbuilder/cmd/${{ steps.set-binary-name.outputs.binary_name }}
           if-no-files-found: error
 
+      - name: Store Mac .dmg as action artifact
+        uses: actions/upload-artifact@v4
+        if: ${{ runner.os == 'macOS' }}
+        with:
+          name: ${{ steps.set-binary-name.outputs.binary_name }}.dmg
+          path: ./otelcolbuilder/cmd/${{ steps.set-binary-name.outputs.binary_name }}.dmg
+          if-no-files-found: error
+
       - uses: actions/cache/save@v4
         if: ${{ steps.rebuild-toolchain.outcome == 'success' }}
         with:
