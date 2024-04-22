@@ -25,6 +25,16 @@ on:
         required: false
       app_store_connect_password:
         required: false
+      microsoft_certificate:
+        required: false
+      microsoft_certificate_password:
+        required: false
+      microsoft_certificate_hash:
+        required: false
+      microsoft_certificate_name:
+        required: false
+      microsoft_description:
+        required: false
 
 defaults:
   run:
@@ -178,6 +188,17 @@ jobs:
           AC_PASSWORD: ${{ secrets.app_store_connect_password }}
         working-directory: ./otelcolbuilder/
         run: make ${{ inputs.arch_os }}-sign
+
+      - name: Sign Windows binary
+        if: runner.os == 'Windows'
+        uses: skymatic/code-sign-action@v3
+        with:
+          certificate: '${{ secrets.microsoft_certificate }}'
+          password: '${{ secrets.microsoft_certificate_password }}'
+          certificatesha1: '${{ secrets.microsoft_certificate_hash }}'
+          certificatename: '${{ secrets.microsoft_certificate_name }}'
+          description: '${{ secrets.microsoft_description }}'
+          folder: ./otelcolbuilder/cmd
 
       - name: Test binary
         if: inputs.arch_os == env.ARCH_OS
