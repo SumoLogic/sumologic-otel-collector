@@ -39,42 +39,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check if test related files changed
-        id: changed-files
-        uses: tj-actions/changed-files@v41
-        with:
-          files: |
-            **/go.mod
-            **/go.sum
-            **/*.go
-            **/*.yaml
-            **/*.yml
-            **/Makefile
-            **/Makefile.common
-            scripts/install.sh
-
       - name: Setup go
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
 
       - name: Get GOCACHE and GOMODCACHE
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         run: |
           echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
           echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
 
       - name: Get cache key
         id: get-cache-key
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         run: |
           echo "cache-key=go-test-${{ env.GO_VERSION }}${BORINGCRYPTO_SUFFIX}-${{inputs.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}" >> $GITHUB_OUTPUT
           echo "restore-keys=go-test-${{ env.GO_VERSION }}${BORINGCRYPTO_SUFFIX}-${{inputs.arch_os}}-" >> $GITHUB_OUTPUT
 
       - uses: actions/cache/restore@v4
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         with:
           path: |
             ${{ env.GOMODCACHE }}/cache
@@ -84,19 +66,15 @@ jobs:
             ${{ steps.get-cache-key.outputs.restore-keys }}
 
       - name: Set default BUILDER_BIN_PATH
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
 
       - name: Add opentelemetry-collector-builder installation dir to PATH
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
 
       - name: Run package tests
-        if: ${{ ! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true' }}
         run: make gotest ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
 
       - uses: actions/cache/save@v4
-        if: ${{ inputs.save-cache && (! inputs.only-if-changed || steps.changed-files.outputs.any_changed == 'true') }}
         with:
           path: |
             ${{ env.GOMODCACHE }}/cache
