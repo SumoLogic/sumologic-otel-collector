@@ -162,9 +162,9 @@ update-docs: install-gsed
 #
 # Related issue: https://github.com/golang/go/issues/34055
 
-# Exemplar usage for the release:
+# Example usage for the release:
 #
-# export TAG=v0.0.43-beta.0
+# export TAG=v0.98.0-sumo-0
 # make add-tag push-tag
 
 .PHONY: add-tag

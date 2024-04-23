@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.98.0-sumo-0]
+
+### Released 2024-04-22
+
+### Added
+
+- feat(otrm): Support validating filter and transform processors in the source templates [#1547]
+- feat: push images to Docker Hub repository [#1549]
+
+### Changed
+
+- chore: update otelcol core to v0.98.0 [#1538]
+
+[#1547]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1547
+[#1549]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1549
+[#1538]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1538
+[v0.98.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.98.0-sumo-0
+
 ## [v0.97.0-sumo-1]
 
 ### Released 2024-04-11
@@ -18,7 +36,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [#1539]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1539
 [#1540]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1540
-
 [v0.97.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.97.0-sumo-1
 
 ## [v0.97.0-sumo-0]
@@ -37,7 +54,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1528]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1528
 [#1530]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1530
 [#1517]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1517
-
 [v0.97.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.97.0-sumo-0
 
 ## [v0.96.0-sumo-1]
