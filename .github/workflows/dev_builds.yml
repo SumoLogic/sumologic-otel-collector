@@ -15,6 +15,23 @@ env:
 
 jobs:
 
+  get-version:
+    name: Get application version for this revision
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Get version
+        id: get-version
+        run: |
+          TAG=$(git describe --tags --abbrev=5 --match "v[0-9]*")
+          echo "version=${TAG/v}" > $GITHUB_OUTPUT
+      - name: Print version
+        run: echo ::notice title=Version::${{ steps.get-version.outputs.version }}
+
   # Add lint to dev builds as that's the only way for cache to be shared across branches.
   # https://docs.github.com/en/actions/advanced-guides/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
   lint:
@@ -87,6 +104,7 @@ jobs:
   build:
     name: Build
     uses: ./.github/workflows/workflow-build.yml
+    needs: [get-version]
     strategy:
       fail-fast: false
       matrix:
@@ -115,6 +133,7 @@ jobs:
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
       save-cache: true
+      sumo_component_gomod_version: "v${{ needs.get-version.outputs.version }}"
     secrets:
       apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
       apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
@@ -130,18 +149,12 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - build
+      - get-version
     strategy:
       matrix:
         arch_os: [ 'linux_amd64', 'linux_arm64' ]
     steps:
       - uses: actions/checkout@v4
-
-      - name: Extract tag
-        id: extract_tag
-        run: echo "tag=$(git rev-parse HEAD)" > $GITHUB_OUTPUT
-
-      - name: Print tag
-        run: echo "Running dev build for ${{ steps.extract_tag.outputs.tag }}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3.0.0
@@ -174,7 +187,7 @@ jobs:
         run: |
           cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-multiplatform-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
             BUILD_TYPE_SUFFIX="-fips"
 
@@ -182,7 +195,7 @@ jobs:
         run: |
           cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-multiplatform-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
             REPO_URL=sumologic/sumologic-otel-collector-dev \
             BUILD_TYPE_SUFFIX="-fips"
@@ -191,7 +204,7 @@ jobs:
         run: |
           cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-ubi-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
             BUILD_TYPE_SUFFIX="-ubi-fips"
 
@@ -199,7 +212,7 @@ jobs:
         run: |
           cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-ubi-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
             REPO_URL=sumologic/sumologic-otel-collector-dev \
             BUILD_TYPE_SUFFIX="-ubi-fips"
@@ -213,14 +226,14 @@ jobs:
         run: |
           cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-multiplatform-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }}
 
       - name: Build and push image to DockerHub
         run: |
           cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-multiplatform-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
             REPO_URL=sumologic/sumologic-otel-collector-dev
 
@@ -228,7 +241,7 @@ jobs:
         run: |
           cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-ubi-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
             BUILD_TYPE_SUFFIX="-ubi"
 
@@ -236,7 +249,7 @@ jobs:
         run: |
           cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
           make build-push-container-ubi-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
             REPO_URL=sumologic/sumologic-otel-collector-dev \
             BUILD_TYPE_SUFFIX="-ubi"
@@ -246,6 +259,7 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     needs:
       - build
+      - get-version
     strategy:
       matrix:
         include:
@@ -257,13 +271,6 @@ jobs:
             runs-on: windows-2019
     steps:
       - uses: actions/checkout@v4
-
-      - name: Extract tag
-        id: extract_tag
-        run: echo "tag=$(git rev-parse HEAD)" > $GITHUB_OUTPUT
-
-      - name: Print tag
-        run: echo "Running dev build for ${{ steps.extract_tag.outputs.tag }}"
 
       - name: Login to Open Source ECR
         run: |
@@ -292,14 +299,14 @@ jobs:
         run: |
           cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
           make build-push-container-windows-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
 
       - name: Build and push images to DockerHub
         run: |
           cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
           make build-push-container-windows-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             REPO_URL=sumologic/sumologic-otel-collector-dev \
             PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
 
@@ -309,15 +316,9 @@ jobs:
     needs:
       - build-container-images
       - build-windows-container-images
+      - get-version
     steps:
       - uses: actions/checkout@v4
-
-      - name: Extract tag
-        id: extract_tag
-        run: echo "tag=$(git rev-parse HEAD)" > $GITHUB_OUTPUT
-
-      - name: Print tag
-        run: echo "Running dev build for ${{ steps.extract_tag.outputs.tag }}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3.0.0
@@ -344,14 +345,14 @@ jobs:
       - name: Push joint FIPS container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORMS="linux/amd64" \
             BUILD_TYPE_SUFFIX="-fips"
 
       - name: Push joint FIPS container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORMS="linux/amd64" \
             REPO_URL=sumologic/sumologic-otel-collector-dev \
             BUILD_TYPE_SUFFIX="-fips"
@@ -359,14 +360,14 @@ jobs:
       - name: Push joint UBI-based FIPS container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORMS="linux/amd64" \
             BUILD_TYPE_SUFFIX="-ubi-fips"
 
       - name: Push joint UBI-based FIPS container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORMS="linux/amd64" \
             REPO_URL=sumologic/sumologic-otel-collector-dev \
             BUILD_TYPE_SUFFIX="-ubi-fips"
@@ -374,27 +375,27 @@ jobs:
       - name: Push joint container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022 windows/amd64/ltsc2019"
 
       - name: Push joint container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022 windows/amd64/ltsc2019" \
             REPO_URL=sumologic/sumologic-otel-collector-dev
 
       - name: Push joint UBI-based container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORMS="linux/amd64" \
             BUILD_TYPE_SUFFIX="-ubi"
 
       - name: Push joint UBI-based container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest-dev \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORMS="linux/amd64" \
             REPO_URL=sumologic/sumologic-otel-collector-dev \
             BUILD_TYPE_SUFFIX="-ubi"
