@@ -210,10 +210,10 @@ delete-remote-tag:
 .PHONY: prepare-tag
 prepare-tag: install-gsed
 	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
-	$(SED) -i 's#\(gomod: "github.com/SumoLogic/sumologic-otel-collector/.*\) v0.0.0-00010101000000-000000000000#\1 ${TAG}#g' \
+	$(SED) -i 's#\(gomod: github.com/SumoLogic/sumologic-otel-collector/.*\) v0.0.0-00010101000000-000000000000#\1 ${TAG}#g' \
 		otelcolbuilder/.otelcol-builder.yaml
 # Make sure to work with both tags starting not starting with v.
-	$(SED) -i 's#\(gomod: "github.com/SumoLogic/sumologic-otel-collector/.*\) \([^v].*\)#\1 v\2#g' \
+	$(SED) -i 's#\(gomod: github.com/SumoLogic/sumologic-otel-collector/.*\) \([^v].*\)#\1 v\2#g' \
 		otelcolbuilder/.otelcol-builder.yaml
 
 
