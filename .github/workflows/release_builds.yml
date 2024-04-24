@@ -367,7 +367,7 @@ jobs:
         run: |
           cp artifacts/${{ steps.set_filename_fips.outputs.filename_fips }} otelcol-sumo
           make build-push-container-multiplatform \
-            BUILD_TAG=v${{ needs.get-version.outputs.version }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
             BUILD_TYPE_SUFFIX="-fips"
 
