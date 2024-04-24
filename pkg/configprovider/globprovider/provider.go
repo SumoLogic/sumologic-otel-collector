@@ -38,6 +38,10 @@ func NewWithSettings(_ confmap.ProviderSettings) confmap.Provider {
 	return &provider{}
 }
 
+func NewFactory() confmap.ProviderFactory {
+	return confmap.NewProviderFactory(NewWithSettings)
+}
+
 func (fmp *provider) Retrieve(ctx context.Context, uri string, _ confmap.WatcherFunc) (*confmap.Retrieved, error) {
 	var rawConf map[string]interface{}
 	if !strings.HasPrefix(uri, schemePrefix) {

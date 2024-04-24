@@ -30,9 +30,8 @@ import (
 	"go.opentelemetry.io/collector/featuregate"
 	"go.opentelemetry.io/collector/otelcol"
 
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider"
-
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider"
 )
 
 // This file contains modifications to the collector settings which inject a custom config provider
@@ -95,19 +94,18 @@ func NewConfigProvider(locations []string) (otelcol.ConfigProvider, error) {
 // for the logic we're emulating here
 // we only add the glob provider, everything else should be the same
 func NewConfigProviderSettings(locations []string) otelcol.ConfigProviderSettings {
-	settings := confmap.ProviderSettings{}
 	return otelcol.ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
 			URIs: locations,
-			Providers: makeMapProvidersMap(
-				fileprovider.NewWithSettings(settings),
-				envprovider.NewWithSettings(settings),
-				yamlprovider.NewWithSettings(settings),
-				httpprovider.NewWithSettings(settings),
-				httpsprovider.NewWithSettings(settings),
-				globprovider.NewWithSettings(settings),
-			),
-			Converters: []confmap.Converter{expandconverter.New(confmap.ConverterSettings{})},
+			ProviderFactories: []confmap.ProviderFactory{
+				fileprovider.NewFactory(),
+				envprovider.NewFactory(),
+				yamlprovider.NewFactory(),
+				httpprovider.NewFactory(),
+				httpsprovider.NewFactory(),
+				globprovider.NewFactory(),
+			},
+			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
 		},
 	}
 }
@@ -117,9 +115,9 @@ func NewConfigProviderSettings(locations []string) otelcol.ConfigProviderSetting
 func NewOpAmpConfigProviderSettings(location string) otelcol.ConfigProviderSettings {
 	return otelcol.ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
-			URIs:       []string{location},
-			Providers:  makeMapProvidersMap(opampprovider.NewWithSettings(confmap.ProviderSettings{})),
-			Converters: []confmap.Converter{expandconverter.New(confmap.ConverterSettings{})},
+			URIs:               []string{location},
+			ProviderFactories:  []confmap.ProviderFactory{opampprovider.NewFactory()},
+			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
 		},
 	}
 }

@@ -36,7 +36,7 @@ type syslogexporter struct {
 }
 
 func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*syslogexporter, error) {
-	tlsConfig, err := cfg.TLSSetting.LoadTLSConfig()
+	tlsConfig, err := cfg.TLSSetting.LoadTLSConfig(context.Background())
 	if err != nil {
 		return nil, err
 	}
