@@ -21,26 +21,46 @@ env:
   GO_VERSION: "1.21.4"
 
 jobs:
+  get-version:
+    name: Get application version for this revision
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Get version
+        id: get-version
+        run: |
+          echo "version=$(echo ${GITHUB_REF#refs/tags/v})" > $GITHUB_OUTPUT
+      - name: Print version
+        run: echo ::notice title=Version::${{ steps.get-version.outputs.version }}
 
   build:
     name: Build
     runs-on: ${{ matrix.runs_on }}
+    needs: [get-version]
     strategy:
       matrix:
         include:
           - arch_os: linux_amd64
             runs_on: ubuntu-20.04
+            version: ${{ needs.get-version.outputs.version }}
           - arch_os: linux_arm64
             runs_on: ubuntu-20.04
+            version: ${{ needs.get-version.outputs.version }}
           - arch_os: windows_amd64
             runs_on: windows-2022
             builder_bin_path: '${RUNNER_TEMP}\bin'
             builder_bin_ext: .exe
+            version: ${{ needs.get-version.outputs.version }}
           - arch_os: windows_amd64
             runs_on: windows-2022
             builder_bin_path: '${RUNNER_TEMP}\bin'
             builder_bin_ext: .exe
             fips: true
+            version: ${{ needs.get-version.outputs.version }}
     env:
       OTELCOL_FIPS_SUFFIX: ${{ matrix.fips && '-fips' || '' }}
     steps:
@@ -71,13 +91,6 @@ jobs:
         run: echo "BUILDER_BIN_PATH=${{matrix.builder_bin_path}}" >> $GITHUB_ENV
         if: matrix.builder_bin_path != ''
 
-      - name: Extract tag
-        id: extract_tag
-        run: echo "tag=$(echo ${GITHUB_REF#refs/tags/v})" > $GITHUB_OUTPUT
-
-      - name: Print tag
-        run: echo "${{ steps.extract_tag.outputs.tag }}"
-
       - name: Add opentelemetry-collector-builder installation dir to PATH
         run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
 
@@ -86,7 +99,7 @@ jobs:
         working-directory: ./otelcolbuilder
 
       - name: Prepare tags in otelcolbuilder's config
-        run: make prepare-tag TAG=${{ steps.extract_tag.outputs.tag }}
+        run: make prepare-tag TAG=v${{ matrix.version }}
 
       - name: Build
         if: ${{ ! (matrix.fips && contains(matrix.arch_os, 'windows')) }}
@@ -100,7 +113,7 @@ jobs:
 
       - name: Set filename
         id: set_filename
-        run: echo "filename=$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}${OTELCOL_FIPS_SUFFIX}-${{matrix.arch_os}})${{matrix.builder_bin_ext}}" > $GITHUB_OUTPUT
+        run: echo "filename=$(echo otelcol-sumo-${{ matrix.version }}${OTELCOL_FIPS_SUFFIX}-${{matrix.arch_os}})${{matrix.builder_bin_ext}}" > $GITHUB_OUTPUT
 
       - name: Rename to include tag in filename
         run: cp otelcol-sumo${OTELCOL_FIPS_SUFFIX}-${{matrix.arch_os}}${{matrix.builder_bin_ext}} ${{ steps.set_filename.outputs.filename }}
@@ -134,13 +147,16 @@ jobs:
   build-darwin:
     name: Build darwin
     runs-on: ${{ matrix.runs_on }}
+    needs: [get-version]
     strategy:
       matrix:
         include:
           - arch_os: darwin_amd64
             runs_on: macos-latest
+            version: ${{ needs.get-version.outputs.version }}
           - arch_os: darwin_arm64
             runs_on: macos-latest
+            version: ${{ needs.get-version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
 
@@ -163,10 +179,6 @@ jobs:
           restore-keys: |
             ${{matrix.arch_os}}-go-
 
-      - name: Extract tag
-        id: extract_tag
-        run: echo "tag=$(echo ${GITHUB_REF#refs/tags/v})" > $GITHUB_OUTPUT
-
       - name: Add opentelemetry-collector-builder installation dir to PATH
         run: echo "$HOME/bin" >> $GITHUB_PATH
 
@@ -175,7 +187,7 @@ jobs:
         working-directory: ./otelcolbuilder
 
       - name: Prepare tags in otelcolbuilder's config
-        run: make prepare-tag TAG=${{ steps.extract_tag.outputs.tag }}
+        run: make prepare-tag TAG=v${{ matrix.version }}
 
       - name: Build
         run: make otelcol-sumo-${{matrix.arch_os}}
@@ -183,7 +195,7 @@ jobs:
 
       - name: Set filename
         id: set_filename
-        run: echo "filename=$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}})" > $GITHUB_OUTPUT
+        run: echo "filename=$(echo otelcol-sumo-${{ matrix.version }}-${{matrix.arch_os}})" > $GITHUB_OUTPUT
 
       - name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v2
@@ -227,8 +239,11 @@ jobs:
   build-fips:
     name: Build FIPS
     runs-on: ubuntu-20.04
+    needs: [get-version]
     strategy:
       matrix:
+        version:
+          - ${{ needs.get-version.outputs.version }}
         arch_os:
           - 'linux_amd64'
           - 'linux_arm64'
@@ -244,10 +259,6 @@ jobs:
       - name: Fetch current branch
         run: ./ci/fetch_current_branch.sh
 
-      - name: Extract tag
-        id: extract_tag
-        run: echo "tag=$(echo ${GITHUB_REF#refs/tags/v})" > $GITHUB_OUTPUT
-
       - name: Add opentelemetry-collector-builder installation dir to PATH
         run: echo "$HOME/bin" >> $GITHUB_PATH
 
@@ -256,7 +267,7 @@ jobs:
         working-directory: ./otelcolbuilder
 
       - name: Prepare tags in otelcolbuilder's config
-        run: make prepare-tag TAG=${{ steps.extract_tag.outputs.tag }}
+        run: make prepare-tag TAG=v${{ matrix.version }}
 
       - name: Build Toolchains
         run: make toolchain-${{ matrix.arch_os }} OUTPUT=/opt/toolchain -j3
@@ -277,7 +288,7 @@ jobs:
 
       - name: Set filename
         id: set_filename
-        run: echo "filename=$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-fips-${{matrix.arch_os}})" > $GITHUB_OUTPUT
+        run: echo "filename=$(echo otelcol-sumo-${{ matrix.version }}-fips-${{matrix.arch_os}})" > $GITHUB_OUTPUT
 
       - name: Rename to include tag in filename
         run: cp otelcol-sumo-fips-${{matrix.arch_os}} ${{ steps.set_filename.outputs.filename }}
@@ -302,18 +313,12 @@ jobs:
     needs:
       - build
       - build-fips
+      - get-version
     strategy:
       matrix:
         arch_os: [ 'linux_amd64', 'linux_arm64']
     steps:
       - uses: actions/checkout@v4
-
-      - name: Extract tag
-        id: extract_tag
-        run: echo "tag=$(echo ${GITHUB_REF#refs/tags/v})" > $GITHUB_OUTPUT
-
-      - name: Print tag
-        run: echo "${{ steps.extract_tag.outputs.tag }}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3.0.0
@@ -327,11 +332,11 @@ jobs:
 
       - name: Set filename
         id: set_filename
-        run: echo "filename=$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-${{matrix.arch_os}})" > $GITHUB_OUTPUT
+        run: echo "filename=$(echo otelcol-sumo-${{ needs.get-version.outputs.version }}-${{matrix.arch_os}})" > $GITHUB_OUTPUT
 
       - name: Set filename for FIPS
         id: set_filename_fips
-        run: echo "filename_fips=$(echo otelcol-sumo-${{ steps.extract_tag.outputs.tag }}-fips-${{matrix.arch_os}})" > $GITHUB_OUTPUT
+        run: echo "filename_fips=$(echo otelcol-sumo-${{ needs.get-version.outputs.version }}-fips-${{matrix.arch_os}})" > $GITHUB_OUTPUT
 
       - name: Login to Open Source ECR
         run: make login
@@ -362,7 +367,7 @@ jobs:
         run: |
           cp artifacts/${{ steps.set_filename_fips.outputs.filename_fips }} otelcol-sumo
           make build-push-container-multiplatform \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=v${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
             BUILD_TYPE_SUFFIX="-fips"
 
@@ -371,7 +376,7 @@ jobs:
         run: |
           cp artifacts/${{ steps.set_filename_fips.outputs.filename_fips }} otelcol-sumo
           make build-push-container-multiplatform \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
             REPO_URL=sumologic/sumologic-otel-collector \
             BUILD_TYPE_SUFFIX="-fips"
@@ -381,7 +386,7 @@ jobs:
         run: |
           cp artifacts/${{ steps.set_filename_fips.outputs.filename_fips }} otelcol-sumo
           make build-push-container-ubi \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
             BUILD_TYPE_SUFFIX="-ubi-fips"
 
@@ -390,7 +395,7 @@ jobs:
         run: |
           cp artifacts/${{ steps.set_filename_fips.outputs.filename_fips }} otelcol-sumo
           make build-push-container-ubi \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
             REPO_URL=sumologic/sumologic-otel-collector \
             BUILD_TYPE_SUFFIX="-ubi-fips"
@@ -399,14 +404,14 @@ jobs:
         run: |
           cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
           make build-push-container-multiplatform \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }}
 
       - name: Build and push image to DockerHub
         run: |
           cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
           make build-push-container-multiplatform \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
             REPO_URL=sumologic/sumologic-otel-collector
 
@@ -415,7 +420,7 @@ jobs:
         run: |
           cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
           make build-push-container-ubi \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
             BUILD_TYPE_SUFFIX="-ubi"
 
@@ -424,7 +429,7 @@ jobs:
         run: |
           cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
           make build-push-container-ubi \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
             REPO_URL=sumologic/sumologic-otel-collector \
             BUILD_TYPE_SUFFIX="-ubi"
@@ -437,15 +442,9 @@ jobs:
       # when darwin build fails.
       - build-darwin
       - build-container-images
+      - get-version
     steps:
       - uses: actions/checkout@v4
-
-      - name: Extract tag
-        id: extract_tag
-        run: echo "tag=$(echo ${GITHUB_REF#refs/tags/v})" > $GITHUB_OUTPUT
-
-      - name: Print tag
-        run: echo "${{ steps.extract_tag.outputs.tag }}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3.0.0
@@ -472,14 +471,14 @@ jobs:
       - name: Push joint FIPS container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORMS="linux/amd64" \
             BUILD_TYPE_SUFFIX="-fips"
 
       - name: Push joint FIPS container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORMS="linux/amd64" \
             REPO_URL=sumologic/sumologic-otel-collector \
             BUILD_TYPE_SUFFIX="-fips"
@@ -487,14 +486,14 @@ jobs:
       - name: Push joint UBI-based FIPS container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORMS="linux/amd64" \
             BUILD_TYPE_SUFFIX="-ubi-fips"
 
       - name: Push joint UBI-based FIPS container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORMS="linux/amd64" \
             REPO_URL=sumologic/sumologic-otel-collector \
             BUILD_TYPE_SUFFIX="-ubi-fips"
@@ -502,27 +501,27 @@ jobs:
       - name: Push joint container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORMS="linux/amd64 linux/arm64"
 
       - name: Push joint container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORMS="linux/amd64 linux/arm64" \
             REPO_URL=sumologic/sumologic-otel-collector
 
       - name: Push joint UBI-based container manifest for all platforms to Open Source ECR
         run: |
           make push-container-manifest \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORMS="linux/amd64" \
             BUILD_TYPE_SUFFIX="-ubi"
 
       - name: Push joint UBI-based container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest \
-            BUILD_TAG=${{ steps.extract_tag.outputs.tag }} \
+            BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORMS="linux/amd64" \
             REPO_URL=sumologic/sumologic-otel-collector \
             BUILD_TYPE_SUFFIX="-ubi"
@@ -550,13 +549,6 @@ jobs:
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v2
 
-      - name: Extract tag
-        id: extract_tag
-        run: echo "tag=$(echo ${GITHUB_REF#refs/tags/v})" > $GITHUB_OUTPUT
-
-      - name: Print tag
-        run: echo "${{ steps.extract_tag.outputs.tag }}"
-
       - name: Fetch binary artifact for ${{ matrix.arch_os }} ${{ matrix.fips && '(FIPS)' || '' }}
         uses: actions/download-artifact@v4
         with:
@@ -566,9 +558,6 @@ jobs:
       - name: Rename binary artifact for ${{ matrix.arch_os }}
         working-directory: ./otelcolbuilder/cmd
         run: mv otelcol-sumo-*-sumo-*${{ matrix.arch_os }}.exe otelcol-sumo-${{ matrix.arch_os }}.exe
-
-      - name: Set VERSION_TAG
-        run: echo "VERSION_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Set PRODUCT_VERSION
         run: echo "PRODUCT_VERSION=$(./ci/get_version.sh productversion)" >> $GITHUB_ENV
@@ -672,14 +661,8 @@ jobs:
       - build-container-images
       - push-docker-manifest
       - package-msi
+      - get-version
     steps:
-      - name: Extract tag
-        id: extract_tag
-        run: echo "tag=$(echo ${GITHUB_REF#refs/tags/v})" > $GITHUB_OUTPUT
-
-      - name: Print tag
-        run: echo "v${{ steps.extract_tag.outputs.tag }}"
-
       - name: Download all binaries stored as artifact
         uses: actions/download-artifact@v4
         with:
@@ -696,7 +679,7 @@ jobs:
           omitNameDuringUpdate: true
 
           body: |
-            ## v${{ steps.extract_tag.outputs.tag }}
+            ## v${{ needs.get-version.outputs.version }}
 
             **TODO**
 
@@ -712,7 +695,7 @@ jobs:
             ### Container images:
 
             ```
-            docker pull public.ecr.aws/sumologic/sumologic-otel-collector:${{ steps.extract_tag.outputs.tag }}
+            docker pull public.ecr.aws/sumologic/sumologic-otel-collector:${{ needs.get-version.outputs.version }}
             ```
 
           artifacts: "artifacts/*/*"
