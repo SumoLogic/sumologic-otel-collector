@@ -7,6 +7,10 @@ on:
         description: Architecture and OS in the form "{arch}_{os}". See GOARCH and GOOS for accepted values.
         default: linux_amd64
         type: string
+      sumo_component_gomod_version:
+        description: Package version for components hosted in this repo. Normally, this is the v0.0.0-00010101000000-000000000000 placeholder.
+        type: string
+        required: false
       fips:
         description: Build binary with FIPS support
         default: false
@@ -79,6 +83,10 @@ jobs:
           powershell -command "Expand-Archive go.zip D:\\a\\_work\\1\\s" &&
           echo "/d/a/_work/1/s/go/bin" >> $GITHUB_PATH &&
           powershell -command "Set-ItemProperty -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy -Name Enabled -Value \$true"
+
+      - name: Set Sumo component version in go.mod
+        if: inputs.sumo_component_gomod_version != ''
+        run: make prepare-tag TAG=${{ inputs.sumo_component_gomod_version }}
 
       - name: Get Go env values
         run: |
@@ -217,7 +225,7 @@ jobs:
 
       - name: Store Mac .dmg as action artifact
         uses: actions/upload-artifact@v4
-        if: ${{ runner.os == 'macOS' }}
+        if: runner.os == 'macOS' && env.MACOS_SIGNING_ENABLED == 'true'
         with:
           name: ${{ steps.set-binary-name.outputs.binary_name }}.dmg
           path: ./otelcolbuilder/cmd/${{ steps.set-binary-name.outputs.binary_name }}.dmg
