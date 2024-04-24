@@ -303,7 +303,7 @@ func (se *SumologicExtension) getHTTPClient(
 	ClientConfig confighttp.ClientConfig,
 	regInfo api.OpenRegisterResponsePayload,
 ) (*http.Client, error) {
-	httpClient, err := ClientConfig.ToClientContext(
+	httpClient, err := ClientConfig.ToClient(
 		ctx,
 		se.host,
 		component.TelemetrySettings{},

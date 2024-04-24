@@ -15,6 +15,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"os"
+	"time"
+
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
 	"go.opentelemetry.io/collector/confmap/provider/envprovider"
@@ -22,8 +25,6 @@ import (
 	"go.opentelemetry.io/collector/confmap/provider/httpprovider"
 	"go.opentelemetry.io/collector/confmap/provider/httpsprovider"
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
-	"os"
-	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -32,6 +33,8 @@ import (
 
 	"go.opentelemetry.io/collector/featuregate"
 	"go.opentelemetry.io/collector/otelcol"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
 )
 
 type windowsService struct {
@@ -246,19 +249,18 @@ func updateSettingsUsingFlags(set *otelcol.CollectorSettings, flags *flag.FlagSe
 }
 
 func newDefaultConfigProviderSettings(uris []string) otelcol.ConfigProviderSettings {
-	converterSet := confmap.ConverterSettings{}
-	providerSet := confmap.ProviderSettings{}
 	return otelcol.ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
 			URIs: uris,
-			Providers: makeMapProvidersMap(
-				fileprovider.NewWithSettings(providerSet),
-				envprovider.NewWithSettings(providerSet),
-				yamlprovider.NewWithSettings(providerSet),
-				httpprovider.NewWithSettings(providerSet),
-				httpsprovider.NewWithSettings(providerSet),
-			),
-			Converters: []confmap.Converter{expandconverter.New(converterSet)},
+			ProviderFactories: []confmap.ProviderFactory{
+				fileprovider.NewFactory(),
+				envprovider.NewFactory(),
+				yamlprovider.NewFactory(),
+				httpprovider.NewFactory(),
+				httpsprovider.NewFactory(),
+				globprovider.NewFactory(),
+			},
+			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
 		},
 	}
 }

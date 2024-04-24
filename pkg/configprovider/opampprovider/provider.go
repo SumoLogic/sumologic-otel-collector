@@ -65,6 +65,10 @@ func NewWithSettings(settings confmap.ProviderSettings) confmap.Provider {
 	return &Provider{GlobProvider: globprovider.NewWithSettings(settings)}
 }
 
+func NewFactory() confmap.ProviderFactory {
+	return confmap.NewProviderFactory(NewWithSettings)
+}
+
 func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.WatcherFunc) (*confmap.Retrieved, error) {
 	var cfg ConfigFragment
 	configPath = strings.TrimPrefix(configPath, "opamp:")
@@ -88,7 +92,7 @@ func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.W
 	if err != nil {
 		return nil, err
 	}
-	addl, err := fileprovider.NewWithSettings(confmap.ProviderSettings{}).Retrieve(ctx, "file:"+configPath, fn)
+	addl, err := fileprovider.NewFactory().Create(confmap.ProviderSettings{}).Retrieve(ctx, "file:"+configPath, fn)
 	if err != nil {
 		return nil, err
 	}
