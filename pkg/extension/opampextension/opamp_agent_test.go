@@ -485,3 +485,16 @@ func TestReload(t *testing.T) {
 	assert.NoError(t, o.Start(ctx, componenttest.NewNopHost()))
 	assert.NoError(t, o.Reload(ctx))
 }
+
+func TestDefaultEndpointSetOnStart(t *testing.T) {
+	cfg := createDefaultConfig().(*Config)
+	set := extensiontest.NewNopCreateSettings()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings := o.startSettings()
+	if settings.OpAMPServerURL != DefaultSumoLogicOpAmpURL {
+		t.Error("expected unconfigured opamp endpoint to result in default sumo opamp url setting")
+	}
+}
