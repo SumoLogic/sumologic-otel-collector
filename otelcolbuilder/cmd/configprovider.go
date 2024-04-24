@@ -33,6 +33,8 @@ import (
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/confmap/provider/secretsmanagerprovider"
 )
 
 // This file contains modifications to the collector settings which inject a custom config provider
@@ -106,6 +108,7 @@ func NewConfigProviderSettings(locations []string) otelcol.ConfigProviderSetting
 				httpprovider.NewWithSettings(settings),
 				httpsprovider.NewWithSettings(settings),
 				globprovider.NewWithSettings(settings),
+				secretsmanagerprovider.New(),
 			),
 			Converters: []confmap.Converter{expandconverter.New(confmap.ConverterSettings{})},
 		},
