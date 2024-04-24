@@ -41,6 +41,8 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension"
 )
 
+const DefaultSumoLogicOpAmpURL = "wss://opamp-events.sumologic.com/v1/opamp"
+
 type opampAgent struct {
 	cfg    *Config
 	host   component.Host
@@ -99,6 +101,9 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 	}
 
 	o.endpoint = o.cfg.Endpoint
+	if o.endpoint == "" {
+		o.endpoint = DefaultSumoLogicOpAmpURL
+	}
 
 	if o.authExtension == nil {
 		return o.startClient(ctx)
@@ -144,7 +149,7 @@ func (o *opampAgent) Reload(ctx context.Context) error {
 	return o.Start(ctx, o.host)
 }
 
-func (o *opampAgent) startClient(ctx context.Context) error {
+func (o *opampAgent) startSettings() types.StartSettings {
 	settings := types.StartSettings{
 		Header:         o.authHeader,
 		OpAMPServerURL: o.endpoint,
@@ -171,6 +176,16 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 		RemoteConfigStatus: o.remoteConfigStatus,
 		Capabilities:       o.getAgentCapabilities(),
 	}
+
+	if settings.OpAMPServerURL == "" {
+		settings.OpAMPServerURL = DefaultSumoLogicOpAmpURL
+	}
+
+	return settings
+}
+
+func (o *opampAgent) startClient(ctx context.Context) error {
+	settings := o.startSettings()
 
 	o.logger.Debug("Starting OpAMP client...")
 
