@@ -39,280 +39,50 @@ jobs:
 
   build:
     name: Build
-    runs-on: ${{ matrix.runs_on }}
-    needs: [get-version]
+    uses: ./.github/workflows/workflow-build.yml
+    needs: [ get-version ]
     strategy:
       matrix:
         include:
           - arch_os: linux_amd64
-            runs_on: ubuntu-20.04
-            version: ${{ needs.get-version.outputs.version }}
-          - arch_os: linux_arm64
-            runs_on: ubuntu-20.04
-            version: ${{ needs.get-version.outputs.version }}
-          - arch_os: windows_amd64
-            runs_on: windows-2022
-            builder_bin_path: '${RUNNER_TEMP}\bin'
-            builder_bin_ext: .exe
-            version: ${{ needs.get-version.outputs.version }}
-          - arch_os: windows_amd64
-            runs_on: windows-2022
-            builder_bin_path: '${RUNNER_TEMP}\bin'
-            builder_bin_ext: .exe
+            runs-on: ubuntu-20.04
+          - arch_os: linux_amd64
+            runs-on: ubuntu-20.04
             fips: true
-            version: ${{ needs.get-version.outputs.version }}
-    env:
-      OTELCOL_FIPS_SUFFIX: ${{ matrix.fips && '-fips' || '' }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
-
-      - name: Setup go
-        if: ${{ ! (contains(matrix.arch_os, 'windows') && matrix.fips) }}
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: '**/go.sum'
-
-      - name: Setup go (Microsoft fork) and enable FIPS on Windows
-        if: contains(matrix.arch_os, 'windows') && matrix.fips
-        run: |
-          curl -Lo go.zip https://aka.ms/golang/release/latest/go${{ env.GO_VERSION }}.windows-amd64.zip &&
-          powershell -command "Expand-Archive go.zip D:\\a\\_work\\1\\s" &&
-          echo "/d/a/_work/1/s/go/bin" >> $GITHUB_PATH &&
-          powershell -command "Set-ItemProperty -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy -Name Enabled -Value \$true"
-
-      - name: Set default BUILDER_BIN_PATH
-        run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
-
-      - name: Override BUILDER_BIN_PATH if set in matrix
-        run: echo "BUILDER_BIN_PATH=${{matrix.builder_bin_path}}" >> $GITHUB_ENV
-        if: matrix.builder_bin_path != ''
-
-      - name: Add opentelemetry-collector-builder installation dir to PATH
-        run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
-
-      - name: Install opentelemetry-collector-builder
-        run: make install-builder
-        working-directory: ./otelcolbuilder
-
-      - name: Prepare tags in otelcolbuilder's config
-        run: make prepare-tag TAG=v${{ matrix.version }}
-
-      - name: Build
-        if: ${{ ! (matrix.fips && contains(matrix.arch_os, 'windows')) }}
-        run: make otelcol-sumo-${{matrix.arch_os}}
-        working-directory: ./otelcolbuilder
-
-      - name: Build (FIPS) for Windows
-        if: matrix.fips && contains(matrix.arch_os, 'windows')
-        run: make otelcol-sumo-${{matrix.arch_os}} FIPS_SUFFIX="-fips" CGO_ENABLED=1
-        working-directory: ./otelcolbuilder
-
-      - name: Set filename
-        id: set_filename
-        run: echo "filename=$(echo otelcol-sumo-${{ matrix.version }}${OTELCOL_FIPS_SUFFIX}-${{matrix.arch_os}})${{matrix.builder_bin_ext}}" > $GITHUB_OUTPUT
-
-      - name: Rename to include tag in filename
-        run: cp otelcol-sumo${OTELCOL_FIPS_SUFFIX}-${{matrix.arch_os}}${{matrix.builder_bin_ext}} ${{ steps.set_filename.outputs.filename }}
-        working-directory: ./otelcolbuilder/cmd
-
-      - name: Show Microsoft Cryptography Next-Generation symbols
-        if: matrix.fips && contains(matrix.arch_os, 'windows')
-        working-directory: ./otelcolbuilder/cmd
-        run: |
-          go tool nm ${{ steps.set_filename.outputs.filename }} | \
-          grep "vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt.GetFipsAlgorithmMode"
-
-      - name: Sign Windows binary
-        if: runner.os == 'Windows'
-        uses: skymatic/code-sign-action@v3
-        with:
-          certificate: '${{ secrets.MICROSOFT_CERTIFICATE }}'
-          password: '${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}'
-          certificatesha1: '${{ secrets.MICROSOFT_CERTHASH }}'
-          certificatename: '${{ secrets.MICROSOFT_CERTNAME }}'
-          description: '${{ secrets.MICROSOFT_DESCRIPTION }}'
-          folder: ./otelcolbuilder/cmd
-
-      - name: Store binary as action artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{matrix.arch_os}}${{ matrix.fips && '_fips' || '' }}
-          path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
-          if-no-files-found: error
-
-  build-darwin:
-    name: Build darwin
-    runs-on: ${{ matrix.runs_on }}
-    needs: [get-version]
-    strategy:
-      matrix:
-        include:
+          - arch_os: linux_arm64
+            runs-on: ubuntu-20.04
+          - arch_os: linux_arm64
+            runs-on: ubuntu-20.04
+            fips: true
           - arch_os: darwin_amd64
-            runs_on: macos-latest
-            version: ${{ needs.get-version.outputs.version }}
+            runs-on: macos-latest
           - arch_os: darwin_arm64
-            runs_on: macos-latest
-            version: ${{ needs.get-version.outputs.version }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
-
-      - name: Setup go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      # As described in
-      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
-      - uses: actions/cache@v4
-        with:
-          path: |
-            /Users/runner/go/pkg/mod
-            /Users/runner/Library/Caches/go-build
-          key: ${{matrix.arch_os}}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{matrix.arch_os}}-go-
-
-      - name: Add opentelemetry-collector-builder installation dir to PATH
-        run: echo "$HOME/bin" >> $GITHUB_PATH
-
-      - name: Install opentelemetry-collector-builder
-        run: make install-builder
-        working-directory: ./otelcolbuilder
-
-      - name: Prepare tags in otelcolbuilder's config
-        run: make prepare-tag TAG=v${{ matrix.version }}
-
-      - name: Build
-        run: make otelcol-sumo-${{matrix.arch_os}}
-        working-directory: ./otelcolbuilder
-
-      - name: Set filename
-        id: set_filename
-        run: echo "filename=$(echo otelcol-sumo-${{ matrix.version }}-${{matrix.arch_os}})" > $GITHUB_OUTPUT
-
-      - name: Import Code-Signing Certificates
-        uses: Apple-Actions/import-codesign-certs@v2
-        with:
-          # The certificates in a PKCS12 file encoded as a base64 string
-          p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-          # The password used to import the PKCS12 file.
-          p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
-
-      - name: Sign the mac binaries
-        env:
-          AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
-        working-directory: ./otelcolbuilder/
-        run: make ${{matrix.arch_os}}-sign
-
-      - name: Rename .dmg to include tag in filename
-        run: cp otelcol-sumo-${{matrix.arch_os}}.dmg ${{ steps.set_filename.outputs.filename }}.dmg
-        working-directory: ./otelcolbuilder/cmd
-
-      - name: Rename binary to include tag in filename
-        run: cp otelcol-sumo-${{matrix.arch_os}} ${{ steps.set_filename.outputs.filename }}
-        working-directory: ./otelcolbuilder/cmd
-
-      # Store binary and .dmg into pipeline artifacts after they have been signed
-
-      - name: Store .dmg as action artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{matrix.arch_os}}.dmg
-          path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}.dmg
-          if-no-files-found: error
-
-      - name: Store binary as action artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{matrix.arch_os}}
-          path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
-          if-no-files-found: error
-
-  # pipeline to build FIPS compliance binary on Go+BoringCrypto
-  build-fips:
-    name: Build FIPS
-    runs-on: ubuntu-20.04
-    needs: [get-version]
-    strategy:
-      matrix:
-        version:
-          - ${{ needs.get-version.outputs.version }}
-        arch_os:
-          - 'linux_amd64'
-          - 'linux_arm64'
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: '**/go.sum'
-
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
-
-      - name: Add opentelemetry-collector-builder installation dir to PATH
-        run: echo "$HOME/bin" >> $GITHUB_PATH
-
-      - name: Install opentelemetry-collector-builder
-        run: make install-builder
-        working-directory: ./otelcolbuilder
-
-      - name: Prepare tags in otelcolbuilder's config
-        run: make prepare-tag TAG=v${{ matrix.version }}
-
-      - name: Build Toolchains
-        run: make toolchain-${{ matrix.arch_os }} OUTPUT=/opt/toolchain -j3
-        working-directory: ./otelcolbuilder
-
-      - name: Build (FIPS)
-        if: ${{ contains(matrix.arch_os, 'linux') }}
-        run: |
-          CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
-          test "$CC"
-          echo "Using toolchain: $CC"
-          make otelcol-sumo-${{matrix.arch_os}} \
-            FIPS_SUFFIX="-fips" \
-            CGO_ENABLED="1" \
-            CC="$CC" \
-            EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
-        working-directory: ./otelcolbuilder
-
-      - name: Set filename
-        id: set_filename
-        run: echo "filename=$(echo otelcol-sumo-${{ matrix.version }}-fips-${{matrix.arch_os}})" > $GITHUB_OUTPUT
-
-      - name: Rename to include tag in filename
-        run: cp otelcol-sumo-fips-${{matrix.arch_os}} ${{ steps.set_filename.outputs.filename }}
-        working-directory: ./otelcolbuilder/cmd
-
-      - name: Show BoringSSL symbols
-        working-directory: ./otelcolbuilder/cmd
-        run: |
-          go tool nm ${{ steps.set_filename.outputs.filename }} | \
-          grep "_Cfunc__goboringcrypto_"
-
-      - name: Store binary as action artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: "${{matrix.arch_os}}-fips"
-          path: ./otelcolbuilder/cmd/${{ steps.set_filename.outputs.filename }}
-          if-no-files-found: error
+            runs-on: macos-latest
+          - arch_os: windows_amd64
+            runs-on: windows-2022
+          - arch_os: windows_amd64
+            runs-on: windows-2022
+            fips: true
+    with:
+      arch_os: ${{ matrix.arch_os }}
+      runs-on: ${{ matrix.runs-on }}
+      fips: ${{ matrix.fips == true }}
+      sumo_component_gomod_version: "v${{ needs.get-version.outputs.version }}"
+    secrets:
+      apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+      apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+      app_store_connect_password: ${{ secrets.AC_PASSWORD }}
+      microsoft_certificate: ${{ secrets.MICROSOFT_CERTIFICATE }}
+      microsoft_certificate_password: ${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}
+      microsoft_certificate_hash: ${{ secrets.MICROSOFT_CERTHASH }}
+      microsoft_certificate_name: ${{ secrets.MICROSOFT_CERTNAME }}
+      microsoft_description: ${{ secrets.MICROSOFT_DESCRIPTION }}
 
   build-container-images:
     name: Build container
     runs-on: ubuntu-20.04
     needs:
       - build
-      - build-fips
       - get-version
     strategy:
       matrix:
@@ -330,14 +100,6 @@ jobs:
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
 
-      - name: Set filename
-        id: set_filename
-        run: echo "filename=$(echo otelcol-sumo-${{ needs.get-version.outputs.version }}-${{matrix.arch_os}})" > $GITHUB_OUTPUT
-
-      - name: Set filename for FIPS
-        id: set_filename_fips
-        run: echo "filename_fips=$(echo otelcol-sumo-${{ needs.get-version.outputs.version }}-fips-${{matrix.arch_os}})" > $GITHUB_OUTPUT
-
       - name: Login to Open Source ECR
         run: make login
         env:
@@ -353,19 +115,19 @@ jobs:
       - name: Download binary action artifact from build phase
         uses: actions/download-artifact@v4
         with:
-          name: ${{matrix.arch_os}}
+          name: otelcol-sumo-${{matrix.arch_os}}
           path: artifacts/
 
       - name: Download binary action artifact from build phase (FIPS)
         uses: actions/download-artifact@v4
         with:
-          name: ${{matrix.arch_os}}-fips
+          name: otelcol-sumo-fips-${{matrix.arch_os}}
           path: artifacts/
 
       - name: Build and push FIPS image to Open Source ECR
         if: matrix.arch_os == 'linux_amd64'
         run: |
-          cp artifacts/${{ steps.set_filename_fips.outputs.filename_fips }} otelcol-sumo
+          cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-multiplatform \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
@@ -374,7 +136,7 @@ jobs:
       - name: Build and push FIPS image to DockerHub
         if: matrix.arch_os == 'linux_amd64'
         run: |
-          cp artifacts/${{ steps.set_filename_fips.outputs.filename_fips }} otelcol-sumo
+          cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-multiplatform \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
@@ -384,7 +146,7 @@ jobs:
       - name: Build and push UBI-based FIPS image to Open Source ECR
         if: matrix.arch_os == 'linux_amd64'
         run: |
-          cp artifacts/${{ steps.set_filename_fips.outputs.filename_fips }} otelcol-sumo
+          cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-ubi \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
@@ -393,7 +155,7 @@ jobs:
       - name: Build and push UBI-based FIPS image to DockerHub
         if: matrix.arch_os == 'linux_amd64'
         run: |
-          cp artifacts/${{ steps.set_filename_fips.outputs.filename_fips }} otelcol-sumo
+          cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-ubi \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
@@ -402,14 +164,14 @@ jobs:
 
       - name: Build and push image to Open Source ECR
         run: |
-          cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
+          cp artifacts/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-multiplatform \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }}
 
       - name: Build and push image to DockerHub
         run: |
-          cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
+          cp artifacts/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-multiplatform \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
@@ -418,7 +180,7 @@ jobs:
       - name: Build and push UBI-based image to Open Source ECR
         if: matrix.arch_os == 'linux_amd64'
         run: |
-          cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
+          cp artifacts/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-ubi \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
@@ -427,7 +189,7 @@ jobs:
       - name: Build and push UBI-based image to DockerHub
         if: matrix.arch_os == 'linux_amd64'
         run: |
-          cp artifacts/${{ steps.set_filename.outputs.filename }} otelcol-sumo
+          cp artifacts/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-ubi \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
@@ -440,7 +202,7 @@ jobs:
     needs:
       # Require darwin build to succeed to prevent pushing container images
       # when darwin build fails.
-      - build-darwin
+      - build
       - build-container-images
       - get-version
     steps:
@@ -552,12 +314,13 @@ jobs:
       - name: Fetch binary artifact for ${{ matrix.arch_os }} ${{ matrix.fips && '(FIPS)' || '' }}
         uses: actions/download-artifact@v4
         with:
-          name: windows_amd64${{ matrix.fips && '_fips' || '' }}
+          name: otelcol-sumo${{ matrix.fips && '-fips' || '' }}-windows_amd64.exe
           path: ./otelcolbuilder/cmd
 
-      - name: Rename binary artifact for ${{ matrix.arch_os }}
+      - name: Rename FIPS binary artifact for ${{ matrix.arch_os }}
+        if: matrix.fips
         working-directory: ./otelcolbuilder/cmd
-        run: mv otelcol-sumo-*-sumo-*${{ matrix.arch_os }}.exe otelcol-sumo-${{ matrix.arch_os }}.exe
+        run: mv otelcol-sumo${{ matrix.fips && '-fips' || '' }}-windows_amd64.exe otelcol-sumo-${{ matrix.arch_os }}.exe
 
       - name: Set PRODUCT_VERSION
         run: echo "PRODUCT_VERSION=$(./ci/get_version.sh productversion)" >> $GITHUB_ENV
@@ -656,8 +419,6 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - build
-      - build-darwin
-      - build-fips
       - build-container-images
       - push-docker-manifest
       - package-msi
@@ -667,7 +428,17 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts/
-
+          merge-multiple: true
+      - name: Add version to binary names
+        working-directory: artifacts/
+        run: |
+          find . -type f -name 'otelcol-sumo*' \
+            | grep -v '\.msi' \
+            | sed 's/^\.\///' \
+            | while read -r file; do
+              new_name=$(echo "$file" | sed 's/otelcol-sumo/otelcol-sumo-${{ needs.get-version.outputs.version }}/g')
+              mv "$file" "$new_name"
+          done
       - uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -698,6 +469,6 @@ jobs:
             docker pull public.ecr.aws/sumologic/sumologic-otel-collector:${{ needs.get-version.outputs.version }}
             ```
 
-          artifacts: "artifacts/*/*"
+          artifacts: "artifacts/*"
           artifactErrorsFailBuild: true
           replacesArtifacts: true
