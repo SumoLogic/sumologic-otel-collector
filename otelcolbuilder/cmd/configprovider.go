@@ -121,11 +121,3 @@ func NewOpAmpConfigProviderSettings(location string) otelcol.ConfigProviderSetti
 		},
 	}
 }
-
-func makeMapProvidersMap(providers ...confmap.Provider) map[string]confmap.Provider {
-	ret := make(map[string]confmap.Provider, len(providers))
-	for _, provider := range providers {
-		ret[provider.Scheme()] = provider
-	}
-	return ret
-}
