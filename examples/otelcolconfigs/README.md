@@ -7,6 +7,8 @@
 - [tracing agent configuration](./agent_configuration_template.yaml) - example configuration to collect traces.
 - [tracing gateway configuration](./gateway_configuration_template.yaml) - example configuration to load balance traces using [loadbalancingexporter][loadbalancingexporter].
 - [tracing sampler configuration](./sampler_configuration_template.yaml) - example configuration to filter traces using [cascadingfilterprocessor][cascadingfilterprocessor].
+- [multiple tracing sampler configuration](./sampler_configuration_multiple_instances_template.yaml) - example configuration to filter traces using [cascadingfilterprocessor][cascadingfilterprocessor]
+  in case of multiple instances.
 
 [hostmetricsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.52.0/receiver/hostmetricsreceiver
 [json_parser]: https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/operators/json_parser.md
