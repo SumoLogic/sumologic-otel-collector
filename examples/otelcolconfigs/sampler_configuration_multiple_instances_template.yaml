@@ -35,10 +35,10 @@ processors:
 
   ## Smart cascading filtering rules with preset limits.
   cascading_filter:
-    ## collector_instances (default = 1): In case of multiple deployments sharing single configuration of the cascadingfilter, 
-    ## should be used to scale down properly spans_per_second global and policy limits. 
-    ## Value should be positive integer corresponding to the number of collectors with 
-    ## configured cascadingfilters e.g. collector_instances=5. As a result configured spans_per_second 
+    ## collector_instances (default = 1): In case of multiple deployments sharing single configuration of the cascadingfilter,
+    ## should be used to scale down properly spans_per_second global and policy limits.
+    ## Value should be positive integer corresponding to the number of collectors with
+    ## configured cascadingfilters e.g. collector_instances=5. As a result configured spans_per_second
     ## limit will be divided by 5 for global and policy limits.
     collector_instances: 1
     ## (default = 30s): Wait time since the first span of a trace arrived before making
