@@ -66,6 +66,33 @@ func TestFillWithAnnotations(t *testing.T) {
 	assertAttribute(t, attrs, "_sourceCategory", "ABC#123asd#Prefix:sc#from#annot#ns#1#123asd")
 }
 
+func TestFillWithEmptyAnnotations(t *testing.T) {
+	cfg := createDefaultConfig().(*Config)
+	cfg.SourceCategoryPrefix = "prefix"
+
+	attrs := pcommon.NewMap()
+	attrs.PutStr("k8s.namespace.name", "ns-1")
+	attrs.PutStr("k8s.pod.uid", "123asd")
+	attrs.PutStr("k8s.pod.pod_name", "ABC")
+
+	filler := newSourceCategoryFiller(cfg, zap.NewNop())
+
+	// can replace prefix with an empty string
+	attrs.PutStr("k8s.pod.annotation.sumologic.com/sourceCategoryPrefix", "")
+	filler.fill(&attrs)
+	assertAttribute(t, attrs, "_sourceCategory", "ns/1/ABC")
+
+	// can replace dash with an empty string
+	attrs.PutStr("k8s.pod.annotation.sumologic.com/sourceCategoryReplaceDash", "")
+	filler.fill(&attrs)
+	assertAttribute(t, attrs, "_sourceCategory", "ns1/ABC")
+
+	// can replace source category with empty string
+	attrs.PutStr("k8s.pod.annotation.sumologic.com/sourceCategory", "")
+	filler.fill(&attrs)
+	assertAttribute(t, attrs, "_sourceCategory", "")
+}
+
 func TestFillWithNamespaceAnnotations(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 
