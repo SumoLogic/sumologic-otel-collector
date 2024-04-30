@@ -104,35 +104,31 @@ func (f *sourceCategoryFiller) fill(attributes *pcommon.Map) {
 }
 
 func (f *sourceCategoryFiller) getSourceCategoryDashReplacement(attributes *pcommon.Map) string {
-	dashReplacement := getAnnotationAttributeValue(f.annotationPrefix, sourceCategoryReplaceDashAnnotation, attributes)
-	if dashReplacement != "" {
+	dashReplacement, found := getAnnotationAttributeValue(f.annotationPrefix, sourceCategoryReplaceDashAnnotation, attributes)
+	if found {
 		return dashReplacement
 	}
 
-	dashReplacement = getAnnotationAttributeValue(f.namespaceAnnotationPrefix, sourceCategoryReplaceDashAnnotation, attributes)
-	if dashReplacement != "" {
+	dashReplacement, found = getAnnotationAttributeValue(f.namespaceAnnotationPrefix, sourceCategoryReplaceDashAnnotation, attributes)
+	if found {
 		return dashReplacement
 	}
 	return f.dashReplacement
 }
 
 func (f *sourceCategoryFiller) getSourceCategoryFromAnnotation(annotationPrefix string, attributes *pcommon.Map) (string, bool) {
-	doesUseAnnotation := false
-
-	valueTemplate := getAnnotationAttributeValue(annotationPrefix, sourceCategorySpecialAnnotation, attributes)
-	if valueTemplate == "" {
+	valueTemplate, foundTemplate := getAnnotationAttributeValue(annotationPrefix, sourceCategorySpecialAnnotation, attributes)
+	if !foundTemplate {
 		valueTemplate = f.valueTemplate
-	} else {
-		doesUseAnnotation = true
 	}
 
-	prefix := getAnnotationAttributeValue(annotationPrefix, sourceCategoryPrefixAnnotation, attributes)
-	if prefix == "" {
+	prefix, foundPrefix := getAnnotationAttributeValue(annotationPrefix, sourceCategoryPrefixAnnotation, attributes)
+	if !foundPrefix {
 		prefix = f.prefix
-	} else {
-		doesUseAnnotation = true
 	}
+
 	valueTemplate = prefix + valueTemplate
+	doesUseAnnotation := foundPrefix || foundTemplate
 	return valueTemplate, doesUseAnnotation
 }
 
@@ -150,8 +146,8 @@ func (f *sourceCategoryFiller) getSourceCategoryFromContainerAnnotation(attribut
 
 	for _, containerAnnotationPrefix := range f.containerAnnotationsPrefixes {
 		annotationKey := fmt.Sprintf("%s%s.sourceCategory", containerAnnotationPrefix, containerName.Str())
-		annotationValue := getAnnotationAttributeValue(f.annotationPrefix, annotationKey, attributes)
-		if annotationValue != "" {
+		annotationValue, found := getAnnotationAttributeValue(f.annotationPrefix, annotationKey, attributes)
+		if found {
 			f.logger.Debug("Filled source category from container annotation",
 				zap.String("annotation", annotationKey),
 				zap.String("source_category", annotationValue),
@@ -181,10 +177,10 @@ func (f *sourceCategoryFiller) replaceTemplateAttributes(template string, templa
 	return strings.NewReplacer(replacerArgs...).Replace(template)
 }
 
-func getAnnotationAttributeValue(annotationAttributePrefix string, annotation string, attributes *pcommon.Map) string {
+func getAnnotationAttributeValue(annotationAttributePrefix string, annotation string, attributes *pcommon.Map) (string, bool) {
 	annotationAttribute, found := attributes.Get(annotationAttributePrefix + annotation)
 	if found {
-		return annotationAttribute.Str()
+		return annotationAttribute.Str(), found
 	}
-	return ""
+	return "", false
 }

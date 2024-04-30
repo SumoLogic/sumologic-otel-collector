@@ -499,6 +499,18 @@ func TestSourceCategoryAnnotations(t *testing.T) {
 		assertAttribute(t, processedAttributes, "_sourceCategory", "annot>namespace#1/pod")
 	})
 
+	t.Run("source category empty prefix annotation", func(t *testing.T) {
+		inputAttributes := createK8sLabels()
+		inputAttributes["pod_annotation_sumologic.com/sourceCategoryPrefix"] = ""
+		inputTraces := newTraceData(inputAttributes)
+
+		processedTraces, err := newSourceProcessor(newProcessorCreateSettings(), cfg).ProcessTraces(context.Background(), inputTraces)
+		assert.NoError(t, err)
+
+		processedAttributes := processedTraces.ResourceSpans().At(0).Resource().Attributes()
+		assertAttribute(t, processedAttributes, "_sourceCategory", "namespace#1/pod")
+	})
+
 	t.Run("source category dash replacement annotation", func(t *testing.T) {
 		inputAttributes := createK8sLabels()
 		inputAttributes["pod_annotation_sumologic.com/sourceCategoryReplaceDash"] = "^"
@@ -649,14 +661,12 @@ func TestSourceCategoryTemplateWithCustomAttribute(t *testing.T) {
 func assertAttribute(t *testing.T, attributes pcommon.Map, attributeName string, expectedValue string) {
 	value, exists := attributes.Get(attributeName)
 
-	if expectedValue == "" {
+	if !exists {
 		assert.False(t, exists, "Attribute '%s' should not exist.", attributeName)
 	} else {
 		assert.True(t, exists, "Attribute '%s' should exist, but it does not.", attributeName)
-		if exists {
-			actualValue := value.Str()
-			assert.Equal(t, expectedValue, actualValue, "Attribute '%s' should be '%s', but was '%s'.", attributeName, expectedValue, actualValue)
-		}
+		actualValue := value.Str()
+		assert.Equal(t, expectedValue, actualValue, "Attribute '%s' should be '%s', but was '%s'.", attributeName, expectedValue, actualValue)
 	}
 }
 
