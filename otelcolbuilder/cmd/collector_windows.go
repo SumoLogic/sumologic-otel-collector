@@ -10,7 +10,6 @@
 package main // import "go.opentelemetry.io/collector/otelcol"
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"flag"
@@ -25,6 +24,7 @@ import (
 	"go.opentelemetry.io/collector/confmap/provider/httpprovider"
 	"go.opentelemetry.io/collector/confmap/provider/httpsprovider"
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
+	"go.opentelemetry.io/collector/service"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -65,7 +65,7 @@ func (s *windowsService) Execute(args []string, requests <-chan svc.ChangeReques
 
 	changes <- svc.Status{State: svc.StartPending}
 	if err = s.start(elog, colErrorChannel); err != nil {
-		_ = elog.Error(3, fmt.Sprintf("failed to start service: %v", err))
+		elog.Error(3, fmt.Sprintf("failed to start service: %v", err))
 		return false, 1064 // 1064: ERROR_EXCEPTION_IN_SERVICE
 	}
 	changes <- svc.Status{State: svc.Running, Accepts: svc.AcceptStop | svc.AcceptShutdown}
@@ -78,13 +78,13 @@ func (s *windowsService) Execute(args []string, requests <-chan svc.ChangeReques
 		case svc.Stop, svc.Shutdown:
 			changes <- svc.Status{State: svc.StopPending}
 			if err = s.stop(colErrorChannel); err != nil {
-				_ = elog.Error(3, fmt.Sprintf("errors occurred while shutting down the service: %v", err))
+				elog.Error(3, fmt.Sprintf("errors occurred while shutting down the service: %v", err))
 			}
 			changes <- svc.Status{State: svc.Stopped}
 			return false, 0
 
 		default:
-			_ = elog.Error(3, fmt.Sprintf("unexpected service control request #%d", req.Cmd))
+			elog.Error(3, fmt.Sprintf("unexpected service control request #%d", req.Cmd))
 			return false, 1052 // 1052: ERROR_INVALID_SERVICE_CONTROL
 		}
 	}
@@ -93,26 +93,11 @@ func (s *windowsService) Execute(args []string, requests <-chan svc.ChangeReques
 }
 
 func (s *windowsService) start(elog *eventlog.Log, colErrorChannel chan error) error {
-	// Append to new slice instead of the already existing s.settings.LoggingOptions slice to not change that.
-	_ = elog.Info(6666, "starting windows service")
-	s.settings.LoggingOptions = append(
-		[]zap.Option{zap.WrapCore(withWindowsCore(elog))},
-		s.settings.LoggingOptions...,
-	)
 	// Parse all the flags manually.
-	buf := bytes.NewBufferString("")
-	s.flags.SetOutput(buf)
-	s.flags.PrintDefaults()
-	_ = elog.Info(6667, fmt.Sprintf("usage: %s", buf.String()))
-
-	// Parse all the flags manually.
-	_ = elog.Info(6668, "parsing arguments")
 	if err := s.flags.Parse(os.Args[1:]); err != nil {
-		_ = elog.Info(6669, fmt.Sprintf("error parsing argument: %v", err))
 		return err
 	}
 
-	_ = elog.Info(6670, "new collector with flags")
 	var err error
 	err = updateSettingsUsingFlags(&s.settings, s.flags)
 	if err != nil {
@@ -194,7 +179,7 @@ func (w windowsEventLogCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) 
 func (w windowsEventLogCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 	buf, err := w.encoder.EncodeEntry(ent, fields)
 	if err != nil {
-		_ = w.elog.Warning(2, fmt.Sprintf("failed encoding log entry %v\r\n", err))
+		w.elog.Warning(2, fmt.Sprintf("failed encoding log entry %v\r\n", err))
 		return err
 	}
 	msg := buf.String()
@@ -219,8 +204,18 @@ func (w windowsEventLogCore) Sync() error {
 	return w.core.Sync()
 }
 
-func withWindowsCore(elog *eventlog.Log) func(zapcore.Core) zapcore.Core {
+func withWindowsCore(elog *eventlog.Log, serviceConfig **service.Config) func(zapcore.Core) zapcore.Core {
 	return func(core zapcore.Core) zapcore.Core {
+		if serviceConfig != nil {
+			for _, output := range (*serviceConfig).Telemetry.Logs.OutputPaths {
+				if output != "stdout" && output != "stderr" {
+					// A log file was specified in the configuration, so we should not use the Windows Event Log
+					return core
+				}
+			}
+		}
+
+		// Use the Windows Event Log
 		encoderConfig := zap.NewProductionEncoderConfig()
 		encoderConfig.LineEnding = "\r\n"
 		return windowsEventLogCore{core, elog, zapcore.NewConsoleEncoder(encoderConfig)}
