@@ -35,7 +35,6 @@ import (
 	"go.opentelemetry.io/collector/otelcol"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider"
 )
 
 type windowsService struct {
@@ -251,7 +250,7 @@ func updateSettingsUsingFlags(set *otelcol.CollectorSettings, flags *flag.FlagSe
 		// Provide a default set of providers and converters if none have been specified.
 		// TODO: Remove this after CollectorSettings.ConfigProvider is removed and instead
 		// do it in the builder.
-		if len(resolverSet.Providers) == 0 && len(resolverSet.Converters) == 0 {
+		if len(resolverSet.ProviderFactories) == 0 && len(resolverSet.ConverterFactories) == 0 {
 			set.ConfigProviderSettings = newDefaultConfigProviderSettings(resolverSet.URIs)
 			elog.Info(6681, fmt.Sprintf("default config provider settings: %v", set.ConfigProviderSettings))
 		}
@@ -270,7 +269,6 @@ func newDefaultConfigProviderSettings(uris []string) otelcol.ConfigProviderSetti
 				httpprovider.NewFactory(),
 				httpsprovider.NewFactory(),
 				globprovider.NewFactory(),
-				opampprovider.NewFactory(),
 			},
 			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
 		},
