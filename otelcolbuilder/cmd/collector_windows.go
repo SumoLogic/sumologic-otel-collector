@@ -107,13 +107,17 @@ func (s *windowsService) start(elog *eventlog.Log, colErrorChannel chan error) e
 
 	// Parse all the flags manually.
 	_ = elog.Info(6668, "parsing arguments")
+	elog.Info(6669, fmt.Sprintf("args: %v", os.Args))
+	elog.Info(6670, fmt.Sprintf("flags: %v", s.flags))
 	if err := s.flags.Parse(os.Args[1:]); err != nil {
-		_ = elog.Info(6669, fmt.Sprintf("error parsing argument: %v", err))
+		_ = elog.Info(6671, fmt.Sprintf("error parsing argument: %v", err))
 		return err
 	}
 
-	_ = elog.Info(6670, "new collector with flags")
+	_ = elog.Info(6672, "new collector with flags")
 	var err error
+	elog.Info(6673, "===============Updating settings using flags================")
+	elog.Info(6674, fmt.Sprintf("settings: %v", s.settings))
 	err = updateSettingsUsingFlags(&s.settings, s.flags)
 	if err != nil {
 		return err
