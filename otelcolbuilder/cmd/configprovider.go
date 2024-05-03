@@ -65,6 +65,9 @@ func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
 	locations := getConfigFlag(flagset)
 	opAmpPath := flagset.Lookup(opAmpConfigFlag)
 
+	fmt.Println("=============Locations=============")
+	fmt.Println(locations)
+
 	if len(locations) > 0 && opAmpPath.Value.String() != "" {
 		return fmt.Errorf("cannot use --%s and --%s flags together", configFlag, opAmpConfigFlag)
 	}
@@ -104,6 +107,7 @@ func NewConfigProviderSettings(locations []string) otelcol.ConfigProviderSetting
 				httpprovider.NewFactory(),
 				httpsprovider.NewFactory(),
 				globprovider.NewFactory(),
+				opampprovider.NewFactory(),
 			},
 			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
 		},

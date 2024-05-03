@@ -35,6 +35,7 @@ import (
 	"go.opentelemetry.io/collector/otelcol"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider"
 )
 
 type windowsService struct {
@@ -118,7 +119,7 @@ func (s *windowsService) start(elog *eventlog.Log, colErrorChannel chan error) e
 	var err error
 	elog.Info(6673, "===============Updating settings using flags================")
 	elog.Info(6674, fmt.Sprintf("settings: %v", s.settings))
-	err = updateSettingsUsingFlags(&s.settings, s.flags)
+	err = updateSettingsUsingFlags(&s.settings, s.flags, elog)
 	if err != nil {
 		return err
 	}
@@ -231,10 +232,13 @@ func withWindowsCore(elog *eventlog.Log) func(zapcore.Core) zapcore.Core {
 	}
 }
 
-func updateSettingsUsingFlags(set *otelcol.CollectorSettings, flags *flag.FlagSet) error {
+func updateSettingsUsingFlags(set *otelcol.CollectorSettings, flags *flag.FlagSet, elog *eventlog.Log) error {
 	if set.ConfigProvider == nil {
 		resolverSet := &set.ConfigProviderSettings.ResolverSettings
+		elog.Info(6675, fmt.Sprintf("resolver settings: %v", resolverSet))
+		elog.Info(6676, fmt.Sprintf("flags: %v", flags))
 		configFlags := getConfigFlag(flags)
+		elog.Info(6677, fmt.Sprintf("config flags: %v", configFlags))
 
 		if len(configFlags) > 0 {
 			resolverSet.URIs = configFlags
@@ -242,11 +246,14 @@ func updateSettingsUsingFlags(set *otelcol.CollectorSettings, flags *flag.FlagSe
 		if len(resolverSet.URIs) == 0 {
 			return errors.New("at least one config flag must be provided")
 		}
+		elog.Info(6678, fmt.Sprintf("resolver settings: %v", resolverSet))
+		elog.Info(6679, fmt.Sprintf("resolver URIs: %v", resolverSet.URIs))
 		// Provide a default set of providers and converters if none have been specified.
 		// TODO: Remove this after CollectorSettings.ConfigProvider is removed and instead
 		// do it in the builder.
 		if len(resolverSet.Providers) == 0 && len(resolverSet.Converters) == 0 {
 			set.ConfigProviderSettings = newDefaultConfigProviderSettings(resolverSet.URIs)
+			elog.Info(6681, fmt.Sprintf("default config provider settings: %v", set.ConfigProviderSettings))
 		}
 	}
 	return nil
@@ -263,6 +270,7 @@ func newDefaultConfigProviderSettings(uris []string) otelcol.ConfigProviderSetti
 				httpprovider.NewFactory(),
 				httpsprovider.NewFactory(),
 				globprovider.NewFactory(),
+				opampprovider.NewFactory(),
 			},
 			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
 		},
