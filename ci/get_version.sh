@@ -174,7 +174,7 @@ sumo_version() {
 # https://learn.microsoft.com/en-us/windows/win32/msi/productversion
 # MAJOR.MINOR.PATCH.BUILD -> MAJOR.MINOR.BUILD.INTERNAL
 windows_product_version() {
-    echo "${major_version}.${minor_version}.${patch_version}.${build_version}"
+    echo "${major_version}.${minor_version}.${patch_version}.${ot_channel_version}"
 }
 
 parse_params "$@"
