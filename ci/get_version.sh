@@ -4,6 +4,7 @@ declare -i major_version
 declare -i minor_version
 declare -i patch_version
 declare build_version
+declare build_windows_version
 declare ot_channel
 declare -i ot_channel_version
 declare sumo_channel
@@ -77,11 +78,14 @@ parse_version_tag() {
     if [[ $ot_channel == "sumo" ]]; then
         if [[ $sumo_channel != "" ]]; then
             build_version="${ot_channel_version}-${sumo_channel}.${sumo_channel_version}"
+            build_windows_version="${ot_channel_version}.${sumo_channel_version}"
         else
             build_version="${ot_channel_version}"
+            build_windows_version="${ot_channel_version}"
         fi
     elif [[ $ot_channel != "" ]]; then
         build_version="${ot_channel_version}"
+        build_windows_version="${ot_channel_version}"
     fi
 
     if [[ $OVERRIDE_BUILD_VERSION != "" ]]; then
@@ -91,6 +95,7 @@ parse_version_tag() {
             exit 1
         fi
         build_version="${OVERRIDE_BUILD_VERSION}"
+        build_windows_version="${OVERRIDE_BUILD_VERSION}"
     fi
 }
 
@@ -148,6 +153,12 @@ validate() {
         exit 1
     fi
 
+    # Build version is also known as the internal version on Windows
+    if [[ -z "${build_windows_version}" ]]; then
+        echo "Windows Build version cannot be empty"
+        exit 1
+    fi
+
     if [[ $ot_channel_version -lt 0 ]]; then
         echo "Build version cannot be less than 0"
         exit 1
@@ -174,7 +185,7 @@ sumo_version() {
 # https://learn.microsoft.com/en-us/windows/win32/msi/productversion
 # MAJOR.MINOR.PATCH.BUILD -> MAJOR.MINOR.BUILD.INTERNAL
 windows_product_version() {
-    echo "${major_version}.${minor_version}.${patch_version}.${build_version}"
+    echo "${major_version}.${minor_version}.${patch_version}.${build_windows_version}"
 }
 
 parse_params "$@"
