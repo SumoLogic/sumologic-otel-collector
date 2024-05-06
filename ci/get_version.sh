@@ -3,7 +3,7 @@
 declare -i major_version
 declare -i minor_version
 declare -i patch_version
-declare -i build_version
+declare build_version
 declare ot_channel
 declare -i ot_channel_version
 declare sumo_channel
@@ -76,7 +76,7 @@ parse_version_tag() {
 
     if [[ $ot_channel == "sumo" ]]; then
         if [[ $sumo_channel != "" ]]; then
-            build_version="${sumo_channel_version}"
+            build_version="${ot_channel_version}-${sumo_channel}.${sumo_channel_version}"
         else
             build_version="${ot_channel_version}"
         fi
@@ -90,7 +90,6 @@ parse_version_tag() {
             echo "Error: OVERRIDE_BUILD_VERSION is not a number" >&2
             exit 1
         fi
-
         build_version="${OVERRIDE_BUILD_VERSION}"
     fi
 }
@@ -149,12 +148,12 @@ validate() {
         exit 1
     fi
 
-    if [[ $build_version -lt 0 ]]; then
+    if [[ $ot_channel_version -lt 0 ]]; then
         echo "Build version cannot be less than 0"
         exit 1
     fi
 
-    if [[ $build_version -gt 65535 ]]; then
+    if [[ $ot_channel_version -gt 65535 ]]; then
         echo "Build version cannot be greater than 65,535"
         exit 1
     fi
