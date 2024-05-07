@@ -78,7 +78,7 @@ parse_version_tag() {
     if [[ $ot_channel == "sumo" ]]; then
         if [[ $sumo_channel != "" ]]; then
             build_version="${ot_channel_version}-${sumo_channel}.${sumo_channel_version}"
-            build_windows_version="${ot_channel_version}.${sumo_channel_version}"
+            build_windows_version="${ot_channel_version}"
         else
             build_version="${ot_channel_version}"
             build_windows_version="${ot_channel_version}"
