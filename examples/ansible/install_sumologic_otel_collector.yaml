@@ -7,7 +7,7 @@
   tasks:
     - name: Download install script
       ansible.builtin.get_url:
-        url: "https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/scripts/install.sh"
+        url: "https://github.com/SumoLogic/sumologic-otel-collector-packaging/releases/latest/download/install.sh"
         dest: /tmp/install.sh
         mode: 0755
     - name: Create install script argument list
