@@ -55,6 +55,32 @@ In order to learn more, pleasee see [purpose of Sumo Logic Distribution for Open
 [mac_arm64]: ./docs/installation.md#macos-on-arm64-apple-m1-x86-64
 [win_amd64]: ./docs/installation.md#windows
 
+## Support matrix
+
+The following supported/unsupported versions cover the OpenTelemetry Collector releases since the OpenTelemetry Remote management (OTRM) beta release. Any release prior to the beta release of OTRM are now considered end of life (EOL).
+
+### Supported versions
+
+Below is a table with documentation for every supported minor release. EOL for the latest release will be three months after the next minor release.
+
+| version                                                                                                 | planned end of life date |
+| ------------------------------------------------------------------------------------------------------- | ------------------------ |
+| [v0.98.0-sumo-0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.98.0-sumo-0/README.md)   | 2024-08-09               |
+| [v0.97.0-sumo-1](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.97.0-sumo-1/README.md)   | 2024-07-23               |
+| [v0.97.0-sumo-0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.97.0-sumo-0/README.md)   | 2024-07-23               |
+| [v0.96.0-sumo-1](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.96.0-sumo-1/README.md)   | 2024-07-11               |
+| [v0.96.0-sumo-0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.96.0-sumo-0/README.md)   | 2024-07-11               |
+| [v0.94.0-sumo-2](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.94.0-sumo-2/README.md)   | 2024-06-12               |
+| [v0.94.0-sumo-1](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.94.0-sumo-1/README.md)   | 2024-06-12               |
+| [v0.94.0-sumo-0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.94.0-sumo-0/README.md)   | 2024-06-12               |
+| [v0.93.0-sumo-0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.93.0-sumo-0/README.md)   | 2024-05-14               |
+
+### Unsupported versions
+
+| version                                                                                                 | end of life date |
+| --------------------------------------------------------------------------------------------------------| -----------------|
+| [v0.92.0-sumo-0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.92.0-sumo-0/README.md)   | 2024-05-07       |
+
 ## Components
 
 This section lists the components that are included in Sumo Logic Distribution for OpenTelemetry Collector.
