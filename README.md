@@ -61,25 +61,24 @@ The following supported/unsupported versions cover the OpenTelemetry Collector r
 
 ### Supported versions
 
-Below is a table with documentation for every supported minor release. EOL for the latest release will be three months after the next minor release.
+Below is a table with documentation for every supported Opentelemetry minor release. EOL for the latest release will be three months after the next minor release. The Otel minor version is linked to the latest minor/patch version of the Sumo Logic distribution of the collector.
+Only critical bug fixes and CVEs will be backported to supported versions.
 
 | version                                                                                                 | planned end of life date |
-| ------------------------------------------------------------------------------------------------------- | ------------------------ |
-| [v0.98.0-sumo-0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.98.0-sumo-0/README.md)   | 2024-08-09               |
-| [v0.97.0-sumo-1](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.97.0-sumo-1/README.md)   | 2024-07-23               |
-| [v0.97.0-sumo-0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.97.0-sumo-0/README.md)   | 2024-07-23               |
-| [v0.96.0-sumo-1](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.96.0-sumo-1/README.md)   | 2024-07-11               |
-| [v0.96.0-sumo-0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.96.0-sumo-0/README.md)   | 2024-07-11               |
-| [v0.94.0-sumo-2](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.94.0-sumo-2/README.md)   | 2024-06-12               |
-| [v0.94.0-sumo-1](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.94.0-sumo-1/README.md)   | 2024-06-12               |
-| [v0.94.0-sumo-0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.94.0-sumo-0/README.md)   | 2024-06-12               |
-| [v0.93.0-sumo-0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.93.0-sumo-0/README.md)   | 2024-05-14               |
+| ------------------------------------------------------------------------------------------------------- | -------------------------|
+| [v0.99.0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.99.0-sumo-0/README.md)          | 2024-08-16               |
+| [v0.98.0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.98.0-sumo-0/README.md)          | 2024-08-09               |
+| [v0.97.0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.97.0-sumo-1/README.md)          | 2024-07-23               |
+| [v0.96.0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.96.0-sumo-1/README.md)          | 2024-07-11               |
+| [v0.94.0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.94.0-sumo-2/README.md)          | 2024-06-12               |
 
 ### Unsupported versions
 
 | version                                                                                                 | end of life date |
 | --------------------------------------------------------------------------------------------------------| -----------------|
-| [v0.92.0-sumo-0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.92.0-sumo-0/README.md)   | 2024-05-07       |
+| v0.95.0 (Skipped)                                                                                       | N/A              |
+| [v0.93.0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.93.0-sumo-0/README.md)          | 2024-05-14       |
+| [v0.92.0](https://github.com/SumoLogic/sumologic-otel-collector/blob/v0.92.0-sumo-0/README.md)          | 2024-05-07       |
 
 ## Components
 
