@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.99.0-sumo-0]
+
+### Released 2024-05-09
+
+### Changed
+
+- chore: update otelcol core to v0.99.0 [#1560]
+
+### Fixed
+
+- fix(sourceprocessor): don't ignore empty annotation values [#1569]
+- fix(windows): Recognize opamp as a config provider [#1570]
+- fix: use the right install script url in orchestrator modules [#1581]
+
+[#1560]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1560
+[#1569]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1569
+[#1570]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1570
+[#1581]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1581
+[v0.99.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.99.0-sumo-0
+
 ## [v0.98.0-sumo-0]
 
 ### Released 2024-04-22

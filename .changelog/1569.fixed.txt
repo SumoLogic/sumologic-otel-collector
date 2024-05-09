@@ -1,1 +1,0 @@
-fix(sourceprocessor): don't ignore empty annotation values
