@@ -13,6 +13,7 @@
   - [How do I update the changelog while releasing?](#how-do-i-update-the-changelog-while-releasing)
   - [How do I add multiple entries for the same PR?](#how-do-i-add-multiple-entries-for-the-same-pr)
   - [How do I add an entry with multiple PR links?](#how-do-i-add-an-entry-with-multiple-pr-links)
+- [Releasing](./docs/release.md)
 
 ---
 
