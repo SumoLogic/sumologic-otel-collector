@@ -512,6 +512,8 @@ github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.1
 github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.100.0/go.mod h1:yeL6CxpW2uW3xGppdID3/L5GQXJrRaLuxTC2mSHAIf0=
 github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage v0.100.0 h1:f8NG64CXizsdcCRhA+2+mqwJEytxTWah9I+Rb3bl9iM=
 github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage v0.100.0/go.mod h1:KX9dDfu7CF3KYEa9hkjX7Ov1AklnpSbHEPcwCcOpgcg=
+github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.100.0 h1:ZVy0HsgHq62ZPmvKlKyuD+o83Ge084Z5F1aST/RzEbQ=
+github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.100.0/go.mod h1:nOlUiZgOOBpVY7I97kB2g3TOPmazelsWs7WIWh/7ft4=
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/ecsutil v0.100.0 h1:KjzXdORje0ygzLHovLbiuug/5RCtHdzBhkaqW2vwBC8=
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/ecsutil v0.100.0/go.mod h1:Bea3M7PLNE6fSaFXPGupJTMBdhXnrhDiIgOxZ/TJDzY=
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/common v0.100.0 h1:XaJgaIiuSgYKy9tt45ye0YnsiG75sP+7C4BvgcwNjGQ=

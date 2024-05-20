@@ -6,7 +6,6 @@ toolchain go1.21.7
 
 require (
 	github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter v0.0.0-00010101000000-000000000000
-	github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.96.0
 	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf/parsers/yaml v0.1.0
 	github.com/knadh/koanf/providers/rawbytes v0.1.0
@@ -17,6 +16,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.100.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.100.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage v0.100.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.100.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.100.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.100.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.100.0

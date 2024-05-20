@@ -34,7 +34,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
 
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension"
 )
 
 const (
@@ -351,7 +351,7 @@ func (se *sumologicexporter) configure(ctx context.Context) error {
 	}
 
 	if httpSettings.Endpoint == "" && httpSettings.Auth != nil &&
-		httpSettings.Auth.AuthenticatorID.Type() == sumologicextension.Type {
+		httpSettings.Auth.AuthenticatorID.Type() == sumologicextension.NewFactory().Type() {
 		// If user specified using sumologicextension as auth but none was
 		// found then return an error.
 		if !foundSumoExt {
@@ -367,7 +367,7 @@ func (se *sumologicexporter) configure(ctx context.Context) error {
 		// endpoint was not set then send data on a collector generic ingest URL
 		// with authentication set by sumologicextension.
 
-		u, err := url.Parse(ext.BaseUrl())
+		u, err := url.Parse(ext.BaseURL())
 		if err != nil {
 			return fmt.Errorf("failed to parse API base URL from sumologicextension: %w", err)
 		}
@@ -397,7 +397,7 @@ func (se *sumologicexporter) configure(ctx context.Context) error {
 
 		// Clean authenticator if set to sumologic.
 		// Setting to null in configuration doesn't work, so we have to force it that way.
-		if httpSettings.Auth != nil && httpSettings.Auth.AuthenticatorID.Type() == sumologicextension.Type {
+		if httpSettings.Auth != nil && httpSettings.Auth.AuthenticatorID.Type() == sumologicextension.NewFactory().Type() {
 			httpSettings.Auth = nil
 		}
 	} else {
