@@ -40,7 +40,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	semconv "go.opentelemetry.io/collector/semconv/v1.18.0"
 
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension"
 )
 
 type opampAgent struct {
@@ -102,7 +102,7 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 
 	var baseURL string
 	if o.authExtension != nil {
-		baseURL = o.authExtension.BaseUrl()
+		baseURL = o.authExtension.BaseURL()
 	}
 
 	if err := o.setEndpoint(baseURL); err != nil {

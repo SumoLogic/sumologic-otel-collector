@@ -182,8 +182,6 @@ receivers:
 
 extensions:
   # Processors with non-upstreamed changes:
-  - gomod: github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension v0.0.0-00010101000000-000000000000
-    path: ./../pkg/extension/sumologicextension
   - gomod: github.com/SumoLogic/sumologic-otel-collector/pkg/extension/opampextension v0.0.0-00010101000000-000000000000
     path: ./../pkg/extension/opampextension
 
@@ -212,6 +210,7 @@ extensions:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/sigv4authextension v0.100.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/dbstorage v0.100.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage v0.100.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.100.0
 
 connectors:
   - gomod: go.opentelemetry.io/collector/connector/forwardconnector v0.100.0
@@ -237,7 +236,6 @@ replaces:
   # We add a dependency in the builder config in this file but only for a particular (placeholder)
   # version which gets then translated into a replace in go.mod file.
   # This does not replace the version that sumologicexporter depends on.
-  - github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicextension => ../../pkg/extension/sumologicextension
   - github.com/SumoLogic/sumologic-otel-collector/pkg/extension/opampextension => ../../pkg/extension/opampextension
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider => ../../pkg/configprovider/globprovider
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider => ../../pkg/configprovider/opampprovider
