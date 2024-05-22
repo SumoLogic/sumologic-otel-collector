@@ -66,13 +66,13 @@ The rest of the components in the table are pure upstream OpenTelemetry componen
 The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 
 |                        Receivers                         |                          Processors                          |               Exporters                |                  Extensions                  |              Connectors               |
-| :------------------------------------------------------: | :----------------------------------------------------------: | :------------------------------------: | :------------------------------------------: | :-----------------------------------: |
+| :------------------------------------------------------: | :----------------------------------------------------------: | :------------------------------------: | :------------------------------------------: |:-------------------------------------:|
 |     [active_directory_ds][activedirectorydsreceiver]     |              [attributes][attributesprocessor]               |         [awss3][awss3exporter]         |       [asapclient][asapauthextension]        |      [forward][forwardconnector]      |
 |   [`active_directory_inv`][activedirectoryinvreceiver]   |                   [batch][batchprocessor]                    |        [carbon][carbonexporter]        |             [awsproxy][awsproxy]             |        [count][countconnector]        |
-|              [aerospike][aerospikereceiver]              |        [`cascading_filter`][cascadingfilterprocessor]        |         [debug][debugexporter]         |       [basicauth][basicauthextension]        |      [routing][routingconnector]      |
-|                 [apache][apachereceiver]                 |       [cumulativetodelta][cumulativetodeltaprocessor]        |          [file][fileexporter]          | [bearertokenauth][bearertokenauthextension]  | [servicegraph][servicegraphconnector] |
-|          [awscloudwatch][awscloudwatchreceiver]          |             [deltatorate][deltatorateprocessor]              |         [kafka][kafkaexporter]         |           [db_storage][dbstorage]            |  [spanmetrics][spanmetricsconnector]  |
-|    [awscontainerinsight][awscontainerinsightreceiver]    | [experimental_metricsgeneration][metricsgenerationprocessor] | [loadbalancing][loadbalancingexporter] |      [docker_observer][dockerobserver]       |                                       |
+|              [aerospike][aerospikereceiver]              |        [`cascading_filter`][cascadingfilterprocessor]        |         [debug][debugexporter]         |       [basicauth][basicauthextension]        |     [failover][failoverconnector]     |
+|                 [apache][apachereceiver]                 |       [cumulativetodelta][cumulativetodeltaprocessor]        |          [file][fileexporter]          | [bearertokenauth][bearertokenauthextension]  |      [routing][routingconnector]      |
+|          [awscloudwatch][awscloudwatchreceiver]          |             [deltatorate][deltatorateprocessor]              |         [kafka][kafkaexporter]         |           [db_storage][dbstorage]            | [servicegraph][servicegraphconnector] |
+|    [awscontainerinsight][awscontainerinsightreceiver]    | [experimental_metricsgeneration][metricsgenerationprocessor] | [loadbalancing][loadbalancingexporter] |      [docker_observer][dockerobserver]       |  [spanmetrics][spanmetricsconnector]  |
 | [awsecscontainermetrics][awsecscontainermetricsreceiver] |                  [filter][filterprocessor]                   |  ⚠️ ~~[logging][loggingexporter]~~ ⚠️  |         [ecs_observer][ecsobserver]          |                                       |
 |            [awsfirehose][awsfirehosereceiver]            |            [groupbyattrs][groupbyattrsprocessor]             |          [otlp][otlpexporter]          |     [ecs_task_observer][ecstaskobserver]     |                                       |
 |                [awsxray][awsxrayreceiver]                |            [groupbytrace][groupbytraceprocessor]             |      [otlphttp][otlphttpexporter]      |         [file_storage][filestorage]          |                                       |
@@ -308,6 +308,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [zpagesextension]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.100.0/extension/zpagesextension
 [forwardconnector]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.100.0/connector/forwardconnector
 [countconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.100.0/connector/countconnector
+[failoverconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.100.0/connector/failoverconnector
 [routingconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.100.0/connector/routingconnector
 [servicegraphconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.100.0/connector/servicegraphconnector
 [spanmetricsconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.100.0/connector/spanmetricsconnector
