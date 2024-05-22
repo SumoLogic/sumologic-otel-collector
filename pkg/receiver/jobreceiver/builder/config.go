@@ -1,11 +1,13 @@
 package builder
 
 import (
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output"
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output/consumer"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/helper"
+	"go.opentelemetry.io/collector/component"
 	"go.uber.org/zap"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output/consumer"
 )
 
 type JobRunnerBuilder interface {
@@ -35,8 +37,8 @@ type pipelineInputConfig struct {
 }
 
 // Build the stanza input operator.
-func (cfg *pipelineInputConfig) Build(logger *zap.SugaredLogger) (operator.Operator, error) {
-	inputBase, err := cfg.InputConfig.Build(logger)
+func (cfg *pipelineInputConfig) Build(settings component.TelemetrySettings) (operator.Operator, error) {
+	inputBase, err := cfg.InputConfig.Build(settings)
 	if err != nil {
 		return nil, err
 	}
@@ -45,12 +47,12 @@ func (cfg *pipelineInputConfig) Build(logger *zap.SugaredLogger) (operator.Opera
 	}
 
 	// point the consumer at this input operator
-	consumer, err := cfg.ConsumerBuilder.Build(logger, inputOp)
+	consumer, err := cfg.ConsumerBuilder.Build(settings.Logger.Sugar(), inputOp)
 	if err != nil {
 		return nil, err
 	}
 	// point the job runner at the consumer
-	runner, err := cfg.JobRunnerBuilder.Build(logger, consumer)
+	runner, err := cfg.JobRunnerBuilder.Build(settings.Logger.Sugar(), consumer)
 	if err != nil {
 		return nil, err
 	}
