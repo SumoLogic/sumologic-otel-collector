@@ -69,6 +69,15 @@ jobs:
               echo "MACOS_SIGNING_ENABLED=true" >> $GITHUB_ENV
           fi
 
+      - name: Determine if Windows package should be signed
+        if: runner.os == 'Windows'
+        env:
+          WINDOWS_CERTIFICATE: '${{ secrets.microsoft_certificate }}'
+        run: |
+          if [ -n "${WINDOWS_CERTIFICATE}" ]; then
+              echo "WINDOWS_SIGNING_ENABLED=true" >> $GITHUB_ENV
+          fi
+
       - name: Setup go
         if: (! (contains(inputs.arch_os, 'windows') && inputs.fips))
         uses: actions/setup-go@v5
@@ -198,7 +207,7 @@ jobs:
         run: make ${{ inputs.arch_os }}-sign
 
       - name: Sign Windows binary
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && env.WINDOWS_SIGNING_ENABLED == 'true'
         uses: skymatic/code-sign-action@v3
         with:
           certificate: '${{ secrets.microsoft_certificate }}'
