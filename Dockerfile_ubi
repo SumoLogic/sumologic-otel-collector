@@ -3,7 +3,7 @@ ARG REPO_URL=sumologic-otel-collector
 ARG BUILD_ARCH
 
 ## Build RedHat compliant image
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10
 
 ENV SUMMARY="UBI based sumologic-otel-collector" \
     DESCRIPTION="Sumo Logic Distribution for OpenTelemetry Collector is a Sumo Logic-supported distribution of the OpenTelemetry Collector. It is a single agent to send logs, metrics and traces to Sumo Logic."
