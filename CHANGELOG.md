@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.100.0-sumo-0]
+
+### Released 2024-05-27
+
+### Added
+
+- build: add exceptions connector [#1588]
+- build: add failover connector [#1588]
+- build: add roundrobin connector [#1588]
+
+### Changed
+
+- upgrade otelcol core to 0.100.0 [#1588]
+
+[#1588]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1588
+[v0.100.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.100.0-sumo-0
+
 ## [v0.99.0-sumo-0]
 
 ### Released 2024-05-09
