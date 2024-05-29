@@ -17,6 +17,7 @@ package sampling
 import (
 	"sync"
 	"time"
+	"fmt"
 
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
@@ -41,6 +42,52 @@ type TraceData struct {
 	SpanCount int32
 	// ReceivedBatches stores all the batches received for the trace.
 	ReceivedBatches []ptrace.Traces
+}
+
+func (td *TraceData) String() string {
+	var output string
+	for i, batch := range td.ReceivedBatches {
+		output += fmt.Sprintf("Batch %d:\n", i)
+		rs := batch.ResourceSpans()
+		for j := 0; j < rs.Len(); j++ {
+			resource := rs.At(j).Resource()
+			output += fmt.Sprintf("  Resource %d: %v\n", j, resource.Attributes().AsRaw())
+			ss := rs.At(j).ScopeSpans()
+			for k := 0; k < ss.Len(); k++ {
+				spans := ss.At(k).Spans()
+				for l := 0; l < spans.Len(); l++ {
+					span := spans.At(l)
+
+					// Get the status of the span
+					status := span.Status()
+
+					// Create a string representation of the status
+					statusStr := fmt.Sprintf("{ Code: %d, Message: %s }", status.Code(), status.Message())
+				
+					// Check if the span is a root span
+					isRootSpan := span.ParentSpanID().IsEmpty()
+					fmt.Printf("is it root span? -> %v\n", isRootSpan)
+					var spanType string
+
+					if !isRootSpan {
+						spanType = "any span"
+					} else {
+						spanType = "root span"
+					}
+
+					// Get the SpanID
+					spanID := span.SpanID().String()					
+
+					output += fmt.Sprintf("    Span %d (Type: %s):\n", l, spanType)
+					output += fmt.Sprintf("      Name: %s\n", span.Name())
+					output += fmt.Sprintf("      SpanID: %s\n", spanID)
+					output += fmt.Sprintf("      Attributes: %v\n", span.Attributes().AsRaw())
+					output += fmt.Sprintf("      Status: %v\n", statusStr)
+				}
+			}
+		}
+	}
+	return output
 }
 
 // Decision gives the status of sampling decision.

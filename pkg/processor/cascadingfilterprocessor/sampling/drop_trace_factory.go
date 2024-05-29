@@ -16,7 +16,7 @@ package sampling
 
 import (
 	"regexp"
-
+	"fmt"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
 
@@ -28,6 +28,7 @@ type dropTraceEvaluator struct {
 	stringAttr  *stringAttributeFilter
 	attrs       []attributeFilter
 	operationRe *regexp.Regexp
+	statusCode  *string
 
 	logger *zap.Logger
 }
@@ -47,6 +48,7 @@ func NewDropTraceEvaluator(logger *zap.Logger, cfg config.TraceRejectCfg) (DropT
 	}
 
 	var operationRe *regexp.Regexp
+	var statusCode *string
 
 	if cfg.NamePattern != nil {
 		operationRe, err = regexp.Compile(*cfg.NamePattern)
@@ -55,11 +57,16 @@ func NewDropTraceEvaluator(logger *zap.Logger, cfg config.TraceRejectCfg) (DropT
 		}
 	}
 
+	if (cfg.StatusCode != nil) {
+		statusCode = cfg.StatusCode
+	}
+
 	return &dropTraceEvaluator{
 		stringAttr:  stringAttrFilter,
 		numericAttr: numericAttrFilter,
 		attrs:       attrsFilter,
 		operationRe: operationRe,
+		statusCode:  statusCode,
 		logger:      logger,
 	}, nil
 }
@@ -74,6 +81,7 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 	matchingStringAttrFound := false
 	matchingNumericAttrFound := false
 	matchingAttrsFound := false
+	matchingStatusCodeFound := false
 
 	for _, batch := range batches {
 		rs := batch.ResourceSpans()
@@ -104,6 +112,29 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 						matchingNumericAttrFound = checkIfNumericAttrFound(span.Attributes(), dte.numericAttr)
 					}
 
+					// Print the span details
+					fmt.Printf("current Span Name in shouldDrop: %s\n", span.Name())
+					fmt.Printf("current Span Attributes in shouldDrop: %v\n", span.Attributes().AsRaw())					
+
+					// Get the status of the span
+					status := span.Status()
+					// Create a string representation of the status
+					statusStr := fmt.Sprintf("{ Code: %d, Message: %s }", status.Code(), status.Message())
+					fmt.Printf("current STATUS CODE in shouldDrop: %v\n", statusStr)	
+
+					// Check if the span is a root span
+					isRootSpan := span.ParentSpanID().IsEmpty()
+					fmt.Printf("CHECK IF IT IS ROOT SPAN in shouldDrop: %v\n", isRootSpan)	
+
+					if dte.statusCode != nil && !matchingStatusCodeFound && isRootSpan {
+						statusCode := span.Status().Code()
+						fmt.Printf("Found root span status code: %d\n", statusCode)
+						fmt.Printf("what is the dte status code (user inputted)? : %d\n", dte.statusCode)
+						if statusCode.String() == *dte.statusCode {
+							matchingStatusCodeFound = true
+						}
+					}
+
 					if dte.operationRe != nil && !matchingOperationFound {
 						if dte.operationRe.MatchString(span.Name()) {
 							matchingOperationFound = true
@@ -115,12 +146,13 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 	}
 
 	conditionMet := struct {
-		operationName, stringAttr, numericAttr, attrs bool
+		operationName, stringAttr, numericAttr, attrs, statusCode bool
 	}{
 		operationName: true,
 		stringAttr:    true,
 		numericAttr:   true,
 		attrs:         true,
+		statusCode:	   true,
 	}
 
 	if dte.operationRe != nil {
@@ -136,5 +168,16 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 		conditionMet.attrs = matchingAttrsFound
 	}
 
-	return conditionMet.operationName && conditionMet.numericAttr && conditionMet.stringAttr && conditionMet.attrs
+	if dte.statusCode != nil {
+        conditionMet.statusCode = matchingStatusCodeFound
+    }
+
+	// Print the final decision criteria
+	fmt.Printf("Matching Criteria: %+v\n", conditionMet)
+
+	var isDrop bool
+	isDrop = conditionMet.operationName && conditionMet.numericAttr && conditionMet.stringAttr && conditionMet.attrs && conditionMet.statusCode
+	fmt.Printf("should drop? -> %v\n", isDrop)
+
+	return conditionMet.operationName && conditionMet.numericAttr && conditionMet.stringAttr && conditionMet.attrs && conditionMet.statusCode
 }

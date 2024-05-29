@@ -45,6 +45,7 @@ func TestLoadConfig(t *testing.T) {
 	probFilteringRate := int32(100)
 	namePatternValue := "foo.*"
 	healthCheckNamePatternValue := "health.*"
+	statusCode := "ERROR"
 
 	id1 := component.NewIDWithName(Type, "1")
 	assert.Equal(t, cfg.Processors[id1],
@@ -58,6 +59,7 @@ func TestLoadConfig(t *testing.T) {
 				{
 					Name:        "healthcheck-rule",
 					NamePattern: &healthCheckNamePatternValue,
+					StatusCode:  &statusCode,
 				},
 			},
 			TraceAcceptCfgs: []cfconfig.TraceAcceptCfg{
@@ -114,6 +116,7 @@ func TestLoadConfig(t *testing.T) {
 				{
 					Name:        "healthcheck-rule",
 					NamePattern: &healthCheckNamePatternValue,
+					StatusCode:  &statusCode,
 				},
 				{
 					Name:                "remove-all-traces-with-healthcheck-service",
