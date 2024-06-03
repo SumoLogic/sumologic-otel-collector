@@ -3,15 +3,15 @@ name: Releases
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-alpha.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-alpha.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+"
 
-      - 'v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-alpha.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-beta.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-rc.[0-9]+'
+      - "v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-alpha.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-beta.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-rc.[0-9]+"
 
 defaults:
   run:
@@ -40,7 +40,7 @@ jobs:
   build:
     name: Build
     uses: ./.github/workflows/workflow-build.yml
-    needs: [ get-version ]
+    needs: [get-version]
     strategy:
       matrix:
         include:
@@ -86,7 +86,7 @@ jobs:
       - get-version
     strategy:
       matrix:
-        arch_os: [ 'linux_amd64', 'linux_arm64']
+        arch_os: ["linux_amd64", "linux_arm64"]
     steps:
       - uses: actions/checkout@v4
 
@@ -243,14 +243,14 @@ jobs:
         run: |
           make push-container-manifest \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64,linux/arm64" \
+            PLATFORMS="linux/amd64 linux/arm64" \
             BUILD_TYPE_SUFFIX="-ubi-fips"
 
       - name: Push joint UBI-based FIPS container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64,linux/arm64" \
+            PLATFORMS="linux/amd64 linux/arm64" \
             REPO_URL=sumologic/sumologic-otel-collector \
             BUILD_TYPE_SUFFIX="-ubi-fips"
 
@@ -271,14 +271,14 @@ jobs:
         run: |
           make push-container-manifest \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64,linux/arm64" \
+            PLATFORMS="linux/amd64 linux/arm64" \
             BUILD_TYPE_SUFFIX="-ubi"
 
       - name: Push joint UBI-based container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64,linux/arm64" \
+            PLATFORMS="linux/amd64 linux/arm64" \
             REPO_URL=sumologic/sumologic-otel-collector \
             BUILD_TYPE_SUFFIX="-ubi"
 
@@ -326,11 +326,11 @@ jobs:
       - name: Sign MSI
         uses: skymatic/code-sign-action@v3
         with:
-          certificate: '${{ secrets.MICROSOFT_CERTIFICATE }}'
-          password: '${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}'
-          certificatesha1: '${{ secrets.MICROSOFT_CERTHASH }}'
-          certificatename: '${{ secrets.MICROSOFT_CERTNAME }}'
-          description: '${{ secrets.MICROSOFT_DESCRIPTION }}'
+          certificate: "${{ secrets.MICROSOFT_CERTIFICATE }}"
+          password: "${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}"
+          certificatesha1: "${{ secrets.MICROSOFT_CERTHASH }}"
+          certificatename: "${{ secrets.MICROSOFT_CERTNAME }}"
+          description: "${{ secrets.MICROSOFT_DESCRIPTION }}"
           folder: ./packaging/msi/wix/bin/${{ matrix.platform }}/en-US
 
       - name: Store MSI as action artifact for ${{ matrix.arch_os }}
@@ -339,7 +339,6 @@ jobs:
           name: ${{ matrix.arch_os }}${{ matrix.fips && '_fips' || '' }}_msi
           path: ./packaging/msi/wix/bin/${{ matrix.platform }}/en-US/*.msi
           if-no-files-found: error
-
 
   # Store the install script from the packaging repository as a release artifact.
   # Originally, this script was stored in this repository, and the official download url pointed
