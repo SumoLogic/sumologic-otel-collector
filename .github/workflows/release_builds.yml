@@ -125,7 +125,6 @@ jobs:
           path: artifacts/
 
       - name: Build and push FIPS image to Open Source ECR
-        if: matrix.arch_os == 'linux_amd64'
         run: |
           cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-multiplatform \
@@ -134,7 +133,6 @@ jobs:
             BUILD_TYPE_SUFFIX="-fips"
 
       - name: Build and push FIPS image to DockerHub
-        if: matrix.arch_os == 'linux_amd64'
         run: |
           cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-multiplatform \
@@ -144,7 +142,6 @@ jobs:
             BUILD_TYPE_SUFFIX="-fips"
 
       - name: Build and push UBI-based FIPS image to Open Source ECR
-        if: matrix.arch_os == 'linux_amd64'
         run: |
           cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-ubi \
@@ -153,7 +150,6 @@ jobs:
             BUILD_TYPE_SUFFIX="-ubi-fips"
 
       - name: Build and push UBI-based FIPS image to DockerHub
-        if: matrix.arch_os == 'linux_amd64'
         run: |
           cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-ubi \
@@ -178,7 +174,6 @@ jobs:
             REPO_URL=sumologic/sumologic-otel-collector
 
       - name: Build and push UBI-based image to Open Source ECR
-        if: matrix.arch_os == 'linux_amd64'
         run: |
           cp artifacts/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-ubi \
@@ -187,7 +182,6 @@ jobs:
             BUILD_TYPE_SUFFIX="-ubi"
 
       - name: Build and push UBI-based image to DockerHub
-        if: matrix.arch_os == 'linux_amd64'
         run: |
           cp artifacts/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-ubi \
