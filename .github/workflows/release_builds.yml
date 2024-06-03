@@ -243,14 +243,14 @@ jobs:
         run: |
           make push-container-manifest \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64" \
+            PLATFORMS="linux/amd64,linux/arm64" \
             BUILD_TYPE_SUFFIX="-ubi-fips"
 
       - name: Push joint UBI-based FIPS container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64" \
+            PLATFORMS="linux/amd64,linux/arm64" \
             REPO_URL=sumologic/sumologic-otel-collector \
             BUILD_TYPE_SUFFIX="-ubi-fips"
 
@@ -271,14 +271,14 @@ jobs:
         run: |
           make push-container-manifest \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64" \
+            PLATFORMS="linux/amd64,linux/arm64" \
             BUILD_TYPE_SUFFIX="-ubi"
 
       - name: Push joint UBI-based container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64" \
+            PLATFORMS="linux/amd64,linux/arm64" \
             REPO_URL=sumologic/sumologic-otel-collector \
             BUILD_TYPE_SUFFIX="-ubi"
 
