@@ -2,6 +2,8 @@
 
 export GO_VERSION="1.21.4"
 
+ARCH="$(dpkg --print-architecture)"
+
 sudo apt update -y
 sudo apt install -y \
     make \
@@ -9,10 +11,10 @@ sudo apt install -y \
     python3-pip
 
 # Install Go
-curl -LJ "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" -o go.linux-amd64.tar.gz \
+curl -LJ "https://golang.org/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz" -o go.linux-${ARCH}.tar.gz \
     && rm -rf /usr/local/go \
-    && tar -C /usr/local -xzf go.linux-amd64.tar.gz \
-    && rm go.linux-amd64.tar.gz \
+    && tar -C /usr/local -xzf go.linux-${ARCH}.tar.gz \
+    && rm go.linux-${ARCH}.tar.gz \
     && ln -s /usr/local/go/bin/go /usr/local/bin
 
 # Install Node.js (for tools like linters etc.)
@@ -77,7 +79,7 @@ su vagrant -c 'chef-solo --chef-license=accept' || true
 # Install docker
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
 add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   "deb [arch=${ARCH}] https://download.docker.com/linux/ubuntu \
    $(lsb_release -cs) \
    stable"
 apt-get install -y docker-ce docker-ce-cli containerd.io
