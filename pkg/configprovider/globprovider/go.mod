@@ -1,12 +1,12 @@
 module github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider
 
-go 1.21
+go 1.21.0
 
-toolchain go1.21.4
+toolchain go1.22.3
 
 require (
 	github.com/stretchr/testify v1.9.0
-	go.opentelemetry.io/collector/confmap v0.100.0
+	go.opentelemetry.io/collector/confmap v0.102.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 
