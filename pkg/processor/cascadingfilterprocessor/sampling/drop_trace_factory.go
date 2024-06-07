@@ -16,7 +16,6 @@ package sampling
 
 import (
 	"regexp"
-	"fmt"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
 
@@ -110,26 +109,13 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 					}
 					if !matchingNumericAttrFound && dte.numericAttr != nil {
 						matchingNumericAttrFound = checkIfNumericAttrFound(span.Attributes(), dte.numericAttr)
-					}
+					}				
 
-					// Print the span details
-					fmt.Printf("current Span Name in shouldDrop: %s\n", span.Name())
-					fmt.Printf("current Span Attributes in shouldDrop: %v\n", span.Attributes().AsRaw())					
-
-					// Get the status of the span
-					status := span.Status()
-					// Create a string representation of the status
-					statusStr := fmt.Sprintf("{ Code: %d, Message: %s }", status.Code(), status.Message())
-					fmt.Printf("current STATUS CODE in shouldDrop: %v\n", statusStr)	
-
-					// Check if the span is a root span
+					status := span.Status()	
 					isRootSpan := span.ParentSpanID().IsEmpty()
-					fmt.Printf("CHECK IF IT IS ROOT SPAN in shouldDrop: %v\n", isRootSpan)	
 
 					if dte.statusCode != nil && !matchingStatusCodeFound && isRootSpan {
 						statusCode := span.Status().Code()
-						fmt.Printf("Found root span status code: %d\n", statusCode)
-						fmt.Printf("what is the dte status code (user inputted)? : %d\n", dte.statusCode)
 						if statusCode.String() == *dte.statusCode {
 							matchingStatusCodeFound = true
 						}
@@ -171,13 +157,6 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 	if dte.statusCode != nil {
         conditionMet.statusCode = matchingStatusCodeFound
     }
-
-	// Print the final decision criteria
-	fmt.Printf("Matching Criteria: %+v\n", conditionMet)
-
-	var isDrop bool
-	isDrop = conditionMet.operationName && conditionMet.numericAttr && conditionMet.stringAttr && conditionMet.attrs && conditionMet.statusCode
-	fmt.Printf("should drop? -> %v\n", isDrop)
 
 	return conditionMet.operationName && conditionMet.numericAttr && conditionMet.stringAttr && conditionMet.attrs && conditionMet.statusCode
 }
