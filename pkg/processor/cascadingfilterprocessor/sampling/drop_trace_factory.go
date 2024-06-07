@@ -16,6 +16,7 @@ package sampling
 
 import (
 	"regexp"
+
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
 
@@ -56,7 +57,7 @@ func NewDropTraceEvaluator(logger *zap.Logger, cfg config.TraceRejectCfg) (DropT
 		}
 	}
 
-	if (cfg.StatusCode != nil) {
+	if cfg.StatusCode != nil {
 		statusCode = cfg.StatusCode
 	}
 
@@ -137,7 +138,7 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 		stringAttr:    true,
 		numericAttr:   true,
 		attrs:         true,
-		statusCode:	   true,
+		statusCode:    true,
 	}
 
 	if dte.operationRe != nil {
@@ -154,8 +155,8 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 	}
 
 	if dte.statusCode != nil {
-        conditionMet.statusCode = matchingStatusCodeFound
-    }
+		conditionMet.statusCode = matchingStatusCodeFound
+	}
 
 	return conditionMet.operationName && conditionMet.numericAttr && conditionMet.stringAttr && conditionMet.attrs && conditionMet.statusCode
 }

@@ -90,13 +90,13 @@ var cfgAutoRate = cfconfig.Config{
 			},
 		},
 	},
-    TraceRejectCfgs: []cfconfig.TraceRejectCfg{
-        {
-            Name:        "health-check",
-            NamePattern: &healthCheckPattern,
-            StatusCode:  mapStatusCode(statusCode),
-        },
-    },
+	TraceRejectCfgs: []cfconfig.TraceRejectCfg{
+		{
+			Name:        "health-check",
+			NamePattern: &healthCheckPattern,
+			StatusCode:  mapStatusCode(statusCode),
+		},
+	},
 }
 
 func fillSpan(span *ptrace.Span, durationMicros int64) {
@@ -280,7 +280,6 @@ func mapStatusCode(statusCode string) *string {
 		return &status
 	}
 }
-
 
 //func TestSecondChanceReevaluation(t *testing.T) {
 //	cascading := createCascade()
