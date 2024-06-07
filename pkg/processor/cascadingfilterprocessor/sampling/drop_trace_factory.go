@@ -109,7 +109,7 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 					}
 					if !matchingNumericAttrFound && dte.numericAttr != nil {
 						matchingNumericAttrFound = checkIfNumericAttrFound(span.Attributes(), dte.numericAttr)
-					}				
+					}
 
 					isRootSpan := span.ParentSpanID().IsEmpty()
 
