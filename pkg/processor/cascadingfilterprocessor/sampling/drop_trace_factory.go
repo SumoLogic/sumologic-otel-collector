@@ -111,7 +111,6 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 						matchingNumericAttrFound = checkIfNumericAttrFound(span.Attributes(), dte.numericAttr)
 					}				
 
-					status := span.Status()	
 					isRootSpan := span.ParentSpanID().IsEmpty()
 
 					if dte.statusCode != nil && !matchingStatusCodeFound && isRootSpan {
