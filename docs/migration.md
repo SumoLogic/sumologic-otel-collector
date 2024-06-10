@@ -2507,8 +2507,8 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [filterprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/processor/filterprocessor
 [sumologicsyslog]: ../pkg/processor/sumologicsyslogprocessor/README.md
 [network-semantic-convention]: https://github.com/open-telemetry/semantic-conventions/blob/cee22ec91448808ebcfa53df689c800c7171c9e1/docs/general/attributes.md#other-network-attributes
-[sumologicextension]: ../pkg/extension/sumologicextension/README.md
-[sumologicexporter]: ../pkg/exporter/sumologicexporter/README.md
+[sumologicextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/extension/sumologicextension/README.md
+[sumologicexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/exporter/sumologicexporter/README.md
 [syslogexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.102.0/exporter/syslogexporter/README.md
 [user.properties]: https://help.sumologic.com/docs/send-data/installed-collectors/collector-installation-reference/user-properties
 [proxy]: https://opentelemetry.io/docs/collector/configuration/#proxy-support

@@ -27,7 +27,7 @@ import (
 const (
 	// The value of "type" key in configuration.
 	typeStr        = "sumologic"
-	stabilityLevel = component.StabilityLevelBeta
+	stabilityLevel = component.StabilityLevelDeprecated
 )
 
 var Type = component.MustNewType(typeStr)

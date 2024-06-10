@@ -1,6 +1,7 @@
 # Configuration
 
 - [Basic configuration](#basic-configuration)
+  - [Alternative: OpAmp remote-managed configuration](#alternative-opamp-remote-managed-configuration)
   - [Basic configuration for logs](#basic-configuration-for-logs)
   - [Basic configuration for metrics](#basic-configuration-for-metrics)
   - [Basic configuration for traces](#basic-configuration-for-traces)
@@ -323,8 +324,8 @@ so keep in mind that to store credentials either the user needs a home directory
 More information about this feature can be found in the [extension's documentation][sumologicextension_store_credentials].
 
 [sumologic_webpage]: https://www.sumologic.com/
-[sumologicextension]: ../pkg/extension/sumologicextension/
-[sumologicexporter]: ../pkg/exporter/sumologicexporter/
+[sumologicextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/extension/sumologicextension
+[sumologicexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/exporter/sumologicexporter
 [hostmetricsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/receiver/hostmetricsreceiver
 [sumologicextension_configuration]: ../pkg/extension/sumologicextension#configuration
 [sumologicextension_store_credentials]: ../pkg/extension/sumologicextension/README.md#storing-credentials
@@ -420,7 +421,7 @@ service:
       - hostmetrics
 ```
 
-[sumologicexporter_docs]: ../pkg/exporter/sumologicexporter/README.md
+[sumologicexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/exporter/sumologicexporter/README.md
 
 ## Collecting logs from files
 

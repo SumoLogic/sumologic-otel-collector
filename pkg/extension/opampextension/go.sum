@@ -502,6 +502,8 @@ github.com/open-telemetry/opamp-go v0.14.0 h1:KoziIK+wsFojhUXNTkCSTnCPf0eCMqFAac
 github.com/open-telemetry/opamp-go v0.14.0/go.mod h1:XOGCigljsLSTZ8FfLwvat0M1QDj3conIIgRa77BWrKs=
 github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.102.0 h1:R70PpK14trQfL/Vj5oAiGRqX09s2gOWuf6t1Ae5fevQ=
 github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.102.0/go.mod h1:xmy/yFFmB1Epy+czrYMbA+4xeOKvhFqNqYWU6qINeis=
+github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter v0.102.0 h1:hixtJA1mtYsGvptwvsZhK+jNiBRlL8EXFB75mjlaTio=
+github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter v0.102.0/go.mod h1:a4ATO9tRv2awpizVLWlNe8QqVEOmI59Jl1g5Y4taU3Q=
 github.com/open-telemetry/opentelemetry-collector-contrib/exporter/syslogexporter v0.102.0 h1:QA8BS4Wrj4rIOX9dajqhXUlFSzDFQzE0qdiX/mmSJas=
 github.com/open-telemetry/opentelemetry-collector-contrib/exporter/syslogexporter v0.102.0/go.mod h1:Df8aFeWLqD8J0iLKXVkAGX4YD0h7u8pOljWNqd58jvE=
 github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.102.0 h1:5Z2JnKjMC885NAPUXmb04Rl4GWMLqGhfhnwLXLDFoi0=
