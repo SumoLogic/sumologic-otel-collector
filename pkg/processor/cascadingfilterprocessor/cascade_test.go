@@ -33,7 +33,7 @@ import (
 var testValue = 10 * time.Millisecond
 var probabilisticFilteringRate = int32(10)
 var healthCheckPattern = "health"
-var statusCode = "ERROR"
+var statusCode = ptrace.StatusCodeError.String()
 
 var cfg = cfconfig.Config{
 	CollectorInstances:      1,
@@ -58,7 +58,7 @@ var cfg = cfconfig.Config{
 		{
 			Name:        "health-check",
 			NamePattern: &healthCheckPattern,
-			StatusCode:  mapStatusCode(statusCode),
+			StatusCode:  &statusCode,
 		},
 	},
 }
@@ -71,7 +71,7 @@ var cfgJustDropping = cfconfig.Config{
 		{
 			Name:        "health-check",
 			NamePattern: &healthCheckPattern,
-			StatusCode:  mapStatusCode(statusCode),
+			StatusCode:  &statusCode,
 		},
 	},
 }
@@ -94,7 +94,7 @@ var cfgAutoRate = cfconfig.Config{
 		{
 			Name:        "health-check",
 			NamePattern: &healthCheckPattern,
-			StatusCode:  mapStatusCode(statusCode),
+			StatusCode:  &statusCode,
 		},
 	},
 }
@@ -267,19 +267,6 @@ func TestDropTracesAndAutoRateOthers(t *testing.T) {
 	require.False(t, cascading.shouldBeDropped(pcommon.TraceID([16]byte{2}), trace3))
 }
 
-func mapStatusCode(statusCode string) *string {
-	switch statusCode {
-	case "OK":
-		status := ptrace.StatusCodeOk.String()
-		return &status
-	case "ERROR":
-		status := ptrace.StatusCodeError.String()
-		return &status
-	default:
-		status := ptrace.StatusCodeUnset.String()
-		return &status
-	}
-}
 
 //func TestSecondChanceReevaluation(t *testing.T) {
 //	cascading := createCascade()

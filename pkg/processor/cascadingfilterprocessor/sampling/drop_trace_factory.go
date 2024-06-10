@@ -48,7 +48,6 @@ func NewDropTraceEvaluator(logger *zap.Logger, cfg config.TraceRejectCfg) (DropT
 	}
 
 	var operationRe *regexp.Regexp
-	var statusCode *string
 
 	if cfg.NamePattern != nil {
 		operationRe, err = regexp.Compile(*cfg.NamePattern)
@@ -57,16 +56,12 @@ func NewDropTraceEvaluator(logger *zap.Logger, cfg config.TraceRejectCfg) (DropT
 		}
 	}
 
-	if cfg.StatusCode != nil {
-		statusCode = cfg.StatusCode
-	}
-
 	return &dropTraceEvaluator{
 		stringAttr:  stringAttrFilter,
 		numericAttr: numericAttrFilter,
 		attrs:       attrsFilter,
 		operationRe: operationRe,
-		statusCode:  statusCode,
+		statusCode:  cfg.StatusCode,
 		logger:      logger,
 	}, nil
 }
@@ -112,10 +107,7 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 						matchingNumericAttrFound = checkIfNumericAttrFound(span.Attributes(), dte.numericAttr)
 					}
 
-					isRootSpan := span.ParentSpanID().IsEmpty()
-
-					if dte.statusCode != nil && !matchingStatusCodeFound && isRootSpan {
-						statusCode := span.Status().Code()
+					if !matchingStatusCodeFound && dte.statusCode != nil && span.ParentSpanID().IsEmpty() {						statusCode := span.Status().Code()
 						if statusCode.String() == *dte.statusCode {
 							matchingStatusCodeFound = true
 						}
