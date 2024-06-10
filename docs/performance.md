@@ -1,18 +1,17 @@
 # Performance
 
-- [Performance](#performance)
-  - [Benchmarks](#benchmarks)
-    - [Logs](#logs)
-      - [Benchmark setup](#benchmark-setup)
-      - [CPU usage guidelines](#cpu-usage-guidelines)
-        - [Benchmark - CPU usage for particular average message size and EPS](#benchmark---cpu-usage-for-particular-average-message-size-and-eps)
-        - [Benchmark - EPS for average message size and CPU usage](#benchmark---eps-for-average-message-size-and-cpu-usage)
-      - [Memory usage guidelines](#memory-usage-guidelines)
-        - [Benchmark - memory usage for particular average message size and EPS](#benchmark---memory-usage-for-particular-average-message-size-and-eps)
-  - [Fine Tuning](#fine-tuning)
-    - [Sumo Logic Exporter](#sumo-logic-exporter)
-    - [Batch Processor](#batch-processor)
-    - [Memory Limiter Processor](#memory-limiter-processor)
+- [Benchmarks](#benchmarks)
+  - [Logs](#logs)
+    - [Benchmark setup](#benchmark-setup)
+    - [CPU usage guidelines](#cpu-usage-guidelines)
+      - [Benchmark - CPU usage for particular average message size and EPS](#benchmark---cpu-usage-for-particular-average-message-size-and-eps)
+      - [Benchmark - EPS for average message size and CPU usage](#benchmark---eps-for-average-message-size-and-cpu-usage)
+    - [Memory usage guidelines](#memory-usage-guidelines)
+      - [Benchmark - memory usage for particular average message size and EPS](#benchmark---memory-usage-for-particular-average-message-size-and-eps)
+- [Fine Tuning](#fine-tuning)
+  - [Sumo Logic Exporter](#sumo-logic-exporter)
+  - [Batch Processor](#batch-processor)
+  - [Memory Limiter Processor](#memory-limiter-processor)
 
 ## Benchmarks
 
