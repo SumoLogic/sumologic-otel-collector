@@ -38,7 +38,7 @@ func NewFactory() extension.Factory {
 		Type,
 		createDefaultConfig,
 		createExtension,
-		component.StabilityLevelBeta,
+		component.StabilityLevelDeprecated,
 	)
 }
 
