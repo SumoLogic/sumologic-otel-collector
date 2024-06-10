@@ -282,7 +282,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [otlpexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.102.1/exporter/otlpexporter
 [otlphttpexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.102.1/exporter/otlphttpexporter
 [prometheusexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/exporter/prometheusexporter
-[sumologicexporter]: [./pkg/exporter/sumologicexporter](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/exporter/sumologicexporter)
+[sumologicexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/exporter/sumologicexporter
 [syslogexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/exporter/syslogexporter
 [asapauthextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/extension/asapauthextension
 [awsproxy]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/extension/awsproxy
