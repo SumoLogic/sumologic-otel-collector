@@ -107,7 +107,8 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 						matchingNumericAttrFound = checkIfNumericAttrFound(span.Attributes(), dte.numericAttr)
 					}
 
-					if !matchingStatusCodeFound && dte.statusCode != nil && span.ParentSpanID().IsEmpty() {						statusCode := span.Status().Code()
+					if !matchingStatusCodeFound && dte.statusCode != nil && span.ParentSpanID().IsEmpty() {
+						statusCode := span.Status().Code()
 						if statusCode.String() == *dte.statusCode {
 							matchingStatusCodeFound = true
 						}

@@ -267,7 +267,6 @@ func TestDropTracesAndAutoRateOthers(t *testing.T) {
 	require.False(t, cascading.shouldBeDropped(pcommon.TraceID([16]byte{2}), trace3))
 }
 
-
 //func TestSecondChanceReevaluation(t *testing.T) {
 //	cascading := createCascade()
 //
