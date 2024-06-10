@@ -1,25 +1,27 @@
 # Configuration
 
-- [Basic configuration](#basic-configuration)
-  - [Basic configuration for logs](#basic-configuration-for-logs)
-  - [Basic configuration for metrics](#basic-configuration-for-metrics)
-  - [Basic configuration for traces](#basic-configuration-for-traces)
-  - [Putting it all together](#putting-it-all-together)
-- [Authentication](#authentication)
-  - [Running the collector as systemd service](#running-the-collector-as-systemd-service)
-  - [Using multiple Sumo Logic extensions](#using-multiple-sumo-logic-extensions)
-- [Persistence](#persistence)
-- [Collecting logs from files](#collecting-logs-from-files)
-  - [Keeping track of position in files](#keeping-track-of-position-in-files)
-  - [Parsing JSON logs](#parsing-json-logs)
-- [Setting source category](#setting-source-category)
-  - [Setting source category on logs from files](#setting-source-category-on-logs-from-files)
-  - [Setting source category on Prometheus metrics](#setting-source-category-on-prometheus-metrics)
-  - [Setting source category with the Resource processor](#setting-source-category-with-the-resource-processor)
-- [Setting source host](#setting-source-host)
-- [Command-line configuration options](#command-line-configuration-options)
-- [Proxy Support](#proxy-support)
-- [Keeping Prometheus format using OTLP exporter](#keeping-prometheus-format-using-otlp-exporter)
+- [Configuration](#configuration)
+  - [Basic configuration](#basic-configuration)
+    - [Alternative: OpAmp remote-managed configuration](#alternative-opamp-remote-managed-configuration)
+    - [Basic configuration for logs](#basic-configuration-for-logs)
+    - [Basic configuration for metrics](#basic-configuration-for-metrics)
+    - [Basic configuration for traces](#basic-configuration-for-traces)
+    - [Putting it all together](#putting-it-all-together)
+  - [Authentication](#authentication)
+    - [Running the collector as systemd service](#running-the-collector-as-systemd-service)
+    - [Using multiple Sumo Logic extensions](#using-multiple-sumo-logic-extensions)
+  - [Persistence](#persistence)
+  - [Collecting logs from files](#collecting-logs-from-files)
+    - [Keeping track of position in files](#keeping-track-of-position-in-files)
+    - [Parsing JSON logs](#parsing-json-logs)
+  - [Setting source category](#setting-source-category)
+    - [Setting source category on logs from files](#setting-source-category-on-logs-from-files)
+    - [Setting source category on Prometheus metrics](#setting-source-category-on-prometheus-metrics)
+    - [Setting source category with the Resource processor](#setting-source-category-with-the-resource-processor)
+  - [Setting source host](#setting-source-host)
+  - [Command-line configuration options](#command-line-configuration-options)
+  - [Proxy Support](#proxy-support)
+  - [Keeping Prometheus format using OTLP exporter](#keeping-prometheus-format-using-otlp-exporter)
 
 ---
 
@@ -323,8 +325,8 @@ so keep in mind that to store credentials either the user needs a home directory
 More information about this feature can be found in the [extension's documentation][sumologicextension_store_credentials].
 
 [sumologic_webpage]: https://www.sumologic.com/
-[sumologicextension]: ../pkg/extension/sumologicextension/
-[sumologicexporter]: ../pkg/exporter/sumologicexporter/
+[sumologicextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/extension/sumologicextension
+[sumologicexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/exporter/sumologicexporter
 [hostmetricsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/receiver/hostmetricsreceiver
 [sumologicextension_configuration]: ../pkg/extension/sumologicextension#configuration
 [sumologicextension_store_credentials]: ../pkg/extension/sumologicextension/README.md#storing-credentials
@@ -420,7 +422,7 @@ service:
       - hostmetrics
 ```
 
-[sumologicexporter_docs]: ../pkg/exporter/sumologicexporter/README.md
+[sumologicexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/exporter/sumologicexporter/README.md
 
 ## Collecting logs from files
 

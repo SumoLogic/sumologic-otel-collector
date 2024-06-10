@@ -5,13 +5,13 @@ go 1.21.0
 toolchain go1.21.7
 
 require (
-	github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter v0.0.0-00010101000000-000000000000
 	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf/parsers/yaml v0.1.0
 	github.com/knadh/koanf/providers/rawbytes v0.1.0
 	github.com/knadh/koanf/v2 v2.1.1
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/open-telemetry/opamp-go v0.14.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter v0.102.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/syslogexporter v0.102.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.102.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.102.0
@@ -262,5 +262,3 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
-
-replace github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexporter => ./../../exporter/sumologicexporter

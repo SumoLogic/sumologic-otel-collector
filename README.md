@@ -77,7 +77,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |            [awsfirehose][awsfirehosereceiver]            |            [groupbyattrs][groupbyattrsprocessor]             |          [otlp][otlpexporter]          |     [ecs_task_observer][ecstaskobserver]     |  [spanmetrics][spanmetricsconnector]  |
 |                [awsxray][awsxrayreceiver]                |            [groupbytrace][groupbytraceprocessor]             |      [otlphttp][otlphttpexporter]      |         [file_storage][filestorage]          |                                       |
 |          [azureeventhub][azureeventhubreceiver]          |                 [`k8s_tagger`][k8sprocessor]                 |    [prometheus][prometheusexporter]    |   [headerssetter][headerssetterextension]    |                                       |
-|                  [bigip][bigipreceiver]                  |           [k8sattributes][k8sattributesprocessor]            |    [`sumologic`][sumologicexporter]    |     [health_check][healthcheckextension]     |                                       |
+|                  [bigip][bigipreceiver]                  |           [k8sattributes][k8sattributesprocessor]            |    [sumologic] [sumologicexporter]    |     [health_check][healthcheckextension]     |                                       |
 |                 [carbon][carbonreceiver]                 |           [logstransform][logstransformprocessor]            |        [syslog][syslogexporter]        |        [host_observer][hostobserver]         |                                       |
 |                 [chrony][chronyreceiver]                 |           [memory_limiter][memorylimiterprocessor]           |           [nop][nopexporter]           |       [http_forwarder][httpforwarder]        |                                       |
 |             [cloudflare][cloudflarereceiver]             |        [`metric_frequency`][metricfrequencyprocessor]        |                                        | [jaegerremotesampling][jaegerremotesampling] |                                       |
@@ -282,7 +282,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [otlpexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.102.1/exporter/otlpexporter
 [otlphttpexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.102.1/exporter/otlphttpexporter
 [prometheusexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/exporter/prometheusexporter
-[sumologicexporter]: ./pkg/exporter/sumologicexporter
+[sumologicexporter]: [./pkg/exporter/sumologicexporter](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/exporter/sumologicexporter)
 [syslogexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/exporter/syslogexporter
 [asapauthextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/extension/asapauthextension
 [awsproxy]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/extension/awsproxy

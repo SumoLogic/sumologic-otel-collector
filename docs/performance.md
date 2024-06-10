@@ -1,17 +1,18 @@
 # Performance
 
-- [Benchmarks](#benchmarks)
-  - [Logs](#logs)
-    - [Benchmark setup](#benchmark-setup)
-    - [CPU usage guidelines](#cpu-usage-guidelines)
-      - [Benchmark - CPU usage for particular average message size and EPS](#benchmark---cpu-usage-for-particular-average-message-size-and-eps)
-      - [Benchmark - EPS for average message size and CPU usage](#benchmark---eps-for-average-message-size-and-cpu-usage)
-    - [Memory usage guidelines](#memory-usage-guidelines)
-      - [Benchmark - memory usage for particular average message size and EPS](#benchmark---memory-usage-for-particular-average-message-size-and-eps)
-- [Fine Tuning](#fine-tuning)
-  - [Sumo Logic Exporter](#sumo-logic-exporter)
-  - [Batch Processor](#batch-processor)
-  - [Memory Limiter Processor](#memory-limiter-processor)
+- [Performance](#performance)
+  - [Benchmarks](#benchmarks)
+    - [Logs](#logs)
+      - [Benchmark setup](#benchmark-setup)
+      - [CPU usage guidelines](#cpu-usage-guidelines)
+        - [Benchmark - CPU usage for particular average message size and EPS](#benchmark---cpu-usage-for-particular-average-message-size-and-eps)
+        - [Benchmark - EPS for average message size and CPU usage](#benchmark---eps-for-average-message-size-and-cpu-usage)
+      - [Memory usage guidelines](#memory-usage-guidelines)
+        - [Benchmark - memory usage for particular average message size and EPS](#benchmark---memory-usage-for-particular-average-message-size-and-eps)
+  - [Fine Tuning](#fine-tuning)
+    - [Sumo Logic Exporter](#sumo-logic-exporter)
+    - [Batch Processor](#batch-processor)
+    - [Memory Limiter Processor](#memory-limiter-processor)
 
 ## Benchmarks
 
@@ -91,7 +92,7 @@ There are a couple configuration options that can help with performance in speci
 
 ### Sumo Logic Exporter
 
-The [`sumologicexporter`](../pkg/exporter/sumologicexporter)
+The [`sumologicexporter`](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/exporter/sumologicexporter)
 sends data to Sumo Logic.
 
 It has the following features that can help with performance:
@@ -100,7 +101,7 @@ It has the following features that can help with performance:
 - `sending_queue` with its `num_consumers`, `queue_size` settings,
 - `timeout`.
 
-Read more about these features in the [Sumo Logic Exporter docs](../pkg/exporter/sumologicexporter/README.md).
+Read more about these features in the [Sumo Logic Exporter docs](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/exporter/sumologicexporter/README.md).
 
 ### Batch Processor
 
