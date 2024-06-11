@@ -15,6 +15,7 @@
 package sampling
 
 import (
+	"errors"
 	"regexp"
 
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -31,6 +32,22 @@ type dropTraceEvaluator struct {
 	statusCode  *string
 
 	logger *zap.Logger
+}
+
+func validateStatusCode(statusCode *string) error {
+	if statusCode == nil {
+		return nil
+	}
+
+	validStatusCodes := []string{"Error", "Ok", "Unset"}
+
+	for _, valid := range validStatusCodes {
+		if *statusCode == valid {
+			return nil
+		}
+	}
+
+	return errors.New("Invalid status code: must be one of 'Error', 'Ok', or 'Unset' ")
 }
 
 var _ DropTraceEvaluator = (*dropTraceEvaluator)(nil)
@@ -54,6 +71,10 @@ func NewDropTraceEvaluator(logger *zap.Logger, cfg config.TraceRejectCfg) (DropT
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if err := validateStatusCode(cfg.StatusCode); err != nil {
+		return nil, err
 	}
 
 	return &dropTraceEvaluator{

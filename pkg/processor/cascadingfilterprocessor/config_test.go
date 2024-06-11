@@ -45,7 +45,7 @@ func TestLoadConfig(t *testing.T) {
 	probFilteringRate := int32(100)
 	namePatternValue := "foo.*"
 	healthCheckNamePatternValue := "health.*"
-	statusCode := "ERROR"
+	statusCode := "Error"
 
 	id1 := component.NewIDWithName(Type, "1")
 	assert.Equal(t, cfg.Processors[id1],
