@@ -24,6 +24,12 @@ import (
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
 )
 
+const (
+    StatusCodeError = "Error"
+    StatusCodeOk    = "Ok"
+    StatusCodeUnset = "Unset"
+)
+
 type dropTraceEvaluator struct {
 	numericAttr *numericAttributeFilter
 	stringAttr  *stringAttributeFilter
@@ -39,7 +45,7 @@ func validateStatusCode(statusCode *string) error {
 		return nil
 	}
 
-	validStatusCodes := []string{"Error", "Ok", "Unset"}
+	validStatusCodes := []string{StatusCodeError, StatusCodeOk, StatusCodeUnset}
 
 	for _, valid := range validStatusCodes {
 		if *statusCode == valid {
