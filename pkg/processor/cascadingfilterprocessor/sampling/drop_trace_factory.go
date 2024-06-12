@@ -25,9 +25,9 @@ import (
 )
 
 const (
-    StatusCodeError = "Error"
-    StatusCodeOk    = "Ok"
-    StatusCodeUnset = "Unset"
+	StatusCodeError = "Error"
+	StatusCodeOk    = "Ok"
+	StatusCodeUnset = "Unset"
 )
 
 type dropTraceEvaluator struct {
