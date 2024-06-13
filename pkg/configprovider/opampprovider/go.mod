@@ -6,7 +6,7 @@ toolchain go1.22.3
 
 require (
 	github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider v0.0.0-00010101000000-000000000000
-	github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil v0.0.0-00010101000000-000000000000
+	github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil
 	github.com/google/go-cmp v0.5.9
 	go.opentelemetry.io/collector/confmap v0.102.1
 	go.opentelemetry.io/collector/confmap/provider/fileprovider v0.102.1
