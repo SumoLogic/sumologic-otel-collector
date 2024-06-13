@@ -33,6 +33,8 @@ import (
 var testValue = 10 * time.Millisecond
 var probabilisticFilteringRate = int32(10)
 var healthCheckPattern = "health"
+var statusCode = ptrace.StatusCodeError.String()
+
 var cfg = cfconfig.Config{
 	CollectorInstances:      1,
 	DecisionWait:            2 * time.Second,
@@ -56,6 +58,7 @@ var cfg = cfconfig.Config{
 		{
 			Name:        "health-check",
 			NamePattern: &healthCheckPattern,
+			StatusCode:  &statusCode,
 		},
 	},
 }
@@ -68,6 +71,7 @@ var cfgJustDropping = cfconfig.Config{
 		{
 			Name:        "health-check",
 			NamePattern: &healthCheckPattern,
+			StatusCode:  &statusCode,
 		},
 	},
 }
@@ -90,6 +94,7 @@ var cfgAutoRate = cfconfig.Config{
 		{
 			Name:        "health-check",
 			NamePattern: &healthCheckPattern,
+			StatusCode:  &statusCode,
 		},
 	},
 }
@@ -101,6 +106,7 @@ func fillSpan(span *ptrace.Span, durationMicros int64) {
 	span.Attributes().PutInt("foo", 55)
 	span.SetStartTimestamp(pcommon.Timestamp(startTime))
 	span.SetEndTimestamp(pcommon.Timestamp(nowTs))
+	span.Status().SetCode(ptrace.StatusCodeError)
 }
 
 func createTrace(c *cascade, numSpans int, durationMicros int64) *sampling.TraceData {
@@ -193,6 +199,24 @@ func TestDropTraces(t *testing.T) {
 	trace2.ReceivedBatches[0].ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(2).SetName("health-check")
 	require.False(t, cascading.shouldBeDropped(pcommon.TraceID([16]byte{0}), trace1))
 	require.True(t, cascading.shouldBeDropped(pcommon.TraceID([16]byte{0}), trace2))
+}
+
+func TestDropTracesWithDifferentStatusCode(t *testing.T) {
+	cascading := createCascade(t)
+
+	trace1 := createTrace(cascading, 1, 1000000)
+	trace2 := createTrace(cascading, 1, 1000000)
+	trace3 := createTrace(cascading, 1, 1000000)
+
+	trace1.ReceivedBatches[0].ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(0).SetName("health-check-trace-1")
+	trace1.ReceivedBatches[0].ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(0).Status().SetCode(ptrace.StatusCodeUnset)
+	trace2.ReceivedBatches[0].ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(0).SetName("health-check-trace-2")
+	trace2.ReceivedBatches[0].ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(0).Status().SetCode(ptrace.StatusCodeOk)
+	trace3.ReceivedBatches[0].ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(0).SetName("health-check-trace-3")
+
+	require.False(t, cascading.shouldBeDropped(pcommon.TraceID([16]byte{0}), trace1))
+	require.False(t, cascading.shouldBeDropped(pcommon.TraceID([16]byte{0}), trace2))
+	require.True(t, cascading.shouldBeDropped(pcommon.TraceID([16]byte{0}), trace3))
 }
 
 func TestDropTracesAndNotLimitOthers(t *testing.T) {
