@@ -52,7 +52,7 @@ func validateStatusCode(statusCode *string) error {
 		}
 	}
 
-	return errors.New("Invalid status code: must be one of 'Error', 'Ok', or 'Unset' ")
+	return errors.New("invalid status code: must be one of 'Error', 'Ok', or 'Unset' ")
 }
 
 var _ DropTraceEvaluator = (*dropTraceEvaluator)(nil)

@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/otelcol/otelcoltest"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 
 	cfconfig "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
 )
@@ -45,7 +46,7 @@ func TestLoadConfig(t *testing.T) {
 	probFilteringRate := int32(100)
 	namePatternValue := "foo.*"
 	healthCheckNamePatternValue := "health.*"
-	statusCode := "Error"
+	statusCode := ptrace.StatusCodeError.String()
 
 	id1 := component.NewIDWithName(Type, "1")
 	assert.Equal(t, cfg.Processors[id1],
