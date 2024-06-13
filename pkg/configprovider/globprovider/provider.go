@@ -17,6 +17,7 @@ package globprovider
 import (
 	"context"
 	"fmt"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -68,11 +69,12 @@ func (fmp *provider) Retrieve(ctx context.Context, uri string, _ confmap.Watcher
 			return &confmap.Retrieved{}, err
 		}
 		pathConf := confmap.NewFromStringMap(rawConf)
+		providerutil.PrepareForReplaceBehavior(conf, pathConf)
 		if err := conf.Merge(pathConf); err != nil {
 			return &confmap.Retrieved{}, err
 		}
-	}
 
+	}
 	return confmap.NewRetrieved(conf.ToStringMap())
 }
 
