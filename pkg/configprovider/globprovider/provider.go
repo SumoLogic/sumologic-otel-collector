@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v3"
-
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil"
 	"go.opentelemetry.io/collector/confmap"
 )
 
@@ -68,6 +68,7 @@ func (fmp *provider) Retrieve(ctx context.Context, uri string, _ confmap.Watcher
 			return &confmap.Retrieved{}, err
 		}
 		pathConf := confmap.NewFromStringMap(rawConf)
+		providerutil.PrepareForReplaceBehavior(conf, pathConf)
 		if err := conf.Merge(pathConf); err != nil {
 			return &confmap.Retrieved{}, err
 		}

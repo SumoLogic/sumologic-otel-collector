@@ -25,3 +25,5 @@ require (
 )
 
 replace github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider => ../globprovider
+
+replace github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil => ../providerutil
