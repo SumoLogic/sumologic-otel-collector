@@ -19,15 +19,10 @@ import (
 	"regexp"
 
 	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
-)
-
-const (
-	StatusCodeError = "Error"
-	StatusCodeOk    = "Ok"
-	StatusCodeUnset = "Unset"
 )
 
 type dropTraceEvaluator struct {
@@ -45,7 +40,11 @@ func validateStatusCode(statusCode *string) error {
 		return nil
 	}
 
-	validStatusCodes := []string{StatusCodeError, StatusCodeOk, StatusCodeUnset}
+	validStatusCodes := []string{
+		ptrace.StatusCodeError.String(),
+		ptrace.StatusCodeOk.String(),
+		ptrace.StatusCodeUnset.String(),
+	}
 
 	for _, valid := range validStatusCodes {
 		if *statusCode == valid {
