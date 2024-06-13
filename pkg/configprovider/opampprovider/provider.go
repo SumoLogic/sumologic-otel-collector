@@ -135,7 +135,8 @@ func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.W
 	if err != nil {
 		return nil, err
 	}
-	PrepareForReplaceBehavior(retConf, addlConf)
+	//Order of conf parameter is imp, see method comments
+	PrepareForReplaceBehavior(addlConf, retConf)
 	// merge the file config in
 	if err := conf.Merge(addlConf); err != nil {
 		return nil, err
