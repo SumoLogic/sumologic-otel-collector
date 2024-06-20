@@ -1,6 +1,6 @@
 # Upgrading
 
-- [Upgrading to v0.103.0-sumo-0](#upgrading-to-v01030-sumo-0)
+- [Upgrading to v0.104.0-sumo-0](#upgrading-to-v01040-sumo-0)
   - [`sumologic` exporter: remove `compress_encoding`](#sumologic-exporter-remove-compress_encoding)
 - [Upgrading to v0.96.0-sumo-0](#upgrading-to-v0960-sumo-0)
   - [`sumologic` exporter: remove `json_logs`](#sumologic-exporter-remove-json_logs)
@@ -55,7 +55,7 @@
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
-## Upgrading to v0.103.0-sumo-0
+## Upgrading to v0.104.0-sumo-0
 
 ### `sumologic` exporter: remove `compress_encoding`
 
