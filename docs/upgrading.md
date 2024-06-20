@@ -70,7 +70,7 @@ Change this:
   ```yaml
   exporters:
     sumologic:
-      compress_encoding:
+      compress_encoding: ""
   ```
 
 to this:
@@ -78,7 +78,7 @@ to this:
   ```yaml
   exporters:
     sumologic:
-      compression:
+      compression: ""
   ```
 
 ## Upgrading to v0.96.0-sumo-0
