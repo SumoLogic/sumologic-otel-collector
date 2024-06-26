@@ -1,29 +1,30 @@
 package providerutil
 
-import "go.opentelemetry.io/collector/confmap"
+import (
+	"go.opentelemetry.io/collector/confmap"
+	"strings"
+)
 
-// Remove specific keys from srcMap if same keys present in mergeMap under same path
-func removeMatchingKeysFromSrcMap(srcMap map[string]interface{}, mergeMap map[string]interface{}) map[string]interface{} {
-	srcMapVal := srcMap
-	mergeMapVal := mergeMap
-	for key, mergeValue := range mergeMapVal {
-		srcValue, exists := srcMapVal[key]
+func removeKeyFromSrcMap(srcMap map[string]interface{}, mergeMap map[string]interface{}, keys []string, index int) map[string]interface{} {
 
-		//if key not exists in merge map, skip the path
-		if !exists {
-			continue
+	if index == len(keys) { //out of index
+		return srcMap
+	}
+
+	currentKey := keys[index]
+	leafIndex := len(keys) - 1
+	if index == leafIndex { // Got Leaf key, if leaf key exists in both maps, remove it from source map
+		_, existInSrc := srcMap[currentKey]
+		_, existInMerge := mergeMap[currentKey]
+		// If leaf key exists in both maps, remove from source map
+		if existInSrc && existInMerge {
+			delete(srcMap, currentKey)
 		}
-
-		if key == "collector_fields" {
-			delete(srcMapVal, key)
-		}
-
-		mergeNestedMap, isMergeMap := mergeValue.(map[string]interface{})
-		srcNestedMap, isSrcMap := srcValue.(map[string]interface{})
-
-		if isMergeMap && isSrcMap {
-			// Recursively handle nested maps
-			removeMatchingKeysFromSrcMap(srcNestedMap, mergeNestedMap)
+	} else { // More levels to go, descend into child if current key present in both maps
+		srcNestedMap, isCurrKeyInSrcMap := srcMap[currentKey].(map[string]interface{})
+		mergeNestedMap, isCurrKeyInMergeMap := mergeMap[currentKey].(map[string]interface{})
+		if isCurrKeyInSrcMap && isCurrKeyInMergeMap {
+			removeKeyFromSrcMap(srcNestedMap, mergeNestedMap, keys, index+1)
 		}
 	}
 	return srcMap
@@ -34,5 +35,11 @@ func removeMatchingKeysFromSrcMap(srcMap map[string]interface{}, mergeMap map[st
 // Merge method merges field values from source and mergeConf, so by removing existing values from
 // source map, we can achieve replace behavior
 func PrepareForReplaceBehavior(srcConf *confmap.Conf, mergeConf *confmap.Conf) {
-	*srcConf = *confmap.NewFromStringMap(removeMatchingKeysFromSrcMap(srcConf.ToStringMap(), mergeConf.ToStringMap()))
+	keyPathsWithReplaceBehavior := []string{
+		"extensions#sumologic#collector_fields",
+	}
+	for _, path := range keyPathsWithReplaceBehavior {
+		pathKeys := strings.Split(path, "#")
+		*srcConf = *confmap.NewFromStringMap(removeKeyFromSrcMap(srcConf.ToStringMap(), mergeConf.ToStringMap(), pathKeys, 0))
+	}
 }
