@@ -100,7 +100,7 @@ func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.W
 	if err != nil {
 		return nil, err
 	}
-	//Order of conf parameter is imp, see method comments
+	// Order of conf parameters is important, see method comments
 	providerutil.PrepareForReplaceBehavior(addlConf, retConf)
 
 	// merge the file config in
