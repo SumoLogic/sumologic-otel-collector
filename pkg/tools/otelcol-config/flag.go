@@ -37,11 +37,11 @@ const (
 	enableRemoteControlUsage  = "enables remote control via opamp"
 	disableRemoteControlUsage = "disables remote control, uses local configuration only"
 	setOpAmpEndpointUsage     = "sets the opamp endpoint (eg: wss://example.com)"
-	configUsage               = "path to sumologic.yaml configuration file"
-	setKVUsage                = "set key-value in sumologic.yaml with yq path (eg: --set-kv extensions.sumologic.foo=bar)"
-	getKVUsage                = "get key-value from sumologic.yaml with yq path (eg: --get-kv extensions.sumologic.foo)"
-	delKVUsage                = "delete key-value from sumologic.yaml with yq path (eg: --del-kv foo.bar)"
-	appendKVUsage             = `append key-value to sumologic.yaml with yq path (eg: --append-kv 'extensions={"foo":"bar"}')`
+	configUsage               = "path to sumologic configuration directory (normally /etc/otelcol-sumo)"
+	setKVUsage                = "set key-value in conf.d with yq path (eg: --set-kv extensions.sumologic.foo=bar)"
+	getKVUsage                = "get key-value from conf.d with yq path (eg: --get-kv extensions.sumologic.foo)"
+	delKVUsage                = "delete key-value from conf.d with yq path (eg: --del-kv foo.bar)"
+	appendKVUsage             = `append key-value to conf.d with yq path (eg: --append-kv 'extensions={"foo":"bar"}')`
 )
 
 type flagValues struct {
