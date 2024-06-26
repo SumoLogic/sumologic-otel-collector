@@ -56,6 +56,7 @@ func (fmp *provider) Retrieve(ctx context.Context, uri string, _ confmap.Watcher
 
 	// sort the paths alphabetically to have consistent ordering
 	sort.Strings(paths)
+	sort.Strings(paths)
 
 	conf := confmap.New()
 	for _, path := range paths {
