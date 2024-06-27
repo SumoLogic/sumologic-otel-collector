@@ -35,8 +35,8 @@ func removeKeyFromSrcMap(srcMap map[string]interface{}, mergeMap map[string]inte
 // Merge method merges field values from source and mergeConf, so by removing existing values from
 // source map, we can achieve replace behavior
 func PrepareForReplaceBehavior(srcConf *confmap.Conf, mergeConf *confmap.Conf) {
-	keyPathsWithReplaceBehavior := []string{
-		"extensions#sumologic#collector_fields",
+	keyPathsWithReplaceBehavior := [][]string{
+		{"extensions", "sumologic", "collector_fields"},
 	}
 	for _, path := range keyPathsWithReplaceBehavior {
 		pathKeys := strings.Split(path, "#")
