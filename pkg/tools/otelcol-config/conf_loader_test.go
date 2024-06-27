@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/fs"
 	"testing"
 	"testing/fstest"
@@ -133,7 +132,6 @@ func TestConfLoader(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-			fmt.Println(test.Name)
 			conf, err := ReadConfigDir(test.FS)
 			if err != nil {
 				if !test.ErrExpected {
