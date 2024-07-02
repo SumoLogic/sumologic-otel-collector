@@ -5,6 +5,7 @@ go 1.21.0
 toolchain go1.22.3
 
 require (
+	github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil v0.0.0-00010101000000-000000000000
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/collector/confmap v0.102.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -25,3 +26,5 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
+
+replace github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil => ../providerutil
