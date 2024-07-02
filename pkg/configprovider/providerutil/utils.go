@@ -2,7 +2,6 @@ package providerutil
 
 import (
 	"go.opentelemetry.io/collector/confmap"
-	"strings"
 )
 
 func removeKeyFromSrcMap(srcMap map[string]interface{}, mergeMap map[string]interface{}, keys []string) map[string]interface{} {
