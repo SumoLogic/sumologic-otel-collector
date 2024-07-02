@@ -33,7 +33,7 @@ import (
 
 func TestNewOpampAgent(t *testing.T) {
 	cfg := createDefaultConfig()
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	set.BuildInfo = component.BuildInfo{Version: "test version", Command: "otelcoltest"}
 	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
@@ -46,7 +46,7 @@ func TestNewOpampAgent(t *testing.T) {
 
 func TestNewOpampAgentAttributes(t *testing.T) {
 	cfg := createDefaultConfig()
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	set.BuildInfo = component.BuildInfo{Version: "test version", Command: "otelcoltest"}
 	set.Resource.Attributes().PutStr(semconv.AttributeServiceName, "otelcol-sumo")
 	set.Resource.Attributes().PutStr(semconv.AttributeServiceVersion, "sumo.0")
@@ -60,7 +60,7 @@ func TestNewOpampAgentAttributes(t *testing.T) {
 
 func TestGetAgentCapabilities(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -72,7 +72,7 @@ func TestGetAgentCapabilities(t *testing.T) {
 
 func TestCreateAgentDescription(t *testing.T) {
 	cfg := createDefaultConfig()
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -83,7 +83,7 @@ func TestCreateAgentDescription(t *testing.T) {
 
 func TestLoadEffectiveConfig(t *testing.T) {
 	cfg := createDefaultConfig()
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -95,7 +95,7 @@ func TestLoadEffectiveConfig(t *testing.T) {
 
 func TestSaveEffectiveConfig(t *testing.T) {
 	cfg := createDefaultConfig()
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -108,7 +108,7 @@ func TestSaveEffectiveConfig(t *testing.T) {
 
 func TestUpdateAgentIdentity(t *testing.T) {
 	cfg := createDefaultConfig()
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -124,7 +124,7 @@ func TestUpdateAgentIdentity(t *testing.T) {
 
 func TestComposeEffectiveConfig(t *testing.T) {
 	cfg := createDefaultConfig()
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -139,7 +139,7 @@ func TestApplyRemoteConfig(t *testing.T) {
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -179,7 +179,7 @@ func TestApplyRemoteApacheConfig(t *testing.T) {
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -219,7 +219,7 @@ func TestApplyRemoteHostConfig(t *testing.T) {
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -259,7 +259,7 @@ func TestApplyRemoteWindowsEventConfig(t *testing.T) {
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -299,7 +299,7 @@ func TestApplyRemoteExtensionsConfig(t *testing.T) {
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -339,7 +339,7 @@ func TestApplyRemoteConfigFailed(t *testing.T) {
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -374,7 +374,7 @@ func TestApplyRemoteConfigMissingProcessor(t *testing.T) {
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -411,7 +411,7 @@ func TestApplyFilterProcessorConfig(t *testing.T) {
 
 	cfg := createDefaultConfig().(*Config)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -447,7 +447,7 @@ func TestApplyFilterProcessorConfig(t *testing.T) {
 func TestShutdown(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.ClientConfig.Auth = nil
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -463,7 +463,7 @@ func TestStart(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.ClientConfig.Auth = nil
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -478,7 +478,7 @@ func TestReload(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.ClientConfig.Auth = nil
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopCreateSettings()
+	set := extensiontest.NewNopSettings()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 

@@ -15,6 +15,13 @@
 package k8sprocessor
 
 import (
+	"go.opentelemetry.io/collector/confmap"
+	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
+	"go.opentelemetry.io/collector/confmap/provider/envprovider"
+	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
+	"go.opentelemetry.io/collector/confmap/provider/httpprovider"
+	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
+	"go.opentelemetry.io/collector/otelcol"
 	"path"
 	"testing"
 
@@ -34,10 +41,18 @@ func TestLoadConfig(t *testing.T) {
 
 	require.NoError(t, component.ValidateConfig(factory.CreateDefaultConfig()))
 
-	cfg, err := otelcoltest.LoadConfig(
-		path.Join(".", "testdata", "config.yaml"),
-		factories,
-	)
+	cfg, err := otelcoltest.LoadConfigWithSettings(factories, otelcol.ConfigProviderSettings{
+		ResolverSettings: confmap.ResolverSettings{
+			URIs: []string{path.Join(".", "testdata", "config.yaml")},
+			ProviderFactories: []confmap.ProviderFactory{
+				fileprovider.NewFactory(),
+				envprovider.NewFactory(),
+				yamlprovider.NewFactory(),
+				httpprovider.NewFactory(),
+			},
+			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
+		},
+	})
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 	require.NoError(t, cfg.Validate())
