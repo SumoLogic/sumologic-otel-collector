@@ -39,7 +39,7 @@ type sumologicSchemaProcessor struct {
 	subprocessors []sumologicSchemaSubprocessor
 }
 
-func newSumologicSchemaProcessor(set processor.CreateSettings, config *Config) (*sumologicSchemaProcessor, error) {
+func newSumologicSchemaProcessor(set processor.Settings, config *Config) (*sumologicSchemaProcessor, error) {
 	set.Logger.Warn("Sumo Logic Schema processor has been deprecated in favor of Sumo Logic processor. " +
 		"Please follow https://github.com/SumoLogic/sumologic-otel-collector/blob/main/docs/upgrading.md#upgrading-to-v0910-sumo-0")
 

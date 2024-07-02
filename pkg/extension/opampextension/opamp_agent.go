@@ -17,6 +17,13 @@ package opampextension
 import (
 	"context"
 	"fmt"
+	"go.opentelemetry.io/collector/confmap"
+	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
+	"go.opentelemetry.io/collector/confmap/provider/envprovider"
+	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
+	"go.opentelemetry.io/collector/confmap/provider/httpprovider"
+	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
+	"go.opentelemetry.io/collector/otelcol"
 	"net/http"
 	"net/url"
 	"os"
@@ -444,7 +451,19 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 			return fmt.Errorf("cannot get the list of factories: %v", err)
 		}
 		o.logger.Info("Loading Configuration to Validate...")
-		_, errValidate := otelcoltest.LoadConfigAndValidate(p, factories)
+
+		_, errValidate := otelcoltest.LoadConfigAndValidateWithSettings(factories, otelcol.ConfigProviderSettings{
+			ResolverSettings: confmap.ResolverSettings{
+				URIs: []string{p},
+				ProviderFactories: []confmap.ProviderFactory{
+					fileprovider.NewFactory(),
+					envprovider.NewFactory(),
+					yamlprovider.NewFactory(),
+					httpprovider.NewFactory(),
+				},
+				ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
+			},
+		})
 		if errValidate != nil {
 			o.logger.Error("Validation Failed... %v", zap.Error(errValidate))
 			return fmt.Errorf("cannot validate config named %v", errValidate)

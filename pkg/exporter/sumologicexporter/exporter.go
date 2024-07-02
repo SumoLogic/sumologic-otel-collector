@@ -69,7 +69,7 @@ type sumologicexporter struct {
 	id component.ID
 }
 
-func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sumologicexporter, error) {
+func initExporter(cfg *Config, createSettings exporter.Settings) (*sumologicexporter, error) {
 
 	pf, err := newPrometheusFormatter()
 	if err != nil {
@@ -97,7 +97,7 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sumolog
 
 func newLogsExporter(
 	ctx context.Context,
-	params exporter.CreateSettings,
+	params exporter.Settings,
 	cfg *Config,
 ) (exporter.Logs, error) {
 	se, err := initExporter(cfg, params)
@@ -122,7 +122,7 @@ func newLogsExporter(
 
 func newMetricsExporter(
 	ctx context.Context,
-	params exporter.CreateSettings,
+	params exporter.Settings,
 	cfg *Config,
 ) (exporter.Metrics, error) {
 	se, err := initExporter(cfg, params)
@@ -147,7 +147,7 @@ func newMetricsExporter(
 
 func newTracesExporter(
 	ctx context.Context,
-	params exporter.CreateSettings,
+	params exporter.Settings,
 	cfg *Config,
 ) (exporter.Traces, error) {
 	se, err := initExporter(cfg, params)

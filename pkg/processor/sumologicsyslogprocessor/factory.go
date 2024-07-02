@@ -50,7 +50,7 @@ func createDefaultConfig() component.Config {
 
 func createLogProcessor(
 	ctx context.Context,
-	params processor.CreateSettings,
+	params processor.Settings,
 	cfg component.Config,
 	nextConsumer consumer.Logs,
 ) (processor.Logs, error) {

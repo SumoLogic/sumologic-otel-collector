@@ -15,6 +15,13 @@
 package sumologicschemaprocessor
 
 import (
+	"go.opentelemetry.io/collector/confmap"
+	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
+	"go.opentelemetry.io/collector/confmap/provider/envprovider"
+	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
+	"go.opentelemetry.io/collector/confmap/provider/httpprovider"
+	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
+	"go.opentelemetry.io/collector/otelcol"
 	"path/filepath"
 	"testing"
 
@@ -30,7 +37,19 @@ func TestLoadConfig(t *testing.T) {
 
 	factory := NewFactory()
 	factories.Processors[Type] = factory
-	cfg, err := otelcoltest.LoadConfigAndValidate(filepath.Join("testdata", "config.yaml"), factories)
+
+	cfg, err := otelcoltest.LoadConfigAndValidateWithSettings(factories, otelcol.ConfigProviderSettings{
+		ResolverSettings: confmap.ResolverSettings{
+			URIs: []string{filepath.Join("testdata", "config.yaml")},
+			ProviderFactories: []confmap.ProviderFactory{
+				fileprovider.NewFactory(),
+				envprovider.NewFactory(),
+				yamlprovider.NewFactory(),
+				httpprovider.NewFactory(),
+			},
+			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
+		},
+	})
 
 	require.Nil(t, err)
 	require.NotNil(t, cfg)

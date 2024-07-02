@@ -89,7 +89,7 @@ func compileRegex(regex string) *regexp.Regexp {
 	return re
 }
 
-func newSourceProcessor(set processor.CreateSettings, cfg *Config) *sourceProcessor {
+func newSourceProcessor(set processor.Settings, cfg *Config) *sourceProcessor {
 	keys := sourceKeys{
 		annotationPrefix:          cfg.AnnotationPrefix,
 		namespaceAnnotationPrefix: cfg.NamespaceAnnotationPrefix,

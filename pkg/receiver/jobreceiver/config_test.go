@@ -91,7 +91,7 @@ func TestConfigValidate(t *testing.T) {
 			expected := tc.Expected()
 			sub, err := cm.Sub(component.NewIDWithName(Type, tc.Name).String())
 			require.NoError(t, err)
-			require.NoError(t, component.UnmarshalConfig(sub, actual))
+			require.NoError(t, sub.Unmarshal(&actual))
 			assert.Equal(t, expected, actual)
 		})
 	}

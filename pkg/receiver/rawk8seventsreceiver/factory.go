@@ -56,7 +56,7 @@ func createDefaultConfig() component.Config {
 
 func createLogsReceiver(
 	ctx context.Context,
-	params receiver.CreateSettings,
+	params receiver.Settings,
 	cfg component.Config,
 	consumer consumer.Logs,
 ) (receiver.Logs, error) {
@@ -67,7 +67,7 @@ func createLogsReceiver(
 
 func createLogsReceiverWithClient(
 	_ context.Context,
-	params receiver.CreateSettings,
+	params receiver.Settings,
 	cfg component.Config,
 	consumer consumer.Logs,
 	clientFactory func(APIConfig) (k8s.Interface, error),
