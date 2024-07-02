@@ -115,21 +115,9 @@ update-ot: install-gsed
 	$(SED) -i "s/\(go\.opentelemetry\.io\/collector\/.*\) v$(OT_CORE_VERSION)$$/\1 v$(OT_CORE_NEW)/" otelcolbuilder/.otelcol-builder.yaml
 	$(SED) -i "s/\(github\.com\/open-telemetry\/opentelemetry-collector-contrib\/.*\) v$(OT_CONTRIB_VERSION)$$/\1 v$(OT_CONTRIB_NEW)/" otelcolbuilder/.otelcol-builder.yaml
 	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW)/" otelcolbuilder/Makefile
-	$(SED) -i "s/\(collector\/\(blob\|tree\)\/v\)$(OT_CORE_VERSION)/\1$(OT_CORE_NEW)/" \
-		README.md \
-		docs/configuration.md \
-		docs/migration.md \
-		docs/performance.md \
-	$(SED) -i "s/\(contrib\/\(blob\|tree\)\/v\)$(OT_CONTRIB_VERSION)/\1$(OT_CONTRIB_NEW)/" \
-		README.md \
-		docs/configuration.md \
-		docs/migration.md \
-		docs/performance.md \
-		pkg/receiver/telegrafreceiver/README.md
 	@find . -type f -name "go.mod" -exec $(SED) -i "s/\(go\.opentelemetry\.io\/collector.*\) v$(OT_CORE_VERSION)$$/\1 v$(OT_CORE_NEW)/" {} \;
 	@find . -type f -name "go.mod" -exec $(SED) -i "s/\(github\.com\/open-telemetry\/opentelemetry-collector-contrib\/.*\) v$(OT_CONTRIB_VERSION)$$/\1 v$(OT_CONTRIB_NEW)/" {} \;
 	@echo "building OT distro to check for breakage"
-	make gomod-download-all
 	pushd otelcolbuilder \
 		&& make install-builder \
 		&& make build \

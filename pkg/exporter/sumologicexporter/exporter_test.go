@@ -67,8 +67,8 @@ func createTestConfig() *Config {
 	return config
 }
 
-func createExporterCreateSettings() exporter.CreateSettings {
-	return exporter.CreateSettings{
+func createExporterCreateSettings() exporter.Settings {
+	return exporter.Settings{
 		TelemetrySettings: component.TelemetrySettings{
 			Logger: zap.NewNop(),
 		},
@@ -292,16 +292,17 @@ func TestPartiallyFailed(t *testing.T) {
 }
 
 func TestInvalidHTTPCLient(t *testing.T) {
+	clientConfig := confighttp.ClientConfig{
+		Endpoint: "test_endpoint",
+		CustomRoundTripper: func(next http.RoundTripper) (http.RoundTripper, error) {
+			return nil, errors.New("roundTripperException")
+		},
+	}
 	exp, err := initExporter(&Config{
 		LogFormat:    "json",
 		MetricFormat: "otlp",
 		TraceFormat:  "otlp",
-		ClientConfig: confighttp.ClientConfig{
-			Endpoint: "test_endpoint",
-			CustomRoundTripper: func(next http.RoundTripper) (http.RoundTripper, error) {
-				return nil, errors.New("roundTripperException")
-			},
-		},
+		ClientConfig: clientConfig,
 	}, createExporterCreateSettings())
 	assert.NoError(t, err)
 

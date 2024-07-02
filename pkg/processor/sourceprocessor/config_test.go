@@ -15,6 +15,13 @@
 package sourceprocessor
 
 import (
+	"go.opentelemetry.io/collector/confmap"
+	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
+	"go.opentelemetry.io/collector/confmap/provider/envprovider"
+	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
+	"go.opentelemetry.io/collector/confmap/provider/httpprovider"
+	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
+	"go.opentelemetry.io/collector/otelcol"
 	"path"
 	"testing"
 
@@ -31,7 +38,19 @@ func TestLoadConfig(t *testing.T) {
 	factories.Processors[Type] = factory
 
 	cfgPath := path.Join(".", "testdata", "config.yaml")
-	cfg, err := otelcoltest.LoadConfig(cfgPath, factories)
+
+	cfg, err := otelcoltest.LoadConfigWithSettings(factories, otelcol.ConfigProviderSettings{
+		ResolverSettings: confmap.ResolverSettings{
+			URIs: []string{cfgPath},
+			ProviderFactories: []confmap.ProviderFactory{
+				fileprovider.NewFactory(),
+				envprovider.NewFactory(),
+				yamlprovider.NewFactory(),
+				httpprovider.NewFactory(),
+			},
+			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
+		},
+	})
 	assert.NoError(t, err)
 	assert.NotNil(t, cfg)
 

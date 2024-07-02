@@ -15,6 +15,13 @@
 package cascadingfilterprocessor
 
 import (
+	"go.opentelemetry.io/collector/confmap"
+	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
+	"go.opentelemetry.io/collector/confmap/provider/envprovider"
+	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
+	"go.opentelemetry.io/collector/confmap/provider/httpprovider"
+	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
+	"go.opentelemetry.io/collector/otelcol"
 	"path"
 	"testing"
 	"time"
@@ -35,7 +42,18 @@ func TestLoadConfig(t *testing.T) {
 	factory := NewFactory()
 	factories.Processors[factory.Type()] = factory
 
-	cfg, err := otelcoltest.LoadConfig(path.Join(".", "testdata", "cascading_filter_config.yaml"), factories)
+	cfg, err := otelcoltest.LoadConfigWithSettings(factories, otelcol.ConfigProviderSettings{
+		ResolverSettings: confmap.ResolverSettings{
+			URIs: []string{path.Join(".", "testdata", "cascading_filter_config.yaml")},
+			ProviderFactories: []confmap.ProviderFactory{
+				fileprovider.NewFactory(),
+				envprovider.NewFactory(),
+				yamlprovider.NewFactory(),
+				httpprovider.NewFactory(),
+			},
+			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
+		},
+	})
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
