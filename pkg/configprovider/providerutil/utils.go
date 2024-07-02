@@ -5,27 +5,27 @@ import (
 	"strings"
 )
 
-func removeKeyFromSrcMap(srcMap map[string]interface{}, mergeMap map[string]interface{}, keys []string, index int) map[string]interface{} {
+func removeKeyFromSrcMap(srcMap map[string]interface{}, mergeMap map[string]interface{}, keys []string) map[string]interface{} {
 
-	if index == len(keys) { //out of index
+	if len(keys) == 0 {
 		return srcMap
 	}
 
-	currentKey := keys[index]
-	leafIndex := len(keys) - 1
-	if index == leafIndex { // Got Leaf key, if leaf key exists in both maps, remove it from source map
+	currentKey := keys[0]
+	if len(keys) == 1 { // Got Leaf key, if leaf key exists in both maps, remove it from source map
 		_, existInSrc := srcMap[currentKey]
 		_, existInMerge := mergeMap[currentKey]
 		// If leaf key exists in both maps, remove from source map
 		if existInSrc && existInMerge {
 			delete(srcMap, currentKey)
 		}
-	} else { // More levels to go, descend into child if current key present in both maps
-		srcNestedMap, isCurrKeyInSrcMap := srcMap[currentKey].(map[string]interface{})
-		mergeNestedMap, isCurrKeyInMergeMap := mergeMap[currentKey].(map[string]interface{})
-		if isCurrKeyInSrcMap && isCurrKeyInMergeMap {
-			removeKeyFromSrcMap(srcNestedMap, mergeNestedMap, keys, index+1)
-		}
+		return srcMap	
+	}
+	// More levels to go, descend into child if current key present in both maps
+	srcNestedMap, isCurrKeyInSrcMap := srcMap[currentKey].(map[string]interface{})
+	mergeNestedMap, isCurrKeyInMergeMap := mergeMap[currentKey].(map[string]interface{})
+	if isCurrKeyInSrcMap && isCurrKeyInMergeMap {
+		removeKeyFromSrcMap(srcNestedMap, mergeNestedMap, keys[1:])
 	}
 	return srcMap
 }
@@ -38,8 +38,7 @@ func PrepareForReplaceBehavior(srcConf *confmap.Conf, mergeConf *confmap.Conf) {
 	keyPathsWithReplaceBehavior := [][]string{
 		{"extensions", "sumologic", "collector_fields"},
 	}
-	for _, path := range keyPathsWithReplaceBehavior {
-		pathKeys := strings.Split(path, "#")
-		*srcConf = *confmap.NewFromStringMap(removeKeyFromSrcMap(srcConf.ToStringMap(), mergeConf.ToStringMap(), pathKeys, 0))
+	for _, keyPath := range keyPathsWithReplaceBehavior {
+		*srcConf = *confmap.NewFromStringMap(removeKeyFromSrcMap(srcConf.ToStringMap(), mergeConf.ToStringMap(), keyPath))
 	}
 }
