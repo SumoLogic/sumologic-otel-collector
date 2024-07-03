@@ -17,14 +17,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
 	"gopkg.in/yaml.v2"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 const (
