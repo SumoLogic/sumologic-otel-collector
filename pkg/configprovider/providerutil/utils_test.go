@@ -1,9 +1,10 @@
 package providerutil
 
 import (
-	"go.opentelemetry.io/collector/confmap"
 	"reflect"
 	"testing"
+
+	"go.opentelemetry.io/collector/confmap"
 )
 
 func TestPrepareForReplaceBehavior(t *testing.T) {
@@ -18,10 +19,10 @@ func TestPrepareForReplaceBehavior(t *testing.T) {
 			srcMap: map[string]interface{}{
 				"extensions": map[string]interface{}{
 					"sumologic": map[string]interface{}{
+						"childKey2": "value2",
 						"collector_fields": map[string]interface{}{
 							"cluster": "cluster-1",
 						},
-						"childKey2": "value2",
 					},
 				},
 				"anotherKey": "anotherValue",
