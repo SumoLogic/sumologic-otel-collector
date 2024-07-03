@@ -18,7 +18,7 @@ func removeKeyFromSrcMap(srcMap map[string]interface{}, mergeMap map[string]inte
 		if existInSrc && existInMerge {
 			delete(srcMap, currentKey)
 		}
-		return srcMap	
+		return srcMap
 	}
 	// More levels to go, descend into child if current key present in both maps
 	srcNestedMap, isCurrKeyInSrcMap := srcMap[currentKey].(map[string]interface{})
