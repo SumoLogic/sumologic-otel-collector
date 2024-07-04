@@ -86,7 +86,15 @@ func main() {
 		os.Exit(2)
 	}
 
-	ctx := makeActionContext(flagValues)
+	ctx := &actionContext{
+		ConfigDir:           os.DirFS(flagValues.ConfigDir),
+		Flags:               flagValues,
+		Stdout:              os.Stdout,
+		Stderr:              os.Stderr,
+		WriteConfD:          getConfDWriter(flagValues, ConfDSettings),
+		WriteConfDOverrides: getConfDWriter(flagValues, ConfDOverrides),
+	}
+
 	if err := visitFlags(fs, ctx); err != nil {
 		stderrOrBust(err)
 		exit(err)

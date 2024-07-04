@@ -8,7 +8,7 @@ import (
 	"github.com/mikefarah/yq/v4/pkg/yqlib"
 )
 
-// WriteKVAction is used by the set-kv action.
+// WriteKVAction is used by the write-kv action.
 func WriteKVAction(ctx *actionContext) error {
 	conf, err := ReadConfigDir(ctx.ConfigDir)
 	if err != nil {
@@ -16,7 +16,7 @@ func WriteKVAction(ctx *actionContext) error {
 	}
 
 	if conf.SumologicRemote != nil {
-		return errors.New("set-kv not supported for remote-controlled collectors")
+		return errors.New("write-kv not supported for remote-controlled collectors")
 	}
 
 	docName := ConfDSettings
