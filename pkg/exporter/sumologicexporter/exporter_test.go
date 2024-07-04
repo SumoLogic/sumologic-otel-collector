@@ -292,17 +292,16 @@ func TestPartiallyFailed(t *testing.T) {
 }
 
 func TestInvalidHTTPCLient(t *testing.T) {
-	clientConfig := confighttp.ClientConfig{
-		Endpoint: "test_endpoint",
-		CustomRoundTripper: func(next http.RoundTripper) (http.RoundTripper, error) {
-			return nil, errors.New("roundTripperException")
-		},
-	}
 	exp, err := initExporter(&Config{
 		LogFormat:    "json",
 		MetricFormat: "otlp",
 		TraceFormat:  "otlp",
-		ClientConfig: clientConfig,
+		ClientConfig: confighttp.ClientConfig{
+			Endpoint: "test_endpoint",
+			CustomRoundTripper: func(next http.RoundTripper) (http.RoundTripper, error) {
+				return nil, errors.New("roundTripperException")
+			},
+		},
 	}, createExporterCreateSettings())
 	assert.NoError(t, err)
 
