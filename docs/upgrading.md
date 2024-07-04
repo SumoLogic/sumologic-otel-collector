@@ -1,5 +1,7 @@
 # Upgrading
 
+- [Upgrading to v0.103.0-sumo-0](#upgrading-to-v01030-sumo-0)
+  - [`sumologic` configuration: modified the `configuration files` merge behaviour](#sumologic-configuration-modified-the-configuration-files-merge-behaviour)
 - [Upgrading to v0.96.0-sumo-0](#upgrading-to-v0960-sumo-0)
   - [`sumologic` exporter: remove `json_logs`](#sumologic-exporter-remove-json_logs)
   - [`sumologic` exporter: remove `clear_logs_timestamp`](#sumologic-exporter-remove-clear_logs_timestamp)
@@ -52,6 +54,73 @@
   - [Sumo Logic exporter metadata handling](#sumo-logic-exporter-metadata-handling)
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
+
+
+## Upgrading to v0.103.0-sumo-0
+
+### `sumologic` configuration: modified the `configuration files` merge behaviour
+
+Modified the configuration merge behaviour to perform overwrite instead of update for `collector_fields` key of [Sumo Logic Extension](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/sumologicextension#configuration).
+
+For example, if two configuration files(say `conf1.yaml` and `conf2.yaml`) define the `collector_fields`,
+
+In previous flow, the values of `collector_fields` from `conf2.yaml` will be added to `conf1.yaml` and the effective configuration will have vaules from both the configurations.
+
+Starting from `v0.103.0-sumo-0`, the values of collector_fields tag from conf1.yaml will be overwritten by values from conf2.yaml and the effective configuration will have collector_fields value of conf2.yaml only.
+
+For example:
+
+conf1.yaml
+```
+extensions:
+  sumologic:
+    collector_description: "My OpenTelemetry Collector"
+    collector_fields:
+      cluster: "cluster-1"
+    some_list:
+      - element 1
+      - element 2
+```
+conf2.yaml
+```
+extensions:
+  sumologic:
+    collector_fields:
+      zone: "eu"
+    some_list:
+      - element 3
+      - element 4
+```
+effective configuration (`old behaviour`)
+```
+extensions:
+  sumologic:
+    collector_description: "My OpenTelemetry Collector"
+    collector_fields:
+      cluster: "cluster-1"
+      zone: "eu"
+    some_list:
+      - element 3
+      - element 4
+```
+effective configuration (`new behaviour`)
+```
+extensions:
+  sumologic:
+    collector_description: "My OpenTelemetry Collector"
+    collector_fields:
+      zone: "eu"
+    some_list:
+      - element 3
+      - element 4
+```
+
+If you have multiple config files with collector_fields key specified, only the value from the last file(alphabetically sorted order) will be present in effective configuration.
+So, for locally managed collectors, Please don't maintain collector_fields key in multiple configuration files and move them to a single file.
+
+Note: This applied only to collector_fields key, all other key behaviour will remain same.
+
+For more details regarding configuration structure and merge behaviour, see https://help.sumologic.com/docs/send-data/opentelemetry-collector/data-source-configurations/overview/#configuration-structure
 
 ## Upgrading to v0.96.0-sumo-0
 
@@ -682,8 +751,8 @@ to make it behave like the Sumo Logic exporter.
 
 See the [Source processor documentation][sourceprocessor_docs] for more details.
 
-[sumologicexporter_docs]: ../pkg/exporter/sumologicexporter/README.md
-[sourceprocessor_docs]: ../pkg/processor/sourceprocessor/README.md
+[sumologicexporter_docs]: https://github.com/sumologic/sumologic-otel-collector/tree/v0.57.2-sumo-0/pkg/exporter/sumologicexporter/README.md
+[sourceprocessor_docs]: https://github.com/sumologic/sumologic-otel-collector/tree/v0.57.2-sumo-0/pkg/processor/sourceprocessor/README.md
 
 ## Upgrading to v0.56.0-sumo-0
 
@@ -760,8 +829,8 @@ service:
 
 **Note**: By default, the `sumologicschema` processor also performs other actions. Please see a corresponding warning in paragraph [`sumologic` exporter: drop support for translating attributes](#sumologic-exporter-drop-support-for-translating-attributes) for more information.
 
-[sumologicschema_processor]: ../pkg/processor/sumologicschemaprocessor/
-[sumologicschema_processor_readme]: ../pkg/processor/sumologicschemaprocessor/README.md
+[sumologicschema_processor]: https://github.com/sumologic/sumologic-otel-collector/tree/v0.56.0-sumo-0/pkg/processor/sumologicschemaprocessor/
+[sumologicschema_processor_readme]: https://github.com/sumologic/sumologic-otel-collector/tree/v0.56.0-sumo-0/pkg/processor/sumologicschemaprocessor/README.md
 
 ## Upgrading to v0.55.0-sumo-0
 
