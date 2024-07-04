@@ -64,7 +64,7 @@ Modified the configuration merge behaviour to perform overwrite instead of updat
 
 For example, if two configuration files(say `conf1.yaml` and `conf2.yaml`) define the `collector_fields`,
 
-In previous flow, the values of collector_fields from conf2.yaml will be added to conf1.yaml and the effective configuration will have vaules from both the configurations.
+In previous flow, the values of `collector_fields` from `conf2.yaml` will be added to `conf1.yaml` and the effective configuration will have vaules from both the configurations.
 
 Starting from `v0.103.0-sumo-0`, the values of collector_fields tag from conf1.yaml will be overwritten by values from conf2.yaml and the effective configuration will have collector_fields value of conf2.yaml only.
 
