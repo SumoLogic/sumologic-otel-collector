@@ -20,7 +20,7 @@ func TestReadKVAction(t *testing.T) {
 		{
 			Name: "precedence",
 			Conf: fstest.MapFS{
-				// note that foo is overridden and get-kv should return baz
+				// note that foo is overridden and read-kv should return baz
 				path.Join(ConfDotD, "00-fst.yaml"): &fstest.MapFile{
 					Data: []byte(`{"sumologic":{"foo":"bar"}}`),
 				},
@@ -126,7 +126,7 @@ func TestReadKVAction(t *testing.T) {
 				t.Fatal(err)
 			}
 			if got, want := stdoutBuf.String(), test.ExpStdout; got != want {
-				t.Errorf("bad get-kv: got %q, want %q", got, want)
+				t.Errorf("bad read-kv: got %q, want %q", got, want)
 			}
 			if got, want := stderrBuf.String(), test.ExpStderr; got != want {
 				t.Errorf("%q", got)

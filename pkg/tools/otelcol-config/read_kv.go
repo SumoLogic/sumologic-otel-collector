@@ -17,7 +17,7 @@ func ReadKVAction(ctx *actionContext) error {
 	}
 
 	if conf.SumologicRemote != nil {
-		return errors.New("get-kv not supported for remote-controlled collectors")
+		return errors.New("read-kv not supported for remote-controlled collectors")
 	}
 
 	readOrder := sort.StringSlice{}
