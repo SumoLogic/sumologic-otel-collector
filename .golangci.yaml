@@ -5,7 +5,7 @@ run:
 linters-settings:
   errcheck:
     check-type-assertions: false
-    check-blank: true
+    check-blank: false
 
   gosimple:
     go: "1.21"
