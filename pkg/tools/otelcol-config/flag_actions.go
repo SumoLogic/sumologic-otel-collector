@@ -2,20 +2,19 @@ package main
 
 import (
 	"errors"
-
-	"github.com/spf13/pflag"
 )
 
 var notImplementedError = errors.New("not implemented")
 
-func notImplementedAction(*pflag.Flag, *pflag.FlagSet) error {
+func notImplementedAction(*actionContext) error {
 	return notImplementedError
 }
 
-type action func(actionFlag *pflag.Flag, allFlags *pflag.FlagSet) error
+type action func(context *actionContext) error
 
 var flagActions = map[string]action{
 	flagHelp:                 helpAction,
+	flagConfigDir:            nullAction,
 	flagAddTag:               notImplementedAction,
 	flagDeleteTag:            notImplementedAction,
 	flagSetInstallationToken: notImplementedAction,
@@ -27,9 +26,29 @@ var flagActions = map[string]action{
 	flagEnableRemoteControl:  notImplementedAction,
 	flagDisableRemoteControl: notImplementedAction,
 	flagSetOpAmpEndpoint:     notImplementedAction,
-	flagConfigDir:            notImplementedAction,
-	flagSetKV:                notImplementedAction,
-	flagDelKV:                notImplementedAction,
-	flagGetKV:                notImplementedAction,
-	flagAppendKV:             notImplementedAction,
+	flagWriteKV:              WriteKVAction,
+	flagReadKV:               ReadKVAction,
+	flagOverride:             nullAction,
+}
+
+func nullAction(*actionContext) error {
+	return nil
+}
+
+var actionOrder = []string{
+	flagHelp,
+	flagConfigDir,
+	flagAddTag,
+	flagDeleteTag,
+	flagSetInstallationToken,
+	flagEnableHostmetrics,
+	flagDisableHostmetrics,
+	flagEnableEphemeral,
+	flagDisableEphemeral,
+	flagSetAPIURL,
+	flagEnableRemoteControl,
+	flagDisableRemoteControl,
+	flagSetOpAmpEndpoint,
+	flagWriteKV,
+	flagReadKV,
 }

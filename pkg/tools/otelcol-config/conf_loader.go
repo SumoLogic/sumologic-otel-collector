@@ -11,6 +11,8 @@ const (
 	SumologicRemoteDotYaml = "sumologic-remote.yaml"
 	ConfDotD               = "conf.d"
 	ConfDotDAvailable      = "conf.d-available"
+	ConfDSettings          = "00-otelcol-config-settings.yaml"
+	ConfDOverrides         = "99-otelcol-config-overrides.yaml"
 )
 
 type ConfDir struct {

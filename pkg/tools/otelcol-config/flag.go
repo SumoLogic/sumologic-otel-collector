@@ -20,10 +20,9 @@ const (
 	flagEnableRemoteControl  = "enable-remote-control"
 	flagDisableRemoteControl = "disable-remote-control"
 	flagConfigDir            = "config"
-	flagSetKV                = "set-kv"
-	flagDelKV                = "del-kv"
-	flagGetKV                = "get-kv"
-	flagAppendKV             = "append-kv"
+	flagWriteKV              = "write-kv"
+	flagReadKV               = "read-kv"
+	flagOverride             = "override"
 )
 
 const (
@@ -38,10 +37,9 @@ const (
 	disableRemoteControlUsage = "disables remote control, uses local configuration only"
 	setOpAmpEndpointUsage     = "sets the opamp endpoint (eg: wss://example.com)"
 	configUsage               = "path to sumologic configuration directory (normally /etc/otelcol-sumo)"
-	setKVUsage                = "set key-value in conf.d with yq path (eg: --set-kv extensions.sumologic.foo=bar)"
-	getKVUsage                = "get key-value from conf.d with yq path (eg: --get-kv extensions.sumologic.foo)"
-	delKVUsage                = "delete key-value from conf.d with yq path (eg: --del-kv foo.bar)"
-	appendKVUsage             = `append key-value to conf.d with yq path (eg: --append-kv 'extensions={"foo":"bar"}')`
+	writeKVUsage              = `write key-value in conf.d with yq expression (eg: --write-kv '.extensions.sumologic.foo = "bar"')`
+	getKVUsage                = "read key-value from conf.d with yq path (eg: --read-kv .extensions.sumologic.foo)"
+	overrideUsage             = "for write-kv, override all other user settings"
 )
 
 type flagValues struct {
@@ -57,10 +55,9 @@ type flagValues struct {
 	SetOpAmpEndpoint     string
 	Help                 bool
 	ConfigDir            string
-	SetKV                map[string]string
-	DelKV                []string
-	GetKV                []string
-	AppendKV             map[string]string
+	WriteKV              []string
+	ReadKV               []string
+	Override             bool
 }
 
 func newFlagValues() *flagValues {
@@ -83,10 +80,9 @@ func makeFlagSet(fv *flagValues) *pflag.FlagSet {
 	flags.BoolVar(&fv.DisableRemoteControl, flagDisableRemoteControl, false, disableRemoteControlUsage)
 	flags.StringVarP(&fv.SetOpAmpEndpoint, flagSetOpAmpEndpoint, "e", "", setOpAmpEndpointUsage)
 	flags.StringVarP(&fv.ConfigDir, flagConfigDir, "c", "", configUsage)
-	flags.StringToStringVar(&fv.SetKV, flagSetKV, nil, setKVUsage)
-	flags.StringArrayVar(&fv.GetKV, flagGetKV, nil, getKVUsage)
-	flags.StringArrayVar(&fv.DelKV, flagDelKV, nil, delKVUsage)
-	flags.StringToStringVar(&fv.AppendKV, flagAppendKV, nil, appendKVUsage)
+	flags.StringArrayVar(&fv.WriteKV, flagWriteKV, nil, writeKVUsage)
+	flags.StringArrayVar(&fv.ReadKV, flagReadKV, nil, getKVUsage)
+	flags.BoolVar(&fv.Override, flagOverride, false, overrideUsage)
 
 	return flags
 }
