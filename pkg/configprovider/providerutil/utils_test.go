@@ -1,22 +1,22 @@
 package providerutil
 
 import (
-	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/confmap"
 )
 
 func TestPrepareForReplaceBehavior(t *testing.T) {
 	tests := []struct {
-		name        string
-		srcMap      map[string]interface{}
-		mergeMap    map[string]interface{}
-		expectedMap map[string]interface{}
+		name         string
+		srcConf      *confmap.Conf
+		mergeConf    *confmap.Conf
+		expectedConf *confmap.Conf
 	}{
 		{
 			name: "Remove matching key path from source map",
-			srcMap: map[string]interface{}{
+			srcConf: confmap.NewFromStringMap(map[string]interface{}{
 				"extensions": map[string]interface{}{
 					"sumologic": map[string]interface{}{
 						"childKey2": "value2",
@@ -26,8 +26,8 @@ func TestPrepareForReplaceBehavior(t *testing.T) {
 					},
 				},
 				"anotherKey": "anotherValue",
-			},
-			mergeMap: map[string]interface{}{
+			}),
+			mergeConf: confmap.NewFromStringMap(map[string]interface{}{
 				"extensions": map[string]interface{}{
 					"sumologic": map[string]interface{}{
 						"collector_fields": map[string]interface{}{
@@ -37,19 +37,19 @@ func TestPrepareForReplaceBehavior(t *testing.T) {
 					},
 				},
 				"anotherKey": "anotherValue",
-			},
-			expectedMap: map[string]interface{}{
+			}),
+			expectedConf: confmap.NewFromStringMap(map[string]interface{}{
 				"extensions": map[string]interface{}{
 					"sumologic": map[string]interface{}{
 						"childKey2": "value2",
 					},
 				},
 				"anotherKey": "anotherValue",
-			},
+			}),
 		},
 		{
 			name: "No matching key paths to remove, source map remains unaffected",
-			srcMap: map[string]interface{}{
+			srcConf: confmap.NewFromStringMap(map[string]interface{}{
 				"extensions": map[string]interface{}{
 					"sumologic": map[string]interface{}{
 						"collector_fields1": map[string]interface{}{
@@ -58,8 +58,8 @@ func TestPrepareForReplaceBehavior(t *testing.T) {
 					},
 				},
 				"anotherKey": "anotherValue",
-			},
-			mergeMap: map[string]interface{}{
+			}),
+			mergeConf: confmap.NewFromStringMap(map[string]interface{}{
 				"extensions": map[string]interface{}{
 					"sumologic": map[string]interface{}{
 						"collector_fields2": map[string]interface{}{
@@ -68,8 +68,8 @@ func TestPrepareForReplaceBehavior(t *testing.T) {
 					},
 				},
 				"anotherKey": "anotherValue",
-			},
-			expectedMap: map[string]interface{}{
+			}),
+			expectedConf: confmap.NewFromStringMap(map[string]interface{}{
 				"extensions": map[string]interface{}{
 					"sumologic": map[string]interface{}{
 						"collector_fields1": map[string]interface{}{
@@ -78,18 +78,14 @@ func TestPrepareForReplaceBehavior(t *testing.T) {
 					},
 				},
 				"anotherKey": "anotherValue",
-			},
+			}),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			srcConf := confmap.NewFromStringMap(tt.srcMap)
-			mergeConf := confmap.NewFromStringMap(tt.mergeMap)
-			PrepareForReplaceBehavior(srcConf, mergeConf)
-			if !reflect.DeepEqual(srcConf.ToStringMap(), tt.expectedMap) {
-				t.Errorf("PrepareForReplaceBehavior() = %v, want %v", srcConf.ToStringMap(), tt.expectedMap)
-			}
+			PrepareForReplaceBehavior(tt.srcConf, tt.mergeConf)
+			assert.Equal(t, tt.expectedConf, tt.srcConf)
 		})
 	}
 }
