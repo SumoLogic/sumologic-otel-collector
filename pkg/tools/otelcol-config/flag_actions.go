@@ -35,6 +35,7 @@ func nullAction(*actionContext) error {
 	return nil
 }
 
+// actionOrder specifies the order in which actions will be applied
 var actionOrder = []string{
 	flagHelp,
 	flagConfigDir,

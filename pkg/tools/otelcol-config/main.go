@@ -30,14 +30,8 @@ func exit(err error) {
 // flags that have been explicitly set will be acted on. This means that there
 // are no actions taken by default, when flags are omitted.
 func visitFlags(fs *pflag.FlagSet, ctx *actionContext) error {
-	flags := []*pflag.Flag{}
-
-	fs.Visit(func(flag *pflag.Flag) {
-		flags = append(flags, flag)
-	})
-
-	for _, flag := range flags {
-		name := flag.Name
+	sortedActions := getSortedActions(fs)
+	for _, name := range sortedActions {
 		action := flagActions[name]
 		if action == nil {
 			return fmt.Errorf("developer error: action undefined: %s", name)
@@ -48,6 +42,29 @@ func visitFlags(fs *pflag.FlagSet, ctx *actionContext) error {
 	}
 
 	return nil
+}
+
+func getSortedActions(fs *pflag.FlagSet) []string {
+	flags := []*pflag.Flag{}
+
+	fs.Visit(func(flag *pflag.Flag) {
+		flags = append(flags, flag)
+	})
+
+	actions := map[string]struct{}{}
+
+	for _, flag := range flags {
+		actions[flag.Name] = struct{}{}
+	}
+
+	sortedActions := []string{}
+	for _, action := range actionOrder {
+		if _, ok := actions[action]; ok {
+			sortedActions = append(sortedActions, action)
+		}
+	}
+
+	return sortedActions
 }
 
 func getConfDWriter(values *flagValues, fileName string) func(doc []byte) error {
