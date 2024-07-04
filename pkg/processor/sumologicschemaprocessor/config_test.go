@@ -24,9 +24,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
-	"go.opentelemetry.io/collector/confmap/provider/envprovider"
 	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
-	"go.opentelemetry.io/collector/confmap/provider/httpprovider"
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
 	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/otelcol/otelcoltest"
@@ -44,9 +42,7 @@ func TestLoadConfig(t *testing.T) {
 			URIs: []string{filepath.Join("testdata", "config.yaml")},
 			ProviderFactories: []confmap.ProviderFactory{
 				fileprovider.NewFactory(),
-				envprovider.NewFactory(),
 				yamlprovider.NewFactory(),
-				httpprovider.NewFactory(),
 			},
 			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
 		},
