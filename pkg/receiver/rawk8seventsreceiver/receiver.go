@@ -81,7 +81,7 @@ type eventChange struct {
 
 // create a new receiver
 func newRawK8sEventsReceiver(
-	params receiver.CreateSettings,
+	params receiver.Settings,
 	cfg *Config,
 	consumer consumer.Logs,
 	client k8s.Interface,

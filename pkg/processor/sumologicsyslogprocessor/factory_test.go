@@ -38,7 +38,7 @@ func TestLogProcessor(t *testing.T) {
 	// Manually set required fields
 	cfg.FacilityAttr = "testAttrName"
 
-	params := processor.CreateSettings{
+	params := processor.Settings{
 		TelemetrySettings: componenttest.NewNopTelemetrySettings(),
 	}
 	lp, err := factory.CreateLogsProcessor(context.Background(), params, cfg, consumertest.NewNop())
