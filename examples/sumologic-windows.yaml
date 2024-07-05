@@ -37,16 +37,15 @@ receivers:
 exporters:
   ## Configuration for Sumo Logic Exporter
   ## This exporter supports sending logs, metrics and traces data to Sumo Logic.
-  ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/exporter/sumologicexporter
+  ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.103.0/exporter/sumologicexporter
   sumologic:
     sending_queue:
       enabled: true
       storage: file_storage
     retry_on_failure:
-        max_elapsed_time: 0
+      max_elapsed_time: 0
 
 processors:
-
   ## Configuration for Memory Limiter Processor
   ## The memory_limiter processor is used to prevent out of memory situations on the collector.
   ## ref: https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor
@@ -83,7 +82,7 @@ processors:
   resourcedetection/system:
     detectors: ["system"]
     system:
-      hostname_sources: ["dns","os"]
+      hostname_sources: ["dns", "os"]
 
 service:
   extensions:

@@ -62,7 +62,7 @@ func createDefaultConfig() component.Config {
 
 func createTraceProcessor(
 	ctx context.Context,
-	settings processor.CreateSettings,
+	settings processor.Settings,
 	cfg component.Config,
 	nextConsumer consumer.Traces,
 ) (processor.Traces, error) {

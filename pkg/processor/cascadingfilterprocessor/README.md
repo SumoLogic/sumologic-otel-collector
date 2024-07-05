@@ -47,6 +47,7 @@ Each of the specified drop rules has several properties:
 
 - `name` (required): identifies the rule
 - `name_pattern: <regex>`: selects the span if its operation name matches the provided regular expression
+- `status_code: <string>`: supported string values: "Ok", "Unset", or "Error"
 - `attributes: <list of attributes>`: list of attribute-level filters (both span level and resource level is being evaluated).
   When several elements are specified, conditions for each of them must be met. Each entry might contain a number of fields:
   - `key: <name>`: name of the attribute key
@@ -119,7 +120,7 @@ processors:
           use_regex: true
  ```
 
-### Filtering out healhtchecks and traffic shaping
+### Filtering out healthchecks and traffic shaping
 
 In the following example few more conditions were added:
 
@@ -152,6 +153,22 @@ cascadingfilter:
         min_number_of_errors: 3
       spans_per_second: 500 # <- adjust the output traffic level
 ```
+
+### Just filtering out status code
+
+Following example will drop all traces that match the following criteria:
+
+- there is a ROOT span with status code of "Error" (since status code is "Error", "Ok", or "Unset")
+
+(status code doc: https://opentelemetry-python.readthedocs.io/en/latest/api/trace.status.html)
+
+```yaml
+processors:
+  cascading_filter:
+    trace_reject_filters:
+      - name: remove-all-traces-with-error-status-code
+        status_code: "Error"
+ ```
 
 ### Advanced configuration
 

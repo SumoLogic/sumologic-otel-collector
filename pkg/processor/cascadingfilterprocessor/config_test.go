@@ -22,7 +22,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/confmap"
+	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
+	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
+	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
+	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/otelcol/otelcoltest"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 
 	cfconfig "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
 )
@@ -34,7 +40,16 @@ func TestLoadConfig(t *testing.T) {
 	factory := NewFactory()
 	factories.Processors[factory.Type()] = factory
 
-	cfg, err := otelcoltest.LoadConfig(path.Join(".", "testdata", "cascading_filter_config.yaml"), factories)
+	cfg, err := otelcoltest.LoadConfigWithSettings(factories, otelcol.ConfigProviderSettings{
+		ResolverSettings: confmap.ResolverSettings{
+			URIs: []string{path.Join(".", "testdata", "cascading_filter_config.yaml")},
+			ProviderFactories: []confmap.ProviderFactory{
+				fileprovider.NewFactory(),
+				yamlprovider.NewFactory(),
+			},
+			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
+		},
+	})
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -45,6 +60,7 @@ func TestLoadConfig(t *testing.T) {
 	probFilteringRate := int32(100)
 	namePatternValue := "foo.*"
 	healthCheckNamePatternValue := "health.*"
+	statusCode := ptrace.StatusCodeError.String()
 
 	id1 := component.NewIDWithName(Type, "1")
 	assert.Equal(t, cfg.Processors[id1],
@@ -58,6 +74,7 @@ func TestLoadConfig(t *testing.T) {
 				{
 					Name:        "healthcheck-rule",
 					NamePattern: &healthCheckNamePatternValue,
+					StatusCode:  &statusCode,
 				},
 			},
 			TraceAcceptCfgs: []cfconfig.TraceAcceptCfg{
@@ -114,6 +131,7 @@ func TestLoadConfig(t *testing.T) {
 				{
 					Name:        "healthcheck-rule",
 					NamePattern: &healthCheckNamePatternValue,
+					StatusCode:  &statusCode,
 				},
 				{
 					Name:                "remove-all-traces-with-healthcheck-service",

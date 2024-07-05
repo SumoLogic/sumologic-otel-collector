@@ -101,6 +101,8 @@ type TraceRejectCfg struct {
 	AttributeCfg []AttributeCfg `mapstructure:"attributes"`
 	// NamePattern (optional) describes a regular expression that must be met by any span operation name
 	NamePattern *string `mapstructure:"name_pattern"`
+	// StatusCode (optional) describes whether an operation succeeds or not (OK, ERROR, or UNSET)
+	StatusCode *string `mapstructure:"status_code"`
 }
 
 // Config holds the configuration for cascading-filter-based sampling.

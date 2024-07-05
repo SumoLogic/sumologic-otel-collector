@@ -39,7 +39,7 @@ func TestCreateProcessor(t *testing.T) {
 	kubeClientProvider = newFakeClient
 
 	cfg := factory.CreateDefaultConfig()
-	params := processor.CreateSettings{
+	params := processor.Settings{
 		TelemetrySettings: componenttest.NewNopTelemetrySettings(),
 	}
 
