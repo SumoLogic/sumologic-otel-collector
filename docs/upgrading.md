@@ -55,7 +55,6 @@
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
-
 ## Upgrading to v0.103.0-sumo-0
 
 ### `sumologic` configuration: modified the `configuration files` merge behaviour
@@ -66,11 +65,12 @@ For example, if two configuration files(say `conf1.yaml` and `conf2.yaml`) defin
 
 In previous flow, the values of `collector_fields` from `conf2.yaml` will be added to `conf1.yaml` and the effective configuration will have vaules from both the configurations.
 
-Starting from `v0.103.0-sumo-0`, the values of collector_fields tag from conf1.yaml will be overwritten by values from conf2.yaml and the effective configuration will have collector_fields value of conf2.yaml only.
+Starting from `v0.103.0-sumo-0`, the values of `collector_fields` tag from `conf1.yaml` will be overwritten by values from `conf2.yaml` and the effective configuration will have `collector_fields` value of `conf2.yaml` only.
 
 For example:
 
-conf1.yaml
+`conf1.yaml`:
+
 ```
 extensions:
   sumologic:
@@ -81,7 +81,9 @@ extensions:
       - element 1
       - element 2
 ```
-conf2.yaml
+
+`conf2.yaml`:
+
 ```
 extensions:
   sumologic:
@@ -91,7 +93,9 @@ extensions:
       - element 3
       - element 4
 ```
+
 effective configuration (`old behaviour`)
+
 ```
 extensions:
   sumologic:
@@ -103,7 +107,9 @@ extensions:
       - element 3
       - element 4
 ```
+
 effective configuration (`new behaviour`)
+
 ```
 extensions:
   sumologic:
@@ -115,10 +121,10 @@ extensions:
       - element 4
 ```
 
-If you have multiple config files with collector_fields key specified, only the value from the last file(alphabetically sorted order) will be present in effective configuration.
-So, for locally managed collectors, Please don't maintain collector_fields key in multiple configuration files and move them to a single file.
+If you have multiple config files with `collector_fields` key specified, only the value from the last file(**alphabetically** sorted order) will be present in effective configuration.
+So, for locally managed collectors, Please don't maintain `collector_fields` key in multiple configuration files and move them to a single file.
 
-Note: This applied only to collector_fields key, all other key behaviour will remain same.
+Note: This applies only to `collector_fields` key, all other key behaviour will remain the same.
 
 For more details regarding configuration structure and merge behaviour, see https://help.sumologic.com/docs/send-data/opentelemetry-collector/data-source-configurations/overview/#configuration-structure
 
