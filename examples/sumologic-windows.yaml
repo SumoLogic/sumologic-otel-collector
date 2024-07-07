@@ -37,7 +37,7 @@ receivers:
 exporters:
   ## Configuration for Sumo Logic Exporter
   ## This exporter supports sending logs, metrics and traces data to Sumo Logic.
-  ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.102.0/exporter/sumologicexporter
+  ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.103.0/exporter/sumologicexporter
   sumologic:
     sending_queue:
       enabled: true
