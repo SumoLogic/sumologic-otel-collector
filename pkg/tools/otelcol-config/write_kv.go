@@ -8,7 +8,13 @@ import (
 	"github.com/mikefarah/yq/v4/pkg/yqlib"
 )
 
-// WriteKVAction is used by the write-kv action.
+// WriteKVAction applies a yq expression to the user configuration in conf.d.
+// Any arbitrary write can occur, including deletions.
+//
+// WriteKVAction applies updates to one of two files. Either:
+// conf.d/otelcol-config-settings.yaml OR
+// conf.d/otelcol-config-overrides.yaml,
+// depending on if the override flag is set.
 func WriteKVAction(ctx *actionContext) error {
 	conf, err := ReadConfigDir(ctx.ConfigDir)
 	if err != nil {

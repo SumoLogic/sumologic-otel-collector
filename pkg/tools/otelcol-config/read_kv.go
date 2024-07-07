@@ -10,6 +10,10 @@ import (
 
 const nullResult = "null\n"
 
+// ReadKVAction reads values from conf.d. Since conf.d can comprise multiple
+// files, it looks in descending order, and returns the first match it finds.
+// This matches the priority order of otelcol-sumo's configuration loader.
+// Or at least, it should.
 func ReadKVAction(ctx *actionContext) error {
 	conf, err := ReadConfigDir(ctx.ConfigDir)
 	if err != nil {
