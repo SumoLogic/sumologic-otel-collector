@@ -25,6 +25,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/dockerstatsreceiver v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver v0.103.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kafkametricsreceiver v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kafkareceiver v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/nginxreceiver v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/rabbitmqreceiver v0.103.0
@@ -37,6 +38,9 @@ require (
 	go.opentelemetry.io/collector/config/configauth v0.103.0
 	go.opentelemetry.io/collector/config/confighttp v0.103.0
 	go.opentelemetry.io/collector/confmap v0.103.0
+	go.opentelemetry.io/collector/confmap/converter/expandconverter v0.103.0
+	go.opentelemetry.io/collector/confmap/provider/fileprovider v0.103.0
+	go.opentelemetry.io/collector/confmap/provider/yamlprovider v0.103.0
 	go.opentelemetry.io/collector/exporter v0.103.0
 	go.opentelemetry.io/collector/exporter/otlpexporter v0.103.0
 	go.opentelemetry.io/collector/extension v0.103.0
@@ -203,12 +207,9 @@ require (
 	go.opentelemetry.io/collector/config/configtelemetry v0.103.0 // indirect
 	go.opentelemetry.io/collector/config/configtls v0.103.0 // indirect
 	go.opentelemetry.io/collector/config/internal v0.103.0 // indirect
-	go.opentelemetry.io/collector/confmap/converter/expandconverter v0.103.0 // indirect
 	go.opentelemetry.io/collector/confmap/provider/envprovider v0.103.0 // indirect
-	go.opentelemetry.io/collector/confmap/provider/fileprovider v0.103.0 // indirect
 	go.opentelemetry.io/collector/confmap/provider/httpprovider v0.103.0 // indirect
 	go.opentelemetry.io/collector/confmap/provider/httpsprovider v0.103.0 // indirect
-	go.opentelemetry.io/collector/confmap/provider/yamlprovider v0.103.0 // indirect
 	go.opentelemetry.io/collector/connector v0.103.0 // indirect
 	go.opentelemetry.io/collector/consumer v0.103.0 // indirect
 	go.opentelemetry.io/collector/extension/auth v0.103.0 // indirect
