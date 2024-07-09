@@ -122,7 +122,7 @@ extensions:
 ```
 
 If you have multiple config files with `collector_fields` key specified, only the value from the last file(**alphabetically** sorted order) will be present in effective configuration.
-So, for locally managed collectors, Please don't maintain `collector_fields` key in multiple configuration files and move them to a single file.
+Due to above, avoid maintaining `collector_fields` in multiple configuration files and move them to a single file.
 
 Note: This applies only to `collector_fields` key, all other key behaviour will remain the same.
 
