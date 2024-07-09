@@ -10,10 +10,6 @@ linters-settings:
   gosimple:
     go: "1.21"
 
-  maligned:
-    # print struct with more effective memory layout or not, false by default
-    suggest-new: true
-
   unused:
     go: "1.21"
 
@@ -37,7 +33,6 @@ linters:
     - ineffassign
     - typecheck
     - unused
-    - gosimple
     - staticcheck
 
 issues:
