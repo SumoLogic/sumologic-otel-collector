@@ -1,0 +1,23 @@
+receivers:
+  kafkametrics:
+    brokers: 10.10.10.10:9092
+    protocol_version: 2.0.0
+    scrapers:
+      - brokers
+      - topics
+      - consumers
+    auth:
+      tls:
+        ca_file: ca.pem
+        cert_file: cert.pem
+        key_file: key.pem
+    collection_interval: 5s
+exporters:
+    sumologic:
+service:
+  pipelines:
+    metrics/windows/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      receivers:
+        - kafkametrics
+      exporters:
+        - sumologic

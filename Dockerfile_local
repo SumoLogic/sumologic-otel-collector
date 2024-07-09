@@ -6,13 +6,13 @@ RUN apk --update add make gcc g++ curl git
 RUN make install-builder BUILDER_BIN_PATH=/bin
 RUN make build BUILDER_BIN_PATH=/bin
 
-FROM alpine:3.20.0 as certs
+FROM alpine:3.20.1 as certs
 RUN apk --update add ca-certificates
 
-FROM alpine:3.20.0 as directories
+FROM alpine:3.20.1 as directories
 RUN mkdir /etc/otel/
 
-FROM debian:12.5 as systemd
+FROM debian:12.6 as systemd
 RUN apt update && apt install -y systemd
 # prepare package with journald and it's dependencies keeping original paths
 # h stands for dereference of symbolic links
