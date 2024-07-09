@@ -1,5 +1,7 @@
 # Upgrading
 
+- [Upgrading to v0.104.0-sumo-0](#upgrading-to-v01040-sumo-0)
+  - [`sumologic` exporter: remove `compress_encoding`](#sumologic-exporter-remove-compress_encoding)
 - [Upgrading to v0.96.0-sumo-0](#upgrading-to-v0960-sumo-0)
   - [`sumologic` exporter: remove `json_logs`](#sumologic-exporter-remove-json_logs)
   - [`sumologic` exporter: remove `clear_logs_timestamp`](#sumologic-exporter-remove-clear_logs_timestamp)
@@ -52,6 +54,32 @@
   - [Sumo Logic exporter metadata handling](#sumo-logic-exporter-metadata-handling)
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
+
+## Upgrading to v0.104.0-sumo-0
+
+### `sumologic` exporter: remove `compress_encoding`
+
+`compress_encoding` has been removed in favor of using `compression` from client config.
+
+To migrate do the following step:
+
+- use `compression` in replace of `compress_encoding`:
+
+Change this:
+
+  ```yaml
+  exporters:
+    sumologic:
+      compress_encoding: ""
+  ```
+
+to this:
+
+  ```yaml
+  exporters:
+    sumologic:
+      compression: ""
+  ```
 
 ## Upgrading to v0.96.0-sumo-0
 
