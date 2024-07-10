@@ -57,7 +57,7 @@ func WriteKVAction(ctx *actionContext) error {
 		doc = []byte(result)
 	}
 
-	if err := writeDoc(doc); err != nil {
+	if _, err := writeDoc(doc); err != nil {
 		return fmt.Errorf("error writing %s: %s", docName, err)
 	}
 

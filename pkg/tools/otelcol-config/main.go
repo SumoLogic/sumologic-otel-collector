@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// errorCoder is here to give actions a way to set the exit status of the program
 type errorCoder interface {
 	ErrorCode() int
 }
@@ -67,9 +68,22 @@ func getSortedActions(fs *pflag.FlagSet) []string {
 	return sortedActions
 }
 
-func getConfDWriter(values *flagValues, fileName string) func(doc []byte) error {
-	return func(doc []byte) (err error) {
-		return os.WriteFile(filepath.Join(values.ConfigDir, ConfDotD, fileName), doc, 0600)
+func getConfDWriter(values *flagValues, fileName string) func(doc []byte) (int, error) {
+	return func(doc []byte) (int, error) {
+		return len(doc), os.WriteFile(filepath.Join(values.ConfigDir, ConfDotD, fileName), doc, 0600)
+	}
+}
+
+func getSumologicRemoteWriter(values *flagValues) func([]byte) (int, error) {
+	docPath := filepath.Join(values.ConfigDir, SumologicRemoteDotYaml)
+	return func(doc []byte) (int, error) {
+		if doc == nil {
+			// Special case: when doc is nil, we delete the file. This tells
+			// the packaging that it should not use --remote-config for
+			// otelcol-sumo.
+			return 0, os.Remove(docPath)
+		}
+		return len(doc), os.WriteFile(docPath, doc, 0600)
 	}
 }
 
@@ -87,12 +101,13 @@ func main() {
 	}
 
 	ctx := &actionContext{
-		ConfigDir:           os.DirFS(flagValues.ConfigDir),
-		Flags:               flagValues,
-		Stdout:              os.Stdout,
-		Stderr:              os.Stderr,
-		WriteConfD:          getConfDWriter(flagValues, ConfDSettings),
-		WriteConfDOverrides: getConfDWriter(flagValues, ConfDOverrides),
+		ConfigDir:            os.DirFS(flagValues.ConfigDir),
+		Flags:                flagValues,
+		Stdout:               os.Stdout,
+		Stderr:               os.Stderr,
+		WriteConfD:           getConfDWriter(flagValues, ConfDSettings),
+		WriteConfDOverrides:  getConfDWriter(flagValues, ConfDOverrides),
+		WriteSumologicRemote: getSumologicRemoteWriter(flagValues),
 	}
 
 	if err := visitFlags(fs, ctx); err != nil {
