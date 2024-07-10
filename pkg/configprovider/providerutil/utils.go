@@ -3,8 +3,8 @@ package providerutil
 import (
 	"go.opentelemetry.io/collector/confmap"
 )
-
-func removeKeyFromSrcMap(srcMap map[string]interface{}, mergeMap map[string]interface{}, keys []string) map[string]interface{} {
+// Removes the key(path passed in keys array) from sourceMap if same key path is present in mergeMap
+func removeMatchingKeyFromSrcMap(srcMap map[string]interface{}, mergeMap map[string]interface{}, keys []string) map[string]interface{} {
 
 	if len(keys) == 0 {
 		return srcMap
@@ -38,6 +38,6 @@ func PrepareForReplaceBehavior(srcConf *confmap.Conf, mergeConf *confmap.Conf) {
 		{"extensions", "sumologic", "collector_fields"},
 	}
 	for _, keyPath := range keyPathsWithReplaceBehavior {
-		*srcConf = *confmap.NewFromStringMap(removeKeyFromSrcMap(srcConf.ToStringMap(), mergeConf.ToStringMap(), keyPath))
+		*srcConf = *confmap.NewFromStringMap(removeMatchingKeyFromSrcMap(srcConf.ToStringMap(), mergeConf.ToStringMap(), keyPath))
 	}
 }
