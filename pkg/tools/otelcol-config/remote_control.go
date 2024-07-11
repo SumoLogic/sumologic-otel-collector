@@ -2,10 +2,9 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"path/filepath"
 
-	"github.com/mikefarah/yq/v4/pkg/yqlib"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -55,24 +54,29 @@ func makeNewSumologicRemoteYAML(ctx *actionContext, conf ConfDir) error {
 		confBase = ctx.Flags.ConfigDir
 	}
 
-	encoder := yqlib.YamlFormat.EncoderFactory()
 	remoteConfigDir := filepath.Join(confBase, DefaultRemoteConfigurationDirectory)
-	buf := new(bytes.Buffer)
-	writer := yqlib.NewSinglePrinterWriter(buf)
-	printer := yqlib.NewPrinter(encoder, writer)
-	expression := fmt.Sprintf(
-		"%s = %q, %s = %q, %s = %t",
-		extensionsOpampEndpoint, DefaultSumoLogicOpampEndpoint,
-		extensionsRemoteConfigurationDirectory, remoteConfigDir,
-		extensionsOpampEnabled, true,
-	)
-	err := yqlib.NewStreamEvaluator().EvaluateNew(expression, printer)
-	if err != nil {
-		err = fmt.Errorf("developer error: %s", err)
-		return err
+
+	var sumoRemoteConfig = map[string]any{
+		"extensions": []map[string]any{
+			{
+				"opamp": map[string]any{
+					"enabled":                        true,
+					"remote_configuration_directory": remoteConfigDir,
+					"endpoint":                       DefaultSumoLogicOpampEndpoint,
+				},
+			},
+		},
 	}
 
-	_, err = ctx.WriteSumologicRemote(buf.Bytes())
+	buf := new(bytes.Buffer)
+	enc := yaml.NewEncoder(buf)
+	enc.SetIndent(2)
+	if err := enc.Encode(sumoRemoteConfig); err != nil {
+		// this should never happen even under abnormal circumstances
+		panic(err)
+	}
+
+	_, err := ctx.WriteSumologicRemote(buf.Bytes())
 
 	return err
 }

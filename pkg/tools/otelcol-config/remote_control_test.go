@@ -74,7 +74,13 @@ func TestEnableRemoteControlConfigFileNotPresent(t *testing.T) {
 	values := &flagValues{
 		EnableRemoteControl: true,
 	}
-	slrWriter := newTestWriter([]byte("extensions:\n  opamp:\n    endpoint: wss://opamp-events.sumologic.com/v1/opamp\n    remote_configuration_directory: /etc/otelcol-sumo/opamp.d\n    enabled: true\nextensions:\n  opamp:\n    endpoint: wss://opamp-events.sumologic.com/v1/opamp\n    remote_configuration_directory: /etc/otelcol-sumo/opamp.d\n    enabled: true\n"))
+	const expData = `extensions:
+  - opamp:
+      enabled: true
+      endpoint: wss://opamp-events.sumologic.com/v1/opamp
+      remote_configuration_directory: /etc/otelcol-sumo/opamp.d
+`
+	slrWriter := newTestWriter([]byte(expData))
 	ctx := &actionContext{
 		ConfigDir:            fstest.MapFS{},
 		Flags:                values,
