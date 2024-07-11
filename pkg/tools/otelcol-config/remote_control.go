@@ -8,12 +8,6 @@ import (
 )
 
 const (
-	extensionsOpampEndpoint                = ".extensions.opamp.endpoint"
-	extensionsRemoteConfigurationDirectory = ".extensions.opamp.remote_configuration_directory"
-	extensionsOpampEnabled                 = ".extensions.opamp.enabled"
-)
-
-const (
 	DefaultSumoLogicOpampEndpoint       = "wss://opamp-events.sumologic.com/v1/opamp"
 	DefaultConfigurationDirectory       = "/etc/otelcol-sumo"
 	DefaultRemoteConfigurationDirectory = "opamp.d"
