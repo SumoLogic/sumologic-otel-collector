@@ -4,10 +4,10 @@ import (
 	"errors"
 )
 
-var notImplementedError = errors.New("not implemented")
+var errNotImplemented = errors.New("not implemented")
 
 func notImplementedAction(*actionContext) error {
-	return notImplementedError
+	return errNotImplemented
 }
 
 type action func(context *actionContext) error
