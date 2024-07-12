@@ -12,8 +12,8 @@ import (
 // Any arbitrary write can occur, including deletions.
 //
 // WriteKVAction applies updates to one of two files. Either:
-// conf.d/otelcol-config-settings.yaml OR
-// conf.d/otelcol-config-overrides.yaml,
+// conf.d/00-otelcol-config-settings.yaml OR
+// conf.d/99-otelcol-config-overrides.yaml,
 // depending on if the override flag is set.
 func WriteKVAction(ctx *actionContext) error {
 	conf, err := ReadConfigDir(ctx.ConfigDir)
