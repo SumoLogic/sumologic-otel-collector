@@ -9,22 +9,22 @@ import (
 	"testing"
 )
 
-func discardWriter([]byte) error {
-	return nil
+func discardWriter([]byte) (int, error) {
+	return 0, nil
 }
 
 type errWriter struct {
 }
 
-func (errWriter) Write([]byte) error {
-	return errors.New("writer called")
+func (errWriter) Write([]byte) (int, error) {
+	return 0, errors.New("writer called")
 }
 
 func makeTestActionContext(t testing.TB,
 	confD fs.FS,
 	flags []string,
 	stdout, stderr io.Writer,
-	writeConfD, writeConfDOverrides func([]byte) error) *actionContext {
+	writeConfD, writeConfDOverrides func([]byte) (int, error)) *actionContext {
 
 	t.Helper()
 
@@ -64,11 +64,11 @@ type testWriter struct {
 	exp []byte
 }
 
-func (t *testWriter) Write(data []byte) error {
+func (t *testWriter) Write(data []byte) (int, error) {
 	if got, want := data, t.exp; !bytes.Equal(got, want) {
-		return fmt.Errorf("bad conf.d write: got %q, want %q", got, want)
+		return 0, fmt.Errorf("bad conf.d write: got %q, want %q", got, want)
 	}
-	return nil
+	return len(data), nil
 }
 
 func newTestWriter(exp []byte) *testWriter {

@@ -3,7 +3,7 @@ package main
 import "testing"
 
 func TestNotImplementedAction(t *testing.T) {
-	if got, want := notImplementedAction(nil), notImplementedError; got != want {
+	if got, want := notImplementedAction(nil), errNotImplemented; got != want {
 		t.Errorf("bad error: got %q, want %q", got, want)
 	}
 }
