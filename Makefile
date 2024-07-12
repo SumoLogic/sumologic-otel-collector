@@ -119,7 +119,7 @@ update-ot: install-gsed
 		README.md \
 		docs/configuration.md \
 		docs/migration.md \
-		docs/performance.md \
+		docs/performance.md
 	$(SED) -i "s/\(contrib\/\(blob\|tree\)\/v\)$(OT_CONTRIB_VERSION)/\1$(OT_CONTRIB_NEW)/" \
 		README.md \
 		docs/configuration.md \

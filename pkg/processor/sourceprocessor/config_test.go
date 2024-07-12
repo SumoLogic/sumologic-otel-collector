@@ -21,11 +21,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/confmap"
-	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
-	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
-	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
-	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 )
 
@@ -38,16 +33,7 @@ func TestLoadConfig(t *testing.T) {
 
 	cfgPath := path.Join(".", "testdata", "config.yaml")
 
-	cfg, err := otelcoltest.LoadConfigWithSettings(factories, otelcol.ConfigProviderSettings{
-		ResolverSettings: confmap.ResolverSettings{
-			URIs: []string{cfgPath},
-			ProviderFactories: []confmap.ProviderFactory{
-				fileprovider.NewFactory(),
-				yamlprovider.NewFactory(),
-			},
-			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
-		},
-	})
+	cfg, err := otelcoltest.LoadConfig(cfgPath, factories)
 	assert.NoError(t, err)
 	assert.NotNil(t, cfg)
 
