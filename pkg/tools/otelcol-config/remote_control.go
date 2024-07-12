@@ -51,13 +51,11 @@ func makeNewSumologicRemoteYAML(ctx *actionContext, conf ConfDir) error {
 	remoteConfigDir := filepath.Join(confBase, DefaultRemoteConfigurationDirectory)
 
 	var sumoRemoteConfig = map[string]any{
-		"extensions": []map[string]any{
-			{
-				"opamp": map[string]any{
-					"enabled":                        true,
-					"remote_configuration_directory": remoteConfigDir,
-					"endpoint":                       DefaultSumoLogicOpampEndpoint,
-				},
+		"extensions": map[string]any{
+			"opamp": map[string]any{
+				"enabled":                        true,
+				"remote_configuration_directory": remoteConfigDir,
+				"endpoint":                       DefaultSumoLogicOpampEndpoint,
 			},
 		},
 	}
