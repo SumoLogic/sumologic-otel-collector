@@ -25,7 +25,7 @@ var flagActions = map[string]action{
 	flagSetAPIURL:            notImplementedAction,
 	flagEnableRemoteControl:  EnableRemoteControlAction,
 	flagDisableRemoteControl: DisableRemoteControlAction,
-	flagSetOpAmpEndpoint:     notImplementedAction,
+	flagSetOpAmpEndpoint:     SetOpAmpEndpointAction,
 	flagWriteKV:              WriteKVAction,
 	flagReadKV:               ReadKVAction,
 	flagOverride:             nullAction,
