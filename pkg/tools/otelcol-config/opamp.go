@@ -34,7 +34,7 @@ func SetOpAmpEndpointAction(ctx *actionContext) error {
 	expression := fmt.Sprintf(".extensions.opamp.endpoint = %q", endpoint)
 	result, err := eval.EvaluateAll(expression, string(doc), encoder, decoder)
 	if err != nil {
-		return fmt.Errorf("couldn't write installation token: %s", err)
+		return fmt.Errorf("couldn't set opamp endpoint: %s", err)
 	}
 	doc = []byte(result)
 
