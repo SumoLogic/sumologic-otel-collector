@@ -28,6 +28,7 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/dockerstatsreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kafkametricsreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kafkareceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/nginxreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/rabbitmqreceiver"
@@ -63,6 +64,7 @@ func Components() (
 		nginxreceiver.NewFactory(),
 		redisreceiver.NewFactory(),
 		kafkareceiver.NewFactory(),
+		kafkametricsreceiver.NewFactory(),
 		dockerstatsreceiver.NewFactory(),
 		rabbitmqreceiver.NewFactory(),
 		windowsperfcountersreceiver.NewFactory(),

@@ -1,4 +1,4 @@
-GOLANGCI_LINT_VERSION ?= v1.55.2
+GOLANGCI_LINT_VERSION ?= v1.59.1
 PRETTIER_VERSION ?= 3.0.3
 TOWNCRIER_VERSION ?= 23.6.0
 SHELL := /usr/bin/env bash
@@ -119,7 +119,7 @@ update-ot: install-gsed
 		README.md \
 		docs/configuration.md \
 		docs/migration.md \
-		docs/performance.md \
+		docs/performance.md
 	$(SED) -i "s/\(contrib\/\(blob\|tree\)\/v\)$(OT_CONTRIB_VERSION)/\1$(OT_CONTRIB_NEW)/" \
 		README.md \
 		docs/configuration.md \

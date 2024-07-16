@@ -444,6 +444,46 @@ func TestApplyFilterProcessorConfig(t *testing.T) {
 	assert.Equal(t, "OpAMP agent does not accept remote configuration", err.Error())
 }
 
+func TestApplyKafkaMetricsConfig(t *testing.T) {
+	d, err := os.MkdirTemp("", "opamp.d")
+	assert.NoError(t, err)
+	defer os.RemoveAll(d)
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.RemoteConfigurationDirectory = d
+	set := extensiontest.NewNopSettings()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	assert.Equal(t, len(o.effectiveConfig), 0)
+
+	path := filepath.Join("testdata", "opamp.d", "opamp-kafkametrics-config.yaml")
+	rb, err := os.ReadFile(path)
+	assert.NoError(t, err)
+
+	rc := &protobufs.AgentRemoteConfig{
+		Config: &protobufs.AgentConfigMap{
+			ConfigMap: map[string]*protobufs.AgentConfigFile{
+				"default": {
+					Body: rb,
+				},
+			},
+		},
+		ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
+	}
+
+	changed, err := o.applyRemoteConfig(rc)
+	assert.NoError(t, err)
+	assert.True(t, changed)
+	assert.NotEqual(t, len(o.effectiveConfig), 0)
+
+	cfg.AcceptsRemoteConfiguration = false
+	changed, err = o.applyRemoteConfig(rc)
+	assert.False(t, changed)
+	assert.Error(t, err)
+	assert.Equal(t, "OpAMP agent does not accept remote configuration", err.Error())
+}
+
 func TestShutdown(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.ClientConfig.Auth = nil

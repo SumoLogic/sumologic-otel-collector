@@ -1,0 +1,1 @@
+docs: Added migration steps for compress_encoding

@@ -19,15 +19,22 @@ func TestMain(m *testing.M) {
 
 func TestExecute(t *testing.T) {
 	ctx := context.Background()
+	t.Log("Running basic test")
 	// Basic command execution
 	t.Run("basic", func(t *testing.T) {
+		t.Log("debug 1")
 		echo := NewExecution(ctx, withTestHelper(t, ExecutionRequest{Command: "echo", Arguments: []string{"hello", "world"}}))
+		t.Log("debug 2")
 		outC := eventualOutput(t, echo)
+		t.Log("debug 3")
 		resp, err := echo.Run()
+		t.Log("debug 4")
 		require.NoError(t, err)
+		t.Log("debug 5")
 		assert.Equal(t, 0, resp.Status)
-		require.NoError(t, err)
+		t.Log("debug 6")
 		assert.Contains(t, <-outC, "hello world")
+		t.Log("debug 7")
 	})
 
 	// Command exits non-zero

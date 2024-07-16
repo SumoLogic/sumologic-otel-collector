@@ -147,7 +147,7 @@ jobs:
           - arch_os: linux_amd64
             runs-on: ubuntu-20.04
             boringcrypto: true
-          - arch_os: darwin_amd64
+          - arch_os: darwin_arm64
             runs-on: macos-latest
           - arch_os: windows_amd64
             runs-on: windows-2022
