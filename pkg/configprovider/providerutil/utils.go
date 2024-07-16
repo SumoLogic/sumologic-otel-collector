@@ -24,7 +24,7 @@ func removeMatchingKeyFromSrcMap(srcMap map[string]interface{}, mergeMap map[str
 	srcNestedMap, isCurrKeyInSrcMap := srcMap[currentKey].(map[string]interface{})
 	mergeNestedMap, isCurrKeyInMergeMap := mergeMap[currentKey].(map[string]interface{})
 	if isCurrKeyInSrcMap && isCurrKeyInMergeMap {
-		removeKeyFromSrcMap(srcNestedMap, mergeNestedMap, keys[1:])
+		removeMatchingKeyFromSrcMap(srcNestedMap, mergeNestedMap, keys[1:])
 	}
 	return srcMap
 }
