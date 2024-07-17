@@ -16,7 +16,7 @@ var flagActions = map[string]action{
 	flagHelp:                 helpAction,
 	flagConfigDir:            nullAction,
 	flagAddTag:               AddTagAction,
-	flagDeleteTag:            notImplementedAction,
+	flagDeleteTag:            DeleteTagAction,
 	flagSetInstallationToken: SetInstallationTokenAction,
 	flagEnableHostmetrics:    notImplementedAction,
 	flagDisableHostmetrics:   notImplementedAction,
