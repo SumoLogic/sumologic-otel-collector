@@ -15,7 +15,7 @@ type action func(context *actionContext) error
 var flagActions = map[string]action{
 	flagHelp:                 helpAction,
 	flagConfigDir:            nullAction,
-	flagAddTag:               notImplementedAction,
+	flagAddTag:               AddTagAction,
 	flagDeleteTag:            notImplementedAction,
 	flagSetInstallationToken: SetInstallationTokenAction,
 	flagEnableHostmetrics:    notImplementedAction,
