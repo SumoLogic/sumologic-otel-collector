@@ -3,6 +3,7 @@ package providerutil
 import (
 	"go.opentelemetry.io/collector/confmap"
 )
+
 // Removes the key(path passed in keys array) from sourceMap if same key path is present in mergeMap
 func removeMatchingKeyFromSrcMap(srcMap map[string]interface{}, mergeMap map[string]interface{}, keys []string) map[string]interface{} {
 
