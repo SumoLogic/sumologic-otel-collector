@@ -1,0 +1,1 @@
+doc: Update readme with the support matrix for OT collectors
