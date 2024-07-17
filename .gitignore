@@ -39,6 +39,9 @@ go.work*
 # udpdemux binary
 pkg/tools/udpdemux/udpdemux
 
+# otelcol-config binary
+pkg/tools/otelcol-config/otelcol-config
+
 # temporary files
 /tmp
 
