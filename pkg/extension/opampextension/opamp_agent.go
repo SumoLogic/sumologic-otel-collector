@@ -31,6 +31,7 @@ import (
 	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
 	"go.opentelemetry.io/collector/otelcol"
+	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	semconv "go.opentelemetry.io/collector/semconv/v1.18.0"
 	"go.uber.org/zap"
@@ -448,7 +449,8 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 		}
 		o.logger.Info("Loading Configuration to Validate...")
 
-		_, errValidate := loadConfigAndValidateWithSettings(factories, otelcol.ConfigProviderSettings{
+		//lint:ignore SA1019 we need this deprecated function
+		_, errValidate := otelcoltest.LoadConfigAndValidateWithSettings(factories, otelcol.ConfigProviderSettings{
 			ResolverSettings: confmap.ResolverSettings{
 				URIs: []string{p},
 				ProviderFactories: []confmap.ProviderFactory{
@@ -573,21 +575,4 @@ func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
 			o.logger.Error("Failed to reload collector configuration via SIGHUP", zap.Error(err))
 		}
 	}
-}
-
-func loadConfigWithSettings(factories otelcol.Factories, set otelcol.ConfigProviderSettings) (*otelcol.Config, error) {
-	// Read yaml config from file
-	provider, err := otelcol.NewConfigProvider(set)
-	if err != nil {
-		return nil, err
-	}
-	return provider.Get(context.Background(), factories)
-}
-
-func loadConfigAndValidateWithSettings(factories otelcol.Factories, set otelcol.ConfigProviderSettings) (*otelcol.Config, error) {
-	cfg, err := loadConfigWithSettings(factories, set)
-	if err != nil {
-		return nil, err
-	}
-	return cfg, cfg.Validate()
 }

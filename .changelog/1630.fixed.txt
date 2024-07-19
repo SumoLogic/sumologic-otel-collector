@@ -1,0 +1,1 @@
+fix(opamp): Use otelcoltest to validate configuration
