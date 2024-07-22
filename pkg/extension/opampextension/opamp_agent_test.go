@@ -31,12 +31,36 @@ import (
 	semconv "go.opentelemetry.io/collector/semconv/v1.18.0"
 )
 
-func TestNewOpampAgent(t *testing.T) {
-	cfg := createDefaultConfig()
+func setupOpampAgent(t *testing.T) (*opampAgent, *Config) {
+	cfg := createDefaultConfig().(*Config)
 	set := extensiontest.NewNopSettings()
 	set.BuildInfo = component.BuildInfo{Version: "test version", Command: "otelcoltest"}
-	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
+	return o, cfg
+}
+
+func remoteConfig(t *testing.T, path string) *protobufs.AgentRemoteConfig {
+	rb, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("Failed to read file: %v", err)
+	}
+
+	rc := &protobufs.AgentRemoteConfig{
+		Config: &protobufs.AgentConfigMap{
+			ConfigMap: map[string]*protobufs.AgentConfigFile{
+				"default": {
+					Body: rb,
+				},
+			},
+		},
+		ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
+	}
+	return rc
+}
+func TestNewOpampAgent(t *testing.T) {
+	o, _ := setupOpampAgent(t)
+
 	assert.Equal(t, "otelcoltest", o.agentType)
 	assert.Equal(t, "test version", o.agentVersion)
 	assert.NotEmpty(t, o.instanceId.String())
@@ -59,11 +83,7 @@ func TestNewOpampAgentAttributes(t *testing.T) {
 }
 
 func TestGetAgentCapabilities(t *testing.T) {
-	cfg := createDefaultConfig().(*Config)
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
-
+	o, cfg := setupOpampAgent(t)
 	assert.Equal(t, o.getAgentCapabilities(), protobufs.AgentCapabilities(4102))
 
 	cfg.AcceptsRemoteConfiguration = false
@@ -71,10 +91,7 @@ func TestGetAgentCapabilities(t *testing.T) {
 }
 
 func TestCreateAgentDescription(t *testing.T) {
-	cfg := createDefaultConfig()
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
+	o, _ := setupOpampAgent(t)
 
 	assert.Nil(t, o.agentDescription)
 	assert.NoError(t, o.createAgentDescription())
@@ -82,10 +99,7 @@ func TestCreateAgentDescription(t *testing.T) {
 }
 
 func TestLoadEffectiveConfig(t *testing.T) {
-	cfg := createDefaultConfig()
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
+	o, _ := setupOpampAgent(t)
 
 	assert.Equal(t, len(o.effectiveConfig), 0)
 
@@ -94,10 +108,7 @@ func TestLoadEffectiveConfig(t *testing.T) {
 }
 
 func TestSaveEffectiveConfig(t *testing.T) {
-	cfg := createDefaultConfig()
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
+	o, _ := setupOpampAgent(t)
 
 	d, err := os.MkdirTemp("", "opamp.d")
 	assert.NoError(t, err)
@@ -107,10 +118,7 @@ func TestSaveEffectiveConfig(t *testing.T) {
 }
 
 func TestUpdateAgentIdentity(t *testing.T) {
-	cfg := createDefaultConfig()
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
+	o, _ := setupOpampAgent(t)
 
 	olduid := o.instanceId
 	assert.NotEmpty(t, olduid.String())
@@ -123,10 +131,7 @@ func TestUpdateAgentIdentity(t *testing.T) {
 }
 
 func TestComposeEffectiveConfig(t *testing.T) {
-	cfg := createDefaultConfig()
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg.(*Config), set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
+	o, _ := setupOpampAgent(t)
 
 	ec := o.composeEffectiveConfig()
 	assert.NotNil(t, ec)
@@ -137,28 +142,13 @@ func TestApplyRemoteConfig(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
 
-	cfg := createDefaultConfig().(*Config)
+	o, cfg := setupOpampAgent(t)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
 
 	assert.Equal(t, len(o.effectiveConfig), 0)
 
 	path := filepath.Join("testdata", "opamp.d", "opamp-remote-config.yaml")
-	rb, err := os.ReadFile(path)
-	assert.NoError(t, err)
-
-	rc := &protobufs.AgentRemoteConfig{
-		Config: &protobufs.AgentConfigMap{
-			ConfigMap: map[string]*protobufs.AgentConfigFile{
-				"default": {
-					Body: rb,
-				},
-			},
-		},
-		ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
-	}
+	rc := remoteConfig(t, path)
 
 	changed, err := o.applyRemoteConfig(rc)
 	assert.NoError(t, err)
@@ -177,29 +167,13 @@ func TestApplyRemoteApacheConfig(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
 
-	cfg := createDefaultConfig().(*Config)
+	o, cfg := setupOpampAgent(t)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
 
 	assert.Equal(t, len(o.effectiveConfig), 0)
 
 	path := filepath.Join("testdata", "opamp.d", "opamp-apache-config.yaml")
-	rb, err := os.ReadFile(path)
-	assert.NoError(t, err)
-
-	rc := &protobufs.AgentRemoteConfig{
-		Config: &protobufs.AgentConfigMap{
-			ConfigMap: map[string]*protobufs.AgentConfigFile{
-				"default": {
-					Body: rb,
-				},
-			},
-		},
-		ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
-	}
-
+	rc := remoteConfig(t, path)
 	changed, err := o.applyRemoteConfig(rc)
 	assert.NoError(t, err)
 	assert.True(t, changed)
@@ -217,28 +191,13 @@ func TestApplyRemoteHostConfig(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
 
-	cfg := createDefaultConfig().(*Config)
+	o, cfg := setupOpampAgent(t)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
 
 	assert.Equal(t, len(o.effectiveConfig), 0)
 
 	path := filepath.Join("testdata", "opamp.d", "opamp-host-config.yaml")
-	rb, err := os.ReadFile(path)
-	assert.NoError(t, err)
-
-	rc := &protobufs.AgentRemoteConfig{
-		Config: &protobufs.AgentConfigMap{
-			ConfigMap: map[string]*protobufs.AgentConfigFile{
-				"default": {
-					Body: rb,
-				},
-			},
-		},
-		ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
-	}
+	rc := remoteConfig(t, path)
 
 	changed, err := o.applyRemoteConfig(rc)
 	assert.NoError(t, err)
@@ -257,28 +216,13 @@ func TestApplyRemoteWindowsEventConfig(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
 
-	cfg := createDefaultConfig().(*Config)
+	o, cfg := setupOpampAgent(t)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
 
 	assert.Equal(t, len(o.effectiveConfig), 0)
 
 	path := filepath.Join("testdata", "opamp.d", "opamp-windows-event-config.yaml")
-	rb, err := os.ReadFile(path)
-	assert.NoError(t, err)
-
-	rc := &protobufs.AgentRemoteConfig{
-		Config: &protobufs.AgentConfigMap{
-			ConfigMap: map[string]*protobufs.AgentConfigFile{
-				"default": {
-					Body: rb,
-				},
-			},
-		},
-		ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
-	}
+	rc := remoteConfig(t, path)
 
 	changed, err := o.applyRemoteConfig(rc)
 	assert.NoError(t, err)
@@ -297,28 +241,13 @@ func TestApplyRemoteExtensionsConfig(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
 
-	cfg := createDefaultConfig().(*Config)
+	o, cfg := setupOpampAgent(t)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
 
 	assert.Equal(t, len(o.effectiveConfig), 0)
 
 	path := filepath.Join("testdata", "opamp.d", "opamp-extensions-config.yaml")
-	rb, err := os.ReadFile(path)
-	assert.NoError(t, err)
-
-	rc := &protobufs.AgentRemoteConfig{
-		Config: &protobufs.AgentConfigMap{
-			ConfigMap: map[string]*protobufs.AgentConfigFile{
-				"default": {
-					Body: rb,
-				},
-			},
-		},
-		ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
-	}
+	rc := remoteConfig(t, path)
 
 	changed, err := o.applyRemoteConfig(rc)
 	assert.NoError(t, err)
@@ -337,28 +266,13 @@ func TestApplyRemoteConfigFailed(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
 
-	cfg := createDefaultConfig().(*Config)
+	o, cfg := setupOpampAgent(t)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
 
 	assert.Equal(t, len(o.effectiveConfig), 0)
 
 	path := filepath.Join("testdata", "opamp.d", "opamp-invalid-remote-config.yaml")
-	rb, err := os.ReadFile(path)
-	assert.NoError(t, err)
-
-	rc := &protobufs.AgentRemoteConfig{
-		Config: &protobufs.AgentConfigMap{
-			ConfigMap: map[string]*protobufs.AgentConfigFile{
-				"default": {
-					Body: rb,
-				},
-			},
-		},
-		ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
-	}
+	rc := remoteConfig(t, path)
 
 	changed, err := o.applyRemoteConfig(rc)
 	assert.Error(t, err)
@@ -372,28 +286,13 @@ func TestApplyRemoteConfigMissingProcessor(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
 
-	cfg := createDefaultConfig().(*Config)
+	o, cfg := setupOpampAgent(t)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
 
 	assert.Equal(t, len(o.effectiveConfig), 0)
 
 	path := filepath.Join("testdata", "opamp.d", "opamp-missing-processor.yaml")
-	rb, err := os.ReadFile(path)
-	assert.NoError(t, err)
-
-	rc := &protobufs.AgentRemoteConfig{
-		Config: &protobufs.AgentConfigMap{
-			ConfigMap: map[string]*protobufs.AgentConfigFile{
-				"default": {
-					Body: rb,
-				},
-			},
-		},
-		ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
-	}
+	rc := remoteConfig(t, path)
 
 	changed, err := o.applyRemoteConfig(rc)
 	assert.Error(t, err)
@@ -409,28 +308,13 @@ func TestApplyFilterProcessorConfig(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
 
-	cfg := createDefaultConfig().(*Config)
+	o, cfg := setupOpampAgent(t)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
 
 	assert.Equal(t, len(o.effectiveConfig), 0)
 
 	path := filepath.Join("testdata", "opamp.d", "opamp-filter-processor.yaml")
-	rb, err := os.ReadFile(path)
-	assert.NoError(t, err)
-
-	rc := &protobufs.AgentRemoteConfig{
-		Config: &protobufs.AgentConfigMap{
-			ConfigMap: map[string]*protobufs.AgentConfigFile{
-				"default": {
-					Body: rb,
-				},
-			},
-		},
-		ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
-	}
+	rc := remoteConfig(t, path)
 
 	changed, err := o.applyRemoteConfig(rc)
 	assert.NoError(t, err)
@@ -449,28 +333,13 @@ func TestApplyKafkaMetricsConfig(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
 
-	cfg := createDefaultConfig().(*Config)
+	o, cfg := setupOpampAgent(t)
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
 
 	assert.Equal(t, len(o.effectiveConfig), 0)
 
 	path := filepath.Join("testdata", "opamp.d", "opamp-kafkametrics-config.yaml")
-	rb, err := os.ReadFile(path)
-	assert.NoError(t, err)
-
-	rc := &protobufs.AgentRemoteConfig{
-		Config: &protobufs.AgentConfigMap{
-			ConfigMap: map[string]*protobufs.AgentConfigFile{
-				"default": {
-					Body: rb,
-				},
-			},
-		},
-		ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
-	}
+	rc := remoteConfig(t, path)
 
 	changed, err := o.applyRemoteConfig(rc)
 	assert.NoError(t, err)
@@ -485,11 +354,8 @@ func TestApplyKafkaMetricsConfig(t *testing.T) {
 }
 
 func TestShutdown(t *testing.T) {
-	cfg := createDefaultConfig().(*Config)
+	o, cfg := setupOpampAgent(t)
 	cfg.ClientConfig.Auth = nil
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
 
 	// Shutdown with no OpAMP client
 	assert.NoError(t, o.Shutdown(context.Background()))
@@ -500,12 +366,9 @@ func TestStart(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
 
-	cfg := createDefaultConfig().(*Config)
+	o, cfg := setupOpampAgent(t)
 	cfg.ClientConfig.Auth = nil
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
 
 	assert.NoError(t, o.Start(context.Background(), componenttest.NewNopHost()))
 }
@@ -515,12 +378,9 @@ func TestReload(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
 
-	cfg := createDefaultConfig().(*Config)
+	o, cfg := setupOpampAgent(t)
 	cfg.ClientConfig.Auth = nil
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopSettings()
-	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
 
 	ctx := context.Background()
 	assert.NoError(t, o.Start(ctx, componenttest.NewNopHost()))
