@@ -1,10 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
+	"syscall"
 
 	"github.com/spf13/pflag"
 )
@@ -127,11 +130,14 @@ func getHostMetricsUnlinker(values *flagValues) func() error {
 	filename := getHostMetricsFilename()
 	hostmetricsPath := filepath.Join(values.ConfigDir, ConfDotD, filename)
 	return func() error {
-		if err := os.Remove(hostmetricsPath); err == os.ErrNotExist {
+		err := os.Remove(hostmetricsPath)
+		var perr *fs.PathError
+		if errors.As(os.Remove(hostmetricsPath), &perr) && perr.Err == syscall.ENOENT {
 			// if the link does not exist, hostmetrics are already disabled
 			return nil
 		} else {
-			return nil
+			// otherwise we'll return whatever error there was
+			return err
 		}
 	}
 }

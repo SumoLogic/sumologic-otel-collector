@@ -74,6 +74,11 @@ func TestHostMetricsLinker(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// trying to unlink the link again shouldn't result in error
+	if err := unlinker(); err != nil {
+		t.Fatal(err)
+	}
+
 	// verify the linked file is still there
 	_, err = os.Stat(configPath)
 	if err != nil {
