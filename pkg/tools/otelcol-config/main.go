@@ -15,6 +15,7 @@ import (
 const (
 	hostmetricsLinux  = "hostmetrics-linux.yaml"
 	hostmetricsDarwin = "hostmetrics-darwin.yaml"
+	ephemeralYAML     = "ephemeral.yaml"
 )
 
 // errorCoder is here to give actions a way to set the exit status of the program
@@ -112,12 +113,11 @@ func isLinkError(err error) bool {
 	return linkError
 }
 
-func getHostMetricsLinker(values *flagValues) func() error {
-	filename := getHostMetricsFilename()
-	hostmetricsAvailPath := filepath.Join(values.ConfigDir, ConfDotDAvailable, filename)
-	hostmetricsPath := filepath.Join(values.ConfigDir, ConfDotD, filename)
+func getLinker(values *flagValues, filename string) func() error {
+	availPath := filepath.Join(values.ConfigDir, ConfDotDAvailable, filename)
+	configPath := filepath.Join(values.ConfigDir, ConfDotD, filename)
 	return func() error {
-		if err := os.Symlink(hostmetricsAvailPath, hostmetricsPath); isLinkError(err) {
+		if err := os.Symlink(availPath, configPath); isLinkError(err) {
 			// if the link already exists, hostmetrics are already enabled
 			return nil
 		} else {
@@ -126,13 +126,12 @@ func getHostMetricsLinker(values *flagValues) func() error {
 	}
 }
 
-func getHostMetricsUnlinker(values *flagValues) func() error {
-	filename := getHostMetricsFilename()
-	hostmetricsPath := filepath.Join(values.ConfigDir, ConfDotD, filename)
+func getUnlinker(values *flagValues, filename string) func() error {
+	configPath := filepath.Join(values.ConfigDir, ConfDotD, filename)
 	return func() error {
-		err := os.Remove(hostmetricsPath)
+		err := os.Remove(configPath)
 		var perr *fs.PathError
-		if errors.As(os.Remove(hostmetricsPath), &perr) && perr.Err == syscall.ENOENT {
+		if errors.As(err, &perr) && perr.Err == syscall.ENOENT {
 			// if the link does not exist, hostmetrics are already disabled
 			return nil
 		} else {
@@ -140,6 +139,24 @@ func getHostMetricsUnlinker(values *flagValues) func() error {
 			return err
 		}
 	}
+}
+
+func getHostMetricsLinker(values *flagValues) func() error {
+	filename := getHostMetricsFilename()
+	return getLinker(values, filename)
+}
+
+func getHostMetricsUnlinker(values *flagValues) func() error {
+	filename := getHostMetricsFilename()
+	return getUnlinker(values, filename)
+}
+
+func getEphemeralLinker(values *flagValues) func() error {
+	return getLinker(values, ephemeralYAML)
+}
+
+func getEphemeralUnlinker(values *flagValues) func() error {
+	return getUnlinker(values, ephemeralYAML)
 }
 
 // main. here is what it does:
@@ -177,6 +194,8 @@ func main() {
 		WriteSumologicRemote: getSumologicRemoteWriter(flagValues),
 		LinkHostMetrics:      getHostMetricsLinker(flagValues),
 		UnlinkHostMetrics:    getHostMetricsUnlinker(flagValues),
+		LinkEphemeral:        getEphemeralLinker(flagValues),
+		UnlinkEphemeral:      getEphemeralUnlinker(flagValues),
 	}
 
 	if err := visitFlags(fs, ctx); err != nil {
