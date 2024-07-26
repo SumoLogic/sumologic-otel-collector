@@ -22,7 +22,7 @@ var flagActions = map[string]action{
 	flagDisableHostmetrics:   DisableHostmetricsAction,
 	flagEnableEphemeral:      EnableEphemeralAction,
 	flagDisableEphemeral:     DisableEphemeralAction,
-	flagSetAPIURL:            notImplementedAction,
+	flagSetAPIURL:            SetAPIURLAction,
 	flagEnableRemoteControl:  EnableRemoteControlAction,
 	flagDisableRemoteControl: DisableRemoteControlAction,
 	flagSetOpAmpEndpoint:     SetOpAmpEndpointAction,
@@ -35,7 +35,9 @@ func nullAction(*actionContext) error {
 	return nil
 }
 
-// actionOrder specifies the order in which actions will be applied
+// actionOrder specifies the order in which actions will be applied.
+// This order has been chosen specifically so that actions do not conflict
+// with one another. Use care when adding to this list or reordering it.
 var actionOrder = []string{
 	flagHelp,
 	flagConfigDir,
