@@ -202,6 +202,4 @@ func main() {
 		stderrOrBust(err)
 		exit(err)
 	}
-
-	os.Exit(0)
 }
