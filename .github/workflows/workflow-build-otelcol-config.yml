@@ -78,7 +78,7 @@ jobs:
 
       - name: Build
         if: '! inputs.fips'
-        run: make otelcol-sumo-${{inputs.arch_os}}
+        run: make otelcol-config-${{inputs.arch_os}}
         working-directory: ./pkg/tools/otelcol-config
 
       - uses: actions/cache/restore@v4
@@ -102,7 +102,7 @@ jobs:
           CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
           test "$CC"
           echo "Using toolchain: $CC"
-          make otelcol-sumo-${{inputs.arch_os}} \
+          make otelcol-config-${{inputs.arch_os}} \
             FIPS_SUFFIX="-fips" \
             CGO_ENABLED="1" \
             CC="$CC" \
@@ -124,7 +124,7 @@ jobs:
 
       - name: Set binary name
         id: set-binary-name
-        run: echo "binary_name=otelcol-sumo${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}${OTELCOL_BINARY_EXTENSION}" >> $GITHUB_OUTPUT
+        run: echo "binary_name=otelcol-config${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}${OTELCOL_BINARY_EXTENSION}" >> $GITHUB_OUTPUT
 
       - name: Show BoringSSL symbols
         if: inputs.fips && contains(inputs.arch_os, 'linux')

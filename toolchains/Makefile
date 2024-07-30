@@ -20,7 +20,7 @@ print-docker-cross-builder-volume:
 
 musl-cross-make:
 	git clone $(MUSL_X_MAKE_REPO) $(ROOT_DIR)musl-cross-make;
-	cd musl-cross-make && git checkout $(MUSL_X_MAKE_REF);
+	cd $(ROOT_DIR)musl-cross-make && git checkout $(MUSL_X_MAKE_REF);
 	cp $(ROOT_DIR)config.mak $(ROOT_DIR)musl-cross-make/config.mak;
 
 .PHONY: toolchain-linux_arm64
