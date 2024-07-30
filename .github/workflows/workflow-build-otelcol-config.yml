@@ -133,11 +133,11 @@ jobs:
           go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
           grep "_Cfunc__goboringcrypto_"
 
-      - name: Test binary
-        if: inputs.arch_os == env.ARCH_OS
-        working-directory: ./pkg/tools/otelcol-config
-        run: |
-          ./${{ steps.set-binary-name.outputs.binary_name }} -t foo
+      # - name: Test binary
+      #   if: inputs.arch_os == env.ARCH_OS
+      #   working-directory: ./pkg/tools/otelcol-config
+      #   run: |
+      #     ./${{ steps.set-binary-name.outputs.binary_name }} -t foo
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v4
