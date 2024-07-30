@@ -25,6 +25,13 @@ on:
         description: Save the module and build caches.
         default: false
         type: boolean
+    secrets:
+      apple_developer_certificate_p12_base64:
+        required: false
+      apple_developer_certificate_password:
+        required: false
+      app_store_connect_password:
+        required: false
 
 defaults:
   run:
