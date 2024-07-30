@@ -19,7 +19,7 @@ print-docker-cross-builder-volume:
 	@echo $(DOCKER_CROSS_BUILDER_VOLUME)
 
 musl-cross-make:
-	git clone $(MUSL_X_MAKE_REPO);
+	git clone $(MUSL_X_MAKE_REPO) $(ROOT_DIR)musl-cross-make;
 	cd musl-cross-make && git checkout $(MUSL_X_MAKE_REF);
 	cp $(ROOT_DIR)config.mak $(ROOT_DIR)musl-cross-make/config.mak;
 
