@@ -137,7 +137,7 @@ jobs:
         if: inputs.arch_os == env.ARCH_OS
         working-directory: ./pkg/tools/otelcol-config
         run: |
-          ./${{ steps.set-binary-name.outputs.binary_name }} --help
+          ./${{ steps.set-binary-name.outputs.binary_name }} -t foo
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v4
