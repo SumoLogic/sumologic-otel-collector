@@ -27,7 +27,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/confmap"
+	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
+	"go.opentelemetry.io/collector/confmap/provider/envprovider"
+	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
+	"go.opentelemetry.io/collector/confmap/provider/httpprovider"
+	"go.opentelemetry.io/collector/confmap/provider/httpsprovider"
+	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
 	"go.opentelemetry.io/collector/otelcol"
+
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider"
 )
 
 func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
@@ -98,14 +108,31 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			t.Parallel()
 
 			locations := []string{tc.configFile}
-			cp, err := NewConfigProvider(locations)
-			require.NoError(t, err)
+
+			// this is copied from the generated main.go
+			settings := otelcol.ConfigProviderSettings{
+				ResolverSettings: confmap.ResolverSettings{
+					ProviderFactories: []confmap.ProviderFactory{
+						globprovider.NewFactory(),
+						opampprovider.NewFactory(),
+						envprovider.NewFactory(),
+						fileprovider.NewFactory(),
+						httpprovider.NewFactory(),
+						httpsprovider.NewFactory(),
+						yamlprovider.NewFactory(),
+					},
+					ConverterFactories: []confmap.ConverterFactory{
+						expandconverter.NewFactory(),
+					},
+				},
+			}
+			settings.ResolverSettings.URIs = locations
 
 			t.Log("Creating new app...")
 			app, err := otelcol.NewCollector(otelcol.CollectorSettings{
-				BuildInfo:      component.NewDefaultBuildInfo(),
-				Factories:      components,
-				ConfigProvider: cp,
+				BuildInfo:              component.NewDefaultBuildInfo(),
+				Factories:              components,
+				ConfigProviderSettings: settings,
 			})
 			require.NoError(t, err)
 

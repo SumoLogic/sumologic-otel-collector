@@ -19,18 +19,14 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
 	"go.opentelemetry.io/collector/confmap/provider/envprovider"
-	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
-	"go.opentelemetry.io/collector/confmap/provider/httpprovider"
-	"go.opentelemetry.io/collector/confmap/provider/httpsprovider"
-	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
 	"go.opentelemetry.io/collector/featuregate"
 	"go.opentelemetry.io/collector/otelcol"
 
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider"
 )
 
@@ -45,9 +41,8 @@ func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
 	if err != nil {
 		return fmt.Errorf("setting feature gate flags failed: %s", err)
 	}
-	// to create the provider, we need config locations passed in via the command line
-	// to get these, we take the command the service uses to start, parse the flags, and read the values
-	flagset := flags(featuregate.GlobalRegistry())
+	// we need to check if any config locations have been set alongside the opamp config
+	flagset := flags()
 
 	// drop the output from the flagset, we only want to parse
 	// by default it prints error messages to stdout :(
@@ -63,51 +58,24 @@ func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
 	}
 
 	locations := getConfigFlag(flagset)
-	opAmpPath := flagset.Lookup(opAmpConfigFlag)
+	opAmpPath := getOpampConfigFlag(flagset)
 
-	if len(locations) > 0 && opAmpPath.Value.String() != "" {
+	if len(locations) > 0 && opAmpPath != "" {
 		return fmt.Errorf("cannot use --%s and --%s flags together", configFlag, opAmpConfigFlag)
 	}
 
-	if len(locations) == 0 && opAmpPath.Value.String() == "" {
-		// if no locations, use defaults
-		// either this is a command, or the default provider will throw an error
+	if opAmpPath == "" {
+		// let the default config provider handle things, we don't need to do anything
 		return nil
 	}
 
-	// create the config provider using the locations
-	if len(locations) > 0 {
-		params.ConfigProviderSettings = NewConfigProviderSettings(locations)
-	} else {
-		params.ConfigProviderSettings = NewOpAmpConfigProviderSettings(opAmpPath.Value.String())
-	}
+	// opamp path is set, use a custom provider with only opamp
+	// remove the opamp flags from os.Args, so flag parsing doesn't throw an error later
+	opampFlagIndex := slices.Index(os.Args, fmt.Sprintf("--%s", opAmpConfigFlag))
+	os.Args = slices.Delete(os.Args, opampFlagIndex, opampFlagIndex+2)
+	params.ConfigProviderSettings = NewOpAmpConfigProviderSettings(opAmpPath)
 
 	return nil
-}
-
-func NewConfigProvider(locations []string) (otelcol.ConfigProvider, error) {
-	settings := NewConfigProviderSettings(locations)
-	return otelcol.NewConfigProvider(settings)
-}
-
-// see https://github.com/open-telemetry/opentelemetry-collector/blob/72011ca22dff6614d518768b3bb53a1193c6ad02/service/command.go#L38
-// for the logic we're emulating here
-// we only add the glob provider, everything else should be the same
-func NewConfigProviderSettings(locations []string) otelcol.ConfigProviderSettings {
-	return otelcol.ConfigProviderSettings{
-		ResolverSettings: confmap.ResolverSettings{
-			URIs: locations,
-			ProviderFactories: []confmap.ProviderFactory{
-				fileprovider.NewFactory(),
-				envprovider.NewFactory(),
-				yamlprovider.NewFactory(),
-				httpprovider.NewFactory(),
-				httpsprovider.NewFactory(),
-				globprovider.NewFactory(),
-			},
-			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
-		},
-	}
 }
 
 // NewOpAmpConfigProviderSettings is like NewConfigProviderSettings, but only
@@ -116,7 +84,7 @@ func NewOpAmpConfigProviderSettings(location string) otelcol.ConfigProviderSetti
 	return otelcol.ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
 			URIs:               []string{location},
-			ProviderFactories:  []confmap.ProviderFactory{opampprovider.NewFactory()},
+			ProviderFactories:  []confmap.ProviderFactory{opampprovider.NewFactory(), envprovider.NewFactory()},
 			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
 		},
 	}

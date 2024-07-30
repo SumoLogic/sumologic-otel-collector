@@ -20,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 
@@ -34,10 +35,7 @@ func TestLoadConfig(t *testing.T) {
 
 	require.NoError(t, component.ValidateConfig(factory.CreateDefaultConfig()))
 
-	cfg, err := otelcoltest.LoadConfig(
-		path.Join(".", "testdata", "config.yaml"),
-		factories,
-	)
+	cfg, err := otelcoltest.LoadConfig(path.Join(".", "testdata", "config.yaml"), factories)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 	require.NoError(t, cfg.Validate())

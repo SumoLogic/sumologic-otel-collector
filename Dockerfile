@@ -1,5 +1,5 @@
 # For FIPS binary, there are some debian runtime dependencies
-FROM debian:12.5 as otelcol
+FROM debian:12.6 as otelcol
 COPY otelcol-sumo /
 # This shouldn't be necessary but sometimes we end up with execution bit not set.
 # ref: https://github.com/open-telemetry/opentelemetry-collector/issues/1317
@@ -12,13 +12,13 @@ RUN tar czhf otelcol.tar.gz /otelcol-sumo $(ldd /otelcol-sumo | grep -oP "\/.*? 
 # however, we can copy full directory as root (/) to be base file structure for scratch image
 RUN mkdir /output && tar xf /otelcol.tar.gz --directory /output
 
-FROM alpine:3.20.0 as certs
+FROM alpine:3.20.1 as certs
 RUN apk --update add ca-certificates
 
-FROM alpine:3.20.0 as directories
+FROM alpine:3.20.1 as directories
 RUN mkdir /etc/otel/
 
-FROM debian:12.5 as systemd
+FROM debian:12.6 as systemd
 RUN apt update && apt install -y systemd
 # prepare package with journald and it's dependencies keeping original paths
 # h stands for dereference of symbolic links

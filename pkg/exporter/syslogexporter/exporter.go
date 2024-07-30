@@ -35,7 +35,7 @@ type syslogexporter struct {
 	tlsConfig *tls.Config
 }
 
-func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*syslogexporter, error) {
+func initExporter(cfg *Config, createSettings exporter.Settings) (*syslogexporter, error) {
 	tlsConfig, err := cfg.TLSSetting.LoadTLSConfig(context.Background())
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func initExporter(cfg *Config, createSettings exporter.CreateSettings) (*sysloge
 
 func newLogsExporter(
 	ctx context.Context,
-	params exporter.CreateSettings,
+	params exporter.Settings,
 	cfg *Config,
 ) (exporter.Logs, error) {
 	s, err := initExporter(cfg, params)

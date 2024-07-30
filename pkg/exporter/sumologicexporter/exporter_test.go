@@ -67,8 +67,8 @@ func createTestConfig() *Config {
 	return config
 }
 
-func createExporterCreateSettings() exporter.CreateSettings {
-	return exporter.CreateSettings{
+func createExporterCreateSettings() exporter.Settings {
+	return exporter.Settings{
 		TelemetrySettings: component.TelemetrySettings{
 			Logger: zap.NewNop(),
 		},

@@ -57,7 +57,7 @@ parse_version_tag() {
     # shellcheck disable=SC2153
     version_tag="${VERSION_TAG}"
     if [ -z "${version_tag}" ]; then
-        version_tag=$(git tag -l --sort -version:refname | head -n 1)
+        version_tag=$(git describe --tags --abbrev=0 --match "v[0-9]*" | head -n 1)
     fi
 
     version_regex="^v([0-9]+).([0-9]+).([0-9]+)((-(alpha|beta|rc|sumo)[-.]([0-9]+))(-(alpha|beta|rc).([0-9])+)?)?$"

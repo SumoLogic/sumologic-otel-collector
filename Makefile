@@ -1,4 +1,4 @@
-GOLANGCI_LINT_VERSION ?= v1.55.2
+GOLANGCI_LINT_VERSION ?= v1.59.1
 PRETTIER_VERSION ?= 3.0.3
 TOWNCRIER_VERSION ?= 23.6.0
 SHELL := /usr/bin/env bash
@@ -119,11 +119,12 @@ update-ot: install-gsed
 		README.md \
 		docs/configuration.md \
 		docs/migration.md \
-		pkg/exporter/sumologicexporter/README.md
+		docs/performance.md
 	$(SED) -i "s/\(contrib\/\(blob\|tree\)\/v\)$(OT_CONTRIB_VERSION)/\1$(OT_CONTRIB_NEW)/" \
 		README.md \
 		docs/configuration.md \
 		docs/migration.md \
+		docs/performance.md \
 		pkg/receiver/telegrafreceiver/README.md
 	@find . -type f -name "go.mod" -exec $(SED) -i "s/\(go\.opentelemetry\.io\/collector.*\) v$(OT_CORE_VERSION)$$/\1 v$(OT_CORE_NEW)/" {} \;
 	@find . -type f -name "go.mod" -exec $(SED) -i "s/\(github\.com\/open-telemetry\/opentelemetry-collector-contrib\/.*\) v$(OT_CONTRIB_VERSION)$$/\1 v$(OT_CONTRIB_NEW)/" {} \;

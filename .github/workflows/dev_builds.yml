@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - 'dev-build/*'
+      - "dev-build/*"
 
 defaults:
   run:
@@ -14,7 +14,6 @@ env:
   GO_VERSION: "1.21.4"
 
 jobs:
-
   get-version:
     name: Get application version for this revision
     runs-on: ubuntu-latest
@@ -39,7 +38,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        arch_os: [ 'linux_amd64' ]
+        arch_os: ["linux_amd64"]
     steps:
       - uses: actions/checkout@v4
 
@@ -152,16 +151,16 @@ jobs:
       - get-version
     strategy:
       matrix:
-        arch_os: [ 'linux_amd64', 'linux_arm64' ]
+        arch_os: ["linux_amd64", "linux_arm64"]
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.0.0
+        uses: docker/setup-qemu-action@v3.2.0
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3.3.0
+        uses: docker/setup-buildx-action@v3.6.1
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -321,11 +320,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.0.0
+        uses: docker/setup-qemu-action@v3.2.0
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3.3.0
+        uses: docker/setup-buildx-action@v3.6.1
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -361,14 +360,14 @@ jobs:
         run: |
           make push-container-manifest-dev \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64" \
+            PLATFORMS="linux/amd64 linux/arm64" \
             BUILD_TYPE_SUFFIX="-ubi-fips"
 
       - name: Push joint UBI-based FIPS container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest-dev \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64" \
+            PLATFORMS="linux/amd64 linux/arm64" \
             REPO_URL=sumologic/sumologic-otel-collector-dev \
             BUILD_TYPE_SUFFIX="-ubi-fips"
 
@@ -389,14 +388,14 @@ jobs:
         run: |
           make push-container-manifest-dev \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64" \
+            PLATFORMS="linux/amd64 linux/arm64" \
             BUILD_TYPE_SUFFIX="-ubi"
 
       - name: Push joint UBI-based container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest-dev \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64" \
+            PLATFORMS="linux/amd64 linux/arm64" \
             REPO_URL=sumologic/sumologic-otel-collector-dev \
             BUILD_TYPE_SUFFIX="-ubi"
 

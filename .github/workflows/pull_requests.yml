@@ -147,7 +147,7 @@ jobs:
           - arch_os: linux_amd64
             runs-on: ubuntu-20.04
             boringcrypto: true
-          - arch_os: darwin_amd64
+          - arch_os: darwin_arm64
             runs-on: macos-latest
           - arch_os: windows_amd64
             runs-on: windows-2022
@@ -278,11 +278,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.0.0
+        uses: docker/setup-qemu-action@v3.2.0
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3.3.0
+        uses: docker/setup-buildx-action@v3.6.1
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}

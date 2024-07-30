@@ -19,16 +19,12 @@
 package main // import "go.opentelemetry.io/collector/service"
 
 import (
-	"errors"
 	"flag"
 	"strings"
-
-	"go.opentelemetry.io/collector/featuregate"
 )
 
 const (
-	configFlag       = "config"
-	featureGatesFlag = "feature-gates"
+	configFlag = "config"
 )
 
 type configFlagValue struct {
@@ -52,29 +48,14 @@ const opAmpConfigFlag = "remote-config"
 // opAmpConfig houses the contents of the flag
 var opAmpConfig string
 
-func flags(reg *featuregate.Registry) *flag.FlagSet {
+func flags() *flag.FlagSet {
 	flagSet := new(flag.FlagSet)
 
 	cfgs := new(configFlagValue)
 	flagSet.Var(cfgs, configFlag, "Locations to the config file(s), note that only a"+
 		" single location can be set per flag entry e.g. `--config=file:/path/to/first --config=file:path/to/second`.")
 
-	flagSet.StringVar(&opAmpConfig, opAmpConfigFlag, "", "configure collector with opamp config file")
-
-	flagSet.Func("set",
-		"Set arbitrary component config property. The component has to be defined in the config file and the flag"+
-			" has a higher precedence. Array config properties are overridden and maps are joined. Example --set=processors.batch.timeout=2s",
-		func(s string) error {
-			idx := strings.Index(s, "=")
-			if idx == -1 {
-				// No need for more context, see TestSetFlag/invalid_set.
-				return errors.New("missing equal sign")
-			}
-			cfgs.sets = append(cfgs.sets, "yaml:"+strings.TrimSpace(strings.ReplaceAll(s[:idx], ".", "::"))+": "+strings.TrimSpace(s[idx+1:]))
-			return nil
-		})
-
-	reg.RegisterFlags(flagSet)
+	addOpampConfigFlag(flagSet)
 
 	return flagSet
 }
@@ -82,4 +63,17 @@ func flags(reg *featuregate.Registry) *flag.FlagSet {
 func getConfigFlag(flagSet *flag.FlagSet) []string {
 	cfv := flagSet.Lookup(configFlag).Value.(*configFlagValue)
 	return append(cfv.values, cfv.sets...)
+}
+
+func getOpampConfigFlag(flagSet *flag.FlagSet) string {
+	opampPath := flagSet.Lookup(opAmpConfigFlag)
+	return opampPath.Value.String()
+}
+
+type CommonFlagSet interface {
+	StringVar(p *string, name string, value string, usage string)
+}
+
+func addOpampConfigFlag(flagSet CommonFlagSet) {
+	flagSet.StringVar(&opAmpConfig, opAmpConfigFlag, "", "configure collector with opamp config file")
 }

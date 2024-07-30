@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.102.1-sumo-0]
+
+### Released 2024-06-07
+
+### Changed
+
+- feat: build UBI image for arm64 [#1594]
+- upgrade otelcol core to 0.102.1 [#1598]
+
+[#1594]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1594
+[#1598]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1598
+
+[v0.102.1-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.102.1-sumo-0## [v0.100.0-sumo-0]
+
 ## [v0.100.0-sumo-0]
 
 ### Released 2024-05-27

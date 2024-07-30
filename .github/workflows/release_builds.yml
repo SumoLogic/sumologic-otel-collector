@@ -3,15 +3,15 @@ name: Releases
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-alpha.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-alpha.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+"
 
-      - 'v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-alpha.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-beta.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-rc.[0-9]+'
+      - "v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-alpha.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-beta.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-rc.[0-9]+"
 
 defaults:
   run:
@@ -40,7 +40,7 @@ jobs:
   build:
     name: Build
     uses: ./.github/workflows/workflow-build.yml
-    needs: [ get-version ]
+    needs: [get-version]
     strategy:
       matrix:
         include:
@@ -86,16 +86,16 @@ jobs:
       - get-version
     strategy:
       matrix:
-        arch_os: [ 'linux_amd64', 'linux_arm64']
+        arch_os: ["linux_amd64", "linux_arm64"]
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.0.0
+        uses: docker/setup-qemu-action@v3.2.0
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3.3.0
+        uses: docker/setup-buildx-action@v3.6.1
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -125,7 +125,6 @@ jobs:
           path: artifacts/
 
       - name: Build and push FIPS image to Open Source ECR
-        if: matrix.arch_os == 'linux_amd64'
         run: |
           cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-multiplatform \
@@ -134,7 +133,6 @@ jobs:
             BUILD_TYPE_SUFFIX="-fips"
 
       - name: Build and push FIPS image to DockerHub
-        if: matrix.arch_os == 'linux_amd64'
         run: |
           cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-multiplatform \
@@ -144,7 +142,6 @@ jobs:
             BUILD_TYPE_SUFFIX="-fips"
 
       - name: Build and push UBI-based FIPS image to Open Source ECR
-        if: matrix.arch_os == 'linux_amd64'
         run: |
           cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-ubi \
@@ -153,7 +150,6 @@ jobs:
             BUILD_TYPE_SUFFIX="-ubi-fips"
 
       - name: Build and push UBI-based FIPS image to DockerHub
-        if: matrix.arch_os == 'linux_amd64'
         run: |
           cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-ubi \
@@ -178,7 +174,6 @@ jobs:
             REPO_URL=sumologic/sumologic-otel-collector
 
       - name: Build and push UBI-based image to Open Source ECR
-        if: matrix.arch_os == 'linux_amd64'
         run: |
           cp artifacts/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-ubi \
@@ -187,7 +182,6 @@ jobs:
             BUILD_TYPE_SUFFIX="-ubi"
 
       - name: Build and push UBI-based image to DockerHub
-        if: matrix.arch_os == 'linux_amd64'
         run: |
           cp artifacts/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-ubi \
@@ -209,11 +203,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.0.0
+        uses: docker/setup-qemu-action@v3.2.0
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3.3.0
+        uses: docker/setup-buildx-action@v3.6.1
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -249,14 +243,14 @@ jobs:
         run: |
           make push-container-manifest \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64" \
+            PLATFORMS="linux/amd64 linux/arm64" \
             BUILD_TYPE_SUFFIX="-ubi-fips"
 
       - name: Push joint UBI-based FIPS container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64" \
+            PLATFORMS="linux/amd64 linux/arm64" \
             REPO_URL=sumologic/sumologic-otel-collector \
             BUILD_TYPE_SUFFIX="-ubi-fips"
 
@@ -277,14 +271,14 @@ jobs:
         run: |
           make push-container-manifest \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64" \
+            PLATFORMS="linux/amd64 linux/arm64" \
             BUILD_TYPE_SUFFIX="-ubi"
 
       - name: Push joint UBI-based container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64" \
+            PLATFORMS="linux/amd64 linux/arm64" \
             REPO_URL=sumologic/sumologic-otel-collector \
             BUILD_TYPE_SUFFIX="-ubi"
 
@@ -332,11 +326,11 @@ jobs:
       - name: Sign MSI
         uses: skymatic/code-sign-action@v3
         with:
-          certificate: '${{ secrets.MICROSOFT_CERTIFICATE }}'
-          password: '${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}'
-          certificatesha1: '${{ secrets.MICROSOFT_CERTHASH }}'
-          certificatename: '${{ secrets.MICROSOFT_CERTNAME }}'
-          description: '${{ secrets.MICROSOFT_DESCRIPTION }}'
+          certificate: "${{ secrets.MICROSOFT_CERTIFICATE }}"
+          password: "${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}"
+          certificatesha1: "${{ secrets.MICROSOFT_CERTHASH }}"
+          certificatename: "${{ secrets.MICROSOFT_CERTNAME }}"
+          description: "${{ secrets.MICROSOFT_DESCRIPTION }}"
           folder: ./packaging/msi/wix/bin/${{ matrix.platform }}/en-US
 
       - name: Store MSI as action artifact for ${{ matrix.arch_os }}
@@ -345,7 +339,6 @@ jobs:
           name: ${{ matrix.arch_os }}${{ matrix.fips && '_fips' || '' }}_msi
           path: ./packaging/msi/wix/bin/${{ matrix.platform }}/en-US/*.msi
           if-no-files-found: error
-
 
   # Store the install script from the packaging repository as a release artifact.
   # Originally, this script was stored in this repository, and the official download url pointed

@@ -15,9 +15,11 @@
 package sampling
 
 import (
+	"errors"
 	"regexp"
 
 	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
@@ -28,8 +30,29 @@ type dropTraceEvaluator struct {
 	stringAttr  *stringAttributeFilter
 	attrs       []attributeFilter
 	operationRe *regexp.Regexp
+	statusCode  *string
 
 	logger *zap.Logger
+}
+
+func validateStatusCode(statusCode *string) error {
+	if statusCode == nil {
+		return nil
+	}
+
+	validStatusCodes := []string{
+		ptrace.StatusCodeError.String(),
+		ptrace.StatusCodeOk.String(),
+		ptrace.StatusCodeUnset.String(),
+	}
+
+	for _, valid := range validStatusCodes {
+		if *statusCode == valid {
+			return nil
+		}
+	}
+
+	return errors.New("invalid status code: must be one of 'Error', 'Ok', or 'Unset' ")
 }
 
 var _ DropTraceEvaluator = (*dropTraceEvaluator)(nil)
@@ -55,11 +78,16 @@ func NewDropTraceEvaluator(logger *zap.Logger, cfg config.TraceRejectCfg) (DropT
 		}
 	}
 
+	if err := validateStatusCode(cfg.StatusCode); err != nil {
+		return nil, err
+	}
+
 	return &dropTraceEvaluator{
 		stringAttr:  stringAttrFilter,
 		numericAttr: numericAttrFilter,
 		attrs:       attrsFilter,
 		operationRe: operationRe,
+		statusCode:  cfg.StatusCode,
 		logger:      logger,
 	}, nil
 }
@@ -74,6 +102,7 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 	matchingStringAttrFound := false
 	matchingNumericAttrFound := false
 	matchingAttrsFound := false
+	matchingStatusCodeFound := false
 
 	for _, batch := range batches {
 		rs := batch.ResourceSpans()
@@ -104,6 +133,13 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 						matchingNumericAttrFound = checkIfNumericAttrFound(span.Attributes(), dte.numericAttr)
 					}
 
+					if !matchingStatusCodeFound && dte.statusCode != nil && span.ParentSpanID().IsEmpty() {
+						statusCode := span.Status().Code()
+						if statusCode.String() == *dte.statusCode {
+							matchingStatusCodeFound = true
+						}
+					}
+
 					if dte.operationRe != nil && !matchingOperationFound {
 						if dte.operationRe.MatchString(span.Name()) {
 							matchingOperationFound = true
@@ -115,12 +151,13 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 	}
 
 	conditionMet := struct {
-		operationName, stringAttr, numericAttr, attrs bool
+		operationName, stringAttr, numericAttr, attrs, statusCode bool
 	}{
 		operationName: true,
 		stringAttr:    true,
 		numericAttr:   true,
 		attrs:         true,
+		statusCode:    true,
 	}
 
 	if dte.operationRe != nil {
@@ -136,5 +173,9 @@ func (dte *dropTraceEvaluator) ShouldDrop(_ pcommon.TraceID, trace *TraceData) b
 		conditionMet.attrs = matchingAttrsFound
 	}
 
-	return conditionMet.operationName && conditionMet.numericAttr && conditionMet.stringAttr && conditionMet.attrs
+	if dte.statusCode != nil {
+		conditionMet.statusCode = matchingStatusCodeFound
+	}
+
+	return conditionMet.operationName && conditionMet.numericAttr && conditionMet.stringAttr && conditionMet.attrs && conditionMet.statusCode
 }

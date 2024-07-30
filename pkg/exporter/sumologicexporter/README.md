@@ -1,6 +1,11 @@
 # Sumo Logic Exporter
 
-**Stability level**: Beta
+**Stability level**: Deprecated
+
+This extension is deprecated in favor of the [Sumo Logic exporter][sumologic_exporter_docs] that lives in the [OpenTelemetry Collector Contrib][contrib_repo] repository.
+
+[sumologic_exporter_docs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/sumologicexporter/README.md
+[contrib_repo]: https://github.com/open-telemetry/opentelemetry-collector-contrib/
 
 This exporter supports sending logs and metrics data to [Sumo Logic](https://www.sumologic.com/).
 
@@ -24,7 +29,7 @@ exporters:
     # max HTTP request body size in bytes before compression (if applied),
     # NOTE: this limit does not apply to data sent in otlp format,
     #   to limit size of otlp requests, please use the batch processor:
-    #   https://github.com/open-telemetry/opentelemetry-collector/tree/v0.100.0/processor/batchprocessor
+    #   https://github.com/open-telemetry/opentelemetry-collector/tree/v0.103.0/processor/batchprocessor
     # default = 1_048_576 (1MB)
     max_request_body_size: <max_request_body_size>
 

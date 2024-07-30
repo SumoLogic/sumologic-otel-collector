@@ -54,7 +54,7 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 	ccfg.Credentials.InstallationToken = "dummy_install_token"
 
 	ext, err := createExtension(context.Background(),
-		extension.CreateSettings{
+		extension.Settings{
 			TelemetrySettings: componenttest.NewNopTelemetrySettings(),
 		},
 		cfg,
@@ -69,7 +69,7 @@ func TestFactory_CreateExtension(t *testing.T) {
 	cfg.Credentials.InstallationToken = "dummy_install_token"
 
 	ext, err := createExtension(context.Background(),
-		extension.CreateSettings{
+		extension.Settings{
 			TelemetrySettings: componenttest.NewNopTelemetrySettings(),
 		},
 		cfg,

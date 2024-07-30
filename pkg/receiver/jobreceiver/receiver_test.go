@@ -26,7 +26,7 @@ func TestMonitoringJob(t *testing.T) {
 
 	sink := new(consumertest.LogsSink)
 
-	rec, err := f.CreateLogsReceiver(context.Background(), receivertest.NewNopCreateSettings(), cfg, sink)
+	rec, err := f.CreateLogsReceiver(context.Background(), receivertest.NewNopSettings(), cfg, sink)
 	require.NoError(t, err)
 
 	require.NoError(t, rec.Start(context.Background(), componenttest.NewNopHost()))

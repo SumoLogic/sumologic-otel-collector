@@ -1,5 +1,7 @@
 # Upgrading
 
+- [Upgrading to v0.104.0-sumo-0](#upgrading-to-v01040-sumo-0)
+  - [`sumologic` exporter: remove `compress_encoding`](#sumologic-exporter-remove-compress_encoding)
 - [Upgrading to v0.96.0-sumo-0](#upgrading-to-v0960-sumo-0)
   - [`sumologic` exporter: remove `json_logs`](#sumologic-exporter-remove-json_logs)
   - [`sumologic` exporter: remove `clear_logs_timestamp`](#sumologic-exporter-remove-clear_logs_timestamp)
@@ -52,6 +54,32 @@
   - [Sumo Logic exporter metadata handling](#sumo-logic-exporter-metadata-handling)
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
+
+## Upgrading to v0.104.0-sumo-0
+
+### `sumologic` exporter: remove `compress_encoding`
+
+`compress_encoding` has been removed in favor of using `compression` from client config.
+
+To migrate do the following step:
+
+- use `compression` in replace of `compress_encoding`:
+
+Change this:
+
+  ```yaml
+  exporters:
+    sumologic:
+      compress_encoding: ""
+  ```
+
+to this:
+
+  ```yaml
+  exporters:
+    sumologic:
+      compression: ""
+  ```
 
 ## Upgrading to v0.96.0-sumo-0
 
@@ -682,8 +710,8 @@ to make it behave like the Sumo Logic exporter.
 
 See the [Source processor documentation][sourceprocessor_docs] for more details.
 
-[sumologicexporter_docs]: ../pkg/exporter/sumologicexporter/README.md
-[sourceprocessor_docs]: ../pkg/processor/sourceprocessor/README.md
+[sumologicexporter_docs]: https://github.com/sumologic/sumologic-otel-collector/tree/v0.57.2-sumo-0/pkg/exporter/sumologicexporter/README.md
+[sourceprocessor_docs]: https://github.com/sumologic/sumologic-otel-collector/tree/v0.57.2-sumo-0/pkg/processor/sourceprocessor/README.md
 
 ## Upgrading to v0.56.0-sumo-0
 
@@ -760,8 +788,8 @@ service:
 
 **Note**: By default, the `sumologicschema` processor also performs other actions. Please see a corresponding warning in paragraph [`sumologic` exporter: drop support for translating attributes](#sumologic-exporter-drop-support-for-translating-attributes) for more information.
 
-[sumologicschema_processor]: ../pkg/processor/sumologicschemaprocessor/
-[sumologicschema_processor_readme]: ../pkg/processor/sumologicschemaprocessor/README.md
+[sumologicschema_processor]: https://github.com/sumologic/sumologic-otel-collector/tree/v0.56.0-sumo-0/pkg/processor/sumologicschemaprocessor/
+[sumologicschema_processor_readme]: https://github.com/sumologic/sumologic-otel-collector/tree/v0.56.0-sumo-0/pkg/processor/sumologicschemaprocessor/README.md
 
 ## Upgrading to v0.55.0-sumo-0
 

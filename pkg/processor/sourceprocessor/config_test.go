@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 )
@@ -31,6 +32,7 @@ func TestLoadConfig(t *testing.T) {
 	factories.Processors[Type] = factory
 
 	cfgPath := path.Join(".", "testdata", "config.yaml")
+
 	cfg, err := otelcoltest.LoadConfig(cfgPath, factories)
 	assert.NoError(t, err)
 	assert.NotNil(t, cfg)

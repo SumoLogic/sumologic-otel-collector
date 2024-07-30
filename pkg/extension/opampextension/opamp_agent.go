@@ -23,21 +23,24 @@ import (
 	"reflect"
 	"runtime"
 
+	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/confmap"
+	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
+	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
+	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
+	"go.opentelemetry.io/collector/otelcol"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	semconv "go.opentelemetry.io/collector/semconv/v1.18.0"
+	"go.uber.org/zap"
+
 	"github.com/google/uuid"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/knadh/koanf/v2"
 	"github.com/oklog/ulid/v2"
-	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/otelcol/otelcoltest"
-	"go.uber.org/zap"
-
 	"github.com/open-telemetry/opamp-go/client"
 	"github.com/open-telemetry/opamp-go/client/types"
 	"github.com/open-telemetry/opamp-go/protobufs"
-	"go.opentelemetry.io/collector/pdata/pcommon"
-	semconv "go.opentelemetry.io/collector/semconv/v1.18.0"
-
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension"
 )
 
@@ -423,7 +426,17 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 			return fmt.Errorf("cannot get the list of factories: %v", err)
 		}
 		o.logger.Info("Loading Configuration to Validate...")
-		_, errValidate := otelcoltest.LoadConfigAndValidate(p, factories)
+
+		_, errValidate := loadConfigAndValidateWithSettings(factories, otelcol.ConfigProviderSettings{
+			ResolverSettings: confmap.ResolverSettings{
+				URIs: []string{p},
+				ProviderFactories: []confmap.ProviderFactory{
+					fileprovider.NewFactory(),
+					yamlprovider.NewFactory(),
+				},
+				ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
+			},
+		})
 		if errValidate != nil {
 			o.logger.Error("Validation Failed... %v", zap.Error(errValidate))
 			return fmt.Errorf("cannot validate config named %v", errValidate)
@@ -539,4 +552,21 @@ func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
 			o.logger.Error("Failed to reload collector configuration via SIGHUP", zap.Error(err))
 		}
 	}
+}
+
+func loadConfigWithSettings(factories otelcol.Factories, set otelcol.ConfigProviderSettings) (*otelcol.Config, error) {
+	// Read yaml config from file
+	provider, err := otelcol.NewConfigProvider(set)
+	if err != nil {
+		return nil, err
+	}
+	return provider.Get(context.Background(), factories)
+}
+
+func loadConfigAndValidateWithSettings(factories otelcol.Factories, set otelcol.ConfigProviderSettings) (*otelcol.Config, error) {
+	cfg, err := loadConfigWithSettings(factories, set)
+	if err != nil {
+		return nil, err
+	}
+	return cfg, cfg.Validate()
 }

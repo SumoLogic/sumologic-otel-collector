@@ -759,8 +759,8 @@ func TestLogProcessorJson(t *testing.T) {
 	}
 }
 
-func newProcessorCreateSettings() processor.CreateSettings {
-	return processor.CreateSettings{
+func newProcessorCreateSettings() processor.Settings {
+	return processor.Settings{
 		TelemetrySettings: component.TelemetrySettings{
 			Logger: zap.NewNop(),
 		},
