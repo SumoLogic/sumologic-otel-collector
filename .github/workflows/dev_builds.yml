@@ -156,11 +156,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.1.0
+        uses: docker/setup-qemu-action@v3.2.0
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3.4.0
+        uses: docker/setup-buildx-action@v3.6.1
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -320,11 +320,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.1.0
+        uses: docker/setup-qemu-action@v3.2.0
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3.4.0
+        uses: docker/setup-buildx-action@v3.6.1
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}

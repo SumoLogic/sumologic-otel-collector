@@ -23,6 +23,7 @@ import (
 
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
+	"go.opentelemetry.io/collector/confmap/provider/envprovider"
 	"go.opentelemetry.io/collector/featuregate"
 	"go.opentelemetry.io/collector/otelcol"
 
@@ -83,7 +84,7 @@ func NewOpAmpConfigProviderSettings(location string) otelcol.ConfigProviderSetti
 	return otelcol.ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
 			URIs:               []string{location},
-			ProviderFactories:  []confmap.ProviderFactory{opampprovider.NewFactory()},
+			ProviderFactories:  []confmap.ProviderFactory{opampprovider.NewFactory(), envprovider.NewFactory()},
 			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
 		},
 	}

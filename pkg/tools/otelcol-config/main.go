@@ -1,11 +1,21 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
+	"syscall"
 
 	"github.com/spf13/pflag"
+)
+
+const (
+	hostmetricsLinux  = "hostmetrics-linux.yaml"
+	hostmetricsDarwin = "hostmetrics-darwin.yaml"
+	ephemeralYAML     = "ephemeral.yaml"
 )
 
 // errorCoder is here to give actions a way to set the exit status of the program
@@ -87,13 +97,87 @@ func getSumologicRemoteWriter(values *flagValues) func([]byte) (int, error) {
 	}
 }
 
+func getHostMetricsFilename() string {
+	switch runtime.GOOS {
+	case "linux":
+		return hostmetricsLinux
+	case "darwin":
+		return hostmetricsDarwin
+	default:
+		panic("unsupported os: " + runtime.GOOS)
+	}
+}
+
+func isLinkError(err error) bool {
+	_, linkError := err.(*os.LinkError)
+	return linkError
+}
+
+func getLinker(values *flagValues, filename string) func() error {
+	availPath := filepath.Join(values.ConfigDir, ConfDotDAvailable, filename)
+	configPath := filepath.Join(values.ConfigDir, ConfDotD, filename)
+	return func() error {
+		if err := os.Symlink(availPath, configPath); isLinkError(err) {
+			// if the link already exists, hostmetrics are already enabled
+			return nil
+		} else {
+			return err
+		}
+	}
+}
+
+func getUnlinker(values *flagValues, filename string) func() error {
+	configPath := filepath.Join(values.ConfigDir, ConfDotD, filename)
+	return func() error {
+		err := os.Remove(configPath)
+		var perr *fs.PathError
+		if errors.As(err, &perr) && perr.Err == syscall.ENOENT {
+			// if the link does not exist, hostmetrics are already disabled
+			return nil
+		} else {
+			// otherwise we'll return whatever error there was
+			return err
+		}
+	}
+}
+
+func getHostMetricsLinker(values *flagValues) func() error {
+	filename := getHostMetricsFilename()
+	return getLinker(values, filename)
+}
+
+func getHostMetricsUnlinker(values *flagValues) func() error {
+	filename := getHostMetricsFilename()
+	return getUnlinker(values, filename)
+}
+
+func getEphemeralLinker(values *flagValues) func() error {
+	return getLinker(values, ephemeralYAML)
+}
+
+func getEphemeralUnlinker(values *flagValues) func() error {
+	return getUnlinker(values, ephemeralYAML)
+}
+
 // main. here is what it does:
 //
-// 1. parse flags, or exit 2 on failure
-// 2. visit flags alphabetically according to flagActions, or exit on failure
+// 1. Check basic OS compatibility
+// 1. Parse flags, or exit 2 on failure
+// 2. Visit flags alphabetically according to flagActions, or exit on failure
 func main() {
+	if runtime.GOOS != "linux" && runtime.GOOS != "darwin" {
+		stderrOrBust(fmt.Errorf("unsupported OS: %s", runtime.GOOS))
+		os.Exit(1)
+	}
+
 	flagValues := newFlagValues()
 	fs := makeFlagSet(flagValues)
+
+	if len(os.Args) == 1 {
+		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
+		fs.PrintDefaults()
+		os.Exit(2)
+	}
 
 	if err := fs.Parse(os.Args); err != nil {
 		stderrOrBust(err)
@@ -108,6 +192,10 @@ func main() {
 		WriteConfD:           getConfDWriter(flagValues, ConfDSettings),
 		WriteConfDOverrides:  getConfDWriter(flagValues, ConfDOverrides),
 		WriteSumologicRemote: getSumologicRemoteWriter(flagValues),
+		LinkHostMetrics:      getHostMetricsLinker(flagValues),
+		UnlinkHostMetrics:    getHostMetricsUnlinker(flagValues),
+		LinkEphemeral:        getEphemeralLinker(flagValues),
+		UnlinkEphemeral:      getEphemeralUnlinker(flagValues),
 	}
 
 	if err := visitFlags(fs, ctx); err != nil {
