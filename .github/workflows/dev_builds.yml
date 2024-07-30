@@ -100,6 +100,25 @@ jobs:
       save-cache: true
       boringcrypto: ${{ matrix.boringcrypto == true }}
 
+  test-otelcol-config:
+    name: Test
+    uses: ./.github/workflows/workflow-test-otelcol-config.yml
+    strategy:
+      matrix:
+        include:
+          - arch_os: linux_amd64
+            runs-on: ubuntu-20.04
+          - arch_os: linux_amd64
+            runs-on: ubuntu-20.04
+            boringcrypto: true
+          - arch_os: darwin_amd64
+            runs-on: macos-latest
+    with:
+      arch_os: ${{ matrix.arch_os }}
+      runs-on: ${{ matrix.runs-on }}
+      save-cache: true
+      boringcrypto: ${{ matrix.boringcrypto == true }}
+
   build:
     name: Build
     uses: ./.github/workflows/workflow-build.yml
@@ -142,6 +161,39 @@ jobs:
       microsoft_certificate_hash: ${{ secrets.MICROSOFT_CERTHASH }}
       microsoft_certificate_name: ${{ secrets.MICROSOFT_CERTNAME }}
       microsoft_description: ${{ secrets.MICROSOFT_DESCRIPTION }}
+
+  build-otelcol-config:
+    name: Build (otelcol-config)
+    uses: ./.github/workflows/workflow-build-otelcol-config.yml
+    needs: [get-version]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch_os: darwin_amd64
+            runs-on: macos-latest
+          - arch_os: darwin_arm64
+            runs-on: macos-latest
+          - arch_os: linux_amd64
+            runs-on: ubuntu-20.04
+          - arch_os: linux_amd64
+            runs-on: ubuntu-20.04
+            fips: true
+          - arch_os: linux_arm64
+            runs-on: ubuntu-20.04
+          - arch_os: linux_arm64
+            runs-on: ubuntu-20.04
+            fips: true
+    with:
+      arch_os: ${{ matrix.arch_os }}
+      runs-on: ${{ matrix.runs-on }}
+      fips: ${{ matrix.fips == true }}
+      save-cache: true
+      sumo_component_gomod_version: "v${{ needs.get-version.outputs.version }}"
+    secrets:
+      apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+      apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+      app_store_connect_password: ${{ secrets.AC_PASSWORD }}
 
   build-container-images:
     name: Build container
@@ -475,6 +527,8 @@ jobs:
   trigger-packaging:
     name: Trigger Packaging
     needs:
+      - build
+      - build-otelcol-config
       - lint
       - package-msi
       - push-docker-manifest
