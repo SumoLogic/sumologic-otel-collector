@@ -1,8 +1,5 @@
 include ../toolchains/Makefile
 
-ROOT_DIR ?= $(realpath $(dir $(realpath $(dir $(realpath $(lastword $(MAKEFILE_LIST)))))))
-#TOOLCHAINS_DIR ?= "$(shell '$(MAKE)' print-toolchains-dir)"
-
 BINARY_NAME ?= otelcol-sumo
 BUILDER_VERSION ?= 0.103.1
 FIPS_SUFFIX ?= ""
@@ -75,10 +72,6 @@ endif
 # the CGO resolver. This has caused a DNS resolution error for .local domains in our K8s containers.
 # ref: https://pkg.go.dev/net#hdr-Name_Resolution
 GOTAGS := $(GOTAGS) netgo
-
-.PHONY: print-root-dir
-print-root-dir:
-	@echo $(ROOT_DIR)
 
 .PHONY: _install-bin
 _install-bin:
