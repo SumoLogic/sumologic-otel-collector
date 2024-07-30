@@ -124,7 +124,7 @@ jobs:
 
       - name: Set binary name
         id: set-binary-name
-        run: echo "binary_name=otelcol-config${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}${OTELCOL_BINARY_EXTENSION}" >> $GITHUB_OUTPUT
+        run: echo "binary_name=otelcol-config${FIPS_SUFFIX}-${{inputs.arch_os}}" >> $GITHUB_OUTPUT
 
       - name: Show BoringSSL symbols
         if: inputs.fips && contains(inputs.arch_os, 'linux')
