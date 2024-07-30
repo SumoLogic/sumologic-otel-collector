@@ -1,6 +1,7 @@
 include ../toolchains/Makefile
 
-TOOLCHAINS_DIR ?= "$(shell '$(MAKE)' print-toolchains-dir)"
+ROOT_DIR ?= $(realpath $(dir $(realpath $(dir $(realpath $(lastword $(MAKEFILE_LIST)))))))
+#TOOLCHAINS_DIR ?= "$(shell '$(MAKE)' print-toolchains-dir)"
 
 BINARY_NAME ?= otelcol-sumo
 BUILDER_VERSION ?= 0.103.1
@@ -74,6 +75,10 @@ endif
 # the CGO resolver. This has caused a DNS resolution error for .local domains in our K8s containers.
 # ref: https://pkg.go.dev/net#hdr-Name_Resolution
 GOTAGS := $(GOTAGS) netgo
+
+.PHONY: print-root-dir
+print-root-dir:
+	@echo $(ROOT_DIR)
 
 .PHONY: _install-bin
 _install-bin:
@@ -154,11 +159,11 @@ build-debug: ensure-correct-builder-version
 .PHONY: build-fips
 build-fips: docker-golang-cross-builder
 	docker run -it --rm \
-	-v golang-cross-builder:/root/build \
+	-v $(DOCKER_CROSS_BUILDER_VOLUME):/root/build \
 	-v $(PWD)/../:/root/workspace \
 	-w /root/workspace \
 	--tmpfs /tmp \
-	--entrypoint ./otelcolbuilder/build-fips/entrypoint.sh \
+	--entrypoint /root/workspace/otelcolbuilder/build-fips/entrypoint.sh \
 	golang-cross-builder
 
 .PHONY: generate-sources
@@ -235,7 +240,7 @@ otelcol-sumo-linux-fips_arm64:
 	$(MAKE) otelcol-sumo-linux_arm64 \
 		FIPS_SUFFIX="-fips" \
 		CGO_ENABLED="1" \
-		CC="$(TOOLCHAINS_DIR)toolchain_arm64/bin/aarch64-linux-musl-gcc" \
+		CC="$(TOOLCHAINS_DIR)/toolchain_arm64/bin/aarch64-linux-musl-gcc" \
 		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
 
 .PHONY: otelcol-sumo-linux-fips_amd64
@@ -244,5 +249,5 @@ otelcol-sumo-linux-fips_amd64:
 	$(MAKE) otelcol-sumo-linux_amd64 \
 		FIPS_SUFFIX="-fips" \
 		CGO_ENABLED="1" \
-		CC="$(TOOLCHAINS_DIR)toolchain_amd64/bin/x86_64-linux-musl-gcc" \
+		CC="$(TOOLCHAINS_DIR)/toolchain_amd64/bin/x86_64-linux-musl-gcc" \
 		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
