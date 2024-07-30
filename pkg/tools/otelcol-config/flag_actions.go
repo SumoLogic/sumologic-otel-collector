@@ -15,17 +15,17 @@ type action func(context *actionContext) error
 var flagActions = map[string]action{
 	flagHelp:                 helpAction,
 	flagConfigDir:            nullAction,
-	flagAddTag:               notImplementedAction,
-	flagDeleteTag:            notImplementedAction,
+	flagAddTag:               AddTagAction,
+	flagDeleteTag:            DeleteTagAction,
 	flagSetInstallationToken: SetInstallationTokenAction,
-	flagEnableHostmetrics:    notImplementedAction,
-	flagDisableHostmetrics:   notImplementedAction,
-	flagEnableEphemeral:      notImplementedAction,
-	flagDisableEphemeral:     notImplementedAction,
-	flagSetAPIURL:            notImplementedAction,
+	flagEnableHostmetrics:    EnableHostmetricsAction,
+	flagDisableHostmetrics:   DisableHostmetricsAction,
+	flagEnableEphemeral:      EnableEphemeralAction,
+	flagDisableEphemeral:     DisableEphemeralAction,
+	flagSetAPIURL:            SetAPIURLAction,
 	flagEnableRemoteControl:  EnableRemoteControlAction,
 	flagDisableRemoteControl: DisableRemoteControlAction,
-	flagSetOpAmpEndpoint:     notImplementedAction,
+	flagSetOpAmpEndpoint:     SetOpAmpEndpointAction,
 	flagWriteKV:              WriteKVAction,
 	flagReadKV:               ReadKVAction,
 	flagOverride:             nullAction,
@@ -35,7 +35,9 @@ func nullAction(*actionContext) error {
 	return nil
 }
 
-// actionOrder specifies the order in which actions will be applied
+// actionOrder specifies the order in which actions will be applied.
+// This order has been chosen specifically so that actions do not conflict
+// with one another. Use care when adding to this list or reordering it.
 var actionOrder = []string{
 	flagHelp,
 	flagConfigDir,

@@ -40,6 +40,7 @@ const (
 	writeKVUsage              = `write key-value in conf.d with yq expression (eg: --write-kv '.extensions.sumologic.foo = "bar"')`
 	getKVUsage                = "read key-value from conf.d with yq path (eg: --read-kv .extensions.sumologic.foo)"
 	overrideUsage             = "for write-kv, override all other user settings"
+	setAPIURLUsage            = "sets the base_api_url field in the sumologic extension"
 )
 
 type flagValues struct {
@@ -58,6 +59,7 @@ type flagValues struct {
 	WriteKV              []string
 	ReadKV               []string
 	Override             bool
+	SetAPIURL            string
 }
 
 func newFlagValues() *flagValues {
@@ -83,6 +85,7 @@ func makeFlagSet(fv *flagValues) *pflag.FlagSet {
 	flags.StringArrayVar(&fv.WriteKV, flagWriteKV, nil, writeKVUsage)
 	flags.StringArrayVar(&fv.ReadKV, flagReadKV, nil, getKVUsage)
 	flags.BoolVar(&fv.Override, flagOverride, false, overrideUsage)
+	flags.StringVar(&fv.SetAPIURL, flagSetAPIURL, "", setAPIURLUsage)
 
 	return flags
 }
