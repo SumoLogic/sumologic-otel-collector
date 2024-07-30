@@ -130,20 +130,20 @@ jobs:
         if: inputs.fips && contains(inputs.arch_os, 'linux')
         working-directory: ./pkg/tools/otelcol-config
         run: |
-          go tool nm ${{ steps.set-otelcol-config-binary-name.outputs.binary_name }} | \
+          go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
           grep "_Cfunc__goboringcrypto_"
 
       - name: Test binary
         if: inputs.arch_os == env.ARCH_OS
         working-directory: ./pkg/tools/otelcol-config
         run: |
-          ./${{ steps.set-otelcol-config-binary-name.outputs.binary_name }} --help
+          ./${{ steps.set-binary-name.outputs.binary_name }} --help
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.set-otelcol-config-binary-name.outputs.binary_name }}
-          path: ./pkg/tools/otelcol-config/${{ steps.set-otelcol-config-binary-name.outputs.binary_name }}
+          name: ${{ steps.set-binary-name.outputs.binary_name }}
+          path: ./pkg/tools/otelcol-config/${{ steps.set-binary-name.outputs.binary_name }}
           if-no-files-found: error
 
       - uses: actions/cache/save@v4
