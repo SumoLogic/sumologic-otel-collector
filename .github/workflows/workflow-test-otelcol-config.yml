@@ -32,7 +32,7 @@ env:
 
 jobs:
   test:
-    name: Test
+    name: Test (otelcol-config)
     runs-on: ${{ inputs.runs-on }}
     env:
       BORINGCRYPTO_SUFFIX: ${{ inputs.boringcrypto && '-boringcrypto' || '' }}
