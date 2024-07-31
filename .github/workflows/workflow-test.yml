@@ -52,9 +52,9 @@ jobs:
           drive-format: ReFS
           drive-type: Dynamic
           workspace-copy: true
-          env-mapping: |
-            GOCACHE,{{ DEV_DRIVE }}/go/cache
-            GOMODCACHE,{{ DEV_DRIVE }}/go/mod
+          env-mapping:
+            GOCACHE: ${{ env.DEV_DRIVE }}/go/cache
+            GOMODCACHE: ${{ env.DEV_DRIVE }}/go/mod
 
       - name: Get GOCACHE and GOMODCACHE
         if: ${{ runner.os != 'Windows' }}
