@@ -43,9 +43,21 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-          cache: true
+          cache: false
+
+      - uses: samypr100/setup-dev-drive@v3
+        if: {{ runner.os == 'Windows' }}
+        with:
+          drive-size: 8GB
+          drive-format: ReFS
+          drive-type: Dynamic
+          workspace-copy: true
+          env-mapping: |
+            GOCACHE,{{ DEV_DRIVE }}/go/cache
+            GOMODCACHE,{{ DEV_DRIVE }}/go/mod
 
       - name: Get GOCACHE and GOMODCACHE
+        if: {{ runner.os != 'Windows' }}
         run: |
           echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
           echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
