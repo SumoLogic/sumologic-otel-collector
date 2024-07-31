@@ -43,7 +43,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-          cache: false
+          cache: true
 
       - name: Get GOCACHE and GOMODCACHE
         run: |
@@ -53,8 +53,8 @@ jobs:
       - name: Get cache key
         id: get-cache-key
         run: |
-          echo "cache-key=go-test-${{ env.GO_VERSION }}${BORINGCRYPTO_SUFFIX}-${{inputs.arch_os}}-${{ hashFiles('pkg/tools/otelcol-config/go.sum') }}" >> $GITHUB_OUTPUT
-          echo "restore-keys=go-test-${{ env.GO_VERSION }}${BORINGCRYPTO_SUFFIX}-${{inputs.arch_os}}-" >> $GITHUB_OUTPUT
+          echo "cache-key=go-test-${{ env.GO_VERSION }}-otelcol-config${BORINGCRYPTO_SUFFIX}-${{inputs.arch_os}}-${{ hashFiles('pkg/tools/otelcol-config/go.sum') }}" >> $GITHUB_OUTPUT
+          echo "restore-keys=go-test-${{ env.GO_VERSION }}-otelcol-config${BORINGCRYPTO_SUFFIX}-${{inputs.arch_os}}-" >> $GITHUB_OUTPUT
 
       - uses: actions/cache/restore@v4
         with:
