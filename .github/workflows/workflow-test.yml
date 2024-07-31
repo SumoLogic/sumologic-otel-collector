@@ -46,7 +46,7 @@ jobs:
           cache: false
 
       - uses: samypr100/setup-dev-drive@v3
-        if: {{ runner.os == 'Windows' }}
+        if: ${{ runner.os == 'Windows' }}
         with:
           drive-size: 8GB
           drive-format: ReFS
@@ -57,7 +57,7 @@ jobs:
             GOMODCACHE,{{ DEV_DRIVE }}/go/mod
 
       - name: Get GOCACHE and GOMODCACHE
-        if: {{ runner.os != 'Windows' }}
+        if: ${{ runner.os != 'Windows' }}
         run: |
           echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
           echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
