@@ -62,7 +62,7 @@ jobs:
           env
           echo "DEV_DRIVE: $DEV_DRIVE"
           echo "GOMODCACHE=${{ env.GOMODCACHE }}" >> "$GITHUB_ENV"
-          echo "GOCACHE=${{ env.GOCACHE" }} >> "$GITHUB_ENV"
+          echo "GOCACHE=${{ env.GOCACHE }} >> "$GITHUB_ENV"
 
       - name: Get GOCACHE and GOMODCACHE
         if: ${{ runner.os != 'Windows' }}
