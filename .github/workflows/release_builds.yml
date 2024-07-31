@@ -299,6 +299,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
+
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v2
 

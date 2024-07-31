@@ -46,6 +46,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Fetch current branch
+        run: ./ci/fetch_current_branch.sh
+
       - name: Setup go
         uses: actions/setup-go@v5
         with:
@@ -133,6 +136,7 @@ jobs:
           go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
           grep "_Cfunc__goboringcrypto_"
 
+      # TODO: find a way to test if the binary runs
       # - name: Test binary
       #   if: inputs.arch_os == env.ARCH_OS
       #   working-directory: ./pkg/tools/otelcol-config
