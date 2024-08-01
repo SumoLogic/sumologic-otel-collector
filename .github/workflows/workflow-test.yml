@@ -48,7 +48,7 @@ jobs:
       - uses: samypr100/setup-dev-drive@v3
         if: ${{ runner.os == 'Windows' }}
         with:
-          drive-size: 8GB
+          drive-size: 20GB
           drive-format: ReFS
           drive-type: Dynamic
           workspace-copy: true
