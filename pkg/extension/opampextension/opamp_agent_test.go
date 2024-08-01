@@ -51,142 +51,38 @@ func remoteConfig(t *testing.T, path string) *protobufs.AgentRemoteConfig {
 	}
 	return rc
 }
+func defaultSetup() (*Config, extension.Settings) {
+	cfg := createDefaultConfig().(*Config)
+	set := extensiontest.NewNopSettings()
+	return cfg, set
+}
 
-func TestOpampAgent(t *testing.T) {
+func setupWithRemoteConfig(t *testing.T) (*Config, extension.Settings) {
+	tempDir := t.TempDir()
+	cfg, set := defaultSetup()
+	cfg.RemoteConfigurationDirectory = tempDir
+	return cfg, set
+}
+func setupWithRemoteConfigAuthNil(t *testing.T) (*Config, extension.Settings) {
+	cfg, set := setupWithRemoteConfig(t)
+	cfg.ClientConfig.Auth = nil
+	return cfg, set
+}
+
+func setupWithBuildInfo(version, command string) (*Config, extension.Settings) {
+	cfg, set := defaultSetup()
+	set.BuildInfo = component.BuildInfo{Version: version, Command: command}
+	return cfg, set
+}
+
+func TestOpampAgenRemoteConfig(t *testing.T) {
 	testCases := []struct {
 		name     string
-		setup    func() (*Config, extension.Settings)
 		validate func(*opampAgent, *testing.T)
 	}{
-		{
-			name: "NewOpampAgent",
-			setup: func() (*Config, extension.Settings) {
-				cfg := createDefaultConfig()
-				set := extensiontest.NewNopSettings()
-				set.BuildInfo = component.BuildInfo{Version: "test version", Command: "otelcoltest"}
-				return cfg.(*Config), set
-			},
-			validate: func(o *opampAgent, t *testing.T) {
-				assert.Equal(t, "otelcoltest", o.agentType)
-				assert.Equal(t, "test version", o.agentVersion)
-				assert.NotEmpty(t, o.instanceId.String())
-				assert.Empty(t, o.effectiveConfig)
-				assert.Nil(t, o.agentDescription)
-			},
-		},
-		{
-			name: "NewOpampAgentAttributes",
-			setup: func() (*Config, extension.Settings) {
-				cfg := createDefaultConfig()
-				set := extensiontest.NewNopSettings()
-				set.BuildInfo = component.BuildInfo{Version: "test version", Command: "otelcoltest"}
-				set.Resource.Attributes().PutStr(semconv.AttributeServiceName, "otelcol-sumo")
-				set.Resource.Attributes().PutStr(semconv.AttributeServiceVersion, "sumo.0")
-				set.Resource.Attributes().PutStr(semconv.AttributeServiceInstanceID, "f8999bc1-4c9b-4619-9bae-7f009d2411ec")
-				return cfg.(*Config), set
-			},
-			validate: func(o *opampAgent, t *testing.T) {
-				assert.Equal(t, "otelcol-sumo", o.agentType)
-				assert.Equal(t, "sumo.0", o.agentVersion)
-				assert.Equal(t, "7RK6DW2K4V8RCSQBKZ02EJ84FC", o.instanceId.String())
-			},
-		},
-		{
-			name: "GetAgentCapabilities",
-			setup: func() (*Config, extension.Settings) {
-				cfg := createDefaultConfig().(*Config)
-				set := extensiontest.NewNopSettings()
-				return cfg, set
-			},
-			validate: func(o *opampAgent, t *testing.T) {
-				assert.Equal(t, o.getAgentCapabilities(), protobufs.AgentCapabilities(4102))
 
-				o.cfg.AcceptsRemoteConfiguration = false
-				assert.Equal(t, o.getAgentCapabilities(), protobufs.AgentCapabilities(4))
-			},
-		},
-		{
-			name: "CreateAgentDescription",
-			setup: func() (*Config, extension.Settings) {
-				cfg := createDefaultConfig()
-				set := extensiontest.NewNopSettings()
-				return cfg.(*Config), set
-			},
-			validate: func(o *opampAgent, t *testing.T) {
-				assert.Nil(t, o.agentDescription)
-				assert.NoError(t, o.createAgentDescription())
-				assert.NotNil(t, o.agentDescription)
-			},
-		},
-		{
-			name: "LoadEffectiveConfig",
-			setup: func() (*Config, extension.Settings) {
-				cfg := createDefaultConfig()
-				set := extensiontest.NewNopSettings()
-				return cfg.(*Config), set
-			},
-			validate: func(o *opampAgent, t *testing.T) {
-				assert.Equal(t, len(o.effectiveConfig), 0)
-
-				assert.NoError(t, o.loadEffectiveConfig("testdata"))
-				assert.NotEqual(t, len(o.effectiveConfig), 0)
-			},
-		},
-		{
-			name: "SaveEffectiveConfig",
-			setup: func() (*Config, extension.Settings) {
-				cfg := createDefaultConfig()
-				set := extensiontest.NewNopSettings()
-				return cfg.(*Config), set
-			},
-			validate: func(o *opampAgent, t *testing.T) {
-				d, err := os.MkdirTemp("", "opamp.d")
-				assert.NoError(t, err)
-				defer os.RemoveAll(d)
-
-				assert.NoError(t, o.saveEffectiveConfig(d))
-			},
-		},
-		{
-			name: "UpdateAgentIdentity",
-			setup: func() (*Config, extension.Settings) {
-				cfg := createDefaultConfig()
-				set := extensiontest.NewNopSettings()
-				return cfg.(*Config), set
-			},
-			validate: func(o *opampAgent, t *testing.T) {
-				olduid := o.instanceId
-				assert.NotEmpty(t, olduid.String())
-
-				uid := ulid.Make()
-				assert.NotEqual(t, uid, olduid)
-
-				o.updateAgentIdentity(uid)
-				assert.Equal(t, o.instanceId, uid)
-			},
-		},
-		{
-			name: "ComposeEffectiveConfig",
-			setup: func() (*Config, extension.Settings) {
-				cfg := createDefaultConfig()
-				set := extensiontest.NewNopSettings()
-				return cfg.(*Config), set
-			},
-			validate: func(o *opampAgent, t *testing.T) {
-				ec := o.composeEffectiveConfig()
-				assert.NotNil(t, ec)
-			},
-		},
 		{
 			name: "ApplyRemoteConfig",
-			setup: func() (*Config, extension.Settings) {
-				tempDir := t.TempDir()
-				cfg := createDefaultConfig().(*Config)
-				cfg.RemoteConfigurationDirectory = tempDir
-				set := extensiontest.NewNopSettings()
-
-				return cfg, set
-			},
 			validate: func(o *opampAgent, t *testing.T) {
 				path := filepath.Join("testdata", "opamp.d", "opamp-remote-config.yaml")
 				rc := remoteConfig(t, path)
@@ -205,13 +101,6 @@ func TestOpampAgent(t *testing.T) {
 		},
 		{
 			name: "ApplyRemoteApacheConfig",
-			setup: func() (*Config, extension.Settings) {
-				tempDir := t.TempDir()
-				cfg := createDefaultConfig().(*Config)
-				cfg.RemoteConfigurationDirectory = tempDir
-				set := extensiontest.NewNopSettings()
-				return cfg, set
-			},
 			validate: func(o *opampAgent, t *testing.T) {
 				path := filepath.Join("testdata", "opamp.d", "opamp-apache-config.yaml")
 				rc := remoteConfig(t, path)
@@ -230,14 +119,6 @@ func TestOpampAgent(t *testing.T) {
 		},
 		{
 			name: "ApplyRemoteHostConfig",
-			setup: func() (*Config, extension.Settings) {
-				tempDir := t.TempDir()
-
-				cfg := createDefaultConfig().(*Config)
-				cfg.RemoteConfigurationDirectory = tempDir
-				set := extensiontest.NewNopSettings()
-				return cfg, set
-			},
 			validate: func(o *opampAgent, t *testing.T) {
 				path := filepath.Join("testdata", "opamp.d", "opamp-host-config.yaml")
 				rc := remoteConfig(t, path)
@@ -256,14 +137,6 @@ func TestOpampAgent(t *testing.T) {
 		},
 		{
 			name: "ApplyRemoteWindowsEventConfig",
-			setup: func() (*Config, extension.Settings) {
-				tempDir := t.TempDir()
-
-				cfg := createDefaultConfig().(*Config)
-				cfg.RemoteConfigurationDirectory = tempDir
-				set := extensiontest.NewNopSettings()
-				return cfg, set
-			},
 			validate: func(o *opampAgent, t *testing.T) {
 				path := filepath.Join("testdata", "opamp.d", "opamp-windows-event-config.yaml")
 				rc := remoteConfig(t, path)
@@ -282,14 +155,6 @@ func TestOpampAgent(t *testing.T) {
 		},
 		{
 			name: "ApplyRemoteExtensionsConfig",
-			setup: func() (*Config, extension.Settings) {
-				tempDir := t.TempDir()
-
-				cfg := createDefaultConfig().(*Config)
-				cfg.RemoteConfigurationDirectory = tempDir
-				set := extensiontest.NewNopSettings()
-				return cfg, set
-			},
 			validate: func(o *opampAgent, t *testing.T) {
 				path := filepath.Join("testdata", "opamp.d", "opamp-extensions-config.yaml")
 				rc := remoteConfig(t, path)
@@ -308,14 +173,6 @@ func TestOpampAgent(t *testing.T) {
 		},
 		{
 			name: "ApplyRemoteConfigFailed",
-			setup: func() (*Config, extension.Settings) {
-				tempDir := t.TempDir()
-
-				cfg := createDefaultConfig().(*Config)
-				cfg.RemoteConfigurationDirectory = tempDir
-				set := extensiontest.NewNopSettings()
-				return cfg, set
-			},
 			validate: func(o *opampAgent, t *testing.T) {
 				path := filepath.Join("testdata", "opamp.d", "opamp-invalid-remote-config.yaml")
 				rc := remoteConfig(t, path)
@@ -329,14 +186,6 @@ func TestOpampAgent(t *testing.T) {
 		},
 		{
 			name: "ApplyRemoteConfigMissingProcessor",
-			setup: func() (*Config, extension.Settings) {
-				tempDir := t.TempDir()
-
-				cfg := createDefaultConfig().(*Config)
-				cfg.RemoteConfigurationDirectory = tempDir
-				set := extensiontest.NewNopSettings()
-				return cfg, set
-			},
 			validate: func(o *opampAgent, t *testing.T) {
 				path := filepath.Join("testdata", "opamp.d", "opamp-missing-processor.yaml")
 				rc := remoteConfig(t, path)
@@ -352,14 +201,6 @@ func TestOpampAgent(t *testing.T) {
 		},
 		{
 			name: "ApplyFilterProcessorConfig",
-			setup: func() (*Config, extension.Settings) {
-				tempDir := t.TempDir()
-
-				cfg := createDefaultConfig().(*Config)
-				cfg.RemoteConfigurationDirectory = tempDir
-				set := extensiontest.NewNopSettings()
-				return cfg, set
-			},
 			validate: func(o *opampAgent, t *testing.T) {
 				path := filepath.Join("testdata", "opamp.d", "opamp-filter-processor.yaml")
 				rc := remoteConfig(t, path)
@@ -378,14 +219,6 @@ func TestOpampAgent(t *testing.T) {
 		},
 		{
 			name: "ApplyKafkaMetricsConfig",
-			setup: func() (*Config, extension.Settings) {
-				tempDir := t.TempDir()
-
-				cfg := createDefaultConfig().(*Config)
-				cfg.RemoteConfigurationDirectory = tempDir
-				set := extensiontest.NewNopSettings()
-				return cfg, set
-			},
 			validate: func(o *opampAgent, t *testing.T) {
 				path := filepath.Join("testdata", "opamp.d", "opamp-kafkametrics-config.yaml")
 				rc := remoteConfig(t, path)
@@ -402,13 +235,110 @@ func TestOpampAgent(t *testing.T) {
 				assert.Equal(t, "OpAMP agent does not accept remote configuration", err.Error())
 			},
 		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg, set := setupWithRemoteConfig(t)
+			o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+			assert.NoError(t, err)
+			tc.validate(o, t)
+		})
+	}
+}
+func TestOpampAgenAuthNil(t *testing.T) {
+	testCases := []struct {
+		name     string
+		validate func(*opampAgent, *testing.T)
+	}{
+		{
+			name: "Start",
+			validate: func(o *opampAgent, t *testing.T) {
+				assert.NoError(t, o.Start(context.Background(), componenttest.NewNopHost()))
+			},
+		},
+		{
+			name: "Reload",
+			validate: func(o *opampAgent, t *testing.T) {
+				ctx := context.Background()
+				assert.NoError(t, o.Start(ctx, componenttest.NewNopHost()))
+				assert.NoError(t, o.Reload(ctx))
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg, set := setupWithRemoteConfigAuthNil(t)
+			o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+			assert.NoError(t, err)
+			tc.validate(o, t)
+		})
+	}
+}
+func TestDefaultOpampAgent(t *testing.T) {
+	testCases := []struct {
+		name     string
+		validate func(*opampAgent, *testing.T)
+	}{
+		{
+			name: "GetAgentCapabilities",
+			validate: func(o *opampAgent, t *testing.T) {
+				assert.Equal(t, o.getAgentCapabilities(), protobufs.AgentCapabilities(4102))
+
+				o.cfg.AcceptsRemoteConfiguration = false
+				assert.Equal(t, o.getAgentCapabilities(), protobufs.AgentCapabilities(4))
+			},
+		},
+		{
+			name: "CreateAgentDescription",
+			validate: func(o *opampAgent, t *testing.T) {
+				assert.Nil(t, o.agentDescription)
+				assert.NoError(t, o.createAgentDescription())
+				assert.NotNil(t, o.agentDescription)
+			},
+		},
+		{
+			name: "LoadEffectiveConfig",
+			validate: func(o *opampAgent, t *testing.T) {
+				assert.Equal(t, len(o.effectiveConfig), 0)
+
+				assert.NoError(t, o.loadEffectiveConfig("testdata"))
+				assert.NotEqual(t, len(o.effectiveConfig), 0)
+			},
+		},
+		{
+			name: "SaveEffectiveConfig",
+			validate: func(o *opampAgent, t *testing.T) {
+				d, err := os.MkdirTemp("", "opamp.d")
+				assert.NoError(t, err)
+				defer os.RemoveAll(d)
+
+				assert.NoError(t, o.saveEffectiveConfig(d))
+			},
+		},
+		{
+			name: "UpdateAgentIdentity",
+			validate: func(o *opampAgent, t *testing.T) {
+				olduid := o.instanceId
+				assert.NotEmpty(t, olduid.String())
+
+				uid := ulid.Make()
+				assert.NotEqual(t, uid, olduid)
+
+				o.updateAgentIdentity(uid)
+				assert.Equal(t, o.instanceId, uid)
+			},
+		},
+		{
+			name: "ComposeEffectiveConfig",
+			validate: func(o *opampAgent, t *testing.T) {
+				ec := o.composeEffectiveConfig()
+				assert.NotNil(t, ec)
+			},
+		},
 		{
 			name: "Shutdown",
-			setup: func() (*Config, extension.Settings) {
-				cfg := createDefaultConfig()
-				set := extensiontest.NewNopSettings()
-				return cfg.(*Config), set
-			},
 			validate: func(o *opampAgent, t *testing.T) {
 				cfg := createDefaultConfig().(*Config)
 				cfg.ClientConfig.Auth = nil
@@ -418,44 +348,7 @@ func TestOpampAgent(t *testing.T) {
 			},
 		},
 		{
-			name: "Start",
-			setup: func() (*Config, extension.Settings) {
-				tempDir := t.TempDir()
-
-				cfg := createDefaultConfig().(*Config)
-				cfg.ClientConfig.Auth = nil
-				cfg.RemoteConfigurationDirectory = tempDir
-				set := extensiontest.NewNopSettings()
-				return cfg, set
-			},
-			validate: func(o *opampAgent, t *testing.T) {
-				assert.NoError(t, o.Start(context.Background(), componenttest.NewNopHost()))
-			},
-		},
-		{
-			name: "Reload",
-			setup: func() (*Config, extension.Settings) {
-				tempDir := t.TempDir()
-
-				cfg := createDefaultConfig().(*Config)
-				cfg.ClientConfig.Auth = nil
-				cfg.RemoteConfigurationDirectory = tempDir
-				set := extensiontest.NewNopSettings()
-				return cfg, set
-			},
-			validate: func(o *opampAgent, t *testing.T) {
-				ctx := context.Background()
-				assert.NoError(t, o.Start(ctx, componenttest.NewNopHost()))
-				assert.NoError(t, o.Reload(ctx))
-			},
-		},
-		{
 			name: "HackSetEndpoint",
-			setup: func() (*Config, extension.Settings) {
-				cfg := createDefaultConfig().(*Config)
-				set := extensiontest.NewNopSettings()
-				return cfg, set
-			},
 			validate: func(o *opampAgent, t *testing.T) {
 				tests := []struct {
 					name         string
@@ -515,6 +408,53 @@ func TestOpampAgent(t *testing.T) {
 						}
 					})
 				}
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg, set := defaultSetup()
+			o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+			assert.NoError(t, err)
+			tc.validate(o, t)
+		})
+	}
+}
+
+func TestBuildInfoOpampAgent(t *testing.T) {
+	testCases := []struct {
+		name     string
+		setup    func() (*Config, extension.Settings)
+		validate func(*opampAgent, *testing.T)
+	}{
+		{
+			name: "NewOpampAgent",
+			setup: func() (*Config, extension.Settings) {
+				cfg, set := setupWithBuildInfo("test version", "otelcoltest")
+				return cfg, set
+			},
+			validate: func(o *opampAgent, t *testing.T) {
+				assert.Equal(t, "otelcoltest", o.agentType)
+				assert.Equal(t, "test version", o.agentVersion)
+				assert.NotEmpty(t, o.instanceId.String())
+				assert.Empty(t, o.effectiveConfig)
+				assert.Nil(t, o.agentDescription)
+			},
+		},
+		{
+			name: "NewOpampAgentAttributes",
+			setup: func() (*Config, extension.Settings) {
+				cfg, set := setupWithBuildInfo("test version", "otelcoltest")
+				set.Resource.Attributes().PutStr(semconv.AttributeServiceName, "otelcol-sumo")
+				set.Resource.Attributes().PutStr(semconv.AttributeServiceVersion, "sumo.0")
+				set.Resource.Attributes().PutStr(semconv.AttributeServiceInstanceID, "f8999bc1-4c9b-4619-9bae-7f009d2411ec")
+				return cfg, set
+			},
+			validate: func(o *opampAgent, t *testing.T) {
+				assert.Equal(t, "otelcol-sumo", o.agentType)
+				assert.Equal(t, "sumo.0", o.agentVersion)
+				assert.Equal(t, "7RK6DW2K4V8RCSQBKZ02EJ84FC", o.instanceId.String())
 			},
 		},
 	}
