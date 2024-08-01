@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.104.0-sumo-0]
+
+### Released 2024-08-01
+
+### Added
+
+- feat(cascadingfilter): Added status code filtering to cascading filter processor [#1600]
+- docs: Added migration steps for compress_encoding [#1605]
+- feat(opamp): Validate kafkametricsreceiver [#1614]
+
+### Changed
+
+- feat: use Sumo Logic exporter from OpenTelemetry repository [#1601]
+- upgrade otelcol core to 0.104.0 [#1619]
+
+### Fixed
+
+- fix(opamp): Add the Default(env) provider to the provider list in ConfigProviderSettings [#1632]
+- fix(install): Fix script to always install the latest stable version [#1645]
+
+[#1600]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1600
+[#1605]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1605
+[#1614]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1614
+[#1601]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1601
+[#1619]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1619
+[#1632]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1632
+[#1645]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1645
+[v0.104.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.104.0-sumo-0
+
 ## [v0.102.1-sumo-0]
 
 ### Released 2024-06-07
