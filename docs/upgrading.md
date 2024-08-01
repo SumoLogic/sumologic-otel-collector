@@ -2,7 +2,6 @@
 
 - [Upgrading to v0.104.0-sumo-0](#upgrading-to-v01040-sumo-0)
   - [`sumologic` exporter: remove `compress_encoding`](#sumologic-exporter-remove-compress_encoding)
-- [Upgrading to v0.103.0-sumo-0](#upgrading-to-v01030-sumo-0)
   - [`sumologic` configuration: modified the `configuration files` merge behaviour](#sumologic-configuration-modified-the-configuration-files-merge-behaviour)
 - [Upgrading to v0.96.0-sumo-0](#upgrading-to-v0960-sumo-0)
   - [`sumologic` exporter: remove `json_logs`](#sumologic-exporter-remove-json_logs)
@@ -82,8 +81,6 @@ to this:
     sumologic:
       compression: ""
   ```
-
-## Upgrading to v0.103.0-sumo-0
 
 ### `sumologic` configuration: modified the `configuration files` merge behaviour
 
