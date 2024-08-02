@@ -237,7 +237,7 @@ func TestOpampAgenRemoteConfig(t *testing.T) {
 			d, err := os.MkdirTemp("", "opamp.d")
 			assert.NoError(t, err)
 			defer os.RemoveAll(d)
-			cfg, set := setupWithRemoteConfig(t,d)
+			cfg, set := setupWithRemoteConfig(t, d)
 			o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 			assert.NoError(t, err)
 			tc.validate(o, t)
@@ -270,7 +270,7 @@ func TestOpampAgenAuthNil(t *testing.T) {
 			d, err := os.MkdirTemp("", "opamp.d")
 			assert.NoError(t, err)
 			defer os.RemoveAll(d)
-			cfg, set := setupWithRemoteConfig(t,d)
+			cfg, set := setupWithRemoteConfig(t, d)
 			cfg.ClientConfig.Auth = nil
 			o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 			assert.NoError(t, err)
