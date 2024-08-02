@@ -57,15 +57,10 @@ func defaultSetup() (*Config, extension.Settings) {
 	return cfg, set
 }
 
-func setupWithRemoteConfig(t *testing.T) (*Config, extension.Settings) {
-	tempDir := t.TempDir()
+func setupWithRemoteConfig(t *testing.T, d string) (*Config, extension.Settings) {
+	// tempDir := t.TempDir()
 	cfg, set := defaultSetup()
-	cfg.RemoteConfigurationDirectory = tempDir
-	return cfg, set
-}
-func setupWithRemoteConfigAuthNil(t *testing.T) (*Config, extension.Settings) {
-	cfg, set := setupWithRemoteConfig(t)
-	cfg.ClientConfig.Auth = nil
+	cfg.RemoteConfigurationDirectory = d
 	return cfg, set
 }
 
@@ -239,7 +234,10 @@ func TestOpampAgenRemoteConfig(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg, set := setupWithRemoteConfig(t)
+			d, err := os.MkdirTemp("", "opamp.d")
+			assert.NoError(t, err)
+			defer os.RemoveAll(d)
+			cfg, set := setupWithRemoteConfig(t,d)
 			o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 			assert.NoError(t, err)
 			tc.validate(o, t)
@@ -269,7 +267,11 @@ func TestOpampAgenAuthNil(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg, set := setupWithRemoteConfigAuthNil(t)
+			d, err := os.MkdirTemp("", "opamp.d")
+			assert.NoError(t, err)
+			defer os.RemoveAll(d)
+			cfg, set := setupWithRemoteConfig(t,d)
+			cfg.ClientConfig.Auth = nil
 			o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 			assert.NoError(t, err)
 			tc.validate(o, t)
