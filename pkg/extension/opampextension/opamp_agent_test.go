@@ -58,7 +58,6 @@ func defaultSetup() (*Config, extension.Settings) {
 }
 
 func setupWithRemoteConfig(t *testing.T, d string) (*Config, extension.Settings) {
-	// tempDir := t.TempDir()
 	cfg, set := defaultSetup()
 	cfg.RemoteConfigurationDirectory = d
 	return cfg, set
