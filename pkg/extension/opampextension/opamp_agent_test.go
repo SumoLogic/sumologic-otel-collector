@@ -34,7 +34,9 @@ import (
 )
 
 const errMsgRemoteConfigNotAccepted = "OpAMP agent does not accept remote configuration"
-const errMsgInvalidConfigName = "cannot validate config named service::pipelines::logs/localfilesource/0aa79379-c764-4d3d-9d66-03f6df029a07: references processor \"batch\" which is not configured"
+const errMsgInvalidConfigName = "cannot validate config named " +
+	"service::pipelines::logs/localfilesource/0aa79379-c764-4d3d-9d66-03f6df029a07: " +
+	"references processor \"batch\" which is not configured"
 
 func defaultSetup() (*Config, extension.Settings) {
 	cfg := createDefaultConfig().(*Config)
