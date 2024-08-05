@@ -51,64 +51,64 @@ func setupWithBuildInfo(version, command string) (*Config, extension.Settings) {
 	return cfg, set
 }
 func TestApplyRemoteConfig(t *testing.T) {
-    tests := []struct {
-        name            string
-        file            string
-        acceptsRemote   bool
-        expectChanged   bool
-        expectError     bool
-        errorMessage    string
-    }{
-        {"ApplyRemoteConfig", "testdata/opamp.d/opamp-remote-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
-        {"ApplyRemoteApacheConfig", "testdata/opamp.d/opamp-apache-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
-        {"ApplyRemoteHostConfig", "testdata/opamp.d/opamp-host-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
-        {"ApplyRemoteWindowsEventConfig", "testdata/opamp.d/opamp-windows-event-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
-        {"ApplyRemoteExtensionsConfig", "testdata/opamp.d/opamp-extensions-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
-        {"ApplyRemoteConfigFailed", "testdata/opamp.d/opamp-invalid-remote-config.yaml", true, false, true, "'max_elapsed_time' must be non-negative"},
-        {"ApplyRemoteConfigMissingProcessor", "testdata/opamp.d/opamp-missing-processor.yaml", true, false, true, "cannot validate config named service::pipelines::logs/localfilesource/0aa79379-c764-4d3d-9d66-03f6df029a07: references processor \"batch\" which is not configured"},
-        {"ApplyFilterProcessorConfig", "testdata/opamp.d/opamp-filter-processor.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
-        {"ApplyKafkaMetricsConfig", "testdata/opamp.d/opamp-kafkametrics-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
-    }
+	tests := []struct {
+		name          string
+		file          string
+		acceptsRemote bool
+		expectChanged bool
+		expectError   bool
+		errorMessage  string
+	}{
+		{"ApplyRemoteConfig", "testdata/opamp.d/opamp-remote-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
+		{"ApplyRemoteApacheConfig", "testdata/opamp.d/opamp-apache-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
+		{"ApplyRemoteHostConfig", "testdata/opamp.d/opamp-host-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
+		{"ApplyRemoteWindowsEventConfig", "testdata/opamp.d/opamp-windows-event-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
+		{"ApplyRemoteExtensionsConfig", "testdata/opamp.d/opamp-extensions-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
+		{"ApplyRemoteConfigFailed", "testdata/opamp.d/opamp-invalid-remote-config.yaml", true, false, true, "'max_elapsed_time' must be non-negative"},
+		{"ApplyRemoteConfigMissingProcessor", "testdata/opamp.d/opamp-missing-processor.yaml", true, false, true, "cannot validate config named service::pipelines::logs/localfilesource/0aa79379-c764-4d3d-9d66-03f6df029a07: references processor \"batch\" which is not configured"},
+		{"ApplyFilterProcessorConfig", "testdata/opamp.d/opamp-filter-processor.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
+		{"ApplyKafkaMetricsConfig", "testdata/opamp.d/opamp-kafkametrics-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
+	}
 
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            d, err := os.MkdirTemp("", "opamp.d")
-            assert.NoError(t, err)
-            defer os.RemoveAll(d)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d, err := os.MkdirTemp("", "opamp.d")
+			assert.NoError(t, err)
+			defer os.RemoveAll(d)
 
-            cfg := createDefaultConfig().(*Config)
-            cfg.RemoteConfigurationDirectory = d
-            set := extensiontest.NewNopSettings()
-            o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-            assert.NoError(t, err)
+			cfg := createDefaultConfig().(*Config)
+			cfg.RemoteConfigurationDirectory = d
+			set := extensiontest.NewNopSettings()
+			o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+			assert.NoError(t, err)
 
-            cfg.AcceptsRemoteConfiguration = tt.acceptsRemote
+			cfg.AcceptsRemoteConfiguration = tt.acceptsRemote
 
-            path := filepath.Join(tt.file)
-            rb, err := os.ReadFile(path)
-            assert.NoError(t, err)
+			path := filepath.Join(tt.file)
+			rb, err := os.ReadFile(path)
+			assert.NoError(t, err)
 
-            rc := &protobufs.AgentRemoteConfig{
-                Config: &protobufs.AgentConfigMap{
-                    ConfigMap: map[string]*protobufs.AgentConfigFile{
-                        "default": {
-                            Body: rb,
-                        },
-                    },
-                },
-                ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
-            }
+			rc := &protobufs.AgentRemoteConfig{
+				Config: &protobufs.AgentConfigMap{
+					ConfigMap: map[string]*protobufs.AgentConfigFile{
+						"default": {
+							Body: rb,
+						},
+					},
+				},
+				ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
+			}
 
-            changed, err := o.applyRemoteConfig(rc)
-            if tt.expectError {
-                assert.Error(t, err)
-                assert.ErrorContains(t, err, tt.errorMessage)
-            } else {
-                assert.NoError(t, err)
-            }
-            assert.Equal(t, tt.expectChanged, changed)
-        })
-    }
+			changed, err := o.applyRemoteConfig(rc)
+			if tt.expectError {
+				assert.Error(t, err)
+				assert.ErrorContains(t, err, tt.errorMessage)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.expectChanged, changed)
+		})
+	}
 }
 
 func TestOpampAgenAuthNil(t *testing.T) {
