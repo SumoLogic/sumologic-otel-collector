@@ -33,6 +33,9 @@ import (
 	semconv "go.opentelemetry.io/collector/semconv/v1.18.0"
 )
 
+const errMsgRemoteConfigNotAccepted = "OpAMP agent does not accept remote configuration"
+const errMsgInvalidConfigName = "cannot validate config named service::pipelines::logs/localfilesource/0aa79379-c764-4d3d-9d66-03f6df029a07: references processor \"batch\" which is not configured"
+
 func defaultSetup() (*Config, extension.Settings) {
 	cfg := createDefaultConfig().(*Config)
 	set := extensiontest.NewNopSettings()
@@ -50,6 +53,89 @@ func setupWithBuildInfo(version, command string) (*Config, extension.Settings) {
 	set.BuildInfo = component.BuildInfo{Version: version, Command: command}
 	return cfg, set
 }
+
+func TestDefaultOpampAgent1(t *testing.T) {
+	tests := []struct {
+		name string
+		// Additional fields for specific test cases can be added here
+	}{
+		{"GetAgentCapabilities"},
+		{"CreateAgentDescription"},
+		{"LoadEffectiveConfig"},
+		{"SaveEffectiveConfig"},
+		{"UpdateAgentIdentity"},
+		{"ComposeEffectiveConfig"},
+		{"Shutdown"},
+		{"HackSetEndpoint"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg, set := defaultSetup()
+			o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+			assert.NoError(t, err)
+
+			switch tt.name {
+			case "GetAgentCapabilities":
+				assert.Equal(t, o.getAgentCapabilities(), protobufs.AgentCapabilities(4102))
+				o.cfg.AcceptsRemoteConfiguration = false
+				assert.Equal(t, o.getAgentCapabilities(), protobufs.AgentCapabilities(4))
+			case "CreateAgentDescription":
+				assert.Nil(t, o.agentDescription)
+				assert.NoError(t, o.createAgentDescription())
+				assert.NotNil(t, o.agentDescription)
+			case "LoadEffectiveConfig":
+				assert.Empty(t, o.effectiveConfig)
+				assert.NoError(t, o.loadEffectiveConfig("testdata"))
+				assert.NotEmpty(t, o.effectiveConfig)
+			case "SaveEffectiveConfig":
+				d, err := os.MkdirTemp("", "opamp.d")
+				assert.NoError(t, err)
+				defer os.RemoveAll(d)
+				assert.NoError(t, o.saveEffectiveConfig(d))
+			case "UpdateAgentIdentity":
+				olduid := o.instanceId
+				assert.NotEmpty(t, olduid.String())
+				uid := ulid.Make()
+				assert.NotEqual(t, uid, olduid)
+				o.updateAgentIdentity(uid)
+				assert.Equal(t, o.instanceId, uid)
+			case "ComposeEffectiveConfig":
+				ec := o.composeEffectiveConfig()
+				assert.NotNil(t, ec)
+			case "Shutdown":
+				cfg.ClientConfig.Auth = nil
+				assert.NoError(t, o.Shutdown(context.Background()))
+			case "HackSetEndpoint":
+				tests := []struct {
+					name         string
+					url          string
+					wantEndpoint string
+				}{
+					{"empty url defaults to config endpoint", "", "wss://example.com"},
+					{"url variant a", "https://sumo-open-events.example.com", "wss://sumo-opamp-events.example.com/v1/opamp"},
+					{"url variant b", "https://sumo-open-collectors.example.com", "wss://sumo-opamp-collectors.example.com/v1/opamp"},
+					{"url variant c", "https://example.com", "wss://example.com/v1/opamp"},
+					{"dev sumologic url", "https://long-open-events.sumologic.net/api/v1", "wss://long-opamp-events.sumologic.net/v1/opamp"},
+					{"prod sumologic url", "https://open-collectors.sumologic.com/api/v1", "wss://opamp-collectors.sumologic.com/v1/opamp"},
+					{"prod sumologic url with region", "https://open-collectors.au.sumologic.com/api/v1/", "wss://opamp-collectors.au.sumologic.com/v1/opamp"},
+				}
+				for _, test := range tests {
+					t.Run(test.name, func(t *testing.T) {
+						agent := &opampAgent{cfg: &Config{ClientConfig: confighttp.ClientConfig{Endpoint: "wss://example.com"}}}
+						if err := agent.setEndpoint(test.url); err != nil {
+							t.Fatal(err)
+						}
+						if got, want := agent.endpoint, test.wantEndpoint; got != want {
+							t.Errorf("didn't get expected endpoint: got %q, want %q", got, want)
+						}
+					})
+				}
+			}
+		})
+	}
+}
+
 func TestApplyRemoteConfig(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -59,15 +145,15 @@ func TestApplyRemoteConfig(t *testing.T) {
 		expectError   bool
 		errorMessage  string
 	}{
-		{"ApplyRemoteConfig", "testdata/opamp.d/opamp-remote-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
-		{"ApplyRemoteApacheConfig", "testdata/opamp.d/opamp-apache-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
-		{"ApplyRemoteHostConfig", "testdata/opamp.d/opamp-host-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
-		{"ApplyRemoteWindowsEventConfig", "testdata/opamp.d/opamp-windows-event-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
-		{"ApplyRemoteExtensionsConfig", "testdata/opamp.d/opamp-extensions-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
+		{"ApplyRemoteConfig", "testdata/opamp.d/opamp-remote-config.yaml", false, false, true, errMsgRemoteConfigNotAccepted},
+		{"ApplyRemoteApacheConfig", "testdata/opamp.d/opamp-apache-config.yaml", false, false, true, errMsgRemoteConfigNotAccepted},
+		{"ApplyRemoteHostConfig", "testdata/opamp.d/opamp-host-config.yaml", false, false, true, errMsgRemoteConfigNotAccepted},
+		{"ApplyRemoteWindowsEventConfig", "testdata/opamp.d/opamp-windows-event-config.yaml", false, false, true, errMsgRemoteConfigNotAccepted},
+		{"ApplyRemoteExtensionsConfig", "testdata/opamp.d/opamp-extensions-config.yaml", false, false, true, errMsgRemoteConfigNotAccepted},
 		{"ApplyRemoteConfigFailed", "testdata/opamp.d/opamp-invalid-remote-config.yaml", true, false, true, "'max_elapsed_time' must be non-negative"},
-		{"ApplyRemoteConfigMissingProcessor", "testdata/opamp.d/opamp-missing-processor.yaml", true, false, true, "cannot validate config named service::pipelines::logs/localfilesource/0aa79379-c764-4d3d-9d66-03f6df029a07: references processor \"batch\" which is not configured"},
-		{"ApplyFilterProcessorConfig", "testdata/opamp.d/opamp-filter-processor.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
-		{"ApplyKafkaMetricsConfig", "testdata/opamp.d/opamp-kafkametrics-config.yaml", false, false, true, "OpAMP agent does not accept remote configuration"},
+		{"ApplyRemoteConfigMissingProcessor", "testdata/opamp.d/opamp-missing-processor.yaml", true, false, true, errMsgInvalidConfigName},
+		{"ApplyFilterProcessorConfig", "testdata/opamp.d/opamp-filter-processor.yaml", false, false, true, errMsgRemoteConfigNotAccepted},
+		{"ApplyKafkaMetricsConfig", "testdata/opamp.d/opamp-kafkametrics-config.yaml", false, false, true, errMsgRemoteConfigNotAccepted},
 	}
 
 	for _, tt := range tests {
