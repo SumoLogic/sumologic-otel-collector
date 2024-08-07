@@ -207,7 +207,7 @@ func TestHackSetEndpoint(t *testing.T) {
 		wantEndpoint string
 	}{
 		{
-			name: "empty url defaults to config endpoint",
+			name:         "empty url defaults to config endpoint",
 			wantEndpoint: "wss://example.com",
 		},
 		{
