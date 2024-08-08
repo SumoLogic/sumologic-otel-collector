@@ -86,6 +86,12 @@ func getDir(root fs.FS, dirName string) (result map[string][]byte, err error) {
 		}
 		contents, err := fs.ReadFile(dirFS, entry.Name())
 		if err != nil {
+			if err == fs.ErrNotExist {
+				continue
+			}
+			if _, ok := err.(*fs.PathError); ok {
+				continue
+			}
 			return nil, err
 		}
 		result[entry.Name()] = contents
