@@ -81,10 +81,7 @@ func TestApplyRemoteConfig(t *testing.T) {
 			d, err := os.MkdirTemp("", "opamp.d")
 			assert.NoError(t, err)
 			defer os.RemoveAll(d)
-
-			cfg := createDefaultConfig().(*Config)
-			cfg.RemoteConfigurationDirectory = d
-			set := extensiontest.NewNopSettings()
+			cfg, set := setupWithRemoteConfig(t, d)
 			o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 			assert.NoError(t, err)
 
