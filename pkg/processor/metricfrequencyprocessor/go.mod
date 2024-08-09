@@ -2,7 +2,7 @@ module github.com/SumoLogic/sumologic-otel-collector/processor/metricfrequencypr
 
 go 1.21.0
 
-toolchain go1.22.3
+toolchain go1.21.11
 
 require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
