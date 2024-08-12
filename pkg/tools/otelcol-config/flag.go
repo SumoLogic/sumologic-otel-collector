@@ -36,7 +36,7 @@ const (
 	enableRemoteControlUsage  = "enables remote control via opamp"
 	disableRemoteControlUsage = "disables remote control, uses local configuration only"
 	setOpAmpEndpointUsage     = "sets the opamp endpoint (eg: wss://example.com)"
-	configUsage               = "path to sumologic configuration directory (normally /etc/otelcol-sumo)"
+	configUsage               = "path to sumologic configuration directory"
 	writeKVUsage              = `write key-value in conf.d with yq expression (eg: --write-kv '.extensions.sumologic.foo = "bar"')`
 	getKVUsage                = "read key-value from conf.d with yq path (eg: --read-kv .extensions.sumologic.foo)"
 	overrideUsage             = "for write-kv, override all other user settings"
@@ -81,7 +81,7 @@ func makeFlagSet(fv *flagValues) *pflag.FlagSet {
 	flags.BoolVar(&fv.EnableRemoteControl, flagEnableRemoteControl, false, enableRemoteControlUsage)
 	flags.BoolVar(&fv.DisableRemoteControl, flagDisableRemoteControl, false, disableRemoteControlUsage)
 	flags.StringVarP(&fv.SetOpAmpEndpoint, flagSetOpAmpEndpoint, "e", "", setOpAmpEndpointUsage)
-	flags.StringVarP(&fv.ConfigDir, flagConfigDir, "c", "", configUsage)
+	flags.StringVarP(&fv.ConfigDir, flagConfigDir, "c", "/etc/otelcol-sumo", configUsage)
 	flags.StringArrayVar(&fv.WriteKV, flagWriteKV, nil, writeKVUsage)
 	flags.StringArrayVar(&fv.ReadKV, flagReadKV, nil, getKVUsage)
 	flags.BoolVar(&fv.Override, flagOverride, false, overrideUsage)
