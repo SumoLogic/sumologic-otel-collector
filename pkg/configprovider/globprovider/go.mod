@@ -2,7 +2,7 @@ module github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprov
 
 go 1.21.0
 
-toolchain go1.22.3
+toolchain go1.21.11
 
 require (
 	github.com/stretchr/testify v1.9.0

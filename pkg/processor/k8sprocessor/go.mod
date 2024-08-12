@@ -2,7 +2,7 @@ module github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8spr
 
 go 1.21.0
 
-toolchain go1.21.7
+toolchain go1.21.11
 
 require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig v0.104.0

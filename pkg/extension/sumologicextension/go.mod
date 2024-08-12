@@ -2,7 +2,7 @@ module github.com/SumoLogic/sumologic-otel-collector/pkg/extension/sumologicexte
 
 go 1.21.0
 
-toolchain go1.22.3
+toolchain go1.21.11
 
 require (
 	github.com/Showmax/go-fqdn v1.0.0
