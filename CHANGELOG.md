@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.104.0-sumo-1]
+
+### Released 2024-08-12
+
+### Changed
+
+- chore(deps): chore(deps): bump github.com/docker/docker from 24.0.9+incompatible to 25.0.6+incompatible in /pkg/receiver/telegrafreceiver [#1646]
+- chore(deps): Upgrade go version to 1.21.11 [#1650]
+- chore(deps): chore(deps): bump github.com/docker/docker from 25.0.5+incompatible to 25.0.6+incompatible in /pkg/extension/opampextension [#1651]
+- chore(deps): bump go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp from 0.42.0 to 0.44.0 in /pkg/receiver/telegrafreceiver [#1652]
+- chore(deps): bump google.golang.org/grpc from 1.64.0 to 1.64.1 [#1653]
+- chore(deps): bump github.com/rs/cors from 1.10.1 to 1.11.0 in /pkg/exporter/sumologicexporter [#1654]
+
+[#1646]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1646
+[#1650]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1650
+[#1651]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1651
+[#1652]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1652
+[#1653]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1653
+[#1654]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1654
+
+[v0.104.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.104.0-sumo-1
+
 ## [v0.104.0-sumo-0]
 
 ### Released 2024-08-01
