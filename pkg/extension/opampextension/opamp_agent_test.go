@@ -33,26 +33,23 @@ import (
 	semconv "go.opentelemetry.io/collector/semconv/v1.18.0"
 )
 
-const errMsgRemoteConfigNotAccepted = "OpAMP agent does not accept remote configuration"
-const errMsgInvalidConfigName = "cannot validate config named " +
-	"service::pipelines::logs/localfilesource/0aa79379-c764-4d3d-9d66-03f6df029a07: " +
-	"references processor \"batch\" which is not configured"
+const (
+	errMsgRemoteConfigNotAccepted = "OpAMP agent does not accept remote configuration"
+	errMsgInvalidConfigName       = "cannot validate config named " +
+		"service::pipelines::logs/localfilesource/0aa79379-c764-4d3d-9d66-03f6df029a07: " +
+		"references processor \"batch\" which is not configured"
+)
 
 func defaultSetup() (*Config, extension.Settings) {
 	cfg := createDefaultConfig().(*Config)
 	set := extensiontest.NewNopSettings()
+	set.BuildInfo = component.BuildInfo{Version: "test version", Command: "otelcoltest"}
 	return cfg, set
 }
 
 func setupWithRemoteConfig(t *testing.T, d string) (*Config, extension.Settings) {
 	cfg, set := defaultSetup()
 	cfg.RemoteConfigurationDirectory = d
-	return cfg, set
-}
-
-func setupWithBuildInfo(version, command string) (*Config, extension.Settings) {
-	cfg, set := defaultSetup()
-	set.BuildInfo = component.BuildInfo{Version: version, Command: command}
 	return cfg, set
 }
 
@@ -231,7 +228,8 @@ func TestHackSetEndpoint(t *testing.T) {
 			name:         "prod sumologic url",
 			url:          "https://open-collectors.sumologic.com/api/v1",
 			wantEndpoint: "wss://opamp-collectors.sumologic.com/v1/opamp",
-		}, {
+		},
+		{
 
 			name:         "prod sumologic url with region",
 			url:          "https://open-collectors.au.sumologic.com/api/v1/",
@@ -258,7 +256,7 @@ func TestHackSetEndpoint(t *testing.T) {
 }
 
 func TestNewOpampAgent(t *testing.T) {
-	cfg, set := setupWithBuildInfo("test version", "otelcoltest")
+	cfg, set := defaultSetup()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 	assert.Equal(t, "otelcoltest", o.agentType)
@@ -269,7 +267,7 @@ func TestNewOpampAgent(t *testing.T) {
 }
 
 func TestNewOpampAgentAttributes(t *testing.T) {
-	cfg, set := setupWithBuildInfo("test version", "otelcoltest")
+	cfg, set := defaultSetup()
 	set.Resource.Attributes().PutStr(semconv.AttributeServiceName, "otelcol-sumo")
 	set.Resource.Attributes().PutStr(semconv.AttributeServiceVersion, "sumo.0")
 	set.Resource.Attributes().PutStr(semconv.AttributeServiceInstanceID, "f8999bc1-4c9b-4619-9bae-7f009d2411ec")
