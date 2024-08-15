@@ -136,6 +136,7 @@ jobs:
           grep "_Cfunc__goboringcrypto_"
 
       - uses: apple-actions/import-codesign-certs@v3
+        if: ${{ runner.os == 'macOS' }}
         with:
           p12-file-base64: ${{ secrets.apple_developer_certificate_p12_base64 CERTIFICATES_P12 }}
           p12-password: ${{ secrets.apple_developer_certificate_password }}

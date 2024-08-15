@@ -187,6 +187,7 @@ jobs:
           grep "vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt.GetFipsAlgorithmMode"
 
       - uses: apple-actions/import-codesign-certs@v3
+        if: ${{ runner.os == 'macOS' && env.MACOS_SIGNING_ENABLED == 'true' }}
         with:
           p12-file-base64: ${{ secrets.apple_developer_certificate_p12_base64 }}
           p12-password: ${{ secrets.apple_developer_certificate_password }}
