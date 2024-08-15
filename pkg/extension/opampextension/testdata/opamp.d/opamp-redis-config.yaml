@@ -1,0 +1,14 @@
+receivers:
+  redis:
+    endpoint: "localhost:6379"
+    collection_interval: 10s
+    password: test
+exporters:
+    sumologic:
+service:
+  pipelines:
+    metrics/redis/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      receivers:
+        - redis
+      exporters:
+        - sumologic
