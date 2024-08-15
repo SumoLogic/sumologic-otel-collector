@@ -101,7 +101,7 @@ jobs:
       boringcrypto: ${{ matrix.boringcrypto == true }}
 
   test-otelcol-config:
-    name: Test
+    name: Test (otelcol-config)
     uses: ./.github/workflows/workflow-test-otelcol-config.yml
     strategy:
       matrix:
