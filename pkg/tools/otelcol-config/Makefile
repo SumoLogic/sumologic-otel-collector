@@ -45,6 +45,14 @@ endif
 # ref: https://pkg.go.dev/net#hdr-Name_Resolution
 GOTAGS := $(GOTAGS) netgo
 
+# Settings for macOS builds
+ifeq ($(OS),darwin)
+	AC_USERNAME ?= otel-mac-certs@sumologic.com
+	AC_PASSWORD ?= $(shell echo $$AC_PASSWORD)
+	DEVELOPER_TEAM_ID ?= 8F28635Z7X
+	DEVELOPER_SIGNING_IDENTITY ?= Developer ID Application: Sumo Logic, Inc. ($(DEVELOPER_TEAM_ID))
+endif
+
 ################################################################################
 # Functions
 ################################################################################
@@ -142,20 +150,14 @@ otelcol-config-linux-fips_arm64:
 # Disk imaging targets
 ################################################################################
 
-# otelcol-sumo-dmg: APP_NAME=otelcol-sumo
-# otelcol-sumo-dmg: DMG_VOLUME_NAME=Sumo Logic Distribution for OpenTelemetry Collector
-# otelcol-sumo-dmg: DMG_PATH=test.dmg
-
-.PHONY: otelcol-sumo-dmg
-otelcol-sumo-dmg:
-	$(call check_defined, OTELCOL_BIN_PATH, you must set OTELCOL_BIN_PATH=path/to/otelcol_sumo)
-	$(call check_defined, OTELCOL_CONFIG_BIN_PATH, you must set OTELCOL_CONFIG_BIN_PATH=path/to/otelcol-config)
+.PHONY: otelcol-config-dmg
+otelcol-config-dmg: DMG_VOLUME_NAME=Sumo Logic OpenTelemetry Collector Config Tool
+otelcol-config-dmg:
+	$(call check_defined, BIN_PATH, BIN_PATH must be set to the path of the otelcol-config binary)
+	$(call check_defined, DMG_PATH, DMG_PATH must be set to the path of the DMG file that will be created)
 	$(eval TMP_DIR ?= $(shell mktemp -d))
-	cp otelcol-sumo "$(DMG_SOURCE_DIR)"
-#	$(eval DMG_SOURCE_DIR = $(shell $(MAKE) darwin-dmg-prepare))
-#	$(MAKE) darwin-dmg-add-file DMG_SOURCE_DIR="$(DMG_SOURCE_DIR)" SOURCE_FILE_PATH="flag.go"
-#	$(MAKE) darwin-dmg-add-file DMG_SOURCE_DIR="$(DMG_SOURCE_DIR)" SOURCE_FILE_PATH="flag_actions.go"
-	hdiutil create "$(DMG_PATH)" -ov -volname "$(DMG_VOLUME_NAME)" -fs APFS -format UDZO -srcfolder "$(DMG_SOURCE_DIR)"
+	cp "$(BIN_PATH)" "$(TMP_DIR)/otelcol-config"
+	hdiutil create "$(DMG_PATH)" -ov -volname "$(DMG_VOLUME_NAME)" -fs APFS -format UDZO -srcfolder "$(TMP_DIR)"
 
 ################################################################################
 # Code signing targets
@@ -163,15 +165,22 @@ otelcol-sumo-dmg:
 
 .PHONY: darwin-sign-binary
 darwin-sign-binary:
-darwin-sign-binary:
-	codesign --timestamp --options=runtime -s "$(DEVELOPER_SIGNING_IDENTITY)" -v "$(BINARY_PATH)"
+	$(call check_defined, BIN_PATH, BIN_PATH must be set to the path of the binary to sign)
+	codesign --timestamp --options=runtime -s "$(DEVELOPER_SIGNING_IDENTITY)" -v "$(BIN_PATH)"
 
 .PHONY: darwin-sign-dmg
-darwin-sign: BINARY_PATH = cmd/$(BINARY_NAME)
-darwin-sign: DMG_PATH = $(BINARY_PATH).dmg
-darwin-sign:
+darwin-sign-dmg: DMG_PATH=$(BIN_PATH).dmg
+darwin-sign-dmg:
+	$(call check_defined, DMG_PATH, DMG_PATH must be set to the path of the DMG file to sign)
 	xcrun notarytool submit --apple-id "$(AC_USERNAME)" --password "$(AC_PASSWORD)" --team-id "$(DEVELOPER_TEAM_ID)" --progress --wait "$(DMG_PATH)"
 	xcrun stapler staple "$(DMG_PATH)"
+
+.PHONY: darwin-dmg-and-sign
+darwin-dmg-and-sign: DMG_PATH=$(BINARY_NAME).dmg
+darwin-dmg-and-sign:
+	$(MAKE) darwin-sign-binary BIN_PATH=$(BINARY_NAME)
+	$(MAKE) otelcol-config-dmg BIN_PATH=$(BINARY_NAME) DMG_PATH=$(DMG_PATH)
+	$(MAKE) darwin-sign-dmg DMG_PATH=$(BINARY_NAME).dmg
 
 .PHONY: darwin_amd64-sign
 darwin_amd64-sign: BINARY_NAME=otelcol-config-darwin_amd64

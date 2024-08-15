@@ -20,8 +20,6 @@ print-docker-cross-builder-name:
 print-docker-cross-builder-volume:
 	@echo $(DOCKER_CROSS_BUILDER_VOLUME)
 
-#.PHONY: musl-cross-make
-#musl-cross-make: MUSL_REPO_PATH=$(TOOLCHAINS_DIR)/musl-cross-make
 musl-cross-make:
 	git clone $(MUSL_X_MAKE_REPO);
 	cd musl-cross-make && git checkout $(MUSL_X_MAKE_REF);
