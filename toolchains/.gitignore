@@ -1,0 +1,3 @@
+# FIPS Static
+musl-cross-make
+toolchain_*

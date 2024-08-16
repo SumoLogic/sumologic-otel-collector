@@ -186,18 +186,11 @@ jobs:
           go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
           grep "vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt.GetFipsAlgorithmMode"
 
-      # TODO: Go back to using Apple-Actions/import-codesign-certs once https://github.com/Apple-Actions/import-codesign-certs/pull/58 is merged
-      - name: Import macOS Code-Signing Certificates
+      - uses: apple-actions/import-codesign-certs@v3
         if: ${{ runner.os == 'macOS' && env.MACOS_SIGNING_ENABLED == 'true' }}
-        run: |
-          export p12_filepath=$(mktemp)
-          echo '${{ secrets.apple_developer_certificate_p12_base64 }}' | base64 --decode >${p12_filepath}
-          /usr/bin/security create-keychain -p ${{ secrets.apple_developer_certificate_password }} signing_temp.keychain
-          /usr/bin/security set-keychain-settings -lut 21600 signing_temp.keychain
-          /usr/bin/security unlock-keychain -p ${{ secrets.apple_developer_certificate_password }} signing_temp.keychain
-          /usr/bin/security import ${p12_filepath} -k signing_temp.keychain -f pkcs12 -A -T /usr/bin/codesign -T /usr/bin/security -P ${{ secrets.apple_developer_certificate_password }}
-          /usr/bin/security set-key-partition-list -S apple-tool:,apple: -k ${{ secrets.apple_developer_certificate_password }} signing_temp.keychain
-          /usr/bin/security list-keychains -d user -s signing_temp.keychain login.keychain
+        with:
+          p12-file-base64: ${{ secrets.apple_developer_certificate_p12_base64 }}
+          p12-password: ${{ secrets.apple_developer_certificate_password }}
 
       - name: Sign the mac binaries
         if: ${{ runner.os == 'macOS' && env.MACOS_SIGNING_ENABLED == 'true' }}

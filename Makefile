@@ -225,6 +225,7 @@ prepare-tag: install-gsed
 .PHONY: build
 build:
 	@$(MAKE) -C ./otelcolbuilder/ build
+	@$(MAKE) -C ./pkg/tools/otelcol-config/ build
 
 .PHONY: install-builder
 install-builder:
