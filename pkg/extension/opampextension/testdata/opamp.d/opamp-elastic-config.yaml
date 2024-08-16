@@ -1,0 +1,21 @@
+receivers:
+  elasticsearch:
+    metrics:
+      elasticsearch.node.fs.disk.available:
+        enabled: false
+    nodes: ["_local"]
+    skip_cluster_metrics: true
+    indices: [".geoip_databases"]
+    endpoint: http://localhost:9200
+    username: otel
+    password: password
+    collection_interval: 10s
+exporters:
+    sumologic:
+service:
+  pipelines:
+    metrics/elastic/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      receivers:
+        - elasticsearch
+      exporters:
+        - sumologic

@@ -1,0 +1,24 @@
+receivers:
+  postgresql:
+    endpoint: localhost:5432
+    transport: tcp
+    username: otel
+    password: test
+    databases:
+      - otel
+    collection_interval: 10s
+    tls:
+      insecure: false
+      insecure_skip_verify: false
+      ca_file: /home/otel/authorities.crt
+      cert_file: /home/otel/mypostgrescert.crt
+      key_file: /home/otel/mypostgreskey.key
+exporters:
+    sumologic:
+service:
+  pipelines:
+    metrics/postgresql/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      receivers:
+        - postgresql
+      exporters:
+        - sumologic

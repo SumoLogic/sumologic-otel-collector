@@ -38,6 +38,7 @@ const (
 	errMsgInvalidConfigName       = "cannot validate config named " +
 		"service::pipelines::logs/localfilesource/0aa79379-c764-4d3d-9d66-03f6df029a07: " +
 		"references processor \"batch\" which is not configured"
+	errMsgInvalidInterval = "'max_elapsed_time' must be non-negative"
 )
 
 func defaultSetup() (*Config, extension.Settings) {
@@ -55,22 +56,25 @@ func setupWithRemoteConfig(t *testing.T, d string) (*Config, extension.Settings)
 
 func TestApplyRemoteConfig(t *testing.T) {
 	tests := []struct {
-		name          string
-		file          string
-		acceptsRemote bool
-		expectChanged bool
-		expectError   bool
-		errorMessage  string
+		name         string
+		file         string
+		expectError  bool
+		errorMessage string
 	}{
-		{"ApplyRemoteConfig", "testdata/opamp.d/opamp-remote-config.yaml", false, false, true, errMsgRemoteConfigNotAccepted},
-		{"ApplyRemoteApacheConfig", "testdata/opamp.d/opamp-apache-config.yaml", false, false, true, errMsgRemoteConfigNotAccepted},
-		{"ApplyRemoteHostConfig", "testdata/opamp.d/opamp-host-config.yaml", false, false, true, errMsgRemoteConfigNotAccepted},
-		{"ApplyRemoteWindowsEventConfig", "testdata/opamp.d/opamp-windows-event-config.yaml", false, false, true, errMsgRemoteConfigNotAccepted},
-		{"ApplyRemoteExtensionsConfig", "testdata/opamp.d/opamp-extensions-config.yaml", false, false, true, errMsgRemoteConfigNotAccepted},
-		{"ApplyRemoteConfigFailed", "testdata/opamp.d/opamp-invalid-remote-config.yaml", true, false, true, "'max_elapsed_time' must be non-negative"},
-		{"ApplyRemoteConfigMissingProcessor", "testdata/opamp.d/opamp-missing-processor.yaml", true, false, true, errMsgInvalidConfigName},
-		{"ApplyFilterProcessorConfig", "testdata/opamp.d/opamp-filter-processor.yaml", false, false, true, errMsgRemoteConfigNotAccepted},
-		{"ApplyKafkaMetricsConfig", "testdata/opamp.d/opamp-kafkametrics-config.yaml", false, false, true, errMsgRemoteConfigNotAccepted},
+		{"ApplyRemoteConfig", "testdata/opamp.d/opamp-remote-config.yaml", false, ""},
+		{"ApplyRemoteApacheConfig", "testdata/opamp.d/opamp-apache-config.yaml", false, ""},
+		{"ApplyRemoteHostConfig", "testdata/opamp.d/opamp-host-config.yaml", false, ""},
+		{"ApplyRemoteWindowsEventConfig", "testdata/opamp.d/opamp-windows-event-config.yaml", false, ""},
+		{"ApplyRemoteExtensionsConfig", "testdata/opamp.d/opamp-extensions-config.yaml", false, ""},
+		{"ApplyRemoteConfigFailed", "testdata/opamp.d/opamp-invalid-remote-config.yaml", true, errMsgInvalidInterval},
+		{"ApplyRemoteConfigMissingProcessor", "testdata/opamp.d/opamp-missing-processor.yaml", true, errMsgInvalidConfigName},
+		{"ApplyFilterProcessorConfig", "testdata/opamp.d/opamp-filter-processor.yaml", false, ""},
+		{"ApplyKafkaMetricsConfig", "testdata/opamp.d/opamp-kafkametrics-config.yaml", false, ""},
+		{"ApplyElasticsearchConfig", "testdata/opamp.d/opamp-elastic-config.yaml", false, ""},
+		{"ApplyMysqlConfig", "testdata/opamp.d/opamp-mysql-config.yaml", false, ""},
+		{"ApplyPostgresqlConfig", "testdata/opamp.d/opamp-postgresql-config.yaml", false, ""},
+		{"ApplyRabbitmqConfig", "testdata/opamp.d/opamp-rabbitmq-config.yaml", false, ""},
+		{"ApplyRedisConfig", "testdata/opamp.d/opamp-redis-config.yaml", false, ""},
 	}
 
 	for _, tt := range tests {
@@ -81,9 +85,6 @@ func TestApplyRemoteConfig(t *testing.T) {
 			cfg, set := setupWithRemoteConfig(t, d)
 			o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 			assert.NoError(t, err)
-
-			cfg.AcceptsRemoteConfiguration = tt.acceptsRemote
-
 			path := filepath.Join(tt.file)
 			rb, err := os.ReadFile(path)
 			assert.NoError(t, err)
@@ -99,14 +100,26 @@ func TestApplyRemoteConfig(t *testing.T) {
 				ConfigHash: []byte("b2b1e3e7f45d564db1c0b621bbf67008"),
 			}
 
-			changed, err := o.applyRemoteConfig(rc)
+			// Test with an error in configuration
 			if tt.expectError {
+				changed, err := o.applyRemoteConfig(rc)
 				assert.Error(t, err)
 				assert.ErrorContains(t, err, tt.errorMessage)
+				assert.False(t, changed)
+				assert.Equal(t, len(o.effectiveConfig), 0)
 			} else {
+				// Test with a valid configuration
+				changed, err := o.applyRemoteConfig(rc)
 				assert.NoError(t, err)
+				assert.True(t, changed)
+				assert.NotEqual(t, len(o.effectiveConfig), 0)
 			}
-			assert.Equal(t, tt.expectChanged, changed)
+			// Test with remote configuration disabled
+			cfg.AcceptsRemoteConfiguration = false
+			changed, err := o.applyRemoteConfig(rc)
+			assert.False(t, changed)
+			assert.Error(t, err)
+			assert.Equal(t, errMsgRemoteConfigNotAccepted, err.Error())
 		})
 	}
 }

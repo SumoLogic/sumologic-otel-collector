@@ -1,0 +1,15 @@
+receivers:
+  rabbitmq:
+    endpoint: http://localhost:15672
+    username: otelu
+    password: test
+    collection_interval: 10s
+exporters:
+    sumologic:
+service:
+  pipelines:
+    metrics/rabbitmq/09c98ea4-6686-4ab9-b3cd-f04070906441:
+      receivers:
+        - rabbitmq
+      exporters:
+        - sumologic

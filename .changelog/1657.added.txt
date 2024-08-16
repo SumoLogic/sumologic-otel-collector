@@ -1,0 +1,1 @@
+feat(opamp): Add support for new source templates (elastic, mysql, postgres, rabbitmq, redis)
