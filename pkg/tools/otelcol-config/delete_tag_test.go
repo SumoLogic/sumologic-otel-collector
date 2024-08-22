@@ -101,6 +101,16 @@ func TestDeleteTagAction(t *testing.T) {
 			Flags:         []string{"--delete-tag", "foo"},
 			ExpConfDWrite: []byte("extensions:\n  sumologic:\n    collector_fields:\n      bar: baz\n"),
 		},
+		{
+			Name: "dot in tag name",
+			Conf: fstest.MapFS{
+				path.Join(ConfDotD, ConfDSettings): &fstest.MapFile{
+					Data: []byte("extensions:\n  sumologic:\n    collector_fields:\n      foo.bar: baz\n"),
+				},
+			},
+			Flags:         []string{"--delete-tag", "foo.bar"},
+			ExpConfDWrite: []byte("extensions:\n  sumologic:\n    collector_fields: {}\n"),
+		},
 	}
 
 	for _, test := range tests {
