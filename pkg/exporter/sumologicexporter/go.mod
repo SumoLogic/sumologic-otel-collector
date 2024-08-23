@@ -2,7 +2,7 @@ module github.com/SumoLogic/sumologic-otel-collector/pkg/exporter/sumologicexpor
 
 go 1.21.0
 
-toolchain go1.22.2
+toolchain go1.22.6
 
 require (
 	github.com/klauspost/compress v1.17.9

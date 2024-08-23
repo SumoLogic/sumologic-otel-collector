@@ -2,7 +2,7 @@ module github.com/astencel-sumo/sumologicschemaprocessor
 
 go 1.21.0
 
-toolchain go1.21.11
+toolchain go1.22.6
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

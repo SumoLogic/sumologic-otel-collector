@@ -2,7 +2,7 @@ module github.com/SumoLogic/sumologic-otel-collector/pkg/processor/sourceprocess
 
 go 1.21.0
 
-toolchain go1.21.11
+toolchain go1.22.6
 
 require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.106.1

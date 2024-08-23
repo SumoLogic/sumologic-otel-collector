@@ -235,7 +235,6 @@ excludes:
 replaces:
   # ----------------------------------------------------------------------------
   # Needed for telegrafreceiver
-  # - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.28.3-sumo-3
   - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.31.2-sumo-1
 
   # This is to make sure we build the with the sumologicextension from the tree.

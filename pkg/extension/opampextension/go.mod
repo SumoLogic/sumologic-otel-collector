@@ -2,7 +2,7 @@ module github.com/open-telemetry/opentelemetry-collector-contrib/extension/opamp
 
 go 1.21.0
 
-toolchain go1.21.11
+toolchain go1.22.6
 
 require (
 	github.com/google/uuid v1.6.0
