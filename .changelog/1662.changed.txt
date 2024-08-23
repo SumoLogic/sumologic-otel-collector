@@ -1,0 +1,1 @@
+Upgrade otelcol core to 0.106.1

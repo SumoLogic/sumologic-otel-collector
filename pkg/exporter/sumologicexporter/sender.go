@@ -137,7 +137,7 @@ type sender struct {
 
 const (
 	// maxBufferSize defines size of the logBuffer (maximum number of plog.LogRecord entries)
-	maxBufferSize int = 1024 * 1024
+	// maxBufferSize int = 1024 * 1024
 
 	headerContentType     string = "Content-Type"
 	headerContentEncoding string = "Content-Encoding"
