@@ -32,7 +32,7 @@ type Builder interface {
 // WriterOp is the consumer's interface to the stanza pipeline
 type WriterOp interface {
 	NewEntry(value interface{}) (*entry.Entry, error)
-	Write(ctx context.Context, e *entry.Entry)
+	Write(ctx context.Context, e *entry.Entry) error
 }
 
 type contextKey string
