@@ -106,6 +106,12 @@ func TestAddTagAction(t *testing.T) {
 			Flags:    []string{"--add-tag", `foo=[1,2,3,4]`, "--override"},
 			ExpWrite: []byte("extensions:\n  sumologic:\n    collector_fields:\n      foo:\n        - 1\n        - 2\n        - 3\n        - 4\n"),
 		},
+		{
+			Name:     "dot in tag name",
+			Conf:     fstest.MapFS{},
+			Flags:    []string{"--add-tag", "foo.bar=baz"},
+			ExpWrite: []byte("extensions:\n  sumologic:\n    collector_fields:\n      foo.bar: baz\n"),
+		},
 	}
 
 	for _, test := range tests {

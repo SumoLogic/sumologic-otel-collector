@@ -43,7 +43,7 @@ func deleteTagOverride(ctx *actionContext, conf ConfDir) error {
 	encoder := yqlib.YamlFormat.EncoderFactory()
 	decoder := yqlib.YamlFormat.DecoderFactory()
 	for _, tagName := range ctx.Flags.DeleteTags {
-		key := fmt.Sprintf(".extensions.sumologic.collector_fields.%s", tagName)
+		key := fmt.Sprintf(".extensions.sumologic.collector_fields.%q", tagName)
 		for _, confKey := range readOrder {
 			doc := string(conf.ConfD[confKey])
 			result, err := eval.Evaluate(key, doc, encoder, decoder)
@@ -76,7 +76,7 @@ func deleteTag(ctx *actionContext, conf ConfDir, docName string, writeDoc func([
 		return nil
 	}
 
-	const keyFmt = "del(.extensions.sumologic.collector_fields.%s)"
+	const keyFmt = "del(.extensions.sumologic.collector_fields.%q)"
 
 	for _, tagName := range ctx.Flags.DeleteTags {
 		expression := fmt.Sprintf(keyFmt, tagName)
