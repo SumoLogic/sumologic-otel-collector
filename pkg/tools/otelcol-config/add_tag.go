@@ -31,8 +31,8 @@ func AddTagAction(ctx *actionContext) error {
 	doc := conf.ConfD[docName]
 
 	const (
-		keyFmt      = ".extensions.sumologic.collector_fields.%s = %s"
-		quoteKeyFmt = ".extensions.sumologic.collector_fields.%s = %q"
+		keyFmt      = ".extensions.sumologic.collector_fields.%q = %s"
+		quoteKeyFmt = ".extensions.sumologic.collector_fields.%q = %q"
 	)
 
 	for tagName, tag := range ctx.Flags.AddTags {
