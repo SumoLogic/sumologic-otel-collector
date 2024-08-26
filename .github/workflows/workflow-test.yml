@@ -28,7 +28,7 @@ defaults:
     shell: bash
 
 env:
-  GO_VERSION: "1.21.11"
+  GO_VERSION: "1.22.6"
 
 jobs:
   test:

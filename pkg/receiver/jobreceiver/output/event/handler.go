@@ -95,8 +95,9 @@ func (b *eventOutputBuffer) Close(summary consumer.ExecutionSummary) {
 	if b.IncludeDuration {
 		ent.Attributes[commandDurationLabel] = summary.RunDuration.Seconds()
 	}
-
-	b.writer.Write(b.ctx, ent)
+	if err := b.writer.Write(b.ctx, ent); err != nil {
+		b.logger.Errorf("failed to write entry: %s", err)
+	}
 }
 
 // Write to the buffer. Meant to be used by both output streams
