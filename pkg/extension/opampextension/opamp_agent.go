@@ -429,7 +429,7 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 
 	for k, v := range o.effectiveConfig {
 		p := filepath.Join(dir, k)
-        	o.logger.Info("Loading file to Validate...", zap.String("message"))
+        	o.logger.Info("Loading file to Validate...", zap.String("filePath",p))
 		
 
 		// OpenFile the same way os.Create does it, but with 0600 perms
