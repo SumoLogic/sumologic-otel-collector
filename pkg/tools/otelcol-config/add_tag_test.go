@@ -112,6 +112,16 @@ func TestAddTagAction(t *testing.T) {
 			Flags:    []string{"--add-tag", "foo.bar=baz"},
 			ExpWrite: []byte("extensions:\n  sumologic:\n    collector_fields:\n      foo.bar: baz\n"),
 		},
+		{
+			Name: "add tag to sumologic-remote.yaml",
+			Conf: fstest.MapFS{
+				SumologicRemoteDotYaml: &fstest.MapFile{
+					Data: []byte("extensions:\n  sumologic:\n    collector_fields:\n      foo: bar\n"),
+				},
+			},
+			Flags:    []string{"--add-tag", "bar=baz"},
+			ExpWrite: []byte("extensions:\n  sumologic:\n    collector_fields:\n      foo: bar\n      bar: baz\n"),
+		},
 	}
 
 	for _, test := range tests {
@@ -137,6 +147,11 @@ func TestAddTagAction(t *testing.T) {
 				settingsWriter,
 				overridesWriter,
 			)
+			if _, ok := test.Conf.(fstest.MapFS)[SumologicRemoteDotYaml]; ok {
+				actionContext.WriteConfD = errWriter{}.Write
+				actionContext.WriteConfDOverrides = errWriter{}.Write
+				actionContext.WriteSumologicRemote = newTestWriter(test.ExpWrite).Write
+			}
 			err := AddTagAction(actionContext)
 			if test.ExpErr && err == nil {
 				t.Fatal("expected non-nil error")
