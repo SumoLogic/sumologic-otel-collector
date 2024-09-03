@@ -9,6 +9,10 @@ import (
 )
 
 func SetInstallationTokenAction(ctx *actionContext) error {
+	if ctx.SystemdEnabled {
+		return setInstallationTokenSystemd(ctx)
+	}
+
 	conf, err := ReadConfigDir(ctx.ConfigDir)
 	if err != nil {
 		return err
@@ -63,5 +67,14 @@ func SetInstallationTokenAction(ctx *actionContext) error {
 		return fmt.Errorf("couldn't write installation token: %s", err)
 	}
 
+	return nil
+}
+
+func setInstallationTokenSystemd(ctx *actionContext) error {
+	tokenDoc := fmt.Sprintf("SUMOLOGIC_INSTALLATION_TOKEN=%s\n", ctx.Flags.InstallationToken)
+	_, err := ctx.WriteInstallationTokenEnv([]byte(tokenDoc))
+	if err != nil {
+		return fmt.Errorf("couldn't write token.env: %s", err)
+	}
 	return nil
 }

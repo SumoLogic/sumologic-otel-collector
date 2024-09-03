@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 
 	"github.com/spf13/pflag"
@@ -159,6 +161,27 @@ func getEphemeralUnlinker(values *flagValues) func() error {
 	return getUnlinker(values, ephemeralYAML)
 }
 
+func getSystemdEnabled() bool {
+	// this may need to become more nuanced at some point
+	b, err := exec.Command("ps", "--no-headers", "-o", "comm", "1").CombinedOutput()
+	if err != nil {
+		// safe to say it's not enabled
+		return false
+	}
+	return strings.HasPrefix(string(b), "systemd")
+}
+
+func getInstallationTokenWriter(values *flagValues) func([]byte) (int, error) {
+	return func(token []byte) (int, error) {
+		tokenDir := filepath.Join(values.ConfigDir, "env")
+		if err := os.MkdirAll(tokenDir, 0700); err != nil {
+			return 0, err
+		}
+		tokenPath := filepath.Join(tokenDir, "token.env")
+		return len(token), os.WriteFile(tokenPath, token, 0600)
+	}
+}
+
 // main. here is what it does:
 //
 // 1. Check basic OS compatibility
@@ -185,17 +208,19 @@ func main() {
 	}
 
 	ctx := &actionContext{
-		ConfigDir:            os.DirFS(flagValues.ConfigDir),
-		Flags:                flagValues,
-		Stdout:               os.Stdout,
-		Stderr:               os.Stderr,
-		WriteConfD:           getConfDWriter(flagValues, ConfDSettings),
-		WriteConfDOverrides:  getConfDWriter(flagValues, ConfDOverrides),
-		WriteSumologicRemote: getSumologicRemoteWriter(flagValues),
-		LinkHostMetrics:      getHostMetricsLinker(flagValues),
-		UnlinkHostMetrics:    getHostMetricsUnlinker(flagValues),
-		LinkEphemeral:        getEphemeralLinker(flagValues),
-		UnlinkEphemeral:      getEphemeralUnlinker(flagValues),
+		ConfigDir:                 os.DirFS(flagValues.ConfigDir),
+		Flags:                     flagValues,
+		Stdout:                    os.Stdout,
+		Stderr:                    os.Stderr,
+		WriteConfD:                getConfDWriter(flagValues, ConfDSettings),
+		WriteConfDOverrides:       getConfDWriter(flagValues, ConfDOverrides),
+		WriteSumologicRemote:      getSumologicRemoteWriter(flagValues),
+		LinkHostMetrics:           getHostMetricsLinker(flagValues),
+		UnlinkHostMetrics:         getHostMetricsUnlinker(flagValues),
+		LinkEphemeral:             getEphemeralLinker(flagValues),
+		UnlinkEphemeral:           getEphemeralUnlinker(flagValues),
+		SystemdEnabled:            getSystemdEnabled(),
+		WriteInstallationTokenEnv: getInstallationTokenWriter(flagValues),
 	}
 
 	if err := visitFlags(fs, ctx); err != nil {
