@@ -88,6 +88,7 @@ func getConfDWriter(values *flagValues, fileName string) func(doc []byte) (int, 
 
 func getSumologicRemoteWriter(values *flagValues) func([]byte) (int, error) {
 	docPath := filepath.Join(values.ConfigDir, SumologicRemoteDotYaml)
+
 	return func(doc []byte) (int, error) {
 		if doc == nil {
 			// Special case: when doc is nil, we delete the file. This tells
@@ -95,8 +96,66 @@ func getSumologicRemoteWriter(values *flagValues) func([]byte) (int, error) {
 			// otelcol-sumo.
 			return 0, os.Remove(docPath)
 		}
-		return len(doc), os.WriteFile(docPath, doc, 0600)
+
+		if err := os.WriteFile(docPath, doc, 0600); err != nil {
+			return 0, fmt.Errorf("error writing sumologic-remote.yaml: %s", err)
+		}
+
+		if err := setSumologicRemoteOwner(values); err != nil {
+			return len(doc), fmt.Errorf("error setting sumologic-remote.yaml owner: %s", err)
+		}
+
+		return len(doc), nil
 	}
+}
+
+func setSumologicRemoteOwner(values *flagValues) error {
+	if runtime.GOOS == "windows" {
+		// windows does not have the concept of uid and gid ownership
+		return nil
+	}
+
+	baseConfigPath := filepath.Join(values.ConfigDir, SumologicDotYaml)
+	docPath := filepath.Join(values.ConfigDir, SumologicRemoteDotYaml)
+
+	// check who owns the base configuration file
+	stat, err := os.Stat(baseConfigPath)
+	if err != nil {
+		// maybe it doesn't exist, stat the parent dir instead
+		stat, err = os.Stat(values.ConfigDir)
+		if err != nil {
+			// something is seriously wrong
+			return fmt.Errorf("error reading config dir: %s", err)
+		}
+	}
+
+	var uid, gid uint32
+
+	sys, ok := stat.Sys().(*syscall.Stat_t)
+	if ok {
+		uid = sys.Uid
+		gid = sys.Gid
+	} else {
+		// we're not on a supported platform for chown
+		return nil
+	}
+
+	if int(uid) == syscall.Getuid() {
+		// we're already that user
+		return nil
+	}
+
+	// set the owner to be consistent with the other configuration
+	if err := os.Chown(docPath, int(uid), int(gid)); err != nil {
+		if err.(*os.PathError).Err == syscall.EPERM {
+			// we don't have permission to chown, skip it
+			return nil
+		}
+		return err
+	}
+
+	return nil
+
 }
 
 func getHostMetricsFilename() string {
