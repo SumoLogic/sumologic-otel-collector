@@ -25,24 +25,20 @@ func setSumologicRemoteOwner(values *flagValues) error {
 		}
 	}
 
-	var uid, gid uint32
-
 	sys, ok := stat.Sys().(*syscall.Stat_t)
-	if ok {
-		uid = sys.Uid
-		gid = sys.Gid
-	} else {
-		// we're not on a supported platform for chown
+	if !ok {
+		// the platform does not has the expected sys somehow,
+		// so just bail out with no error
 		return nil
 	}
 
-	if int(uid) == syscall.Getuid() {
+	if int(sys.Uid) == syscall.Getuid() {
 		// we're already that user
 		return nil
 	}
 
 	// set the owner to be consistent with the other configuration
-	if err := os.Chown(docPath, int(uid), int(gid)); err != nil {
+	if err := os.Chown(docPath, int(sys.Uid), int(sys.Gid)); err != nil {
 		if err.(*os.PathError).Err == syscall.EPERM {
 			// we don't have permission to chown, skip it
 			return nil
