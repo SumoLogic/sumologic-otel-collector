@@ -7,7 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
-## [v0.104.0-sumo-1]
+## [v0.106.1-sumo-0]
+
+### Released 2024-09-10
+
+### Added
+
+- feat(opamp): Add support for new source templates (elastic, mysql, postgres, rabbitmq, redis) [#1657]
+
+### Changed
+
+- chore(deps): Upgrade go version to 1.22.6 [#1662.2]
+- Upgrade otelcol core to 0.106.1 [#1662]
+
+### Fixed
+
+- fix(jobreceiver): resolve a concurrency issue in the command executor [#1660]
+
+[#1657]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1657
+[#1662.2]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1662.2
+[#1662]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1662
+[#1660]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1660
+
+[v0.106.1-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.106.1-sumo-0## [v0.104.0-sumo-1]
 
 ### Released 2024-08-12
 
@@ -26,7 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1652]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1652
 [#1653]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1653
 [#1654]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1654
-
 [v0.104.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.104.0-sumo-1
 
 ## [v0.104.0-sumo-0]
