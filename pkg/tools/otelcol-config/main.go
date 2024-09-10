@@ -82,7 +82,7 @@ func getSortedActions(fs *pflag.FlagSet) []string {
 
 func getConfDWriter(values *flagValues, fileName string) func(doc []byte) (int, error) {
 	return func(doc []byte) (int, error) {
-		return len(doc), os.WriteFile(filepath.Join(values.ConfigDir, ConfDotD, fileName), doc, 0600)
+		return len(doc), os.WriteFile(filepath.Join(values.ConfigDir, ConfDotD, fileName), doc, 0660)
 	}
 }
 
@@ -97,7 +97,7 @@ func getSumologicRemoteWriter(values *flagValues) func([]byte) (int, error) {
 			return 0, os.Remove(docPath)
 		}
 
-		if err := os.WriteFile(docPath, doc, 0600); err != nil {
+		if err := os.WriteFile(docPath, doc, 0660); err != nil {
 			return 0, fmt.Errorf("error writing sumologic-remote.yaml: %s", err)
 		}
 
@@ -184,11 +184,11 @@ func getSystemdEnabled() bool {
 func getInstallationTokenWriter(values *flagValues) func([]byte) (int, error) {
 	return func(token []byte) (int, error) {
 		tokenDir := filepath.Join(values.ConfigDir, "env")
-		if err := os.MkdirAll(tokenDir, 0700); err != nil {
+		if err := os.MkdirAll(tokenDir, 0770); err != nil {
 			return 0, err
 		}
 		tokenPath := filepath.Join(tokenDir, "token.env")
-		return len(token), os.WriteFile(tokenPath, token, 0600)
+		return len(token), os.WriteFile(tokenPath, token, 0660)
 	}
 }
 

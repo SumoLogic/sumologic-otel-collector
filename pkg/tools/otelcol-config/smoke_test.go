@@ -9,16 +9,16 @@ import (
 )
 
 func createSkeleton(dir string) error {
-	if err := os.Mkdir(filepath.Join(dir, ConfDotD), 0700); err != nil {
+	if err := os.Mkdir(filepath.Join(dir, ConfDotD), 0770); err != nil {
 		return err
 	}
-	if err := os.Mkdir(filepath.Join(dir, ConfDotDAvailable), 0700); err != nil {
+	if err := os.Mkdir(filepath.Join(dir, ConfDotDAvailable), 0770); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(dir, ConfDotDAvailable, getHostMetricsFilename()), []byte("hostmetrics"), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, ConfDotDAvailable, getHostMetricsFilename()), []byte("hostmetrics"), 0660); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(dir, ConfDotDAvailable, ephemeralYAML), []byte("ephemeral"), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, ConfDotDAvailable, ephemeralYAML), []byte("ephemeral"), 0660); err != nil {
 		return err
 	}
 	return nil
