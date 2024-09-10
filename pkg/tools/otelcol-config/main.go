@@ -88,6 +88,7 @@ func getConfDWriter(values *flagValues, fileName string) func(doc []byte) (int, 
 
 func getSumologicRemoteWriter(values *flagValues) func([]byte) (int, error) {
 	docPath := filepath.Join(values.ConfigDir, SumologicRemoteDotYaml)
+
 	return func(doc []byte) (int, error) {
 		if doc == nil {
 			// Special case: when doc is nil, we delete the file. This tells
@@ -95,7 +96,16 @@ func getSumologicRemoteWriter(values *flagValues) func([]byte) (int, error) {
 			// otelcol-sumo.
 			return 0, os.Remove(docPath)
 		}
-		return len(doc), os.WriteFile(docPath, doc, 0600)
+
+		if err := os.WriteFile(docPath, doc, 0600); err != nil {
+			return 0, fmt.Errorf("error writing sumologic-remote.yaml: %s", err)
+		}
+
+		if err := setSumologicRemoteOwner(values); err != nil {
+			return len(doc), fmt.Errorf("error setting sumologic-remote.yaml owner: %s", err)
+		}
+
+		return len(doc), nil
 	}
 }
 
