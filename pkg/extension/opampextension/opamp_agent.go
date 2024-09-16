@@ -512,6 +512,7 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 
 	configChanged = false
 	if !reflect.DeepEqual(o.effectiveConfig, nec) {
+		o.logger.Info("Start saving effective config")
 		oec := o.effectiveConfig
 		o.effectiveConfig = nec
 
