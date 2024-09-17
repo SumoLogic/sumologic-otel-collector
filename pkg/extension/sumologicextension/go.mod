@@ -21,6 +21,8 @@ require (
 	google.golang.org/grpc v1.65.0
 )
 
+replace go.opentelemetry.io/collector/extension/sumologicextension => github.com/chan-tim-sumo/opentelemetry-collector-contrib/extension/sumologicextension v0.0.0-20240912165444-6c4e8e628e0d
+
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
