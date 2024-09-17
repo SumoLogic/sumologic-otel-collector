@@ -535,7 +535,7 @@ func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
 		var err error
 		configChanged, err = o.applyRemoteConfig(msg.RemoteConfig)
 		if err == nil {
-			err = errors.New("Simulated error-test")
+			err = fmt.Errorf("Simulated test error")
 			o.logger.Error("Failed to apply OpAMP agent remote config", zap.Error(err))
 			err = o.opampClient.SetRemoteConfigStatus(&protobufs.RemoteConfigStatus{
 				LastRemoteConfigHash: msg.RemoteConfig.ConfigHash,
