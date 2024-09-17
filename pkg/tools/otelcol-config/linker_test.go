@@ -31,7 +31,7 @@ func TestHostMetricsLinker(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	configPath := filepath.Join(availPath, hostmetricsFilename)
+	configPath := filepath.Join(availPath, hostmetricsYAML)
 	if err := os.WriteFile(configPath, []byte("configuration: yes"), 0660); err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func TestHostMetricsLinker(t *testing.T) {
 		t.Fatal(fmt.Errorf("can't link config path %s: %s", configPath, err))
 	}
 
-	linkPath := filepath.Join(dir, ConfDotD, hostmetricsFilename)
+	linkPath := filepath.Join(dir, ConfDotD, hostmetricsYAML)
 
 	stat, err := os.Lstat(linkPath)
 	if err != nil {

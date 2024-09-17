@@ -15,9 +15,8 @@ import (
 )
 
 const (
-	hostmetricsLinux  = "hostmetrics-linux.yaml"
-	hostmetricsDarwin = "hostmetrics-darwin.yaml"
-	ephemeralYAML     = "ephemeral.yaml"
+	hostmetricsYAML = "hostmetrics.yaml"
+	ephemeralYAML   = "ephemeral.yaml"
 )
 
 // errorCoder is here to give actions a way to set the exit status of the program
@@ -109,17 +108,6 @@ func getSumologicRemoteWriter(values *flagValues) func([]byte) (int, error) {
 	}
 }
 
-func getHostMetricsFilename() string {
-	switch runtime.GOOS {
-	case "linux":
-		return hostmetricsLinux
-	case "darwin":
-		return hostmetricsDarwin
-	default:
-		panic("unsupported os: " + runtime.GOOS)
-	}
-}
-
 func isLinkError(err error) bool {
 	_, linkError := err.(*os.LinkError)
 	return linkError
@@ -154,13 +142,11 @@ func getUnlinker(values *flagValues, filename string) func() error {
 }
 
 func getHostMetricsLinker(values *flagValues) func() error {
-	filename := getHostMetricsFilename()
-	return getLinker(values, filename)
+	return getLinker(values, hostmetricsYAML)
 }
 
 func getHostMetricsUnlinker(values *flagValues) func() error {
-	filename := getHostMetricsFilename()
-	return getUnlinker(values, filename)
+	return getUnlinker(values, hostmetricsYAML)
 }
 
 func getEphemeralLinker(values *flagValues) func() error {
