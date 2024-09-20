@@ -510,7 +510,7 @@ extensions:
 		if err != nil {
 			return false, fmt.Errorf("cannot parse config named %s: %v", n, err)
 		}
-		k.Set("receivers.nop", nil)
+		k.Set("receivers.nop", map[string]interface{}{})
 		fb, err := k.Marshal(yaml.Parser())
 		o.logger.Info("Agent config yaml", zap.String("config", string(fb)))
 		
