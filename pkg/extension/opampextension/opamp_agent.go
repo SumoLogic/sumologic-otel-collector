@@ -513,6 +513,7 @@ extensions:
 		k.Set("receivers.nop", map[string]interface{}{})
 		k.Set("exporters.nop", map[string]interface{}{})
 		k.Set("service.pipelines.logs/nop.receivers", []string{"nop"})
+		k.Set("service.pipelines.logs/nop.exporters", []string{"nop"})
 		fb, err := k.Marshal(yaml.Parser())
 		o.logger.Info("Agent config yaml", zap.String("config", string(fb)))
 		
