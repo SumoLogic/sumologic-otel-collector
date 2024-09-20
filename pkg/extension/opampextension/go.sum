@@ -757,6 +757,8 @@ go.opentelemetry.io/collector/consumer/consumertest v0.106.1 h1:hDdFeVjCLIJ6iLfb
 go.opentelemetry.io/collector/consumer/consumertest v0.106.1/go.mod h1:WRTYnQ8bYHQrEN6eJZ80oC4pNI7VeDRdsTZI6xs9o5M=
 go.opentelemetry.io/collector/exporter v0.106.1 h1:PIqLqWacxSFcCstiF/6kxI1GLiP+9pjG7XFujxZG1z0=
 go.opentelemetry.io/collector/exporter v0.106.1/go.mod h1:aGIoEwT5UjCHzq+oFYMuc5Mt15AfqvgDeLdjWTYSqNo=
+go.opentelemetry.io/collector/exporter/nopexporter v0.106.0 h1:shTpN6E/yaM5clsMI+65KPfHhzwyUCttdFgi2tZD3AM=
+go.opentelemetry.io/collector/exporter/nopexporter v0.106.0/go.mod h1:QpGkZoh1G10So5BnFKf/bY7rmHVRK5vFqn/tcGirxIw=
 go.opentelemetry.io/collector/exporter/otlpexporter v0.106.1 h1:XZmroqROemurXiRWAg4WfO0KkoooIcvzTi2aUcW5A8Q=
 go.opentelemetry.io/collector/exporter/otlpexporter v0.106.1/go.mod h1:e01tHm+agklfj9C3jnLZd6ar+FvLCOw9VT2u87ao9IQ=
 go.opentelemetry.io/collector/extension v0.106.1 h1:HNV2eOxaSDy5gL5KYoPoTLlp6fdeWmuw4paxhi10VUo=
