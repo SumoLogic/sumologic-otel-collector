@@ -52,6 +52,7 @@ require (
 	go.opentelemetry.io/collector/processor/batchprocessor v0.104.0
 	go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.104.0
 	go.opentelemetry.io/collector/receiver v0.104.0
+	go.opentelemetry.io/collector/receiver/nopreceiver v0.104.0
 	go.opentelemetry.io/collector/receiver/otlpreceiver v0.104.0
 	go.opentelemetry.io/collector/semconv v0.104.0
 	go.uber.org/multierr v1.11.0
