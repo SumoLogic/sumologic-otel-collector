@@ -22,17 +22,17 @@ func TestHostMetricsLinker(t *testing.T) {
 	}
 
 	availPath := filepath.Join(dir, ConfDotDAvailable)
-	if err := os.Mkdir(availPath, 0700); err != nil {
+	if err := os.Mkdir(availPath, 0770); err != nil {
 		t.Fatal(err)
 	}
 
 	confdPath := filepath.Join(dir, ConfDotD)
-	if err := os.Mkdir(confdPath, 0700); err != nil {
+	if err := os.Mkdir(confdPath, 0770); err != nil {
 		t.Fatal(err)
 	}
 
 	configPath := filepath.Join(availPath, hostmetricsFilename)
-	if err := os.WriteFile(configPath, []byte("configuration: yes"), 0600); err != nil {
+	if err := os.WriteFile(configPath, []byte("configuration: yes"), 0660); err != nil {
 		t.Fatal(err)
 	}
 

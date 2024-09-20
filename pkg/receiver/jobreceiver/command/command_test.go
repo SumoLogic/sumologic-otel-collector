@@ -22,19 +22,14 @@ func TestExecute(t *testing.T) {
 	t.Log("Running basic test")
 	// Basic command execution
 	t.Run("basic", func(t *testing.T) {
-		t.Log("debug 1")
 		echo := NewExecution(ctx, withTestHelper(t, ExecutionRequest{Command: "echo", Arguments: []string{"hello", "world"}}))
-		t.Log("debug 2")
 		outC := eventualOutput(t, echo)
-		t.Log("debug 3")
 		resp, err := echo.Run()
-		t.Log("debug 4")
 		require.NoError(t, err)
-		t.Log("debug 5")
 		assert.Equal(t, 0, resp.Status)
-		t.Log("debug 6")
-		assert.Contains(t, <-outC, "hello world")
-		t.Log("debug 7")
+		output := <-outC
+		require.NoError(t, output.Error)
+		assert.Contains(t, output.Message, "hello world")
 	})
 
 	// Command exits non-zero
@@ -97,7 +92,9 @@ func TestExecute(t *testing.T) {
 		time.Sleep(time.Millisecond * 100)
 		_, err = echo.Run()
 		assert.Error(t, err)
-		assert.Contains(t, <-outC, "hello world")
+		output := <-outC
+		require.NoError(t, output.Error)
+		assert.Contains(t, output.Message, "hello world")
 	})
 }
 
@@ -110,21 +107,32 @@ func withTestHelper(t *testing.T, r ExecutionRequest) ExecutionRequest {
 	return r
 }
 
-func eventualOutput(t *testing.T, i *Execution) <-chan string {
+type executionOutput struct {
+	Message string
+	Error   error
+}
+
+func eventualOutput(t *testing.T, i *Execution) <-chan executionOutput {
 	t.Helper()
-	out := make(chan string, 1)
+	out := make(chan executionOutput, 1)
 	stdout, err := i.Stdout()
 	require.NoError(t, err)
 	stderr, err := i.Stderr()
 	require.NoError(t, err)
 	go func() {
+		defer close(out)
 		var buf bytes.Buffer
 		_, err := io.Copy(&buf, stdout)
-		require.NoError(t, err)
+		if err != nil {
+			out <- executionOutput{Error: err}
+			return
+		}
 		_, err = io.Copy(&buf, stderr)
-		require.NoError(t, err)
-		out <- buf.String()
-		close(out)
+		if err != nil {
+			out <- executionOutput{Error: err}
+			return
+		}
+		out <- executionOutput{Message: buf.String()}
 	}()
 	return out
 }

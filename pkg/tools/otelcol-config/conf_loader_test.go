@@ -2,6 +2,8 @@ package main
 
 import (
 	"io/fs"
+	"os"
+	"path/filepath"
 	"testing"
 	"testing/fstest"
 
@@ -142,5 +144,41 @@ func TestConfLoader(t *testing.T) {
 				t.Errorf("conf dir not as expected: %s", cmp.Diff(want, got))
 			}
 		})
+	}
+}
+
+func TestConfLoaderDanglingSymlinks(t *testing.T) {
+	tempdir := t.TempDir()
+
+	if err := os.Mkdir(filepath.Join(tempdir, ConfDotD), 0770); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Mkdir(filepath.Join(tempdir, ConfDotDAvailable), 0770); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(tempdir, ConfDotD, ConfDSettings), []byte("extensions:\n  sumologic:\n    installation_token: abcdef\n"), 0660); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Symlink(filepath.Join(tempdir, ConfDotDAvailable, "foobar.yaml"), filepath.Join(tempdir, ConfDotD, "foobar.yaml")); err != nil {
+		t.Fatal(err)
+	}
+
+	conf, err := ReadConfigDir(os.DirFS(tempdir))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	exp := ConfDir{
+		ConfD: map[string][]byte{
+			ConfDSettings: []byte("extensions:\n  sumologic:\n    installation_token: abcdef\n"),
+		},
+		ConfDAvailable: map[string][]byte{},
+	}
+
+	if !cmp.Equal(conf, exp) {
+		t.Errorf("conf dir not as expected: %s", cmp.Diff(exp, conf))
 	}
 }

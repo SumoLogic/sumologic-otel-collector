@@ -35,12 +35,13 @@ func TestEnableEphemeralActionRemoteControlled(t *testing.T) {
 	ctx := &actionContext{
 		ConfigDir: fstest.MapFS{
 			SumologicRemoteDotYaml: &fstest.MapFile{
-				Data: []byte(`{"extensions":{"opamp":{"enabled":true}}}`),
+				Data: []byte("extensions:\n  opamp:\n    enabled: true\n"),
 			},
 		},
+		WriteSumologicRemote: newTestWriter([]byte("extensions:\n  opamp:\n    enabled: true\n  sumologic:\n    ephemeral: true\n")).Write,
 	}
-	if err := EnableEphemeralAction(ctx); err == nil {
-		t.Fatal("expected non-nil error")
+	if err := EnableEphemeralAction(ctx); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -48,12 +49,13 @@ func TestDisableEphemeralActionRemoteControlled(t *testing.T) {
 	ctx := &actionContext{
 		ConfigDir: fstest.MapFS{
 			SumologicRemoteDotYaml: &fstest.MapFile{
-				Data: []byte(`{"extensions":{"opamp":{"enabled":true}}}`),
+				Data: []byte("extensions:\n  opamp:\n    enabled: true\n"),
 			},
 		},
+		WriteSumologicRemote: newTestWriter([]byte("extensions:\n  opamp:\n    enabled: true\n  sumologic:\n    ephemeral: false\n")).Write,
 	}
-	if err := DisableEphemeralAction(ctx); err == nil {
-		t.Fatal("expected non-nil error")
+	if err := DisableEphemeralAction(ctx); err != nil {
+		t.Fatal(err)
 	}
 }
 

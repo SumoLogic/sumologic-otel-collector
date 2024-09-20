@@ -40,9 +40,13 @@ type ExecutionRequest struct {
 func NewExecution(ctx context.Context, request ExecutionRequest) *Execution {
 	ctx, cancel := context.WithCancel(ctx)
 	cmd := exec.CommandContext(ctx, request.Command, request.Arguments...)
+
 	if len(request.Env) > 0 {
 		cmd.Env = request.Env
 	}
+
+	cmd.Stdout = io.Discard
+	cmd.Stderr = io.Discard
 
 	setOptions(cmd)
 	return &Execution{
@@ -57,16 +61,36 @@ type Execution struct {
 	cmd     *exec.Cmd
 	ctx     context.Context
 	cancel  func()
+	stdout  *io.PipeReader
+	stderr  *io.PipeReader
+	stdoutW *io.PipeWriter
+	stderrW *io.PipeWriter
 	timeout time.Duration
 }
 
-// Stdout and Stderr return Readers for the underlying execution's output
-// streams. Run must be called subsequently or file descriptors may be leaked.
+// Stdout returns a reader that delivers the process' stdout. Once called, this
+// reader must be fully consumed, or execution will stall.
 func (c *Execution) Stdout() (io.Reader, error) {
-	return c.cmd.StdoutPipe()
+	if c.stdout == nil {
+		reader, writer := io.Pipe()
+		c.cmd.Stdout = writer
+		c.stdoutW = writer
+		c.stdout = reader
+	}
+
+	return c.stdout, nil
 }
+
+// Stderr returns a reader that delivers the process' stderr. Once called, this
+// reader must be fully consumed, or execution will stall.
 func (c *Execution) Stderr() (io.Reader, error) {
-	return c.cmd.StderrPipe()
+	if c.stderr == nil {
+		reader, writer := io.Pipe()
+		c.cmd.Stderr = writer
+		c.stderrW = writer
+		c.stderr = reader
+	}
+	return c.stderr, nil
 }
 
 // Run the command. May only be invoked once.
@@ -108,6 +132,14 @@ func (c *Execution) Run() (resp ExecutionResponse, err error) {
 	} else {
 		// Everything is A-OK.
 		resp.Status = OKExitStatus
+	}
+
+	if c.stderrW != nil {
+		_ = c.stderrW.Close()
+	}
+
+	if c.stdoutW != nil {
+		_ = c.stdoutW.Close()
 	}
 
 	return resp, nil

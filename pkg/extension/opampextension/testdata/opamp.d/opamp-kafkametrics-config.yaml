@@ -16,7 +16,7 @@ exporters:
     sumologic:
 service:
   pipelines:
-    metrics/windows/09c98ea4-6686-4ab9-b3cd-f04070906441:
+    metrics/kafkametrics/09c98ea4-6686-4ab9-b3cd-f04070906441:
       receivers:
         - kafkametrics
       exporters:

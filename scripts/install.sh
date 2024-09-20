@@ -447,7 +447,9 @@ function get_latest_version() {
 
     # get latest version directly from website if there is no versions from api
     if [[ -z "${versions}" ]]; then
-        curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 0 --retry-max-time 150 -s https://github.com/SumoLogic/sumologic-otel-collector/releases | grep -oE '/SumoLogic/sumologic-otel-collector/releases/tag/(.*)"' | head -n 1 | sed 's%/SumoLogic/sumologic-otel-collector/releases/tag/v\([^"]*\)".*%\1%g'
+        curl --retry 5 --connect-timeout 5 --max-time 30 --retry-delay 5 --retry-max-time 150 -s https://github.com/SumoLogic/sumologic-otel-collector/releases \
+        | grep -Eo '/SumoLogic/sumologic-otel-collector/releases/tag/v[0-9]+\.[0-9]+\.[0-9]+-sumo-[0-9]+[^-]' \
+        | head -n 1 | sed 's%/SumoLogic/sumologic-otel-collector/releases/tag/v\([^"]*\)".*%\1%g'
     else
         # sed 's/ /\n/g' converts spaces to new lines
         echo "${versions}" | sed 's/ /\n/g' | head -n 1
@@ -459,7 +461,7 @@ function get_latest_version() {
 # sort it from last to first
 # remove v from beginning of version
 function get_versions() {
-    # returns empty in case we exceeded github rate limit
+    # returns empty in case we exceeded github rate limit. This can happen if we are running this script too many times in a short period.
     if [[ "$(github_rate_limit)" == "0" ]]; then
         return
     fi

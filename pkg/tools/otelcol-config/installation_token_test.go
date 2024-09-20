@@ -10,11 +10,12 @@ import (
 
 func TestSetInstallationTokenAction(t *testing.T) {
 	tests := []struct {
-		Name     string
-		Flags    []string
-		Conf     fs.FS
-		ExpWrite []byte
-		ExpErr   bool
+		Name           string
+		Flags          []string
+		Conf           fs.FS
+		SystemdEnabled bool
+		ExpWrite       []byte
+		ExpErr         bool
 	}{
 		{
 			Name:     "no existing settings",
@@ -64,6 +65,13 @@ func TestSetInstallationTokenAction(t *testing.T) {
 			Conf:     fstest.MapFS{},
 			ExpWrite: []byte("extensions:\n  sumologic:\n    installation_token: abcdef\n"),
 		},
+		{
+			Name:           "systemd",
+			Flags:          []string{"--set-installation-token", "abcdef"},
+			Conf:           fstest.MapFS{},
+			ExpWrite:       []byte("SUMOLOGIC_INSTALLATION_TOKEN=abcdef\n"),
+			SystemdEnabled: true,
+		},
 	}
 
 	for _, test := range tests {
@@ -78,30 +86,40 @@ func TestSetInstallationTokenAction(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			var settingsWriter, overridesWriter, sumologicRemoteWriter func([]byte) (int, error)
+			var settingsWriter, overridesWriter, sumologicRemoteWriter, tokenEnvWriter func([]byte) (int, error)
 
-			if flagValues.Override {
+			tokenEnvWriter = errWriter
+			if test.SystemdEnabled {
+				tokenEnvWriter = writer
 				settingsWriter = errWriter
 				sumologicRemoteWriter = errWriter
-				overridesWriter = writer
-			} else if flagValues.EnableRemoteControl || remoteControlEnabled(t, test.Conf) {
-				settingsWriter = errWriter
 				overridesWriter = errWriter
-				sumologicRemoteWriter = writer
 			} else {
-				overridesWriter = errWriter
-				sumologicRemoteWriter = errWriter
-				settingsWriter = writer
+				if flagValues.Override {
+					settingsWriter = errWriter
+					sumologicRemoteWriter = errWriter
+					overridesWriter = writer
+				} else if flagValues.EnableRemoteControl || remoteControlEnabled(t, test.Conf) {
+					settingsWriter = errWriter
+					overridesWriter = errWriter
+					sumologicRemoteWriter = writer
+				} else {
+					overridesWriter = errWriter
+					sumologicRemoteWriter = errWriter
+					settingsWriter = writer
+				}
 			}
 
 			ctx := &actionContext{
-				ConfigDir:            test.Conf,
-				Flags:                flagValues,
-				Stdout:               io.Discard,
-				Stderr:               io.Discard,
-				WriteConfD:           settingsWriter,
-				WriteConfDOverrides:  overridesWriter,
-				WriteSumologicRemote: sumologicRemoteWriter,
+				ConfigDir:                 test.Conf,
+				Flags:                     flagValues,
+				Stdout:                    io.Discard,
+				Stderr:                    io.Discard,
+				WriteConfD:                settingsWriter,
+				WriteConfDOverrides:       overridesWriter,
+				WriteSumologicRemote:      sumologicRemoteWriter,
+				WriteInstallationTokenEnv: tokenEnvWriter,
+				SystemdEnabled:            test.SystemdEnabled,
 			}
 
 			err := SetInstallationTokenAction(ctx)
