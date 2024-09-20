@@ -492,7 +492,7 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 
 	nec := map[string]*protobufs.AgentConfigFile{}
 
-	for n, f := range config.Config.ConfigMap {
+	for n, _ := range config.Config.ConfigMap {
 		var k = koanf.New(".")
 
 		data := `
