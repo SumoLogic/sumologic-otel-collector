@@ -2,6 +2,7 @@ package opampextension
 
 import (
 	"go.opentelemetry.io/collector/exporter"
+	"go.opentelemetry.io/collector/exporter/nopexporter"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
 	"go.opentelemetry.io/collector/extension"
 	"go.opentelemetry.io/collector/extension/ballastextension"
@@ -84,6 +85,7 @@ func Components() (
 		otlpexporter.NewFactory(),
 		sumologicexporter.NewFactory(),
 		syslogexporter.NewFactory(),
+		nopexporter.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
