@@ -495,11 +495,22 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 	for n, f := range config.Config.ConfigMap {
 		var k = koanf.New(".")
 
-		err := k.Load(rawbytes.Provider(f.Body), yaml.Parser())
+		data := `
+extensions:
+  sumologic:
+    collector_fields:
+      gg: testing1234
+      sumo.disco.enabled: "true"
+      trst: "1323"
+`
+
+		// Load the YAML data into the Koanf instance
+		err := k.Load(rawbytes.Provider([]byte(data)), yaml.Parser())
+		//err := k.Load(rawbytes.Provider(f.Body), yaml.Parser())
 		if err != nil {
 			return false, fmt.Errorf("cannot parse config named %s: %v", n, err)
 		}
-
+		k.Set("receivers.nop", nil)
 		fb, err := k.Marshal(yaml.Parser())
 		o.logger.Info("Agent config yaml", zap.String("config", string(fb)))
 		
