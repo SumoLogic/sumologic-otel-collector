@@ -510,8 +510,8 @@ extensions:
 		if err != nil {
 			return false, fmt.Errorf("cannot parse config named %s: %v", n, err)
 		}
-		k.Set("receivers.nop", map[string]interface{}{})
-		k.Set("exporters.nop", map[string]interface{}{})
+		k.Set("receivers.nop", nil)
+		k.Set("exporters.nop", []string{"nop"})
 		k.Set("service.pipelines.logs/nop.receivers", []string{"nop"})
 		k.Set("service.pipelines.logs/nop.exporters", []string{"nop"})
 		fb, err := k.Marshal(yaml.Parser())
