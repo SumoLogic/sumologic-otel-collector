@@ -3,10 +3,12 @@
 extensions:
   ## Configuration for Sumo Logic Extension
   ## Manages registration, heartbeats and authentication to Sumo Logic
-  ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/sumologicextension
+  ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/extension/sumologicextension
   sumologic:
     installation_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
     collector_credentials_directory: /var/lib/otelcol-sumo/credentials
+    api_base_url: https://long-open-events.sumologic.net/
+    collector_name: chan-tim-testingCollector_new
 
   ## Configuration for Health Check Extension
   ## Health Check extension enables an HTTP url that can be probed to check the status of the OpenTelemetry Collector
@@ -40,19 +42,34 @@ receivers:
         endpoint: localhost:4317
       http:
         endpoint: localhost:4318
+  zipkin:
+    endpoint: localhost:9411        
+  redis:
+    endpoint: "localhost:6379"
+    collection_interval: 10s
+  mongodb:
+    hosts:
+      - endpoint: localhost:27017
+    collection_interval: 10s
+    tls:
+      insecure: true
+      insecure_skip_verify: true
 
 exporters:
   ## Configuration for Sumo Logic Exporter
   ## This exporter supports sending logs, metrics and traces data to Sumo Logic.
-  ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.103.0/exporter/sumologicexporter
+  ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/exporter/sumologicexporter
   sumologic:
     sending_queue:
       enabled: true
       storage: file_storage
     retry_on_failure:
-      max_elapsed_time: 0
+        max_elapsed_time: 0
+  logging:
+    verbosity: detailed
 
 processors:
+
   ## Configuration for Memory Limiter Processor
   ## The memory_limiter processor is used to prevent out of memory situations on the collector.
   ## ref: https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor
@@ -89,7 +106,21 @@ processors:
   resourcedetection/system:
     detectors: ["system", "ec2", "gcp", "azure"]
     system:
-      hostname_sources: ["dns", "os"]
+      hostname_sources: ["dns","os"]
+
+  cascading_filter:
+    collector_instances: 1
+    decision_wait: 10s
+    num_traces: 100
+    expected_new_traces_per_sec: 10
+    spans_per_second: 1000
+    prior_spans_rate: 600
+    history_size: 100
+    probabilistic_filtering_ratio: 0.1
+    trace_reject_filters:
+      - name: remove-all-root-span-error
+        status_code: "Error"
+
 
 service:
   extensions:
@@ -103,12 +134,15 @@ service:
     metrics/default:
       receivers:
         - otlp
+        - redis
+        - mongodb
       processors:
         - memory_limiter
         - batch
         - sumologic
       exporters:
         - sumologic
+      #  - logging
     logs/default:
       receivers:
         - otlp
@@ -118,12 +152,16 @@ service:
         - sumologic
       exporters:
         - sumologic
+        - logging
     traces/default:
       receivers:
         - otlp
+        - zipkin
       processors:
-        - memory_limiter
-        - batch
-        - sumologic
+      #   #- memory_limiter
+      #   #- batch
+        - cascading_filter
+      #   - sumologic
       exporters:
         - sumologic
+        - logging
