@@ -205,7 +205,9 @@ extensions:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/sigv4authextension v0.106.1
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/dbstorage v0.106.1
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage v0.106.1
+  # - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.106.1
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.106.1
+    path: ./../../opentelemetry-collector-contrib/extension/sumologicextension
 
 connectors:
   - gomod: go.opentelemetry.io/collector/connector/forwardconnector v0.106.1
