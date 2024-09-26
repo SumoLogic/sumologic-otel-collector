@@ -50,7 +50,3 @@ func setConfigOwner(values *flagValues, docPath string) error {
 
 	return nil
 }
-
-func setSumologicRemoteOwner(values *flagValues) error {
-	return setConfigOwner(values, SumologicRemoteDotYaml)
-}
