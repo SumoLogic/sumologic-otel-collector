@@ -91,16 +91,22 @@ func getSumologicRemoteWriter(values *flagValues) func([]byte) (int, error) {
 	return func(doc []byte) (int, error) {
 		if doc == nil {
 			// Special case: when doc is nil, we delete the file. This tells
-			// the packaging that it should not use --remote-config for
+			// the service managers that it should not use --remote-config for
 			// otelcol-sumo.
 			return 0, os.Remove(docPath)
 		}
 
+		// os.WriteFile sets permissions before umask so we must call os.Chmod
+		// after the file is created
 		if err := os.WriteFile(docPath, doc, 0660); err != nil {
 			return 0, fmt.Errorf("error writing sumologic-remote.yaml: %s", err)
 		}
 
-		if err := setSumologicRemoteOwner(values); err != nil {
+		if err := os.Chmod(docPath, 0660); err != nil {
+			return 0, fmt.Errorf("error setting sumologic-remote.yaml permissions: %s", err)
+		}
+
+		if err := setConfigOwner(values, docPath); err != nil {
 			return len(doc), fmt.Errorf("error setting sumologic-remote.yaml owner: %s", err)
 		}
 
@@ -117,12 +123,18 @@ func getLinker(values *flagValues, filename string) func() error {
 	availPath := filepath.Join(values.ConfigDir, ConfDotDAvailable, filename)
 	configPath := filepath.Join(values.ConfigDir, ConfDotD, filename)
 	return func() error {
-		if err := os.Symlink(availPath, configPath); isLinkError(err) {
-			// if the link already exists, hostmetrics are already enabled
-			return nil
-		} else {
+		if err := os.Symlink(availPath, configPath); err != nil {
+			if isLinkError(err) {
+				// if the link already exists, feature is already enabled
+				return nil
+			}
 			return err
 		}
+
+		if err := setConfigOwner(values, configPath); err != nil {
+			return fmt.Errorf("error setting %s owner: %s", configPath, err)
+		}
+		return nil
 	}
 }
 

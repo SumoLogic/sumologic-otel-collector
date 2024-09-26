@@ -9,12 +9,11 @@ import (
 	"syscall"
 )
 
-// use chown to set the owner of sumologic-remote.yaml to otelcol-sumo
-// or whatever the user should be, based on the ownership of sumologic.yaml
-// or its parent directory
-func setSumologicRemoteOwner(values *flagValues) error {
+// use chown to set the owner of a config file to otelcol-sumo or whatever the
+// user should be, based on the ownership of sumologic.yaml or its parent
+// directory
+func setConfigOwner(values *flagValues, docPath string) error {
 	baseConfigPath := filepath.Join(values.ConfigDir, SumologicDotYaml)
-	docPath := filepath.Join(values.ConfigDir, SumologicRemoteDotYaml)
 
 	// check who owns the base configuration file
 	stat, err := os.Stat(baseConfigPath)
@@ -35,12 +34,13 @@ func setSumologicRemoteOwner(values *flagValues) error {
 	}
 
 	if int(sys.Uid) == syscall.Getuid() {
-		// we're already that user
+		// we're already that user so the file should already have the correct
+		// owner
 		return nil
 	}
 
 	// set the owner to be consistent with the other configuration
-	if err := os.Chown(docPath, int(sys.Uid), int(sys.Gid)); err != nil {
+	if err := os.Lchown(docPath, int(sys.Uid), int(sys.Gid)); err != nil {
 		if err.(*os.PathError).Err == syscall.EPERM {
 			// we don't have permission to chown, skip it
 			return nil
@@ -49,4 +49,8 @@ func setSumologicRemoteOwner(values *flagValues) error {
 	}
 
 	return nil
+}
+
+func setSumologicRemoteOwner(values *flagValues) error {
+	return setConfigOwner(values, SumologicRemoteDotYaml)
 }
