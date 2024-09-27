@@ -80,8 +80,24 @@ func getSortedActions(fs *pflag.FlagSet) []string {
 }
 
 func getConfDWriter(values *flagValues, fileName string) func(doc []byte) (int, error) {
+	docPath := filepath.Join(values.ConfigDir, ConfDotD, fileName)
+
 	return func(doc []byte) (int, error) {
-		return len(doc), os.WriteFile(filepath.Join(values.ConfigDir, ConfDotD, fileName), doc, 0660)
+		// os.WriteFile sets permissions before umask so we must call os.Chmod
+		// after the file is created
+		if err := os.WriteFile(docPath, doc, 0660); err != nil {
+			return 0, fmt.Errorf("error writing %s: %s", fileName, err)
+		}
+
+		if err := os.Chmod(docPath, 0660); err != nil {
+			return 0, fmt.Errorf("error setting %s permissions: %s", fileName, err)
+		}
+
+		if err := setConfigOwner(values, docPath); err != nil {
+			return len(doc), fmt.Errorf("error setting %s owner: %s", fileName, err)
+		}
+
+		return len(doc), nil
 	}
 }
 
