@@ -8,11 +8,11 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/influxdata/telegraf v1.28.3
 	github.com/stretchr/testify v1.9.0
-	go.opentelemetry.io/collector/component v0.106.1
-	go.opentelemetry.io/collector/consumer v0.106.1
-	go.opentelemetry.io/collector/consumer/consumertest v0.106.1
-	go.opentelemetry.io/collector/pdata v1.12.0
-	go.opentelemetry.io/collector/receiver v0.106.1
+	go.opentelemetry.io/collector/component v0.108.1
+	go.opentelemetry.io/collector/consumer v0.108.1
+	go.opentelemetry.io/collector/consumer/consumertest v0.108.1
+	go.opentelemetry.io/collector/pdata v1.14.1
+	go.opentelemetry.io/collector/receiver v0.108.0
 	go.uber.org/zap v1.27.0
 )
 
@@ -102,6 +102,7 @@ require (
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
+	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
 	github.com/influxdata/line-protocol/v2 v2.2.1 // indirect
@@ -158,7 +159,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/prometheus-community/pro-bing v0.4.0 // indirect
-	github.com/prometheus/client_golang v1.19.1 // indirect
+	github.com/prometheus/client_golang v1.20.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
@@ -191,12 +192,13 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.mongodb.org/mongo-driver v1.14.0 // indirect
-	go.opentelemetry.io/collector/config/configtelemetry v0.106.1 // indirect
-	go.opentelemetry.io/collector/consumer/consumerprofiles v0.106.1 // indirect
-	go.opentelemetry.io/collector/pdata/pprofile v0.106.1 // indirect
+	go.opentelemetry.io/collector/config/configtelemetry v0.108.1 // indirect
+	go.opentelemetry.io/collector/consumer/consumerprofiles v0.108.1 // indirect
+	go.opentelemetry.io/collector/pdata/pprofile v0.108.1 // indirect
 	go.opentelemetry.io/collector/semconv v0.101.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0 // indirect
 	go.opentelemetry.io/otel v1.28.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.28.0 // indirect
 	go.opentelemetry.io/otel/exporters/prometheus v0.50.0 // indirect
 	go.opentelemetry.io/otel/metric v1.28.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.28.0 // indirect

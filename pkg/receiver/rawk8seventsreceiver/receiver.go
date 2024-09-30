@@ -103,22 +103,30 @@ func newRawK8sEventsReceiver(
 	restClient := client.CoreV1().RESTClient()
 	for _, namespace := range namespaces {
 		namespaceListWatch := listerWatcherFactory(restClient, "events", namespace, fields.Everything())
-		_, namespaceController = cache.NewInformer(namespaceListWatch, &corev1.Event{}, 0, cache.ResourceEventHandlerFuncs{
-			AddFunc: func(obj interface{}) {
-				event := obj.(*corev1.Event)
-				eventCh <- &eventChange{
-					changeType: eventChangeTypeAdded,
-					event:      event,
-				}
+
+		informerOptions := cache.InformerOptions{
+			ListerWatcher: namespaceListWatch,
+			ObjectType:    &corev1.Event{},
+			Handler: cache.ResourceEventHandlerFuncs{
+				AddFunc: func(obj interface{}) {
+					event := obj.(*corev1.Event)
+					eventCh <- &eventChange{
+						changeType: eventChangeTypeAdded,
+						event:      event,
+					}
+				},
+				UpdateFunc: func(_, obj interface{}) {
+					event := obj.(*corev1.Event)
+					eventCh <- &eventChange{
+						changeType: eventChangeTypeModified,
+						event:      event,
+					}
+				},
 			},
-			UpdateFunc: func(_, obj interface{}) {
-				event := obj.(*corev1.Event)
-				eventCh <- &eventChange{
-					changeType: eventChangeTypeModified,
-					event:      event,
-				}
-			},
-		})
+			ResyncPeriod: 0, // Same as before, no resync period
+		}
+
+		_, namespaceController = cache.NewInformerWithOptions(informerOptions)
 		eventControllers = append(eventControllers, namespaceController)
 	}
 	receiver := &rawK8sEventsReceiver{
