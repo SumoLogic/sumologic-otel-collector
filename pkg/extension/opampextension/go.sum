@@ -757,6 +757,8 @@ go.opentelemetry.io/collector/consumer/consumertest v0.106.1 h1:hDdFeVjCLIJ6iLfb
 go.opentelemetry.io/collector/consumer/consumertest v0.106.1/go.mod h1:WRTYnQ8bYHQrEN6eJZ80oC4pNI7VeDRdsTZI6xs9o5M=
 go.opentelemetry.io/collector/exporter v0.106.1 h1:PIqLqWacxSFcCstiF/6kxI1GLiP+9pjG7XFujxZG1z0=
 go.opentelemetry.io/collector/exporter v0.106.1/go.mod h1:aGIoEwT5UjCHzq+oFYMuc5Mt15AfqvgDeLdjWTYSqNo=
+go.opentelemetry.io/collector/exporter/nopexporter v0.106.0 h1:shTpN6E/yaM5clsMI+65KPfHhzwyUCttdFgi2tZD3AM=
+go.opentelemetry.io/collector/exporter/nopexporter v0.106.0/go.mod h1:QpGkZoh1G10So5BnFKf/bY7rmHVRK5vFqn/tcGirxIw=
 go.opentelemetry.io/collector/exporter/otlpexporter v0.106.1 h1:XZmroqROemurXiRWAg4WfO0KkoooIcvzTi2aUcW5A8Q=
 go.opentelemetry.io/collector/exporter/otlpexporter v0.106.1/go.mod h1:e01tHm+agklfj9C3jnLZd6ar+FvLCOw9VT2u87ao9IQ=
 go.opentelemetry.io/collector/extension v0.106.1 h1:HNV2eOxaSDy5gL5KYoPoTLlp6fdeWmuw4paxhi10VUo=
@@ -791,6 +793,8 @@ go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.106.1 h1:UnCZR
 go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.106.1/go.mod h1:UgxhLwtAvVjrACkS6jcp3oSHyQWu/LAjVSTmW1/NjKs=
 go.opentelemetry.io/collector/receiver v0.106.1 h1:9kDLDJmInnz+AzAV9oV/UGMoc1+oI1pwMMs7+uMiJq4=
 go.opentelemetry.io/collector/receiver v0.106.1/go.mod h1:3j9asWz7mqsgE77rPaNhlNQhRwgFhRynf0UEPs/4rkM=
+go.opentelemetry.io/collector/receiver/nopreceiver v0.106.0 h1:OSNzzUUeIBcVzU8bQYyiZHpw/OFmTG26ZZW32LbMLK8=
+go.opentelemetry.io/collector/receiver/nopreceiver v0.106.0/go.mod h1:o+b6eHGdhL9sCvSSIBld85Gt+nuzypQBk6HEi0zx/1g=
 go.opentelemetry.io/collector/receiver/otlpreceiver v0.106.1 h1:Z4wSuYpTpnrgUHq6XnG8eHNCXzSsF+yDODzZdVV2GmU=
 go.opentelemetry.io/collector/receiver/otlpreceiver v0.106.1/go.mod h1:IE8RQoGF84xPW0UzRkyq6eT8mVbSu5vuXGRrKjK7iaM=
 go.opentelemetry.io/collector/semconv v0.106.1 h1:x0OSXrQCFinqZNUPTKrHU0gnbwngOVOPyhedQCDyDoQ=

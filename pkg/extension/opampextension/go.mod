@@ -37,6 +37,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver v0.106.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowsperfcountersreceiver v0.106.1
 	github.com/stretchr/testify v1.9.0
+
 	go.opentelemetry.io/collector/component v0.106.1
 	go.opentelemetry.io/collector/config/configauth v0.106.1
 	go.opentelemetry.io/collector/config/confighttp v0.106.1
@@ -45,6 +46,7 @@ require (
 	go.opentelemetry.io/collector/confmap/provider/fileprovider v0.106.1
 	go.opentelemetry.io/collector/confmap/provider/yamlprovider v0.106.1
 	go.opentelemetry.io/collector/exporter v0.106.1
+	go.opentelemetry.io/collector/exporter/nopexporter v0.106.0
 	go.opentelemetry.io/collector/exporter/otlpexporter v0.106.1
 	go.opentelemetry.io/collector/extension v0.106.1
 	go.opentelemetry.io/collector/extension/ballastextension v0.106.1
@@ -54,6 +56,7 @@ require (
 	go.opentelemetry.io/collector/processor/batchprocessor v0.106.1
 	go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.106.1
 	go.opentelemetry.io/collector/receiver v0.106.1
+  	go.opentelemetry.io/collector/receiver/nopreceiver v0.106.0
 	go.opentelemetry.io/collector/receiver/otlpreceiver v0.106.1
 	go.opentelemetry.io/collector/semconv v0.106.1
 	go.uber.org/multierr v1.11.0
