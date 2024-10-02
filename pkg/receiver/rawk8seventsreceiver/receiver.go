@@ -103,7 +103,7 @@ func newRawK8sEventsReceiver(
 	restClient := client.CoreV1().RESTClient()
 	for _, namespace := range namespaces {
 		namespaceListWatch := listerWatcherFactory(restClient, "events", namespace, fields.Everything())
-		_, namespaceController = cache.NewInformer(namespaceListWatch, &corev1.Event{}, 0, cache.ResourceEventHandlerFuncs{
+		_, namespaceController = cache.NewInformer(namespaceListWatch, &corev1.Event{}, 0, cache.ResourceEventHandlerFuncs{ // nolint:staticcheck
 			AddFunc: func(obj interface{}) {
 				event := obj.(*corev1.Event)
 				eventCh <- &eventChange{
