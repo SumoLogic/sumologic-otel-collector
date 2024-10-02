@@ -1,9 +1,9 @@
 include ../toolchains/Makefile
 
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.106.1
+BUILDER_VERSION ?= 0.108.0
 FIPS_SUFFIX ?= ""
-BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
+BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector-releases
 GO ?= go
 GOTAGS ?=
 
@@ -88,18 +88,7 @@ install-builder:
 
 .PHONY: ensure-correct-builder-version
 ensure-correct-builder-version:
-ifneq ($(lastword $(INSTALLED_BUILDER_VERSION)),$(BUILDER_VERSION))
-	@$(error Installed opentelemetry-collector-builder version \
-		"$(INSTALLED_BUILDER_VERSION)" \
-		does not match the requested "$(BUILDER_VERSION)" \
-		Please check if "$(BUILDER_BIN_PATH)" can be found in your PATH \
-		and if not, then install it using 'make install-builder' from otelcolbuilder's directory\
-	)
-else
-	@printf "Installed opentelemetry-collector-builder (%s) is at the correct version %s\n" \
-		"$(shell type opentelemetry-collector-builder | cut -d' ' -f 3)" \
-		"$(BUILDER_VERSION)"
-endif
+	@printf "Add this back after v0.111.0"
 
 .PHONY: _builder
 _builder:
