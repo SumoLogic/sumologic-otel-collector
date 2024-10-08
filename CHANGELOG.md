@@ -22,7 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1678]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1678
 [#1681]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1681
 
-[v0.108.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.108.0-sumo-0## [v0.106.1-sumo-1]
+[v0.108.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.108.0-sumo-0
+
+## [v0.106.1-sumo-1]
 
 ### Released 2024-09-11
 
@@ -32,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [#1674]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1674
 
-[v0.106.1-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.106.1-sumo-1## [v0.106.1-sumo-0]
+[v0.106.1-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.106.1-sumo-1
 
 ## [v0.106.1-sumo-0]
 
@@ -56,7 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1662]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1662
 [#1660]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1660
 
-[v0.106.1-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.106.1-sumo-0## [v0.104.0-sumo-1]
+[v0.106.1-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.106.1-sumo-0
+
+## [v0.104.0-sumo-1]
 
 ### Released 2024-08-12
 
@@ -75,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1652]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1652
 [#1653]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1653
 [#1654]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1654
+
 [v0.104.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.104.0-sumo-1
 
 ## [v0.104.0-sumo-0]
