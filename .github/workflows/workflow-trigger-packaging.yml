@@ -65,3 +65,9 @@ jobs:
       # packaging workflow has completed.
       - name: Packaging Workflow URL
         run: echo ::notice title=Packaging Workflow URL::https://github.com/SumoLogic/sumologic-otel-collector-packaging/actions/workflows/build_packages.yml
+      - name: Workflow ID
+        run: echo ::notice title=Workflow ID::{{ inputs.workflow_id }}
+      - name: OTC Version
+        run: echo ::notice title=OTC Version::{{ steps.version-core.outputs.version }}
+      - name: OTC Sumo Version
+        run: echo ::notice title=OTC Sumo Version::{{steps.sumo-version.outputs.version }}
