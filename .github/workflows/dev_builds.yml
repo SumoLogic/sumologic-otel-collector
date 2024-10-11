@@ -91,7 +91,7 @@ jobs:
             runs-on: ubuntu-20.04
             boringcrypto: true
           - arch_os: darwin_amd64
-            runs-on: macos-latest
+            runs-on: macos-15
           - arch_os: windows_amd64
             runs-on: windows-2022
     with:
@@ -112,7 +112,7 @@ jobs:
             runs-on: ubuntu-20.04
             boringcrypto: true
           - arch_os: darwin_amd64
-            runs-on: macos-latest
+            runs-on: macos-15
     with:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
@@ -138,9 +138,9 @@ jobs:
             runs-on: ubuntu-20.04
             fips: true
           - arch_os: darwin_amd64
-            runs-on: macos-latest
+            runs-on: macos-15
           - arch_os: darwin_arm64
-            runs-on: macos-latest
+            runs-on: macos-15
           - arch_os: windows_amd64
             runs-on: windows-2022
           - arch_os: windows_amd64
@@ -171,9 +171,9 @@ jobs:
       matrix:
         include:
           - arch_os: darwin_amd64
-            runs-on: macos-latest
+            runs-on: macos-15
           - arch_os: darwin_arm64
-            runs-on: macos-latest
+            runs-on: macos-15
           - arch_os: linux_amd64
             runs-on: ubuntu-20.04
           - arch_os: linux_amd64
