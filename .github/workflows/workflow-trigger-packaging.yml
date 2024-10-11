@@ -65,3 +65,5 @@ jobs:
       # packaging workflow has completed.
       - name: Packaging Workflow URL
         run: echo ::notice title=Packaging Workflow URL::https://github.com/SumoLogic/sumologic-otel-collector-packaging/actions/workflows/build_packages.yml
+      - name: Workflow ID
+        run: echo ::notice title=Workflow ID::{{ inputs.workflow_id }}
