@@ -47,23 +47,25 @@ func getJobMetadata(ctx context.Context, client *github.Client, ref string) (job
 		return meta, err
 	}
 
+	var runID int64
 	for _, checkRun := range list.CheckRuns {
 		if !strings.HasPrefix(*checkRun.Name, "Trigger Packaging") {
 			continue
 		}
-		annotations, _, err := client.Checks.ListCheckRunAnnotations(ctx, otcOrg, otcRepo, *checkRun.ID, nil)
-		if err != nil {
-			return meta, err
-		}
-		for _, anno := range annotations {
-			switch *anno.Title {
-			case otcVersionAnnotation:
-				meta.OTCVersion = *anno.Message
-			case otcSumoVersionAnnotation:
-				meta.OTCSumoVersion = *anno.Message
-			case workflowIDAnnotation:
-				meta.WorkflowID = *anno.Message
-			}
+		runID = *checkRun.ID
+	}
+	annotations, _, err := client.Checks.ListCheckRunAnnotations(ctx, otcOrg, otcRepo, runID, nil)
+	if err != nil {
+		return meta, err
+	}
+	for _, anno := range annotations {
+		switch *anno.Title {
+		case otcVersionAnnotation:
+			meta.OTCVersion = *anno.Message
+		case otcSumoVersionAnnotation:
+			meta.OTCSumoVersion = *anno.Message
+		case workflowIDAnnotation:
+			meta.WorkflowID = *anno.Message
 		}
 	}
 
