@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
 	"gopkg.in/yaml.v2"
@@ -100,6 +101,9 @@ func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.W
 	if err != nil {
 		return nil, err
 	}
+	// Order of conf parameters is important, see method comments
+	providerutil.PrepareForReplaceBehavior(addlConf, retConf)
+
 	// merge the file config in
 	if err := conf.Merge(addlConf); err != nil {
 		return nil, err
