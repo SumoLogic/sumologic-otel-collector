@@ -3,6 +3,6 @@
 package main
 
 // this is only a stub for Windows build support
-func setSumologicRemoteOwner(*flagValues) error {
+func setConfigOwner(*flagValues, string) error {
 	return nil
 }
