@@ -82,9 +82,9 @@ golint:
 gomod-download-all:
 	@$(MAKE) for-all CMD="make mod-download-all"
 
-.PHONY: install-golangci-lint
-install-golangci-lint:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+.PHONY: install-staticcheck
+install-staticcheck:
+	go install honnef.co/go/tools/cmd/staticcheck@latest
 
 .PHONY: print-all-modules
 print-all-modules:

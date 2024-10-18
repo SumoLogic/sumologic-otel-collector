@@ -31,7 +31,7 @@ type ADConfig struct {
 var (
 	errInvalidDN           = errors.New("base_dn is required, it must be a valid distinguished name (CN=Guest,OU=Users,DC=example,DC=com)")
 	errInvalidPollInterval = errors.New("poll_interval is incorrect, invalid duration")
-	errSupportedOS         = errors.New(typeStr + " is only supported on Windows.")
+	errSupportedOS         = errors.New(typeStr + " is only supported on Windows")
 )
 
 func isValidDuration(duration time.Duration) bool {

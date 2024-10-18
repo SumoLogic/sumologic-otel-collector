@@ -71,6 +71,6 @@ make build-container-local
 
 Here is the list of useful targets for [make](../Makefile):
 
-- `install-golangci-lint` - to install golint
+- `install-staticcheck` - to install staticcheck
 - `gotest` - to run unittests
 - `golint` - to run go code linter
