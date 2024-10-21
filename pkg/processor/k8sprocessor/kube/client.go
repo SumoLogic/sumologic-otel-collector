@@ -122,7 +122,7 @@ func New(
 		fieldSelector = addNodeSelector(fieldSelector, filters.Node)
 	}
 
-	c.informer = newInformer(c.kc, c.Filters.Namespace, labelSelector, fieldSelector)
+	c.informer = newInformer(logger, c.kc, c.Filters.Namespace, labelSelector, fieldSelector)
 	return c, err
 }
 

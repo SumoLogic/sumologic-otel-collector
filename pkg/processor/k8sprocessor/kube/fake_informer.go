@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
@@ -33,6 +34,7 @@ type FakeInformer struct {
 }
 
 func NewFakeInformer(
+	logger *zap.Logger,
 	_ kubernetes.Interface,
 	namespace string,
 	labelSelector labels.Selector,
