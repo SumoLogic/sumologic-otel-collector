@@ -1,6 +1,6 @@
 # Upgrading
 
-- [Upgrading to v0.109.0-sumo-0](#upgrading-to-v01090-sumo-0)
+- [Upgrading to v0.108.0-sumo-0](#upgrading-to-v01080-sumo-0)
   - [`sumologic` configuration: modified the `configuration files` merge behaviour](#sumologic-configuration-modified-the-configuration-files-merge-behaviour)
 - [Upgrading to v0.104.0-sumo-0](#upgrading-to-v01040-sumo-0)
   - [`sumologic` exporter: remove `compress_encoding`](#sumologic-exporter-remove-compress_encoding)
@@ -57,7 +57,7 @@
     - [Removing unnecessary metadata using the resourceprocessor](#removing-unnecessary-metadata-using-the-resourceprocessor)
     - [Moving record-level attributes used for metadata to the resource level](#moving-record-level-attributes-used-for-metadata-to-the-resource-level)
 
-## Upgrading to v0.109.0-sumo-0
+## Upgrading to v0.108.0-sumo-0
 
 ### `sumologic` configuration: modified the `configuration files` merge behaviour
 
@@ -67,7 +67,7 @@ For example, if two configuration files(say `conf1.yaml` and `conf2.yaml`) defin
 
 In previous flow, the values of `collector_fields` from `conf2.yaml` will be added to `conf1.yaml` and the effective configuration will have vaules from both the configurations.
 
-Starting from `v0.103.0-sumo-0`, the values of `collector_fields` tag from `conf1.yaml` will be overwritten by values from `conf2.yaml` and the effective configuration will have `collector_fields` value of `conf2.yaml` only.
+Starting from `v0.108.0-sumo-0`, the values of `collector_fields` tag from `conf1.yaml` will be overwritten by values from `conf2.yaml` and the effective configuration will have `collector_fields` value of `conf2.yaml` only.
 
 For example:
 
