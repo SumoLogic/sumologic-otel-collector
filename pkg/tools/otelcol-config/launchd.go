@@ -32,8 +32,6 @@ type launchdRoot struct {
 // /Library/LaunchDaemons/com.sumologic.otelcol-sumo.plist. It produces a
 // launchdConfig that contains the data read from the launchd config.
 func ReadLaunchdConfig(root fs.FS) (launchdConfig, error) {
-	const errMsg = ""
-
 	conf := launchdConfig{}
 
 	bytes, err := fs.ReadFile(root, launchdConfigPlist)
