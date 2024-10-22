@@ -39,6 +39,7 @@ func NewFakeInformer(
 	namespace string,
 	labelSelector labels.Selector,
 	fieldSelector fields.Selector,
+	limit int,
 ) cache.SharedInformer {
 	return &FakeInformer{
 		FakeController: &FakeController{},

@@ -52,6 +52,7 @@ func NewFactory() processor.Factory {
 func createDefaultConfig() component.Config {
 	return &Config{
 		APIConfig: k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
+		Limit:     DefaultLimit,
 		Extract: ExtractConfig{
 			Delimiter: DefaultDelimiter,
 		},
@@ -209,6 +210,8 @@ func createProcessorOpts(cfg component.Config) []Option {
 	opts = append(opts, WithExtractPodAssociations(oCfg.Association...))
 
 	opts = append(opts, WithDelimiter(oCfg.Extract.Delimiter))
+
+	opts = append(opts, WithLimit(oCfg.Limit))
 
 	opts = append(opts, WithExcludes(oCfg.Exclude))
 

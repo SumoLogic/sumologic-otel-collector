@@ -36,7 +36,7 @@ func Test_newSharedInformer(t *testing.T) {
 	require.NoError(t, err)
 	client, err := newFakeAPIClientset(k8sconfig.APIConfig{})
 	require.NoError(t, err)
-	informer := newSharedInformer(logger, client, "testns", labelSelector, fieldSelector)
+	informer := newSharedInformer(logger, client, "testns", labelSelector, fieldSelector, 10)
 	assert.NotNil(t, informer)
 }
 
@@ -62,7 +62,7 @@ func Test_informerListFuncWithSelectors(t *testing.T) {
 	assert.NoError(t, err)
 	logger, err := zap.NewDevelopment()
 	assert.NoError(t, err)
-	listFunc := informerListFuncWithSelectors(logger, c, "test-ns", ls, fs)
+	listFunc := informerListFuncWithSelectors(logger, c, "test-ns", ls, fs, 10)
 	opts := metav1.ListOptions{}
 	obj, err := listFunc(opts)
 	assert.NoError(t, err)
@@ -102,7 +102,7 @@ func Test_fakeInformer(t *testing.T) {
 	assert.NoError(t, err)
 	logger, err := zap.NewDevelopment()
 	assert.NoError(t, err)
-	i := NewFakeInformer(logger, c, "ns", nil, nil)
+	i := NewFakeInformer(logger, c, "ns", nil, nil, 10)
 	_, err = i.AddEventHandlerWithResyncPeriod(cache.ResourceEventHandlerFuncs{}, time.Second)
 	assert.NoError(t, err)
 	i.HasSynced()

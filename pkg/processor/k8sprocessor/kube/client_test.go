@@ -120,6 +120,7 @@ func TestDefaultClientset(t *testing.T) {
 		nil,
 		nil,
 		"",
+		10,
 		30*time.Second,
 		DefaultPodDeleteGracePeriod,
 	)
@@ -138,6 +139,7 @@ func TestDefaultClientset(t *testing.T) {
 		nil,
 		nil,
 		"",
+		10,
 		30*time.Second,
 		DefaultPodDeleteGracePeriod,
 	)
@@ -157,6 +159,7 @@ func TestBadFilters(t *testing.T) {
 		NewFakeInformer,
 		newFakeOwnerProvider,
 		"",
+		10,
 		30*time.Second,
 		DefaultPodDeleteGracePeriod,
 	)
@@ -205,6 +208,7 @@ func TestConstructorErrors(t *testing.T) {
 			NewFakeInformer,
 			newFakeOwnerProvider,
 			"",
+			10,
 			30*time.Second,
 			DefaultPodDeleteGracePeriod,
 		)
@@ -1176,6 +1180,7 @@ func Test_PodsGetAddedAndDeletedFromCache(t *testing.T) {
 		newSharedInformer,
 		newOwnerProvider,
 		"_",
+		10,
 		10*time.Millisecond,
 		10*time.Millisecond,
 	)
@@ -1293,6 +1298,7 @@ func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters
 		NewFakeInformer,
 		newFakeOwnerProvider,
 		"_",
+		10,
 		30*time.Second,
 		DefaultPodDeleteGracePeriod,
 	)
