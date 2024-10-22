@@ -12,6 +12,7 @@ import (
 // for carrying values across API boundaries. It is for abstracting I/O.
 type actionContext struct {
 	ConfigDir                 fs.FS
+	LaunchdDir                fs.FS
 	Flags                     *flagValues
 	Stdout                    io.Writer
 	Stderr                    io.Writer
@@ -24,4 +25,6 @@ type actionContext struct {
 	UnlinkEphemeral           func() error
 	SystemdEnabled            bool
 	WriteInstallationTokenEnv func([]byte) (int, error)
+	LaunchdEnabled            bool
+	WriteLaunchdConfig        func([]byte) (int, error)
 }

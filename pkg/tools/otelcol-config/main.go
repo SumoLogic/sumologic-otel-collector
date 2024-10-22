@@ -195,7 +195,12 @@ func getSystemdEnabled() bool {
 	return strings.HasPrefix(string(b), "systemd")
 }
 
-func getInstallationTokenWriter(values *flagValues) func([]byte) (int, error) {
+func getLaunchdEnabled() bool {
+	// this may need to become more nuanced at some point
+	return runtime.GOOS == "darwin"
+}
+
+func getInstallationTokenEnvWriter(values *flagValues) func([]byte) (int, error) {
 	return func(token []byte) (int, error) {
 		tokenDir := filepath.Join(values.ConfigDir, "env")
 		if err := os.MkdirAll(tokenDir, 0770); err != nil {
@@ -203,6 +208,13 @@ func getInstallationTokenWriter(values *flagValues) func([]byte) (int, error) {
 		}
 		tokenPath := filepath.Join(tokenDir, "token.env")
 		return len(token), os.WriteFile(tokenPath, token, 0660)
+	}
+}
+
+func getLaunchdConfigWriter(values *flagValues) func([]byte) (int, error) {
+	return func(config []byte) (int, error) {
+		configPath := filepath.Join(values.LaunchdDir, launchdConfigPlist)
+		return len(config), os.WriteFile(configPath, config, 0660)
 	}
 }
 
@@ -233,6 +245,7 @@ func main() {
 
 	ctx := &actionContext{
 		ConfigDir:                 os.DirFS(flagValues.ConfigDir),
+		LaunchdDir:                os.DirFS(flagValues.LaunchdDir),
 		Flags:                     flagValues,
 		Stdout:                    os.Stdout,
 		Stderr:                    os.Stderr,
@@ -244,7 +257,9 @@ func main() {
 		LinkEphemeral:             getEphemeralLinker(flagValues),
 		UnlinkEphemeral:           getEphemeralUnlinker(flagValues),
 		SystemdEnabled:            getSystemdEnabled(),
-		WriteInstallationTokenEnv: getInstallationTokenWriter(flagValues),
+		WriteInstallationTokenEnv: getInstallationTokenEnvWriter(flagValues),
+		LaunchdEnabled:            getLaunchdEnabled(),
+		WriteLaunchdConfig:        getLaunchdConfigWriter(flagValues),
 	}
 
 	if err := visitFlags(fs, ctx); err != nil {
