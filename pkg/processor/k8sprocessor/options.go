@@ -381,6 +381,14 @@ func WithDelimiter(delimiter string) Option {
 	}
 }
 
+// WithLimit sets the limit to use by kubernetesprocessor
+func WithLimit(limit int) Option {
+	return func(p *kubernetesprocessor) error {
+		p.limit = limit
+		return nil
+	}
+}
+
 // WithExcludes allows specifying pods to exclude
 func WithExcludes(excludeConfig ExcludeConfig) Option {
 	return func(p *kubernetesprocessor) error {
