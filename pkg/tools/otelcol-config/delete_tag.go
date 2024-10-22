@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 
@@ -19,14 +18,14 @@ func DeleteTagAction(ctx *actionContext) error {
 	}
 
 	if conf.SumologicRemote != nil {
-		return errors.New("delete-tag not supported for remote-controlled collectors")
+		return deleteTag(ctx, conf.SumologicRemote, ctx.WriteSumologicRemote)
 	}
 
 	if ctx.Flags.Override {
 		return deleteTagOverride(ctx, conf)
-	} else {
-		return deleteTag(ctx, conf, ConfDSettings, ctx.WriteConfD)
 	}
+
+	return deleteTag(ctx, conf.ConfD[ConfDSettings], ctx.WriteConfD)
 }
 
 func deleteTagOverride(ctx *actionContext, conf ConfDir) error {
@@ -43,7 +42,7 @@ func deleteTagOverride(ctx *actionContext, conf ConfDir) error {
 	encoder := yqlib.YamlFormat.EncoderFactory()
 	decoder := yqlib.YamlFormat.DecoderFactory()
 	for _, tagName := range ctx.Flags.DeleteTags {
-		key := fmt.Sprintf(".extensions.sumologic.collector_fields.%s", tagName)
+		key := fmt.Sprintf(".extensions.sumologic.collector_fields.%q", tagName)
 		for _, confKey := range readOrder {
 			doc := string(conf.ConfD[confKey])
 			result, err := eval.Evaluate(key, doc, encoder, decoder)
@@ -58,25 +57,24 @@ func deleteTagOverride(ctx *actionContext, conf ConfDir) error {
 		}
 	}
 
-	if err := deleteTag(ctx, conf, ConfDOverrides, ctx.WriteConfDOverrides); err != nil {
+	if err := deleteTag(ctx, conf.ConfD[ConfDOverrides], ctx.WriteConfDOverrides); err != nil {
 		return err
 	}
 
-	return deleteTag(ctx, conf, ConfDSettings, ctx.WriteConfD)
+	return deleteTag(ctx, conf.ConfD[ConfDSettings], ctx.WriteConfD)
 }
 
-func deleteTag(ctx *actionContext, conf ConfDir, docName string, writeDoc func([]byte) (int, error)) error {
+func deleteTag(ctx *actionContext, doc []byte, writeDoc func([]byte) (int, error)) error {
 	encoder := yqlib.YamlFormat.EncoderFactory()
 	decoder := yqlib.YamlFormat.DecoderFactory()
 	eval := yqlib.NewStringEvaluator()
-	doc := conf.ConfD[docName]
 
 	if len(doc) == 0 {
 		// tag does not exist, nor any other config for that matter
 		return nil
 	}
 
-	const keyFmt = "del(.extensions.sumologic.collector_fields.%s)"
+	const keyFmt = "del(.extensions.sumologic.collector_fields.%q)"
 
 	for _, tagName := range ctx.Flags.DeleteTags {
 		expression := fmt.Sprintf(keyFmt, tagName)
@@ -90,7 +88,7 @@ func deleteTag(ctx *actionContext, conf ConfDir, docName string, writeDoc func([
 	}
 
 	if _, err := writeDoc(doc); err != nil {
-		return fmt.Errorf("error writing %s: %s", docName, err)
+		return fmt.Errorf("error deleting tag: %s", err)
 	}
 
 	return nil

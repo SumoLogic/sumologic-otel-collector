@@ -18,7 +18,7 @@ defaults:
     shell: bash
 
 env:
-  GO_VERSION: "1.21.4"
+  GO_VERSION: "1.22.6"
 
 jobs:
   get-version:
@@ -55,9 +55,9 @@ jobs:
             runs-on: ubuntu-20.04
             fips: true
           - arch_os: darwin_amd64
-            runs-on: macos-latest
+            runs-on: macos-15
           - arch_os: darwin_arm64
-            runs-on: macos-latest
+            runs-on: macos-15
           - arch_os: windows_amd64
             runs-on: windows-2022
           - arch_os: windows_amd64

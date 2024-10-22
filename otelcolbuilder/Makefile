@@ -1,7 +1,9 @@
+include ../toolchains/Makefile
+
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.103.1
+BUILDER_VERSION ?= 0.108.0
 FIPS_SUFFIX ?= ""
-BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector
+BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector-releases
 GO ?= go
 GOTAGS ?=
 
@@ -76,28 +78,11 @@ _install-bin:
 	@mkdir -p "$(BUILDER_BIN_PATH)"
 	curl -L -o "$(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME)" https://$(BUILDER_REPO)/releases/download/cmd/builder/v$(BUILDER_VERSION)/ocb_$(BUILDER_VERSION)_$(PLATFORM)_$(ARCH)$(BUILDER_BIN_EXT)
 	@chmod +x "$(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME)"
-	@$(MAKE) ensure-correct-builder-version
 
 .PHONY: install-builder
 install-builder:
 	@echo "Installing $(BUILDER_REPO)/cmd/builder@v$(BUILDER_VERSION)... (in $(BUILDER_BIN_PATH))"
 	@$(MAKE) _install-bin PLATFORM=$(OS)
-
-
-.PHONY: ensure-correct-builder-version
-ensure-correct-builder-version:
-ifneq ($(lastword $(INSTALLED_BUILDER_VERSION)),$(BUILDER_VERSION))
-	@$(error Installed opentelemetry-collector-builder version \
-		"$(INSTALLED_BUILDER_VERSION)" \
-		does not match the requested "$(BUILDER_VERSION)" \
-		Please check if "$(BUILDER_BIN_PATH)" can be found in your PATH \
-		and if not, then install it using 'make install-builder' from otelcolbuilder's directory\
-	)
-else
-	@printf "Installed opentelemetry-collector-builder (%s) is at the correct version %s\n" \
-		"$(shell type opentelemetry-collector-builder | cut -d' ' -f 3)" \
-		"$(BUILDER_VERSION)"
-endif
 
 .PHONY: _builder
 _builder:
@@ -134,24 +119,28 @@ _gobuild_debug:
 	chmod +x ./cmd/$(BINARY_NAME)-debug$(BUILDER_BIN_EXT)
 
 .PHONY: build
-build: ensure-correct-builder-version
+build:
 # Since builder doesn't allow adding build tags, let's just skip the compilation
 # and run 'go build ...' by hand.
 	@$(MAKE) generate-sources
 	@$(MAKE) _gobuild
 
 .PHONY: build-debug
-build-debug: ensure-correct-builder-version
+build-debug:
 # Since builder doesn't allow adding build tags, let's just skip the compilation
 # and run 'go build ...' by hand.
 	@$(MAKE) generate-sources
 	@$(MAKE) _gobuild_debug
 
 .PHONY: build-fips
-build-fips:
-	docker volume create build-fips
-	docker build --platform linux/amd64 -t otelcol-sumo-builder-fips -f ./build-fips/Dockerfile ./build-fips
-	docker run -it --platform linux/amd64 --rm -v build-fips:/root/build -v $(PWD)/../:/root/workspace -w /root/workspace --tmpfs /tmp otelcol-sumo-builder-fips
+build-fips: docker-golang-cross-builder
+	docker run -it --rm \
+	-v $(DOCKER_CROSS_BUILDER_VOLUME):/root/build \
+	-v $(PWD)/../:/root/workspace \
+	-w /root/workspace \
+	--tmpfs /tmp \
+	--entrypoint /root/workspace/otelcolbuilder/build-fips/entrypoint.sh \
+	golang-cross-builder
 
 .PHONY: generate-sources
 generate-sources:
@@ -163,7 +152,7 @@ generate-sources:
 
 .PHONY: test
 test:
-	@$(MAKE) ensure-correct-builder-version || $(MAKE) install-builder
+	@$(MAKE) install-builder
 	@$(MAKE) generate-sources
 	CGO_ENABLED=${CGO_ENABLED} GOEXPERIMENT=$(GOEXPERIMENT) $(MAKE) -C cmd test
 
@@ -221,36 +210,20 @@ otelcol-sumo-linux_arm:
 otelcol-sumo-windows_amd64:
 	GOOS=windows GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-windows_amd64
 
-MUSL_X_MAKE_REPO=https://github.com/richfelker/musl-cross-make.git
-MUSL_X_MAKE_REF=fe915821b652a7fa37b34a596f47d8e20bc72338
-
-musl-cross-make:
-	git clone $(MUSL_X_MAKE_REPO);
-	cd musl-cross-make && git checkout $(MUSL_X_MAKE_REF);
-	cp ./build-fips/config.mak ./musl-cross-make/config.mak;
-
-.PHONY: toolchain-linux_arm64
-toolchain-linux_arm64: musl-cross-make
-	TARGET=aarch64-linux-musl $(MAKE) -C musl-cross-make install
-
-.PHONY: toolchain-linux_amd64
-toolchain-linux_amd64: musl-cross-make
-	TARGET=x86_64-linux-musl $(MAKE) -C musl-cross-make install
-
 .PHONY: otelcol-sumo-linux-fips_arm64
 otelcol-sumo-linux-fips_arm64:
-	$(MAKE) toolchain-linux_arm64 OUTPUT=$(PWD)/toolchain_arm64 -j3
+	$(MAKE) toolchain-linux_arm64
 	$(MAKE) otelcol-sumo-linux_arm64 \
 		FIPS_SUFFIX="-fips" \
 		CGO_ENABLED="1" \
-		CC="$(PWD)/toolchain_arm64/bin/aarch64-linux-musl-gcc" \
+		CC="$(TOOLCHAINS_DIR)/toolchain_arm64/bin/aarch64-linux-musl-gcc" \
 		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
 
 .PHONY: otelcol-sumo-linux-fips_amd64
 otelcol-sumo-linux-fips_amd64:
-	$(MAKE) toolchain-linux_amd64 OUTPUT=$(PWD)/toolchain_amd64 -j3
+	$(MAKE) toolchain-linux_amd64
 	$(MAKE) otelcol-sumo-linux_amd64 \
 		FIPS_SUFFIX="-fips" \
 		CGO_ENABLED="1" \
-		CC="$(PWD)/toolchain_amd64/bin/x86_64-linux-musl-gcc" \
+		CC="$(TOOLCHAINS_DIR)/toolchain_amd64/bin/x86_64-linux-musl-gcc" \
 		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"

@@ -10,12 +10,13 @@ import (
 
 func TestDeleteTagAction(t *testing.T) {
 	tests := []struct {
-		Name                   string
-		Conf                   fs.FS
-		Flags                  []string
-		ExpConfDWrite          []byte
-		ExpConfDOverridesWrite []byte
-		ExpErr                 bool
+		Name                    string
+		Conf                    fs.FS
+		Flags                   []string
+		ExpConfDWrite           []byte
+		ExpConfDOverridesWrite  []byte
+		ExpSumoLogicRemoteWrite []byte
+		ExpErr                  bool
 	}{
 		{
 			Name:  "doc missing",
@@ -101,11 +102,33 @@ func TestDeleteTagAction(t *testing.T) {
 			Flags:         []string{"--delete-tag", "foo"},
 			ExpConfDWrite: []byte("extensions:\n  sumologic:\n    collector_fields:\n      bar: baz\n"),
 		},
+		{
+			Name: "dot in tag name",
+			Conf: fstest.MapFS{
+				path.Join(ConfDotD, ConfDSettings): &fstest.MapFile{
+					Data: []byte("extensions:\n  sumologic:\n    collector_fields:\n      foo.bar: baz\n"),
+				},
+			},
+			Flags:         []string{"--delete-tag", "foo.bar"},
+			ExpConfDWrite: []byte("extensions:\n  sumologic:\n    collector_fields: {}\n"),
+		},
+		{
+			Name: "delete tag from sumologic-remote.yaml",
+			Conf: fstest.MapFS{
+				SumologicRemoteDotYaml: &fstest.MapFile{
+					Data: []byte("extensions:\n  sumologic:\n    collector_fields:\n      foo: bar\n      bar: baz\n"),
+				},
+			},
+			Flags:                   []string{"--delete-tag", "bar"},
+			ExpSumoLogicRemoteWrite: []byte("extensions:\n  sumologic:\n    collector_fields:\n      foo: bar\n"),
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-			var settingsWriter, overridesWriter func([]byte) (int, error)
+			var settingsWriter, overridesWriter, sumologicRemoteWriter func([]byte) (int, error)
+
+			sumologicRemoteWriter = errWriter{}.Write
 
 			if test.ExpConfDWrite != nil {
 				settingsWriter = newTestWriter(test.ExpConfDWrite).Write
@@ -119,6 +142,12 @@ func TestDeleteTagAction(t *testing.T) {
 				overridesWriter = errWriter{}.Write
 			}
 
+			if test.ExpSumoLogicRemoteWrite != nil {
+				settingsWriter = errWriter{}.Write
+				overridesWriter = errWriter{}.Write
+				sumologicRemoteWriter = newTestWriter(test.ExpSumoLogicRemoteWrite).Write
+			}
+
 			stdoutBuf := new(bytes.Buffer)
 			stderrBuf := new(bytes.Buffer)
 
@@ -130,6 +159,8 @@ func TestDeleteTagAction(t *testing.T) {
 				settingsWriter,
 				overridesWriter,
 			)
+
+			actionContext.WriteSumologicRemote = sumologicRemoteWriter
 
 			err := DeleteTagAction(actionContext)
 			if test.ExpErr && err == nil {

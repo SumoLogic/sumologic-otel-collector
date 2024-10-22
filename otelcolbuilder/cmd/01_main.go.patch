@@ -4,7 +4,7 @@
  	}
 
 -	cmd := otelcol.NewCommand(params)
-+	cmd := otelcol.NewCommandMustSetProvider(params)
++	cmd := otelcol.NewCommand(params)
 +	// this is only here so that the flag can be recognized by the upstream parser and displayed in help
 +	addOpampConfigFlag(cmd.Flags())
  	if err := cmd.Execute(); err != nil {

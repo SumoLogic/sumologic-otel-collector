@@ -46,7 +46,9 @@ func (h *handler) consume(ctx context.Context, in io.Reader, stream string) {
 		if h.config.IncludeStreamName {
 			ent.Attributes[commandStreamNameLabel] = stream
 		}
-		h.writer.Write(ctx, ent)
+		if err := h.writer.Write(ctx, ent); err != nil {
+			h.logger.Errorf("failed to write log entry: %s", err)
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		h.logger.Errorf("error reading input stream", zap.String("stream", stream), zap.Error(err))

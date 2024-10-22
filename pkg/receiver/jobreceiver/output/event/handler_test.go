@@ -65,6 +65,7 @@ func (s *stubWriter) NewEntry(value interface{}) (*entry.Entry, error) {
 	return e, nil
 }
 
-func (s *stubWriter) Write(ctx context.Context, e *entry.Entry) {
+func (s *stubWriter) Write(ctx context.Context, e *entry.Entry) error {
 	s.Out = append(s.Out, e)
+	return nil
 }

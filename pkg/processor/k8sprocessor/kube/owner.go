@@ -621,7 +621,7 @@ func (op *OwnerCache) GetOwners(pod *Pod) []*ObjectOwner {
 				}
 			}
 			// ownerReference may be empty
-			op.logger.Warn(
+			op.logger.Debug(
 				"missing owner data for Pod, cache may be out of sync",
 				zap.String("pod", pod.Name),
 				zap.String("owner_id", string(uid)),

@@ -7,6 +7,110 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.108.0-sumo-0]
+
+### Released 2024-10-03
+
+### Changed
+
+- chore: Upgraded otel core to 0.108.0 [#1678]
+
+### Fixed
+
+- Remove unnecessary warnings from the k8s tagger [#1681]
+
+[#1678]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1678
+[#1681]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1681
+
+[v0.108.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.108.0-sumo-0
+
+## [v0.106.1-sumo-1]
+
+### Released 2024-09-11
+
+### Fixed
+
+- fix(version): Fixing the changelog and version for otel collector [#1674]
+
+[#1674]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1674
+
+[v0.106.1-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.106.1-sumo-1
+
+## [v0.106.1-sumo-0]
+
+### Released 2024-09-03
+
+### Added
+
+- feat(opamp): Add support for new source templates (elastic, mysql, postgres, rabbitmq, redis) [#1657]
+
+### Changed
+
+- chore(deps): Upgrade go version to 1.22.6 [#1662.2]
+- Upgrade otelcol core to 0.106.1 [#1662]
+
+### Fixed
+
+- fix(jobreceiver): resolve a concurrency issue in the command executor [#1660]
+
+[#1657]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1657
+[#1662.2]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1662.2
+[#1662]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1662
+[#1660]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1660
+
+[v0.106.1-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.106.1-sumo-0
+
+## [v0.104.0-sumo-1]
+
+### Released 2024-08-12
+
+### Changed
+
+- chore(deps): chore(deps): bump github.com/docker/docker from 24.0.9+incompatible to 25.0.6+incompatible in /pkg/receiver/telegrafreceiver [#1646]
+- chore(deps): Upgrade go version to 1.21.11 [#1650]
+- chore(deps): chore(deps): bump github.com/docker/docker from 25.0.5+incompatible to 25.0.6+incompatible in /pkg/extension/opampextension [#1651]
+- chore(deps): bump go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp from 0.42.0 to 0.44.0 in /pkg/receiver/telegrafreceiver [#1652]
+- chore(deps): bump google.golang.org/grpc from 1.64.0 to 1.64.1 [#1653]
+- chore(deps): bump github.com/rs/cors from 1.10.1 to 1.11.0 in /pkg/exporter/sumologicexporter [#1654]
+
+[#1646]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1646
+[#1650]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1650
+[#1651]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1651
+[#1652]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1652
+[#1653]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1653
+[#1654]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1654
+
+[v0.104.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.104.0-sumo-1
+
+## [v0.104.0-sumo-0]
+
+### Released 2024-08-01
+
+### Added
+
+- feat(cascadingfilter): Added status code filtering to cascading filter processor [#1600]
+- docs: Added migration steps for compress_encoding [#1605]
+- feat(opamp): Validate kafkametricsreceiver [#1614]
+
+### Changed
+
+- feat: use Sumo Logic exporter from OpenTelemetry repository [#1601]
+- upgrade otelcol core to 0.104.0 [#1619]
+
+### Fixed
+
+- fix(opamp): Add the Default(env) provider to the provider list in ConfigProviderSettings [#1632]
+- fix(install): Fix script to always install the latest stable version [#1645]
+
+[#1600]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1600
+[#1605]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1605
+[#1614]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1614
+[#1601]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1601
+[#1619]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1619
+[#1632]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1632
+[#1645]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1645
+[v0.104.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.104.0-sumo-0
+
 ## [v0.102.1-sumo-0]
 
 ### Released 2024-06-07

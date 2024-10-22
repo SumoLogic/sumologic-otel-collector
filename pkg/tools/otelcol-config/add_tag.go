@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 
 	"github.com/mikefarah/yq/v4/pkg/yqlib"
@@ -12,10 +11,6 @@ func AddTagAction(ctx *actionContext) error {
 	conf, err := ReadConfigDir(ctx.ConfigDir)
 	if err != nil {
 		return err
-	}
-
-	if conf.SumologicRemote != nil {
-		return errors.New("add-tag not supported for remote-controlled collectors")
 	}
 
 	docName := ConfDSettings
@@ -30,9 +25,15 @@ func AddTagAction(ctx *actionContext) error {
 	eval := yqlib.NewStringEvaluator()
 	doc := conf.ConfD[docName]
 
+	if conf.SumologicRemote != nil {
+		doc = conf.SumologicRemote
+		writeDoc = ctx.WriteSumologicRemote
+		docName = SumologicRemoteDotYaml
+	}
+
 	const (
-		keyFmt      = ".extensions.sumologic.collector_fields.%s = %s"
-		quoteKeyFmt = ".extensions.sumologic.collector_fields.%s = %q"
+		keyFmt      = ".extensions.sumologic.collector_fields.%q = %s"
+		quoteKeyFmt = ".extensions.sumologic.collector_fields.%q = %q"
 	)
 
 	for tagName, tag := range ctx.Flags.AddTags {
