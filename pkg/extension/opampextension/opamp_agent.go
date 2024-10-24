@@ -18,12 +18,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"reflect"
 	"runtime"
-	"strings"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/confmap"
@@ -45,6 +43,8 @@ import (
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension"
 )
+
+const DefaultSumoLogicOpAmpURL = "wss://opamp-events.sumologic.com/v1/opamp"
 
 type opampAgent struct {
 	cfg    *Config
@@ -103,13 +103,9 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 		return err
 	}
 
-	var baseURL string
-	if o.authExtension != nil {
-		baseURL = o.authExtension.BaseURL()
-	}
-
-	if err := o.setEndpoint(baseURL); err != nil {
-		return err
+	o.endpoint = o.cfg.Endpoint
+	if o.endpoint == "" {
+		o.endpoint = DefaultSumoLogicOpAmpURL
 	}
 
 	if o.authExtension == nil {
@@ -156,7 +152,7 @@ func (o *opampAgent) Reload(ctx context.Context) error {
 	return o.Start(ctx, o.host)
 }
 
-func (o *opampAgent) startClient(ctx context.Context) error {
+func (o *opampAgent) startSettings() types.StartSettings {
 	settings := types.StartSettings{
 		Header:         o.authHeader,
 		OpAMPServerURL: o.endpoint,
@@ -183,6 +179,16 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 		RemoteConfigStatus: o.remoteConfigStatus,
 		Capabilities:       o.getAgentCapabilities(),
 	}
+
+	if settings.OpAMPServerURL == "" {
+		settings.OpAMPServerURL = DefaultSumoLogicOpAmpURL
+	}
+
+	return settings
+}
+
+func (o *opampAgent) startClient(ctx context.Context) error {
+	settings := o.startSettings()
 
 	o.logger.Debug("Starting OpAMP client...")
 
@@ -248,33 +254,6 @@ func (o *opampAgent) watchCredentials(ctx context.Context, callback func(ctx con
 			o.logger.Error("Failed to execute watch credential key callback", zap.Error(err))
 		}
 	}()
-
-	return nil
-}
-
-// setEndpoint sets the OpAMP endpoint based on the collector endpoint.
-// This is a hack, and it should be removed when the backend is able to
-// correctly redirect our OpAMP client to the correct URL.
-func (o *opampAgent) setEndpoint(baseURL string) error {
-	if baseURL == "" {
-		o.endpoint = o.cfg.Endpoint
-		return nil
-	}
-	u, err := url.Parse(baseURL)
-	if err != nil {
-		return fmt.Errorf("url error, cannot set opamp endpoint: %s", err)
-	}
-
-	u.Scheme = "wss"
-	u.Path = "/v1/opamp"
-
-	// These replacements are specific to Sumo Logic's current domain naming,
-	// and are made provisionally for the OTRM beta. In the future, the backend
-	// will inform the agent of the correct OpAMP URL to use.
-	u.Host = strings.Replace(u.Host, "open-events", "opamp-events", 1)
-	u.Host = strings.Replace(u.Host, "open-collectors", "opamp-collectors", 1)
-
-	o.endpoint = u.String()
 
 	return nil
 }

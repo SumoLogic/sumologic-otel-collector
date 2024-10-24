@@ -26,7 +26,6 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
-	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/extension"
 	"go.opentelemetry.io/collector/extension/extensiontest"
 
@@ -203,68 +202,48 @@ func TestShutdown(t *testing.T) {
 	assert.NoError(t, o.Shutdown(context.Background()))
 }
 
-// To be removed when the OpAMP backend correctly advertises its URL.
-// This test is badly written, it reaches into unexported fields to test
-// their contents, but given that it will be removed in a few months, that
-// shouldn't matter too much from a big picture perspective.
-func TestHackSetEndpoint(t *testing.T) {
-	tests := []struct {
-		name         string
-		url          string
-		wantEndpoint string
-	}{
-		{
-			name:         "empty url defaults to config endpoint",
-			wantEndpoint: "wss://example.com",
-		},
-		{
-			name:         "url variant a",
-			url:          "https://sumo-open-events.example.com",
-			wantEndpoint: "wss://sumo-opamp-events.example.com/v1/opamp",
-		},
-		{
-			name:         "url variant b",
-			url:          "https://sumo-open-collectors.example.com",
-			wantEndpoint: "wss://sumo-opamp-collectors.example.com/v1/opamp",
-		},
-		{
-			name:         "url variant c",
-			url:          "https://example.com",
-			wantEndpoint: "wss://example.com/v1/opamp",
-		},
-		{
-			name:         "dev sumologic url",
-			url:          "https://long-open-events.sumologic.net/api/v1",
-			wantEndpoint: "wss://long-opamp-events.sumologic.net/v1/opamp",
-		},
-		{
-			name:         "prod sumologic url",
-			url:          "https://open-collectors.sumologic.com/api/v1",
-			wantEndpoint: "wss://opamp-collectors.sumologic.com/v1/opamp",
-		},
-		{
+func TestStart(t *testing.T) {
+	d, err := os.MkdirTemp("", "opamp.d")
+	assert.NoError(t, err)
+	defer os.RemoveAll(d)
 
-			name:         "prod sumologic url with region",
-			url:          "https://open-collectors.au.sumologic.com/api/v1/",
-			wantEndpoint: "wss://opamp-collectors.au.sumologic.com/v1/opamp",
-		},
+	cfg := createDefaultConfig().(*Config)
+	cfg.ClientConfig.Auth = nil
+	cfg.RemoteConfigurationDirectory = d
+	set := extensiontest.NewNopSettings()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	assert.NoError(t, o.Start(context.Background(), componenttest.NewNopHost()))
+}
+
+func TestReload(t *testing.T) {
+	d, err := os.MkdirTemp("", "opamp.d")
+	assert.NoError(t, err)
+	defer os.RemoveAll(d)
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.ClientConfig.Auth = nil
+	cfg.RemoteConfigurationDirectory = d
+	set := extensiontest.NewNopSettings()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	ctx := context.Background()
+	assert.NoError(t, o.Start(ctx, componenttest.NewNopHost()))
+	assert.NoError(t, o.Reload(ctx))
+}
+
+func TestDefaultEndpointSetOnStart(t *testing.T) {
+	cfg := createDefaultConfig().(*Config)
+	set := extensiontest.NewNopSettings()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	if err != nil {
+		t.Fatal(err)
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			agent := &opampAgent{cfg: &Config{
-				ClientConfig: confighttp.ClientConfig{
-					Endpoint: "wss://example.com",
-				},
-			}}
-			if err := agent.setEndpoint(test.url); err != nil {
-				// can only happen with an invalid URL, which is quite hard
-				// to even come up with for Go's URL package
-				t.Fatal(err)
-			}
-			if got, want := agent.endpoint, test.wantEndpoint; got != want {
-				t.Errorf("didn't get expected endpoint: got %q, want %q", got, want)
-			}
-		})
+	settings := o.startSettings()
+	if settings.OpAMPServerURL != DefaultSumoLogicOpAmpURL {
+		t.Error("expected unconfigured opamp endpoint to result in default sumo opamp url setting")
 	}
 }
 
@@ -289,31 +268,4 @@ func TestNewOpampAgentAttributes(t *testing.T) {
 	assert.Equal(t, "otelcol-sumo", o.agentType)
 	assert.Equal(t, "sumo.0", o.agentVersion)
 	assert.Equal(t, "7RK6DW2K4V8RCSQBKZ02EJ84FC", o.instanceId.String())
-}
-
-func TestStart(t *testing.T) {
-	d, err := os.MkdirTemp("", "opamp.d")
-	assert.NoError(t, err)
-	defer os.RemoveAll(d)
-	cfg, set := setupWithRemoteConfig(t, d)
-	cfg.ClientConfig.Auth = nil
-	cfg.RemoteConfigurationDirectory = d
-	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
-
-	assert.NoError(t, o.Start(context.Background(), componenttest.NewNopHost()))
-}
-
-func TestReload(t *testing.T) {
-	d, err := os.MkdirTemp("", "opamp.d")
-	assert.NoError(t, err)
-	defer os.RemoveAll(d)
-	cfg, set := setupWithRemoteConfig(t, d)
-	cfg.ClientConfig.Auth = nil
-	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
-
-	ctx := context.Background()
-	assert.NoError(t, o.Start(ctx, componenttest.NewNopHost()))
-	assert.NoError(t, o.Reload(ctx))
 }
