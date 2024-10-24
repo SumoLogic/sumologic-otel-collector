@@ -74,6 +74,7 @@ type ClientProvider func(
 	InformerProvider,
 	OwnerProvider,
 	string,
+	int,
 	time.Duration,
 	time.Duration,
 ) (Client, error)
