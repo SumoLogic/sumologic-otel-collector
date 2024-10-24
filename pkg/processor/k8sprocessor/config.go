@@ -47,6 +47,9 @@ type Config struct {
 	// Exclude section allows to define names of pod that should be
 	// ignored while tagging.
 	Exclude ExcludeConfig `mapstructure:"exclude"`
+
+	// Limit is the page size for the list of pods to fetch from the API.
+	Limit int `mapstructure:"limit"`
 }
 
 func (cfg *Config) Validate() error {
@@ -233,6 +236,9 @@ type PodAssociationConfig struct {
 
 // DefaultDelimiter is default value for Delimiter for ExtractConfig
 const DefaultDelimiter string = ", "
+
+// DefaultLimit is default value for Limit for Config
+const DefaultLimit int = 200
 
 // ExcludeConfig represent a list of Pods to exclude
 type ExcludeConfig struct {

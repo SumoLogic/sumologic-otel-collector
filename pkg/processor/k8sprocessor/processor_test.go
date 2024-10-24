@@ -238,6 +238,7 @@ func TestProcessorBadClientProvider(t *testing.T) {
 		_ kube.InformerProvider,
 		_ kube.OwnerProvider,
 		_ string,
+		_ int,
 		_ time.Duration,
 		_ time.Duration,
 	) (kube.Client, error) {

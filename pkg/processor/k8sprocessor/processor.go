@@ -44,6 +44,7 @@ type kubernetesprocessor struct {
 	podAssociations []kube.Association
 	podIgnore       kube.Excludes
 	delimiter       string
+	limit           int
 }
 
 func (kp *kubernetesprocessor) initKubeClient(logger *zap.Logger, kubeClient kube.ClientProvider) error {
@@ -62,6 +63,7 @@ func (kp *kubernetesprocessor) initKubeClient(logger *zap.Logger, kubeClient kub
 			nil,
 			nil,
 			kp.delimiter,
+			kp.limit,
 			30*time.Second,
 			kube.DefaultPodDeleteGracePeriod,
 		)
