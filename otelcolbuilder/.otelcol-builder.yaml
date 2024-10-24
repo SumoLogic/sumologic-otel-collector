@@ -6,7 +6,7 @@ dist:
   module: github.com/SumoLogic/sumologic-otel-collector
 
   # the OpenTelemetry Collector version to use as base for the distribution.
-  otelcol_version: 0.108.0
+  otelcol_version: 0.109.0
   # the path to write the output (sources and binary).
   output_path: ./cmd
 
