@@ -4,9 +4,9 @@ on:
   workflow_call:
     inputs:
       workflow_id:
-        description: ID of the workflow to fetch artifacts from. If empty, artifacts will be fetched from the latest release.
+        description: ID of the Collector workflow that Packaging will fetch artifacts from.
         type: string
-        required: false
+        required: true
 
 defaults:
   run:
