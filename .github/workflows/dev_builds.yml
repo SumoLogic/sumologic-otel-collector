@@ -536,4 +536,3 @@ jobs:
     secrets: inherit
     with:
       workflow_id: ${{ github.run_id }}
-      create_release: false
