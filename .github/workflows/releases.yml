@@ -367,6 +367,12 @@ jobs:
               new_name=$(echo "$file" | sed "s/otelcol-sumo/otelcol-sumo-${version}/g")
               mv "$file" "$new_name"
           done
+          find . -type f -name 'otelcol-config*' \
+            | sed 's/^\.\///' \
+            | while read -r file; do
+              new_name=$(echo "$file" | sed "s/otelcol-config/otelcol-config-${version}/g")
+              mv "$file" "$new_name"
+          done
 
       - uses: ncipollo/release-action@v1
         with:
