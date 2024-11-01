@@ -374,7 +374,8 @@ jobs:
           draft: true
           prerelease: false
           commit: ${{ needs.get-sha.outputs.git-sha }}
-          tag: v${{ needs.get-version.outputs.version }}
+          #tag: v${{ needs.get-version.outputs.version }}
+          tag: workflow-test-release
 
           allowUpdates: true
           omitBodyDuringUpdate: true
