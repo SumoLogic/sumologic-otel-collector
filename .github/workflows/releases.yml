@@ -364,7 +364,7 @@ jobs:
           find . -type f -name 'otelcol-sumo*' \
             | sed 's/^\.\///' \
             | while read -r file; do
-              new_name=$(echo "$file" | sed 's/otelcol-sumo/otelcol-sumo-${version}/g')
+              new_name=$(echo "$file" | sed "s/otelcol-sumo/otelcol-sumo-${version}/g")
               mv "$file" "$new_name"
           done
 
