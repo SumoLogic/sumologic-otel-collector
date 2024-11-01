@@ -70,7 +70,7 @@ jobs:
         run: |
           workflow="${{ inputs.workflow_id }}"
           sha="$(gh run view ${workflow} --json headSha -t '{{.headSha}}')"
-          echo "git-sha=$sha" >> $GITHUB_OUTPUT"
+          echo "git-sha=$sha" >> $GITHUB_OUTPUT
 
       - name: Output Git SHA
         run: |
