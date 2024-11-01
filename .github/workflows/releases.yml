@@ -72,6 +72,10 @@ jobs:
           sha="$(gh run view ${workflow} --json headSha -t '{{.headSha}}')"
           echo "git-sha=$sha" >> $GITHUB_OUTPUT"
 
+      - name: Output Git SHA
+        run: |
+          echo ::notice title=Git SHA::${{ steps.get-sha.outputs.git-sha }}
+
   # build-container-images:
   #   name: Build container
   #   runs-on: ubuntu-20.04
