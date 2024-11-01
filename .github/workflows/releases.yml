@@ -47,7 +47,7 @@ jobs:
       - name: Determine version from artifact
         id: get-version
         run: |
-          artifact="artifacts/otelcol-sumo-linux-amd64"
+          artifact="artifacts/otelcol-sumo-linux_amd64"
           script="ci/get_version_from_binary.sh"
           core="$("$script" core "${artifact}")"
           sumo="$("$script" sumo "${artifact}")"
