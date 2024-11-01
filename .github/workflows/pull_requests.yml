@@ -380,4 +380,4 @@ jobs:
       - name: Test built image
         run: make test-built-image
 
-      # ToDo: build windows FIPS image
+      # TODO: build windows FIPS image

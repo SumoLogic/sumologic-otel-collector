@@ -9,9 +9,9 @@ usage() {
   cat <<EOF
 Usage: $(basename "${BASH_SOURCE[0]}") [-h] [core|sumo|productversion]
 
-Detects the latest version from a combination of the otelcol-builder config and
-Git tags. It can output version information in different formats depending on
-the subcommand used.
+Detects the version to use for building otelcol-sumo using a combination of the
+otelcol-builder config and Git tags. It can output version information in
+different formats depending on the subcommand used.
 
 Available options:
 
@@ -96,54 +96,54 @@ parse_sumo_version() {
 # Validate version information using the Windows ProductVersion requirements.
 validate() {
     if [[ -z "${major_version}" ]]; then
-        echo "Major version cannot be empty"
+        echo "Major version cannot be empty" >&2
         exit 1
     fi
 
     if [[ $major_version -lt 0 ]]; then
-        echo "Major version cannot be less than 0"
+        echo "Major version cannot be less than 0" >&2
         exit 1
     fi
 
     if [[ $major_version -gt 255 ]]; then
-        echo "Major version cannot be greater than 255"
+        echo "Major version cannot be greater than 255" >&2
         exit 1
     fi
 
     if [[ -z "${minor_version}" ]]; then
-        echo "Minor version cannot be empty"
+        echo "Minor version cannot be empty" >&2
         exit 1
     fi
 
     if [[ $minor_version -lt 0 ]]; then
-        echo "Minor version cannot be less than 0"
+        echo "Minor version cannot be less than 0" >&2
         exit 1
     fi
 
     if [[ $minor_version -gt 255 ]]; then
-        echo "Minor version cannot be greater than 255"
+        echo "Minor version cannot be greater than 255" >&2
         exit 1
     fi
 
     # Patch version (known as the build version on Windows)
     if [[ -z "${patch_version}" ]]; then
-        echo "Patch version cannot be empty"
+        echo "Patch version cannot be empty" >&2
         exit 1
     fi
 
     if [[ $patch_version -lt 0 ]]; then
-        echo "Patch version cannot be less than 0"
+        echo "Patch version cannot be less than 0" >&2
         exit 1
     fi
 
     if [[ $patch_version -gt 65535 ]]; then
-        echo "Patch version cannot be greater than 65,535"
+        echo "Patch version cannot be greater than 65,535" >&2
         exit 1
     fi
 
     # Sumo version (known as the internal version on Windows)
     if [[ -z "${sumo_version}" ]]; then
-        echo "Sumo version cannot be empty"
+        echo "Sumo version cannot be empty" >&2
         exit 1
     fi
 }
