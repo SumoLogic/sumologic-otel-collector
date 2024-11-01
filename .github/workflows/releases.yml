@@ -66,7 +66,7 @@ jobs:
       - name: Determine Git SHA of workflow
         id: get-sha
         run: |
-          workflow="${{ inputs.workflow_id }}
+          workflow="${{ inputs.workflow_id }}"
           sha="$(gh run view ${workflow} --json headSha -t '{{.headSha}}')"
           echo "git-sha=$sha" >> $GITHUB_OUTPUT"
 
