@@ -48,6 +48,7 @@ jobs:
         id: get-version
         run: |
           artifact="artifacts/otelcol-sumo-linux_amd64"
+          chmod +x "${artifact}"
           script="ci/get_version_from_binary.sh"
           core="$("$script" core "${artifact}")"
           sumo="$("$script" sumo "${artifact}")"
