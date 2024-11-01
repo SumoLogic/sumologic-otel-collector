@@ -65,6 +65,8 @@ jobs:
 
       - name: Determine Git SHA of workflow
         id: get-sha
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           workflow="${{ inputs.workflow_id }}"
           sha="$(gh run view ${workflow} --json headSha -t '{{.headSha}}')"
