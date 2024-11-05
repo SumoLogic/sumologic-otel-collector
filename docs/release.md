@@ -39,8 +39,11 @@ one of two methods to find the workflow run:
 
 #### Option 1 - Use the `gh` cli tool to find the workflow
 
+Run the following command (be sure to replace `BUILD_NUMBER` with the build
+number of the package):
+
 ```shell
-BUILD_NUMBER="1790"
+PAGER=""; BUILD_NUMBER="1790"; \
 gh run list -R sumologic/sumologic-otel-collector-packaging -s success \
 -w build_packages.yml -L 200 -b main --json displayTitle,number,url \
 -q ".[] | select(.number == ${BUILD_NUMBER})"
@@ -58,6 +61,21 @@ This will output a number of fields, for example:
 
 We need the number to the right of `Build for Remote Workflow`. This number is
 the ID of the workflow run that built the binaries used in the package.
+
+The workflow run can be viewed by first running:
+
+```shell
+PAGER=""; WORKFLOW_ID="11672946742"; \
+gh run list -R sumologic/sumologic-otel-collector -s success \
+-w dev_builds.yml -L 200 -b main --json displayTitle,databaseId,url \
+-q ".[] | select(.databaseId == ${WORKFLOW_ID})"
+```
+
+Which will output the URL of the workflow run:
+
+```text
+https://github.com/SumoLogic/sumologic-otel-collector/actions/runs/11672946742
+```
 
 #### Option 2 - Search the GitHub website manually
 
@@ -80,12 +98,13 @@ methods of doing this.
 
 #### Option 1 - Use the `gh` cli tool to trigger the release
 
-A release can be triggered by using the following command:
+A release can be triggered by using the following command (be sure to replace
+`WORKFLOW_ID` with the Workflow Run ID from the previous step):
 
 ```shell
-# Be sure to replace this with workflow ID from the previous step
-WORKFLOW_ID=11672946742
-gh workflow run releases.yml -R sumologic/sumologic-otel-collector -f workflow_id=${WORKFLOW_ID}
+PAGER=""; WORKFLOW_ID="11672946742"; \
+gh workflow run releases.yml -R sumologic/sumologic-otel-collector \
+-f workflow_id=${WORKFLOW_ID}
 ```
 
 #### Option 2 - Use the GitHub website to trigger the release

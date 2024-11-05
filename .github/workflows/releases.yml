@@ -279,6 +279,14 @@ jobs:
   # to the most recent release here. The script has since been moved to the packaging repository.
   # It is kept here for backwards compatibility. Once the download count for this artifact
   # reaches 0 for new releases, this can be removed.
+  #
+  # TODO: This pulls the latest install scripts from the main branch of the
+  # packaging reopsitory. There is a chance that the install scripts attached to
+  # a collector release will differ from the install scripts attached to a
+  # packaging release. We can either remove install scripts from releases here
+  # or we should ensure that the install scripts are always automically synced
+  # to this repository and use the install scripts from the HEAD SHA of the
+  # collector workflow run specified for a release.
   install-script:
     name: Store install script
     runs-on: ubuntu-latest
