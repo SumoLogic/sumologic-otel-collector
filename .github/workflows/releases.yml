@@ -12,6 +12,7 @@ on:
           release.
         required: true
         type: string
+  pull_request:
 
 defaults:
   run:
