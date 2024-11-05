@@ -197,7 +197,10 @@ jobs:
         env:
           AC_PASSWORD: ${{ secrets.app_store_connect_password }}
         working-directory: ./otelcolbuilder/
-        run: make ${{ inputs.arch_os }}-sign
+        run: |
+          for i in $(seq 1 5); do
+          make ${{ inputs.arch_os }}-sign && break || sleep 5
+          done
 
       - name: Sign Windows binary
         if: runner.os == 'Windows' && env.WINDOWS_SIGNING_ENABLED == 'true'
