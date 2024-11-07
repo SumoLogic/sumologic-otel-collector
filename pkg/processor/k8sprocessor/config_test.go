@@ -44,6 +44,7 @@ func TestLoadConfig(t *testing.T) {
 	assert.EqualValues(t,
 		&Config{
 			APIConfig: k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
+			Limit:     200,
 			Extract:   ExtractConfig{Delimiter: ", "},
 		},
 		p0,
@@ -53,6 +54,7 @@ func TestLoadConfig(t *testing.T) {
 	assert.EqualValues(t,
 		&Config{
 			APIConfig:          k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeKubeConfig},
+			Limit:              200,
 			Passthrough:        false,
 			OwnerLookupEnabled: true,
 			Extract: ExtractConfig{

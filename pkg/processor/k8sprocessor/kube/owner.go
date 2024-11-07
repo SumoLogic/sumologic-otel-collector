@@ -128,6 +128,8 @@ func newOwnerProvider(
 		informers.WithTweakListOptions(func(opts *meta_v1.ListOptions) {
 			opts.LabelSelector = labelSelector.String()
 			opts.FieldSelector = fieldSelector.String()
+			// Unset resource version to get the latest data
+			opts.ResourceVersion = ""
 		}))
 
 	ownerCache.addNamespaceInformer(factory)

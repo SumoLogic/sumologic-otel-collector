@@ -20,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	api_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
@@ -31,9 +32,11 @@ import (
 func Test_newSharedInformer(t *testing.T) {
 	labelSelector, fieldSelector, err := selectorsFromFilters(Filters{})
 	require.NoError(t, err)
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
 	client, err := newFakeAPIClientset(k8sconfig.APIConfig{})
 	require.NoError(t, err)
-	informer := newSharedInformer(client, "testns", labelSelector, fieldSelector)
+	informer := newSharedInformer(logger, client, "testns", labelSelector, fieldSelector, 10)
 	assert.NotNil(t, informer)
 }
 
@@ -57,7 +60,9 @@ func Test_informerListFuncWithSelectors(t *testing.T) {
 	assert.NoError(t, err)
 	c, err := newFakeAPIClientset(k8sconfig.APIConfig{})
 	assert.NoError(t, err)
-	listFunc := informerListFuncWithSelectors(c, "test-ns", ls, fs)
+	logger, err := zap.NewDevelopment()
+	assert.NoError(t, err)
+	listFunc := informerListFuncWithSelectors(logger, c, "test-ns", ls, fs, 10)
 	opts := metav1.ListOptions{}
 	obj, err := listFunc(opts)
 	assert.NoError(t, err)
@@ -95,7 +100,9 @@ func Test_fakeInformer(t *testing.T) {
 	// nothing real to test here. just to make coverage happy
 	c, err := newFakeAPIClientset(k8sconfig.APIConfig{})
 	assert.NoError(t, err)
-	i := NewFakeInformer(c, "ns", nil, nil)
+	logger, err := zap.NewDevelopment()
+	assert.NoError(t, err)
+	i := NewFakeInformer(logger, c, "ns", nil, nil, 10)
 	_, err = i.AddEventHandlerWithResyncPeriod(cache.ResourceEventHandlerFuncs{}, time.Second)
 	assert.NoError(t, err)
 	i.HasSynced()
