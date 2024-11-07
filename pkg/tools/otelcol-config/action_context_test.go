@@ -66,7 +66,7 @@ type testWriter struct {
 
 func (t *testWriter) Write(data []byte) (int, error) {
 	if got, want := data, t.exp; !bytes.Equal(got, want) {
-		return 0, fmt.Errorf("bad conf.d write: got %q, want %q", got, want)
+		return 0, fmt.Errorf("bad write: got %q, want %q", got, want)
 	}
 	return len(data), nil
 }
