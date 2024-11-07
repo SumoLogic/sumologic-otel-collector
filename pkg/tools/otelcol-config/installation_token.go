@@ -6,11 +6,16 @@ import (
 
 	"github.com/mikefarah/yq/v4/pkg/yqlib"
 	"gopkg.in/yaml.v3"
+	"howett.net/plist"
 )
 
 func SetInstallationTokenAction(ctx *actionContext) error {
 	if ctx.SystemdEnabled {
 		return setInstallationTokenSystemd(ctx)
+	}
+
+	if ctx.LaunchdEnabled {
+		return setInstallationTokenLaunchd(ctx)
 	}
 
 	conf, err := ReadConfigDir(ctx.ConfigDir)
@@ -75,6 +80,25 @@ func setInstallationTokenSystemd(ctx *actionContext) error {
 	_, err := ctx.WriteInstallationTokenEnv([]byte(tokenDoc))
 	if err != nil {
 		return fmt.Errorf("couldn't write token.env: %s", err)
+	}
+	return nil
+}
+
+func setInstallationTokenLaunchd(ctx *actionContext) error {
+	conf, err := ReadLaunchdConfig(ctx.LaunchdDir)
+	if err != nil {
+		return err
+	}
+
+	conf.Root.EnvironmentVariables["SUMOLOGIC_INSTALLATION_TOKEN"] = ctx.Flags.InstallationToken
+
+	newBytes, err := plist.Marshal(&conf.Root, conf.Format)
+	if err != nil {
+		return fmt.Errorf("couldn't marshal launchd config: %s", err)
+	}
+
+	if _, err := ctx.WriteLaunchdConfig(newBytes); err != nil {
+		return fmt.Errorf("couldn't write launchd config: %s", err)
 	}
 	return nil
 }

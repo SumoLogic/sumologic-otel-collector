@@ -44,7 +44,7 @@ func selectors() (labels.Selector, fields.Selector) {
 
 // newFakeClient instantiates a new FakeClient object and satisfies the ClientProvider type
 func newFakeClient(
-	_ *zap.Logger,
+	logger *zap.Logger,
 	apiCfg k8sconfig.APIConfig,
 	rules kube.ExtractionRules,
 	filters kube.Filters,
@@ -54,6 +54,7 @@ func newFakeClient(
 	_ kube.InformerProvider,
 	_ kube.OwnerProvider,
 	_ string,
+	_ int,
 	_ time.Duration,
 	_ time.Duration,
 ) (kube.Client, error) {
@@ -65,7 +66,7 @@ func newFakeClient(
 		Rules:        rules,
 		Filters:      filters,
 		Associations: associations,
-		Informer:     kube.NewFakeInformer(cs, "", ls, fs),
+		Informer:     kube.NewFakeInformer(logger, cs, "", ls, fs, 10),
 		StopCh:       make(chan struct{}),
 	}, nil
 }

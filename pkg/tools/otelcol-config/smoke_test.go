@@ -8,17 +8,20 @@ import (
 	"testing"
 )
 
-func createSkeleton(dir string) error {
-	if err := os.Mkdir(filepath.Join(dir, ConfDotD), 0770); err != nil {
+func createSkeleton(configDir string, launchdDir string) error {
+	if err := os.Mkdir(filepath.Join(configDir, ConfDotD), 0770); err != nil {
 		return err
 	}
-	if err := os.Mkdir(filepath.Join(dir, ConfDotDAvailable), 0770); err != nil {
+	if err := os.Mkdir(filepath.Join(configDir, ConfDotDAvailable), 0770); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(dir, ConfDotDAvailable, hostmetricsYAML), []byte("hostmetrics"), 0660); err != nil {
+	if err := os.WriteFile(filepath.Join(configDir, ConfDotDAvailable, hostmetricsYAML), []byte("hostmetrics"), 0660); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(dir, ConfDotDAvailable, ephemeralYAML), []byte("ephemeral"), 0660); err != nil {
+	if err := os.WriteFile(filepath.Join(configDir, ConfDotDAvailable, ephemeralYAML), []byte("ephemeral"), 0660); err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(launchdDir, launchdConfigPlist), []byte(defaultLaunchdConfigXML), 0660); err != nil {
 		return err
 	}
 	return nil
@@ -27,12 +30,14 @@ func createSkeleton(dir string) error {
 func TestLocallyManagedSmoke(t *testing.T) {
 	// run main against a tempdir with all locally managed flags
 	configDir := t.TempDir()
-	if err := createSkeleton(configDir); err != nil {
+	launchdDir := t.TempDir()
+	if err := createSkeleton(configDir, launchdDir); err != nil {
 		t.Fatal(err)
 	}
 	flags := []string{
 		"otelcol-config",
 		"--config", configDir,
+		"--launchd", launchdDir,
 		"--add-tag", "foo=bar",
 		"--add-tag", "bar=baz",
 		"--delete-tag", "bar",
@@ -53,7 +58,8 @@ func TestLocallyManagedSmoke(t *testing.T) {
 func TestRemotelyManagedSmoke(t *testing.T) {
 	// run main against a tempdir with all remotely managed flags
 	configDir := t.TempDir()
-	if err := createSkeleton(configDir); err != nil {
+	launchdDir := t.TempDir()
+	if err := createSkeleton(configDir, launchdDir); err != nil {
 		t.Fatal(err)
 	}
 	flags := []string{
