@@ -150,15 +150,15 @@ func TestConfLoader(t *testing.T) {
 func TestConfLoaderDanglingSymlinks(t *testing.T) {
 	tempdir := t.TempDir()
 
-	if err := os.Mkdir(filepath.Join(tempdir, ConfDotD), 0700); err != nil {
+	if err := os.Mkdir(filepath.Join(tempdir, ConfDotD), 0770); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := os.Mkdir(filepath.Join(tempdir, ConfDotDAvailable), 0700); err != nil {
+	if err := os.Mkdir(filepath.Join(tempdir, ConfDotDAvailable), 0770); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := os.WriteFile(filepath.Join(tempdir, ConfDotD, ConfDSettings), []byte("extensions:\n  sumologic:\n    installation_token: abcdef\n"), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(tempdir, ConfDotD, ConfDSettings), []byte("extensions:\n  sumologic:\n    installation_token: abcdef\n"), 0660); err != nil {
 		t.Fatal(err)
 	}
 

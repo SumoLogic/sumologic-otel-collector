@@ -45,6 +45,7 @@ type WatchClient struct {
 	stopCh      chan struct{}
 	op          OwnerAPI
 	delimiter   string
+	limit       int
 
 	// A map containing Pod related data, used to associate them with resources.
 	// Key can be either an IP address or Pod UID
@@ -67,6 +68,7 @@ func New(
 	newInformer InformerProvider,
 	newOwnerProviderFunc OwnerProvider,
 	delimiter string,
+	limit int,
 	deleteInterval time.Duration,
 	gracePeriod time.Duration,
 ) (Client, error) {
@@ -78,6 +80,7 @@ func New(
 		Exclude:      exclude,
 		stopCh:       make(chan struct{}),
 		delimiter:    delimiter,
+		limit:        limit,
 		Pods:         map[PodIdentifier]*Pod{},
 	}
 	go c.deleteLoop(deleteInterval, gracePeriod)
@@ -122,7 +125,7 @@ func New(
 		fieldSelector = addNodeSelector(fieldSelector, filters.Node)
 	}
 
-	c.informer = newInformer(c.kc, c.Filters.Namespace, labelSelector, fieldSelector)
+	c.informer = newInformer(logger, c.kc, c.Filters.Namespace, labelSelector, fieldSelector, c.limit)
 	return c, err
 }
 
@@ -323,7 +326,7 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 
 	if c.Rules.NodeName {
 		if len(pod.Spec.NodeName) == 0 {
-			c.logger.Warn("missing Node name for Pod, cache may be out of sync", zap.String("pod", pod.Name))
+			c.logger.Debug("missing Node name for Pod, cache may be out of sync", zap.String("pod", pod.Name))
 		}
 		tags[c.Rules.Tags.NodeName] = pod.Spec.NodeName
 	}
@@ -345,7 +348,7 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 		cs := pod.Status.ContainerStatuses[0]
 		if c.Rules.ContainerID {
 			if len(cs.ContainerID) == 0 {
-				c.logger.Warn("missing container ID for Pod, cache may be out of sync", zap.String("pod", pod.Name), zap.String("container_name", cs.Name))
+				c.logger.Debug("missing container ID for Pod, cache may be out of sync", zap.String("pod", pod.Name), zap.String("container_name", cs.Name))
 			}
 			tags[c.Rules.Tags.ContainerID] = cs.ContainerID
 		}

@@ -148,7 +148,7 @@ jobs:
             runs-on: ubuntu-20.04
             boringcrypto: true
           - arch_os: darwin_arm64
-            runs-on: macos-latest
+            runs-on: macos-15
           - arch_os: windows_amd64
             runs-on: windows-2022
     with:
@@ -168,7 +168,7 @@ jobs:
             runs-on: ubuntu-20.04
             boringcrypto: true
           - arch_os: darwin_amd64
-            runs-on: macos-latest
+            runs-on: macos-15
     with:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
@@ -200,7 +200,7 @@ jobs:
         run: dotnet test -v:n ./SumoLogicTests.dll
 
   lint:
-    name: Lint (golangci-lint)
+    name: Lint (staticcheck)
     runs-on: ubuntu-20.04
     needs: [ build-changed ]
     if: needs.build-changed.outputs.any_changed == 'true'
@@ -233,18 +233,18 @@ jobs:
       - uses: actions/cache/restore@v4
         with:
           path: |
-            /home/runner/.cache/golangci-lint
-          key: golangci-lint-${{ env.GO_VERSION }}-${{matrix.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
+            /home/runner/.cache/staticcheck
+          key: staticcheck-${{ env.GO_VERSION }}-${{matrix.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
           restore-keys: |
-            golangci-lint-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
+            staticcheck-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
 
-      - name: Install golangci-lint
-        run: make install-golangci-lint
+      - name: Install staticcheck
+        run: make install-staticcheck
 
       - name: Add opentelemetry-collector-builder installation dir to PATH
         run: echo "$HOME/bin" >> $GITHUB_PATH
 
-      - name: Run golangci-lint
+      - name: Run staticcheck
         run: make golint
 
   build:
@@ -261,9 +261,9 @@ jobs:
           - arch_os: linux_arm64
             runs-on: ubuntu-20.04
           - arch_os: darwin_amd64
-            runs-on: macos-latest
+            runs-on: macos-15
           - arch_os: darwin_arm64
-            runs-on: macos-latest
+            runs-on: macos-15
           - arch_os: windows_amd64
             runs-on: windows-2022
           - arch_os: windows_amd64
@@ -291,9 +291,9 @@ jobs:
       matrix:
         include:
           - arch_os: darwin_amd64
-            runs-on: macos-latest
+            runs-on: macos-15
           - arch_os: darwin_arm64
-            runs-on: macos-latest
+            runs-on: macos-15
           - arch_os: linux_amd64
             runs-on: ubuntu-20.04
           - arch_os: linux_amd64

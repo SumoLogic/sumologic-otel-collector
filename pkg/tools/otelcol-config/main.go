@@ -15,9 +15,8 @@ import (
 )
 
 const (
-	hostmetricsLinux  = "hostmetrics-linux.yaml"
-	hostmetricsDarwin = "hostmetrics-darwin.yaml"
-	ephemeralYAML     = "ephemeral.yaml"
+	hostmetricsYAML = "hostmetrics.yaml"
+	ephemeralYAML   = "ephemeral.yaml"
 )
 
 // errorCoder is here to give actions a way to set the exit status of the program
@@ -81,32 +80,53 @@ func getSortedActions(fs *pflag.FlagSet) []string {
 }
 
 func getConfDWriter(values *flagValues, fileName string) func(doc []byte) (int, error) {
+	docPath := filepath.Join(values.ConfigDir, ConfDotD, fileName)
+
 	return func(doc []byte) (int, error) {
-		return len(doc), os.WriteFile(filepath.Join(values.ConfigDir, ConfDotD, fileName), doc, 0600)
+		// os.WriteFile sets permissions before umask so we must call os.Chmod
+		// after the file is created
+		if err := os.WriteFile(docPath, doc, 0660); err != nil {
+			return 0, fmt.Errorf("error writing %s: %s", fileName, err)
+		}
+
+		if err := os.Chmod(docPath, 0660); err != nil {
+			return 0, fmt.Errorf("error setting %s permissions: %s", fileName, err)
+		}
+
+		if err := setConfigOwner(values, docPath); err != nil {
+			return len(doc), fmt.Errorf("error setting %s owner: %s", fileName, err)
+		}
+
+		return len(doc), nil
 	}
 }
 
 func getSumologicRemoteWriter(values *flagValues) func([]byte) (int, error) {
 	docPath := filepath.Join(values.ConfigDir, SumologicRemoteDotYaml)
+
 	return func(doc []byte) (int, error) {
 		if doc == nil {
 			// Special case: when doc is nil, we delete the file. This tells
-			// the packaging that it should not use --remote-config for
+			// the service managers that it should not use --remote-config for
 			// otelcol-sumo.
 			return 0, os.Remove(docPath)
 		}
-		return len(doc), os.WriteFile(docPath, doc, 0600)
-	}
-}
 
-func getHostMetricsFilename() string {
-	switch runtime.GOOS {
-	case "linux":
-		return hostmetricsLinux
-	case "darwin":
-		return hostmetricsDarwin
-	default:
-		panic("unsupported os: " + runtime.GOOS)
+		// os.WriteFile sets permissions before umask so we must call os.Chmod
+		// after the file is created
+		if err := os.WriteFile(docPath, doc, 0660); err != nil {
+			return 0, fmt.Errorf("error writing sumologic-remote.yaml: %s", err)
+		}
+
+		if err := os.Chmod(docPath, 0660); err != nil {
+			return 0, fmt.Errorf("error setting sumologic-remote.yaml permissions: %s", err)
+		}
+
+		if err := setConfigOwner(values, docPath); err != nil {
+			return len(doc), fmt.Errorf("error setting sumologic-remote.yaml owner: %s", err)
+		}
+
+		return len(doc), nil
 	}
 }
 
@@ -119,12 +139,18 @@ func getLinker(values *flagValues, filename string) func() error {
 	availPath := filepath.Join(values.ConfigDir, ConfDotDAvailable, filename)
 	configPath := filepath.Join(values.ConfigDir, ConfDotD, filename)
 	return func() error {
-		if err := os.Symlink(availPath, configPath); isLinkError(err) {
-			// if the link already exists, hostmetrics are already enabled
-			return nil
-		} else {
+		if err := os.Symlink(availPath, configPath); err != nil {
+			if isLinkError(err) {
+				// if the link already exists, feature is already enabled
+				return nil
+			}
 			return err
 		}
+
+		if err := setConfigOwner(values, configPath); err != nil {
+			return fmt.Errorf("error setting %s owner: %s", configPath, err)
+		}
+		return nil
 	}
 }
 
@@ -144,13 +170,11 @@ func getUnlinker(values *flagValues, filename string) func() error {
 }
 
 func getHostMetricsLinker(values *flagValues) func() error {
-	filename := getHostMetricsFilename()
-	return getLinker(values, filename)
+	return getLinker(values, hostmetricsYAML)
 }
 
 func getHostMetricsUnlinker(values *flagValues) func() error {
-	filename := getHostMetricsFilename()
-	return getUnlinker(values, filename)
+	return getUnlinker(values, hostmetricsYAML)
 }
 
 func getEphemeralLinker(values *flagValues) func() error {
@@ -171,14 +195,26 @@ func getSystemdEnabled() bool {
 	return strings.HasPrefix(string(b), "systemd")
 }
 
-func getInstallationTokenWriter(values *flagValues) func([]byte) (int, error) {
+func getLaunchdEnabled() bool {
+	// this may need to become more nuanced at some point
+	return runtime.GOOS == "darwin"
+}
+
+func getInstallationTokenEnvWriter(values *flagValues) func([]byte) (int, error) {
 	return func(token []byte) (int, error) {
 		tokenDir := filepath.Join(values.ConfigDir, "env")
-		if err := os.MkdirAll(tokenDir, 0700); err != nil {
+		if err := os.MkdirAll(tokenDir, 0770); err != nil {
 			return 0, err
 		}
 		tokenPath := filepath.Join(tokenDir, "token.env")
-		return len(token), os.WriteFile(tokenPath, token, 0600)
+		return len(token), os.WriteFile(tokenPath, token, 0660)
+	}
+}
+
+func getLaunchdConfigWriter(values *flagValues) func([]byte) (int, error) {
+	return func(config []byte) (int, error) {
+		configPath := filepath.Join(values.LaunchdDir, launchdConfigPlist)
+		return len(config), os.WriteFile(configPath, config, 0660)
 	}
 }
 
@@ -209,6 +245,7 @@ func main() {
 
 	ctx := &actionContext{
 		ConfigDir:                 os.DirFS(flagValues.ConfigDir),
+		LaunchdDir:                os.DirFS(flagValues.LaunchdDir),
 		Flags:                     flagValues,
 		Stdout:                    os.Stdout,
 		Stderr:                    os.Stderr,
@@ -220,7 +257,9 @@ func main() {
 		LinkEphemeral:             getEphemeralLinker(flagValues),
 		UnlinkEphemeral:           getEphemeralUnlinker(flagValues),
 		SystemdEnabled:            getSystemdEnabled(),
-		WriteInstallationTokenEnv: getInstallationTokenWriter(flagValues),
+		WriteInstallationTokenEnv: getInstallationTokenEnvWriter(flagValues),
+		LaunchdEnabled:            getLaunchdEnabled(),
+		WriteLaunchdConfig:        getLaunchdConfigWriter(flagValues),
 	}
 
 	if err := visitFlags(fs, ctx); err != nil {

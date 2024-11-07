@@ -128,6 +128,8 @@ func newOwnerProvider(
 		informers.WithTweakListOptions(func(opts *meta_v1.ListOptions) {
 			opts.LabelSelector = labelSelector.String()
 			opts.FieldSelector = fieldSelector.String()
+			// Unset resource version to get the latest data
+			opts.ResourceVersion = ""
 		}))
 
 	ownerCache.addNamespaceInformer(factory)
@@ -621,7 +623,7 @@ func (op *OwnerCache) GetOwners(pod *Pod) []*ObjectOwner {
 				}
 			}
 			// ownerReference may be empty
-			op.logger.Warn(
+			op.logger.Debug(
 				"missing owner data for Pod, cache may be out of sync",
 				zap.String("pod", pod.Name),
 				zap.String("owner_id", string(uid)),
