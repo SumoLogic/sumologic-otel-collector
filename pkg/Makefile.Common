@@ -3,7 +3,7 @@ ifeq ($(OS),Windows_NT)
 endif
 
 GOTEST=go test -race
-LINT=golangci-lint
+LINT=staticcheck
 
 .PHONY: test
 test:
@@ -16,7 +16,7 @@ fmt:
 
 .PHONY: lint
 lint:
-	$(LINT) run
+	$(LINT) .
 
 .PHONY: mod-download-all
 mod-download-all:
