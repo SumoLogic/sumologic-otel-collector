@@ -34,7 +34,7 @@ jobs:
           REPO: SumoLogic/sumologic-otel-collector-packaging
           WORKFLOW: build_packages.yml
         run: |
-          gh workflow run --repo ${REPO} ${WORKFLOW} --ref use-binary-version --json << EOF
+          gh workflow run --repo ${REPO} ${WORKFLOW} --json << EOF
             {
               "workflow_id": "${{ inputs.workflow_id }}"
             }
