@@ -223,9 +223,14 @@ jobs:
       - name: Run staticcheck
         run: make golint
 
+  get-version:
+    name: Get next available version
+    uses: ./.github/workflows/_get-version-workflow.yml
+
   build:
     name: Build
     uses: ./.github/workflows/workflow-build.yml
+    needs: [get-version]
     strategy:
       matrix:
         include:
@@ -249,6 +254,7 @@ jobs:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
+      version: ${{ needs.get-version.outputs.version }}
     secrets:
       apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
       apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
