@@ -57,10 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
-
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
+          fetch-depth: 0
 
       - name: Determine if MacOS package should be signed
         if: runner.os == 'macOS'

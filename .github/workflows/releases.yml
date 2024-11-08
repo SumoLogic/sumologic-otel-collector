@@ -315,9 +315,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
-
       - name: Archive Chef cookbook
         run: tar -cvf ./examples/chef/chef-cookbook.tar.gz -C ./examples/chef sumologic-otel-collector/
 

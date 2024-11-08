@@ -23,11 +23,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Get version
         id: get-version
         run: |
           version=$(./ci/get_version.sh full | xargs)-$(git rev-parse HEAD | xargs)
           echo "version=${version}" > $GITHUB_OUTPUT
+
       - name: Print version
         run: echo ::notice title=Version::${{ steps.get-version.outputs.version }}
 
