@@ -56,6 +56,8 @@ jobs:
       OTELCOL_FIPS_SUFFIX: ${{ inputs.fips && '-fips' || '' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Fetch current branch
         run: ./ci/fetch_current_branch.sh
