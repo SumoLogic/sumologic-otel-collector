@@ -187,7 +187,7 @@ jobs:
           grep "vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt.GetFipsAlgorithmMode"
 
       - name: Verify binary version
-        if: inputs.arch_os == 'linux_amd64'
+        if: inputs.arch_os == 'linux_amd64' || inputs.arch_os == "darwin_amd64"
         run: |
           binary=${{ steps.set-binary-name.outputs.binary_name }}
           binary_path=otelcolbuilder/cmd/${binary}
