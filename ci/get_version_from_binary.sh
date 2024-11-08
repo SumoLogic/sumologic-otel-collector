@@ -53,7 +53,7 @@ parse_version() {
 
     output="$(${binary_path} --version)"
 
-    regex=".* v([0-9]+)\.([0-9]+)\.([0-9]+)\-sumo\-([0-9]+).*"
+    regex=".* ([0-9]+)\.([0-9]+)\.([0-9]+)\-sumo\-([0-9]+).*"
 
     if [[ $output =~ $regex ]]; then
         major_version="${BASH_REMATCH[1]}"
