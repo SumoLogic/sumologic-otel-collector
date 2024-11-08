@@ -175,30 +175,6 @@ jobs:
       save-cache: true
       boringcrypto: ${{ matrix.boringcrypto == true }}
 
-  test-wixext:
-    name: Test (SumoLogic.wixext)
-    runs-on: windows-2019
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
-
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v2
-
-      - name: Restore NuGet packages
-        working-directory: ./packaging/msi/SumoLogic.wixext/SumoLogicTests
-        run: nuget.exe restore -PackagesDirectory ../packages
-
-      - name: Build unit tests
-        working-directory: ./packaging/msi/SumoLogic.wixext/SumoLogicTests
-        run: msbuild.exe -p:Configuration=Release -p:Platform=AnyCPU -Restore
-
-      - name: Run unit tests
-        working-directory: ./packaging/msi/SumoLogic.wixext/SumoLogicTests/bin/Release
-        run: dotnet test -v:n ./SumoLogicTests.dll
-
   lint:
     name: Lint (staticcheck)
     runs-on: ubuntu-20.04
@@ -404,4 +380,4 @@ jobs:
       - name: Test built image
         run: make test-built-image
 
-      # ToDo: build windows FIPS image
+      # TODO: build windows FIPS image

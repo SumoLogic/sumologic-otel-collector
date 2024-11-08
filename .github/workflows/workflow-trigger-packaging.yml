@@ -3,14 +3,10 @@ name: Trigger Packaging
 on:
   workflow_call:
     inputs:
-      create_release:
-        description: The packaging workflow will create a draft release in the packaging repository.
-        required: true
-        type: boolean
       workflow_id:
-        description: ID of the workflow to fetch artifacts from. If empty, artifacts will be fetched from the latest release.
+        description: ID of the Collector workflow that Packaging will fetch artifacts from.
         type: string
-        required: false
+        required: true
 
 defaults:
   run:
@@ -30,20 +26,6 @@ jobs:
           fetch-depth: 0
           filter: 'tree:0'
 
-      - name: Determine version core
-        id: version-core
-        run: >
-          ./ci/get_version.sh core > /tmp/version_core &&
-          cat /tmp/version_core &&
-          echo version=$(cat /tmp/version_core) >> $GITHUB_OUTPUT
-
-      - name: Determine sumo version
-        id: sumo-version
-        run: >
-          ./ci/get_version.sh sumo > /tmp/sumo_version &&
-          cat /tmp/sumo_version &&
-          echo version=$(cat /tmp/sumo_version) >> $GITHUB_OUTPUT
-
       # TODO: output the workflow url
       - name: Trigger packaging workflow
         id: trigger-packaging-workflow
@@ -52,12 +34,9 @@ jobs:
           REPO: SumoLogic/sumologic-otel-collector-packaging
           WORKFLOW: build_packages.yml
         run: |
-          gh workflow run --repo ${REPO} ${WORKFLOW} --json << EOF
+          gh workflow run --repo ${REPO} ${WORKFLOW} --ref use-binary-version --json << EOF
             {
-              "workflow_id": "${{ inputs.workflow_id }}",
-              "otc_version": "${{ steps.version-core.outputs.version }}",
-              "otc_sumo_version": "${{ steps.sumo-version.outputs.version }}",
-              "release": "${{ inputs.create_release }}"
+              "workflow_id": "${{ inputs.workflow_id }}"
             }
           EOF
 
@@ -65,9 +44,5 @@ jobs:
       # packaging workflow has completed.
       - name: Packaging Workflow URL
         run: echo ::notice title=Packaging Workflow URL::https://github.com/SumoLogic/sumologic-otel-collector-packaging/actions/workflows/build_packages.yml
-      - name: Workflow ID
-        run: echo ::notice title=Workflow ID::${{ inputs.workflow_id }}
-      - name: OTC Version
-        run: echo ::notice title=OTC Version::${{ steps.version-core.outputs.version }}
-      - name: OTC Sumo Version
-        run: echo ::notice title=OTC Sumo Version::${{ steps.sumo-version.outputs.version }}
+      - name: Collector Workflow ID
+        run: echo ::notice title=Collector Workflow ID::${{ inputs.workflow_id }}
