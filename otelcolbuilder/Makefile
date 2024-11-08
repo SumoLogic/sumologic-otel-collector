@@ -86,7 +86,7 @@ install-builder:
 
 .PHONY: _builder
 _builder:
-	$(eval VERSION ?= $(shell ./ci/get_version.sh full | xargs)-$(shell git rev-parse HEAD | xargs))
+	$(eval VERSION ?= $(shell ../ci/get_version.sh full | xargs)-$(shell git rev-parse HEAD | xargs))
 # Need to specify go path because otherwise opentelemetry-collector-builder
 # uses /usr/bin/go which on Github Actions is using preinstalled 1.15.12 by default.
 	CGO_ENABLED=$(CGO_ENABLED) $(BUILDER_BIN_NAME) \
