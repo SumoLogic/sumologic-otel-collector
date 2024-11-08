@@ -112,7 +112,7 @@ jobs:
         run: |
           echo "cache-key=go-build-${{ env.GO_VERSION }}${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}" >> $GITHUB_OUTPUT
           echo "restore-keys=go-build-${{ env.GO_VERSION }}${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}-" >> $GITHUB_OUTPUT
-          echo "toolchain-cache-key=toolchain-${{inputs.arch_os}}-${{ hashFiles('otelcolbuilder/build-fips/config.mak', 'otelcolbuilder/build-fips/Makefile') }}" >> $GITHUB_OUTPUT
+          echo "toolchain-cache-key=toolchain-${{inputs.arch_os}}-${{ hashFiles('toolchains/config.mak', 'toolchains/Makefile') }}" >> $GITHUB_OUTPUT
 
       - uses: actions/cache/restore@v4
         with:
