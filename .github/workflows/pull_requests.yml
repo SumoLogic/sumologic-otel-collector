@@ -175,32 +175,8 @@ jobs:
       save-cache: true
       boringcrypto: ${{ matrix.boringcrypto == true }}
 
-  test-wixext:
-    name: Test (SumoLogic.wixext)
-    runs-on: windows-2019
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
-
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v2
-
-      - name: Restore NuGet packages
-        working-directory: ./packaging/msi/SumoLogic.wixext/SumoLogicTests
-        run: nuget.exe restore -PackagesDirectory ../packages
-
-      - name: Build unit tests
-        working-directory: ./packaging/msi/SumoLogic.wixext/SumoLogicTests
-        run: msbuild.exe -p:Configuration=Release -p:Platform=AnyCPU -Restore
-
-      - name: Run unit tests
-        working-directory: ./packaging/msi/SumoLogic.wixext/SumoLogicTests/bin/Release
-        run: dotnet test -v:n ./SumoLogicTests.dll
-
   lint:
-    name: Lint (golangci-lint)
+    name: Lint (staticcheck)
     runs-on: ubuntu-20.04
     needs: [ build-changed ]
     if: needs.build-changed.outputs.any_changed == 'true'
@@ -233,23 +209,28 @@ jobs:
       - uses: actions/cache/restore@v4
         with:
           path: |
-            /home/runner/.cache/golangci-lint
-          key: golangci-lint-${{ env.GO_VERSION }}-${{matrix.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
+            /home/runner/.cache/staticcheck
+          key: staticcheck-${{ env.GO_VERSION }}-${{matrix.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
           restore-keys: |
-            golangci-lint-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
+            staticcheck-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
 
-      - name: Install golangci-lint
-        run: make install-golangci-lint
+      - name: Install staticcheck
+        run: make install-staticcheck
 
       - name: Add opentelemetry-collector-builder installation dir to PATH
         run: echo "$HOME/bin" >> $GITHUB_PATH
 
-      - name: Run golangci-lint
+      - name: Run staticcheck
         run: make golint
+
+  get-version:
+    name: Get next available version
+    uses: ./.github/workflows/_get-version-workflow.yml
 
   build:
     name: Build
     uses: ./.github/workflows/workflow-build.yml
+    needs: [get-version]
     strategy:
       matrix:
         include:
@@ -273,6 +254,7 @@ jobs:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
+      version: ${{ needs.get-version.outputs.version }}
     secrets:
       apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
       apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
@@ -332,7 +314,7 @@ jobs:
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3.6.1
+        uses: docker/setup-buildx-action@v3.7.1
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -404,4 +386,4 @@ jobs:
       - name: Test built image
         run: make test-built-image
 
-      # ToDo: build windows FIPS image
+      # TODO: build windows FIPS image

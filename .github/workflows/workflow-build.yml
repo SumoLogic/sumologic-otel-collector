@@ -22,6 +22,10 @@ on:
         description: Save the module and build caches.
         default: false
         type: boolean
+      version:
+        description: Version to use when building the binary
+        required: true
+        type: string
     secrets:
       apple_developer_certificate_p12_base64:
         required: false
@@ -46,6 +50,7 @@ defaults:
 
 env:
   GO_VERSION: "1.22.6"
+  VERSION: ${{ inputs.version }}
 
 jobs:
   build:
@@ -56,9 +61,6 @@ jobs:
       OTELCOL_FIPS_SUFFIX: ${{ inputs.fips && '-fips' || '' }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
 
       - name: Determine if MacOS package should be signed
         if: runner.os == 'macOS'
@@ -186,6 +188,14 @@ jobs:
           go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
           grep "vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt.GetFipsAlgorithmMode"
 
+      - name: Verify binary version
+        if: inputs.arch_os == 'linux_amd64' || inputs.arch_os == 'darwin_amd64'
+        run: |
+          binary=${{ steps.set-binary-name.outputs.binary_name }}
+          binary_path=otelcolbuilder/cmd/${binary}
+          ./ci/get_version_from_binary.sh otc "${binary_path}"
+          ./ci/get_version_from_binary.sh sumo "${binary_path}"
+
       - uses: apple-actions/import-codesign-certs@v3
         if: ${{ runner.os == 'macOS' && env.MACOS_SIGNING_ENABLED == 'true' }}
         with:
@@ -197,7 +207,10 @@ jobs:
         env:
           AC_PASSWORD: ${{ secrets.app_store_connect_password }}
         working-directory: ./otelcolbuilder/
-        run: make ${{ inputs.arch_os }}-sign
+        run: |
+          for i in $(seq 1 5); do
+          make ${{ inputs.arch_os }}-sign && break || sleep 5
+          done
 
       - name: Sign Windows binary
         if: runner.os == 'Windows' && env.WINDOWS_SIGNING_ENABLED == 'true'
