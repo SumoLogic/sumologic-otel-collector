@@ -26,8 +26,8 @@ jobs:
       - name: Get version
         id: get-version
         run: |
-          TAG=$(git describe --tags --abbrev=5 --match "v[0-9]*")
-          echo "version=${TAG/v}" > $GITHUB_OUTPUT
+          version=$(./ci/get_version.sh full | xargs)-$(git rev-parse HEAD | xargs)
+          echo "version=${version}" > $GITHUB_OUTPUT
       - name: Print version
         run: echo ::notice title=Version::${{ steps.get-version.outputs.version }}
 
