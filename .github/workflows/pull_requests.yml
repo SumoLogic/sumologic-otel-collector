@@ -33,6 +33,25 @@ jobs:
             **/Makefile.common
             **/Dockerfile*
 
+  get-version:
+    name: Get application version for this revision
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: get-version
+        run: |
+          version=$(./ci/get_version.sh full | xargs)-$(git rev-parse HEAD | xargs)
+          echo "version=${version}" > $GITHUB_OUTPUT
+
+      - name: Print version
+        run: echo ::notice title=Version::${{ steps.get-version.outputs.version }}
+
   markdownlint:
     runs-on: ubuntu-20.04
     steps:
@@ -249,6 +268,7 @@ jobs:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
+      version: ${{ needs.get-version.outputs.version }}
     secrets:
       apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
       apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
