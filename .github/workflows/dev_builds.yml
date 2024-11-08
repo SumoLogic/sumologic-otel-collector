@@ -14,23 +14,6 @@ env:
   GO_VERSION: "1.22.6"
 
 jobs:
-  get-version:
-    name: Get application version for this revision
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.get-version.outputs.version }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Get version
-        id: get-version
-        run: |
-          TAG=$(git describe --tags --abbrev=5 --match "v[0-9]*")
-          echo "version=${TAG/v}" > $GITHUB_OUTPUT
-      - name: Print version
-        run: echo ::notice title=Version::${{ steps.get-version.outputs.version }}
-
   # Add lint to dev builds as that's the only way for cache to be shared across branches.
   # https://docs.github.com/en/actions/advanced-guides/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
   lint:
@@ -119,6 +102,10 @@ jobs:
       save-cache: true
       boringcrypto: ${{ matrix.boringcrypto == true }}
 
+  get-version:
+    name: Get next available version
+    uses: ./.github/workflows/_get-version-workflow.yml
+
   build:
     name: Build
     uses: ./.github/workflows/workflow-build.yml
@@ -151,7 +138,7 @@ jobs:
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
       save-cache: true
-      sumo_component_gomod_version: "v${{ needs.get-version.outputs.version }}"
+      version: ${{ needs.get-version.outputs.version }}
     secrets:
       apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
       apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}

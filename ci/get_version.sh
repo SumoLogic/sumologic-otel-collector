@@ -7,7 +7,7 @@ declare -i sumo_version
 
 usage() {
   cat <<EOF
-Usage: $(basename "${BASH_SOURCE[0]}") [-h] [core|sumo|productversion]
+Usage: $(basename "${BASH_SOURCE[0]}") [-h] [core|sumo|full|productversion]
 
 Detects the version to use for building otelcol-sumo using a combination of the
 otelcol-builder config and Git tags. It can output version information in
