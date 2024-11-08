@@ -7,7 +7,7 @@ declare -i sumo_version
 
 usage() {
   cat <<EOF
-Usage: $(basename "${BASH_SOURCE[0]}") [-h] [otc|sumo] [path/to/otelcol-sumo]
+Usage: $(basename "${BASH_SOURCE[0]}") [-h] [core|sumo|productversion] [path/to/otelcol-sumo]
 
 Retrieves the version of an otelcol-sumo binary by parsing the output of
 otelcol-sumo's version flag.

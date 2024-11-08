@@ -186,6 +186,14 @@ jobs:
           go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
           grep "vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt.GetFipsAlgorithmMode"
 
+      - name: Verify binary version
+        if: inputs.arch_os == 'linux_amd64'
+        run: |
+          binary=${{ steps.set-binary-name.outputs.binary_name }}
+          binary_path=otelcolbuilder/cmd/${binary}
+          ./ci/get_version_from_binary.sh otc "${binary_path}"
+          ./ci/get_version_from_binary.sh sumo "${binary_path}"
+
       - uses: apple-actions/import-codesign-certs@v3
         if: ${{ runner.os == 'macOS' && env.MACOS_SIGNING_ENABLED == 'true' }}
         with:
