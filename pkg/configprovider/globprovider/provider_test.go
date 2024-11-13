@@ -30,7 +30,7 @@ import (
 )
 
 func TestValidateProviderScheme(t *testing.T) {
-	assert.NoError(t, ValidateProviderScheme(NewWithSettings(confmap.ProviderSettings{})))
+	assert.NoError(t, ValidateProviderScheme(globprovider.NewWithSettings(confmap.ProviderSettings{})))
 }
 
 func TestEmptyName(t *testing.T) {
@@ -79,7 +79,7 @@ func ValidateProviderScheme(p confmap.Provider) error {
 
 func TestSetRemotelyManagedMergeFlow(t *testing.T) {
 	fp := globprovider.NewWithSettings(confmap.ProviderSettings{}).(*globprovider.Provider)
-	assert.False(t, fp.remotelyManagedMergeFlow, "Expected remotelyManagedMergeFlow to be false by default")
+	assert.False(t, fp.GetRemotelyManagedMergeFlow(), "Expected remotelyManagedMergeFlow to be false by default")
 	fp.SetRemotelyManagedMergeFlow(true)
-	assert.True(t, fp.remotelyManagedMergeFlow, "Expected remotelyManagedMergeFlow to be true after calling SetRemotelyManagedMergeFlow(true)")
+	assert.True(t, fp.GetRemotelyManagedMergeFlow(), "Expected remotelyManagedMergeFlow to be true after calling SetRemotelyManagedMergeFlow(true)")
 }
