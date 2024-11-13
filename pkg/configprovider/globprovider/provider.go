@@ -45,7 +45,7 @@ func NewFactory() confmap.ProviderFactory {
 }
 
 func (fmp *provider) SetRemotelyManagedMergeFlow(enable bool) {
-    fmp.useReplaceBehavior = enable
+    fmp.remotelyManagedMergeFlow = enable
 }
 
 func (fmp *provider) Retrieve(ctx context.Context, uri string, _ confmap.WatcherFunc) (*confmap.Retrieved, error) {
