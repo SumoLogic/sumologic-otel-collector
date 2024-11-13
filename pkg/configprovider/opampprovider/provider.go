@@ -85,6 +85,7 @@ func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.W
 	}
 	conf := confmap.New()
 	glob := p.GlobProvider
+	glob.SetRemotelyManagedMergeFlow(true)
 	retrieved, err := glob.Retrieve(ctx, glob.Scheme()+":"+filepath.Join(cfg.ConfigDir(), "*.yaml"), fn)
 	if err != nil {
 		return nil, err
