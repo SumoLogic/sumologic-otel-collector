@@ -37,18 +37,18 @@ type Provider struct{
 }
 
 func NewWithSettings(_ confmap.ProviderSettings) confmap.Provider {
-	return &provider{}
+	return &Provider{}
 }
 
 func NewFactory() confmap.ProviderFactory {
 	return confmap.NewProviderFactory(NewWithSettings)
 }
 
-func (fmp *provider) SetRemotelyManagedMergeFlow(enable bool) {
+func (fmp *Provider) SetRemotelyManagedMergeFlow(enable bool) {
     fmp.remotelyManagedMergeFlow = enable
 }
 
-func (fmp *provider) Retrieve(ctx context.Context, uri string, _ confmap.WatcherFunc) (*confmap.Retrieved, error) {
+func (fmp *Provider) Retrieve(ctx context.Context, uri string, _ confmap.WatcherFunc) (*confmap.Retrieved, error) {
 	var rawConf map[string]interface{}
 	if !strings.HasPrefix(uri, schemePrefix) {
 		return &confmap.Retrieved{}, fmt.Errorf("%q uri is not supported by %q provider", uri, schemeName)
@@ -85,10 +85,10 @@ func (fmp *provider) Retrieve(ctx context.Context, uri string, _ confmap.Watcher
 	return confmap.NewRetrieved(conf.ToStringMap())
 }
 
-func (*provider) Scheme() string {
+func (*Provider) Scheme() string {
 	return schemeName
 }
 
-func (fmp *provider) Shutdown(context.Context) error {
+func (fmp *Provider) Shutdown(context.Context) error {
 	return nil
 }
