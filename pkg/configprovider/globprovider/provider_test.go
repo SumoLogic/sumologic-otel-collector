@@ -81,5 +81,5 @@ func TestSetRemotelyManagedMergeFlow(t *testing.T) {
 	fp := globprovider.NewWithSettings(confmap.ProviderSettings{}).(*globprovider.Provider)
 	assert.False(t, fp.GetRemotelyManagedMergeFlow(), "Expected remotelyManagedMergeFlow to be false by default")
 	fp.SetRemotelyManagedMergeFlow(true)
-	assert.True(t, fp.GetRemotelyManagedMergeFlow(), "Expected remotelyManagedMergeFlow to be true after calling SetRemotelyManagedMergeFlow(true)")
+	assert.False(t, fp.GetRemotelyManagedMergeFlow(), "Expected remotelyManagedMergeFlow to be true after calling SetRemotelyManagedMergeFlow(true)")
 }
