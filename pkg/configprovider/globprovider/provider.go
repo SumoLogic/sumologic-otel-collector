@@ -74,13 +74,9 @@ func (fmp *provider) Retrieve(ctx context.Context, uri string, _ confmap.Watcher
 			return &confmap.Retrieved{}, err
 		}
 		pathConf := confmap.NewFromStringMap(rawConf)
-<<<<<<< Updated upstream
-		providerutil.PrepareForReplaceBehavior(conf, pathConf)
-=======
 		if fmp.remotelyManagedMergeFlow {
 			providerutil.PrepareForReplaceBehavior(conf, pathConf)
 		}
->>>>>>> Stashed changes
 		if err := conf.Merge(pathConf); err != nil {
 			return &confmap.Retrieved{}, err
 		}
