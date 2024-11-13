@@ -159,3 +159,10 @@ func ValidateProviderScheme(p confmap.Provider) error {
 
 	return nil
 }
+
+func TestSetRemotelyManagedMergeFlow(t *testing.T) {
+	fp := NewWithSettings(confmap.ProviderSettings{}).(*globprovider.Provider)
+	assert.False(t, fp.remotelyManagedMergeFlow, "Expected remotelyManagedMergeFlow to be false by default")
+	prov.SetRemotelyManagedMergeFlow(true)
+	assert.True(t, fp.remotelyManagedMergeFlow, "Expected remotelyManagedMergeFlow to be true after calling SetRemotelyManagedMergeFlow(true)")
+}
