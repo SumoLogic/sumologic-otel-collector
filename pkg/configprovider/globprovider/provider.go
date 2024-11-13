@@ -32,7 +32,7 @@ const (
 	schemePrefix = schemeName + ":"
 )
 
-type provider struct{
+type Provider struct{
 	remotelyManagedMergeFlow bool
 }
 
