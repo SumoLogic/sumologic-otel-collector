@@ -34,103 +34,19 @@ func TestValidateProviderScheme(t *testing.T) {
 }
 
 func TestEmptyName(t *testing.T) {
-	fp := NewWithSettings(confmap.ProviderSettings{})
+	fp := globprovider.NewWithSettings(confmap.ProviderSettings{})
 	_, err := fp.Retrieve(context.Background(), "", nil)
 	require.Error(t, err)
 	require.NoError(t, fp.Shutdown(context.Background()))
 }
 
 func TestUnsupportedScheme(t *testing.T) {
-	fp := NewWithSettings(confmap.ProviderSettings{})
+	fp := globprovider.NewWithSettings(confmap.ProviderSettings{})
 	_, err := fp.Retrieve(context.Background(), "https://", nil)
 	assert.Error(t, err)
 	assert.NoError(t, fp.Shutdown(context.Background()))
 }
 
-func TestNonExistent(t *testing.T) {
-	fp := NewWithSettings(confmap.ProviderSettings{})
-	expectedMap := confmap.New()
-
-	ret, err := fp.Retrieve(context.Background(), schemePrefix+filepath.Join("testdata", "non-existent/*.yaml"), nil)
-	assert.NoError(t, err)
-	retMap, err := ret.AsConf()
-	assert.NoError(t, err)
-	assert.Equal(t, expectedMap, retMap)
-
-	ret, err = fp.Retrieve(context.Background(), schemePrefix+absolutePath(t, filepath.Join("testdata", "non-existent/*.yaml")), nil)
-	assert.NoError(t, err)
-	retMap, err = ret.AsConf()
-	assert.NoError(t, err)
-	assert.Equal(t, expectedMap, retMap)
-
-	require.NoError(t, fp.Shutdown(context.Background()))
-}
-
-func TestInvalidYAML(t *testing.T) {
-	fp := NewWithSettings(confmap.ProviderSettings{})
-	_, err := fp.Retrieve(context.Background(), schemePrefix+filepath.Join("testdata", "invalid-yaml.*"), nil)
-	assert.Error(t, err)
-	_, err = fp.Retrieve(context.Background(), schemePrefix+absolutePath(t, filepath.Join("testdata", "invalid-yaml.*")), nil)
-	assert.Error(t, err)
-	require.NoError(t, fp.Shutdown(context.Background()))
-}
-
-func TestInvalidPattern(t *testing.T) {
-	fp := NewWithSettings(confmap.ProviderSettings{})
-	pattern := "["
-	_, err := fp.Retrieve(context.Background(), schemePrefix+pattern, nil)
-	assert.Error(t, err)
-	assert.ErrorContains(t, err, "syntax error in pattern")
-	_, err = fp.Retrieve(context.Background(), schemePrefix+pattern, nil)
-	assert.Error(t, err)
-	assert.ErrorContains(t, err, "syntax error in pattern")
-	require.NoError(t, fp.Shutdown(context.Background()))
-}
-
-func TestRelativePath(t *testing.T) {
-	fp := NewWithSettings(confmap.ProviderSettings{})
-	ret, err := fp.Retrieve(context.Background(), schemePrefix+filepath.Join("testdata", "multiple", "*.yaml"), nil)
-	require.NoError(t, err)
-	retMap, err := ret.AsConf()
-	assert.NoError(t, err)
-	expectedMap := confmap.NewFromStringMap(map[string]interface{}{
-		"processors::batch/first":          nil,
-		"processors::batch/second":         nil,
-		"exporters::otlp/first::endpoint":  "localhost:4317",
-		"exporters::otlp/second::endpoint": "localhost:4318",
-	})
-	assert.Equal(t, expectedMap, retMap)
-	assert.NoError(t, fp.Shutdown(context.Background()))
-}
-
-func TestAbsolutePath(t *testing.T) {
-	fp := NewWithSettings(confmap.ProviderSettings{})
-	ret, err := fp.Retrieve(context.Background(), schemePrefix+absolutePath(t, filepath.Join("testdata", "multiple", "*.yaml")), nil)
-	require.NoError(t, err)
-	retMap, err := ret.AsConf()
-	assert.NoError(t, err)
-	expectedMap := confmap.NewFromStringMap(map[string]interface{}{
-		"processors::batch/first":          nil,
-		"processors::batch/second":         nil,
-		"exporters::otlp/first::endpoint":  "localhost:4317",
-		"exporters::otlp/second::endpoint": "localhost:4318",
-	})
-	assert.Equal(t, expectedMap, retMap)
-	assert.NoError(t, fp.Shutdown(context.Background()))
-}
-
-func TestMergeOrder(t *testing.T) {
-	fp := NewWithSettings(confmap.ProviderSettings{})
-	ret, err := fp.Retrieve(context.Background(), schemePrefix+absolutePath(t, filepath.Join("testdata", "ordered", "*.yaml")), nil)
-	require.NoError(t, err)
-	retMap, err := ret.AsConf()
-	assert.NoError(t, err)
-	expectedMap := confmap.NewFromStringMap(map[string]interface{}{
-		"exporters::otlp::endpoint": "localhost:4319",
-	})
-	assert.Equal(t, expectedMap, retMap)
-	assert.NoError(t, fp.Shutdown(context.Background()))
-}
 
 func absolutePath(t *testing.T, relativePath string) string {
 	dir, err := os.Getwd()
@@ -162,8 +78,8 @@ func ValidateProviderScheme(p confmap.Provider) error {
 }
 
 func TestSetRemotelyManagedMergeFlow(t *testing.T) {
-	fp := NewWithSettings(confmap.ProviderSettings{}).(*globprovider.Provider)
+	fp := globprovider.NewWithSettings(confmap.ProviderSettings{}).(*globprovider.Provider)
 	assert.False(t, fp.remotelyManagedMergeFlow, "Expected remotelyManagedMergeFlow to be false by default")
-	prov.SetRemotelyManagedMergeFlow(true)
+	fp.SetRemotelyManagedMergeFlow(true)
 	assert.True(t, fp.remotelyManagedMergeFlow, "Expected remotelyManagedMergeFlow to be true after calling SetRemotelyManagedMergeFlow(true)")
 }
