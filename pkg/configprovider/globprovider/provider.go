@@ -32,7 +32,9 @@ const (
 	schemePrefix = schemeName + ":"
 )
 
-type provider struct{}
+type Provider struct{
+	remotelyManagedMergeFlow bool
+}
 
 func NewWithSettings(_ confmap.ProviderSettings) confmap.Provider {
 	return &provider{}
@@ -40,6 +42,10 @@ func NewWithSettings(_ confmap.ProviderSettings) confmap.Provider {
 
 func NewFactory() confmap.ProviderFactory {
 	return confmap.NewProviderFactory(NewWithSettings)
+}
+
+func (fmp *Provider) SetRemotelyManagedMergeFlow(enable bool) {
+    fmp.remotelyManagedMergeFlow = enable
 }
 
 func (fmp *provider) Retrieve(ctx context.Context, uri string, _ confmap.WatcherFunc) (*confmap.Retrieved, error) {
@@ -68,7 +74,13 @@ func (fmp *provider) Retrieve(ctx context.Context, uri string, _ confmap.Watcher
 			return &confmap.Retrieved{}, err
 		}
 		pathConf := confmap.NewFromStringMap(rawConf)
+<<<<<<< Updated upstream
 		providerutil.PrepareForReplaceBehavior(conf, pathConf)
+=======
+		if fmp.remotelyManagedMergeFlow {
+			providerutil.PrepareForReplaceBehavior(conf, pathConf)
+		}
+>>>>>>> Stashed changes
 		if err := conf.Merge(pathConf); err != nil {
 			return &confmap.Retrieved{}, err
 		}
