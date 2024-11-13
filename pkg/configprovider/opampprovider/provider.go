@@ -85,7 +85,7 @@ func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.W
 	}
 	conf := confmap.New()
 	glob := p.GlobProvider
-	if globProvider, ok := glob.(*globprovider.provider); ok {
+	if globProvider, ok := glob.(*globprovider.Provider); ok {
         	globProvider.SetRemotelyManagedMergeFlow(true)
 	}
 	
