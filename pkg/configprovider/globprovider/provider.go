@@ -48,6 +48,10 @@ func (fmp *Provider) SetRemotelyManagedMergeFlow(enable bool) {
     fmp.remotelyManagedMergeFlow = enable
 }
 
+func (fmp *Provider) GetRemotelyManagedMergeFlow() bool {
+	return fmp.remotelyManagedMergeFlow
+}
+
 func (fmp *Provider) Retrieve(ctx context.Context, uri string, _ confmap.WatcherFunc) (*confmap.Retrieved, error) {
 	var rawConf map[string]interface{}
 	if !strings.HasPrefix(uri, schemePrefix) {
