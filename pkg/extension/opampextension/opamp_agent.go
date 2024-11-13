@@ -463,7 +463,7 @@ func (o *opampAgent) composeEffectiveConfig() *protobufs.EffectiveConfig {
 }
 
 func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (configChanged bool, err error) {
-	o.logger.Debug("Received remote config from OpAMP server", zap.ByteString("hash", config.ConfigHash))
+	o.logger.Info("Received remote config from OpAMP server", zap.ByteString("hash", config.ConfigHash))
 
 	if !o.cfg.AcceptsRemoteConfiguration {
 		return false, fmt.Errorf("OpAMP agent does not accept remote configuration")
@@ -480,6 +480,7 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 		}
 
 		fb, err := k.Marshal(yaml.Parser())
+
 		if err != nil {
 			return false, fmt.Errorf("cannot marshal config named %s: %v", n, err)
 		}
@@ -489,6 +490,7 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 
 	configChanged = false
 	if !reflect.DeepEqual(o.effectiveConfig, nec) {
+		o.logger.Info("Start saving effective config")
 		oec := o.effectiveConfig
 		o.effectiveConfig = nec
 
