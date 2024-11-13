@@ -1,88 +1,85 @@
-name: Releases
+name: 'Publish release'
+
+run-name: >
+  ${{ format('Publish Release for Workflow: {0}', inputs.workflow_id) }}
 
 on:
-  push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
-      - "v[0-9]+.[0-9]+.[0-9]+-alpha.[0-9]+"
-      - "v[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+"
-      - "v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+"
-
-      - "v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+"
-      - "v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-alpha.[0-9]+"
-      - "v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-beta.[0-9]+"
-      - "v[0-9]+.[0-9]+.[0-9]+-sumo-[0-9]+-rc.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      workflow_id:
+        description: |
+          Workflow Run ID from this repository to fetch artifacts from for this
+          release.
+        required: true
+        type: string
 
 defaults:
   run:
     shell: bash
-
-env:
-  GO_VERSION: "1.22.6"
 
 jobs:
   get-version:
     name: Get application version for this revision
     runs-on: ubuntu-latest
     outputs:
+      sha: ${{ steps.get-sha.outputs.git-sha }}
+      otc-version: ${{ steps.get-version.outputs.otc-version }}
+      sumo-version: ${{ steps.get-version.outputs.sumo-version }}
       version: ${{ steps.get-version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Outuput Workflow ID
+        run: echo ::notice title=Workflow ID::${{ inputs.workflow_id }}
+
+      - name: Output Workflow URL
+        run: |
+          repo_url="https://github.com/SumoLogic/sumologic-otel-collector"
+          url="${repo_url}/actions/runs/${{ inputs.workflow_id }}"
+          echo ::notice title=Workflow URL::${url}
+
+      - name: Download otelcol-sumo artifact from workflow
+        uses: actions/download-artifact@v4
         with:
-          fetch-depth: 0
-      - name: Get version
+          name: otelcol-sumo-linux_amd64
+          path: artifacts/
+          merge-multiple: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.workflow_id }}
+
+      - name: Determine version from artifact
         id: get-version
         run: |
-          echo "version=$(echo ${GITHUB_REF#refs/tags/v})" > $GITHUB_OUTPUT
-      - name: Print version
-        run: echo ::notice title=Version::${{ steps.get-version.outputs.version }}
+          artifact="artifacts/otelcol-sumo-linux_amd64"
+          chmod +x "${artifact}"
+          script="ci/get_version_from_binary.sh"
+          core="$("$script" core "${artifact}")"
+          sumo="$("$script" sumo "${artifact}")"
+          echo "otc-version=$core" >> $GITHUB_OUTPUT
+          echo "sumo-version=$sumo" >> $GITHUB_OUTPUT
+          echo "version=${core}-sumo-${sumo}" >> $GITHUB_OUTPUT
 
-  build:
-    name: Build
-    uses: ./.github/workflows/workflow-build.yml
-    needs: [get-version]
-    strategy:
-      matrix:
-        include:
-          - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
-            fips: true
-          - arch_os: linux_arm64
-            runs-on: ubuntu-20.04
-          - arch_os: linux_arm64
-            runs-on: ubuntu-20.04
-            fips: true
-          - arch_os: darwin_amd64
-            runs-on: macos-15
-          - arch_os: darwin_arm64
-            runs-on: macos-15
-          - arch_os: windows_amd64
-            runs-on: windows-2022
-          - arch_os: windows_amd64
-            runs-on: windows-2022
-            fips: true
-    with:
-      arch_os: ${{ matrix.arch_os }}
-      runs-on: ${{ matrix.runs-on }}
-      fips: ${{ matrix.fips == true }}
-      sumo_component_gomod_version: "v${{ needs.get-version.outputs.version }}"
-    secrets:
-      apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-      apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
-      app_store_connect_password: ${{ secrets.AC_PASSWORD }}
-      microsoft_certificate: ${{ secrets.MICROSOFT_CERTIFICATE }}
-      microsoft_certificate_password: ${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}
-      microsoft_certificate_hash: ${{ secrets.MICROSOFT_CERTHASH }}
-      microsoft_certificate_name: ${{ secrets.MICROSOFT_CERTNAME }}
-      microsoft_description: ${{ secrets.MICROSOFT_DESCRIPTION }}
+      - name: Output Version
+        run: |
+          echo ::notice title=Version::${{ steps.get-version.outputs.version }}
+
+      - name: Determine Git SHA of workflow
+        id: get-sha
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          workflow="${{ inputs.workflow_id }}"
+          sha="$(gh run view ${workflow} --json headSha -t '{{.headSha}}')"
+          echo "git-sha=$sha" >> $GITHUB_OUTPUT
+
+      - name: Output Git SHA
+        run: |
+          echo ::notice title=Git SHA::${{ steps.get-sha.outputs.git-sha }}
 
   build-container-images:
     name: Build container
     runs-on: ubuntu-20.04
     needs:
-      - build
       - get-version
     strategy:
       matrix:
@@ -95,7 +92,7 @@ jobs:
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3.6.1
+        uses: docker/setup-buildx-action@v3.7.1
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -112,17 +109,13 @@ jobs:
             --username ${{ secrets.DOCKERHUB_LOGIN }} \
             --password ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Download binary action artifact from build phase
+      - name: Download platform otelcol-sumo artifacts from workflow
         uses: actions/download-artifact@v4
         with:
-          name: otelcol-sumo-${{matrix.arch_os}}
+          pattern: otelcol-sumo-*-${{ matrix.arch_os }}
           path: artifacts/
-
-      - name: Download binary action artifact from build phase (FIPS)
-        uses: actions/download-artifact@v4
-        with:
-          name: otelcol-sumo-fips-${{matrix.arch_os}}
-          path: artifacts/
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.workflow_id }}
 
       - name: Build and push FIPS image to Open Source ECR
         run: |
@@ -196,7 +189,6 @@ jobs:
     needs:
       # Require darwin build to succeed to prevent pushing container images
       # when darwin build fails.
-      - build
       - build-container-images
       - get-version
     steps:
@@ -207,7 +199,7 @@ jobs:
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3.6.1
+        uses: docker/setup-buildx-action@v3.7.1
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -282,69 +274,19 @@ jobs:
             REPO_URL=sumologic/sumologic-otel-collector \
             BUILD_TYPE_SUFFIX="-ubi"
 
-  package-msi:
-    name: Package MSI
-    runs-on: windows-2019
-    needs:
-      - build
-    strategy:
-      matrix:
-        include:
-          - arch_os: windows_amd64
-            platform: x64
-            fips: false
-          - arch_os: windows_amd64
-            platform: x64
-            fips: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
-
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v2
-
-      - name: Fetch binary artifact for ${{ matrix.arch_os }} ${{ matrix.fips && '(FIPS)' || '' }}
-        uses: actions/download-artifact@v4
-        with:
-          name: otelcol-sumo${{ matrix.fips && '-fips' || '' }}-windows_amd64.exe
-          path: ./otelcolbuilder/cmd
-
-      - name: Rename FIPS binary artifact for ${{ matrix.arch_os }}
-        if: matrix.fips
-        working-directory: ./otelcolbuilder/cmd
-        run: mv otelcol-sumo${{ matrix.fips && '-fips' || '' }}-windows_amd64.exe otelcol-sumo-${{ matrix.arch_os }}.exe
-
-      - name: Set PRODUCT_VERSION
-        run: echo "PRODUCT_VERSION=$(./ci/get_version.sh productversion)" >> $GITHUB_ENV
-
-      - name: Build MSI for ${{ matrix.arch_os }}
-        working-directory: ./packaging/msi/wix
-        run: msbuild.exe -p:Configuration=Release -p:Platform=${{ matrix.platform }} -p:ProductVersion=$PRODUCT_VERSION -p:FIPSEnabled=${{ matrix.fips }} -Restore
-
-      - name: Sign MSI
-        uses: skymatic/code-sign-action@v3
-        with:
-          certificate: "${{ secrets.MICROSOFT_CERTIFICATE }}"
-          password: "${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}"
-          certificatesha1: "${{ secrets.MICROSOFT_CERTHASH }}"
-          certificatename: "${{ secrets.MICROSOFT_CERTNAME }}"
-          description: "${{ secrets.MICROSOFT_DESCRIPTION }}"
-          folder: ./packaging/msi/wix/bin/${{ matrix.platform }}/en-US
-
-      - name: Store MSI as action artifact for ${{ matrix.arch_os }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.arch_os }}${{ matrix.fips && '_fips' || '' }}_msi
-          path: ./packaging/msi/wix/bin/${{ matrix.platform }}/en-US/*.msi
-          if-no-files-found: error
-
   # Store the install script from the packaging repository as a release artifact.
   # Originally, this script was stored in this repository, and the official download url pointed
   # to the most recent release here. The script has since been moved to the packaging repository.
   # It is kept here for backwards compatibility. Once the download count for this artifact
   # reaches 0 for new releases, this can be removed.
+  #
+  # TODO: This pulls the latest install scripts from the main branch of the
+  # packaging reopsitory. There is a chance that the install scripts attached to
+  # a collector release will differ from the install scripts attached to a
+  # packaging release. We can either remove install scripts from releases here
+  # or we should ensure that the install scripts are always automically synced
+  # to this repository and use the install scripts from the HEAD SHA of the
+  # collector workflow run specified for a release.
   install-script:
     name: Store install script
     runs-on: ubuntu-latest
@@ -372,9 +314,6 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
-
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
 
       - name: Archive Chef cookbook
         run: tar -cvf ./examples/chef/chef-cookbook.tar.gz -C ./examples/chef sumologic-otel-collector/
@@ -411,32 +350,42 @@ jobs:
     name: Create Github release
     runs-on: ubuntu-20.04
     needs:
-      - build
+      - get-version
       - build-container-images
       - push-docker-manifest
-      - package-msi
-      - get-version
     steps:
-      - name: Download all binaries stored as artifact
+      - name: Download all artifacts from workflow
         uses: actions/download-artifact@v4
         with:
           path: artifacts/
           merge-multiple: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.workflow_id }}
+
       - name: Add version to binary names
         working-directory: artifacts/
         run: |
+          version="${{ needs.get-version.outputs.version }}"
           find . -type f -name 'otelcol-sumo*' \
-            | grep -v '\.msi' \
             | sed 's/^\.\///' \
             | while read -r file; do
-              new_name=$(echo "$file" | sed 's/otelcol-sumo/otelcol-sumo-${{ needs.get-version.outputs.version }}/g')
+              new_name=$(echo "$file" | sed "s/otelcol-sumo/otelcol-sumo-${version}/g")
               mv "$file" "$new_name"
           done
+          find . -type f -name 'otelcol-config*' \
+            | sed 's/^\.\///' \
+            | while read -r file; do
+              new_name=$(echo "$file" | sed "s/otelcol-config/otelcol-config-${version}/g")
+              mv "$file" "$new_name"
+          done
+
       - uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           draft: true
           prerelease: false
+          commit: ${{ needs.get-sha.outputs.git-sha }}
+          tag: v${{ needs.get-version.outputs.version }}
 
           allowUpdates: true
           omitBodyDuringUpdate: true

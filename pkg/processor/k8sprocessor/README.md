@@ -16,6 +16,10 @@ it with the in-memory data. If a match is found, the cached metadata is added to
 ```yaml
 processors:
   k8s_tagger:
+    # Limit page size when fetching pods from the k8s API
+    # default: 200
+    limit: 300
+
     # List of exclusion rules. For now it's possible to specify
     # a list of pod name regexes who's records should not be enriched with metadata.
     # default: []

@@ -15,6 +15,7 @@ type action func(context *actionContext) error
 var flagActions = map[string]action{
 	flagHelp:                 helpAction,
 	flagConfigDir:            nullAction,
+	flagLaunchdDir:           nullAction,
 	flagAddTag:               AddTagAction,
 	flagDeleteTag:            DeleteTagAction,
 	flagSetInstallationToken: SetInstallationTokenAction,
@@ -41,6 +42,7 @@ func nullAction(*actionContext) error {
 var actionOrder = []string{
 	flagHelp,
 	flagConfigDir,
+	flagLaunchdDir,
 	flagEnableRemoteControl,
 	flagDisableRemoteControl,
 	flagAddTag,

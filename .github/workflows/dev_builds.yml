@@ -14,27 +14,10 @@ env:
   GO_VERSION: "1.22.6"
 
 jobs:
-  get-version:
-    name: Get application version for this revision
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.get-version.outputs.version }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Get version
-        id: get-version
-        run: |
-          TAG=$(git describe --tags --abbrev=5 --match "v[0-9]*")
-          echo "version=${TAG/v}" > $GITHUB_OUTPUT
-      - name: Print version
-        run: echo ::notice title=Version::${{ steps.get-version.outputs.version }}
-
   # Add lint to dev builds as that's the only way for cache to be shared across branches.
   # https://docs.github.com/en/actions/advanced-guides/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
   lint:
-    name: Lint (golangci-lint)
+    name: Lint (staticcheck)
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -65,18 +48,18 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: |
-            /home/runner/.cache/golangci-lint
-          key: golangci-lint-${{ env.GO_VERSION }}-${{matrix.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
+            /home/runner/.cache/staticcheck
+          key: staticcheck-${{ env.GO_VERSION }}-${{matrix.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
           restore-keys: |
-            golangci-lint-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
+            staticcheck-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
 
-      - name: Install golangci-lint
-        run: make install-golangci-lint
+      - name: Install staticcheck
+        run: make install-staticcheck
 
       - name: Add opentelemetry-collector-builder installation dir to PATH
         run: echo "$HOME/bin" >> $GITHUB_PATH
 
-      - name: Run golangci-lint
+      - name: Run staticcheck
         run: make golint
 
   test:
@@ -119,6 +102,10 @@ jobs:
       save-cache: true
       boringcrypto: ${{ matrix.boringcrypto == true }}
 
+  get-version:
+    name: Get next available version
+    uses: ./.github/workflows/_get-version-workflow.yml
+
   build:
     name: Build
     uses: ./.github/workflows/workflow-build.yml
@@ -151,7 +138,7 @@ jobs:
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
       save-cache: true
-      sumo_component_gomod_version: "v${{ needs.get-version.outputs.version }}"
+      version: ${{ needs.get-version.outputs.version }}
     secrets:
       apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
       apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
@@ -212,7 +199,7 @@ jobs:
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3.6.1
+        uses: docker/setup-buildx-action@v3.7.1
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -376,7 +363,7 @@ jobs:
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3.6.1
+        uses: docker/setup-buildx-action@v3.7.1
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
@@ -451,57 +438,6 @@ jobs:
             REPO_URL=sumologic/sumologic-otel-collector-dev \
             BUILD_TYPE_SUFFIX="-ubi"
 
-  package-msi:
-    name: Package MSI
-    runs-on: windows-2019
-    needs:
-      - build
-    strategy:
-      matrix:
-        include:
-          - arch_os: windows_amd64
-            platform: x64
-            fips: false
-          - arch_os: windows_amd64
-            platform: x64
-            fips: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
-
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v2
-
-      - name: Fetch binary artifact for ${{ matrix.arch_os }}
-        uses: actions/download-artifact@v4
-        with:
-          name: otelcol-sumo${{ matrix.fips && '-fips' || '' }}-${{ matrix.arch_os }}.exe
-          path: ./otelcolbuilder/cmd
-
-      - name: Rename fips binary artifact for ${{ matrix.arch_os }}
-        if: matrix.fips
-        working-directory: ./otelcolbuilder/cmd
-        run: mv otelcol-sumo-fips-${{ matrix.arch_os }}.exe otelcol-sumo-${{ matrix.arch_os }}.exe
-
-      - name: Set OVERRIDE_BUILD_NUMBER
-        run: echo "OVERRIDE_BUILD_VERSION=$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
-
-      - name: Set PRODUCT_VERSION
-        run: echo "PRODUCT_VERSION=$(./ci/get_version.sh productversion)" >> $GITHUB_ENV
-
-      - name: Build MSI for ${{ matrix.arch_os }}
-        working-directory: ./packaging/msi/wix
-        run: msbuild.exe -p:Configuration=Release -p:Platform=${{ matrix.platform }} -p:ProductVersion=$PRODUCT_VERSION -p:FIPSEnabled=${{ matrix.fips }} -Restore
-
-      - name: Store MSI as action artifact for ${{ matrix.arch_os }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.arch_os }}${{ matrix.fips && '_fips' || '' }}_msi
-          path: ./packaging/msi/wix/bin/${{ matrix.platform }}/en-US/*.msi
-          if-no-files-found: error
-
   install-script:
     name: Store install script
     runs-on: ubuntu-latest
@@ -530,10 +466,8 @@ jobs:
       - build
       - build-otelcol-config
       - lint
-      - package-msi
       - push-docker-manifest
     uses: ./.github/workflows/workflow-trigger-packaging.yml
     secrets: inherit
     with:
       workflow_id: ${{ github.run_id }}
-      create_release: false

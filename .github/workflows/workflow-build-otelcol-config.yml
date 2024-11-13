@@ -46,9 +46,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch current branch
-        run: ./ci/fetch_current_branch.sh
-
       - name: Setup go
         uses: actions/setup-go@v5
         with:

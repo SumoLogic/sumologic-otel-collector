@@ -13,7 +13,9 @@ func TestSetInstallationTokenAction(t *testing.T) {
 		Name           string
 		Flags          []string
 		Conf           fs.FS
+		Launchd        fs.FS
 		SystemdEnabled bool
+		LaunchdEnabled bool
 		ExpWrite       []byte
 		ExpErr         bool
 	}{
@@ -72,6 +74,44 @@ func TestSetInstallationTokenAction(t *testing.T) {
 			ExpWrite:       []byte("SUMOLOGIC_INSTALLATION_TOKEN=abcdef\n"),
 			SystemdEnabled: true,
 		},
+		{
+			Name:  "launchd",
+			Flags: []string{"--set-installation-token", "abcdef"},
+			Launchd: fstest.MapFS{
+				launchdConfigPlist: &fstest.MapFile{
+					Data: []byte(defaultLaunchdConfigXML),
+				},
+			},
+			ExpWrite: []byte(xmlPreamble +
+				`<plist version="1.0">` +
+				`<dict>` +
+				`<key>EnvironmentVariables</key>` +
+				`<dict>` +
+				`<key>SUMOLOGIC_INSTALLATION_TOKEN</key>` +
+				`<string>abcdef</string>` +
+				`</dict>` +
+				`<key>GroupName</key>` +
+				`<string>_otelcol-sumo</string>` +
+				`<key>KeepAlive</key>` +
+				`<true/>` +
+				`<key>Label</key>` +
+				`<string>otelcol-sumo</string>` +
+				`<key>ProgramArguments</key>` +
+				`<array>` +
+				`<string>/usr/share/otelcol-sumo.sh</string>` +
+				`</array>` +
+				`<key>RunAtLoad</key>` +
+				`<true/>` +
+				`<key>StandardErrorPath</key>` +
+				`<string>/var/log/otelcol-sumo/otelcol-sumo.log</string>` +
+				`<key>StandardOutPath</key>` +
+				`<string>/var/log/otelcol-sumo/otelcol-sumo.log</string>` +
+				`<key>UserName</key>` +
+				`<string>_otelcol-sumo</string>` +
+				`</dict>` +
+				`</plist>`),
+			LaunchdEnabled: true,
+		},
 	}
 
 	for _, test := range tests {
@@ -80,21 +120,33 @@ func TestSetInstallationTokenAction(t *testing.T) {
 			errWriter := errWriter{}.Write
 
 			flagValues := newFlagValues()
-			fs := makeFlagSet(flagValues)
+			flagSet := makeFlagSet(flagValues)
 
-			if err := fs.Parse(test.Flags); err != nil {
+			if err := flagSet.Parse(test.Flags); err != nil {
 				t.Fatal(err)
 			}
 
-			var settingsWriter, overridesWriter, sumologicRemoteWriter, tokenEnvWriter func([]byte) (int, error)
+			var (
+				settingsWriter,
+				overridesWriter,
+				sumologicRemoteWriter,
+				tokenEnvWriter,
+				launchdWriter func([]byte) (int, error)
+			)
 
 			tokenEnvWriter = errWriter
-			if test.SystemdEnabled {
+			switch {
+			case test.SystemdEnabled:
 				tokenEnvWriter = writer
 				settingsWriter = errWriter
 				sumologicRemoteWriter = errWriter
 				overridesWriter = errWriter
-			} else {
+			case test.LaunchdEnabled:
+				launchdWriter = writer
+				settingsWriter = errWriter
+				sumologicRemoteWriter = errWriter
+				overridesWriter = errWriter
+			default:
 				if flagValues.Override {
 					settingsWriter = errWriter
 					sumologicRemoteWriter = errWriter
@@ -112,6 +164,7 @@ func TestSetInstallationTokenAction(t *testing.T) {
 
 			ctx := &actionContext{
 				ConfigDir:                 test.Conf,
+				LaunchdDir:                test.Launchd,
 				Flags:                     flagValues,
 				Stdout:                    io.Discard,
 				Stderr:                    io.Discard,
@@ -119,7 +172,9 @@ func TestSetInstallationTokenAction(t *testing.T) {
 				WriteConfDOverrides:       overridesWriter,
 				WriteSumologicRemote:      sumologicRemoteWriter,
 				WriteInstallationTokenEnv: tokenEnvWriter,
+				WriteLaunchdConfig:        launchdWriter,
 				SystemdEnabled:            test.SystemdEnabled,
+				LaunchdEnabled:            test.LaunchdEnabled,
 			}
 
 			err := SetInstallationTokenAction(ctx)
