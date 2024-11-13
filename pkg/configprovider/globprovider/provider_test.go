@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
 
 	"go.opentelemetry.io/collector/confmap"
 )
