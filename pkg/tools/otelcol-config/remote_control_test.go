@@ -82,9 +82,15 @@ extensions:
   opamp:
     endpoint: wss://opamp-events.sumologic.com/v1/opamp
     remote_configuration_directory: /etc/otelcol-sumo/opamp.d
+  sumologic:
+    collector_credentials_directory: /var/lib/otelcol-sumo/credentials
+    installation_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
 receivers:
   nop: {}
 service:
+  extensions:
+    - sumologic
+    - opamp
   pipelines:
     logs/default:
       exporters:
