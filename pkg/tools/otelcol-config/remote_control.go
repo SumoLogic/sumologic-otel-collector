@@ -53,9 +53,30 @@ func makeNewSumologicRemoteYAML(ctx *actionContext, conf ConfDir) error {
 	var sumoRemoteConfig = map[string]any{
 		"extensions": map[string]any{
 			"opamp": map[string]any{
-				"enabled":                        true,
 				"remote_configuration_directory": remoteConfigDir,
 				"endpoint":                       DefaultSumoLogicOpampEndpoint,
+			},
+		},
+		"receivers": map[string]any{
+			"nop": map[string]any{},
+		},
+		"exporters": map[string]any{
+			"nop": map[string]any{},
+		},
+		"service": map[string]any{
+			"pipelines": map[string]any{
+				"metrics/default": map[string]any{
+					"receivers": []string{"nop"},
+					"exporters": []string{"nop"},
+				},
+				"logs/default": map[string]any{
+					"receivers": []string{"nop"},
+					"exporters": []string{"nop"},
+				},
+				"traces/default": map[string]any{
+					"receivers": []string{"nop"},
+					"exporters": []string{"nop"},
+				},
 			},
 		},
 	}
