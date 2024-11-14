@@ -56,6 +56,10 @@ func makeNewSumologicRemoteYAML(ctx *actionContext, conf ConfDir) error {
 				"remote_configuration_directory": remoteConfigDir,
 				"endpoint":                       DefaultSumoLogicOpampEndpoint,
 			},
+			"sumologic": map[string]any{
+				"installation_token":              "${SUMOLOGIC_INSTALLATION_TOKEN}",
+				"collector_credentials_directory": "/var/lib/otelcol-sumo/credentials",
+			},
 		},
 		"receivers": map[string]any{
 			"nop": map[string]any{},
@@ -64,6 +68,10 @@ func makeNewSumologicRemoteYAML(ctx *actionContext, conf ConfDir) error {
 			"nop": map[string]any{},
 		},
 		"service": map[string]any{
+			"extensions": []string{
+				"sumologic",
+				"opamp",
+			},
 			"pipelines": map[string]any{
 				"metrics/default": map[string]any{
 					"receivers": []string{"nop"},
