@@ -76,11 +76,31 @@ func TestEnableRemoteControlConfigFileNotPresent(t *testing.T) {
 	values := &flagValues{
 		EnableRemoteControl: true,
 	}
-	const expData = `extensions:
+	const expData = `exporters:
+  nop: {}
+extensions:
   opamp:
-    enabled: true
     endpoint: wss://opamp-events.sumologic.com/v1/opamp
     remote_configuration_directory: /etc/otelcol-sumo/opamp.d
+receivers:
+  nop: {}
+service:
+  pipelines:
+    logs/default:
+      exporters:
+        - nop
+      receivers:
+        - nop
+    metrics/default:
+      exporters:
+        - nop
+      receivers:
+        - nop
+    traces/default:
+      exporters:
+        - nop
+      receivers:
+        - nop
 `
 	slrWriter := newTestWriter([]byte(expData))
 	ctx := &actionContext{
