@@ -52,6 +52,16 @@ func makeNewSumologicRemoteYAML(ctx *actionContext, conf ConfDir) error {
 
 	var sumoRemoteConfig = map[string]any{
 		"extensions": map[string]any{
+			"file_storage": map[string]any{
+				"compaction": map[string]any{
+					"directory":  "/var/lib/otelcol-sumo/file_storage",
+					"on_rebound": true,
+				},
+				"directory": "/var/lib/otelcol-sumo/file_storage",
+			},
+			"health_check": map[string]any{
+				"endpoint": "localhost:13133",
+			},
 			"opamp": map[string]any{
 				"remote_configuration_directory": remoteConfigDir,
 				"endpoint":                       DefaultSumoLogicOpampEndpoint,
@@ -70,6 +80,8 @@ func makeNewSumologicRemoteYAML(ctx *actionContext, conf ConfDir) error {
 		"service": map[string]any{
 			"extensions": []string{
 				"sumologic",
+				"health_check",
+				"file_storage",
 				"opamp",
 			},
 			"pipelines": map[string]any{
