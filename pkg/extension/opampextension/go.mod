@@ -45,6 +45,7 @@ require (
 	go.opentelemetry.io/collector/confmap/provider/fileprovider v0.108.1
 	go.opentelemetry.io/collector/confmap/provider/yamlprovider v0.108.1
 	go.opentelemetry.io/collector/exporter v0.108.1
+	go.opentelemetry.io/collector/exporter/nopexporter v0.108.0
 	go.opentelemetry.io/collector/exporter/otlpexporter v0.108.0
 	go.opentelemetry.io/collector/extension v0.108.1
 	go.opentelemetry.io/collector/extension/ballastextension v0.108.0
@@ -54,6 +55,7 @@ require (
 	go.opentelemetry.io/collector/processor/batchprocessor v0.108.0
 	go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.108.0
 	go.opentelemetry.io/collector/receiver v0.108.1
+	go.opentelemetry.io/collector/receiver/nopreceiver v0.108.0
 	go.opentelemetry.io/collector/receiver/otlpreceiver v0.108.0
 	go.opentelemetry.io/collector/semconv v0.108.1
 	go.uber.org/multierr v1.11.0
