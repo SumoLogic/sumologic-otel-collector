@@ -79,6 +79,13 @@ func TestEnableRemoteControlConfigFileNotPresent(t *testing.T) {
 	const expData = `exporters:
   nop: {}
 extensions:
+  file_storage:
+    compaction:
+      directory: /var/lib/otelcol-sumo/file_storage
+      on_rebound: true
+    directory: /var/lib/otelcol-sumo/file_storage
+  health_check:
+    endpoint: localhost:13133
   opamp:
     endpoint: wss://opamp-events.sumologic.com/v1/opamp
     remote_configuration_directory: /etc/otelcol-sumo/opamp.d
@@ -90,6 +97,8 @@ receivers:
 service:
   extensions:
     - sumologic
+    - health_check
+    - file_storage
     - opamp
   pipelines:
     logs/default:

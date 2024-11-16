@@ -406,7 +406,17 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 		}
 	}
 
+	o.logger.Debug("Loading Component Factories...")
+	factories, err := Components()
+	if err != nil {
+		return fmt.Errorf("cannot get the list of factories: %v", err)
+	}
+
 	for k, v := range o.effectiveConfig {
+		logger := o.logger.With(
+			zap.String("filename", k),
+		)
+
 		p := filepath.Join(dir, k)
 
 		// OpenFile the same way os.Create does it, but with 0600 perms
@@ -420,12 +430,8 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 		if err != nil {
 			return err
 		}
-		o.logger.Debug("Loading Component Factories...")
-		factories, err := Components()
-		if err != nil {
-			return fmt.Errorf("cannot get the list of factories: %v", err)
-		}
-		o.logger.Info("Loading Configuration to Validate...")
+
+		logger.Info("Loading Configuration to Validate...")
 
 		_, errValidate := loadConfigAndValidateWithSettings(factories, otelcol.ConfigProviderSettings{
 			ResolverSettings: confmap.ResolverSettings{
@@ -438,10 +444,10 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 			},
 		})
 		if errValidate != nil {
-			o.logger.Error("Validation Failed... %v", zap.Error(errValidate))
-			return fmt.Errorf("cannot validate config named %v", errValidate)
+			logger.Error("Validation Failed", zap.Error(errValidate))
+			return fmt.Errorf("cannot validate config: %v", errValidate)
 		}
-		o.logger.Info("Config Validation Successful...")
+		logger.Info("Config Validation Successful")
 	}
 
 	return nil
