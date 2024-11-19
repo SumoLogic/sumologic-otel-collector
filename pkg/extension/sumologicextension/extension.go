@@ -1066,5 +1066,5 @@ func getHostname(logger *zap.Logger) (string, error) {
 func cleanupBuildVersion(version string) string {
 	
 
-	return version
+	return "v" + version
 }
