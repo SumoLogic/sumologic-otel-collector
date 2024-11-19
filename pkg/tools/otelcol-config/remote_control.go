@@ -52,10 +52,51 @@ func makeNewSumologicRemoteYAML(ctx *actionContext, conf ConfDir) error {
 
 	var sumoRemoteConfig = map[string]any{
 		"extensions": map[string]any{
+			"file_storage": map[string]any{
+				"compaction": map[string]any{
+					"directory":  "/var/lib/otelcol-sumo/file_storage",
+					"on_rebound": true,
+				},
+				"directory": "/var/lib/otelcol-sumo/file_storage",
+			},
+			"health_check": map[string]any{
+				"endpoint": "localhost:13133",
+			},
 			"opamp": map[string]any{
-				"enabled":                        true,
 				"remote_configuration_directory": remoteConfigDir,
 				"endpoint":                       DefaultSumoLogicOpampEndpoint,
+			},
+			"sumologic": map[string]any{
+				"installation_token":              "${SUMOLOGIC_INSTALLATION_TOKEN}",
+				"collector_credentials_directory": "/var/lib/otelcol-sumo/credentials",
+			},
+		},
+		"receivers": map[string]any{
+			"nop": map[string]any{},
+		},
+		"exporters": map[string]any{
+			"nop": map[string]any{},
+		},
+		"service": map[string]any{
+			"extensions": []string{
+				"sumologic",
+				"health_check",
+				"file_storage",
+				"opamp",
+			},
+			"pipelines": map[string]any{
+				"metrics/default": map[string]any{
+					"receivers": []string{"nop"},
+					"exporters": []string{"nop"},
+				},
+				"logs/default": map[string]any{
+					"receivers": []string{"nop"},
+					"exporters": []string{"nop"},
+				},
+				"traces/default": map[string]any{
+					"receivers": []string{"nop"},
+					"exporters": []string{"nop"},
+				},
 			},
 		},
 	}
