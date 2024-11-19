@@ -4,6 +4,7 @@ import (
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/nopexporter"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
+	"go.opentelemetry.io/collector/exporter/nopexporter"
 	"go.opentelemetry.io/collector/extension"
 	"go.opentelemetry.io/collector/extension/ballastextension"
 
@@ -14,6 +15,7 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/nopreceiver"
 	"go.opentelemetry.io/collector/receiver/otlpreceiver"
+	"go.opentelemetry.io/collector/receiver/nopreceiver"
 	"go.uber.org/multierr"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter"
@@ -61,6 +63,7 @@ func Components() (
 	errs = multierr.Append(errs, err)
 
 	receivers, err := receiver.MakeFactoryMap(
+		nopreceiver.NewFactory(),
 		apachereceiver.NewFactory(),
 		filelogreceiver.NewFactory(),
 		hostmetricsreceiver.NewFactory(),
@@ -82,6 +85,7 @@ func Components() (
 	errs = multierr.Append(errs, err)
 
 	exporters, err := exporter.MakeFactoryMap(
+		nopexporter.NewFactory(),
 		otlpexporter.NewFactory(),
 		sumologicexporter.NewFactory(),
 		syslogexporter.NewFactory(),
