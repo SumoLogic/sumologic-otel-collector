@@ -91,7 +91,7 @@ _builder:
 # uses /usr/bin/go which on Github Actions is using preinstalled 1.15.12 by default.
 	CGO_ENABLED=$(CGO_ENABLED) $(BUILDER_BIN_NAME) \
 		--go $(GO) \
-		--version "v0.108.0-sumo-2" \
+		--version "v0.108.0-sumo-2-60-g8ae91" \
 		--config .otelcol-builder.yaml \
 		--output-path ./cmd \
 		--skip-compilation=$(SKIP_COMPILATION)
