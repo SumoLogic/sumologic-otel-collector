@@ -87,7 +87,7 @@ extensions:
   health_check:
     endpoint: localhost:13133
   opamp:
-    endpoint: wss://opamp-events.sumologic.com/v1/opamp
+    endpoint: wss://opamp-collectors.sumologic.com/v1/opamp
     remote_configuration_directory: /etc/otelcol-sumo/opamp.d
   sumologic:
     collector_credentials_directory: /var/lib/otelcol-sumo/credentials
