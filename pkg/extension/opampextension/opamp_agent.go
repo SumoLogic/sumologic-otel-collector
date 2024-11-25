@@ -44,7 +44,7 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension"
 )
 
-const DefaultSumoLogicOpAmpURL = "wss://opamp-events.sumologic.com/v1/opamp"
+const DefaultSumoLogicOpAmpURL = "wss://opamp-collectors.sumologic.com/v1/opamp"
 
 type opampAgent struct {
 	cfg    *Config
