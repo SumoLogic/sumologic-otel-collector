@@ -75,7 +75,6 @@ func Components() (
 		rabbitmqreceiver.NewFactory(),
 		windowsperfcountersreceiver.NewFactory(),
 		syslogreceiver.NewFactory(),
-		nopreceiver.NewFactory(),
 		mysqlreceiver.NewFactory(),
 		elasticsearchreceiver.NewFactory(),
 		postgresqlreceiver.NewFactory(),
@@ -83,7 +82,6 @@ func Components() (
 	errs = multierr.Append(errs, err)
 
 	exporters, err := exporter.MakeFactoryMap(
-		nopexporter.NewFactory(),
 		otlpexporter.NewFactory(),
 		sumologicexporter.NewFactory(),
 		syslogexporter.NewFactory(),
