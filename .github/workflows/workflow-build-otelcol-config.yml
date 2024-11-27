@@ -65,7 +65,7 @@ jobs:
         run: |
           echo "cache-key=go-build-${{ env.GO_VERSION }}-otelcol-config${FIPS_SUFFIX}-${{inputs.arch_os}}-${{ hashFiles('pkg/tools/otelcol-config/go.sum') }}" >> $GITHUB_OUTPUT
           echo "restore-keys=go-build-${{ env.GO_VERSION }}-otelcol-config${FIPS_SUFFIX}-${{inputs.arch_os}}-" >> $GITHUB_OUTPUT
-          echo "toolchain-cache-key=toolchain-${{inputs.arch_os}}-${{ hashFiles('pkg/tools/otelcol-config/build-fips/config.mak', 'pkg/tools/otelcol-config/build-fips/Makefile') }}" >> $GITHUB_OUTPUT
+          echo "toolchain-cache-key=toolchain-${{inputs.arch_os}}-${{ hashFiles('toolchains/config.mak', 'toolchains/Makefile') }}" >> $GITHUB_OUTPUT
 
       - uses: actions/cache/restore@v4
         with:
@@ -77,7 +77,7 @@ jobs:
             ${{ steps.get-cache-key.outputs.restore-keys }}
 
       - name: Build
-        if: '! inputs.fips'
+        if: "! inputs.fips"
         run: make otelcol-config-${{inputs.arch_os}}
         working-directory: ./pkg/tools/otelcol-config
 
@@ -93,19 +93,6 @@ jobs:
         id: rebuild-toolchain
         if: ${{ steps.restore-toolchain-cache.outcome == 'success' && steps.restore-toolchain-cache.outputs.cache-hit != 'true' }}
         run: make toolchain-${{ inputs.arch_os }} OUTPUT=/opt/toolchain -j3
-        working-directory: ./toolchains
-
-      - name: Build (FIPS)
-        if: inputs.fips && contains(inputs.arch_os, 'linux')
-        run: |
-          CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
-          test "$CC"
-          echo "Using toolchain: $CC"
-          make otelcol-config-${{inputs.arch_os}} \
-            FIPS_SUFFIX="-fips" \
-            CGO_ENABLED="1" \
-            CC="$CC" \
-            EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
         working-directory: ./pkg/tools/otelcol-config
 
       - name: Build (FIPS)
@@ -118,12 +105,23 @@ jobs:
             FIPS_SUFFIX="-fips" \
             CGO_ENABLED="1" \
             CC="$CC" \
-            EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
+            LDFLAGS="-linkmode external -extldflags '-static'"
         working-directory: ./pkg/tools/otelcol-config
 
       - name: Set binary name
         id: set-binary-name
         run: echo "binary_name=otelcol-config${FIPS_SUFFIX}-${{inputs.arch_os}}" >> $GITHUB_OUTPUT
+
+      - name: Show file info
+        working-directory: ./pkg/tools/otelcol-config
+        run: |
+          file ${{ steps.set-binary-name.outputs.binary_name }}
+
+      - name: Show ldd info
+        if: contains(inputs.arch_os, 'linux')
+        working-directory: ./pkg/tools/otelcol-config
+        run: |
+          ldd ${{ steps.set-binary-name.outputs.binary_name }} || true
 
       - name: Show BoringSSL symbols
         if: inputs.fips && contains(inputs.arch_os, 'linux')
