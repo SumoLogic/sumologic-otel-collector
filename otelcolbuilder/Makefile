@@ -1,7 +1,7 @@
 include ../toolchains/Makefile
 
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.108.0
+BUILDER_VERSION ?= 0.114.0
 FIPS_SUFFIX ?= ""
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector-releases
 GO ?= go
@@ -90,8 +90,6 @@ _builder:
 # Need to specify go path because otherwise opentelemetry-collector-builder
 # uses /usr/bin/go which on Github Actions is using preinstalled 1.15.12 by default.
 	CGO_ENABLED=$(CGO_ENABLED) $(BUILDER_BIN_NAME) \
-		--go $(GO) \
-		--version "$(VERSION)$(FIPS_SUFFIX)" \
 		--config .otelcol-builder.yaml \
 		--output-path ./cmd \
 		--skip-compilation=$(SKIP_COMPILATION)

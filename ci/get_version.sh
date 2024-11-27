@@ -52,7 +52,7 @@ parse_params() {
 
 parse_core_version() {
     config="otelcolbuilder/.otelcol-builder.yaml"
-    regex='s/.*otelcol_version:[ ]+([0-9]+\.[0-9]+\.[0-9]+).*/\1/p'
+    regex='s/.*version:[ ]+([0-9]+\.[0-9]+\.[0-9]+).*/\1/p'
     version="$(sed -En "${regex}" "${config}")"
 
     if [[ -z "${version}" ]]; then
