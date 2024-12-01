@@ -1,6 +1,6 @@
 extensions:
   sumologic:
     childKey2: "value2"
-	collector_fields:
-		"cluster": "cluster-1"
+      collector_fields:
+        "cluster": "cluster-1"
 processor: "someprocessor"
