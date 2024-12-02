@@ -41,7 +41,7 @@ func TestLogProcessor(t *testing.T) {
 	params := processor.Settings{
 		TelemetrySettings: componenttest.NewNopTelemetrySettings(),
 	}
-	lp, err := factory.CreateLogsProcessor(context.Background(), params, cfg, consumertest.NewNop())
+	lp, err := factory.CreateLogs(context.Background(), params, cfg, consumertest.NewNop())
 	assert.NotNil(t, lp)
 	assert.NoError(t, err, "cannot create log processor")
 }
