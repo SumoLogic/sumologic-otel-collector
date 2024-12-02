@@ -9,6 +9,8 @@ GO ?= go
 OS ?= $(shell uname -s | tr A-Z a-z)
 ARCH ?= $(shell uname -m | sed s/aarch64/arm64/ | sed s/x86_64/amd64/)
 
+FIPS_SUFFIX ?= ""
+
 # Builds for darwin need to be built with CGO_ENABLED set to 1 because some telegraf
 # plugins that are used within the telegrafreceiver are implemented with CGO.
 # Example of this might be the cpu input plugin using gopsutil to the cpu stats.

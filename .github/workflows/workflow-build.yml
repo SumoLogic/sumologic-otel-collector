@@ -74,7 +74,7 @@ jobs:
       - name: Determine if Windows package should be signed
         if: runner.os == 'Windows'
         env:
-          WINDOWS_CERTIFICATE: '${{ secrets.microsoft_certificate }}'
+          WINDOWS_CERTIFICATE: "${{ secrets.microsoft_certificate }}"
         run: |
           if [ -n "${WINDOWS_CERTIFICATE}" ]; then
               echo "WINDOWS_SIGNING_ENABLED=true" >> $GITHUB_ENV
@@ -134,7 +134,7 @@ jobs:
         working-directory: ./otelcolbuilder
 
       - name: Build
-        if: '! inputs.fips'
+        if: "! inputs.fips"
         run: make otelcol-sumo-${{inputs.arch_os}}
         working-directory: ./otelcolbuilder
 
@@ -173,6 +173,17 @@ jobs:
       - name: Set binary name
         id: set-binary-name
         run: echo "binary_name=otelcol-sumo${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}${OTELCOL_BINARY_EXTENSION}" >> $GITHUB_OUTPUT
+
+      - name: Show file info
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          file ${{ steps.set-binary-name.outputs.binary_name }}
+
+      - name: Show ldd info
+        if: contains(inputs.arch_os, 'linux')
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          ldd ${{ steps.set-binary-name.outputs.binary_name }} || true
 
       - name: Show BoringSSL symbols
         if: inputs.fips && contains(inputs.arch_os, 'linux')
@@ -216,11 +227,11 @@ jobs:
         if: runner.os == 'Windows' && env.WINDOWS_SIGNING_ENABLED == 'true'
         uses: skymatic/code-sign-action@v3
         with:
-          certificate: '${{ secrets.microsoft_certificate }}'
-          password: '${{ secrets.microsoft_certificate_password }}'
-          certificatesha1: '${{ secrets.microsoft_certificate_hash }}'
-          certificatename: '${{ secrets.microsoft_certificate_name }}'
-          description: '${{ secrets.microsoft_description }}'
+          certificate: "${{ secrets.microsoft_certificate }}"
+          password: "${{ secrets.microsoft_certificate_password }}"
+          certificatesha1: "${{ secrets.microsoft_certificate_hash }}"
+          certificatename: "${{ secrets.microsoft_certificate_name }}"
+          description: "${{ secrets.microsoft_description }}"
           folder: ./otelcolbuilder/cmd
 
       - name: Test binary
