@@ -1,5 +1,5 @@
 extensions:
   sumologic:
-    childKey2: "value2"
+    childKey: "value"
     collector_fields:
       "zone": "eu"
