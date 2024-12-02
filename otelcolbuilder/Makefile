@@ -78,11 +78,27 @@ _install-bin:
 	@mkdir -p "$(BUILDER_BIN_PATH)"
 	curl -L -o "$(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME)" https://$(BUILDER_REPO)/releases/download/cmd/builder/v$(BUILDER_VERSION)/ocb_$(BUILDER_VERSION)_$(PLATFORM)_$(ARCH)$(BUILDER_BIN_EXT)
 	@chmod +x "$(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME)"
+	@$(MAKE) ensure-correct-builder-version
 
 .PHONY: install-builder
 install-builder:
 	@echo "Installing $(BUILDER_REPO)/cmd/builder@v$(BUILDER_VERSION)... (in $(BUILDER_BIN_PATH))"
 	@$(MAKE) _install-bin PLATFORM=$(OS)
+
+.PHONY: ensure-correct-builder-version
+ensure-correct-builder-version:
+ifneq ($(lastword $(INSTALLED_BUILDER_VERSION)),$(BUILDER_VERSION))
+	@$(error Installed opentelemetry-collector-builder version \
+		"$(INSTALLED_BUILDER_VERSION)" \
+		does not match the requested "$(BUILDER_VERSION)" \
+		Please check if "$(BUILDER_BIN_PATH)" can be found in your PATH \
+		and if not, then install it using 'make install-builder' from otelcolbuilder's directory\
+	)
+else
+	@printf "Installed opentelemetry-collector-builder (%s) is at the correct version %s\n" \
+		"$(shell type opentelemetry-collector-builder | cut -d' ' -f 3)" \
+		"$(BUILDER_VERSION)"
+endif
 
 .PHONY: _builder
 _builder:
@@ -117,14 +133,14 @@ _gobuild_debug:
 	chmod +x ./cmd/$(BINARY_NAME)-debug$(BUILDER_BIN_EXT)
 
 .PHONY: build
-build:
+build: ensure-correct-builder-version
 # Since builder doesn't allow adding build tags, let's just skip the compilation
 # and run 'go build ...' by hand.
 	@$(MAKE) generate-sources
 	@$(MAKE) _gobuild
 
 .PHONY: build-debug
-build-debug:
+build-debug: ensure-correct-builder-version
 # Since builder doesn't allow adding build tags, let's just skip the compilation
 # and run 'go build ...' by hand.
 	@$(MAKE) generate-sources
@@ -150,7 +166,7 @@ generate-sources:
 
 .PHONY: test
 test:
-	@$(MAKE) install-builder
+	@$(MAKE) ensure-correct-builder-version || $(MAKE) install-builder
 	@$(MAKE) generate-sources
 	CGO_ENABLED=${CGO_ENABLED} GOEXPERIMENT=$(GOEXPERIMENT) $(MAKE) -C cmd test
 
