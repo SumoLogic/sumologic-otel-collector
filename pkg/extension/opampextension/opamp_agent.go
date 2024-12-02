@@ -486,8 +486,7 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 		}
 
 		fb, err := k.Marshal(yaml.Parser())
-		o.logger.Info("Agent config yaml", zap.String("config", string(fb)))
-
+		
 		if err != nil {
 			return false, fmt.Errorf("cannot marshal config named %s: %v", n, err)
 		}
