@@ -163,8 +163,8 @@ func ValidateProviderScheme(p confmap.Provider) error {
 func TestRemotelyManagedMergeFlow(t *testing.T) {
 	fp := NewWithSettings(confmap.ProviderSettings{})
 	if globProvider, ok := fp.(*Provider); ok {         
-    		globProvider.SetRemotelyManagedMergeFlow(false)
-	} 
+    		globProvider.SetRemotelyManagedMergeFlow(true)
+	}
 	ret, err := fp.Retrieve(context.Background(), schemePrefix+filepath.Join("testdata", "mergefunc", "*.yaml"), nil)
 	require.NoError(t, err)
 	retMap, err := ret.AsConf()
