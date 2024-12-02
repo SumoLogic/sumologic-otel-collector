@@ -43,30 +43,30 @@ func TestCreateProcessor(t *testing.T) {
 		TelemetrySettings: componenttest.NewNopTelemetrySettings(),
 	}
 
-	tp, err := factory.CreateTracesProcessor(context.Background(), params, cfg, consumertest.NewNop())
+	tp, err := factory.CreateTraces(context.Background(), params, cfg, consumertest.NewNop())
 	assert.NotNil(t, tp)
 	assert.NoError(t, err)
 
-	mp, err := factory.CreateMetricsProcessor(context.Background(), params, cfg, consumertest.NewNop())
+	mp, err := factory.CreateMetrics(context.Background(), params, cfg, consumertest.NewNop())
 	assert.NotNil(t, mp)
 	assert.NoError(t, err)
 
-	lp, err := factory.CreateLogsProcessor(context.Background(), params, cfg, consumertest.NewNop())
+	lp, err := factory.CreateLogs(context.Background(), params, cfg, consumertest.NewNop())
 	assert.NotNil(t, lp)
 	assert.NoError(t, err)
 
 	oCfg := cfg.(*Config)
 	oCfg.Passthrough = true
 
-	tp, err = factory.CreateTracesProcessor(context.Background(), params, cfg, consumertest.NewNop())
+	tp, err = factory.CreateTraces(context.Background(), params, cfg, consumertest.NewNop())
 	assert.NotNil(t, tp)
 	assert.NoError(t, err)
 
-	mp, err = factory.CreateMetricsProcessor(context.Background(), params, cfg, consumertest.NewNop())
+	mp, err = factory.CreateMetrics(context.Background(), params, cfg, consumertest.NewNop())
 	assert.NotNil(t, mp)
 	assert.NoError(t, err)
 
-	lp, err = factory.CreateLogsProcessor(context.Background(), params, cfg, consumertest.NewNop())
+	lp, err = factory.CreateLogs(context.Background(), params, cfg, consumertest.NewNop())
 	assert.NotNil(t, lp)
 	assert.NoError(t, err)
 
