@@ -162,7 +162,9 @@ func ValidateProviderScheme(p confmap.Provider) error {
 
 func TestRemotelyManagedMergeFlow(t *testing.T) {
 	fp := NewWithSettings(confmap.ProviderSettings{})
-	fp.SetRemotelyManagedMergeFlow(true)
+	if globProvider, ok := fp.(*globprovider.Provider); ok {
+        	globProvider.SetRemotelyManagedMergeFlow(true)
+	}
 	ret, err := fp.Retrieve(context.Background(), schemePrefix+filepath.Join("testdata", "mergefunc", "*.yaml"), nil)
 	require.NoError(t, err)
 	retMap, err := ret.AsConf()
@@ -176,7 +178,7 @@ func TestRemotelyManagedMergeFlow(t *testing.T) {
 						},
 					},
 				},
-				processor: "someprocessor",
+				"processor": "someprocessor",
 			})
 	assert.Equal(t, expectedMap, retMap)
 	assert.NoError(t, fp.Shutdown(context.Background()))
@@ -184,6 +186,7 @@ func TestRemotelyManagedMergeFlow(t *testing.T) {
 
 func TestLocallyManagedMergeFlow(t *testing.T) {
 	fp := NewWithSettings(confmap.ProviderSettings{})
+	
 	ret, err := fp.Retrieve(context.Background(), schemePrefix+filepath.Join("testdata", "mergefunc", "*.yaml"), nil)
 	require.NoError(t, err)
 	retMap, err := ret.AsConf()
@@ -198,7 +201,7 @@ func TestLocallyManagedMergeFlow(t *testing.T) {
 						},
 					},
 				},
-				processor: "someprocessor",
+				"processor": "someprocessor",
 			})
 	assert.Equal(t, expectedMap, retMap)
 	assert.NoError(t, fp.Shutdown(context.Background()))
