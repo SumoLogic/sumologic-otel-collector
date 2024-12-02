@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	DefaultSumoLogicOpampEndpoint       = "wss://opamp-events.sumologic.com/v1/opamp"
+	DefaultSumoLogicOpampEndpoint       = "wss://opamp-collectors.sumologic.com/v1/opamp"
 	DefaultConfigurationDirectory       = "/etc/otelcol-sumo"
 	DefaultRemoteConfigurationDirectory = "opamp.d"
 )
