@@ -2,4 +2,4 @@ extensions:
   sumologic:
     childKey: "value"
     collector_fields:
-      "zone": "eu"
+      zone: "eu"
