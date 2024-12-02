@@ -45,17 +45,16 @@ receivers:
   postgresql:
     endpoint: localhost:5432
     transport: tcp
-    username: otel
-    password: test
+    username: timothy.chan
+    password: postgrestest
     databases:
-      - otel
-    collection_interval: 10s
+      - my_database
+      - postgres
+      - pg_stat_database
+    collection_interval: 180s
     tls:
-      insecure: false
-      insecure_skip_verify: false
-      ca_file: /home/otel/authorities.crt
-      cert_file: /home/otel/mypostgrescert.crt
-      key_file: /home/otel/mypostgreskey.key
+      insecure: true
+      insecure_skip_verify: true
 
 exporters:
   ## Configuration for Sumo Logic Exporter
