@@ -102,7 +102,7 @@ endif
 
 .PHONY: _builder
 _builder:
-	$(eval VERSION ?= $(shell git describe --tags --abbrev=5 --match "v[0-9]*"))
+	$(eval VERSION ?= $(shell git describe --tags --abbrev=5 --match "v[0-9]*"| sed 's/^v//'))
 	$(shell yq e ".dist.version = \"${VERSION}${FIPS_SUFFIX}\"" -i .otelcol-builder.yaml)
 	$(eval SUMOVERSION ?= $(shell yq '.dist.version' .otelcol-builder.yaml))
 	@echo "Building otelcol-sumo version: $(SUMOVERSION)"
