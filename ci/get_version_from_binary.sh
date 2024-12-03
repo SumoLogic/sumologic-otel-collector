@@ -53,7 +53,7 @@ parse_version() {
 
     output="$(${binary_path} --version)"
 
-    regex=".* ([0-9]+)\.([0-9]+)\.([0-9]+)\-sumo\-([0-9]+).*"
+    regex="otelcol-sumo version ([0-9]+)\.([0-9]+)\.([0-9]+)\-sumo\-([0-9]+).*"
 
     if [[ $output =~ $regex ]]; then
         major_version="${BASH_REMATCH[1]}"
