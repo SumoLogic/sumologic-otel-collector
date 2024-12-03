@@ -21,7 +21,7 @@ readonly GREP=grep
 fi
 
 readonly BUILDER_CONFIG="otelcolbuilder/.otelcol-builder.yaml"
-OT_VERSION=$(yq e '.dist.otelcol_version' "${BUILDER_CONFIG}" | cut -f1,2 -d'.')
+OT_VERSION=$(yq e '.dist.version' "${BUILDER_CONFIG}" | cut -f1,2 -d'.')
 readonly OT_VERSION
 readonly CONTRIB_PLUGIN_HTTP_URL_REGEX="https://github.com/open-telemetry/opentelemetry-collector(-contrib)?/tree/(v[0-9]+.[0-9]+.[0-9]+)/(receiver|processor|exporter|extension)/([a-zA-Z]+)"
 readonly CONTRIB_PLUGIN_REGEX="github.com/open-telemetry/opentelemetry-collector(-contrib)?/(receiver|processor|exporter|extension)/([a-zA-Z]+)"

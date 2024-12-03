@@ -2,18 +2,17 @@ package opampextension
 
 import (
 	"go.opentelemetry.io/collector/exporter"
-	"go.opentelemetry.io/collector/exporter/otlpexporter"
 	"go.opentelemetry.io/collector/exporter/nopexporter"
+	"go.opentelemetry.io/collector/exporter/otlpexporter"
 	"go.opentelemetry.io/collector/extension"
-	"go.opentelemetry.io/collector/extension/ballastextension"
 
 	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/collector/processor/batchprocessor"
 	"go.opentelemetry.io/collector/processor/memorylimiterprocessor"
 	"go.opentelemetry.io/collector/receiver"
-	"go.opentelemetry.io/collector/receiver/otlpreceiver"
 	"go.opentelemetry.io/collector/receiver/nopreceiver"
+	"go.opentelemetry.io/collector/receiver/otlpreceiver"
 	"go.uber.org/multierr"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter"
@@ -51,7 +50,6 @@ func Components() (
 	var errs error
 
 	extensions, err := extension.MakeFactoryMap(
-		ballastextension.NewFactory(),
 		sumologicextension.NewFactory(),
 		healthcheckextension.NewFactory(),
 		pprofextension.NewFactory(),

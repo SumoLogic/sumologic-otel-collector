@@ -61,7 +61,7 @@ func createLogProcessor(
 		return nil, err
 	}
 
-	return processorhelper.NewLogsProcessor(
+	return processorhelper.NewLogs(
 		ctx,
 		params,
 		cfg,
