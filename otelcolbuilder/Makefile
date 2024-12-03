@@ -102,7 +102,10 @@ endif
 
 .PHONY: _builder
 _builder:
-	$(eval VERSION ?= devel-$(shell git rev-parse HEAD | xargs))
+	$(eval VERSION ?= $(shell git describe --tags --abbrev=5 --match "v[0-9]*"))
+	$(shell yq e ".dist.version = \"${VERSION}${FIPS_SUFFIX}\"" -i .otelcol-builder.yaml)
+	$(eval SUMOVERSION ?= $(shell yq '.dist.version' .otelcol-builder.yaml))
+	@echo "Building otelcol-sumo version: $(SUMOVERSION)"
 # Need to specify go path because otherwise opentelemetry-collector-builder
 # uses /usr/bin/go which on Github Actions is using preinstalled 1.15.12 by default.
 	CGO_ENABLED=$(CGO_ENABLED) $(BUILDER_BIN_NAME) \
