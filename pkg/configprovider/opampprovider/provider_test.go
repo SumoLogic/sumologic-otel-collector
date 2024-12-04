@@ -148,7 +148,7 @@ func TestRemotelyManagedFlowDisabled(t *testing.T) {
 		"processor":                                         "someprocessor",
 		"extensions::opamp::remote_configuration_directory": "../globprovider/testdata/mergefunc",
 		"extensions::opamp::endpoint":                       "wss://example.com/v1/opamp",
-		"extensions::opamp::new_configmergeflow_disabled":   true,
+		"extensions::opamp::new_configmergeflow_disabled":   false,
 	})
 	want := exp.ToStringMap()
 	if diff := cmp.Diff(want, got); diff != "" {
