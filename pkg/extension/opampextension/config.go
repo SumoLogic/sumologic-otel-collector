@@ -39,6 +39,9 @@ type Config struct {
 
 	// AcceptsRemoteConfiguration indicates if the OpAMP agent will accept remote configuration.
 	AcceptsRemoteConfiguration bool `mapstructure:"accepts_remote_configuration"`
+
+	// Flag to toggle new config merge flow introduced for collector tag edit feature
+	NewConfigMergeFlowEnabled bool `mapstructure:"new_configmergeflow_enabled"`
 }
 
 // CreateDefaultClientConfig returns default http client settings
