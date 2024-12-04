@@ -178,8 +178,7 @@ func TestRemotelyManagedFlowEnabled(t *testing.T) {
 	got := conf.ToStringMap()
 	exp := confmap.NewFromStringMap(map[string]any{
 		"extensions::sumologic::childKey":                   "value",
-		"extensions::sumologic::collector_fields::cluster":   "cluster-1",
-                "extensions::sumologic::collector_fields::zone":      "eu",
+		"extensions::sumologic::collector_fields::zone":      "eu",
 		"processor":                                         "someprocessor",
 		"extensions::opamp::remote_configuration_directory": "../globprovider/testdata/mergefunc",
 		"extensions::opamp::endpoint":                       "wss://example.com/v1/opamp",
