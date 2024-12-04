@@ -113,7 +113,6 @@ func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.W
 	}
 
 	if cfg.IsRemotelyManagedMergeFlow() {
-		return nil, fmt.Errorf(" Remotely managed merge flow enabled: %s", err)
 		// Order of conf parameters is important, see method comments
 		providerutil.PrepareForReplaceBehavior(addlConf, retConf)
 	}
