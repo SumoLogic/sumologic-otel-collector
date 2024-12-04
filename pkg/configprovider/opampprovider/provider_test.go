@@ -129,7 +129,7 @@ func TestRemotelyManagedFlowDisabled(t *testing.T) {
 		}
 	}()
 
-	configPath := "opamp:" + absolutePath(t, filepath.Join("testdata", "configMergeDisabled.yaml"))
+	configPath := "opamp:" + absolutePath(t, filepath.Join("testdata", "config_new_merge_disabled.yaml"))
 	t.Logf("loading opamp config file: %s", configPath)
 
 	ret, err := p.Retrieve(context.Background(), configPath, nil)
@@ -164,7 +164,7 @@ func TestRemotelyManagedFlowEnabled(t *testing.T) {
 		}
 	}()
 
-	configPath := "opamp:" + absolutePath(t, filepath.Join("testdata", "configMergeEnabled.yaml"))
+	configPath := "opamp:" + absolutePath(t, filepath.Join("testdata", "config_new_merge_enabled.yaml"))
 	t.Logf("loading opamp config file: %s", configPath)
 
 	ret, err := p.Retrieve(context.Background(), configPath, nil)
