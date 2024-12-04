@@ -142,7 +142,7 @@ func TestRemotelyManagedFlowDisabled(t *testing.T) {
 	}
 	got := conf.ToStringMap()
 	exp := confmap.NewFromStringMap(map[string]any{
-		"extensions::sumologic::childKey":                   "value"
+		"extensions::sumologic::childKey":                   "value",
 		"extensions::sumologic::collector_fields::cluster":   "cluster-1",
                 "extensions::sumologic::collector_fields::zone":      "eu",
 		"processor":                                         "someprocessor"
