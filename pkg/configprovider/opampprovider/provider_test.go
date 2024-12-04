@@ -145,7 +145,7 @@ func TestRemotelyManagedFlowDisabled(t *testing.T) {
 		"extensions::sumologic::childKey":                   "value",
 		"extensions::sumologic::collector_fields::cluster":   "cluster-1",
                 "extensions::sumologic::collector_fields::zone":      "eu",
-		"processor":                                         "someprocessor"
+		"processor":                                         "someprocessor",
 		"extensions::opamp::remote_configuration_directory": "../globprovider/testdata/mergefunc",
 		"extensions::opamp::endpoint":                       "wss://example.com/v1/opamp",
 		"extensions::opamp::new_configmergeflow_disabled":   true,
