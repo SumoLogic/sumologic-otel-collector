@@ -2,4 +2,4 @@ extensions:
   opamp:
     endpoint: "wss://example.com/v1/opamp"
     remote_configuration_directory: ../globprovider/testdata/mergefunc
-    new_configmergeflow_disabled: true  
+    new_configmergeflow_disabled: true
