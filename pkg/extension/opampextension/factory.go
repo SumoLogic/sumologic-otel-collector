@@ -36,6 +36,7 @@ func createDefaultConfig() component.Config {
 	return &Config{
 		ClientConfig:               CreateDefaultClientConfig(),
 		AcceptsRemoteConfiguration: true,
+		NewConfigMergeFlowEnabled: true,
 	}
 }
 
