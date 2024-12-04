@@ -190,7 +190,7 @@ func (o *opampAgent) startSettings() types.StartSettings {
 func (o *opampAgent) startClient(ctx context.Context) error {
 	settings := o.startSettings()
 
-	o.logger.Info("Starting OpAMP client...")
+	o.logger.Debug("Starting OpAMP client...")
 
 	if !o.cfg.NewConfigMergeFlowEnabled {
 		o.logger.Info("New config merge flow disabled..")

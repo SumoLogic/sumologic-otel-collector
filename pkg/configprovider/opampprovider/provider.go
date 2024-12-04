@@ -39,12 +39,17 @@ type ConfigFragment struct {
 	Extensions struct {
 		OpAmp struct {
 			RemoteConfigurationDirectory string `yaml:"remote_configuration_directory"`
+			NewConfigMergeFlowDisabled bool `yaml:"new_configmergeflow_disabled"`
 		} `yaml:"opamp"`
 	} `yaml:"extensions"`
 }
 
 func (c ConfigFragment) ConfigDir() string {
 	return c.Extensions.OpAmp.RemoteConfigurationDirectory
+}
+
+func (c ConfigFragment) IsRemotelyManagedMergeFlow() bool {
+	return !c.Extensions.OpAmp.NewConfigMergeFlowDisabled
 }
 
 func (c ConfigFragment) Validate() error {
@@ -85,8 +90,9 @@ func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.W
 	}
 	conf := confmap.New()
 	glob := p.GlobProvider
+
 	if globProvider, ok := glob.(*globprovider.Provider); ok {
-        	globProvider.SetRemotelyManagedMergeFlow(true)
+        	globProvider.SetRemotelyManagedMergeFlow(cfg.IsRemotelyManagedMergeFlow())
 	}
 
 	retrieved, err := glob.Retrieve(ctx, glob.Scheme()+":"+filepath.Join(cfg.ConfigDir(), "*.yaml"), fn)
@@ -105,8 +111,12 @@ func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.W
 	if err != nil {
 		return nil, err
 	}
-	// Order of conf parameters is important, see method comments
-	providerutil.PrepareForReplaceBehavior(addlConf, retConf)
+
+	if cfg.IsRemotelyManagedMergeFlow() {
+		return nil, fmt.Errorf(" Remotely managed merge flow enabled: %s", err)
+		// Order of conf parameters is important, see method comments
+		providerutil.PrepareForReplaceBehavior(addlConf, retConf)
+	}
 
 	// merge the file config in
 	if err := conf.Merge(addlConf); err != nil {
