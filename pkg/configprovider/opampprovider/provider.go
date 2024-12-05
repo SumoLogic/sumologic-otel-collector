@@ -39,7 +39,7 @@ type ConfigFragment struct {
 	Extensions struct {
 		OpAmp struct {
 			RemoteConfigurationDirectory string `yaml:"remote_configuration_directory"`
-			NewConfigMergeFlowDisabled bool `yaml:"new_configmergeflow_disabled"`
+			NewConfigMergeFlowDisabled bool `yaml:"disable_tag_new_config_merge"`
 		} `yaml:"opamp"`
 	} `yaml:"extensions"`
 }
