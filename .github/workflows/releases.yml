@@ -112,7 +112,15 @@ jobs:
       - name: Download platform otelcol-sumo artifacts from workflow
         uses: actions/download-artifact@v4
         with:
-          pattern: otelcol-sumo-*-${{ matrix.arch_os }}
+          pattern: otelcol-sumo-${{ matrix.arch_os }}
+          path: artifacts/
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.workflow_id }}
+
+      - name: Download platform fips otelcol-sumo artifacts from workflow
+        uses: actions/download-artifact@v4
+        with:
+          pattern: otelcol-sumo-fips-${{ matrix.arch_os }}
           path: artifacts/
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ inputs.workflow_id }}
