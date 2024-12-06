@@ -39,7 +39,7 @@ type ConfigFragment struct {
 	Extensions struct {
 		OpAmp struct {
 			RemoteConfigurationDirectory string `yaml:"remote_configuration_directory"`
-			NewConfigMergeFlowDisabled bool `yaml:"disable_tag_new_config_merge"`
+			DisableTagNewConfigMerge bool `yaml:"disable_tag_new_config_merge"`
 		} `yaml:"opamp"`
 	} `yaml:"extensions"`
 }
@@ -49,7 +49,7 @@ func (c ConfigFragment) ConfigDir() string {
 }
 
 func (c ConfigFragment) IsRemotelyManagedMergeFlow() bool {
-	return !c.Extensions.OpAmp.NewConfigMergeFlowDisabled
+	return !c.Extensions.OpAmp.DisableTagNewConfigMerge
 }
 
 func (c ConfigFragment) Validate() error {
