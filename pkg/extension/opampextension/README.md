@@ -31,6 +31,9 @@ It manages:
   configuration received from the OpAMP server. This directory must coincide
   with a configuration provider (e.g. glob) for the configuration to be loaded
   by the collector.
+- `disable_tag_replacement`: (optional) Boolean flag to disable new config merge
+  flow which replaces tags instead of updating them introduced for tag edit
+  feature for remotely managed collectors. Default value - false
 
 ## Example Config
 

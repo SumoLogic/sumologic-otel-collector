@@ -22,9 +22,9 @@ import (
 	"sort"
 	"strings"
 
-	"gopkg.in/yaml.v3"
-
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil"
 	"go.opentelemetry.io/collector/confmap"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -32,17 +32,23 @@ const (
 	schemePrefix = schemeName + ":"
 )
 
-type provider struct{}
+type Provider struct{
+	remotelyManagedMergeFlow bool
+}
 
 func NewWithSettings(_ confmap.ProviderSettings) confmap.Provider {
-	return &provider{}
+	return &Provider{}
 }
 
 func NewFactory() confmap.ProviderFactory {
 	return confmap.NewProviderFactory(NewWithSettings)
 }
 
-func (fmp *provider) Retrieve(ctx context.Context, uri string, _ confmap.WatcherFunc) (*confmap.Retrieved, error) {
+func (fmp *Provider) SetRemotelyManagedMergeFlow(enable bool) {
+    fmp.remotelyManagedMergeFlow = enable
+}
+
+func (fmp *Provider) Retrieve(ctx context.Context, uri string, _ confmap.WatcherFunc) (*confmap.Retrieved, error) {
 	var rawConf map[string]interface{}
 	if !strings.HasPrefix(uri, schemePrefix) {
 		return &confmap.Retrieved{}, fmt.Errorf("%q uri is not supported by %q provider", uri, schemeName)
@@ -68,18 +74,21 @@ func (fmp *provider) Retrieve(ctx context.Context, uri string, _ confmap.Watcher
 			return &confmap.Retrieved{}, err
 		}
 		pathConf := confmap.NewFromStringMap(rawConf)
+		if fmp.remotelyManagedMergeFlow {
+			providerutil.PrepareForReplaceBehavior(conf, pathConf)
+		}
 		if err := conf.Merge(pathConf); err != nil {
 			return &confmap.Retrieved{}, err
 		}
-	}
 
+	}
 	return confmap.NewRetrieved(conf.ToStringMap())
 }
 
-func (*provider) Scheme() string {
+func (*Provider) Scheme() string {
 	return schemeName
 }
 
-func (fmp *provider) Shutdown(context.Context) error {
+func (fmp *Provider) Shutdown(context.Context) error {
 	return nil
 }
