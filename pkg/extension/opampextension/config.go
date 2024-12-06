@@ -41,7 +41,7 @@ type Config struct {
 	AcceptsRemoteConfiguration bool `mapstructure:"accepts_remote_configuration"`
 
 	// Flag to toggle new config merge flow introduced for collector tag edit feature
-	DisableTagNewConfigMerge bool `mapstructure:"disable_tag_new_config_merge"`
+	DisableTagReplacement bool `mapstructure:"disable_tag_replacement"`
 }
 
 // CreateDefaultClientConfig returns default http client settings
