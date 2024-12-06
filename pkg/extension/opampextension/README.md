@@ -32,8 +32,7 @@ It manages:
   with a configuration provider (e.g. glob) for the configuration to be loaded
   by the collector.
 - `disable_tag_new_config_merge`: (optional) Boolean flag to disable new config merge
-  flow introduced for tag edit feature for remotely managed collectors. Default
-  value is disabled.
+  flow introduced for tag edit feature for remotely managed collectors. Default value - false
 
 ## Example Config
 
