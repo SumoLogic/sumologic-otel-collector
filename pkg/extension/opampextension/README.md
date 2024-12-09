@@ -32,7 +32,7 @@ It manages:
   with a configuration provider (e.g. glob) for the configuration to be loaded
   by the collector.
 - `disable_tag_replacement`: (optional) Boolean flag to disable new config merge
-  flow which replaces tags instead of updating them introduced for tag edit
+to disable tag replacement which replaces tags instead of appending to them for remotely managed collectors
   feature for remotely managed collectors. Default value - false
 
 ## Example Config
