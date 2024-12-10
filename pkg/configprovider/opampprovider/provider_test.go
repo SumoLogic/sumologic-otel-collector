@@ -144,7 +144,9 @@ func TestRemotelyManagedFlowDisabled(t *testing.T) {
 	exp := confmap.NewFromStringMap(map[string]any{
 		"extensions::sumologic::childKey":                   "value",
 		"extensions::sumologic::collector_fields::cluster":   "cluster-1",
-                "extensions::sumologic::collector_fields::zone":      "eu",
+        "extensions::sumologic::collector_fields::zone":      "eu",
+        "extensions::sumologic::collector_fields1::cluster":   "cluster-1",
+        "extensions::sumologic::collector_fields1::zone":      "eu",
 		"processor":                                         "someprocessor",
 		"extensions::opamp::remote_configuration_directory": "../globprovider/testdata/mergefunc",
 		"extensions::opamp::endpoint":                       "wss://example.com/v1/opamp",
@@ -179,6 +181,8 @@ func TestRemotelyManagedFlowEnabled(t *testing.T) {
 	exp := confmap.NewFromStringMap(map[string]any{
 		"extensions::sumologic::childKey":                   "value",
 		"extensions::sumologic::collector_fields::zone":      "eu",
+		"extensions::sumologic::collector_fields1::cluster":   "cluster-1",
+        "extensions::sumologic::collector_fields1::zone":      "eu",
 		"processor":                                         "someprocessor",
 		"extensions::opamp::remote_configuration_directory": "../globprovider/testdata/mergefunc",
 		"extensions::opamp::endpoint":                       "wss://example.com/v1/opamp",

@@ -176,6 +176,10 @@ func TestRemotelyManagedMergeFlow(t *testing.T) {
 						"collector_fields": map[string]interface{}{
 							"zone": "eu",
 						},
+						"collector_fields1": map[string]interface{}{
+							"cluster": "cluster-1",
+							"zone": "eu",
+						},
 					},
 				},
 				"processor": "someprocessor",
@@ -195,6 +199,10 @@ func TestLocallyManagedMergeFlow(t *testing.T) {
 					"sumologic": map[string]interface{}{
 						"childKey": "value",
 						"collector_fields": map[string]interface{}{
+							"cluster": "cluster-1",
+							"zone": "eu",
+						},
+						"collector_fields1": map[string]interface{}{
 							"cluster": "cluster-1",
 							"zone": "eu",
 						},
