@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
 	"gopkg.in/yaml.v2"
@@ -38,12 +39,17 @@ type ConfigFragment struct {
 	Extensions struct {
 		OpAmp struct {
 			RemoteConfigurationDirectory string `yaml:"remote_configuration_directory"`
+			DisableTagReplacement bool `yaml:"disable_tag_replacement"`
 		} `yaml:"opamp"`
 	} `yaml:"extensions"`
 }
 
 func (c ConfigFragment) ConfigDir() string {
 	return c.Extensions.OpAmp.RemoteConfigurationDirectory
+}
+
+func (c ConfigFragment) IsRemotelyManagedMergeFlow() bool {
+	return !c.Extensions.OpAmp.DisableTagReplacement
 }
 
 func (c ConfigFragment) Validate() error {
@@ -84,6 +90,11 @@ func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.W
 	}
 	conf := confmap.New()
 	glob := p.GlobProvider
+
+	if globProvider, ok := glob.(*globprovider.Provider); ok {
+        	globProvider.SetRemotelyManagedMergeFlow(cfg.IsRemotelyManagedMergeFlow())
+	}
+
 	retrieved, err := glob.Retrieve(ctx, glob.Scheme()+":"+filepath.Join(cfg.ConfigDir(), "*.yaml"), fn)
 	if err != nil {
 		return nil, err
@@ -100,6 +111,12 @@ func (p *Provider) Retrieve(ctx context.Context, configPath string, fn confmap.W
 	if err != nil {
 		return nil, err
 	}
+
+	if cfg.IsRemotelyManagedMergeFlow() {
+		// Order of conf parameters is important, see method comments
+		providerutil.PrepareForReplaceBehavior(addlConf, retConf)
+	}
+
 	// merge the file config in
 	if err := conf.Merge(addlConf); err != nil {
 		return nil, err

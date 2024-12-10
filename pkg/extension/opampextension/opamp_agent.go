@@ -486,6 +486,7 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 		}
 
 		fb, err := k.Marshal(yaml.Parser())
+
 		if err != nil {
 			return false, fmt.Errorf("cannot marshal config named %s: %v", n, err)
 		}
@@ -495,6 +496,7 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 
 	configChanged = false
 	if !reflect.DeepEqual(o.effectiveConfig, nec) {
+		o.logger.Info("Saving effective config")
 		oec := o.effectiveConfig
 		o.effectiveConfig = nec
 

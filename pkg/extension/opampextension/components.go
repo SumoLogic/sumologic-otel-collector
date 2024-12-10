@@ -2,8 +2,8 @@ package opampextension
 
 import (
 	"go.opentelemetry.io/collector/exporter"
-	"go.opentelemetry.io/collector/exporter/otlpexporter"
 	"go.opentelemetry.io/collector/exporter/nopexporter"
+	"go.opentelemetry.io/collector/exporter/otlpexporter"
 	"go.opentelemetry.io/collector/extension"
 	"go.opentelemetry.io/collector/extension/ballastextension"
 
@@ -12,8 +12,8 @@ import (
 	"go.opentelemetry.io/collector/processor/batchprocessor"
 	"go.opentelemetry.io/collector/processor/memorylimiterprocessor"
 	"go.opentelemetry.io/collector/receiver"
-	"go.opentelemetry.io/collector/receiver/otlpreceiver"
 	"go.opentelemetry.io/collector/receiver/nopreceiver"
+	"go.opentelemetry.io/collector/receiver/otlpreceiver"
 	"go.uber.org/multierr"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter"
@@ -82,10 +82,10 @@ func Components() (
 	errs = multierr.Append(errs, err)
 
 	exporters, err := exporter.MakeFactoryMap(
-		nopexporter.NewFactory(),
 		otlpexporter.NewFactory(),
 		sumologicexporter.NewFactory(),
 		syslogexporter.NewFactory(),
+		nopexporter.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
