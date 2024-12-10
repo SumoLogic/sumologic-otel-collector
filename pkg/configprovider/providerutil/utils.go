@@ -35,9 +35,10 @@ func removeMatchingKeyFromSrcMap(srcMap map[string]interface{}, mergeMap map[str
 // Merge method merges field values from source and mergeConf, so by removing existing values from
 // source map, we can achieve replace behavior
 func PrepareForReplaceBehavior(srcConf *confmap.Conf, mergeConf *confmap.Conf) {
-	keyPathsWithReplaceBehavior := [][]string{
-		{"extensions", "sumologic", "collector_fields"},
-	}
+    	collectorFieldsPath := []string{"extensions", "sumologic", "collector_fields"}
+   	keyPathsWithReplaceBehavior := [][]string{
+		 collectorFieldsPath,
+    	}
 	for _, keyPath := range keyPathsWithReplaceBehavior {
 		*srcConf = *confmap.NewFromStringMap(removeMatchingKeyFromSrcMap(srcConf.ToStringMap(), mergeConf.ToStringMap(), keyPath))
 	}
