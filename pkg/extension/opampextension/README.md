@@ -69,16 +69,16 @@ Here is a list of valid values for the OpAMP `endpoint** configuration option:
 
 **Note:** These endpoints are not yet available.
 
-|  Deployment   | API base URL                                |
-|:-------------:|---------------------------------------------|
-| default/`US1` | `https://opamp-collectors.sumologic.com`     |
-|     `US2`     | `https://opamp-collectors.us2.sumologic.com` |
-|     `AU`      | `https://opamp-collectors.au.sumologic.com`  |
-|     `DE`      | `https://opamp-collectors.de.sumologic.com`  |
-|     `EU`      | `https://opamp-collectors.eu.sumologic.com`  |
-|     `JP`      | `https://opamp-collectors.jp.sumologic.com`  |
-|     `CA`      | `https://opamp-collectors.ca.sumologic.com`  |
-|     `IN`      | `https://opamp-collectors.in.sumologic.com`  |
+|  Deployment   | API base URL                                        |
+|:-------------:|-----------------------------------------------------|
+| default/`US1` | `wss://opamp-collectors.sumologic.com/v1/opamp`     |
+|     `US2`     | `wss://opamp-collectors.us2.sumologic.com/v1/opamp` |
+|     `AU`      | `wss://opamp-collectors.au.sumologic.com/v1/opamp`  |
+|     `DE`      | `wss://opamp-collectors.de.sumologic.com/v1/opamp`  |
+|     `EU`      | `wss://opamp-collectors.eu.sumologic.com/v1/opamp`  |
+|     `JP`      | `wss://opamp-collectors.jp.sumologic.com/v1/opamp`  |
+|     `CA`      | `wss://opamp-collectors.ca.sumologic.com/v1/opamp`  |
+|     `IN`      | `wss://opamp-collectors.in.sumologic.com/v1/opamp`  |
 
 ## Storing local configuration
 
