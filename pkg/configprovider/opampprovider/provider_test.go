@@ -121,6 +121,79 @@ func TestValid(t *testing.T) {
 	}
 }
 
+func TestRemotelyManagedFlowDisabled(t *testing.T) {
+	p := NewWithSettings(confmap.ProviderSettings{})
+	defer func() {
+		if err := p.Shutdown(context.Background()); err != nil {
+			t.Error(err)
+		}
+	}()
+
+	configPath := "opamp:" + absolutePath(t, filepath.Join("testdata", "config_new_merge_disabled.yaml"))
+	t.Logf("loading opamp config file: %s", configPath)
+
+	ret, err := p.Retrieve(context.Background(), configPath, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	conf, err := ret.AsConf()
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := conf.ToStringMap()
+	exp := confmap.NewFromStringMap(map[string]any{
+		"extensions::sumologic::childKey":                   "value",
+		"extensions::sumologic::collector_fields::cluster":   "cluster-1",
+        "extensions::sumologic::collector_fields::zone":      "eu",
+        "extensions::sumologic::collector_fields1::cluster":   "cluster-1",
+        "extensions::sumologic::collector_fields1::zone":      "eu",
+		"processor":                                         "someprocessor",
+		"extensions::opamp::remote_configuration_directory": "../globprovider/testdata/mergefunc",
+		"extensions::opamp::endpoint":                       "wss://example.com/v1/opamp",
+		"extensions::opamp::disable_tag_replacement":   true,
+	})
+	want := exp.ToStringMap()
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("Retrieve() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestRemotelyManagedFlowEnabled(t *testing.T) {
+	p := NewWithSettings(confmap.ProviderSettings{})
+	defer func() {
+		if err := p.Shutdown(context.Background()); err != nil {
+			t.Error(err)
+		}
+	}()
+
+	configPath := "opamp:" + absolutePath(t, filepath.Join("testdata", "config_new_merge_enabled.yaml"))
+	t.Logf("loading opamp config file: %s", configPath)
+
+	ret, err := p.Retrieve(context.Background(), configPath, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	conf, err := ret.AsConf()
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := conf.ToStringMap()
+	exp := confmap.NewFromStringMap(map[string]any{
+		"extensions::sumologic::childKey":                   "value",
+		"extensions::sumologic::collector_fields::zone":      "eu",
+		"extensions::sumologic::collector_fields1::cluster":   "cluster-1",
+        "extensions::sumologic::collector_fields1::zone":      "eu",
+		"processor":                                         "someprocessor",
+		"extensions::opamp::remote_configuration_directory": "../globprovider/testdata/mergefunc",
+		"extensions::opamp::endpoint":                       "wss://example.com/v1/opamp",
+	})
+	want := exp.ToStringMap()
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("Retrieve() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+
 func absolutePath(t *testing.T, relativePath string) string {
 	t.Helper()
 	pth, err := filepath.Abs(relativePath)

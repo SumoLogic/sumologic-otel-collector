@@ -1,0 +1,7 @@
+extensions:
+  sumologic:
+    childKey: "value"
+    collector_fields:
+      zone: "eu"
+    collector_fields1:
+      zone: "eu"
