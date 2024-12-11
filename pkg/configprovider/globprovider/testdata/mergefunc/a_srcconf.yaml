@@ -1,0 +1,8 @@
+extensions:
+  sumologic:
+    childKey: "value"
+    collector_fields:
+      cluster: "cluster-1"
+    collector_fields1:
+      cluster: "cluster-1"
+processor: "someprocessor"

@@ -245,3 +245,4 @@ replaces:
   - github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.108.0 => github.com/SumoLogic/opentelemetry-collector-contrib/extension/sumologicextension 6afd5814da3e09014683ab0e4a08f8f781bc904f
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider => ../../pkg/configprovider/globprovider
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider => ../../pkg/configprovider/opampprovider
+  - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil => ../../pkg/configprovider/providerutil

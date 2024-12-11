@@ -1,0 +1,5 @@
+extensions:
+  opamp:
+    endpoint: "wss://example.com/v1/opamp"
+    remote_configuration_directory: ../globprovider/testdata/mergefunc
+    disable_tag_replacement: true
