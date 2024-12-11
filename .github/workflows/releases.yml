@@ -1,4 +1,4 @@
-name: 'Publish release'
+name: "Publish release"
 
 run-name: >
   ${{ format('Publish Release for Workflow: {0}', inputs.workflow_id) }}
@@ -112,14 +112,22 @@ jobs:
       - name: Download platform otelcol-sumo artifacts from workflow
         uses: actions/download-artifact@v4
         with:
-          pattern: otelcol-sumo-*-${{ matrix.arch_os }}
+          pattern: otelcol-sumo-${{ matrix.arch_os }}
+          path: artifacts/
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.workflow_id }}
+
+      - name: Download platform fips otelcol-sumo artifacts from workflow
+        uses: actions/download-artifact@v4
+        with:
+          pattern: otelcol-sumo-fips-${{ matrix.arch_os }}
           path: artifacts/
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ inputs.workflow_id }}
 
       - name: Build and push FIPS image to Open Source ECR
         run: |
-          cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
+          cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}}/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-multiplatform \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
@@ -127,7 +135,7 @@ jobs:
 
       - name: Build and push FIPS image to DockerHub
         run: |
-          cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
+          cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}}/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-multiplatform \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
@@ -136,7 +144,7 @@ jobs:
 
       - name: Build and push UBI-based FIPS image to Open Source ECR
         run: |
-          cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
+          cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}}/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-ubi \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
@@ -144,7 +152,7 @@ jobs:
 
       - name: Build and push UBI-based FIPS image to DockerHub
         run: |
-          cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
+          cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}}/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-ubi \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
@@ -153,14 +161,14 @@ jobs:
 
       - name: Build and push image to Open Source ECR
         run: |
-          cp artifacts/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
+          cp artifacts/otelcol-sumo-${{matrix.arch_os}}/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-multiplatform \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }}
 
       - name: Build and push image to DockerHub
         run: |
-          cp artifacts/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
+          cp artifacts/otelcol-sumo-${{matrix.arch_os}}/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-multiplatform \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
@@ -168,7 +176,7 @@ jobs:
 
       - name: Build and push UBI-based image to Open Source ECR
         run: |
-          cp artifacts/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
+          cp artifacts/otelcol-sumo-${{matrix.arch_os}}/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-ubi \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
@@ -176,7 +184,7 @@ jobs:
 
       - name: Build and push UBI-based image to DockerHub
         run: |
-          cp artifacts/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
+          cp artifacts/otelcol-sumo-${{matrix.arch_os}}/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
           make build-push-container-ubi \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
             PLATFORM=${{ matrix.arch_os }} \
