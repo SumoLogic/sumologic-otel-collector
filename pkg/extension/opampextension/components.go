@@ -5,7 +5,6 @@ import (
 	"go.opentelemetry.io/collector/exporter/nopexporter"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
 	"go.opentelemetry.io/collector/extension"
-	"go.opentelemetry.io/collector/extension/ballastextension"
 
 	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/processor"
@@ -51,7 +50,6 @@ func Components() (
 	var errs error
 
 	extensions, err := extension.MakeFactoryMap(
-		ballastextension.NewFactory(),
 		sumologicextension.NewFactory(),
 		healthcheckextension.NewFactory(),
 		pprofextension.NewFactory(),

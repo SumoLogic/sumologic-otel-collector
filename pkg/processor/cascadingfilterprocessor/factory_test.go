@@ -49,7 +49,7 @@ func TestCreateProcessor(t *testing.T) {
 	params := processor.Settings{
 		TelemetrySettings: component.TelemetrySettings{Logger: zap.NewNop()},
 	}
-	tp, err := factory.CreateTracesProcessor(context.Background(), params, cfg, consumertest.NewNop())
+	tp, err := factory.CreateTraces(context.Background(), params, cfg, consumertest.NewNop())
 	assert.NotNil(t, tp)
 	assert.NoError(t, err, "cannot create trace processor")
 }
