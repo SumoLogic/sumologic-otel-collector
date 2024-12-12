@@ -68,7 +68,8 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |                        Receivers                         |                          Processors                          |               Exporters                |                  Extensions                  |             Connectors              |
 | :------------------------------------------------------: | :----------------------------------------------------------: | :------------------------------------: | :------------------------------------------: | :---------------------------------: |
 |     [active_directory_ds][activedirectorydsreceiver]     |              [attributes][attributesprocessor]               |         [awss3][awss3exporter]         |       [asapclient][asapauthextension]        |     [forward][forwardconnector]     |
-|   [`active_directory_inv`][activedirectoryinvreceiver]   |                   [batch][batchprocessor]                    |        [carbon][carbonexporter]        |             [awsproxy][awsproxy]             |       [count][countconnector]       |
+|          |                   [batch][batchprocessor]                    | [awskinesisexporter][awskinesisexporter]                                       |                                              |                                     |
+|   [`active_directory_inv`][activedirectoryinvreceiver]   |                                                              |        [carbon][carbonexporter]        |             [awsproxy][awsproxy]             |       [count][countconnector]       |
 |              [aerospike][aerospikereceiver]              |        [`cascading_filter`][cascadingfilterprocessor]        |         [debug][debugexporter]         |       [basicauth][basicauthextension]        |  [exceptions][exceptionsconnector]  |
 |                 [apache][apachereceiver]                 |       [cumulativetodelta][cumulativetodeltaprocessor]        |          [file][fileexporter]          | [bearertokenauth][bearertokenauthextension]  |    [failover][failoverconnector]    |
 |          [awscloudwatch][awscloudwatchreceiver]          |             [deltatorate][deltatorateprocessor]              |         [kafka][kafkaexporter]         |           [db_storage][dbstorage]            |  [roundrobin][roundrobinconnector]  |
@@ -272,6 +273,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [tailsamplingprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.114.0/processor/tailsamplingprocessor
 [transformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.114.0/processor/transformprocessor
 [awss3exporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.114.0/exporter/awss3exporter
+[awskinesisexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.114.0/exporter/awskinesisexporter
 [carbonexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.114.0/exporter/carbonexporter
 [debugexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.114.0/exporter/debugexporter
 [fileexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.114.0/exporter/fileexporter
