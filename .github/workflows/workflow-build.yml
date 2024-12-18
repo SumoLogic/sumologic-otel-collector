@@ -49,7 +49,7 @@ defaults:
     shell: bash
 
 env:
-  GO_VERSION: "1.22.6"
+  GO_VERSION: "1.22.8"
   VERSION: ${{ inputs.version }}
 
 jobs:
@@ -204,7 +204,7 @@ jobs:
         run: |
           binary=${{ steps.set-binary-name.outputs.binary_name }}
           binary_path=otelcolbuilder/cmd/${binary}
-          ./ci/get_version_from_binary.sh otc "${binary_path}"
+          ./ci/get_version_from_binary.sh core "${binary_path}"
           ./ci/get_version_from_binary.sh sumo "${binary_path}"
 
       - uses: apple-actions/import-codesign-certs@v3

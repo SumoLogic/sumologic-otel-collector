@@ -103,7 +103,7 @@ for-all:
 check-uniform-dependencies:
 	./ci/check_uniform_dependencies.sh
 
-OT_CORE_VERSION := $(shell grep "otelcol_version: .*" otelcolbuilder/.otelcol-builder.yaml | cut -f 4 -d " ")
+OT_CORE_VERSION := $(shell grep "version: .*" otelcolbuilder/.otelcol-builder.yaml | cut -f 4 -d " ")
 OT_CONTRIB_VERSION := $(shell grep --max-count=1 '^  - gomod: github\.com/open-telemetry/opentelemetry-collector-contrib/' otelcolbuilder/.otelcol-builder.yaml | cut -d " " -f 6 | $(SED) "s/v//")
 # usage: make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y
 .PHONY: update-ot
@@ -111,9 +111,9 @@ update-ot: install-gsed
 	@test $(OT_CORE_NEW)    || (echo "usage: make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y"; exit 1);
 	@test $(OT_CONTRIB_NEW) || (echo "usage: make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y"; exit 1);
 	@echo "Updating OT core from $(OT_CORE_VERSION) to $(OT_CORE_NEW) and OT contrib from $(OT_CONTRIB_VERSION) to $(OT_CONTRIB_NEW)"
-	$(SED) -i "s/\(otelcol_version:\) $(OT_CORE_VERSION)$$/\1 $(OT_CORE_NEW)/" otelcolbuilder/.otelcol-builder.yaml
-	$(SED) -i "s/\(go\.opentelemetry\.io\/collector\/.*\) v$(OT_CORE_VERSION)$$/\1 v$(OT_CORE_NEW)/" otelcolbuilder/.otelcol-builder.yaml
-	$(SED) -i "s/\(github\.com\/open-telemetry\/opentelemetry-collector-contrib\/.*\) v$(OT_CONTRIB_VERSION)$$/\1 v$(OT_CONTRIB_NEW)/" otelcolbuilder/.otelcol-builder.yaml
+	$(shell yq e ".dist.version = \"${OT_CORE_NEW}\"" -i otelcolbuilder/.otelcol-builder.yaml)
+	$(shell yq -i '(.. | select(tag=="!!str")) |= sub("(go\.opentelemetry\.io/collector.*) v${OT_CORE_VERSION}", "$$1 v${OT_CORE_NEW}")'  otelcolbuilder/.otelcol-builder.yaml)
+	$(shell yq -i '(.. | select(tag=="!!str")) |= sub("(github\.com/open-telemetry/opentelemetry-collector-contrib.*) v${OT_CONTRIB_VERSION}", "$$1 v${OT_CONTRIB_NEW}")'  otelcolbuilder/.otelcol-builder.yaml)
 	$(SED) -i "s/$(OT_CORE_VERSION)/$(OT_CORE_NEW)/" otelcolbuilder/Makefile
 	$(SED) -i "s/\(collector\/\(blob\|tree\)\/v\)$(OT_CORE_VERSION)/\1$(OT_CORE_NEW)/" \
 		README.md \

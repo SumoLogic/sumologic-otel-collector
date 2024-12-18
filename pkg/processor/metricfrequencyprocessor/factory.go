@@ -62,5 +62,5 @@ func createMetricsProcessor(
 	var internalProcessor = &metricsfrequencyprocessor{
 		sieve: newMetricSieve(cfg.(*Config)),
 	}
-	return processorhelper.NewMetricsProcessor(ctx, params, cfg, nextConsumer, internalProcessor.ProcessMetrics)
+	return processorhelper.NewMetrics(ctx, params, cfg, nextConsumer, internalProcessor.ProcessMetrics)
 }
