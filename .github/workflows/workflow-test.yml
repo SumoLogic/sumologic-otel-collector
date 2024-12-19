@@ -65,6 +65,10 @@ jobs:
           restore-keys: |
             ${{ steps.get-cache-key.outputs.restore-keys }}
 
+      - name: Install yq (Windows)
+        if: contains(inputs.arch_os, 'windows')
+        run: choco install yq
+
       - name: Set default BUILDER_BIN_PATH
         run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
 
