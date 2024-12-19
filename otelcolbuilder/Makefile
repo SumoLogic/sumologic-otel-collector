@@ -24,6 +24,11 @@ BUILDER_BIN_PATH ?= $(HOME)/bin
 
 INSTALLED_BUILDER_VERSION := $(shell $(BUILDER_BIN_NAME) version 2>&1)
 
+INSTALLED_YQ_VERSION := $(shell yq --version 2>&1)
+ifeq ($(INSTALLED_YQ_VERSION),)
+    $(error "The yq command is required but was not found")
+endif
+
 # Settings for macOS builds
 ifeq ($(OS),darwin)
 	AC_USERNAME ?= otel-mac-certs@sumologic.com
