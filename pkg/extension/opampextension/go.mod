@@ -17,6 +17,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.114.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage v0.114.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.114.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.114.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.114.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.114.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.114.0
