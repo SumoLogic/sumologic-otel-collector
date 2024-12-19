@@ -1,0 +1,1 @@
+feat: Add validation for the attributes processor
