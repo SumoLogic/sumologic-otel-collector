@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.114.0-sumo-0]
+
+### Released 2024-12-19
+
+### Added
+
+- feat: Add validation for the attributes processor [#1721]
+
+### Changed
+
+- feat(ConfigProvider)!: Modify config merge to do replace instead of update for Specific tags for Remotely managed collectors [#1604]
+- chore(ci): remove MSIs from this repo [#1693]
+- chore: Upgrade otel core to v114 [#1714]
+
+### Fixed
+
+- fix(opamp): Update OpAmp default endpoint to a new one that supports redirection [#1709]
+
+[#1721]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1721
+[#1604]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1604
+[#1693]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1693
+[#1714]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1714
+[#1709]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1709
+[v0.114.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.114.0-sumo-0
+
 ## [v0.108.0-sumo-1]
 
 ### Released 2024-10-22
