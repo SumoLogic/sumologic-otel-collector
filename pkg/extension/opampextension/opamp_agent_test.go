@@ -71,6 +71,7 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyKafkaMetricsConfig", "testdata/opamp.d/opamp-kafkametrics-config.yaml", false, ""},
 		{"ApplyElasticsearchConfig", "testdata/opamp.d/opamp-elastic-config.yaml", false, ""},
 		{"ApplyMysqlConfig", "testdata/opamp.d/opamp-mysql-config.yaml", false, ""},
+		{"ApplyattributesprocessorConfig", "testdata/opamp.d/opamp-attributes-processor.yaml", false, ""},
 		{"ApplyPostgresqlConfig", "testdata/opamp.d/opamp-postgresql-config.yaml", false, ""},
 		{"ApplyRabbitmqConfig", "testdata/opamp.d/opamp-rabbitmq-config.yaml", false, ""},
 		{"ApplyRedisConfig", "testdata/opamp.d/opamp-redis-config.yaml", false, ""},
