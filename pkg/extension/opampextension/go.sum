@@ -553,6 +553,8 @@ github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/zipkin 
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/zipkin v0.114.0/go.mod h1:t5uoTcckI8kQeW1sZl8A+1UebVJPe47Qi3WQeNZu6w4=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/winperfcounters v0.114.0 h1:1xAInvRymxpsuIWz/plGH98eWRhmLVgUHqleBCEeoJM=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/winperfcounters v0.114.0/go.mod h1:3PSKkD/USW8EXij1UTwoRwDFIl0D0V5td9U3n0YEKTo=
+github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.114.0 h1:fltPkjMuiVTtIVwoWUzbL0ad2CTCJsWfnCSDJQ9hSxU=
+github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.114.0/go.mod h1:HcG364Is9u2EDqOUtQX0RwnbHtQqSh5+x2FdcYC+F1M=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.114.0 h1:QBR07Gaw6ePkufQ/AhHgBv4OlwzXlULTdiUnaKIlvLk=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.114.0/go.mod h1:coY0CV/sNj1hltRXKZr2gnrLvr7xUbnW+GhpCQpGR/Y=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.114.0 h1:ttRj/3GIpg+vUTeBI+EBeeWdNuvBT3S/ayoqpvA9B9s=
