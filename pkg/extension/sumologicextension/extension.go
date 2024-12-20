@@ -791,6 +791,8 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 	}
 
 	var buff bytes.Buffer
+	se.logger.Info("Collector version before cleanup,",
+		zap.String("version",se.buildVersion))
 	if err = json.NewEncoder(&buff).Encode(api.OpenMetadataRequestPayload{
 		HostDetails: api.OpenMetadataHostDetails{
 			Name:        hostname,
@@ -816,7 +818,9 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 
 	addJSONHeaders(req)
 
-	se.logger.Info("Updating collector metadata",
+	se.logger.Info("Collector version before cleanup,",
+		zap.String("version",se.buildVersion))
+	se.logger.Info("Updating collector metadata-1",
 		zap.String("URL", u.String()),
 		zap.String("body", buff.String()))
 
@@ -1064,6 +1068,8 @@ func getHostname(logger *zap.Logger) (string, error) {
 // cleaned up. All other version formats will remain the same.
 // Cleaned up format: 0.108.0-sumo-2-4d57200692d5c5c39effad4ae3b29fef79209113
 func cleanupBuildVersion(version string) string {
+	se.logger.Info("cleanupBuildVersion")
+	return "v0.114.0-sumo-2"
 	pattern := "(^[0-9]+\\.[0-9]+\\.[0-9]+-sumo-[0-9]+)-[0-9a-f]{40}$"
 	re := regexp.MustCompile(pattern)
 
