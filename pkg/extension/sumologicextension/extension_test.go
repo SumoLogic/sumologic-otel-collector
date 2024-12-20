@@ -1607,15 +1607,23 @@ func Test_cleanupBuildVersion(t *testing.T) {
 			name: "with hash",
 			args: args{version: "0.108.0-sumo-2-4d57200692d5c5c39effad4ae3b29fef79209113"},
 			want: "v0.108.0-sumo-2",
-		}, {
+		},
+		{
+			name: "with hash and prefix",
+			args: args{version: "otelcol-sumo version 0.114.0-sumo-0-4d57200692d5c5c39effad4ae3b29fef79209113"},
+			want: "v0.114.0-sumo-0",
+		},
+		{
 			name: "already ok",
 			args: args{version: "v0.108.0-sumo-2"},
 			want: "v0.108.0-sumo-2",
-		}, {
+		},
+		{
 			name: "non v",
 			args: args{version: "0.108.0-sumo-2"},
 			want: "0.108.0-sumo-2",
-		}, {
+		},
+		{
 			name: "nonsense",
 			args: args{version: "hfiwe-23rhc8eg.fhf"},
 			want: "hfiwe-23rhc8eg.fhf",

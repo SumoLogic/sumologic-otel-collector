@@ -9,8 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.114.0-sumo-0]
 
-### Released 2024-12-19
-
 ### Added
 
 - feat: Add validation for the attributes processor [#1721]
