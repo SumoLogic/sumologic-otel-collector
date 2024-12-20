@@ -1605,8 +1605,8 @@ func Test_cleanupBuildVersion(t *testing.T) {
 	}{
 		{
 			name: "with hash",
-			args: args{version: "0.108.0-sumo-2-4d57200692d5c5c39effad4ae3b29fef79209113"},
-			want: "v0.108.0-sumo-2",
+			args: args{version: "0.114.0-sumo-0-12af6df57c89a341b991d5937faba66d62831e5c"},
+			want: "v0.114.0-sumo-0",
 		}, {
 			name: "already ok",
 			args: args{version: "v0.108.0-sumo-2"},
