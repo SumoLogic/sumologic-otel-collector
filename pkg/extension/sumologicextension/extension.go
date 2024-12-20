@@ -1068,6 +1068,7 @@ func getHostname(logger *zap.Logger) (string, error) {
 // cleaned up. All other version formats will remain the same.
 // Cleaned up format: 0.108.0-sumo-2-4d57200692d5c5c39effad4ae3b29fef79209113
 func cleanupBuildVersion(version string) string {
+	se.logger.Info("cleanupBuildVersion")
 	return "v0.114.0-sumo-2"
 	pattern := "(^[0-9]+\\.[0-9]+\\.[0-9]+-sumo-[0-9]+)-[0-9a-f]{40}$"
 	re := regexp.MustCompile(pattern)
