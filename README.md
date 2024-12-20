@@ -7,7 +7,7 @@ It is a single agent to send logs, metrics and traces to [Sumo Logic][sumologic]
 
 **Our aim is to extend and not to replace the OpenTelemetry Collector.**
 
-In order to learn more, pleasee see [purpose of Sumo Logic Distribution for OpenTelemetry Collector][purpose]
+In order to learn more, please see [purpose of Sumo Logic Distribution for OpenTelemetry Collector][purpose]
 
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
 [sumologic]: https://www.sumologic.com
