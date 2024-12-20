@@ -791,6 +791,8 @@ func (se *SumologicExtension) updateMetadataWithHTTPClient(ctx context.Context, 
 	}
 
 	var buff bytes.Buffer
+	se.logger.Info("Collector version before cleanup,",
+		zap.String("version",se.buildVersion))
 	if err = json.NewEncoder(&buff).Encode(api.OpenMetadataRequestPayload{
 		HostDetails: api.OpenMetadataHostDetails{
 			Name:        hostname,
