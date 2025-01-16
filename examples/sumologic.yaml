@@ -56,6 +56,17 @@ receivers:
       insecure: true
       insecure_skip_verify: true
 
+  mongodb:
+    hosts:
+      - endpoint: localhost:27017 # primary
+    #   - endpoint: localhost:27018
+    #   - endpoint: localhost:27019
+    # replica_set: rs0
+    collection_interval: 1s
+    tls:
+      insecure: true
+      insecure_skip_verify: true      
+
 exporters:
   ## Configuration for Sumo Logic Exporter
   ## This exporter supports sending logs, metrics and traces data to Sumo Logic.
@@ -130,11 +141,15 @@ service:
   telemetry:
     metrics:
       address: localhost:8888
+    # logs:
+    #   level: "debug"
+
   pipelines:
     metrics/default:
       receivers:
         - otlp
-        - postgresql
+        # - postgresql
+        - mongodb
       processors:
         - memory_limiter
         - batch
