@@ -2,7 +2,7 @@ FROM golang:1.22.8-alpine AS builder
 ADD . /src
 WORKDIR /src/otelcolbuilder/
 ENV CGO_ENABLED=0
-RUN apk --update add make gcc g++ curl git
+RUN apk --update add make gcc g++ curl git yq patch
 RUN make install-builder BUILDER_BIN_PATH=/bin
 RUN make build BUILDER_BIN_PATH=/bin
 
