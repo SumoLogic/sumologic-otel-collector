@@ -2,7 +2,7 @@ module github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprov
 
 go 1.22.0
 
-toolchain go1.22.8
+toolchain go1.23.0
 
 require (
 	github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil v0.0.0-00010101000000-000000000000
