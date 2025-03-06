@@ -56,7 +56,7 @@ type rawK8sEventsReceiver struct {
 	ctx              context.Context
 	cancel           context.CancelFunc
 	startTime        time.Time
-	//lint:ignore SA1019
+	//lint:ignore SA1019 we need this deprecated client
 	storage               storage.Client
 	latestResourceVersion uint64
 
@@ -174,18 +174,18 @@ func (r *rawK8sEventsReceiver) Shutdown(ctx context.Context) error {
 	return err
 }
 
-//lint:ignore SA1019
+//lint:ignore SA1019 we need this deprecated client
 func (r *rawK8sEventsReceiver) getStorage(ctx context.Context, host component.Host) (storage.Client, error) {
 	if host == nil {
 		r.logger.Debug("Storage not initialized: host is not available")
 		return nil, nil
 	}
 
-	//lint:ignore SA1019
+	//lint:ignore SA1019 we need this deprecated extension
 	var storageExtension storage.Extension
 	var storageExtensionId component.ID
 	for extentionId, extension := range host.GetExtensions() {
-		//lint:ignore SA1019
+		//lint:ignore SA1019 we need this deprecated extension
 		if se, ok := extension.(storage.Extension); ok {
 			if storageExtension != nil {
 				return nil, fmt.Errorf("multiple storage extensions found: '%s', '%s'", storageExtensionId, extentionId)
