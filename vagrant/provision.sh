@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export GO_VERSION="1.22.8"
+export GO_VERSION="1.23.0"
 
 ARCH="$(dpkg --print-architecture)"
 
