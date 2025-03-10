@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.118.0-sumo-0]
+
+### Changed
+
+- Upgrade the otel collector core and contrib to 0.118.0 [#1733]
+
+[#1733]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1733
+[v0.118.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.118.0-sumo-0
+
 ## [v0.114.0-sumo-0]
 
 ### Released 2024-12-19
