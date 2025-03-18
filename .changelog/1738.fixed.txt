@@ -1,1 +1,0 @@
-fix(version): Fix the collector version
