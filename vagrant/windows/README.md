@@ -62,6 +62,6 @@ the application, you can build a Windows container the following way:
 
 ```bash
 cp otelcolbuilder/cmd/otelcol-sumo.exe .
-make build-push-container-windows-dev PLATFORM=windows/amd64/ltsc2022
-docker run public.ecr.aws/sumologic/sumologic-otel-collector-dev:latest-windows-amd64-ltsc2022 --version
+make build-push-container-windows PLATFORM=windows/amd64/ltsc2022
+docker run public.ecr.aws/sumologic/sumologic-otel-collector-ci-builds:latest-windows-amd64-ltsc2022 --version
 ```

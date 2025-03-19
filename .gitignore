@@ -61,3 +61,6 @@ packaging/msi/SumoLogic.wixext/packages
 
 # Windows Thumbs.db
 Thumbs.db
+
+# 1Password
+.op/
