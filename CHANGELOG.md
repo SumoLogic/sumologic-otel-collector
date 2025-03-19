@@ -9,13 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.118.0-sumo-1]
 
-### Released 2025-03-18
-
 ### Fixed
 
-- fix(version): Fix the collector version [#1738]
+- fix(version): Fix the collector version reported to SumoLogic [#1743]
 
-[#1738]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1738
+[#1743]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1743
 [v0.118.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.118.0-sumo-1
 
 ## [v0.118.0-sumo-0]
