@@ -220,7 +220,7 @@ replaces:
   # version which gets then translated into a replace in go.mod file.
   # This does not replace the version that sumologicexporter depends on.
   - github.com/SumoLogic/sumologic-otel-collector/pkg/extension/opampextension => ../../pkg/extension/opampextension
-  - github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.118.0 => github.com/SumoLogic/opentelemetry-collector-contrib/extension/sumologicextension f0c5bb5bac63056954a5387222a776a85696c9c0
+  - github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.118.0 => github.com/SumoLogic/opentelemetry-collector-contrib/extension/sumologicextension f45c0be5c566abb6aeefd7cab10a31e1684dca4f
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider => ../../pkg/configprovider/globprovider
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider => ../../pkg/configprovider/opampprovider
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil => ../../pkg/configprovider/providerutil
