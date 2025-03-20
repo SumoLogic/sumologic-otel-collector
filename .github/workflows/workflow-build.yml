@@ -16,7 +16,7 @@ on:
         default: false
         type: boolean
       runs-on:
-        default: ubuntu-20.04
+        default: ubuntu-24.04
         type: string
       save-cache:
         description: Save the module and build caches.
