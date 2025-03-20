@@ -13,7 +13,7 @@ on:
       - main
 jobs:
   changelog:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-changelog')"
     env:
       PR_NUMBER: ${{ github.event.number }}
