@@ -18,7 +18,7 @@ jobs:
   # https://docs.github.com/en/actions/advanced-guides/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
   lint:
     name: Lint (staticcheck)
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         arch_os: ["linux_amd64"]
@@ -69,9 +69,9 @@ jobs:
       matrix:
         include:
           - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
           - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
             boringcrypto: true
           - arch_os: darwin_amd64
             runs-on: macos-15
@@ -90,9 +90,9 @@ jobs:
       matrix:
         include:
           - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
           - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
             boringcrypto: true
           - arch_os: darwin_amd64
             runs-on: macos-15
@@ -115,14 +115,14 @@ jobs:
       matrix:
         include:
           - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
           - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
             fips: true
           - arch_os: linux_arm64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
           - arch_os: linux_arm64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
             fips: true
           - arch_os: darwin_amd64
             runs-on: macos-15
@@ -162,14 +162,14 @@ jobs:
           - arch_os: darwin_arm64
             runs-on: macos-15
           - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
           - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
             fips: true
           - arch_os: linux_arm64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
           - arch_os: linux_arm64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
             fips: true
     with:
       arch_os: ${{ matrix.arch_os }}
@@ -184,7 +184,7 @@ jobs:
 
   build-container-images:
     name: Build container
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs:
       - build
       - get-version
@@ -350,7 +350,7 @@ jobs:
 
   push-docker-manifest:
     name: Push joint container manifest
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs:
       - build-container-images
       - build-windows-container-images
@@ -453,7 +453,7 @@ jobs:
   # collector workflow run specified for a release.
   install-script:
     name: Store install script
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -475,7 +475,7 @@ jobs:
 
   config-management-assets:
     name: Store Chef cookbook, Puppet module, and Ansible playbook
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 

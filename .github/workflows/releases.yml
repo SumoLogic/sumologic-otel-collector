@@ -20,7 +20,7 @@ defaults:
 jobs:
   get-version:
     name: Get application version for this revision
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       sha: ${{ steps.get-sha.outputs.git-sha }}
       otc-version: ${{ steps.get-version.outputs.otc-version }}
@@ -78,7 +78,7 @@ jobs:
 
   build-container-images:
     name: Build container
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs:
       - get-version
     strategy:
@@ -193,7 +193,7 @@ jobs:
 
   push-docker-manifest:
     name: Push joint container manifest
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs:
       # Require darwin build to succeed to prevent pushing container images
       # when darwin build fails.
@@ -284,7 +284,7 @@ jobs:
 
   create-release:
     name: Create Github release
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs:
       - get-version
       - build-container-images
