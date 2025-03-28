@@ -1,0 +1,33 @@
+name: "Post release tasks"
+
+run-name: >
+  ${{ format('Post Release Tasks for Release: {0}', github.ref_name) }}
+
+on:
+  release:
+    types: [released]
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  create-pkg-tags:
+    name: Create package tags
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: "${{github.ref_name}}"
+
+      - name: Create & push package tags
+        run: |
+          for dir in $(find ./pkg -type f -name "go.mod" ! -path "*pkg/test/*" -exec dirname {} \; | sort); do
+            tag_name="${dir:2}/${{github.ref_name}}";
+            echo "Creating tag for: ${tag_name}";
+            git tag -a "${tag_name}" -s -m "${tag_name}" "${{github.ref_name}}";
+            git push origin "${tag_name}"
+          done
