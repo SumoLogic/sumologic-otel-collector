@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.118.0-sumo-1]
+
+### Added
+
+- Include a new processor to split logs into multiple log records [#1755]
+
+[#1755]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1755
+[v0.118.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.118.0-sumo-1
+
 ## [v0.118.0-sumo-0]
 
 ### Changed

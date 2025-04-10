@@ -41,6 +41,7 @@ processors:
   # https://github.com/open-telemetry/opentelemetry-collector/pull/4616
   - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.118.0
     # Upstream processors:
+  - gomod: github.com/observiq/bindplane-otel-collector/processor/unrollprocessor v1.70.0
   - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.118.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.118.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/cumulativetodeltaprocessor v0.118.0
