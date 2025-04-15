@@ -4,13 +4,11 @@ set -eo pipefail
 
 if echo "${PLATFORM}" | grep -v windows; then
 
-    DOCKER_BUILDX_LS_OUT=$(docker buildx ls <<-END
-END
-    )
+    DOCKER_BUILDX_LS_OUT=$(docker buildx ls 2>&1)
     readonly DOCKER_BUILDX_LS_OUT
 
     # check for arm support only if we try to build it
-    if echo "${PLATFORM}" | grep -q arm && ! grep -q arm <<< "${DOCKER_BUILDX_LS_OUT}"; then
+    if echo "${PLATFORM}" | grep -q arm && ! grep -q arm <<<"${DOCKER_BUILDX_LS_OUT}"; then
         echo "Your Buildx seems to lack ARM architecture support"
         echo "${DOCKER_BUILDX_LS_OUT}"
         exit 1
@@ -58,25 +56,25 @@ function build_push() {
     set -x
 
     case "${PLATFORM}" in
-    "linux/amd64"|"linux_amd64")
+    "linux/amd64" | "linux_amd64")
         readonly BUILD_ARCH="amd64"
         readonly BUILD_PLATFORM="linux"
         PLATFORM="linux/amd64"
         ;;
 
-    "linux/arm64"|"linux_arm64")
+    "linux/arm64" | "linux_arm64")
         readonly BUILD_ARCH="arm64"
         readonly BUILD_PLATFORM="linux"
         PLATFORM="linux/arm64"
         ;;
 
-    "windows/amd64"|"windows_amd64")
+    "windows/amd64" | "windows_amd64")
         readonly BUILD_ARCH="amd64"
         readonly BASE_IMAGE_TAG_SUFFIX="windows"
         PLATFORM="windows/amd64"
         ;;
 
-    "windows/amd64/ltsc2022"|"windows_amd64_ltsc2022")
+    "windows/amd64/ltsc2022" | "windows_amd64_ltsc2022")
         readonly BUILD_ARCH="amd64"
         readonly BUILD_PLATFORM="windows"
         readonly BASE_IMAGE_TAG_SUFFIX="-ltsc2022"
@@ -84,7 +82,7 @@ function build_push() {
         PLATFORM="windows/amd64"
         ;;
 
-    "windows/amd64/ltsc2019"|"windows_amd64_ltsc2019")
+    "windows/amd64/ltsc2019" | "windows_amd64_ltsc2019")
         readonly BUILD_ARCH="amd64"
         readonly BUILD_PLATFORM="windows"
         readonly BASE_IMAGE_TAG_SUFFIX="-ltsc2019"
@@ -108,6 +106,8 @@ function build_push() {
         ;;
     esac
 
+    local GIT_SHA
+    readonly GIT_SHA="${REPO_URL}:$(git rev-parse HEAD)${BUILD_TYPE_SUFFIX}${BASE_IMAGE_TAG_SUFFIX}"
     local TAG
     readonly TAG="${REPO_URL}:${BUILD_TAG}${BUILD_TYPE_SUFFIX}-${BUILD_PLATFORM}-${BUILD_ARCH}${BASE_IMAGE_TAG_SUFFIX}"
     local LATEST_TAG
@@ -115,7 +115,7 @@ function build_push() {
 
     # --provenance=false for docker buildx ensures that we create manifest instead of manifest list
     if [[ "${PUSH}" == true ]]; then
-        echo "Building tags: ${TAG}, ${LATEST_TAG}"
+        echo "Building tags: ${GIT_SHA}, ${TAG}, ${LATEST_TAG}"
 
         if [[ "${BUILD_PLATFORM}" == "windows" ]]; then
             docker build \
@@ -124,10 +124,12 @@ function build_push() {
                 --build-arg BASE_IMAGE_TAG="${BASE_IMAGE_TAG}" \
                 --build-arg BUILDKIT_INLINE_CACHE=1 \
                 --platform="${PLATFORM}" \
+                --tag "${GIT_SHA}" \
                 --tag "${LATEST_TAG}" \
+                --tag "${TAG}" \
                 .
 
-            docker tag "${LATEST_TAG}" "${TAG}"
+            #docker tag "${LATEST_TAG}" "${TAG}"
 
             docker push "${LATEST_TAG}"
             docker push "${TAG}"
@@ -139,6 +141,7 @@ function build_push() {
                 --build-arg BASE_IMAGE_TAG="${BASE_IMAGE_TAG}" \
                 --build-arg BUILDKIT_INLINE_CACHE=1 \
                 --platform="${PLATFORM}" \
+                --tag "${GIT_SHA}" \
                 --tag "${LATEST_TAG}" \
                 --tag "${TAG}" \
                 --provenance=false \

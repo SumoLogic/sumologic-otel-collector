@@ -1,6 +1,11 @@
 # For FIPS binary, there are some debian runtime dependencies
 FROM debian:12.6 AS otelcol
-COPY otelcol-sumo /
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+
+RUN echo "I am running on ${BUILDPLATFORM}, building for ${TARGETPLATFORM}"
+
+COPY artifacts/$TARGETPLATFORM/otelcol-sumo /
 # This shouldn't be necessary but sometimes we end up with execution bit not set.
 # ref: https://github.com/open-telemetry/opentelemetry-collector/issues/1317
 RUN chmod 755 /otelcol-sumo
