@@ -7,8 +7,9 @@ ifeq ($(OS),Windows_NT)
 	MAKE := "$(shell cygpath '$(MAKE)')"
 endif
 
-all: markdownlint yamllint
+GIT_SHA := $(shell git rev-parse HEAD)
 
+all: markdownlint yamllint
 
 ifeq ($(shell go env GOOS),darwin)
 SED ?= gsed
@@ -253,6 +254,30 @@ DH_URL_CI = $(DH_URL)/sumologic/sumologic-otel-collector-ci-builds
 DH_URL_RC = $(DH_URL)/sumologic/sumologic-otel-collector-release-candidates
 DH_REPO_STABLE = $(DH_URL)/sumologic/sumologic-otel-collector
 
+.PHONY: _bake-container-image
+_bake-container-image: METADATA_FILE = container-manifest-standard-$(GOOS)-$(GOARCH).json
+_bake-container-image:
+	BASE_TAG=$(BASE_TAG) GIT_SHA=$(GIT_SHA) docker buildx bake $(BAKE_TARGET) \
+		--set "*.output=type=image,name=$(BASE_TAG),push-by-digest=true,name-canonical=true,push=false,registry.insecure=true" \
+		--set "*.tags="
+
+.PHONY: bake-ecr-container-images
+bake-ecr-container-images: BASE_TAG=$(ECR_URL_CI)
+bake-ecr-container-images: BAKE_TARGET=standard-all
+bake-ecr-container-images: _bake-container-image
+
+.PHONY: bake-container-images
+bake-container-images:
+#	rm -f container-digests.txt
+	$(MAKE) bake-ecr-container-images
+#	$(MAKE) _bake-container-image BAKE_TARGET=standard-all BASE_TAG=
+#	$(MAKE) _bake-container-image GOOS=linux GOARCH=arm64
+#	cat container-digests.txt
+
+.PHONY: create-container-index
+create-container-index:
+#	export DIGESTS=$$(cat container-digests.txt); echo $$DIGESTS; docker buildx imagetools create --dry-run $$(echo $$DIGESTS)
+
 # NOTE: Only used by build-container-local
 .PHONY: _build
 _build:
@@ -297,6 +322,7 @@ build-container-windows:
 
 #-------------------------------------------------------------------------------
 
+# NOTE: pushes a manifest to reference multiple platforms
 .PHONY: _push-container-manifest
 _push-container-manifest:
 	BUILD_TAG="$(BUILD_TAG)" \
@@ -309,26 +335,24 @@ push-container-manifest: _push-container-manifest
 
 #-------------------------------------------------------------------------------
 
+.PHONY: _build-push-container-multiplatform
+_build-push-container-multiplatform: PUSH = --push
+_build-push-container-multiplatform: _build-container-multiplatform
+
+.PHONY: build-push-container
+build-push-container: DOCKERFILE = Dockerfile
+build-push-container: REPO_URL = "$(ECR_URL_CI)"
+build-push-container: _build-push-container-multiplatform
+
+.PHONY: build-push-container-ubi
+build-push-container-ubi: DOCKERFILE = Dockerfile_ubi
+build-push-container-ubi: REPO_URL = "$(ECR_URL_CI)"
+build-push-container-ubi: _build-push-container-multiplatform
+
 .PHONY: build-push-container-windows
 build-push-container-windows: DOCKERFILE = Dockerfile_windows
-build-push-container-windows: build-push-container-multiplatform
-
-.PHONY: build-push-container-ubi
-build-push-container-ubi-dev: REPO_URL = "$(ECR_URL_CI)"
-build-push-container-ubi-dev: build-push-container-ubi
-
-.PHONY: build-push-container-windows
-build-push-container-windows: PUSH = --push
+build-push-container-windows: REPO_URL = "$(ECR_URL_CI)"
 build-push-container-windows: build-container-windows
-
-.PHONY: build-push-container-multiplatform
-build-push-container-multiplatform: PUSH = --push
-build-push-container-multiplatform: _build-container-multiplatform
-
-.PHONY: build-push-container-ubi
-build-push-container-ubi: PUSH = --push
-build-push-container-ubi: DOCKERFILE = Dockerfile_ubi
-build-push-container-ubi: _build-container-multiplatform
 
 #-------------------------------------------------------------------------------
 
@@ -436,11 +460,6 @@ _promote-container-images-linux: _create-container-aliases-ubi-fips
 # * 0.118.0-sumo-1-9826f842f8c3c30979465383f2232ca81f69566f-linux-arm64
 # * 0.118.0-sumo-1-9826f842f8c3c30979465383f2232ca81f69566f-ubi-fips-linux-arm64
 # * 0.118.0-sumo-1-9826f842f8c3c30979465383f2232ca81f69566f-ubi-linux-arm64
-
-skopeo_copy "${SENSU_DOCKER_REPO}:${ALPINE_TAG}" "${SENSU_DOCKER_REPO}:${VERSION}"
-skopeo_copy "${SENSU_DOCKER_REPO}:${ALPINE_TAG}" "${SENSU_DOCKER_REPO}:${SHORT_VERSION}"
-skopeo_copy "${SENSU_DOCKER_REPO}:${ALPINE_TAG}" "${SENSU_DOCKER_REPO}:${MAJOR_VERSION}"
-skopeo_copy "${SENSU_DOCKER_REPO}:${ALPINE_TAG}" "${SENSU_DOCKER_REPO}:latest"
 
 # Promotes an image in the ECR ci-builds repository to the release-candidates
 # repository

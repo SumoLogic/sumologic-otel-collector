@@ -3,7 +3,7 @@
 set -eo pipefail
 
 # check for arm support only if we try to build it
-if echo "${PLATFORMS}" | grep -q arm && ! docker buildx ls | grep -q arm ; then
+if echo "${PLATFORMS}" | grep -q arm && docker buildx ls 2>&1 | grep -q arm; then
     echo "Your Buildx seems to lack ARM architecture support"
     echo
     docker buildx ls
@@ -34,8 +34,7 @@ function push_manifest() {
     TAGS_IN_MANIFEST=()
 
     echo "Platforms:"
-    for platform in "${PLATFORMS[@]}"
-    do
+    for platform in "${PLATFORMS[@]}"; do
         echo "${platform}"
         case "${platform}" in
         "linux/amd64")
@@ -74,8 +73,7 @@ function push_manifest() {
     done
 
     echo "Tags in the manifest:"
-    for tag in "${TAGS_IN_MANIFEST[@]}"
-    do
+    for tag in "${TAGS_IN_MANIFEST[@]}"; do
         echo "${tag}"
     done
 
