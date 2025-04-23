@@ -65,18 +65,20 @@ func newCountingErrorConsumer(err error) *countingErrorConsumer {
 }
 
 func TestStartShutdown(t *testing.T) {
+	f := NewFactory()
 	ctx := context.Background()
 	cfg := createTestConfig()
-	receiver, err := createMetricsReceiver(ctx, receivertest.NewNopSettings(), cfg, consumertest.NewNop())
+	receiver, err := createMetricsReceiver(ctx, receivertest.NewNopSettings(f.Type()), cfg, consumertest.NewNop())
 	require.NoError(t, err)
 	require.NoError(t, receiver.Start(ctx, componenttest.NewNopHost()))
 	require.NoError(t, receiver.Shutdown(ctx))
 }
 
 func TestShutdownBeforeStart(t *testing.T) {
+	f := NewFactory()
 	ctx := context.Background()
 	cfg := createTestConfig()
-	receiver, err := createMetricsReceiver(ctx, receivertest.NewNopSettings(), cfg, consumertest.NewNop())
+	receiver, err := createMetricsReceiver(ctx, receivertest.NewNopSettings(f.Type()), cfg, consumertest.NewNop())
 	require.NoError(t, err)
 	require.NoError(t, receiver.Shutdown(ctx))
 }
