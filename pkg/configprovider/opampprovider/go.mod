@@ -1,8 +1,6 @@
 module github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider
 
-go 1.22.0
-
-toolchain go1.23.0
+go 1.24.0
 
 require (
 	github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider v0.0.0-00010101000000-000000000000
