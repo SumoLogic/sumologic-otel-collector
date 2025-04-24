@@ -16,7 +16,6 @@ package opampextension
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -104,7 +103,6 @@ func TestApplyRemoteConfig(t *testing.T) {
 			// Test with an error in configuration
 			if tt.expectError {
 				changed, err := o.applyRemoteConfig(rc)
-				fmt.Println("@@@@@got error:", err)
 				assert.Error(t, err)
 				assert.ErrorContains(t, err, tt.errorMessage)
 				assert.False(t, changed)
