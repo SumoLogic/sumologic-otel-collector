@@ -243,7 +243,7 @@ jobs:
           push: true
           set: |
             *.tags=
-            *.output=type=image,"name=663229565520.dkr.ec2.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-release-candidates,push-by-digest=true,name-canonical=true,push=true
+            *.output=type=image,"name=663229565520.dkr.ec2.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-release-candidates",push-by-digest=true,name-canonical=true,push=true
 
   #     - name: Login to Open Source ECR
   #       run: make login
