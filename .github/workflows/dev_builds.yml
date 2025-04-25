@@ -227,11 +227,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: otelcol-sumo-linux_amd64
+          path: artifacts/linux/amd64/otelcol-sumo
 
       - name: Download binary action artifact from build phase
         uses: actions/download-artifact@v4
         with:
           name: otelcol-sumo-linux_arm64
+          path: artifacts/linux/arm64/otelcol-sumo
 
       - name: Set GIT_SHA
         run: echo "GIT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
