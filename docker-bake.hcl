@@ -32,17 +32,44 @@ target "standard" {
   ]
 }
 
+target "standard-fips" {
+  inherits = ["standard"]
+  args = {
+    COLLECTOR_BIN = "otelcol-sumo-fips"
+  }
+}
+
 target "standard-local" {
   inherits = ["standard"]
   output = ["type=docker"]
 }
 
-target "standard-all" {
+target "standard-all-nofips" {
   inherits = ["standard"]
   platforms = [
     "linux/amd64",
     "linux/arm64"
   ]
+}
+
+target "standard-all-fips" {
+  inherits = ["standard-fips"]
+  platforms = [
+    "linux/amd64",
+    "linux/arm64"
+  ]
+}
+
+target "standard-all" {
+  name = "standard-all-${tgt}"
+  inherits = [tgt]
+  matrix = {
+    tgt = [
+      "standard-all-nofips",
+      "standard-all-fips"
+    ]
+  }
+}
   #output = [{
   #  type="image",
   #  name="${REPO}/sumologic-otel-collector-ci-builds:${GIT_SHA}",
@@ -56,4 +83,4 @@ target "standard-all" {
     #"${REPO}/sumologic-otel-collector-ci-builds:${CONTAINER_VERSION}",
     #"${REPO}/sumologic-otel-collector-ci-builds:latest",
   #]
-}
+#}

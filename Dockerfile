@@ -2,10 +2,11 @@
 FROM debian:12.6 AS otelcol
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
+ARG COLLECTOR_BIN=otelcol-sumo
 
 RUN echo "I am running on ${BUILDPLATFORM}, building for ${TARGETPLATFORM}"
 
-COPY artifacts/$TARGETPLATFORM/otelcol-sumo /
+COPY artifacts/$TARGETPLATFORM/$COLLECTOR_BIN /otelcol-sumo
 # This shouldn't be necessary but sometimes we end up with execution bit not set.
 # ref: https://github.com/open-telemetry/opentelemetry-collector/issues/1317
 RUN chmod 755 /otelcol-sumo
