@@ -233,8 +233,8 @@ jobs:
         with:
           name: otelcol-sumo-linux_arm64
 
-      - name: Set GITHUB_SHA
-        run: echo "GITHUB_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Set GIT_SHA
+        run: echo "GIT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Set BASE_TAG
         run: echo "BASE_TAG=663229565520.dkr.ec2.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-release-candidates" >> "$GITHUB_ENV"
