@@ -1,8 +1,6 @@
 module github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/rawk8seventsreceiver
 
-go 1.23.0
-
-toolchain go1.24.0
+go 1.24.0
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0

@@ -1,8 +1,6 @@
 module github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/activedirectoryinvreceiver
 
-go 1.23.0
-
-toolchain go1.23.5
+go 1.24.0
 
 require (
 	github.com/go-adsi/adsi v0.0.0-20230315214257-4ff46d735e52
