@@ -95,6 +95,7 @@ jobs:
           echo "/d/a/_work/1/s/go/bin" >> $GITHUB_PATH &&
           powershell -command "Set-ItemProperty -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy -Name Enabled -Value \$true"
 
+          
       - name: (DEBUG) Show PATH
         if: contains(inputs.arch_os, 'windows') && inputs.fips
         run: echo $PATH
