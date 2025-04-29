@@ -14,6 +14,9 @@ endif
 ifeq ($(OS),windows)
 	BUILDER_BIN_EXT ?= .exe
 	MAKE := "$(shell cygpath '$(MAKE)')"
+$(info "PATH = $(PATH)")
+$(info "MAKE = $(MAKE)")
+$(error "quitting")
 endif
 
 OS ?= $(shell uname -s | tr A-Z a-z)

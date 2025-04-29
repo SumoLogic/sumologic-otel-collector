@@ -90,7 +90,6 @@ jobs:
       - name: Setup go (Microsoft fork) and enable FIPS on Windows
         if: contains(inputs.arch_os, 'windows') && inputs.fips
         run: |
-          rm "$(which go)" &&
           curl -Lo go.zip https://aka.ms/golang/release/latest/go${{ env.GO_VERSION }}.windows-amd64.zip &&
           powershell -command "Expand-Archive go.zip D:\\a\\_work\\1\\s" &&
           echo "/d/a/_work/1/s/go/bin" >> $GITHUB_PATH &&
@@ -111,6 +110,10 @@ jobs:
       - name: (DEBUG) List contents of go directory
         if: contains(inputs.arch_os, 'windows') && inputs.fips
         run: ls -l /d/a/_work/1/s/go/bin
+
+      - name: (DEBUG) Show cygpath
+        if: contains(inputs.arch_os, 'windows') && inputs.fips
+        run: cygpath
 
       - name: Set Sumo component version in go.mod
         if: inputs.sumo_component_gomod_version != ''
