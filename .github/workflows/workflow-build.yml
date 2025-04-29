@@ -111,10 +111,6 @@ jobs:
         if: contains(inputs.arch_os, 'windows') && inputs.fips
         run: ls -l /d/a/_work/1/s/go/bin
 
-      - name: (DEBUG) Show cygpath
-        if: contains(inputs.arch_os, 'windows') && inputs.fips
-        run: cygpath
-
       - name: Set Sumo component version in go.mod
         if: inputs.sumo_component_gomod_version != ''
         run: make prepare-tag TAG=${{ inputs.sumo_component_gomod_version }}

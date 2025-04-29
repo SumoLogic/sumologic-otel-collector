@@ -11,6 +11,8 @@ ifeq ($(OS),Windows_NT)
 	OS=windows
 endif
 
+$(info "SHELL = $(SHELL)")
+
 ifeq ($(OS),windows)
 	BUILDER_BIN_EXT ?= .exe
 	MAKE := "$(shell cygpath '$(MAKE)')"
