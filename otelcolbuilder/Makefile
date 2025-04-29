@@ -16,7 +16,6 @@ ifeq ($(OS),windows)
 	MAKE := "$(shell cygpath '$(MAKE)')"
 $(info "PATH = $(PATH)")
 $(info "MAKE = $(MAKE)")
-$(error "quitting")
 endif
 
 OS ?= $(shell uname -s | tr A-Z a-z)
