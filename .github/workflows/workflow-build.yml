@@ -95,22 +95,6 @@ jobs:
           cygpath -w "/d/a/_work/1/s/go/bin" >> $GITHUB_PATH &&
           powershell -command "Set-ItemProperty -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy -Name Enabled -Value \$true"
 
-      - name: (DEBUG) Show PATH
-        if: contains(inputs.arch_os, 'windows') && inputs.fips
-        run: echo $PATH
-
-      - name: (DEBUG) List contents of go directory
-        if: contains(inputs.arch_os, 'windows') && inputs.fips
-        run: ls -l /d/a/_work/1/s
-
-      - name: (DEBUG) List contents of go directory
-        if: contains(inputs.arch_os, 'windows') && inputs.fips
-        run: ls -l /d/a/_work/1/s/go
-
-      - name: (DEBUG) List contents of go directory
-        if: contains(inputs.arch_os, 'windows') && inputs.fips
-        run: ls -l /d/a/_work/1/s/go/bin
-
       - name: Set Sumo component version in go.mod
         if: inputs.sumo_component_gomod_version != ''
         run: make prepare-tag TAG=${{ inputs.sumo_component_gomod_version }}
