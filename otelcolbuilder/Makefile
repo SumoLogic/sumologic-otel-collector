@@ -1,7 +1,7 @@
 include ../toolchains/Makefile
 
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.118.0
+BUILDER_VERSION ?= 0.124.0
 FIPS_SUFFIX ?= ""
 BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector-releases
 GO ?= go
@@ -107,7 +107,7 @@ endif
 
 .PHONY: _builder
 _builder:
-	$(eval VERSION ?= $(shell git describe --tags --abbrev=5 --match "v[0-9]*"| sed 's/^v//'))
+	$(eval VERSION ?= $(shell BUILDER_CONFIG=.otelcol-builder.yaml ../ci/get_version.sh core))
 	$(shell yq e ".dist.version = \"${VERSION}${FIPS_SUFFIX}\"" -i .otelcol-builder.yaml)
 	$(eval SUMOVERSION ?= $(shell yq '.dist.version' .otelcol-builder.yaml))
 	@echo "Building otelcol-sumo version: $(SUMOVERSION)"

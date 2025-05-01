@@ -29,10 +29,11 @@ func TestType(t *testing.T) {
 }
 
 func TestCreateLogsReceiver(t *testing.T) {
+	f := NewFactory()
 	cfg := CreateDefaultConfig().(*ADConfig)
 	_, err := NewFactory().CreateLogs(
 		context.Background(),
-		receivertest.NewNopSettings(),
+		receivertest.NewNopSettings(f.Type()),
 		cfg,
 		nil,
 	)

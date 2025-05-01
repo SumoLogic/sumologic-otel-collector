@@ -12,7 +12,7 @@ processors:
     memory_limiter:
         check_interval: 5s
         limit_percentage: 75
-        spike_limit_percentage: 20
+        spike_limit_percentage: "twenty"
     resource/0aa79379-c764-4d3d-9d66-03f6df029a07:
         attributes:
             - action: insert
