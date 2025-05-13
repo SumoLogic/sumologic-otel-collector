@@ -23,6 +23,14 @@ target "standard" {
   inherits = ["docker-metadata-action"]
   context = "./"
   dockerfile = "Dockerfile"
+  output = [{
+    type="image",
+    #name="${BASE_TAG}/sumologic-otel-collector-ci-builds:${GIT_SHA}",
+    name="${BASE_TAG}/sumologic-otel-collector-ci-builds",
+    push-by-digest=true,
+    name-canonical=true,
+    push=true
+  }]
   tags = [
     #"663229565520.dkr.ecr.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-ci-builds:${GIT_SHA}"
     #"${BASE_TAG}/sumologic-otel-collector-ci-builds:${CONTAINER_VERSION}",
@@ -37,10 +45,23 @@ target "standard-fips" {
   args = {
     COLLECTOR_BIN = "otelcol-sumo-fips"
   }
+  output = [{
+   type="image",
+   #name="${BASE_TAG}/sumologic-otel-collector-ci-builds:${GIT_SHA}",
+   name="${BASE_TAG}/sumologic-otel-collector-ci-builds",
+   push-by-digest=true,
+   name-canonical=true,
+   push=true
+  }]
 }
 
 target "standard-local" {
   inherits = ["standard"]
+  output = ["type=docker"]
+}
+
+target "standard-local-fips" {
+  inherits = ["standard-fips"]
   output = ["type=docker"]
 }
 
@@ -70,17 +91,16 @@ target "standard-all" {
     ]
   }
 }
-  #output = [{
-  #  type="image",
-  #  name="${REPO}/sumologic-otel-collector-ci-builds:${GIT_SHA}",
-  #  push-by-digest=true,
-  #  name-canonical=true,
-  #  push=false
-  #}]
+
+target "push-standard-ecr" {
+
+}
+
+
   #tags = [
     #"663229565520.dkr.ecr.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-ci-builds:${GIT_SHA}"
-    #"${REPO}/sumologic-otel-collector-ci-builds:${GIT_SHA}",
-    #"${REPO}/sumologic-otel-collector-ci-builds:${CONTAINER_VERSION}",
-    #"${REPO}/sumologic-otel-collector-ci-builds:latest",
+    #"${BASE_TAG}/sumologic-otel-collector-ci-builds:${GIT_SHA}",
+    #"${BASE_TAG}/sumologic-otel-collector-ci-builds:${CONTAINER_VERSION}",
+    #"${BASE_TAG}/sumologic-otel-collector-ci-builds:latest",
   #]
 #}

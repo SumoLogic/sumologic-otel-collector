@@ -188,13 +188,29 @@ jobs:
     needs:
       - build
       - get-version
+    strategy:
+      matrix:
+        include:
+          - target: standard
+            platform: linux_amd64
+            colletor_binary: otelcol-sumo
+          - target: standard
+            platform: linux_arm64
+            collector_binary: otelcol-sumo
+          - target: standard-fips
+            platform: linux_amd64
+            colletor_binary: otelcol-sumo-fips
+          - target: standard-fips
+            platform: linux_arm64
+            colletor_binary: otelcol-sumo-fips
     steps:
       - uses: actions/checkout@v4
 
-      #     - name: Convert Go platform to Docker platform
-      #       run: |
-      #         platform=${{ matrix.arch_os }}
-      #         echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+      - name: Convert Go platform to Docker platform
+        id: docker-platform
+        run: |
+          platform=${{ matrix.arch_os }}
+          echo "name=${platform//\//-}" >> "$GITHUB_OUTPUT"
 
       - name: Set image metadata
         id: meta
@@ -226,26 +242,8 @@ jobs:
       - name: Download binary action artifact from build phase
         uses: actions/download-artifact@v4
         with:
-          name: otelcol-sumo-linux_amd64
-          path: artifacts/linux/amd64/otelcol-sumo
-
-      - name: Download binary action artifact from build phase
-        uses: actions/download-artifact@v4
-        with:
-          name: otelcol-sumo-linux_arm64
-          path: artifacts/linux/arm64/otelcol-sumo
-
-      - name: Download FIPS binary action artifact from build phase
-        uses: actions/download-artifact@v4
-        with:
-          name: otelcol-sumo-fips-linux_amd64
-          path: artifacts/linux/amd64/otelcol-sumo-fips
-
-      - name: Download FIPS binary action artifact from build phase
-        uses: actions/download-artifact@v4
-        with:
-          name: otelcol-sumo-fips-linux_arm64
-          path: artifacts/linux/arm64/otelcol-sumo-fips
+          name: ${{ matrix.collector_binary }}-${{ matrix.platform }}
+          path: artifacts/${{ steps.docker-platform.outputs.name }}/${{ matrix.collector_binary }}
 
       - name: Set GIT_SHA
         run: echo "GIT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
@@ -254,6 +252,7 @@ jobs:
         run: echo "BASE_TAG=663229565520.dkr.ecr.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-ci-builds" >> "$GITHUB_ENV"
 
       - name: Build and push
+        id: build
         uses: docker/bake-action@v6
         with:
           source: .
@@ -263,6 +262,8 @@ jobs:
             *.tags=
             *.output=type=image,"name=663229565520.dkr.ecr.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-ci-builds",push-by-digest=true,name-canonical=true,push=true
 
+      - name: Print metadata
+        run: echo '${{ steps.build.outputs.metadata }}'
   #     - name: Login to Open Source ECR
   #       run: make login
   #       env:
