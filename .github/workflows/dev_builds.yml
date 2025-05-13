@@ -193,16 +193,16 @@ jobs:
         include:
           - target: standard
             platform: linux_amd64
-            colletor_binary: otelcol-sumo
+            collector_binary: otelcol-sumo
           - target: standard
             platform: linux_arm64
             collector_binary: otelcol-sumo
           - target: standard-fips
             platform: linux_amd64
-            colletor_binary: otelcol-sumo-fips
+            collector_binary: otelcol-sumo-fips
           - target: standard-fips
             platform: linux_arm64
-            colletor_binary: otelcol-sumo-fips
+            collector_binary: otelcol-sumo-fips
     steps:
       - uses: actions/checkout@v4
 
