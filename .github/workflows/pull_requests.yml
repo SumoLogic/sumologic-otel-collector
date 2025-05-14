@@ -172,7 +172,6 @@ jobs:
     with:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
-      save-cache: true
       boringcrypto: ${{ matrix.boringcrypto == true }}
 
   lint:
@@ -290,7 +289,6 @@ jobs:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
-      save-cache: true
     secrets:
       apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
       apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}

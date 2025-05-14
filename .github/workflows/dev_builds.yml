@@ -37,30 +37,35 @@ jobs:
           echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
 
       - uses: actions/cache/restore@v4
+        id: restore-go-mod-cache
         with:
           path: |
             ${{ env.GOMODCACHE }}/cache
             ${{ env.GOCACHE }}
-          key: go-test-${{ env.GO_VERSION }}-${{matrix.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
+          key: go-lint-${{ env.GO_VERSION }}-${{ matrix.arch_os }}--${{ hashFiles('pkg/**/*/go.sum') }}
           restore-keys: |
-            go-test-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
+            go-lint-${{ env.GO_VERSION }}-${{ matrix.arch_os }}-
 
       - uses: actions/cache@v4
         with:
           path: |
             /home/runner/.cache/staticcheck
-          key: staticcheck-${{ env.GO_VERSION }}-${{matrix.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
+          key: staticcheck-${{ runner.os }}-${{ github.sha }}
           restore-keys: |
-            staticcheck-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
+            staticcheck-${{ runner.os }}-
 
       - name: Install staticcheck
         run: make install-staticcheck
 
-      - name: Add opentelemetry-collector-builder installation dir to PATH
-        run: echo "$HOME/bin" >> $GITHUB_PATH
-
       - name: Run staticcheck
         run: make golint
+
+      - uses: actions/cache/save@v4
+        with:
+          path: |
+            ${{ env.GOMODCACHE }}/cache
+            ${{ env.GOCACHE }}
+          key: ${{ steps.restore-go-mod-cache.outputs.cache-primary-key }}
 
   test:
     name: Test
@@ -70,17 +75,16 @@ jobs:
         include:
           - arch_os: linux_amd64
             runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-            boringcrypto: true
-          - arch_os: darwin_amd64
-            runs-on: macos-15
-          - arch_os: windows_amd64
-            runs-on: windows-2022
+          # - arch_os: linux_amd64
+          #   runs-on: ubuntu-24.04
+          #   boringcrypto: true
+          # - arch_os: darwin_amd64
+          #   runs-on: macos-15
+          # - arch_os: windows_amd64
+          #   runs-on: windows-2022
     with:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
-      save-cache: true
       boringcrypto: ${{ matrix.boringcrypto == true }}
 
   test-otelcol-config:
@@ -91,15 +95,14 @@ jobs:
         include:
           - arch_os: linux_amd64
             runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-            boringcrypto: true
-          - arch_os: darwin_amd64
-            runs-on: macos-15
+          # - arch_os: linux_amd64
+          #   runs-on: ubuntu-24.04
+          #   boringcrypto: true
+          # - arch_os: darwin_amd64
+          #   runs-on: macos-15
     with:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
-      save-cache: true
       boringcrypto: ${{ matrix.boringcrypto == true }}
 
   get-version:
@@ -124,20 +127,19 @@ jobs:
           - arch_os: linux_arm64
             runs-on: ubuntu-24.04
             fips: true
-          - arch_os: darwin_amd64
-            runs-on: macos-15
-          - arch_os: darwin_arm64
-            runs-on: macos-15
-          - arch_os: windows_amd64
-            runs-on: windows-2022
-          - arch_os: windows_amd64
-            runs-on: windows-2022
-            fips: true
+          # - arch_os: darwin_amd64
+          #   runs-on: macos-15
+          # - arch_os: darwin_arm64
+          #   runs-on: macos-15
+          # - arch_os: windows_amd64
+          #   runs-on: windows-2022
+          # - arch_os: windows_amd64
+          #   runs-on: windows-2022
+          #   fips: true
     with:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
-      save-cache: true
       version: ${{ needs.get-version.outputs.version }}
     secrets:
       apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
@@ -149,38 +151,37 @@ jobs:
       microsoft_certificate_name: ${{ secrets.MICROSOFT_CERTNAME }}
       microsoft_description: ${{ secrets.MICROSOFT_DESCRIPTION }}
 
-  build-otelcol-config:
-    name: Build (otelcol-config)
-    uses: ./.github/workflows/workflow-build-otelcol-config.yml
-    needs: [get-version]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch_os: darwin_amd64
-            runs-on: macos-15
-          - arch_os: darwin_arm64
-            runs-on: macos-15
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-            fips: true
-          - arch_os: linux_arm64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_arm64
-            runs-on: ubuntu-24.04
-            fips: true
-    with:
-      arch_os: ${{ matrix.arch_os }}
-      runs-on: ${{ matrix.runs-on }}
-      fips: ${{ matrix.fips == true }}
-      save-cache: true
-      sumo_component_gomod_version: "v${{ needs.get-version.outputs.version }}"
-    secrets:
-      apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-      apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
-      app_store_connect_password: ${{ secrets.AC_PASSWORD }}
+  # build-otelcol-config:
+  #   name: Build (otelcol-config)
+  #   uses: ./.github/workflows/workflow-build-otelcol-config.yml
+  #   needs: [get-version]
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       include:
+  #         - arch_os: darwin_amd64
+  #           runs-on: macos-15
+  #         - arch_os: darwin_arm64
+  #           runs-on: macos-15
+  #         - arch_os: linux_amd64
+  #           runs-on: ubuntu-24.04
+  #         - arch_os: linux_amd64
+  #           runs-on: ubuntu-24.04
+  #           fips: true
+  #         - arch_os: linux_arm64
+  #           runs-on: ubuntu-24.04
+  #         - arch_os: linux_arm64
+  #           runs-on: ubuntu-24.04
+  #           fips: true
+  #   with:
+  #     arch_os: ${{ matrix.arch_os }}
+  #     runs-on: ${{ matrix.runs-on }}
+  #     fips: ${{ matrix.fips == true }}
+  #     sumo_component_gomod_version: "v${{ needs.get-version.outputs.version }}"
+  #   secrets:
+  #     apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+  #     apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+  #     app_store_connect_password: ${{ secrets.AC_PASSWORD }}
 
   build-container-images:
     name: Build container
@@ -188,6 +189,14 @@ jobs:
     needs:
       - build
       - get-version
+    outputs:
+      # NOTE: one output is needed for each item in the matrix. These outputs
+      # store the raw manifest of the container image of each build and are used
+      # to create a multiplatform image index later on.
+      manifest_standard_linux_amd64: ${{ steps.manifest.outputs.standard_linux_amd64 }}
+      manifest_standard_linux_arm64: ${{ steps.manifest.outputs.standard_linux_arm64 }}
+      manifest_standard_fips_linux_amd64: ${{ steps.manifest.outputs.standard-fips_linux_amd64 }}
+      manifest_standard_fips_linux_arm64: ${{ steps.manifest.outputs.standard-fips_linux_arm64 }}
     strategy:
       matrix:
         include:
@@ -245,9 +254,6 @@ jobs:
           name: ${{ matrix.collector_binary }}-${{ matrix.platform }}
           path: artifacts/${{ steps.docker-platform.outputs.name }}/${{ matrix.collector_binary }}
 
-      - name: DEBUG
-        run: ls artifacts/**/*
-
       - name: Set GIT_SHA
         run: echo "GIT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
@@ -268,11 +274,12 @@ jobs:
 
       - name: Print metadata
         run: echo '${{ steps.build.outputs.metadata }}'
-  #     - name: Login to Open Source ECR
-  #       run: make login
-  #       env:
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+
+      - name: Set container image manifest output
+        id: manifest
+        run: |
+          manifest='${{ steps.build.outputs.metadata }}'
+          echo "${{ matrix.target }}_${{ matrix.platform }}=${manifest}" >> "$GITHUB_OUTPUT"
 
   # - name: Login to Docker Hub
   #   run: |
@@ -434,6 +441,42 @@ jobs:
   #           BUILD_TAG=${{ needs.get-version.outputs.version }} \
   #           REPO_URL=sumologic/sumologic-otel-collector \
   #           PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
+
+  push-docker-manifest:
+    name: Push joint container manifest
+    runs-on: ubuntu-24.04
+    needs:
+      - build-container-images
+      #- build-windows-container-images
+      - get-version
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show job outputs
+        run: |
+          echo '${{ toJSON(needs.build-container-images.outputs) }}' | jq
+
+      - name: DEBUG attempt loop
+        run: |
+          echo '${{ toJSON(needs.build-container-images.outputs) }}' | \
+          jq -c '.[]' | \
+          xargs -L 1 cat
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3.2.0
+
+      - name: Set up Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3.7.1
+
+      - name: Show Buildx platforms
+        run: echo ${{ steps.buildx.outputs.platforms }}
+
+      - name: Login to Private Open Source ECR
+        run: make login-ecr-private
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
 
   # push-docker-manifest:
   #   name: Push joint container manifest
