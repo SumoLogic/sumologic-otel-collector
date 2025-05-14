@@ -25,7 +25,6 @@ target "standard" {
   dockerfile = "Dockerfile"
   output = [{
     type="image",
-    #name="${BASE_TAG}/sumologic-otel-collector-ci-builds:${GIT_SHA}",
     name="${BASE_TAG}/sumologic-otel-collector-ci-builds",
     push-by-digest=true,
     name-canonical=true,

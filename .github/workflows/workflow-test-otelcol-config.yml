@@ -18,10 +18,6 @@ on:
         description: Run only if relevant files changed.
         default: false
         type: boolean
-      save-cache:
-        description: Save the module and build caches.
-        default: false
-        type: boolean
 
 defaults:
   run:
@@ -53,10 +49,17 @@ jobs:
       - name: Get cache key
         id: get-cache-key
         run: |
-          echo "cache-key=go-test-${{ env.GO_VERSION }}${BORINGCRYPTO_SUFFIX}-${{inputs.arch_os}}-${{ hashFiles('pkg/tools/otelcol-config/go.sum') }}" >> $GITHUB_OUTPUT
-          echo "restore-keys=go-test-${{ env.GO_VERSION }}${BORINGCRYPTO_SUFFIX}-${{inputs.arch_os}}-" >> $GITHUB_OUTPUT
+          go_hash="${{ hashFiles('pkg/tools/otelcol-config/go.sum') }}"
+          go_version="${{ env.GO_VERSION }}"
+          platform="${{ inputs.arch_os }}"
+          fips_suffix="${BORINGCRYPTO_SUFFIX}"
+          cache_key="go-test-${go_version}-otelcol-config${fips_suffix}-${platform}"
+
+          echo "cache-key=${cache_key}-${go_hash}" >> $GITHUB_OUTPUT
+          echo "restore-keys=${cache_key}" >> $GITHUB_OUTPUT
 
       - uses: actions/cache/restore@v4
+        id: restore-go-mod-cache
         with:
           path: |
             ${{ env.GOMODCACHE }}/cache
@@ -74,4 +77,4 @@ jobs:
           path: |
             ${{ env.GOMODCACHE }}/cache
             ${{ env.GOCACHE }}
-          key: ${{ steps.get-cache-key.outputs.cache-key }}
+          key: ${{ steps.restore-go-mod-cache.outputs.cache-primary-key }}
