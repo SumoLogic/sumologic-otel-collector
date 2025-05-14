@@ -245,6 +245,9 @@ jobs:
           name: ${{ matrix.collector_binary }}-${{ matrix.platform }}
           path: artifacts/${{ steps.docker-platform.outputs.name }}/${{ matrix.collector_binary }}
 
+      - name: DEBUG
+        run: ls artifacts/**/*
+
       - name: Set GIT_SHA
         run: echo "GIT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
@@ -256,9 +259,10 @@ jobs:
         uses: docker/bake-action@v6
         with:
           source: .
-          targets: standard-all
+          targets: ${{ matrix.target }}
           push: true
           set: |
+            *.platform=${{ steps.docker-platform.outputs.name }}
             *.tags=
             *.output=type=image,"name=663229565520.dkr.ecr.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-ci-builds",push-by-digest=true,name-canonical=true,push=true
 
