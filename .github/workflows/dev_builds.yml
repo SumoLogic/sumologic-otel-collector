@@ -210,7 +210,7 @@ jobs:
         id: docker-platform
         run: |
           platform=${{ matrix.platform }}
-          echo "name=${platform//\//-}" >> "$GITHUB_OUTPUT"
+          echo "name=${platform/_/\/}" >> "$GITHUB_OUTPUT"
 
       - name: Set image metadata
         id: meta
