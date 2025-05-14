@@ -209,7 +209,7 @@ jobs:
       - name: Convert Go platform to Docker platform
         id: docker-platform
         run: |
-          platform=${{ matrix.arch_os }}
+          platform=${{ matrix.platform }}
           echo "name=${platform//\//-}" >> "$GITHUB_OUTPUT"
 
       - name: Set image metadata
