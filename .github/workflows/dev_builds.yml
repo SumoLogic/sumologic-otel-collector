@@ -292,7 +292,7 @@ jobs:
         id: manifest
         run: |
           manifest='${{ steps.build.outputs.metadata }}'
-          echo "${{ matrix.target }}_${{ matrix.platform }}=${manifest}" >> "$GITHUB_OUTPUT"
+          echo "${{ matrix.target }}_${{ matrix.platform }}='${manifest}'" >> "$GITHUB_OUTPUT"
 
   # - name: Login to Docker Hub
   #   run: |

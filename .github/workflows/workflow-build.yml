@@ -114,7 +114,7 @@ jobs:
           toolchain_hash="${{ hashFiles('toolchains/config.mak', 'toolchains/Makefile') }}"
           cache_key="go-build-${go_version}${fips_suffix}-${platform}"
 
-          echo "cache-key=${cache_key}-${go_hash}" >> $GITHUB_OUTPUT
+          echo "cache-key=${cache_key}-${go_hash}-${{ github.run_id }}" >> $GITHUB_OUTPUT
           echo "restore-keys=${cache_key}" >> $GITHUB_OUTPUT
           echo "toolchain-cache-key=toolchain-${platform}-${toolchain_hash}" >> $GITHUB_OUTPUT
 
@@ -274,6 +274,7 @@ jobs:
           key: ${{ steps.restore-toolchain-cache.outputs.cache-primary-key }}
 
       - uses: actions/cache/save@v4
+        if: always()
         with:
           path: |
             ${{ env.GOMODCACHE }}/cache
