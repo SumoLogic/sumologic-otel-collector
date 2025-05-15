@@ -284,9 +284,8 @@ jobs:
       - name: Set container image manifest output
         id: manifest
         run: |
-          echo ${{ steps.build.outputs.metadata }} > manifest.json
-          manifest="$(jq -c . manifest.json)"
-          echo "${{ matrix.target }}_${{ matrix.platform }}=${manifest}" >> "$GITHUB_OUTPUT"
+          name="${{ matrix.target }}_${{ matrix.platform }}"
+          echo "${name}=${{ fromJSON(steps.build.outputs.metadata) }}" >> "$GITHUB_OUTPUT"
 
   # - name: Login to Docker Hub
   #   run: |
