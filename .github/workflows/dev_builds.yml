@@ -42,7 +42,7 @@ jobs:
           path: |
             ${{ env.GOMODCACHE }}/cache
             ${{ env.GOCACHE }}
-          key: go-lint-${{ env.GO_VERSION }}-${{ matrix.arch_os }}--${{ hashFiles('pkg/**/*/go.sum') }}
+          key: go-lint-${{ env.GO_VERSION }}-${{ matrix.arch_os }}-${{ hashFiles('pkg/**/*/go.sum') }}-${{ github.run_id }}
           restore-keys: |
             go-lint-${{ env.GO_VERSION }}-${{ matrix.arch_os }}-
 
@@ -66,6 +66,7 @@ jobs:
         run: make golint
 
       - uses: actions/cache/save@v4
+        if: always()
         with:
           path: |
             ${{ env.GOMODCACHE }}/cache
@@ -291,7 +292,8 @@ jobs:
       - name: Set container image manifest output
         id: manifest
         run: |
-          manifest='${{ steps.build.outputs.metadata }}'
+          echo '${{ steps.build.outputs.metadata }}' > manifest.json
+          manifest="$(jq -c . manifest.json)"
           echo "${{ matrix.target }}_${{ matrix.platform }}='${manifest}'" >> "$GITHUB_OUTPUT"
 
   # - name: Login to Docker Hub
