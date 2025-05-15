@@ -55,7 +55,7 @@ jobs:
           fips_suffix="${BORINGCRYPTO_SUFFIX}"
           cache_key="go-test-${go_version}-otelcol-config${fips_suffix}-${platform}"
 
-          echo "cache-key=${cache_key}-${go_hash}" >> $GITHUB_OUTPUT
+          echo "cache-key=${cache_key}-${go_hash}-${{ github.run_id }}" >> $GITHUB_OUTPUT
           echo "restore-keys=${cache_key}" >> $GITHUB_OUTPUT
 
       - uses: actions/cache/restore@v4
@@ -73,6 +73,7 @@ jobs:
         working-directory: ./pkg/tools/otelcol-config
 
       - uses: actions/cache/save@v4
+        if: always()
         with:
           path: |
             ${{ env.GOMODCACHE }}/cache
