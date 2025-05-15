@@ -76,8 +76,6 @@ jobs:
   test:
     name: Test
     uses: ./.github/workflows/workflow-test.yml
-    permissions:
-      actions: write
     strategy:
       matrix:
         include:
@@ -98,8 +96,6 @@ jobs:
   test-otelcol-config:
     name: Test (otelcol-config)
     uses: ./.github/workflows/workflow-test-otelcol-config.yml
-    permissions:
-      actions: write
     strategy:
       matrix:
         include:
@@ -123,8 +119,6 @@ jobs:
     name: Build
     uses: ./.github/workflows/workflow-build.yml
     needs: [get-version]
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -167,8 +161,6 @@ jobs:
   #   name: Build (otelcol-config)
   #   uses: ./.github/workflows/workflow-build-otelcol-config.yml
   #   needs: [get-version]
-  #   permissions:
-  #     actions: write
   #   strategy:
   #     fail-fast: false
   #     matrix:
@@ -292,9 +284,9 @@ jobs:
       - name: Set container image manifest output
         id: manifest
         run: |
-          echo '${{ steps.build.outputs.metadata }}' > manifest.json
+          echo ${{ steps.build.outputs.metadata }} > manifest.json
           manifest="$(jq -c . manifest.json)"
-          echo "${{ matrix.target }}_${{ matrix.platform }}='${manifest}'" >> "$GITHUB_OUTPUT"
+          echo "${{ matrix.target }}_${{ matrix.platform }}=${manifest}" >> "$GITHUB_OUTPUT"
 
   # - name: Login to Docker Hub
   #   run: |
@@ -464,13 +456,21 @@ jobs:
       - build-container-images
       #- build-windows-container-images
       - get-version
+    strategy:
+      matrix:
+        target:
+          - standard
+          - standard-fips
     steps:
       - uses: actions/checkout@v4
 
       - name: DEBUG attempt loop
         run: |
-          echo '${{ toJSON(needs.build-container-images.outputs) }}' > outputs.json
-          jq -c '.[]' outputs.json | xargs -L 1 cat
+          echo ${{ toJSON(needs.build-container-images.outputs) }} \
+          | jq -jf ci/jq/manifest-sources.jq --arg target ${{ matrix.target }} \
+          > sources.txt
+
+          cat sources.txt
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3.2.0
