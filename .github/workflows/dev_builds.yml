@@ -285,7 +285,8 @@ jobs:
         id: manifest
         run: |
           name="${{ matrix.target }}_${{ matrix.platform }}"
-          echo "${name}=${{ fromJSON(steps.build.outputs.metadata) }}" >> "$GITHUB_OUTPUT"
+          printf -v metadata $(echo '${{ steps.build.outputs.metadata }}' | jq -c .)
+          echo "${name}=${{ steps.build.outputs.metadata }}" >> "$GITHUB_OUTPUT"
 
   # - name: Login to Docker Hub
   #   run: |
