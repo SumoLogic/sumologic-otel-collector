@@ -460,9 +460,9 @@ jobs:
       matrix:
         include:
           - target: standard
-            tags: ${{ toJSON(["latest", github.ref]) }}
+            tags: '["latest", "${{ github.ref }}"])'
           - target: standard-fips
-            tags: ${{ toJSON(["latest-fips", format('{}-fips', github.ref)]) }}
+            tags: '["latest-fips", "${{ github.ref }}-fips"])'
     steps:
       - uses: actions/checkout@v4
 
