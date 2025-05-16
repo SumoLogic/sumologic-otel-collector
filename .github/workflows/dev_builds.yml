@@ -466,7 +466,7 @@ jobs:
 
       - name: DEBUG attempt loop
         run: |
-          echo ${{ toJSON(needs.build-container-images.outputs) }} \
+          echo '${{ toJSON(needs.build-container-images.outputs) }}' \
           | jq -jf ci/jq/manifest-sources.jq --arg target ${{ matrix.target }} \
           > sources.txt
 
