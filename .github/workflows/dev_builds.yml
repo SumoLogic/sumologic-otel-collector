@@ -497,7 +497,7 @@ jobs:
           REPO_NAME: sumologic-otel-collector-ci-build
         run: |
           REPO="${REPO_BASE}/${REPO_ORG}/${REPO_NAME}"
-          echo '${{ fromJSON(matrix.tags) }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > tags.txt
+          echo '${{ matrix.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > tags.txt
 
       - name: Create multiplatform image index
         run: |
