@@ -286,7 +286,7 @@ jobs:
         run: |
           name="${{ matrix.target }}_${{ matrix.platform }}"
           printf -v metadata $(echo '${{ steps.build.outputs.metadata }}' | jq -c .)
-          echo "${name}=${{ steps.build.outputs.metadata }}" >> "$GITHUB_OUTPUT"
+          echo "${name}=${metadata}" >> "$GITHUB_OUTPUT"
 
   # - name: Login to Docker Hub
   #   run: |
