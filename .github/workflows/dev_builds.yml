@@ -302,12 +302,6 @@ jobs:
           printf -v metadata $(echo '${{ steps.build.outputs.metadata }}' | jq -c .)
           echo "${name}=${metadata}" >> "$GITHUB_OUTPUT"
 
-  # - name: Login to Docker Hub
-  #   run: |
-  #     docker login \
-  #       --username ${{ secrets.DOCKERHUB_LOGIN_DEV }} \
-  #       --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
-
   # build-windows-container-images:
   #   name: Build Windows container
   #   runs-on: ${{ matrix.runs-on }}
@@ -364,8 +358,8 @@ jobs:
   #           REPO_URL=sumologic/sumologic-otel-collector \
   #           PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
 
-  push-docker-manifest:
-    name: Push joint container manifest
+  push-image-indexes:
+    name: Push image indexes
     runs-on: ubuntu-24.04
     needs:
       - build-container-images
@@ -402,6 +396,13 @@ jobs:
           username: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
 
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_LOGIN_DEV }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
+
       - name: Determine source images
         run: |
           echo '${{ toJSON(needs.build-container-images.outputs) }}' \
@@ -410,16 +411,29 @@ jobs:
 
           cat sources.txt
 
-      - name: Determine tags
+      - name: Determine tags (ECR)
         env:
           REPO_BASE: 663229565520.dkr.ecr.us-east-1.amazonaws.com
           REPO_ORG: sumologic
           REPO_NAME: sumologic-otel-collector-ci-builds
         run: |
           REPO="${REPO_BASE}/${REPO_ORG}/${REPO_NAME}"
-          echo '${{ matrix.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > tags.txt
+          echo '${{ matrix.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > ecr-tags.txt
 
-      - name: Create multiplatform image index
+      - name: Determine tags (Docker Hub)
+        env:
+          REPO_BASE: docker.io
+          REPO_ORG: sumologic
+          REPO_NAME: sumologic-otel-collector-ci-builds
+        run: |
+          REPO="${REPO_BASE}/${REPO_ORG}/${REPO_NAME}"
+          echo '${{ matrix.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > dh-tags.txt
+
+      - name: Create multiplatform image index (ECR)
+        run: |
+          docker buildx imagetools create $(cat sources.txt) $(cat tags.txt)
+
+      - name: Create multiplatform image index (Docker Hub)
         run: |
           docker buildx imagetools create $(cat sources.txt) $(cat tags.txt)
 
