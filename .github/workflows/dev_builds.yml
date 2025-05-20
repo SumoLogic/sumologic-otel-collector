@@ -495,7 +495,7 @@ jobs:
         env:
           REPO_BASE: 663229565520.dkr.ecr.us-east-1.amazonaws.com
           REPO_ORG: sumologic
-          REPO_NAME: sumologic-otel-collector-ci-build
+          REPO_NAME: sumologic-otel-collector-ci-builds
         run: |
           REPO="${REPO_BASE}/${REPO_ORG}/${REPO_NAME}"
           echo '${{ matrix.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > tags.txt
