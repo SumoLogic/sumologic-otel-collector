@@ -431,11 +431,11 @@ jobs:
 
       - name: Create multiplatform image index (ECR)
         run: |
-          docker buildx imagetools create $(cat sources.txt) $(cat tags.txt)
+          docker buildx imagetools create $(cat sources.txt) $(cat ecr-tags.txt)
 
       - name: Create multiplatform image index (Docker Hub)
         run: |
-          docker buildx imagetools create $(cat sources.txt) $(cat tags.txt)
+          docker buildx imagetools create $(cat sources.txt) $(cat dh-tags.txt)
 
   #     - name: Push joint container manifest for all platforms to Open Source ECR
   #       run: |
