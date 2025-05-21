@@ -137,8 +137,8 @@ jobs:
           #   runs-on: macos-15
           # - arch_os: darwin_arm64
           #   runs-on: macos-15
-          # - arch_os: windows_amd64
-          #   runs-on: windows-2022
+          - arch_os: windows_amd64
+            runs-on: windows-2022
           # - arch_os: windows_amd64
           #   runs-on: windows-2022
           #   fips: true
@@ -191,7 +191,7 @@ jobs:
 
   build-container-images:
     name: Build container
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.runs-on || 'ubuntu-24.04' }}
     needs:
       - build
       - get-version
@@ -201,6 +201,8 @@ jobs:
       # to create a multiplatform image index later on.
       manifest_standard_linux_amd64: ${{ steps.manifest.outputs.standard_linux_amd64 }}
       manifest_standard_linux_arm64: ${{ steps.manifest.outputs.standard_linux_arm64 }}
+      manifest_standard_windows_amd64_ltsc2019: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2019 }}
+      manifest_standard_windows_amd64_ltsc2022: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2022 }}
       manifest_standard-fips_linux_amd64: ${{ steps.manifest.outputs.standard-fips_linux_amd64 }}
       manifest_standard-fips_linux_arm64: ${{ steps.manifest.outputs.standard-fips_linux_arm64 }}
       manifest_ubi_linux_amd64: ${{ steps.manifest.outputs.ubi_linux_amd64 }}
@@ -210,52 +212,65 @@ jobs:
     strategy:
       matrix:
         include:
-          # standard target
-          - target: standard
+          # standard product
+          - product: standard
             platform: linux_amd64
             collector_binary: otelcol-sumo
-          - target: standard
+          - product: standard
             platform: linux_arm64
             collector_binary: otelcol-sumo
-          # standard-fips target
-          - target: standard-fips
+          - product: standard
+            target: windows-ltsc2022
+            platform: windows_amd64
+            subplatform: ltsc2022
+            runs-on: windows-2022
+            binary_ext: .exe
+          - product: standard
+            target: windows-ltsc2019
+            platform: windows_amd64
+            subplatform: ltsc2019
+            runs-on: windows-2019
+            binary_ext: .exe
+          # standard-fips product
+          - product: standard-fips
             platform: linux_amd64
             collector_binary: otelcol-sumo-fips
-          - target: standard-fips
+          - product: standard-fips
             platform: linux_arm64
             collector_binary: otelcol-sumo-fips
           # ubi target
-          - target: ubi
+          - product: ubi
             platform: linux_amd64
             collector_binary: otelcol-sumo
-          - target: ubi
+          - product: ubi
             platform: linux_arm64
             collector_binary: otelcol-sumo
           # ubi-fips target
-          - target: ubi-fips
+          - product: ubi-fips
             platform: linux_amd64
             collector_binary: otelcol-sumo-fips
-          - target: ubi-fips
+          - product: ubi-fips
             platform: linux_arm64
             collector_binary: otelcol-sumo-fips
     steps:
       - uses: actions/checkout@v4
 
+      - name: Output Go platform with subplatform
+        id: go-platform
+        run: |
+          platform=${{ matrix.platform }}
+          subplatform=${{ matrix.subplatform == '' && '' || format('_{0}', matrix.subplatform) }}
+          echo "name=${platform}${subplatform}" >> $GITHUB_OUTPUT
+
       - name: Convert Go platform to Docker platform
         id: docker-platform
         run: |
-          platform=${{ matrix.platform }}
+          platform=${{ steps.go-platform.outputs.name }}
           echo "name=${platform/_/\/}" >> "$GITHUB_OUTPUT"
 
-      # - name: Set image metadata
-      #   id: meta
-      #   uses: docker/metadata-action@v5
-      #   with:
-      #     images: 663229565520.dkr.ecr.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-ci-builds
-      # tags: ${{ inputs.meta-tags }}
-      # flavor: ${{ inputs.meta-flavor }}
-      # labels: ${{ inputs.meta-labels }}
-      # annotations: ${{ inputs.meta-annotations }}
+      - name: Set image metadata
+        id: meta
+        uses: docker/metadata-action@v5
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3.6.0
@@ -277,15 +292,15 @@ jobs:
       - name: Download binary action artifact from build phase
         uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.collector_binary }}-${{ matrix.platform }}
-          path: artifacts/${{ steps.docker-platform.outputs.name }}/${{ matrix.collector_binary }}
+          name: ${{ matrix.collector_binary }}-${{ matrix.platform }}${{ matrix.binary_ext }}
+          path: artifacts/${{ steps.docker-platform.outputs.name }}/${{ matrix.collector_binary }}${{ matrix.binary_ext }}
 
       - name: Build and push
         id: build
         uses: docker/bake-action@v6
         with:
           source: .
-          targets: ${{ matrix.target }}
+          targets: ${{ matrix.target || matrix.product }}
           push: true
           set: |
             *.platform=${{ steps.docker-platform.outputs.name }}
@@ -298,7 +313,7 @@ jobs:
       - name: Set container image manifest output
         id: manifest
         run: |
-          name="${{ matrix.target }}_${{ matrix.platform }}"
+          name="${{ matrix.product }}_${{ steps.go-platform.outputs.name }}"
           printf -v metadata $(echo '${{ steps.build.outputs.metadata }}' | jq -c .)
           echo "${name}=${metadata}" >> "$GITHUB_OUTPUT"
 
