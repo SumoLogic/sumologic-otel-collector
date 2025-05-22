@@ -47,6 +47,7 @@ defaults:
 env:
   GO_VERSION: "1.24.0"
   VERSION: ${{ inputs.version }}
+  YQ_VERSION: "4.45.1"
 
 jobs:
   build:
@@ -98,7 +99,7 @@ jobs:
         run: |
           file="go${{ env.GO_VERSION }}.windows-amd64.zip.sha256"
           url="https://aka.ms/golang/release/latest/${file}"
-          curl -Lo $file $url
+          curl -Lo "$file" "$url"
           checksum=$(awk '{print $1}' $file)
           echo "checksum=${checksum}" >> $GITHUB_OUTPUT
 
@@ -116,7 +117,7 @@ jobs:
           file="go${{ env.GO_VERSION }}.windows-amd64.zip"
           url="https://aka.ms/golang/release/latest/${file}"
           mkdir /d/ms-go
-          curl -Lo /d/ms-go/go.zip $url
+          curl -Lo /d/ms-go/go.zip "$url"
 
       - name: Setup go (Microsoft fork) and enable FIPS on Windows
         if: contains(inputs.arch_os, 'windows') && inputs.fips
@@ -164,9 +165,28 @@ jobs:
           restore-keys: |
             ${{ steps.get-cache-key.outputs.restore-keys }}
 
+      - name: Cache yq
+        id: cache-yq
+        uses: actions/cache@v4
+        with:
+          key: choco-yq-${{ env.YQ_VERSION }}
+          path: |
+            D:\nupkg_cache
+
+      - name: Download yq (Windows)
+        if: os.runner == 'Windows' && steps.cache-yq.outputs.cache-hit != 'true'
+        run: |
+          url="https://chocolatey.org/api/v2/package/yq/${{ env.YQ_VERSION }}"
+          output_path="/d/nupkg_cache/yq.${{ env.YQ_VERSION }}.nupkg"
+          curl -Lo "$output_path" "$url"
+
       - name: Install yq (Windows)
-        if: contains(inputs.arch_os, 'windows')
-        run: choco install yq
+        if: os.runner == 'Windows'
+        run: |
+          choco install yq \
+            --version ${{ env.YQ_VERSION }} \
+            --source 'D:\nupkg_cache' \
+            --ignore-dependencies
 
       - name: Set default BUILDER_BIN_PATH
         run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
