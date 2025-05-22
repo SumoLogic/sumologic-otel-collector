@@ -294,6 +294,8 @@ jobs:
       apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
       app_store_connect_password: ${{ secrets.AC_PASSWORD }}
 
+  # TODO: this needs to be updated to use docker bake and should probably test
+  # all images & platforms
   build-and-test-container-images:
     name: Build container
     runs-on: ubuntu-24.04

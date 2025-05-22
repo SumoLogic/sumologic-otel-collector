@@ -235,231 +235,33 @@ install-builder:
 
 #-------------------------------------------------------------------------------
 
-BASE_IMAGE_TAG ?= ""
-BUILD_TAG ?= latest
-BUILD_CACHE_TAG = latest-builder-cache
-DOCKERFILE = Dockerfile
-IMAGE_NAME = sumologic-otel-collector
-
-# ECR settings
-ECR_PUBLIC_URL = public.ecr.aws/sumologic
-ECR_PRIVATE_URL = 663229565520.dkr.ecr.us-east-1.amazonaws.com/sumologic
-ECR_URL_CI = $(ECR_PRIVATE_URL)/sumologic-otel-collector-ci-builds
-ECR_URL_RC = $(ECR_PRIVATE_URL)/sumologic-otel-collector-release-candidates
-ECR_URL_STABLE = $(ECR_PUBLIC_URL)/sumologic-otel-collector
-
-# Docker Hub settings
-DH_URL = docker.io
-DH_URL_CI = $(DH_URL)/sumologic/sumologic-otel-collector-ci-builds
-DH_URL_RC = $(DH_URL)/sumologic/sumologic-otel-collector-release-candidates
-DH_REPO_STABLE = $(DH_URL)/sumologic/sumologic-otel-collector
-
-.PHONY: _bake-container-image
-_bake-container-image: METADATA_FILE = container-manifest-standard-$(GOOS)-$(GOARCH).json
-_bake-container-image:
-	BASE_TAG=$(BASE_TAG) GIT_SHA=$(GIT_SHA) docker buildx bake $(BAKE_TARGET) \
-		--set "*.output=type=image,name=$(BASE_TAG),push-by-digest=true,name-canonical=true,push=false,registry.insecure=true" \
-		--set "*.tags="
-
-.PHONY: bake-ecr-container-images
-bake-ecr-container-images: BASE_TAG=$(ECR_URL_CI)
-bake-ecr-container-images: BAKE_TARGET=standard-all
-bake-ecr-container-images: _bake-container-image
-
-.PHONY: bake-container-images
-bake-container-images:
-#	rm -f container-digests.txt
-	$(MAKE) bake-ecr-container-images
-#	$(MAKE) _bake-container-image BAKE_TARGET=standard-all BASE_TAG=
-#	$(MAKE) _bake-container-image GOOS=linux GOARCH=arm64
-#	cat container-digests.txt
-
-.PHONY: create-container-index
-create-container-index:
-#	export DIGESTS=$$(cat container-digests.txt); echo $$DIGESTS; docker buildx imagetools create --dry-run $$(echo $$DIGESTS)
-
-# NOTE: Only used by build-container-local
-.PHONY: _build
-_build:
-	DOCKER_BUILDKIT=1 docker build \
-		--file $(DOCKERFILE) \
-		--build-arg BUILD_TAG=$(TAG) \
-		--build-arg BUILDKIT_INLINE_CACHE=1 \
-		--tag $(IMG):$(TAG) \
-		--tag $(IMG):$(shell git rev-parse --short HEAD) \
-		.
-
-.PHONY: _build-container-multiplatform
-_build-container-multiplatform:
-	BUILD_TAG="$(BUILD_TAG)" \
-		REPO_URL="$(REPO_URL)" \
-		DOCKERFILE="$(DOCKERFILE)" \
-		PLATFORM="$(PLATFORM)" \
-		BASE_IMAGE_TAG="${BASE_IMAGE_TAG}" \
-		./ci/build-push-multiplatform.sh $(PUSH)
-
-.PHONY: build-container-local
-build-container-local:
-	$(MAKE) _build \
-		IMG="$(IMAGE_NAME)-local" \
-		DOCKERFILE="Dockerfile_local" \
-		TAG="$(BUILD_TAG)"
-
-.PHONY: build-container-multiplatform
-build-container-multiplatform: REPO_URL = "$(ECR_URL_CI)"
-build-container-multiplatform: _build-container-multiplatform
-
-.PHONY: build-container-windows
-build-container-windows: REPO_URL = "$(ECR_URL_CI)"
-build-container-windows:
-	$(MAKE) _build-container-multiplatform \
-		DOCKERFILE=Dockerfile_windows \
-		BASE_IMAGE_TAG=ltsc2022
-
-	$(MAKE) _build-container-multiplatform \
-		DOCKERFILE=Dockerfile_windows \
-		BASE_IMAGE_TAG=ltsc2019
-
-#-------------------------------------------------------------------------------
-
-# NOTE: pushes a manifest to reference multiple platforms
-.PHONY: _push-container-manifest
-_push-container-manifest:
-	BUILD_TAG="$(BUILD_TAG)" \
-		REPO_URL="$(ECR_URL_CI)" \
-		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
-
-.PHONY: push-container-manifest
-push-container-manifest: REPO_URL = "$(ECR_URL_CI)"
-push-container-manifest: _push-container-manifest
-
-#-------------------------------------------------------------------------------
-
-.PHONY: _build-push-container-multiplatform
-_build-push-container-multiplatform: PUSH = --push
-_build-push-container-multiplatform: _build-container-multiplatform
-
-.PHONY: build-push-container
-build-push-container: DOCKERFILE = Dockerfile
-build-push-container: REPO_URL = "$(ECR_URL_CI)"
-build-push-container: _build-push-container-multiplatform
-
-.PHONY: build-push-container-ubi
-build-push-container-ubi: DOCKERFILE = Dockerfile_ubi
-build-push-container-ubi: REPO_URL = "$(ECR_URL_CI)"
-build-push-container-ubi: _build-push-container-multiplatform
-
-.PHONY: build-push-container-windows
-build-push-container-windows: DOCKERFILE = Dockerfile_windows
-build-push-container-windows: REPO_URL = "$(ECR_URL_CI)"
-build-push-container-windows: build-container-windows
-
-#-------------------------------------------------------------------------------
-
-.PHONY: test-built-image
-test-built-image:
-	docker run --rm "$(REPO_URL):$(BUILD_TAG)" --version
-
-#-------------------------------------------------------------------------------
-
 .PHONY: _promote-container-image
 _promote-container-image:
-	skopeo copy -a "$(SRC_URL):$(SRC_TAG)" "$(DST_URL):$(DST_TAG)"
+	docker buildx imagetools create "$(SRC_URL):$(TAG)" -t "$(DST_URL):$(TAG)"
 
 .PHONY: _create-container-image-alias
 _create-container-image-alias:
-	skopeo copy -a "$(DST_URL):$(SRC_TAG)" "$(DST_URL):$(DST_TAG)"
+	docker buildx imagetools create "$(URL):$(SRC_TAG)" -t "$(URL):$(DST_TAG)"
 
 .PHONY: _promote-container-image-standard
 _promote-container-image-standard:
-	$(MAKE) _promote-container-image \
-		SRC_TAG="$(GIT_SHA)" \
-		DST_TAG="$(GIT_SHA)"
+	$(MAKE) _promote-container-image TAG="$(GIT_SHA)"
+	$(MAKE) _create-container-image-alias SRC_TAG="$(GIT_SHA)" DST_TAG="latest"
 
 .PHONY: _promote-container-image-standard-fips
 _promote-container-image-standard-fips:
-	$(MAKE) _promote-container-image \
-		SRC_TAG="$(GIT_SHA)-fips" \
-		DST_TAG="$(GIT_SHA)-fips"
+	$(MAKE) _promote-container-image TAG="$(GIT_SHA)-fips"
+	$(MAKE) _create-container-image-alias SRC_TAG="$(GIT_SHA)" DST_TAG="latest-fips"
 
 .PHONY: _promote-container-image-ubi
 _promote-container-image-ubi:
-	$(MAKE) _promote-container-image \
-		SRC_TAG="$(GIT_SHA)-ubi" \
-		DST_TAG="$(GIT_SHA)-ubi"
+	$(MAKE) _promote-container-image TAG="$(GIT_SHA)-ubi"
+	$(MAKE) _create-container-image-alias SRC_TAG="$(GIT_SHA)" DST_TAG="latest-ubi"
 
 .PHONY: _promote-container-image-ubi-fips
 _promote-container-image-ubi-fips:
-	$(MAKE) _promote-container-image \
-		SRC_TAG="$(GIT_SHA)-ubi-fips" \
-		DST_TAG="$(GIT_SHA)-ubi-fips"
-
-.PHONY: _create-container-aliases-standard
-_create-container-aliases-standard:
-	$(MAKE) _create-container-image-alias \
-		SRC_TAG="$(GIT_SHA)" \
-		DST_TAG="latest-$(PLATFORM)"
-	$(MAKE) _create-container-image-alias \
-		SRC_TAG="$(GIT_SHA)" \
-		DST_TAG="latest"
-
-.PHONY: _create-container-aliases-standard-fips
-_create-container-aliases-standard-fips:
-	$(MAKE) _create-container-image-alias \
-		SRC_TAG="$(GIT_SHA)-fips" \
-		DST_TAG="latest-fips-$(PLATFORM)"
-	$(MAKE) _create-container-image-alias \
-		SRC_TAG="$(GIT_SHA)-fips" \
-		DST_TAG="latest-fips"
-
-.PHONY: _create-container-aliases-ubi
-_create-container-aliases-ubi:
-	$(MAKE) _create-container-image-alias \
-		SRC_TAG="$(GIT_SHA)-ubi" \
-		DST_TAG="latest-ubi-$(PLATFORM)"
-	$(MAKE) _create-container-image-alias \
-		SRC_TAG="$(GIT_SHA)-ubi" \
-		DST_TAG="latest-ubi"
-
-.PHONY: _create-container-aliases-ubi-fips
-_create-container-aliases-ubi-fips:
-	$(MAKE) _create-container-image-alias \
-		SRC_TAG="$(GIT_SHA)-ubi-fips" \
-		DST_TAG="latest-ubi-fips-$(PLATFORM)"
-	$(MAKE) _create-container-image-alias \
-		SRC_TAG="$(GIT_SHA)-ubi-fips" \
-		DST_TAG="latest-ubi-fips"
-
-.PHONY: _promote-container-images-linux
-_promote-container-images-linux: _promote-container-image-standard
-_promote-container-images-linux: _promote-container-image-standard-fips
-_promote-container-images-linux: _promote-container-image-ubi
-_promote-container-images-linux: _promote-container-image-ubi-fips
-_promote-container-images-linux: _create-container-aliases-standard
-_promote-container-images-linux: _create-container-aliases-standard-fips
-_promote-container-images-linux: _create-container-aliases-ubi
-_promote-container-images-linux: _create-container-aliases-ubi-fips
-
-# TODO: use latest tag, versions, etc.
-# NOTE: there are no ubi or fips images for windows
-# Current image tags:
-# * latest
-# * latest-fips
-# * latest-ubi
-# * latest-ubi-fips
-# * latest-fips-linux-arm64
-# * latest-linux-arm64
-# * latest-ubi-fips-linux-arm64
-# * latest-ubi-linux-arm64
-
-# * 0.118.0-sumo-1-9826f842f8c3c30979465383f2232ca81f69566f
-# * 0.118.0-sumo-1-9826f842f8c3c30979465383f2232ca81f69566f-fips
-# * 0.118.0-sumo-1-9826f842f8c3c30979465383f2232ca81f69566f-ubi
-# * 0.118.0-sumo-1-9826f842f8c3c30979465383f2232ca81f69566f-ubi-fips
-# * 0.118.0-sumo-1-9826f842f8c3c30979465383f2232ca81f69566f-fips-linux-arm64
-# * 0.118.0-sumo-1-9826f842f8c3c30979465383f2232ca81f69566f-linux-arm64
-# * 0.118.0-sumo-1-9826f842f8c3c30979465383f2232ca81f69566f-ubi-fips-linux-arm64
-# * 0.118.0-sumo-1-9826f842f8c3c30979465383f2232ca81f69566f-ubi-linux-arm64
+	$(MAKE) _promote-container-image TAG="$(GIT_SHA)-ubi-fips"
+	$(MAKE) _create-container-image-alias SRC_TAG="$(GIT_SHA)" DST_TAG="latest-ubi-fips"
 
 # Promotes an image in the ECR ci-builds repository to the release-candidates
 # repository
@@ -488,10 +290,6 @@ promote-dh-image-ci-to-rc: _promote-container-manifest
 promote-dh-image-rc-to-stable: SRC_URL = "docker://$(DH_URL_RC):$(GIT_SHA)"
 promote-dh-image-rc-to-stable: DST_URL = "docker://$(DH_URL_STABLE):$(GIT_SHA)"
 promote-dh-image-rc-to-stable: _promote-container-manifest
-
-#-------------------------------------------------------------------------------
-
-# TODO: yank container image support
 
 #-------------------------------------------------------------------------------
 
@@ -528,27 +326,6 @@ endif
 .PHONY: check-changelog
 check-changelog:
 	towncrier check
-
-#-------------------------------------------------------------------------------
-.PHONY: _login-ecr-public
-_login-ecr-public:
-	aws ecr-public get-login-password --region us-east-1 \
-	| docker login --username AWS --password-stdin $(ECR_URL)
-
-.PHONY: _login-ecr-private
-_login-ecr-private:
-	aws ecr get-login-password --region us-east-1 \
-	| docker login --username AWS --password-stdin $(ECR_URL)
-
-.PHONY: login-ecr-public
-login-ecr-public:
-	$(MAKE) _login-ecr-public \
-		ECR_URL="$(ECR_PUBLIC_URL)"
-
-.PHONY: login-ecr-private
-login-ecr-private:
-	$(MAKE) _login-ecr-private \
-		ECR_URL="$(ECR_PRIVATE_URL)"
 
 #-------------------------------------------------------------------------------
 
