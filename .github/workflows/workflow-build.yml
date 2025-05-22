@@ -93,10 +93,34 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           cache: false
 
+      - name: Get SHA256 checksum of Microsoft go release
+        id: ms-go-checksum
+        run: |
+          file="go${{ env.GO_VERSION }}.windows-amd64.zip.sha256"
+          url="https://aka.ms/golang/release/latest/${file}"
+          curl -Lo $file $url
+          checksum=$(awk '{print $1}' $file)
+          echo "checksum=${checksum}" >> $GITHUB_OUTPUT
+
+      - name: Cache go (Microsoft fork)
+        id: cache-ms-go
+        uses: actions/cache@v4
+        with:
+          key: ms-go-zip-${{ steps.ms-go-checksum.outputs.checksum }}
+          path: |
+            D:\ms-go
+
+      - name: Download go (Microsoft fork)
+        if: contains(inputs.arch_os, 'windows') && inputs.fips && steps.cache-ms-go.outputs.cache-hit != 'true'
+        run: |
+          file="go${{ env.GO_VERSION }}.windows-amd64.zip"
+          url="https://aka.ms/golang/release/latest/${file}"
+          mkdir /d/ms-go
+          curl -Lo /d/ms-go/go.zip $url
+
       - name: Setup go (Microsoft fork) and enable FIPS on Windows
         if: contains(inputs.arch_os, 'windows') && inputs.fips
         run: |
-          curl -Lo go.zip https://aka.ms/golang/release/latest/go${{ env.GO_VERSION }}.windows-amd64.zip &&
           powershell -command "Expand-Archive go.zip D:\\a\\_work\\1\\s" &&
           cygpath -w "/d/a/_work/1/s/go/bin" >> $GITHUB_PATH &&
           powershell -command "Set-ItemProperty -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy -Name Enabled -Value \$true"
@@ -139,10 +163,6 @@ jobs:
           key: ${{ steps.get-cache-key.outputs.cache-key }}
           restore-keys: |
             ${{ steps.get-cache-key.outputs.restore-keys }}
-
-      - name: Install yq (Windows)
-        if: contains(inputs.arch_os, 'windows')
-        run: choco install yq
 
       - name: Set default BUILDER_BIN_PATH
         run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
