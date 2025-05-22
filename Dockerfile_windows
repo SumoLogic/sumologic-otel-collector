@@ -2,10 +2,10 @@ ARG BASE_IMAGE_TAG=ltsc2022
 FROM mcr.microsoft.com/windows/servercore:${BASE_IMAGE_TAG}
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
-ARG COLLECTOR_BIN="otelcol-sumo.exe"
+ARG COLLECTOR_BIN="otelcol-sumo"
 
 RUN echo "I am running on ${BUILDPLATFORM}, building for ${TARGETPLATFORM}"
 
-COPY /artifacts/$TARGETPLATFORM/$COLLECTOR_BIN /otelcol-sumo.exe
+COPY /artifacts/$TARGETPLATFORM/$COLLECTOR_BIN.exe /otelcol-sumo.exe
 ENTRYPOINT ["/otelcol-sumo.exe"]
 CMD ["--config", "/etc/otel/config.yaml"]

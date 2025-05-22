@@ -19,7 +19,6 @@ def target_sources($target):
   .
   | filter_target($target)
   | map(.value | fromjson)
-  | map(.[$target])
   | map(target_source_as_string);
 
 target_sources($target) | join(" ")
