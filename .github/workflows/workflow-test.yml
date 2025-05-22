@@ -35,6 +35,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set go caching environment variables on Windows
+        if: runner.os == 'Windows'
+        run: |
+          # Fix slow Go compile and cache restore
+          # See https://github.com/actions/setup-go/pull/515
+          echo 'GOCACHE=D:\gocache' >> $GITHUB_ENV
+          echo 'GOMODCACHE=D:\gomodcache' >> $GITHUB_ENV
+          echo 'GOTMPDIR=D:\gotmp' >> $GITHUB_ENV
+          mkdir /d/gotmp
+
       - name: Setup go
         uses: actions/setup-go@v5
         with:
@@ -43,8 +53,10 @@ jobs:
 
       - name: Get GOCACHE and GOMODCACHE
         run: |
-          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
-          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+          if [ "$RUNNER_OS" != "Windows" ]; then
+            echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
+            echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+          fi
 
       - name: Get cache key
         id: get-cache-key
