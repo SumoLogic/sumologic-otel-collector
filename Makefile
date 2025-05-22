@@ -73,6 +73,9 @@ list-modules:
 
 .PHONY: gotest
 gotest:
+	echo "GOCACHE = ${GOCACHE}"
+	echo "GOMODCACHE = ${GOMODCACHE}"
+	echo "GOTMPDIR = ${GOTMPDIR}"
 	@$(MAKE) for-all CMD="make test"
 
 .PHONY: golint
