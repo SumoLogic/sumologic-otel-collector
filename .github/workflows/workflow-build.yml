@@ -76,6 +76,16 @@ jobs:
               echo "WINDOWS_SIGNING_ENABLED=true" >> $GITHUB_ENV
           fi
 
+      - name: Set go caching environment variables on Windows
+        if: runner.os == 'Windows'
+        run: |
+          # Fix slow Go compile and cache restore
+          # See https://github.com/actions/setup-go/pull/515
+          echo 'GOCACHE=D:\gocache' >> $GITHUB_ENV
+          echo 'GOMODCACHE=D:\gomodcache' >> $GITHUB_ENV
+          echo 'GOTMPDIR=D:\gotmp' >> $GITHUB_ENV
+          mkdir /d/gotmp
+
       - name: Setup go
         if: (! (contains(inputs.arch_os, 'windows') && inputs.fips))
         uses: actions/setup-go@v5
@@ -95,10 +105,12 @@ jobs:
         if: inputs.sumo_component_gomod_version != ''
         run: make prepare-tag TAG=${{ inputs.sumo_component_gomod_version }}
 
-      - name: Get Go env values
+      - name: Setup go environment variables
         run: |
-          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
-          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+          if [ "$RUNNER_OS" != "Windows" ]; then
+            echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
+            echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+          fi
           echo "GOARCH=$(go env GOARCH)" >> "$GITHUB_ENV"
           echo "GOOS=$(go env GOOS)" >> "$GITHUB_ENV"
           echo "ARCH_OS=$(go env GOOS)_$(go env GOARCH)" >> $GITHUB_ENV
