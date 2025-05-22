@@ -137,11 +137,11 @@ jobs:
           #   runs-on: macos-15
           # - arch_os: darwin_arm64
           #   runs-on: macos-15
-          # - arch_os: windows_amd64
-          #   runs-on: windows-2022
-          # - arch_os: windows_amd64
-          #   runs-on: windows-2022
-          #   fips: true
+          - arch_os: windows_amd64
+            runs-on: windows-2022
+          - arch_os: windows_amd64
+            runs-on: windows-2022
+            fips: true
     with:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
@@ -201,8 +201,8 @@ jobs:
       # to create a multiplatform image index later on.
       manifest_standard_linux_amd64: ${{ steps.manifest.outputs.standard_linux_amd64 }}
       manifest_standard_linux_arm64: ${{ steps.manifest.outputs.standard_linux_arm64 }}
-      # manifest_standard_windows_amd64_ltsc2019: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2019 }}
-      # manifest_standard_windows_amd64_ltsc2022: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2022 }}
+      manifest_standard_windows_amd64_ltsc2019: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2019 }}
+      manifest_standard_windows_amd64_ltsc2022: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2022 }}
       manifest_standard-fips_linux_amd64: ${{ steps.manifest.outputs.standard-fips_linux_amd64 }}
       manifest_standard-fips_linux_arm64: ${{ steps.manifest.outputs.standard-fips_linux_arm64 }}
       manifest_ubi_linux_amd64: ${{ steps.manifest.outputs.ubi_linux_amd64 }}
@@ -219,19 +219,18 @@ jobs:
           - product: standard
             platform: linux_arm64
             collector_binary: otelcol-sumo
-          # - product: standard
-          #   target: windows-ltsc2022
-          #   platform: windows_amd64
-          #   subplatform: ltsc2022
-          #   runs-on: windows-2022
-          #   binary_ext: .exe
-          # - product: standard
-          #   target: windows-ltsc2019
-          #   platform: windows_amd64
-          #   subplatform: ltsc2019
-          #   runs-on: windows-2019
-          #   binary_ext: .exe
-          # standard-fips product
+          - product: standard
+            target: windows-ltsc2022
+            platform: windows_amd64
+            subplatform: ltsc2022
+            runs-on: windows-2022
+            binary_ext: .exe
+          - product: standard
+            target: windows-ltsc2019
+            platform: windows_amd64
+            subplatform: ltsc2019
+            runs-on: windows-2019
+            binary_ext: .exe
           - product: standard-fips
             platform: linux_amd64
             collector_binary: otelcol-sumo-fips

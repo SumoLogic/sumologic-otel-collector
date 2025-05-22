@@ -1,3 +1,4 @@
+# -*- mode: dockerfile -*-
 # For FIPS binary, there are some debian runtime dependencies
 FROM debian:12.6 AS otelcol
 ARG TARGETPLATFORM
