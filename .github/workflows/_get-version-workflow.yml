@@ -25,7 +25,9 @@ jobs:
       - name: Get version
         id: get-version
         run: |
-          version=$(./ci/get_version.sh full | xargs)-$(git rev-parse HEAD | xargs)
+          full=$(./ci/get_version.sh full | xargs)
+          version=${full}-$(git rev-parse HEAD | xargs)
+          echo "full=${full}" > $GITHUB_OUTPUT
           echo "version=${version}" > $GITHUB_OUTPUT
 
       - name: Print version

@@ -7,10 +7,8 @@ ARG COLLECTOR_BIN=otelcol-sumo
 ENV SUMMARY="UBI based sumologic-otel-collector" \
     DESCRIPTION="Sumo Logic Distribution for OpenTelemetry Collector is a Sumo Logic-supported distribution of the OpenTelemetry Collector. It is a single agent to send logs, metrics and traces to Sumo Logic."
 
-# TODO: fix BUILD_TAG
 LABEL name="sumologic-otel-collector" \
     vendor="Sumo Logic" \
-    version="$BUILD_TAG" \
     release="0" \
     summary="$SUMMARY" \
     description="$DESCRIPTION" \
