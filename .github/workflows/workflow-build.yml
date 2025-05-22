@@ -85,7 +85,7 @@ jobs:
           echo 'GOCACHE=D:\gocache' >> $GITHUB_ENV
           echo 'GOMODCACHE=D:\gomodcache' >> $GITHUB_ENV
           echo 'GOTMPDIR=D:\gotmp' >> $GITHUB_ENV
-          mkdir /d/gotmp
+          mkdir -p /d/gotmp
 
       - name: Setup go
         if: (! (contains(inputs.arch_os, 'windows') && inputs.fips))
@@ -176,6 +176,7 @@ jobs:
       - name: Download yq (Windows)
         if: runner.os == 'Windows' && steps.cache-yq.outputs.cache-hit != 'true'
         run: |
+          mkdir -p /d/nupkg_cache
           url="https://chocolatey.org/api/v2/package/yq/${{ env.YQ_VERSION }}"
           output_path="/d/nupkg_cache/yq.${{ env.YQ_VERSION }}.nupkg"
           curl -Lo "$output_path" "$url"
