@@ -259,7 +259,7 @@ jobs:
         id: go-platform
         run: |
           platform=${{ matrix.platform }}
-          subplatform=${{ matrix.subplatform != '' && '' || format('_{0}', matrix.subplatform) }}
+          subplatform=${{ matrix.subplatform && format('_{0}', matrix.subplatform) || '' }}
           echo "name=${platform}${subplatform}" >> $GITHUB_OUTPUT
 
       - name: Convert Go platform to Docker platform
@@ -271,6 +271,9 @@ jobs:
       - name: Set image metadata
         id: meta
         uses: docker/metadata-action@v5
+        with:
+          labels: |
+            version="${{ needs.get-version.outputs.full }}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3.6.0
