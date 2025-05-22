@@ -11,18 +11,6 @@ defaults:
     shell: bash
 
 env:
-  ACTION_CACHE: "v4"
-  ACTION_CACHE_RESTORE: "v4"
-  ACTION_CACHE_SAVE: "v4"
-  ACTION_CHECKOUT: "v4"
-  ACTION_DOWNLOAD_ARTIFACT: "v4"
-  ACTION_DOCKER_BAKE: "v6"
-  ACTION_DOCKER_LOGIN: "v3"
-  ACTION_DOCKER_METADATA: "v5"
-  ACTION_DOCKER_SETUP_BUILDX: "v3.10.0"
-  ACTION_DOCKER_SETUP_QEMU: "v3.6.0"
-  ACTION_SETUP_GO: "v5"
-  ACTION_UPLOAD_ARTIFACT: "v4"
   GO_VERSION: "1.23.0"
 
 jobs:
@@ -35,10 +23,10 @@ jobs:
       matrix:
         arch_os: ["linux_amd64"]
     steps:
-      - uses: actions/checkout@${{ env.ACTION_CHECKOUT }}
+      - uses: actions/checkout@v4
 
       - name: Setup go
-        uses: actions/setup-go@${{ env.ACTION_SETUP_GO }}
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
@@ -48,7 +36,7 @@ jobs:
           echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
           echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
 
-      - uses: actions/cache/restore@${{ env.ACTION_CACHE_RESTORE }}
+      - uses: actions/cache/restore@v4
         id: restore-go-mod-cache
         with:
           path: |
@@ -58,7 +46,7 @@ jobs:
           restore-keys: |
             go-lint-${{ env.GO_VERSION }}-${{ matrix.arch_os }}-
 
-      - uses: actions/cache@${{ env.ACTION_CACHE }}
+      - uses: actions/cache@v4
         with:
           path: |
             /home/runner/.cache/staticcheck
@@ -77,7 +65,7 @@ jobs:
       - name: Run staticcheck
         run: make golint
 
-      - uses: actions/cache/save@${{ env.ACTION_CACHE_SAVE }}
+      - uses: actions/cache/save@v4
         if: always()
         with:
           path: |
@@ -264,7 +252,7 @@ jobs:
             platform: linux_arm64
             collector_binary: otelcol-sumo-fips
     steps:
-      - uses: actions/checkout@${{ env.ACTION_CHECKOUT }}
+      - uses: actions/checkout@v4
 
       - name: Output Go platform with subplatform
         id: go-platform
@@ -281,38 +269,38 @@ jobs:
 
       - name: Set image metadata
         id: meta
-        uses: docker/metadata-action@${{ env.ACTION_DOCKER_METADATA }}
+        uses: docker/metadata-action@v5
         with:
           labels: |
             version="${{ needs.get-version.outputs.full }}"
 
       - name: Set up QEMU
         if: runner.os != 'Windows'
-        uses: docker/setup-qemu-action@${{ env.ACTION_DOCKER_SETUP_QEMU }}
+        uses: docker/setup-qemu-action@v3.6.0
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@${{ env.ACTION_DOCKER_SETUP_BUILDX }}
+        uses: docker/setup-buildx-action@v3.10.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
 
       - name: Login to ECR
-        uses: docker/login-action@${{ env.ACTION_DOCKER_LOGIN }}
+        uses: docker/login-action@v3
         with:
           registry: 663229565520.dkr.ecr.us-east-1.amazonaws.com
           username: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
 
       - name: Download binary action artifact from build phase
-        uses: actions/download-artifact@${{ env.ACTION_DOWNLOAD_ARTIFACT }}
+        uses: actions/download-artifact@v4
         with:
           name: ${{ matrix.collector_binary }}-${{ matrix.platform }}${{ matrix.binary_ext }}
           path: artifacts/${{ steps.docker-platform.outputs.name }}/${{ matrix.collector_binary }}${{ matrix.binary_ext }}
 
       - name: Build and push
         id: build
-        uses: docker/bake-action@${{ env.ACTION_DOCKER_BAKE }}
+        uses: docker/bake-action@v6
         with:
           source: .
           targets: ${{ matrix.target || matrix.product }}
@@ -349,7 +337,7 @@ jobs:
   #           base_image_tag: ltsc2019
   #           runs-on: windows-2019
   #   steps:
-  #     - uses: actions/checkout@${{ env.ACTION_CHECKOUT }}
+  #     - uses: actions/checkout@v4
 
   #     - name: Login to Open Source ECR
   #       run: |
@@ -369,7 +357,7 @@ jobs:
   #           --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
 
   #     - name: Download binary action artifact from build phase
-  #       uses: actions/download-artifact@${{ env.ACTION_DOWNLOAD_ARTIFACT }}
+  #       uses: actions/download-artifact@v4
   #       with:
   #         name: otelcol-sumo-${{matrix.arch_os}}.exe
   #         path: artifacts/
@@ -408,27 +396,27 @@ jobs:
           - target: ubi-fips
             tags: '["latest-ubi-fips", "${{ github.sha }}-ubi-fips", "${{ needs.get-version.outputs.version }}-ubi-fips"]'
     steps:
-      - uses: actions/checkout@${{ env.ACTION_CHECKOUT }}
+      - uses: actions/checkout@v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@${{ env.ACTION_DOCKER_SETUP_QEMU }}
+        uses: docker/setup-qemu-action@v3.6.0
 
       - name: Set up Buildx
         id: buildx
-        uses: docker/setup-buildx-action@${{ env.ACTION_DOCKER_SETUP_BUILDX }}
+        uses: docker/setup-buildx-action@v3.10.0
 
       - name: Show Buildx platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
 
       - name: Login to ECR
-        uses: docker/login-action@${{ env.ACTION_DOCKER_LOGIN }}
+        uses: docker/login-action@v3
         with:
           registry: 663229565520.dkr.ecr.us-east-1.amazonaws.com
           username: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
 
       - name: Login to Docker Hub
-        uses: docker/login-action@${{ env.ACTION_DOCKER_LOGIN }}
+        uses: docker/login-action@v3
         with:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_LOGIN_DEV }}
@@ -498,19 +486,19 @@ jobs:
   #   name: Store install script
   #   runs-on: ubuntu-24.04
   #   steps:
-  #     - uses: actions/checkout@${{ env.ACTION_CHECKOUT }}
+  #     - uses: actions/checkout@v4
   #       with:
   #         repository: SumoLogic/sumologic-otel-collector-packaging
 
   #     - name: Store Linux install script as action artifact
-  #       uses: actions/upload-artifact@${{ env.ACTION_UPLOAD_ARTIFACT }}
+  #       uses: actions/upload-artifact@v4
   #       with:
   #         name: install.sh
   #         path: ./install-script/install.sh
   #         if-no-files-found: error
 
   #     - name: Store Windows install script as action artifact
-  #       uses: actions/upload-artifact@${{ env.ACTION_UPLOAD_ARTIFACT }}
+  #       uses: actions/upload-artifact@v4
   #       with:
   #         name: install.ps1
   #         path: ./install-script/install.ps1
@@ -520,7 +508,7 @@ jobs:
   #   name: Store Chef cookbook, Puppet module, and Ansible playbook
   #   runs-on: ubuntu-24.04
   #   steps:
-  #     - uses: actions/checkout@${{ env.ACTION_CHECKOUT }}
+  #     - uses: actions/checkout@v4
 
   #     - name: Archive Chef cookbook
   #       run: tar -cvf ./examples/chef/chef-cookbook.tar.gz -C ./examples/chef sumologic-otel-collector/
@@ -532,21 +520,21 @@ jobs:
   #       run: tar -cvf ./examples/ansible-playbook.tar.gz -C ./examples ansible/
 
   #     - name: Store Chef cookbook archive as action artifact
-  #       uses: actions/upload-artifact@${{ env.ACTION_UPLOAD_ARTIFACT }}
+  #       uses: actions/upload-artifact@v4
   #       with:
   #         name: chef-cookbook.tar.gz
   #         path: ./examples/chef/chef-cookbook.tar.gz
   #         if-no-files-found: error
 
   #     - name: Store Puppet module archive as action artifact
-  #       uses: actions/upload-artifact@${{ env.ACTION_UPLOAD_ARTIFACT }}
+  #       uses: actions/upload-artifact@v4
   #       with:
   #         name: puppet-module.tar.gz
   #         path: ./examples/puppet/puppet-module.tar.gz
   #         if-no-files-found: error
 
   #     - name: Store Ansible playbook archive as action artifact
-  #       uses: actions/upload-artifact@${{ env.ACTION_UPLOAD_ARTIFACT }}
+  #       uses: actions/upload-artifact@v4
   #       with:
   #         name: ansible-playbook.tar.gz
   #         path: ./examples/ansible-playbook.tar.gz
