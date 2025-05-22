@@ -1,3 +1,4 @@
+# -*- mode: dockerfile -*-
 ARG BASE_IMAGE_TAG=ltsc2022
 FROM mcr.microsoft.com/windows/servercore:${BASE_IMAGE_TAG}
 ARG TARGETPLATFORM

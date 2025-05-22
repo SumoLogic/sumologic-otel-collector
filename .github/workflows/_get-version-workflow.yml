@@ -16,6 +16,7 @@ jobs:
     name: Get application version for this revision
     runs-on: ubuntu-24.04
     outputs:
+      full: ${{ steps.get-version.outputs.full }}
       version: ${{ steps.get-version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
