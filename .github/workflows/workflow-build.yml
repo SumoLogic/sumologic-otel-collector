@@ -121,7 +121,7 @@ jobs:
       - name: Setup go (Microsoft fork) and enable FIPS on Windows
         if: contains(inputs.arch_os, 'windows') && inputs.fips
         run: |
-          powershell -command "Expand-Archive /d/ms-go/go.zip D:\\a\\_work\\1\\s" &&
+          powershell -command "Expand-Archive D:\ms-go\go.zip D:\\a\\_work\\1\\s" &&
           echo "/d/a/_work/1/s/go/bin" >> $GITHUB_PATH &&
           powershell -command "Set-ItemProperty -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy -Name Enabled -Value \$true"
 
