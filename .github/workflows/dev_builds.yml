@@ -259,7 +259,7 @@ jobs:
         id: go-platform
         run: |
           platform=${{ matrix.platform }}
-          subplatform=${{ matrix.subplatform == '' && '' || format('_{0}', matrix.subplatform) }}
+          subplatform=${{ matrix.subplatform != '' && '' || format('_{0}', matrix.subplatform) }}
           echo "name=${platform}${subplatform}" >> $GITHUB_OUTPUT
 
       - name: Convert Go platform to Docker platform
