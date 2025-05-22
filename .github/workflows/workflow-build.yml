@@ -121,8 +121,8 @@ jobs:
       - name: Setup go (Microsoft fork) and enable FIPS on Windows
         if: contains(inputs.arch_os, 'windows') && inputs.fips
         run: |
-          powershell -command "Expand-Archive go.zip D:\\a\\_work\\1\\s" &&
-          cygpath -w "/d/a/_work/1/s/go/bin" >> $GITHUB_PATH &&
+          powershell -command "Expand-Archive D:\\ms-go\\go.zip D:\\a\\_work\\1\\s" &&
+          cygpath -w "/d/ms-go/go/bin" >> $GITHUB_PATH &&
           powershell -command "Set-ItemProperty -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy -Name Enabled -Value \$true"
 
       - name: Set Sumo component version in go.mod
