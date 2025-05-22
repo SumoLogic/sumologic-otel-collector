@@ -171,11 +171,12 @@ jobs:
         with:
           key: choco-yq-${{ env.YQ_VERSION }}
           path: |
-            ${{ env.PROGRAMDATA }}\chocolatey\lib\yq\tools\yq.exe
+            C:\chocolatey\lib\yq\tools\yq.exe
 
       - name: Install yq (Windows)
         if: runner.os == 'Windows' && steps.cache-yq.outputs.cache-hit != 'true'
         run: |
+          env
           choco install yq --version ${{ env.YQ_VERSION }}
 
       - name: Set default BUILDER_BIN_PATH
