@@ -47,7 +47,7 @@ defaults:
 env:
   GO_VERSION: "1.24.0"
   VERSION: ${{ inputs.version }}
-  YQ_VERSION: "4.45.1"
+  YQ_VERSION: "4.45.4"
 
 jobs:
   build:
@@ -171,23 +171,12 @@ jobs:
         with:
           key: choco-yq-${{ env.YQ_VERSION }}
           path: |
-            D:\nupkg_cache
-
-      - name: Download yq (Windows)
-        if: runner.os == 'Windows' && steps.cache-yq.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p /d/nupkg_cache
-          url="https://chocolatey.org/api/v2/package/yq/${{ env.YQ_VERSION }}"
-          output_path="/d/nupkg_cache/yq.${{ env.YQ_VERSION }}.nupkg"
-          curl -Lo "$output_path" "$url"
+            ${{ env.PROGRAMDATA }}\chocolatey\lib\yq\tools\yq.exe
 
       - name: Install yq (Windows)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && steps.cache-yq.outputs.cache-hit != 'true'
         run: |
-          choco install yq \
-            --version ${{ env.YQ_VERSION }} \
-            --source 'D:\nupkg_cache' \
-            --ignore-dependencies
+          choco install yq --version ${{ env.YQ_VERSION }}
 
       - name: Set default BUILDER_BIN_PATH
         run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
