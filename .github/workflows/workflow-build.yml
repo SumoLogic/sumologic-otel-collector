@@ -174,14 +174,14 @@ jobs:
             D:\nupkg_cache
 
       - name: Download yq (Windows)
-        if: os.runner == 'Windows' && steps.cache-yq.outputs.cache-hit != 'true'
+        if: runner.os == 'Windows' && steps.cache-yq.outputs.cache-hit != 'true'
         run: |
           url="https://chocolatey.org/api/v2/package/yq/${{ env.YQ_VERSION }}"
           output_path="/d/nupkg_cache/yq.${{ env.YQ_VERSION }}.nupkg"
           curl -Lo "$output_path" "$url"
 
       - name: Install yq (Windows)
-        if: os.runner == 'Windows'
+        if: runner.os == 'Windows'
         run: |
           choco install yq \
             --version ${{ env.YQ_VERSION }} \
