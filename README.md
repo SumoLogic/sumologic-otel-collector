@@ -295,6 +295,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [filestorage]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.124.0/extension/storage/filestorage
 [headerssetterextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.124.0/extension/headerssetterextension
 [healthcheckextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.124.0/extension/healthcheckextension
+[healthcheckv2extension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.124.0/extension/healthcheckv2extension
 [hostobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.124.0/extension/observer/hostobserver
 [httpforwarder]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.124.0/extension/httpforwarderextension
 [jaegerremotesampling]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.124.0/extension/jaegerremotesampling
