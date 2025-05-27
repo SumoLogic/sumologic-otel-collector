@@ -12,9 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - chore: Upgrade the otel collector core and contrib to 0.124.1 [#1765]
-- chore: Upgrade the otel collector core and contrib to 0.124.0 [#1758]
 
-[#1758]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1758
 [#1765]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1765
 [v0.124.1-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.124.1-sumo-0
 
