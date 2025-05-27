@@ -1514,7 +1514,7 @@ The table below shows how some metrics commonly used by the Installed Collector 
 |                                   |                                                 |                     |
 | current                           | _not available_                                 |                     |
 
-Full list of metrics available in this receiver can be found [here][dockerstatsmetrics].
+Full list of metrics available in this receiver can be found in the [documentation][dockerstatsmetrics].
 
 Unfortunately, Sumo Logic apps don't work with these metric names yet. To convieniently translate them, use [Sumo Logic Schema Processor][sumologicschemaprocessor]:
 
