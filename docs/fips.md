@@ -73,7 +73,7 @@ following: <https://go.googlesource.com/go/+/dev.boringcrypto/misc/boring/>
 Depending on configuration, Otelcol can act as a TLS client, server, or both. More specifically,
 some receivers can accept data via a TLS-wrapped protocol like HTTP or GRPC. Similarly, some
 exporters can send data using such a protocol. The configuration is standardized and can be
-found [here](https://github.com/open-telemetry/opentelemetry-collector/blob/main/config/configtls/README.md).
+found in the [readme](https://github.com/open-telemetry/opentelemetry-collector/blob/main/config/configtls/README.md).
 
 For the purpose of examining the TLS handshake in both of these situations, we'll use the following minimal
 configuration:
@@ -175,7 +175,7 @@ client point: uncompressed (0)
 
 ## Setting minimum TLS version
 
-While [FIPS 140][fips] doesn't, strictly speaking, mandate a specific TLS version, it is nonetheless a good practice to use a recent version. Otelcol allows TLS to be configured for each component individually, in a standardized manner. You can find the details [here](https://github.com/open-telemetry/opentelemetry-collector/blob/main/config/configtls/README.md).
+While [FIPS 140][fips] doesn't, strictly speaking, mandate a specific TLS version, it is nonetheless a good practice to use a recent version. Otelcol allows TLS to be configured for each component individually, in a standardized manner. You can find the details in the [readme](https://github.com/open-telemetry/opentelemetry-collector/blob/main/config/configtls/README.md).
 
 By default, the minimum TLS version for otel components is `1.2`. This is a good default that is compliant with the standard. At the moment, there is some uncertainty as to
 whether BoringCrypto is FIPS-compliant when using TLS `1.3`, so we recommend staying with the default.
