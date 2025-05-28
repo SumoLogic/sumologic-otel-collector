@@ -77,55 +77,6 @@ jobs:
               echo "WINDOWS_SIGNING_ENABLED=true" >> $GITHUB_ENV
           fi
 
-      - name: Set go caching environment variables on Windows
-        if: runner.os == 'Windows'
-        run: |
-          # Fix slow Go compile and cache restore
-          # See https://github.com/actions/setup-go/pull/515
-          echo 'GOCACHE=D:\gocache' >> $GITHUB_ENV
-          echo 'GOMODCACHE=D:\gomodcache' >> $GITHUB_ENV
-          echo 'GOTMPDIR=D:\gotmp' >> $GITHUB_ENV
-          mkdir -p /d/gotmp
-
-      - name: Setup go
-        if: (! (contains(inputs.arch_os, 'windows') && inputs.fips))
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: false
-
-      - name: Get SHA256 checksum of Microsoft go release
-        id: ms-go-checksum
-        run: |
-          file="go${{ env.GO_VERSION }}.windows-amd64.zip.sha256"
-          url="https://aka.ms/golang/release/latest/${file}"
-          curl -Lo "$file" "$url"
-          checksum=$(awk '{print $1}' $file)
-          echo "checksum=${checksum}" >> $GITHUB_OUTPUT
-
-      - name: Cache go (Microsoft fork)
-        id: cache-ms-go
-        uses: actions/cache@v4
-        with:
-          key: ms-go-zip-${{ steps.ms-go-checksum.outputs.checksum }}
-          path: |
-            D:\ms-go
-
-      - name: Download go (Microsoft fork)
-        if: contains(inputs.arch_os, 'windows') && inputs.fips && steps.cache-ms-go.outputs.cache-hit != 'true'
-        run: |
-          file="go${{ env.GO_VERSION }}.windows-amd64.zip"
-          url="https://aka.ms/golang/release/latest/${file}"
-          mkdir /d/ms-go
-          curl -Lo /d/ms-go/go.zip "$url"
-
-      - name: Setup go (Microsoft fork) and enable FIPS on Windows
-        if: contains(inputs.arch_os, 'windows') && inputs.fips
-        run: |
-          powershell -command "Expand-Archive D:\ms-go\go.zip D:\\a\\_work\\1\\s" &&
-          echo "/d/a/_work/1/s/go/bin" >> $GITHUB_PATH &&
-          powershell -command "Set-ItemProperty -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy -Name Enabled -Value \$true"
-
       - name: Set Sumo component version in go.mod
         if: inputs.sumo_component_gomod_version != ''
         run: make prepare-tag TAG=${{ inputs.sumo_component_gomod_version }}
@@ -140,7 +91,6 @@ jobs:
           echo "GOOS=$(go env GOOS)" >> "$GITHUB_ENV"
           echo "ARCH_OS=$(go env GOOS)_$(go env GOARCH)" >> $GITHUB_ENV
 
-      # TODO: don't include the pkg/tools directory when using hashFiles
       - name: Get cache key
         id: get-cache-key
         run: |
@@ -166,6 +116,7 @@ jobs:
             ${{ steps.get-cache-key.outputs.restore-keys }}
 
       - name: Cache yq
+        if: runner.os == 'Windows'
         id: cache-yq
         uses: actions/cache@v4
         with:

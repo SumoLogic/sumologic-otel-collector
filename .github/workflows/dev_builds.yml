@@ -14,161 +14,208 @@ env:
   GO_VERSION: "1.23.0"
 
 jobs:
-  # Add lint to dev builds as that's the only way for cache to be shared across branches.
-  # https://docs.github.com/en/actions/advanced-guides/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
-  lint:
-    name: Lint (staticcheck)
-    runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        arch_os: ["linux_amd64"]
+  setup-environment:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup go
+      # Fix slow Go compile and cache restore
+      # See https://github.com/actions/setup-go/pull/515
+      # - name: Set Go cache environment variables (Windows)
+      #   if: runner.os == 'Windows'
+      #   run: |
+      #     echo 'GOCACHE=D:\gocache' >> $GITHUB_ENV
+      #     echo 'GOMODCACHE=D:\gomodcache' >> $GITHUB_ENV
+      #     echo 'GOTMPDIR=D:\gotmp' >> $GITHUB_ENV
+      #     mkdir -p /d/gocache
+      #     mkdir -p /d/gomodcache
+      #     mkdir -p /d/gotmp
+
+      - name: Set Go working directory
+        id: go-workdir
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            workdir="/d"
+          else
+            workdir="${HOME}"
+          fi
+          echo "path=${workdir}" >> $GITHUB_OUTPUT
+
+      - name: Setup Go
+        if: (! (contains(inputs.arch_os, 'windows') && inputs.fips))
         uses: actions/setup-go@v5
+        working-directory: ${{ steps.go-workdir.outputs.path }}
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
 
-      - name: Get GOCACHE and GOMODCACHE
+      - name: Set Go environment variables
         run: |
+          echo "GOPATH=$(go env GOPATH)" >> "$GITHUB_ENV"
           echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
           echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+          go env
 
-      - uses: actions/cache/restore@v4
-        id: restore-go-mod-cache
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: go-lint-${{ env.GO_VERSION }}-${{ matrix.arch_os }}-${{ hashFiles('pkg/**/*/go.sum') }}-${{ github.run_id }}
-          restore-keys: |
-            go-lint-${{ env.GO_VERSION }}-${{ matrix.arch_os }}-
+      # - name: Cache Go
+      #   id: go-cache
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       ${{ env.GOPATH }}/bin
+      #       ${{ env.GOMODCACHE }}
+      #       ${{ env.GOCACHE }}
+      #     key: go-cache-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            /home/runner/.cache/staticcheck
-          key: staticcheck-${{ runner.os }}-${{ github.sha }}
-          restore-keys: |
-            staticcheck-${{ runner.os }}-
+      # - name: Install Go modules
+      #   if: steps.go-cache.outputs.cache-hit != 'true'
+      #   run: make
 
-      - name: Install staticcheck
-        run: make install-staticcheck
+  # setup-environment-windows:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-        # TODO: fix the Makefile so that it doesn't require this when running
-        # targets that shouldn't require it (e.g. make golint)
-      - name: Add opentelemetry-collector-builder installation dir to PATH
-        run: echo "$HOME/bin" >> $GITHUB_PATH
+  #     - name: Get SHA256 checksum of Microsoft Go release
+  #       id: ms-go-checksum
+  #       run: |
+  #         file="go${{ env.GO_VERSION }}.windows-amd64.zip.sha256"
+  #         url="https://aka.ms/golang/release/latest/${file}"
+  #         curl -Lo "$file" "$url"
+  #         checksum=$(awk '{print $1}' $file)
+  #         echo "checksum=${checksum}" >> $GITHUB_OUTPUT
 
-      - name: Run staticcheck
-        run: make golint
+  #     - name: Cache go (Microsoft fork)
+  #       id: cache-ms-go
+  #       uses: actions/cache@v4
+  #       with:
+  #         key: ms-go-zip-${{ steps.ms-go-checksum.outputs.checksum }}
+  #         path: |
+  #           D:\ms-go
 
-      - uses: actions/cache/save@v4
-        if: always()
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.restore-go-mod-cache.outputs.cache-primary-key }}
+  #     - name: Download go (Microsoft fork)
+  #       if: contains(inputs.arch_os, 'windows') && inputs.fips && steps.cache-ms-go.outputs.cache-hit != 'true'
+  #       run: |
+  #         file="go${{ env.GO_VERSION }}.windows-amd64.zip"
+  #         url="https://aka.ms/golang/release/latest/${file}"
+  #         mkdir /d/ms-go
+  #         curl -Lo /d/ms-go/go.zip "$url"
 
-  test:
-    name: Test
-    uses: ./.github/workflows/workflow-test.yml
-    strategy:
-      matrix:
-        include:
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-            boringcrypto: true
-          - arch_os: darwin_amd64
-            runs-on: macos-15
-          - arch_os: windows_amd64
-            runs-on: windows-2022
-    with:
-      arch_os: ${{ matrix.arch_os }}
-      runs-on: ${{ matrix.runs-on }}
-      boringcrypto: ${{ matrix.boringcrypto == true }}
+  #     - name: Setup go (Microsoft fork) and enable FIPS on Windows
+  #       if: contains(inputs.arch_os, 'windows') && inputs.fips
+  #       run: |
+  #         powershell -command "Expand-Archive D:\ms-go\go.zip D:\\a\\_work\\1\\s" &&
+  #         echo "/d/a/_work/1/s/go/bin" >> $GITHUB_PATH &&
+  #         powershell -command "Set-ItemProperty -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy -Name Enabled -Value \$true"
 
-  test-otelcol-config:
-    name: Test (otelcol-config)
-    uses: ./.github/workflows/workflow-test-otelcol-config.yml
-    strategy:
-      matrix:
-        include:
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-          # - arch_os: linux_amd64
-          #   runs-on: ubuntu-24.04
-          #   boringcrypto: true
-          # - arch_os: darwin_amd64
-          #   runs-on: macos-15
-    with:
-      arch_os: ${{ matrix.arch_os }}
-      runs-on: ${{ matrix.runs-on }}
-      boringcrypto: ${{ matrix.boringcrypto == true }}
+  # # Add lint to dev builds as that's the only way for cache to be shared across branches.
+  # # https://docs.github.com/en/actions/advanced-guides/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
+  # lint:
+  #   name: Lint (staticcheck)
+  #   runs-on: ubuntu-24.04
+  #   strategy:
+  #     matrix:
+  #       arch_os: ["linux_amd64"]
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-  get-version:
-    name: Get next available version
-    uses: ./.github/workflows/_get-version-workflow.yml
+  #     - name: Setup go
+  #       uses: actions/setup-go@v5
+  #       with:
+  #         go-version: ${{ env.GO_VERSION }}
+  #         cache: false
 
-  build:
-    name: Build
-    uses: ./.github/workflows/workflow-build.yml
-    needs: [get-version]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-            fips: true
-          - arch_os: linux_arm64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_arm64
-            runs-on: ubuntu-24.04
-            fips: true
-          - arch_os: darwin_amd64
-            runs-on: macos-15
-          - arch_os: darwin_arm64
-            runs-on: macos-15
-          - arch_os: windows_amd64
-            runs-on: windows-2022
-          - arch_os: windows_amd64
-            runs-on: windows-2022
-            fips: true
-    with:
-      arch_os: ${{ matrix.arch_os }}
-      runs-on: ${{ matrix.runs-on }}
-      fips: ${{ matrix.fips == true }}
-      version: ${{ needs.get-version.outputs.version }}
-    secrets:
-      apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-      apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
-      app_store_connect_password: ${{ secrets.AC_PASSWORD }}
-      microsoft_certificate: ${{ secrets.MICROSOFT_CERTIFICATE }}
-      microsoft_certificate_password: ${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}
-      microsoft_certificate_hash: ${{ secrets.MICROSOFT_CERTHASH }}
-      microsoft_certificate_name: ${{ secrets.MICROSOFT_CERTNAME }}
-      microsoft_description: ${{ secrets.MICROSOFT_DESCRIPTION }}
+  #     - name: Get GOCACHE and GOMODCACHE
+  #       run: |
+  #         echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
+  #         echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
 
-  # build-otelcol-config:
-  #   name: Build (otelcol-config)
-  #   uses: ./.github/workflows/workflow-build-otelcol-config.yml
+  #     - uses: actions/cache/restore@v4
+  #       id: restore-go-mod-cache
+  #       with:
+  #         path: |
+  #           ${{ env.GOMODCACHE }}/cache
+  #           ${{ env.GOCACHE }}
+  #         key: go-lint-${{ env.GO_VERSION }}-${{ matrix.arch_os }}-${{ hashFiles('pkg/**/*/go.sum') }}-${{ github.run_id }}
+  #         restore-keys: |
+  #           go-lint-${{ env.GO_VERSION }}-${{ matrix.arch_os }}-
+
+  #     - uses: actions/cache@v4
+  #       with:
+  #         path: |
+  #           /home/runner/.cache/staticcheck
+  #         key: staticcheck-${{ runner.os }}-${{ github.sha }}
+  #         restore-keys: |
+  #           staticcheck-${{ runner.os }}-
+
+  #     - name: Install staticcheck
+  #       run: make install-staticcheck
+
+  #       # TODO: fix the Makefile so that it doesn't require this when running
+  #       # targets that shouldn't require it (e.g. make golint)
+  #     - name: Add opentelemetry-collector-builder installation dir to PATH
+  #       run: echo "$HOME/bin" >> $GITHUB_PATH
+
+  #     - name: Run staticcheck
+  #       run: make golint
+
+  #     - uses: actions/cache/save@v4
+  #       if: always()
+  #       with:
+  #         path: |
+  #           ${{ env.GOMODCACHE }}/cache
+  #           ${{ env.GOCACHE }}
+  #         key: ${{ steps.restore-go-mod-cache.outputs.cache-primary-key }}
+
+  # test:
+  #   name: Test
+  #   uses: ./.github/workflows/workflow-test.yml
+  #   strategy:
+  #     matrix:
+  #       include:
+  #         - arch_os: linux_amd64
+  #           runs-on: ubuntu-24.04
+  #         - arch_os: linux_amd64
+  #           runs-on: ubuntu-24.04
+  #           boringcrypto: true
+  #         - arch_os: darwin_amd64
+  #           runs-on: macos-15
+  #         - arch_os: windows_amd64
+  #           runs-on: windows-2022
+  #   with:
+  #     arch_os: ${{ matrix.arch_os }}
+  #     runs-on: ${{ matrix.runs-on }}
+  #     boringcrypto: ${{ matrix.boringcrypto == true }}
+
+  # test-otelcol-config:
+  #   name: Test (otelcol-config)
+  #   uses: ./.github/workflows/workflow-test-otelcol-config.yml
+  #   strategy:
+  #     matrix:
+  #       include:
+  #         - arch_os: linux_amd64
+  #           runs-on: ubuntu-24.04
+  #         # - arch_os: linux_amd64
+  #         #   runs-on: ubuntu-24.04
+  #         #   boringcrypto: true
+  #         # - arch_os: darwin_amd64
+  #         #   runs-on: macos-15
+  #   with:
+  #     arch_os: ${{ matrix.arch_os }}
+  #     runs-on: ${{ matrix.runs-on }}
+  #     boringcrypto: ${{ matrix.boringcrypto == true }}
+
+  # get-version:
+  #   name: Get next available version
+  #   uses: ./.github/workflows/_get-version-workflow.yml
+
+  # build:
+  #   name: Build
+  #   uses: ./.github/workflows/workflow-build.yml
   #   needs: [get-version]
   #   strategy:
   #     fail-fast: false
   #     matrix:
   #       include:
-  #         - arch_os: darwin_amd64
-  #           runs-on: macos-15
-  #         - arch_os: darwin_arm64
-  #           runs-on: macos-15
   #         - arch_os: linux_amd64
   #           runs-on: ubuntu-24.04
   #         - arch_os: linux_amd64
@@ -178,381 +225,429 @@ jobs:
   #           runs-on: ubuntu-24.04
   #         - arch_os: linux_arm64
   #           runs-on: ubuntu-24.04
+  #           fips: true
+  #         - arch_os: darwin_amd64
+  #           runs-on: macos-15
+  #         - arch_os: darwin_arm64
+  #           runs-on: macos-15
+  #         - arch_os: windows_amd64
+  #           runs-on: windows-2022
+  #         - arch_os: windows_amd64
+  #           runs-on: windows-2022
   #           fips: true
   #   with:
   #     arch_os: ${{ matrix.arch_os }}
   #     runs-on: ${{ matrix.runs-on }}
   #     fips: ${{ matrix.fips == true }}
-  #     sumo_component_gomod_version: "v${{ needs.get-version.outputs.version }}"
+  #     version: ${{ needs.get-version.outputs.version }}
   #   secrets:
   #     apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
   #     apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
   #     app_store_connect_password: ${{ secrets.AC_PASSWORD }}
+  #     microsoft_certificate: ${{ secrets.MICROSOFT_CERTIFICATE }}
+  #     microsoft_certificate_password: ${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}
+  #     microsoft_certificate_hash: ${{ secrets.MICROSOFT_CERTHASH }}
+  #     microsoft_certificate_name: ${{ secrets.MICROSOFT_CERTNAME }}
+  #     microsoft_description: ${{ secrets.MICROSOFT_DESCRIPTION }}
 
-  build-container-images:
-    name: Build container
-    runs-on: ${{ matrix.runs-on || 'ubuntu-24.04' }}
-    needs:
-      - build
-      - get-version
-    outputs:
-      # NOTE: one output is needed for each item in the matrix. These outputs
-      # store the raw manifest of the container image of each build and are used
-      # to create a multiplatform image index later on.
-      manifest_standard_linux_amd64: ${{ steps.manifest.outputs.standard_linux_amd64 }}
-      manifest_standard_linux_arm64: ${{ steps.manifest.outputs.standard_linux_arm64 }}
-      manifest_standard_windows_amd64_ltsc2019: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2019 }}
-      manifest_standard_windows_amd64_ltsc2022: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2022 }}
-      manifest_standard-fips_linux_amd64: ${{ steps.manifest.outputs.standard-fips_linux_amd64 }}
-      manifest_standard-fips_linux_arm64: ${{ steps.manifest.outputs.standard-fips_linux_arm64 }}
-      manifest_ubi_linux_amd64: ${{ steps.manifest.outputs.ubi_linux_amd64 }}
-      manifest_ubi_linux_arm64: ${{ steps.manifest.outputs.ubi_linux_arm64 }}
-      manifest_ubi-fips_linux_amd64: ${{ steps.manifest.outputs.ubi-fips_linux_amd64 }}
-      manifest_ubi-fips_linux_arm64: ${{ steps.manifest.outputs.ubi-fips_linux_arm64 }}
-    strategy:
-      matrix:
-        include:
-          # standard product
-          - product: standard
-            platform: linux_amd64
-            collector_binary: otelcol-sumo
-          - product: standard
-            platform: linux_arm64
-            collector_binary: otelcol-sumo
-          - product: standard
-            target: windows-ltsc2022
-            platform: windows_amd64
-            subplatform: ltsc2022
-            runs-on: windows-2022
-            binary_ext: .exe
-          - product: standard
-            target: windows-ltsc2019
-            platform: windows_amd64
-            subplatform: ltsc2019
-            runs-on: windows-2019
-            binary_ext: .exe
-          # standard-fips product
-          - product: standard-fips
-            platform: linux_amd64
-            collector_binary: otelcol-sumo-fips
-          - product: standard-fips
-            platform: linux_arm64
-            collector_binary: otelcol-sumo-fips
-          # ubi target
-          - product: ubi
-            platform: linux_amd64
-            collector_binary: otelcol-sumo
-          - product: ubi
-            platform: linux_arm64
-            collector_binary: otelcol-sumo
-          # ubi-fips target
-          - product: ubi-fips
-            platform: linux_amd64
-            collector_binary: otelcol-sumo-fips
-          - product: ubi-fips
-            platform: linux_arm64
-            collector_binary: otelcol-sumo-fips
-    steps:
-      - uses: actions/checkout@v4
+  # # build-otelcol-config:
+  # #   name: Build (otelcol-config)
+  # #   uses: ./.github/workflows/workflow-build-otelcol-config.yml
+  # #   needs: [get-version]
+  # #   strategy:
+  # #     fail-fast: false
+  # #     matrix:
+  # #       include:
+  # #         - arch_os: darwin_amd64
+  # #           runs-on: macos-15
+  # #         - arch_os: darwin_arm64
+  # #           runs-on: macos-15
+  # #         - arch_os: linux_amd64
+  # #           runs-on: ubuntu-24.04
+  # #         - arch_os: linux_amd64
+  # #           runs-on: ubuntu-24.04
+  # #           fips: true
+  # #         - arch_os: linux_arm64
+  # #           runs-on: ubuntu-24.04
+  # #         - arch_os: linux_arm64
+  # #           runs-on: ubuntu-24.04
+  # #           fips: true
+  # #   with:
+  # #     arch_os: ${{ matrix.arch_os }}
+  # #     runs-on: ${{ matrix.runs-on }}
+  # #     fips: ${{ matrix.fips == true }}
+  # #     sumo_component_gomod_version: "v${{ needs.get-version.outputs.version }}"
+  # #   secrets:
+  # #     apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+  # #     apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+  # #     app_store_connect_password: ${{ secrets.AC_PASSWORD }}
 
-      - name: Output Go platform with subplatform
-        id: go-platform
-        run: |
-          platform=${{ matrix.platform }}
-          subplatform=${{ matrix.subplatform && format('_{0}', matrix.subplatform) || '' }}
-          echo "name=${platform}${subplatform}" >> $GITHUB_OUTPUT
-
-      - name: Convert Go platform to Docker platform
-        id: docker-platform
-        run: |
-          platform=${{ steps.go-platform.outputs.name }}
-          echo "name=${platform/_/\/}" >> "$GITHUB_OUTPUT"
-
-      - name: Set image metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          labels: |
-            version="${{ needs.get-version.outputs.full }}"
-
-      - name: Set up QEMU
-        if: runner.os != 'Windows'
-        uses: docker/setup-qemu-action@v3.6.0
-
-      - name: Set up Buildx
-        if: runner.os != 'Windows'
-        id: buildx
-        uses: docker/setup-buildx-action@v3.10.0
-
-      - name: Show Buildx platforms
-        if: runner.os != 'Windows'
-        run: echo ${{ steps.buildx.outputs.platforms }}
-
-      - name: Login to ECR
-        uses: docker/login-action@v3
-        with:
-          registry: 663229565520.dkr.ecr.us-east-1.amazonaws.com
-          username: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
-          password: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
-
-      - name: Download binary action artifact from build phase
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ matrix.collector_binary }}-${{ matrix.platform }}${{ matrix.binary_ext }}
-          path: artifacts/${{ steps.docker-platform.outputs.name }}/${{ matrix.collector_binary }}${{ matrix.binary_ext }}
-
-      - name: Build and push
-        id: build
-        uses: docker/bake-action@v6
-        with:
-          source: .
-          targets: ${{ matrix.target || matrix.product }}
-          push: true
-          set: |
-            *.cache-from=type=gha
-            *.cache-to=type=gha,mode=max
-            *.platform=${{ steps.docker-platform.outputs.name }}
-            *.tags=
-            *.output=type=image,"name=663229565520.dkr.ecr.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-ci-builds",push-by-digest=true,name-canonical=true,push=true
-
-      - name: Print metadata
-        run: echo '${{ steps.build.outputs.metadata }}'
-
-      - name: Set container image manifest output
-        id: manifest
-        run: |
-          name="${{ matrix.product }}_${{ steps.go-platform.outputs.name }}"
-          target="${{ matrix.target || matrix.product }}"
-          printf -v metadata $(echo '${{ steps.build.outputs.metadata }}' | jq -c ".[\"$target\"]")
-          echo "${name}=${metadata}" >> "$GITHUB_OUTPUT"
-
-  # build-windows-container-images:
-  #   name: Build Windows container
-  #   runs-on: ${{ matrix.runs-on }}
+  # build-container-images:
+  #   name: Build container
+  #   runs-on: ${{ matrix.runs-on || 'ubuntu-24.04' }}
   #   needs:
   #     - build
   #     - get-version
+  #   outputs:
+  #     # NOTE: one output is needed for each item in the matrix. These outputs
+  #     # store the raw manifest of the container image of each build and are used
+  #     # to create a multiplatform image index later on.
+  #     manifest_standard_linux_amd64: ${{ steps.manifest.outputs.standard_linux_amd64 }}
+  #     manifest_standard_linux_arm64: ${{ steps.manifest.outputs.standard_linux_arm64 }}
+  #     manifest_standard_windows_amd64_ltsc2019: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2019 }}
+  #     manifest_standard_windows_amd64_ltsc2022: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2022 }}
+  #     manifest_standard-fips_linux_amd64: ${{ steps.manifest.outputs.standard-fips_linux_amd64 }}
+  #     manifest_standard-fips_linux_arm64: ${{ steps.manifest.outputs.standard-fips_linux_arm64 }}
+  #     manifest_ubi_linux_amd64: ${{ steps.manifest.outputs.ubi_linux_amd64 }}
+  #     manifest_ubi_linux_arm64: ${{ steps.manifest.outputs.ubi_linux_arm64 }}
+  #     manifest_ubi-fips_linux_amd64: ${{ steps.manifest.outputs.ubi-fips_linux_amd64 }}
+  #     manifest_ubi-fips_linux_arm64: ${{ steps.manifest.outputs.ubi-fips_linux_arm64 }}
   #   strategy:
   #     matrix:
   #       include:
-  #         - arch_os: windows_amd64
-  #           base_image_tag: ltsc2022
+  #         # standard product
+  #         - product: standard
+  #           platform: linux_amd64
+  #           collector_binary: otelcol-sumo
+  #         - product: standard
+  #           platform: linux_arm64
+  #           collector_binary: otelcol-sumo
+  #         - product: standard
+  #           target: windows-ltsc2022
+  #           platform: windows_amd64
+  #           subplatform: ltsc2022
   #           runs-on: windows-2022
-  #         - arch_os: windows_amd64
-  #           base_image_tag: ltsc2019
+  #           binary_ext: .exe
+  #           collector_binary: otelcol-sumo
+  #         - product: standard
+  #           target: windows-ltsc2019
+  #           platform: windows_amd64
+  #           subplatform: ltsc2019
   #           runs-on: windows-2019
+  #           binary_ext: .exe
+  #           collector_binary: otelcol-sumo
+  #         # standard-fips product
+  #         - product: standard-fips
+  #           platform: linux_amd64
+  #           collector_binary: otelcol-sumo-fips
+  #         - product: standard-fips
+  #           platform: linux_arm64
+  #           collector_binary: otelcol-sumo-fips
+  #         # ubi target
+  #         - product: ubi
+  #           platform: linux_amd64
+  #           collector_binary: otelcol-sumo
+  #         - product: ubi
+  #           platform: linux_arm64
+  #           collector_binary: otelcol-sumo
+  #         # ubi-fips target
+  #         - product: ubi-fips
+  #           platform: linux_amd64
+  #           collector_binary: otelcol-sumo-fips
+  #         - product: ubi-fips
+  #           platform: linux_arm64
+  #           collector_binary: otelcol-sumo-fips
   #   steps:
   #     - uses: actions/checkout@v4
 
-  #     - name: Login to Open Source ECR
+  #     - name: Output Go platform with subplatform
+  #       id: go-platform
   #       run: |
-  #         USERNAME=$(powershell.exe "echo \$Env:UserName")
-  #         # remove wincred entry and fix json format by replacing }, with }
-  #         cat "C:\\Users\\${USERNAME}\\.docker\\config.json" | grep -v "wincred" | sed 's/},$/}/' > "C:\\Users\\${USERNAME}\\.docker\\config.json.tmp"
-  #         mv "C:\\Users\\${USERNAME}\\.docker\\config.json.tmp" "C:\\Users\\${USERNAME}\\.docker\\config.json"
-  #         make login
-  #       env:
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+  #         platform=${{ matrix.platform }}
+  #         subplatform=${{ matrix.subplatform && format('_{0}', matrix.subplatform) || '' }}
+  #         echo "name=${platform}${subplatform}" >> $GITHUB_OUTPUT
 
-  #     - name: Login to Docker Hub
+  #     - name: Convert Go platform to Docker platform
+  #       id: docker-platform
   #       run: |
-  #         docker login \
-  #           --username ${{ secrets.DOCKERHUB_LOGIN_DEV }} \
-  #           --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
+  #         platform=${{ steps.go-platform.outputs.name }}
+  #         echo "name=${platform/_/\/}" >> "$GITHUB_OUTPUT"
+
+  #     - name: Set image metadata
+  #       id: meta
+  #       uses: docker/metadata-action@v5
+  #       with:
+  #         labels: |
+  #           version="${{ needs.get-version.outputs.full }}"
+
+  #     - name: Set up QEMU
+  #       if: runner.os != 'Windows'
+  #       uses: docker/setup-qemu-action@v3.6.0
+
+  #     - name: Set up Buildx
+  #       if: runner.os != 'Windows'
+  #       id: buildx
+  #       uses: docker/setup-buildx-action@v3.10.0
+
+  #     - name: Show Buildx platforms
+  #       if: runner.os != 'Windows'
+  #       run: echo ${{ steps.buildx.outputs.platforms }}
+
+  #     - name: Login to ECR
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: 663229565520.dkr.ecr.us-east-1.amazonaws.com
+  #         username: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+  #         password: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
 
   #     - name: Download binary action artifact from build phase
   #       uses: actions/download-artifact@v4
   #       with:
-  #         name: otelcol-sumo-${{matrix.arch_os}}.exe
-  #         path: artifacts/
+  #         name: ${{ matrix.collector_binary }}-${{ matrix.platform }}${{ matrix.binary_ext }}
+  #         path: artifacts/${{ steps.docker-platform.outputs.name }}/${{ matrix.collector_binary }}${{ matrix.binary_ext }}
 
-  #     - name: Build and push images to Open Source ECR
+  #     - name: Build and push
+  #       id: build
+  #       uses: docker/bake-action@v6
+  #       with:
+  #         source: .
+  #         targets: ${{ matrix.target || matrix.product }}
+  #         push: true
+  #         set: |
+  #           *.cache-from=type=gha
+  #           *.cache-to=type=gha,mode=max
+  #           *.platform=${{ steps.docker-platform.outputs.name }}
+  #           *.tags=
+  #           *.output=type=image,"name=663229565520.dkr.ecr.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-ci-builds",push-by-digest=true,name-canonical=true,push=true
+
+  #     - name: Print metadata
+  #       run: echo '${{ steps.build.outputs.metadata }}'
+
+  #     - name: Set container image manifest output
+  #       id: manifest
   #       run: |
-  #         cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
-  #         make build-push-container-windows \
-  #           BUILD_TAG=${{ needs.get-version.outputs.version }} \
-  #           PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
+  #         name="${{ matrix.product }}_${{ steps.go-platform.outputs.name }}"
+  #         target="${{ matrix.target || matrix.product }}"
+  #         printf -v metadata $(echo '${{ steps.build.outputs.metadata }}' | jq -c ".[\"$target\"]")
+  #         echo "${name}=${metadata}" >> "$GITHUB_OUTPUT"
 
-  #     - name: Build and push images to DockerHub
-  #       run: |
-  #         cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
-  #         make build-push-container-windows \
-  #           BUILD_TAG=${{ needs.get-version.outputs.version }} \
-  #           REPO_URL=sumologic/sumologic-otel-collector \
-  #           PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
+  # # build-windows-container-images:
+  # #   name: Build Windows container
+  # #   runs-on: ${{ matrix.runs-on }}
+  # #   needs:
+  # #     - build
+  # #     - get-version
+  # #   strategy:
+  # #     matrix:
+  # #       include:
+  # #         - arch_os: windows_amd64
+  # #           base_image_tag: ltsc2022
+  # #           runs-on: windows-2022
+  # #         - arch_os: windows_amd64
+  # #           base_image_tag: ltsc2019
+  # #           runs-on: windows-2019
+  # #   steps:
+  # #     - uses: actions/checkout@v4
 
-  push-image-indexes:
-    name: Push image indexes
-    runs-on: ubuntu-24.04
-    needs:
-      - build-container-images
-      #- build-windows-container-images
-      - get-version
-    strategy:
-      matrix:
-        include:
-          - target: standard
-            tags: '["latest", "${{ github.sha }}", "${{ needs.get-version.outputs.version }}"]'
-          - target: standard-fips
-            tags: '["latest-fips", "${{ github.sha }}-fips", "${{ needs.get-version.outputs.version }}-fips"]'
-          - target: ubi
-            tags: '["latest-ubi", "${{ github.sha }}-ubi", "${{ needs.get-version.outputs.version }}-ubi"]'
-          - target: ubi-fips
-            tags: '["latest-ubi-fips", "${{ github.sha }}-ubi-fips", "${{ needs.get-version.outputs.version }}-ubi-fips"]'
-    steps:
-      - uses: actions/checkout@v4
+  # #     - name: Login to Open Source ECR
+  # #       run: |
+  # #         USERNAME=$(powershell.exe "echo \$Env:UserName")
+  # #         # remove wincred entry and fix json format by replacing }, with }
+  # #         cat "C:\\Users\\${USERNAME}\\.docker\\config.json" | grep -v "wincred" | sed 's/},$/}/' > "C:\\Users\\${USERNAME}\\.docker\\config.json.tmp"
+  # #         mv "C:\\Users\\${USERNAME}\\.docker\\config.json.tmp" "C:\\Users\\${USERNAME}\\.docker\\config.json"
+  # #         make login
+  # #       env:
+  # #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+  # #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.6.0
+  # #     - name: Login to Docker Hub
+  # #       run: |
+  # #         docker login \
+  # #           --username ${{ secrets.DOCKERHUB_LOGIN_DEV }} \
+  # #           --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
 
-      - name: Set up Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v3.10.0
+  # #     - name: Download binary action artifact from build phase
+  # #       uses: actions/download-artifact@v4
+  # #       with:
+  # #         name: otelcol-sumo-${{matrix.arch_os}}.exe
+  # #         path: artifacts/
 
-      - name: Show Buildx platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
+  # #     - name: Build and push images to Open Source ECR
+  # #       run: |
+  # #         cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
+  # #         make build-push-container-windows \
+  # #           BUILD_TAG=${{ needs.get-version.outputs.version }} \
+  # #           PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
 
-      - name: Login to ECR
-        uses: docker/login-action@v3
-        with:
-          registry: 663229565520.dkr.ecr.us-east-1.amazonaws.com
-          username: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
-          password: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+  # #     - name: Build and push images to DockerHub
+  # #       run: |
+  # #         cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
+  # #         make build-push-container-windows \
+  # #           BUILD_TAG=${{ needs.get-version.outputs.version }} \
+  # #           REPO_URL=sumologic/sumologic-otel-collector \
+  # #           PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKERHUB_LOGIN_DEV }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
-
-      - name: Determine source images
-        run: |
-          echo '${{ toJSON(needs.build-container-images.outputs) }}' \
-          | jq -jf ci/jq/manifest-sources.jq --arg target ${{ matrix.target }} \
-          > sources.txt
-
-          cat sources.txt
-
-      - name: Determine tags (ECR)
-        env:
-          REPO_BASE: 663229565520.dkr.ecr.us-east-1.amazonaws.com
-          REPO_ORG: sumologic
-          REPO_NAME: sumologic-otel-collector-ci-builds
-        run: |
-          REPO="${REPO_BASE}/${REPO_ORG}/${REPO_NAME}"
-          echo '${{ matrix.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > ecr-tags.txt
-
-      - name: Determine tags (Docker Hub)
-        env:
-          REPO_BASE: docker.io
-          REPO_ORG: sumologic
-          REPO_NAME: sumologic-otel-collector-ci-builds
-        run: |
-          REPO="${REPO_BASE}/${REPO_ORG}/${REPO_NAME}"
-          echo '${{ matrix.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > dh-tags.txt
-
-      - name: Create multiplatform image index (ECR)
-        run: |
-          docker buildx imagetools create $(cat sources.txt) $(cat ecr-tags.txt)
-
-      - name: Create multiplatform image index (Docker Hub)
-        run: |
-          docker buildx imagetools create $(cat sources.txt) $(cat dh-tags.txt)
-
-  #     - name: Push joint container manifest for all platforms to Open Source ECR
-  #       run: |
-  #         make push-container-manifest \
-  #           BUILD_TAG=${{ needs.get-version.outputs.version }} \
-  #           PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022 windows/amd64/ltsc2019"
-
-  #     - name: Push joint container manifest for all platforms to DockerHub
-  #       run: |
-  #         make push-container-manifest \
-  #           BUILD_TAG=${{ needs.get-version.outputs.version }} \
-  #           PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022 windows/amd64/ltsc2019" \
-  #           REPO_URL=sumologic/sumologic-otel-collector
-
-  # # Store the install script from the packaging repository as an action artifact.
-  # # Originally, this script was stored in this repository, and the official download url pointed
-  # # to the most recent release here. The script has since been moved to the packaging repository.
-  # # It is kept here for backwards compatibility. Once the download count for this artifact
-  # # reaches 0 for new releases, this can be removed.
-  # #
-  # # TODO: This pulls the latest install scripts from the main branch of the
-  # # packaging reopsitory. There is a chance that the install scripts attached to
-  # # a collector release will differ from the install scripts attached to a
-  # # packaging release. We can either remove install scripts from releases here
-  # # or we should ensure that the install scripts are always automically synced
-  # # to this repository and use the install scripts from the HEAD SHA of the
-  # # collector workflow run specified for a release.
-  # install-script:
-  #   name: Store install script
+  # push-image-indexes:
+  #   name: Push image indexes
   #   runs-on: ubuntu-24.04
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         repository: SumoLogic/sumologic-otel-collector-packaging
-
-  #     - name: Store Linux install script as action artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: install.sh
-  #         path: ./install-script/install.sh
-  #         if-no-files-found: error
-
-  #     - name: Store Windows install script as action artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: install.ps1
-  #         path: ./install-script/install.ps1
-  #         if-no-files-found: error
-
-  # config-management-assets:
-  #   name: Store Chef cookbook, Puppet module, and Ansible playbook
-  #   runs-on: ubuntu-24.04
-  #   steps:
-  #     - uses: actions/checkout@v4
-
-  #     - name: Archive Chef cookbook
-  #       run: tar -cvf ./examples/chef/chef-cookbook.tar.gz -C ./examples/chef sumologic-otel-collector/
-
-  #     - name: Archive Puppet module
-  #       run: tar -cvf ./examples/puppet/puppet-module.tar.gz -C ./examples/puppet/modules install_otel_collector/
-
-  #     - name: Archive Ansible playbook
-  #       run: tar -cvf ./examples/ansible-playbook.tar.gz -C ./examples ansible/
-
-  #     - name: Store Chef cookbook archive as action artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: chef-cookbook.tar.gz
-  #         path: ./examples/chef/chef-cookbook.tar.gz
-  #         if-no-files-found: error
-
-  #     - name: Store Puppet module archive as action artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: puppet-module.tar.gz
-  #         path: ./examples/puppet/puppet-module.tar.gz
-  #         if-no-files-found: error
-
-  #     - name: Store Ansible playbook archive as action artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: ansible-playbook.tar.gz
-  #         path: ./examples/ansible-playbook.tar.gz
-  #         if-no-files-found: error
-
-  # trigger-packaging:
-  #   name: Trigger Packaging
   #   needs:
-  #     - build
-  #     - build-otelcol-config
-  #     - lint
-  #     - push-docker-manifest
-  #   uses: ./.github/workflows/workflow-trigger-packaging.yml
-  #   secrets: inherit
-  #   with:
-  #     workflow_id: ${{ github.run_id }}
+  #     - build-container-images
+  #     #- build-windows-container-images
+  #     - get-version
+  #   strategy:
+  #     matrix:
+  #       include:
+  #         - target: standard
+  #           tags: '["latest", "${{ github.sha }}", "${{ needs.get-version.outputs.version }}"]'
+  #         - target: standard-fips
+  #           tags: '["latest-fips", "${{ github.sha }}-fips", "${{ needs.get-version.outputs.version }}-fips"]'
+  #         - target: ubi
+  #           tags: '["latest-ubi", "${{ github.sha }}-ubi", "${{ needs.get-version.outputs.version }}-ubi"]'
+  #         - target: ubi-fips
+  #           tags: '["latest-ubi-fips", "${{ github.sha }}-ubi-fips", "${{ needs.get-version.outputs.version }}-ubi-fips"]'
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - name: Set up QEMU
+  #       uses: docker/setup-qemu-action@v3.6.0
+
+  #     - name: Set up Buildx
+  #       id: buildx
+  #       uses: docker/setup-buildx-action@v3.10.0
+
+  #     - name: Show Buildx platforms
+  #       run: echo ${{ steps.buildx.outputs.platforms }}
+
+  #     - name: Login to ECR
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: 663229565520.dkr.ecr.us-east-1.amazonaws.com
+  #         username: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+  #         password: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+
+  #     - name: Login to Docker Hub
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: docker.io
+  #         username: ${{ secrets.DOCKERHUB_LOGIN_DEV }}
+  #         password: ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
+
+  #     - name: Determine source images
+  #       run: |
+  #         echo '${{ toJSON(needs.build-container-images.outputs) }}' \
+  #         | jq -jf ci/jq/manifest-sources.jq --arg target ${{ matrix.target }} \
+  #         > sources.txt
+
+  #         cat sources.txt
+
+  #     - name: Determine tags (ECR)
+  #       env:
+  #         REPO_BASE: 663229565520.dkr.ecr.us-east-1.amazonaws.com
+  #         REPO_ORG: sumologic
+  #         REPO_NAME: sumologic-otel-collector-ci-builds
+  #       run: |
+  #         REPO="${REPO_BASE}/${REPO_ORG}/${REPO_NAME}"
+  #         echo '${{ matrix.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > ecr-tags.txt
+
+  #     - name: Determine tags (Docker Hub)
+  #       env:
+  #         REPO_BASE: docker.io
+  #         REPO_ORG: sumologic
+  #         REPO_NAME: sumologic-otel-collector-ci-builds
+  #       run: |
+  #         REPO="${REPO_BASE}/${REPO_ORG}/${REPO_NAME}"
+  #         echo '${{ matrix.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > dh-tags.txt
+
+  #     - name: Create multiplatform image index (ECR)
+  #       run: |
+  #         docker buildx imagetools create $(cat sources.txt) $(cat ecr-tags.txt)
+
+  #     - name: Create multiplatform image index (Docker Hub)
+  #       run: |
+  #         docker buildx imagetools create $(cat sources.txt) $(cat dh-tags.txt)
+
+  # #     - name: Push joint container manifest for all platforms to Open Source ECR
+  # #       run: |
+  # #         make push-container-manifest \
+  # #           BUILD_TAG=${{ needs.get-version.outputs.version }} \
+  # #           PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022 windows/amd64/ltsc2019"
+
+  # #     - name: Push joint container manifest for all platforms to DockerHub
+  # #       run: |
+  # #         make push-container-manifest \
+  # #           BUILD_TAG=${{ needs.get-version.outputs.version }} \
+  # #           PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022 windows/amd64/ltsc2019" \
+  # #           REPO_URL=sumologic/sumologic-otel-collector
+
+  # # # Store the install script from the packaging repository as an action artifact.
+  # # # Originally, this script was stored in this repository, and the official download url pointed
+  # # # to the most recent release here. The script has since been moved to the packaging repository.
+  # # # It is kept here for backwards compatibility. Once the download count for this artifact
+  # # # reaches 0 for new releases, this can be removed.
+  # # #
+  # # # TODO: This pulls the latest install scripts from the main branch of the
+  # # # packaging reopsitory. There is a chance that the install scripts attached to
+  # # # a collector release will differ from the install scripts attached to a
+  # # # packaging release. We can either remove install scripts from releases here
+  # # # or we should ensure that the install scripts are always automically synced
+  # # # to this repository and use the install scripts from the HEAD SHA of the
+  # # # collector workflow run specified for a release.
+  # # install-script:
+  # #   name: Store install script
+  # #   runs-on: ubuntu-24.04
+  # #   steps:
+  # #     - uses: actions/checkout@v4
+  # #       with:
+  # #         repository: SumoLogic/sumologic-otel-collector-packaging
+
+  # #     - name: Store Linux install script as action artifact
+  # #       uses: actions/upload-artifact@v4
+  # #       with:
+  # #         name: install.sh
+  # #         path: ./install-script/install.sh
+  # #         if-no-files-found: error
+
+  # #     - name: Store Windows install script as action artifact
+  # #       uses: actions/upload-artifact@v4
+  # #       with:
+  # #         name: install.ps1
+  # #         path: ./install-script/install.ps1
+  # #         if-no-files-found: error
+
+  # # config-management-assets:
+  # #   name: Store Chef cookbook, Puppet module, and Ansible playbook
+  # #   runs-on: ubuntu-24.04
+  # #   steps:
+  # #     - uses: actions/checkout@v4
+
+  # #     - name: Archive Chef cookbook
+  # #       run: tar -cvf ./examples/chef/chef-cookbook.tar.gz -C ./examples/chef sumologic-otel-collector/
+
+  # #     - name: Archive Puppet module
+  # #       run: tar -cvf ./examples/puppet/puppet-module.tar.gz -C ./examples/puppet/modules install_otel_collector/
+
+  # #     - name: Archive Ansible playbook
+  # #       run: tar -cvf ./examples/ansible-playbook.tar.gz -C ./examples ansible/
+
+  # #     - name: Store Chef cookbook archive as action artifact
+  # #       uses: actions/upload-artifact@v4
+  # #       with:
+  # #         name: chef-cookbook.tar.gz
+  # #         path: ./examples/chef/chef-cookbook.tar.gz
+  # #         if-no-files-found: error
+
+  # #     - name: Store Puppet module archive as action artifact
+  # #       uses: actions/upload-artifact@v4
+  # #       with:
+  # #         name: puppet-module.tar.gz
+  # #         path: ./examples/puppet/puppet-module.tar.gz
+  # #         if-no-files-found: error
+
+  # #     - name: Store Ansible playbook archive as action artifact
+  # #       uses: actions/upload-artifact@v4
+  # #       with:
+  # #         name: ansible-playbook.tar.gz
+  # #         path: ./examples/ansible-playbook.tar.gz
+  # #         if-no-files-found: error
+
+  # # trigger-packaging:
+  # #   name: Trigger Packaging
+  # #   needs:
+  # #     - build
+  # #     - build-otelcol-config
+  # #     - lint
+  # #     - push-docker-manifest
+  # #   uses: ./.github/workflows/workflow-trigger-packaging.yml
+  # #   secrets: inherit
+  # #   with:
+  # #     workflow_id: ${{ github.run_id }}
