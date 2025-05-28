@@ -201,8 +201,8 @@ jobs:
       # to create a multiplatform image index later on.
       manifest_standard_linux_amd64: ${{ steps.manifest.outputs.standard_linux_amd64 }}
       manifest_standard_linux_arm64: ${{ steps.manifest.outputs.standard_linux_arm64 }}
-      # manifest_standard_windows_amd64_ltsc2019: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2019 }}
-      # manifest_standard_windows_amd64_ltsc2022: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2022 }}
+      manifest_standard_windows_amd64_ltsc2019: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2019 }}
+      manifest_standard_windows_amd64_ltsc2022: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2022 }}
       manifest_standard-fips_linux_amd64: ${{ steps.manifest.outputs.standard-fips_linux_amd64 }}
       manifest_standard-fips_linux_arm64: ${{ steps.manifest.outputs.standard-fips_linux_arm64 }}
       manifest_ubi_linux_amd64: ${{ steps.manifest.outputs.ubi_linux_amd64 }}
@@ -219,18 +219,18 @@ jobs:
           - product: standard
             platform: linux_arm64
             collector_binary: otelcol-sumo
-          # - product: standard
-          #   target: windows-ltsc2022
-          #   platform: windows_amd64
-          #   subplatform: ltsc2022
-          #   runs-on: windows-2022
-          #   binary_ext: .exe
-          # - product: standard
-          #   target: windows-ltsc2019
-          #   platform: windows_amd64
-          #   subplatform: ltsc2019
-          #   runs-on: windows-2019
-          #   binary_ext: .exe
+          - product: standard
+            target: windows-ltsc2022
+            platform: windows_amd64
+            subplatform: ltsc2022
+            runs-on: windows-2022
+            binary_ext: .exe
+          - product: standard
+            target: windows-ltsc2019
+            platform: windows_amd64
+            subplatform: ltsc2019
+            runs-on: windows-2019
+            binary_ext: .exe
           # standard-fips product
           - product: standard-fips
             platform: linux_amd64
@@ -280,10 +280,12 @@ jobs:
         uses: docker/setup-qemu-action@v3.6.0
 
       - name: Set up Buildx
+        if: runner.os != 'Windows'
         id: buildx
         uses: docker/setup-buildx-action@v3.10.0
 
       - name: Show Buildx platforms
+        if: runner.os != 'Windows'
         run: echo ${{ steps.buildx.outputs.platforms }}
 
       - name: Login to ECR
@@ -307,6 +309,8 @@ jobs:
           targets: ${{ matrix.target || matrix.product }}
           push: true
           set: |
+            *.cache-from=type=gha
+            *.cache-to=type=gha,mode=max
             *.platform=${{ steps.docker-platform.outputs.name }}
             *.tags=
             *.output=type=image,"name=663229565520.dkr.ecr.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-ci-builds",push-by-digest=true,name-canonical=true,push=true

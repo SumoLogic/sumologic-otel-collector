@@ -79,14 +79,14 @@ target "windows-ltsc2022" {
 }
 
 target "windows-ltsc2019-fips" {
-  inherits = ["_common-windows"]
+  inherits = ["_common-windows", "_common-fips"]
   args = {
     BASE_IMAGE_TAG = "ltsc2019"
   }
 }
 
-target "windows-ltsc2022" {
-  inherits = ["_common-windows"]
+target "windows-ltsc2022-fips" {
+  inherits = ["_common-windows", "_common-fips"]
   args = {
     BASE_IMAGE_TAG = "ltsc2022"
   }
