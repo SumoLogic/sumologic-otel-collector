@@ -22,12 +22,8 @@ ARCH ?= $(shell uname -m | sed s/aarch64/arm64/ | sed s/x86_64/amd64/)
 BUILDER_BIN_NAME ?= opentelemetry-collector-builder$(BUILDER_BIN_EXT)
 BUILDER_BIN_PATH ?= $(HOME)/bin
 
-INSTALLED_BUILDER_VERSION := $(shell $(BUILDER_BIN_NAME) version 2>&1)
-
-INSTALLED_YQ_VERSION := $(shell yq --version 2>&1)
-ifeq ($(INSTALLED_YQ_VERSION),)
-    $(error "The yq command is required but was not found")
-endif
+INSTALLED_BUILDER_VERSION := $(shell $(BUILDER_BIN_NAME) version 2>/dev/null)
+INSTALLED_YQ_VERSION := $(shell yq --version 2>/dev/null)
 
 # Settings for macOS builds
 ifeq ($(OS),darwin)
@@ -78,6 +74,12 @@ endif
 # ref: https://pkg.go.dev/net#hdr-Name_Resolution
 GOTAGS := $(GOTAGS) netgo
 
+.PHONY: require-yq
+require-yq:
+ifeq ($(INSTALLED_YQ_VERSION),)
+	@$(error "The yq command is required but was not found")
+endif
+
 .PHONY: _install-bin
 _install-bin:
 	@mkdir -p "$(BUILDER_BIN_PATH)"
@@ -106,6 +108,7 @@ else
 endif
 
 .PHONY: _builder
+_builder: require-yq
 _builder:
 	$(eval VERSION ?= $(shell git describe --tags --abbrev=5 --match "v[0-9]*"| sed 's/^v//'))
 	$(shell yq e ".dist.version = \"${VERSION}${FIPS_SUFFIX}\"" -i .otelcol-builder.yaml)

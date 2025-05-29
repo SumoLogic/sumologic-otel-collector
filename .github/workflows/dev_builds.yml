@@ -142,11 +142,6 @@ jobs:
       - name: Install staticcheck
         run: make install-staticcheck
 
-        # TODO: fix the Makefile so that it doesn't require this when running
-        # targets that shouldn't require it (e.g. make golint)
-      - name: Add opentelemetry-collector-builder installation dir to PATH
-        run: echo "$HOME/bin" >> $GITHUB_PATH
-
       - name: Run staticcheck
         run: make golint
 
