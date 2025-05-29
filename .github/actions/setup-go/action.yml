@@ -11,7 +11,7 @@ inputs:
         * official
         * microsoft
     required: false
-    default: official
+    default: "official"
   skip-cache-restore-on-hit:
     description: |
       Skips restoring the cache when there is a cache hit for the primary cache
@@ -65,20 +65,19 @@ runs:
     - name: Check distribution input
       shell: bash
       env:
-        DISTRIBUTION: ${{ inputs.distribution }}
+        distribution: ${{ inputs.distribution }}
       run: |
         distributions=("official" "microsoft")
-        input="${DISTRIBUTION}"
 
-        echo ${distributions[@]} | grep -w -q "${input}"
+        echo ${distributions[@]} | grep -w -q "${distribution}"
         rc=$?
 
         if [[ "$rc" != "0" ]]; then
-          echo "Specified Go distribution is invalid: ${input}"
+          echo "Specified Go distribution is invalid: ${distribution}"
           exit 1
         fi
 
-        echo "Specified Go distribution is valid: ${input}"
+        echo "Specified Go distribution is valid: ${distribution}"
 
     # Fix slow Go compile and cache restore
     # See https://github.com/actions/setup-go/pull/515
