@@ -6,6 +6,7 @@ run-name: >
 on:
   release:
     types: [released]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -22,6 +23,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: "${{github.ref_name}}"
+
+      - name: Set Git user name & email
+        run: |
+          git config --global user.email "opensource-collection-team@sumologic.com"
+          git config --global user.name "Sumo Logic Open Source Collection"
 
       - name: Create & push package tags
         run: |
