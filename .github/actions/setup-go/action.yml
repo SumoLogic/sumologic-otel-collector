@@ -11,7 +11,7 @@ inputs:
         * official
         * microsoft
     required: false
-    default: "official"
+    default: official
   skip-cache-restore-on-hit:
     description: |
       Skips restoring the cache when there is a cache hit for the primary cache
