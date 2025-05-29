@@ -61,6 +61,7 @@ jobs:
             ${{ env.GOMODCACHE }}
             ${{ env.GOCACHE }}
           key: go-cache-${{ runner.os }}-${{ hashFiles('**/*.sum') }}
+          lookup-only: true
 
       - name: Install Go modules
         if: steps.go-cache.outputs.cache-hit != 'true'
