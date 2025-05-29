@@ -133,10 +133,10 @@ runs:
         runner_os_key="${distribution_key}-${RUNNER_OS}"
         full_key="${runner_os_key}-${{ hashFiles('**/*.sum') }}"
 
-        echo "base=${BASE_KEY}" >> $GITHUB_OUTPUTS
-        echo "distribution=${distribution_key}" >> $GITHUB_OUTPUTS
-        echo "runner-os=${runner_os_key}" >> $GITHUB_OUTPUTS
-        echo "full=${full_key}" >> $GITHUB_OUTPUTS
+        echo "base=${BASE_KEY}" >> $GITHUB_OUTPUT
+        echo "distribution=${distribution_key}" >> $GITHUB_OUTPUT
+        echo "runner-os=${runner_os_key}" >> $GITHUB_OUTPUT
+        echo "full=${full_key}" >> $GITHUB_OUTPUT
 
     - name: Cache Go
       id: go-cache
