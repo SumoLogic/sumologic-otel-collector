@@ -43,6 +43,7 @@ jobs:
 
   test:
     name: Test
+    needs: [setup-environment]
     uses: ./.github/workflows/workflow-test.yml
     strategy:
       matrix:
