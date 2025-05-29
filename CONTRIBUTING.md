@@ -44,20 +44,21 @@ environment:
   cd sumologic-otel-collector/otelcolbuilder
   ```
 
-1. Install otelcolbuilder:
+1. Install ocb:
 
   ```bash
-  make install-builder
+  make install-ocb
   ```
 
 ### How to build
 
 ```bash
 $ cd otelcolbuilder && make build
-opentelemetry-collector-builder \
+Installed ocb (/Users/sumo/bin/ocb) is at the correct version: 0.124.0
+Building otelcol-sumo version: 0.124.1
+CGO_ENABLED=1 /Users/sumo/bin/ocb \
                 --config .otelcol-builder.yaml \
-                --output-path ./cmd \
-                --name otelcol-sumo
+                --skip-compilation=true
 2021-05-24T16:29:03.494+0200    INFO    cmd/root.go:99  OpenTelemetry Collector distribution builder    {"version": "dev", "date": "unknown"}
 2021-05-24T16:29:03.498+0200    INFO    builder/main.go:90      Sources created {"path": "./cmd"}
 2021-05-24T16:29:03.612+0200    INFO    builder/main.go:126     Getting go modules
@@ -71,10 +72,11 @@ make targets e.g.:
 ```bash
 $ cd otelcolbuilder && make otelcol-sumo-linux_arm64
 GOOS=linux   GOARCH=arm64 /Library/Developer/CommandLineTools/usr/bin/make build BINARY_NAME=otelcol-sumo-linux_arm64
-opentelemetry-collector-builder \
+Installed ocb (/Users/sumo/bin/ocb) is at the correct version: 0.124.0
+Building otelcol-sumo version: 0.124.1
+CGO_ENABLED=1 /Users/sumo/bin/ocb \
                 --config .otelcol-builder.yaml \
-                --output-path ./cmd \
-                --name otelcol-sumo-linux_arm64
+                --skip-compilation=true
 2021-05-24T16:32:11.963+0200    INFO    cmd/root.go:99  OpenTelemetry Collector distribution builder    {"version": "dev", "date": "unknown"}
 2021-05-24T16:32:11.965+0200    INFO    builder/main.go:90      Sources created {"path": "./cmd"}
 2021-05-24T16:32:12.066+0200    INFO    builder/main.go:126     Getting go modules
@@ -140,20 +142,20 @@ This will also cause Go to generate a `go.work.sum` file to match.
 To contribute you will need to ensure you have the following setup:
 
 - working Go environment
-- installed `opentelemetry-collector-builder`
+- installed `ocb`
 
-  `opentelemetry-collector-builder` can be installed using following command:
+  `ocb` can be installed using following command:
 
   ```bash
-  make -C otelcolbuilder install-builder
+  make -C otelcolbuilder install-ocb
   ```
 
-  Which will by default install the builder binary in `${HOME}/bin/opentelemetry-collector-builder`.
-  You can customize it by providing the `BUILDER_BIN_PATH` argument.
+  Which will by default install the ocb binary in `${HOME}/bin/ocb`.
+  You can customize it by providing the `BIN_PATH` argument.
 
   ```bash
-  make -C otelcolbuilder install-builder \
-    BUILDER_BIN_PATH=/custom/dir/bin/opentelemetry-collector-builder
+  make -C otelcolbuilder install-ocb \
+    BIN_PATH=/custom/dir/bin
   ```
 
 [go-msi]: https://go.dev/dl/

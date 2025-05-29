@@ -1,0 +1,75 @@
+#################################################################################
+# A reusable workflow to determine the build information for this project. This
+# includes the Go version and the next available-to-use OTC version.
+#################################################################################
+
+name: Workflow - Determine Build Info
+
+on:
+  workflow_call:
+    outputs:
+      go-version:
+        description: The Go version to use for the build
+        value: ${{ jobs.determine.outputs.go-version }}
+      version:
+        description: The next available OTC version
+        value: ${{ jobs.determine.outputs.version }}
+      version-with-sha:
+        description: The next available OTC version with Git SHA
+        value: ${{ jobs.determine.outputs.version-with-sha }}
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  GO_VERSION: "1.24.0"
+
+jobs:
+  determine:
+    name: Determine
+    runs-on: ubuntu-24.04
+    outputs:
+      go-version: ${{ steps.go.outputs.version }}
+      version: ${{ steps.otc.outputs.version }}
+      version-with-sha: ${{ steps.otc.outputs.version-with-sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # NOTE: The following step is used to determine the Azure region which
+      # will be useful in the future for conditional logic based on the region.
+      # This will be necessary for scenarios such as using Azure Blob Storage
+      # for caching to get around the 10 GB limit in GitHub.
+      - name: Get Azure region
+        run: |
+          url="http://169.254.169.254/metadata/instance?api-version=2017-12-01"
+          curl -sH Metadata:true "$url" | jq .
+
+      - name: Output OTC information
+        id: otc
+        shell: bash
+        run: |
+          version="$(./ci/get_version.sh full | xargs)"
+          with_sha="${version}-$(git rev-parse HEAD | xargs)"
+
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "version-with-sha=${with_sha}" >> "$GITHUB_OUTPUT"
+
+      - name: Output Go information
+        id: go
+        shell: bash
+        run: |
+          echo "version=${GO_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Output notices
+        shell: bash
+        run: |
+          version="${{ steps.otc.outputs.version }}"
+          version_with_sha="${{ steps.otc.outputs.version-with-sha }}"
+          go_version="${{ steps.go.outputs.version }}"
+
+          echo ::notice title=Version with Git SHA::${version_with_sha}
+          echo ::notice title=Version::${version}
+          echo ::notice title=Go version::${go_version}

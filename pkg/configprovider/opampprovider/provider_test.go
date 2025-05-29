@@ -143,14 +143,14 @@ func TestRemotelyManagedFlowDisabled(t *testing.T) {
 	got := conf.ToStringMap()
 	exp := confmap.NewFromStringMap(map[string]any{
 		"extensions::sumologic::childKey":                   "value",
-		"extensions::sumologic::collector_fields::cluster":   "cluster-1",
-        "extensions::sumologic::collector_fields::zone":      "eu",
-        "extensions::sumologic::collector_fields1::cluster":   "cluster-1",
-        "extensions::sumologic::collector_fields1::zone":      "eu",
-		"processor":                                         "someprocessor",
+		"extensions::sumologic::collector_fields::cluster":  "cluster-1",
+		"extensions::sumologic::collector_fields::zone":     "eu",
+		"extensions::sumologic::collector_fields1::cluster": "cluster-1",
+		"extensions::sumologic::collector_fields1::zone":    "eu",
+		"processor": "someprocessor",
 		"extensions::opamp::remote_configuration_directory": "../globprovider/testdata/mergefunc",
 		"extensions::opamp::endpoint":                       "wss://example.com/v1/opamp",
-		"extensions::opamp::disable_tag_replacement":   true,
+		"extensions::opamp::disable_tag_replacement":        true,
 	})
 	want := exp.ToStringMap()
 	if diff := cmp.Diff(want, got); diff != "" {
@@ -180,10 +180,10 @@ func TestRemotelyManagedFlowEnabled(t *testing.T) {
 	got := conf.ToStringMap()
 	exp := confmap.NewFromStringMap(map[string]any{
 		"extensions::sumologic::childKey":                   "value",
-		"extensions::sumologic::collector_fields::zone":      "eu",
-		"extensions::sumologic::collector_fields1::cluster":   "cluster-1",
-        "extensions::sumologic::collector_fields1::zone":      "eu",
-		"processor":                                         "someprocessor",
+		"extensions::sumologic::collector_fields::zone":     "eu",
+		"extensions::sumologic::collector_fields1::cluster": "cluster-1",
+		"extensions::sumologic::collector_fields1::zone":    "eu",
+		"processor": "someprocessor",
 		"extensions::opamp::remote_configuration_directory": "../globprovider/testdata/mergefunc",
 		"extensions::opamp::endpoint":                       "wss://example.com/v1/opamp",
 	})
@@ -192,7 +192,6 @@ func TestRemotelyManagedFlowEnabled(t *testing.T) {
 		t.Errorf("Retrieve() mismatch (-want +got):\n%s", diff)
 	}
 }
-
 
 func absolutePath(t *testing.T, relativePath string) string {
 	t.Helper()

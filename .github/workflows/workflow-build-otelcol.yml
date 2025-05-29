@@ -1,0 +1,61 @@
+#################################################################################
+# A reusable workflow to build the otelcol-sumo binary for multiple platforms.
+#################################################################################
+
+name: Workflow - Build Collector (Multiple Platforms)
+
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: The version of Go to use.
+        type: string
+        required: true
+      signing-enabled:
+        default: true
+        type: boolean
+      version:
+        description: Version to use when building the binary
+        required: true
+        type: string
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test:
+    name: >
+      ${{ matrix.platform }} ${{ matrix.fips == true && '(FIPS)' || '' }}
+    uses: ./.github/workflows/workflow-build-otelcol-platform.yml
+    with:
+      fips: ${{ matrix.fips == true }}
+      go-version: ${{ inputs.go-version }}
+      platform: ${{ matrix.platform }}
+      runs-on: ${{ matrix.runs-on }}
+      signing-enabled: ${{ inputs.signing-enabled }}
+      version: ${{ inputs.version }}
+    secrets: inherit
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux_amd64
+            runs-on: ubuntu-24.04
+          - platform: linux_amd64
+            runs-on: ubuntu-24.04
+            fips: true
+          - platform: linux_arm64
+            runs-on: ubuntu-24.04
+          - platform: linux_arm64
+            runs-on: ubuntu-24.04
+            fips: true
+          - platform: darwin_amd64
+            runs-on: macos-15
+          - platform: darwin_arm64
+            runs-on: macos-15
+          - platform: windows_amd64
+            runs-on: windows-2022
+          - platform: windows_amd64
+            runs-on: windows-2022
+            fips: true

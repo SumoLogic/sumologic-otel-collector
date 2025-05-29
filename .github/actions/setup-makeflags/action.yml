@@ -1,0 +1,23 @@
+name: Setup MAKEFLAGS on Runner
+
+description: |
+  This action sets the `MAKEFLAGS` environment variable to enable parallel
+  builds using the number of available CPU cores on the GitHub Runner. This
+  helps speed up build processes that use `make` by allowing simultaneous jobs.
+
+runs:
+  using: "composite"
+  steps:
+    # Run make with support for simultaneous jobs matching the number of cores
+    # available on each GitHub Runner. The core count for each runner can be
+    # found at the following URL:
+    # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
+    - name: Set number of simultaneous jobs
+      shell: bash
+      run: |
+        cores="4"
+        if [[ "${RUNNER_OS}" == "macOS" && "${RUNNER_ARCH}" == "ARM64" ]]; then
+          cores="3"
+        fi
+
+        echo "MAKEFLAGS=-j ${cores}" >> $GITHUB_ENV

@@ -1,0 +1,153 @@
+#################################################################################
+# A reusable workflow to build the otelcol-config binary for a specific platform.
+#################################################################################
+
+name: Workflow - Build Config Tool (Single Platform)
+
+on:
+  workflow_call:
+    inputs:
+      fips:
+        description: Build binary with FIPS support
+        default: false
+        type: boolean
+      go-version:
+        description: The version of Go to use.
+        type: string
+        required: true
+      platform:
+        description: |
+          Platform (Operating System and CPU architecture) in the form
+          "{os}_{arch}". See GOOS and GOARCH for accepted values.
+        default: linux_amd64
+        type: string
+      runs-on:
+        default: ubuntu-24.04
+        type: string
+      signing-enabled:
+        default: true
+        type: boolean
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: >
+      ${{ inputs.platform }} ${{ inputs.fips == true && '(FIPS)' || '' }}
+    runs-on: ${{ inputs.runs-on }}
+    env:
+      FIPS_SUFFIX: ${{ inputs.fips && '-fips' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/parse-platform
+        id: platform
+        with:
+          platform: ${{ inputs.platform }}
+
+      - name: Setup Go Distribution
+        id: setup-go
+        uses: ./.github/actions/setup-go
+        with:
+          version: ${{ inputs.go-version }}
+          cache-name: otelcol-config-go-cache
+          cache-dependency-paths: |
+            pkg/tools/otelcol-config/go.sum
+
+      - uses: ./.github/actions/setup-build-environment
+        with:
+          fips: ${{ inputs.fips }}
+
+      - name: Install Go modules
+        working-directory: ./pkg/tools/otelcol-config
+        run: go mod download
+
+      - name: Build
+        if: "! inputs.fips"
+        run: make otelcol-config-${{ inputs.platform }}
+        working-directory: ./pkg/tools/otelcol-config
+
+      - name: Setup Toolchain
+        uses: ./.github/actions/setup-toolchain
+        if: inputs.fips && steps.platform.outputs.os == 'linux'
+        with:
+          platform: ${{ inputs.platform }}
+
+      - name: Build (FIPS)
+        if: inputs.fips && steps.platform.outputs.os == 'linux'
+        run: |
+          CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
+          test "$CC"
+          echo "Using toolchain: $CC"
+          make otelcol-config-${{ inputs.platform }} \
+            FIPS_SUFFIX="-fips" \
+            CGO_ENABLED="1" \
+            CC="$CC" \
+            LDFLAGS="-linkmode external -extldflags '-static'"
+        working-directory: ./pkg/tools/otelcol-config
+
+      - name: Set binary name
+        uses: ./.github/actions/determine-binary-name
+        id: binary-name
+        with:
+          fips: ${{ inputs.fips }}
+          name: otelcol-config
+          platform: ${{ inputs.platform }}
+
+      - name: Show file info
+        working-directory: ./pkg/tools/otelcol-config
+        run: |
+          file ${{ steps.binary-name.outputs.name-with-platform }}
+
+      - name: Show ldd info
+        if: steps.platform.outputs.os == 'linux'
+        working-directory: ./pkg/tools/otelcol-config
+        run: |
+          ldd ${{ steps.binary-name.outputs.name-with-platform }} || true
+
+      - uses: ./.github/actions/show-fips-symbols
+        if: inputs.fips
+        with:
+          name: ${{ steps.binary-name.outputs.name-with-platform }}
+          os: ${{ steps.platform.outputs.os }}
+          working-directory: ./pkg/tools/otelcol-config
+
+      - uses: apple-actions/import-codesign-certs@v3
+        if: runner.os == 'macOS' && inputs.signing-enabled
+        with:
+          p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+          p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+
+      - name: Sign the mac binaries
+        if: runner.os == 'macOS' && inputs.signing-enabled
+        env:
+          AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
+        working-directory: ./pkg/tools/otelcol-config
+        run: make ${{ inputs.platform }}-sign
+
+      - name: Store binary as action artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ${{ steps.binary-name.outputs.name-with-platform }}
+          path: ./pkg/tools/otelcol-config/${{ steps.binary-name.outputs.name-with-platform }}
+          if-no-files-found: error
+
+      - name: Store macOS .dmg as action artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: runner.os == 'macOS'
+        with:
+          name: ${{ steps.binary-name.outputs.name-with-platform }}.dmg
+          path: ./pkg/tools/otelcol-config/${{ steps.binary-name.outputs.name-with-platform }}.dmg
+          if-no-files-found: error
+
+      # NOTE: There doesn't appear to be a simple way to run post hooks in
+      # composite actions. We must unmount the VHDX image after we're done using
+      # it but before the post-cache hook runs. We should be able to fix this by
+      # converting our setup-vhdx action to NodeJS.
+      - name: Unmount Go Cache (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Dismount-VHD -Path ${{ steps.setup-go.outputs.vhdx-path }}

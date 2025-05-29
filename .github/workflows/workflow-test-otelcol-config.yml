@@ -1,77 +1,34 @@
-name: Run tests (otelcol-config)
+#################################################################################
+# A reusable workflow to run tests for otelcol-config across multiple platforms.
+#################################################################################
+
+name: Workflow - Test Config Tool (Multiple Platforms)
 
 on:
   workflow_call:
     inputs:
-      arch_os:
-        description: Architecture and OS in the form "{arch}_{os}". See GOARCH and GOOS for accepted values.
-        default: linux_amd64
+      go-version:
+        description: The version of Go to use.
         type: string
-      boringcrypto:
-        description: Run with BoringCrypto enabled
-        default: false
-        type: boolean
-      runs-on:
-        default: ubuntu-24.04
-        type: string
-      only-if-changed:
-        description: Run only if relevant files changed.
-        default: false
-        type: boolean
-      save-cache:
-        description: Save the module and build caches.
-        default: false
-        type: boolean
+        required: true
 
 defaults:
   run:
     shell: bash
 
-env:
-  GO_VERSION: "1.21.11"
-
 jobs:
   test:
-    name: Test (otelcol-config)
-    runs-on: ${{ inputs.runs-on }}
-    env:
-      BORINGCRYPTO_SUFFIX: ${{ inputs.boringcrypto && '-boringcrypto' || '' }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: false
-
-      - name: Get GOCACHE and GOMODCACHE
-        run: |
-          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
-          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
-
-      - name: Get cache key
-        id: get-cache-key
-        run: |
-          echo "cache-key=go-test-${{ env.GO_VERSION }}${BORINGCRYPTO_SUFFIX}-${{inputs.arch_os}}-${{ hashFiles('pkg/tools/otelcol-config/go.sum') }}" >> $GITHUB_OUTPUT
-          echo "restore-keys=go-test-${{ env.GO_VERSION }}${BORINGCRYPTO_SUFFIX}-${{inputs.arch_os}}-" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache/restore@v4
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.get-cache-key.outputs.cache-key }}
-          restore-keys: |
-            ${{ steps.get-cache-key.outputs.restore-keys }}
-
-      - name: Run tests
-        run: make test ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
-        working-directory: ./pkg/tools/otelcol-config
-
-      - uses: actions/cache/save@v4
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.get-cache-key.outputs.cache-key }}
+    name: >
+      ${{ matrix.runs-on }} ${{ matrix.fips == true && '(FIPS)' || '' }}
+    uses: ./.github/workflows/workflow-test-otelcol-config-platform.yml
+    with:
+      fips: ${{ matrix.fips == true }}
+      go-version: ${{ inputs.go-version }}
+      runs-on: ${{ matrix.runs-on }}
+    strategy:
+      matrix:
+        include:
+          - runs-on: ubuntu-24.04
+          - runs-on: ubuntu-24.04
+            fips: true
+          - runs-on: macos-15

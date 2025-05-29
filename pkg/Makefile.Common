@@ -1,9 +1,16 @@
-ifeq ($(OS),Windows_NT)
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
+parent_dir := $(abspath $(current_dir)/../)
+
+include $(parent_dir)/Makefile.Common
+
+ifeq ($(HOST_OS),Windows_NT)
 	OS=windows
 endif
 
-GOTEST=go test -race
-LINT=staticcheck
+GOFLAGS ?= -race
+GOTEST := go test $(GOFLAGS)
+LINT := staticcheck
 
 .PHONY: test
 test:
