@@ -59,6 +59,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: ./.github/actions/enable-fips
+        if: runner.os == "Windows" && input.fips
+
       - name: Determine if MacOS package should be signed
         if: runner.os == 'macOS'
         env:

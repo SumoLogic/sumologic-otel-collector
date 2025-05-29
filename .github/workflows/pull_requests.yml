@@ -366,8 +366,8 @@ jobs:
             base_image_tag: ltsc2022
             runs-on: windows-2022
           - arch_os: windows_amd64
-            base_image_tag: ltsc2019
-            runs-on: windows-2019
+            base_image_tag: ltsc2025
+            runs-on: windows-2025
     steps:
       - uses: actions/checkout@v4
 
