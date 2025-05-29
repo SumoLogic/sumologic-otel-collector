@@ -63,6 +63,7 @@ runs:
   using: "composite"
   steps:
     - name: Check distribution input
+      shell: bash
       run: |
         distributions=("official" "microsoft")
         input="${{ inputs.distribution }}"
