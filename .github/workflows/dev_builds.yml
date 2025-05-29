@@ -19,6 +19,8 @@ jobs:
     strategy:
       matrix:
         include:
+          - runs-on: macos-15
+            distribution: official
           - runs-on: ubuntu-24.04
             distribution: official
           - runs-on: windows-2022
