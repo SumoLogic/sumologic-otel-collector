@@ -27,30 +27,19 @@ jobs:
 
       # Fix slow Go compile and cache restore
       # See https://github.com/actions/setup-go/pull/515
-      # - name: Set Go cache environment variables (Windows)
-      #   if: runner.os == 'Windows'
-      #   run: |
-      #     echo 'GOCACHE=D:\gocache' >> $GITHUB_ENV
-      #     echo 'GOMODCACHE=D:\gomodcache' >> $GITHUB_ENV
-      #     echo 'GOTMPDIR=D:\gotmp' >> $GITHUB_ENV
-      #     mkdir -p /d/gocache
-      #     mkdir -p /d/gomodcache
-      #     mkdir -p /d/gotmp
-
-      - name: Set Go working directory
-        id: go-workdir
+      - name: Set Go cache environment variables (Windows)
+        if: runner.os == 'Windows'
         run: |
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            workdir="/d"
-          else
-            workdir="${HOME}"
-          fi
-          echo "path=${workdir}" >> $GITHUB_OUTPUT
+          echo 'GOCACHE=D:\gocache' >> $GITHUB_ENV
+          echo 'GOMODCACHE=D:\gomodcache' >> $GITHUB_ENV
+          echo 'GOTMPDIR=D:\gotmp' >> $GITHUB_ENV
+          mkdir -p /d/gocache
+          mkdir -p /d/gomodcache
+          mkdir -p /d/gotmp
 
       - name: Setup Go
-        if: (! (contains(inputs.arch_os, 'windows') && inputs.fips))
+        if: runner.os != 'windows' && matrix.fips
         uses: actions/setup-go@v5
-        working-directory: ${{ steps.go-workdir.outputs.path }}
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
@@ -60,21 +49,22 @@ jobs:
           echo "GOPATH=$(go env GOPATH)" >> "$GITHUB_ENV"
           echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
           echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+          echo "GOTMPDIR=$(go env GOTMPDIR)" >> $GITHUB_ENV
           go env
 
-      # - name: Cache Go
-      #   id: go-cache
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: |
-      #       ${{ env.GOPATH }}/bin
-      #       ${{ env.GOMODCACHE }}
-      #       ${{ env.GOCACHE }}
-      #     key: go-cache-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
+      - name: Cache Go
+        id: go-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.GOPATH }}/bin
+            ${{ env.GOMODCACHE }}
+            ${{ env.GOCACHE }}
+          key: go-cache-${{ runner.os }}-${{ hashFiles('**/*.sum') }}
 
-      # - name: Install Go modules
-      #   if: steps.go-cache.outputs.cache-hit != 'true'
-      #   run: make
+      - name: Install Go modules
+        if: steps.go-cache.outputs.cache-hit != 'true'
+        run: make gomod-download-all
 
   # setup-environment-windows:
   #   runs-on: ubuntu-latest
@@ -113,64 +103,52 @@ jobs:
   #         echo "/d/a/_work/1/s/go/bin" >> $GITHUB_PATH &&
   #         powershell -command "Set-ItemProperty -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy -Name Enabled -Value \$true"
 
-  # # Add lint to dev builds as that's the only way for cache to be shared across branches.
-  # # https://docs.github.com/en/actions/advanced-guides/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
-  # lint:
-  #   name: Lint (staticcheck)
-  #   runs-on: ubuntu-24.04
-  #   strategy:
-  #     matrix:
-  #       arch_os: ["linux_amd64"]
-  #   steps:
-  #     - uses: actions/checkout@v4
+  # Add lint to dev builds as that's the only way for cache to be shared across branches.
+  # https://docs.github.com/en/actions/advanced-guides/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
+  lint:
+    name: Lint (staticcheck)
+    runs-on: ubuntu-24.04
+    needs: [setup-environment]
+    steps:
+      - uses: actions/checkout@v4
 
-  #     - name: Setup go
-  #       uses: actions/setup-go@v5
-  #       with:
-  #         go-version: ${{ env.GO_VERSION }}
-  #         cache: false
+      - name: Setup go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
 
-  #     - name: Get GOCACHE and GOMODCACHE
-  #       run: |
-  #         echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
-  #         echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+      - name: Get GOCACHE and GOMODCACHE
+        run: |
+          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
+          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
 
-  #     - uses: actions/cache/restore@v4
-  #       id: restore-go-mod-cache
-  #       with:
-  #         path: |
-  #           ${{ env.GOMODCACHE }}/cache
-  #           ${{ env.GOCACHE }}
-  #         key: go-lint-${{ env.GO_VERSION }}-${{ matrix.arch_os }}-${{ hashFiles('pkg/**/*/go.sum') }}-${{ github.run_id }}
-  #         restore-keys: |
-  #           go-lint-${{ env.GO_VERSION }}-${{ matrix.arch_os }}-
+      - uses: actions/cache/restore@v4
+        id: restore-go-cache
+        with:
+          path: |
+            ${{ env.GOMODCACHE }}/cache
+            ${{ env.GOCACHE }}
+          key: go-cache-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
 
-  #     - uses: actions/cache@v4
-  #       with:
-  #         path: |
-  #           /home/runner/.cache/staticcheck
-  #         key: staticcheck-${{ runner.os }}-${{ github.sha }}
-  #         restore-keys: |
-  #           staticcheck-${{ runner.os }}-
+      - uses: actions/cache@v4
+        with:
+          path: |
+            /home/runner/.cache/staticcheck
+          key: staticcheck-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            staticcheck-${{ runner.os }}-
 
-  #     - name: Install staticcheck
-  #       run: make install-staticcheck
+      - name: Install staticcheck
+        run: make install-staticcheck
 
-  #       # TODO: fix the Makefile so that it doesn't require this when running
-  #       # targets that shouldn't require it (e.g. make golint)
-  #     - name: Add opentelemetry-collector-builder installation dir to PATH
-  #       run: echo "$HOME/bin" >> $GITHUB_PATH
+        # TODO: fix the Makefile so that it doesn't require this when running
+        # targets that shouldn't require it (e.g. make golint)
+      - name: Add opentelemetry-collector-builder installation dir to PATH
+        run: echo "$HOME/bin" >> $GITHUB_PATH
 
-  #     - name: Run staticcheck
-  #       run: make golint
-
-  #     - uses: actions/cache/save@v4
-  #       if: always()
-  #       with:
-  #         path: |
-  #           ${{ env.GOMODCACHE }}/cache
-  #           ${{ env.GOCACHE }}
-  #         key: ${{ steps.restore-go-mod-cache.outputs.cache-primary-key }}
+      - name: Run staticcheck
+        run: make golint
 
   # test:
   #   name: Test
