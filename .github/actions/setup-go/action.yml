@@ -64,11 +64,13 @@ runs:
   steps:
     - name: Check distribution input
       shell: bash
+      env:
+        DISTRIBUTION: ${{ inputs.distribution }}
       run: |
         distributions=("official" "microsoft")
-        input="${{ inputs.distribution }}"
+        input="${DISTRIBUTION}"
 
-        echo ${distributions[@]} | grep -w -q $input
+        echo ${distributions[@]} | grep -w -q "${input}"
         rc=$?
 
         if [[ "$rc" != "0" ]]; then
