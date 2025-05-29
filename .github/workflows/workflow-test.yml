@@ -11,24 +11,21 @@ on:
         description: Run with BoringCrypto enabled
         default: false
         type: boolean
-      runs-on:
-        default: ubuntu-24.04
+      go-version:
+        description: The version of Go to use.
         type: string
+        required: true
       only-if-changed:
         description: Run only if relevant files changed.
         default: false
         type: boolean
-      save-cache:
-        description: Save the module and build caches.
-        default: false
-        type: boolean
+      runs-on:
+        default: ubuntu-24.04
+        type: string
 
 defaults:
   run:
     shell: bash
-
-env:
-  GO_VERSION: "1.24.0"
 
 jobs:
   test:
@@ -39,48 +36,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup go
-        uses: actions/setup-go@v5
+      - name: Setup MAKEFLAGS
+        uses: ./.github/actions/setup-makeflags
+
+      - name: Setup Go
+        id: setup-go
+        uses: ./.github/actions/setup-go
         with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: false
+          version: ${{ inputs.go-version }}
+          cache-dependency-paths: |
+            **/*.sum
+            otelcolbuilder/.otelcol-builder.yaml
 
-      - name: Get GOCACHE and GOMODCACHE
-        run: |
-          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
-          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+      - name: Setup yq
+        if: runner.os == 'Windows'
+        uses: ./.github/actions/setup-yq
 
-      - name: Get cache key
-        id: get-cache-key
-        run: |
-          echo "cache-key=go-test-${{ env.GO_VERSION }}${BORINGCRYPTO_SUFFIX}-${{inputs.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}" >> $GITHUB_OUTPUT
-          echo "restore-keys=go-test-${{ env.GO_VERSION }}${BORINGCRYPTO_SUFFIX}-${{inputs.arch_os}}-" >> $GITHUB_OUTPUT
+      - name: Setup ocb
+        uses: ./.github/actions/setup-ocb
 
-      - uses: actions/cache/restore@v4
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.get-cache-key.outputs.cache-key }}
-          restore-keys: |
-            ${{ steps.get-cache-key.outputs.restore-keys }}
-
-      - name: Install yq (Windows)
-        if: contains(inputs.arch_os, 'windows')
-        run: choco install yq
-
-      - name: Set default BUILDER_BIN_PATH
-        run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
-
-      - name: Add opentelemetry-collector-builder installation dir to PATH
-        run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
+      - name: Install Go JUnit Report
+        run: make install-go-junit-report
 
       - name: Run package tests
-        run: make gotest ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
+        run: make gotest-junit ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
 
-      - uses: actions/cache/save@v4
+      - name: Print JUnit Reports
+        run: |
+          find . -name report.xml -exec cat {} \;
+
+      - name: Test Summary
+        uses: test-summary/action@v1
         with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.get-cache-key.outputs.cache-key }}
+          paths: |
+            **/report.xml
+        if: always()

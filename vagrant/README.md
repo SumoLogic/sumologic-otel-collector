@@ -45,8 +45,8 @@ If you see the following or similar error:
 ```text
 vagrant@sumologic-otel-collector:/sumologic$ make build
 make[1]: Entering directory '/sumologic/otelcolbuilder'
-/bin/sh: 1: opentelemetry-collector-builder: not found
-Makefile:41: *** Installed opentelemetry-collector-builder version "" does not match the requested "0.53.0" Please check if "/home/vagrant/bin" can be found in your PATH and if not, then install it using 'make install-builder' from otelcolbuilder's directory .  Stop.
+/bin/sh: 1: ocb: not found
+Makefile:41: *** Installed ocb version "" does not match the requested "0.53.0" Please check if "/home/vagrant/bin" can be found in your PATH and if not, then install it using 'make install-ocb' from otelcolbuilder's directory .  Stop.
 make[1]: Leaving directory '/sumologic/otelcolbuilder'
 make: *** [Makefile:177: build] Error 2
 ```
@@ -54,7 +54,7 @@ make: *** [Makefile:177: build] Error 2
 run the following command:
 
 ```bash
-make install-builder build
+make install-ocb build
 ```
 
 The `otelcol-sumo` binary is going to be placed at `/sumologic/otelcolbuilder/cmd/otelcol-sumo`.

@@ -1,0 +1,157 @@
+name: Setup Go
+
+inputs:
+  cache-dependency-paths:
+    description: |
+      A list of one or more paths to generate a hash from to append to the cache
+      key. Defaults to "**/*.sum".
+    required: false
+    default: "**/*.sum"
+  cache-name:
+    description: |
+      The base name of the cache key. Defaults to "go-cache".
+    required: false
+    default: go-cache-2
+  distribution:
+    description: |
+      The distribution of Go to install.
+      Options:
+        * official
+        * microsoft
+    required: false
+    default: official
+  skip-cache-restore-on-hit:
+    description: |
+      Skips restoring the cache when there is a cache hit for the primary cache
+      key. Set to "true" to enable.
+    required: false
+  version:
+    description: The version of Go to install.
+    required: true
+
+outputs:
+  cache-hit:
+    description: A boolean value to indicate an exact match was found for the primary key
+    value: ${{ steps.go-cache.outputs.cache-hit }}
+  go-arch:
+    value: ${{ steps.go-env.outputs.go-arch }}
+  go-cache:
+    value: ${{ steps.go-env.outputs.go-cache }}
+  go-host-arch:
+    value: ${{ steps.go-env.outputs.go-host-arch }}
+  go-host-os:
+    value: ${{ steps.go-env.outputs.go-host-os }}
+  go-mod-cache:
+    value: ${{ steps.go-env.outputs.go-mod-cache }}
+  go-os:
+    value: ${{ steps.go-env.outputs.go-os }}
+  go-path:
+    value: ${{ steps.go-env.outputs.go-path }}
+  go-proxy:
+    value: ${{ steps.go-env.outputs.go-proxy }}
+  go-root:
+    value: ${{ steps.go-env.outputs.go-root }}
+  go-tmp-dir:
+    value: ${{ steps.go-env.outputs.go-tmp-dir }}
+  go-version:
+    value: ${{ steps.go-env.outputs.go-version }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check distribution input
+      shell: bash
+      env:
+        distribution: ${{ inputs.distribution }}
+      run: |
+        distributions=("official" "microsoft")
+
+        echo ${distributions[@]} | grep -w -q "${distribution}"
+        rc=$?
+
+        if [[ "$rc" != "0" ]]; then
+          echo "Specified Go distribution is invalid: ${distribution}"
+          exit 1
+        fi
+
+        echo "Specified Go distribution is valid: ${distribution}"
+
+    - name: Set cache outputs
+      id: go-cache-key
+      shell: bash
+      env:
+        BASE_KEY: ${{ inputs.cache-name }}
+        DISTRIBUTION: ${{ inputs.distribution }}
+        HASH: ${{ hashFiles(inputs.cache-dependency-paths) }}
+      run: |
+        key="${BASE_KEY}-${DISTRIBUTION}-${RUNNER_OS}-${HASH}"
+
+        echo "name=${key}" >> $GITHUB_OUTPUT
+
+    - name: Cache Go (Windows)
+      id: go-cache-windows
+      if: runner.os == 'Windows'
+      uses: ./.github/actions/setup-vhdx
+      with:
+        cache-key: ${{ steps.go-cache-key.outputs.name }}
+        drive-letter: "G"
+        name: go-cache
+
+    # Fix slow Go compile and cache restore
+    # See https://github.com/actions/setup-go/pull/515
+    - name: Set Go cache environment variables (Windows)
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |
+        echo 'GOCACHE=G:\gocache' >> $GITHUB_ENV
+        echo 'GOMODCACHE=G:\gomodcache' >> $GITHUB_ENV
+        echo 'GOTMPDIR=G:\gotmp' >> $GITHUB_ENV
+        mkdir -p /g/gocache
+        mkdir -p /g/gomodcache
+        mkdir -p /g/gotmp
+
+    - name: Setup Go (Official distribution)
+      if: inputs.distribution != 'microsoft'
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ inputs.version }}
+        cache: false
+
+    - name: Setup Go (Microsoft distribution)
+      if: inputs.distribution == 'microsoft'
+      uses: ./.github/actions/setup-microsoft-go
+      with:
+        install-dir: G:\go
+        version: ${{ inputs.version }}
+
+    - name: Show Path to Go binary
+      shell: bash
+      run: |
+        which go
+
+    - name: Set Go environment outputs
+      id: go-env
+      shell: bash
+      run: |
+        echo "go-arch=$(go env GOARCH)" >> $GITHUB_OUTPUT
+        echo "go-cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
+        echo "go-host-arch=$(go env GOHOSTARCH)" >> $GITHUB_OUTPUT
+        echo "go-host-os=$(go env GOHOSTOS)" >> $GITHUB_OUTPUT
+        echo "go-mod-cache=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
+        echo "go-os=$(go env GOOS)" >> $GITHUB_OUTPUT
+        echo "go-path=$(go env GOPATH)" >> $GITHUB_OUTPUT
+        echo "go-proxy=$(go env GOPROXY)" >> $GITHUB_OUTPUT
+        echo "go-root=$(go env GOROOT)" >> $GITHUB_OUTPUT
+        echo "go-tmp-dir=$(go env GOTMPDIR)" >> $GITHUB_OUTPUT
+        echo "go-version=$(go env GOVERSION)" >> $GITHUB_OUTPUT
+
+    - name: Cache Go
+      if: runner.os != 'Windows'
+      id: go-cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ steps.go-env.outputs.go-mod-cache }}
+          ${{ steps.go-env.outputs.go-cache }}
+        key: ${{ steps.go-cache-key.outputs.name }}
+        lookup-only: ${{ inputs.skip-cache-restore-on-hit == 'true' }}

@@ -18,28 +18,28 @@ FIPS_SUFFIX ?= ""
 # https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin_nocgo.go
 # https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin.go
 ifeq ($(shell go env GOOS),darwin)
-CGO_ENABLED ?= 1
+	CGO_ENABLED ?= 1
 else
 # CGO_ENABLED=0 is used becuase we don't want to rely on c libs and opentelemetry
 # also builds their binaries this way.
 # ref: https://github.com/open-telemetry/opentelemetry-collector/blob/4c503ddc/Makefile#L254-L256
-CGO_ENABLED ?= 0
+	CGO_ENABLED ?= 0
 endif
 
 # We don't want to strip symbols for FIPS builds, as they're useful for verifying the build
 ifeq ($(FIPS_SUFFIX),"")
-GOEXPERIMENT=""
-LDFLAGS+= -s -w
+	GOEXPERIMENT=""
+	LDFLAGS+= -s -w
 # We want to use boringcrypto for fips setup
 else
-ifeq ($(shell go env GOOS),windows)
-GOEXPERIMENT=systemcrypto
-GOTAGS := $(GOTAGS) requirefips
-LDFLAGS+= -w
-else
-GOEXPERIMENT=boringcrypto
-LDFLAGS+= -w
-endif
+	ifeq ($(shell go env GOOS),windows)
+		GOEXPERIMENT=systemcrypto
+		GOTAGS := $(GOTAGS) requirefips
+		LDFLAGS+= -w
+	else
+		GOEXPERIMENT=boringcrypto
+		LDFLAGS+= -w
+	endif
 endif
 
 # We want to enforce go dns for all types of binaries. The FIPS binaries are built with CGO enabled and use
@@ -132,7 +132,6 @@ otelcol-config-windows_amd64:
 
 .PHONY: otelcol-config-linux-fips_amd64
 otelcol-config-linux-fips_amd64:
-	$(MAKE) toolchain-linux_amd64
 	$(MAKE) otelcol-config-linux_amd64 \
 	FIPS_SUFFIX="-fips" \
 	CGO_ENABLED="1" \
@@ -141,7 +140,6 @@ otelcol-config-linux-fips_amd64:
 
 .PHONY: otelcol-config-linux-fips_arm64
 otelcol-config-linux-fips_arm64:
-	$(MAKE) toolchain-linux_arm64
 	$(MAKE) otelcol-config-linux_arm64 \
 	FIPS_SUFFIX="-fips" \
 	CGO_ENABLED="1" \

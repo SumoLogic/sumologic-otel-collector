@@ -1,0 +1,59 @@
+name: Setup Toolchain
+
+inputs:
+  platform:
+    description: |
+      The platform of the toolchain to setup. Required.
+    required: true
+  skip-cache-restore-on-hit:
+    description: |
+      Skips restoring the cache when there is a cache hit for the primary cache
+      key. Set to "true" to enable.
+    required: false
+
+outputs:
+  cache-hit:
+    description: |
+      A boolean value to indicate an exact match was found for the primary key.
+    value: ${{ steps.restore-cache.outputs.cache-hit }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check Runner
+      shell: bash
+      run: |
+        if [[ "${RUNNER_OS}" != "Linux" ]]; then
+          echo "This action is only supported on Linux runners"
+          exit 1
+        fi
+
+    - name: Set Cache Key
+      id: cache-key
+      shell: bash
+      run: |
+        platform="${{ inputs.platform }}"
+        hash="${{ hashFiles('toolchains/config.mak', 'toolchains/Makefile') }}"
+
+        echo "name=toolchain-2-${platform}-${hash}" >> $GITHUB_OUTPUT
+
+    - name: Restore Toolchain Cache
+      id: restore-cache
+      uses: actions/cache/restore@v4
+      with:
+        path: /opt/toolchain
+        key: ${{ steps.cache-key.outputs.name }}
+        lookup-only: ${{ inputs.skip-cache-restore-on-hit == 'true' }}
+
+    - name: Build Toolchain
+      id: build
+      if: steps.restore-cache.outputs.cache-hit != 'true'
+      shell: bash
+      working-directory: ./toolchains
+      run: make toolchain-${{ inputs.platform }} OUTPUT=/opt/toolchain -j3
+
+    - uses: actions/cache/save@v4
+      if: steps.build.outcome == 'success'
+      with:
+        path: /opt/toolchain
+        key: ${{ steps.restore-cache.outputs.cache-primary-key }}

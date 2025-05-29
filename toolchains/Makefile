@@ -28,12 +28,12 @@ musl-cross-make:
 .PHONY: toolchain-linux_arm64
 toolchain-linux_arm64: OUTPUT=$(TOOLCHAINS_DIR)/toolchain_arm64
 toolchain-linux_arm64: musl-cross-make
-	TARGET=aarch64-linux-musl $(MAKE) -C musl-cross-make install -j3
+	TARGET=aarch64-linux-musl $(MAKE) -C musl-cross-make install
 
 .PHONY: toolchain-linux_amd64
 toolchain-linux_amd64: OUTPUT=$(TOOLCHAINS_DIR)/toolchain_amd64
 toolchain-linux_amd64: musl-cross-make
-	TARGET=x86_64-linux-musl $(MAKE) -C musl-cross-make install -j3
+	TARGET=x86_64-linux-musl $(MAKE) -C musl-cross-make install
 
 .PHONY: docker-golang-cross-builder
 docker-golang-cross-builder:

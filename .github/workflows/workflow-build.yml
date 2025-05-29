@@ -7,21 +7,21 @@ on:
         description: Architecture and OS in the form "{arch}_{os}". See GOARCH and GOOS for accepted values.
         default: linux_amd64
         type: string
-      sumo_component_gomod_version:
-        description: Package version for components hosted in this repo. Normally, this is the v0.0.0-00010101000000-000000000000 placeholder.
-        type: string
-        required: false
       fips:
         description: Build binary with FIPS support
         default: false
         type: boolean
+      go-version:
+        description: The version of Go to use.
+        type: string
+        required: true
       runs-on:
         default: ubuntu-24.04
         type: string
-      save-cache:
-        description: Save the module and build caches.
-        default: false
-        type: boolean
+      sumo_component_gomod_version:
+        description: Package version for components hosted in this repo. Normally, this is the v0.0.0-00010101000000-000000000000 placeholder.
+        type: string
+        required: false
       version:
         description: Version to use when building the binary
         required: true
@@ -49,8 +49,8 @@ defaults:
     shell: bash
 
 env:
-  GO_VERSION: "1.24.0"
   VERSION: ${{ inputs.version }}
+  YQ_VERSION: "4.45.4"
 
 jobs:
   build:
@@ -61,6 +61,13 @@ jobs:
       OTELCOL_FIPS_SUFFIX: ${{ inputs.fips && '-fips' || '' }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup MAKEFLAGS
+        uses: ./.github/actions/setup-makeflags
+
+      - name: Enable FIPS
+        uses: ./.github/actions/enable-fips
+        if: runner.os == 'Windows' && inputs.fips
 
       - name: Determine if MacOS package should be signed
         if: runner.os == 'macOS'
@@ -80,86 +87,49 @@ jobs:
               echo "WINDOWS_SIGNING_ENABLED=true" >> $GITHUB_ENV
           fi
 
-      - name: Setup go
-        if: (! (contains(inputs.arch_os, 'windows') && inputs.fips))
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: false
-
-      - name: Setup go (Microsoft fork) and enable FIPS on Windows
-        if: contains(inputs.arch_os, 'windows') && inputs.fips
-        run: |
-          curl -Lo go.zip https://aka.ms/golang/release/latest/go${{ env.GO_VERSION }}.windows-amd64.zip &&
-          powershell -command "Expand-Archive go.zip D:\\a\\_work\\1\\s" &&
-          cygpath -w "/d/a/_work/1/s/go/bin" >> $GITHUB_PATH &&
-          powershell -command "Set-ItemProperty -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy -Name Enabled -Value \$true"
-
       - name: Set Sumo component version in go.mod
         if: inputs.sumo_component_gomod_version != ''
         run: make prepare-tag TAG=${{ inputs.sumo_component_gomod_version }}
 
-      - name: Get Go env values
+      - name: Set Go Distribution
+        id: go-distribution
         run: |
-          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
-          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
-          echo "GOARCH=$(go env GOARCH)" >> "$GITHUB_ENV"
-          echo "GOOS=$(go env GOOS)" >> "$GITHUB_ENV"
-          echo "ARCH_OS=$(go env GOOS)_$(go env GOARCH)" >> $GITHUB_ENV
+          distribution="official"
+          fips="${{ inputs.fips }}"
 
-      - name: Get cache key
-        id: get-cache-key
-        run: |
-          echo "cache-key=go-build-${{ env.GO_VERSION }}${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}" >> $GITHUB_OUTPUT
-          echo "restore-keys=go-build-${{ env.GO_VERSION }}${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}-" >> $GITHUB_OUTPUT
-          echo "toolchain-cache-key=toolchain-${{inputs.arch_os}}-${{ hashFiles('toolchains/config.mak', 'toolchains/Makefile') }}" >> $GITHUB_OUTPUT
+          if [[ "${RUNNER_OS}" == "Windows" && "${fips}" == "true" ]]; then
+            distribution="microsoft"
+          fi
 
-      - uses: actions/cache/restore@v4
+          echo "name=${distribution}" >> $GITHUB_OUTPUT
+
+      - name: Setup Go
+        id: setup-go
+        uses: ./.github/actions/setup-go
         with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.get-cache-key.outputs.cache-key }}
-          restore-keys: |
-            ${{ steps.get-cache-key.outputs.restore-keys }}
+          distribution: ${{ steps.go-distribution.outputs.name }}
+          version: ${{ inputs.go-version }}
+          cache-dependency-paths: |
+            **/*.sum
+            otelcolbuilder/.otelcol-builder.yaml
 
-      - name: Install yq (Windows)
-        if: contains(inputs.arch_os, 'windows')
-        run: choco install yq
+      - name: Setup yq
+        if: runner.os == 'Windows'
+        uses: ./.github/actions/setup-yq
 
-      - name: Set default BUILDER_BIN_PATH
-        run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
-
-      - name: Add opentelemetry-collector-builder installation dir to PATH
-        if: (! contains(inputs.arch_os, 'windows') )
-        run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
-
-      - name: Add opentelemetry-collector-builder installation dir to PATH (Windows)
-        if: contains(inputs.arch_os, 'windows')
-        run: cygpath -w "$BUILDER_BIN_PATH" >> $GITHUB_PATH
-
-      - name: Install opentelemetry-collector-builder
-        run: make install-builder
-        working-directory: ./otelcolbuilder
+      - name: Setup ocb
+        uses: ./.github/actions/setup-ocb
 
       - name: Build
         if: "! inputs.fips"
         run: make otelcol-sumo-${{inputs.arch_os}}
         working-directory: ./otelcolbuilder
 
-      - uses: actions/cache/restore@v4
-        id: restore-toolchain-cache
+      - name: Setup Toolchain
+        uses: ./.github/actions/setup-toolchain
         if: inputs.fips && contains(inputs.arch_os, 'linux')
         with:
-          path: |
-            /opt/toolchain
-          key: ${{ steps.get-cache-key.outputs.toolchain-cache-key }}
-
-      - name: Rebuild Toolchains
-        id: rebuild-toolchain
-        if: ${{ steps.restore-toolchain-cache.outcome == 'success' && steps.restore-toolchain-cache.outputs.cache-hit != 'true' }}
-        run: make toolchain-${{ inputs.arch_os }} OUTPUT=/opt/toolchain -j3
-        working-directory: ./otelcolbuilder
+          platform: ${{ inputs.arch_os }}
 
       - name: Build (FIPS)
         if: inputs.fips && contains(inputs.arch_os, 'linux')
@@ -265,18 +235,3 @@ jobs:
           name: ${{ steps.set-binary-name.outputs.binary_name }}.dmg
           path: ./otelcolbuilder/cmd/${{ steps.set-binary-name.outputs.binary_name }}.dmg
           if-no-files-found: error
-
-      - uses: actions/cache/save@v4
-        if: ${{ steps.rebuild-toolchain.outcome == 'success' }}
-        with:
-          path: |
-            /opt/toolchain
-          key: ${{ steps.get-cache-key.outputs.toolchain-cache-key }}
-
-      - uses: actions/cache/save@v4
-        if: inputs.save-cache
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.get-cache-key.outputs.cache-key }}

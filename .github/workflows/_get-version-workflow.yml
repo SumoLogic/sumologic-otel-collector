@@ -16,6 +16,7 @@ jobs:
     name: Get application version for this revision
     runs-on: ubuntu-24.04
     outputs:
+      full: ${{ steps.get-version.outputs.full }}
       version: ${{ steps.get-version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
@@ -25,7 +26,9 @@ jobs:
       - name: Get version
         id: get-version
         run: |
-          version=$(./ci/get_version.sh full | xargs)-$(git rev-parse HEAD | xargs)
+          full=$(./ci/get_version.sh full | xargs)
+          version=${full}-$(git rev-parse HEAD | xargs)
+          echo "full=${full}" > $GITHUB_OUTPUT
           echo "version=${version}" > $GITHUB_OUTPUT
 
       - name: Print version

@@ -1,0 +1,16 @@
+name: Setup ocb
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set default BIN_PATH
+      shell: bash
+      run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
+
+    - name: Add ocb installation dir to PATH
+      shell: bash
+      run: echo "$BIN_PATH" >> $GITHUB_PATH
+
+    - name: Install ocb
+      shell: bash
+      run: make install-ocb

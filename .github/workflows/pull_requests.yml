@@ -172,7 +172,6 @@ jobs:
     with:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
-      save-cache: true
       boringcrypto: ${{ matrix.boringcrypto == true }}
 
   lint:
@@ -290,12 +289,13 @@ jobs:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
-      save-cache: true
     secrets:
       apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
       apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
       app_store_connect_password: ${{ secrets.AC_PASSWORD }}
 
+  # TODO: this needs to be updated to use docker bake and should probably test
+  # all images & platforms
   build-and-test-container-images:
     name: Build container
     runs-on: ubuntu-24.04
@@ -366,8 +366,8 @@ jobs:
             base_image_tag: ltsc2022
             runs-on: windows-2022
           - arch_os: windows_amd64
-            base_image_tag: ltsc2019
-            runs-on: windows-2019
+            base_image_tag: ltsc2025
+            runs-on: windows-2025
     steps:
       - uses: actions/checkout@v4
 

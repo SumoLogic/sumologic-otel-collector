@@ -1,26 +1,127 @@
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
+
+include $(realpath $(current_dir)/Makefile.Common)
+
 GOLANGCI_LINT_VERSION ?= v1.59.1
 PRETTIER_VERSION ?= 3.0.3
 TOWNCRIER_VERSION ?= 23.6.0
-SHELL := /usr/bin/env bash
+GIT_SHA_CMD := git rev-parse HEAD
 
-ifeq ($(OS),Windows_NT)
+#################################################################################
+# Platform-specific setup
+#################################################################################
+
+# Convert between Linux & Windows paths
+ifeq ($(HOST_OS),Windows_NT)
 	MAKE := "$(shell cygpath '$(MAKE)')"
 endif
 
+# Use GNU tools on macOS to ensure tool compatibility between platforms
+ifeq ($(HOST_OS),Darwin)
+	SED ?= gsed
+	DATE ?= gdate
+else
+	SED ?= sed
+	DATE ?= date
+endif
+
+#################################################################################
+# OpenTelemetry variables
+#################################################################################
+
+OT_CORE_VERSION := $(shell grep "version: .*" otelcolbuilder/.otelcol-builder.yaml | cut -f 4 -d " ")
+OT_CONTRIB_VERSION := $(shell grep --max-count=1 '^  - gomod: github\.com/open-telemetry/opentelemetry-collector-contrib/' otelcolbuilder/.otelcol-builder.yaml | cut -d " " -f 6 | $(SED) "s/v//")
+
+#################################################################################
+# Go module variables
+#################################################################################
+
+ALL_GO_MODULES := $(shell find pkg/ -type f -name 'go.mod' -exec dirname {} \; | sort)
+ALL_GO_MODULES += otelcolbuilder
+
+EXPORTABLE_MODULES := $(filter pkg/%,$(ALL_GO_MODULES))
+EXPORTABLE_MODULES := $(filter-out pkg/test,$(EXPORTABLE_MODULES))
+EXPORTABLE_MODULES := $(filter-out pkg/tools/%,$(EXPORTABLE_MODULES))
+
+TESTABLE_MODULES := $(filter-out pkg/tools/udpdemux,$(ALL_GO_MODULES))
+
+#################################################################################
+# Colour variables
+#################################################################################
+
+NC            := $(shell tput -Txterm sgr0)
+Black         := $(shell tput -Txterm setaf 0)
+Red           := $(shell tput -Txterm setaf 1)
+Green         := $(shell tput -Txterm setaf 2)
+Yellow        := $(shell tput -Txterm setaf 3)
+Blue          := $(shell tput -Txterm setaf 4)
+Magenta       := $(shell tput -Txterm setaf 5)
+Cyan          := $(shell tput -Txterm setaf 6)
+White         := $(shell tput -Txterm setaf 7)
+
+#################################################################################
+# Functions
+#################################################################################
+
+define target_echo
+	echo -e "[$(Yellow)$(@D)$(NC)]: $1"
+endef
+
+define shell_run
+	@start=$$($(DATE) +"%s%3N"); \
+	$(call target_echo,Running command: $1); \
+	$1 | awk '{print "[$(Yellow)$(@D)$(NC)]: " $$0}'; \
+	end=$$($(DATE) +"%s%3N"); \
+	duration=$$(( $$end - $$start )); \
+	$(call target_echo,Completed in $$duration ms)
+endef
+
+#################################################################################
+# Default target
+#################################################################################
+
 all: markdownlint yamllint
 
+#################################################################################
+# General wildcard targets
+#################################################################################
 
-ifeq ($(shell go env GOOS),darwin)
-SED ?= gsed
-else
-SED ?= sed
+.PHONY: %/print-directory
+%/print-directory:
+	@echo $(@D)
+
+.PHONY: %/test
+%/test:
+	@$(call shell_run,cd "$(@D)" && make test)
+
+.PHONY: %/lint
+%/lint:
+	@$(call shell_run,cd "$(@D)" && make lint)
+
+#################################################################################
+# System CLI tool targets
+#################################################################################
+
+.PHONY: install-gnu-sed
+install-gnu-sed:
+ifeq ($(HOST_OS),Darwin)
+	@which gsed || brew install gnu-sed
 endif
 
-.PHONY: install-gsed
-install-gsed:
-ifeq ($(shell go env GOOS),darwin)
-	@which gsed || brew install gsed
+.PHONY: install-coreutils
+install-coreutils:
+ifeq ($(HOST_OS),Darwin)
+	@which gdate || brew install coreutils
 endif
+
+.PHONY: install-dependencies
+install-dependencies: install-coreutils
+install-dependencies: install-gnu-sed
+
+#################################################################################
+# Markdown targets
+#################################################################################
 
 .PHONY: install-markdownlint
 install-markdownlint:
@@ -34,18 +135,34 @@ markdownlint:
 markdownlint-docker:
 	docker run --rm -v ${PWD}:/workdir ghcr.io/igorshubovych/markdownlint-cli:latest '**/*.md'
 
-yamllint:
-	yamllint -c .yamllint.yaml \
-		otelcolbuilder/.otelcol-builder.yaml
-
 markdown-links-lint:
 	./ci/markdown_links_lint.sh
 
 markdown-link-check:
 	./ci/markdown_link_check.sh
 
+#################################################################################
+# YAML targets
+#################################################################################
+
+yamllint:
+	yamllint -c .yamllint.yaml \
+		otelcolbuilder/.otelcol-builder.yaml
+
+#################################################################################
+# Shell targets
+#################################################################################
+
+.PHONY: check-uniform-dependencies
+check-uniform-dependencies:
+	./ci/check_uniform_dependencies.sh
+
 shellcheck:
 	shellcheck --severity=info ci/*.sh
+
+#################################################################################
+# Commit-hook targets
+#################################################################################
 
 .PHONY: install-pre-commit
 install-pre-commit:
@@ -60,54 +177,57 @@ install-pre-commit-hook:
 pre-commit-check:
 	pre-commit run --all-files
 
-# ALL_MODULES includes ./* dirs (excludes . dir and example with go code)
-ALL_MODULES := $(shell find ./pkg -type f -name "go.mod" -exec dirname {} \; | sort | egrep  '^./' )
-ALL_MODULES += ./otelcolbuilder
+#################################################################################
+# Go targets
+#################################################################################
 
-ALL_EXPORTABLE_MODULES += $(shell find ./pkg -type f -name "go.mod" ! -path "*pkg/test/*" -exec dirname {} \; | sort )
+.PHONY: %/mod-download-all
+%/mod-download-all:
+	@$(call shell_run,cd "$(@D)" && make mod-download-all)
 
-.PHONY: list-modules
-list-modules:
-	$(MAKE) for-all CMD=""
-
-.PHONY: gotest
-gotest:
-	@$(MAKE) for-all CMD="make test"
+.PHONY: %/test-junit
+%/test-junit:
+	make test
 
 .PHONY: golint
-golint:
-	@$(MAKE) for-all CMD="make lint"
+golint: $(patsubst %,%/lint,$(ALL_GO_MODULES))
 
 .PHONY: gomod-download-all
-gomod-download-all:
-	@$(MAKE) for-all CMD="make mod-download-all"
+gomod-download-all: $(patsubst %,%/mod-download-all,$(ALL_GO_MODULES))
+
+.PHONY: gotest
+gotest: $(patsubst %,%/test,$(TESTABLE_GO_MODULES))
+
+.PHONY: gotest-junit
+gotest-junit: $(patsubst %,%/test-junit,$(TESTABLE_GO_MODULES))
+
+.PHONY: install-go-junit-report
+install-go-junit-report:
+	go install github.com/jstemmer/go-junit-report@latest
 
 .PHONY: install-staticcheck
 install-staticcheck:
 	go install honnef.co/go/tools/cmd/staticcheck@latest
 
-.PHONY: print-all-modules
-print-all-modules:
-	echo $(ALL_EXPORTABLE_MODULES)
+.PHONY: list-all-modules
+list-all-modules: $(patsubst %,%/print-directory,$(ALL_GO_MODULES))
 
-.PHONY: for-all
-for-all:
-	@echo "running $${CMD} in all modules..."
-	@set -e; for dir in $(ALL_MODULES); do \
-	  (cd "$${dir}" && \
-	  	echo "running $${CMD} in $${dir}" && \
-	 	$${CMD} ); \
-	done
+.PHONY: list-exportable-modules
+list-exportable-modules: $(patsubst %,%/print-directory,$(EXPORTABLE_GO_MODULES))
 
-.PHONY: check-uniform-dependencies
-check-uniform-dependencies:
-	./ci/check_uniform_dependencies.sh
+.PHONY: list-testable-modules
+list-testable-modules: $(patsubst %,%/print-directory,$(TESTABLE_GO_MODULES))
 
-OT_CORE_VERSION := $(shell grep "version: .*" otelcolbuilder/.otelcol-builder.yaml | cut -f 4 -d " ")
-OT_CONTRIB_VERSION := $(shell grep --max-count=1 '^  - gomod: github\.com/open-telemetry/opentelemetry-collector-contrib/' otelcolbuilder/.otelcol-builder.yaml | cut -d " " -f 6 | $(SED) "s/v//")
-# usage: make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y
+#################################################################################
+# OpenTelemetry preparation targets
+#################################################################################
+
+# NOTE: This target can be used by setting OTC_CORE_NEW and OT_CONTRIB_NEW when
+# calling the target.
+#
+# E.g. make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y
 .PHONY: update-ot
-update-ot: install-gsed
+update-ot: install-gnu-sed
 	@test $(OT_CORE_NEW)    || (echo "usage: make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y"; exit 1);
 	@test $(OT_CONTRIB_NEW) || (echo "usage: make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y"; exit 1);
 	@echo "Updating OT core from $(OT_CORE_VERSION) to $(OT_CORE_NEW) and OT contrib from $(OT_CONTRIB_VERSION) to $(OT_CONTRIB_NEW)"
@@ -131,218 +251,109 @@ update-ot: install-gsed
 	@echo "building OT distro to check for breakage"
 	make gomod-download-all
 	pushd otelcolbuilder \
-		&& make install-builder \
+		&& make install-ocb \
 		&& make build \
 		&& popd
 
 .PHONY: update-journalctl
-update-journalctl: install-gsed
+update-journalctl: install-gnu-sed
 	$(SED) -i "s/FROM debian.*/FROM debian:${DEBIAN_VERSION} as systemd/" Dockerfile*
 
-LATEST_OT_VERSION := $(shell git describe --match 'v*' --abbrev=0 | cut -c2-)
-PREVIOUS_OT_VERSION := $(shell git describe --match 'v*' --abbrev=0 `git describe --match 'v*' --abbrev=0`^ | cut -c2-)
-PREVIOUS_CORE_VERSION := $(shell echo ${PREVIOUS_OT_VERSION} | sed -e 's/-sumo-.*//')
 .PHONY: update-docs
-update-docs: install-gsed
+update-docs: install-gnu-sed
+update-docs: LATEST_OT_VERSION = $(shell git describe --match 'v*' --abbrev=0 | cut -c2-)
+update-docs: PREVIOUS_OT_VERSION = $(shell git describe --match 'v*' --abbrev=0 `git describe --match 'v*' --abbrev=0`^ | cut -c2-)
+update-docs: PREVIOUS_CORE_VERSION = $(shell echo ${PREVIOUS_OT_VERSION} | sed -e 's/-sumo-.*//')
+update-docs:
 	@find docs/ -type f \( -name "*.md" ! -name "upgrading.md" \) -exec $(SED) -i 's#$(PREVIOUS_CORE_VERSION)#$(OT_CORE_VERSION)#g' {} \;
 	@find docs/ -type f \( -name "*.md" ! -name "upgrading.md" \) -exec $(SED) -i 's#$(PREVIOUS_OT_VERSION)#$(LATEST_OT_VERSION)#g' {} \;
-################################################################################
-# Release
-################################################################################
-#
-# These targets should be used for the release process in order to make the modules
-# contained within this repo importable.
-# This is required because as of now Go doesn't allow importing modules being
-# defined in repository's sub directories without having this directory name set
-# as prefix for the tag
-#
-# So when we want to make pkg/exporter/sumologicexporter with version v0.0.43-beta.0
-# importable then we need to create the following tag:
-# `pkg/exporter/sumologicexporter/v0.0.43-beta.0`
-# in order for it to be importable.
-#
-# Related issue: https://github.com/golang/go/issues/34055
 
-# Example usage for the release:
-#
-# export TAG=v0.98.0-sumo-0
-# make add-tag push-tag
-
-.PHONY: add-tag
-add-tag:
-	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
-	@echo "Adding tag ${TAG}"
-	@git tag -a ${TAG} -s -m "${TAG}"
-	@set -e; for dir in $(ALL_EXPORTABLE_MODULES); do \
-	  (echo Adding tag "$${dir:2}/$${TAG}" && \
-	 	git tag -a "$${dir:2}/$${TAG}" -s -m "${dir:2}/${TAG}" ); \
-	done
-
-.PHONY: push-tag
-push-tag:
-	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
-	@echo "Pushing tag ${TAG}"
-	@git push origin ${TAG}
-	@set -e; for dir in $(ALL_EXPORTABLE_MODULES); do \
-	  (echo Pushing tag "$${dir:2}/$${TAG}" && \
-	 	git push origin "$${dir:2}/$${TAG}"); \
-	done
-
-.PHONY: delete-tag
-delete-tag:
-	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
-	@echo "Deleting tag ${TAG}"
-	@git tag -d ${TAG}
-	@set -e; for dir in $(ALL_EXPORTABLE_MODULES); do \
-	  (echo Deleting tag "$${dir:2}/$${TAG}" && \
-	 	git tag -d "$${dir:2}/$${TAG}" ); \
-	done
-
-.PHONY: delete-remote-tag
-delete-remote-tag:
-	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
-	@echo "Deleting remote tag ${TAG}"
-	@git push --delete origin ${TAG}
-	@set -e; for dir in $(ALL_EXPORTABLE_MODULES); do \
-		(echo Deleting remote tag "$${dir:2}/$${TAG}" && \
-		git push --delete origin "$${dir:2}/$${TAG}"); \
-	done
-
-.PHONY: prepare-tag
-prepare-tag: install-gsed
-	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
-	$(SED) -i 's#\(gomod: github.com/SumoLogic/sumologic-otel-collector/.*\) v0.0.0-00010101000000-000000000000#\1 ${TAG}#g' \
-		otelcolbuilder/.otelcol-builder.yaml
-# Make sure to work with both tags starting not starting with v.
-	$(SED) -i 's#\(gomod: github.com/SumoLogic/sumologic-otel-collector/.*\) \([^v].*\)#\1 v\2#g' \
-		otelcolbuilder/.otelcol-builder.yaml
-
-
-################################################################################
-# Build
-################################################################################
+#################################################################################
+# OpenTelemetry build targets
+#################################################################################
 
 .PHONY: build
 build:
 	@$(MAKE) -C ./otelcolbuilder/ build
 	@$(MAKE) -C ./pkg/tools/otelcol-config/ build
 
-.PHONY: install-builder
-install-builder:
-	@$(MAKE) -C ./otelcolbuilder/ install-builder
+.PHONY: install-ocb
+install-ocb:
+	@$(MAKE) -C ./otelcolbuilder/ install-ocb
 
-BUILD_TAG ?= latest
-BUILD_CACHE_TAG = latest-builder-cache
-IMAGE_NAME = sumologic-otel-collector
-IMAGE_NAME_DEV = sumologic-otel-collector-dev
+#################################################################################
+# Container targets
+#################################################################################
 
-OPENSOURCE_ECR_URL = public.ecr.aws/sumologic
-OPENSOURCE_REPO_URL = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME)
-OPENSOURCE_REPO_URL_DEV = $(OPENSOURCE_ECR_URL)/$(IMAGE_NAME_DEV)
-REPO_URL = $(OPENSOURCE_REPO_URL)
-BASE_IMAGE_TAG ?= ""
+.PHONY: _promote-container-image
+_promote-container-image:
+	docker buildx imagetools create "$(SRC_URL):$(TAG)" -t "$(DST_URL):$(TAG)"
 
-DOCKERFILE = Dockerfile
+.PHONY: _create-container-image-alias
+_create-container-image-alias:
+	docker buildx imagetools create "$(URL):$(SRC_TAG)" -t "$(URL):$(DST_TAG)"
 
-.PHONY: _build
-_build:
-	DOCKER_BUILDKIT=1 docker build \
-		--file $(DOCKERFILE) \
-		--build-arg BUILD_TAG=$(TAG) \
-		--build-arg BUILDKIT_INLINE_CACHE=1 \
-		--tag $(IMG):$(TAG) \
-		.
+.PHONY: _promote-container-image-standard
+_promote-container-image-standard: GIT_SHA = $(shell $(GIT_SHA_CMD))
+_promote-container-image-standard:
+	$(MAKE) _promote-container-image TAG="$(GIT_SHA)"
+	$(MAKE) _create-container-image-alias SRC_TAG="$(GIT_SHA)" DST_TAG="latest"
 
-.PHONY: build-container-local
-build-container-local:
-	$(MAKE) _build \
-		IMG="$(IMAGE_NAME)-local" \
-		DOCKERFILE="Dockerfile_local" \
-		TAG="$(BUILD_TAG)"
+.PHONY: _promote-container-image-standard-fips
+_promote-container-image-standard-fips: GIT_SHA = $(shell $(GIT_SHA_CMD))
+_promote-container-image-standard-fips:
+	$(MAKE) _promote-container-image TAG="$(GIT_SHA)-fips"
+	$(MAKE) _create-container-image-alias SRC_TAG="$(GIT_SHA)" DST_TAG="latest-fips"
 
-.PHONY: build-container-dev
-build-container-dev:
-	$(MAKE) _build \
-		IMG="$(IMAGE_NAME_DEV)" \
-		TAG="$(BUILD_TAG)"
+.PHONY: _promote-container-image-ubi
+_promote-container-image-ubi: GIT_SHA = $(shell $(GIT_SHA_CMD))
+_promote-container-image-ubi:
+	$(MAKE) _promote-container-image TAG="$(GIT_SHA)-ubi"
+	$(MAKE) _create-container-image-alias SRC_TAG="$(GIT_SHA)" DST_TAG="latest-ubi"
 
-#-------------------------------------------------------------------------------
+.PHONY: _promote-container-image-ubi-fips
+_promote-container-image-ubi-fips: GIT_SHA = $(shell $(GIT_SHA_CMD))
+_promote-container-image-ubi-fips:
+	$(MAKE) _promote-container-image TAG="$(GIT_SHA)-ubi-fips"
+	$(MAKE) _create-container-image-alias SRC_TAG="$(GIT_SHA)" DST_TAG="latest-ubi-fips"
 
-# dev
+# Promotes an image in the ECR ci-builds repository to the release-candidates
+# repository
+.PHONY: promote-ecr-image-ci-to-rc
+promote-ecr-image-ci-to-rc: SRC_URL = "docker://$(ECR_URL_CI)"
+promote-ecr-image-ci-to-rc: DST_URL = "docker://$(ECR_URL_RC)"
+promote-ecr-image-ci-to-rc: _promote-container-manifest
 
-.PHONY: build-container-multiplatform-dev
-build-container-multiplatform-dev: REPO_URL = "$(OPENSOURCE_REPO_URL_DEV)"
-build-container-multiplatform-dev: build-container-multiplatform
+# Promotes an image in the ECR release-candidates repository to the stable
+# repository
+.PHONY: promote-ecr-image-rc-to-stable
+promote-ecr-image-rc-to-stable: GIT_SHA = $(shell $(GIT_SHA_CMD))
+promote-ecr-image-rc-to-stable: SRC_URL = "docker://$(ECR_URL_RC):$(GIT_SHA)"
+promote-ecr-image-rc-to-stable: DST_URL = "docker://$(ECR_URL_STABLE):$(GIT_SHA)"
+promote-ecr-image-rc-to-stable: _promote-container-manifest
 
-.PHONY: build-push-container-multiplatform-dev
-build-push-container-multiplatform-dev: REPO_URL = "$(OPENSOURCE_REPO_URL_DEV)"
-build-push-container-multiplatform-dev: build-push-container-multiplatform
+# Promotes an image in the Docker Hub ci-builds repository to the
+# release-candidates repository
+.PHONY: promote-dh-image-ci-to-rc
+promote-dh-image-ci-to-rc: GIT_SHA = $(shell $(GIT_SHA_CMD))
+promote-dh-image-ci-to-rc: SRC_URL = "$(DH_URL_CI):$(GIT_SHA)"
+promote-dh-image-ci-to-rc: DST_URL = "$(DH_URL_RC):$(GIT_SHA)"
+promote-dh-image-ci-to-rc: _promote-container-manifest
 
-.PHONY: build-push-container-windows-dev
-build-push-container-windows-dev: DOCKERFILE = Dockerfile_windows
-build-push-container-windows-dev: build-push-container-multiplatform-dev
+# Promotes an image in the Docker Hub release-candidates repository to the
+# stable repository
+.PHONY: promote-dh-image-rc-to-stable
+promote-dh-image-rc-to-stable: GIT_SHA = $(shell $(GIT_SHA_CMD))
+promote-dh-image-rc-to-stable: SRC_URL = "docker://$(DH_URL_RC):$(GIT_SHA)"
+promote-dh-image-rc-to-stable: DST_URL = "docker://$(DH_URL_STABLE):$(GIT_SHA)"
+promote-dh-image-rc-to-stable: _promote-container-manifest
 
-.PHONY: push-container-manifest-dev
-push-container-manifest-dev: REPO_URL = "$(OPENSOURCE_REPO_URL_DEV)"
-push-container-manifest-dev: push-container-manifest
-
-.PHONY: build-push-container-ubi
-build-push-container-ubi-dev: REPO_URL = "$(OPENSOURCE_REPO_URL_DEV)"
-build-push-container-ubi-dev: build-push-container-ubi
-
-#-------------------------------------------------------------------------------
-
-# release
-
-.PHONY: _build-container-multiplatform
-_build-container-multiplatform:
-	BUILD_TAG="$(BUILD_TAG)" \
-		REPO_URL="$(REPO_URL)" \
-		DOCKERFILE="$(DOCKERFILE)" \
-		PLATFORM="$(PLATFORM)" \
-		BASE_IMAGE_TAG="${BASE_IMAGE_TAG}" \
-		./ci/build-push-multiplatform.sh $(PUSH)
-
-.PHONY: build-container-multiplatform
-build-container-multiplatform: _build-container-multiplatform
-
-.PHONY: build-container-windows
-build-container-windows:
-	$(MAKE) _build-container-multiplatform \
-		DOCKERFILE=Dockerfile_windows \
-		BASE_IMAGE_TAG=ltsc2022
-
-	$(MAKE) _build-container-multiplatform \
-		DOCKERFILE=Dockerfile_windows \
-		BASE_IMAGE_TAG=ltsc2019
-
-.PHONY: build-push-container-windows
-build-push-container-windows: PUSH = --push
-build-push-container-windows: build-container-windows
-
-.PHONY: build-push-container-multiplatform
-build-push-container-multiplatform: PUSH = --push
-build-push-container-multiplatform: _build-container-multiplatform
-
-.PHONY: build-push-container-ubi
-build-push-container-ubi: PUSH = --push
-build-push-container-ubi: DOCKERFILE = Dockerfile_ubi
-build-push-container-ubi: _build-container-multiplatform
-
-.PHONY: test-built-image
-test-built-image:
-	docker run --rm "$(REPO_URL):$(BUILD_TAG)" --version
-
-.PHONY: push-container-manifest
-push-container-manifest:
-	BUILD_TAG="$(BUILD_TAG)" \
-		REPO_URL="$(REPO_URL)" \
-		./ci/push_docker_multiplatform_manifest.sh $(PLATFORMS)
-
-#-------------------------------------------------------------------------------
-
-# Changelog management
-# We use Towncrier (https://towncrier.readthedocs.io) for changelog management.
+#################################################################################
+# Changelog targets
+#
+# NOTE: We use Towncrier (https://towncrier.readthedocs.io) for changelog
+#       management.
+#################################################################################
 
 .PHONY: install-towncrier
 install-towncrier:
@@ -375,20 +386,9 @@ endif
 check-changelog:
 	towncrier check
 
-#-------------------------------------------------------------------------------
-.PHONY: _login
-_login:
-	aws ecr-public get-login-password --region us-east-1 \
-	| docker login --username AWS --password-stdin $(ECR_URL)
-
-.PHONY: login
-login:
-	$(MAKE) _login \
-		ECR_URL="$(OPENSOURCE_ECR_URL)"
-
-#-------------------------------------------------------------------------------
-
-# vagrant
+#################################################################################
+# Vagrant targets
+#################################################################################
 
 .PHONY: vagrant-up
 vagrant-up:

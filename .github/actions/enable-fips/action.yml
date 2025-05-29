@@ -1,0 +1,21 @@
+name: Enable FIPS on Runner
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check Runner
+      shell: bash
+      run: |
+        if [[ "${RUNNER_OS}" != "Windows" ]]; then
+          echo "This action is only supported on Windows runners for now"
+          exit 1
+        fi
+
+    - name: Enable FIPS (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        Set-ItemProperty `
+        -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy `
+        -Name Enabled `
+        -Value \$true
