@@ -64,13 +64,6 @@ target "ubi-fips" {
   ]
 }
 
-target "windows-ltsc2019" {
-  inherits = ["_common-windows"]
-  args = {
-    BASE_IMAGE_TAG = "ltsc2019"
-  }
-}
-
 target "windows-ltsc2022" {
   inherits = ["_common-windows"]
   args = {
@@ -78,10 +71,10 @@ target "windows-ltsc2022" {
   }
 }
 
-target "windows-ltsc2019-fips" {
-  inherits = ["_common-windows", "_common-fips"]
+target "windows-ltsc2025" {
+  inherits = ["_common-windows"]
   args = {
-    BASE_IMAGE_TAG = "ltsc2019"
+    BASE_IMAGE_TAG = "ltsc2025"
   }
 }
 
@@ -89,5 +82,12 @@ target "windows-ltsc2022-fips" {
   inherits = ["_common-windows", "_common-fips"]
   args = {
     BASE_IMAGE_TAG = "ltsc2022"
+  }
+}
+
+target "windows-ltsc2025-fips" {
+  inherits = ["_common-windows", "_common-fips"]
+  args = {
+    BASE_IMAGE_TAG = "ltsc2025"
   }
 }

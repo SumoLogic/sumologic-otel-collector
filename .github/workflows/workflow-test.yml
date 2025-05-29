@@ -35,50 +35,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set go caching environment variables on Windows
-        if: runner.os == 'Windows'
-        run: |
-          # Fix slow Go compile and cache restore
-          # See https://github.com/actions/setup-go/pull/515
-          echo 'GOCACHE=D:\gocache' >> $GITHUB_ENV
-          echo 'GOMODCACHE=D:\gomodcache' >> $GITHUB_ENV
-          echo 'GOTMPDIR=D:\gotmp' >> $GITHUB_ENV
-          mkdir /d/gotmp
-
-      - name: Setup go
-        uses: actions/setup-go@v5
+      - id: setup-go
+        uses: ./.github/actions/setup-go
         with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: false
-
-      - name: Get GOCACHE and GOMODCACHE
-        run: |
-          if [ "$RUNNER_OS" != "Windows" ]; then
-            echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
-            echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
-          fi
-
-      - name: Get cache key
-        id: get-cache-key
-        run: |
-          go_hash="${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}"
-          go_version="${{ env.GO_VERSION }}"
-          platform="${{ inputs.arch_os }}"
-          fips_suffix="${BORINGCRYPTO_SUFFIX}"
-          cache_key="go-test-${go_version}${fips_suffix}-${platform}"
-
-          echo "cache-key=${cache_key}-${go_hash}-${{ github.run_id }}" >> $GITHUB_OUTPUT
-          echo "restore-keys=${cache_key}" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache/restore@v4
-        id: restore-go-mod-cache
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.get-cache-key.outputs.cache-key }}
-          restore-keys: |
-            ${{ steps.get-cache-key.outputs.restore-keys }}
+          distribution: ${{ matrix.distribution }}
+          version: ${{ env.GO_VERSION }}
 
       - name: Install yq (Windows)
         if: contains(inputs.arch_os, 'windows')
@@ -92,11 +53,3 @@ jobs:
 
       - name: Run package tests
         run: make gotest ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
-
-      - uses: actions/cache/save@v4
-        if: always()
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.restore-go-mod-cache.outputs.cache-primary-key }}

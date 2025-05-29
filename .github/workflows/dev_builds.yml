@@ -20,151 +20,44 @@ jobs:
       matrix:
         include:
           - runs-on: ubuntu-24.04
+            distribution: official
           - runs-on: windows-2022
-
+            distribution: official
+          - runs-on: windows-2022
+            distribution: microsoft
     steps:
       - uses: actions/checkout@v4
 
-      # Fix slow Go compile and cache restore
-      # See https://github.com/actions/setup-go/pull/515
-      - name: Set Go cache environment variables (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          echo 'GOCACHE=D:\gocache' >> $GITHUB_ENV
-          echo 'GOMODCACHE=D:\gomodcache' >> $GITHUB_ENV
-          echo 'GOTMPDIR=D:\gotmp' >> $GITHUB_ENV
-          mkdir -p /d/gocache
-          mkdir -p /d/gomodcache
-          mkdir -p /d/gotmp
-
-      - name: Setup Go
-        if: runner.os != 'windows' && matrix.fips
-        uses: actions/setup-go@v5
+      - id: setup-go
+        uses: ./.github/actions/setup-go
         with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: false
-
-      - name: Set Go environment variables
-        run: |
-          echo "GOPATH=$(go env GOPATH)" >> "$GITHUB_ENV"
-          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
-          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
-          echo "GOTMPDIR=$(go env GOTMPDIR)" >> $GITHUB_ENV
-          go env
-
-      - name: Cache Go
-        id: go-cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ env.GOPATH }}/bin
-            ${{ env.GOMODCACHE }}
-            ${{ env.GOCACHE }}
-          key: go-cache-${{ runner.os }}-${{ hashFiles('**/*.sum') }}
-          lookup-only: true
+          distribution: ${{ matrix.distribution }}
+          skip-cache-restore-on-hit: "true"
+          version: ${{ env.GO_VERSION }}
 
       - name: Install Go modules
-        if: steps.go-cache.outputs.cache-hit != 'true'
+        if: steps.setup-go.outputs.cache-hit != 'true'
         run: make gomod-download-all
 
-  # setup-environment-windows:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-
-  #     - name: Get SHA256 checksum of Microsoft Go release
-  #       id: ms-go-checksum
-  #       run: |
-  #         file="go${{ env.GO_VERSION }}.windows-amd64.zip.sha256"
-  #         url="https://aka.ms/golang/release/latest/${file}"
-  #         curl -Lo "$file" "$url"
-  #         checksum=$(awk '{print $1}' $file)
-  #         echo "checksum=${checksum}" >> $GITHUB_OUTPUT
-
-  #     - name: Cache go (Microsoft fork)
-  #       id: cache-ms-go
-  #       uses: actions/cache@v4
-  #       with:
-  #         key: ms-go-zip-${{ steps.ms-go-checksum.outputs.checksum }}
-  #         path: |
-  #           D:\ms-go
-
-  #     - name: Download go (Microsoft fork)
-  #       if: contains(inputs.arch_os, 'windows') && inputs.fips && steps.cache-ms-go.outputs.cache-hit != 'true'
-  #       run: |
-  #         file="go${{ env.GO_VERSION }}.windows-amd64.zip"
-  #         url="https://aka.ms/golang/release/latest/${file}"
-  #         mkdir /d/ms-go
-  #         curl -Lo /d/ms-go/go.zip "$url"
-
-  #     - name: Setup go (Microsoft fork) and enable FIPS on Windows
-  #       if: contains(inputs.arch_os, 'windows') && inputs.fips
-  #       run: |
-  #         powershell -command "Expand-Archive D:\ms-go\go.zip D:\\a\\_work\\1\\s" &&
-  #         echo "/d/a/_work/1/s/go/bin" >> $GITHUB_PATH &&
-  #         powershell -command "Set-ItemProperty -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy -Name Enabled -Value \$true"
-
-  # Add lint to dev builds as that's the only way for cache to be shared across branches.
-  # https://docs.github.com/en/actions/advanced-guides/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
-  lint:
-    name: Lint (staticcheck)
-    runs-on: ubuntu-24.04
-    needs: [setup-environment]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: false
-
-      - name: Get GOCACHE and GOMODCACHE
-        run: |
-          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
-          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
-
-      - uses: actions/cache/restore@v4
-        id: restore-go-cache
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: go-cache-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
-
-      - uses: actions/cache@v4
-        with:
-          path: |
-            /home/runner/.cache/staticcheck
-          key: staticcheck-${{ runner.os }}-${{ github.sha }}
-          restore-keys: |
-            staticcheck-${{ runner.os }}-
-
-      - name: Install staticcheck
-        run: make install-staticcheck
-
-      - name: Run staticcheck
-        run: make golint
-
-  # test:
-  #   name: Test
-  #   uses: ./.github/workflows/workflow-test.yml
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         - arch_os: linux_amd64
-  #           runs-on: ubuntu-24.04
-  #         - arch_os: linux_amd64
-  #           runs-on: ubuntu-24.04
-  #           boringcrypto: true
-  #         - arch_os: darwin_amd64
-  #           runs-on: macos-15
-  #         - arch_os: windows_amd64
-  #           runs-on: windows-2022
-  #   with:
-  #     arch_os: ${{ matrix.arch_os }}
-  #     runs-on: ${{ matrix.runs-on }}
-  #     boringcrypto: ${{ matrix.boringcrypto == true }}
+  test:
+    name: Test
+    uses: ./.github/workflows/workflow-test.yml
+    strategy:
+      matrix:
+        include:
+          - arch_os: linux_amd64
+            runs-on: ubuntu-24.04
+          - arch_os: linux_amd64
+            runs-on: ubuntu-24.04
+            boringcrypto: true
+          - arch_os: darwin_amd64
+            runs-on: macos-15
+          - arch_os: windows_amd64
+            runs-on: windows-2025
+    with:
+      arch_os: ${{ matrix.arch_os }}
+      runs-on: ${{ matrix.runs-on }}
+      boringcrypto: ${{ matrix.boringcrypto == true }}
 
   # test-otelcol-config:
   #   name: Test (otelcol-config)
@@ -300,10 +193,10 @@ jobs:
   #           binary_ext: .exe
   #           collector_binary: otelcol-sumo
   #         - product: standard
-  #           target: windows-ltsc2019
+  #           target: windows-ltsc2025
   #           platform: windows_amd64
-  #           subplatform: ltsc2019
-  #           runs-on: windows-2019
+  #           subplatform: ltsc2025
+  #           runs-on: windows-2025
   #           binary_ext: .exe
   #           collector_binary: otelcol-sumo
   #         # standard-fips product
@@ -414,8 +307,8 @@ jobs:
   # #           base_image_tag: ltsc2022
   # #           runs-on: windows-2022
   # #         - arch_os: windows_amd64
-  # #           base_image_tag: ltsc2019
-  # #           runs-on: windows-2019
+  # #           base_image_tag: ltsc2025
+  # #           runs-on: windows-2025
   # #   steps:
   # #     - uses: actions/checkout@v4
 
