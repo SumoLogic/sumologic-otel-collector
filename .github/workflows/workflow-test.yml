@@ -44,14 +44,8 @@ jobs:
       - name: Setup yq
         uses: ./.github/actions/setup-yq
 
-      - name: Set default BUILDER_BIN_PATH
-        run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
-
-      - name: Add opentelemetry-collector-builder installation dir to PATH
-        run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
-
-      - name: Install opentelemetry-collector-builder
-        run: make install-builder
+      - name: Setup opentelemetry-collector-builder
+        uses: ./.github/actions/setup-opentelemetry-collector-builder
 
       - name: Run package tests
         run: make gotest ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}

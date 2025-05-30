@@ -46,6 +46,9 @@ jobs:
         if: runner.os == 'Windows'
         uses: ./.github/actions/setup-yq
 
+      - name: Setup opentelemetry-collector-builder
+        uses: ./.github/actions/setup-opentelemetry-collector-builder
+
       - name: Generate sources
         working-directory: otelcolbuilder
         run: make generate-sources
