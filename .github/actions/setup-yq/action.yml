@@ -1,0 +1,16 @@
+name: Setup yq
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check Runner
+      shell: bash
+      run: |
+        if [[ "${RUNNER_OS}" != "Windows" ]]; then
+          echo "This action only supports Windows runners"
+          exit 1
+        fi
+
+    - name: Setup yq
+      if: contains(inputs.arch_os, 'windows')
+      run: choco install yq
