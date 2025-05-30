@@ -35,7 +35,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - id: setup-go
+      - name: Setup Go
+        id: setup-go
         uses: ./.github/actions/setup-go
         with:
           version: ${{ env.GO_VERSION }}
@@ -49,6 +50,9 @@ jobs:
 
       - name: Add opentelemetry-collector-builder installation dir to PATH
         run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
+
+      - name: Install opentelemetry-collector-builder
+        run: make install-builder
 
       - name: Run package tests
         run: make gotest ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
