@@ -22,7 +22,7 @@ ARCH ?= $(shell uname -m | sed s/aarch64/arm64/ | sed s/x86_64/amd64/)
 BUILDER_BIN_NAME ?= opentelemetry-collector-builder$(BUILDER_BIN_EXT)
 BUILDER_BIN_PATH ?= $(HOME)/bin
 
-INSTALLED_BUILDER_VERSION := $(shell command -v $(BUILDER_BIN_NAME) 2>&1 > /dev/null && $(BUILDER_BIN_NAME) version)
+INSTALLED_BUILDER_VERSION := $(shell command -v $(BUILDER_BIN_NAME) 2>&1 > /dev/null && $(BUILDER_BIN_NAME) version 2>&1)
 INSTALLED_YQ_VERSION := $(shell command -v yq 2>&1 > /dev/null && yq --version)
 
 # Settings for macOS builds
