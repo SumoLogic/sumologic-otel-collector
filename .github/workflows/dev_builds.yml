@@ -39,7 +39,7 @@ jobs:
           version: ${{ env.GO_VERSION }}
 
       - name: Install Go modules
-        if: steps.setup-go.outputs.cache-hit != "true"
+        if: steps.setup-go.outputs.cache-hit != 'true'
         run: make gomod-download-all
 
       - name: Install yq
