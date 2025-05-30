@@ -13,4 +13,5 @@ runs:
 
     - name: Setup yq
       if: contains(inputs.arch_os, 'windows')
+      shell: bash
       run: choco install yq
