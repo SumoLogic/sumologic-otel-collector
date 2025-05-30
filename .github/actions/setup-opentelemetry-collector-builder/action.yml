@@ -4,10 +4,13 @@ runs:
   using: "composite"
   steps:
     - name: Set default BUILDER_BIN_PATH
+      shell: bash
       run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
 
     - name: Add opentelemetry-collector-builder installation dir to PATH
+      shell: bash
       run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
 
     - name: Install opentelemetry-collector-builder
+      shell: bash
       run: make install-builder
