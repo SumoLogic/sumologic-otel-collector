@@ -1,0 +1,13 @@
+name: Setup yq
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set default BUILDER_BIN_PATH
+      run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
+
+    - name: Add opentelemetry-collector-builder installation dir to PATH
+      run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
+
+    - name: Install opentelemetry-collector-builder
+      run: make install-builder
