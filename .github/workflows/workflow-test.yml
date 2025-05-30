@@ -41,9 +41,8 @@ jobs:
         with:
           version: ${{ env.GO_VERSION }}
 
-      - name: Install yq (Windows)
-        if: contains(inputs.arch_os, 'windows')
-        run: choco install yq
+      - name: Setup yq
+        uses: ./.github/actions/setup-yq
 
       - name: Set default BUILDER_BIN_PATH
         run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
