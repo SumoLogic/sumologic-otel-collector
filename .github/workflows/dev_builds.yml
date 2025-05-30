@@ -30,7 +30,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - id: setup-go
+      - name: Setup Go
+        id: setup-go
         uses: ./.github/actions/setup-go
         with:
           distribution: ${{ matrix.distribution }}
