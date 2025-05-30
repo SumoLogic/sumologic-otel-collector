@@ -43,7 +43,7 @@ jobs:
         run: make gomod-download-all
 
       - name: Install yq
-        if: runner.os == "Windows"
+        if: runner.os == 'Windows'
         uses: ./.github/actions/setup-yq
 
       - name: Generate sources
