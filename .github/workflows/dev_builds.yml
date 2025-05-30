@@ -47,6 +47,7 @@ jobs:
         uses: ./.github/actions/setup-yq
 
       - name: Generate sources
+        working-directory: otelcolbuilder
         run: make generate-sources
 
       - name: Show git status
