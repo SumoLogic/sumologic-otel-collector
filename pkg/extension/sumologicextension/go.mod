@@ -10,6 +10,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.124.1
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/status v0.124.1
 	github.com/shirou/gopsutil/v3 v3.24.4
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v1.30.0
@@ -44,6 +45,7 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
+	github.com/open-telemetry/opentelemetry-collector-contrib v0.124.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
