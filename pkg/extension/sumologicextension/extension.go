@@ -239,6 +239,11 @@ func (se *SumologicExtension) Start(ctx context.Context, host component.Host) er
 // Shutdown is invoked during service shutdown.
 func (se *SumologicExtension) Shutdown(ctx context.Context) error {
 	se.closeOnce.Do(func() { close(se.closeChan) })
+	se.statusSubscriptionWg.Wait()
+	se.componentHealthWg.Wait()
+	if se.componentStatusCh != nil {
+		close(se.componentStatusCh)
+	}
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -1117,42 +1122,44 @@ func (o *SumologicExtension) ComponentStatusChanged(
 	o.componentStatusCh <- &eventSourcePair{source: source, event: event}
 }
 
-func (o *SumologicExtension) Ready() error {
-	o.setHealth(map[string]any{"Healthy": true})
-	close(o.readyCh)
+func (se *SumologicExtension) Ready() error {
+	se.setHealth(map[string]any{"Healthy": true})
+	close(se.readyCh)
 	return nil
 }
 
-func (o *SumologicExtension) NotReady() error {
-	o.setHealth(map[string]any{"Healthy": false})
+func (se *SumologicExtension) NotReady() error {
+	se.setHealth(map[string]any{"Healthy": false})
 	return nil
 }
 
-func (o *SumologicExtension) initHealthReporting() {
-	o.setHealth(map[string]any{"Healthy": false})
+func (se *SumologicExtension) initHealthReporting() {
+	se.setHealth(map[string]any{"Healthy": false})
 
-	if o.statusAggregator == nil {
-		o.statusAggregator = status.NewAggregator(status.PriorityPermanent)
+	if se.statusAggregator == nil {
+		se.statusAggregator = status.NewAggregator(status.PriorityPermanent)
 	}
-	statusChan, unsubscribeFunc := o.statusAggregator.Subscribe(status.ScopeAll, status.Verbose)
-	o.statusSubscriptionWg.Add(1)
-	go o.statusAggregatorEventLoop(unsubscribeFunc, statusChan)
+	statusChan, unsubscribeFunc := se.statusAggregator.Subscribe(status.ScopeAll, status.Verbose)
+	se.statusSubscriptionWg.Add(1)
+	go se.statusAggregatorEventLoop(unsubscribeFunc, statusChan)
 
 	// Start processing events in the background so that our status watcher doesn't
 	// block others before the extension starts.
-	o.componentStatusCh = make(chan *eventSourcePair)
-	o.componentHealthWg.Add(1)
-	go o.componentHealthEventLoop()
+	se.componentStatusCh = make(chan *eventSourcePair)
+	se.componentHealthWg.Add(1)
+	go se.componentHealthEventLoop()
 }
 
-func (o *SumologicExtension) statusAggregatorEventLoop(unsubscribeFunc status.UnsubscribeFunc, statusChan <-chan *status.AggregateStatus) {
+func (se *SumologicExtension) statusAggregatorEventLoop(unsubscribeFunc status.UnsubscribeFunc, statusChan <-chan *status.AggregateStatus) {
 	defer func() {
 		unsubscribeFunc()
-		o.statusSubscriptionWg.Done()
+		se.logger.Info("unsubscribed from health event aggregator")
+		se.statusSubscriptionWg.Done()
 	}()
 	for {
 		select {
-		case <-o.closeChan:
+		case <-se.closeChan:
+			se.logger.Info("stopping health aggregator event loop")
 			return
 		case statusUpdate, ok := <-statusChan:
 			if !ok {
@@ -1165,50 +1172,58 @@ func (o *SumologicExtension) statusAggregatorEventLoop(unsubscribeFunc status.Un
 
 			componentHealth := convertComponentHealth(statusUpdate)
 
-			o.setHealth(componentHealth)
+			se.setHealth(componentHealth)
 		}
 	}
 }
 
-func (o *SumologicExtension) componentHealthEventLoop() {
+func (se *SumologicExtension) componentHealthEventLoop() {
 	// Record events with component.StatusStarting, but queue other events until
 	// PipelineWatcher.Ready is called. This prevents aggregate statuses from
 	// flapping between StatusStarting and StatusOK as components are started
 	// individually by the service.
 	var eventQueue []*eventSourcePair
 
-	defer o.componentHealthWg.Done()
+	defer func() {
+		se.logger.Info("componentHealthEventLoop finished")
+		se.componentHealthWg.Done()
+	}()
 	for loop := true; loop; {
 		select {
-		case esp, ok := <-o.componentStatusCh:
+		case esp, ok := <-se.componentStatusCh:
 			if !ok {
+				se.logger.Info("componentStatusCh closed")
 				return
 			}
 			if esp.event.Status() != componentstatus.StatusStarting {
 				eventQueue = append(eventQueue, esp)
 				continue
 			}
-			o.statusAggregator.RecordStatus(esp.source, esp.event)
-		case <-o.readyCh:
+			se.statusAggregator.RecordStatus(esp.source, esp.event)
+		case <-se.readyCh:
+			se.logger.Info("ready closed")
 			for _, esp := range eventQueue {
-				o.statusAggregator.RecordStatus(esp.source, esp.event)
+				se.statusAggregator.RecordStatus(esp.source, esp.event)
 			}
 			eventQueue = nil
 			loop = false
-		case <-o.closeChan:
+		case <-se.closeChan:
+			se.logger.Info("returning componentHealthEventLoop, closeChan stopped")
 			return
 		}
 	}
 
 	// After PipelineWatcher.Ready, record statuses as they are received.
+	se.logger.Info("start component wise  event loop")
 	for {
 		select {
-		case esp, ok := <-o.componentStatusCh:
+		case esp, ok := <-se.componentStatusCh:
 			if !ok {
 				return
 			}
-			o.statusAggregator.RecordStatus(esp.source, esp.event)
-		case <-o.closeChan:
+			se.statusAggregator.RecordStatus(esp.source, esp.event)
+		case <-se.closeChan:
+			se.logger.Info("stopping component health event loop, closeChan stopped")
 			return
 		}
 	}
