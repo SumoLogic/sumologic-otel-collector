@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/status"
+	"go.opentelemetry.io/collector/component/componentstatus"
 	"io"
 	"net"
 	"net/http"
@@ -75,6 +77,13 @@ type SumologicExtension struct {
 	closeOnce sync.Once
 	backOff   *backoff.ExponentialBackOff
 	id        component.ID
+
+	statusAggregator     statusAggregator
+	statusSubscriptionWg *sync.WaitGroup
+	componentHealthWg    *sync.WaitGroup
+	startTimeUnixNano    uint64
+	componentStatusCh    chan *eventSourcePair
+	readyCh              chan struct{}
 }
 
 const (
@@ -157,21 +166,27 @@ func newSumologicExtension(conf *Config, logger *zap.Logger, id component.ID, bu
 	backOff.MaxElapsedTime = conf.BackOff.MaxElapsedTime
 	backOff.MaxInterval = conf.BackOff.MaxInterval
 
-	return &SumologicExtension{
-		collectorName:     collectorName,
-		buildVersion:      buildVersion,
-		baseUrl:           strings.TrimSuffix(conf.ApiBaseUrl, "/"),
-		credsNotifyUpdate: make(chan struct{}),
-		conf:              conf,
-		origLogger:        logger,
-		logger:            logger,
-		hashKey:           hashKey,
-		credentialsStore:  credentialsStore,
-		updateMetadata:    updateCollectorMetadataFeatureGate.IsEnabled(),
-		closeChan:         make(chan struct{}),
-		backOff:           backOff,
-		id:                id,
-	}, nil
+	extension := SumologicExtension{
+		collectorName:        collectorName,
+		buildVersion:         buildVersion,
+		baseUrl:              strings.TrimSuffix(conf.ApiBaseUrl, "/"),
+		credsNotifyUpdate:    make(chan struct{}),
+		conf:                 conf,
+		origLogger:           logger,
+		logger:               logger,
+		hashKey:              hashKey,
+		credentialsStore:     credentialsStore,
+		updateMetadata:       updateCollectorMetadataFeatureGate.IsEnabled(),
+		closeChan:            make(chan struct{}),
+		backOff:              backOff,
+		id:                   id,
+		statusSubscriptionWg: &sync.WaitGroup{},
+		componentHealthWg:    &sync.WaitGroup{},
+		readyCh:              make(chan struct{}),
+	}
+	extension.initHealthReporting()
+
+	return &extension, nil
 }
 
 func createHashKey(conf *Config) string {
@@ -1074,4 +1089,161 @@ func cleanupBuildVersion(version string) string {
 	}
 
 	return version
+}
+
+type statusAggregator interface {
+	Subscribe(scope status.Scope, verbosity status.Verbosity) (<-chan *status.AggregateStatus, status.UnsubscribeFunc)
+	RecordStatus(source *componentstatus.InstanceID, event *componentstatus.Event)
+}
+
+type eventSourcePair struct {
+	source *componentstatus.InstanceID
+	event  *componentstatus.Event
+}
+
+func (o *SumologicExtension) ComponentStatusChanged(
+	source *componentstatus.InstanceID,
+	event *componentstatus.Event,
+) {
+	defer func() {
+		if r := recover(); r != nil {
+			o.logger.Info(
+				"discarding event received after shutdown",
+				zap.Any("source", source),
+				zap.Any("event", event),
+			)
+		}
+	}()
+	o.componentStatusCh <- &eventSourcePair{source: source, event: event}
+}
+
+func (o *SumologicExtension) Ready() error {
+	o.setHealth(map[string]any{"Healthy": true})
+	close(o.readyCh)
+	return nil
+}
+
+func (o *SumologicExtension) NotReady() error {
+	o.setHealth(map[string]any{"Healthy": false})
+	return nil
+}
+
+func (o *SumologicExtension) initHealthReporting() {
+	o.setHealth(map[string]any{"Healthy": false})
+
+	if o.statusAggregator == nil {
+		o.statusAggregator = status.NewAggregator(status.PriorityPermanent)
+	}
+	statusChan, unsubscribeFunc := o.statusAggregator.Subscribe(status.ScopeAll, status.Verbose)
+	o.statusSubscriptionWg.Add(1)
+	go o.statusAggregatorEventLoop(unsubscribeFunc, statusChan)
+
+	// Start processing events in the background so that our status watcher doesn't
+	// block others before the extension starts.
+	o.componentStatusCh = make(chan *eventSourcePair)
+	o.componentHealthWg.Add(1)
+	go o.componentHealthEventLoop()
+}
+
+func (o *SumologicExtension) statusAggregatorEventLoop(unsubscribeFunc status.UnsubscribeFunc, statusChan <-chan *status.AggregateStatus) {
+	defer func() {
+		unsubscribeFunc()
+		o.statusSubscriptionWg.Done()
+	}()
+	for {
+		select {
+		case <-o.closeChan:
+			return
+		case statusUpdate, ok := <-statusChan:
+			if !ok {
+				return
+			}
+
+			if statusUpdate == nil || statusUpdate.Status() == componentstatus.StatusNone {
+				continue
+			}
+
+			componentHealth := convertComponentHealth(statusUpdate)
+
+			o.setHealth(componentHealth)
+		}
+	}
+}
+
+func (o *SumologicExtension) componentHealthEventLoop() {
+	// Record events with component.StatusStarting, but queue other events until
+	// PipelineWatcher.Ready is called. This prevents aggregate statuses from
+	// flapping between StatusStarting and StatusOK as components are started
+	// individually by the service.
+	var eventQueue []*eventSourcePair
+
+	defer o.componentHealthWg.Done()
+	for loop := true; loop; {
+		select {
+		case esp, ok := <-o.componentStatusCh:
+			if !ok {
+				return
+			}
+			if esp.event.Status() != componentstatus.StatusStarting {
+				eventQueue = append(eventQueue, esp)
+				continue
+			}
+			o.statusAggregator.RecordStatus(esp.source, esp.event)
+		case <-o.readyCh:
+			for _, esp := range eventQueue {
+				o.statusAggregator.RecordStatus(esp.source, esp.event)
+			}
+			eventQueue = nil
+			loop = false
+		case <-o.closeChan:
+			return
+		}
+	}
+
+	// After PipelineWatcher.Ready, record statuses as they are received.
+	for {
+		select {
+		case esp, ok := <-o.componentStatusCh:
+			if !ok {
+				return
+			}
+			o.statusAggregator.RecordStatus(esp.source, esp.event)
+		case <-o.closeChan:
+			return
+		}
+	}
+}
+
+func convertComponentHealth(statusUpdate *status.AggregateStatus) map[string]any {
+	var isHealthy bool
+	if statusUpdate.Status() == componentstatus.StatusOK {
+		isHealthy = true
+	} else {
+		isHealthy = false
+	}
+
+	componentHealth := map[string]any{
+		"Healthy":            isHealthy,
+		"Status":             statusUpdate.Status().String(),
+		"StatusTimeUnixNano": uint64(statusUpdate.Timestamp().UnixNano()),
+	}
+
+	if statusUpdate.Err() != nil {
+		componentHealth["LastError"] = statusUpdate.Err().Error()
+	}
+
+	if len(statusUpdate.ComponentStatusMap) > 0 {
+		componentHealth["componentHealth"] = map[string]map[string]any{}
+		subMap := componentHealth["componentHealth"].(map[string]map[string]any)
+		for comp, compState := range statusUpdate.ComponentStatusMap {
+			subMap[comp] = convertComponentHealth(compState)
+		}
+	}
+
+	return componentHealth
+}
+
+func (o *SumologicExtension) setHealth(healthMap map[string]any) {
+	b, _ := json.MarshalIndent(healthMap, "", "  ")
+	o.logger.Info("reporting health to backend: ", zap.Any("healthEvent", b))
 }

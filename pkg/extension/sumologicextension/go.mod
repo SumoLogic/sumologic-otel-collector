@@ -10,6 +10,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.124.1
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/status v0.124.1
 	github.com/shirou/gopsutil/v3 v3.24.4
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v1.30.0
