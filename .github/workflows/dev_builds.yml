@@ -78,6 +78,7 @@ jobs:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
       boringcrypto: ${{ matrix.boringcrypto == true }}
+      go-version: ${{ env.GO_VERSION }}
 
   # test-otelcol-config:
   #   name: Test (otelcol-config)

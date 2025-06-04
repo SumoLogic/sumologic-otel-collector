@@ -11,6 +11,10 @@ on:
         description: Run with BoringCrypto enabled
         default: false
         type: boolean
+      go-version:
+        description: The version of Go to use.
+        type: string
+        required: true
       runs-on:
         default: ubuntu-24.04
         type: string
@@ -22,9 +26,6 @@ on:
 defaults:
   run:
     shell: bash
-
-env:
-  GO_VERSION: "1.24.0"
 
 jobs:
   test:
@@ -39,7 +40,10 @@ jobs:
         id: setup-go
         uses: ./.github/actions/setup-go
         with:
-          version: ${{ env.GO_VERSION }}
+          version: ${{ inputs.go-version }}
+          cache-dependency-paths: |
+            **/*.sum
+            otelcolbuilder/.otelcol-builder.yaml
 
       - name: Setup yq
         uses: ./.github/actions/setup-yq
