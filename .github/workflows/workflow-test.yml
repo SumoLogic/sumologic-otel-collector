@@ -46,6 +46,7 @@ jobs:
             otelcolbuilder/.otelcol-builder.yaml
 
       - name: Setup yq
+        if: runner.os == 'Windows'
         uses: ./.github/actions/setup-yq
 
       - name: Setup ocb

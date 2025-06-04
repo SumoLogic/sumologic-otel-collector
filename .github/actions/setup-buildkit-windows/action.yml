@@ -1,0 +1,74 @@
+name: Setup BuildKit on Windows
+
+inputs:
+  docker-version:
+    description: The version of Docker to install.
+    required: true
+  containerd-version:
+    description: The version of containerd to install.
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check Runner
+      shell: bash
+      run: |
+        if [[ "${RUNNER_OS}" != "Windows" ]]; then
+          echo "The setup-buildkit-windows action is only supported on Windows runners"
+          exit 1
+        fi
+
+    - name: Set GitHub Path
+      shell: bash
+      run: echo "${{ github.action_path }}" >> $GITHUB_PATH
+
+    - name: Determine Architecture
+      id: get-arch
+      shell: bash
+      run: |
+        arch="$(uname -m)"
+        echo "name=${arch}" >> $GITHUB_OUTPUT
+
+    - name: Stop Docker Desktop
+      shell: pwsh
+      run: docker desktop stop
+
+    - name: Download & Install Docker
+      shell: pwsh
+      run: |
+        $arch = "${{ steps.get-arch.outputs.name }}"
+        $version = "${{ inputs.docker-version }}"
+        $file = "docker-${version}.zip"
+        $url = "https://download.docker.com/win/static/stable/${arch}/${file}"
+
+        curl.exe -fSLO "${url}"
+        Expand-Archive -Path "${file}" -DestinationPath .
+        cp .\docker\dockerd.exe $env:ProgramFiles\Docker\Docker\resources\dockerd.exe
+        cp .\docker\docker.exe $env:ProgramFiles\Docker\Docker\resources\bin\docker.exe
+
+    - name: Download & Install containerd
+      shell: pwsh
+      run: |
+        # use version 1.7.27 or newer
+        $version = "${{ inputs.containerd-version }}"
+        $arch = "amd64"
+        $file = "containerd-${version}-windows-${arch}.tar.gz"
+        $repo = "https://github.com/containerd/containerd"
+        $url = "${repo}/releases/download/v${version}/${file}"
+
+        curl.exe -LO "${url}"
+        tar.exe xvf .\containerd-$Version-windows-$Arch.tar.gz
+        cp -Path .\bin\* -Destination $env:ProgramFiles\Docker\Docker\resources -Recurse
+
+    - name: Update Docker Daemon Config
+      shell: pwsh
+      run: |
+        $actionPath = "${{ github.action_path }}"
+        $current = "${env:ProgramData}\Docker\config\daemon.json"
+        $new = "${actionPath}\daemon.json"
+        jq -s '.[0] * .[1]' "${current}" "${new}" | Out-File -FilePath "${currentConfig}"
+
+    - name: Start Docker Desktop Service
+      shell: pwsh
+      run: docker desktop start

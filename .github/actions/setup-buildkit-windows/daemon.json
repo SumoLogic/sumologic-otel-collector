@@ -1,0 +1,6 @@
+{
+  "default-runtime": "io.containerd.runhcs.v1",
+  "features": {
+    "containerd-snapshotter": true
+  }
+}
