@@ -27,8 +27,15 @@ jobs:
             distribution: official
           - runs-on: windows-2022
             distribution: microsoft
+    outputs:
+      go-version: ${{ steps.go-version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Output Go version
+        id: go-version
+        run: |
+          echo "version=${GO_VERSION}" >> $GITHUB_OUTPUT
 
       - name: Setup Go
         id: setup-go
@@ -78,7 +85,7 @@ jobs:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
       boringcrypto: ${{ matrix.boringcrypto == true }}
-      go-version: ${{ env.GO_VERSION }}
+      go-version: ${{ needs.setup-environment.outputs.go-version }}
 
   # test-otelcol-config:
   #   name: Test (otelcol-config)
