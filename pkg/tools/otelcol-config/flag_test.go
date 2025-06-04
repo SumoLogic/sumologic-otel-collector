@@ -171,6 +171,17 @@ func TestSetOpampEndpoint(t *testing.T) {
 	}
 }
 
+func TestSetTimezone(t *testing.T) {
+	fv := newFlagValues()
+	fs := makeFlagSet(fv)
+	if err := fs.Parse([]string{"otelcol-config", "--set-timezone", "Europe/Prague"}); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := fv.SetTimezone, "Europe/Prague"; !cmp.Equal(got, want) {
+		t.Errorf("bad flag values: got %v, want %v", got, want)
+	}
+}
+
 func TestConfigDir(t *testing.T) {
 	fv := newFlagValues()
 	fs := makeFlagSet(fv)
