@@ -131,7 +131,6 @@ endif
 .PHONY: _ocb_build
 _ocb_build: ensure-correct-ocb-version require-yq
 _ocb_build: SKIP_COMPILATION=false
-_ocb_build: SKIP_GENERATE=false
 _ocb_build:
 	$(eval VERSION ?= $(shell BUILDER_CONFIG=.otelcol-builder.yaml ../ci/get_version.sh core))
 	$(shell yq e ".dist.version = \"${VERSION}${FIPS_SUFFIX}\"" -i .otelcol-builder.yaml)
@@ -141,8 +140,7 @@ _ocb_build:
 # uses /usr/bin/go which on Github Actions is using preinstalled 1.15.12 by default.
 	CGO_ENABLED=$(CGO_ENABLED) $(OCB) \
 		--config .otelcol-builder.yaml \
-		--skip-compilation=$(SKIP_COMPILATION) \
-		--skip-generate=$(SKIP_GENERATE)
+		--skip-compilation=$(SKIP_COMPILATION)
 
 .PHONY: _gobuild
 _gobuild:
@@ -189,10 +187,6 @@ build-fips: docker-golang-cross-builder
 	--tmpfs /tmp \
 	--entrypoint /root/workspace/otelcolbuilder/build-fips/entrypoint.sh \
 	golang-cross-builder
-
-.PHONY: get-modules
-get-modules:
-	@$(MAKE) _ocb_build SKIP_COMPILATION=true SKIP_GENERATE=true
 
 .PHONY: generate-sources
 generate-sources:

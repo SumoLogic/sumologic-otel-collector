@@ -53,10 +53,10 @@ jobs:
         if: steps.setup-go.outputs.cache-hit != 'true'
         uses: ./.github/actions/setup-ocb
 
-      - name: Install OpenTelemetry Go modules
+      - name: Generate OTC sources & Install Go modules
         if: steps.setup-go.outputs.cache-hit != 'true'
         working-directory: otelcolbuilder
-        run: make get-modules
+        run: make generate-sources
 
   test:
     name: Test
