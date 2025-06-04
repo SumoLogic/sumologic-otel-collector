@@ -139,7 +139,7 @@ runs:
       run: |
         distribution_key="${BASE_KEY}-${DISTRIBUTION}"
         runner_os_key="${distribution_key}-${RUNNER_OS}"
-        full_key="${runner_os_key}-${{ hashFiles(inputs.cache-dependency-paths }}"
+        full_key="${runner_os_key}-${{ hashFiles(inputs.cache-dependency-paths) }}"
 
         echo "base=${BASE_KEY}" >> $GITHUB_OUTPUT
         echo "distribution=${distribution_key}" >> $GITHUB_OUTPUT
