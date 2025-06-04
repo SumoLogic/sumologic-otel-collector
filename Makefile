@@ -135,7 +135,7 @@ update-ot: install-gsed
 	@echo "building OT distro to check for breakage"
 	make gomod-download-all
 	pushd otelcolbuilder \
-		&& make install-builder \
+		&& make install-ocb \
 		&& make build \
 		&& popd
 
@@ -232,9 +232,9 @@ build:
 	@$(MAKE) -C ./otelcolbuilder/ build
 	@$(MAKE) -C ./pkg/tools/otelcol-config/ build
 
-.PHONY: install-builder
-install-builder:
-	@$(MAKE) -C ./otelcolbuilder/ install-builder
+.PHONY: install-ocb
+install-ocb:
+	@$(MAKE) -C ./otelcolbuilder/ install-ocb
 
 #-------------------------------------------------------------------------------
 

@@ -134,16 +134,16 @@ jobs:
           env
           choco install yq --version ${{ env.YQ_VERSION }}
 
-      - name: Set default BUILDER_BIN_PATH
-        run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
+      - name: Set default BIN_PATH
+        run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
 
-      - name: Add opentelemetry-collector-builder installation dir to PATH
+      - name: Add ocb installation dir to PATH
         if: (! contains(inputs.arch_os, 'windows') )
-        run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
+        run: echo "BIN_PATH" >> $GITHUB_PATH
 
-      - name: Add opentelemetry-collector-builder installation dir to PATH (Windows)
+      - name: Add ocb installation dir to PATH (Windows)
         if: contains(inputs.arch_os, 'windows')
-        run: cygpath -w "$BUILDER_BIN_PATH" >> $GITHUB_PATH
+        run: cygpath -w "$BIN_PATH" >> $GITHUB_PATH
 
       - name: Install opentelemetry-collector-builder
         run: make install-builder

@@ -37,24 +37,26 @@ jobs:
           distribution: ${{ matrix.distribution }}
           skip-cache-restore-on-hit: "true"
           version: ${{ env.GO_VERSION }}
+          cache-dependency-paths: |
+            **/*.sum
+            otelcolbuilder/.otelcol-builder.yaml
 
       - name: Install Go modules
         if: steps.setup-go.outputs.cache-hit != 'true'
         run: make gomod-download-all
 
       - name: Install yq
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && steps.setup-go.outputs.cache-hit != 'true'
         uses: ./.github/actions/setup-yq
 
-      - name: Setup opentelemetry-collector-builder
-        uses: ./.github/actions/setup-opentelemetry-collector-builder
+      - name: Setup ocb
+        if: steps.setup-go.outputs.cache-hit != 'true'
+        uses: ./.github/actions/setup-ocb
 
-      - name: Generate sources
+      - name: Install OpenTelemetry Go modules
+        if: steps.setup-go.outputs.cache-hit != 'true'
         working-directory: otelcolbuilder
-        run: make generate-sources
-
-      - name: Show git status
-        run: git status
+        run: make get-modules
 
   test:
     name: Test

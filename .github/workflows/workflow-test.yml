@@ -44,8 +44,8 @@ jobs:
       - name: Setup yq
         uses: ./.github/actions/setup-yq
 
-      - name: Setup opentelemetry-collector-builder
-        uses: ./.github/actions/setup-opentelemetry-collector-builder
+      - name: Setup ocb
+        uses: ./.github/actions/setup-ocb
 
       - name: Run package tests
         run: make gotest ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}

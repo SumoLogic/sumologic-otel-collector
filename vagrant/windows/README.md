@@ -49,7 +49,7 @@ TODO: Try and make this work with Vagrant.
 After starting `bash` as per the previous section, you can use the same command as on Unix. So:
 
 ```bash
-make install-builder
+make install-ocb
 make build
 ```
 
