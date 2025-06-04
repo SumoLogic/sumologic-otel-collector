@@ -13,4 +13,4 @@ runs:
 
     - name: Install ocb
       shell: bash
-      run: make install-builder
+      run: make install-ocb
