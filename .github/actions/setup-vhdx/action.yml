@@ -24,10 +24,6 @@ outputs:
 
 runs:
   using: "composite"
-  env:
-    Name: "${{ inputs.name }}"
-    Letter: "${{ inputs.drive-letter }}"
-    Size: "${{ inputs.size }}"
   steps:
     - name: Check Runner
       shell: bash
@@ -36,6 +32,17 @@ runs:
           echo "This action is only supported on Windows runners"
           exit 1
         fi
+
+    - name: Set environment variables
+      shell: bash
+      env:
+        NAME: "${{ inputs.name }}"
+        LETTER: "${{ inputs.drive-letter }}"
+        SIZE: "${{ inputs.size }}"
+      run: |
+        echo "Name=${NAME}" >> $GITHUB_ENV
+        echo "Letter=${LETTER}" >> $GITHUB_ENV
+        echo "Size=${SIZE}" >> $GITHUB_ENV
 
     - name: Cache VHDX Image
       id: cache
