@@ -21,6 +21,8 @@ jobs:
       version: ${{ steps.otc-version.outputs.version }}
       version-with-sha: ${{ steps.otc-version.outputs.version-with-sha }}
     steps:
+      - uses: actions/checkout@v4
+
       - name: Get next available OTC version
         id: otc-version
         uses: ./.github/actions/get-next-otc-version
