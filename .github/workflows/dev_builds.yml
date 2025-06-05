@@ -129,7 +129,9 @@ jobs:
   test-otelcol-config:
     name: Test (otelcol-config)
     uses: ./.github/workflows/workflow-test-otelcol-config.yml
-    needs: [get-go-version, setup-environment-otelcol-config]
+    needs:
+      - get-go-version
+      - setup-environment-otelcol-config
     strategy:
       matrix:
         include:
@@ -198,6 +200,7 @@ jobs:
     needs:
       - get-version
       - get-go-version
+      - setup-environment-otelcol-config
     strategy:
       fail-fast: false
       matrix:
