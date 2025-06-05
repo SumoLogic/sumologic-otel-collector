@@ -39,8 +39,8 @@ jobs:
         id: go-version
         run: echo "version=${GO_VERSION}" >> $GITHUB_OUTPUT
 
-  setup-environment-otelcol:
-    name: Setup Environment (otelcol)
+  setup-cache-otelcol:
+    name: Setup Cache (otelcol)
     runs-on: ${{ matrix.runs-on }}
     needs: [get-go-version]
     strategy:
@@ -85,8 +85,8 @@ jobs:
         working-directory: otelcolbuilder
         run: make generate-sources
 
-  setup-environment-otelcol-config:
-    name: Setup Environment (otelcol-config)
+  setup-cache-otelcol-config:
+    name: Setup Cache (otelcol-config)
     runs-on: ${{ matrix.runs-on }}
     needs: [get-go-version]
     strategy:
@@ -115,8 +115,8 @@ jobs:
         working-directory: ./pkg/tools/otelcol-config
         run: go mod download
 
-  setup-environment-toolchain:
-    name: Setup Environment (toolchains)
+  setup-cache-toolchain:
+    name: Setup Cache (toolchain)
     runs-on: ubuntu-24.04
     strategy:
       matrix:
@@ -136,7 +136,7 @@ jobs:
     name: Test
     needs:
       - get-go-version
-      - setup-environment-otelcol
+      - setup-cache-otelcol
     uses: ./.github/workflows/workflow-test.yml
     strategy:
       matrix:
@@ -161,7 +161,7 @@ jobs:
     uses: ./.github/workflows/workflow-test-otelcol-config.yml
     needs:
       - get-go-version
-      - setup-environment-otelcol-config
+      - setup-cache-otelcol-config
     strategy:
       matrix:
         include:
@@ -184,7 +184,8 @@ jobs:
     needs:
       - get-otc-version
       - get-go-version
-      - setup-environment-otelcol
+      - setup-cache-otelcol
+      - setup-cache-toolchain
     strategy:
       fail-fast: false
       matrix:
@@ -230,7 +231,8 @@ jobs:
     needs:
       - get-otc-version
       - get-go-version
-      - setup-environment-otelcol-config
+      - setup-cache-otelcol-config
+      - setup-cache-toolchain
     strategy:
       fail-fast: false
       matrix:
