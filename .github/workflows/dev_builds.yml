@@ -68,8 +68,8 @@ jobs:
       - name: Show cache sizes
         run: |
           du -hs ${{ steps.setup-go.outputs.go-path }}/bin
-          du -hs ${{ steps.setup-go.outputs.go-mod-cache }}/*
-          du -hs ${{ steps.setup-go.outputs.go-cache }}/*
+          du -hs ${{ steps.setup-go.outputs.go-mod-cache }}
+          du -hs ${{ steps.setup-go.outputs.go-cache }}
 
   test:
     name: Test
