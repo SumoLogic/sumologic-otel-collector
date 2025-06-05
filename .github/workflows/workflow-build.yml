@@ -88,10 +88,23 @@ jobs:
         if: inputs.sumo_component_gomod_version != ''
         run: make prepare-tag TAG=${{ inputs.sumo_component_gomod_version }}
 
+      - name: Set Go Distribution
+        id: go-distribution
+        run: |
+          distribution="official"
+          fips="${{ inputs.fips }}"
+
+          if [[ "${RUNNER_OS} == "Windows" && "${fips}" == "true"]]; then
+            distribution="microsoft"
+          fi
+
+          echo "name=${distribution}" >> $GITHUB_OUTPUT
+
       - name: Setup Go
         id: setup-go
         uses: ./.github/actions/setup-go
         with:
+          distribution: ${{ steps.go-distribution.outputs.name }}
           version: ${{ inputs.go-version }}
           cache-dependency-paths: |
             **/*.sum
