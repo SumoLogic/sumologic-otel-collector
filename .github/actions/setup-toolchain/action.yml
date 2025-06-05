@@ -35,11 +35,11 @@ runs:
         platform="${{ inputs.platform }}"
         hash="${{ hashFiles('toolchains/config.mak', 'toolchains/Makefile') }}"
 
-        echo "name=toolchain-${platform}-${hash}" >> $GITHUB_OUTPUT
+        echo "name=toolchain-2-${platform}-${hash}" >> $GITHUB_OUTPUT
 
-    - name: Cache Toolchain
-      id: cache
-      uses: actions/cache@v4
+    - name: Restore Toolchain Cache
+      id: restore-cache
+      uses: actions/cache/restore@v4
       with:
         path: /opt/toolchain
         key: ${{ steps.cache-key.outputs.name }}
@@ -47,7 +47,17 @@ runs:
 
     - name: Build Toolchain
       id: build
-      if: steps.cache.outputs.cache-hit != 'true'
+      if: |
+        ${{
+        steps.restore-cache.outcome == 'success' &&
+        steps.restore-cache.outputs.cache-hit != 'true'
+        }}
       shell: bash
       working-directory: ./toolchains
       run: make toolchain-${{ inputs.platform }} OUTPUT=/opt/toolchain -j3
+
+    - uses: actions/cache/save@v4
+      if: ${{ steps.build.outcome == 'success' }}
+      with:
+        path: /opt/toolchain
+        key: ${{ steps.restore-cache.outputs.cache-primary-key }}
