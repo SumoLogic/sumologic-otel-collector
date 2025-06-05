@@ -87,18 +87,25 @@ runs:
 
         echo "Specified Go distribution is valid: ${distribution}"
 
+    - name: Setup Go VHDX Image (Windows)
+      if: runner.os == 'Windows'
+      uses: ./.github/actions/setup-vhdx
+      with:
+        drive-letter: "G"
+        name: "go-${{ inputs.version }}"
+
     # Fix slow Go compile and cache restore
     # See https://github.com/actions/setup-go/pull/515
     - name: Set Go cache environment variables (Windows)
       if: runner.os == 'Windows'
       shell: bash
       run: |
-        echo 'GOCACHE=D:\gocache' >> $GITHUB_ENV
-        echo 'GOMODCACHE=D:\gomodcache' >> $GITHUB_ENV
-        echo 'GOTMPDIR=D:\gotmp' >> $GITHUB_ENV
-        mkdir -p /d/gocache
-        mkdir -p /d/gomodcache
-        mkdir -p /d/gotmp
+        echo 'GOCACHE=G:\gocache' >> $GITHUB_ENV
+        echo 'GOMODCACHE=G:\gomodcache' >> $GITHUB_ENV
+        echo 'GOTMPDIR=G:\gotmp' >> $GITHUB_ENV
+        mkdir -p /g/gocache
+        mkdir -p /g/gomodcache
+        mkdir -p /g/gotmp
 
     - name: Setup Go (Official distribution)
       if: inputs.distribution != 'microsoft'

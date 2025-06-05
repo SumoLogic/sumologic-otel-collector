@@ -14,7 +14,7 @@ runs:
     - name: Enable FIPS (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
-      runs: |
+      run: |
         Set-ItemProperty `
         -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy `
         -Name Enabled `
