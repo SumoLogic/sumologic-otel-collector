@@ -14,9 +14,16 @@ env:
   GO_VERSION: "1.24.0"
 
 jobs:
-  get-version:
-    name: Get next available version
-    uses: ./.github/workflows/_get-version-workflow.yml
+  get-otc-version:
+    name: Get next available OTC version
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.otc-version.outputs.version }}
+      version-with-sha: ${{ steps.otc-version.outputs.version-with-sha }}
+    steps:
+      - name: Get next available OTC version
+        id: otc-version
+        uses: ./.github/actions/get-next-otc-version
 
   get-go-version:
     name: Get Go version
@@ -154,7 +161,7 @@ jobs:
     name: Build
     uses: ./.github/workflows/workflow-build.yml
     needs:
-      - get-version
+      - get-otc-version
       - get-go-version
       - setup-environment
     strategy:
@@ -185,7 +192,7 @@ jobs:
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
       go-version: ${{ needs.get-go-version.outputs.version }}
-      version: ${{ needs.get-version.outputs.version }}
+      version: ${{ needs.get-otc-version.outputs.version-with-sha }}
     secrets:
       apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
       apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
@@ -200,7 +207,7 @@ jobs:
     name: Build (otelcol-config)
     uses: ./.github/workflows/workflow-build-otelcol-config.yml
     needs:
-      - get-version
+      - get-otc-version
       - get-go-version
       - setup-environment-otelcol-config
     strategy:
@@ -226,7 +233,7 @@ jobs:
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
       go-version: ${{ needs.get-go-version.outputs.version }}
-      sumo_component_gomod_version: "v${{ needs.get-version.outputs.version }}"
+      sumo_component_gomod_version: "v${{ needs.get-otc-version.outputs.version-with-sha }}"
     secrets:
       apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
       apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
@@ -237,7 +244,7 @@ jobs:
     runs-on: ${{ matrix.runs-on || 'ubuntu-24.04' }}
     needs:
       - build
-      - get-version
+      - get-otc-version
     outputs:
       # NOTE: one output is needed for each item in the matrix. These outputs
       # store the raw manifest of the container image of each build and are used
@@ -325,7 +332,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           labels: |
-            version="${{ needs.get-version.outputs.full }}"
+            version="${{ needs.get-otc-version.outputs.version }}"
 
       - name: Set up QEMU
         if: runner.os != 'Windows'
@@ -383,7 +390,7 @@ jobs:
   # #   runs-on: ${{ matrix.runs-on }}
   # #   needs:
   # #     - build
-  # #     - get-version
+  # #     - get-otc-version
   # #   strategy:
   # #     matrix:
   # #       include:
@@ -423,14 +430,14 @@ jobs:
   # #       run: |
   # #         cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
   # #         make build-push-container-windows \
-  # #           BUILD_TAG=${{ needs.get-version.outputs.version }} \
+  # #           BUILD_TAG=${{ needs.get-otc-version.outputs.version-with-sha }} \
   # #           PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
 
   # #     - name: Build and push images to DockerHub
   # #       run: |
   # #         cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
   # #         make build-push-container-windows \
-  # #           BUILD_TAG=${{ needs.get-version.outputs.version }} \
+  # #           BUILD_TAG=${{ needs.get-otc-version.outputs.version-with-sha }} \
   # #           REPO_URL=sumologic/sumologic-otel-collector \
   # #           PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
 
@@ -440,18 +447,18 @@ jobs:
   #   needs:
   #     - build-container-images
   #     #- build-windows-container-images
-  #     - get-version
+  #     - get-otc-version
   #   strategy:
   #     matrix:
   #       include:
   #         - target: standard
-  #           tags: '["latest", "${{ github.sha }}", "${{ needs.get-version.outputs.version }}"]'
+  #           tags: '["latest", "${{ github.sha }}", "${{ needs.get-otc-version.outputs.version }}"]'
   #         - target: standard-fips
-  #           tags: '["latest-fips", "${{ github.sha }}-fips", "${{ needs.get-version.outputs.version }}-fips"]'
+  #           tags: '["latest-fips", "${{ github.sha }}-fips", "${{ needs.get-otc-version.outputs.version }}-fips"]'
   #         - target: ubi
-  #           tags: '["latest-ubi", "${{ github.sha }}-ubi", "${{ needs.get-version.outputs.version }}-ubi"]'
+  #           tags: '["latest-ubi", "${{ github.sha }}-ubi", "${{ needs.get-otc-version.outputs.version }}-ubi"]'
   #         - target: ubi-fips
-  #           tags: '["latest-ubi-fips", "${{ github.sha }}-ubi-fips", "${{ needs.get-version.outputs.version }}-ubi-fips"]'
+  #           tags: '["latest-ubi-fips", "${{ github.sha }}-ubi-fips", "${{ needs.get-otc-version.outputs.version }}-ubi-fips"]'
   #   steps:
   #     - uses: actions/checkout@v4
 
@@ -516,13 +523,13 @@ jobs:
   # #     - name: Push joint container manifest for all platforms to Open Source ECR
   # #       run: |
   # #         make push-container-manifest \
-  # #           BUILD_TAG=${{ needs.get-version.outputs.version }} \
+  # #           BUILD_TAG=${{ needs.get-otc-version.outputs.version }} \
   # #           PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022 windows/amd64/ltsc2019"
 
   # #     - name: Push joint container manifest for all platforms to DockerHub
   # #       run: |
   # #         make push-container-manifest \
-  # #           BUILD_TAG=${{ needs.get-version.outputs.version }} \
+  # #           BUILD_TAG=${{ needs.get-otc-version.outputs.version }} \
   # #           PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022 windows/amd64/ltsc2019" \
   # #           REPO_URL=sumologic/sumologic-otel-collector
 
