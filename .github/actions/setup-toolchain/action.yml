@@ -40,7 +40,6 @@ runs:
     - name: Cache Toolchain
       id: cache
       uses: actions/cache@v4
-      shell: bash
       with:
         path: /opt/toolchain
         key: ${{ steps.cache-key.outputs.name }}
