@@ -47,17 +47,13 @@ runs:
 
     - name: Build Toolchain
       id: build
-      if: |
-        ${{
-        steps.restore-cache.outcome == 'success' &&
-        steps.restore-cache.outputs.cache-hit != 'true'
-        }}
+      if: steps.restore-cache.outputs.cache-hit != 'true'
       shell: bash
       working-directory: ./toolchains
       run: make toolchain-${{ inputs.platform }} OUTPUT=/opt/toolchain -j3
 
     - uses: actions/cache/save@v4
-      if: ${{ steps.build.outcome == 'success' }}
+      if: steps.build.outcome == 'success'
       with:
         path: /opt/toolchain
         key: ${{ steps.restore-cache.outputs.cache-primary-key }}
