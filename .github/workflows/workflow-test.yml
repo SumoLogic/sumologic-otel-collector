@@ -46,6 +46,7 @@ jobs:
             otelcolbuilder/.otelcol-builder.yaml
 
       - name: Show cache sizes
+        if: runner.os == 'Linux'
         run: |
           du -hs $(go env GOPATH)/bin
           du -hs $(go env GOMODCACHE)
