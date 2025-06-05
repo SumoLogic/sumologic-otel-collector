@@ -201,6 +201,11 @@ test:
 	@$(MAKE) generate-sources
 	CGO_ENABLED=${CGO_ENABLED} GOEXPERIMENT=$(GOEXPERIMENT) $(MAKE) -C cmd test
 
+.PHONY: test-junit
+test-junit:
+	@$(MAKE) generate-sources
+	CGO_ENABLED=${CGO_ENABLED} GOEXPERIMENT=$(GOEXPERIMENT) $(MAKE) -C cmd test-junit
+
 .PHONY: lint
 lint: ensure-correct-ocb-version generate-sources
 	@$(MAKE) -C cmd lint

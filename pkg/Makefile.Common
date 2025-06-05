@@ -9,6 +9,10 @@ LINT=staticcheck
 test:
 	$(GOTEST) ./...
 
+.PHONY: test-junit
+test-junit:
+    $(GOTEST) -v ./... | tee >(go-junit-report -set-exit-code > report.xml)
+
 .PHONY: fmt
 fmt:
 	gofmt  -w -s ./

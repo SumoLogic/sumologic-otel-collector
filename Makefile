@@ -17,6 +17,10 @@ else
 SED ?= sed
 endif
 
+.PHONY: install-go-junit-report
+install-go-junit-report:
+	go install github.com/jstemmer/go-junit-report@latest
+
 .PHONY: install-gsed
 install-gsed:
 ifeq ($(shell go env GOOS),darwin)
@@ -73,10 +77,11 @@ list-modules:
 
 .PHONY: gotest
 gotest:
-	echo "GOCACHE = $(shell go env GOCACHE)"
-	echo "GOMODCACHE = $(shell go env GOMODCACHE)"
-	echo "GOTMPDIR = $(shell go env GOTMPDIR)"
 	@$(MAKE) for-all CMD="make test"
+
+.PHONY: gotest-junit
+gotest:
+	@$(MAKE) for-all CMD="make test-junit"
 
 .PHONY: golint
 golint:

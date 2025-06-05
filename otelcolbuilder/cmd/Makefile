@@ -9,6 +9,10 @@ test:
 test-v:
 	@$(MAKE) test FLAGS=-v
 
+.PHONY: test-junit
+test-junit:
+	@$(MAKE) test FLAGS=-v | tee >(go-junit-report -set-exit-code > report.xml)
+
 # Don't lint the code generated with opentelemetry-collector-builder as it
 # produces code that's not gofmt-ed:
 #

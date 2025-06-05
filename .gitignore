@@ -66,3 +66,5 @@ Thumbs.db
 .op/
 
 artifacts/
+
+report.xml

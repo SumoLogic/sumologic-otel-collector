@@ -47,9 +47,9 @@ jobs:
 
       - name: Show cache sizes
         run: |
-          du -hs $(go env GOPATH)/bin
-          du -hs $(go env GOMODCACHE)
-          du -hs $(go env GOCACHE)
+          du -hs $(go env GOPATH)/bin/*
+          du -hs $(go env GOMODCACHE)/*
+          du -hs $(go env GOCACHE)/*
 
       - name: Setup yq
         if: runner.os == 'Windows'
@@ -58,5 +58,15 @@ jobs:
       - name: Setup ocb
         uses: ./.github/actions/setup-ocb
 
+      - name: Install Go JUnit Report
+        run: make install-go-junit-report
+
       - name: Run package tests
         run: make gotest ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
+
+      - name: Test Summary
+        uses: test-summary/action@v1
+        with:
+          paths: |
+            **/report.xml
+        if: always()
