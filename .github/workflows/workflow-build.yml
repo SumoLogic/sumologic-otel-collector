@@ -64,7 +64,7 @@ jobs:
 
       - name: Enable FIPS
         uses: ./.github/actions/enable-fips
-        if: runner.os == "Windows" && inputs.fips
+        if: runner.os == 'Windows' && inputs.fips
 
       - name: Determine if MacOS package should be signed
         if: runner.os == 'macOS'

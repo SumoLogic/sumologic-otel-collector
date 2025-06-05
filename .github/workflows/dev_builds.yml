@@ -26,8 +26,7 @@ jobs:
     steps:
       - name: Output Go version
         id: go-version
-        run: |
-          echo "version=${GO_VERSION}" >> $GITHUB_OUTPUT
+        run: echo "version=${GO_VERSION}" >> $GITHUB_OUTPUT
 
   setup-environment:
     runs-on: ${{ matrix.runs-on }}
