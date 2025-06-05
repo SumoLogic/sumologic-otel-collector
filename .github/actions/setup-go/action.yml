@@ -115,9 +115,6 @@ runs:
         echo 'GOCACHE=G:\gocache' >> $GITHUB_ENV
         echo 'GOMODCACHE=G:\gomodcache' >> $GITHUB_ENV
         echo 'GOTMPDIR=G:\gotmp' >> $GITHUB_ENV
-        mkdir -p /g/gocache
-        mkdir -p /g/gomodcache
-        mkdir -p /g/gotmp
 
     - name: Set Go environment outputs
       id: go-env
@@ -149,13 +146,22 @@ runs:
         lookup-only: ${{ inputs.skip-cache-restore-on-hit == 'true' }}
 
     - name: Cache Go (Windows)
+      id: go-cache-windows
       if: runner.os == 'Windows'
       uses: ./.github/actions/setup-vhdx
       with:
         drive-letter: "G"
-        name: ${{ steps.go-cache-keys.outputs.full }}
+        name: go
         skip-cache-restore-on-hit: ${{ inputs.skip-cache-restore-on-hit }}
         cache-dependency-paths: |
           ${{ steps.go-env.outputs.go-path }}/bin
           ${{ steps.go-env.outputs.go-mod-cache }}
           ${{ steps.go-env.outputs.go-cache }}
+
+    - name: Create Go Directories (Windows)
+      if: runner.os == 'Windows' && steps.go-cache-windows.outputs.cache-hit != 'true'
+      shell: pwsh
+      run: |
+        mkdir -p "${{ steps.go-env.outputs.go-path }}\\bin"
+        mkdir -p "${{ steps.go-env.outputs.go-mod-cache }}"
+        mkdir -p "${{ steps.go-env.outputs.go-cache }}"

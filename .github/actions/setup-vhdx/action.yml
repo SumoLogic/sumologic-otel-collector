@@ -1,21 +1,26 @@
 name: Setup VHDX Image
 
 inputs:
+  cache-dependency-paths:
+    description: |
+      A list of one or more paths to generate a hash from to append to the cache
+      key.
+    required: true
   drive-letter:
     description: The drive letter to mount the VHDX image to.
     required: true
   name:
     description: The name of the VHDX image.
     required: true
+  skip-cache-restore-on-hit:
+    description: |
+      Skips restoring the cache when there is a cache hit for the primary cache
+      key. Set to "true" to enable.
   size:
     description: |
       The size of the VHDX image. Defaults to 50GB.
     required: false
     default: 50GB
-  skip-cache-restore-on-hit:
-    description: |
-      Skips restoring the cache when there is a cache hit for the primary cache
-      key. Set to "true" to enable.
 
 outputs:
   cache-hit:
@@ -49,7 +54,7 @@ runs:
       uses: actions/cache@v4
       with:
         path: D:\${{ inputs.name }}.vhdx
-        key: vhdx-cache-${{ inputs.name }}
+        key: vhdx-cache-${{ inputs.name }}-${{ hashFiles(inputs.cache-dependency-paths) }}
         lookup-only: ${{ inputs.skip-cache-restore-on-hit == 'true' }}
 
     # Mount-VHD -Path "C:\Temp\Test.vhdx" -NoDriveLetter -Passthru | Get-Disk | Get-Partition | where { ($_ | Get-Volume) -ne $Null } | Add-PartitionAccessPath -AccessPath "C:\Temp\MountPoint\"
