@@ -69,7 +69,7 @@ jobs:
         run: make install-go-junit-report
 
       - name: Run package tests
-        run: make gotest ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
+        run: make gotest-junit ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
 
       - name: Test Summary
         uses: test-summary/action@v1

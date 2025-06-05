@@ -11,7 +11,7 @@ inputs:
     description: |
       The base name of the cache key. Defaults to "go-cache".
     required: false
-    default: go-cache
+    default: go-cache-2
   distribution:
     description: |
       The distribution of Go to install.
@@ -159,13 +159,13 @@ runs:
         restore-keys: |
           ${{ steps.go-cache-keys.outputs.runner-os }}-
 
-    - name: Restore Go cache if no exact cache hit
-      if: inputs.skip-cache-restore-on-hit == 'true' && steps.go-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/restore@v4
-      with:
-        path: |
-          ${{ steps.go-env.outputs.go-path }}/bin
-          ${{ steps.go-env.outputs.go-mod-cache }}
-          ${{ steps.go-env.outputs.go-cache }}
-        key: ${{ steps.go-cache-keys.outputs.full }}
-        restore-keys: ${{ steps.go-cache-keys.outputs.runner-os }}-
+    # - name: Restore Go cache if no exact cache hit
+    #   if: inputs.skip-cache-restore-on-hit == 'true' && steps.go-cache.outputs.cache-hit != 'true'
+    #   uses: actions/cache/restore@v4
+    #   with:
+    #     path: |
+    #       ${{ steps.go-env.outputs.go-path }}/bin
+    #       ${{ steps.go-env.outputs.go-mod-cache }}
+    #       ${{ steps.go-env.outputs.go-cache }}
+    #     key: ${{ steps.go-cache-keys.outputs.full }}
+    #     restore-keys: ${{ steps.go-cache-keys.outputs.runner-os }}-

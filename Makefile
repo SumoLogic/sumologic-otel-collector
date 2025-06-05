@@ -80,7 +80,7 @@ gotest:
 	@$(MAKE) for-all CMD="make test"
 
 .PHONY: gotest-junit
-gotest:
+gotest-junit:
 	@$(MAKE) for-all CMD="make test-junit"
 
 .PHONY: golint
