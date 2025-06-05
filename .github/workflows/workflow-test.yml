@@ -47,12 +47,15 @@ jobs:
 
       - name: Show cache sizes
         run: |
-          ls -l $(go env GOPATH)/bin
-          ls -l $(go env GOMODCACHE)
-          ls -l $(go env GOCACHE)
-          du -h $(go env GOPATH)/bin
+          du -hs $(go env GOPATH)/bin
+          du -hs $(go env GOMODCACHE)
+          du -hs $(go env GOCACHE)
           du -hs $(go env GOMODCACHE)/*
-          du -hs $(go env GOCACHE)/*
+          du -hs $(go env GOMODCACHE)/cache/*
+          du -hs $(go env GOMODCACHE)/github.com/*
+          du -hs $(go env GOMODCACHE)/golang.org/*
+          du -hs $(go env GOMODCACHE)/google.golang.org/*
+          du -hs $(go env GOMODCACHE)/modernc.org/*
 
       - name: Setup yq
         if: runner.os == 'Windows'

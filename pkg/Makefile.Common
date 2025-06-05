@@ -10,8 +10,8 @@ test:
 	$(GOTEST) ./...
 
 .PHONY: test-junit
-test-junit:
-    $(GOTEST) -v ./... | tee >(go-junit-report -set-exit-code > report.xml)
+test-junit: $(eval SHELL:=/bin/bash)
+	$(GOTEST) -v ./... | tee >(go-junit-report -set-exit-code > report.xml)
 
 .PHONY: fmt
 fmt:
