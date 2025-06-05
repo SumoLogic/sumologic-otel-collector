@@ -16,10 +16,10 @@ runs:
       shell: bash
       run: |
         version=$(./ci/get_version.sh full | xargs)
-        with_sha=${full}-$(git rev-parse HEAD | xargs)
+        with_sha=${version}-$(git rev-parse HEAD | xargs)
 
-        echo "version=${version}" > $GITHUB_OUTPUT
-        echo "version-with-sha=${with_sha}" > $GITHUB_OUTPUT
+        echo "version=${version}" >> $GITHUB_OUTPUT
+        echo "version-with-sha=${with_sha}" >> $GITHUB_OUTPUT
 
     - name: Print version
       shell: bash
