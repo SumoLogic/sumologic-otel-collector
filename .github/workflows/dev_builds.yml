@@ -133,7 +133,7 @@ jobs:
           skip-cache-restore-on-hit: "true"
 
   test:
-    name: Test
+    name: Test (otelcol)
     needs:
       - get-go-version
       - setup-cache-otelcol
@@ -179,7 +179,7 @@ jobs:
       go-version: ${{ needs.get-go-version.outputs.version }}
 
   build:
-    name: Build
+    name: Build (otelcol)
     uses: ./.github/workflows/workflow-build.yml
     needs:
       - get-otc-version
