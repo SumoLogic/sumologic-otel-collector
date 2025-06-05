@@ -69,6 +69,8 @@ pre-commit-check:
 ALL_MODULES := $(shell find ./pkg -type f -name "go.mod" -exec dirname {} \; | sort | egrep  '^./' )
 ALL_MODULES += ./otelcolbuilder
 
+ALL_TESTABLE_MODULES := $(shell find ./pkg -type f -name "go.mod" ! -path "*pkg/tools/udpdemux/*" -exec dirname {} \; | sort | egrep  '^./' )
+
 ALL_EXPORTABLE_MODULES += $(shell find ./pkg -type f -name "go.mod" ! -path "*pkg/test/*" -exec dirname {} \; | sort )
 
 .PHONY: list-modules
@@ -81,7 +83,7 @@ gotest:
 
 .PHONY: gotest-junit
 gotest-junit:
-	@$(MAKE) for-all CMD="make test-junit"
+	@$(MAKE) for-all-testable CMD="make test-junit"
 
 .PHONY: golint
 golint:
@@ -103,6 +105,15 @@ print-all-modules:
 for-all:
 	@echo "running $${CMD} in all modules..."
 	@set -e; for dir in $(ALL_MODULES); do \
+	  (cd "$${dir}" && \
+	  	echo "running $${CMD} in $${dir}" && \
+	 	$${CMD} ); \
+	done
+
+.PHONY: for-all-testable
+for-all-testable:
+	@echo "running $${CMD} in all modules..."
+	@set -e; for dir in $(ALL_TESTABLE_MODULES); do \
 	  (cd "$${dir}" && \
 	  	echo "running $${CMD} in $${dir}" && \
 	 	$${CMD} ); \
