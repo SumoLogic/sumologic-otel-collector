@@ -22,13 +22,12 @@ outputs:
     description: A boolean value to indicate an exact match was found for the primary key
     value: ${{ steps.cache.outputs.cache-hit }}
 
-env:
-  Name: "${{ inputs.name }}"
-  Letter: "${{ inputs.drive-letter }}"
-  Size: "${{ inputs.size }}"
-
 runs:
   using: "composite"
+  env:
+    Name: "${{ inputs.name }}"
+    Letter: "${{ inputs.drive-letter }}"
+    Size: "${{ inputs.size }}"
   steps:
     - name: Check Runner
       shell: bash
@@ -37,15 +36,6 @@ runs:
           echo "This action is only supported on Windows runners"
           exit 1
         fi
-
-    - name: Enable FIPS (Windows)
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        Set-ItemProperty `
-        -Path HKLM:\System\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy `
-        -Name Enabled `
-        -Value \$true
 
     - name: Cache VHDX Image
       id: cache
