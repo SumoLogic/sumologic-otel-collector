@@ -149,7 +149,7 @@ _gobuild:
 		-tags "$(GOTAGS)" \
 		-ldflags="$(LDFLAGS)" \
 		-trimpath \
-		-o ./$(BINARY_NAME)$(BIN_EXT) . \
+		-o ./$(BINARY_NAME)$(BINARY_EXT) . \
 	)
 	chmod +x ./cmd/$(BINARY_NAME)$(BINARY_EXT)
 
