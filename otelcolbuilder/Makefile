@@ -262,7 +262,6 @@ otelcol-sumo-windows_amd64:
 
 .PHONY: otelcol-sumo-linux-fips_arm64
 otelcol-sumo-linux-fips_arm64:
-	$(MAKE) toolchain-linux_arm64
 	$(MAKE) otelcol-sumo-linux_arm64 \
 		FIPS_SUFFIX="-fips" \
 		CGO_ENABLED="1" \
@@ -271,7 +270,6 @@ otelcol-sumo-linux-fips_arm64:
 
 .PHONY: otelcol-sumo-linux-fips_amd64
 otelcol-sumo-linux-fips_amd64:
-	$(MAKE) toolchain-linux_amd64
 	$(MAKE) otelcol-sumo-linux_amd64 \
 		FIPS_SUFFIX="-fips" \
 		CGO_ENABLED="1" \

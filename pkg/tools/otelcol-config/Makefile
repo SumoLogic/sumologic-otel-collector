@@ -132,7 +132,6 @@ otelcol-config-windows_amd64:
 
 .PHONY: otelcol-config-linux-fips_amd64
 otelcol-config-linux-fips_amd64:
-	$(MAKE) toolchain-linux_amd64
 	$(MAKE) otelcol-config-linux_amd64 \
 	FIPS_SUFFIX="-fips" \
 	CGO_ENABLED="1" \
@@ -141,7 +140,6 @@ otelcol-config-linux-fips_amd64:
 
 .PHONY: otelcol-config-linux-fips_arm64
 otelcol-config-linux-fips_arm64:
-	$(MAKE) toolchain-linux_arm64
 	$(MAKE) otelcol-config-linux_arm64 \
 	FIPS_SUFFIX="-fips" \
 	CGO_ENABLED="1" \

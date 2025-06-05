@@ -39,8 +39,8 @@ jobs:
         id: go-version
         run: echo "version=${GO_VERSION}" >> $GITHUB_OUTPUT
 
-  setup-environment:
-    name: Setup Environment
+  setup-environment-otelcol:
+    name: Setup Environment (otelcol)
     runs-on: ${{ matrix.runs-on }}
     needs: [get-go-version]
     strategy:
@@ -115,11 +115,28 @@ jobs:
         working-directory: ./pkg/tools/otelcol-config
         run: go mod download
 
+  setup-environment-toolchain:
+    name: Setup Environment (toolchains)
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - platform: linux_amd64
+          - platform: linux_arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Toolchain
+        uses: ./.github/actions/setup-toolchain
+        with:
+          platform: ${{ matrix.platform }}
+          skip-cache-restore-on-hit: "true"
+
   test:
     name: Test
     needs:
       - get-go-version
-      - setup-environment
+      - setup-environment-otelcol
     uses: ./.github/workflows/workflow-test.yml
     strategy:
       matrix:
@@ -167,7 +184,7 @@ jobs:
     needs:
       - get-otc-version
       - get-go-version
-      - setup-environment
+      - setup-environment-otelcol
     strategy:
       fail-fast: false
       matrix:
