@@ -22,6 +22,8 @@ jobs:
       version-with-sha: ${{ steps.otc-version.outputs.version-with-sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Get next available OTC version
         id: otc-version
