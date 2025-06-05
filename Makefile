@@ -7,7 +7,7 @@ ifeq ($(OS),Windows_NT)
 	MAKE := "$(shell cygpath '$(MAKE)')"
 endif
 
-GIT_SHA := $(shell git rev-parse HEAD)
+GIT_SHA_CMD := git rev-parse HEAD
 
 all: markdownlint yamllint
 
@@ -73,9 +73,9 @@ list-modules:
 
 .PHONY: gotest
 gotest:
-	echo "GOCACHE = ${GOCACHE}"
-	echo "GOMODCACHE = ${GOMODCACHE}"
-	echo "GOTMPDIR = ${GOTMPDIR}"
+	echo "GOCACHE = $(shell go env GOCACHE)"
+	echo "GOMODCACHE = $(shell go env GOMODCACHE)"
+	echo "GOTMPDIR = $(shell go env GOTMPDIR)"
 	@$(MAKE) for-all CMD="make test"
 
 .PHONY: golint
@@ -143,11 +143,12 @@ update-ot: install-gsed
 update-journalctl: install-gsed
 	$(SED) -i "s/FROM debian.*/FROM debian:${DEBIAN_VERSION} as systemd/" Dockerfile*
 
-LATEST_OT_VERSION := $(shell git describe --match 'v*' --abbrev=0 | cut -c2-)
-PREVIOUS_OT_VERSION := $(shell git describe --match 'v*' --abbrev=0 `git describe --match 'v*' --abbrev=0`^ | cut -c2-)
-PREVIOUS_CORE_VERSION := $(shell echo ${PREVIOUS_OT_VERSION} | sed -e 's/-sumo-.*//')
 .PHONY: update-docs
 update-docs: install-gsed
+update-docs: LATEST_OT_VERSION = $(shell git describe --match 'v*' --abbrev=0 | cut -c2-)
+update-docs: PREVIOUS_OT_VERSION = $(shell git describe --match 'v*' --abbrev=0 `git describe --match 'v*' --abbrev=0`^ | cut -c2-)
+update-docs: PREVIOUS_CORE_VERSION = $(shell echo ${PREVIOUS_OT_VERSION} | sed -e 's/-sumo-.*//')
+update-docs:
 	@find docs/ -type f \( -name "*.md" ! -name "upgrading.md" \) -exec $(SED) -i 's#$(PREVIOUS_CORE_VERSION)#$(OT_CORE_VERSION)#g' {} \;
 	@find docs/ -type f \( -name "*.md" ! -name "upgrading.md" \) -exec $(SED) -i 's#$(PREVIOUS_OT_VERSION)#$(LATEST_OT_VERSION)#g' {} \;
 
@@ -247,21 +248,25 @@ _create-container-image-alias:
 	docker buildx imagetools create "$(URL):$(SRC_TAG)" -t "$(URL):$(DST_TAG)"
 
 .PHONY: _promote-container-image-standard
+_promote-container-image-standard: GIT_SHA = $(shell $(GIT_SHA_CMD))
 _promote-container-image-standard:
 	$(MAKE) _promote-container-image TAG="$(GIT_SHA)"
 	$(MAKE) _create-container-image-alias SRC_TAG="$(GIT_SHA)" DST_TAG="latest"
 
 .PHONY: _promote-container-image-standard-fips
+_promote-container-image-standard-fips: GIT_SHA = $(shell $(GIT_SHA_CMD))
 _promote-container-image-standard-fips:
 	$(MAKE) _promote-container-image TAG="$(GIT_SHA)-fips"
 	$(MAKE) _create-container-image-alias SRC_TAG="$(GIT_SHA)" DST_TAG="latest-fips"
 
 .PHONY: _promote-container-image-ubi
+_promote-container-image-ubi: GIT_SHA = $(shell $(GIT_SHA_CMD))
 _promote-container-image-ubi:
 	$(MAKE) _promote-container-image TAG="$(GIT_SHA)-ubi"
 	$(MAKE) _create-container-image-alias SRC_TAG="$(GIT_SHA)" DST_TAG="latest-ubi"
 
 .PHONY: _promote-container-image-ubi-fips
+_promote-container-image-ubi-fips: GIT_SHA = $(shell $(GIT_SHA_CMD))
 _promote-container-image-ubi-fips:
 	$(MAKE) _promote-container-image TAG="$(GIT_SHA)-ubi-fips"
 	$(MAKE) _create-container-image-alias SRC_TAG="$(GIT_SHA)" DST_TAG="latest-ubi-fips"
@@ -276,6 +281,7 @@ promote-ecr-image-ci-to-rc: _promote-container-manifest
 # Promotes an image in the ECR release-candidates repository to the stable
 # repository
 .PHONY: promote-ecr-image-rc-to-stable
+promote-ecr-image-rc-to-stable: GIT_SHA = $(shell $(GIT_SHA_CMD))
 promote-ecr-image-rc-to-stable: SRC_URL = "docker://$(ECR_URL_RC):$(GIT_SHA)"
 promote-ecr-image-rc-to-stable: DST_URL = "docker://$(ECR_URL_STABLE):$(GIT_SHA)"
 promote-ecr-image-rc-to-stable: _promote-container-manifest
@@ -283,6 +289,7 @@ promote-ecr-image-rc-to-stable: _promote-container-manifest
 # Promotes an image in the Docker Hub ci-builds repository to the
 # release-candidates repository
 .PHONY: promote-dh-image-ci-to-rc
+promote-dh-image-ci-to-rc: GIT_SHA = $(shell $(GIT_SHA_CMD))
 promote-dh-image-ci-to-rc: SRC_URL = "$(DH_URL_CI):$(GIT_SHA)"
 promote-dh-image-ci-to-rc: DST_URL = "$(DH_URL_RC):$(GIT_SHA)"
 promote-dh-image-ci-to-rc: _promote-container-manifest
@@ -290,6 +297,7 @@ promote-dh-image-ci-to-rc: _promote-container-manifest
 # Promotes an image in the Docker Hub release-candidates repository to the
 # stable repository
 .PHONY: promote-dh-image-rc-to-stable
+promote-dh-image-rc-to-stable: GIT_SHA = $(shell $(GIT_SHA_CMD))
 promote-dh-image-rc-to-stable: SRC_URL = "docker://$(DH_URL_RC):$(GIT_SHA)"
 promote-dh-image-rc-to-stable: DST_URL = "docker://$(DH_URL_STABLE):$(GIT_SHA)"
 promote-dh-image-rc-to-stable: _promote-container-manifest

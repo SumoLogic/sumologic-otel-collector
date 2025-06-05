@@ -29,10 +29,12 @@ import (
 )
 
 func TestValidateProviderScheme(t *testing.T) {
+	t.Parallel()
 	assert.NoError(t, ValidateProviderScheme(NewWithSettings(confmap.ProviderSettings{})))
 }
 
 func TestEmptyName(t *testing.T) {
+	t.Parallel()
 	fp := NewWithSettings(confmap.ProviderSettings{})
 	_, err := fp.Retrieve(context.Background(), "", nil)
 	require.Error(t, err)
@@ -40,6 +42,7 @@ func TestEmptyName(t *testing.T) {
 }
 
 func TestUnsupportedScheme(t *testing.T) {
+	t.Parallel()
 	fp := NewWithSettings(confmap.ProviderSettings{})
 	_, err := fp.Retrieve(context.Background(), "https://", nil)
 	assert.Error(t, err)
@@ -47,6 +50,7 @@ func TestUnsupportedScheme(t *testing.T) {
 }
 
 func TestNonExistent(t *testing.T) {
+	t.Parallel()
 	fp := NewWithSettings(confmap.ProviderSettings{})
 	expectedMap := confmap.New()
 
@@ -66,6 +70,7 @@ func TestNonExistent(t *testing.T) {
 }
 
 func TestInvalidYAML(t *testing.T) {
+	t.Parallel()
 	fp := NewWithSettings(confmap.ProviderSettings{})
 	_, err := fp.Retrieve(context.Background(), schemePrefix+filepath.Join("testdata", "invalid-yaml.*"), nil)
 	assert.Error(t, err)
@@ -75,6 +80,7 @@ func TestInvalidYAML(t *testing.T) {
 }
 
 func TestInvalidPattern(t *testing.T) {
+	t.Parallel()
 	fp := NewWithSettings(confmap.ProviderSettings{})
 	pattern := "["
 	_, err := fp.Retrieve(context.Background(), schemePrefix+pattern, nil)
@@ -87,6 +93,7 @@ func TestInvalidPattern(t *testing.T) {
 }
 
 func TestRelativePath(t *testing.T) {
+	t.Parallel()
 	fp := NewWithSettings(confmap.ProviderSettings{})
 	ret, err := fp.Retrieve(context.Background(), schemePrefix+filepath.Join("testdata", "multiple", "*.yaml"), nil)
 	require.NoError(t, err)
@@ -103,6 +110,7 @@ func TestRelativePath(t *testing.T) {
 }
 
 func TestAbsolutePath(t *testing.T) {
+	t.Parallel()
 	fp := NewWithSettings(confmap.ProviderSettings{})
 	ret, err := fp.Retrieve(context.Background(), schemePrefix+absolutePath(t, filepath.Join("testdata", "multiple", "*.yaml")), nil)
 	require.NoError(t, err)
@@ -119,6 +127,7 @@ func TestAbsolutePath(t *testing.T) {
 }
 
 func TestMergeOrder(t *testing.T) {
+	t.Parallel()
 	fp := NewWithSettings(confmap.ProviderSettings{})
 	ret, err := fp.Retrieve(context.Background(), schemePrefix+absolutePath(t, filepath.Join("testdata", "ordered", "*.yaml")), nil)
 	require.NoError(t, err)
@@ -161,55 +170,57 @@ func ValidateProviderScheme(p confmap.Provider) error {
 }
 
 func TestRemotelyManagedMergeFlow(t *testing.T) {
+	t.Parallel()
 	fp := NewWithSettings(confmap.ProviderSettings{})
 	if globProvider, ok := fp.(*Provider); ok {
-    		globProvider.SetRemotelyManagedMergeFlow(true)
+		globProvider.SetRemotelyManagedMergeFlow(true)
 	}
 	ret, err := fp.Retrieve(context.Background(), schemePrefix+filepath.Join("testdata", "mergefunc", "*.yaml"), nil)
 	require.NoError(t, err)
 	retMap, err := ret.AsConf()
 	assert.NoError(t, err)
 	expectedMap := confmap.NewFromStringMap(map[string]interface{}{
-				"extensions": map[string]interface{}{
-					"sumologic": map[string]interface{}{
-						"childKey": "value",
-						"collector_fields": map[string]interface{}{
-							"zone": "eu",
-						},
-						"collector_fields1": map[string]interface{}{
-							"cluster": "cluster-1",
-							"zone": "eu",
-						},
-					},
+		"extensions": map[string]interface{}{
+			"sumologic": map[string]interface{}{
+				"childKey": "value",
+				"collector_fields": map[string]interface{}{
+					"zone": "eu",
 				},
-				"processor": "someprocessor",
-			})
+				"collector_fields1": map[string]interface{}{
+					"cluster": "cluster-1",
+					"zone":    "eu",
+				},
+			},
+		},
+		"processor": "someprocessor",
+	})
 	assert.Equal(t, expectedMap, retMap)
 	assert.NoError(t, fp.Shutdown(context.Background()))
 }
 
 func TestLocallyManagedMergeFlow(t *testing.T) {
+	t.Parallel()
 	fp := NewWithSettings(confmap.ProviderSettings{})
 	ret, err := fp.Retrieve(context.Background(), schemePrefix+filepath.Join("testdata", "mergefunc", "*.yaml"), nil)
 	require.NoError(t, err)
 	retMap, err := ret.AsConf()
 	assert.NoError(t, err)
 	expectedMap := confmap.NewFromStringMap(map[string]interface{}{
-				"extensions": map[string]interface{}{
-					"sumologic": map[string]interface{}{
-						"childKey": "value",
-						"collector_fields": map[string]interface{}{
-							"cluster": "cluster-1",
-							"zone": "eu",
-						},
-						"collector_fields1": map[string]interface{}{
-							"cluster": "cluster-1",
-							"zone": "eu",
-						},
-					},
+		"extensions": map[string]interface{}{
+			"sumologic": map[string]interface{}{
+				"childKey": "value",
+				"collector_fields": map[string]interface{}{
+					"cluster": "cluster-1",
+					"zone":    "eu",
 				},
-				"processor": "someprocessor",
-			})
+				"collector_fields1": map[string]interface{}{
+					"cluster": "cluster-1",
+					"zone":    "eu",
+				},
+			},
+		},
+		"processor": "someprocessor",
+	})
 	assert.Equal(t, expectedMap, retMap)
 	assert.NoError(t, fp.Shutdown(context.Background()))
 }
