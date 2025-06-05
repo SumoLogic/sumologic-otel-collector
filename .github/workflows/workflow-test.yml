@@ -71,6 +71,10 @@ jobs:
       - name: Run package tests
         run: make gotest-junit ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
 
+      - name: Print JUnit Reports
+        run: |
+          find . -name report.xml -exec cat {} \;
+
       - name: Test Summary
         uses: test-summary/action@v1
         with:
