@@ -15,7 +15,7 @@ outputs:
   cache-hit:
     description: |
       A boolean value to indicate an exact match was found for the primary key.
-    value: ${{ steps.go-cache.outputs.cache-hit }}
+    value: ${{ steps.restore-cache.outputs.cache-hit }}
 
 runs:
   using: "composite"
