@@ -1,11 +1,11 @@
 name: Setup BuildKit on Windows
 
 inputs:
-  docker-version:
-    description: The version of Docker to install.
-    required: true
   containerd-version:
     description: The version of containerd to install.
+    required: true
+  docker-version:
+    description: The version of Docker to install.
     required: true
 
 runs:

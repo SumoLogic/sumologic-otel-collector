@@ -308,6 +308,13 @@ jobs:
           platform=${{ steps.go-platform.outputs.name }}
           echo "name=${platform/_/\/}" >> "$GITHUB_OUTPUT"
 
+      - name: Setup BuildKit (Windows)
+        if: runner.os == 'Windows'
+        uses: ./.github/actions/setup-buildkit-windows
+        with:
+          containerd-version: "2.1.1"
+          docker-version: "28.2.2"
+
       - name: Set image metadata
         id: meta
         uses: docker/metadata-action@v5
