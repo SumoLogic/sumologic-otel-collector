@@ -26,14 +26,12 @@ import (
 )
 
 func TestValidateProviderScheme(t *testing.T) {
-	t.Parallel()
 	if err := ValidateProviderScheme(NewWithSettings(confmap.ProviderSettings{})); err != nil {
 		t.Error(err)
 	}
 }
 
 func TestEmptyURI(t *testing.T) {
-	t.Parallel()
 	p := NewWithSettings(confmap.ProviderSettings{})
 	_, err := p.Retrieve(context.Background(), "", nil)
 	if err == nil {
@@ -45,7 +43,6 @@ func TestEmptyURI(t *testing.T) {
 }
 
 func TestUnsupportedScheme(t *testing.T) {
-	t.Parallel()
 	p := NewWithSettings(confmap.ProviderSettings{})
 	_, err := p.Retrieve(context.Background(), "https://foo", nil)
 	if err == nil {
@@ -57,7 +54,6 @@ func TestUnsupportedScheme(t *testing.T) {
 }
 
 func TestNonExistent(t *testing.T) {
-	t.Parallel()
 	p := NewWithSettings(confmap.ProviderSettings{})
 
 	_, err := p.Retrieve(context.Background(), "opamp:/tmp/does/not/exist", nil)
@@ -70,7 +66,6 @@ func TestNonExistent(t *testing.T) {
 }
 
 func TestInvalidYAML(t *testing.T) {
-	t.Parallel()
 	p := NewWithSettings(confmap.ProviderSettings{})
 	_, err := p.Retrieve(context.Background(), "opamp:"+filepath.Join("testdata", "invalid-yaml.txt"), nil)
 	if err == nil {
@@ -82,7 +77,6 @@ func TestInvalidYAML(t *testing.T) {
 }
 
 func TestMissingRemoteConfigurationDir(t *testing.T) {
-	t.Parallel()
 	p := NewWithSettings(confmap.ProviderSettings{})
 	_, err := p.Retrieve(context.Background(), "opamp:"+filepath.Join("testdata", "missing_config_dir.yaml"), nil)
 	if err == nil {
@@ -94,7 +88,6 @@ func TestMissingRemoteConfigurationDir(t *testing.T) {
 }
 
 func TestValid(t *testing.T) {
-	t.Parallel()
 	p := NewWithSettings(confmap.ProviderSettings{})
 	defer func() {
 		if err := p.Shutdown(context.Background()); err != nil {
@@ -129,7 +122,6 @@ func TestValid(t *testing.T) {
 }
 
 func TestRemotelyManagedFlowDisabled(t *testing.T) {
-	t.Parallel()
 	p := NewWithSettings(confmap.ProviderSettings{})
 	defer func() {
 		if err := p.Shutdown(context.Background()); err != nil {
@@ -167,7 +159,6 @@ func TestRemotelyManagedFlowDisabled(t *testing.T) {
 }
 
 func TestRemotelyManagedFlowEnabled(t *testing.T) {
-	t.Parallel()
 	p := NewWithSettings(confmap.ProviderSettings{})
 	defer func() {
 		if err := p.Shutdown(context.Background()); err != nil {

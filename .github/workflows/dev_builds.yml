@@ -14,8 +14,23 @@ env:
   GO_VERSION: "1.24.0"
 
 jobs:
+  get-version:
+    name: Get next available version
+    uses: ./.github/workflows/_get-version-workflow.yml
+
+  get-go-version:
+    name: Get Go version
+    outputs:
+      version: ${{ steps.go-version.outputs.version }}
+    steps:
+      - name: Output Go version
+        id: go-version
+        run: |
+          echo "version=${GO_VERSION}" >> $GITHUB_OUTPUT
+
   setup-environment:
     runs-on: ${{ matrix.runs-on }}
+    needs: [get-go-version]
     strategy:
       matrix:
         include:
@@ -27,15 +42,8 @@ jobs:
             distribution: official
           - runs-on: windows-2022
             distribution: microsoft
-    outputs:
-      go-version: ${{ steps.go-version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Output Go version
-        id: go-version
-        run: |
-          echo "version=${GO_VERSION}" >> $GITHUB_OUTPUT
 
       - name: Setup Go
         id: setup-go
@@ -43,7 +51,7 @@ jobs:
         with:
           distribution: ${{ matrix.distribution }}
           skip-cache-restore-on-hit: "true"
-          version: ${{ env.GO_VERSION }}
+          version: ${{ needs.get-go-version.outputs.version }}
           cache-dependency-paths: |
             **/*.sum
             otelcolbuilder/.otelcol-builder.yaml
@@ -65,9 +73,40 @@ jobs:
         working-directory: otelcolbuilder
         run: make generate-sources
 
+  setup-environment-otelcol-config:
+    runs-on: ${{ matrix.runs-on }}
+    needs: [get-go-version]
+    strategy:
+      matrix:
+        include:
+          - runs-on: macos-15
+            distribution: official
+          - runs-on: ubuntu-24.04
+            distribution: official
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        id: setup-go
+        uses: ./.github/actions/setup-go
+        with:
+          distribution: ${{ matrix.distribution }}
+          skip-cache-restore-on-hit: "true"
+          version: ${{ needs.get-go-version.outputs.version }}
+          cache-name: otelcol-config-go-cache
+          cache-dependency-paths: |
+            pkg/tools/otelcol-config/go.sum
+
+      - name: Install Go modules
+        if: steps.setup-go.outputs.cache-hit != 'true'
+        working-directory: ./pkg/tools/otelcol-config
+        run: go mod download
+
   test:
     name: Test
-    needs: [setup-environment]
+    needs:
+      - get-go-version
+      - setup-environment
     uses: ./.github/workflows/workflow-test.yml
     strategy:
       matrix:
@@ -85,242 +124,247 @@ jobs:
       arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
       boringcrypto: ${{ matrix.boringcrypto == true }}
-      go-version: ${{ needs.setup-environment.outputs.go-version }}
+      go-version: ${{ needs.get-go-version.outputs.version }}
 
-  # test-otelcol-config:
-  #   name: Test (otelcol-config)
-  #   uses: ./.github/workflows/workflow-test-otelcol-config.yml
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         - arch_os: linux_amd64
-  #           runs-on: ubuntu-24.04
-  #         # - arch_os: linux_amd64
-  #         #   runs-on: ubuntu-24.04
-  #         #   boringcrypto: true
-  #         # - arch_os: darwin_amd64
-  #         #   runs-on: macos-15
-  #   with:
-  #     arch_os: ${{ matrix.arch_os }}
-  #     runs-on: ${{ matrix.runs-on }}
-  #     boringcrypto: ${{ matrix.boringcrypto == true }}
+  test-otelcol-config:
+    name: Test (otelcol-config)
+    uses: ./.github/workflows/workflow-test-otelcol-config.yml
+    needs: [get-go-version, setup-environment-otelcol-config]
+    strategy:
+      matrix:
+        include:
+          - arch_os: linux_amd64
+            runs-on: ubuntu-24.04
+          - arch_os: linux_amd64
+            runs-on: ubuntu-24.04
+            boringcrypto: true
+          - arch_os: darwin_amd64
+            runs-on: macos-15
+    with:
+      arch_os: ${{ matrix.arch_os }}
+      runs-on: ${{ matrix.runs-on }}
+      boringcrypto: ${{ matrix.boringcrypto == true }}
+      go-version: ${{ needs.get-go-version.outputs.version }}
 
-  # get-version:
-  #   name: Get next available version
-  #   uses: ./.github/workflows/_get-version-workflow.yml
+  build:
+    name: Build
+    uses: ./.github/workflows/workflow-build.yml
+    needs:
+      - get-version
+      - get-go-version
+      - setup-environment
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch_os: linux_amd64
+            runs-on: ubuntu-24.04
+          - arch_os: linux_amd64
+            runs-on: ubuntu-24.04
+            fips: true
+          - arch_os: linux_arm64
+            runs-on: ubuntu-24.04
+          - arch_os: linux_arm64
+            runs-on: ubuntu-24.04
+            fips: true
+          - arch_os: darwin_amd64
+            runs-on: macos-15
+          - arch_os: darwin_arm64
+            runs-on: macos-15
+          - arch_os: windows_amd64
+            runs-on: windows-2022
+          - arch_os: windows_amd64
+            runs-on: windows-2022
+            fips: true
+    with:
+      arch_os: ${{ matrix.arch_os }}
+      runs-on: ${{ matrix.runs-on }}
+      fips: ${{ matrix.fips == true }}
+      go-version: ${{ needs.get-go-version.outputs.version }}
+      version: ${{ needs.get-version.outputs.version }}
+    secrets:
+      apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+      apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+      app_store_connect_password: ${{ secrets.AC_PASSWORD }}
+      microsoft_certificate: ${{ secrets.MICROSOFT_CERTIFICATE }}
+      microsoft_certificate_password: ${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}
+      microsoft_certificate_hash: ${{ secrets.MICROSOFT_CERTHASH }}
+      microsoft_certificate_name: ${{ secrets.MICROSOFT_CERTNAME }}
+      microsoft_description: ${{ secrets.MICROSOFT_DESCRIPTION }}
 
-  # build:
-  #   name: Build
-  #   uses: ./.github/workflows/workflow-build.yml
-  #   needs: [get-version]
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       include:
-  #         - arch_os: linux_amd64
-  #           runs-on: ubuntu-24.04
-  #         - arch_os: linux_amd64
-  #           runs-on: ubuntu-24.04
-  #           fips: true
-  #         - arch_os: linux_arm64
-  #           runs-on: ubuntu-24.04
-  #         - arch_os: linux_arm64
-  #           runs-on: ubuntu-24.04
-  #           fips: true
-  #         - arch_os: darwin_amd64
-  #           runs-on: macos-15
-  #         - arch_os: darwin_arm64
-  #           runs-on: macos-15
-  #         - arch_os: windows_amd64
-  #           runs-on: windows-2022
-  #         - arch_os: windows_amd64
-  #           runs-on: windows-2022
-  #           fips: true
-  #   with:
-  #     arch_os: ${{ matrix.arch_os }}
-  #     runs-on: ${{ matrix.runs-on }}
-  #     fips: ${{ matrix.fips == true }}
-  #     version: ${{ needs.get-version.outputs.version }}
-  #   secrets:
-  #     apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-  #     apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
-  #     app_store_connect_password: ${{ secrets.AC_PASSWORD }}
-  #     microsoft_certificate: ${{ secrets.MICROSOFT_CERTIFICATE }}
-  #     microsoft_certificate_password: ${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}
-  #     microsoft_certificate_hash: ${{ secrets.MICROSOFT_CERTHASH }}
-  #     microsoft_certificate_name: ${{ secrets.MICROSOFT_CERTNAME }}
-  #     microsoft_description: ${{ secrets.MICROSOFT_DESCRIPTION }}
+  build-otelcol-config:
+    name: Build (otelcol-config)
+    uses: ./.github/workflows/workflow-build-otelcol-config.yml
+    needs:
+      - get-version
+      - get-go-version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch_os: darwin_amd64
+            runs-on: macos-15
+          - arch_os: darwin_arm64
+            runs-on: macos-15
+          - arch_os: linux_amd64
+            runs-on: ubuntu-24.04
+          - arch_os: linux_amd64
+            runs-on: ubuntu-24.04
+            fips: true
+          - arch_os: linux_arm64
+            runs-on: ubuntu-24.04
+          - arch_os: linux_arm64
+            runs-on: ubuntu-24.04
+            fips: true
+    with:
+      arch_os: ${{ matrix.arch_os }}
+      runs-on: ${{ matrix.runs-on }}
+      fips: ${{ matrix.fips == true }}
+      go-version:
+      sumo_component_gomod_version: "v${{ needs.get-version.outputs.version }}"
+    secrets:
+      apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+      apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+      app_store_connect_password: ${{ secrets.AC_PASSWORD }}
 
-  # # build-otelcol-config:
-  # #   name: Build (otelcol-config)
-  # #   uses: ./.github/workflows/workflow-build-otelcol-config.yml
-  # #   needs: [get-version]
-  # #   strategy:
-  # #     fail-fast: false
-  # #     matrix:
-  # #       include:
-  # #         - arch_os: darwin_amd64
-  # #           runs-on: macos-15
-  # #         - arch_os: darwin_arm64
-  # #           runs-on: macos-15
-  # #         - arch_os: linux_amd64
-  # #           runs-on: ubuntu-24.04
-  # #         - arch_os: linux_amd64
-  # #           runs-on: ubuntu-24.04
-  # #           fips: true
-  # #         - arch_os: linux_arm64
-  # #           runs-on: ubuntu-24.04
-  # #         - arch_os: linux_arm64
-  # #           runs-on: ubuntu-24.04
-  # #           fips: true
-  # #   with:
-  # #     arch_os: ${{ matrix.arch_os }}
-  # #     runs-on: ${{ matrix.runs-on }}
-  # #     fips: ${{ matrix.fips == true }}
-  # #     sumo_component_gomod_version: "v${{ needs.get-version.outputs.version }}"
-  # #   secrets:
-  # #     apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-  # #     apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
-  # #     app_store_connect_password: ${{ secrets.AC_PASSWORD }}
+  build-container-images:
+    name: Build container
+    runs-on: ${{ matrix.runs-on || 'ubuntu-24.04' }}
+    needs:
+      - build
+      - get-version
+    outputs:
+      # NOTE: one output is needed for each item in the matrix. These outputs
+      # store the raw manifest of the container image of each build and are used
+      # to create a multiplatform image index later on.
+      manifest_standard_linux_amd64: ${{ steps.manifest.outputs.standard_linux_amd64 }}
+      manifest_standard_linux_arm64: ${{ steps.manifest.outputs.standard_linux_arm64 }}
+      manifest_standard_windows_amd64_ltsc2019: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2019 }}
+      manifest_standard_windows_amd64_ltsc2022: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2022 }}
+      manifest_standard-fips_linux_amd64: ${{ steps.manifest.outputs.standard-fips_linux_amd64 }}
+      manifest_standard-fips_linux_arm64: ${{ steps.manifest.outputs.standard-fips_linux_arm64 }}
+      manifest_ubi_linux_amd64: ${{ steps.manifest.outputs.ubi_linux_amd64 }}
+      manifest_ubi_linux_arm64: ${{ steps.manifest.outputs.ubi_linux_arm64 }}
+      manifest_ubi-fips_linux_amd64: ${{ steps.manifest.outputs.ubi-fips_linux_amd64 }}
+      manifest_ubi-fips_linux_arm64: ${{ steps.manifest.outputs.ubi-fips_linux_arm64 }}
+    strategy:
+      matrix:
+        include:
+          # standard product
+          - product: standard
+            platform: linux_amd64
+            collector_binary: otelcol-sumo
+          - product: standard
+            platform: linux_arm64
+            collector_binary: otelcol-sumo
+          - product: standard
+            target: windows-ltsc2022
+            platform: windows_amd64
+            subplatform: ltsc2022
+            runs-on: windows-2022
+            binary_ext: .exe
+            collector_binary: otelcol-sumo
+          - product: standard
+            target: windows-ltsc2025
+            platform: windows_amd64
+            subplatform: ltsc2025
+            runs-on: windows-2025
+            binary_ext: .exe
+            collector_binary: otelcol-sumo
+          # standard-fips product
+          - product: standard-fips
+            platform: linux_amd64
+            collector_binary: otelcol-sumo-fips
+          - product: standard-fips
+            platform: linux_arm64
+            collector_binary: otelcol-sumo-fips
+          # ubi target
+          - product: ubi
+            platform: linux_amd64
+            collector_binary: otelcol-sumo
+          - product: ubi
+            platform: linux_arm64
+            collector_binary: otelcol-sumo
+          # ubi-fips target
+          - product: ubi-fips
+            platform: linux_amd64
+            collector_binary: otelcol-sumo-fips
+          - product: ubi-fips
+            platform: linux_arm64
+            collector_binary: otelcol-sumo-fips
+    steps:
+      - uses: actions/checkout@v4
 
-  # build-container-images:
-  #   name: Build container
-  #   runs-on: ${{ matrix.runs-on || 'ubuntu-24.04' }}
-  #   needs:
-  #     - build
-  #     - get-version
-  #   outputs:
-  #     # NOTE: one output is needed for each item in the matrix. These outputs
-  #     # store the raw manifest of the container image of each build and are used
-  #     # to create a multiplatform image index later on.
-  #     manifest_standard_linux_amd64: ${{ steps.manifest.outputs.standard_linux_amd64 }}
-  #     manifest_standard_linux_arm64: ${{ steps.manifest.outputs.standard_linux_arm64 }}
-  #     manifest_standard_windows_amd64_ltsc2019: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2019 }}
-  #     manifest_standard_windows_amd64_ltsc2022: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2022 }}
-  #     manifest_standard-fips_linux_amd64: ${{ steps.manifest.outputs.standard-fips_linux_amd64 }}
-  #     manifest_standard-fips_linux_arm64: ${{ steps.manifest.outputs.standard-fips_linux_arm64 }}
-  #     manifest_ubi_linux_amd64: ${{ steps.manifest.outputs.ubi_linux_amd64 }}
-  #     manifest_ubi_linux_arm64: ${{ steps.manifest.outputs.ubi_linux_arm64 }}
-  #     manifest_ubi-fips_linux_amd64: ${{ steps.manifest.outputs.ubi-fips_linux_amd64 }}
-  #     manifest_ubi-fips_linux_arm64: ${{ steps.manifest.outputs.ubi-fips_linux_arm64 }}
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         # standard product
-  #         - product: standard
-  #           platform: linux_amd64
-  #           collector_binary: otelcol-sumo
-  #         - product: standard
-  #           platform: linux_arm64
-  #           collector_binary: otelcol-sumo
-  #         - product: standard
-  #           target: windows-ltsc2022
-  #           platform: windows_amd64
-  #           subplatform: ltsc2022
-  #           runs-on: windows-2022
-  #           binary_ext: .exe
-  #           collector_binary: otelcol-sumo
-  #         - product: standard
-  #           target: windows-ltsc2025
-  #           platform: windows_amd64
-  #           subplatform: ltsc2025
-  #           runs-on: windows-2025
-  #           binary_ext: .exe
-  #           collector_binary: otelcol-sumo
-  #         # standard-fips product
-  #         - product: standard-fips
-  #           platform: linux_amd64
-  #           collector_binary: otelcol-sumo-fips
-  #         - product: standard-fips
-  #           platform: linux_arm64
-  #           collector_binary: otelcol-sumo-fips
-  #         # ubi target
-  #         - product: ubi
-  #           platform: linux_amd64
-  #           collector_binary: otelcol-sumo
-  #         - product: ubi
-  #           platform: linux_arm64
-  #           collector_binary: otelcol-sumo
-  #         # ubi-fips target
-  #         - product: ubi-fips
-  #           platform: linux_amd64
-  #           collector_binary: otelcol-sumo-fips
-  #         - product: ubi-fips
-  #           platform: linux_arm64
-  #           collector_binary: otelcol-sumo-fips
-  #   steps:
-  #     - uses: actions/checkout@v4
+      - name: Output Go platform with subplatform
+        id: go-platform
+        run: |
+          platform=${{ matrix.platform }}
+          subplatform=${{ matrix.subplatform && format('_{0}', matrix.subplatform) || '' }}
+          echo "name=${platform}${subplatform}" >> $GITHUB_OUTPUT
 
-  #     - name: Output Go platform with subplatform
-  #       id: go-platform
-  #       run: |
-  #         platform=${{ matrix.platform }}
-  #         subplatform=${{ matrix.subplatform && format('_{0}', matrix.subplatform) || '' }}
-  #         echo "name=${platform}${subplatform}" >> $GITHUB_OUTPUT
+      - name: Convert Go platform to Docker platform
+        id: docker-platform
+        run: |
+          platform=${{ steps.go-platform.outputs.name }}
+          echo "name=${platform/_/\/}" >> "$GITHUB_OUTPUT"
 
-  #     - name: Convert Go platform to Docker platform
-  #       id: docker-platform
-  #       run: |
-  #         platform=${{ steps.go-platform.outputs.name }}
-  #         echo "name=${platform/_/\/}" >> "$GITHUB_OUTPUT"
+      - name: Set image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          labels: |
+            version="${{ needs.get-version.outputs.full }}"
 
-  #     - name: Set image metadata
-  #       id: meta
-  #       uses: docker/metadata-action@v5
-  #       with:
-  #         labels: |
-  #           version="${{ needs.get-version.outputs.full }}"
+      - name: Set up QEMU
+        if: runner.os != 'Windows'
+        uses: docker/setup-qemu-action@v3.6.0
 
-  #     - name: Set up QEMU
-  #       if: runner.os != 'Windows'
-  #       uses: docker/setup-qemu-action@v3.6.0
+      - name: Set up Buildx
+        if: runner.os != 'Windows'
+        id: buildx
+        uses: docker/setup-buildx-action@v3.10.0
 
-  #     - name: Set up Buildx
-  #       if: runner.os != 'Windows'
-  #       id: buildx
-  #       uses: docker/setup-buildx-action@v3.10.0
+      - name: Show Buildx platforms
+        if: runner.os != 'Windows'
+        run: echo ${{ steps.buildx.outputs.platforms }}
 
-  #     - name: Show Buildx platforms
-  #       if: runner.os != 'Windows'
-  #       run: echo ${{ steps.buildx.outputs.platforms }}
+      - name: Login to ECR
+        uses: docker/login-action@v3
+        with:
+          registry: 663229565520.dkr.ecr.us-east-1.amazonaws.com
+          username: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+          password: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
 
-  #     - name: Login to ECR
-  #       uses: docker/login-action@v3
-  #       with:
-  #         registry: 663229565520.dkr.ecr.us-east-1.amazonaws.com
-  #         username: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
-  #         password: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+      - name: Download binary action artifact from build phase
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.collector_binary }}-${{ matrix.platform }}${{ matrix.binary_ext }}
+          path: artifacts/${{ steps.docker-platform.outputs.name }}/${{ matrix.collector_binary }}${{ matrix.binary_ext }}
 
-  #     - name: Download binary action artifact from build phase
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: ${{ matrix.collector_binary }}-${{ matrix.platform }}${{ matrix.binary_ext }}
-  #         path: artifacts/${{ steps.docker-platform.outputs.name }}/${{ matrix.collector_binary }}${{ matrix.binary_ext }}
+      - name: Build and push
+        id: build
+        uses: docker/bake-action@v6
+        with:
+          source: .
+          targets: ${{ matrix.target || matrix.product }}
+          push: true
+          set: |
+            *.cache-from=type=gha
+            *.cache-to=type=gha,mode=max
+            *.platform=${{ steps.docker-platform.outputs.name }}
+            *.tags=
+            *.output=type=image,"name=663229565520.dkr.ecr.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-ci-builds",push-by-digest=true,name-canonical=true,push=true
 
-  #     - name: Build and push
-  #       id: build
-  #       uses: docker/bake-action@v6
-  #       with:
-  #         source: .
-  #         targets: ${{ matrix.target || matrix.product }}
-  #         push: true
-  #         set: |
-  #           *.cache-from=type=gha
-  #           *.cache-to=type=gha,mode=max
-  #           *.platform=${{ steps.docker-platform.outputs.name }}
-  #           *.tags=
-  #           *.output=type=image,"name=663229565520.dkr.ecr.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-ci-builds",push-by-digest=true,name-canonical=true,push=true
+      - name: Print metadata
+        run: echo '${{ steps.build.outputs.metadata }}'
 
-  #     - name: Print metadata
-  #       run: echo '${{ steps.build.outputs.metadata }}'
-
-  #     - name: Set container image manifest output
-  #       id: manifest
-  #       run: |
-  #         name="${{ matrix.product }}_${{ steps.go-platform.outputs.name }}"
-  #         target="${{ matrix.target || matrix.product }}"
-  #         printf -v metadata $(echo '${{ steps.build.outputs.metadata }}' | jq -c ".[\"$target\"]")
-  #         echo "${name}=${metadata}" >> "$GITHUB_OUTPUT"
+      - name: Set container image manifest output
+        id: manifest
+        run: |
+          name="${{ matrix.product }}_${{ steps.go-platform.outputs.name }}"
+          target="${{ matrix.target || matrix.product }}"
+          printf -v metadata $(echo '${{ steps.build.outputs.metadata }}' | jq -c ".[\"$target\"]")
+          echo "${name}=${metadata}" >> "$GITHUB_OUTPUT"
 
   # # build-windows-container-images:
   # #   name: Build Windows container

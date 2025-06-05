@@ -11,6 +11,10 @@ on:
         description: Run with BoringCrypto enabled
         default: false
         type: boolean
+      go-version:
+        description: The version of Go to use.
+        type: string
+        required: true
       runs-on:
         default: ubuntu-24.04
         type: string
@@ -23,9 +27,6 @@ defaults:
   run:
     shell: bash
 
-env:
-  GO_VERSION: "1.21.11"
-
 jobs:
   test:
     name: Test (otelcol-config)
@@ -35,47 +36,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup go
-        uses: actions/setup-go@v5
+      - name: Setup Go
+        id: setup-go
+        uses: ./.github/actions/setup-go
         with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: false
-
-      - name: Get GOCACHE and GOMODCACHE
-        run: |
-          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
-          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
-
-      - name: Get cache key
-        id: get-cache-key
-        run: |
-          go_hash="${{ hashFiles('pkg/tools/otelcol-config/go.sum') }}"
-          go_version="${{ env.GO_VERSION }}"
-          platform="${{ inputs.arch_os }}"
-          fips_suffix="${BORINGCRYPTO_SUFFIX}"
-          cache_key="go-test-${go_version}-otelcol-config${fips_suffix}-${platform}"
-
-          echo "cache-key=${cache_key}-${go_hash}-${{ github.run_id }}" >> $GITHUB_OUTPUT
-          echo "restore-keys=${cache_key}" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache/restore@v4
-        id: restore-go-mod-cache
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.get-cache-key.outputs.cache-key }}
-          restore-keys: |
-            ${{ steps.get-cache-key.outputs.restore-keys }}
+          version: ${{ inputs.go-version }}
+          cache-name: otelcol-config-go-cache
+          cache-dependency-paths: |
+            pkg/tools/otelcol-config/go.sum
 
       - name: Run tests
         run: make test ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
         working-directory: ./pkg/tools/otelcol-config
-
-      - uses: actions/cache/save@v4
-        if: always()
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.restore-go-mod-cache.outputs.cache-primary-key }}

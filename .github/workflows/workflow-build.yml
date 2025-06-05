@@ -15,6 +15,10 @@ on:
         description: Build binary with FIPS support
         default: false
         type: boolean
+      go-version:
+        description: The version of Go to use.
+        type: string
+        required: true
       runs-on:
         default: ubuntu-24.04
         type: string
@@ -45,7 +49,6 @@ defaults:
     shell: bash
 
 env:
-  GO_VERSION: "1.24.0"
   VERSION: ${{ inputs.version }}
   YQ_VERSION: "4.45.4"
 
@@ -85,74 +88,34 @@ jobs:
         if: inputs.sumo_component_gomod_version != ''
         run: make prepare-tag TAG=${{ inputs.sumo_component_gomod_version }}
 
-      - name: Setup go environment variables
-        run: |
-          if [ "$RUNNER_OS" != "Windows" ]; then
-            echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
-            echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
-          fi
-          echo "GOARCH=$(go env GOARCH)" >> "$GITHUB_ENV"
-          echo "GOOS=$(go env GOOS)" >> "$GITHUB_ENV"
-          echo "ARCH_OS=$(go env GOOS)_$(go env GOARCH)" >> $GITHUB_ENV
-
-      - name: Get cache key
-        id: get-cache-key
-        run: |
-          go_hash="${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}"
-          go_version="${{ env.GO_VERSION }}"
-          platform="${{ inputs.arch_os }}"
-          fips_suffix="${OTELCOL_FIPS_SUFFIX}"
-          toolchain_hash="${{ hashFiles('toolchains/config.mak', 'toolchains/Makefile') }}"
-          cache_key="go-build-${go_version}${fips_suffix}-${platform}"
-
-          echo "cache-key=${cache_key}-${go_hash}-${{ github.run_id }}" >> $GITHUB_OUTPUT
-          echo "restore-keys=${cache_key}" >> $GITHUB_OUTPUT
-          echo "toolchain-cache-key=toolchain-${platform}-${toolchain_hash}" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache/restore@v4
-        id: restore-go-mod-cache
+      - name: Setup Go
+        id: setup-go
+        uses: ./.github/actions/setup-go
         with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.get-cache-key.outputs.cache-key }}
-          restore-keys: |
-            ${{ steps.get-cache-key.outputs.restore-keys }}
+          version: ${{ inputs.go-version }}
+          cache-dependency-paths: |
+            **/*.sum
+            otelcolbuilder/.otelcol-builder.yaml
 
-      - name: Cache yq
+      - name: Setup yq
         if: runner.os == 'Windows'
-        id: cache-yq
-        uses: actions/cache@v4
-        with:
-          key: choco-yq-${{ env.YQ_VERSION }}
-          path: |
-            C:\chocolatey\lib\yq\tools\yq.exe
+        uses: ./.github/actions/setup-yq
 
-      - name: Install yq (Windows)
-        if: runner.os == 'Windows' && steps.cache-yq.outputs.cache-hit != 'true'
-        run: |
-          env
-          choco install yq --version ${{ env.YQ_VERSION }}
-
-      - name: Set default BIN_PATH
-        run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
-
-      - name: Add ocb installation dir to PATH
-        if: (! contains(inputs.arch_os, 'windows') )
-        run: echo "BIN_PATH" >> $GITHUB_PATH
-
-      - name: Add ocb installation dir to PATH (Windows)
-        if: contains(inputs.arch_os, 'windows')
-        run: cygpath -w "$BIN_PATH" >> $GITHUB_PATH
-
-      - name: Install opentelemetry-collector-builder
-        run: make install-builder
-        working-directory: ./otelcolbuilder
+      - name: Setup ocb
+        uses: ./.github/actions/setup-ocb
 
       - name: Build
         if: "! inputs.fips"
         run: make otelcol-sumo-${{inputs.arch_os}}
         working-directory: ./otelcolbuilder
+
+      - name: Get cache key
+        id: get-cache-key
+        run: |
+          platform="${{ inputs.arch_os }}"
+          toolchain_hash="${{ hashFiles('toolchains/config.mak', 'toolchains/Makefile') }}"
+
+          echo "toolchain-cache-key=toolchain-${platform}-${toolchain_hash}" >> $GITHUB_OUTPUT
 
       - uses: actions/cache/restore@v4
         id: restore-toolchain-cache
@@ -279,11 +242,3 @@ jobs:
           path: |
             /opt/toolchain
           key: ${{ steps.restore-toolchain-cache.outputs.cache-primary-key }}
-
-      - uses: actions/cache/save@v4
-        if: always()
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.restore-go-mod-cache.outputs.cache-primary-key }}
