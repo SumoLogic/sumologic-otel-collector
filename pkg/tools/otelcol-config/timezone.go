@@ -48,17 +48,17 @@ func SetTimezoneAction(ctx *actionContext) error {
 			// shouldn't ever happen
 			panic(err)
 		}
-		doc = buf.Bytes()
+		config = buf.Bytes()
 	} else {
 		expression := fmt.Sprintf(".extensions.sumologic.time_zone = %q", ctx.Flags.SetTimezone)
-		result, err := eval.EvaluateAll(expression, string(doc), encoder, decoder)
+		result, err := eval.EvaluateAll(expression, string(config), encoder, decoder)
 		if err != nil {
 			return fmt.Errorf("couldn't write timezone: %s", err)
 		}
-		doc = []byte(result)
+		config = []byte(result)
 	}
 
-	_, err = writer(doc)
+	_, err = writer(config)
 	if err != nil {
 		return fmt.Errorf("couldn't write timezone: %s", err)
 	}
