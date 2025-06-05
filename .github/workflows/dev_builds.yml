@@ -15,7 +15,7 @@ env:
 
 jobs:
   get-version:
-    name: Get next available version
+    #name: Get next available version
     uses: ./.github/workflows/_get-version-workflow.yml
 
   get-go-version:
