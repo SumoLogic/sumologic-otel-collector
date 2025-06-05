@@ -12,7 +12,7 @@ runs:
         fi
 
     - name: Enable FIPS (Windows)
-      if: runner.os == "Windows"
+      if: runner.os == 'Windows'
       shell: pwsh
       runs: |
         Set-ItemProperty `
