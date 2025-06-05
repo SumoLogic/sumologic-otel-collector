@@ -389,140 +389,83 @@ jobs:
           printf -v metadata $(echo '${{ steps.build.outputs.metadata }}' | jq -c ".[\"$target\"]")
           echo "${name}=${metadata}" >> "$GITHUB_OUTPUT"
 
-  # # build-windows-container-images:
-  # #   name: Build Windows container
-  # #   runs-on: ${{ matrix.runs-on }}
-  # #   needs:
-  # #     - build
-  # #     - get-otc-version
-  # #   strategy:
-  # #     matrix:
-  # #       include:
-  # #         - arch_os: windows_amd64
-  # #           base_image_tag: ltsc2022
-  # #           runs-on: windows-2022
-  # #         - arch_os: windows_amd64
-  # #           base_image_tag: ltsc2025
-  # #           runs-on: windows-2025
-  # #   steps:
-  # #     - uses: actions/checkout@v4
+  push-image-indexes:
+    name: Push image indexes
+    runs-on: ubuntu-24.04
+    needs:
+      - build-container-images
+      - get-otc-version
+    strategy:
+      matrix:
+        include:
+          - target: standard
+            tags: '["latest", "${{ github.sha }}", "${{ needs.get-otc-version.outputs.version }}"]'
+          - target: standard-fips
+            tags: '["latest-fips", "${{ github.sha }}-fips", "${{ needs.get-otc-version.outputs.version }}-fips"]'
+          - target: ubi
+            tags: '["latest-ubi", "${{ github.sha }}-ubi", "${{ needs.get-otc-version.outputs.version }}-ubi"]'
+          - target: ubi-fips
+            tags: '["latest-ubi-fips", "${{ github.sha }}-ubi-fips", "${{ needs.get-otc-version.outputs.version }}-ubi-fips"]'
+    steps:
+      - uses: actions/checkout@v4
 
-  # #     - name: Login to Open Source ECR
-  # #       run: |
-  # #         USERNAME=$(powershell.exe "echo \$Env:UserName")
-  # #         # remove wincred entry and fix json format by replacing }, with }
-  # #         cat "C:\\Users\\${USERNAME}\\.docker\\config.json" | grep -v "wincred" | sed 's/},$/}/' > "C:\\Users\\${USERNAME}\\.docker\\config.json.tmp"
-  # #         mv "C:\\Users\\${USERNAME}\\.docker\\config.json.tmp" "C:\\Users\\${USERNAME}\\.docker\\config.json"
-  # #         make login
-  # #       env:
-  # #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
-  # #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3.6.0
 
-  # #     - name: Login to Docker Hub
-  # #       run: |
-  # #         docker login \
-  # #           --username ${{ secrets.DOCKERHUB_LOGIN_DEV }} \
-  # #           --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
+      - name: Set up Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3.10.0
 
-  # #     - name: Download binary action artifact from build phase
-  # #       uses: actions/download-artifact@v4
-  # #       with:
-  # #         name: otelcol-sumo-${{matrix.arch_os}}.exe
-  # #         path: artifacts/
+      - name: Show Buildx platforms
+        run: echo ${{ steps.buildx.outputs.platforms }}
 
-  # #     - name: Build and push images to Open Source ECR
-  # #       run: |
-  # #         cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
-  # #         make build-push-container-windows \
-  # #           BUILD_TAG=${{ needs.get-otc-version.outputs.version-with-sha }} \
-  # #           PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
+      - name: Login to ECR
+        uses: docker/login-action@v3
+        with:
+          registry: 663229565520.dkr.ecr.us-east-1.amazonaws.com
+          username: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+          password: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
 
-  # #     - name: Build and push images to DockerHub
-  # #       run: |
-  # #         cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
-  # #         make build-push-container-windows \
-  # #           BUILD_TAG=${{ needs.get-otc-version.outputs.version-with-sha }} \
-  # #           REPO_URL=sumologic/sumologic-otel-collector \
-  # #           PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_LOGIN_DEV }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
 
-  # push-image-indexes:
-  #   name: Push image indexes
-  #   runs-on: ubuntu-24.04
-  #   needs:
-  #     - build-container-images
-  #     #- build-windows-container-images
-  #     - get-otc-version
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         - target: standard
-  #           tags: '["latest", "${{ github.sha }}", "${{ needs.get-otc-version.outputs.version }}"]'
-  #         - target: standard-fips
-  #           tags: '["latest-fips", "${{ github.sha }}-fips", "${{ needs.get-otc-version.outputs.version }}-fips"]'
-  #         - target: ubi
-  #           tags: '["latest-ubi", "${{ github.sha }}-ubi", "${{ needs.get-otc-version.outputs.version }}-ubi"]'
-  #         - target: ubi-fips
-  #           tags: '["latest-ubi-fips", "${{ github.sha }}-ubi-fips", "${{ needs.get-otc-version.outputs.version }}-ubi-fips"]'
-  #   steps:
-  #     - uses: actions/checkout@v4
+      - name: Determine source images
+        run: |
+          echo '${{ toJSON(needs.build-container-images.outputs) }}' \
+          | jq -jf ci/jq/manifest-sources.jq --arg target ${{ matrix.target }} \
+          > sources.txt
 
-  #     - name: Set up QEMU
-  #       uses: docker/setup-qemu-action@v3.6.0
+          cat sources.txt
 
-  #     - name: Set up Buildx
-  #       id: buildx
-  #       uses: docker/setup-buildx-action@v3.10.0
+      - name: Determine tags (ECR)
+        env:
+          REPO_BASE: 663229565520.dkr.ecr.us-east-1.amazonaws.com
+          REPO_ORG: sumologic
+          REPO_NAME: sumologic-otel-collector-ci-builds
+        run: |
+          REPO="${REPO_BASE}/${REPO_ORG}/${REPO_NAME}"
+          echo '${{ matrix.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > ecr-tags.txt
 
-  #     - name: Show Buildx platforms
-  #       run: echo ${{ steps.buildx.outputs.platforms }}
+      - name: Determine tags (Docker Hub)
+        env:
+          REPO_BASE: docker.io
+          REPO_ORG: sumologic
+          REPO_NAME: sumologic-otel-collector-ci-builds
+        run: |
+          REPO="${REPO_BASE}/${REPO_ORG}/${REPO_NAME}"
+          echo '${{ matrix.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > dh-tags.txt
 
-  #     - name: Login to ECR
-  #       uses: docker/login-action@v3
-  #       with:
-  #         registry: 663229565520.dkr.ecr.us-east-1.amazonaws.com
-  #         username: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
-  #         password: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+      - name: Create multiplatform image index (ECR)
+        run: |
+          docker buildx imagetools create $(cat sources.txt) $(cat ecr-tags.txt)
 
-  #     - name: Login to Docker Hub
-  #       uses: docker/login-action@v3
-  #       with:
-  #         registry: docker.io
-  #         username: ${{ secrets.DOCKERHUB_LOGIN_DEV }}
-  #         password: ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
-
-  #     - name: Determine source images
-  #       run: |
-  #         echo '${{ toJSON(needs.build-container-images.outputs) }}' \
-  #         | jq -jf ci/jq/manifest-sources.jq --arg target ${{ matrix.target }} \
-  #         > sources.txt
-
-  #         cat sources.txt
-
-  #     - name: Determine tags (ECR)
-  #       env:
-  #         REPO_BASE: 663229565520.dkr.ecr.us-east-1.amazonaws.com
-  #         REPO_ORG: sumologic
-  #         REPO_NAME: sumologic-otel-collector-ci-builds
-  #       run: |
-  #         REPO="${REPO_BASE}/${REPO_ORG}/${REPO_NAME}"
-  #         echo '${{ matrix.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > ecr-tags.txt
-
-  #     - name: Determine tags (Docker Hub)
-  #       env:
-  #         REPO_BASE: docker.io
-  #         REPO_ORG: sumologic
-  #         REPO_NAME: sumologic-otel-collector-ci-builds
-  #       run: |
-  #         REPO="${REPO_BASE}/${REPO_ORG}/${REPO_NAME}"
-  #         echo '${{ matrix.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > dh-tags.txt
-
-  #     - name: Create multiplatform image index (ECR)
-  #       run: |
-  #         docker buildx imagetools create $(cat sources.txt) $(cat ecr-tags.txt)
-
-  #     - name: Create multiplatform image index (Docker Hub)
-  #       run: |
-  #         docker buildx imagetools create $(cat sources.txt) $(cat dh-tags.txt)
+      - name: Create multiplatform image index (Docker Hub)
+        run: |
+          docker buildx imagetools create $(cat sources.txt) $(cat dh-tags.txt)
 
   # #     - name: Push joint container manifest for all platforms to Open Source ECR
   # #       run: |

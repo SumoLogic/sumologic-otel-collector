@@ -58,17 +58,17 @@ runs:
       if: steps.cache.outputs.cache-hit != 'true' && inputs.skip-cache-restore-on-hit != 'true'
       shell: pwsh
       run: |
-        $Drive = New-VHD -Path D:\${Name}.vhdx -SizeBytes ${Size} -Dynamic |
+        $Drive = New-VHD -Path D:\${env:Name}.vhdx -SizeBytes ${env:Size} -Dynamic |
           Mount-VHD -PassThru |
           Initialize-Disk -PassThru |
           New-Partition -UseMaximumSize |
           Format-Volume -FileSystem NTFS -Confirm:$false -Force
-        $Drive | Get-Partition | Set-Partition -NewDriveLetter "${Letter}"
+        $Drive | Get-Partition | Set-Partition -NewDriveLetter "${env:Letter}"
 
     - name: Mount VHDX
       if: steps.cache.outputs.cache-hit == 'true' && inputs.skip-cache-restore-on-hit != 'true'
       shell: pwsh
       run: |
-        $Drive = Mount-VHD -Path D:\${Name}.vhdx -PassThru
+        $Drive = Mount-VHD -Path D:\${env:Name}.vhdx -PassThru
         $Drive | Get-Disk | Get-Partition | Where-Object { $_.Type -eq 'Basic' } |
-          Set-Partition -NewDriveLetter "${Letter}"
+          Set-Partition -NewDriveLetter "${env:Letter}"
