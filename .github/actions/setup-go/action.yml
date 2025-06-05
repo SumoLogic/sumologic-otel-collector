@@ -156,8 +156,8 @@ runs:
           ${{ steps.go-env.outputs.go-cache }}
         key: ${{ steps.go-cache-keys.outputs.full }}
         lookup-only: ${{ inputs.skip-cache-restore-on-hit == 'true' }}
-        restore-keys: |
-          ${{ steps.go-cache-keys.outputs.runner-os }}-
+        # restore-keys: |
+        #   ${{ steps.go-cache-keys.outputs.runner-os }}-
 
     # - name: Restore Go cache if no exact cache hit
     #   if: inputs.skip-cache-restore-on-hit == 'true' && steps.go-cache.outputs.cache-hit != 'true'
