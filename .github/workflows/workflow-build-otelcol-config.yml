@@ -7,17 +7,21 @@ on:
         description: Architecture and OS in the form "{arch}_{os}". See GOARCH and GOOS for accepted values.
         default: linux_amd64
         type: string
-      sumo_component_gomod_version:
-        description: Package version for components hosted in this repo. Normally, this is the v0.0.0-00010101000000-000000000000 placeholder.
-        type: string
-        required: false
       fips:
         description: Build binary with FIPS support
         default: false
         type: boolean
+      go-version:
+        description: The version of Go to use.
+        type: string
+        required: true
       runs-on:
         default: ubuntu-24.04
         type: string
+      sumo_component_gomod_version:
+        description: Package version for components hosted in this repo. Normally, this is the v0.0.0-00010101000000-000000000000 placeholder.
+        type: string
+        required: false
     secrets:
       apple_developer_certificate_p12_base64:
         required: false
@@ -44,50 +48,29 @@ jobs:
 
       - name: Enable FIPS
         uses: ./.github/actions/enable-fips
-        if: runner.os == "Windows" && inputs.fips
+        if: runner.os == 'Windows' && inputs.fips
 
-      - name: Setup go
-        uses: actions/setup-go@v5
+      - name: Setup Go
+        id: setup-go
+        uses: ./.github/actions/setup-go
         with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: false
-
-      - name: Get Go env values
-        run: |
-          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
-          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
-          echo "GOARCH=$(go env GOARCH)" >> "$GITHUB_ENV"
-          echo "GOOS=$(go env GOOS)" >> "$GITHUB_ENV"
-          echo "ARCH_OS=$(go env GOOS)_$(go env GOARCH)" >> $GITHUB_ENV
-
-      - name: Get cache key
-        id: get-cache-key
-        run: |
-          go_hash="${{ hashFiles('pkg/tools/otelcol-config/go.sum') }}"
-          go_version="${{ env.GO_VERSION }}"
-          platform="${{ inputs.arch_os }}"
-          fips_suffix="${FIPS_SUFFIX}"
-          toolchain_hash="${{ hashFiles('toolchains/config.mak', 'toolchains/Makefile') }}"
-          cache_key="go-build-${go_version}-otelcol-config${fips_suffix}-${platform}"
-
-          echo "cache-key=${cache_key}-${go_hash}" >> $GITHUB_OUTPUT
-          echo "restore-keys=${cache_key}" >> $GITHUB_OUTPUT
-          echo "toolchain-cache-key=toolchain-${platform}-${toolchain_hash}" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache/restore@v4
-        id: restore-go-mod-cache
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.get-cache-key.outputs.cache-key }}
-          restore-keys: |
-            ${{ steps.get-cache-key.outputs.restore-keys }}
+          version: ${{ inputs.go-version }}
+          cache-name: otelcol-config-go-cache
+          cache-dependency-paths: |
+            pkg/tools/otelcol-config/go.sum
 
       - name: Build
         if: "! inputs.fips"
         run: make otelcol-config-${{inputs.arch_os}}
         working-directory: ./pkg/tools/otelcol-config
+
+      - name: Get cache key
+        id: get-cache-key
+        run: |
+          platform="${{ inputs.arch_os }}"
+          toolchain_hash="${{ hashFiles('toolchains/config.mak', 'toolchains/Makefile') }}"
+
+          echo "toolchain-cache-key=toolchain-${platform}-${toolchain_hash}" >> $GITHUB_OUTPUT
 
       - uses: actions/cache/restore@v4
         id: restore-toolchain-cache
@@ -172,10 +155,3 @@ jobs:
           path: |
             /opt/toolchain
           key: ${{ steps.restore-toolchain-cache.outputs.cache-primary-key }}
-
-      - uses: actions/cache/save@v4
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.restore-go-mod-cache.outputs.cache-primary-key }}

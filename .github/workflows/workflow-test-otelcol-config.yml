@@ -15,13 +15,13 @@ on:
         description: The version of Go to use.
         type: string
         required: true
-      runs-on:
-        default: ubuntu-24.04
-        type: string
       only-if-changed:
         description: Run only if relevant files changed.
         default: false
         type: boolean
+      runs-on:
+        default: ubuntu-24.04
+        type: string
 
 defaults:
   run:

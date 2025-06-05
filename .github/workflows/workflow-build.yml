@@ -7,10 +7,6 @@ on:
         description: Architecture and OS in the form "{arch}_{os}". See GOARCH and GOOS for accepted values.
         default: linux_amd64
         type: string
-      sumo_component_gomod_version:
-        description: Package version for components hosted in this repo. Normally, this is the v0.0.0-00010101000000-000000000000 placeholder.
-        type: string
-        required: false
       fips:
         description: Build binary with FIPS support
         default: false
@@ -22,6 +18,10 @@ on:
       runs-on:
         default: ubuntu-24.04
         type: string
+      sumo_component_gomod_version:
+        description: Package version for components hosted in this repo. Normally, this is the v0.0.0-00010101000000-000000000000 placeholder.
+        type: string
+        required: false
       version:
         description: Version to use when building the binary
         required: true

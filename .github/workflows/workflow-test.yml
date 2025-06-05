@@ -15,13 +15,13 @@ on:
         description: The version of Go to use.
         type: string
         required: true
-      runs-on:
-        default: ubuntu-24.04
-        type: string
       only-if-changed:
         description: Run only if relevant files changed.
         default: false
         type: boolean
+      runs-on:
+        default: ubuntu-24.04
+        type: string
 
 defaults:
   run:
@@ -44,19 +44,6 @@ jobs:
           cache-dependency-paths: |
             **/*.sum
             otelcolbuilder/.otelcol-builder.yaml
-
-      - name: Show cache sizes
-        if: runner.os == 'Linux'
-        run: |
-          du -hs $(go env GOPATH)/bin
-          du -hs $(go env GOMODCACHE)
-          du -hs $(go env GOCACHE)
-          du -hs $(go env GOMODCACHE)/*
-          du -hs $(go env GOMODCACHE)/cache/*
-          du -hs $(go env GOMODCACHE)/github.com/*
-          du -hs $(go env GOMODCACHE)/golang.org/*
-          du -hs $(go env GOMODCACHE)/google.golang.org/*
-          du -hs $(go env GOMODCACHE)/modernc.org/*
 
       - name: Setup yq
         if: runner.os == 'Windows'
