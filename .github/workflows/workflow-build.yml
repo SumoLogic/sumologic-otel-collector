@@ -94,7 +94,7 @@ jobs:
           distribution="official"
           fips="${{ inputs.fips }}"
 
-          if [[ "${RUNNER_OS}" == "Windows" && "${fips}" == "true"]]; then
+          if [[ "${RUNNER_OS}" == "Windows" && "${fips}" == "true" ]]; then
             distribution="microsoft"
           fi
 
