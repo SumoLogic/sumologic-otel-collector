@@ -30,6 +30,7 @@ runs:
 
     - name: Set Cache Key
       id: cache-key
+      shell: bash
       run: |
         platform="${{ inputs.platform }}"
         hash="${{ hashFiles('toolchains/config.mak', 'toolchains/Makefile') }}"
@@ -39,6 +40,7 @@ runs:
     - name: Cache Toolchain
       id: cache
       uses: actions/cache@v4
+      shell: bash
       with:
         path: /opt/toolchain
         key: ${{ steps.cache-key.outputs.name }}
@@ -47,5 +49,6 @@ runs:
     - name: Build Toolchain
       id: build
       if: steps.cache.outputs.cache-hit != 'true'
-      run: make toolchain-${{ inputs.platform }} OUTPUT=/opt/toolchain -j3
+      shell: bash
       working-directory: ./toolchains
+      run: make toolchain-${{ inputs.platform }} OUTPUT=/opt/toolchain -j3
