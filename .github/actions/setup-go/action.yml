@@ -131,7 +131,6 @@ runs:
         echo "go-root=$(go env GOROOT)" >> $GITHUB_OUTPUT
         echo "go-tmp-dir=$(go env GOTMPDIR)" >> $GITHUB_OUTPUT
         echo "go-version=$(go env GOVERSION)" >> $GITHUB_OUTPUT
-        go env
 
     - name: Cache Go
       if: runner.os != 'Windows'
