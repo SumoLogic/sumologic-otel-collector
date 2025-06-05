@@ -20,6 +20,7 @@ jobs:
 
   get-go-version:
     name: Get Go version
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.go-version.outputs.version }}
     steps:
