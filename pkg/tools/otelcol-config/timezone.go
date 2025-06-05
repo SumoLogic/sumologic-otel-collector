@@ -14,25 +14,26 @@ func SetTimezoneAction(ctx *actionContext) error {
 	}
 
 	var writer func([]byte) (int, error)
-	var doc []byte
+	var config []byte
 
 	switch {
 	case conf.SumologicRemote != nil || ctx.Flags.EnableRemoteControl:
 		writer = ctx.WriteSumologicRemote
-		doc = conf.SumologicRemote
+		config = conf.SumologicRemote
 	case ctx.Flags.Override:
 		writer = ctx.WriteConfDOverrides
-		doc = conf.ConfD[ConfDOverrides]
+		config = conf.ConfD[ConfDOverrides]
 	default:
 		writer = ctx.WriteConfD
-		doc = conf.ConfD[ConfDSettings]
+		config = conf.ConfD[ConfDSettings]
 	}
 
 	encoder := yqlib.YamlFormat.EncoderFactory()
 	decoder := yqlib.YamlFormat.DecoderFactory()
 	eval := yqlib.NewStringEvaluator()
 
-	if len(doc) == 0 {
+	if len(config) == 0 {
+		// If the config is empty, we create a new document with the timezone setting.
 		buf := new(bytes.Buffer)
 		enc := yaml.NewEncoder(buf)
 		enc.SetIndent(2)
