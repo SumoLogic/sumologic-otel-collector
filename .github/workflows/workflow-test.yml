@@ -45,6 +45,12 @@ jobs:
             **/*.sum
             otelcolbuilder/.otelcol-builder.yaml
 
+      - name: Show cache sizes
+        run: |
+          du -hs $(go env GOPATH)/bin
+          du -hs $(go env GOMODCACHE)
+          du -hs $(go env GOCACHE)
+
       - name: Setup yq
         if: runner.os == 'Windows'
         uses: ./.github/actions/setup-yq
