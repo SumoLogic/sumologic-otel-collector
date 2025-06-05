@@ -47,7 +47,10 @@ jobs:
 
       - name: Show cache sizes
         run: |
-          du -hs $(go env GOPATH)/bin/*
+          ls -l $(go env GOPATH)/bin
+          ls -l $(go env GOMODCACHE)
+          ls -l $(go env GOCACHE)
+          du -h $(go env GOPATH)/bin
           du -hs $(go env GOMODCACHE)/*
           du -hs $(go env GOCACHE)/*
 
