@@ -148,7 +148,7 @@ runs:
         skip-cache-restore-on-hit: ${{ inputs.skip-cache-restore-on-hit }}
 
     - name: Create Go Directories (Windows)
-      if: runner.os == 'Windows' && steps.go-cache-windows.outputs.cache-hit != 'true' && inputs.skip-cache-restore-on-hit != 'true'
+      if: runner.os == 'Windows' && steps.go-cache-windows.outputs.cache-hit != 'true'
       shell: pwsh
       run: |
         mkdir -p "${{ steps.go-env.outputs.go-mod-cache }}"
