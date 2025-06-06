@@ -131,6 +131,12 @@ runs:
         which go
         echo $PATH
 
+    - name: Show Path to Go binary
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        echo $env:Path
+
     - name: Set Go environment outputs
       id: go-env
       shell: bash
