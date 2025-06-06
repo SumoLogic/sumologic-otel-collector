@@ -51,7 +51,7 @@ runs:
       id: cache
       uses: actions/cache@v4
       with:
-        path: D:\\${{ inputs.name }}.vhdx
+        path: /d/${{ inputs.name }}.vhdx
         key: vhdx-${{ inputs.cache-key }}
         lookup-only: ${{ inputs.skip-cache-restore-on-hit == 'true' }}
 
@@ -75,3 +75,8 @@ runs:
         $Drive = Mount-VHD -Path D:\${env:Name}.vhdx -PassThru
         $Drive | Get-Disk | Get-Partition | Where-Object { $_.Type -eq 'Basic' } |
           Set-Partition -NewDriveLetter "${env:Letter}"
+
+    - name: Show dir
+      shell: bash
+      run: |
+        ls -l /d/
