@@ -90,7 +90,6 @@ runs:
         version: ${{ inputs.version }}
 
     - name: Set cache outputs
-      if: runner.os != 'Windows'
       id: go-cache-key
       shell: bash
       env:

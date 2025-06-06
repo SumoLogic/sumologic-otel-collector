@@ -55,7 +55,7 @@ runs:
     # Mount-VHD -Path "C:\Temp\Test.vhdx" -NoDriveLetter -Passthru | Get-Disk | Get-Partition | where { ($_ | Get-Volume) -ne $Null } | Add-PartitionAccessPath -AccessPath "C:\Temp\MountPoint\"
 
     - name: Create and Mount VHDX Image
-      if: steps.cache.outputs.cache-hit != 'true' && inputs.skip-cache-restore-on-hit != 'true'
+      if: steps.cache.outputs.cache-hit != 'true'
       shell: pwsh
       run: |
         $Drive = New-VHD -Path D:\${env:Name}.vhdx -SizeBytes ${env:Size} -Dynamic |
