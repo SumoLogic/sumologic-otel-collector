@@ -61,6 +61,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Run make with support for parallel jobs matching the number of cores
+      # available on each GitHub Runner. The core count can be found at the
+      # following URL.
+      # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
+      - name: Set MAKEFLAGS
+        run: |
+          cores="4"
+          if [[ "${RUNNER_OS}" == "macOS" && "${RUNNER_ARCH}" == "ARM64" ]]; then
+            cores="3"
+          fi
+
+          echo "MAKEFLAGS=\"-j ${cores}\"" >> $GITHUB_ENV
+
       - name: Setup Go
         id: setup-go
         uses: ./.github/actions/setup-go
@@ -103,6 +116,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Run make with support for parallel jobs matching the number of cores
+      # available on each GitHub Runner. The core count can be found at the
+      # following URL.
+      # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
+      - name: Set MAKEFLAGS
+        run: |
+          cores="4"
+          if [[ "${RUNNER_OS}" == "macOS" && "${RUNNER_ARCH}" == "ARM64" ]]; then
+            cores="3"
+          fi
+
+          echo "MAKEFLAGS=\"-j ${cores}\"" >> $GITHUB_ENV
+
       - name: Setup Go
         id: setup-go
         uses: ./.github/actions/setup-go
@@ -129,6 +155,19 @@ jobs:
           - platform: linux_arm64
     steps:
       - uses: actions/checkout@v4
+
+      # Run make with support for parallel jobs matching the number of cores
+      # available on each GitHub Runner. The core count can be found at the
+      # following URL.
+      # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
+      - name: Set MAKEFLAGS
+        run: |
+          cores="4"
+          if [[ "${RUNNER_OS}" == "macOS" && "${RUNNER_ARCH}" == "ARM64" ]]; then
+            cores="3"
+          fi
+
+          echo "MAKEFLAGS=\"-j ${cores}\"" >> $GITHUB_ENV
 
       - name: Setup Toolchain
         uses: ./.github/actions/setup-toolchain
