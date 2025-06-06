@@ -32,3 +32,10 @@ runs:
     - name: Install Microsoft Distribution of Go
       shell: pwsh
       run: go-install.ps1 -Version "go${{ inputs.version }}" -InstallDir "${{ inputs.install-dir }}"
+
+    - name: Add Go to Path
+      shell: bash
+      run: |
+        bin_dir="$(cygpath.exe \"${{ inputs.install-dir }}\\bin\")"
+        echo $bin_dir
+        echo "${bin_dir}" >> $GITHUB_PATH
