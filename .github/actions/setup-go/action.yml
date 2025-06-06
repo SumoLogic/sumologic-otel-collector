@@ -127,7 +127,9 @@ runs:
 
     - name: Show Path to Go binary
       shell: bash
-      run: which go
+      run: |
+        which go
+        echo $PATH
 
     - name: Set Go environment outputs
       id: go-env
