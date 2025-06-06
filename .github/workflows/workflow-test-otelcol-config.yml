@@ -47,7 +47,7 @@ jobs:
             cores="3"
           fi
 
-          echo "MAKEFLAGS=\"-j ${cores}\"" >> $GITHUB_ENV
+          echo "MAKEFLAGS=-j ${cores}" >> $GITHUB_ENV
 
       - name: Setup Go
         id: setup-go

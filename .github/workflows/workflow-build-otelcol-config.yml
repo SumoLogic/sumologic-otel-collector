@@ -57,7 +57,7 @@ jobs:
             cores="3"
           fi
 
-          echo "MAKEFLAGS=\"-j ${cores}\"" >> $GITHUB_ENV
+          echo "MAKEFLAGS=-j ${cores}" >> $GITHUB_ENV
 
       - name: Enable FIPS
         uses: ./.github/actions/enable-fips
