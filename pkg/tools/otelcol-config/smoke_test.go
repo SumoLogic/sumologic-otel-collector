@@ -42,6 +42,7 @@ func TestLocallyManagedSmoke(t *testing.T) {
 		"--add-tag", "bar=baz",
 		"--delete-tag", "bar",
 		"--set-installation-token", "abcdef",
+		"--set-timezone", "Europe/Berlin",
 		"--enable-hostmetrics",
 		"--disable-hostmetrics",
 		"--enable-ephemeral",

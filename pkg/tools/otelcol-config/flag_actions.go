@@ -23,6 +23,7 @@ var flagActions = map[string]action{
 	flagDisableHostmetrics:   DisableHostmetricsAction,
 	flagEnableEphemeral:      EnableEphemeralAction,
 	flagDisableEphemeral:     DisableEphemeralAction,
+	flagSetTimezone:          SetTimezoneAction,
 	flagSetAPIURL:            SetAPIURLAction,
 	flagEnableRemoteControl:  EnableRemoteControlAction,
 	flagDisableRemoteControl: DisableRemoteControlAction,
@@ -54,6 +55,7 @@ var actionOrder = []string{
 	flagDisableEphemeral,
 	flagSetAPIURL,
 	flagSetOpAmpEndpoint,
+	flagSetTimezone,
 	flagWriteKV,
 	flagReadKV,
 }
