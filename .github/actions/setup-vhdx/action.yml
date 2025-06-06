@@ -1,6 +1,9 @@
 name: Setup VHDX Image
 
 inputs:
+  cache-key:
+    description: The cache key to store the VHDX image.
+    required: true
   drive-letter:
     description: The drive letter to mount the VHDX image to.
     required: true
@@ -48,8 +51,8 @@ runs:
       id: cache
       uses: actions/cache@v4
       with:
-        path: D:\${{ inputs.name }}.vhdx
-        key: vhdx-cache-${{ inputs.name }}
+        path: D:\\${{ inputs.name }}.vhdx
+        key: vhdx-${{ inputs.cache-key }}
         lookup-only: ${{ inputs.skip-cache-restore-on-hit == 'true' }}
 
     # Mount-VHD -Path "C:\Temp\Test.vhdx" -NoDriveLetter -Passthru | Get-Disk | Get-Partition | where { ($_ | Get-Volume) -ne $Null } | Add-PartitionAccessPath -AccessPath "C:\Temp\MountPoint\"

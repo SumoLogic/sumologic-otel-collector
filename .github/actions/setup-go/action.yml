@@ -143,8 +143,9 @@ runs:
       if: runner.os == 'Windows'
       uses: ./.github/actions/setup-vhdx
       with:
+        cache-key: ${{ steps.go-cache-key.outputs.name }}
         drive-letter: "G"
-        name: ${{ steps.go-cache-key.outputs.name }}
+        name: go-cache
         skip-cache-restore-on-hit: ${{ inputs.skip-cache-restore-on-hit }}
 
     - name: Create Go Directories (Windows)
