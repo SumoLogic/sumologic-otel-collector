@@ -91,20 +91,16 @@ runs:
 
     - name: Set cache outputs
       if: runner.os != 'Windows'
-      id: go-cache-keys
+      id: go-cache-key
       shell: bash
       env:
         BASE_KEY: ${{ inputs.cache-name }}
         DISTRIBUTION: ${{ inputs.distribution }}
+        HASH: ${{ hashFiles(inputs.cache-dependency-paths) }}
       run: |
-        distribution_key="${BASE_KEY}-${DISTRIBUTION}"
-        runner_os_key="${distribution_key}-${RUNNER_OS}"
-        full_key="${runner_os_key}-${{ hashFiles(inputs.cache-dependency-paths) }}"
+        key="${BASE_KEY}-${DISTRIBUTION}-${RUNNER_OS}-${HASH}"
 
-        echo "base=${BASE_KEY}" >> $GITHUB_OUTPUT
-        echo "distribution=${distribution_key}" >> $GITHUB_OUTPUT
-        echo "runner-os=${runner_os_key}" >> $GITHUB_OUTPUT
-        echo "full=${full_key}" >> $GITHUB_OUTPUT
+        echo "name=${key}" >> $GITHUB_OUTPUT
 
     # Fix slow Go compile and cache restore
     # See https://github.com/actions/setup-go/pull/515
@@ -138,10 +134,9 @@ runs:
       uses: actions/cache@v4
       with:
         path: |
-          ${{ steps.go-env.outputs.go-path }}/bin
           ${{ steps.go-env.outputs.go-mod-cache }}
           ${{ steps.go-env.outputs.go-cache }}
-        key: ${{ steps.go-cache-keys.outputs.full }}
+        key: ${{ steps.go-cache-key.outputs.name }}
         lookup-only: ${{ inputs.skip-cache-restore-on-hit == 'true' }}
 
     - name: Cache Go (Windows)
@@ -150,17 +145,12 @@ runs:
       uses: ./.github/actions/setup-vhdx
       with:
         drive-letter: "G"
-        name: go
+        name: ${{ steps.go-cache-key.outputs.name }}
         skip-cache-restore-on-hit: ${{ inputs.skip-cache-restore-on-hit }}
-        cache-dependency-paths: |
-          ${{ steps.go-env.outputs.go-path }}/bin
-          ${{ steps.go-env.outputs.go-mod-cache }}
-          ${{ steps.go-env.outputs.go-cache }}
 
     - name: Create Go Directories (Windows)
-      if: runner.os == 'Windows' && steps.go-cache-windows.outputs.cache-hit != 'true'
+      if: runner.os == 'Windows' && steps.go-cache-windows.outputs.cache-hit != 'true' && inputs.skip-cache-restore-on-hit != 'true'
       shell: pwsh
       run: |
-        mkdir -p "${{ steps.go-env.outputs.go-path }}\\bin"
         mkdir -p "${{ steps.go-env.outputs.go-mod-cache }}"
         mkdir -p "${{ steps.go-env.outputs.go-cache }}"

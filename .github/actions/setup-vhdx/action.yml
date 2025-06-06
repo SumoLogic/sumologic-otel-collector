@@ -1,11 +1,6 @@
 name: Setup VHDX Image
 
 inputs:
-  cache-dependency-paths:
-    description: |
-      A list of one or more paths to generate a hash from to append to the cache
-      key.
-    required: true
   drive-letter:
     description: The drive letter to mount the VHDX image to.
     required: true
@@ -54,7 +49,7 @@ runs:
       uses: actions/cache@v4
       with:
         path: D:\${{ inputs.name }}.vhdx
-        key: vhdx-cache-${{ inputs.name }}-${{ hashFiles(inputs.cache-dependency-paths) }}
+        key: vhdx-cache-${{ inputs.name }}
         lookup-only: ${{ inputs.skip-cache-restore-on-hit == 'true' }}
 
     # Mount-VHD -Path "C:\Temp\Test.vhdx" -NoDriveLetter -Passthru | Get-Disk | Get-Partition | where { ($_ | Get-Volume) -ne $Null } | Add-PartitionAccessPath -AccessPath "C:\Temp\MountPoint\"
