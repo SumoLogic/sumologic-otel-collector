@@ -2,30 +2,114 @@ GOLANGCI_LINT_VERSION ?= v1.59.1
 PRETTIER_VERSION ?= 3.0.3
 TOWNCRIER_VERSION ?= 23.6.0
 SHELL := /usr/bin/env bash
+GIT_SHA_CMD := git rev-parse HEAD
 
+# Convert between Linux & Windows paths
 ifeq ($(OS),Windows_NT)
 	MAKE := "$(shell cygpath '$(MAKE)')"
 endif
 
-GIT_SHA_CMD := git rev-parse HEAD
+# Use GNU tools on macOS to ensure tool compatibility between platforms
+ifeq ($(shell go env GOOS),darwin)
+SED ?= gsed
+DATE ?= gdate
+else
+SED ?= sed
+DATE ?= date
+endif
+
+#################################################################################
+# OpenTelemetry variables
+#################################################################################
+
+OT_CORE_VERSION := $(shell grep "version: .*" otelcolbuilder/.otelcol-builder.yaml | cut -f 4 -d " ")
+OT_CONTRIB_VERSION := $(shell grep --max-count=1 '^  - gomod: github\.com/open-telemetry/opentelemetry-collector-contrib/' otelcolbuilder/.otelcol-builder.yaml | cut -d " " -f 6 | $(SED) "s/v//")
+
+#################################################################################
+# Go module variables
+#################################################################################
+
+ALL_GO_MODULES := $(shell find pkg/ -type f -name 'go.mod' -exec dirname {} \; | sort)
+ALL_GO_MODULES += otelcolbuilder
+
+EXPORTABLE_MODULES := $(filter pkg/%,$(ALL_GO_MODULES))
+EXPORTABLE_MODULES := $(filter-out pkg/test,$(EXPORTABLE_MODULES))
+EXPORTABLE_MODULES := $(filter-out pkg/tools/%,$(EXPORTABLE_MODULES))
+
+TESTABLE_MODULES := $(filter-out pkg/tools/udpdemux,$(ALL_GO_MODULES))
+
+#################################################################################
+# Colour variables
+#################################################################################
+
+NC            := $(shell tput -Txterm sgr0)
+Black         := $(shell tput -Txterm setaf 0)
+Red           := $(shell tput -Txterm setaf 1)
+Green         := $(shell tput -Txterm setaf 2)
+Yellow        := $(shell tput -Txterm setaf 3)
+Blue          := $(shell tput -Txterm setaf 4)
+Magenta       := $(shell tput -Txterm setaf 5)
+Cyan          := $(shell tput -Txterm setaf 6)
+White         := $(shell tput -Txterm setaf 7)
+
+#################################################################################
+# Functions
+#################################################################################
+
+define target_echo
+	echo -e "[$(Yellow)$(@D)$(NC)]: $1"
+endef
+
+define shell_run
+	@start=$$($(DATE) +"%s%3N"); \
+	$(call target_echo,Running command: $1); \
+	$1 | awk '{print "[$(Yellow)$(@D)$(NC)]: " $$0}'; \
+	end=$$($(DATE) +"%s%3N"); \
+	duration=$$(( $$end - $$start )); \
+	$(call target_echo,Completed in $$duration ms)
+endef
+
+#################################################################################
+# Default target
+#################################################################################
 
 all: markdownlint yamllint
 
+#################################################################################
+# General wildcard targets
+#################################################################################
+
+.PHONY: %/print-directory
+%/print-directory:
+	@echo $(@D)
+
+.PHONY: %/test
+%/test:
+	@$(call shell_run,cd "$(@D)" && make test)
+
+.PHONY: %/lint
+%/lint:
+	@$(call shell_run,cd "$(@D)" && make lint)
+
+#################################################################################
+# System CLI tool targets
+#################################################################################
+
+.PHONY: install-gnu-sed
+install-gnu-sed:
 ifeq ($(shell go env GOOS),darwin)
-SED ?= gsed
-else
-SED ?= sed
+	@which gsed || brew install gnu-sed
 endif
 
-.PHONY: install-go-junit-report
-install-go-junit-report:
-	go install github.com/jstemmer/go-junit-report@latest
-
-.PHONY: install-gsed
-install-gsed:
+.PHONY: install-coreutils
+install-coreutils:
 ifeq ($(shell go env GOOS),darwin)
-	@which gsed || brew install gsed
+	@which gdate || brew install coreutils
 endif
+
+#################################################################################
+# Markdown targets
+#################################################################################
 
 .PHONY: install-markdownlint
 install-markdownlint:
@@ -39,18 +123,34 @@ markdownlint:
 markdownlint-docker:
 	docker run --rm -v ${PWD}:/workdir ghcr.io/igorshubovych/markdownlint-cli:latest '**/*.md'
 
-yamllint:
-	yamllint -c .yamllint.yaml \
-		otelcolbuilder/.otelcol-builder.yaml
-
 markdown-links-lint:
 	./ci/markdown_links_lint.sh
 
 markdown-link-check:
 	./ci/markdown_link_check.sh
 
+#################################################################################
+# YAML targets
+#################################################################################
+
+yamllint:
+	yamllint -c .yamllint.yaml \
+		otelcolbuilder/.otelcol-builder.yaml
+
+#################################################################################
+# Shell targets
+#################################################################################
+
+.PHONY: check-uniform-dependencies
+check-uniform-dependencies:
+	./ci/check_uniform_dependencies.sh
+
 shellcheck:
 	shellcheck --severity=info ci/*.sh
+
+#################################################################################
+# Commit-hook targets
+#################################################################################
 
 .PHONY: install-pre-commit
 install-pre-commit:
@@ -65,69 +165,57 @@ install-pre-commit-hook:
 pre-commit-check:
 	pre-commit run --all-files
 
-# ALL_MODULES includes ./* dirs (excludes . dir and example with go code)
-ALL_MODULES := $(shell find ./pkg -type f -name "go.mod" -exec dirname {} \; | sort | egrep  '^./' )
-ALL_MODULES += ./otelcolbuilder
+#################################################################################
+# Go targets
+#################################################################################
 
-ALL_TESTABLE_MODULES := $(shell find ./pkg -type f -name "go.mod" ! -path "*pkg/tools/udpdemux/*" -exec dirname {} \; | sort | egrep  '^./' )
+.PHONY: %/mod-download-all
+%/mod-download-all:
+	@$(call shell_run,cd "$(@D)" && make mod-download-all)
 
-ALL_EXPORTABLE_MODULES += $(shell find ./pkg -type f -name "go.mod" ! -path "*pkg/test/*" -exec dirname {} \; | sort )
-
-.PHONY: list-modules
-list-modules:
-	$(MAKE) for-all CMD=""
-
-.PHONY: gotest
-gotest:
-	@$(MAKE) for-all CMD="make test"
-
-.PHONY: gotest-junit
-gotest-junit:
-	@$(MAKE) for-all-testable CMD="make test-junit"
+.PHONY: %/test-junit
+%/test-junit:
+	make test
 
 .PHONY: golint
-golint:
-	@$(MAKE) for-all CMD="make lint"
+golint: $(patsubst %,%/lint,$(ALL_GO_MODULES))
 
 .PHONY: gomod-download-all
-gomod-download-all:
-	@$(MAKE) for-all CMD="make mod-download-all"
+gomod-download-all: $(patsubst %,%/mod-download-all,$(ALL_GO_MODULES))
+
+.PHONY: gotest
+gotest: $(patsubst %,%/test,$(TESTABLE_GO_MODULES))
+
+.PHONY: gotest-junit
+gotest-junit: $(patsubst %,%/test-junit,$(TESTABLE_GO_MODULES))
+
+.PHONY: install-go-junit-report
+install-go-junit-report:
+	go install github.com/jstemmer/go-junit-report@latest
 
 .PHONY: install-staticcheck
 install-staticcheck:
 	go install honnef.co/go/tools/cmd/staticcheck@latest
 
-.PHONY: print-all-modules
-print-all-modules:
-	echo $(ALL_EXPORTABLE_MODULES)
+.PHONY: list-all-modules
+list-all-modules: $(patsubst %,%/print-directory,$(ALL_GO_MODULES))
 
-.PHONY: for-all
-for-all:
-	@echo "running $${CMD} in all modules..."
-	@set -e; for dir in $(ALL_MODULES); do \
-	  (cd "$${dir}" && \
-	  	echo "running $${CMD} in $${dir}" && \
-	 	$${CMD} ); \
-	done
+.PHONY: list-exportable-modules
+list-exportable-modules: $(patsubst %,%/print-directory,$(EXPORTABLE_GO_MODULES))
 
-.PHONY: for-all-testable
-for-all-testable:
-	@echo "running $${CMD} in all modules..."
-	@set -e; for dir in $(ALL_TESTABLE_MODULES); do \
-	  (cd "$${dir}" && \
-	  	echo "running $${CMD} in $${dir}" && \
-	 	$${CMD} ); \
-	done
+.PHONY: list-testable-modules
+list-testable-modules: $(patsubst %,%/print-directory,$(TESTABLE_GO_MODULES))
 
-.PHONY: check-uniform-dependencies
-check-uniform-dependencies:
-	./ci/check_uniform_dependencies.sh
+#################################################################################
+# OpenTelemetry preparation targets
+#################################################################################
 
-OT_CORE_VERSION := $(shell grep "version: .*" otelcolbuilder/.otelcol-builder.yaml | cut -f 4 -d " ")
-OT_CONTRIB_VERSION := $(shell grep --max-count=1 '^  - gomod: github\.com/open-telemetry/opentelemetry-collector-contrib/' otelcolbuilder/.otelcol-builder.yaml | cut -d " " -f 6 | $(SED) "s/v//")
-# usage: make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y
+# NOTE: This target can be used by setting OTC_CORE_NEW and OT_CONTRIB_NEW when
+# calling the target.
+#
+# E.g. make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y
 .PHONY: update-ot
-update-ot: install-gsed
+update-ot: install-gnu-sed
 	@test $(OT_CORE_NEW)    || (echo "usage: make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y"; exit 1);
 	@test $(OT_CONTRIB_NEW) || (echo "usage: make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y"; exit 1);
 	@echo "Updating OT core from $(OT_CORE_VERSION) to $(OT_CORE_NEW) and OT contrib from $(OT_CONTRIB_VERSION) to $(OT_CONTRIB_NEW)"
@@ -156,11 +244,11 @@ update-ot: install-gsed
 		&& popd
 
 .PHONY: update-journalctl
-update-journalctl: install-gsed
+update-journalctl: install-gnu-sed
 	$(SED) -i "s/FROM debian.*/FROM debian:${DEBIAN_VERSION} as systemd/" Dockerfile*
 
 .PHONY: update-docs
-update-docs: install-gsed
+update-docs: install-gnu-sed
 update-docs: LATEST_OT_VERSION = $(shell git describe --match 'v*' --abbrev=0 | cut -c2-)
 update-docs: PREVIOUS_OT_VERSION = $(shell git describe --match 'v*' --abbrev=0 `git describe --match 'v*' --abbrev=0`^ | cut -c2-)
 update-docs: PREVIOUS_CORE_VERSION = $(shell echo ${PREVIOUS_OT_VERSION} | sed -e 's/-sumo-.*//')
@@ -168,81 +256,9 @@ update-docs:
 	@find docs/ -type f \( -name "*.md" ! -name "upgrading.md" \) -exec $(SED) -i 's#$(PREVIOUS_CORE_VERSION)#$(OT_CORE_VERSION)#g' {} \;
 	@find docs/ -type f \( -name "*.md" ! -name "upgrading.md" \) -exec $(SED) -i 's#$(PREVIOUS_OT_VERSION)#$(LATEST_OT_VERSION)#g' {} \;
 
-################################################################################
-# Release
-################################################################################
-#
-# These targets should be used for the release process in order to make the modules
-# contained within this repo importable.
-# This is required because as of now Go doesn't allow importing modules being
-# defined in repository's sub directories without having this directory name set
-# as prefix for the tag
-#
-# So when we want to make pkg/exporter/sumologicexporter with version v0.0.43-beta.0
-# importable then we need to create the following tag:
-# `pkg/exporter/sumologicexporter/v0.0.43-beta.0`
-# in order for it to be importable.
-#
-# Related issue: https://github.com/golang/go/issues/34055
-
-# Example usage for the release:
-#
-# export TAG=v0.98.0-sumo-0
-# make add-tag push-tag
-
-.PHONY: add-tag
-add-tag:
-	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
-	@echo "Adding tag ${TAG}"
-	@git tag -a ${TAG} -s -m "${TAG}"
-	@set -e; for dir in $(ALL_EXPORTABLE_MODULES); do \
-	  (echo Adding tag "$${dir:2}/$${TAG}" && \
-	 	git tag -a "$${dir:2}/$${TAG}" -s -m "${dir:2}/${TAG}" ); \
-	done
-
-.PHONY: push-tag
-push-tag:
-	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
-	@echo "Pushing tag ${TAG}"
-	@git push origin ${TAG}
-	@set -e; for dir in $(ALL_EXPORTABLE_MODULES); do \
-	  (echo Pushing tag "$${dir:2}/$${TAG}" && \
-	 	git push origin "$${dir:2}/$${TAG}"); \
-	done
-
-.PHONY: delete-tag
-delete-tag:
-	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
-	@echo "Deleting tag ${TAG}"
-	@git tag -d ${TAG}
-	@set -e; for dir in $(ALL_EXPORTABLE_MODULES); do \
-	  (echo Deleting tag "$${dir:2}/$${TAG}" && \
-	 	git tag -d "$${dir:2}/$${TAG}" ); \
-	done
-
-.PHONY: delete-remote-tag
-delete-remote-tag:
-	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
-	@echo "Deleting remote tag ${TAG}"
-	@git push --delete origin ${TAG}
-	@set -e; for dir in $(ALL_EXPORTABLE_MODULES); do \
-		(echo Deleting remote tag "$${dir:2}/$${TAG}" && \
-		git push --delete origin "$${dir:2}/$${TAG}"); \
-	done
-
-.PHONY: prepare-tag
-prepare-tag: install-gsed
-	@[ "${TAG}" ] || ( echo ">> env var TAG is not set"; exit 1 )
-	$(SED) -i 's#\(gomod: github.com/SumoLogic/sumologic-otel-collector/.*\) v0.0.0-00010101000000-000000000000#\1 ${TAG}#g' \
-		otelcolbuilder/.otelcol-builder.yaml
-# Make sure to work with both tags starting not starting with v.
-	$(SED) -i 's#\(gomod: github.com/SumoLogic/sumologic-otel-collector/.*\) \([^v].*\)#\1 v\2#g' \
-		otelcolbuilder/.otelcol-builder.yaml
-
-
-################################################################################
-# Build
-################################################################################
+#################################################################################
+# OpenTelemetry build targets
+#################################################################################
 
 .PHONY: build
 build:
@@ -253,7 +269,9 @@ build:
 install-ocb:
 	@$(MAKE) -C ./otelcolbuilder/ install-ocb
 
-#-------------------------------------------------------------------------------
+#################################################################################
+# Container targets
+#################################################################################
 
 .PHONY: _promote-container-image
 _promote-container-image:
@@ -318,10 +336,12 @@ promote-dh-image-rc-to-stable: SRC_URL = "docker://$(DH_URL_RC):$(GIT_SHA)"
 promote-dh-image-rc-to-stable: DST_URL = "docker://$(DH_URL_STABLE):$(GIT_SHA)"
 promote-dh-image-rc-to-stable: _promote-container-manifest
 
-#-------------------------------------------------------------------------------
-
-# Changelog management
-# We use Towncrier (https://towncrier.readthedocs.io) for changelog management.
+#################################################################################
+# Changelog targets
+#
+# NOTE: We use Towncrier (https://towncrier.readthedocs.io) for changelog
+#       management.
+#################################################################################
 
 .PHONY: install-towncrier
 install-towncrier:
@@ -354,9 +374,9 @@ endif
 check-changelog:
 	towncrier check
 
-#-------------------------------------------------------------------------------
-
-# vagrant
+#################################################################################
+# Vagrant targets
+#################################################################################
 
 .PHONY: vagrant-up
 vagrant-up:
