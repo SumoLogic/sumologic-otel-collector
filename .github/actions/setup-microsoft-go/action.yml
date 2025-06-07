@@ -4,7 +4,7 @@ inputs:
   install-dir:
     description: The directory to install Go to.
     required: false
-    default: D:\\go
+    default: D:\go
   version:
     description: The version of Go to install.
     required: true
@@ -36,4 +36,7 @@ runs:
     - name: Add Go to Path
       shell: pwsh
       run: |
+        ls -l G:\
+        ls -l ${{ inputs.install-dir }}
+        ls -l ${{ inputs.install-dir }}\bin
         echo "${{ inputs.install-dir }}\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append

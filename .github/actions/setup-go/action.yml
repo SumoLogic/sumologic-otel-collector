@@ -122,7 +122,7 @@ runs:
       if: inputs.distribution == 'microsoft'
       uses: ./.github/actions/setup-microsoft-go
       with:
-        install-dir: G:\\go
+        install-dir: /g/go
         version: ${{ inputs.version }}
 
     - name: Show Path to Go binary
