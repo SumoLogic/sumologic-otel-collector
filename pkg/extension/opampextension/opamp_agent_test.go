@@ -38,6 +38,7 @@ const (
 		"service::pipelines::logs/localfilesource/0aa79379-c764-4d3d-9d66-03f6df029a07: " +
 		"references processor \"batch\" which is not configured"
 	errMsgInvalidType = "'spike_limit_percentage' expected type 'uint32'"
+	errExpectedUncofiguredEndPoint = "expected unconfigured opamp endpoint to result in default sumo opamp url setting"
 )
 
 func defaultSetup() (*Config, extension.Settings) {
@@ -244,7 +245,7 @@ func TestDefaultEndpointSetOnStart(t *testing.T) {
 	}
 	settings := o.startSettings()
 	if settings.OpAMPServerURL != DefaultSumoLogicOpAmpURL {
-		t.Error("expected unconfigured opamp endpoint to result in default sumo opamp url setting")
+		t.Error(errExpectedUncofiguredEndPoint)
 	}
 }
 
