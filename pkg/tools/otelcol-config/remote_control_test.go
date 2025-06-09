@@ -92,6 +92,7 @@ extensions:
   sumologic:
     collector_credentials_directory: /var/lib/otelcol-sumo/credentials
     installation_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
+    time_zone: UTC
 receivers:
   nop: {}
 service:

@@ -69,6 +69,7 @@ func makeNewSumologicRemoteYAML(ctx *actionContext, conf ConfDir) error {
 			"sumologic": map[string]any{
 				"installation_token":              "${SUMOLOGIC_INSTALLATION_TOKEN}",
 				"collector_credentials_directory": "/var/lib/otelcol-sumo/credentials",
+				"time_zone":                       "UTC",
 			},
 		},
 		"receivers": map[string]any{
