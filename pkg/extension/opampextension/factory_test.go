@@ -36,7 +36,7 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 
 	assert.Equal(t, cfg, &Config{
 		ClientConfig: confighttp.ClientConfig{
-			Auth: &configauth.Authentication{
+			Auth: &configauth.Config{
 				AuthenticatorID: component.NewID(sumologicextension.NewFactory().Type()),
 			},
 		},

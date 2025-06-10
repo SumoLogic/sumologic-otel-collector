@@ -7,7 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
-## [v0.124.1-sumo-0]
+## [v0.127.0-sumo-0]
+
+### Released 2025-06-10
+
+### Changed
+
+- chore: Upgraded otel core to 0.127.0 [#1771]
+- chore: Changed configauth implementation as per 0.127.0 upstream changes [#1771]
+
+### Fixed
+
+- chore: fixed CVE-2025-3445, changed archives library "github.com/mholt/archives" [#1771]
+
+[#1771]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1771
+
+[v0.127.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.127.0-sumo-0## [v0.124.1-sumo-0]
 
 ### Changed
 

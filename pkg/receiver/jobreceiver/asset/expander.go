@@ -1,11 +1,14 @@
 package asset
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 
-	archiver "github.com/mholt/archiver/v3"
+	"github.com/mholt/archives"
 
 	filetype "gopkg.in/h2non/filetype.v1"
 	filetype_types "gopkg.in/h2non/filetype.v1/types"
@@ -30,21 +33,22 @@ type namer interface {
 
 // Expand an archive to a target directory.
 func (a *archiveExpander) Expand(archive io.ReadSeeker, targetDirectory string) error {
-	// detect the type of archive the asset is
 	ft, err := sniffType(archive)
 	if err != nil {
 		return err
 	}
 
-	var ar archiver.Unarchiver
+	var format archives.Extractor
 
-	// If the file is not an archive, exit with an error.
 	switch ft.MIME.Value {
 	case "application/x-tar":
-		ar = archiver.NewTar()
+		format = archives.Tar{}
 	case "application/gzip":
-		ar = archiver.NewTarGz()
-
+		format = archives.CompressedArchive{
+			Compression: archives.Gz{},
+			Archival:    archives.Tar{},
+			Extraction:  archives.Tar{},
+		}
 	default:
 		return fmt.Errorf(
 			"given file of format '%s' does not appear valid",
@@ -52,16 +56,41 @@ func (a *archiveExpander) Expand(archive io.ReadSeeker, targetDirectory string) 
 		)
 	}
 
-	namer, ok := archive.(namer)
+	_, ok := archive.(namer)
 	if !ok {
 		return errors.New("couldn't get path to archive")
 	}
 
-	// Extract the archive to the desired path
-	if err := ar.Unarchive(namer.Name(), targetDirectory); err != nil {
-		return fmt.Errorf("error extracting asset: %s", err)
-	}
+	ctx := context.Background()
+	err = format.Extract(ctx, archive, func(ctx context.Context, f archives.FileInfo) error {
+		if err := os.MkdirAll(filepath.Dir(targetDirectory), 0755); err != nil {
+			return fmt.Errorf("failed to create directory structure: %w", err)
+		}
+		destPath := filepath.Join(targetDirectory, f.Name())
+		if f.IsDir() {
+			return os.MkdirAll(destPath, f.Mode())
+		}
+		destFile, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY, f.Mode())
+		if err != nil {
+			return fmt.Errorf("failed to create file: %w", err)
+		}
+		defer destFile.Close()
 
+		fileReader, err := f.Open()
+		if err != nil {
+			return fmt.Errorf("failed to open file from archive: %w", err)
+		}
+		defer fileReader.Close()
+
+		_, err = io.Copy(destFile, fileReader)
+		if err != nil {
+			return fmt.Errorf("failed to copy file: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
