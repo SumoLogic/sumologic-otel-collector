@@ -32,6 +32,20 @@ target "_common-windows" {
   dockerfile = "Dockerfile_windows"
 }
 
+target "_common-windows-2022" {
+  inherits = ["_common-windows"]
+  args = {
+    BASE_IMAGE = "mcr.microsoft.com/windows/servercore:ltsc2022"
+  }
+}
+
+target "_common-windows-2025" {
+  inherits = ["_common-windows"]
+  args = {
+    BASE_IMAGE = "mcr.microsoft.com/windows/nanoserver:ltsc2022"
+  }
+}
+
 target "standard" {
   inherits = ["_common"]
   platforms  = [
@@ -65,29 +79,17 @@ target "ubi-fips" {
 }
 
 target "windows-ltsc2022" {
-  inherits = ["_common-windows"]
-  args = {
-    BASE_IMAGE_TAG = "ltsc2022"
-  }
+  inherits = ["_common-windows-2022"]
 }
 
 target "windows-ltsc2025" {
-  inherits = ["_common-windows"]
-  args = {
-    BASE_IMAGE_TAG = "ltsc2025"
-  }
+  inherits = ["_common-windows-2025"]
 }
 
 target "windows-ltsc2022-fips" {
-  inherits = ["_common-windows", "_common-fips"]
-  args = {
-    BASE_IMAGE_TAG = "ltsc2022"
-  }
+  inherits = ["_common-windows-2022", "_common-fips"]
 }
 
 target "windows-ltsc2025-fips" {
-  inherits = ["_common-windows", "_common-fips"]
-  args = {
-    BASE_IMAGE_TAG = "ltsc2025"
-  }
+  inherits = ["_common-windows-2025", "_common-fips"]
 }

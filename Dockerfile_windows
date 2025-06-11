@@ -1,6 +1,6 @@
 # -*- mode: dockerfile -*-
-ARG BASE_IMAGE_TAG=ltsc2022
-FROM mcr.microsoft.com/windows/servercore:${BASE_IMAGE_TAG}
+ARG BASE_IMAGE=mcr.microsoft.com/windows/nanoserver:ltsc2025
+FROM ${BASE_IMAGE}
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 ARG COLLECTOR_BIN="otelcol-sumo"
