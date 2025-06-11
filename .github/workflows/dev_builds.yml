@@ -61,9 +61,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup MAKEFLAGS
-        uses: ./.github/actions/setup-makeflags
-
       - name: Setup Go
         id: setup-go
         uses: ./.github/actions/setup-go
@@ -75,20 +72,12 @@ jobs:
             **/*.sum
             otelcolbuilder/.otelcol-builder.yaml
 
-      - name: Install Makefile dependencies
-        run: make install-dependencies
+      - uses: ./.github/actions/setup-make-environment
+        if: steps.setup-go.outputs.cache-hit != 'true'
 
       - name: Install Go modules
         if: steps.setup-go.outputs.cache-hit != 'true'
         run: make gomod-download-all
-
-      - name: Install yq
-        if: runner.os == 'Windows' && steps.setup-go.outputs.cache-hit != 'true'
-        uses: ./.github/actions/setup-yq
-
-      - name: Setup ocb
-        if: steps.setup-go.outputs.cache-hit != 'true'
-        uses: ./.github/actions/setup-ocb
 
       - name: Generate OTC sources & Install Go modules
         if: steps.setup-go.outputs.cache-hit != 'true'
@@ -119,9 +108,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup MAKEFLAGS
-        uses: ./.github/actions/setup-makeflags
-
       - name: Setup Go
         id: setup-go
         uses: ./.github/actions/setup-go
@@ -133,8 +119,8 @@ jobs:
           cache-dependency-paths: |
             pkg/tools/otelcol-config/go.sum
 
-      - name: Install Makefile dependencies
-        run: make install-dependencies
+      - uses: ./.github/actions/setup-make-environment
+        if: steps.setup-go.outputs.cache-hit != 'true'
 
       - name: Install Go modules
         if: steps.setup-go.outputs.cache-hit != 'true'
@@ -170,20 +156,15 @@ jobs:
     strategy:
       matrix:
         include:
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-            boringcrypto: true
-          - arch_os: darwin_amd64
-            runs-on: macos-15
-          - arch_os: windows_amd64
-            runs-on: windows-2025
+          - runs-on: ubuntu-24.04
+          - runs-on: ubuntu-24.04
+            fips: true
+          - runs-on: macos-15
+          - runs-on: windows-2025
     with:
-      arch_os: ${{ matrix.arch_os }}
-      runs-on: ${{ matrix.runs-on }}
-      boringcrypto: ${{ matrix.boringcrypto == true }}
+      fips: ${{ matrix.fips == true }}
       go-version: ${{ needs.get-go-version.outputs.version }}
+      runs-on: ${{ matrix.runs-on }}
 
   test-otelcol-config:
     name: Test (otelcol-config)
@@ -194,17 +175,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-            boringcrypto: true
-          - arch_os: darwin_amd64
-            runs-on: macos-15
+          - runs-on: ubuntu-24.04
+          - runs-on: ubuntu-24.04
+            fips: true
+          - runs-on: macos-15
     with:
-      arch_os: ${{ matrix.arch_os }}
       runs-on: ${{ matrix.runs-on }}
-      boringcrypto: ${{ matrix.boringcrypto == true }}
+      fips: ${{ matrix.fips == true }}
       go-version: ${{ needs.get-go-version.outputs.version }}
 
   build:
@@ -219,27 +196,27 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - arch_os: linux_amd64
+          - platform: linux_amd64
             runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-            fips: true
-          - arch_os: linux_arm64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_arm64
+          - platform: linux_amd64
             runs-on: ubuntu-24.04
             fips: true
-          - arch_os: darwin_amd64
+          - platform: linux_arm64
+            runs-on: ubuntu-24.04
+          - platform: linux_arm64
+            runs-on: ubuntu-24.04
+            fips: true
+          - platform: darwin_amd64
             runs-on: macos-15
-          - arch_os: darwin_arm64
+          - platform: darwin_arm64
             runs-on: macos-15
-          - arch_os: windows_amd64
+          - platform: windows_amd64
             runs-on: windows-2022
-          - arch_os: windows_amd64
+          - platform: windows_amd64
             runs-on: windows-2022
             fips: true
     with:
-      arch_os: ${{ matrix.arch_os }}
+      platform: ${{ matrix.platform }}
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
       go-version: ${{ needs.get-go-version.outputs.version }}
@@ -266,26 +243,25 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - arch_os: darwin_amd64
+          - platform: darwin_amd64
             runs-on: macos-15
-          - arch_os: darwin_arm64
+          - platform: darwin_arm64
             runs-on: macos-15
-          - arch_os: linux_amd64
+          - platform: linux_amd64
             runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
+          - platform: linux_amd64
             runs-on: ubuntu-24.04
             fips: true
-          - arch_os: linux_arm64
+          - platform: linux_arm64
             runs-on: ubuntu-24.04
-          - arch_os: linux_arm64
+          - platform: linux_arm64
             runs-on: ubuntu-24.04
             fips: true
     with:
-      arch_os: ${{ matrix.arch_os }}
+      platform: ${{ matrix.platform }}
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
       go-version: ${{ needs.get-go-version.outputs.version }}
-      sumo_component_gomod_version: "v${{ needs.get-otc-version.outputs.version-with-sha }}"
     secrets:
       apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
       apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
@@ -375,30 +351,6 @@ jobs:
           echo "name=${name/_/\/}" >> "$GITHUB_OUTPUT"
           echo "name-with-subplatform=${name_with_subplatform/_/\/}" >> "$GITHUB_OUTPUT"
 
-      - name: Debug
-        run: |
-          echo "go-platform.name = ${{ steps.go-platform.outputs.name }}"
-          echo "go-platform.name-with-subplatform = ${{ steps.go-platform.outputs.name-with-subplatform }}"
-          echo "docker-platform.name = ${{ steps.docker-platform.outputs.name }}"
-          echo "docker-platform.name-with-subplatform = ${{ steps.docker-platform.outputs.name-with-subplatform }}"
-
-      - name: Set ECR registry information
-        id: registry
-        run: |
-          target="${{ matrix.target || matrix.product }}"
-          account="663229565520"
-          region="us-east-1"
-          namespace="sumologic"
-          repo="sumologic-otel-collector-ci-builds"
-          cache_tag="buildcache-${RUNNER_OS}-${target}"
-          account_url="${account}.dkr.ecr.${region}.amazonaws.com"
-          repo_url="${account_url}/${namespace}/${repo}"
-          cache_tag_url="${repo_url}:${cache_tag}"
-
-          echo "account-url=${account_url}" >> $GITHUB_OUTPUT
-          echo "repo-url=${repo_url}" >> $GITHUB_OUTPUT
-          echo "cache-tag-url=${cache_tag_url}" >> $GITHUB_OUTPUT
-
       - name: Set image metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -431,9 +383,16 @@ jobs:
       - name: Login to ECR
         uses: docker/login-action@v3
         with:
-          registry: ${{ steps.registry.outputs.account-url }}
+          registry: 663229565520.dkr.ecr.us-east-1.amazonaws.com
           username: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_LOGIN_DEV }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
 
       - name: Download binary action artifact from build phase
         uses: actions/download-artifact@v4
@@ -447,19 +406,20 @@ jobs:
         with:
           source: .
           targets: ${{ matrix.target || matrix.product }}
-          push: true
+          provenance: false
+          files: |
+            ./docker-bake.hcl
+            ./docker-bake.ci-override.hcl
+            cwd://${{ steps.meta.outputs.bake-file }}
           set: |
-            *.cache-from=type=registry,ref=${{ steps.registry.outputs.cache-tag-url }}
-            *.cache-to=type=registry,ref=${{ steps.registry.outputs.cache-tag-url }},mode=max
             *.platform=${{ steps.docker-platform.outputs.name }}
             *.tags=
-            *.output=type=image,"name=${{ steps.registry.outputs.repo-url }}",push-by-digest=true,name-canonical=true,push=true
 
       - name: Print & fix metadata
         run: |
           echo "-- Current metadata"
           echo '${{ steps.build.outputs.metadata }}' | tee metadata.json
-          echo "\n\n-- Fixed metadata"
+          echo "-- Fixed metadata"
           jq -jf ci/jq/fix-metadata.jq metadata.json | tee metadata-fixed.json
 
       - name: Set container image manifest output
@@ -467,8 +427,8 @@ jobs:
         run: |
           name="${{ matrix.product }}_${{ steps.go-platform.outputs.name-with-subplatform }}"
           target="${{ matrix.target || matrix.product }}"
-          printf -v metadata $(jq -c ".[\"$target\"]" metadata-fixed.json)
-          echo "${name}=${metadata}" >> "$GITHUB_OUTPUT"
+          jq -c ".[\"$target\"]" metadata-fixed.json | tee target-metadata.json
+          echo "${name}=$(cat target-metadata.json)" >> "$GITHUB_OUTPUT"
 
   push-image-indexes:
     name: Push image indexes

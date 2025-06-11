@@ -1,5 +1,6 @@
-// https://github.com/docker/metadata-action#bake-definition
-target "docker-metadata-action" {}
+#################################################################################
+# Groups
+#################################################################################
 
 group "default" {
   targets = [
@@ -10,10 +11,22 @@ group "default" {
   ]
 }
 
+#################################################################################
+# Base targets
+#################################################################################
+
 target "_common" {
-  inherits = ["docker-metadata-action"]
   context = "./"
-  dockerfile = "Dockerfile"
+  attest = [
+    {
+      type = "provenance",
+      disabled = true,
+    },
+    {
+      type = "sbom",
+      disabled = true,
+    },
+  ]
 }
 
 target "_common-fips" {
@@ -22,72 +35,56 @@ target "_common-fips" {
   }
 }
 
-target "_common-ubi" {
+target "_common-standard" {
   inherits = ["_common"]
-  dockerfile = "Dockerfile_ubi"
+  dockerfile = "./dockerfiles/scratch/Dockerfile"
 }
 
-target "_common-windows" {
+target "_common-ubi" {
   inherits = ["_common"]
-  dockerfile = "Dockerfile_windows"
+  dockerfile = "./dockerfiles/ubi/Dockerfile"
 }
 
 target "_common-windows-2022" {
-  inherits = ["_common-windows"]
-  args = {
-    BASE_IMAGE = "mcr.microsoft.com/windows/servercore:ltsc2022"
-  }
+  inherits = ["_common"]
+  dockerfile = "./dockerfiles/windows/nanoserver/ltsc2022/Dockerfile"
 }
 
 target "_common-windows-2025" {
-  inherits = ["_common-windows"]
-  args = {
-    BASE_IMAGE = "mcr.microsoft.com/windows/nanoserver:ltsc2022"
-  }
+  inherits = ["_common"]
+  dockerfile = "./dockerfiles/windows/nanoserver/ltsc2025/Dockerfile"
 }
 
+#################################################################################
+# Composite targets
+#################################################################################
+
 target "standard" {
-  inherits = ["_common"]
-  platforms  = [
-    "linux/amd64",
-    "linux/arm64"
-  ]
+  inherits = ["_common-standard"]
 }
 
 target "standard-fips" {
-  inherits = ["_common", "_common-fips"]
-  platforms  = [
-    "linux/amd64",
-    "linux/arm64"
-  ]
+  inherits = ["_common-standard", "_common-fips"]
 }
 
 target "ubi" {
   inherits = ["_common-ubi"]
-  platforms  = [
-    "linux/amd64",
-    "linux/arm64"
-  ]
 }
 
 target "ubi-fips" {
   inherits = ["_common-ubi", "_common-fips"]
-  platforms  = [
-    "linux/amd64",
-    "linux/arm64"
-  ]
 }
 
 target "windows-ltsc2022" {
   inherits = ["_common-windows-2022"]
 }
 
-target "windows-ltsc2025" {
-  inherits = ["_common-windows-2025"]
-}
-
 target "windows-ltsc2022-fips" {
   inherits = ["_common-windows-2022", "_common-fips"]
+}
+
+target "windows-ltsc2025" {
+  inherits = ["_common-windows-2025"]
 }
 
 target "windows-ltsc2025-fips" {

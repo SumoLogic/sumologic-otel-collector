@@ -3,10 +3,6 @@ name: Build Otelcol
 on:
   workflow_call:
     inputs:
-      arch_os:
-        description: Architecture and OS in the form "{arch}_{os}". See GOARCH and GOOS for accepted values.
-        default: linux_amd64
-        type: string
       fips:
         description: Build binary with FIPS support
         default: false
@@ -15,13 +11,18 @@ on:
         description: The version of Go to use.
         type: string
         required: true
+      platform:
+        description: |
+          Platform (Operating System and CPU architecture) in the form
+          "{os}_{arch}". See GOOS and GOARCH for accepted values.
+        default: linux_amd64
+        type: string
       runs-on:
         default: ubuntu-24.04
         type: string
-      sumo_component_gomod_version:
-        description: Package version for components hosted in this repo. Normally, this is the v0.0.0-00010101000000-000000000000 placeholder.
-        type: string
-        required: false
+      signing-enabled:
+        default: true
+        type: boolean
       version:
         description: Version to use when building the binary
         required: true
@@ -56,40 +57,13 @@ jobs:
   build:
     name: Build
     runs-on: ${{ inputs.runs-on }}
-    env:
-      OTELCOL_BINARY_EXTENSION: ${{ contains(inputs.arch_os, 'windows') && '.exe' || '' }}
-      OTELCOL_FIPS_SUFFIX: ${{ inputs.fips && '-fips' || '' }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup MAKEFLAGS
-        uses: ./.github/actions/setup-makeflags
-
-      - name: Enable FIPS
-        uses: ./.github/actions/enable-fips
-        if: runner.os == 'Windows' && inputs.fips
-
-      - name: Determine if MacOS package should be signed
-        if: runner.os == 'macOS'
-        env:
-          APPLE_DEVELOPER_CERTIFICATE: ${{ secrets.apple_developer_certificate_p12_base64 }}
-        run: |
-          if [ -n "${APPLE_DEVELOPER_CERTIFICATE}" ]; then
-              echo "MACOS_SIGNING_ENABLED=true" >> $GITHUB_ENV
-          fi
-
-      - name: Determine if Windows package should be signed
-        if: runner.os == 'Windows'
-        env:
-          WINDOWS_CERTIFICATE: "${{ secrets.microsoft_certificate }}"
-        run: |
-          if [ -n "${WINDOWS_CERTIFICATE}" ]; then
-              echo "WINDOWS_SIGNING_ENABLED=true" >> $GITHUB_ENV
-          fi
-
-      - name: Set Sumo component version in go.mod
-        if: inputs.sumo_component_gomod_version != ''
-        run: make prepare-tag TAG=${{ inputs.sumo_component_gomod_version }}
+      - uses: ./.github/actions/parse-go-platform
+        id: platform
+        with:
+          platform: ${{ inputs.platform }}
 
       - name: Set Go Distribution
         id: go-distribution
@@ -113,31 +87,31 @@ jobs:
             **/*.sum
             otelcolbuilder/.otelcol-builder.yaml
 
-      - name: Setup yq
-        if: runner.os == 'Windows'
-        uses: ./.github/actions/setup-yq
-
-      - name: Setup ocb
-        uses: ./.github/actions/setup-ocb
+      - uses: ./.github/actions/setup-build-environment
+        if: inputs.signing-enabled
+        with:
+          apple-signing-certificate-p12-base64: ${{ secrets.apple_developer_certificate_p12_base64 }}
+          apple-signing-certificate-password: ${{ secrets.apple_developer_certificate_password }}
+          fips: ${{ inputs.fips }}
 
       - name: Build
         if: "! inputs.fips"
-        run: make otelcol-sumo-${{inputs.arch_os}}
+        run: make otelcol-sumo-${{ inputs.platform }}
         working-directory: ./otelcolbuilder
 
       - name: Setup Toolchain
         uses: ./.github/actions/setup-toolchain
-        if: inputs.fips && contains(inputs.arch_os, 'linux')
+        if: inputs.fips && steps.platform.outputs.os == 'linux'
         with:
-          platform: ${{ inputs.arch_os }}
+          platform: ${{ inputs.platform }}
 
       - name: Build (FIPS)
-        if: inputs.fips && contains(inputs.arch_os, 'linux')
+        if: inputs.fips && steps.platform.outputs.os == 'linux'
         run: |
           CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
           test "$CC"
           echo "Using toolchain: $CC"
-          make otelcol-sumo-${{inputs.arch_os}} \
+          make otelcol-sumo-${{ inputs.platform }} \
             FIPS_SUFFIX="-fips" \
             CGO_ENABLED="1" \
             CC="$CC" \
@@ -145,65 +119,55 @@ jobs:
         working-directory: ./otelcolbuilder
 
       - name: Build (FIPS)
-        if: inputs.fips && ! contains(inputs.arch_os, 'linux')
-        run: make otelcol-sumo-${{inputs.arch_os}} FIPS_SUFFIX="-fips" CGO_ENABLED=1
+        if: inputs.fips && steps.platform.outputs.os != 'linux'
+        run: make otelcol-sumo-${{ inputs.platform }} FIPS_SUFFIX="-fips" CGO_ENABLED=1
         working-directory: ./otelcolbuilder
 
-      - name: Set binary name
+      - uses: ./.github/actions/determine-binary-name
         id: set-binary-name
-        run: echo "binary_name=otelcol-sumo${OTELCOL_FIPS_SUFFIX}-${{inputs.arch_os}}${OTELCOL_BINARY_EXTENSION}" >> $GITHUB_OUTPUT
+        with:
+          fips: ${{ inputs.fips }}
+          name: otelcol-sumo
+          platform: ${{ inputs.platform }}
 
       - name: Show file info
         working-directory: ./otelcolbuilder/cmd
         run: |
-          file ${{ steps.set-binary-name.outputs.binary_name }}
+          file ${{ steps.set-binary-name.outputs.name }}
 
       - name: Show ldd info
-        if: contains(inputs.arch_os, 'linux')
+        if: steps.platform.outputs.os == 'linux'
         working-directory: ./otelcolbuilder/cmd
         run: |
-          ldd ${{ steps.set-binary-name.outputs.binary_name }} || true
+          ldd ${{ steps.set-binary-name.outputs.name }} || true
 
-      - name: Show BoringSSL symbols
-        if: inputs.fips && contains(inputs.arch_os, 'linux')
-        working-directory: ./otelcolbuilder/cmd
-        run: |
-          go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
-          grep "_Cfunc__goboringcrypto_"
-
-      - name: Show Microsoft Cryptography Next-Generation symbols
-        if: inputs.fips && contains(inputs.arch_os, 'windows')
-        working-directory: ./otelcolbuilder/cmd
-        run: |
-          go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
-          grep "vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt.GetFipsAlgorithmMode"
+      - uses: ./.github/actions/show-fips-symbols
+        if: inputs.fips
+        with:
+          name: ${{ steps.set-binary-name.outputs.name }}
+          os: ${{ steps.platform.outputs.os }}
+          working-directory: ./otelcolbuilder/cmd
 
       - name: Verify binary version
-        if: inputs.arch_os == 'linux_amd64' || inputs.arch_os == 'darwin_amd64'
+        if: inputs.platform == 'linux_amd64' || inputs.platform == 'darwin_amd64'
         run: |
-          binary=${{ steps.set-binary-name.outputs.binary_name }}
+          binary=${{ steps.set-binary-name.outputs.name }}
           binary_path=otelcolbuilder/cmd/${binary}
           ./ci/get_version_from_binary.sh core "${binary_path}"
           ./ci/get_version_from_binary.sh sumo "${binary_path}"
 
-      - uses: apple-actions/import-codesign-certs@v3
-        if: ${{ runner.os == 'macOS' && env.MACOS_SIGNING_ENABLED == 'true' }}
-        with:
-          p12-file-base64: ${{ secrets.apple_developer_certificate_p12_base64 }}
-          p12-password: ${{ secrets.apple_developer_certificate_password }}
-
       - name: Sign the mac binaries
-        if: ${{ runner.os == 'macOS' && env.MACOS_SIGNING_ENABLED == 'true' }}
+        if: runner.os == 'macOS' && inputs.signing-enabled
         env:
           AC_PASSWORD: ${{ secrets.app_store_connect_password }}
         working-directory: ./otelcolbuilder/
         run: |
           for i in $(seq 1 5); do
-          make ${{ inputs.arch_os }}-sign && break || sleep 5
+          make ${{ inputs.platform }}-sign && break || sleep 5
           done
 
       - name: Sign Windows binary
-        if: runner.os == 'Windows' && env.WINDOWS_SIGNING_ENABLED == 'true'
+        if: runner.os == 'Windows' && inputs.signing-enabled
         uses: skymatic/code-sign-action@v3
         with:
           certificate: "${{ secrets.microsoft_certificate }}"
@@ -214,24 +178,24 @@ jobs:
           folder: ./otelcolbuilder/cmd
 
       - name: Test binary
-        if: inputs.arch_os == env.ARCH_OS
+        if: inputs.platform == 'linux_amd64'
         working-directory: ./otelcolbuilder/cmd
         run: |
-          ./${{ steps.set-binary-name.outputs.binary_name }} help
-          ./${{ steps.set-binary-name.outputs.binary_name }} components
-          ./${{ steps.set-binary-name.outputs.binary_name }} completion bash
+          ./${{ steps.set-binary-name.outputs.name }} help
+          ./${{ steps.set-binary-name.outputs.name }} components
+          ./${{ steps.set-binary-name.outputs.name }} completion bash
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.set-binary-name.outputs.binary_name }}
-          path: ./otelcolbuilder/cmd/${{ steps.set-binary-name.outputs.binary_name }}
+          name: ${{ steps.set-binary-name.outputs.name }}
+          path: ./otelcolbuilder/cmd/${{ steps.set-binary-name.outputs.name }}
           if-no-files-found: error
 
       - name: Store Mac .dmg as action artifact
         uses: actions/upload-artifact@v4
-        if: runner.os == 'macOS' && env.MACOS_SIGNING_ENABLED == 'true'
+        if: runner.os == 'macOS'
         with:
-          name: ${{ steps.set-binary-name.outputs.binary_name }}.dmg
-          path: ./otelcolbuilder/cmd/${{ steps.set-binary-name.outputs.binary_name }}.dmg
+          name: ${{ steps.set-binary-name.outputs.name }}.dmg
+          path: ./otelcolbuilder/cmd/${{ steps.set-binary-name.outputs.name }}.dmg
           if-no-files-found: error

@@ -1,0 +1,25 @@
+name: Setup Test Environment
+
+inputs:
+  apple-signing-certificate-p12-base64:
+    required: true
+  apple-signing-certificate-password:
+    required: true
+  fips:
+    description: Enables FIPS environment.
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - uses: ./.github/actions/setup-make-environment
+
+    - name: Enable FIPS
+      uses: ./.github/actions/enable-fips
+      if: runner.os == 'Windows' && inputs.fips
+
+    - uses: apple-actions/import-codesign-certs@v3
+      if: runner.os == 'macOS'
+      with:
+        p12-file-base64: ${{ inputs.apple-signing-certificate-p12-base64 }}
+        p12-password: ${{ inputs.apple-signing-certificate-password }}

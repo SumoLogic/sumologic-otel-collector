@@ -131,27 +131,6 @@ runs:
         $ts = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
         "timestamp=${ts}" >> $env:GITHUB_OUTPUT
 
-    # - name: Stop Docker Service
-    #   shell: pwsh
-    #   run: Stop-Service docker
-
-    # - name: Update Docker Daemon Config
-    #   shell: pwsh
-    #   run: |
-    #     Set-Content $env:ProgramData\Docker\config\daemon.json @"
-    #     {
-    #       "default-runtime": "io.containerd.runhcs.v1",
-    #       "features": {
-    #         "buildkit": true,
-    #         "containerd-snapshotter": true
-    #       }
-    #     }
-    #     "@
-
-    # - name: Start Docker Service
-    #   shell: pwsh
-    #   run: Start-Service docker
-
     - name: Setup Docker
       uses: docker/setup-docker-action@v4
       with:

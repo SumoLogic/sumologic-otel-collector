@@ -3,12 +3,8 @@ name: Run tests (otelcol-config)
 on:
   workflow_call:
     inputs:
-      arch_os:
-        description: Architecture and OS in the form "{arch}_{os}". See GOARCH and GOOS for accepted values.
-        default: linux_amd64
-        type: string
-      boringcrypto:
-        description: Run with BoringCrypto enabled
+      fips:
+        description: Run with FIPS enabled
         default: false
         type: boolean
       go-version:
@@ -31,13 +27,8 @@ jobs:
   test:
     name: Test (otelcol-config)
     runs-on: ${{ inputs.runs-on }}
-    env:
-      BORINGCRYPTO_SUFFIX: ${{ inputs.boringcrypto && '-boringcrypto' || '' }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup MAKEFLAGS
-        uses: ./.github/actions/setup-makeflags
 
       - name: Setup Go
         id: setup-go
@@ -48,6 +39,20 @@ jobs:
           cache-dependency-paths: |
             pkg/tools/otelcol-config/go.sum
 
+      - uses: ./.github/actions/setup-test-environment
+
       - name: Run tests
-        run: make test ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
         working-directory: ./pkg/tools/otelcol-config
+        run: make test-junit ${{ inputs.fips && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
+
+      - name: Print JUnit Report
+        working-directory: ./pkg/tools/otelcol-config
+        run: |
+          find . -name report.xml -exec cat {} \;
+
+      - name: Test Summary
+        uses: test-summary/action@v1
+        with:
+          paths: |
+            pkg/tools/otelcol-config/report.xml
+        if: always()

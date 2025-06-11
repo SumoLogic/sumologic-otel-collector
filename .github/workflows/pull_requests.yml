@@ -142,19 +142,19 @@ jobs:
     strategy:
       matrix:
         include:
-          - arch_os: linux_amd64
+          - platform: linux_amd64
             runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
+          - platform: linux_amd64
             runs-on: ubuntu-24.04
-            boringcrypto: true
-          - arch_os: darwin_arm64
+            fips: true
+          - platform: darwin_arm64
             runs-on: macos-15
-          - arch_os: windows_amd64
+          - platform: windows_amd64
             runs-on: windows-2022
     with:
-      arch_os: ${{ matrix.arch_os }}
+      platform: ${{ matrix.platform }}
       runs-on: ${{ matrix.runs-on }}
-      boringcrypto: ${{ matrix.boringcrypto == true }}
+      fips: ${{ matrix.fips }}
 
   test-otelcol-config:
     name: Test (otelcol-config)
@@ -162,17 +162,17 @@ jobs:
     strategy:
       matrix:
         include:
-          - arch_os: linux_amd64
+          - platform: linux_amd64
             runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
+          - platform: linux_amd64
             runs-on: ubuntu-24.04
-            boringcrypto: true
-          - arch_os: darwin_amd64
+            fips: true
+          - platform: darwin_amd64
             runs-on: macos-15
     with:
-      arch_os: ${{ matrix.arch_os }}
+      platform: ${{ matrix.platform }}
       runs-on: ${{ matrix.runs-on }}
-      boringcrypto: ${{ matrix.boringcrypto == true }}
+      fips: ${{ matrix.fips }}
 
   lint:
     name: Lint (staticcheck)
@@ -181,7 +181,7 @@ jobs:
     if: needs.build-changed.outputs.any_changed == 'true'
     strategy:
       matrix:
-        arch_os: ["linux_amd64"]
+        platform: ["linux_amd64"]
     steps:
       - uses: actions/checkout@v4
 
@@ -201,17 +201,17 @@ jobs:
           path: |
             ${{ env.GOMODCACHE }}/cache
             ${{ env.GOCACHE }}
-          key: go-test-${{ env.GO_VERSION }}-${{matrix.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
+          key: go-test-${{ env.GO_VERSION }}-${{matrix.platform}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
           restore-keys: |
-            go-test-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
+            go-test-${{ env.GO_VERSION }}-${{matrix.platform}}-
 
       - uses: actions/cache/restore@v4
         with:
           path: |
             /home/runner/.cache/staticcheck
-          key: staticcheck-${{ env.GO_VERSION }}-${{matrix.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
+          key: staticcheck-${{ env.GO_VERSION }}-${{matrix.platform}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
           restore-keys: |
-            staticcheck-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
+            staticcheck-${{ env.GO_VERSION }}-${{matrix.platform}}-
 
       - name: Install staticcheck
         run: make install-staticcheck
@@ -233,24 +233,24 @@ jobs:
     strategy:
       matrix:
         include:
-          - arch_os: linux_amd64
+          - platform: linux_amd64
             runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
+          - platform: linux_amd64
             runs-on: ubuntu-24.04
             fips: true
-          - arch_os: linux_arm64
+          - platform: linux_arm64
             runs-on: ubuntu-24.04
-          - arch_os: darwin_amd64
+          - platform: darwin_amd64
             runs-on: macos-15
-          - arch_os: darwin_arm64
+          - platform: darwin_arm64
             runs-on: macos-15
-          - arch_os: windows_amd64
+          - platform: windows_amd64
             runs-on: windows-2022
-          - arch_os: windows_amd64
+          - platform: windows_amd64
             runs-on: windows-2022
             fips: true
     with:
-      arch_os: ${{ matrix.arch_os }}
+      platform: ${{ matrix.platform }}
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
       version: ${{ needs.get-version.outputs.version }}
@@ -271,22 +271,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - arch_os: darwin_amd64
+          - platform: darwin_amd64
             runs-on: macos-15
-          - arch_os: darwin_arm64
+          - platform: darwin_arm64
             runs-on: macos-15
-          - arch_os: linux_amd64
+          - platform: linux_amd64
             runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
+          - platform: linux_amd64
             runs-on: ubuntu-24.04
             fips: true
-          - arch_os: linux_arm64
+          - platform: linux_arm64
             runs-on: ubuntu-24.04
-          - arch_os: linux_arm64
+          - platform: linux_arm64
             runs-on: ubuntu-24.04
             fips: true
     with:
-      arch_os: ${{ matrix.arch_os }}
+      platform: ${{ matrix.platform }}
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
     secrets:
@@ -305,7 +305,7 @@ jobs:
     if: needs.build-changed.outputs.any_changed == 'true'
     strategy:
       matrix:
-        arch_os: ["linux_amd64", "linux_arm64"]
+        platform: ["linux_amd64", "linux_arm64"]
     steps:
       - uses: actions/checkout@v4
 
@@ -322,34 +322,34 @@ jobs:
       - name: Download binary action artifact from build phase
         uses: actions/download-artifact@v4
         with:
-          name: otelcol-sumo-${{matrix.arch_os}}
+          name: otelcol-sumo-${{matrix.platform}}
           path: artifacts/
 
       - name: Build the container image
         run: |
-          cp artifacts/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
+          cp artifacts/otelcol-sumo-${{matrix.platform}} otelcol-sumo
           make build-container-multiplatform \
-            PLATFORM=${{ matrix.arch_os }}
+            PLATFORM=${{ matrix.platform }}
 
       - name: Test built image
         run: make test-built-image
 
       - name: Download FIPS binary action artifact from build phase
-        if: matrix.arch_os == 'linux_amd64'
+        if: matrix.platform == 'linux_amd64'
         uses: actions/download-artifact@v4
         with:
-          name: otelcol-sumo-fips-${{matrix.arch_os}}
+          name: otelcol-sumo-fips-${{matrix.platform}}
           path: artifacts/
 
       - name: Build the FIPS container image
-        if: matrix.arch_os == 'linux_amd64'
+        if: matrix.platform == 'linux_amd64'
         run: |
-          cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
+          cp artifacts/otelcol-sumo-fips-${{matrix.platform}} otelcol-sumo
           make build-container-multiplatform \
-            PLATFORM=${{ matrix.arch_os }} BUILD_TYPE_SUFFIX="-fips"
+            PLATFORM=${{ matrix.platform }} BUILD_TYPE_SUFFIX="-fips"
 
       - name: Test built FIPS image
-        if: matrix.arch_os == 'linux_amd64'
+        if: matrix.platform == 'linux_amd64'
         run: make test-built-image BUILD_TAG="latest-fips"
 
   build-windows-container:
@@ -362,10 +362,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - arch_os: windows_amd64
+          - platform: windows_amd64
             base_image_tag: ltsc2022
             runs-on: windows-2022
-          - arch_os: windows_amd64
+          - platform: windows_amd64
             base_image_tag: ltsc2025
             runs-on: windows-2025
     steps:
@@ -374,14 +374,14 @@ jobs:
       - name: Download binary action artifact from build phase
         uses: actions/download-artifact@v4
         with:
-          name: otelcol-sumo-${{matrix.arch_os}}.exe
+          name: otelcol-sumo-${{matrix.platform}}.exe
           path: artifacts/
 
       - name: Build the container image
         run: |
-          cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
+          cp artifacts/otelcol-sumo-${{matrix.platform}}.exe otelcol-sumo.exe
           make build-container-windows \
-            PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
+            PLATFORM=${{ matrix.platform }}_${{ matrix.base_image_tag }}
 
       - name: Test built image
         run: make test-built-image

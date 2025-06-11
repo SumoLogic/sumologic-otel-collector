@@ -15,6 +15,14 @@ ifeq ($(OS),Windows_NT)
 			HOST_ARCH ?= x86
 		endif
 	endif
+
+	ifeq ($(HOST_ARCH),)
+		ifneq ($(PROCESSOR_ARCHITEW6432),)
+			UNSUPPORTED_ARCH := $(PROCESSOR_ARCHITEW6432)
+		else
+			UNSUPPORTED_ARCH := $(PROCESSOR_ARCHITECTURE)
+		endif
+	endif
 else
 	UNAME_S ?= $(shell uname -s)
 	ifeq ($(UNAME_S),Linux)
@@ -23,23 +31,31 @@ else
 	ifeq ($(UNAME_S),Darwin)
 		HOST_OS ?= Darwin
 	endif
-	UNAME_P := $(shell uname -p)
-	ifeq ($(UNAME_P),x86_64)
+
+	UNAME_M := $(shell uname -m)
+	ifeq ($(UNAME_M),x86_64)
 		HOST_ARCH ?= AMD64
 	endif
-	ifneq ($(filter %86,$(UNAME_P)),)
-		HOST_ARCH ?= IA32
+	ifeq ($(UNAME_M),aarch64)
+		HOST_ARCH ?= ARM64
 	endif
-	ifneq ($(filter arm%,$(UNAME_P)),)
-		HOST_ARCH ?= ARM
+	ifeq ($(UNAME_M),arm64)
+		HOST_ARCH ?= ARM64
+	endif
+
+	ifeq ($(HOST_ARCH),)
+		UNSUPPORTED_OS := $(UNAME_S)
+	endif
+	ifeq ($(HOST_ARCH),)
+		UNSUPPORTED_ARCH := $(UNAME_M)
 	endif
 endif
 
 ifeq ($(HOST_OS),)
-	$(error Could not detect host operating system)
+$(error Unsupported operating system: $(UNSUPPORTED_OS))
 endif
 ifeq ($(HOST_ARCH),)
-	$(error Could not detect host architecture)
+$(error Unsupported architecture: $(UNSUPPORTED_ARCH))
 endif
 
 $(info Platform detected: $(HOST_OS)/$(HOST_ARCH))

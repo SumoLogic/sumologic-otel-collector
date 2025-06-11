@@ -1,0 +1,46 @@
+name: Determine the name of a binary
+
+inputs:
+  fips:
+    description: Whether the binary is built with FIPS or not.
+    required: false
+    default: false
+  name:
+    description: The base name of the binary.
+    required: true
+  platform:
+    description: The platform of the binary. Must be in "{os}_{arch}" format.
+    required: true
+
+outputs:
+  name:
+    value: ${{ steps.binary.outputs.name }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: ./.github/actions/parse-go-platform
+      id: platform
+      with:
+        platform: ${{ inputs.platform }}
+
+    - name: Set binary name
+      id: binary
+      shell: bash
+      run: |
+        fips="${{ inputs.fips }}"
+        platform="${{ inputs.platform }}"
+        os="${{ steps.platform.outputs.os }}"
+        name="${{ inputs.name }}"
+
+        if [[ "${fips}" == "true" ]]; then
+          name="${name}-fips"
+        fi
+
+        name="${name}-${platform}"
+
+        if [[ "${os}" == "windows" ]]; then
+          name="${name}.exe"
+        fi
+
+        echo "name=${name}" >> $GITHUB_OUTPUT

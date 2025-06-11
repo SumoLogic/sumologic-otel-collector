@@ -3,10 +3,6 @@ name: Build Otelcol Config Tool
 on:
   workflow_call:
     inputs:
-      arch_os:
-        description: Architecture and OS in the form "{arch}_{os}". See GOARCH and GOOS for accepted values.
-        default: linux_amd64
-        type: string
       fips:
         description: Build binary with FIPS support
         default: false
@@ -15,13 +11,18 @@ on:
         description: The version of Go to use.
         type: string
         required: true
+      platform:
+        description: |
+          Platform (Operating System and CPU architecture) in the form
+          "{os}_{arch}". See GOOS and GOARCH for accepted values.
+        default: linux_amd64
+        type: string
       runs-on:
         default: ubuntu-24.04
         type: string
-      sumo_component_gomod_version:
-        description: Package version for components hosted in this repo. Normally, this is the v0.0.0-00010101000000-000000000000 placeholder.
-        type: string
-        required: false
+      signing-enabled:
+        default: true
+        type: boolean
     secrets:
       apple_developer_certificate_p12_base64:
         required: false
@@ -34,9 +35,6 @@ defaults:
   run:
     shell: bash
 
-env:
-  GO_VERSION: "1.21.11"
-
 jobs:
   build:
     name: Build
@@ -46,14 +44,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup MAKEFLAGS
-        uses: ./.github/actions/setup-makeflags
+      - uses: ./.github/actions/parse-go-platform
+        id: platform
+        with:
+          platform: ${{ inputs.platform }}
 
-      - name: Enable FIPS
-        uses: ./.github/actions/enable-fips
-        if: runner.os == 'Windows' && inputs.fips
-
-      - name: Setup Go
+      - name: Setup Go Distribution
         id: setup-go
         uses: ./.github/actions/setup-go
         with:
@@ -62,76 +58,80 @@ jobs:
           cache-dependency-paths: |
             pkg/tools/otelcol-config/go.sum
 
+      - uses: ./.github/actions/setup-build-environment
+        if: inputs.signing-enabled
+        with:
+          apple-signing-certificate-p12-base64: ${{ secrets.apple_developer_certificate_p12_base64 }}
+          apple-signing-certificate-password: ${{ secrets.apple_developer_certificate_password }}
+          fips: ${{ inputs.fips }}
+
       - name: Build
         if: "! inputs.fips"
-        run: make otelcol-config-${{inputs.arch_os}}
+        run: make otelcol-config-${{ inputs.platform }}
         working-directory: ./pkg/tools/otelcol-config
 
       - name: Setup Toolchain
         uses: ./.github/actions/setup-toolchain
-        if: inputs.fips && contains(inputs.arch_os, 'linux')
+        if: inputs.fips && steps.platform.outputs.os == 'linux'
         with:
-          platform: ${{ inputs.arch_os }}
+          platform: ${{ inputs.platform }}
 
       - name: Build (FIPS)
-        if: inputs.fips && contains(inputs.arch_os, 'linux')
+        if: inputs.fips && steps.platform.outputs.os == 'linux'
         run: |
           CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
           test "$CC"
           echo "Using toolchain: $CC"
-          make otelcol-config-${{inputs.arch_os}} \
+          make otelcol-config-${{ inputs.platform }} \
             FIPS_SUFFIX="-fips" \
             CGO_ENABLED="1" \
             CC="$CC" \
             LDFLAGS="-linkmode external -extldflags '-static'"
         working-directory: ./pkg/tools/otelcol-config
 
-      - name: Set binary name
+      - uses: ./.github/actions/determine-binary-name
         id: set-binary-name
-        run: echo "binary_name=otelcol-config${FIPS_SUFFIX}-${{inputs.arch_os}}" >> $GITHUB_OUTPUT
+        with:
+          fips: ${{ inputs.fips }}
+          name: otelcol-config
+          platform: ${{ inputs.platform }}
 
       - name: Show file info
         working-directory: ./pkg/tools/otelcol-config
         run: |
-          file ${{ steps.set-binary-name.outputs.binary_name }}
+          file ${{ steps.set-binary-name.outputs.name }}
 
       - name: Show ldd info
-        if: contains(inputs.arch_os, 'linux')
+        if: steps.platform.outputs.os == 'linux'
         working-directory: ./pkg/tools/otelcol-config
         run: |
-          ldd ${{ steps.set-binary-name.outputs.binary_name }} || true
+          ldd ${{ steps.set-binary-name.outputs.name }} || true
 
-      - name: Show BoringSSL symbols
-        if: inputs.fips && contains(inputs.arch_os, 'linux')
-        working-directory: ./pkg/tools/otelcol-config
-        run: |
-          go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
-          grep "_Cfunc__goboringcrypto_"
-
-      - uses: apple-actions/import-codesign-certs@v3
-        if: ${{ runner.os == 'macOS' }}
+      - uses: ./.github/actions/show-fips-symbols
+        if: inputs.fips
         with:
-          p12-file-base64: ${{ secrets.apple_developer_certificate_p12_base64 }}
-          p12-password: ${{ secrets.apple_developer_certificate_password }}
+          name: ${{ steps.set-binary-name.outputs.name }}
+          os: ${{ steps.platform.outputs.os }}
+          working-directory: ./pkg/tools/otelcol-config
 
       - name: Sign the mac binaries
-        if: ${{ runner.os == 'macOS' }}
+        if: runner.os == 'macOS' && inputs.signing-enabled
         env:
           AC_PASSWORD: ${{ secrets.app_store_connect_password }}
         working-directory: ./pkg/tools/otelcol-config
-        run: make ${{ inputs.arch_os }}-sign
+        run: make ${{ inputs.platform }}-sign
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.set-binary-name.outputs.binary_name }}
-          path: ./pkg/tools/otelcol-config/${{ steps.set-binary-name.outputs.binary_name }}
+          name: ${{ steps.set-binary-name.outputs.name }}
+          path: ./pkg/tools/otelcol-config/${{ steps.set-binary-name.outputs.name }}
           if-no-files-found: error
 
       - name: Store macOS .dmg as action artifact
         uses: actions/upload-artifact@v4
         if: runner.os == 'macOS'
         with:
-          name: ${{ steps.set-binary-name.outputs.binary_name }}.dmg
-          path: ./pkg/tools/otelcol-config/${{ steps.set-binary-name.outputs.binary_name }}.dmg
+          name: ${{ steps.set-binary-name.outputs.name }}.dmg
+          path: ./pkg/tools/otelcol-config/${{ steps.set-binary-name.outputs.name }}.dmg
           if-no-files-found: error

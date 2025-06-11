@@ -1,4 +1,3 @@
-# -*- mode: dockerfile -*-
 # Build RedHat compliant image
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10
 ARG TARGETPLATFORM
@@ -27,7 +26,8 @@ RUN chmod 755 /otelcol-sumo
 ADD https://raw.githubusercontent.com/SumoLogic/sumologic-otel-collector/main/LICENSE \
     /licenses/LICENSE
 
-RUN microdnf update && microdnf install systemd && microdnf clean all
+# hadolint ignore=DL3041
+RUN microdnf update && microdnf install -y systemd && microdnf clean all
 
 ARG USER_UID=10001
 USER ${USER_UID}

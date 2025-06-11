@@ -1,0 +1,10 @@
+name: Setup Test Environment
+
+runs:
+  using: "composite"
+  steps:
+    - uses: ./.github/actions/setup-make-environment
+
+    - name: Install Go JUnit Report
+      shell: bash
+      run: make install-go-junit-report

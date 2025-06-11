@@ -30,8 +30,12 @@ endif
 # OpenTelemetry variables
 #################################################################################
 
-OT_CORE_VERSION := $(shell grep "version: .*" otelcolbuilder/.otelcol-builder.yaml | cut -f 4 -d " ")
-OT_CONTRIB_VERSION := $(shell grep --max-count=1 '^  - gomod: github\.com/open-telemetry/opentelemetry-collector-contrib/' otelcolbuilder/.otelcol-builder.yaml | cut -d " " -f 6 | $(SED) "s/v//")
+OT_CORE_VERSION_CMD := grep "version: .*" otelcolbuilder/.otelcol-builder.yaml \
+	| cut -f 4 -d " "
+
+OT_CONTRIB_VERSION_CMD := grep --max-count=1 \
+	'^  - gomod: github\.com/open-telemetry/opentelemetry-collector-contrib/' \
+	otelcolbuilder/.otelcol-builder.yaml | cut -d " " -f 6 | $(SED) "s/v//"
 
 #################################################################################
 # Go module variables
@@ -40,11 +44,12 @@ OT_CONTRIB_VERSION := $(shell grep --max-count=1 '^  - gomod: github\.com/open-t
 ALL_GO_MODULES := $(shell find pkg/ -type f -name 'go.mod' -exec dirname {} \; | sort)
 ALL_GO_MODULES += otelcolbuilder
 
-EXPORTABLE_MODULES := $(filter pkg/%,$(ALL_GO_MODULES))
-EXPORTABLE_MODULES := $(filter-out pkg/test,$(EXPORTABLE_MODULES))
-EXPORTABLE_MODULES := $(filter-out pkg/tools/%,$(EXPORTABLE_MODULES))
+EXPORTABLE_GO_MODULES := $(filter pkg/%,$(ALL_GO_MODULES))
+EXPORTABLE_GO_MODULES := $(filter-out pkg/test,$(EXPORTABLE_GO_MODULES))
+EXPORTABLE_GO_MODULES := $(filter-out pkg/tools/%,$(EXPORTABLE_GO_MODULES))
 
-TESTABLE_MODULES := $(filter-out pkg/tools/udpdemux,$(ALL_GO_MODULES))
+TESTABLE_GO_MODULES := $(filter-out pkg/tools/otelcol-config,$(ALL_GO_MODULES))
+TESTABLE_GO_MODULES := $(filter-out pkg/tools/udpdemux,$(ALL_GO_MODULES))
 
 #################################################################################
 # Colour variables
@@ -93,11 +98,11 @@ all: markdownlint yamllint
 
 .PHONY: %/test
 %/test:
-	@$(call shell_run,cd "$(@D)" && make test)
+	$(call shell_run,cd "$(@D)" && $(MAKE) test)
 
 .PHONY: %/lint
 %/lint:
-	@$(call shell_run,cd "$(@D)" && make lint)
+	$(call shell_run,cd "$(@D)" && $(MAKE) lint)
 
 #################################################################################
 # System CLI tool targets
@@ -106,13 +111,13 @@ all: markdownlint yamllint
 .PHONY: install-gnu-sed
 install-gnu-sed:
 ifeq ($(HOST_OS),Darwin)
-	@which gsed || brew install gnu-sed
+	@which gsed > /dev/null || brew install gnu-sed
 endif
 
 .PHONY: install-coreutils
 install-coreutils:
 ifeq ($(HOST_OS),Darwin)
-	@which gdate || brew install coreutils
+	@which gdate > /dev/null || brew install coreutils
 endif
 
 .PHONY: install-dependencies
@@ -133,7 +138,8 @@ markdownlint:
 
 .PHONY: markdownlint-docker
 markdownlint-docker:
-	docker run --rm -v ${PWD}:/workdir ghcr.io/igorshubovych/markdownlint-cli:latest '**/*.md'
+	docker run --rm -v ${PWD}:/workdir \
+		ghcr.io/igorshubovych/markdownlint-cli:latest '**/*.md'
 
 markdown-links-lint:
 	./ci/markdown_links_lint.sh
@@ -183,11 +189,11 @@ pre-commit-check:
 
 .PHONY: %/mod-download-all
 %/mod-download-all:
-	@$(call shell_run,cd "$(@D)" && make mod-download-all)
+	$(call shell_run,cd "$(@D)" && $(MAKE) mod-download-all)
 
 .PHONY: %/test-junit
 %/test-junit:
-	make test
+	$(call shell_run,cd "$(@D)" && $(MAKE) test-junit)
 
 .PHONY: golint
 golint: $(patsubst %,%/lint,$(ALL_GO_MODULES))
@@ -228,6 +234,9 @@ list-testable-modules: $(patsubst %,%/print-directory,$(TESTABLE_GO_MODULES))
 # E.g. make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y
 .PHONY: update-ot
 update-ot: install-gnu-sed
+update-ot: OT_CORE_VERSION = $(shell $(OT_CORE_VERSION_CMD))
+update-ot: OT_CONTRIB_VERSION = $(shell $(OT_CONTRIB_VERSION_CMD))
+update-ot:
 	@test $(OT_CORE_NEW)    || (echo "usage: make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y"; exit 1);
 	@test $(OT_CONTRIB_NEW) || (echo "usage: make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y"; exit 1);
 	@echo "Updating OT core from $(OT_CORE_VERSION) to $(OT_CORE_NEW) and OT contrib from $(OT_CONTRIB_VERSION) to $(OT_CONTRIB_NEW)"
@@ -249,10 +258,10 @@ update-ot: install-gnu-sed
 	@find . -type f -name "go.mod" -exec $(SED) -i "s/\(go\.opentelemetry\.io\/collector.*\) v$(OT_CORE_VERSION)$$/\1 v$(OT_CORE_NEW)/" {} \;
 	@find . -type f -name "go.mod" -exec $(SED) -i "s/\(github\.com\/open-telemetry\/opentelemetry-collector-contrib\/.*\) v$(OT_CONTRIB_VERSION)$$/\1 v$(OT_CONTRIB_NEW)/" {} \;
 	@echo "building OT distro to check for breakage"
-	make gomod-download-all
+	$(MAKE) gomod-download-all
 	pushd otelcolbuilder \
-		&& make install-ocb \
-		&& make build \
+		&& $(MAKE) install-ocb \
+		&& $(MAKE) build \
 		&& popd
 
 .PHONY: update-journalctl
@@ -261,6 +270,7 @@ update-journalctl: install-gnu-sed
 
 .PHONY: update-docs
 update-docs: install-gnu-sed
+update-docs: OT_CORE_VERSION = $(shell $(OT_CORE_VERSION_CMD))
 update-docs: LATEST_OT_VERSION = $(shell git describe --match 'v*' --abbrev=0 | cut -c2-)
 update-docs: PREVIOUS_OT_VERSION = $(shell git describe --match 'v*' --abbrev=0 `git describe --match 'v*' --abbrev=0`^ | cut -c2-)
 update-docs: PREVIOUS_CORE_VERSION = $(shell echo ${PREVIOUS_OT_VERSION} | sed -e 's/-sumo-.*//')
