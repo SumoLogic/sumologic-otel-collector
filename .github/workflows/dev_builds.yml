@@ -300,14 +300,14 @@ jobs:
           - product: standard
             target: windows-ltsc2022
             platform: windows_amd64
-            subplatform: ltsc2022
+            os-version: 10.0.20348.3807
             runs-on: windows-2022
             binary_ext: .exe
             collector_binary: otelcol-sumo
           - product: standard
             target: windows-ltsc2025
             platform: windows_amd64
-            subplatform: ltsc2025
+            os-version: 10.0.26100.4349
             runs-on: windows-2025
             binary_ext: .exe
             collector_binary: otelcol-sumo
@@ -339,17 +339,17 @@ jobs:
         id: go-platform
         run: |
           platform=${{ matrix.platform }}
-          subplatform=${{ matrix.subplatform && format('_{0}', matrix.subplatform) || '' }}
+          os_version=${{ matrix.os-version && format('({0})', matrix.os-version) || '' }}
           echo "name=${platform}" >> $GITHUB_OUTPUT
-          echo "name-with-subplatform=${platform}${subplatform}" >> $GITHUB_OUTPUT
+          echo "name-with-os-version=${platform}${os_version}" >> $GITHUB_OUTPUT
 
       - name: Convert Go platform to Docker platform
         id: docker-platform
         run: |
           name=${{ steps.go-platform.outputs.name }}
-          name_with_subplatform=${{ steps.go-platform.outputs.name-with-subplatform }}
+          name_with_os_version=${{ steps.go-platform.outputs.name-with-os-version }}
           echo "name=${name/_/\/}" >> "$GITHUB_OUTPUT"
-          echo "name-with-subplatform=${name_with_subplatform/_/\/}" >> "$GITHUB_OUTPUT"
+          echo "name-with-os-version=${name_with_os_version/_/\/}" >> "$GITHUB_OUTPUT"
 
       - name: Set image metadata
         id: meta
@@ -412,6 +412,7 @@ jobs:
             ./docker-bake.ci-override.hcl
             cwd://${{ steps.meta.outputs.bake-file }}
           set: |
+            *.platform=${{ steps.docker-platform.outputs.name-with-os-version }}
             *.tags=
 
       - name: Print & fix metadata
@@ -424,7 +425,7 @@ jobs:
       - name: Set container image manifest output
         id: manifest
         run: |
-          name="${{ matrix.product }}_${{ steps.go-platform.outputs.name-with-subplatform }}"
+          name="${{ matrix.product }}_${{ steps.go-platform.outputs.name-with-os-version }}"
           target="${{ matrix.target || matrix.product }}"
           jq -c ".[\"$target\"]" metadata-fixed.json | tee target-metadata.json
           echo "${name}=$(cat target-metadata.json)" >> "$GITHUB_OUTPUT"
