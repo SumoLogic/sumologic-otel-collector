@@ -58,4 +58,6 @@ ifeq ($(HOST_ARCH),)
 $(error Unsupported architecture: $(UNSUPPORTED_ARCH))
 endif
 
+ifneq ($(DEBUG),)
 $(info Platform detected: $(HOST_OS)/$(HOST_ARCH))
+endif

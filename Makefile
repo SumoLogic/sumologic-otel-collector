@@ -358,6 +358,22 @@ promote-dh-image-rc-to-stable: SRC_URL = "docker://$(DH_URL_RC):$(GIT_SHA)"
 promote-dh-image-rc-to-stable: DST_URL = "docker://$(DH_URL_STABLE):$(GIT_SHA)"
 promote-dh-image-rc-to-stable: _promote-container-manifest
 
+ECR_URL_CI ?= 663229565520.dkr.ecr.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-ci-builds
+
+.PHONY: _print-image-platforms
+_print-image-platforms:
+	@echo Supported platforms for $(REGISTRY_URL):$(TAG)
+	@docker buildx imagetools inspect --raw \
+		$(REGISTRY_URL):$(TAG) | jq -f ci/jq/platforms.jq
+	@echo
+
+.PHONY: print-ecr-image-platforms
+print-ecr-image-platforms:
+	@$(MAKE) _print-image-platforms REGISTRY_URL=$(ECR_URL_CI) TAG=latest
+	@$(MAKE) _print-image-platforms REGISTRY_URL=$(ECR_URL_CI) TAG=latest-fips
+	@$(MAKE) _print-image-platforms REGISTRY_URL=$(ECR_URL_CI) TAG=latest-ubi
+	@$(MAKE) _print-image-platforms REGISTRY_URL=$(ECR_URL_CI) TAG=latest-ubi-fips
+
 #################################################################################
 # Changelog targets
 #
