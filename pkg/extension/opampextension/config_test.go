@@ -31,6 +31,11 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension"
 )
 
+const (
+	errOpampDirMust = "opamp remote_configuration_directory must be provided"
+	errOpampInvalidInstanceUuid = "opamp instance_uid is invalid"
+)
+
 func TestUnmarshalDefaultConfig(t *testing.T) {
 	factory := NewFactory()
 	cfg := factory.CreateDefaultConfig()
@@ -62,7 +67,7 @@ func TestConfigValidate(t *testing.T) {
 	cfg := &Config{}
 	err := cfg.Validate()
 	require.Error(t, err)
-	assert.Equal(t, "opamp remote_configuration_directory must be provided", err.Error())
+	assert.Equal(t, errOpampDirMust, err.Error())
 
 	d, err := os.MkdirTemp("", "opamp.d")
 	assert.NoError(t, err)
@@ -75,5 +80,5 @@ func TestConfigValidate(t *testing.T) {
 	cfg.InstanceUID = "01BX5ZZKBKACTAV9WEVGEMMVRZFAIL"
 	err = cfg.Validate()
 	require.Error(t, err)
-	assert.Equal(t, "opamp instance_uid is invalid", err.Error())
+	assert.Equal(t, errOpampInvalidInstanceUuid, err.Error())
 }
