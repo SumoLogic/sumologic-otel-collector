@@ -15,6 +15,8 @@ inputs:
 outputs:
   name:
     value: ${{ steps.binary.outputs.name }}
+  name-with-platform:
+    value: ${{ steps.binary.outputs.name-with-platform }}
 
 runs:
   using: "composite"
