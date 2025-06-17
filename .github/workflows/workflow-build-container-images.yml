@@ -154,6 +154,7 @@ jobs:
             ./docker-bake.ci-override.hcl
             cwd://${{ steps.meta.outputs.bake-file }}
           set: |
+            *.platform=${{ steps.platform.outputs.name-with-os-version }}
             *.tags=
 
       - name: Print & fix metadata

@@ -278,11 +278,9 @@ jobs:
         include:
           # standard product
           - product: standard
-            target: standard-linux-amd64
             os: linux
             arch: amd64
           - product: standard
-            target: standard-linux-arm64
             os: linux
             arch: arm64
           - product: standard
@@ -299,32 +297,26 @@ jobs:
             runs-on: windows-2025
           # standard-fips product
           - product: standard-fips
-            target: standard-fips-linux-amd64
             fips: true
             os: linux
             arch: amd64
           - product: standard-fips
-            target: standard-fips-linux-arm64
             fips: true
             os: linux
             arch: arm64
           # ubi product
           - product: ubi
-            target: ubi-linux-amd64
             os: linux
             arch: amd64
           - product: ubi
-            target: ubi-linux-arm64
             os: linux
             arch: arm64
           # ubi-fips product
           - product: ubi-fips
-            target: ubi-fips-linux-amd64
             fips: true
             os: linux
             arch: amd64
           - product: ubi-fips
-            target: ubi-fips-linux-arm64
             fips: true
             os: linux
             arch: arm64
