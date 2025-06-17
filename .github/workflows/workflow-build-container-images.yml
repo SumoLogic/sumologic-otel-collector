@@ -179,12 +179,12 @@ jobs:
           echo "-- Current metadata (ECR)"
           echo '${{ steps.build-ecr.outputs.metadata }}' | tee metadata-ecr.json
           echo "-- Fixed metadata (ECR)"
-          jq -jf ci/jq/fix-metadata.jq metadata.json | tee metadata-fixed-ecr.json
+          jq -jf ci/jq/fix-metadata.jq metadata-ecr.json | tee metadata-fixed-ecr.json
 
           echo "-- Current metadata (Docker Hub)"
           echo '${{ steps.build-dh.outputs.metadata }}' | tee metadata-dh.json
           echo "-- Fixed metadata (Docker Hub)"
-          jq -jf ci/jq/fix-metadata.jq metadata.json | tee metadata-fixed-dh.json
+          jq -jf ci/jq/fix-metadata.jq metadata-dh.json | tee metadata-fixed-dh.json
 
       - name: Set container image manifest output
         id: manifest
