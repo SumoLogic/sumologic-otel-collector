@@ -91,7 +91,7 @@ jobs:
 
       - name: Set binary name
         uses: ./.github/actions/determine-binary-name
-        id: set-binary-name
+        id: binary-name
         with:
           fips: ${{ inputs.fips }}
           name: otelcol-config
@@ -100,18 +100,18 @@ jobs:
       - name: Show file info
         working-directory: ./pkg/tools/otelcol-config
         run: |
-          file ${{ steps.set-binary-name.outputs.name }}
+          file ${{ steps.binary-name.outputs.name-with-platform }}
 
       - name: Show ldd info
         if: steps.platform.outputs.os == 'linux'
         working-directory: ./pkg/tools/otelcol-config
         run: |
-          ldd ${{ steps.set-binary-name.outputs.name }} || true
+          ldd ${{ steps.binary-name.outputs.name-with-platform }} || true
 
       - uses: ./.github/actions/show-fips-symbols
         if: inputs.fips
         with:
-          name: ${{ steps.set-binary-name.outputs.name }}
+          name: ${{ steps.binary-name.outputs.name-with-platform }}
           os: ${{ steps.platform.outputs.os }}
           working-directory: ./pkg/tools/otelcol-config
 
@@ -125,14 +125,14 @@ jobs:
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.set-binary-name.outputs.name }}
-          path: ./pkg/tools/otelcol-config/${{ steps.set-binary-name.outputs.name }}
+          name: ${{ steps.binary-name.outputs.name-with-platform }}
+          path: ./pkg/tools/otelcol-config/${{ steps.binary-name.outputs.name-with-platform }}
           if-no-files-found: error
 
       - name: Store macOS .dmg as action artifact
         uses: actions/upload-artifact@v4
         if: runner.os == 'macOS'
         with:
-          name: ${{ steps.set-binary-name.outputs.name }}.dmg
-          path: ./pkg/tools/otelcol-config/${{ steps.set-binary-name.outputs.name }}.dmg
+          name: ${{ steps.binary-name.outputs.name-with-platform }}.dmg
+          path: ./pkg/tools/otelcol-config/${{ steps.binary-name.outputs.name-with-platform }}.dmg
           if-no-files-found: error

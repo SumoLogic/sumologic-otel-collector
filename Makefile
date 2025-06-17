@@ -323,6 +323,18 @@ install-ocb:
 # Container targets
 #################################################################################
 
+.PHONY: login-ecr-private
+login-ecr-private:
+	@aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $(ECR_REGISTRY)
+
+.PHONY: login-ecr-public
+login-ecr-public:
+	@aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $(ECR_PUBLIC_REGISTRY)
+
+.PHONY: login-dh
+login-dh:
+	@docker login
+
 .PHONY: _image_tags_for_sha
 _image_tags_for_sha:
 ifeq ($(SRC_REPO),)

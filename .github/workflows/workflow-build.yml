@@ -125,7 +125,7 @@ jobs:
 
       - name: Set binary name
         uses: ./.github/actions/determine-binary-name
-        id: set-binary-name
+        id: binary-name
         with:
           fips: ${{ inputs.fips }}
           name: otelcol-sumo
@@ -134,25 +134,25 @@ jobs:
       - name: Show file info
         working-directory: ./otelcolbuilder/cmd
         run: |
-          file ${{ steps.set-binary-name.outputs.name }}
+          file ${{ steps.binary-name.outputs.name-with-platform }}
 
       - name: Show ldd info
         if: steps.platform.outputs.os == 'linux'
         working-directory: ./otelcolbuilder/cmd
         run: |
-          ldd ${{ steps.set-binary-name.outputs.name }} || true
+          ldd ${{ steps.binary-name.outputs.name-with-platform }} || true
 
       - uses: ./.github/actions/show-fips-symbols
         if: inputs.fips
         with:
-          name: ${{ steps.set-binary-name.outputs.name }}
+          name: ${{ steps.binary-name.outputs.name-with-platform }}
           os: ${{ steps.platform.outputs.os }}
           working-directory: ./otelcolbuilder/cmd
 
       - name: Verify binary version
         if: inputs.platform == 'linux_amd64' || inputs.platform == 'darwin_amd64'
         run: |
-          binary=${{ steps.set-binary-name.outputs.name }}
+          binary=${{ steps.binary-name.outputs.name-with-platform }}
           binary_path=otelcolbuilder/cmd/${binary}
           ./ci/get_version_from_binary.sh core "${binary_path}"
           ./ci/get_version_from_binary.sh sumo "${binary_path}"
@@ -182,21 +182,22 @@ jobs:
         if: inputs.platform == 'linux_amd64'
         working-directory: ./otelcolbuilder/cmd
         run: |
-          ./${{ steps.set-binary-name.outputs.name }} help
-          ./${{ steps.set-binary-name.outputs.name }} components
-          ./${{ steps.set-binary-name.outputs.name }} completion bash
+          binary="${{ steps.binary-name.outputs.name-with-platform }}"
+          ./${binary} help
+          ./${binary} components
+          ./${binary} completion bash
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.set-binary-name.outputs.name }}
-          path: ./otelcolbuilder/cmd/${{ steps.set-binary-name.outputs.name }}
+          name: ${{ steps.binary-name.outputs.name-with-platform }}
+          path: ./otelcolbuilder/cmd/${{ steps.binary-name.outputs.name-with-platform }}
           if-no-files-found: error
 
       - name: Store Mac .dmg as action artifact
         uses: actions/upload-artifact@v4
         if: runner.os == 'macOS'
         with:
-          name: ${{ steps.set-binary-name.outputs.name }}.dmg
-          path: ./otelcolbuilder/cmd/${{ steps.set-binary-name.outputs.name }}.dmg
+          name: ${{ steps.binary-name.outputs.name-with-platform }}.dmg
+          path: ./otelcolbuilder/cmd/${{ steps.binary-name.outputs.name-with-platform }}.dmg
           if-no-files-found: error

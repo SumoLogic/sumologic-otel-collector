@@ -37,10 +37,12 @@ runs:
           name="${name}-fips"
         fi
 
-        name="${name}-${platform}"
+        name_with_platform="${name}-${platform}"
 
         if [[ "${os}" == "windows" ]]; then
           name="${name}.exe"
+          name_with_platform="${name_with_platform}.exe"
         fi
 
         echo "name=${name}" >> $GITHUB_OUTPUT
+        echo "name-with-platform=${name_with_platform}" >> $GITHUB_OUTPUT

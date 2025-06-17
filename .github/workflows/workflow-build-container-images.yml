@@ -59,7 +59,7 @@ jobs:
 
       - name: Set binary name
         uses: ./.github/actions/determine-binary-name
-        id: set-binary-name
+        id: binary-name
         with:
           fips: ${{ inputs.fips }}
           name: otelcol-sumo
@@ -71,7 +71,7 @@ jobs:
           os="${{ inputs.os }}"
           os_version="${{ inputs.os-version }}"
           arch="${{ inputs.arch }}"
-          binary_name="${{ steps.set-binary-name.outputs.name }}"
+          binary_name="${{ steps.binary-name.outputs.name }}"
           product="${{ inputs.product }}"
           target="${{ inputs.target }}"
 
@@ -139,7 +139,7 @@ jobs:
       - name: Download binary action artifact from build phase
         uses: actions/download-artifact@v4
         with:
-          name: ${{ steps.set-binary-name.outputs.name }}
+          name: ${{ steps.binary-name.outputs.name-with-platform }}
           path: ${{ steps.platform.outputs.artifact-path }}
 
       - name: Build and push
