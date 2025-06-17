@@ -1,0 +1,1 @@
+chore: Upgrading otel collector to 0.127.0 with all the changes.

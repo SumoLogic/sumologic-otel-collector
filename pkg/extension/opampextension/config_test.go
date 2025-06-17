@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	errOpampDirMust = "opamp remote_configuration_directory must be provided"
+	errOpampDirMust             = "opamp remote_configuration_directory must be provided"
 	errOpampInvalidInstanceUuid = "opamp instance_uid is invalid"
 )
 
@@ -53,7 +53,7 @@ func TestUnmarshalConfig(t *testing.T) {
 		&Config{
 			ClientConfig: confighttp.ClientConfig{
 				Endpoint: "wss://127.0.0.1:4320/v1/opamp",
-				Auth: &configauth.Authentication{
+				Auth: &configauth.Config{
 					AuthenticatorID: component.NewID(sumologicextension.NewFactory().Type()),
 				},
 			},
