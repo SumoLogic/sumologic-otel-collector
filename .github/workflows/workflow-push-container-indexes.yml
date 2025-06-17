@@ -95,8 +95,14 @@ jobs:
 
       - name: Create multiplatform image index (ECR)
         run: |
-          docker buildx imagetools create $(cat sources.txt) $(cat ecr-tags.txt)
+          for tag in $(cat ecr-tags.txt); do
+            docker manifest create "${tag}" $(cat sources.txt)
+            docker manifest push "${tag}"
+          done
 
       - name: Create multiplatform image index (Docker Hub)
         run: |
-          docker buildx imagetools create $(cat sources.txt) $(cat dh-tags.txt)
+          for tag in $(cat dh-tags.txt); do
+            docker manifest create "${tag}" $(cat sources.txt)
+            docker manifest push "${tag}"
+          done
