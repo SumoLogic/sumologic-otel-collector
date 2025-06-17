@@ -321,7 +321,7 @@ jobs:
             os: linux
             arch: arm64
     with:
-      arch: ${{ matrix.platform }}
+      arch: ${{ matrix.arch }}
       fips: ${{ matrix.fips == true }}
       os: ${{ matrix.os }}
       os-version: ${{ matrix.os-version }}

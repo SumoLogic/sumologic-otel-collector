@@ -6,7 +6,6 @@ include $(realpath $(current_dir)/Makefile.Common)
 GOLANGCI_LINT_VERSION ?= v1.59.1
 PRETTIER_VERSION ?= 3.0.3
 TOWNCRIER_VERSION ?= 23.6.0
-GIT_SHA_CMD := git rev-parse HEAD
 
 #################################################################################
 # Platform-specific setup
@@ -24,6 +23,13 @@ ifeq ($(HOST_OS),Darwin)
 else
 	SED ?= sed
 	DATE ?= date
+endif
+
+OP := $(shell which op 2> /dev/null)
+ifneq ($(OP),)
+	AWS ?= op plugin run -- aws
+else
+	AWS ?= aws
 endif
 
 #################################################################################
@@ -50,6 +56,28 @@ EXPORTABLE_GO_MODULES := $(filter-out pkg/tools/%,$(EXPORTABLE_GO_MODULES))
 
 TESTABLE_GO_MODULES := $(filter-out pkg/tools/otelcol-config,$(ALL_GO_MODULES))
 TESTABLE_GO_MODULES := $(filter-out pkg/tools/udpdemux,$(ALL_GO_MODULES))
+
+#################################################################################
+# Container variables
+#################################################################################
+
+# General
+CONTAINER_REPO_CI ?= sumologic/sumologic-otel-collector-ci-builds
+CONTAINER_REPO_RC ?= sumologic/sumologic-otel-collector-release-candidates
+CONTAINER_REPO_STABLE ?= sumologic/sumologic-otel-collector
+
+# Docker Hub
+DH_REGISTRY ?= docker.io
+DH_REPO_CI ?= $(DH_REGISTRY)/$(CONTAINER_REPO_CI)
+DH_REPO_RC ?= $(DH_REGISTRY)/$(CONTAINER_REPO_RC)
+DH_REPO_STABLE ?= $(DH_REGISTRY)/$(CONTAINER_REPO_STABLE)
+
+# Amazon ECR
+ECR_REGISTRY ?= 663229565520.dkr.ecr.us-east-1.amazonaws.com
+ECR_REPO_CI ?= $(ECR_REGISTRY)/$(CONTAINER_REPO_CI)
+ECR_REPO_RC ?= $(ECR_REGISTRY)/$(CONTAINER_REPO_RC)
+ECR_PUBLIC_REGISTRY ?= public.ecr.aws
+ECR_REPO_STABLE ?= $(ECR_PUBLIC_REGISTRY)/$(CONTAINER_REPO_STABLE)
 
 #################################################################################
 # Colour variables
@@ -295,84 +323,132 @@ install-ocb:
 # Container targets
 #################################################################################
 
+.PHONY: _image_tags_for_sha
+_image_tags_for_sha:
+ifeq ($(SRC_REPO),)
+	@$(error SRC_REPO must be set for container image promotion)
+endif
+ifeq ($(DST_REGISTRY),)
+	@$(error DST_REGISTRY must be set for container image promotion)
+endif
+ifeq ($(DST_REPO),)
+	@$(error DST_REPO must be set for container image promotion)
+endif
+ifeq ($(GIT_SHA),)
+	@$(error GIT_SHA must be set for container image promotion. It should be \
+		equal to the Git SHA of the sumologic-otel-collector commit that the \
+		container image to be promoted is built for)
+endif
+	@$(AWS) ecr describe-images \
+		--repository-name "$(SRC_REPO)" \
+		--image-ids "imageTag=$(GIT_SHA)" \
+		--output json \
+		| jq -j '.imageDetails.[0].imageTags' \
+		| jq -jf ci/jq/tags.jq --arg url "$(DST_REGISTRY)/$(DST_REPO)"
+
+.PHONY: _promote-container-image-cmd
+_promote-container-image-cmd: SRC_IMG = $(SRC_REGISTRY)/$(SRC_REPO):$(GIT_SHA)$(TAG_SUFFIX)
+_promote-container-image-cmd:
+	docker buildx imagetools create $(SRC_IMG) \
+		$(shell $(MAKE) _image_tags_for_sha \
+		SRC_REPO="$(SRC_REPO)" \
+		DST_REGISTRY="$(DST_REGISTRY)" \
+		DST_REPO="$(DST_REPO)" \
+		GIT_SHA="$(GIT_SHA)$(TAG_SUFFIX)")
+
 .PHONY: _promote-container-image
 _promote-container-image:
-	docker buildx imagetools create "$(SRC_URL):$(TAG)" -t "$(DST_URL):$(TAG)"
+	@$(MAKE) _promote-container-image-cmd \
+		SRC_REGISTRY="$(SRC_REGISTRY)" \
+		SRC_REPO="$(SRC_REPO)" \
+		DST_REGISTRY="$(DST_REGISTRY)" \
+		DST_REPO="$(DST_REPO)" \
+		GIT_SHA="$(GIT_SHA)" \
+		TAG_SUFFIX="$(TAG_SUFFIX)"
 
-.PHONY: _create-container-image-alias
-_create-container-image-alias:
-	docker buildx imagetools create "$(URL):$(SRC_TAG)" -t "$(URL):$(DST_TAG)"
+.PHONY: _promote-image-ci-to-rc
+_promote-image-ci-to-rc:
+	@$(MAKE) _promote-container-image \
+		SRC_REGISTRY="$(SRC_REGISTRY)" \
+		SRC_REPO="$(CONTAINER_REPO_CI)" \
+		DST_REGISTRY="$(DST_REGISTRY)" \
+		DST_REPO="$(CONTAINER_REPO_RC)"
 
-.PHONY: _promote-container-image-standard
-_promote-container-image-standard: GIT_SHA = $(shell $(GIT_SHA_CMD))
-_promote-container-image-standard:
-	$(MAKE) _promote-container-image TAG="$(GIT_SHA)"
-	$(MAKE) _create-container-image-alias SRC_TAG="$(GIT_SHA)" DST_TAG="latest"
+.PHONY: _promote-image-rc-to-stable
+_promote-image-rc-to-stable:
+	@$(MAKE) _promote-container-image \
+		SRC_REGISTRY="$(SRC_REGISTRY)" \
+		SRC_REPO="$(CONTAINER_REPO_RC)" \
+		DST_REGISTRY="$(DST_REGISTRY)" \
+		DST_REPO="$(CONTAINER_REPO_STABLE)"
 
-.PHONY: _promote-container-image-standard-fips
-_promote-container-image-standard-fips: GIT_SHA = $(shell $(GIT_SHA_CMD))
-_promote-container-image-standard-fips:
-	$(MAKE) _promote-container-image TAG="$(GIT_SHA)-fips"
-	$(MAKE) _create-container-image-alias SRC_TAG="$(GIT_SHA)" DST_TAG="latest-fips"
+.PHONY: _demote-image-rc
+_demote-image-rc:
+	@echo TODO: implement me
 
-.PHONY: _promote-container-image-ubi
-_promote-container-image-ubi: GIT_SHA = $(shell $(GIT_SHA_CMD))
-_promote-container-image-ubi:
-	$(MAKE) _promote-container-image TAG="$(GIT_SHA)-ubi"
-	$(MAKE) _create-container-image-alias SRC_TAG="$(GIT_SHA)" DST_TAG="latest-ubi"
-
-.PHONY: _promote-container-image-ubi-fips
-_promote-container-image-ubi-fips: GIT_SHA = $(shell $(GIT_SHA_CMD))
-_promote-container-image-ubi-fips:
-	$(MAKE) _promote-container-image TAG="$(GIT_SHA)-ubi-fips"
-	$(MAKE) _create-container-image-alias SRC_TAG="$(GIT_SHA)" DST_TAG="latest-ubi-fips"
+.PHONY: _demote-image-stable
+_demote-image-stable:
+	@echo TODO: implement me
 
 # Promotes an image in the ECR ci-builds repository to the release-candidates
 # repository
 .PHONY: promote-ecr-image-ci-to-rc
-promote-ecr-image-ci-to-rc: SRC_URL = "docker://$(ECR_URL_CI)"
-promote-ecr-image-ci-to-rc: DST_URL = "docker://$(ECR_URL_RC)"
-promote-ecr-image-ci-to-rc: _promote-container-manifest
+promote-ecr-image-ci-to-rc:
+	@$(MAKE) _promote-image-ci-to-rc \
+		SRC_REGISTRY="$(ECR_REGISTRY)" \
+		DST_REGISTRY="$(ECR_REGISTRY)"
 
 # Promotes an image in the ECR release-candidates repository to the stable
 # repository
 .PHONY: promote-ecr-image-rc-to-stable
-promote-ecr-image-rc-to-stable: GIT_SHA = $(shell $(GIT_SHA_CMD))
-promote-ecr-image-rc-to-stable: SRC_URL = "docker://$(ECR_URL_RC):$(GIT_SHA)"
-promote-ecr-image-rc-to-stable: DST_URL = "docker://$(ECR_URL_STABLE):$(GIT_SHA)"
-promote-ecr-image-rc-to-stable: _promote-container-manifest
+promote-ecr-image-rc-to-stable:
+	@$(MAKE) _promote-image-rc-to-stable \
+		SRC_REGISTRY="$(ECR_REGISTRY)" \
+		DST_REGISTRY="$(ECR_PUBLIC_REGISTRY)"
 
 # Promotes an image in the Docker Hub ci-builds repository to the
 # release-candidates repository
 .PHONY: promote-dh-image-ci-to-rc
-promote-dh-image-ci-to-rc: GIT_SHA = $(shell $(GIT_SHA_CMD))
-promote-dh-image-ci-to-rc: SRC_URL = "$(DH_URL_CI):$(GIT_SHA)"
-promote-dh-image-ci-to-rc: DST_URL = "$(DH_URL_RC):$(GIT_SHA)"
-promote-dh-image-ci-to-rc: _promote-container-manifest
+promote-dh-image-ci-to-rc:
+	@$(MAKE) _promote-image-ci-to-rc \
+		SRC_REGISTRY="$(DH_REGISTRY)" \
+		DST_REGISTRY="$(DH_REGISTRY)"
 
 # Promotes an image in the Docker Hub release-candidates repository to the
 # stable repository
 .PHONY: promote-dh-image-rc-to-stable
-promote-dh-image-rc-to-stable: GIT_SHA = $(shell $(GIT_SHA_CMD))
-promote-dh-image-rc-to-stable: SRC_URL = "docker://$(DH_URL_RC):$(GIT_SHA)"
-promote-dh-image-rc-to-stable: DST_URL = "docker://$(DH_URL_STABLE):$(GIT_SHA)"
-promote-dh-image-rc-to-stable: _promote-container-manifest
+promote-dh-image-rc-to-stable:
+	@$(MAKE) _promote-image-rc-to-stable \
+		SRC_REGISTRY="$(DH_REGISTRY)" \
+		DST_REGISTRY="$(DH_REGISTRY)"
 
-ECR_URL_CI ?= 663229565520.dkr.ecr.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-ci-builds
+# Promotes an image in all registries from the ci-builds repository to the
+# release-candidates repository
+.PHONY: promote-all-image-ci-to-rc
+promote-all-image-ci-to-rc:
+	@$(MAKE) promote-ecr-image-ci-to-rc TAG_SUFFIX="$(TAG_SUFFIX)"
+	@$(MAKE) promote-dh-image-ci-to-rc TAG_SUFFIX="$(TAG_SUFFIX)"
+
+.PHONY: promote-images-ci-to-rc
+promote-images-ci-to-rc:
+	@$(MAKE) promote-all-image-ci-to-rc
+	@$(MAKE) promote-all-image-ci-to-rc TAG_SUFFIX="-fips"
+	@$(MAKE) promote-all-image-ci-to-rc TAG_SUFFIX="-ubi"
+	@$(MAKE) promote-all-image-ci-to-rc TAG_SUFFIX="-ubi-fips"
 
 .PHONY: _print-image-platforms
 _print-image-platforms:
-	@echo Supported platforms for $(REGISTRY_URL):$(TAG)
+	@echo Supported platforms for $(REGISTRY):$(TAG)
 	@docker buildx imagetools inspect --raw \
-		$(REGISTRY_URL):$(TAG) | jq -f ci/jq/platforms.jq
+		$(REGISTRY):$(TAG) | jq -f ci/jq/platforms.jq
 	@echo
 
 .PHONY: print-ecr-image-platforms
 print-ecr-image-platforms:
-	@$(MAKE) _print-image-platforms REGISTRY_URL=$(ECR_URL_CI) TAG=latest
-	@$(MAKE) _print-image-platforms REGISTRY_URL=$(ECR_URL_CI) TAG=latest-fips
-	@$(MAKE) _print-image-platforms REGISTRY_URL=$(ECR_URL_CI) TAG=latest-ubi
-	@$(MAKE) _print-image-platforms REGISTRY_URL=$(ECR_URL_CI) TAG=latest-ubi-fips
+	@$(MAKE) _print-image-platforms REGISTRY=$(ECR_REPO_CI) TAG=latest
+	@$(MAKE) _print-image-platforms REGISTRY=$(ECR_REPO_CI) TAG=latest-fips
+	@$(MAKE) _print-image-platforms REGISTRY=$(ECR_REPO_CI) TAG=latest-ubi
+	@$(MAKE) _print-image-platforms REGISTRY=$(ECR_REPO_CI) TAG=latest-ubi-fips
 
 #################################################################################
 # Changelog targets
