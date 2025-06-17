@@ -75,7 +75,7 @@ jobs:
           product="${{ inputs.product }}"
           target="${{ inputs.target }}"
 
-          artifact_path="artifacts/${os}_${arch}/${binary_name}"
+          artifact_path="artifacts/${os}/${arch}/${binary_name}"
 
           manifest="manifest_${product}_${os}_${arch}"
           if [[ "${target}" != "" ]]; then
