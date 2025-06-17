@@ -7,7 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
-## [v0.124.1-sumo-0]
+## [v0.127.0-sumo-0]
+
+### Released 2025-06-17
+
+### Added
+
+- Add set-timezone to set collector timezone [#1770]
+
+### Changed
+
+- chore: Upgrading otel collector to 0.127.0 with all the changes. [#1774]
+
+### Fixed
+
+- fix: removed dependency for github.com/mholt/archiver/v3, replaced with github.com/mholt/archives to fix CVE-2025-3445 [https://github.com/advisories/GHSA-7vpp-9cxj-q8gv] [#1775]
+
+[#1770]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1770
+[#1774]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1774
+[#1775]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1775
+
+[v0.127.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.127.0-sumo-0## [v0.124.1-sumo-0]
 
 ### Changed
 
