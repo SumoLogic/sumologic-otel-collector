@@ -3,7 +3,7 @@ current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
 include $(realpath $(current_dir)/Makefile.Common)
 
-GOLANGCI_LINT_VERSION ?= v1.59.1
+CRANE_VERSION ?= 0.20.6
 PRETTIER_VERSION ?= 3.0.3
 TOWNCRIER_VERSION ?= 23.6.0
 
@@ -147,6 +147,10 @@ install-coreutils:
 ifeq ($(HOST_OS),Darwin)
 	@which gdate > /dev/null || brew install coreutils
 endif
+
+.PHONY: install-crane
+install-crane:
+	go install github.com/google/go-containerregistry/cmd/crane@v$(CRANE_VERSION)
 
 .PHONY: install-dependencies
 install-dependencies: install-coreutils
@@ -323,13 +327,20 @@ install-ocb:
 # Container targets
 #################################################################################
 
+.PHONY: _login-ecr
+_login-ecr:
+	@$(AWS) $(ECR_SUBCMD) get-login-password --region $(AWS_REGION) \
+		| crane auth login -u AWS --password-stdin $(REGISTRY)
+
 .PHONY: login-ecr-private
 login-ecr-private:
-	@aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $(ECR_REGISTRY)
+	@$(MAKE) _login-ecr ECR_SUBCMD="ecr" AWS_REGION="us-east-1" \
+		REGISTRY="$(ECR_REGISTRY)"
 
 .PHONY: login-ecr-public
 login-ecr-public:
-	@aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $(ECR_PUBLIC_REGISTRY)
+	@$(MAKE) _login-ecr ECR_SUBCMD="ecr-public" AWS_REGION="us-east-1" \
+		REGISTRY="$(ECR_PUBLIC_REGISTRY)"
 
 .PHONY: login-dh
 login-dh:
