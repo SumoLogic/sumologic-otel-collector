@@ -3,6 +3,6 @@
 #################################################################################
 
 variable "REPO" {
-  type = list(string)
+  type = string
   default = "docker.io/sumologic/sumologic-otel-collector-ci-builds"
 }
