@@ -1,4 +1,3 @@
-# syntax=docker.io/docker/dockerfile-upstream:1.17.0-labs
 FROM mcr.microsoft.com/windows/servercore:ltsc2022 AS core
 FROM mcr.microsoft.com/windows/nanoserver:ltsc2022
 ARG TARGETPLATFORM
