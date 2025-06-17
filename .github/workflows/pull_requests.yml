@@ -224,7 +224,7 @@ jobs:
 
   get-version:
     name: Get next available version
-    uses: ./.github/workflows/_get-version-workflow.yml
+    uses: ./.github/workflows/workflow-get-version.yml
 
   build:
     name: Build

@@ -1,0 +1,178 @@
+name: Build container images
+
+on:
+  workflow_call:
+    inputs:
+      arch:
+        description: The CPU architecture to build for.
+        type: string
+        required: true
+      fips:
+        description: Build container image using FIPS binary.
+        default: false
+        type: boolean
+      os:
+        description: The operating system to build for.
+        type: string
+        required: true
+      os-version:
+        description: The operating system version to build for.
+        type: string
+      product:
+        description: |
+          The product name to build. This allows different bake targets to end
+          up in the same multi-platform image.
+        type: string
+        required: true
+      target:
+        description: |
+          The bake target to build. The product name will be used as the target
+          when target is not set.
+        type: string
+      runs-on:
+        default: ubuntu-24.04
+        type: string
+      version:
+        description: The version of OTC to build for.
+        type: string
+        required: true
+    secrets:
+      aws-access-key-id:
+        required: true
+      aws-secret-access-key:
+        required: true
+      dockerhub-login:
+        required: true
+      dockerhub-password:
+        required: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set binary name
+        uses: ./.github/actions/determine-binary-name
+        id: set-binary-name
+        with:
+          fips: ${{ inputs.fips }}
+          name: otelcol-sumo
+          platform: ${{ inputs.os }}_${{ inputs.arch }}
+
+      - name: Output platform information
+        id: platform
+        run: |
+          os="${{ inputs.os }}"
+          os_version="${{ inputs.os-version }}"
+          arch="${{ inputs.arch }}"
+          binary_name="${{ steps.set-binary-name.outputs.name }}"
+          product="${{ inputs.product }}"
+          target="${{ inputs.target }}"
+
+          artifact_path="artifacts/${os}_${arch}/${binary_name}"
+
+          manifest="manifest_${product}_${os}_${arch}"
+          if [[ "${target}" != "" ]]; then
+            manifest+="_${target}"
+          fi
+
+          name_with_os_version="${os}"
+          if [[ "${os_version}" != "" ]]; then
+            name_with_os_version+="(${os_version})"
+          fi
+          name_with_os_version+="/${arch}"
+
+          echo "name=${os}" >> $GITHUB_OUTPUT
+          echo "name-with-os-version=${name_with_os_version}" >> $GITHUB_OUTPUT
+          echo "artifact-path=${artifact_path}" >> $GITHUB_OUTPUT
+          echo "manifest-name=${manifest}" >> $GITHUB_OUTPUT
+
+      - name: Set image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          labels: |
+            version=${{ needs.otc-version.outputs.version }}
+
+      - name: Setup BuildKit (Windows)
+        if: runner.os == 'Windows'
+        uses: ./.github/actions/setup-buildkit-windows
+        with:
+          buildkit-version: "0.22.0"
+          buildx-version: "0.24.0"
+          containerd-version: "2.1.1"
+          docker-version: "28.2.2"
+
+      - name: Set up QEMU
+        if: runner.os != 'Windows'
+        uses: docker/setup-qemu-action@v3.6.0
+
+      - name: Set up Buildx
+        if: runner.os != 'Windows'
+        id: buildx
+        uses: docker/setup-buildx-action@v3.10.0
+
+      - name: Show Buildx platforms
+        if: runner.os != 'Windows'
+        run: echo ${{ steps.buildx.outputs.platforms }}
+
+      - name: Login to ECR
+        uses: docker/login-action@v3
+        with:
+          registry: 663229565520.dkr.ecr.us-east-1.amazonaws.com
+          username: ${{ secrets.aws-access-key-id }}
+          password: ${{ secrets.aws-secret-access-key }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.dockerhub-login }}
+          password: ${{ secrets.dockerhub-password }}
+
+      - name: Download binary action artifact from build phase
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.set-binary-name.outputs.name }}
+          path: ${{ steps.platform.outputs.artifact-path }}
+
+      - name: Build and push
+        id: build
+        uses: docker/bake-action@v6
+        with:
+          source: .
+          targets: ${{ inputs.target || inputs.product }}
+          provenance: false
+          files: |
+            ./docker-bake.hcl
+            ./docker-bake.ci-override.hcl
+            cwd://${{ steps.meta.outputs.bake-file }}
+          set: |
+            *.platform=${{ steps.platform.outputs.name-with-os-version }}
+            *.tags=
+
+      - name: Print & fix metadata
+        run: |
+          echo "-- Current metadata"
+          echo '${{ steps.build.outputs.metadata }}' | tee metadata.json
+          echo "-- Fixed metadata"
+          jq -jf ci/jq/fix-metadata.jq metadata.json | tee metadata-fixed.json
+
+      - name: Set container image manifest output
+        id: manifest
+        run: |
+          name="${{ steps.platform.outputs.manifest-name }}"
+          target="${{ inputs.target || inputs.product }}"
+          jq -c ".[\"$target\"]" metadata-fixed.json | tee "${name}.json"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.platform.outputs.manifest-name }}
+          path: ${{ steps.platform.outputs.manifest-name }}.json
+          if-no-files-found: error

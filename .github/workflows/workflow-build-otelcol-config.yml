@@ -89,7 +89,8 @@ jobs:
             LDFLAGS="-linkmode external -extldflags '-static'"
         working-directory: ./pkg/tools/otelcol-config
 
-      - uses: ./.github/actions/determine-binary-name
+      - name: Set binary name
+        uses: ./.github/actions/determine-binary-name
         id: set-binary-name
         with:
           fips: ${{ inputs.fips }}

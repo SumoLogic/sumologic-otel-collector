@@ -123,7 +123,8 @@ jobs:
         run: make otelcol-sumo-${{ inputs.platform }} FIPS_SUFFIX="-fips" CGO_ENABLED=1
         working-directory: ./otelcolbuilder
 
-      - uses: ./.github/actions/determine-binary-name
+      - name: Set binary name
+        uses: ./.github/actions/determine-binary-name
         id: set-binary-name
         with:
           fips: ${{ inputs.fips }}

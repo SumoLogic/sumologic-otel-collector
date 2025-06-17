@@ -268,171 +268,76 @@ jobs:
       app_store_connect_password: ${{ secrets.AC_PASSWORD }}
 
   build-container-images:
-    name: Build container
-    runs-on: ${{ matrix.runs-on || 'ubuntu-24.04' }}
+    name: Container Images
+    uses: ./.github/workflows/workflow-build-container-images.yml
     needs:
       - build
       - get-otc-version
-    outputs:
-      # NOTE: one output is needed for each item in the matrix. These outputs
-      # store the raw manifest of the container image of each build and are used
-      # to create a multiplatform image index later on.
-      manifest_standard_linux_amd64: ${{ steps.manifest.outputs.standard_linux_amd64 }}
-      manifest_standard_linux_arm64: ${{ steps.manifest.outputs.standard_linux_arm64 }}
-      manifest_standard_windows_amd64_ltsc2019: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2019 }}
-      manifest_standard_windows_amd64_ltsc2022: ${{ steps.manifest.outputs.standard_windows_amd64_ltsc2022 }}
-      manifest_standard-fips_linux_amd64: ${{ steps.manifest.outputs.standard-fips_linux_amd64 }}
-      manifest_standard-fips_linux_arm64: ${{ steps.manifest.outputs.standard-fips_linux_arm64 }}
-      manifest_ubi_linux_amd64: ${{ steps.manifest.outputs.ubi_linux_amd64 }}
-      manifest_ubi_linux_arm64: ${{ steps.manifest.outputs.ubi_linux_arm64 }}
-      manifest_ubi-fips_linux_amd64: ${{ steps.manifest.outputs.ubi-fips_linux_amd64 }}
-      manifest_ubi-fips_linux_arm64: ${{ steps.manifest.outputs.ubi-fips_linux_arm64 }}
     strategy:
       matrix:
         include:
           # standard product
           - product: standard
-            platform: linux_amd64
-            collector_binary: otelcol-sumo
+            os: linux
+            arch: amd64
           - product: standard
-            platform: linux_arm64
-            collector_binary: otelcol-sumo
+            os: linux
+            arch: arm64
           - product: standard
             target: windows-ltsc2022
-            platform: windows_amd64
+            os: windows
             os-version: 10.0.20348.3807
+            arch: amd64
             runs-on: windows-2022
-            binary_ext: .exe
-            collector_binary: otelcol-sumo
           - product: standard
             target: windows-ltsc2025
-            platform: windows_amd64
+            os: windows
             os-version: 10.0.26100.4349
+            arch: amd64
             runs-on: windows-2025
-            binary_ext: .exe
-            collector_binary: otelcol-sumo
           # standard-fips product
           - product: standard-fips
-            platform: linux_amd64
-            collector_binary: otelcol-sumo-fips
+            fips: true
+            os: linux
+            arch: amd64
           - product: standard-fips
-            platform: linux_arm64
-            collector_binary: otelcol-sumo-fips
+            fips: true
+            os: linux
+            arch: arm64
           # ubi product
           - product: ubi
-            platform: linux_amd64
-            collector_binary: otelcol-sumo
+            os: linux
+            arch: amd64
           - product: ubi
-            platform: linux_arm64
-            collector_binary: otelcol-sumo
+            os: linux
+            arch: arm64
           # ubi-fips product
           - product: ubi-fips
-            platform: linux_amd64
-            collector_binary: otelcol-sumo-fips
+            fips: true
+            os: linux
+            arch: amd64
           - product: ubi-fips
-            platform: linux_arm64
-            collector_binary: otelcol-sumo-fips
-    steps:
-      - uses: actions/checkout@v4
+            fips: true
+            os: linux
+            arch: arm64
+    with:
+      arch: ${{ matrix.platform }}
+      fips: ${{ matrix.fips == true }}
+      os: ${{ matrix.os }}
+      os-version: ${{ matrix.os-version }}
+      product: ${{ matrix.product }}
+      target: ${{ matrix.target }}
+      runs-on: ${{ matrix.runs-on || 'ubuntu-24.04' }}
+      version: ${{ needs.get-otc-version.outputs.version }}
+    secrets:
+      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+      dockerhub-login: ${{ secrets.DOCKERHUB_LOGIN_DEV }}
+      dockerhub-password: ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
 
-      - name: Output Go platform
-        id: go-platform
-        run: |
-          platform=${{ matrix.platform }}
-          os_version=${{ matrix.os-version && format('({0})', matrix.os-version) || '' }}
-          echo "name=${platform}" >> $GITHUB_OUTPUT
-          echo "name-with-os-version=${platform}${os_version}" >> $GITHUB_OUTPUT
-
-      - name: Convert Go platform to Docker platform
-        id: docker-platform
-        run: |
-          name=${{ steps.go-platform.outputs.name }}
-          name_with_os_version=${{ steps.go-platform.outputs.name-with-os-version }}
-          echo "name=${name/_/\/}" >> "$GITHUB_OUTPUT"
-          echo "name-with-os-version=${name_with_os_version/_/\/}" >> "$GITHUB_OUTPUT"
-
-      - name: Set image metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          labels: |
-            version=${{ needs.get-otc-version.outputs.version }}
-
-      - name: Setup BuildKit (Windows)
-        if: runner.os == 'Windows'
-        uses: ./.github/actions/setup-buildkit-windows
-        with:
-          buildkit-version: "0.22.0"
-          buildx-version: "0.24.0"
-          containerd-version: "2.1.1"
-          docker-version: "28.2.2"
-
-      - name: Set up QEMU
-        if: runner.os != 'Windows'
-        uses: docker/setup-qemu-action@v3.6.0
-
-      - name: Set up Buildx
-        if: runner.os != 'Windows'
-        id: buildx
-        uses: docker/setup-buildx-action@v3.10.0
-
-      - name: Show Buildx platforms
-        if: runner.os != 'Windows'
-        run: echo ${{ steps.buildx.outputs.platforms }}
-
-      - name: Login to ECR
-        uses: docker/login-action@v3
-        with:
-          registry: 663229565520.dkr.ecr.us-east-1.amazonaws.com
-          username: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
-          password: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKERHUB_LOGIN_DEV }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
-
-      - name: Download binary action artifact from build phase
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ matrix.collector_binary }}-${{ matrix.platform }}${{ matrix.binary_ext }}
-          path: artifacts/${{ steps.docker-platform.outputs.name }}/${{ matrix.collector_binary }}${{ matrix.binary_ext }}
-
-      - name: Build and push
-        id: build
-        uses: docker/bake-action@v6
-        with:
-          source: .
-          targets: ${{ matrix.target || matrix.product }}
-          provenance: false
-          files: |
-            ./docker-bake.hcl
-            ./docker-bake.ci-override.hcl
-            cwd://${{ steps.meta.outputs.bake-file }}
-          set: |
-            *.platform=${{ steps.docker-platform.outputs.name-with-os-version }}
-            *.tags=
-
-      - name: Print & fix metadata
-        run: |
-          echo "-- Current metadata"
-          echo '${{ steps.build.outputs.metadata }}' | tee metadata.json
-          echo "-- Fixed metadata"
-          jq -jf ci/jq/fix-metadata.jq metadata.json | tee metadata-fixed.json
-
-      - name: Set container image manifest output
-        id: manifest
-        run: |
-          name="${{ matrix.product }}_${{ steps.go-platform.outputs.name-with-os-version }}"
-          target="${{ matrix.target || matrix.product }}"
-          jq -c ".[\"$target\"]" metadata-fixed.json | tee target-metadata.json
-          echo "${name}=$(cat target-metadata.json)" >> "$GITHUB_OUTPUT"
-
-  push-image-indexes:
-    name: Push image indexes
-    runs-on: ubuntu-24.04
+  push-container-indexes:
+    name: Container Indexes
+    uses: ./.github/workflows/workflow-push-container-indexes.yml
     needs:
       - build-container-images
       - get-otc-version
@@ -447,66 +352,15 @@ jobs:
             tags: '["latest-ubi", "${{ github.sha }}-ubi", "${{ needs.get-otc-version.outputs.version }}-ubi"]'
           - target: ubi-fips
             tags: '["latest-ubi-fips", "${{ github.sha }}-ubi-fips", "${{ needs.get-otc-version.outputs.version }}-ubi-fips"]'
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.6.0
-
-      - name: Set up Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v3.10.0
-
-      - name: Show Buildx platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
-
-      - name: Login to ECR
-        uses: docker/login-action@v3
-        with:
-          registry: 663229565520.dkr.ecr.us-east-1.amazonaws.com
-          username: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
-          password: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKERHUB_LOGIN_DEV }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
-
-      - name: Determine source images
-        run: |
-          echo '${{ toJSON(needs.build-container-images.outputs) }}' \
-          | jq -jf ci/jq/manifest-sources.jq --arg target ${{ matrix.target }} \
-          > sources.txt
-
-          cat sources.txt
-
-      - name: Determine tags (ECR)
-        env:
-          REPO_BASE: 663229565520.dkr.ecr.us-east-1.amazonaws.com
-          REPO_ORG: sumologic
-          REPO_NAME: sumologic-otel-collector-ci-builds
-        run: |
-          REPO="${REPO_BASE}/${REPO_ORG}/${REPO_NAME}"
-          echo '${{ matrix.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > ecr-tags.txt
-
-      - name: Determine tags (Docker Hub)
-        env:
-          REPO_BASE: docker.io
-          REPO_ORG: sumologic
-          REPO_NAME: sumologic-otel-collector-ci-builds
-        run: |
-          REPO="${REPO_BASE}/${REPO_ORG}/${REPO_NAME}"
-          echo '${{ matrix.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > dh-tags.txt
-
-      - name: Create multiplatform image index (ECR)
-        run: |
-          docker buildx imagetools create $(cat sources.txt) $(cat ecr-tags.txt)
-
-      - name: Create multiplatform image index (Docker Hub)
-        run: |
-          docker buildx imagetools create $(cat sources.txt) $(cat dh-tags.txt)
+    with:
+      tags: ${{ matrix.tags }}
+      target: ${{ matrix.target }}
+      version: ${{ needs.get-otc-version.outputs.version }}
+    secrets:
+      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+      dockerhub-login: ${{ secrets.DOCKERHUB_LOGIN_DEV }}
+      dockerhub-password: ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
 
   # Store the install script from the packaging repository as an action artifact.
   # Originally, this script was stored in this repository, and the official download url pointed
