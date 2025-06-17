@@ -103,8 +103,8 @@ for-all:
 check-uniform-dependencies:
 	./ci/check_uniform_dependencies.sh
 
-OT_CORE_VERSION := "0.124.1"
-OT_CONTRIB_VERSION := "0.124.1"
+OT_CORE_VERSION := $(shell grep "version: .*" otelcolbuilder/.otelcol-builder.yaml | cut -f 4 -d " ")
+OT_CONTRIB_VERSION := $(shell grep --max-count=1 '^  - gomod: github\.com/open-telemetry/opentelemetry-collector-contrib/' otelcolbuilder/.otelcol-builder.yaml | cut -d " " -f 6 | $(SED) "s/v//")
 # usage: make update-ot OT_CORE_NEW=x.x.x OT_CONTRIB_NEW=y.y.y
 .PHONY: update-ot
 update-ot: install-gsed
