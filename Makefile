@@ -342,12 +342,38 @@ login-ecr-public:
 	@$(MAKE) _login-ecr ECR_SUBCMD="ecr-public" AWS_REGION="us-east-1" \
 		REGISTRY="$(ECR_PUBLIC_REGISTRY)"
 
-.PHONY: login-dh
-login-dh:
-	@docker login
+.PHONY: _crane-copy
+_crane-copy:
+ifeq ($(SRC_IMAGE),)
+	@$(error SRC_IMAGE must be set for crane copy)
+endif
+ifeq ($(DST_IMAGE),)
+	@$(error DST_IMAGE must be set for crane copy)
+endif
+	@crane copy "$(SRC_IMAGE)" "$(DST_IMAGE)"
 
-.PHONY: _image_tags_for_sha
-_image_tags_for_sha:
+.PHONY: _crane-tag
+_crane-tag:
+ifeq ($(SRC_IMAGE),)
+	@$(error SRC_IMAGE must be set for crane tag)
+endif
+ifeq ($(TAG_NAME),)
+	@$(error TAG_NAME must be set for crane tag)
+endif
+	@crane tag "$(SRC_IMAGE)" "$(TAG_NAME)"
+
+.PHONY: create-container-image-tag
+create-container-image-tag:
+	@$(MAKE) _crane-tag \
+		SRC_IMAGE="$(SRC_REPO):$(GIT_SHA)$(TAG_SUFFIX)" \
+		TAG_NAME="$(TAG_NAME)"
+
+.PHONY: _promote-container-image
+_promote-container-image: TAG_NAME = $(GIT_SHA)$(TAG_SUFFIX)
+_promote-container-image:
+ifeq ($(SRC_REGISTRY),)
+	@$(error SRC_REGISTRY must be set for container image promotion)
+endif
 ifeq ($(SRC_REPO),)
 	@$(error SRC_REPO must be set for container image promotion)
 endif
@@ -362,32 +388,9 @@ ifeq ($(GIT_SHA),)
 		equal to the Git SHA of the sumologic-otel-collector commit that the \
 		container image to be promoted is built for)
 endif
-	@$(AWS) ecr describe-images \
-		--repository-name "$(SRC_REPO)" \
-		--image-ids "imageTag=$(GIT_SHA)" \
-		--output json \
-		| jq -j '.imageDetails.[0].imageTags' \
-		| jq -jf ci/jq/tags.jq --arg url "$(DST_REGISTRY)/$(DST_REPO)"
-
-.PHONY: _promote-container-image-cmd
-_promote-container-image-cmd: SRC_IMG = $(SRC_REGISTRY)/$(SRC_REPO):$(GIT_SHA)$(TAG_SUFFIX)
-_promote-container-image-cmd:
-	docker buildx imagetools create $(SRC_IMG) \
-		$(shell $(MAKE) _image_tags_for_sha \
-		SRC_REPO="$(SRC_REPO)" \
-		DST_REGISTRY="$(DST_REGISTRY)" \
-		DST_REPO="$(DST_REPO)" \
-		GIT_SHA="$(GIT_SHA)$(TAG_SUFFIX)")
-
-.PHONY: _promote-container-image
-_promote-container-image:
-	@$(MAKE) _promote-container-image-cmd \
-		SRC_REGISTRY="$(SRC_REGISTRY)" \
-		SRC_REPO="$(SRC_REPO)" \
-		DST_REGISTRY="$(DST_REGISTRY)" \
-		DST_REPO="$(DST_REPO)" \
-		GIT_SHA="$(GIT_SHA)" \
-		TAG_SUFFIX="$(TAG_SUFFIX)"
+	@$(MAKE) _crane-copy \
+		SRC_IMAGE="$(SRC_REGISTRY)/$(SRC_REPO):$(TAG_NAME)" \
+		DST_IMAGE="$(DST_REGISTRY)/$(DST_REPO):$(TAG_NAME)"
 
 .PHONY: _promote-image-ci-to-rc
 _promote-image-ci-to-rc:
