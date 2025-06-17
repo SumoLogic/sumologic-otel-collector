@@ -9,19 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.127.0-sumo-0]
 
-### Released 2025-06-17
-
 ### Added
 
-- Add set-timezone to set collector timezone [#1770]
+- feat: Added the set-timezone option to set collector timezone [#1770]
 
 ### Changed
 
-- chore: Upgrading otel collector to 0.127.0 with all the changes. [#1774]
+- chore: Upgraded the otel collector to 0.127.0 [#1774]
 
 ### Fixed
 
-- fix: removed dependency for github.com/mholt/archiver/v3, replaced with github.com/mholt/archives to fix CVE-2025-3445 [https://github.com/advisories/GHSA-7vpp-9cxj-q8gv] [#1775]
+- fix: Addressed CVE-2025-3445 [https://github.com/advisories/GHSA-7vpp-9cxj-q8gv] by migrating to github.com/mholt/archives [#1775]
 
 [#1770]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1770
 [#1774]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1774
