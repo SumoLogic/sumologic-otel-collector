@@ -71,9 +71,10 @@ jobs:
       - name: Determine source images
         run: |
           jq -jf ci/jq/manifest-sources.jq --arg target ${{ inputs.target }} \
-          manifests/*.json > sources.txt
+          manifests/*-ecr.json | tee sources-ecr.txt
 
-          cat sources.txt
+          jq -jf ci/jq/manifest-sources.jq --arg target ${{ inputs.target }} \
+          manifests/*-dh.json | tee sources-dh.txt
 
       - name: Determine tags (ECR)
         env:
@@ -96,13 +97,13 @@ jobs:
       - name: Create multiplatform image index (ECR)
         run: |
           for tag in $(cat ecr-tags.txt); do
-            docker manifest create "${tag}" $(cat sources.txt)
+            docker manifest create "${tag}" $(cat sources-ecr.txt)
             docker manifest push "${tag}"
           done
 
       - name: Create multiplatform image index (Docker Hub)
         run: |
           for tag in $(cat dh-tags.txt); do
-            docker manifest create "${tag}" $(cat sources.txt)
+            docker manifest create "${tag}" $(cat sources-dh.txt)
             docker manifest push "${tag}"
           done

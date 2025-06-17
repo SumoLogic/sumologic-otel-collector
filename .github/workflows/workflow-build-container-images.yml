@@ -142,8 +142,8 @@ jobs:
           name: ${{ steps.binary-name.outputs.name-with-platform }}
           path: ${{ steps.platform.outputs.artifact-path }}
 
-      - name: Build and push
-        id: build
+      - name: Build and push (ECR)
+        id: build-ecr
         uses: docker/bake-action@v6
         with:
           source: .
@@ -151,6 +151,23 @@ jobs:
           provenance: false
           files: |
             ./docker-bake.hcl
+            ./docker-bake.ecr-override.hcl
+            ./docker-bake.ci-override.hcl
+            cwd://${{ steps.meta.outputs.bake-file }}
+          set: |
+            *.platform=${{ steps.platform.outputs.name-with-os-version }}
+            *.tags=
+
+      - name: Build and push (Docker)
+        id: build-dh
+        uses: docker/bake-action@v6
+        with:
+          source: .
+          targets: ${{ inputs.target || inputs.product }}
+          provenance: false
+          files: |
+            ./docker-bake.hcl
+            ./docker-bake.dh-override.hcl
             ./docker-bake.ci-override.hcl
             cwd://${{ steps.meta.outputs.bake-file }}
           set: |
@@ -159,20 +176,32 @@ jobs:
 
       - name: Print & fix metadata
         run: |
-          echo "-- Current metadata"
-          echo '${{ steps.build.outputs.metadata }}' | tee metadata.json
-          echo "-- Fixed metadata"
-          jq -jf ci/jq/fix-metadata.jq metadata.json | tee metadata-fixed.json
+          echo "-- Current metadata (ECR)"
+          echo '${{ steps.build-ecr.outputs.metadata }}' | tee metadata-ecr.json
+          echo "-- Fixed metadata (ECR)"
+          jq -jf ci/jq/fix-metadata.jq metadata.json | tee metadata-fixed-ecr.json
+
+          echo "-- Current metadata (Docker Hub)"
+          echo '${{ steps.build-dh.outputs.metadata }}' | tee metadata-dh.json
+          echo "-- Fixed metadata (Docker Hub)"
+          jq -jf ci/jq/fix-metadata.jq metadata.json | tee metadata-fixed-dh.json
 
       - name: Set container image manifest output
         id: manifest
         run: |
           name="${{ steps.platform.outputs.manifest-name }}"
           target="${{ inputs.target || inputs.product }}"
-          jq -c ".[\"$target\"]" metadata-fixed.json | tee "${name}.json"
+          jq -c ".[\"$target\"]" metadata-fixed-ecr.json | tee "${name}-ecr.json"
+          jq -c ".[\"$target\"]" metadata-fixed-dh.json | tee "${name}-dh.json"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.platform.outputs.manifest-name }}
-          path: ${{ steps.platform.outputs.manifest-name }}.json
+          name: ${{ steps.platform.outputs.manifest-name }}-ecr
+          path: ${{ steps.platform.outputs.manifest-name }}-ecr.json
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.platform.outputs.manifest-name }}-dh
+          path: ${{ steps.platform.outputs.manifest-name }}-dh.json
           if-no-files-found: error

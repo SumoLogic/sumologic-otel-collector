@@ -5,10 +5,9 @@
 function "cache-from" {
   params = [tgt]
   result = [
-    for repo in REPOS:
     {
       type = "registry"
-      ref = "${repo}:buildcache-${tgt}-${BAKE_LOCAL_PLATFORM}"
+      ref = "${REPO}:buildcache-${tgt}-${BAKE_LOCAL_PLATFORM}"
     }
   ]
 }
@@ -16,31 +15,15 @@ function "cache-from" {
 function "cache-to" {
   params = [tgt]
   result = [
-    for repo in REPOS:
     {
       type = "registry"
       mode = "max"
       ref = join("-", [
-        "${repo}:buildcache",
+        "${REPO}:buildcache",
         "${tgt}",
         replace(BAKE_LOCAL_PLATFORM, "/", "-")
       ])
     }
-  ]
-}
-
-#################################################################################
-# Variables
-#################################################################################
-
-variable "REPOS" {
-  type = list(string)
-  default = [
-    join("/", [
-      "663229565520.dkr.ecr.us-east-1.amazonaws.com",
-      "sumologic/sumologic-otel-collector-ci-builds",
-    ]),
-    # "docker.io/sumologic/sumologic-otel-collector-ci-builds",
   ]
 }
 
@@ -67,7 +50,7 @@ target "_common" {
   output = [
     {
       type = "image"
-      name = "663229565520.dkr.ecr.us-east-1.amazonaws.com/sumologic/sumologic-otel-collector-ci-builds"
+      name = "${REPO}"
       name-canonical = true
       push = true
       push-by-digest = true
