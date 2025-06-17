@@ -5,9 +5,14 @@ on:
     inputs:
       target:
         description: |
-          The bake target to build. The product name will be used as the target
-          when target is not set.
+          The name of the bake target to create tags for.
         type: string
+        required: true
+      tags:
+        description: |
+          A list of tags (in JSON format) to create for the source images.
+        type: string
+        required: true
       version:
         description: The version of OTC the images are for.
         type: string
