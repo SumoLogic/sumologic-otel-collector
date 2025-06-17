@@ -1,3 +1,4 @@
+# syntax=docker.io/docker/dockerfile-upstream:1.17.0-labs
 FROM mcr.microsoft.com/windows/nanoserver:ltsc2025
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
