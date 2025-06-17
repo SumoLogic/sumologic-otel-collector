@@ -63,16 +63,56 @@ target "standard" {
   inherits = ["_common-standard"]
 }
 
+target "standard-linux-amd64" {
+  inherits = ["standard"]
+  platforms = ["linux/amd64"]
+}
+
+target "standard-linux-arm64" {
+  inherits = ["standard"]
+  platforms = ["linux/arm64"]
+}
+
 target "standard-fips" {
   inherits = ["_common-standard", "_common-fips"]
+}
+
+target "standard-fips-linux-amd64" {
+  inherits = ["standard-fips"]
+  platforms = ["linux/amd64"]
+}
+
+target "standard-fips-linux-arm64" {
+  inherits = ["standard-fips"]
+  platforms = ["linux/arm64"]
 }
 
 target "ubi" {
   inherits = ["_common-ubi"]
 }
 
+target "ubi-linux-amd64" {
+  inherits = ["ubi"]
+  platforms = ["linux/amd64"]
+}
+
+target "ubi-linux-arm64" {
+  inherits = ["ubi"]
+  platforms = ["linux/arm64"]
+}
+
 target "ubi-fips" {
   inherits = ["_common-ubi", "_common-fips"]
+}
+
+target "ubi-fips-linux-amd64" {
+  inherits = ["ubi-fips"]
+  platforms = ["linux/amd64"]
+}
+
+target "ubi-fips-linux-arm64" {
+  inherits = ["ubi-fips"]
+  platforms = ["linux/arm64"]
 }
 
 target "windows-ltsc2022" {
