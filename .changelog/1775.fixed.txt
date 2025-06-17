@@ -1,1 +1,0 @@
-fix: removed dependency for github.com/mholt/archiver/v3, replaced with github.com/mholt/archives to fix CVE-2025-3445 [https://github.com/advisories/GHSA-7vpp-9cxj-q8gv]
