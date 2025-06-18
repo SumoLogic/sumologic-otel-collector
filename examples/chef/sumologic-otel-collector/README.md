@@ -5,10 +5,10 @@ This cookbook will install Sumo Logic Distro of [OpenTelemetry Collector][otc_li
 ## Using the cookbook
 
 - Get an [installation token][installation_token] from Sumo Logic
-- Prepare [configuration](../../docs/configuration.md) file for Sumo Logic Distribution for OpenTelemetry Collector and put the file in a directory of your choice. You can put multiple configuration files in this directory, and all of them will be used.
+- Prepare [configuration](../../../docs/configuration.md) file for Sumo Logic Distribution for OpenTelemetry Collector and put the file in a directory of your choice. You can put multiple configuration files in this directory, and all of them will be used.
 
   **NOTE**: The playbook will prepare a [base configuration][base_configuration] for you, and configure the [extension][sumologicextension] as well.
-- Prepare Chef Recipe and save it in the [recipes/default.rb](sumologic-otel-collector/recipes/default.rb) file
+- Prepare Chef Recipe and save it in the [recipes/default.rb](recipes/default.rb) file
 
     ```ruby
     sumologic_otel_collector 'sumologic-otel-collector' do
@@ -73,5 +73,5 @@ The following steps describe procedure of testing changes:
 
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
 [installation_token]: https://help.sumologic.com/docs/manage/security/installation-tokens/
-[base_configuration]: ../sumologic.yaml
-[sumologicextension]: ../../pkg/extension/sumologicextension/
+[base_configuration]: ../../sumologic.yaml
+[sumologicextension]: ../../../pkg/extension/sumologicextension/
