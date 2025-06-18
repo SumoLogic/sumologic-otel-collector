@@ -332,8 +332,6 @@ jobs:
     secrets:
       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
-      dockerhub-login: ${{ secrets.DOCKERHUB_LOGIN_DEV }}
-      dockerhub-password: ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
 
   push-container-indexes:
     name: Container Indexes
@@ -359,8 +357,6 @@ jobs:
     secrets:
       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
-      dockerhub-login: ${{ secrets.DOCKERHUB_LOGIN_DEV }}
-      dockerhub-password: ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
 
   # Store the install script from the packaging repository as an action artifact.
   # Originally, this script was stored in this repository, and the official download url pointed

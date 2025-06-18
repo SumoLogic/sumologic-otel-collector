@@ -22,10 +22,6 @@ on:
         required: true
       aws-secret-access-key:
         required: true
-      dockerhub-login:
-        required: true
-      dockerhub-password:
-        required: true
 
 defaults:
   run:
@@ -55,13 +51,6 @@ jobs:
           username: ${{ secrets.aws-access-key-id }}
           password: ${{ secrets.aws-secret-access-key }}
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          registry: docker.io
-          username: ${{ secrets.dockerhub-login }}
-          password: ${{ secrets.dockerhub-password }}
-
       - uses: actions/download-artifact@v4
         with:
           pattern: "manifest_${{ inputs.target }}_*"
@@ -73,9 +62,6 @@ jobs:
           jq -jf ci/jq/manifest-sources.jq --arg target ${{ inputs.target }} \
           manifests/*-ecr.json | tee sources-ecr.txt
 
-          jq -jf ci/jq/manifest-sources.jq --arg target ${{ inputs.target }} \
-          manifests/*-dh.json | tee sources-dh.txt
-
       - name: Determine tags (ECR)
         env:
           REPO_BASE: 663229565520.dkr.ecr.us-east-1.amazonaws.com
@@ -85,25 +71,9 @@ jobs:
           REPO="${REPO_BASE}/${REPO_ORG}/${REPO_NAME}"
           echo '${{ inputs.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > ecr-tags.txt
 
-      - name: Determine tags (Docker Hub)
-        env:
-          REPO_BASE: docker.io
-          REPO_ORG: sumologic
-          REPO_NAME: sumologic-otel-collector-ci-builds
-        run: |
-          REPO="${REPO_BASE}/${REPO_ORG}/${REPO_NAME}"
-          echo '${{ inputs.tags }}' | jq -jf ci/jq/tags.jq --arg url "$REPO" > dh-tags.txt
-
       - name: Create multiplatform image index (ECR)
         run: |
           for tag in $(cat ecr-tags.txt); do
             docker manifest create "${tag}" $(cat sources-ecr.txt)
-            docker manifest push "${tag}"
-          done
-
-      - name: Create multiplatform image index (Docker Hub)
-        run: |
-          for tag in $(cat dh-tags.txt); do
-            docker manifest create "${tag}" $(cat sources-dh.txt)
             docker manifest push "${tag}"
           done
