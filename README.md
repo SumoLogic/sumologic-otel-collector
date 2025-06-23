@@ -303,7 +303,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [oidcauthextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.127.0/extension/oidcauthextension
 [pprofextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.127.0/extension/pprofextension
 [sigv4authextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.127.0/extension/sigv4authextension
-[sumologicextension]: ./pkg/extension/sumologicextension
+[sumologicextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.127.0/extension/sumologicextension
 [zpagesextension]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.127.0/extension/zpagesextension
 [forwardconnector]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.127.0/connector/forwardconnector
 [countconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.127.0/connector/countconnector
