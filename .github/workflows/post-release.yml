@@ -1,0 +1,47 @@
+name: "Post release tasks"
+
+run-name: >
+  ${{ format('Post Release Tasks for Release: {0}', inputs.ref_name || github.ref_name) }}
+
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+    inputs:
+      ref_name:
+        description: |
+          The ref name (e.g. tag name) that should be used as a trigger for this workflow.
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  create-pkg-tags:
+    name: Create package tags
+    runs-on: ubuntu-24.04
+    env:
+      REF_NAME: ${{ inputs.ref_name || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: "${{ env.REF_NAME }}"
+
+      - name: Set Git user name & email
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "github-actions"
+
+      - name: Create & push package tags
+        run: |
+          for dir in $(find ./pkg -type f -name "go.mod" ! -path "*pkg/test/*" -exec dirname {} \; | sort); do
+            tag_name="${dir:2}/${REF_NAME}";
+            echo "Creating tag for: ${tag_name}";
+            git tag -a "${tag_name}" -m "${tag_name}" "${REF_NAME}";
+            git push origin "${tag_name}"
+          done
