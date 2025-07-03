@@ -254,7 +254,7 @@ processors:
 
 ### Assign to an Ingest Budget
 
-Assignment to an Ingest Budget is not supported by Opentelemetry Collector.
+Assignment to an Ingest Budget can be done using [ingest-budget]
 
 ### Time Zone
 
@@ -2532,3 +2532,4 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [mask-filter]: https://help.sumologic.com/docs/send-data/use-json-configure-sources/#example-mask-filter
 [ottlfuncs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.127.0/pkg/ottl/ottlfuncs#functions
 [forward-data]: https://help.sumologic.com/docs/manage/data-archiving/installed-collectors/
+[ingest-budget]: https://help.sumologic.com/docs/manage/ingestion-volume/ingest-budgets/
