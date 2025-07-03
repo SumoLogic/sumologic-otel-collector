@@ -62,10 +62,11 @@ func newCountingErrorConsumer(err error) *countingErrorConsumer {
 }
 
 func TestNewRawK8sEventsReceiver(t *testing.T) {
+	f := NewFactory()
 	rCfg := createDefaultConfig().(*Config)
 	client := fake.NewSimpleClientset(&corev1.Event{})
 	r, err := newRawK8sEventsReceiver(
-		receivertest.NewNopSettings(),
+		receivertest.NewNopSettings(f.Type()),
 		rCfg,
 		consumertest.NewNop(),
 		client,
@@ -79,7 +80,7 @@ func TestNewRawK8sEventsReceiver(t *testing.T) {
 
 	rCfg.Namespaces = []string{"test", "another_test"}
 	r1, err := newRawK8sEventsReceiver(
-		receivertest.NewNopSettings(),
+		receivertest.NewNopSettings(f.Type()),
 		rCfg,
 		consumertest.NewNop(),
 		client,
@@ -93,6 +94,7 @@ func TestNewRawK8sEventsReceiver(t *testing.T) {
 }
 
 func TestProcessEventE2E(t *testing.T) {
+	f := NewFactory()
 	rCfg := createDefaultConfig().(*Config)
 	client := fake.NewSimpleClientset()
 	sink := new(consumertest.LogsSink)
@@ -107,7 +109,7 @@ func TestProcessEventE2E(t *testing.T) {
 	}
 
 	r, err := newRawK8sEventsReceiver(
-		receivertest.NewNopSettings(),
+		receivertest.NewNopSettings(f.Type()),
 		rCfg,
 		sink,
 		client,
@@ -129,11 +131,12 @@ func TestProcessEventE2E(t *testing.T) {
 }
 
 func TestProcessEvent(t *testing.T) {
+	f := NewFactory()
 	rCfg := createDefaultConfig().(*Config)
 	client := fake.NewSimpleClientset()
 	sink := new(consumertest.LogsSink)
 	r, err := newRawK8sEventsReceiver(
-		receivertest.NewNopSettings(),
+		receivertest.NewNopSettings(f.Type()),
 		rCfg,
 		sink,
 		client,
@@ -149,13 +152,14 @@ func TestProcessEvent(t *testing.T) {
 }
 
 func TestConsumeRetryOnRecoverableError(t *testing.T) {
+	f := NewFactory()
 	rCfg := createDefaultConfig().(*Config)
 	client := fake.NewSimpleClientset()
 	ctx := context.Background()
 	core, observedLogs := observer.New(zapcore.InfoLevel)
 	consumerError := errors.New("recoverable error")
 	consumer := newCountingErrorConsumer(consumerError)
-	settings := receivertest.NewNopSettings()
+	settings := receivertest.NewNopSettings(f.Type())
 	settings.Logger = zap.New(core)
 	rCfg.ConsumeMaxRetries = 1
 	rCfg.ConsumeRetryDelay = time.Nanosecond
@@ -179,13 +183,14 @@ func TestConsumeRetryOnRecoverableError(t *testing.T) {
 }
 
 func TestConsumeNoRetryOnPermanentError(t *testing.T) {
+	f := NewFactory()
 	rCfg := createDefaultConfig().(*Config)
 	client := fake.NewSimpleClientset()
 	ctx := context.Background()
 	core, observedLogs := observer.New(zapcore.InfoLevel)
 	consumerError := consumererror.NewPermanent(errors.New("permanent error"))
 	consumer := newCountingErrorConsumer(consumerError)
-	settings := receivertest.NewNopSettings()
+	settings := receivertest.NewNopSettings(f.Type())
 	settings.Logger = zap.New(core)
 	rCfg.ConsumeRetryDelay = time.Nanosecond
 
@@ -207,11 +212,12 @@ func TestConsumeNoRetryOnPermanentError(t *testing.T) {
 }
 
 func TestConvertEventToLog(t *testing.T) {
+	f := NewFactory()
 	rCfg := createDefaultConfig().(*Config)
 	client := fake.NewSimpleClientset()
 	sink := new(consumertest.LogsSink)
 	r, err := newRawK8sEventsReceiver(
-		receivertest.NewNopSettings(),
+		receivertest.NewNopSettings(f.Type()),
 		rCfg,
 		sink,
 		client,
@@ -264,13 +270,14 @@ func TestConvertEventToLog(t *testing.T) {
 }
 
 func TestEventFilterByTime(t *testing.T) {
+	f := NewFactory()
 	maxEventAge := time.Minute * 5
 	rCfg := createDefaultConfig().(*Config)
 	rCfg.MaxEventAge = maxEventAge
 	client := fake.NewSimpleClientset()
 	sink := new(consumertest.LogsSink)
 	r, err := newRawK8sEventsReceiver(
-		receivertest.NewNopSettings(),
+		receivertest.NewNopSettings(f.Type()),
 		rCfg,
 		sink,
 		client,
@@ -305,6 +312,7 @@ func TestGetEventTimestamp(t *testing.T) {
 }
 
 func TestNoStorage(t *testing.T) {
+	f := NewFactory()
 	receiverConfig := createDefaultConfig().(*Config)
 	logsSink := new(consumertest.LogsSink)
 	listWatch := cachetest.NewFakeControllerSource()
@@ -318,7 +326,7 @@ func TestNoStorage(t *testing.T) {
 	}
 
 	receiver, err := newRawK8sEventsReceiver(
-		receivertest.NewNopSettings(),
+		receivertest.NewNopSettings(f.Type()),
 		receiverConfig,
 		logsSink,
 		fake.NewSimpleClientset(),
@@ -360,7 +368,7 @@ func TestNoStorage(t *testing.T) {
 
 	// Start the receiver again.
 	receiver, err = newRawK8sEventsReceiver(
-		receivertest.NewNopSettings(),
+		receivertest.NewNopSettings(f.Type()),
 		receiverConfig,
 		logsSink,
 		fake.NewSimpleClientset(),
@@ -377,6 +385,7 @@ func TestNoStorage(t *testing.T) {
 }
 
 func TestStorage(t *testing.T) {
+	f := NewFactory()
 	receiverConfig := createDefaultConfig().(*Config)
 	logsSink := new(consumertest.LogsSink)
 	listWatch := cachetest.NewFakeControllerSource()
@@ -388,7 +397,7 @@ func TestStorage(t *testing.T) {
 	) cache.ListerWatcher {
 		return listWatch
 	}
-	settings := receivertest.NewNopSettings()
+	settings := receivertest.NewNopSettings(f.Type())
 
 	receiver, err := newRawK8sEventsReceiver(
 		settings,

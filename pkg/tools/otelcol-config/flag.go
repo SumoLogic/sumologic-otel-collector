@@ -17,6 +17,7 @@ const (
 	flagDisableHostmetrics   = "disable-hostmetrics"
 	flagEnableEphemeral      = "enable-ephemeral"
 	flagDisableEphemeral     = "disable-ephemeral"
+	flagSetTimezone          = "set-timezone"
 	flagEnableRemoteControl  = "enable-remote-control"
 	flagDisableRemoteControl = "disable-remote-control"
 	flagConfigDir            = "config"
@@ -43,6 +44,7 @@ const (
 	getKVUsage                = "read key-value from conf.d with yq path (eg: --read-kv .extensions.sumologic.foo)"
 	overrideUsage             = "for write-kv, override all other user settings"
 	setAPIURLUsage            = "sets the base_api_url field in the sumologic extension"
+	setTimezoneUsage          = "sets the time_zone field in the sumologic extension"
 )
 
 type flagValues struct {
@@ -56,6 +58,7 @@ type flagValues struct {
 	EnableRemoteControl  bool
 	DisableRemoteControl bool
 	SetOpAmpEndpoint     string
+	SetTimezone          string
 	Help                 bool
 	ConfigDir            string
 	LaunchdDir           string
@@ -84,6 +87,7 @@ func makeFlagSet(fv *flagValues) *pflag.FlagSet {
 	flags.BoolVar(&fv.EnableRemoteControl, flagEnableRemoteControl, false, enableRemoteControlUsage)
 	flags.BoolVar(&fv.DisableRemoteControl, flagDisableRemoteControl, false, disableRemoteControlUsage)
 	flags.StringVarP(&fv.SetOpAmpEndpoint, flagSetOpAmpEndpoint, "e", "", setOpAmpEndpointUsage)
+	flags.StringVarP(&fv.SetTimezone, flagSetTimezone, "z", "", setTimezoneUsage)
 	flags.StringVarP(&fv.ConfigDir, flagConfigDir, "c", "/etc/otelcol-sumo", configUsage)
 	flags.StringVarP(&fv.LaunchdDir, flagLaunchdDir, "l", "/Library/LaunchDaemons", launchdUsage)
 	flags.StringArrayVar(&fv.WriteKV, flagWriteKV, nil, writeKVUsage)

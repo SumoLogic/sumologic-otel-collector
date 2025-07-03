@@ -47,7 +47,7 @@ type Config struct {
 // CreateDefaultClientConfig returns default http client settings
 func CreateDefaultClientConfig() confighttp.ClientConfig {
 	return confighttp.ClientConfig{
-		Auth: &configauth.Authentication{
+		Auth: &configauth.Config{
 			AuthenticatorID: component.NewID(sumologicextension.NewFactory().Type()),
 		},
 	}
