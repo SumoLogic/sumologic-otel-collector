@@ -11,14 +11,14 @@ defaults:
     shell: bash
 
 env:
-  GO_VERSION: "1.23.0"
+  GO_VERSION: "1.24.0"
 
 jobs:
   # Add lint to dev builds as that's the only way for cache to be shared across branches.
   # https://docs.github.com/en/actions/advanced-guides/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
   lint:
     name: Lint (staticcheck)
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         arch_os: ["linux_amd64"]
@@ -69,9 +69,9 @@ jobs:
       matrix:
         include:
           - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
           - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
             boringcrypto: true
           - arch_os: darwin_amd64
             runs-on: macos-15
@@ -90,9 +90,9 @@ jobs:
       matrix:
         include:
           - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
           - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
             boringcrypto: true
           - arch_os: darwin_amd64
             runs-on: macos-15
@@ -115,14 +115,14 @@ jobs:
       matrix:
         include:
           - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
           - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
             fips: true
           - arch_os: linux_arm64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
           - arch_os: linux_arm64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
             fips: true
           - arch_os: darwin_amd64
             runs-on: macos-15
@@ -162,14 +162,14 @@ jobs:
           - arch_os: darwin_arm64
             runs-on: macos-15
           - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
           - arch_os: linux_amd64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
             fips: true
           - arch_os: linux_arm64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
           - arch_os: linux_arm64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
             fips: true
     with:
       arch_os: ${{ matrix.arch_os }}
@@ -184,7 +184,7 @@ jobs:
 
   build-container-images:
     name: Build container
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs:
       - build
       - get-version
@@ -350,7 +350,7 @@ jobs:
 
   push-docker-manifest:
     name: Push joint container manifest
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs:
       - build-container-images
       - build-windows-container-images
@@ -438,9 +438,22 @@ jobs:
             REPO_URL=sumologic/sumologic-otel-collector-dev \
             BUILD_TYPE_SUFFIX="-ubi"
 
+  # Store the install script from the packaging repository as an action artifact.
+  # Originally, this script was stored in this repository, and the official download url pointed
+  # to the most recent release here. The script has since been moved to the packaging repository.
+  # It is kept here for backwards compatibility. Once the download count for this artifact
+  # reaches 0 for new releases, this can be removed.
+  #
+  # TODO: This pulls the latest install scripts from the main branch of the
+  # packaging reopsitory. There is a chance that the install scripts attached to
+  # a collector release will differ from the install scripts attached to a
+  # packaging release. We can either remove install scripts from releases here
+  # or we should ensure that the install scripts are always automically synced
+  # to this repository and use the install scripts from the HEAD SHA of the
+  # collector workflow run specified for a release.
   install-script:
     name: Store install script
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -458,6 +471,42 @@ jobs:
         with:
           name: install.ps1
           path: ./install-script/install.ps1
+          if-no-files-found: error
+
+  config-management-assets:
+    name: Store Chef cookbook, Puppet module, and Ansible playbook
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Archive Chef cookbook
+        run: tar -cvf ./examples/chef/chef-cookbook.tar.gz -C ./examples/chef sumologic-otel-collector/
+
+      - name: Archive Puppet module
+        run: tar -cvf ./examples/puppet/puppet-module.tar.gz -C ./examples/puppet/modules install_otel_collector/
+
+      - name: Archive Ansible playbook
+        run: tar -cvf ./examples/ansible-playbook.tar.gz -C ./examples ansible/
+
+      - name: Store Chef cookbook archive as action artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chef-cookbook.tar.gz
+          path: ./examples/chef/chef-cookbook.tar.gz
+          if-no-files-found: error
+
+      - name: Store Puppet module archive as action artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppet-module.tar.gz
+          path: ./examples/puppet/puppet-module.tar.gz
+          if-no-files-found: error
+
+      - name: Store Ansible playbook archive as action artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ansible-playbook.tar.gz
+          path: ./examples/ansible-playbook.tar.gz
           if-no-files-found: error
 
   trigger-packaging:

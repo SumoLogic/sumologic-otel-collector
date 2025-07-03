@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
+	"go.opentelemetry.io/collector/confmap/xconfmap"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/processor"
 )
@@ -29,7 +30,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 	factory := NewFactory()
 	cfg := factory.CreateDefaultConfig()
 	assert.NotNil(t, cfg, "failed to create default config")
-	assert.NoError(t, component.ValidateConfig(cfg))
+	assert.NoError(t, xconfmap.Validate(cfg))
 }
 
 func TestCreateProcessor(t *testing.T) {
@@ -40,6 +41,7 @@ func TestCreateProcessor(t *testing.T) {
 
 	cfg := factory.CreateDefaultConfig()
 	params := processor.Settings{
+		ID:                component.NewIDWithName(factory.Type(), ""),
 		TelemetrySettings: componenttest.NewNopTelemetrySettings(),
 	}
 

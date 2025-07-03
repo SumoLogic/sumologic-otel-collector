@@ -37,12 +37,13 @@ const (
 	errMsgInvalidConfigName       = "cannot validate config: " +
 		"service::pipelines::logs/localfilesource/0aa79379-c764-4d3d-9d66-03f6df029a07: " +
 		"references processor \"batch\" which is not configured"
-	errMsgInvalidInterval = "'max_elapsed_time' must be non-negative"
+	errMsgInvalidType = "'spike_limit_percentage' expected type 'uint32'"
+	errExpectedUncofiguredEndPoint = "expected unconfigured opamp endpoint to result in default sumo opamp url setting"
 )
 
 func defaultSetup() (*Config, extension.Settings) {
 	cfg := createDefaultConfig().(*Config)
-	set := extensiontest.NewNopSettings()
+	set := extensiontest.NewNopSettings(extensiontest.NopType)
 	set.BuildInfo = component.BuildInfo{Version: "test version", Command: "otelcoltest"}
 	return cfg, set
 }
@@ -65,7 +66,7 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyRemoteHostConfig", "testdata/opamp.d/opamp-host-config.yaml", false, ""},
 		{"ApplyRemoteWindowsEventConfig", "testdata/opamp.d/opamp-windows-event-config.yaml", false, ""},
 		{"ApplyRemoteExtensionsConfig", "testdata/opamp.d/opamp-extensions-config.yaml", false, ""},
-		{"ApplyRemoteConfigFailed", "testdata/opamp.d/opamp-invalid-remote-config.yaml", true, errMsgInvalidInterval},
+		{"ApplyRemoteConfigFailed", "testdata/opamp.d/opamp-invalid-remote-config.yaml", true, errMsgInvalidType},
 		{"ApplyRemoteConfigMissingProcessor", "testdata/opamp.d/opamp-missing-processor.yaml", true, errMsgInvalidConfigName},
 		{"ApplyFilterProcessorConfig", "testdata/opamp.d/opamp-filter-processor.yaml", false, ""},
 		{"ApplyKafkaMetricsConfig", "testdata/opamp.d/opamp-kafkametrics-config.yaml", false, ""},
@@ -211,7 +212,7 @@ func TestStart(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.ClientConfig.Auth = nil
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopSettings()
+	set := extensiontest.NewNopSettings(extensiontest.NopType)
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -226,7 +227,7 @@ func TestReload(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	cfg.ClientConfig.Auth = nil
 	cfg.RemoteConfigurationDirectory = d
-	set := extensiontest.NewNopSettings()
+	set := extensiontest.NewNopSettings(extensiontest.NopType)
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
@@ -237,14 +238,14 @@ func TestReload(t *testing.T) {
 
 func TestDefaultEndpointSetOnStart(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
-	set := extensiontest.NewNopSettings()
+	set := extensiontest.NewNopSettings(extensiontest.NopType)
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	if err != nil {
 		t.Fatal(err)
 	}
 	settings := o.startSettings()
 	if settings.OpAMPServerURL != DefaultSumoLogicOpAmpURL {
-		t.Error("expected unconfigured opamp endpoint to result in default sumo opamp url setting")
+		t.Error(errExpectedUncofiguredEndPoint)
 	}
 }
 
