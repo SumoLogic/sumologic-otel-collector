@@ -3,10 +3,13 @@ package logentries
 import (
 	"bufio"
 	"fmt"
+	"golang.org/x/text/encoding"
+	"golang.org/x/text/encoding/ianaindex"
+	"golang.org/x/text/encoding/unicode"
 	"io"
+	"strings"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver/output/consumer"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/decode"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/helper"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/split"
 	"go.uber.org/zap"
@@ -35,7 +38,7 @@ type LogEntriesConfig struct {
 
 func (c *LogEntriesConfig) Build(logger *zap.SugaredLogger, op consumer.WriterOp) (consumer.Interface, error) {
 
-	encoding, err := decode.LookupEncoding(c.Encoding)
+	encoding, err := LookupEncoding(c.Encoding)
 	if err != nil {
 		return nil, fmt.Errorf("log_entries configuration unable to use encoding %s: %w", c.Encoding, err)
 	}
@@ -94,4 +97,31 @@ func (f scannerFactory) splitWithTruncate() bufio.SplitFunc {
 		}
 		return
 	}
+}
+
+var encodingOverrides = map[string]encoding.Encoding{
+	"utf-16":    unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM),
+	"utf16":     unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM),
+	"utf-8":     unicode.UTF8,
+	"utf8":      unicode.UTF8,
+	"utf-8-raw": UTF8Raw,
+	"utf8-raw":  UTF8Raw,
+	"ascii":     unicode.UTF8,
+	"us-ascii":  unicode.UTF8,
+	"nop":       encoding.Nop,
+	"":          unicode.UTF8,
+}
+
+func LookupEncoding(enc string) (encoding.Encoding, error) {
+	if e, ok := encodingOverrides[strings.ToLower(enc)]; ok {
+		return e, nil
+	}
+	e, err := ianaindex.IANA.Encoding(enc)
+	if err != nil {
+		return nil, fmt.Errorf("unsupported encoding '%s'", enc)
+	}
+	if e == nil {
+		return nil, fmt.Errorf("no charmap defined for encoding '%s'", enc)
+	}
+	return e, nil
 }
