@@ -75,8 +75,8 @@ using the image available in the one of the following repositories:
 > One can read more about the above described mechanism in
 > [`sumologicextension` README.md][sumologicextension_storing_credentials].
 
-[sumologicextension]: ./../pkg/extension/sumologicextension/README.md
-[sumologicextension_storing_credentials]: ./../pkg/extension/sumologicextension/README.md#Storing-credentials
+[sumologicextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.127.0/extension/sumologicextension/README.md
+[sumologicextension_storing_credentials]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.127.0/extension/sumologicextension#storing-credentials
 
 ## Ansible
 

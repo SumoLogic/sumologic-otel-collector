@@ -1,5 +1,7 @@
 #!/bin/bash
 
+BUILDER_CONFIG="${BUILDER_CONFIG:-otelcolbuilder/.otelcol-builder.yaml}"
+
 declare -i major_version
 declare -i minor_version
 declare -i patch_version
@@ -51,7 +53,7 @@ parse_params() {
 }
 
 parse_core_version() {
-    config="otelcolbuilder/.otelcol-builder.yaml"
+    config="$BUILDER_CONFIG"
     regex='s/.*version:[ ]+([0-9]+\.[0-9]+\.[0-9]+).*/\1/p'
     version="$(sed -En "${regex}" "${config}")"
 

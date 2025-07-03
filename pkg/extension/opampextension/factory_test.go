@@ -31,11 +31,12 @@ import (
 )
 
 func TestFactory_CreateDefaultConfig(t *testing.T) {
+	f := NewFactory()
 	cfg := createDefaultConfig()
 
 	assert.Equal(t, cfg, &Config{
 		ClientConfig: confighttp.ClientConfig{
-			Auth: &configauth.Authentication{
+			Auth: &configauth.Config{
 				AuthenticatorID: component.NewID(sumologicextension.NewFactory().Type()),
 			},
 		},
@@ -43,14 +44,15 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 	})
 
 	assert.NoError(t, componenttest.CheckConfigStruct(cfg))
-	ext, err := createExtension(context.Background(), extensiontest.NewNopSettings(), cfg)
+	ext, err := createExtension(context.Background(), extensiontest.NewNopSettings(f.Type()), cfg)
 	require.NoError(t, err)
 	require.NotNil(t, ext)
 }
 
 func TestFactory_CreateExtension(t *testing.T) {
+	f := NewFactory()
 	cfg := createDefaultConfig().(*Config)
-	ext, err := createExtension(context.Background(), extensiontest.NewNopSettings(), cfg)
+	ext, err := createExtension(context.Background(), extensiontest.NewNopSettings(f.Type()), cfg)
 	require.NoError(t, err)
 	require.NotNil(t, ext)
 }
