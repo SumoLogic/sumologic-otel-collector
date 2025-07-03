@@ -225,3 +225,4 @@ replaces:
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider => ../../pkg/configprovider/globprovider
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider => ../../pkg/configprovider/opampprovider
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil => ../../pkg/configprovider/providerutil
+  - github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter => github.com/echlebek/opentelemetry-collector-contrib/exporter/sumologicexporter
