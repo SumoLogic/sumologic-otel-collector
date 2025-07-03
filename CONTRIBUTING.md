@@ -121,7 +121,6 @@ use (
         ./otelcolbuilder/cmd
         ./pkg/test
         ./pkg/exporter/sumologicexporter
-        ./pkg/extension/sumologicextension
         ./pkg/processor/cascadingfilterprocessor
         ./pkg/processor/k8sprocessor
         ./pkg/processor/metricfrequencyprocessor

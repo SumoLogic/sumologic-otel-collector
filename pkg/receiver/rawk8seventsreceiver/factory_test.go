@@ -48,11 +48,12 @@ func TestFactoryType(t *testing.T) {
 }
 
 func TestCreateReceiver(t *testing.T) {
+	f := NewFactory()
 	rCfg := createDefaultConfig().(*Config)
 
 	// Fails with bad K8s Config.
 	r, err := createLogsReceiver(
-		context.Background(), receivertest.NewNopSettings(),
+		context.Background(), receivertest.NewNopSettings(f.Type()),
 		rCfg, consumertest.NewNop(),
 	)
 	assert.Error(t, err)
@@ -64,7 +65,7 @@ func TestCreateReceiver(t *testing.T) {
 	}
 	r, err = createLogsReceiverWithClient(
 		context.Background(),
-		receivertest.NewNopSettings(),
+		receivertest.NewNopSettings(f.Type()),
 		rCfg, consumertest.NewNop(),
 		fakeClientFactory,
 	)

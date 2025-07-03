@@ -18,14 +18,13 @@ import (
 	"context"
 	"testing"
 
+	cfconfig "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/processor"
 	"go.uber.org/zap"
-
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor/config"
 )
 
 func TestCreateDefaultConfig(t *testing.T) {
@@ -37,16 +36,17 @@ func TestCreateDefaultConfig(t *testing.T) {
 func TestCreateProcessor(t *testing.T) {
 	factory := NewFactory()
 
-	cfg := factory.CreateDefaultConfig().(*config.Config)
+	cfg := factory.CreateDefaultConfig().(*cfconfig.Config)
 	// Manually set required fields
 	cfg.ExpectedNewTracesPerSec = 64
-	cfg.PolicyCfgs = []config.TraceAcceptCfg{
+	cfg.PolicyCfgs = []cfconfig.TraceAcceptCfg{
 		{
 			Name: "test-policy",
 		},
 	}
 
 	params := processor.Settings{
+		ID:                component.NewID(factory.Type()),
 		TelemetrySettings: component.TelemetrySettings{Logger: zap.NewNop()},
 	}
 	tp, err := factory.CreateTraces(context.Background(), params, cfg, consumertest.NewNop())
