@@ -30,4 +30,4 @@ This playbook will install Sumo Logic Distro of [OpenTelemetry Collector][otc_li
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
 [installation_token]: https://help.sumologic.com/docs/manage/security/installation-tokens/
 [base_configuration]: ../sumologic.yaml
-[sumologicextension]: ../../pkg/extension/sumologicextension/
+[sumologicextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.127.0/extension/sumologicextension

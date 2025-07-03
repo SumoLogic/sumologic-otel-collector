@@ -74,4 +74,4 @@ The following steps describe procedure of testing changes:
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
 [installation_token]: https://help.sumologic.com/docs/manage/security/installation-tokens/
 [base_configuration]: ../../sumologic.yaml
-[sumologicextension]: ../../../pkg/extension/sumologicextension/
+[sumologicextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.127.0/extension/sumologicextension

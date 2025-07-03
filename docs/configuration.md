@@ -327,8 +327,8 @@ More information about this feature can be found in the [extension's documentati
 [sumologicextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.127.0/extension/sumologicextension
 [sumologicexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.127.0/exporter/sumologicexporter
 [hostmetricsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.127.0/receiver/hostmetricsreceiver
-[sumologicextension_configuration]: ../pkg/extension/sumologicextension#configuration
-[sumologicextension_store_credentials]: ../pkg/extension/sumologicextension/README.md#storing-credentials
+[sumologicextension_configuration]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.127.0/extension/sumologicextension#configuration
+[sumologicextension_store_credentials]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.127.0/extension/sumologicextension#storing-credentials
 
 ### Using multiple Sumo Logic extensions
 
