@@ -18,7 +18,7 @@ import (
 	"regexp"
 	"time"
 
-	conventions "go.opentelemetry.io/collector/semconv/v1.18.0"
+	conventions "go.opentelemetry.io/otel/semconv/v1.18.0"
 
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -192,13 +192,13 @@ func NewExtractionFieldTags() ExtractionFieldTags {
 	tags.ContainerImage = defaultTagContainerImage
 	tags.ContainerName = defaultTagContainerName
 	tags.DaemonSetName = defaultTagDaemonSetName
-	tags.DeploymentName = conventions.AttributeK8SDeploymentName
+	tags.DeploymentName = string(conventions.K8SDeploymentNameKey)
 	tags.HostName = defaultTagHostName
 	tags.CronJobName = defaultTagCronJobName
 	tags.JobName = defaultTagJobName
 	tags.PodUID = defaultTagPodUID
-	tags.PodName = conventions.AttributeK8SPodName
-	tags.Namespace = conventions.AttributeK8SNamespaceName
+	tags.PodName = string(conventions.K8SPodNameKey)
+	tags.Namespace = string(conventions.K8SNamespaceNameKey)
 	tags.NodeName = defaultTagNodeName
 	tags.ReplicaSetName = defaultTagReplicaSetName
 	tags.ServiceName = defaultTagServiceName

@@ -33,7 +33,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.opentelemetry.io/collector/processor"
-	conventions "go.opentelemetry.io/collector/semconv/v1.18.0"
+	conventions "go.opentelemetry.io/otel/semconv/v1.18.0"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
@@ -296,7 +296,7 @@ func withPassthroughIP(passthroughIP string) generateResourceFunc {
 
 func withHostname(hostname string) generateResourceFunc {
 	return func(res pcommon.Resource) {
-		res.Attributes().PutStr(conventions.AttributeHostName, hostname)
+		res.Attributes().PutStr(string(conventions.HostNameKey), hostname)
 	}
 }
 
@@ -853,16 +853,16 @@ func TestMetricsProcessorHostname(t *testing.T) {
 			name:     "invalid IP in hostname",
 			hostname: "invalid-ip",
 			expectedAttrs: map[string]string{
-				conventions.AttributeHostName: "invalid-ip",
+				string(conventions.HostNameKey): "invalid-ip",
 			},
 		},
 		{
 			name:     "valid IP in hostname",
 			hostname: "3.3.3.3",
 			expectedAttrs: map[string]string{
-				conventions.AttributeHostName: "3.3.3.3",
-				k8sIPLabelName:                "3.3.3.3",
-				"kk":                          "vv",
+				string(conventions.HostNameKey): "3.3.3.3",
+				k8sIPLabelName:                  "3.3.3.3",
+				"kk":                            "vv",
 			},
 		},
 	}
@@ -928,16 +928,16 @@ func TestMetricsProcessorHostnameWithPodAssociation(t *testing.T) {
 			name:     "invalid IP in hostname",
 			hostname: "invalid-ip",
 			expectedAttrs: map[string]string{
-				conventions.AttributeHostName: "invalid-ip",
+				string(conventions.HostNameKey): "invalid-ip",
 			},
 		},
 		{
 			name:     "valid IP in hostname",
 			hostname: "3.3.3.3",
 			expectedAttrs: map[string]string{
-				conventions.AttributeHostName: "3.3.3.3",
-				k8sIPLabelName:                "3.3.3.3",
-				"kk":                          "vv",
+				string(conventions.HostNameKey): "3.3.3.3",
+				k8sIPLabelName:                  "3.3.3.3",
+				"kk":                            "vv",
 			},
 		},
 	}
