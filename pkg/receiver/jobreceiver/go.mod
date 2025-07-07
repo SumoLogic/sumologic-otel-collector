@@ -16,6 +16,7 @@ require (
 	go.opentelemetry.io/collector/receiver v1.33.0
 	go.opentelemetry.io/collector/receiver/receivertest v0.127.0
 	go.uber.org/zap v1.27.0
+	golang.org/x/text v0.25.0
 	gopkg.in/h2non/filetype.v1 v1.0.5
 )
 
@@ -86,7 +87,6 @@ require (
 	go4.org v0.0.0-20230225012048-214862532bf5 // indirect
 	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
 	gonum.org/v1/gonum v0.16.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a // indirect
 	google.golang.org/grpc v1.72.1 // indirect
