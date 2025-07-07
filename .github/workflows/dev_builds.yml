@@ -411,13 +411,13 @@ jobs:
         run: |
           make push-container-manifest-dev \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022 windows/amd64/ltsc2019"
+            PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022"
 
       - name: Push joint container manifest for all platforms to DockerHub
         run: |
           make push-container-manifest-dev \
             BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022 windows/amd64/ltsc2019" \
+            PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022" \
             REPO_URL=sumologic/sumologic-otel-collector-dev
 
       - name: Push joint UBI-based container manifest for all platforms to Open Source ECR
