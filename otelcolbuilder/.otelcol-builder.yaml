@@ -4,7 +4,7 @@ dist:
   # the module name for the new distribution, following Go mod conventions. Optional, but recommended.
   module: github.com/SumoLogic/sumologic-otel-collector
   # the OpenTelemetry Collector version to use as base for the distribution.
-  version: 0.127.0
+  version: 0.127.0-sumo-0-b30f9cf7bc2f22fe06afd026e65ce1de81696005
   # the path to write the output (sources and binary).
   output_path: ./cmd
 exporters:
@@ -221,7 +221,6 @@ replaces:
   # version which gets then translated into a replace in go.mod file.
   # This does not replace the version that sumologicexporter depends on.
   - github.com/SumoLogic/sumologic-otel-collector/pkg/extension/opampextension => ../../pkg/extension/opampextension
-  - github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.127.0 => github.com/SumoLogic/opentelemetry-collector-contrib/extension/sumologicextension a61effde6b04ee20364f025416061b65039a106b
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider => ../../pkg/configprovider/globprovider
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider => ../../pkg/configprovider/opampprovider
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil => ../../pkg/configprovider/providerutil
