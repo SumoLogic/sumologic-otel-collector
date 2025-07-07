@@ -58,12 +58,6 @@ function push_manifest() {
             BUILD_PLATFORM="windows"
             BASE_IMAGE_TAG_SUFFIX="-ltsc2022"
             ;;
-
-        "windows/amd64/ltsc2019")
-            BUILD_ARCH="amd64"
-            BUILD_PLATFORM="windows"
-            BASE_IMAGE_TAG_SUFFIX="-ltsc2019"
-            ;;
         *)
             echo "Unsupported platform ${platform}"
             exit 1
