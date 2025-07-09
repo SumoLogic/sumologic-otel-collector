@@ -312,10 +312,6 @@ build-container-windows:
 		DOCKERFILE=Dockerfile_windows \
 		BASE_IMAGE_TAG=ltsc2022
 
-	$(MAKE) _build-container-multiplatform \
-		DOCKERFILE=Dockerfile_windows \
-		BASE_IMAGE_TAG=ltsc2019
-
 .PHONY: build-push-container-windows
 build-push-container-windows: PUSH = --push
 build-push-container-windows: build-container-windows

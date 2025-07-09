@@ -84,14 +84,6 @@ function build_push() {
         PLATFORM="windows/amd64"
         ;;
 
-    "windows/amd64/ltsc2019"|"windows_amd64_ltsc2019")
-        readonly BUILD_ARCH="amd64"
-        readonly BUILD_PLATFORM="windows"
-        readonly BASE_IMAGE_TAG_SUFFIX="-ltsc2019"
-        readonly BASE_IMAGE_TAG="ltsc2019"
-        PLATFORM="windows/amd64"
-        ;;
-
     # Can't really enable it for now because:
     # !shopify/sarama@v1.29.0/gssapi_kerberos.go:62:10: constant 4294967295 overflows int
     # ref: https://github.com/SumoLogic/sumologic-otel-collector/runs/2805247906
