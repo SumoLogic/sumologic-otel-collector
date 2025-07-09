@@ -28,8 +28,7 @@ import (
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/extension"
 	"go.opentelemetry.io/collector/extension/extensiontest"
-
-	semconv "go.opentelemetry.io/collector/semconv/v1.18.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.18.0"
 )
 
 const (
@@ -37,7 +36,7 @@ const (
 	errMsgInvalidConfigName       = "cannot validate config: " +
 		"service::pipelines::logs/localfilesource/0aa79379-c764-4d3d-9d66-03f6df029a07: " +
 		"references processor \"batch\" which is not configured"
-	errMsgInvalidType = "'spike_limit_percentage' expected type 'uint32'"
+	errMsgInvalidType              = "'spike_limit_percentage' expected type 'uint32'"
 	errExpectedUncofiguredEndPoint = "expected unconfigured opamp endpoint to result in default sumo opamp url setting"
 )
 
@@ -262,9 +261,9 @@ func TestNewOpampAgent(t *testing.T) {
 
 func TestNewOpampAgentAttributes(t *testing.T) {
 	cfg, set := defaultSetup()
-	set.Resource.Attributes().PutStr(semconv.AttributeServiceName, "otelcol-sumo")
-	set.Resource.Attributes().PutStr(semconv.AttributeServiceVersion, "sumo.0")
-	set.Resource.Attributes().PutStr(semconv.AttributeServiceInstanceID, "f8999bc1-4c9b-4619-9bae-7f009d2411ec")
+	set.Resource.Attributes().PutStr(string(semconv.ServiceNameKey), "otelcol-sumo")
+	set.Resource.Attributes().PutStr(string(semconv.ServiceVersionKey), "sumo.0")
+	set.Resource.Attributes().PutStr(string(semconv.ServiceInstanceIDKey), "f8999bc1-4c9b-4619-9bae-7f009d2411ec")
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 	assert.Equal(t, "otelcol-sumo", o.agentType)

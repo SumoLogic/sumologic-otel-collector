@@ -64,3 +64,5 @@ Thumbs.db
 
 # 1Password
 .op/
+
+.idea

@@ -20,7 +20,7 @@ import (
 	"regexp"
 	"strings"
 
-	conventions "go.opentelemetry.io/collector/semconv/v1.18.0"
+	conventions "go.opentelemetry.io/otel/semconv/v1.18.0"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
@@ -109,39 +109,39 @@ func WithExtractMetadata(fields ...string) Option {
 		}
 		for _, field := range fields {
 			switch field {
-			case metadataContainerID, conventions.AttributeContainerID:
+			case metadataContainerID, string(conventions.ContainerIDKey):
 				p.rules.ContainerID = true
-			case metadataContainerImage, conventions.AttributeContainerImageName:
+			case metadataContainerImage, string(conventions.ContainerImageNameKey):
 				p.rules.ContainerImage = true
-			case metadataContainerName, conventions.AttributeContainerName:
+			case metadataContainerName, string(conventions.ContainerNameKey):
 				p.rules.ContainerName = true
-			case metadataCronJobName, conventions.AttributeK8SCronJobName:
+			case metadataCronJobName, string(conventions.K8SCronJobNameKey):
 				p.rules.CronJobName = true
-			case metadataDaemonSetName, conventions.AttributeK8SDaemonSetName:
+			case metadataDaemonSetName, string(conventions.K8SDaemonSetNameKey):
 				p.rules.DaemonSetName = true
-			case metadataDeploymentName, conventions.AttributeK8SDeploymentName:
+			case metadataDeploymentName, string(conventions.K8SDeploymentNameKey):
 				p.rules.DeploymentName = true
-			case metadataHostName, conventions.AttributeHostName:
+			case metadataHostName, string(conventions.HostNameKey):
 				p.rules.HostName = true
-			case metadataJobName, conventions.AttributeK8SJobName:
+			case metadataJobName, string(conventions.K8SJobNameKey):
 				p.rules.JobName = true
-			case metadataNamespace, conventions.AttributeK8SNamespaceName:
+			case metadataNamespace, string(conventions.K8SNamespaceNameKey):
 				p.rules.Namespace = true
-			case metadataNodeName, conventions.AttributeK8SNodeName:
+			case metadataNodeName, string(conventions.K8SNodeNameKey):
 				p.rules.NodeName = true
-			case metadataPodID, conventions.AttributeK8SPodUID:
+			case metadataPodID, string(conventions.K8SPodUIDKey):
 				p.rules.PodUID = true
-			case metadataPodName, conventions.AttributeK8SPodName:
+			case metadataPodName, string(conventions.K8SPodNameKey):
 				p.rules.PodName = true
-			case metadataReplicaSetName, conventions.AttributeK8SReplicaSetName:
+			case metadataReplicaSetName, string(conventions.K8SReplicaSetNameKey):
 				p.rules.ReplicaSetName = true
 			case metadataServiceName, metadataOtelSemconvServiceName:
 				p.rules.ServiceName = true
 			case metadataStartTime, metadataOtelPodStartTime:
 				p.rules.StartTime = true
-			case metadataStatefulSetName, conventions.AttributeK8SStatefulSetName:
+			case metadataStatefulSetName, string(conventions.K8SStatefulSetNameKey):
 				p.rules.StatefulSetName = true
-			case deprecatedMetadataClusterName, conventions.AttributeK8SClusterName:
+			case deprecatedMetadataClusterName, string(conventions.K8SClusterNameKey):
 				p.logger.Warn("clusterName metadata field has been deprecated and will be removed soon")
 			default:
 				return fmt.Errorf("\"%s\" is not a supported metadata field", field)
