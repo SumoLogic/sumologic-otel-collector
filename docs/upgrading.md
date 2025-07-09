@@ -645,7 +645,7 @@ To disable the new features, disable the feature gates in otelcol's arguments:
 otelcol-sumo --config=file:config.yaml --feature-gates=-receiver.apache.emitServerNameAsResourceAttribute,-receiver.apache.emitPortAsResourceAttribute
 ```
 
-More information about the feature gates can be found [here][apache-feature-gates].
+More information about the feature gates can be found in the [documentation][apache-feature-gates].
 The target release for the removal of feature gates is `v0.68`.
 
 ### `elasticsearch` receiver: turn on more datapoints
@@ -661,7 +661,7 @@ To disable the new features, disable the feature gates in otelcol's arguments:
 otelcol-sumo --config=file:config.yaml --feature-gates=-receiver.elasticsearch.emitClusterHealthDetailedShardMetrics,-receiver.elasticsearch.emitAllIndexOperationMetrics
 ```
 
-More information about the feature gates can be found [here][elasticsearch-feature-gates].
+More information about the feature gates can be found in the [documentation][elasticsearch-feature-gates].
 The target release for the removal of feature gates is `v0.71`.
 
 [#5784]: https://github.com/open-telemetry/opentelemetry-collector/pull/5784
@@ -856,8 +856,8 @@ processors:
 ```
 
 Starting with `v0.51.0-sumo-0`, the `clusterName` option is removed.
-This is a result of an upstream change that removes the `k8s.cluster.name` metadata ([link](https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/9885)),
-which in turn is a result of Kubernetes libraries removing support for this deprecated and non-functional field ([link](https://github.com/kubernetes/apimachinery/commit/430b920312ca0fa10eca95967764ff08f34083a3)).
+This is a result of an upstream change that removes the `k8s.cluster.name` metadata ([PR](https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/9885)),
+which in turn is a result of Kubernetes libraries removing support for this deprecated and non-functional field ([commit](https://github.com/kubernetes/apimachinery/commit/430b920312ca0fa10eca95967764ff08f34083a3)).
 
 #### How to upgrade
 

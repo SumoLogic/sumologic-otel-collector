@@ -5,7 +5,7 @@
 We currently have some legacy E2E tests ported from [our OT fork][ot_fork],
 which serve as a means of verifying feature parity for tracing as we migrate it
 to this distribution. The tests are run by CircleCI on demand for `main` and
-release branches, and are defined [here][tracing_tests].
+release branches, and are defined in the [tests][tracing_tests].
 
 In order to run the tests, go to the [CircleCI page][circleci], choose the branch
 you want, and manually approve the workflow to run. Note that you need commiter

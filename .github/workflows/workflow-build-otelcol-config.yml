@@ -16,7 +16,7 @@ on:
         default: false
         type: boolean
       runs-on:
-        default: ubuntu-20.04
+        default: ubuntu-24.04
         type: string
       save-cache:
         description: Save the module and build caches.
@@ -130,7 +130,7 @@ jobs:
           go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
           grep "_Cfunc__goboringcrypto_"
 
-      - uses: apple-actions/import-codesign-certs@v3
+      - uses: apple-actions/import-codesign-certs@v5
         if: ${{ runner.os == 'macOS' }}
         with:
           p12-file-base64: ${{ secrets.apple_developer_certificate_p12_base64 }}

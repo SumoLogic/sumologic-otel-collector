@@ -23,7 +23,7 @@ import (
 
 	"go.opentelemetry.io/collector/client"
 	"go.opentelemetry.io/collector/pdata/pcommon"
-	conventions "go.opentelemetry.io/collector/semconv/v1.18.0"
+	conventions "go.opentelemetry.io/otel/semconv/v1.18.0"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor/kube"
 )
@@ -37,7 +37,7 @@ func extractPodID(
 	associations []kube.Association,
 ) (podIdentifierKey string, podIdentifierValue kube.PodIdentifier, returnErr error) {
 	connectionIP := getConnectionIP(ctx)
-	hostname := stringAttributeFromMap(attrs, conventions.AttributeHostName)
+	hostname := stringAttributeFromMap(attrs, string(conventions.HostNameKey))
 
 	// If pod association is not set
 	if len(associations) == 0 {
@@ -72,7 +72,7 @@ func extractPodID(
 		case asso.From == "resource_attribute": // If association configured by resource_attribute
 			// In k8s environment, host.name label set to a pod IP address.
 			// If the value doesn't represent an IP address, we skip it.
-			if asso.Name == conventions.AttributeHostName {
+			if asso.Name == string(conventions.HostNameKey) {
 				if net.ParseIP(hostname) != nil {
 					podIdentifierKey = k8sIPLabelName
 					podIdentifierValue = kube.PodIdentifier(hostname)
@@ -90,12 +90,12 @@ func extractPodID(
 			}
 		case asso.From == "build_hostname":
 			// Build hostname from pod k8s.pod.name and k8s.namespace.name attributes
-			pod, ok := attrs.Get(conventions.AttributeK8SPodName)
+			pod, ok := attrs.Get(string(conventions.K8SPodNameKey))
 			if !ok {
 				return "", kube.PodIdentifier(""), errors.New("pod name not found in attributes")
 			}
 
-			namespace, ok := attrs.Get(conventions.AttributeK8SNamespaceName)
+			namespace, ok := attrs.Get(string(conventions.K8SNamespaceNameKey))
 			if !ok {
 				return "", kube.PodIdentifier(""), errors.New("namespace name not found in attributes")
 			}

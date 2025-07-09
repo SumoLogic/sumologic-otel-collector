@@ -12,7 +12,7 @@ on:
         default: false
         type: boolean
       runs-on:
-        default: ubuntu-20.04
+        default: ubuntu-24.04
         type: string
       only-if-changed:
         description: Run only if relevant files changed.
@@ -28,7 +28,7 @@ defaults:
     shell: bash
 
 env:
-  GO_VERSION: "1.22.8"
+  GO_VERSION: "1.24.0"
 
 jobs:
   test:
