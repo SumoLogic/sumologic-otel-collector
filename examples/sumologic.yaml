@@ -3,10 +3,12 @@
 extensions:
   ## Configuration for Sumo Logic Extension
   ## Manages registration, heartbeats and authentication to Sumo Logic
-  ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/sumologicextension
+  ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/extension/sumologicextension
   sumologic:
     installation_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
     collector_credentials_directory: /var/lib/otelcol-sumo/credentials
+    api_base_url: https://long-open-events.sumologic.net/    
+    collector_name: s3testing   
 
   ## Configuration for Health Check Extension
   ## Health Check extension enables an HTTP url that can be probed to check the status of the OpenTelemetry Collector
@@ -28,7 +30,7 @@ extensions:
   ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/extension/opampextension
   opamp:
     remote_configuration_directory: /etc/otelcol-sumo/opamp.d
-    endpoint: wss://opamp-collectors.sumologic.com/v1/opamp
+    endpoint: wss://opamp-events.sumologic.com/v1/opamp
 
 receivers:
   ## Configuration for OTLP Receiver
@@ -40,17 +42,35 @@ receivers:
         endpoint: localhost:4317
       http:
         endpoint: localhost:4318
+  zipkin:
+    endpoint: localhost:9411        
 
 exporters:
   ## Configuration for Sumo Logic Exporter
   ## This exporter supports sending logs, metrics and traces data to Sumo Logic.
-  ## ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.103.0/exporter/sumologicexporter
+  ## ref: https://github.com/SumoLogic/sumologic-otel-collector/tree/main/pkg/exporter/sumologicexporter
   sumologic:
     sending_queue:
       enabled: true
       storage: file_storage
     retry_on_failure:
-      max_elapsed_time: 0
+        max_elapsed_time: 0    
+  debug:
+    verbosity: detailed
+  
+  # AWS S3 Exporter configuration
+  awss3:
+    s3uploader:
+      region: 'us-west-1'
+      s3_bucket: 'testing-s3-exporter'
+      s3_prefix: 'otel-test-data/'
+    
+    # Use Sumo Logic format for logs
+    marshaler: sumo_ic  # This is specifically for Sumo Logic format
+    
+    # Optional: Configure sending queue
+    sending_queue:
+      enabled: false
 
 processors:
   ## Configuration for Memory Limiter Processor
@@ -91,6 +111,18 @@ processors:
     system:
       hostname_sources: ["dns", "os"]
 
+  resource/add_source_category:
+    attributes:
+    - action: insert
+      key: _sourceCategory
+      value: "otel/s3logs"
+    - action: insert
+      key: _sourceHost
+      value: "s3testing"
+    - action: insert
+      key: _sourceName
+      value: "otel-collector"
+
 service:
   extensions:
     - sumologic
@@ -109,21 +141,27 @@ service:
         - sumologic
       exporters:
         - sumologic
+        - debug
     logs/default:
       receivers:
         - otlp
       processors:
         - memory_limiter
+        - resource/add_source_category
         - batch
         - sumologic
       exporters:
+        - awss3 
         - sumologic
     traces/default:
       receivers:
         - otlp
+        - zipkin
       processors:
-        - memory_limiter
-        - batch
-        - sumologic
+      #   #- memory_limiter
+      #   #- batch
+      #  - cascading_filter
+      #   - sumologic
       exporters:
         - sumologic
+        - debug
