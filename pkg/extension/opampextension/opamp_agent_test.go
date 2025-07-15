@@ -75,6 +75,12 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyPostgresqlConfig", "testdata/opamp.d/opamp-postgresql-config.yaml", false, ""},
 		{"ApplyRabbitmqConfig", "testdata/opamp.d/opamp-rabbitmq-config.yaml", false, ""},
 		{"ApplyRedisConfig", "testdata/opamp.d/opamp-redis-config.yaml", false, ""},
+		{"ApplyFirehoseConfig", "testdata/opamp.d/opamp-aws-firehose-config.yaml", false, ""},
+		{"ApplyCloudwatchConfig", "testdata/opamp.d/opamp-aws-cloudwatch-receiver-config.yaml", false, ""},
+		{"ApplyContainerInsightConfig", "testdata/opamp.d/opamp-aws-container-insight-config.yaml", false, ""},
+		{"ApplyEcsContainerMetricsConfig", "testdata/opamp.d/opamp-aws-container-metrics-config.yaml", false, ""},
+		{"ApplyS3Config", "testdata/opamp.d/opamp-aws-s3-exporter-config.yaml", false, ""},
+		{"ApplyXrayConfig", "testdata/opamp.d/opamp-aws-xray-config.yaml", false, ""},
 	}
 
 	for _, tt := range tests {
