@@ -23,7 +23,7 @@ exporters:
       s3_prefix: "com.awss3.prefix"
 
     # Optional (5s by default)
-    timeout: 20s      
+    timeout: 20s
 service:
   pipelines:
     metrics/s3/abcdef01-2345-6789-abcd-ef0123456789:

@@ -2,9 +2,9 @@ receivers:
   awscontainerinsightreceiver:
     collection_interval: 60s
     container_orchestrator: eks
-    add_service_as_attribute: true 
-    prefer_full_pod_name: false 
-    add_full_pod_name_metric_label: false 
+    add_service_as_attribute: true
+    prefer_full_pod_name: false
+    add_full_pod_name_metric_label: false
 exporters:
   sumologic:
 service:
