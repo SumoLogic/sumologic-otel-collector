@@ -1,0 +1,20 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  awskinesis:
+    stream_name: "test-stream"
+    region: "us-west-2"
+    role: arn:test-role
+    aws:
+      access_key_id: "test-access-key"
+      secret_access_key: "test-secret-key"
+service:
+  pipelines:
+    metrics/kinesis/12345678-1234-1234-1234-123456789abc:
+      receivers:
+        - otlp
+      exporters:
+        - awskinesis

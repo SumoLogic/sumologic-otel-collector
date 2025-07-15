@@ -1,0 +1,16 @@
+receivers:
+  awscontainerinsightreceiver:
+    collection_interval: 60s
+    container_orchestrator: eks
+    add_service_as_attribute: true 
+    prefer_full_pod_name: false 
+    add_full_pod_name_metric_label: false 
+exporters:
+  sumologic:
+service:
+  pipelines:
+    metrics/containerinsight/abcdef01-2345-6789-abcd-ef0123456789:
+      receivers:
+        - awscontainerinsightreceiver
+      exporters:
+        - sumologic

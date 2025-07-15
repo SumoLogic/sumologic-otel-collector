@@ -1,0 +1,20 @@
+receivers:
+  awscloudwatch:
+    region: us-west-1
+    logs:
+      poll_interval: 1m
+      groups:
+        autodiscover:
+          limit: 100
+          prefix: /aws/eks/
+          streams:
+            prefixes: [kube-api-controller]
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs/cloudwatch/abcdef01-2345-6789-abcd-ef0123456789:
+      receivers:
+        - awscloudwatch
+      exporters:
+        - sumologic

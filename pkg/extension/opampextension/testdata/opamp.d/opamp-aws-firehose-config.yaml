@@ -1,0 +1,17 @@
+receivers:
+  awsfirehose:
+    endpoint: 0.0.0.0:4433
+    record_type: cwmetrics
+    access_key: "some_access_key"
+    tls:
+      cert_file: server.crt
+      key_file: server.key
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs/firehose/abcdef01-2345-6789-abcd-ef0123456789:
+      receivers:
+        - awsfirehose
+      exporters:
+        - sumologic

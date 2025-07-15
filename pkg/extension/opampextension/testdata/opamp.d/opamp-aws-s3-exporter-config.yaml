@@ -1,0 +1,33 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  awss3:
+    s3uploader:
+      region: 'eu-central-1'
+      s3_bucket: 'databucket'
+      s3_prefix: 'metric'
+      s3_partition_format: '%Y/%m/%d/%H/%M'
+      retry_mode: "standard"
+      retry_max_attempts: 5
+      retry_max_backoff: "30s"
+    # Optional (disabled by default)
+    sending_queue:
+      enabled: true
+      num_consumers: 10
+      queue_size: 100
+
+    resource_attrs_to_s3:
+      s3_prefix: "com.awss3.prefix"
+
+    # Optional (5s by default)
+    timeout: 20s      
+service:
+  pipelines:
+    metrics/s3/abcdef01-2345-6789-abcd-ef0123456789:
+      receivers:
+        - otlp
+      exporters:
+        - awss3
