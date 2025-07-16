@@ -23,6 +23,8 @@ import (
 	backoff "github.com/cenkalti/backoff/v4"
 	"github.com/influxdata/telegraf"
 	telegrafagent "github.com/influxdata/telegraf/agent"
+	telegrafconfig "github.com/influxdata/telegraf/config"
+	"github.com/influxdata/telegraf/models"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/consumer/consumererror"
@@ -58,6 +60,17 @@ type telegrafreceiver struct {
 // Ensure this receiver adheres to required interface.
 var _ receiver.Metrics = (*telegrafreceiver)(nil)
 
+func addOutputConfig(config *telegrafconfig.Config, ch chan telegraf.Metric) {
+	outputConfig := &models.OutputConfig{
+		Name:   "internal",
+		Source: "channel",
+		Alias:  "channel",
+		ID:     "channel",
+	}
+	output := models.NewRunningOutput(newChannelOutput(ch), outputConfig, 1, 1)
+	config.Outputs = append(config.Outputs, output)
+}
+
 // Start tells the receiver to start.
 func (r *telegrafreceiver) Start(ctx context.Context, host component.Host) error {
 	r.logger.Info("Starting telegraf receiver")
@@ -72,11 +85,12 @@ func (r *telegrafreceiver) Start(ctx context.Context, host component.Host) error
 		r.cancel = cancel
 
 		ch := make(chan telegraf.Metric)
+		addOutputConfig(r.agent.Config, ch)
 
 		r.wg.Add(1)
 		go func() {
 			defer r.wg.Done()
-			if rErr := r.agent.RunWithChannel(rctx, ch); rErr != nil {
+			if rErr := r.agent.Run(rctx); rErr != nil {
 				r.logger.Error("Problem starting receiver", zap.Error(rErr))
 			}
 		}()
