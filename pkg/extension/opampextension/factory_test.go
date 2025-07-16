@@ -16,6 +16,7 @@ package opampextension
 
 import (
 	"context"
+	"go.opentelemetry.io/collector/config/configoptional"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -36,9 +37,9 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 
 	assert.Equal(t, cfg, &Config{
 		ClientConfig: confighttp.ClientConfig{
-			Auth: &configauth.Config{
+			Auth: configoptional.Some[configauth.Config](configauth.Config{
 				AuthenticatorID: component.NewID(sumologicextension.NewFactory().Type()),
-			},
+			}),
 		},
 		AcceptsRemoteConfiguration: true,
 	})
