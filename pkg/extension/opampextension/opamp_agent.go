@@ -210,13 +210,13 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 func (o *opampAgent) getAuthExtension() error {
 	settings := o.cfg.ClientConfig
 
-	if settings.Auth == nil {
+	if !settings.Auth.HasValue() {
 		return nil
 	}
 
 	for _, e := range o.host.GetExtensions() {
 		v, ok := e.(*sumologicextension.SumologicExtension)
-		if ok && settings.Auth.AuthenticatorID == v.ComponentID() {
+		if ok && settings.Auth.Get().AuthenticatorID == v.ComponentID() {
 			o.authExtension = v
 			break
 		}
@@ -227,7 +227,7 @@ func (o *opampAgent) getAuthExtension() error {
 			"sumologic was specified as auth extension (named: %q) but "+
 				"a matching extension was not found in the config, "+
 				"please re-check the config and/or define the sumologicextension",
-			settings.Auth.AuthenticatorID.String(),
+			settings.Auth.Get().AuthenticatorID.String(),
 		)
 	}
 
