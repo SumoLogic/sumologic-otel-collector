@@ -12,9 +12,6 @@
       "groupName": "opentelemetry-collector"
     }
   ],
-  "gomod": {
-    "enabled": true
-  },
   "regexManagers": [
     {
       "fileMatch": ["\.md$"],
