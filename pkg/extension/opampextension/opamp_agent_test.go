@@ -38,6 +38,7 @@ const (
 		"references processor \"batch\" which is not configured"
 	errMsgInvalidType              = "'spike_limit_percentage' expected type 'uint32'"
 	errExpectedUncofiguredEndPoint = "expected unconfigured opamp endpoint to result in default sumo opamp url setting"
+	errMsgInvalidCloudwatchConfig  = "source data must be an array or slice, got int"
 )
 
 func defaultSetup() (*Config, extension.Settings) {
@@ -80,6 +81,7 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyContainerInsightConfig", "testdata/opamp.d/opamp-aws-container-insight-config.yaml", false, ""},
 		{"ApplyEcsContainerMetricsConfig", "testdata/opamp.d/opamp-aws-container-metrics-config.yaml", false, ""},
 		{"ApplyS3Config", "testdata/opamp.d/opamp-aws-s3-exporter-config.yaml", false, ""},
+		{"ApplyCloudwatchConfigFailure", "testdata/opamp.d/opamp-aws-cloudwatch-receiver-error-config.yaml", true, errMsgInvalidCloudwatchConfig},
 		{"ApplyXrayConfig", "testdata/opamp.d/opamp-aws-xray-config.yaml", false, ""},
 	}
 
