@@ -1,0 +1,44 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base"
+  ],
+  "packageRules": [
+    {
+      "matchPackagePatterns": [
+        "go.opentelemetry.io/collector",
+        "github.com/open-telemetry/opentelemetry-collector-contrib"
+      ],
+      "groupName": "opentelemetry-collector"
+    }
+  ],
+  "gomod": {
+    "enabled": true
+  },
+  "regexManagers": [
+    {
+      "fileMatch": ["\.md$"],
+      "matchStrings": [
+        "github.com/open-telemetry/opentelemetry-collector-contrib/blob/v(?<currentValue>.*?)/"
+      ],
+      "depNameTemplate": "github.com/open-telemetry/opentelemetry-collector-contrib",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "fileMatch": ["(^|/)otelcolbuilder/cmd/components.go$"],
+      "matchStrings": [
+        "go.opentelemetry.io/collector/component v(?<currentValue>.*?)",
+        "go.opentelemetry.io/collector/confmap v(?<currentValue>.*?)",
+        "go.opentelemetry.io/collector/consumer v(?<currentValue>.*?)",
+        "go.opentelemetry.io/collector/exporter v(?<currentValue>.*?)",
+        "go.opentelemetry.io/collector/extension v(?<currentValue>.*?)",
+        "go.opentelemetry.io/collector/featuregate v(?<currentValue>.*?)",
+        "go.opentelemetry.io/collector/pdata v(?<currentValue>.*?)",
+        "go.opentelemetry.io/collector/processor v(?<currentValue>.*?)",
+        "go.opentelemetry.io/collector/receiver v(?<currentValue>.*?)"
+      ],
+      "depNameTemplate": "go.opentelemetry.io/collector",
+      "datasourceTemplate": "go"
+    }
+  ]
+}
