@@ -6,17 +6,17 @@
   "enabledManagers": ["gomod"],
   "packageRules": [
     {
-      "matchPackagePatterns": [
-        "go.opentelemetry.io/collector",
-        "github.com/open-telemetry/opentelemetry-collector-contrib"
+      "matchPackageNames": [
+        "go.opentelemetry.io/collector.*",
+        "github.com/open-telemetry/opentelemetry-collector-contrib.*"
       ],
       "groupName": "opentelemetry-collector"
     },
     {
       "matchPackageNames": [".*"],
-      "excludePackagePatterns": [
-        "go.opentelemetry.io/collector",
-        "github.com/open-telemetry/opentelemetry-collector-contrib"
+      "excludePackageNames": [
+        "go.opentelemetry.io/collector.*",
+        "github.com/open-telemetry/opentelemetry-collector-contrib.*"
       ],
       "enabled": false
     }
