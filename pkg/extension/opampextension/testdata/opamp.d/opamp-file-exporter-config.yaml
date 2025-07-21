@@ -18,7 +18,6 @@ exporters:
       enabled: true
       resource_attribute: dummy
       max_open_files: 10
-    
 service:
   pipelines:
     metrics/file/abcdef01-2345-6789-abcd-ef0123456789:
