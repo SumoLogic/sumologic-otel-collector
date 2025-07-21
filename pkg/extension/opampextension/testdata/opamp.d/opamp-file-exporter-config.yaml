@@ -1,0 +1,28 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  file:
+    path: "/tmp/otel-collector-metrics.json"
+    format: json
+    rotation:
+      max_megabytes: 10
+      max_days: 3
+      max_backups: 3
+      localtime: true
+    compression: zstd
+    flush_interval: 5
+    group_by:
+      enabled: true
+      resource_attribute: dummy
+      max_open_files: 10
+    
+service:
+  pipelines:
+    metrics/file/abcdef01-2345-6789-abcd-ef0123456789:
+      receivers:
+        - otlp
+      exporters:
+        - file

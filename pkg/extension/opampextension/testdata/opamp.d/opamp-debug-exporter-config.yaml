@@ -1,0 +1,18 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  debug:
+    verbosity: detailed
+    sampling_initial: 10
+    sampling_thereafter: 50
+    use_internal_logger: false
+service:
+  pipelines:
+    metrics/debug/abcdef01-2345-6789-abcd-ef0123456789:
+      receivers:
+        - otlp
+      exporters:
+        - debug
