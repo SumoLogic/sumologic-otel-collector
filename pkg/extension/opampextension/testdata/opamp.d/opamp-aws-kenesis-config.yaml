@@ -5,7 +5,7 @@ receivers:
       http:
 exporters:
   awskinesis:
-    encoding: 
+    encoding:
       name: "otlp"
       compression: "gzip"
     max_records_per_batch: 400
