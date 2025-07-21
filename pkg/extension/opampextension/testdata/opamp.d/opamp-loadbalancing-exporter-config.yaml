@@ -11,14 +11,14 @@ exporters:
     resolver:
       static:
         hostnames:
-        - endpoint-1 
+        - endpoint-1
         - endpoint-2:55678
   loadbalancing/2:
     protocol:
       otlp:
     resolver:
       dns:
-        hostname: service-1 
+        hostname: service-1
   loadbalancing/3:
     protocol:
       otlp:
