@@ -1,0 +1,27 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  awskinesis:
+    encoding:
+      name: "otlp"
+      compression: "gzip"
+    max_records_per_batch: 400
+    max_record_size: 14
+    sending_queue:
+      enabled: true
+      num_consumers: 30
+      queue_size: 2000
+    aws:
+      stream_name: raw-trace-stream
+      region: us-east-1
+      role: arn:test-role
+service:
+  pipelines:
+    metrics/kinesis/12345678-1234-1234-1234-123456789abc:
+      receivers:
+        - otlp
+      exporters:
+        - awskinesis
