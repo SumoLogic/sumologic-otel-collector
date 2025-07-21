@@ -5,12 +5,19 @@ receivers:
       http:
 exporters:
   awskinesis:
-    stream_name: "test-stream"
-    region: "us-west-2"
-    role: arn:test-role
+    encoding: 
+      name: "otlp"
+      compression: "gzip"
+    max_records_per_batch: 400
+    max_record_size: 14
+    sending_queue:
+      enabled: true
+      num_consumers: 30
+      queue_size: 2000
     aws:
-      access_key_id: "test-access-key"
-      secret_access_key: "test-secret-key"
+      stream_name: raw-trace-stream
+      region: us-east-1
+      role: arn:test-role
 service:
   pipelines:
     metrics/kinesis/12345678-1234-1234-1234-123456789abc:
