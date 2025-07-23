@@ -2,6 +2,7 @@ package opampextension
 
 import (
 	"go.opentelemetry.io/collector/exporter"
+	"go.opentelemetry.io/collector/exporter/debugexporter"
 	"go.opentelemetry.io/collector/exporter/nopexporter"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
 	"go.opentelemetry.io/collector/extension"
@@ -16,6 +17,10 @@ import (
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awskinesisexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awss3exporter"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/carbonexporter"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/loadbalancingexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/syslogexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/awsproxy"
@@ -100,6 +105,11 @@ func Components() (
 		nopexporter.NewFactory(),
 		awss3exporter.NewFactory(),
 		awskinesisexporter.NewFactory(),
+		carbonexporter.NewFactory(),
+		debugexporter.NewFactory(),
+		fileexporter.NewFactory(),
+		kafkaexporter.NewFactory(),
+		loadbalancingexporter.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 

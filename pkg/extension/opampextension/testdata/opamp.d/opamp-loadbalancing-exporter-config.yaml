@@ -1,0 +1,54 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  loadbalancing:
+    protocol:
+      otlp:
+        timeout: 1s
+    resolver:
+      static:
+        hostnames:
+        - endpoint-1
+        - endpoint-2:55678
+  loadbalancing/2:
+    protocol:
+      otlp:
+    resolver:
+      dns:
+        hostname: service-1
+  loadbalancing/3:
+    protocol:
+      otlp:
+    resolver:
+      dns:
+        hostname: service-1
+        port: '5569'
+  loadbalancing/4:
+    protocol:
+      otlp:
+    resolver:
+      aws_cloud_map:
+        namespace: cloudmap-1
+        service_name: service-1
+        port: 4319
+  loadbalancing/5:
+    sending_queue:
+      enabled: true
+    protocol:
+      otlp:
+        sending_queue:
+          enabled: false
+service:
+  pipelines:
+    metrics/loadbalancing/abcdef01-2345-6789-abcd-ef0123456789:
+      receivers:
+        - otlp
+      exporters:
+        - loadbalancing
+        - loadbalancing/2
+        - loadbalancing/3
+        - loadbalancing/4
+        - loadbalancing/5
