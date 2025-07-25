@@ -92,7 +92,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Dismount-VHD -Path go-cache.vhdx
+          Dismount-VHD -Path ${{ steps.setup-go.outputs.vhdx-path }}
 
   setup-cache-otelcol-config:
     name: Setup Cache (otelcol-config)

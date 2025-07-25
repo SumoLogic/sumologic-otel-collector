@@ -112,7 +112,7 @@ runs:
       uses: ./.github/actions/setup-vhdx
       with:
         name: ${{ steps.cache-config.outputs.vhdx-path }}
-        size: 500MB
+        size: 2000MB
         skip-create: ${{ steps.cache.outputs.cache-hit == 'true' }}
 
     - name: Set Go install directory output (Windows)
