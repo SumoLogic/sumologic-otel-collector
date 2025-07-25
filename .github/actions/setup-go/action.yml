@@ -63,7 +63,7 @@ outputs:
     value: ${{ steps.go-env.outputs.go-version }}
   vhdx-path:
     description: The path to the VHDX image file.
-    value: ${{ steps.cache-config.outputs.path }}
+    value: ${{ steps.cache-config.outputs.vhdx-path }}
 
 runs:
   using: "composite"
@@ -96,14 +96,14 @@ runs:
         vhdx_path="${base_key}.vhdx"
 
         echo "name=${name}" >> "$GITHUB_OUTPUT"
-        echo "path=${vhdx_path}" >> "$GITHUB_OUTPUT"
+        echo "vhdx-path=${vhdx_path}" >> "$GITHUB_OUTPUT"
 
     - name: Cache VHDX Image (Windows)
       if: runner.os == 'Windows'
       id: cache
       uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
       with:
-        path: ${{ steps.cache-config.outputs.path }}
+        path: ${{ steps.cache-config.outputs.vhdx-path }}
         key: ${{ steps.cache-config.outputs.name }}
 
     - name: Setup VHDX for caching (Windows)
@@ -111,7 +111,7 @@ runs:
       id: vhdx
       uses: ./.github/actions/setup-vhdx
       with:
-        name: ${{ steps.cache-config.outputs.path }}
+        name: ${{ steps.cache-config.outputs.vhdx-path }}
         size: 500MB
         skip-create: ${{ steps.cache.outputs.cache-hit == 'true' }}
 
@@ -187,5 +187,5 @@ runs:
         path: |
           ${{ steps.go-env.outputs.go-mod-cache }}
           ${{ steps.go-env.outputs.go-cache }}
-        key: ${{ steps.go-cache-key.outputs.name }}
+        key: ${{ steps.cache-config.outputs.name }}
         lookup-only: ${{ inputs.skip-cache-restore-on-hit == 'true' }}
