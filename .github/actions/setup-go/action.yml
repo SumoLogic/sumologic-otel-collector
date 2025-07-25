@@ -36,9 +36,6 @@ inputs:
     required: true
 
 outputs:
-  cache-hit:
-    description: A boolean value to indicate an exact match was found for the primary key
-    value: ${{ steps.go-cache.outputs.cache-hit }}
   go-arch:
     value: ${{ steps.go-env.outputs.go-arch }}
   go-cache:

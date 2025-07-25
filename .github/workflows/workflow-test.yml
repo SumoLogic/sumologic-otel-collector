@@ -11,10 +11,6 @@ on:
         description: The version of Go to use.
         type: string
         required: true
-      only-if-changed:
-        description: Run only if relevant files changed.
-        default: false
-        type: boolean
       runs-on:
         default: ubuntu-24.04
         type: string
@@ -54,3 +50,13 @@ jobs:
           paths: |
             **/report.xml
         if: always()
+
+      # NOTE: There doesn't appear to be a simple way to run post hooks in
+      # composite actions. We must unmount the VHDX image after we're done using
+      # it but before the post-cache hook runs. We should be able to fix this by
+      # converting our setup-vhdx action to NodeJS.
+      - name: Unmount Go Cache (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Dismount-VHD -Path ${{ steps.setup-go.outputs.vhdx-path }}

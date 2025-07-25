@@ -70,6 +70,6 @@ jobs:
           version_with_sha="${{ steps.otc.outputs.version-with-sha }}"
           go_version="${{ steps.go.outputs.version }}"
 
-          echo ::notice title=Go version::${go_version}
-          echo ::notice title=Version::${version}
           echo ::notice title=Version with Git SHA::${version_with_sha}
+          echo ::notice title=Version::${version}
+          echo ::notice title=Go version::${go_version}

@@ -15,117 +15,10 @@ jobs:
     name: Build Info
     uses: ./.github/workflows/workflow-determine-build-info.yml
 
-  setup-cache-otelcol:
-    name: Setup Cache (otelcol)
-    runs-on: ${{ matrix.runs-on }}
-    needs:
-      - determine-build-info
-    strategy:
-      matrix:
-        include:
-          - runs-on: macos-15
-            distribution: official
-          - runs-on: ubuntu-24.04
-            distribution: official
-          - runs-on: windows-2022
-            distribution: official
-          - runs-on: windows-2022
-            distribution: microsoft
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Go
-        id: setup-go
-        uses: ./.github/actions/setup-go
-        with:
-          distribution: ${{ matrix.distribution }}
-          skip-cache-restore-on-hit: "true"
-          version: ${{ needs.determine-build-info.outputs.go-version }}
-          cache-dependency-paths: |
-            **/*.sum
-            otelcolbuilder/.otelcol-builder.yaml
-
-      - uses: ./.github/actions/setup-make-environment
-        if: steps.setup-go.outputs.cache-hit != 'true'
-
-      - name: Install Go modules
-        if: steps.setup-go.outputs.cache-hit != 'true'
-        run: make gomod-download-all
-
-      - name: Generate OTC sources & Install Go modules
-        if: steps.setup-go.outputs.cache-hit != 'true'
-        working-directory: otelcolbuilder
-        run: make generate-sources
-
-      # NOTE: There doesn't appear to be a simple way to run post hooks in
-      # composite actions. We must unmount the VHDX image after we're done using
-      # it but before the post-cache hook runs. We should be able to fix this by
-      # converting our setup-vhdx action to NodeJS.
-      - name: Unmount Go Cache (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Dismount-VHD -Path ${{ steps.setup-go.outputs.vhdx-path }}
-
-  setup-cache-otelcol-config:
-    name: Setup Cache (otelcol-config)
-    runs-on: ${{ matrix.runs-on }}
-    needs:
-      - determine-build-info
-    strategy:
-      matrix:
-        include:
-          - runs-on: macos-15
-            distribution: official
-          - runs-on: ubuntu-24.04
-            distribution: official
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Go
-        id: setup-go
-        uses: ./.github/actions/setup-go
-        with:
-          distribution: ${{ matrix.distribution }}
-          skip-cache-restore-on-hit: "true"
-          version: ${{ needs.determine-build-info.outputs.go-version }}
-          cache-name: otelcol-config-go-cache
-          cache-dependency-paths: |
-            pkg/tools/otelcol-config/go.sum
-
-      - uses: ./.github/actions/setup-make-environment
-        if: steps.setup-go.outputs.cache-hit != 'true'
-
-      - name: Install Go modules
-        if: steps.setup-go.outputs.cache-hit != 'true'
-        working-directory: ./pkg/tools/otelcol-config
-        run: go mod download
-
-  setup-cache-toolchain:
-    name: Setup Cache (toolchain)
-    runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        include:
-          - platform: linux_amd64
-          - platform: linux_arm64
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup MAKEFLAGS
-        uses: ./.github/actions/setup-makeflags
-
-      - name: Setup Toolchain
-        uses: ./.github/actions/setup-toolchain
-        with:
-          platform: ${{ matrix.platform }}
-          skip-cache-restore-on-hit: "true"
-
-  test:
+  test-otelcol:
     name: Test (otelcol)
     needs:
       - determine-build-info
-      - setup-cache-otelcol
     uses: ./.github/workflows/workflow-test.yml
     strategy:
       matrix:
@@ -145,7 +38,6 @@ jobs:
     uses: ./.github/workflows/workflow-test-otelcol-config.yml
     needs:
       - determine-build-info
-      - setup-cache-otelcol-config
     strategy:
       matrix:
         include:
@@ -158,13 +50,11 @@ jobs:
       fips: ${{ matrix.fips == true }}
       go-version: ${{ needs.determine-build-info.outputs.go-version }}
 
-  build:
+  build-otelcol:
     name: Build (otelcol)
     uses: ./.github/workflows/workflow-build.yml
     needs:
       - determine-build-info
-      - setup-cache-otelcol
-      - setup-cache-toolchain
     strategy:
       fail-fast: false
       matrix:
@@ -201,8 +91,6 @@ jobs:
     uses: ./.github/workflows/workflow-build-otelcol-config.yml
     needs:
       - determine-build-info
-      - setup-cache-otelcol-config
-      - setup-cache-toolchain
     strategy:
       fail-fast: false
       matrix:
@@ -302,7 +190,7 @@ jobs:
   trigger-containers:
     name: Containers
     needs:
-      - build
+      - build-otelcol
     uses: ./.github/workflows/workflow-trigger-remote-workflow.yml
     secrets: inherit
     with:
@@ -313,7 +201,7 @@ jobs:
   trigger-packaging:
     name: Packages
     needs:
-      - build
+      - build-otelcol
       - build-otelcol-config
     uses: ./.github/workflows/workflow-trigger-remote-workflow.yml
     secrets: inherit

@@ -64,6 +64,10 @@ jobs:
           apple-signing-certificate-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
           fips: ${{ inputs.fips }}
 
+      - name: Install Go modules
+        working-directory: ./pkg/tools/otelcol-config
+        run: go mod download
+
       - name: Build
         if: "! inputs.fips"
         run: make otelcol-config-${{ inputs.platform }}
@@ -135,3 +139,13 @@ jobs:
           name: ${{ steps.binary-name.outputs.name-with-platform }}.dmg
           path: ./pkg/tools/otelcol-config/${{ steps.binary-name.outputs.name-with-platform }}.dmg
           if-no-files-found: error
+
+      # NOTE: There doesn't appear to be a simple way to run post hooks in
+      # composite actions. We must unmount the VHDX image after we're done using
+      # it but before the post-cache hook runs. We should be able to fix this by
+      # converting our setup-vhdx action to NodeJS.
+      - name: Unmount Go Cache (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Dismount-VHD -Path ${{ steps.setup-go.outputs.vhdx-path }}
