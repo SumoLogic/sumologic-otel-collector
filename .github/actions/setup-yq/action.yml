@@ -17,18 +17,25 @@ runs:
         fi
 
     - name: Setup yq
+      id: yq
       shell: pwsh
       run: |
         $repo = "https://github.com/mikefarah/yq"
         $version = "4.45.4"
         $file = "yq_windows_amd64.exe"
         $url = "${repo}/releases/download/v${version}/${file}"
+        $drive = (Get-Location).Drive.Name
+        $installDir = "${drive}\yq"
+        $path = "${installDir}\yq.exe"
 
         curl.exe -LO "${url}"
-        mkdir -p D:\yq
-        mv $file D:\yq\yq.exe
+        mkdir -p "${installDir}"
+        mv $file "${path}"
+
+        "install-dir=${installDir}" >> $env:GITHUB_OUTPUT
+        "path=${path}" >> $env:GITHUB_OUTPUT
 
     - name: Add yq to PATH
       shell: pwsh
       run: |
-        "D:\yq" >> $env:GITHUB_PATH
+        "${{ steps.yq.outputs.install-dir }}" >> $env:GITHUB_PATH

@@ -1,3 +1,4 @@
+# TODO: rename to split platform string
 name: Parse a Go platform string
 
 description: |
