@@ -1,4 +1,10 @@
-name: Build Otelcol Config Tool
+#################################################################################
+# A reusable workflow to build the Otelcol Config Tool binary for a specific
+# platform. It supports building with or without FIPS support, and can sign
+# macOS binaries if signing is enabled.
+#################################################################################
+
+name: Workflow - Build Otelcol Config Tool
 
 on:
   workflow_call:
