@@ -10,43 +10,16 @@ defaults:
   run:
     shell: bash
 
-env:
-  GO_VERSION: "1.24.0"
-
 jobs:
-  get-otc-version:
-    name: Get next available OTC version
-    runs-on: ubuntu-24.04
-    outputs:
-      version: ${{ steps.otc-version.outputs.version }}
-      version-with-sha: ${{ steps.otc-version.outputs.version-with-sha }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get next available OTC version
-        id: otc-version
-        uses: ./.github/actions/get-next-otc-version
-
-  get-go-version:
-    name: Get Go version
-    runs-on: ubuntu-24.04
-    outputs:
-      version: ${{ steps.go-version.outputs.version }}
-    steps:
-      - name: Output Go version
-        id: go-version
-        run: echo "version=${GO_VERSION}" >> "$GITHUB_OUTPUT"
-
-      - name: Get Azure Region
-        run: |
-          curl -sH Metadata:true "http://169.254.169.254/metadata/instance?api-version=2017-12-01" | jq .
+  determine-build-info:
+    name: Build Info
+    uses: ./.github/workflows/workflow-determine-build-info.yml
 
   setup-cache-otelcol:
     name: Setup Cache (otelcol)
     runs-on: ${{ matrix.runs-on }}
-    needs: [get-go-version]
+    needs:
+      - determine-build-info
     strategy:
       matrix:
         include:
@@ -67,7 +40,7 @@ jobs:
         with:
           distribution: ${{ matrix.distribution }}
           skip-cache-restore-on-hit: "true"
-          version: ${{ needs.get-go-version.outputs.version }}
+          version: ${{ needs.determine-build-info.outputs.go-version }}
           cache-dependency-paths: |
             **/*.sum
             otelcolbuilder/.otelcol-builder.yaml
@@ -97,7 +70,8 @@ jobs:
   setup-cache-otelcol-config:
     name: Setup Cache (otelcol-config)
     runs-on: ${{ matrix.runs-on }}
-    needs: [get-go-version]
+    needs:
+      - determine-build-info
     strategy:
       matrix:
         include:
@@ -114,7 +88,7 @@ jobs:
         with:
           distribution: ${{ matrix.distribution }}
           skip-cache-restore-on-hit: "true"
-          version: ${{ needs.get-go-version.outputs.version }}
+          version: ${{ needs.determine-build-info.outputs.go-version }}
           cache-name: otelcol-config-go-cache
           cache-dependency-paths: |
             pkg/tools/otelcol-config/go.sum
@@ -150,7 +124,7 @@ jobs:
   test:
     name: Test (otelcol)
     needs:
-      - get-go-version
+      - determine-build-info
       - setup-cache-otelcol
     uses: ./.github/workflows/workflow-test.yml
     strategy:
@@ -163,14 +137,14 @@ jobs:
           - runs-on: windows-2025
     with:
       fips: ${{ matrix.fips == true }}
-      go-version: ${{ needs.get-go-version.outputs.version }}
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
       runs-on: ${{ matrix.runs-on }}
 
   test-otelcol-config:
     name: Test (otelcol-config)
     uses: ./.github/workflows/workflow-test-otelcol-config.yml
     needs:
-      - get-go-version
+      - determine-build-info
       - setup-cache-otelcol-config
     strategy:
       matrix:
@@ -182,14 +156,13 @@ jobs:
     with:
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
-      go-version: ${{ needs.get-go-version.outputs.version }}
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
 
   build:
     name: Build (otelcol)
     uses: ./.github/workflows/workflow-build.yml
     needs:
-      - get-otc-version
-      - get-go-version
+      - determine-build-info
       - setup-cache-otelcol
       - setup-cache-toolchain
     strategy:
@@ -219,16 +192,15 @@ jobs:
       platform: ${{ matrix.platform }}
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
-      go-version: ${{ needs.get-go-version.outputs.version }}
-      version: ${{ needs.get-otc-version.outputs.version-with-sha }}
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
+      version: ${{ needs.determine-build-info.outputs.version-with-sha }}
     secrets: inherit
 
   build-otelcol-config:
     name: Build (otelcol-config)
     uses: ./.github/workflows/workflow-build-otelcol-config.yml
     needs:
-      - get-otc-version
-      - get-go-version
+      - determine-build-info
       - setup-cache-otelcol-config
       - setup-cache-toolchain
     strategy:
@@ -253,7 +225,7 @@ jobs:
       platform: ${{ matrix.platform }}
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
-      go-version: ${{ needs.get-go-version.outputs.version }}
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
     secrets: inherit
 
   # Store the install script from the packaging repository as an action artifact.

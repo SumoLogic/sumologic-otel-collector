@@ -138,7 +138,7 @@ jobs:
     uses: ./.github/workflows/workflow-test.yml
     needs:
       - build-changed
-      - get-go-version
+      - determine-build-info
     if: needs.build-changed.outputs.any_changed == 'true'
     strategy:
       matrix:
@@ -149,7 +149,7 @@ jobs:
           - runs-on: macos-15
           - runs-on: windows-2022
     with:
-      go-version: ${{ needs.get-go-version.outputs.version }}
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
       fips: ${{ matrix.fips == true }}
       runs-on: ${{ matrix.runs-on }}
 
@@ -157,7 +157,7 @@ jobs:
     name: Test (otelcol-config)
     uses: ./.github/workflows/workflow-test-otelcol-config.yml
     needs:
-      - get-go-version
+      - determine-build-info
     strategy:
       matrix:
         include:
@@ -167,7 +167,7 @@ jobs:
           - runs-on: macos-15
     with:
       fips: ${{ matrix.fips == true }}
-      go-version: ${{ needs.get-go-version.outputs.version }}
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
       runs-on: ${{ matrix.runs-on }}
 
   lint:
@@ -218,26 +218,15 @@ jobs:
       - name: Run staticcheck
         run: make golint
 
-  get-version:
-    name: Get next available version
-    uses: ./.github/workflows/workflow-get-version.yml
-
-  get-go-version:
-    name: Get Go version
-    runs-on: ubuntu-24.04
-    outputs:
-      version: ${{ steps.go-version.outputs.version }}
-    steps:
-      - name: Output Go version
-        id: go-version
-        run: echo "version=${GO_VERSION}" >> "$GITHUB_OUTPUT"
+  determine-build-info:
+    name: Build Info
+    uses: ./.github/workflows/workflow-determine-build-info.yml
 
   build:
     name: Build
     uses: ./.github/workflows/workflow-build.yml
     needs:
-      - get-version
-      - get-go-version
+      - determine-build-info
     strategy:
       matrix:
         include:
@@ -259,17 +248,17 @@ jobs:
             fips: true
     with:
       fips: ${{ matrix.fips == true }}
-      go-version: ${{ needs.get-go-version.outputs.version }}
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
       platform: ${{ matrix.platform }}
       runs-on: ${{ matrix.runs-on }}
-      version: ${{ needs.get-version.outputs.version }}
+      version: ${{ needs.determine-build-info.outputs.version-with-sha }}
     secrets: inherit
 
   build-otelcol-config:
     name: Build (otelcol-config)
     uses: ./.github/workflows/workflow-build-otelcol-config.yml
     needs:
-      - get-go-version
+      - determine-build-info
     strategy:
       fail-fast: false
       matrix:
@@ -289,7 +278,7 @@ jobs:
             runs-on: ubuntu-24.04
             fips: true
     with:
-      go-version: ${{ needs.get-go-version.outputs.version }}
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
       platform: ${{ matrix.platform }}
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
