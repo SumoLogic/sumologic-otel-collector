@@ -1,0 +1,1 @@
+"chore: using go version 1.24.5 for building binary in github workflows"
