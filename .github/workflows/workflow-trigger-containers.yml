@@ -1,0 +1,48 @@
+name: Trigger Containers
+
+on:
+  workflow_call:
+    inputs:
+      workflow_id:
+        description: |
+          ID of the Collector workflow that Container builds will fetch
+          artifacts from.
+        type: string
+        required: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  # Triggers build-and-push workflow in the sumologic-otel-collector-containers
+  # repository.
+  trigger:
+    name: Trigger Containers
+    runs-on: ubuntu-24.04
+    steps:
+      # TODO: output the workflow url
+      - name: Trigger containers workflow
+        id: trigger-containers-workflow
+        env:
+          GITHUB_TOKEN: ${{ secrets.PACKAGING_GH_TOKEN }}
+          REPO: SumoLogic/sumologic-otel-collector-containers
+          WORKFLOW: build-and-push.yml
+        run: |
+          gh workflow run --repo "${REPO}" "${WORKFLOW}" --json << EOF
+            {
+              "workflow_id": "${{ inputs.workflow_id }}"
+            }
+          EOF
+
+      # Outputs the Containers Workflow URL as an Annotation in the UI after the
+      # containers workflow has completed.
+      - name: Containers Workflow URL
+        run: |
+          url="https://github.com/SumoLogic/sumologic-otel-collector-containers"
+          url="${url}/actions/workflows/build-and-push.yml"
+          echo ::notice title=Containers Workflow URL::${url}
+
+      - name: Collector Workflow ID
+        run: |
+          echo ::notice title=Collector Workflow ID::${{ inputs.workflow_id }}

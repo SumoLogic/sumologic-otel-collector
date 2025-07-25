@@ -1,5 +1,10 @@
 name: Setup MAKEFLAGS on Runner
 
+description: |
+  This action sets the `MAKEFLAGS` environment variable to enable parallel
+  builds using the number of available CPU cores on the GitHub Runner. This
+  helps speed up build processes that use `make` by allowing simultaneous jobs.
+
 runs:
   using: "composite"
   steps:

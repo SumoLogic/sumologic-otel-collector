@@ -28,8 +28,8 @@ jobs:
         run: |
           full=$(./ci/get_version.sh full | xargs)
           version=${full}-$(git rev-parse HEAD | xargs)
-          echo "full=${full}" > $GITHUB_OUTPUT
-          echo "version=${version}" > $GITHUB_OUTPUT
+          echo "full=${full}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
 
       - name: Print version
         run: echo ::notice title=Version::${{ steps.get-version.outputs.version }}

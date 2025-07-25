@@ -39,7 +39,7 @@ jobs:
           echo ::notice title=Workflow URL::${url}
 
       - name: Download otelcol-sumo artifact from workflow
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: otelcol-sumo-linux_amd64
           path: artifacts/
@@ -53,11 +53,14 @@ jobs:
           artifact="artifacts/otelcol-sumo-linux_amd64"
           chmod +x "${artifact}"
           script="ci/get_version_from_binary.sh"
-          core="$("$script" core "${artifact}")"
-          sumo="$("$script" sumo "${artifact}")"
-          echo "otc-version=$core" >> $GITHUB_OUTPUT
-          echo "sumo-version=$sumo" >> $GITHUB_OUTPUT
-          echo "version=${core}-sumo-${sumo}" >> $GITHUB_OUTPUT
+          core="$("${script}" core "${artifact}")"
+          sumo="$("${script}" sumo "${artifact}")"
+
+          {
+            echo "otc-version=$core"
+            echo "sumo-version=$sumo"
+            echo "version=${core}-sumo-${sumo}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Output Version
         run: |
@@ -70,60 +73,11 @@ jobs:
         run: |
           workflow="${{ inputs.workflow_id }}"
           sha="$(gh run view ${workflow} --json headSha -t '{{.headSha}}')"
-          echo "git-sha=$sha" >> $GITHUB_OUTPUT
+          echo "git-sha=$sha" >> "$GITHUB_OUTPUT"
 
       - name: Output Git SHA
         run: |
           echo ::notice title=Git SHA::${{ steps.get-sha.outputs.git-sha }}
-
-  build-container-images:
-    name: Build container
-    runs-on: ubuntu-24.04
-    needs:
-      - get-version
-    strategy:
-      matrix:
-        platform: ["linux_amd64", "linux_arm64"]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.2.0
-
-      - name: Set up Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v3.7.1
-
-      - name: Show Buildx platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
-
-      - name: Login to Open Source ECR
-        run: make login
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: Login to Docker Hub
-        run: |
-          docker login \
-            --username ${{ secrets.DOCKERHUB_LOGIN }} \
-            --password ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Download platform otelcol-sumo artifacts from workflow
-        uses: actions/download-artifact@v4
-        with:
-          pattern: otelcol-sumo-${{ matrix.platform }}
-          path: artifacts/
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ inputs.workflow_id }}
-
-      - name: Download platform fips otelcol-sumo artifacts from workflow
-        uses: actions/download-artifact@v4
-        with:
-          pattern: otelcol-sumo-fips-${{ matrix.platform }}
-          path: artifacts/
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ inputs.workflow_id }}
 
   create-release:
     name: Create Github release
@@ -132,7 +86,7 @@ jobs:
       - get-version
     steps:
       - name: Download all artifacts from workflow
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           path: artifacts/
           merge-multiple: true
@@ -146,13 +100,13 @@ jobs:
           find . -type f -name 'otelcol-sumo*' \
             | sed 's/^\.\///' \
             | while read -r file; do
-              new_name=$(echo "$file" | sed "s/otelcol-sumo/otelcol-sumo-${version}/g")
+              new_name="${file//otelcol-sumo/otelcol-sumo-${version}}"
               mv "$file" "$new_name"
           done
           find . -type f -name 'otelcol-config*' \
             | sed 's/^\.\///' \
             | while read -r file; do
-              new_name=$(echo "$file" | sed "s/otelcol-config/otelcol-config-${version}/g")
+              new_name="${file//otelcol-config/otelcol-config-${version}}"
               mv "$file" "$new_name"
           done
 
@@ -161,7 +115,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           draft: true
           prerelease: false
-          commit: ${{ needs.get-sha.outputs.git-sha }}
+          commit: ${{ needs.get-version.outputs.sha }}
           tag: v${{ needs.get-version.outputs.version }}
 
           allowUpdates: true
@@ -181,12 +135,6 @@ jobs:
             ### Changelog
 
             **TODO**
-
-            ### Container images:
-
-            ```
-            docker pull public.ecr.aws/sumologic/sumologic-otel-collector:${{ needs.get-version.outputs.version }}
-            ```
 
           artifacts: "artifacts/*"
           artifactErrorsFailBuild: true

@@ -1,5 +1,11 @@
 name: Setup Make Environment
 
+description: |
+  This action sets up the environment for building projects using `make`. It
+  configures the `MAKEFLAGS` environment variable to enable parallel builds
+  based on the number of CPU cores available on the GitHub Runner. It also
+  installs necessary dependencies and tools required for building projects.
+
 runs:
   using: "composite"
   steps:

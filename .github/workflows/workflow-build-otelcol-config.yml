@@ -23,13 +23,6 @@ on:
       signing-enabled:
         default: true
         type: boolean
-    secrets:
-      apple_developer_certificate_p12_base64:
-        required: false
-      apple_developer_certificate_password:
-        required: false
-      app_store_connect_password:
-        required: false
 
 defaults:
   run:
@@ -61,8 +54,8 @@ jobs:
       - uses: ./.github/actions/setup-build-environment
         if: inputs.signing-enabled
         with:
-          apple-signing-certificate-p12-base64: ${{ secrets.apple_developer_certificate_p12_base64 }}
-          apple-signing-certificate-password: ${{ secrets.apple_developer_certificate_password }}
+          apple-signing-certificate-p12-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+          apple-signing-certificate-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
           fips: ${{ inputs.fips }}
 
       - name: Build
@@ -118,19 +111,19 @@ jobs:
       - name: Sign the mac binaries
         if: runner.os == 'macOS' && inputs.signing-enabled
         env:
-          AC_PASSWORD: ${{ secrets.app_store_connect_password }}
+          AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
         working-directory: ./pkg/tools/otelcol-config
         run: make ${{ inputs.platform }}-sign
 
       - name: Store binary as action artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ${{ steps.binary-name.outputs.name-with-platform }}
           path: ./pkg/tools/otelcol-config/${{ steps.binary-name.outputs.name-with-platform }}
           if-no-files-found: error
 
       - name: Store macOS .dmg as action artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: runner.os == 'macOS'
         with:
           name: ${{ steps.binary-name.outputs.name-with-platform }}.dmg

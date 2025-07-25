@@ -12,10 +12,14 @@ jobs:
       - name: Close Jira task
         id: close-jira-task
         run: |-
+          issue="${{ github.event.issue.number }}"
+          query="summary~\"sumologic-otel-collector%20and%20%23${issue}\""
+          url="${JIRA_BASE_URL}/rest/api/latest/search?jql=${query}"
+
           JIRA_ID=$(curl \
             --http1.1 \
             -u "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
-            ${JIRA_BASE_URL}'/rest/api/latest/search?jql=summary~"sumologic-otel-collector%20and%20%23${{ github.event.issue.number }}"' \
+            "${url}" \
             | jq '.issues[0].key' --raw-output)
 
           curl \

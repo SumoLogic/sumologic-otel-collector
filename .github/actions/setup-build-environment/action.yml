@@ -1,4 +1,9 @@
-name: Setup Test Environment
+name: Setup Build Environment
+
+description: |
+  This action sets up the build environment for the Sumo Logic OpenTelemetry
+  Collector (OTC) project. It imports Apple signing certificates for macOS builds
+  and enables FIPS mode on Windows runners if specified.
 
 inputs:
   apple-signing-certificate-p12-base64:

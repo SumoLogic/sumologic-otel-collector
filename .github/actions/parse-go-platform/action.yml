@@ -1,5 +1,9 @@
 name: Parse a Go platform string
 
+description: |
+  This action parses a Go platform string in the format of "{os}_{arch}" and
+  outputs the operating system (os) and architecture (arch) components.
+
 inputs:
   platform:
     description: A Go platform string in the format of "{os}_{arch}".

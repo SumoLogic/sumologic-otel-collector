@@ -1,5 +1,10 @@
 name: Setup Toolchain
 
+description: |
+  This action sets up the toolchain environment for building projects on a
+  specific platform. It restores the toolchain cache if available, builds the
+  toolchain if not found in the cache, and saves the cache for future runs.
+
 inputs:
   platform:
     description: |
@@ -39,7 +44,7 @@ runs:
 
     - name: Restore Toolchain Cache
       id: restore-cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684
       with:
         path: /opt/toolchain
         key: ${{ steps.cache-key.outputs.name }}
@@ -52,7 +57,7 @@ runs:
       working-directory: ./toolchains
       run: make toolchain-${{ inputs.platform }} OUTPUT=/opt/toolchain -j3
 
-    - uses: actions/cache/save@v4
+    - uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684
       if: steps.build.outcome == 'success'
       with:
         path: /opt/toolchain

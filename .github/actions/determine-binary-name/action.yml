@@ -1,5 +1,11 @@
 name: Determine the name of a binary
 
+description: |
+  This action determines the name of a binary based on the provided inputs.
+  It takes into account whether the binary is built with FIPS, the base name,
+  and the platform (in "{os}_{arch}" format). The output includes both the
+  base name and the name with platform suffix, adjusting for Windows if necessary.
+
 inputs:
   fips:
     description: Whether the binary is built with FIPS or not.

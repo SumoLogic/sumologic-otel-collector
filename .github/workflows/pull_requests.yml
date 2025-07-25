@@ -138,41 +138,37 @@ jobs:
     uses: ./.github/workflows/workflow-test.yml
     needs:
       - build-changed
+      - get-go-version
     if: needs.build-changed.outputs.any_changed == 'true'
     strategy:
       matrix:
         include:
-          - platform: linux_amd64
-            runs-on: ubuntu-24.04
-          - platform: linux_amd64
-            runs-on: ubuntu-24.04
+          - runs-on: ubuntu-24.04
+          - runs-on: ubuntu-24.04
             fips: true
-          - platform: darwin_arm64
-            runs-on: macos-15
-          - platform: windows_amd64
-            runs-on: windows-2022
+          - runs-on: macos-15
+          - runs-on: windows-2022
     with:
-      platform: ${{ matrix.platform }}
+      go-version: ${{ needs.get-go-version.outputs.version }}
+      fips: ${{ matrix.fips == true }}
       runs-on: ${{ matrix.runs-on }}
-      fips: ${{ matrix.fips }}
 
   test-otelcol-config:
     name: Test (otelcol-config)
     uses: ./.github/workflows/workflow-test-otelcol-config.yml
+    needs:
+      - get-go-version
     strategy:
       matrix:
         include:
-          - platform: linux_amd64
-            runs-on: ubuntu-24.04
-          - platform: linux_amd64
-            runs-on: ubuntu-24.04
+          - runs-on: ubuntu-24.04
+          - runs-on: ubuntu-24.04
             fips: true
-          - platform: darwin_amd64
-            runs-on: macos-15
+          - runs-on: macos-15
     with:
-      platform: ${{ matrix.platform }}
+      fips: ${{ matrix.fips == true }}
+      go-version: ${{ needs.get-go-version.outputs.version }}
       runs-on: ${{ matrix.runs-on }}
-      fips: ${{ matrix.fips }}
 
   lint:
     name: Lint (staticcheck)
@@ -196,7 +192,7 @@ jobs:
           echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
           echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
 
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684
         with:
           path: |
             ${{ env.GOMODCACHE }}/cache
@@ -205,7 +201,7 @@ jobs:
           restore-keys: |
             go-test-${{ env.GO_VERSION }}-${{matrix.platform}}-
 
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684
         with:
           path: |
             /home/runner/.cache/staticcheck
@@ -217,7 +213,7 @@ jobs:
         run: make install-staticcheck
 
       - name: Add opentelemetry-collector-builder installation dir to PATH
-        run: echo "$HOME/bin" >> $GITHUB_PATH
+        run: echo "$HOME/bin" >> "$GITHUB_PATH"
 
       - name: Run staticcheck
         run: make golint
@@ -226,10 +222,22 @@ jobs:
     name: Get next available version
     uses: ./.github/workflows/workflow-get-version.yml
 
+  get-go-version:
+    name: Get Go version
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.go-version.outputs.version }}
+    steps:
+      - name: Output Go version
+        id: go-version
+        run: echo "version=${GO_VERSION}" >> "$GITHUB_OUTPUT"
+
   build:
     name: Build
     uses: ./.github/workflows/workflow-build.yml
-    needs: [get-version]
+    needs:
+      - get-version
+      - get-go-version
     strategy:
       matrix:
         include:
@@ -250,23 +258,18 @@ jobs:
             runs-on: windows-2022
             fips: true
     with:
+      fips: ${{ matrix.fips == true }}
+      go-version: ${{ needs.get-go-version.outputs.version }}
       platform: ${{ matrix.platform }}
       runs-on: ${{ matrix.runs-on }}
-      fips: ${{ matrix.fips == true }}
       version: ${{ needs.get-version.outputs.version }}
-    secrets:
-      apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-      apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
-      app_store_connect_password: ${{ secrets.AC_PASSWORD }}
-      microsoft_certificate: ${{ secrets.MICROSOFT_CERTIFICATE }}
-      microsoft_certificate_password: ${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}
-      microsoft_certificate_hash: ${{ secrets.MICROSOFT_CERTHASH }}
-      microsoft_certificate_name: ${{ secrets.MICROSOFT_CERTNAME }}
-      microsoft_description: ${{ secrets.MICROSOFT_DESCRIPTION }}
+    secrets: inherit
 
   build-otelcol-config:
     name: Build (otelcol-config)
     uses: ./.github/workflows/workflow-build-otelcol-config.yml
+    needs:
+      - get-go-version
     strategy:
       fail-fast: false
       matrix:
@@ -286,13 +289,11 @@ jobs:
             runs-on: ubuntu-24.04
             fips: true
     with:
+      go-version: ${{ needs.get-go-version.outputs.version }}
       platform: ${{ matrix.platform }}
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
-    secrets:
-      apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-      apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
-      app_store_connect_password: ${{ secrets.AC_PASSWORD }}
+    secrets: inherit
 
   # TODO: this needs to be updated to use docker bake and should probably test
   # all images & platforms
@@ -320,7 +321,7 @@ jobs:
         run: echo ${{ steps.buildx.outputs.platforms }}
 
       - name: Download binary action artifact from build phase
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: otelcol-sumo-${{matrix.platform}}
           path: artifacts/
@@ -336,7 +337,7 @@ jobs:
 
       - name: Download FIPS binary action artifact from build phase
         if: matrix.platform == 'linux_amd64'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: otelcol-sumo-fips-${{matrix.platform}}
           path: artifacts/
@@ -372,7 +373,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download binary action artifact from build phase
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: otelcol-sumo-${{matrix.platform}}.exe
           path: artifacts/

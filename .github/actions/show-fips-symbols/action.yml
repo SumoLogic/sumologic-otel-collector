@@ -1,5 +1,11 @@
 name: Show FIPS Symbols
 
+description: |
+  This action checks for specific FIPS-related symbols in a binary.
+  It is designed to work with binaries built for Linux and Windows.
+  For Linux, it checks for BoringSSL symbols, and for Windows,
+  it checks for Microsoft Cryptography Next-Generation symbols.
+
 inputs:
   name:
     description: The name of the binary to check.

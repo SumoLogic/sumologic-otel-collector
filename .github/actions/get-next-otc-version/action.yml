@@ -1,5 +1,12 @@
 name: Get next available OTC version
 
+description: |
+  This action retrieves the next available version of the Sumo Logic
+  OpenTelemetry Collector (OTC) by running a script that fetches the current
+  version and increments it. The version is then outputted in two formats:
+  1. The next available OTC version (without Git SHA).
+  2. The next available OTC version appended with the current Git SHA.
+
 outputs:
   version:
     description: The next available OTC version

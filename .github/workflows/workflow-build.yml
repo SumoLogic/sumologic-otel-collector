@@ -27,23 +27,6 @@ on:
         description: Version to use when building the binary
         required: true
         type: string
-    secrets:
-      apple_developer_certificate_p12_base64:
-        required: false
-      apple_developer_certificate_password:
-        required: false
-      app_store_connect_password:
-        required: false
-      microsoft_certificate:
-        required: false
-      microsoft_certificate_password:
-        required: false
-      microsoft_certificate_hash:
-        required: false
-      microsoft_certificate_name:
-        required: false
-      microsoft_description:
-        required: false
 
 defaults:
   run:
@@ -75,7 +58,7 @@ jobs:
             distribution="microsoft"
           fi
 
-          echo "name=${distribution}" >> $GITHUB_OUTPUT
+          echo "name=${distribution}" >> "$GITHUB_OUTPUT"
 
       - name: Setup Go
         id: setup-go
@@ -90,8 +73,8 @@ jobs:
       - uses: ./.github/actions/setup-build-environment
         if: inputs.signing-enabled
         with:
-          apple-signing-certificate-p12-base64: ${{ secrets.apple_developer_certificate_p12_base64 }}
-          apple-signing-certificate-password: ${{ secrets.apple_developer_certificate_password }}
+          apple-signing-certificate-p12-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+          apple-signing-certificate-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
           fips: ${{ inputs.fips }}
 
       - name: Build
@@ -160,10 +143,11 @@ jobs:
       - name: Sign the mac binaries
         if: runner.os == 'macOS' && inputs.signing-enabled
         env:
-          AC_PASSWORD: ${{ secrets.app_store_connect_password }}
+          AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
         working-directory: ./otelcolbuilder/
         run: |
-          for i in $(seq 1 5); do
+          for _ in $(seq 1 5); do
+          # shellcheck disable=SC2015
           make ${{ inputs.platform }}-sign && break || sleep 5
           done
 
@@ -171,11 +155,11 @@ jobs:
         if: runner.os == 'Windows' && inputs.signing-enabled
         uses: skymatic/code-sign-action@v3
         with:
-          certificate: "${{ secrets.microsoft_certificate }}"
-          password: "${{ secrets.microsoft_certificate_password }}"
-          certificatesha1: "${{ secrets.microsoft_certificate_hash }}"
-          certificatename: "${{ secrets.microsoft_certificate_name }}"
-          description: "${{ secrets.microsoft_description }}"
+          certificate: ${{ secrets.MICROSOFT_CERTIFICATE }}
+          password: ${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}
+          certificatesha1: ${{ secrets.MICROSOFT_CERTHASH }}
+          certificatename: ${{ secrets.MICROSOFT_CERTNAME }}
+          description: ${{ secrets.MICROSOFT_DESCRIPTION }}
           folder: ./otelcolbuilder/cmd
 
       - name: Test binary
@@ -188,14 +172,14 @@ jobs:
           ./${binary} completion bash
 
       - name: Store binary as action artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ${{ steps.binary-name.outputs.name-with-platform }}
           path: ./otelcolbuilder/cmd/${{ steps.binary-name.outputs.name-with-platform }}
           if-no-files-found: error
 
       - name: Store Mac .dmg as action artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: runner.os == 'macOS'
         with:
           name: ${{ steps.binary-name.outputs.name-with-platform }}.dmg

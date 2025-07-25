@@ -58,28 +58,6 @@ TESTABLE_GO_MODULES := $(filter-out pkg/tools/otelcol-config,$(ALL_GO_MODULES))
 TESTABLE_GO_MODULES := $(filter-out pkg/tools/udpdemux,$(ALL_GO_MODULES))
 
 #################################################################################
-# Container variables
-#################################################################################
-
-# General
-CONTAINER_REPO_CI ?= sumologic/sumologic-otel-collector-ci-builds
-CONTAINER_REPO_RC ?= sumologic/sumologic-otel-collector-release-candidates
-CONTAINER_REPO_STABLE ?= sumologic/sumologic-otel-collector
-
-# Docker Hub
-DH_REGISTRY ?= docker.io
-DH_REPO_CI ?= $(DH_REGISTRY)/$(CONTAINER_REPO_CI)
-DH_REPO_RC ?= $(DH_REGISTRY)/$(CONTAINER_REPO_RC)
-DH_REPO_STABLE ?= $(DH_REGISTRY)/$(CONTAINER_REPO_STABLE)
-
-# Amazon ECR
-ECR_REGISTRY ?= 663229565520.dkr.ecr.us-east-1.amazonaws.com
-ECR_REPO_CI ?= $(ECR_REGISTRY)/$(CONTAINER_REPO_CI)
-ECR_REPO_RC ?= $(ECR_REGISTRY)/$(CONTAINER_REPO_RC)
-ECR_PUBLIC_REGISTRY ?= public.ecr.aws
-ECR_REPO_STABLE ?= $(ECR_PUBLIC_REGISTRY)/$(CONTAINER_REPO_STABLE)
-
-#################################################################################
 # Colour variables
 #################################################################################
 
@@ -296,10 +274,6 @@ update-ot:
 		&& $(MAKE) build \
 		&& popd
 
-.PHONY: update-journalctl
-update-journalctl: install-gnu-sed
-	$(SED) -i "s/FROM debian.*/FROM debian:${DEBIAN_VERSION} as systemd/" Dockerfile*
-
 .PHONY: update-docs
 update-docs: install-gnu-sed
 update-docs: OT_CORE_VERSION = $(shell $(OT_CORE_VERSION_CMD))
@@ -322,159 +296,6 @@ build:
 .PHONY: install-ocb
 install-ocb:
 	@$(MAKE) -C ./otelcolbuilder/ install-ocb
-
-#################################################################################
-# Container targets
-#################################################################################
-
-.PHONY: _login-ecr
-_login-ecr:
-	@$(AWS) $(ECR_SUBCMD) get-login-password --region $(AWS_REGION) \
-		| crane auth login -u AWS --password-stdin $(REGISTRY)
-
-.PHONY: login-ecr-private
-login-ecr-private:
-	@$(MAKE) _login-ecr ECR_SUBCMD="ecr" AWS_REGION="us-east-1" \
-		REGISTRY="$(ECR_REGISTRY)"
-
-.PHONY: login-ecr-public
-login-ecr-public:
-	@$(MAKE) _login-ecr ECR_SUBCMD="ecr-public" AWS_REGION="us-east-1" \
-		REGISTRY="$(ECR_PUBLIC_REGISTRY)"
-
-.PHONY: _crane-copy
-_crane-copy:
-ifeq ($(SRC_IMAGE),)
-	@$(error SRC_IMAGE must be set for crane copy)
-endif
-ifeq ($(DST_IMAGE),)
-	@$(error DST_IMAGE must be set for crane copy)
-endif
-	@crane copy "$(SRC_IMAGE)" "$(DST_IMAGE)"
-
-.PHONY: _crane-tag
-_crane-tag:
-ifeq ($(SRC_IMAGE),)
-	@$(error SRC_IMAGE must be set for crane tag)
-endif
-ifeq ($(TAG_NAME),)
-	@$(error TAG_NAME must be set for crane tag)
-endif
-	@crane tag "$(SRC_IMAGE)" "$(TAG_NAME)"
-
-.PHONY: create-container-image-tag
-create-container-image-tag:
-	@$(MAKE) _crane-tag \
-		SRC_IMAGE="$(SRC_REPO):$(GIT_SHA)$(TAG_SUFFIX)" \
-		TAG_NAME="$(TAG_NAME)"
-
-.PHONY: _promote-container-image
-_promote-container-image: TAG_NAME = $(GIT_SHA)$(TAG_SUFFIX)
-_promote-container-image:
-ifeq ($(SRC_REGISTRY),)
-	@$(error SRC_REGISTRY must be set for container image promotion)
-endif
-ifeq ($(SRC_REPO),)
-	@$(error SRC_REPO must be set for container image promotion)
-endif
-ifeq ($(DST_REGISTRY),)
-	@$(error DST_REGISTRY must be set for container image promotion)
-endif
-ifeq ($(DST_REPO),)
-	@$(error DST_REPO must be set for container image promotion)
-endif
-ifeq ($(GIT_SHA),)
-	@$(error GIT_SHA must be set for container image promotion. It should be \
-		equal to the Git SHA of the sumologic-otel-collector commit that the \
-		container image to be promoted is built for)
-endif
-	@$(MAKE) _crane-copy \
-		SRC_IMAGE="$(SRC_REGISTRY)/$(SRC_REPO):$(TAG_NAME)" \
-		DST_IMAGE="$(DST_REGISTRY)/$(DST_REPO):$(TAG_NAME)"
-
-.PHONY: _promote-image-ci-to-rc
-_promote-image-ci-to-rc:
-	@$(MAKE) _promote-container-image \
-		SRC_REGISTRY="$(SRC_REGISTRY)" \
-		SRC_REPO="$(CONTAINER_REPO_CI)" \
-		DST_REGISTRY="$(DST_REGISTRY)" \
-		DST_REPO="$(CONTAINER_REPO_RC)"
-
-.PHONY: _promote-image-rc-to-stable
-_promote-image-rc-to-stable:
-	@$(MAKE) _promote-container-image \
-		SRC_REGISTRY="$(SRC_REGISTRY)" \
-		SRC_REPO="$(CONTAINER_REPO_RC)" \
-		DST_REGISTRY="$(DST_REGISTRY)" \
-		DST_REPO="$(CONTAINER_REPO_STABLE)"
-
-.PHONY: _demote-image-rc
-_demote-image-rc:
-	@echo TODO: implement me
-
-.PHONY: _demote-image-stable
-_demote-image-stable:
-	@echo TODO: implement me
-
-# Promotes an image in the ECR ci-builds repository to the release-candidates
-# repository
-.PHONY: promote-ecr-image-ci-to-rc
-promote-ecr-image-ci-to-rc:
-	@$(MAKE) _promote-image-ci-to-rc \
-		SRC_REGISTRY="$(ECR_REGISTRY)" \
-		DST_REGISTRY="$(ECR_REGISTRY)"
-
-# Promotes an image in the ECR release-candidates repository to the stable
-# repository
-.PHONY: promote-ecr-image-rc-to-stable
-promote-ecr-image-rc-to-stable:
-	@$(MAKE) _promote-image-rc-to-stable \
-		SRC_REGISTRY="$(ECR_REGISTRY)" \
-		DST_REGISTRY="$(ECR_PUBLIC_REGISTRY)"
-
-# Promotes an image in the Docker Hub ci-builds repository to the
-# release-candidates repository
-.PHONY: promote-dh-image-ci-to-rc
-promote-dh-image-ci-to-rc:
-	@$(MAKE) _promote-image-ci-to-rc \
-		SRC_REGISTRY="$(DH_REGISTRY)" \
-		DST_REGISTRY="$(DH_REGISTRY)"
-
-# Promotes an image in the Docker Hub release-candidates repository to the
-# stable repository
-.PHONY: promote-dh-image-rc-to-stable
-promote-dh-image-rc-to-stable:
-	@$(MAKE) _promote-image-rc-to-stable \
-		SRC_REGISTRY="$(DH_REGISTRY)" \
-		DST_REGISTRY="$(DH_REGISTRY)"
-
-# Promotes an image in all registries from the ci-builds repository to the
-# release-candidates repository
-.PHONY: promote-all-image-ci-to-rc
-promote-all-image-ci-to-rc:
-	@$(MAKE) promote-ecr-image-ci-to-rc TAG_SUFFIX="$(TAG_SUFFIX)"
-	@$(MAKE) promote-dh-image-ci-to-rc TAG_SUFFIX="$(TAG_SUFFIX)"
-
-.PHONY: promote-images-ci-to-rc
-promote-images-ci-to-rc:
-	@$(MAKE) promote-all-image-ci-to-rc
-	@$(MAKE) promote-all-image-ci-to-rc TAG_SUFFIX="-fips"
-	@$(MAKE) promote-all-image-ci-to-rc TAG_SUFFIX="-ubi"
-	@$(MAKE) promote-all-image-ci-to-rc TAG_SUFFIX="-ubi-fips"
-
-.PHONY: _print-image-platforms
-_print-image-platforms:
-	@echo Supported platforms for $(REGISTRY):$(TAG)
-	@docker buildx imagetools inspect --raw \
-		$(REGISTRY):$(TAG) | jq -f ci/jq/platforms.jq
-	@echo
-
-.PHONY: print-ecr-image-platforms
-print-ecr-image-platforms:
-	@$(MAKE) _print-image-platforms REGISTRY=$(ECR_REPO_CI) TAG=latest
-	@$(MAKE) _print-image-platforms REGISTRY=$(ECR_REPO_CI) TAG=latest-fips
-	@$(MAKE) _print-image-platforms REGISTRY=$(ECR_REPO_CI) TAG=latest-ubi
-	@$(MAKE) _print-image-platforms REGISTRY=$(ECR_REPO_CI) TAG=latest-ubi-fips
 
 #################################################################################
 # Changelog targets

@@ -37,7 +37,7 @@ jobs:
     steps:
       - name: Output Go version
         id: go-version
-        run: echo "version=${GO_VERSION}" >> $GITHUB_OUTPUT
+        run: echo "version=${GO_VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Get Azure Region
         run: |
@@ -221,15 +221,7 @@ jobs:
       fips: ${{ matrix.fips == true }}
       go-version: ${{ needs.get-go-version.outputs.version }}
       version: ${{ needs.get-otc-version.outputs.version-with-sha }}
-    secrets:
-      apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-      apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
-      app_store_connect_password: ${{ secrets.AC_PASSWORD }}
-      microsoft_certificate: ${{ secrets.MICROSOFT_CERTIFICATE }}
-      microsoft_certificate_password: ${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}
-      microsoft_certificate_hash: ${{ secrets.MICROSOFT_CERTHASH }}
-      microsoft_certificate_name: ${{ secrets.MICROSOFT_CERTNAME }}
-      microsoft_description: ${{ secrets.MICROSOFT_DESCRIPTION }}
+    secrets: inherit
 
   build-otelcol-config:
     name: Build (otelcol-config)
@@ -262,101 +254,7 @@ jobs:
       runs-on: ${{ matrix.runs-on }}
       fips: ${{ matrix.fips == true }}
       go-version: ${{ needs.get-go-version.outputs.version }}
-    secrets:
-      apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-      apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
-      app_store_connect_password: ${{ secrets.AC_PASSWORD }}
-
-  build-container-images:
-    name: Container Images
-    uses: ./.github/workflows/workflow-build-container-images.yml
-    needs:
-      - build
-      - get-otc-version
-    strategy:
-      matrix:
-        include:
-          # standard product
-          - product: standard
-            os: linux
-            arch: amd64
-          - product: standard
-            os: linux
-            arch: arm64
-          - product: standard
-            target: windows-ltsc2022
-            os: windows
-            os-version: 10.0.20348.3807
-            arch: amd64
-            runs-on: windows-2022
-          - product: standard
-            target: windows-ltsc2025
-            os: windows
-            os-version: 10.0.26100.4349
-            arch: amd64
-            runs-on: windows-2025
-          # standard-fips product
-          - product: standard-fips
-            fips: true
-            os: linux
-            arch: amd64
-          - product: standard-fips
-            fips: true
-            os: linux
-            arch: arm64
-          # ubi product
-          - product: ubi
-            os: linux
-            arch: amd64
-          - product: ubi
-            os: linux
-            arch: arm64
-          # ubi-fips product
-          - product: ubi-fips
-            fips: true
-            os: linux
-            arch: amd64
-          - product: ubi-fips
-            fips: true
-            os: linux
-            arch: arm64
-    with:
-      arch: ${{ matrix.arch }}
-      fips: ${{ matrix.fips == true }}
-      os: ${{ matrix.os }}
-      os-version: ${{ matrix.os-version }}
-      product: ${{ matrix.product }}
-      target: ${{ matrix.target }}
-      runs-on: ${{ matrix.runs-on || 'ubuntu-24.04' }}
-      version: ${{ needs.get-otc-version.outputs.version }}
-    secrets:
-      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
-      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
-
-  push-container-indexes:
-    name: Container Indexes
-    uses: ./.github/workflows/workflow-push-container-indexes.yml
-    needs:
-      - build-container-images
-      - get-otc-version
-    strategy:
-      matrix:
-        include:
-          - target: standard
-            tags: '["latest", "${{ github.sha }}", "${{ needs.get-otc-version.outputs.version }}"]'
-          - target: standard-fips
-            tags: '["latest-fips", "${{ github.sha }}-fips", "${{ needs.get-otc-version.outputs.version }}-fips"]'
-          - target: ubi
-            tags: '["latest-ubi", "${{ github.sha }}-ubi", "${{ needs.get-otc-version.outputs.version }}-ubi"]'
-          - target: ubi-fips
-            tags: '["latest-ubi-fips", "${{ github.sha }}-ubi-fips", "${{ needs.get-otc-version.outputs.version }}-ubi-fips"]'
-    with:
-      tags: ${{ matrix.tags }}
-      target: ${{ matrix.target }}
-      version: ${{ needs.get-otc-version.outputs.version }}
-    secrets:
-      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
-      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+    secrets: inherit
 
   # Store the install script from the packaging repository as an action artifact.
   # Originally, this script was stored in this repository, and the official download url pointed
@@ -380,14 +278,14 @@ jobs:
           repository: SumoLogic/sumologic-otel-collector-packaging
 
       - name: Store Linux install script as action artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: install.sh
           path: ./install-script/install.sh
           if-no-files-found: error
 
       - name: Store Windows install script as action artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: install.ps1
           path: ./install-script/install.ps1
@@ -409,28 +307,37 @@ jobs:
         run: tar -cvf ./examples/ansible-playbook.tar.gz -C ./examples ansible/
 
       - name: Store Chef cookbook archive as action artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: chef-cookbook.tar.gz
           path: ./examples/chef/chef-cookbook.tar.gz
           if-no-files-found: error
 
       - name: Store Puppet module archive as action artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: puppet-module.tar.gz
           path: ./examples/puppet/puppet-module.tar.gz
           if-no-files-found: error
 
       - name: Store Ansible playbook archive as action artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ansible-playbook.tar.gz
           path: ./examples/ansible-playbook.tar.gz
           if-no-files-found: error
 
+  trigger-containers:
+    name: Containers
+    needs:
+      - build
+    uses: ./.github/workflows/workflow-trigger-containers.yml
+    secrets: inherit
+    with:
+      workflow_id: ${{ github.run_id }}
+
   trigger-packaging:
-    name: Trigger Packaging
+    name: Packages
     needs:
       - build
       - build-otelcol-config
