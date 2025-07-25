@@ -303,17 +303,22 @@ jobs:
     name: Containers
     needs:
       - build
-    uses: ./.github/workflows/workflow-trigger-containers.yml
+    uses: ./.github/workflows/workflow-trigger-remote-workflow.yml
     secrets: inherit
     with:
-      workflow_id: ${{ github.run_id }}
+      repo: sumologic/sumologic-otel-collector-containers
+      workflow-id: ${{ github.run_id }}
+      workflow-name: build-and-push.yml
 
   trigger-packaging:
     name: Packages
     needs:
       - build
       - build-otelcol-config
-    uses: ./.github/workflows/workflow-trigger-packaging.yml
+    uses: ./.github/workflows/workflow-trigger-remote-workflow.yml
     secrets: inherit
     with:
-      workflow_id: ${{ github.run_id }}
+      repo: sumologic/sumologic-otel-collector-packaging
+      workflow-id: ${{ github.run_id }}
+      workflow-id-key: workflow_id
+      workflow-name: build_packages.yml

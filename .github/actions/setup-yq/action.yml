@@ -25,7 +25,7 @@ runs:
         $file = "yq_windows_amd64.exe"
         $url = "${repo}/releases/download/v${version}/${file}"
         $drive = (Get-Location).Drive.Name
-        $installDir = "${drive}\yq"
+        $installDir = "${drive}:\yq"
         $path = "${installDir}\yq.exe"
 
         curl.exe -LO "${url}"
