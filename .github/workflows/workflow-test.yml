@@ -37,12 +37,15 @@ jobs:
 
       - uses: ./.github/actions/setup-test-environment
 
-      - name: Run package tests
-        run: make gotest-junit ${{ inputs.fips && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
+      # - name: Run package tests
+      #   run: make gotest-junit ${{ inputs.fips && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
 
-      - name: Print JUnit Reports
-        run: |
-          find . -name report.xml -exec cat {} \;
+      - name: Run package tests
+        run: make gotest-gotestfmt ${{ inputs.fips && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
+
+      # - name: Print JUnit Reports
+      #   run: |
+      #     find . -name report.xml -exec cat {} \;
 
       - name: Test Summary
         uses: test-summary/action@v1
