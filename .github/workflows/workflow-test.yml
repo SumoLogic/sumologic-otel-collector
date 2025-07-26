@@ -55,16 +55,12 @@ jobs:
       - name: Run package tests
         id: tests
         env:
-          CGO_ENABLED: ${{ inputs.fips && '1' || '0' }}
-          GOEXPERIMENT: ${{ inputs.fips && 'boringcrypto' || '' }}
           GOTEST_LOG_DIR: /tmp
           GOTEST_LOG_BASENAME: ${{ steps.job.outputs.name }}
         run: |
-          make gotest-gotestfmt \
-            CGO_ENABLED="${CGO_ENABLED}" \
-            GOEXPERIMENT="${GOEXPERIMENT}" \
-            GOTEST_LOG_DIR="${GOTEST_LOG_DIR}" \
-            GOTEST_LOG_BASENAME="${GOTEST_LOG_BASENAME}"
+          make gotest-gotestfmt ${{
+            inputs.fips && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || ''
+          }} GOTEST_LOG_DIR="${GOTEST_LOG_DIR}" GOTEST_LOG_BASENAME="${GOTEST_LOG_BASENAME}"
 
           log_base_path="${GOTEST_LOG_DIR}/${GOTEST_LOG_BASENAME}"
 
