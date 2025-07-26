@@ -8,7 +8,11 @@ ifeq ($(HOST_OS),Windows_NT)
 	OS=windows
 endif
 
-GOTEST := go test -race
+ifeq ($(HOST_OS),Darwin)
+     GOFLAGS ?= -ldflags=-linkmode=internal
+endif
+
+GOTEST := go test -race $(GOFLAGS)
 GOTEST_LOG_PATH := /tmp/gotest.log
 LINT := staticcheck
 
