@@ -23,7 +23,7 @@ jobs:
   test:
     name: >
       ${{ inputs.fips == true && 'Test FIPS' || 'Test' }} -
-      ${{ runs-on }}
+      ${{ inputs.runs-on }}
     runs-on: ${{ inputs.runs-on }}
     steps:
       - uses: actions/checkout@v4
