@@ -51,13 +51,12 @@ jobs:
             }
           EOF
 
-      # Outputs the Packaging Workflow URL as an Annotation in the UI after the
-      # packaging workflow has completed.
-      - name: Packaging Workflow URL
+      # Outputs the Remote Workflow URL as an Annotation in the Web UI.
+      - name: Remote Workflow URL
         run: |
-          url="https://github.com/SumoLogic/sumologic-otel-collector-packaging"
-          url="${url}/actions/workflows/build_packages.yml"
-          echo ::notice title=Packaging Workflow URL::${url}
+          url="https://github.com/${{ inputs.repo }}"
+          url="${url}/actions/workflows/${{ inputs.workflow-name }}"
+          echo ::notice title=Remote Workflow URL::${url}
 
       - name: Collector Workflow ID
         run: |

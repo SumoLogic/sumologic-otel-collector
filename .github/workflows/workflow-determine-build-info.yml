@@ -16,7 +16,7 @@ on:
         value: ${{ jobs.determine.outputs.version }}
       version-with-sha:
         description: The next available OTC version with Git SHA
-        value: ${{ jobs.determine.outputs.version }}
+        value: ${{ jobs.determine.outputs.version-with-sha }}
 
 defaults:
   run:
