@@ -222,6 +222,9 @@ gotest: $(patsubst %,%/test,$(TESTABLE_GO_MODULES))
 .PHONY: gotest-junit
 gotest-junit: $(patsubst %,%/test-junit,$(TESTABLE_GO_MODULES))
 
+.PHONY: gotest-gotestfmt
+gotest-gotestfmt: $(patsubst %,%/test-gotestfmt,$(TESTABLE_GO_MODULES))
+
 .PHONY: install-go-junit-report
 install-go-junit-report:
 	go install github.com/jstemmer/go-junit-report@latest
