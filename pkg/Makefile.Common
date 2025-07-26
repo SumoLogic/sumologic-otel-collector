@@ -9,11 +9,13 @@ ifeq ($(HOST_OS),Windows_NT)
 endif
 
 ifeq ($(HOST_OS),Darwin)
-     GOFLAGS ?= -ldflags=-linkmode=internal
+	GOFLAGS ?= -race -ldflags=-linkmode=internal
+else
+	GOFLAGS ?= -race
 endif
 
-GOTEST := go test -race $(GOFLAGS)
-GOTESTSUM := gotestsum -race $(GOFLAGS)
+GOTEST := go test $(GOFLAGS)
+GOTESTSUM := gotestsum
 LINT := staticcheck
 
 .PHONY: test
@@ -26,7 +28,7 @@ test-junit:
 
 .PHONY: test-gotestsum
 test-gotestsum:
-	$(GOTESTSUM) --format github-actions
+	$(GOTESTSUM) --format github-actions -- $(GOFLAGS)
 
 .PHONY: fmt
 fmt:
