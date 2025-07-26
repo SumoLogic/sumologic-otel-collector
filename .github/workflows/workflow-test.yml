@@ -21,10 +21,21 @@ defaults:
 
 jobs:
   test:
-    name: Test
+    name: >
+      ${{ inputs.fips == true && 'Test FIPS' || 'Test' }} -
+      ${{ runner.os }}
     runs-on: ${{ inputs.runs-on }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Output sanitized job name
+        id: job
+        run: |
+          project="otelcol-sumo"
+          job="${GITHUB_JOB// /-}"
+          name="${project}-${job}"
+
+          echo "name=${name}" >> "$GITHUB_OUTPUT"
 
       - name: Setup Go
         id: setup-go
@@ -41,25 +52,40 @@ jobs:
       #   run: make gotest-junit ${{ inputs.fips && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
 
       - name: Run package tests
-        run: make gotest-gotestfmt ${{ inputs.fips && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
+        id: tests
+        env:
+          CGO_ENABLED: ${{ inputs.fips && '1' || '0' }}
+          GOEXPERIMENT: ${{ inputs.fips && 'boringcrypto' || '' }}
+          GOTEST_LOG_DIR: /tmp
+          GOTEST_LOG_BASENAME: ${{ steps.job.outputs.name }}
+        run: |
+          make gotest-gotestfmt \
+            CGO_ENABLED="${CGO_ENABLED}" \
+            GOEXPERIMENT="${GOEXPERIMENT}" \
+            GOTEST_LOG_DIR="${GOTEST_LOG_DIR}" \
+            GOTEST_LOG_BASENAME="${GOTEST_LOG_BASENAME}"
+
+          log_base_path="${GOTEST_LOG_DIR}/${GOTEST_LOG_BASENAME}"
+
+          echo "log-base-path=${log_base_path}" >> "$GITHUB_OUTPUT"
 
       # - name: Print JUnit Reports
       #   run: |
       #     find . -name report.xml -exec cat {} \;
 
-      - name: Test Summary
-        uses: test-summary/action@v1
-        with:
-          paths: |
-            **/report.xml
-        if: always()
+      # - name: Test Summary
+      #   uses: test-summary/action@v1
+      #   with:
+      #     paths: |
+      #       **/report.xml
+      #   if: always()
 
       # Upload the original go test log as an artifact for later review.
-      - name: Upload Original Test Log
+      - name: Upload Original Test Logs
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: test-log
-          path: /tmp/gotest.log
+          name: ${{ steps.job.outputs.name }}-logs
+          path: ${{ steps.tests.outputs.log-base-path }}*
           if-no-files-found: error
         if: always()
 

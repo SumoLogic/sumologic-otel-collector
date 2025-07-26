@@ -44,6 +44,13 @@ OT_CONTRIB_VERSION_CMD := grep --max-count=1 \
 	otelcolbuilder/.otelcol-builder.yaml | cut -d " " -f 6 | $(SED) "s/v//"
 
 #################################################################################
+# Go testing variables
+#################################################################################
+
+GOTEST_LOG_DIR := /tmp
+GOTEST_LOG_BASENAME := gotest
+
+#################################################################################
 # Go module variables
 #################################################################################
 
@@ -207,8 +214,11 @@ pre-commit-check:
 
 # Run tests with nice formatting. Save the original log in /tmp/gotest.log
 .PHONY: %/test-gotestfmt
+%/test-gotestfmt: PKG=$(subst /,-,$(@D))
 %/test-gotestfmt:
-	$(call shell_run,cd "$(@D)" && $(MAKE) test-gotestfmt)
+	@echo $(MYTEST)
+	cd "$(@D)" && $(MAKE) test-gotestfmt \
+		GOTEST_LOG_PATH=$(GOTEST_LOG_DIR)/$(GOTEST_LOG_BASENAME)-$(PKG).log
 
 .PHONY: golint
 golint: $(patsubst %,%/lint,$(ALL_GO_MODULES))

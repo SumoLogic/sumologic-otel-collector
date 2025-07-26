@@ -8,8 +8,9 @@ ifeq ($(HOST_OS),Windows_NT)
 	OS=windows
 endif
 
-GOTEST=go test -race
-LINT=staticcheck
+GOTEST := go test -race
+GOTEST_LOG_PATH := /tmp/gotest.log
+LINT := staticcheck
 
 .PHONY: test
 test:
@@ -21,7 +22,7 @@ test-junit:
 
 .PHONY: test-gotestfmt
 test-gotestfmt:
-	$(GOTEST) -v -json ./... 2>&1 | tee /tmp/gotest.log | gotestfmt
+	$(GOTEST) -v -json ./... 2>&1 | tee $(GOTEST_LOG_PATH) | gotestfmt
 
 .PHONY: fmt
 fmt:
