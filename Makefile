@@ -216,7 +216,6 @@ pre-commit-check:
 .PHONY: %/test-gotestfmt
 %/test-gotestfmt: PKG=$(subst /,-,$(@D))
 %/test-gotestfmt:
-	@echo $(MYTEST)
 	cd "$(@D)" && $(MAKE) test-gotestfmt \
 		GOTEST_LOG_PATH=$(GOTEST_LOG_DIR)/$(GOTEST_LOG_BASENAME)-$(PKG).log
 
