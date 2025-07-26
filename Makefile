@@ -207,7 +207,6 @@ pre-commit-check:
 
 # Run tests with nice formatting. Save the original log in /tmp/gotest.log
 .PHONY: %/test-gotestsum
-%/test-gotestsum: PKG=$(subst /,-,$(@D))
 %/test-gotestsum:
 	cd "$(@D)" && $(MAKE) test-gotestsum
 

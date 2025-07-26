@@ -14,7 +14,6 @@ runs:
       shell: bash
       run: make install-go-junit-report
 
-    - name: Install gotestfmt
-      uses: gotesttools/gotestfmt-action@v2
-      with:
-        token: ${{ github.token }}
+    - name: Install gotestsum
+      shell: bash
+      run: make install-gotestsum

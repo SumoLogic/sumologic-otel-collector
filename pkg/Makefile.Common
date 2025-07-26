@@ -13,7 +13,7 @@ ifeq ($(HOST_OS),Darwin)
 endif
 
 GOTEST := go test -race $(GOFLAGS)
-GOTESTSUM := go test -race $(GOFLAGS)
+GOTESTSUM := gotestsum -race $(GOFLAGS)
 LINT := staticcheck
 
 .PHONY: test
