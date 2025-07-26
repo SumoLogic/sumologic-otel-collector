@@ -23,7 +23,7 @@ jobs:
   test:
     name: >
       ${{ inputs.fips == true && 'Test FIPS' || 'Test' }} -
-      ${{ runner.os }}
+      ${{ runs-on }}
     runs-on: ${{ inputs.runs-on }}
     steps:
       - uses: actions/checkout@v4
@@ -33,6 +33,7 @@ jobs:
         run: |
           project="otelcol-sumo"
           job="${GITHUB_JOB// /-}"
+          job="${job//./-}"
           name="${project}-${job}"
 
           echo "name=${name}" >> "$GITHUB_OUTPUT"
