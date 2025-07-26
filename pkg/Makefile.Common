@@ -8,11 +8,7 @@ ifeq ($(HOST_OS),Windows_NT)
 	OS=windows
 endif
 
-ifeq ($(HOST_OS),Darwin)
-	GOFLAGS ?= -race -ldflags=-linkmode=internal
-else
-	GOFLAGS ?= -race
-endif
+GOFLAGS ?= -race
 
 GOTEST := go test $(GOFLAGS)
 GOTESTSUM := gotestsum
