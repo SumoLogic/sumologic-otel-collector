@@ -3,7 +3,6 @@ current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
 include $(realpath $(current_dir)/Makefile.Common)
 
-CRANE_VERSION ?= 0.20.6
 PRETTIER_VERSION ?= 3.0.3
 TOWNCRIER_VERSION ?= 23.6.0
 
@@ -42,13 +41,6 @@ OT_CORE_VERSION_CMD := grep "version: .*" otelcolbuilder/.otelcol-builder.yaml \
 OT_CONTRIB_VERSION_CMD := grep --max-count=1 \
 	'^  - gomod: github\.com/open-telemetry/opentelemetry-collector-contrib/' \
 	otelcolbuilder/.otelcol-builder.yaml | cut -d " " -f 6 | $(SED) "s/v//"
-
-#################################################################################
-# Go testing variables
-#################################################################################
-
-GOTEST_LOG_DIR := /tmp
-GOTEST_LOG_BASENAME := gotest
 
 #################################################################################
 # Go module variables
@@ -133,13 +125,14 @@ ifeq ($(HOST_OS),Darwin)
 	@which gdate > /dev/null || brew install coreutils
 endif
 
-.PHONY: install-crane
-install-crane:
-	go install github.com/google/go-containerregistry/cmd/crane@v$(CRANE_VERSION)
+.PHONY: install-gotestsum
+install-gotestsum:
+	@which gotestsum > /dev/null || go install gotest.tools/gotestsum@latest
 
 .PHONY: install-dependencies
 install-dependencies: install-coreutils
 install-dependencies: install-gnu-sed
+install-dependencies: install-gotestsum
 
 #################################################################################
 # Markdown targets
@@ -213,11 +206,10 @@ pre-commit-check:
 	$(call shell_run,cd "$(@D)" && $(MAKE) test-junit)
 
 # Run tests with nice formatting. Save the original log in /tmp/gotest.log
-.PHONY: %/test-gotestfmt
-%/test-gotestfmt: PKG=$(subst /,-,$(@D))
-%/test-gotestfmt:
-	cd "$(@D)" && $(MAKE) test-gotestfmt \
-		GOTEST_LOG_PATH=$(GOTEST_LOG_DIR)/$(GOTEST_LOG_BASENAME)-$(PKG).log
+.PHONY: %/test-gotestsum
+%/test-gotestsum: PKG=$(subst /,-,$(@D))
+%/test-gotestsum:
+	cd "$(@D)" && $(MAKE) test-gotestsum
 
 .PHONY: golint
 golint: $(patsubst %,%/lint,$(ALL_GO_MODULES))
@@ -231,8 +223,8 @@ gotest: $(patsubst %,%/test,$(TESTABLE_GO_MODULES))
 .PHONY: gotest-junit
 gotest-junit: $(patsubst %,%/test-junit,$(TESTABLE_GO_MODULES))
 
-.PHONY: gotest-gotestfmt
-gotest-gotestfmt: $(patsubst %,%/test-gotestfmt,$(TESTABLE_GO_MODULES))
+.PHONY: gotest-gotestsum
+gotest-gotestsum: $(patsubst %,%/test-gotestsum,$(TESTABLE_GO_MODULES))
 
 .PHONY: install-go-junit-report
 install-go-junit-report:

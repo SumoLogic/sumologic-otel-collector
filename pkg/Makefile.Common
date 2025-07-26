@@ -13,7 +13,7 @@ ifeq ($(HOST_OS),Darwin)
 endif
 
 GOTEST := go test -race $(GOFLAGS)
-GOTEST_LOG_PATH := /tmp/gotest.log
+GOTESTSUM := go test -race $(GOFLAGS)
 LINT := staticcheck
 
 .PHONY: test
@@ -24,9 +24,9 @@ test:
 test-junit:
 	$(GOTEST) -v ./... | tee >(go-junit-report -set-exit-code > report.xml)
 
-.PHONY: test-gotestfmt
-test-gotestfmt:
-	$(GOTEST) -v -json ./... 2>&1 | tee $(GOTEST_LOG_PATH) | gotestfmt
+.PHONY: test-gotestsum
+test-gotestsum:
+	$(GOTESTSUM) --format github-actions
 
 .PHONY: fmt
 fmt:
