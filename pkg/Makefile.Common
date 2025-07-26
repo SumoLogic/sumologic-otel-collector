@@ -19,6 +19,10 @@ test:
 test-junit:
 	$(GOTEST) -v ./... | tee >(go-junit-report -set-exit-code > report.xml)
 
+.PHONY: test-gotestfmt
+test-gotestfmt:
+	$(GOTEST) -v -json ./... 2>&1 | tee /tmp/gotest.log | gotestfmt
+
 .PHONY: fmt
 fmt:
 	gofmt  -w -s ./

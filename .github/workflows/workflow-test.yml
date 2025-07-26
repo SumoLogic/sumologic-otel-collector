@@ -38,7 +38,7 @@ jobs:
       - uses: ./.github/actions/setup-test-environment
 
       - name: Run package tests
-        run: make gotest-junit ${{ inputs.fips && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
+        run: make gotest-gotestfmt ${{ inputs.fips && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
 
       - name: Print JUnit Reports
         run: |
@@ -49,6 +49,15 @@ jobs:
         with:
           paths: |
             **/report.xml
+        if: always()
+
+      # Upload the original go test log as an artifact for later review.
+      - name: Upload Original Test Log
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: test-log
+          path: /tmp/gotest.log
+          if-no-files-found: error
         if: always()
 
       # NOTE: There doesn't appear to be a simple way to run post hooks in

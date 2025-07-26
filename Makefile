@@ -205,6 +205,11 @@ pre-commit-check:
 %/test-junit:
 	$(call shell_run,cd "$(@D)" && $(MAKE) test-junit)
 
+# Run tests with nice formatting. Save the original log in /tmp/gotest.log
+.PHONY: %/test-gotestfmt
+%/test-gotestfmt:
+	$(call shell_run,cd "$(@D)" && $(MAKE) test-gotestfmt)
+
 .PHONY: golint
 golint: $(patsubst %,%/lint,$(ALL_GO_MODULES))
 
