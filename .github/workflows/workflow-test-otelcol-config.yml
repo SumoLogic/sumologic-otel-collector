@@ -41,21 +41,28 @@ jobs:
 
       - uses: ./.github/actions/setup-test-environment
 
+      # - name: Run tests
+      #   working-directory: ./pkg/tools/otelcol-config
+      #   run: make test-junit ${{ inputs.fips && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
+
       - name: Run tests
         working-directory: ./pkg/tools/otelcol-config
-        run: make test-junit ${{ inputs.fips && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
-
-      - name: Print JUnit Report
-        working-directory: ./pkg/tools/otelcol-config
         run: |
-          find . -name report.xml -exec cat {} \;
+          make test-gotestsum ${{
+            inputs.fips && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || ''
+          }}
 
-      - name: Test Summary
-        uses: test-summary/action@v1
-        with:
-          paths: |
-            pkg/tools/otelcol-config/report.xml
-        if: always()
+      # - name: Print JUnit Report
+      #   working-directory: ./pkg/tools/otelcol-config
+      #   run: |
+      #     find . -name report.xml -exec cat {} \;
+
+      # - name: Test Summary
+      #   uses: test-summary/action@v1
+      #   with:
+      #     paths: |
+      #       pkg/tools/otelcol-config/report.xml
+      #   if: always()
 
       # NOTE: There doesn't appear to be a simple way to run post hooks in
       # composite actions. We must unmount the VHDX image after we're done using
