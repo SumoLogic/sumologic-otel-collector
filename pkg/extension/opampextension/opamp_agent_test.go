@@ -20,6 +20,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"go.opentelemetry.io/collector/config/configauth"
+	"go.opentelemetry.io/collector/config/configoptional"
+
 	"github.com/oklog/ulid/v2"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/stretchr/testify/assert"
@@ -208,7 +211,7 @@ func TestComposeEffectiveConfig(t *testing.T) {
 
 func TestShutdown(t *testing.T) {
 	cfg, set := defaultSetup()
-	cfg.ClientConfig.Auth = nil
+	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
 
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
@@ -223,7 +226,7 @@ func TestStart(t *testing.T) {
 	defer os.RemoveAll(d)
 
 	cfg := createDefaultConfig().(*Config)
-	cfg.ClientConfig.Auth = nil
+	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
 	cfg.RemoteConfigurationDirectory = d
 	set := extensiontest.NewNopSettings(extensiontest.NopType)
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
@@ -238,7 +241,7 @@ func TestReload(t *testing.T) {
 	defer os.RemoveAll(d)
 
 	cfg := createDefaultConfig().(*Config)
-	cfg.ClientConfig.Auth = nil
+	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
 	cfg.RemoteConfigurationDirectory = d
 	set := extensiontest.NewNopSettings(extensiontest.NopType)
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)

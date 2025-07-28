@@ -17,6 +17,8 @@ package opampextension
 import (
 	"errors"
 
+	"go.opentelemetry.io/collector/config/configoptional"
+
 	"github.com/oklog/ulid/v2"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/configauth"
@@ -47,9 +49,9 @@ type Config struct {
 // CreateDefaultClientConfig returns default http client settings
 func CreateDefaultClientConfig() confighttp.ClientConfig {
 	return confighttp.ClientConfig{
-		Auth: &configauth.Config{
+		Auth: configoptional.Some[configauth.Config](configauth.Config{
 			AuthenticatorID: component.NewID(sumologicextension.NewFactory().Type()),
-		},
+		}),
 	}
 }
 
