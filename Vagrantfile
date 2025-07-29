@@ -2,8 +2,7 @@
 # vi: set ft=ruby :
 
 Vagrant.configure('2') do |config|
-  config.vm.box = "jhu-wsep/rhel9-arm"
-  config.vm.box_version = "9.5.0"
+  config.vm.box = 'ubuntu/focal64'
   config.vm.disk :disk, size: "50GB", primary: true
   config.vm.box_check_update = false
   config.vm.host_name = 'sumologic-otel-collector'

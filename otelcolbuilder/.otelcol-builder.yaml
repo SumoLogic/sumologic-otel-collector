@@ -214,7 +214,7 @@ excludes:
 replaces:
   # ----------------------------------------------------------------------------
   # Needed for telegrafreceiver
-  - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf f5e56aa23df07aa64f9d9c99bad5c76fd4c6fe15
+  - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.34.2-sumo-1
   # This is to make sure we build the with the sumologicextension from the tree.
   # The reason this is needed is that sumologicexporter depends on sumologicextension in its go.mod.
   # We add a dependency in the builder config in this file but only for a particular (placeholder)
