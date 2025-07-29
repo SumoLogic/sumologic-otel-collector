@@ -19,6 +19,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"go.opentelemetry.io/collector/config/configoptional"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -53,9 +55,11 @@ func TestUnmarshalConfig(t *testing.T) {
 		&Config{
 			ClientConfig: confighttp.ClientConfig{
 				Endpoint: "wss://127.0.0.1:4320/v1/opamp",
-				Auth: &configauth.Config{
-					AuthenticatorID: component.NewID(sumologicextension.NewFactory().Type()),
-				},
+				Auth: configoptional.Some[configauth.Config](
+					configauth.Config{
+						AuthenticatorID: component.NewID(sumologicextension.NewFactory().Type()),
+					},
+				),
 			},
 			InstanceUID:                  "01BX5ZZKBKACTAV9WEVGEMMVRZ",
 			RemoteConfigurationDirectory: "/tmp/opamp.d",
