@@ -22,7 +22,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	conventions "go.opentelemetry.io/collector/semconv/v1.18.0"
+	conventions "go.opentelemetry.io/otel/semconv/v1.18.0"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
@@ -351,21 +351,21 @@ func TestWithExtractMetadata(t *testing.T) {
 func TestWithExtractMetadataSemanticConventions(t *testing.T) {
 	p := &kubernetesprocessor{}
 	fields := []string{
-		conventions.AttributeContainerID,
-		conventions.AttributeContainerImageName,
-		conventions.AttributeContainerName,
-		conventions.AttributeK8SCronJobName,
-		conventions.AttributeK8SDaemonSetName,
-		conventions.AttributeK8SDeploymentName,
-		conventions.AttributeHostName,
-		conventions.AttributeK8SJobName,
-		conventions.AttributeK8SNamespaceName,
-		conventions.AttributeK8SNodeName,
-		conventions.AttributeK8SPodUID,
-		conventions.AttributeK8SPodName,
-		conventions.AttributeK8SReplicaSetName,
+		string(conventions.ContainerIDKey),
+		string(conventions.ContainerImageNameKey),
+		string(conventions.ContainerNameKey),
+		string(conventions.K8SCronJobNameKey),
+		string(conventions.K8SDaemonSetNameKey),
+		string(conventions.K8SDeploymentNameKey),
+		string(conventions.HostNameKey),
+		string(conventions.K8SJobNameKey),
+		string(conventions.K8SNamespaceNameKey),
+		string(conventions.K8SNodeNameKey),
+		string(conventions.K8SPodUIDKey),
+		string(conventions.K8SPodNameKey),
+		string(conventions.K8SReplicaSetNameKey),
 		metadataOtelSemconvServiceName,
-		conventions.AttributeK8SStatefulSetName,
+		string(conventions.K8SStatefulSetNameKey),
 		metadataOtelPodStartTime,
 	}
 	assert.NoError(t, WithExtractMetadata(fields...)(p))

@@ -148,7 +148,7 @@ jobs:
           ./ci/get_version_from_binary.sh core "${binary_path}"
           ./ci/get_version_from_binary.sh sumo "${binary_path}"
 
-      - uses: apple-actions/import-codesign-certs@v3
+      - uses: apple-actions/import-codesign-certs@v5
         if: runner.os == 'macOS' && inputs.signing-enabled
         with:
           p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}

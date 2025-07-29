@@ -10,6 +10,12 @@ Vagrant.configure('2') do |config|
   # See: https://www.virtualbox.org/manual/ch06.html#network_hostonly
   config.vm.network :private_network, ip: "192.168.56.13"
 
+  config.vm.provider 'parallels' do |vb|
+    vb.cpus = 8
+    vb.memory = 16384
+    vb.name = 'sumologic-otel-collector'
+  end
+
   config.vm.provider 'virtualbox' do |vb|
     vb.gui = false
     vb.cpus = 8

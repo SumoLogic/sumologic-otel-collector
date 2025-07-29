@@ -30,7 +30,7 @@ import (
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
 	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/pdata/pcommon"
-	semconv "go.opentelemetry.io/collector/semconv/v1.18.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.18.0"
 	"go.uber.org/zap"
 
 	"github.com/google/uuid"
@@ -210,13 +210,13 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 func (o *opampAgent) getAuthExtension() error {
 	settings := o.cfg.ClientConfig
 
-	if settings.Auth == nil {
+	if !settings.Auth.HasValue() {
 		return nil
 	}
 
 	for _, e := range o.host.GetExtensions() {
 		v, ok := e.(*sumologicextension.SumologicExtension)
-		if ok && settings.Auth.AuthenticatorID == v.ComponentID() {
+		if ok && settings.Auth.Get().AuthenticatorID == v.ComponentID() {
 			o.authExtension = v
 			break
 		}
@@ -227,7 +227,7 @@ func (o *opampAgent) getAuthExtension() error {
 			"sumologic was specified as auth extension (named: %q) but "+
 				"a matching extension was not found in the config, "+
 				"please re-check the config and/or define the sumologicextension",
-			settings.Auth.AuthenticatorID.String(),
+			settings.Auth.Get().AuthenticatorID.String(),
 		)
 	}
 
@@ -261,14 +261,14 @@ func (o *opampAgent) watchCredentials(ctx context.Context, callback func(ctx con
 func newOpampAgent(cfg *Config, logger *zap.Logger, build component.BuildInfo, res pcommon.Resource) (*opampAgent, error) {
 	agentType := build.Command
 
-	sn, ok := res.Attributes().Get(semconv.AttributeServiceName)
+	sn, ok := res.Attributes().Get(string(semconv.ServiceNameKey))
 	if ok {
 		agentType = sn.AsString()
 	}
 
 	agentVersion := build.Version
 
-	sv, ok := res.Attributes().Get(semconv.AttributeServiceVersion)
+	sv, ok := res.Attributes().Get(string(semconv.ServiceVersionKey))
 	if ok {
 		agentVersion = sv.AsString()
 	}
@@ -282,7 +282,7 @@ func newOpampAgent(cfg *Config, logger *zap.Logger, build component.BuildInfo, r
 		}
 		uid = puid
 	} else {
-		sid, ok := res.Attributes().Get(semconv.AttributeServiceInstanceID)
+		sid, ok := res.Attributes().Get(string(semconv.ServiceInstanceIDKey))
 		if ok {
 			uuid, err := uuid.Parse(sid.AsString())
 			if err != nil {
@@ -331,9 +331,9 @@ func (o *opampAgent) createAgentDescription() error {
 	}
 
 	ident := []*protobufs.KeyValue{
-		stringKeyValue(semconv.AttributeServiceInstanceID, o.instanceId.String()),
-		stringKeyValue(semconv.AttributeServiceName, o.agentType),
-		stringKeyValue(semconv.AttributeServiceVersion, o.agentVersion),
+		stringKeyValue(string(semconv.ServiceInstanceIDKey), o.instanceId.String()),
+		stringKeyValue(string(semconv.ServiceNameKey), o.agentType),
+		stringKeyValue(string(semconv.ServiceVersionKey), o.agentVersion),
 	}
 
 	nonIdent := []*protobufs.KeyValue{

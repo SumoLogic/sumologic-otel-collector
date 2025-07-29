@@ -19,6 +19,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"go.opentelemetry.io/collector/config/configoptional"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -29,6 +31,11 @@ import (
 	"go.opentelemetry.io/collector/confmap/confmaptest"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension"
+)
+
+const (
+	errOpampDirMust             = "opamp remote_configuration_directory must be provided"
+	errOpampInvalidInstanceUuid = "opamp instance_uid is invalid"
 )
 
 func TestUnmarshalDefaultConfig(t *testing.T) {
@@ -48,9 +55,11 @@ func TestUnmarshalConfig(t *testing.T) {
 		&Config{
 			ClientConfig: confighttp.ClientConfig{
 				Endpoint: "wss://127.0.0.1:4320/v1/opamp",
-				Auth: &configauth.Authentication{
-					AuthenticatorID: component.NewID(sumologicextension.NewFactory().Type()),
-				},
+				Auth: configoptional.Some[configauth.Config](
+					configauth.Config{
+						AuthenticatorID: component.NewID(sumologicextension.NewFactory().Type()),
+					},
+				),
 			},
 			InstanceUID:                  "01BX5ZZKBKACTAV9WEVGEMMVRZ",
 			RemoteConfigurationDirectory: "/tmp/opamp.d",
@@ -62,7 +71,7 @@ func TestConfigValidate(t *testing.T) {
 	cfg := &Config{}
 	err := cfg.Validate()
 	require.Error(t, err)
-	assert.Equal(t, "opamp remote_configuration_directory must be provided", err.Error())
+	assert.Equal(t, errOpampDirMust, err.Error())
 
 	d, err := os.MkdirTemp("", "opamp.d")
 	assert.NoError(t, err)
@@ -75,5 +84,5 @@ func TestConfigValidate(t *testing.T) {
 	cfg.InstanceUID = "01BX5ZZKBKACTAV9WEVGEMMVRZFAIL"
 	err = cfg.Validate()
 	require.Error(t, err)
-	assert.Equal(t, "opamp instance_uid is invalid", err.Error())
+	assert.Equal(t, errOpampInvalidInstanceUuid, err.Error())
 }

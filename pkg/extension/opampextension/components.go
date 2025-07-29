@@ -2,6 +2,7 @@ package opampextension
 
 import (
 	"go.opentelemetry.io/collector/exporter"
+	"go.opentelemetry.io/collector/exporter/debugexporter"
 	"go.opentelemetry.io/collector/exporter/nopexporter"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
 	"go.opentelemetry.io/collector/extension"
@@ -14,8 +15,15 @@ import (
 	"go.opentelemetry.io/collector/receiver/otlpreceiver"
 	"go.uber.org/multierr"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awskinesisexporter"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awss3exporter"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/carbonexporter"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/loadbalancingexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sumologicexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/syslogexporter"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/awsproxy"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage"
@@ -26,6 +34,11 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/apachereceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscloudwatchreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awsecscontainermetricsreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awsfirehosereceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awsxrayreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/dockerstatsreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/elasticsearchreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver"
@@ -55,6 +68,7 @@ func Components() (
 		pprofextension.NewFactory(),
 		NewFactory(), // opampextension
 		filestorage.NewFactory(),
+		awsproxy.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
@@ -76,6 +90,11 @@ func Components() (
 		mysqlreceiver.NewFactory(),
 		elasticsearchreceiver.NewFactory(),
 		postgresqlreceiver.NewFactory(),
+		awscloudwatchreceiver.NewFactory(),
+		awscontainerinsightreceiver.NewFactory(),
+		awsecscontainermetricsreceiver.NewFactory(),
+		awsfirehosereceiver.NewFactory(),
+		awsxrayreceiver.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
@@ -84,6 +103,13 @@ func Components() (
 		sumologicexporter.NewFactory(),
 		syslogexporter.NewFactory(),
 		nopexporter.NewFactory(),
+		awss3exporter.NewFactory(),
+		awskinesisexporter.NewFactory(),
+		carbonexporter.NewFactory(),
+		debugexporter.NewFactory(),
+		fileexporter.NewFactory(),
+		kafkaexporter.NewFactory(),
+		loadbalancingexporter.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
