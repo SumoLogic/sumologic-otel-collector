@@ -20,6 +20,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"go.opentelemetry.io/collector/config/configauth"
+	"go.opentelemetry.io/collector/config/configoptional"
+
 	"github.com/oklog/ulid/v2"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/stretchr/testify/assert"
@@ -28,8 +31,7 @@ import (
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/extension"
 	"go.opentelemetry.io/collector/extension/extensiontest"
-
-	semconv "go.opentelemetry.io/collector/semconv/v1.18.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.18.0"
 )
 
 const (
@@ -37,8 +39,9 @@ const (
 	errMsgInvalidConfigName       = "cannot validate config: " +
 		"service::pipelines::logs/localfilesource/0aa79379-c764-4d3d-9d66-03f6df029a07: " +
 		"references processor \"batch\" which is not configured"
-	errMsgInvalidType = "'spike_limit_percentage' expected type 'uint32'"
+	errMsgInvalidType              = "'spike_limit_percentage' expected type 'uint32'"
 	errExpectedUncofiguredEndPoint = "expected unconfigured opamp endpoint to result in default sumo opamp url setting"
+	errMsgInvalidCloudwatchConfig  = "source data must be an array or slice, got int"
 )
 
 func defaultSetup() (*Config, extension.Settings) {
@@ -76,6 +79,19 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyPostgresqlConfig", "testdata/opamp.d/opamp-postgresql-config.yaml", false, ""},
 		{"ApplyRabbitmqConfig", "testdata/opamp.d/opamp-rabbitmq-config.yaml", false, ""},
 		{"ApplyRedisConfig", "testdata/opamp.d/opamp-redis-config.yaml", false, ""},
+		{"ApplyFirehoseConfig", "testdata/opamp.d/opamp-aws-firehose-config.yaml", false, ""},
+		{"ApplyCloudwatchConfig", "testdata/opamp.d/opamp-aws-cloudwatch-receiver-config.yaml", false, ""},
+		{"ApplyContainerInsightConfig", "testdata/opamp.d/opamp-aws-container-insight-config.yaml", false, ""},
+		{"ApplyEcsContainerMetricsConfig", "testdata/opamp.d/opamp-aws-container-metrics-config.yaml", false, ""},
+		{"ApplyS3Config", "testdata/opamp.d/opamp-aws-s3-exporter-config.yaml", false, ""},
+		{"ApplyCloudwatchConfigFailure", "testdata/opamp.d/opamp-aws-cloudwatch-receiver-error-config.yaml", true, errMsgInvalidCloudwatchConfig},
+		{"ApplyXrayConfig", "testdata/opamp.d/opamp-aws-xray-config.yaml", false, ""},
+		{"ApplyKenesisConfig", "testdata/opamp.d/opamp-aws-kenesis-config.yaml", false, ""},
+		{"ApplyCarbonExporterConfig", "testdata/opamp.d/opamp-carbon-exporter-config.yaml", false, ""},
+		{"ApplyDebugExporterConfig", "testdata/opamp.d/opamp-debug-exporter-config.yaml", false, ""},
+		{"ApplyFileExporterConfig", "testdata/opamp.d/opamp-file-exporter-config.yaml", false, ""},
+		{"ApplyKafkaExporterConfig", "testdata/opamp.d/opamp-kafka-exporter-config.yaml", false, ""},
+		{"ApplyLoadbalancingExporterConfig", "testdata/opamp.d/opamp-loadbalancing-exporter-config.yaml", false, ""},
 	}
 
 	for _, tt := range tests {
@@ -195,7 +211,7 @@ func TestComposeEffectiveConfig(t *testing.T) {
 
 func TestShutdown(t *testing.T) {
 	cfg, set := defaultSetup()
-	cfg.ClientConfig.Auth = nil
+	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
 
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
@@ -210,7 +226,7 @@ func TestStart(t *testing.T) {
 	defer os.RemoveAll(d)
 
 	cfg := createDefaultConfig().(*Config)
-	cfg.ClientConfig.Auth = nil
+	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
 	cfg.RemoteConfigurationDirectory = d
 	set := extensiontest.NewNopSettings(extensiontest.NopType)
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
@@ -225,7 +241,7 @@ func TestReload(t *testing.T) {
 	defer os.RemoveAll(d)
 
 	cfg := createDefaultConfig().(*Config)
-	cfg.ClientConfig.Auth = nil
+	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
 	cfg.RemoteConfigurationDirectory = d
 	set := extensiontest.NewNopSettings(extensiontest.NopType)
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
@@ -262,9 +278,9 @@ func TestNewOpampAgent(t *testing.T) {
 
 func TestNewOpampAgentAttributes(t *testing.T) {
 	cfg, set := defaultSetup()
-	set.Resource.Attributes().PutStr(semconv.AttributeServiceName, "otelcol-sumo")
-	set.Resource.Attributes().PutStr(semconv.AttributeServiceVersion, "sumo.0")
-	set.Resource.Attributes().PutStr(semconv.AttributeServiceInstanceID, "f8999bc1-4c9b-4619-9bae-7f009d2411ec")
+	set.Resource.Attributes().PutStr(string(semconv.ServiceNameKey), "otelcol-sumo")
+	set.Resource.Attributes().PutStr(string(semconv.ServiceVersionKey), "sumo.0")
+	set.Resource.Attributes().PutStr(string(semconv.ServiceInstanceIDKey), "f8999bc1-4c9b-4619-9bae-7f009d2411ec")
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 	assert.Equal(t, "otelcol-sumo", o.agentType)
