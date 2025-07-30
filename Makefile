@@ -1,7 +1,16 @@
+#################################################################################
+# Path variables
+#################################################################################
+
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
-include $(realpath $(current_dir)/Makefile.Common)
+# Include common.mk
+include $(realpath $(current_dir)/common.mk)
+
+#################################################################################
+# Variables
+#################################################################################
 
 PRETTIER_VERSION ?= 3.0.3
 TOWNCRIER_VERSION ?= 23.6.0
@@ -54,7 +63,15 @@ EXPORTABLE_GO_MODULES := $(filter-out pkg/test,$(EXPORTABLE_GO_MODULES))
 EXPORTABLE_GO_MODULES := $(filter-out pkg/tools/%,$(EXPORTABLE_GO_MODULES))
 
 TESTABLE_GO_MODULES := $(filter-out pkg/tools/otelcol-config,$(ALL_GO_MODULES))
-TESTABLE_GO_MODULES := $(filter-out pkg/tools/udpdemux,$(ALL_GO_MODULES))
+TESTABLE_GO_MODULES := $(filter-out pkg/tools/udpdemux,$(TESTABLE_GO_MODULES))
+
+#################################################################################
+# GitHub Actions variables
+#################################################################################
+
+# Contains the base matrix for workflow-test-otelcol.yml
+TEST_OTELCOL_BASE_MATRIX = ci/matrix/workflow-test-otelcol.json
+TEST_OTELCOL_JQ_FILTER = ci/matrix/workflow-test-otelcol.jq
 
 #################################################################################
 # Colour variables
@@ -108,31 +125,6 @@ all: markdownlint yamllint
 .PHONY: %/lint
 %/lint:
 	$(call shell_run,cd "$(@D)" && $(MAKE) lint)
-
-#################################################################################
-# System CLI tool targets
-#################################################################################
-
-.PHONY: install-gnu-sed
-install-gnu-sed:
-ifeq ($(HOST_OS),Darwin)
-	@which gsed > /dev/null || brew install gnu-sed
-endif
-
-.PHONY: install-coreutils
-install-coreutils:
-ifeq ($(HOST_OS),Darwin)
-	@which gdate > /dev/null || brew install coreutils
-endif
-
-.PHONY: install-gotestsum
-install-gotestsum:
-	@which gotestsum > /dev/null || go install gotest.tools/gotestsum@latest
-
-.PHONY: install-dependencies
-install-dependencies: install-coreutils
-install-dependencies: install-gnu-sed
-install-dependencies: install-gotestsum
 
 #################################################################################
 # Markdown targets
@@ -210,10 +202,6 @@ gomod-download-all: $(patsubst %,%/mod-download-all,$(ALL_GO_MODULES))
 .PHONY: gotest
 gotest: $(patsubst %,%/test,$(TESTABLE_GO_MODULES))
 
-.PHONY: install-staticcheck
-install-staticcheck:
-	go install honnef.co/go/tools/cmd/staticcheck@latest
-
 .PHONY: list-all-modules
 list-all-modules: $(patsubst %,%/print-directory,$(ALL_GO_MODULES))
 
@@ -222,6 +210,32 @@ list-exportable-modules: $(patsubst %,%/print-directory,$(EXPORTABLE_GO_MODULES)
 
 .PHONY: list-testable-modules
 list-testable-modules: $(patsubst %,%/print-directory,$(TESTABLE_GO_MODULES))
+
+#################################################################################
+# GitHub Actions targets
+#################################################################################
+
+.PHONY: testable-modules-json
+testable-modules-json: install-jq
+testable-modules-json:
+	@printf '"%s"\n' $(TESTABLE_GO_MODULES) | jq -scr
+
+.PHONY: test-otelcol-base-matrix
+test-otelcol-base-matrix: install-jq
+test-otelcol-base-matrix:
+	@jq -cr . "$(TEST_OTELCOL_BASE_MATRIX)"
+
+# Generate a matrix for the otelcol test workflow by combining the base matrix
+# with the testable Go modules
+.PHONY: test-otelcol-matrix
+test-otelcol-matrix: install-jq
+test-otelcol-matrix: BASE_MATRIX = $(shell $(MAKE) test-otelcol-base-matrix)
+test-otelcol-matrix: PKGS = $(shell $(MAKE) testable-modules-json)
+test-otelcol-matrix:
+	@jq -ncr \
+	--argjson base '$(BASE_MATRIX)' \
+	--argjson pkgs '$(PKGS)' \
+	-f "$(TEST_OTELCOL_JQ_FILTER)"
 
 #################################################################################
 # OpenTelemetry preparation targets

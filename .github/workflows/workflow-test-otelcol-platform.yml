@@ -15,9 +15,14 @@ on:
         description: The version of Go to use.
         type: string
         required: true
-      runs-on:
-        default: ubuntu-24.04
+      pkg:
+        description: The package path to run tests in.
         type: string
+        required: true
+      runs-on:
+        description: The runner to run the tests on.
+        type: string
+        required: true
 
 defaults:
   run:
@@ -26,27 +31,141 @@ defaults:
 jobs:
   test:
     name: >
-      ${{ inputs.runs-on }} ${{ inputs.fips == true && '(FIPS)' || '' }}
+      ${{ inputs.runs-on }}
+      ${{ inputs.fips == true && '(FIPS)' || '' }}
+      -
+      ${{ inputs.pkg }}
     runs-on: ${{ inputs.runs-on }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set GOCACHE & GOMODCACHE
+        if: runner.os != 'Windows'
+        run: |
+          gocache="${HOME}/.go-cache"
+          gomodcache="${HOME}/.go-mod-cache"
+
+          mkdir -p "${gocache}"
+          mkdir -p "${gomodcache}"
+
+          {
+            echo "GOCACHE=${gocache}"
+            echo "GOMODCACHE=${gomodcache}"
+          } >> "$GITHUB_ENV"
+
+      - name: Determine Cache Dependencies
+        id: cache-dependencies
+        working-directory: ${{ inputs.pkg }}
+        run: |
+          paths="$(make cache-dependency-paths-json)"
+          echo "paths=${paths}" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Keys
+        if: runner.os != 'Windows'
+        id: cache-keys
+        run: |
+          os="${RUNNER_OS}"
+          arch="${RUNNER_ARCH}"
+          fips="${{ inputs.fips == true && 'fips' || 'nofips' }}"
+          hash="${{ hashFiles(steps.cache-dependencies.outputs.paths) }}"
+          ts="$(date +%Y-%m-%d)"
+          pkg="${{ inputs.pkg }}"
+
+          gocachename="${pkg}-${os}-${arch}-${fips}-gocache-${hash}"
+          gocachenamedate="${gocachename}-${ts}"
+          gomodcachename="${pkg}-${os}-gomodcache-${hash}"
+          gomodcachenamedate="${gomodcachename}-${ts}"
+
+          {
+            echo "go-cache=${gocachename}"
+            echo "go-cache-with-date=${gocachenamedate}"
+            echo "go-cache-path=${GOCACHE}"
+            echo "go-mod-cache=${gomodcachename}"
+            echo "go-mod-cache-with-date=${gomodcachenamedate}"
+            echo "go-mod-cache-path=${GOMODCACHE}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Restore GOMODCACHE
+        if: runner.os != 'Windows'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-mod-cache-path }}
+          key: nonexistent
+          restore-keys: ${{ steps.cache-keys.outputs.go-mod-cache }}-
+
+      - name: Restore GOCACHE
+        if: runner.os != 'Windows'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-cache-path }}
+          key: nonexistent
+          restore-keys: ${{ steps.cache-keys.outputs.go-cache }}-
 
       - name: Setup Go
         id: setup-go
         uses: ./.github/actions/setup-go
         with:
           version: ${{ inputs.go-version }}
-          cache-dependency-paths: |
-            **/*.sum
-            otelcolbuilder/.otelcol-builder.yaml
 
       - uses: ./.github/actions/setup-test-environment
 
       - name: Run tests
+        working-directory: ${{ inputs.pkg }}
         run: |
-          make gotest ${{
+          make test ${{
             inputs.fips && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || ''
           }}
+
+      - name: Trim Go cache
+        if: github.ref == 'refs/heads/main' && runner.os != 'Windows'
+        shell: bash
+        run: |
+          cache_dir="${{ steps.cache-keys.outputs.go-cache-path }}"
+          find "${cache_dir}" -type f -mmin +90 -delete
+
+      - name: Check if cache for GOCACHE exists
+        id: go-cache-exists
+        if: github.ref == 'refs/heads/main' && runner.os != 'Windows'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-cache-path }}
+          key: ${{ steps.cache-keys.outputs.go-cache-with-date }}
+          lookup-only: true
+
+      - name: Save GOCACHE
+        if: ${{
+          github.ref == 'refs/heads/main'
+          &&
+          runner.os != 'Windows'
+          &&
+          steps.go-cache-exists.outputs.cache-hit != 'true'
+          }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-cache-path }}
+          key: ${{ steps.cache-keys.outputs.go-cache-with-date }}
+
+      - name: Check if cache for GOMODCACHE exists
+        id: go-mod-cache-exists
+        if: github.ref == 'refs/heads/main' && runner.os != 'Windows'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-mod-cache-path }}
+          key: ${{ steps.cache-keys.outputs.go-mod-cache-with-date }}
+          lookup-only: true
+
+      - name: Save GOMODCACHE
+        if: ${{
+          github.ref == 'refs/heads/main'
+          &&
+          runner.os != 'Windows'
+          &&
+          steps.go-mod-cache-exists.outputs.cache-hit != 'true'
+          }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-mod-cache-path }}
+          key: ${{ steps.cache-keys.outputs.go-mod-cache-with-date }}
 
       # NOTE: There doesn't appear to be a simple way to run post hooks in
       # composite actions. We must unmount the VHDX image after we're done using

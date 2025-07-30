@@ -176,13 +176,13 @@ runs:
         echo "go-tmp-dir=$(go env GOTMPDIR)" >> $GITHUB_OUTPUT
         echo "go-version=$(go env GOVERSION)" >> $GITHUB_OUTPUT
 
-    - name: Cache Go
-      if: runner.os != 'Windows'
-      id: go-cache
-      uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
-      with:
-        path: |
-          ${{ steps.go-env.outputs.go-mod-cache }}
-          ${{ steps.go-env.outputs.go-cache }}
-        key: ${{ steps.cache-config.outputs.name }}
-        lookup-only: ${{ inputs.skip-cache-restore-on-hit == 'true' }}
+    # - name: Cache Go
+    #   if: runner.os != 'Windows'
+    #   id: go-cache
+    #   uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+    #   with:
+    #     path: |
+    #       ${{ steps.go-env.outputs.go-mod-cache }}
+    #       ${{ steps.go-env.outputs.go-cache }}
+    #     key: ${{ steps.cache-config.outputs.name }}
+    #     lookup-only: ${{ inputs.skip-cache-restore-on-hit == 'true' }}

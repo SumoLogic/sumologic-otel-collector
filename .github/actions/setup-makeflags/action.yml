@@ -12,6 +12,9 @@ runs:
     # available on each GitHub Runner. The core count for each runner can be
     # found at the following URL:
     # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
+    #
+    # NOTE: This is disabled for now as it seems to be slowing down build times
+    # for the collector.
     - name: Set number of simultaneous jobs
       shell: bash
       run: |
@@ -20,4 +23,4 @@ runs:
           cores="3"
         fi
 
-        echo "MAKEFLAGS=-j ${cores}" >> $GITHUB_ENV
+        #echo "MAKEFLAGS=-j ${cores}" >> $GITHUB_ENV

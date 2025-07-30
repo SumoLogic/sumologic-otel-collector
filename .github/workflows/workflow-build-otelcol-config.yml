@@ -36,9 +36,9 @@ jobs:
       matrix:
         include:
           - platform: darwin_amd64
-            runs-on: macos-15
+            runs-on: macos-15-xlarge
           - platform: darwin_arm64
-            runs-on: macos-15
+            runs-on: macos-15-xlarge
           - platform: linux_amd64
             runs-on: ubuntu-24.04
           - platform: linux_amd64

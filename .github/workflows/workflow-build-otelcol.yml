@@ -51,9 +51,9 @@ jobs:
             runs-on: ubuntu-24.04
             fips: true
           - platform: darwin_amd64
-            runs-on: macos-15
+            runs-on: macos-15-xlarge
           - platform: darwin_arm64
-            runs-on: macos-15
+            runs-on: macos-15-xlarge
           - platform: windows_amd64
             runs-on: windows-2022
           - platform: windows_amd64

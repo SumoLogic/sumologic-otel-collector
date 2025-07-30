@@ -17,19 +17,34 @@ defaults:
     shell: bash
 
 jobs:
+  matrix:
+    name: Generate Matrix
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.generate-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate matrix
+        id: generate-matrix
+        run: |
+          matrix="$(make test-otelcol-matrix)"
+          echo "${matrix}" | jq
+          echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
+
   test:
     name: >
-      ${{ matrix.runs-on }} ${{ matrix.fips == true && '(FIPS)' || '' }}
+      ${{ matrix.runs-on }}
+      ${{ matrix.fips == true && '(FIPS)' || '' }}
+      -
+      ${{ matrix.pkg }}
     uses: ./.github/workflows/workflow-test-otelcol-platform.yml
+    needs:
+      - matrix
     with:
       fips: ${{ matrix.fips == true }}
       go-version: ${{ inputs.go-version }}
+      pkg: ${{ matrix.pkg }}
       runs-on: ${{ matrix.runs-on }}
     strategy:
-      matrix:
-        include:
-          - runs-on: ubuntu-24.04
-          - runs-on: ubuntu-24.04
-            fips: true
-          - runs-on: macos-15
-          - runs-on: windows-2025
+      matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}

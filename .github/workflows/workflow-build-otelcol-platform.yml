@@ -53,6 +53,63 @@ jobs:
         with:
           platform: ${{ inputs.platform }}
 
+      - name: Set GOCACHE & GOMODCACHE
+        if: runner.os != 'Windows'
+        run: |
+          gocache="${HOME}/.go-cache"
+          gomodcache="${HOME}/.go-mod-cache"
+
+          mkdir -p "${gocache}"
+          mkdir -p "${gomodcache}"
+
+          {
+            echo "GOCACHE=${gocache}"
+            echo "GOMODCACHE=${gomodcache}"
+          } >> "$GITHUB_ENV"
+
+      - name: Cache Keys
+        if: runner.os != 'Windows'
+        id: cache-keys
+        run: |
+          os="${{ steps.platform.outputs.os }}"
+          arch="${{ steps.platform.outputs.arch }}"
+          fips="${{ inputs.fips == true && 'fips' || 'nofips' }}"
+          hash="${{ hashFiles(
+            '**/*.mod',
+            'otelcolbuilder/.otelcol-builder.yaml
+          ') }}"
+          ts="$(date +%Y-%m-%d)"
+
+          gocachename="${os}-${arch}-${fips}-gocache-${hash}"
+          gocachenamedate="${gocachename}-${ts}"
+          gomodcachename="${os}-gomodcache-${hash}"
+          gomodcachenamedate="${gomodcachename}-${ts}"
+
+          {
+            echo "go-cache=${gocachename}"
+            echo "go-cache-with-date=${gocachenamedate}"
+            echo "go-cache-path=${GOCACHE}"
+            echo "go-mod-cache=${gomodcachename}"
+            echo "go-mod-cache-with-date=${gomodcachenamedate}"
+            echo "go-mod-cache-path=${GOMODCACHE}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Restore GOMODCACHE
+        if: runner.os != 'Windows'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-mod-cache-path }}
+          key: nonexistent
+          restore-keys: ${{ steps.cache-keys.outputs.go-mod-cache }}-
+
+      - name: Restore GOCACHE
+        if: runner.os != 'Windows'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-cache-path }}
+          key: nonexistent
+          restore-keys: ${{ steps.cache-keys.outputs.go-cache }}-
+
       - name: Set Go Distribution
         id: go-distribution
         run: |
@@ -111,8 +168,62 @@ jobs:
       # FIPS Build for non-Linux platforms
       - name: Build (FIPS)
         if: inputs.fips && steps.platform.outputs.os != 'linux'
-        run: make otelcol-sumo-${{ inputs.platform }} FIPS_SUFFIX="-fips" CGO_ENABLED=1
         working-directory: ./otelcolbuilder
+        run: |
+          make otelcol-sumo-${{ inputs.platform }} \
+          FIPS_SUFFIX="-fips" \
+          CGO_ENABLED="1"
+
+      - name: Trim Go cache
+        if: github.ref == 'refs/heads/main' && runner.os != 'Windows'
+        shell: bash
+        run: |
+          cache_dir="${{ steps.cache-keys.outputs.go-cache-path }}"
+          find "${cache_dir}" -type f -mmin +90 -delete
+
+      - name: Check if cache for GOCACHE exists
+        id: go-cache-exists
+        if: github.ref == 'refs/heads/main' && runner.os != 'Windows'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-cache-path }}
+          key: ${{ steps.cache-keys.outputs.go-cache-with-date }}
+          lookup-only: true
+
+      - name: Save GOCACHE
+        if: ${{
+          github.ref == 'refs/heads/main'
+          &&
+          runner.os != 'Windows'
+          &&
+          steps.go-cache-exists.outputs.cache-hit != 'true'
+          }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-cache-path }}
+          key: ${{ steps.cache-keys.outputs.go-cache-with-date }}
+
+      - name: Check if cache for GOMODCACHE exists
+        id: go-mod-cache-exists
+        if: github.ref == 'refs/heads/main' && runner.os != 'Windows'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-mod-cache-path }}
+          key: ${{ steps.cache-keys.outputs.go-mod-cache-with-date }}
+          lookup-only: true
+
+      - name: Save GOMODCACHE
+        if: ${{
+          github.ref == 'refs/heads/main'
+          &&
+          runner.os != 'Windows'
+          &&
+          steps.go-mod-cache-exists.outputs.cache-hit != 'true'
+          }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-mod-cache-path }}
+          key: ${{ steps.cache-keys.outputs.go-mod-cache-with-date }}
 
       - name: Set binary name
         uses: ./.github/actions/determine-binary-name

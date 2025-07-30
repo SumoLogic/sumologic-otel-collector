@@ -54,14 +54,3 @@ make build
 ```
 
 to build the binary.
-
-## Building Windows containers
-
-Use the [docker](docker/) machine, as it comes with Docker for Windows installed and configured. After building
-the application, you can build a Windows container the following way:
-
-```bash
-cp otelcolbuilder/cmd/otelcol-sumo.exe .
-make build-push-container-windows PLATFORM=windows/amd64/ltsc2022
-docker run public.ecr.aws/sumologic/sumologic-otel-collector-ci-builds:latest-windows-amd64-ltsc2022 --version
-```

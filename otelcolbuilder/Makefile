@@ -1,4 +1,39 @@
-include ../toolchains/Makefile
+#################################################################################
+# Path variables & stop implicit rules
+#################################################################################
+
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
+parent_dir := $(abspath $(current_dir)/..)
+toolchains_dir := $(abspath $(parent_dir)/toolchains)
+
+Makefile:
+	@true
+
+$(parent_dir)/common.mk:
+	@true
+
+$(toolchains_dir)/Makefile:
+	@true
+
+#################################################################################
+# Override variables & include makefile dependencies
+#################################################################################
+
+# A list of one or more space-delimited paths to files that are used to determine
+# if the cache should be invalidated. When these files change, the cache is
+# invalidated. This is used by GitHub Actions.
+CACHE_DEPENDENCY_PATHS ?= .otelcol-builder.yaml
+
+# Include common.mk from the parent directory
+include $(parent_dir)/common.mk
+
+# Include the toolchains Makefile
+include $(toolchains_dir)/Makefile
+
+#################################################################################
+# Variables
+#################################################################################
 
 BINARY_NAME ?= otelcol-sumo
 OCB_VERSION ?= 0.130.1
@@ -6,19 +41,6 @@ FIPS_SUFFIX ?=
 OTC_RELEASE_REPO ?= github.com/open-telemetry/opentelemetry-collector-releases
 GO ?= go
 GOTAGS ?=
-
-ifeq ($(OS),Windows_NT)
-	OS=windows
-endif
-
-ifeq ($(OS),windows)
-	BINARY_EXT ?= .exe
-	MAKE := "$(shell cygpath '$(MAKE)')"
-endif
-
-OS ?= $(shell uname -s | tr A-Z a-z)
-ARCH ?= $(shell uname -m | sed s/aarch64/arm64/ | sed s/x86_64/amd64/)
-
 BIN_PATH ?= $(HOME)/bin
 
 # Check if ocb is installed & determine ocb version
@@ -29,14 +51,17 @@ ifneq ($(OCB),)
 endif
 
 # OCB Download URL
-OCB_URL := https://$(OTC_RELEASE_REPO)/releases/download/cmd/builder/v$(OCB_VERSION)/ocb_$(OCB_VERSION)_$(OS)_$(ARCH)$(BINARY_EXT)
+OCB_FILE := ocb_$(OCB_VERSION)_$(GOOS)_$(GOARCH)$(BINARY_EXT)
+OCB_RELEASE := cmd/builder/v$(OCB_VERSION)
+OCB_BASE_URL := https://$(OTC_RELEASE_REPO)/releases/download
+OCB_URL := $(OCB_BASE_URL)/$(OCB_RELEASE)/$(OCB_FILE)
 
 # Check if yq is installed
 YQ_BIN_NAME := yq$(BINARY_EXT)
 YQ := $(shell command -v $(YQ_BIN_NAME) 2>&1)
 
 # Settings for macOS builds
-ifeq ($(OS),darwin)
+ifeq ($(HOST_OS),Darwin)
 	AC_USERNAME ?= otel-mac-certs@sumologic.com
 	AC_PASSWORD ?= $(shell echo $$AC_PASSWORD)
 	DEVELOPER_TEAM_ID ?= 8F28635Z7X
@@ -46,7 +71,7 @@ endif
 
 # Add additional LDFLAGS
 # ex: to get a staticly executable with CGO use EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
-LDFLAGS:=$(EXTRA_LDFLAGS)
+LDFLAGS := $(EXTRA_LDFLAGS)
 
 # Builds for darwin need to be built with CGO_ENABLED set to 1 because some telegraf
 # plugins that are used within the telegrafreceiver are implemented with CGO.
@@ -93,11 +118,8 @@ endif
 .PHONY: _install-bin
 _install-bin:
 	@mkdir -p $(BIN_PATH)
-	@ls -l $(BIN_PATH)
 	curl -L -o $(BIN_PATH)/$(OCB_BIN_NAME) $(OCB_URL)
-	@ls -l $(BIN_PATH)
 	@chmod +x "$(BIN_PATH)/$(OCB_BIN_NAME)"
-	@ls -l $(BIN_PATH)
 	@$(MAKE) ensure-correct-ocb-version
 
 .PHONY: ocb-version
@@ -137,7 +159,7 @@ endif
 
 .PHONY: _ocb_build
 _ocb_build: ensure-correct-ocb-version require-yq
-_ocb_build: SKIP_COMPILATION=false
+_ocb_build: SKIP_COMPILATION ?= false
 _ocb_build:
 	$(eval VERSION ?= $(shell BUILDER_CONFIG=.otelcol-builder.yaml ../ci/get_version.sh core))
 	$(shell yq e ".dist.version = \"${VERSION}${FIPS_SUFFIX}\"" -i .otelcol-builder.yaml)
@@ -175,20 +197,15 @@ _gobuild_debug:
 build:
 # Since ocb doesn't allow adding build tags, let's just skip the compilation
 # and run 'go build ...' by hand.
-	$(info PATH = $(PATH))
-	$(info OCB_BIN_NAME = $(OCB_BIN_NAME))
-	$(info OCB = $(OCB))
-	$(info INSTALLED_OCB_VERSION = $(INSTALLED_OCB_VERSION))
-	$(info OCB_URL = $(OCB_URL))
-	@$(MAKE) generate-sources
-	@$(MAKE) _gobuild
+	$(MAKE) generate-sources
+	$(MAKE) _gobuild
 
 .PHONY: build-debug
 build-debug:
 # Since ocb doesn't allow adding build tags, let's just skip the compilation
 # and run 'go build ...' by hand.
-	@$(MAKE) generate-sources
-	@$(MAKE) _gobuild_debug
+	$(MAKE) generate-sources
+	$(MAKE) _gobuild_debug
 
 .PHONY: build-fips
 build-fips: docker-golang-cross-builder
@@ -272,7 +289,7 @@ otelcol-sumo-linux-fips_arm64:
 	$(MAKE) otelcol-sumo-linux_arm64 \
 		FIPS_SUFFIX=-fips \
 		CGO_ENABLED=1 \
-		CC="$(TOOLCHAINS_DIR)/toolchain_arm64/bin/aarch64-linux-musl-gcc" \
+		CC="$(toolchains_dir)/toolchain_arm64/bin/aarch64-linux-musl-gcc" \
 		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
 
 .PHONY: otelcol-sumo-linux-fips_amd64
@@ -280,5 +297,5 @@ otelcol-sumo-linux-fips_amd64:
 	$(MAKE) otelcol-sumo-linux_amd64 \
 		FIPS_SUFFIX=-fips \
 		CGO_ENABLED=1 \
-		CC="$(TOOLCHAINS_DIR)/toolchain_amd64/bin/x86_64-linux-musl-gcc" \
+		CC="$(toolchains_dir)/toolchain_amd64/bin/x86_64-linux-musl-gcc" \
 		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"

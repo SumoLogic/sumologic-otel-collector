@@ -4,28 +4,46 @@
 
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
-parent_dir := $(abspath $(current_dir)/..)
-pkg_dir := $(abspath $(parent_dir)/..)
+parent_dir := $(abspath $(current_dir)/../)
 
-Makefile:
+common.mk:
 	@true
 
-$(pkg_dir)/common.mk:
+$(parent_dir)/common.mk:
 	@true
 
 #################################################################################
 # Override variables & include makefile dependencies
 #################################################################################
 
-include $(pkg_dir)/common.mk
+# Include common.mk from the parent directory
+include $(parent_dir)/common.mk
+
+#################################################################################
+# Variables
+#################################################################################
+
+GOFLAGS ?= -race
+GOTEST := go test $(GOFLAGS)
+LINT := staticcheck
 
 #################################################################################
 # Targets
 #################################################################################
 
-.PHONY: build
-build:
-	go build -v -o udpdemux .
-
 .PHONY: test
-test: build
+test:
+	$(GOTEST) ./...
+
+.PHONY: fmt
+fmt:
+	gofmt -w -s ./
+	goimports -w  -local github.com/open-telemetry/opentelemetry-collector-contrib ./
+
+.PHONY: lint
+lint:
+	$(LINT) .
+
+.PHONY: mod-download-all
+mod-download-all:
+	go mod download all && go mod tidy
