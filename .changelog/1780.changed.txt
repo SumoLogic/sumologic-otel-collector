@@ -1,1 +1,0 @@
-chore: removing sumologic-extension from repo
