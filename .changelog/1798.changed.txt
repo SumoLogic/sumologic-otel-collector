@@ -1,0 +1,1 @@
+chore: using go version 1.24.5 for building binary in github workflows. it will fix below vulnerabilities CVE-2025-22871,CVE-2025-22874,CVE-2025-0913,CVE-2025-4673
