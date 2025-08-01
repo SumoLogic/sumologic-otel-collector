@@ -1,0 +1,14 @@
+collectd:
+  endpoint: "localhost:12345"
+  timeout: "50s"
+  attributes_prefix: "dap_"
+  encoding: "command"
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - collectd
+      exporters:
+        - sumologic
