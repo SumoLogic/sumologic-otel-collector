@@ -4,6 +4,8 @@
 
 name: Workflow - Trigger Remote Workflow
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:

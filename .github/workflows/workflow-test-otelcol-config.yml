@@ -4,6 +4,9 @@
 
 name: Workflow - Test Config Tool (Multiple Platforms)
 
+permissions:
+  contents: read
+
 on:
   workflow_call:
     inputs:

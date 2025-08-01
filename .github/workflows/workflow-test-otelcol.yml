@@ -4,6 +4,9 @@
 
 name: Workflow - Test Collector (Multiple Platforms)
 
+permissions:
+  contents: read
+
 on:
   workflow_call:
     inputs:

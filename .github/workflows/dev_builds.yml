@@ -1,5 +1,8 @@
 name: Dev builds
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
@@ -87,6 +90,8 @@ jobs:
 
   config-management-assets:
     name: Store Config Management Assets
+    permissions:
+      contents: read
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
