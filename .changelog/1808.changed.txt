@@ -1,0 +1,1 @@
+docs: removed IN and added KR deployment in opampextension README.md
