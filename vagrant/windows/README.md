@@ -49,19 +49,8 @@ TODO: Try and make this work with Vagrant.
 After starting `bash` as per the previous section, you can use the same command as on Unix. So:
 
 ```bash
-make install-builder
+make install-ocb
 make build
 ```
 
 to build the binary.
-
-## Building Windows containers
-
-Use the [docker](docker/) machine, as it comes with Docker for Windows installed and configured. After building
-the application, you can build a Windows container the following way:
-
-```bash
-cp otelcolbuilder/cmd/otelcol-sumo.exe .
-make build-push-container-windows-dev PLATFORM=windows/amd64/ltsc2022
-docker run public.ecr.aws/sumologic/sumologic-otel-collector-dev:latest-windows-amd64-ltsc2022 --version
-```

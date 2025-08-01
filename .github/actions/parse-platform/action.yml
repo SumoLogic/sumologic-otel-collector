@@ -1,0 +1,35 @@
+name: Parse platform strings
+
+description: |
+  This action parses a platform string in the format of "{os}_{arch}" and
+  outputs the operating system (os) and architecture (arch) components.
+
+inputs:
+  platform:
+    description: A platform string in the format of "{os}_{arch}".
+    required: true
+
+outputs:
+  arch:
+    value: ${{ steps.parse.outputs.arch }}
+  os:
+    value: ${{ steps.parse.outputs.os }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Parse platform string
+      id: parse
+      shell: bash
+      run: |
+        platform="${{ inputs.platform }}"
+        os="${platform%_*}"
+        arch="${platform##*_}"
+
+        if [[ "${os}" == "" || "${arch}" == "" ]]; then
+          echo "Failed to parse platform: ${platform}"
+          exit 1
+        fi
+
+        echo "os=${os}" >> $GITHUB_OUTPUT
+        echo "arch=${arch}" >> $GITHUB_OUTPUT

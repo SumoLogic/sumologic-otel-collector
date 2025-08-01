@@ -4,11 +4,11 @@
 cp -r /root/workspace/* /root/build/
 cd /root/build
 
-# Install builder
+# Install ocb
 cd otelcolbuilder || exit 1
 mkdir "${HOME}/bin"
 export PATH="${HOME}/bin:${PATH}"
-make install-builder
+make install-ocb
 
 # Build otelcol-sumo
 make otelcol-sumo-linux-fips_amd64

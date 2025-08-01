@@ -1,0 +1,37 @@
+name: Show FIPS Symbols
+
+description: |
+  This action checks for specific FIPS-related symbols in a binary.
+  It is designed to work with binaries built for Linux and Windows.
+  For Linux, it checks for BoringSSL symbols, and for Windows,
+  it checks for Microsoft Cryptography Next-Generation symbols.
+
+inputs:
+  name:
+    description: The name of the binary to check.
+    required: true
+  os:
+    description: The operating system the binary is built for.
+    required: true
+  working-directory:
+    required: false
+    default: ./
+
+runs:
+  using: "composite"
+  steps:
+    - name: Show BoringSSL symbols
+      if: inputs.os == 'linux'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        go tool nm ${{ inputs.name }} | \
+        grep "_Cfunc__goboringcrypto_"
+
+    - name: Show Microsoft Cryptography Next-Generation symbols
+      if: inputs.os == 'windows'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        go tool nm ${{ inputs.name }} | \
+        grep "vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt.GetFipsAlgorithmMode"

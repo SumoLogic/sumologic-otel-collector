@@ -1,36 +1,67 @@
-include ../toolchains/Makefile
+#################################################################################
+# Path variables & stop implicit rules
+#################################################################################
+
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
+parent_dir := $(abspath $(current_dir)/..)
+toolchains_dir := $(abspath $(parent_dir)/toolchains)
+
+Makefile:
+	@true
+
+$(parent_dir)/common.mk:
+	@true
+
+$(toolchains_dir)/Makefile:
+	@true
+
+#################################################################################
+# Override variables & include makefile dependencies
+#################################################################################
+
+# A list of one or more space-delimited paths to files that are used to determine
+# if the cache should be invalidated. When these files change, the cache is
+# invalidated. This is used by GitHub Actions.
+CACHE_DEPENDENCY_PATHS ?= .otelcol-builder.yaml
+
+# Include common.mk from the parent directory
+include $(parent_dir)/common.mk
+
+# Include the toolchains Makefile
+include $(toolchains_dir)/Makefile
+
+#################################################################################
+# Variables
+#################################################################################
 
 BINARY_NAME ?= otelcol-sumo
-BUILDER_VERSION ?= 0.130.1
-FIPS_SUFFIX ?= ""
-BUILDER_REPO ?= github.com/open-telemetry/opentelemetry-collector-releases
+OCB_VERSION ?= 0.130.1
+FIPS_SUFFIX ?=
+OTC_RELEASE_REPO ?= github.com/open-telemetry/opentelemetry-collector-releases
 GO ?= go
 GOTAGS ?=
+BIN_PATH ?= $(HOME)/bin
 
-ifeq ($(OS),Windows_NT)
-	OS=windows
+# Check if ocb is installed & determine ocb version
+OCB_BIN_NAME := ocb$(BINARY_EXT)
+OCB := $(shell which $(OCB_BIN_NAME) || echo)
+ifneq ($(OCB),)
+	INSTALLED_OCB_VERSION := $(shell $(OCB) version 2>&1)
 endif
 
-ifeq ($(OS),windows)
-	BUILDER_BIN_EXT ?= .exe
-	MAKE := "$(shell cygpath '$(MAKE)')"
-endif
+# OCB Download URL
+OCB_FILE := ocb_$(OCB_VERSION)_$(GOOS)_$(GOARCH)$(BINARY_EXT)
+OCB_RELEASE := cmd/builder/v$(OCB_VERSION)
+OCB_BASE_URL := https://$(OTC_RELEASE_REPO)/releases/download
+OCB_URL := $(OCB_BASE_URL)/$(OCB_RELEASE)/$(OCB_FILE)
 
-OS ?= $(shell uname -s | tr A-Z a-z)
-ARCH ?= $(shell uname -m | sed s/aarch64/arm64/ | sed s/x86_64/amd64/)
-
-BUILDER_BIN_NAME ?= opentelemetry-collector-builder$(BUILDER_BIN_EXT)
-BUILDER_BIN_PATH ?= $(HOME)/bin
-
-INSTALLED_BUILDER_VERSION := $(shell $(BUILDER_BIN_NAME) version 2>&1)
-
-INSTALLED_YQ_VERSION := $(shell yq --version 2>&1)
-ifeq ($(INSTALLED_YQ_VERSION),)
-    $(error "The yq command is required but was not found")
-endif
+# Check if yq is installed
+YQ_BIN_NAME := yq$(BINARY_EXT)
+YQ := $(shell command -v $(YQ_BIN_NAME) 2>&1)
 
 # Settings for macOS builds
-ifeq ($(OS),darwin)
+ifeq ($(HOST_OS),Darwin)
 	AC_USERNAME ?= otel-mac-certs@sumologic.com
 	AC_PASSWORD ?= $(shell echo $$AC_PASSWORD)
 	DEVELOPER_TEAM_ID ?= 8F28635Z7X
@@ -40,7 +71,7 @@ endif
 
 # Add additional LDFLAGS
 # ex: to get a staticly executable with CGO use EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
-LDFLAGS:=$(EXTRA_LDFLAGS)
+LDFLAGS := $(EXTRA_LDFLAGS)
 
 # Builds for darwin need to be built with CGO_ENABLED set to 1 because some telegraf
 # plugins that are used within the telegrafreceiver are implemented with CGO.
@@ -49,28 +80,28 @@ LDFLAGS:=$(EXTRA_LDFLAGS)
 # https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin_nocgo.go
 # https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin.go
 ifeq ($(shell go env GOOS),darwin)
-CGO_ENABLED ?= 1
+	CGO_ENABLED ?= 1
 else
 # CGO_ENABLED=0 is used becuase we don't want to rely on c libs and opentelemetry
 # also builds their binaries this way.
 # ref: https://github.com/open-telemetry/opentelemetry-collector/blob/4c503ddc/Makefile#L254-L256
-CGO_ENABLED ?= 0
+	CGO_ENABLED ?= 0
 endif
 
 # We don't want to strip symbols for FIPS builds, as they're useful for verifying the build
-ifeq ($(FIPS_SUFFIX),"")
-GOEXPERIMENT=""
-LDFLAGS+= -s -w
+ifeq ($(FIPS_SUFFIX),)
+	GOEXPERIMENT=
+	LDFLAGS+= -s -w
+else
 # We want to use boringcrypto for fips setup
-else
-ifeq ($(shell go env GOOS),windows)
-GOEXPERIMENT=systemcrypto
-GOTAGS := $(GOTAGS) requirefips
-LDFLAGS+= -w
-else
-GOEXPERIMENT=boringcrypto
-LDFLAGS+= -w
-endif
+	ifeq ($(shell go env GOOS),windows)
+		GOEXPERIMENT=systemcrypto
+		GOTAGS := $(GOTAGS) requirefips
+		LDFLAGS+= -w
+	else
+		GOEXPERIMENT=boringcrypto
+		LDFLAGS+= -w
+	endif
 endif
 
 # We want to enforce go dns for all types of binaries. The FIPS binaries are built with CGO enabled and use
@@ -78,44 +109,66 @@ endif
 # ref: https://pkg.go.dev/net#hdr-Name_Resolution
 GOTAGS := $(GOTAGS) netgo
 
-.PHONY: _install-bin
-_install-bin:
-	@mkdir -p "$(BUILDER_BIN_PATH)"
-	curl -L -o "$(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME)" https://$(BUILDER_REPO)/releases/download/cmd/builder/v$(BUILDER_VERSION)/ocb_$(BUILDER_VERSION)_$(PLATFORM)_$(ARCH)$(BUILDER_BIN_EXT)
-	@chmod +x "$(BUILDER_BIN_PATH)/$(BUILDER_BIN_NAME)"
-	@$(MAKE) ensure-correct-builder-version
-
-.PHONY: install-builder
-install-builder:
-	@echo "Installing $(BUILDER_REPO)/cmd/builder@v$(BUILDER_VERSION)... (in $(BUILDER_BIN_PATH))"
-	@$(MAKE) _install-bin PLATFORM=$(OS)
-
-.PHONY: ensure-correct-builder-version
-ensure-correct-builder-version:
-ifneq ($(lastword $(INSTALLED_BUILDER_VERSION)),$(BUILDER_VERSION))
-	@$(error Installed opentelemetry-collector-builder version \
-		"$(INSTALLED_BUILDER_VERSION)" \
-		does not match the requested "$(BUILDER_VERSION)" \
-		Please check if "$(BUILDER_BIN_PATH)" can be found in your PATH \
-		and if not, then install it using 'make install-builder' from otelcolbuilder's directory\
-	)
-else
-	@printf "Installed opentelemetry-collector-builder (%s) is at the correct version %s\n" \
-		"$(shell type opentelemetry-collector-builder | cut -d' ' -f 3)" \
-		"$(BUILDER_VERSION)"
+.PHONY: require-yq
+require-yq:
+ifeq ($(YQ),)
+	@$(error "The yq command is required but was not found")
 endif
 
-.PHONY: _builder
-_builder:
+.PHONY: _install-bin
+_install-bin:
+	@mkdir -p $(BIN_PATH)
+	curl -L -o $(BIN_PATH)/$(OCB_BIN_NAME) $(OCB_URL)
+	@chmod +x "$(BIN_PATH)/$(OCB_BIN_NAME)"
+	@$(MAKE) ensure-correct-ocb-version
+
+.PHONY: ocb-version
+ocb-version:
+	@echo $(OCB_VERSION)
+
+.PHONY: install-ocb
+install-ocb:
+	@echo "Installing $(OTC_RELEASE_REPO)/cmd/builder@v$(OCB_VERSION)... (in $(BIN_PATH))"
+	@$(MAKE) _install-bin
+
+.PHONY: ensure-ocb-installed
+ensure-ocb-installed:
+ifeq ($(OCB),)
+	@$(error ocb executable was not found in PATH. \
+		Please check that "$(BIN_PATH)" can be found in your PATH \
+		environment variable and that "$(BIN_PATH)/$(OCB_BIN_NAME)" \
+		exists. If ocb is missing it can be installed by running \
+		'make install-ocb' from the otelcolbuilder directory.\
+	)
+endif
+
+.PHONY: ensure-correct-ocb-version
+ensure-correct-ocb-version: ensure-ocb-installed
+ifneq ($(lastword $(INSTALLED_OCB_VERSION)),$(OCB_VERSION))
+	@$(error Installed ocb version \
+		"$(INSTALLED_OCB_VERSION)" \
+		does not match the requested "$(OCB_VERSION)". The correct version of \
+		ocb can be installed by running 'make install-ocb' from the \
+		otelcolbuilder directory.\
+	)
+else
+	@printf "Installed ocb (%s) is at the correct version %s\n" \
+		"$(shell type $(OCB) | cut -d' ' -f 3)" \
+		"$(OCB_VERSION)"
+endif
+
+.PHONY: _ocb_build
+_ocb_build: ensure-correct-ocb-version require-yq
+_ocb_build: SKIP_COMPILATION ?= false
+_ocb_build:
 	$(eval VERSION ?= $(shell BUILDER_CONFIG=.otelcol-builder.yaml ../ci/get_version.sh core))
 	$(shell yq e ".dist.version = \"${VERSION}${FIPS_SUFFIX}\"" -i .otelcol-builder.yaml)
 	$(eval SUMOVERSION ?= $(shell yq '.dist.version' .otelcol-builder.yaml))
 	@echo "Building otelcol-sumo version: $(SUMOVERSION)"
 # Need to specify go path because otherwise opentelemetry-collector-builder
 # uses /usr/bin/go which on Github Actions is using preinstalled 1.15.12 by default.
-	CGO_ENABLED=$(CGO_ENABLED) $(BUILDER_BIN_NAME) \
+	CGO_ENABLED=$(CGO_ENABLED) $(OCB) \
 		--config .otelcol-builder.yaml \
-		--output-path ./cmd \
 		--skip-compilation=$(SKIP_COMPILATION)
 
 .PHONY: _gobuild
@@ -125,9 +178,9 @@ _gobuild:
 		-tags "$(GOTAGS)" \
 		-ldflags="$(LDFLAGS)" \
 		-trimpath \
-		-o ./$(BINARY_NAME)$(BUILDER_BIN_EXT) . \
+		-o ./$(BINARY_NAME)$(BINARY_EXT) . \
 	)
-	chmod +x ./cmd/$(BINARY_NAME)$(BUILDER_BIN_EXT)
+	chmod +x ./cmd/$(BINARY_NAME)$(BINARY_EXT)
 
 .PHONY: _gobuild_debug
 _gobuild_debug:
@@ -136,23 +189,23 @@ _gobuild_debug:
 		-tags "$(GOTAGS)" \
 		-race \
 		-gcflags "all=-N -l" \
-		-o ./$(BINARY_NAME)-debug$(BUILDER_BIN_EXT) . \
+		-o ./$(BINARY_NAME)-debug$(BINARY_EXT) . \
 	)
-	chmod +x ./cmd/$(BINARY_NAME)-debug$(BUILDER_BIN_EXT)
+	chmod +x ./cmd/$(BINARY_NAME)-debug$(BINARY_EXT)
 
 .PHONY: build
-build: ensure-correct-builder-version
-# Since builder doesn't allow adding build tags, let's just skip the compilation
+build:
+# Since ocb doesn't allow adding build tags, let's just skip the compilation
 # and run 'go build ...' by hand.
-	@$(MAKE) generate-sources
-	@$(MAKE) _gobuild
+	$(MAKE) generate-sources
+	$(MAKE) _gobuild
 
 .PHONY: build-debug
-build-debug: ensure-correct-builder-version
-# Since builder doesn't allow adding build tags, let's just skip the compilation
+build-debug:
+# Since ocb doesn't allow adding build tags, let's just skip the compilation
 # and run 'go build ...' by hand.
-	@$(MAKE) generate-sources
-	@$(MAKE) _gobuild_debug
+	$(MAKE) generate-sources
+	$(MAKE) _gobuild_debug
 
 .PHONY: build-fips
 build-fips: docker-golang-cross-builder
@@ -166,20 +219,19 @@ build-fips: docker-golang-cross-builder
 
 .PHONY: generate-sources
 generate-sources:
-	@$(MAKE) _builder SKIP_COMPILATION=true
-	# the changes below allow us to use a custom config provider
+	@$(MAKE) _ocb_build SKIP_COMPILATION=true
+# the changes below allow us to use a custom config provider
 	patch cmd/main.go cmd/00_main.go.patch
 	patch cmd/main.go cmd/01_main.go.patch
 	patch cmd/main_windows.go cmd/main_windows.go.patch
 
 .PHONY: test
 test:
-	@$(MAKE) ensure-correct-builder-version || $(MAKE) install-builder
 	@$(MAKE) generate-sources
 	CGO_ENABLED=${CGO_ENABLED} GOEXPERIMENT=$(GOEXPERIMENT) $(MAKE) -C cmd test
 
 .PHONY: lint
-lint: install-builder generate-sources
+lint: ensure-correct-ocb-version generate-sources
 	@$(MAKE) -C cmd lint
 
 .PHONY: mod-download-all
@@ -234,18 +286,16 @@ otelcol-sumo-windows_amd64:
 
 .PHONY: otelcol-sumo-linux-fips_arm64
 otelcol-sumo-linux-fips_arm64:
-	$(MAKE) toolchain-linux_arm64
 	$(MAKE) otelcol-sumo-linux_arm64 \
-		FIPS_SUFFIX="-fips" \
-		CGO_ENABLED="1" \
-		CC="$(TOOLCHAINS_DIR)/toolchain_arm64/bin/aarch64-linux-musl-gcc" \
+		FIPS_SUFFIX=-fips \
+		CGO_ENABLED=1 \
+		CC="$(toolchains_dir)/toolchain_arm64/bin/aarch64-linux-musl-gcc" \
 		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
 
 .PHONY: otelcol-sumo-linux-fips_amd64
 otelcol-sumo-linux-fips_amd64:
-	$(MAKE) toolchain-linux_amd64
 	$(MAKE) otelcol-sumo-linux_amd64 \
-		FIPS_SUFFIX="-fips" \
-		CGO_ENABLED="1" \
-		CC="$(TOOLCHAINS_DIR)/toolchain_amd64/bin/x86_64-linux-musl-gcc" \
+		FIPS_SUFFIX=-fips \
+		CGO_ENABLED=1 \
+		CC="$(toolchains_dir)/toolchain_amd64/bin/x86_64-linux-musl-gcc" \
 		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"

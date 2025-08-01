@@ -1,0 +1,188 @@
+name: Setup Go
+
+description: |
+  This action sets up the Go programming language environment on GitHub
+  runners. It installs the specified version of Go, configures caching for
+  Go modules, and sets up necessary environment variables for Go development.
+  It supports both official and Microsoft distributions of Go.
+
+inputs:
+  cache-dependency-paths:
+    description: |
+      A list of one or more paths to generate a hash from to append to the cache
+      key. Defaults to "**/*.sum".
+    required: false
+    default: "**/*.sum"
+  cache-name:
+    description: |
+      The base name of the cache key. Defaults to "go-cache".
+    required: false
+    default: go-cache
+  distribution:
+    description: |
+      The distribution of Go to install.
+      Options:
+        * official
+        * microsoft
+    required: false
+    default: official
+  skip-cache-restore-on-hit:
+    description: |
+      Skips restoring the cache when there is a cache hit for the primary cache
+      key. Set to "true" to enable.
+    required: false
+  version:
+    description: The version of Go to install.
+    required: true
+
+outputs:
+  go-arch:
+    value: ${{ steps.go-env.outputs.go-arch }}
+  go-cache:
+    value: ${{ steps.go-env.outputs.go-cache }}
+  go-host-arch:
+    value: ${{ steps.go-env.outputs.go-host-arch }}
+  go-host-os:
+    value: ${{ steps.go-env.outputs.go-host-os }}
+  go-mod-cache:
+    value: ${{ steps.go-env.outputs.go-mod-cache }}
+  go-os:
+    value: ${{ steps.go-env.outputs.go-os }}
+  go-path:
+    value: ${{ steps.go-env.outputs.go-path }}
+  go-proxy:
+    value: ${{ steps.go-env.outputs.go-proxy }}
+  go-root:
+    value: ${{ steps.go-env.outputs.go-root }}
+  go-tmp-dir:
+    value: ${{ steps.go-env.outputs.go-tmp-dir }}
+  go-version:
+    value: ${{ steps.go-env.outputs.go-version }}
+  vhdx-path:
+    description: The path to the VHDX image file.
+    value: ${{ steps.cache-config.outputs.vhdx-path }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check distribution input
+      shell: bash
+      env:
+        distribution: ${{ inputs.distribution }}
+      run: |
+        distributions=("official" "microsoft")
+
+        echo ${distributions[@]} | grep -w -q "${distribution}"
+        rc=$?
+
+        if [[ "$rc" != "0" ]]; then
+          echo "Specified Go distribution is invalid: ${distribution}"
+          exit 1
+        fi
+
+        echo "Specified Go distribution is valid: ${distribution}"
+
+    - name: Set cache outputs
+      id: cache-config
+      shell: bash
+      run: |
+        base_key="${{ inputs.cache-name }}"
+        distribution="${{ inputs.distribution }}"
+        hash="${{ hashFiles(inputs.cache-dependency-paths) }}"
+        name="${base_key}-${distribution}-${RUNNER_OS}-${hash}"
+        vhdx_path="${base_key}.vhdx"
+
+        echo "name=${name}" >> "$GITHUB_OUTPUT"
+        echo "vhdx-path=${vhdx_path}" >> "$GITHUB_OUTPUT"
+
+    - name: Cache VHDX Image (Windows)
+      if: runner.os == 'Windows'
+      id: cache
+      uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+      with:
+        path: ${{ steps.cache-config.outputs.vhdx-path }}
+        key: ${{ steps.cache-config.outputs.name }}
+
+    - name: Setup VHDX for caching (Windows)
+      if: runner.os == 'Windows'
+      id: vhdx
+      uses: ./.github/actions/setup-vhdx
+      with:
+        name: ${{ steps.cache-config.outputs.vhdx-path }}
+        size: 50GB
+        skip-create: ${{ steps.cache.outputs.cache-hit == 'true' }}
+
+    - name: Set Go install directory output (Windows)
+      if: runner.os == 'Windows'
+      id: go-install-dir
+      shell: pwsh
+      run: |
+        $drive = "${{ steps.vhdx.outputs.drive-letter }}"
+        $installDir = "${drive}:\go"
+
+        "path=$installDir" >> $env:GITHUB_OUTPUT
+
+    # Fix slow Go compile and cache restore
+    # See https://github.com/actions/setup-go/pull/515
+    - name: Set Go environment variables (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $drive = "${{ steps.vhdx.outputs.drive-letter }}"
+        $cacheDir = "${drive}:\gocache"
+        $modCacheDir = "${drive}:\gomodcache"
+        $tmpDir = "${drive}:\gotmp"
+
+        New-Item -ItemType Directory -Force -Path $cacheDir
+        New-Item -ItemType Directory -Force -Path $modCacheDir
+        New-Item -ItemType Directory -Force -Path $tmpDir
+
+        "GOCACHE=${cacheDir}" >> $env:GITHUB_ENV
+        "GOMODCACHE=${modCacheDir}" >> $env:GITHUB_ENV
+        "GOTMPDIR=${tmpDir}" >> $env:GITHUB_ENV
+
+    - name: Setup Go (Official distribution)
+      if: inputs.distribution != 'microsoft'
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ inputs.version }}
+        cache: false
+
+    - name: Setup Go (Microsoft distribution)
+      if: inputs.distribution == 'microsoft'
+      uses: ./.github/actions/setup-microsoft-go
+      with:
+        install-dir: ${{ steps.go-install-dir.outputs.path }}
+        version: ${{ inputs.version }}
+
+    - name: Show Path to Go binary
+      shell: bash
+      run: |
+        which go
+
+    - name: Set Go environment outputs
+      id: go-env
+      shell: bash
+      run: |
+        echo "go-arch=$(go env GOARCH)" >> $GITHUB_OUTPUT
+        echo "go-cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
+        echo "go-host-arch=$(go env GOHOSTARCH)" >> $GITHUB_OUTPUT
+        echo "go-host-os=$(go env GOHOSTOS)" >> $GITHUB_OUTPUT
+        echo "go-mod-cache=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
+        echo "go-os=$(go env GOOS)" >> $GITHUB_OUTPUT
+        echo "go-path=$(go env GOPATH)" >> $GITHUB_OUTPUT
+        echo "go-proxy=$(go env GOPROXY)" >> $GITHUB_OUTPUT
+        echo "go-root=$(go env GOROOT)" >> $GITHUB_OUTPUT
+        echo "go-tmp-dir=$(go env GOTMPDIR)" >> $GITHUB_OUTPUT
+        echo "go-version=$(go env GOVERSION)" >> $GITHUB_OUTPUT
+
+    # - name: Cache Go
+    #   if: runner.os != 'Windows'
+    #   id: go-cache
+    #   uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+    #   with:
+    #     path: |
+    #       ${{ steps.go-env.outputs.go-mod-cache }}
+    #       ${{ steps.go-env.outputs.go-cache }}
+    #     key: ${{ steps.cache-config.outputs.name }}
+    #     lookup-only: ${{ inputs.skip-cache-restore-on-hit == 'true' }}

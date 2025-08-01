@@ -1,0 +1,19 @@
+name: Setup Build Environment
+
+description: |
+  This action sets up the build environment for the Sumo Logic OpenTelemetry
+  Collector (OTC) project. It enables FIPS mode on Windows runners if specified.
+
+inputs:
+  fips:
+    description: Enables FIPS environment.
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - uses: ./.github/actions/setup-make-environment
+
+    - name: Enable FIPS
+      uses: ./.github/actions/enable-fips
+      if: runner.os == 'Windows' && inputs.fips

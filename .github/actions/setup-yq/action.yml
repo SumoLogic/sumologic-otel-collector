@@ -1,0 +1,41 @@
+name: Setup yq
+
+inputs:
+  version:
+    description: The version of yq to install.
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check Runner
+      shell: bash
+      run: |
+        if [[ "${RUNNER_OS}" != "Windows" ]]; then
+          echo "This action only supports Windows runners"
+          exit 1
+        fi
+
+    - name: Setup yq
+      id: yq
+      shell: pwsh
+      run: |
+        $repo = "https://github.com/mikefarah/yq"
+        $version = "4.45.4"
+        $file = "yq_windows_amd64.exe"
+        $url = "${repo}/releases/download/v${version}/${file}"
+        $drive = (Get-Location).Drive.Name
+        $installDir = "${drive}:\yq"
+        $path = "${installDir}\yq.exe"
+
+        curl.exe -LO "${url}"
+        mkdir -p "${installDir}"
+        mv $file "${path}"
+
+        "install-dir=${installDir}" >> $env:GITHUB_OUTPUT
+        "path=${path}" >> $env:GITHUB_OUTPUT
+
+    - name: Add yq to PATH
+      shell: pwsh
+      run: |
+        "${{ steps.yq.outputs.install-dir }}" >> $env:GITHUB_PATH

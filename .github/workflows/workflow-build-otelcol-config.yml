@@ -1,174 +1,51 @@
-name: Build Otelcol Config Tool
+#################################################################################
+# A reusable workflow to build the otelcol-config binary for multiple platforms.
+#################################################################################
+
+name: Workflow - Build Config Tool (Multiple Platforms)
 
 on:
   workflow_call:
     inputs:
-      arch_os:
-        description: Architecture and OS in the form "{arch}_{os}". See GOARCH and GOOS for accepted values.
-        default: linux_amd64
+      go-version:
+        description: The version of Go to use.
         type: string
-      sumo_component_gomod_version:
-        description: Package version for components hosted in this repo. Normally, this is the v0.0.0-00010101000000-000000000000 placeholder.
-        type: string
-        required: false
-      fips:
-        description: Build binary with FIPS support
-        default: false
+        required: true
+      signing-enabled:
+        default: true
         type: boolean
-      runs-on:
-        default: ubuntu-24.04
-        type: string
-      save-cache:
-        description: Save the module and build caches.
-        default: false
-        type: boolean
-    secrets:
-      apple_developer_certificate_p12_base64:
-        required: false
-      apple_developer_certificate_password:
-        required: false
-      app_store_connect_password:
-        required: false
 
 defaults:
   run:
     shell: bash
 
-env:
-  GO_VERSION: "1.21.11"
-
 jobs:
-  build:
-    name: Build
-    runs-on: ${{ inputs.runs-on }}
-    env:
-      FIPS_SUFFIX: ${{ inputs.fips && '-fips' || '' }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: false
-
-      - name: Get Go env values
-        run: |
-          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
-          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
-          echo "GOARCH=$(go env GOARCH)" >> "$GITHUB_ENV"
-          echo "GOOS=$(go env GOOS)" >> "$GITHUB_ENV"
-          echo "ARCH_OS=$(go env GOOS)_$(go env GOARCH)" >> $GITHUB_ENV
-
-      - name: Get cache key
-        id: get-cache-key
-        run: |
-          echo "cache-key=go-build-${{ env.GO_VERSION }}-otelcol-config${FIPS_SUFFIX}-${{inputs.arch_os}}-${{ hashFiles('pkg/tools/otelcol-config/go.sum') }}" >> $GITHUB_OUTPUT
-          echo "restore-keys=go-build-${{ env.GO_VERSION }}-otelcol-config${FIPS_SUFFIX}-${{inputs.arch_os}}-" >> $GITHUB_OUTPUT
-          echo "toolchain-cache-key=toolchain-${{inputs.arch_os}}-${{ hashFiles('toolchains/config.mak', 'toolchains/Makefile') }}" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache/restore@v4
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.get-cache-key.outputs.cache-key }}
-          restore-keys: |
-            ${{ steps.get-cache-key.outputs.restore-keys }}
-
-      - name: Build
-        if: "! inputs.fips"
-        run: make otelcol-config-${{inputs.arch_os}}
-        working-directory: ./pkg/tools/otelcol-config
-
-      - uses: actions/cache/restore@v4
-        id: restore-toolchain-cache
-        if: inputs.fips && contains(inputs.arch_os, 'linux')
-        with:
-          path: |
-            /opt/toolchain
-          key: ${{ steps.get-cache-key.outputs.toolchain-cache-key }}
-
-      - name: Rebuild Toolchains
-        id: rebuild-toolchain
-        if: ${{ steps.restore-toolchain-cache.outcome == 'success' && steps.restore-toolchain-cache.outputs.cache-hit != 'true' }}
-        run: make toolchain-${{ inputs.arch_os }} OUTPUT=/opt/toolchain -j3
-        working-directory: ./pkg/tools/otelcol-config
-
-      - name: Build (FIPS)
-        if: inputs.fips && contains(inputs.arch_os, 'linux')
-        run: |
-          CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
-          test "$CC"
-          echo "Using toolchain: $CC"
-          make otelcol-config-${{inputs.arch_os}} \
-            FIPS_SUFFIX="-fips" \
-            CGO_ENABLED="1" \
-            CC="$CC" \
-            LDFLAGS="-linkmode external -extldflags '-static'"
-        working-directory: ./pkg/tools/otelcol-config
-
-      - name: Set binary name
-        id: set-binary-name
-        run: echo "binary_name=otelcol-config${FIPS_SUFFIX}-${{inputs.arch_os}}" >> $GITHUB_OUTPUT
-
-      - name: Show file info
-        working-directory: ./pkg/tools/otelcol-config
-        run: |
-          file ${{ steps.set-binary-name.outputs.binary_name }}
-
-      - name: Show ldd info
-        if: contains(inputs.arch_os, 'linux')
-        working-directory: ./pkg/tools/otelcol-config
-        run: |
-          ldd ${{ steps.set-binary-name.outputs.binary_name }} || true
-
-      - name: Show BoringSSL symbols
-        if: inputs.fips && contains(inputs.arch_os, 'linux')
-        working-directory: ./pkg/tools/otelcol-config
-        run: |
-          go tool nm ${{ steps.set-binary-name.outputs.binary_name }} | \
-          grep "_Cfunc__goboringcrypto_"
-
-      - uses: apple-actions/import-codesign-certs@v5
-        if: ${{ runner.os == 'macOS' }}
-        with:
-          p12-file-base64: ${{ secrets.apple_developer_certificate_p12_base64 }}
-          p12-password: ${{ secrets.apple_developer_certificate_password }}
-
-      - name: Sign the mac binaries
-        if: ${{ runner.os == 'macOS' }}
-        env:
-          AC_PASSWORD: ${{ secrets.app_store_connect_password }}
-        working-directory: ./pkg/tools/otelcol-config
-        run: make ${{ inputs.arch_os }}-sign
-
-      - name: Store binary as action artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.set-binary-name.outputs.binary_name }}
-          path: ./pkg/tools/otelcol-config/${{ steps.set-binary-name.outputs.binary_name }}
-          if-no-files-found: error
-
-      - name: Store macOS .dmg as action artifact
-        uses: actions/upload-artifact@v4
-        if: runner.os == 'macOS'
-        with:
-          name: ${{ steps.set-binary-name.outputs.binary_name }}.dmg
-          path: ./pkg/tools/otelcol-config/${{ steps.set-binary-name.outputs.binary_name }}.dmg
-          if-no-files-found: error
-
-      - uses: actions/cache/save@v4
-        if: ${{ steps.rebuild-toolchain.outcome == 'success' }}
-        with:
-          path: |
-            /opt/toolchain
-          key: ${{ steps.get-cache-key.outputs.toolchain-cache-key }}
-
-      - uses: actions/cache/save@v4
-        if: inputs.save-cache
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: ${{ steps.get-cache-key.outputs.cache-key }}
+  test:
+    name: >
+      ${{ matrix.platform }} ${{ matrix.fips == true && '(FIPS)' || '' }}
+    uses: ./.github/workflows/workflow-build-otelcol-config-platform.yml
+    with:
+      fips: ${{ matrix.fips == true }}
+      go-version: ${{ inputs.go-version }}
+      platform: ${{ matrix.platform }}
+      runs-on: ${{ matrix.runs-on }}
+      signing-enabled: ${{ inputs.signing-enabled }}
+    secrets: inherit
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: darwin_amd64
+            runs-on: macos-15-xlarge
+          - platform: darwin_arm64
+            runs-on: macos-15-xlarge
+          - platform: linux_amd64
+            runs-on: ubuntu-24.04
+          - platform: linux_amd64
+            runs-on: ubuntu-24.04
+            fips: true
+          - platform: linux_arm64
+            runs-on: ubuntu-24.04
+          - platform: linux_arm64
+            runs-on: ubuntu-24.04
+            fips: true

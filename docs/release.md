@@ -135,11 +135,19 @@ The docs for triggering a package release can be found in the
 [Packaging Release docs][release_packaging] in the
 [sumologic-otel-collector-packaging][packaging_repo] repository.
 
+### Release container images
+
+The docs for triggering a release for containers can be found in the
+[Containers Release docs][release_containers] in the
+[sumologic-otel-collector-containers][containers_repo] repository.
+
 [changelog]: ../CHANGELOG.md
 [build_workflow]: https://github.com/SumoLogic/sumologic-otel-collector-packaging/actions/workflows/build_packages.yml?query=branch%3Amain
 [releases_workflow]: https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/releases.yml
 [release_packaging]: https://github.com/SumoLogic/sumologic-otel-collector-packaging/blob/main/docs/release.md
+[release_containers]: https://github.com/SumoLogic/sumologic-otel-collector-containers/blob/main/docs/release.md
 [packaging_repo]: https://github.com/SumoLogic/sumologic-otel-collector-packaging
+[containers_repo]: https://github.com/SumoLogic/sumologic-otel-collector-containers
 [release_0]: ../images/release_0.png
 [release_1]: ../images/release_1.png
 [release_2]: ../images/release_2.png

@@ -1,0 +1,11 @@
+name: Setup Test Environment
+
+description: |
+  This action sets up the environment for running tests in the Sumo Logic
+  OpenTelemetry Collector (OTC) project. It installs necessary tools and
+  dependencies required for testing.
+
+runs:
+  using: "composite"
+  steps:
+    - uses: ./.github/actions/setup-make-environment

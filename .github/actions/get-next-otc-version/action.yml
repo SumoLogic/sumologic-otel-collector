@@ -1,0 +1,35 @@
+name: Get next available OTC version
+
+description: |
+  This action retrieves the next available version of the Sumo Logic
+  OpenTelemetry Collector (OTC) by running a script that fetches the current
+  version and increments it. The version is then outputted in two formats:
+  1. The next available OTC version (without Git SHA).
+  2. The next available OTC version appended with the current Git SHA.
+
+outputs:
+  version:
+    description: The next available OTC version
+    value: ${{ steps.get-version.outputs.version }}
+  version-with-sha:
+    description: The next available OTC version with Git SHA
+    value: ${{ steps.get-version.outputs.version-with-sha }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get version
+      id: get-version
+      shell: bash
+      run: |
+        version=$(./ci/get_version.sh full | xargs)
+        with_sha=${version}-$(git rev-parse HEAD | xargs)
+
+        echo "version=${version}" >> $GITHUB_OUTPUT
+        echo "version-with-sha=${with_sha}" >> $GITHUB_OUTPUT
+
+    - name: Print version
+      shell: bash
+      run: |
+        echo ::notice title=Version::${{ steps.get-version.outputs.version }}
+        echo ::notice title=Version with Git SHA::${{ steps.get-version.outputs.version-with-sha }}
