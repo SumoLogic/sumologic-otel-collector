@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.130.1-sumo-0]
+
+### Added
+
+- feat: add geoip processor from upstream [#1782]
+- feat(opamp): Add configuration validation for the following components [#1790] [#1796]
+  - awsproxy
+  - awscloudwatchreceiver
+  - awscontainerinsightreceiver
+  - awsecscontainermetricsreceiver
+  - awsfirehosereceiver
+  - awsxrayreceiver
+  - awss3exporter
+  - awskinesisexporter
+  - carbonexporter
+  - debugexporter
+  - fileexporter
+  - kafkaexporter
+  - loadbalancingexporter
+- Upgrade the otel collector core to 0.130.1 [#1799]
+- chore: Upgrade go version to 1.24.5 for binaries. Addresses the following CVEs [#1798]
+  - CVE-2025-22871, CVE-2025-22874, CVE-2025-0913, CVE-2025-4673
+
+### Changed
+
+- chore: removing sumologic-extension from repo [#1780]
+
+[#1782]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1782
+[#1790]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1790
+[#1796]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1796
+[#1799]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1799
+[#1780]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1780
+[#1798]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1798
+[v0.130.1-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.130.1-sumo-0
+
 ## [v0.127.0-sumo-0]
 
 ### Added
@@ -19,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- fix: Addressed CVE-2025-3445 [https://github.com/advisories/GHSA-7vpp-9cxj-q8gv] by migrating to github.com/mholt/archives [#1775]
+- fix: Addressed CVE-2025-3445 by migrating to github.com/mholt/archives [#1775]
 
 [#1770]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1770
 [#1774]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1774
