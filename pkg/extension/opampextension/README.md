@@ -91,3 +91,32 @@ it persists each received YAML configuration to a local file in the
 `remote_configuration_directory` are removed before doing so. A configuration
 provider must be used in order to load the stored configuration, for example:
 `--config "glob:/etc/otelcol-sumo/opamp.d/*"`.
+
+## Components
+
+This section lists the components that are included in the sumologic opamp extension for OpenTelemetry Collector.
+
+| Receivers | Processors | Exporters | Extensions | Connectors |
+| :-------: | :--------: | :-------: | :--------: | :--------: |
+| nop | attributes | awskinesis | awsproxy |            |
+| apache | batch | awss3 | filestorage |            |
+| filelog | memorylimiter | carbon | healthcheck |            |
+| hostmetrics | resourcedetection | debug | opamp |            |
+| otlp | resource | file | pprof |            |
+| windowseventlog | filter | kafka | sumologic |            |
+| nginx | transform | loadbalancing |            |            |
+| redis |            | nop |            |            |
+| kafka |            | otlp |            |            |
+| kafkametrics |            | sumologic |            |            |
+| dockerstats |            | syslog |            |            |
+| rabbitmq |            |           |            |            |
+| windowsperfcounters |            |           |            |            |
+| syslog |            |           |            |            |
+| mysql |            |           |            |            |
+| elasticsearch |            |           |            |            |
+| postgresql |            |           |            |            |
+| awscloudwatch |            |           |            |            |
+| awscontainerinsight |            |           |            |            |
+| awsecscontainermetrics |            |           |            |            |
+| awsfirehose |            |           |            |            |
+| awsxray |            |           |            |            |
