@@ -1,0 +1,34 @@
+receivers:
+  filelog:
+    include:
+      - ./testdata/logs/test.log
+    start_at: beginning
+
+exporters:
+    sumologic:
+        retry_on_failure:
+            max_elapsed_time: 0
+
+extensions:
+    sumologic:
+        api_base_url: http://localhost:3333
+        collector_credentials_directory: /tmp/lib-temp/otelcol-sumo/credentials
+        collector_fields:
+            deployment.environment: default
+            host.group: default
+        installation_token: token
+
+processors:
+    sumologic: null
+
+service:
+    extensions:
+        - sumologic
+    pipelines:
+        logs:
+            exporters:
+                - sumologic
+            processors:
+                - sumologic
+            receivers:
+                - filelog

@@ -1,0 +1,29 @@
+ifeq ($(OS),Windows_NT)
+	OS=windows
+endif
+
+PROJECT_ROOT := $(shell git rev-parse --show-toplevel)
+OTELCOL_BINARY := $(PROJECT_ROOT)/otelcolbuilder/cmd/otelcol-sumo
+GOTEST=go test -race
+LINT=staticcheck
+
+.PHONY: test
+test:
+	@if [ ! -f $(OTELCOL_BINARY) ]; then \
+        echo "Binary not found, building..."; \
+        $(MAKE) -C $(PROJECT_ROOT)/otelcolbuilder build; \
+    fi
+	$(GOTEST) ./...
+
+.PHONY: fmt
+fmt:
+	gofmt  -w -s ./
+	goimports -w  -local github.com/open-telemetry/opentelemetry-collector-contrib ./
+
+.PHONY: lint
+lint:
+	$(LINT) .
+
+.PHONY: mod-download-all
+mod-download-all:
+	go mod download all && go mod tidy
