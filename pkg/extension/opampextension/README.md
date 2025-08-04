@@ -58,7 +58,7 @@ Here is a list of valid values for the Sumo Logic `api_base_url` configuration
 option:
 
 |  Deployment   | API base URL                                |
-|:-------------:|---------------------------------------------|
+| :-----------: | ------------------------------------------- |
 | default/`US1` | `https://open-collectors.sumologic.com`     |
 |     `US2`     | `https://open-collectors.us2.sumologic.com` |
 |     `AU`      | `https://open-collectors.au.sumologic.com`  |
@@ -66,14 +66,14 @@ option:
 |     `EU`      | `https://open-collectors.eu.sumologic.com`  |
 |     `JP`      | `https://open-collectors.jp.sumologic.com`  |
 |     `CA`      | `https://open-collectors.ca.sumologic.com`  |
-|     `IN`      | `https://open-collectors.in.sumologic.com`  |
+|     `KR`      | `https://open-collectors.kr.sumologic.com`  |
 
 Here is a list of valid values for the OpAMP `endpoint** configuration option:
 
 **Note:** These endpoints are not yet available.
 
-|  Deployment   | API base URL                                |
-|:-------------:|---------------------------------------------|
+|  Deployment   | API base URL                                 |
+| :-----------: | -------------------------------------------- |
 | default/`US1` | `https://opamp-collectors.sumologic.com`     |
 |     `US2`     | `https://opamp-collectors.us2.sumologic.com` |
 |     `AU`      | `https://opamp-collectors.au.sumologic.com`  |
@@ -81,7 +81,7 @@ Here is a list of valid values for the OpAMP `endpoint** configuration option:
 |     `EU`      | `https://opamp-collectors.eu.sumologic.com`  |
 |     `JP`      | `https://opamp-collectors.jp.sumologic.com`  |
 |     `CA`      | `https://opamp-collectors.ca.sumologic.com`  |
-|     `IN`      | `https://opamp-collectors.in.sumologic.com`  |
+|     `KR`      | `https://opamp-collectors.kr.sumologic.com`  |
 
 ## Storing local configuration
 
