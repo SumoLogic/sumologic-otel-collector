@@ -9,27 +9,27 @@ import (
 func TestUnix(t *testing.T) {
 	testList := []testSpec{
 		{
-			name:        "ValidateFileExporterConfig",
+			name:        "ValidateConfigFileExporter",
 			validations: []checkFunc{checkValidateOutput},
 			args:        []string{validateCommand, configTag, "./testdata/config/config-file-exporter-valid.yaml"},
 		},
 		{
-			name:        "InvalidConfig",
+			name:        "ValidateConfigInvalidConfig",
 			validations: []checkFunc{checkInvalidValidateOutput},
 			args:        []string{validateCommand, configTag, "./testdata/config/config-file-exporter-invalid.yaml"},
 		},
 		{
-			name:        "ValidFileExporterConfig",
+			name:        "ValidateIngestionFileExporter",
 			validations: []checkFunc{checkLogFileCreated},
 			args:        []string{configTag, "./testdata/config/config-file-exporter-valid.yaml"},
 		},
 		{
-			name:        "ValidateSumologicExporterConfig",
+			name:        "ValidateConfigSumologicExporter",
 			validations: []checkFunc{checkValidateOutput},
 			args:        []string{validateCommand, configTag, "./testdata/config/config-file-sumologic-exporter-valid.yaml"},
 		},
 		{
-			name:        "ValidSumologicExporterConfig",
+			name:        "ValidateIngestionSumologicExporter",
 			validations: []checkFunc{checkValidSumologicExporter},
 			preActions:  []checkFunc{preActionCreateCredentialsDir},
 			args:        []string{configTag, "./testdata/config/config-file-sumologic-exporter-valid.yaml"},
