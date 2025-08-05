@@ -22,7 +22,41 @@ type testSpec struct {
 	preActions  []checkFunc
 }
 
-func executeBinary(tt *testSpec) (context.Context, *exec.Cmd, context.CancelFunc, error) {
+func runTest(tt *testSpec, t *testing.T) (fErr error) {
+	ch := check{
+		test: t,
+	}
+	defer tearDown()
+
+	mockAPI, err := startMockAPI(t)
+	if err != nil {
+		return fmt.Errorf("failed to start mock API: %s", err)
+	}
+	defer stopMockAPI(t, mockAPI)
+
+	for _, v := range tt.preActions {
+		if ok := v(ch); !ok {
+			return nil
+		}
+	}
+
+	t.Log("Starting binary execution")
+	ctx, cmd, cancel, err := prepareExecuteBinary(tt)
+	if err != nil {
+		return fmt.Errorf("failed to create command: %w", err)
+	}
+	ch.commandOutput, ch.commandExitCode, ch.commandErr = getCommandOutput(cmd, ctx, cancel)
+	t.Log("Running post validations")
+	for _, v := range tt.validations {
+		if ok := v(ch); !ok {
+			return nil
+		}
+	}
+
+	return nil
+}
+
+func prepareExecuteBinary(tt *testSpec) (context.Context, *exec.Cmd, context.CancelFunc, error) {
 	if _, err := os.Stat(binaryPath); os.IsNotExist(err) {
 		return nil, nil, nil, fmt.Errorf("binary does not exist: %s", binaryPath)
 	}
@@ -64,34 +98,6 @@ func getCommandOutput(c *exec.Cmd, ctx context.Context, cancel context.CancelFun
 	return output, exitCode, err
 }
 
-func runTest(tt *testSpec, t *testing.T) (fErr error) {
-	ch := check{
-		test: t,
-	}
-	defer tearDown()
-	mockAPI, err := startMockAPI(t)
-	if err != nil {
-		return fmt.Errorf("failed to start mock API: %s", err)
-	}
-	defer stopMockAPI(t, mockAPI)
-	for _, v := range tt.preActions {
-		if ok := v(ch); !ok {
-			return nil
-		}
-	}
-	ctx, cmd, cancel, err := executeBinary(tt)
-	if err != nil {
-		return fmt.Errorf("failed to create command: %w", err)
-	}
-	ch.commandOutput, ch.commandExitCode, ch.commandErr = getCommandOutput(cmd, ctx, cancel)
-	for _, v := range tt.validations {
-		if ok := v(ch); !ok {
-			return nil
-		}
-	}
-	return nil
-}
-
 func tearDown() {
 	if _, err := os.Stat(logFilePath); err == nil {
 		_ = os.Remove(logFilePath)
@@ -113,7 +119,6 @@ func killProcessesByName(name string) {
 
 	for _, pidStr := range pids {
 		if pid, err := strconv.Atoi(strings.TrimSpace(pidStr)); err == nil {
-			// Kill individual processes by PID
 			exec.Command("kill", strconv.Itoa(pid)).Run()
 		}
 	}
