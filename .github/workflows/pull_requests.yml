@@ -1,5 +1,8 @@
 name: PRs checks
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     branches:
@@ -133,47 +136,23 @@ jobs:
       - name: shellcheck
         run: make shellcheck
 
-  test:
-    name: Test
-    uses: ./.github/workflows/workflow-test.yml
+  test-otelcol:
+    name: Test (otelcol)
+    if: needs.build-changed.outputs.any_changed == 'true'
+    uses: ./.github/workflows/workflow-test-otelcol.yml
     needs:
       - build-changed
-    if: needs.build-changed.outputs.any_changed == 'true'
-    strategy:
-      matrix:
-        include:
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-            boringcrypto: true
-          - arch_os: darwin_arm64
-            runs-on: macos-15
-          - arch_os: windows_amd64
-            runs-on: windows-2022
+      - determine-build-info
     with:
-      arch_os: ${{ matrix.arch_os }}
-      runs-on: ${{ matrix.runs-on }}
-      boringcrypto: ${{ matrix.boringcrypto == true }}
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
 
   test-otelcol-config:
     name: Test (otelcol-config)
     uses: ./.github/workflows/workflow-test-otelcol-config.yml
-    strategy:
-      matrix:
-        include:
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-            boringcrypto: true
-          - arch_os: darwin_amd64
-            runs-on: macos-15
+    needs:
+      - determine-build-info
     with:
-      arch_os: ${{ matrix.arch_os }}
-      runs-on: ${{ matrix.runs-on }}
-      save-cache: true
-      boringcrypto: ${{ matrix.boringcrypto == true }}
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
 
   lint:
     name: Lint (staticcheck)
@@ -182,7 +161,7 @@ jobs:
     if: needs.build-changed.outputs.any_changed == 'true'
     strategy:
       matrix:
-        arch_os: ["linux_amd64"]
+        platform: ["linux_amd64"]
     steps:
       - uses: actions/checkout@v4
 
@@ -197,190 +176,51 @@ jobs:
           echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
           echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
 
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684
         with:
           path: |
             ${{ env.GOMODCACHE }}/cache
             ${{ env.GOCACHE }}
-          key: go-test-${{ env.GO_VERSION }}-${{matrix.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
+          key: go-test-${{ env.GO_VERSION }}-${{matrix.platform}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
           restore-keys: |
-            go-test-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
+            go-test-${{ env.GO_VERSION }}-${{matrix.platform}}-
 
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684
         with:
           path: |
             /home/runner/.cache/staticcheck
-          key: staticcheck-${{ env.GO_VERSION }}-${{matrix.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
+          key: staticcheck-${{ env.GO_VERSION }}-${{matrix.platform}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
           restore-keys: |
-            staticcheck-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
+            staticcheck-${{ env.GO_VERSION }}-${{matrix.platform}}-
 
       - name: Install staticcheck
         run: make install-staticcheck
 
       - name: Add opentelemetry-collector-builder installation dir to PATH
-        run: echo "$HOME/bin" >> $GITHUB_PATH
+        run: echo "$HOME/bin" >> "$GITHUB_PATH"
 
       - name: Run staticcheck
         run: make golint
 
-  get-version:
-    name: Get next available version
-    uses: ./.github/workflows/_get-version-workflow.yml
+  determine-build-info:
+    name: Build Info
+    uses: ./.github/workflows/workflow-determine-build-info.yml
 
-  build:
-    name: Build
-    uses: ./.github/workflows/workflow-build.yml
-    needs: [get-version]
-    strategy:
-      matrix:
-        include:
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-            fips: true
-          - arch_os: linux_arm64
-            runs-on: ubuntu-24.04
-          - arch_os: darwin_amd64
-            runs-on: macos-15
-          - arch_os: darwin_arm64
-            runs-on: macos-15
-          - arch_os: windows_amd64
-            runs-on: windows-2022
-          - arch_os: windows_amd64
-            runs-on: windows-2022
-            fips: true
+  build-otelcol:
+    name: Build - Collector
+    uses: ./.github/workflows/workflow-build-otelcol.yml
+    needs:
+      - determine-build-info
     with:
-      arch_os: ${{ matrix.arch_os }}
-      runs-on: ${{ matrix.runs-on }}
-      fips: ${{ matrix.fips == true }}
-      version: ${{ needs.get-version.outputs.version }}
-    secrets:
-      apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-      apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
-      app_store_connect_password: ${{ secrets.AC_PASSWORD }}
-      microsoft_certificate: ${{ secrets.MICROSOFT_CERTIFICATE }}
-      microsoft_certificate_password: ${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}
-      microsoft_certificate_hash: ${{ secrets.MICROSOFT_CERTHASH }}
-      microsoft_certificate_name: ${{ secrets.MICROSOFT_CERTNAME }}
-      microsoft_description: ${{ secrets.MICROSOFT_DESCRIPTION }}
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
+      version: ${{ needs.determine-build-info.outputs.version-with-sha }}
+    secrets: inherit
 
   build-otelcol-config:
-    name: Build (otelcol-config)
+    name: Build - Config Tool
     uses: ./.github/workflows/workflow-build-otelcol-config.yml
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch_os: darwin_amd64
-            runs-on: macos-15
-          - arch_os: darwin_arm64
-            runs-on: macos-15
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-            fips: true
-          - arch_os: linux_arm64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_arm64
-            runs-on: ubuntu-24.04
-            fips: true
+    needs:
+      - determine-build-info
     with:
-      arch_os: ${{ matrix.arch_os }}
-      runs-on: ${{ matrix.runs-on }}
-      fips: ${{ matrix.fips == true }}
-      save-cache: true
-    secrets:
-      apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-      apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
-      app_store_connect_password: ${{ secrets.AC_PASSWORD }}
-
-  build-and-test-container-images:
-    name: Build container
-    runs-on: ubuntu-24.04
-    needs:
-      - build-changed
-      - build
-    if: needs.build-changed.outputs.any_changed == 'true'
-    strategy:
-      matrix:
-        arch_os: ["linux_amd64", "linux_arm64"]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.6.0
-
-      - name: Set up Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v3.11.1
-
-      - name: Show Buildx platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
-
-      - name: Download binary action artifact from build phase
-        uses: actions/download-artifact@v4
-        with:
-          name: otelcol-sumo-${{matrix.arch_os}}
-          path: artifacts/
-
-      - name: Build the container image
-        run: |
-          cp artifacts/otelcol-sumo-${{matrix.arch_os}} otelcol-sumo
-          make build-container-multiplatform \
-            PLATFORM=${{ matrix.arch_os }}
-
-      - name: Test built image
-        run: make test-built-image
-
-      - name: Download FIPS binary action artifact from build phase
-        if: matrix.arch_os == 'linux_amd64'
-        uses: actions/download-artifact@v4
-        with:
-          name: otelcol-sumo-fips-${{matrix.arch_os}}
-          path: artifacts/
-
-      - name: Build the FIPS container image
-        if: matrix.arch_os == 'linux_amd64'
-        run: |
-          cp artifacts/otelcol-sumo-fips-${{matrix.arch_os}} otelcol-sumo
-          make build-container-multiplatform \
-            PLATFORM=${{ matrix.arch_os }} BUILD_TYPE_SUFFIX="-fips"
-
-      - name: Test built FIPS image
-        if: matrix.arch_os == 'linux_amd64'
-        run: make test-built-image BUILD_TAG="latest-fips"
-
-  build-windows-container:
-    name: Build windows container
-    needs:
-      - build-changed
-      - build
-    if: needs.build-changed.outputs.any_changed == 'true'
-    runs-on: ${{ matrix.runs-on }}
-    strategy:
-      matrix:
-        include:
-          - arch_os: windows_amd64
-            base_image_tag: ltsc2022
-            runs-on: windows-2022
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download binary action artifact from build phase
-        uses: actions/download-artifact@v4
-        with:
-          name: otelcol-sumo-${{matrix.arch_os}}.exe
-          path: artifacts/
-
-      - name: Build the container image
-        run: |
-          cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
-          make build-container-windows \
-            PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
-
-      - name: Test built image
-        run: make test-built-image
-
-      # TODO: build windows FIPS image
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
+    secrets: inherit
