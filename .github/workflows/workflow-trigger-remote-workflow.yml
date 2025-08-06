@@ -1,0 +1,69 @@
+#################################################################################
+# A reusable workflow to trigger a remote workflow in a different repository.
+#################################################################################
+
+name: Workflow - Trigger Remote Workflow
+
+permissions: {}
+
+on:
+  workflow_call:
+    inputs:
+      repo:
+        description: |
+          Name of the repository where the remote workflow is defined.
+        type: string
+        required: true
+      workflow-id:
+        description: |
+          ID of the workflow that is triggering the remote workflow.
+        type: string
+        required: true
+      workflow-id-key:
+        description: |
+          Name of the input that will be used to pass the workflow ID to the
+          remote workflow.
+        type: string
+        default: workflow-id
+      workflow-name:
+        description: |
+          Name of the workflow to trigger in the remote repository.
+        type: string
+        required: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  trigger:
+    name: Trigger Remote Workflow
+    runs-on: ubuntu-24.04
+    steps:
+      # TODO: It would be nice to output the URL of the remote workflow after it
+      # is triggered. There is not currently an easy way to implement this. A
+      # solution is being worked on by GitHub in the issue URL below.
+      # https://github.com/cli/cli/issues/4001
+      - name: Trigger remote workflow
+        id: trigger-remote-workflow
+        env:
+          GITHUB_TOKEN: ${{ secrets.PACKAGING_GH_TOKEN }}
+          REPO: ${{ inputs.repo }}
+          WORKFLOW: ${{ inputs.workflow-name }}
+        run: |
+          gh workflow run --repo "${REPO}" "${WORKFLOW}" --json << EOF
+            {
+              "${{ inputs.workflow-id-key }}": "${{ inputs.workflow-id }}"
+            }
+          EOF
+
+      # Outputs the Remote Workflow URL as an Annotation in the Web UI.
+      - name: Remote Workflow URL
+        run: |
+          url="https://github.com/${{ inputs.repo }}"
+          url="${url}/actions/workflows/${{ inputs.workflow-name }}"
+          echo ::notice title=Remote Workflow URL::${url}
+
+      - name: Collector Workflow ID
+        run: |
+          echo ::notice title=Collector Workflow ID::${{ inputs.workflow-id }}

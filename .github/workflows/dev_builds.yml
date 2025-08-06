@@ -1,5 +1,8 @@
 name: Dev builds
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
@@ -10,430 +13,45 @@ defaults:
   run:
     shell: bash
 
-env:
-  GO_VERSION: "1.24.0"
-
 jobs:
-  # Add lint to dev builds as that's the only way for cache to be shared across branches.
-  # https://docs.github.com/en/actions/advanced-guides/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
-  lint:
-    name: Lint (staticcheck)
-    runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        arch_os: ["linux_amd64"]
-    steps:
-      - uses: actions/checkout@v4
+  determine-build-info:
+    name: Build Info
+    uses: ./.github/workflows/workflow-determine-build-info.yml
 
-      - name: Setup go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: false
-
-      - name: Get GOCACHE and GOMODCACHE
-        run: |
-          echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
-          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
-
-      - uses: actions/cache/restore@v4
-        with:
-          path: |
-            ${{ env.GOMODCACHE }}/cache
-            ${{ env.GOCACHE }}
-          key: go-test-${{ env.GO_VERSION }}-${{matrix.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
-          restore-keys: |
-            go-test-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
-
-      - uses: actions/cache@v4
-        with:
-          path: |
-            /home/runner/.cache/staticcheck
-          key: staticcheck-${{ env.GO_VERSION }}-${{matrix.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}
-          restore-keys: |
-            staticcheck-${{ env.GO_VERSION }}-${{matrix.arch_os}}-
-
-      - name: Install staticcheck
-        run: make install-staticcheck
-
-      - name: Add opentelemetry-collector-builder installation dir to PATH
-        run: echo "$HOME/bin" >> $GITHUB_PATH
-
-      - name: Run staticcheck
-        run: make golint
-
-  test:
-    name: Test
-    uses: ./.github/workflows/workflow-test.yml
-    strategy:
-      matrix:
-        include:
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-            boringcrypto: true
-          - arch_os: darwin_amd64
-            runs-on: macos-15
-          - arch_os: windows_amd64
-            runs-on: windows-2022
+  test-otelcol:
+    name: Test - Collector
+    needs:
+      - determine-build-info
+    uses: ./.github/workflows/workflow-test-otelcol.yml
     with:
-      arch_os: ${{ matrix.arch_os }}
-      runs-on: ${{ matrix.runs-on }}
-      save-cache: true
-      boringcrypto: ${{ matrix.boringcrypto == true }}
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
 
   test-otelcol-config:
-    name: Test (otelcol-config)
+    name: Test - Config Tool
     uses: ./.github/workflows/workflow-test-otelcol-config.yml
-    strategy:
-      matrix:
-        include:
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-            boringcrypto: true
-          - arch_os: darwin_amd64
-            runs-on: macos-15
+    needs:
+      - determine-build-info
     with:
-      arch_os: ${{ matrix.arch_os }}
-      runs-on: ${{ matrix.runs-on }}
-      save-cache: true
-      boringcrypto: ${{ matrix.boringcrypto == true }}
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
 
-  get-version:
-    name: Get next available version
-    uses: ./.github/workflows/_get-version-workflow.yml
-
-  build:
-    name: Build
-    uses: ./.github/workflows/workflow-build.yml
-    needs: [get-version]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-            fips: true
-          - arch_os: linux_arm64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_arm64
-            runs-on: ubuntu-24.04
-            fips: true
-          - arch_os: darwin_amd64
-            runs-on: macos-15
-          - arch_os: darwin_arm64
-            runs-on: macos-15
-          - arch_os: windows_amd64
-            runs-on: windows-2022
-          - arch_os: windows_amd64
-            runs-on: windows-2022
-            fips: true
+  build-otelcol:
+    name: Build - Collector
+    uses: ./.github/workflows/workflow-build-otelcol.yml
+    needs:
+      - determine-build-info
     with:
-      arch_os: ${{ matrix.arch_os }}
-      runs-on: ${{ matrix.runs-on }}
-      fips: ${{ matrix.fips == true }}
-      save-cache: true
-      version: ${{ needs.get-version.outputs.version }}
-    secrets:
-      apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-      apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
-      app_store_connect_password: ${{ secrets.AC_PASSWORD }}
-      microsoft_certificate: ${{ secrets.MICROSOFT_CERTIFICATE }}
-      microsoft_certificate_password: ${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}
-      microsoft_certificate_hash: ${{ secrets.MICROSOFT_CERTHASH }}
-      microsoft_certificate_name: ${{ secrets.MICROSOFT_CERTNAME }}
-      microsoft_description: ${{ secrets.MICROSOFT_DESCRIPTION }}
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
+      version: ${{ needs.determine-build-info.outputs.version-with-sha }}
+    secrets: inherit
 
   build-otelcol-config:
-    name: Build (otelcol-config)
+    name: Build - Config Tool
     uses: ./.github/workflows/workflow-build-otelcol-config.yml
-    needs: [get-version]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch_os: darwin_amd64
-            runs-on: macos-15
-          - arch_os: darwin_arm64
-            runs-on: macos-15
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_amd64
-            runs-on: ubuntu-24.04
-            fips: true
-          - arch_os: linux_arm64
-            runs-on: ubuntu-24.04
-          - arch_os: linux_arm64
-            runs-on: ubuntu-24.04
-            fips: true
+    needs:
+      - determine-build-info
     with:
-      arch_os: ${{ matrix.arch_os }}
-      runs-on: ${{ matrix.runs-on }}
-      fips: ${{ matrix.fips == true }}
-      save-cache: true
-      sumo_component_gomod_version: "v${{ needs.get-version.outputs.version }}"
-    secrets:
-      apple_developer_certificate_p12_base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-      apple_developer_certificate_password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
-      app_store_connect_password: ${{ secrets.AC_PASSWORD }}
-
-  build-container-images:
-    name: Build container
-    runs-on: ubuntu-24.04
-    needs:
-      - build
-      - get-version
-    strategy:
-      matrix:
-        arch_os: ["linux_amd64", "linux_arm64"]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.6.0
-
-      - name: Set up Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v3.11.1
-
-      - name: Show Buildx platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
-
-      - name: Login to Open Source ECR
-        run: make login
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
-
-      - name: Login to Docker Hub
-        run: |
-          docker login \
-            --username ${{ secrets.DOCKERHUB_LOGIN_DEV }} \
-            --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
-
-      - name: Download FIPS binary action artifact from build phase
-        uses: actions/download-artifact@v4
-        with:
-          name: otelcol-sumo-fips-${{matrix.arch_os}}
-
-      - name: Build and push FIPS images to Open Source ECR
-        run: |
-          cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
-          make build-push-container-multiplatform-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORM=${{ matrix.arch_os }} \
-            BUILD_TYPE_SUFFIX="-fips"
-
-      - name: Build and push FIPS images to DockerHub
-        run: |
-          cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
-          make build-push-container-multiplatform-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORM=${{ matrix.arch_os }} \
-            REPO_URL=sumologic/sumologic-otel-collector-dev \
-            BUILD_TYPE_SUFFIX="-fips"
-
-      - name: Build and push UBI-based FIPS image to Open Source ECR
-        run: |
-          cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
-          make build-push-container-ubi-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORM=${{ matrix.arch_os }} \
-            BUILD_TYPE_SUFFIX="-ubi-fips"
-
-      - name: Build and push UBI-based FIPS image to DockerHub
-        run: |
-          cp otelcol-sumo-fips-${{ matrix.arch_os }} otelcol-sumo
-          make build-push-container-ubi-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORM=${{ matrix.arch_os }} \
-            REPO_URL=sumologic/sumologic-otel-collector-dev \
-            BUILD_TYPE_SUFFIX="-ubi-fips"
-
-      - name: Download binary action artifact from build phase
-        uses: actions/download-artifact@v4
-        with:
-          name: otelcol-sumo-${{ matrix.arch_os }}
-
-      - name: Build and push image to Open Source ECR
-        run: |
-          cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
-          make build-push-container-multiplatform-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORM=${{ matrix.arch_os }}
-
-      - name: Build and push image to DockerHub
-        run: |
-          cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
-          make build-push-container-multiplatform-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORM=${{ matrix.arch_os }} \
-            REPO_URL=sumologic/sumologic-otel-collector-dev
-
-      - name: Build and push UBI-based image to Open Source ECR
-        run: |
-          cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
-          make build-push-container-ubi-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORM=${{ matrix.arch_os }} \
-            BUILD_TYPE_SUFFIX="-ubi"
-
-      - name: Build and push UBI-based image to DockerHub
-        run: |
-          cp otelcol-sumo-${{ matrix.arch_os }} otelcol-sumo
-          make build-push-container-ubi-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORM=${{ matrix.arch_os }} \
-            REPO_URL=sumologic/sumologic-otel-collector-dev \
-            BUILD_TYPE_SUFFIX="-ubi"
-
-  build-windows-container-images:
-    name: Build Windows container
-    runs-on: ${{ matrix.runs-on }}
-    needs:
-      - build
-      - get-version
-    strategy:
-      matrix:
-        include:
-          - arch_os: windows_amd64
-            base_image_tag: ltsc2022
-            runs-on: windows-2022
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Login to Open Source ECR
-        run: |
-          USERNAME=$(powershell.exe "echo \$Env:UserName")
-          # remove wincred entry and fix json format by replacing }, with }
-          cat "C:\\Users\\${USERNAME}\\.docker\\config.json" | grep -v "wincred" | sed 's/},$/}/' > "C:\\Users\\${USERNAME}\\.docker\\config.json.tmp"
-          mv "C:\\Users\\${USERNAME}\\.docker\\config.json.tmp" "C:\\Users\\${USERNAME}\\.docker\\config.json"
-          make login
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
-
-      - name: Login to Docker Hub
-        run: |
-          docker login \
-            --username ${{ secrets.DOCKERHUB_LOGIN_DEV }} \
-            --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
-
-      - name: Download binary action artifact from build phase
-        uses: actions/download-artifact@v4
-        with:
-          name: otelcol-sumo-${{matrix.arch_os}}.exe
-          path: artifacts/
-
-      - name: Build and push images to Open Source ECR
-        run: |
-          cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
-          make build-push-container-windows-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
-
-      - name: Build and push images to DockerHub
-        run: |
-          cp artifacts/otelcol-sumo-${{matrix.arch_os}}.exe otelcol-sumo.exe
-          make build-push-container-windows-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            REPO_URL=sumologic/sumologic-otel-collector-dev \
-            PLATFORM=${{ matrix.arch_os }}_${{ matrix.base_image_tag }}
-
-  push-docker-manifest:
-    name: Push joint container manifest
-    runs-on: ubuntu-24.04
-    needs:
-      - build-container-images
-      - build-windows-container-images
-      - get-version
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.6.0
-
-      - name: Set up Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v3.11.1
-
-      - name: Show Buildx platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
-
-      - name: Login to Open Source ECR
-        run: make login
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
-
-      - name: Login to Docker Hub
-        run: |
-          docker login \
-            --username ${{ secrets.DOCKERHUB_LOGIN_DEV }} \
-            --password ${{ secrets.DOCKERHUB_PASSWORD_DEV }}
-
-      - name: Push joint FIPS container manifest for all platforms to Open Source ECR
-        run: |
-          make push-container-manifest-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64" \
-            BUILD_TYPE_SUFFIX="-fips"
-
-      - name: Push joint FIPS container manifest for all platforms to DockerHub
-        run: |
-          make push-container-manifest-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64" \
-            REPO_URL=sumologic/sumologic-otel-collector-dev \
-            BUILD_TYPE_SUFFIX="-fips"
-
-      - name: Push joint UBI-based FIPS container manifest for all platforms to Open Source ECR
-        run: |
-          make push-container-manifest-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64 linux/arm64" \
-            BUILD_TYPE_SUFFIX="-ubi-fips"
-
-      - name: Push joint UBI-based FIPS container manifest for all platforms to DockerHub
-        run: |
-          make push-container-manifest-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64 linux/arm64" \
-            REPO_URL=sumologic/sumologic-otel-collector-dev \
-            BUILD_TYPE_SUFFIX="-ubi-fips"
-
-      - name: Push joint container manifest for all platforms to Open Source ECR
-        run: |
-          make push-container-manifest-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022"
-
-      - name: Push joint container manifest for all platforms to DockerHub
-        run: |
-          make push-container-manifest-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64 linux/arm64 windows/amd64/ltsc2022" \
-            REPO_URL=sumologic/sumologic-otel-collector-dev
-
-      - name: Push joint UBI-based container manifest for all platforms to Open Source ECR
-        run: |
-          make push-container-manifest-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64 linux/arm64" \
-            BUILD_TYPE_SUFFIX="-ubi"
-
-      - name: Push joint UBI-based container manifest for all platforms to DockerHub
-        run: |
-          make push-container-manifest-dev \
-            BUILD_TAG=${{ needs.get-version.outputs.version }} \
-            PLATFORMS="linux/amd64 linux/arm64" \
-            REPO_URL=sumologic/sumologic-otel-collector-dev \
-            BUILD_TYPE_SUFFIX="-ubi"
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
+    secrets: inherit
 
   # Store the install script from the packaging repository as an action artifact.
   # Originally, this script was stored in this repository, and the official download url pointed
@@ -449,7 +67,7 @@ jobs:
   # to this repository and use the install scripts from the HEAD SHA of the
   # collector workflow run specified for a release.
   install-script:
-    name: Store install script
+    name: Store Install Script
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -457,21 +75,23 @@ jobs:
           repository: SumoLogic/sumologic-otel-collector-packaging
 
       - name: Store Linux install script as action artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: install.sh
           path: ./install-script/install.sh
           if-no-files-found: error
 
       - name: Store Windows install script as action artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: install.ps1
           path: ./install-script/install.ps1
           if-no-files-found: error
 
   config-management-assets:
-    name: Store Chef cookbook, Puppet module, and Ansible playbook
+    name: Store Config Management Assets
+    permissions:
+      contents: read
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -486,34 +106,46 @@ jobs:
         run: tar -cvf ./examples/ansible-playbook.tar.gz -C ./examples ansible/
 
       - name: Store Chef cookbook archive as action artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: chef-cookbook.tar.gz
           path: ./examples/chef/chef-cookbook.tar.gz
           if-no-files-found: error
 
       - name: Store Puppet module archive as action artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: puppet-module.tar.gz
           path: ./examples/puppet/puppet-module.tar.gz
           if-no-files-found: error
 
       - name: Store Ansible playbook archive as action artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ansible-playbook.tar.gz
           path: ./examples/ansible-playbook.tar.gz
           if-no-files-found: error
 
-  trigger-packaging:
-    name: Trigger Packaging
+  trigger-containers:
+    name: Containers
     needs:
-      - build
-      - build-otelcol-config
-      - lint
-      - push-docker-manifest
-    uses: ./.github/workflows/workflow-trigger-packaging.yml
+      - build-otelcol
+    uses: ./.github/workflows/workflow-trigger-remote-workflow.yml
     secrets: inherit
     with:
-      workflow_id: ${{ github.run_id }}
+      repo: sumologic/sumologic-otel-collector-containers
+      workflow-id: ${{ github.run_id }}
+      workflow-name: build-and-push.yml
+
+  trigger-packaging:
+    name: Packages
+    needs:
+      - build-otelcol
+      - build-otelcol-config
+    uses: ./.github/workflows/workflow-trigger-remote-workflow.yml
+    secrets: inherit
+    with:
+      repo: sumologic/sumologic-otel-collector-packaging
+      workflow-id: ${{ github.run_id }}
+      workflow-id-key: workflow_id
+      workflow-name: build_packages.yml
