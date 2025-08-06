@@ -1,54 +1,82 @@
-include ../../Makefile.Common
-include ../../../toolchains/Makefile
+#################################################################################
+# Path variables & stop implicit rules
+#################################################################################
 
-TOOLCHAINS_DIR ?= "$(shell '$(MAKE)' print-toolchains-dir)"
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
+parent_dir := $(abspath $(current_dir)/..)
+pkg_dir := $(abspath $(parent_dir)/..)
+root_dir := $(abspath $(pkg_dir)/..)
+toolchains_dir := $(abspath $(root_dir)/toolchains)
+
+Makefile:
+	@true
+
+$(pkg_dir)/common.mk:
+	@true
+
+$(toolchains_dir)/Makefile:
+	@true
+
+#################################################################################
+# Override variables & include makefile dependencies
+#################################################################################
+
+# Include commmon.mk from the package directory
+include $(pkg_dir)/common.mk
+
+# Include Makefile from the toolchains directory
+include $(toolchains_dir)/Makefile
+
+#################################################################################
+# Variables
+#################################################################################
 
 BINARY_NAME ?= otelcol-config
 GO ?= go
-
-OS ?= $(shell uname -s | tr A-Z a-z)
-ARCH ?= $(shell uname -m | sed s/aarch64/arm64/ | sed s/x86_64/amd64/)
-
 FIPS_SUFFIX ?= ""
 
-# Builds for darwin need to be built with CGO_ENABLED set to 1 because some telegraf
-# plugins that are used within the telegrafreceiver are implemented with CGO.
-# Example of this might be the cpu input plugin using gopsutil to the cpu stats.
+# Builds for darwin need to be built with CGO_ENABLED set to 1 because some
+# telegraf plugins that are used within the telegrafreceiver are implemented with
+# CGO. Example of this might be the cpu input plugin using gopsutil to the cpu
+# stats.
 #
 # https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin_nocgo.go
 # https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin.go
 ifeq ($(shell go env GOOS),darwin)
-CGO_ENABLED ?= 1
+	CGO_ENABLED ?= 1
 else
 # CGO_ENABLED=0 is used becuase we don't want to rely on c libs and opentelemetry
 # also builds their binaries this way.
 # ref: https://github.com/open-telemetry/opentelemetry-collector/blob/4c503ddc/Makefile#L254-L256
-CGO_ENABLED ?= 0
+	CGO_ENABLED ?= 0
 endif
 
-# We don't want to strip symbols for FIPS builds, as they're useful for verifying the build
+# We don't want to strip symbols for FIPS builds, as they're useful for verifying
+# the build
 ifeq ($(FIPS_SUFFIX),"")
-GOEXPERIMENT=""
-LDFLAGS+= -s -w
+	GOEXPERIMENT=""
+	LDFLAGS+= -s -w
 # We want to use boringcrypto for fips setup
 else
-ifeq ($(shell go env GOOS),windows)
-GOEXPERIMENT=systemcrypto
-GOTAGS := $(GOTAGS) requirefips
-LDFLAGS+= -w
-else
-GOEXPERIMENT=boringcrypto
-LDFLAGS+= -w
-endif
+	ifeq ($(shell go env GOOS),windows)
+		GOEXPERIMENT=systemcrypto
+		GOTAGS := $(GOTAGS) requirefips
+		LDFLAGS+= -w
+	else
+		GOEXPERIMENT=boringcrypto
+		LDFLAGS+= -w
+	endif
 endif
 
-# We want to enforce go dns for all types of binaries. The FIPS binaries are built with CGO enabled and use
-# the CGO resolver. This has caused a DNS resolution error for .local domains in our K8s containers.
+# We want to enforce go dns for all types of binaries. The FIPS binaries are
+# built with CGO enabled and use the CGO resolver. This has caused a DNS
+# resolution error for .local domains in our K8s containers.
 # ref: https://pkg.go.dev/net#hdr-Name_Resolution
 GOTAGS := $(GOTAGS) netgo
 
 # Settings for macOS builds
-ifeq ($(OS),darwin)
+ifeq ($(HOST_OS),Darwin)
 	AC_USERNAME ?= otel-mac-certs@sumologic.com
 	AC_PASSWORD ?= $(shell echo $$AC_PASSWORD)
 	DEVELOPER_TEAM_ID ?= 8F28635Z7X
@@ -132,20 +160,18 @@ otelcol-config-windows_amd64:
 
 .PHONY: otelcol-config-linux-fips_amd64
 otelcol-config-linux-fips_amd64:
-	$(MAKE) toolchain-linux_amd64
 	$(MAKE) otelcol-config-linux_amd64 \
 	FIPS_SUFFIX="-fips" \
 	CGO_ENABLED="1" \
-	CC="$(TOOLCHAINS_DIR)toolchain_amd64/bin/x86_64-linux-musl-gcc" \
+	CC="$(toolchains_dir)toolchain_amd64/bin/x86_64-linux-musl-gcc" \
 	LDFLAGS="-linkmode external -extldflags '-static'"
 
 .PHONY: otelcol-config-linux-fips_arm64
 otelcol-config-linux-fips_arm64:
-	$(MAKE) toolchain-linux_arm64
 	$(MAKE) otelcol-config-linux_arm64 \
 	FIPS_SUFFIX="-fips" \
 	CGO_ENABLED="1" \
-	CC="$(TOOLCHAINS_DIR)toolchain_arm64/bin/aarch64-linux-musl-gcc" \
+	CC="$(toolchains_dir)toolchain_arm64/bin/aarch64-linux-musl-gcc" \
 	LDFLAGS="-linkmode external -extldflags '-static'"
 
 ################################################################################

@@ -1,0 +1,322 @@
+#################################################################################
+# A reusable workflow to build the otelcol-sumo binary for a specific platform.
+#################################################################################
+
+name: Workflow - Build Collector (Single Platform)
+
+on:
+  workflow_call:
+    inputs:
+      fips:
+        description: Build binary with FIPS support
+        default: false
+        type: boolean
+      go-version:
+        description: The version of Go to use.
+        type: string
+        required: true
+      platform:
+        description: |
+          Platform (Operating System and CPU architecture) in the form
+          "{os}_{arch}". See GOOS and GOARCH for accepted values.
+        default: linux_amd64
+        type: string
+      runs-on:
+        default: ubuntu-24.04
+        type: string
+      signing-enabled:
+        default: true
+        type: boolean
+      version:
+        description: Version to use when building the binary
+        required: true
+        type: string
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  VERSION: ${{ inputs.version }}
+  YQ_VERSION: "4.45.4"
+
+jobs:
+  build:
+    name: >
+      ${{ inputs.platform }} ${{ inputs.fips == true && '(FIPS)' || '' }}
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/parse-platform
+        id: platform
+        with:
+          platform: ${{ inputs.platform }}
+
+      - name: Set GOCACHE & GOMODCACHE
+        if: runner.os != 'Windows'
+        run: |
+          gocache="${HOME}/.go-cache"
+          gomodcache="${HOME}/.go-mod-cache"
+
+          mkdir -p "${gocache}"
+          mkdir -p "${gomodcache}"
+
+          {
+            echo "GOCACHE=${gocache}"
+            echo "GOMODCACHE=${gomodcache}"
+          } >> "$GITHUB_ENV"
+
+      - name: Cache Keys
+        if: runner.os != 'Windows'
+        id: cache-keys
+        run: |
+          os="${{ steps.platform.outputs.os }}"
+          arch="${{ steps.platform.outputs.arch }}"
+          fips="${{ inputs.fips == true && 'fips' || 'nofips' }}"
+          hash="${{ hashFiles(
+            '**/*.mod',
+            'otelcolbuilder/.otelcol-builder.yaml
+          ') }}"
+          ts="$(date +%Y-%m-%d)"
+
+          gocachename="${os}-${arch}-${fips}-gocache-${hash}"
+          gocachenamedate="${gocachename}-${ts}"
+          gomodcachename="${os}-gomodcache-${hash}"
+          gomodcachenamedate="${gomodcachename}-${ts}"
+
+          {
+            echo "go-cache=${gocachename}"
+            echo "go-cache-with-date=${gocachenamedate}"
+            echo "go-cache-path=${GOCACHE}"
+            echo "go-mod-cache=${gomodcachename}"
+            echo "go-mod-cache-with-date=${gomodcachenamedate}"
+            echo "go-mod-cache-path=${GOMODCACHE}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Restore GOMODCACHE
+        if: runner.os != 'Windows'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-mod-cache-path }}
+          key: nonexistent
+          restore-keys: ${{ steps.cache-keys.outputs.go-mod-cache }}-
+
+      - name: Restore GOCACHE
+        if: runner.os != 'Windows'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-cache-path }}
+          key: nonexistent
+          restore-keys: ${{ steps.cache-keys.outputs.go-cache }}-
+
+      - name: Set Go Distribution
+        id: go-distribution
+        run: |
+          distribution="official"
+          fips="${{ inputs.fips }}"
+
+          if [[ "${RUNNER_OS}" == "Windows" && "${fips}" == "true" ]]; then
+            distribution="microsoft"
+          fi
+
+          echo "name=${distribution}" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Go
+        id: setup-go
+        uses: ./.github/actions/setup-go
+        with:
+          distribution: ${{ steps.go-distribution.outputs.name }}
+          version: ${{ inputs.go-version }}
+          cache-dependency-paths: |
+            **/*.sum
+            otelcolbuilder/.otelcol-builder.yaml
+
+      - uses: ./.github/actions/setup-build-environment
+        with:
+          fips: ${{ inputs.fips }}
+
+      - name: Install Go modules
+        run: make gomod-download-all
+
+      - name: Setup Toolchain
+        uses: ./.github/actions/setup-toolchain
+        if: inputs.fips && steps.platform.outputs.os == 'linux'
+        with:
+          platform: ${{ inputs.platform }}
+
+      # Build without FIPS
+      - name: Build
+        if: "! inputs.fips"
+        working-directory: ./otelcolbuilder
+        run: make otelcol-sumo-${{ inputs.platform }}
+
+      # FIPS Build for Linux
+      - name: Build (FIPS)
+        if: inputs.fips && steps.platform.outputs.os == 'linux'
+        working-directory: ./otelcolbuilder
+        run: |
+          CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
+          test "$CC"
+          echo "Using toolchain: $CC"
+          make otelcol-sumo-${{ inputs.platform }} \
+            FIPS_SUFFIX="-fips" \
+            CGO_ENABLED="1" \
+            CC="$CC" \
+            EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
+
+      # FIPS Build for non-Linux platforms
+      - name: Build (FIPS)
+        if: inputs.fips && steps.platform.outputs.os != 'linux'
+        working-directory: ./otelcolbuilder
+        run: |
+          make otelcol-sumo-${{ inputs.platform }} \
+          FIPS_SUFFIX="-fips" \
+          CGO_ENABLED="1"
+
+      - name: Trim Go cache
+        if: github.ref == 'refs/heads/main' && runner.os != 'Windows'
+        shell: bash
+        run: |
+          cache_dir="${{ steps.cache-keys.outputs.go-cache-path }}"
+          find "${cache_dir}" -type f -mmin +90 -delete
+
+      - name: Check if cache for GOCACHE exists
+        id: go-cache-exists
+        if: github.ref == 'refs/heads/main' && runner.os != 'Windows'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-cache-path }}
+          key: ${{ steps.cache-keys.outputs.go-cache-with-date }}
+          lookup-only: true
+
+      - name: Save GOCACHE
+        if: ${{
+          github.ref == 'refs/heads/main'
+          &&
+          runner.os != 'Windows'
+          &&
+          steps.go-cache-exists.outputs.cache-hit != 'true'
+          }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-cache-path }}
+          key: ${{ steps.cache-keys.outputs.go-cache-with-date }}
+
+      - name: Check if cache for GOMODCACHE exists
+        id: go-mod-cache-exists
+        if: github.ref == 'refs/heads/main' && runner.os != 'Windows'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-mod-cache-path }}
+          key: ${{ steps.cache-keys.outputs.go-mod-cache-with-date }}
+          lookup-only: true
+
+      - name: Save GOMODCACHE
+        if: ${{
+          github.ref == 'refs/heads/main'
+          &&
+          runner.os != 'Windows'
+          &&
+          steps.go-mod-cache-exists.outputs.cache-hit != 'true'
+          }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.cache-keys.outputs.go-mod-cache-path }}
+          key: ${{ steps.cache-keys.outputs.go-mod-cache-with-date }}
+
+      - name: Set binary name
+        uses: ./.github/actions/determine-binary-name
+        id: binary-name
+        with:
+          fips: ${{ inputs.fips }}
+          name: otelcol-sumo
+          platform: ${{ inputs.platform }}
+
+      - name: Show file info
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          file ${{ steps.binary-name.outputs.name-with-platform }}
+
+      - name: Show ldd info
+        if: steps.platform.outputs.os == 'linux'
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          ldd ${{ steps.binary-name.outputs.name-with-platform }} || true
+
+      - uses: ./.github/actions/show-fips-symbols
+        if: inputs.fips
+        with:
+          name: ${{ steps.binary-name.outputs.name-with-platform }}
+          os: ${{ steps.platform.outputs.os }}
+          working-directory: ./otelcolbuilder/cmd
+
+      - name: Verify binary version
+        if: inputs.platform == 'linux_amd64' || inputs.platform == 'darwin_amd64'
+        run: |
+          binary=${{ steps.binary-name.outputs.name-with-platform }}
+          binary_path=otelcolbuilder/cmd/${binary}
+          ./ci/get_version_from_binary.sh core "${binary_path}"
+          ./ci/get_version_from_binary.sh sumo "${binary_path}"
+
+      - uses: apple-actions/import-codesign-certs@v5
+        if: runner.os == 'macOS' && inputs.signing-enabled
+        with:
+          p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+          p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+
+      - name: Sign the mac binaries
+        if: runner.os == 'macOS' && inputs.signing-enabled
+        env:
+          AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
+        working-directory: ./otelcolbuilder/
+        run: |
+          for _ in $(seq 1 5); do
+          # shellcheck disable=SC2015
+          make ${{ inputs.platform }}-sign && break || sleep 5
+          done
+
+      - name: Sign Windows binary
+        if: runner.os == 'Windows' && inputs.signing-enabled
+        uses: skymatic/code-sign-action@v3
+        with:
+          certificate: ${{ secrets.MICROSOFT_CERTIFICATE }}
+          password: ${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}
+          certificatesha1: ${{ secrets.MICROSOFT_CERTHASH }}
+          certificatename: ${{ secrets.MICROSOFT_CERTNAME }}
+          description: ${{ secrets.MICROSOFT_DESCRIPTION }}
+          folder: ./otelcolbuilder/cmd
+
+      - name: Test binary
+        if: inputs.platform == 'linux_amd64'
+        working-directory: ./otelcolbuilder/cmd
+        run: |
+          binary="${{ steps.binary-name.outputs.name-with-platform }}"
+          ./${binary} help
+          ./${binary} components
+          ./${binary} completion bash
+
+      - name: Store binary as action artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ${{ steps.binary-name.outputs.name-with-platform }}
+          path: ./otelcolbuilder/cmd/${{ steps.binary-name.outputs.name-with-platform }}
+          if-no-files-found: error
+
+      - name: Store Mac .dmg as action artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: runner.os == 'macOS'
+        with:
+          name: ${{ steps.binary-name.outputs.name-with-platform }}.dmg
+          path: ./otelcolbuilder/cmd/${{ steps.binary-name.outputs.name-with-platform }}.dmg
+          if-no-files-found: error
+
+      # NOTE: There doesn't appear to be a simple way to run post hooks in
+      # composite actions. We must unmount the VHDX image after we're done using
+      # it but before the post-cache hook runs. We should be able to fix this by
+      # converting our setup-vhdx action to NodeJS.
+      - name: Unmount Go Cache (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Dismount-VHD -Path ${{ steps.setup-go.outputs.vhdx-path }}

@@ -1,0 +1,17 @@
+{
+    "include": [
+        {
+            "runs-on": "macos-15-xlarge"
+        },
+        {
+            "runs-on": "ubuntu-24.04"
+        },
+        {
+            "runs-on": "ubuntu-24.04",
+            "fips": true
+        },
+        {
+            "runs-on": "windows-2025"
+        }
+    ]
+}

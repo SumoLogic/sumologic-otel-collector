@@ -31,4 +31,4 @@ jobs:
           make check-changelog
       - name: Check if new CHANGELOG entries reference the correct PR
         run: |
-          git diff --name-only origin/${{ github.base_ref }} HEAD .changelog | grep ${PR_NUMBER}
+          git diff --name-only "origin/${{ github.base_ref }}" HEAD .changelog | grep "${PR_NUMBER}"

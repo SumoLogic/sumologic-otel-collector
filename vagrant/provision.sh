@@ -11,11 +11,11 @@ sudo apt install -y \
     python3-pip
 
 # Install Go
-curl -LJ "https://golang.org/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz" -o go.linux-${ARCH}.tar.gz \
-    && rm -rf /usr/local/go \
-    && tar -C /usr/local -xzf go.linux-${ARCH}.tar.gz \
-    && rm go.linux-${ARCH}.tar.gz \
-    && ln -s /usr/local/go/bin/go /usr/local/bin
+curl -LJ "https://golang.org/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz" -o go.linux-${ARCH}.tar.gz &&
+    rm -rf /usr/local/go &&
+    tar -C /usr/local -xzf go.linux-${ARCH}.tar.gz &&
+    rm go.linux-${ARCH}.tar.gz &&
+    ln -s /usr/local/go/bin/go /usr/local/bin
 
 # Install Node.js (for tools like linters etc.)
 curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
@@ -25,13 +25,13 @@ make -C /sumologic install-markdownlint
 
 # Install opentelemetry-collector-builder
 
-su vagrant -c 'export PATH="${PATH}:/home/vagrant/bin"; make -C /sumologic/otelcolbuilder/ install-builder'
+su vagrant -c 'export PATH="${PATH}:/home/vagrant/bin"; make -C /sumologic/otelcolbuilder/ install-ocb'
 
 # Install ansible
 pip3 install ansible
 
 # Add puppet hosts
-tee -a /etc/hosts << END
+tee -a /etc/hosts <<END
 127.0.0.1 agent
 END
 
@@ -41,7 +41,7 @@ dpkg -i puppet6-release-focal.deb
 apt-get update -y
 apt-get install puppetserver puppet-agent -y
 
-tee /etc/puppetlabs/puppet/puppet.conf << END
+tee /etc/puppetlabs/puppet/puppet.conf <<END
 [server]
 vardir = /opt/puppetlabs/server/data/puppetserver
 logdir = /var/log/puppetlabs/puppetserver
@@ -65,8 +65,8 @@ systemctl enable puppetserver
 systemctl start puppet
 systemctl enable puppet
 
-echo 'PATH="$PATH:/opt/puppetlabs/bin/"' >> /etc/profile
-echo 'PATH="$PATH:/home/vagrant/bin:/home/vagrant/go/bin"' >> /home/vagrant/.bashrc
+echo 'PATH="$PATH:/opt/puppetlabs/bin/"' >>/etc/profile
+echo 'PATH="$PATH:/home/vagrant/bin:/home/vagrant/go/bin"' >>/home/vagrant/.bashrc
 sed -i 's#secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"#secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/opt/puppetlabs/bin"#g' /etc/sudoers
 
 # Install chef
@@ -79,7 +79,7 @@ su vagrant -c 'chef-solo --chef-license=accept' || true
 # Install docker
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
 add-apt-repository \
-   "deb [arch=${ARCH}] https://download.docker.com/linux/ubuntu \
+    "deb [arch=${ARCH}] https://download.docker.com/linux/ubuntu \
    $(lsb_release -cs) \
    stable"
 apt-get install -y docker-ce docker-ce-cli containerd.io

@@ -1,0 +1,32 @@
+name: Setup Make Environment
+
+description: |
+  This action sets up the environment for building projects using `make`. It
+  configures the `MAKEFLAGS` environment variable to enable parallel builds
+  based on the number of CPU cores available on the GitHub Runner. It also
+  installs necessary dependencies and tools required for building projects.
+
+runs:
+  using: "composite"
+  steps:
+    - uses: ./.github/actions/setup-makeflags
+
+    - name: Install dependencies
+      shell: bash
+      run: make install-dependencies
+
+    # TODO: Move this into the Makefile, remove caching
+    - uses: ./.github/actions/setup-yq
+      if: runner.os == 'Windows'
+
+    # TODO: This can probably move into the Makefile so long as we can detect if
+    # it is being run on a GitHub Runner.
+    - name: Set default BIN_PATH
+      shell: bash
+      run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
+
+    - name: Add ocb installation dir to PATH
+      shell: bash
+      run: echo "$BIN_PATH" >> $GITHUB_PATH
+
+    - uses: ./.github/actions/setup-ocb
