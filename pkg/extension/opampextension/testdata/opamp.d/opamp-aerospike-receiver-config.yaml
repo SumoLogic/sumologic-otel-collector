@@ -1,0 +1,15 @@
+receivers:
+  aerospike:
+    endpoint: "localhost:3000"
+    tlsname: "gg"
+    collect_cluster_metrics: false
+    collection_interval: 30s
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - aerospike
+      exporters:
+        - sumologic
