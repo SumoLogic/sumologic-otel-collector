@@ -1,0 +1,14 @@
+receivers:
+  filestats:
+    include: /tmp/files/*
+    collection_interval: 10s
+    initial_delay: 1s
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - collectd
+      exporters:
+        - sumologic

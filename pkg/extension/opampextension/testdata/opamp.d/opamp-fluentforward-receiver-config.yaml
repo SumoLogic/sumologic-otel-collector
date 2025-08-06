@@ -1,0 +1,12 @@
+receivers:
+  fluentforward:
+    endpoint: 0.0.0.0:8006
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - fluentforward
+      exporters:
+        - sumologic

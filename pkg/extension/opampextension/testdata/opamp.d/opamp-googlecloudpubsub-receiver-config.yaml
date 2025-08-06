@@ -1,0 +1,15 @@
+receivres:
+  googlecloudpubsub:
+    project: my-project
+    user_agent: opentelemetry-collector-contrib {{version}}
+    timeout: 20s
+    subscription: projects/my-project/subscriptions/otlp-subscription
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - googlecloudpubsub
+      exporters:
+        - sumologic

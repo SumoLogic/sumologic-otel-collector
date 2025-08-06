@@ -1,0 +1,17 @@
+receivers:
+  haproxy:
+    endpoint: http://127.0.0.1:8080/stats
+    metrics:
+      haproxy.connection_rate:
+        enabled: false
+      haproxy.requests:
+        enabled: true
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - haproxy
+      exporters:
+        - sumologic
