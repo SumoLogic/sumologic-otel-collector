@@ -14,7 +14,7 @@ on:
                 description: Run with FIPS enabled
                 default: false
                 type: boolean
-            go_version:
+            go-version:
                 description: The version of Go to use.
                 type: string
                 required: true
