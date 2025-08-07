@@ -1,7 +1,7 @@
 receivers:
   filelog:
     include:
-      - ./testdata/logs/test.log
+      - ./testdata/logs/test
     start_at: beginning
 
 exporters:
