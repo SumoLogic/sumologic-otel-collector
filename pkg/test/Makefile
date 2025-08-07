@@ -17,3 +17,7 @@ $(pkg_dir)/common.mk:
 #################################################################################
 
 include $(pkg_dir)/common.mk
+
+.PHONY: test-integration
+test-integration:
+	go test -tags=integration ./...

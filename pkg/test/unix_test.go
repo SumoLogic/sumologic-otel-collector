@@ -1,4 +1,5 @@
-//go:build !windows
+//go:build integration && !windows
+// +build integration,!windows
 
 package sumologic_tests
 
