@@ -4,6 +4,9 @@
 
 name: Workflow - Integration Test Collector (Single platform)
 
+permissions:
+  contents: read
+
 on:
     workflow_call:
         inputs:
