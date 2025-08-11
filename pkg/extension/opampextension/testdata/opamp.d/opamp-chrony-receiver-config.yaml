@@ -1,0 +1,19 @@
+receivers:
+  chrony:
+    endpoint: unix:///var/run/chrony/chronyd.sock
+    timeout: 10s
+    collection_interval: 30s
+    metrics:
+      ntp.skew:
+        enabled: true
+      ntp.stratum:
+        enabled: true
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - chrony
+      exporters:
+        - sumologic

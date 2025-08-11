@@ -92,6 +92,16 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyFileExporterConfig", "testdata/opamp.d/opamp-file-exporter-config.yaml", false, ""},
 		{"ApplyKafkaExporterConfig", "testdata/opamp.d/opamp-kafka-exporter-config.yaml", false, ""},
 		{"ApplyLoadbalancingExporterConfig", "testdata/opamp.d/opamp-loadbalancing-exporter-config.yaml", false, ""},
+		{"ApplyActiveDirecotryDSConfig", "testdata/opamp.d/opamp-activedirectoryds-receiver-config.yaml", false, ""},
+		{"ApplyAerospikeConfig", "testdata/opamp.d/opamp-aerospike-receiver-config.yaml", false, ""},
+		{"ApplyAzureEventHubConfig", "testdata/opamp.d/opamp-azureeventhub-receiver-config.yaml", false, ""},
+		{"ApplyBigipConfig", "testdata/opamp.d/opamp-bigip-receiver-config.yaml", false, ""},
+		{"ApplyCarbonReceiverConfig", "testdata/opamp.d/opamp-carbon-receiver-config.yaml", false, ""},
+		{"ApplyChronyConfig", "testdata/opamp.d/opamp-chrony-receiver-config.yaml", false, ""},
+		{"ApplyCloudlfareReceiverConfig", "testdata/opamp.d/opamp-cloudflare-receiver-config.yaml", false, ""},
+		{"ApplyPrometheusExporterConfig", "testdata/opamp.d/opamp-prometheus-exporter-config.yaml", false, ""},
+		{"ApplyOtlphttpConfig", "testdata/opamp.d/opamp-otlphttp-exporter-config.yaml", false, ""},
+		{"ApplyECSObserverConfig", "testdata/opamp.d/opamp-ecsobserver-config.yaml", false, ""},
 	}
 
 	for _, tt := range tests {
