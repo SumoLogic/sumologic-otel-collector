@@ -1,0 +1,21 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+processors:
+  groupbyattrs:
+    keys:
+      - key1
+      - key2
+service:
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        processors:
+          - groupbyattrs
+        exporters:
+          - sumologic

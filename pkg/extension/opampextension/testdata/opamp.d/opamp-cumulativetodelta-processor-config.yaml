@@ -1,0 +1,57 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+processors:
+  cumulativetodelta:
+    include:
+      match_type: strict
+      metrics:
+        - metric1
+        - metric2
+    exclude:
+      match_type: strict
+      metrics:
+        - metric3
+        - metric4
+    max_staleness: 10s
+
+  cumulativetodelta/regexp:
+    include:
+      match_type: regexp
+      metrics:
+        - a*
+    exclude:
+      match_type: regexp
+      metrics:
+        - b*
+    max_staleness: 10s
+
+  cumulativetodelta/metric_type_filter:
+    include:
+      match_type: regexp
+      metrics:
+        - a*
+      metric_types:
+        - sum
+    exclude:
+      match_type: regexp
+      metrics:
+        - b*
+      metric_types:
+        - histogram
+    max_staleness: 10s
+service:
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        processors:
+          - cumulativetodelta/metric_type_filter
+          - cumulativetodelta/regexp
+          - cumulativetodelta
+        exporters:
+          - sumologic
