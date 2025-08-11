@@ -1,0 +1,1 @@
+chore: adding 10 components(processors) to opamp extension
