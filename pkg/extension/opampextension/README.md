@@ -109,8 +109,8 @@ This section lists the components that are included in the sumologic opamp exten
 |         kafka          |                   |     otlp      |             |            |
 |      kafkametrics      |                   |   sumologic   |             |            |
 |      dockerstats       |                   |    syslog     |             |            |
-|        rabbitmq        |                   |               |             |            |
-|  windowsperfcounters   |                   |               |             |            |
+|        rabbitmq        |                   |  prometheus   |             |            |
+|  windowsperfcounters   |                   |   otlphttp    |             |            |
 |         syslog         |                   |               |             |            |
 |         mysql          |                   |               |             |            |
 |     elasticsearch      |                   |               |             |            |
@@ -130,3 +130,10 @@ This section lists the components that are included in the sumologic opamp exten
 |   googlecloudpubsub    |                   |               |             |            |
 |   googlecloudspanner   |                   |               |             |            |
 |        haproxy         |                   |               |             |            |
+|   activedirectoryds    |                   |               |             |            |
+|       aerospike        |                   |               |             |            |
+|     azureeventhub      |                   |               |             |            |
+|         bigip          |                   |               |             |            |
+|        carbonr         |                   |               |             |            |
+|         chrony         |                   |               |             |            |
+|       cloudflare       |                   |               |             |            |
