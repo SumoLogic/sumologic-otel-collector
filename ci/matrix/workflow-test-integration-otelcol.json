@@ -1,0 +1,10 @@
+{
+    "include": [
+        {
+            "runs-on": "macos-15-xlarge"
+        },
+        {
+            "runs-on": "ubuntu-24.04"
+        }
+    ]
+}
