@@ -104,7 +104,7 @@ This section lists the components that are included in the sumologic opamp exten
 |      hostmetrics       | resourcedetection |     debug     |    opamp    |            |
 |          otlp          |     resource      |     file      |    pprof    |            |
 |    windowseventlog     |      filter       |     kafka     |  sumologic  |            |
-|         nginx          |     transform     | loadbalancing | ecsobserver |            |
+|         nginx          |     transform     | loadbalancing |             |            |
 |         redis          |                   |      nop      |             |            |
 |         kafka          |                   |     otlp      |             |            |
 |      kafkametrics      |                   |   sumologic   |             |            |
@@ -120,6 +120,16 @@ This section lists the components that are included in the sumologic opamp exten
 | awsecscontainermetrics |                   |               |             |            |
 |      awsfirehose       |                   |               |             |            |
 |        awsxray         |                   |               |             |            |
+|        collectd        |                   |               |             |            |
+|        couchdb         |                   |               |             |            |
+|        datadog         |                   |               |             |            |
+|         expvar         |                   |               |             |            |
+|       filestats        |                   |               |             |            |
+|      flinkmetrics      |                   |               |             |            |
+|     fluentforward      |                   |               |             |            |
+|   googlecloudpubsub    |                   |               |             |            |
+|   googlecloudspanner   |                   |               |             |            |
+|        haproxy         |                   |               |             |            |
 |   activedirectoryds    |                   |               |             |            |
 |       aerospike        |                   |               |             |            |
 |     azureeventhub      |                   |               |             |            |

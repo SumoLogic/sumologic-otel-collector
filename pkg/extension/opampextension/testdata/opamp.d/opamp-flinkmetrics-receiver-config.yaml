@@ -1,0 +1,13 @@
+receivers:
+  flinkmetrics:
+    endpoint: http://localhost:8081
+    collection_interval: 10s
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - flinkmetrics
+      exporters:
+        - sumologic
