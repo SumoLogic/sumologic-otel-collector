@@ -113,10 +113,7 @@ jobs:
             - uses: ./.github/actions/setup-test-environment
 
             - name: install docker on macos
-              if: runner.os == 'macos'
-              run: |
-                brew install docker colima
-                colima start
+              uses: douglascamata/setup-docker-macos-action@v1.0.0
             - name: Pull and run sumologic-mock
               run: |
                 docker pull public.ecr.aws/sumologic/sumologic-mock:2.24.0
