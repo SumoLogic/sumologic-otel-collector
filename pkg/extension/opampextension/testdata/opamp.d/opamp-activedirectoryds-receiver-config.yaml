@@ -1,0 +1,15 @@
+receivers:
+  active_directory_ds:
+    collection_interval: 2m
+    metrics:
+      active_directory.ds.replication.object.rate:
+        enabled: false
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - active_directory_ds
+      exporters:
+        - sumologic
