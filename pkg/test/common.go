@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"net"
-	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
@@ -20,6 +17,7 @@ type testSpec struct {
 	validations []checkFunc
 	args        []string
 	preActions  []checkFunc
+	timeout_ms  int
 }
 
 func runTest(tt *testSpec, t *testing.T) (fErr error) {
@@ -27,12 +25,6 @@ func runTest(tt *testSpec, t *testing.T) (fErr error) {
 		test: t,
 	}
 	defer tearDown()
-
-	mockAPI, err := startMockAPI(t)
-	if err != nil {
-		return fmt.Errorf("failed to start mock API: %s", err)
-	}
-	defer stopMockAPI(t, mockAPI)
 
 	for _, v := range tt.preActions {
 		if ok := v(ch); !ok {
@@ -63,8 +55,11 @@ func prepareExecuteBinary(tt *testSpec) (context.Context, *exec.Cmd, context.Can
 	if err := isExecutable(binaryPath); err != nil {
 		return nil, nil, nil, fmt.Errorf("binary is not executable: %w", err)
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	timeout := tt.timeout_ms
+	if timeout == 0 {
+		timeout = 5000
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Millisecond)
 	cmd := exec.CommandContext(ctx, binaryPath, tt.args...)
 	if wd, err := os.Getwd(); err == nil {
 		cmd.Dir = wd
@@ -122,38 +117,4 @@ func killProcessesByName(name string) {
 			exec.Command("kill", strconv.Itoa(pid)).Run()
 		}
 	}
-}
-
-func startMockAPI(t *testing.T) (*http.Server, error) {
-	t.Log("Starting HTTP server")
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if _, err := io.WriteString(w, "200 OK\n"); err != nil {
-			panic(err)
-		}
-	})
-
-	listener, err := net.Listen("tcp", ":3333")
-	if err != nil {
-		return nil, err
-	}
-
-	httpServer := &http.Server{
-		Handler: mux,
-	}
-	go func() {
-		err := httpServer.Serve(listener)
-		if err != nil && err != http.ErrServerClosed {
-			panic(err)
-		}
-	}()
-	return httpServer, nil
-}
-
-func stopMockAPI(t *testing.T, mockAPI *http.Server) error {
-	t.Log("stopping HTTP server")
-	if err := mockAPI.Shutdown(context.Background()); err != nil {
-		return fmt.Errorf("failed to shutdown API: %s", err)
-	}
-	return nil
 }

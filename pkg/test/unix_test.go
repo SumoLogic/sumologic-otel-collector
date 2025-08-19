@@ -23,6 +23,7 @@ func TestUnix(t *testing.T) {
 			name:        "ValidateIngestionFileExporter",
 			validations: []checkFunc{checkLogFileCreated},
 			args:        []string{configTag, "./testdata/config/config-file-exporter-valid.yaml"},
+			timeout_ms:  120000,
 		},
 		{
 			name:        "ValidateConfigSumologicExporter",
@@ -31,9 +32,10 @@ func TestUnix(t *testing.T) {
 		},
 		{
 			name:        "ValidateIngestionSumologicExporter",
-			validations: []checkFunc{checkValidSumologicExporter},
+			validations: []checkFunc{checkValidSumologicExporter, validateLogNumbersViaSumologicMock},
 			preActions:  []checkFunc{preActionCreateCredentialsDir},
 			args:        []string{configTag, "./testdata/config/config-file-sumologic-exporter-valid.yaml"},
+			timeout_ms:  120000,
 		},
 	}
 

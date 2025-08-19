@@ -27,4 +27,5 @@ test-integration:
         echo "Binary not found, building..."; \
         $(MAKE) -C $(PROJECT_ROOT)/otelcolbuilder build; \
     fi
+	go clean -testcache
 	go test -tags=integration ./...

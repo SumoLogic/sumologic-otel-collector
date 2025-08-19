@@ -6,29 +6,31 @@ receivers:
 
 exporters:
     sumologic:
-        retry_on_failure:
-            max_elapsed_time: 0
+
+processors:
+  resource:
+    attributes:
+      - key: test
+        value: ValidateIngestionSumologicExporter
+        action: insert
 
 extensions:
     sumologic:
-        api_base_url: http://localhost:3333
+        api_base_url: http://localhost:3000/
         collector_credentials_directory: /tmp/lib-temp/otelcol-sumo/credentials
         collector_fields:
             deployment.environment: default
             host.group: default
         installation_token: token
 
-processors:
-    sumologic: null
-
 service:
     extensions:
         - sumologic
     pipelines:
         logs:
-            exporters:
-                - sumologic
             processors:
+                - resource
+            exporters:
                 - sumologic
             receivers:
                 - filelog

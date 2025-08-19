@@ -1,7 +1,10 @@
 package sumologic_tests
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"testing"
 
@@ -39,4 +42,25 @@ func checkValidSumologicExporter(c check) bool {
 func preActionCreateCredentialsDir(c check) bool {
 	err := os.MkdirAll(credentialsDir, 0755)
 	return assert.NoError(c.test, err, "Failed to create credentials directory: "+credentialsDir)
+}
+
+func validateLogNumbersViaSumologicMock(c check) bool {
+	resp, err := http.Get(sumlogicMockURL + sumologicMockLogCountPath)
+	if !assert.NoError(c.test, err, "Failed to send GET request") {
+		return false
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if !assert.NoError(c.test, err, "Failed to read response body") {
+		return false
+	}
+
+	var result map[string]int
+	err = json.Unmarshal(body, &result)
+	if !assert.NoError(c.test, err, "Failed to unmarshal JSON response") {
+		return false
+	}
+
+	return assert.Equal(c.test, 2, result["count"], "Expected count to be 2")
 }
