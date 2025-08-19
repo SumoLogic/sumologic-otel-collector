@@ -1,5 +1,5 @@
 #################################################################################
-# A reusable workflow to run integtation tests for otelcol-sumo.
+# A reusable workflow to run integration tests for otelcol-sumo.
 #################################################################################
 
 name: Workflow - Integration Test Collector (Single platform)
@@ -111,6 +111,11 @@ jobs:
                 version: ${{ inputs.go-version }}
 
             - uses: ./.github/actions/setup-test-environment
+
+            - name: Pull and run sumologic-mock
+              run: |
+                docker pull public.ecr.aws/sumologic/sumologic-mock:2.24.0
+                docker run -p 3000:3000 --rm public.ecr.aws/sumologic/sumologic-mock:2.24.0
 
             - name: Run tests
               working-directory: ${{ inputs.pkg }}
