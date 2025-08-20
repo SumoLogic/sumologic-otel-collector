@@ -27,6 +27,8 @@ processors:
   # Processors with non-upstreamed changes:
   - gomod: github.com/SumoLogic/sumologic-otel-collector/pkg/processor/cascadingfilterprocessor v0.0.0-00010101000000-000000000000
     path: ./../pkg/processor/cascadingfilterprocessor
+  - gomod: github.com/SumoLogic/sumologic-otel-collector/pkg/processor/genaiprocessor v0.0.0-00010101000000-000000000000
+    path: ./../pkg/processor/genaiprocessor
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sprocessor v0.0.0-00010101000000-000000000000
     path: ./../pkg/processor/k8sprocessor
   - gomod: github.com/SumoLogic/sumologic-otel-collector/pkg/processor/sourceprocessor v0.0.0-00010101000000-000000000000
