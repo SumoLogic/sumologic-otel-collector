@@ -1,0 +1,114 @@
+# Complete OpenTelemetry Collector configuration example with GenAI processor
+# This example shows how to use the GenAI processor to analyze application logs
+
+receivers:
+  # Collect logs from application files
+  filelog:
+    include: ["/var/log/app/*.log"]
+    operators:
+      - type: json_parser
+        id: json_parser
+        if: 'body startsWith "{"'
+      - type: severity_parser
+        id: severity_parser
+        parse_from: attributes.level
+
+  # OTLP receiver for direct application telemetry
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # Add basic source information
+  source:
+    collector: "otelcol-genai"
+    source_category: "app/logs"
+    source_name: "application"
+
+  # Filter to only process error and warning logs with GenAI
+  filter/errors:
+    error_mode: ignore
+    logs:
+      log_record:
+        - 'severity_text != "ERROR" and severity_text != "WARN"'
+
+  # GenAI processor for intelligent log analysis
+  genai:
+    endpoint: "http://litellm-gateway:4000"
+    api_key: "${OPENAI_API_KEY}"
+    model: "gpt-3.5-turbo"
+    system_prompt: |
+      You are an expert application support engineer analyzing log entries.
+      Your task is to:
+      1. Identify the type of issue (if any)
+      2. Assess the severity level
+      3. Suggest potential root causes
+      4. Recommend immediate actions
+      
+      Provide concise, actionable insights in JSON format.
+    user_prompt: |
+      Log Entry: {{.body}}
+      Timestamp: {{.timestamp}}
+      Severity: {{.severity}}
+      Application: {{.app_name}}
+      Component: {{.component}}
+      
+      Analyze this log entry and provide insights.
+    max_tokens: 200
+    temperature: 0.2
+    timeout: 30s
+    response_field: "ai_insights"
+    filter_regex: "(ERROR|WARN|Exception|Failed|Timeout|Error)"
+    extract_fields: ["body", "app_name", "component", "user_id", "request_id"]
+
+  # Batch processor for efficient export
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+exporters:
+  # Export to Sumo Logic
+  sumologic:
+    endpoint: "${SUMOLOGIC_ENDPOINT}"
+    compression: gzip
+    log_format: json
+    metadata_attributes:
+      - k8s.namespace.name
+      - k8s.pod.name
+      - k8s.container.name
+
+  # Local debugging output
+  logging:
+    loglevel: info
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+  # Export to file for analysis
+  file:
+    path: /tmp/analyzed_logs.json
+    format: json
+
+service:
+  pipelines:
+    # Pipeline for error/warning logs with AI analysis
+    logs/ai_analysis:
+      receivers: [filelog, otlp]
+      processors: [source, filter/errors, genai, batch]
+      exporters: [sumologic, file]
+    
+    # Pipeline for all logs without AI processing
+    logs/all:
+      receivers: [filelog, otlp]
+      processors: [source, batch]
+      exporters: [logging]
+
+  extensions: []
+
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      address: 0.0.0.0:8888

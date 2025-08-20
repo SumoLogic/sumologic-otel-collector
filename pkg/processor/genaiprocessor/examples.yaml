@@ -1,0 +1,58 @@
+# Example configuration for the GenAI processor
+
+# Basic configuration
+processors:
+  genai:
+    endpoint: "http://localhost:4000"
+    model: "gpt-3.5-turbo"
+    system_prompt: "You are a helpful assistant that analyzes log data."
+    user_prompt: "Analyze this log entry and provide insights: {{.body}}"
+    max_tokens: 150
+    temperature: 0.3
+    timeout: 30s
+    response_field: "ai_analysis"
+
+# Advanced configuration with filtering and field extraction
+processors:
+  genai/advanced:
+    endpoint: "http://litellm-gateway:4000"
+    api_key: "${OPENAI_API_KEY}"
+    model: "gpt-4"
+    system_prompt: |
+      You are a security analyst specializing in log analysis.
+      Analyze log entries for potential security threats, anomalies, or issues.
+      Provide concise, actionable insights.
+    user_prompt: |
+      Log Message: {{.body}}
+      Timestamp: {{.timestamp}}
+      Severity: {{.severity}}
+      Source: {{.source}}
+      
+      Is this log entry indicative of any security concerns or anomalies?
+    max_tokens: 200
+    temperature: 0.2
+    timeout: 45s
+    response_field: "security_analysis"
+    filter_regex: "(ERROR|CRITICAL|WARN|authentication|login|failed|unauthorized|denied)"
+    extract_fields: ["body", "source", "user_id", "ip_address"]
+
+# Configuration for application error analysis
+processors:
+  genai/errors:
+    endpoint: "http://litellm-gateway:4000"
+    model: "claude-3-sonnet"
+    system_prompt: |
+      You are a senior software engineer analyzing application errors.
+      Help identify root causes and suggest potential fixes.
+    user_prompt: |
+      Error Log: {{.body}}
+      Stack Trace: {{.stack_trace}}
+      Application: {{.app_name}}
+      
+      What might be the root cause and how can this be fixed?
+    max_tokens: 300
+    temperature: 0.1
+    timeout: 60s
+    response_field: "error_analysis"
+    filter_regex: "(ERROR|FATAL|Exception|Error)"
+    extract_fields: ["body", "stack_trace", "app_name", "component"]
