@@ -115,7 +115,7 @@ jobs:
             - name: Pull and run sumologic-mock
               run: |
                 docker pull public.ecr.aws/sumologic/sumologic-mock:2.24.0
-                docker run -p 3000:3000 --rm public.ecr.aws/sumologic/sumologic-mock:2.24.0
+                docker run -d -p 3000:3000 --rm public.ecr.aws/sumologic/sumologic-mock:2.24.0
 
             - name: Run tests
               working-directory: ${{ inputs.pkg }}
