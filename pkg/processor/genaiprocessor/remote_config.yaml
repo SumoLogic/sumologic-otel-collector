@@ -1,12 +1,6 @@
-# GenAI Processor
+# Basic OpenTelemetry Collector configuration using GenAI processor with remote LiteLLM
+# This configuration connects to a remote LiteLLM gateway instance
 
-The GenAI processor integrates with LiteLLM gateway to process OpenTelemetry log data using Large Language Models (LLMs). It sends log data to LLM models via API calls.
-
-## Configuration
-
-The processor can be configured with the following parameters:
-
-```yaml
 receivers:
   filelog:
     include: ["/tmp/sample_logs.json"]
@@ -54,44 +48,17 @@ exporters:
     verbosity: detailed
     sampling_initial: 5
     sampling_thereafter: 200
-```
 
-## Features
+service:
+  pipelines:
+    logs:
+      receivers: [filelog]
+      processors: [genai]
+      exporters: [debug]
 
-- **Template-based prompts**: Use Go text templates to customize system and user prompts with log data
-- **Selective processing**: Filter logs using regex patterns to process only relevant entries
-- **Field extraction**: Extract specific fields from log attributes for use in prompts
-- **Error handling**: Graceful error handling that doesn't stop the pipeline
-- **Configurable models**: Support for any model available through LiteLLM
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      level: basic
 
-## Template Variables
-
-The following variables are available in prompt templates:
-
-- `{{.body}}` - Log message body
-
-## LiteLLM Integration
-
-This processor expects a LiteLLM gateway running at the configured endpoint. LiteLLM should be configured with the appropriate model providers and API keys.
-
-Example LiteLLM configuration:
-```yaml
-model_list:
-  - model_name: gpt-3.5-turbo
-    litellm_params:
-      model: openai/gpt-3.5-turbo
-      api_key: your-openai-api-key
-```
-
-## Performance Considerations
-
-- The processor makes HTTP requests to the LiteLLM API for each matching log record
-- Consider the `timeout` setting to prevent blocking the pipeline
-- Monitor API rate limits and costs when using external LLM providers
-- The processor processes logs sequentially to avoid overwhelming the API
-
-## Security
-
-- API keys should be stored securely (e.g., environment variables, secrets management)
-- Be mindful of sensitive data in logs when sending to external LLM providers
-- Consider using local models or private deployments for sensitive data

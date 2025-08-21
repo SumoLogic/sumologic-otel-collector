@@ -41,19 +41,36 @@ type LiteLLMRequest struct {
 
 // Message represents a chat message
 type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role        string        `json:"role"`
+	Content     string        `json:"content"`
+	Annotations []interface{} `json:"annotations,omitempty"`
 }
 
 // LiteLLMResponse represents the response structure from LiteLLM API
 type LiteLLMResponse struct {
-	Choices []Choice `json:"choices"`
-	Error   *APIError `json:"error,omitempty"`
+	ID                string    `json:"id"`
+	Created           int64     `json:"created"`
+	Model             string    `json:"model"`
+	Object            string    `json:"object"`
+	SystemFingerprint string    `json:"system_fingerprint"`
+	Choices           []Choice  `json:"choices"`
+	Usage             *Usage    `json:"usage,omitempty"`
+	ServiceTier       string    `json:"service_tier,omitempty"`
+	Error             *APIError `json:"error,omitempty"`
+}
+
+// Usage represents token usage information
+type Usage struct {
+	CompletionTokens int `json:"completion_tokens"`
+	PromptTokens     int `json:"prompt_tokens"`
+	TotalTokens      int `json:"total_tokens"`
 }
 
 // Choice represents a response choice
 type Choice struct {
-	Message Message `json:"message"`
+	Message      Message `json:"message"`
+	FinishReason string  `json:"finish_reason"`
+	Index        int     `json:"index"`
 }
 
 // APIError represents an API error
@@ -113,58 +130,58 @@ func newGenAIProcessor(params processor.Settings, config *Config) (*genaiProcess
 // ProcessLogs processes log records through GenAI models
 func (p *genaiProcessor) ProcessLogs(ctx context.Context, logs plog.Logs) (plog.Logs, error) {
 	resourceLogs := logs.ResourceLogs()
+
+	// Build new collection with processed records
 	for i := 0; i < resourceLogs.Len(); i++ {
-		resource := resourceLogs.At(i)
-		scopeLogs := resource.ScopeLogs()
+		resourceLog := resourceLogs.At(i)
+		scopeLogs := resourceLog.ScopeLogs()
+
 		for j := 0; j < scopeLogs.Len(); j++ {
-			scope := scopeLogs.At(j)
-			logRecords := scope.LogRecords()
+			scopeLog := scopeLogs.At(j)
+			logRecords := scopeLog.LogRecords()
+
+			// Collect all records to keep (non-array) and expanded records (from arrays)
+			var finalRecords []plog.LogRecord
+
 			for k := 0; k < logRecords.Len(); k++ {
 				record := logRecords.At(k)
-				if err := p.processLogRecord(ctx, record); err != nil {
-					p.logger.Error("Failed to process log record with GenAI", zap.Error(err))
-					// Continue processing other records even if one fails
+
+				// Check if this record should be processed (contains JSON array)
+				if p.shouldProcessRecord(record) {
+					expandedRecords, err := p.expandJsonArrayRecord(ctx, record)
+					if err != nil {
+						p.logger.Error("Failed to expand JSON array record", zap.Error(err))
+						// Keep original record on error
+						finalRecords = append(finalRecords, record)
+						continue
+					}
+
+					if len(expandedRecords) > 0 {
+						// Add expanded records instead of original
+						finalRecords = append(finalRecords, expandedRecords...)
+					} else {
+						// Keep original if no expansion occurred
+						finalRecords = append(finalRecords, record)
+					}
+				} else {
+					// Keep non-array records as-is
+					finalRecords = append(finalRecords, record)
 				}
+			}
+
+			// Clear existing records and add final records
+			logRecords.RemoveIf(func(lr plog.LogRecord) bool {
+				return true // Remove all
+			})
+
+			// Add all final records
+			for _, finalRecord := range finalRecords {
+				targetRecord := logRecords.AppendEmpty()
+				finalRecord.CopyTo(targetRecord)
 			}
 		}
 	}
 	return logs, nil
-}
-
-// processLogRecord processes a single log record
-func (p *genaiProcessor) processLogRecord(ctx context.Context, record plog.LogRecord) error {
-	// Check if the log record should be processed based on filter regex
-	if p.filterRegex != nil {
-		logBody := record.Body().AsString()
-		if !p.filterRegex.MatchString(logBody) {
-			return nil // Skip this record
-		}
-	}
-
-	// Extract data from log record for template
-	templateData := p.extractTemplateData(record)
-
-	// Generate prompts using templates
-	systemPrompt, err := p.renderTemplate(p.systemTemplate, templateData)
-	if err != nil {
-		return fmt.Errorf("failed to render system prompt: %w", err)
-	}
-
-	userPrompt, err := p.renderTemplate(p.userTemplate, templateData)
-	if err != nil {
-		return fmt.Errorf("failed to render user prompt: %w", err)
-	}
-
-	// Call LiteLLM API
-	response, err := p.callLiteLLM(ctx, systemPrompt, userPrompt)
-	if err != nil {
-		return fmt.Errorf("failed to call LiteLLM API: %w", err)
-	}
-
-	// Add the AI response to the log record attributes
-	record.Attributes().PutStr(p.config.ResponseField, response)
-
-	return nil
 }
 
 // extractTemplateData extracts data from log record for template rendering
@@ -245,12 +262,36 @@ func (p *genaiProcessor) callLiteLLM(ctx context.Context, systemPrompt, userProm
 
 	// Check for HTTP errors
 	if resp.StatusCode != http.StatusOK {
+		responsePreview := string(responseBody)
+		if len(responsePreview) > 1000 {
+			responsePreview = responsePreview[:1000] + "..."
+		}
+		p.logger.Error("LiteLLM API request failed",
+			zap.Int("status_code", resp.StatusCode),
+			zap.String("response", responsePreview))
 		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(responseBody))
+	}
+
+	// Always log basic response info for debugging
+	p.logger.Info("Received response from LiteLLM API",
+		zap.Int("status_code", resp.StatusCode),
+		zap.Int("response_length", len(responseBody)))
+
+	// Log response body for debugging if it's not JSON
+	if !json.Valid(responseBody) {
+		p.logger.Error("Received non-JSON response from API",
+			zap.String("full_response", string(responseBody)))
+		return "", fmt.Errorf("received non-JSON response from API (likely HTML redirect)")
 	}
 
 	// Parse the response
 	var llmResponse LiteLLMResponse
 	if err := json.Unmarshal(responseBody, &llmResponse); err != nil {
+		responsePreview := string(responseBody)
+		if len(responsePreview) > 200 {
+			responsePreview = responsePreview[:200] + "..."
+		}
+		p.logger.Error("Failed to unmarshal response", zap.String("response", responsePreview))
 		return "", fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
@@ -264,5 +305,94 @@ func (p *genaiProcessor) callLiteLLM(ctx context.Context, systemPrompt, userProm
 		return "", fmt.Errorf("no choices in API response")
 	}
 
-	return strings.TrimSpace(llmResponse.Choices[0].Message.Content), nil
+	responseContent := strings.TrimSpace(llmResponse.Choices[0].Message.Content)
+
+	// Log successful parsing
+	p.logger.Info("Successfully parsed LiteLLM response",
+		zap.String("model", llmResponse.Model),
+		zap.Int("total_tokens", func() int {
+			if llmResponse.Usage != nil {
+				return llmResponse.Usage.TotalTokens
+			}
+			return 0
+		}()),
+		zap.Int("response_length", len(responseContent)))
+
+	return responseContent, nil
+}
+
+// shouldProcessRecord checks if a log record contains a JSON array that should be split
+func (p *genaiProcessor) shouldProcessRecord(record plog.LogRecord) bool {
+	// Check if the log record should be processed based on filter regex
+	if p.filterRegex != nil {
+		logBody := record.Body().AsString()
+		if !p.filterRegex.MatchString(logBody) {
+			return false // Skip this record
+		}
+	}
+
+	// Check if the body looks like a JSON array
+	logBody := strings.TrimSpace(record.Body().AsString())
+	return strings.HasPrefix(logBody, "[") && strings.HasSuffix(logBody, "]")
+}
+
+// expandJsonArrayRecord processes a single record containing a JSON array and returns multiple individual records
+func (p *genaiProcessor) expandJsonArrayRecord(ctx context.Context, originalRecord plog.LogRecord) ([]plog.LogRecord, error) {
+	// Extract data from log record for template
+	templateData := p.extractTemplateData(originalRecord)
+
+	// Generate prompts using templates
+	systemPrompt, err := p.renderTemplate(p.systemTemplate, templateData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render system prompt: %w", err)
+	}
+
+	userPrompt, err := p.renderTemplate(p.userTemplate, templateData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render user prompt: %w", err)
+	}
+
+	// Call LiteLLM API
+	response, err := p.callLiteLLM(ctx, systemPrompt, userPrompt)
+	if err != nil {
+		// Log the error but don't fail the entire pipeline
+		p.logger.Warn("Skipping GenAI processing due to API error", zap.Error(err))
+		return nil, nil // Return empty slice, not an error
+	}
+
+	// Split the response into individual JSON lines
+	lines := strings.Split(strings.TrimSpace(response), "\n")
+	var expandedRecords []plog.LogRecord
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		// Validate that the line is valid JSON
+		if !json.Valid([]byte(line)) {
+			p.logger.Warn("Skipping invalid JSON line from AI response", zap.String("line", line))
+			continue
+		}
+
+		// Create a new log record for each JSON object
+		newRecord := plog.NewLogRecord()
+		originalRecord.CopyTo(newRecord)
+
+		// Set the body to the individual JSON object
+		newRecord.Body().SetStr(line)
+
+		// Add metadata about the processing
+		newRecord.Attributes().PutStr(p.config.ResponseField+"_status", "split_from_array")
+		newRecord.Attributes().PutStr("processing_type", "json_array_split")
+
+		expandedRecords = append(expandedRecords, newRecord)
+	}
+
+	p.logger.Info("Successfully split JSON array into individual records",
+		zap.Int("original_records", 1),
+		zap.Int("expanded_records", len(expandedRecords)))
+
+	return expandedRecords, nil
 }

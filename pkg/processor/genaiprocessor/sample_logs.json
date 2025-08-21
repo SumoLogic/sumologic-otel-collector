@@ -1,0 +1,75 @@
+[
+  {
+    "timestamp": "2025-08-21T10:30:00Z",
+    "level": "INFO",
+    "service": "user-api",
+    "message": "User login successful",
+    "user_id": "12345",
+    "ip_address": "192.168.1.100"
+  },
+  {
+    "timestamp": "2025-08-21T10:30:15Z",
+    "level": "WARN",
+    "service": "user-api",
+    "message": "Rate limit approaching",
+    "user_id": "12345",
+    "requests_count": 95
+  },
+  {
+    "timestamp": "2025-08-21T10:30:30Z",
+    "level": "ERROR",
+    "service": "user-api", 
+    "message": "Database connection timeout",
+    "error_code": "DB_TIMEOUT",
+    "duration_ms": 5000
+  },
+  {
+    "timestamp": "2025-08-21T10:31:00Z",
+    "level": "INFO",
+    "service": "payment-service",
+    "message": "Payment processed successfully",
+    "transaction_id": "txn_abc123",
+    "amount": 99.99,
+    "currency": "USD"
+  },
+  {
+    "timestamp": "2025-08-21T10:31:10Z",
+    "level": "ERROR",
+    "service": "payment-service",
+    "message": "Payment validation failed",
+    "transaction_id": "txn_def456",
+    "error": "Invalid credit card number",
+    "card_last_four": "1234"
+  },
+  {
+    "timestamp": "2025-08-21T10:32:00Z",
+    "level": "DEBUG",
+    "service": "auth-service",
+    "message": "Token validation started",
+    "token_id": "tk_789xyz"
+  },
+  {
+    "timestamp": "2025-08-21T10:32:05Z",
+    "level": "INFO",
+    "service": "auth-service",
+    "message": "Token validation successful",
+    "token_id": "tk_789xyz",
+    "expires_at": "2025-08-21T12:32:05Z"
+  },
+  {
+    "timestamp": "2025-08-21T10:32:10Z",
+    "level": "WARN",
+    "service": "auth-service",
+    "message": "Token will expire soon",
+    "token_id": "tk_789xyz",
+    "expires_in_minutes": 15
+  },
+  {
+    "timestamp": "2025-08-21T10:32:15Z",
+    "level": "ERROR",
+    "service": "auth-service",
+    "message": "Failed to refresh token",
+    "token_id": "tk_789xyz",
+    "error": "Refresh token expired"
+  }
+]

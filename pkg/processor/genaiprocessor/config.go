@@ -22,34 +22,34 @@ import (
 type Config struct {
 	// LiteLLM endpoint URL
 	Endpoint string `mapstructure:"endpoint"`
-	
+
 	// API key for authentication (optional)
 	APIKey string `mapstructure:"api_key"`
-	
+
 	// Model to use for processing
 	Model string `mapstructure:"model"`
-	
+
 	// System prompt template
 	SystemPrompt string `mapstructure:"system_prompt"`
-	
+
 	// User prompt template (can use placeholders for log data)
 	UserPrompt string `mapstructure:"user_prompt"`
-	
+
 	// Maximum tokens for the response
 	MaxTokens int `mapstructure:"max_tokens"`
-	
+
 	// Temperature for response generation
 	Temperature float64 `mapstructure:"temperature"`
-	
+
 	// Timeout for API requests
 	Timeout time.Duration `mapstructure:"timeout"`
-	
+
 	// Field to store the AI response in the log record
 	ResponseField string `mapstructure:"response_field"`
-	
+
 	// Only process logs that match this regex (optional)
 	FilterRegex string `mapstructure:"filter_regex"`
-	
+
 	// Fields to extract from log records for processing
 	ExtractFields []string `mapstructure:"extract_fields"`
 }
