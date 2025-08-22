@@ -11,40 +11,40 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type check struct {
+type textContext struct {
 	test            *testing.T
 	commandErr      error
 	commandOutput   []byte
 	commandExitCode int
 }
 
-type checkFunc func(check) bool
+type checkFunc func(textContext) bool
 
-func checkLogFileCreated(c check) bool {
+func checkLogFileCreated(c textContext) bool {
 	return assert.FileExists(c.test, logFilePath, "log file not found. "+string(c.commandOutput))
 }
 
-func checkValidateOutput(c check) bool {
+func checkValidateOutput(c textContext) bool {
 	return assert.Equal(c.test, 0, c.commandExitCode, "Validate output code invalid. "+string(c.commandOutput))
 }
 
-func checkInvalidValidateOutput(c check) bool {
+func checkInvalidValidateOutput(c textContext) bool {
 	ok1 := assert.Equal(c.test, 1, c.commandExitCode, "Invalid file successfully validated")
 	ok2 := assert.Contains(c.test, string(c.commandOutput), "invalid keys: processorss", "Expected error message in output")
 	return ok1 && ok2
 }
 
-func checkValidSumologicExporter(c check) bool {
+func checkValidSumologicExporter(c textContext) bool {
 	ok := assert.Nil(c.test, c.commandErr, "error occured while running collector: "+fmt.Sprint(c.commandErr))
 	return ok
 }
 
-func preActionCreateCredentialsDir(c check) bool {
+func preActionCreateCredentialsDir(c textContext) bool {
 	err := os.MkdirAll(credentialsDir, 0755)
 	return assert.NoError(c.test, err, "Failed to create credentials directory: "+credentialsDir)
 }
 
-func validateLogNumbersViaSumologicMock(c check) bool {
+func validateLogNumbersViaSumologicMock(c textContext) bool {
 	resp, err := http.Get(sumlogicMockURL + sumologicMockLogCountPath)
 	if !assert.NoError(c.test, err, "Failed to send GET request") {
 		return false

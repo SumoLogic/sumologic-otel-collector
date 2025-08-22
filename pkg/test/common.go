@@ -21,7 +21,7 @@ type testSpec struct {
 }
 
 func runTest(tt *testSpec, t *testing.T) (fErr error) {
-	ch := check{
+	ch := textContext{
 		test: t,
 	}
 	defer tearDown()
