@@ -44,7 +44,7 @@ func preActionCreateCredentialsDir(c testContext) bool {
 	return assert.NoError(c.test, err, "Failed to create credentials directory: "+credentialsDir)
 }
 
-func validateLogNumbersViaSumologicMock(c testContext) bool {
+func checkLogNumbersViaSumologicMock(c testContext) bool {
 	resp, err := http.Get(sumlogicMockURL + sumologicMockLogCountPath)
 	if !assert.NoError(c.test, err, "Failed to send GET request") {
 		return false
