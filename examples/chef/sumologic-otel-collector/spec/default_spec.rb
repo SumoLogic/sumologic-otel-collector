@@ -1,5 +1,4 @@
 require 'chefspec'
-require 'chefspec/berkshelf'
 
 describe 'sumologic-otel-collector::default' do
   let(:chef_run) { ChefSpec::SoloRunner.new(platform: platform, version: version).converge(described_recipe) }
