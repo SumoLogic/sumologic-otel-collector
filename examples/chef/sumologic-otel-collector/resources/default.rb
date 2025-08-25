@@ -16,6 +16,10 @@ property :systemd_service, [true, false] , default: true
 property :version, String
 # path to a directory with config files for Sumo Logic Distribution for OpenTelemetry Collector
 property :src_config_path, String
+# enables remote management for Sumo Logic Distribution for OpenTelemetry Collector
+property :remotely_managed, [true, false] , default: false
+# Sumo Logic Opamp Api url
+property :opamp_api_url, String
 
 DOWNLOAD_TIMEOUT = 300
 BINARY_PATH = '/usr/local/bin/otelcol-sumo'
@@ -68,6 +72,10 @@ def get_install_script_command(resource)
   end
   if property_is_set?(:api_url)
      command_parts.push("--api #{resource.api_url}")
+  if property_is_set?(:opamp_api_url)
+     command_parts.push("--opamp-api #{resource.opamp_api_url}")
+  if resource.remotely_managed
+     command_parts.push("--remotely_managed")
   end
   if ! resource.systemd_service
      command_parts.push("--skip-systemd")
