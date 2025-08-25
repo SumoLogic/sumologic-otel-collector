@@ -21,13 +21,13 @@ type testSpec struct {
 }
 
 func runTest(tt *testSpec, t *testing.T) (fErr error) {
-	ch := testContext{
+	testCtx := testContext{
 		test: t,
 	}
 	defer tearDown()
 
 	for _, v := range tt.preActions {
-		if ok := v(ch); !ok {
+		if ok := v(testCtx); !ok {
 			return nil
 		}
 	}
@@ -37,10 +37,10 @@ func runTest(tt *testSpec, t *testing.T) (fErr error) {
 	if err != nil {
 		return fmt.Errorf("failed to create command: %w", err)
 	}
-	ch.commandOutput, ch.commandExitCode, ch.commandErr = getCommandOutput(cmd, ctx, cancel)
+	testCtx.commandOutput, testCtx.commandExitCode, testCtx.commandErr = getCommandOutput(cmd, ctx, cancel)
 	t.Log("Running post validations")
 	for _, v := range tt.validations {
-		if ok := v(ch); !ok {
+		if ok := v(testCtx); !ok {
 			return nil
 		}
 	}
