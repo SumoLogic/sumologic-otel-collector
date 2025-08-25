@@ -1,0 +1,25 @@
+receivers:
+  filelog:
+    include:
+      - ./testdata/logs/test
+    start_at: beginning
+
+processorss:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+exporters:
+  file:
+    path: ./output/test.log
+    rotation:
+      max_megabytes: 10
+      max_days: 3
+      max_backups: 3
+
+service:
+  pipelines:
+    logs:
+      receivers: [filelog]
+      processors: [batch]
+      exporters: [file]
