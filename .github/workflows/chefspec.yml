@@ -1,0 +1,34 @@
+name: ChefSpec Tests
+
+on:
+  push:
+    paths:
+      - 'examples/chef/sumologic-otel-collector/**'
+      - '.github/workflows/chefspec.yml'
+  pull_request:
+    paths:
+      - 'examples/chef/sumologic-otel-collector/**'
+      - '.github/workflows/chefspec.yml'
+
+jobs:
+  chefspec:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: examples/chef/sumologic-otel-collector
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install dependencies
+        run: |
+          gem install bundler
+          bundle install
+
+      - name: Run ChefSpec tests
+        run: bundle exec rspec
