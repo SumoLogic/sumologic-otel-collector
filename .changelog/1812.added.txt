@@ -1,0 +1,1 @@
+test: added ITs for sumologic-otel-collector, along with github tooling and makefile changes.

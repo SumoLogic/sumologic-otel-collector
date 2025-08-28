@@ -1,0 +1,36 @@
+receivers:
+  filelog:
+    include:
+      - ./testdata/logs/test
+    start_at: beginning
+
+exporters:
+    sumologic:
+
+processors:
+  resource:
+    attributes:
+      - key: test
+        value: ValidateIngestionSumologicExporter
+        action: insert
+
+extensions:
+    sumologic:
+        api_base_url: http://localhost:3000/
+        collector_credentials_directory: /tmp/lib-temp/otelcol-sumo/credentials
+        collector_fields:
+            deployment.environment: default
+            host.group: default
+        installation_token: token
+
+service:
+    extensions:
+        - sumologic
+    pipelines:
+        logs:
+            processors:
+                - resource
+            exporters:
+                - sumologic
+            receivers:
+                - filelog
