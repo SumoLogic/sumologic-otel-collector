@@ -1,0 +1,13 @@
+dist:
+  name: otelcol
+  description: OpenTelemetry Collector for testing pipeline components
+  output_path: /tmp/otelcol
+
+receivers:
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/rabbitmqreceiver v{{ .Env.OTEL_VERSION }}
+
+exporters:
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusexporter v{{ .Env.OTEL_VERSION }}
+
+replaces:
+  - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/rabbitmqreceiver => /contrib/receiver/rabbitmqreceiver

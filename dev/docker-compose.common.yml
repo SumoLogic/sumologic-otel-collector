@@ -1,0 +1,7 @@
+services:
+  ca-certificates:
+    build:
+      dockerfile: dockerfiles/ca-certificates/Dockerfile
+      args:
+        ALPINE_VERSION: 3.22.1
+        APK_CA_CERTIFICATES_VERSION: 20250619-r0
