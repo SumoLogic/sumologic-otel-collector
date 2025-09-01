@@ -27,7 +27,7 @@ class install_otel_collector (
   Optional[String] $version = undef,
   String $src_config_path = 'puppet:///modules/install_otel_collector/conf.d',
 ) {
-  $install_script_url = 'https://github.com/SumoLogic/sumologic-otel-collector-packaging/releases/latest/download/install.sh'
+  $install_script_url = 'https://download-otel.sumologic.com/latest/download/install.sh'
   $install_script_path = '/tmp/install.sh'
   $download_timeout = 300
 

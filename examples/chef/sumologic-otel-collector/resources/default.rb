@@ -16,12 +16,16 @@ property :systemd_service, [true, false] , default: true
 property :version, String
 # path to a directory with config files for Sumo Logic Distribution for OpenTelemetry Collector
 property :src_config_path, String
+# enables remote management for Sumo Logic Distribution for OpenTelemetry Collector
+property :remotely_managed, [true, false] , default: false
+# Sumo Logic Opamp Api url
+property :opamp_api_url, String
 
 DOWNLOAD_TIMEOUT = 300
 BINARY_PATH = '/usr/local/bin/otelcol-sumo'
 BINARY_CONFIG = '/etc/otelcol-sumo/conf.d'
 INSTALL_SCRIPT_PATH = "/tmp/install.sh"
-INSTALL_SCRIPT_URL = "https://github.com/SumoLogic/sumologic-otel-collector-packaging/releases/latest/download/install.sh"
+INSTALL_SCRIPT_URL = "https://download-otel.sumologic.com/latest/download/install.sh"
 
 action :default do
   run_action :get_install_script
@@ -68,6 +72,10 @@ def get_install_script_command(resource)
   end
   if property_is_set?(:api_url)
      command_parts.push("--api #{resource.api_url}")
+  if property_is_set?(:opamp_api_url)
+     command_parts.push("--opamp-api #{resource.opamp_api_url}")
+  if resource.remotely_managed
+     command_parts.push("--remotely_managed")
   end
   if ! resource.systemd_service
      command_parts.push("--skip-systemd")
