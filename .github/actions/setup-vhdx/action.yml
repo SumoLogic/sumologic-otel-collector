@@ -1,0 +1,92 @@
+name: Setup VHDX Image
+
+description: |
+  Fetches a VHDX image from cache if it exists otherwise a new VHDX image is
+  created and added to the cache. It is then mounted to a drive letter for
+  various tools to be installed to. This helps speed up CI builds which are
+  otherwise slow on Windows.
+
+inputs:
+  name:
+    description: The name of the VHDX image (with extension).
+    required: true
+  skip-create:
+    description: |
+      If set to true, the action will skip creating a new VHDX image and only
+      mount an existing one.
+    required: false
+    default: false
+  size:
+    description: The size of the VHDX image. Defaults to 50GB.
+    required: false
+    default: 50GB
+
+outputs:
+  drive-letter:
+    description: The drive letter that the VHDX image is mounted to.
+    value: ${{ steps.drive.outputs.letter }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check Runner
+      shell: bash
+      run: |
+        if [[ "${RUNNER_OS}" != "Windows" ]]; then
+          echo "This action is only supported on Windows runners"
+          exit 1
+        fi
+
+    - name: Find available drive letter
+      id: drive
+      shell: pwsh
+      run: |
+        $existing = ([System.IO.DriveInfo]::GetDrives().Name).Substring(0,1)
+        $all = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.toCharArray()
+        $available = $all | Where-Object { $_ -notin $existing }
+        $selected = $available | Select-Object -First 1
+
+        echo "Existing drives: ${existing}"
+        echo "Available drives: ${available}"
+        echo "Selected drive: ${selected}"
+
+        "letter=$selected" >> $env:GITHUB_OUTPUT
+
+    - name: Output VHDX path
+      id: vhdx
+      shell: pwsh
+      run: |
+        $dirPath = (Get-Location).Path
+        $vhdxPath = "${dirPath}\${{ inputs.name }}"
+        "path=$vhdxPath" >> $env:GITHUB_OUTPUT
+
+    - name: Set environment variables
+      shell: pwsh
+      env:
+        VHDXPATH: "${{ steps.vhdx.outputs.path }}"
+        LETTER: "${{ steps.drive.outputs.letter }}"
+        SIZE: "${{ inputs.size }}"
+      run: |
+        "NAME=${env:NAME}" >> $env:GITHUB_ENV
+        "LETTER=${env:LETTER}" >> $env:GITHUB_ENV
+        "SIZE=${env:SIZE}" >> $env:GITHUB_ENV
+        "VHDXPATH=${env:VHDXPATH}" >> $env:GITHUB_ENV
+
+    - name: Create & Mount VHDX Image
+      if: inputs.skip-create != 'true'
+      shell: pwsh
+      run: |
+        $Drive = New-VHD -Path "${env:VHDXPATH}" -SizeBytes ${env:SIZE} -Dynamic |
+          Mount-VHD -PassThru |
+          Initialize-Disk -PassThru |
+          New-Partition -UseMaximumSize |
+          Format-Volume -FileSystem NTFS -Confirm:$false -Force
+        $Drive | Get-Partition | Set-Partition -NewDriveLetter "${env:LETTER}"
+
+    - name: Mount VHDX
+      if: inputs.skip-create == 'true'
+      shell: pwsh
+      run: |
+        $Drive = Mount-VHD -Path "${env:VHDXPATH}" -PassThru
+        $Drive | Get-Disk | Get-Partition | Where-Object { $_.Type -eq 'Basic' } |
+          Set-Partition -NewDriveLetter "${env:LETTER}"

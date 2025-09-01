@@ -58,7 +58,7 @@ Here is a list of valid values for the Sumo Logic `api_base_url` configuration
 option:
 
 |  Deployment   | API base URL                                |
-|:-------------:|---------------------------------------------|
+| :-----------: | ------------------------------------------- |
 | default/`US1` | `https://open-collectors.sumologic.com`     |
 |     `US2`     | `https://open-collectors.us2.sumologic.com` |
 |     `AU`      | `https://open-collectors.au.sumologic.com`  |
@@ -66,14 +66,14 @@ option:
 |     `EU`      | `https://open-collectors.eu.sumologic.com`  |
 |     `JP`      | `https://open-collectors.jp.sumologic.com`  |
 |     `CA`      | `https://open-collectors.ca.sumologic.com`  |
-|     `IN`      | `https://open-collectors.in.sumologic.com`  |
+|     `KR`      | `https://open-collectors.kr.sumologic.com`  |
 
 Here is a list of valid values for the OpAMP `endpoint** configuration option:
 
 **Note:** These endpoints are not yet available.
 
-|  Deployment   | API base URL                                |
-|:-------------:|---------------------------------------------|
+|  Deployment   | API base URL                                 |
+| :-----------: | -------------------------------------------- |
 | default/`US1` | `https://opamp-collectors.sumologic.com`     |
 |     `US2`     | `https://opamp-collectors.us2.sumologic.com` |
 |     `AU`      | `https://opamp-collectors.au.sumologic.com`  |
@@ -81,7 +81,7 @@ Here is a list of valid values for the OpAMP `endpoint** configuration option:
 |     `EU`      | `https://opamp-collectors.eu.sumologic.com`  |
 |     `JP`      | `https://opamp-collectors.jp.sumologic.com`  |
 |     `CA`      | `https://opamp-collectors.ca.sumologic.com`  |
-|     `IN`      | `https://opamp-collectors.in.sumologic.com`  |
+|     `KR`      | `https://opamp-collectors.kr.sumologic.com`  |
 
 ## Storing local configuration
 
@@ -91,3 +91,49 @@ it persists each received YAML configuration to a local file in the
 `remote_configuration_directory` are removed before doing so. A configuration
 provider must be used in order to load the stored configuration, for example:
 `--config "glob:/etc/otelcol-sumo/opamp.d/*"`.
+
+## Components
+
+This section lists the components that are included in the sumologic opamp extension for OpenTelemetry Collector.
+
+|       Receivers        |    Processors     |   Exporters   | Extensions  | Connectors |
+| :--------------------: | :---------------: | :-----------: | :---------: | :--------: |
+|          nop           |    attributes     |  awskinesis   |  awsproxy   |            |
+|         apache         |       batch       |     awss3     | filestorage |            |
+|        filelog         |   memorylimiter   |    carbon     | healthcheck |            |
+|      hostmetrics       | resourcedetection |     debug     |    opamp    |            |
+|          otlp          |     resource      |     file      |    pprof    |            |
+|    windowseventlog     |      filter       |     kafka     |  sumologic  |            |
+|         nginx          |     transform     | loadbalancing |             |            |
+|         redis          |                   |      nop      |             |            |
+|         kafka          |                   |     otlp      |             |            |
+|      kafkametrics      |                   |   sumologic   |             |            |
+|      dockerstats       |                   |    syslog     |             |            |
+|        rabbitmq        |                   |  prometheus   |             |            |
+|  windowsperfcounters   |                   |   otlphttp    |             |            |
+|         syslog         |                   |               |             |            |
+|         mysql          |                   |               |             |            |
+|     elasticsearch      |                   |               |             |            |
+|       postgresql       |                   |               |             |            |
+|     awscloudwatch      |                   |               |             |            |
+|  awscontainerinsight   |                   |               |             |            |
+| awsecscontainermetrics |                   |               |             |            |
+|      awsfirehose       |                   |               |             |            |
+|        awsxray         |                   |               |             |            |
+|        collectd        |                   |               |             |            |
+|        couchdb         |                   |               |             |            |
+|        datadog         |                   |               |             |            |
+|         expvar         |                   |               |             |            |
+|       filestats        |                   |               |             |            |
+|      flinkmetrics      |                   |               |             |            |
+|     fluentforward      |                   |               |             |            |
+|   googlecloudpubsub    |                   |               |             |            |
+|   googlecloudspanner   |                   |               |             |            |
+|        haproxy         |                   |               |             |            |
+|   activedirectoryds    |                   |               |             |            |
+|       aerospike        |                   |               |             |            |
+|     azureeventhub      |                   |               |             |            |
+|         bigip          |                   |               |             |            |
+|        carbonr         |                   |               |             |            |
+|         chrony         |                   |               |             |            |
+|       cloudflare       |                   |               |             |            |

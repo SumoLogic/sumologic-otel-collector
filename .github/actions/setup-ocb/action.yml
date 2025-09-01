@@ -1,0 +1,69 @@
+name: Setup ocb
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set default BIN_PATH
+      shell: bash
+      run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
+
+    - name: Add ocb installation dir to PATH
+      shell: bash
+      run: echo "$BIN_PATH" >> $GITHUB_PATH
+
+    - name: Download ocb
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      working-directory: otelcolbuilder
+      run: |
+        version="$(printf "%s" "$(make ocb-version)")"
+        repo="open-telemetry/opentelemetry-collector-releases"
+        tag="cmd/builder/v${version}"
+        os=""
+        arch=""
+        ext=""
+
+        case "${RUNNER_OS}" in
+          "macOS")
+            os="darwin" ;;
+          "Linux")
+            os="linux" ;;
+          "Windows")
+            os="windows"
+            ext=".exe"
+            ;;
+          *)
+            echo "Unsupported OS: ${RUNNER_OS}"
+            exit 1
+        esac
+
+        case "${RUNNER_ARCH}" in
+          "X86")
+            arch="386" ;;
+          "X64")
+            arch="amd64" ;;
+          "ARM")
+            arch="armv7" ;;
+          "ARM64")
+            arch="arm64" ;;
+          *)
+            echo "Unsupported Architecture: ${RUNNER_ARCH}"
+            exit 1
+        esac
+
+        output="${BIN_PATH}/ocb${ext}"
+        file="ocb_${version}_${os}_${arch}${ext}"
+
+        echo "Downloading ocb"
+        echo "Repository: ${repo}"
+        echo "Release: ${tag}"
+        echo "Artifact: ${file}"
+        echo "Output path: ${output}"
+
+        gh release download -R "${repo}" "${tag}" -O "${output}" -p "${file}"
+
+    - name: Set execute bit for ocb
+      shell: bash
+      run: |
+        chmod +x "${BIN_PATH}/ocb"
