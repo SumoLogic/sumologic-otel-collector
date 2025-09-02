@@ -96,44 +96,44 @@ provider must be used in order to load the stored configuration, for example:
 
 This section lists the components that are included in the sumologic opamp extension for OpenTelemetry Collector.
 
-|       Receivers        |    Processors     |   Exporters   | Extensions  | Connectors |
-| :--------------------: | :---------------: | :-----------: | :---------: | :--------: |
-|          nop           |    attributes     |  awskinesis   |  awsproxy   |            |
-|         apache         |       batch       |     awss3     | filestorage |            |
-|        filelog         |   memorylimiter   |    carbon     | healthcheck |            |
-|      hostmetrics       | resourcedetection |     debug     |    opamp    |            |
-|          otlp          |     resource      |     file      |    pprof    |            |
-|    windowseventlog     |      filter       |     kafka     |  sumologic  |            |
-|         nginx          |     transform     | loadbalancing |             |            |
-|         redis          |                   |      nop      |             |            |
-|         kafka          |                   |     otlp      |             |            |
-|      kafkametrics      |                   |   sumologic   |             |            |
-|      dockerstats       |                   |    syslog     |             |            |
-|        rabbitmq        |                   |  prometheus   |             |            |
-|  windowsperfcounters   |                   |   otlphttp    |             |            |
-|         syslog         |                   |               |             |            |
-|         mysql          |                   |               |             |            |
-|     elasticsearch      |                   |               |             |            |
-|       postgresql       |                   |               |             |            |
-|     awscloudwatch      |                   |               |             |            |
-|  awscontainerinsight   |                   |               |             |            |
-| awsecscontainermetrics |                   |               |             |            |
-|      awsfirehose       |                   |               |             |            |
-|        awsxray         |                   |               |             |            |
-|        collectd        |                   |               |             |            |
-|        couchdb         |                   |               |             |            |
-|        datadog         |                   |               |             |            |
-|         expvar         |                   |               |             |            |
-|       filestats        |                   |               |             |            |
-|      flinkmetrics      |                   |               |             |            |
-|     fluentforward      |                   |               |             |            |
-|   googlecloudpubsub    |                   |               |             |            |
-|   googlecloudspanner   |                   |               |             |            |
-|        haproxy         |                   |               |             |            |
-|   activedirectoryds    |                   |               |             |            |
-|       aerospike        |                   |               |             |            |
-|     azureeventhub      |                   |               |             |            |
-|         bigip          |                   |               |             |            |
-|        carbonr         |                   |               |             |            |
-|         chrony         |                   |               |             |            |
-|       cloudflare       |                   |               |             |            |
+|       Receivers        |      Processors      |   Exporters   | Extensions  | Connectors |
+| :--------------------: | :------------------: | :-----------: | :---------: | :--------: |
+|          nop           |      attributes      |  awskinesis   |  awsproxy   |            |
+|         apache         |        batch         |     awss3     | filestorage |            |
+|        filelog         |    memorylimiter     |    carbon     | healthcheck |            |
+|      hostmetrics       |  resourcedetection   |     debug     |    opamp    |            |
+|          otlp          |       resource       |     file      |    pprof    |            |
+|    windowseventlog     |        filter        |     kafka     |  sumologic  |            |
+|         nginx          |      transform       | loadbalancing |             |            |
+|         redis          |  cumulativetodelta   |      nop      |             |            |
+|         kafka          |     deltatorate      |     otlp      |             |            |
+|      kafkametrics      |  metricsgeneration   |   sumologic   |             |            |
+|      dockerstats       |     groupbyattrs     |    syslog     |             |            |
+|        rabbitmq        |     groupbytrace     |  prometheus   |             |            |
+|  windowsperfcounters   |    k8sattributes     |   otlphttp    |             |            |
+|         syslog         |       logdedup       |               |             |            |
+|         mysql          |    logstransform     |               |             |            |
+|     elasticsearch      |   metricstransform   |               |             |            |
+|       postgresql       | probabilisticsampler |               |             |            |
+|     awscloudwatch      |                      |               |             |            |
+|  awscontainerinsight   |                      |               |             |            |
+| awsecscontainermetrics |                      |               |             |            |
+|      awsfirehose       |                      |               |             |            |
+|        awsxray         |                      |               |             |            |
+|        collectd        |                      |               |             |            |
+|        couchdb         |                      |               |             |            |
+|        datadog         |                      |               |             |            |
+|         expvar         |                      |               |             |            |
+|       filestats        |                      |               |             |            |
+|      flinkmetrics      |                      |               |             |            |
+|     fluentforward      |                      |               |             |            |
+|   googlecloudpubsub    |                      |               |             |            |
+|   googlecloudspanner   |                      |               |             |            |
+|        haproxy         |                      |               |             |            |
+|   activedirectoryds    |                      |               |             |            |
+|       aerospike        |                      |               |             |            |
+|     azureeventhub      |                      |               |             |            |
+|         bigip          |                      |               |             |            |
+|        carbonr         |                      |               |             |            |
+|         chrony         |                      |               |             |            |
+|       cloudflare       |                      |               |             |            |

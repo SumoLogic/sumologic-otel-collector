@@ -1,0 +1,23 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+processors:
+  probabilistic_sampler:
+    sampling_percentage: 15.3
+    hash_seed: 22
+    attribute_source: "record"
+    from_attribute: "foo"
+    sampling_priority: "bar"
+service:
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        processors:
+          - probabilistic_sampler
+        exporters:
+          - sumologic
