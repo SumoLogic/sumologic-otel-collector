@@ -23,7 +23,7 @@
       when: version is defined
     - name: Add api_url to install script argument list
       ansible.builtin.set_fact:
-        install_script_args: "{{ install_script_args + [ '--api_url ' ~ api_url ] }}"
+        install_script_args: "{{ install_script_args + [ '--api ' ~ api_url ] }}"
       when: api_url is defined
     - name: Disable systemd via install script argument list
       ansible.builtin.set_fact:
