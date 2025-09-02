@@ -1,0 +1,21 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+processors:
+  deltatorate:
+    metrics:
+      - metric1
+      - metric2
+service:
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        processors:
+          - deltatorate
+        exporters:
+          - sumologic
