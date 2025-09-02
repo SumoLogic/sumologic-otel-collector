@@ -23,12 +23,20 @@
       when: version is defined
     - name: Add api_url to install script argument list
       ansible.builtin.set_fact:
-        install_script_args: "{{ install_script_args + [ '--api_url ' ~ api_url ] }}"
+        install_script_args: "{{ install_script_args + [ '--api ' ~ api_url ] }}"
       when: api_url is defined
     - name: Disable systemd via install script argument list
       ansible.builtin.set_fact:
         install_script_args: "{{ install_script_args + ['--skip-systemd'] }}"
       when: not systemd_service
+    - name: Add remotely managed to install script argument list
+      ansible.builtin.set_fact:
+        install_script_args: "{{ install_script_args + ['--remotely-managed'] }}"
+      when: remotely_managed | default(false)
+    - name: Add opamp_api_url to install script argument list
+      ansible.builtin.set_fact:
+        install_script_args: "{{ install_script_args + [ '--opamp_api ' ~ opamp_api_url ] }}"
+      when: opamp_api_url is defined
     - name: Run install script
       environment:
         SUMOLOGIC_INSTALLATION_TOKEN: "{{ installation_token | mandatory }}"
