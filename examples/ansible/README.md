@@ -26,6 +26,8 @@ This playbook will install Sumo Logic Distro of [OpenTelemetry Collector][otc_li
 - `version`: version of Sumo Logic Distribution for OpenTelemetry Collector. The default is the latest stable version.
 - `systemd_service`: enables creation of Systemd Service for Sumo Logic Distribution for OpenTelemetry Collector. Enabled by default. Note that this playbook will not start the collector if you disable this.
 - `src_config_path`: path to configuration directory for Sumo Logic Distribution for OpenTelemetry Collector
+- `remotely_managed`: enables creation of remotely managed Sumo Logic Distribution for OpenTelemetry Collector. Disabled by default.
+- `opamp_api_url`: Sumo Logic Opamp API url. You shouldn't need to set this in most normal circumstances.
 
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
 [installation_token]: https://help.sumologic.com/docs/manage/security/installation-tokens/
