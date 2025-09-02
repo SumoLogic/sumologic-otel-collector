@@ -77,10 +77,6 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			configFile: "testdata/filelog_sumologicexporter_with_persistent_queue_enabled.yaml",
 		},
 		{
-			name:       "telegrafreceiver with routingprocessor",
-			configFile: "testdata/telegrafreceiver_routingprocessor.yaml",
-		},
-		{
 			name:       "resource and attributes processors with support for regexp for delete and hash actions",
 			configFile: "testdata/attribute_attraction_pattern.yaml",
 		},
