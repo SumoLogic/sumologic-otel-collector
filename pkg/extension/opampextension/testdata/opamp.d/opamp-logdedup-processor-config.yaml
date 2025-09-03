@@ -1,0 +1,20 @@
+receivers:
+    filelog:
+        include: [./example/*.log]
+processors:
+    logdedup:
+        conditions:
+            - attributes["ID"] == 1
+            - resource.attributes["service.name"] == "my-service"
+        interval: 60s
+        log_count_attribute: dedup_count
+        timezone: 'America/Los_Angeles'
+exporters:
+    sumologic:
+
+service:
+    pipelines:
+        logs:
+            receivers: [filelog]
+            processors: [logdedup]
+            exporters: [sumologic]

@@ -26,6 +26,14 @@ jobs:
     with:
       go-version: ${{ needs.determine-build-info.outputs.go-version }}
 
+  test-integration-otelcol:
+    name: Integration Test - Collector
+    needs:
+      - determine-build-info
+    uses: ./.github/workflows/workflow-test-integration-otelcol.yml
+    with:
+      go-version: ${{ needs.determine-build-info.outputs.go-version }}
+
   test-otelcol-config:
     name: Test - Config Tool
     uses: ./.github/workflows/workflow-test-otelcol-config.yml

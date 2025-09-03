@@ -17,3 +17,15 @@ $(pkg_dir)/common.mk:
 #################################################################################
 
 include $(pkg_dir)/common.mk
+
+PROJECT_ROOT := $(shell git rev-parse --show-toplevel)
+OTELCOL_BINARY := $(PROJECT_ROOT)/otelcolbuilder/cmd/otelcol-sumo
+
+.PHONY: test-integration
+test-integration:
+	@if [ ! -f $(OTELCOL_BINARY) ]; then \
+        echo "Binary not found, building..."; \
+        $(MAKE) -C $(PROJECT_ROOT)/otelcolbuilder build; \
+    fi
+	go clean -testcache
+	go test -tags=integration ./...
