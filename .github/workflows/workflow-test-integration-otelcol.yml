@@ -1,0 +1,53 @@
+#################################################################################
+# A reusable workflow to run integration tests for otelcol-sumo across multiple platforms.
+#################################################################################
+
+name: Workflow - Integration Test Collector (Multiple Platforms)
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: The version of Go to use.
+        type: string
+        required: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  matrix:
+    name: Generate Matrix
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.generate-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate matrix
+        id: generate-matrix
+        run: |
+          matrix="$(make test-integration-otelcol-matrix)"
+          echo "${matrix}" | jq
+          echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: >
+      ${{ matrix.runs-on }}
+      ${{ matrix.fips == true && '(FIPS)' || '' }}
+      -
+      ${{ matrix.pkg }}
+    uses: ./.github/workflows/workflow-test-integration-otelcol-platform.yml
+    needs:
+      - matrix
+    with:
+      fips: ${{ matrix.fips == true }}
+      go-version: ${{ inputs.go-version }}
+      pkg: ${{ matrix.pkg }}
+      runs-on: ${{ matrix.runs-on }}
+    strategy:
+      matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
