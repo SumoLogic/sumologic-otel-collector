@@ -64,7 +64,7 @@ EXPORTABLE_GO_MODULES := $(filter-out pkg/tools/%,$(EXPORTABLE_GO_MODULES))
 
 TESTABLE_GO_MODULES := $(filter-out pkg/tools/otelcol-config,$(ALL_GO_MODULES))
 TESTABLE_GO_MODULES := $(filter-out pkg/tools/udpdemux,$(TESTABLE_GO_MODULES))
-
+INTEGRATION_TESTABLE_GO_MODULES := $(shell find pkg/ -type f -name '*_test.go' -exec grep -l '// +build integration\|//go:build integration' {} \; | xargs -r dirname | sort -u)
 #################################################################################
 # GitHub Actions variables
 #################################################################################
@@ -72,6 +72,11 @@ TESTABLE_GO_MODULES := $(filter-out pkg/tools/udpdemux,$(TESTABLE_GO_MODULES))
 # Contains the base matrix for workflow-test-otelcol.yml
 TEST_OTELCOL_BASE_MATRIX = ci/matrix/workflow-test-otelcol.json
 TEST_OTELCOL_JQ_FILTER = ci/matrix/workflow-test-otelcol.jq
+
+# Contains the base matrix for workflow-test-integration-otelcol.yml
+TEST_INTEGRATION_OTELCOL_BASE_MATRIX = ci/matrix/workflow-test-integration-otelcol.json
+TEST_INTEGRATION_OTELCOL_JQ_FILTER = ci/matrix/workflow-test-otelcol.jq
+
 
 #################################################################################
 # Colour variables
@@ -125,6 +130,10 @@ all: markdownlint yamllint
 .PHONY: %/lint
 %/lint:
 	$(call shell_run,cd "$(@D)" && $(MAKE) lint)
+
+.PHONY: %/testintegration
+%/testintegration:
+	$(call shell_run,cd "$(@D)" && $(MAKE) test-integration)
 
 #################################################################################
 # Markdown targets
@@ -202,6 +211,9 @@ gomod-download-all: $(patsubst %,%/mod-download-all,$(ALL_GO_MODULES))
 .PHONY: gotest
 gotest: $(patsubst %,%/test,$(TESTABLE_GO_MODULES))
 
+.PHONY: gotest-integration
+gotest-integration: $(patsubst %,%/testintegration,$(INTEGRATION_TESTABLE_GO_MODULES))
+
 .PHONY: list-all-modules
 list-all-modules: $(patsubst %,%/print-directory,$(ALL_GO_MODULES))
 
@@ -210,6 +222,9 @@ list-exportable-modules: $(patsubst %,%/print-directory,$(EXPORTABLE_GO_MODULES)
 
 .PHONY: list-testable-modules
 list-testable-modules: $(patsubst %,%/print-directory,$(TESTABLE_GO_MODULES))
+
+.PHONY: list-integration-testable-modules
+list-integration-testable-modules: $(patsubst %,%/print-directory,$(INTEGRATION_TESTABLE_GO_MODULES))
 
 #################################################################################
 # GitHub Actions targets
@@ -220,10 +235,20 @@ testable-modules-json: install-jq
 testable-modules-json:
 	@printf '"%s"\n' $(TESTABLE_GO_MODULES) | jq -scr
 
+.PHONY: integration-testable-modules-json
+integration-testable-modules-json: install-jq
+integration-testable-modules-json:
+	@printf '"%s"\n' $(INTEGRATION_TESTABLE_GO_MODULES) | jq -scr
+
 .PHONY: test-otelcol-base-matrix
 test-otelcol-base-matrix: install-jq
 test-otelcol-base-matrix:
 	@jq -cr . "$(TEST_OTELCOL_BASE_MATRIX)"
+
+.PHONY: test-integration-otelcol-base-matrix
+test-integration-otelcol-base-matrix: install-jq
+test-integration-otelcol-base-matrix:
+	@jq -cr . "$(TEST_INTEGRATION_OTELCOL_BASE_MATRIX)"
 
 # Generate a matrix for the otelcol test workflow by combining the base matrix
 # with the testable Go modules
@@ -236,6 +261,18 @@ test-otelcol-matrix:
 	--argjson base '$(BASE_MATRIX)' \
 	--argjson pkgs '$(PKGS)' \
 	-f "$(TEST_OTELCOL_JQ_FILTER)"
+
+# Generate a matrix for the otelcol test workflow by combining the base matrix
+# with the testable Go modules
+.PHONY: test-integration-otelcol-matrix
+test-integration-otelcol-matrix: install-jq
+test-integration-otelcol-matrix: BASE_MATRIX = $(shell $(MAKE) test-integration-otelcol-base-matrix)
+test-integration-otelcol-matrix: PKGS = $(shell $(MAKE) integration-testable-modules-json)
+test-integration-otelcol-matrix:
+	@jq -ncr \
+	--argjson base '$(BASE_MATRIX)' \
+	--argjson pkgs '$(PKGS)' \
+	-f "$(TEST_INTEGRATION_OTELCOL_JQ_FILTER)"
 
 #################################################################################
 # OpenTelemetry preparation targets
