@@ -119,3 +119,61 @@
           when: src_config_path is defined or src_env_path is defined
 
       when: ansible_os_family == 'Windows'
+    - name: Download install script
+      ansible.builtin.get_url:
+        url: "https://download-otel.sumologic.com/latest/download/install.sh"
+        dest: /tmp/install.sh
+        mode: 0755
+    - name: Create install script argument list
+      ansible.builtin.set_fact:
+        install_script_args: ['--download-timeout 300']
+    - name: Add tags to install script argument list
+      ansible.builtin.set_fact:
+        install_script_args: "{{ install_script_args + [ '--tag ' ~ item.key ~ '=' ~ item.value ] }}"
+      loop: "{{ collector_tags | dict2items }}"
+    - name: Add version to install script argument list
+      ansible.builtin.set_fact:
+        install_script_args: "{{ install_script_args + [ '--version ' ~ version ] }}"
+      when: version is defined
+    - name: Add api_url to install script argument list
+      ansible.builtin.set_fact:
+        install_script_args: "{{ install_script_args + [ '--api ' ~ api_url ] }}"
+      when: api_url is defined
+    - name: Disable systemd via install script argument list
+      ansible.builtin.set_fact:
+        install_script_args: "{{ install_script_args + ['--skip-systemd'] }}"
+      when: not systemd_service
+    - name: Add remotely managed to install script argument list
+      ansible.builtin.set_fact:
+        install_script_args: "{{ install_script_args + ['--remotely-managed'] }}"
+      when: remotely_managed | default(false)
+    - name: Add opamp_api_url to install script argument list
+      ansible.builtin.set_fact:
+        install_script_args: "{{ install_script_args + [ '--opamp_api ' ~ opamp_api_url ] }}"
+      when: opamp_api_url is defined
+    - name: Run install script
+      environment:
+        SUMOLOGIC_INSTALLATION_TOKEN: "{{ installation_token | mandatory }}"
+      ansible.builtin.command: "bash /tmp/install.sh {{ install_script_args | join(' ') }}"
+      changed_when: true
+    - name: "Copy configuration files to /etc/otelcol-sumo/conf.d"
+      ansible.builtin.copy:
+        src: "{{ src_config_path }}"
+        dest: /etc/otelcol-sumo/conf.d
+        owner: otelcol-sumo
+        group: otelcol-sumo
+        mode: 0640
+      when: src_config_path is defined
+    - name: "Copy environment files to /etc/otelcol-sumo/env"
+      ansible.builtin.copy:
+        src: "{{ src_env_path }}"
+        dest: /etc/otelcol-sumo/env
+        owner: root
+        group: root
+        mode: 0600
+      when: src_env_path is defined
+    - name: Restart service
+      service:
+        name: otelcol-sumo
+        state: restarted
+      when: (src_config_path is defined) or (src_env_path is defined)
