@@ -125,7 +125,21 @@ jobs:
         env:
           AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
         working-directory: ./pkg/tools/otelcol-config
-        run: make ${{ inputs.platform }}-sign
+        run: |
+          signed=false
+
+          for _ in $(seq 1 5); do
+            if make ${{ inputs.platform }}-sign; then
+              signed=true
+              break
+            fi
+            sleep 5
+          done
+
+          if ! $signed; then
+            echo "Failed to sign binary & dmg file"
+            exit 1
+          fi
 
       - name: Store binary as action artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

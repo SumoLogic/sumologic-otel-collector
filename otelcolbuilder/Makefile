@@ -1,6 +1,6 @@
-#################################################################################
+################################################################################
 # Path variables & stop implicit rules
-#################################################################################
+################################################################################
 
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
@@ -16,9 +16,9 @@ $(parent_dir)/common.mk:
 $(toolchains_dir)/Makefile:
 	@true
 
-#################################################################################
+################################################################################
 # Override variables & include makefile dependencies
-#################################################################################
+################################################################################
 
 # A list of one or more space-delimited paths to files that are used to determine
 # if the cache should be invalidated. When these files change, the cache is
@@ -31,9 +31,9 @@ include $(parent_dir)/common.mk
 # Include the toolchains Makefile
 include $(toolchains_dir)/Makefile
 
-#################################################################################
+################################################################################
 # Variables
-#################################################################################
+################################################################################
 
 BINARY_NAME ?= otelcol-sumo
 OCB_VERSION ?= 0.130.1
@@ -249,36 +249,17 @@ otelcol-sumo-darwin_amd64:
 otelcol-sumo-darwin_arm64:
 	GOOS=darwin  GOARCH=arm64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-darwin_arm64
 
-.PHONY: darwin-sign
-darwin-sign: BINARY_PATH = cmd/$(BINARY_NAME)
-darwin-sign: DMG_PATH = $(BINARY_PATH).dmg
-darwin-sign:
-	$(eval DMG_SOURCE_DIR = $(shell mktemp -d -t "$(BINARY_NAME)-dmg"))
-	codesign --timestamp --options=runtime -s "$(DEVELOPER_SIGNING_IDENTITY)" -v "$(BINARY_PATH)"
-	cp "$(BINARY_PATH)" "$(DMG_SOURCE_DIR)"
-	hdiutil create "$(DMG_PATH)" -ov -volname "$(DMG_VOLUME_NAME)" -fs APFS -format UDZO -srcfolder "$(DMG_SOURCE_DIR)"
-	xcrun notarytool submit --apple-id "$(AC_USERNAME)" --password "$(AC_PASSWORD)" --team-id "$(DEVELOPER_TEAM_ID)" --progress --wait "$(DMG_PATH)"
-	xcrun stapler staple "$(DMG_PATH)"
-
-.PHONY: darwin_amd64-sign
-darwin_amd64-sign: BINARY_NAME=otelcol-sumo-darwin_amd64
-darwin_amd64-sign: darwin-sign
-
-.PHONY: darwin_arm64-sign
-darwin_arm64-sign: BINARY_NAME=otelcol-sumo-darwin_arm64
-darwin_arm64-sign: darwin-sign
-
 .PHONY: otelcol-sumo-linux_amd64
 otelcol-sumo-linux_amd64:
 	GOOS=linux   GOARCH=amd64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-linux_amd64
 
-.PHONY: otelcol-sumo-linux_arm64
-otelcol-sumo-linux_arm64:
-	GOOS=linux   GOARCH=arm64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-linux_arm64
-
 .PHONY: otelcol-sumo-linux_arm
 otelcol-sumo-linux_arm:
 	GOOS=linux   GOARCH=arm $(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-linux_arm
+
+.PHONY: otelcol-sumo-linux_arm64
+otelcol-sumo-linux_arm64:
+	GOOS=linux   GOARCH=arm64 $(MAKE) build BINARY_NAME=$(BINARY_NAME)$(FIPS_SUFFIX)-linux_arm64
 
 .PHONY: otelcol-sumo-windows_amd64
 otelcol-sumo-windows_amd64:
@@ -299,3 +280,20 @@ otelcol-sumo-linux-fips_amd64:
 		CGO_ENABLED=1 \
 		CC="$(toolchains_dir)/toolchain_amd64/bin/x86_64-linux-musl-gcc" \
 		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
+
+################################################################################
+# Signing targets
+################################################################################
+
+.PHONY: darwin-sign-otelcol
+darwin-sign-otelcol: BIN_PATH = cmd/$(BINARY_NAME)
+darwin-sign-otelcol: DMG_BIN_FILENAME = otelcol-sumo
+darwin-sign-otelcol: darwin-sign
+
+.PHONY: darwin_amd64-sign
+darwin_amd64-sign: BINARY_NAME=otelcol-sumo-darwin_amd64
+darwin_amd64-sign: darwin-sign-otelcol
+
+.PHONY: darwin_arm64-sign
+darwin_arm64-sign: BINARY_NAME=otelcol-sumo-darwin_arm64
+darwin_arm64-sign: darwin-sign-otelcol

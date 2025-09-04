@@ -81,29 +81,12 @@ ifeq ($(HOST_OS),Darwin)
 	AC_PASSWORD ?= $(shell echo $$AC_PASSWORD)
 	DEVELOPER_TEAM_ID ?= 8F28635Z7X
 	DEVELOPER_SIGNING_IDENTITY ?= Developer ID Application: Sumo Logic, Inc. ($(DEVELOPER_TEAM_ID))
+	DMG_VOLUME_NAME ?= Sumo Logic OpenTelemetry Collector Config Tool
 endif
 
 ################################################################################
-# Functions
+# Build targets
 ################################################################################
-
-# Check that given variables are set and all have non-empty values,
-# die with an error otherwise.
-#
-# PARAMS:
-#   1. Variable name(s) to test.
-#   2. (optional) Error message to print.
-#
-# EXAMPLE:
-# @:$(call check_defined, ENV_REGION, you must set ENV_REGION=usc1|awsuse2)
-#
-check_defined = \
-	$(strip $(foreach 1,$1, \
-		$(call __check_defined,$1,$(strip $(value 2)))))
-__check_defined = \
-	$(if $(value $1),, \
-		$(error Undefined $1$(if $2, ($2))$(if $(value @), \
-			required by target `$@')))
 
 .PHONY: build
 build:
@@ -179,7 +162,6 @@ otelcol-config-linux-fips_arm64:
 ################################################################################
 
 .PHONY: otelcol-config-dmg
-otelcol-config-dmg: DMG_VOLUME_NAME=Sumo Logic OpenTelemetry Collector Config Tool
 otelcol-config-dmg:
 	$(call check_defined, BIN_PATH, BIN_PATH must be set to the path of the otelcol-config binary)
 	$(call check_defined, DMG_PATH, DMG_PATH must be set to the path of the DMG file that will be created)
@@ -188,32 +170,18 @@ otelcol-config-dmg:
 	hdiutil create "$(DMG_PATH)" -ov -volname "$(DMG_VOLUME_NAME)" -fs APFS -format UDZO -srcfolder "$(TMP_DIR)"
 
 ################################################################################
-# Code signing targets
+# Signing targets
 ################################################################################
 
-.PHONY: darwin-sign-binary
-darwin-sign-binary:
-	$(call check_defined, BIN_PATH, BIN_PATH must be set to the path of the binary to sign)
-	codesign --timestamp --options=runtime -s "$(DEVELOPER_SIGNING_IDENTITY)" -v "$(BIN_PATH)"
-
-.PHONY: darwin-sign-dmg
-darwin-sign-dmg: DMG_PATH=$(BIN_PATH).dmg
-darwin-sign-dmg:
-	$(call check_defined, DMG_PATH, DMG_PATH must be set to the path of the DMG file to sign)
-	xcrun notarytool submit --apple-id "$(AC_USERNAME)" --password "$(AC_PASSWORD)" --team-id "$(DEVELOPER_TEAM_ID)" --progress --wait "$(DMG_PATH)"
-	xcrun stapler staple "$(DMG_PATH)"
-
-.PHONY: darwin-dmg-and-sign
-darwin-dmg-and-sign: DMG_PATH=$(BINARY_NAME).dmg
-darwin-dmg-and-sign:
-	$(MAKE) darwin-sign-binary BIN_PATH=$(BINARY_NAME)
-	$(MAKE) otelcol-config-dmg BIN_PATH=$(BINARY_NAME) DMG_PATH=$(DMG_PATH)
-	$(MAKE) darwin-sign-dmg DMG_PATH=$(BINARY_NAME).dmg
+.PHONY: darwin-sign-otelcol-config
+darwin-sign-otelcol-config: BIN_PATH = $(BINARY_NAME)
+darwin-sign-otelcol-config: DMG_BIN_FILENAME = otelcol-config
+darwin-sign-otelcol-config: darwin-sign
 
 .PHONY: darwin_amd64-sign
 darwin_amd64-sign: BINARY_NAME=otelcol-config-darwin_amd64
-darwin_amd64-sign: darwin-dmg-and-sign
+darwin_amd64-sign: darwin-sign-otelcol-config
 
 .PHONY: darwin_arm64-sign
 darwin_arm64-sign: BINARY_NAME=otelcol-config-darwin_arm64
-darwin_arm64-sign: darwin-dmg-and-sign
+darwin_arm64-sign: darwin-sign-otelcol-config
