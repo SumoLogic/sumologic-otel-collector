@@ -1,7 +1,6 @@
 - name: Install and configure Sumo OT distro
   hosts: sumologic_otel_collector_hosts
   gather_facts: true
-  become: "{{ true if ansible_os_family != 'Windows' else false }}"
   vars_files:
     - vars/default.yaml
 
@@ -31,6 +30,14 @@
           ansible.builtin.set_fact:
             install_script_args: "{{ install_script_args + ['--skip-systemd'] }}"
           when: not systemd_service
+        - name: Add remotely managed to install script argument list
+          ansible.builtin.set_fact:
+            install_script_args: "{{ install_script_args + ['--remotely-managed'] }}"
+          when: remotely_managed | default(false)
+        - name: Add opamp_api_url to install script argument list
+          ansible.builtin.set_fact:
+            install_script_args: "{{ install_script_args + [ '--opamp_api ' ~ opamp_api_url ] }}"
+          when: opamp_api_url is defined
         - name: Run install script
           environment:
             SUMOLOGIC_INSTALLATION_TOKEN: "{{ installation_token | mandatory }}"
@@ -57,7 +64,7 @@
             name: otelcol-sumo
             state: restarted
           when: (src_config_path is defined) or (src_env_path is defined)
-
+      become: true
       when: ansible_os_family == 'Darwin'
     - block:
         - name: Download install script
@@ -72,7 +79,7 @@
                 '{{ item.key }}' = '{{ item.value }}'{% if not loop.last %}; {% endif %}
                 {% endfor %}
               }
-        - name: Initialize install.ps1 argument list
+        - name: Initialize install script argument list
           set_fact:
             win_install_args: []
         - name: Add version to install script argument list
@@ -83,6 +90,10 @@
           set_fact:
             win_install_args: "{{ win_install_args + [ '-Api ' ~ api_url ] }}"
           when: api_url is defined
+        - name: Add remotely managed to install script argument list
+          set_fact:
+            win_install_args: "{{ win_install_args + ['-RemotelyManaged' ~ remotely_managed] }}"
+          when: remotely_managed | default(false)
         - name: Add opamp_api to iinstall script argument list
           set_fact:
             win_install_args: "{{ win_install_args + [ '-OpAmpApi ' ~ opamp_api ] }}"
@@ -91,13 +102,8 @@
           win_shell: |
             Set-ExecutionPolicy RemoteSigned -Scope Process -Force
             [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-            $path = "C:\Windows\Temp\install.ps1"
             $tags = {{ ps_tags }}
-            & $path -InstallationToken "{{ installation_token }}" -Tags $tags -RemotelyManaged $True {{ win_install_args | join(" ") }}
-          register: install_result
-          failed_when: >
-            install_result.rc != 0 and
-            'Installation successful' not in install_result.stdout
+            & 'C:\Windows\Temp\install.ps1' -InstallationToken "{{ installation_token }}" -Tags $tags {{ win_install_args | join(" ") }}
           args:
             executable: powershell.exe
           environment:
@@ -117,5 +123,5 @@
             name: otelcol-sumo
             state: restarted
           when: src_config_path is defined or src_env_path is defined
-
+      become: false
       when: ansible_os_family == 'Windows'
