@@ -65,11 +65,11 @@
             state: restarted
           when: (src_config_path is defined) or (src_env_path is defined)
       become: true
-      when: ansible_os_family == 'Darwin'
+      when: ansible_os_family != 'Windows'
     - block:
         - name: Download install script
           win_get_url:
-            url: "https://stag-download-otel.sumologic.net/latest/download/install.ps1"
+            url: "https://download-otel.sumologic.com/latest/download/install.ps1"
             dest: "C:\\Windows\\Temp\\install.ps1"
         - name: Build tag arguments
           set_fact:
@@ -92,9 +92,9 @@
           when: api_url is defined
         - name: Add remotely managed to install script argument list
           set_fact:
-            win_install_args: "{{ win_install_args + ['-RemotelyManaged' ~ remotely_managed] }}"
+            win_install_args: "{{ win_install_args + ['-RemotelyManaged ' ~ remotely_managed] }}"
           when: remotely_managed | default(false)
-        - name: Add opamp_api to iinstall script argument list
+        - name: Add opamp_api to install script argument list
           set_fact:
             win_install_args: "{{ win_install_args + [ '-OpAmpApi ' ~ opamp_api ] }}"
           when: opamp_api is defined
