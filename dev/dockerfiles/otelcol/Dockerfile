@@ -1,6 +1,6 @@
 ARG ALPINE_VERSION=3.22.1
 ARG GOMPLATE_VERSION=v4.3.3-alpine
-ARG OCB_VERSION=0.133.0
+ARG OCB_VERSION=0.130.0
 
 # NOTE: The next few build stages only exists to allow the contrib context to be
 # passed in separately from the component's build context. It is passed in by

@@ -4,14 +4,28 @@ receivers:
       grpc:
         endpoint: localhost:4317
 
-processors:
-  routing:
-    from_attribute: attr1
-    attribute_source: resource
-    default_exporters: sumologic/default
+connectors:
+  routing/metrics:
+    match_once: true
+    default_pipelines: metrics/default
     table:
-    - value: 'value1'
-      exporters: sumologic/1
+    - context: request
+      condition: request["attr1"] == "value1"
+      pipelines: metrics/1
+  routing/logs:
+    match_once: true
+    default_pipelines: logs/default
+    table:
+    - context: request
+      condition: request["attr1"] == "value1"
+      pipelines: logs/1
+  routing/traces:
+    match_once: true
+    default_pipelines: traces/default
+    table:
+    - context: request
+      condition: request["attr1"] == "value1"
+      pipelines: traces/1
 
 exporters:
   sumologic/default:
@@ -24,24 +38,45 @@ service:
     metrics:
       receivers:
       - otlp
-      processors:
+      exporters:
+      - routing/metrics
+    metrics/default:
+      receivers:
       - routing
       exporters:
       - sumologic/default
+    metrics/1:
+      receivers:
+      - routing
+      exporters:
       - sumologic/1
     logs:
       receivers:
       - otlp
-      processors:
+      exporters:
+      - routing/logs
+    logs/default:
+      receivers:
       - routing
       exporters:
       - sumologic/default
+    logs/1:
+      receivers:
+      - routing
+      exporters:
       - sumologic/1
     traces:
       receivers:
       - otlp
-      processors:
+      exporters:
+      - routing/traces
+    traces/default:
+      receivers:
       - routing
       exporters:
       - sumologic/default
+    traces/1:
+      receivers:
+      - routing
+      exporters:
       - sumologic/1
