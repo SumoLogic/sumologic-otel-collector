@@ -27,7 +27,7 @@ jobs:
       sumo-version: ${{ steps.get-version.outputs.sumo-version }}
       version: ${{ steps.get-version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Outuput Workflow ID
         run: echo ::notice title=Workflow ID::${{ inputs.workflow_id }}
