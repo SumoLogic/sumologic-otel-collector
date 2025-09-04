@@ -66,7 +66,7 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 		},
 		{
 			name:       "routing processor for traces",
-			configFile: "testdata/routing_processor.yaml",
+			configFile: "testdata/routing_connector.yaml",
 		},
 		{
 			name:       "metricfrequencyprocessor with telegrafreceiver and sumologicexporter",
