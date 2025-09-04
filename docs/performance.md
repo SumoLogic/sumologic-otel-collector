@@ -91,7 +91,7 @@ There are a couple configuration options that can help with performance in speci
 
 ### Sumo Logic Exporter
 
-The [`sumologicexporter`](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.130.0/exporter/sumologicexporter)
+The [`sumologicexporter`](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.134.0/exporter/sumologicexporter)
 sends data to Sumo Logic.
 
 It has the following features that can help with performance:
@@ -100,7 +100,7 @@ It has the following features that can help with performance:
 - `sending_queue` with its `num_consumers`, `queue_size` settings,
 - `timeout`.
 
-Read more about these features in the [Sumo Logic Exporter docs](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.130.0/exporter/sumologicexporter/README.md).
+Read more about these features in the [Sumo Logic Exporter docs](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.134.0/exporter/sumologicexporter/README.md).
 
 ### Batch Processor
 

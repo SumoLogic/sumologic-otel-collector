@@ -259,4 +259,4 @@ service:
 
 [prometheus_data_model]: https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
 [sumologic_output_plugin]: https://github.com/influxdata/telegraf/tree/master/plugins/outputs/sumologic
-[metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.130.0/processor/metricstransformprocessor
+[metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.134.0/processor/metricstransformprocessor
