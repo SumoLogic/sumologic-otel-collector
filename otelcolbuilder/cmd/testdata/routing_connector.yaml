@@ -42,12 +42,12 @@ service:
       - routing/metrics
     metrics/default:
       receivers:
-      - routing
+      - routing/metrics
       exporters:
       - sumologic/default
     metrics/1:
       receivers:
-      - routing
+      - routing/metrics
       exporters:
       - sumologic/1
     logs:
@@ -57,12 +57,12 @@ service:
       - routing/logs
     logs/default:
       receivers:
-      - routing
+      - routing/logs
       exporters:
       - sumologic/default
     logs/1:
       receivers:
-      - routing
+      - routing/logs
       exporters:
       - sumologic/1
     traces:
@@ -72,11 +72,11 @@ service:
       - routing/traces
     traces/default:
       receivers:
-      - routing
+      - routing/traces
       exporters:
       - sumologic/default
     traces/1:
       receivers:
-      - routing
+      - routing/traces
       exporters:
       - sumologic/1
