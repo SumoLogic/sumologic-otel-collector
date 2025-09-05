@@ -23,7 +23,7 @@ connectors:
       - metrics/sumologic1
     table:
       - context: resource
-        condition: resource["_sourceHost"] == "localhost"
+        condition: attributes["_sourceHost"] == "localhost"
         pipelines:
           - metrics/sumologic2
 
