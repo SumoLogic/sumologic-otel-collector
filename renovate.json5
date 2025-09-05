@@ -16,7 +16,6 @@
         "^github.com/open-telemetry/opentelemetry-collector-contrib.*"
       ],
       "groupName": "opentelemetry-collector",
-      "schedule": ["every 12 hours"],
     }
   ]
 }
