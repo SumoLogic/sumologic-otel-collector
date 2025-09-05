@@ -15,7 +15,7 @@ connectors:
       pipelines: [metrics/1]
   routing/logs:
     match_once: true
-    default_pipelines: 
+    default_pipelines:
       - logs/default
     table:
     - context: request
@@ -23,7 +23,7 @@ connectors:
       pipelines: [logs/1]
   routing/traces:
     match_once: true
-    default_pipelines: 
+    default_pipelines:
       - traces/default
     table:
     - context: request
