@@ -17,21 +17,21 @@ receivers:
       [[inputs.diskio]]
       [[inputs.mem]]
 
+connectors:
+  routing:
+    match_once: true
+    default_pipelines: metrics/sumologic1
+    table:
+    - context: resource
+      condition: resource["_sourceHost"] == "localhost"
+      pipelines: metrics/sumologic2
+
 processors:
   resource:
     attributes:
     - key: _sourceHost
       from_attribute: host
       action: insert
-  routing:
-    default_exporters:
-    - sumologic/1
-    attribute_source: resource
-    from_attribute: _sourceHost
-    table:
-    - value: localhost
-      exporters:
-      - sumologic/2
 
 exporters:
   sumologic/1:
@@ -46,7 +46,15 @@ service:
       - telegraf
       processors:
       - resource
+      exporters:
+      - routing
+    metrics/sumologic1:
+      receivers:
       - routing
       exporters:
       - sumologic/1
+    metrics/sumologic2:
+      receivers:
+      - routing
+      exporters:
       - sumologic/2
