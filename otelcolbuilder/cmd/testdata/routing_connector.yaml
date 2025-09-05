@@ -6,7 +6,6 @@ receivers:
 
 connectors:
   routing/metrics:
-    match_once: true
     default_pipelines:
       - metrics/default
     table:
@@ -14,7 +13,6 @@ connectors:
       condition: request["attr1"] == "value1"
       pipelines: [metrics/1]
   routing/logs:
-    match_once: true
     default_pipelines:
       - logs/default
     table:
@@ -22,7 +20,6 @@ connectors:
       condition: request["attr1"] == "value1"
       pipelines: [logs/1]
   routing/traces:
-    match_once: true
     default_pipelines:
       - traces/default
     table:
