@@ -36,7 +36,7 @@ include $(toolchains_dir)/Makefile
 ################################################################################
 
 BINARY_NAME ?= otelcol-sumo
-OCB_VERSION ?= 0.130.1
+OCB_VERSION ?= 0.133.0
 FIPS_SUFFIX ?=
 OTC_RELEASE_REPO ?= github.com/open-telemetry/opentelemetry-collector-releases
 GO ?= go
@@ -144,7 +144,7 @@ endif
 
 .PHONY: ensure-correct-ocb-version
 ensure-correct-ocb-version: ensure-ocb-installed
-ifneq ($(lastword $(INSTALLED_OCB_VERSION)),$(OCB_VERSION))
+ifeq (,$(findstring $(OCB_VERSION),$(lastword $(INSTALLED_OCB_VERSION))))
 	@$(error Installed ocb version \
 		"$(INSTALLED_OCB_VERSION)" \
 		does not match the requested "$(OCB_VERSION)". The correct version of \
