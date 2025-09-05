@@ -144,16 +144,13 @@ endif
 
 .PHONY: ensure-correct-ocb-version
 ensure-correct-ocb-version: ensure-ocb-installed
-ifneq ($(lastword $(INSTALLED_OCB_VERSION)),$(OCB_VERSION))
-	@$(echo Installed ocb version \
+ifeq (,$(findstring $(OCB_VERSION),$(lastword $(INSTALLED_OCB_VERSION))))
+	@$(error Installed ocb version \
 		"$(INSTALLED_OCB_VERSION)" \
 		does not match the requested "$(OCB_VERSION)". The correct version of \
 		ocb can be installed by running 'make install-ocb' from the \
 		otelcolbuilder directory.\
 	)
-	@printf "Installed ocb (%s) is at the correct version %s\n" \
-		"$(shell type $(OCB) | cut -d' ' -f 3)" \
-		"$(OCB_VERSION)"
 else
 	@printf "Installed ocb (%s) is at the correct version %s\n" \
 		"$(shell type $(OCB) | cut -d' ' -f 3)" \
