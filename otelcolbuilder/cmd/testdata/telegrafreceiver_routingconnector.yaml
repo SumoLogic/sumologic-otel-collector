@@ -19,7 +19,6 @@ receivers:
 
 connectors:
   routing:
-    match_once: true
     default_pipelines:
       - metrics/sumologic1
     table:
