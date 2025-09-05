@@ -7,25 +7,28 @@ receivers:
 connectors:
   routing/metrics:
     match_once: true
-    default_pipelines: metrics/default
+    default_pipelines:
+      - metrics/default
     table:
     - context: request
       condition: request["attr1"] == "value1"
-      pipelines: metrics/1
+      pipelines: [metrics/1]
   routing/logs:
     match_once: true
-    default_pipelines: logs/default
+    default_pipelines: 
+      - logs/default
     table:
     - context: request
       condition: request["attr1"] == "value1"
-      pipelines: logs/1
+      pipelines: [logs/1]
   routing/traces:
     match_once: true
-    default_pipelines: traces/default
+    default_pipelines: 
+      - traces/default
     table:
     - context: request
       condition: request["attr1"] == "value1"
-      pipelines: traces/1
+      pipelines: [traces/1]
 
 exporters:
   sumologic/default:
