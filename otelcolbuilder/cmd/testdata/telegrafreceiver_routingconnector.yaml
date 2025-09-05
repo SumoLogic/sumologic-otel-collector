@@ -20,11 +20,13 @@ receivers:
 connectors:
   routing:
     match_once: true
-    default_pipelines: metrics/sumologic1
+    default_pipelines:
+      - metrics/sumologic1
     table:
-    - context: resource
-      condition: resource["_sourceHost"] == "localhost"
-      pipelines: metrics/sumologic2
+      - context: resource
+        condition: resource["_sourceHost"] == "localhost"
+        pipelines:
+          - metrics/sumologic2
 
 processors:
   resource:
