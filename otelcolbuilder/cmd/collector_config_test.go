@@ -65,7 +65,7 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			configFile: "testdata/filterprocessor_logs.yaml",
 		},
 		{
-			name:       "routing processor for traces",
+			name:       "routing connector for traces",
 			configFile: "testdata/routing_connector.yaml",
 		},
 		{
