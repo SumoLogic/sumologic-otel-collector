@@ -104,6 +104,29 @@ endif
 # invalidated. This is used by GitHub Actions.
 CACHE_DEPENDENCY_PATHS ?= go.mod
 
+################################################################################
+# Functions
+################################################################################
+
+# Check that given variables are set and all have non-empty values,
+# die with an error otherwise.
+#
+# PARAMS:
+#   1. Variable name(s) to test.
+#   2. (optional) Error message to print.
+#
+# EXAMPLE:
+# @:$(call check_defined, ENV_REGION, you must set ENV_REGION=usc1|awsuse2)
+#
+check_defined = \
+	$(strip $(foreach 1,$1, \
+		$(call __check_defined,$1,$(strip $(value 2)))))
+
+__check_defined = \
+	$(if $(value $1),, \
+		$(error Undefined $1$(if $2, ($2))$(if $(value @), \
+			required by target '$@')))
+
 #################################################################################
 # System CLI tool targets
 #################################################################################
@@ -140,9 +163,9 @@ install-dependencies: install-staticcheck
 install-dependencies:
 	@echo "All dependencies installed successfully."
 
-#################################################################################
+################################################################################
 # GitHub Actions targets
-#################################################################################
+################################################################################
 
 .PHONY: list-cache-dependency-paths
 list-cache-dependency-paths:
@@ -152,3 +175,88 @@ list-cache-dependency-paths:
 cache-dependency-paths-json: install-jq
 cache-dependency-paths-json:
 	@printf '"%s"\n' $(CACHE_DEPENDENCY_PATHS) | jq -scr
+
+################################################################################
+# Disk imaging targets
+################################################################################
+
+# Creates a DMG file to store a binary.
+#
+# 1. Attempt to remove DMG file with same name.
+# 2. Create temporary directory for DMG contents.
+# 3. Create DMG file using contents in temporary directory.
+.PHONY: darwin-create-dmg
+darwin-create-dmg:
+	@$(call check_defined, \
+		BIN_PATH \
+		DMG_BIN_FILENAME \
+		DMG_PATH \
+		DMG_VOLUME_NAME \
+	)
+
+	@rm -f "$(DMG_PATH)" 2>&1 || true
+	@$(eval DMG_SOURCE_DIR ?= $(shell mktemp -d))
+	@echo "Using temp dir: $(DMG_SOURCE_DIR)"
+	@cp "$(BIN_PATH)" "$(DMG_SOURCE_DIR)/$(DMG_BIN_FILENAME)"
+
+	@hdiutil create "$(DMG_PATH)" \
+		-ov -volname "$(DMG_VOLUME_NAME)" -fs APFS \
+		-format UDZO -srcfolder "$(DMG_SOURCE_DIR)" 2>&1 || \
+		(rm -rf "$(DMG_SOURCE_DIR)" && exit 1)
+
+################################################################################
+# Signing targets
+################################################################################
+
+# Check if a binary is signed. Exits 1 if signed or 0 if unsigned.
+.PHONY: darwin-check-binary-signed
+darwin-check-binary-signed:
+	@$(call check_defined,
+		BIN_PATH \
+		DEVELOPER_TEAM_ID \
+	)
+
+	@codesign -dv "$(BIN_PATH)" 2>&1 | grep "$(DEVELOPER_TEAM_ID)" && \
+		echo "$(BIN_PATH) is already signed" || \
+		(echo "$(BIN_PATH) is not yet signed" && exit 1)
+
+# Uses codesign to sign a binary. Skips binaries that are already signed.
+.PHONY: darwin-sign-binary
+darwin-sign-binary:
+	@$(call check_defined, \
+		BIN_PATH \
+		DEVELOPER_SIGNING_IDENTITY \
+	)
+
+	@$(MAKE) darwin-check-binary-signed || \
+		(echo "Signing $(BIN_PATH)..." && \
+		codesign --timestamp --options=runtime \
+			-s "$(DEVELOPER_SIGNING_IDENTITY)" \
+			-v "$(BIN_PATH)")
+
+	@echo "$(BIN_PATH) is signed"
+
+.PHONY: darwin-notarize-dmg
+darwin-notarize-dmg:
+	@$(call check_defined, \
+		AC_USERNAME \
+		AC_PASSWORD \
+		DEVELOPER_TEAM_ID \
+		DMG_PATH \
+	)
+
+	@xcrun notarytool submit \
+		--apple-id "$(AC_USERNAME)" \
+		--password "$(AC_PASSWORD)" \
+		--team-id "$(DEVELOPER_TEAM_ID)" \
+		--progress \
+		--wait \
+		"$(DMG_PATH)"
+
+	@xcrun stapler staple "$(DMG_PATH)"
+
+.PHONY: darwin-sign
+darwin-sign: DMG_PATH = $(BIN_PATH).dmg
+darwin-sign: darwin-sign-binary
+darwin-sign: darwin-create-dmg
+darwin-sign: darwin-notarize-dmg
