@@ -7,16 +7,16 @@
   "commitMessageExtra": "{{depName}} from {{currentValue}} to {{newValue}}",
   "packageRules": [
     {
-      "matchPackageNames": [".*"],
+      "matchPackageNames": ["/.*/"],
       "enabled": false
     },
     {
-      "matchPackageNames": [
-        "^go.opentelemetry.io/collector.*",
-        "^github.com/open-telemetry/opentelemetry-collector-contrib.*"
+      "matchPackagePatterns": [
+        "^go\\.opentelemetry\\.io/collector.*$",
+        "^github\\.com/open-telemetry/opentelemetry-collector-contrib.*$"
       ],
       "groupName": "opentelemetry-collector",
-      "schedule": ["every 12 hours"],
-    }
+      "enabled": true
+    },
   ]
 }

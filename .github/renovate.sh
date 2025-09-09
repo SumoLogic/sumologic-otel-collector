@@ -20,6 +20,7 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+make gomod-download-all
 TO_VERSIONS=$(grep -o 'github.com/open-telemetry/opentelemetry-collector-contrib[^ ]* v[0-9.]\+' pkg/extension/opampextension/go.mod | awk '{print $2}' | sed 's/^v//' | sort -u)
 TO_VERSION_COUNT=$(echo "$versions" | wc -l)
 if [[ "$TO_VERSION_COUNT" -gt 1 ]]; then
