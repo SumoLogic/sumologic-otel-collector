@@ -1,0 +1,1 @@
+ci: adding renovatebot to automate version bumps
