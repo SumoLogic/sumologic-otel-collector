@@ -1,1 +1,0 @@
-chore: adding support for remotely managed collector for chef

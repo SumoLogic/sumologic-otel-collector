@@ -1,1 +1,0 @@
-chore: Update Chef,Ansible,Puppet to use cdn url for install script
