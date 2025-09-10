@@ -1,1 +1,0 @@
-docs: Updated readme file to reflect the components for opampextension
