@@ -1,0 +1,36 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+processors:
+  redaction:
+    allow_all_keys: false
+    allowed_keys:
+      - description
+      - group
+      - id
+      - name
+    ignored_keys:
+      - safe_attribute
+    blocked_key_patterns:
+      - ".*token.*"
+      - ".*api_key.*"
+    blocked_values:
+      - "4[0-9]{12}(?:[0-9]{3})?"
+      - "(5[1-5][0-9]{14})"
+    allowed_values:
+      - ".+@mycompany.com"
+    hash_function: md5
+    summary: debug
+service:
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        processors:
+          - redaction
+        exporters:
+          - sumologic

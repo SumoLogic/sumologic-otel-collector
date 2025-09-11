@@ -1,0 +1,23 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+processors:
+  routing:
+    from_attribute: X-Tenant
+    default_exporters: [sumologic]
+    table:
+    - value: acme
+      exporters: [sumologic]
+service:
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        processors:
+          - routing
+        exporters:
+          - sumologic

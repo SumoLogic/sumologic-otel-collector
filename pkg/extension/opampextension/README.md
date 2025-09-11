@@ -115,13 +115,13 @@ This section lists the components that are included in the sumologic opamp exten
 |         mysql          |    logstransform     |               |             |            |
 |     elasticsearch      |   metricstransform   |               |             |            |
 |       postgresql       | probabilisticsampler |               |             |            |
-|     awscloudwatch      |                      |               |             |            |
-|  awscontainerinsight   |                      |               |             |            |
-| awsecscontainermetrics |                      |               |             |            |
-|      awsfirehose       |                      |               |             |            |
-|        awsxray         |                      |               |             |            |
-|        collectd        |                      |               |             |            |
-|        couchdb         |                      |               |             |            |
+|     awscloudwatch      |        geoip         |               |             |            |
+|  awscontainerinsight   |      redaction       |               |             |            |
+| awsecscontainermetrics |      remotetap       |               |             |            |
+|      awsfirehose       |       routing        |               |             |            |
+|        awsxray         |        schema        |               |             |            |
+|        collectd        |         span         |               |             |            |
+|        couchdb         |     tailsampling     |               |             |            |
 |        datadog         |                      |               |             |            |
 |         expvar         |                      |               |             |            |
 |       filestats        |                      |               |             |            |
@@ -137,3 +137,6 @@ This section lists the components that are included in the sumologic opamp exten
 |        carbonr         |                      |               |             |            |
 |         chrony         |                      |               |             |            |
 |       cloudflare       |                      |               |             |            |
+|      cloudfoundry      |                      |               |             |            |
+|       httpcheck        |                      |               |             |            |
+|          iis           |                      |               |             |            |

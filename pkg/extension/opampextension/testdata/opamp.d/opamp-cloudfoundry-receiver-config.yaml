@@ -1,0 +1,23 @@
+receivers:
+  cloudfoundry:
+    rlp_gateway:
+      endpoint: "https://log-stream.sys.example.internal"
+      shard_id: "otel-test"
+      timeout: "20s"
+      tls:
+        insecure_skip_verify: true
+    uaa:
+      endpoint: "https://uaa.sys.example.internal"
+      username: "admin"
+      password: "test"
+      tls:
+        insecure_skip_verify: true
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - cloudfoundry
+      exporters:
+        - sumologic

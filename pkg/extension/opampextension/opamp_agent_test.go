@@ -112,6 +112,15 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyPrometheusExporterConfig", "testdata/opamp.d/opamp-prometheus-exporter-config.yaml", false, ""},
 		{"ApplyOtlphttpConfig", "testdata/opamp.d/opamp-otlphttp-exporter-config.yaml", false, ""},
 		{"ApplyECSObserverConfig", "testdata/opamp.d/opamp-ecsobserver-config.yaml", false, ""},
+		{"ApplyRedactionProcessorConfig", "testdata/opamp.d/opamp-redaction-processor-config.yaml", false, ""},
+		{"ApplyRemotetapProcessorConfig", "testdata/opamp.d/opamp-remotetap-processor-config.yaml", false, ""},
+		{"ApplyGeoipProcessorConfig", "testdata/opamp.d/opamp-geoip-processor-config.yaml", false, ""},
+		{"ApplySchemaProcessorConfig", "testdata/opamp.d/opamp-schema-processor-config.yaml", false, ""},
+		{"ApplySpanProcessorConfig", "testdata/opamp.d/opamp-span-processor-config.yaml", false, ""},
+		{"ApplyTailsamplingProcessorConfig", "testdata/opamp.d/opamp-tailsampling-processor-config.yaml", false, ""},
+		{"ApplyCloudfoundryReceiverConfig", "testdata/opamp.d/opamp-cloudfoundry-receiver-config.yaml", false, ""},
+		{"ApplyIisReceiverConfig", "testdata/opamp.d/opamp-iis-receiver-config.yaml", false, ""},
+		{"ApplyHttpcheckReceiverConfig", "testdata/opamp.d/opamp-httpcheck-receiver-config.yaml", false, ""},
 	}
 
 	for _, tt := range tests {
