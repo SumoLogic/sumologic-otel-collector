@@ -1,6 +1,18 @@
 # Ansible playbook to install Sumo Logic Distribution for OpenTelemetry Collector
 
-This playbook will install Sumo Logic Distro of [OpenTelemetry Collector][otc_link].
+This playbook will install Sumo Logic Distro of [OpenTelemetry Collector][otc_link] on both **Linux/Mac** and **Windows** hosts.
+
+## Controller Node (Where You Run Ansible)
+
+- Must be a **Linux/Mac environment**
+- On Windows, use **WSL (Windows Subsystem for Linux)** with Ansible installed
+
+## Target Nodes (Where the Collector Will Be Installed)
+
+- **Windows Hosts**:
+  - PowerShell 5.1 or later
+  - WinRM enabled and accessible from the controller
+  - Ansible user must have administrative privileges
 
 ## Running playbook
 
