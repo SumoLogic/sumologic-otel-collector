@@ -86,7 +86,6 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowsperfcountersreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/redactionprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/remotetapprocessor"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/routingprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/geoipprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/schemaprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/spanprocessor"
@@ -197,7 +196,6 @@ func Components() (
 		probabilisticsamplerprocessor.NewFactory(),
 		redactionprocessor.NewFactory(),
 		remotetapprocessor.NewFactory(),
-		routingprocessor.NewFactory(),
 		geoipprocessor.NewFactory(),
 		schemaprocessor.NewFactory(),
 		spanprocessor.NewFactory(),
