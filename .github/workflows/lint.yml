@@ -1,0 +1,17 @@
+name: "Lint"
+
+permissions:
+  contents: read
+
+on:
+  pull_request: {}
+  push: {}
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: actionlint
+        uses: raven-actions/actionlint@v2
