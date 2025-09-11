@@ -1,1 +1,0 @@
-feat(processor/routing): deprecate `routingprocessor` since its deprecated in upstream in favor of `routingconnector`
