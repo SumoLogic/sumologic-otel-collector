@@ -23,7 +23,15 @@ include $(parent_dir)/common.mk
 # Variables
 #################################################################################
 
-GOFLAGS ?= -race
+GOFLAGS ?=
+
+# NOTE: Only use the -race flag on Linux.
+ifeq ($(HOST_OS),Linux)
+	GOFLAGS ?= -race
+endif
+
+$(error GOFLAGS = $(GOFLAGS))
+
 GOTEST := go test $(GOFLAGS)
 LINT := staticcheck
 
