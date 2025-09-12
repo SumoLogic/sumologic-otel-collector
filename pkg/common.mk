@@ -30,8 +30,6 @@ ifeq ($(HOST_OS),Linux)
 	GOFLAGS ?= -race
 endif
 
-$(error GOFLAGS = $(GOFLAGS))
-
 GOTEST := go test $(GOFLAGS)
 LINT := staticcheck
 
