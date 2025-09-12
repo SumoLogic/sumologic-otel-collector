@@ -1,5 +1,7 @@
 name: Setup yq
 
+description: Installs yq and adds it to PATH.
+
 inputs:
   version:
     description: The version of yq to install.
@@ -21,7 +23,7 @@ runs:
       shell: pwsh
       run: |
         $repo = "https://github.com/mikefarah/yq"
-        $version = "4.45.4"
+        $version = "${{ inputs.version }}"
         $file = "yq_windows_amd64.exe"
         $url = "${repo}/releases/download/v${version}/${file}"
         $drive = (Get-Location).Drive.Name

@@ -102,8 +102,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install yq
-        run: |
-          sudo wget https://github.com/mikefarah/yq/releases/download/v4.12.1/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
+        uses: ./.github/actions/setup-yq
+        with:
+          version: "4.45.4"
       - name: Check plugins in README and builder config
         run: ./ci/plugins_check.sh
 
