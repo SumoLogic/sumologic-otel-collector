@@ -35,7 +35,7 @@
       when: remotely_managed | default(false)
     - name: Add opamp_api_url to install script argument list
       ansible.builtin.set_fact:
-        install_script_args: "{{ install_script_args + [ '--opamp_api ' ~ opamp_api_url ] }}"
+        install_script_args: "{{ install_script_args + [ '--opamp-api ' ~ opamp_api_url ] }}"
       when: opamp_api_url is defined
     - name: Run install script
       environment:
