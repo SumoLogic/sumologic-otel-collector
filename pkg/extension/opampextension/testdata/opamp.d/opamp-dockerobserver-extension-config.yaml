@@ -1,0 +1,22 @@
+extensions:
+  docker_observer:
+    endpoint: my/path/to/docker.sock
+    excluded_images: ['redis', 'another_image_name']
+    api_version: "1.25"
+    timeout: 15s
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+service:
+    extensions:
+      - docker_observer
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        exporters:
+          - sumologic

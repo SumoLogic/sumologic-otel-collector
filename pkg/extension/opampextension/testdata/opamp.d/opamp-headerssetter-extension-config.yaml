@@ -1,0 +1,31 @@
+extensions:
+  headers_setter:
+    headers:
+      - action: insert
+        key: X-Scope-OrgID
+        from_context: tenant_id
+        default_value: Org-ID
+      - action: upsert
+        key: User-ID
+        value: user_id
+      - action: update
+        key: User-ID
+        value: user_id
+      - action: delete
+        key: Some-Header
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+service:
+    extensions:
+      - headers_setter
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        exporters:
+          - sumologic
