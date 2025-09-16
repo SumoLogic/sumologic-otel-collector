@@ -1,0 +1,1 @@
+feat(receiver/opencensusreceiver, receiver/sapmreceiver): deprecate `opencensusreceiver` and 'sapmreceiver' since its deprecated in upstream.
