@@ -84,6 +84,15 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/syslogreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowsperfcountersreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/redactionprocessor"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/remotetapprocessor"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/geoipprocessor"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/schemaprocessor"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/spanprocessor"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/cloudfoundryreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/iisreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/httpcheckreceiver"
 )
 
 // Components returns the set of components for tests
@@ -144,6 +153,9 @@ func Components() (
 		carbonreceiver.NewFactory(),
 		chronyreceiver.NewFactory(),
 		cloudflarereceiver.NewFactory(),
+		cloudfoundryreceiver.NewFactory(),
+		iisreceiver.NewFactory(),
+		httpcheckreceiver.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
@@ -182,6 +194,12 @@ func Components() (
 		logstransformprocessor.NewFactory(),
 		metricstransformprocessor.NewFactory(),
 		probabilisticsamplerprocessor.NewFactory(),
+		redactionprocessor.NewFactory(),
+		remotetapprocessor.NewFactory(),
+		geoipprocessor.NewFactory(),
+		schemaprocessor.NewFactory(),
+		spanprocessor.NewFactory(),
+		tailsamplingprocessor.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
