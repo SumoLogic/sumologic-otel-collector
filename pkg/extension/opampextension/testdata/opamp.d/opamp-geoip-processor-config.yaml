@@ -1,0 +1,22 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+processors:
+  geoip:
+    context: record
+    providers:
+      maxmind:
+        database_path: /tmp/db
+service:
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        processors:
+          - geoip
+        exporters:
+          - sumologic
