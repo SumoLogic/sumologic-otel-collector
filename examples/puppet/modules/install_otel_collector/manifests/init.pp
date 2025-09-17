@@ -37,9 +37,14 @@ class install_otel_collector (
     $install_script_path = 'C:/Windows/Temp/install.ps1'
     $exe_path            = 'C:/Program Files/Sumo Logic/OpenTelemetry Collector/bin/otelcol-sumo.exe'
 
-    # Construct PowerShell hashtable literal string for tags
+    # Escape single quotes for PowerShell
+    function escape_single_quotes(String $str) {
+      $str.gsub("'", "''")
+    }
+
+    # Build the escaped hashtable
     $tags_ps_lines = $collector_tags.map |$k, $v| {
-      "    '${k}' = '${v}';"
+      "    '${escape_single_quotes($k)}' = '${escape_single_quotes($v)}';"
     }
     $tags_ps_block = "@{\n${tags_ps_lines.join("\n")}\n}"
 
@@ -55,7 +60,7 @@ class install_otel_collector (
 
     # Run install script with tags defined inside PowerShell command
     exec { 'Install Otel Collector':
-      command => "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy Bypass -Command \"\
+      command => "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy RemoteSigned -Command \"\
         Set-ExecutionPolicy RemoteSigned -Scope Process -Force; \
         [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; \
         \$tags = ${tags_ps_block}; \
@@ -66,24 +71,9 @@ class install_otel_collector (
     }
 
     # Ensure directories exist
-    file { 'C:/Program Files/Sumo Logic':
-      ensure => directory,
-    }
-
-    file { 'C:/Program Files/Sumo Logic/OpenTelemetry Collector':
-      ensure  => directory,
-      require => File['C:/Program Files/Sumo Logic'],
-    }
-
     file { 'C:/Program Files/Sumo Logic/OpenTelemetry Collector/conf.d':
       ensure  => directory,
       require => File['C:/Program Files/Sumo Logic/OpenTelemetry Collector'],
-    }
-
-    file { 'C:/Program Files/Sumo Logic/OpenTelemetry Collector/conf.d/.keep':
-      ensure  => file,
-      content => "# Keep this directory for Puppet",
-      require => File['C:/Program Files/Sumo Logic/OpenTelemetry Collector/conf.d'],
     }
   } else {
 
