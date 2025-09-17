@@ -1,0 +1,18 @@
+receivers:
+  jaeger:
+    protocols:
+      thrift_binary:
+        endpoint: 0.0.0.0:6832
+        queue_size: 5_000
+        max_packet_size: 131_072
+        workers: 50
+        socket_buffer_size: 8_388_608
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - jaeger
+      exporters:
+        - sumologic

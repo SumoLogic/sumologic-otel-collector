@@ -1,0 +1,15 @@
+receivers:
+  otlpjsonfile:
+    include:
+      - "/var/log/*.log"
+    exclude:
+      - "/var/log/example.log"
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - otlpjsonfile
+      exporters:
+        - sumologic

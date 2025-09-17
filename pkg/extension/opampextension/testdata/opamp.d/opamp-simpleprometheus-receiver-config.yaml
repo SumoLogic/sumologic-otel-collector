@@ -1,0 +1,19 @@
+receivers:
+  prometheus_simple:
+    collection_interval: 10s
+    use_service_account: true
+    endpoint: "172.17.0.5:9153"
+    tls:
+      ca_file: "/path/to/ca"
+      cert_file: "/path/to/cert"
+      key_file: "/path/to/key"
+      insecure_skip_verify: true
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - prometheus_simple
+      exporters:
+        - sumologic
