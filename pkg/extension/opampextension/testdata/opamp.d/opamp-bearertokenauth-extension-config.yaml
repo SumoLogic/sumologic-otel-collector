@@ -1,0 +1,28 @@
+extensions:
+  bearertokenauth:
+    token: "somerandomtoken"
+    filename: "file-containing.token"
+  bearertokenauth/withscheme:
+    scheme: "Bearer"
+    token: "randomtoken"
+  bearertokenauth/multipletokens:
+    scheme: "Bearer"
+    tokens:
+      - "randomtoken"
+      - "thistokenalsoworks"
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+service:
+    extensions:
+      - bearertokenauth/multipletokens
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        exporters:
+          - sumologic

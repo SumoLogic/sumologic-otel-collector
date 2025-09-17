@@ -121,6 +121,21 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyCloudfoundryReceiverConfig", "testdata/opamp.d/opamp-cloudfoundry-receiver-config.yaml", false, ""},
 		{"ApplyIisReceiverConfig", "testdata/opamp.d/opamp-iis-receiver-config.yaml", false, ""},
 		{"ApplyHttpcheckReceiverConfig", "testdata/opamp.d/opamp-httpcheck-receiver-config.yaml", false, ""},
+		{"ApplyAsapAuthExtensionConfig", "testdata/opamp.d/opamp-asapauth-extension-config.yaml", false, ""},
+		{"ApplyBasicAuthExtensionConfig", "testdata/opamp.d/opamp-basicauth-extension-config.yaml", false, ""},
+		{"ApplyBearerTokenAuthExtensionConfig", "testdata/opamp.d/opamp-bearertokenauth-extension-config.yaml", false, ""},
+		{"ApplyDbStorageExtensionConfig", "testdata/opamp.d/opamp-dbstorage-extension-config.yaml", false, ""},
+		{"ApplyDockerObserverExtensionConfig", "testdata/opamp.d/opamp-dockerobserver-extension-config.yaml", false, ""},
+		{"ApplyHeadersSetterExtensionConfig", "testdata/opamp.d/opamp-headerssetter-extension-config.yaml", false, ""},
+		{"ApplyHostObserverExtensionConfig", "testdata/opamp.d/opamp-hostobserver-extension-config.yaml", false, ""},
+		{"ApplyHttpForwarderExtensionConfig", "testdata/opamp.d/opamp-httpforwarder-extension-config.yaml", false, ""},
+		{"ApplyJaegerRemoteSamplingExtensionConfig", "testdata/opamp.d/opamp-jaegerremotesampling-extension-config.yaml", false, ""},
+		{"ApplyK8sObserverExtensionConfig", "testdata/opamp.d/opamp-k8sobserver-extension-config.yaml", false, ""},
+		{"ApplyOauth2ClientauthExtensionConfig", "testdata/opamp.d/opamp-oauth2clientauth-extension-config.yaml", false, ""},
+		{"ApplyOidcAuthExtensionConfig", "testdata/opamp.d/opamp-oidcauth-extension-config.yaml", false, ""},
+		{"ApplyPprofExtensionConfig", "testdata/opamp.d/opamp-pprof-extension-config.yaml", false, ""},
+		{"ApplySigv4AuthExtensionConfig", "testdata/opamp.d/opamp-sigv4auth-extension-config.yaml", false, ""},
+		{"ApplyZpagesExtensionConfig", "testdata/opamp.d/opamp-zpages-extension-config.yaml", false, ""},
 	}
 
 	for _, tt := range tests {

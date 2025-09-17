@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/nopreceiver"
 	"go.opentelemetry.io/collector/receiver/otlpreceiver"
+	"go.opentelemetry.io/collector/extension/zpagesextension"
 
 	"go.uber.org/multierr"
 
@@ -93,6 +94,20 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/cloudfoundryreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/iisreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/httpcheckreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/asapauthextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/basicauthextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/bearertokenauthextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/dbstorage"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/dockerobserver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/headerssetterextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/hostobserver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/httpforwarderextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/jaegerremotesampling"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/k8sobserver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/oauth2clientauthextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/oidcauthextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sigv4authextension"
+
 )
 
 // Components returns the set of components for tests
@@ -110,6 +125,20 @@ func Components() (
 		filestorage.NewFactory(),
 		awsproxy.NewFactory(),
 		ecsobserver.NewFactory(),
+		asapauthextension.NewFactory(),
+		basicauthextension.NewFactory(),
+		bearertokenauthextension.NewFactory(),
+		dbstorage.NewFactory(),
+		dockerobserver.NewFactory(),
+		headerssetterextension.NewFactory(),
+		hostobserver.NewFactory(),
+		httpforwarderextension.NewFactory(),
+		jaegerremotesampling.NewFactory(),
+		k8sobserver.NewFactory(),
+		oauth2clientauthextension.NewFactory(),
+		oidcauthextension.NewFactory(),
+		sigv4authextension.NewFactory(),
+		zpagesextension.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
