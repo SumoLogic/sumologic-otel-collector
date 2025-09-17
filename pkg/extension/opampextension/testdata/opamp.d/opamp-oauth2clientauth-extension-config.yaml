@@ -1,0 +1,32 @@
+extensions:
+  oauth2client:
+    client_id: someclientid
+    client_secret: someclientsecret
+    endpoint_params:
+      audience: someaudience
+    token_url: https://example.com/oauth2/default/v1/token
+    scopes: ["api.metrics"]
+    # tls settings for the token client
+    tls:
+      insecure: true
+      ca_file: /var/lib/mycert.pem
+      cert_file: certfile
+      key_file: keyfile
+    timeout: 2s
+    expiry_buffer: 10s
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+service:
+    extensions:
+      - oauth2client
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        exporters:
+          - sumologic

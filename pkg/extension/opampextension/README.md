@@ -96,44 +96,47 @@ provider must be used in order to load the stored configuration, for example:
 
 This section lists the components that are included in the sumologic opamp extension for OpenTelemetry Collector.
 
-|       Receivers        |      Processors      |   Exporters   | Extensions  | Connectors |
-| :--------------------: | :------------------: | :-----------: | :---------: | :--------: |
-|          nop           |      attributes      |  awskinesis   |  awsproxy   |            |
-|         apache         |        batch         |     awss3     | filestorage |            |
-|        filelog         |    memorylimiter     |    carbon     | healthcheck |            |
-|      hostmetrics       |  resourcedetection   |     debug     |    opamp    |            |
-|          otlp          |       resource       |     file      |    pprof    |            |
-|    windowseventlog     |        filter        |     kafka     |  sumologic  |            |
-|         nginx          |      transform       | loadbalancing |             |            |
-|         redis          |  cumulativetodelta   |      nop      |             |            |
-|         kafka          |     deltatorate      |     otlp      |             |            |
-|      kafkametrics      |  metricsgeneration   |   sumologic   |             |            |
-|      dockerstats       |     groupbyattrs     |    syslog     |             |            |
-|        rabbitmq        |     groupbytrace     |  prometheus   |             |            |
-|  windowsperfcounters   |    k8sattributes     |   otlphttp    |             |            |
-|         syslog         |       logdedup       |               |             |            |
-|         mysql          |    logstransform     |               |             |            |
-|     elasticsearch      |   metricstransform   |               |             |            |
-|       postgresql       | probabilisticsampler |               |             |            |
-|     awscloudwatch      |                      |               |             |            |
-|  awscontainerinsight   |                      |               |             |            |
-| awsecscontainermetrics |                      |               |             |            |
-|      awsfirehose       |                      |               |             |            |
-|        awsxray         |                      |               |             |            |
-|        collectd        |                      |               |             |            |
-|        couchdb         |                      |               |             |            |
-|        datadog         |                      |               |             |            |
-|         expvar         |                      |               |             |            |
-|       filestats        |                      |               |             |            |
-|      flinkmetrics      |                      |               |             |            |
-|     fluentforward      |                      |               |             |            |
-|   googlecloudpubsub    |                      |               |             |            |
-|   googlecloudspanner   |                      |               |             |            |
-|        haproxy         |                      |               |             |            |
-|   activedirectoryds    |                      |               |             |            |
-|       aerospike        |                      |               |             |            |
-|     azureeventhub      |                      |               |             |            |
-|         bigip          |                      |               |             |            |
-|        carbonr         |                      |               |             |            |
-|         chrony         |                      |               |             |            |
-|       cloudflare       |                      |               |             |            |
+|       Receivers        |      Processors      |   Exporters   |      Extensions      | Connectors |
+| :--------------------: | :------------------: | :-----------: | :------------------: | :--------: |
+|          nop           |      attributes      |  awskinesis   |       awsproxy       |            |
+|         apache         |        batch         |     awss3     |     filestorage      |            |
+|        filelog         |    memorylimiter     |    carbon     |     healthcheck      |            |
+|      hostmetrics       |  resourcedetection   |     debug     |        opamp         |            |
+|          otlp          |       resource       |     file      |        pprof         |            |
+|    windowseventlog     |        filter        |     kafka     |      sumologic       |            |
+|         nginx          |      transform       | loadbalancing |       asapauth       |            |
+|         redis          |  cumulativetodelta   |      nop      |      basicauth       |            |
+|         kafka          |     deltatorate      |     otlp      |   bearertokenauth    |            |
+|      kafkametrics      |  metricsgeneration   |   sumologic   |      dbstorage       |            |
+|      dockerstats       |     groupbyattrs     |    syslog     |    dockerobserver    |            |
+|        rabbitmq        |     groupbytrace     |  prometheus   |    headerssetter     |            |
+|  windowsperfcounters   |    k8sattributes     |   otlphttp    |     hostobserver     |            |
+|         syslog         |       logdedup       |               |    httpforwarder     |            |
+|         mysql          |    logstransform     |               | jaegerremotesampling |            |
+|     elasticsearch      |   metricstransform   |               |     k8sobserver      |            |
+|       postgresql       | probabilisticsampler |               |   oauth2clientauth   |            |
+|     awscloudwatch      |        geoip         |               |       oidcauth       |            |
+|  awscontainerinsight   |      redaction       |               |        pprof         |            |
+| awsecscontainermetrics |      remotetap       |               |      sigv4auth       |            |
+|      awsfirehose       |       routing        |               |        zpages        |            |
+|        awsxray         |        schema        |               |                      |            |
+|        collectd        |         span         |               |                      |            |
+|        couchdb         |     tailsampling     |               |                      |            |
+|        datadog         |                      |               |                      |            |
+|         expvar         |                      |               |                      |            |
+|       filestats        |                      |               |                      |            |
+|      flinkmetrics      |                      |               |                      |            |
+|     fluentforward      |                      |               |                      |            |
+|   googlecloudpubsub    |                      |               |                      |            |
+|   googlecloudspanner   |                      |               |                      |            |
+|        haproxy         |                      |               |                      |            |
+|   activedirectoryds    |                      |               |                      |            |
+|       aerospike        |                      |               |                      |            |
+|     azureeventhub      |                      |               |                      |            |
+|         bigip          |                      |               |                      |            |
+|        carbonr         |                      |               |                      |            |
+|         chrony         |                      |               |                      |            |
+|       cloudflare       |                      |               |                      |            |
+|      cloudfoundry      |                      |               |                      |            |
+|       httpcheck        |                      |               |                      |            |
+|          iis           |                      |               |                      |            |

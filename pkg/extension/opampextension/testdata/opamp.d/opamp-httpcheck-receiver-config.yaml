@@ -1,0 +1,26 @@
+receivers:
+  httpcheck:
+    collection_interval: 30s
+    targets:
+      - method: "GET"
+        endpoints:
+          - "https://opentelemetry.io"
+      - method: "GET"
+        endpoints:
+          - "http://localhost:8080/hello1"
+          - "http://localhost:8080/hello2"
+        headers:
+          Authorization: "Bearer <your_bearer_token>"
+      - method: "GET"
+        endpoint: "http://localhost:8080/hello"
+        headers:
+          Authorization: "Bearer <your_bearer_token>"
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - httpcheck
+      exporters:
+        - sumologic

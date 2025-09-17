@@ -1,0 +1,24 @@
+extensions:
+  k8s_observer:
+    auth_type: serviceAccount
+    node: ${env:K8S_NODE_NAME}
+    observe_pods: true
+    observe_nodes: true
+    observe_services: true
+    observe_ingresses: true
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+service:
+    extensions:
+      - k8s_observer
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        exporters:
+          - sumologic
