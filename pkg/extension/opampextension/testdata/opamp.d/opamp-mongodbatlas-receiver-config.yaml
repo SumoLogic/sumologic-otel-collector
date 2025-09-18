@@ -1,0 +1,21 @@
+receivers:
+  mongodbatlas:
+    public_key: <redacted>
+    private_key: <redacted>
+    alerts:
+      enabled: true
+      mode: poll
+      projects:
+      - name: Project 0
+        include_clusters: [Cluster0]
+      poll_interval: 1m
+    storage: file_storage
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - mongodbatlas
+      exporters:
+        - sumologic

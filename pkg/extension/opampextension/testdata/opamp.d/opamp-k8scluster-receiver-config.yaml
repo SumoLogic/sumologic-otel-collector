@@ -1,0 +1,16 @@
+receivers:
+  k8s_cluster:
+    collection_interval: 30s
+    node_conditions_to_report: [ "Ready", "MemoryPressure" ]
+    allocatable_types_to_report: [ "cpu","memory" ]
+    metadata_exporters: [ nop ]
+    metadata_collection_interval: 30m
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - k8s_cluster
+      exporters:
+        - sumologic

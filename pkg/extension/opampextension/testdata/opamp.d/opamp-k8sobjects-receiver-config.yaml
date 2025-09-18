@@ -1,0 +1,23 @@
+receivers:
+  k8sobjects:
+    auth_type: serviceAccount
+    k8s_leader_elector: k8s_leader_elector
+    objects:
+      - name: pods
+        mode: pull
+        label_selector: environment in (production),tier in (frontend)
+        field_selector: status.phase=Running
+        interval: 15m
+      - name: events
+        mode: watch
+        group: events.k8s.io
+        namespaces: [default]
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - k8sobjects
+      exporters:
+        - sumologic

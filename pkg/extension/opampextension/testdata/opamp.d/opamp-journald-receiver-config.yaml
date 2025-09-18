@@ -1,0 +1,18 @@
+receivers:
+  journald:
+    directory: /run/log/journal
+    units:
+      - ssh
+      - kubelet
+      - docker
+      - containerd
+    priority: info
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - journald
+      exporters:
+        - sumologic

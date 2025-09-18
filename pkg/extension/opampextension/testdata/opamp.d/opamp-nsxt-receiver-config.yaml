@@ -1,0 +1,18 @@
+receivers:
+  nsxt:
+    endpoint: https://nsx-manager
+    username: admin
+    password: password
+    timeout: 60s
+    metrics:
+      nsxt.node.cpu.utilization:
+        enabled: false
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - nsxt
+      exporters:
+        - sumologic
