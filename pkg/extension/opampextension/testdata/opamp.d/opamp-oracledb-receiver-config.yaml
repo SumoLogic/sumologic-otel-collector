@@ -1,0 +1,15 @@
+receivers:
+  oracledb:
+    endpoint: localhost:51521
+    password: p@sswo%d
+    service: XE
+    username: otel
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - oracledb
+      exporters:
+        - sumologic

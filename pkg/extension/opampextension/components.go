@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/nopreceiver"
 	"go.opentelemetry.io/collector/receiver/otlpreceiver"
+	"go.opentelemetry.io/collector/extension/zpagesextension"
 
 	"go.uber.org/multierr"
 
@@ -93,6 +94,38 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/cloudfoundryreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/iisreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/httpcheckreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/asapauthextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/basicauthextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/bearertokenauthextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/dbstorage"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/dockerobserver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/headerssetterextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/hostobserver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/httpforwarderextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/jaegerremotesampling"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/k8sobserver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/oauth2clientauthextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/oidcauthextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sigv4authextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/influxdbreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jmxreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/journaldreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sclusterreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8seventsreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sobjectsreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/lokireceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/memcachedreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/mongodbreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/mongodbatlasreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/nsxtreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/oracledbreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/otlpjsonfilereceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/podmanreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/simpleprometheusreceiver"
+
 )
 
 // Components returns the set of components for tests
@@ -110,6 +143,20 @@ func Components() (
 		filestorage.NewFactory(),
 		awsproxy.NewFactory(),
 		ecsobserver.NewFactory(),
+		asapauthextension.NewFactory(),
+		basicauthextension.NewFactory(),
+		bearertokenauthextension.NewFactory(),
+		dbstorage.NewFactory(),
+		dockerobserver.NewFactory(),
+		headerssetterextension.NewFactory(),
+		hostobserver.NewFactory(),
+		httpforwarderextension.NewFactory(),
+		jaegerremotesampling.NewFactory(),
+		k8sobserver.NewFactory(),
+		oauth2clientauthextension.NewFactory(),
+		oidcauthextension.NewFactory(),
+		sigv4authextension.NewFactory(),
+		zpagesextension.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
@@ -156,6 +203,24 @@ func Components() (
 		cloudfoundryreceiver.NewFactory(),
 		iisreceiver.NewFactory(),
 		httpcheckreceiver.NewFactory(),
+		influxdbreceiver.NewFactory(),
+		jaegerreceiver.NewFactory(),
+		jmxreceiver.NewFactory(),
+		journaldreceiver.NewFactory(),
+		k8sclusterreceiver.NewFactory(),
+		k8seventsreceiver.NewFactory(),
+		k8sobjectsreceiver.NewFactory(),
+		kubeletstatsreceiver.NewFactory(),
+		lokireceiver.NewFactory(),
+		memcachedreceiver.NewFactory(),
+		mongodbreceiver.NewFactory(),
+		mongodbatlasreceiver.NewFactory(),
+		nsxtreceiver.NewFactory(),
+		opencensusreceiver.NewFactory(),
+		oracledbreceiver.NewFactory(),
+		otlpjsonfilereceiver.NewFactory(),
+		podmanreceiver.NewFactory(),
+		simpleprometheusreceiver.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 

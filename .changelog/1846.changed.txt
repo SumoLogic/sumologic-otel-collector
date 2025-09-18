@@ -1,0 +1,1 @@
+chore: adding all extensions to opamoextension

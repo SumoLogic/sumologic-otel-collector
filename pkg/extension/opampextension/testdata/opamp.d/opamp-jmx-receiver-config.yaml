@@ -1,0 +1,35 @@
+receivers:
+  jmx:
+    jar_path: testdata/fake_jmx.jar
+    endpoint: myendpoint:12345
+    target_system: jvm
+    collection_interval: 15s
+    username: myusername
+    password: mypassword
+    otlp:
+      endpoint: myotlpendpoint
+      headers:
+        x-header-1: value1
+        x-header-2: value2
+      timeout: 5s
+    keystore_path: mykeystorepath
+    keystore_password: mykeystorepassword
+    keystore_type: mykeystoretype
+    truststore_path: mytruststorepath
+    truststore_password: mytruststorepassword
+    remote_profile: myremoteprofile
+    realm: myrealm
+    log_level: trace
+    resource_attributes:
+      one: two
+    additional_jars:
+      - testdata/fake_additional.jar
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - jmx
+      exporters:
+        - sumologic

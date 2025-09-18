@@ -1,0 +1,17 @@
+receivers:
+  loki:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:3500
+      grpc:
+        endpoint: 0.0.0.0:3600
+    use_incoming_timestamp: true
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - loki
+      exporters:
+        - sumologic

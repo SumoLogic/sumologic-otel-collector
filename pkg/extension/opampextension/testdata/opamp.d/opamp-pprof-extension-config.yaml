@@ -1,0 +1,21 @@
+extensions:
+  pprof/1:
+    endpoint: "127.0.0.1:1777"
+    block_profile_fraction: 3
+    mutex_profile_fraction: 5
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+service:
+    extensions:
+      - pprof/1
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        exporters:
+          - sumologic

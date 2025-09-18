@@ -1,0 +1,19 @@
+extensions:
+  zpages:
+    endpoint: "localhost:56888"
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+service:
+    extensions:
+      - zpages
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        exporters:
+          - sumologic
