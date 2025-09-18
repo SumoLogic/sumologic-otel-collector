@@ -30,6 +30,7 @@ class install_otel_collector (
   Optional[String] $version = undef,
   String $src_config_path = 'puppet:///modules/install_otel_collector/conf.d',
   Optional[String] $opamp_api_url = undef,
+  Boolean $remotely_managed = true,
 ) {
   if $facts['os']['family'] == 'windows' {
 
@@ -51,6 +52,7 @@ class install_otel_collector (
     # Optional arguments as strings (empty if undef)
     $api_arg    = $api_url ? { undef => '', default => "-Api '${api_url}'" }
     $opamp_arg  = $opamp_api_url ? { undef => '', default => "-OpAmpApi '${opamp_api_url}'" }
+    $remote_arg = $remotely_managed ? { true => '-RemotelyManaged $true', false => '-RemotelyManaged $false' }
     # Download install.ps1 script
     exec { 'Download Otel Collector Script':
       command   => "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy Bypass -Command \"Invoke-WebRequest -Uri '${install_script_url}' -OutFile '${install_script_path}'\"",
@@ -64,7 +66,7 @@ class install_otel_collector (
         Set-ExecutionPolicy RemoteSigned -Scope Process -Force; \
         [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; \
         \$tags = ${tags_ps_block}; \
-        & '${install_script_path}' -InstallationToken '${installation_token}' -Tags \$tags ${api_arg} ${opamp_arg}\"",
+        & '${install_script_path}' -InstallationToken '${installation_token}' -Tags \$tags ${remote_arg} ${api_arg} ${opamp_arg}\"",
       unless  => "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -Command \"if (Test-Path '${exe_path}') { exit 0 } else { exit 1 }\"",
       require => Exec['Download Otel Collector Script'],
       logoutput => true,
