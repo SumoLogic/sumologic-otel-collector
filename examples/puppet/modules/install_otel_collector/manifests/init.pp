@@ -52,7 +52,7 @@ class install_otel_collector (
     # Optional arguments as strings (empty if undef)
     $api_arg    = $api_url ? { undef => '', default => "-Api '${api_url}'" }
     $opamp_arg  = $opamp_api_url ? { undef => '', default => "-OpAmpApi '${opamp_api_url}'" }
-    $remote_arg = $remotely_managed ? { true => '-RemotelyManaged $true', false => '-RemotelyManaged $false' }
+    $remote_arg =  "-RemotelyManaged \$${remotely_managed}"
     # Download install.ps1 script
     exec { 'Download Otel Collector Script':
       command   => "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy Bypass -Command \"Invoke-WebRequest -Uri '${install_script_url}' -OutFile '${install_script_path}'\"",
