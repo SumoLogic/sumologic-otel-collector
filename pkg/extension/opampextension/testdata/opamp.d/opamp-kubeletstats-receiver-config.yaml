@@ -1,0 +1,19 @@
+receivers:
+  kubeletstats:
+    collection_interval: 20s
+    initial_delay: 1s
+    auth_type: "tls"
+    ca_file: "/path/to/ca.crt"
+    key_file: "/path/to/apiserver.key"
+    cert_file: "/path/to/apiserver.crt"
+    endpoint: "https://192.168.64.1:10250"
+    insecure_skip_verify: true
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - kubeletstats
+      exporters:
+        - sumologic

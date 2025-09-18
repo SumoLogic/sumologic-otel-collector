@@ -107,6 +107,24 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/oauth2clientauthextension"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/oidcauthextension"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sigv4authextension"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/influxdbreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jmxreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/journaldreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sclusterreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8seventsreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sobjectsreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/lokireceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/memcachedreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/mongodbreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/mongodbatlasreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/nsxtreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/oracledbreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/otlpjsonfilereceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/podmanreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/simpleprometheusreceiver"
 
 )
 
@@ -185,6 +203,24 @@ func Components() (
 		cloudfoundryreceiver.NewFactory(),
 		iisreceiver.NewFactory(),
 		httpcheckreceiver.NewFactory(),
+		influxdbreceiver.NewFactory(),
+		jaegerreceiver.NewFactory(),
+		jmxreceiver.NewFactory(),
+		journaldreceiver.NewFactory(),
+		k8sclusterreceiver.NewFactory(),
+		k8seventsreceiver.NewFactory(),
+		k8sobjectsreceiver.NewFactory(),
+		kubeletstatsreceiver.NewFactory(),
+		lokireceiver.NewFactory(),
+		memcachedreceiver.NewFactory(),
+		mongodbreceiver.NewFactory(),
+		mongodbatlasreceiver.NewFactory(),
+		nsxtreceiver.NewFactory(),
+		opencensusreceiver.NewFactory(),
+		oracledbreceiver.NewFactory(),
+		otlpjsonfilereceiver.NewFactory(),
+		podmanreceiver.NewFactory(),
+		simpleprometheusreceiver.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 

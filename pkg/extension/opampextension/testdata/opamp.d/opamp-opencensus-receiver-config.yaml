@@ -1,0 +1,14 @@
+receivers:
+  opencensus:
+    cors_allowed_origins:
+    - http://test.com
+    - https://*.example.com
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - opencensus
+      exporters:
+        - sumologic

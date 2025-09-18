@@ -1,0 +1,13 @@
+receivers:
+  k8s_events:
+    auth_type: kubeConfig
+    namespaces: [default, my_namespace]
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - k8s_events
+      exporters:
+        - sumologic
