@@ -3,9 +3,7 @@
 This [Puppet][puppet] [manifest](manifest/../manifests/install_otel_collector.pp) along with
 [module](modules/install_otel_collector/) will install Sumo Logic Distro of [OpenTelemetry Collector][otc_link].
 
-## Using the module
-
-### Windows Support
+## Windows Support
 
 - To install the Sumo Logic OpenTelemetry Collector on Windows:
   Ensure PowerShell execution policy allows scripts:
@@ -13,6 +11,8 @@ This [Puppet][puppet] [manifest](manifest/../manifests/install_otel_collector.pp
    ```powershell
    Set-ExecutionPolicy RemoteSigned -Scope Process -Force
    ```
+
+## Using the module
 
 - Get an [installation token][installation_token] from Sumo Logic
 - Prepare [configuration](../../docs/configuration.md) file for Sumo Logic Distribution for OpenTelemetry Collector and put the file in a directory of your choice. You can put multiple configuration files in this directory, and all of them will be used.
