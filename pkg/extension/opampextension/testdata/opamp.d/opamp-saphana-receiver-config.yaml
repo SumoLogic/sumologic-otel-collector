@@ -1,0 +1,16 @@
+receivers:
+  saphana:
+    endpoint: "localhost:33015"
+    collection_interval: 60s
+    metrics:
+      saphana.cpu.used:
+        enabled: false
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - saphana
+      exporters:
+        - sumologic

@@ -1,0 +1,15 @@
+receivers:
+  sapm:
+    endpoint: localhost:7276
+    tls:
+      cert_file: /test.crt
+      key_file: /test.key
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - sapm
+      exporters:
+        - sumologic

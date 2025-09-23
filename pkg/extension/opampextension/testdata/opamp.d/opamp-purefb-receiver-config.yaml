@@ -1,0 +1,29 @@
+extensions:
+  bearertokenauth/fb01:
+    token: "..."
+receivers:
+  purefb:
+    endpoint: http://172.31.60.207:9491/metrics
+    arrays:
+      - address: fb01
+        auth:
+          authenticator: bearertokenauth/fb01
+    clients:
+      - address: fb01
+        auth:
+          authenticator: bearertokenauth/fb01
+    env: dev
+    settings:
+      reload_intervals:
+        array: 5m
+        clients: 6m
+        usage: 6m
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - purefb
+      exporters:
+        - sumologic

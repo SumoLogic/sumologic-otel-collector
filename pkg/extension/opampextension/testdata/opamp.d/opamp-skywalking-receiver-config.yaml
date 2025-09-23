@@ -1,0 +1,16 @@
+receivers:
+  skywalking:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:11800
+      http:
+        endpoint: 0.0.0.0:12800
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - skywalking
+      exporters:
+        - sumologic

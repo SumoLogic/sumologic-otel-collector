@@ -125,6 +125,24 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/otlpjsonfilereceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/podmanreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/simpleprometheusreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/pulsarreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/purefareceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/purefbreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/receivercreator"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/riakreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/saphanareceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/sapmreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/signalfxreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/skywalkingreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/snowflakereceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/snmpreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/solacereceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/splunkhecreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/sqlqueryreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/sqlserverreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/sshcheckreceiver"
+
 
 )
 
@@ -221,6 +239,23 @@ func Components() (
 		otlpjsonfilereceiver.NewFactory(),
 		podmanreceiver.NewFactory(),
 		simpleprometheusreceiver.NewFactory(),
+		prometheusreceiver.NewFactory(),
+		pulsarreceiver.NewFactory(),
+		purefareceiver.NewFactory(),
+		purefbreceiver.NewFactory(),
+		receivercreator.NewFactory(),
+		riakreceiver.NewFactory(),
+		saphanareceiver.NewFactory(),
+		sapmreceiver.NewFactory(),
+		signalfxreceiver.NewFactory(),
+		skywalkingreceiver.NewFactory(),
+		snowflakereceiver.NewFactory(),
+		snmpreceiver.NewFactory(),
+		solacereceiver.NewFactory(),
+		splunkhecreceiver.NewFactory(),
+		sqlqueryreceiver.NewFactory(),
+		sqlserverreceiver.NewFactory(),
+		sshcheckreceiver.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 

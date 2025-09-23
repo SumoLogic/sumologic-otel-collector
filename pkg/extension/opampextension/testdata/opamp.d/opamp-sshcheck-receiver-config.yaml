@@ -1,0 +1,15 @@
+receivers:
+  sshcheck:
+    endpoint: localhost:2222
+    username: otelu
+    password: $OTELP
+    collection_interval: 60s
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - sshcheck
+      exporters:
+        - sumologic
