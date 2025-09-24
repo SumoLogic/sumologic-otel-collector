@@ -100,7 +100,6 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |                  [nginx][nginxreceiver]                  |                                                              |                                        |                                             |                                     |
 |                    [nop][nopreceiver]                    |                                                              |                                        |                                             |                                     |
 |                   [nsxt][nsxtreceiver]                   |                                                              |                                        |                                             |                                     |
-|             [opencensus][opencensusreceiver]             |                                                              |                                        |                                             |                                     |
 |               [oracledb][oracledbreceiver]               |                                                              |                                        |                                             |                                     |
 |                   [otlp][otlpreceiver]                   |                                                              |                                        |                                             |                                     |
 |           [otlpjsonfile][otlpjsonfilereceiver]           |                                                              |                                        |                                             |                                     |
@@ -117,7 +116,6 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |                  [redis][redisreceiver]                  |                                                              |                                        |                                             |                                     |
 |                   [riak][riakreceiver]                   |                                                              |                                        |                                             |                                     |
 |                [saphana][saphanareceiver]                |                                                              |                                        |                                             |                                     |
-|                   [sapm][sapmreceiver]                   |                                                              |                                        |                                             |                                     |
 |               [signalfx][signalfxreceiver]               |                                                              |                                        |                                             |                                     |
 |             [skywalking][skywalkingreceiver]             |                                                              |                                        |                                             |                                     |
 |              [snowflake][snowflakereceiver]              |                                                              |                                        |                                             |                                     |
@@ -203,7 +201,6 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [nginxreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.136.0/receiver/nginxreceiver
 [nopreceiver]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.136.0/receiver/nopreceiver
 [nsxtreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.136.0/receiver/nsxtreceiver
-[opencensusreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.136.0/receiver/opencensusreceiver
 [oracledbreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.136.0/receiver/oracledbreceiver
 [otlpreceiver]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.136.0/receiver/otlpreceiver
 [otlpjsonfilereceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.136.0/receiver/otlpjsonfilereceiver
@@ -220,7 +217,6 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [redisreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.136.0/receiver/redisreceiver
 [riakreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.136.0/receiver/riakreceiver
 [saphanareceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.136.0/receiver/saphanareceiver
-[sapmreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.136.0/receiver/sapmreceiver
 [signalfxreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.136.0/receiver/signalfxreceiver
 [skywalkingreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.136.0/receiver/skywalkingreceiver
 [snmpreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.136.0/receiver/snmpreceiver
