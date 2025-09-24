@@ -1,0 +1,95 @@
+receivers:
+  snmp:
+    collection_interval: 60s
+    endpoint: udp://localhost:161
+    version: v3
+    security_level: auth_priv
+    user: otel
+    auth_type: "MD5"
+    auth_password: ${env:SNMP_AUTH_PASSWORD}
+    privacy_type: "DES"
+    privacy_password: ${env:SNMP_PRIVACY_PASSWORD}
+
+    resource_attributes:
+      resource_attr.name.1:
+        indexed_value_prefix: probe
+      resource_attr.name.2:
+        oid: "1.1.1.1"
+
+    attributes:
+      attr.name.1:
+        value: a2_new_key
+        enum:
+          - in
+          - out
+      attr.name.2:
+        indexed_value_prefix: device
+      attr.name.3:
+        oid: "2.2.2.2"
+
+    metrics:
+      metric.name.1:
+        unit: "1"
+        sum:
+          aggregation: cumulative
+          monotonic: true
+          value_type: int
+        column_oids:
+          - oid: "2.2.2.1"
+            attributes:
+              - name: attr.name.3
+      metric.name.2:
+        unit: "By"
+        gauge:
+          value_type: int
+        column_oids:
+          - oid: "3.3.3.3"
+            attributes:
+              - name: attr.name.2
+              - name: attr.name.1
+                value: in
+          - oid: "2"
+            attributes:
+              - name: attr.name.2
+              - name: attr.name.1
+                value: out
+      metric.name.3:
+        unit: "By"
+        sum:
+          aggregation: delta
+          monotonic: false
+          value_type: double
+        scalar_oids:
+          - oid: "4.4.4.4.0"
+            attributes:
+              - name: attr.name.1
+                value: in
+          - oid: "4.4.4.5.0"
+            attributes:
+              - name: attr.name.1
+                value: out
+      metric.name.4:
+        unit: "By"
+        gauge:
+          value_type: int
+        column_oids:
+          - oid: "5.5.5.5"
+            resource_attributes:
+              - resource_attr.name.1
+      metric.name.5:
+        unit: "By"
+        gauge:
+          value_type: int
+        column_oids:
+          - oid: "1.1.1.2"
+            resource_attributes:
+              - resource_attr.name.2
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - snmp
+      exporters:
+        - sumologic
