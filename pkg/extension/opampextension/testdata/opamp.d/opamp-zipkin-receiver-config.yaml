@@ -1,0 +1,13 @@
+receivers:
+  zipkin:
+    endpoint: "localhost:8765"
+    parse_string_tags: true
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - zipkin
+      exporters:
+        - sumologic
