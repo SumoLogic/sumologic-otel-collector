@@ -1,0 +1,1 @@
+chore: adding all remaining components to opampextension

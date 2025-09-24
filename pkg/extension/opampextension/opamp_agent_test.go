@@ -171,6 +171,14 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplySqlQueryReceiverConfig", "testdata/opamp.d/opamp-sqlquery-receiver-config.yaml", false, ""},
 		{"ApplySqlServerReceiverConfig", "testdata/opamp.d/opamp-sqlserver-receiver-config.yaml", false, ""},
 		{"ApplySshCheckReceiverConfig", "testdata/opamp.d/opamp-sshcheck-receiver-config.yaml", false, ""},
+		{"ApplyStatsdReceiverConfig", "testdata/opamp.d/opamp-statsd-receiver-config.yaml", false, ""},
+		{"ApplyTcplogReceiverConfig", "testdata/opamp.d/opamp-tcplog-receiver-config.yaml", false, ""},
+		{"ApplyUdplogReceiverConfig", "testdata/opamp.d/opamp-udplog-receiver-config.yaml", false, ""},
+		{"ApplyVcenterReceiverConfig", "testdata/opamp.d/opamp-vcenter-receiver-config.yaml", false, ""},
+		{"ApplyWavefrontReceiverConfig", "testdata/opamp.d/opamp-wavefront-receiver-config.yaml", false, ""},
+		{"ApplyZipkinReceiverConfig", "testdata/opamp.d/opamp-zipkin-receiver-config.yaml", false, ""},
+		{"ApplyZookeeperReceiverConfig", "testdata/opamp.d/opamp-zookeeper-receiver-config.yaml", false, ""},
+		{"ApplyEcstaskExtensionConfig", "testdata/opamp.d/opamp-ecstask-extension-config.yaml", false, ""},
 	}
 
 	for _, tt := range tests {

@@ -1,0 +1,26 @@
+receivers:
+  statsd:
+    endpoint: "localhost:8127"
+    aggregation_interval: 70s
+    enable_metric_type: true
+    is_monotonic_counter: false
+    timer_histogram_mapping:
+      - statsd_type: "histogram"
+        observer_type: "gauge"
+      - statsd_type: "timing"
+        observer_type: "histogram"
+        histogram:
+          max_size: 100
+      - statsd_type: "distribution"
+        observer_type: "summary"
+        summary:
+          percentiles: [0, 10, 50, 90, 95, 100]
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - statsd
+      exporters:
+        - sumologic
