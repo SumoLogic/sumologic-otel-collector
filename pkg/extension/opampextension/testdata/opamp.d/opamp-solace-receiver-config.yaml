@@ -1,0 +1,17 @@
+receivers:
+  solace:
+    broker: ["localhost:5671"]
+    auth:
+      sasl_plain:
+        username: otel
+        password: otel01$
+    queue: queue://#telemetry-profile123
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - solace
+      exporters:
+        - sumologic

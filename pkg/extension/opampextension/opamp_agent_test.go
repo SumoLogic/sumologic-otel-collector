@@ -154,6 +154,23 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyOtlpJsonFileReceiverConfig", "testdata/opamp.d/opamp-otlpjsonfile-receiver-config.yaml", false, ""},
 		{"ApplyPodmanReceiverConfig", "testdata/opamp.d/opamp-podman-receiver-config.yaml", false, ""},
 		{"ApplySimplePrometheusReceiverConfig", "testdata/opamp.d/opamp-simpleprometheus-receiver-config.yaml", false, ""},
+		{"ApplyPrometheusReceiverConfig", "testdata/opamp.d/opamp-prometheus-receiver-config.yaml", false, ""},
+		{"ApplyPulsarReceiverConfig", "testdata/opamp.d/opamp-pulsar-receiver-config.yaml", false, ""},
+		{"ApplyPurefaReceiverConfig", "testdata/opamp.d/opamp-purefa-receiver-config.yaml", false, ""},
+		{"ApplyPurefbReceiverConfig", "testdata/opamp.d/opamp-purefb-receiver-config.yaml", false, ""},
+		{"ApplyReceiverCreatorConfig", "testdata/opamp.d/opamp-receiver-creator-config.yaml", false, ""},
+		{"ApplyRiakReceiverConfig", "testdata/opamp.d/opamp-riak-receiver-config.yaml", false, ""},
+		{"ApplySaphanaReceiverConfig", "testdata/opamp.d/opamp-saphana-receiver-config.yaml", false, ""},
+		{"ApplySapmReceiverConfig", "testdata/opamp.d/opamp-sapm-receiver-config.yaml", false, ""},
+		{"ApplySignalFxReceiverConfig", "testdata/opamp.d/opamp-signalfx-receiver-config.yaml", false, ""},
+		{"ApplySkyWalkingReceiverConfig", "testdata/opamp.d/opamp-skywalking-receiver-config.yaml", false, ""},
+		{"ApplySnowflakeReceiverConfig", "testdata/opamp.d/opamp-snowflake-receiver-config.yaml", false, ""},
+		{"ApplySnmpReceiverConfig", "testdata/opamp.d/opamp-snmp-receiver-config.yaml", false, ""},
+		{"ApplySolaceReceiverConfig", "testdata/opamp.d/opamp-solace-receiver-config.yaml", false, ""},
+		{"ApplySplunkhecReceiverConfig", "testdata/opamp.d/opamp-splunkhec-receiver-config.yaml", false, ""},
+		{"ApplySqlQueryReceiverConfig", "testdata/opamp.d/opamp-sqlquery-receiver-config.yaml", false, ""},
+		{"ApplySqlServerReceiverConfig", "testdata/opamp.d/opamp-sqlserver-receiver-config.yaml", false, ""},
+		{"ApplySshCheckReceiverConfig", "testdata/opamp.d/opamp-sshcheck-receiver-config.yaml", false, ""},
 	}
 
 	for _, tt := range tests {
