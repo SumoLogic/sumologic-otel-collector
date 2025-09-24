@@ -142,7 +142,14 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/sqlqueryreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/sqlserverreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/sshcheckreceiver"
-
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/statsdreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/tcplogreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/udplogreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/vcenterreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/wavefrontreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zookeeperreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/ecstaskobserver"
 
 )
 
@@ -175,6 +182,7 @@ func Components() (
 		oidcauthextension.NewFactory(),
 		sigv4authextension.NewFactory(),
 		zpagesextension.NewFactory(),
+		ecstaskobserver.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
@@ -256,6 +264,13 @@ func Components() (
 		sqlqueryreceiver.NewFactory(),
 		sqlserverreceiver.NewFactory(),
 		sshcheckreceiver.NewFactory(),
+		statsdreceiver.NewFactory(),
+		tcplogreceiver.NewFactory(),
+		udplogreceiver.NewFactory(),
+		vcenterreceiver.NewFactory(),
+		wavefrontreceiver.NewFactory(),
+		zipkinreceiver.NewFactory(),
+		zookeeperreceiver.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 

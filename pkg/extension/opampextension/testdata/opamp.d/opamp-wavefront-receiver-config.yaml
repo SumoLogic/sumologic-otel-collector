@@ -1,0 +1,14 @@
+receivers:
+  wavefront:
+    endpoint: localhost:8080
+    tcp_idle_timeout: 5s
+    extract_collectd_tags: true
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - wavefront
+      exporters:
+        - sumologic
