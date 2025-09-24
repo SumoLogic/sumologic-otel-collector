@@ -1,1 +1,7 @@
-updated confmap dependency
+### 🔄 Packages updated:
+
+| Package                                                | From      | To       |
+|--------------------------------------------------------|-----------|----------|
+| `go.opentelemetry.io/collector/confmap` (opampprovider) | v1.20.0   | v1.36.0  |
+| `go.opentelemetry.io/collector/confmap` (providerUtil)  | v0.102.1  | v1.36.0  |
+| `go.opentelemetry.io/collector/confmap` (globprovider)  | v0.107.0  | v1.36.0  |
