@@ -84,7 +84,7 @@ The following steps describe procedure of testing changes:
 
 - In Windows for verifying the service:
 
-  ```bash
+  ```powershell
   Get-Service -Name OtelcolSumo
   ```
 
