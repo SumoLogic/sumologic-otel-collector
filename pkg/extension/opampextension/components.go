@@ -38,6 +38,7 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/oauth2clientauthextension"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/dockerobserver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/ecsobserver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/ecstaskobserver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/hostobserver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/k8sobserver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/oidcauthextension"
@@ -137,9 +138,16 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/sqlqueryreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/sqlserverreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/sshcheckreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/statsdreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/syslogreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/tcplogreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/udplogreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/vcenterreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/wavefrontreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowsperfcountersreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zookeeperreceiver"
 )
 
 // Components returns the set of components for tests
@@ -171,6 +179,7 @@ func Components() (
 		oidcauthextension.NewFactory(),
 		sigv4authextension.NewFactory(),
 		zpagesextension.NewFactory(),
+		ecstaskobserver.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
@@ -250,6 +259,13 @@ func Components() (
 		sqlqueryreceiver.NewFactory(),
 		sqlserverreceiver.NewFactory(),
 		sshcheckreceiver.NewFactory(),
+		statsdreceiver.NewFactory(),
+		tcplogreceiver.NewFactory(),
+		udplogreceiver.NewFactory(),
+		vcenterreceiver.NewFactory(),
+		wavefrontreceiver.NewFactory(),
+		zipkinreceiver.NewFactory(),
+		zookeeperreceiver.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
