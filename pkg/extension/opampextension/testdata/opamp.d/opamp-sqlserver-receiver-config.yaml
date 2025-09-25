@@ -1,0 +1,29 @@
+receivers:
+  sqlserver:
+    collection_interval: 10s
+    instance_name: CustomInstance
+    username: myusername
+    password: mypassword
+    server: sqlserver.address
+    port: 1433
+    events:
+      db.server.query_sample:
+        enabled: true
+      db.server.top_query:
+        enabled: true
+    top_query_collection:
+      lookback_time: 60
+      max_query_sample_count: 1000
+      top_query_count: 200
+      collection_interval: 60s
+    query_sample_collection:
+      max_rows_per_query: 100
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - sqlserver
+      exporters:
+        - sumologic

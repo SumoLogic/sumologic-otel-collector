@@ -1,0 +1,25 @@
+extensions:
+  asapclient:
+    key_id: somekeyid
+    issuer: someissuer
+    audience:
+      - someservice
+      - someotherservice
+    private_key: ${env:ASAP_PRIVATE_KEY}
+    ttl: 60s
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+service:
+    extensions:
+      - asapclient
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        exporters:
+          - sumologic

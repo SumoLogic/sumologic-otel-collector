@@ -1,0 +1,13 @@
+exporters:
+  sumologic:
+receivers:
+  iis:
+    collection_interval: 10s
+    initial_delay: 1s
+service:
+  pipelines:
+    logs:
+      receivers:
+        - iis
+      exporters:
+        - sumologic

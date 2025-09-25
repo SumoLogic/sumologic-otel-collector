@@ -1,0 +1,22 @@
+receivers:
+  pulsar:
+    endpoint: pulsar://localhost:6650
+    topic: otlp-spans
+    subscription: otlp_spans_sub
+    consumer_name: otlp_spans_sub_1
+    encoding: otlp_proto
+    auth:
+      tls:
+        cert_file: cert.pem
+        key_file: key.pem
+    tls_allow_insecure_connection: false
+    tls_trust_certs_file_path: ca.pem
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - pulsar
+      exporters:
+        - sumologic

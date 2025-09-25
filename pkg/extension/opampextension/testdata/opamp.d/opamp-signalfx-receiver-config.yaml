@@ -1,0 +1,15 @@
+receivers:
+  signalfx:
+    access_token_passthrough: true
+    tls:
+      cert_file: /test.crt
+      key_file: /test.key
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - signalfx
+      exporters:
+        - sumologic

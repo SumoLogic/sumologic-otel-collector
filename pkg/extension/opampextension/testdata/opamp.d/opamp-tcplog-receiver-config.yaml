@@ -1,0 +1,12 @@
+receivers:
+  tcplog:
+    listen_address: "0.0.0.0:54525"
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - tcplog
+      exporters:
+        - sumologic

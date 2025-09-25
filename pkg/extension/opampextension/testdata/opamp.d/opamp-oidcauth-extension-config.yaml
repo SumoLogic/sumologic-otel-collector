@@ -1,0 +1,23 @@
+extensions:
+  oidc:
+    providers:
+      - issuer_url: http://localhost:8080/auth/realms/opentelemetry
+        issuer_ca_path: /etc/pki/tls/cert.pem
+        audience: account
+        username_claim: email
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+service:
+    extensions:
+      - oidc
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        exporters:
+          - sumologic

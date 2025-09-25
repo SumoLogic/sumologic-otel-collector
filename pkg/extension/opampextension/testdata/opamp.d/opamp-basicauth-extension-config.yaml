@@ -1,0 +1,26 @@
+extensions:
+  basicauth/server:
+    htpasswd:
+      file: .htpasswd
+      inline: |
+        ${env:BASIC_AUTH_USERNAME}:${env:BASIC_AUTH_PASSWORD}
+  basicauth/client:
+    client_auth:
+      username: username
+      password: password
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+service:
+    extensions:
+      - basicauth/server
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        exporters:
+          - sumologic
