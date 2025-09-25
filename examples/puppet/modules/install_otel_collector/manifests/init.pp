@@ -30,7 +30,7 @@ class install_otel_collector (
   Optional[String] $version = undef,
   String $src_config_path = 'puppet:///modules/install_otel_collector/conf.d',
   Optional[String] $opamp_api_url = undef,
-  Boolean $remotely_managed = true,
+  Boolean $remotely_managed = false,
 ) {
   if $facts['os']['family'] == 'windows' {
 
