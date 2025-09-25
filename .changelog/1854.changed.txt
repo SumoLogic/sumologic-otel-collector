@@ -1,1 +1,1 @@
-receiver/opencensusreceiver removed as its removed in upstream
+chore!:receiver/opencensusreceiver removed as its removed in upstream
