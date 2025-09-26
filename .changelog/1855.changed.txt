@@ -1,0 +1,1 @@
+chore(confmap): update opampprovider, providerUtil, and globprovider to v1.36.0
