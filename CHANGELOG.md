@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.136.0-sumo-0]
+
+### Released 2025-09-26
+
+### Changed
+
+- chore: adding 10 components to opampextension [#1839]
+- chore: adding all extensions to opamoextension [#1846]
+- chore: adding next set of components to opampextension [#1847]
+- chore: adding receiver components to opampextension [#1852]
+- chore:receiver/sapm removed as its removed in upstream [#1854]
+- chore!:upgrade core and contrib to 0.136.0 [#1854]
+- chore!:receiver/opencensusreceiver removed as its removed in upstream [#1854]
+- chore: adding all remaining components to opampextension [#1856]
+
+[#1839]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1839
+[#1846]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1846
+[#1847]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1847
+[#1852]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1852
+[#1854]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1854
+[#1856]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1856
+[v0.136.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.136.0-sumo-0
+
 ## [v0.133.0-sumo-0]
 
 ### Released 2025-09-10
