@@ -1,0 +1,14 @@
+receivers:
+  zookeeper:
+    endpoint: "localhost:2181"
+    collection_interval: 20s
+    initial_delay: 1s
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - zookeeper
+      exporters:
+        - sumologic

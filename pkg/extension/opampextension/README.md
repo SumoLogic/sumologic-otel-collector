@@ -119,8 +119,8 @@ This section lists the components that are included in the sumologic opamp exten
 |  awscontainerinsight   |      redaction       |               |        pprof         |            |
 | awsecscontainermetrics |      remotetap       |               |      sigv4auth       |            |
 |      awsfirehose       |       routing        |               |        zpages        |            |
-|        awsxray         |        schema        |               |                      |            |
-|        collectd        |         span         |               |                      |            |
+|        awsxray         |        schema        |               |  asapauthextension   |            |
+|        collectd        |         span         |               |       ecstask        |            |
 |        couchdb         |     tailsampling     |               |                      |            |
 |        datadog         |                      |               |                      |            |
 |         expvar         |                      |               |                      |            |
@@ -158,3 +158,26 @@ This section lists the components that are included in the sumologic opamp exten
 |      otlpjsonfile      |                      |               |                      |            |
 |         podman         |                      |               |                      |            |
 |    simpleprometheus    |                      |               |                      |            |
+|       prometheus       |                      |               |                      |            |
+|         pulsar         |                      |               |                      |            |
+|         purefa         |                      |               |                      |            |
+|         purefb         |                      |               |                      |            |
+|        receive         |                      |               |                      |            |
+|          riak          |                      |               |                      |            |
+|        saphana         |                      |               |                      |            |
+|          sapm          |                      |               |                      |            |
+|        signalfx        |                      |               |                      |            |
+|       skywalking       |                      |               |                      |            |
+|       snowflake        |                      |               |                      |            |
+|          snmp          |                      |               |                      |            |
+|         solace         |                      |               |                      |            |
+|       splunkhec        |                      |               |                      |            |
+|        sqlquery        |                      |               |                      |            |
+|       sqlserver        |                      |               |                      |            |
+|        sshcheck        |                      |               |                      |            |
+|         statsd         |                      |               |                      |            |
+|         tcplog         |                      |               |                      |            |
+|         udplog         |                      |               |                      |            |
+|       wavefront        |                      |               |                      |            |
+|         zipkin         |                      |               |                      |            |
+|       zookeeper        |                      |               |                      |            |

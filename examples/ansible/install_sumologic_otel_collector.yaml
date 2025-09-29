@@ -1,65 +1,127 @@
 - name: Install and configure Sumo OT distro
   hosts: sumologic_otel_collector_hosts
-  become: true
   gather_facts: true
   vars_files:
     - vars/default.yaml
+
   tasks:
-    - name: Download install script
-      ansible.builtin.get_url:
-        url: "https://download-otel.sumologic.com/latest/download/install.sh"
-        dest: /tmp/install.sh
-        mode: 0755
-    - name: Create install script argument list
-      ansible.builtin.set_fact:
-        install_script_args: ['--download-timeout 300']
-    - name: Add tags to install script argument list
-      ansible.builtin.set_fact:
-        install_script_args: "{{ install_script_args + [ '--tag ' ~ item.key ~ '=' ~ item.value ] }}"
-      loop: "{{ collector_tags | dict2items }}"
-    - name: Add version to install script argument list
-      ansible.builtin.set_fact:
-        install_script_args: "{{ install_script_args + [ '--version ' ~ version ] }}"
-      when: version is defined
-    - name: Add api_url to install script argument list
-      ansible.builtin.set_fact:
-        install_script_args: "{{ install_script_args + [ '--api ' ~ api_url ] }}"
-      when: api_url is defined
-    - name: Disable systemd via install script argument list
-      ansible.builtin.set_fact:
-        install_script_args: "{{ install_script_args + ['--skip-systemd'] }}"
-      when: not systemd_service
-    - name: Add remotely managed to install script argument list
-      ansible.builtin.set_fact:
-        install_script_args: "{{ install_script_args + ['--remotely-managed'] }}"
-      when: remotely_managed | default(false)
-    - name: Add opamp_api_url to install script argument list
-      ansible.builtin.set_fact:
-        install_script_args: "{{ install_script_args + [ '--opamp-api ' ~ opamp_api_url ] }}"
-      when: opamp_api_url is defined
-    - name: Run install script
-      environment:
-        SUMOLOGIC_INSTALLATION_TOKEN: "{{ installation_token | mandatory }}"
-      ansible.builtin.command: "bash /tmp/install.sh {{ install_script_args | join(' ') }}"
-      changed_when: true
-    - name: "Copy configuration files to /etc/otelcol-sumo/conf.d"
-      ansible.builtin.copy:
-        src: "{{ src_config_path }}"
-        dest: /etc/otelcol-sumo/conf.d
-        owner: otelcol-sumo
-        group: otelcol-sumo
-        mode: 0640
-      when: src_config_path is defined
-    - name: "Copy environment files to /etc/otelcol-sumo/env"
-      ansible.builtin.copy:
-        src: "{{ src_env_path }}"
-        dest: /etc/otelcol-sumo/env
-        owner: root
-        group: root
-        mode: 0600
-      when: src_env_path is defined
-    - name: Restart service
-      service:
-        name: otelcol-sumo
-        state: restarted
-      when: (src_config_path is defined) or (src_env_path is defined)
+    - block:
+        - name: Download install script
+          ansible.builtin.get_url:
+            url: "https://github.com/SumoLogic/sumologic-otel-collector-packaging/releases/latest/download/install.sh"
+            dest: /tmp/install.sh
+            mode: 0755
+        - name: Create install script argument list
+          ansible.builtin.set_fact:
+            install_script_args: ['--download-timeout 300']
+        - name: Add tags to install script argument list
+          ansible.builtin.set_fact:
+            install_script_args: "{{ install_script_args + [ '--tag ' ~ item.key ~ '=' ~ item.value ] }}"
+          loop: "{{ collector_tags | dict2items }}"
+        - name: Add version to install script argument list
+          ansible.builtin.set_fact:
+            install_script_args: "{{ install_script_args + [ '--version ' ~ version ] }}"
+          when: version is defined
+        - name: Add api_url to install script argument list
+          ansible.builtin.set_fact:
+            install_script_args: "{{ install_script_args + [ '--api ' ~ api_url ] }}"
+          when: api_url is defined
+        - name: Disable systemd via install script argument list
+          ansible.builtin.set_fact:
+            install_script_args: "{{ install_script_args + ['--skip-systemd'] }}"
+          when: not systemd_service
+        - name: Add remotely managed to install script argument list
+          ansible.builtin.set_fact:
+            install_script_args: "{{ install_script_args + ['--remotely-managed'] }}"
+          when: remotely_managed | default(false)
+        - name: Add opamp_api_url to install script argument list
+          ansible.builtin.set_fact:
+            install_script_args: "{{ install_script_args + [ '--opamp-api ' ~ opamp_api_url ] }}"
+          when: opamp_api_url is defined
+        - name: Run install script
+          environment:
+            SUMOLOGIC_INSTALLATION_TOKEN: "{{ installation_token | mandatory }}"
+          ansible.builtin.command: "bash /tmp/install.sh {{ install_script_args | join(' ') }}"
+          changed_when: true
+        - name: Copy configuration files
+          ansible.builtin.copy:
+            src: "{{ src_config_path }}"
+            dest: /etc/otelcol-sumo/conf.d
+            owner: otelcol-sumo
+            group: otelcol-sumo
+            mode: 0640
+          when: src_config_path is defined
+        - name: Copy environment files
+          ansible.builtin.copy:
+            src: "{{ src_env_path }}"
+            dest: /etc/otelcol-sumo/env
+            owner: root
+            group: root
+            mode: 0600
+          when: src_env_path is defined
+        - name: Restart otelcol-sumo service
+          ansible.builtin.service:
+            name: otelcol-sumo
+            state: restarted
+          when: (src_config_path is defined) or (src_env_path is defined)
+      become: true
+      when: ansible_os_family != 'Windows'
+    - block:
+        - name: Download install script
+          win_get_url:
+            url: "https://download-otel.sumologic.com/latest/download/install.ps1"
+            dest: "C:\\Windows\\Temp\\install.ps1"
+        - name: Build tag arguments
+          set_fact:
+            ps_tags: >-
+              @{
+                {% for item in collector_tags | dict2items %}
+                '{{ item.key }}' = '{{ item.value }}'{% if not loop.last %}; {% endif %}
+                {% endfor %}
+              }
+        - name: Initialize install script argument list
+          set_fact:
+            win_install_args: []
+        - name: Add version to install script argument list
+          set_fact:
+            win_install_args: "{{ win_install_args + [ '-Version ' ~ version ] }}"
+          when: version is defined
+        - name: Add api_url to install script argument list
+          set_fact:
+            win_install_args: "{{ win_install_args + [ '-Api ' ~ api_url ] }}"
+          when: api_url is defined
+        - name: Add remotely managed to install script argument list
+          set_fact:
+            win_install_args: "{{ win_install_args + ['-RemotelyManaged ' ~ remotely_managed] }}"
+          when: remotely_managed | default(false)
+        - name: Add opamp_api to install script argument list
+          set_fact:
+            win_install_args: "{{ win_install_args + [ '-OpAmpApi ' ~ opamp_api ] }}"
+          when: opamp_api is defined
+        - name: Run install script
+          win_shell: |
+            Set-ExecutionPolicy RemoteSigned -Scope Process -Force
+            [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+            $tags = {{ ps_tags }}
+            & 'C:\Windows\Temp\install.ps1' -InstallationToken "{{ installation_token }}" -Tags $tags {{ win_install_args | join(" ") }}
+          args:
+            executable: powershell.exe
+          environment:
+            SUMOLOGIC_INSTALLATION_TOKEN: "{{ installation_token }}"
+        - name: Copy configuration files
+          win_copy:
+            src: "{{ src_config_path }}"
+            dest: "C:\\ProgramData\\SumoLogic\\otelcol-sumo\\conf.d"
+          when: src_config_path is defined
+        - name: Copy environment files
+          win_copy:
+            src: "{{ src_env_path }}"
+            dest: "C:\\ProgramData\\SumoLogic\\otelcol-sumo\\env"
+          when: src_env_path is defined
+        - name: Restart otelcol-sumo service
+          win_service:
+            name: otelcol-sumo
+            state: restarted
+          when: src_config_path is defined or src_env_path is defined
+      become: false
+      when: ansible_os_family == 'Windows'
