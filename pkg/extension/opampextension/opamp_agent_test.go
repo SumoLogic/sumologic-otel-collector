@@ -149,7 +149,6 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyMongodbReceiverConfig", "testdata/opamp.d/opamp-mongodb-receiver-config.yaml", false, ""},
 		{"ApplyMongodbAtlasReceiverConfig", "testdata/opamp.d/opamp-mongodbatlas-receiver-config.yaml", false, ""},
 		{"ApplyNsxtReceiverConfig", "testdata/opamp.d/opamp-nsxt-receiver-config.yaml", false, ""},
-		{"ApplyOpenCensusReceiverConfig", "testdata/opamp.d/opamp-opencensus-receiver-config.yaml", false, ""},
 		{"ApplyOracledbReceiverConfig", "testdata/opamp.d/opamp-oracledb-receiver-config.yaml", false, ""},
 		{"ApplyOtlpJsonFileReceiverConfig", "testdata/opamp.d/opamp-otlpjsonfile-receiver-config.yaml", false, ""},
 		{"ApplyPodmanReceiverConfig", "testdata/opamp.d/opamp-podman-receiver-config.yaml", false, ""},
@@ -161,7 +160,6 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyReceiverCreatorConfig", "testdata/opamp.d/opamp-receiver-creator-config.yaml", false, ""},
 		{"ApplyRiakReceiverConfig", "testdata/opamp.d/opamp-riak-receiver-config.yaml", false, ""},
 		{"ApplySaphanaReceiverConfig", "testdata/opamp.d/opamp-saphana-receiver-config.yaml", false, ""},
-		{"ApplySapmReceiverConfig", "testdata/opamp.d/opamp-sapm-receiver-config.yaml", false, ""},
 		{"ApplySignalFxReceiverConfig", "testdata/opamp.d/opamp-signalfx-receiver-config.yaml", false, ""},
 		{"ApplySkyWalkingReceiverConfig", "testdata/opamp.d/opamp-skywalking-receiver-config.yaml", false, ""},
 		{"ApplySnowflakeReceiverConfig", "testdata/opamp.d/opamp-snowflake-receiver-config.yaml", false, ""},
@@ -171,6 +169,14 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplySqlQueryReceiverConfig", "testdata/opamp.d/opamp-sqlquery-receiver-config.yaml", false, ""},
 		{"ApplySqlServerReceiverConfig", "testdata/opamp.d/opamp-sqlserver-receiver-config.yaml", false, ""},
 		{"ApplySshCheckReceiverConfig", "testdata/opamp.d/opamp-sshcheck-receiver-config.yaml", false, ""},
+		{"ApplyStatsdReceiverConfig", "testdata/opamp.d/opamp-statsd-receiver-config.yaml", false, ""},
+		{"ApplyTcplogReceiverConfig", "testdata/opamp.d/opamp-tcplog-receiver-config.yaml", false, ""},
+		{"ApplyUdplogReceiverConfig", "testdata/opamp.d/opamp-udplog-receiver-config.yaml", false, ""},
+		{"ApplyVcenterReceiverConfig", "testdata/opamp.d/opamp-vcenter-receiver-config.yaml", false, ""},
+		{"ApplyWavefrontReceiverConfig", "testdata/opamp.d/opamp-wavefront-receiver-config.yaml", false, ""},
+		{"ApplyZipkinReceiverConfig", "testdata/opamp.d/opamp-zipkin-receiver-config.yaml", false, ""},
+		{"ApplyZookeeperReceiverConfig", "testdata/opamp.d/opamp-zookeeper-receiver-config.yaml", false, ""},
+		{"ApplyEcstaskExtensionConfig", "testdata/opamp.d/opamp-ecstask-extension-config.yaml", false, ""},
 	}
 
 	for _, tt := range tests {
