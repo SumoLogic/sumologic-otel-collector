@@ -1,1 +1,0 @@
-Added ansible support for windows
