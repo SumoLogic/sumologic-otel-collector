@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.136.0-sumo-1]
+
+### Released 2025-09-30
+
+### Changed
+
+- Added ansible support for windows [#1826]
+- chore(confmap): update opampprovider, providerUtil, and globprovider to v1.36.0 [#1855]
+
+### Fixed
+
+- deps: downgrading gosnowflake to 1.15.0 [#1861]
+
+[#1826]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1826
+[#1855]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1855
+[#1861]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1861
+[v0.136.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.136.0-sumo-1
+
 ## [v0.136.0-sumo-0]
 
 ### Released 2025-09-26
