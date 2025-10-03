@@ -72,8 +72,10 @@ def get_install_script_command(resource)
   end
   if property_is_set?(:api_url)
      command_parts.push("--api #{resource.api_url}")
+  end
   if property_is_set?(:opamp_api_url)
      command_parts.push("--opamp-api #{resource.opamp_api_url}")
+  end
   if resource.remotely_managed
      command_parts.push("--remotely_managed")
   end
