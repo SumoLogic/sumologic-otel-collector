@@ -7,9 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
-## [v0.133.0-sumo-0]
+## [v0.136.0-sumo-1]
 
-### Released 2025-09-10
+### Released 2025-09-30
+
+### Changed
+
+- Added ansible support for windows [#1826]
+- chore(confmap): update opampprovider, providerUtil, and globprovider to v1.36.0 [#1855]
+
+### Fixed
+
+- deps: downgrading gosnowflake to 1.15.0 [#1861]
+
+[#1826]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1826
+[#1855]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1855
+[#1861]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1861
+[v0.136.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.136.0-sumo-1
+
+## [v0.136.0-sumo-0]
+
+### Released 2025-09-26
 
 ### Added
 
@@ -23,6 +41,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- chore: adding 10 components to opampextension [#1839]
+- chore: adding all extensions to opamoextension [#1846]
+- chore: adding next set of components to opampextension [#1847]
+- chore: adding receiver components to opampextension [#1852]
+- chore:receiver/sapm removed as its removed in upstream [#1854]
+- chore!:upgrade core and contrib to 0.136.0 [#1854]
+- chore!:receiver/opencensusreceiver removed as its removed in upstream [#1854]
+- chore: adding all remaining components to opampextension [#1856]
 - docs: removed IN and added KR deployment in opampextension README.md [#1808]
 - chore: adding support for remotely managed collector for chef [#1816]
 - chore: Update Chef,Ansible,Puppet to use cdn url for install script [#1818]
@@ -31,6 +57,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(processor/routing): deprecate `routingprocessor` since its deprecated in upstream in favor of `routingconnector` [#1834]
 - chore: Fix for opamp api fix for ansible [#1840]
 
+[#1839]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1839
+[#1846]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1846
+[#1847]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1847
+[#1852]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1852
+[#1854]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1854
+[#1856]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1856
 [#1803]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1803
 [#1804]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1804
 [#1806]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1806
@@ -44,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1822]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1822
 [#1833]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1833
 [#1840]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1840
-[v0.133.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.133.0-sumo-0
+[v0.136.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.136.0-sumo-0
 
 ## [v0.130.1-sumo-0]
 
