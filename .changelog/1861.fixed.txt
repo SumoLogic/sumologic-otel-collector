@@ -1,1 +1,0 @@
-deps: downgrading gosnowflake to 1.15.0
