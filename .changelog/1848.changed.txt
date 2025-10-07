@@ -1,1 +1,0 @@
-chore: added remote support for puppet(windows)
