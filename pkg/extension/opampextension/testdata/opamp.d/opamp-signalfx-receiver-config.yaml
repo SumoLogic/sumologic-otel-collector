@@ -1,6 +1,12 @@
+extensions:
+  headers_setter:
+    headers:
+      - action: upsert
+        key: X-SF-TOKEN
+        from_context: auth
+
 receivers:
   signalfx:
-    access_token_passthrough: true
     tls:
       cert_file: /test.crt
       key_file: /test.key
