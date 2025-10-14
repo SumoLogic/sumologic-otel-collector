@@ -83,13 +83,13 @@ LDFLAGS := $(EXTRA_LDFLAGS)
 
 ifeq ($(shell go env GOOS),darwin)
 	CGO_ENABLED ?= 1
-# else ifeq ($(OS),windows)
-#	CGO_ENABLED ?= 0
+else ifeq ($(shell go env GOOS),windows)
+	CGO_ENABLED ?= 1
 else
 # CGO_ENABLED=0 is used becuase we don't want to rely on c libs and opentelemetry
 # also builds their binaries this way.
 # ref: https://github.com/open-telemetry/opentelemetry-collector/blob/4c503ddc/Makefile#L254-L256
-	CGO_ENABLED ?= 1
+	CGO_ENABLED ?= 0
 endif
 
 # We don't want to strip symbols for FIPS builds, as they're useful for verifying the build
