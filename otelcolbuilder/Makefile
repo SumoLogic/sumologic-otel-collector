@@ -89,7 +89,7 @@ endif
 ifeq ($(OS),darwin)
 	CGO_ENABLED ?= 1
 else ifeq ($(OS),windows)
-	CGO_ENABLED ?= 1
+	CGO_ENABLED ?= 0
 else
 # CGO_ENABLED=0 is used becuase we don't want to rely on c libs and opentelemetry
 # also builds their binaries this way.
