@@ -89,7 +89,7 @@ else
 # CGO_ENABLED=0 is used becuase we don't want to rely on c libs and opentelemetry
 # also builds their binaries this way.
 # ref: https://github.com/open-telemetry/opentelemetry-collector/blob/4c503ddc/Makefile#L254-L256
-	CGO_ENABLED ?= 0
+	CGO_ENABLED ?= 1
 endif
 
 # We don't want to strip symbols for FIPS builds, as they're useful for verifying the build
