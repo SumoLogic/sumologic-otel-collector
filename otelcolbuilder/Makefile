@@ -81,6 +81,11 @@ LDFLAGS := $(EXTRA_LDFLAGS)
 # https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin.go
 # test cgo enable - windows
 OS := $(shell go env GOOS)
+
+ifeq ($(OS),)
+$(error GOOS not detected. Make sure Go is in PATH and `go env GOOS` works)
+endif
+
 ifeq ($(OS),darwin)
 	CGO_ENABLED ?= 1
 else ifeq ($(OS),windows)
