@@ -82,9 +82,7 @@ LDFLAGS := $(EXTRA_LDFLAGS)
 # test cgo enable - windows
 OS := $(shell go env GOOS)
 
-ifeq ($(OS),)
-$(error GOOS not detected. Make sure Go is in PATH and `go env GOOS` works)
-endif
+$(info Detected OS: $(OS))
 
 ifeq ($(OS),darwin)
 	CGO_ENABLED ?= 1
