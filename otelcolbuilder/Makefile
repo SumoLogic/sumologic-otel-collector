@@ -80,14 +80,11 @@ LDFLAGS := $(EXTRA_LDFLAGS)
 # https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin_nocgo.go
 # https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin.go
 # test cgo enable - windows
-OS := $(shell go env GOOS)
 
-$(info Detected OS: $(OS))
-
-ifeq ($(OS),darwin)
+ifeq ($(shell go env GOOS),darwin)
 	CGO_ENABLED ?= 1
-else ifeq ($(OS),windows)
-	CGO_ENABLED ?= 0
+# else ifeq ($(OS),windows)
+#	CGO_ENABLED ?= 0
 else
 # CGO_ENABLED=0 is used becuase we don't want to rely on c libs and opentelemetry
 # also builds their binaries this way.
