@@ -89,7 +89,7 @@ def get_install_script_command(resource)
      command_parts.push("--opamp-api #{resource.opamp_api_url}")
   end
   if resource.remotely_managed
-     command_parts.push("--remotely_managed")
+     command_parts.push("--remotely-managed")
   end
   if ! resource.systemd_service
      command_parts.push("--skip-systemd")
