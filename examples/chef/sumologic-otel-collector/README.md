@@ -1,6 +1,15 @@
-# Chef cookbook to install Sumo Logic Distribution for OpenTelemetry Collector
+# Chef cookbook to install Sumo Logic Distribution for OpenTelemetry Collector(Linux/Windows)
 
 This cookbook will install Sumo Logic Distro of [OpenTelemetry Collector][otc_link].
+
+## Windows Support
+
+- To install the Sumo Logic OpenTelemetry Collector on Windows:
+  Ensure PowerShell execution policy allows scripts:
+
+   ```powershell
+   Set-ExecutionPolicy RemoteSigned -Scope Process -Force
+   ```
 
 ## Using the cookbook
 
@@ -71,6 +80,12 @@ The following steps describe procedure of testing changes:
 
   ```bash
   sudo journalctl -u otelcol-sumo
+  ```
+
+- In Windows for verifying the service:
+
+  ```powershell
+  Get-Service -Name OtelcolSumo
   ```
 
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
