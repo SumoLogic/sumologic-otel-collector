@@ -1,1 +1,0 @@
-Fix: Remote manage collector in chef
