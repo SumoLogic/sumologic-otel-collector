@@ -1,5 +1,8 @@
 name: Ansible Lint Check
 
+permissions:
+  contents: read
+
 on:
   push:
     paths:
@@ -36,7 +39,7 @@ jobs:
 
       - name: Syntax check playbooks
         run: |
-          find examples/ansible -type f \( -name "*.yml" -o -name "*.yaml" \) | while read file; do
+          find examples/ansible -type f \( -name "*.yml" -o -name "*.yaml" \) | while read -r file; do
             if grep -q "hosts:" "$file"; then
               echo "Running syntax check on $file"
               ansible-playbook --syntax-check "$file" || exit 1
