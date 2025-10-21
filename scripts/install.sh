@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
+# =============================================================
+# DEPRECATION NOTICE (October 2025)
+# The install.sh script has been DEPRECATED and will be removed in a future release.
+# It has moved to the dedicated packaging repository:
+#   https://github.com/SumoLogic/sumologic-otel-collector-packaging
+# Please fetch the latest script from the packaging repo releases:
+#   https://github.com/SumoLogic/sumologic-otel-collector-packaging/releases/latest/download/install.sh
+# Do not rely on this in-repo copy for new installations; it will no longer receive updates.
+# =============================================================
 
 set -euo pipefail
 
@@ -261,7 +270,7 @@ function parse_options() {
       "--${ARG_LONG_TIMEOUT}")
         set -- "$@" "-${ARG_SHORT_TIMEOUT}"
         ;;
-      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_SKIP_CONFIG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_FIPS}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SKIP_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}"|"-${ARG_SHORT_TIMEOUT}"|"-${ARG_SHORT_INSTALL_HOSTMETRICS}"|"-${ARG_SHORT_REMOTELY_MANAGED}"|"-${ARG_SHORT_EPHEMERAL}")
+      "-${ARG_SHORT_TOKEN}"|"-${ARG_SHORT_HELP}"|"-${ARG_SHORT_API}"|"-${ARG_SHORT_TAG}"|"-${ARG_SHORT_SKIP_CONFIG}"|"-${ARG_SHORT_VERSION}"|"-${ARG_SHORT_FIPS}"|"-${ARG_SHORT_YES}"|"-${ARG_SHORT_SKIP_SYSTEMD}"|"-${ARG_SHORT_UNINSTALL}"|"-${ARG_SHORT_PURGE}"|"-${ARG_SHORT_SKIP_TOKEN}"|"-${ARG_SHORT_DOWNLOAD}"|"-${ARG_SHORT_CONFIG_BRANCH}"|"-${ARG_SHORT_BINARY_BRANCH}"|"-${ARG_SHORT_BRANCH}"|"-${ARG_SHORT_KEEP_DOWNLOADS}"|"-${ARG_SHORT_TIMEOUT}"|"-${ARG_SHORT_INSTALL_HOSTMETRICS}"|"-${ARG_SHORT_REMOTELY_MANAGED}"|"-${ARG_SHORT_EPHEMERAL" )
         set -- "$@" "${arg}"
         ;;
       "--${ARG_LONG_INSTALL_HOSTMETRICS}")
@@ -1866,7 +1875,7 @@ if [[ "${OS_TYPE}" == "darwin" ]]; then
     fi
 
     # Extract choices xml from meta package, override the choices to enable
-    # optional choices, and then install using the new choice selections
+       # optional choices, and then install using the new choice selections
     installer -showChoiceChangesXML -pkg "${pkg}" -target / > "${choices}"
 
     # Determine how many installation choices exist
@@ -1874,7 +1883,7 @@ if [[ "${OS_TYPE}" == "darwin" ]]; then
     readonly choices_count
 
     # Loop through each installation choice
-    for (( i=0; i < "${choices_count}"; i++ )); do
+    for (( i=0; i++ )); do
         choice_id_key="${i}.choiceIdentifier"
         choice_attr_key="${i}.choiceAttribute"
         attr_setting_key="${i}.attributeSetting"

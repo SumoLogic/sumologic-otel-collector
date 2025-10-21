@@ -1,3 +1,13 @@
+# =============================================================
+# DEPRECATION NOTICE (October 2025)
+# The install.ps1 script has been DEPRECATED and will be removed in a future release.
+# It has moved to the dedicated packaging repository:
+#   https://github.com/SumoLogic/sumologic-otel-collector-packaging
+# Please fetch the latest script from the packaging repo releases:
+#   https://github.com/SumoLogic/sumologic-otel-collector-packaging/releases/latest/download/install.ps1
+# Do not rely on this in-repo copy for new installations; it will no longer receive updates.
+# =============================================================
+
 using assembly System.Net.Http
 using namespace System.Net.Http
 

@@ -30,6 +30,12 @@ In order to learn more, please see [purpose of Sumo Logic Distribution for OpenT
 - [Versioning policy][versioning]
 - [Breaking changes policy][breaking]
 
+> Deprecated install scripts
+> The legacy `scripts/install.sh` and `scripts/install.ps1` in this repository are deprecated and will be removed.
+> Please use the versions published in the packaging repository releases:
+> https://download-otel.sumologic.com/latest/download/install.sh
+> https://download-otel.sumologic.com/latest/download/install.ps1
+
 ## Supported OS and architectures
 
 | Linux                         | MacOS                         | Windows                     |
