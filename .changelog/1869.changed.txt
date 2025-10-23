@@ -1,0 +1,1 @@
+fix(collector): Changed the dns resolver from Pure Go DNS Resolver to Cgo DNS Resolver to fix DNS resolution issues in Go DNS resolver
