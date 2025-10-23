@@ -107,6 +107,21 @@ jobs:
       - name: Check plugins in README and builder config
         run: ./ci/plugins_check.sh
 
+  ansible-lint:
+    name: Ansible Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check if Ansible files changed
+        id: changed-files
+        uses: tj-actions/changed-files@v46
+        with:
+          files: |
+            examples/ansible/**
+      - name: Call Ansible lint workflow
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: ./.github/workflows/ansible-lint-check.yaml
+
   pre-commit-check:
     runs-on: ubuntu-24.04
     steps:
