@@ -68,3 +68,4 @@ Thumbs.db
 artifacts/
 
 .idea
+venv/
