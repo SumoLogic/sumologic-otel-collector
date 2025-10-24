@@ -105,10 +105,10 @@ class install_otel_collector (
     } else {
       $remotely_managed_command_args = []
     }
-    if $opamp_api_url == undef {
-      $opamp_command_args = []
-    } else {
+    if $opamp_api_url != undef {
       $opamp_command_args = ["--opamp-api ${opamp_api_url}"]
+    } else {
+      $opamp_command_args = []
     }
     $install_command_args = ["--download-timeout ${download_timeout}"] + $tags_command_args + $version_command_args + $api_command_args + $systemd_command_args + $remotely_managed_command_args + $opamp_command_args
 
