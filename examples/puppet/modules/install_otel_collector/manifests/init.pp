@@ -19,7 +19,7 @@
 # @param src_config_path
 #   Path to a directory with config files.
 # @param opamp_api_url
-#   Optional OpAmp API URL (used in Windows)
+#   Optional OpAmp API URL
 #
 
 class install_otel_collector (
@@ -32,6 +32,10 @@ class install_otel_collector (
   Optional[String] $opamp_api_url = undef,
   Boolean $remotely_managed = false,
 ) {
+  # if remotely_managed is enabled, opamp_api_url must be provided
+  if $remotely_managed and $opamp_api_url == undef {
+    fail('opamp_api_url must be provided when remotely_managed is true')
+  }
   if $facts['os']['family'] == 'windows' {
 
     $install_script_url  = 'https://download-otel.sumologic.com/latest/download/install.ps1'
