@@ -23,6 +23,8 @@ type actionContext struct {
 	UnlinkHostMetrics         func() error
 	LinkEphemeral             func() error
 	UnlinkEphemeral           func() error
+	LinkClobber               func() error
+	UnlinkClobber             func() error
 	SystemdEnabled            bool
 	WriteInstallationTokenEnv func([]byte) (int, error)
 	LaunchdEnabled            bool

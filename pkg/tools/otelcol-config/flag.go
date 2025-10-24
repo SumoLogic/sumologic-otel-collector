@@ -17,6 +17,8 @@ const (
 	flagDisableHostmetrics   = "disable-hostmetrics"
 	flagEnableEphemeral      = "enable-ephemeral"
 	flagDisableEphemeral     = "disable-ephemeral"
+	flagEnableClobber        = "enable-clobber"
+	flagDisableClobber       = "disable-clobber"
 	flagSetTimezone          = "set-timezone"
 	flagEnableRemoteControl  = "enable-remote-control"
 	flagDisableRemoteControl = "disable-remote-control"
@@ -35,6 +37,8 @@ const (
 	disableHMUsage            = "disables hostmetrics"
 	enableEphemeralUsage      = "enables ephemeral mode"
 	disableEphemeralUsage     = "disables ephemeral mode"
+	enableClobberUsage        = "enables clobber mode (overwrites existing configuration)"
+	disableClobberUsage       = "disables clobber mode (prevents overwriting configuration)"
 	enableRemoteControlUsage  = "enables remote control via opamp"
 	disableRemoteControlUsage = "disables remote control, uses local configuration only"
 	setOpAmpEndpointUsage     = "sets the opamp endpoint (eg: wss://example.com)"
@@ -55,6 +59,8 @@ type flagValues struct {
 	DisableHostmetrics   bool
 	EnableEphemeral      bool
 	DisableEphemeral     bool
+	EnableClobber        bool
+	DisableClobber       bool
 	EnableRemoteControl  bool
 	DisableRemoteControl bool
 	SetOpAmpEndpoint     string
@@ -84,6 +90,8 @@ func makeFlagSet(fv *flagValues) *pflag.FlagSet {
 	flags.BoolVar(&fv.DisableHostmetrics, flagDisableHostmetrics, false, disableHMUsage)
 	flags.BoolVar(&fv.EnableEphemeral, flagEnableEphemeral, false, enableEphemeralUsage)
 	flags.BoolVar(&fv.DisableEphemeral, flagDisableEphemeral, false, disableEphemeralUsage)
+	flags.BoolVar(&fv.EnableClobber, flagEnableClobber, false, enableClobberUsage)
+	flags.BoolVar(&fv.DisableClobber, flagDisableClobber, false, disableClobberUsage)
 	flags.BoolVar(&fv.EnableRemoteControl, flagEnableRemoteControl, false, enableRemoteControlUsage)
 	flags.BoolVar(&fv.DisableRemoteControl, flagDisableRemoteControl, false, disableRemoteControlUsage)
 	flags.StringVarP(&fv.SetOpAmpEndpoint, flagSetOpAmpEndpoint, "e", "", setOpAmpEndpointUsage)

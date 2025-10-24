@@ -17,6 +17,7 @@ import (
 const (
 	hostmetricsYAML = "hostmetrics.yaml"
 	ephemeralYAML   = "ephemeral.yaml"
+	clobberYAML     = "clobber.yaml"
 )
 
 // errorCoder is here to give actions a way to set the exit status of the program
@@ -256,6 +257,8 @@ func main() {
 		UnlinkHostMetrics:         getHostMetricsUnlinker(flagValues),
 		LinkEphemeral:             getEphemeralLinker(flagValues),
 		UnlinkEphemeral:           getEphemeralUnlinker(flagValues),
+		LinkClobber:               getLinker(flagValues, clobberYAML),
+		UnlinkClobber:             getUnlinker(flagValues, clobberYAML),
 		SystemdEnabled:            getSystemdEnabled(),
 		WriteInstallationTokenEnv: getInstallationTokenEnvWriter(flagValues),
 		LaunchdEnabled:            getLaunchdEnabled(),
