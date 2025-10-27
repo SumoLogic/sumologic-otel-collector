@@ -1,0 +1,41 @@
+name: Puppet Lint Check
+
+permissions:
+  contents: read
+
+on:
+  workflow_call: {}
+  workflow_dispatch: {}
+
+jobs:
+  lint:
+    name: Puppet Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+            ruby-version: '3.2'
+
+      - name: Install Puppet and linting tools
+        run: |
+          sudo gem install 'puppet:>=7.30.0' 'puppet-lint:>=4.2.4'
+
+      - name: Run puppet-lint
+        run: |
+          echo "Running puppet-lint on examples/puppet..."
+          puppet-lint examples/puppet \
+            --no-documentation-check \
+            --fail-on-warnings || exit 1
+
+      - name: Puppet syntax check
+        run: |
+          echo "Running puppet syntax checks..."
+          find examples/puppet -type f -name "*.pp" | while read -r file; do
+            echo "Checking syntax for $file"
+            puppet parser validate "$file" || exit 1
+          done
