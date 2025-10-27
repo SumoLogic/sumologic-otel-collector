@@ -16,14 +16,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Ruby environment
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ruby ruby-dev
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+            ruby-version: '3.2'
 
       - name: Install Puppet and linting tools
         run: |
-          sudo gem install puppet puppet-lint
+          sudo gem install 'puppet:>=7.30.0' 'puppet-lint:>=4.2.4'
 
       - name: Run puppet-lint
         run: |
