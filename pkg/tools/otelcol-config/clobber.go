@@ -17,7 +17,7 @@ func ClobberAction(ctx *actionContext) error {
 	var config []byte
 
 	switch {
-	case conf.SumologicRemote != nil || ctx.Flags.Clobber:
+	case conf.SumologicRemote != nil || ctx.Flags.EnableRemoteControl:
 		writer = ctx.WriteSumologicRemote
 		config = conf.SumologicRemote
 	case ctx.Flags.Override:
@@ -60,11 +60,10 @@ func writeYAML(ctx *actionContext, config []byte, writer func([]byte) (int, erro
 		}
 		config = []byte(result)
 
-		_, err = writer(config)
-		if err != nil {
-			return fmt.Errorf("Error encountered while setting clobber: %w", err)
-		}
 	}
-
+	_, err := writer(config)
+	if err != nil {
+		return fmt.Errorf("Error encountered while setting clobber: %w", err)
+	}
 	return nil
 }
