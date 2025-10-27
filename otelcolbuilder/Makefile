@@ -79,7 +79,6 @@ LDFLAGS := $(EXTRA_LDFLAGS)
 #
 # https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin_nocgo.go
 # https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin.go
-# test cgo enable - windows
 
 ifeq ($(shell go env GOOS),darwin)
 	CGO_ENABLED ?= 1
