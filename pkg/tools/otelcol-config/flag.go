@@ -25,6 +25,7 @@ const (
 	flagWriteKV              = "write-kv"
 	flagReadKV               = "read-kv"
 	flagOverride             = "override"
+	flagClobber              = "clobber"
 )
 
 const (
@@ -45,6 +46,7 @@ const (
 	overrideUsage             = "for write-kv, override all other user settings"
 	setAPIURLUsage            = "sets the base_api_url field in the sumologic extension"
 	setTimezoneUsage          = "sets the time_zone field in the sumologic extension"
+	clobberUsage              = "defines whether to delete any existing collector with the same name."
 )
 
 type flagValues struct {
@@ -66,6 +68,7 @@ type flagValues struct {
 	ReadKV               []string
 	Override             bool
 	SetAPIURL            string
+	Clobber              bool
 }
 
 func newFlagValues() *flagValues {
@@ -94,6 +97,7 @@ func makeFlagSet(fv *flagValues) *pflag.FlagSet {
 	flags.StringArrayVar(&fv.ReadKV, flagReadKV, nil, getKVUsage)
 	flags.BoolVar(&fv.Override, flagOverride, false, overrideUsage)
 	flags.StringVar(&fv.SetAPIURL, flagSetAPIURL, "", setAPIURLUsage)
+	flags.BoolVar(&fv.Clobber, flagClobber, false, clobberUsage)
 
 	return flags
 }

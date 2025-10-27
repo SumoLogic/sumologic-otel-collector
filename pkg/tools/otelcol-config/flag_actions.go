@@ -31,6 +31,7 @@ var flagActions = map[string]action{
 	flagWriteKV:              WriteKVAction,
 	flagReadKV:               ReadKVAction,
 	flagOverride:             nullAction,
+	flagClobber:              ClobberAction,
 }
 
 func nullAction(*actionContext) error {
@@ -58,4 +59,5 @@ var actionOrder = []string{
 	flagSetTimezone,
 	flagWriteKV,
 	flagReadKV,
+	flagClobber,
 }
