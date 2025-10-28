@@ -10,7 +10,7 @@ on:
 jobs:
   lint:
     name: Chef Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repository
@@ -22,7 +22,7 @@ jobs:
           ruby-version: '3.2'
 
       - name: Install Chef Workstation
-        run: gem install 'chef:~>18.0'
+        run: gem install 'chef-workstation'
 
       # Run Cookstyle (Chef linter)
       - name: Run Cookstyle
