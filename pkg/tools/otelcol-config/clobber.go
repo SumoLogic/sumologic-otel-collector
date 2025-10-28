@@ -28,7 +28,7 @@ func EnableClobberAction(ctx *actionContext) error {
 		config = conf.ConfD[ConfDSettings]
 	}
 
-	return writeYAML(ctx, config, writer, ctx.Flags.EnableClobber)
+	return writeYAML(ctx, config, writer, true)
 }
 
 func DisableClobberAction(ctx *actionContext) error {
@@ -51,7 +51,7 @@ func DisableClobberAction(ctx *actionContext) error {
 		config = conf.ConfD[ConfDSettings]
 	}
 
-	return writeYAML(ctx, config, writer, ctx.Flags.DisableClobber)
+	return writeYAML(ctx, config, writer, false)
 }
 func writeYAML(ctx *actionContext, config []byte, writer func([]byte) (int, error), isEnabled bool) error {
 	encoder := yqlib.YamlFormat.EncoderFactory()
