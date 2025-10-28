@@ -28,7 +28,7 @@ func EnableClobberAction(ctx *actionContext) error {
 		config = conf.ConfD[ConfDSettings]
 	}
 
-	return writeYAML(ctx, config, writer)
+	return writeYAML(ctx, config, writer, ctx.Flags.EnableClobber)
 }
 
 func DisableClobberAction(ctx *actionContext) error {
@@ -37,19 +37,23 @@ func DisableClobberAction(ctx *actionContext) error {
 		return err
 	}
 	var writer func([]byte) (int, error)
+	var config []byte
 
 	switch {
 	case conf.SumologicRemote != nil || ctx.Flags.EnableRemoteControl:
 		writer = ctx.WriteSumologicRemote
+		config = conf.SumologicRemote
 	case ctx.Flags.Override:
 		writer = ctx.WriteConfDOverrides
+		config = conf.ConfD[ConfDOverrides]
 	default:
 		writer = ctx.WriteConfD
+		config = conf.ConfD[ConfDSettings]
 	}
-	_, err = writer(nil)
-	return err
+
+	return writeYAML(ctx, config, writer, ctx.Flags.DisableClobber)
 }
-func writeYAML(ctx *actionContext, config []byte, writer func([]byte) (int, error)) error {
+func writeYAML(ctx *actionContext, config []byte, writer func([]byte) (int, error), isEnabled bool) error {
 	encoder := yqlib.YamlFormat.EncoderFactory()
 	decoder := yqlib.YamlFormat.DecoderFactory()
 	eval := yqlib.NewStringEvaluator()
@@ -61,7 +65,7 @@ func writeYAML(ctx *actionContext, config []byte, writer func([]byte) (int, erro
 		settings := map[string]any{
 			"extensions": map[string]any{
 				"sumologic": map[string]any{
-					"clobber": ctx.Flags.EnableClobber,
+					"clobber": isEnabled,
 				},
 			},
 		}
@@ -71,7 +75,7 @@ func writeYAML(ctx *actionContext, config []byte, writer func([]byte) (int, erro
 
 		config = buff.Bytes()
 	} else {
-		expression := fmt.Sprintf(".extensions.sumologic.clobber = %t", ctx.Flags.EnableClobber)
+		expression := fmt.Sprintf(".extensions.sumologic.clobber = %t", isEnabled)
 		result, err := eval.EvaluateAll(expression, string(config), encoder, decoder)
 		if err != nil {
 			return fmt.Errorf("evaluate: %s", err)

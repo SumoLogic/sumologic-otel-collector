@@ -20,19 +20,19 @@ func TestClobberAction(t *testing.T) {
 		ExpectedErr    bool
 	}{
 		{
-			Name:           "no existing setting",
+			Name:           "[enabled] no existing setting",
 			Flags:          []string{"--enable-clobber"},
 			Conf:           fstest.MapFS{},
 			ExpectedWriter: []byte("extensions:\n  sumologic:\n    clobber: true\n"),
 		},
 		{
-			Name:           "no existing setting, override",
+			Name:           "[enabled] no existing setting, override",
 			Flags:          []string{"--enable-clobber", "--override"},
 			Conf:           fstest.MapFS{},
 			ExpectedWriter: []byte("extensions:\n  sumologic:\n    clobber: true\n"),
 		},
 		{
-			Name:  "remote control with existing file",
+			Name:  "[enabled] remote control with existing file",
 			Flags: []string{"--enable-clobber"},
 			Conf: fstest.MapFS{
 				SumologicRemoteDotYaml: &fstest.MapFile{
@@ -42,10 +42,38 @@ func TestClobberAction(t *testing.T) {
 			ExpectedWriter: []byte("extensions:\n  opamp:\n    enabled: true\n  sumologic:\n    clobber: true\n"),
 		},
 		{
-			Name:           "remote control with no existing file, but flag exists",
+			Name:           "[enabled] remote control with no existing file, but flag exists",
 			Flags:          []string{"--enable-clobber", "--enable-remote-control"},
 			Conf:           fstest.MapFS{},
 			ExpectedWriter: []byte("extensions:\n  sumologic:\n    clobber: true\n"),
+		},
+		{
+			Name:           "[disabled] no existing setting",
+			Flags:          []string{"--disable-clobber"},
+			Conf:           fstest.MapFS{},
+			ExpectedWriter: []byte("extensions:\n  sumologic:\n    clobber: false\n"),
+		},
+		{
+			Name:           "[disabled] no existing setting, override",
+			Flags:          []string{"--disable-clobber", "--override"},
+			Conf:           fstest.MapFS{},
+			ExpectedWriter: []byte("extensions:\n  sumologic:\n    clobber: false\n"),
+		},
+		{
+			Name:  "[disabled] remote control with existing file",
+			Flags: []string{"--disable-clobber"},
+			Conf: fstest.MapFS{
+				SumologicRemoteDotYaml: &fstest.MapFile{
+					Data: []byte("extensions:\n  opamp:\n    enabled: true\n"),
+				},
+			},
+			ExpectedWriter: []byte("extensions:\n  opamp:\n    enabled: true\n  sumologic:\n    clobber: false\n"),
+		},
+		{
+			Name:           "[disabled] remote control with no existing file, but flag exists",
+			Flags:          []string{"--disable-clobber", "--enable-remote-control"},
+			Conf:           fstest.MapFS{},
+			ExpectedWriter: []byte("extensions:\n  sumologic:\n    clobber: false\n"),
 		},
 	}
 
