@@ -8,7 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func ClobberAction(ctx *actionContext) error {
+func EnableClobberAction(ctx *actionContext) error {
 	conf, err := ReadConfigDir(ctx.ConfigDir)
 	if err != nil {
 		return err
@@ -31,6 +31,24 @@ func ClobberAction(ctx *actionContext) error {
 	return writeYAML(ctx, config, writer)
 }
 
+func DisableClobberAction(ctx *actionContext) error {
+	conf, err := ReadConfigDir(ctx.ConfigDir)
+	if err != nil {
+		return err
+	}
+	var writer func([]byte) (int, error)
+
+	switch {
+	case conf.SumologicRemote != nil || ctx.Flags.EnableRemoteControl:
+		writer = ctx.WriteSumologicRemote
+	case ctx.Flags.Override:
+		writer = ctx.WriteConfDOverrides
+	default:
+		writer = ctx.WriteConfD
+	}
+	_, err = writer(nil)
+	return err
+}
 func writeYAML(ctx *actionContext, config []byte, writer func([]byte) (int, error)) error {
 	encoder := yqlib.YamlFormat.EncoderFactory()
 	decoder := yqlib.YamlFormat.DecoderFactory()
@@ -43,7 +61,7 @@ func writeYAML(ctx *actionContext, config []byte, writer func([]byte) (int, erro
 		settings := map[string]any{
 			"extensions": map[string]any{
 				"sumologic": map[string]any{
-					"clobber": ctx.Flags.Clobber,
+					"clobber": ctx.Flags.EnableClobber,
 				},
 			},
 		}
@@ -53,17 +71,16 @@ func writeYAML(ctx *actionContext, config []byte, writer func([]byte) (int, erro
 
 		config = buff.Bytes()
 	} else {
-		expression := fmt.Sprintf(".extensions.sumologic.clobber = %t", ctx.Flags.Clobber)
+		expression := fmt.Sprintf(".extensions.sumologic.clobber = %t", ctx.Flags.EnableClobber)
 		result, err := eval.EvaluateAll(expression, string(config), encoder, decoder)
 		if err != nil {
-			return fmt.Errorf("evaluate: %w", err)
+			return fmt.Errorf("evaluate: %s", err)
 		}
 		config = []byte(result)
-
 	}
 	_, err := writer(config)
 	if err != nil {
-		return fmt.Errorf("Error encountered while setting clobber: %w", err)
+		return fmt.Errorf("error encountered while setting clobber: %s", err)
 	}
 	return nil
 }

@@ -21,19 +21,19 @@ func TestClobberAction(t *testing.T) {
 	}{
 		{
 			Name:           "no existing setting",
-			Flags:          []string{"--clobber", "true"},
+			Flags:          []string{"--enable-clobber"},
 			Conf:           fstest.MapFS{},
 			ExpectedWriter: []byte("extensions:\n  sumologic:\n    clobber: true\n"),
 		},
 		{
 			Name:           "no existing setting, override",
-			Flags:          []string{"--clobber", "true", "--override"},
+			Flags:          []string{"--enable-clobber", "--override"},
 			Conf:           fstest.MapFS{},
 			ExpectedWriter: []byte("extensions:\n  sumologic:\n    clobber: true\n"),
 		},
 		{
 			Name:  "remote control with existing file",
-			Flags: []string{"--clobber", "true"},
+			Flags: []string{"--enable-clobber"},
 			Conf: fstest.MapFS{
 				SumologicRemoteDotYaml: &fstest.MapFile{
 					Data: []byte("extensions:\n  opamp:\n    enabled: true\n"),
@@ -43,7 +43,7 @@ func TestClobberAction(t *testing.T) {
 		},
 		{
 			Name:           "remote control with no existing file, but flag exists",
-			Flags:          []string{"--clobber", "true", "--enable-remote-control"},
+			Flags:          []string{"--enable-clobber", "--enable-remote-control"},
 			Conf:           fstest.MapFS{},
 			ExpectedWriter: []byte("extensions:\n  sumologic:\n    clobber: true\n"),
 		},
@@ -109,7 +109,7 @@ func TestClobberAction(t *testing.T) {
 				LaunchdEnabled:            test.LaunchdEnabled,
 			}
 
-			err := ClobberAction(ctx)
+			err := EnableClobberAction(ctx)
 			if err != nil && !test.ExpectedErr {
 				t.Fatal(err)
 			}
