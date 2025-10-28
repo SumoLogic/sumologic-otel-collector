@@ -40,13 +40,16 @@ jobs:
           echo "Checking Ruby syntax in Chef cookbooks..."
           if [ -d examples/chef ]; then
             error=false
-            find examples/chef -type f -name "*.rb" | while read -r file; do
+            while read -r file; do
               echo "Validating syntax for $file"
               ruby -c "$file" || error=true
-            done
+            done < <(find examples/chef -type f -name "*.rb")
+
             if [ "$error" = true ]; then
               echo "Ruby syntax errors found."
               exit 1
+            else
+              echo "All Ruby files passed syntax validation."
             fi
           else
             echo "No Chef directory found. Skipping syntax validation."
