@@ -61,5 +61,5 @@ var actionOrder = []string{
 	flagWriteKV,
 	flagReadKV,
 	flagEnableClobber,
-	flagEnableClobber,
+	flagDisableClobber,
 }
