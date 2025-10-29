@@ -70,7 +70,7 @@ func writeYAML(ctx *actionContext, config []byte, writer func([]byte) (int, erro
 			},
 		}
 		if err := enc.Encode(settings); err != nil {
-			panic(err)
+			return fmt.Errorf("encode settings: %w", err)
 		}
 
 		config = buff.Bytes()
