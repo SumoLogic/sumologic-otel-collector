@@ -48,7 +48,7 @@ const (
 	setAPIURLUsage            = "sets the base_api_url field in the sumologic extension"
 	setTimezoneUsage          = "sets the time_zone field in the sumologic extension"
 	enableClobberUsage        = "enables clobber (deletes any existing collector with the same name)."
-	disableClobberUsage       = "disables clobber (retains any existing collector with the same name and appends a 13 digit unix timestamp to the new collector with the same name)."
+	disableClobberUsage       = "disables clobber (prevents deletion of existing collectors with the same name)."
 )
 
 type flagValues struct {
