@@ -113,13 +113,13 @@
 
         - name: Add remotely managed to install script argument list
           ansible.builtin.set_fact:
-            win_install_args: "{{ win_install_args + ['-RemotelyManaged ' ~ remotely_managed] }}"
+            win_install_args: "{{ win_install_args + ['-RemotelyManaged ' ~ ('$True' if remotely_managed else '$False')] }}"
           when: remotely_managed | default(false)
 
         - name: Add opamp_api to install script argument list
           ansible.builtin.set_fact:
-            win_install_args: "{{ win_install_args + [ '-OpAmpApi ' ~ opamp_api ] }}"
-          when: opamp_api is defined
+            win_install_args: "{{ win_install_args + [ '-OpAmpApi ' ~ opamp_api_url ] }}"
+          when: opamp_api_url is defined
 
         - name: Run install script
           ansible.windows.win_shell: |
