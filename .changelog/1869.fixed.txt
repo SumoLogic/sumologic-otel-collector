@@ -1,0 +1,1 @@
+fix(windows collector): Changed the dns resolver from Pure Go DNS Resolver to Cgo DNS Resolver since Go DNS Resolver is not resolving DNS queries the same way as the OS
