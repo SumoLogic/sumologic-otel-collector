@@ -53,7 +53,7 @@ class install_otel_collector (
     # Optional arguments as strings (empty if undef)
     $api_arg    = $api_url ? { undef => '', default => "-Api '${api_url}'" }
     $opamp_arg  = $opamp_api_url ? { undef => '', default => "-OpAmpApi '${opamp_api_url}'" }
-    $remote_arg = $remotely_managed ? { true => '-RemotelyManaged $true', false => '-RemotelyManaged $false' }
+    $remote_arg = $remotely_managed ? { true => '-RemotelyManaged $true', default => '' }
 
     # Download install.ps1 script
     exec { 'Download Otel Collector Script':
@@ -64,13 +64,13 @@ class install_otel_collector (
 
     # Run install script with tags defined inside PowerShell command
     exec { 'Install Otel Collector':
-      command => "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy Bypass -Command \"\
+      command   => "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy Bypass -Command \"\
         Set-ExecutionPolicy RemoteSigned -Scope Process -Force; \
         [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; \
         \$tags = ${tags_ps_block}; \
         & '${install_script_path}' -InstallationToken '${installation_token}' -Tags \$tags ${remote_arg} ${api_arg} ${opamp_arg}\"",
-      unless  => "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -Command \"if (Test-Path '${exe_path}') { exit 0 } else { exit 1 }\"",
-      require => Exec['Download Otel Collector Script'],
+      unless    => "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -Command \"if (Test-Path '${exe_path}') { exit 0 } else { exit 1 }\"",
+      require   => Exec['Download Otel Collector Script'],
       logoutput => true,
     }
 
@@ -91,7 +91,7 @@ class install_otel_collector (
 
     file { 'C:/Program Files/Sumo Logic/OpenTelemetry Collector/conf.d/.keep':
       ensure  => file,
-      content => "# Keep this directory for Puppet",
+      content => '# Keep this directory for Puppet',
       require => File['C:/Program Files/Sumo Logic/OpenTelemetry Collector/conf.d'],
     }
   } else {
