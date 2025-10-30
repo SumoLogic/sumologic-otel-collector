@@ -1,0 +1,19 @@
+receivers:
+  apache:
+    endpoint: "http://localhost:5001/server-status?autoo"
+
+exporters:
+  debug:
+
+processors:
+  memory_limiter:
+    check_interval: 5s
+    limit_percentage: 75
+    spike_limit_percentage: 20
+
+service:
+  pipelines:
+    metrics:
+      receivers: [file]
+      processors: [memory_limiter]
+      exporters: [debug]
