@@ -1,9 +1,5 @@
 extensions:
   sigv4auth:
-    region: "region"
-    service: "service"
-    assume_role:
-      session_name: "role_session_name"
 receivers:
   otlp:
     protocols:
