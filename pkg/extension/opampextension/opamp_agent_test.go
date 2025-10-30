@@ -270,6 +270,42 @@ func TestSaveEffectiveConfig(t *testing.T) {
 	assert.NoError(t, o.saveEffectiveConfig(d))
 }
 
+func TestSaveEffectiveConfigWithInvalidConfig(t *testing.T) {
+	tests := []struct {
+		name         string
+		file         string
+		errorMessage string
+	}{
+		{"ApplyInvalidApacheURIConfig", "testdata/opamp.d/opamp-invalid-apache-uri-config.yaml", "cannot validate config"},
+		{"ApplyInvalidApacheKeysConfig", "testdata/opamp.d/opamp-invalid-apache-keys-config.yaml", "cannot validate config"},
+		{"ApplyInvalidPipelineConfigUndefinedComponent", "testdata/opamp.d/opamp-invalid-pipeline-undefined-component-config.yaml", "cannot validate config"},
+		{"ApplyInvalidPipelineConfigNoExporter", "testdata/opamp.d/opamp-invalid-pipeline-no-exporter-config.yaml", "cannot validate config"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d, err := os.MkdirTemp("", "opamp.d")
+			assert.NoError(t, err)
+			defer os.RemoveAll(d)
+			cfg, set := setupWithRemoteConfig(t, d)
+			o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+			assert.NoError(t, err)
+			path := filepath.Join(tt.file)
+			rb, err := os.ReadFile(path)
+			assert.NoError(t, err)
+
+			o.effectiveConfig = map[string]*protobufs.AgentConfigFile{
+				tt.name: {
+					Body: rb,
+				},
+			}
+			err = o.saveEffectiveConfig(d)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), tt.errorMessage)
+		})
+	}
+}
+
 func TestUpdateAgentIdentity(t *testing.T) {
 	cfg, set := defaultSetup()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
