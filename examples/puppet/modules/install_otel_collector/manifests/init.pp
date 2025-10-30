@@ -20,6 +20,8 @@
 #   Path to a directory with config files.
 # @param opamp_api_url
 #   Optional OpAmp API URL
+# @param remotely_managed
+#   Optional flag for remote management
 #
 
 class install_otel_collector (
@@ -38,21 +40,21 @@ class install_otel_collector (
     $install_script_path = 'C:/Windows/Temp/install.ps1'
     $exe_path            = 'C:/Program Files/Sumo Logic/OpenTelemetry Collector/bin/otelcol-sumo.exe'
 
-    # Escape single quotes for PowerShell
-    function escape_single_quotes(String $str) {
-      $str.gsub("'", "''")
-    }
-
-    # Build the escaped hashtable
+    # Construct PowerShell hashtable literal string for tags, e.g.
+    # @{
+    #   'key1' = 'value1';
+    #   'key2' = 'value2';
+    # }
     $tags_ps_lines = $collector_tags.map |$k, $v| {
-      "    '${escape_single_quotes($k)}' = '${escape_single_quotes($v)}';"
+      "    '${k}' = '${v}';"
     }
     $tags_ps_block = "@{\n${tags_ps_lines.join("\n")}\n}"
 
     # Optional arguments as strings (empty if undef)
     $api_arg    = $api_url ? { undef => '', default => "-Api '${api_url}'" }
     $opamp_arg  = $opamp_api_url ? { undef => '', default => "-OpAmpApi '${opamp_api_url}'" }
-    $remote_arg =  "-RemotelyManaged \$${remotely_managed}"
+    $remote_arg = $remotely_managed ? { true => '-RemotelyManaged $true', false => '-RemotelyManaged $false' }
+
     # Download install.ps1 script
     exec { 'Download Otel Collector Script':
       command   => "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy Bypass -Command \"Invoke-WebRequest -Uri '${install_script_url}' -OutFile '${install_script_path}'\"",
@@ -62,7 +64,7 @@ class install_otel_collector (
 
     # Run install script with tags defined inside PowerShell command
     exec { 'Install Otel Collector':
-      command => "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy RemoteSigned -Command \"\
+      command => "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy Bypass -Command \"\
         Set-ExecutionPolicy RemoteSigned -Scope Process -Force; \
         [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; \
         \$tags = ${tags_ps_block}; \
@@ -73,9 +75,24 @@ class install_otel_collector (
     }
 
     # Ensure directories exist
+    file { 'C:/Program Files/Sumo Logic':
+      ensure => directory,
+    }
+
+    file { 'C:/Program Files/Sumo Logic/OpenTelemetry Collector':
+      ensure  => directory,
+      require => File['C:/Program Files/Sumo Logic'],
+    }
+
     file { 'C:/Program Files/Sumo Logic/OpenTelemetry Collector/conf.d':
       ensure  => directory,
       require => File['C:/Program Files/Sumo Logic/OpenTelemetry Collector'],
+    }
+
+    file { 'C:/Program Files/Sumo Logic/OpenTelemetry Collector/conf.d/.keep':
+      ensure  => file,
+      content => "# Keep this directory for Puppet",
+      require => File['C:/Program Files/Sumo Logic/OpenTelemetry Collector/conf.d'],
     }
   } else {
 
