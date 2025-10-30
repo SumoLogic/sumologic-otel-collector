@@ -5,7 +5,7 @@ receivers:
       http:
 exporters:
   file:
-    path: "/tmp/otel-collector-metrics.json"
+    path: "/tmp/otel-collector-metrics.*"
     format: json
     rotation:
       max_megabytes: 10

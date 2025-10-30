@@ -1,8 +1,9 @@
 extensions:
   sigv4auth:
+    region: "region"
+    service: "service"
     assume_role:
-      arn: "arn:aws:iam::123456789012:role/aws-service-role/access"
-      sts_region: "us-east-1"
+      session_name: "role_session_name"
 receivers:
   otlp:
     protocols:

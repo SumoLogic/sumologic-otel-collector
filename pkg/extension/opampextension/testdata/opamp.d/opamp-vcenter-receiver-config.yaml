@@ -2,7 +2,7 @@ receivers:
   vcenter:
     endpoint: http://localhost:15672
     username: otelu
-    password: ${env:VCENTER_PASSWORD}
+    password: pass
     collection_interval: 5m
     initial_delay: 1s
 exporters:
