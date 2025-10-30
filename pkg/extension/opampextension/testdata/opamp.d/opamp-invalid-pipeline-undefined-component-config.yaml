@@ -1,6 +1,6 @@
 receivers:
   apache:
-    endpoint: "http://localhost:5001/server-status?autoo"
+    endpoint: "http://localhost:5001/server-status?auto"
 
 exporters:
   debug:

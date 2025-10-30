@@ -13,7 +13,7 @@ processors:
 
 service:
   pipelines:
-    mertics:
+    metrics:
       receivers: [apache]
       processors: [memory_limiter]
       exporters: [debug]
