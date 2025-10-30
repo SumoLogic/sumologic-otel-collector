@@ -134,7 +134,6 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyOauth2ClientauthExtensionConfig", "testdata/opamp.d/opamp-oauth2clientauth-extension-config.yaml", false, ""},
 		{"ApplyOidcAuthExtensionConfig", "testdata/opamp.d/opamp-oidcauth-extension-config.yaml", false, ""},
 		{"ApplyPprofExtensionConfig", "testdata/opamp.d/opamp-pprof-extension-config.yaml", false, ""},
-		{"ApplySigv4AuthExtensionConfig", "testdata/opamp.d/opamp-sigv4auth-extension-config.yaml", false, ""},
 		{"ApplyZpagesExtensionConfig", "testdata/opamp.d/opamp-zpages-extension-config.yaml", false, ""},
 		{"ApplyInfluxdbReceiverConfig", "testdata/opamp.d/opamp-influxdb-receiver-config.yaml", false, ""},
 		{"ApplyJaegerReceiverConfig", "testdata/opamp.d/opamp-jaeger-receiver-config.yaml", false, ""},
