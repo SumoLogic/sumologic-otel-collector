@@ -64,7 +64,7 @@ class install_otel_collector (
 
     # Run install script with tags defined inside PowerShell command
     exec { 'Install Otel Collector':
-      command   => "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy Bypass -Command \"\
+      command   => "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy RemoteSigned -Command \"\
         Set-ExecutionPolicy RemoteSigned -Scope Process -Force; \
         [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; \
         \$tags = ${tags_ps_block}; \
@@ -75,18 +75,12 @@ class install_otel_collector (
     }
 
     # Ensure directories exist
-    file { 'C:/Program Files/Sumo Logic':
+    file { [
+      'C:/Program Files/Sumo Logic/',
+      'C:/Program Files/Sumo Logic/OpenTelemetry Collector/',
+      'C:/Program Files/Sumo Logic/OpenTelemetry Collector/conf.d/',
+      ]:
       ensure => directory,
-    }
-
-    file { 'C:/Program Files/Sumo Logic/OpenTelemetry Collector':
-      ensure  => directory,
-      require => File['C:/Program Files/Sumo Logic'],
-    }
-
-    file { 'C:/Program Files/Sumo Logic/OpenTelemetry Collector/conf.d':
-      ensure  => directory,
-      require => File['C:/Program Files/Sumo Logic/OpenTelemetry Collector'],
     }
 
     file { 'C:/Program Files/Sumo Logic/OpenTelemetry Collector/conf.d/.keep':
