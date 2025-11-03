@@ -107,6 +107,66 @@ jobs:
       - name: Check plugins in README and builder config
         run: ./ci/plugins_check.sh
 
+  ansible-lint-checker:
+    name: Check if Ansible files changed
+    runs-on: ubuntu-24.04
+    outputs:
+      any_changed: ${{ steps.changed-files.outputs.any_changed }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check if Ansible files changed
+        id: changed-files
+        uses: tj-actions/changed-files@v46
+        with:
+          files: |
+            examples/ansible/**
+
+  ansible-lint:
+    name: Ansible Lint
+    needs: [ansible-lint-checker]
+    if: needs.ansible-lint-checker.outputs.any_changed == 'true'
+    uses: ./.github/workflows/ansible-lint-check.yaml
+
+  puppet-lint-checker:
+    name: Check if Puppet files changed
+    runs-on: ubuntu-24.04
+    outputs:
+      any_changed: ${{ steps.changed-files.outputs.any_changed }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check if Puppet files changed
+        id: changed-files
+        uses: tj-actions/changed-files@v46
+        with:
+          files: |
+            examples/puppet/**
+
+  puppet-lint:
+    name: Puppet Lint
+    needs: [puppet-lint-checker]
+    if: needs.puppet-lint-checker.outputs.any_changed == 'true'
+    uses: ./.github/workflows/puppet-lint-check.yaml
+
+  chef-lint-checker:
+    name: Check if Chef files changed
+    runs-on: ubuntu-24.04
+    outputs:
+      any_changed: ${{ steps.changed-files.outputs.any_changed }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check if Chef files changed
+        id: changed-files
+        uses: tj-actions/changed-files@v46
+        with:
+          files: |
+            examples/chef/**
+
+  chef-lint:
+    name: Chef Lint
+    needs: [chef-lint-checker]
+    if: needs.chef-lint-checker.outputs.any_changed == 'true'
+    uses: ./.github/workflows/chef-lint-check.yaml
+
   pre-commit-check:
     runs-on: ubuntu-24.04
     steps:

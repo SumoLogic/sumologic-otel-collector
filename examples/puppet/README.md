@@ -43,6 +43,7 @@ This [Puppet][puppet] [manifest](manifest/../manifests/install_otel_collector.pp
 - `systemd_service`: enables creation of Systemd Service for Sumo Logic Distribution for OpenTelemetry Collector. Enabled by default. Note that this recipe will not start the collector if you disable this.
 - `src_config_path`: path to configuration directory for Sumo Logic Distribution for OpenTelemetry Collector
 - `opamp_api_url`: Sumo Logic Opamp API url. You shouldn't need to set this in most normal circumstances.
+- `remotely_managed`: enables creation of remotely managed Sumo Logic Distribution for OpenTelemetry Collector. Disabled by default.
 
 ## Test on Vagrant
 
