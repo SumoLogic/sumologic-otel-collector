@@ -1,0 +1,1 @@
+ci: add chef syntax check to GitHub Actions
