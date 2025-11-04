@@ -5,7 +5,7 @@ extensions:
     audience:
       - someservice
       - someotherservice
-    private_key: cedcedcedc
+    private_key: private_key
     ttl: 60s
 receivers:
   otlp:

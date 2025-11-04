@@ -5,7 +5,7 @@ receivers:
     username: myusername
     password: mypassword
     server: sqlserver.address
-    computer_name: gg
+    computer_name: sumologic
     port: 1433
     events:
       db.server.query_sample:
