@@ -1,0 +1,1 @@
+ci: added Ansible syntax check to GitHub Actions

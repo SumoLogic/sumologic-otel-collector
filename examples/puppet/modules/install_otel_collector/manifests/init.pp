@@ -19,7 +19,7 @@
 # @param src_config_path
 #   Path to a directory with config files.
 # @param opamp_api_url
-#   Optional OpAmp API URL (used in Windows)
+#   Optional OpAmp API URL
 #
 
 class install_otel_collector (
@@ -100,7 +100,17 @@ class install_otel_collector (
     } else {
       $systemd_command_args = ['--skip-systemd']
     }
-    $install_command_args = ["--download-timeout ${download_timeout}"] + $tags_command_args + $version_command_args + $api_command_args + $systemd_command_args
+    if $remotely_managed {
+      $remotely_managed_command_args = ['--remotely-managed']
+    } else {
+      $remotely_managed_command_args = []
+    }
+    if $opamp_api_url != undef {
+      $opamp_command_args = ["--opamp-api ${opamp_api_url}"]
+    } else {
+      $opamp_command_args = []
+    }
+    $install_command_args = ["--download-timeout ${download_timeout}"] + $tags_command_args + $version_command_args + $api_command_args + $systemd_command_args + $remotely_managed_command_args + $opamp_command_args
 
     file { 'download the install script':
       source => $install_script_url,
