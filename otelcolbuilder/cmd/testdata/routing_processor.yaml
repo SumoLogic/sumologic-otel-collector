@@ -1,0 +1,47 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: localhost:4317
+
+processors:
+  routing:
+    from_attribute: attr1
+    attribute_source: resource
+    default_exporters: sumologic/default
+    table:
+    - value: 'value1'
+      exporters: sumologic/1
+
+exporters:
+  sumologic/default:
+    endpoint: http://dummy.endpoint.com:8888/api
+  sumologic/1:
+    endpoint: http://dummy.endpoint.com:8889/api
+
+service:
+  pipelines:
+    metrics:
+      receivers:
+      - otlp
+      processors:
+      - routing
+      exporters:
+      - sumologic/default
+      - sumologic/1
+    logs:
+      receivers:
+      - otlp
+      processors:
+      - routing
+      exporters:
+      - sumologic/default
+      - sumologic/1
+    traces:
+      receivers:
+      - otlp
+      processors:
+      - routing
+      exporters:
+      - sumologic/default
+      - sumologic/1

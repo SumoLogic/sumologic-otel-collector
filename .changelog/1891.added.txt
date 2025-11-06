@@ -1,0 +1,1 @@
+Adds routing processor back to otel-col from v0.132.0 otel-contrib
