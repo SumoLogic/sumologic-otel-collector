@@ -32,11 +32,9 @@ jobs:
           .github/renovate.sh
 
       - name: Commit and push document changes
-        env:
-          HEAD_REF: ${{ github.head_ref }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .
           git commit -m "docs: update docs after dependency upgrade" || echo "No changes to commit"
-          git push origin "$HEAD_REF"
+          git push origin "${{ github.event.inputs.target_branch }}"
