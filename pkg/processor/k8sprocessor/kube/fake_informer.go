@@ -15,6 +15,7 @@
 package kube
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -57,6 +58,13 @@ func (f *FakeInformer) AddEventHandlerWithResyncPeriod(handler cache.ResourceEve
 	return nil, nil
 }
 
+func (f *FakeInformer) AddEventHandlerWithOptions(handler cache.ResourceEventHandler, options cache.HandlerOptions) (cache.ResourceEventHandlerRegistration, error) {
+	if options.ResyncPeriod != nil {
+		return f.AddEventHandlerWithResyncPeriod(handler, *options.ResyncPeriod)
+	}
+	return f.AddEventHandlerWithResyncPeriod(handler, time.Second)
+}
+
 func (f *FakeInformer) RemoveEventHandler(handle cache.ResourceEventHandlerRegistration) error {
 	return nil
 }
@@ -89,6 +97,13 @@ func (c *FakeController) Run(stopCh <-chan struct{}) {
 	c.Unlock()
 }
 
+func (c *FakeController) RunWithContext(ctx context.Context) {
+	<-ctx.Done()
+	c.Lock()
+	c.stopped = true
+	c.Unlock()
+}
+
 func (c *FakeController) HasStopped() bool {
 	c.Lock()
 	defer c.Unlock()
@@ -100,6 +115,10 @@ func (c *FakeController) LastSyncResourceVersion() string {
 }
 
 func (f *FakeInformer) SetWatchErrorHandler(cache.WatchErrorHandler) error {
+	return nil
+}
+
+func (f *FakeInformer) SetWatchErrorHandlerWithContext(cache.WatchErrorHandlerWithContext) error {
 	return nil
 }
 
