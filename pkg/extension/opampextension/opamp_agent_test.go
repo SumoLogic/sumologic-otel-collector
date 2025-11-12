@@ -18,20 +18,15 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
-
-	"go.opentelemetry.io/collector/config/configauth"
-	"go.opentelemetry.io/collector/config/configoptional"
 
 	"github.com/oklog/ulid/v2"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/stretchr/testify/assert"
-
-	"slices"
-
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
+	"go.opentelemetry.io/collector/config/configauth"
+	"go.opentelemetry.io/collector/config/configoptional"
 	"go.opentelemetry.io/collector/extension"
 	"go.opentelemetry.io/collector/extension/extensiontest"
 	semconv "go.opentelemetry.io/otel/semconv/v1.18.0"
@@ -46,15 +41,6 @@ const (
 	errExpectedUncofiguredEndPoint = "expected unconfigured opamp endpoint to result in default sumo opamp url setting"
 	errMsgInvalidCloudwatchConfig  = "source data must be an array or slice, got int"
 )
-
-func shouldRunOnCurrentOS(allowedOS []string) bool {
-	if len(allowedOS) == 0 {
-		return true
-	}
-
-	currentOS := runtime.GOOS
-	return slices.Contains(allowedOS, currentOS)
-}
 
 func defaultSetup() (*Config, extension.Settings) {
 	cfg := createDefaultConfig().(*Config)
@@ -75,127 +61,120 @@ func TestApplyRemoteConfig(t *testing.T) {
 		file         string
 		expectError  bool
 		errorMessage string
-		os           []string // OS restrictions - if nil, runs on all OS
 	}{
-		{"ApplyRemoteConfig", "testdata/opamp.d/opamp-remote-config.yaml", false, "", nil},
-		{"ApplyRemoteApacheConfig", "testdata/opamp.d/opamp-apache-config.yaml", false, "", nil},
-		{"ApplyRemoteHostConfig", "testdata/opamp.d/opamp-host-config.yaml", false, "", nil},
-		{"ApplyRemoteWindowsEventConfig", "testdata/opamp.d/opamp-windows-event-config.yaml", false, "", []string{"windows"}},
-		{"ApplyRemoteExtensionsConfig", "testdata/opamp.d/opamp-extensions-config.yaml", false, "", nil},
-		{"ApplyRemoteConfigFailed", "testdata/opamp.d/opamp-invalid-remote-config.yaml", true, errMsgInvalidType, nil},
-		{"ApplyRemoteConfigMissingProcessor", "testdata/opamp.d/opamp-missing-processor.yaml", true, errMsgInvalidConfigName, nil},
-		{"ApplyFilterProcessorConfig", "testdata/opamp.d/opamp-filter-processor.yaml", false, "", nil},
-		{"ApplyKafkaMetricsConfig", "testdata/opamp.d/opamp-kafkametrics-config.yaml", false, "", nil},
-		{"ApplyElasticsearchConfig", "testdata/opamp.d/opamp-elastic-config.yaml", false, "", nil},
-		{"ApplyMysqlConfig", "testdata/opamp.d/opamp-mysql-config.yaml", false, "", nil},
-		{"ApplyattributesprocessorConfig", "testdata/opamp.d/opamp-attributes-processor.yaml", false, "", nil},
-		{"ApplyPostgresqlConfig", "testdata/opamp.d/opamp-postgresql-config.yaml", false, "", nil},
-		{"ApplyRabbitmqConfig", "testdata/opamp.d/opamp-rabbitmq-config.yaml", false, "", nil},
-		{"ApplyRedisConfig", "testdata/opamp.d/opamp-redis-config.yaml", false, "", nil},
-		{"ApplyFirehoseConfig", "testdata/opamp.d/opamp-aws-firehose-config.yaml", false, "", nil},
-		{"ApplyCloudwatchConfig", "testdata/opamp.d/opamp-aws-cloudwatch-receiver-config.yaml", false, "", nil},
-		{"ApplyContainerInsightConfig", "testdata/opamp.d/opamp-aws-container-insight-config.yaml", false, "", nil},
-		{"ApplyEcsContainerMetricsConfig", "testdata/opamp.d/opamp-aws-container-metrics-config.yaml", false, "", nil},
-		{"ApplyS3Config", "testdata/opamp.d/opamp-aws-s3-exporter-config.yaml", false, "", nil},
-		{"ApplyCloudwatchConfigFailure", "testdata/opamp.d/opamp-aws-cloudwatch-receiver-error-config.yaml", true, errMsgInvalidCloudwatchConfig, nil},
-		{"ApplyXrayConfig", "testdata/opamp.d/opamp-aws-xray-config.yaml", false, "", nil},
-		{"ApplyKenesisConfig", "testdata/opamp.d/opamp-aws-kenesis-config.yaml", false, "", nil},
-		{"ApplyCarbonExporterConfig", "testdata/opamp.d/opamp-carbon-exporter-config.yaml", false, "", nil},
-		{"ApplyDebugExporterConfig", "testdata/opamp.d/opamp-debug-exporter-config.yaml", false, "", nil},
-		{"ApplyFileExporterConfig", "testdata/opamp.d/opamp-file-exporter-config.yaml", false, "", nil},
-		{"ApplyKafkaExporterConfig", "testdata/opamp.d/opamp-kafka-exporter-config.yaml", false, "", nil},
-		{"ApplyLoadbalancingExporterConfig", "testdata/opamp.d/opamp-loadbalancing-exporter-config.yaml", false, "", nil},
-		{"ApplyCumulativetodeltaProcessorConfig", "testdata/opamp.d/opamp-cumulativetodelta-processor-config.yaml", false, "", nil},
-		{"ApplyDeltatorateProcessorConfig", "testdata/opamp.d/opamp-deltatorate-processor-config.yaml", false, "", nil},
-		{"ApplyMetricsgenerationProcessorConfig", "testdata/opamp.d/opamp-metricsgeneration-processor-config.yaml", false, "", nil},
-		{"ApplyGroupbyattrsProcessorConfig", "testdata/opamp.d/opamp-groupbyattrs-processor-config.yaml", false, "", nil},
-		{"ApplyGroupbytraceProcessorConfig", "testdata/opamp.d/opamp-groupbytrace-processor-config.yaml", false, "", nil},
-		{"ApplyK8sattributesProcessorConfig", "testdata/opamp.d/opamp-k8sattributes-processor-config.yaml", false, "", nil},
-		{"ApplyLogdedupProcessorConfig", "testdata/opamp.d/opamp-logdedup-processor-config.yaml", false, "", nil},
-		{"ApplyLogstransformProcessorConfig", "testdata/opamp.d/opamp-logstransform-processor-config.yaml", false, "", nil},
-		{"ApplyMetricstransformProcessorConfig", "testdata/opamp.d/opamp-metricstransform-processor-config.yaml", false, "", nil},
-		{"ApplyProbabilisticsamplerProcessorConfig", "testdata/opamp.d/opamp-probabilisticsampler-processor-config.yaml", false, "", nil},
-		{"ApplyActiveDirecotryDSConfig", "testdata/opamp.d/opamp-activedirectoryds-receiver-config.yaml", false, "", []string{"windows"}},
-		{"ApplyAerospikeConfig", "testdata/opamp.d/opamp-aerospike-receiver-config.yaml", false, "", nil},
-		{"ApplyAzureEventHubConfig", "testdata/opamp.d/opamp-azureeventhub-receiver-config.yaml", false, "", nil},
-		{"ApplyBigipConfig", "testdata/opamp.d/opamp-bigip-receiver-config.yaml", false, "", nil},
-		{"ApplyCarbonReceiverConfig", "testdata/opamp.d/opamp-carbon-receiver-config.yaml", false, "", nil},
-		{"ApplyChronyConfig", "testdata/opamp.d/opamp-chrony-receiver-config.yaml", false, "", []string{"linux", "darwin"}},
-		{"ApplyCloudlfareReceiverConfig", "testdata/opamp.d/opamp-cloudflare-receiver-config.yaml", false, "", nil},
-		{"ApplyPrometheusExporterConfig", "testdata/opamp.d/opamp-prometheus-exporter-config.yaml", false, "", nil},
-		{"ApplyOtlphttpConfig", "testdata/opamp.d/opamp-otlphttp-exporter-config.yaml", false, "", nil},
-		{"ApplyECSObserverConfig", "testdata/opamp.d/opamp-ecsobserver-config.yaml", false, "", nil},
-		{"ApplyRedactionProcessorConfig", "testdata/opamp.d/opamp-redaction-processor-config.yaml", false, "", nil},
-		{"ApplyRemotetapProcessorConfig", "testdata/opamp.d/opamp-remotetap-processor-config.yaml", false, "", nil},
-		{"ApplyGeoipProcessorConfig", "testdata/opamp.d/opamp-geoip-processor-config.yaml", false, "", nil},
-		{"ApplySchemaProcessorConfig", "testdata/opamp.d/opamp-schema-processor-config.yaml", false, "", nil},
-		{"ApplySpanProcessorConfig", "testdata/opamp.d/opamp-span-processor-config.yaml", false, "", nil},
-		{"ApplyTailsamplingProcessorConfig", "testdata/opamp.d/opamp-tailsampling-processor-config.yaml", false, "", nil},
-		{"ApplyCloudfoundryReceiverConfig", "testdata/opamp.d/opamp-cloudfoundry-receiver-config.yaml", false, "", nil},
-		{"ApplyIisReceiverConfig", "testdata/opamp.d/opamp-iis-receiver-config.yaml", false, "", nil},
-		{"ApplyHttpcheckReceiverConfig", "testdata/opamp.d/opamp-httpcheck-receiver-config.yaml", false, "", nil},
-		{"ApplyAsapAuthExtensionConfig", "testdata/opamp.d/opamp-asapauth-extension-config.yaml", false, "", nil},
-		{"ApplyBasicAuthExtensionConfig", "testdata/opamp.d/opamp-basicauth-extension-config.yaml", false, "", nil},
-		{"ApplyBearerTokenAuthExtensionConfig", "testdata/opamp.d/opamp-bearertokenauth-extension-config.yaml", false, "", nil},
-		{"ApplyDbStorageExtensionConfig", "testdata/opamp.d/opamp-dbstorage-extension-config.yaml", false, "", nil},
-		{"ApplyDockerObserverExtensionConfig", "testdata/opamp.d/opamp-dockerobserver-extension-config.yaml", false, "", nil},
-		{"ApplyHeadersSetterExtensionConfig", "testdata/opamp.d/opamp-headerssetter-extension-config.yaml", false, "", nil},
-		{"ApplyHostObserverExtensionConfig", "testdata/opamp.d/opamp-hostobserver-extension-config.yaml", false, "", nil},
-		{"ApplyHttpForwarderExtensionConfig", "testdata/opamp.d/opamp-httpforwarder-extension-config.yaml", false, "", nil},
-		{"ApplyJaegerRemoteSamplingExtensionConfig", "testdata/opamp.d/opamp-jaegerremotesampling-extension-config.yaml", false, "", nil},
-		{"ApplyK8sObserverExtensionConfig", "testdata/opamp.d/opamp-k8sobserver-extension-config.yaml", false, "", nil},
-		{"ApplyOauth2ClientauthExtensionConfig", "testdata/opamp.d/opamp-oauth2clientauth-extension-config.yaml", false, "", nil},
-		{"ApplyOidcAuthExtensionConfig", "testdata/opamp.d/opamp-oidcauth-extension-config.yaml", false, "", nil},
-		{"ApplyPprofExtensionConfig", "testdata/opamp.d/opamp-pprof-extension-config.yaml", false, "", nil},
-		{"ApplyZpagesExtensionConfig", "testdata/opamp.d/opamp-zpages-extension-config.yaml", false, "", nil},
-		{"ApplyInfluxdbReceiverConfig", "testdata/opamp.d/opamp-influxdb-receiver-config.yaml", false, "", nil},
-		{"ApplyJaegerReceiverConfig", "testdata/opamp.d/opamp-jaeger-receiver-config.yaml", false, "", nil},
-		{"ApplyJournaldReceiverConfig", "testdata/opamp.d/opamp-journald-receiver-config.yaml", false, "", nil},
-		{"ApplyK8sClusterReceiverConfig", "testdata/opamp.d/opamp-k8scluster-receiver-config.yaml", false, "", nil},
-		{"ApplyK8sEventsReceiverConfig", "testdata/opamp.d/opamp-k8sevents-receiver-config.yaml", false, "", nil},
-		{"ApplyK8sObjectsReceiverConfig", "testdata/opamp.d/opamp-k8sobjects-receiver-config.yaml", false, "", nil},
-		{"ApplyKubeletStatsReceiverConfig", "testdata/opamp.d/opamp-kubeletstats-receiver-config.yaml", false, "", nil},
-		{"ApplyLokiReceiverConfig", "testdata/opamp.d/opamp-loki-receiver-config.yaml", false, "", nil},
-		{"ApplyMemcachedReceiverConfig", "testdata/opamp.d/opamp-memcached-receiver-config.yaml", false, "", nil},
-		{"ApplyMongodbReceiverConfig", "testdata/opamp.d/opamp-mongodb-receiver-config.yaml", false, "", nil},
-		{"ApplyMongodbAtlasReceiverConfig", "testdata/opamp.d/opamp-mongodbatlas-receiver-config.yaml", false, "", nil},
-		{"ApplyNsxtReceiverConfig", "testdata/opamp.d/opamp-nsxt-receiver-config.yaml", false, "", nil},
-		{"ApplyOracledbReceiverConfig", "testdata/opamp.d/opamp-oracledb-receiver-config.yaml", false, "", nil},
-		{"ApplyOtlpJsonFileReceiverConfig", "testdata/opamp.d/opamp-otlpjsonfile-receiver-config.yaml", false, "", nil},
-		{"ApplyPodmanReceiverConfig", "testdata/opamp.d/opamp-podman-receiver-config.yaml", false, "", nil},
-		{"ApplySimplePrometheusReceiverConfig", "testdata/opamp.d/opamp-simpleprometheus-receiver-config.yaml", false, "", nil},
-		{"ApplyPrometheusReceiverConfig", "testdata/opamp.d/opamp-prometheus-receiver-config.yaml", false, "", nil},
-		{"ApplyPulsarReceiverConfig", "testdata/opamp.d/opamp-pulsar-receiver-config.yaml", false, "", nil},
-		{"ApplyPurefaReceiverConfig", "testdata/opamp.d/opamp-purefa-receiver-config.yaml", false, "", nil},
-		{"ApplyPurefbReceiverConfig", "testdata/opamp.d/opamp-purefb-receiver-config.yaml", false, "", nil},
-		{"ApplyReceiverCreatorConfig", "testdata/opamp.d/opamp-receiver-creator-config.yaml", false, "", nil},
-		{"ApplyRiakReceiverConfig", "testdata/opamp.d/opamp-riak-receiver-config.yaml", false, "", nil},
-		{"ApplySaphanaReceiverConfig", "testdata/opamp.d/opamp-saphana-receiver-config.yaml", false, "", nil},
-		{"ApplySignalFxReceiverConfig", "testdata/opamp.d/opamp-signalfx-receiver-config.yaml", false, "", nil},
-		{"ApplySkyWalkingReceiverConfig", "testdata/opamp.d/opamp-skywalking-receiver-config.yaml", false, "", nil},
-		{"ApplySnowflakeReceiverConfig", "testdata/opamp.d/opamp-snowflake-receiver-config.yaml", false, "", nil},
-		{"ApplySolaceReceiverConfig", "testdata/opamp.d/opamp-solace-receiver-config.yaml", false, "", nil},
-		{"ApplySplunkhecReceiverConfig", "testdata/opamp.d/opamp-splunkhec-receiver-config.yaml", false, "", nil},
-		{"ApplySqlQueryReceiverConfig", "testdata/opamp.d/opamp-sqlquery-receiver-config.yaml", false, "", nil},
-		{"ApplySqlServerReceiverConfig", "testdata/opamp.d/opamp-sqlserver-receiver-config.yaml", false, "", nil},
-		{"ApplySshCheckReceiverConfig", "testdata/opamp.d/opamp-sshcheck-receiver-config.yaml", false, "", nil},
-		{"ApplyStatsdReceiverConfig", "testdata/opamp.d/opamp-statsd-receiver-config.yaml", false, "", nil},
-		{"ApplyTcplogReceiverConfig", "testdata/opamp.d/opamp-tcplog-receiver-config.yaml", false, "", nil},
-		{"ApplyUdplogReceiverConfig", "testdata/opamp.d/opamp-udplog-receiver-config.yaml", false, "", nil},
-		{"ApplyVcenterReceiverConfig", "testdata/opamp.d/opamp-vcenter-receiver-config.yaml", false, "", nil},
-		{"ApplyWavefrontReceiverConfig", "testdata/opamp.d/opamp-wavefront-receiver-config.yaml", false, "", nil},
-		{"ApplyZipkinReceiverConfig", "testdata/opamp.d/opamp-zipkin-receiver-config.yaml", false, "", nil},
-		{"ApplyZookeeperReceiverConfig", "testdata/opamp.d/opamp-zookeeper-receiver-config.yaml", false, "", nil},
-		{"ApplyEcstaskExtensionConfig", "testdata/opamp.d/opamp-ecstask-extension-config.yaml", false, "", nil},
+		{"ApplyRemoteConfig", "testdata/opamp.d/opamp-remote-config.yaml", false, ""},
+		{"ApplyRemoteApacheConfig", "testdata/opamp.d/opamp-apache-config.yaml", false, ""},
+		{"ApplyRemoteHostConfig", "testdata/opamp.d/opamp-host-config.yaml", false, ""},
+		{"ApplyRemoteExtensionsConfig", "testdata/opamp.d/opamp-extensions-config.yaml", false, ""},
+		{"ApplyRemoteConfigFailed", "testdata/opamp.d/opamp-invalid-remote-config.yaml", true, errMsgInvalidType},
+		{"ApplyRemoteConfigMissingProcessor", "testdata/opamp.d/opamp-missing-processor.yaml", true, errMsgInvalidConfigName},
+		{"ApplyFilterProcessorConfig", "testdata/opamp.d/opamp-filter-processor.yaml", false, ""},
+		{"ApplyKafkaMetricsConfig", "testdata/opamp.d/opamp-kafkametrics-config.yaml", false, ""},
+		{"ApplyElasticsearchConfig", "testdata/opamp.d/opamp-elastic-config.yaml", false, ""},
+		{"ApplyMysqlConfig", "testdata/opamp.d/opamp-mysql-config.yaml", false, ""},
+		{"ApplyattributesprocessorConfig", "testdata/opamp.d/opamp-attributes-processor.yaml", false, ""},
+		{"ApplyPostgresqlConfig", "testdata/opamp.d/opamp-postgresql-config.yaml", false, ""},
+		{"ApplyRabbitmqConfig", "testdata/opamp.d/opamp-rabbitmq-config.yaml", false, ""},
+		{"ApplyRedisConfig", "testdata/opamp.d/opamp-redis-config.yaml", false, ""},
+		{"ApplyFirehoseConfig", "testdata/opamp.d/opamp-aws-firehose-config.yaml", false, ""},
+		{"ApplyCloudwatchConfig", "testdata/opamp.d/opamp-aws-cloudwatch-receiver-config.yaml", false, ""},
+		{"ApplyContainerInsightConfig", "testdata/opamp.d/opamp-aws-container-insight-config.yaml", false, ""},
+		{"ApplyEcsContainerMetricsConfig", "testdata/opamp.d/opamp-aws-container-metrics-config.yaml", false, ""},
+		{"ApplyS3Config", "testdata/opamp.d/opamp-aws-s3-exporter-config.yaml", false, ""},
+		{"ApplyCloudwatchConfigFailure", "testdata/opamp.d/opamp-aws-cloudwatch-receiver-error-config.yaml", true, errMsgInvalidCloudwatchConfig},
+		{"ApplyXrayConfig", "testdata/opamp.d/opamp-aws-xray-config.yaml", false, ""},
+		{"ApplyKenesisConfig", "testdata/opamp.d/opamp-aws-kenesis-config.yaml", false, ""},
+		{"ApplyCarbonExporterConfig", "testdata/opamp.d/opamp-carbon-exporter-config.yaml", false, ""},
+		{"ApplyDebugExporterConfig", "testdata/opamp.d/opamp-debug-exporter-config.yaml", false, ""},
+		{"ApplyFileExporterConfig", "testdata/opamp.d/opamp-file-exporter-config.yaml", false, ""},
+		{"ApplyKafkaExporterConfig", "testdata/opamp.d/opamp-kafka-exporter-config.yaml", false, ""},
+		{"ApplyLoadbalancingExporterConfig", "testdata/opamp.d/opamp-loadbalancing-exporter-config.yaml", false, ""},
+		{"ApplyCumulativetodeltaProcessorConfig", "testdata/opamp.d/opamp-cumulativetodelta-processor-config.yaml", false, ""},
+		{"ApplyDeltatorateProcessorConfig", "testdata/opamp.d/opamp-deltatorate-processor-config.yaml", false, ""},
+		{"ApplyMetricsgenerationProcessorConfig", "testdata/opamp.d/opamp-metricsgeneration-processor-config.yaml", false, ""},
+		{"ApplyGroupbyattrsProcessorConfig", "testdata/opamp.d/opamp-groupbyattrs-processor-config.yaml", false, ""},
+		{"ApplyGroupbytraceProcessorConfig", "testdata/opamp.d/opamp-groupbytrace-processor-config.yaml", false, ""},
+		{"ApplyK8sattributesProcessorConfig", "testdata/opamp.d/opamp-k8sattributes-processor-config.yaml", false, ""},
+		{"ApplyLogdedupProcessorConfig", "testdata/opamp.d/opamp-logdedup-processor-config.yaml", false, ""},
+		{"ApplyLogstransformProcessorConfig", "testdata/opamp.d/opamp-logstransform-processor-config.yaml", false, ""},
+		{"ApplyMetricstransformProcessorConfig", "testdata/opamp.d/opamp-metricstransform-processor-config.yaml", false, ""},
+		{"ApplyProbabilisticsamplerProcessorConfig", "testdata/opamp.d/opamp-probabilisticsampler-processor-config.yaml", false, ""},
+		{"ApplyAerospikeConfig", "testdata/opamp.d/opamp-aerospike-receiver-config.yaml", false, ""},
+		{"ApplyAzureEventHubConfig", "testdata/opamp.d/opamp-azureeventhub-receiver-config.yaml", false, ""},
+		{"ApplyBigipConfig", "testdata/opamp.d/opamp-bigip-receiver-config.yaml", false, ""},
+		{"ApplyCarbonReceiverConfig", "testdata/opamp.d/opamp-carbon-receiver-config.yaml", false, ""},
+		{"ApplyCloudlfareReceiverConfig", "testdata/opamp.d/opamp-cloudflare-receiver-config.yaml", false, ""},
+		{"ApplyPrometheusExporterConfig", "testdata/opamp.d/opamp-prometheus-exporter-config.yaml", false, ""},
+		{"ApplyOtlphttpConfig", "testdata/opamp.d/opamp-otlphttp-exporter-config.yaml", false, ""},
+		{"ApplyECSObserverConfig", "testdata/opamp.d/opamp-ecsobserver-config.yaml", false, ""},
+		{"ApplyRedactionProcessorConfig", "testdata/opamp.d/opamp-redaction-processor-config.yaml", false, ""},
+		{"ApplyRemotetapProcessorConfig", "testdata/opamp.d/opamp-remotetap-processor-config.yaml", false, ""},
+		{"ApplyGeoipProcessorConfig", "testdata/opamp.d/opamp-geoip-processor-config.yaml", false, ""},
+		{"ApplySchemaProcessorConfig", "testdata/opamp.d/opamp-schema-processor-config.yaml", false, ""},
+		{"ApplySpanProcessorConfig", "testdata/opamp.d/opamp-span-processor-config.yaml", false, ""},
+		{"ApplyTailsamplingProcessorConfig", "testdata/opamp.d/opamp-tailsampling-processor-config.yaml", false, ""},
+		{"ApplyCloudfoundryReceiverConfig", "testdata/opamp.d/opamp-cloudfoundry-receiver-config.yaml", false, ""},
+		{"ApplyHttpcheckReceiverConfig", "testdata/opamp.d/opamp-httpcheck-receiver-config.yaml", false, ""},
+		{"ApplyAsapAuthExtensionConfig", "testdata/opamp.d/opamp-asapauth-extension-config.yaml", false, ""},
+		{"ApplyBasicAuthExtensionConfig", "testdata/opamp.d/opamp-basicauth-extension-config.yaml", false, ""},
+		{"ApplyBearerTokenAuthExtensionConfig", "testdata/opamp.d/opamp-bearertokenauth-extension-config.yaml", false, ""},
+		{"ApplyDbStorageExtensionConfig", "testdata/opamp.d/opamp-dbstorage-extension-config.yaml", false, ""},
+		{"ApplyDockerObserverExtensionConfig", "testdata/opamp.d/opamp-dockerobserver-extension-config.yaml", false, ""},
+		{"ApplyHeadersSetterExtensionConfig", "testdata/opamp.d/opamp-headerssetter-extension-config.yaml", false, ""},
+		{"ApplyHostObserverExtensionConfig", "testdata/opamp.d/opamp-hostobserver-extension-config.yaml", false, ""},
+		{"ApplyHttpForwarderExtensionConfig", "testdata/opamp.d/opamp-httpforwarder-extension-config.yaml", false, ""},
+		{"ApplyJaegerRemoteSamplingExtensionConfig", "testdata/opamp.d/opamp-jaegerremotesampling-extension-config.yaml", false, ""},
+		{"ApplyK8sObserverExtensionConfig", "testdata/opamp.d/opamp-k8sobserver-extension-config.yaml", false, ""},
+		{"ApplyOauth2ClientauthExtensionConfig", "testdata/opamp.d/opamp-oauth2clientauth-extension-config.yaml", false, ""},
+		{"ApplyOidcAuthExtensionConfig", "testdata/opamp.d/opamp-oidcauth-extension-config.yaml", false, ""},
+		{"ApplyPprofExtensionConfig", "testdata/opamp.d/opamp-pprof-extension-config.yaml", false, ""},
+		{"ApplyZpagesExtensionConfig", "testdata/opamp.d/opamp-zpages-extension-config.yaml", false, ""},
+		{"ApplyInfluxdbReceiverConfig", "testdata/opamp.d/opamp-influxdb-receiver-config.yaml", false, ""},
+		{"ApplyJaegerReceiverConfig", "testdata/opamp.d/opamp-jaeger-receiver-config.yaml", false, ""},
+		{"ApplyJournaldReceiverConfig", "testdata/opamp.d/opamp-journald-receiver-config.yaml", false, ""},
+		{"ApplyK8sClusterReceiverConfig", "testdata/opamp.d/opamp-k8scluster-receiver-config.yaml", false, ""},
+		{"ApplyK8sEventsReceiverConfig", "testdata/opamp.d/opamp-k8sevents-receiver-config.yaml", false, ""},
+		{"ApplyK8sObjectsReceiverConfig", "testdata/opamp.d/opamp-k8sobjects-receiver-config.yaml", false, ""},
+		{"ApplyKubeletStatsReceiverConfig", "testdata/opamp.d/opamp-kubeletstats-receiver-config.yaml", false, ""},
+		{"ApplyLokiReceiverConfig", "testdata/opamp.d/opamp-loki-receiver-config.yaml", false, ""},
+		{"ApplyMemcachedReceiverConfig", "testdata/opamp.d/opamp-memcached-receiver-config.yaml", false, ""},
+		{"ApplyMongodbReceiverConfig", "testdata/opamp.d/opamp-mongodb-receiver-config.yaml", false, ""},
+		{"ApplyMongodbAtlasReceiverConfig", "testdata/opamp.d/opamp-mongodbatlas-receiver-config.yaml", false, ""},
+		{"ApplyNsxtReceiverConfig", "testdata/opamp.d/opamp-nsxt-receiver-config.yaml", false, ""},
+		{"ApplyOracledbReceiverConfig", "testdata/opamp.d/opamp-oracledb-receiver-config.yaml", false, ""},
+		{"ApplyOtlpJsonFileReceiverConfig", "testdata/opamp.d/opamp-otlpjsonfile-receiver-config.yaml", false, ""},
+		{"ApplyPodmanReceiverConfig", "testdata/opamp.d/opamp-podman-receiver-config.yaml", false, ""},
+		{"ApplySimplePrometheusReceiverConfig", "testdata/opamp.d/opamp-simpleprometheus-receiver-config.yaml", false, ""},
+		{"ApplyPrometheusReceiverConfig", "testdata/opamp.d/opamp-prometheus-receiver-config.yaml", false, ""},
+		{"ApplyPulsarReceiverConfig", "testdata/opamp.d/opamp-pulsar-receiver-config.yaml", false, ""},
+		{"ApplyPurefaReceiverConfig", "testdata/opamp.d/opamp-purefa-receiver-config.yaml", false, ""},
+		{"ApplyPurefbReceiverConfig", "testdata/opamp.d/opamp-purefb-receiver-config.yaml", false, ""},
+		{"ApplyReceiverCreatorConfig", "testdata/opamp.d/opamp-receiver-creator-config.yaml", false, ""},
+		{"ApplyRiakReceiverConfig", "testdata/opamp.d/opamp-riak-receiver-config.yaml", false, ""},
+		{"ApplySaphanaReceiverConfig", "testdata/opamp.d/opamp-saphana-receiver-config.yaml", false, ""},
+		{"ApplySignalFxReceiverConfig", "testdata/opamp.d/opamp-signalfx-receiver-config.yaml", false, ""},
+		{"ApplySkyWalkingReceiverConfig", "testdata/opamp.d/opamp-skywalking-receiver-config.yaml", false, ""},
+		{"ApplySnowflakeReceiverConfig", "testdata/opamp.d/opamp-snowflake-receiver-config.yaml", false, ""},
+		{"ApplySolaceReceiverConfig", "testdata/opamp.d/opamp-solace-receiver-config.yaml", false, ""},
+		{"ApplySplunkhecReceiverConfig", "testdata/opamp.d/opamp-splunkhec-receiver-config.yaml", false, ""},
+		{"ApplySqlQueryReceiverConfig", "testdata/opamp.d/opamp-sqlquery-receiver-config.yaml", false, ""},
+		{"ApplySqlServerReceiverConfig", "testdata/opamp.d/opamp-sqlserver-receiver-config.yaml", false, ""},
+		{"ApplySshCheckReceiverConfig", "testdata/opamp.d/opamp-sshcheck-receiver-config.yaml", false, ""},
+		{"ApplyStatsdReceiverConfig", "testdata/opamp.d/opamp-statsd-receiver-config.yaml", false, ""},
+		{"ApplyTcplogReceiverConfig", "testdata/opamp.d/opamp-tcplog-receiver-config.yaml", false, ""},
+		{"ApplyUdplogReceiverConfig", "testdata/opamp.d/opamp-udplog-receiver-config.yaml", false, ""},
+		{"ApplyVcenterReceiverConfig", "testdata/opamp.d/opamp-vcenter-receiver-config.yaml", false, ""},
+		{"ApplyWavefrontReceiverConfig", "testdata/opamp.d/opamp-wavefront-receiver-config.yaml", false, ""},
+		{"ApplyZipkinReceiverConfig", "testdata/opamp.d/opamp-zipkin-receiver-config.yaml", false, ""},
+		{"ApplyZookeeperReceiverConfig", "testdata/opamp.d/opamp-zookeeper-receiver-config.yaml", false, ""},
+		{"ApplyEcstaskExtensionConfig", "testdata/opamp.d/opamp-ecstask-extension-config.yaml", false, ""},
+		{"ApplyRemoteWindowsEventConfig", "testdata/opamp.d/opamp-windows-event-config.yaml", false, ""},
+		{"ApplyActiveDirecotryDSConfig", "testdata/opamp.d/opamp-activedirectoryds-receiver-config.yaml", false, ""},
+		{"ApplyIisReceiverConfig", "testdata/opamp.d/opamp-iis-receiver-config.yaml", false, ""},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if !shouldRunOnCurrentOS(tt.os) {
-				t.Skipf("Skipping test %s: not supported on %s (supported OS: %v)", tt.name, runtime.GOOS, tt.os)
-				return
-			}
-
 			d, err := os.MkdirTemp("", "opamp.d")
 			assert.NoError(t, err)
 			defer os.RemoveAll(d)
