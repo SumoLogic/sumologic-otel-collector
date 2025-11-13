@@ -28,6 +28,23 @@ readonly CONTRIB_PLUGIN_REGEX="github.com/open-telemetry/opentelemetry-collector
 BUILDER_PLUGINS=$(yq e '... comments="" | [.receivers[], .exporters[], .processors[], .extensions[]][] | to_entries | .[].value | match("[^\s]+") | .string' "${BUILDER_CONFIG}")
 readonly BUILDER_PLUGINS
 
+# Update the whitelist if exception is needed and a component needs to be pinned to a diff otelcol-contrib version.
+PLUGIN_ALLOWLIST=(
+  "https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.132.0/processor/routingprocessor|v0.132.0"
+)
+
+is_allowed() {
+  local url="${1}"
+  local ver="${2}"
+  for entry in "${PLUGIN_ALLOWLIST[@]}"; do
+    IFS='|' read -r u v <<< "$entry"
+    if [[ "${url}" == *"${u}"* ]] && [[ "${ver}" == "${v}" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 # For all plugins in README.md ...
 for plugin_url in $(${GREP} -o -E "${CONTRIB_PLUGIN_HTTP_URL_REGEX}" README.md)
 do
@@ -37,8 +54,12 @@ do
         PLUGIN_VERSION_FROM_README=$(echo "${BASH_REMATCH[2]}" | cut -f1,2 -d'.' )
         if [[ ${PLUGIN_VERSION_FROM_README} != v${OT_VERSION} ]]
         then
-            printf "There's an unexpected plugin version in README.md for %s (should be %s)\n" "${plugin_url}" "${OT_VERSION}.*"
-            fail=1
+            if is_allowed "${plugin_url}" "${BASH_REMATCH[2]}"; then
+              echo "Allowed exception for ${plugin_url} ${BASH_REMATCH[2]}"
+            else
+              printf "There's an unexpected plugin version in README.md for %s (should be %s)\n" "${plugin_url}" "${OT_VERSION}.*"
+              fail=1
+            fi
         fi
 
         # ... and when the plugin is from contrib ... (core plugins are not listed in builder config) ...

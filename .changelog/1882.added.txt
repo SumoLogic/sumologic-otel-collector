@@ -1,1 +1,0 @@
-feat: Added --enable-clobber option to replace existing collector during installation
