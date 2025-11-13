@@ -71,10 +71,12 @@ receivers:
         pods: 60s
         volumes: 60s
 
+exporters:
+  sumologic:
+
 service:
   extensions: [bearertokenauth/array01,bearertokenauth/array02]
   pipelines:
     metrics:
       receivers: [purefa/array01,purefa/array02]
-exporters:
-  sumologic:
+      exporters: [sumologic]

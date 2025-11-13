@@ -1,6 +1,6 @@
 receivers:
   chrony:
-    endpoint: unix:///var/run/chrony/chronyd.sock
+    endpoint: unix:///dev/null
     timeout: 10s
     collection_interval: 30s
     metrics:

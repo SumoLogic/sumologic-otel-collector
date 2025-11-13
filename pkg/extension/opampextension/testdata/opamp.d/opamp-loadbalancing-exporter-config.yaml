@@ -37,6 +37,8 @@ exporters:
   loadbalancing/5:
     sending_queue:
       enabled: true
+      num_consumers: 5
+      queue_size: 5
     protocol:
       otlp:
         sending_queue:

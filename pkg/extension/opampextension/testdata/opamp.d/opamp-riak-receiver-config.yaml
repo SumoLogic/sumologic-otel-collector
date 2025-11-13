@@ -2,7 +2,7 @@ receivers:
   riak:
     endpoint: http://localhost:8098
     username: otelu
-    password: ${env:RIAK_PASSWORD}
+    password: pass
     collection_interval: 60s
 exporters:
   sumologic:

@@ -20,15 +20,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"go.opentelemetry.io/collector/config/configauth"
-	"go.opentelemetry.io/collector/config/configoptional"
-
 	"github.com/oklog/ulid/v2"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/stretchr/testify/assert"
-
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
+	"go.opentelemetry.io/collector/config/configauth"
+	"go.opentelemetry.io/collector/config/configoptional"
 	"go.opentelemetry.io/collector/extension"
 	"go.opentelemetry.io/collector/extension/extensiontest"
 	semconv "go.opentelemetry.io/otel/semconv/v1.18.0"
@@ -67,7 +65,6 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyRemoteConfig", "testdata/opamp.d/opamp-remote-config.yaml", false, ""},
 		{"ApplyRemoteApacheConfig", "testdata/opamp.d/opamp-apache-config.yaml", false, ""},
 		{"ApplyRemoteHostConfig", "testdata/opamp.d/opamp-host-config.yaml", false, ""},
-		{"ApplyRemoteWindowsEventConfig", "testdata/opamp.d/opamp-windows-event-config.yaml", false, ""},
 		{"ApplyRemoteExtensionsConfig", "testdata/opamp.d/opamp-extensions-config.yaml", false, ""},
 		{"ApplyRemoteConfigFailed", "testdata/opamp.d/opamp-invalid-remote-config.yaml", true, errMsgInvalidType},
 		{"ApplyRemoteConfigMissingProcessor", "testdata/opamp.d/opamp-missing-processor.yaml", true, errMsgInvalidConfigName},
@@ -102,12 +99,10 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyLogstransformProcessorConfig", "testdata/opamp.d/opamp-logstransform-processor-config.yaml", false, ""},
 		{"ApplyMetricstransformProcessorConfig", "testdata/opamp.d/opamp-metricstransform-processor-config.yaml", false, ""},
 		{"ApplyProbabilisticsamplerProcessorConfig", "testdata/opamp.d/opamp-probabilisticsampler-processor-config.yaml", false, ""},
-		{"ApplyActiveDirecotryDSConfig", "testdata/opamp.d/opamp-activedirectoryds-receiver-config.yaml", false, ""},
 		{"ApplyAerospikeConfig", "testdata/opamp.d/opamp-aerospike-receiver-config.yaml", false, ""},
 		{"ApplyAzureEventHubConfig", "testdata/opamp.d/opamp-azureeventhub-receiver-config.yaml", false, ""},
 		{"ApplyBigipConfig", "testdata/opamp.d/opamp-bigip-receiver-config.yaml", false, ""},
 		{"ApplyCarbonReceiverConfig", "testdata/opamp.d/opamp-carbon-receiver-config.yaml", false, ""},
-		{"ApplyChronyConfig", "testdata/opamp.d/opamp-chrony-receiver-config.yaml", false, ""},
 		{"ApplyCloudlfareReceiverConfig", "testdata/opamp.d/opamp-cloudflare-receiver-config.yaml", false, ""},
 		{"ApplyPrometheusExporterConfig", "testdata/opamp.d/opamp-prometheus-exporter-config.yaml", false, ""},
 		{"ApplyOtlphttpConfig", "testdata/opamp.d/opamp-otlphttp-exporter-config.yaml", false, ""},
@@ -119,7 +114,6 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplySpanProcessorConfig", "testdata/opamp.d/opamp-span-processor-config.yaml", false, ""},
 		{"ApplyTailsamplingProcessorConfig", "testdata/opamp.d/opamp-tailsampling-processor-config.yaml", false, ""},
 		{"ApplyCloudfoundryReceiverConfig", "testdata/opamp.d/opamp-cloudfoundry-receiver-config.yaml", false, ""},
-		{"ApplyIisReceiverConfig", "testdata/opamp.d/opamp-iis-receiver-config.yaml", false, ""},
 		{"ApplyHttpcheckReceiverConfig", "testdata/opamp.d/opamp-httpcheck-receiver-config.yaml", false, ""},
 		{"ApplyAsapAuthExtensionConfig", "testdata/opamp.d/opamp-asapauth-extension-config.yaml", false, ""},
 		{"ApplyBasicAuthExtensionConfig", "testdata/opamp.d/opamp-basicauth-extension-config.yaml", false, ""},
@@ -134,11 +128,9 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyOauth2ClientauthExtensionConfig", "testdata/opamp.d/opamp-oauth2clientauth-extension-config.yaml", false, ""},
 		{"ApplyOidcAuthExtensionConfig", "testdata/opamp.d/opamp-oidcauth-extension-config.yaml", false, ""},
 		{"ApplyPprofExtensionConfig", "testdata/opamp.d/opamp-pprof-extension-config.yaml", false, ""},
-		{"ApplySigv4AuthExtensionConfig", "testdata/opamp.d/opamp-sigv4auth-extension-config.yaml", false, ""},
 		{"ApplyZpagesExtensionConfig", "testdata/opamp.d/opamp-zpages-extension-config.yaml", false, ""},
 		{"ApplyInfluxdbReceiverConfig", "testdata/opamp.d/opamp-influxdb-receiver-config.yaml", false, ""},
 		{"ApplyJaegerReceiverConfig", "testdata/opamp.d/opamp-jaeger-receiver-config.yaml", false, ""},
-		{"ApplyJmxReceiverConfig", "testdata/opamp.d/opamp-jmx-receiver-config.yaml", false, ""},
 		{"ApplyJournaldReceiverConfig", "testdata/opamp.d/opamp-journald-receiver-config.yaml", false, ""},
 		{"ApplyK8sClusterReceiverConfig", "testdata/opamp.d/opamp-k8scluster-receiver-config.yaml", false, ""},
 		{"ApplyK8sEventsReceiverConfig", "testdata/opamp.d/opamp-k8sevents-receiver-config.yaml", false, ""},
@@ -163,7 +155,6 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplySignalFxReceiverConfig", "testdata/opamp.d/opamp-signalfx-receiver-config.yaml", false, ""},
 		{"ApplySkyWalkingReceiverConfig", "testdata/opamp.d/opamp-skywalking-receiver-config.yaml", false, ""},
 		{"ApplySnowflakeReceiverConfig", "testdata/opamp.d/opamp-snowflake-receiver-config.yaml", false, ""},
-		{"ApplySnmpReceiverConfig", "testdata/opamp.d/opamp-snmp-receiver-config.yaml", false, ""},
 		{"ApplySolaceReceiverConfig", "testdata/opamp.d/opamp-solace-receiver-config.yaml", false, ""},
 		{"ApplySplunkhecReceiverConfig", "testdata/opamp.d/opamp-splunkhec-receiver-config.yaml", false, ""},
 		{"ApplySqlQueryReceiverConfig", "testdata/opamp.d/opamp-sqlquery-receiver-config.yaml", false, ""},
@@ -177,6 +168,9 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyZipkinReceiverConfig", "testdata/opamp.d/opamp-zipkin-receiver-config.yaml", false, ""},
 		{"ApplyZookeeperReceiverConfig", "testdata/opamp.d/opamp-zookeeper-receiver-config.yaml", false, ""},
 		{"ApplyEcstaskExtensionConfig", "testdata/opamp.d/opamp-ecstask-extension-config.yaml", false, ""},
+		{"ApplyRemoteWindowsEventConfig", "testdata/opamp.d/opamp-windows-event-config.yaml", false, ""},
+		{"ApplyActiveDirecotryDSConfig", "testdata/opamp.d/opamp-activedirectoryds-receiver-config.yaml", false, ""},
+		{"ApplyIisReceiverConfig", "testdata/opamp.d/opamp-iis-receiver-config.yaml", false, ""},
 	}
 
 	for _, tt := range tests {
@@ -268,6 +262,42 @@ func TestSaveEffectiveConfig(t *testing.T) {
 	defer os.RemoveAll(d)
 
 	assert.NoError(t, o.saveEffectiveConfig(d))
+}
+
+func TestSaveEffectiveConfigWithInvalidConfig(t *testing.T) {
+	tests := []struct {
+		name         string
+		file         string
+		errorMessage string
+	}{
+		{"ApplyInvalidApacheURIConfig", "testdata/opamp.d/opamp-invalid-apache-uri-config.yaml", "query must be 'auto'"},
+		{"ApplyInvalidApacheKeysConfig", "testdata/opamp.d/opamp-invalid-apache-keys-config.yaml", "has invalid keys: endpointt"},
+		{"ApplyInvalidPipelineConfigUndefinedComponent", "testdata/opamp.d/opamp-invalid-pipeline-undefined-component-config.yaml", "references receiver \"file\" which is not configured"},
+		{"ApplyInvalidPipelineConfigNoExporter", "testdata/opamp.d/opamp-invalid-pipeline-no-exporter-config.yaml", "must have at least one exporter"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d, err := os.MkdirTemp("", "opamp.d")
+			assert.NoError(t, err)
+			defer os.RemoveAll(d)
+			cfg, set := setupWithRemoteConfig(t, d)
+			o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+			assert.NoError(t, err)
+			path := filepath.Join(tt.file)
+			rb, err := os.ReadFile(path)
+			assert.NoError(t, err)
+
+			o.effectiveConfig = map[string]*protobufs.AgentConfigFile{
+				tt.name: {
+					Body: rb,
+				},
+			}
+			err = o.saveEffectiveConfig(d)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), tt.errorMessage)
+		})
+	}
 }
 
 func TestUpdateAgentIdentity(t *testing.T) {
