@@ -315,7 +315,7 @@ jobs:
 
       - name: Store Mac .dmg as action artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: runner.os == 'macOS'
+        if: runner.os == 'macOS' && inputs.signing-enabled && github.actor != 'dependabot[bot]'
         with:
           name: ${{ steps.binary-name.outputs.name-with-platform }}.dmg
           path: ./otelcolbuilder/cmd/${{ steps.binary-name.outputs.name-with-platform }}.dmg
