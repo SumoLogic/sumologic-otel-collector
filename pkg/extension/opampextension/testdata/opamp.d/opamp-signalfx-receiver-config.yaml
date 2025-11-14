@@ -1,0 +1,21 @@
+extensions:
+  headers_setter:
+    headers:
+      - action: upsert
+        key: X-SF-TOKEN
+        from_context: auth
+
+receivers:
+  signalfx:
+    tls:
+      cert_file: /test.crt
+      key_file: /test.key
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - signalfx
+      exporters:
+        - sumologic

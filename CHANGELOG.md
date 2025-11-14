@@ -7,6 +7,134 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.139.0-sumo-0]
+
+### Released 2025-11-12
+
+### Added
+
+- feat: Added --enable-clobber option to replace existing collector during installation [#1882]
+- Adds routing processor back to otel-col from v0.132.0 otel-contrib [#1891]
+
+### Changed
+
+- ci: added Ansible syntax check to GitHub Actions [#1876]
+- chore: added remote collector installation using puppet for linux [#1877]
+- ci: add puppet syntax check to GitHub Actions [#1878]
+- ci: add chef syntax check to GitHub Actions [#1881]
+- fix: ansible arguments error [#1884]
+- fix: puppet arguments error resolved [#1885]
+- chore: set upstream to 0.139.0 and fixed breaking changes [#1892]
+
+### Fixed
+
+- fix(windows collector): Changed the dns resolver from Pure Go DNS Resolver to Cgo DNS Resolver since Go DNS Resolver is not resolving DNS queries the same way as the OS [#1869]
+- fix: fix renovate action [#1889]
+
+[#1882]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1882
+[#1891]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1891
+[#1876]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1876
+[#1877]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1877
+[#1878]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1878
+[#1881]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1881
+[#1884]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1884
+[#1885]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1885
+[#1892]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1892
+[#1869]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1869
+[#1889]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1889
+
+[v0.139.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.139.0-sumo-0
+
+## [v0.137.0-sumo-0]
+
+### Released 2025-10-16
+
+### Changed
+
+- chore: Added Puppet support for windows [#1845]
+- Added Windows support using chef [#1851]
+- fix(collector): correct missing end statement [#1863]
+- chore:set upstream to 0.137.0 [#1865]
+- Fix: Remote manage collector in chef [#1872]
+
+[#1845]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1845
+[#1851]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1851
+[#1863]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1863
+[#1865]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1865
+[#1872]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1872
+[v0.137.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.137.0-sumo-0
+
+## [v0.136.0-sumo-1]
+
+### Released 2025-09-30
+
+### Changed
+
+- Added ansible support for windows [#1826]
+- chore(confmap): update opampprovider, providerUtil, and globprovider to v1.36.0 [#1855]
+
+### Fixed
+
+- deps: downgrading gosnowflake to 1.15.0 [#1861]
+
+[#1826]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1826
+[#1855]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1855
+[#1861]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1861
+[v0.136.0-sumo-1]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.136.0-sumo-1
+
+## [v0.136.0-sumo-0]
+
+### Released 2025-09-26
+
+### Added
+
+- chore: adding next set of components to opampextension [#1803]
+- ci: adding renovatebot to automate version bumps [#1804]
+- chore: adding 10 more receivers to opampextension [#1806]
+- docs: Updated readme file to reflect the components for opampextension [#1807]
+- test: added ITs for sumologic-otel-collector, along with github tooling and makefile changes. [#1812]
+- chore: adding 10 components(processors) to opamp extension [#1813]
+- Upgrade the otel collector and contrib to 0.133.0 [#1834]
+
+### Changed
+
+- chore: adding 10 components to opampextension [#1839]
+- chore: adding all extensions to opamoextension [#1846]
+- chore: adding next set of components to opampextension [#1847]
+- chore: adding receiver components to opampextension [#1852]
+- chore:receiver/sapm removed as its removed in upstream [#1854]
+- chore!:upgrade core and contrib to 0.136.0 [#1854]
+- chore!:receiver/opencensusreceiver removed as its removed in upstream [#1854]
+- chore: adding all remaining components to opampextension [#1856]
+- docs: removed IN and added KR deployment in opampextension README.md [#1808]
+- chore: adding support for remotely managed collector for chef [#1816]
+- chore: Update Chef,Ansible,Puppet to use cdn url for install script [#1818]
+- chore: adding support for remotely managed collector for ansible [#1822]
+- chore: Upgrade docker version to address CVE-2025-54388 [#1833]
+- feat(processor/routing): deprecate `routingprocessor` since its deprecated in upstream in favor of `routingconnector` [#1834]
+- chore: Fix for opamp api fix for ansible [#1840]
+
+[#1839]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1839
+[#1846]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1846
+[#1847]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1847
+[#1852]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1852
+[#1854]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1854
+[#1856]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1856
+[#1803]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1803
+[#1804]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1804
+[#1806]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1806
+[#1807]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1807
+[#1812]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1812
+[#1813]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1813
+[#1834]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1834
+[#1808]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1808
+[#1816]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1816
+[#1818]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1818
+[#1822]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1822
+[#1833]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1833
+[#1840]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1840
+[v0.136.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.136.0-sumo-0
+
 ## [v0.130.1-sumo-0]
 
 ### Added

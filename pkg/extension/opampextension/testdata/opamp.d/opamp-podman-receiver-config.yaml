@@ -1,0 +1,18 @@
+receivers:
+  podman_stats:
+    endpoint: unix://run/podman/podman.sock
+    timeout: 10s
+    collection_interval: 10s
+    initial_delay: 1s
+    metrics:
+      container.cpu.usage.system:
+        enabled: false
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - podman_stats
+      exporters:
+        - sumologic

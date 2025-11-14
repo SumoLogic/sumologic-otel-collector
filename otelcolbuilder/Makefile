@@ -36,7 +36,7 @@ include $(toolchains_dir)/Makefile
 ################################################################################
 
 BINARY_NAME ?= otelcol-sumo
-OCB_VERSION ?= 0.130.1
+OCB_VERSION ?= 0.139.0
 FIPS_SUFFIX ?=
 OTC_RELEASE_REPO ?= github.com/open-telemetry/opentelemetry-collector-releases
 GO ?= go
@@ -79,7 +79,10 @@ LDFLAGS := $(EXTRA_LDFLAGS)
 #
 # https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin_nocgo.go
 # https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin.go
+
 ifeq ($(shell go env GOOS),darwin)
+	CGO_ENABLED ?= 1
+else ifeq ($(shell go env GOOS),windows)
 	CGO_ENABLED ?= 1
 else
 # CGO_ENABLED=0 is used becuase we don't want to rely on c libs and opentelemetry
@@ -107,7 +110,9 @@ endif
 # We want to enforce go dns for all types of binaries. The FIPS binaries are built with CGO enabled and use
 # the CGO resolver. This has caused a DNS resolution error for .local domains in our K8s containers.
 # ref: https://pkg.go.dev/net#hdr-Name_Resolution
-GOTAGS := $(GOTAGS) netgo
+ifneq ($(shell go env GOOS),windows)
+	GOTAGS := $(GOTAGS) netgo
+endif
 
 .PHONY: require-yq
 require-yq:
@@ -144,7 +149,7 @@ endif
 
 .PHONY: ensure-correct-ocb-version
 ensure-correct-ocb-version: ensure-ocb-installed
-ifneq ($(lastword $(INSTALLED_OCB_VERSION)),$(OCB_VERSION))
+ifeq (,$(findstring $(OCB_VERSION),$(lastword $(INSTALLED_OCB_VERSION))))
 	@$(error Installed ocb version \
 		"$(INSTALLED_OCB_VERSION)" \
 		does not match the requested "$(OCB_VERSION)". The correct version of \

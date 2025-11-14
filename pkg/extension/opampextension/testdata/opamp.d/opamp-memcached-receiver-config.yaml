@@ -1,0 +1,14 @@
+receivers:
+  memcached:
+    endpoint: "localhost:11211"
+    collection_interval: 10s
+    transport: tcp
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - memcached
+      exporters:
+        - sumologic

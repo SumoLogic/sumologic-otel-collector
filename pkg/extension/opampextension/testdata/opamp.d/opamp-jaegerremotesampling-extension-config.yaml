@@ -1,0 +1,30 @@
+extensions:
+  jaegerremotesampling:
+    source:
+      reload_interval: 30s
+      remote:
+        endpoint: jaeger-collector:14250
+  jaegerremotesampling/1:
+    source:
+      reload_interval: 1s
+      file: /etc/otelcol/sampling_strategies.json
+  jaegerremotesampling/2:
+    source:
+      reload_interval: 1s
+      file: http://jaeger.example.com/sampling_strategies.json
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+service:
+    extensions:
+      - jaegerremotesampling
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        exporters:
+          - sumologic

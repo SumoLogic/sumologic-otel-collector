@@ -1,0 +1,82 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: localhost:4317
+
+connectors:
+  routing/metrics:
+    default_pipelines:
+      - metrics/default
+    table:
+    - context: request
+      condition: request["attr1"] == "value1"
+      pipelines: [metrics/1]
+  routing/logs:
+    default_pipelines:
+      - logs/default
+    table:
+    - context: request
+      condition: request["attr1"] == "value1"
+      pipelines: [logs/1]
+  routing/traces:
+    default_pipelines:
+      - traces/default
+    table:
+    - context: request
+      condition: request["attr1"] == "value1"
+      pipelines: [traces/1]
+
+exporters:
+  sumologic/default:
+    endpoint: http://dummy.endpoint.com:8888/api
+  sumologic/1:
+    endpoint: http://dummy.endpoint.com:8889/api
+
+service:
+  pipelines:
+    metrics:
+      receivers:
+      - otlp
+      exporters:
+      - routing/metrics
+    metrics/default:
+      receivers:
+      - routing/metrics
+      exporters:
+      - sumologic/default
+    metrics/1:
+      receivers:
+      - routing/metrics
+      exporters:
+      - sumologic/1
+    logs:
+      receivers:
+      - otlp
+      exporters:
+      - routing/logs
+    logs/default:
+      receivers:
+      - routing/logs
+      exporters:
+      - sumologic/default
+    logs/1:
+      receivers:
+      - routing/logs
+      exporters:
+      - sumologic/1
+    traces:
+      receivers:
+      - otlp
+      exporters:
+      - routing/traces
+    traces/default:
+      receivers:
+      - routing/traces
+      exporters:
+      - sumologic/default
+    traces/1:
+      receivers:
+      - routing/traces
+      exporters:
+      - sumologic/1

@@ -1,1 +1,0 @@
-chore: adding 10 more receivers to opampextension

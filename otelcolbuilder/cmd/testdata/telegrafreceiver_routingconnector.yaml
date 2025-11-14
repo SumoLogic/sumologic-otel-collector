@@ -1,0 +1,61 @@
+receivers:
+  telegraf:
+    separate_field: false
+    agent_config: |
+      [agent]
+        interval = "1s"
+        flush_interval = "1s"
+        debug = true
+      [[inputs.cpu]]
+        percpu = true
+        totalcpu = true
+      [[inputs.disk]]
+      [[inputs.net]]
+        interfaces = ["eth*", "en*", "lo*"]
+        ignore_protocol_stats = true
+      [[inputs.netstat]]
+      [[inputs.diskio]]
+      [[inputs.mem]]
+
+connectors:
+  routing:
+    default_pipelines:
+      - metrics/sumologic1
+    table:
+      - context: resource
+        condition: attributes["_sourceHost"] == "localhost"
+        pipelines:
+          - metrics/sumologic2
+
+processors:
+  resource:
+    attributes:
+    - key: _sourceHost
+      from_attribute: host
+      action: insert
+
+exporters:
+  sumologic/1:
+    endpoint: http://dummy.endpoint.com:8888/api
+  sumologic/2:
+    endpoint: http://dummy.endpoint.com:8888/api/v2
+
+service:
+  pipelines:
+    metrics:
+      receivers:
+      - telegraf
+      processors:
+      - resource
+      exporters:
+      - routing
+    metrics/sumologic1:
+      receivers:
+      - routing
+      exporters:
+      - sumologic/1
+    metrics/sumologic2:
+      receivers:
+      - routing
+      exporters:
+      - sumologic/2

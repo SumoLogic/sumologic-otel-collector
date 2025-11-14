@@ -1,0 +1,23 @@
+receivers:
+  splunk_hec:
+    access_token_passthrough: true
+    tls:
+      cert_file: /test.crt
+      key_file: /test.key
+    raw_path: "/raw"
+    hec_metadata_to_otel_attrs:
+      source: "mysource"
+      sourcetype: "mysourcetype"
+      index: "myindex"
+      host: "myhost"
+    ack:
+      extension: ack/in_memory
+exporters:
+  sumologic:
+service:
+  pipelines:
+    logs:
+      receivers:
+        - splunk_hec
+      exporters:
+        - sumologic

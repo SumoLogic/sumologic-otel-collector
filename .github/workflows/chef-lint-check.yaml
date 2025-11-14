@@ -1,0 +1,56 @@
+name: Chef Lint Check
+
+permissions:
+  contents: read
+
+on:
+  workflow_call: {}
+  workflow_dispatch: {}
+
+jobs:
+  lint:
+    name: Chef Lint
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install Chef Workstation
+        run: gem install 'chef-workstation'
+
+      # Run Cookstyle (Chef linter)
+      - name: Run Cookstyle
+        run: |
+          echo "Running Cookstyle on Chef cookbooks..."
+          if [ -d examples/chef ]; then
+            cookstyle examples/chef --display-cop-names --extra-details || exit 1
+          else
+            echo "No Chef directory found. Skipping lint."
+          fi
+
+      # Validate Ruby syntax in all Chef files
+      - name: Ruby Syntax Check
+        run: |
+          echo "Checking Ruby syntax in Chef cookbooks..."
+          if [ -d examples/chef ]; then
+            error=false
+            while read -r file; do
+              echo "Validating syntax for $file"
+              ruby -c "$file" || error=true
+            done < <(find examples/chef -type f -name "*.rb")
+
+            if [ "$error" = true ]; then
+              echo "Ruby syntax errors found."
+              exit 1
+            else
+              echo "All Ruby files passed syntax validation."
+            fi
+          else
+            echo "No Chef directory found. Skipping syntax validation."
+          fi

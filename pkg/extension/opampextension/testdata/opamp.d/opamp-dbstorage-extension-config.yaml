@@ -1,0 +1,20 @@
+extensions:
+  db_storage:
+    driver: "sqlite"
+    datasource: "file:///path/to/foo.db?_pragma=busy_timeout(10000)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)"
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+service:
+    extensions:
+      - db_storage
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        exporters:
+          - sumologic

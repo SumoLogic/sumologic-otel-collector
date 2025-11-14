@@ -53,8 +53,20 @@ jobs:
       - name: Get cache key
         id: get-cache-key
         run: |
-          echo "cache-key=go-test-${{ env.GO_VERSION }}${BORINGCRYPTO_SUFFIX}-${{inputs.arch_os}}-${{ hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml') }}" >> $GITHUB_OUTPUT
-          echo "restore-keys=go-test-${{ env.GO_VERSION }}${BORINGCRYPTO_SUFFIX}-${{inputs.arch_os}}-" >> $GITHUB_OUTPUT
+          arch_os="${{ inputs.arch_os }}"
+          go_version="${{ env.GO_VERSION }}"
+          go_key="${go_version}${BORINGCRYPTO_SUFFIX}"
+          hash="${{
+            hashFiles('pkg/**/go.sum', 'otelcolbuilder/.otelcol-builder.yaml')
+          }}"
+
+          restore_key="go-test-${go_key}-${arch_os}-"
+          cache_key="${restore_key}${hash}"
+
+          {
+          echo "cache-key=${cache_key}"
+          echo "restore-keys=${restore_key}"
+          } >> "$GITHUB_OUTPUT"
 
       - uses: actions/cache/restore@v4
         with:
@@ -70,10 +82,10 @@ jobs:
         run: choco install yq
 
       - name: Set default BUILDER_BIN_PATH
-        run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
+        run: echo "BUILDER_BIN_PATH=${HOME}/bin" >> "$GITHUB_ENV"
 
       - name: Add opentelemetry-collector-builder installation dir to PATH
-        run: echo "$BUILDER_BIN_PATH" >> $GITHUB_PATH
+        run: echo "$BUILDER_BIN_PATH" >> "$GITHUB_PATH"
 
       - name: Run package tests
         run: make gotest ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}

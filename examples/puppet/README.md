@@ -1,7 +1,16 @@
-# Installation of Sumo Logic Distribution for OpenTelemetry Collector with Puppet
+# Installation of Sumo Logic Distribution for OpenTelemetry Collector with Puppet(Linux/Windows)
 
 This [Puppet][puppet] [manifest](manifest/../manifests/install_otel_collector.pp) along with
 [module](modules/install_otel_collector/) will install Sumo Logic Distro of [OpenTelemetry Collector][otc_link].
+
+## Windows Support
+
+- To install the Sumo Logic OpenTelemetry Collector on Windows:
+  Ensure PowerShell execution policy allows scripts:
+
+   ```powershell
+   Set-ExecutionPolicy RemoteSigned -Scope Process -Force
+   ```
 
 ## Using the module
 
@@ -33,6 +42,8 @@ This [Puppet][puppet] [manifest](manifest/../manifests/install_otel_collector.pp
 - `version`: version of Sumo Logic Distribution for OpenTelemetry Collector
 - `systemd_service`: enables creation of Systemd Service for Sumo Logic Distribution for OpenTelemetry Collector. Enabled by default. Note that this recipe will not start the collector if you disable this.
 - `src_config_path`: path to configuration directory for Sumo Logic Distribution for OpenTelemetry Collector
+- `opamp_api_url`: Sumo Logic Opamp API url. You shouldn't need to set this in most normal circumstances.
+- `remotely_managed`: enables creation of remotely managed Sumo Logic Distribution for OpenTelemetry Collector. Disabled by default.
 
 ## Test on Vagrant
 
@@ -81,6 +92,12 @@ To install Sumo Logic Distribution for OpenTelemetry Collector with Puppet on Va
 
   ```bash
   sudo journalctl -u otelcol-sumo
+  ```
+
+- In Windows for verifying the service:
+
+  ```bash
+  Get-Service -Name OtelcolSumo
   ```
 
 [puppet]: https://puppet.com/

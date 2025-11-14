@@ -1,0 +1,21 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+processors:
+  span:
+    name:
+      from_attributes: ["db.svc", "operation"]
+      separator: "::"
+service:
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        processors:
+          - span
+        exporters:
+          - sumologic
