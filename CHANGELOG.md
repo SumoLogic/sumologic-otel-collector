@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.139.0-sumo-0]
+
+### Released 2025-11-12
+
+### Added
+
+- feat: Added --enable-clobber option to replace existing collector during installation [#1882]
+- Adds routing processor back to otel-col from v0.132.0 otel-contrib [#1891]
+
+### Changed
+
+- ci: added Ansible syntax check to GitHub Actions [#1876]
+- chore: added remote collector installation using puppet for linux [#1877]
+- ci: add puppet syntax check to GitHub Actions [#1878]
+- ci: add chef syntax check to GitHub Actions [#1881]
+- fix: ansible arguments error [#1884]
+- fix: puppet arguments error resolved [#1885]
+- chore: set upstream to 0.139.0 and fixed breaking changes [#1892]
+
+### Fixed
+
+- fix(windows collector): Changed the dns resolver from Pure Go DNS Resolver to Cgo DNS Resolver since Go DNS Resolver is not resolving DNS queries the same way as the OS [#1869]
+- fix: fix renovate action [#1889]
+
+[#1882]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1882
+[#1891]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1891
+[#1876]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1876
+[#1877]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1877
+[#1878]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1878
+[#1881]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1881
+[#1884]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1884
+[#1885]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1885
+[#1892]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1892
+[#1869]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1869
+[#1889]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1889
+
+[v0.139.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.139.0-sumo-0
+
+## [v0.137.0-sumo-0]
+
+### Released 2025-10-16
+
+### Changed
+
+- chore: Added Puppet support for windows [#1845]
+- Added Windows support using chef [#1851]
+- fix(collector): correct missing end statement [#1863]
+- chore:set upstream to 0.137.0 [#1865]
+- Fix: Remote manage collector in chef [#1872]
+
+[#1845]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1845
+[#1851]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1851
+[#1863]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1863
+[#1865]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1865
+[#1872]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1872
+[v0.137.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.137.0-sumo-0
+
 ## [v0.136.0-sumo-1]
 
 ### Released 2025-09-30

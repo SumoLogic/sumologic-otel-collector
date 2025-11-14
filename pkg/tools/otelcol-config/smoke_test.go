@@ -49,6 +49,7 @@ func TestLocallyManagedSmoke(t *testing.T) {
 		"--disable-ephemeral",
 		"--set-api-url", "https://example.com",
 		"--write-kv", ".hello.world = \"yes\"",
+		"--enable-clobber",
 	}
 
 	os.Args = flags

@@ -90,6 +90,7 @@ extensions:
     endpoint: wss://opamp-collectors.sumologic.com/v1/opamp
     remote_configuration_directory: /etc/otelcol-sumo/opamp.d
   sumologic:
+    clobber: false
     collector_credentials_directory: /var/lib/otelcol-sumo/credentials
     installation_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
     time_zone: UTC
