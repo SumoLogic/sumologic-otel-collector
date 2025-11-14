@@ -1,1 +1,0 @@
-chore: added remote collector installation using puppet for linux

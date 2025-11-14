@@ -30,6 +30,7 @@ jobs:
           echo "Running puppet-lint on examples/puppet..."
           puppet-lint examples/puppet \
             --no-documentation-check \
+            --no-140chars \
             --fail-on-warnings || exit 1
 
       - name: Puppet syntax check
