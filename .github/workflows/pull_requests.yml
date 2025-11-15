@@ -46,7 +46,7 @@ jobs:
         with:
           files: |
             **/*.md
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         if: steps.changed-files.outputs.any_changed == 'true'
       - name: Install markdownlint
         if: steps.changed-files.outputs.any_changed == 'true'
