@@ -37,7 +37,7 @@ jobs:
     env:
       BORINGCRYPTO_SUFFIX: ${{ inputs.boringcrypto && '-boringcrypto' || '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup go
         uses: actions/setup-go@v6
