@@ -208,6 +208,16 @@ golint: $(patsubst %,%/lint,$(ALL_GO_MODULES))
 .PHONY: gomod-download-all
 gomod-download-all: $(patsubst %,%/mod-download-all,$(ALL_GO_MODULES))
 
+# Parallel version of gomod-download-all for faster builds
+# Uses xargs to download modules concurrently (default: 4 parallel jobs)
+# Usage: make gomod-download-all-parallel
+# Usage: make gomod-download-all-parallel PARALLEL_JOBS=8
+.PHONY: gomod-download-all-parallel
+gomod-download-all-parallel: PARALLEL_JOBS ?= 4
+gomod-download-all-parallel:
+	@echo "Downloading Go modules in parallel ($(PARALLEL_JOBS) jobs)..."
+	@printf '%s\n' $(ALL_GO_MODULES) | xargs -P $(PARALLEL_JOBS) -I {} $(MAKE) --no-print-directory {}/mod-download-all
+
 .PHONY: gotest
 gotest: $(patsubst %,%/test,$(TESTABLE_GO_MODULES))
 
@@ -308,7 +318,7 @@ update-ot:
 	@find . -type f -name "go.mod" -exec $(SED) -i "s/\(go\.opentelemetry\.io\/collector.*\) v$(OT_CORE_VERSION)$$/\1 v$(OT_CORE_NEW)/" {} \;
 	@find . -type f -name "go.mod" -exec $(SED) -i "s/\(github\.com\/open-telemetry\/opentelemetry-collector-contrib\/.*\) v$(OT_CONTRIB_VERSION)$$/\1 v$(OT_CONTRIB_NEW)/" {} \;
 	@echo "building OT distro to check for breakage"
-	$(MAKE) gomod-download-all
+	$(MAKE) gomod-download-all-parallel
 	pushd otelcolbuilder \
 		&& $(MAKE) install-ocb \
 		&& $(MAKE) build \

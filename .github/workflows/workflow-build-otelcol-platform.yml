@@ -137,7 +137,7 @@ jobs:
           fips: ${{ inputs.fips }}
 
       - name: Install Go modules
-        run: make gomod-download-all
+        run: make gomod-download-all-parallel PARALLEL_JOBS=8
 
       - name: Setup Toolchain
         uses: ./.github/actions/setup-toolchain
