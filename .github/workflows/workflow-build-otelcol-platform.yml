@@ -145,6 +145,23 @@ jobs:
         with:
           platform: ${{ inputs.platform }}
 
+      - name: Free disk space
+        if: runner.os == 'Linux'
+        run: |
+
+          # Remove unnecessary files to free up space
+          # DO NOT remove /opt/hostedtoolcache as it contains Go and other needed tools
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/share/swift
+
+          # Clean apt cache
+          sudo apt-get clean
+
+          # Remove docker images we don't need
+          docker image prune -af || true
       # Build without FIPS
       - name: Build
         if: "! inputs.fips"
