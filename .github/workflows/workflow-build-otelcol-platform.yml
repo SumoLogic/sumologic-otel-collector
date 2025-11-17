@@ -53,21 +53,18 @@ jobs:
         with:
           platform: ${{ inputs.platform }}
 
-      - name: Set GOCACHE & GOMODCACHE & TMPDIR
+      - name: Set GOCACHE & GOMODCACHE
         if: runner.os != 'Windows'
         run: |
           gocache="${HOME}/.go-cache"
           gomodcache="${HOME}/.go-mod-cache"
-          tmpdir="${RUNNER_TEMP}/go-tmp"
 
           mkdir -p "${gocache}"
           mkdir -p "${gomodcache}"
-          mkdir -p "${tmpdir}"
 
           {
             echo "GOCACHE=${gocache}"
             echo "GOMODCACHE=${gomodcache}"
-            echo "TMPDIR=${tmpdir}"
           } >> "$GITHUB_ENV"
 
       - name: Cache Keys
@@ -148,29 +145,33 @@ jobs:
         with:
           platform: ${{ inputs.platform }}
 
-      - name: Verify TMPDIR and disk space
-        if: runner.os != 'Windows'
+      - name: Free disk space
+        if: runner.os == 'Linux'
         run: |
-          echo "TMPDIR=${TMPDIR}"
-          echo "GOCACHE=${GOCACHE}"
-          echo "GOMODCACHE=${GOMODCACHE}"
-          df -h "${TMPDIR}" || df -h "${RUNNER_TEMP}" || df -h /tmp
-          ls -ld "${TMPDIR}" || true
 
+          # Remove unnecessary files to free up space
+          # DO NOT remove /opt/hostedtoolcache as it contains Go and other needed tools
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/share/swift
+
+          # Clean apt cache
+          sudo apt-get clean
+
+          # Remove docker images we don't need
+          docker image prune -af || true
       # Build without FIPS
       - name: Build
         if: "! inputs.fips"
         working-directory: ./otelcolbuilder
-        env:
-          TMPDIR: ${{ runner.temp }}/go-tmp
         run: make otelcol-sumo-${{ inputs.platform }}
 
       # FIPS Build for Linux
       - name: Build (FIPS)
         if: inputs.fips && steps.platform.outputs.os == 'linux'
         working-directory: ./otelcolbuilder
-        env:
-          TMPDIR: ${{ runner.temp }}/go-tmp
         run: |
           CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
           test "$CC"
@@ -185,8 +186,6 @@ jobs:
       - name: Build (FIPS)
         if: inputs.fips && steps.platform.outputs.os != 'linux'
         working-directory: ./otelcolbuilder
-        env:
-          TMPDIR: ${{ runner.temp }}/go-tmp
         run: |
           make otelcol-sumo-${{ inputs.platform }} \
           FIPS_SUFFIX="-fips" \
