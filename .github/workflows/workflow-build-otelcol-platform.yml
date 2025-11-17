@@ -53,18 +53,21 @@ jobs:
         with:
           platform: ${{ inputs.platform }}
 
-      - name: Set GOCACHE & GOMODCACHE
+      - name: Set GOCACHE & GOMODCACHE & TMPDIR
         if: runner.os != 'Windows'
         run: |
           gocache="${HOME}/.go-cache"
           gomodcache="${HOME}/.go-mod-cache"
+          tmpdir="${RUNNER_TEMP}/go-tmp"
 
           mkdir -p "${gocache}"
           mkdir -p "${gomodcache}"
+          mkdir -p "${tmpdir}"
 
           {
             echo "GOCACHE=${gocache}"
             echo "GOMODCACHE=${gomodcache}"
+            echo "TMPDIR=${tmpdir}"
           } >> "$GITHUB_ENV"
 
       - name: Cache Keys
