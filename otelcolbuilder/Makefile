@@ -178,7 +178,9 @@ _ocb_build:
 
 .PHONY: _gobuild
 _gobuild:
+	@test -n "$(TMPDIR)" || echo "Warning: TMPDIR is not set"
 	(cd cmd && \
+		export TMPDIR="$(TMPDIR)" && \
 		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
 		-tags "$(GOTAGS)" \
 		-ldflags="$(LDFLAGS)" \
@@ -190,6 +192,7 @@ _gobuild:
 .PHONY: _gobuild_debug
 _gobuild_debug:
 	(cd cmd && \
+		export TMPDIR="$(TMPDIR)" && \
 		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
 		-tags "$(GOTAGS)" \
 		-race \
