@@ -1,5 +1,20 @@
 # Installation
 
+> **⚠️ DEPRECATION NOTICE**
+>
+> The installation scripts (`scripts/install.sh` and `scripts/install.ps1`) in this repository have been **deprecated** and moved to the [sumologic-otel-collector-packaging](https://github.com/SumoLogic/sumologic-otel-collector-packaging) repository.
+>
+> **Please use the installation scripts and packages from the packaging repository instead.** These scripts will be removed from this repository in a future release.
+>
+> **Download the latest scripts:**
+> - Linux/macOS: https://download-otel.sumologic.com/latest/download/install.sh
+> - Windows: https://download-otel.sumologic.com/latest/download/install.ps1
+>
+> **For the latest installation instructions, please refer to the official documentation:**
+> - [Linux Installation](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-linux/)
+> - [MacOS Installation](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-macos/)
+> - [Windows Installation](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-windows/)
+
 The Sumo Logic Distribution for OpenTelemetry Collector can be run using either the binary file available in [Github releases][github_releases] or
 the container images stored in AWS Public ECR under the following repositories:
 
