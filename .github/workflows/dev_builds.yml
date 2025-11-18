@@ -78,19 +78,19 @@ jobs:
     name: Store Install Script
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: SumoLogic/sumologic-otel-collector-packaging
 
       - name: Store Linux install script as action artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: install.sh
           path: ./install-script/install.sh
           if-no-files-found: error
 
       - name: Store Windows install script as action artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: install.ps1
           path: ./install-script/install.ps1
@@ -102,7 +102,7 @@ jobs:
       contents: read
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Archive Chef cookbook
         run: tar -cvf ./examples/chef/chef-cookbook.tar.gz -C ./examples/chef sumologic-otel-collector/
@@ -114,21 +114,21 @@ jobs:
         run: tar -cvf ./examples/ansible-playbook.tar.gz -C ./examples ansible/
 
       - name: Store Chef cookbook archive as action artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: chef-cookbook.tar.gz
           path: ./examples/chef/chef-cookbook.tar.gz
           if-no-files-found: error
 
       - name: Store Puppet module archive as action artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: puppet-module.tar.gz
           path: ./examples/puppet/puppet-module.tar.gz
           if-no-files-found: error
 
       - name: Store Ansible playbook archive as action artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: ansible-playbook.tar.gz
           path: ./examples/ansible-playbook.tar.gz
