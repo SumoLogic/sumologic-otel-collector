@@ -7,8 +7,9 @@
 > **Please use the installation scripts and packages from the packaging repository instead.** These scripts will be removed from this repository in a future release.
 >
 > **Download the latest scripts:**
-> - Linux/macOS: https://download-otel.sumologic.com/latest/download/install.sh
-> - Windows: https://download-otel.sumologic.com/latest/download/install.ps1
+>
+> - Linux/macOS: <https://download-otel.sumologic.com/latest/download/install.sh>
+> - Windows: <https://download-otel.sumologic.com/latest/download/install.ps1>
 >
 > **For the latest installation instructions, please refer to the official documentation:**
 > - [Linux Installation](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-linux/)
