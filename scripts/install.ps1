@@ -1,3 +1,21 @@
+################################################################################
+#
+# DEPRECATION NOTICE
+#
+# WARNING: This installation script has been deprecated and moved to:
+# https://github.com/SumoLogic/sumologic-otel-collector-packaging
+#
+# Please use the installation scripts from the packaging repository instead.
+# This script will be removed in a future release.
+#
+# Download the latest script from:
+# https://download-otel.sumologic.com/latest/download/install.ps1
+#
+# For the latest installation instructions, please visit:
+# https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-windows/
+#
+################################################################################
+
 using assembly System.Net.Http
 using namespace System.Net.Http
 
@@ -399,6 +417,24 @@ function Get-BinaryFromUri {
 ##
 # Main code
 ##
+
+# Display deprecation warning
+Write-Host "=============================================================================" -ForegroundColor Yellow
+Write-Host "WARNING: This installation script is DEPRECATED" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "This script has been moved to the sumologic-otel-collector-packaging repository:"
+Write-Host "https://github.com/SumoLogic/sumologic-otel-collector-packaging" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Please use the installation scripts from the packaging repository instead."
+Write-Host "This script will be removed in a future release."
+Write-Host ""
+Write-Host "Download the latest script from:"
+Write-Host "  https://download-otel.sumologic.com/latest/download/install.ps1" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "For the latest installation instructions, visit:"
+Write-Host "  https://help.sumologic.com/docs/send-data/opentelemetry-collector/" -ForegroundColor Cyan
+Write-Host "=============================================================================" -ForegroundColor Yellow
+Write-Host ""
 
 try {
     if ($InstallationToken -eq $null -or $InstallationToken -eq "") {
