@@ -37,7 +37,6 @@ processors:
     filter:
       namespace: ns2
       node: ip-111.us-west-2.compute.internal
-      node_from_env_var: K8S_NODE
       labels:
         - key: key1
           value: value1
