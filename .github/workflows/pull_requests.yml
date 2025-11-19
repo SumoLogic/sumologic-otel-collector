@@ -21,7 +21,7 @@ jobs:
     outputs:
       any_changed: ${{ steps.changed-files.outputs.any_changed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Check if build related files changed
         id: changed-files
         uses: tj-actions/changed-files@v46
@@ -39,14 +39,14 @@ jobs:
   markdownlint:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Check if related files changed
         id: changed-files
         uses: tj-actions/changed-files@v46
         with:
           files: |
             **/*.md
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         if: steps.changed-files.outputs.any_changed == 'true'
       - name: Install markdownlint
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -58,7 +58,7 @@ jobs:
   yamllint:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install yamllint
         run: pip install yamllint
       - name: yamllint
@@ -67,7 +67,7 @@ jobs:
   markdown-link-check:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Check if related files changed
         id: changed-files
         uses: tj-actions/changed-files@v46
@@ -85,7 +85,7 @@ jobs:
   md-links-lint:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Check if related files changed
         id: changed-files
         uses: tj-actions/changed-files@v46
@@ -100,7 +100,7 @@ jobs:
   plugins-check:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install yq
         run: |
           sudo wget https://github.com/mikefarah/yq/releases/download/v4.12.1/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
@@ -113,7 +113,7 @@ jobs:
     outputs:
       any_changed: ${{ steps.changed-files.outputs.any_changed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Check if Ansible files changed
         id: changed-files
         uses: tj-actions/changed-files@v46
@@ -133,7 +133,7 @@ jobs:
     outputs:
       any_changed: ${{ steps.changed-files.outputs.any_changed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Check if Puppet files changed
         id: changed-files
         uses: tj-actions/changed-files@v46
@@ -153,7 +153,7 @@ jobs:
     outputs:
       any_changed: ${{ steps.changed-files.outputs.any_changed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Check if Chef files changed
         id: changed-files
         uses: tj-actions/changed-files@v46
@@ -170,15 +170,15 @@ jobs:
   pre-commit-check:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
       - uses: pre-commit/action@v3.0.1
 
   check-uniform-dependencies:
     name: Check uniform dependencies
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check uniform dependencies
         run: make check-uniform-dependencies
@@ -188,7 +188,7 @@ jobs:
     env:
       SHELLCHECK_VERSION: 0.10.0
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: install shellcheck
         run: |
           curl --retry 10 --retry-max-time 120 --retry-delay 5 -Lo- https://github.com/koalaman/shellcheck/releases/download/v${{ env.SHELLCHECK_VERSION }}/shellcheck-v${{ env.SHELLCHECK_VERSION }}.linux.x86_64.tar.xz | tar -xJf -
@@ -223,10 +223,10 @@ jobs:
       matrix:
         platform: ["linux_amd64"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false

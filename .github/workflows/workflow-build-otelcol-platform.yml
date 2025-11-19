@@ -46,7 +46,7 @@ jobs:
       ${{ inputs.platform }} ${{ inputs.fips == true && '(FIPS)' || '' }}
     runs-on: ${{ inputs.runs-on }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/parse-platform
         id: platform
@@ -137,7 +137,7 @@ jobs:
           fips: ${{ inputs.fips }}
 
       - name: Install Go modules
-        run: make gomod-download-all
+        run: make gomod-download-all-parallel PARALLEL_JOBS=8
 
       - name: Setup Toolchain
         uses: ./.github/actions/setup-toolchain
@@ -145,6 +145,23 @@ jobs:
         with:
           platform: ${{ inputs.platform }}
 
+      - name: Free disk space
+        if: runner.os == 'Linux'
+        run: |
+
+          # Remove unnecessary files to free up space
+          # DO NOT remove /opt/hostedtoolcache as it contains Go and other needed tools
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/share/swift
+
+          # Clean apt cache
+          sudo apt-get clean
+
+          # Remove docker images we don't need
+          docker image prune -af || true
       # Build without FIPS
       - name: Build
         if: "! inputs.fips"
@@ -307,14 +324,14 @@ jobs:
           ./${binary} completion bash
 
       - name: Store binary as action artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: ${{ steps.binary-name.outputs.name-with-platform }}
           path: ./otelcolbuilder/cmd/${{ steps.binary-name.outputs.name-with-platform }}
           if-no-files-found: error
 
       - name: Store Mac .dmg as action artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         if: runner.os == 'macOS' && inputs.signing-enabled && github.actor != 'dependabot[bot]'
         with:
           name: ${{ steps.binary-name.outputs.name-with-platform }}.dmg
