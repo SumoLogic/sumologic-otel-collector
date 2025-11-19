@@ -2,6 +2,20 @@
 
 set -euo pipefail
 
+############################ DEPRECATION NOTICE ############################
+#
+# WARNING: This installation script has been deprecated and moved to:
+# https://github.com/SumoLogic/sumologic-otel-collector-packaging
+#
+# Please use the installation scripts from the packaging repository instead.
+# This script will be removed in a future release.
+#
+# For the latest installation instructions, please visit:
+# - Linux: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-linux/
+# - MacOS: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-macos/
+#
+############################################################################
+
 ############################ Static variables
 
 ARG_SHORT_TOKEN='i'
@@ -1700,6 +1714,21 @@ function plutil_replace_key() {
 }
 
 ############################ Main code
+
+# Display deprecation warning
+echo "============================================================================="
+echo "WARNING: This installation script is DEPRECATED"
+echo ""
+echo "This script has been moved to the sumologic-otel-collector-packaging repository:"
+echo "https://github.com/SumoLogic/sumologic-otel-collector-packaging"
+echo ""
+echo "Please use the installation scripts from the packaging repository instead."
+echo "This script will be removed in a future release."
+echo ""
+echo "For the latest installation instructions, visit:"
+echo "  https://help.sumologic.com/docs/send-data/opentelemetry-collector/"
+echo "============================================================================="
+echo ""
 
 OS_TYPE="$(get_os_type)"
 ARCH_TYPE="$(get_arch_type)"
