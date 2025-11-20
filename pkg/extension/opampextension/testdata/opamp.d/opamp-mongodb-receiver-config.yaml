@@ -3,7 +3,7 @@ receivers:
     hosts:
       - endpoint: localhost:27017
     username: otel
-    password: ${env:MONGODB_PASSWORD}
+    password: pass
     collection_interval: 60s
     initial_delay: 1s
     tls:

@@ -2,6 +2,8 @@ receivers:
   saphana:
     endpoint: "localhost:33015"
     collection_interval: 60s
+    username: otel
+    password: pass
     metrics:
       saphana.cpu.used:
         enabled: false

@@ -1,6 +1,8 @@
 receivers:
   sapm:
     endpoint: localhost:7276
+    auth_password: pass
+    privacy_password: pass
     tls:
       cert_file: /test.crt
       key_file: /test.key
