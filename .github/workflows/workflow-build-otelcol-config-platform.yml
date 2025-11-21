@@ -40,7 +40,7 @@ jobs:
     env:
       FIPS_SUFFIX: ${{ inputs.fips && '-fips' || '' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       - uses: ./.github/actions/parse-platform
         id: platform
@@ -117,8 +117,8 @@ jobs:
       - uses: apple-actions/import-codesign-certs@v5
         if: runner.os == 'macOS' && inputs.signing-enabled && github.actor != 'dependabot[bot]'
         with:
-          p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-          p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+          p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64_NOV_25 }}
+          p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD_NOV_25 }}
 
       - name: Sign the mac binaries
         if: runner.os == 'macOS' && inputs.signing-enabled && github.actor != 'dependabot[bot]'
@@ -127,7 +127,6 @@ jobs:
         working-directory: ./pkg/tools/otelcol-config
         run: |
           signed=false
-
           for _ in $(seq 1 5); do
             if make ${{ inputs.platform }}-sign; then
               signed=true
@@ -142,14 +141,14 @@ jobs:
           fi
 
       - name: Store binary as action artifact
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ${{ steps.binary-name.outputs.name-with-platform }}
           path: ./pkg/tools/otelcol-config/${{ steps.binary-name.outputs.name-with-platform }}
           if-no-files-found: error
 
       - name: Store macOS .dmg as action artifact
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: runner.os == 'macOS' && inputs.signing-enabled && github.actor != 'dependabot[bot]'
         with:
           name: ${{ steps.binary-name.outputs.name-with-platform }}.dmg
