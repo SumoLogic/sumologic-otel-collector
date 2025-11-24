@@ -28,7 +28,7 @@ jobs:
     env:
       REF_NAME: ${{ inputs.ref_name || github.ref_name }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: "${{ env.REF_NAME }}"
 

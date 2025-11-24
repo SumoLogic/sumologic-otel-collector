@@ -40,7 +40,7 @@ jobs:
       ${{ inputs.pkg }}
     runs-on: ${{ inputs.runs-on }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Set GOCACHE & GOMODCACHE
         if: runner.os != 'Windows'

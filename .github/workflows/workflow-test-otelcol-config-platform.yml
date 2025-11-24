@@ -33,7 +33,7 @@ jobs:
       ${{ inputs.runs-on }} ${{ inputs.fips == true && '(FIPS)' || '' }}
     runs-on: ${{ inputs.runs-on }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Setup Go
         id: setup-go
