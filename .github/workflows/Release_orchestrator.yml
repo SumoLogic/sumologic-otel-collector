@@ -37,59 +37,59 @@ jobs:
         id: find-workflows
         run: |
           set -euo pipefail
-          
+
           BUILD_NUMBER="${{ inputs.package_build_number }}"
-          
+
           # Step 1: Find packaging workflow by build number
           PKG_RESULT=$(gh run list -R SumoLogic/sumologic-otel-collector-packaging \
             -w build_packages.yml -s success -b main -L 200 \
             --json databaseId,displayTitle,number,url \
             -q ".[] | select(.number == ${BUILD_NUMBER})")
-          
+
           if [[ -z "$PKG_RESULT" ]]; then
             echo "::error::Packaging workflow not found for build: ${BUILD_NUMBER}"
             exit 1
           fi
-          
+
           PKG_WORKFLOW_ID=$(echo "$PKG_RESULT" | jq -r '.databaseId')
           PKG_DISPLAY_TITLE=$(echo "$PKG_RESULT" | jq -r '.displayTitle')
           echo "packaging-workflow-id=${PKG_WORKFLOW_ID}" >> "$GITHUB_OUTPUT"
-          
+
           # Step 2: Extract collector workflow ID from packaging displayTitle
           COLLECTOR_WORKFLOW_ID=$(echo "$PKG_DISPLAY_TITLE" | grep -oP 'Build for Remote Workflow: \K\d+' || true)
-          
+
           if [[ -z "$COLLECTOR_WORKFLOW_ID" ]]; then
             echo "::error::Could not extract collector workflow ID from: ${PKG_DISPLAY_TITLE}"
             exit 1
           fi
-          
+
           echo "collector-workflow-id=${COLLECTOR_WORKFLOW_ID}" >> "$GITHUB_OUTPUT"
-          
+
           # Verify collector workflow exists and is successful
           COLLECTOR_RESULT=$(gh run view "${COLLECTOR_WORKFLOW_ID}" \
             -R SumoLogic/sumologic-otel-collector --json status,conclusion)
           COLLECTOR_STATUS=$(echo "$COLLECTOR_RESULT" | jq -r '.status')
           COLLECTOR_CONCLUSION=$(echo "$COLLECTOR_RESULT" | jq -r '.conclusion')
-          
+
           if [[ "$COLLECTOR_STATUS" != "completed" ]] || [[ "$COLLECTOR_CONCLUSION" != "success" ]]; then
             echo "::error::Collector workflow not successful (status: ${COLLECTOR_STATUS}, conclusion: ${COLLECTOR_CONCLUSION})"
             exit 1
           fi
-          
+
           # Step 3: Find containers workflow by collector workflow ID
           CONTAINERS_RESULT=$(gh run list -R SumoLogic/sumologic-otel-collector-containers \
             -w build-and-push.yml -s success -b main -L 200 \
             --json databaseId,displayTitle \
             -q ".[] | select(.displayTitle | contains(\"${COLLECTOR_WORKFLOW_ID}\"))")
-          
+
           if [[ -z "$CONTAINERS_RESULT" ]]; then
             echo "::error::Containers workflow not found for collector workflow: ${COLLECTOR_WORKFLOW_ID}"
             exit 1
           fi
-          
+
           CONTAINERS_WORKFLOW_ID=$(echo "$CONTAINERS_RESULT" | jq -r '.databaseId')
           echo "containers-workflow-id=${CONTAINERS_WORKFLOW_ID}" >> "$GITHUB_OUTPUT"
-          
+
           # Step 4: Get version information
           gh run download "${PKG_WORKFLOW_ID}" -R SumoLogic/sumologic-otel-collector-packaging \
             -n "otc-version.txt" -D /tmp/versions 2>/dev/null || true
@@ -97,15 +97,15 @@ jobs:
             -n "otc-build-number.txt" -D /tmp/versions 2>/dev/null || true
           gh run download "${PKG_WORKFLOW_ID}" -R SumoLogic/sumologic-otel-collector-packaging \
             -n "otc-sumo-version.txt" -D /tmp/versions 2>/dev/null || true
-          
+
           if [[ -f "/tmp/versions/otc-version.txt" && -f "/tmp/versions/otc-build-number.txt" && -f "/tmp/versions/otc-sumo-version.txt" ]]; then
             OTC_VERSION=$(cat /tmp/versions/otc-version.txt)
             OTC_BUILD=$(cat /tmp/versions/otc-build-number.txt)
             OTC_SUMO=$(cat /tmp/versions/otc-sumo-version.txt)
-            
+
             echo "package-version=${OTC_VERSION}-${OTC_BUILD}" >> "$GITHUB_OUTPUT"
             echo "collector-version=${OTC_VERSION}-sumo-${OTC_SUMO}" >> "$GITHUB_OUTPUT"
-            
+
             echo "::notice::Package Version: ${OTC_VERSION}-${OTC_BUILD}"
             echo "::notice::Collector Version: ${OTC_VERSION}-sumo-${OTC_SUMO}"
           else
@@ -125,29 +125,29 @@ jobs:
         id: trigger
         run: |
           set -euo pipefail
-          
+
           WORKFLOW_ID="${{ needs.validate-and-discover.outputs.collector-workflow-id }}"
           REPO="SumoLogic/sumologic-otel-collector"
-          
+
           gh workflow run releases.yml -R "${REPO}" -f "workflow_id=${WORKFLOW_ID}"
           sleep 5
-          
+
           RELEASE_RUN=$(gh run list -R "${REPO}" -w releases.yml -L 10 \
             --json databaseId,displayTitle \
             -q ".[] | select(.displayTitle | contains(\"${WORKFLOW_ID}\")) | .databaseId" | head -n 1)
-          
+
           if [[ -z "$RELEASE_RUN" ]]; then
             echo "::error::Could not find triggered release workflow"
             exit 1
           fi
-          
+
           echo "release-run-id=${RELEASE_RUN}" >> "$GITHUB_OUTPUT"
           gh run watch "${RELEASE_RUN}" -R "${REPO}" --exit-status
 
   promote-packaging-to-stable:
     name: Promote Packaging RC→Stable
     runs-on: ubuntu-24.04
-    needs: 
+    needs:
       - validate-and-discover
       - release-collector
     outputs:
@@ -159,17 +159,17 @@ jobs:
         id: promote
         run: |
           set -euo pipefail
-          
+
           VERSION="${{ needs.validate-and-discover.outputs.package-version }}"
           REPO="SumoLogic/sumologic-otel-collector-packaging"
-          
+
           gh workflow run promote-release-candidate.yml -R "${REPO}" -f "version=${VERSION}"
           sleep 5
-          
+
           PROMOTE_RUN=$(gh run list -R "${REPO}" -w promote-release-candidate.yml -L 10 \
             --json databaseId,displayTitle \
             -q ".[] | select(.displayTitle | contains(\"${VERSION}\")) | .databaseId" | head -n 1)
-          
+
           if [[ -z "$PROMOTE_RUN" ]]; then
             echo "::warning::Could not find promotion workflow, it may take longer to appear"
           else
@@ -180,7 +180,7 @@ jobs:
   release-packaging:
     name: Create Packaging Draft Release
     runs-on: ubuntu-24.04
-    needs: 
+    needs:
       - validate-and-discover
       - promote-packaging-to-stable
     outputs:
@@ -192,22 +192,22 @@ jobs:
         id: release
         run: |
           set -euo pipefail
-          
+
           WORKFLOW_ID="${{ needs.validate-and-discover.outputs.packaging-workflow-id }}"
           REPO="SumoLogic/sumologic-otel-collector-packaging"
-          
+
           gh workflow run releases.yml -R "${REPO}" -f "workflow_id=${WORKFLOW_ID}"
           sleep 5
-          
+
           RELEASE_RUN=$(gh run list -R "${REPO}" -w releases.yml -L 10 \
             --json databaseId,displayTitle \
             -q ".[] | select(.displayTitle | contains(\"${WORKFLOW_ID}\")) | .databaseId" | head -n 1)
-          
+
           if [[ -z "$RELEASE_RUN" ]]; then
             echo "::error::Could not find triggered release workflow"
             exit 1
           fi
-          
+
           echo "release-run-id=${RELEASE_RUN}" >> "$GITHUB_OUTPUT"
           gh run watch "${RELEASE_RUN}" -R "${REPO}" --exit-status
 
@@ -226,22 +226,22 @@ jobs:
         id: release
         run: |
           set -euo pipefail
-          
+
           WORKFLOW_ID="${{ needs.validate-and-discover.outputs.containers-workflow-id }}"
           REPO="SumoLogic/sumologic-otel-collector-containers"
-          
+
           gh workflow run releases.yml -R "${REPO}" -f "workflow-id=${WORKFLOW_ID}"
           sleep 5
-          
+
           RELEASE_RUN=$(gh run list -R "${REPO}" -w releases.yml -L 10 \
             --json databaseId,displayTitle \
             -q ".[] | select(.displayTitle | contains(\"${WORKFLOW_ID}\")) | .databaseId" | head -n 1)
-          
+
           if [[ -z "$RELEASE_RUN" ]]; then
             echo "::error::Could not find triggered release workflow"
             exit 1
           fi
-          
+
           echo "release-run-id=${RELEASE_RUN}" >> "$GITHUB_OUTPUT"
           gh run watch "${RELEASE_RUN}" -R "${REPO}" --exit-status
 
@@ -259,11 +259,11 @@ jobs:
       - name: Generate summary
         run: |
           cat >> "$GITHUB_STEP_SUMMARY" << 'EOF'
-          
+
           **Build Number**: ${{ inputs.package_build_number }}
           **Package Version**: ${{ needs.validate-and-discover.outputs.package-version }}
           **Collector Version**: ${{ needs.validate-and-discover.outputs.collector-version }}
-   
+
           ### Collector
           - **Status**: ${{ needs.release-collector.result }}
           - **Action**: Draft release created
@@ -278,9 +278,9 @@ jobs:
           - **RC→Stable + Draft**: ${{ needs.release-containers.result }}
           - **Link**: [Containers Releases](https://github.com/SumoLogic/sumologic-otel-collector-containers/releases)
           ---
-          
+
           ## 📝 Next Steps
-          
+
           1. **Publish [Collector Release](https://github.com/SumoLogic/sumologic-otel-collector/releases) FIRST** ⚠️
              - Add upstream OT versions & changelog → Publish (triggers `post-release.yml` for package tags)
           2. **Verify** [post-release workflow](https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/post-release.yml) created package tags
