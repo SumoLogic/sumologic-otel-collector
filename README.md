@@ -287,7 +287,6 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [dbstorage]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.139.0/extension/storage/dbstorage
 [dockerobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.139.0/extension/observer/dockerobserver
 [ecsobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.139.0/extension/observer/ecsobserver
-[ecstaskobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.139.0/extension/observer/ecstaskobserver
 [filestorage]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.139.0/extension/storage/filestorage
 [headerssetterextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.139.0/extension/headerssetterextension
 [healthcheckextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.139.0/extension/healthcheckextension

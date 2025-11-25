@@ -29,7 +29,6 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/oauth2clientauthextension v0.140.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/dockerobserver v0.140.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/ecsobserver v0.140.1
-	github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/ecstaskobserver v0.139.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/hostobserver v0.140.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/k8sobserver v0.140.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/oidcauthextension v0.140.1
