@@ -2,12 +2,9 @@
 
 - [How to release](#how-to-release)
   - [Check end-to-end tests](#check-end-to-end-tests)
-  - [Determine the Workflow Run ID to release](#determine-the-workflow-run-id-to-release)
-    - [Find the package build number](#find-the-package-build-number)
-    - [Find the collector workflow run](#find-the-collector-workflow-run)
-  - [Trigger the release](#trigger-the-release)
-  - [Publish GitHub release](#publish-github-release)
-  - [Release packages](#release-packages)
+  - [Find the package build number](#find-the-package-build-number)
+  - [Trigger the release orchestrator](#trigger-the-release-orchestrator)
+  - [Publish GitHub releases](#publish-github-releases)
 
 ## How to release
 
@@ -15,139 +12,85 @@
 
 Check if the Sumo internal e2e tests are passing.
 
-### Determine the Workflow Run ID to release
+### Find the package build number
 
 We can begin the process of creating a release once QE has given a thumbs up for
-a given package version. We can determine the Workflow Run ID to use for a
-release using the following steps:
+a given package version. Each package has a build number and it's included in the
+package version & filename. For example, if the package version that QE validates
+is 0.108.0-1790 then the build number is **1790**.
 
-#### Find the package build number
+This build number is all you need to trigger the release process!
 
-Each package has a build number and it's included in the package version &
-filename. For example, if the package version that QE validates is 0.108.0-1790
-then the build number is 1790.
+### Trigger the release orchestrator
 
-#### Find the collector workflow run
+The [Drafting Release][orchestrator_workflow] workflow automates the entire release
+process. It will automatically:
 
-Each package uses binaries built from this repository. We can find the workflow
-used to build the binaries by tracing our way back from the package build number.
+1. Find and validate all related workflow runs (collector, packaging, containers)
+2. Create draft releases for all three repositories
+3. Promote packaging release candidates to stable
+4. Provide a summary with links to all releases
 
-The build number corresponds directly to the GitHub Run Number for a packaging
-workflow run in GitHub Actions. Unfortunately, there does not currently appear to
-be a way to reference a workflow run using the run number. Instead, we can use
-one of two methods to find the workflow run:
-
-#### Option 1 - Use the `gh` cli tool to find the workflow
-
-Run the following command (be sure to replace `BUILD_NUMBER` with the build
-number of the package):
-
-```shell
-PAGER=""; BUILD_NUMBER="1790"; \
-gh run list -R sumologic/sumologic-otel-collector-packaging -s success \
--w build_packages.yml -L 200 -b main --json displayTitle,number,url \
--q ".[] | select(.number == ${BUILD_NUMBER})"
-```
-
-This will output a number of fields, for example:
-
-```json
-{
-  "displayTitle": "Build for Remote Workflow: 11672946742, Version: 0.108.0-sumo-1\n",
-  "number": 1790,
-  "url": "https://github.com/SumoLogic/sumologic-otel-collector-packaging/actions/runs/11673248730"
-}
-```
-
-We need the number to the right of `Build for Remote Workflow`. This number is
-the ID of the workflow run that built the binaries used in the package.
-
-The workflow run can be viewed by first running:
-
-```shell
-PAGER=""; WORKFLOW_ID="11672946742"; \
-gh run list -R sumologic/sumologic-otel-collector -s success \
--w dev_builds.yml -L 200 -b main --json displayTitle,databaseId,url \
--q ".[] | select(.databaseId == ${WORKFLOW_ID})"
-```
-
-Which will output the URL of the workflow run:
-
-```text
-https://github.com/SumoLogic/sumologic-otel-collector/actions/runs/11672946742
-```
-
-#### Option 2 - Search the GitHub website manually
-
-Manually search for the run number on the
-[Build packages workflow][build_workflow] page. Search for the build number
-(e.g. 1790) until you find the corresponding workflow.
-
-![Finding the packaging workflow run][release_0]
-
-Once you've found the packaging workflow run, we need the number to the right of
-`Build for Remote Workflow`. This number is
-the ID of the workflow run that built the binaries used in the package.
-
-![Finding the collector workflow ID][release_1]
-
-### Trigger the release
-
-Now that we have the Workflow Run ID we can trigger a release. There are two
-methods of doing this.
+There are two methods to trigger the orchestrator:
 
 #### Option 1 - Use the `gh` cli tool to trigger the release
 
-A release can be triggered by using the following command (be sure to replace
-`WORKFLOW_ID` with the Workflow Run ID from the previous step):
+Run the following command (replace `BUILD_NUMBER` with the build number from QE):
 
 ```shell
-PAGER=""; WORKFLOW_ID="11672946742"; \
-gh workflow run releases.yml -R sumologic/sumologic-otel-collector \
--f workflow_id=${WORKFLOW_ID}
+BUILD_NUMBER="1790"; \
+gh workflow run Release_orchestrator.yml -R sumologic/sumologic-otel-collector \
+-f package_build_number=${BUILD_NUMBER}
 ```
 
 #### Option 2 - Use the GitHub website to trigger the release
 
-Navigate to the [Publish release][releases_workflow] workflow in GitHub Actions.
+Navigate to the [Drafting Release][orchestrator_workflow] workflow in GitHub Actions.
 Find and click the `Run workflow` button on the right-hand side of the page.
-Fill in the Workflow Run ID from the previous step and then click the green
-`Run workflow` button.
+Enter the package build number (e.g., 1790) and click the green `Run workflow` button.
 
-![Triggering a release][release_2]
+The workflow will automatically discover the related workflow IDs and orchestrate
+the entire release process across all three repositories.
 
-### Publish GitHub release
+### Publish GitHub releases
 
-The GitHub release is created as draft by the
-[releases](../.github/workflows/releases.yml) GitHub Action.
+Once the orchestrator workflow completes successfully, it will provide a summary with
+the status of all release operations and direct links to the draft releases.
 
-After the release draft is created, go to [GitHub releases](https://github.com/SumoLogic/sumologic-otel-collector/releases),
-edit the release draft and fill in missing information:
+The orchestrator creates draft releases for all three repositories:
 
-- Specify versions for upstream OT core and contrib releases
-- Copy and paste the Changelog entry for this release from [CHANGELOG.md][changelog]
+1. **[Collector releases][collector_releases]** (this repository)
+2. **[Packaging releases][packaging_releases]**
+3. **[Container releases][containers_releases]**
 
-After verifying that the release text and all links are good, publish the release.
+#### Publishing order
 
-### Release packages
+⚠️ **IMPORTANT: Releases must be published in the following order:**
 
-The docs for triggering a package release can be found in the
-[Packaging Release docs][release_packaging] in the
-[sumologic-otel-collector-packaging][packaging_repo] repository.
+1. **Publish the [Collector Release][collector_releases] FIRST**
+   - Edit the draft release and add the following information:
+     - Specify versions for upstream OT core and contrib releases
+     - Copy and paste the Changelog entry for this release from [CHANGELOG.md][changelog]
+   - After verifying that the release text and all links are correct, publish the release
+   - Publishing this release will automatically trigger the [post-release workflow][post_release_workflow]
+     which creates the necessary package tags
 
-### Release container images
+2. **Verify the [post-release workflow][post_release_workflow] completed successfully**
+   - Ensure the workflow created the required package tags
+   - These tags are needed for the packaging and containers releases
 
-The docs for triggering a release for containers can be found in the
-[Containers Release docs][release_containers] in the
-[sumologic-otel-collector-containers][containers_repo] repository.
+3. **Publish the [Packaging Release][packaging_releases]**
+   - Review the draft release and publish it
+
+4. **Publish the [Containers Release][containers_releases]**
+   - Review the draft release and publish it
+
+The orchestrator workflow summary will provide direct links to all releases and
+their current status.
 
 [changelog]: ../CHANGELOG.md
-[build_workflow]: https://github.com/SumoLogic/sumologic-otel-collector-packaging/actions/workflows/build_packages.yml?query=branch%3Amain
-[releases_workflow]: https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/releases.yml
-[release_packaging]: https://github.com/SumoLogic/sumologic-otel-collector-packaging/blob/main/docs/release.md
-[release_containers]: https://github.com/SumoLogic/sumologic-otel-collector-containers/blob/main/docs/release.md
-[packaging_repo]: https://github.com/SumoLogic/sumologic-otel-collector-packaging
-[containers_repo]: https://github.com/SumoLogic/sumologic-otel-collector-containers
-[release_0]: ../images/release_0.png
-[release_1]: ../images/release_1.png
-[release_2]: ../images/release_2.png
+[orchestrator_workflow]: https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/Release_orchestrator.yml
+[post_release_workflow]: https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/post-release.yml
+[collector_releases]: https://github.com/SumoLogic/sumologic-otel-collector/releases
+[packaging_releases]: https://github.com/SumoLogic/sumologic-otel-collector-packaging/releases
+[containers_releases]: https://github.com/SumoLogic/sumologic-otel-collector-containers/releases
