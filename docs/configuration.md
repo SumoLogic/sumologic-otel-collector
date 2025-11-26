@@ -225,7 +225,7 @@ service:
       exporters: [sumologic]
 ```
 
-[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.140.1/receiver/otlpreceiver
+[otlpreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.140.0/receiver/otlpreceiver
 
 ### Putting it all together
 
@@ -533,7 +533,7 @@ Example configuration with example log can be found in [/examples/otelcolconfigs
 
 [json_parser]: https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/operators/json_parser.md
 [filelogreceiver_readme]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/receiver/filelogreceiver
-[debugexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.140.1/exporter/debugexporter
+[debugexporter_docs]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.140.0/exporter/debugexporter
 
 ## Setting source category
 
