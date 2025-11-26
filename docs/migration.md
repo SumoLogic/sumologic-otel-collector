@@ -2465,14 +2465,14 @@ More useful information can be found in [Host Metrics Source for Cloud Based Man
 __Note: The are differences between the Installed Collector and the Openelemetry Collector host metrics.
 See [this document](comparison.md#host-metrics) to learn more.__
 
-| The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
-|-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `name`                            | [processors.source.source_name](#name-5)                                                                        |
-| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-5) |
-| `category`                        | [processors.source.source_category](#source-category-4)                                                         |
+| The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                   |
+|-----------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| `name`                            | [processors.source.source_name](#name-5)                                                                          |
+| `description`                     | A description can be added as a comment just above the receiver name. [See the linked example.](#description-5)   |
+| `category`                        | [processors.source.source_category](#source-category-4)                                                           |
 | `metrics`                         | [Appropiate plugins have to be configured.](#metrics-1) By default no metrics are being processed.                |
 | `interval (ms)`                   | [receivers.telegraf.agent_config('agent'.interval)](#scan-interval-1)                                             |
-| `hostName`                        | [processors.source.source_host](#source-host-3)                                                                 |
+| `hostName`                        | [processors.source.source_host](#source-host-3)                                                                   |
 
 ### Local Windows Event Log Source (LocalWindowsEventLog)
 
