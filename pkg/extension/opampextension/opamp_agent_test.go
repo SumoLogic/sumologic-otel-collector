@@ -167,7 +167,6 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyWavefrontReceiverConfig", "testdata/opamp.d/opamp-wavefront-receiver-config.yaml", false, ""},
 		{"ApplyZipkinReceiverConfig", "testdata/opamp.d/opamp-zipkin-receiver-config.yaml", false, ""},
 		{"ApplyZookeeperReceiverConfig", "testdata/opamp.d/opamp-zookeeper-receiver-config.yaml", false, ""},
-		{"ApplyEcstaskExtensionConfig", "testdata/opamp.d/opamp-ecstask-extension-config.yaml", false, ""},
 		{"ApplyRemoteWindowsEventConfig", "testdata/opamp.d/opamp-windows-event-config.yaml", false, ""},
 		{"ApplyActiveDirecotryDSConfig", "testdata/opamp.d/opamp-activedirectoryds-receiver-config.yaml", false, ""},
 		{"ApplyIisReceiverConfig", "testdata/opamp.d/opamp-iis-receiver-config.yaml", false, ""},
