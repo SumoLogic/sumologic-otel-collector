@@ -1,1 +1,1 @@
-chore:making release work reusable
+ci:making release work reusable
