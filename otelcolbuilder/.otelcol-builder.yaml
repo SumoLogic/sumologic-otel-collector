@@ -189,6 +189,7 @@ extensions:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/dbstorage v0.140.1
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage v0.140.1
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.140.1
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/encoding/textencodingextension v0.140.1
 connectors:
   - gomod: go.opentelemetry.io/collector/connector/forwardconnector v0.140.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/countconnector v0.140.1
