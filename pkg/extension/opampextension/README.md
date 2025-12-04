@@ -122,7 +122,7 @@ This section lists the components that are included in the sumologic opamp exten
 |        awsxray         |        schema        |               |  asapauthextension   |            |
 |        collectd        |         span         |               |       ecstask        |            |
 |        couchdb         |     tailsampling     |               |                      |            |
-|        datadog         |                      |               |                      |            |
+|        datadog         |        unroll        |               |                      |            |
 |         expvar         |                      |               |                      |            |
 |       filestats        |                      |               |                      |            |
 |      flinkmetrics      |                      |               |                      |            |
