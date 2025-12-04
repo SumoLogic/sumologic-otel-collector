@@ -1,0 +1,19 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+processors:
+  unroll:
+    recursive: false
+service:
+    pipelines:
+      logs:
+        receivers:
+          - otlp
+        processors:
+          - unroll
+        exporters:
+          - sumologic
