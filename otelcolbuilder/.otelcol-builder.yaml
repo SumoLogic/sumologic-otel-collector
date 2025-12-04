@@ -16,7 +16,6 @@ exporters:
   - gomod: go.opentelemetry.io/collector/exporter/nopexporter v0.140.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awskinesisexporter v0.140.1
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awss3exporter v0.140.1
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/carbonexporter v0.140.1
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter v0.140.1
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.140.1
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/loadbalancingexporter v0.140.1

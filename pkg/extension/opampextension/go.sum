@@ -1653,8 +1653,6 @@ github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awskinesisexp
 github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awskinesisexporter v0.140.1/go.mod h1:4yB3ooDfU36AhC9WEdjeNgecdGpF4zMFS2VFWG2qVbQ=
 github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awss3exporter v0.140.1 h1:qrmO+mxGbiWgLG343gE2UjT51nU65Rn1cJD/VRtmsYg=
 github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awss3exporter v0.140.1/go.mod h1:isDvy60e6j3D6jzSifBSlhXsnl1I5bTBEzI7bGbA0KE=
-github.com/open-telemetry/opentelemetry-collector-contrib/exporter/carbonexporter v0.140.1 h1:mHX0pU5MO8Pb4RVn7A6yEUb8uGtNVIr3reid4yKEoxo=
-github.com/open-telemetry/opentelemetry-collector-contrib/exporter/carbonexporter v0.140.1/go.mod h1:l6KM8UIekUEGv5QG8nq11/zZoa8HeTvtHTFEdXIAANQ=
 github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter v0.140.1 h1:R6b6uJpOYHCXxrgq+gkseYzz4hB+nLs3m922z2mU9xE=
 github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter v0.140.1/go.mod h1:PwzN4rWrPTeac7y3K8sFNqZ/8BOd8BCmRN85O58fZcc=
 github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.140.1 h1:hAWfXRKRRuGcAC5RSmYysvVNqhfEBWb56Jw1wNfloi0=

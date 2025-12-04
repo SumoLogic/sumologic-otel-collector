@@ -20,7 +20,6 @@ import (
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awskinesisexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awss3exporter"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/carbonexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/loadbalancingexporter"
@@ -275,7 +274,6 @@ func Components() (
 		nopexporter.NewFactory(),
 		awss3exporter.NewFactory(),
 		awskinesisexporter.NewFactory(),
-		carbonexporter.NewFactory(),
 		debugexporter.NewFactory(),
 		fileexporter.NewFactory(),
 		kafkaexporter.NewFactory(),
