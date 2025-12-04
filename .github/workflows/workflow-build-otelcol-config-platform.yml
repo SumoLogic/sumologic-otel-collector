@@ -114,7 +114,7 @@ jobs:
           os: ${{ steps.platform.outputs.os }}
           working-directory: ./pkg/tools/otelcol-config
 
-      - uses: apple-actions/import-codesign-certs@v5
+      - uses: apple-actions/import-codesign-certs@v6
         if: runner.os == 'macOS' && inputs.signing-enabled && github.actor != 'dependabot[bot]'
         with:
           p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64_NOV_25 }}
