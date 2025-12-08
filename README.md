@@ -51,7 +51,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 | :------------------------------------------------------: | :----------------------------------------------------------: | :------------------------------------: | :-----------------------------------------: | :---------------------------------: |
 |     [active_directory_ds][activedirectorydsreceiver]     |              [attributes][attributesprocessor]               |         [awss3][awss3exporter]         |       [asapclient][asapauthextension]       |     [forward][forwardconnector]     |
 |                                                          |                   [batch][batchprocessor]                    |          [awskinesisexporter]          |                                             |                                     |
-|   [`active_directory_inv`][activedirectoryinvreceiver]   |                                                              |                                        |                 [awsproxy]                  |       [count][countconnector]       |
+|   [`active_directory_inv`][activedirectoryinvreceiver]   |                                                              |        [carbon][carbonexporter]        |                 [awsproxy]                  |       [count][countconnector]       |
 |              [aerospike][aerospikereceiver]              |        [`cascading_filter`][cascadingfilterprocessor]        |         [debug][debugexporter]         |       [basicauth][basicauthextension]       |  [exceptions][exceptionsconnector]  |
 |                 [apache][apachereceiver]                 |       [cumulativetodelta][cumulativetodeltaprocessor]        |          [file][fileexporter]          | [bearertokenauth][bearertokenauthextension] |    [failover][failoverconnector]    |
 |          [awscloudwatch][awscloudwatchreceiver]          |             [deltatorate][deltatorateprocessor]              |         [kafka][kafkaexporter]         |           [db_storage][dbstorage]           |  [roundrobin][roundrobinconnector]  |
@@ -82,7 +82,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |            [hostmetrics][hostmetricsreceiver]            |            [tail_sampling][tailsamplingprocessor]            |                                        |                                             |                                     |
 |              [httpcheck][httpcheckreceiver]              |               [transform][transformprocessor]                |                                        |                                             |                                     |
 |                    [iis][iisreceiver]                    |                 [routing][routingprocessor]                  |                                        |                                             |                                     |
-|               [influxdb][influxdbreceiver]               |                                                              |                                        |                                             |                                     |
+|               [influxdb][influxdbreceiver]               |                  [unroll][unrollprocessor]                   |                                        |                                             |                                     |
 |                 [jaeger][jaegerreceiver]                 |                                                              |                                        |                                             |                                     |
 |                    [jmx][jmxreceiver]                    |                                                              |                                        |                                             |                                     |
 |               [journald][journaldreceiver]               |                                                              |                                        |                                             |                                     |
@@ -265,47 +265,49 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [sumologicprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/processor/sumologicprocessor
 [sumologicschemaprocessor]: ./pkg/processor/sumologicschemaprocessor
 [sumologicsyslogprocessor]: ./pkg/processor/sumologicsyslogprocessor
-[tailsamplingprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/processor/tailsamplingprocessor
-[transformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/processor/transformprocessor
-[awss3exporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/exporter/awss3exporter
-[awskinesisexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/exporter/awskinesisexporter
-[debugexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.141.0/exporter/debugexporter
-[fileexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/exporter/fileexporter
-[kafkaexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/exporter/kafkaexporter
-[loadbalancingexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/exporter/loadbalancingexporter
-[nopexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.141.0/exporter/nopexporter
-[otlpexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.141.0/exporter/otlpexporter
-[otlphttpexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.141.0/exporter/otlphttpexporter
-[prometheusexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/exporter/prometheusexporter
-[sumologicexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/exporter/sumologicexporter
-[syslogexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/exporter/syslogexporter
-[asapauthextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/asapauthextension
-[awsproxy]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/awsproxy
-[basicauthextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/basicauthextension
-[bearertokenauthextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/bearertokenauthextension
-[dbstorage]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/storage/dbstorage
-[dockerobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/observer/dockerobserver
-[ecsobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/observer/ecsobserver
-[filestorage]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/storage/filestorage
-[headerssetterextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/headerssetterextension
-[healthcheckextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/healthcheckextension
-[hostobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/observer/hostobserver
-[httpforwarder]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/httpforwarderextension
-[jaegerremotesampling]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/jaegerremotesampling
-[k8sobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/observer/k8sobserver
-[oauth2clientauthextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/oauth2clientauthextension
-[oidcauthextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/oidcauthextension
-[pprofextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/pprofextension
-[sigv4authextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/sigv4authextension
-[sumologicextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/sumologicextension
-[zpagesextension]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.141.0/extension/zpagesextension
-[textencodingextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/extension/encoding/textencodingextension
-[forwardconnector]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.141.0/connector/forwardconnector
-[countconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/connector/countconnector
-[failoverconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/connector/failoverconnector
-[exceptionsconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/connector/exceptionsconnector
-[roundrobinconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/connector/roundrobinconnector
-[routingconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/connector/routingconnector
-[servicegraphconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/connector/servicegraphconnector
-[spanmetricsconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/connector/spanmetricsconnector
-[geoipprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.141.0/processor/geoipprocessor
+[tailsamplingprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/processor/tailsamplingprocessor
+[transformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/processor/transformprocessor
+[awss3exporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/exporter/awss3exporter
+[awskinesisexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/exporter/awskinesisexporter
+[carbonexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/exporter/carbonexporter
+[debugexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.140.0/exporter/debugexporter
+[fileexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/exporter/fileexporter
+[kafkaexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/exporter/kafkaexporter
+[loadbalancingexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/exporter/loadbalancingexporter
+[nopexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.140.0/exporter/nopexporter
+[otlpexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.140.0/exporter/otlpexporter
+[otlphttpexporter]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.140.0/exporter/otlphttpexporter
+[prometheusexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/exporter/prometheusexporter
+[sumologicexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/exporter/sumologicexporter
+[syslogexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/exporter/syslogexporter
+[asapauthextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/asapauthextension
+[awsproxy]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/awsproxy
+[basicauthextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/basicauthextension
+[bearertokenauthextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/bearertokenauthextension
+[dbstorage]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/storage/dbstorage
+[dockerobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/observer/dockerobserver
+[ecsobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/observer/ecsobserver
+[filestorage]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/storage/filestorage
+[headerssetterextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/headerssetterextension
+[healthcheckextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/healthcheckextension
+[hostobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/observer/hostobserver
+[httpforwarder]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/httpforwarderextension
+[jaegerremotesampling]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/jaegerremotesampling
+[k8sobserver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/observer/k8sobserver
+[oauth2clientauthextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/oauth2clientauthextension
+[oidcauthextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/oidcauthextension
+[pprofextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/pprofextension
+[sigv4authextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/sigv4authextension
+[sumologicextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/sumologicextension
+[zpagesextension]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.140.0/extension/zpagesextension
+[textencodingextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/extension/encoding/textencodingextension
+[forwardconnector]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.140.0/connector/forwardconnector
+[countconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/connector/countconnector
+[failoverconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/connector/failoverconnector
+[exceptionsconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/connector/exceptionsconnector
+[roundrobinconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/connector/roundrobinconnector
+[routingconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/connector/routingconnector
+[servicegraphconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/connector/servicegraphconnector
+[spanmetricsconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/connector/spanmetricsconnector
+[geoipprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.140.1/processor/geoipprocessor
+[unrollprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/unrollprocessor

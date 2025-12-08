@@ -63,6 +63,7 @@ processors:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/sumologicprocessor v0.141.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor v0.141.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor v0.141.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/unrollprocessor v0.141.0
   # Restoring routing processor back to sumo-otel as it was removed from the v0.133.0
   # Should be removed after routing processor to connector migration is done.
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/routingprocessor v0.132.0
