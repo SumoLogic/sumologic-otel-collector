@@ -1865,6 +1865,8 @@ github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsampling
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor v0.141.0/go.mod h1:SfhRpKlqe8DFtm/TyeFt9FWqX6aMjazJkx05mdEIAQU=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor v0.141.0 h1:rNgGO1uImtLw+1/Qr+qvCzuMBJuEFHbWo0RYZ7nnE+M=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor v0.141.0/go.mod h1:7LIMNjS/DyYrqLxXDv4+1kny7Mm8zMdNrHunTSirWuk=
+github.com/open-telemetry/opentelemetry-collector-contrib/processor/unrollprocessor v0.141.0 h1:fgmSggx5SoQHQtB4GhdnxIwXqxcU10Sr/er+HrhEKF8=
+github.com/open-telemetry/opentelemetry-collector-contrib/processor/unrollprocessor v0.141.0/go.mod h1:AhIb2tSZ9AK1uXzP/5Bt5Pnhy8i51wqJ+xXA0gYP/ps=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/activedirectorydsreceiver v0.141.0 h1:PKYnlOF50q5loJ+JK29XZTc/lPWP5yumotibrfrDaWQ=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/activedirectorydsreceiver v0.141.0/go.mod h1:kr5KULQAv7qUzmx7b+3fxGHWBPuYhDUfT9/HYJLkpWM=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/aerospikereceiver v0.141.0 h1:cZ285azmoTiClv9LK2NACXIb1VCgCWFhDtW9d0GLtTI=
