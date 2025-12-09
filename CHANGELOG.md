@@ -22,7 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- chore: prepare release v0.140.0 [#1914]
 - ci:making release work reusable [#1915]
 - chore: prepare release 0.141.0 [#1919]
 
