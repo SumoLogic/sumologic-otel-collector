@@ -2,7 +2,7 @@ extensions:
   docker_observer:
     endpoint: my/path/to/docker.sock
     excluded_images: ['redis', 'another_image_name']
-    api_version: "1.25"
+    api_version: "1.44"
     timeout: 15s
 receivers:
   otlp:

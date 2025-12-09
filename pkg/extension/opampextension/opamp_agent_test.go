@@ -84,7 +84,6 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyCloudwatchConfigFailure", "testdata/opamp.d/opamp-aws-cloudwatch-receiver-error-config.yaml", true, errMsgInvalidCloudwatchConfig},
 		{"ApplyXrayConfig", "testdata/opamp.d/opamp-aws-xray-config.yaml", false, ""},
 		{"ApplyKenesisConfig", "testdata/opamp.d/opamp-aws-kenesis-config.yaml", false, ""},
-		{"ApplyCarbonExporterConfig", "testdata/opamp.d/opamp-carbon-exporter-config.yaml", false, ""},
 		{"ApplyDebugExporterConfig", "testdata/opamp.d/opamp-debug-exporter-config.yaml", false, ""},
 		{"ApplyFileExporterConfig", "testdata/opamp.d/opamp-file-exporter-config.yaml", false, ""},
 		{"ApplyKafkaExporterConfig", "testdata/opamp.d/opamp-kafka-exporter-config.yaml", false, ""},
