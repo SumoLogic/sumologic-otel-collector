@@ -46,7 +46,7 @@ jobs:
       ${{ inputs.platform }} ${{ inputs.fips == true && '(FIPS)' || '' }}
     runs-on: ${{ inputs.runs-on }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: ./.github/actions/parse-platform
         id: platform
@@ -276,11 +276,11 @@ jobs:
           ./ci/get_version_from_binary.sh core "${binary_path}"
           ./ci/get_version_from_binary.sh sumo "${binary_path}"
 
-      - uses: apple-actions/import-codesign-certs@v5
+      - uses: apple-actions/import-codesign-certs@v6
         if: runner.os == 'macOS' && inputs.signing-enabled && github.actor != 'dependabot[bot]'
         with:
-          p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-          p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+          p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64_NOV_25 }}
+          p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD_NOV_25 }}
 
       - name: Sign the mac binaries
         if: runner.os == 'macOS' && inputs.signing-enabled && github.actor != 'dependabot[bot]'

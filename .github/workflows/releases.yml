@@ -12,6 +12,14 @@ on:
           release.
         required: true
         type: string
+  workflow_call:
+    inputs:
+      workflow_id:
+        description: |
+          Workflow Run ID from this repository to fetch artifacts from for this
+          release.
+        required: true
+        type: string
 
 defaults:
   run:
@@ -27,7 +35,7 @@ jobs:
       sumo-version: ${{ steps.get-version.outputs.sumo-version }}
       version: ${{ steps.get-version.outputs.version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Outuput Workflow ID
         run: echo ::notice title=Workflow ID::${{ inputs.workflow_id }}

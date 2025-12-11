@@ -40,7 +40,7 @@ jobs:
     env:
       FIPS_SUFFIX: ${{ inputs.fips && '-fips' || '' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: ./.github/actions/parse-platform
         id: platform
@@ -114,11 +114,11 @@ jobs:
           os: ${{ steps.platform.outputs.os }}
           working-directory: ./pkg/tools/otelcol-config
 
-      - uses: apple-actions/import-codesign-certs@v5
+      - uses: apple-actions/import-codesign-certs@v6
         if: runner.os == 'macOS' && inputs.signing-enabled && github.actor != 'dependabot[bot]'
         with:
-          p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-          p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+          p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64_NOV_25 }}
+          p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD_NOV_25 }}
 
       - name: Sign the mac binaries
         if: runner.os == 'macOS' && inputs.signing-enabled && github.actor != 'dependabot[bot]'
@@ -127,7 +127,6 @@ jobs:
         working-directory: ./pkg/tools/otelcol-config
         run: |
           signed=false
-
           for _ in $(seq 1 5); do
             if make ${{ inputs.platform }}-sign; then
               signed=true

@@ -1,1 +1,0 @@
-Deprecated install scripts (install.sh and install.ps1) - moved to sumologic-otel-collector-packaging repository

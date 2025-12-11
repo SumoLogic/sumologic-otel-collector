@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.141.0-sumo-0]
+
+### Released 2025-12-09
+
+### Breaking Changes
+
+- chore: removed carbonexporter as it has been deprecated by upstream [#1919]
+
+### Added
+
+- chore:add textencodingextension [#1917]
+- feat: add unroll processor from upstream [#1920]
+
+### Changed
+
+- ci:making release work reusable [#1915]
+- chore: prepare release 0.141.0 [#1919]
+
+[#1919]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1919
+[#1917]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1917
+[#1920]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1920
+[#1915]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1915
+
+[v0.141.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.141.0-sumo-0
+
+## [v0.140.0-sumo-0]
+
+### Released 2025-11-26
+
+### Added
+
+- feat: Added config validation in opamp-extension [#1886]
+
+### Changed
+
+- fix: ci build failure (cleaning up space) [#1897]
+- chore: Deprecated install scripts (install.sh and install.ps1) - moved to sumologic-otel-collector-packaging repository [#1904]
+- ci: added new apple signing certificate [#1908]
+- chore: upgrade collector to 0.140.0 [#1913]
+
+[#1886]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1886
+[#1897]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1897
+[#1904]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1904
+[#1908]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1908
+[#1913]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1913
+[v0.140.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.140.0-sumo-0
+
 ## [v0.139.0-sumo-0]
 
 ### Released 2025-11-12
@@ -42,7 +89,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1892]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1892
 [#1869]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1869
 [#1889]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1889
-
 [v0.139.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.139.0-sumo-0
 
 ## [v0.137.0-sumo-0]

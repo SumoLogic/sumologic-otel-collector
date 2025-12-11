@@ -8,10 +8,10 @@ jobs:
   renovate:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Renovate run
-        uses: renovatebot/github-action@v44.0.3
+        uses: renovatebot/github-action@v44.0.5
         env:
           LOG_LEVEL: debug
           RENOVATE_REPOSITORIES: SumoLogic/sumologic-otel-collector

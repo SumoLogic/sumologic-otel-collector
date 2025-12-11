@@ -34,7 +34,7 @@ jobs:
       version: ${{ steps.otc.outputs.version }}
       version-with-sha: ${{ steps.otc.outputs.version-with-sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
