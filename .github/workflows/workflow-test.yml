@@ -68,7 +68,7 @@ jobs:
           echo "restore-keys=${restore_key}"
           } >> "$GITHUB_OUTPUT"
 
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v5
         with:
           path: |
             ${{ env.GOMODCACHE }}/cache
@@ -90,7 +90,7 @@ jobs:
       - name: Run package tests
         run: make gotest ${{ inputs.boringcrypto && 'CGO_ENABLED=1 GOEXPERIMENT=boringcrypto' || '' }}
 
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@v5
         with:
           path: |
             ${{ env.GOMODCACHE }}/cache
