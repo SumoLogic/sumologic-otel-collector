@@ -47,7 +47,7 @@ jobs:
           echo ::notice title=Workflow URL::${url}
 
       - name: Download otelcol-sumo artifact from workflow
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
         with:
           name: otelcol-sumo-linux_amd64
           path: artifacts/
@@ -94,7 +94,7 @@ jobs:
       - get-version
     steps:
       - name: Download all artifacts from workflow
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
         with:
           path: artifacts/
           merge-multiple: true
