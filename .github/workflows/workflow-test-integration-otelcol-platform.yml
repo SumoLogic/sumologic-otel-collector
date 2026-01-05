@@ -91,7 +91,7 @@ jobs:
 
             - name: Restore GOMODCACHE
               if: runner.os != 'Windows'
-              uses: actions/cache/restore@v4
+              uses: actions/cache/restore@v5
               with:
                 path: ${{ steps.cache-keys.outputs.go-mod-cache-path }}
                 key: nonexistent
@@ -99,7 +99,7 @@ jobs:
 
             - name: Restore GOCACHE
               if: runner.os != 'Windows'
-              uses: actions/cache/restore@v4
+              uses: actions/cache/restore@v5
               with:
                 path: ${{ steps.cache-keys.outputs.go-cache-path }}
                 key: nonexistent
@@ -133,7 +133,7 @@ jobs:
             - name: Check if cache for GOCACHE exists
               id: go-cache-exists
               if: github.ref == 'refs/heads/main' && runner.os != 'Windows'
-              uses: actions/cache/restore@v4
+              uses: actions/cache/restore@v5
               with:
                 path: ${{ steps.cache-keys.outputs.go-cache-path }}
                 key: ${{ steps.cache-keys.outputs.go-cache-with-date }}
@@ -147,7 +147,7 @@ jobs:
                 &&
                 steps.go-cache-exists.outputs.cache-hit != 'true'
                 }}
-              uses: actions/cache/save@v4
+              uses: actions/cache/save@v5
               with:
                 path: ${{ steps.cache-keys.outputs.go-cache-path }}
                 key: ${{ steps.cache-keys.outputs.go-cache-with-date }}
@@ -155,7 +155,7 @@ jobs:
             - name: Check if cache for GOMODCACHE exists
               id: go-mod-cache-exists
               if: github.ref == 'refs/heads/main' && runner.os != 'Windows'
-              uses: actions/cache/restore@v4
+              uses: actions/cache/restore@v5
               with:
                 path: ${{ steps.cache-keys.outputs.go-mod-cache-path }}
                 key: ${{ steps.cache-keys.outputs.go-mod-cache-with-date }}
@@ -169,7 +169,7 @@ jobs:
                 &&
                 steps.go-mod-cache-exists.outputs.cache-hit != 'true'
                 }}
-              uses: actions/cache/save@v4
+              uses: actions/cache/save@v5
               with:
                 path: ${{ steps.cache-keys.outputs.go-mod-cache-path }}
                 key: ${{ steps.cache-keys.outputs.go-mod-cache-with-date }}
