@@ -96,7 +96,7 @@ jobs:
 
       - name: Restore GOMODCACHE
         if: runner.os != 'Windows'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ steps.cache-keys.outputs.go-mod-cache-path }}
           key: nonexistent
@@ -104,7 +104,7 @@ jobs:
 
       - name: Restore GOCACHE
         if: runner.os != 'Windows'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ steps.cache-keys.outputs.go-cache-path }}
           key: nonexistent
@@ -201,7 +201,7 @@ jobs:
       - name: Check if cache for GOCACHE exists
         id: go-cache-exists
         if: github.ref == 'refs/heads/main' && runner.os != 'Windows'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ steps.cache-keys.outputs.go-cache-path }}
           key: ${{ steps.cache-keys.outputs.go-cache-with-date }}
@@ -215,7 +215,7 @@ jobs:
           &&
           steps.go-cache-exists.outputs.cache-hit != 'true'
           }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ${{ steps.cache-keys.outputs.go-cache-path }}
           key: ${{ steps.cache-keys.outputs.go-cache-with-date }}
@@ -223,7 +223,7 @@ jobs:
       - name: Check if cache for GOMODCACHE exists
         id: go-mod-cache-exists
         if: github.ref == 'refs/heads/main' && runner.os != 'Windows'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ steps.cache-keys.outputs.go-mod-cache-path }}
           key: ${{ steps.cache-keys.outputs.go-mod-cache-with-date }}
@@ -237,7 +237,7 @@ jobs:
           &&
           steps.go-mod-cache-exists.outputs.cache-hit != 'true'
           }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ${{ steps.cache-keys.outputs.go-mod-cache-path }}
           key: ${{ steps.cache-keys.outputs.go-mod-cache-with-date }}
@@ -324,14 +324,14 @@ jobs:
           ./${binary} completion bash
 
       - name: Store binary as action artifact
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: ${{ steps.binary-name.outputs.name-with-platform }}
           path: ./otelcolbuilder/cmd/${{ steps.binary-name.outputs.name-with-platform }}
           if-no-files-found: error
 
       - name: Store Mac .dmg as action artifact
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: runner.os == 'macOS' && inputs.signing-enabled && github.actor != 'dependabot[bot]'
         with:
           name: ${{ steps.binary-name.outputs.name-with-platform }}.dmg

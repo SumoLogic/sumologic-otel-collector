@@ -30,7 +30,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707 // indirect
 	github.com/elastic/lunes v0.2.0 // indirect
-	github.com/expr-lang/expr v1.17.6 // indirect
+	github.com/expr-lang/expr v1.17.7 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
