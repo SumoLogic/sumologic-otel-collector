@@ -1,7 +1,7 @@
 name: Renovate-scheduler
 on:
-#   schedule:
-#     - cron: '0 3 * * *'   # every day at 3 AM UTC
+  schedule:
+    - cron: '0 3 * * 2'   # every Tuesday at 3 AM UTC
   workflow_dispatch:      # allow manual runs
 
 jobs:
