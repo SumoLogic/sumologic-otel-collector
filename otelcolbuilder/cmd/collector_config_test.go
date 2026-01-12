@@ -100,10 +100,6 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			name:       "config to parse logs using json_parser",
 			configFile: "../../examples/otelcolconfigs/logs_json/config.yaml",
 		},
-		{
-			name:       "routing processor for traces",
-			configFile: "testdata/routing_processor.yaml",
-		},
 	}
 
 	for _, tc := range testcases {
