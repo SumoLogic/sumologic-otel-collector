@@ -81,7 +81,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |                [haproxy][haproxyreceiver]                |        [`sumologic_syslog`][sumologicsyslogprocessor]        |                                        |                                             |                                     |
 |            [hostmetrics][hostmetricsreceiver]            |            [tail_sampling][tailsamplingprocessor]            |                                        |                                             |                                     |
 |              [httpcheck][httpcheckreceiver]              |               [transform][transformprocessor]                |                                        |                                             |                                     |
-|                    [iis][iisreceiver]                    |                 [routing][routingprocessor]                  |                                        |                                             |                                     |
+|                    [iis][iisreceiver]                    |                                                              |                                        |                                             |                                     |
 |               [influxdb][influxdbreceiver]               |                  [unroll][unrollprocessor]                   |                                        |                                             |                                     |
 |                 [jaeger][jaegerreceiver]                 |                                                              |                                        |                                             |                                     |
 |                    [jmx][jmxreceiver]                    |                                                              |                                        |                                             |                                     |
@@ -258,7 +258,6 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [remotetapprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.143.0/processor/remotetapprocessor
 [resourceprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.143.0/processor/resourceprocessor
 [resourcedetectionprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.143.0/processor/resourcedetectionprocessor
-[routingprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.132.0/processor/routingprocessor
 [schemaprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.143.0/processor/schemaprocessor
 [sourceprocessor]: ./pkg/processor/sourceprocessor
 [spanprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.143.0/processor/spanprocessor

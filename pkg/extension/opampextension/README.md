@@ -118,7 +118,7 @@ This section lists the components that are included in the sumologic opamp exten
 |     awscloudwatch      |        geoip         |               |       oidcauth       |            |
 |  awscontainerinsight   |      redaction       |               |        pprof         |            |
 | awsecscontainermetrics |      remotetap       |               |      sigv4auth       |            |
-|      awsfirehose       |       routing        |               |        zpages        |            |
+|      awsfirehose       |                      |               |        zpages        |            |
 |        awsxray         |        schema        |               |  asapauthextension   |            |
 |        collectd        |         span         |               |       ecstask        |            |
 |        couchdb         |     tailsampling     |               |                      |            |
