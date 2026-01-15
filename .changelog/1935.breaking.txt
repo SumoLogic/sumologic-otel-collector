@@ -1,1 +1,0 @@
-chore: deprecating routing processor due to upstream deprecation
