@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.143.0-sumo-0]
+
+### Released 2026-01-15
+
+### Breaking Changes
+
+- chore: deprecating routing processor due to upstream deprecation [#1935]
+
+### Changed
+
+- chore: upgrade collector to 0.143.0 [#1935]
+
+[#1935]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1935
+
+[v0.143.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.143.0-sumo-0
+
 ## [v0.141.0-sumo-0]
 
 ### Released 2025-12-09
@@ -29,7 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1917]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1917
 [#1920]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1920
 [#1915]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1915
-
 [v0.141.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.141.0-sumo-0
 
 ## [v0.140.0-sumo-0]
