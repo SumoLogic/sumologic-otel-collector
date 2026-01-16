@@ -21,10 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ##### Upstream Context
 
-* The `routingprocessor` was **deprecated upstream** in OpenTelemetry Collector Contrib in [v0.116.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/releases/tag/v0.116.0).
-* Upstream recommends migrating to [**`routingConnector`**](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/connector/routingconnector), which provides a clearer and more scalable routing model. 
-* Tracking issue: [https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/36616](https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/36616)
-
+- The `routingprocessor` was **deprecated upstream** in OpenTelemetry Collector Contrib in [v0.116.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/releases/tag/v0.116.0).
+- Upstream recommends migrating to [**`routingConnector`**](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/connector/routingconnector), which provides a clearer and more scalable routing model.
+- Tracking issue: [https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/36616](https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/36616)
 
 ---
 
