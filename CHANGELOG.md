@@ -15,6 +15,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - chore: deprecating routing processor due to upstream deprecation [#1935]
 
+#### Deprecation of `routingProcessor`
+
+---
+
+##### Upstream Context
+
+* The `routingprocessor` was **deprecated upstream** in OpenTelemetry Collector Contrib in [v0.116.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/releases/tag/v0.116.0).
+* Upstream recommends migrating to [**`routingConnector`**](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/connector/routingconnector), which provides a clearer and more scalable routing model. 
+* Tracking issue: [https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/36616](https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/36616)
+
+
+---
+
+##### Migration
+
+The routing connector supports all features of the routing processor and more. However, the configuration is different. The general idea is the same, but there are a few key differences:
+
+- Rather than routing directly to exporters, the routing connector routes to pipelines. This allow for processors to be included after routing decisions.
+- The connector is configured within the `connectors` section, rather than the `processors` section of the configuration.
+- Usage of the connector in pipelines is different. You must use it as an exporter AND as a receiver in each pipeline to which it can route.
+- Configuration is primarily based on [OTTL](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl#opentelemetry-transformation-language).
+- Each route can be evaluated in a different [OTTL Context](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/ottl/contexts/README.md#opentelemetry-transformation-language-contexts).
+
+##### Example
+
+Starting from the example configuration below, we can achieve the same result with the routing connector:
+
+```yaml
+processors:
+  routing:
+    from_attribute: X-Tenant
+    default_exporters: [jaeger]
+    table:
+    - value: acme
+      exporters: [jaeger/acme]
+exporters:
+  jaeger:
+    endpoint: localhost:14250
+  jaeger/acme:
+    endpoint: localhost:24250
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [routing]
+      exporters: [jaeger, jaeger/acme]
+```
+
+```yaml
+connectors:
+  routing:
+    match_once: true
+    default_pipelines: [traces/jaeger]
+    table:
+    - context: request
+      condition: request["X-Tenant"] == "acme"
+      pipelines: [traces/jaeger/acme]
+exporters:
+  jaeger:
+    endpoint: localhost:14250
+  jaeger/acme:
+    endpoint: localhost:24250
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [routing]
+    traces/jaeger:
+      receivers: [routing]
+      exporters: [jaeger]
+    traces/jaeger/acme:
+      receivers: [routing]
+      exporters: [jaeger/acme]
+```
+
+---
+
 ### Changed
 
 - chore: upgrade collector to 0.143.0 [#1935]
