@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The routing connector supports all features of the routing processor and more. However, the configuration is different. The general idea is the same, but there are a few key differences:
 
-- Rather than routing directly to exporters, the routing connector routes to pipelines. This allow for processors to be included after routing decisions.
+- Rather than routing directly to exporters, the routing connector routes to pipelines. This allows for processors to be included after routing decisions.
 - The connector is configured within the `connectors` section, rather than the `processors` section of the configuration.
 - Usage of the connector in pipelines is different. You must use it as an exporter AND as a receiver in each pipeline to which it can route.
 - Configuration is primarily based on [OTTL](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl#opentelemetry-transformation-language).
