@@ -36,6 +36,8 @@ jobs:
       version: ${{ steps.get-version.outputs.version }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          repository: SumoLogic/sumologic-otel-collector
 
       - name: Outuput Workflow ID
         run: echo ::notice title=Workflow ID::${{ inputs.workflow_id }}
@@ -54,6 +56,7 @@ jobs:
           merge-multiple: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ inputs.workflow_id }}
+          repository: SumoLogic/sumologic-otel-collector
 
       - name: Determine version from artifact
         id: get-version
@@ -100,6 +103,7 @@ jobs:
           merge-multiple: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ inputs.workflow_id }}
+          repository: SumoLogic/sumologic-otel-collector
 
       - name: Add version to binary names
         working-directory: artifacts/
