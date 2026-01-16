@@ -18,5 +18,10 @@
       "groupName": "opentelemetry-collector",
       "enabled": true
     },
+    {
+      "matchFileNames": ["pkg/extension/opampextension/go.mod"],
+      "matchPackagePatterns": ["semconv"],
+      "enabled": false
+    },
   ]
 }
