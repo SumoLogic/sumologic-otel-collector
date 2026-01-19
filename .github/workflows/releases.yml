@@ -83,7 +83,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           workflow="${{ inputs.workflow_id }}"
-          sha="$(gh run view ${workflow} --json headSha -t '{{.headSha}}')"
+          sha="$(gh run view ${workflow} -R SumoLogic/sumologic-otel-collector --json headSha -t '{{.headSha}}')"
           echo "git-sha=$sha" >> "$GITHUB_OUTPUT"
 
       - name: Output Git SHA
