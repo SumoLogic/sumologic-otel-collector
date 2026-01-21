@@ -36,6 +36,8 @@ processors:
     path: ./../pkg/processor/sumologicsyslogprocessor
   - gomod: github.com/SumoLogic/sumologic-otel-collector/pkg/processor/metricfrequencyprocessor v0.0.0-00010101000000-000000000000
     path: ./../pkg/processor/metricfrequencyprocessor
+  - gomod: github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor v0.0.0-00010101000000-000000000000
+    path: ./../pkg/processor/lookupprocessor
   # Since include-code was removed we need to manually add all core components that we want to include:
   # https://github.com/open-telemetry/opentelemetry-collector/pull/4616
   - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.144.0
