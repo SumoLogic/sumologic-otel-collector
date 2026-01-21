@@ -425,10 +425,10 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 		if err != nil {
 			return err
 		}
-		defer f.Close()
 
 		_, err = f.Write(v.Body)
 		if err != nil {
+			f.Close()
 			return err
 		}
 
@@ -446,9 +446,20 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 		})
 		if errValidate != nil {
 			logger.Error("Validation Failed", zap.Error(errValidate))
+			if err := f.Close(); err != nil {
+				logger.Warn("Unable to close config file", zap.Error(err))
+			}
+			err = os.Remove(p)
+			if err != nil {
+				o.logger.Warn("Unable to delete invalid config file", zap.String("invalid config filename", p), zap.Error(err))
+			}
 			return fmt.Errorf("cannot validate config: %v", errValidate)
 		}
 		logger.Info("Config Validation Successful")
+
+		if err := f.Close(); err != nil {
+			logger.Warn("Unable to close config file", zap.Error(err))
+		}
 	}
 
 	return nil
