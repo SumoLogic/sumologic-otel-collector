@@ -496,7 +496,11 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 	}
 
 	configChanged = false
-	if !reflect.DeepEqual(o.effectiveConfig, nec) {
+	diskCount, err := getConfigFileCountOnDisk(o)
+	if err != nil {
+		return false, fmt.Errorf("cannot read config dir %s: %v", o.cfg.RemoteConfigurationDirectory, err)
+	}
+	if !reflect.DeepEqual(o.effectiveConfig, nec) || len(nec) != diskCount {
 		o.logger.Info("Saving effective config")
 		oec := o.effectiveConfig
 		o.effectiveConfig = nec
@@ -584,4 +588,24 @@ func loadConfigAndValidateWithSettings(factories otelcol.Factories, set otelcol.
 		return nil, err
 	}
 	return cfg, nil
+}
+
+func getConfigFileCountOnDisk(o *opampAgent) (int, error) {
+	dir := o.cfg.RemoteConfigurationDirectory
+
+	fi, err := os.Stat(dir)
+	if err != nil {
+		return 0, err
+	}
+
+	if !fi.IsDir() {
+		return 0, fmt.Errorf("%s is not a directory", dir)
+	}
+
+	paths, err := filepath.Glob(filepath.Join(dir, "*.yaml"))
+	if err != nil {
+		return 0, err
+	}
+
+	return len(paths), nil
 }

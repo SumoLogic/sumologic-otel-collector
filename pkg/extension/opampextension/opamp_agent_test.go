@@ -218,6 +218,41 @@ func TestApplyRemoteConfig(t *testing.T) {
 	}
 }
 
+func TestApplyRemoteConfig_FileRemoved(t *testing.T) {
+	d, err := os.MkdirTemp("", "opamp.d")
+	assert.NoError(t, err)
+	defer os.RemoveAll(d)
+
+	dummyConfig := []byte("receivers: {}")
+	dummyFilePath := filepath.Join(d, "dummy.yaml")
+	err = os.WriteFile(dummyFilePath, dummyConfig, 0600)
+	assert.NoError(t, err)
+
+	cfg, set := setupWithRemoteConfig(t, d)
+	cfg.AcceptsRemoteConfiguration = true
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	err = o.loadEffectiveConfig(d)
+	assert.NoError(t, err)
+	assert.Len(t, o.effectiveConfig, 1)
+
+	rc := &protobufs.AgentRemoteConfig{
+		Config: &protobufs.AgentConfigMap{
+			ConfigMap: map[string]*protobufs.AgentConfigFile{},
+		},
+		ConfigHash: []byte("d41d8cd98f00b204e9800998ecf8427e"),
+	}
+
+	changed, err := o.applyRemoteConfig(rc)
+	assert.NoError(t, err)
+	assert.True(t, changed)
+	assert.Len(t, o.effectiveConfig, 0)
+
+	_, err = os.Stat(dummyFilePath)
+	assert.True(t, os.IsNotExist(err))
+}
+
 func TestGetAgentCapabilities(t *testing.T) {
 	cfg, set := defaultSetup()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
