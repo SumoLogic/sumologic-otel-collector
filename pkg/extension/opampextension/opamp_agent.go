@@ -500,6 +500,7 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 	if err != nil {
 		return false, fmt.Errorf("cannot read config dir %s: %v", o.cfg.RemoteConfigurationDirectory, err)
 	}
+	o.logger.Debug("calculated diskcount: ", zap.Int("diskCount", diskCount))
 	if !reflect.DeepEqual(o.effectiveConfig, nec) || len(nec) != diskCount {
 		o.logger.Info("Saving effective config")
 		oec := o.effectiveConfig
@@ -512,6 +513,8 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 		}
 
 		configChanged = true
+	} else {
+		o.logger.Debug("Skipping")
 	}
 
 	return configChanged, nil
