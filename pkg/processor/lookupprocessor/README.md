@@ -2,10 +2,10 @@
 
 | Status | |
 | ------ | ----- |
-| Stability | [development]: logs |
+| Stability | [alpha]: logs |
 | Distributions | [] |
 
-[development]: https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/component-stability.md#development
+[alpha]: https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/component-stability.md#aplha
 
 ## Description
 
@@ -15,16 +15,22 @@ Currently supports logs, with metrics and traces support planned.
 
 ## Configuration
 
-```yaml
+```dns
 processors:
   lookup:
     source:
-      type: yaml
-      path: /etc/otel/mappings.yaml
+      type: dns
+      mode: forward
+      timeout: 5s
+    cache:
+      enabled: true
+      size: 1000
+      ttl: 5m
+      negative_ttl: 1m
     attributes:
-      - key: user.name
-        from_attribute: user.id
-        default: "Unknown User"
+      - key: server.ip
+        from_attribute: server.hostname
+        default: "unknown"
         action: upsert
         context: record
 ```
@@ -205,16 +211,7 @@ Measures the full processing pipeline including pdata operations, attribute iter
 | 100 logs, 3 attributes | 21,604 | 54,113 | 1,014 |
 | 1000 logs, 1 attribute | 122,447 | 280,617 | 6,014 |
 
-### YAML Source Performance
-
-Measures only the source lookup operation (map access), isolated from processor overhead:
-
-| Map Size | ns/op | allocs/op |
-|----------|-------|-----------|
-| 10 entries | 1,418 | 0 |
-| 100 entries | 1,355 | 0 |
-| 1,000 entries | 1,317 | 0 |
-| 10,000 entries | 1,319 | 0 |
+Source-specific benchmarks are available in each source's README.
 
 ## Custom Sources
 
