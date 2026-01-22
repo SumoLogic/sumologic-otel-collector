@@ -82,7 +82,7 @@ func (c *Cache) Get(key string) (any, bool) {
 		c.mu.Lock()
 		// Double-check entry still exists and is still expired (race condition protection)
 		if entry, exists := c.entries[key]; exists && !entry.expireAt.IsZero() && time.Now().After(entry.expireAt) {
-			c.logger.Info("cache entry expired", zap.String("key", key))
+			c.logger.Debug("cache entry expired", zap.String("key", key))
 			c.removeEntry(key)
 		}
 		c.mu.Unlock()
