@@ -15,7 +15,7 @@ This package provides DNS lookup capabilities for the lookup processor, supporti
 
 ## Configuration
 
-```dns
+```yaml
 lookup:
   sources:
     - type: dns
