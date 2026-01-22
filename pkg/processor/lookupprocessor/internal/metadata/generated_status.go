@@ -8,7 +8,7 @@ import (
 
 var (
 	Type      = component.MustNewType("lookup")
-	ScopeName = "github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor"
+	ScopeName = "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor"
 )
 
 const (

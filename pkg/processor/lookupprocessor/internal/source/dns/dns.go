@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package dns provides a DNS lookup source for forward and reverse DNS resolution.
-package dns // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/internal/source/dns"
+package dns // import "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/internal/source/dns"
 
 import (
 	"context"
@@ -11,28 +11,31 @@ import (
 	"strings"
 	"time"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/lookupsource"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/lookupsource"
 )
 
 const sourceType = "dns"
 
-// Mode specifies the DNS resolution mode.
-type Mode string
+// RecordType specifies the DNS record type to query.
+type RecordType string
 
 const (
-	// ModeForward performs forward DNS lookup (hostname to IP address)
-	ModeForward Mode = "forward"
-	// ModeReverse performs reverse DNS lookup (IP address to hostname)
-	ModeReverse Mode = "reverse"
+	// RecordTypePTR performs reverse DNS lookup (IP address to hostname)
+	RecordTypePTR RecordType = "PTR"
+	// RecordTypeA performs forward IPv4 DNS lookup (hostname to IPv4 address)
+	RecordTypeA RecordType = "A"
+	// RecordTypeAAAA performs forward IPv6 DNS lookup (hostname to IPv6 address)
+	RecordTypeAAAA RecordType = "AAAA"
 )
 
 // Config is the configuration for the DNS lookup source.
 type Config struct {
-	// Mode specifies the DNS resolution mode: "forward" or "reverse".
-	// - forward: resolves hostname to IP address(es)
-	// - reverse: resolves IP address to hostname(s)
-	// Default: "forward"
-	Mode Mode `mapstructure:"mode"`
+	// RecordType specifies the DNS record type to query: "PTR", "A", or "AAAA".
+	// - PTR: reverse lookup, resolves IP address to hostname(s)
+	// - A: forward IPv4 lookup, resolves hostname to IPv4 address(es)
+	// - AAAA: forward IPv6 lookup, resolves hostname to IPv6 address(es)
+	// Default: "A"
+	RecordType RecordType `mapstructure:"record_type"`
 
 	// Timeout specifies the maximum time to wait for DNS resolution.
 	// Default: 5s
@@ -53,11 +56,11 @@ type Config struct {
 
 // Validate implements lookupsource.SourceConfig.
 func (c *Config) Validate() error {
-	switch c.Mode {
-	case "", ModeForward, ModeReverse:
+	switch c.RecordType {
+	case "", RecordTypeA, RecordTypeAAAA, RecordTypePTR:
 		// valid
 	default:
-		return errors.New("mode must be 'forward' or 'reverse'")
+		return errors.New("record_type must be 'PTR', 'A', or 'AAAA'")
 	}
 
 	if c.Timeout < 0 {
@@ -85,7 +88,7 @@ func NewFactory() lookupsource.SourceFactory {
 
 func createDefaultConfig() lookupsource.SourceConfig {
 	return &Config{
-		Mode:            ModeForward,
+		RecordType:      RecordTypeA,
 		Timeout:         5 * time.Second,
 		MultipleResults: false,
 	}
@@ -99,9 +102,9 @@ func createSource(
 	dnsCfg := cfg.(*Config)
 
 	// Apply defaults
-	mode := dnsCfg.Mode
-	if mode == "" {
-		mode = ModeForward
+	recordType := dnsCfg.RecordType
+	if recordType == "" {
+		recordType = RecordTypeA
 	}
 
 	timeout := dnsCfg.Timeout
@@ -129,7 +132,7 @@ func createSource(
 	}
 
 	s := &dnsSource{
-		mode:            mode,
+		recordType:      recordType,
 		timeout:         timeout,
 		resolver:        resolver,
 		multipleResults: dnsCfg.MultipleResults,
@@ -153,7 +156,7 @@ func createSource(
 
 // dnsSource performs DNS lookups.
 type dnsSource struct {
-	mode            Mode
+	recordType      RecordType
 	timeout         time.Duration
 	resolver        *net.Resolver
 	multipleResults bool
@@ -170,13 +173,13 @@ func (s *dnsSource) lookup(ctx context.Context, key string) (any, bool, error) {
 	lookupCtx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
-	switch s.mode {
-	case ModeForward:
+	switch s.recordType {
+	case RecordTypeA, RecordTypeAAAA:
 		return s.forwardLookup(lookupCtx, key)
-	case ModeReverse:
+	case RecordTypePTR:
 		return s.reverseLookup(lookupCtx, key)
 	default:
-		return nil, false, errors.New("invalid mode")
+		return nil, false, errors.New("invalid record_type")
 	}
 }
 
@@ -198,10 +201,20 @@ func (s *dnsSource) forwardLookup(ctx context.Context, hostname string) (any, bo
 		return nil, false, nil
 	}
 
-	// Convert IPAddr to string, handling IPv6 zone identifiers properly
-	ips := make([]string, len(addrs))
-	for i, addr := range addrs {
-		ips[i] = addr.String()
+	// Filter addresses based on record type and convert to string
+	var ips []string
+	for _, addr := range addrs {
+		if s.recordType == RecordTypeA && addr.IP.To4() != nil {
+			// IPv4 address for A record
+			ips = append(ips, addr.IP.String())
+		} else if s.recordType == RecordTypeAAAA && addr.IP.To4() == nil {
+			// IPv6 address for AAAA record
+			ips = append(ips, addr.String())
+		}
+	}
+
+	if len(ips) == 0 {
+		return nil, false, nil
 	}
 
 	if s.multipleResults {

@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package lookupprocessor // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor"
+package lookupprocessor // import "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor"
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/lookupsource"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/lookupsource"
 )
 
 // Action specifies how to handle the lookup result.

@@ -12,8 +12,8 @@ import (
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/processor/processortest"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/internal/metadata"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/lookupsource"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/internal/metadata"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/lookupsource"
 )
 
 func testAttributeConfig() AttributeConfig {

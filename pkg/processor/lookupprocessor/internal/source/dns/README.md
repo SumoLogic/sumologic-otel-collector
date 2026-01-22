@@ -1,11 +1,12 @@
 # DNS Lookup Source
 
-This package provides DNS lookup capabilities for the lookup processor, supporting both forward (hostname to IP) and reverse (IP to hostname) DNS resolution with optional caching.
+This package provides DNS lookup capabilities for the lookup processor, supporting multiple DNS record types including forward (hostname to IP) and reverse (IP to hostname) DNS resolution with optional caching.
 
 ## Features
 
-- **Forward DNS Lookups**: Resolve hostnames to IP addresses (A/AAAA records)
-- **Reverse DNS Lookups**: Resolve IP addresses to hostnames (PTR records)
+- **A Record Lookups**: Resolve hostnames to IPv4 addresses
+- **AAAA Record Lookups**: Resolve hostnames to IPv6 addresses
+- **PTR Record Lookups**: Resolve IP addresses to hostnames (reverse DNS)
 - **IPv4 and IPv6 Support**: Handles both IP versions seamlessly
 - **Custom DNS Servers**: Configure specific DNS resolvers
 - **Caching**: Optional in-memory caching with configurable TTL
@@ -14,11 +15,11 @@ This package provides DNS lookup capabilities for the lookup processor, supporti
 
 ## Configuration
 
-```yaml
+```dns
 lookup:
   sources:
     - type: dns
-      mode: forward              # "forward" or "reverse"
+      record_type: A             # "PTR", "A", or "AAAA"
       timeout: 5s                # DNS query timeout
       resolver: "8.8.8.8:53"     # Optional: custom DNS server
       multiple_results: false    # Return all results or first only
@@ -28,7 +29,7 @@ lookup:
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `mode` | string | `forward` | DNS resolution mode: `forward` (hostname→IP) or `reverse` (IP→hostname) |
+| `record_type` | string | `A` | DNS record type: `A` (hostname→IPv4), `AAAA` (hostname→IPv6), or `PTR` (IP→hostname) |
 | `timeout` | duration | `5s` | Maximum time to wait for DNS resolution |
 | `resolver` | string | system default | Custom DNS server in `host:port` format (e.g., `8.8.8.8:53`) |
 | `multiple_results` | bool | `false` | If true, returns all results as comma-separated string; if false, returns first result only |

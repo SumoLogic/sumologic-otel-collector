@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package lookupprocessor // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor"
+package lookupprocessor // import "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor"
 
 import (
 	"context"
@@ -13,11 +13,11 @@ import (
 	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/collector/processor/processorhelper"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/internal/metadata"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/internal/source/dns"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/internal/source/noop"
-	yamlsource "github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/internal/source/yaml"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/lookupsource"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/internal/metadata"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/internal/source/dns"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/internal/source/noop"
+	yamlsource "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/internal/source/yaml"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/lookupsource"
 )
 
 var processorCapabilities = consumer.Capabilities{MutatesData: true}
@@ -69,7 +69,7 @@ func NewFactory() processor.Factory {
 // Example (third-party HTTP source):
 //
 //	import (
-//	    "github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor"
+//	    "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor"
 //	    "github.com/user/otel-lookup-http/httplookup"
 //	)
 //

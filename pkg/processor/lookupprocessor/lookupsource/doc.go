@@ -35,9 +35,9 @@
 //
 // # Registering with the Processor
 //
-//	import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor"
+//	import "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor"
 //
 //	factories.Processors[lookupprocessor.Type] = lookupprocessor.NewFactoryWithOptions(
 //	    lookupprocessor.WithSources(mysource.NewFactory()),
 //	)
-package lookupsource // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/lookupsource"
+package lookupsource // import "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/lookupsource"

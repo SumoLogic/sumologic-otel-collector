@@ -1,4 +1,4 @@
-module github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor
+module github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor
 
 go 1.24.0
 

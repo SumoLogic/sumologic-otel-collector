@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package yaml provides a YAML file-based lookup source.
-package yaml // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/internal/source/yaml"
+package yaml // import "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/internal/source/yaml"
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/lookupsource"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/lookupsource"
 )
 
 const sourceType = "yaml"

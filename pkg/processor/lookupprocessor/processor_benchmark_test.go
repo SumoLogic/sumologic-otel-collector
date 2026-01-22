@@ -14,7 +14,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/processor/processortest"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/internal/metadata"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/internal/metadata"
 )
 
 // BenchmarkProcessorLookup benchmarks the core processor overhead.

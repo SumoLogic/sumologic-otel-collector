@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/lookupsource"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/lookupsource"
 )
 
 // BenchmarkDNSLookup benchmarks DNS lookup performance.
@@ -97,8 +97,8 @@ func createBenchmarkSource(b *testing.B, cacheEnabled bool) lookupsource.Source 
 
 	factory := NewFactory()
 	cfg := &Config{
-		Mode:    ModeReverse,
-		Timeout: 5 * time.Second,
+		RecordType: RecordTypePTR,
+		Timeout:    5 * time.Second,
 	}
 
 	createSettings := lookupsource.CreateSettings{

@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package noop provides a no-operation lookup source for testing.
-package noop // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/internal/source/noop"
+package noop // import "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/internal/source/noop"
 
 import (
 	"context"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/lookupsource"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/lookupsource"
 )
 
 const sourceType = "noop"

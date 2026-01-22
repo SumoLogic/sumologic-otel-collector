@@ -13,4 +13,4 @@
 // Custom sources can be registered using [NewFactoryWithOptions] with [WithSources].
 // The public API for creating custom sources is in the lookupsource subpackage.
 // See [lookupsource.NewSourceFactory] and [lookupsource.NewSource] for details.
-package lookupprocessor // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor"
+package lookupprocessor // import "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor"

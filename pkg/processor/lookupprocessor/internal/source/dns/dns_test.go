@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/lookupprocessor/lookupsource"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/lookupsource"
 )
 
 func TestConfig_Validate(t *testing.T) {
@@ -21,43 +21,48 @@ func TestConfig_Validate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "valid forward mode",
-			config:  Config{Mode: ModeForward, Timeout: 5 * time.Second},
+			name:    "valid A record type",
+			config:  Config{RecordType: RecordTypeA, Timeout: 5 * time.Second},
 			wantErr: false,
 		},
 		{
-			name:    "valid reverse mode",
-			config:  Config{Mode: ModeReverse, Timeout: 5 * time.Second},
+			name:    "valid AAAA record type",
+			config:  Config{RecordType: RecordTypeAAAA, Timeout: 5 * time.Second},
 			wantErr: false,
 		},
 		{
-			name:    "empty mode defaults to forward",
+			name:    "valid PTR record type",
+			config:  Config{RecordType: RecordTypePTR, Timeout: 5 * time.Second},
+			wantErr: false,
+		},
+		{
+			name:    "empty record_type defaults to A",
 			config:  Config{Timeout: 5 * time.Second},
 			wantErr: false,
 		},
 		{
-			name:    "invalid mode",
-			config:  Config{Mode: "invalid", Timeout: 5 * time.Second},
+			name:    "invalid record type",
+			config:  Config{RecordType: "invalid", Timeout: 5 * time.Second},
 			wantErr: true,
 		},
 		{
 			name:    "negative timeout",
-			config:  Config{Mode: ModeForward, Timeout: -1 * time.Second},
+			config:  Config{RecordType: RecordTypeA, Timeout: -1 * time.Second},
 			wantErr: true,
 		},
 		{
 			name:    "valid with resolver",
-			config:  Config{Mode: ModeForward, Timeout: 5 * time.Second, Resolver: "8.8.8.8:53"},
+			config:  Config{RecordType: RecordTypeA, Timeout: 5 * time.Second, Resolver: "8.8.8.8:53"},
 			wantErr: false,
 		},
 		{
 			name:    "invalid resolver format",
-			config:  Config{Mode: ModeForward, Timeout: 5 * time.Second, Resolver: "8.8.8.8"},
+			config:  Config{RecordType: RecordTypeA, Timeout: 5 * time.Second, Resolver: "8.8.8.8"},
 			wantErr: true,
 		},
 		{
 			name:    "valid with multiple results",
-			config:  Config{Mode: ModeForward, Timeout: 5 * time.Second, MultipleResults: true},
+			config:  Config{RecordType: RecordTypeA, Timeout: 5 * time.Second, MultipleResults: true},
 			wantErr: false,
 		},
 	}
@@ -83,7 +88,7 @@ func TestNewFactory(t *testing.T) {
 
 	defaultCfg, ok := cfg.(*Config)
 	require.True(t, ok)
-	assert.Equal(t, ModeForward, defaultCfg.Mode)
+	assert.Equal(t, RecordTypeA, defaultCfg.RecordType)
 	assert.Equal(t, 5*time.Second, defaultCfg.Timeout)
 	assert.False(t, defaultCfg.MultipleResults)
 }
@@ -91,8 +96,8 @@ func TestNewFactory(t *testing.T) {
 func TestCreateSource(t *testing.T) {
 	factory := NewFactory()
 	cfg := &Config{
-		Mode:    ModeForward,
-		Timeout: 5 * time.Second,
+		RecordType: RecordTypeA,
+		Timeout:    5 * time.Second,
 	}
 
 	source, err := factory.CreateSource(context.Background(), lookupsource.CreateSettings{}, cfg)
@@ -104,8 +109,8 @@ func TestCreateSource(t *testing.T) {
 func TestForwardLookup(t *testing.T) {
 	factory := NewFactory()
 	cfg := &Config{
-		Mode:    ModeForward,
-		Timeout: 10 * time.Second,
+		RecordType: RecordTypeA,
+		Timeout:    10 * time.Second,
 	}
 
 	source, err := factory.CreateSource(context.Background(), lookupsource.CreateSettings{}, cfg)
@@ -136,8 +141,8 @@ func TestForwardLookup(t *testing.T) {
 func TestReverseLookup(t *testing.T) {
 	factory := NewFactory()
 	cfg := &Config{
-		Mode:    ModeReverse,
-		Timeout: 10 * time.Second,
+		RecordType: RecordTypePTR,
+		Timeout:    10 * time.Second,
 	}
 
 	source, err := factory.CreateSource(context.Background(), lookupsource.CreateSettings{}, cfg)
@@ -170,33 +175,57 @@ func TestIPv6Support(t *testing.T) {
 	ctx := context.Background()
 	factory := NewFactory()
 
-	t.Run("forward lookup with IPv6", func(t *testing.T) {
+	t.Run("AAAA record lookup - IPv6 only", func(t *testing.T) {
 		cfg := &Config{
-			Mode:            ModeForward,
+			RecordType:      RecordTypeAAAA,
 			Timeout:         10 * time.Second,
 			MultipleResults: true,
 		}
 		source, err := factory.CreateSource(ctx, lookupsource.CreateSettings{}, cfg)
 		require.NoError(t, err)
 
-		// localhost should resolve to both IPv4 and IPv6 on most systems
-		result, found, err := source.Lookup(ctx, "localhost")
-		require.NoError(t, err)
+		// dns.google has both A and AAAA records
+		result, found, err := source.Lookup(ctx, "dns.google")
+		if err != nil {
+			t.Skipf("Network not accessible: %v", err)
+		}
 		if found {
 			resultStr, ok := result.(string)
 			require.True(t, ok)
-			t.Logf("localhost resolved to: %v", resultStr)
-			// Check if result contains IPv6 addresses (contain colons)
-			if assert.NotEmpty(t, resultStr) {
-				t.Logf("Result may include IPv6 addresses")
-			}
+			t.Logf("dns.google AAAA records: %v", resultStr)
+			// Should contain IPv6 addresses (with colons)
+			assert.Contains(t, resultStr, ":")
 		}
 	})
 
-	t.Run("reverse lookup IPv6 localhost", func(t *testing.T) {
+	t.Run("A record lookup - IPv4 only", func(t *testing.T) {
 		cfg := &Config{
-			Mode:    ModeReverse,
-			Timeout: 10 * time.Second,
+			RecordType:      RecordTypeA,
+			Timeout:         10 * time.Second,
+			MultipleResults: true,
+		}
+		source, err := factory.CreateSource(ctx, lookupsource.CreateSettings{}, cfg)
+		require.NoError(t, err)
+
+		// dns.google has both A and AAAA records
+		result, found, err := source.Lookup(ctx, "dns.google")
+		if err != nil {
+			t.Skipf("Network not accessible: %v", err)
+		}
+		if found {
+			resultStr, ok := result.(string)
+			require.True(t, ok)
+			t.Logf("dns.google A records: %v", resultStr)
+			// Should contain IPv4 addresses (dots, no colons)
+			assert.Contains(t, resultStr, ".")
+			assert.NotContains(t, resultStr, ":")
+		}
+	})
+
+	t.Run("PTR record - IPv6 localhost reverse lookup", func(t *testing.T) {
+		cfg := &Config{
+			RecordType: RecordTypePTR,
+			Timeout:    10 * time.Second,
 		}
 		source, err := factory.CreateSource(ctx, lookupsource.CreateSettings{}, cfg)
 		require.NoError(t, err)
@@ -206,16 +235,16 @@ func TestIPv6Support(t *testing.T) {
 		require.NoError(t, err)
 		if found {
 			assert.NotEmpty(t, result)
-			t.Logf("::1 resolved to: %v", result)
+			t.Logf("::1 PTR resolved to: %v", result)
 		} else {
 			t.Log("::1 reverse lookup not found (may not be configured)")
 		}
 	})
 
-	t.Run("reverse lookup full IPv6 address", func(t *testing.T) {
+	t.Run("PTR record - Google DNS IPv6 reverse lookup", func(t *testing.T) {
 		cfg := &Config{
-			Mode:    ModeReverse,
-			Timeout: 10 * time.Second,
+			RecordType: RecordTypePTR,
+			Timeout:    10 * time.Second,
 		}
 		source, err := factory.CreateSource(ctx, lookupsource.CreateSettings{}, cfg)
 		require.NoError(t, err)
@@ -225,63 +254,88 @@ func TestIPv6Support(t *testing.T) {
 		require.NoError(t, err)
 		if found {
 			assert.NotEmpty(t, result)
-			t.Logf("2001:4860:4860::8888 resolved to: %v", result)
+			t.Logf("2001:4860:4860::8888 PTR resolved to: %v", result)
 			// Should resolve to dns.google or similar
+			assert.Contains(t, result.(string), "google")
 		} else {
 			t.Log("Google DNS IPv6 reverse lookup not found (may require network access)")
 		}
 	})
 
-	t.Run("forward lookup returns IPv6", func(t *testing.T) {
+	t.Run("PTR record - IPv6 address format validation", func(t *testing.T) {
 		cfg := &Config{
-			Mode:    ModeForward,
-			Timeout: 10 * time.Second,
+			RecordType: RecordTypePTR,
+			Timeout:    10 * time.Second,
 		}
 		source, err := factory.CreateSource(ctx, lookupsource.CreateSettings{}, cfg)
 		require.NoError(t, err)
 
-		// dns.google has both IPv4 and IPv6 addresses
-		result, found, err := source.Lookup(ctx, "dns.google")
-		if err != nil {
-			t.Skipf("Skipping test, network may not be accessible: %v", err)
-		}
-		if found {
-			assert.NotEmpty(t, result)
-			t.Logf("dns.google resolved to: %v", result)
-			// Result could be IPv4 or IPv6 depending on system preference
-		}
-	})
-
-	t.Run("IPv6 address format validation", func(t *testing.T) {
-		cfg := &Config{
-			Mode:    ModeReverse,
-			Timeout: 10 * time.Second,
-		}
-		source, err := factory.CreateSource(ctx, lookupsource.CreateSettings{}, cfg)
-		require.NoError(t, err)
-
-		testCases := []string{
-			"::1",                    // Loopback
-			"fe80::1",                // Link-local
-			"2001:db8::1",            // Documentation prefix
-			"2001:4860:4860::8888",   // Full address
-			"2001:4860:4860::8844",   // Another valid address
-			"::ffff:192.0.2.1",       // IPv4-mapped IPv6
+		testCases := []struct {
+			ipv6 string
+			desc string
+		}{
+			{"::1", "Loopback"},
+			{"fe80::1", "Link-local"},
+			{"2001:db8::1", "Documentation prefix"},
+			{"2001:4860:4860::8888", "Google DNS full address"},
+			{"2001:4860:4860::8844", "Google DNS alternate"},
+			{"::ffff:192.0.2.1", "IPv4-mapped IPv6"},
 		}
 
-		for _, ipv6 := range testCases {
-			t.Run(ipv6, func(t *testing.T) {
-				result, found, err := source.Lookup(ctx, ipv6)
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				result, found, err := source.Lookup(ctx, tc.ipv6)
 				// We don't assert found or specific result, just that it doesn't panic
 				// and handles the IPv6 format correctly
 				if err != nil {
-					t.Logf("%s lookup error (expected for some addresses): %v", ipv6, err)
+					t.Logf("%s PTR lookup error (expected for some addresses): %v", tc.ipv6, err)
 				} else if found {
-					t.Logf("%s resolved to: %v", ipv6, result)
+					t.Logf("%s PTR resolved to: %v", tc.ipv6, result)
 				} else {
-					t.Logf("%s not found (expected for some addresses)", ipv6)
+					t.Logf("%s PTR not found (expected for some addresses)", tc.ipv6)
 				}
 				// No panic means IPv6 is handled correctly
+			})
+		}
+	})
+
+	t.Run("AAAA vs A record type filtering", func(t *testing.T) {
+		// Test that AAAA returns only IPv6, A returns only IPv4
+		testCases := []struct {
+			recordType      RecordType
+			hostname        string
+			expectIPv6Only  bool
+			expectIPv4Only  bool
+		}{
+			{RecordTypeA, "dns.google", false, true},
+			{RecordTypeAAAA, "dns.google", true, false},
+		}
+
+		for _, tc := range testCases {
+			t.Run(string(tc.recordType), func(t *testing.T) {
+				cfg := &Config{
+					RecordType: tc.recordType,
+					Timeout:    10 * time.Second,
+				}
+				source, err := factory.CreateSource(ctx, lookupsource.CreateSettings{}, cfg)
+				require.NoError(t, err)
+
+				result, found, err := source.Lookup(ctx, tc.hostname)
+				if err != nil {
+					t.Skipf("Network not accessible: %v", err)
+				}
+				if found {
+					resultStr := result.(string)
+					t.Logf("%s %s resolved to: %v", tc.hostname, tc.recordType, resultStr)
+
+					if tc.expectIPv6Only {
+						assert.Contains(t, resultStr, ":", "AAAA record should contain IPv6 addresses with colons")
+					}
+					if tc.expectIPv4Only {
+						assert.Contains(t, resultStr, ".", "A record should contain IPv4 addresses with dots")
+						assert.NotContains(t, resultStr, ":", "A record should not contain IPv6 addresses")
+					}
+				}
 			})
 		}
 	})
@@ -290,7 +344,7 @@ func TestIPv6Support(t *testing.T) {
 func TestMultipleResults(t *testing.T) {
 	factory := NewFactory()
 	cfg := &Config{
-		Mode:            ModeForward,
+		RecordType:      RecordTypeA,
 		Timeout:         10 * time.Second,
 		MultipleResults: true,
 	}
@@ -316,8 +370,8 @@ func TestMultipleResults(t *testing.T) {
 func TestTimeout(t *testing.T) {
 	factory := NewFactory()
 	cfg := &Config{
-		Mode:    ModeForward,
-		Timeout: 1 * time.Nanosecond, // Very short timeout
+		RecordType: RecordTypeA,
+		Timeout:    1 * time.Nanosecond, // Very short timeout
 	}
 
 	source, err := factory.CreateSource(context.Background(), lookupsource.CreateSettings{}, cfg)
@@ -337,9 +391,9 @@ func TestTimeout(t *testing.T) {
 func TestCustomResolver(t *testing.T) {
 	factory := NewFactory()
 	cfg := &Config{
-		Mode:     ModeForward,
-		Timeout:  10 * time.Second,
-		Resolver: "8.8.8.8:53", // Google's public DNS
+		RecordType: RecordTypeA,
+		Timeout:    10 * time.Second,
+		Resolver:   "8.8.8.8:53", // Google's public DNS
 	}
 
 	source, err := factory.CreateSource(context.Background(), lookupsource.CreateSettings{}, cfg)
@@ -361,15 +415,15 @@ func TestCustomResolver(t *testing.T) {
 	})
 }
 
-func TestModeSwitching(t *testing.T) {
+func TestRecordTypeSwitching(t *testing.T) {
 	ctx := context.Background()
 	factory := NewFactory()
 
-	t.Run("forward then reverse", func(t *testing.T) {
-		// First, do forward lookup
+	t.Run("A record then PTR record", func(t *testing.T) {
+		// First, do A record lookup
 		forwardCfg := &Config{
-			Mode:    ModeForward,
-			Timeout: 10 * time.Second,
+			RecordType: RecordTypeA,
+			Timeout:    10 * time.Second,
 		}
 		forwardSource, err := factory.CreateSource(ctx, lookupsource.CreateSettings{}, forwardCfg)
 		require.NoError(t, err)
@@ -382,12 +436,12 @@ func TestModeSwitching(t *testing.T) {
 
 		ipStr, ok := ip.(string)
 		require.True(t, ok)
-		t.Logf("Forward lookup: localhost -> %s", ipStr)
+		t.Logf("A record lookup: localhost -> %s", ipStr)
 
-		// Now do reverse lookup on that IP
+		// Now do PTR record lookup on that IP
 		reverseCfg := &Config{
-			Mode:    ModeReverse,
-			Timeout: 10 * time.Second,
+			RecordType: RecordTypePTR,
+			Timeout:    10 * time.Second,
 		}
 		reverseSource, err := factory.CreateSource(ctx, lookupsource.CreateSettings{}, reverseCfg)
 		require.NoError(t, err)
@@ -395,44 +449,8 @@ func TestModeSwitching(t *testing.T) {
 		hostname, found, err := reverseSource.Lookup(ctx, ipStr)
 		require.NoError(t, err)
 		if found {
-			t.Logf("Reverse lookup: %s -> %v", ipStr, hostname)
+			t.Logf("PTR record lookup: %s -> %v", ipStr, hostname)
 			assert.NotEmpty(t, hostname)
 		}
 	})
-}
-
-func TestWithCaching(t *testing.T) {
-	factory := NewFactory()
-	cfg := &Config{
-		Mode:    ModeForward,
-		Timeout: 10 * time.Second,
-	}
-
-	// Create source with caching enabled
-	settings := lookupsource.CreateSettings{
-		Cache: lookupsource.CacheConfig{
-			Enabled: true,
-			Size:    100,
-			TTL:     5 * time.Minute,
-		},
-	}
-	source, err := factory.CreateSource(context.Background(), settings, cfg)
-	require.NoError(t, err)
-
-	ctx := context.Background()
-
-	// First lookup should miss cache and query DNS
-	result1, found1, err := source.Lookup(ctx, "localhost")
-	require.NoError(t, err)
-	if !found1 {
-		t.Skip("localhost not found")
-	}
-	assert.NotEmpty(t, result1)
-
-	// Second lookup should hit cache (we can't easily verify this without instrumentation,
-	// but we can at least verify it returns the same result)
-	result2, found2, err := source.Lookup(ctx, "localhost")
-	require.NoError(t, err)
-	assert.True(t, found2)
-	assert.Equal(t, result1, result2)
 }

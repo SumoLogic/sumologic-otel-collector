@@ -20,7 +20,7 @@ processors:
   lookup:
     source:
       type: dns
-      mode: forward
+      record_type: A
       timeout: 5s
     cache:
       enabled: true
@@ -115,23 +115,24 @@ svc-worker: "Background Worker"
 
 ### dns
 
-Performs DNS lookups to resolve hostnames to IP addresses (forward lookup) or IP addresses to hostnames (reverse lookup).
+Performs DNS lookups to resolve hostnames to IP addresses or IP addresses to hostnames based on DNS record type.
 
 | Field | Description | Default |
 | ----- | ----------- | ------- |
-| `mode` | DNS resolution mode: `forward` or `reverse` | `forward` |
+| `record_type` | DNS record type: `A` (hostname to IPv4), `AAAA` (hostname to IPv6), or `PTR` (IP to hostname) | `A` |
+| `timeout` | Maximum time to wait for DNS resolution | `5s` |
 | `timeout` | Maximum time to wait for DNS resolution | `5s` |
 | `resolver` | Custom DNS server (format: "host:port", e.g., "8.8.8.8:53"). If empty, uses system default | - |
 | `multiple_results` | If true, returns all results as comma-separated string; if false, returns first result only | `false` |
 
-**Forward lookup** (hostname to IP):
+**A record lookup** (hostname to IPv4):
 
 ```yaml
 processors:
   lookup:
     source:
       type: dns
-      mode: forward
+      record_type: A
       timeout: 5s
     cache:
       enabled: true
@@ -142,25 +143,7 @@ processors:
         from_attribute: server.hostname
 ```
 
-**Reverse lookup** (IP to hostname):
-
-```yaml
-processors:
-  lookup:
-    source:
-      type: dns
-      mode: reverse
-      timeout: 5s
-      resolver: "8.8.8.8:53"
-    cache:
-      enabled: true
-      size: 1000
-      ttl: 10m
-      negative_ttl: 1m
-    attributes:
-      - key: client.hostname
-        from_attribute: client.ip
-```
+Detailed documentation for sources can be found under the respective source's readme.
 
 ## Caching
 
@@ -171,7 +154,7 @@ processors:
   lookup:
     source:
       type: dns
-      mode: forward
+      record_type: A
     cache:
       enabled: true
       size: 1000           # Max entries
