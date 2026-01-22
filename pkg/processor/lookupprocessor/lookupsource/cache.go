@@ -176,7 +176,7 @@ func (c *Cache) evictOldest() {
 // Must be called with write lock held.
 func (c *Cache) removeEntry(key string) {
 	delete(c.entries, key)
-	
+
 	// Remove key from keys slice
 	for i, k := range c.keys {
 		if k == key {

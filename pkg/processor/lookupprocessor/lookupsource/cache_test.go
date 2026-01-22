@@ -41,7 +41,7 @@ func TestCacheStub(t *testing.T) {
 
 	// Clear removes all entries
 	cache.Clear()
-	
+
 	// After clear, should not be found
 	val, found = cache.Get("key")
 	assert.False(t, found)
