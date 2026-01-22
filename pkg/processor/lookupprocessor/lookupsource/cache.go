@@ -82,7 +82,6 @@ func (c *Cache) Get(key string) (any, bool) {
 		c.mu.Lock()
 		// Double-check entry still exists and is still expired (race condition protection)
 		if entry, exists := c.entries[key]; exists && !entry.expireAt.IsZero() && time.Now().After(entry.expireAt) {
-			c.logger.Debug("cache entry expired", zap.String("key", key))
 			c.removeEntry(key)
 		}
 		c.mu.Unlock()
@@ -92,11 +91,9 @@ func (c *Cache) Get(key string) (any, bool) {
 	// Return nil for cached negative results
 	if entry.isNegative {
 		c.mu.RUnlock()
-		c.logger.Debug("cache hit (negative)", zap.String("key", key))
 		return nil, false
 	}
 
-	c.logger.Debug("cache hit", zap.String("key", key), zap.Any("value", entry.value))
 	c.mu.RUnlock()
 	return entry.value, true
 }
@@ -128,7 +125,6 @@ func (c *Cache) Set(key string, value any) {
 			expireAt:   expireAt,
 			isNegative: isNegative,
 		}
-		c.logger.Info("cache updated", zap.String("key", key), zap.Bool("negative", isNegative))
 		return
 	}
 
@@ -148,7 +144,6 @@ func (c *Cache) Set(key string, value any) {
 		isNegative: isNegative,
 	}
 	c.keys = append(c.keys, key)
-	c.logger.Info("cache stored", zap.String("key", key), zap.Bool("negative", isNegative), zap.Duration("ttl", ttl))
 }
 
 func (c *Cache) Clear() {
@@ -168,7 +163,6 @@ func (c *Cache) evictOldest() {
 
 	// Remove oldest key
 	oldestKey := c.keys[0]
-	c.logger.Info("cache evicted oldest entry", zap.String("key", oldestKey))
 	c.removeEntry(oldestKey)
 }
 
