@@ -28,7 +28,7 @@ lookup:
 ### Configuration Options
 
 | Field | Type | Default | Description |
-|-------|------|---------|-------------|
+| ----- | ---- | ------- | ----------- |
 | `record_type` | string | `A` | DNS record type: `A` (hostname→IPv4), `AAAA` (hostname→IPv6), or `PTR` (IP→hostname) |
 | `timeout` | duration | `5s` | Maximum time to wait for DNS resolution |
 | `resolver` | string | system default | Custom DNS server in `host:port` format (e.g., `8.8.8.8:53`) |
@@ -59,7 +59,7 @@ BenchmarkCacheEffectiveness/cached-4        34393330        175.6 ns/op     128 
 ### Performance Analysis
 
 | Scenario | Latency | Throughput | Memory per Op | Allocations |
-|----------|---------|------------|---------------|-------------|
+| -------- | ------- | ---------- | ------------- | ----------- |
 | **Uncached DNS** | ~240 μs (0.24 ms) | ~4,100 ops/sec | 3,648 B | 34 |
 | **Cached DNS** | ~175 ns (0.00017 ms) | ~5.7M ops/sec | 128 B | 1 |
 | **Parallel Cached** | ~98 ns | ~10M ops/sec | 128 B | 1 |

@@ -187,7 +187,7 @@ make benchmark
 Measures the full processing pipeline including pdata operations, attribute iteration, value conversion, and telemetry. Uses noop source to isolate processor overhead from source implementation (Apple M4 Pro):
 
 | Scenario | ns/op | B/op | allocs/op |
-|----------|-------|------|-----------|
+| -------- | ----- | ---- | --------- |
 | 1 log, 1 attribute | 323 | 696 | 20 |
 | 10 logs, 1 attribute | 1,274 | 3,216 | 74 |
 | 100 logs, 1 attribute | 11,076 | 28,512 | 614 |
@@ -274,4 +274,3 @@ func createSource(
     ), nil
 }
 ```
-
