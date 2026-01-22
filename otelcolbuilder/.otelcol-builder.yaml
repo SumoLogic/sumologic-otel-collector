@@ -4,7 +4,7 @@ dist:
   # the module name for the new distribution, following Go mod conventions. Optional, but recommended.
   module: github.com/SumoLogic/sumologic-otel-collector
   # the OpenTelemetry Collector version to use as base for the distribution.
-  version: 0.143.0-sumo-0
+  version: 0.144.0
   # the path to write the output (sources and binary).
   output_path: ./cmd
 exporters:
