@@ -92,11 +92,11 @@ func (c *Cache) Get(key string) (any, bool) {
 	// Return nil for cached negative results
 	if entry.isNegative {
 		c.mu.RUnlock()
-		c.logger.Info("cache hit (negative)", zap.String("key", key))
+		c.logger.Debug("cache hit (negative)", zap.String("key", key))
 		return nil, false
 	}
 
-	c.logger.Info("cache hit", zap.String("key", key), zap.Any("value", entry.value))
+	c.logger.Debug("cache hit", zap.String("key", key), zap.Any("value", entry.value))
 	c.mu.RUnlock()
 	return entry.value, true
 }
