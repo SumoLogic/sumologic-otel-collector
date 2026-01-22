@@ -15,7 +15,7 @@ Currently supports logs, with metrics and traces support planned.
 
 ## Configuration
 
-```dns
+```yaml
 processors:
   lookup:
     source:
